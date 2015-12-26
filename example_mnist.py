@@ -44,22 +44,16 @@ def get_model(input, label):
     tf.scalar_summary(cost.op.name, cost)
     return prob, cost
 
-#def get_eval(prob, labels):
-    #"""
-    #Args:
-        #prob: bx10
-        #labels: b
-    #Returns:
-        #scalar float: accuracy
-    #"""
-    #correct = tf.nn.in_top_k(prob, labels, 1)
-
-    #nr_correct = tf.reduce_sum(tf.cast(correct, tf.int32))
-    #return tf.cast(nr_correct, tf.float32) / tf.cast(tf.size(labels), tf.float32)
-
 def main():
     dataset_train = Mnist('train')
     dataset_test = Mnist('test')
+    extensions = [
+        OnehotClassificationValidation(
+            BatchData(dataset_test, batch_size, remainder=True),
+            prefix='test', period=2),
+        PeriodicSaver(LOG_DIR, period=2)
+    ]
+
     with tf.Graph().as_default():
         input_var = tf.placeholder(tf.float32, shape=(None, PIXELS), name='input')
         label_var = tf.placeholder(tf.int32, shape=(None,), name='label')
@@ -69,17 +63,14 @@ def main():
         optimizer = tf.train.AdagradOptimizer(0.01)
         train_op = optimizer.minimize(cost)
 
-        validation_ext = OnehotClassificationValidation(
-            BatchData(dataset_test, batch_size), 'test')
-        validation_ext.init()
+        for ext in extensions:
+            ext.init()
 
         summary_op = tf.merge_all_summaries()
-        saver = tf.train.Saver()
 
         sess = tf.Session()
         sess.run(tf.initialize_all_variables())
-        summary_writer = tf.train.SummaryWriter(LOG_DIR,
-                                                graph_def=sess.graph_def)
+        summary_writer = tf.train.SummaryWriter(LOG_DIR, graph_def=sess.graph_def)
 
         with sess.as_default():
             for epoch in count(1):
@@ -90,13 +81,11 @@ def main():
                     _, cost_value = sess.run([train_op, cost], feed_dict=feed)
 
                 print('Epoch %d: last batch cost = %.2f' % (epoch, cost_value))
-
-                summary_str = sess.run(summary_op, feed_dict=feed)
+                summary_str = summary_op.eval(feed_dict=feed)
                 summary_writer.add_summary(summary_str, epoch)
 
-                if epoch % 2 == 0:
-                    saver.save(sess, LOG_DIR, global_step=epoch)
-                    validation_ext.trigger()
+                for ext in extensions:
+                    ext.trigger()
 
 
 
