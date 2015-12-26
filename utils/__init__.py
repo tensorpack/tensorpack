@@ -3,16 +3,17 @@
 #  File: __init__.py
 #  Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
-import tensorflow as tf
+from pkgutil import walk_packages
+import os
+import os.path
 
+def global_import(name):
+    p = __import__(name, globals(), locals())
+    lst = p.__all__ if '__all__' in dir(p) else dir(p)
+    for k in lst:
+        globals()[k] = p.__dict__[k]
 
-def one_hot(y, num_labels):
-    batch_size = y.get_shape().as_list()[0]
-    assert type(batch_size) == int, type(batch_size)
-    y = tf.expand_dims(y, 1)
-    indices = tf.expand_dims(tf.range(0, batch_size), 1)
-    concated = tf.concat(1, [indices, y])
-    onehot_labels = tf.sparse_to_dense(
-        concated, tf.pack([batch_size, num_labels]), 1.0, 0.0)
-    onehot_labels.set_shape([batch_size, num_labels])
-    return tf.cast(onehot_labels, tf.float32)
+for _, module_name, _ in walk_packages(
+        [os.path.dirname(__file__)]):
+    if not module_name.startswith('_'):
+        global_import(module_name)

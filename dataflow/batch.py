@@ -8,7 +8,6 @@ import numpy as np
 __all__ = ['BatchData']
 
 class BatchData(object):
-
     def __init__(self, ds, batch_size):
         self.ds = ds
         self.batch_size = batch_size
@@ -30,4 +29,3 @@ class BatchData(object):
                 np.array([x[k] for x in data_holder],
                          dtype=data_holder[0][k].dtype))
         return tuple(result)
-
