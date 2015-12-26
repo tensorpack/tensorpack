@@ -4,13 +4,17 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 import numpy as np
 
+__all__ = ['StatCounter', 'Accuracy']
 
 class StatCounter(object):
     def __init__(self):
-        self.values = []
+        self.reset()
 
     def feed(self, v):
         self.values.append(v)
+
+    def reset(self):
+        self.values = []
 
     @property
     def average(self):
@@ -22,6 +26,9 @@ class StatCounter(object):
 
 class Accuracy(object):
     def __init__(self):
+        self.reset()
+
+    def reset(self):
         self.tot = 0
         self.corr = 0
 

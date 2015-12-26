@@ -24,18 +24,22 @@ NUM_CLASS = 10
 batch_size = 128
 LOG_DIR = 'train_log'
 
-def get_model(input, label):
+def get_model(inputs):
     """
     Args:
-        input: bx28x28
-        label: bx1 integer
+        inputs: a list of input variable,
+        e.g.: [input, label] with:
+            input: bx28x28
+            label: bx1 integer
     Returns:
-        (output, cost)
-        output: variable
+        (outputs, cost)
+        outputs: a list of output variable
         cost: scalar variable
     """
     # use this dropout variable! it will be set to 1 at test time
-    keep_prob = tf.placeholder(tf.float32, shape=tuple(), name='dropout_prob')
+    keep_prob = tf.placeholder(tf.float32, shape=tuple(), name=DROPOUT_PROB_OP_NAME)
+
+    input, label = inputs
 
     input = tf.reshape(input, [-1, IMAGE_SIZE, IMAGE_SIZE, 1])
     conv0 = Conv2D('conv0', input, out_channel=32, kernel_shape=5,
@@ -62,17 +66,23 @@ def get_model(input, label):
     cost = tf.nn.softmax_cross_entropy_with_logits(fc1, y)
     cost = tf.reduce_mean(cost, name='cost')
 
-    tf.scalar_summary(cost.op.name, cost)
-    return prob, cost
+    # number of correctly classified samples
+    correct = tf.equal(
+        tf.cast(tf.argmax(prob, 1), tf.int32), label)
+    correct = tf.reduce_sum(tf.cast(correct, tf.int32), name='correct')
+
+    return [prob, correct], cost
 
 def main():
     dataset_train = BatchData(Mnist('train'), batch_size)
     dataset_test = BatchData(Mnist('test'), batch_size, remainder=True)
-    extensions = [
-        OnehotClassificationValidation(
+    callbacks = [
+        SummaryWriter(LOG_DIR),
+        AccuracyValidation(
             dataset_test,
-            prefix='test', period=2),
-        PeriodicSaver(LOG_DIR, period=2)
+            prefix='test', period=1),
+        TrainingAccuracy(),
+        PeriodicSaver(LOG_DIR, period=1)
     ]
     optimizer = tf.train.AdamOptimizer(1e-4)
     sess_config = tf.ConfigProto()
@@ -80,38 +90,42 @@ def main():
 
     with tf.Graph().as_default():
         G = tf.get_default_graph()
-        input_var = tf.placeholder(tf.float32, shape=(None, IMAGE_SIZE, IMAGE_SIZE), name='input')
+        image_var = tf.placeholder(tf.float32, shape=(None, IMAGE_SIZE, IMAGE_SIZE), name='input')
         label_var = tf.placeholder(tf.int32, shape=(None,), name='label')
-        prob, cost = get_model(input_var, label_var)
+        input_vars = [image_var, label_var]
 
-        train_op = optimizer.minimize(cost)
+        for v in input_vars:
+            G.add_to_collection(INPUT_VARS_KEY, v)
+        output_vars, cost_var = get_model(input_vars)
+        for v in output_vars:
+            G.add_to_collection(OUTPUT_VARS_KEY, v)
 
-        for ext in extensions:
-            ext.init()
+        train_op = optimizer.minimize(cost_var)
 
-        summary_op = tf.merge_all_summaries()
         sess = tf.Session(config=sess_config)
         sess.run(tf.initialize_all_variables())
-        summary_writer = tf.train.SummaryWriter(LOG_DIR, graph_def=sess.graph_def)
 
-        keep_prob = G.get_tensor_by_name('dropout_prob:0')
         with sess.as_default():
+            for ext in callbacks:
+                ext.before_train()
+
+            keep_prob_var = G.get_tensor_by_name(DROPOUT_PROB_VAR_NAME)
             for epoch in count(1):
-                running_cost = StatCounter()
-                for (img, label) in dataset_train.get_data():
-                    feed = {input_var: img,
-                            label_var: label,
-                            keep_prob: 0.5}
+                for dp in dataset_train.get_data():
+                    feed = {keep_prob_var: 0.5}
+                    feed.update(dict(zip(input_vars, dp)))
 
-                    _, cost_value = sess.run([train_op, cost], feed_dict=feed)
-                    running_cost.feed(cost_value)
+                    results = sess.run(
+                        [train_op, cost_var] + output_vars, feed_dict=feed)
+                    cost = results[1]
+                    outputs = results[2:]
+                    assert len(outputs) == len(output_vars)
+                    for cb in callbacks:
+                        cb.trigger_step(dp, outputs, cost)
 
-                print('Epoch %d: avg cost = %.2f' % (epoch, running_cost.average))
-                summary_str = summary_op.eval(feed_dict=feed)
-                summary_writer.add_summary(summary_str, epoch)
-
-                for ext in extensions:
-                    ext.trigger()
+                for cb in callbacks:
+                    cb.trigger_epoch()
+        summary_writer.close()
 
 
 
