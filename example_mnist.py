@@ -3,6 +3,12 @@
 # File: example_mnist.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
+
+# HACK protobuf
+#import sys
+#import os
+#sys.path.insert(0, os.path.expanduser('~/.local/lib/python2.7/site-packages'))
+
 import tensorflow as tf
 import numpy as np
 from itertools import count
@@ -28,15 +34,20 @@ def get_model(input, label):
         output: variable
         cost: scalar variable
     """
-    input = tf.reshape(input, [-1, 28, 28, 1])
-    conv = Conv2D('conv0', input, out_channel=20, kernel_shape=3,
-                  padding='same')
-    input = tf.reshape(input, [-1, 28 * 28])
+    input = tf.reshape(input, [-1, IMAGE_SIZE, IMAGE_SIZE, 1])
+    conv0 = Conv2D('conv0', input, out_channel=5, kernel_shape=3,
+                  padding='valid')
+    pool0 = tf.nn.max_pool(conv0, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1],
+                           padding='SAME')
+    conv1 = Conv2D('conv1', pool0, out_channel=10, kernel_shape=4,
+                  padding='valid')
+    pool1 = tf.nn.max_pool(conv1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1],
+                           padding='SAME')
 
-    fc0 = FullyConnected('fc0', input, 200)
+    feature = batch_flatten(pool1)
+
+    fc0 = FullyConnected('fc0', feature, 512)
     fc0 = tf.nn.relu(fc0)
-    fc1 = FullyConnected('fc1', fc0, out_dim=200)
-    fc1 = tf.nn.relu(fc1)
     fc2 = FullyConnected('lr', fc1, out_dim=10)
     prob = tf.nn.softmax(fc2, name='output')
 
