@@ -5,7 +5,7 @@
 
 import tensorflow as tf
 import numpy as np
-__all__ = ['one_hot', 'batch_flatten']
+__all__ = ['one_hot', 'batch_flatten', 'logSoftmax']
 
 def one_hot(y, num_labels):
     batch_size = tf.size(y)
@@ -20,3 +20,10 @@ def one_hot(y, num_labels):
 def batch_flatten(x):
     total_dim = np.prod(x.get_shape()[1:].as_list())
     return tf.reshape(x, [-1, total_dim])
+
+def logSoftmax(x):
+    z = x - tf.reduce_max(x, 1, keep_dims=True)
+    logprob = z - tf.log(tf.reduce_sum(tf.exp(z), 1, keep_dims=True))
+    return logprob
+
+

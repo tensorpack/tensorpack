@@ -34,26 +34,30 @@ def get_model(input, label):
         output: variable
         cost: scalar variable
     """
+    keep_prob = tf.placeholder(tf.float32, name='dropout_prob')
+
     input = tf.reshape(input, [-1, IMAGE_SIZE, IMAGE_SIZE, 1])
-    conv0 = Conv2D('conv0', input, out_channel=20, kernel_shape=5,
+    conv0 = Conv2D('conv0', input, out_channel=32, kernel_shape=5,
                   padding='valid')
+    conv0 = tf.nn.relu(conv0)
     pool0 = tf.nn.max_pool(conv0, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1],
                            padding='SAME')
     conv1 = Conv2D('conv1', pool0, out_channel=40, kernel_shape=3,
                   padding='valid')
+    conv1 = tf.nn.relu(conv1)
     pool1 = tf.nn.max_pool(conv1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1],
                            padding='SAME')
-    conv2 = Conv2D('conv2', pool0, out_channel=40, kernel_shape=3,
-                  padding='valid')
 
-    feature = batch_flatten(conv2)
+    feature = batch_flatten(pool1)
 
-    fc0 = FullyConnected('fc0', feature, 512)
+    fc0 = FullyConnected('fc0', feature, 1024)
     fc0 = tf.nn.relu(fc0)
+    fc0 = tf.nn.dropout(fc0, keep_prob)
+
     fc1 = FullyConnected('lr', fc0, out_dim=10)
     prob = tf.nn.softmax(fc1, name='output')
 
-    logprob = tf.log(prob)
+    logprob = logSoftmax(fc1)
     y = one_hot(label, NUM_CLASS)
     cost = tf.reduce_sum(-y * logprob, 1)
     cost = tf.reduce_mean(cost, name='cost')
@@ -77,7 +81,7 @@ def main():
 
         prob, cost = get_model(input_var, label_var)
 
-        optimizer = tf.train.AdagradOptimizer(0.01)
+        optimizer = tf.train.AdamOptimizer(1e-4)
         train_op = optimizer.minimize(cost)
 
         for ext in extensions:
@@ -90,11 +94,14 @@ def main():
         sess.run(tf.initialize_all_variables())
         summary_writer = tf.train.SummaryWriter(LOG_DIR, graph_def=sess.graph_def)
 
+        g = tf.get_default_graph()
+        keep_prob = g.get_tensor_by_name('dropout_prob:0')
         with sess.as_default():
             for epoch in count(1):
                 for (img, label) in BatchData(dataset_train, batch_size).get_data():
                     feed = {input_var: img,
-                            label_var: label}
+                            label_var: label,
+                            keep_prob: 0.5}
 
                     _, cost_value = sess.run([train_op, cost], feed_dict=feed)
 

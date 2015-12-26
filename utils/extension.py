@@ -41,21 +41,22 @@ class OnehotClassificationValidation(PeriodicExtension):
     """
     def __init__(self, ds, prefix,
                  period=1,
-                 input_op_name='input',
-                 label_op_name='label',
-                 output_op_name='output'):
+                 input_var_name='input:0',
+                 label_var_name='label:0',
+                 output_var_name='output:0'):
         super(OnehotClassificationValidation, self).__init__(period)
         self.ds = ds
-        self.input_op_name = input_op_name
-        self.output_op_name = output_op_name
-        self.label_op_name = label_op_name
+        self.input_var_name = input_var_name
+        self.output_var_name = output_var_name
+        self.label_var_name = label_var_name
 
     def init(self):
         self.graph = tf.get_default_graph()
         with tf.name_scope('validation'):
-            self.input_var = self.graph.get_operation_by_name(self.input_op_name).outputs[0]
-            self.label_var = self.graph.get_operation_by_name(self.label_op_name).outputs[0]
-            self.output_var = self.graph.get_operation_by_name(self.output_op_name).outputs[0]
+            self.input_var = self.graph.get_tensor_by_name(self.input_var_name)
+            self.label_var = self.graph.get_tensor_by_name(self.label_var_name)
+            self.output_var = self.graph.get_tensor_by_name(self.output_var_name)
+            self.dropout_var = self.graph.get_tensor_by_name('dropout_prob:0')
 
             correct = tf.equal(tf.cast(tf.argmax(self.output_var, 1), tf.int32),
                                self.label_var)
@@ -66,8 +67,9 @@ class OnehotClassificationValidation(PeriodicExtension):
         cnt = 0
         cnt_correct = 0
         for (img, label) in self.ds.get_data():
-            # TODO dropout?
-            feed = {self.input_var: img, self.label_var: label}
+            feed = {self.input_var: img,
+                    self.label_var: label,
+                    self.dropout_var: 1.0}
             cnt += img.shape[0]
             cnt_correct += self.nr_correct_var.eval(feed_dict=feed)
         # TODO write to summary?
