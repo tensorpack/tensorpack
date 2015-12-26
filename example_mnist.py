@@ -60,7 +60,7 @@ def get_model(input, label):
 
     y = one_hot(label, NUM_CLASS)
     cost = tf.nn.softmax_cross_entropy_with_logits(fc1, y)
-    cost = tf.reduce_sum(cost, name='cost')
+    cost = tf.reduce_mean(cost, name='cost')
 
     tf.scalar_summary(cost.op.name, cost)
     return prob, cost
@@ -97,14 +97,16 @@ def main():
         keep_prob = G.get_tensor_by_name('dropout_prob:0')
         with sess.as_default():
             for epoch in count(1):
+                running_cost = StatCounter()
                 for (img, label) in dataset_train.get_data():
                     feed = {input_var: img,
                             label_var: label,
                             keep_prob: 0.5}
 
                     _, cost_value = sess.run([train_op, cost], feed_dict=feed)
+                    running_cost.feed(cost_value)
 
-                print('Epoch %d: last batch cost = %.2f' % (epoch, cost_value))
+                print('Epoch %d: avg cost = %.2f' % (epoch, running_cost.average))
                 summary_str = summary_op.eval(feed_dict=feed)
                 summary_writer.add_summary(summary_str, epoch)
 

@@ -65,7 +65,7 @@ class OnehotClassificationValidation(PeriodicExtension):
 
     def _trigger(self):
         cnt = 0
-        cnt_correct = 0
+        correct_stat = Accuracy()
         sess = tf.get_default_session()
         cost_sum = 0
         for (img, label) in self.ds.get_data():
@@ -75,12 +75,12 @@ class OnehotClassificationValidation(PeriodicExtension):
             cnt += img.shape[0]
             correct, cost = sess.run([self.nr_correct_var, self.cost_var],
                                     feed_dict=feed)
-            cnt_correct += correct
-            cost_sum += cost
+            correct_stat.feed(correct, cnt)
+            cost_sum += cost * cnt
         cost_sum /= cnt
         # TODO write to summary?
         print "After epoch {}: acc={}, cost={}".format(
-            self.epoch_num, cnt_correct * 1.0 / cnt, cost_sum)
+            self.epoch_num, correct_stat.accuracy, cost_sum)
 
 
 class PeriodicSaver(PeriodicExtension):
