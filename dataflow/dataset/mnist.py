@@ -16,7 +16,7 @@ class Mnist(object):
             train_or_test: string either 'train' or 'test'
         """
         if dir is None:
-            dir = os.path.join(os.path.dirname(__file__), 'mnist')
+            dir = os.path.join(os.path.dirname(__file__), 'mnist_data')
         self.dataset = input_data.read_data_sets(dir)
         self.train_or_test = train_or_test
 
@@ -28,5 +28,7 @@ class Mnist(object):
             yield (img, label)
 
 if __name__ == '__main__':
-    ds = Mnist()
-    ds.get_data()
+    ds = Mnist('train')
+    for (img, label) in ds.get_data():
+        from IPython import embed; embed()
+
