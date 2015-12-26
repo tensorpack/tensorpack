@@ -34,6 +34,7 @@ def get_model(input, label):
         output: variable
         cost: scalar variable
     """
+    # use this dropout variable! it will be set to 1 at test time
     keep_prob = tf.placeholder(tf.float32, name='dropout_prob')
 
     input = tf.reshape(input, [-1, IMAGE_SIZE, IMAGE_SIZE, 1])
@@ -57,10 +58,11 @@ def get_model(input, label):
     fc1 = FullyConnected('lr', fc0, out_dim=10)
     prob = tf.nn.softmax(fc1, name='output')
 
-    logprob = logSoftmax(fc1)
     y = one_hot(label, NUM_CLASS)
-    cost = tf.reduce_sum(-y * logprob, 1)
-    cost = tf.reduce_mean(cost, name='cost')
+    cost = tf.nn.softmax_cross_entropy_with_logits(fc1, y)
+    #logprob = logSoftmax(fc1)
+    #cost = tf.reduce_sum(-y * logprob, 1)
+    cost = tf.reduce_sum(cost, name='cost')
 
     tf.scalar_summary(cost.op.name, cost)
     return prob, cost
@@ -74,28 +76,27 @@ def main():
             prefix='test', period=2),
         PeriodicSaver(LOG_DIR, period=2)
     ]
+    optimizer = tf.train.AdamOptimizer(1e-4)
+    sess_config = tf.ConfigProto()
+    sess_config.device_count['GPU'] = 1
 
     with tf.Graph().as_default():
+        G = tf.get_default_graph()
         input_var = tf.placeholder(tf.float32, shape=(None, IMAGE_SIZE, IMAGE_SIZE), name='input')
         label_var = tf.placeholder(tf.int32, shape=(None,), name='label')
-
         prob, cost = get_model(input_var, label_var)
 
-        optimizer = tf.train.AdamOptimizer(1e-4)
         train_op = optimizer.minimize(cost)
 
         for ext in extensions:
             ext.init()
 
         summary_op = tf.merge_all_summaries()
-        config = tf.ConfigProto()
-        config.device_count['GPU'] = 1
-        sess = tf.Session(config=config)
+        sess = tf.Session(config=sess_config)
         sess.run(tf.initialize_all_variables())
         summary_writer = tf.train.SummaryWriter(LOG_DIR, graph_def=sess.graph_def)
 
-        g = tf.get_default_graph()
-        keep_prob = g.get_tensor_by_name('dropout_prob:0')
+        keep_prob = G.get_tensor_by_name('dropout_prob:0')
         with sess.as_default():
             for epoch in count(1):
                 for (img, label) in BatchData(dataset_train, batch_size).get_data():
