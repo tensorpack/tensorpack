@@ -23,7 +23,7 @@ class Mnist(object):
     def get_data(self):
         ds = self.dataset.train if self.train_or_test == 'train' else self.dataset.test
         for k in xrange(ds.num_examples):
-            img = ds.images[k]
+            img = ds.images[k].reshape((28, 28))
             label = ds.labels[k]
             yield (img, label)
 

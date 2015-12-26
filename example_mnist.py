@@ -14,7 +14,6 @@ from dataflow.dataset import Mnist
 from dataflow import *
 
 IMAGE_SIZE = 28
-PIXELS = IMAGE_SIZE * IMAGE_SIZE
 NUM_CLASS = 10
 batch_size = 128
 LOG_DIR = 'train_log'
@@ -22,13 +21,18 @@ LOG_DIR = 'train_log'
 def get_model(input, label):
     """
     Args:
-        input: bxPIXELS
+        input: bx28x28
         label: bx1 integer
     Returns:
         (output, cost)
         output: variable
         cost: scalar variable
     """
+    input = tf.reshape(input, [-1, 28, 28, 1])
+    conv = Conv2D('conv0', input, out_channel=20, kernel_shape=3,
+                  padding='same')
+    input = tf.reshape(input, [-1, 28 * 28])
+
     fc0 = FullyConnected('fc0', input, 200)
     fc0 = tf.nn.relu(fc0)
     fc1 = FullyConnected('fc1', fc0, out_dim=200)
@@ -55,7 +59,7 @@ def main():
     ]
 
     with tf.Graph().as_default():
-        input_var = tf.placeholder(tf.float32, shape=(None, PIXELS), name='input')
+        input_var = tf.placeholder(tf.float32, shape=(None, IMAGE_SIZE, IMAGE_SIZE), name='input')
         label_var = tf.placeholder(tf.int32, shape=(None,), name='label')
 
         prob, cost = get_model(input_var, label_var)

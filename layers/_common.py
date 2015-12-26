@@ -3,7 +3,6 @@
 # File: _common.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
-__all__ = ['layer_register']
 import tensorflow as tf
 
 def layer_register():
@@ -13,7 +12,7 @@ def layer_register():
             assert isinstance(name, basestring)
             args = args[1:]
 
-            with tf.name_scope(name):
+            with tf.variable_scope(name):
                 return func(*args, **kwargs)
         return inner
     return wrapper
