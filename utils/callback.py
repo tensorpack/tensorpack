@@ -8,6 +8,7 @@ import sys
 import numpy as np
 import os
 from abc import abstractmethod
+
 from .stat import *
 from .utils import *
 from .naming import *
@@ -20,12 +21,12 @@ class Callback(object):
 
     def _before_train(self):
         """
-        Called before training
+        Called before starting iterative training
         """
 
-    # trigger after every step
     def trigger_step(self, dp, outputs, cost):
         """
+        Callback to be triggered after every step (every backpropagation)
         Args:
             dp: the input dict fed into the graph
             outputs: list of output values after running this dp
@@ -33,8 +34,10 @@ class Callback(object):
         """
         pass
 
-    # trigger after every epoch
     def trigger_epoch(self):
+        """
+        Callback to be triggered after every epoch (full iteration of input dataset)
+        """
         pass
 
 class PeriodicCallback(Callback):
@@ -77,11 +80,7 @@ class AccuracyValidation(PeriodicCallback):
         self.dropout_var = self.get_tensor(DROPOUT_PROB_VAR_NAME)
         self.correct_var = self.get_tensor(self.correct_var_name)
         self.cost_var = self.get_tensor(self.cost_var_name)
-        try:
-            self.writer = tf.get_collection(SUMMARY_WRITER_COLLECTION_KEY)[0]
-        except Exception as e:
-            print "SummaryWriter should be the first extension!"
-            raise
+        self.writer = tf.get_collection(SUMMARY_WRITER_COLLECTION_KEY)[0]
 
     def _trigger(self):
         cnt = 0
@@ -121,11 +120,7 @@ class TrainingAccuracy(Callback):
         self.epoch_num = 0
 
     def _before_train(self):
-        try:
-            self.writer = tf.get_collection(SUMMARY_WRITER_COLLECTION_KEY)[0]
-        except Exception as e:
-            print "SummaryWriter should be the first extension!"
-            raise
+        self.writer = tf.get_collection(SUMMARY_WRITER_COLLECTION_KEY)[0]
         output_vars = self.graph.get_collection(OUTPUT_VARS_KEY)
         for idx, var in enumerate(output_vars):
             if var.name == self.correct_var_name:
@@ -193,4 +188,26 @@ class SummaryWriter(Callback):
         summary_str = self.summary_op.eval(self.last_dp)
         self.epoch_num += 1
         self.writer.add_summary(summary_str, self.epoch_num)
+
+class Callbacks(Callback):
+    def __init__(self, callbacks):
+        # put SummaryWriter to the first
+        for idx, cb in enumerate(callbacks):
+            if type(cb) == SummaryWriter:
+                callbacks.insert(0, callbacks.pop(idx))
+                break
+
+        self.callbacks = callbacks
+
+    def before_train(self):
+        for cb in self.callbacks:
+            cb.before_train()
+
+    def trigger_step(self, dp, outputs, cost):
+        for cb in self.callbacks:
+            cb.trigger_step(dp, outputs, cost)
+
+    def trigger_epoch(self):
+        for cb in self.callbacks:
+            cb.trigger_epoch()
 
