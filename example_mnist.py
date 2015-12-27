@@ -71,7 +71,7 @@ def get_model(inputs):
     # monitor training accuracy
     tf.add_to_collection(
         SUMMARY_VARS_KEY,
-        tf.reduce_mean(correct, name='train_accuracy'))
+        1 - tf.reduce_mean(correct, name='train_error'))
 
     # weight decay on all W of fc layers
     wd_cost = tf.mul(1e-4,
@@ -81,7 +81,7 @@ def get_model(inputs):
 
     return [prob, nr_correct], tf.add_n(tf.get_collection(COST_VARS_KEY), name='cost')
 
-def main():
+def main(argv=None):
     BATCH_SIZE = 128
     with tf.Graph().as_default():
         dataset_train = BatchData(Mnist('train'), BATCH_SIZE)
@@ -95,6 +95,7 @@ def main():
         label_var = tf.placeholder(tf.int32, shape=(None,), name='label')
         input_vars = [image_var, label_var]
         output_vars, cost_var = get_model(input_vars)
+        add_histogram_summary('.*/W') # monitor histogram of all W
 
         config = dict(
             dataset_train=dataset_train,
@@ -104,7 +105,7 @@ def main():
                     dataset_test,
                     prefix='test'),
                 PeriodicSaver(LOG_DIR, period=1),
-                SummaryWriter(LOG_DIR, histogram_regex='.*/W'),
+                SummaryWriter(LOG_DIR),
             ],
             session_config=sess_config,
             inputs=input_vars,
@@ -115,6 +116,5 @@ def main():
         from train import start_train
         start_train(config)
 
-
 if __name__ == '__main__':
-    main()
+    tf.app.run()

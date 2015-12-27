@@ -56,12 +56,12 @@ class ValidationAccuracy(PeriodicCallback):
 
         cost_avg = cost_sum / cnt
         self.writer.add_summary(
-            create_summary('{}_accuracy'.format(self.prefix),
-                           correct_stat.accuracy),
+            create_summary('{}_error'.format(self.prefix),
+                           1 - correct_stat.accuracy),
             self.epoch_num)
         self.writer.add_summary(
             create_summary('{}_cost'.format(self.prefix),
                            cost_avg),
             self.epoch_num)
-        print "{} validation after epoch {}: acc={}, cost={}".format(
-            self.prefix, self.epoch_num, correct_stat.accuracy, cost_avg)
+        print "{} validation after epoch {}: err={}, cost={}".format(
+            self.prefix, self.epoch_num, 1 - correct_stat.accuracy, cost_avg)

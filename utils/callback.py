@@ -66,22 +66,11 @@ class SummaryWriter(Callback):
     def __init__(self, log_dir, histogram_regex=None):
         self.log_dir = log_dir
         self.epoch_num = 0
-        self.hist_regex = histogram_regex
 
     def _before_train(self):
         self.writer = tf.train.SummaryWriter(
             self.log_dir, graph_def=self.sess.graph_def)
         tf.add_to_collection(SUMMARY_WRITER_COLLECTION_KEY, self.writer)
-
-        # create some summary
-        if self.hist_regex is not None:
-            import re
-            params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
-            for p in params:
-                name = p.name
-                if re.search(self.hist_regex, name):
-                    tf.histogram_summary(name, p)
-
         self.summary_op = tf.merge_all_summaries()
 
     def trigger_step(self, inputs, outputs, cost):

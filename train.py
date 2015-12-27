@@ -55,6 +55,11 @@ def start_train(config):
     # maintain average in each step
     with tf.control_dependencies([avg_maintain_op]):
         grads = optimizer.compute_gradients(cost_var)
+
+    for grad, var in grads:
+        if grad:
+            tf.histogram_summary(var.op.name + '/gradients', grad)
+
     train_op = optimizer.apply_gradients(grads, global_step_var)
 
     sess = tf.Session(config=sess_config)
