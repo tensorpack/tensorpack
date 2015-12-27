@@ -12,7 +12,7 @@ import tensorflow as tf
 import numpy as np
 import os
 
-from layers import *
+from models import *
 from utils import *
 from utils.symbolic_functions import *
 from utils.summary import *
