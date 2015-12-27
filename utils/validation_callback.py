@@ -65,5 +65,5 @@ class ValidationError(PeriodicCallback):
                            cost_avg),
             self.epoch_num)
         logger.info(
-            "{} validation after epoch {}: err={}, cost={}".format(
+            "{} validation after epoch {}: err={:.4f}, cost={:.3f}".format(
             self.prefix, self.epoch_num, err_stat.accuracy, cost_avg))

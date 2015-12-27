@@ -77,14 +77,15 @@ def start_train(config):
 
         keep_prob_var = G.get_tensor_by_name(DROPOUT_PROB_VAR_NAME)
         for epoch in xrange(1, max_epoch):
-            for dp in dataset_train.get_data():
-                feed = {keep_prob_var: 0.5}
-                feed.update(dict(zip(input_vars, dp)))
+            with timed_operation('epoch {}'.format(epoch)):
+                for dp in dataset_train.get_data():
+                    feed = {keep_prob_var: 0.5}
+                    feed.update(dict(zip(input_vars, dp)))
 
-                results = sess.run(
-                    [train_op, cost_var] + output_vars, feed_dict=feed)
-                cost = results[1]
-                outputs = results[2:]
-                callbacks.trigger_step(feed, outputs, cost)
+                    results = sess.run(
+                        [train_op, cost_var] + output_vars, feed_dict=feed)
+                    cost = results[1]
+                    outputs = results[2:]
+                    callbacks.trigger_step(feed, outputs, cost)
 
-            callbacks.trigger_epoch()
+                callbacks.trigger_epoch()

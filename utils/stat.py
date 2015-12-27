@@ -4,8 +4,6 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 import numpy as np
 
-__all__ = ['StatCounter', 'Accuracy']
-
 class StatCounter(object):
     def __init__(self):
         self.reset()

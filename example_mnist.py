@@ -12,9 +12,10 @@ import tensorflow as tf
 import numpy as np
 import os
 
-from utils import logger
 from layers import *
 from utils import *
+from utils.symbolic_functions import *
+from utils.summary import *
 from dataflow.dataset import Mnist
 from dataflow import *
 

@@ -1,11 +1,9 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
-# File: utils.py
+# File: summary.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
-
-__all__ = ['create_summary', 'add_histogram_summary', 'add_activation_summary']
 
 def create_summary(name, v):
     """

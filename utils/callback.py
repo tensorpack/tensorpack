@@ -7,9 +7,11 @@ import tensorflow as tf
 import sys
 import numpy as np
 import os
+import time
 from abc import abstractmethod
 
 from .naming import *
+import logger
 
 class Callback(object):
     def before_train(self):
@@ -107,7 +109,22 @@ class Callbacks(Callback):
             cb.trigger_step(inputs, outputs, cost)
 
     def trigger_epoch(self):
+        start = time.time()
+        times = []
         for cb in self.callbacks:
+            s = time.time()
             cb.trigger_epoch()
+            times.append(time.time() - s)
         self.writer.flush()
+        tot = time.time() - start
+
+        # log the time of some heavy callbacks
+        if tot < 3:
+            return
+        msgs = []
+        for idx, t in enumerate(times):
+            if t / tot > 0.3 and t > 1:
+                msgs.append("{}:{}".format(
+                    type(self.callbacks[idx]).__name__, t))
+        logger.info("Callbacks took {} sec. {}".format(tot, ' '.join(msgs)))
 

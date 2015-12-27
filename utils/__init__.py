@@ -5,7 +5,10 @@
 
 from pkgutil import walk_packages
 import os
-import os.path
+import time
+import sys
+from contextlib import contextmanager
+import logger
 
 def global_import(name):
     p = __import__(name, globals(), locals())
@@ -13,7 +16,16 @@ def global_import(name):
     for k in lst:
         globals()[k] = p.__dict__[k]
 
-for _, module_name, _ in walk_packages(
-        [os.path.dirname(__file__)]):
-    if not module_name.startswith('_'):
-        global_import(module_name)
+global_import('naming')
+global_import('callback')
+global_import('validation_callback')
+
+
+@contextmanager
+def timed_operation(msg, log_start=False):
+    if log_start:
+        logger.info('start {} ...'.format(msg))
+    start = time.time()
+    yield
+    logger.info('finished {}, time={:.2f}sec.'.format(
+        msg, time.time() - start))
