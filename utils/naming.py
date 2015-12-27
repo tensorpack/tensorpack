@@ -11,8 +11,8 @@ MERGE_SUMMARY_OP_NAME = 'MergeSummary/MergeSummary:0'
 
 INPUT_VARS_KEY = 'INPUT_VARIABLES'
 OUTPUT_VARS_KEY = 'OUTPUT_VARIABLES'
-COST_VARS_KEY = 'COST_VARIABLES'
-SUMMARY_VARS_KEY = 'SUMMARY_VARIABLES'  # define extra variable to summarize
+COST_VARS_KEY = 'COST_VARIABLES'        # keep track of each individual cost
+SUMMARY_VARS_KEY = 'SUMMARY_VARIABLES'  # extra variables to summarize during training
 
 # export all upper case variables
 all_local_names = locals().keys()

@@ -59,16 +59,19 @@ def get_model(inputs):
 
     y = one_hot(label, 10)
     cost = tf.nn.softmax_cross_entropy_with_logits(fc1, y)
-    cost = tf.reduce_mean(cost, name='cross_entropy_cost')
+    cost = tf.reduce_mean(cost, name='cross_entropy_loss')
     tf.add_to_collection(COST_VARS_KEY, cost)
 
-    # compute the number of correctly classified samples, for ValidationAccuracy to use
+    # compute the number of correctly classified samples, for ValidationAccuracy to use at test time
     correct = tf.equal(
         tf.cast(tf.argmax(prob, 1), tf.int32), label)
     correct = tf.cast(correct, tf.float32)
     nr_correct = tf.reduce_sum(correct, name='correct')
-    tf.add_to_collection(SUMMARY_VARS_KEY,
-                         tf.reduce_mean(correct, name='training_accuracy'))
+
+    # monitor training accuracy
+    tf.add_to_collection(
+        SUMMARY_VARS_KEY,
+        tf.reduce_mean(correct, name='train_accuracy'))
 
     # weight decay on all W of fc layers
     wd_cost = tf.mul(1e-4,
@@ -97,9 +100,9 @@ def main():
             dataset_train=dataset_train,
             optimizer=tf.train.AdamOptimizer(1e-4),
             callbacks=[
-                TrainingAccuracy(batch_size=BATCH_SIZE),
-                ValidationAccuracy(dataset_test,
-                    prefix='test', period=1),
+                ValidationAccuracy(
+                    dataset_test,
+                    prefix='test'),
                 PeriodicSaver(LOG_DIR, period=1),
                 SummaryWriter(LOG_DIR, histogram_regex='.*/W'),
             ],

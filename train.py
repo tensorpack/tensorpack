@@ -40,21 +40,22 @@ def start_train(config):
     for v in output_vars:
         G.add_to_collection(OUTPUT_VARS_KEY, v)
 
+    global_step_var = tf.Variable(0, trainable=False, name='global_step')
+
     # add some summary ops to the graph
-    cost_avg = tf.train.ExponentialMovingAverage(0.9, name='avg')
-    # TODO global step
-    cost_vars = tf.get_collection(COST_VARS_KEY)
-    summary_vars = tf.get_collection(SUMMARY_VARS_KEY)
-    vars_to_summary = cost_vars + [cost_var] + summary_vars
-    cost_avg_maintain_op = cost_avg.apply(vars_to_summary)
+    averager = tf.train.ExponentialMovingAverage(
+        0.9, num_updates=global_step_var, name='avg')
+    vars_to_summary = [cost_var] + \
+            tf.get_collection(SUMMARY_VARS_KEY) + \
+            tf.get_collection(COST_VARS_KEY)
+    avg_maintain_op = averager.apply(vars_to_summary)
     for c in vars_to_summary:
-        #tf.scalar_summary(c.op.name +' (raw)', c)
-        tf.scalar_summary(c.op.name, cost_avg.average(c))
+        tf.scalar_summary(c.op.name, averager.average(c))
 
     # maintain average in each step
-    with tf.control_dependencies([cost_avg_maintain_op]):
+    with tf.control_dependencies([avg_maintain_op]):
         grads = optimizer.compute_gradients(cost_var)
-    train_op = optimizer.apply_gradients(grads) # TODO global_step
+    train_op = optimizer.apply_gradients(grads, global_step_var)
 
     sess = tf.Session(config=sess_config)
     # start training
