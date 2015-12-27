@@ -7,6 +7,13 @@ import tensorflow as tf
 from utils import *
 from itertools import count
 
+def prepare():
+    keep_prob = tf.placeholder(
+        tf.float32, shape=tuple(), name=DROPOUT_PROB_OP_NAME)
+    global_step_var = tf.Variable(
+        0, trainable=False, name=GLOBAL_STEP_OP_NAME)
+
+
 def start_train(config):
     """
     Start training with the given config
@@ -40,11 +47,7 @@ def start_train(config):
     for v in output_vars:
         G.add_to_collection(OUTPUT_VARS_KEY, v)
 
-    try:
-        global_step_var = G.get_tensor_by_name(GLOBAL_STEP_VAR_NAME)
-    except KeyError:    # not created
-        global_step_var = tf.Variable(
-            0, trainable=False, name=GLOBAL_STEP_OP_NAME)
+    global_step_var = G.get_tensor_by_name(GLOBAL_STEP_VAR_NAME)
 
     # add some summary ops to the graph
     averager = tf.train.ExponentialMovingAverage(
