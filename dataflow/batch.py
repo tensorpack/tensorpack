@@ -4,10 +4,11 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import numpy as np
+from .base import DataFlow
 
 __all__ = ['BatchData']
 
-class BatchData(object):
+class BatchData(DataFlow):
     def __init__(self, ds, batch_size, remainder=False):
         """
         Args:

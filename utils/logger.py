@@ -5,6 +5,7 @@
 
 import logging
 import os
+import os.path
 from termcolor import colored
 
 __all__ = []
@@ -38,14 +39,14 @@ for func in ['info', 'warning', 'error', 'critical', 'warn']:
 
 def set_file(path):
     if os.path.isfile(path):
-        warn("File \"{}\" exists! backup? (y/n)".format(path))
-        resp = raw_input()
-        if resp in ['y', 'Y']:
-            from datetime import datetime
-            backup_name = path + datetime.now().strftime('.%d-%H%M%S')
-            import shutil
-            shutil.move(path, backup_name)
-            info("Log '{}' moved to '{}'".format(path, backup_name))
+        from datetime import datetime
+        backup_name = path + datetime.now().strftime('.%d-%H%M%S')
+        import shutil
+        shutil.move(path, backup_name)
+        info("Log file '{}' backuped to '{}'".format(path, backup_name))
+    dirname = os.path.dirname(path)
+    if not os.path.isdir(dirname):
+        os.makedirs(dirname)
     hdl = logging.FileHandler(
         filename=path, encoding='utf-8', mode='w')
     logger.addHandler(hdl)

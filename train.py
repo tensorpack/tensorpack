@@ -5,6 +5,7 @@
 
 import tensorflow as tf
 from utils import *
+from dataflow import DataFlow
 from itertools import count
 
 def prepare():
@@ -20,17 +21,19 @@ def start_train(config):
     Args:
         config: a tensorpack config dictionary
     """
-    # a Dataflow instance
     dataset_train = config['dataset_train']
+    assert isinstance(dataset_train, DataFlow), dataset_train.__class__
 
     # a tf.train.Optimizer instance
     optimizer = config['optimizer']
+    assert isinstance(optimizer, tf.train.Optimizer), optimizer.__class__
 
     # a list of Callback instance
     callbacks = Callbacks(config.get('callbacks', []))
 
     # a tf.ConfigProto instance
     sess_config = config.get('session_config', None)
+    assert isinstance(sess_config, tf.ConfigProto), sess_config.__class__
 
     # a list of input/output variables
     input_vars = config['inputs']

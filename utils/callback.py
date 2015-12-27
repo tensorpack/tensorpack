@@ -89,6 +89,9 @@ class SummaryWriter(Callback):
 
 class Callbacks(Callback):
     def __init__(self, callbacks):
+        for cb in callbacks:
+            assert isinstance(cb, Callback), cb.__class__
+
         # put SummaryWriter to the first
         for idx, cb in enumerate(callbacks):
             if type(cb) == SummaryWriter:
