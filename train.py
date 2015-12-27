@@ -7,6 +7,7 @@ import tensorflow as tf
 from utils import *
 from dataflow import DataFlow
 from itertools import count
+import argparse
 
 def prepare():
     keep_prob = tf.placeholder(
@@ -92,3 +93,17 @@ def start_train(config):
                     callbacks.trigger_step(feed, outputs, cost)
 
                 callbacks.trigger_epoch()
+
+def main(get_config_func):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--gpu', help='GPU(s) to use.') # nargs='*' in multi mode
+    args = parser.parse_args()
+    device = '/cpu:0'
+    if args.gpu:
+        device = '/gpu:{}'.format(args.gpu)
+
+    with tf.Graph().as_default():
+        with tf.device(device):
+            prepare()
+            config = get_config_func()
+            start_train(config)
