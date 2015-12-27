@@ -9,20 +9,23 @@ import gzip
 import numpy
 from six.moves import urllib
 
+from utils import logger
+
 __all__ = ['Mnist']
 
 SOURCE_URL = 'http://yann.lecun.com/exdb/mnist/'
 
 def maybe_download(filename, work_directory):
-  """Download the data from Yann's website, unless it's already here."""
-  if not os.path.exists(work_directory):
-    os.mkdir(work_directory)
-  filepath = os.path.join(work_directory, filename)
-  if not os.path.exists(filepath):
-    filepath, _ = urllib.request.urlretrieve(SOURCE_URL + filename, filepath)
-    statinfo = os.stat(filepath)
-    print('Successfully downloaded', filename, statinfo.st_size, 'bytes.')
-  return filepath
+    """Download the data from Yann's website, unless it's already here."""
+    if not os.path.exists(work_directory):
+        os.mkdir(work_directory)
+    filepath = os.path.join(work_directory, filename)
+    if not os.path.exists(filepath):
+        logger.info("Downloading mnist data...")
+        filepath, _ = urllib.request.urlretrieve(SOURCE_URL + filename, filepath)
+        statinfo = os.stat(filepath)
+        logger.info('Successfully downloaded to ' + filename)
+    return filepath
 
 def _read32(bytestream):
   dt = numpy.dtype(numpy.uint32).newbyteorder('>')
@@ -30,7 +33,6 @@ def _read32(bytestream):
 
 def extract_images(filename):
   """Extract the images into a 4D uint8 numpy array [index, y, x, depth]."""
-  print('Extracting', filename)
   with gzip.open(filename) as bytestream:
     magic = _read32(bytestream)
     if magic != 2051:
@@ -47,7 +49,6 @@ def extract_images(filename):
 
 def extract_labels(filename):
   """Extract the labels into a 1D uint8 numpy array [index]."""
-  print('Extracting', filename)
   with gzip.open(filename) as bytestream:
     magic = _read32(bytestream)
     if magic != 2049:

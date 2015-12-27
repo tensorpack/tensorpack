@@ -5,6 +5,7 @@
 
 import tensorflow as tf
 import re
+from utils import logger
 
 __all__ = ['regularize_cost']
 
@@ -16,7 +17,7 @@ def regularize_cost(regex, func):
     for p in params:
         name = p.name
         if re.search(regex, name):
-            print("Weight decay for {}".format(name))
+            logger.info("Weight decay for {}".format(name))
             costs.append(func(p))
     return tf.add_n(costs)
 

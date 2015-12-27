@@ -3,15 +3,16 @@
 # File: example_mnist.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
-
-# prefer protobuf in user-namespace
+# use user-space protobuf
 import sys
 import os
 sys.path.insert(0, os.path.expanduser('~/.local/lib/python2.7/site-packages'))
 
 import tensorflow as tf
 import numpy as np
+import os
 
+from utils import logger
 from layers import *
 from utils import *
 from dataflow.dataset import Mnist
@@ -77,6 +78,7 @@ def get_config():
     IMAGE_SIZE = 28
     LOG_DIR = 'train_log'
     BATCH_SIZE = 128
+    logger.set_file(os.path.join(LOG_DIR, 'training.log'))
 
     dataset_train = BatchData(Mnist('train'), BATCH_SIZE)
     dataset_test = BatchData(Mnist('test'), 256, remainder=True)

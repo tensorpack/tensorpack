@@ -8,6 +8,7 @@ from .stat import *
 from .callback import PeriodicCallback, Callback
 from .naming import *
 from .summary import *
+import logger
 
 class ValidationError(PeriodicCallback):
     """
@@ -63,5 +64,6 @@ class ValidationError(PeriodicCallback):
             create_summary('{}_cost'.format(self.prefix),
                            cost_avg),
             self.epoch_num)
-        print "{} validation after epoch {}: err={}, cost={}".format(
-            self.prefix, self.epoch_num, err_stat.accuracy, cost_avg)
+        logger.info(
+            "{} validation after epoch {}: err={}, cost={}".format(
+            self.prefix, self.epoch_num, err_stat.accuracy, cost_avg))
