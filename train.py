@@ -58,6 +58,6 @@ def start_train(config):
                     [train_op, cost_var] + output_vars, feed_dict=feed)
                 cost = results[1]
                 outputs = results[2:]
-                callbacks.trigger_step(dp, outputs, cost)
+                callbacks.trigger_step(feed, outputs, cost)
 
             callbacks.trigger_epoch()

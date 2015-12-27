@@ -24,8 +24,8 @@ def get_model(inputs):
     """
     Args:
         inputs: a list of input variable,
-        e.g.: [input_var, label_var] with:
-            input_var: bx28x28
+        e.g.: [image_var, label_var] with:
+            image_var: bx28x28
             label_var: bx1 integer
     Returns:
         (outputs, cost)
@@ -35,19 +35,18 @@ def get_model(inputs):
     # use this variable in dropout! Tensorpack will automatically set it to 1 at test time
     keep_prob = tf.placeholder(tf.float32, shape=tuple(), name=DROPOUT_PROB_OP_NAME)
 
-    input, label = inputs
+    image, label = inputs
 
-    input = tf.reshape(input, [-1, IMAGE_SIZE, IMAGE_SIZE, 1])
-    conv0 = Conv2D('conv0', input, out_channel=32, kernel_shape=5,
+    image = tf.reshape(image, [-1, IMAGE_SIZE, IMAGE_SIZE, 1])
+    conv0 = Conv2D('conv0', image, out_channel=32, kernel_shape=5,
                   padding='valid')
     conv0 = tf.nn.relu(conv0)
-    pool0 = tf.nn.max_pool(conv0, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1],
-                           padding='SAME')
-    conv1 = Conv2D('conv1', pool0, out_channel=40, kernel_shape=3,
-                  padding='valid')
+    pool0 = tf.nn.max_pool(conv0, ksize=[1, 2, 2, 1],
+                           strides=[1, 2, 2, 1], padding='SAME')
+    conv1 = Conv2D('conv1', pool0, out_channel=40, kernel_shape=3, padding='valid')
     conv1 = tf.nn.relu(conv1)
-    pool1 = tf.nn.max_pool(conv1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1],
-                           padding='SAME')
+    pool1 = tf.nn.max_pool(conv1, ksize=[1, 2, 2, 1],
+                           strides=[1, 2, 2, 1], padding='SAME')
 
     feature = batch_flatten(pool1)
 
@@ -60,19 +59,23 @@ def get_model(inputs):
 
     y = one_hot(label, 10)
     cost = tf.nn.softmax_cross_entropy_with_logits(fc1, y)
-    cost = tf.reduce_mean(cost, name='cost')
+    cost = tf.reduce_mean(cost)
 
-    # number of correctly classified samples
+    # compute the number of correctly classified samples, for ValidationAccuracy to use
     correct = tf.equal(
         tf.cast(tf.argmax(prob, 1), tf.int32), label)
     correct = tf.reduce_sum(tf.cast(correct, tf.int32), name='correct')
 
-    return [prob, correct], cost
+    # weight decay on all W of fc layers
+    wd_cost = 1e-4 * regularize_cost('fc.*/W', tf.nn.l2_loss)
+
+    return [prob, correct], tf.add(cost, wd_cost, name='cost')
 
 def main():
+    BATCH_SIZE = 128
     with tf.Graph().as_default():
-        dataset_train = BatchData(Mnist('train'), 128)
-        dataset_test = BatchData(Mnist('test'), 128, remainder=True)
+        dataset_train = BatchData(Mnist('train'), BATCH_SIZE)
+        dataset_test = BatchData(Mnist('test'), 256, remainder=True)
 
         sess_config = tf.ConfigProto()
         sess_config.device_count['GPU'] = 1
@@ -87,11 +90,11 @@ def main():
             dataset_train=dataset_train,
             optimizer=tf.train.AdamOptimizer(1e-4),
             callbacks=[
-                TrainingAccuracy(),
-                AccuracyValidation(dataset_test,
+                TrainingAccuracy(batch_size=BATCH_SIZE),
+                ValidationAccuracy(dataset_test,
                     prefix='test', period=1),
                 PeriodicSaver(LOG_DIR, period=1),
-                SummaryWriter(LOG_DIR),
+                SummaryWriter(LOG_DIR, histogram_regex='.*/W'),
             ],
             session_config=sess_config,
             inputs=input_vars,
