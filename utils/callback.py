@@ -30,13 +30,11 @@ class Callback(object):
             outputs: list of output values after running this dp
             cost: the cost value after running this dp
         """
-        pass
 
     def trigger_epoch(self):
         """
         Callback to be triggered after every epoch (full iteration of input dataset)
         """
-        pass
 
 class PeriodicCallback(Callback):
     def __init__(self, period):
@@ -73,12 +71,12 @@ class SummaryWriter(Callback):
     def _before_train(self):
         self.writer = tf.train.SummaryWriter(
             self.log_dir, graph_def=self.sess.graph_def)
-        self.graph.add_to_collection(SUMMARY_WRITER_COLLECTION_KEY, self.writer)
+        tf.add_to_collection(SUMMARY_WRITER_COLLECTION_KEY, self.writer)
 
         # create some summary
         if self.hist_regex is not None:
             import re
-            params = self.graph.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
+            params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
             for p in params:
                 name = p.name
                 if re.search(self.hist_regex, name):

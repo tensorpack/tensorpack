@@ -12,11 +12,11 @@ def regularize_cost(regex, func):
     G = tf.get_default_graph()
     params = G.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
 
-    cost = 0
+    costs = []
     for p in params:
         name = p.name
         if re.search(regex, name):
             print("Weight decay for {}".format(name))
-            cost += func(p)
-    return cost
+            costs.append(func(p))
+    return tf.add_n(costs)
 

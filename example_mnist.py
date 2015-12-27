@@ -59,17 +59,24 @@ def get_model(inputs):
 
     y = one_hot(label, 10)
     cost = tf.nn.softmax_cross_entropy_with_logits(fc1, y)
-    cost = tf.reduce_mean(cost)
+    cost = tf.reduce_mean(cost, name='cross_entropy_cost')
+    tf.add_to_collection(COST_VARS_KEY, cost)
 
     # compute the number of correctly classified samples, for ValidationAccuracy to use
     correct = tf.equal(
         tf.cast(tf.argmax(prob, 1), tf.int32), label)
-    correct = tf.reduce_sum(tf.cast(correct, tf.int32), name='correct')
+    correct = tf.cast(correct, tf.float32)
+    nr_correct = tf.reduce_sum(correct, name='correct')
+    tf.add_to_collection(SUMMARY_VARS_KEY,
+                         tf.reduce_mean(correct, name='training_accuracy'))
 
     # weight decay on all W of fc layers
-    wd_cost = 1e-4 * regularize_cost('fc.*/W', tf.nn.l2_loss)
+    wd_cost = tf.mul(1e-4,
+                     regularize_cost('fc.*/W', tf.nn.l2_loss),
+                     name='regularize_loss')
+    tf.add_to_collection(COST_VARS_KEY, wd_cost)
 
-    return [prob, correct], tf.add(cost, wd_cost, name='cost')
+    return [prob, nr_correct], tf.add_n(tf.get_collection(COST_VARS_KEY), name='cost')
 
 def main():
     BATCH_SIZE = 128
