@@ -22,6 +22,9 @@ def add_activation_summary(x, name=None):
     Summary for an activation tensor x.
     If name is None, use x.name
     """
+    ndim = x.get_shape().ndims
+    assert ndim >= 2, \
+        "Summary a scalar with histogram? Maybe use scalar instead. FIXME!"
     if name is None:
         name = x.name
     tf.histogram_summary(name + '/activations', x)

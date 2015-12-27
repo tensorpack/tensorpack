@@ -5,6 +5,7 @@
 
 import tensorflow as tf
 from utils.summary import *
+from utils import logger
 
 def layer_register(summary_activation=False):
     """
@@ -17,15 +18,28 @@ def layer_register(summary_activation=False):
             args = args[1:]
             do_summary = kwargs.pop(
                 'summary_activation', summary_activation)
+            inputs = args[0]
+            if isinstance(inputs, list):
+                shape_str = ",".join(
+                    map(str(x.get_shape().as_list()), inputs))
+            else:
+                shape_str = str(inputs.get_shape().as_list())
+            logger.info("{} input: {}".format(name, shape_str))
 
             with tf.variable_scope(name) as scope:
-                ret = func(*args, **kwargs)
-                if do_summary:
-                    ndim = ret.get_shape().ndims
-                    assert ndim >= 2, \
-                        "Summary a scalar with histogram? Maybe use scalar instead. FIXME!"
-                    add_activation_summary(ret, scope.name)
-                return ret
+                outputs = func(*args, **kwargs)
+                if isinstance(outputs, list):
+                    shape_str = ",".join(
+                        map(str(x.get_shape().as_list()), outputs))
+                    if do_summary:
+                        for x in outputs:
+                            add_activation_summary(x, scope.name)
+                else:
+                    shape_str = str(outputs.get_shape().as_list())
+                    if do_summary:
+                        add_activation_summary(outputs, scope.name)
+                logger.info("{} output: {}".format(name, shape_str))
+                return outputs
         return inner
     return wrapper
 
@@ -35,7 +49,7 @@ def shape2d(a):
     """
     if type(a) == int:
         return [a, a]
-    if type(a) in [list, tuple]:
+    if isinstance(a, (list, tuple)):
         assert len(a) == 2
         return list(a)
     raise RuntimeError("Illegal shape: {}".format(a))

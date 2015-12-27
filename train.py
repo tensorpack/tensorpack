@@ -42,13 +42,13 @@ def start_train(config):
 
     max_epoch = int(config['max_epoch'])
 
-
     # build graph
     G = tf.get_default_graph()
     for v in input_vars:
         G.add_to_collection(INPUT_VARS_KEY, v)
     for v in output_vars:
         G.add_to_collection(OUTPUT_VARS_KEY, v)
+    summary_model()
 
     global_step_var = G.get_tensor_by_name(GLOBAL_STEP_VAR_NAME)
 

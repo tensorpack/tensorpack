@@ -35,15 +35,15 @@ def get_model(inputs):
     keep_prob = tf.get_default_graph().get_tensor_by_name(DROPOUT_PROB_VAR_NAME)
 
     image, label = inputs
+    image = tf.expand_dims(image, 3)    # add a single channel
 
-    image = tf.expand_dims(image, 3)
-    conv0 = Conv2D('conv0', image, out_channel=32, kernel_shape=5,
-                  padding='valid')
+    conv0 = Conv2D('conv0', image, out_channel=32, kernel_shape=5)
     pool0 = MaxPooling('pool0', conv0, 2)
     conv1 = Conv2D('conv1', pool0, out_channel=40, kernel_shape=3)
     pool1 = MaxPooling('pool1', conv1, 2)
+    conv2 = Conv2D('conv2', pool1, out_channel=32, kernel_shape=3)
 
-    fc0 = FullyConnected('fc0', pool1, 1024)
+    fc0 = FullyConnected('fc0', conv2, 1024)
     fc0 = tf.nn.dropout(fc0, keep_prob)
 
     # fc will have activation summary by default. disable this for the output layer
