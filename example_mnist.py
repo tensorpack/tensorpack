@@ -74,7 +74,7 @@ def get_model(inputs):
 
 def get_config():
     IMAGE_SIZE = 28
-    LOG_DIR = 'train_log'
+    LOG_DIR = os.path.join('train_log', os.path.basename(__file__)[:-3])
     BATCH_SIZE = 128
     logger.set_file(os.path.join(LOG_DIR, 'training.log'))
 
@@ -83,6 +83,7 @@ def get_config():
 
     sess_config = tf.ConfigProto()
     sess_config.device_count['GPU'] = 1
+    sess_config.gpu_options.allocator_type = 'BFC'
     sess_config.allow_soft_placement = True
 
     # prepare model

@@ -93,17 +93,16 @@ def start_train(config):
                     callbacks.trigger_step(feed, outputs, cost)
 
                 callbacks.trigger_epoch()
+    sess.close()
 
 def main(get_config_func):
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gpu', help='GPU(s) to use.') # nargs='*' in multi mode
+    parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.') # nargs='*' in multi mode
     args = parser.parse_args()
-    device = '/cpu:0'
     if args.gpu:
-        device = '/gpu:{}'.format(args.gpu)
+        os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
     with tf.Graph().as_default():
-        with tf.device(device):
-            prepare()
-            config = get_config_func()
-            start_train(config)
+        prepare()
+        config = get_config_func()
+        start_train(config)
