@@ -6,8 +6,10 @@
 DROPOUT_PROB_OP_NAME = 'dropout_prob'
 DROPOUT_PROB_VAR_NAME = 'dropout_prob:0'
 
+GLOBAL_STEP_OP_NAME = 'global_step'
+GLOBAL_STEP_VAR_NAME = 'global_step:0'
+
 SUMMARY_WRITER_COLLECTION_KEY = 'summary_writer'
-MERGE_SUMMARY_OP_NAME = 'MergeSummary/MergeSummary:0'
 
 INPUT_VARS_KEY = 'INPUT_VARIABLES'
 OUTPUT_VARS_KEY = 'OUTPUT_VARIABLES'

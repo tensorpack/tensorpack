@@ -128,6 +128,10 @@ class Mnist(object):
         self.dataset = read_data_sets(dir)
         self.train_or_test = train_or_test
 
+    def size(self):
+        ds = self.dataset.train if self.train_or_test == 'train' else self.dataset.test
+        return ds.num_examples
+
     def get_data(self):
         ds = self.dataset.train if self.train_or_test == 'train' else self.dataset.test
         for k in xrange(ds.num_examples):

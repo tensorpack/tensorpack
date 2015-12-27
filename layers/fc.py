@@ -6,15 +6,14 @@
 
 from ._common import layer_register
 import tensorflow as tf
+from utils.symbolic_functions import *
 import math
 
 __all__ = ['FullyConnected']
 
-@layer_register()
-def FullyConnected(x, out_dim, W_init=None, b_init=None):
-    """
-    x: matrix of bxn
-    """
+@layer_register(summary_activation=True)
+def FullyConnected(x, out_dim, W_init=None, b_init=None, nl=tf.nn.relu):
+    x = batch_flatten(x)
     in_dim = x.get_shape().as_list()[1]
 
     if W_init is None:
@@ -22,6 +21,6 @@ def FullyConnected(x, out_dim, W_init=None, b_init=None):
     if b_init is None:
         b_init = tf.constant_initializer()
 
-    W = tf.get_variable('W', [in_dim, out_dim], initializer=W_init) # TODO collections
+    W = tf.get_variable('W', [in_dim, out_dim], initializer=W_init)
     b = tf.get_variable('b', [out_dim], initializer=b_init)
-    return tf.matmul(x, W) + b
+    return nl(tf.matmul(x, W) + b)

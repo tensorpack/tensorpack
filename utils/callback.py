@@ -63,7 +63,7 @@ class PeriodicSaver(PeriodicCallback):
                         global_step=self.epoch_num, latest_filename='latest')
 
 class SummaryWriter(Callback):
-    def __init__(self, log_dir, histogram_regex=None):
+    def __init__(self, log_dir):
         self.log_dir = log_dir
         self.epoch_num = 0
 
@@ -100,6 +100,7 @@ class Callbacks(Callback):
     def before_train(self):
         for cb in self.callbacks:
             cb.before_train()
+        self.writer = tf.get_collection(SUMMARY_WRITER_COLLECTION_KEY)[0]
 
     def trigger_step(self, inputs, outputs, cost):
         for cb in self.callbacks:
@@ -108,4 +109,5 @@ class Callbacks(Callback):
     def trigger_epoch(self):
         for cb in self.callbacks:
             cb.trigger_epoch()
+        self.writer.flush()
 

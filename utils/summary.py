@@ -5,7 +5,7 @@
 
 import tensorflow as tf
 
-__all__ = ['create_summary', 'add_histogram_summary']
+__all__ = ['create_summary', 'add_histogram_summary', 'add_activation_summary']
 
 def create_summary(name, v):
     """
@@ -18,6 +18,17 @@ def create_summary(name, v):
     s = tf.Summary()
     s.value.add(tag=name, simple_value=v)
     return s
+
+def add_activation_summary(x, name=None):
+    """
+    Summary for an activation tensor x.
+    If name is None, use x.name
+    """
+    if name is None:
+        name = x.name
+    tf.histogram_summary(name + '/activations', x)
+    tf.scalar_summary(name + '/sparsity', tf.nn.zero_fraction(x))
+    # TODO avoid repeating activations on multiple GPUs
 
 def add_histogram_summary(regex):
     """

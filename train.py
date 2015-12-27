@@ -40,7 +40,11 @@ def start_train(config):
     for v in output_vars:
         G.add_to_collection(OUTPUT_VARS_KEY, v)
 
-    global_step_var = tf.Variable(0, trainable=False, name='global_step')
+    try:
+        global_step_var = G.get_tensor_by_name(GLOBAL_STEP_VAR_NAME)
+    except KeyError:    # not created
+        global_step_var = tf.Variable(
+            0, trainable=False, name=GLOBAL_STEP_OP_NAME)
 
     # add some summary ops to the graph
     averager = tf.train.ExponentialMovingAverage(

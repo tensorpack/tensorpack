@@ -18,6 +18,14 @@ class BatchData(object):
         self.batch_size = batch_size
         self.remainder = remainder
 
+    def size(self):
+        ds_size = self.ds.size()
+        div = ds_size / self.batch_size
+        rem = ds_size % self.batch_size
+        if rem == 0:
+            return div
+        return div + int(self.remainder)
+
     def get_data(self):
         holder = []
         for data in self.ds.get_data():

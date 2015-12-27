@@ -5,14 +5,14 @@
 
 import tensorflow as tf
 import math
-from ._common import layer_register
+from ._common import *
 
 __all__ = ['Conv2D']
 
-@layer_register()
+@layer_register(summary_activation=True)
 def Conv2D(x, out_channel, kernel_shape,
-           padding='VALID', stride=None,
-           W_init=None, b_init=None):
+           padding='VALID', stride=1,
+           W_init=None, b_init=None, nl=tf.nn.relu):
     """
     kernel_shape: (h, w) or a int
     stride: (h, w) or a int
@@ -21,19 +21,10 @@ def Conv2D(x, out_channel, kernel_shape,
     in_shape = x.get_shape().as_list()
     in_channel = in_shape[-1]
 
-    if type(kernel_shape) == int:
-        kernel_shape = [kernel_shape, kernel_shape]
+    kernel_shape = shape2d(kernel_shape)
     padding = padding.upper()
-
     filter_shape = kernel_shape + [in_channel, out_channel]
-
-    if stride is None:
-        stride = [1, 1, 1, 1]
-    elif type(stride) == int:
-        stride = [1, stride, stride, 1]
-    elif type(stride) in [list, tuple]:
-        assert len(stride) == 2
-        stride = [1] + list(stride) + [1]
+    stride = shape4d(stride)
 
     if W_init is None:
         W_init = tf.truncated_normal_initializer(stddev=0.04)
@@ -44,5 +35,5 @@ def Conv2D(x, out_channel, kernel_shape,
     b = tf.get_variable('b', [out_channel], initializer=b_init)
 
     conv = tf.nn.conv2d(x, W, stride, padding)
-    return tf.nn.bias_add(conv, b)
+    return nl(tf.nn.bias_add(conv, b))
 

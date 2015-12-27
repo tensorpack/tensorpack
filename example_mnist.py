@@ -40,21 +40,16 @@ def get_model(inputs):
     image = tf.reshape(image, [-1, IMAGE_SIZE, IMAGE_SIZE, 1])
     conv0 = Conv2D('conv0', image, out_channel=32, kernel_shape=5,
                   padding='valid')
-    conv0 = tf.nn.relu(conv0)
-    pool0 = tf.nn.max_pool(conv0, ksize=[1, 2, 2, 1],
-                           strides=[1, 2, 2, 1], padding='SAME')
-    conv1 = Conv2D('conv1', pool0, out_channel=40, kernel_shape=3, padding='valid')
-    conv1 = tf.nn.relu(conv1)
-    pool1 = tf.nn.max_pool(conv1, ksize=[1, 2, 2, 1],
-                           strides=[1, 2, 2, 1], padding='SAME')
+    pool0 = MaxPooling('pool0', conv0, 2)
+    conv1 = Conv2D('conv1', pool0, out_channel=40, kernel_shape=3)
+    pool1 = MaxPooling('pool1', conv1, 2)
 
-    feature = batch_flatten(pool1)
-
-    fc0 = FullyConnected('fc0', feature, 1024)
-    fc0 = tf.nn.relu(fc0)
+    fc0 = FullyConnected('fc0', pool1, 1024)
     fc0 = tf.nn.dropout(fc0, keep_prob)
 
-    fc1 = FullyConnected('lr', fc0, out_dim=10)
+    # fc will have activation summary by default. disable this for the output layer
+    fc1 = FullyConnected('fc1', fc0, out_dim=10,
+                         summary_activation=False, nl=tf.identity)
     prob = tf.nn.softmax(fc1, name='output')
 
     y = one_hot(label, 10)
@@ -62,16 +57,16 @@ def get_model(inputs):
     cost = tf.reduce_mean(cost, name='cross_entropy_loss')
     tf.add_to_collection(COST_VARS_KEY, cost)
 
-    # compute the number of correctly classified samples, for ValidationAccuracy to use at test time
-    correct = tf.equal(
+    # compute the number of failed samples, for ValidationErro to use at test time
+    wrong = tf.not_equal(
         tf.cast(tf.argmax(prob, 1), tf.int32), label)
-    correct = tf.cast(correct, tf.float32)
-    nr_correct = tf.reduce_sum(correct, name='correct')
+    wrong = tf.cast(wrong, tf.float32)
+    nr_wrong = tf.reduce_sum(wrong, name='wrong')
 
     # monitor training accuracy
     tf.add_to_collection(
         SUMMARY_VARS_KEY,
-        1 - tf.reduce_mean(correct, name='train_error'))
+        tf.sub(1.0, tf.reduce_mean(wrong), name='train_error'))
 
     # weight decay on all W of fc layers
     wd_cost = tf.mul(1e-4,
@@ -79,7 +74,7 @@ def get_model(inputs):
                      name='regularize_loss')
     tf.add_to_collection(COST_VARS_KEY, wd_cost)
 
-    return [prob, nr_correct], tf.add_n(tf.get_collection(COST_VARS_KEY), name='cost')
+    return [prob, nr_wrong], tf.add_n(tf.get_collection(COST_VARS_KEY), name='cost')
 
 def main(argv=None):
     BATCH_SIZE = 128
@@ -97,11 +92,20 @@ def main(argv=None):
         output_vars, cost_var = get_model(input_vars)
         add_histogram_summary('.*/W') # monitor histogram of all W
 
+        global_step_var = tf.Variable(
+            0, trainable=False, name=GLOBAL_STEP_OP_NAME)
+        lr = tf.train.exponential_decay(
+            learning_rate=1e-4,
+            global_step=global_step_var,
+            decay_steps=dataset_train.size() * 50,
+            decay_rate=0.1, staircase=True, name='learning_rate')
+        tf.scalar_summary('learning_rate', lr)
+
         config = dict(
             dataset_train=dataset_train,
-            optimizer=tf.train.AdamOptimizer(1e-4),
+            optimizer=tf.train.AdamOptimizer(lr),
             callbacks=[
-                ValidationAccuracy(
+                ValidationError(
                     dataset_test,
                     prefix='test'),
                 PeriodicSaver(LOG_DIR, period=1),
