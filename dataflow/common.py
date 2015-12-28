@@ -11,9 +11,10 @@ __all__ = ['BatchData', 'FixedSizeData']
 class BatchData(DataFlow):
     def __init__(self, ds, batch_size, remainder=False):
         """
-        Args:
-            ds: a dataflow
-            remainder: whether to return the remaining data smaller than a batch_size
+        Group data in ds into batches
+        ds: a DataFlow instance
+        remainder: whether to return the remaining data smaller than a batch_size.
+            if set, might return a data point of a different shape
         """
         self.ds = ds
         self.batch_size = batch_size

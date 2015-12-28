@@ -12,7 +12,12 @@ _layer_logged = set()
 
 def layer_register(summary_activation=False):
     """
-    summary_activation: default behavior of whether to summary the output of this layer
+    Register a layer.
+    Args:
+        summary_activation:
+            Define the default behavior of whether to
+            summary the output(activation) of this layer.
+            Can be overriden when creating the layer.
     """
     def wrapper(func):
         def inner(*args, **kwargs):
@@ -26,24 +31,17 @@ def layer_register(summary_activation=False):
                 outputs = func(*args, **kwargs)
                 if name not in _layer_logged:
                     # log shape info and add activation
-                    if isinstance(inputs, list):
-                        shape_str = ",".join(
-                            map(str(x.get_shape().as_list()), inputs))
-                    else:
-                        shape_str = str(inputs.get_shape().as_list())
-                    logger.info("{} input: {}".format(name, shape_str))
+                    logger.info("{} input: {}".format(
+                        name, get_shape_str(inputs)))
+                    logger.info("{} output: {}".format(
+                        name, get_shape_str(outputs)))
 
-                    if isinstance(outputs, list):
-                        shape_str = ",".join(
-                            map(str(x.get_shape().as_list()), outputs))
-                        if do_summary:
+                    if do_summary:
+                        if isinstance(outputs, list):
                             for x in outputs:
                                 add_activation_summary(x, scope.name)
-                    else:
-                        shape_str = str(outputs.get_shape().as_list())
-                        if do_summary:
+                        else:
                             add_activation_summary(outputs, scope.name)
-                    logger.info("{} output: {}".format(name, shape_str))
                     _layer_logged.add(name)
                 return outputs
         return inner
@@ -63,4 +61,3 @@ def shape2d(a):
 def shape4d(a):
     # for use with tensorflow
     return [1] + shape2d(a) + [1]
-

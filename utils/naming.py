@@ -3,9 +3,6 @@
 # File: naming.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
-IS_TRAINING_OP_NAME = 'is_training'
-IS_TRAINING_VAR_NAME = 'is_training:0'
-
 GLOBAL_STEP_OP_NAME = 'global_step'
 GLOBAL_STEP_VAR_NAME = 'global_step:0'
 

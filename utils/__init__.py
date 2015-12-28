@@ -27,20 +27,6 @@ def timed_operation(msg, log_start=False):
     logger.info('finished {}, time={:.2f}sec.'.format(
         msg, time.time() - start))
 
-def describe_model():
-    train_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
-    msg = [""]
-    total = 0
-    for v in train_vars:
-        shape = v.get_shape()
-        ele = shape.num_elements()
-        total += ele
-        msg.append("{}: shape={}, dim={}".format(
-            v.name, shape.as_list(), ele))
-    msg.append("Total dim={}".format(total))
-    logger.info("Model Params: {}".format('\n'.join(msg)))
-
-# TODO disable shape output in get_model
 @contextmanager
 def create_test_graph():
     G = tf.get_default_graph()

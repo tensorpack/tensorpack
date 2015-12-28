@@ -5,9 +5,8 @@
 
 import tensorflow as tf
 from utils import *
-from utils.concurrency import *
-from utils.callback import *
-from utils.summary import *
+from utils.concurrency import EnqueueThread,coordinator_guard
+from utils.summary import summary_moving_average, describe_model
 from dataflow import DataFlow
 from itertools import count
 import argparse
@@ -97,7 +96,6 @@ def start_train(config):
 
                 # note that summary_op will take a data from the queue.
                 callbacks.trigger_epoch()
-    sess.close()
 
 def main(get_config_func):
     parser = argparse.ArgumentParser()

@@ -90,8 +90,8 @@ def get_config():
 
     dataset_train = BatchData(Mnist('train'), BATCH_SIZE)
     dataset_test = BatchData(Mnist('test'), 256, remainder=True)
-    dataset_train = FixedSizeData(dataset_train, 20)
-    dataset_test = FixedSizeData(dataset_test, 20)
+    #dataset_train = FixedSizeData(dataset_train, 20)
+    #dataset_test = FixedSizeData(dataset_test, 20)
 
     sess_config = tf.ConfigProto()
     sess_config.device_count['GPU'] = 1

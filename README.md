@@ -3,7 +3,8 @@ Neural Network Toolbox based on TensorFlow
 
 
 ## Features:
-+ Scoped Abstraction of common models.
++ Scoped abstraction of common models.
 + Provide callbacks to control training behavior (as in [Keras](http://keras.io)).
-+ Use `Dataflow` to fine-grained control data preprocessing.
-+ Write a config file, tensorpack will do the rest.
++ Use `Dataflow` to own fine-grained control on data preprocessing.
++ Automatically use the Queue operator in tensorflow to speed up input.
++ Training and testing graph are modeled together, automatically.
