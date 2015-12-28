@@ -18,11 +18,14 @@ from models import *
 from utils import *
 from utils.symbolic_functions import *
 from utils.summary import *
+from utils.callback import *
+from utils.validation_callback import *
 from utils.concurrency import *
 from dataflow.dataset import Mnist
 from dataflow import *
 
 def get_model(inputs):
+# TODO is_training as a python variable
     """
     Args:
         inputs: a list of input variable,
@@ -41,12 +44,12 @@ def get_model(inputs):
     image, label = inputs
     image = tf.expand_dims(image, 3)    # add a single channel
 
-    #conv0 = Conv2D('conv0', image, out_channel=32, kernel_shape=5)
-    #pool0 = MaxPooling('pool0', conv0, 2)
-    #conv1 = Conv2D('conv1', pool0, out_channel=40, kernel_shape=3)
-    #pool1 = MaxPooling('pool1', conv1, 2)
+    conv0 = Conv2D('conv0', image, out_channel=32, kernel_shape=5)
+    pool0 = MaxPooling('pool0', conv0, 2)
+    conv1 = Conv2D('conv1', pool0, out_channel=40, kernel_shape=3)
+    pool1 = MaxPooling('pool1', conv1, 2)
 
-    fc0 = FullyConnected('fc0', image, 1024)
+    fc0 = FullyConnected('fc0', pool1, 1024)
     fc0 = tf.nn.dropout(fc0, keep_prob)
 
     # fc will have activation summary by default. disable this for the output layer
@@ -74,15 +77,18 @@ def get_model(inputs):
                      name='regularize_loss')
     tf.add_to_collection(COST_VARS_KEY, wd_cost)
 
-    return [prob, nr_wrong], tf.add_n(tf.get_collection(COST_VARS_KEY), name='cost')
+    # this won't work with multigpu
+    #return [prob, nr_wrong], tf.add_n(tf.get_collection(COST_VARS_KEY), name='cost')
+    return [prob, nr_wrong], tf.add_n([wd_cost, cost], name='cost')
 
 def get_config():
     IMAGE_SIZE = 28
-    LOG_DIR = os.path.join('train_log', os.path.basename(__file__)[:-3])
+    log_dir = os.path.join('train_log', os.path.basename(__file__)[:-3])
+    logger.set_logger_dir(log_dir)
     BATCH_SIZE = 128
-    logger.set_file(os.path.join(LOG_DIR, 'training.log'))
 
     dataset_train = BatchData(Mnist('train'), BATCH_SIZE)
+    #dataset_train = FixedSizeData(dataset_train, 20)
     dataset_test = BatchData(Mnist('test'), 256, remainder=True)
 
     sess_config = tf.ConfigProto()
@@ -111,11 +117,11 @@ def get_config():
     return dict(
         dataset_train=dataset_train,
         optimizer=tf.train.AdamOptimizer(lr),
-        callbacks=[
-            SummaryWriter(LOG_DIR),
-            #ValidationError(dataset_test, prefix='test'),
-            PeriodicSaver(LOG_DIR),
-        ],
+        callback=Callbacks([
+            SummaryWriter(),
+            PeriodicSaver(),
+            ValidationError(dataset_test, prefix='test'),
+        ]),
         session_config=sess_config,
         inputs=input_vars,
         input_queue=input_queue,

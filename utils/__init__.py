@@ -16,11 +16,7 @@ def global_import(name):
     lst = p.__all__ if '__all__' in dir(p) else dir(p)
     for k in lst:
         globals()[k] = p.__dict__[k]
-
 global_import('naming')
-global_import('callback')
-global_import('validation_callback')
-
 
 @contextmanager
 def timed_operation(msg, log_start=False):
@@ -44,3 +40,32 @@ def describe_model():
     msg.append("Total dim={}".format(total))
     logger.info("Model Params: {}".format('\n'.join(msg)))
 
+# TODO disable shape output in get_model
+@contextmanager
+def create_test_graph():
+    G = tf.get_default_graph()
+    input_vars_train = G.get_collection(INPUT_VARS_KEY)
+    forward_func = G.get_collection(FORWARD_FUNC_KEY)[0]
+    with tf.Graph().as_default() as Gtest:
+        input_vars = []
+        for v in input_vars_train:
+            name = v.name
+            assert name.endswith(':0'), "I think placeholder variable should all ends with ':0'"
+            name = name[:-2]
+            input_vars.append(tf.placeholder(
+                v.dtype, shape=v.get_shape(), name=name
+            ))
+        for v in input_vars:
+            Gtest.add_to_collection(INPUT_VARS_KEY, v)
+        is_training = tf.constant(False, name=IS_TRAINING_OP_NAME)
+
+        output_vars, cost = forward_func(input_vars)
+        for v in output_vars:
+            Gtest.add_to_collection(OUTPUT_VARS_KEY, v)
+        yield Gtest
+
+@contextmanager
+def create_test_session():
+    with create_test_graph():
+        with tf.Session() as sess:
+            yield sess

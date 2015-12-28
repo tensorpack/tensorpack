@@ -7,6 +7,9 @@ import tensorflow as tf
 from utils.summary import *
 from utils import logger
 
+# make sure each layer is only logged once
+_layer_logged = set()
+
 def layer_register(summary_activation=False):
     """
     summary_activation: default behavior of whether to summary the output of this layer
@@ -19,26 +22,29 @@ def layer_register(summary_activation=False):
             do_summary = kwargs.pop(
                 'summary_activation', summary_activation)
             inputs = args[0]
-            if isinstance(inputs, list):
-                shape_str = ",".join(
-                    map(str(x.get_shape().as_list()), inputs))
-            else:
-                shape_str = str(inputs.get_shape().as_list())
-            logger.info("{} input: {}".format(name, shape_str))
-
             with tf.variable_scope(name) as scope:
                 outputs = func(*args, **kwargs)
-                if isinstance(outputs, list):
-                    shape_str = ",".join(
-                        map(str(x.get_shape().as_list()), outputs))
-                    if do_summary:
-                        for x in outputs:
-                            add_activation_summary(x, scope.name)
-                else:
-                    shape_str = str(outputs.get_shape().as_list())
-                    if do_summary:
-                        add_activation_summary(outputs, scope.name)
-                logger.info("{} output: {}".format(name, shape_str))
+                if name not in _layer_logged:
+                    # log shape info and add activation
+                    if isinstance(inputs, list):
+                        shape_str = ",".join(
+                            map(str(x.get_shape().as_list()), inputs))
+                    else:
+                        shape_str = str(inputs.get_shape().as_list())
+                    logger.info("{} input: {}".format(name, shape_str))
+
+                    if isinstance(outputs, list):
+                        shape_str = ",".join(
+                            map(str(x.get_shape().as_list()), outputs))
+                        if do_summary:
+                            for x in outputs:
+                                add_activation_summary(x, scope.name)
+                    else:
+                        shape_str = str(outputs.get_shape().as_list())
+                        if do_summary:
+                            add_activation_summary(outputs, scope.name)
+                    logger.info("{} output: {}".format(name, shape_str))
+                    _layer_logged.add(name)
                 return outputs
         return inner
     return wrapper

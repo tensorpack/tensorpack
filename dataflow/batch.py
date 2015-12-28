@@ -6,7 +6,7 @@
 import numpy as np
 from .base import DataFlow
 
-__all__ = ['BatchData']
+__all__ = ['BatchData', 'FixedSizeData']
 
 class BatchData(DataFlow):
     def __init__(self, ds, batch_size, remainder=False):
@@ -46,3 +46,21 @@ class BatchData(DataFlow):
                 np.array([x[k] for x in data_holder],
                          dtype=data_holder[0][k].dtype))
         return tuple(result)
+
+class FixedSizeData(DataFlow):
+    def __init__(self, ds, size):
+        self.ds = ds
+        self._size = size
+
+    def size(self):
+        return self._size
+
+    def get_data(self):
+        cnt = 0
+        while True:
+            for dp in self.ds.get_data():
+                cnt += 1
+                yield dp
+                if cnt == self._size:
+                    return
+

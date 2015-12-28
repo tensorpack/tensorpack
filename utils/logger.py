@@ -50,3 +50,11 @@ def set_file(path):
     hdl = logging.FileHandler(
         filename=path, encoding='utf-8', mode='w')
     logger.addHandler(hdl)
+
+global LOG_DIR
+LOG_DIR = "train_log"
+def set_logger_dir(dirname):
+    global LOG_DIR
+    LOG_DIR = dirname
+    set_file(os.path.join(LOG_DIR, 'training.log'))
+
