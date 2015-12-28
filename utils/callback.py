@@ -34,9 +34,9 @@ class Callback(object):
         """
         Callback to be triggered after every step (every backpropagation)
         Args:
-            inputs: the input dict fed into the graph
-            outputs: list of output values after running this dp
-            cost: the cost value after running this dp
+            inputs: the list of input values
+            outputs: list of output values after running this inputs
+            cost: the cost value after running this input
         """
 
     def trigger_epoch(self):
@@ -85,9 +85,7 @@ class SummaryWriter(Callback):
         # check if there is any summary
         if self.summary_op is None:
             return
-
-        feed = {IS_TRAINING_VAR_NAME: True}
-        summary_str = self.summary_op.eval(feed_dict=feed)
+        summary_str = self.summary_op.eval()
         self.epoch_num += 1
         self.writer.add_summary(summary_str, self.epoch_num)
 
@@ -102,9 +100,7 @@ class CallbackTimeLogger(object):
         self.times.append((name, time))
 
     def log(self):
-        """
-        log the time of some heavy callbacks
-        """
+        """ log the time of some heavy callbacks """
         if self.tot < 3:
             return
         msgs = []
@@ -162,18 +158,21 @@ class TestCallbacks(Callback):
 
     def trigger_epoch(self):
         tm = CallbackTimeLogger()
-        with self.graph.as_default():
-            with self.sess.as_default():
+        with self.graph.as_default(), self.sess.as_default():
+            s = time.time()
+            ckpt = tf.train.get_checkpoint_state(logger.LOG_DIR)
+            if ckpt is None:
+                logger.error(
+                    "Cannot find a checkpoint state. Do you forget to use PeriodicSaver?")
+                return
+            logger.info(
+                "Restore checkpoint from {}".format(ckpt.model_checkpoint_path))
+            self.saver.restore(self.sess, ckpt.model_checkpoint_path)
+            tm.add('restore session', time.time() - s)
+            for cb in self.cbs:
                 s = time.time()
-                ckpt = tf.train.get_checkpoint_state(logger.LOG_DIR)
-                if ckpt is None:
-                    from IPython import embed; embed()
-                self.saver.restore(self.sess, ckpt.model_checkpoint_path)
-                tm.add('restore session', time.time() - s)
-                for cb in self.cbs:
-                    s = time.time()
-                    cb.trigger_epoch()
-                    tm.add(type(cb).__name__, time.time() - s)
+                cb.trigger_epoch()
+                tm.add(type(cb).__name__, time.time() - s)
         self.writer.flush()
         tm.log()
 
@@ -198,7 +197,7 @@ class Callbacks(Callback):
         self.test.before_train()
 
     def trigger_step(self, inputs, outputs, cost):
-        self.train.trigger_step()
+        self.train.trigger_step(inputs, outputs, cost)
         # test callback don't have trigger_step
 
     def trigger_epoch(self):

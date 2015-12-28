@@ -45,9 +45,11 @@ class EnqueueThread(threading.Thread):
             logger.exception("Exception in EnqueueThread:")
 
 @contextmanager
-def coordinator_context(sess, coord, thread, queue):
+def coordinator_guard(sess, coord, thread, queue):
     """
-    Context manager to make sure queue is closed and thread is joined
+    Context manager to make sure that:
+        queue is closed
+        thread is joined
     """
     thread.start()
     try:

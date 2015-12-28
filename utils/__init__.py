@@ -57,9 +57,7 @@ def create_test_graph():
             ))
         for v in input_vars:
             Gtest.add_to_collection(INPUT_VARS_KEY, v)
-        is_training = tf.constant(False, name=IS_TRAINING_OP_NAME)
-
-        output_vars, cost = forward_func(input_vars)
+        output_vars, cost = forward_func(input_vars, is_training=False)
         for v in output_vars:
             Gtest.add_to_collection(OUTPUT_VARS_KEY, v)
         yield Gtest

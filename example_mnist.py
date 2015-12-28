@@ -24,22 +24,21 @@ from utils.concurrency import *
 from dataflow.dataset import Mnist
 from dataflow import *
 
-def get_model(inputs):
-# TODO is_training as a python variable
+def get_model(inputs, is_training):
     """
     Args:
         inputs: a list of input variable,
         e.g.: [image_var, label_var] with:
             image_var: bx28x28
             label_var: bx1 integer
+        is_training: a python bool variable
     Returns:
         (outputs, cost)
         outputs: a list of output variable
-        cost: scalar variable
+        cost: the cost to minimize. scalar variable
     """
-    is_training = tf.get_default_graph().get_tensor_by_name(IS_TRAINING_VAR_NAME)
-    keep_prob = control_flow_ops.cond(
-        is_training, lambda: tf.constant(0.5), lambda: tf.constant(1.0), name='dropout_prob')
+    is_training = bool(is_training)
+    keep_prob = tf.constant(0.5 if is_training else 1.0)
 
     image, label = inputs
     image = tf.expand_dims(image, 3)    # add a single channel
@@ -77,19 +76,22 @@ def get_model(inputs):
                      name='regularize_loss')
     tf.add_to_collection(COST_VARS_KEY, wd_cost)
 
+    add_histogram_summary('.*/W')   # monitor histogram of all W
     # this won't work with multigpu
     #return [prob, nr_wrong], tf.add_n(tf.get_collection(COST_VARS_KEY), name='cost')
     return [prob, nr_wrong], tf.add_n([wd_cost, cost], name='cost')
 
 def get_config():
-    IMAGE_SIZE = 28
     log_dir = os.path.join('train_log', os.path.basename(__file__)[:-3])
     logger.set_logger_dir(log_dir)
+
+    IMAGE_SIZE = 28
     BATCH_SIZE = 128
 
     dataset_train = BatchData(Mnist('train'), BATCH_SIZE)
-    #dataset_train = FixedSizeData(dataset_train, 20)
     dataset_test = BatchData(Mnist('test'), 256, remainder=True)
+    dataset_train = FixedSizeData(dataset_train, 20)
+    dataset_test = FixedSizeData(dataset_test, 20)
 
     sess_config = tf.ConfigProto()
     sess_config.device_count['GPU'] = 1
@@ -98,14 +100,15 @@ def get_config():
     sess_config.allow_soft_placement = True
 
     # prepare model
-    image_var = tf.placeholder(
-        tf.float32, shape=(None, IMAGE_SIZE, IMAGE_SIZE), name='input')
-    label_var = tf.placeholder(
-        tf.int32, shape=(None,), name='label')
-    input_vars = [image_var, label_var]
-    input_queue = tf.RandomShuffleQueue(100, 50, ['float32', 'int32'], name='queue')
+    input_vars = [
+        tf.placeholder(
+            tf.float32, shape=(None, IMAGE_SIZE, IMAGE_SIZE), name='input'),
+        tf.placeholder(
+            tf.int32, shape=(None,), name='label')
+    ]
+    input_queue = tf.RandomShuffleQueue(
+        100, 50, [x.dtype for x in input_vars], name='queue')
 
-    add_histogram_summary('.*/W') # monitor histogram of all W
     global_step_var = tf.get_default_graph().get_tensor_by_name(GLOBAL_STEP_VAR_NAME)
     lr = tf.train.exponential_decay(
         learning_rate=1e-4,

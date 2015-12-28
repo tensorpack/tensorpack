@@ -19,7 +19,6 @@ def create_summary(name, v):
     return s
 
 def add_activation_summary(x, name=None):
-    # TODO dedup
     """
     Summary for an activation tensor x.
     If name is None, use x.name

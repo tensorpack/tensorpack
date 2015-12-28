@@ -13,9 +13,6 @@ from itertools import count
 import argparse
 
 def prepare():
-    is_training = tf.constant(True, name=IS_TRAINING_OP_NAME)
-    #keep_prob = tf.placeholder(
-        #tf.float32, shape=tuple(), name=DROPOUT_PROB_OP_NAME)
     global_step_var = tf.Variable(
         0, trainable=False, name=GLOBAL_STEP_OP_NAME)
 
@@ -40,7 +37,7 @@ def start_train(config):
     sess_config = config.get('session_config', None)
     assert isinstance(sess_config, tf.ConfigProto), sess_config.__class__
 
-    # a list of input/output variables
+    # input/output variables
     input_vars = config['inputs']
     input_queue = config['input_queue']
     get_model_func = config['get_model_func']
@@ -49,9 +46,10 @@ def start_train(config):
 
     enqueue_op = input_queue.enqueue(tuple(input_vars))
     model_inputs = input_queue.dequeue()
+    # set dequeue shape
     for qv, v in zip(model_inputs, input_vars):
         qv.set_shape(v.get_shape())
-    output_vars, cost_var = get_model_func(model_inputs)
+    output_vars, cost_var = get_model_func(model_inputs, is_training=True)
 
     # build graph
     G = tf.get_default_graph()
@@ -84,19 +82,19 @@ def start_train(config):
     # a thread that keeps filling the queue
     th = EnqueueThread(sess, coord, enqueue_op, dataset_train)
     with sess.as_default(), \
-            coordinator_context(
+            coordinator_guard(
                 sess, coord, th, input_queue):
         callbacks.before_train()
         for epoch in xrange(1, max_epoch):
             with timed_operation('epoch {}'.format(epoch)):
                 for step in xrange(dataset_train.size()):
-                    # TODO eval dequeue to get dp
-                    fetches = [train_op, cost_var] + output_vars
-                    feed = {IS_TRAINING_VAR_NAME: True}
-                    results = sess.run(fetches, feed_dict=feed)
+                    fetches = [train_op, cost_var] + output_vars + model_inputs
+                    results = sess.run(fetches)
                     cost = results[1]
-                    outputs = results[2:]
-                    # TODO trigger_step
+                    outputs = results[2:2 + len(output_vars)]
+                    inputs = results[-len(model_inputs):]
+                    callbacks.trigger_step(inputs, outputs, cost)
+
                 # note that summary_op will take a data from the queue.
                 callbacks.trigger_epoch()
     sess.close()

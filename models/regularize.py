@@ -10,6 +10,9 @@ from utils import logger
 __all__ = ['regularize_cost']
 
 def regularize_cost(regex, func):
+    """
+    Apply a regularizer on every trainable variable matching the regex
+    """
     G = tf.get_default_graph()
     params = G.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
 
@@ -17,7 +20,7 @@ def regularize_cost(regex, func):
     for p in params:
         name = p.name
         if re.search(regex, name):
-            logger.info("Weight decay for {}".format(name))
+            logger.info("Apply regularizer for {}".format(name))
             costs.append(func(p))
     return tf.add_n(costs)
 
