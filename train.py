@@ -5,6 +5,7 @@
 
 import tensorflow as tf
 from utils import *
+from utils.concurrency import *
 from dataflow import DataFlow
 from itertools import count
 import argparse
@@ -39,10 +40,16 @@ def start_train(config):
 
     # a list of input/output variables
     input_vars = config['inputs']
-    output_vars = config['outputs']
-    cost_var = config['cost']
+    input_queue = config['input_queue']
+    get_model_func = config['get_model_func']
 
     max_epoch = int(config['max_epoch'])
+
+    enqueue_op = input_queue.enqueue(tuple(input_vars))
+    model_inputs = input_queue.dequeue()
+    for qv, v in zip(model_inputs, input_vars):
+        qv.set_shape(v.get_shape())
+    output_vars, cost_var = get_model_func(model_inputs)
 
     # build graph
     G = tf.get_default_graph()
@@ -71,21 +78,26 @@ def start_train(config):
     with sess.as_default():
         sess.run(tf.initialize_all_variables())
         callbacks.before_train()
-
-        is_training = G.get_tensor_by_name(IS_TRAINING_VAR_NAME)
         for epoch in xrange(1, max_epoch):
-            with timed_operation('epoch {}'.format(epoch)):
-                for dp in dataset_train.get_data():
-                    feed = {is_training: True}
-                    feed.update(dict(zip(input_vars, dp)))
-
-                    results = sess.run(
-                        [train_op, cost_var] + output_vars, feed_dict=feed)
+            coord = tf.train.Coordinator()
+            th = EnqueueThread(sess, coord, enqueue_op, dataset_train)
+            with timed_operation('epoch {}'.format(epoch)), \
+                    coordinator_context(
+                        sess, coord, th, input_queue):
+                for step in xrange(dataset_train.size()):
+                    # TODO eval dequeue to get dp
+                    fetches = [train_op, cost_var] + output_vars
+                    results = sess.run(fetches,
+                        feed_dict={IS_TRAINING_VAR_NAME: True})
                     cost = results[1]
                     outputs = results[2:]
-                    callbacks.trigger_step(feed, outputs, cost)
-
+                    print tf.train.global_step(sess, global_step_var), cost
+                    # trigger_step
+                coord.request_stop()
+                # summary will take a data from the queue
                 callbacks.trigger_epoch()
+                print "Finish callback"
+
     sess.close()
 
 def main(get_config_func):

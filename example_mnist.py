@@ -18,6 +18,7 @@ from models import *
 from utils import *
 from utils.symbolic_functions import *
 from utils.summary import *
+from utils.concurrency import *
 from dataflow.dataset import Mnist
 from dataflow import *
 
@@ -40,12 +41,12 @@ def get_model(inputs):
     image, label = inputs
     image = tf.expand_dims(image, 3)    # add a single channel
 
-    conv0 = Conv2D('conv0', image, out_channel=32, kernel_shape=5)
-    pool0 = MaxPooling('pool0', conv0, 2)
-    conv1 = Conv2D('conv1', pool0, out_channel=40, kernel_shape=3)
-    pool1 = MaxPooling('pool1', conv1, 2)
+    #conv0 = Conv2D('conv0', image, out_channel=32, kernel_shape=5)
+    #pool0 = MaxPooling('pool0', conv0, 2)
+    #conv1 = Conv2D('conv1', pool0, out_channel=40, kernel_shape=3)
+    #pool1 = MaxPooling('pool1', conv1, 2)
 
-    fc0 = FullyConnected('fc0', pool1, 1024)
+    fc0 = FullyConnected('fc0', image, 1024)
     fc0 = tf.nn.dropout(fc0, keep_prob)
 
     # fc will have activation summary by default. disable this for the output layer
@@ -91,12 +92,14 @@ def get_config():
     sess_config.allow_soft_placement = True
 
     # prepare model
-    image_var = tf.placeholder(tf.float32, shape=(None, IMAGE_SIZE, IMAGE_SIZE), name='input')
-    label_var = tf.placeholder(tf.int32, shape=(None,), name='label')
+    image_var = tf.placeholder(
+        tf.float32, shape=(None, IMAGE_SIZE, IMAGE_SIZE), name='input')
+    label_var = tf.placeholder(
+        tf.int32, shape=(None,), name='label')
     input_vars = [image_var, label_var]
-    output_vars, cost_var = get_model(input_vars)
-    add_histogram_summary('.*/W') # monitor histogram of all W
+    input_queue = tf.RandomShuffleQueue(100, 50, ['float32', 'int32'], name='queue')
 
+    add_histogram_summary('.*/W') # monitor histogram of all W
     global_step_var = tf.get_default_graph().get_tensor_by_name(GLOBAL_STEP_VAR_NAME)
     lr = tf.train.exponential_decay(
         learning_rate=1e-4,
@@ -110,13 +113,13 @@ def get_config():
         optimizer=tf.train.AdamOptimizer(lr),
         callbacks=[
             SummaryWriter(LOG_DIR),
-            ValidationError(dataset_test, prefix='test'),
+            #ValidationError(dataset_test, prefix='test'),
             PeriodicSaver(LOG_DIR),
         ],
         session_config=sess_config,
         inputs=input_vars,
-        outputs=output_vars,
-        cost=cost_var,
+        input_queue=input_queue,
+        get_model_func=get_model,
         max_epoch=100,
     )
 

@@ -75,15 +75,13 @@ class SummaryWriter(Callback):
         tf.add_to_collection(SUMMARY_WRITER_COLLECTION_KEY, self.writer)
         self.summary_op = tf.merge_all_summaries()
 
-    def trigger_step(self, inputs, outputs, cost):
-        self.last_dp = inputs
-
     def trigger_epoch(self):
         # check if there is any summary
         if self.summary_op is None:
             return
 
-        summary_str = self.summary_op.eval(self.last_dp)
+        summary_str = self.summary_op.eval(
+            feed_dict={IS_TRAINING_VAR_NAME: True})
         self.epoch_num += 1
         self.writer.add_summary(summary_str, self.epoch_num)
 

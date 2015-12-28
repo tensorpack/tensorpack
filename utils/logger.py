@@ -34,7 +34,7 @@ def getlogger():
 
 logger = getlogger()
 
-for func in ['info', 'warning', 'error', 'critical', 'warn']:
+for func in ['info', 'warning', 'error', 'critical', 'warn', 'exception', 'debug']:
     locals()[func] = getattr(logger, func)
 
 def set_file(path):
