@@ -18,10 +18,14 @@ from models import *
 from utils import *
 from utils.symbolic_functions import *
 from utils.summary import *
+from utils.callback import *
+from utils.validation_callback import *
+from utils.concurrency import *
 from dataflow.dataset import Mnist
 from dataflow import *
 
 def get_model(inputs):
+# TODO is_training as a python variable
     """
     Args:
         inputs: a list of input variable,
@@ -73,15 +77,18 @@ def get_model(inputs):
                      name='regularize_loss')
     tf.add_to_collection(COST_VARS_KEY, wd_cost)
 
-    return [prob, nr_wrong], tf.add_n(tf.get_collection(COST_VARS_KEY), name='cost')
+    # this won't work with multigpu
+    #return [prob, nr_wrong], tf.add_n(tf.get_collection(COST_VARS_KEY), name='cost')
+    return [prob, nr_wrong], tf.add_n([wd_cost, cost], name='cost')
 
 def get_config():
     IMAGE_SIZE = 28
-    LOG_DIR = os.path.join('train_log', os.path.basename(__file__)[:-3])
+    log_dir = os.path.join('train_log', os.path.basename(__file__)[:-3])
+    logger.set_logger_dir(log_dir)
     BATCH_SIZE = 128
-    logger.set_file(os.path.join(LOG_DIR, 'training.log'))
 
     dataset_train = BatchData(Mnist('train'), BATCH_SIZE)
+    #dataset_train = FixedSizeData(dataset_train, 20)
     dataset_test = BatchData(Mnist('test'), 256, remainder=True)
 
     sess_config = tf.ConfigProto()
@@ -91,12 +98,14 @@ def get_config():
     sess_config.allow_soft_placement = True
 
     # prepare model
-    image_var = tf.placeholder(tf.float32, shape=(None, IMAGE_SIZE, IMAGE_SIZE), name='input')
-    label_var = tf.placeholder(tf.int32, shape=(None,), name='label')
+    image_var = tf.placeholder(
+        tf.float32, shape=(None, IMAGE_SIZE, IMAGE_SIZE), name='input')
+    label_var = tf.placeholder(
+        tf.int32, shape=(None,), name='label')
     input_vars = [image_var, label_var]
-    output_vars, cost_var = get_model(input_vars)
-    add_histogram_summary('.*/W') # monitor histogram of all W
+    input_queue = tf.RandomShuffleQueue(100, 50, ['float32', 'int32'], name='queue')
 
+    add_histogram_summary('.*/W') # monitor histogram of all W
     global_step_var = tf.get_default_graph().get_tensor_by_name(GLOBAL_STEP_VAR_NAME)
     lr = tf.train.exponential_decay(
         learning_rate=1e-4,
@@ -108,15 +117,15 @@ def get_config():
     return dict(
         dataset_train=dataset_train,
         optimizer=tf.train.AdamOptimizer(lr),
-        callbacks=[
-            SummaryWriter(LOG_DIR),
+        callback=Callbacks([
+            SummaryWriter(),
+            PeriodicSaver(),
             ValidationError(dataset_test, prefix='test'),
-            PeriodicSaver(LOG_DIR),
-        ],
+        ]),
         session_config=sess_config,
         inputs=input_vars,
-        outputs=output_vars,
-        cost=cost_var,
+        input_queue=input_queue,
+        get_model_func=get_model,
         max_epoch=100,
     )
 

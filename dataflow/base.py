@@ -8,6 +8,7 @@ from abc import abstractmethod
 __all__ = ['DataFlow']
 
 class DataFlow(object):
+    # TODO private impl
     @abstractmethod
     def get_data(self):
         """

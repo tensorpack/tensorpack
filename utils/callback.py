@@ -10,10 +10,16 @@ import os
 import time
 from abc import abstractmethod
 
+from . import create_test_session
 from .naming import *
 import logger
 
 class Callback(object):
+    running_graph = 'train'
+    """ The graph that this callback should run on.
+        Either 'train' or 'test'
+    """
+
     def before_train(self):
         self.graph = tf.get_default_graph()
         self.sess = tf.get_default_session()
@@ -53,20 +59,20 @@ class PeriodicCallback(Callback):
         pass
 
 class PeriodicSaver(PeriodicCallback):
-    def __init__(self, log_dir, period=1):
+    def __init__(self, period=1):
         super(PeriodicSaver, self).__init__(period)
-        self.path = os.path.join(log_dir, 'model')
+        self.path = os.path.join(logger.LOG_DIR, 'model')
 
     def _before_train(self):
         self.saver = tf.train.Saver(max_to_keep=99999)
 
     def _trigger(self):
         self.saver.save(tf.get_default_session(), self.path,
-                        global_step=self.epoch_num, latest_filename='latest')
+                        global_step=self.epoch_num)
 
 class SummaryWriter(Callback):
-    def __init__(self, log_dir):
-        self.log_dir = log_dir
+    def __init__(self):
+        self.log_dir = logger.LOG_DIR
         self.epoch_num = 0
 
     def _before_train(self):
@@ -75,59 +81,127 @@ class SummaryWriter(Callback):
         tf.add_to_collection(SUMMARY_WRITER_COLLECTION_KEY, self.writer)
         self.summary_op = tf.merge_all_summaries()
 
-    def trigger_step(self, inputs, outputs, cost):
-        self.last_dp = inputs
-
     def trigger_epoch(self):
         # check if there is any summary
         if self.summary_op is None:
             return
 
-        summary_str = self.summary_op.eval(self.last_dp)
+        feed = {IS_TRAINING_VAR_NAME: True}
+        summary_str = self.summary_op.eval(feed_dict=feed)
         self.epoch_num += 1
         self.writer.add_summary(summary_str, self.epoch_num)
 
-class Callbacks(Callback):
-    def __init__(self, callbacks):
-        for cb in callbacks:
-            assert isinstance(cb, Callback), cb.__class__
 
+class CallbackTimeLogger(object):
+    def __init__(self):
+        self.times = []
+        self.tot = 0
+
+    def add(self, name, time):
+        self.tot += time
+        self.times.append((name, time))
+
+    def log(self):
+        """
+        log the time of some heavy callbacks
+        """
+        if self.tot < 3:
+            return
+        msgs = []
+        for name, t in self.times:
+            if t / self.tot > 0.3 and t > 1:
+                msgs.append("{}:{}".format(name, t))
+        logger.info(
+            "Callbacks took {} sec. {}".format(
+                self.tot, ' '.join(msgs)))
+
+
+class TrainCallbacks(Callback):
+    def __init__(self, callbacks):
+        self.cbs = callbacks
         # put SummaryWriter to the first
-        for idx, cb in enumerate(callbacks):
+        for idx, cb in enumerate(self.cbs):
             if type(cb) == SummaryWriter:
-                callbacks.insert(0, callbacks.pop(idx))
+                self.cbs.insert(0, self.cbs.pop(idx))
                 break
         else:
-            raise RuntimeError("callbacks must contain a SummaryWriter!")
-
-        self.callbacks = callbacks
+            raise RuntimeError("Callbacks must contain a SummaryWriter!")
 
     def before_train(self):
-        for cb in self.callbacks:
+        for cb in self.cbs:
             cb.before_train()
         self.writer = tf.get_collection(SUMMARY_WRITER_COLLECTION_KEY)[0]
 
     def trigger_step(self, inputs, outputs, cost):
-        for cb in self.callbacks:
+        for cb in self.cbs:
             cb.trigger_step(inputs, outputs, cost)
 
     def trigger_epoch(self):
-        start = time.time()
-        times = []
-        for cb in self.callbacks:
+        tm = CallbackTimeLogger()
+        for cb in self.cbs:
             s = time.time()
             cb.trigger_epoch()
-            times.append(time.time() - s)
+            tm.add(type(cb).__name__, time.time() - s)
         self.writer.flush()
-        tot = time.time() - start
+        tm.log()
 
-        # log the time of some heavy callbacks
-        if tot < 3:
-            return
-        msgs = []
-        for idx, t in enumerate(times):
-            if t / tot > 0.3 and t > 1:
-                msgs.append("{}:{}".format(
-                    type(self.callbacks[idx]).__name__, t))
-        logger.info("Callbacks took {} sec. {}".format(tot, ' '.join(msgs)))
+class TestCallbacks(Callback):
+    def __init__(self, callbacks):
+        self.cbs = callbacks
+
+    def before_train(self):
+        self.writer = tf.get_collection(SUMMARY_WRITER_COLLECTION_KEY)[0]
+        with create_test_session() as sess:
+            self.sess = sess
+            self.graph = sess.graph
+
+            self.saver = tf.train.Saver()
+            tf.add_to_collection(SUMMARY_WRITER_COLLECTION_KEY, self.writer)
+            for cb in self.cbs:
+                cb.before_train()
+
+    def trigger_epoch(self):
+        tm = CallbackTimeLogger()
+        with self.graph.as_default():
+            with self.sess.as_default():
+                s = time.time()
+                ckpt = tf.train.get_checkpoint_state(logger.LOG_DIR)
+                if ckpt is None:
+                    from IPython import embed; embed()
+                self.saver.restore(self.sess, ckpt.model_checkpoint_path)
+                tm.add('restore session', time.time() - s)
+                for cb in self.cbs:
+                    s = time.time()
+                    cb.trigger_epoch()
+                    tm.add(type(cb).__name__, time.time() - s)
+        self.writer.flush()
+        tm.log()
+
+class Callbacks(Callback):
+    def __init__(self, cbs):
+        train_cbs = []
+        test_cbs = []
+        for cb in cbs:
+            assert isinstance(cb, Callback), cb.__class__
+            if cb.running_graph == 'test':
+                test_cbs.append(cb)
+            elif cb.running_graph == 'train':
+                train_cbs.append(cb)
+            else:
+                raise RuntimeError(
+                    "Unknown callback running graph {}!".format(cb.running_graph))
+        self.train = TrainCallbacks(train_cbs)
+        self.test = TestCallbacks(test_cbs)
+
+    def before_train(self):
+        self.train.before_train()
+        self.test.before_train()
+
+    def trigger_step(self, inputs, outputs, cost):
+        self.train.trigger_step()
+        # test callback don't have trigger_step
+
+    def trigger_epoch(self):
+        self.train.trigger_epoch()
+        self.test.trigger_epoch()
 
