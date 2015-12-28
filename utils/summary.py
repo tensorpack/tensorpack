@@ -4,6 +4,7 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
+from .naming import *
 
 def create_summary(name, v):
     """
@@ -42,3 +43,14 @@ def add_histogram_summary(regex):
         if re.search(regex, name):
             tf.histogram_summary(name, p)
 
+def summary_moving_average(cost_var):
+    global_step_var = tf.get_default_graph().get_tensor_by_name(GLOBAL_STEP_VAR_NAME)
+    averager = tf.train.ExponentialMovingAverage(
+        0.9, num_updates=global_step_var, name='avg')
+    vars_to_summary = [cost_var] + \
+            tf.get_collection(SUMMARY_VARS_KEY) + \
+            tf.get_collection(COST_VARS_KEY)
+    avg_maintain_op = averager.apply(vars_to_summary)
+    for c in vars_to_summary:
+        tf.scalar_summary(c.op.name, averager.average(c))
+    return avg_maintain_op

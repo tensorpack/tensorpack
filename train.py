@@ -10,8 +10,9 @@ from itertools import count
 import argparse
 
 def prepare():
-    keep_prob = tf.placeholder(
-        tf.float32, shape=tuple(), name=DROPOUT_PROB_OP_NAME)
+    is_training = tf.placeholder(tf.bool, shape=(), name=IS_TRAINING_OP_NAME)
+    #keep_prob = tf.placeholder(
+        #tf.float32, shape=tuple(), name=DROPOUT_PROB_OP_NAME)
     global_step_var = tf.Variable(
         0, trainable=False, name=GLOBAL_STEP_OP_NAME)
 
@@ -49,19 +50,11 @@ def start_train(config):
         G.add_to_collection(INPUT_VARS_KEY, v)
     for v in output_vars:
         G.add_to_collection(OUTPUT_VARS_KEY, v)
-    summary_model()
+    describe_model()
 
     global_step_var = G.get_tensor_by_name(GLOBAL_STEP_VAR_NAME)
 
-    # add some summary ops to the graph
-    averager = tf.train.ExponentialMovingAverage(
-        0.9, num_updates=global_step_var, name='avg')
-    vars_to_summary = [cost_var] + \
-            tf.get_collection(SUMMARY_VARS_KEY) + \
-            tf.get_collection(COST_VARS_KEY)
-    avg_maintain_op = averager.apply(vars_to_summary)
-    for c in vars_to_summary:
-        tf.scalar_summary(c.op.name, averager.average(c))
+    avg_maintain_op = summary_moving_average(cost_var)
 
     # maintain average in each step
     with tf.control_dependencies([avg_maintain_op]):
@@ -79,11 +72,11 @@ def start_train(config):
         sess.run(tf.initialize_all_variables())
         callbacks.before_train()
 
-        keep_prob_var = G.get_tensor_by_name(DROPOUT_PROB_VAR_NAME)
+        is_training = G.get_tensor_by_name(IS_TRAINING_VAR_NAME)
         for epoch in xrange(1, max_epoch):
             with timed_operation('epoch {}'.format(epoch)):
                 for dp in dataset_train.get_data():
-                    feed = {keep_prob_var: 0.5}
+                    feed = {is_training: True}
                     feed.update(dict(zip(input_vars, dp)))
 
                     results = sess.run(

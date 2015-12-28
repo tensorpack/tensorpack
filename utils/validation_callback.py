@@ -33,7 +33,7 @@ class ValidationError(PeriodicCallback):
 
     def _before_train(self):
         self.input_vars = tf.get_collection(INPUT_VARS_KEY)
-        self.dropout_var = self.get_tensor(DROPOUT_PROB_VAR_NAME)
+        self.is_training_var = self.get_tensor(IS_TRAINING_VAR_NAME)
         self.wrong_var = self.get_tensor(self.wrong_var_name)
         self.cost_var = self.get_tensor(self.cost_var_name)
         self.writer = tf.get_collection(SUMMARY_WRITER_COLLECTION_KEY)[0]
@@ -43,7 +43,7 @@ class ValidationError(PeriodicCallback):
         err_stat = Accuracy()
         cost_sum = 0
         for dp in self.ds.get_data():
-            feed = {self.dropout_var: 1.0}
+            feed = {self.is_training_var: False}
             feed.update(dict(zip(self.input_vars, dp)))
 
             batch_size = dp[0].shape[0]   # assume batched input

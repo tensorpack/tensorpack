@@ -9,6 +9,8 @@ import os
 sys.path.insert(0, os.path.expanduser('~/.local/lib/python2.7/site-packages'))
 
 import tensorflow as tf
+from tensorflow.python.ops import control_flow_ops
+
 import numpy as np
 import os
 
@@ -31,8 +33,9 @@ def get_model(inputs):
         outputs: a list of output variable
         cost: scalar variable
     """
-    # use this variable in dropout! Tensorpack will automatically set it to 1 at test time
-    keep_prob = tf.get_default_graph().get_tensor_by_name(DROPOUT_PROB_VAR_NAME)
+    is_training = tf.get_default_graph().get_tensor_by_name(IS_TRAINING_VAR_NAME)
+    keep_prob = control_flow_ops.cond(
+        is_training, lambda: tf.constant(0.5), lambda: tf.constant(1.0), name='dropout_prob')
 
     image, label = inputs
     image = tf.expand_dims(image, 3)    # add a single channel
@@ -83,6 +86,7 @@ def get_config():
 
     sess_config = tf.ConfigProto()
     sess_config.device_count['GPU'] = 1
+    sess_config.gpu_options.per_process_gpu_memory_fraction = 0.5
     sess_config.gpu_options.allocator_type = 'BFC'
     sess_config.allow_soft_placement = True
 

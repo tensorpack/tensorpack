@@ -31,8 +31,7 @@ def timed_operation(msg, log_start=False):
     logger.info('finished {}, time={:.2f}sec.'.format(
         msg, time.time() - start))
 
-
-def summary_model():
+def describe_model():
     train_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
     msg = [""]
     total = 0
