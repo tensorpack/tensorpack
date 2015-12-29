@@ -6,18 +6,6 @@
 import tensorflow as tf
 import logger
 
-def restore_params(sess, params):
-    variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
-    var_dict = dict([v.name, v] for v in variables)
-    for name, value in params.iteritems():
-        try:
-            var = var_dict[name]
-        except (ValueError, KeyError):
-            logger.warn("Param {} not found in this graph".format(name))
-            continue
-        logger.info("Restoring param {}".format(name))
-        sess.run(var.assign(value))
-
 def describe_model():
     """ describe the current model parameters"""
     train_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)

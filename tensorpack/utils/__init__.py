@@ -53,3 +53,16 @@ def create_test_session():
     with create_test_graph():
         with tf.Session() as sess:
             yield sess
+
+def get_default_sess_config():
+    """
+    Return a better config to use as default.
+    Tensorflow default session config consume too much resources
+    """
+    conf = tf.ConfigProto()
+    conf.device_count['GPU'] = 1
+    conf.gpu_options.per_process_gpu_memory_fraction = 0.8
+    conf.gpu_options.allocator_type = 'BFC'
+    conf.allow_soft_placement = True
+    return conf
+

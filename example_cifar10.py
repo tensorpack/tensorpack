@@ -36,22 +36,22 @@ def get_model(inputs, is_training):
             #[image, label], BATCH_SIZE, CAPACITY, MIN_AFTER_DEQUEUE,
             #num_threads=2, enqueue_many=False)
 
-    conv0 = Conv2D('conv0', image, out_channel=64, kernel_shape=5, padding='SAME')
-    pool0 = MaxPooling('pool0', conv0, 3, stride=2, padding='SAME')
-    norm0 = tf.nn.lrn(pool0, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75, name='norm0')
+    l = Conv2D('conv0', image, out_channel=64, kernel_shape=5, padding='SAME')
+    l = MaxPooling('pool0', l, 3, stride=2, padding='SAME')
+    l = tf.nn.lrn(l, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75, name='norm0')
 
-    conv1 = Conv2D('conv1', norm0, out_channel=64, kernel_shape=5, padding='SAME')
-    norm1 = tf.nn.lrn(conv1, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75, name='norm1')
-    pool1 = MaxPooling('pool1', norm1, 3, stride=2, padding='SAME')
+    l = Conv2D('conv1', l, out_channel=64, kernel_shape=5, padding='SAME')
+    l = tf.nn.lrn(l, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75, name='norm1')
+    l = MaxPooling('pool1', l, 3, stride=2, padding='SAME')
 
-    fc0 = FullyConnected('fc0', pool1, 384)
-    fc1 = FullyConnected('fc1', fc0, out_dim=192)
+    l = FullyConnected('fc0', l, 384)
+    l = FullyConnected('fc1', l, out_dim=192)
     # fc will have activation summary by default. disable this for the output layer
-    fc2 = FullyConnected('fc2', fc1, out_dim=10, summary_activation=False, nl=tf.identity)
-    prob = tf.nn.softmax(fc2, name='output')
+    logits = FullyConnected('fc2', l, out_dim=10, summary_activation=False, nl=tf.identity)
+    prob = tf.nn.softmax(logits, name='output')
 
     y = one_hot(label, 10)
-    cost = tf.nn.softmax_cross_entropy_with_logits(fc2, y)
+    cost = tf.nn.softmax_cross_entropy_with_logits(logits, y)
     cost = tf.reduce_mean(cost, name='cross_entropy_loss')
     tf.add_to_collection(COST_VARS_KEY, cost)
 
@@ -88,11 +88,8 @@ def get_config():
     #step_per_epoch = 20
     #dataset_test = FixedSizeData(dataset_test, 20)
 
-    sess_config = tf.ConfigProto()
-    sess_config.device_count['GPU'] = 1
+    sess_config = get_default_sess_config()
     sess_config.gpu_options.per_process_gpu_memory_fraction = 0.5
-    sess_config.gpu_options.allocator_type = 'BFC'
-    sess_config.allow_soft_placement = True
 
     # prepare model
     input_vars = [

@@ -10,7 +10,8 @@ import argparse
 from utils import *
 from utils.concurrency import EnqueueThread,coordinator_guard
 from utils.summary import summary_moving_average
-from utils.modelutils import restore_params, describe_model
+from utils.modelutils import describe_model
+from utils.sessinit import NewSession
 from utils import logger
 from dataflow import DataFlow
 
@@ -53,8 +54,7 @@ def start_train(config):
     sess_config = config.get('session_config', None)
     assert isinstance(sess_config, tf.ConfigProto), sess_config.__class__
 
-    # restore saved params
-    params = config.get('restore_params', {})
+    sess_init = config.get('session_init', NewSession())
 
     # input/output variables
     input_vars = config['inputs']
@@ -83,9 +83,7 @@ def start_train(config):
     train_op = get_train_op(optimizer, cost_var)
 
     sess = tf.Session(config=sess_config)
-    sess.run(tf.initialize_all_variables())
-
-    restore_params(sess, params)
+    sess_init.init(sess)
 
     # start training:
     coord = tf.train.Coordinator()

@@ -51,21 +51,21 @@ def get_model(inputs, is_training):
             #[image, label], BATCH_SIZE, CAPACITY, MIN_AFTER_DEQUEUE,
             #num_threads=2, enqueue_many=False)
 
-    conv0 = Conv2D('conv0', image, out_channel=32, kernel_shape=5)
-    pool0 = MaxPooling('pool0', conv0, 2)
-    conv1 = Conv2D('conv1', pool0, out_channel=40, kernel_shape=3)
-    pool1 = MaxPooling('pool1', conv1, 2)
+    l = Conv2D('conv0', image, out_channel=32, kernel_shape=5)
+    l = MaxPooling('pool0', l, 2)
+    l = Conv2D('conv1', l, out_channel=40, kernel_shape=3)
+    l = MaxPooling('pool1', l, 2)
 
-    fc0 = FullyConnected('fc0', pool1, 1024)
-    fc0 = tf.nn.dropout(fc0, keep_prob)
+    l = FullyConnected('fc0', l, 1024)
+    l = tf.nn.dropout(l, keep_prob)
 
     # fc will have activation summary by default. disable this for the output layer
-    fc1 = FullyConnected('fc1', fc0, out_dim=10,
+    logits = FullyConnected('fc1', l, out_dim=10,
                          summary_activation=False, nl=tf.identity)
-    prob = tf.nn.softmax(fc1, name='output')
+    prob = tf.nn.softmax(logits, name='output')
 
     y = one_hot(label, 10)
-    cost = tf.nn.softmax_cross_entropy_with_logits(fc1, y)
+    cost = tf.nn.softmax_cross_entropy_with_logits(logits, y)
     cost = tf.reduce_mean(cost, name='cross_entropy_loss')
     tf.add_to_collection(COST_VARS_KEY, cost)
 
@@ -101,11 +101,8 @@ def get_config():
     #step_per_epoch = 20
     #dataset_test = FixedSizeData(dataset_test, 20)
 
-    sess_config = tf.ConfigProto()
-    sess_config.device_count['GPU'] = 1
+    sess_config = get_default_sess_config()
     sess_config.gpu_options.per_process_gpu_memory_fraction = 0.5
-    sess_config.gpu_options.allocator_type = 'BFC'
-    sess_config.allow_soft_placement = True
 
     # prepare model
     input_vars = [
@@ -116,6 +113,8 @@ def get_config():
     ]
     input_queue = tf.RandomShuffleQueue(
         100, 50, [x.dtype for x in input_vars], name='queue')
+    #input_queue = tf.FIFOQueue(
+        #100, [x.dtype for x in input_vars], name='queue')
 
     global_step_var = tf.get_default_graph().get_tensor_by_name(GLOBAL_STEP_VAR_NAME)
     lr = tf.train.exponential_decay(

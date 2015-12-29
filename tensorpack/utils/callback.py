@@ -59,12 +59,16 @@ class PeriodicCallback(Callback):
         pass
 
 class PeriodicSaver(PeriodicCallback):
-    def __init__(self, period=1):
+    def __init__(self, period=1, keep_recent=50, keep_freq=0.5):
         super(PeriodicSaver, self).__init__(period)
         self.path = os.path.join(logger.LOG_DIR, 'model')
+        self.keep_recent = keep_recent
+        self.keep_freq = keep_freq
 
     def _before_train(self):
-        self.saver = tf.train.Saver(max_to_keep=99999)
+        self.saver = tf.train.Saver(
+            max_to_keep=self.keep_recent,
+            keep_checkpoint_every_n_hours=self.keep_freq)
 
     def _trigger(self):
         self.saver.save(tf.get_default_session(), self.path,
@@ -142,6 +146,11 @@ class TrainCallbacks(Callback):
         tm.log()
 
 class TestCallbacks(Callback):
+    """
+    Hold callbacks to be run in testing graph.
+    Will set a context with testing graph and testing session, for
+    each test-time callback to run
+    """
     def __init__(self, callbacks):
         self.cbs = callbacks
 
