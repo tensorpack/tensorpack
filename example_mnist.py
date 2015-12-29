@@ -47,14 +47,14 @@ def get_model(inputs, is_training):
     image, label = inputs
     image = tf.expand_dims(image, 3)    # add a single channel
 
-    if is_training:
-        # augmentations
-        image, label = tf.train.slice_input_producer(
-            [image, label], name='slice_queue')
-        image = tf.image.random_brightness(image, 0.1)
-        image, label = tf.train.shuffle_batch(
-            [image, label], BATCH_SIZE, CAPACITY, MIN_AFTER_DEQUEUE,
-            num_threads=2, enqueue_many=False)
+    #if is_training:    # slow
+        ## augmentations
+        #image, label = tf.train.slice_input_producer(
+            #[image, label], name='slice_queue')
+        #image = tf.image.random_brightness(image, 0.1)
+        #image, label = tf.train.shuffle_batch(
+            #[image, label], BATCH_SIZE, CAPACITY, MIN_AFTER_DEQUEUE,
+            #num_threads=2, enqueue_many=False)
 
     conv0 = Conv2D('conv0', image, out_channel=32, kernel_shape=5)
     pool0 = MaxPooling('pool0', conv0, 2)
@@ -100,9 +100,9 @@ def get_config():
 
     IMAGE_SIZE = 28
 
-    dataset_train = Mnist('train')
+    dataset_train = BatchData(Mnist('train'), 128)
     dataset_test = BatchData(Mnist('test'), 256, remainder=True)
-    step_per_epoch = dataset_train.size() / BATCH_SIZE
+    step_per_epoch = dataset_train.size()
     #step_per_epoch = 20
     #dataset_test = FixedSizeData(dataset_test, 20)
 

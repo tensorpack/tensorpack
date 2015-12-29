@@ -39,10 +39,7 @@ class EnqueueThread(threading.Thread):
                 for dp in self.dataflow.get_data():
                     if self.coord.should_stop():
                         return
-                    feed = {}
-                    for var, data in izip(self.input_vars, dp):
-                        data = expand_dim_if_necessary(var, data)
-                        feed[var] = data
+                    feed = dict(izip(self.input_vars, dp))
                     self.sess.run([self.op], feed_dict=feed)
         except tf.errors.CancelledError as e:
             pass
