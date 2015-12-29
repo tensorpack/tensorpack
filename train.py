@@ -41,7 +41,9 @@ def start_train(config):
     input_queue = config['input_queue']
     get_model_func = config['get_model_func']
 
+    step_per_epoch = int(config['step_per_epoch'])
     max_epoch = int(config['max_epoch'])
+    assert step_per_epoch > 0 and max_epoch > 0
 
     enqueue_op = input_queue.enqueue(tuple(input_vars))
     model_inputs = input_queue.dequeue()
@@ -79,14 +81,19 @@ def start_train(config):
     # start training:
     coord = tf.train.Coordinator()
     # a thread that keeps filling the queue
-    th = EnqueueThread(sess, coord, enqueue_op, dataset_train)
+    input_th = EnqueueThread(sess, coord, enqueue_op, dataset_train)
+    model_th = tf.train.start_queue_runners(
+        sess=sess, coord=coord, daemon=True, start=False)
+
     with sess.as_default(), \
             coordinator_guard(
-                sess, coord, th, input_queue):
+                sess, coord, [input_th] + model_th, input_queue):
         callbacks.before_train()
         for epoch in xrange(1, max_epoch):
             with timed_operation('epoch {}'.format(epoch)):
-                for step in xrange(dataset_train.size()):
+                for step in xrange(step_per_epoch):
+                    if coord.should_stop():
+                        return
                     fetches = [train_op, cost_var] + output_vars + model_inputs
                     results = sess.run(fetches)
                     cost = results[1]

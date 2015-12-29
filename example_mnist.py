@@ -24,6 +24,10 @@ from utils.concurrency import *
 from dataflow.dataset import Mnist
 from dataflow import *
 
+BATCH_SIZE = 128
+MIN_AFTER_DEQUEUE = 500
+CAPACITY = MIN_AFTER_DEQUEUE + 3 * BATCH_SIZE
+
 def get_model(inputs, is_training):
     """
     Args:
@@ -42,6 +46,15 @@ def get_model(inputs, is_training):
 
     image, label = inputs
     image = tf.expand_dims(image, 3)    # add a single channel
+
+    if is_training:
+        # augmentations
+        image, label = tf.train.slice_input_producer(
+            [image, label], name='slice_queue')
+        image = tf.image.random_brightness(image, 0.1)
+        image, label = tf.train.shuffle_batch(
+            [image, label], BATCH_SIZE, CAPACITY, MIN_AFTER_DEQUEUE,
+            num_threads=2, enqueue_many=False)
 
     conv0 = Conv2D('conv0', image, out_channel=32, kernel_shape=5)
     pool0 = MaxPooling('pool0', conv0, 2)
@@ -86,11 +99,11 @@ def get_config():
     logger.set_logger_dir(log_dir)
 
     IMAGE_SIZE = 28
-    BATCH_SIZE = 128
 
-    dataset_train = BatchData(Mnist('train'), BATCH_SIZE)
+    dataset_train = Mnist('train')
     dataset_test = BatchData(Mnist('test'), 256, remainder=True)
-    #dataset_train = FixedSizeData(dataset_train, 20)
+    step_per_epoch = dataset_train.size() / BATCH_SIZE
+    #step_per_epoch = 20
     #dataset_test = FixedSizeData(dataset_test, 20)
 
     sess_config = tf.ConfigProto()
@@ -129,6 +142,7 @@ def get_config():
         inputs=input_vars,
         input_queue=input_queue,
         get_model_func=get_model,
+        step_per_epoch=step_per_epoch,
         max_epoch=100,
     )
 

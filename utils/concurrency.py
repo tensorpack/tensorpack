@@ -5,8 +5,10 @@
 
 import threading
 from contextlib import contextmanager
+from itertools import izip
 import tensorflow as tf
 
+from .utils import expand_dim_if_necessary
 from .naming import *
 import logger
 
@@ -37,21 +39,26 @@ class EnqueueThread(threading.Thread):
                 for dp in self.dataflow.get_data():
                     if self.coord.should_stop():
                         return
-                    feed = dict(zip(self.input_vars, dp))
+                    feed = {}
+                    for var, data in izip(self.input_vars, dp):
+                        data = expand_dim_if_necessary(var, data)
+                        feed[var] = data
                     self.sess.run([self.op], feed_dict=feed)
         except tf.errors.CancelledError as e:
             pass
         except Exception:
             logger.exception("Exception in EnqueueThread:")
+            self.coord.request_stop()
 
 @contextmanager
-def coordinator_guard(sess, coord, thread, queue):
+def coordinator_guard(sess, coord, threads, queue):
     """
     Context manager to make sure that:
         queue is closed
-        thread is joined
+        threads are joined
     """
-    thread.start()
+    for th in threads:
+        th.start()
     try:
         yield
     except (KeyboardInterrupt, Exception) as e:
@@ -60,4 +67,4 @@ def coordinator_guard(sess, coord, thread, queue):
         coord.request_stop()
         sess.run(
             queue.close(cancel_pending_enqueues=True))
-        coord.join([thread])
+        coord.join(threads)
