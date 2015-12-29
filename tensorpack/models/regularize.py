@@ -5,7 +5,8 @@
 
 import tensorflow as tf
 import re
-from utils import logger
+
+from ..utils import logger
 
 __all__ = ['regularize_cost']
 

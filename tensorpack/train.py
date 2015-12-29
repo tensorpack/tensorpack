@@ -111,14 +111,3 @@ def start_train(config):
                 # note that summary_op will take a data from the queue.
                 callbacks.trigger_epoch()
 
-def main(get_config_func):
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.') # nargs='*' in multi mode
-    args = parser.parse_args()
-    if args.gpu:
-        os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
-
-    with tf.Graph().as_default():
-        prepare()
-        config = get_config_func()
-        start_train(config)

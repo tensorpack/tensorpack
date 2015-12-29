@@ -8,9 +8,9 @@ import gzip
 
 import numpy
 from six.moves import urllib
-from utils import logger
 
-from dataflow.base import DataFlow
+from ...utils import logger
+from ..base import DataFlow
 
 __all__ = ['Mnist']
 

@@ -14,8 +14,8 @@ import numpy
 from six.moves import urllib
 import tarfile
 
-from utils import logger
-from dataflow.base import DataFlow
+from ...utils import logger
+from ..base import DataFlow
 
 __all__ = ['Cifar10']
 

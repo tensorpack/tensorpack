@@ -3,26 +3,19 @@
 # File: example_cifar10.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
-# use user-space protobuf
-import sys
-import os
-sys.path.insert(0, os.path.expanduser('~/.local/lib/python2.7/site-packages'))
-
 import tensorflow as tf
-from tensorflow.python.ops import control_flow_ops
-
+import argparse
 import numpy as np
 import os
 
-from models import *
-from utils import *
-from utils.symbolic_functions import *
-from utils.summary import *
-from utils.callback import *
-from utils.validation_callback import *
-from utils.concurrency import *
-from dataflow.dataset import Cifar10
-from dataflow import *
+from tensorpack.models import *
+from tensorpack.utils import *
+from tensorpack.utils.symbolic_functions import *
+from tensorpack.utils.summary import *
+from tensorpack.utils.callback import *
+from tensorpack.utils.validation_callback import *
+from tensorpack.dataflow.dataset import Cifar10
+from tensorpack.dataflow import *
 
 BATCH_SIZE = 128
 MIN_AFTER_DEQUEUE = 500
@@ -136,5 +129,14 @@ def get_config():
     )
 
 if __name__ == '__main__':
-    from train import main
-    main(get_config)
+    from tensorpack import train
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.') # nargs='*' in multi mode
+    args = parser.parse_args()
+    if args.gpu:
+        os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
+
+    with tf.Graph().as_default():
+        train.prepare()
+        config = get_config()
+        train.start_train(config)

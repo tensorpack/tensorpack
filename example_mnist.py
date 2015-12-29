@@ -8,16 +8,16 @@ from tensorflow.python.ops import control_flow_ops
 
 import numpy as np
 import os, sys
+import argparse
 
-from models import *
-from utils import *
-from utils.symbolic_functions import *
-from utils.summary import *
-from utils.callback import *
-from utils.validation_callback import *
-from utils.concurrency import *
-from dataflow.dataset import Mnist
-from dataflow import *
+from tensorpack.models import *
+from tensorpack.utils import *
+from tensorpack.utils.symbolic_functions import *
+from tensorpack.utils.summary import *
+from tensorpack.utils.callback import *
+from tensorpack.utils.validation_callback import *
+from tensorpack.dataflow.dataset import Mnist
+from tensorpack.dataflow import *
 
 BATCH_SIZE = 128
 MIN_AFTER_DEQUEUE = 500
@@ -142,5 +142,14 @@ def get_config():
     )
 
 if __name__ == '__main__':
-    from train import main
-    main(get_config)
+    from tensorpack import train
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.') # nargs='*' in multi mode
+    args = parser.parse_args()
+    if args.gpu:
+        os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
+
+    with tf.Graph().as_default():
+        train.prepare()
+        config = get_config()
+        train.start_train(config)

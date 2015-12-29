@@ -3,11 +3,11 @@
 # File: fc.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
+import tensorflow as tf
+import math
 
 from ._common import layer_register
-import tensorflow as tf
-from utils.symbolic_functions import *
-import math
+from ..utils.symbolic_functions import *
 
 __all__ = ['FullyConnected']
 

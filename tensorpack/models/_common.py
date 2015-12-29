@@ -4,9 +4,9 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
-from utils.modelutils import *
-from utils.summary import *
-from utils import logger
+from ..utils.modelutils import *
+from ..utils.summary import *
+from ..utils import logger
 
 # make sure each layer is only logged once
 _layer_logged = set()
