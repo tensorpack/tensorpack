@@ -1,4 +1,5 @@
 *.gz
+*.npy
 train_log
 
 # Byte-compiled / optimized / DLL files

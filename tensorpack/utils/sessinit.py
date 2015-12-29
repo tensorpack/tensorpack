@@ -4,6 +4,7 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 from abc import abstractmethod
+import numpy as np
 import tensorflow as tf
 
 from . import logger
@@ -24,7 +25,7 @@ class SaverRestore(SessionInit):
         saver = tf.train.Saver()
         saver.restore(sess, self.path)
         logger.info(
-            "Restore checkpoint from {}".format(ckpt.model_checkpoint_path))
+            "Restore checkpoint from {}".format(self.path))
 
     def set_path(self, model_path):
         self.path = model_path
@@ -44,3 +45,12 @@ class ParamRestore(SessionInit):
                 continue
             logger.info("Restoring param {}".format(name))
             sess.run(var.assign(value))
+
+def dump_session_params(path):
+    var = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
+    result = {}
+    for v in var:
+        result[v.name] = v.eval()
+    logger.info("Params to save to {}:".format(path))
+    logger.info(str(result.keys()))
+    np.save(path, result)

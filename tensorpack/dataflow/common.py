@@ -17,7 +17,8 @@ class BatchData(DataFlow):
             if set, might return a data point of a different shape
         """
         self.ds = ds
-        assert batch_size <= ds.size()
+        if not remainder:
+            assert batch_size <= ds.size()
         self.batch_size = batch_size
         self.remainder = remainder
 
@@ -84,7 +85,6 @@ class FakeData(DataFlow):
     def get_data(self):
         for _ in xrange(self._size):
             yield [np.random.random(k) for k in self.shapes]
-
 
 class MapData(DataFlow):
     """ Apply a function to the given index in the datapoint"""

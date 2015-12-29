@@ -62,7 +62,7 @@ def get_model(inputs, is_training):
     # fc will have activation summary by default. disable this for the output layer
     logits = FullyConnected('fc1', l, out_dim=10,
                          summary_activation=False, nl=tf.identity)
-    prob = tf.nn.softmax(logits, name='output')
+    prob = tf.nn.softmax(logits, name='prob')
 
     y = one_hot(label, 10)
     cost = tf.nn.softmax_cross_entropy_with_logits(logits, y)
