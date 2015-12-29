@@ -44,6 +44,7 @@ class EnqueueThread(threading.Thread):
         except tf.errors.CancelledError as e:
             pass
         except Exception:
+            # TODO close queue.
             logger.exception("Exception in EnqueueThread:")
             self.coord.request_stop()
 

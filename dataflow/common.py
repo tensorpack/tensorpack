@@ -1,12 +1,12 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
-# File: batch.py
+# File: common.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import numpy as np
 from .base import DataFlow
 
-__all__ = ['BatchData', 'FixedSizeData']
+__all__ = ['BatchData', 'FixedSizeData', 'FakeData']
 
 class BatchData(DataFlow):
     def __init__(self, ds, batch_size, remainder=False):
@@ -64,4 +64,17 @@ class FixedSizeData(DataFlow):
                 yield dp
                 if cnt == self._size:
                     return
+
+class FakeData(DataFlow):
+    """ Build fake data of given shapes"""
+    def __init__(self, shapes, size):
+        self.shapes = shapes
+        self._size = size
+
+    def size(self):
+        return self._size
+
+    def get_data(self):
+        for _ in xrange(self._size):
+            yield tuple((np.random.random(k) for k in self.shapes))
 
