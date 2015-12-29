@@ -7,7 +7,10 @@ from pkgutil import walk_packages
 import os
 import os.path
 
+__SKIP = ['dftools', 'dataset']
 def global_import(name):
+    if name in __SKIP:
+        return
     p = __import__(name, globals(), locals())
     lst = p.__all__ if '__all__' in dir(p) else dir(p)
     for k in lst:

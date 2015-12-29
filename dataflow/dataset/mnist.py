@@ -10,9 +10,11 @@ import numpy
 from six.moves import urllib
 from utils import logger
 
-from ..base import DataFlow
+from dataflow.base import DataFlow
 
 __all__ = ['Mnist']
+
+""" This file is mostly copied from tensorflow example """
 
 SOURCE_URL = 'http://yann.lecun.com/exdb/mnist/'
 
@@ -133,7 +135,7 @@ class Mnist(DataFlow):
         for k in xrange(ds.num_examples):
             img = ds.images[k].reshape((28, 28))
             label = ds.labels[k]
-            yield (img, label)
+            yield [img, label]
 
 if __name__ == '__main__':
     ds = Mnist('train')

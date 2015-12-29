@@ -8,6 +8,7 @@ import os
 import os.path
 
 def global_import(name):
+    print name
     p = __import__(name, globals(), locals())
     lst = p.__all__ if '__all__' in dir(p) else dir(p)
     for k in lst:

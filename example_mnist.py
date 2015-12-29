@@ -3,16 +3,11 @@
 # File: example_mnist.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
-# use user-space protobuf
-import sys
-import os
-sys.path.insert(0, os.path.expanduser('~/.local/lib/python2.7/site-packages'))
-
 import tensorflow as tf
 from tensorflow.python.ops import control_flow_ops
 
 import numpy as np
-import os
+import os, sys
 
 from models import *
 from utils import *

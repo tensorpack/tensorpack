@@ -2,6 +2,7 @@
 # -*- coding: UTF-8 -*-
 # File: utils.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
+import os
 
 def expand_dim_if_necessary(var, dp):
     """
@@ -17,3 +18,12 @@ def expand_dim_if_necessary(var, dp):
         dp = dp.reshape(new_shape)
     return dp
 
+
+def mkdir_p(dirname):
+    if dirname == '':
+        return
+    try:
+        os.makedirs(dirname)
+    except OSError as e:
+        if e.errno != 17:
+            raise e

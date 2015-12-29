@@ -6,7 +6,7 @@
 import numpy as np
 from .base import DataFlow
 
-__all__ = ['BatchData', 'FixedSizeData', 'FakeData']
+__all__ = ['BatchData', 'FixedSizeData', 'FakeData', 'MapData']
 
 class BatchData(DataFlow):
     def __init__(self, ds, batch_size, remainder=False):
@@ -43,10 +43,16 @@ class BatchData(DataFlow):
         size = len(data_holder[0])
         result = []
         for k in xrange(size):
+            dt = data_holder[0][k]
+            if type(dt) in [int, bool, long]:
+                tp = 'int32'
+            elif type(dt) == float:
+                tp = 'float32'
+            else:
+                tp = dt.dtype
             result.append(
-                np.array([x[k] for x in data_holder],
-                         dtype=data_holder[0][k].dtype))
-        return tuple(result)
+                np.array([x[k] for x in data_holder], dtype=tp))
+        return result
 
 class FixedSizeData(DataFlow):
     def __init__(self, ds, size):
@@ -76,5 +82,21 @@ class FakeData(DataFlow):
 
     def get_data(self):
         for _ in xrange(self._size):
-            yield tuple((np.random.random(k) for k in self.shapes))
+            yield [np.random.random(k) for k in self.shapes]
 
+
+class MapData(DataFlow):
+    """ Apply a function to the given index in the datapoint"""
+    def __init__(self, ds, func, index=0):
+        self.ds = ds
+        self.func = func
+        self.index = index
+
+    def size(self):
+        return self.ds.size()
+
+    def get_data(self):
+        for dp in self.ds.get_data():
+            d = list(dp)
+            dp[self.index] = self.func(dp[self.index])
+            yield dp
