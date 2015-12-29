@@ -126,7 +126,7 @@ def get_config():
     tf.scalar_summary('learning_rate', lr)
 
     return dict(
-        dataset_train=dataset_train,
+        dataset=dataset_train,
         optimizer=tf.train.AdamOptimizer(lr),
         callback=Callbacks([
             SummaryWriter(),

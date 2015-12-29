@@ -18,8 +18,8 @@ def start_infer(config):
     Args:
         config: a tensorpack config dictionary
     """
-    dataset_test = config['dataset_test']
-    assert isinstance(dataset_test, DataFlow), dataset_test.__class__
+    dataset = config['dataset']
+    assert isinstance(dataset, DataFlow), dataset.__class__
 
     # a tf.ConfigProto instance
     sess_config = config.get('session_config', None)
@@ -53,7 +53,7 @@ def start_infer(config):
 
     with sess.as_default():
         with timed_operation('running one batch'):
-            for dp in dataset_test.get_data():
+            for dp in dataset.get_data():
                 feed = dict(zip(input_vars, dp))
                 fetches = [cost_var] + output_vars
                 results = sess.run(fetches, feed_dict=feed)

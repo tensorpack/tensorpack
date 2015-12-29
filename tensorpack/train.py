@@ -39,8 +39,8 @@ def start_train(config):
     Args:
         config: a tensorpack config dictionary
     """
-    dataset_train = config['dataset_train']
-    assert isinstance(dataset_train, DataFlow), dataset_train.__class__
+    dataset = config['dataset']
+    assert isinstance(dataset, DataFlow), dataset.__class__
 
     # a tf.train.Optimizer instance
     optimizer = config['optimizer']
@@ -90,7 +90,7 @@ def start_train(config):
     # start training:
     coord = tf.train.Coordinator()
     # a thread that keeps filling the queue
-    input_th = EnqueueThread(sess, coord, enqueue_op, dataset_train)
+    input_th = EnqueueThread(sess, coord, enqueue_op, dataset)
     model_th = tf.train.start_queue_runners(
         sess=sess, coord=coord, daemon=True, start=True)
     input_th.start()
