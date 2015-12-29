@@ -63,6 +63,7 @@ class Cifar10(DataFlow):
         assert train_or_test in ['train', 'test']
         if dir is None:
             dir = os.path.join(os.path.dirname(__file__), 'cifar10_data')
+        maybe_download_and_extract(dir)
 
         if train_or_test == 'train':
             self.fs = [os.path.join(

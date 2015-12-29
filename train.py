@@ -4,17 +4,19 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
-from utils import *
-from utils.concurrency import EnqueueThread,coordinator_guard
-from utils.summary import summary_moving_average, describe_model
-from dataflow import DataFlow
 from itertools import count
 import argparse
+
+from utils import *
+from utils.concurrency import EnqueueThread,coordinator_guard
+from utils.summary import summary_moving_average
+from utils.modelutils import restore_params, describe_model
+from utils import logger
+from dataflow import DataFlow
 
 def prepare():
     global_step_var = tf.Variable(
         0, trainable=False, name=GLOBAL_STEP_OP_NAME)
-
 
 def start_train(config):
     """
@@ -35,6 +37,9 @@ def start_train(config):
     # a tf.ConfigProto instance
     sess_config = config.get('session_config', None)
     assert isinstance(sess_config, tf.ConfigProto), sess_config.__class__
+
+    # restore saved params
+    params = config.get('restore_params', {})
 
     # input/output variables
     input_vars = config['inputs']
@@ -77,6 +82,8 @@ def start_train(config):
 
     sess = tf.Session(config=sess_config)
     sess.run(tf.initialize_all_variables())
+
+    restore_params(sess, params)
 
     # start training:
     coord = tf.train.Coordinator()

@@ -12,18 +12,22 @@ __all__ = ['Conv2D']
 @layer_register(summary_activation=True)
 def Conv2D(x, out_channel, kernel_shape,
            padding='VALID', stride=1,
-           W_init=None, b_init=None, nl=tf.nn.relu):
+           W_init=None, b_init=None,
+           nl=tf.nn.relu, split=1):
     """
     kernel_shape: (h, w) or a int
     stride: (h, w) or a int
     padding: 'valid' or 'same'
+    split: split channels. used in alexnet
     """
     in_shape = x.get_shape().as_list()
     in_channel = in_shape[-1]
+    assert in_channel % split == 0
+    assert out_channel % split == 0
 
     kernel_shape = shape2d(kernel_shape)
     padding = padding.upper()
-    filter_shape = kernel_shape + [in_channel, out_channel]
+    filter_shape = kernel_shape + [in_channel / split, out_channel]
     stride = shape4d(stride)
 
     if W_init is None:
@@ -34,6 +38,14 @@ def Conv2D(x, out_channel, kernel_shape,
     W = tf.get_variable('W', filter_shape, initializer=W_init) # TODO collections
     b = tf.get_variable('b', [out_channel], initializer=b_init)
 
-    conv = tf.nn.conv2d(x, W, stride, padding)
+    if split == 1:
+        conv = tf.nn.conv2d(x, W, stride, padding)
+    else:
+        inputs = tf.split(3, split, x)
+        kernels = tf.split(3, split, W)
+        outputs = [tf.nn.conv2d(i, k, stride, padding)
+                   for i, k in zip(inputs, kernels)]
+        conv = tf.concat(3, outputs)
     return nl(tf.nn.bias_add(conv, b))
+
 

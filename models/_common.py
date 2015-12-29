@@ -4,6 +4,7 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
+from utils.modelutils import *
 from utils.summary import *
 from utils import logger
 

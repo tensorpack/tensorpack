@@ -17,6 +17,7 @@ class BatchData(DataFlow):
             if set, might return a data point of a different shape
         """
         self.ds = ds
+        assert batch_size <= ds.size()
         self.batch_size = batch_size
         self.remainder = remainder
 
