@@ -18,6 +18,21 @@ def prepare():
     global_step_var = tf.Variable(
         0, trainable=False, name=GLOBAL_STEP_OP_NAME)
 
+def get_train_op(optimizer, cost_var):
+    global_step_var = tf.get_default_graph().get_tensor_by_name(GLOBAL_STEP_VAR_NAME)
+
+    avg_maintain_op = summary_moving_average(cost_var)
+
+    # maintain average in each step
+    with tf.control_dependencies([avg_maintain_op]):
+        grads = optimizer.compute_gradients(cost_var)
+
+    for grad, var in grads:
+        if grad:
+            tf.histogram_summary(var.op.name + '/gradients', grad)
+
+    return optimizer.apply_gradients(grads, global_step_var)
+
 def start_train(config):
     """
     Start training with the given config
@@ -58,27 +73,14 @@ def start_train(config):
     output_vars, cost_var = get_model_func(model_inputs, is_training=True)
 
     # build graph
-    G = tf.get_default_graph()
-    G.add_to_collection(FORWARD_FUNC_KEY, get_model_func)
+    tf.add_to_collection(FORWARD_FUNC_KEY, get_model_func)
     for v in input_vars:
-        G.add_to_collection(INPUT_VARS_KEY, v)
+        tf.add_to_collection(INPUT_VARS_KEY, v)
     for v in output_vars:
-        G.add_to_collection(OUTPUT_VARS_KEY, v)
+        tf.add_to_collection(OUTPUT_VARS_KEY, v)
     describe_model()
 
-    global_step_var = G.get_tensor_by_name(GLOBAL_STEP_VAR_NAME)
-
-    avg_maintain_op = summary_moving_average(cost_var)
-
-    # maintain average in each step
-    with tf.control_dependencies([avg_maintain_op]):
-        grads = optimizer.compute_gradients(cost_var)
-
-    for grad, var in grads:
-        if grad:
-            tf.histogram_summary(var.op.name + '/gradients', grad)
-
-    train_op = optimizer.apply_gradients(grads, global_step_var)
+    train_op = get_train_op(optimizer, cost_var)
 
     sess = tf.Session(config=sess_config)
     sess.run(tf.initialize_all_variables())
@@ -90,11 +92,11 @@ def start_train(config):
     # a thread that keeps filling the queue
     input_th = EnqueueThread(sess, coord, enqueue_op, dataset_train)
     model_th = tf.train.start_queue_runners(
-        sess=sess, coord=coord, daemon=True, start=False)
+        sess=sess, coord=coord, daemon=True, start=True)
+    input_th.start()
 
     with sess.as_default(), \
-            coordinator_guard(
-                sess, coord, [input_th] + model_th, input_queue):
+            coordinator_guard(sess, coord):
         callbacks.before_train()
         for epoch in xrange(1, max_epoch):
             with timed_operation('epoch {}'.format(epoch)):

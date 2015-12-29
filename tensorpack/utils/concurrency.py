@@ -32,6 +32,7 @@ class EnqueueThread(threading.Thread):
         self.input_vars = sess.graph.get_collection(INPUT_VARS_KEY)
         self.dataflow = dataflow
         self.op = enqueue_op
+        self.daemon = True
 
     def run(self):
         try:
@@ -49,20 +50,11 @@ class EnqueueThread(threading.Thread):
             self.coord.request_stop()
 
 @contextmanager
-def coordinator_guard(sess, coord, threads, queue):
-    """
-    Context manager to make sure that:
-        queue is closed
-        threads are joined
-    """
-    for th in threads:
-        th.start()
+def coordinator_guard(sess, coord):
     try:
         yield
     except (KeyboardInterrupt, Exception) as e:
         raise
     finally:
         coord.request_stop()
-        sess.run(
-            queue.close(cancel_pending_enqueues=True))
-        coord.join(threads)
+        sess.close()
