@@ -166,6 +166,8 @@ class TestCallbacks(Callback):
                 cb.before_train()
 
     def trigger_epoch(self):
+        if not self.cbs:
+            return
         tm = CallbackTimeLogger()
         with self.graph.as_default(), self.sess.as_default():
             s = time.time()

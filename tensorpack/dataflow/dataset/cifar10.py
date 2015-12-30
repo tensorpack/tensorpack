@@ -2,12 +2,6 @@
 # -*- coding: UTF-8 -*-
 # File: cifar10.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
-
-#!/usr/bin/env python2
-# -*- coding: UTF-8 -*-
-# File: cifar10.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
-
 import os, sys
 import cPickle
 import numpy
