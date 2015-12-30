@@ -7,8 +7,13 @@ import tensorflow as tf
 import re
 
 from ..utils import logger
+from ..utils import *
 
 __all__ = ['regularize_cost']
+
+@memoized
+def _log_regularizer(name):
+    logger.info("Apply regularizer for {}".format(name))
 
 def regularize_cost(regex, func):
     """
@@ -20,8 +25,7 @@ def regularize_cost(regex, func):
     costs = []
     for p in params:
         name = p.name
-        if re.search(regex, name):
-            logger.info("Apply regularizer for {}".format(name))
-            costs.append(func(p))
+        costs.append(func(p))
+        _log_regularizer(name)
     return tf.add_n(costs)
 

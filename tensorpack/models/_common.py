@@ -4,6 +4,8 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
+from functools import wraps
+
 from ..utils.modelutils import *
 from ..utils.summary import *
 from ..utils import logger
@@ -21,6 +23,7 @@ def layer_register(summary_activation=False):
             Can be overriden when creating the layer.
     """
     def wrapper(func):
+        @wraps(func)
         def inner(*args, **kwargs):
             name = args[0]
             assert isinstance(name, basestring)

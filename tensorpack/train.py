@@ -11,7 +11,6 @@ from utils import *
 from utils.concurrency import EnqueueThread,coordinator_guard
 from utils.summary import summary_moving_average
 from utils.modelutils import describe_model
-from utils.sessinit import NewSession
 from utils import logger
 from dataflow import DataFlow
 

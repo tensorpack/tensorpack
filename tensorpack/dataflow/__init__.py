@@ -6,6 +6,7 @@
 from pkgutil import walk_packages
 import os
 import os.path
+import dataset
 
 __SKIP = ['dftools', 'dataset']
 def global_import(name):

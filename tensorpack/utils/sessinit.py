@@ -7,7 +7,7 @@ from abc import abstractmethod
 import numpy as np
 import tensorflow as tf
 
-from . import logger
+import logger
 class SessionInit(object):
     @abstractmethod
     def init(self, sess):

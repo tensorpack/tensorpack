@@ -16,7 +16,6 @@ from tensorpack.utils.symbolic_functions import *
 from tensorpack.utils.summary import *
 from tensorpack.utils.callback import *
 from tensorpack.utils.validation_callback import *
-from tensorpack.dataflow.dataset import Mnist
 from tensorpack.dataflow import *
 
 BATCH_SIZE = 128
@@ -95,8 +94,8 @@ def get_config():
 
     IMAGE_SIZE = 28
 
-    dataset_train = BatchData(Mnist('train'), 128)
-    dataset_test = BatchData(Mnist('test'), 256, remainder=True)
+    dataset_train = BatchData(dataset.Mnist('train'), 128)
+    dataset_test = BatchData(dataset.Mnist('test'), 256, remainder=True)
     step_per_epoch = dataset_train.size()
     #step_per_epoch = 20
     #dataset_test = FixedSizeData(dataset_test, 20)
@@ -144,6 +143,7 @@ if __name__ == '__main__':
     from tensorpack import train
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.') # nargs='*' in multi mode
+    parser.add_argument('--load', help='load model')
     args = parser.parse_args()
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
@@ -151,4 +151,6 @@ if __name__ == '__main__':
     with tf.Graph().as_default():
         train.prepare()
         config = get_config()
+        if args.load:
+            config['session_init'] = SaverRestore(args.load)
         train.start_train(config)

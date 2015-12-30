@@ -13,9 +13,7 @@ from tensorpack.utils import *
 from tensorpack.utils.symbolic_functions import *
 from tensorpack.utils.summary import *
 from tensorpack.utils.callback import *
-from tensorpack.utils.sessinit import *
 from tensorpack.utils.validation_callback import *
-from tensorpack.dataflow.dataset import Cifar10
 from tensorpack.dataflow import *
 
 BATCH_SIZE = 128
@@ -81,10 +79,10 @@ def get_config():
     logger.set_logger_dir(log_dir)
 
     import cv2
-    dataset_train = Cifar10('train')
+    dataset_train = dataset.Cifar10('train')
     dataset_train = MapData(dataset_train, lambda img: cv2.resize(img, (24, 24)))
     dataset_train = BatchData(dataset_train, 128)
-    dataset_test = Cifar10('test')
+    dataset_test = dataset.Cifar10('test')
     dataset_test = MapData(dataset_test, lambda img: cv2.resize(img, (24, 24)))
     dataset_test = BatchData(dataset_test, 128)
     step_per_epoch = dataset_train.size()
@@ -133,7 +131,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.') # nargs='*' in multi mode
     parser.add_argument('--load', help='load model')
-    global args
     args = parser.parse_args()
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
@@ -141,8 +138,7 @@ if __name__ == '__main__':
     with tf.Graph().as_default():
         train.prepare()
         config = get_config()
-
         if args.load:
             config['session_init'] = SaverRestore(args.load)
-        sess_init = NewSession()
+
         train.start_train(config)

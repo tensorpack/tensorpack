@@ -5,7 +5,7 @@
 
 import tensorflow as tf
 import logger
-from .naming import *
+from naming import *
 
 def create_summary(name, v):
     """
