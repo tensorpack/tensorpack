@@ -35,6 +35,7 @@ class ParamRestore(SessionInit):
         self.prms = param_dict
 
     def init(self, sess):
+        sess.run(tf.initialize_all_variables())
         variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
         var_dict = dict([v.name, v] for v in variables)
         for name, value in self.prms.iteritems():

@@ -25,13 +25,15 @@ class StoppableThread(threading.Thread):
 
 
 class EnqueueThread(threading.Thread):
-    def __init__(self, sess, coord, enqueue_op, dataflow):
+    def __init__(self, sess, coord, enqueue_op, dataflow, queue):
         super(EnqueueThread, self).__init__()
         self.sess = sess
         self.coord = coord
         self.input_vars = sess.graph.get_collection(INPUT_VARS_KEY)
         self.dataflow = dataflow
         self.op = enqueue_op
+        self.queue = queue
+
         self.daemon = True
 
     def run(self):
@@ -45,8 +47,8 @@ class EnqueueThread(threading.Thread):
         except tf.errors.CancelledError as e:
             pass
         except Exception:
-            # TODO close queue.
             logger.exception("Exception in EnqueueThread:")
+            self.queue.close(cancel_pending_enqueues=True)
             self.coord.request_stop()
 
 @contextmanager

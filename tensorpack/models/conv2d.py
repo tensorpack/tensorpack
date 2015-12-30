@@ -35,7 +35,7 @@ def Conv2D(x, out_channel, kernel_shape,
     if b_init is None:
         b_init = tf.constant_initializer()
 
-    W = tf.get_variable('W', filter_shape, initializer=W_init) # TODO collections
+    W = tf.get_variable('W', filter_shape, initializer=W_init)
     b = tf.get_variable('b', [out_channel], initializer=b_init)
 
     if split == 1:

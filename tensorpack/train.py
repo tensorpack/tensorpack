@@ -87,7 +87,7 @@ def start_train(config):
     # start training:
     coord = tf.train.Coordinator()
     # a thread that keeps filling the queue
-    input_th = EnqueueThread(sess, coord, enqueue_op, dataset)
+    input_th = EnqueueThread(sess, coord, enqueue_op, dataset, input_queue)
     model_th = tf.train.start_queue_runners(
         sess=sess, coord=coord, daemon=True, start=True)
     input_th.start()
@@ -101,7 +101,9 @@ def start_train(config):
                     if coord.should_stop():
                         return
                     fetches = [train_op, cost_var] + output_vars + model_inputs
+                    print 'before'
                     results = sess.run(fetches)
+                    print 'after'
                     cost = results[1]
                     outputs = results[2:2 + len(output_vars)]
                     inputs = results[-len(model_inputs):]

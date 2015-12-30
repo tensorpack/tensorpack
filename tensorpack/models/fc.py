@@ -23,4 +23,4 @@ def FullyConnected(x, out_dim, W_init=None, b_init=None, nl=tf.nn.relu):
 
     W = tf.get_variable('W', [in_dim, out_dim], initializer=W_init)
     b = tf.get_variable('b', [out_dim], initializer=b_init)
-    return nl(tf.matmul(x, W) + b)
+    return nl(tf.matmul(x, W) + b, name=tf.get_variable_scope().name + '_output')
