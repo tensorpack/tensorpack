@@ -9,6 +9,7 @@ import time
 import sys
 from contextlib import contextmanager
 import tensorflow as tf
+import numpy as np
 import collections
 
 import logger
@@ -103,3 +104,6 @@ def get_global_step_var():
     global_step_var = tf.Variable(
         0, trainable=False, name=GLOBAL_STEP_OP_NAME)
     return global_step_var
+
+def get_rng(self):
+    return np.random.RandomState()

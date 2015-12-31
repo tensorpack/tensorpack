@@ -16,6 +16,7 @@ from tensorpack.utils.summary import *
 from tensorpack.utils.callback import *
 from tensorpack.utils.validation_callback import *
 from tensorpack.dataflow import *
+from tensorpack.dataflow import imgaug
 
 BATCH_SIZE = 128
 MIN_AFTER_DEQUEUE = 500
@@ -81,7 +82,15 @@ def get_config():
 
     import cv2
     dataset_train = dataset.Cifar10('train')
-    dataset_train = MapData(dataset_train, lambda img: cv2.resize(img, (24, 24)))
+    augmentor = imgaug.AugmentorList([
+        RandomCrop((24, 24)),
+        Flip(horiz=True),
+        BrightnessAdd(0.25),
+        Contrast((0.2,1.8)),
+        PerImageWhitening()
+    ])
+    dataset_train = MapData(dataset_train, lambda img:
+                            augmentor.augment(imgaug.Image(img)).arr)
     dataset_train = BatchData(dataset_train, 128)
     dataset_test = dataset.Cifar10('test')
     dataset_test = MapData(dataset_test, lambda img: cv2.resize(img, (24, 24)))
