@@ -83,7 +83,7 @@ def get_config():
 
     dataset_train = FakeData([(227,227,3), tuple()], 10)
     dataset_train = BatchData(dataset_train, 10)
-    step_per_epoch = 3
+    step_per_epoch = 1
 
     sess_config = get_default_sess_config()
     sess_config.gpu_options.per_process_gpu_memory_fraction = 0.5
@@ -105,12 +105,12 @@ def get_config():
         decay_rate=0.1, staircase=True, name='learning_rate')
     tf.scalar_summary('learning_rate', lr)
 
-    param_dict = np.load('alexnet1.npy').item()
+    param_dict = np.load('alexnet.npy').item()
 
     return TrainConfig(
         dataset=dataset_train,
         optimizer=tf.train.AdamOptimizer(lr),
-        callback=Callbacks([
+        callbacks=Callbacks([
             SummaryWriter(),
             PeriodicSaver(),
             #ValidationError(dataset_test, prefix='test'),
@@ -162,4 +162,4 @@ if __name__ == '__main__':
     #start_train(get_config())
 
     # run alexnet with given model (in npy format)
-    run_test('alexnet.npy')
+    run_test('alexnet-tuned.npy')

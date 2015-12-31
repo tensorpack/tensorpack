@@ -12,7 +12,7 @@ import imp
 from tensorpack.utils import *
 from tensorpack.utils import sessinit
 from tensorpack.dataflow import *
-from tensorpack.predict import DatasetPredictor
+from tensorpack.predict import PredictConfig, DatasetPredictor
 
 
 parser = argparse.ArgumentParser()
@@ -27,11 +27,14 @@ args = parser.parse_args()
 get_config_func = imp.load_source('config_script', args.config).get_config
 
 with tf.Graph().as_default() as G:
-    global_step_var = tf.Variable(
-        0, trainable=False, name=GLOBAL_STEP_OP_NAME)
-    config = get_config_func()
-    config['session_init'] = sessinit.SaverRestore(args.model)
-    config['output_var'] = 'output:0'
+    train_config = get_config_func()
+    config = PredictConfig(
+        inputs=train_config.inputs,
+        input_dataset_mapping=[train_config.inputs[0]],  # assume first component is image
+        get_model_func=train_config.get_model_func,
+        session_init=sessinit.SaverRestore(args.model),
+        output_var_names=['output:0']
+    )
 
     ds = ImageFromFile(args.images, 3, resize=(227, 227))
     predictor = DatasetPredictor(config, ds, batch=128)
@@ -39,7 +42,7 @@ with tf.Graph().as_default() as G:
 
     if args.output_type == 'label':
         for r in res:
-            print r.argsort()[-top:][::-1]
+            print r[0].argsort(axis=1)[:,-args.top:][:,::-1]
     elif args.output_type == 'label_prob':
         raise NotImplementedError
     elif args.output_type == 'raw':

@@ -23,10 +23,9 @@ args = parser.parse_args()
 get_config_func = imp.load_source('config_script', args.config).get_config
 
 with tf.Graph().as_default() as G:
-    global_step_var = tf.Variable(
-        0, trainable=False, name=GLOBAL_STEP_OP_NAME)
+    global_step_var = get_global_step_var()
     config = get_config_func()
-    config['get_model_func'](config['inputs'], is_training=False)
+    config.get_model_func(config.inputs, is_training=False)
     init = sessinit.SaverRestore(args.model)
     sess = tf.Session()
     init.init(sess)
