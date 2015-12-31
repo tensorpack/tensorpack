@@ -3,11 +3,14 @@
 # File: base.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
-from abc import abstractmethod
+
+from abc import abstractmethod, ABCMeta
 
 __all__ = ['DataFlow']
 
 class DataFlow(object):
+    __metaclass__ = ABCMeta
+
     @abstractmethod
     def get_data(self):
         """

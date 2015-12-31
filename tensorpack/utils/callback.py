@@ -8,13 +8,14 @@ import sys
 import numpy as np
 import os
 import time
-from abc import abstractmethod
+from abc import abstractmethod, ABCMeta
 
 from . import create_test_session
 from .naming import *
 import logger
 
 class Callback(object):
+    __metaclass__ = ABCMeta
     running_graph = 'train'
     """ The graph that this callback should run on.
         Either 'train' or 'test'

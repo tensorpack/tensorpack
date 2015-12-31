@@ -3,12 +3,14 @@
 # File: sessinit.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
-from abc import abstractmethod
+from abc import abstractmethod, ABCMeta
 import numpy as np
 import tensorflow as tf
 
 import logger
 class SessionInit(object):
+    __metaclass__ = ABCMeta
+
     @abstractmethod
     def init(self, sess):
         """ Method to initialize a session"""
