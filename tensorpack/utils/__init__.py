@@ -11,7 +11,6 @@ from contextlib import contextmanager
 import tensorflow as tf
 import collections
 
-
 import logger
 
 def global_import(name):
@@ -98,3 +97,9 @@ class memoized(object):
     def __get__(self, obj, objtype):
        '''Support instance methods.'''
        return functools.partial(self.__call__, obj)
+
+@memoized
+def get_global_step_var():
+    global_step_var = tf.Variable(
+        0, trainable=False, name=GLOBAL_STEP_OP_NAME)
+    return global_step_var

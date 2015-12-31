@@ -9,14 +9,60 @@ import argparse
 
 from utils import *
 from utils.concurrency import EnqueueThread,coordinator_guard
+from utils.callback import Callbacks
 from utils.summary import summary_moving_average
 from utils.modelutils import describe_model
 from utils import logger
 from dataflow import DataFlow
 
-def prepare():
-    global_step_var = tf.Variable(
-        0, trainable=False, name=GLOBAL_STEP_OP_NAME)
+class TrainConfig(object):
+    """ config for training"""
+    def __init__(self, **kwargs):
+        """
+        Args:
+            dataset: the dataset to train. a tensorpack.dataflow.DataFlow instance.
+            optimizer: a tf.train.Optimizer instance defining the optimizer
+                for trainig. default to an AdamOptimizer
+            callbacks: a tensorpack.utils.callback.Callbacks instance. Define
+                the callbacks to perform during training. has to contain a
+                SummaryWriter and a PeriodicSaver
+            session_config: a tf.ConfigProto instance to instantiate the
+                session. default to a session running 1 GPU.
+            session_init: a tensorpack.utils.sessinit.SessionInit instance to
+                initialize variables of a session. default to a new session.
+            inputs: a list of input variables. must match what is returned by
+                the dataset
+            input_queue: the queue used for input. default to a FIFO queue
+                with capacity 5
+            get_model_func: a function taking `inputs` and `is_training` and
+                return a tuple of output list as well as the cost to minimize
+            step_per_epoch: the number of steps (parameter updates) to perform
+                in each epoch. default to dataset.size()
+            max_epoch: maximum number of epoch to run training. default to 100
+        """
+        def assert_type(v, tp):
+            assert isinstance(v, tp), v.__class__
+        self.dataset = kwargs.pop('dataset')
+        assert_type(self.dataset, DataFlow)
+        self.optimizer = kwargs.pop('optimizer', tf.train.AdamOptimizer())
+        assert_type(self.optimizer, tf.train.Optimizer)
+        self.callbacks = kwargs.pop('callbacks')
+        assert_type(self.callbacks, Callbacks)
+        self.session_config = kwargs.pop('session_config', get_default_sess_config())
+        assert_type(self.session_config, tf.ConfigProto)
+        self.session_init = kwargs.pop('session_init', NewSession())
+        assert_type(self.session_init, SessionInit)
+        self.inputs = kwargs.pop('inputs')
+        [assert_type(i, tf.Tensor) for i in self.inputs]
+        self.input_queue = kwargs.pop(
+            'input_queue', tf.FIFOQueue(5, [x.dtype for x in self.inputs], name='input_queue'))
+        assert_type(self.input_queue, tf.QueueBase)
+        assert self.input_queue.dtypes == [x.dtype for x in self.inputs]
+        self.get_model_func = kwargs.pop('get_model_func')
+        self.step_per_epoch = int(kwargs.pop('step_per_epoch', self.dataset.size()))
+        self.max_epoch = int(kwargs.pop('max_epoch', 100))
+        assert self.step_per_epoch > 0 and self.max_epoch > 0
+        assert len(kwargs) == 0, 'Unknown arguments: {}'.format(str(kwargs.keys()))
 
 def get_train_op(optimizer, cost_var):
     global_step_var = tf.get_default_graph().get_tensor_by_name(GLOBAL_STEP_VAR_NAME)
@@ -37,57 +83,36 @@ def start_train(config):
     """
     Start training with the given config
     Args:
-        config: a tensorpack config dictionary
+        config: a TrainConfig instance
     """
-    dataset = config['dataset']
-    assert isinstance(dataset, DataFlow), dataset.__class__
-
-    # a tf.train.Optimizer instance
-    optimizer = config['optimizer']
-    assert isinstance(optimizer, tf.train.Optimizer), optimizer.__class__
-
-    # a list of Callback instance
-    callbacks = config['callback']
-
-    # a tf.ConfigProto instance
-    sess_config = config.get('session_config', None)
-    assert isinstance(sess_config, tf.ConfigProto), sess_config.__class__
-
-    sess_init = config.get('session_init', NewSession())
-
-    # input/output variables
-    input_vars = config['inputs']
-    input_queue = config['input_queue']
-    get_model_func = config['get_model_func']
-
-    step_per_epoch = int(config['step_per_epoch'])
-    max_epoch = int(config['max_epoch'])
-    assert step_per_epoch > 0 and max_epoch > 0
+    input_vars = config.inputs
+    input_queue = config.input_queue
+    callbacks = config.callbacks
 
     enqueue_op = input_queue.enqueue(tuple(input_vars))
     model_inputs = input_queue.dequeue()
     # set dequeue shape
     for qv, v in zip(model_inputs, input_vars):
         qv.set_shape(v.get_shape())
-    output_vars, cost_var = get_model_func(model_inputs, is_training=True)
+    output_vars, cost_var = config.get_model_func(model_inputs, is_training=True)
 
     # build graph
-    tf.add_to_collection(FORWARD_FUNC_KEY, get_model_func)
+    tf.add_to_collection(FORWARD_FUNC_KEY, config.get_model_func)
     for v in input_vars:
         tf.add_to_collection(INPUT_VARS_KEY, v)
     for v in output_vars:
         tf.add_to_collection(OUTPUT_VARS_KEY, v)
     describe_model()
 
-    train_op = get_train_op(optimizer, cost_var)
+    train_op = get_train_op(config.optimizer, cost_var)
 
-    sess = tf.Session(config=sess_config)
-    sess_init.init(sess)
+    sess = tf.Session(config=config.session_config)
+    config.session_init.init(sess)
 
     # start training:
     coord = tf.train.Coordinator()
     # a thread that keeps filling the queue
-    input_th = EnqueueThread(sess, coord, enqueue_op, dataset, input_queue)
+    input_th = EnqueueThread(sess, coord, enqueue_op, config.dataset, input_queue)
     model_th = tf.train.start_queue_runners(
         sess=sess, coord=coord, daemon=True, start=True)
     input_th.start()
@@ -95,15 +120,13 @@ def start_train(config):
     with sess.as_default(), \
             coordinator_guard(sess, coord):
         callbacks.before_train()
-        for epoch in xrange(1, max_epoch):
+        for epoch in xrange(1, config.max_epoch):
             with timed_operation('epoch {}'.format(epoch)):
-                for step in xrange(step_per_epoch):
+                for step in xrange(config.step_per_epoch):
                     if coord.should_stop():
                         return
                     fetches = [train_op, cost_var] + output_vars + model_inputs
-                    print 'before'
                     results = sess.run(fetches)
-                    print 'after'
                     cost = results[1]
                     outputs = results[2:2 + len(output_vars)]
                     inputs = results[-len(model_inputs):]
@@ -111,4 +134,3 @@ def start_train(config):
 
                 # note that summary_op will take a data from the queue.
                 callbacks.trigger_epoch()
-

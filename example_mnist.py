@@ -10,6 +10,7 @@ import numpy as np
 import os, sys
 import argparse
 
+from tensorpack.train import TrainConfig, start_train
 from tensorpack.models import *
 from tensorpack.utils import *
 from tensorpack.utils.symbolic_functions import *
@@ -97,7 +98,7 @@ def get_config():
     dataset_train = BatchData(dataset.Mnist('train'), 128)
     dataset_test = BatchData(dataset.Mnist('test'), 256, remainder=True)
     step_per_epoch = dataset_train.size()
-    #step_per_epoch = 20
+    step_per_epoch = 2
     #dataset_test = FixedSizeData(dataset_test, 20)
 
     sess_config = get_default_sess_config()
@@ -115,18 +116,17 @@ def get_config():
     #input_queue = tf.FIFOQueue(
         #100, [x.dtype for x in input_vars], name='queue')
 
-    global_step_var = tf.get_default_graph().get_tensor_by_name(GLOBAL_STEP_VAR_NAME)
     lr = tf.train.exponential_decay(
         learning_rate=1e-4,
-        global_step=global_step_var,
+        global_step=get_global_step_var(),
         decay_steps=dataset_train.size() * 50,
         decay_rate=0.1, staircase=True, name='learning_rate')
     tf.scalar_summary('learning_rate', lr)
 
-    return dict(
+    return TrainConfig(
         dataset=dataset_train,
         optimizer=tf.train.AdamOptimizer(lr),
-        callback=Callbacks([
+        callbacks=Callbacks([
             SummaryWriter(),
             PeriodicSaver(),
             ValidationError(dataset_test, prefix='test'),
@@ -140,7 +140,6 @@ def get_config():
     )
 
 if __name__ == '__main__':
-    from tensorpack import train
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.') # nargs='*' in multi mode
     parser.add_argument('--load', help='load model')
@@ -149,8 +148,7 @@ if __name__ == '__main__':
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
     with tf.Graph().as_default():
-        train.prepare()
         config = get_config()
         if args.load:
-            config['session_init'] = SaverRestore(args.load)
-        train.start_train(config)
+            config.session_init = SaverRestore(args.load)
+        start_train(config)

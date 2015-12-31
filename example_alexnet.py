@@ -1,56 +1,58 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
-# File: example_cifar10.py
+# File: example_alexnet.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
-import argparse
 import numpy as np
 import os
+import argparse
+import cPickle as pkl
 
 from tensorpack.train import TrainConfig, start_train
+from tensorpack.predict import PredictConfig, get_predict_func
 from tensorpack.models import *
 from tensorpack.utils import *
 from tensorpack.utils.symbolic_functions import *
 from tensorpack.utils.summary import *
 from tensorpack.utils.callback import *
-from tensorpack.utils.validation_callback import *
 from tensorpack.dataflow import *
 
-BATCH_SIZE = 128
+BATCH_SIZE = 10
 MIN_AFTER_DEQUEUE = 500
 CAPACITY = MIN_AFTER_DEQUEUE + 3 * BATCH_SIZE
 
 def get_model(inputs, is_training):
+    # img: 227x227x3
     is_training = bool(is_training)
     keep_prob = tf.constant(0.5 if is_training else 1.0)
 
     image, label = inputs
 
-    #if is_training:    # slow
-        ## augmentations
-        #image, label = tf.train.slice_input_producer(
-            #[image, label], name='slice_queue')
-        #image = tf.image.random_brightness(image, 0.1)
-        #image, label = tf.train.shuffle_batch(
-            #[image, label], BATCH_SIZE, CAPACITY, MIN_AFTER_DEQUEUE,
-            #num_threads=2, enqueue_many=False)
+    l = Conv2D('conv1', image, out_channel=96, kernel_shape=11, stride=4, padding='VALID')
+    l = tf.nn.lrn(l, 2, bias=1.0, alpha=2e-5, beta=0.75, name='norm1')
+    l = MaxPooling('pool1', l, 3, stride=2, padding='VALID')
 
-    l = Conv2D('conv0', image, out_channel=64, kernel_shape=5, padding='SAME')
-    l = MaxPooling('pool0', l, 3, stride=2, padding='SAME')
-    l = tf.nn.lrn(l, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75, name='norm0')
+    l = Conv2D('conv2', l, out_channel=256, kernel_shape=5,
+                   padding='SAME', split=2)
+    l = tf.nn.lrn(l, 2, bias=1.0, alpha=2e-5, beta=0.75, name='norm2')
+    l = MaxPooling('pool2', l, 3, stride=2, padding='VALID')
 
-    l = Conv2D('conv1', l, out_channel=64, kernel_shape=5, padding='SAME')
-    l = tf.nn.lrn(l, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75, name='norm1')
-    l = MaxPooling('pool1', l, 3, stride=2, padding='SAME')
+    l = Conv2D('conv3', l, out_channel=384, kernel_shape=3,
+                   padding='SAME')
+    l = Conv2D('conv4', l, out_channel=384, kernel_shape=3,
+                   padding='SAME', split=2)
+    l = Conv2D('conv5', l, out_channel=256, kernel_shape=3,
+                   padding='SAME', split=2)
+    l = MaxPooling('pool3', l, 3, stride=2, padding='VALID')
 
-    l = FullyConnected('fc0', l, 384)
-    l = FullyConnected('fc1', l, out_dim=192)
+    l = FullyConnected('fc6', l, 4096)
+    l = FullyConnected('fc7', l, out_dim=4096)
     # fc will have activation summary by default. disable this for the output layer
-    logits = FullyConnected('fc2', l, out_dim=10, summary_activation=False, nl=tf.identity)
+    logits = FullyConnected('fc8', l, out_dim=1000, summary_activation=False, nl=tf.identity)
     prob = tf.nn.softmax(logits, name='output')
 
-    y = one_hot(label, 10)
+    y = one_hot(label, 1000)
     cost = tf.nn.softmax_cross_entropy_with_logits(logits, y)
     cost = tf.reduce_mean(cost, name='cross_entropy_loss')
     tf.add_to_collection(COST_VARS_KEY, cost)
@@ -79,16 +81,9 @@ def get_config():
     log_dir = os.path.join('train_log', os.path.basename(__file__)[:-3])
     logger.set_logger_dir(log_dir)
 
-    import cv2
-    dataset_train = dataset.Cifar10('train')
-    dataset_train = MapData(dataset_train, lambda img: cv2.resize(img, (24, 24)))
-    dataset_train = BatchData(dataset_train, 128)
-    dataset_test = dataset.Cifar10('test')
-    dataset_test = MapData(dataset_test, lambda img: cv2.resize(img, (24, 24)))
-    dataset_test = BatchData(dataset_test, 128)
-    step_per_epoch = dataset_train.size()
-    #step_per_epoch = 20
-    #dataset_test = FixedSizeData(dataset_test, 20)
+    dataset_train = FakeData([(227,227,3), tuple()], 10)
+    dataset_train = BatchData(dataset_train, 10)
+    step_per_epoch = 3
 
     sess_config = get_default_sess_config()
     sess_config.gpu_options.per_process_gpu_memory_fraction = 0.5
@@ -96,47 +91,74 @@ def get_config():
     # prepare model
     input_vars = [
         tf.placeholder(
-            tf.float32, shape=(None, 24, 24, 3), name='input'),
+            tf.float32, shape=(None, 227, 227, 3), name='input'),
         tf.placeholder(
             tf.int32, shape=(None,), name='label')
     ]
     input_queue = tf.RandomShuffleQueue(
-        100, 50, [x.dtype for x in input_vars], name='queue')
+        10, 3, [x.dtype for x in input_vars], name='queue')
 
     lr = tf.train.exponential_decay(
-        learning_rate=1e-4,
+        learning_rate=1e-8,
         global_step=get_global_step_var(),
         decay_steps=dataset_train.size() * 50,
         decay_rate=0.1, staircase=True, name='learning_rate')
     tf.scalar_summary('learning_rate', lr)
 
+    param_dict = np.load('alexnet1.npy').item()
+
     return TrainConfig(
         dataset=dataset_train,
         optimizer=tf.train.AdamOptimizer(lr),
-        callbacks=Callbacks([
+        callback=Callbacks([
             SummaryWriter(),
             PeriodicSaver(),
-            ValidationError(dataset_test, prefix='test'),
+            #ValidationError(dataset_test, prefix='test'),
         ]),
         session_config=sess_config,
         inputs=input_vars,
         input_queue=input_queue,
         get_model_func=get_model,
         step_per_epoch=step_per_epoch,
+        session_init=ParamRestore(param_dict),
         max_epoch=100,
     )
+
+def run_test(path):
+    input_vars = [
+        tf.placeholder(
+            tf.float32, shape=(None, 227, 227, 3), name='input'),
+        tf.placeholder(
+            tf.int32, shape=(None,), name='label')
+    ]
+    param_dict = np.load(path).item()
+
+    pred_config = PredictConfig(
+        inputs=input_vars,
+        get_model_func=get_model,
+        session_init=ParamRestore(param_dict),
+        output_var_names=['output:0']   # output:0 is the probability distribution
+    )
+    predict_func = get_predict_func(pred_config)
+
+    import cv2
+    im = cv2.imread('cat.jpg')
+    im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
+    im = cv2.resize(im, (227, 227))
+    im = np.reshape(im, (1, 227, 227, 3))
+    outputs = predict_func([im, (1,)])[0]
+    prob = outputs[0]
+    print prob.shape
+    print prob.argsort()[-10:][::-1]
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.') # nargs='*' in multi mode
-    parser.add_argument('--load', help='load model')
     args = parser.parse_args()
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
-    with tf.Graph().as_default():
-        config = get_config()
-        if args.load:
-            config.session_init = SaverRestore(args.load)
+    #start_train(get_config())
 
-        start_train(config)
+    # run alexnet with given model (in npy format)
+    run_test('alexnet.npy')
