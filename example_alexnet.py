@@ -135,6 +135,7 @@ def run_test(path):
 
     pred_config = PredictConfig(
         inputs=input_vars,
+        input_dataset_mapping=[input_vars[0]],
         get_model_func=get_model,
         session_init=ParamRestore(param_dict),
         output_var_names=['output:0']   # output:0 is the probability distribution
@@ -146,7 +147,7 @@ def run_test(path):
     im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
     im = cv2.resize(im, (227, 227))
     im = np.reshape(im, (1, 227, 227, 3))
-    outputs = predict_func([im, (1,)])[0]
+    outputs = predict_func([im])[0]
     prob = outputs[0]
     print prob.shape
     print prob.argsort()[-10:][::-1]
