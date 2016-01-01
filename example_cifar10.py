@@ -28,7 +28,7 @@ def get_model(inputs, is_training):
 
     image, label = inputs
 
-    if is_training:    # slow?
+    if is_training:
         image, label = tf.train.shuffle_batch(
             [image, label], BATCH_SIZE, CAPACITY, MIN_AFTER_DEQUEUE,
             num_threads=6, enqueue_many=False)
@@ -44,14 +44,19 @@ def get_model(inputs, is_training):
     l = MaxPooling('pool0', l, 3, stride=2, padding='SAME')
     l = tf.nn.lrn(l, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75, name='norm0')
 
-    l = Conv2D('conv1', l, out_channel=64, kernel_shape=5, padding='SAME')
+    l = Conv2D('conv1', l, out_channel=64, kernel_shape=5, padding='SAME',
+               b_init=tf.constant_initializer(0.1))
     l = tf.nn.lrn(l, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75, name='norm1')
     l = MaxPooling('pool1', l, 3, stride=2, padding='SAME')
 
-    l = FullyConnected('fc0', l, 384)
-    l = FullyConnected('fc1', l, out_dim=192)
+    l = FullyConnected('fc0', l, 384,
+                       b_init=tf.constant_initializer(0.1))
+    l = FullyConnected('fc1', l, out_dim=192,
+                       b_init=tf.constant_initializer(0.1))
     # fc will have activation summary by default. disable this for the output layer
-    logits = FullyConnected('fc2', l, out_dim=10, summary_activation=False, nl=tf.identity)
+    logits = FullyConnected('linear', l, out_dim=10, summary_activation=False,
+                            nl=tf.identity,
+                            W_init=tf.truncated_normal_initializer(1/192.0))
     prob = tf.nn.softmax(logits, name='output')
 
     y = one_hot(label, 10)
@@ -69,7 +74,7 @@ def get_model(inputs, is_training):
         SUMMARY_VARS_KEY, tf.reduce_mean(wrong, name='train_error'))
 
     # weight decay on all W of fc layers
-    wd_cost = tf.mul(1e-4,
+    wd_cost = tf.mul(4e-3,
                      regularize_cost('fc.*/W', tf.nn.l2_loss),
                      name='regularize_loss')
     tf.add_to_collection(COST_VARS_KEY, wd_cost)
@@ -122,7 +127,7 @@ def get_config():
     lr = tf.train.exponential_decay(
         learning_rate=1e-1,
         global_step=get_global_step_var(),
-        decay_steps=dataset_train.size() * 200,
+        decay_steps=dataset_train.size() * 350,
         decay_rate=0.1, staircase=True, name='learning_rate')
     tf.scalar_summary('learning_rate', lr)
 

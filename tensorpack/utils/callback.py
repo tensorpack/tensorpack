@@ -61,7 +61,7 @@ class PeriodicCallback(Callback):
         pass
 
 class PeriodicSaver(PeriodicCallback):
-    def __init__(self, period=1, keep_recent=50, keep_freq=0.5):
+    def __init__(self, period=1, keep_recent=10, keep_freq=0.5):
         super(PeriodicSaver, self).__init__(period)
         self.path = os.path.join(logger.LOG_DIR, 'model')
         self.keep_recent = keep_recent

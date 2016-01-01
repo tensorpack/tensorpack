@@ -7,6 +7,7 @@ import tensorflow as tf
 from itertools import count
 import argparse
 import numpy as np
+import tqdm
 
 from utils import *
 from utils.modelutils import describe_model
@@ -115,8 +116,10 @@ class DatasetPredictor(object):
 
     def get_result(self):
         """ a generator to return prediction for each data"""
-        for dp in self.ds.get_data():
-            yield self.predict_func(dp)
+        with tqdm(total=self.ds.size()) as pbar:
+            for dp in self.ds.get_data():
+                yield self.predict_func(dp)
+                pbar.update()
 
     def get_all_result(self):
         return list(self.get_result())
