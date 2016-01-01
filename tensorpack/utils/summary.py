@@ -56,7 +56,10 @@ def summary_moving_average(cost_var):
             tf.get_collection(SUMMARY_VARS_KEY) + \
             tf.get_collection(COST_VARS_KEY)
     avg_maintain_op = averager.apply(vars_to_summary)
-    for c in vars_to_summary:
-        tf.scalar_summary(c.op.name, averager.average(c))
+    for idx, c in enumerate(vars_to_summary):
+        name = c.op.name
+        if idx == 0:
+            name = 'train_cost'
+        tf.scalar_summary(name, averager.average(c))
     return avg_maintain_op
 

@@ -60,14 +60,9 @@ class ValidationError(PeriodicCallback):
                 pbar.update()
 
         cost_avg = cost_sum / cnt
-        self.writer.add_summary(
-            create_summary('{}_error'.format(self.prefix),
-                           err_stat.accuracy),
-            self.global_step)
-        self.writer.add_summary(
-            create_summary('{}_cost'.format(self.prefix),
-                           cost_avg),
-            self.global_step)
-        logger.info(
-            "{} validation after epoch{},step{}: err={:.4f}, cost={:.3f}".format(
-            self.prefix, self.epoch_num, self.global_step, err_stat.accuracy, cost_avg))
+        self.writer.add_summary(create_summary(
+            '{}_error'.format(self.prefix), err_stat.accuracy), self.global_step)
+        self.writer.add_summary(create_summary(
+            '{}_cost'.format(self.prefix), cost_avg), self.global_step)
+        logger.info("{}_cost: {:.4f}".format(self.prefix, cost_avg))
+        logger.info("{}_error: {:.4f}".format(self.prefix, err_stat.accuracy))

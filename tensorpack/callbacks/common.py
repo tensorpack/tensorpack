@@ -30,8 +30,9 @@ class PeriodicSaver(PeriodicCallback):
             global_step=self.global_step)
 
 class SummaryWriter(Callback):
-    def __init__(self):
+    def __init__(self, print_tag=None):
         self.log_dir = logger.LOG_DIR
+        self.print_tag = print_tag if print_tag else ['train_cost']
 
     def _before_train(self):
         self.writer = tf.train.SummaryWriter(
@@ -44,5 +45,11 @@ class SummaryWriter(Callback):
         if self.summary_op is None:
             return
         summary_str = self.summary_op.eval()
-        self.writer.add_summary(summary_str, get_global_step())
+        summary = tf.Summary.FromString(summary_str)
+        for val in summary.value:
+            if val.tag in self.print_tag:
+                assert val.WhichOneof('value') == 'simple_value', \
+                    'Cannot print summary {}: not a simple_value summary!'.format(val.tag)
+                logger.info('{}: {:.4f}'.format(val.tag, val.simple_value))
+        self.writer.add_summary(summary, get_global_step())
 

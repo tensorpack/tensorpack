@@ -134,7 +134,7 @@ def get_config():
         dataset=dataset_train,
         optimizer=tf.train.GradientDescentOptimizer(lr),
         callbacks=Callbacks([
-            SummaryWriter(),
+            SummaryWriter(print_tag=['train_cost', 'train_error']),
             PeriodicSaver(),
             ValidationError(dataset_test, prefix='test'),
         ]),
