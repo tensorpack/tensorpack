@@ -4,6 +4,8 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
+from tqdm import tqdm
+
 from .stat import *
 from .callback import PeriodicCallback, Callback
 from .naming import *
@@ -42,17 +44,19 @@ class ValidationError(PeriodicCallback):
         cnt = 0
         err_stat = Accuracy()
         cost_sum = 0
-        for dp in self.ds.get_data():
-            feed = dict(zip(self.input_vars, dp))
+        with tqdm(total=self.ds.size()) as pbar:
+            for dp in self.ds.get_data():
+                feed = dict(zip(self.input_vars, dp))
 
-            batch_size = dp[0].shape[0]   # assume batched input
+                batch_size = dp[0].shape[0]   # assume batched input
 
-            cnt += batch_size
-            wrong, cost = self.sess.run(
-                [self.wrong_var, self.cost_var], feed_dict=feed)
-            err_stat.feed(wrong, batch_size)
-            # each batch might not have the same size in validation
-            cost_sum += cost * batch_size
+                cnt += batch_size
+                wrong, cost = self.sess.run(
+                    [self.wrong_var, self.cost_var], feed_dict=feed)
+                err_stat.feed(wrong, batch_size)
+                # each batch might not have the same size in validation
+                cost_sum += cost * batch_size
+                pbar.update()
 
         cost_avg = cost_sum / cnt
         self.writer.add_summary(

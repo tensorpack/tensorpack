@@ -7,6 +7,7 @@ import tensorflow as tf
 from itertools import count
 import argparse
 
+import tqdm
 from utils import *
 from utils.concurrency import EnqueueThread,coordinator_guard
 from utils.callback import Callbacks
@@ -134,7 +135,8 @@ def start_train(config):
         callbacks.before_train()
         for epoch in xrange(1, config.max_epoch):
             with timed_operation('epoch {}'.format(epoch)):
-                for step in xrange(config.step_per_epoch):
+                for step in tqdm.trange(
+                        config.step_per_epoch, leave=True, mininterval=0.2):
                     if coord.should_stop():
                         return
                     # TODO if no one uses trigger_step, train_op can be

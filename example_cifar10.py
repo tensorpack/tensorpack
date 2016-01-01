@@ -140,7 +140,7 @@ def get_config():
         get_model_func=get_model,
         batched_model_input=False,
         step_per_epoch=step_per_epoch,
-        max_epoch=100,
+        max_epoch=500,
     )
 
 if __name__ == '__main__':
