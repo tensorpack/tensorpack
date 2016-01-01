@@ -31,36 +31,6 @@ def timed_operation(msg, log_start=False):
     logger.info('finished {}, time={:.2f}sec.'.format(
         msg, time.time() - start))
 
-@contextmanager
-def create_test_graph():
-    G = tf.get_default_graph()
-    input_vars_train = G.get_collection(INPUT_VARS_KEY)
-    forward_func = G.get_collection(FORWARD_FUNC_KEY)[0]
-    with tf.Graph().as_default() as Gtest:
-        # create a global step var in test graph
-        global_step_var = tf.Variable(
-            0, trainable=False, name=GLOBAL_STEP_OP_NAME)
-        input_vars = []
-        for v in input_vars_train:
-            name = v.name
-            assert name.endswith(':0'), "I think placeholder variable should all ends with ':0'"
-            name = name[:-2]
-            input_vars.append(tf.placeholder(
-                v.dtype, shape=v.get_shape(), name=name
-            ))
-        for v in input_vars:
-            Gtest.add_to_collection(INPUT_VARS_KEY, v)
-        output_vars, cost = forward_func(input_vars, is_training=False)
-        for v in output_vars:
-            Gtest.add_to_collection(OUTPUT_VARS_KEY, v)
-        yield Gtest
-
-@contextmanager
-def create_test_session():
-    with create_test_graph():
-        with tf.Session() as sess:
-            yield sess
-
 def get_default_sess_config():
     """
     Return a better config to use as default.

@@ -1,99 +1,46 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
-# File: callback.py
+# File: group.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
-import sys
-import numpy as np
-import os
-import time
-from abc import abstractmethod, ABCMeta
+from contextlib import contextmanager
 
-from . import create_test_session, get_global_step
-from .naming import *
-import logger
+from .base import Callback
+from .common import *
+from ..utils import *
 
-class Callback(object):
-    __metaclass__ = ABCMeta
-    running_graph = 'train'
-    """ The graph that this callback should run on.
-        Either 'train' or 'test'
-    """
+__all__ = ['Callbacks']
 
-    def before_train(self):
-        self.graph = tf.get_default_graph()
-        self.sess = tf.get_default_session()
-        self._before_train()
+@contextmanager
+def create_test_graph():
+    G = tf.get_default_graph()
+    input_vars_train = G.get_collection(INPUT_VARS_KEY)
+    forward_func = G.get_collection(FORWARD_FUNC_KEY)[0]
+    with tf.Graph().as_default() as Gtest:
+        # create a global step var in test graph
+        global_step_var = tf.Variable(
+            0, trainable=False, name=GLOBAL_STEP_OP_NAME)
+        input_vars = []
+        for v in input_vars_train:
+            name = v.name
+            assert name.endswith(':0'), "I think placeholder variable should all ends with ':0'"
+            name = name[:-2]
+            input_vars.append(tf.placeholder(
+                v.dtype, shape=v.get_shape(), name=name
+            ))
+        for v in input_vars:
+            Gtest.add_to_collection(INPUT_VARS_KEY, v)
+        output_vars, cost = forward_func(input_vars, is_training=False)
+        for v in output_vars:
+            Gtest.add_to_collection(OUTPUT_VARS_KEY, v)
+        yield Gtest
 
-    def _before_train(self):
-        """
-        Called before starting iterative training
-        """
-
-    def trigger_step(self, inputs, outputs, cost):
-        """
-        Callback to be triggered after every step (every backpropagation)
-        Args:
-            inputs: the list of input values
-            outputs: list of output values after running this inputs
-            cost: the cost value after running this input
-        """
-
-    def trigger_epoch(self):
-        """
-        Callback to be triggered after every epoch (full iteration of input dataset)
-        """
-
-class PeriodicCallback(Callback):
-    def __init__(self, period):
-        self.__period = period
-        self.epoch_num = 0
-
-    def trigger_epoch(self):
-        self.epoch_num += 1
-        if self.epoch_num % self.__period == 0:
-            self.global_step = get_global_step()
-            self._trigger()
-
-    @abstractmethod
-    def _trigger(self):
-        pass
-
-class PeriodicSaver(PeriodicCallback):
-    def __init__(self, period=1, keep_recent=10, keep_freq=0.5):
-        super(PeriodicSaver, self).__init__(period)
-        self.path = os.path.join(logger.LOG_DIR, 'model')
-        self.keep_recent = keep_recent
-        self.keep_freq = keep_freq
-
-    def _before_train(self):
-        self.saver = tf.train.Saver(
-            max_to_keep=self.keep_recent,
-            keep_checkpoint_every_n_hours=self.keep_freq)
-
-    def _trigger(self):
-        self.saver.save(
-            tf.get_default_session(),
-            self.path,
-            global_step=self.global_step)
-
-class SummaryWriter(Callback):
-    def __init__(self):
-        self.log_dir = logger.LOG_DIR
-
-    def _before_train(self):
-        self.writer = tf.train.SummaryWriter(
-            self.log_dir, graph_def=self.sess.graph_def)
-        tf.add_to_collection(SUMMARY_WRITER_COLLECTION_KEY, self.writer)
-        self.summary_op = tf.merge_all_summaries()
-
-    def trigger_epoch(self):
-        # check if there is any summary
-        if self.summary_op is None:
-            return
-        summary_str = self.summary_op.eval()
-        self.writer.add_summary(summary_str, get_global_step())
+@contextmanager
+def create_test_session():
+    with create_test_graph():
+        with tf.Session() as sess:
+            yield sess
 
 class CallbackTimeLogger(object):
     def __init__(self):
@@ -126,7 +73,7 @@ class TrainCallbacks(Callback):
                 self.cbs.insert(0, self.cbs.pop(idx))
                 break
         else:
-            raise RuntimeError("Callbacks must contain a SummaryWriter!")
+            raise ValueError("Callbacks must contain a SummaryWriter!")
 
     def before_train(self):
         for cb in self.cbs:
@@ -199,7 +146,7 @@ class Callbacks(Callback):
             elif cb.running_graph == 'train':
                 train_cbs.append(cb)
             else:
-                raise RuntimeError(
+                raise ValueError(
                     "Unknown callback running graph {}!".format(cb.running_graph))
         self.train = TrainCallbacks(train_cbs)
         self.test = TestCallbacks(test_cbs)
@@ -216,4 +163,3 @@ class Callbacks(Callback):
         self.train.trigger_epoch()
         # TODO test callbacks can be run async?
         self.test.trigger_epoch()
-

@@ -18,7 +18,7 @@ def Conv2D(x, out_channel, kernel_shape,
     kernel_shape: (h, w) or a int
     stride: (h, w) or a int
     padding: 'valid' or 'same'
-    split: split channels. used in alexnet
+    split: split channels. used in Alexnet
     """
     in_shape = x.get_shape().as_list()
     in_channel = in_shape[-1]
@@ -31,7 +31,7 @@ def Conv2D(x, out_channel, kernel_shape,
     stride = shape4d(stride)
 
     if W_init is None:
-        W_init = tf.truncated_normal_initializer(stddev=1e-4)
+        W_init = tf.truncated_normal_initializer(stddev=4e-3)
     if b_init is None:
         b_init = tf.constant_initializer()
 

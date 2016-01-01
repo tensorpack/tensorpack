@@ -15,8 +15,7 @@ from tensorpack.models import *
 from tensorpack.utils import *
 from tensorpack.utils.symbolic_functions import *
 from tensorpack.utils.summary import *
-from tensorpack.utils.callback import *
-from tensorpack.utils.validation_callback import *
+from tensorpack.callbacks import *
 from tensorpack.dataflow import *
 
 BATCH_SIZE = 128

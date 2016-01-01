@@ -10,7 +10,7 @@ import argparse
 import tqdm
 from utils import *
 from utils.concurrency import EnqueueThread,coordinator_guard
-from utils.callback import Callbacks
+from callbacks import *
 from utils.summary import summary_moving_average
 from utils.modelutils import describe_model
 from utils import logger

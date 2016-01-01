@@ -6,11 +6,12 @@
 import tensorflow as tf
 from tqdm import tqdm
 
-from .stat import *
-from .callback import PeriodicCallback, Callback
-from .naming import *
-from .summary import *
-import logger
+from ..utils import *
+from ..utils.stat import *
+from ..utils.summary import *
+from .base import PeriodicCallback, Callback
+
+__all__ = ['ValidationError']
 
 class ValidationError(PeriodicCallback):
     running_graph = 'test'
