@@ -56,7 +56,7 @@ def get_model(inputs, is_training):
     y = one_hot(label, 10)
     cost = tf.nn.softmax_cross_entropy_with_logits(logits, y)
     cost = tf.reduce_mean(cost, name='cross_entropy_loss')
-    tf.add_to_collection(COST_VARS_KEY, cost)
+    tf.add_to_collection(SUMMARY_VARS_KEY, cost)
 
     # compute the number of failed samples, for ValidationError to use at test time
     wrong = tf.not_equal(
@@ -71,7 +71,7 @@ def get_model(inputs, is_training):
     wd_cost = tf.mul(1e-4,
                      regularize_cost('fc.*/W', tf.nn.l2_loss),
                      name='regularize_loss')
-    tf.add_to_collection(COST_VARS_KEY, wd_cost)
+    tf.add_to_collection(SUMMARY_VARS_KEY, wd_cost)
 
     add_histogram_summary('.*/W')   # monitor histogram of all W
     return [prob, nr_wrong], tf.add_n([wd_cost, cost], name='cost')
@@ -105,6 +105,7 @@ def get_config():
 
     sess_config = get_default_sess_config()
     sess_config.gpu_options.per_process_gpu_memory_fraction = 0.5
+    sess_config.device_count['GPU'] = 2
 
     # prepare model
     input_vars = [
@@ -149,7 +150,8 @@ if __name__ == '__main__':
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
     with tf.Graph().as_default():
-        config = get_config()
+        with tf.device('/cpu:0'):
+            config = get_config()
         if args.load:
             config.session_init = SaverRestore(args.load)
 

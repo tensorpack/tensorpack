@@ -5,6 +5,7 @@
 
 import tensorflow as tf
 import os
+import re
 
 from .base import Callback, PeriodicCallback
 from ..utils import *
@@ -47,6 +48,8 @@ class SummaryWriter(Callback):
         summary_str = self.summary_op.eval()
         summary = tf.Summary.FromString(summary_str)
         for val in summary.value:
+            #print val.tag
+            val.tag = re.sub('tower[0-9]*/', '', val.tag)
             if val.tag in self.print_tag:
                 assert val.WhichOneof('value') == 'simple_value', \
                     'Cannot print summary {}: not a simple_value summary!'.format(val.tag)

@@ -9,7 +9,6 @@ GLOBAL_STEP_VAR_NAME = 'global_step:0'
 SUMMARY_WRITER_COLLECTION_KEY = 'summary_writer'
 
 INPUT_VARS_KEY = 'INPUT_VARIABLES'
-OUTPUT_VARS_KEY = 'OUTPUT_VARIABLES'
 COST_VARS_KEY = 'COST_VARIABLES'        # keep track of each individual cost
 SUMMARY_VARS_KEY = 'SUMMARY_VARIABLES'  # extra variables to summarize during training
 FORWARD_FUNC_KEY = 'FORWARD_FUNCTION'

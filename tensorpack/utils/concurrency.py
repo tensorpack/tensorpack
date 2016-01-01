@@ -44,6 +44,7 @@ class EnqueueThread(threading.Thread):
                         return
                     feed = dict(izip(self.input_vars, dp))
                     self.sess.run([self.op], feed_dict=feed)
+                #print '\nExauhsted!!!'
         except tf.errors.CancelledError as e:
             pass
         except Exception:
