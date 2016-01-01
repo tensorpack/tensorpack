@@ -111,9 +111,9 @@ class CallbackTimeLogger(object):
         msgs = []
         for name, t in self.times:
             if t / self.tot > 0.3 and t > 1:
-                msgs.append("{}:{}".format(name, t))
+                msgs.append("{}:{}sec".format(name, t))
         logger.info(
-            "Callbacks took {} sec. {}".format(
+            "Callbacks took {} sec in total. {}".format(
                 self.tot, ' '.join(msgs)))
 
 

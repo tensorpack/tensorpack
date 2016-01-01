@@ -42,13 +42,12 @@ def get_model(inputs, is_training):
     image, label = inputs
     image = tf.expand_dims(image, 3)    # add a single channel
 
-    #if is_training:    # slow
+    #if is_training:
         ## augmentations
         #image, label = tf.train.slice_input_producer(
-            #[image, label], name='slice_queue')
-        #image = tf.image.random_brightness(image, 0.1)
-        #image, label = tf.train.shuffle_batch(
-            #[image, label], BATCH_SIZE, CAPACITY, MIN_AFTER_DEQUEUE,
+            #[image, label], shuffle=False, name='slice_queue')
+        #image, label = tf.train.batch(
+            #[image, label], BATCH_SIZE, capacity=CAPACITY,
             #num_threads=2, enqueue_many=False)
 
     l = Conv2D('conv0', image, out_channel=32, kernel_shape=5)
@@ -98,7 +97,7 @@ def get_config():
     dataset_train = BatchData(dataset.Mnist('train'), 128)
     dataset_test = BatchData(dataset.Mnist('test'), 256, remainder=True)
     step_per_epoch = dataset_train.size()
-    step_per_epoch = 2
+    #step_per_epoch = 30
     #dataset_test = FixedSizeData(dataset_test, 20)
 
     sess_config = get_default_sess_config()

@@ -5,8 +5,10 @@
 
 import numpy as np
 from .base import DataFlow
+from imgaug import AugmentorList, Image
 
-__all__ = ['BatchData', 'FixedSizeData', 'FakeData', 'MapData']
+__all__ = ['BatchData', 'FixedSizeData', 'FakeData', 'MapData',
+           'AugmentImageComponent']
 
 class BatchData(DataFlow):
     def __init__(self, ds, batch_size, remainder=False):
@@ -101,3 +103,17 @@ class MapData(DataFlow):
             d = list(dp)
             dp[self.index] = self.func(dp[self.index])
             yield dp
+
+def AugmentImageComponent(ds, augmentors, index=0):
+    """
+    Augment the image in each data point
+    Args:
+        ds: a DataFlow dataset instance
+        augmentors: a list of ImageAugmentor instance
+        index: the index of image in each data point. default to be 0
+    """
+    aug = AugmentorList(augmentors)
+    return MapData(
+        ds,
+        lambda img: aug.augment(Image(img)).arr,
+        index)

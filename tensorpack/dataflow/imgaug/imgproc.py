@@ -33,12 +33,13 @@ class Contrast(ImageAugmentor):
         r = self._rand_range(*self.factor_range)
         mean = np.mean(arr, axis=(0,1), keepdims=True)
         img.arr = (arr - mean) * r + mean
+        img.arr = np.clip(img.arr, 0, 1)
 
 class PerImageWhitening(ImageAugmentor):
     """
     Linearly scales image to have zero mean and unit norm.
     x = (x - mean) / adjusted_stddev
-    where adjusted_stddev = max(stddev, 1.0/sqrt(num_pixels))
+    where adjusted_stddev = max(stddev, 1.0/sqrt(num_pixels * channels))
     """
     def __init__(self):
         pass
@@ -46,5 +47,5 @@ class PerImageWhitening(ImageAugmentor):
     def _augment(self, img):
         mean = np.mean(img.arr, axis=(0,1), keepdims=True)
         std = np.std(img.arr, axis=(0,1), keepdims=True)
-        std = np.maximum(std, 1.0 / np.sqrt(np.prod(img.arr.shape[:2])))
+        std = np.maximum(std, 1.0 / np.sqrt(np.prod(img.arr.shape)))
         img.arr = (img.arr - mean) / std

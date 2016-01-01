@@ -36,6 +36,11 @@ class TrainConfig(object):
                 with capacity 5
             get_model_func: a function taking `inputs` and `is_training` and
                 return a tuple of output list as well as the cost to minimize
+            batched_model_input: boolean. If yes, `get_model_func` expected batched
+                input in training. Otherwise, expect single data point in
+                training, so that you may do pre-processing and batch them
+                later with batch ops. It's suggested that you do all
+                preprocessing in dataset as that is usually faster.
             step_per_epoch: the number of steps (parameter updates) to perform
                 in each epoch. default to dataset.size()
             max_epoch: maximum number of epoch to run training. default to 100
@@ -59,6 +64,7 @@ class TrainConfig(object):
         assert_type(self.input_queue, tf.QueueBase)
         assert self.input_queue.dtypes == [x.dtype for x in self.inputs]
         self.get_model_func = kwargs.pop('get_model_func')
+        self.batched_model_input = kwargs.pop('batched_model_input', True)
         self.step_per_epoch = int(kwargs.pop('step_per_epoch', self.dataset.size()))
         self.max_epoch = int(kwargs.pop('max_epoch', 100))
         assert self.step_per_epoch > 0 and self.max_epoch > 0
@@ -89,11 +95,16 @@ def start_train(config):
     input_queue = config.input_queue
     callbacks = config.callbacks
 
-    enqueue_op = input_queue.enqueue(tuple(input_vars))
-    model_inputs = input_queue.dequeue()
-    # set dequeue shape
-    for qv, v in zip(model_inputs, input_vars):
-        qv.set_shape(v.get_shape())
+    if config.batched_model_input:
+        enqueue_op = input_queue.enqueue(input_vars)
+        model_inputs = input_queue.dequeue()
+        for qv, v in zip(model_inputs, input_vars):
+            qv.set_shape(v.get_shape())
+    else:
+        enqueue_op = input_queue.enqueue_many(input_vars)
+        model_inputs = input_queue.dequeue()
+        for qv, v in zip(model_inputs, input_vars):
+            qv.set_shape(v.get_shape().as_list()[1:])
     output_vars, cost_var = config.get_model_func(model_inputs, is_training=True)
 
     # build graph
@@ -125,6 +136,8 @@ def start_train(config):
                 for step in xrange(config.step_per_epoch):
                     if coord.should_stop():
                         return
+                    # TODO if no one uses trigger_step, train_op can be
+                    # faster, see: https://github.com/soumith/convnet-benchmarks/pull/67/files
                     fetches = [train_op, cost_var] + output_vars + model_inputs
                     results = sess.run(fetches)
                     cost = results[1]

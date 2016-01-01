@@ -19,7 +19,7 @@ from tensorpack.dataflow import *
 from tensorpack.dataflow import imgaug
 
 BATCH_SIZE = 128
-MIN_AFTER_DEQUEUE = 500
+MIN_AFTER_DEQUEUE = 20000   # a large number, as in the official example
 CAPACITY = MIN_AFTER_DEQUEUE + 3 * BATCH_SIZE
 
 def get_model(inputs, is_training):
@@ -28,7 +28,10 @@ def get_model(inputs, is_training):
 
     image, label = inputs
 
-    #if is_training:    # slow
+    if is_training:    # slow?
+        image, label = tf.train.shuffle_batch(
+            [image, label], BATCH_SIZE, CAPACITY, MIN_AFTER_DEQUEUE,
+            num_threads=6, enqueue_many=False)
         ## augmentations
         #image, label = tf.train.slice_input_producer(
             #[image, label], name='slice_queue')
@@ -80,20 +83,23 @@ def get_config():
     log_dir = os.path.join('train_log', os.path.basename(__file__)[:-3])
     logger.set_logger_dir(log_dir)
 
-    import cv2
     dataset_train = dataset.Cifar10('train')
-    augmentor = imgaug.AugmentorList([
+    augmentors = [
         RandomCrop((24, 24)),
         Flip(horiz=True),
         BrightnessAdd(0.25),
         Contrast((0.2,1.8)),
         PerImageWhitening()
-    ])
-    dataset_train = MapData(dataset_train, lambda img:
-                            augmentor.augment(imgaug.Image(img)).arr)
+    ]
+    dataset_train = AugmentImageComponent(dataset_train, augmentors)
     dataset_train = BatchData(dataset_train, 128)
+
+    augmentors = [
+        CenterCrop((24, 24)),
+        PerImageWhitening()
+    ]
     dataset_test = dataset.Cifar10('test')
-    dataset_test = MapData(dataset_test, lambda img: cv2.resize(img, (24, 24)))
+    dataset_test = AugmentImageComponent(dataset_test, augmentors)
     dataset_test = BatchData(dataset_test, 128)
     step_per_epoch = dataset_train.size()
     #step_per_epoch = 20
@@ -109,19 +115,19 @@ def get_config():
         tf.placeholder(
             tf.int32, shape=(None,), name='label')
     ]
-    input_queue = tf.RandomShuffleQueue(
-        100, 50, [x.dtype for x in input_vars], name='queue')
+    input_queue = tf.FIFOQueue(
+        50, [x.dtype for x in input_vars], name='queue')
 
     lr = tf.train.exponential_decay(
-        learning_rate=1e-4,
+        learning_rate=1e-1,
         global_step=get_global_step_var(),
-        decay_steps=dataset_train.size() * 50,
+        decay_steps=dataset_train.size() * 200,
         decay_rate=0.1, staircase=True, name='learning_rate')
     tf.scalar_summary('learning_rate', lr)
 
     return TrainConfig(
         dataset=dataset_train,
-        optimizer=tf.train.AdamOptimizer(lr),
+        optimizer=tf.train.GradientDescentOptimizer(lr),
         callbacks=Callbacks([
             SummaryWriter(),
             PeriodicSaver(),
@@ -131,6 +137,7 @@ def get_config():
         inputs=input_vars,
         input_queue=input_queue,
         get_model_func=get_model,
+        batched_model_input=False,
         step_per_epoch=step_per_epoch,
         max_epoch=100,
     )
