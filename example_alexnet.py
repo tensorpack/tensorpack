@@ -78,7 +78,8 @@ def get_model(inputs, is_training):
     return [prob, nr_wrong], tf.add_n([wd_cost, cost], name='cost')
 
 def get_config():
-    log_dir = os.path.join('train_log', os.path.basename(__file__)[:-3])
+    basename = os.path.basename(__file__)
+    log_dir = os.path.join('train_log', basename[:basename.rfind('.')])
     logger.set_logger_dir(log_dir)
 
     dataset_train = FakeData([(227,227,3), tuple()], 10)
