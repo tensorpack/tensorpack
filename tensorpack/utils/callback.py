@@ -10,7 +10,7 @@ import os
 import time
 from abc import abstractmethod, ABCMeta
 
-from . import create_test_session
+from . import create_test_session, get_global_step
 from .naming import *
 import logger
 
@@ -53,6 +53,7 @@ class PeriodicCallback(Callback):
     def trigger_epoch(self):
         self.epoch_num += 1
         if self.epoch_num % self.__period == 0:
+            self.global_step = get_global_step()
             self._trigger()
 
     @abstractmethod
@@ -72,13 +73,14 @@ class PeriodicSaver(PeriodicCallback):
             keep_checkpoint_every_n_hours=self.keep_freq)
 
     def _trigger(self):
-        self.saver.save(tf.get_default_session(), self.path,
-                        global_step=self.epoch_num)
+        self.saver.save(
+            tf.get_default_session(),
+            self.path,
+            global_step=self.global_step)
 
 class SummaryWriter(Callback):
     def __init__(self):
         self.log_dir = logger.LOG_DIR
-        self.epoch_num = 0
 
     def _before_train(self):
         self.writer = tf.train.SummaryWriter(
@@ -91,9 +93,7 @@ class SummaryWriter(Callback):
         if self.summary_op is None:
             return
         summary_str = self.summary_op.eval()
-        self.epoch_num += 1
-        self.writer.add_summary(summary_str, self.epoch_num)
-
+        self.writer.add_summary(summary_str, get_global_step())
 
 class CallbackTimeLogger(object):
     def __init__(self):
@@ -214,5 +214,6 @@ class Callbacks(Callback):
 
     def trigger_epoch(self):
         self.train.trigger_epoch()
+        # TODO test callbacks can be run async?
         self.test.trigger_epoch()
 

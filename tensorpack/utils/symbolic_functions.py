@@ -8,7 +8,7 @@ import numpy as np
 __all__ = ['one_hot', 'batch_flatten', 'logSoftmax']
 
 def one_hot(y, num_labels):
-    with tf.variable_scope('one_hot'):
+    with tf.op_scope([y, num_labels], 'one_hot'):
         batch_size = tf.size(y)
         y = tf.expand_dims(y, 1)
         indices = tf.expand_dims(tf.range(0, batch_size), 1)
@@ -23,7 +23,7 @@ def batch_flatten(x):
     return tf.reshape(x, [-1, total_dim])
 
 def logSoftmax(x):
-    with tf.variable_scope('logSoftmax'):
+    with tf.op_scope([x], 'logSoftmax'):
         z = x - tf.reduce_max(x, 1, keep_dims=True)
         logprob = z - tf.log(tf.reduce_sum(tf.exp(z), 1, keep_dims=True))
         return logprob

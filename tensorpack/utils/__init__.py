@@ -37,6 +37,9 @@ def create_test_graph():
     input_vars_train = G.get_collection(INPUT_VARS_KEY)
     forward_func = G.get_collection(FORWARD_FUNC_KEY)[0]
     with tf.Graph().as_default() as Gtest:
+        # create a global step var in test graph
+        global_step_var = tf.Variable(
+            0, trainable=False, name=GLOBAL_STEP_OP_NAME)
         input_vars = []
         for v in input_vars_train:
             name = v.name
@@ -99,11 +102,20 @@ class memoized(object):
        '''Support instance methods.'''
        return functools.partial(self.__call__, obj)
 
-@memoized
 def get_global_step_var():
-    global_step_var = tf.Variable(
-        0, trainable=False, name=GLOBAL_STEP_OP_NAME)
-    return global_step_var
+    """ get global_step variable in the current graph"""
+    try:
+        return tf.get_default_graph().get_tensor_by_name(GLOBAL_STEP_VAR_NAME)
+    except KeyError:
+        var = tf.Variable(
+            0, trainable=False, name=GLOBAL_STEP_OP_NAME)
+        return var
+
+def get_global_step():
+    """ get global_step value with current graph and session"""
+    return tf.train.global_step(
+        tf.get_default_session(),
+        get_global_step_var())
 
 def get_rng(self):
     return np.random.RandomState()

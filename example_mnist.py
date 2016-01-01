@@ -98,7 +98,7 @@ def get_config():
     dataset_train = BatchData(dataset.Mnist('train'), 128)
     dataset_test = BatchData(dataset.Mnist('test'), 256, remainder=True)
     step_per_epoch = dataset_train.size()
-    #step_per_epoch = 30
+    step_per_epoch = 30
     #dataset_test = FixedSizeData(dataset_test, 20)
 
     sess_config = get_default_sess_config()

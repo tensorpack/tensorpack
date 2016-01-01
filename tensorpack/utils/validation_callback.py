@@ -58,11 +58,11 @@ class ValidationError(PeriodicCallback):
         self.writer.add_summary(
             create_summary('{}_error'.format(self.prefix),
                            err_stat.accuracy),
-            self.epoch_num)
+            self.global_step)
         self.writer.add_summary(
             create_summary('{}_cost'.format(self.prefix),
                            cost_avg),
-            self.epoch_num)
+            self.global_step)
         logger.info(
-            "{} validation after epoch {}: err={:.4f}, cost={:.3f}".format(
-            self.prefix, self.epoch_num, err_stat.accuracy, cost_avg))
+            "{} validation after epoch{},step{}: err={:.4f}, cost={:.3f}".format(
+            self.prefix, self.epoch_num, self.global_step, err_stat.accuracy, cost_avg))

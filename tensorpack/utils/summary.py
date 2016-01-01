@@ -51,7 +51,7 @@ def summary_moving_average(cost_var):
     """
     global_step_var = tf.get_default_graph().get_tensor_by_name(GLOBAL_STEP_VAR_NAME)
     averager = tf.train.ExponentialMovingAverage(
-        0.9, num_updates=global_step_var, name='avg')
+        0.9, num_updates=global_step_var, name='moving_averages')
     vars_to_summary = [cost_var] + \
             tf.get_collection(SUMMARY_VARS_KEY) + \
             tf.get_collection(COST_VARS_KEY)

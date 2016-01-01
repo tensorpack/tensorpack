@@ -130,6 +130,7 @@ def start_train(config):
 
     with sess.as_default(), \
             coordinator_guard(sess, coord):
+        logger.info("Start with global_step={}".format(get_global_step()))
         callbacks.before_train()
         for epoch in xrange(1, config.max_epoch):
             with timed_operation('epoch {}'.format(epoch)):
