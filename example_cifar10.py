@@ -79,8 +79,6 @@ def get_model(inputs, is_training):
     tf.add_to_collection(COST_VARS_KEY, wd_cost)
 
     add_histogram_summary('.*/W')   # monitor histogram of all W
-    # this won't work with multigpu
-    #return [prob, nr_wrong], tf.add_n(tf.get_collection(COST_VARS_KEY), name='cost')
     return [prob, nr_wrong], tf.add_n([wd_cost, cost], name='cost')
 
 def get_config():
