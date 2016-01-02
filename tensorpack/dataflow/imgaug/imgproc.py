@@ -19,7 +19,7 @@ class BrightnessAdd(ImageAugmentor):
     def _augment(self, img):
         v = self._rand_range(-self.delta, self.delta)
         img.arr += v
-        img.arr = np.clip(img.arr, 0, 1)
+        img.arr = np.clip(img.arr, 0, 255)
 
 class Contrast(ImageAugmentor):
     """
@@ -33,7 +33,7 @@ class Contrast(ImageAugmentor):
         r = self._rand_range(*self.factor_range)
         mean = np.mean(arr, axis=(0,1), keepdims=True)
         img.arr = (arr - mean) * r + mean
-        img.arr = np.clip(img.arr, 0, 1)
+        img.arr = np.clip(img.arr, 0, 255)
 
 class PerImageWhitening(ImageAugmentor):
     """
@@ -41,11 +41,16 @@ class PerImageWhitening(ImageAugmentor):
     x = (x - mean) / adjusted_stddev
     where adjusted_stddev = max(stddev, 1.0/sqrt(num_pixels * channels))
     """
-    def __init__(self):
+    def __init__(self, all_channel=True):
+        self.all_channel = all_channel
         pass
 
     def _augment(self, img):
-        mean = np.mean(img.arr, axis=(0,1), keepdims=True)
-        std = np.std(img.arr, axis=(0,1), keepdims=True)
+        if self.all_channel:
+            mean = np.mean(img.arr)
+            std = np.std(img.arr)
+        else:
+            mean = np.mean(img.arr, axis=(0,1), keepdims=True)
+            std = np.std(img.arr, axis=(0,1), keepdims=True)
         std = np.maximum(std, 1.0 / np.sqrt(np.prod(img.arr.shape)))
         img.arr = (img.arr - mean) / std

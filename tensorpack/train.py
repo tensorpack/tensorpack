@@ -161,8 +161,9 @@ def start_train(config):
     summary_grads(grads)
     avg_maintain_op = summary_moving_average(cost_var)
 
-    with tf.control_dependencies([avg_maintain_op]):
-        train_op = config.optimizer.apply_gradients(grads, get_global_step_var())
+    train_op = tf.group(
+        config.optimizer.apply_gradients(grads, get_global_step_var()),
+        avg_maintain_op)
 
     describe_model()
     sess = tf.Session(config=config.session_config)

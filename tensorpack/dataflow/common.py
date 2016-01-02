@@ -100,7 +100,6 @@ class MapData(DataFlow):
 
     def get_data(self):
         for dp in self.ds.get_data():
-            d = list(dp)
             dp[self.index] = self.func(dp[self.index])
             yield dp
 

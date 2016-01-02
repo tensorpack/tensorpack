@@ -28,6 +28,7 @@ class Flip(ImageAugmentor):
         self._init()
 
     def _augment(self, img):
+# TODO XXX prob is wrong for both mode
         if self._rand_range() < self.prob:
             img.arr = cv2.flip(img.arr, self.code)
             if img.coords:
