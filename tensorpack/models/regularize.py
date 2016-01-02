@@ -28,5 +28,7 @@ def regularize_cost(regex, func):
         if re.search(regex, name):
             costs.append(func(p))
             _log_regularizer(name)
+    if not costs:
+        return 0
     return tf.add_n(costs)
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
-# File: example_cifar10.py
+# File: loyaltry.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
@@ -16,41 +16,45 @@ from tensorpack.utils.symbolic_functions import *
 from tensorpack.utils.summary import *
 from tensorpack.dataflow import *
 from tensorpack.dataflow import imgaug
+from cifar10 import cifar10
 
 BATCH_SIZE = 128
 MIN_AFTER_DEQUEUE = 20000   # a large number, as in the official example
 CAPACITY = MIN_AFTER_DEQUEUE + 3 * BATCH_SIZE
 
 def get_model(inputs, is_training):
-    is_training = bool(is_training)
-    keep_prob = tf.constant(0.5 if is_training else 1.0)
+    #keep_prob = tf.constant(0.5 if is_training else 1.0)
 
     image, label = inputs
 
-    if is_training:    # slow?
+    if is_training:
         image, label = tf.train.shuffle_batch(
             [image, label], BATCH_SIZE, CAPACITY, MIN_AFTER_DEQUEUE,
             num_threads=6, enqueue_many=False)
-        ## augmentations
-        #image, label = tf.train.slice_input_producer(
-            #[image, label], name='slice_queue')
-        #image = tf.image.random_brightness(image, 0.1)
-        #image, label = tf.train.shuffle_batch(
-            #[image, label], BATCH_SIZE, CAPACITY, MIN_AFTER_DEQUEUE,
-            #num_threads=2, enqueue_many=False)
+        tf.image_summary("train_image", image, 10)
 
-    l = Conv2D('conv0', image, out_channel=64, kernel_shape=5, padding='SAME')
-    l = MaxPooling('pool0', l, 3, stride=2, padding='SAME')
-    l = tf.nn.lrn(l, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75, name='norm0')
-
-    l = Conv2D('conv1', l, out_channel=64, kernel_shape=5, padding='SAME')
-    l = tf.nn.lrn(l, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75, name='norm1')
+    l = Conv2D('conv1', image, out_channel=64, kernel_shape=5, padding='SAME',
+              W_init=tf.truncated_normal_initializer(stddev=1e-4))
     l = MaxPooling('pool1', l, 3, stride=2, padding='SAME')
+    l = tf.nn.lrn(l, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75, name='norm1')
 
-    l = FullyConnected('fc0', l, 384)
-    l = FullyConnected('fc1', l, out_dim=192)
-    # fc will have activation summary by default. disable this for the output layer
-    logits = FullyConnected('fc2', l, out_dim=10, summary_activation=False, nl=tf.identity)
+    l = Conv2D('conv2', l, out_channel=64, kernel_shape=5, padding='SAME',
+              W_init=tf.truncated_normal_initializer(stddev=1e-4),
+              b_init=tf.constant_initializer(0.1))
+    l = tf.nn.lrn(l, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75, name='norm2')
+    l = MaxPooling('pool2', l, 3, stride=2, padding='SAME')
+
+    l = FullyConnected('fc0', l, 384,
+                       W_init=tf.truncated_normal_initializer(stddev=0.04),
+                       b_init=tf.constant_initializer(0.1))
+    l = FullyConnected('fc1', l, out_dim=192,
+                       W_init=tf.truncated_normal_initializer(stddev=0.04),
+                       b_init=tf.constant_initializer(0.1))
+    ## fc will have activation summary by default. disable this for the output layer
+    logits = FullyConnected('linear', l, out_dim=10, summary_activation=False,
+                            nl=tf.identity,
+                            W_init=tf.truncated_normal_initializer(stddev=1.0/192))
+
     prob = tf.nn.softmax(logits, name='output')
 
     y = one_hot(label, 10)
@@ -68,13 +72,13 @@ def get_model(inputs, is_training):
         MOVING_SUMMARY_VARS_KEY, tf.reduce_mean(wrong, name='train_error'))
 
     # weight decay on all W of fc layers
-    wd_cost = tf.mul(1e-4,
+    wd_cost = tf.mul(0.004,
                      regularize_cost('fc.*/W', tf.nn.l2_loss),
                      name='regularize_loss')
     tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, wd_cost)
 
     add_param_summary('.*')   # monitor all variables
-    return [prob, nr_wrong], tf.add_n([wd_cost, cost], name='cost')
+    return [prob, nr_wrong], tf.add_n([cost, wd_cost], name='cost')
 
 def get_config():
     basename = os.path.basename(__file__)
@@ -85,23 +89,21 @@ def get_config():
     augmentors = [
         RandomCrop((24, 24)),
         Flip(horiz=True),
-        BrightnessAdd(0.25),
+        BrightnessAdd(63),
         Contrast((0.2,1.8)),
-        PerImageWhitening()
+        PerImageWhitening(all_channel=True)
     ]
     dataset_train = AugmentImageComponent(dataset_train, augmentors)
     dataset_train = BatchData(dataset_train, 128)
 
     augmentors = [
         CenterCrop((24, 24)),
-        PerImageWhitening()
+        PerImageWhitening(all_channel=True)
     ]
     dataset_test = dataset.Cifar10('test')
     dataset_test = AugmentImageComponent(dataset_test, augmentors)
     dataset_test = BatchData(dataset_test, 128)
     step_per_epoch = dataset_train.size()
-    #step_per_epoch = 20
-    #dataset_test = FixedSizeData(dataset_test, 20)
 
     sess_config = get_default_sess_config()
     sess_config.gpu_options.per_process_gpu_memory_fraction = 0.5

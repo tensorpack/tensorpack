@@ -19,8 +19,9 @@ def FullyConnected(x, out_dim, W_init=None, b_init=None, nl=tf.nn.relu):
     if W_init is None:
         W_init = tf.truncated_normal_initializer(stddev=1.0 / math.sqrt(float(in_dim)))
     if b_init is None:
-        b_init = tf.constant_initializer()
+        b_init = tf.constant_initializer(0.0)
 
-    W = tf.get_variable('W', [in_dim, out_dim], initializer=W_init)
-    b = tf.get_variable('b', [out_dim], initializer=b_init)
+    with tf.device('/cpu:0'):
+        W = tf.get_variable('W', [in_dim, out_dim], initializer=W_init)
+        b = tf.get_variable('b', [out_dim], initializer=b_init)
     return nl(tf.nn.xw_plus_b(x, W, b), name=tf.get_variable_scope().name + '_output')
