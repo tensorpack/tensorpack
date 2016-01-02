@@ -46,6 +46,7 @@ class TrainConfig(object):
             step_per_epoch: the number of steps (parameter updates) to perform
                 in each epoch. default to dataset.size()
             max_epoch: maximum number of epoch to run training. default to 100
+            nr_tower: int. number of towers. default to 1.
         """
         def assert_type(v, tp):
             assert isinstance(v, tp), v.__class__
@@ -70,21 +71,10 @@ class TrainConfig(object):
         self.step_per_epoch = int(kwargs.pop('step_per_epoch', self.dataset.size()))
         self.max_epoch = int(kwargs.pop('max_epoch', 100))
         assert self.step_per_epoch > 0 and self.max_epoch > 0
+        self.nr_tower = int(kwargs.pop('nr_tower', 1))
         assert len(kwargs) == 0, 'Unknown arguments: {}'.format(str(kwargs.keys()))
 
 def average_gradients(tower_grads):
-  """Calculate the average gradient for each shared variable across all towers.
-
-  Note that this function provides a synchronization point across all towers.
-
-  Args:
-    tower_grads: List of lists of (gradient, variable) tuples. The outer list
-      is over individual gradients. The inner list is over the gradient
-      calculation for each tower.
-  Returns:
-     List of pairs of (gradient, variable) where the gradient has been averaged
-     across all towers.
-  """
   average_grads = []
   for grad_and_vars in zip(*tower_grads):
     # Note that each grad_and_vars looks like the following:
@@ -109,6 +99,10 @@ def average_gradients(tower_grads):
     average_grads.append(grad_and_var)
   return average_grads
 
+def summary_grads(grads):
+    for grad, var in grads:
+        if grad:
+            tf.histogram_summary(var.op.name + '/gradients', grad)
 
 def start_train(config):
     """
@@ -119,6 +113,10 @@ def start_train(config):
     input_vars = config.inputs
     input_queue = config.input_queue
     callbacks = config.callbacks
+
+    tf.add_to_collection(FORWARD_FUNC_KEY, config.get_model_func)
+    for v in input_vars:
+        tf.add_to_collection(INPUT_VARS_KEY, v)
 
     def get_model_inputs():
         model_inputs = input_queue.dequeue()
@@ -134,40 +132,38 @@ def start_train(config):
     else:
         enqueue_op = input_queue.enqueue_many(input_vars)
 
-    keys_to_maintain = [tf.GraphKeys.SUMMARIES, SUMMARY_VARS_KEY]
-    olds = {}
-    for k in keys_to_maintain:
-        olds[k] = copy.copy(tf.get_collection(k))
-    all_grads = []
-    n_tower = 1
-    for i in range(n_tower):
-        with tf.device('/gpu:{}'.format(i)):
-            with tf.name_scope('tower{}'.format(i)):
-                for k in keys_to_maintain:
-                    del tf.get_collection(k)[:]
+    # get gradients to update:
+    logger.info("Training a model of {} tower".format(config.nr_tower))
+    if config.nr_tower > 1:
+        coll_keys = [tf.GraphKeys.SUMMARIES, MOVING_SUMMARY_VARS_KEY]
+        kept_summaries = {}
+        grads = []
+        for i in range(config.nr_tower):
+            with tf.device('/gpu:{}'.format(i)):
                 model_inputs = get_model_inputs()
                 output_vars, cost_var = config.get_model_func(model_inputs, is_training=True)
-                tf.get_variable_scope().reuse_variables()
-                grads = config.optimizer.compute_gradients(cost_var)
-                all_grads.append(grads)
-    for k in keys_to_maintain:
-        tf.get_collection(k).extend(olds[k])
-    grads = average_gradients(all_grads)
-    for grad, var in grads:
-        if grad:
-            tf.histogram_summary(var.op.name + '/gradients', grad)
+                grads.append(
+                    config.optimizer.compute_gradients(cost_var))
+
+                if i == 0:
+                    tf.get_variable_scope().reuse_variables()
+                    for k in coll_keys:
+                        kept_summaries[k] = copy.copy(tf.get_collection(k))
+        for k in coll_keys:  # avoid repeating summary on multiple devices
+            del tf.get_collection(k)[:]
+            tf.get_collection(k).extend(kept_summaries[k])
+        grads = average_gradients(grads)
+    else:
+        model_inputs = get_model_inputs()
+        output_vars, cost_var = config.get_model_func(model_inputs, is_training=True)
+        grads = config.optimizer.compute_gradients(cost_var)
+    summary_grads(grads)
     avg_maintain_op = summary_moving_average(cost_var)
 
-    # build graph
-    tf.add_to_collection(FORWARD_FUNC_KEY, config.get_model_func)
-    for v in input_vars:
-        tf.add_to_collection(INPUT_VARS_KEY, v)
-    describe_model()
-
-    # train_op = get_train_op(config.optimizer, cost_var)
     with tf.control_dependencies([avg_maintain_op]):
         train_op = config.optimizer.apply_gradients(grads, get_global_step_var())
 
+    describe_model()
     sess = tf.Session(config=config.session_config)
     config.session_init.init(sess)
 

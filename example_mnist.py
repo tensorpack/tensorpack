@@ -65,7 +65,7 @@ def get_model(inputs, is_training):
     y = one_hot(label, 10)
     cost = tf.nn.softmax_cross_entropy_with_logits(logits, y)
     cost = tf.reduce_mean(cost, name='cross_entropy_loss')
-    tf.add_to_collection(COST_VARS_KEY, cost)
+    tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, cost)
 
     # compute the number of failed samples, for ValidationError to use at test time
     wrong = tf.not_equal(
@@ -74,13 +74,13 @@ def get_model(inputs, is_training):
     nr_wrong = tf.reduce_sum(wrong, name='wrong')
     # monitor training error
     tf.add_to_collection(
-        SUMMARY_VARS_KEY, tf.reduce_mean(wrong, name='train_error'))
+        MOVING_SUMMARY_VARS_KEY, tf.reduce_mean(wrong, name='train_error'))
 
     # weight decay on all W of fc layers
     wd_cost = tf.mul(1e-4,
                      regularize_cost('fc.*/W', tf.nn.l2_loss),
                      name='regularize_loss')
-    tf.add_to_collection(COST_VARS_KEY, wd_cost)
+    tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, wd_cost)
 
     add_histogram_summary('.*/W')   # monitor histogram of all W
     return [prob, nr_wrong], tf.add_n([wd_cost, cost], name='cost')
@@ -95,7 +95,7 @@ def get_config():
     dataset_train = BatchData(dataset.Mnist('train'), 128)
     dataset_test = BatchData(dataset.Mnist('test'), 256, remainder=True)
     step_per_epoch = dataset_train.size()
-    step_per_epoch = 30
+    #step_per_epoch = 30
     #dataset_test = FixedSizeData(dataset_test, 20)
 
     sess_config = get_default_sess_config()

@@ -31,7 +31,6 @@ def add_activation_summary(x, name=None):
         name = x.name
     tf.histogram_summary(name + '/activations', x)
     tf.scalar_summary(name + '/sparsity', tf.nn.zero_fraction(x))
-    # TODO avoid repeating activations on multiple GPUs
 
 def add_histogram_summary(regex):
     """
@@ -46,15 +45,14 @@ def add_histogram_summary(regex):
 
 def summary_moving_average(cost_var):
     """ Create a MovingAverage op and summary for all variables in
-        COST_VARS_KEY, SUMMARY_VARS_KEY, as well as the argument
+        MOVING_SUMMARY_VARS_KEY, as well as the argument
         Return a op to maintain these average
     """
     global_step_var = tf.get_default_graph().get_tensor_by_name(GLOBAL_STEP_VAR_NAME)
     averager = tf.train.ExponentialMovingAverage(
         0.99, num_updates=global_step_var, name='moving_averages')
     vars_to_summary = [cost_var] + \
-            tf.get_collection(SUMMARY_VARS_KEY) + \
-            tf.get_collection(COST_VARS_KEY)
+            tf.get_collection(MOVING_SUMMARY_VARS_KEY)
     avg_maintain_op = averager.apply(vars_to_summary)
     for idx, c in enumerate(vars_to_summary):
         name = c.op.name
