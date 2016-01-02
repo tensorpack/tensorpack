@@ -32,16 +32,19 @@ def add_activation_summary(x, name=None):
     tf.histogram_summary(name + '/activations', x)
     tf.scalar_summary(name + '/sparsity', tf.nn.zero_fraction(x))
 
-def add_histogram_summary(regex):
+def add_param_summary(regex):
     """
-    Add histogram summary for all trainable variables matching the regex
+    Add summary for all trainable variables matching the regex
     """
     import re
     params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
     for p in params:
         name = p.name
         if re.search(regex, name):
-            tf.histogram_summary(name, p)
+            if p.get_shape().ndims == 0:
+                tf.scalar_summary(name, p)
+            else:
+                tf.histogram_summary(name, p)
 
 def summary_moving_average(cost_var):
     """ Create a MovingAverage op and summary for all variables in

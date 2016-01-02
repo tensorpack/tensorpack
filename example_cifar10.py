@@ -73,7 +73,7 @@ def get_model(inputs, is_training):
                      name='regularize_loss')
     tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, wd_cost)
 
-    add_histogram_summary('.*/W')   # monitor histogram of all W
+    add_param_summary('.*')   # monitor all variables
     return [prob, nr_wrong], tf.add_n([wd_cost, cost], name='cost')
 
 def get_config():
@@ -155,5 +155,5 @@ if __name__ == '__main__':
         if args.load:
             config.session_init = SaverRestore(args.load)
         if args.gpu:
-            config['nr_tower'] = len(args.gpu.split(','))
+            config.nr_tower = len(args.gpu.split(','))
         start_train(config)

@@ -82,7 +82,7 @@ def get_model(inputs, is_training):
                      name='regularize_loss')
     tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, wd_cost)
 
-    add_histogram_summary('.*/W')   # monitor histogram of all W
+    add_param_summary('.*/W')   # monitor histogram of all W
     return [prob, nr_wrong], tf.add_n([wd_cost, cost], name='cost')
 
 def get_config():

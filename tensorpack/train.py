@@ -140,15 +140,16 @@ def start_train(config):
         grads = []
         for i in range(config.nr_tower):
             with tf.device('/gpu:{}'.format(i)):
-                model_inputs = get_model_inputs()
-                output_vars, cost_var = config.get_model_func(model_inputs, is_training=True)
-                grads.append(
-                    config.optimizer.compute_gradients(cost_var))
+                with tf.name_scope('tower{}'.format(i)) as scope:
+                    model_inputs = get_model_inputs()
+                    output_vars, cost_var = config.get_model_func(model_inputs, is_training=True)
+                    grads.append(
+                        config.optimizer.compute_gradients(cost_var))
 
-                if i == 0:
-                    tf.get_variable_scope().reuse_variables()
-                    for k in coll_keys:
-                        kept_summaries[k] = copy.copy(tf.get_collection(k))
+                    if i == 0:
+                        tf.get_variable_scope().reuse_variables()
+                        for k in coll_keys:
+                            kept_summaries[k] = copy.copy(tf.get_collection(k))
         for k in coll_keys:  # avoid repeating summary on multiple devices
             del tf.get_collection(k)[:]
             tf.get_collection(k).extend(kept_summaries[k])
