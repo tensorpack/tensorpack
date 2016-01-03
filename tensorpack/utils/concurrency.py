@@ -51,13 +51,3 @@ class EnqueueThread(threading.Thread):
             logger.exception("Exception in EnqueueThread:")
             self.queue.close(cancel_pending_enqueues=True)
             self.coord.request_stop()
-
-@contextmanager
-def coordinator_guard(sess, coord):
-    try:
-        yield
-    except (KeyboardInterrupt, Exception) as e:
-        raise
-    finally:
-        coord.request_stop()
-        sess.close()

@@ -6,7 +6,7 @@
 from .base import ImageAugmentor
 import numpy as np
 
-__all__ = ['BrightnessAdd', 'Contrast', 'PerImageWhitening']
+__all__ = ['BrightnessAdd', 'Contrast', 'MeanVarianceNormalize']
 
 class BrightnessAdd(ImageAugmentor):
     """
@@ -35,7 +35,7 @@ class Contrast(ImageAugmentor):
         img.arr = (arr - mean) * r + mean
         img.arr = np.clip(img.arr, 0, 255)
 
-class PerImageWhitening(ImageAugmentor):
+class MeanVarianceNormalize(ImageAugmentor):
     """
     Linearly scales image to have zero mean and unit norm.
     x = (x - mean) / adjusted_stddev
@@ -43,7 +43,6 @@ class PerImageWhitening(ImageAugmentor):
     """
     def __init__(self, all_channel=True):
         self.all_channel = all_channel
-        pass
 
     def _augment(self, img):
         if self.all_channel:

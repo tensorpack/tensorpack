@@ -37,8 +37,7 @@ def get_default_sess_config():
     Tensorflow default session config consume too much resources
     """
     conf = tf.ConfigProto()
-    conf.device_count['GPU'] = 1
-    conf.gpu_options.per_process_gpu_memory_fraction = 0.8
+    conf.gpu_options.per_process_gpu_memory_fraction = 0.6
     conf.gpu_options.allocator_type = 'BFC'
     conf.allow_soft_placement = True
     return conf

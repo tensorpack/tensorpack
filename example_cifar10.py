@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
-# File: loyaltry.py
+# File: example_cifar10.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
@@ -16,10 +16,15 @@ from tensorpack.utils.symbolic_functions import *
 from tensorpack.utils.summary import *
 from tensorpack.dataflow import *
 from tensorpack.dataflow import imgaug
-from cifar10 import cifar10
+
+"""
+This config follows the same preprocessing/model/hyperparemeters as in
+tensorflow cifar10 examples. (https://tensorflow.googlesource.com/tensorflow/+/master/tensorflow/models/image/cifar10/)
+But it's faster.
+"""
 
 BATCH_SIZE = 128
-MIN_AFTER_DEQUEUE = 20000   # a large number, as in the official example
+MIN_AFTER_DEQUEUE = int(50000 * 0.4)
 CAPACITY = MIN_AFTER_DEQUEUE + 3 * BATCH_SIZE
 
 def get_model(inputs, is_training):
@@ -50,7 +55,7 @@ def get_model(inputs, is_training):
     l = FullyConnected('fc1', l, out_dim=192,
                        W_init=tf.truncated_normal_initializer(stddev=0.04),
                        b_init=tf.constant_initializer(0.1))
-    ## fc will have activation summary by default. disable this for the output layer
+    # fc will have activation summary by default. disable for the output layer
     logits = FullyConnected('linear', l, out_dim=10, summary_activation=False,
                             nl=tf.identity,
                             W_init=tf.truncated_normal_initializer(stddev=1.0/192))
@@ -91,14 +96,14 @@ def get_config():
         Flip(horiz=True),
         BrightnessAdd(63),
         Contrast((0.2,1.8)),
-        PerImageWhitening(all_channel=True)
+        MeanVarianceNormalize(all_channel=True)
     ]
     dataset_train = AugmentImageComponent(dataset_train, augmentors)
     dataset_train = BatchData(dataset_train, 128)
 
     augmentors = [
         CenterCrop((24, 24)),
-        PerImageWhitening(all_channel=True)
+        MeanVarianceNormalize(all_channel=True)
     ]
     dataset_test = dataset.Cifar10('test')
     dataset_test = AugmentImageComponent(dataset_test, augmentors)
@@ -107,7 +112,6 @@ def get_config():
 
     sess_config = get_default_sess_config()
     sess_config.gpu_options.per_process_gpu_memory_fraction = 0.5
-    sess_config.device_count['GPU'] = 2
 
     # prepare model
     input_vars = [
@@ -150,6 +154,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
+    else:
+        os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
     with tf.Graph().as_default():
         with tf.device('/cpu:0'):

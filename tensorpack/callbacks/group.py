@@ -78,9 +78,13 @@ class TrainCallbacks(Callback):
             cb.before_train()
         self.writer = tf.get_collection(SUMMARY_WRITER_COLLECTION_KEY)[0]
 
-    def trigger_step(self, inputs, outputs, cost):
+    def after_train(self):
         for cb in self.cbs:
-            cb.trigger_step(inputs, outputs, cost)
+            cb.after_train()
+
+    def trigger_step(self):
+        for cb in self.cbs:
+            cb.trigger_step()
 
     def trigger_epoch(self):
         tm = CallbackTimeLogger()
@@ -110,6 +114,10 @@ class TestCallbacks(Callback):
             tf.add_to_collection(SUMMARY_WRITER_COLLECTION_KEY, self.writer)
             for cb in self.cbs:
                 cb.before_train()
+
+    def after_train(self):
+        for cb in self.cbs:
+            cb.after_train()
 
     def trigger_epoch(self):
         if not self.cbs:
@@ -153,8 +161,12 @@ class Callbacks(Callback):
         self.train.before_train()
         self.test.before_train()
 
-    def trigger_step(self, inputs, outputs, cost):
-        self.train.trigger_step(inputs, outputs, cost)
+    def after_train(self):
+        self.train.after_train()
+        self.test.after_train()
+
+    def trigger_step(self):
+        self.train.trigger_step()
         # test callback don't have trigger_step
 
     def trigger_epoch(self):

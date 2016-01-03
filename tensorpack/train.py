@@ -10,7 +10,7 @@ import argparse
 
 import tqdm
 from utils import *
-from utils.concurrency import EnqueueThread,coordinator_guard
+from utils.concurrency import EnqueueThread
 from callbacks import *
 from utils.summary import summary_moving_average
 from utils.modelutils import describe_model
@@ -75,29 +75,12 @@ class TrainConfig(object):
         assert len(kwargs) == 0, 'Unknown arguments: {}'.format(str(kwargs.keys()))
 
 def average_gradients(tower_grads):
-  average_grads = []
-  for grad_and_vars in zip(*tower_grads):
-    # Note that each grad_and_vars looks like the following:
-    #   ((grad0_gpu0, var0_gpu0), ... , (grad0_gpuN, var0_gpuN))
-    grads = []
-    for g, _ in grad_and_vars:
-      # Add 0 dimension to the gradients to represent the tower.
-      expanded_g = tf.expand_dims(g, 0)
-
-      # Append on a 'tower' dimension which we will average over below.
-      grads.append(expanded_g)
-
-    # Average over the 'tower' dimension.
-    grad = tf.concat(0, grads)
-    grad = tf.reduce_mean(grad, 0)
-
-    # Keep in mind that the Variables are redundant because they are shared
-    # across towers. So .. we will just return the first tower's pointer to
-    # the Variable.
-    v = grad_and_vars[0][1]
-    grad_and_var = (grad, v)
-    average_grads.append(grad_and_var)
-  return average_grads
+    average_grads = []
+    for grad_and_vars in zip(*tower_grads):
+        grad = tf.add_n([x[0] for x in grad_and_vars]) / float(len(tower_grads))
+        v = grad_and_vars[0][1]
+        average_grads.append((grad, v))
+    return average_grads
 
 def summary_grads(grads):
     for grad, var in grads:
@@ -139,17 +122,17 @@ def start_train(config):
         kept_summaries = {}
         grads = []
         for i in range(config.nr_tower):
-            with tf.device('/gpu:{}'.format(i)):
-                with tf.name_scope('tower{}'.format(i)) as scope:
-                    model_inputs = get_model_inputs()
-                    output_vars, cost_var = config.get_model_func(model_inputs, is_training=True)
-                    grads.append(
-                        config.optimizer.compute_gradients(cost_var))
+            with tf.device('/gpu:{}'.format(i)), \
+                    tf.name_scope('tower{}'.format(i)) as scope:
+                model_inputs = get_model_inputs()
+                output_vars, cost_var = config.get_model_func(model_inputs, is_training=True)
+                grads.append(
+                    config.optimizer.compute_gradients(cost_var))
 
-                    if i == 0:
-                        tf.get_variable_scope().reuse_variables()
-                        for k in coll_keys:
-                            kept_summaries[k] = copy.copy(tf.get_collection(k))
+                if i == 0:
+                    tf.get_variable_scope().reuse_variables()
+                    for k in coll_keys:
+                        kept_summaries[k] = copy.copy(tf.get_collection(k))
         for k in coll_keys:  # avoid repeating summary on multiple devices
             del tf.get_collection(k)[:]
             tf.get_collection(k).extend(kept_summaries[k])
@@ -172,29 +155,31 @@ def start_train(config):
     # start training:
     coord = tf.train.Coordinator()
     # a thread that keeps filling the queue
-    input_th = EnqueueThread(sess, coord, enqueue_op, config.dataset, input_queue)
     model_th = tf.train.start_queue_runners(
         sess=sess, coord=coord, daemon=True, start=True)
+    input_th = EnqueueThread(sess, coord, enqueue_op, config.dataset, input_queue)
     input_th.start()
 
-    with sess.as_default(), \
-            coordinator_guard(sess, coord):
-        logger.info("Start with global_step={}".format(get_global_step()))
-        callbacks.before_train()
-        for epoch in xrange(1, config.max_epoch):
-            with timed_operation('epoch {}'.format(epoch)):
-                for step in tqdm.trange(
-                        config.step_per_epoch, leave=True, mininterval=0.2):
-                    if coord.should_stop():
-                        return
-                    # TODO if no one uses trigger_step, train_op can be
-                    # faster, see: https://github.com/soumith/convnet-benchmarks/pull/67/files
-                    fetches = [train_op, cost_var] + output_vars + model_inputs
-                    results = sess.run(fetches)
-                    cost = results[1]
-                    outputs = results[2:2 + len(output_vars)]
-                    inputs = results[-len(model_inputs):]
-                    callbacks.trigger_step(inputs, outputs, cost)
+    with sess.as_default():
+        try:
+            logger.info("Start training with global_step={}".format(get_global_step()))
+            callbacks.before_train()
+            for epoch in xrange(1, config.max_epoch):
+                with timed_operation('epoch {}'.format(epoch)):
+                    for step in tqdm.trange(
+                            config.step_per_epoch, leave=True, mininterval=0.2):
+                        if coord.should_stop():
+                            return
+                        sess.run([train_op])    # faster since train_op return None
+                        callbacks.trigger_step()
 
-                # note that summary_op will take a data from the queue.
-                callbacks.trigger_epoch()
+                    # note that summary_op will take a data from the queue.
+                    callbacks.trigger_epoch()
+        except (KeyboardInterrupt, Exception):
+            raise
+        finally:
+            coord.request_stop()
+            queue.close(cancel_pending_enqueues=True)
+            callbacks.after_train()
+            sess.close()
+

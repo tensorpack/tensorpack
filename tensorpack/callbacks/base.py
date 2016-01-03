@@ -31,13 +31,15 @@ class Callback(object):
         Called before starting iterative training
         """
 
-    def trigger_step(self, inputs, outputs, cost):
+    def after_train(self):
+        """
+        Called after training
+        """
+
+    def trigger_step(self):
         """
         Callback to be triggered after every step (every backpropagation)
-        Args:
-            inputs: the list of input values
-            outputs: list of output values after running this inputs
-            cost: the cost value after running this input
+        Could be useful to apply some tricks on parameters (clipping, low-rank, etc)
         """
 
     def trigger_epoch(self):
