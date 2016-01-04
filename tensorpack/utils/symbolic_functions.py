@@ -5,7 +5,6 @@
 
 import tensorflow as tf
 import numpy as np
-__all__ = ['one_hot', 'batch_flatten', 'logSoftmax']
 
 def one_hot(y, num_labels):
     with tf.op_scope([y, num_labels], 'one_hot'):
@@ -17,6 +16,10 @@ def one_hot(y, num_labels):
             concated, tf.pack([batch_size, num_labels]), 1.0, 0.0)
         onehot_labels.set_shape([None, num_labels])
         return tf.cast(onehot_labels, tf.float32)
+
+def flatten(x):
+    total_dim = np.prod(x.get_shape().as_list())
+    return tf.reshape(x, [total_dim])
 
 def batch_flatten(x):
     total_dim = np.prod(x.get_shape()[1:].as_list())
