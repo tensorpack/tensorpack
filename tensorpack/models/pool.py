@@ -39,7 +39,7 @@ def FixedUnPooling(x, shape, unpool_mat=None):
     input_shape = x.get_shape().as_list()
     assert len(input_shape) == 4
     if unpool_mat is None:
-        mat = np.zeros(shape)
+        mat = np.zeros(shape, dtype='float32')
         mat[0][0] = 1
         unpool_mat = tf.Variable(mat, trainable=False, name='unpool_mat')
     assert unpool_mat.get_shape().as_list() == list(shape)

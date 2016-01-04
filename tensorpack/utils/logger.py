@@ -55,8 +55,9 @@ def set_file(path):
 global LOG_FILE
 LOG_FILE = "train_log/log.log"
 def set_logger_file(filename):
-    global LOG_FILE
+    global LOG_FILE, LOG_DIR
     LOG_FILE = filename
+    LOG_DIR = os.path.dirname(LOG_FILE)
     mkdir_p(os.path.dirname(LOG_FILE))
     set_file(LOG_FILE)
 

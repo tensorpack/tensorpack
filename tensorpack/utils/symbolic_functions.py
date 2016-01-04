@@ -18,8 +18,7 @@ def one_hot(y, num_labels):
         return tf.cast(onehot_labels, tf.float32)
 
 def flatten(x):
-    total_dim = np.prod(x.get_shape().as_list())
-    return tf.reshape(x, [total_dim])
+    return tf.reshape(x, [-1])
 
 def batch_flatten(x):
     total_dim = np.prod(x.get_shape()[1:].as_list())

@@ -16,7 +16,7 @@ class ImageFromFile(DataFlow):
             channel: 1 or 3 channel
             resize: a (h, w) tuple. If given, will force a resize
         """
-        assert len(self.files)
+        assert len(files)
         self.files = files
         self.channel = int(channel)
         self.resize = resize

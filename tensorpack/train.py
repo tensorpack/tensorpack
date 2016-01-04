@@ -103,6 +103,8 @@ def start_train(config):
 
     def get_model_inputs():
         model_inputs = input_queue.dequeue()
+        if isinstance(model_inputs, tf.Tensor):
+            model_inputs = [model_inputs]
         for qv, v in zip(model_inputs, input_vars):
             if config.batched_model_input:
                 qv.set_shape(v.get_shape())
@@ -179,7 +181,7 @@ def start_train(config):
             raise
         finally:
             coord.request_stop()
-            queue.close(cancel_pending_enqueues=True)
+            input_queue.close(cancel_pending_enqueues=True)
             callbacks.after_train()
             sess.close()
 
