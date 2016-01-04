@@ -19,7 +19,7 @@ class ValidationCallback(PeriodicCallback):
     """
     Basic routine for validation callbacks.
     """
-    def __init__(self, ds, prefix, period, cost_var_name='cost:0'):
+    def __init__(self, ds, prefix, period=1, cost_var_name='cost:0'):
         super(ValidationCallback, self).__init__(period)
         self.ds = ds
         self.prefix = prefix
@@ -67,6 +67,10 @@ class ValidationCallback(PeriodicCallback):
         self.writer.add_summary(create_summary(
             '{}_cost'.format(self.prefix), cost_avg), self.global_step)
         logger.info("{}_cost: {:.4f}".format(self.prefix, cost_avg))
+
+    def _trigger(self):
+        for dp, outputs in self._run_validation():
+            pass
 
 
 class ValidationError(ValidationCallback):
