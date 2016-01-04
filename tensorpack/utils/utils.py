@@ -20,6 +20,7 @@ def expand_dim_if_necessary(var, dp):
 
 
 def mkdir_p(dirname):
+    assert dirname is not None
     if dirname == '':
         return
     try:

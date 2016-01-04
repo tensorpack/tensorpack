@@ -88,7 +88,7 @@ def get_model(inputs, is_training):
 def get_config():
     basename = os.path.basename(__file__)
     log_dir = os.path.join('train_log', basename[:basename.rfind('.')])
-    logger.set_logger_dir(log_dir)
+    logger.set_logger_file(os.path.join(log_dir, 'training.log'))
 
     dataset_train = dataset.Cifar10('train')
     augmentors = [

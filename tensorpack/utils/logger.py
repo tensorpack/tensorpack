@@ -52,11 +52,11 @@ def set_file(path):
         filename=path, encoding='utf-8', mode='w')
     logger.addHandler(hdl)
 
-global LOG_DIR
-LOG_DIR = "train_log"
-def set_logger_dir(dirname):
-    global LOG_DIR
-    LOG_DIR = dirname
-    mkdir_p(LOG_DIR)
-    set_file(os.path.join(LOG_DIR, 'training.log'))
+global LOG_FILE
+LOG_FILE = "train_log/log.log"
+def set_logger_file(filename):
+    global LOG_FILE
+    LOG_FILE = filename
+    mkdir_p(os.path.dirname(LOG_FILE))
+    set_file(LOG_FILE)
 

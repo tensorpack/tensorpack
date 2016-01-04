@@ -4,6 +4,7 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
+import itertools
 from tqdm import tqdm
 
 from ..utils import *
@@ -47,7 +48,7 @@ class ValidationError(PeriodicCallback):
         cost_sum = 0
         with tqdm(total=self.ds.size()) as pbar:
             for dp in self.ds.get_data():
-                feed = dict(zip(self.input_vars, dp))
+                feed = dict(itertools.izip(self.input_vars, dp))
 
                 batch_size = dp[0].shape[0]   # assume batched input
 

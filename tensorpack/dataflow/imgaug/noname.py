@@ -17,18 +17,17 @@ class Flip(ImageAugmentor):
             horiz, vert: True/False
         """
         if horiz and vert:
-            self.code = -1
+            raise ValueError("Please use two Flip, with both 0.5 prob")
         elif horiz:
             self.code = 1
         elif vert:
             self.code = 0
         else:
-            raise RuntimeError("Are you kidding?")
+            raise ValueError("Are you kidding?")
         self.prob = prob
         self._init()
 
     def _augment(self, img):
-# TODO XXX prob is wrong for both mode
         if self._rand_range() < self.prob:
             img.arr = cv2.flip(img.arr, self.code)
             if img.coords:
