@@ -3,6 +3,7 @@
 # File: sessinit.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
+import os
 from abc import abstractmethod, ABCMeta
 import numpy as np
 import tensorflow as tf
@@ -21,6 +22,11 @@ class NewSession(SessionInit):
 
 class SaverRestore(SessionInit):
     def __init__(self, model_path):
+        assert os.path.isfile(model_path)
+        if os.path.basename(model_path) == 'checkpoint':
+            model_path = tf.train.get_checkpoint_state(
+                os.path.dirname(model_path)).model_checkpoint_path
+            assert os.path.isfile(model_path)
         self.set_path(model_path)
 
     def init(self, sess):
