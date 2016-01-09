@@ -36,8 +36,8 @@ class TrainConfig(object):
                 the dataset
             input_queue: the queue used for input. default to a FIFO queue
                 with capacity 5
-            get_model_func: a function taking `inputs` and `is_training` and
-                return a tuple of output list as well as the cost to minimize
+            get_model_func: a function taking `inputs` and `is_training`, and
+                return the cost to minimize
             batched_model_input: boolean. If yes, `get_model_func` expected batched
                 input in training. Otherwise, expect single data point in
                 training, so that you may do pre-processing and batch them
@@ -127,7 +127,7 @@ def start_train(config):
             with tf.device('/gpu:{}'.format(i)), \
                     tf.name_scope('tower{}'.format(i)) as scope:
                 model_inputs = get_model_inputs()
-                output_vars, cost_var = config.get_model_func(model_inputs, is_training=True)
+                cost_var = config.get_model_func(model_inputs, is_training=True)
                 grads.append(
                     config.optimizer.compute_gradients(cost_var))
 
@@ -141,7 +141,7 @@ def start_train(config):
         grads = average_gradients(grads)
     else:
         model_inputs = get_model_inputs()
-        output_vars, cost_var = config.get_model_func(model_inputs, is_training=True)
+        cost_var = config.get_model_func(model_inputs, is_training=True)
         grads = config.optimizer.compute_gradients(cost_var)
     summary_grads(grads)
     avg_maintain_op = summary_moving_average(cost_var)

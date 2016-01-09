@@ -15,7 +15,7 @@ from tensorpack.models import *
 from tensorpack.utils import *
 from tensorpack.utils.symbolic_functions import *
 from tensorpack.utils.summary import *
-from tensorpack.utils.callback import *
+from tensorpack.callbacks import *
 from tensorpack.dataflow import *
 
 BATCH_SIZE = 10
@@ -25,7 +25,7 @@ CAPACITY = MIN_AFTER_DEQUEUE + 3 * BATCH_SIZE
 def get_model(inputs, is_training):
     # img: 227x227x3
     is_training = bool(is_training)
-    keep_prob = tf.constant(0.5 if is_training else 0.0)
+    keep_prob = tf.constant(0.5 if is_training else 1.0)
 
     image, label = inputs
 
@@ -73,7 +73,7 @@ def get_model(inputs, is_training):
     tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, wd_cost)
 
     add_param_summary('.*/W')   # monitor histogram of all W
-    return [prob, nr_wrong], tf.add_n([wd_cost, cost], name='cost')
+    return tf.add_n([wd_cost, cost], name='cost')
 
 def get_config():
     basename = os.path.basename(__file__)

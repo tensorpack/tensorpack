@@ -31,7 +31,7 @@ def create_test_graph():
             ))
         for v in input_vars:
             Gtest.add_to_collection(INPUT_VARS_KEY, v)
-        output_vars, cost = forward_func(input_vars, is_training=False)
+        cost = forward_func(input_vars, is_training=False)
         yield Gtest
 
 @contextmanager

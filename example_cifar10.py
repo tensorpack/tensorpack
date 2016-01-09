@@ -83,7 +83,7 @@ def get_model(inputs, is_training):
     tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, wd_cost)
 
     add_param_summary('.*')   # monitor all variables
-    return [prob, nr_wrong], tf.add_n([cost, wd_cost], name='cost')
+    return tf.add_n([cost, wd_cost], name='cost')
 
 def get_config():
     basename = os.path.basename(__file__)

@@ -31,12 +31,10 @@ def get_model(inputs, is_training):
             label_var: bx1 integer
         is_training: a python bool variable
     Returns:
-        (outputs, cost)
-        outputs: a list of output variable
-        cost: the cost to minimize. scalar variable
+        the cost to minimize. scalar variable
     """
     is_training = bool(is_training)
-    keep_prob = tf.constant(0.5 if is_training else 0.0)
+    keep_prob = tf.constant(0.5 if is_training else 1.0)
 
     image, label = inputs
     image = tf.expand_dims(image, 3)    # add a single channel
@@ -83,7 +81,7 @@ def get_model(inputs, is_training):
     tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, wd_cost)
 
     add_param_summary('.*/W')   # monitor histogram of all W
-    return [prob, nr_wrong], tf.add_n([wd_cost, cost], name='cost')
+    return tf.add_n([wd_cost, cost], name='cost')
 
 def get_config():
     basename = os.path.basename(__file__)
@@ -126,6 +124,7 @@ def get_config():
         callbacks=Callbacks([
             SummaryWriter(print_tag=['train_cost', 'train_error']),
             PeriodicSaver(),
+            #ValidationCallback(dataset_test, 'test')
             ValidationError(dataset_test, prefix='test'),
         ]),
         session_config=sess_config,

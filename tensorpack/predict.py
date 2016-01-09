@@ -6,6 +6,7 @@
 import tensorflow as tf
 from itertools import count
 import argparse
+from collections import namedtuple
 import numpy as np
 from tqdm import tqdm
 
@@ -43,8 +44,8 @@ class PredictConfig(object):
                 return a tuple of output list as well as the cost to minimize
             output_var_names: a list of names of the output variable to predict, the
                 variables can be any computable tensor in the graph.
-                if None, will predict everything returned by `get_model_func`
-                (all outputs as well as the cost). Predict only specific output
+                if None, will only calculate the cost returned by `get_model_func`.
+                Predict only specific output (instead of the cost)
                 might be faster and might require only some of the input variables.
         """
         def assert_type(v, tp):
@@ -66,14 +67,13 @@ def get_predict_func(config):
         A prediction function that takes a list of inputs value, and return
         one/a list of output values.
         If `output_var_names` is set, then the prediction function will
-        return a list of output values. If not, will return a list of output
-        values and a cost.
+        return a list of output values. If not, will return a cost.
     """
     output_var_names = config.output_var_names
 
     # input/output variables
     input_vars = config.inputs
-    output_vars, cost_var = config.get_model_func(input_vars, is_training=False)
+    cost_var = config.get_model_func(input_vars, is_training=False)
     input_map = config.input_dataset_mapping
     if input_map is None:
         input_map = input_vars
@@ -81,6 +81,8 @@ def get_predict_func(config):
     # check output_var_names against output_vars
     if output_var_names is not None:
         output_vars = [tf.get_default_graph().get_tensor_by_name(n) for n in output_var_names]
+    else:
+        output_vars = []
 
     describe_model()
 
@@ -96,11 +98,12 @@ def get_predict_func(config):
             results = sess.run(output_vars, feed_dict=feed)
             return results
         else:
-            results = sess.run([cost_var] + output_vars, feed_dict=feed)
+            results = sess.run([cost_var], feed_dict=feed)
             cost = results[0]
-            outputs = results[1:]
-            return outputs, cost
+            return cost
     return run_input
+
+PredictResult = namedtuple('PredictResult', ['input', 'output'])
 
 class DatasetPredictor(object):
     def __init__(self, predict_config, dataset, batch=0):
@@ -118,7 +121,7 @@ class DatasetPredictor(object):
         """ a generator to return prediction for each data"""
         with tqdm(total=self.ds.size()) as pbar:
             for dp in self.ds.get_data():
-                yield [dp, self.predict_func(dp)]
+                yield PredictResult(dp, self.predict_func(dp))
                 pbar.update()
 
     def get_all_result(self):
