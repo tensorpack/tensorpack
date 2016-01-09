@@ -28,7 +28,7 @@ MIN_AFTER_DEQUEUE = int(50000 * 0.4)
 CAPACITY = MIN_AFTER_DEQUEUE + 3 * BATCH_SIZE
 
 def get_model(inputs, is_training):
-    #keep_prob = tf.constant(0.5 if is_training else 1.0)
+    #keep_prob = tf.constant(0.5 if is_training else 0.0)
 
     image, label = inputs
 

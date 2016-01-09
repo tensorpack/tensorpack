@@ -36,7 +36,7 @@ def get_model(inputs, is_training):
         cost: the cost to minimize. scalar variable
     """
     is_training = bool(is_training)
-    keep_prob = tf.constant(0.5 if is_training else 1.0)
+    keep_prob = tf.constant(0.5 if is_training else 0.0)
 
     image, label = inputs
     image = tf.expand_dims(image, 3)    # add a single channel

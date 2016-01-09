@@ -44,6 +44,7 @@ def FixedUnPooling(x, shape, unpool_mat=None):
         unpool_mat = tf.Variable(mat, trainable=False, name='unpool_mat')
     assert unpool_mat.get_shape().as_list() == list(shape)
 
+    # perform a tensor-matrix kronecker product
     fx = flatten(tf.transpose(x, [0, 3, 1, 2]))
     fx = tf.expand_dims(fx, -1)       # (bchw)x1
     mat = tf.expand_dims(flatten(unpool_mat), 0)    #1x(shxsw)
