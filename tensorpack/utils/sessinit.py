@@ -56,6 +56,7 @@ class ParamRestore(SessionInit):
             sess.run(var.assign(value))
 
 def dump_session_params(path):
+    """ dump value of all trainable variables to a dict"""
     var = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
     result = {}
     for v in var:

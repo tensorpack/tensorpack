@@ -39,7 +39,7 @@ with tf.Graph().as_default() as G:
     ds = ImageFromFile(args.images, 3, resize=(227, 227))
     predictor = DatasetPredictor(config, ds, batch=128)
     res = predictor.get_all_result()
-    res = [k[1] for k in res]
+    res = [k.output for k in res]
 
     if args.output_type == 'label':
         for r in res:

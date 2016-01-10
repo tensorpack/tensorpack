@@ -11,8 +11,6 @@ import imp
 from tensorpack.utils import *
 from tensorpack.utils import sessinit
 from tensorpack.dataflow import *
-from tensorpack.predict import DatasetPredictor
-
 
 parser = argparse.ArgumentParser()
 parser.add_argument(dest='config')
@@ -30,6 +28,3 @@ with tf.Graph().as_default() as G:
     init.init(sess)
     with sess.as_default():
         sessinit.dump_session_params(args.output)
-
-
-

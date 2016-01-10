@@ -78,7 +78,7 @@ def get_model(inputs, is_training):
 def get_config():
     basename = os.path.basename(__file__)
     log_dir = os.path.join('train_log', basename[:basename.rfind('.')])
-    logger.set_logger_dir(log_dir)
+    logger.set_logger_file(os.path.join(log_dir, 'training.log'))
 
     dataset_train = FakeData([(227,227,3), tuple()], 10)
     dataset_train = BatchData(dataset_train, 10)
@@ -158,7 +158,7 @@ if __name__ == '__main__':
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
-    #start_train(get_config())
+    start_train(get_config())
 
     # run alexnet with given model (in npy format)
     run_test('alexnet-tuned.npy')
