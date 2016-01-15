@@ -39,14 +39,6 @@ def get_model(inputs, is_training):
     image, label = inputs
     image = tf.expand_dims(image, 3)    # add a single channel
 
-    #if is_training:
-        ## augmentations
-        #image, label = tf.train.slice_input_producer(
-            #[image, label], shuffle=False, name='slice_queue')
-        #image, label = tf.train.batch(
-            #[image, label], BATCH_SIZE, capacity=CAPACITY,
-            #num_threads=2, enqueue_many=False)
-
     l = Conv2D('conv0', image, out_channel=32, kernel_shape=5)
     l = MaxPooling('pool0', l, 2)
     l = Conv2D('conv1', l, out_channel=40, kernel_shape=3)
@@ -93,7 +85,6 @@ def get_config():
     dataset_train = BatchData(dataset.Mnist('train'), 128)
     dataset_test = BatchData(dataset.Mnist('test'), 256, remainder=True)
     step_per_epoch = dataset_train.size()
-    step_per_epoch = 30
     #dataset_test = FixedSizeData(dataset_test, 20)
 
     sess_config = get_default_sess_config()
@@ -106,10 +97,8 @@ def get_config():
         tf.placeholder(
             tf.int32, shape=(None,), name='label')
     ]
-    input_queue = tf.RandomShuffleQueue(
-        100, 50, [x.dtype for x in input_vars], name='queue')
-    #input_queue = tf.FIFOQueue(
-        #100, [x.dtype for x in input_vars], name='queue')
+    input_queue = tf.FIFOQueue(
+        100, [x.dtype for x in input_vars], name='queue')
 
     lr = tf.train.exponential_decay(
         learning_rate=1e-4,
@@ -124,7 +113,6 @@ def get_config():
         callbacks=Callbacks([
             SummaryWriter(print_tag=['train_cost', 'train_error']),
             PeriodicSaver(),
-            #ValidationCallback(dataset_test, 'test')
             ValidationError(dataset_test, prefix='test'),
         ]),
         session_config=sess_config,
