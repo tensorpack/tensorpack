@@ -59,6 +59,7 @@ class BatchData(DataFlow):
         return result
 
 class FixedSizeData(DataFlow):
+    """ generate data from another dataflow, but with a fixed epoch size"""
     def __init__(self, ds, size):
         self.ds = ds
         self._size = size
@@ -75,8 +76,22 @@ class FixedSizeData(DataFlow):
                 if cnt == self._size:
                     return
 
+class RepeatedData(DataFlow):
+    """ repeat another dataflow for certain times"""
+    def __init__(self, ds, nr):
+        self.nr = nr
+        self.ds = ds
+
+    def size(self):
+        return self.ds.size() * self.nr
+
+    def get_data(self):
+        for _ in xrange(self.nr):
+            for dp in self.ds.get_data():
+                yield dp
+
 class FakeData(DataFlow):
-    """ Build fake data of given shapes"""
+    """ Build fake random data of given shapes"""
     def __init__(self, shapes, size):
         self.shapes = shapes
         self._size = size
