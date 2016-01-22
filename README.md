@@ -8,4 +8,5 @@ In development. No document, don't use.
 + Provide callbacks to control training behavior (as in [Keras](http://keras.io)).
 + Use `Dataflow` to gain fine-grained control on data preprocessing.
 + Automatically use the Queue operator in tensorflow to speed up input.
-+ Training and testing graph are modeled together, automatically. Just need to follow the conventions to setup stuffs.
++ Training and testing graph are modeled together. Just need to follow the conventions to setup stuffs.
++ Use tensorboard easily.

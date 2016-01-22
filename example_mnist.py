@@ -25,7 +25,7 @@ CAPACITY = MIN_AFTER_DEQUEUE + 3 * BATCH_SIZE
 def get_model(inputs, is_training):
     """
     Args:
-        inputs: a list of input variable,
+        inputs: a list of input variable for training
         e.g.: [image_var, label_var] with:
             image_var: bx28x28
             label_var: bx1 integer

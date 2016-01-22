@@ -57,3 +57,23 @@ def FixedUnPooling(x, shape, unpool_mat=None):
                             input_shape[2] * shape[1],
                             input_shape[3]])
     return prod
+
+import unittest
+class TestPool(unittest.TestCase):
+    def test_fixed_unpooling(self):
+        h, w = 3, 4
+        mat = np.random.rand(h, w).astype('float32')
+        inp = tf.Variable(mat)
+        inp = tf.reshape(inp, [1, h, w, 1])
+        output = FixedUnPooling('unpool', inp, 2)
+        sess = tf.Session()
+        sess.run(tf.initialize_all_variables())
+        res = sess.run([output])[0]
+        self.assertEqual(res.shape, (1, 2*h, 2*w, 1))
+
+        # mat is on cornser
+        ele = res[0,::2,::2,0]
+        self.assertTrue((ele == mat).all())
+        # the rest are zeros
+        res[0,::2,::2,0] = 0
+        self.assertTrue((res == 0).all())
