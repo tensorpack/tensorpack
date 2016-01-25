@@ -8,14 +8,30 @@ import numpy as np
 from . import *
 import unittest
 
-subs = unittest.TestCase.__subclasses__()
+class TestModel(unittest.TestCase):
+    def run_variable(self, var):
+        sess = tf.Session()
+        sess.run(tf.initialize_all_variables())
+        if isinstance(var, list):
+            return sess.run(var)
+        else:
+            return sess.run([var])[0]
+
+    def make_variable(self, *args):
+        if len(args) > 1:
+            return [tf.Variable(k) for k in args]
+        else:
+            return tf.Variable(args[0])
 
 def run_test_case(case):
     suite = unittest.TestLoader().loadTestsFromTestCase(case)
     unittest.TextTestRunner(verbosity=2).run(suite)
 
-for cls in subs:
-    if 'tensorpack.models' in str(cls):
+if __name__ == '__main__':
+    import tensorpack
+    subs = tensorpack.models._test.TestModel.__subclasses__()
+    print subs
+    for cls in subs:
         run_test_case(cls)
 
 

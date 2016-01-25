@@ -33,7 +33,7 @@ def FixedUnPooling(x, shape, unpool_mat=None):
     Unpool the input with a fixed mat to perform kronecker product with
     x: 4D tensor of (b, h, w, c)
     shape: int or list/tuple of length 2
-    unpool_mat: a tf matrix with size=shape. if None, will use a zero-mat with a 1 as first element
+    unpool_mat: a tf matrix with size=shape. if None, will use a mat with 1 at top-left corner
     """
     shape = shape2d(shape)
     input_shape = x.get_shape().as_list()
@@ -58,17 +58,15 @@ def FixedUnPooling(x, shape, unpool_mat=None):
                             input_shape[3]])
     return prod
 
-import unittest
-class TestPool(unittest.TestCase):
+from _test import TestModel
+class TestPool(TestModel):
     def test_fixed_unpooling(self):
         h, w = 3, 4
         mat = np.random.rand(h, w).astype('float32')
-        inp = tf.Variable(mat)
+        inp = self.make_variable(mat)
         inp = tf.reshape(inp, [1, h, w, 1])
         output = FixedUnPooling('unpool', inp, 2)
-        sess = tf.Session()
-        sess.run(tf.initialize_all_variables())
-        res = sess.run([output])[0]
+        res = self.run_variable(output)
         self.assertEqual(res.shape, (1, 2*h, 2*w, 1))
 
         # mat is on cornser
