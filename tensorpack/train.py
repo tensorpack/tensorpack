@@ -87,6 +87,10 @@ def summary_grads(grads):
         if grad:
             tf.histogram_summary(var.op.name + '/gradients', grad)
 
+def check_grads(grads):
+    for grad, var in grads:
+        tf.Assert(tf.reduce_all(tf.is_finite(var)), [var])
+
 def start_train(config):
     """
     Start training with the given config
@@ -144,6 +148,7 @@ def start_train(config):
         cost_var = config.get_model_func(model_inputs, is_training=True)
         grads = config.optimizer.compute_gradients(cost_var)
     summary_grads(grads)
+    check_grads(grads)
     avg_maintain_op = summary_moving_average(cost_var)
 
     train_op = tf.group(

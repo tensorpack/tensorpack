@@ -39,20 +39,41 @@ def sample(img, coords):
     return sampled
 
 @layer_register()
-def ImageSample(template, mapping, interpolate):
+def ImageSample(template, mapping):
     """
-    Sample an image from template, using the given coordinate
+    Sample the template image, using the given coordinate, by bilinear interpolation.
     template: bxhxwxc
     mapping: bxh2xw2x2  (y, x) real-value coordinates
-    interpolate: 'nearest'
     Return: bxh2xw2xc
     """
+    mapping = tf.maximum(mapping, 0.0)
+    tf.check_numerics(mapping, "mapping")
+    lcoor = tf.cast(mapping, tf.int32)  # floor
+    ucoor = lcoor + 1
 
-    if interpolate == 'nearest':
-        mapping = tf.cast(tf.floor(mapping + 0.5), tf.int32)
-        return sample(template, mapping)
-    else:
-        raise NotImplementedError()
+    # has to cast to int32 and then cast back
+    # XXX tf.floor have gradient 1 w.r.t input, bug or feature?
+    diff = mapping - tf.cast(lcoor, tf.float32)
+    neg_diff = 1.0 - diff   #bxh2xw2x2
+
+    lcoory, lcoorx = tf.split(3, 2, lcoor)
+    ucoory, ucoorx = tf.split(3, 2, ucoor)
+
+    lyux = tf.concat(3, [lcoory, ucoorx])
+    uylx = tf.concat(3, [ucoory, lcoorx])
+
+    diffy, diffx = tf.split(3, 2, diff)
+    neg_diffy, neg_diffx = tf.split(3, 2, neg_diff)
+
+    prod = tf.reduce_prod(diff, 3, keep_dims=True)
+    diff = tf.Print(diff, [tf.is_finite(tf.reduce_sum(diff)), tf.shape(prod),
+                          tf.reduce_max(diff), diff],
+                    summarize=50)
+
+    return sample(template, lcoor) * neg_diffx * neg_diffy + \
+           sample(template, ucoor) * diffx * diffy + \
+           sample(template, lyux) * neg_diffy * diffx + \
+           sample(template, uylx) * diffy * neg_diffx
 
 from _test import TestModel
 class TestSample(TestModel):
@@ -85,7 +106,39 @@ class TestSample(TestModel):
         true_res = np_sample(bimg, np.floor(mat + 0.5).astype('int32'))
 
         inp, mapping = self.make_variable(bimg, mat)
-        output = ImageSample('sample', inp, mapping, 'nearest')
+        output = sample(inp, tf.cast(tf.floor(mapping+0.5), tf.int32))
         res = self.run_variable(output)
 
         self.assertTrue((res == true_res).all())
+
+if __name__ == '__main__':
+    import cv2
+    import numpy as np
+    import sys
+    im = cv2.imread('cat.jpg')
+    im = im.reshape((1,) + im.shape).astype('float32')
+    imv = tf.Variable(im)
+
+    h, w = 300, 400
+    mapping = np.zeros((1, h, w, 2), dtype='float32')
+    diff = 2000
+    for x in range(w):
+        for y in range(h):
+            mapping[0,y,x,:] = np.array([y-diff+0.4, x-diff+0.5])
+
+    mapv = tf.Variable(mapping)
+    output = ImageSample('sample', imv, mapv)
+    sess = tf.Session()
+    sess.run(tf.initialize_all_variables())
+
+    out = sess.run(tf.gradients(tf.reduce_sum(output), mapv))
+    #out = sess.run(output)
+    print out[0].min()
+    print out[0].max()
+    print out[0].sum()
+
+    out = sess.run([output])[0]
+    im = out[0]
+    cv2.imwrite('sampled.jpg', im)
+
+

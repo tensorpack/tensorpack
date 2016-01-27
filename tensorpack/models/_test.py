@@ -30,7 +30,6 @@ def run_test_case(case):
 if __name__ == '__main__':
     import tensorpack
     subs = tensorpack.models._test.TestModel.__subclasses__()
-    print subs
     for cls in subs:
         run_test_case(cls)
 

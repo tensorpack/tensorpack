@@ -17,10 +17,10 @@ class DataFlow(object):
         A generator to generate data as tuple.
         """
 
-    @abstractmethod
     def size(self):
         """
         Size of this data flow.
         """
+        raise NotImplementedError()
 
 
