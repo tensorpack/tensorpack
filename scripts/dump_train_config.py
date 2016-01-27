@@ -16,6 +16,9 @@ from tensorpack.utils.utils import mkdir_p
 parser = argparse.ArgumentParser()
 parser.add_argument(dest='config')
 parser.add_argument('-o', '--output', help='output directory to dump dataset image')
+parser.add_argument('--index',
+                    help='index of the image component in datapoint',
+                    default=0, type=int)
 parser.add_argument('-n', '--number', help='number of images to dump',
                     default=10, type=int)
 args = parser.parse_args()
@@ -28,7 +31,7 @@ config = get_config_func()
 if args.output:
     mkdir_p(args.output)
     cnt = 0
-    index = 0   # TODO: as an argument?
+    index = args.index   # TODO: as an argument?
     for dp in config.dataset.get_data():
         imgbatch = dp[index]
         if cnt > args.number:
