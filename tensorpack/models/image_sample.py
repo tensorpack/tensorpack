@@ -71,10 +71,10 @@ def ImageSample(template, mapping):
                           tf.reduce_max(diff), diff],
                     summarize=50)
 
-    return sample(template, lcoor) * neg_diffx * neg_diffy + \
-           sample(template, ucoor) * diffx * diffy + \
-           sample(template, lyux) * neg_diffy * diffx + \
-           sample(template, uylx) * diffy * neg_diffx
+    return tf.add_n([sample(template, lcoor) * neg_diffx * neg_diffy,
+           sample(template, ucoor) * diffx * diffy,
+           sample(template, lyux) * neg_diffy * diffx,
+           sample(template, uylx) * diffy * neg_diffx], name='sampled')
 
 from _test import TestModel
 class TestSample(TestModel):

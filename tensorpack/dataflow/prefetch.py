@@ -9,24 +9,24 @@ import multiprocessing
 
 __all__ = ['PrefetchData']
 
+class Sentinel:
+    pass
+
 class PrefetchProcess(multiprocessing.Process):
     def __init__(self, ds, queue_size):
         super(PrefetchProcess, self).__init__()
         self.ds = ds
         self.queue = multiprocessing.Queue(queue_size)
-        class Sentinel:
-            pass
-        self.sentinel = Sentinel()
 
     def run(self):
         for dp in self.ds.get_data():
             self.queue.put(dp)
-        self.queue.put(self.sentinel)
+        self.queue.put(Sentinel())
 
     def get_data(self):
         while True:
             ret = self.queue.get()
-            if ret is self.sentinel:
+            if isinstance(ret, Sentinel):
                 return
             yield ret
 
@@ -43,8 +43,10 @@ class PrefetchData(DataFlow):
         worker = PrefetchProcess(self.ds, self.nr_prefetch)
         # TODO register terminate function
         worker.start()
-        for dp in worker.get_data():
-            yield dp
-        worker.join()
-        worker.terminate()
+        try:
+            for dp in worker.get_data():
+                yield dp
+        finally:
+            worker.join()
+            worker.terminate()
 
