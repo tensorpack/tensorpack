@@ -46,6 +46,7 @@ def ImageSample(template, mapping):
     mapping: bxh2xw2x2  (y, x) real-value coordinates
     Return: bxh2xw2xc
     """
+    assert template.get_shape().ndims == 4 and mapping.get_shape().ndims == 4
     mapping = tf.maximum(mapping, 0.0)
     tf.check_numerics(mapping, "mapping")
     lcoor = tf.cast(mapping, tf.int32)  # floor

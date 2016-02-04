@@ -4,6 +4,7 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 from .base import ImageAugmentor
+import cv2
 
 __all__ = ['RandomCrop', 'CenterCrop', 'Resize']
 
@@ -42,11 +43,11 @@ class Resize(ImageAugmentor):
     def __init__(self, shape):
         """
         Args:
-            shape: (w, h)
+            shape: (h, w)
         """
         self._init(locals())
 
     def _augment(self, img):
         img.arr = cv2.resize(
-            img.arr, self.shape,
+            img.arr, self.shape[::-1],
             interpolation=cv2.INTER_CUBIC)
