@@ -32,6 +32,9 @@ class Callback(object):
         """
 
     def after_train(self):
+        self._after_train()
+
+    def _after_train(self):
         """
         Called after training
         """

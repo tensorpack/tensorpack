@@ -78,7 +78,7 @@ class TrainCallbacks(Callback):
             cb.before_train()
         self.writer = tf.get_collection(SUMMARY_WRITER_COLLECTION_KEY)[0]
 
-    def after_train(self):
+    def _after_train(self):
         for cb in self.cbs:
             cb.after_train()
 
@@ -115,7 +115,7 @@ class TestCallbacks(Callback):
             for cb in self.cbs:
                 cb.before_train()
 
-    def after_train(self):
+    def _after_train(self):
         for cb in self.cbs:
             cb.after_train()
 
@@ -161,7 +161,7 @@ class Callbacks(Callback):
         self.train.before_train()
         self.test.before_train()
 
-    def after_train(self):
+    def _after_train(self):
         self.train.after_train()
         self.test.after_train()
 

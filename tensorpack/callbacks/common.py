@@ -56,6 +56,6 @@ class SummaryWriter(Callback):
                 logger.info('{}: {:.4f}'.format(val.tag, val.simple_value))
         self.writer.add_summary(summary, get_global_step())
 
-    def after_train(self):
+    def _after_train(self):
         self.writer.close()
 
