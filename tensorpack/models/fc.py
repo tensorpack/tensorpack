@@ -17,7 +17,7 @@ def FullyConnected(x, out_dim, W_init=None, b_init=None, nl=tf.nn.relu):
     in_dim = x.get_shape().as_list()[1]
 
     if W_init is None:
-        W_init = tf.truncated_normal_initializer(stddev=1.0 / math.sqrt(float(in_dim)))
+        W_init = tf.truncated_normal_initializer(stddev=1 / math.sqrt(float(in_dim)))
     if b_init is None:
         b_init = tf.constant_initializer(0.0)
 

@@ -7,6 +7,7 @@ import cPickle
 import numpy
 from six.moves import urllib
 import tarfile
+import logging
 
 from ...utils import logger
 from ..base import DataFlow
@@ -24,10 +25,11 @@ def maybe_download_and_extract(dest_directory):
     filename = DATA_URL.split('/')[-1]
     filepath = os.path.join(dest_directory, filename)
     if os.path.isdir(os.path.join(dest_directory, 'cifar-10-batches-py')):
+        logger.info("Found cifar10 data in {}.".format(dest_directory))
         return
     else:
         def _progress(count, block_size, total_size):
-            sys.stdout.write('\r>> Downloading %s %.1f%%' % (filename,
+            sys.stdout.write('\r>> Downloading %s %.1f%%' % (filepath,
                     float(count * block_size) / float(total_size) * 100.0))
             sys.stdout.flush()
         filepath, _ = urllib.request.urlretrieve(DATA_URL, filepath, reporthook=_progress)

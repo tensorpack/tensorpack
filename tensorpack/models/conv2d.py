@@ -31,7 +31,7 @@ def Conv2D(x, out_channel, kernel_shape,
     stride = shape4d(stride)
 
     if W_init is None:
-        W_init = tf.truncated_normal_initializer(stddev=4e-2)
+        W_init = tf.truncated_normal_initializer(stddev=1e-2)
     if b_init is None:
         b_init = tf.constant_initializer()
 

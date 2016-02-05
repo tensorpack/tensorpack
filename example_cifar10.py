@@ -92,18 +92,18 @@ def get_config():
 
     dataset_train = dataset.Cifar10('train')
     augmentors = [
-        RandomCrop((24, 24)),
-        Flip(horiz=True),
-        BrightnessAdd(63),
-        Contrast((0.2,1.8)),
-        MeanVarianceNormalize(all_channel=True)
+        imgaug.RandomCrop((24, 24)),
+        imgaug.Flip(horiz=True),
+        imgaug.BrightnessAdd(63),
+        imgaug.Contrast((0.2,1.8)),
+        imgaug.MeanVarianceNormalize(all_channel=True)
     ]
     dataset_train = AugmentImageComponent(dataset_train, augmentors)
     dataset_train = BatchData(dataset_train, 128)
 
     augmentors = [
-        CenterCrop((24, 24)),
-        MeanVarianceNormalize(all_channel=True)
+        imgaug.CenterCrop((24, 24)),
+        imgaug.MeanVarianceNormalize(all_channel=True)
     ]
     dataset_test = dataset.Cifar10('test')
     dataset_test = AugmentImageComponent(dataset_test, augmentors)

@@ -39,21 +39,24 @@ def sample(img, coords):
     return sampled
 
 @layer_register()
-def ImageSample(template, mapping):
+def ImageSample(inputs):
     """
     Sample the template image, using the given coordinate, by bilinear interpolation.
+    inputs: list of [template, mapping]
     template: bxhxwxc
     mapping: bxh2xw2x2  (y, x) real-value coordinates
     Return: bxh2xw2xc
     """
+    template, mapping = inputs
     assert template.get_shape().ndims == 4 and mapping.get_shape().ndims == 4
+
     mapping = tf.maximum(mapping, 0.0)
-    tf.check_numerics(mapping, "mapping")
     lcoor = tf.cast(mapping, tf.int32)  # floor
     ucoor = lcoor + 1
 
     # has to cast to int32 and then cast back
-    # XXX tf.floor have gradient 1 w.r.t input, bug or feature?
+    # tf.floor have gradient 1 w.r.t input
+    # TODO bug fixed in #951
     diff = mapping - tf.cast(lcoor, tf.float32)
     neg_diff = 1.0 - diff   #bxh2xw2x2
 
@@ -128,7 +131,7 @@ if __name__ == '__main__':
             mapping[0,y,x,:] = np.array([y-diff+0.4, x-diff+0.5])
 
     mapv = tf.Variable(mapping)
-    output = ImageSample('sample', imv, mapv)
+    output = ImageSample('sample', [imv, mapv])
     sess = tf.Session()
     sess.run(tf.initialize_all_variables())
 

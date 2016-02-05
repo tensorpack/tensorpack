@@ -23,9 +23,9 @@ def describe_model():
 
 def get_shape_str(tensors):
     """ return the shape string for a tensor or a list of tensors"""
-    if isinstance(tensors, list):
+    if isinstance(tensors, (list, tuple)):
         shape_str = ",".join(
-            map(str(x.get_shape().as_list()), tensors))
+            map(lambda x: str(x.get_shape().as_list()), tensors))
     else:
         shape_str = str(tensors.get_shape().as_list())
     return shape_str

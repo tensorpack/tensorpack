@@ -24,7 +24,7 @@ def maybe_download(filename, work_directory):
         os.mkdir(work_directory)
     filepath = os.path.join(work_directory, filename)
     if not os.path.exists(filepath):
-        logger.info("Downloading mnist data...")
+        logger.info("Downloading mnist data to {}...".format(filepath))
         filepath, _ = urllib.request.urlretrieve(SOURCE_URL + filename, filepath)
         statinfo = os.stat(filepath)
         logger.info('Successfully downloaded to ' + filename)
