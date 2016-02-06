@@ -33,6 +33,7 @@ class EnqueueThread(threading.Thread):
         self.dataflow = dataflow
         self.op = enqueue_op
         self.queue = queue
+        self.close_op = self.queue.close(cancel_pending_enqueues=True)
 
         self.daemon = True
 
@@ -49,5 +50,5 @@ class EnqueueThread(threading.Thread):
             pass
         except Exception:
             logger.exception("Exception in EnqueueThread:")
-            self.queue.close(cancel_pending_enqueues=True)
+            self.sess.run(self.close_op)
             self.coord.request_stop()

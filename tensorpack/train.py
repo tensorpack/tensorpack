@@ -171,6 +171,8 @@ def start_train(config):
         try:
             logger.info("Start training with global_step={}".format(get_global_step()))
             callbacks.before_train()
+            tf.get_default_graph().finalize()
+
             for epoch in xrange(1, config.max_epoch):
                 with timed_operation('epoch {}'.format(epoch)):
                     for step in tqdm.trange(
@@ -186,7 +188,7 @@ def start_train(config):
             raise
         finally:
             coord.request_stop()
-            input_queue.close(cancel_pending_enqueues=True)
+            # Do I need to run queue.close
             callbacks.after_train()
             sess.close()
 
