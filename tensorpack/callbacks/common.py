@@ -24,7 +24,7 @@ class PeriodicSaver(PeriodicCallback):
             max_to_keep=self.keep_recent,
             keep_checkpoint_every_n_hours=self.keep_freq)
 
-    def _trigger(self):
+    def _trigger_periodic(self):
         self.saver.save(
             tf.get_default_session(),
             self.path,
@@ -40,13 +40,16 @@ class SummaryWriter(Callback):
             self.log_dir, graph_def=self.sess.graph_def)
         tf.add_to_collection(SUMMARY_WRITER_COLLECTION_KEY, self.writer)
         self.summary_op = tf.merge_all_summaries()
+        self.epoch_num = 0
 
-    def trigger_epoch(self):
+    def _trigger_epoch(self):
+        self.epoch_num += 1
         # check if there is any summary
         if self.summary_op is None:
             return
         summary_str = self.summary_op.eval()
         summary = tf.Summary.FromString(summary_str)
+        printed_tag = set()
         for val in summary.value:
             #print val.tag
             val.tag = re.sub('tower[0-9]*/', '', val.tag)
@@ -54,7 +57,12 @@ class SummaryWriter(Callback):
                 assert val.WhichOneof('value') == 'simple_value', \
                     'Cannot print summary {}: not a simple_value summary!'.format(val.tag)
                 logger.info('{}: {:.4f}'.format(val.tag, val.simple_value))
+                printed_tag.add(val.tag)
         self.writer.add_summary(summary, get_global_step())
+        if self.epoch_num == 1:
+            if len(printed_tag) != len(self.print_tag):
+                logger.warn("Tags to print not found in Summary Writer: {}".format(
+                    ", ".join([k for k in self.print_tag if k not in printed_tag])))
 
     def _after_train(self):
         self.writer.close()

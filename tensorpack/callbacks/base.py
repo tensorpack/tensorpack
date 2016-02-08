@@ -24,6 +24,7 @@ class Callback(object):
     def before_train(self):
         self.graph = tf.get_default_graph()
         self.sess = tf.get_default_session()
+        self.epoch_num = 0
         self._before_train()
 
     def _before_train(self):
@@ -46,22 +47,25 @@ class Callback(object):
         """
 
     def trigger_epoch(self):
+        self.epoch_num += 1
+        self.global_step = get_global_step()
+        self._trigger_epoch()
+
+    def _trigger_epoch(self):
         """
         Callback to be triggered after every epoch (full iteration of input dataset)
         """
 
+
 class PeriodicCallback(Callback):
     def __init__(self, period):
-        self.__period = period
-        self.epoch_num = 0
+        self.period = period
 
-    def trigger_epoch(self):
-        self.epoch_num += 1
-        if self.epoch_num % self.__period == 0:
-            self.global_step = get_global_step()
-            self._trigger()
+    def _trigger_epoch(self):
+        if self.epoch_num % self.period == 0:
+            self._trigger_periodic()
 
     @abstractmethod
-    def _trigger(self):
+    def _trigger_periodic(self):
         pass
 

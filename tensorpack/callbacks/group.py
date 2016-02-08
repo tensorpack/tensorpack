@@ -73,7 +73,7 @@ class TrainCallbacks(Callback):
         else:
             raise ValueError("Callbacks must contain a SummaryWriter!")
 
-    def before_train(self):
+    def _before_train(self):
         for cb in self.cbs:
             cb.before_train()
         self.writer = tf.get_collection(SUMMARY_WRITER_COLLECTION_KEY)[0]
@@ -86,7 +86,7 @@ class TrainCallbacks(Callback):
         for cb in self.cbs:
             cb.trigger_step()
 
-    def trigger_epoch(self):
+    def _trigger_epoch(self):
         tm = CallbackTimeLogger()
         for cb in self.cbs:
             s = time.time()
@@ -104,7 +104,7 @@ class TestCallbacks(Callback):
     def __init__(self, callbacks):
         self.cbs = callbacks
 
-    def before_train(self):
+    def _before_train(self):
         self.writer = tf.get_collection(SUMMARY_WRITER_COLLECTION_KEY)[0]
         with create_test_session() as sess:
             self.sess = sess
@@ -119,7 +119,7 @@ class TestCallbacks(Callback):
         for cb in self.cbs:
             cb.after_train()
 
-    def trigger_epoch(self):
+    def _trigger_epoch(self):
         if not self.cbs:
             return
         tm = CallbackTimeLogger()
@@ -157,7 +157,7 @@ class Callbacks(Callback):
         self.train = TrainCallbacks(train_cbs)
         self.test = TestCallbacks(test_cbs)
 
-    def before_train(self):
+    def _before_train(self):
         self.train.before_train()
         self.test.before_train()
 
@@ -169,7 +169,7 @@ class Callbacks(Callback):
         self.train.trigger_step()
         # test callback don't have trigger_step
 
-    def trigger_epoch(self):
+    def _trigger_epoch(self):
         self.train.trigger_epoch()
         # TODO test callbacks can be run async?
         self.test.trigger_epoch()

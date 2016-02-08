@@ -68,7 +68,7 @@ class ValidationCallback(PeriodicCallback):
             '{}_cost'.format(self.prefix), cost_avg), self.global_step)
         logger.info("{}_cost: {:.4f}".format(self.prefix, cost_avg))
 
-    def _trigger(self):
+    def _trigger_periodic(self):
         for dp, outputs in self._run_validation():
             pass
 
@@ -95,7 +95,7 @@ class ValidationError(ValidationCallback):
     def _get_output_vars(self):
         return [self.wrong_var]
 
-    def _trigger(self):
+    def _trigger_periodic(self):
         err_stat = Accuracy()
         for dp, outputs in self._run_validation():
             batch_size = dp[0].shape[0]   # assume batched input
