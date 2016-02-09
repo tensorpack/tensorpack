@@ -35,11 +35,12 @@ class PredictConfig(object):
                 If not given, defaults to range(len(input_vars))
 
                 For example, with image classification task, the testing
-                dataset only provides datapoints of images (no labels). The
-                arguments should look like:
-                    inputs: [image_var, label_var]
+                dataset only provides datapoints of images (no labels). When
+                the input variables of the model is:
+                    input_vars: [image_var, label_var]
+                the mapping should look like:
                     input_data_mapping: [0]
-                If this argument is not set, the inputs and the data points won't be aligned.
+                If this argument is not set in this case, the inputs and the data points won't be aligned.
             model: a ModelDesc instance
             output_var_names: a list of names of the output variable to predict, the
                 variables can be any computable tensor in the graph.
@@ -53,7 +54,7 @@ class PredictConfig(object):
         assert_type(self.session_config, tf.ConfigProto)
         self.session_init = kwargs.pop('session_init')
         self.model = kwargs.pop('model')
-        self.input_data_mapping = kwargs.pop('input_dataset_mapping', None)
+        self.input_data_mapping = kwargs.pop('input_data_mapping', None)
         self.output_var_names = kwargs.pop('output_var_names', None)
         assert len(kwargs) == 0, 'Unknown arguments: {}'.format(str(kwargs.keys()))
 

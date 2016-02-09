@@ -124,7 +124,7 @@ def run_test(path):
     param_dict = np.load(path).item()
 
     pred_config = PredictConfig(
-        model=Models(),
+        model=Model(),
         input_data_mapping=[0],
         session_init=ParamRestore(param_dict),
         output_var_names=['output:0']   # output:0 is the probability distribution
@@ -139,7 +139,9 @@ def run_test(path):
     outputs = predict_func([im])[0]
     prob = outputs[0]
     print prob.shape
-    print prob.argsort()[-10:][::-1]
+    ret = prob.argsort()[-10:][::-1]
+    print ret
+    assert ret[0] == 285
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -148,7 +150,7 @@ if __name__ == '__main__':
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
-    start_train(get_config())
+    #start_train(get_config())
 
     # run alexnet with given model (in npy format)
-    run_test('alexnet-tuned.npy')
+    run_test('alexnet.npy')
