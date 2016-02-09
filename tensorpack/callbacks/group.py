@@ -15,23 +15,15 @@ __all__ = ['Callbacks']
 @contextmanager
 def create_test_graph():
     G = tf.get_default_graph()
-    input_vars_train = G.get_collection(INPUT_VARS_KEY)
-    forward_func = G.get_collection(FORWARD_FUNC_KEY)[0]
+    model = G.get_collection(MODEL_KEY)[0]
     with tf.Graph().as_default() as Gtest:
         # create a global step var in test graph
         global_step_var = tf.Variable(
             0, trainable=False, name=GLOBAL_STEP_OP_NAME)
-        input_vars = []
-        for v in input_vars_train:
-            name = v.name
-            assert name.endswith(':0'), "I think placeholder variable should all ends with ':0'"
-            name = name[:-2]
-            input_vars.append(tf.placeholder(
-                v.dtype, shape=v.get_shape(), name=name
-            ))
-        for v in input_vars:
-            Gtest.add_to_collection(INPUT_VARS_KEY, v)
-        cost = forward_func(input_vars, is_training=False)
+        new_model = model.__class__()
+        input_vars = new_model.get_input_vars()
+        cost = new_model.get_cost(input_vars, is_training=False)
+        Gtest.add_to_collection(MODEL_KEY, new_model)
         yield Gtest
 
 @contextmanager
@@ -155,15 +147,20 @@ class Callbacks(Callback):
                 raise ValueError(
                     "Unknown callback running graph {}!".format(cb.running_graph))
         self.train = TrainCallbacks(train_cbs)
-        self.test = TestCallbacks(test_cbs)
+        if test_cbs:
+            self.test = TestCallbacks(test_cbs)
+        else:
+            self.test = None
 
     def _before_train(self):
         self.train.before_train()
-        self.test.before_train()
+        if self.test:
+            self.test.before_train()
 
     def _after_train(self):
         self.train.after_train()
-        self.test.after_train()
+        if self.test:
+            self.test.after_train()
 
     def trigger_step(self):
         self.train.trigger_step()
@@ -172,4 +169,5 @@ class Callbacks(Callback):
     def _trigger_epoch(self):
         self.train.trigger_epoch()
         # TODO test callbacks can be run async?
-        self.test.trigger_epoch()
+        if self.test:
+            self.test.trigger_epoch()

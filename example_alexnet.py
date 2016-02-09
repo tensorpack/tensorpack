@@ -22,58 +22,67 @@ BATCH_SIZE = 10
 MIN_AFTER_DEQUEUE = 500
 CAPACITY = MIN_AFTER_DEQUEUE + 3 * BATCH_SIZE
 
-def get_model(inputs, is_training):
-    # img: 227x227x3
-    is_training = bool(is_training)
-    keep_prob = tf.constant(0.5 if is_training else 1.0)
+class Model(ModelDesc):
+    def _get_input_vars(self):
+        return [
+            tf.placeholder(
+                tf.float32, shape=(None, 227, 227, 3), name='input'),
+            tf.placeholder(
+                tf.int32, shape=(None,), name='label')
+        ]
 
-    image, label = inputs
+    def _get_cost(self, inputs, is_training):
+        # img: 227x227x3
+        is_training = bool(is_training)
+        keep_prob = tf.constant(0.5 if is_training else 1.0)
 
-    l = Conv2D('conv1', image, out_channel=96, kernel_shape=11, stride=4, padding='VALID')
-    l = tf.nn.lrn(l, 2, bias=1.0, alpha=2e-5, beta=0.75, name='norm1')
-    l = MaxPooling('pool1', l, 3, stride=2, padding='VALID')
+        image, label = inputs
 
-    l = Conv2D('conv2', l, out_channel=256, kernel_shape=5,
-                   padding='SAME', split=2)
-    l = tf.nn.lrn(l, 2, bias=1.0, alpha=2e-5, beta=0.75, name='norm2')
-    l = MaxPooling('pool2', l, 3, stride=2, padding='VALID')
+        l = Conv2D('conv1', image, out_channel=96, kernel_shape=11, stride=4, padding='VALID')
+        l = tf.nn.lrn(l, 2, bias=1.0, alpha=2e-5, beta=0.75, name='norm1')
+        l = MaxPooling('pool1', l, 3, stride=2, padding='VALID')
 
-    l = Conv2D('conv3', l, out_channel=384, kernel_shape=3,
-                   padding='SAME')
-    l = Conv2D('conv4', l, out_channel=384, kernel_shape=3,
-                   padding='SAME', split=2)
-    l = Conv2D('conv5', l, out_channel=256, kernel_shape=3,
-                   padding='SAME', split=2)
-    l = MaxPooling('pool3', l, 3, stride=2, padding='VALID')
+        l = Conv2D('conv2', l, out_channel=256, kernel_shape=5,
+                       padding='SAME', split=2)
+        l = tf.nn.lrn(l, 2, bias=1.0, alpha=2e-5, beta=0.75, name='norm2')
+        l = MaxPooling('pool2', l, 3, stride=2, padding='VALID')
 
-    l = FullyConnected('fc6', l, 4096)
-    l = FullyConnected('fc7', l, out_dim=4096)
-    # fc will have activation summary by default. disable this for the output layer
-    logits = FullyConnected('fc8', l, out_dim=1000, summary_activation=False, nl=tf.identity)
-    prob = tf.nn.softmax(logits, name='output')
+        l = Conv2D('conv3', l, out_channel=384, kernel_shape=3,
+                       padding='SAME')
+        l = Conv2D('conv4', l, out_channel=384, kernel_shape=3,
+                       padding='SAME', split=2)
+        l = Conv2D('conv5', l, out_channel=256, kernel_shape=3,
+                       padding='SAME', split=2)
+        l = MaxPooling('pool3', l, 3, stride=2, padding='VALID')
 
-    y = one_hot(label, 1000)
-    cost = tf.nn.softmax_cross_entropy_with_logits(logits, y)
-    cost = tf.reduce_mean(cost, name='cross_entropy_loss')
-    tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, cost)
+        l = FullyConnected('fc6', l, 4096)
+        l = FullyConnected('fc7', l, out_dim=4096)
+        # fc will have activation summary by default. disable this for the output layer
+        logits = FullyConnected('fc8', l, out_dim=1000, summary_activation=False, nl=tf.identity)
+        prob = tf.nn.softmax(logits, name='output')
 
-    # compute the number of failed samples, for ValidationError to use at test time
-    wrong = tf.not_equal(
-        tf.cast(tf.argmax(prob, 1), tf.int32), label)
-    wrong = tf.cast(wrong, tf.float32)
-    nr_wrong = tf.reduce_sum(wrong, name='wrong')
-    # monitor training error
-    tf.add_to_collection(
-        MOVING_SUMMARY_VARS_KEY, tf.reduce_mean(wrong, name='train_error'))
+        y = one_hot(label, 1000)
+        cost = tf.nn.softmax_cross_entropy_with_logits(logits, y)
+        cost = tf.reduce_mean(cost, name='cross_entropy_loss')
+        tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, cost)
 
-    # weight decay on all W of fc layers
-    wd_cost = tf.mul(1e-4,
-                     regularize_cost('fc.*/W', tf.nn.l2_loss),
-                     name='regularize_loss')
-    tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, wd_cost)
+        # compute the number of failed samples, for ValidationError to use at test time
+        wrong = tf.not_equal(
+            tf.cast(tf.argmax(prob, 1), tf.int32), label)
+        wrong = tf.cast(wrong, tf.float32)
+        nr_wrong = tf.reduce_sum(wrong, name='wrong')
+        # monitor training error
+        tf.add_to_collection(
+            MOVING_SUMMARY_VARS_KEY, tf.reduce_mean(wrong, name='train_error'))
 
-    add_param_summary('.*/W')   # monitor histogram of all W
-    return tf.add_n([wd_cost, cost], name='cost')
+        # weight decay on all W of fc layers
+        wd_cost = tf.mul(1e-4,
+                         regularize_cost('fc.*/W', tf.nn.l2_loss),
+                         name='regularize_loss')
+        tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, wd_cost)
+
+        add_param_summary('.*/W')   # monitor histogram of all W
+        return tf.add_n([wd_cost, cost], name='cost')
 
 def get_config():
     basename = os.path.basename(__file__)
@@ -86,16 +95,6 @@ def get_config():
 
     sess_config = get_default_sess_config()
     sess_config.gpu_options.per_process_gpu_memory_fraction = 0.5
-
-    # prepare model
-    input_vars = [
-        tf.placeholder(
-            tf.float32, shape=(None, 227, 227, 3), name='input'),
-        tf.placeholder(
-            tf.int32, shape=(None,), name='label')
-    ]
-    input_queue = tf.RandomShuffleQueue(
-        10, 3, [x.dtype for x in input_vars], name='queue')
 
     lr = tf.train.exponential_decay(
         learning_rate=1e-8,
@@ -115,27 +114,18 @@ def get_config():
             #ValidationError(dataset_test, prefix='test'),
         ]),
         session_config=sess_config,
-        inputs=input_vars,
-        input_queue=input_queue,
-        get_model_func=get_model,
+        model=Model(),
         step_per_epoch=step_per_epoch,
         session_init=ParamRestore(param_dict),
         max_epoch=100,
     )
 
 def run_test(path):
-    input_vars = [
-        tf.placeholder(
-            tf.float32, shape=(None, 227, 227, 3), name='input'),
-        tf.placeholder(
-            tf.int32, shape=(None,), name='label')
-    ]
     param_dict = np.load(path).item()
 
     pred_config = PredictConfig(
-        inputs=input_vars,
-        input_dataset_mapping=[input_vars[0]],
-        get_model_func=get_model,
+        model=Models(),
+        input_data_mapping=[0],
         session_init=ParamRestore(param_dict),
         output_var_names=['output:0']   # output:0 is the probability distribution
     )

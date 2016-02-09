@@ -16,7 +16,7 @@ class BatchData(DataFlow):
         Group data in ds into batches
         ds: a DataFlow instance
         remainder: whether to return the remaining data smaller than a batch_size.
-            if set, might return a data point of a different shape
+            if set True, will possibly return a data point of a smaller 1st dimension
         """
         self.ds = ds
         if not remainder:

@@ -29,7 +29,7 @@ class EnqueueThread(threading.Thread):
         super(EnqueueThread, self).__init__()
         self.sess = sess
         self.coord = coord
-        self.input_vars = sess.graph.get_collection(INPUT_VARS_KEY)
+        self.input_vars = sess.graph.get_collection(MODEL_KEY)[0].get_input_vars()
         self.dataflow = dataflow
         self.op = enqueue_op
         self.queue = queue

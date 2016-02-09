@@ -28,10 +28,8 @@ class DumpParamAsImage(Callback):
 
     def _before_train(self):
         self.var = self.graph.get_tensor_by_name(self.var_name)
-        self.epoch_num = 0
 
     def _trigger_epoch(self):
-        self.epoch_num += 1
         val = self.sess.run(self.var)
         if self.func is not None:
             val = self.func(val)
@@ -40,13 +38,13 @@ class DumpParamAsImage(Callback):
                 assert im.ndim in [2, 3], str(im.ndim)
                 fname = os.path.join(
                     self.log_dir,
-                    self.prefix + '-ep{}-{}.png'.format(self.epoch_num, idx))
+                    self.prefix + '-ep{:03d}-{}.png'.format(self.epoch_num, idx))
                 cv2.imwrite(fname, im * self.scale)
         else:
             im = val
             assert im.ndim in [2, 3]
             fname = os.path.join(
                 self.log_dir,
-                self.prefix + '-ep{}.png'.format(self.epoch_num))
+                self.prefix + '-ep{:03d}.png'.format(self.epoch_num))
             cv2.imwrite(fname, im * self.scale)
 

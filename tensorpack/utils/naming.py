@@ -8,9 +8,8 @@ GLOBAL_STEP_VAR_NAME = 'global_step:0'
 
 SUMMARY_WRITER_COLLECTION_KEY = 'summary_writer'
 
-INPUT_VARS_KEY = 'INPUT_VARIABLES'
 MOVING_SUMMARY_VARS_KEY = 'MOVING_SUMMARY_VARIABLES'  # extra variables to summarize during training
-FORWARD_FUNC_KEY = 'FORWARD_FUNCTION'
+MODEL_KEY = 'MODEL'
 
 # export all upper case variables
 all_local_names = locals().keys()

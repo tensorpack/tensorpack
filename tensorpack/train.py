@@ -9,6 +9,7 @@ import copy
 import argparse
 
 import tqdm
+from models import ModelDesc
 from utils import *
 from utils.concurrency import EnqueueThread
 from callbacks import *
@@ -32,17 +33,7 @@ class TrainConfig(object):
                 session. default to a session running 1 GPU.
             session_init: a tensorpack.utils.sessinit.SessionInit instance to
                 initialize variables of a session. default to a new session.
-            inputs: a list of input variables. must match what is returned by
-                the dataset
-            input_queue: the queue used for input. default to a FIFO queue
-                with capacity 5
-            get_model_func: a function taking `inputs` and `is_training`, and
-                return the cost to minimize
-            batched_model_input: boolean. If yes, `get_model_func` expected batched
-                input in training. Otherwise, expect single data point in
-                training, so that you may do pre-processing and batch them
-                later with batch ops. It's suggested that you do all
-                preprocessing in dataset as that is usually faster.
+            model: a ModelDesc instance
             step_per_epoch: the number of steps (parameter updates) to perform
                 in each epoch. default to dataset.size()
             max_epoch: maximum number of epoch to run training. default to 100
@@ -60,14 +51,8 @@ class TrainConfig(object):
         assert_type(self.session_config, tf.ConfigProto)
         self.session_init = kwargs.pop('session_init', NewSession())
         assert_type(self.session_init, SessionInit)
-        self.inputs = kwargs.pop('inputs')
-        [assert_type(i, tf.Tensor) for i in self.inputs]
-        self.input_queue = kwargs.pop(
-            'input_queue', tf.FIFOQueue(5, [x.dtype for x in self.inputs], name='input_queue'))
-        assert_type(self.input_queue, tf.QueueBase)
-        assert self.input_queue.dtypes == [x.dtype for x in self.inputs]
-        self.get_model_func = kwargs.pop('get_model_func')
-        self.batched_model_input = kwargs.pop('batched_model_input', True)
+        self.model = kwargs.pop('model')
+        assert_type(self.model, ModelDesc)
         self.step_per_epoch = int(kwargs.pop('step_per_epoch', self.dataset.size()))
         self.max_epoch = int(kwargs.pop('max_epoch', 100))
         assert self.step_per_epoch > 0 and self.max_epoch > 0
@@ -97,29 +82,22 @@ def start_train(config):
     Args:
         config: a TrainConfig instance
     """
-    input_vars = config.inputs
-    input_queue = config.input_queue
+    model = config.model
+    input_vars = model.get_input_vars()
+    input_queue = model.get_input_queue()
     callbacks = config.callbacks
 
-    tf.add_to_collection(FORWARD_FUNC_KEY, config.get_model_func)
-    for v in input_vars:
-        tf.add_to_collection(INPUT_VARS_KEY, v)
+    tf.add_to_collection(MODEL_KEY, model)
 
     def get_model_inputs():
         model_inputs = input_queue.dequeue()
         if isinstance(model_inputs, tf.Tensor):
             model_inputs = [model_inputs]
         for qv, v in zip(model_inputs, input_vars):
-            if config.batched_model_input:
-                qv.set_shape(v.get_shape())
-            else:
-                qv.set_shape(v.get_shape().as_list()[1:])
+            qv.set_shape(v.get_shape())
         return model_inputs
 
-    if config.batched_model_input:
-        enqueue_op = input_queue.enqueue(input_vars)
-    else:
-        enqueue_op = input_queue.enqueue_many(input_vars)
+    enqueue_op = input_queue.enqueue(input_vars)
 
     # get gradients to update:
     logger.info("Training a model of {} tower".format(config.nr_tower))
@@ -131,7 +109,7 @@ def start_train(config):
             with tf.device('/gpu:{}'.format(i)), \
                     tf.name_scope('tower{}'.format(i)) as scope:
                 model_inputs = get_model_inputs()
-                cost_var = config.get_model_func(model_inputs, is_training=True)
+                cost_var = model.get_cost(model_inputs, is_training=True)
                 grads.append(
                     config.optimizer.compute_gradients(cost_var))
 
@@ -145,7 +123,7 @@ def start_train(config):
         grads = average_gradients(grads)
     else:
         model_inputs = get_model_inputs()
-        cost_var = config.get_model_func(model_inputs, is_training=True)
+        cost_var = model.get_cost(model_inputs, is_training=True)
         grads = config.optimizer.compute_gradients(cost_var)
     summary_grads(grads)
     check_grads(grads)
