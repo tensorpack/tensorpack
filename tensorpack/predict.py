@@ -73,9 +73,10 @@ def get_predict_func(config):
     # input/output variables
     input_vars = config.model.get_input_vars()
     cost_var = config.model.get_cost(input_vars, is_training=False)
-    input_map = [input_vars[k] for k in config.input_data_mapping]
-    if input_map is None:
+    if config.input_data_mapping is None:
         input_map = input_vars
+    else:
+        input_map = [input_vars[k] for k in config.input_data_mapping]
 
     # check output_var_names against output_vars
     if output_var_names is not None:
