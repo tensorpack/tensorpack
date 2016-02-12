@@ -13,40 +13,48 @@ class Sentinel:
     pass
 
 class PrefetchProcess(multiprocessing.Process):
-    def __init__(self, ds, queue_size):
+    def __init__(self, ds, queue):
+        """
+        ds: ds to take data from
+        queue: output queue to put results in
+        """
         super(PrefetchProcess, self).__init__()
         self.ds = ds
-        self.queue = multiprocessing.Queue(queue_size)
+        self.queue = queue
 
     def run(self):
-        for dp in self.ds.get_data():
-            self.queue.put(dp)
-        self.queue.put(Sentinel())
+        try:
+            for dp in self.ds.get_data():
+                self.queue.put(dp)
+        finally:
+            self.queue.put(Sentinel())
 
-    def get_data(self):
-        while True:
-            ret = self.queue.get()
-            if isinstance(ret, Sentinel):
-                return
-            yield ret
 
 class PrefetchData(DataFlow):
-    def __init__(self, ds, nr_prefetch):
+    def __init__(self, ds, nr_prefetch, nr_proc=1):
+        """
+        use multiprocess, will duplicate ds by nr_proc times
+        """
         self.ds = ds
-        self.nr_prefetch = int(nr_prefetch)
-        assert self.nr_prefetch > 0
-
-    def size(self):
-        return self.ds.size()
+        self.nr_proc = nr_proc
+        self.nr_prefetch = nr_prefetch
 
     def get_data(self):
-        worker = PrefetchProcess(self.ds, self.nr_prefetch)
-        # TODO register terminate function
-        worker.start()
+        queue = multiprocessing.Queue(self.nr_prefetch)
+        procs = [PrefetchProcess(self.ds, queue) for _ in range(self.nr_proc)]
+        [x.start() for x in procs]
+
+        end_cnt = 0
         try:
-            for dp in worker.get_data():
+            while True:
+                dp = queue.get()
+                if isinstance(dp, Sentinel):
+                    end_cnt += 1
+                    if end_cnt == self.nr_proc:
+                        break
+                    continue
                 yield dp
         finally:
-            worker.join()
-            worker.terminate()
+            queue.close()
+            [x.terminate() for x in procs]
 

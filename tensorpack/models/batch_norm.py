@@ -11,10 +11,11 @@ __all__ = ['BatchNorm']
 
 
 # http://stackoverflow.com/questions/33949786/how-could-i-use-batch-normalization-in-tensorflow
+# Only work for 4D tensor right now: #804
 @layer_register()
 def BatchNorm(x, is_training):
     """
-    x: has to be BHWC for now
+    x: BHWC tensor
     is_training: bool
     """
     is_training = bool(is_training)

@@ -11,7 +11,7 @@ __all__ = ['Conv2D']
 
 @layer_register(summary_activation=True)
 def Conv2D(x, out_channel, kernel_shape,
-           padding='VALID', stride=1,
+           padding='SAME', stride=1,
            W_init=None, b_init=None,
            nl=tf.nn.relu, split=1):
     """

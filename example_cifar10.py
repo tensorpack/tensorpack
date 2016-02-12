@@ -20,7 +20,7 @@ from tensorpack.dataflow import imgaug
 """
 This config follows the same preprocessing/model/hyperparemeters as in
 tensorflow cifar10 examples. (https://tensorflow.googlesource.com/tensorflow/+/master/tensorflow/models/image/cifar10/)
-But it's faster.
+86% accuracy. faster.
 """
 
 BATCH_SIZE = 128

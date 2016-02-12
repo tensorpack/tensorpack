@@ -63,18 +63,26 @@ class FixedSizeData(DataFlow):
     def __init__(self, ds, size):
         self.ds = ds
         self._size = size
+        self.itr = None
 
     def size(self):
         return self._size
 
     def get_data(self):
+        if self.itr is None:
+            self.itr = self.ds.get_data()
         cnt = 0
         while True:
-            for dp in self.ds.get_data():
-                cnt += 1
-                yield dp
-                if cnt == self._size:
-                    return
+            try:
+                dp = self.itr.next()
+            except StopIteration:
+                self.itr = self.ds.get_data()
+                dp = self.itr.next()
+
+            cnt += 1
+            yield dp
+            if cnt == self._size:
+                return
 
 class RepeatedData(DataFlow):
     """ repeat another dataflow for certain times"""
@@ -93,6 +101,9 @@ class RepeatedData(DataFlow):
 class FakeData(DataFlow):
     """ Build fake random data of given shapes"""
     def __init__(self, shapes, size):
+        """
+        shapes: list of list/tuple
+        """
         self.shapes = shapes
         self._size = size
 
@@ -126,6 +137,7 @@ def AugmentImageComponent(ds, augmentors, index=0):
         augmentors: a list of ImageAugmentor instance
         index: the index of image in each data point. default to be 0
     """
+# TODO reset rng at the beginning of each get_data
     aug = AugmentorList(augmentors)
     return MapData(
         ds,
