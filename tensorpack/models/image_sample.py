@@ -69,10 +69,10 @@ def ImageSample(inputs):
     diffy, diffx = tf.split(3, 2, diff)
     neg_diffy, neg_diffx = tf.split(3, 2, neg_diff)
 
-    prod = tf.reduce_prod(diff, 3, keep_dims=True)
-    diff = tf.Print(diff, [tf.is_finite(tf.reduce_sum(diff)), tf.shape(prod),
-                          tf.reduce_max(diff), diff],
-                    summarize=50)
+    #prod = tf.reduce_prod(diff, 3, keep_dims=True)
+    #diff = tf.Print(diff, [tf.is_finite(tf.reduce_sum(diff)), tf.shape(prod),
+                          #tf.reduce_max(diff), diff],
+                    #summarize=50)
 
     return tf.add_n([sample(template, lcoor) * neg_diffx * neg_diffy,
            sample(template, ucoor) * diffx * diffy,

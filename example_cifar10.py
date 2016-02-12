@@ -47,12 +47,14 @@ class Model(ModelDesc):
 
         l = Conv2D('conv1', image, out_channel=64, kernel_shape=5, padding='SAME',
                   W_init=tf.truncated_normal_initializer(stddev=1e-4))
+        #l = BatchNorm('bn0', l, is_training)
         l = MaxPooling('pool1', l, 3, stride=2, padding='SAME')
         l = tf.nn.lrn(l, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75, name='norm1')
 
         l = Conv2D('conv2', l, out_channel=64, kernel_shape=5, padding='SAME',
                   W_init=tf.truncated_normal_initializer(stddev=1e-4),
                   b_init=tf.constant_initializer(0.1))
+        #l = BatchNorm('bn1', l, is_training)
         l = tf.nn.lrn(l, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75, name='norm2')
         l = MaxPooling('pool2', l, 3, stride=2, padding='SAME')
 
