@@ -42,6 +42,9 @@ def sample(img, coords):
 def ImageSample(inputs):
     """
     Sample the template image, using the given coordinate, by bilinear interpolation.
+    It mimics the same behavior described in:
+    Spatial Transformer Networks, http://arxiv.org/abs/1506.02025
+
     inputs: list of [template, mapping]
     template: bxhxwxc
     mapping: bxh2xw2x2  (y, x) real-value coordinates
