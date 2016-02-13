@@ -96,6 +96,10 @@ class DataSet(object):
         return self._num_examples
 
 class Mnist(DataFlow):
+    """
+    Return [image, label],
+        image is 28x28 in the range [0,1]
+    """
     def __init__(self, train_or_test, dir=None):
         """
         Args:

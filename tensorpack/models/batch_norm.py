@@ -11,7 +11,7 @@ __all__ = ['BatchNorm']
 
 
 # http://stackoverflow.com/questions/33949786/how-could-i-use-batch-normalization-in-tensorflow
-# Only work for 4D tensor right now: #804
+# TF batch_norm only works for 4D tensor right now: #804
 @layer_register()
 def BatchNorm(x, is_training):
     """
@@ -22,12 +22,15 @@ def BatchNorm(x, is_training):
     Whole-population mean/variance is calculated by a running-average mean/variance, with decay rate 0.999
     Epsilon for variance is set to 1e-5, as is torch/nn: https://github.com/torch/nn/blob/master/BatchNormalization.lua
 
-    x: BHWC tensor
+    x: BHWC tensor or a vector
     is_training: bool
     """
     EPS = 1e-5
     is_training = bool(is_training)
     shape = x.get_shape().as_list()
+    if len(shape) == 2:
+        x = tf.reshape(x, [-1, 1, 1, shape[1]])
+        shape = x.get_shape().as_list()
     assert len(shape) == 4
 
     n_out = shape[-1]  # channel

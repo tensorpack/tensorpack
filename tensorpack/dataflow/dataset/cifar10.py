@@ -51,6 +51,10 @@ def read_cifar10(filenames):
             yield [img, label[k]]
 
 class Cifar10(DataFlow):
+    """
+    Return [image, label],
+        image is 32x32x3 in the range [0,255]
+    """
     def __init__(self, train_or_test, dir=None):
         """
         Args:
