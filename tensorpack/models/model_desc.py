@@ -61,7 +61,7 @@ class ModelDesc(object):
         but must have the same length
         """
 
-    def get_lr_multipler(self):
+    def get_lr_multiplier(self):
         """
         Return a dict of {variable_regex: multiplier}
         """

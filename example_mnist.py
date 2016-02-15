@@ -1,5 +1,5 @@
 #!/usr/bin/env python2
-# -*- coding: UTF-8 -*-
+# -*- coding: utf-8 -*-
 # File: example_mnist.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
@@ -38,7 +38,7 @@ class Model(ModelDesc):
         image = tf.expand_dims(image, 3)    # add a single channel
 
         l = Conv2D('conv0', image, out_channel=32, kernel_shape=3)
-        l = Conv2D('conv1', image, out_channel=32, kernel_shape=3)
+        l = Conv2D('conv1', l, out_channel=32, kernel_shape=3)
         l = MaxPooling('pool0', l, 2)
         l = Conv2D('conv2', l, out_channel=40, kernel_shape=3)
         l = MaxPooling('pool1', l, 2)
@@ -122,3 +122,4 @@ if __name__ == '__main__':
         if args.load:
             config.session_init = SaverRestore(args.load)
         start_train(config)
+
