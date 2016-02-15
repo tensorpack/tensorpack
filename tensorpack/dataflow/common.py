@@ -85,18 +85,27 @@ class FixedSizeData(DataFlow):
                 return
 
 class RepeatedData(DataFlow):
-    """ repeat another dataflow for certain times"""
+    """ repeat another dataflow for certain times
+        if nr == -1, repeat infinitely many times
+    """
     def __init__(self, ds, nr):
         self.nr = nr
         self.ds = ds
 
     def size(self):
+        if self.nr == -1:
+            raise RuntimeError(), "size() is unavailable for infinite dataflow"
         return self.ds.size() * self.nr
 
     def get_data(self):
-        for _ in xrange(self.nr):
-            for dp in self.ds.get_data():
-                yield dp
+        if self.nr == -1:
+            while True:
+                for dp in self.ds.get_data():
+                    yield dp
+        else:
+            for _ in xrange(self.nr):
+                for dp in self.ds.get_data():
+                    yield dp
 
 class FakeData(DataFlow):
     """ Build fake random data of given shapes"""

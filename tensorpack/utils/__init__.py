@@ -28,7 +28,7 @@ def timed_operation(msg, log_start=False):
         logger.info('start {} ...'.format(msg))
     start = time.time()
     yield
-    logger.info('finished {}, time={:.2f}sec.'.format(
+    logger.info('{} finished, time={:.2f}sec.'.format(
         msg, time.time() - start))
 
 def get_default_sess_config():
