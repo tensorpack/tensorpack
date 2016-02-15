@@ -18,9 +18,7 @@ from tensorpack.dataflow import *
 from tensorpack.dataflow import imgaug
 
 """
-This config follows the same preprocessing/model/hyperparemeters as in
-tensorflow cifar10 examples. (https://tensorflow.googlesource.com/tensorflow/+/master/tensorflow/models/image/cifar10/)
-86% accuracy. faster.
+CIFAR10 89% test accuracy after 200 epochs.
 """
 
 BATCH_SIZE = 128
@@ -31,7 +29,7 @@ class Model(ModelDesc):
     def _get_input_vars(self):
         return [
             tf.placeholder(
-                tf.float32, shape=[None, 24, 24, 3], name='input'),
+                tf.float32, shape=[None, 30, 30, 3], name='input'),
             tf.placeholder(
                 tf.int32, shape=[None], name='label')
         ]
@@ -45,30 +43,32 @@ class Model(ModelDesc):
                 num_threads=6, enqueue_many=True)
             tf.image_summary("train_image", image, 10)
 
-        l = Conv2D('conv1', image, out_channel=64, kernel_shape=5, padding='SAME',
-                  W_init=tf.truncated_normal_initializer(stddev=1e-4))
-        #l = BatchNorm('bn0', l, is_training)
+        l = Conv2D('conv1.1', image, out_channel=64, kernel_shape=3, padding='SAME')
+        l = Conv2D('conv1.2', l, out_channel=64, kernel_shape=3, nl=tf.identity)
+        l = BatchNorm('bn1', l, is_training)
+        l = tf.nn.relu(l)
         l = MaxPooling('pool1', l, 3, stride=2, padding='SAME')
-        l = tf.nn.lrn(l, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75, name='norm1')
 
-        l = Conv2D('conv2', l, out_channel=64, kernel_shape=5, padding='SAME',
-                  W_init=tf.truncated_normal_initializer(stddev=1e-4),
-                  b_init=tf.constant_initializer(0.1))
-        #l = BatchNorm('bn1', l, is_training)
-        l = tf.nn.lrn(l, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75, name='norm2')
+        l = Conv2D('conv2.1', l, out_channel=128, kernel_shape=3)
+        l = Conv2D('conv2.2', l, out_channel=128, kernel_shape=3, nl=tf.identity)
+        l = BatchNorm('bn2', l, is_training)
+        l = tf.nn.relu(l)
         l = MaxPooling('pool2', l, 3, stride=2, padding='SAME')
 
-        l = FullyConnected('fc0', l, 384,
+        l = Conv2D('conv3.1', l, out_channel=128, kernel_shape=3, padding='VALID')
+        l = Conv2D('conv3.2', l, out_channel=128, kernel_shape=3, padding='VALID', nl=tf.identity)
+        l = BatchNorm('bn3', l, is_training)
+        l = tf.nn.relu(l)
+        l = FullyConnected('fc0', l, 512,
                            W_init=tf.truncated_normal_initializer(stddev=0.04),
                            b_init=tf.constant_initializer(0.1))
-        l = FullyConnected('fc1', l, out_dim=192,
+        l = FullyConnected('fc1', l, out_dim=512,
                            W_init=tf.truncated_normal_initializer(stddev=0.04),
                            b_init=tf.constant_initializer(0.1))
         # fc will have activation summary by default. disable for the output layer
         logits = FullyConnected('linear', l, out_dim=10, summary_activation=False,
                                 nl=tf.identity,
                                 W_init=tf.truncated_normal_initializer(stddev=1.0/192))
-
         prob = tf.nn.softmax(logits, name='output')
 
         y = one_hot(label, 10)
@@ -102,7 +102,7 @@ def get_config():
     # prepare dataset
     dataset_train = dataset.Cifar10('train')
     augmentors = [
-        imgaug.RandomCrop((24, 24)),
+        imgaug.RandomCrop((30, 30)),
         imgaug.Flip(horiz=True),
         imgaug.BrightnessAdd(63),
         imgaug.Contrast((0.2,1.8)),
@@ -113,7 +113,7 @@ def get_config():
     step_per_epoch = dataset_train.size()
 
     augmentors = [
-        imgaug.CenterCrop((24, 24)),
+        imgaug.CenterCrop((30, 30)),
         imgaug.MeanVarianceNormalize(all_channel=True)
     ]
     dataset_test = dataset.Cifar10('test')
@@ -124,15 +124,15 @@ def get_config():
     sess_config.gpu_options.per_process_gpu_memory_fraction = 0.5
 
     lr = tf.train.exponential_decay(
-        learning_rate=1e-1,
+        learning_rate=1e-2,
         global_step=get_global_step_var(),
-        decay_steps=dataset_train.size() * 200,
-        decay_rate=0.1, staircase=True, name='learning_rate')
+        decay_steps=dataset_train.size() * 30,
+        decay_rate=0.5, staircase=True, name='learning_rate')
     tf.scalar_summary('learning_rate', lr)
 
     return TrainConfig(
         dataset=dataset_train,
-        optimizer=tf.train.GradientDescentOptimizer(lr),
+        optimizer=tf.train.AdamOptimizer(lr),
         callbacks=Callbacks([
             SummaryWriter(print_tag=['train_cost', 'train_error']),
             PeriodicSaver(),
