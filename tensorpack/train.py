@@ -72,6 +72,7 @@ def average_grads(tower_grads):
 def summary_grads(grads):
     for grad, var in grads:
         if grad:
+            # TODO also summary RMS and print
             tf.histogram_summary(var.op.name + '/gradients', grad)
 
 def check_grads(grads):
