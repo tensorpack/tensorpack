@@ -53,6 +53,8 @@ class SummaryWriter(Callback):
         """ print_tag : a list of regex to match scalar summary to print
             if None, will print all scalar tags
         """
+        if not hasattr(logger, 'LOG_DIR'):
+            raise RuntimeError("Please use logger.set_logger_dir at the beginning of your script.")
         self.log_dir = logger.LOG_DIR
         logger.stat_holder = StatHolder(self.log_dir, print_tag)
 

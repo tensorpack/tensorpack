@@ -86,8 +86,8 @@ class Model(ModelDesc):
 
 def get_config():
     basename = os.path.basename(__file__)
-    log_dir = os.path.join('train_log', basename[:basename.rfind('.')])
-    logger.set_logger_file(os.path.join(log_dir, 'training.log'))
+    logger.set_logger_dir(
+        os.path.join('train_log', basename[:basename.rfind('.')]))
 
     dataset_train = FakeData([(227,227,3), tuple()], 10)
     dataset_train = BatchData(dataset_train, 10)
