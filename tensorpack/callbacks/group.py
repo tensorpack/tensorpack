@@ -7,7 +7,7 @@ import tensorflow as tf
 from contextlib import contextmanager
 
 from .base import Callback
-from .common import *
+from .summary import *
 from ..utils import *
 
 __all__ = ['Callbacks']
@@ -57,18 +57,18 @@ class CallbackTimeLogger(object):
 class TrainCallbacks(Callback):
     def __init__(self, callbacks):
         self.cbs = callbacks
-        # put SummaryWriter to the first
         for idx, cb in enumerate(self.cbs):
+            # put SummaryWriter to the beginning
             if type(cb) == SummaryWriter:
                 self.cbs.insert(0, self.cbs.pop(idx))
                 break
         else:
-            raise ValueError("Callbacks must contain a SummaryWriter!")
+            logger.warn("SummaryWriter must be used! Insert a default one automatically.")
+            self.cbs.insert(0, SummaryWriter())
 
     def _before_train(self):
         for cb in self.cbs:
             cb.before_train()
-        self.writer = tf.get_collection(SUMMARY_WRITER_COLLECTION_KEY)[0]
 
     def _after_train(self):
         for cb in self.cbs:
@@ -84,7 +84,6 @@ class TrainCallbacks(Callback):
             s = time.time()
             cb.trigger_epoch()
             tm.add(type(cb).__name__, time.time() - s)
-        self.writer.flush()
         tm.log()
 
 class TestCallbacks(Callback):
@@ -97,13 +96,11 @@ class TestCallbacks(Callback):
         self.cbs = callbacks
 
     def _before_train(self):
-        self.writer = tf.get_collection(SUMMARY_WRITER_COLLECTION_KEY)[0]
         with create_test_session() as sess:
             self.sess = sess
             self.graph = sess.graph
 
             self.saver = tf.train.Saver()
-            tf.add_to_collection(SUMMARY_WRITER_COLLECTION_KEY, self.writer)
             for cb in self.cbs:
                 cb.before_train()
 
@@ -130,7 +127,6 @@ class TestCallbacks(Callback):
                 s = time.time()
                 cb.trigger_epoch()
                 tm.add(type(cb).__name__, time.time() - s)
-        self.writer.flush()
         tm.log()
 
 class Callbacks(Callback):
@@ -161,6 +157,7 @@ class Callbacks(Callback):
         self.train.after_train()
         if self.test:
             self.test.after_train()
+        logger.writer.close()
 
     def trigger_step(self):
         self.train.trigger_step()
@@ -168,6 +165,7 @@ class Callbacks(Callback):
 
     def _trigger_epoch(self):
         self.train.trigger_epoch()
-        # TODO test callbacks can be run async?
         if self.test:
             self.test.trigger_epoch()
+        logger.writer.flush()
+        logger.stat_holder.finalize()

@@ -28,7 +28,6 @@ class ValidationCallback(PeriodicCallback):
     def _before_train(self):
         self.input_vars = tf.get_collection(MODEL_KEY)[0].get_input_vars()
         self.cost_var = self.get_tensor(self.cost_var_name)
-        self.writer = tf.get_collection(SUMMARY_WRITER_COLLECTION_KEY)[0]
         self._find_output_vars()
 
     def get_tensor(self, name):
@@ -64,9 +63,9 @@ class ValidationCallback(PeriodicCallback):
                 pbar.update()
 
         cost_avg = cost_sum / cnt
-        self.writer.add_summary(create_summary(
+        logger.writer.add_summary(create_summary(
             '{}_cost'.format(self.prefix), cost_avg), self.global_step)
-        logger.info("{}_cost: {:.4f}".format(self.prefix, cost_avg))
+        logger.stat_holder.add_stat("{}_cost".format(self.prefix), cost_avg)
 
     def _trigger_periodic(self):
         for dp, outputs in self._run_validation():
@@ -102,6 +101,6 @@ class ValidationError(ValidationCallback):
             wrong = outputs[0]
             err_stat.feed(wrong, batch_size)
 
-        self.writer.add_summary(create_summary(
+        logger.writer.add_summary(create_summary(
             '{}_error'.format(self.prefix), err_stat.accuracy), self.global_step)
-        logger.info("{}_error: {:.4f}".format(self.prefix, err_stat.accuracy))
+        logger.stat_holder.add_stat("{}_error".format(self.prefix), err_stat.accuracy)

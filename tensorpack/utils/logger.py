@@ -61,3 +61,10 @@ def set_logger_file(filename):
     mkdir_p(os.path.dirname(LOG_FILE))
     set_file(LOG_FILE)
 
+# global logger:
+
+# a SummaryWriter
+writer = None
+
+# a StatHolder
+stat_holder = None
