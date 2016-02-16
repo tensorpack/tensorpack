@@ -7,6 +7,10 @@ import logging
 import os, shutil
 import os.path
 from termcolor import colored
+import sys
+if not sys.version_info >= (3, 0):
+    input = raw_input   # for compatibility
+
 from .utils import mkdir_p
 
 __all__ = []
@@ -21,8 +25,12 @@ class MyFormatter(logging.Formatter):
             fmt = date + ' ' + colored('ERR', 'red', attrs=['blink', 'underline']) + ' ' + msg
         else:
             fmt = date + ' ' + msg
-        # TODO this doesn't work in Python3
-        self._fmt = fmt
+        if hasattr(self, '_style'):
+            # Python3 compatibilty
+            self._style._fmt = fmt
+            self._fmt = fmt
+        else:
+            self._fmt = fmt
         return super(MyFormatter, self).format(record)
 
 def getlogger():
@@ -32,7 +40,6 @@ def getlogger():
     handler = logging.StreamHandler()
     handler.setFormatter(MyFormatter(datefmt='%d %H:%M:%S'))
     logger.addHandler(handler)
-    logger.warn("hahah")
     return logger
 
 logger = getlogger()
