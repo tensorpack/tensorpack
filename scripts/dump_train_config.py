@@ -39,7 +39,7 @@ if args.output:
         for bi, img in enumerate(imgbatch):
             cnt += 1
             fname = os.path.join(args.output, '{:03d}-{}.png'.format(cnt, bi))
-            cv2.imwrite(fname, img)
+            cv2.imwrite(fname, img * 255)
 
 NR_DP_TEST = 100
 logger.info("Testing dataflow speed:")

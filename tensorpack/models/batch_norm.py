@@ -13,7 +13,7 @@ __all__ = ['BatchNorm']
 # http://stackoverflow.com/questions/33949786/how-could-i-use-batch-normalization-in-tensorflow
 # TF batch_norm only works for 4D tensor right now: #804
 @layer_register()
-def BatchNorm(x, is_training):
+def BatchNorm(x, is_training, gamma_init=1.0):
     """
     Batch normalization layer as described in:
     Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift
@@ -35,7 +35,8 @@ def BatchNorm(x, is_training):
 
     n_out = shape[-1]  # channel
     beta = tf.get_variable('beta', [n_out])
-    gamma = tf.get_variable('gamma', [n_out], initializer=tf.constant_initializer(1.0))
+    gamma = tf.get_variable('gamma', [n_out],
+                            initializer=tf.constant_initializer(gamma_init))
     batch_mean, batch_var = tf.nn.moments(x, [0, 1, 2], name='moments')
 
     ema = tf.train.ExponentialMovingAverage(decay=0.999)
@@ -49,6 +50,7 @@ def BatchNorm(x, is_training):
         batch = tf.cast(tf.shape(x)[0], tf.float32)
         mean, var = ema_mean, ema_var * batch / (batch - 1) # unbiased variance estimator
 
-    normed = tf.nn.batch_norm_with_global_normalization(x, mean, var, beta, gamma, EPS, True)
+    normed = tf.nn.batch_norm_with_global_normalization(
+        x, mean, var, beta, gamma, EPS, True)
     return normed
 
