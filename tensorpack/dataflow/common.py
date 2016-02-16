@@ -5,7 +5,7 @@
 
 import numpy as np
 from .base import DataFlow
-from imgaug import AugmentorList, Image
+from .imgaug import AugmentorList, Image
 
 __all__ = ['BatchData', 'FixedSizeData', 'FakeData', 'MapData',
            'AugmentImageComponent']
@@ -94,7 +94,7 @@ class RepeatedData(DataFlow):
 
     def size(self):
         if self.nr == -1:
-            raise RuntimeError(), "size() is unavailable for infinite dataflow"
+            raise RuntimeError("size() is unavailable for infinite dataflow")
         return self.ds.size() * self.nr
 
     def get_data(self):

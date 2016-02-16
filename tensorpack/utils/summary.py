@@ -4,8 +4,9 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
-import logger
-from naming import *
+
+from . import logger
+from .naming import *
 
 def create_summary(name, v):
     """

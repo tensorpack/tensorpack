@@ -82,7 +82,7 @@ def ImageSample(inputs):
            sample(template, lyux) * neg_diffy * diffx,
            sample(template, uylx) * diffy * neg_diffx], name='sampled')
 
-from _test import TestModel
+from ._test import TestModel
 class TestSample(TestModel):
     def test_sample(self):
         import numpy as np
@@ -140,9 +140,9 @@ if __name__ == '__main__':
 
     out = sess.run(tf.gradients(tf.reduce_sum(output), mapv))
     #out = sess.run(output)
-    print out[0].min()
-    print out[0].max()
-    print out[0].sum()
+    print(out[0].min())
+    print(out[0].max())
+    print(out[0].sum())
 
     out = sess.run([output])[0]
     im = out[0]

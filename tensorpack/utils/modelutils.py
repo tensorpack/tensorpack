@@ -4,7 +4,8 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
-import logger
+
+from . import logger
 
 def describe_model():
     """ describe the current model parameters"""

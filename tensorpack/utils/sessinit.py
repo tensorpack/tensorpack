@@ -8,7 +8,7 @@ from abc import abstractmethod, ABCMeta
 import numpy as np
 import tensorflow as tf
 
-import logger
+from . import logger
 class SessionInit(object):
     __metaclass__ = ABCMeta
 

@@ -12,10 +12,10 @@ import tensorflow as tf
 import numpy as np
 import collections
 
-import logger
+from . import logger
 
 def global_import(name):
-    p = __import__(name, globals(), locals())
+    p = __import__(name, globals(), None, level=1)
     lst = p.__all__ if '__all__' in dir(p) else dir(p)
     for k in lst:
         globals()[k] = p.__dict__[k]

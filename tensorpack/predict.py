@@ -4,16 +4,16 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
-from itertools import count, izip
+from itertools import count
 import argparse
 from collections import namedtuple
 import numpy as np
 from tqdm import tqdm
 
-from utils import *
-from utils.modelutils import describe_model
-from utils import logger
-from dataflow import DataFlow, BatchData
+from .utils import *
+from .utils.modelutils import describe_model
+from .utils import logger
+from .dataflow import DataFlow, BatchData
 
 class PredictConfig(object):
     def __init__(self, **kwargs):
@@ -93,7 +93,7 @@ def get_predict_func(config):
         assert len(input_map) == len(dp), \
             "Graph has {} inputs but dataset only gives {} components!".format(
                     len(input_map), len(dp))
-        feed = dict(izip(input_map, dp))
+        feed = dict(zip(input_map, dp))
         if output_var_names is not None:
             results = sess.run(output_vars, feed_dict=feed)
             return results

@@ -7,7 +7,7 @@ import tensorflow as tf
 import re
 import os
 import operator
-import cPickle as pickle
+import pickle
 
 from .base import Callback, PeriodicCallback
 from ..utils import *

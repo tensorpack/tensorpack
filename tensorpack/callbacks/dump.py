@@ -3,9 +3,11 @@
 # File: dump.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
-from .base import Callback
-import cv2
 import os
+import scipy.misc
+from scipy.misc import imsave
+
+from .base import Callback
 from ..utils import logger
 
 __all__ = ['DumpParamAsImage']
@@ -39,12 +41,12 @@ class DumpParamAsImage(Callback):
                 fname = os.path.join(
                     self.log_dir,
                     self.prefix + '-ep{:03d}-{}.png'.format(self.epoch_num, idx))
-                cv2.imwrite(fname, im * self.scale)
+                imsave(fname, (im * self.scale).astype('uint8'))
         else:
             im = val
             assert im.ndim in [2, 3]
             fname = os.path.join(
                 self.log_dir,
                 self.prefix + '-ep{:03d}.png'.format(self.epoch_num))
-            cv2.imwrite(fname, im * self.scale)
+            imsave(fname, (im * self.scale).astype('uint8'))
 

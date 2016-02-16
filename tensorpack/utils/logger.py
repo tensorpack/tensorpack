@@ -21,6 +21,7 @@ class MyFormatter(logging.Formatter):
             fmt = date + ' ' + colored('ERR', 'red', attrs=['blink', 'underline']) + ' ' + msg
         else:
             fmt = date + ' ' + msg
+        # TODO this doesn't work in Python3
         self._fmt = fmt
         return super(MyFormatter, self).format(record)
 
@@ -31,6 +32,7 @@ def getlogger():
     handler = logging.StreamHandler()
     handler.setFormatter(MyFormatter(datefmt='%d %H:%M:%S'))
     logger.addHandler(handler)
+    logger.warn("hahah")
     return logger
 
 logger = getlogger()
@@ -53,7 +55,7 @@ def set_logger_dir(dirname):
     if os.path.isdir(dirname):
         logger.info("Directory {} exists. Please either backup or delete it unless you're continue from a paused task." )
         logger.info("Select Action: k (keep) / b (backup) / d (delete):")
-        act = raw_input().lower()
+        act = input().lower()
         if act == 'b':
             from datetime import datetime
             backup_name = dirname + datetime.now().strftime('.%d-%H%M%S')

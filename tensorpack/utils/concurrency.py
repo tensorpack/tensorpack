@@ -5,12 +5,11 @@
 
 import threading
 from contextlib import contextmanager
-from itertools import izip
 import tensorflow as tf
 
 from .utils import expand_dim_if_necessary
 from .naming import *
-import logger
+from . import logger
 
 class StoppableThread(threading.Thread):
     def __init__(self):
@@ -43,7 +42,7 @@ class EnqueueThread(threading.Thread):
                 for dp in self.dataflow.get_data():
                     if self.coord.should_stop():
                         return
-                    feed = dict(izip(self.input_vars, dp))
+                    feed = dict(zip(self.input_vars, dp))
                     self.sess.run([self.op], feed_dict=feed)
                 #print '\nExauhsted!!!'
         except tf.errors.CancelledError as e:

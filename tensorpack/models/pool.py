@@ -58,7 +58,7 @@ def FixedUnPooling(x, shape, unpool_mat=None):
                             input_shape[3]])
     return prod
 
-from _test import TestModel
+from ._test import TestModel
 class TestPool(TestModel):
     def test_fixed_unpooling(self):
         h, w = 3, 4

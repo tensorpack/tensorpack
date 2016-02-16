@@ -8,17 +8,17 @@ from itertools import count
 import copy
 import argparse
 import re
-
 import tqdm
-from models import ModelDesc
-from dataflow.common import RepeatedData
-from utils import *
-from utils.concurrency import EnqueueThread
-from callbacks import *
-from utils.summary import summary_moving_average
-from utils.modelutils import describe_model
-from utils import logger
-from dataflow import DataFlow
+
+from .models import ModelDesc
+from .dataflow.common import RepeatedData
+from .utils import *
+from .utils.concurrency import EnqueueThread
+from .callbacks import *
+from .utils.summary import summary_moving_average
+from .utils.modelutils import describe_model
+from .utils import logger
+from .dataflow import DataFlow
 
 class TrainConfig(object):
     """ config for training"""

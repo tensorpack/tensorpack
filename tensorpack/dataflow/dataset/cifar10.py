@@ -3,7 +3,7 @@
 # File: cifar10.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 import os, sys
-import cPickle
+import pickle
 import numpy
 from six.moves import urllib
 import tarfile
@@ -41,7 +41,7 @@ def maybe_download_and_extract(dest_directory):
 def read_cifar10(filenames):
     for fname in filenames:
         fo = open(fname, 'rb')
-        dic = cPickle.load(fo)
+        dic = pickle.load(fo)
         data = dic['data']
         label = dic['labels']
         fo.close()

@@ -6,20 +6,20 @@
 from pkgutil import walk_packages
 import os
 import os.path
-import dataset
-import imgaug
 
-__SKIP = ['dftools', 'dataset']
+from . import dataset
+from . import imgaug
+
 def global_import(name):
-    if name in __SKIP:
-        return
-    p = __import__(name, globals(), locals())
+    p = __import__(name, globals(), locals(), level=1)
     lst = p.__all__ if '__all__' in dir(p) else dir(p)
     for k in lst:
         globals()[k] = p.__dict__[k]
 
+__SKIP = ['dftools', 'dataset']
 for _, module_name, _ in walk_packages(
         [os.path.dirname(__file__)]):
-    if not module_name.startswith('_'):
+    if not module_name.startswith('_') and \
+        module_name not in __SKIP:
         global_import(module_name)
 
