@@ -31,13 +31,13 @@ def timed_operation(msg, log_start=False):
     logger.info('{} finished, time={:.2f}sec.'.format(
         msg, time.time() - start))
 
-def get_default_sess_config():
+def get_default_sess_config(mem_fraction=0.5):
     """
     Return a better config to use as default.
     Tensorflow default session config consume too much resources
     """
     conf = tf.ConfigProto()
-    conf.gpu_options.per_process_gpu_memory_fraction = 0.6
+    conf.gpu_options.per_process_gpu_memory_fraction = mem_fraction
     conf.gpu_options.allocator_type = 'BFC'
     conf.allow_soft_placement = True
     return conf

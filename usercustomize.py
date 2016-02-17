@@ -5,6 +5,7 @@
 
 # use user-space protobuf
 import sys, os
-site = os.path.join(os.environ['HOME'],
-                       '.local/lib/python2.7/site-packages')
-sys.path.insert(0, site)
+if not sys.version_info >= (3, 0):
+    site = os.path.join(os.environ['HOME'],
+                           '.local/lib/python2.7/site-packages')
+    sys.path.insert(0, site)

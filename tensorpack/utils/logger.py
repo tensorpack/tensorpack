@@ -7,6 +7,7 @@ import logging
 import os, shutil
 import os.path
 from termcolor import colored
+from datetime import datetime
 import sys
 if not sys.version_info >= (3, 0):
     input = raw_input   # for compatibility
@@ -48,7 +49,6 @@ logger = getlogger()
 global LOG_FILE, LOG_DIR
 def _set_file(path):
     if os.path.isfile(path):
-        from datetime import datetime
         backup_name = path + datetime.now().strftime('.%d-%H%M%S')
         shutil.move(path, backup_name)
         info("Log file '{}' backuped to '{}'".format(path, backup_name))
@@ -60,14 +60,15 @@ def set_logger_dir(dirname):
     global LOG_FILE, LOG_DIR
     LOG_DIR = dirname
     if os.path.isdir(dirname):
-        logger.info("Directory {} exists. Please either backup or delete it unless you're continue from a paused task." )
+        logger.warn("""\
+Directory {} exists! Please either backup or delete it \
+unless you're resuming from a previous task.""".format(dirname))
         logger.info("Select Action: k (keep) / b (backup) / d (delete):")
         act = input().lower()
         if act == 'b':
-            from datetime import datetime
             backup_name = dirname + datetime.now().strftime('.%d-%H%M%S')
             shutil.move(dirname, backup_name)
-            info("Log directory'{}' backuped to '{}'".format(dirname, backup_name))
+            info("Directory'{}' backuped to '{}'".format(dirname, backup_name))
         elif act == 'd':
             shutil.rmtree(dirname)
         elif act == 'k':
@@ -83,8 +84,8 @@ def set_logger_dir(dirname):
 for func in ['info', 'warning', 'error', 'critical', 'warn', 'exception', 'debug']:
     locals()[func] = getattr(logger, func)
 
-# a SummaryWriter
+# a global SummaryWriter
 writer = None
 
-# a StatHolder
+# a global StatHolder
 stat_holder = None

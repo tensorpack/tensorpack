@@ -18,7 +18,7 @@ from tensorpack.dataflow import *
 from tensorpack.dataflow import imgaug
 
 """
-CIFAR10 89% test accuracy after 200 epochs.
+CIFAR10 89% test accuracy after 60k step (about 150 epochs)
 """
 
 BATCH_SIZE = 128

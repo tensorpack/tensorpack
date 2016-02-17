@@ -21,7 +21,9 @@ from .utils import logger
 from .dataflow import DataFlow
 
 class TrainConfig(object):
-    """ config for training"""
+    """
+    Config for training a model with a single loss
+    """
     def __init__(self, **kwargs):
         """
         Args:
@@ -95,7 +97,7 @@ def scale_grads(grads, multiplier):
 
 def start_train(config):
     """
-    Start training with the given config
+    Start training with a config
     Args:
         config: a TrainConfig instance
     """
@@ -171,7 +173,9 @@ def start_train(config):
             tf.get_default_graph().finalize()
 
             for epoch in xrange(1, config.max_epoch):
-                with timed_operation('Epoch {}'.format(epoch)):
+                with timed_operation(
+                    'Epoch {}, global_step={}'.format(
+                        epoch, get_global_step() + config.step_per_epoch)):
                     for step in tqdm.trange(
                             config.step_per_epoch,
                         leave=True, mininterval=0.5,

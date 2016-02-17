@@ -17,7 +17,7 @@ class DumpParamAsImage(Callback):
         """
         map_func: map the value of the variable to an image or list of images, default to identity
             images should have shape [h, w] or [h, w, c].
-        scale: a scaling parameter on pixels
+        scale: a multiplier on pixel values, applied after map_func. default to 255
         """
         self.var_name = var_name
         self.func = map_func
@@ -37,16 +37,15 @@ class DumpParamAsImage(Callback):
             val = self.func(val)
         if isinstance(val, list):
             for idx, im in enumerate(val):
-                assert im.ndim in [2, 3], str(im.ndim)
-                fname = os.path.join(
-                    self.log_dir,
-                    self.prefix + '-ep{:03d}-{}.png'.format(self.epoch_num, idx))
-                imsave(fname, (im * self.scale).astype('uint8'))
+                self._dump_image(im, idx)
         else:
-            im = val
-            assert im.ndim in [2, 3]
-            fname = os.path.join(
-                self.log_dir,
-                self.prefix + '-ep{:03d}.png'.format(self.epoch_num))
-            imsave(fname, (im * self.scale).astype('uint8'))
+            self._dump_image(val)
+
+    def _dump_image(self, im, idx=None):
+        assert im.ndim in [2, 3], str(im.ndim)
+        fname = os.path.join(
+            self.log_dir,
+            self.prefix + '-ep{:03d}{}.png'.format(
+                self.epoch_num, '-' + str(idx) if idx else ''))
+        imsave(fname, (im * self.scale).astype('uint8'))
 
