@@ -12,7 +12,9 @@ from ..utils.symbolic_functions import *
 __all__ = ['FullyConnected']
 
 @layer_register(summary_activation=True)
-def FullyConnected(x, out_dim, W_init=None, b_init=None, nl=tf.nn.relu):
+def FullyConnected(x, out_dim,
+                   W_init=None, b_init=None,
+                   nl=tf.nn.relu, use_bias=True):
     x = batch_flatten(x)
     in_dim = x.get_shape().as_list()[1]
 
@@ -20,9 +22,11 @@ def FullyConnected(x, out_dim, W_init=None, b_init=None, nl=tf.nn.relu):
         #W_init = tf.truncated_normal_initializer(stddev=1 / math.sqrt(float(in_dim)))
         W_init = tf.uniform_unit_scaling_initializer()
     if b_init is None:
-        b_init = tf.constant_initializer(0.0)
+        b_init = tf.constant_initializer()
 
     with tf.device('/cpu:0'):
         W = tf.get_variable('W', [in_dim, out_dim], initializer=W_init)
-        b = tf.get_variable('b', [out_dim], initializer=b_init)
-    return nl(tf.nn.xw_plus_b(x, W, b), name=tf.get_variable_scope().name + '_output')
+        if use_bias:
+            b = tf.get_variable('b', [out_dim], initializer=b_init)
+    prod = tf.nn.xw_plus_b(x, W, b) if use_bias else tf.matmul(x, W)
+    return nl(prod, name=tf.get_variable_scope().name + '_output')

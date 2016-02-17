@@ -6,7 +6,7 @@
 import tensorflow as tf
 from contextlib import contextmanager
 
-from .base import Callback
+from .base import Callback, TrainCallback, TestCallback
 from .summary import *
 from ..utils import *
 
@@ -41,6 +41,12 @@ class CallbackTimeLogger(object):
         self.tot += time
         self.times.append((name, time))
 
+    @contextmanager
+    def timed_callback(self, name):
+        s = time.time()
+        yield
+        self.add(name, time.time() - s)
+
     def log(self):
         """ log the time of some heavy callbacks """
         if self.tot < 3:
@@ -53,119 +59,98 @@ class CallbackTimeLogger(object):
             "Callbacks took {:.3f} sec in total. {}".format(
                 self.tot, ' '.join(msgs)))
 
-
-class TrainCallbacks(Callback):
-    def __init__(self, callbacks):
-        self.cbs = callbacks
-        for idx, cb in enumerate(self.cbs):
-            # put SummaryWriter to the beginning
-            if type(cb) == SummaryWriter:
-                self.cbs.insert(0, self.cbs.pop(idx))
-                break
-        else:
-            logger.warn("SummaryWriter must be used! Insert a default one automatically.")
-            self.cbs.insert(0, SummaryWriter())
-
-    def _before_train(self):
-        for cb in self.cbs:
-            cb.before_train()
-
-    def _after_train(self):
-        for cb in self.cbs:
-            cb.after_train()
-
-    def trigger_step(self):
-        for cb in self.cbs:
-            cb.trigger_step()
-
-    def _trigger_epoch(self):
-        tm = CallbackTimeLogger()
-        for cb in self.cbs:
-            s = time.time()
-            cb.trigger_epoch()
-            tm.add(type(cb).__name__, time.time() - s)
-        tm.log()
-
-class TestCallbacks(Callback):
+class TestCallbackContext(object):
     """
-    Hold callbacks to be run in testing graph.
-    Will set a context with testing graph and testing session, for
-    each test-time callback to run
+    A class holding the context needed for running TestCallback
     """
-    def __init__(self, callbacks):
-        self.cbs = callbacks
+    def __init__(self):
+        self.sess = None
 
-    def _before_train(self):
+    def _init_test_sess(self):
         with create_test_session() as sess:
             self.sess = sess
             self.graph = sess.graph
-
             self.saver = tf.train.Saver()
-            for cb in self.cbs:
+
+    @contextmanager
+    def before_train_context(self):
+        if self.sess is None:
+            self._init_test_sess()
+        with self.graph.as_default(), self.sess.as_default():
+            yield
+
+    # TODO also do this for after_train?
+
+    def restore_checkpoint(self):
+        ckpt = tf.train.get_checkpoint_state(logger.LOG_DIR)
+        if ckpt is None:
+            raise RuntimeError(
+                "Cannot find a checkpoint state. Do you forget to use PeriodicSaver before any TestCallback?")
+        logger.info(
+            "Restore checkpoint from {}".format(ckpt.model_checkpoint_path))
+        self.saver.restore(self.sess, ckpt.model_checkpoint_path)
+
+    @contextmanager
+    def trigger_epoch_context(self):
+        with self.graph.as_default(), self.sess.as_default():
+            yield
+
+class Callbacks(Callback):
+    def __init__(self, cbs):
+        # check type
+        for cb in cbs:
+            assert isinstance(cb, Callback), cb.__class__
+            if not isinstance(cb.type, (TrainCallback, TestCallback)):
+                raise ValueError(
+                    "Unknown callback running graph {}!".format(str(cb.type)))
+
+        # ensure a SummaryWriter
+        for idx, cb in enumerate(cbs):
+            if type(cb) == SummaryWriter:
+                cbs.insert(0, cbs.pop(idx))
+                break
+        else:
+            logger.warn("SummaryWriter must be used! Insert a default one automatically.")
+            cbs.insert(0, SummaryWriter())
+
+        self.cbs = cbs
+        self.test_callback_context = TestCallbackContext()
+
+    def _before_train(self):
+        for cb in self.cbs:
+            if isinstance(cb.type, TrainCallback):
                 cb.before_train()
+            else:
+                with self.test_callback_context.before_train_context():
+                    cb.before_train()
 
     def _after_train(self):
         for cb in self.cbs:
             cb.after_train()
-
-    def _trigger_epoch(self):
-        if not self.cbs:
-            return
-        tm = CallbackTimeLogger()
-        with self.graph.as_default(), self.sess.as_default():
-            s = time.time()
-            ckpt = tf.train.get_checkpoint_state(logger.LOG_DIR)
-            if ckpt is None:
-                logger.error(
-                    "Cannot find a checkpoint state. Do you forget to use PeriodicSaver?")
-                return
-            logger.info(
-                "Restore checkpoint from {}".format(ckpt.model_checkpoint_path))
-            self.saver.restore(self.sess, ckpt.model_checkpoint_path)
-            tm.add('restore session', time.time() - s)
-            for cb in self.cbs:
-                s = time.time()
-                cb.trigger_epoch()
-                tm.add(type(cb).__name__, time.time() - s)
-        tm.log()
-
-class Callbacks(Callback):
-    def __init__(self, cbs):
-        train_cbs = []
-        test_cbs = []
-        for cb in cbs:
-            assert isinstance(cb, Callback), cb.__class__
-            if cb.running_graph == 'test':
-                test_cbs.append(cb)
-            elif cb.running_graph == 'train':
-                train_cbs.append(cb)
-            else:
-                raise ValueError(
-                    "Unknown callback running graph {}!".format(cb.running_graph))
-        self.train = TrainCallbacks(train_cbs)
-        if test_cbs:
-            self.test = TestCallbacks(test_cbs)
-        else:
-            self.test = None
-
-    def _before_train(self):
-        self.train.before_train()
-        if self.test:
-            self.test.before_train()
-
-    def _after_train(self):
-        self.train.after_train()
-        if self.test:
-            self.test.after_train()
         logger.writer.close()
 
     def trigger_step(self):
-        self.train.trigger_step()
+        for cb in self.cbs:
+            if isinstance(cb.type, TrainCallback):
+                cb.trigger_step()
         # test callback don't have trigger_step
 
     def _trigger_epoch(self):
-        self.train.trigger_epoch()
-        if self.test:
-            self.test.trigger_epoch()
+        tm = CallbackTimeLogger()
+
+        test_sess_restored = False
+        for cb in self.cbs:
+            if isinstance(cb.type, TrainCallback):
+                with tm.timed_callback(type(cb).__name__):
+                    cb.trigger_epoch()
+            else:
+                if not test_sess_restored:
+                    with tm.timed_callback('restore checkpoint'):
+                        self.test_callback_context.restore_checkpoint()
+                    test_sess_restored = True
+                with self.test_callback_context.trigger_epoch_context(), \
+                        tm.timed_callback(type(cb).__name__):
+                    cb.trigger_epoch()
+        tm.log()
         logger.writer.flush()
         logger.stat_holder.finalize()

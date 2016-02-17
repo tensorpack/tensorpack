@@ -11,14 +11,20 @@ from abc import abstractmethod, ABCMeta
 
 from ..utils import *
 
-__all__ = ['Callback', 'PeriodicCallback']
+__all__ = ['Callback', 'PeriodicCallback', 'TrainCallback', 'TestCallback']
+
+class TrainCallback(object):
+    pass
+
+class TestCallback(object):
+    pass
 
 class Callback(object):
     __metaclass__ = ABCMeta
 
-    running_graph = 'train'
+    type = TrainCallback()
     """ The graph that this callback should run on.
-        Either 'train' or 'test'
+        Either TrainCallback or TestCallback
     """
 
     def before_train(self):

@@ -31,4 +31,8 @@ class PeriodicSaver(PeriodicCallback):
             global_step=self.global_step)
 
 class MinSaver(Callback):
-    pass
+    def __init__(self, monitor_stat):
+        self.monitor_stat = monitor_stat
+
+    def _trigger_epoch(self):
+        pass

@@ -10,12 +10,12 @@ from tqdm import tqdm
 from ..utils import *
 from ..utils.stat import *
 from ..utils.summary import *
-from .base import PeriodicCallback, Callback
+from .base import PeriodicCallback, Callback, TestCallback
 
 __all__ = ['ValidationError', 'ValidationCallback']
 
 class ValidationCallback(PeriodicCallback):
-    running_graph = 'test'
+    type = TestCallback()
     """
     Basic routine for validation callbacks.
     """
@@ -48,7 +48,7 @@ class ValidationCallback(PeriodicCallback):
 
         output_vars = self._get_output_vars()
         output_vars.append(self.cost_var)
-        with tqdm(total=self.ds.size()) as pbar:
+        with tqdm(total=self.ds.size(), ascii=True) as pbar:
             for dp in self.ds.get_data():
                 feed = dict(itertools.izip(self.input_vars, dp))
 
