@@ -60,15 +60,12 @@ class Model(ModelDesc):
         l = BatchNorm('bn3', l, is_training)
         l = tf.nn.relu(l)
         l = FullyConnected('fc0', l, 512,
-                           W_init=tf.truncated_normal_initializer(stddev=0.04),
                            b_init=tf.constant_initializer(0.1))
         l = FullyConnected('fc1', l, out_dim=512,
-                           W_init=tf.truncated_normal_initializer(stddev=0.04),
                            b_init=tf.constant_initializer(0.1))
         # fc will have activation summary by default. disable for the output layer
         logits = FullyConnected('linear', l, out_dim=10, summary_activation=False,
-                                nl=tf.identity,
-                                W_init=tf.truncated_normal_initializer(stddev=1.0/192))
+                                nl=tf.identity)
         prob = tf.nn.softmax(logits, name='output')
 
         y = one_hot(label, 10)
@@ -134,7 +131,7 @@ def get_config():
         dataset=dataset_train,
         optimizer=tf.train.AdamOptimizer(lr),
         callbacks=Callbacks([
-            SummaryWriter(print_tag=['train_cost', 'train_error']),
+            SummaryWriter(),
             PeriodicSaver(),
             ValidationError(dataset_test, prefix='test'),
         ]),

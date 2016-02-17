@@ -20,7 +20,7 @@ from tensorpack.dataflow import *
 
 """
 MNIST ConvNet example.
-99.33% test accuracy after 50 epochs.
+99.3% validation accuracy after 50 epochs.
 """
 
 BATCH_SIZE = 128
