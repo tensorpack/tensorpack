@@ -86,7 +86,7 @@ def scale_grads(grads, multiplier):
     ret = []
     for grad, var in grads:
         varname = var.name
-        for regex, val in multiplier.iteritems():
+        for regex, val in multiplier:
             if re.search(regex, varname):
                 logger.info("Apply lr multiplier {} for {}".format(val, varname))
                 ret.append((grad * val, var))

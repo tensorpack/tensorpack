@@ -65,6 +65,6 @@ class ModelDesc(object):
 
     def get_lr_multiplier(self):
         """
-        Return a dict of {variable_regex: multiplier}
+        Return a list of (variable_regex: multiplier)
         """
-        return {}
+        return []
