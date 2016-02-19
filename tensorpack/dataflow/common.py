@@ -8,6 +8,7 @@ from .base import DataFlow
 from .imgaug import AugmentorList, Image
 
 __all__ = ['BatchData', 'FixedSizeData', 'FakeData', 'MapData',
+           'MapDataComponent', 'RandomChooseData',
            'AugmentImageComponent']
 
 class BatchData(DataFlow):
@@ -124,6 +125,19 @@ class FakeData(DataFlow):
             yield [np.random.random(k) for k in self.shapes]
 
 class MapData(DataFlow):
+    """ Map a function to the datapoint"""
+    def __init__(self, ds, func):
+        self.ds = ds
+        self.func = func
+
+    def size(self):
+        return self.ds.size()
+
+    def get_data(self):
+        for dp in self.ds.get_data():
+            yield self.func(dp)
+
+class MapDataComponent(DataFlow):
     """ Apply a function to the given index in the datapoint"""
     def __init__(self, ds, func, index=0):
         self.ds = ds
@@ -138,6 +152,31 @@ class MapData(DataFlow):
             dp[self.index] = self.func(dp[self.index])
             yield dp
 
+class RandomChooseData(DataFlow):
+    """
+    Randomly choose from several dataflow. Stop producing when any of its dataflow stops.
+    """
+    def __init__(self, df_lists):
+        """
+        df_lists: list of dataflow, or list of (dataflow, probability) tuple
+        """
+        if isinstance(df_lists[0], (tuple, list)):
+            assert sum([v[1] for v in df_lists]) == 1.0
+            self.df_lists = df_lists
+        else:
+            prob = 1.0 / len(df_lists)
+            self.df_lists = [(k, prob) for k in df_lists]
+
+    def get_data(self):
+        itrs = [v[0].get_data() for v in self.df_lists]
+        probs = np.array([v[1] for v in self.df_lists])
+        try:
+            while True:
+                itr = np.random.choice(itrs, p=probs)
+                yield next(itr)
+        except StopIteration:
+            return
+
 def AugmentImageComponent(ds, augmentors, index=0):
     """
     Augment the image in each data point
@@ -146,9 +185,9 @@ def AugmentImageComponent(ds, augmentors, index=0):
         augmentors: a list of ImageAugmentor instance
         index: the index of image in each data point. default to be 0
     """
-# TODO reset rng at the beginning of each get_data
+    # TODO reset rng at the beginning of each get_data
     aug = AugmentorList(augmentors)
-    return MapData(
+    return MapDataComponent(
         ds,
         lambda img: aug.augment(Image(img)).arr,
         index)

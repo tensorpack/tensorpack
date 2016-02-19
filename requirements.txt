@@ -1,4 +1,4 @@
 termcolor
-numpy
-protobuf~=3.0.0a1
+pillow
+scipy
 tqdm

@@ -4,6 +4,7 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
+from copy import copy
 
 from ._common import layer_register
 
@@ -37,7 +38,16 @@ def BatchNorm(x, is_training, gamma_init=1.0):
     beta = tf.get_variable('beta', [n_out])
     gamma = tf.get_variable('gamma', [n_out],
                             initializer=tf.constant_initializer(gamma_init))
+
+    # XXX hack to clear shape. see tensorflow#1162
+    if shape[0] is not None:
+        x = tf.tile(x, tf.pack([1,1,1,1]))
+        hack_shape = copy(shape)
+        hack_shape[0] = None
+        x.set_shape(hack_shape)
+
     batch_mean, batch_var = tf.nn.moments(x, [0, 1, 2], name='moments')
+    print batch_mean
 
     ema = tf.train.ExponentialMovingAverage(decay=0.999)
     ema_apply_op = ema.apply([batch_mean, batch_var])
