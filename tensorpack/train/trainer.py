@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
-# File: train.py
+# File: trainer.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
@@ -47,7 +47,7 @@ class SimpleTrainer(Trainer):
         self.sess.run([self.train_op], feed_dict=feed)    # faster since train_op return None
 
     def train(self):
-        model = self.config.model
+        model = self.model
         input_vars = model.get_input_vars()
         self.input_vars = input_vars
         cost_var = model.get_cost(input_vars, is_training=True)
@@ -91,7 +91,7 @@ class QueueInputTrainer(Trainer):
         return ret
 
     def train(self):
-        model = self.config.model
+        model = self.model
         input_vars = model.get_input_vars()
         input_queue = model.get_input_queue()
 
@@ -144,7 +144,7 @@ class QueueInputTrainer(Trainer):
         self.init_session_and_coord()
 
         # create a thread that keeps filling the queue
-        input_th = EnqueueThread(self.sess, self.coord, enqueue_op, self.config.dataset, input_queue)
+        input_th = EnqueueThread(self, enqueue_op, self.config.dataset, input_queue)
         input_th.start()
         self.main_loop()
 

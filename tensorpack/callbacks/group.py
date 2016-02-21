@@ -13,22 +13,22 @@ from ..utils import *
 __all__ = ['Callbacks']
 
 @contextmanager
-def create_test_graph():
-    G = tf.get_default_graph()
-    model = G.get_collection(MODEL_KEY)[0]
+def create_test_graph(trainer):
+    model = trainer.model.__class__()
     with tf.Graph().as_default() as Gtest:
         # create a global step var in test graph
         global_step_var = tf.Variable(
             0, trainable=False, name=GLOBAL_STEP_OP_NAME)
-        new_model = model.__class__()
-        input_vars = new_model.get_input_vars()
-        cost = new_model.get_cost(input_vars, is_training=False)
-        Gtest.add_to_collection(MODEL_KEY, new_model)
+        input_vars = model.get_input_vars()
+        for v in input_vars:
+            tf.add_to_collection(INPUT_VARS_KEY, v)
+        cost = model.get_cost(input_vars, is_training=False)
         yield Gtest
 
 @contextmanager
-def create_test_session():
-    with create_test_graph():
+def create_test_session(trainer):
+    """ create a test-time session from trainer"""
+    with create_test_graph(trainer):
         with tf.Session() as sess:
             yield sess
 
@@ -66,16 +66,13 @@ class TestCallbackContext(object):
     def __init__(self):
         self.sess = None
 
-    def _init_test_sess(self):
-        with create_test_session() as sess:
-            self.sess = sess
-            self.graph = sess.graph
-            self.saver = tf.train.Saver()
-
     @contextmanager
-    def before_train_context(self):
+    def before_train_context(self, trainer):
         if self.sess is None:
-            self._init_test_sess()
+            with create_test_session(trainer) as sess:
+                self.sess = sess
+                self.graph = sess.graph
+                self.saver = tf.train.Saver()
         with self.graph.as_default(), self.sess.as_default():
             yield
 
@@ -112,7 +109,7 @@ class Callbacks(Callback):
             if isinstance(cb.type, TrainCallback):
                 cb.before_train(self.trainer)
             else:
-                with self.test_callback_context.before_train_context():
+                with self.test_callback_context.before_train_context(self.trainer):
                     cb.before_train(self.trainer)
 
     def _after_train(self):

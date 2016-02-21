@@ -23,11 +23,12 @@ class StoppableThread(threading.Thread):
 
 
 class EnqueueThread(threading.Thread):
-    def __init__(self, sess, coord, enqueue_op, dataflow, queue):
+    def __init__(self, trainer, enqueue_op, dataflow, queue):
         super(EnqueueThread, self).__init__()
-        self.sess = sess
-        self.coord = coord
-        self.input_vars = sess.graph.get_collection(MODEL_KEY)[0].get_input_vars()
+        self.sess = trainer.sess
+        self.coord = trainer.coord
+        self.input_vars = trainer.model.get_input_vars()
+
         self.dataflow = dataflow
         self.op = enqueue_op
         self.queue = queue

@@ -26,7 +26,7 @@ class ValidationCallback(PeriodicCallback):
         self.cost_var_name = cost_var_name
 
     def _before_train(self):
-        self.input_vars = tf.get_collection(MODEL_KEY)[0].get_input_vars()
+        self.input_vars = tf.get_collection(INPUT_VARS_KEY)
         self.cost_var = self.get_tensor(self.cost_var_name)
         self._find_output_vars()
 

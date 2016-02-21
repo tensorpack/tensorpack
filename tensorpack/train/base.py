@@ -24,7 +24,7 @@ class Trainer(object):
         """
         assert isinstance(config, TrainConfig), type(config)
         self.config = config
-        tf.add_to_collection(MODEL_KEY, config.model)
+        self.model = config.model
 
     @abstractmethod
     def train(self):
