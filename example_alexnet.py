@@ -24,12 +24,8 @@ CAPACITY = MIN_AFTER_DEQUEUE + 3 * BATCH_SIZE
 
 class Model(ModelDesc):
     def _get_input_vars(self):
-        return [
-            tf.placeholder(
-                tf.float32, shape=(None, 227, 227, 3), name='input'),
-            tf.placeholder(
-                tf.int32, shape=(None,), name='label')
-        ]
+        return [InputVar(tf.float32, (None, 227, 227, 3), 'input'),
+            InputVar(tf.int32, (None,), 'label') ]
 
     def _get_cost(self, inputs, is_training):
         # img: 227x227x3
