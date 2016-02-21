@@ -12,7 +12,7 @@ import pickle
 from .base import Callback, PeriodicCallback
 from ..utils import *
 
-__all__ = ['SummaryWriter']
+__all__ = ['StatHolder', 'StatPrinter']
 
 class StatHolder(object):
     def __init__(self, log_dir, print_tag=None):
@@ -48,30 +48,12 @@ class StatHolder(object):
             pickle.dump(self.stat_history, f)
         os.rename(tmp_filename, self.filename)
 
-class SummaryWriter(Callback):
+class StatPrinter(Callback):
     def __init__(self, print_tag=None):
         """ print_tag : a list of regex to match scalar summary to print
             if None, will print all scalar tags
         """
-        if not hasattr(logger, 'LOG_DIR'):
-            raise RuntimeError("Please use logger.set_logger_dir at the beginning of your script.")
-        self.log_dir = logger.LOG_DIR
-        logger.stat_holder = StatHolder(self.log_dir, print_tag)
+        self.print_tag = print_tag
 
     def _before_train(self):
-        logger.writer = tf.train.SummaryWriter(
-            self.log_dir, graph_def=self.sess.graph_def)
-
-        self.summary_op = tf.merge_all_summaries()
-
-    def _trigger_epoch(self):
-        # check if there is any summary to write
-        if self.summary_op is None:
-            return
-        summary_str = self.summary_op.eval()
-        summary = tf.Summary.FromString(summary_str)
-        for val in summary.value:
-            if val.WhichOneof('value') == 'simple_value':
-                val.tag = re.sub('tower[0-9]*/', '', val.tag)
-                logger.stat_holder.add_stat(val.tag, val.simple_value)
-        logger.writer.add_summary(summary, self.global_step)
+        logger.stat_holder = StatHolder(logger.LOG_DIR, self.print_tag)

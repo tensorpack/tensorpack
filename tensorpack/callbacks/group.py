@@ -104,15 +104,6 @@ class Callbacks(Callback):
                 raise ValueError(
                     "Unknown callback running graph {}!".format(str(cb.type)))
 
-        # ensure a SummaryWriter
-        for idx, cb in enumerate(cbs):
-            if type(cb) == SummaryWriter:
-                cbs.insert(0, cbs.pop(idx))
-                break
-        else:
-            logger.warn("SummaryWriter must be used! Insert a default one automatically.")
-            cbs.insert(0, SummaryWriter())
-
         self.cbs = cbs
         self.test_callback_context = TestCallbackContext()
 
@@ -127,7 +118,6 @@ class Callbacks(Callback):
     def _after_train(self):
         for cb in self.cbs:
             cb.after_train()
-        logger.writer.close()
 
     def trigger_step(self):
         for cb in self.cbs:
@@ -152,5 +142,3 @@ class Callbacks(Callback):
                         tm.timed_callback(type(cb).__name__):
                     cb.trigger_epoch()
         tm.log()
-        logger.writer.flush()
-        logger.stat_holder.finalize()
