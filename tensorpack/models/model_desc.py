@@ -5,44 +5,53 @@
 
 from abc import ABCMeta, abstractmethod
 import tensorflow as tf
+from collections import namedtuple
 
-__all__ = ['ModelDesc']
+__all__ = ['ModelDesc', 'InputVar']
+
+InputVar = namedtuple('InputVar', ['type', 'shape', 'name'])
 
 class ModelDesc(object):
     __metaclass__ = ABCMeta
 
+
     def __init__(self):
-        self.input_vars = None
+        pass
 
     def get_input_vars(self):
         """
-        return the list of input vars in the graph
-        results will be cached, to avoid creating the same variable
-
+        return the list of raw input vars in the graph
+        if reuse=True, results will be cached, to avoid creating the same variable
         """
-        if self.input_vars is None:
-            self.input_vars = self._get_input_vars()
-            for i in self.input_vars:
-                assert isinstance(i, tf.Tensor), tf.Tensor.__class__
-        return self.input_vars
+        input_vars = self._get_input_vars()
+        ret = []
+        for v in input_vars:
+            ret.append(tf.placeholder(v.type, shape=v.shape, name=v.name))
+        return ret
+
+    def reuse_input_vars(self):
+        """ find input_vars in default graph"""
+        input_var_names = [k.name for k in self._get_input_vars()]
+        g = tf.get_default_graph()
+        return [g.get_tensor_by_name(name + ":0") for name in input_var_names]
 
     @abstractmethod
     def _get_input_vars(self):
         """
         return the list of input vars in the graph
         """
+        pass
 
-    def get_input_queue(self):
+    def get_input_queue(self, input_vars):
         """
         return the queue for input. the dequeued elements will be fed to self.get_cost
         if queue is None, datapoints from dataflow will be fed to the graph directly.
         when running with multiGPU, queue cannot be None
         """
-        assert self.input_vars is not None
-        return tf.FIFOQueue(50, [x.dtype for x in self.input_vars], name='input_queue')
+        assert input_vars is not None
+        return tf.FIFOQueue(50, [x.dtype for x in input_vars], name='input_queue')
 
     def get_cost(self, input_vars, is_training):
-        assert len(input_vars) == len(self.input_vars)
         assert type(is_training) == bool
         return self._get_cost(input_vars, is_training)
 
@@ -57,10 +66,6 @@ class ModelDesc(object):
             is_training: a python bool variable
         Returns:
             the cost to minimize. scalar variable
-
-        input_vars might be different from self.input_vars
-        (inputs might go through the queue for faster input),
-        but must have the same length
         """
 
     def get_lr_multiplier(self):

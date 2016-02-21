@@ -94,8 +94,8 @@ class QueueInputTrainer(Trainer):
         model = self.model
         input_vars = model.get_input_vars()
         input_queue = model.get_input_queue()
-
         enqueue_op = input_queue.enqueue(input_vars)
+
         def get_model_inputs():
             model_inputs = input_queue.dequeue()
             if isinstance(model_inputs, tf.Tensor): # only one input
@@ -144,7 +144,7 @@ class QueueInputTrainer(Trainer):
         self.init_session_and_coord()
 
         # create a thread that keeps filling the queue
-        input_th = EnqueueThread(self, enqueue_op, self.config.dataset, input_queue)
+        input_th = EnqueueThread(self, input_queue, enqueue_op, input_vars)
         input_th.start()
         self.main_loop()
 

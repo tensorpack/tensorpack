@@ -14,14 +14,12 @@ __all__ = ['Callbacks']
 
 @contextmanager
 def create_test_graph(trainer):
-    model = trainer.model.__class__()
+    model = trainer.model
     with tf.Graph().as_default() as Gtest:
         # create a global step var in test graph
         global_step_var = tf.Variable(
             0, trainable=False, name=GLOBAL_STEP_OP_NAME)
         input_vars = model.get_input_vars()
-        for v in input_vars:
-            tf.add_to_collection(INPUT_VARS_KEY, v)
         cost = model.get_cost(input_vars, is_training=False)
         yield Gtest
 

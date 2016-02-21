@@ -28,12 +28,9 @@ IMAGE_SIZE = 28
 
 class Model(ModelDesc):
     def _get_input_vars(self):
-        return [
-            tf.placeholder(
-                tf.float32, shape=(None, IMAGE_SIZE, IMAGE_SIZE), name='input'),
-            tf.placeholder(
-                tf.int32, shape=(None,), name='label')
-        ]
+        return [InputVar(tf.float32, (None, IMAGE_SIZE, IMAGE_SIZE), 'input'),
+                InputVar(tf.int32, (None,), 'label')
+               ]
 
     def _get_cost(self, input_vars, is_training):
         is_training = bool(is_training)
@@ -92,7 +89,6 @@ def get_config():
     dataset_train = BatchData(dataset.Mnist('train'), 128)
     dataset_test = BatchData(dataset.Mnist('test'), 256, remainder=True)
     step_per_epoch = dataset_train.size()
-    step_per_epoch = 20
 
     # prepare session
     sess_config = get_default_sess_config()
