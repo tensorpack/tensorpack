@@ -83,9 +83,3 @@ unless you're resuming from a previous task.""".format(dirname))
 # export logger functions
 for func in ['info', 'warning', 'error', 'critical', 'warn', 'exception', 'debug']:
     locals()[func] = getattr(logger, func)
-
-# a global SummaryWriter
-writer = None
-
-# a global StatHolder
-stat_holder = None

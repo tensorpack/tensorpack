@@ -35,11 +35,10 @@ class Trainer(object):
         pass
 
     def trigger_epoch(self):
-        self.global_step += self.config.step_per_epoch
         self._trigger_epoch()
         self.config.callbacks.trigger_epoch()
         self.summary_writer.flush()
-        logger.stat_holder.finalize()
+        self.stat_holder.finalize()
 
     @abstractmethod
     def _trigger_epoch(self):
@@ -50,17 +49,16 @@ class Trainer(object):
             raise RuntimeError("Please use logger.set_logger_dir at the beginning of your script.")
         self.summary_writer = tf.train.SummaryWriter(
             logger.LOG_DIR, graph_def=self.sess.graph_def)
-        logger.writer = self.summary_writer
         self.summary_op = tf.merge_all_summaries()
         # create an empty StatHolder
-        logger.stat_holder = StatHolder(logger.LOG_DIR, [])
+        self.stat_holder = StatHolder(logger.LOG_DIR, [])
 
     def _process_summary(self, summary_str):
         summary = tf.Summary.FromString(summary_str)
         for val in summary.value:
             if val.WhichOneof('value') == 'simple_value':
                 val.tag = re.sub('tower[0-9]*/', '', val.tag)   # TODO move to subclasses
-                logger.stat_holder.add_stat(val.tag, val.simple_value)
+                self.stat_holder.add_stat(val.tag, val.simple_value)
         self.summary_writer.add_summary(summary, self.global_step)
 
     def main_loop(self):
@@ -70,7 +68,7 @@ class Trainer(object):
                 self._init_summary()
                 self.global_step = get_global_step()
                 logger.info("Start training with global_step={}".format(self.global_step))
-                callbacks.before_train()
+                callbacks.before_train(self)
                 tf.get_default_graph().finalize()
 
                 for epoch in xrange(1, self.config.max_epoch):
@@ -85,6 +83,7 @@ class Trainer(object):
                                 return
                             self.run_step()
                             callbacks.trigger_step()
+                            self.global_step += 1
                         self.trigger_epoch()
             except (KeyboardInterrupt, Exception):
                 raise

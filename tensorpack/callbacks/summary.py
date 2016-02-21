@@ -56,4 +56,4 @@ class StatPrinter(Callback):
         self.print_tag = print_tag
 
     def _before_train(self):
-        logger.stat_holder = StatHolder(logger.LOG_DIR, self.print_tag)
+        self.trainer.stat_holder = StatHolder(logger.LOG_DIR, self.print_tag)

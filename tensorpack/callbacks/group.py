@@ -110,10 +110,10 @@ class Callbacks(Callback):
     def _before_train(self):
         for cb in self.cbs:
             if isinstance(cb.type, TrainCallback):
-                cb.before_train()
+                cb.before_train(self.trainer)
             else:
                 with self.test_callback_context.before_train_context():
-                    cb.before_train()
+                    cb.before_train(self.trainer)
 
     def _after_train(self):
         for cb in self.cbs:

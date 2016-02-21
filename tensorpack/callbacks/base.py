@@ -27,7 +27,8 @@ class Callback(object):
         Either TrainCallback or TestCallback
     """
 
-    def before_train(self):
+    def before_train(self, trainer):
+        self.trainer = trainer
         self.graph = tf.get_default_graph()
         self.sess = tf.get_default_session()
         self.epoch_num = 0
@@ -52,9 +53,12 @@ class Callback(object):
         Could be useful to apply some tricks on parameters (clipping, low-rank, etc)
         """
 
+    @property
+    def global_step(self):
+        return self.trainer.global_step
+
     def trigger_epoch(self):
         self.epoch_num += 1
-        self.global_step = get_global_step()
         self._trigger_epoch()
 
     def _trigger_epoch(self):

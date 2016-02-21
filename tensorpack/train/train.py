@@ -13,7 +13,7 @@ from ..utils import *
 from ..utils.concurrency import EnqueueThread
 from ..utils.summary import summary_moving_average
 
-__all__ = ['SimpleTrainer', 'QueueInputTrainer']
+__all__ = ['SimpleTrainer', 'QueueInputTrainer', 'start_train']
 
 def summary_grads(grads):
     for grad, var in grads:
@@ -157,7 +157,6 @@ class QueueInputTrainer(Trainer):
             summary_str = self.summary_op.eval()
             self._process_summary(summary_str)
 
-
 def start_train(config):
-    tr = SimpleTrainer(config)
+    tr = QueueInputTrainer(config)
     tr.train()

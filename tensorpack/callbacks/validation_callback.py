@@ -63,9 +63,9 @@ class ValidationCallback(PeriodicCallback):
                 pbar.update()
 
         cost_avg = cost_sum / cnt
-        logger.writer.add_summary(create_summary(
+        self.trainer.summary_writer.add_summary(create_summary(
             '{}_cost'.format(self.prefix), cost_avg), self.global_step)
-        logger.stat_holder.add_stat("{}_cost".format(self.prefix), cost_avg)
+        self.trainer.stat_holder.add_stat("{}_cost".format(self.prefix), cost_avg)
 
     def _trigger_periodic(self):
         for dp, outputs in self._run_validation():
@@ -101,6 +101,6 @@ class ValidationError(ValidationCallback):
             wrong = outputs[0]
             err_stat.feed(wrong, batch_size)
 
-        logger.writer.add_summary(create_summary(
+        self.trainer.summary_writer.add_summary(create_summary(
             '{}_error'.format(self.prefix), err_stat.accuracy), self.global_step)
-        logger.stat_holder.add_stat("{}_error".format(self.prefix), err_stat.accuracy)
+        self.trainer.stat_holder.add_stat("{}_error".format(self.prefix), err_stat.accuracy)
