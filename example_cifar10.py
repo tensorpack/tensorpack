@@ -8,7 +8,7 @@ import argparse
 import numpy as np
 import os
 
-from tensorpack.train import TrainConfig, start_train
+from tensorpack.train import TrainConfig, QueueInputTrainer
 from tensorpack.models import *
 from tensorpack.callbacks import *
 from tensorpack.utils import *
@@ -158,4 +158,4 @@ if __name__ == '__main__':
             config.session_init = SaverRestore(args.load)
         if args.gpu:
             config.nr_tower = len(args.gpu.split(','))
-        start_train(config)
+        QueueInputTrainer(config).train()

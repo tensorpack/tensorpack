@@ -7,7 +7,6 @@ import threading
 from contextlib import contextmanager
 import tensorflow as tf
 
-from .utils import expand_dim_if_necessary
 from .naming import *
 from . import logger
 
@@ -44,7 +43,6 @@ class EnqueueThread(threading.Thread):
                         return
                     feed = dict(zip(self.input_vars, dp))
                     self.sess.run([self.op], feed_dict=feed)
-                #print '\nExauhsted!!!'
         except tf.errors.CancelledError as e:
             pass
         except Exception:

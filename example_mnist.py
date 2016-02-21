@@ -10,7 +10,7 @@ import numpy as np
 import os, sys
 import argparse
 
-from tensorpack.train import TrainConfig, start_train
+from tensorpack.train import TrainConfig, SimpleTrainer
 from tensorpack.models import *
 from tensorpack.utils import *
 from tensorpack.utils.symbolic_functions import *
@@ -92,7 +92,7 @@ def get_config():
     dataset_train = BatchData(dataset.Mnist('train'), 128)
     dataset_test = BatchData(dataset.Mnist('test'), 256, remainder=True)
     step_per_epoch = dataset_train.size()
-    step_per_epoch = 20
+    #step_per_epoch = 20
 
     # prepare session
     sess_config = get_default_sess_config()
@@ -131,5 +131,5 @@ if __name__ == '__main__':
         config = get_config()
         if args.load:
             config.session_init = SaverRestore(args.load)
-        start_train(config)
+        SimpleTrainer(config).train()
 

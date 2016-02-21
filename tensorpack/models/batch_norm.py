@@ -47,7 +47,6 @@ def BatchNorm(x, is_training, gamma_init=1.0):
         x.set_shape(hack_shape)
 
     batch_mean, batch_var = tf.nn.moments(x, [0, 1, 2], name='moments')
-    print batch_mean
 
     ema = tf.train.ExponentialMovingAverage(decay=0.999)
     ema_apply_op = ema.apply([batch_mean, batch_var])
