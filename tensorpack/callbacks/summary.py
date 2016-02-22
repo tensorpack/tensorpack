@@ -40,7 +40,7 @@ class StatHolder(object):
     def _print_stat(self):
         for k, v in sorted(self.stat_now.items(), key=operator.itemgetter(0)):
             if self.print_tag is None or k in self.print_tag:
-                logger.info('{}: {:.4f}'.format(k, v))
+                logger.info('{}: {:.5f}'.format(k, v))
 
     def _write_stat(self):
         tmp_filename = self.filename + '.tmp'

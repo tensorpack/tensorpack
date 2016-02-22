@@ -93,7 +93,7 @@ class QueueInputTrainer(Trainer):
     def train(self):
         model = self.model
         input_vars = model.get_input_vars()
-        input_queue = model.get_input_queue()
+        input_queue = model.get_input_queue(input_vars)
         enqueue_op = input_queue.enqueue(input_vars)
 
         def get_model_inputs():
