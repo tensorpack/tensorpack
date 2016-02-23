@@ -32,7 +32,7 @@ class DumpParamAsImage(Callback):
         self.var = self.graph.get_tensor_by_name(self.var_name)
 
     def _trigger_epoch(self):
-        val = self.sess.run(self.var)
+        val = self.trainer.sess.run(self.var)
         if self.func is not None:
             val = self.func(val)
         if isinstance(val, list):

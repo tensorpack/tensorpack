@@ -30,7 +30,6 @@ class Callback(object):
     def before_train(self, trainer):
         self.trainer = trainer
         self.graph = tf.get_default_graph()
-        self.sess = tf.get_default_session()
         self.epoch_num = 0
         self._before_train()
 
