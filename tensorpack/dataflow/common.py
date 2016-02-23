@@ -4,6 +4,7 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import numpy as np
+import copy
 from .base import DataFlow
 from .imgaug import AugmentorList, Image
 
@@ -149,6 +150,7 @@ class MapDataComponent(DataFlow):
 
     def get_data(self):
         for dp in self.ds.get_data():
+            dp = copy.deepcopy(dp)  # avoid modifying the original dp
             dp[self.index] = self.func(dp[self.index])
             yield dp
 

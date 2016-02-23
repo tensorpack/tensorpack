@@ -62,13 +62,13 @@ class Trainer(object):
         self.summary_writer.add_summary(summary, self.global_step)
 
     def main_loop(self):
+        self._init_summary()
         callbacks = self.config.callbacks
+        callbacks.before_train(self)
         with self.sess.as_default():
             try:
-                self._init_summary()
                 self.global_step = get_global_step()
                 logger.info("Start training with global_step={}".format(self.global_step))
-                callbacks.before_train(self)
                 tf.get_default_graph().finalize()
 
                 for epoch in xrange(1, self.config.max_epoch):

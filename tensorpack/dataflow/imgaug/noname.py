@@ -7,7 +7,7 @@ from .base import ImageAugmentor
 import numpy as np
 import cv2
 
-__all__ = ['Flip']
+__all__ = ['Flip', 'MapImage']
 
 class Flip(ImageAugmentor):
     def __init__(self, horiz=False, vert=False, prob=0.5):
@@ -34,3 +34,9 @@ class Flip(ImageAugmentor):
                 raise NotImplementedError()
 
 
+class MapImage(ImageAugmentor):
+    def __init__(self, func):
+        self.func = func
+
+    def _augment(self, img):
+        img.arr = self.func(img.arr)

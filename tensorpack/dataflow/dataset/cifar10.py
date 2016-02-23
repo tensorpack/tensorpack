@@ -6,6 +6,7 @@ import os, sys
 import pickle
 import numpy as np
 from six.moves import urllib
+import copy
 import tarfile
 import logging
 
@@ -78,7 +79,7 @@ class Cifar10(DataFlow):
         if train_or_test == 'train':
             self.fs = fnames[:5]
         else:
-            self.fs = fnames[-1]
+            self.fs = [fnames[-1]]
         for f in self.fs:
             if not os.path.isfile(f):
                 raise ValueError('Failed to find file: ' + f)
