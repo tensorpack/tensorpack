@@ -48,6 +48,7 @@ class ValidationCallback(PeriodicCallback):
 
         output_vars = self._get_output_vars()
         output_vars.append(self.cost_var)
+        sess = tf.get_default_session()
         with tqdm(total=self.ds.size(), ascii=True) as pbar:
             for dp in self.ds.get_data():
                 feed = dict(itertools.izip(self.input_vars, dp))
@@ -55,7 +56,7 @@ class ValidationCallback(PeriodicCallback):
                 batch_size = dp[0].shape[0]   # assume batched input
 
                 cnt += batch_size
-                outputs = self.sess.run(output_vars, feed_dict=feed)
+                outputs = sess.run(output_vars, feed_dict=feed)
                 cost = outputs[-1]
                 # each batch might not have the same size in validation
                 cost_sum += cost * batch_size
