@@ -5,9 +5,11 @@
 
 import numpy as np
 import cv2
-from .base import DataFlow
+import copy
+from .base import DataFlow, ProxyDataFlow
+from .imgaug import AugmentorList, Image
 
-__all__ = ['ImageFromFile']
+__all__ = ['ImageFromFile', 'AugmentImageComponent']
 
 class ImageFromFile(DataFlow):
     """ generate rgb images from files """
@@ -34,3 +36,26 @@ class ImageFromFile(DataFlow):
                 im = cv2.resize(im, self.resize[::-1])
             yield [im]
 
+
+class AugmentImageComponent(ProxyDataFlow):
+    """
+    Augment the image in each data point
+    Args:
+        ds: a DataFlow dataset instance
+        augmentors: a list of ImageAugmentor instance
+        index: the index of image in each data point. default to be 0
+    """
+    def __init__(self, ds, augmentors, index=0):
+        super(AugmentImageComponent, self).__init__(ds)
+        self.augs = AugmentorList(augmentors)
+        self.index = index
+
+    def reset_state(self):
+        self.ds.reset_state()
+        # TODO aug reset
+
+    def get_data(self):
+        for dp in self.ds.get_data():
+            dp = copy.deepcopy(dp)
+            dp[self.index] = self.augs.augment(Image(dp[self.index])).arr
+            yield dp

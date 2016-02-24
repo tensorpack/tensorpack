@@ -4,14 +4,11 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import numpy as np
-import copy
 from .base import DataFlow, ProxyDataFlow
-from .imgaug import AugmentorList, Image
 from ..utils import *
 
 __all__ = ['BatchData', 'FixedSizeData', 'FakeData', 'MapData',
-           'MapDataComponent', 'RandomChooseData',
-           'AugmentImageComponent']
+           'MapDataComponent', 'RandomChooseData' ]
 
 class BatchData(ProxyDataFlow):
     def __init__(self, ds, batch_size, remainder=False):
@@ -184,18 +181,3 @@ class RandomChooseData(DataFlow):
                 yield next(itr)
         except StopIteration:
             return
-
-def AugmentImageComponent(ds, augmentors, index=0):
-    """
-    Augment the image in each data point
-    Args:
-        ds: a DataFlow dataset instance
-        augmentors: a list of ImageAugmentor instance
-        index: the index of image in each data point. default to be 0
-    """
-    # TODO reset rng at the beginning of each get_data
-    aug = AugmentorList(augmentors)
-    return MapDataComponent(
-        ds,
-        lambda img: aug.augment(Image(img)).arr,
-        index)
