@@ -23,6 +23,7 @@ class PrefetchProcess(multiprocessing.Process):
         self.queue = queue
 
     def run(self):
+        self.ds.reset_state()
         try:
             for dp in self.ds.get_data():
                 self.queue.put(dp)

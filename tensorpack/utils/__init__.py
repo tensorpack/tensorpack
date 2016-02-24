@@ -87,4 +87,5 @@ def get_global_step():
         get_global_step_var())
 
 def get_rng(self):
-    return np.random.RandomState()
+    seed = (id(self) + os.getpid()) % 4294967295
+    return np.random.RandomState(seed)

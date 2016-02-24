@@ -30,7 +30,7 @@ class TrainConfig(object):
                 initialize variables of a session. default to a new session.
             model: a ModelDesc instance
             step_per_epoch: the number of steps (parameter updates) to perform
-                in each epoch. default to dataset.size()
+                in each epoch.
             max_epoch: maximum number of epoch to run training. default to 100
             nr_tower: int. number of towers. default to 1.
         """
@@ -49,7 +49,7 @@ class TrainConfig(object):
         assert_type(self.session_config, tf.ConfigProto)
         self.session_init = kwargs.pop('session_init', NewSession())
         assert_type(self.session_init, SessionInit)
-        self.step_per_epoch = int(kwargs.pop('step_per_epoch', self.dataset.size()))
+        self.step_per_epoch = int(kwargs.pop('step_per_epoch'))
         self.max_epoch = int(kwargs.pop('max_epoch', 100))
         assert self.step_per_epoch > 0 and self.max_epoch > 0
         self.nr_tower = int(kwargs.pop('nr_tower', 1))
