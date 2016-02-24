@@ -15,11 +15,11 @@ __all__ = ['PeriodicSaver']
 class PeriodicSaver(PeriodicCallback):
     def __init__(self, period=1, keep_recent=10, keep_freq=0.5):
         super(PeriodicSaver, self).__init__(period)
-        self.path = os.path.join(logger.LOG_DIR, 'model')
         self.keep_recent = keep_recent
         self.keep_freq = keep_freq
 
     def _before_train(self):
+        self.path = os.path.join(logger.LOG_DIR, 'model')
         self.saver = tf.train.Saver(
             max_to_keep=self.keep_recent,
             keep_checkpoint_every_n_hours=self.keep_freq)

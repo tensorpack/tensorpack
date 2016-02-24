@@ -91,10 +91,6 @@ class Model(ModelDesc):
         return tf.add_n([cost, wd_cost], name='cost')
 
 def get_config():
-    basename = os.path.basename(__file__)
-    logger.set_logger_dir(
-        os.path.join('train_log', basename[:basename.rfind('.')]))
-
     # prepare dataset
     dataset_train = dataset.Cifar10('train')
     augmentors = [
@@ -102,10 +98,13 @@ def get_config():
         imgaug.Flip(horiz=True),
         imgaug.BrightnessAdd(63),
         imgaug.Contrast((0.2,1.8)),
+        #imgaug.GaussianDeform([(0.2, 0.2), (0.2, 0.8), (0.8,0.8), (0.8,0.2)],
+                             #(30,30), 0.2, 3),
         imgaug.MeanVarianceNormalize(all_channel=True)
     ]
     dataset_train = AugmentImageComponent(dataset_train, augmentors)
     dataset_train = BatchData(dataset_train, 128)
+    #dataset_train = PrefetchData(dataset_train, 3, 2)
     step_per_epoch = dataset_train.size()
 
     augmentors = [
@@ -145,6 +144,11 @@ if __name__ == '__main__':
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.') # nargs='*' in multi mode
     parser.add_argument('--load', help='load model')
     args = parser.parse_args()
+
+    basename = os.path.basename(__file__)
+    logger.set_logger_dir(
+        os.path.join('train_log', basename[:basename.rfind('.')]))
+
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
     else:

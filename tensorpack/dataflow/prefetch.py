@@ -39,6 +39,9 @@ class PrefetchData(DataFlow):
         self.nr_proc = nr_proc
         self.nr_prefetch = nr_prefetch
 
+    def size(self):
+        return self.ds.size() * self.nr_proc
+
     def get_data(self):
         queue = multiprocessing.Queue(self.nr_prefetch)
         procs = [PrefetchProcess(self.ds, queue) for _ in range(self.nr_proc)]
