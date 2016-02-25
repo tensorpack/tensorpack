@@ -130,7 +130,7 @@ class FakeData(DataFlow):
 class MapData(ProxyDataFlow):
     """ Map a function to the datapoint"""
     def __init__(self, ds, func):
-        super(MapData, self).__init_(ds)
+        super(MapData, self).__init__(ds)
         self.func = func
 
     def get_data(self):

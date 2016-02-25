@@ -5,7 +5,7 @@
 
 import tensorflow as tf
 
-from . import logger
+from . import logger, get_global_step_var
 from .naming import *
 
 def create_summary(name, v):
@@ -30,8 +30,8 @@ def add_activation_summary(x, name=None):
         "Summary a scalar with histogram? Maybe use scalar instead. FIXME!"
     if name is None:
         name = x.name
-    tf.histogram_summary(name + '/activations', x)
-    tf.scalar_summary(name + '/sparsity', tf.nn.zero_fraction(x))
+    tf.histogram_summary(name + '/activation', x)
+    tf.scalar_summary(name + '/activation_sparsity', tf.nn.zero_fraction(x))
 
 def add_param_summary(regex):
     """
@@ -45,6 +45,7 @@ def add_param_summary(regex):
             if p.get_shape().ndims == 0:
                 tf.scalar_summary(name, p)
             else:
+                tf.scalar_summary(name + '/sparsity', tf.nn.zero_fraction(p))
                 tf.histogram_summary(name, p)
 
 def summary_moving_average(cost_var):
@@ -52,7 +53,7 @@ def summary_moving_average(cost_var):
         MOVING_SUMMARY_VARS_KEY, as well as the argument
         Return a op to maintain these average
     """
-    global_step_var = tf.get_default_graph().get_tensor_by_name(GLOBAL_STEP_VAR_NAME)
+    global_step_var = get_global_step_var()
     averager = tf.train.ExponentialMovingAverage(
         0.99, num_updates=global_step_var, name='moving_averages')
     vars_to_summary = [cost_var] + \

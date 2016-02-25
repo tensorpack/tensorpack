@@ -7,6 +7,7 @@ import numpy as np
 import cv2
 import copy
 from .base import DataFlow, ProxyDataFlow
+from .common import MapDataComponent
 from .imgaug import AugmentorList, Image
 
 __all__ = ['ImageFromFile', 'AugmentImageComponent']
@@ -37,7 +38,7 @@ class ImageFromFile(DataFlow):
             yield [im]
 
 
-class AugmentImageComponent(ProxyDataFlow):
+class AugmentImageComponent(MapDataComponent):
     """
     Augment image in each data point
     Args:
@@ -46,16 +47,10 @@ class AugmentImageComponent(ProxyDataFlow):
         index: the index of image in each data point. default to be 0
     """
     def __init__(self, ds, augmentors, index=0):
-        super(AugmentImageComponent, self).__init__(ds)
         self.augs = AugmentorList(augmentors)
-        self.index = index
+        super(AugmentImageComponent, self).__init__(
+            ds, lambda x: self.augs.augment(Image(x)).arr, index)
 
     def reset_state(self):
         self.ds.reset_state()
         self.augs.reset_state()
-
-    def get_data(self):
-        for dp in self.ds.get_data():
-            dp = copy.deepcopy(dp)
-            dp[self.index] = self.augs.augment(Image(dp[self.index])).arr
-            yield dp
