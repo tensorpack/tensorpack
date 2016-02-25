@@ -16,7 +16,7 @@ __all__ = ['StatHolder', 'StatPrinter']
 
 class StatHolder(object):
     def __init__(self, log_dir, print_tag=None):
-        self.print_tag = None if print_tag is None else set(print_tag)
+        self.set_print_tag(print_tag)
         self.stat_now = {}
 
         self.log_dir = log_dir
@@ -30,6 +30,9 @@ class StatHolder(object):
 
     def add_stat(self, k, v):
         self.stat_now[k] = v
+
+    def set_print_tag(self, print_tag):
+        self.print_tag = None if print_tag is None else set(print_tag)
 
     def finalize(self):
         self._print_stat()
@@ -56,4 +59,4 @@ class StatPrinter(Callback):
         self.print_tag = print_tag
 
     def _before_train(self):
-        self.trainer.stat_holder = StatHolder(logger.LOG_DIR, self.print_tag)
+        self.trainer.stat_holder.set_print_tag(self.print_tag)

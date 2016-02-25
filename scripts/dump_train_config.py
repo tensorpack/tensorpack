@@ -15,7 +15,10 @@ from tensorpack.utils.utils import mkdir_p
 
 parser = argparse.ArgumentParser()
 parser.add_argument(dest='config')
-parser.add_argument('-o', '--output', help='output directory to dump dataset image')
+parser.add_argument('-o', '--output',
+                    help='output directory to dump dataset image. If not given, will not dump images.')
+parser.add_argument('-s', '--scale',
+                    help='scale the image data (maybe by 255)', default=1, type=int)
 parser.add_argument('--index',
                     help='index of the image component in datapoint',
                     default=0, type=int)
@@ -37,7 +40,7 @@ if args.output:
         for bi, img in enumerate(imgbatch):
             cnt += 1
             fname = os.path.join(args.output, '{:03d}-{}.png'.format(cnt, bi))
-            cv2.imwrite(fname, img)
+            cv2.imwrite(fname, img * args.scale)
 
 NR_DP_TEST = 100
 logger.info("Testing dataflow speed:")
