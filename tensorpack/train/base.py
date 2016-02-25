@@ -62,14 +62,19 @@ class Trainer(object):
         self.summary_writer.add_summary(summary, self.global_step)
 
     def main_loop(self):
+        # some final operations that might modify the graph
         self._init_summary()
+        get_global_step_var()
         callbacks = self.config.callbacks
         callbacks.before_train(self)
+        self.config.session_init.init(self.sess)
+        tf.get_default_graph().finalize()
+        self._start_all_threads()
+
         with self.sess.as_default():
             try:
                 self.global_step = get_global_step()
                 logger.info("Start training with global_step={}".format(self.global_step))
-                tf.get_default_graph().finalize()
 
                 for epoch in xrange(1, self.config.max_epoch):
                     with timed_operation(
@@ -97,10 +102,12 @@ class Trainer(object):
     def init_session_and_coord(self):
         describe_model()
         self.sess = tf.Session(config=self.config.session_config)
-        self.config.session_init.init(self.sess)
-
-        # start training:
         self.coord = tf.train.Coordinator()
+
+    def _start_all_threads(self):
+        """
+        Run all threads before starting training
+        """
         tf.train.start_queue_runners(
             sess=self.sess, coord=self.coord, daemon=True, start=True)
 

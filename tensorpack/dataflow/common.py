@@ -4,6 +4,7 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import numpy as np
+import copy
 from .base import DataFlow, ProxyDataFlow
 from ..utils import *
 

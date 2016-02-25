@@ -142,11 +142,13 @@ class QueueInputTrainer(Trainer):
             avg_maintain_op)
 
         self.init_session_and_coord()
-
         # create a thread that keeps filling the queue
-        input_th = EnqueueThread(self, input_queue, enqueue_op, input_vars)
-        input_th.start()
+        self.input_th = EnqueueThread(self, input_queue, enqueue_op, input_vars)
         self.main_loop()
+
+    def _start_all_threads(self):
+        super(QueueInputTrainer, self)._start_all_threads()
+        self.input_th.start()
 
     def run_step(self):
         self.sess.run([self.train_op])    # faster since train_op return None

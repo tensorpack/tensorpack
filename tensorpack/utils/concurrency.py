@@ -43,7 +43,7 @@ class EnqueueThread(threading.Thread):
                     if self.coord.should_stop():
                         return
                     feed = dict(zip(self.input_vars, dp))
-                    self.sess.run([self.op], feed_dict=feed)
+                    self.op.run(feed_dict=feed, session=self.sess)
         except tf.errors.CancelledError as e:
             pass
         except Exception:
