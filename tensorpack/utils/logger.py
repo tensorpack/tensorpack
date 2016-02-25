@@ -58,23 +58,27 @@ def _set_file(path):
 
 def set_logger_dir(dirname):
     global LOG_FILE, LOG_DIR
-    LOG_DIR = dirname
     if os.path.isdir(dirname):
         logger.warn("""\
-Directory {} exists! Please either backup or delete it \
+Directory {} exists! Please either backup/delete it, or use a new directory \
 unless you're resuming from a previous task.""".format(dirname))
-        logger.info("Select Action: k (keep) / b (backup) / d (delete):")
+        logger.info("Select Action: k (keep) / b (backup) / d (delete) / n (new):")
         act = input().lower()
+        timestr = datetime.now().strftime('%m%d-%H%M%S')
         if act == 'b':
-            backup_name = dirname + datetime.now().strftime('.%d-%H%M%S')
+            backup_name = dirname + timestr
             shutil.move(dirname, backup_name)
             info("Directory'{}' backuped to '{}'".format(dirname, backup_name))
         elif act == 'd':
             shutil.rmtree(dirname)
+        elif act == 'n':
+            dirname = dirname + timestr
+            info("Use a different log directory {}".format(dirname))
         elif act == 'k':
             pass
         else:
             raise ValueError("Unknown action: {}".format(act))
+    LOG_DIR = dirname
     mkdir_p(dirname)
     LOG_FILE = os.path.join(dirname, 'log.log')
     _set_file(LOG_FILE)
