@@ -20,14 +20,17 @@ class ImageAugmentor(object):
     __metaclass__ = ABCMeta
 
     def __init__(self):
-        self.rng = get_rng(self)
+        self.reset_state()
 
     def _init(self, params=None):
-        self.rng = get_rng(self)
+        self.reset_state()
         if params:
             for k, v in params.iteritems():
                 if k != 'self':
                     setattr(self, k, v)
+
+    def reset_state(self):
+        self.rng = get_rng(self)
 
     def augment(self, img):
         """
@@ -64,3 +67,7 @@ class AugmentorList(ImageAugmentor):
         img.arr = img.arr.astype('float32')
         for aug in self.augs:
             aug.augment(img)
+
+    def reset_state(self):
+        for a in self.augs:
+            a.reset_state()

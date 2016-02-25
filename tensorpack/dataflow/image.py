@@ -39,7 +39,7 @@ class ImageFromFile(DataFlow):
 
 class AugmentImageComponent(ProxyDataFlow):
     """
-    Augment the image in each data point
+    Augment image in each data point
     Args:
         ds: a DataFlow dataset instance
         augmentors: a list of ImageAugmentor instance
@@ -52,7 +52,7 @@ class AugmentImageComponent(ProxyDataFlow):
 
     def reset_state(self):
         self.ds.reset_state()
-        # TODO aug reset
+        self.augs.reset_state()
 
     def get_data(self):
         for dp in self.ds.get_data():

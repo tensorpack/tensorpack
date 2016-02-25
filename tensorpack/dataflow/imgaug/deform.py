@@ -61,6 +61,7 @@ class GaussianDeform(ImageAugmentor):
         shape: 2D image shape
         randrange: default to shape[0] / 8
         """
+        super(GaussianDeform, self).__init__()
         self.anchors = anchors
         self.K = len(self.anchors)
         self.shape = shape
@@ -75,7 +76,6 @@ class GaussianDeform(ImageAugmentor):
             self.randrange = self.shape[0] / 8
         else:
             self.randrange = randrange
-        self._init()
 
     def _augment(self, img):
         if img.coords:
