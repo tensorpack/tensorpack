@@ -15,17 +15,6 @@ from ..utils.summary import summary_moving_average
 
 __all__ = ['SimpleTrainer', 'QueueInputTrainer', 'start_train']
 
-def summary_grads(grads):
-    for grad, var in grads:
-        if grad:
-            # TODO also summary RMS and print
-            tf.histogram_summary(var.op.name + '/gradients', grad)
-
-def check_grads(grads):
-    for grad, var in grads:
-        assert grad is not None, "Grad is None for variable {}".format(var.name)
-        tf.Assert(tf.reduce_all(tf.is_finite(var)), [var])
-
 def scale_grads(grads, multiplier):
     ret = []
     for grad, var in grads:
@@ -54,9 +43,7 @@ class SimpleTrainer(Trainer):
         avg_maintain_op = summary_moving_average(cost_var)
 
         grads = self.config.optimizer.compute_gradients(cost_var)
-        check_grads(grads)
-        grads = scale_grads(grads, model.get_lr_multiplier())
-        summary_grads(grads)
+        grads = self.process_grads(grads)
 
         self.train_op = tf.group(
             self.config.optimizer.apply_gradients(grads, get_global_step_var()),
@@ -133,9 +120,7 @@ class QueueInputTrainer(Trainer):
             grads = self.config.optimizer.compute_gradients(cost_var)
         avg_maintain_op = summary_moving_average(cost_var)  # TODO(multigpu) average the cost from each device?
 
-        check_grads(grads)
-        grads = scale_grads(grads, model.get_lr_multiplier())
-        summary_grads(grads)
+        grads = self.process_grads(grads)
 
         self.train_op = tf.group(
             self.config.optimizer.apply_gradients(grads, get_global_step_var()),

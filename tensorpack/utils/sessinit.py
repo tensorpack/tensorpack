@@ -39,6 +39,9 @@ class SaverRestore(SessionInit):
         self.path = model_path
 
 class ParamRestore(SessionInit):
+    """
+    Restore trainable variables from a dictionary
+    """
     def __init__(self, param_dict):
         self.prms = param_dict
 

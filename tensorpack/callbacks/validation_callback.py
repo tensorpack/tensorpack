@@ -6,7 +6,7 @@
 import tensorflow as tf
 import itertools
 from tqdm import tqdm
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 
 from ..utils import *
 from ..utils.stat import *

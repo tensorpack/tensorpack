@@ -7,6 +7,8 @@ from abc import ABCMeta, abstractmethod
 import tensorflow as tf
 from collections import namedtuple
 
+from ..utils.gradproc import *
+
 __all__ = ['ModelDesc', 'InputVar']
 
 InputVar = namedtuple('InputVar', ['type', 'shape', 'name'])
@@ -68,8 +70,6 @@ class ModelDesc(object):
             the cost to minimize. scalar variable
         """
 
-    def get_lr_multiplier(self):
-        """
-        Return a list of (variable_regex: multiplier)
-        """
-        return []
+    def get_gradient_processor(self):
+        """ Return a list of GradientProcessor. They will be executed in order"""
+        return [SummaryGradient(), CheckGradient()]

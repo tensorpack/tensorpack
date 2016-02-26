@@ -14,6 +14,7 @@ from tensorpack.train import TrainConfig, SimpleTrainer
 from tensorpack.models import *
 from tensorpack.utils import *
 from tensorpack.utils.symbolic_functions import *
+from tensorpack.utils.gradproc  import *
 from tensorpack.utils.summary import *
 from tensorpack.callbacks import *
 from tensorpack.dataflow import *

@@ -111,3 +111,8 @@ class Trainer(object):
         tf.train.start_queue_runners(
             sess=self.sess, coord=self.coord, daemon=True, start=True)
 
+    def process_grads(self, grads):
+        procs = self.config.model.get_gradient_processor()
+        for proc in procs:
+            grads = proc.process(grads)
+        return grads
