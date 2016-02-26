@@ -45,7 +45,7 @@ def add_param_summary(regex):
             if p.get_shape().ndims == 0:
                 tf.scalar_summary(name, p)
             else:
-                tf.scalar_summary(name + '/sparsity', tf.nn.zero_fraction(p))
+                #tf.scalar_summary(name + '/sparsity', tf.nn.zero_fraction(p))
                 tf.histogram_summary(name, p)
 
 def summary_moving_average(cost_var):
