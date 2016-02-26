@@ -33,20 +33,38 @@ def add_activation_summary(x, name=None):
     tf.histogram_summary(name + '/activation', x)
     tf.scalar_summary(name + '/activation_sparsity', tf.nn.zero_fraction(x))
 
-def add_param_summary(regex):
+def add_param_summary(summary_lists):
     """
+    summary_lists: list of (regex, [list of action to perform])
+    action can be 'mean', 'scalar', 'histogram', 'sparsity'
     Add summary for all trainable variables matching the regex
     """
+    def perform(var, action):
+        ndim = var.get_shape().ndims
+        if action == 'scalar':
+            assert ndim == 0, "Scalar summary on high-dimension data. Maybe you want 'mean'?"
+            tf.scalar_summary(var.name, var)
+            return
+        assert ndim > 0, "Cannot perform {} summary on scalar data".format(action)
+        if action == 'histogram':
+            tf.histogram_summary(var.name, var)
+            return
+        if action == 'sparsity':
+            tf.scalar_summary(var.name + '/sparsity', tf.nn.zero_fraction(var))
+            return
+        if action == 'mean':
+            tf.scalar_summary(var.name + '/mean', tf.reduce_mean(var))
+            return
+        raise RuntimeError("Unknown action {}".format(action))
+
     import re
     params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
     for p in params:
         name = p.name
-        if re.search(regex, name):
-            if p.get_shape().ndims == 0:
-                tf.scalar_summary(name, p)
-            else:
-                #tf.scalar_summary(name + '/sparsity', tf.nn.zero_fraction(p))
-                tf.histogram_summary(name, p)
+        for rgx, actions in summary_lists:
+            if re.search(rgx, name):
+                for act in actions:
+                    perform(p, act)
 
 def summary_moving_average(cost_var):
     """ Create a MovingAverage op and summary for all variables in

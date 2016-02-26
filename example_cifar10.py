@@ -87,7 +87,7 @@ class Model(ModelDesc):
                          name='regularize_loss')
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, wd_cost)
 
-        add_param_summary('.*')   # monitor all variables
+        add_param_summary([('.*/W', ['histogram', 'sparsity'])])   # monitor W
         return tf.add_n([cost, wd_cost], name='cost')
 
 def get_config():

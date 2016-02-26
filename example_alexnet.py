@@ -76,8 +76,6 @@ class Model(ModelDesc):
                          regularize_cost('fc.*/W', tf.nn.l2_loss),
                          name='regularize_loss')
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, wd_cost)
-
-        add_param_summary('.*/W')   # monitor histogram of all W
         return tf.add_n([wd_cost, cost], name='cost')
 
 def get_config():
