@@ -41,19 +41,20 @@ def add_param_summary(summary_lists):
     """
     def perform(var, action):
         ndim = var.get_shape().ndims
+        name = var.name.replace(':0', '')
         if action == 'scalar':
             assert ndim == 0, "Scalar summary on high-dimension data. Maybe you want 'mean'?"
-            tf.scalar_summary(var.name, var)
+            tf.scalar_summary(name, var)
             return
         assert ndim > 0, "Cannot perform {} summary on scalar data".format(action)
         if action == 'histogram':
-            tf.histogram_summary(var.name, var)
+            tf.histogram_summary(name, var)
             return
         if action == 'sparsity':
-            tf.scalar_summary(var.name + '/sparsity', tf.nn.zero_fraction(var))
+            tf.scalar_summary(name + '/sparsity', tf.nn.zero_fraction(var))
             return
         if action == 'mean':
-            tf.scalar_summary(var.name + '/mean', tf.reduce_mean(var))
+            tf.scalar_summary(name + '/mean', tf.reduce_mean(var))
             return
         raise RuntimeError("Unknown action {}".format(action))
 

@@ -20,7 +20,7 @@ from tensorpack.dataflow import *
 
 """
 MNIST ConvNet example.
-99.3% validation accuracy after 50 epochs.
+99.25% validation accuracy after 50 epochs.
 """
 
 BATCH_SIZE = 128
@@ -107,6 +107,7 @@ def get_config():
         callbacks=Callbacks([
             StatPrinter(),
             PeriodicSaver(),
+            ValidationStatPrinter(dataset_test, ['cost:0']),
             ValidationError(dataset_test, prefix='validation'),
         ]),
         session_config=sess_config,
