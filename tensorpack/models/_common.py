@@ -23,32 +23,38 @@ def layer_register(summary_activation=False):
             Can be overriden when creating the layer.
     """
     def wrapper(func):
-        @wraps(func)
-        def inner(*args, **kwargs):
-            name = args[0]
-            assert isinstance(name, basestring)
-            args = args[1:]
-            do_summary = kwargs.pop(
-                'summary_activation', summary_activation)
-            inputs = args[0]
-            with tf.variable_scope(name) as scope:
-                outputs = func(*args, **kwargs)
-                if name not in _layer_logged:
-                    # log shape info and add activation
-                    logger.info("{} input: {}".format(
-                        name, get_shape_str(inputs)))
-                    logger.info("{} output: {}".format(
-                        name, get_shape_str(outputs)))
+        class WrapedObject(object):
+            def __init__(self, func):
+                self.f = func
 
-                    if do_summary:
-                        if isinstance(outputs, list):
-                            for x in outputs:
-                                add_activation_summary(x, scope.name)
-                        else:
-                            add_activation_summary(outputs, scope.name)
-                    _layer_logged.add(name)
-                return outputs
-        return inner
+            @wraps(func)
+            def __call__(self, *args, **kwargs):
+                name = args[0]
+                assert isinstance(name, basestring), \
+                        'name must be either the first argument. Args: {}'.format(str(args))
+                args = args[1:]
+
+                do_summary = kwargs.pop(
+                    'summary_activation', summary_activation)
+                inputs = args[0]
+                with tf.variable_scope(name) as scope:
+                    outputs = self.f(*args, **kwargs)
+                    if name not in _layer_logged:
+                        # log shape info and add activation
+                        logger.info("{} input: {}".format(
+                            name, get_shape_str(inputs)))
+                        logger.info("{} output: {}".format(
+                            name, get_shape_str(outputs)))
+
+                        if do_summary:
+                            if isinstance(outputs, list):
+                                for x in outputs:
+                                    add_activation_summary(x, scope.name)
+                            else:
+                                add_activation_summary(outputs, scope.name)
+                        _layer_logged.add(name)
+                    return outputs
+        return WrapedObject(func)
     return wrapper
 
 def shape2d(a):

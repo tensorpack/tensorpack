@@ -29,4 +29,4 @@ def FullyConnected(x, out_dim,
         if use_bias:
             b = tf.get_variable('b', [out_dim], initializer=b_init)
     prod = tf.nn.xw_plus_b(x, W, b) if use_bias else tf.matmul(x, W)
-    return nl(prod, name=tf.get_variable_scope().name + '_output')
+    return nl(prod, name='output')

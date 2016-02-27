@@ -8,7 +8,7 @@ from copy import copy
 
 from ._common import *
 
-__all__ = ['Maxout', 'prelu']
+__all__ = ['Maxout', 'PReLU']
 
 @layer_register()
 def Maxout(x, num_unit):
@@ -19,6 +19,12 @@ def Maxout(x, num_unit):
     x = tf.reshape(x, [-1, input_shape[1], input_shape[2], ch / 3, 3])
     return tf.reduce_max(x, 4, name='output')
 
-def PReLU(x, init=tf.constant_initializer(0.001)):
+@layer_register()
+def PReLU(x, init=tf.constant_initializer(0.001), name=None):
+    """ allow name to be compatible to other builtin nonlinearity function"""
     alpha = tf.get_variable('alpha', [], initializer=init)
-    return ((1 + alpha) * x + (1 - alpha) * tf.abs(x)) * 0.5
+    x = ((1 + alpha) * x + (1 - alpha) * tf.abs(x))
+    if name is None:
+        return x * 0.5
+    else:
+        return tf.mul(x, 0.5, name=name)
