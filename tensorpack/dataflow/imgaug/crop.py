@@ -4,9 +4,8 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 from .base import ImageAugmentor
-import cv2
 
-__all__ = ['RandomCrop', 'CenterCrop', 'Resize']
+__all__ = ['RandomCrop', 'CenterCrop', 'FixedCrop']
 
 class RandomCrop(ImageAugmentor):
     """ Randomly crop the image into a smaller one """
@@ -38,16 +37,14 @@ class CenterCrop(ImageAugmentor):
         if img.coords:
             raise NotImplementedError()
 
-class Resize(ImageAugmentor):
-    """Resize image to a target size"""
-    def __init__(self, shape):
-        """
-        Args:
-            shape: (h, w)
-        """
+class FixedCrop(ImageAugmentor):
+    """ Crop a rectangle at a given location"""
+    def __init__(self, rangex, rangey):
         self._init(locals())
 
     def _augment(self, img):
-        img.arr = cv2.resize(
-            img.arr, self.shape[::-1],
-            interpolation=cv2.INTER_CUBIC)
+        orig_shape = img.arr.shape
+        img.arr = img.arr[self.rangey[0]:self.rangey[1],
+                          self.rangex[0]:self.rangex[1]]
+        if img.coords:
+            raise NotImplementedError()

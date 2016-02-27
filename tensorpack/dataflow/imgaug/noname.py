@@ -7,7 +7,7 @@ from .base import ImageAugmentor
 import numpy as np
 import cv2
 
-__all__ = ['Flip', 'MapImage']
+__all__ = ['Flip', 'MapImage', 'Resize']
 
 class Flip(ImageAugmentor):
     def __init__(self, horiz=False, vert=False, prob=0.5):
@@ -40,3 +40,18 @@ class MapImage(ImageAugmentor):
 
     def _augment(self, img):
         img.arr = self.func(img.arr)
+
+
+class Resize(ImageAugmentor):
+    """Resize image to a target size"""
+    def __init__(self, shape):
+        """
+        Args:
+            shape: (h, w)
+        """
+        self._init(locals())
+
+    def _augment(self, img):
+        img.arr = cv2.resize(
+            img.arr, self.shape[::-1],
+            interpolation=cv2.INTER_CUBIC)
