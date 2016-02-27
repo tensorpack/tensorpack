@@ -21,7 +21,7 @@ from tensorpack.dataflow import *
 
 """
 MNIST ConvNet example.
-99.25% validation accuracy after 50 epochs.
+about 0.55% validation error after 50 epochs.
 """
 
 BATCH_SIZE = 128
@@ -40,7 +40,7 @@ class Model(ModelDesc):
         image, label = input_vars
         image = tf.expand_dims(image, 3)    # add a single channel
 
-        nl = tf.nn.relu
+        nl = prelu
         image = image * 2 - 1
         l = Conv2D('conv0', image, out_channel=32, kernel_shape=3, nl=nl,
                    padding='VALID')
