@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: predict.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
@@ -9,6 +8,7 @@ import argparse
 from collections import namedtuple
 import numpy as np
 from tqdm import tqdm
+from six.moves import zip
 
 from .utils import *
 from .utils.modelutils import describe_model

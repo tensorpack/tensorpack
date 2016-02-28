@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: base.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
@@ -25,7 +24,7 @@ class ImageAugmentor(object):
     def _init(self, params=None):
         self.reset_state()
         if params:
-            for k, v in params.iteritems():
+            for k, v in params.items():
                 if k != 'self':
                     setattr(self, k, v)
 

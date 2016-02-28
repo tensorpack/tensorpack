@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: concurrency.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
@@ -6,6 +5,7 @@
 import threading
 from contextlib import contextmanager
 import tensorflow as tf
+from six.moves import zip
 
 from .naming import *
 from . import logger

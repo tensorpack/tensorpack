@@ -1,10 +1,10 @@
-#!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: _common.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
 from functools import wraps
+import six
 
 from ..utils.modelutils import *
 from ..utils.summary import *
@@ -30,7 +30,7 @@ def layer_register(summary_activation=False):
             @wraps(func)
             def __call__(self, *args, **kwargs):
                 name = args[0]
-                assert isinstance(name, basestring), \
+                assert isinstance(name, six.string_types), \
                         'name must be either the first argument. Args: {}'.format(str(args))
                 args = args[1:]
 

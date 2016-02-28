@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: validation_callback.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
@@ -7,6 +6,7 @@ import tensorflow as tf
 import itertools
 from tqdm import tqdm
 from abc import ABCMeta, abstractmethod
+from six.moves import zip
 
 from ..utils import *
 from ..utils.stat import *
@@ -48,7 +48,7 @@ class ValidationCallback(PeriodicCallback):
         sess = tf.get_default_session()
         with tqdm(total=self.ds.size(), ascii=True) as pbar:
             for dp in self.ds.get_data():
-                feed = dict(itertools.izip(self.input_vars, dp))
+                feed = dict(zip(self.input_vars, dp))
                 batch_size = dp[0].shape[0]   # assume batched input
                 outputs = sess.run(output_vars, feed_dict=feed)
                 yield (dp, outputs)

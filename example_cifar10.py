@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 # File: example_cifar10.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
@@ -108,6 +108,7 @@ def get_config():
     dataset_train = BatchData(dataset_train, 128)
     dataset_train = PrefetchData(dataset_train, 3, 2)
     step_per_epoch = dataset_train.size() / 2
+    step_per_epoch = 10
 
     augmentors = [
         imgaug.CenterCrop((30, 30)),

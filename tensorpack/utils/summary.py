@@ -1,8 +1,8 @@
-#!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: summary.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
+import six
 import tensorflow as tf
 
 from . import logger, get_global_step_var
@@ -14,7 +14,7 @@ def create_summary(name, v):
     Args: v: a value
 
     """
-    assert isinstance(name, basestring), type(name)
+    assert isinstance(name, six.string_types), type(name)
     v = float(v)
     s = tf.Summary()
     s.value.add(tag=name, simple_value=v)

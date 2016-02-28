@@ -5,7 +5,7 @@
 import os, sys
 import pickle
 import numpy as np
-from six.moves import urllib
+from six.moves import urllib, range
 import copy
 import tarfile
 import logging
@@ -43,11 +43,11 @@ def read_cifar10(filenames):
     ret = []
     for fname in filenames:
         fo = open(fname, 'rb')
-        dic = pickle.load(fo)
-        data = dic['data']
-        label = dic['labels']
+        dic = pickle.load(fo, encoding='bytes')
+        data = dic[b'data']
+        label = dic[b'labels']
         fo.close()
-        for k in xrange(10000):
+        for k in range(10000):
             img = data[k].reshape(3, 32, 32)
             img = np.transpose(img, [1, 2, 0])
             ret.append([img, label[k]])
@@ -55,7 +55,7 @@ def read_cifar10(filenames):
 
 def get_filenames(dir):
     filenames = [os.path.join(
-            dir, 'cifar-10-batches-py', 'data_batch_%d' % i) for i in xrange(1, 6)]
+            dir, 'cifar-10-batches-py', 'data_batch_%d' % i) for i in range(1, 6)]
     filenames.append(os.path.join(
         dir, 'cifar-10-batches-py', 'test_batch'))
     return filenames
@@ -115,7 +115,7 @@ if __name__ == '__main__':
     ds = Cifar10('train')
     from tensorpack.dataflow.dftools import dump_dataset_images
     mean = ds.get_per_channel_mean()
-    print mean
+    print(mean)
     dump_dataset_images(ds, '/tmp/cifar', 100)
 
     #for (img, label) in ds.get_data():

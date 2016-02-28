@@ -7,7 +7,7 @@ import os
 import gzip
 
 import numpy
-from six.moves import urllib
+from six.moves import urllib, range
 
 from ...utils import logger
 from ..base import DataFlow
@@ -136,7 +136,7 @@ class Mnist(DataFlow):
 
     def get_data(self):
         ds = self.train if self.train_or_test == 'train' else self.test
-        for k in xrange(ds.num_examples):
+        for k in range(ds.num_examples):
             img = ds.images[k].reshape((28, 28))
             label = ds.labels[k]
             yield [img, label]

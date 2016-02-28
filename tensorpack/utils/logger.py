@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: logger.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
@@ -8,9 +7,8 @@ import os, shutil
 import os.path
 from termcolor import colored
 from datetime import datetime
+from six.moves import input
 import sys
-if not sys.version_info >= (3, 0):
-    input = raw_input   # for compatibility
 
 from .utils import mkdir_p
 
@@ -63,7 +61,10 @@ def set_logger_dir(dirname):
 Directory {} exists! Please either backup/delete it, or use a new directory \
 unless you're resuming from a previous task.""".format(dirname))
         logger.info("Select Action: k (keep) / b (backup) / d (delete) / n (new):")
-        act = input().lower()
+        while True:
+            act = input().lower()
+            if act:
+                break
         timestr = datetime.now().strftime('%m%d-%H%M%S')
         if act == 'b':
             backup_name = dirname + timestr

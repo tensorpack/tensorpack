@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # File: example_mnist.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>

@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 # File: config.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>

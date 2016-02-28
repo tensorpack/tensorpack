@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: sessinit.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
@@ -7,6 +6,7 @@ import os
 from abc import abstractmethod, ABCMeta
 import numpy as np
 import tensorflow as tf
+import six
 
 from . import logger
 class SessionInit(object):
@@ -49,7 +49,7 @@ class ParamRestore(SessionInit):
         sess.run(tf.initialize_all_variables())
         variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
         var_dict = dict([v.name, v] for v in variables)
-        for name, value in self.prms.iteritems():
+        for name, value in six.iteritems(self.prms):
             try:
                 var = var_dict[name]
             except (ValueError, KeyError):

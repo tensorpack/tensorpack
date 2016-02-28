@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: symbolic_functions.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>

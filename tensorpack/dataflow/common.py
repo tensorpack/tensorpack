@@ -1,10 +1,10 @@
-#!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: common.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import numpy as np
 import copy
+from six.moves import range
 from .base import DataFlow, ProxyDataFlow
 from ..utils import *
 
@@ -47,9 +47,9 @@ class BatchData(ProxyDataFlow):
     def aggregate_batch(data_holder):
         size = len(data_holder[0])
         result = []
-        for k in xrange(size):
+        for k in range(size):
             dt = data_holder[0][k]
-            if type(dt) in [int, bool, long]:
+            if type(dt) in [int, bool]:
                 tp = 'int32'
             elif type(dt) == float:
                 tp = 'float32'
@@ -104,7 +104,7 @@ class RepeatedData(ProxyDataFlow):
                 for dp in self.ds.get_data():
                     yield dp
         else:
-            for _ in xrange(self.nr):
+            for _ in range(self.nr):
                 for dp in self.ds.get_data():
                     yield dp
 
@@ -125,7 +125,7 @@ class FakeData(DataFlow):
         self.rng = get_rng(self)
 
     def get_data(self):
-        for _ in xrange(self._size):
+        for _ in range(self._size):
             yield [self.rng.random_sample(k) for k in self.shapes]
 
 class MapData(ProxyDataFlow):

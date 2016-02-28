@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: imgproc.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
