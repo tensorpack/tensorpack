@@ -5,6 +5,7 @@
 import os, sys
 import pickle
 import numpy as np
+import random
 from six.moves import urllib, range
 import copy
 import tarfile
@@ -65,10 +66,11 @@ class Cifar10(DataFlow):
     Return [image, label],
         image is 32x32x3 in the range [0,255]
     """
-    def __init__(self, train_or_test, dir=None):
+    def __init__(self, train_or_test, shuffle=True, dir=None):
         """
         Args:
             train_or_test: string either 'train' or 'test'
+            shuffle: default to True
         """
         assert train_or_test in ['train', 'test']
         if dir is None:
@@ -86,13 +88,17 @@ class Cifar10(DataFlow):
         self.train_or_test = train_or_test
         self.dir = dir
         self.data = read_cifar10(self.fs)
+        self.shuffle = shuffle
 
     def size(self):
         return 50000 if self.train_or_test == 'train' else 10000
 
     def get_data(self):
-        for k in self.data:
-            yield k
+        idxs = list(range(len(self.data)))
+        if self.shuffle:
+            random.shuffle(idxs)
+        for k in idxs:
+            yield self.data[k]
 
     def get_per_pixel_mean(self):
         """

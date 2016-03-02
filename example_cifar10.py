@@ -18,7 +18,7 @@ from tensorpack.dataflow import *
 from tensorpack.dataflow import imgaug
 
 """
-CIFAR10 90% validation accuracy after 100k step, 91% after 160k step.
+CIFAR10 90% validation accuracy after 100k step
 """
 
 BATCH_SIZE = 128

@@ -5,7 +5,7 @@
 
 import os
 import gzip
-
+import random
 import numpy
 from six.moves import urllib, range
 
@@ -100,7 +100,7 @@ class Mnist(DataFlow):
     Return [image, label],
         image is 28x28 in the range [0,1]
     """
-    def __init__(self, train_or_test, dir=None):
+    def __init__(self, train_or_test, shuffle=True, dir=None):
         """
         Args:
             train_or_test: string either 'train' or 'test'
@@ -109,6 +109,7 @@ class Mnist(DataFlow):
             dir = os.path.join(os.path.dirname(__file__), 'mnist_data')
         assert train_or_test in ['train', 'test']
         self.train_or_test = train_or_test
+        self.shuffle = shuffle
 
         TRAIN_IMAGES = 'train-images-idx3-ubyte.gz'
         TRAIN_LABELS = 'train-labels-idx1-ubyte.gz'
@@ -136,7 +137,10 @@ class Mnist(DataFlow):
 
     def get_data(self):
         ds = self.train if self.train_or_test == 'train' else self.test
-        for k in range(ds.num_examples):
+        idxs = list(range(ds.num_examples))
+        if self.shuffle:
+            random.shuffle(idxs)
+        for k in idxs:
             img = ds.images[k].reshape((28, 28))
             label = ds.labels[k]
             yield [img, label]
