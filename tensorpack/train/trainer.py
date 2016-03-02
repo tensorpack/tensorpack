@@ -3,6 +3,7 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
+import threading
 import copy
 import re
 from six.moves import zip
@@ -10,24 +11,9 @@ from six.moves import zip
 from .base import Trainer
 from ..dataflow.common import RepeatedData
 from ..utils import *
-from ..utils.concurrency import EnqueueThread
 from ..utils.summary import summary_moving_average
 
 __all__ = ['SimpleTrainer', 'QueueInputTrainer', 'start_train']
-
-def scale_grads(grads, multiplier):
-    ret = []
-    for grad, var in grads:
-        varname = var.name
-        for regex, val in multiplier:
-            if re.search(regex, varname):
-                logger.info("Apply lr multiplier {} for {}".format(val, varname))
-                ret.append((grad * val, var))
-                break
-        else:
-            ret.append((grad, var))
-    return ret
-
 
 class SimpleTrainer(Trainer):
     def run_step(self):
@@ -61,6 +47,34 @@ class SimpleTrainer(Trainer):
             summary_str = self.summary_op.eval(feed_dict=feed)
             self._process_summary(summary_str)
 
+class EnqueueThread(threading.Thread):
+    def __init__(self, trainer, queue, enqueue_op, raw_input_var):
+        super(EnqueueThread, self).__init__()
+        self.sess = trainer.sess
+        self.coord = trainer.coord
+        self.dataflow = trainer.config.dataset
+
+        self.input_vars = raw_input_var
+        self.op = enqueue_op
+        self.queue = queue
+        self.close_op = self.queue.close(cancel_pending_enqueues=True)
+
+        self.daemon = True
+
+    def run(self):
+        try:
+            while True:
+                for dp in self.dataflow.get_data():
+                    if self.coord.should_stop():
+                        return
+                    feed = dict(zip(self.input_vars, dp))
+                    self.op.run(feed_dict=feed, session=self.sess)
+        except tf.errors.CancelledError as e:
+            pass
+        except Exception:
+            logger.exception("Exception in EnqueueThread:")
+            self.sess.run(self.close_op)
+            self.coord.request_stop()
 
 class QueueInputTrainer(Trainer):
     """

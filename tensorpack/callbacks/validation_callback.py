@@ -3,7 +3,6 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
-import itertools
 from tqdm import tqdm
 from abc import ABCMeta, abstractmethod
 from six.moves import zip
@@ -80,7 +79,7 @@ class ValidationStatPrinter(ValidationCallback):
         stats = np.mean(stats, axis=0)
         assert len(stats) == len(self.vars_to_print)
 
-        for stat, var in itertools.izip(stats, self.vars_to_print):
+        for stat, var in zip(stats, self.vars_to_print):
             name = var.name.replace(':0', '')
             self.trainer.summary_writer.add_summary(create_summary(
                 '{}_{}'.format(self.prefix, name), stat), self.global_step)

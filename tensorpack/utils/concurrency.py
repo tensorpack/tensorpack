@@ -5,10 +5,11 @@
 import threading
 from contextlib import contextmanager
 import tensorflow as tf
+import atexit
+import weakref
 from six.moves import zip
 
 from .naming import *
-from . import logger
 
 class StoppableThread(threading.Thread):
     def __init__(self):
@@ -22,31 +23,19 @@ class StoppableThread(threading.Thread):
         return self._stop.isSet()
 
 
-class EnqueueThread(threading.Thread):
-    def __init__(self, trainer, queue, enqueue_op, raw_input_var):
-        super(EnqueueThread, self).__init__()
-        self.sess = trainer.sess
-        self.coord = trainer.coord
-        self.dataflow = trainer.config.dataset
+def ensure_proc_terminate(proc):
+    def stop_proc_by_weak_ref(ref):
+        proc = ref()
+        if proc is None:
+            return
+        if not proc.is_alive():
+            return
+        proc.terminate()
+        proc.join()
 
-        self.input_vars = raw_input_var
-        self.op = enqueue_op
-        self.queue = queue
-        self.close_op = self.queue.close(cancel_pending_enqueues=True)
+    assert isinstance(proc, multiprocessing.Process)
+    atexit.register(stop_proc_by_weak_ref, weakref.ref(proc))
 
-        self.daemon = True
-
-    def run(self):
-        try:
-            while True:
-                for dp in self.dataflow.get_data():
-                    if self.coord.should_stop():
-                        return
-                    feed = dict(zip(self.input_vars, dp))
-                    self.op.run(feed_dict=feed, session=self.sess)
-        except tf.errors.CancelledError as e:
-            pass
-        except Exception:
-            logger.exception("Exception in EnqueueThread:")
-            self.sess.run(self.close_op)
-            self.coord.request_stop()
+def ensure_procs_terminate(procs):
+    for p in procs:
+        ensure_proc_terminate(p)

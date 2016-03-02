@@ -2,9 +2,10 @@
 # File: prefetch.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
+import multiprocessing
 
 from .base import DataFlow
-import multiprocessing
+from ..utils.concurrency import ensure_procs_terminate
 
 __all__ = ['PrefetchData']
 
@@ -45,6 +46,7 @@ class PrefetchData(DataFlow):
     def get_data(self):
         queue = multiprocessing.Queue(self.nr_prefetch)
         procs = [PrefetchProcess(self.ds, queue) for _ in range(self.nr_proc)]
+        ensure_procs_terminate(procs)
         [x.start() for x in procs]
 
         end_cnt = 0
