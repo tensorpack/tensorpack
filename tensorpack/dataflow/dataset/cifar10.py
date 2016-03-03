@@ -6,6 +6,7 @@ import os, sys
 import pickle
 import numpy as np
 import random
+import six
 from six.moves import urllib, range
 import copy
 import tarfile
@@ -44,7 +45,10 @@ def read_cifar10(filenames):
     ret = []
     for fname in filenames:
         fo = open(fname, 'rb')
-        dic = pickle.load(fo, encoding='bytes')
+        if six.PY3:
+            dic = pickle.load(fo, encoding='bytes')
+        else:
+            dic = pickle.load(fo)
         data = dic[b'data']
         label = dic[b'labels']
         fo.close()

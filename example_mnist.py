@@ -96,8 +96,8 @@ def get_config():
     lr = tf.train.exponential_decay(
         learning_rate=1e-3,
         global_step=get_global_step_var(),
-        decay_steps=dataset_train.size() * 20,
-        decay_rate=0.1, staircase=True, name='learning_rate')
+        decay_steps=dataset_train.size() * 10,
+        decay_rate=0.5, staircase=True, name='learning_rate')
     tf.scalar_summary('learning_rate', lr)
 
     return TrainConfig(
