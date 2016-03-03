@@ -3,13 +3,14 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import numpy as np
+import random
 import copy
 from six.moves import range
 from .base import DataFlow, ProxyDataFlow
 from ..utils import *
 
 __all__ = ['BatchData', 'FixedSizeData', 'FakeData', 'MapData',
-           'MapDataComponent', 'RandomChooseData' ]
+           'MapDataComponent', 'RandomChooseData', 'RandomMixData']
 
 class BatchData(ProxyDataFlow):
     def __init__(self, ds, batch_size, remainder=False):
@@ -182,3 +183,35 @@ class RandomChooseData(DataFlow):
                 yield next(itr)
         except StopIteration:
             return
+
+class RandomMixData(DataFlow):
+    """
+    Randomly choose from several dataflow, will eventually exhaust all dataflow.
+    So it's a perfect mix.
+    """
+    def __init__(self, df_lists):
+        """
+        df_lists: list of dataflow
+        all DataFlow in df_lists must have size() implemented
+        """
+        self.df_lists = df_lists
+        self.sizes = [k.size() for k in self.df_lists]
+
+    def reset_state(self):
+        for d in self.df_lists:
+            d.reset_state()
+
+    def size(self):
+        return sum(self.sizes)
+
+    def get_data(self):
+        sums = np.cumsum(self.sizes)
+        idxs = np.arange(self.size())
+        np.random.shuffle(idxs)
+        idxs = np.array(map(
+            lambda x: np.searchsorted(sums, x, 'right'), idxs))
+        itrs = [k.get_data() for k in self.df_lists]
+        assert idxs.max() == len(itrs) - 1, "{}!={}".format(idxs.max(), len(itrs)-1)
+        for k in idxs:
+            yield next(itrs[k])
+

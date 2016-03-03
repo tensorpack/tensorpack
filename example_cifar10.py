@@ -73,9 +73,7 @@ class Model(ModelDesc):
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, cost)
 
         # compute the number of failed samples, for ValidationError to use at test time
-        wrong = tf.not_equal(
-            tf.cast(tf.argmax(prob, 1), tf.int32), label)
-        wrong = tf.cast(wrong, tf.float32)
+        wrong = prediction_incorrect(logits, label)
         nr_wrong = tf.reduce_sum(wrong, name='wrong')
         # monitor training error
         tf.add_to_collection(

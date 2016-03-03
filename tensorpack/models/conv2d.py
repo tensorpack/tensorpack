@@ -3,6 +3,7 @@
 # File: conv2d.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
+import numpy as np
 import tensorflow as tf
 import math
 from ._common import *
@@ -21,6 +22,7 @@ def Conv2D(x, out_channel, kernel_shape,
     split: split channels. used in Alexnet
     """
     in_shape = x.get_shape().as_list()
+    num_in = np.prod(in_shape[1:])
     in_channel = in_shape[-1]
     assert in_channel % split == 0
     assert out_channel % split == 0
@@ -31,7 +33,8 @@ def Conv2D(x, out_channel, kernel_shape,
     stride = shape4d(stride)
 
     if W_init is None:
-        W_init = tf.truncated_normal_initializer(stddev=1e-2)
+        #W_init = tf.truncated_normal_initializer(stddev=3e-2)
+        W_init = tf.contrib.layers.xavier_initializer_conv2d()
     if b_init is None:
         b_init = tf.constant_initializer()
 

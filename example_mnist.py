@@ -64,9 +64,7 @@ class Model(ModelDesc):
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, cost)
 
         # compute the number of failed samples, for ValidationError to use at test time
-        wrong = tf.not_equal(
-            tf.cast(tf.argmax(prob, 1), tf.int32), label)
-        wrong = tf.cast(wrong, tf.float32)
+        wrong = prediction_incorrect(logits, label)
         nr_wrong = tf.reduce_sum(wrong, name='wrong')
         # monitor training error
         tf.add_to_collection(
@@ -90,7 +88,6 @@ def get_config():
     dataset_train = BatchData(dataset.Mnist('train'), 128)
     dataset_test = BatchData(dataset.Mnist('test'), 256, remainder=True)
     step_per_epoch = dataset_train.size()
-    step_per_epoch = 30
 
     # prepare session
     sess_config = get_default_sess_config()

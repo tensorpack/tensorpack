@@ -3,6 +3,7 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import threading
+import multiprocessing
 from contextlib import contextmanager
 import tensorflow as tf
 import atexit
