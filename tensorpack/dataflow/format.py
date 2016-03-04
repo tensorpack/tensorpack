@@ -6,6 +6,7 @@ import h5py
 import random
 from six.moves import range
 
+from ..utils import logger
 from .base import DataFlow
 
 """
@@ -20,7 +21,8 @@ class HDF5Data(DataFlow):
     """
     def __init__(self, filename, data_paths, shuffle=True):
         self.f = h5py.File(filename, 'r')
-        self.dps = [self.f[k] for k in data_paths]
+        logger.info("Loading {} to memory...".format(filename))
+        self.dps = [self.f[k].value for k in data_paths]
         lens = [len(k) for k in self.dps]
         assert all([k==lens[0] for k in lens])
         self._size = lens[0]
