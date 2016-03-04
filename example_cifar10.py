@@ -88,33 +88,38 @@ class Model(ModelDesc):
         add_param_summary([('.*/W', ['histogram', 'sparsity'])])   # monitor W
         return tf.add_n([cost, wd_cost], name='cost')
 
-def get_config():
-    #anchors = np.mgrid[0:4,0:4][:,1:,1:].transpose(1,2,0).reshape((-1,2)) / 4.0
-    # prepare dataset
-    dataset_train = dataset.Cifar10('train')
-    augmentors = [
-        imgaug.RandomCrop((30, 30)),
-        imgaug.Flip(horiz=True),
-        imgaug.BrightnessAdd(63),
-        imgaug.Contrast((0.2,1.8)),
-        imgaug.GaussianDeform(
-            [(0.2, 0.2), (0.2, 0.8), (0.8,0.8), (0.8,0.2)],
-            (30,30), 0.2, 3),
-        imgaug.MeanVarianceNormalize(all_channel=True)
-    ]
-    dataset_train = AugmentImageComponent(dataset_train, augmentors)
-    dataset_train = BatchData(dataset_train, 128)
-    dataset_train = PrefetchData(dataset_train, 3, 2)
-    step_per_epoch = dataset_train.size() / 2
-    step_per_epoch = 10
+def get_data(train_or_test):
+    isTrain = train_or_test == 'train'
+    ds = dataset.Cifar10(train_or_test)
+    if isTrain:
+        augmentors = [
+            imgaug.RandomCrop((30, 30)),
+            imgaug.Flip(horiz=True),
+            imgaug.BrightnessAdd(63),
+            imgaug.Contrast((0.2,1.8)),
+            imgaug.GaussianDeform(
+                [(0.2, 0.2), (0.2, 0.8), (0.8,0.8), (0.8,0.2)],
+                (30,30), 0.2, 3),
+            imgaug.MeanVarianceNormalize(all_channel=True)
+        ]
+    else:
+        augmentors = [
+            imgaug.CenterCrop((30, 30)),
+            imgaug.MeanVarianceNormalize(all_channel=True)
+        ]
+    ds = AugmentImageComponent(ds, augmentors)
+    ds = BatchData(ds, 128, remainder=not isTrain)
+    if isTrain:
+        ds = PrefetchData(ds, 3, 2)
+    return ds
 
-    augmentors = [
-        imgaug.CenterCrop((30, 30)),
-        imgaug.MeanVarianceNormalize(all_channel=True)
-    ]
-    dataset_test = dataset.Cifar10('test')
-    dataset_test = AugmentImageComponent(dataset_test, augmentors)
-    dataset_test = BatchData(dataset_test, 128, remainder=True)
+
+
+def get_config():
+    # prepare dataset
+    dataset_train = get_data('train')
+    step_per_epoch = dataset_train.size() / 2
+    dataset_test = get_data('test')
 
     sess_config = get_default_sess_config()
     sess_config.gpu_options.per_process_gpu_memory_fraction = 0.5

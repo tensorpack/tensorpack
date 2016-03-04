@@ -2,3 +2,4 @@ termcolor
 pillow
 scipy
 tqdm
+h5py
