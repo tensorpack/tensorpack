@@ -41,13 +41,16 @@ def getlogger():
     logger.addHandler(handler)
     return logger
 
+def get_time_str():
+    return datetime.now().strftime('%m%d-%H%M%S')
+
 logger = getlogger()
 
 # logger file and directory:
 global LOG_FILE, LOG_DIR
 def _set_file(path):
     if os.path.isfile(path):
-        backup_name = path + datetime.now().strftime('.%d-%H%M%S')
+        backup_name = path + '.' + get_time_str()
         shutil.move(path, backup_name)
         info("Log file '{}' backuped to '{}'".format(path, backup_name))
     hdl = logging.FileHandler(
@@ -65,15 +68,14 @@ unless you're resuming from a previous task.""".format(dirname))
             act = input().lower()
             if act:
                 break
-        timestr = datetime.now().strftime('%m%d-%H%M%S')
         if act == 'b':
-            backup_name = dirname + timestr
+            backup_name = dirname + get_time_str()
             shutil.move(dirname, backup_name)
             info("Directory'{}' backuped to '{}'".format(dirname, backup_name))
         elif act == 'd':
             shutil.rmtree(dirname)
         elif act == 'n':
-            dirname = dirname + timestr
+            dirname = dirname + get_time_str()
             info("Use a different log directory {}".format(dirname))
         elif act == 'k':
             pass

@@ -8,7 +8,7 @@ import numpy
 from ._common import *
 from ..utils.symbolic_functions import *
 
-__all__ = ['MaxPooling', 'FixedUnPooling']
+__all__ = ['MaxPooling', 'FixedUnPooling', 'AvgPooling', 'GlobalAvgPooling']
 
 @layer_register()
 def MaxPooling(x, shape, stride=None, padding='VALID'):
@@ -26,6 +26,26 @@ def MaxPooling(x, shape, stride=None, padding='VALID'):
 
     return tf.nn.max_pool(x, ksize=shape, strides=stride, padding=padding)
 
+@layer_register()
+def AvgPooling(x, shape, stride=None, padding='VALID'):
+    """
+        shape, stride: int or list/tuple of length 2
+        if stride is None, use shape by default
+        padding: 'VALID' or 'SAME'
+    """
+    padding = padding.upper()
+    shape = shape4d(shape)
+    if stride is None:
+        stride = shape
+    else:
+        stride = shape4d(stride)
+
+    return tf.nn.avg_pool(x, ksize=shape, strides=stride, padding=padding)
+
+@layer_register()
+def GlobalAvgPooling(x):
+    assert x.get_shape().ndims == 4
+    return tf.reduce_mean(x, [1, 2])
 
 @layer_register()
 def FixedUnPooling(x, shape, unpool_mat=None):

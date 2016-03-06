@@ -39,12 +39,12 @@ def layer_register(summary_activation=False):
                 inputs = args[0]
                 with tf.variable_scope(name) as scope:
                     outputs = self.f(*args, **kwargs)
-                    if name not in _layer_logged:
+                    if scope.name not in _layer_logged:
                         # log shape info and add activation
                         logger.info("{} input: {}".format(
-                            name, get_shape_str(inputs)))
+                            scope.name, get_shape_str(inputs)))
                         logger.info("{} output: {}".format(
-                            name, get_shape_str(outputs)))
+                            scope.name, get_shape_str(outputs)))
 
                         if do_summary:
                             if isinstance(outputs, list):
@@ -52,7 +52,7 @@ def layer_register(summary_activation=False):
                                     add_activation_summary(x, scope.name)
                             else:
                                 add_activation_summary(outputs, scope.name)
-                        _layer_logged.add(name)
+                        _layer_logged.add(scope.name)
                     return outputs
         return WrapedObject(func)
     return wrapper
