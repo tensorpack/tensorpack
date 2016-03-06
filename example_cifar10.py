@@ -18,7 +18,8 @@ from tensorpack.dataflow import *
 from tensorpack.dataflow import imgaug
 
 """
-CIFAR10 90% validation accuracy after 100k step
+CIFAR10 90% validation accuracy after 100k step.
+91% after 160k step
 """
 
 BATCH_SIZE = 128
@@ -128,7 +129,7 @@ def get_config():
         learning_rate=1e-2,
         global_step=get_global_step_var(),
         decay_steps=dataset_train.size() * 30,
-        decay_rate=0.7, staircase=True, name='learning_rate')
+        decay_rate=0.5, staircase=True, name='learning_rate')
     tf.scalar_summary('learning_rate', lr)
 
     return TrainConfig(

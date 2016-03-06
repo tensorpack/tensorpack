@@ -14,12 +14,13 @@ __all__ = ['Conv2D']
 def Conv2D(x, out_channel, kernel_shape,
            padding='SAME', stride=1,
            W_init=None, b_init=None,
-           nl=tf.nn.relu, split=1):
+           nl=tf.nn.relu, split=1, use_bias=True):
     """
     kernel_shape: (h, w) or a int
     stride: (h, w) or a int
     padding: 'valid' or 'same'
     split: split channels. used in Alexnet
+    use_bias: whether to use bias
     """
     in_shape = x.get_shape().as_list()
     num_in = np.prod(in_shape[1:])
@@ -39,7 +40,8 @@ def Conv2D(x, out_channel, kernel_shape,
         b_init = tf.constant_initializer()
 
     W = tf.get_variable('W', filter_shape, initializer=W_init)
-    b = tf.get_variable('b', [out_channel], initializer=b_init)
+    if use_bias:
+        b = tf.get_variable('b', [out_channel], initializer=b_init)
 
     if split == 1:
         conv = tf.nn.conv2d(x, W, stride, padding)
@@ -49,6 +51,6 @@ def Conv2D(x, out_channel, kernel_shape,
         outputs = [tf.nn.conv2d(i, k, stride, padding)
                    for i, k in zip(inputs, kernels)]
         conv = tf.concat(3, outputs)
-    return nl(tf.nn.bias_add(conv, b), name='output')
+    return nl(tf.nn.bias_add(conv, b) if use_bias else conv, name='output')
 
 

@@ -7,7 +7,8 @@ from .base import ImageAugmentor
 import numpy as np
 from abc import abstractmethod
 
-__all__ = ['RandomCrop', 'CenterCrop', 'FixedCrop', 'CenterPaste']
+__all__ = ['RandomCrop', 'CenterCrop', 'FixedCrop', 'CenterPaste',
+           'ConstantBackgroundFiller']
 
 class RandomCrop(ImageAugmentor):
     """ Randomly crop the image into a smaller one """

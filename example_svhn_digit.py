@@ -17,6 +17,10 @@ from tensorpack.utils.summary import *
 from tensorpack.dataflow import *
 from tensorpack.dataflow import imgaug
 
+"""
+SVHN convnet.
+About 2.9% validation error after 70 epoch.
+"""
 
 class Model(ModelDesc):
     def _get_input_vars(self):
@@ -27,7 +31,7 @@ class Model(ModelDesc):
         image, label = input_vars
         keep_prob = tf.constant(0.5 if is_training else 1.0)
 
-        image = image / 255.0
+        image = image / 128.0 - 1
 
         nl = lambda x, name: tf.abs(tf.tanh(x), name=name)
         l = Conv2D('conv1', image, 24, 5, padding='VALID', nl=nl)
@@ -76,14 +80,17 @@ def get_config():
 
     augmentors = [
         imgaug.Resize((40, 40)),
-        imgaug.BrightnessAdd(63),
-        imgaug.Contrast((0.2,1.8)),
+        imgaug.BrightnessAdd(30),
+        imgaug.Contrast((0.5,1.5)),
+        imgaug.GaussianDeform(
+            [(0.2, 0.2), (0.2, 0.8), (0.8,0.8), (0.8,0.2)],
+            (40,40), 0.2, 3),
     ]
     train = AugmentImageComponent(train, augmentors)
     train = BatchData(train, 128)
-    nr_proc = 2
-    train = PrefetchData(train, 3, nr_proc)
-    step_per_epoch = train.size() / nr_proc
+    nr_proc = 5
+    train = PrefetchData(train, 5, nr_proc)
+    step_per_epoch = train.size()
 
     augmentors = [
         imgaug.Resize((40, 40)),
@@ -91,14 +98,13 @@ def get_config():
     test = AugmentImageComponent(test, augmentors)
     test = BatchData(test, 128, remainder=True)
 
-    sess_config = get_default_sess_config()
-    sess_config.gpu_options.per_process_gpu_memory_fraction = 0.5
+    sess_config = get_default_sess_config(0.8)
 
     lr = tf.train.exponential_decay(
-        learning_rate=1e-4,
+        learning_rate=1e-3,
         global_step=get_global_step_var(),
-        decay_steps=train.size() * 50,
-        decay_rate=0.7, staircase=True, name='learning_rate')
+        decay_steps=train.size() * 30,
+        decay_rate=0.5, staircase=True, name='learning_rate')
     tf.scalar_summary('learning_rate', lr)
 
     return TrainConfig(
@@ -112,7 +118,7 @@ def get_config():
         session_config=sess_config,
         model=Model(),
         step_per_epoch=step_per_epoch,
-        max_epoch=100,
+        max_epoch=350,
     )
 
 if __name__ == '__main__':

@@ -34,14 +34,15 @@ class PrefetchProcess(multiprocessing.Process):
 class PrefetchData(DataFlow):
     def __init__(self, ds, nr_prefetch, nr_proc=1):
         """
-        use multiprocess, will duplicate ds by nr_proc times
+        use multiprocess
         """
         self.ds = ds
+        self._size = self.ds.size()
         self.nr_proc = nr_proc
         self.nr_prefetch = nr_prefetch
 
     def size(self):
-        return self.ds.size() * self.nr_proc
+        return self._size
 
     def get_data(self):
         queue = multiprocessing.Queue(self.nr_prefetch)
@@ -50,6 +51,7 @@ class PrefetchData(DataFlow):
         [x.start() for x in procs]
 
         end_cnt = 0
+        tot_cnt = 0
         try:
             while True:
                 dp = queue.get()
@@ -58,7 +60,10 @@ class PrefetchData(DataFlow):
                     if end_cnt == self.nr_proc:
                         break
                     continue
+                tot_cnt += 1
                 yield dp
+                if tot_cnt == self._size:
+                    break
         finally:
             queue.close()
             [x.terminate() for x in procs]
