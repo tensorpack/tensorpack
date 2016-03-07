@@ -12,7 +12,7 @@ import copy
 import tarfile
 import logging
 
-from ...utils import logger
+from ...utils import logger, get_rng
 from ..base import DataFlow
 
 __all__ = ['Cifar10']
@@ -93,14 +93,18 @@ class Cifar10(DataFlow):
         self.dir = dir
         self.data = read_cifar10(self.fs)
         self.shuffle = shuffle
+        self.rng = get_rng(self)
+
+    def reset_state(self):
+        self.rng = get_rng(self)
 
     def size(self):
         return 50000 if self.train_or_test == 'train' else 10000
 
     def get_data(self):
-        idxs = list(range(len(self.data)))
+        idxs = np.arange(len(self.data))
         if self.shuffle:
-            random.shuffle(idxs)
+            self.rng.shuffle(idxs)
         for k in idxs:
             yield self.data[k]
 

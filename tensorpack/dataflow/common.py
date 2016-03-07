@@ -3,7 +3,6 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import numpy as np
-import random
 import copy
 from six.moves import range
 from .base import DataFlow, ProxyDataFlow
@@ -166,6 +165,7 @@ class RandomChooseData(DataFlow):
         else:
             prob = 1.0 / len(df_lists)
             self.df_lists = [(k, prob) for k in df_lists]
+        self.rng = get_rng(self)
 
     def reset_state(self):
         for d in self.df_lists:
@@ -173,13 +173,14 @@ class RandomChooseData(DataFlow):
                 d[0].reset_state()
             else:
                 d.reset_state()
+        self.rng = get_rng(self)
 
     def get_data(self):
         itrs = [v[0].get_data() for v in self.df_lists]
         probs = np.array([v[1] for v in self.df_lists])
         try:
             while True:
-                itr = np.random.choice(itrs, p=probs)
+                itr = self.rng.choice(itrs, p=probs)
                 yield next(itr)
         except StopIteration:
             return
@@ -196,10 +197,12 @@ class RandomMixData(DataFlow):
         """
         self.df_lists = df_lists
         self.sizes = [k.size() for k in self.df_lists]
+        self.rng = get_rng(self)
 
     def reset_state(self):
         for d in self.df_lists:
             d.reset_state()
+        self.rng = get_rng(self)
 
     def size(self):
         return sum(self.sizes)
@@ -207,7 +210,7 @@ class RandomMixData(DataFlow):
     def get_data(self):
         sums = np.cumsum(self.sizes)
         idxs = np.arange(self.size())
-        np.random.shuffle(idxs)
+        self.rng.shuffle(idxs)
         idxs = np.array(map(
             lambda x: np.searchsorted(sums, x, 'right'), idxs))
         itrs = [k.get_data() for k in self.df_lists]

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-# File: example_svhn_digit.py
+# File: svhn_fast.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
@@ -19,7 +19,7 @@ from tensorpack.dataflow import imgaug
 
 """
 SVHN convnet.
-About 2.9% validation error after 70 epoch.
+About 3.0% validation error after 120 epoch.  2.7% after 250 epoch.
 """
 
 class Model(ModelDesc):
@@ -103,8 +103,8 @@ def get_config():
     lr = tf.train.exponential_decay(
         learning_rate=1e-3,
         global_step=get_global_step_var(),
-        decay_steps=train.size() * 30,
-        decay_rate=0.5, staircase=True, name='learning_rate')
+        decay_steps=train.size() * 60,
+        decay_rate=0.2, staircase=True, name='learning_rate')
     tf.scalar_summary('learning_rate', lr)
 
     return TrainConfig(
