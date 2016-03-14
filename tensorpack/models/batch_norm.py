@@ -42,13 +42,6 @@ def BatchNorm(x, use_local_stat=True, decay=0.9, epsilon=1e-5):
         'gamma', [n_out],
         initializer=tf.constant_initializer(1.0))
 
-    # XXX hack to clear shape. see tensorflow#1162
-    if shape[0] is not None:
-        x = tf.tile(x, tf.pack([1,1,1,1]))
-        hack_shape = copy(shape)
-        hack_shape[0] = None
-        x.set_shape(hack_shape)
-
     batch_mean, batch_var = tf.nn.moments(x, [0, 1, 2], name='moments')
 
     ema = tf.train.ExponentialMovingAverage(decay=decay)

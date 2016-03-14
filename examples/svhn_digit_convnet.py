@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-# File: svhn_fast.py
+# File: svhn_digit_convnet.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
@@ -137,8 +137,7 @@ if __name__ == '__main__':
         os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
     with tf.Graph().as_default():
-        with tf.device('/cpu:0'):
-            config = get_config()
+        config = get_config()
         if args.load:
             config.session_init = SaverRestore(args.load)
         if args.gpu:

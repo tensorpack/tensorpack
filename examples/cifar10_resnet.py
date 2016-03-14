@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-# File: tryagain.py
+# File: cifar10-resnet-deeper.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
@@ -19,13 +19,20 @@ from tensorpack.dataflow import imgaug
 
 """
 CIFAR10-resnet example.
-91.5% validation accuracy after 82 epoch (32k step)
-92.6 validation accuracy after 190 epoch
+I can reproduce the results in:
+Deep Residual Learning for Image Recognition, arxiv:1512.03385
+for n=5 and 18
+This model achieves slightly better results due to the use of the
+whole training set instead of a 95:5 train-val split.
 """
 
 BATCH_SIZE = 128
 
 class Model(ModelDesc):
+    def __init__(self, n):
+        super(Model, self).__init__()
+        self.n = n
+
     def _get_input_vars(self):
         return [InputVar(tf.float32, [None, 32, 32, 3], 'input'),
                 InputVar(tf.int32, [None], 'label')
@@ -63,25 +70,24 @@ class Model(ModelDesc):
                     l = tf.pad(l, [[0,0], [0,0], [0,0], [in_channel//2, in_channel//2]])
 
                 l = b2 + l
-                l = tf.nn.relu(
-                    BatchNorm('bno', l, is_training))
+                l = tf.nn.relu(l)
                 return l
 
 
         l = conv('conv1', image, 16, 1)
         l = BatchNorm('bn1', l, is_training)
         l = tf.nn.relu(l)
-        for k in range(5):
+        for k in range(self.n):
             l = residual('res1.{}'.format(k), l)
         # 32,c=16
 
         l = residual('res2.0', l, increase_dim=True)
-        for k in range(1, 5):
+        for k in range(1, self.n):
             l = residual('res2.{}'.format(k), l)
         # 16,c=32
 
         l = residual('res3.0', l, increase_dim=True)
-        for k in range(1, 5):
+        for k in range(1, self.n):
             l = residual('res3.' + str(k), l)
         # 8,c=64
         l = GlobalAvgPooling('gap', l)
@@ -146,7 +152,7 @@ def get_config():
     lr = tf.train.exponential_decay(
         learning_rate=1e-1,
         global_step=get_global_step_var(),
-        decay_steps=32000,
+        decay_steps=36000,
         decay_rate=0.1, staircase=True, name='learning_rate')
     tf.scalar_summary('learning_rate', lr)
 
@@ -159,7 +165,7 @@ def get_config():
             ValidationError(dataset_test, prefix='test'),
         ]),
         session_config=sess_config,
-        model=Model(),
+        model=Model(n=18),
         step_per_epoch=step_per_epoch,
         max_epoch=500,
     )
