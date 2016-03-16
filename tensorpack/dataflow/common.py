@@ -9,7 +9,7 @@ from .base import DataFlow, ProxyDataFlow
 from ..utils import *
 
 __all__ = ['BatchData', 'FixedSizeData', 'FakeData', 'MapData',
-           'MapDataComponent', 'RandomChooseData', 'RandomMixData']
+           'MapDataComponent', 'RandomChooseData', 'RandomMixData', 'JoinData']
 
 class BatchData(ProxyDataFlow):
     def __init__(self, ds, batch_size, remainder=False):
@@ -217,4 +217,26 @@ class RandomMixData(DataFlow):
         assert idxs.max() == len(itrs) - 1, "{}!={}".format(idxs.max(), len(itrs)-1)
         for k in idxs:
             yield next(itrs[k])
+
+class JoinData(DataFlow):
+    """
+    Concatenate several dataflows
+    """
+    def __init__(self, df_lists):
+        """
+        df_lists: list of dataflow
+        """
+        self.df_lists = df_lists
+
+    def reset_state(self):
+        for d in self.df_lists:
+            d.reset_state()
+
+    def size(self):
+        return sum([x.size() for x in self.df_lists])
+
+    def get_data(self):
+        for d in self.df_lists:
+            for dp in d.get_data():
+                yield dp
 

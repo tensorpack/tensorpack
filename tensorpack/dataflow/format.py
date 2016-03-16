@@ -2,12 +2,17 @@
 # File: format.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import h5py
+from ..utils import logger
+from .base import DataFlow
+
 import random
 from six.moves import range
 
-from ..utils import logger
-from .base import DataFlow
+try:
+    import h5py
+except ImportError:
+    logger.error("Error in `import h5py`. HDF5Data cannot function.")
+
 
 """
 Adapter for different data format.
