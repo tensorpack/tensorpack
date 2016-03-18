@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-# File: cifar10-resnet-deeper.py
+# File: cifar10_resnet.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
@@ -100,7 +100,6 @@ class Model(ModelDesc):
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, cost)
 
-        # compute the number of failed samples, for ValidationError to use at test time
         wrong = prediction_incorrect(logits, label)
         nr_wrong = tf.reduce_sum(wrong, name='wrong')
         # monitor training error
@@ -108,9 +107,7 @@ class Model(ModelDesc):
             MOVING_SUMMARY_VARS_KEY, tf.reduce_mean(wrong, name='train_error'))
 
         # weight decay on all W of fc layers
-        wd_cost = tf.mul(0.0002,
-                         regularize_cost('.*/W', tf.nn.l2_loss),
-                         name='regularize_loss')
+        wd_cost = regularize_cost('.*/W', l2_regularizer(0.0002), name='regularize_loss')
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, wd_cost)
 
         add_param_summary([('.*/W', ['histogram', 'sparsity'])])   # monitor W

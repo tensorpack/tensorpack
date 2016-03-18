@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File: example_mnist.py
+# File: mnist_convnet.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
@@ -10,7 +10,7 @@ import numpy as np
 import os, sys
 import argparse
 
-from tensorpack.train import TrainConfig, SimpleTrainer
+from tensorpack.train import *
 from tensorpack.models import *
 from tensorpack.utils import *
 from tensorpack.utils.symbolic_functions import *
@@ -122,6 +122,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
+    else:
+        os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
     with tf.Graph().as_default():
         config = get_config()

@@ -8,13 +8,16 @@ import re
 from ..utils import logger
 from ..utils import *
 
-__all__ = ['regularize_cost']
+__all__ = ['regularize_cost', 'l2_regularizer', 'l1_regularizer']
 
 @memoized
 def _log_regularizer(name):
     logger.info("Apply regularizer for {}".format(name))
 
-def regularize_cost(regex, func):
+l2_regularizer = tf.contrib.layers.l2_regularizer
+l1_regularizer = tf.contrib.layers.l1_regularizer
+
+def regularize_cost(regex, func, name=None):
     """
     Apply a regularizer on every trainable variable matching the regex
     """
@@ -23,11 +26,11 @@ def regularize_cost(regex, func):
 
     costs = []
     for p in params:
-        name = p.name
-        if re.search(regex, name):
+        para_name = p.name
+        if re.search(regex, para_name):
             costs.append(func(p))
-            _log_regularizer(name)
+            _log_regularizer(para_name)
     if not costs:
         return 0
-    return tf.add_n(costs)
+    return tf.add_n(costs, name=name)
 
