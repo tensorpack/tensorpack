@@ -6,7 +6,7 @@ import tensorflow as tf
 import re
 
 from ..utils import logger
-from ..utils import *
+from ..utils.utils import *
 
 __all__ = ['regularize_cost', 'l2_regularizer', 'l1_regularizer']
 

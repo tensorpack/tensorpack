@@ -1,8 +1,15 @@
 # -*- coding: UTF-8 -*-
 # File: utils.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
-import os
 
+import os, sys
+from contextlib import contextmanager
+import time
+import collections
+
+from . import logger
+
+__all__ = ['timed_operation', 'change_env', 'get_rng', 'memoized']
 #def expand_dim_if_necessary(var, dp):
 #    """
 #    Args:
@@ -17,13 +24,54 @@ import os
 #        dp = dp.reshape(new_shape)
 #    return dp
 
+@contextmanager
+def timed_operation(msg, log_start=False):
+    if log_start:
+        logger.info('start {} ...'.format(msg))
+    start = time.time()
+    yield
+    logger.info('{} finished, time={:.2f}sec.'.format(
+        msg, time.time() - start))
 
-def mkdir_p(dirname):
-    assert dirname is not None
-    if dirname == '':
-        return
-    try:
-        os.makedirs(dirname)
-    except OSError as e:
-        if e.errno != 17:
-            raise e
+@contextmanager
+def change_env(name, val):
+    oldval = os.environ.get(name, None)
+    os.environ[name] = val
+    yield
+    if oldval is None:
+        del os.environ[name]
+    else:
+        os.environ[name] = oldval
+
+class memoized(object):
+    '''Decorator. Caches a function's return value each time it is called.
+    If called later with the same arguments, the cached value is returned
+    (not reevaluated).
+    '''
+    def __init__(self, func):
+       self.func = func
+       self.cache = {}
+
+    def __call__(self, *args):
+       if not isinstance(args, collections.Hashable):
+          # uncacheable. a list, for instance.
+          # better to not cache than blow up.
+          return self.func(*args)
+       if args in self.cache:
+          return self.cache[args]
+       else:
+          value = self.func(*args)
+          self.cache[args] = value
+          return value
+
+    def __repr__(self):
+       '''Return the function's docstring.'''
+       return self.func.__doc__
+
+    def __get__(self, obj, objtype):
+       '''Support instance methods.'''
+       return functools.partial(self.__call__, obj)
+
+def get_rng(self):
+    seed = (id(self) + os.getpid()) % 4294967295
+    return np.random.RandomState(seed)

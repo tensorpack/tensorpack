@@ -10,7 +10,7 @@ from datetime import datetime
 from six.moves import input
 import sys
 
-from .utils import mkdir_p
+from .fs import mkdir_p
 
 __all__ = []
 
