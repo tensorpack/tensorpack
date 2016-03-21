@@ -5,6 +5,7 @@
 
 from collections import namedtuple, defaultdict
 from abc import abstractmethod
+import numpy as np
 import os
 
 from six.moves import zip
@@ -21,12 +22,14 @@ def get_processor():
                 layer_name + '/b': param[1].data}
     ret['Convolution'] = process_conv
 
+    # XXX fc after spatial needs a different stuff
     # XXX caffe has an 'transpose' option for fc/W
     def process_fc(layer_name, param):
         assert len(param) == 2
         return {layer_name + '/W': param[0].data.transpose(),
                 layer_name + '/b': param[1].data}
     ret['InnerProduct'] = process_fc
+
     return ret
 
 def load_caffe(model_desc, model_file):
@@ -38,9 +41,18 @@ def load_caffe(model_desc, model_file):
 
     with change_env('GLOG_minloglevel', '2'):
         import caffe
+        caffe.set_mode_cpu()
         net = caffe.Net(model_desc, model_file, caffe.TEST)
     layer_names = net._layer_names
     for layername, layer in zip(layer_names, net.layers):
+        # XXX
+        if layername == 'fc6':
+            prev_data_shape = (10,256,6,6)
+            logger.info("Special FC...")
+            layer.blobs[0].data[:] = layer.blobs[0].data.reshape(
+                (-1, ) + prev_data_shape[1:]).transpose(
+                    0,2,3,1).reshape(
+                    (-1, np.prod(prev_data_shape[1:])))
         if layer.type in param_processors:
             param_dict.update(param_processors[layer.type](layername, layer.blobs))
         else:
@@ -50,5 +62,14 @@ def load_caffe(model_desc, model_file):
     return param_dict
 
 if __name__ == '__main__':
-    ret = load_caffe('/home/wyx/Work/DL/caffe/models/VGG/VGG_ILSVRC_16_layers_deploy.prototxt',
-               '/home/wyx/Work/DL/caffe/models/VGG/VGG_ILSVRC_16_layers.caffemodel')
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('model')
+    parser.add_argument('weights')
+    parser.add_argument('output')
+    args = parser.parse_args()
+    ret = load_caffe(args.model, args.weights)
+
+    import numpy as np
+    np.save(args.output, ret)
+

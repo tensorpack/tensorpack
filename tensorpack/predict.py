@@ -10,9 +10,9 @@ import numpy as np
 from tqdm import tqdm
 from six.moves import zip
 
-from .utils import *
-from .utils.modelutils import describe_model
+from .tfutils import *
 from .utils import logger
+from .tfutils.modelutils import describe_model
 from .dataflow import DataFlow, BatchData
 
 class PredictConfig(object):

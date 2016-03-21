@@ -54,6 +54,8 @@ class ParamRestore(SessionInit):
         variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
         var_dict = dict([v.name, v] for v in variables)
         for name, value in six.iteritems(self.prms):
+            if not name.endswith(':0'):
+                name = name + ':0'
             try:
                 var = var_dict[name]
             except (ValueError, KeyError):
@@ -67,7 +69,8 @@ def dump_session_params(path):
     var = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
     result = {}
     for v in var:
-        result[v.name] = v.eval()
+        name = v.name.replace(":0", "")
+        result[name] = v.eval()
     logger.info("Params to save to {}:".format(path))
     logger.info(str(result.keys()))
     np.save(path, result)
