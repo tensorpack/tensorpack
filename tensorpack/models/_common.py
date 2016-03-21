@@ -6,8 +6,8 @@ import tensorflow as tf
 from functools import wraps
 import six
 
-from ..utils.modelutils import *
-from ..utils.summary import *
+from ..tfutils.modelutils import *
+from ..tfutils.summary import *
 from ..utils import logger
 
 # make sure each layer is only logged once

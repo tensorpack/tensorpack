@@ -4,6 +4,7 @@
 
 import tensorflow as tf
 from contextlib import contextmanager
+import time
 
 from .base import Callback, TrainCallback, TestCallback
 from .summary import *

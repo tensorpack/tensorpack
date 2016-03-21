@@ -6,7 +6,7 @@
 import tensorflow as tf
 from abc import ABCMeta, abstractmethod
 import re
-from . import logger
+from ..utils import logger
 
 __all__ = ['GradientProcessor', 'SummaryGradient', 'CheckGradient',
            'ScaleGradient']

@@ -7,6 +7,7 @@ import tensorflow as tf
 from ..callbacks import Callbacks
 from ..models import ModelDesc
 from ..utils import *
+from ..tfutils import *
 from ..dataflow import DataFlow
 
 __all__ = ['TrainConfig']

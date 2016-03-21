@@ -8,7 +8,11 @@ import numpy as np
 import tensorflow as tf
 import six
 
-from . import logger
+from ..utils import logger
+
+__all__ = ['SessionInit', 'NewSession', 'SaverRestore', 'ParamRestore',
+           'dump_session_params']
+
 class SessionInit(object):
     __metaclass__ = ABCMeta
 

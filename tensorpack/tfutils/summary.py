@@ -5,8 +5,8 @@
 import six
 import tensorflow as tf
 
-from . import logger, get_global_step_var
-from .naming import *
+from ..utils import *
+from . import get_global_step_var
 
 def create_summary(name, v):
     """

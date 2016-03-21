@@ -11,7 +11,8 @@ from six.moves import zip
 from .base import Trainer
 from ..dataflow.common import RepeatedData
 from ..utils import *
-from ..utils.summary import summary_moving_average
+from ..tfutils.summary import summary_moving_average
+from ..tfutils import *
 
 __all__ = ['SimpleTrainer', 'QueueInputTrainer', 'start_train']
 

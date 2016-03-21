@@ -9,7 +9,7 @@ from six.moves import zip
 
 from ..utils import *
 from ..utils.stat import *
-from ..utils.summary import *
+from ..tfutils.summary import *
 from .base import PeriodicCallback, Callback, TestCallback
 
 __all__ = ['ValidationError', 'ValidationCallback', 'ValidationStatPrinter']

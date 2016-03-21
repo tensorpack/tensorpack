@@ -7,7 +7,7 @@ import tensorflow as tf
 import math
 
 from ._common import layer_register
-from ..utils.symbolic_functions import *
+from ..tfutils.symbolic_functions import *
 
 __all__ = ['FullyConnected']
 

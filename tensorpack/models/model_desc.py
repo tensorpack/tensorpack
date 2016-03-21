@@ -7,7 +7,7 @@ from abc import ABCMeta, abstractmethod
 import tensorflow as tf
 from collections import namedtuple
 
-from ..utils.gradproc import *
+from ..tfutils import *
 
 __all__ = ['ModelDesc', 'InputVar']
 

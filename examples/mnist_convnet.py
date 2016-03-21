@@ -13,9 +13,9 @@ import argparse
 from tensorpack.train import *
 from tensorpack.models import *
 from tensorpack.utils import *
-from tensorpack.utils.symbolic_functions import *
-from tensorpack.utils.gradproc  import *
-from tensorpack.utils.summary import *
+from tensorpack.tfutils.symbolic_functions import *
+from tensorpack.tfutils.summary import *
+from tensorpack.tfutils import *
 from tensorpack.callbacks import *
 from tensorpack.dataflow import *
 

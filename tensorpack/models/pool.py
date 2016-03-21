@@ -6,7 +6,7 @@ import tensorflow as tf
 import numpy
 
 from ._common import *
-from ..utils.symbolic_functions import *
+from ..tfutils.symbolic_functions import *
 
 __all__ = ['MaxPooling', 'FixedUnPooling', 'AvgPooling', 'GlobalAvgPooling']
 

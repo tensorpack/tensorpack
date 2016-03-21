@@ -4,7 +4,7 @@
 
 import tensorflow as tf
 
-from . import logger
+from ..utils import logger
 
 def describe_model():
     """ describe the current model parameters"""

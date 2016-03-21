@@ -3,7 +3,7 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import tensorflow as tf
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 from six.moves import range
 import tqdm
 import re
@@ -11,7 +11,8 @@ import re
 from .config import TrainConfig
 from ..utils import *
 from ..callbacks import StatHolder
-from ..utils.modelutils import describe_model
+from ..tfutils import *
+from ..tfutils.modelutils import describe_model
 
 __all__ = ['Trainer']
 

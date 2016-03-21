@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
-# File: example_alexnet.py
+# File: load_alexnet.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
@@ -13,8 +13,9 @@ from tensorpack.train import TrainConfig, start_train
 from tensorpack.predict import PredictConfig, get_predict_func
 from tensorpack.models import *
 from tensorpack.utils import *
-from tensorpack.utils.symbolic_functions import *
-from tensorpack.utils.summary import *
+from tensorpack.tfutils import *
+from tensorpack.tfutils.symbolic_functions import *
+from tensorpack.tfutils.summary import *
 from tensorpack.callbacks import *
 from tensorpack.dataflow import *
 
