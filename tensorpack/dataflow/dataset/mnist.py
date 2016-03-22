@@ -10,6 +10,7 @@ import numpy
 from six.moves import urllib, range
 
 from ...utils import logger
+from ...utils.fs import download
 from ..base import DataFlow
 
 __all__ = ['Mnist']
@@ -20,14 +21,10 @@ SOURCE_URL = 'http://yann.lecun.com/exdb/mnist/'
 
 def maybe_download(filename, work_directory):
     """Download the data from Yann's website, unless it's already here."""
-    if not os.path.exists(work_directory):
-        os.mkdir(work_directory)
     filepath = os.path.join(work_directory, filename)
     if not os.path.exists(filepath):
         logger.info("Downloading mnist data to {}...".format(filepath))
-        filepath, _ = urllib.request.urlretrieve(SOURCE_URL + filename, filepath)
-        statinfo = os.stat(filepath)
-        logger.info('Successfully downloaded to ' + filename)
+        download(SOURCE_URL + filename, work_directory)
     return filepath
 
 def _read32(bytestream):

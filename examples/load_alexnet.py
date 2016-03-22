@@ -18,6 +18,7 @@ from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
 from tensorpack.callbacks import *
 from tensorpack.dataflow import *
+from tensorpack.dataflow.dataset import ILSVRCMeta
 
 BATCH_SIZE = 10
 MIN_AFTER_DEQUEUE = 500
@@ -132,11 +133,14 @@ def run_test(path, input):
     im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
     im = cv2.resize(im, (227, 227))
     im = np.reshape(im, (1, 227, 227, 3)).astype('float32')
+    im = im - 110
     outputs = predict_func([im])[0]
     prob = outputs[0]
-    print prob.shape
     ret = prob.argsort()[-10:][::-1]
     print ret
+
+    meta = ILSVRCMeta().get_synset_words_1000()
+    print [meta[k] for k in ret]
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

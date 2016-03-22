@@ -31,7 +31,7 @@ class SVHNDigit(DataFlow):
         assert name in ['train', 'test', 'extra'], name
         filename = os.path.join(data_dir, name + '_32x32.mat')
         assert os.path.isfile(filename), \
-                "File {} not found! Download it from \
+                "File {} not found! Please download it from \
 http://ufldl.stanford.edu/housenumbers/".format(filename)
         logger.info("Loading {} ...".format(filename))
         data = scipy.io.loadmat(filename)

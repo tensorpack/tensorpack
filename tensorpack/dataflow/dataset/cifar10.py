@@ -13,6 +13,7 @@ import tarfile
 import logging
 
 from ...utils import logger, get_rng
+from ...utils.fs import download
 from ..base import DataFlow
 
 __all__ = ['Cifar10']
@@ -23,22 +24,13 @@ DATA_URL = 'http://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz'
 def maybe_download_and_extract(dest_directory):
     """Download and extract the tarball from Alex's website.
        copied from tensorflow example """
-    if not os.path.exists(dest_directory):
-        os.makedirs(dest_directory)
-    filename = DATA_URL.split('/')[-1]
-    filepath = os.path.join(dest_directory, filename)
     if os.path.isdir(os.path.join(dest_directory, 'cifar-10-batches-py')):
         logger.info("Found cifar10 data in {}.".format(dest_directory))
         return
     else:
-        def _progress(count, block_size, total_size):
-            sys.stdout.write('\r>> Downloading %s %.1f%%' % (filepath,
-                    float(count * block_size) / float(total_size) * 100.0))
-            sys.stdout.flush()
-        filepath, _ = urllib.request.urlretrieve(DATA_URL, filepath, reporthook=_progress)
-        print()
-        statinfo = os.stat(filepath)
-        print('Succesfully downloaded', filename, statinfo.st_size, 'bytes.')
+        download(URL, dest_directory)
+        filename = DATA_URL.split('/')[-1]
+        filepath = os.path.join(dest_directory, filename)
         tarfile.open(filepath, 'r:gz').extractall(dest_directory)
 
 def read_cifar10(filenames):
