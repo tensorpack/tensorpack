@@ -19,8 +19,7 @@ from tensorpack.dataflow import *
 from tensorpack.dataflow import imgaug
 
 """
-CIFAR10 90% validation accuracy after 100k step.
-91% after 160k step
+CIFAR10 90% validation accuracy after 70k step.
 """
 
 BATCH_SIZE = 128
@@ -43,6 +42,7 @@ class Model(ModelDesc):
                 num_threads=6, enqueue_many=True)
             tf.image_summary("train_image", image, 10)
 
+        image = image / 4.0     # just to make range smaller
         l = Conv2D('conv1.1', image, out_channel=64, kernel_shape=3)
         l = Conv2D('conv1.2', l, out_channel=64, kernel_shape=3, nl=tf.identity)
         l = BatchNorm('bn1', l, is_training)
@@ -112,7 +112,7 @@ def get_data(train_or_test):
     ds = AugmentImageComponent(ds, augmentors)
     ds = BatchData(ds, 128, remainder=not isTrain)
     if isTrain:
-        ds = PrefetchData(ds, 3, 2)
+        ds = PrefetchData(ds, 10, 5)
     return ds
 
 
@@ -120,7 +120,7 @@ def get_data(train_or_test):
 def get_config():
     # prepare dataset
     dataset_train = get_data('train')
-    step_per_epoch = dataset_train.size() / 2
+    step_per_epoch = dataset_train.size()
     dataset_test = get_data('test')
 
     sess_config = get_default_sess_config()

@@ -31,10 +31,7 @@ def BatchNorm(x, use_local_stat=True, decay=0.9, epsilon=1e-5):
     """
 
     shape = x.get_shape().as_list()
-    if len(shape) == 2:
-        x = tf.reshape(x, [-1, 1, 1, shape[1]])
-        shape = x.get_shape().as_list()
-    assert len(shape) == 4
+    assert len(shape) in [2, 4]
 
     n_out = shape[-1]  # channel
     beta = tf.get_variable('beta', [n_out])
@@ -42,7 +39,10 @@ def BatchNorm(x, use_local_stat=True, decay=0.9, epsilon=1e-5):
         'gamma', [n_out],
         initializer=tf.constant_initializer(1.0))
 
-    batch_mean, batch_var = tf.nn.moments(x, [0, 1, 2], name='moments')
+    if len(shape) == 2:
+        batch_mean, batch_var = tf.nn.moments(x, [0], name='moments', keep_dims=False)
+    else:
+        batch_mean, batch_var = tf.nn.moments(x, [0, 1, 2], name='moments', keep_dims=False)
 
     ema = tf.train.ExponentialMovingAverage(decay=decay)
     ema_apply_op = ema.apply([batch_mean, batch_var])
@@ -50,10 +50,10 @@ def BatchNorm(x, use_local_stat=True, decay=0.9, epsilon=1e-5):
 
     if use_local_stat:
         with tf.control_dependencies([ema_apply_op]):
-            return tf.nn.batch_norm_with_global_normalization(
-                x, batch_mean, batch_var, beta, gamma, epsilon, True)
+            return tf.nn.batch_normalization(
+                x, batch_mean, batch_var, beta, gamma, epsilon, 'bn')
     else:
         batch = tf.cast(tf.shape(x)[0], tf.float32)
         mean, var = ema_mean, ema_var * batch / (batch - 1) # unbiased variance estimator
-        return tf.nn.batch_norm_with_global_normalization(
-            x, mean, var, beta, gamma, epsilon, True)
+        return tf.nn.batch_normalization(
+            x, mean, var, beta, gamma, epsilon, 'bn')
