@@ -62,6 +62,11 @@ class ParamRestore(SessionInit):
                 logger.warn("Param {} not found in this graph".format(name))
                 continue
             logger.info("Restoring param {}".format(name))
+            varshape = tuple(var.get_shape().as_list())
+            if varshape != value.shape:
+                assert np.prod(varshape) == np.prod(value.shape)
+                logger.warn("Param {} is reshaped during loading!".format(name))
+                value = value.reshape(varshape)
             sess.run(var.assign(value))
 
 def dump_session_params(path):
