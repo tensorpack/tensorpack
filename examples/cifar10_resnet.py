@@ -147,11 +147,7 @@ def get_config():
 
     sess_config = get_default_sess_config(0.9)
 
-    lr = tf.train.exponential_decay(
-        learning_rate=1e-1,
-        global_step=get_global_step_var(),
-        decay_steps=36000,
-        decay_rate=0.1, staircase=True, name='learning_rate')
+    lr = tf.Variable(0.1, trainable=False, name='learning_rate')
     tf.scalar_summary('learning_rate', lr)
 
     return TrainConfig(
@@ -161,6 +157,8 @@ def get_config():
             StatPrinter(),
             PeriodicSaver(),
             ValidationError(dataset_test, prefix='test'),
+            ScheduledHyperParamSetter('learning_rate',
+                                      [(82, 0.01), (123, 0.001), (300, 0.0001)])
         ]),
         session_config=sess_config,
         model=Model(n=18),

@@ -5,10 +5,13 @@
 
 import tensorflow as tf
 from abc import abstractmethod, ABCMeta
+import operator
+
 from .base import Callback
 from ..utils import logger, get_op_var_name
 
-__all__ = ['HyperParamSetter', 'HumanHyperParamSetter']
+__all__ = ['HyperParamSetter', 'HumanHyperParamSetter',
+           'ScheduledHyperParamSetter']
 
 class HyperParamSetter(Callback):
     __metaclass__ = ABCMeta
@@ -35,9 +38,9 @@ class HyperParamSetter(Callback):
 
     def get_current_value(self):
         ret = self._get_current_value()
-        if ret != self.last_value:
+        if ret is not None and ret != self.last_value:
             logger.info("{} at epoch {} is changed to {}".format(
-                self.var_name, self.epoch_num, ret))
+                self.op_name, self.epoch_num, ret))
         self.last_value = ret
         return ret
 
@@ -47,7 +50,8 @@ class HyperParamSetter(Callback):
 
     def _trigger_epoch(self):
         v = self.get_current_value()
-        self.assign_op.eval(feed_dict={self.val_holder:v})
+        if v is not None:
+            self.assign_op.eval(feed_dict={self.val_holder:v})
 
 class HumanHyperParamSetter(HyperParamSetter):
     def __init__(self, var_name, file_name):
@@ -64,3 +68,20 @@ class HumanHyperParamSetter(HyperParamSetter):
         lines = [s.strip().split(':') for s in lines]
         dic = {str(k):float(v) for k, v in lines}
         return dic[self.op_name]
+
+class ScheduledHyperParamSetter(HyperParamSetter):
+    def __init__(self, var_name, schedule):
+        """
+        schedule: [(epoch1, val1), (epoch2, val2), (epoch3, val3), ...]
+        """
+        self.schedule = sorted(schedule, key=operator.itemgetter(0))
+        super(ScheduledHyperParamSetter, self).__init__(var_name)
+
+    def _get_current_value(self):
+        for e, v in self.schedule:
+            if e == self.epoch_num:
+                return v
+        return None
+
+
+
