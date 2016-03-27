@@ -25,7 +25,6 @@ class HyperParamSetter(Callback):
     def _before_train(self):
         all_vars = tf.all_variables()
         for v in all_vars:
-            print v.name
             if v.name == self.var_name:
                 self.var = v
                 break

@@ -56,6 +56,9 @@ class Callback(object):
         return self.trainer.global_step
 
     def trigger_epoch(self):
+        """
+        epoch_num is the number of epoch finished.
+        """
         self.epoch_num += 1
         self._trigger_epoch()
 
