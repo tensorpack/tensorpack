@@ -31,4 +31,4 @@ class ILSVRCMeta(object):
 
 if __name__ == '__main__':
     meta = ILSVRCMeta()
-    print meta.get_synset_words_1000()
+    print(meta.get_synset_words_1000())

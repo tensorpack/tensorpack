@@ -15,6 +15,9 @@ __all__ = ['FullyConnected']
 def FullyConnected(x, out_dim,
                    W_init=None, b_init=None,
                    nl=tf.nn.relu, use_bias=True):
+    """
+    Fully-Connected layer
+    """
     x = batch_flatten(x)
     in_dim = x.get_shape().as_list()[1]
 

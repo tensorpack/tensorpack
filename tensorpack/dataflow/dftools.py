@@ -5,7 +5,7 @@
 import sys, os
 from scipy.misc import imsave
 
-from ..utils.utils import mkdir_p
+from ..utils.fs import mkdir_p
 
 # TODO name_func to write label?
 def dump_dataset_images(ds, dirname, max_count=None, index=0):
