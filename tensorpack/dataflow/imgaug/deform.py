@@ -7,6 +7,8 @@ import numpy as np
 
 __all__ = ['GaussianDeform', 'GaussianMap']
 
+# TODO really needs speedup
+
 class GaussianMap(object):
     def __init__(self, image_shape, sigma=0.5):
         assert len(image_shape) == 2

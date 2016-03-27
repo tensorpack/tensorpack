@@ -20,7 +20,7 @@ from tensorpack.dataflow import imgaug
 
 """
 SVHN convnet.
-About 3.0% validation error after 120 epoch.  2.7% after 250 epoch.
+About 3.0% validation error after 120 epoch.  2.7% after 300 epoch.
 """
 
 class Model(ModelDesc):
@@ -63,9 +63,7 @@ class Model(ModelDesc):
             MOVING_SUMMARY_VARS_KEY, tf.reduce_mean(wrong, name='train_error'))
 
         # weight decay on all W of fc layers
-        wd_cost = tf.mul(0.00001,
-                         regularize_cost('fc.*/W', tf.nn.l2_loss),
-                         name='regularize_loss')
+        wd_cost = regularize_cost('fc.*/W', l2_regularizer(0.00001))
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, wd_cost)
 
         add_param_summary([('.*/W', ['histogram', 'sparsity'])])   # monitor W
@@ -83,7 +81,7 @@ def get_config():
         imgaug.Resize((40, 40)),
         imgaug.BrightnessAdd(30),
         imgaug.Contrast((0.5,1.5)),
-        imgaug.GaussianDeform(
+        imgaug.GaussianDeform(  # this is slow
             [(0.2, 0.2), (0.2, 0.8), (0.8,0.8), (0.8,0.2)],
             (40,40), 0.2, 3),
     ]

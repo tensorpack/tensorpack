@@ -13,10 +13,10 @@ __all__ = ['BatchNorm']
 
 # http://stackoverflow.com/questions/33949786/how-could-i-use-batch-normalization-in-tensorflow
 # TF batch_norm only works for 4D tensor right now: #804
-# decay: 0.999 not good for resnet, torch use 0.9 by default
+# decay: being too close to 1 leads to slow start-up, but ends up better
 # eps: torch: 1e-5. Lasagne: 1e-4
 @layer_register()
-def BatchNorm(x, use_local_stat=True, decay=0.9, epsilon=1e-5):
+def BatchNorm(x, use_local_stat=True, decay=0.999, epsilon=1e-5):
     """
     Batch normalization layer as described in:
     Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift

@@ -22,9 +22,7 @@ from tensorpack.dataflow import imgaug
 CIFAR10-resnet example.
 I can reproduce the results in:
 Deep Residual Learning for Image Recognition, arxiv:1512.03385
-for n=5 and 18
-This model achieves slightly better results due to the use of the
-whole training set instead of a 95:5 train-val split.
+for n=5 and 18 (6.5% val error)
 """
 
 BATCH_SIZE = 128
@@ -108,7 +106,8 @@ class Model(ModelDesc):
             MOVING_SUMMARY_VARS_KEY, tf.reduce_mean(wrong, name='train_error'))
 
         # weight decay on all W of fc layers
-        wd_cost = regularize_cost('.*/W', l2_regularizer(0.0002), name='regularize_loss')
+        #wd_cost = regularize_cost('.*/W', l2_regularizer(0.0002), name='regularize_loss')
+        wd_cost = 0.0001 * regularize_cost('.*/W', tf.nn.l2_loss)
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, wd_cost)
 
         add_param_summary([('.*/W', ['histogram', 'sparsity'])])   # monitor W
