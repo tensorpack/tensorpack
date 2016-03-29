@@ -49,7 +49,7 @@ class Trainer(object):
         if not hasattr(logger, 'LOG_DIR'):
             raise RuntimeError("Please use logger.set_logger_dir at the beginning of your script.")
         self.summary_writer = tf.train.SummaryWriter(
-            logger.LOG_DIR, graph_def=self.sess.graph)
+            logger.LOG_DIR, graph=self.sess.graph)
         self.summary_op = tf.merge_all_summaries()
         # create an empty StatHolder
         self.stat_holder = StatHolder(logger.LOG_DIR, [])
