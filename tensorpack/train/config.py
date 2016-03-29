@@ -29,8 +29,8 @@ class TrainConfig(object):
             session_init: a tensorpack.utils.sessinit.SessionInit instance to
                 initialize variables of a session. default to a new session.
             model: a ModelDesc instance
-            step_per_epoch: the number of steps (parameter updates) to perform
-                in each epoch.
+            starting_epoch: int. default to be 1.
+            step_per_epoch: the number of steps (SGD updates) to perform in each epoch.
             max_epoch: maximum number of epoch to run training. default to 100
             nr_tower: int. number of towers. default to 1.
         """
@@ -50,6 +50,7 @@ class TrainConfig(object):
         self.session_init = kwargs.pop('session_init', NewSession())
         assert_type(self.session_init, SessionInit)
         self.step_per_epoch = int(kwargs.pop('step_per_epoch'))
+        self.starting_epoch = int(kwargs.pop('starting_epoch', 1))
         self.max_epoch = int(kwargs.pop('max_epoch', 100))
         assert self.step_per_epoch > 0 and self.max_epoch > 0
         self.nr_tower = int(kwargs.pop('nr_tower', 1))

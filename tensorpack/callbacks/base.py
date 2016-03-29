@@ -29,7 +29,7 @@ class Callback(object):
     def before_train(self, trainer):
         self.trainer = trainer
         self.graph = tf.get_default_graph()
-        self.epoch_num = 0
+        self.epoch_num = self.trainer.config.starting_epoch
         self._before_train()
 
     def _before_train(self):
@@ -59,8 +59,8 @@ class Callback(object):
         """
         epoch_num is the number of epoch finished.
         """
-        self.epoch_num += 1
         self._trigger_epoch()
+        self.epoch_num += 1
 
     def _trigger_epoch(self):
         """
