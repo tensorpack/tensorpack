@@ -40,9 +40,9 @@ def BatchNorm(x, use_local_stat=True, decay=0.999, epsilon=1e-5):
         initializer=tf.constant_initializer(1.0))
 
     if len(shape) == 2:
-        batch_mean, batch_var = tf.nn.moments(x, [0], name='moments', keep_dims=False)
+        batch_mean, batch_var = tf.nn.moments(x, [0], keep_dims=False)
     else:
-        batch_mean, batch_var = tf.nn.moments(x, [0, 1, 2], name='moments', keep_dims=False)
+        batch_mean, batch_var = tf.nn.moments(x, [0, 1, 2], keep_dims=False)
 
     ema = tf.train.ExponentialMovingAverage(decay=decay)
     ema_apply_op = ema.apply([batch_mean, batch_var])

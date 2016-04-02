@@ -20,8 +20,25 @@ class PeriodicSaver(PeriodicCallback):
     def _before_train(self):
         self.path = os.path.join(logger.LOG_DIR, 'model')
         self.saver = tf.train.Saver(
+            var_list=self._get_vars(),
             max_to_keep=self.keep_recent,
             keep_checkpoint_every_n_hours=self.keep_freq)
+
+    def _get_vars(self):
+        vars = tf.all_variables()
+        var_dict = {}
+        for v in vars:
+            name = v.op.name
+            if re.match('tower[1-9]', name):
+                logger.info("Skip {} when saving model.".format(name))
+                continue
+            if 'tower0/' in name:
+                new_name = name.replace('tower0/', '')
+                logger.info(
+                    "{} renamed to {} when saving model.".format(name, new_name))
+                name = new_name
+            var_dict[name] = v
+        return var_dict
 
     def _trigger_periodic(self):
         self.saver.save(

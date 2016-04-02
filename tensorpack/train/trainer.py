@@ -118,6 +118,8 @@ class QueueInputTrainer(Trainer):
                         tf.name_scope('tower{}'.format(i)) as scope:
                     model_inputs = get_model_inputs()
                     cost_var = model.get_cost(model_inputs, is_training=True)
+                    if i == 0:
+                        cost_var_t0 = cost_var
                     grad_list.append(
                         self.config.optimizer.compute_gradients(cost_var))
 
@@ -129,6 +131,7 @@ class QueueInputTrainer(Trainer):
                 del tf.get_collection(k)[:]
                 tf.get_collection(k).extend(kept_summaries[k])
             grads = QueueInputTrainer._average_grads(grad_list)
+            cost_var = cost_var_t0
         else:
             model_inputs = get_model_inputs()
             cost_var = model.get_cost(model_inputs, is_training=True)
