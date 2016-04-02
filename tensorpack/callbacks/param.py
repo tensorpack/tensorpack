@@ -62,17 +62,25 @@ class HumanHyperParamSetter(HyperParamSetter):
         super(HumanHyperParamSetter, self).__init__(var_name)
 
     def  _get_current_value(self):
-        with open(self.file_name) as f:
-            lines = f.readlines()
-        lines = [s.strip().split(':') for s in lines]
-        dic = {str(k):float(v) for k, v in lines}
-        return dic[self.op_name]
+        try:
+            with open(self.file_name) as f:
+                lines = f.readlines()
+            lines = [s.strip().split(':') for s in lines]
+            dic = {str(k):float(v) for k, v in lines}
+            ret = dic[self.op_name]
+            return ret
+        except:
+            logger.warn(
+                "Failed to parse {} in {}".format(
+                    self.op_name, self.file_name))
+            return None
 
 class ScheduledHyperParamSetter(HyperParamSetter):
     def __init__(self, var_name, schedule):
         """
         schedule: [(epoch1, val1), (epoch2, val2), (epoch3, val3), ...]
         """
+        schedule = [(int(a), float(b)) for a, b in schedule]
         self.schedule = sorted(schedule, key=operator.itemgetter(0))
         super(ScheduledHyperParamSetter, self).__init__(var_name)
 
