@@ -8,7 +8,8 @@ from abc import abstractmethod, ABCMeta
 import operator
 
 from .base import Callback
-from ..utils import logger, get_op_var_name
+from ..utils import logger
+from ..tfutils import get_op_var_name
 
 __all__ = ['HyperParamSetter', 'HumanHyperParamSetter',
            'ScheduledHyperParamSetter']

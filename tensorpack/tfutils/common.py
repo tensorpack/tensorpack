@@ -32,3 +32,9 @@ def get_global_step():
         tf.get_default_session(),
         get_global_step_var())
 
+
+def get_op_var_name(name):
+    if name.endswith(':0'):
+        return name[:-2], name
+    else:
+        return name, name + ':0'

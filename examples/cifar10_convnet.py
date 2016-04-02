@@ -20,6 +20,8 @@ from tensorpack.dataflow import imgaug
 
 """
 CIFAR10 90% validation accuracy after 70k step.
+
+91% validation accuracy after 36k step with 3 GPU.
 """
 
 BATCH_SIZE = 128
@@ -126,10 +128,11 @@ def get_config():
     sess_config = get_default_sess_config()
     sess_config.gpu_options.per_process_gpu_memory_fraction = 0.5
 
+    nr_gpu = get_nr_gpu()
     lr = tf.train.exponential_decay(
         learning_rate=1e-2,
         global_step=get_global_step_var(),
-        decay_steps=dataset_train.size() * 30,
+        decay_steps=dataset_train.size() * 30 if nr_gpu == 1 else 15,
         decay_rate=0.5, staircase=True, name='learning_rate')
     tf.scalar_summary('learning_rate', lr)
 

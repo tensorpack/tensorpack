@@ -11,7 +11,7 @@ import numpy as np
 from . import logger
 
 __all__ = ['timed_operation', 'change_env', 'get_rng', 'memoized',
-           'get_op_var_name']
+           'get_nr_gpu']
 
 #def expand_dim_if_necessary(var, dp):
 #    """
@@ -79,8 +79,7 @@ def get_rng(self):
     seed = (id(self) + os.getpid()) % 4294967295
     return np.random.RandomState(seed)
 
-def get_op_var_name(name):
-    if name.endswith(':0'):
-        return name[:-2], name
-    else:
-        return name, name + ':0'
+def get_nr_gpu():
+    env = os.environ['CUDA_VISIBLE_DEVICES']
+    assert env is not None
+    return len(env.split(','))
