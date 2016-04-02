@@ -121,9 +121,6 @@ class FakeData(DataFlow):
     def size(self):
         return self._size
 
-    def reset_state(self):
-        self.rng = get_rng(self)
-
     def get_data(self):
         for _ in range(self._size):
             yield [self.rng.random_sample(k) for k in self.shapes]

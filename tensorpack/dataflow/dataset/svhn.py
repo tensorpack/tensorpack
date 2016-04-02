@@ -22,7 +22,7 @@ class SVHNDigit(DataFlow):
     """
     Cache = {}
 
-    def __init__(self, name, data_dir=None):
+    def __init__(self, name, data_dir=None, shuffle=True):
         """
         name: 'train', 'test', or 'extra'
         """
@@ -45,12 +45,21 @@ http://ufldl.stanford.edu/housenumbers/".format(filename)
         self.Y[self.Y==10] = 0
         SVHNDigit.Cache[name] = (self.X, self.Y)
 
+        self.shuffle = shuffle
+        self.rng = get_rng(self)
+
     def size(self):
         return self.X.shape[0]
 
+    def reset_state(self):
+        self.rng = get_rng(self)
+
     def get_data(self):
         n = self.X.shape[0]
-        for k in range(n):
+        idxs = np.arange(n)
+        if self.shuffle:
+            self.rng.shuffle(idxs)
+        for k in idxs:
             yield [self.X[k], self.Y[k]]
 
     @staticmethod

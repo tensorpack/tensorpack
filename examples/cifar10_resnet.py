@@ -24,8 +24,10 @@ Deep Residual Learning for Image Recognition, arxiv:1512.03385
 using the variants proposed in:
 Identity Mappings in Deep Residual Networks, arxiv::1603.05027
 
-I can reproduce the results
-for n=5 (about 7.7% val error) and 18 (about 6.4% val error)
+I can reproduce the results for
+n=5 (about 7.6% val error)
+n=18 (about 6.4% val error)
+n=30: a 182-layer network (about 5.7% val error)
 This model uses the whole training set instead of a 95:5 train-val split.
 """
 
@@ -116,8 +118,9 @@ class Model(ModelDesc):
             MOVING_SUMMARY_VARS_KEY, tf.reduce_mean(wrong, name='train_error'))
 
         # weight decay on all W of fc layers
-        #wd_cost = regularize_cost('.*/W', l2_regularizer(0.0002), name='regularize_loss')
-        wd_cost = 0.0001 * regularize_cost('.*/W', tf.nn.l2_loss)
+        wd_w = tf.train.exponential_decay(0.0002, get_global_step_var(),
+                                          480000, 0.2, True)
+        wd_cost = wd_w * regularize_cost('.*/W', tf.nn.l2_loss)
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, wd_cost)
 
         add_param_summary([('.*/W', ['histogram', 'sparsity'])])   # monitor W
@@ -132,7 +135,7 @@ def get_data(train_or_test):
             imgaug.CenterPaste((40, 40)),
             imgaug.RandomCrop((32, 32)),
             imgaug.Flip(horiz=True),
-            imgaug.BrightnessAdd(20),
+            #imgaug.BrightnessAdd(20),
             #imgaug.Contrast((0.6,1.4)),
             imgaug.MapImage(lambda x: x - pp_mean),
         ]
