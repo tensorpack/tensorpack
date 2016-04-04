@@ -64,6 +64,7 @@ class Trainer(object):
 
     def main_loop(self):
         # some final operations that might modify the graph
+        logger.info("Preparing for training...")
         self._init_summary()
         get_global_step_var()
         callbacks = self.config.callbacks

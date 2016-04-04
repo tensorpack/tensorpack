@@ -49,7 +49,6 @@ http://ufldl.stanford.edu/housenumbers/".format(filename)
         self.Y[self.Y==10] = 0
         SVHNDigit.Cache[name] = (self.X, self.Y)
 
-
     def size(self):
         return self.X.shape[0]
 

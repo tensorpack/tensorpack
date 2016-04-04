@@ -20,7 +20,7 @@ from tensorpack.dataflow import imgaug
 
 """
 SVHN convnet.
-About 3.0% validation error after 120 epoch.  2.7% after 300 epoch.
+About 3.0% validation error after 70 epoch.  2.5% after 130 epoch.
 """
 
 class Model(ModelDesc):
@@ -34,17 +34,16 @@ class Model(ModelDesc):
 
         image = image / 128.0 - 1
 
-        nl = lambda x, name: tf.abs(tf.tanh(x), name=name)
-        l = Conv2D('conv1', image, 24, 5, padding='VALID', nl=nl)
+        l = Conv2D('conv1', image, 24, 5, padding='VALID')
         l = MaxPooling('pool1', l, 2, padding='SAME')
-        l = Conv2D('conv2', l, 32, 3, nl=nl, padding='VALID')
-        l = Conv2D('conv3', l, 32, 3, nl=nl, padding='VALID')
+        l = Conv2D('conv2', l, 32, 3, padding='VALID')
+        l = Conv2D('conv3', l, 32, 3, padding='VALID')
         l = MaxPooling('pool2', l, 2, padding='SAME')
-        l = Conv2D('conv4', l, 64, 3, nl=nl, padding='VALID')
+        l = Conv2D('conv4', l, 64, 3, padding='VALID')
 
         l = tf.nn.dropout(l, keep_prob)
         l = FullyConnected('fc0', l, 512,
-                           b_init=tf.constant_initializer(0.1), nl=nl)
+                           b_init=tf.constant_initializer(0.1))
         # fc will have activation summary by default. disable for the output layer
         logits = FullyConnected('linear', l, out_dim=10, summary_activation=False,
                                 nl=tf.identity)
