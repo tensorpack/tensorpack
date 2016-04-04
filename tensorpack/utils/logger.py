@@ -65,7 +65,7 @@ Directory {} exists! Please either backup/delete it, or use a new directory \
 unless you're resuming from a previous task.""".format(dirname))
         logger.info("Select Action: k (keep) / b (backup) / d (delete) / n (new):")
         while True:
-            act = input().lower()
+            act = input().lower().strip()
             if act:
                 break
         if act == 'b':

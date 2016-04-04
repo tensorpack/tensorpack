@@ -5,12 +5,12 @@
 
 import os
 import random
-import numpy
+import numpy as np
 import scipy
 import scipy.io
 from six.moves import range
 
-from ...utils import logger
+from ...utils import logger, get_rng
 from ..base import DataFlow
 
 __all__ = ['SVHNDigit']
@@ -70,7 +70,7 @@ http://ufldl.stanford.edu/housenumbers/".format(filename)
         a = SVHNDigit('train')
         b = SVHNDigit('test')
         c = SVHNDigit('extra')
-        return numpy.concatenate((a.X, b.X, c.X)).mean(axis=0)
+        return np.concatenate((a.X, b.X, c.X)).mean(axis=0)
 
 if __name__ == '__main__':
     a = SVHNDigit('train')
