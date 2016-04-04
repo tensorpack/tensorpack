@@ -25,7 +25,11 @@ class SVHNDigit(DataFlow):
     def __init__(self, name, data_dir=None, shuffle=True):
         """
         name: 'train', 'test', or 'extra'
+        data_dir: a directory containing {train,test,extra}_32x32.mat
         """
+        self.shuffle = shuffle
+        self.rng = get_rng(self)
+
         if name in SVHNDigit.Cache:
             self.X, self.Y = SVHNDigit.Cache[name]
             return
@@ -45,8 +49,6 @@ http://ufldl.stanford.edu/housenumbers/".format(filename)
         self.Y[self.Y==10] = 0
         SVHNDigit.Cache[name] = (self.X, self.Y)
 
-        self.shuffle = shuffle
-        self.rng = get_rng(self)
 
     def size(self):
         return self.X.shape[0]
