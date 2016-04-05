@@ -15,6 +15,8 @@ from ..base import DataFlow
 
 __all__ = ['SVHNDigit']
 
+SVHN_URL = "http://ufldl.stanford.edu/housenumbers/"
+
 class SVHNDigit(DataFlow):
     """
     SVHN Cropped Digit Dataset
@@ -25,7 +27,7 @@ class SVHNDigit(DataFlow):
     def __init__(self, name, data_dir=None, shuffle=True):
         """
         name: 'train', 'test', or 'extra'
-        data_dir: a directory containing {train,test,extra}_32x32.mat
+        data_dir: a directory containing the original {train,test,extra}_32x32.mat
         """
         self.shuffle = shuffle
         self.rng = get_rng(self)
@@ -40,8 +42,7 @@ class SVHNDigit(DataFlow):
         assert name in ['train', 'test', 'extra'], name
         filename = os.path.join(data_dir, name + '_32x32.mat')
         assert os.path.isfile(filename), \
-                "File {} not found! Please download it from \
-http://ufldl.stanford.edu/housenumbers/".format(filename)
+                "File {} not found! Please download it from {}.".format(filename, SVHN_URL)
         logger.info("Loading {} ...".format(filename))
         data = scipy.io.loadmat(filename)
         self.X = data['X'].transpose(3,0,1,2)

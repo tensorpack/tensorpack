@@ -6,7 +6,7 @@ import tensorflow as tf
 from contextlib import contextmanager
 import time
 
-from .base import Callback, TrainCallback, TestCallback
+from .base import Callback, TrainCallbackType, TestCallbackType
 from .summary import *
 from ..utils import *
 
@@ -91,11 +91,17 @@ class TestCallbackContext(object):
             yield
 
 class Callbacks(Callback):
+    """
+    A container to hold all callbacks, and execute them in the right order and proper session.
+    """
     def __init__(self, cbs):
+        """
+        :param cbs: a list of `Callbacks`
+        """
         # check type
         for cb in cbs:
             assert isinstance(cb, Callback), cb.__class__
-            if not isinstance(cb.type, (TrainCallback, TestCallback)):
+            if not isinstance(cb.type, (TrainCallbackType, TestCallbackType)):
                 raise ValueError(
                     "Unknown callback running graph {}!".format(str(cb.type)))
 
@@ -104,7 +110,7 @@ class Callbacks(Callback):
 
     def _before_train(self):
         for cb in self.cbs:
-            if isinstance(cb.type, TrainCallback):
+            if isinstance(cb.type, TrainCallbackType):
                 cb.before_train(self.trainer)
             else:
                 with self.test_callback_context.before_train_context(self.trainer):
@@ -116,7 +122,7 @@ class Callbacks(Callback):
 
     def trigger_step(self):
         for cb in self.cbs:
-            if isinstance(cb.type, TrainCallback):
+            if isinstance(cb.type, TrainCallbackType):
                 cb.trigger_step()
         # test callback don't have trigger_step
 
@@ -125,7 +131,7 @@ class Callbacks(Callback):
 
         test_sess_restored = False
         for cb in self.cbs:
-            if isinstance(cb.type, TrainCallback):
+            if isinstance(cb.type, TrainCallbackType):
                 with tm.timed_callback(type(cb).__name__):
                     cb.trigger_epoch()
             else:

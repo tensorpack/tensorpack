@@ -14,8 +14,14 @@ from ..utils import *
 __all__ = ['StatHolder', 'StatPrinter']
 
 class StatHolder(object):
-    def __init__(self, log_dir, print_tag=None):
-        self.set_print_tag(print_tag)
+    """
+    A holder to keep all statistics aside from tensorflow events.
+    """
+    def __init__(self, log_dir):
+        """
+        :param log_dir: directory to save the stats.
+        """
+        self.set_print_tag([])
         self.stat_now = {}
 
         self.log_dir = log_dir
@@ -28,12 +34,23 @@ class StatHolder(object):
             self.stat_history = []
 
     def add_stat(self, k, v):
+        """
+        Add a stat.
+        :param k: name
+        :param v: value
+        """
         self.stat_now[k] = v
 
     def set_print_tag(self, print_tag):
+        """
+        Set name of stats to print.
+        """
         self.print_tag = None if print_tag is None else set(print_tag)
 
     def finalize(self):
+        """
+        Called after finishing adding stats. Will print and write stats to disk.
+        """
         self._print_stat()
         self.stat_history.append(self.stat_now)
         self.stat_now = {}
@@ -51,9 +68,13 @@ class StatHolder(object):
         os.rename(tmp_filename, self.filename)
 
 class StatPrinter(Callback):
+    """
+    Control what stats to print.
+    """
     def __init__(self, print_tag=None):
-        """ print_tag : a list of regex to match scalar summary to print
-            if None, will print all scalar tags
+        """
+        :param print_tag : a list of regex to match scalar summary to print.
+            If None, will print all scalar tags
         """
         self.print_tag = print_tag
 

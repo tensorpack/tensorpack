@@ -10,67 +10,83 @@ from abc import abstractmethod, ABCMeta
 
 from ..utils import *
 
-__all__ = ['Callback', 'PeriodicCallback', 'TrainCallback', 'TestCallback']
+__all__ = ['Callback', 'PeriodicCallback', 'TrainCallbackType', 'TestCallbackType']
 
-class TrainCallback(object):
+class TrainCallbackType(object):
     pass
 
-class TestCallback(object):
+class TestCallbackType(object):
     pass
 
 class Callback(object):
+    """ Base class for all callbacks """
     __metaclass__ = ABCMeta
 
-    type = TrainCallback()
-    """ The graph that this callback should run on.
-        Either TrainCallback or TestCallback
+    type = TrainCallbackType()
+    """ Determine the graph that this callback should run on.
+        Either `TrainCallbackType()` or `TestCallbackType()`.
+        Default is `TrainCallbackType()`
     """
 
     def before_train(self, trainer):
+        """
+        Called before starting iterative training.
+
+        :param trainer: a :class:`train.Trainer` instance
+        """
         self.trainer = trainer
         self.graph = tf.get_default_graph()
         self.epoch_num = self.trainer.config.starting_epoch
         self._before_train()
 
     def _before_train(self):
-        """
-        Called before starting iterative training
-        """
+        pass
 
     def after_train(self):
+        """
+        Called after training.
+        """
         self._after_train()
 
     def _after_train(self):
-        """
-        Called after training
-        """
+        pass
 
     def trigger_step(self):
         """
         Callback to be triggered after every step (every backpropagation)
+
         Could be useful to apply some tricks on parameters (clipping, low-rank, etc)
         """
 
     @property
     def global_step(self):
+        """
+        Access the global step value of this training.
+        """
         return self.trainer.global_step
 
     def trigger_epoch(self):
         """
-        epoch_num is the number of epoch finished.
+        Triggered after every epoch.
+
+        In this function, self.epoch_num would be the number of epoch finished.
         """
         self._trigger_epoch()
         self.epoch_num += 1
 
     def _trigger_epoch(self):
-        """
-        Callback to be triggered after every epoch (full iteration of input dataset)
-        """
+        pass
 
 
 class PeriodicCallback(Callback):
+    """
+    A callback to be triggered after every `period` epochs.
+    """
     def __init__(self, period):
-        self.period = period
+        """
+        :param period: int
+        """
+        self.period = int(period)
 
     def _trigger_epoch(self):
         if self.epoch_num % self.period == 0:

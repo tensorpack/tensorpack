@@ -15,10 +15,17 @@ __all__ = ['HyperParamSetter', 'HumanHyperParamSetter',
            'ScheduledHyperParamSetter']
 
 class HyperParamSetter(Callback):
+    """
+    Base class to set hyperparameters after every epoch.
+    """
     __metaclass__ = ABCMeta
 
     # TODO maybe support InputVar?
     def __init__(self, var_name, shape=[]):
+        """
+        :param var_name: name of the variable
+        :param shape: shape of the variable
+        """
         self.op_name, self.var_name = get_op_var_name(var_name)
         self.shape = shape
         self.last_value = None
@@ -37,6 +44,9 @@ class HyperParamSetter(Callback):
         self.assign_op = self.var.assign(self.val_holder)
 
     def get_current_value(self):
+        """
+        :returns: the value to assign to the variable now.
+        """
         ret = self._get_current_value()
         if ret is not None and ret != self.last_value:
             logger.info("{} at epoch {} is changed to {}".format(
@@ -54,10 +64,13 @@ class HyperParamSetter(Callback):
             self.assign_op.eval(feed_dict={self.val_holder:v})
 
 class HumanHyperParamSetter(HyperParamSetter):
+    """
+    Set hyperparameters manually by modifying a file.
+    """
     def __init__(self, var_name, file_name):
         """
-        read value from file_name.
-        file_name: each line in the file is a k:v pair
+        :param var_name: name of the variable.
+        :param file_name: a file containing the value of the variable. Each line in the file is a k:v pair
         """
         self.file_name = file_name
         super(HumanHyperParamSetter, self).__init__(var_name)
@@ -77,9 +90,12 @@ class HumanHyperParamSetter(HyperParamSetter):
             return None
 
 class ScheduledHyperParamSetter(HyperParamSetter):
+    """
+    Set hyperparameters by a predefined schedule.
+    """
     def __init__(self, var_name, schedule):
         """
-        schedule: [(epoch1, val1), (epoch2, val2), (epoch3, val3), ...]
+        :param schedule: [(epoch1, val1), (epoch2, val2), (epoch3, val3), ...]
         """
         schedule = [(int(a), float(b)) for a, b in schedule]
         self.schedule = sorted(schedule, key=operator.itemgetter(0))

@@ -10,16 +10,22 @@ from six.moves import zip
 from ..utils import *
 from ..utils.stat import *
 from ..tfutils.summary import *
-from .base import PeriodicCallback, Callback, TestCallback
+from .base import PeriodicCallback, Callback, TestCallbackType
 
 __all__ = ['ValidationError', 'ValidationCallback', 'ValidationStatPrinter']
 
 class ValidationCallback(PeriodicCallback):
-    type = TestCallback()
     """
     Base class for validation callbacks.
     """
+    type = TestCallbackType()
+
     def __init__(self, ds, prefix, period=1):
+        """
+        :param ds: validation dataset. must be a `DataFlow` instance.
+        :param prefix: name to use for this validation.
+        :param period: period to perform validation.
+        """
         super(ValidationCallback, self).__init__(period)
         self.ds = ds
         self.prefix = prefix
@@ -29,6 +35,9 @@ class ValidationCallback(PeriodicCallback):
         self._find_output_vars()
 
     def get_tensor(self, name):
+        """
+        Get tensor from graph.
+        """
         return self.graph.get_tensor_by_name(name)
 
     @abstractmethod
@@ -63,6 +72,12 @@ class ValidationStatPrinter(ValidationCallback):
     The result of the given Op must be a scalar, and will be averaged for all batches in the validaion set.
     """
     def __init__(self, ds, names_to_print, prefix='validation', period=1):
+        """
+        :param ds: validation dataset. must be a `DataFlow` instance.
+        :param names_to_print: names of variables to print
+        :param prefix: name to use for this validation.
+        :param period: period to perform validation.
+        """
         super(ValidationStatPrinter, self).__init__(ds, prefix, period)
         self.names = names_to_print
 
@@ -88,9 +103,9 @@ class ValidationStatPrinter(ValidationCallback):
 
 class ValidationError(ValidationCallback):
     """
-    Validate the accuracy from a 'wrong' variable
-    wrong_var: integer, number of failed samples in this batch
-    ds: batched dataset
+    Validate the accuracy from a `wrong` variable
+
+    The `wrong` variable is supposed to be an integer equal to the number of failed samples in this batch
 
     This callback produce the "true" error,
     taking account of the fact that batches might not have the same size in
@@ -100,6 +115,10 @@ class ValidationError(ValidationCallback):
     def __init__(self, ds, prefix='validation',
                  period=1,
                  wrong_var_name='wrong:0'):
+        """
+        :param ds: a batched `DataFlow` instance
+        :param wrong_var_name: name of the `wrong` variable
+        """
         super(ValidationError, self).__init__(ds, prefix, period)
         self.wrong_var_name = wrong_var_name
 

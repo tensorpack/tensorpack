@@ -9,21 +9,30 @@ import numpy as np
 
 from .base import Callback
 from ..utils import logger
+from ..tfutils import get_op_var_name
 
 __all__ = ['DumpParamAsImage']
 
 class DumpParamAsImage(Callback):
+    """
+    Dump a variable to image(s) after every epoch.
+    """
     def __init__(self, var_name, prefix=None, map_func=None, scale=255, clip=False):
         """
-        map_func: map the value of the variable to an image or list of images, default to identity
-            images should have shape [h, w] or [h, w, c].
-        scale: a multiplier on pixel values, applied after map_func. default to 255
-        clip: clip the result to [0, 255]
+        :param var_name: the name of the variable.
+
+        :param prefix: the filename prefix for saved images. Default is the op name.
+
+        :param map_func: map the value of the variable to an image or list of
+                    images of shape [h, w] or [h, w, c]. If None, will use identity
+
+        :param scale: a multiplier on pixel values, applied after map_func. default to 255
+        :param clip: whether to clip the result to [0, 255]
         """
-        self.var_name = var_name
+        op_name, self.var_name = get_op_var_name(var_name)
         self.func = map_func
         if prefix is None:
-            self.prefix = self.var_name
+            self.prefix = op_name
         else:
             self.prefix = prefix
         self.log_dir = logger.LOG_DIR

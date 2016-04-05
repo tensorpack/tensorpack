@@ -12,7 +12,15 @@ from ..utils import *
 __all__ = ['PeriodicSaver']
 
 class PeriodicSaver(PeriodicCallback):
+    """
+    Save the model to logger directory.
+    """
     def __init__(self, period=1, keep_recent=10, keep_freq=0.5):
+        """
+        :param period: number of epochs to save models.
+        :param keep_recent: see `tf.train.Saver` documentation.
+        :param keep_freq: see `tf.train.Saver` documentation.
+        """
         super(PeriodicSaver, self).__init__(period)
         self.keep_recent = keep_recent
         self.keep_freq = keep_freq
