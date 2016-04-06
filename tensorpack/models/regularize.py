@@ -19,7 +19,9 @@ l1_regularizer = tf.contrib.layers.l1_regularizer
 
 def regularize_cost(regex, func, name=None):
     """
-    Apply a regularizer on every trainable variable matching the regex
+    Apply a regularizer on every trainable variable matching the regex.
+
+    :param func: a function that takes a tensor and return a scalar.
     """
     G = tf.get_default_graph()
     params = G.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)

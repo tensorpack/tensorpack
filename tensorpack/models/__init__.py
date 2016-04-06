@@ -6,7 +6,7 @@ from pkgutil import walk_packages
 import os
 import os.path
 
-def global_import(name):
+def _global_import(name):
     p = __import__(name, globals(), locals(), level=1)
     lst = p.__all__ if '__all__' in dir(p) else dir(p)
     for k in lst:
@@ -15,5 +15,5 @@ def global_import(name):
 for _, module_name, _ in walk_packages(
         [os.path.dirname(__file__)]):
     if not module_name.startswith('_'):
-        global_import(module_name)
+        _global_import(module_name)
 

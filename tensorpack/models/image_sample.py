@@ -43,12 +43,12 @@ def ImageSample(inputs):
     """
     Sample the template image, using the given coordinate, by bilinear interpolation.
     It mimics the same behavior described in:
-    Spatial Transformer Networks, http://arxiv.org/abs/1506.02025
+    `Spatial Transformer Networks <http://arxiv.org/abs/1506.02025>`_.
 
-    inputs: list of [template, mapping]
-    template: bxhxwxc
-    mapping: bxh2xw2x2  (y, x) real-value coordinates
-    Return: bxh2xw2xc
+    :param input: [template, mapping]. template of shape NHWC. mapping of
+        shape NHW2, where each pair of the last dimension is a (y, x) real-value
+        coordinate.
+    :returns: a NHWC output tensor.
     """
     template, mapping = inputs
     assert template.get_shape().ndims == 4 and mapping.get_shape().ndims == 4

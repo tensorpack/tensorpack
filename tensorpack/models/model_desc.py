@@ -14,16 +14,14 @@ __all__ = ['ModelDesc', 'InputVar']
 InputVar = namedtuple('InputVar', ['type', 'shape', 'name'])
 
 class ModelDesc(object):
+    """ Base class for a model description """
     __metaclass__ = ABCMeta
-
-
-    def __init__(self):
-        pass
 
     def get_input_vars(self):
         """
-        return the list of raw input vars in the graph
-        if reuse=True, results will be cached, to avoid creating the same variable
+        Create and return raw input vars in the graph.
+
+        :returns: the list of raw input vars in the graph
         """
         input_vars = self._get_input_vars()
         ret = []
@@ -32,16 +30,13 @@ class ModelDesc(object):
         return ret
 
     def reuse_input_vars(self):
-        """ find input_vars in default graph"""
+        """ Find and return already-defined input_vars in default graph"""
         input_var_names = [k.name for k in self._get_input_vars()]
         g = tf.get_default_graph()
         return [g.get_tensor_by_name(name + ":0") for name in input_var_names]
 
     @abstractmethod
     def _get_input_vars(self):
-        """
-        return the list of input vars in the graph
-        """
         pass
 
     # TODO move this to QueueInputTrainer
@@ -55,21 +50,21 @@ class ModelDesc(object):
         return tf.FIFOQueue(100, [x.dtype for x in input_vars], name='input_queue')
 
     def get_cost(self, input_vars, is_training):
+        """
+        :param input_vars: a list of input variable in the graph
+            e.g.: [image_var, label_var] with:
+
+            * image_var: bx28x28
+            * label_var: bx1 integer
+        :param is_training: a boolean
+        :returns: the cost to minimize. a scalar variable
+        """
         assert type(is_training) == bool
         return self._get_cost(input_vars, is_training)
 
     @abstractmethod
     def _get_cost(self, input_vars, is_training):
-        """
-        Args:
-            input_vars: a list of input variable in the graph
-            e.g.: [image_var, label_var] with:
-                image_var: bx28x28
-                label_var: bx1 integer
-            is_training: a python bool variable
-        Returns:
-            the cost to minimize. scalar variable
-        """
+        pass
 
     def get_gradient_processor(self):
         """ Return a list of GradientProcessor. They will be executed in order"""

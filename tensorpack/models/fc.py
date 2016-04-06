@@ -16,7 +16,15 @@ def FullyConnected(x, out_dim,
                    W_init=None, b_init=None,
                    nl=tf.nn.relu, use_bias=True):
     """
-    Fully-Connected layer
+    Fully-Connected layer.
+
+    :param input: a tensor to be flattened except the first dimension.
+    :param out_dim: output dimension
+    :param W_init: initializer for W. default to `xavier_initializer_conv2d`.
+    :param b_init: initializer for b. default to zero initializer.
+    :param nl: nonlinearity. default to `relu`.
+    :param use_bias: whether to use bias. a boolean default to True
+    :returns: a 2D tensor
     """
     x = batch_flatten(x)
     in_dim = x.get_shape().as_list()[1]

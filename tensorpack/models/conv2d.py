@@ -16,11 +16,18 @@ def Conv2D(x, out_channel, kernel_shape,
            W_init=None, b_init=None,
            nl=tf.nn.relu, split=1, use_bias=True):
     """
-    kernel_shape: (h, w) or a int
-    stride: (h, w) or a int
-    padding: 'valid' or 'same'
-    split: split channels. used in Alexnet
-    use_bias: whether to use bias
+    2D convolution on 4D inputs.
+
+    :param input: a tensor of shape NHWC
+    :param kernel_shape: (h, w) or a int
+    :param stride: (h, w) or a int. default to 1
+    :param padding: 'valid' or 'same'. default to 'same'
+    :param split: split channels as used in Alexnet. a int default to 1
+    :param W_init: initializer for W. default to `xavier_initializer_conv2d`.
+    :param b_init: initializer for b. default to zero initializer.
+    :param nl: nonlinearity. default to `relu`.
+    :param use_bias: whether to use bias. a boolean default to True
+    :returns: a NHWC tensor
     """
     in_shape = x.get_shape().as_list()
     num_in = np.prod(in_shape[1:])

@@ -13,9 +13,13 @@ __all__ = ['MaxPooling', 'FixedUnPooling', 'AvgPooling', 'GlobalAvgPooling']
 @layer_register()
 def MaxPooling(x, shape, stride=None, padding='VALID'):
     """
-        shape, stride: int or list/tuple of length 2
-        if stride is None, use shape by default
-        padding: 'VALID' or 'SAME'
+    MaxPooling on images.
+
+    :param input: NHWC tensor.
+    :param shape: int or [h, w]
+    :param stride: int or [h, w]. default to be shape.
+    :param padding: 'valid' or 'same'. default to 'valid'
+    :returns: NHWC tensor.
     """
     padding = padding.upper()
     shape = shape4d(shape)
@@ -29,9 +33,13 @@ def MaxPooling(x, shape, stride=None, padding='VALID'):
 @layer_register()
 def AvgPooling(x, shape, stride=None, padding='VALID'):
     """
-        shape, stride: int or list/tuple of length 2
-        if stride is None, use shape by default
-        padding: 'VALID' or 'SAME'
+    Average pooling on images.
+
+    :param input: NHWC tensor.
+    :param shape: int or [h, w]
+    :param stride: int or [h, w]. default to be shape.
+    :param padding: 'valid' or 'same'. default to 'valid'
+    :returns: NHWC tensor.
     """
     padding = padding.upper()
     shape = shape4d(shape)
@@ -44,16 +52,26 @@ def AvgPooling(x, shape, stride=None, padding='VALID'):
 
 @layer_register()
 def GlobalAvgPooling(x):
+    """
+    Global average pooling as in `Network In Network
+    <http://arxiv.org/abs/1312.4400>`_.
+
+    :param input: NHWC tensor.
+    :returns: NC tensor.
+    """
     assert x.get_shape().ndims == 4
     return tf.reduce_mean(x, [1, 2])
 
 @layer_register()
 def FixedUnPooling(x, shape, unpool_mat=None):
     """
-    Unpool the input with a fixed mat to perform kronecker product with
-    x: 4D tensor of (b, h, w, c)
-    shape: int or list/tuple of length 2
-    unpool_mat: a tf matrix with size=shape. if None, will use a mat with 1 at top-left corner
+    Unpool the input with a fixed mat to perform kronecker product with.
+
+    :param input: NHWC tensor
+    :param shape: int or [h, w]
+    :param unpool_mat: a tf matrix with size=shape. If None, will use a mat
+        with 1 at top-left corner.
+    :returns: NHWC tensor
     """
     shape = shape2d(shape)
     input_shape = x.get_shape().as_list()
