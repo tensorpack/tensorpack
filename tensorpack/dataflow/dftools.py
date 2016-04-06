@@ -9,8 +9,12 @@ from ..utils.fs import mkdir_p
 
 # TODO name_func to write label?
 def dump_dataset_images(ds, dirname, max_count=None, index=0):
-    """ dump images to a folder
-        index: the index of the image in a data point
+    """ Dump images from a `DataFlow` to a directory.
+
+        :param ds: a `DataFlow` instance.
+        :param dirname: name of the directory.
+        :param max_count: max number of images to dump
+        :param index: the index of the image component in a data point.
     """
     mkdir_p(dirname)
     if max_count is None:

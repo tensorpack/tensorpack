@@ -15,8 +15,8 @@ class Sentinel:
 class PrefetchProcess(multiprocessing.Process):
     def __init__(self, ds, queue):
         """
-        ds: ds to take data from
-        queue: output queue to put results in
+        :param ds: ds to take data from
+        :param queue: output queue to put results in
         """
         super(PrefetchProcess, self).__init__()
         self.ds = ds
@@ -30,11 +30,15 @@ class PrefetchProcess(multiprocessing.Process):
         finally:
             self.queue.put(Sentinel())
 
-
 class PrefetchData(DataFlow):
+    """
+    Prefetch data from a `DataFlow` using multiprocessing
+    """
     def __init__(self, ds, nr_prefetch, nr_proc=1):
         """
-        use multiprocess
+        :param ds: a `DataFlow` instance.
+        :param nr_prefetch: size of the queue to hold prefetched datapoints.
+        :param nr_proc: number of processes to use.
         """
         self.ds = ds
         self._size = self.ds.size()

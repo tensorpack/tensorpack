@@ -10,6 +10,7 @@ __all__ = ['GaussianDeform', 'GaussianMap']
 # TODO really needs speedup
 
 class GaussianMap(object):
+    """ Generate gaussian weighted deformation map"""
     def __init__(self, image_shape, sigma=0.5):
         assert len(image_shape) == 2
         self.shape = image_shape
@@ -53,14 +54,14 @@ def np_sample(img, coords):
 # TODO input/output with different shape
 class GaussianDeform(ImageAugmentor):
     """
-    Some kind of deformation
+    Some kind of deformation. Quite slow.
     """
-    #TODO docs
     def __init__(self, anchors, shape, sigma=0.5, randrange=None):
         """
-        anchors: in [0,1] coordinate
-        shape: 2D image shape
-        randrange: default to shape[0] / 8
+        :param anchors: in [0,1] coordinate
+        :param shape: image shape in [h, w]
+        :param sigma: sigma for Gaussian weight
+        :param randrange: default to shape[0] / 8
         """
         super(GaussianDeform, self).__init__()
         self.anchors = anchors

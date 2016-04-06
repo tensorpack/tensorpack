@@ -9,9 +9,12 @@ __all__ = ['BrightnessAdd', 'Contrast', 'MeanVarianceNormalize']
 
 class BrightnessAdd(ImageAugmentor):
     """
-    Randomly add a value within [-delta,delta], and clip in [0,255]
+    Random adjust brightness.
     """
     def __init__(self, delta, clip=True):
+        """
+        Randomly add a value within [-delta,delta], and clip in [0,255] if clip is True.
+        """
         assert delta > 0
         self._init(locals())
 
@@ -27,6 +30,10 @@ class Contrast(ImageAugmentor):
     and clip to [0, 255]
     """
     def __init__(self, factor_range, clip=True):
+        """
+        :param factor_range: an interval to random sample the `contrast_factor`.
+        :param clip: boolean.
+        """
         self._init(locals())
 
     def _augment(self, img):
@@ -44,6 +51,9 @@ class MeanVarianceNormalize(ImageAugmentor):
     where adjusted_stddev = max(stddev, 1.0/sqrt(num_pixels * channels))
     """
     def __init__(self, all_channel=True):
+        """
+        :param all_channel: if True, normalize all channels together. else separately.
+        """
         self.all_channel = all_channel
 
     def _augment(self, img):

@@ -8,14 +8,20 @@ from ...utils import get_rng
 __all__ = ['Image', 'ImageAugmentor', 'AugmentorList']
 
 class Image(object):
-    """ An image with attributes, for augmentor to operate on
-        Attributes (such as coordinates) have to be augmented acoordingly, if necessary
+    """ An image class with attributes, for augmentor to operate on.
+        Attributes (such as coordinates) have to be augmented acoordingly by
+        the augmentor, if necessary.
     """
     def __init__(self, arr, coords=None):
+        """
+        :param arr: the image array. Expected to be of [h, w, c] or [h, w]
+        :param coords: keypoint coordinates.
+        """
         self.arr = arr
         self.coords = coords
 
 class ImageAugmentor(object):
+    """ Base class for an image augmentor"""
     __metaclass__ = ABCMeta
 
     def __init__(self):
@@ -33,19 +39,17 @@ class ImageAugmentor(object):
 
     def augment(self, img):
         """
-        Note: will both modify `img` in-place and return `img`
+        Perform augmentation on the image in-place.
+        :param img: an `Image` instance.
+        :returns: the augmented `Image` instance. arr will always be of type
+        'float32' after augmentation.
         """
         self._augment(img)
         return img
 
     @abstractmethod
     def _augment(self, img):
-        """
-        Augment the image in-place. Will always make it float32 array.
-        Args:
-            img: the input Image instance
-                img.arr must be of shape [h, w] or [h, w, c]
-        """
+        pass
 
     def _rand_range(self, low=1.0, high=None, size=None):
         if high is None:
@@ -59,6 +63,9 @@ class AugmentorList(ImageAugmentor):
     Augment by a list of augmentors
     """
     def __init__(self, augmentors):
+        """
+        :param augmentors: list of `ImageAugmentor` instance to be applied
+        """
         self.augs = augmentors
 
     def _augment(self, img):
@@ -68,5 +75,6 @@ class AugmentorList(ImageAugmentor):
             aug.augment(img)
 
     def reset_state(self):
+        """ Will reset state of each augmentor """
         for a in self.augs:
             a.reset_state()

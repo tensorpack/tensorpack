@@ -73,7 +73,7 @@ class StatPrinter(Callback):
     """
     def __init__(self, print_tag=None):
         """
-        :param print_tag : a list of regex to match scalar summary to print.
+        :param print_tag: a list of regex to match scalar summary to print.
             If None, will print all scalar tags
         """
         self.print_tag = print_tag

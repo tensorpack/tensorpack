@@ -12,11 +12,11 @@ from .imgaug import AugmentorList, Image
 __all__ = ['ImageFromFile', 'AugmentImageComponent']
 
 class ImageFromFile(DataFlow):
-    """ generate rgb images from files """
+    """ Generate rgb images from list of files """
     def __init__(self, files, channel=3, resize=None):
-        """ files: list of file path
-            channel: 1 or 3 channel
-            resize: a (h, w) tuple. If given, will force a resize
+        """ :param files: list of file paths
+            :param channel: 1 or 3 channel
+            :param resize: a (h, w) tuple. If given, will force a resize
         """
         assert len(files)
         self.files = files
@@ -39,13 +39,14 @@ class ImageFromFile(DataFlow):
 
 class AugmentImageComponent(MapDataComponent):
     """
-    Augment image in each data point
-    Args:
-        ds: a DataFlow dataset instance
-        augmentors: a list of ImageAugmentor instance
-        index: the index of image in each data point. default to be 0
+    Augment the image component of datapoints
     """
     def __init__(self, ds, augmentors, index=0):
+        """
+        :param ds: a `DataFlow` instance.
+        :param augmentors: a list of `ImageAugmentor` instance to be applied in order.
+        :param index: the index of the image component in the produced datapoints by `ds`. default to be 0
+        """
         self.augs = AugmentorList(augmentors)
         super(AugmentImageComponent, self).__init__(
             ds, lambda x: self.augs.augment(Image(x)).arr, index)

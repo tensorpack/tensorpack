@@ -9,11 +9,16 @@ import cv2
 __all__ = ['Flip', 'MapImage', 'Resize']
 
 class Flip(ImageAugmentor):
+    """
+    Random flip.
+    """
     def __init__(self, horiz=False, vert=False, prob=0.5):
         """
-        Random flip.
-        Args:
-            horiz, vert: True/False
+        Only one of horiz, vert can be set.
+
+        :param horiz: whether or not apply horizontal flip.
+        :param vert: whether or not apply vertical flip.
+        :param prob: probability of flip.
         """
         if horiz and vert:
             raise ValueError("Please use two Flip, with both 0.5 prob")
@@ -34,7 +39,13 @@ class Flip(ImageAugmentor):
 
 
 class MapImage(ImageAugmentor):
+    """
+    Map the image array by a function.
+    """
     def __init__(self, func):
+        """
+        :param func: a function which takes a image array and return a augmented one
+        """
         self.func = func
 
     def _augment(self, img):
@@ -42,11 +53,10 @@ class MapImage(ImageAugmentor):
 
 
 class Resize(ImageAugmentor):
-    """Resize image to a target size"""
+    """ Resize image to a target size"""
     def __init__(self, shape):
         """
-        Args:
-            shape: (h, w)
+        :param shape: shape in (h, w)
         """
         self._init(locals())
 

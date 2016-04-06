@@ -22,9 +22,14 @@ __all__ = ['HDF5Data']
 
 class HDF5Data(DataFlow):
     """
-    Zip data from different paths in this HDF5 data file
+    Zip data from different paths in an HDF5 file. Will load all data into memory.
     """
     def __init__(self, filename, data_paths, shuffle=True):
+        """
+        :param filename: h5 data file.
+        :param data_paths: list of h5 paths to zipped. For example ['images', 'labels']
+        :param shuffle: shuffle the order of all data.
+        """
         self.f = h5py.File(filename, 'r')
         logger.info("Loading {} to memory...".format(filename))
         self.dps = [self.f[k].value for k in data_paths]

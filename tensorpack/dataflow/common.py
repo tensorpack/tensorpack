@@ -14,10 +14,12 @@ __all__ = ['BatchData', 'FixedSizeData', 'FakeData', 'MapData',
 class BatchData(ProxyDataFlow):
     def __init__(self, ds, batch_size, remainder=False):
         """
-        Group data in ds into batches
-        ds: a DataFlow instance
-        remainder: whether to return the remaining data smaller than a batch_size.
-            if set True, will possibly return a data point of a smaller 1st dimension
+        Group data in `ds` into batches.
+
+        :param ds: a DataFlow instance
+        :param remainder: whether to return the remaining data smaller than a batch_size.
+            If set True, will possibly return a data point of a smaller 1st dimension.
+            Otherwise, all generated data are guranteed to have the same size.
         """
         super(BatchData, self).__init__(ds)
         if not remainder:
@@ -34,17 +36,20 @@ class BatchData(ProxyDataFlow):
         return div + int(self.remainder)
 
     def get_data(self):
+        """
+        :returns: produce batched data by tiling data on an extra 0th dimension.
+        """
         holder = []
         for data in self.ds.get_data():
             holder.append(data)
             if len(holder) == self.batch_size:
-                yield BatchData.aggregate_batch(holder)
+                yield BatchData._aggregate_batch(holder)
                 holder = []
         if self.remainder and len(holder) > 0:
-            yield BatchData.aggregate_batch(holder)
+            yield BatchData._aggregate_batch(holder)
 
     @staticmethod
-    def aggregate_batch(data_holder):
+    def _aggregate_batch(data_holder):
         size = len(data_holder[0])
         result = []
         for k in range(size):
@@ -60,16 +65,23 @@ class BatchData(ProxyDataFlow):
         return result
 
 class FixedSizeData(ProxyDataFlow):
-    """ generate data from another dataflow, but with a fixed epoch size"""
+    """ Generate data from another DataFlow, but with a fixed epoch size"""
     def __init__(self, ds, size):
+        """
+        :param ds: a :mod:`DataFlow` to produce data
+        :param size: a int
+        """
         super(FixedSizeData, self).__init__(ds)
-        self._size = size
+        self._size = int(size)
         self.itr = None
 
     def size(self):
         return self._size
 
     def get_data(self):
+        """
+        Produce data from ds, stop at size
+        """
         if self.itr is None:
             self.itr = self.ds.get_data()
         cnt = 0
@@ -86,10 +98,15 @@ class FixedSizeData(ProxyDataFlow):
                 return
 
 class RepeatedData(ProxyDataFlow):
-    """ repeat another dataflow for certain times
-        if nr == -1, repeat infinitely many times
+    """ Take data points from another `DataFlow` and produce them until
+        it's exhausted for certain amount of times.
     """
     def __init__(self, ds, nr):
+        """
+        :param ds: a :mod:`DataFlow` instance.
+        :param nr: number of times to repeat ds.
+            If nr == -1, repeat ds infinitely many times.
+        """
         self.nr = nr
         super(RepeatedData, self).__init__(ds)
 
@@ -109,13 +126,14 @@ class RepeatedData(ProxyDataFlow):
                     yield dp
 
 class FakeData(DataFlow):
-    """ Build fake random data of given shapes"""
+    """ Generate fake random data of given shapes"""
     def __init__(self, shapes, size):
         """
-        shapes: list of list/tuple
+        :param shapes: a list of lists/tuples
+        :param size: size of this DataFlow
         """
         self.shapes = shapes
-        self._size = size
+        self._size = int(size)
         self.rng = get_rng(self)
 
     def size(self):
@@ -126,8 +144,12 @@ class FakeData(DataFlow):
             yield [self.rng.random_sample(k) for k in self.shapes]
 
 class MapData(ProxyDataFlow):
-    """ Map a function to the datapoint"""
+    """ Map a function on the datapoint"""
     def __init__(self, ds, func):
+        """
+        :param ds: a :mod:`DataFlow` instance.
+        :param func: a function that takes a original datapoint, returns a new datapoint
+        """
         super(MapData, self).__init__(ds)
         self.func = func
 
@@ -138,6 +160,10 @@ class MapData(ProxyDataFlow):
 class MapDataComponent(ProxyDataFlow):
     """ Apply a function to the given index in the datapoint"""
     def __init__(self, ds, func, index=0):
+        """
+        :param ds: a :mod:`DataFlow` instance.
+        :param func: a function that takes a datapoint dp[index], returns a new value of dp[index]
+        """
         super(MapDataComponent, self).__init__(ds)
         self.func = func
         self.index = index
@@ -150,11 +176,12 @@ class MapDataComponent(ProxyDataFlow):
 
 class RandomChooseData(DataFlow):
     """
-    Randomly choose from several dataflow. Stop producing when any of its dataflow stops.
+    Randomly choose from several DataFlow. Stop producing when any of them is
+    exhausted.
     """
     def __init__(self, df_lists):
         """
-        df_lists: list of dataflow, or list of (dataflow, probability) tuple
+        :param df_lists: list of dataflow, or list of (dataflow, probability) tuple
         """
         if isinstance(df_lists[0], (tuple, list)):
             assert sum([v[1] for v in df_lists]) == 1.0
@@ -184,13 +211,12 @@ class RandomChooseData(DataFlow):
 
 class RandomMixData(DataFlow):
     """
-    Randomly choose from several dataflow, will eventually exhaust all dataflow.
-    So it's a perfect mix.
+    Randomly choose from several dataflow, and will eventually exhaust all dataflow.  So it's a perfect mix.
     """
     def __init__(self, df_lists):
         """
-        df_lists: list of dataflow
-        all DataFlow in df_lists must have size() implemented
+        :param df_lists: list of dataflow.
+            All DataFlow in `df_lists` must have :func:`size()` implemented
         """
         self.df_lists = df_lists
         self.sizes = [k.size() for k in self.df_lists]
@@ -217,11 +243,11 @@ class RandomMixData(DataFlow):
 
 class JoinData(DataFlow):
     """
-    Concatenate several dataflows
+    Concatenate several dataflows.
     """
     def __init__(self, df_lists):
         """
-        df_lists: list of dataflow
+        :param df_lists: list of :mod:`DataFlow` instances
         """
         self.df_lists = df_lists
 
