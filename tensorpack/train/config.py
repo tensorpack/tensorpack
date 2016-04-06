@@ -18,21 +18,20 @@ class TrainConfig(object):
     """
     def __init__(self, **kwargs):
         """
-        Args:
-            dataset: the dataset to train. a tensorpack.dataflow.DataFlow instance.
-            optimizer: a tf.train.Optimizer instance defining the optimizer for trainig.
-            callbacks: a tensorpack.utils.callback.Callbacks instance. Define
-                the callbacks to perform during training. has to contain a
-                SummaryWriter and a PeriodicSaver
-            session_config: a tf.ConfigProto instance to instantiate the
-                session. default to a session running 1 GPU.
-            session_init: a tensorpack.utils.sessinit.SessionInit instance to
-                initialize variables of a session. default to a new session.
-            model: a ModelDesc instance
-            starting_epoch: int. default to be 1.
-            step_per_epoch: the number of steps (SGD updates) to perform in each epoch.
-            max_epoch: maximum number of epoch to run training. default to 100
-            nr_tower: int. number of towers. default to 1.
+        :param dataset: the dataset to train. a `DataFlow` instance.
+        :param optimizer: a `tf.train.Optimizer` instance defining the optimizer for trainig.
+        :param callbacks: a `callback.Callbacks` instance. Define
+            the callbacks to perform during training. It has to contain a
+            SummaryWriter and a PeriodicSaver
+        :param session_config: a `tf.ConfigProto` instance to instantiate the
+            session. default to a session running 1 GPU.
+        :param session_init: a `sessinit.SessionInit` instance to
+            initialize variables of a session. default to a new session.
+        :param model: a `ModelDesc` instance.j
+        :param starting_epoch: int. default to be 1.
+        :param step_per_epoch: the number of steps (SGD updates) to perform in each epoch.
+        :param max_epoch: maximum number of epoch to run training. default to 100
+        :param nr_tower: int. number of towers. default to 1.
         """
         def assert_type(v, tp):
             assert isinstance(v, tp), v.__class__

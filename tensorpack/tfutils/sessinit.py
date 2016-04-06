@@ -14,18 +14,36 @@ __all__ = ['SessionInit', 'NewSession', 'SaverRestore', 'ParamRestore',
            'dump_session_params']
 
 class SessionInit(object):
+    """ Base class for utilities to initialize a session"""
     __metaclass__ = ABCMeta
 
-    @abstractmethod
     def init(self, sess):
-        """ Method to initialize a session"""
+        """ Initialize a session
+
+        :param sess: a `tf.Session`
+        """
+        self._init(sess)
+
+    @abstractmethod
+    def _init(self, sess):
+        pass
 
 class NewSession(SessionInit):
-    def init(self, sess):
+    """
+    Create a new session. All variables will be initialized by their
+    initializer.
+    """
+    def _init(self, sess):
         sess.run(tf.initialize_all_variables())
 
 class SaverRestore(SessionInit):
+    """
+    Restore an old model saved by `tf.Saver`.
+    """
     def __init__(self, model_path):
+        """
+        :param model_path: a model file or a ``checkpoint`` file.
+        """
         assert os.path.isfile(model_path)
         if os.path.basename(model_path) == 'checkpoint':
             model_path = tf.train.get_checkpoint_state(
@@ -33,7 +51,7 @@ class SaverRestore(SessionInit):
             assert os.path.isfile(model_path)
         self.set_path(model_path)
 
-    def init(self, sess):
+    def _init(self, sess):
         saver = tf.train.Saver()
         saver.restore(sess, self.path)
         logger.info(
@@ -44,12 +62,15 @@ class SaverRestore(SessionInit):
 
 class ParamRestore(SessionInit):
     """
-    Restore trainable variables from a dictionary
+    Restore trainable variables from a dictionary.
     """
     def __init__(self, param_dict):
+        """
+        :param param_dict: a dict of {name: value}
+        """
         self.prms = param_dict
 
-    def init(self, sess):
+    def _init(self, sess):
         sess.run(tf.initialize_all_variables())
         variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
         var_dict = dict([v.name, v] for v in variables)
@@ -70,7 +91,9 @@ class ParamRestore(SessionInit):
             sess.run(var.assign(value))
 
 def dump_session_params(path):
-    """ dump value of all trainable variables to a dict"""
+    """ Dump value of all trainable variables to a dict and save to `path` as
+    npy format.
+    """
     var = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
     result = {}
     for v in var:

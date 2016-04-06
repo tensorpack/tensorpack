@@ -6,6 +6,11 @@ import tensorflow as tf
 import numpy as np
 
 def one_hot(y, num_labels):
+    """
+    :param y: prediction. an Nx1 int tensor.
+    :param num_labels: an int. number of output classes
+    :returns: an NxC onehot matrix.
+    """
     with tf.op_scope([y, num_labels], 'one_hot'):
         batch_size = tf.size(y)
         y = tf.expand_dims(y, 1)
@@ -18,9 +23,9 @@ def one_hot(y, num_labels):
 
 def prediction_incorrect(logits, label):
     """
-    logits: batchxN
-    label: batch
-    return a binary vector with 1 means incorrect prediction
+    :param logits: NxC
+    :param label: N
+    :returns: a binary vector of length N with 1 meaning incorrect prediction
     """
     with tf.op_scope([logits, label], 'incorrect'):
         wrong = tf.not_equal(
@@ -30,13 +35,24 @@ def prediction_incorrect(logits, label):
         return wrong
 
 def flatten(x):
+    """
+    Flatten the tensor.
+    """
     return tf.reshape(x, [-1])
 
 def batch_flatten(x):
+    """
+    Flatten the tensor except the first dimension.
+    """
     total_dim = np.prod(x.get_shape()[1:].as_list())
     return tf.reshape(x, [-1, total_dim])
 
 def logSoftmax(x):
+    """
+    Batch log softmax.
+    :param x: NxC tensor.
+    :returns: NxC tensor.
+    """
     with tf.op_scope([x], 'logSoftmax'):
         z = x - tf.reduce_max(x, 1, keep_dims=True)
         logprob = z - tf.log(tf.reduce_sum(tf.exp(z), 1, keep_dims=True))

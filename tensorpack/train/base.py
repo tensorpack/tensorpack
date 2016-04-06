@@ -17,11 +17,14 @@ from ..tfutils.modelutils import describe_model
 __all__ = ['Trainer']
 
 class Trainer(object):
+    """
+    Base class for a trainer.
+    """
     __metaclass__ = ABCMeta
 
     def __init__(self, config):
         """
-        Config: a `TrainConfig` instance
+        :param config: a `TrainConfig` instance
         """
         assert isinstance(config, TrainConfig), type(config)
         self.config = config
@@ -29,10 +32,12 @@ class Trainer(object):
 
     @abstractmethod
     def train(self):
+        """ Start training"""
         pass
 
     @abstractmethod
     def run_step(self):
+        """ run an iteration"""
         pass
 
     def trigger_epoch(self):

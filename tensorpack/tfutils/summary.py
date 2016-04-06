@@ -10,9 +10,7 @@ from . import get_global_step_var
 
 def create_summary(name, v):
     """
-    Return a tf.Summary object with name and simple value v
-    Args: v: a value
-
+    Return a tf.Summary object with name and simple scalar value v
     """
     assert isinstance(name, six.string_types), type(name)
     v = float(v)
@@ -22,8 +20,8 @@ def create_summary(name, v):
 
 def add_activation_summary(x, name=None):
     """
-    Summary for an activation tensor x.
-    If name is None, use x.name
+    Add summary to graph for an activation tensor x.
+    If name is None, use x.name.
     """
     ndim = x.get_shape().ndims
     assert ndim >= 2, \
@@ -35,9 +33,10 @@ def add_activation_summary(x, name=None):
 
 def add_param_summary(summary_lists):
     """
-    summary_lists: list of (regex, [list of action to perform])
-    action can be 'mean', 'scalar', 'histogram', 'sparsity'
     Add summary for all trainable variables matching the regex
+
+    :param summary_lists: list of (regex, [list of action to perform]).
+        Action can be 'mean', 'scalar', 'histogram', 'sparsity'.
     """
     def perform(var, action):
         ndim = var.get_shape().ndims
@@ -67,10 +66,12 @@ def add_param_summary(summary_lists):
                 for act in actions:
                     perform(p, act)
 
+# TODO use name of cost_var
 def summary_moving_average(cost_var):
     """ Create a MovingAverage op and summary for all variables in
-        MOVING_SUMMARY_VARS_KEY, as well as the argument
-        Return a op to maintain these average
+        MOVING_SUMMARY_VARS_KEY, as well as `cost_var`.
+
+        :returns: a op to maintain these average.
     """
     global_step_var = get_global_step_var()
     averager = tf.train.ExponentialMovingAverage(

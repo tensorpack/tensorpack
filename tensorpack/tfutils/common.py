@@ -8,8 +8,11 @@ import tensorflow as tf
 
 def get_default_sess_config(mem_fraction=0.5):
     """
-    Return a better config to use as default.
-    Tensorflow default session config consume too much resources
+    Return a better session config to use as default.
+    Tensorflow default session config consume too much resources.
+
+    :param mem_fraction: fraction of memory to use.
+    :returns: a `tf.ConfigProto` object.
     """
     conf = tf.ConfigProto()
     conf.gpu_options.per_process_gpu_memory_fraction = mem_fraction
@@ -18,7 +21,7 @@ def get_default_sess_config(mem_fraction=0.5):
     return conf
 
 def get_global_step_var():
-    """ get global_step variable in the current graph"""
+    """ :returns: the global_step variable in the current graph. create if not existed"""
     try:
         return tf.get_default_graph().get_tensor_by_name(GLOBAL_STEP_VAR_NAME)
     except KeyError:
@@ -27,13 +30,19 @@ def get_global_step_var():
         return var
 
 def get_global_step():
-    """ get global_step value with current graph and session"""
+    """ :returns: global_step value in current graph and session"""
     return tf.train.global_step(
         tf.get_default_session(),
         get_global_step_var())
 
 
 def get_op_var_name(name):
+    """
+    Variable name is assumed to be ``op_name + ':0'``
+
+    :param name: an op or a variable name
+    :returns: (op_name, variable_name)
+    """
     if name.endswith(':0'):
         return name[:-2], name
     else:

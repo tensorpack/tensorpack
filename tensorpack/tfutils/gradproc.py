@@ -14,18 +14,24 @@ __all__ = ['GradientProcessor', 'SummaryGradient', 'CheckGradient',
 class GradientProcessor(object):
     __metaclass__ = ABCMeta
 
-    @abstractmethod
     def process(self, grads):
         """
-        Process the symbolic gradients, return symbolic gradients
-        grads: list of (grad, var)
+        Process the symbolic gradients.
+
+        :param grads: list of (grad, var)
+        :returns: symbolic gradients with the same type as input
         """
+        self._process(grads)
+
+    @abstractmethod
+    def _process(self, grads):
+        pass
 
 class SummaryGradient(GradientProcessor):
     """
     Summary history and RMS for each graident variable
     """
-    def process(self, grads):
+    def _process(self, grads):
         for grad, var in grads:
             tf.histogram_summary(var.op.name + '/grad', grad)
             tf.scalar_summary(var.op.name + '/gradRMS',
@@ -37,7 +43,7 @@ class CheckGradient(GradientProcessor):
     """
     Check for numeric issue
     """
-    def process(self, grads):
+    def _process(self, grads):
         for grad, var in grads:
             assert grad is not None, "Grad is None for variable {}".format(var.name)
             # TODO make assert work
@@ -50,11 +56,11 @@ class ScaleGradient(GradientProcessor):
     """
     def __init__(self, multipliers):
         """
-        multipliers: list of (regex, float)
+        :param multipliers: list of (regex, float)
         """
         self.multipliers = multipliers
 
-    def process(self, grads):
+    def _process(self, grads):
         # TODO use None for zero to speed up?
         ret = []
         for grad, var in grads:

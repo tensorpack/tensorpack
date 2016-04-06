@@ -15,38 +15,41 @@ from .utils import logger
 from .tfutils.modelutils import describe_model
 from .dataflow import DataFlow, BatchData
 
+__all__ = ['PredictConfig', 'DatasetPredictor', 'get_predict_func']
+
 class PredictConfig(object):
     def __init__(self, **kwargs):
         """
-        The config used by `get_predict_func`
-        Args:
-            session_config: a tf.ConfigProto instance to instantiate the
-                session. default to a session running 1 GPU.
-            session_init: a tensorpack.utils.sessinit.SessionInit instance to
-                initialize variables of a session.
-            input_data_mapping: Decide the mapping from each component in data
-                to the input tensor, since you may not need all input variables
-                of the graph to run the graph for prediction (for example
-                the `label` input is not used if you only need probability
-                distribution).
-                It should be a list with size=len(one_data_point),
-                where each element is an index of the input variables each
-                component of the data point should be fed into.
-                If not given, defaults to range(len(input_vars))
+        The config used by `get_predict_func`.
 
-                For example, with image classification task, the testing
-                dataset only provides datapoints of images (no labels). When
-                the input variables of the model is:
-                    input_vars: [image_var, label_var]
-                the mapping should look like:
-                    input_data_mapping: [0]
-                If this argument is not set in this case, the inputs and the data points won't be aligned.
-            model: a ModelDesc instance
-            output_var_names: a list of names of the output variable to predict, the
-                variables can be any computable tensor in the graph.
-                if None, will only calculate the cost returned by `get_model_func`.
-                Predict only specific output (instead of the cost)
-                might be faster and might require only some of the input variables.
+        :param session_config: a `tf.ConfigProto` instance to instantiate the
+            session. default to a session running 1 GPU.
+        :param session_init: a `utils.sessinit.SessionInit` instance to
+            initialize variables of a session.
+        :param input_data_mapping: Decide the mapping from each component in data
+            to the input tensor, since you may not need all input variables
+            of the graph to run the graph for prediction (for example
+            the `label` input is not used if you only need probability
+            distribution).
+            It should be a list with size=len(data_point),
+            where each element is an index of the input variables each
+            component of the data point should be fed into.
+            If not given, defaults to range(len(input_vars))
+
+            For example, in image classification task, the testing
+            dataset only provides datapoints of images (no labels). When
+            the input variables of the model is: ::
+
+                input_vars: [image_var, label_var]
+
+            the mapping should look like: ::
+
+                input_data_mapping: [0] # the first component in a datapoint should map to `image_var`
+
+        :param model: a `ModelDesc` instance
+        :param output_var_names: a list of names of the output variables to predict, the
+            variables can be any computable tensor in the graph.
+            Predict specific output might not require all input variables.
         """
         def assert_type(v, tp):
             assert isinstance(v, tp), v.__class__
@@ -55,18 +58,14 @@ class PredictConfig(object):
         self.session_init = kwargs.pop('session_init')
         self.model = kwargs.pop('model')
         self.input_data_mapping = kwargs.pop('input_data_mapping', None)
-        self.output_var_names = kwargs.pop('output_var_names', None)
+        self.output_var_names = kwargs.pop('output_var_names')
         assert len(kwargs) == 0, 'Unknown arguments: {}'.format(str(kwargs.keys()))
 
 def get_predict_func(config):
     """
-    Args:
-        config: a PredictConfig
-    Returns:
-        A prediction function that takes a list of inputs value, and return
-        one/a list of output values.
-        If `output_var_names` is set, then the prediction function will
-        return a list of output values. If not, will return a cost.
+    :param config: a `PredictConfig` instance.
+    :returns: A prediction function that takes a list of input values, and return
+        a list of output values defined in ``config.output_var_names``.
     """
     output_var_names = config.output_var_names
 
@@ -106,10 +105,14 @@ def get_predict_func(config):
 PredictResult = namedtuple('PredictResult', ['input', 'output'])
 
 class DatasetPredictor(object):
+    """
+    Run the predict_config on a given `DataFlow`.
+    """
     def __init__(self, predict_config, dataset, batch=0):
         """
-        A predictor with the given predict_config, run on the given dataset
-        if batch is larger than zero, the dataset will be batched
+        :param predict_config: a `PredictConfig` instance.
+        :param dataset: a `DataFlow` instance.
+        :param batch: if batch > zero, will batch the dataset before running.
         """
         assert isinstance(dataset, DataFlow)
         self.ds = dataset
@@ -118,11 +121,14 @@ class DatasetPredictor(object):
         self.predict_func = get_predict_func(predict_config)
 
     def get_result(self):
-        """ a generator to return prediction for each data"""
+        """ A generator to produce prediction for each data"""
         with tqdm(total=self.ds.size()) as pbar:
             for dp in self.ds.get_data():
                 yield PredictResult(dp, self.predict_func(dp))
                 pbar.update()
 
     def get_all_result(self):
+        """
+        Run over the dataset and return a list of all predictions.
+        """
         return list(self.get_result())

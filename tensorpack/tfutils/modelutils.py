@@ -7,7 +7,7 @@ import tensorflow as tf
 from ..utils import logger
 
 def describe_model():
-    """ describe the current model parameters"""
+    """ print a description of the current model parameters """
     train_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
     msg = [""]
     total = 0
@@ -22,7 +22,10 @@ def describe_model():
 
 
 def get_shape_str(tensors):
-    """ return the shape string for a tensor or a list of tensors"""
+    """
+    :param tensors: a tensor or a list of tensors
+    :returns: a string to describe the shape
+    """
     if isinstance(tensors, (list, tuple)):
         for v in tensors:
             assert isinstance(v, (tf.Tensor, tf.Variable)), "Not a tensor: {}".format(type(v))
