@@ -3,6 +3,7 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 from .base import ImageAugmentor
+from ...utils import logger
 import numpy as np
 
 __all__ = ['GaussianDeform', 'GaussianMap']
@@ -63,6 +64,7 @@ class GaussianDeform(ImageAugmentor):
         :param sigma: sigma for Gaussian weight
         :param randrange: default to shape[0] / 8
         """
+        logger.warn("GaussianDeform is slow. Consider using it with 4 or more prefetching processes.")
         super(GaussianDeform, self).__init__()
         self.anchors = anchors
         self.K = len(self.anchors)

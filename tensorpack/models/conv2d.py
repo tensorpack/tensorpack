@@ -10,7 +10,7 @@ from ._common import *
 
 __all__ = ['Conv2D']
 
-@layer_register(summary_activation=True)
+@layer_register()
 def Conv2D(x, out_channel, kernel_shape,
            padding='SAME', stride=1,
            W_init=None, b_init=None,

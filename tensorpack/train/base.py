@@ -57,7 +57,7 @@ class Trainer(object):
             logger.LOG_DIR, graph=self.sess.graph)
         self.summary_op = tf.merge_all_summaries()
         # create an empty StatHolder
-        self.stat_holder = StatHolder(logger.LOG_DIR, [])
+        self.stat_holder = StatHolder(logger.LOG_DIR)
 
     def _process_summary(self, summary_str):
         summary = tf.Summary.FromString(summary_str)

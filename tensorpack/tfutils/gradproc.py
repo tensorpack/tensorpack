@@ -21,7 +21,7 @@ class GradientProcessor(object):
         :param grads: list of (grad, var)
         :returns: symbolic gradients with the same type as input
         """
-        self._process(grads)
+        return self._process(grads)
 
     @abstractmethod
     def _process(self, grads):

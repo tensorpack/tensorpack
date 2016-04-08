@@ -54,8 +54,7 @@ class Model(ModelDesc):
         l = tf.nn.dropout(l, keep_prob)
 
         # fc will have activation summary by default. disable this for the output layer
-        logits = FullyConnected('fc1', l, out_dim=10,
-                             summary_activation=False, nl=tf.identity)
+        logits = FullyConnected('fc1', l, out_dim=10, nl=tf.identity)
         prob = tf.nn.softmax(logits, name='prob')
 
         y = one_hot(label, 10)

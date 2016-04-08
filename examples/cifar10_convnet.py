@@ -67,8 +67,7 @@ class Model(ModelDesc):
         l = FullyConnected('fc1', l, out_dim=512,
                            b_init=tf.constant_initializer(0.1))
         # fc will have activation summary by default. disable for the output layer
-        logits = FullyConnected('linear', l, out_dim=10, summary_activation=False,
-                                nl=tf.identity)
+        logits = FullyConnected('linear', l, out_dim=10, nl=tf.identity)
         prob = tf.nn.softmax(logits, name='output')
 
         y = one_hot(label, 10)

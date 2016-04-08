@@ -102,8 +102,7 @@ class Model(ModelDesc):
         l = tf.nn.relu(l)
         # 8,c=64
         l = GlobalAvgPooling('gap', l)
-        logits = FullyConnected('linear', l, out_dim=10, summary_activation=False,
-                                nl=tf.identity)
+        logits = FullyConnected('linear', l, out_dim=10, nl=tf.identity)
         prob = tf.nn.softmax(logits, name='output')
 
         y = one_hot(label, 10)
