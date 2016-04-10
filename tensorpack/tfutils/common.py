@@ -18,6 +18,7 @@ def get_default_sess_config(mem_fraction=0.5):
     conf.gpu_options.per_process_gpu_memory_fraction = mem_fraction
     conf.gpu_options.allocator_type = 'BFC'
     conf.allow_soft_placement = True
+    #conf.log_device_placement = True
     return conf
 
 def get_global_step_var():

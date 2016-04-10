@@ -28,7 +28,7 @@ def maybe_download_and_extract(dest_directory):
         logger.info("Found cifar10 data in {}.".format(dest_directory))
         return
     else:
-        download(URL, dest_directory)
+        download(DATA_URL, dest_directory)
         filename = DATA_URL.split('/')[-1]
         filepath = os.path.join(dest_directory, filename)
         tarfile.open(filepath, 'r:gz').extractall(dest_directory)
