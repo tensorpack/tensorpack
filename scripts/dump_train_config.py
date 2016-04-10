@@ -10,7 +10,7 @@ import imp
 import tqdm
 import os
 from tensorpack.utils import logger
-from tensorpack.utils.utils import mkdir_p
+from tensorpack.utils.fs import mkdir_p
 
 
 parser = argparse.ArgumentParser()

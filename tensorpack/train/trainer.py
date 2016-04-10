@@ -86,11 +86,12 @@ class QueueInputTrainer(Trainer):
     @staticmethod
     def _average_grads(tower_grads):
         ret = []
-        for grad_and_vars in zip(*tower_grads):
-            grad = tf.add_n([x[0] for x in grad_and_vars]) / float(len(tower_grads))
-            v = grad_and_vars[0][1]
-            ret.append((grad, v))
-        return ret
+        with tf.device('/gpu:0'):
+            for grad_and_vars in zip(*tower_grads):
+                grad = tf.add_n([x[0] for x in grad_and_vars]) / float(len(tower_grads))
+                v = grad_and_vars[0][1]
+                ret.append((grad, v))
+            return ret
 
     def train(self):
         model = self.model
@@ -121,7 +122,8 @@ class QueueInputTrainer(Trainer):
                     if i == 0:
                         cost_var_t0 = cost_var
                     grad_list.append(
-                        self.config.optimizer.compute_gradients(cost_var))
+                        self.config.optimizer.compute_gradients(cost_var,
+                                                                gate_gradients=0))
 
                     if i == 0:
                         tf.get_variable_scope().reuse_variables()

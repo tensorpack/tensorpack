@@ -4,8 +4,8 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 import os
 import tarfile
+import cv2
 import numpy as np
-import scipy.ndimage as scimg
 
 from ...utils import logger, get_rng
 from ..base import DataFlow
@@ -61,9 +61,10 @@ class ILSVRCMeta(object):
                 ret.append((name, int(cls)))
             return ret
 
-    def get_per_pixel_mean(self):
+    def get_per_pixel_mean(self, size=None):
         """
-        :returns per-pixel mean as an array of shape (3, 256, 256) in range [0, 255]
+        :param size: return image size in [h, w]. default to (256, 256)
+        :returns per-pixel mean as an array of shape (h, w, 3) in range [0, 255]
         """
         import imp
         caffepb = imp.load_source('caffepb', self.caffe_pb_file)
@@ -73,6 +74,9 @@ class ILSVRCMeta(object):
         with open(mean_file) as f:
             obj.ParseFromString(f.read())
         arr = np.array(obj.data).reshape((3, 256, 256))
+        arr = np.transpose(arr, [1,2,0])
+        if size is not None:
+            arr = cv2.resize(arr, size[::-1])
         return arr
 
 class ILSVRC12(DataFlow):
@@ -106,9 +110,10 @@ class ILSVRC12(DataFlow):
             self.rng.shuffle(idxs)
         for k in idxs:
             tp = self.imglist[k]
-            fname = os.path.join(self.dir, self.name, tp[0])
-            im = scimg.imread(fname)
-            if len(im.shape) == 2:
+            fname = os.path.join(self.dir, self.name, tp[0]).strip()
+            im = cv2.imread(fname)
+            assert im is not None, fname
+            if im.ndim == 2:
                 im = np.expand_dims(im, 2).repeat(3,2)
             yield [im, tp[1]]
 

@@ -69,7 +69,7 @@ class AugmentorList(ImageAugmentor):
         self.augs = augmentors
 
     def _augment(self, img):
-        assert img.arr.ndim in [2, 3]
+        assert img.arr.ndim in [2, 3], img.arr.ndim
         img.arr = img.arr.astype('float32')
         for aug in self.augs:
             aug.augment(img)
