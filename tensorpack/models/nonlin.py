@@ -7,8 +7,9 @@ import tensorflow as tf
 from copy import copy
 
 from ._common import *
+from .batch_norm import BatchNorm
 
-__all__ = ['Maxout', 'PReLU', 'LeakyReLU']
+__all__ = ['Maxout', 'PReLU', 'LeakyReLU', 'BNReLU']
 
 @layer_register()
 def Maxout(x, num_unit):
@@ -59,3 +60,15 @@ def LeakyReLU(x, alpha, name=None):
         return x * 0.5
     else:
         return tf.mul(x, 0.5, name=name)
+
+
+def BNReLU(is_training):
+    """
+    :returns: a activation function that performs BN + ReLU (a too common combination)
+    """
+    def f(x, name=None):
+        with tf.variable_scope('bn'):
+            x = BatchNorm.f(x, is_training)
+        x = tf.nn.relu(x, name=name)
+        return x
+    return f

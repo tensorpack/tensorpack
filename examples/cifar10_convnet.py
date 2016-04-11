@@ -46,21 +46,15 @@ class Model(ModelDesc):
 
         image = image / 4.0     # just to make range smaller
         l = Conv2D('conv1.1', image, out_channel=64, kernel_shape=3)
-        l = Conv2D('conv1.2', l, out_channel=64, kernel_shape=3, nl=tf.identity)
-        l = BatchNorm('bn1', l, is_training)
-        l = tf.nn.relu(l)
+        l = Conv2D('conv1.2', l, out_channel=64, kernel_shape=3, nl=BNReLU(is_training))
         l = MaxPooling('pool1', l, 3, stride=2, padding='SAME')
 
         l = Conv2D('conv2.1', l, out_channel=128, kernel_shape=3)
-        l = Conv2D('conv2.2', l, out_channel=128, kernel_shape=3, nl=tf.identity)
-        l = BatchNorm('bn2', l, is_training)
-        l = tf.nn.relu(l)
+        l = Conv2D('conv2.2', l, out_channel=128, kernel_shape=3, nl=BNReLU(is_training))
         l = MaxPooling('pool2', l, 3, stride=2, padding='SAME')
 
         l = Conv2D('conv3.1', l, out_channel=128, kernel_shape=3, padding='VALID')
-        l = Conv2D('conv3.2', l, out_channel=128, kernel_shape=3, padding='VALID', nl=tf.identity)
-        l = BatchNorm('bn3', l, is_training)
-        l = tf.nn.relu(l)
+        l = Conv2D('conv3.2', l, out_channel=128, kernel_shape=3, padding='VALID', nl=BNReLU(is_training))
         l = FullyConnected('fc0', l, 1024 + 512,
                            b_init=tf.constant_initializer(0.1))
         l = tf.nn.dropout(l, keep_prob)
