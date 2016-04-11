@@ -12,7 +12,7 @@ from ..utils.stat import *
 from ..tfutils.summary import *
 from .base import PeriodicCallback, Callback, TestCallbackType
 
-__all__ = ['ValidationError', 'ValidationCallback', 'ValidationStatPrinter']
+__all__ = ['ClassificationError', 'ValidationCallback', 'ValidationStatPrinter']
 
 class ValidationCallback(PeriodicCallback):
     """
@@ -100,8 +100,7 @@ class ValidationStatPrinter(ValidationCallback):
                 '{}_{}'.format(self.prefix, name), stat), self.global_step)
             self.trainer.stat_holder.add_stat("{}_{}".format(self.prefix, name), stat)
 
-
-class ValidationError(ValidationCallback):
+class ClassificationError(ValidationCallback):
     """
     Validate the accuracy from a `wrong` variable
 
@@ -119,7 +118,7 @@ class ValidationError(ValidationCallback):
         :param ds: a batched `DataFlow` instance
         :param wrong_var_name: name of the `wrong` variable
         """
-        super(ValidationError, self).__init__(ds, prefix, period)
+        super(ClassificationError, self).__init__(ds, prefix, period)
         self.wrong_var_name = wrong_var_name
 
     def _find_output_vars(self):

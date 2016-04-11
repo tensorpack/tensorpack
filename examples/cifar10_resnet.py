@@ -167,7 +167,7 @@ def get_config():
         callbacks=Callbacks([
             StatPrinter(),
             PeriodicSaver(),
-            ValidationError(dataset_test, prefix='test'),
+            ClassificationError(dataset_test, prefix='test'),
             ScheduledHyperParamSetter('learning_rate',
                                       [(1, 0.1), (82, 0.01), (123, 0.001), (300, 0.0002)])
         ]),

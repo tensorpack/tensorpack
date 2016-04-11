@@ -53,7 +53,7 @@ class Model(ModelDesc):
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, cost)
 
-        # compute the number of failed samples, for ValidationError to use at test time
+        # compute the number of failed samples, for ClassificationError to use at test time
         wrong = prediction_incorrect(logits, label)
         nr_wrong = tf.reduce_sum(wrong, name='wrong')
         # monitor training error
@@ -110,7 +110,7 @@ def get_config():
         callbacks=Callbacks([
             StatPrinter(),
             PeriodicSaver(),
-            ValidationError(test, prefix='test'),
+            ClassificationError(test, prefix='test'),
         ]),
         session_config=sess_config,
         model=Model(),
