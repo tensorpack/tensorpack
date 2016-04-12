@@ -1,12 +1,11 @@
 # tensorpack
-Neural Network Toolbox based on TensorFlow
+Neural Network Toolbox on TensorFlow
 
-In development. No document, don't use.
+In development. No document.
 
 ## Features:
 + Scoped abstraction of common models.
-+ Provide callbacks to control training behavior (as in [Keras](http://keras.io)).
++ Callbacks systems to control different aspects of training.
 + Use `Dataflow` to gain fine-grained control on data preprocessing.
-+ Automatically use the Queue operator in tensorflow to speed up input.
 + Training and testing graph are modeled together. Just need to follow the conventions to setup stuffs.
-+ Use tensorboard easily.
++ Write summary easier for tensorboard.

@@ -9,6 +9,7 @@ from six.moves import zip
 
 from ..utils import *
 from ..utils.stat import *
+from ..tfutils import *
 from ..tfutils.summary import *
 from .base import PeriodicCallback, Callback, TestCallbackType
 
@@ -82,7 +83,8 @@ class ValidationStatPrinter(ValidationCallback):
         self.names = names_to_print
 
     def _find_output_vars(self):
-        self.vars_to_print = [self.get_tensor(n) for n in self.names]
+        self.vars_to_print = [self.get_tensor(
+            get_op_var_name(n)[1]) for n in self.names]
 
     def _get_output_vars(self):
         return self.vars_to_print
