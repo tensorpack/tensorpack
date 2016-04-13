@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-# File: cifar10_convnet.py
+# File: argscope_test.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
@@ -19,7 +19,7 @@ from tensorpack.dataflow import *
 from tensorpack.dataflow import imgaug
 
 """
-CIFAR10 90% validation accuracy after 70k step.
+CIFAR10 90% validation accuracy after 40k step.
 """
 
 BATCH_SIZE = 128
@@ -43,27 +43,24 @@ class Model(ModelDesc):
             tf.image_summary("train_image", image, 10)
 
         image = image / 4.0     # just to make range smaller
-        l = Conv2D('conv1.1', image, out_channel=64, kernel_shape=3,
-                   nl=BNReLU(is_training), use_bias=False)
-        l = Conv2D('conv1.2', l, out_channel=64, kernel_shape=3, nl=BNReLU(is_training), use_bias=False)
-        l = MaxPooling('pool1', l, 3, stride=2, padding='SAME')
+        with argscope(Conv2D, nl=BNReLU(is_training), use_bias=False, kernel_shape=3):
+            l = Conv2D('conv1.1', image, out_channel=64)
+            l = Conv2D('conv1.2', l, out_channel=64)
+            l = MaxPooling('pool1', l, 3, stride=2, padding='SAME')
 
-        l = Conv2D('conv2.1', l, out_channel=128, kernel_shape=3,
-                   nl=BNReLU(is_training), use_bias=False)
-        l = Conv2D('conv2.2', l, out_channel=128, kernel_shape=3, nl=BNReLU(is_training), use_bias=False)
-        l = MaxPooling('pool2', l, 3, stride=2, padding='SAME')
+            l = Conv2D('conv2.1', l, out_channel=128)
+            l = Conv2D('conv2.2', l, out_channel=128)
+            l = MaxPooling('pool2', l, 3, stride=2, padding='SAME')
 
-        l = Conv2D('conv3.1', l, out_channel=128, kernel_shape=3,
-                   padding='VALID', nl=BNReLU(is_training), use_bias=False)
-        l = Conv2D('conv3.2', l, out_channel=128, kernel_shape=3, padding='VALID', nl=BNReLU(is_training), use_bias=False)
+            l = Conv2D('conv3.1', l, out_channel=128, padding='VALID')
+            l = Conv2D('conv3.2', l, out_channel=128, padding='VALID')
         l = FullyConnected('fc0', l, 1024 + 512,
                            b_init=tf.constant_initializer(0.1))
         l = tf.nn.dropout(l, keep_prob)
-        l = FullyConnected('fc1', l, out_dim=512,
+        l = FullyConnected('fc1', l, 512,
                            b_init=tf.constant_initializer(0.1))
         # fc will have activation summary by default. disable for the output layer
         logits = FullyConnected('linear', l, out_dim=10, nl=tf.identity)
-        prob = tf.nn.softmax(logits, name='output')
 
         y = one_hot(label, 10)
         cost = tf.nn.softmax_cross_entropy_with_logits(logits, y)
