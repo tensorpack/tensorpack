@@ -18,6 +18,7 @@ from tensorpack.tfutils.summary import *
 from tensorpack.tfutils import *
 from tensorpack.callbacks import *
 from tensorpack.dataflow import *
+from IPython import embed; embed()
 
 """
 MNIST ConvNet example.

@@ -16,6 +16,11 @@ __all__ = ['ILSVRCMeta', 'ILSVRC12']
 CAFFE_ILSVRC12_URL = "http://dl.caffe.berkeleyvision.org/caffe_ilsvrc12.tar.gz"
 CAFFE_PROTO_URL = "https://github.com/BVLC/caffe/raw/master/src/caffe/proto/caffe.proto"
 
+"""
+cd train
+for i in *.tar; do dir=${i%.tar}; echo $dir; mkdir -p $dir; tar xf $i -C $dir; done
+"""
+
 class ILSVRCMeta(object):
     """
     Provide metadata for ILSVRC dataset.
@@ -119,7 +124,7 @@ class ILSVRC12(DataFlow):
 
 if __name__ == '__main__':
     meta = ILSVRCMeta()
-    print meta.get_per_pixel_mean()
+    print(meta.get_per_pixel_mean())
     #print(meta.get_synset_words_1000())
 
     #ds = ILSVRC12('/home/wyx/data/imagenet', 'val')

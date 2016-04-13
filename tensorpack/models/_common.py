@@ -27,31 +27,37 @@ def layer_register(summary_activation=False, log_shape=True):
         def wrapped_func(*args, **kwargs):
             name = args[0]
             assert isinstance(name, six.string_types), \
-                    'name must be the first argument. Args: {}'.format(str(args))
+                    'name must be the first argument. Args: {}'.format(args)
             args = args[1:]
             do_summary = kwargs.pop(
                 'summary_activation', summary_activation)
             inputs = args[0]
 
+            # update from current argument scope
             actual_args = get_arg_scope()[func.__name__]
             actual_args.update(kwargs)
 
             with tf.variable_scope(name) as scope:
+                do_log_shape = log_shape and scope.name not in _layer_logged
+                do_summary = do_summary and scope.name not in _layer_logged
+                if do_log_shape:
+                    logger.info("{} input: {}".format(scope.name, get_shape_str(inputs)))
+
+                # run the actual function
                 outputs = func(*args, **actual_args)
-                if log_shape and scope.name not in _layer_logged:
+
+                if do_log_shape:
                     # log shape info and add activation
-                    logger.info("{} input: {}".format(
-                        scope.name, get_shape_str(inputs)))
                     logger.info("{} output: {}".format(
                         scope.name, get_shape_str(outputs)))
-
-                    if do_summary:
-                        if isinstance(outputs, list):
-                            for x in outputs:
-                                add_activation_summary(x, scope.name)
-                        else:
-                            add_activation_summary(outputs, scope.name)
                     _layer_logged.add(scope.name)
+
+                if do_summary:
+                    if isinstance(outputs, list):
+                        for x in outputs:
+                            add_activation_summary(x, scope.name)
+                    else:
+                        add_activation_summary(outputs, scope.name)
                 return outputs
         wrapped_func.f = func   # attribute to access the underlining function object
         return wrapped_func

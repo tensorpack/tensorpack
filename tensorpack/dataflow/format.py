@@ -11,14 +11,15 @@ from six.moves import range
 try:
     import h5py
 except ImportError:
-    logger.error("Error in `import h5py`. HDF5Data cannot function.")
+    logger.error("Error in 'import h5py'. HDF5Data won't be imported.")
+    __all__ = []
+else:
+    __all__ = ['HDF5Data']
 
 
 """
-Adapter for different data format.
+Adapters for different data format.
 """
-
-__all__ = ['HDF5Data']
 
 class HDF5Data(DataFlow):
     """
