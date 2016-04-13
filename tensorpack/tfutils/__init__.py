@@ -14,4 +14,5 @@ def _global_import(name):
 _global_import('sessinit')
 _global_import('common')
 _global_import('gradproc')
+_global_import('argscope')
 

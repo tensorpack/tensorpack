@@ -43,15 +43,18 @@ class Model(ModelDesc):
             tf.image_summary("train_image", image, 10)
 
         image = image / 4.0     # just to make range smaller
-        l = Conv2D('conv1.1', image, out_channel=64, kernel_shape=3)
+        l = Conv2D('conv1.1', image, out_channel=64, kernel_shape=3,
+                   nl=BNReLU(is_training), use_bias=False)
         l = Conv2D('conv1.2', l, out_channel=64, kernel_shape=3, nl=BNReLU(is_training), use_bias=False)
         l = MaxPooling('pool1', l, 3, stride=2, padding='SAME')
 
-        l = Conv2D('conv2.1', l, out_channel=128, kernel_shape=3)
+        l = Conv2D('conv2.1', l, out_channel=128, kernel_shape=3,
+                   nl=BNReLU(is_training), use_bias=False)
         l = Conv2D('conv2.2', l, out_channel=128, kernel_shape=3, nl=BNReLU(is_training), use_bias=False)
         l = MaxPooling('pool2', l, 3, stride=2, padding='SAME')
 
-        l = Conv2D('conv3.1', l, out_channel=128, kernel_shape=3, padding='VALID')
+        l = Conv2D('conv3.1', l, out_channel=128, kernel_shape=3,
+                   padding='VALID', nl=BNReLU(is_training), use_bias=False)
         l = Conv2D('conv3.2', l, out_channel=128, kernel_shape=3, padding='VALID', nl=BNReLU(is_training), use_bias=False)
         l = FullyConnected('fc0', l, 1024 + 512,
                            b_init=tf.constant_initializer(0.1))
@@ -80,7 +83,7 @@ class Model(ModelDesc):
                          name='regularize_loss')
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, wd_cost)
 
-        add_param_summary([('.*/W', ['histogram', 'sparsity'])])   # monitor W
+        add_param_summary([('.*/W', ['histogram'])])   # monitor W
         return tf.add_n([cost, wd_cost], name='cost')
 
 def get_data(train_or_test):
@@ -123,7 +126,7 @@ def get_config():
     lr = tf.train.exponential_decay(
         learning_rate=1e-2,
         global_step=get_global_step_var(),
-        decay_steps=dataset_train.size() * 30 if nr_gpu == 1 else 20,
+        decay_steps=step_per_epoch * 30 if nr_gpu == 1 else 20,
         decay_rate=0.5, staircase=True, name='learning_rate')
     tf.scalar_summary('learning_rate', lr)
 
@@ -138,7 +141,7 @@ def get_config():
         session_config=sess_config,
         model=Model(),
         step_per_epoch=step_per_epoch,
-        max_epoch=500,
+        max_epoch=200,
     )
 
 if __name__ == '__main__':

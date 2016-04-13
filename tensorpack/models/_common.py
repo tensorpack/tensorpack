@@ -6,6 +6,7 @@ import tensorflow as tf
 from functools import wraps
 import six
 
+from ..tfutils import *
 from ..tfutils.modelutils import *
 from ..tfutils.summary import *
 from ..utils import logger
@@ -13,14 +14,13 @@ from ..utils import logger
 # make sure each layer is only logged once
 _layer_logged = set()
 
-def layer_register(summary_activation=False):
+def layer_register(summary_activation=False, log_shape=True):
     """
     Register a layer.
-    Args:
-        summary_activation:
-            Define the default behavior of whether to
-            summary the output(activation) of this layer.
-            Can be overriden when creating the layer.
+    :param summary_activation: Define the default behavior of whether to
+        summary the output(activation) of this layer.
+        Can be overriden when creating the layer.
+    :param log_shape: log input/output shape of this layer
     """
     def wrapper(func):
         @wraps(func)
@@ -29,13 +29,16 @@ def layer_register(summary_activation=False):
             assert isinstance(name, six.string_types), \
                     'name must be the first argument. Args: {}'.format(str(args))
             args = args[1:]
-
             do_summary = kwargs.pop(
                 'summary_activation', summary_activation)
             inputs = args[0]
+
+            actual_args = get_arg_scope()[func.__name__]
+            actual_args.update(kwargs)
+
             with tf.variable_scope(name) as scope:
-                outputs = func(*args, **kwargs)
-                if scope.name not in _layer_logged:
+                outputs = func(*args, **actual_args)
+                if log_shape and scope.name not in _layer_logged:
                     # log shape info and add activation
                     logger.info("{} input: {}".format(
                         scope.name, get_shape_str(inputs)))

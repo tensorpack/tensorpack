@@ -11,7 +11,7 @@ from .batch_norm import BatchNorm
 
 __all__ = ['Maxout', 'PReLU', 'LeakyReLU', 'BNReLU']
 
-@layer_register()
+@layer_register(log_shape=False)
 def Maxout(x, num_unit):
     """
     Maxout networks as in `Maxout Networks <http://arxiv.org/abs/1302.4389>`_.
@@ -27,7 +27,7 @@ def Maxout(x, num_unit):
     x = tf.reshape(x, [-1, input_shape[1], input_shape[2], ch / 3, 3])
     return tf.reduce_max(x, 4, name='output')
 
-@layer_register()
+@layer_register(log_shape=False)
 def PReLU(x, init=tf.constant_initializer(0.001), name=None):
     """
     Parameterized relu as in `Delving Deep into Rectifiers: Surpassing
@@ -44,7 +44,7 @@ def PReLU(x, init=tf.constant_initializer(0.001), name=None):
     else:
         return tf.mul(x, 0.5, name=name)
 
-@layer_register()
+@layer_register(log_shape=False)
 def LeakyReLU(x, alpha, name=None):
     """
     Leaky relu as in `Rectifier Nonlinearities Improve Neural Network Acoustic
@@ -66,9 +66,8 @@ def BNReLU(is_training):
     """
     :returns: a activation function that performs BN + ReLU (a too common combination)
     """
-    def f(x, name=None):
-        with tf.variable_scope('bn'):
-            x = BatchNorm.f(x, is_training)
+    def BNReLU(x, name=None):
+        x = BatchNorm('bn', x, is_training)
         x = tf.nn.relu(x, name=name)
         return x
-    return f
+    return BNReLU

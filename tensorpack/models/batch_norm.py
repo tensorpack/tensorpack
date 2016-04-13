@@ -14,7 +14,7 @@ __all__ = ['BatchNorm']
 # TF batch_norm only works for 4D tensor right now: #804
 # decay: being too close to 1 leads to slow start-up, but ends up better
 # eps: torch: 1e-5. Lasagne: 1e-4
-@layer_register()
+@layer_register(log_shape=False)
 def BatchNorm(x, use_local_stat=True, decay=0.999, epsilon=1e-5):
     """
     Batch normalization layer as described in:
