@@ -80,7 +80,7 @@ class TestCallbackContext(object):
         ckpt = tf.train.get_checkpoint_state(logger.LOG_DIR)
         if ckpt is None:
             raise RuntimeError(
-                "Cannot find a checkpoint state. Do you forget to use PeriodicSaver before any TestCallback?")
+                "Cannot find a checkpoint state. Do you forget to use ModelSaver before all TestCallback?")
         logger.info(
             "Restore checkpoint from {}".format(ckpt.model_checkpoint_path))
         self.saver.restore(self.sess, ckpt.model_checkpoint_path)

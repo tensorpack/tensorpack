@@ -109,7 +109,7 @@ def get_config():
         optimizer=tf.train.AdamOptimizer(lr),
         callbacks=Callbacks([
             StatPrinter(),
-            PeriodicSaver(),
+            ModelSaver(),
             ClassificationError(test, prefix='test'),
         ]),
         session_config=sess_config,

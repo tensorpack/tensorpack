@@ -105,7 +105,7 @@ def get_config():
         optimizer=tf.train.AdamOptimizer(lr),
         callbacks=Callbacks([
             StatPrinter(),
-            PeriodicSaver(),
+            ModelSaver(),
             ValidationStatPrinter(dataset_test, ['cost:0']),
             ClassificationError(dataset_test, prefix='validation'),
         ]),

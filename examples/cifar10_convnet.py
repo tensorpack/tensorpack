@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-# File: argscope_test.py
+# File: cifar10_convnet.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
@@ -116,8 +116,7 @@ def get_config():
     step_per_epoch = dataset_train.size()
     dataset_test = get_data('test')
 
-    sess_config = get_default_sess_config()
-    sess_config.gpu_options.per_process_gpu_memory_fraction = 0.5
+    sess_config = get_default_sess_config(0.5)
 
     nr_gpu = get_nr_gpu()
     lr = tf.train.exponential_decay(
@@ -132,7 +131,7 @@ def get_config():
         optimizer=tf.train.AdamOptimizer(lr, epsilon=1e-3),
         callbacks=Callbacks([
             StatPrinter(),
-            PeriodicSaver(),
+            ModelSaver(),
             ClassificationError(dataset_test, prefix='test'),
         ]),
         session_config=sess_config,

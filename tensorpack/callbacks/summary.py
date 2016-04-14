@@ -8,7 +8,7 @@ import os
 import operator
 import pickle
 
-from .base import Callback, PeriodicCallback
+from .base import Callback
 from ..utils import *
 
 __all__ = ['StatHolder', 'StatPrinter']

@@ -76,7 +76,8 @@ class memoized(object):
        return functools.partial(self.__call__, obj)
 
 def get_rng(self):
-    seed = (id(self) + os.getpid()) % 4294967295
+    seed = (id(self) + os.getpid() +
+            int(datetime.now().strftime("%Y%m%d%H%M%S%f"))) % 4294967295
     return np.random.RandomState(seed)
 
 def get_nr_gpu():

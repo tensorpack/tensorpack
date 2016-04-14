@@ -81,18 +81,24 @@ class Callback(object):
 class PeriodicCallback(Callback):
     """
     A callback to be triggered after every `period` epochs.
+    Doesn't work for trigger_step
     """
-    def __init__(self, period):
+    def __init__(self, cb, period):
         """
+        :param cb: a `Callback`
         :param period: int
         """
+        self.cb = cb
         self.period = int(period)
 
-    def _trigger_epoch(self):
-        if self.epoch_num % self.period == 0:
-            self._trigger_periodic()
+    def _before_train(self):
+        self.cb.before_train(self.trainer)
 
-    @abstractmethod
-    def _trigger_periodic(self):
-        pass
+    def _after_train(self):
+        self.cb.after_train()
+
+    def _trigger_epoch(self):
+        self.cb.epoch_num = self.epoch_num - 1
+        if self.epoch_num % self.period == 0:
+            self.cb.trigger_epoch()
 

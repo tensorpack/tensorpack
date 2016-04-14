@@ -6,22 +6,20 @@ import tensorflow as tf
 import os
 import re
 
-from .base import Callback, PeriodicCallback
+from .base import Callback
 from ..utils import *
 
-__all__ = ['PeriodicSaver']
+__all__ = ['ModelSaver']
 
-class PeriodicSaver(PeriodicCallback):
+class ModelSaver(Callback):
     """
     Save the model to logger directory.
     """
-    def __init__(self, period=1, keep_recent=10, keep_freq=0.5):
+    def __init__(self, keep_recent=10, keep_freq=0.5):
         """
-        :param period: number of epochs to save models.
         :param keep_recent: see `tf.train.Saver` documentation.
         :param keep_freq: see `tf.train.Saver` documentation.
         """
-        super(PeriodicSaver, self).__init__(period)
         self.keep_recent = keep_recent
         self.keep_freq = keep_freq
 
@@ -48,7 +46,7 @@ class PeriodicSaver(PeriodicCallback):
             var_dict[name] = v
         return var_dict
 
-    def _trigger_periodic(self):
+    def _trigger_epoch(self):
         self.saver.save(
             tf.get_default_session(),
             self.path,

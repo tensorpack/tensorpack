@@ -61,7 +61,7 @@ class ScaleGradient(GradientProcessor):
         self.multipliers = multipliers
 
     def _process(self, grads):
-        # TODO use None for zero to speed up?
+        # TODO use None for zero can speed up (or not)?
         ret = []
         for grad, var in grads:
             varname = var.op.name
