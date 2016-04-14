@@ -22,7 +22,7 @@ from IPython import embed; embed()
 
 """
 MNIST ConvNet example.
-about 0.6% validation error after 50 epochs.
+about 0.6% validation error after 30 epochs.
 """
 
 BATCH_SIZE = 128
@@ -58,8 +58,7 @@ class Model(ModelDesc):
         logits = FullyConnected('fc1', l, out_dim=10, nl=tf.identity)
         prob = tf.nn.softmax(logits, name='prob')
 
-        y = one_hot(label, 10)
-        cost = tf.nn.softmax_cross_entropy_with_logits(logits, y)
+        cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, cost)
 
@@ -97,7 +96,7 @@ def get_config():
         learning_rate=1e-3,
         global_step=get_global_step_var(),
         decay_steps=dataset_train.size() * 10,
-        decay_rate=0.5, staircase=True, name='learning_rate')
+        decay_rate=0.3, staircase=True, name='learning_rate')
     tf.scalar_summary('learning_rate', lr)
 
     return TrainConfig(

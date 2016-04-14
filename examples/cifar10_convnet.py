@@ -19,7 +19,8 @@ from tensorpack.dataflow import *
 from tensorpack.dataflow import imgaug
 
 """
-CIFAR10 90% validation accuracy after 40k step.
+A small cifar10 convnet model.
+90% validation accuracy after 40k step.
 """
 
 BATCH_SIZE = 128
@@ -62,8 +63,7 @@ class Model(ModelDesc):
         # fc will have activation summary by default. disable for the output layer
         logits = FullyConnected('linear', l, out_dim=10, nl=tf.identity)
 
-        y = one_hot(label, 10)
-        cost = tf.nn.softmax_cross_entropy_with_logits(logits, y)
+        cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, cost)
 
