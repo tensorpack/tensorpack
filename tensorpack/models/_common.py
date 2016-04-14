@@ -5,6 +5,7 @@
 import tensorflow as tf
 from functools import wraps
 import six
+import copy
 
 from ..tfutils import *
 from ..tfutils.modelutils import *
@@ -34,7 +35,7 @@ def layer_register(summary_activation=False, log_shape=True):
             inputs = args[0]
 
             # update from current argument scope
-            actual_args = get_arg_scope()[func.__name__]
+            actual_args = copy.copy(get_arg_scope()[func.__name__])
             actual_args.update(kwargs)
 
             with tf.variable_scope(name) as scope:

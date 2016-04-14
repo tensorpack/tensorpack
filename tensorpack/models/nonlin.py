@@ -62,12 +62,14 @@ def LeakyReLU(x, alpha, name=None):
         return tf.mul(x, 0.5, name=name)
 
 
-def BNReLU(is_training):
+def BNReLU(is_training, **kwargs):
     """
+    :param is_traning: boolean
+    :param kwargs: args for BatchNorm
     :returns: a activation function that performs BN + ReLU (a too common combination)
     """
     def BNReLU(x, name=None):
-        x = BatchNorm('bn', x, is_training)
+        x = BatchNorm('bn', x, is_training, **kwargs)
         x = tf.nn.relu(x, name=name)
         return x
     return BNReLU

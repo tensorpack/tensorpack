@@ -49,7 +49,7 @@ class HyperParamSetter(Callback):
         """
         ret = self._get_current_value()
         if ret is not None and ret != self.last_value:
-            logger.info("{} at epoch {} is changed to {}".format(
+            logger.info("{} at epoch {} will change to {}".format(
                 self.op_name, self.epoch_num, ret))
         self.last_value = ret
         return ret

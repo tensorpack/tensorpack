@@ -71,7 +71,7 @@ class Trainer(object):
         # some final operations that might modify the graph
         logger.info("Preparing for training...")
         self._init_summary()
-        get_global_step_var()
+        get_global_step_var()   # ensure there is such var, before finalizing the graph
         callbacks = self.config.callbacks
         callbacks.before_train(self)
         self.config.session_init.init(self.sess)
