@@ -4,8 +4,6 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
-from tensorflow.python.ops import control_flow_ops
-
 import numpy as np
 import os, sys
 import argparse
@@ -18,7 +16,6 @@ from tensorpack.tfutils.summary import *
 from tensorpack.tfutils import *
 from tensorpack.callbacks import *
 from tensorpack.dataflow import *
-from IPython import embed; embed()
 
 """
 MNIST ConvNet example.
