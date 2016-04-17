@@ -16,16 +16,11 @@ from tensorpack.tfutils import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
 from tensorpack.dataflow import *
-from tensorpack.dataflow import imgaug
 
 """
 A small cifar10 convnet model.
 90% validation accuracy after 40k step.
 """
-
-BATCH_SIZE = 128
-MIN_AFTER_DEQUEUE = int(50000 * 0.4)
-CAPACITY = MIN_AFTER_DEQUEUE + 3 * BATCH_SIZE
 
 class Model(ModelDesc):
     def _get_input_vars(self):
@@ -134,7 +129,7 @@ def get_config():
         session_config=sess_config,
         model=Model(),
         step_per_epoch=step_per_epoch,
-        max_epoch=200,
+        max_epoch=3,
     )
 
 if __name__ == '__main__':

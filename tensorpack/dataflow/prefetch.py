@@ -9,9 +9,6 @@ from ..utils.concurrency import ensure_procs_terminate
 
 __all__ = ['PrefetchData']
 
-class Sentinel:
-    pass
-
 class PrefetchProcess(multiprocessing.Process):
     def __init__(self, ds, queue):
         """
@@ -24,11 +21,9 @@ class PrefetchProcess(multiprocessing.Process):
 
     def run(self):
         self.ds.reset_state()
-        try:
+        while True:
             for dp in self.ds.get_data():
                 self.queue.put(dp)
-        finally:
-            self.queue.put(Sentinel())
 
 class PrefetchData(ProxyDataFlow):
     """
@@ -52,17 +47,11 @@ class PrefetchData(ProxyDataFlow):
             x.start()
 
     def get_data(self):
-        end_cnt = 0
         tot_cnt = 0
         while True:
             dp = self.queue.get()
-            if isinstance(dp, Sentinel):
-                end_cnt += 1
-                if end_cnt == self.nr_proc:
-                    break
-                continue
-            tot_cnt += 1
             yield dp
+            tot_cnt += 1
             if tot_cnt == self._size:
                 break
 
