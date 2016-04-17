@@ -5,14 +5,16 @@
 
 import sys
 import cv2
-from . import AugmentorList, Flip, GaussianDeform, Image
+from . import AugmentorList, Image
+from .crop import *
 
 
 anchors = [(0.2, 0.2), (0.8, 0.8), (0.5, 0.5), (0.2, 0.5)]
 augmentors = AugmentorList([
     #Contrast((0.2,1.8)),
     #Flip(horiz=True),
-    GaussianDeform(anchors, (360,480), 1, randrange=10)
+    #GaussianDeform(anchors, (360,480), 1, randrange=10)
+    RandomCropRandomShape(0.3)
 ])
 
 while True:

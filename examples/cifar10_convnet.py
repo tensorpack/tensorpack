@@ -38,9 +38,6 @@ class Model(ModelDesc):
         keep_prob = tf.constant(0.5 if is_training else 1.0)
 
         if is_training:
-            image, label = tf.train.shuffle_batch(
-                [image, label], BATCH_SIZE, CAPACITY, MIN_AFTER_DEQUEUE,
-                num_threads=6, enqueue_many=True)
             tf.image_summary("train_image", image, 10)
 
         image = image / 4.0     # just to make range smaller

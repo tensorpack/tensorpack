@@ -3,12 +3,12 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 from .base import ImageAugmentor
+from ...utils.rect import Rect
 
+from six.moves import range
 import numpy as np
-from abc import abstractmethod
 
-__all__ = ['RandomCrop', 'CenterCrop', 'FixedCrop', 'CenterPaste',
-           'ConstantBackgroundFiller']
+__all__ = ['RandomCrop', 'CenterCrop', 'FixedCrop', 'RandomCropRandomShape']
 
 class RandomCrop(ImageAugmentor):
     """ Randomly crop the image into a smaller one """
@@ -44,79 +44,76 @@ class CenterCrop(ImageAugmentor):
 
 class FixedCrop(ImageAugmentor):
     """ Crop a rectangle at a given location"""
-    def __init__(self, rangex, rangey):
+    def __init__(self, rect):
         """
         Two arguments defined the range in both axes to crop, min inclued, max excluded.
 
-        :param rangex: like (xmin, xmax).
-        :param rangey: like (ymin, ymax).
+        :param rect: a `Rect` instance
         """
         self._init(locals())
 
     def _augment(self, img):
         orig_shape = img.arr.shape
-        img.arr = img.arr[self.rangey[0]:self.rangey[1],
-                          self.rangex[0]:self.rangex[1]]
+        img.arr = img.arr[self.rect.y0: self.rect.y1+1,
+                          self.rect.x0: self.rect.x0+1]
         if img.coords:
             raise NotImplementedError()
 
-class BackgroundFiller(object):
-    """ Base class for all BackgroundFiller"""
-    def fill(self, background_shape, img):
-        """
-        Return a proper background image of background_shape, given img
-
-        :param background_shape: a shape of [h, w]
-        :param img: an image
-        :returns: a background image
-        """
-        return self._fill(background_shape, img)
-
-    @abstractmethod
-    def _fill(self, background_shape, img):
-        pass
-
-class ConstantBackgroundFiller(BackgroundFiller):
-    """ Fill the background by a constant """
-    def __init__(self, value):
-        """
-        :param value: the value to fill the background.
-        """
-        self.value = value
-
-    def _fill(self, background_shape, img):
-        assert img.ndim in [3, 1]
-        if img.ndim == 3:
-            return_shape = background_shape + (3,)
-        else:
-            return_shape = background_shape
-        return np.zeros(return_shape) + self.value
-
-class CenterPaste(ImageAugmentor):
+def perturb_BB(image_shape, bb, max_pertub_pixel,
+        rng=None, max_aspect_ratio_diff=0.3,
+        max_try=100):
     """
-    Paste the image onto the center of a background canvas.
+    Perturb a bounding box.
+    :param image_shape: [h, w]
+    :param bb: a `Rect` instance
+    :param max_pertub_pixel: pertubation on each coordinate
+    :param max_aspect_ratio_diff: result can't have an aspect ratio too different from the original
+    :param max_try: if cannot find a valid bounding box, return the original
+    :returns: new bounding box
     """
-    def __init__(self, background_shape, background_filler=None):
-        """
-        :param background_shape: shape of the background canvas.
-        :param background_filler: a `BackgroundFiller` instance. Default to zero-filler.
-        """
-        if background_filler is None:
-            background_filler = ConstantBackgroundFiller(0)
+    orig_ratio = bb.h * 1.0 / bb.w
+    if rng is None:
+        rng = np.random.RandomState()
+    for _ in range(max_try):
+        p = rng.randint(-max_pertub_pixel, max_pertub_pixel, [4])
+        newbb = bb.copy()
+        newbb.x += p[0]
+        newbb.y += p[1]
+        newx1 = bb.x1 + p[2]
+        newy1 = bb.y1 + p[3]
+        newbb.w = newx1 - newbb.x
+        newbb.h = newy1 - newbb.y
+        if not newbb.validate(image_shape):
+            continue
+        new_ratio = newbb.h * 1.0 / newbb.w
+        diff = abs(new_ratio - orig_ratio)
+        if diff / orig_ratio > max_aspect_ratio_diff:
+            continue
+        return newbb
+    return bb
 
+
+class RandomCropRandomShape(ImageAugmentor):
+    """
+    Crop a box around a bounding box
+    """
+    def __init__(self, perturb_ratio, max_aspect_ratio_diff=0.3):
+        """
+        :param perturb_ratio: perturb distance will be in [0, perturb_ratio * sqrt(w * h)]
+        :param max_aspect_ratio_diff: keep aspect ratio within the range
+        """
         self._init(locals())
 
     def _augment(self, img):
-        img_shape = img.arr.shape[:2]
-        assert self.background_shape[0] > img_shape[0] and self.background_shape[1] > img_shape[1]
+        shape = img.arr.shape[:2]
+        box = Rect(0, 0, shape[1] - 1, shape[0] - 1)
+        dist = self.perturb_ratio * np.sqrt(shape[0]*shape[1])
+        newbox = perturb_BB(shape, box, dist,
+                self.rng, self.max_aspect_ratio_diff)
 
-        background = self.background_filler.fill(
-            self.background_shape, img.arr)
-        h0 = (self.background_shape[0] - img_shape[0]) * 0.5
-        w0 = (self.background_shape[1] - img_shape[1]) * 0.5
-        background[h0:h0+img_shape[0], w0:w0+img_shape[1]] = img.arr
-        img.arr = background
+        img.arr = newbox.roi(img.arr)
         if img.coords:
             raise NotImplementedError()
 
-
+if __name__ == '__main__':
+    print(perturb_BB([100, 100], Rect(3, 3, 50, 50), 50))

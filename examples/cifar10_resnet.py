@@ -81,7 +81,6 @@ class Model(ModelDesc):
                 l = c2 + l
                 return l
 
-
         l = conv('conv0', image, 16, 1)
         l = BatchNorm('bn0', l, is_training)
         l = tf.nn.relu(l)
