@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-# File: cifar10_resnet.py
+# File: svhn_resnet.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
@@ -16,18 +16,12 @@ from tensorpack.tfutils import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
 from tensorpack.dataflow import *
+from tensorpack.dataflow import imgaug
+
 
 """
-CIFAR10-resnet example.
-Deep Residual Learning for Image Recognition, arxiv:1512.03385
-using the variants proposed in:
-Identity Mappings in Deep Residual Networks, arxiv::1603.05027
-
-I can reproduce the results for
-n=5 (about 7.6% val error)
-n=18 (about 6.4% val error)
-n=30: a 182-layer network (about 5.7% val error)
-This model uses the whole training set instead of a 95:5 train-val split.
+Reach 1.9% validation error after 90 epochs, with 2 GPUs.
+You might need to adjust learning rate schedule when running with 1 GPU.
 """
 
 BATCH_SIZE = 128
@@ -80,6 +74,7 @@ class Model(ModelDesc):
                 l = c2 + l
                 return l
 
+
         l = conv('conv0', image, 16, 1)
         l = BatchNorm('bn0', l, is_training)
         l = tf.nn.relu(l)
@@ -103,7 +98,8 @@ class Model(ModelDesc):
         logits = FullyConnected('linear', l, out_dim=10, nl=tf.identity)
         prob = tf.nn.softmax(logits, name='output')
 
-        cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)
+        y = one_hot(label, 10)
+        cost = tf.nn.softmax_cross_entropy_with_logits(logits, y)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, cost)
 
@@ -114,9 +110,10 @@ class Model(ModelDesc):
             MOVING_SUMMARY_VARS_KEY, tf.reduce_mean(wrong, name='train_error'))
 
         # weight decay on all W of fc layers
-        wd_w = tf.train.exponential_decay(0.0002, get_global_step_var(),
-                                          480000, 0.2, True)
-        wd_cost = tf.mul(wd_w, regularize_cost('.*/W', tf.nn.l2_loss), name='wd_cost')
+        #wd_cost = regularize_cost('.*/W', l2_regularizer(0.0002), name='regularize_loss')
+        wd_w = tf.train.exponential_decay(0.0001, get_global_step_var(),
+                                          960000, 0.5, True)
+        wd_cost = wd_w * regularize_cost('.*/W', tf.nn.l2_loss)
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, wd_cost)
 
         add_param_summary([('.*/W', ['histogram'])])   # monitor W
@@ -124,15 +121,24 @@ class Model(ModelDesc):
 
 def get_data(train_or_test):
     isTrain = train_or_test == 'train'
-    ds = dataset.Cifar10(train_or_test)
-    pp_mean = ds.get_per_pixel_mean()
+    pp_mean = dataset.SVHNDigit.get_per_pixel_mean()
+    if isTrain:
+        d1 = dataset.SVHNDigit('train')
+        d2 = dataset.SVHNDigit('extra')
+        ds = RandomMixData([d1, d2])
+    else:
+        ds = dataset.SVHNDigit('test')
+
     if isTrain:
         augmentors = [
             imgaug.CenterPaste((40, 40)),
             imgaug.RandomCrop((32, 32)),
-            imgaug.Flip(horiz=True),
-            #imgaug.BrightnessAdd(20),
-            #imgaug.Contrast((0.6,1.4)),
+            #imgaug.Flip(horiz=True),
+            imgaug.BrightnessAdd(10),
+            imgaug.Contrast((0.8,1.2)),
+            imgaug.GaussianDeform(  # this is slow
+                [(0.2, 0.2), (0.2, 0.8), (0.8,0.8), (0.8,0.2)],
+                (32, 32), 0.2, 3),
             imgaug.MapImage(lambda x: x - pp_mean),
         ]
     else:
@@ -142,7 +148,7 @@ def get_data(train_or_test):
     ds = AugmentImageComponent(ds, augmentors)
     ds = BatchData(ds, 128, remainder=not isTrain)
     if isTrain:
-        ds = PrefetchData(ds, 3, 2)
+        ds = PrefetchData(ds, 5, 5)
     return ds
 
 def get_config():
@@ -153,7 +159,7 @@ def get_config():
 
     sess_config = get_default_sess_config(0.9)
 
-    lr = tf.Variable(0.01, trainable=False, name='learning_rate')
+    lr = tf.Variable(0.1, trainable=False, name='learning_rate')
     tf.scalar_summary('learning_rate', lr)
 
     return TrainConfig(
@@ -161,13 +167,13 @@ def get_config():
         optimizer=tf.train.MomentumOptimizer(lr, 0.9),
         callbacks=Callbacks([
             StatPrinter(),
-            ModelSaver(),
-            ClassificationError(dataset_test, prefix='test'),
+            PeriodicSaver(),
+            ValidationError(dataset_test, prefix='test'),
             ScheduledHyperParamSetter('learning_rate',
-                                      [(1, 0.1), (82, 0.01), (123, 0.001), (300, 0.0002)])
+                                      [(1, 0.1), (20, 0.01), (33, 0.001), (60, 0.0001)])
         ]),
         session_config=sess_config,
-        model=Model(n=30),
+        model=Model(n=18),
         step_per_epoch=step_per_epoch,
         max_epoch=500,
     )
