@@ -36,7 +36,7 @@ class ModelSaver(Callback):
         for v in vars:
             name = v.op.name
             if re.match('tower[1-9]', name):
-                logger.info("Skip {} when saving model.".format(name))
+                #logger.info("Skip {} when saving model.".format(name))
                 continue
             if 'tower0/' in name:
                 new_name = name.replace('tower0/', '')

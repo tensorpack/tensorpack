@@ -36,8 +36,8 @@ class CenterCrop(ImageAugmentor):
 
     def _augment(self, img):
         orig_shape = img.arr.shape
-        h0 = (orig_shape[0] - self.crop_shape[0]) * 0.5
-        w0 = (orig_shape[1] - self.crop_shape[1]) * 0.5
+        h0 = int((orig_shape[0] - self.crop_shape[0]) * 0.5)
+        w0 = int((orig_shape[1] - self.crop_shape[1]) * 0.5)
         img.arr = img.arr[h0:h0+self.crop_shape[0],w0:w0+self.crop_shape[1]]
         if img.coords:
             raise NotImplementedError()

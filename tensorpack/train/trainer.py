@@ -88,8 +88,12 @@ class QueueInputTrainer(Trainer):
         ret = []
         with tf.device('/gpu:0'):
             for grad_and_vars in zip(*tower_grads):
-                grad = tf.add_n([x[0] for x in grad_and_vars]) / float(len(tower_grads))
                 v = grad_and_vars[0][1]
+                try:
+                    grad = tf.add_n([x[0] for x in grad_and_vars]) / float(len(tower_grads))
+                except AssertionError:
+                    logger.error("Error while processing gradients of {}".format(v.name))
+                    raise
                 ret.append((grad, v))
             return ret
 
@@ -129,6 +133,7 @@ class QueueInputTrainer(Trainer):
                         tf.get_variable_scope().reuse_variables()
                         for k in coll_keys:
                             kept_summaries[k] = copy.copy(tf.get_collection(k))
+                    logger.info("Graph built for tower {}.".format(i))
             for k in coll_keys:
                 del tf.get_collection(k)[:]
                 tf.get_collection(k).extend(kept_summaries[k])
