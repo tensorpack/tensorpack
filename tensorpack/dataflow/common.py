@@ -144,25 +144,29 @@ class FakeData(DataFlow):
             yield [self.rng.random_sample(k) for k in self.shapes]
 
 class MapData(ProxyDataFlow):
-    """ Map a function on the datapoint"""
+    """ Apply map/filter a function on the datapoint"""
     def __init__(self, ds, func):
         """
         :param ds: a :mod:`DataFlow` instance.
-        :param func: a function that takes a original datapoint, returns a new datapoint
+        :param func: a function that takes a original datapoint, returns a new
+            datapoint. return None to skip this data point.
         """
         super(MapData, self).__init__(ds)
         self.func = func
 
     def get_data(self):
         for dp in self.ds.get_data():
-            yield self.func(dp)
+            ret = self.func(dp)
+            if ret is not None:
+                yield ret
 
 class MapDataComponent(ProxyDataFlow):
-    """ Apply a function to the given index in the datapoint"""
+    """ Apply map/filter on the given index in the datapoint"""
     def __init__(self, ds, func, index=0):
         """
         :param ds: a :mod:`DataFlow` instance.
-        :param func: a function that takes a datapoint dp[index], returns a new value of dp[index]
+        :param func: a function that takes a datapoint dp[index], returns a
+        new value of dp[index]. return None to skip this datapoint.
         """
         super(MapDataComponent, self).__init__(ds)
         self.func = func
@@ -170,9 +174,11 @@ class MapDataComponent(ProxyDataFlow):
 
     def get_data(self):
         for dp in self.ds.get_data():
-            dp = copy.deepcopy(dp)  # avoid modifying the original dp
-            dp[self.index] = self.func(dp[self.index])
-            yield dp
+            repl = self.func(dp[self.index])
+            if repl is not None:
+                dp = copy.deepcopy(dp)  # avoid modifying the original dp
+                dp[self.index] = repl
+                yield dp
 
 class RandomChooseData(DataFlow):
     """

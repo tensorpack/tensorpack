@@ -171,7 +171,7 @@ def get_config():
             InferenceRunner(dataset_test,
                 [ScalarStats('cost'), ClassificationError() ]),
             ScheduledHyperParamSetter('learning_rate',
-                                      [(1, 0.1), (20, 0.01), (33, 0.001), (60, 0.0001)])
+                                      [(1, 0.1), (20, 0.01), (28, 0.001), (50, 0.0001)])
         ]),
         session_config=sess_config,
         model=Model(n=18),
