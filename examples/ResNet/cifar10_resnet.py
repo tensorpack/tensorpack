@@ -24,7 +24,7 @@ This implementation uses the variants proposed in:
 Identity Mappings in Deep Residual Networks, arxiv:1603.05027
 
 I can reproduce the results for
-n=5, about 7.6% val error
+n=5, about 7.2% val error after 93k step with 2 TitanX (6.8it/s)
 n=18, about 6.05% val error after 62k step with 2 TitanX (about 10hr)
 n=30: a 182-layer network, about 5.5% val error after 51k step with 2 GPUs
 This model uses the whole training set instead of a 95:5 train-val split.

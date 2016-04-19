@@ -70,6 +70,7 @@ class TestCallbackContext(object):
             with create_test_session(trainer) as sess:
                 self.sess = sess
                 self.graph = sess.graph
+                # no tower in test graph. just keep it as what it is
                 self.saver = tf.train.Saver()
         with self.graph.as_default(), self.sess.as_default():
             yield

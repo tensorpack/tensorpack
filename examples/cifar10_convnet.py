@@ -114,7 +114,7 @@ def get_config():
     lr = tf.train.exponential_decay(
         learning_rate=1e-2,
         global_step=get_global_step_var(),
-        decay_steps=step_per_epoch * 30 if nr_gpu == 1 else 20,
+        decay_steps=step_per_epoch * (30 if nr_gpu == 1 else 20),
         decay_rate=0.5, staircase=True, name='learning_rate')
     tf.scalar_summary('learning_rate', lr)
 
@@ -129,7 +129,7 @@ def get_config():
         session_config=sess_config,
         model=Model(),
         step_per_epoch=step_per_epoch,
-        max_epoch=3,
+        max_epoch=20,
     )
 
 if __name__ == '__main__':

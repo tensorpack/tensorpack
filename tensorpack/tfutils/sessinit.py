@@ -5,6 +5,8 @@
 import os
 from abc import abstractmethod, ABCMeta
 import numpy as np
+from collections import defaultdict
+import re
 import tensorflow as tf
 import six
 
@@ -38,7 +40,7 @@ class NewSession(SessionInit):
 
 class SaverRestore(SessionInit):
     """
-    Restore an old model saved by `tf.Saver`.
+    Restore an old model saved by `ModelSaver`.
     """
     def __init__(self, model_path):
         """
@@ -52,13 +54,59 @@ class SaverRestore(SessionInit):
         self.set_path(model_path)
 
     def _init(self, sess):
-        saver = tf.train.Saver()
-        saver.restore(sess, self.path)
         logger.info(
-            "Restore checkpoint from {}".format(self.path))
+            "Restoring checkpoint from {}.".format(self.path))
+        sess.run(tf.initialize_all_variables())
+        chkpt_vars = SaverRestore._read_checkpoint_vars(self.path)
+        vars_map = SaverRestore._get_vars_to_restore_multimap(chkpt_vars)
+        for dic in SaverRestore._produce_restore_dict(vars_map):
+            saver = tf.train.Saver(var_list=dic)
+            saver.restore(sess, self.path)
 
     def set_path(self, model_path):
         self.path = model_path
+
+    @staticmethod
+    def _produce_restore_dict(vars_multimap):
+        """
+        Produce {var_name: var} dict that can be used by `tf.train.Saver`, from a {var_name: [vars]} dict.
+        """
+        while len(vars_multimap):
+            ret = {}
+            for k in vars_multimap.keys():
+                v = vars_multimap[k]
+                ret[k] = v[-1]
+                del v[-1]
+                if not len(v):
+                    del vars_multimap[k]
+            yield ret
+
+
+    @staticmethod
+    def _read_checkpoint_vars(model_path):
+        reader = tf.train.NewCheckpointReader(model_path)
+        return set(reader.GetVariableToShapeMap().keys())
+
+    @staticmethod
+    def _get_vars_to_restore_multimap(vars_available):
+        """
+        Get a dict of {var_name: [var, var]} to restore
+        :param vars_available: varaibles available in the checkpoint, for existence checking
+        """
+        # TODO warn if some variable in checkpoint is not used
+        vars_to_restore = tf.all_variables()
+        var_dict = defaultdict(list)
+        for v in vars_to_restore:
+            name = v.op.name
+            if 'tower' in name:
+                new_name = re.sub('tower[0-9]+/', '', name)
+                name = new_name
+            if name in vars_available:
+                var_dict[name].append(v)
+            else:
+                logger.warn("Param {} not found in checkpoint! Will not restore.".format(v.op.name))
+        return var_dict
+
 
 class ParamRestore(SessionInit):
     """

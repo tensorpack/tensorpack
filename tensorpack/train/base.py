@@ -83,7 +83,7 @@ class Trainer(object):
                 self.global_step = get_global_step()
                 logger.info("Start training with global_step={}".format(self.global_step))
 
-                for epoch in range(self.config.starting_epoch, self.config.max_epoch):
+                for epoch in range(self.config.starting_epoch, self.config.max_epoch+1):
                     with timed_operation(
                         'Epoch {}, global_step={}'.format(
                             epoch, self.global_step + self.config.step_per_epoch)):

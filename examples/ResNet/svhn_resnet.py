@@ -20,8 +20,9 @@ from tensorpack.dataflow import imgaug
 
 
 """
-Reach 1.9% validation error after 90 epochs, with 2 GPUs.
-You might need to adjust learning rate schedule when running with 1 GPU.
+ResNet-110 for SVHN Digit Classification.
+Reach 1.9% validation error after 90 epochs, with 2 TitanX xxhr, 2it/s.
+You might need to adjust the learning rate schedule when running with 1 GPU.
 """
 
 BATCH_SIZE = 128
@@ -98,8 +99,7 @@ class Model(ModelDesc):
         logits = FullyConnected('linear', l, out_dim=10, nl=tf.identity)
         prob = tf.nn.softmax(logits, name='output')
 
-        y = one_hot(label, 10)
-        cost = tf.nn.softmax_cross_entropy_with_logits(logits, y)
+        cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, cost)
 
@@ -167,8 +167,8 @@ def get_config():
         optimizer=tf.train.MomentumOptimizer(lr, 0.9),
         callbacks=Callbacks([
             StatPrinter(),
-            PeriodicSaver(),
-            ValidationError(dataset_test, prefix='test'),
+            ModelSaver(),
+            ClassificationError(dataset_test, prefix='validation'),
             ScheduledHyperParamSetter('learning_rate',
                                       [(1, 0.1), (20, 0.01), (33, 0.001), (60, 0.0001)])
         ]),

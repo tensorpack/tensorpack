@@ -26,11 +26,12 @@ class ModelSaver(Callback):
     def _before_train(self):
         self.path = os.path.join(logger.LOG_DIR, 'model')
         self.saver = tf.train.Saver(
-            var_list=self._get_vars(),
+            var_list=ModelSaver._get_vars(),
             max_to_keep=self.keep_recent,
             keep_checkpoint_every_n_hours=self.keep_freq)
 
-    def _get_vars(self):
+    @staticmethod
+    def _get_vars():
         vars = tf.all_variables()
         var_dict = {}
         for v in vars:
