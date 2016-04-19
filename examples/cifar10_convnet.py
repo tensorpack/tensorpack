@@ -124,12 +124,12 @@ def get_config():
         callbacks=Callbacks([
             StatPrinter(),
             ModelSaver(),
-            ClassificationError(dataset_test, prefix='test'),
+            InferenceRunner(dataset_test, ClassificationError())
         ]),
         session_config=sess_config,
         model=Model(),
         step_per_epoch=step_per_epoch,
-        max_epoch=20,
+        max_epoch=300,
     )
 
 if __name__ == '__main__':

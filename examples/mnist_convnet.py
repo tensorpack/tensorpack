@@ -72,7 +72,7 @@ class Model(ModelDesc):
                          name='regularize_loss')
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, wd_cost)
 
-        add_param_summary([('.*/W', ['histogram', 'sparsity'])])   # monitor histogram of all W
+        add_param_summary([('.*/W', ['histogram'])])   # monitor histogram of all W
         return tf.add_n([wd_cost, cost], name='cost')
 
 def get_config():
@@ -102,8 +102,8 @@ def get_config():
         callbacks=Callbacks([
             StatPrinter(),
             ModelSaver(),
-            ValidationStatPrinter(dataset_test, ['cost:0']),
-            ClassificationError(dataset_test, prefix='validation'),
+            InferenceRunner(dataset_test,
+                [ScalarStats('cost'), ClassificationError() ])
         ]),
         session_config=sess_config,
         model=Model(),

@@ -36,7 +36,6 @@ def get_global_step():
         tf.get_default_session(),
         get_global_step_var())
 
-
 def get_op_var_name(name):
     """
     Variable name is assumed to be ``op_name + ':0'``

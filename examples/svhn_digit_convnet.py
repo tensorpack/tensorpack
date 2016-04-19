@@ -109,7 +109,8 @@ def get_config():
         callbacks=Callbacks([
             StatPrinter(),
             ModelSaver(),
-            ClassificationError(test, prefix='test'),
+            InferenceRunner(dataset_test,
+                [ScalarStats('cost'), ClassificationError()])
         ]),
         session_config=sess_config,
         model=Model(),

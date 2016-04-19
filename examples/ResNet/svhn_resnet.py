@@ -168,7 +168,8 @@ def get_config():
         callbacks=Callbacks([
             StatPrinter(),
             ModelSaver(),
-            ClassificationError(dataset_test, prefix='validation'),
+            InferenceRunner(dataset_test,
+                [ScalarStats('cost'), ClassificationError() ]),
             ScheduledHyperParamSetter('learning_rate',
                                       [(1, 0.1), (20, 0.01), (33, 0.001), (60, 0.0001)])
         ]),
