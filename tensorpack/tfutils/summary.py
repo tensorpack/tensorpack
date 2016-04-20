@@ -8,6 +8,9 @@ import tensorflow as tf
 from ..utils import *
 from . import get_global_step_var
 
+__all__ = ['create_summary', 'add_param_summary', 'add_activation_summary',
+           'summary_moving_average']
+
 def create_summary(name, v):
     """
     Return a tf.Summary object with name and simple scalar value v

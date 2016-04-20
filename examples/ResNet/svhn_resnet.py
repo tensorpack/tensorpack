@@ -21,7 +21,7 @@ from tensorpack.dataflow import imgaug
 
 """
 ResNet-110 for SVHN Digit Classification.
-Reach 1.9% validation error after 90 epochs, with 2 TitanX xxhr, 2it/s.
+Reach 1.8% validation error after 70 epochs, with 2 TitanX. 2it/s.
 You might need to adjust the learning rate schedule when running with 1 GPU.
 """
 

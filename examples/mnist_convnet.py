@@ -8,14 +8,10 @@ import numpy as np
 import os, sys
 import argparse
 
-from tensorpack.train import *
-from tensorpack.models import *
-from tensorpack.utils import *
-from tensorpack.tfutils.symbolic_functions import *
-from tensorpack.tfutils.summary import *
-from tensorpack.tfutils import *
+import tensorpack as tp
+from tensorpack.models import  *
+from tensorpack.utils import  *
 from tensorpack.callbacks import *
-from tensorpack.dataflow import *
 
 """
 MNIST ConvNet example.
@@ -60,7 +56,7 @@ class Model(ModelDesc):
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, cost)
 
         # compute the number of failed samples, for ClassificationError to use at test time
-        wrong = prediction_incorrect(logits, label)
+        wrong = tp.symbolic_functions.prediction_incorrect(logits, label)
         nr_wrong = tf.reduce_sum(wrong, name='wrong')
         # monitor training error
         tf.add_to_collection(
@@ -72,7 +68,7 @@ class Model(ModelDesc):
                          name='regularize_loss')
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, wd_cost)
 
-        add_param_summary([('.*/W', ['histogram'])])   # monitor histogram of all W
+        tp.summary.add_param_summary([('.*/W', ['histogram'])])   # monitor histogram of all W
         return tf.add_n([wd_cost, cost], name='cost')
 
 def get_config():
@@ -81,22 +77,22 @@ def get_config():
         os.path.join('train_log', basename[:basename.rfind('.')]))
 
     # prepare dataset
-    dataset_train = BatchData(dataset.Mnist('train'), 128)
-    dataset_test = BatchData(dataset.Mnist('test'), 256, remainder=True)
+    dataset_train = tp.BatchData(tp.dataset.Mnist('train'), 128)
+    dataset_test = tp.BatchData(tp.dataset.Mnist('test'), 256, remainder=True)
     step_per_epoch = dataset_train.size()
 
     # prepare session
-    sess_config = get_default_sess_config()
+    sess_config = tp.get_default_sess_config()
     sess_config.gpu_options.per_process_gpu_memory_fraction = 0.5
 
     lr = tf.train.exponential_decay(
         learning_rate=1e-3,
-        global_step=get_global_step_var(),
+        global_step=tp.get_global_step_var(),
         decay_steps=dataset_train.size() * 10,
         decay_rate=0.3, staircase=True, name='learning_rate')
     tf.scalar_summary('learning_rate', lr)
 
-    return TrainConfig(
+    return tp.TrainConfig(
         dataset=dataset_train,
         optimizer=tf.train.AdamOptimizer(lr),
         callbacks=Callbacks([
@@ -125,5 +121,5 @@ if __name__ == '__main__':
         config = get_config()
         if args.load:
             config.session_init = SaverRestore(args.load)
-        SimpleTrainer(config).train()
+        tp.SimpleTrainer(config).train()
 

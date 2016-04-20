@@ -11,6 +11,7 @@ def global_import(name):
     lst = p.__all__ if '__all__' in dir(p) else dir(p)
     for k in lst:
         globals()[k] = p.__dict__[k]
+    del globals()[name]
 
 for _, module_name, _ in walk_packages(
         [os.path.dirname(__file__)]):

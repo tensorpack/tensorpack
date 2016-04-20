@@ -63,8 +63,8 @@ class CenterPaste(ImageAugmentor):
 
         background = self.background_filler.fill(
             self.background_shape, img.arr)
-        h0 = (self.background_shape[0] - img_shape[0]) * 0.5
-        w0 = (self.background_shape[1] - img_shape[1]) * 0.5
+        h0 = int((self.background_shape[0] - img_shape[0]) * 0.5)
+        w0 = int((self.background_shape[1] - img_shape[1]) * 0.5)
         background[h0:h0+img_shape[0], w0:w0+img_shape[1]] = img.arr
         img.arr = background
         if img.coords:
