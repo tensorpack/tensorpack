@@ -65,7 +65,9 @@ class BatchData(ProxyDataFlow):
         return result
 
 class FixedSizeData(ProxyDataFlow):
-    """ Generate data from another DataFlow, but with a fixed epoch size"""
+    """ Generate data from another DataFlow, but with a fixed epoch size.
+        The state of the underlying DataFlow is maintained among each epoch.
+    """
     def __init__(self, ds, size):
         """
         :param ds: a :mod:`DataFlow` to produce data
@@ -165,7 +167,7 @@ class MapDataComponent(ProxyDataFlow):
     def __init__(self, ds, func, index=0):
         """
         :param ds: a :mod:`DataFlow` instance.
-        :param func: a function that takes a datapoint dp[index], returns a
+        :param func: a function that takes a datapoint component dp[index], returns a
         new value of dp[index]. return None to skip this datapoint.
         """
         super(MapDataComponent, self).__init__(ds)
@@ -269,3 +271,21 @@ class JoinData(DataFlow):
             for dp in d.get_data():
                 yield dp
 
+class SelectComponent(ProxyDataFlow):
+    """
+    Select component from a datapoint.
+    """
+    def __init__(self, ds, idxs):
+        """
+        :param ds: a :mod:`DataFlow` instance
+        :param idxs: a list of datapoint component index of the original dataflow
+        """
+        super(SelectComponent, self).__init__(ds)
+        self.idxs = idxs
+
+    def get_data(self):
+        for dp in self.ds.get_data():
+            newdp = []
+            for idx in self.idxs:
+                newdp.append(dp[idx])
+            yield newdp

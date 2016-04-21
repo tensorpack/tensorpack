@@ -4,6 +4,7 @@
 
 import multiprocessing
 
+from six.moves import range
 from .base import ProxyDataFlow
 from ..utils.concurrency import ensure_procs_terminate
 
@@ -49,12 +50,9 @@ class PrefetchData(ProxyDataFlow):
 
     def get_data(self):
         tot_cnt = 0
-        while True:
+        for _ in range(tot_cnt):
             dp = self.queue.get()
             yield dp
-            tot_cnt += 1
-            if tot_cnt == self._size:
-                break
 
     def __del__(self):
         self.queue.close()
