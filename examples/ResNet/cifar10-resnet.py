@@ -24,10 +24,10 @@ This implementation uses the variants proposed in:
 Identity Mappings in Deep Residual Networks, arxiv:1603.05027
 
 I can reproduce the results for
-n=5, about 7.2% val error after 93k step with 2 TitanX (6.8it/s)
-n=18, about 6.05% val error after 62k step with 2 TitanX (about 10hr)
-n=30: a 182-layer network, about 5.5% val error after 51k step with 2 GPUs
-This model uses the whole training set instead of a 95:5 train-val split.
+n=5, about 7.1% val error after 67k step with 2 TitanX (6.1it/s)
+n=18, about 6.0% val error after 62k step with 2 TitanX (about 10hr)
+n=30: a 182-layer network, about 5.6% val error after 51k step with 2 GPUs
+This model uses the whole training set instead of a train-val split.
 """
 
 BATCH_SIZE = 128
@@ -168,7 +168,7 @@ def get_config():
                                       [(1, 0.1), (82, 0.01), (123, 0.001), (300, 0.0002)])
         ]),
         session_config=sess_config,
-        model=Model(n=5),
+        model=Model(n=18),
         step_per_epoch=step_per_epoch,
         max_epoch=500,
     )
