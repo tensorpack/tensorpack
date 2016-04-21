@@ -82,7 +82,7 @@ def get_data(train_or_test):
         augmentors = [
             imgaug.RandomCrop((30, 30)),
             imgaug.Flip(horiz=True),
-            imgaug.BrightnessAdd(63),
+            imgaug.Brightness(63),
             imgaug.Contrast((0.2,1.8)),
             imgaug.GaussianDeform(
                 [(0.2, 0.2), (0.2, 0.8), (0.8,0.8), (0.8,0.2)],

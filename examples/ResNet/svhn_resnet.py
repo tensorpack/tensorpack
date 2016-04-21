@@ -134,7 +134,7 @@ def get_data(train_or_test):
             imgaug.CenterPaste((40, 40)),
             imgaug.RandomCrop((32, 32)),
             #imgaug.Flip(horiz=True),
-            imgaug.BrightnessAdd(10),
+            imgaug.Brightness(10),
             imgaug.Contrast((0.8,1.2)),
             imgaug.GaussianDeform(  # this is slow
                 [(0.2, 0.2), (0.2, 0.8), (0.8,0.8), (0.8,0.2)],

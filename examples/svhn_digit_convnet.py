@@ -76,7 +76,7 @@ def get_config():
 
     augmentors = [
         imgaug.Resize((40, 40)),
-        imgaug.BrightnessAdd(30),
+        imgaug.Brightness(30),
         imgaug.Contrast((0.5,1.5)),
         imgaug.GaussianDeform(  # this is slow
             [(0.2, 0.2), (0.2, 0.8), (0.8,0.8), (0.8,0.2)],

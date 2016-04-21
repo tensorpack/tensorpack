@@ -26,7 +26,10 @@ class DataFlow(object):
 
     def reset_state(self):
         """
-        Reset state of the dataflow (usually the random seed)
+        Reset state of the dataflow,
+        for example, RNG **HAS** to be reset here if used in the DataFlow.
+        Otherwise it may not work well with prefetching, because different
+        processes will have the same RNG state.
         """
         pass
 

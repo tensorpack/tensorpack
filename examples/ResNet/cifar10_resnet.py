@@ -131,7 +131,7 @@ def get_data(train_or_test):
             imgaug.CenterPaste((40, 40)),
             imgaug.RandomCrop((32, 32)),
             imgaug.Flip(horiz=True),
-            #imgaug.BrightnessAdd(20),
+            #imgaug.Brightness(20),
             #imgaug.Contrast((0.6,1.4)),
             imgaug.MapImage(lambda x: x - pp_mean),
         ]

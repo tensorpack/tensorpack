@@ -20,6 +20,7 @@ class PrefetchProcess(multiprocessing.Process):
         self.queue = queue
 
     def run(self):
+        # reset RNG of ds so each process will produce different data
         self.ds.reset_state()
         while True:
             for dp in self.ds.get_data():

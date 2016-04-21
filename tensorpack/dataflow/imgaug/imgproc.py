@@ -5,9 +5,9 @@
 from .base import ImageAugmentor
 import numpy as np
 
-__all__ = ['BrightnessAdd', 'Contrast', 'MeanVarianceNormalize']
+__all__ = ['Brightness', 'Contrast', 'MeanVarianceNormalize']
 
-class BrightnessAdd(ImageAugmentor):
+class Brightness(ImageAugmentor):
     """
     Random adjust brightness.
     """
