@@ -49,8 +49,7 @@ class PrefetchData(ProxyDataFlow):
             x.start()
 
     def get_data(self):
-        tot_cnt = 0
-        for _ in range(tot_cnt):
+        for _ in range(self._size):
             dp = self.queue.get()
             yield dp
 

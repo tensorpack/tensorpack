@@ -61,14 +61,18 @@ class ScaleGradient(GradientProcessor):
         self.multipliers = multipliers
 
     def _process(self, grads):
-        # TODO use None for zero can speed up (or not)?
         ret = []
         for grad, var in grads:
             varname = var.op.name
             for regex, val in self.multipliers:
-                if re.search(regex, varname):
+                # always match against the whole name
+                if not regex.endswith('$'):
+                    regex = regex + '$'
+
+                if re.match(regex, varname):
                     logger.info("Apply lr multiplier {} for {}".format(val, varname))
-                    ret.append((grad * val, var))
+                    if val != 0:    # skip zero to speed up
+                        ret.append((grad * val, var))
                     break
             else:
                 ret.append((grad, var))
