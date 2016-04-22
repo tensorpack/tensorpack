@@ -53,7 +53,7 @@ class EnqueueThread(threading.Thread):
         super(EnqueueThread, self).__init__()
         self.sess = trainer.sess
         self.coord = trainer.coord
-        self.dataflow = trainer.config.dataset
+        self.dataflow = RepeatedData(trainer.config.dataset, -1)
 
         self.input_vars = raw_input_var
         self.op = enqueue_op
@@ -76,6 +76,8 @@ class EnqueueThread(threading.Thread):
             logger.exception("Exception in EnqueueThread:")
             self.sess.run(self.close_op)
             self.coord.request_stop()
+        finally:
+            logger.info("Enqueue Thread Exited.")
 
 class QueueInputTrainer(Trainer):
     """

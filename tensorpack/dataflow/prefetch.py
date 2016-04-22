@@ -54,7 +54,9 @@ class PrefetchData(ProxyDataFlow):
             yield dp
 
     def __del__(self):
+        logger.info("Prefetch process exiting...")
         self.queue.close()
         for x in self.procs:
             x.terminate()
+        logger.info("Prefetch process exited.")
 
