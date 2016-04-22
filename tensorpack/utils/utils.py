@@ -11,8 +11,8 @@ import numpy as np
 
 from . import logger
 
-__all__ = ['timed_operation', 'change_env', 'get_rng', 'memoized',
-           'get_nr_gpu']
+__all__ = ['timed_operation', 'change_env',
+        'get_rng', 'memoized', 'get_nr_gpu']
 
 #def expand_dim_if_necessary(var, dp):
 #    """

@@ -16,7 +16,7 @@ class BatchData(ProxyDataFlow):
         """
         Group data in `ds` into batches.
 
-        :param ds: a DataFlow instance
+        :param ds: a DataFlow instance. Its component must be either a scalar or a numpy array
         :param remainder: whether to return the remaining data smaller than a batch_size.
             If set True, will possibly return a data point of a smaller 1st dimension.
             Otherwise, all generated data are guranteed to have the same size.

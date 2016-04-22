@@ -7,6 +7,7 @@ import multiprocessing
 from six.moves import range
 from .base import ProxyDataFlow
 from ..utils.concurrency import ensure_procs_terminate
+from ..utils import logger
 
 __all__ = ['PrefetchData']
 

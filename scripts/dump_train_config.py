@@ -49,6 +49,7 @@ with tqdm.tqdm(total=NR_DP_TEST, leave=True, unit='data points') as pbar:
         if idx > NR_DP_TEST:
             break
         pbar.update()
+    from IPython import embed; embed()
 
 
 
