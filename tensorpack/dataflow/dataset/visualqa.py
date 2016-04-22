@@ -11,6 +11,12 @@ import json
 
 __all__ = ['VisualQA']
 
+def read_json(fname):
+    f = open(fname)
+    ret = json.load(f)
+    f.close()
+    return ret
+
 # TODO shuffle
 class VisualQA(DataFlow):
     """
@@ -19,12 +25,11 @@ class VisualQA(DataFlow):
     """
     def __init__(self, question_file, annotation_file):
         with timed_operation('Reading VQA JSON file'):
-            qobj = json.load(open(question_file))
+            qobj, aobj = list(map(read_json, [question_file, annotation_file]))
             self.task_type = qobj['task_type']
             self.questions = qobj['questions']
             self._size = len(self.questions)
 
-            aobj = json.load(open(annotation_file))
             self.anno = aobj['annotations']
             assert len(self.anno) == len(self.questions), \
                 "{}!={}".format(len(self.anno), len(self.questions))
@@ -49,7 +54,7 @@ class VisualQA(DataFlow):
         """
         cnt = Counter()
         for anno in self.anno:
-            cnt[anno['multiple_choice_answer']] += 1
+            cnt[anno['multiple_choice_answer'].lower()] += 1
         return [k[0] for k in cnt.most_common(n)]
 
     def get_common_question_words(self, n):

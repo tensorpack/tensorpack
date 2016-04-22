@@ -69,7 +69,7 @@ def add_param_summary(summary_lists):
                 for act in actions:
                     perform(p, act)
 
-# TODO use name of cost_var
+# TODO get rid of the cost_var thing...
 def summary_moving_average(cost_var):
     """ Create a MovingAverage op and summary for all variables in
         MOVING_SUMMARY_VARS_KEY, as well as `cost_var`.

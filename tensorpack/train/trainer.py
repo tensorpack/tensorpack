@@ -137,8 +137,8 @@ class QueueInputTrainer(Trainer):
                             kept_summaries[k] = copy.copy(tf.get_collection(k))
                     logger.info("Graph built for tower {}.".format(i))
             for k in coll_keys:
-                del tf.get_collection(k)[:]
-                tf.get_collection(k).extend(kept_summaries[k])
+                del tf.get_collection_ref(k)[:]
+                tf.get_collection_ref(k).extend(kept_summaries[k])
             grads = QueueInputTrainer._average_grads(grad_list)
             cost_var = cost_var_t0
         else:

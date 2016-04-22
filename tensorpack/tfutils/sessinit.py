@@ -107,7 +107,6 @@ class SaverRestore(SessionInit):
                 logger.warn("Param {} not found in checkpoint! Will not restore.".format(v.op.name))
         return var_dict
 
-
 class ParamRestore(SessionInit):
     """
     Restore trainable variables from a dictionary.

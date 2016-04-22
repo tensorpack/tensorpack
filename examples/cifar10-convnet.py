@@ -100,8 +100,6 @@ def get_data(train_or_test):
         ds = PrefetchData(ds, 10, 5)
     return ds
 
-
-
 def get_config():
     # prepare dataset
     dataset_train = get_data('train')
