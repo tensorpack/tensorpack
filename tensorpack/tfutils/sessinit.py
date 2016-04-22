@@ -85,7 +85,7 @@ class SaverRestore(SessionInit):
     @staticmethod
     def _read_checkpoint_vars(model_path):
         reader = tf.train.NewCheckpointReader(model_path)
-        return set(reader.GetVariableToShapeMap().keys())
+        return set(reader.get_variable_to_shape_map().keys())
 
     @staticmethod
     def _get_vars_to_restore_multimap(vars_available):

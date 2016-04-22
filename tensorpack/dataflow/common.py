@@ -9,7 +9,8 @@ from .base import DataFlow, ProxyDataFlow
 from ..utils import *
 
 __all__ = ['BatchData', 'FixedSizeData', 'FakeData', 'MapData',
-           'MapDataComponent', 'RandomChooseData', 'RandomMixData', 'JoinData']
+           'MapDataComponent', 'RandomChooseData', 'RandomMixData',
+           'JoinData', 'ConcatData', 'SelectComponent']
 
 class BatchData(ProxyDataFlow):
     def __init__(self, ds, batch_size, remainder=False):
@@ -249,7 +250,7 @@ class RandomMixData(DataFlow):
         for k in idxs:
             yield next(itrs[k])
 
-class JoinData(DataFlow):
+class ConcatData(DataFlow):
     """
     Concatenate several dataflows.
     """
@@ -271,21 +272,48 @@ class JoinData(DataFlow):
             for dp in d.get_data():
                 yield dp
 
-class SelectComponent(ProxyDataFlow):
+class JoinData(DataFlow):
     """
-    Select component from a datapoint.
+    Join the components from each DataFlow.
+    e.g.: df1: [dp1, dp2]
+          df2: [dp3, dp4]
+          join: [dp1, dp2, dp3, dp4]
     """
-    def __init__(self, ds, idxs):
+    def __init__(self, df_lists):
         """
-        :param ds: a :mod:`DataFlow` instance
-        :param idxs: a list of datapoint component index of the original dataflow
+        :param df_lists: list of :mod:`DataFlow` instances
         """
-        super(SelectComponent, self).__init__(ds)
-        self.idxs = idxs
+        self.df_lists = df_lists
+        self._size = self.df_lists[0].size()
+        for d in self.df_lists:
+            assert d.size() == self._size, \
+                    "All DataFlow must have the same size! {} != {}".format(d.size(), self._size)
+
+    def reset_state(self):
+        for d in self.df_lists:
+            d.reset_state()
+
+    def size(self):
+        return self._size
 
     def get_data(self):
-        for dp in self.ds.get_data():
-            newdp = []
-            for idx in self.idxs:
-                newdp.append(dp[idx])
-            yield newdp
+        itrs = [k.get_data() for k in self.df_lists]
+        try:
+            while True:
+                dp = []
+                for itr in itrs:
+                    dp.extend(next(itr))
+                yield dp
+        except StopIteration:
+            pass
+        finally:
+            for itr in itrs:
+                del itr
+
+def SelectComponent(ds, idxs):
+    """
+    :param ds: a :mod:`DataFlow` instance
+    :param idxs: a list of datapoint component index of the original dataflow
+    """
+    return MapData(ds, lambda dp: [dp[i] for i in idxs])
+

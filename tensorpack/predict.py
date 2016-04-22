@@ -79,7 +79,8 @@ def get_predict_func(config):
 
     # check output_var_names against output_vars
     if output_var_names is not None:
-        output_vars = [tf.get_default_graph().get_tensor_by_name(n) for n in output_var_names]
+        output_vars = [tf.get_default_graph().get_tensor_by_name(get_op_var_name(n)[1])
+                       for n in output_var_names]
     else:
         output_vars = []
 
