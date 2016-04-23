@@ -7,8 +7,12 @@ from itertools import count
 import argparse
 from collections import namedtuple
 import numpy as np
+import bisect
 from tqdm import tqdm
 from six.moves import zip
+
+import multiprocessing
+from .utils.concurrency import ensure_proc_terminate, OrderedResultGatherProc, DIE
 
 from .tfutils import *
 from .utils import logger
@@ -50,6 +54,7 @@ class PredictConfig(object):
         :param output_var_names: a list of names of the output variables to predict, the
             variables can be any computable tensor in the graph.
             Predict specific output might not require all input variables.
+        :param nr_gpu: default to 1. Use CUDA_VISIBLE_DEVICES to control which GPU to use sepcifically.
         """
         def assert_type(v, tp):
             assert isinstance(v, tp), v.__class__
@@ -59,6 +64,7 @@ class PredictConfig(object):
         self.model = kwargs.pop('model')
         self.input_data_mapping = kwargs.pop('input_data_mapping', None)
         self.output_var_names = kwargs.pop('output_var_names')
+        self.nr_gpu = kwargs.pop('nr_gpu', 1)
         assert len(kwargs) == 0, 'Unknown arguments: {}'.format(str(kwargs.keys()))
 
 def get_predict_func(config):
@@ -81,8 +87,6 @@ def get_predict_func(config):
     output_vars = [tf.get_default_graph().get_tensor_by_name(get_op_var_name(n)[1])
                    for n in output_var_names]
 
-    describe_model()
-
     sess = tf.Session(config=config.session_config)
     config.session_init.init(sess)
 
@@ -101,27 +105,103 @@ def get_predict_func(config):
 
 PredictResult = namedtuple('PredictResult', ['input', 'output'])
 
-# TODO mutligpu predictor
+
+class PredictWorker(multiprocessing.Process):
+    def __init__(self, idx, gpuid, inqueue, outqueue, config):
+        super(PredictWorker, self).__init__()
+        self.idx = idx
+        self.gpuid = gpuid
+        self.inqueue = inqueue
+        self.outqueue = outqueue
+        self.config = config
+
+    def run(self):
+        os.environ['CUDA_VISIBLE_DEVICES'] = self.gpuid
+        G = tf.Graph()     # build a graph for each process, because they don't need to share anything
+        with G.as_default(), tf.device('/gpu:{}'.format(self.idx)):
+            self.func = get_predict_func(self.config)
+            if self.idx == 0:
+                describe_model()
+        while True:
+            tid, dp = self.inqueue.get()
+            if tid == DIE:
+                self.outqueue.put((DIE, None))
+                return
+            else:
+                res = PredictResult(dp, self.func(dp))
+                self.outqueue.put((tid, res))
+
+def DFtoQueue(ds, size, nr_consumer):
+    q = multiprocessing.Queue(size)
+    class EnqueProc(multiprocessing.Process):
+        def __init__(self, ds, q, nr_consumer):
+            super(EnqueProc, self).__init__()
+            self.ds = ds
+            self.q = q
+
+        def run(self):
+            for idx, dp in enumerate(self.ds.get_data()):
+                self.q.put((idx, dp))
+            print "Enqueue ends"
+            for _ in range(nr_consumer):
+                self.q.put((DIE, None))
+
+    proc = EnqueProc(ds, q, nr_consumer)
+    return q, proc
 
 class DatasetPredictor(object):
     """
     Run the predict_config on a given `DataFlow`.
     """
-    def __init__(self, predict_config, dataset):
+    def __init__(self, config, dataset):
         """
-        :param predict_config: a `PredictConfig` instance.
+        :param config: a `PredictConfig` instance.
         :param dataset: a `DataFlow` instance.
         """
         assert isinstance(dataset, DataFlow)
         self.ds = dataset
-        self.predict_func = get_predict_func(predict_config)
+        self.nr_gpu = config.nr_gpu
+        if self.nr_gpu > 1:
+            self.inqueue, self.inqueue_proc = DFtoQueue(self.ds, 10, self.nr_gpu)
+            self.outqueue = multiprocessing.Queue()
+            try:
+                gpus = os.environ['CUDA_VISIBLE_DEVICES'].split(',')
+            except KeyError:
+                gpus = range(self.nr_gpu)
+            self.workers = [PredictWorker(i, gpus[i], self.inqueue, self.outqueue, config)
+                            for i in range(self.nr_gpu)]
+            self.result_queue = OrderedResultGatherProc(self.outqueue)
+
+            # run the procs
+            self.inqueue_proc.start()
+            for p in self.workers: p.start()
+            self.result_queue.start()
+
+            ensure_proc_terminate(self.workers)
+            ensure_proc_terminate([self.result_queue, self.inqueue_proc])
+        else:
+            self.func = get_predict_func(config)
+
 
     def get_result(self):
         """ A generator to produce prediction for each data"""
         with tqdm(total=self.ds.size()) as pbar:
-            for dp in self.ds.get_data():
-                yield PredictResult(dp, self.predict_func(dp))
-                pbar.update()
+            if self.nr_gpu == 1:
+                for dp in self.ds.get_data():
+                    yield PredictResult(dp, self.func(dp))
+                    pbar.update()
+            else:
+                while True:
+                    res = self.result_queue.get()
+                    if res[0] != DIE:
+                        yield res[1]
+                    else:
+                        break
+                    pbar.update()
+                self.inqueue_proc.join()
+                self.inqueue_proc.terminate()
+                for p in self.workers:
+                    p.join(); p.terminate()
 
     def get_all_result(self):
         """

@@ -40,6 +40,7 @@ class DumpParamAsImage(Callback):
         self.clip = clip
 
     def _before_train(self):
+        # TODO might not work for multiGPU?
         self.var = self.graph.get_tensor_by_name(self.var_name)
 
     def _trigger_epoch(self):

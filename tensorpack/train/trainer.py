@@ -116,9 +116,11 @@ class QueueInputTrainer(Trainer):
         # get gradients to update:
         if self.config.nr_tower > 1:
             logger.info("Training a model of {} tower".format(self.config.nr_tower))
+
             # to avoid repeated summary from each device
             coll_keys = [tf.GraphKeys.SUMMARIES, MOVING_SUMMARY_VARS_KEY]
             kept_summaries = {}
+
             grad_list = []
             for i in range(self.config.nr_tower):
                 with tf.device('/gpu:{}'.format(i)), \

@@ -6,7 +6,7 @@ import multiprocessing
 
 from six.moves import range
 from .base import ProxyDataFlow
-from ..utils.concurrency import ensure_procs_terminate
+from ..utils.concurrency import ensure_proc_terminate
 from ..utils import logger
 
 __all__ = ['PrefetchData']
@@ -36,7 +36,8 @@ class PrefetchData(ProxyDataFlow):
         """
         :param ds: a `DataFlow` instance.
         :param nr_prefetch: size of the queue to hold prefetched datapoints.
-        :param nr_proc: number of processes to use.
+        :param nr_proc: number of processes to use. When larger than 1, order
+            of data points will be random.
         """
         super(PrefetchData, self).__init__(ds)
         self._size = self.size()
@@ -45,7 +46,7 @@ class PrefetchData(ProxyDataFlow):
         self.queue = multiprocessing.Queue(self.nr_prefetch)
         self.procs = [PrefetchProcess(self.ds, self.queue)
                       for _ in range(self.nr_proc)]
-        ensure_procs_terminate(self.procs)
+        ensure_proc_terminate(self.procs)
         for x in self.procs:
             x.start()
 
