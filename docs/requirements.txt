@@ -1,0 +1,3 @@
+termcolor
+tqdm
+nltk
