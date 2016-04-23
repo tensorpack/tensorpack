@@ -9,7 +9,7 @@ from copy import copy
 from ._common import *
 from .batch_norm import BatchNorm
 
-__all__ = ['Maxout', 'PReLU', 'LeakyReLU', 'BNReLU']
+__all__ = ['Maxout', 'PReLU', 'LeakyReLU', 'BNReLU', 'NonLinearity']
 
 @layer_register(log_shape=False)
 def Maxout(x, num_unit):
@@ -24,7 +24,7 @@ def Maxout(x, num_unit):
     assert len(input_shape) == 4
     ch = input_shape[3]
     assert ch % num_unit == 0
-    x = tf.reshape(x, [-1, input_shape[1], input_shape[2], ch / 3, 3])
+    x = tf.reshape(x, [-1, input_shape[1], input_shape[2], ch / num_unit, num_unit])
     return tf.reduce_max(x, 4, name='output')
 
 @layer_register(log_shape=False)
@@ -66,10 +66,18 @@ def BNReLU(is_training, **kwargs):
     """
     :param is_traning: boolean
     :param kwargs: args for BatchNorm
-    :returns: a activation function that performs BN + ReLU (a too common combination)
+    :returns: an activation function that performs BN + ReLU (a too common combination)
     """
     def BNReLU(x, name=None):
         x = BatchNorm('bn', x, is_training, **kwargs)
         x = tf.nn.relu(x, name=name)
         return x
     return BNReLU
+
+@layer_register(log_shape=False)
+def NonLinearity(x, nl):
+    """
+    :param input: any tensor.
+    :param nl: any Tensorflow Operation
+    """
+    return nl(x, name='output')
