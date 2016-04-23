@@ -57,17 +57,25 @@ def _set_file(path):
         filename=path, encoding='utf-8', mode='w')
     logger.addHandler(hdl)
 
-def set_logger_dir(dirname):
+def set_logger_dir(dirname, action=None):
+    """
+    Set the directory for global logging.
+    :param dirname: log directory
+    :param action: an action (k/b/d/n) to be performed. Will ask user by default.
+    """
     global LOG_FILE, LOG_DIR
     if os.path.isdir(dirname):
         logger.warn("""\
 Directory {} exists! Please either backup/delete it, or use a new directory \
 unless you're resuming from a previous task.""".format(dirname))
         logger.info("Select Action: k (keep) / b (backup) / d (delete) / n (new):")
-        while True:
-            act = input().lower().strip()
-            if act:
-                break
+        if not action:
+            while True:
+                act = input().lower().strip()
+                if act:
+                    break
+        else:
+            act = action
         if act == 'b':
             backup_name = dirname + get_time_str()
             shutil.move(dirname, backup_name)

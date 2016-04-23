@@ -4,14 +4,10 @@
 # Credit belongs to Xinyu Zhou
 
 import threading
-import multiprocessing, multiprocess
-from contextlib import contextmanager
-import tensorflow as tf
+import multiprocessing
 import atexit
+import bisect
 import weakref
-from six.moves import zip
-
-from .naming import *
 
 __all__ = ['StoppableThread', 'ensure_proc_terminate',
            'OrderedResultGatherProc', 'OrderedContainer', 'DIE']
@@ -29,8 +25,8 @@ class StoppableThread(threading.Thread):
 
 
 class DIE(object):
+    """ A placeholder class indicating end of queue """
     pass
-
 
 def ensure_proc_terminate(proc):
     if isinstance(proc, list):
@@ -47,11 +43,14 @@ def ensure_proc_terminate(proc):
         proc.terminate()
         proc.join()
 
-    assert isinstance(proc, (multiprocessing.Process, multiprocess.Process))
+    assert isinstance(proc, multiprocessing.Process)
     atexit.register(stop_proc_by_weak_ref, weakref.ref(proc))
 
 
 class OrderedContainer(object):
+    """
+    Like a priority queue, but will always wait for item with index (x+1) before producing (x+2).
+    """
     def __init__(self, start=0):
         self.ranks = []
         self.data = []
@@ -78,9 +77,12 @@ class OrderedContainer(object):
 
 
 class OrderedResultGatherProc(multiprocessing.Process):
+    """
+    Gather indexed data from a data queue, and produce results with the
+    original index-based order.
+    """
     def __init__(self, data_queue, start=0):
         super(self.__class__, self).__init__()
-
         self.data_queue = data_queue
         self.ordered_container = OrderedContainer(start=start)
         self.result_queue = multiprocessing.Queue()

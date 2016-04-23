@@ -7,7 +7,6 @@ from itertools import count
 import argparse
 from collections import namedtuple
 import numpy as np
-import bisect
 from tqdm import tqdm
 from six.moves import zip
 
@@ -21,23 +20,24 @@ from .dataflow import DataFlow, BatchData
 
 __all__ = ['PredictConfig', 'DatasetPredictor', 'get_predict_func']
 
+PredictResult = namedtuple('PredictResult', ['input', 'output'])
+
 class PredictConfig(object):
     def __init__(self, **kwargs):
         """
         The config used by `get_predict_func`.
 
-        :param session_config: a `tf.ConfigProto` instance to instantiate the
-            session. default to a session running 1 GPU.
+        :param session_config: a `tf.ConfigProto` instance to instantiate the session.
         :param session_init: a `utils.sessinit.SessionInit` instance to
             initialize variables of a session.
         :param input_data_mapping: Decide the mapping from each component in data
             to the input tensor, since you may not need all input variables
-            of the graph to run the graph for prediction (for example
-            the `label` input is not used if you only need probability
-            distribution).
-            It should be a list with size=len(data_point),
-            where each element is an index of the input variables each
-            component of the data point should be fed into.
+            of the Model to run the graph for prediction (for example
+            the `label` input is not used if you only need probability distribution).
+
+            It should be a list of int with length equal to `len(data_point)`,
+            where each element in the list defines which input variables each
+            component in the data point should be fed into.
             If not given, defaults to range(len(input_vars))
 
             For example, in image classification task, the testing
@@ -46,7 +46,7 @@ class PredictConfig(object):
 
                 input_vars: [image_var, label_var]
 
-            the mapping should look like: ::
+            the mapping should then look like: ::
 
                 input_data_mapping: [0] # the first component in a datapoint should map to `image_var`
 
@@ -95,19 +95,19 @@ def get_predict_func(config):
             "Graph has {} inputs but dataset only gives {} components!".format(
                     len(input_map), len(dp))
         feed = dict(zip(input_map, dp))
-
-        results = sess.run(output_vars, feed_dict=feed)
-        if len(output_vars) == 1:
-            return results[0]
-        else:
-            return results
+        return sess.run(output_vars, feed_dict=feed)
     return run_input
 
-PredictResult = namedtuple('PredictResult', ['input', 'output'])
-
-
 class PredictWorker(multiprocessing.Process):
+    """ A worker process to run predictor on one GPU """
     def __init__(self, idx, gpuid, inqueue, outqueue, config):
+        """
+        :param idx: index of the worker
+        :param gpuid: id of the GPU to be used
+        :param inqueue: input queue to get data point
+        :param outqueue: output queue put result
+        :param config: a `PredictConfig`
+        """
         super(PredictWorker, self).__init__()
         self.idx = idx
         self.gpuid = gpuid
@@ -132,6 +132,15 @@ class PredictWorker(multiprocessing.Process):
                 self.outqueue.put((tid, res))
 
 def DFtoQueue(ds, size, nr_consumer):
+    """
+    Build a queue that produce data from `DataFlow`, and a process
+    that fills the queue.
+    :param ds: a `DataFlow`
+    :param size: size of the queue
+    :param nr_consumer: number of consumer of the queue.
+        will add this many of `DIE` sentinel to the end of the queue.
+    :returns: (queue, process)
+    """
     q = multiprocessing.Queue(size)
     class EnqueProc(multiprocessing.Process):
         def __init__(self, ds, q, nr_consumer):
@@ -172,16 +181,14 @@ class DatasetPredictor(object):
                             for i in range(self.nr_gpu)]
             self.result_queue = OrderedResultGatherProc(self.outqueue)
 
-            # run the procs
+            # setup all the procs
             self.inqueue_proc.start()
             for p in self.workers: p.start()
             self.result_queue.start()
-
             ensure_proc_terminate(self.workers)
             ensure_proc_terminate([self.result_queue, self.inqueue_proc])
         else:
             self.func = get_predict_func(config)
-
 
     def get_result(self):
         """ A generator to produce prediction for each data"""
@@ -191,12 +198,15 @@ class DatasetPredictor(object):
                     yield PredictResult(dp, self.func(dp))
                     pbar.update()
             else:
+                die_cnt = 0
                 while True:
                     res = self.result_queue.get()
                     if res[0] != DIE:
                         yield res[1]
                     else:
-                        break
+                        die_cnt += 1
+                        if die_cnt == self.nr_gpu:
+                            break
                     pbar.update()
                 self.inqueue_proc.join()
                 self.inqueue_proc.terminate()
