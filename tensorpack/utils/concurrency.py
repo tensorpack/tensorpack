@@ -9,7 +9,7 @@ import atexit
 import bisect
 import weakref
 
-__all__ = ['StoppableThread', 'ensure_proc_terminate',
+__all__ = ['StoppableThread', 'LoopThread', 'ensure_proc_terminate',
            'OrderedResultGatherProc', 'OrderedContainer', 'DIE']
 
 class StoppableThread(threading.Thread):
@@ -22,6 +22,29 @@ class StoppableThread(threading.Thread):
 
     def stopped(self):
         return self._stop.isSet()
+
+class LoopThread(threading.Thread):
+    """ A pausable thread that simply runs a loop"""
+    def __init__(self, func):
+        """
+        :param func: the function to run
+        """
+        super(LoopThread, self).__init__()
+        self.func = func
+        self.lock = threading.Lock()
+        self.daemon = True
+
+    def run(self):
+        while True:
+            self.lock.acquire()
+            self.lock.release()
+            self.func()
+
+    def pause(self):
+        self.lock.acquire()
+
+    def resume(self):
+        self.lock.release()
 
 
 class DIE(object):

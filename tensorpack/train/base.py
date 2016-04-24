@@ -48,6 +48,7 @@ class Trainer(object):
 
     @abstractmethod
     def _trigger_epoch(self):
+        """ This is called right after all steps in an epoch are finished"""
         pass
 
     def _init_summary(self):
@@ -94,7 +95,7 @@ class Trainer(object):
                             if self.coord.should_stop():
                                 return
                             self.run_step()
-                            callbacks.trigger_step()
+                            #callbacks.trigger_step()   # not useful?
                             self.global_step += 1
                         self.trigger_epoch()
             except (KeyboardInterrupt, Exception):
