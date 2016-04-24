@@ -5,7 +5,7 @@
 import tensorflow as tf
 from tqdm import tqdm
 from abc import ABCMeta, abstractmethod
-from six.moves import zip
+from six.moves import zip, map
 
 from ..dataflow import DataFlow
 from ..utils import *
@@ -102,7 +102,7 @@ class InferenceRunner(Callback):
         def get_tensor(name):
             _, varname = get_op_var_name(name)
             return self.graph.get_tensor_by_name(varname)
-        self.output_tensors = map(get_tensor, self.output_tensors)
+        self.output_tensors = list(map(get_tensor, self.output_tensors))
 
     def _trigger_epoch(self):
         for vc in self.vcs:

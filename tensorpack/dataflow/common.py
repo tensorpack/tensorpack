@@ -2,8 +2,9 @@
 # File: common.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
-import numpy as np
+from __future__ import division
 import copy
+import numpy as np
 from six.moves import range
 from .base import DataFlow, ProxyDataFlow
 from ..utils import *
@@ -30,7 +31,7 @@ class BatchData(ProxyDataFlow):
 
     def size(self):
         ds_size = self.ds.size()
-        div = ds_size / self.batch_size
+        div = ds_size // self.batch_size
         rem = ds_size % self.batch_size
         if rem == 0:
             return div

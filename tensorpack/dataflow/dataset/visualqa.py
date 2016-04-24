@@ -73,7 +73,7 @@ if __name__ == '__main__':
     vqa = VisualQA('/home/wyx/data/VQA/MultipleChoice_mscoco_train2014_questions.json',
             '/home/wyx/data/VQA/mscoco_train2014_annotations.json')
     for k in vqa.get_data():
-        print json.dumps(k)
+        print(json.dumps(k))
         break
 #    vqa.get_common_question_words(100)
     vqa.get_common_answer(100)
