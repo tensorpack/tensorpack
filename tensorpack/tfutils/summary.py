@@ -4,6 +4,7 @@
 
 import six
 import tensorflow as tf
+import re
 
 from ..utils import *
 from . import get_global_step_var
@@ -69,23 +70,18 @@ def add_param_summary(summary_lists):
                 for act in actions:
                     perform(p, act)
 
-# TODO get rid of the cost_var thing...
-def summary_moving_average(cost_var):
+def summary_moving_average():
     """ Create a MovingAverage op and summary for all variables in
-        MOVING_SUMMARY_VARS_KEY, as well as `cost_var`.
-
+        MOVING_SUMMARY_VARS_KEY.
         :returns: a op to maintain these average.
     """
     global_step_var = get_global_step_var()
     averager = tf.train.ExponentialMovingAverage(
         0.99, num_updates=global_step_var, name='moving_averages')
-    vars_to_summary = [cost_var] + \
-            tf.get_collection(MOVING_SUMMARY_VARS_KEY)
+    vars_to_summary = tf.get_collection(MOVING_SUMMARY_VARS_KEY)
     avg_maintain_op = averager.apply(vars_to_summary)
     for idx, c in enumerate(vars_to_summary):
-        name = c.op.name
-        if idx == 0:
-            name = 'train_cost'
+        name = re.sub('tower[0-9]+/', '', c.op.name)
         tf.scalar_summary(name, averager.average(c))
     return avg_maintain_op
 

@@ -81,73 +81,91 @@ class EnqueueThread(threading.Thread):
 
 class QueueInputTrainer(Trainer):
     """
-    Trainer which builds a queue for input.
+    Trainer which builds a FIFO queue for input.
     Support multi GPU.
     """
+
+    def __init__(self, config, input_queue=None):
+        """
+        :param config: a `TrainConfig` instance
+        :param input_queue: a `tf.QueueBase` instance to be used to buffer datapoints.
+            Defaults to a FIFO queue of size 100.
+        """
+        super(QueueInputTrainer, self).__init__(config)
+        self.input_vars = self.model.get_input_vars()
+        if input_queue is None:
+            self.input_queue = tf.FIFOQueue(
+                    100, [x.dtype for x in self.input_vars], name='input_queue')
+        else:
+            self.input_queue = input_queue
 
     @staticmethod
     def _average_grads(tower_grads):
         ret = []
-        with tf.device('/gpu:0'):
-            for grad_and_vars in zip(*tower_grads):
-                v = grad_and_vars[0][1]
-                try:
-                    grad = tf.add_n([x[0] for x in grad_and_vars]) / float(len(tower_grads))
-                except AssertionError:
-                    logger.error("Error while processing gradients of {}".format(v.name))
-                    raise
-                ret.append((grad, v))
-            return ret
+        for grad_and_vars in zip(*tower_grads):
+            v = grad_and_vars[0][1]
+            try:
+                grad = tf.add_n([x[0] for x in grad_and_vars]) / float(len(tower_grads))
+            except AssertionError:
+                logger.error("Error while processing gradients of {}".format(v.name))
+                raise
+            ret.append((grad, v))
+        return ret
+
+    def _get_model_inputs(self):
+        """ Dequeue a datapoint from input_queue and return"""
+        ret = self.input_queue.dequeue()
+        if isinstance(ret, tf.Tensor): # only one input
+            ret = [ret]
+        assert len(ret) == len(self.input_vars)
+        for qv, v in zip(ret, self.input_vars):
+            qv.set_shape(v.get_shape())
+        return ret
+
+    def _single_tower_grad_cost(self):
+        """ Get grad and cost for single-tower case"""
+        model_inputs = self._get_model_inputs()
+        cost_var = self.model.get_cost(model_inputs, is_training=True)
+        grads = self.config.optimizer.compute_gradients(cost_var)
+        return (grads, cost_var)
+
+    def _multi_tower_grad_cost(self):
+        logger.info("Training a model of {} tower".format(self.config.nr_tower))
+
+        # to avoid repeated summary from each device
+        collect_dedup = [tf.GraphKeys.SUMMARIES, MOVING_SUMMARY_VARS_KEY]
+        kept_summaries = {}
+
+        grad_list = []
+        for i in range(self.config.nr_tower):
+            with tf.device('/gpu:{}'.format(i)), \
+                    tf.name_scope('tower{}'.format(i)) as scope:
+                model_inputs = self._get_model_inputs()    # each tower dequeue from input queue
+                cost_var = self.model.get_cost(model_inputs, is_training=True) # build tower
+
+                # gate_gradienst=0 seems to be faster?
+                grad_list.append(
+                    self.config.optimizer.compute_gradients(cost_var, gate_gradients=0))
+
+                if i == 0:
+                    cost_var_t0 = cost_var
+                    tf.get_variable_scope().reuse_variables()
+                    for k in collect_dedup:
+                        kept_summaries[k] = copy.copy(tf.get_collection(k))
+                logger.info("Graph built for tower {}.".format(i))
+        for k in collect_dedup:
+            del tf.get_collection_ref(k)[:]
+            tf.get_collection_ref(k).extend(kept_summaries[k])
+        grads = QueueInputTrainer._average_grads(grad_list)
+        return (grads, cost_var_t0)
 
     def train(self):
-        model = self.model
-        input_vars = model.get_input_vars()
-        input_queue = model.get_input_queue(input_vars)
-        enqueue_op = input_queue.enqueue(input_vars)
+        enqueue_op = self.input_queue.enqueue(self.input_vars)
 
-        def get_model_inputs():
-            model_inputs = input_queue.dequeue()
-            if isinstance(model_inputs, tf.Tensor): # only one input
-                model_inputs = [model_inputs]
-            for qv, v in zip(model_inputs, input_vars):
-                qv.set_shape(v.get_shape())
-            return model_inputs
-
-        # get gradients to update:
-        if self.config.nr_tower > 1:
-            logger.info("Training a model of {} tower".format(self.config.nr_tower))
-
-            # to avoid repeated summary from each device
-            coll_keys = [tf.GraphKeys.SUMMARIES, MOVING_SUMMARY_VARS_KEY]
-            kept_summaries = {}
-
-            grad_list = []
-            for i in range(self.config.nr_tower):
-                with tf.device('/gpu:{}'.format(i)), \
-                        tf.name_scope('tower{}'.format(i)) as scope:
-                    model_inputs = get_model_inputs()
-                    cost_var = model.get_cost(model_inputs, is_training=True)
-                    if i == 0:
-                        cost_var_t0 = cost_var
-                    grad_list.append(
-                        self.config.optimizer.compute_gradients(cost_var,
-                                                                gate_gradients=0))
-
-                    if i == 0:
-                        tf.get_variable_scope().reuse_variables()
-                        for k in coll_keys:
-                            kept_summaries[k] = copy.copy(tf.get_collection(k))
-                    logger.info("Graph built for tower {}.".format(i))
-            for k in coll_keys:
-                del tf.get_collection_ref(k)[:]
-                tf.get_collection_ref(k).extend(kept_summaries[k])
-            grads = QueueInputTrainer._average_grads(grad_list)
-            cost_var = cost_var_t0
-        else:
-            model_inputs = get_model_inputs()
-            cost_var = model.get_cost(model_inputs, is_training=True)
-            grads = self.config.optimizer.compute_gradients(cost_var)
-        avg_maintain_op = summary_moving_average(cost_var)  # TODO(multigpu) average the cost from each device?
+        grads, cost_var = self._single_tower_grad_cost() \
+                if self.config.nr_tower == 0 else self._multi_tower_grad_cost()
+        tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, cost_var)
+        avg_maintain_op = summary_moving_average()
 
         grads = self.process_grads(grads)
 
@@ -157,7 +175,7 @@ class QueueInputTrainer(Trainer):
 
         self.init_session_and_coord()
         # create a thread that keeps filling the queue
-        self.input_th = EnqueueThread(self, input_queue, enqueue_op, input_vars)
+        self.input_th = EnqueueThread(self, self.input_queue, enqueue_op, self.input_vars)
         self.main_loop()
 
     def _start_all_threads(self):

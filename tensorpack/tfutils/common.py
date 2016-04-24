@@ -6,7 +6,7 @@
 from ..utils.naming import *
 import tensorflow as tf
 
-def get_default_sess_config(mem_fraction=0.99):
+def get_default_sess_config(mem_fraction=0.9):
     """
     Return a better session config to use as default.
     Tensorflow default session config consume too much resources.

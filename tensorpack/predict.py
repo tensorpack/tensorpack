@@ -3,12 +3,10 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
-from itertools import count
-import argparse
-from collections import namedtuple
 import numpy as np
+from collections import namedtuple
 from tqdm import tqdm
-from six.moves import zip
+from six.moves import zip, range
 
 import multiprocessing
 from .utils.concurrency import ensure_proc_terminate, OrderedResultGatherProc, DIE
@@ -17,6 +15,7 @@ from .tfutils import *
 from .utils import logger
 from .tfutils.modelutils import describe_model
 from .dataflow import DataFlow, BatchData
+from .dataflow.dftools import dataflow_to_process_queue
 
 __all__ = ['PredictConfig', 'DatasetPredictor', 'get_predict_func']
 
@@ -102,7 +101,7 @@ class PredictWorker(multiprocessing.Process):
     """ A worker process to run predictor on one GPU """
     def __init__(self, idx, gpuid, inqueue, outqueue, config):
         """
-        :param idx: index of the worker
+        :param idx: index of the worker. the 0th worker will print log.
         :param gpuid: id of the GPU to be used
         :param inqueue: input queue to get data point
         :param outqueue: output queue put result
@@ -118,7 +117,7 @@ class PredictWorker(multiprocessing.Process):
     def run(self):
         os.environ['CUDA_VISIBLE_DEVICES'] = self.gpuid
         G = tf.Graph()     # build a graph for each process, because they don't need to share anything
-        with G.as_default(), tf.device('/gpu:{}'.format(self.idx)):
+        with G.as_default(), tf.device('/gpu:0'):
             self.func = get_predict_func(self.config)
             if self.idx == 0:
                 describe_model()
@@ -130,33 +129,6 @@ class PredictWorker(multiprocessing.Process):
             else:
                 res = PredictResult(dp, self.func(dp))
                 self.outqueue.put((tid, res))
-
-def DFtoQueue(ds, size, nr_consumer):
-    """
-    Build a queue that produce data from `DataFlow`, and a process
-    that fills the queue.
-    :param ds: a `DataFlow`
-    :param size: size of the queue
-    :param nr_consumer: number of consumer of the queue.
-        will add this many of `DIE` sentinel to the end of the queue.
-    :returns: (queue, process)
-    """
-    q = multiprocessing.Queue(size)
-    class EnqueProc(multiprocessing.Process):
-        def __init__(self, ds, q, nr_consumer):
-            super(EnqueProc, self).__init__()
-            self.ds = ds
-            self.q = q
-
-        def run(self):
-            for idx, dp in enumerate(self.ds.get_data()):
-                self.q.put((idx, dp))
-            print "Enqueue ends"
-            for _ in range(nr_consumer):
-                self.q.put((DIE, None))
-
-    proc = EnqueProc(ds, q, nr_consumer)
-    return q, proc
 
 class DatasetPredictor(object):
     """
@@ -171,12 +143,12 @@ class DatasetPredictor(object):
         self.ds = dataset
         self.nr_gpu = config.nr_gpu
         if self.nr_gpu > 1:
-            self.inqueue, self.inqueue_proc = DFtoQueue(self.ds, 10, self.nr_gpu)
+            self.inqueue, self.inqueue_proc = dataflow_to_process_queue(self.ds, 10, self.nr_gpu)
             self.outqueue = multiprocessing.Queue()
             try:
                 gpus = os.environ['CUDA_VISIBLE_DEVICES'].split(',')
             except KeyError:
-                gpus = range(self.nr_gpu)
+                gpus = list(range(self.nr_gpu))
             self.workers = [PredictWorker(i, gpus[i], self.inqueue, self.outqueue, config)
                             for i in range(self.nr_gpu)]
             self.result_queue = OrderedResultGatherProc(self.outqueue)

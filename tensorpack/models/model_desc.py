@@ -39,16 +39,6 @@ class ModelDesc(object):
     def _get_input_vars(self):
         pass
 
-    # TODO move this to QueueInputTrainer
-    def get_input_queue(self, input_vars):
-        """
-        return the queue for input. the dequeued elements will be fed to self.get_cost
-        if queue is None, datapoints from dataflow will be fed to the graph directly.
-        when running with multiGPU, queue cannot be None
-        """
-        assert input_vars is not None
-        return tf.FIFOQueue(100, [x.dtype for x in input_vars], name='input_queue')
-
     def get_cost(self, input_vars, is_training):
         """
         :param input_vars: a list of input variable in the graph

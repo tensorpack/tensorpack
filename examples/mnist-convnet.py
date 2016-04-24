@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File: mnist_convnet.py
+# File: mnist-convnet.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
@@ -121,5 +121,6 @@ if __name__ == '__main__':
         config = get_config()
         if args.load:
             config.session_init = SaverRestore(args.load)
-        tp.SimpleTrainer(config).train()
+        #tp.SimpleTrainer(config).train()
+        tp.QueueInputTrainer(config).train()
 

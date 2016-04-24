@@ -3,11 +3,14 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import sys, os
+import multiprocessing
 from scipy.misc import imsave
 
 from ..utils.fs import mkdir_p
 
-# TODO name_func to write label?
+__all__ = ['dump_dataset_images', 'dataflow_to_process_queue']
+
+# TODO pass a name_func to write label as filename?
 def dump_dataset_images(ds, dirname, max_count=None, index=0):
     """ Dump images from a `DataFlow` to a directory.
 
@@ -25,3 +28,34 @@ def dump_dataset_images(ds, dirname, max_count=None, index=0):
             return
         img = dp[index]
         imsave(os.path.join(dirname, "{}.jpg".format(i)), img)
+
+
+def dataflow_to_process_queue(ds, size, nr_consumer):
+    """
+    Convert a `DataFlow` to a multiprocessing.Queue.
+    :param ds: a `DataFlow`
+    :param size: size of the queue
+    :param nr_consumer: number of consumer of the queue.
+        will add this many of `DIE` sentinel to the end of the queue.
+    :returns: (queue, process). The process will take data from `ds` to fill
+        the queue once you start it.
+    """
+    q = multiprocessing.Queue(size)
+    class EnqueProc(multiprocessing.Process):
+        def __init__(self, ds, q, nr_consumer):
+            super(EnqueProc, self).__init__()
+            self.ds = ds
+            self.q = q
+
+        def run(self):
+            try:
+                for idx, dp in enumerate(self.ds.get_data()):
+                    self.q.put((idx, dp))
+            finally:
+                for _ in range(nr_consumer):
+                    self.q.put((DIE, None))
+
+    proc = EnqueProc(ds, q, nr_consumer)
+    return q, proc
+
+
