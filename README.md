@@ -1,7 +1,7 @@
 # tensorpack
 Neural Network Toolbox on TensorFlow
 
-In development. No document. See [examples](https://github.com/ppwwyyxx/tensorpack/tree/master/examples).
+In development. See [examples](https://github.com/ppwwyyxx/tensorpack/tree/master/examples) to learn.
 
 ## Features:
 + Scoped abstraction of common models.
