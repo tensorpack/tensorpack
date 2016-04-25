@@ -317,7 +317,7 @@ def get_rst(app, what, name, obj, options, signature,
             return_annotation):
     if signature:
         signature = re.sub('<Mock name=\'([^\']+)\'.*>', '\g<1>', signature)
-        signature = re.sub('tensorflow', 'tf')
+        signature = re.sub('tensorflow', 'tf', signature)
     return signature, return_annotation
 
 def setup(app):
