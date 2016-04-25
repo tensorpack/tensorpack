@@ -12,8 +12,7 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys
-import os
+import sys, os, re
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -21,10 +20,23 @@ import os
 sys.path.insert(0, os.path.abspath('../'))
 
 import mock
+
+#class AttrMock(mock.Mock):
+    #def __init__(self, name):
+        #self.__dict__['name'] = name
+    #def __getattr__(self, attr):
+        #return AttrMock(self.__dict__['name'] + "." + attr)
+    #def __str__(self):
+        #return self.__dict__['name']
+    #def __call__(self, *args, **kwargs):
+        #return self.__dict__['name'] + '(' + \
+                #', '.join(map(str, args)) + ', ' \
+                #+ ', '.join(["{}={}".format(k,v) for k,v in kwargs.items()]) + ')'
+
 MOCK_MODULES = ['numpy', 'scipy', 'tensorflow', 'scipy.misc', 'h5py', 'nltk',
                 'cv2', 'scipy.io']
 for mod_name in MOCK_MODULES:
-    sys.modules[mod_name] = mock.Mock()
+    sys.modules[mod_name] = mock.Mock(name=mod_name)
 
 import tensorpack
 from tensorpack.models import *
@@ -301,5 +313,13 @@ def skip(app, what, name, obj, skip, options):
         return False
     return skip
 
+def get_rst(app, what, name, obj, options, signature,
+            return_annotation):
+    if signature:
+        signature = re.sub('<Mock name=\'([^\']+)\'.*>', '\g<1>', signature)
+        signature = re.sub('tensorflow', 'tf')
+    return signature, return_annotation
+
 def setup(app):
+    app.connect('autodoc-process-signature', get_rst)
     app.connect("autodoc-skip-member", skip)

@@ -24,7 +24,7 @@ def BatchNorm(x, use_local_stat=True, decay=0.9, epsilon=1e-5):
 
     Notes:
 
-    * Whole-population mean/variance is calculated by a running-average mean/variance, with decay rate 0.999
+    * Whole-population mean/variance is calculated by a running-average mean/variance.
     * Epsilon for variance is set to 1e-5, as is `torch/nn <https://github.com/torch/nn/blob/master/BatchNormalization.lua>`_.
 
     :param input: a NHWC tensor or a NC vector

@@ -6,6 +6,7 @@ import tensorflow as tf
 from functools import wraps
 import six
 import copy
+import decorator
 
 from ..tfutils import *
 from ..tfutils.modelutils import *
@@ -23,6 +24,7 @@ def layer_register(summary_activation=False, log_shape=True):
         Can be overriden when creating the layer.
     :param log_shape: log input/output shape of this layer
     """
+    @decorator.decorator
     def wrapper(func):
         @wraps(func)
         def wrapped_func(*args, **kwargs):
