@@ -61,6 +61,10 @@ templates_path = ['_templates']
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
+from recommonmark.parser import CommonMarkParser
+source_parsers = {
+    '.md': CommonMarkParser,
+}
 source_suffix = ['.rst', '.md']
 
 # The encoding of source files.
@@ -308,7 +312,9 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
+
 def skip(app, what, name, obj, skip, options):
+    # keep __init__
     if name == "__init__":
         return False
     return skip
@@ -316,10 +322,21 @@ def skip(app, what, name, obj, skip, options):
 def get_rst(app, what, name, obj, options, signature,
             return_annotation):
     if signature:
+        # replace Mock function names
         signature = re.sub('<Mock name=\'([^\']+)\'.*>', '\g<1>', signature)
         signature = re.sub('tensorflow', 'tf', signature)
     return signature, return_annotation
 
 def setup(app):
+    from recommonmark.transform import AutoStructify
     app.connect('autodoc-process-signature', get_rst)
     app.connect("autodoc-skip-member", skip)
+    app.add_config_value(
+        'recommonmark_config',
+        {'url_resolver': lambda url: \
+         "https://github.com/ppwwyyxx/tensorpack/blob/master/tensorpack/" + url,
+         'auto_toc_tree_section': 'Contents',
+         'enable_math': True,
+         'enable_inline_math': True,
+        }, True)
+    app.add_transform(AutoStructify)

@@ -61,7 +61,7 @@ def LeakyReLU(x, alpha, name=None):
     else:
         return tf.mul(x, 0.5, name=name)
 
-
+# I'm not a layer, but I return a layer.
 def BNReLU(is_training, **kwargs):
     """
     :param is_traning: boolean
