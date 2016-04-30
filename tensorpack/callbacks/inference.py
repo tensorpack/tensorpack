@@ -162,20 +162,21 @@ class ClassificationError(Inferencer):
     """
     Validate the accuracy from a `wrong` variable
 
-    The `wrong` variable is supposed to be an integer equal to the number of failed samples in this batch
+    The `wrong` variable is supposed to be an integer equal to the number of failed samples in this batch.
+    You can use `tf.nn.in_top_k` to record top-k error as well.
 
     This callback produce the "true" error,
     taking account of the fact that batches might not have the same size in
     testing (because the size of test set might not be a multiple of batch size).
     In theory, the result could be different from what produced by ValidationStatPrinter.
     """
-    def __init__(self, wrong_var_name='wrong:0', prefix='validation'):
+    def __init__(self, wrong_var_name='wrong:0', summary_name='validation_error'):
         """
         :param wrong_var_name: name of the `wrong` variable
-        :param prefix: an optional prefix for logging
+        :param summary_name: an optional prefix for logging
         """
         self.wrong_var_name = wrong_var_name
-        self.prefix = prefix
+        self.summary_name = summary_name
 
     def _get_output_tensors(self):
         return [self.wrong_var_name]
@@ -190,6 +191,6 @@ class ClassificationError(Inferencer):
 
     def _after_inference(self):
         self.trainer.summary_writer.add_summary(
-                create_summary('{}_error'.format(self.prefix), self.err_stat.accuracy),
+                create_summary(self.summary_name, self.err_stat.accuracy),
                 get_global_step())
-        self.trainer.stat_holder.add_stat("{}_error".format(self.prefix), self.err_stat.accuracy)
+        self.trainer.stat_holder.add_stat(self.summary_name, self.err_stat.accuracy)

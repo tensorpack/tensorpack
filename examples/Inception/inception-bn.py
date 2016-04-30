@@ -105,11 +105,15 @@ class Model(ModelDesc):
         for k in [cost, loss1, loss2, loss3]:
             tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, k)
 
-        wrong = prediction_incorrect(logits, label)
-        nr_wrong = tf.reduce_sum(wrong, name='wrong')
-        # monitor training error
+        wrong = prediction_incorrect(logits, label, 1)
+        nr_wrong = tf.reduce_sum(wrong, name='wrong-top1')
         tf.add_to_collection(
-            MOVING_SUMMARY_VARS_KEY, tf.reduce_mean(wrong, name='train_error'))
+            MOVING_SUMMARY_VARS_KEY, tf.reduce_mean(wrong, name='train_error_top1'))
+
+        wrong = prediction_incorrect(logits, label, 5)
+        nr_wrong = tf.reduce_sum(wrong, name='wrong-top5')
+        tf.add_to_collection(
+            MOVING_SUMMARY_VARS_KEY, tf.reduce_mean(wrong, name='train_error_top5'))
 
         # weight decay on all W of fc layers
         wd_w = tf.train.exponential_decay(0.0002, get_global_step_var(),
@@ -163,7 +167,9 @@ def get_config():
         callbacks=Callbacks([
             StatPrinter(),
             ModelSaver(),
-            InferenceRunner(dataset_val, ClassificationError()),
+            InferenceRunner(dataset_val, [
+                ClassificationError('wrong-top1', 'val-top1-error'),
+                ClassificationError('wrong-top5', 'val-top5-error')]),
             #HumanHyperParamSetter('learning_rate', 'hyper-googlenet.txt')
             ScheduledHyperParamSetter('learning_rate',
                                       [(8, 0.03), (13, 0.02), (21, 5e-3),

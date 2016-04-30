@@ -21,18 +21,13 @@ def one_hot(y, num_labels):
         onehot_labels.set_shape([None, num_labels])
         return tf.cast(onehot_labels, tf.float32)
 
-def prediction_incorrect(logits, label):
+def prediction_incorrect(logits, label, topk=1):
     """
     :param logits: NxC
     :param label: N
-    :returns: a binary vector of length N with 1 meaning incorrect prediction
+    :returns: a float32 vector of length N with 0/1 values, 1 meaning incorrect prediction
     """
-    with tf.op_scope([logits, label], 'incorrect'):
-        wrong = tf.not_equal(
-            tf.argmax(logits, 1),
-            tf.cast(label, tf.int64))
-        wrong = tf.cast(wrong, tf.float32)
-        return wrong
+    return tf.cast(tf.logical_not(tf.nn.in_top_k(logits, label, topk)), tf.float32)
 
 def flatten(x):
     """
