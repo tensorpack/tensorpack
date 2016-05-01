@@ -73,7 +73,7 @@ class SaverRestore(SessionInit):
         """
         while len(vars_multimap):
             ret = {}
-            for k in vars_multimap.keys():
+            for k in list(vars_multimap.keys()):
                 v = vars_multimap[k]
                 ret[k] = v[-1]
                 del v[-1]

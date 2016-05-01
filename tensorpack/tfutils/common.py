@@ -6,6 +6,11 @@
 from ..utils.naming import *
 import tensorflow as tf
 
+__all__ = ['get_default_sess_config',
+            'get_global_step',
+            'get_global_step_var',
+            'get_op_var_name']
+
 def get_default_sess_config(mem_fraction=0.9):
     """
     Return a better session config to use as default.

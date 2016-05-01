@@ -9,7 +9,7 @@ import re
 from ..utils import logger
 
 __all__ = ['GradientProcessor', 'SummaryGradient', 'CheckGradient',
-           'ScaleGradient']
+           'ScaleGradient', 'MapGradient']
 
 class GradientProcessor(object):
     __metaclass__ = ABCMeta
@@ -74,6 +74,30 @@ class ScaleGradient(GradientProcessor):
                     if val != 0:    # skip zero to speed up
                         ret.append((grad * val, var))
                     break
+            else:
+                ret.append((grad, var))
+        return ret
+
+class MapGradient(GradientProcessor):
+    """
+    Apply a function on all gradient if the name matches regex.
+    """
+    def __init__(self, func, regex='.*'):
+        """
+        :param func: takes a tensor and returns a tensor
+        ;param regex: used to match variables. default to match all variables.
+        """
+        self.func = func
+        if not regex.endswith('$'):
+            regex = regex + '$'
+        self.regex = regex
+
+    def _process(self, grads):
+        ret = []
+        for grad, var in grads:
+            if re.match(self.regex, var.op.name):
+                logger.info("DEBUG {}".format(var.op.name))
+                ret.append((self.func(grad), var))
             else:
                 ret.append((grad, var))
         return ret
