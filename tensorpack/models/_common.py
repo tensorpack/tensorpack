@@ -16,6 +16,13 @@ from ..utils import logger
 # make sure each layer is only logged once
 _layer_logged = set()
 
+def disable_layer_logging():
+    class ContainEverything:
+        def __contains__(self, x):
+            return True
+    # can use nonlocal in python3, but how
+    globals()['_layer_logged'] = ContainEverything()
+
 def layer_register(summary_activation=False, log_shape=True):
     """
     Register a layer.

@@ -115,9 +115,13 @@ class PredictWorker(multiprocessing.Process):
         self.config = config
 
     def run(self):
+        logger.info("Worker {} use GPU {}".format(self.idx, self.gpuid))
         os.environ['CUDA_VISIBLE_DEVICES'] = self.gpuid
         G = tf.Graph()     # build a graph for each process, because they don't need to share anything
         with G.as_default(), tf.device('/gpu:0'):
+            if self.idx != 0:
+                from tensorpack.models._common import disable_layer_logging
+                disable_layer_logging()
             self.func = get_predict_func(self.config)
             if self.idx == 0:
                 describe_model()
@@ -173,13 +177,13 @@ class DatasetPredictor(object):
                 die_cnt = 0
                 while True:
                     res = self.result_queue.get()
+                    pbar.update()
                     if res[0] != DIE:
                         yield res[1]
                     else:
                         die_cnt += 1
                         if die_cnt == self.nr_gpu:
                             break
-                    pbar.update()
                 self.inqueue_proc.join()
                 self.inqueue_proc.terminate()
                 for p in self.workers:

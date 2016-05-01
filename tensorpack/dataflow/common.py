@@ -154,6 +154,7 @@ class MapData(ProxyDataFlow):
         :param ds: a :mod:`DataFlow` instance.
         :param func: a function that takes a original datapoint, returns a new
             datapoint. return None to skip this data point.
+            Note that if you use filter, ds.size() won't be correct.
         """
         super(MapData, self).__init__(ds)
         self.func = func
@@ -170,7 +171,8 @@ class MapDataComponent(ProxyDataFlow):
         """
         :param ds: a :mod:`DataFlow` instance.
         :param func: a function that takes a datapoint component dp[index], returns a
-        new value of dp[index]. return None to skip this datapoint.
+            new value of dp[index]. return None to skip this datapoint.
+            Note that if you use filter, ds.size() won't be correct.
         """
         super(MapDataComponent, self).__init__(ds)
         self.func = func
