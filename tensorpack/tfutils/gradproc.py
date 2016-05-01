@@ -96,7 +96,6 @@ class MapGradient(GradientProcessor):
         ret = []
         for grad, var in grads:
             if re.match(self.regex, var.op.name):
-                logger.info("DEBUG {}".format(var.op.name))
                 ret.append((self.func(grad), var))
             else:
                 ret.append((grad, var))
