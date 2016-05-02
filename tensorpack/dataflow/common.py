@@ -145,7 +145,8 @@ class FakeData(DataFlow):
 
     def get_data(self):
         for _ in range(self._size):
-            yield [self.rng.random_sample(k) for k in self.shapes]
+            yield [self.rng.random_sample(k).astype('float32') for k in self.shapes]
+            #yield [self.rng.random_sample(k) for k in self.shapes]
 
 class MapData(ProxyDataFlow):
     """ Apply map/filter a function on the datapoint"""

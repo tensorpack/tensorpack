@@ -11,7 +11,7 @@ from six.moves import range
 try:
     import h5py
 except ImportError:
-    logger.error("Error in 'import h5py'. HDF5Data won't be imported.")
+    logger.error("Error in 'import h5py'. HDF5Data won't be available.")
     __all__ = []
 else:
     __all__ = ['HDF5Data']
