@@ -45,6 +45,7 @@ class CharRNNData(DataFlow):
         self._size = size
         self.rng = get_rng(self)
 
+        logger.info("Loading corpus...")
         # preprocess data
         with open(input_file) as f:
             data = f.read()
@@ -55,6 +56,7 @@ class CharRNNData(DataFlow):
         param.vocab_size = self.vocab_size
         self.lut = LookUpTable(self.chars)
         self.whole_seq = np.array(list(map(self.lut.get_idx, data)), dtype='int32')
+        logger.info("Corpus loaded. Vocab size: {}".format(self.vocab_size))
 
     def reset_state(self):
         self.rng = get_rng(self)
@@ -126,7 +128,7 @@ def get_config():
             StatPrinter(),
             ModelSaver(),
             #HumanHyperParamSetter('learning_rate', 'hyper.txt')
-            SeduledHyperParamSetter('learning_rate', [(25, 2e-4)])
+            ScheduledHyperParamSetter('learning_rate', [(25, 2e-4)])
         ]),
         model=Model(),
         step_per_epoch=step_per_epoch,
@@ -194,6 +196,7 @@ if __name__ == '__main__':
 
     if args.command == 'sample':
         param.softmax_temprature = args.temperature
+        assert args.load is not None, "Load your model by argument --load"
         sample(args.load, args.start, args.num)
         sys.exit()
     else:
