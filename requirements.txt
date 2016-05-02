@@ -4,3 +4,4 @@ scipy
 tqdm
 h5py
 nltk
+dill

@@ -46,6 +46,7 @@ NR_DP_TEST = args.number
 logger.info("Testing dataflow speed:")
 with tqdm.tqdm(total=NR_DP_TEST, leave=True, unit='data points') as pbar:
     for idx, dp in enumerate(config.dataset.get_data()):
+        del dp
         if idx > NR_DP_TEST:
             break
         pbar.update()
