@@ -67,14 +67,6 @@ class PrefetchData(ProxyDataFlow):
             dp = self.queue.get()
             yield dp
 
-    def __del__(self):
-        logger.info("Prefetch process exiting...")
-        self.queue.close()
-        for x in self.procs:
-            x.terminate()
-        logger.info("Prefetch process exited.")
-
-
 class PrefetchProcessZMQ(multiprocessing.Process):
     def __init__(self, ds, conn_name):
         """
@@ -118,6 +110,10 @@ class PrefetchDataZMQ(ProxyDataFlow):
         for x in self.procs:
             x.start()
 
+        # __del__ not guranteed to get called at exit
+        import atexit
+        atexit.register(lambda x: x.__del__(), self)
+
     def get_data(self):
         for _ in range(self._size):
             dp = loads(self.socket.recv(copy=False))
@@ -125,7 +121,8 @@ class PrefetchDataZMQ(ProxyDataFlow):
 
     def __del__(self):
         logger.info("Prefetch process exiting...")
-        self.context.destroy(0)
+        if not self.context.closed:
+            self.context.destroy(0)
         for x in self.procs:
             x.terminate()
         logger.info("Prefetch process exited.")

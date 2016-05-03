@@ -97,7 +97,7 @@ def get_data(train_or_test):
     ds = AugmentImageComponent(ds, augmentors)
     ds = BatchData(ds, 128, remainder=not isTrain)
     if isTrain:
-        ds = PrefetchDataZMQ(ds, 5)
+        ds = PrefetchData(ds, 10, 5)
     return ds
 
 def get_config():
@@ -127,7 +127,7 @@ def get_config():
         session_config=sess_config,
         model=Model(),
         step_per_epoch=step_per_epoch,
-        max_epoch=300,
+        max_epoch=250,
     )
 
 if __name__ == '__main__':
