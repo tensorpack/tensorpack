@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-# File: svhn_digit_convnet.py
+# File: svhn-digit-convnet.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
@@ -71,8 +71,8 @@ def get_config():
     # prepare dataset
     d1 = dataset.SVHNDigit('train')
     d2 = dataset.SVHNDigit('extra')
-    train = RandomMixData([d1, d2])
-    test = dataset.SVHNDigit('test')
+    data_train = RandomMixData([d1, d2])
+    data_test = dataset.SVHNDigit('test')
 
     augmentors = [
         imgaug.Resize((40, 40)),
@@ -82,37 +82,34 @@ def get_config():
             [(0.2, 0.2), (0.2, 0.8), (0.8,0.8), (0.8,0.2)],
             (40,40), 0.2, 3),
     ]
-    train = AugmentImageComponent(train, augmentors)
-    train = BatchData(train, 128)
+    data_train = AugmentImageComponent(data_train, augmentors)
+    data_train = BatchData(data_train, 128)
     nr_proc = 5
-    train = PrefetchData(train, 5, nr_proc)
-    step_per_epoch = train.size()
+    data_train = PrefetchData(data_train, 5, nr_proc)
+    step_per_epoch = data_train.size()
 
     augmentors = [
         imgaug.Resize((40, 40)),
     ]
-    test = AugmentImageComponent(test, augmentors)
-    test = BatchData(test, 128, remainder=True)
-
-    sess_config = get_default_sess_config(0.8)
+    data_test = AugmentImageComponent(data_test, augmentors)
+    data_test = BatchData(data_test, 128, remainder=True)
 
     lr = tf.train.exponential_decay(
         learning_rate=1e-3,
         global_step=get_global_step_var(),
-        decay_steps=train.size() * 60,
+        decay_steps=data_train.size() * 60,
         decay_rate=0.2, staircase=True, name='learning_rate')
     tf.scalar_summary('learning_rate', lr)
 
     return TrainConfig(
-        dataset=train,
+        dataset=data_train,
         optimizer=tf.train.AdamOptimizer(lr),
         callbacks=Callbacks([
             StatPrinter(),
             ModelSaver(),
-            InferenceRunner(dataset_test,
+            InferenceRunner(data_test,
                 [ScalarStats('cost'), ClassificationError()])
         ]),
-        session_config=sess_config,
         model=Model(),
         step_per_epoch=step_per_epoch,
         max_epoch=350,
