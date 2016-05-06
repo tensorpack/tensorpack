@@ -6,7 +6,7 @@ import tensorflow as tf
 import re
 import os
 import operator
-import pickle
+import json
 
 from .base import Callback
 from ..utils import *
@@ -25,11 +25,11 @@ class StatHolder(object):
         self.stat_now = {}
 
         self.log_dir = log_dir
-        self.filename = os.path.join(log_dir, 'stat.pkl')
+        self.filename = os.path.join(log_dir, 'stat.json')
         if os.path.isfile(self.filename):
             logger.info("Loading stats from {}...".format(self.filename))
             with open(self.filename) as f:
-                self.stat_history = pickle.load(f)
+                self.stat_history = json.load(f)
         else:
             self.stat_history = []
 
@@ -46,6 +46,12 @@ class StatHolder(object):
         Set name of stats to print.
         """
         self.print_tag = None if print_tag is None else set(print_tag)
+
+    def get_stat_now(self, k):
+        """
+        Return the value of a stat in the current epoch.
+        """
+        return self.stat_now[k]
 
     def finalize(self):
         """
@@ -64,7 +70,7 @@ class StatHolder(object):
     def _write_stat(self):
         tmp_filename = self.filename + '.tmp'
         with open(tmp_filename, 'wb') as f:
-            pickle.dump(self.stat_history, f)
+            json.dump(self.stat_history, f)
         os.rename(tmp_filename, self.filename)
 
 class StatPrinter(Callback):

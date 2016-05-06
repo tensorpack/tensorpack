@@ -3,7 +3,7 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
-import os
+import os, shutil
 import re
 
 from .base import Callback
@@ -56,6 +56,24 @@ class ModelSaver(Callback):
 class MinSaver(Callback):
     def __init__(self, monitor_stat):
         self.monitor_stat = monitor_stat
+        self.min = None
+
+    def _get_stat(self):
+        return self.trainer.stat_holder.get_stat_now(self.monitor_stat)
 
     def _trigger_epoch(self):
-        pass
+        if self.min is None or self._get_stat() < self.min:
+            self.min = self._get_stat()
+            self._save()
+
+    def _save(self):
+        ckpt = tf.train.get_checkpoint_state(logger.LOG_DIR)
+        if ckpt is None:
+            raise RuntimeError(
+                "Cannot find a checkpoint state. Do you forget to use ModelSaver before MinSaver?")
+        path = chpt.model_checkpoint_path
+        newname = os.path.join(logger.LOG_DIR, 'min_' + self.monitor_stat)
+        shutil.copy(path, newname)
+        logger.info("Model with minimum {} saved.".format(self.monitor_stat))
+
+

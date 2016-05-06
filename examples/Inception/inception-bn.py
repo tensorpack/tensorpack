@@ -35,7 +35,7 @@ class Model(ModelDesc):
 
     def _get_cost(self, input_vars, is_training):
         image, label = input_vars
-        image = image / 128.0 - 1
+        image = image / 128.0
 
         def inception(name, x, nr1x1, nr3x3r, nr3x3, nr233r, nr233, nrpool, pooltype):
             stride = 2 if nr1x1 == 0 else 1
@@ -45,7 +45,6 @@ class Model(ModelDesc):
                     outs.append(Conv2D('conv1x1', x, nr1x1, 1))
                 x2 = Conv2D('conv3x3r', x, nr3x3r, 1)
                 outs.append(Conv2D('conv3x3', x2, nr3x3, 3, stride=stride))
-
 
                 x3 = Conv2D('conv233r', x, nr233r, 1)
                 x3 = Conv2D('conv233a', x3, nr233, 3)
@@ -133,6 +132,8 @@ def get_data(train_or_test):
     if isTrain:
         augmentors = [
             imgaug.Resize((256, 256)),
+            imgaug.Brightness(30, False),
+            imgaug.Contrast((0.8,1.2), True),
             imgaug.MapImage(lambda x: x - pp_mean),
             imgaug.RandomCrop((224, 224)),
             imgaug.Flip(horiz=True),
@@ -172,9 +173,9 @@ def get_config():
                 ClassificationError('wrong-top5', 'val-top5-error')]),
             #HumanHyperParamSetter('learning_rate', 'hyper-googlenet.txt')
             ScheduledHyperParamSetter('learning_rate',
-                                      [(8, 0.03), (13, 0.02), (21, 5e-3),
-                                       (28, 3e-3), (33, 1e-3), (44, 5e-4),
-                                       (49, 1e-4), (59, 2e-5)])
+                                      [(8, 0.03), (13, 0.02), (16, 5e-3),
+                                       (18, 3e-3), (24, 1e-3), (26, 2e-4),
+                                       (28, 5e-5) ])
         ]),
         session_config=sess_config,
         model=Model(),

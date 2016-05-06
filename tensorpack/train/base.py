@@ -19,6 +19,13 @@ __all__ = ['Trainer']
 class Trainer(object):
     """
     Base class for a trainer.
+
+    Available Attritbutes:
+        stat_holder: a `StatHolder` instance
+        summary_writer: a `tf.SummaryWriter`
+        config: a `TrainConfig`
+        model: a `ModelDesc`
+        global_step: a `int`
     """
     __metaclass__ = ABCMeta
 
