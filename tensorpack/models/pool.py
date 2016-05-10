@@ -8,7 +8,8 @@ import numpy
 from ._common import *
 from ..tfutils.symbolic_functions import *
 
-__all__ = ['MaxPooling', 'FixedUnPooling', 'AvgPooling', 'GlobalAvgPooling']
+__all__ = ['MaxPooling', 'FixedUnPooling', 'AvgPooling', 'GlobalAvgPooling',
+           'BilinearUpSample']
 
 @layer_register()
 def MaxPooling(x, shape, stride=None, padding='VALID'):

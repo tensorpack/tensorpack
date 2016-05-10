@@ -16,6 +16,8 @@ class DataFlow(object):
     def get_data(self):
         """
         A generator to generate data as a list.
+        Datapoint should be a mutable list.
+        Each component should be assumed immutable.
         """
 
     def size(self):

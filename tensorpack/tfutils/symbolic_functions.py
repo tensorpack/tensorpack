@@ -65,7 +65,7 @@ def class_balanced_binary_class_cross_entropy(pred, label, name='cross_entropy_l
     :returns: class-balanced binary classification cross entropy loss
     """
     z = batch_flatten(pred)
-    y = batch_flatten(label)
+    y = tf.cast(batch_flatten(label), tf.float32)
 
     count_neg = tf.reduce_sum(1. - y)
     count_pos = tf.reduce_sum(y)

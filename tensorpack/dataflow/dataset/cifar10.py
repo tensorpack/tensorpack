@@ -98,7 +98,7 @@ class Cifar10(DataFlow):
         if self.shuffle:
             self.rng.shuffle(idxs)
         for k in idxs:
-            yield self.data[k]
+            yield copy.copy(self.data[k])
 
     def get_per_pixel_mean(self):
         """

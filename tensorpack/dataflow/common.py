@@ -183,8 +183,7 @@ class MapDataComponent(ProxyDataFlow):
         for dp in self.ds.get_data():
             repl = self.func(dp[self.index])
             if repl is not None:
-                dp = copy.deepcopy(dp)  # avoid modifying the original dp
-                dp[self.index] = repl
+                dp[self.index] = repl   # NOTE modifying
                 yield dp
 
 class RandomChooseData(DataFlow):
