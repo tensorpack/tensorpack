@@ -24,7 +24,7 @@ class BSDS500(DataFlow):
 
     Produce (image, label) pair, where image has shape (321, 481, 3) and
     ranges in [0,255]. Label is binary and has shape (321, 481).
-    Those pixels annotated as boundaries by >= 3 out of 5 annotators are
+    Those pixels annotated as boundaries by >= 3 annotators are
     considered positive examples. This is used in `Holistically-Nested Edge Detection
     <http://arxiv.org/abs/1504.06375>`_.
     """
@@ -71,7 +71,8 @@ class BSDS500(DataFlow):
             imgid = os.path.basename(f).split('.')[0]
             gt_file = os.path.join(gt_dir, imgid)
             gt = loadmat(gt_file)['groundTruth'][0]
-            gt = sum(gt[k]['Boundaries'][0][0] for k in range(5))
+            n_annot = gt.shape[0]
+            gt = sum(gt[k]['Boundaries'][0][0] for k in range(n_annot))
             gt[gt < 3] = 0
             gt[gt != 0] = 1
             if gt.shape[0] > gt.shape[1]:

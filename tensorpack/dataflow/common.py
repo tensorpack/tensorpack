@@ -10,8 +10,8 @@ from .base import DataFlow, ProxyDataFlow
 from ..utils import *
 
 __all__ = ['BatchData', 'FixedSizeData', 'FakeData', 'MapData',
-           'MapDataComponent', 'RandomChooseData', 'RandomMixData',
-           'JoinData', 'ConcatData', 'SelectComponent']
+           'RepeatedData', 'MapDataComponent', 'RandomChooseData',
+           'RandomMixData', 'JoinData', 'ConcatData', 'SelectComponent']
 
 class BatchData(ProxyDataFlow):
     def __init__(self, ds, batch_size, remainder=False):

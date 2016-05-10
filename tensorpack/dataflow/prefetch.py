@@ -17,7 +17,7 @@ from ..utils import logger
 try:
     import zmq
 except ImportError:
-    logger.error("Error in 'import zmq'. PrefetchDataZMQ won't be available.")
+    logger.warn("Error in 'import zmq'. PrefetchDataZMQ won't be available.")
     __all__ = ['PrefetchData']
 else:
     __all__ = ['PrefetchData', 'PrefetchDataZMQ']

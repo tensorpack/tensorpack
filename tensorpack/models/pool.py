@@ -69,7 +69,7 @@ def FixedUnPooling(x, shape, unpool_mat=None):
 
     :param input: NHWC tensor
     :param shape: int or [h, w]
-    :param unpool_mat: a tf matrix with size=shape. If None, will use a mat
+    :param unpool_mat: a tf/np matrix with size=shape. If None, will use a mat
         with 1 at top-left corner.
     :returns: NHWC tensor
     """
@@ -80,6 +80,8 @@ def FixedUnPooling(x, shape, unpool_mat=None):
         mat = np.zeros(shape, dtype='float32')
         mat[0][0] = 1
         unpool_mat = tf.Variable(mat, trainable=False, name='unpool_mat')
+    elif isinstance(unpool_mat, np.ndarray):
+        unpool_mat = tf.Variable(unpool_mat, trainable=False, name='unpool_mat')
     assert unpool_mat.get_shape().as_list() == list(shape)
 
     # perform a tensor-matrix kronecker product
@@ -95,6 +97,41 @@ def FixedUnPooling(x, shape, unpool_mat=None):
                             input_shape[2] * shape[1],
                             input_shape[3]])
     return prod
+
+@layer_register()
+def BilinearUpSample(x, shape):
+    """
+    Bilinear upsample the input images.
+    :param x: input NHWC tensor
+    :param shape: an integer
+    """
+    def bilinear_conv_filler(s):
+        """
+        s: width, height of the conv filter
+        See https://github.com/BVLC/caffe/blob/master/include%2Fcaffe%2Ffiller.hpp#L244
+        """
+        f = np.ceil(float(s) / 2)
+        c = float(2 * f - 1 - f % 2) / (2 * f)
+        ret = np.zeros((s, s), dtype='float32')
+        for x in range(s):
+            for y in range(s):
+                ret[x,y] = (1 - abs(x / f - c)) * (1 - abs(y / f - c))
+        return ret
+
+    ch = x.get_shape().as_list()[3]
+    shape = int(shape)
+    filter_shape = 2 * shape
+    w = bilinear_conv_filler(filter_shape)
+    w = np.repeat(w, ch * ch).reshape((filter_shape, filter_shape, ch, ch))
+    weight_var = tf.constant(w,
+                             tf.float32,
+                             shape=(filter_shape, filter_shape, ch, ch))
+
+    unpool_mat = np.zeros((shape, shape), dtype='float32')
+    unpool_mat[-1,-1] = 1
+    x = FixedUnPooling('unpool', x, shape, unpool_mat)
+    output = tf.nn.conv2d(x, weight_var, [1,1,1,1], padding='SAME')
+    return output
 
 from ._test import TestModel
 class TestPool(TestModel):
@@ -113,3 +150,23 @@ class TestPool(TestModel):
         # the rest are zeros
         res[0,::2,::2,0] = 0
         self.assertTrue((res == 0).all())
+
+    def test_upsample(self):
+        h, w = 5, 5
+        scale = 2
+
+        mat = np.random.rand(h, w).astype('float32')
+        inp = self.make_variable(mat)
+        inp = tf.reshape(inp, [1, h, w, 1])
+
+        output = BilinearUpSample('upsample', inp, scale)
+        res = self.run_variable(output)
+
+        from skimage.transform import rescale
+        res2 = rescale(mat, scale)
+
+        diff = np.abs(res2 - res[0,:,:,0])
+
+        # not equivalent at corner
+        diff[0,0] = diff[-1,-1] = 0
+        self.assertTrue(diff.max() < 1e-4)

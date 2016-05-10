@@ -11,6 +11,7 @@ import tqdm
 import os
 from tensorpack.utils import logger
 from tensorpack.utils.fs import mkdir_p
+from tensorpack.dataflow import *
 
 
 parser = argparse.ArgumentParser()
@@ -44,13 +45,13 @@ if args.output:
 
 NR_DP_TEST = args.number
 logger.info("Testing dataflow speed:")
+ds = RepeatedData(config.dataset, -1)
 with tqdm.tqdm(total=NR_DP_TEST, leave=True, unit='data points') as pbar:
-    for idx, dp in enumerate(config.dataset.get_data()):
+    for idx, dp in enumerate(ds.get_data()):
         del dp
         if idx > NR_DP_TEST:
             break
         pbar.update()
-    from IPython import embed; embed()
 
 
 

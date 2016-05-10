@@ -4,6 +4,7 @@
 
 from abc import abstractmethod, ABCMeta
 from ...utils import get_rng
+from six.moves import zip
 
 __all__ = ['ImageAugmentor', 'AugmentorList']
 
