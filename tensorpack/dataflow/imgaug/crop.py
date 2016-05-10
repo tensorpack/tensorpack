@@ -18,13 +18,18 @@ class RandomCrop(ImageAugmentor):
         """
         self._init(locals())
 
-    def _augment(self, img):
-        orig_shape = img.arr.shape
+    def _get_augment_params(self, img):
+        orig_shape = img.shape
         h0 = self.rng.randint(0, orig_shape[0] - self.crop_shape[0])
         w0 = self.rng.randint(0, orig_shape[1] - self.crop_shape[1])
-        img.arr = img.arr[h0:h0+self.crop_shape[0],w0:w0+self.crop_shape[1]]
-        if img.coords:
-            raise NotImplementedError()
+        return (h0, w0)
+
+    def _augment(self, img, param):
+        h0, w0 = param
+        return img[h0:h0+self.crop_shape[0],w0:w0+self.crop_shape[1]]
+
+    def _fprop_coord(self, coord, param):
+        raise NotImplementedError()
 
 class CenterCrop(ImageAugmentor):
     """ Crop the image at the center"""
@@ -34,13 +39,14 @@ class CenterCrop(ImageAugmentor):
         """
         self._init(locals())
 
-    def _augment(self, img):
-        orig_shape = img.arr.shape
+    def _augment(self, img, _):
+        orig_shape = img.shape
         h0 = int((orig_shape[0] - self.crop_shape[0]) * 0.5)
         w0 = int((orig_shape[1] - self.crop_shape[1]) * 0.5)
-        img.arr = img.arr[h0:h0+self.crop_shape[0],w0:w0+self.crop_shape[1]]
-        if img.coords:
-            raise NotImplementedError()
+        return img[h0:h0+self.crop_shape[0],w0:w0+self.crop_shape[1]]
+
+    def _fprop_coord(self, coord, param):
+        raise NotImplementedError()
 
 class FixedCrop(ImageAugmentor):
     """ Crop a rectangle at a given location"""
@@ -52,12 +58,13 @@ class FixedCrop(ImageAugmentor):
         """
         self._init(locals())
 
-    def _augment(self, img):
-        orig_shape = img.arr.shape
-        img.arr = img.arr[self.rect.y0: self.rect.y1+1,
-                          self.rect.x0: self.rect.x0+1]
-        if img.coords:
-            raise NotImplementedError()
+    def _augment(self, img, _):
+        orig_shape = img.shape
+        return img[self.rect.y0: self.rect.y1+1,
+                   self.rect.x0: self.rect.x0+1]
+
+    def _fprop_coord(self, coord, param):
+        raise NotImplementedError()
 
 def perturb_BB(image_shape, bb, max_pertub_pixel,
         rng=None, max_aspect_ratio_diff=0.3,
@@ -104,16 +111,19 @@ class RandomCropRandomShape(ImageAugmentor):
         """
         self._init(locals())
 
-    def _augment(self, img):
-        shape = img.arr.shape[:2]
+    def _get_augment_params(self, img):
+        shape = img.shape[:2]
         box = Rect(0, 0, shape[1] - 1, shape[0] - 1)
         dist = self.perturb_ratio * np.sqrt(shape[0]*shape[1])
         newbox = perturb_BB(shape, box, dist,
                 self.rng, self.max_aspect_ratio_diff)
+        return newbox
 
-        img.arr = newbox.roi(img.arr)
-        if img.coords:
-            raise NotImplementedError()
+    def _augment(self, img, newbox):
+        return newbox.roi(img)
+
+    def _fprop_coord(self, coord, param):
+        raise NotImplementedError()
 
 if __name__ == '__main__':
     print(perturb_BB([100, 100], Rect(3, 3, 50, 50), 50))

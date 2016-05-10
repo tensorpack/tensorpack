@@ -7,7 +7,7 @@ import cv2
 import copy
 from .base import DataFlow, ProxyDataFlow
 from .common import MapDataComponent
-from .imgaug import AugmentorList, Image
+from .imgaug import AugmentorList
 
 __all__ = ['ImageFromFile', 'AugmentImageComponent']
 

@@ -5,20 +5,7 @@
 from abc import abstractmethod, ABCMeta
 from ...utils import get_rng
 
-__all__ = ['Image', 'ImageAugmentor', 'AugmentorList']
-
-class Image(object):
-    """ An image class with attributes, for augmentor to operate on.
-        Attributes (such as coordinates) have to be augmented acoordingly by
-        the augmentor, if necessary.
-    """
-    def __init__(self, arr, coords=None):
-        """
-        :param arr: the image array. Expected to be of [h, w, c] or [h, w]
-        :param coords: keypoint coordinates.
-        """
-        self.arr = arr
-        self.coords = coords
+__all__ = ['ImageAugmentor', 'AugmentorList']
 
 class ImageAugmentor(object):
     """ Base class for an image augmentor"""
@@ -40,16 +27,33 @@ class ImageAugmentor(object):
     def augment(self, img):
         """
         Perform augmentation on the image in-place.
-        :param img: an `Image` instance.
-        :returns: the augmented `Image` instance. arr will always be of type
-        'float32' after augmentation.
+        :param img: an [h,w] or [h,w,c] image
+        :returns: the augmented image, always of type 'float32'
         """
-        self._augment(img)
+        img, params = self._augment_return_params(img)
         return img
 
+    def _augment_return_params(self, img):
+        """
+        Augment the image and return both image and params
+        """
+        prms = self._get_augment_params(img)
+        return (self._augment(img, prms), prms)
+
     @abstractmethod
-    def _augment(self, img):
-        pass
+    def _augment(self, img, param):
+        """
+        augment with the given param and return the new image
+        """
+
+    def _get_augment_params(self, img):
+        """
+        get the augmentor parameters
+        """
+        return None
+
+    def _fprop_coord(self, coord, param):
+        return coord
 
     def _rand_range(self, low=1.0, high=None, size=None):
         if high is None:
@@ -67,12 +71,24 @@ class AugmentorList(ImageAugmentor):
         :param augmentors: list of `ImageAugmentor` instance to be applied
         """
         self.augs = augmentors
+        super(AugmentorList, self).__init__()
 
-    def _augment(self, img):
-        assert img.arr.ndim in [2, 3], img.arr.ndim
-        img.arr = img.arr.astype('float32')
-        for aug in self.augs:
-            aug.augment(img)
+    def _get_augment_params(self, img):
+        raise RuntimeError("Cannot simply get parameters of a AugmentorList!")
+
+    def _augment_return_params(self, img):
+        prms = []
+        for a in self.augs:
+            img, prm = a._augment_return_params(img)
+            prms.append(prm)
+        return img, prms
+
+    def _augment(self, img, param):
+        assert img.ndim in [2, 3], img.ndim
+        img = img.astype('float32')
+        for aug, prm in zip(self.augs, param):
+            img = aug._augment(img, prm)
+        return img
 
     def reset_state(self):
         """ Will reset state of each augmentor """

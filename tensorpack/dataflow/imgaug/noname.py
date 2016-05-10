@@ -31,11 +31,16 @@ class Flip(ImageAugmentor):
         self.prob = prob
         self._init()
 
-    def _augment(self, img):
-        if self._rand_range() < self.prob:
-            img.arr = cv2.flip(img.arr, self.code)
-            if img.coords:
-                raise NotImplementedError()
+    def _get_augment_params(self, img):
+        return self._rand_range() < self.prob
+
+    def _augment(self, img, do):
+        if do:
+            img = cv2.flip(img, self.code)
+        return img
+
+    def _fprop_coord(self, coord, param):
+        raise NotImplementedError()
 
 
 class MapImage(ImageAugmentor):
@@ -48,8 +53,8 @@ class MapImage(ImageAugmentor):
         """
         self.func = func
 
-    def _augment(self, img):
-        img.arr = self.func(img.arr)
+    def _augment(self, img, _):
+        img = self.func(img)
 
 
 class Resize(ImageAugmentor):
@@ -60,7 +65,7 @@ class Resize(ImageAugmentor):
         """
         self._init(locals())
 
-    def _augment(self, img):
+    def _augment(self, img, _):
         img.arr = cv2.resize(
             img.arr, self.shape[::-1],
             interpolation=cv2.INTER_CUBIC)

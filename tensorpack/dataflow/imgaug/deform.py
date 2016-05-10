@@ -81,10 +81,15 @@ class GaussianDeform(ImageAugmentor):
         else:
             self.randrange = randrange
 
-    def _augment(self, img):
-        if img.coords:
-            raise NotImplementedError()
+    def _get_augment_params(self, img):
         v = self.rng.rand(self.K, 2).astype('float32') - 0.5
         v = v * 2 * self.randrange
+        return v
+
+    def _augment(self, img, v):
         grid = self.grid + np.dot(self.gws, v)
-        img.arr = np_sample(img.arr, grid)
+        print(grid)
+        return np_sample(img, grid)
+
+    def _fprop_coord(self, coord, param):
+        raise NotImplementedError()

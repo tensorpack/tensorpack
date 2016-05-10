@@ -18,11 +18,15 @@ class Brightness(ImageAugmentor):
         assert delta > 0
         self._init(locals())
 
-    def _augment(self, img):
+    def _get_augment_params(self, img):
         v = self._rand_range(-self.delta, self.delta)
-        img.arr += v
+        return v
+
+    def _augment(self, img, v):
+        img += v
         if self.clip:
-            img.arr = np.clip(img.arr, 0, 255)
+            img = np.clip(img, 0, 255)
+        return img
 
 class Contrast(ImageAugmentor):
     """
@@ -36,13 +40,15 @@ class Contrast(ImageAugmentor):
         """
         self._init(locals())
 
-    def _augment(self, img):
-        arr = img.arr
-        r = self._rand_range(*self.factor_range)
-        mean = np.mean(arr, axis=(0,1), keepdims=True)
-        img.arr = (arr - mean) * r + mean
+    def _get_augment_params(self, img):
+        return self._rand_range(*self.factor_range)
+
+    def _augment(self, img, r):
+        mean = np.mean(img, axis=(0,1), keepdims=True)
+        img = (img - mean) * r + mean
         if self.clip:
-            img.arr = np.clip(img.arr, 0, 255)
+            img = np.clip(img, 0, 255)
+        return img
 
 class MeanVarianceNormalize(ImageAugmentor):
     """
@@ -56,12 +62,13 @@ class MeanVarianceNormalize(ImageAugmentor):
         """
         self.all_channel = all_channel
 
-    def _augment(self, img):
+    def _augment(self, img, _):
         if self.all_channel:
-            mean = np.mean(img.arr)
-            std = np.std(img.arr)
+            mean = np.mean(img)
+            std = np.std(img)
         else:
-            mean = np.mean(img.arr, axis=(0,1), keepdims=True)
-            std = np.std(img.arr, axis=(0,1), keepdims=True)
-        std = np.maximum(std, 1.0 / np.sqrt(np.prod(img.arr.shape)))
-        img.arr = (img.arr - mean) / std
+            mean = np.mean(img, axis=(0,1), keepdims=True)
+            std = np.std(img, axis=(0,1), keepdims=True)
+        std = np.maximum(std, 1.0 / np.sqrt(np.prod(img.shape)))
+        img = (img - mean) / std
+        return img

@@ -57,16 +57,16 @@ class CenterPaste(ImageAugmentor):
 
         self._init(locals())
 
-    def _augment(self, img):
-        img_shape = img.arr.shape[:2]
+    def _augment(self, img, _):
+        img_shape = img.shape[:2]
         assert self.background_shape[0] > img_shape[0] and self.background_shape[1] > img_shape[1]
 
         background = self.background_filler.fill(
-            self.background_shape, img.arr)
+            self.background_shape, img)
         h0 = int((self.background_shape[0] - img_shape[0]) * 0.5)
         w0 = int((self.background_shape[1] - img_shape[1]) * 0.5)
-        background[h0:h0+img_shape[0], w0:w0+img_shape[1]] = img.arr
-        img.arr = background
+        background[h0:h0+img_shape[0], w0:w0+img_shape[1]] = img
+        img = background
         if img.coords:
             raise NotImplementedError()
 
