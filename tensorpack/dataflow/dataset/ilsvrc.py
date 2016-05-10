@@ -117,7 +117,7 @@ class ILSVRC12(DataFlow):
         for k in idxs:
             tp = self.imglist[k]
             fname = os.path.join(self.dir, self.name, tp[0]).strip()
-            im = cv2.imread(fname)
+            im = cv2.imread(fname, cv2.IMREAD_COLOR)
             assert im is not None, fname
             if im.ndim == 2:
                 im = np.expand_dims(im, 2).repeat(3,2)

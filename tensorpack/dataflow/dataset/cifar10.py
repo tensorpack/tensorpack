@@ -9,7 +9,6 @@ import random
 import six
 from six.moves import urllib, range
 import copy
-import tarfile
 import logging
 
 from ...utils import logger, get_rng
@@ -31,6 +30,7 @@ def maybe_download_and_extract(dest_directory):
         download(DATA_URL, dest_directory)
         filename = DATA_URL.split('/')[-1]
         filepath = os.path.join(dest_directory, filename)
+        import tarfile
         tarfile.open(filepath, 'r:gz').extractall(dest_directory)
 
 def read_cifar10(filenames):

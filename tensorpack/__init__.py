@@ -2,6 +2,7 @@
 # File: __init__.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
+import cv2  # fix https://github.com/tensorflow/tensorflow/issues/1924
 from . import models
 from . import train
 from . import utils

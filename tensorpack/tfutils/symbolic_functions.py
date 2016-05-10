@@ -54,3 +54,28 @@ def logSoftmax(x):
         return logprob
 
 
+def class_balanced_binary_class_cross_entropy(pred, label, name='cross_entropy_loss'):
+    """
+    The class-balanced cross entropy loss for binary classification,
+    as in `Holistically-Nested Edge Detection
+    <http://arxiv.org/abs/1504.06375>`_.
+
+    :param pred: size: b x ANYTHING. the predictions in [0,1].
+    :param label: size: b x ANYTHING. the ground truth in {0,1}.
+    :returns: class-balanced binary classification cross entropy loss
+    """
+    z = batch_flatten(pred)
+    y = batch_flatten(label)
+
+    count_neg = tf.reduce_sum(1. - y)
+    count_pos = tf.reduce_sum(y)
+    total = tf.add(count_neg, count_pos)
+    beta = tf.truediv(count_neg, total)
+
+    eps = 1e-8
+    loss_pos = tf.mul(-beta, tf.reduce_sum(tf.mul(tf.log(tf.abs(z) + eps), y), 1))
+    loss_neg = tf.mul(1. - beta, tf.reduce_sum(tf.mul(tf.log(tf.abs(1. - z) + eps), 1. - y), 1))
+    cost = tf.sub(loss_pos, loss_neg)
+    cost = tf.reduce_mean(cost, name=name)
+    return cost
+

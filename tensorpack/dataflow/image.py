@@ -54,3 +54,5 @@ class AugmentImageComponent(MapDataComponent):
     def reset_state(self):
         self.ds.reset_state()
         self.augs.reset_state()
+
+

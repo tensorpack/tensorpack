@@ -26,8 +26,8 @@ class SVHNDigit(DataFlow):
 
     def __init__(self, name, data_dir=None, shuffle=True):
         """
-        name: 'train', 'test', or 'extra'
-        data_dir: a directory containing the original {train,test,extra}_32x32.mat
+        :param name: 'train', 'test', or 'extra'
+        :param data_dir: a directory containing the original {train,test,extra}_32x32.mat
         """
         self.shuffle = shuffle
         self.rng = get_rng(self)

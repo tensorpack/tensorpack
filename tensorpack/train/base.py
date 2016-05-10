@@ -98,7 +98,8 @@ class Trainer(object):
                         for step in tqdm.trange(
                                 self.config.step_per_epoch,
                                 leave=True, mininterval=0.5,
-                                dynamic_ncols=True, ascii=True):
+                                dynamic_ncols=True, ascii=True,
+                                bar_format='{l_bar}{bar}|{n_fmt}/{total_fmt} [{elapsed}<{remaining},{rate_noinv_fmt}]'):
                             if self.coord.should_stop():
                                 return
                             self.run_step()
