@@ -88,7 +88,6 @@ class GaussianDeform(ImageAugmentor):
 
     def _augment(self, img, v):
         grid = self.grid + np.dot(self.gws, v)
-        print(grid)
         return np_sample(img, grid)
 
     def _fprop_coord(self, coord, param):

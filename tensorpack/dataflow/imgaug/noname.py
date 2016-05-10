@@ -54,7 +54,7 @@ class MapImage(ImageAugmentor):
         self.func = func
 
     def _augment(self, img, _):
-        img = self.func(img)
+        return self.func(img)
 
 
 class Resize(ImageAugmentor):
@@ -66,6 +66,6 @@ class Resize(ImageAugmentor):
         self._init(locals())
 
     def _augment(self, img, _):
-        img.arr = cv2.resize(
-            img.arr, self.shape[::-1],
+        return cv2.resize(
+            img, self.shape[::-1],
             interpolation=cv2.INTER_CUBIC)

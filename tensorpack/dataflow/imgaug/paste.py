@@ -67,7 +67,8 @@ class CenterPaste(ImageAugmentor):
         w0 = int((self.background_shape[1] - img_shape[1]) * 0.5)
         background[h0:h0+img_shape[0], w0:w0+img_shape[1]] = img
         img = background
-        if img.coords:
-            raise NotImplementedError()
+        return img
 
+    def _fprop_coord(self, coord, param):
+        raise NotImplementedError()
 

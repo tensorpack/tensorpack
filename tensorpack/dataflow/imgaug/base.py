@@ -77,6 +77,9 @@ class AugmentorList(ImageAugmentor):
         raise RuntimeError("Cannot simply get parameters of a AugmentorList!")
 
     def _augment_return_params(self, img):
+        assert img.ndim in [2, 3], img.ndim
+        img = img.astype('float32')
+
         prms = []
         for a in self.augs:
             img, prm = a._augment_return_params(img)
