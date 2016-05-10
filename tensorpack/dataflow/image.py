@@ -49,7 +49,7 @@ class AugmentImageComponent(MapDataComponent):
         """
         self.augs = AugmentorList(augmentors)
         super(AugmentImageComponent, self).__init__(
-            ds, lambda x: self.augs.augment(Image(x)).arr, index)
+            ds, lambda x: self.augs.augment(x), index)
 
     def reset_state(self):
         self.ds.reset_state()
