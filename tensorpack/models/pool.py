@@ -121,6 +121,10 @@ def BilinearUpSample(x, shape):
 
     ch = x.get_shape().as_list()[3]
     shape = int(shape)
+    unpool_mat = np.zeros((shape, shape), dtype='float32')
+    unpool_mat[-1,-1] = 1
+    x = FixedUnPooling('unpool', x, shape, unpool_mat)
+
     filter_shape = 2 * shape
     w = bilinear_conv_filler(filter_shape)
     w = np.repeat(w, ch * ch).reshape((filter_shape, filter_shape, ch, ch))
@@ -128,9 +132,6 @@ def BilinearUpSample(x, shape):
                              tf.float32,
                              shape=(filter_shape, filter_shape, ch, ch))
 
-    unpool_mat = np.zeros((shape, shape), dtype='float32')
-    unpool_mat[-1,-1] = 1
-    x = FixedUnPooling('unpool', x, shape, unpool_mat)
     output = tf.nn.conv2d(x, weight_var, [1,1,1,1], padding='SAME')
     return output
 

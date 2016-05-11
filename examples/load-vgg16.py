@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
-# File: load_vgg16.py
+# File: load-vgg16.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
@@ -41,30 +41,30 @@ class Model(ModelDesc):
             # 224
             l = Conv2D('conv1_1', image, 64)
             l = Conv2D('conv1_2', l, 64)
-            l = MaxPooling('pool1', l, 2, stride=2, padding='VALID')
+            l = MaxPooling('pool1', l, 2)
             # 112
 
             l = Conv2D('conv2_1', l, 128)
             l = Conv2D('conv2_2', l, 128)
-            l = MaxPooling('pool2', l, 2, stride=2, padding='VALID')
+            l = MaxPooling('pool2', l, 2)
             # 56
 
             l = Conv2D('conv3_1', l, 256)
             l = Conv2D('conv3_2', l, 256)
             l = Conv2D('conv3_3', l, 256)
-            l = MaxPooling('pool3', l, 2, stride=2, padding='VALID')
+            l = MaxPooling('pool3', l, 2)
             # 28
 
             l = Conv2D('conv4_1', l, 512)
             l = Conv2D('conv4_2', l, 512)
             l = Conv2D('conv4_3', l, 512)
-            l = MaxPooling('pool4', l, 2, stride=2, padding='VALID')
+            l = MaxPooling('pool4', l, 2)
             # 14
 
             l = Conv2D('conv5_1', l, 512)
             l = Conv2D('conv5_2', l, 512)
             l = Conv2D('conv5_3', l, 512)
-            l = MaxPooling('pool5', l, 2, stride=2, padding='VALID')
+            l = MaxPooling('pool5', l, 2)
         # 7
 
         l = FullyConnected('fc6', l, 4096)

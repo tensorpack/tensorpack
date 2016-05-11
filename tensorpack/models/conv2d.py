@@ -30,7 +30,6 @@ def Conv2D(x, out_channel, kernel_shape,
     :returns: a NHWC tensor
     """
     in_shape = x.get_shape().as_list()
-    num_in = np.prod(in_shape[1:])
     in_channel = in_shape[-1]
     assert in_channel % split == 0
     assert out_channel % split == 0
