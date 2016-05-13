@@ -69,7 +69,7 @@ class StatHolder(object):
 
     def _write_stat(self):
         tmp_filename = self.filename + '.tmp'
-        with open(tmp_filename, 'wb') as f:
+        with open(tmp_filename, 'w') as f:
             json.dump(self.stat_history, f)
         os.rename(tmp_filename, self.filename)
 

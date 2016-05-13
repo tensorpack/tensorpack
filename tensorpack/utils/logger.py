@@ -55,6 +55,7 @@ def _set_file(path):
         info("Log file '{}' backuped to '{}'".format(path, backup_name))
     hdl = logging.FileHandler(
         filename=path, encoding='utf-8', mode='w')
+    hdl.setFormatter(MyFormatter(datefmt='%d %H:%M:%S'))
     logger.addHandler(hdl)
 
 def set_logger_dir(dirname, action=None):
