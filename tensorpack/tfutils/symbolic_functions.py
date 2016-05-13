@@ -39,8 +39,10 @@ def batch_flatten(x):
     """
     Flatten the tensor except the first dimension.
     """
-    total_dim = np.prod(x.get_shape()[1:].as_list())
-    return tf.reshape(x, [-1, total_dim])
+    shape = x.get_shape().as_list()[1:]
+    if None not in shape:
+        return tf.reshape(x, [-1, np.prod(shape)])
+    return tf.reshape(x, tf.pack([tf.shape(x)[0], -1]))
 
 def logSoftmax(x):
     """

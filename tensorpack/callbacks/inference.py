@@ -3,6 +3,7 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
+import numpy as np
 from tqdm import tqdm
 from abc import ABCMeta, abstractmethod
 from six.moves import zip, map

@@ -30,7 +30,7 @@ class SimpleTrainer(Trainer):
         input_vars = model.get_input_vars()
         self.input_vars = input_vars
         cost_var = model.get_cost(input_vars, is_training=True)
-        avg_maintain_op = summary_moving_average(cost_var)
+        avg_maintain_op = summary_moving_average()
 
         grads = self.config.optimizer.compute_gradients(cost_var)
         grads = self.process_grads(grads)
@@ -66,21 +66,22 @@ class EnqueueThread(threading.Thread):
         self.daemon = True
 
     def run(self):
-        try:
-            while True:
-                for dp in self.dataflow.get_data():
-                    if self.coord.should_stop():
-                        return
-                    feed = dict(zip(self.input_vars, dp))
-                    self.op.run(feed_dict=feed, session=self.sess)
-        except tf.errors.CancelledError as e:
-            pass
-        except Exception:
-            logger.exception("Exception in EnqueueThread:")
-            self.sess.run(self.close_op)
-            self.coord.request_stop()
-        finally:
-            logger.info("Enqueue Thread Exited.")
+        with self.sess.as_default():
+            try:
+                while True:
+                    for dp in self.dataflow.get_data():
+                        if self.coord.should_stop():
+                            return
+                        feed = dict(zip(self.input_vars, dp))
+                        self.op.run(feed_dict=feed)
+            except tf.errors.CancelledError as e:
+                pass
+            except Exception:
+                logger.exception("Exception in EnqueueThread:")
+                self.sess.run(self.close_op)
+                self.coord.request_stop()
+            finally:
+                logger.info("Enqueue Thread Exited.")
 
 
 class QueueInputTrainer(Trainer):

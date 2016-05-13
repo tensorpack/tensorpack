@@ -9,7 +9,7 @@ import tensorflow as tf
 import imp
 
 from tensorpack.utils import *
-from tensorpack.utils import sessinit
+from tensorpack.tfutils import sessinit
 from tensorpack.dataflow import *
 
 parser = argparse.ArgumentParser()
@@ -22,7 +22,7 @@ get_config_func = imp.load_source('config_script', args.config).get_config
 
 with tf.Graph().as_default() as G:
     config = get_config_func()
-    config.get_model_func(config.inputs, is_training=False)
+    config.model.get_cost(config.model.get_input_vars(), is_training=False)
     init = sessinit.SaverRestore(args.model)
     sess = tf.Session()
     init.init(sess)

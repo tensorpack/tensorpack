@@ -55,7 +55,7 @@ class CallbackTimeLogger(object):
                 msgs.append("{}:{:.3f}sec".format(name, t))
         logger.info(
             "Callbacks took {:.3f} sec in total. {}".format(
-                self.tot, ' '.join(msgs)))
+                self.tot, '; '.join(msgs)))
 
 class TestCallbackContext(object):
     """

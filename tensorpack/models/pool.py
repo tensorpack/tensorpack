@@ -75,8 +75,7 @@ def FixedUnPooling(x, shape, unpool_mat=None):
     :returns: NHWC tensor
     """
     shape = shape2d(shape)
-    input_shape = x.get_shape().as_list()
-    assert len(input_shape) == 4
+    input_shape = tf.shape(x)
     if unpool_mat is None:
         mat = np.zeros(shape, dtype='float32')
         mat[0][0] = 1
@@ -90,13 +89,11 @@ def FixedUnPooling(x, shape, unpool_mat=None):
     fx = tf.expand_dims(fx, -1)       # (bchw)x1
     mat = tf.expand_dims(flatten(unpool_mat), 0)    #1x(shxsw)
     prod = tf.matmul(fx, mat)    #(bchw) x(shxsw)
-    prod = tf.reshape(prod, [-1, input_shape[3],
-                             input_shape[1], input_shape[2],
-                             shape[0], shape[1]])
+    prod = tf.reshape(prod, tf.pack(
+        [-1, input_shape[3], input_shape[1], input_shape[2], shape[0], shape[1]]))
     prod = tf.transpose(prod, [0, 2, 4, 3, 5, 1])
-    prod = tf.reshape(prod, [-1, input_shape[1] * shape[0],
-                            input_shape[2] * shape[1],
-                            input_shape[3]])
+    prod = tf.reshape(prod, tf.pack(
+        [-1, input_shape[1] * shape[0], input_shape[2] * shape[1], input_shape[3]]))
     return prod
 
 @layer_register()

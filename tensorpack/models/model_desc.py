@@ -19,10 +19,14 @@ class ModelDesc(object):
 
     def get_input_vars(self):
         """
-        Create and return raw input vars in the graph.
+        Create or return (if already created) input TF vars in the graph.
 
         :returns: the list of raw input vars in the graph
         """
+        try:
+            return self.reuse_input_vars()
+        except KeyError:
+            pass
         input_vars = self._get_input_vars()
         ret = []
         for v in input_vars:
@@ -37,7 +41,7 @@ class ModelDesc(object):
 
     @abstractmethod
     def _get_input_vars(self):
-        pass
+        """:returns: a list of InputVar """
 
     def get_cost(self, input_vars, is_training):
         """
@@ -59,3 +63,4 @@ class ModelDesc(object):
     def get_gradient_processor(self):
         """ Return a list of GradientProcessor. They will be executed in order"""
         return [CheckGradient()]#, SummaryGradient()]
+

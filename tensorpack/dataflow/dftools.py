@@ -23,7 +23,8 @@ def dump_dataset_images(ds, dirname, max_count=None, index=0):
     if max_count is None:
         max_count = sys.maxint
     for i, dp in enumerate(ds.get_data()):
-        print i
+        if i % 100 == 0:
+            print(i)
         if i > max_count:
             return
         img = dp[index]

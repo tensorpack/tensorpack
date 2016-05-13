@@ -128,7 +128,14 @@ class Trainer(object):
             sess=self.sess, coord=self.coord, daemon=True, start=True)
 
     def process_grads(self, grads):
+        g = []
+        for grad, var in grads:
+            if grad is None:
+                logger.warn("No Gradient w.r.t {}".format(var.op.name))
+            else:
+                g.append((grad, var))
+
         procs = self.config.model.get_gradient_processor()
         for proc in procs:
-            grads = proc.process(grads)
-        return grads
+            g = proc.process(g)
+        return g

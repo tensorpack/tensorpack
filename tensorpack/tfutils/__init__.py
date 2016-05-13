@@ -8,7 +8,8 @@ import os
 def _global_import(name):
     p = __import__(name, globals(), None, level=1)
     lst = p.__all__ if '__all__' in dir(p) else dir(p)
-    del globals()[name]
+    if name in ['common', 'argscope']:
+        del globals()[name]
     for k in lst:
         globals()[k] = p.__dict__[k]
 
