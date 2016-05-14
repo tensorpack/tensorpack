@@ -28,18 +28,28 @@ class Callback(object):
         Default is `TrainCallbackType()`
     """
 
-    def before_train(self, trainer):
+    def before_train(self):
         """
-        Called before starting iterative training.
+        Called right before the first iteration.
+        """
+        self._before_train()
+
+    def _before_train(self):
+        pass
+
+    def setup_graph(self, trainer):
+        """
+        Called before finalizing the graph.
+        Use this callback to setup some ops used in the callback.
 
         :param trainer: a :class:`train.Trainer` instance
         """
         self.trainer = trainer
         self.graph = tf.get_default_graph()
         self.epoch_num = self.trainer.config.starting_epoch
-        self._before_train()
+        self._setup_graph()
 
-    def _before_train(self):
+    def _setup_graph(self):
         pass
 
     def after_train(self):

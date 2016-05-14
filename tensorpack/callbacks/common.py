@@ -23,7 +23,7 @@ class ModelSaver(Callback):
         self.keep_recent = keep_recent
         self.keep_freq = keep_freq
 
-    def _before_train(self):
+    def _setup_graph(self):
         self.path = os.path.join(logger.LOG_DIR, 'model')
         self.saver = tf.train.Saver(
             var_list=ModelSaver._get_vars(),

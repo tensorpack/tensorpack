@@ -75,7 +75,6 @@ class Model(ModelDesc):
                 l = c2 + l
                 return l
 
-
         l = conv('conv0', image, 16, 1)
         l = BatchNorm('bn0', l, is_training)
         l = tf.nn.relu(l)
@@ -113,7 +112,7 @@ class Model(ModelDesc):
         #wd_cost = regularize_cost('.*/W', l2_regularizer(0.0002), name='regularize_loss')
         wd_w = tf.train.exponential_decay(0.0001, get_global_step_var(),
                                           960000, 0.5, True)
-        wd_cost = wd_w * regularize_cost('.*/W', tf.nn.l2_loss)
+        wd_cost = tf.mul(wd_w, regularize_cost('.*/W', tf.nn.l2_loss), name='wd_cost')
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, wd_cost)
 
         add_param_summary([('.*/W', ['histogram'])])   # monitor W

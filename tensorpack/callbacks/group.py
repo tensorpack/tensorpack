@@ -66,7 +66,7 @@ class TestCallbackContext(object):
         self.sess = None
 
     @contextmanager
-    def before_train_context(self, trainer):
+    def create_context(self, trainer):
         if self.sess is None:
             with create_test_session(trainer) as sess:
                 self.sess = sess
@@ -88,7 +88,7 @@ class TestCallbackContext(object):
         self.saver.restore(self.sess, ckpt.model_checkpoint_path)
 
     @contextmanager
-    def trigger_epoch_context(self):
+    def test_context(self):
         with self.graph.as_default(), self.sess.as_default():
             yield
 
@@ -110,13 +110,21 @@ class Callbacks(Callback):
         self.cbs = cbs
         self.test_callback_context = TestCallbackContext()
 
+    def _setup_graph(self):
+        for cb in self.cbs:
+            if isinstance(cb.type, TrainCallbackType):
+                cb.setup_graph(self.trainer)
+            else:
+                with self.test_callback_context.create_context(self.trainer):
+                    cb.setup_graph(self.trainer)
+
     def _before_train(self):
         for cb in self.cbs:
             if isinstance(cb.type, TrainCallbackType):
-                cb.before_train(self.trainer)
+                cb.before_train()
             else:
-                with self.test_callback_context.before_train_context(self.trainer):
-                    cb.before_train(self.trainer)
+                with self.test_callback_context.test_context():
+                    cb.before_train()
 
     def _after_train(self):
         for cb in self.cbs:
@@ -141,7 +149,7 @@ class Callbacks(Callback):
                     with tm.timed_callback('restore checkpoint'):
                         self.test_callback_context.restore_checkpoint()
                     test_sess_restored = True
-                with self.test_callback_context.trigger_epoch_context(), \
+                with self.test_callback_context.test_context(), \
                         tm.timed_callback(type(cb).__name__):
                     cb.trigger_epoch()
         tm.log()

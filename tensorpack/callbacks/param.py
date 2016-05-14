@@ -30,7 +30,7 @@ class HyperParamSetter(Callback):
         self.shape = shape
         self.last_value = None
 
-    def _before_train(self):
+    def _setup_graph(self):
         all_vars = tf.all_variables()
         for v in all_vars:
             if v.name == self.var_name:
@@ -59,6 +59,12 @@ class HyperParamSetter(Callback):
         pass
 
     def _trigger_epoch(self):
+        self._set_param()
+
+    def _before_train(self):
+        self._set_param()
+
+    def _set_param(self):
         v = self.get_current_value()
         if v is not None:
             self.assign_op.eval(feed_dict={self.val_holder:v})

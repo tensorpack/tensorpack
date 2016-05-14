@@ -81,7 +81,7 @@ class Trainer(object):
         self._init_summary()
         get_global_step_var()   # ensure there is such var, before finalizing the graph
         callbacks = self.config.callbacks
-        callbacks.before_train(self)
+        callbacks.setup_graph(self)
         self.config.session_init.init(self.sess)
         tf.get_default_graph().finalize()
         self._start_all_threads()
@@ -91,6 +91,7 @@ class Trainer(object):
                 self.global_step = get_global_step()
                 logger.info("Start training with global_step={}".format(self.global_step))
 
+                callbacks.before_train()
                 for epoch in range(self.config.starting_epoch, self.config.max_epoch+1):
                     with timed_operation(
                         'Epoch {}, global_step={}'.format(
