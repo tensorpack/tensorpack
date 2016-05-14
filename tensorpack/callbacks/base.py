@@ -87,8 +87,23 @@ class Callback(object):
     def _trigger_epoch(self):
         pass
 
+class ProxyCallback(Callback):
+    def __init__(self, cb):
+        self.cb = cb
 
-class PeriodicCallback(Callback):
+    def _before_train(self):
+        self.cb.before_train()
+
+    def _setup_graph(self):
+        self.cb.setup_graph(self.trainer)
+
+    def _after_train(self):
+        self.cb.after_train()
+
+    def _trigger_epoch(self):
+        self.cb.trigger_epoch()
+
+class PeriodicCallback(ProxyCallback):
     """
     A callback to be triggered after every `period` epochs.
     Doesn't work for trigger_step
@@ -98,14 +113,8 @@ class PeriodicCallback(Callback):
         :param cb: a `Callback`
         :param period: int
         """
-        self.cb = cb
+        super(PeriodicCallback, self).__init__(self, cb)
         self.period = int(period)
-
-    def _before_train(self):
-        self.cb.before_train(self.trainer)
-
-    def _after_train(self):
-        self.cb.after_train()
 
     def _trigger_epoch(self):
         self.cb.epoch_num = self.epoch_num - 1
