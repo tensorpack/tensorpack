@@ -76,7 +76,7 @@ def get_predict_func(config):
 
     # input/output variables
     input_vars = config.model.get_input_vars()
-    cost_var = config.model.get_cost(input_vars, is_training=False)
+    config.model._build_graph(input_vars, False)
     if config.input_data_mapping is None:
         input_map = input_vars
     else:

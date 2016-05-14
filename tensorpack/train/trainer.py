@@ -29,7 +29,8 @@ class SimpleTrainer(Trainer):
         model = self.model
         input_vars = model.get_input_vars()
         self.input_vars = input_vars
-        cost_var = model.get_cost(input_vars, is_training=True)
+        model.build_graph(input_vars, True)
+        cost_var = model.get_cost()
         avg_maintain_op = summary_moving_average()
 
         grads = self.config.optimizer.compute_gradients(cost_var)
@@ -133,7 +134,8 @@ class QueueInputTrainer(Trainer):
     def _single_tower_grad(self):
         """ Get grad and cost for single-tower case"""
         model_inputs = self._get_model_inputs()
-        cost_var = self.model.get_cost(model_inputs, is_training=True)
+        self.model.build_graph(model_inputs, True)
+        cost_var = self.model.get_cost()
         grads = self.config.optimizer.compute_gradients(cost_var)
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, cost_var)
         return grads
@@ -151,7 +153,8 @@ class QueueInputTrainer(Trainer):
                     tf.name_scope('tower{}'.format(i)) as scope:
                 logger.info("Building graph for tower {}...".format(i))
                 model_inputs = self._get_model_inputs()    # each tower dequeue from input queue
-                cost_var = self.model.get_cost(model_inputs, is_training=True) # build tower
+                self.model.build_graph(model_inputs, True)
+                cost_var = self.model.get_cost() # build tower
 
                 # gate_gradienst=0 seems to be faster?
                 grad_list.append(

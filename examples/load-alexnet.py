@@ -1,8 +1,9 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
-# File: load_alexnet.py
+# File: load-alexnet.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
+import cv2  # tf bug
 import tensorflow as tf
 import numpy as np
 import os
@@ -29,7 +30,7 @@ class Model(ModelDesc):
         return [InputVar(tf.float32, (None, 227, 227, 3), 'input'),
             InputVar(tf.int32, (None,), 'label') ]
 
-    def _get_cost(self, inputs, is_training):
+    def _build_graph(self, inputs, is_training):
         # img: 227x227x3
         is_training = bool(is_training)
         keep_prob = tf.constant(0.5 if is_training else 1.0)
@@ -58,63 +59,6 @@ class Model(ModelDesc):
         # fc will have activation summary by default. disable this for the output layer
         logits = FullyConnected('fc8', l, out_dim=1000, nl=tf.identity)
         prob = tf.nn.softmax(logits, name='output')
-
-        y = one_hot(label, 1000)
-        cost = tf.nn.softmax_cross_entropy_with_logits(logits, y)
-        cost = tf.reduce_mean(cost, name='cross_entropy_loss')
-        tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, cost)
-
-        # compute the number of failed samples, for ValidationError to use at test time
-        wrong = tf.not_equal(
-            tf.cast(tf.argmax(prob, 1), tf.int32), label)
-        wrong = tf.cast(wrong, tf.float32)
-        nr_wrong = tf.reduce_sum(wrong, name='wrong')
-        # monitor training error
-        tf.add_to_collection(
-            MOVING_SUMMARY_VARS_KEY, tf.reduce_mean(wrong, name='train_error'))
-
-        # weight decay on all W of fc layers
-        wd_cost = tf.mul(1e-4,
-                         regularize_cost('fc.*/W', tf.nn.l2_loss),
-                         name='regularize_loss')
-        tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, wd_cost)
-        return tf.add_n([wd_cost, cost], name='cost')
-
-def get_config():
-    basename = os.path.basename(__file__)
-    logger.set_logger_dir(
-        os.path.join('train_log', basename[:basename.rfind('.')]))
-
-    dataset_train = FakeData([(227,227,3), tuple()], 10)
-    dataset_train = BatchData(dataset_train, 10)
-    step_per_epoch = 1
-
-    sess_config = get_default_sess_config()
-    sess_config.gpu_options.per_process_gpu_memory_fraction = 0.5
-
-    lr = tf.train.exponential_decay(
-        learning_rate=1e-8,
-        global_step=get_global_step_var(),
-        decay_steps=dataset_train.size() * 50,
-        decay_rate=0.1, staircase=True, name='learning_rate')
-    tf.scalar_summary('learning_rate', lr)
-
-    param_dict = np.load('alexnet.npy').item()
-
-    return TrainConfig(
-        dataset=dataset_train,
-        optimizer=tf.train.AdamOptimizer(lr),
-        callbacks=Callbacks([
-            StatPrinter(),
-            ModelSaver(),
-            #ValidationError(dataset_test, prefix='test'),
-        ]),
-        session_config=sess_config,
-        model=Model(),
-        step_per_epoch=step_per_epoch,
-        session_init=ParamRestore(param_dict),
-        max_epoch=100,
-    )
 
 def run_test(path, input):
     param_dict = np.load(path).item()
@@ -152,7 +96,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
-
-    #start_train(get_config())
     # run alexnet with given model (in npy format)
     run_test(args.load, args.input)

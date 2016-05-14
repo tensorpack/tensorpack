@@ -77,7 +77,7 @@ class Model(ModelDesc):
         return [InputVar(tf.int32, (None, param.seq_len), 'input'),
                 InputVar(tf.int32, (None, param.seq_len), 'nextinput') ]
 
-    def _get_cost(self, input_vars, is_training):
+    def _build_graph(self, input_vars, is_training):
         input, nextinput = input_vars
 
         cell = rnn_cell.BasicLSTMCell(num_units=param.rnn_size)
@@ -101,9 +101,8 @@ class Model(ModelDesc):
 
         xent_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
                 logits, symbolic_functions.flatten(nextinput))
-        xent_loss = tf.reduce_mean(xent_loss, name='xent_loss')
+        self.cost = tf.reduce_mean(xent_loss, name='cost')
         summary.add_param_summary([('.*/W', ['histogram'])])   # monitor histogram of all W
-        return tf.add_n([xent_loss], name='cost')
 
     def get_gradient_processor(self):
         return [MapGradient(lambda grad: tf.clip_by_global_norm(
@@ -147,7 +146,7 @@ def sample(path, start, length):
 
     model = Model()
     input_vars = model.get_input_vars()
-    model.get_cost(input_vars, False)
+    model.build_graph(input_vars, False)
     sess = tf.Session()
     tfutils.SaverRestore(path).init(sess)
 

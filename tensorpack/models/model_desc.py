@@ -7,6 +7,7 @@ from abc import ABCMeta, abstractmethod
 import tensorflow as tf
 from collections import namedtuple
 
+from ..utils import logger
 from ..tfutils import *
 
 __all__ = ['ModelDesc', 'InputVar']
@@ -43,9 +44,10 @@ class ModelDesc(object):
     def _get_input_vars(self):
         """:returns: a list of InputVar """
 
-    def get_cost(self, input_vars, is_training):
+    def build_graph(self, model_inputs, is_training):
         """
-        :param input_vars: a list of input variable in the graph
+        setup the whole graph.
+        :param model_inputs: a list of input variable in the graph
             e.g.: [image_var, label_var] with:
 
             * image_var: bx28x28
@@ -53,12 +55,33 @@ class ModelDesc(object):
         :param is_training: a boolean
         :returns: the cost to minimize. a scalar variable
         """
-        assert type(is_training) == bool
-        return self._get_cost(input_vars, is_training)
+        self._build_graph(model_inputs, is_training)
 
-    @abstractmethod
-    def _get_cost(self, input_vars, is_training):
-        pass
+    #@abstractmethod
+    def _build_graph(self, inputs, is_training):
+        if self._old_version():
+            self.model_inputs = inputs
+            self.is_training = is_training
+        else:
+            raise NotImplementedError()
+
+    def _old_version(self):
+        # for backward-compat only.
+        import inspect
+        args = inspect.getargspec(self._get_cost)
+        return len(args.args) == 3
+
+    def get_cost(self):
+        if self._old_version():
+            assert type(self.is_training) == bool
+            logger.warn("!!!using _get_cost to setup the graph is deprecated in favor of _build_graph")
+            logger.warn("See examples for details.")
+            return self._get_cost(self.model_inputs, self.is_training)
+        else:
+            return self._get_cost()
+
+    def _get_cost(self, *args):
+        return self.cost
 
     def get_gradient_processor(self):
         """ Return a list of GradientProcessor. They will be executed in order"""

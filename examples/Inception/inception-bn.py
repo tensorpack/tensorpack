@@ -26,14 +26,11 @@ Learning rate may need a different schedule for different number of GPUs (becaus
 """
 
 class Model(ModelDesc):
-    def __init__(self):
-        super(Model, self).__init__()
-
     def _get_input_vars(self):
         return [InputVar(tf.float32, [None, INPUT_SHAPE, INPUT_SHAPE, 3], 'input'),
                 InputVar(tf.int32, [None], 'label') ]
 
-    def _get_cost(self, input_vars, is_training):
+    def _build_graph(self, input_vars, is_training):
         image, label = input_vars
         image = image / 128.0
 
@@ -121,7 +118,7 @@ class Model(ModelDesc):
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, wd_cost)
 
         add_param_summary([('.*/W', ['histogram'])])   # monitor W
-        return tf.add_n([cost, wd_cost], name='cost')
+        self.cost = tf.add_n([cost, wd_cost], name='cost')
 
 def get_data(train_or_test):
     isTrain = train_or_test == 'train'

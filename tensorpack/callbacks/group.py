@@ -20,7 +20,8 @@ def create_test_graph(trainer):
         global_step_var = tf.Variable(
             0, trainable=False, name=GLOBAL_STEP_OP_NAME)
         input_vars = model.get_input_vars()
-        cost = model.get_cost(input_vars, is_training=False)
+        model.build_graph(input_vars, False)
+        cost = model.get_cost()
         yield Gtest
 
 @contextmanager

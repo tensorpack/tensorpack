@@ -15,6 +15,9 @@ class StatCounter(object):
     def reset(self):
         self.values = []
 
+    def count(self):
+        return len(self.values)
+
     @property
     def average(self):
         return np.mean(self.values)
@@ -22,6 +25,10 @@ class StatCounter(object):
     @property
     def sum(self):
         return np.sum(self.values)
+
+    @property
+    def max(self):
+        return max(self.values)
 
 class Accuracy(object):
     def __init__(self):

@@ -3,6 +3,7 @@
 # File: load-vgg16.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
+import cv2
 import tensorflow as tf
 import numpy as np
 import os
@@ -31,7 +32,7 @@ class Model(ModelDesc):
         return [InputVar(tf.float32, (None, 224, 224, 3), 'input'),
                 InputVar(tf.int32, (None,), 'label') ]
 
-    def _get_cost(self, inputs, is_training):
+    def _build_graph(self, inputs, is_training):
         is_training = bool(is_training)
         keep_prob = tf.constant(0.5 if is_training else 1.0)
 
@@ -73,10 +74,6 @@ class Model(ModelDesc):
         l = tf.nn.dropout(l, keep_prob)
         logits = FullyConnected('fc8', l, out_dim=1000, nl=tf.identity)
         prob = tf.nn.softmax(logits, name='output')
-
-        cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)
-        cost = tf.reduce_mean(cost, name='cost')
-        return cost
 
 def run_test(path, input):
     param_dict = np.load(path).item()

@@ -28,7 +28,7 @@ class Model(ModelDesc):
                 InputVar(tf.int32, [None], 'label')
                ]
 
-    def _get_cost(self, input_vars, is_training):
+    def _build_graph(self, input_vars, is_training):
         image, label = input_vars
         keep_prob = tf.constant(0.5 if is_training else 1.0)
 
@@ -73,7 +73,7 @@ class Model(ModelDesc):
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, wd_cost)
 
         add_param_summary([('.*/W', ['histogram'])])   # monitor W
-        return tf.add_n([cost, wd_cost], name='cost')
+        self.cost = tf.add_n([cost, wd_cost], name='cost')
 
 def get_data(train_or_test):
     isTrain = train_or_test == 'train'

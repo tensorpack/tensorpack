@@ -25,7 +25,7 @@ class AtariDriver(object):
         self.ale = ALEInterface()
         self.rng = get_rng(self)
 
-        self.ale.setInt("random_seed", self.rng.randint(214))
+        self.ale.setInt("random_seed", self.rng.randint(999))
         self.ale.setInt("frame_skip", frame_skip)
         self.ale.loadROM(rom_file)
         self.width, self.height = self.ale.getScreenDims()
