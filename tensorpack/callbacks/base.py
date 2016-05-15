@@ -113,7 +113,7 @@ class PeriodicCallback(ProxyCallback):
         :param cb: a `Callback`
         :param period: int
         """
-        super(PeriodicCallback, self).__init__(self, cb)
+        super(PeriodicCallback, self).__init__(cb)
         self.period = int(period)
 
     def _trigger_epoch(self):
