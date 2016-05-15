@@ -102,7 +102,7 @@ class PredictWorker(multiprocessing.Process):
     def __init__(self, idx, gpuid, inqueue, outqueue, config):
         """
         :param idx: index of the worker. the 0th worker will print log.
-        :param gpuid: id of the GPU to be used
+        :param gpuid: id of the GPU to be used. set to -1 to use CPU.
         :param inqueue: input queue to get data point
         :param outqueue: output queue put result
         :param config: a `PredictConfig`
@@ -115,10 +115,13 @@ class PredictWorker(multiprocessing.Process):
         self.config = config
 
     def run(self):
-        logger.info("Worker {} use GPU {}".format(self.idx, self.gpuid))
-        os.environ['CUDA_VISIBLE_DEVICES'] = self.gpuid
+        if self.gpuid >= 0:
+            logger.info("Worker {} uses GPU {}".format(self.idx, self.gpuid))
+            os.environ['CUDA_VISIBLE_DEVICES'] = self.gpuid
+        else:
+            logger.info("Worker {} uses CPU".format(self.idx))
         G = tf.Graph()     # build a graph for each process, because they don't need to share anything
-        with G.as_default(), tf.device('/gpu:0'):
+        with G.as_default(), tf.device('/gpu:0' if self.gpuid >= 0 else '/cpu:0'):
             if self.idx != 0:
                 from tensorpack.models._common import disable_layer_logging
                 disable_layer_logging()

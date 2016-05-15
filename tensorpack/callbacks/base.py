@@ -46,7 +46,8 @@ class Callback(object):
         """
         self.trainer = trainer
         self.graph = tf.get_default_graph()
-        self.epoch_num = self.trainer.config.starting_epoch
+        self.epoch_num = self.trainer.config.starting_epoch - 1
+        # self.epoch_num is always the number of epochs that finished updating parameters.
         self._setup_graph()
 
     def _setup_graph(self):
@@ -81,8 +82,8 @@ class Callback(object):
 
         In this function, self.epoch_num would be the number of epoch finished.
         """
-        self._trigger_epoch()
         self.epoch_num += 1
+        self._trigger_epoch()
 
     def _trigger_epoch(self):
         pass
@@ -117,7 +118,7 @@ class PeriodicCallback(ProxyCallback):
         self.period = int(period)
 
     def _trigger_epoch(self):
-        self.cb.epoch_num = self.epoch_num - 1
         if self.epoch_num % self.period == 0:
+            self.cb.epoch_num = self.epoch_num - 1
             self.cb.trigger_epoch()
 
