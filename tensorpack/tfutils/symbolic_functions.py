@@ -55,7 +55,6 @@ def logSoftmax(x):
         logprob = z - tf.log(tf.reduce_sum(tf.exp(z), 1, keep_dims=True))
         return logprob
 
-
 def class_balanced_binary_class_cross_entropy(pred, label, name='cross_entropy_loss'):
     """
     The class-balanced cross entropy loss for binary classification,
@@ -80,3 +79,8 @@ def class_balanced_binary_class_cross_entropy(pred, label, name='cross_entropy_l
     cost = tf.reduce_mean(cost, name=name)
     return cost
 
+def print_stat(x):
+    """ a simple print op.
+        Use it like: x = print_stat(x)
+    """
+    return tf.Print(x, [tf.reduce_mean(x), x], summarize=20)

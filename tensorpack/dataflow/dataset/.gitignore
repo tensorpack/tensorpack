@@ -2,3 +2,4 @@ mnist_data
 cifar10_data
 svhn_data
 ilsvrc_metadata
+bsds500_data
