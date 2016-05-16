@@ -31,7 +31,7 @@ def FullyConnected(x, out_dim,
 
     if W_init is None:
         #W_init = tf.truncated_normal_initializer(stddev=1 / math.sqrt(float(in_dim)))
-        W_init = tf.uniform_unit_scaling_initializer()
+        W_init = tf.uniform_unit_scaling_initializer(factor=1.43)
     if b_init is None:
         b_init = tf.constant_initializer()
 
