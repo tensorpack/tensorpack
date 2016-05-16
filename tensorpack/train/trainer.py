@@ -31,11 +31,12 @@ class SimpleTrainer(Trainer):
         self.input_vars = input_vars
         model.build_graph(input_vars, True)
         cost_var = model.get_cost()
-        avg_maintain_op = summary_moving_average()
+        tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, cost_var)
 
         grads = self.config.optimizer.compute_gradients(cost_var)
         grads = self.process_grads(grads)
 
+        avg_maintain_op = summary_moving_average()
         self.train_op = tf.group(
             self.config.optimizer.apply_gradients(grads, get_global_step_var()),
             avg_maintain_op)
