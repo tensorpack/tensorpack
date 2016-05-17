@@ -116,6 +116,7 @@ class ParallelPredictWorker(multiprocessing.Process):
             os.environ['CUDA_VISIBLE_DEVICES'] = self.gpuid
         else:
             logger.info("Worker {} uses CPU".format(self.idx))
+            os.environ['CUDA_VISIBLE_DEVICES'] = ''
         G = tf.Graph()     # build a graph for each process, because they don't need to share anything
         with G.as_default(), tf.device('/gpu:0' if self.gpuid >= 0 else '/cpu:0'):
             if self.idx != 0:

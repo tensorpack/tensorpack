@@ -206,7 +206,7 @@ def eval_model_multiprocess(model_path, romfile):
                     self.outq.put(tot_reward)
                     tot_reward = 0
 
-    NR_PROC = multiprocessing.cpu_count() // 2
+    NR_PROC = min(multiprocessing.cpu_count() // 2, 10)
     procs = []
     q = multiprocessing.Queue()
     for k in range(NR_PROC):
