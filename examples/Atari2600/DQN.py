@@ -168,7 +168,7 @@ def play_model(model_path, romfile):
             act = 1
         que.append(act)
         print(act)
-        _, reward, isOver = player.action(act)
+        reward, isOver = player.action(act)
         tot_reward += reward
         if isOver:
             print("Total:", tot_reward)
@@ -210,7 +210,7 @@ def eval_model_multiprocess(model_path, romfile):
                     act = 1
                 que.append(act)
                 #print(act)
-                _, reward, isOver = player.action(act)
+                reward, isOver = player.action(act)
                 tot_reward += reward
                 if isOver:
                     self.outq.put(tot_reward)

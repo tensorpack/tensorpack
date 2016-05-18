@@ -9,6 +9,7 @@ import os
 import cv2
 from collections import deque
 from ...utils import get_rng
+from . import RLEnvironment
 
 __all__ = ['AtariDriver', 'AtariPlayer']
 
@@ -86,7 +87,7 @@ class AtariDriver(object):
             self._reset()
         return (s, r, isOver)
 
-class AtariPlayer(object):
+class AtariPlayer(RLEnvironment):
     """ An Atari game player with limited memory and FPS"""
     def __init__(self, driver, hist_len=4, action_repeat=4, image_shape=(84,84)):
         """
@@ -125,7 +126,7 @@ class AtariPlayer(object):
         :returns: (new_frame, reward, isOver)
         """
         self.last_act = act
-        return self._grab()
+        return self._observe()
 
     def _build_state(self):
         assert len(self.frames) == self.hist_len
@@ -133,7 +134,7 @@ class AtariPlayer(object):
         m = m.transpose([1,2,0])
         return m
 
-    def _grab(self):
+    def _observe(self):
         """ if isOver==True, current_state will return the new episode
         """
         totr = 0
@@ -146,7 +147,7 @@ class AtariPlayer(object):
         self.frames.append(s)
         if isOver:
             self.restart()
-        return (s, totr, isOver)
+        return (totr, isOver)
 
 if __name__ == '__main__':
     a = AtariDriver('breakout.bin', viz=True)

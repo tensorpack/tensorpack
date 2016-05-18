@@ -61,7 +61,7 @@ class AtariExpReplay(DataFlow):
             act = self.rng.choice(range(self.num_actions))
         else:
             act = np.argmax(self.predictor(old_s))  # TODO race condition in session?
-        _, reward, isOver = self.player.action(act)
+        reward, isOver = self.player.action(act)
         reward = np.clip(reward, -1, 2)
         s = self.player.current_state()
 
