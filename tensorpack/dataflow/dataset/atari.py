@@ -33,7 +33,7 @@ class AtariDriver(object):
 
         self.viz = viz
         self.romname = os.path.basename(rom_file)
-        if isinstance(self.viz, float):
+        if self.viz and isinstance(self.viz, float):
             cv2.startWindowThread()
             cv2.namedWindow(self.romname)
 
@@ -56,10 +56,10 @@ class AtariDriver(object):
         now = self._grab_raw_image()
         ret = np.maximum(now, self.last_image)
         self.last_image = now
-        if isinstance(self.viz, float):
+        if self.viz and isinstance(self.viz, float):
             cv2.imshow(self.romname, ret)
             time.sleep(self.viz)
-        else:
+        elif self.viz:
             cv2.imwrite("{}/{:06d}.jpg".format(self.viz, self.framenum), ret)
             self.framenum += 1
         ret = cv2.cvtColor(ret, cv2.COLOR_BGR2YUV)[:,:,0]
