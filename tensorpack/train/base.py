@@ -36,6 +36,7 @@ class Trainer(object):
         assert isinstance(config, TrainConfig), type(config)
         self.config = config
         self.model = config.model
+        self.extra_threads_procs = config.extra_threads_procs
 
     @abstractmethod
     def train(self):
@@ -84,7 +85,7 @@ class Trainer(object):
         callbacks.setup_graph(self)
         self.config.session_init.init(self.sess)
         tf.get_default_graph().finalize()
-        self._start_all_threads()
+        self._start_concurrency()
 
         with self.sess.as_default():
             try:
@@ -121,12 +122,15 @@ class Trainer(object):
         self.sess = tf.Session(config=self.config.session_config)
         self.coord = tf.train.Coordinator()
 
-    def _start_all_threads(self):
+    def _start_concurrency(self):
         """
         Run all threads before starting training
         """
         tf.train.start_queue_runners(
             sess=self.sess, coord=self.coord, daemon=True, start=True)
+        for k in self.extra_threads_procs:
+            k.start()
+
 
     def process_grads(self, grads):
         g = []

@@ -32,6 +32,7 @@ class TrainConfig(object):
         :param step_per_epoch: the number of steps (SGD updates) to perform in each epoch.
         :param max_epoch: maximum number of epoch to run training. default to 100
         :param nr_tower: int. number of towers. default to 1.
+        :param extra_threads_procs: list of `Startable` threads or processes
         """
         def assert_type(v, tp):
             assert isinstance(v, tp), v.__class__
@@ -53,5 +54,6 @@ class TrainConfig(object):
         self.max_epoch = int(kwargs.pop('max_epoch', 100))
         assert self.step_per_epoch > 0 and self.max_epoch > 0
         self.nr_tower = int(kwargs.pop('nr_tower', 1))
+        self.extra_threads_procs = kwargs.pop('extra_threads_procs', [])
         assert len(kwargs) == 0, 'Unknown arguments: {}'.format(str(kwargs.keys()))
 

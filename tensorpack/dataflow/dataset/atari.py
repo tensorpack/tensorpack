@@ -9,7 +9,7 @@ import os
 import cv2
 from collections import deque
 from ...utils import get_rng
-from . import RLEnvironment
+from .rlenv import RLEnvironment
 
 __all__ = ['AtariDriver', 'AtariPlayer']
 
@@ -32,6 +32,8 @@ class AtariDriver(object):
         self.width, self.height = self.ale.getScreenDims()
         self.actions = self.ale.getMinimalActionSet()
 
+        if isinstance(viz, int):
+            viz = float(viz)
         self.viz = viz
         self.romname = os.path.basename(rom_file)
         if self.viz and isinstance(self.viz, float):
@@ -64,6 +66,7 @@ class AtariDriver(object):
             cv2.imwrite("{}/{:06d}.jpg".format(self.viz, self.framenum), ret)
             self.framenum += 1
         ret = cv2.cvtColor(ret, cv2.COLOR_BGR2YUV)[:,:,0]
+        ret = ret[36:204,:]   # several online repos all use this
         return ret
 
     def get_num_actions(self):
@@ -109,6 +112,7 @@ class AtariPlayer(RLEnvironment):
         """
         self.frames.clear()
         s = self.driver.grab_image()
+
         s = cv2.resize(s, self.image_shape)
         for _ in range(self.hist_len):
             self.frames.append(s)

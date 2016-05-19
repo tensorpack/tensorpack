@@ -22,7 +22,7 @@ get_config_func = imp.load_source('config_script', args.config).get_config
 
 with tf.Graph().as_default() as G:
     config = get_config_func()
-    config.model.get_cost(config.model.get_input_vars(), is_training=False)
+    config.model.build_graph(config.model.get_input_vars(), is_training=False)
     init = sessinit.SaverRestore(args.model)
     sess = tf.Session()
     init.init(sess)

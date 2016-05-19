@@ -5,7 +5,7 @@
 
 from abc import abstractmethod, ABCMeta
 
-__all__ = ['RLEnvironment']
+__all__ = ['RLEnvironment', 'NaiveRLEnvironment']
 
 class RLEnvironment(object):
     __meta__ = ABCMeta
@@ -23,3 +23,15 @@ class RLEnvironment(object):
         :params act: the action
         :returns: (reward, isOver)
         """
+
+class NaiveRLEnvironment(RLEnvironment):
+    def __init__(self):
+        self.k = 0
+    def current_state(self):
+        self.k += 1
+        return self.k
+    def action(self, act):
+        self.k = act
+        return (self.k, self.k > 10)
+
+

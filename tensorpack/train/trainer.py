@@ -209,11 +209,8 @@ class QueueInputTrainer(Trainer):
         self.init_session_and_coord()
         # create a thread that keeps filling the queue
         self.input_th = EnqueueThread(self, self.input_queue, enqueue_op, self.input_vars)
+        self.extra_threads_procs.append(self.input_th)
         self.main_loop()
-
-    def _start_all_threads(self):
-        super(QueueInputTrainer, self)._start_all_threads()
-        self.input_th.start()
 
     def run_step(self):
         if self.async:
