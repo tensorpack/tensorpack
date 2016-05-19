@@ -124,7 +124,8 @@ class QueueInputTrainer(Trainer):
 
     def _get_model_inputs(self):
         """ Dequeue a datapoint from input_queue and return"""
-        ret = self.input_queue.dequeue()
+        ret = self.input_queue.dequeue(name='input_deque')
+        print ret
         if isinstance(ret, tf.Tensor): # only one input
             ret = [ret]
         assert len(ret) == len(self.input_vars)
