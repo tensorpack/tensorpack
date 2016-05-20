@@ -2,14 +2,19 @@
 # -*- coding: utf-8 -*-
 # File: atari.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
-from ale_python_interface import ALEInterface
+
 import numpy as np
 import time
 import os
 import cv2
 from collections import deque
-from ...utils import get_rng
+from ...utils import get_rng, logger
 from .rlenv import RLEnvironment
+
+try:
+    from ale_python_interface import ALEInterface
+except ImportError:
+    logger.warn("Cannot import ale_python_interface, Atari won't be available.")
 
 __all__ = ['AtariDriver', 'AtariPlayer']
 

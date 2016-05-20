@@ -3,8 +3,8 @@
 # File: mnist-convnet.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
-import tensorflow as tf
 import numpy as np
+import tensorflow as tf
 import os, sys
 import argparse
 
