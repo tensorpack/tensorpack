@@ -5,12 +5,14 @@
 
 from .base import DataFlow
 from tensorpack.utils import *
+from tensorpack.callbacks.base import Callback
 
 from tqdm import tqdm
 import random
 import numpy as np
 import cv2
 from collections import deque, namedtuple
+
 
 """
 Implement RL-related data preprocessing
@@ -28,7 +30,7 @@ def view_state(state):
     cv2.imshow("state", r)
     cv2.waitKey()
 
-class ExpReplay(DataFlow):
+class ExpReplay(DataFlow, Callback):
     """
     Implement experience replay.
     """
@@ -40,6 +42,8 @@ class ExpReplay(DataFlow):
             batch_size=32,
             populate_size=50000,
             exploration=1,
+            end_exploration=0.1,
+            exploration_epoch_anneal=0.002,
             reward_clip=None):
         """
         :param predictor: callabale. called with a state, return a distribution
@@ -101,6 +105,16 @@ class ExpReplay(DataFlow):
             reward[idx] = b.reward
             isOver[idx] = b.isOver
         return [state, action, reward, next_state, isOver]
+
+    # Callback-related:
+
+    def _before_train(self):
+        self.init_memory()
+
+    def _trigger_epoch(self):
+        if self.exploration > self.end_exploration:
+            self.exploration -= self.exploration_epoch_anneal
+            logger.info("Exploration changed to {}".format(self.exploration))
 
 if __name__ == '__main__':
     from tensorpack.dataflow.dataset import AtariDriver, AtariPlayer

@@ -43,11 +43,10 @@ INIT_EXPLORATION = 1
 EXPLORATION_EPOCH_ANNEAL = 0.0025
 END_EXPLORATION = 0.1
 
-INIT_MEMORY_SIZE = 50000
 MEMORY_SIZE = 1e6
+INIT_MEMORY_SIZE = 50000
 STEP_PER_EPOCH = 10000
 EVAL_EPISODE = 100
-
 
 class Model(ModelDesc):
     def _get_input_vars(self):
@@ -130,18 +129,6 @@ class TargetNetworkUpdator(Callback):
 
     def _trigger_epoch(self):
         self._update()
-
-class ExpReplayController(Callback):
-    def __init__(self, d):
-        self.d = d
-
-    def _before_train(self):
-        self.d.init_memory()
-
-    def _trigger_epoch(self):
-        if self.d.exploration > END_EXPLORATION:
-            self.d.exploration -= EXPLORATION_EPOCH_ANNEAL
-            logger.info("Exploration changed to {}".format(self.d.exploration))
 
 def play_one_episode(player, func, verbose=False):
     tot_reward = 0
@@ -251,6 +238,8 @@ def get_config(romfile):
             batch_size=BATCH_SIZE,
             populate_size=INIT_MEMORY_SIZE,
             exploration=INIT_EXPLORATION,
+            end_exploration=END_EXPLORATION,
+            exploration_epoch_anneal=EXPLORATION_EPOCH_ANNEAL,
             reward_clip=(-1, 2))
 
     lr = tf.Variable(0.0025, trainable=False, name='learning_rate')
@@ -277,7 +266,7 @@ def get_config(romfile):
             HumanHyperParamSetter('learning_rate', 'hyper.txt'),
             HumanHyperParamSetter((dataset_train, 'exploration'), 'hyper.txt'),
             TargetNetworkUpdator(M),
-            ExpReplayController(dataset_train),
+            dataset_train,
             PeriodicCallback(Evaluator(), 1),
         ]),
         session_config=get_default_sess_config(0.5),
