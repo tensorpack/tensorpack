@@ -245,15 +245,17 @@ def get_config(romfile):
     global NUM_ACTIONS
     NUM_ACTIONS = driver.get_num_actions()
 
-    dataset_train = AtariExpReplay(
+    dataset_train = ExpReplay(
             predictor=current_predictor,
             player=AtariPlayer(
                 driver, hist_len=FRAME_HISTORY,
                 action_repeat=ACTION_REPEAT),
+            num_actions=NUM_ACTIONS,
             memory_size=MEMORY_SIZE,
             batch_size=BATCH_SIZE,
             populate_size=INIT_MEMORY_SIZE,
-            exploration=INIT_EXPLORATION)
+            exploration=INIT_EXPLORATION,
+            reward_clip=(-1, 2))
 
     lr = tf.Variable(0.0025, trainable=False, name='learning_rate')
     tf.scalar_summary('learning_rate', lr)
