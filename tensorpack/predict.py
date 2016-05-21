@@ -58,8 +58,7 @@ class PredictConfig(object):
         """
         def assert_type(v, tp):
             assert isinstance(v, tp), v.__class__
-        self.session_config = kwargs.pop('session_config', get_default_sess_config())
-        assert_type(self.session_config, tf.ConfigProto)
+        self.session_config = kwargs.pop('session_config', None)
         self.session_init = kwargs.pop('session_init')
         self.model = kwargs.pop('model')
         self.input_data_mapping = kwargs.pop('input_data_mapping', None)
@@ -87,7 +86,10 @@ def get_predict_func(config):
     output_vars = [tf.get_default_graph().get_tensor_by_name(get_op_var_name(n)[1])
                    for n in output_var_names]
 
-    sess = tf.Session(config=config.session_config)
+    if config.session_config:
+        sess = tf.Session(config=config.session_config)
+    else:
+        sess = tf.Session()
     config.session_init.init(sess)
 
     def run_input(dp):
@@ -116,7 +118,7 @@ class ParallelPredictWorker(multiprocessing.Process):
             os.environ['CUDA_VISIBLE_DEVICES'] = self.gpuid
         else:
             logger.info("Worker {} uses CPU".format(self.idx))
-            os.environ['CUDA_VISIBLE_DEVICES'] = ''
+            os.environ['CUDA_VISIBLE_DEVICES'] = '0'
         G = tf.Graph()     # build a graph for each process, because they don't need to share anything
         with G.as_default(), tf.device('/gpu:0' if self.gpuid >= 0 else '/cpu:0'):
             if self.idx != 0:

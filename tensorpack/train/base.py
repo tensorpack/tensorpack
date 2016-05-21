@@ -12,6 +12,7 @@ from .config import TrainConfig
 from ..utils import *
 from ..callbacks import StatHolder
 from ..tfutils import *
+from ..tfutils.summary import create_summary
 from ..tfutils.modelutils import describe_model
 
 __all__ = ['Trainer']
@@ -75,6 +76,12 @@ class Trainer(object):
                 val.tag = re.sub('tower[0-9]+/', '', val.tag)   # TODO move to subclasses
                 self.stat_holder.add_stat(val.tag, val.simple_value)
         self.summary_writer.add_summary(summary, self.global_step)
+
+    def write_scalar_summary(self, name, val):
+        self.summary_writer.add_summary(
+                create_summary(name, val),
+                get_global_step())
+        self.stat_holder.add_stat(name, val)
 
     def main_loop(self):
         # some final operations that might modify the graph

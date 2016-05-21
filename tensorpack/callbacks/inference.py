@@ -59,12 +59,6 @@ class Inferencer(object):
     def _get_output_tensors(self):
         pass
 
-    def _scalar_summary(self, name, val):
-        self.trainer.summary_writer.add_summary(
-                create_summary(name, val),
-                get_global_step())
-        self.trainer.stat_holder.add_stat(name, val)
-
 class InferenceRunner(Callback):
     """
     A callback that runs different kinds of inferencer.
@@ -161,9 +155,7 @@ class ScalarStats(Inferencer):
         for stat, name in zip(self.stats, self.names):
             opname, _ = get_op_var_name(name)
             name = '{}_{}'.format(self.prefix, opname) if self.prefix else opname
-            self.trainer.summary_writer.add_summary(
-                    create_summary(name, stat), get_global_step())
-            self.trainer.stat_holder.add_stat(name, stat)
+            self.trainer.write_scalar_summary(name, stat)
 
 class ClassificationError(Inferencer):
     """
@@ -197,7 +189,7 @@ class ClassificationError(Inferencer):
         self.err_stat.feed(wrong, batch_size)
 
     def _after_inference(self):
-        self._scalar_summary(self.summary_name, self.err_stat.accuracy)
+        self.trainer.write_scalar_summary(self.summary_name, self.err_stat.accuracy)
 
 class BinaryClassificationStats(Inferencer):
 
@@ -221,5 +213,5 @@ class BinaryClassificationStats(Inferencer):
         self.stat.feed(pred, label)
 
     def _after_inference(self):
-        self._scalar_summary(self.prefix + '_precision', self.stat.precision)
-        self._scalar_summary(self.prefix + '_recall', self.stat.recall)
+        self.trainer.write_scalar_summary(self.prefix + '_precision', self.stat.precision)
+        self.trainer.write_scalar_summary(self.prefix + '_recall', self.stat.recall)
