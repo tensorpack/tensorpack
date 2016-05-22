@@ -40,7 +40,7 @@ def add_param_summary(summary_lists):
     Add summary for all trainable variables matching the regex
 
     :param summary_lists: list of (regex, [list of action to perform]).
-        Action can be 'mean', 'scalar', 'histogram', 'sparsity'.
+        Action can be 'mean', 'scalar', 'histogram', 'sparsity', 'rms'
     """
     def perform(var, action):
         ndim = var.get_shape().ndims
@@ -58,6 +58,10 @@ def add_param_summary(summary_lists):
             return
         if action == 'mean':
             tf.scalar_summary(name + '/mean', tf.reduce_mean(var))
+            return
+        if action == 'rms':
+            tf.scalar_summary(name + '/rms',
+                    tf.sqrt(tf.reduce_mean(tf.square(var))))
             return
         raise RuntimeError("Unknown action {}".format(action))
 
