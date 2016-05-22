@@ -22,7 +22,8 @@ class AtariDriver(object):
     """
     A wrapper for atari emulator.
     """
-    def __init__(self, rom_file, frame_skip=1, viz=0):
+    def __init__(self, rom_file,
+            frame_skip=1, viz=0, height_range=(None,None)):
         """
         :param rom_file: path to the rom
         :param frame_skip: skip every k frames
@@ -48,6 +49,7 @@ class AtariDriver(object):
         self._reset()
         self.last_image = self._grab_raw_image()
         self.framenum = 0
+        self.height_range = height_range
 
     def _grab_raw_image(self):
         """
@@ -64,14 +66,15 @@ class AtariDriver(object):
         now = self._grab_raw_image()
         ret = np.maximum(now, self.last_image)
         self.last_image = now
-        if self.viz and isinstance(self.viz, float):
-            cv2.imshow(self.romname, ret)
-            time.sleep(self.viz)
-        elif self.viz:
-            cv2.imwrite("{}/{:06d}.jpg".format(self.viz, self.framenum), ret)
-            self.framenum += 1
+        ret = ret[self.height_range[0]:self.height_range[1],:]   # several online repos all use this
+        if self.viz:
+            if isinstance(self.viz, float):
+                cv2.imshow(self.romname, ret)
+                time.sleep(self.viz)
+            else:
+                cv2.imwrite("{}/{:06d}.jpg".format(self.viz, self.framenum), ret)
+                self.framenum += 1
         ret = cv2.cvtColor(ret, cv2.COLOR_BGR2YUV)[:,:,0]
-        ret = ret[36:204,:]   # several online repos all use this
         return ret
 
     def get_num_actions(self):

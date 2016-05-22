@@ -36,6 +36,7 @@ IMAGE_SIZE = 84
 NUM_ACTIONS = None
 FRAME_HISTORY = 4
 ACTION_REPEAT = 3
+HEIGHT_RANGE = (36, 204)    # for breakout
 GAMMA = 0.99
 BATCH_SIZE = 32
 
@@ -154,7 +155,7 @@ def play_one_episode(player, func, verbose=False):
             return tot_reward
 
 def play_model(model_path, romfile):
-    player = AtariPlayer(AtariDriver(romfile, viz=0.01),
+    player = AtariPlayer(AtariDriver(romfile, viz=0.01, height_range=HEIGHT_RANGE),
             action_repeat=ACTION_REPEAT)
     global NUM_ACTIONS
     NUM_ACTIONS = player.driver.get_num_actions()
@@ -184,7 +185,7 @@ def eval_model_multiprocess(model_path, romfile):
             self.outq = outqueue
 
         def run(self):
-            player = AtariPlayer(AtariDriver(romfile, viz=0),
+            player = AtariPlayer(AtariDriver(romfile, viz=0, height_range=HEIGHT_RANGE),
                     action_repeat=ACTION_REPEAT)
             global NUM_ACTIONS
             NUM_ACTIONS = player.driver.get_num_actions()
@@ -224,7 +225,7 @@ def get_config(romfile):
         os.path.join('train_log', basename[:basename.rfind('.')]))
     M = Model()
 
-    driver = AtariDriver(romfile)
+    driver = AtariDriver(romfile, height_range=HEIGHT_RANGE)
     global NUM_ACTIONS
     NUM_ACTIONS = driver.get_num_actions()
 
