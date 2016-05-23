@@ -29,6 +29,8 @@ def run_test_case(case):
 
 if __name__ == '__main__':
     import tensorpack
+    from tensorpack.utils import logger
+    logger.disable_logger()
     subs = tensorpack.models._test.TestModel.__subclasses__()
     for cls in subs:
         run_test_case(cls)

@@ -95,6 +95,9 @@ unless you're resuming from a previous task.""".format(dirname))
     LOG_FILE = os.path.join(dirname, 'log.log')
     _set_file(LOG_FILE)
 
+def disable_logger():
+    for func in ['info', 'warning', 'error', 'critical', 'warn', 'exception', 'debug']:
+        globals()[func] = lambda x: None
 
 # export logger functions
 for func in ['info', 'warning', 'error', 'critical', 'warn', 'exception', 'debug']:
