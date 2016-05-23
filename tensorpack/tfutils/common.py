@@ -22,6 +22,7 @@ def get_default_sess_config(mem_fraction=0.9):
     conf = tf.ConfigProto()
     conf.gpu_options.per_process_gpu_memory_fraction = mem_fraction
     conf.gpu_options.allocator_type = 'BFC'
+    conf.gpu_options.allow_growth = True
     conf.allow_soft_placement = True
     #conf.log_device_placement = True
     return conf

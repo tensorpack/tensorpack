@@ -9,7 +9,7 @@ import os
 import cv2
 from collections import deque
 from ...utils import get_rng, logger
-from .rlenv import RLEnvironment
+from ..RL import RLEnvironment
 
 try:
     from ale_python_interface import ALEInterface

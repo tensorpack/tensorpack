@@ -3,36 +3,59 @@
 # File: RL.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
+from abc import abstractmethod, ABCMeta
+import random
+import numpy as np
+from collections import deque, namedtuple
+from tqdm import tqdm
+import cv2
+
 from .base import DataFlow
 from tensorpack.utils import *
 from tensorpack.callbacks.base import Callback
-
-from tqdm import tqdm
-import random
-import numpy as np
-import cv2
-from collections import deque, namedtuple
-
 
 """
 Implement RL-related data preprocessing
 """
 
-__all__ = ['ExpReplay']
+__all__ = ['ExpReplay', 'RLEnvironment', 'NaiveRLEnvironment']
 
 Experience = namedtuple('Experience',
         ['state', 'action', 'reward', 'next', 'isOver'])
 
-def view_state(state):
-# for debug
-    r = np.concatenate([state[:,:,k] for k in range(state.shape[2])], axis=1)
-    print r.shape
-    cv2.imshow("state", r)
-    cv2.waitKey()
+class RLEnvironment(object):
+    __meta__ = ABCMeta
+
+    @abstractmethod
+    def current_state(self):
+        """
+        Observe, return a state representation
+        """
+
+    @abstractmethod
+    def action(self, act):
+        """
+        Perform an action
+        :params act: the action
+        :returns: (reward, isOver)
+        """
+
+class NaiveRLEnvironment(RLEnvironment):
+    """ for testing only"""
+    def __init__(self):
+        self.k = 0
+    def current_state(self):
+        self.k += 1
+        return self.k
+    def action(self, act):
+        self.k = act
+        return (self.k, self.k > 10)
+
 
 class ExpReplay(DataFlow, Callback):
     """
-    Implement experience replay.
+    Implement experience replay in the paper
+    `Human-level control through deep reinforcement learning`.
     """
     def __init__(self,
             predictor,
@@ -78,6 +101,12 @@ class ExpReplay(DataFlow, Callback):
             reward = np.clip(reward, self.reward_clip[0], self.reward_clip[1])
         s = self.player.current_state()
 
+        #def view_state(state):
+            #""" for debug state representation"""
+            #r = np.concatenate([state[:,:,k] for k in range(state.shape[2])], axis=1)
+            #print r.shape
+            #cv2.imshow("state", r)
+            #cv2.waitKey()
         #print act, reward
         #view_state(s)
 
@@ -115,6 +144,8 @@ class ExpReplay(DataFlow, Callback):
         if self.exploration > self.end_exploration:
             self.exploration -= self.exploration_epoch_anneal
             logger.info("Exploration changed to {}".format(self.exploration))
+
+
 
 if __name__ == '__main__':
     from tensorpack.dataflow.dataset import AtariDriver, AtariPlayer
