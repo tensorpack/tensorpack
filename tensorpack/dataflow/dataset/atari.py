@@ -107,17 +107,20 @@ class AtariPlayer(RLEnvironment):
         :param action_repeat: repeat each action `action_repeat` times and skip those frames
         :param image_shape: the shape of the observed image
         """
+        super(AtariPlayer, self).__init__()
         for k, v in locals().items():
             if k != 'self':
                 setattr(self, k, v)
         self.last_act = 0
         self.frames = deque(maxlen=hist_len)
+        self.current_accum_score = 0
         self.restart()
 
     def restart(self):
         """
         Restart the game and populate frames with the beginning frame
         """
+        self.current_accum_score = 0
         self.frames.clear()
         s = self.driver.grab_image()
 
@@ -156,10 +159,21 @@ class AtariPlayer(RLEnvironment):
             if isOver:
                 break
         s = cv2.resize(s, self.image_shape)
+        self.current_accum_score += totr
         self.frames.append(s)
         if isOver:
+            self.stats['score'].append(self.current_accum_score)
             self.restart()
         return (totr, isOver)
+
+    def get_stat(self):
+        try:
+            print self.stats
+            return {'avg_score': np.mean(self.stats['score']),
+                    'max_score': float(np.max(self.stats['score']))
+                    }
+        except ValueError:
+            return {}
 
 if __name__ == '__main__':
     a = AtariDriver('breakout.bin', viz=True)

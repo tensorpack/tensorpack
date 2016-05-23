@@ -255,8 +255,8 @@ def get_config(romfile):
             output = output.strip()
             output = output[output.find(']')+1:]
             mean, maximum = re.findall('[0-9\.]+', output)
-            self.trainer.write_scalar_summary('mean_score', mean)
-            self.trainer.write_scalar_summary('max_score', maximum)
+            self.trainer.write_scalar_summary('eval_mean_score', mean)
+            self.trainer.write_scalar_summary('eval_max_score', maximum)
 
     return TrainConfig(
         dataset=dataset_train,

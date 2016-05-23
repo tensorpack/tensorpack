@@ -6,9 +6,10 @@
 from abc import abstractmethod, ABCMeta
 import random
 import numpy as np
-from collections import deque, namedtuple
+from collections import deque, namedtuple, defaultdict
 from tqdm import tqdm
 import cv2
+import six
 
 from .base import DataFlow
 from tensorpack.utils import *
@@ -26,6 +27,9 @@ Experience = namedtuple('Experience',
 class RLEnvironment(object):
     __meta__ = ABCMeta
 
+    def __init__(self):
+        self.reset_stat()
+
     @abstractmethod
     def current_state(self):
         """
@@ -39,6 +43,16 @@ class RLEnvironment(object):
         :params act: the action
         :returns: (reward, isOver)
         """
+
+    @abstractmethod
+    def get_stat(self):
+        """
+        return a dict of statistics (e.g., score) after running for a while
+        """
+
+    def reset_stat(self):
+        """ reset the statistics counter"""
+        self.stats = defaultdict(list)
 
 class NaiveRLEnvironment(RLEnvironment):
     """ for testing only"""
@@ -67,7 +81,9 @@ class ExpReplay(DataFlow, Callback):
             exploration=1,
             end_exploration=0.1,
             exploration_epoch_anneal=0.002,
-            reward_clip=None):
+            reward_clip=None,
+            new_experience_per_step=1
+            ):
         """
         :param predictor: callabale. called with a state, return a distribution
         :param player: a `RLEnvironment`
@@ -117,7 +133,8 @@ class ExpReplay(DataFlow, Callback):
             idxs = self.rng.randint(len(self.mem), size=self.batch_size)
             batch_exp = [self.mem[k] for k in idxs]
             yield self._process_batch(batch_exp)
-            self._populate_exp()
+            for _ in range(self.new_experience_per_step):
+                self._populate_exp()
 
     def _process_batch(self, batch_exp):
         state_shape = batch_exp[0].state.shape
@@ -144,7 +161,11 @@ class ExpReplay(DataFlow, Callback):
         if self.exploration > self.end_exploration:
             self.exploration -= self.exploration_epoch_anneal
             logger.info("Exploration changed to {}".format(self.exploration))
-
+        stats = self.player.get_stat()
+        for k, v in six.iteritems(stats):
+            if isinstance(v, float):
+                self.trainer.write_scalar_summary('expreplay/' + k, v)
+        self.player.reset_stat()
 
 
 if __name__ == '__main__':
