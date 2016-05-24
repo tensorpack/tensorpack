@@ -18,7 +18,7 @@ from tensorpack.tfutils.summary import *
 from tensorpack.dataflow import *
 
 """
-A small cifar10 convnet model.
+A small convnet model for cifar 10 or cifar100 dataset.
 90% validation accuracy after 40k step.
 """
 

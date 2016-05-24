@@ -77,7 +77,7 @@ def get_filenames(dir, cifar_classnum):
             dir, 'cifar-100-python', 'test'))
     return filenames
 
-class Cifar(DataFlow):
+class CifarBase(DataFlow):
     """
     Return [image, label],
         image is 32x32x3 in the range [0,255]
@@ -142,13 +142,13 @@ class Cifar(DataFlow):
         mean = self.get_per_pixel_mean()
         return np.mean(mean, axis=(0,1))
 
-class Cifar10(Cifar):
+class Cifar10(CifarBase):
     def __init__(self, train_or_test, shuffle=True, dir=None):
         super(Cifar10, self).__init__(train_or_test, shuffle, dir, 10)
 
-class Cifar100(Cifar):
+class Cifar100(CifarBase):
     def __init__(self, train_or_test, shuffle=True, dir=None):
-        super(Cifar10, self).__init__(train_or_test, shuffle, dir, 100)
+        super(Cifar100, self).__init__(train_or_test, shuffle, dir, 100)
 
 if __name__ == '__main__':
     ds = Cifar10('train')
