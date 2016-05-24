@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-# File: cifar10-convnet.py
+# File: cifar-convnet.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 import numpy
 import tensorflow as tf
@@ -19,7 +19,8 @@ from tensorpack.dataflow import *
 
 """
 A small convnet model for cifar 10 or cifar100 dataset.
-90% validation accuracy after 40k step.
+
+For Cifar10: 90% validation accuracy after 40k step.
 """
 
 class Model(ModelDesc):
@@ -141,7 +142,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.') # nargs='*' in multi mode
     parser.add_argument('--load', help='load model')
-    parser.add_argument('--classnum', help='specify cifar10 or cifar100, input 10 for cifar10 or 100 for cifar100')
+    parser.add_argument('--classnum', help='10 for cifar10 or 100 for cifar100',
+                        type=int, default=10)
     args = parser.parse_args()
 
     basename = os.path.basename(__file__)
@@ -153,13 +155,8 @@ if __name__ == '__main__':
     else:
         os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
-    if args.classnum:
-        cifar_classnum = int(args.classnum)
-    else:
-        cifar_classnum = 10
-
     with tf.Graph().as_default():
-        config = get_config(cifar_classnum)
+        config = get_config(args.classnum)
         if args.load:
             config.session_init = SaverRestore(args.load)
         if args.gpu:

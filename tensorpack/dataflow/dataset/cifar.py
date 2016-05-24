@@ -1,7 +1,9 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
-# File: cifar10.py
+# File: cifar.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
+#         Yukun Chen <cykustc@gmail.com>
+
 import os, sys
 import pickle
 import numpy as np
@@ -19,7 +21,7 @@ __all__ = ['Cifar10', 'Cifar100']
 
 
 DATA_URL_CIFAR_10 = 'http://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz'
-DATA_URL_CIFAR_100 = 'https://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz'
+DATA_URL_CIFAR_100 = 'http://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz'
 
 def maybe_download_and_extract(dest_directory, cifar_classnum):
     """Download and extract the tarball from Alex's website.
@@ -52,7 +54,7 @@ def read_cifar(filenames, cifar_classnum):
         data = dic[b'data']
         if cifar_classnum == 10:
             label = dic[b'labels']
-            IMG_NUM = 10000
+            IMG_NUM = 10000 # cifar10 data are split into blocks of 10000
         elif cifar_classnum == 100:
             label = dic[b'fine_labels']
             IMG_NUM = 50000 if 'train' in fname else 10000
@@ -71,10 +73,8 @@ def get_filenames(dir, cifar_classnum):
         filenames.append(os.path.join(
             dir, 'cifar-10-batches-py', 'test_batch'))
     elif cifar_classnum == 100:
-        filenames = [os.path.join(
-                         dir, 'cifar-100-python', 'train')]
-        filenames.append(os.path.join(
-            dir, 'cifar-100-python', 'test'))
+        filenames = [os.path.join(dir, 'cifar-100-python', 'train'),
+                     os.path.join(dir, 'cifar-100-python', 'test')]
     return filenames
 
 class CifarBase(DataFlow):
@@ -92,15 +92,12 @@ class CifarBase(DataFlow):
         assert cifar_classnum == 10 or cifar_classnum == 100
         self.cifar_classnum = cifar_classnum
         if dir is None:
-            dir = os.path.join(os.path.dirname(__file__), 'cifar-10-batches-py'
-                               if cifar_classnum==10 else 'cifar100_data')
+            dir = os.path.join(os.path.dirname(__file__),
+                    'cifar{}_data'.format(cifar_classnum))
         maybe_download_and_extract(dir, self.cifar_classnum)
-        if self.cifar_classnum == 10:
-            fnames = get_filenames(dir, 10)
-        else:
-            fnames = get_filenames(dir, 100)
+        fnames = get_filenames(dir, cifar_classnum)
         if train_or_test == 'train':
-            self.fs = fnames[:5] if cifar_classnum==10 else fnames[:1]
+            self.fs = fnames[:-1]
         else:
             self.fs = [fnames[-1]]
         for f in self.fs:
