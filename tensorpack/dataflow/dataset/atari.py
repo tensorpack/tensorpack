@@ -168,10 +168,8 @@ class AtariPlayer(RLEnvironment):
 
     def get_stat(self):
         try:
-            print self.stats
             return {'avg_score': np.mean(self.stats['score']),
-                    'max_score': float(np.max(self.stats['score']))
-                    }
+                    'max_score': float(np.max(self.stats['score'])) }
         except ValueError:
             return {}
 
