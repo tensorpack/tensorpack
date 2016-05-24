@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-# File: cifar100-convnet.py
-# Author: Yukun Chen <cykustc@gmail.com>
+# File: cifar10-convnet.py
+# Author: Yuxin Wu <ppwwyyxx@gmail.com>
 import numpy
 import tensorflow as tf
 import argparse
@@ -18,11 +18,15 @@ from tensorpack.tfutils.summary import *
 from tensorpack.dataflow import *
 
 """
-A small cifar100 convnet model.
+A small cifar10 convnet model.
 90% validation accuracy after 40k step.
 """
 
 class Model(ModelDesc):
+    def __init__(self, cifar_classnum):
+        super(Model, self).__init__()
+        self.cifar_classnum = cifar_classnum
+
     def _get_input_vars(self):
         return [InputVar(tf.float32, [None, 30, 30, 3], 'input'),
                 InputVar(tf.int32, [None], 'label')
@@ -53,7 +57,7 @@ class Model(ModelDesc):
         l = FullyConnected('fc1', l, 512,
                            b_init=tf.constant_initializer(0.1))
         # fc will have activation summary by default. disable for the output layer
-        logits = FullyConnected('linear', l, out_dim=100, nl=tf.identity)
+        logits = FullyConnected('linear', l, out_dim=self.cifar_classnum, nl=tf.identity)
 
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
@@ -75,9 +79,12 @@ class Model(ModelDesc):
         add_param_summary([('.*/W', ['histogram'])])   # monitor W
         self.cost = tf.add_n([cost, wd_cost], name='cost')
 
-def get_data(train_or_test):
+def get_data(train_or_test, cifar_classnum):
     isTrain = train_or_test == 'train'
-    ds = dataset.Cifar100(train_or_test)
+    if cifar_classnum == 10:
+        ds = dataset.Cifar10(train_or_test)
+    else:
+        ds = dataset.Cifar100(train_or_test)
     if isTrain:
         augmentors = [
             imgaug.RandomCrop((30, 30)),
@@ -96,15 +103,15 @@ def get_data(train_or_test):
         ]
     ds = AugmentImageComponent(ds, augmentors)
     ds = BatchData(ds, 128, remainder=not isTrain)
-    # if isTrain:
-        # ds = PrefetchData(ds, 10, 5)
+    if isTrain:
+        ds = PrefetchData(ds, 10, 5)
     return ds
 
-def get_config():
+def get_config(cifar_classnum):
     # prepare dataset
-    dataset_train = get_data('train')
+    dataset_train = get_data('train', cifar_classnum)
     step_per_epoch = dataset_train.size()
-    dataset_test = get_data('test')
+    dataset_test = get_data('test', cifar_classnum)
 
     sess_config = get_default_sess_config(0.5)
 
@@ -125,7 +132,7 @@ def get_config():
             InferenceRunner(dataset_test, ClassificationError())
         ]),
         session_config=sess_config,
-        model=Model(),
+        model=Model(cifar_classnum),
         step_per_epoch=step_per_epoch,
         max_epoch=250,
     )
@@ -134,6 +141,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.') # nargs='*' in multi mode
     parser.add_argument('--load', help='load model')
+    parser.add_argument('--classnum', help='specify cifar10 or cifar100, input 10 for cifar10 or 100 for cifar100')
     args = parser.parse_args()
 
     basename = os.path.basename(__file__)
@@ -145,8 +153,13 @@ if __name__ == '__main__':
     else:
         os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
+    if args.classnum:
+        cifar_classnum = int(args.classnum)
+    else:
+        cifar_classnum = 10
+
     with tf.Graph().as_default():
-        config = get_config()
+        config = get_config(cifar_classnum)
         if args.load:
             config.session_init = SaverRestore(args.load)
         if args.gpu:
