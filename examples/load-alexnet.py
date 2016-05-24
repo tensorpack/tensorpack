@@ -21,6 +21,12 @@ from tensorpack.callbacks import *
 from tensorpack.dataflow import *
 from tensorpack.dataflow.dataset import ILSVRCMeta
 
+"""
+Usage:
+    python2 -m tensorpack.utils.loadcaffe PATH/TO/CAFFE/{deploy.prototxt,bvlc_alexnet.caffemodel} alexnet.npy
+    ./load-alexnet.py --load alexnet.npy --input cat.png
+"""
+
 BATCH_SIZE = 10
 MIN_AFTER_DEQUEUE = 500
 CAPACITY = MIN_AFTER_DEQUEUE + 3 * BATCH_SIZE
