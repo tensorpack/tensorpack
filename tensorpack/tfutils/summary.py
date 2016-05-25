@@ -34,6 +34,9 @@ def add_activation_summary(x, name=None):
         name = x.name
     tf.histogram_summary(name + '/activation', x)
     tf.scalar_summary(name + '/activation_sparsity', tf.nn.zero_fraction(x))
+    tf.scalar_summary(
+            name + '/activation_rms',
+            tf.sqrt(tf.reduce_mean(tf.square(x))))
 
 def add_param_summary(summary_lists):
     """

@@ -37,6 +37,7 @@ NUM_ACTIONS = None
 FRAME_HISTORY = 4
 ACTION_REPEAT = 3
 HEIGHT_RANGE = (36, 204)    # for breakout
+# HEIGHT_RANGE = (28, -8)   # for pong
 GAMMA = 0.99
 BATCH_SIZE = 32
 

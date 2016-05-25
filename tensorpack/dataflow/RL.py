@@ -126,6 +126,7 @@ class ExpReplay(DataFlow, Callback):
         #print act, reward
         #view_state(s)
 
+        # s is considered useless if isOver==True
         self.mem.append(Experience(old_s, act, reward, s, isOver))
 
     def get_data(self):
