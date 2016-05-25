@@ -9,6 +9,7 @@ import os
 import cv2
 from collections import deque
 from ...utils import get_rng, logger
+from ...utils.stat import StatCounter
 from ..RL import RLEnvironment
 
 try:
@@ -16,23 +17,27 @@ try:
 except ImportError:
     logger.warn("Cannot import ale_python_interface, Atari won't be available.")
 
-__all__ = ['AtariDriver', 'AtariPlayer']
+__all__ = ['AtariPlayer']
 
-class AtariDriver(RLEnvironment):
+class AtariPlayer(RLEnvironment):
     """
     A wrapper for atari emulator.
     """
-    def __init__(self, rom_file, viz=0, height_range=(None,None)):
+    def __init__(self, rom_file, viz=0, height_range=(None,None),
+            frame_skip=4, image_shape=(84, 84)):
         """
         :param rom_file: path to the rom
         :param frame_skip: skip every k frames
+        :param image_shape: (w, h)
+        :param height_range: (h1, h2) to cut
         :param viz: the delay. visualize the game while running. 0 to disable
         """
+        super(AtariPlayer, self).__init__()
         self.ale = ALEInterface()
         self.rng = get_rng(self)
 
         self.ale.setInt("random_seed", self.rng.randint(self.rng.randint(0, 1000)))
-        self.ale.setInt("frame_skip", 1)
+        self.ale.setInt("frame_skip", frame_skip)
         self.ale.setBool('color_averaging', True)
         self.ale.loadROM(rom_file)
         self.width, self.height = self.ale.getScreenDims()
@@ -45,9 +50,11 @@ class AtariDriver(RLEnvironment):
         if self.viz and isinstance(self.viz, float):
             cv2.startWindowThread()
             cv2.namedWindow(self.romname)
+        self.framenum = 0
 
         self.height_range = height_range
-        self.framenum = 0
+        self.image_shape = image_shape
+        self.current_episode_score = StatCounter()
 
         self._reset()
 
@@ -61,9 +68,9 @@ class AtariDriver(RLEnvironment):
 
     def current_state(self):
         """
-        :returns: a gray-scale image, max-pooled over the last frame.
+        :returns: a gray-scale (h, w, 1) image
         """
-        now = self._grab_raw_image()
+        ret = self._grab_raw_image()
         if self.viz:
             if isinstance(self.viz, float):
                 cv2.imshow(self.romname, ret)
@@ -73,6 +80,8 @@ class AtariDriver(RLEnvironment):
                 self.framenum += 1
         ret = ret[self.height_range[0]:self.height_range[1],:]
         ret = cv2.cvtColor(ret, cv2.COLOR_BGR2YUV)[:,:,0]
+        ret = cv2.resize(ret, self.image_shape)
+        ret = np.expand_dims(ret, axis=2)
         return ret
 
     def get_num_actions(self):
@@ -82,6 +91,7 @@ class AtariDriver(RLEnvironment):
         return len(self.actions)
 
     def _reset(self):
+        self.current_episode_score.reset()
         self.ale.reset_game()
 
     def action(self, act):
@@ -90,79 +100,12 @@ class AtariDriver(RLEnvironment):
         :returns: (reward, isOver)
         """
         r = self.ale.act(self.actions[act])
+        self.current_episode_score.feed(r)
         isOver = self.ale.game_over()
         if isOver:
+            self.stats['score'].append(self.current_episode_score.sum)
             self._reset()
         return (r, isOver)
-
-class AtariPlayer(RLEnvironment):
-    """ An Atari game player with limited memory and FPS"""
-    def __init__(self, driver, hist_len=4, action_repeat=4, image_shape=(84,84)):
-        """
-        :param driver: an `AtariDriver` instance.
-        :param hist_len: history(memory) length
-        :param action_repeat: repeat each action `action_repeat` times and skip those frames
-        :param image_shape: the shape of the observed image
-        """
-        super(AtariPlayer, self).__init__()
-        for k, v in locals().items():
-            if k != 'self':
-                setattr(self, k, v)
-        self.last_act = 0
-        self.frames = deque(maxlen=hist_len)
-        self.current_accum_score = 0
-        self.restart()
-
-    def restart(self):
-        """
-        Restart the game and populate frames with the beginning frame
-        """
-        self.current_accum_score = 0
-        self.frames.clear()
-        s = self.driver.current_state()
-
-        s = cv2.resize(s, self.image_shape)
-        for _ in range(self.hist_len):
-            self.frames.append(s)
-
-    def current_state(self):
-        """
-        Return a current state of shape `image_shape + (hist_len,)`
-        """
-        return self._build_state()
-
-    def action(self, act):
-        """
-        Perform an action
-        :param act: index of the action
-        :returns: (reward, isOver)
-        """
-        self.last_act = act
-        return self._observe()
-
-    def _build_state(self):
-        assert len(self.frames) == self.hist_len
-        m = np.array(self.frames)
-        m = m.transpose([1,2,0])
-        return m
-
-    def _observe(self):
-        """ if isOver==True, current_state will return the new episode
-        """
-        totr = 0
-        for k in range(self.action_repeat):
-            r, isOver = self.driver.action(self.last_act)
-            s = self.driver.current_state()
-            totr += r
-            if isOver:
-                break
-        s = cv2.resize(s, self.image_shape)
-        self.current_accum_score += totr
-        self.frames.append(s)
-        if isOver:
-            self.stats['score'].append(self.current_accum_score)
-            self.restart()
-        return (totr, isOver)
 
     def get_stat(self):
         try:
@@ -173,7 +116,8 @@ class AtariPlayer(RLEnvironment):
 
 if __name__ == '__main__':
     import sys
-    a = AtariDriver(sys.argv[1], viz=0.01, height_range=(28,-8))
+    a = AtariPlayer(sys.argv[1],
+            viz=0.01, height_range=(28,-8))
     num = a.get_num_actions()
     rng = get_rng(num)
     import time
@@ -183,6 +127,7 @@ if __name__ == '__main__':
         act = rng.choice(range(num))
         print act
         r, o = a.action(act)
+        a.current_state()
         #time.sleep(0.1)
         print(r, o)
 

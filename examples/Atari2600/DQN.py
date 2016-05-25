@@ -3,8 +3,8 @@
 # File: DQN.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
-import tensorflow as tf
 import numpy as np
+import tensorflow as tf
 import os, sys, re
 import random
 import argparse
@@ -22,7 +22,7 @@ from tensorpack.predict import PredictConfig, get_predict_func, ParallelPredictW
 from tensorpack.tfutils import symbolic_functions as symbf
 from tensorpack.callbacks import *
 
-from tensorpack.dataflow.dataset import AtariDriver, AtariPlayer
+from tensorpack.dataflow.dataset import AtariPlayer
 from tensorpack.dataflow.RL import ExpReplay
 
 """
@@ -36,13 +36,13 @@ IMAGE_SIZE = 84
 NUM_ACTIONS = None
 FRAME_HISTORY = 4
 ACTION_REPEAT = 3
-HEIGHT_RANGE = (36, 204)    # for breakout
-# HEIGHT_RANGE = (28, -8)   # for pong
+#HEIGHT_RANGE = (36, 204)    # for breakout
+HEIGHT_RANGE = (28, -8)   # for pong
 GAMMA = 0.99
 BATCH_SIZE = 32
 
 INIT_EXPLORATION = 1
-EXPLORATION_EPOCH_ANNEAL = 0.0025
+EXPLORATION_EPOCH_ANNEAL = 0.0020
 END_EXPLORATION = 0.1
 
 MEMORY_SIZE = 1e6
@@ -62,15 +62,20 @@ class Model(ModelDesc):
 
     def _get_DQN_prediction(self, image, is_training):
         """ image: [0,255]"""
-        image = image / 128.0 - 1
-        with argscope(Conv2D, nl=tf.nn.relu, use_bias=True):
-            l = Conv2D('conv0', image, out_channel=32, kernel_shape=5, stride=2)
-            l = Conv2D('conv1', l, out_channel=32, kernel_shape=5, stride=2)
-            l = Conv2D('conv2', l, out_channel=64, kernel_shape=4, stride=2)
+        image = image / 255.0
+        with argscope(Conv2D, nl=PReLU.f, use_bias=True):
+            l = Conv2D('conv0', image, out_channel=32, kernel_shape=5, stride=1)
+            l = MaxPooling('pool0', l, 2)
+            l = Conv2D('conv1', l, out_channel=32, kernel_shape=5, stride=1)
+            l = MaxPooling('pool1', l, 2)
+            l = Conv2D('conv2', l, out_channel=64, kernel_shape=4)
+            l = MaxPooling('pool2', l, 2)
             l = Conv2D('conv3', l, out_channel=64, kernel_shape=3)
+            l = MaxPooling('pool3', l, 2)
+            l = Conv2D('conv4', l, out_channel=64, kernel_shape=3)
 
-        l = FullyConnected('fc0', l, 512)
-        l = FullyConnected('fct', l, out_dim=NUM_ACTIONS, nl=tf.identity, summary_activation=False)
+        l = FullyConnected('fc0', l, 512, nl=lambda x, name: LeakyReLU.f(x, 0.01, name))
+        l = FullyConnected('fct', l, out_dim=NUM_ACTIONS, nl=tf.identity)
         return l
 
     def _build_graph(self, inputs, is_training):
@@ -136,14 +141,14 @@ def play_one_episode(player, func, verbose=False):
     tot_reward = 0
     que = deque(maxlen=30)
     while True:
-        s = player.current_state()
+        s = player.current_state()  # XXX
         outputs = func([[s]])
         action_value = outputs[0][0]
         act = action_value.argmax()
         if verbose:
             print action_value, act
         if random.random() < 0.01:
-            act = random.choice(range(player.driver.get_num_actions()))
+            act = random.choice(range(NUM_ACTIONS))
         if len(que) == que.maxlen \
                 and que.count(que[0]) == que.maxlen:
             act = 1 # hack, avoid stuck
@@ -156,10 +161,11 @@ def play_one_episode(player, func, verbose=False):
             return tot_reward
 
 def play_model(model_path, romfile):
-    player = AtariPlayer(AtariDriver(romfile, viz=0.01, height_range=HEIGHT_RANGE),
-            action_repeat=ACTION_REPEAT)
+    player = HistoryFramePlayer(AtariPlayer(
+        romfile, viz=0.01, height_range=HEIGHT_RANGE,
+        frame_skip=ACTION_REPEAT), FRAME_HISTORY)
     global NUM_ACTIONS
-    NUM_ACTIONS = player.driver.get_num_actions()
+    NUM_ACTIONS = player.player.get_num_actions()
 
     M = Model()
     cfg = PredictConfig(
@@ -186,10 +192,11 @@ def eval_model_multiprocess(model_path, romfile):
             self.outq = outqueue
 
         def run(self):
-            player = AtariPlayer(AtariDriver(romfile, viz=0, height_range=HEIGHT_RANGE),
-                    action_repeat=ACTION_REPEAT)
+            player = HistoryFramePlayer(AtariPlayer(
+                romfile, viz=0, height_range=HEIGHT_RANGE,
+                frame_skip=ACTION_REPEAT), FRAME_HISTORY)
             global NUM_ACTIONS
-            NUM_ACTIONS = player.driver.get_num_actions()
+            NUM_ACTIONS = player.player.get_num_actions()
             self._init_runtime()
             while True:
                 score = play_one_episode(player, self.func)
@@ -226,15 +233,15 @@ def get_config(romfile):
         os.path.join('train_log', basename[:basename.rfind('.')]))
     M = Model()
 
-    driver = AtariDriver(romfile, height_range=HEIGHT_RANGE)
+    player = AtariPlayer(
+        romfile, height_range=HEIGHT_RANGE,
+        frame_skip=ACTION_REPEAT)
     global NUM_ACTIONS
-    NUM_ACTIONS = driver.get_num_actions()
+    NUM_ACTIONS = player.get_num_actions()
 
     dataset_train = ExpReplay(
             predictor=current_predictor,
-            player=AtariPlayer(
-                driver, hist_len=FRAME_HISTORY,
-                action_repeat=ACTION_REPEAT),
+            player=player,
             num_actions=NUM_ACTIONS,
             memory_size=MEMORY_SIZE,
             batch_size=BATCH_SIZE,
@@ -242,22 +249,23 @@ def get_config(romfile):
             exploration=INIT_EXPLORATION,
             end_exploration=END_EXPLORATION,
             exploration_epoch_anneal=EXPLORATION_EPOCH_ANNEAL,
-            reward_clip=(-1, 2))
+            reward_clip=(-1, 1),
+            history_len=FRAME_HISTORY)
 
-    lr = tf.Variable(0.0025, trainable=False, name='learning_rate')
+    lr = tf.Variable(0.00025, trainable=False, name='learning_rate')
     tf.scalar_summary('learning_rate', lr)
 
     class Evaluator(Callback):
         def _trigger_epoch(self):
             logger.info("Evaluating...")
             output = subprocess.check_output(
-"""{} --task eval --rom {} --load {} 2>&1 | grep Average""".format(
+"""CUDA_VISIBLE_DEVICES=  {} --task eval --rom {} --load {} 2>&1 | grep Average""".format(
     sys.argv[0], romfile, os.path.join(logger.LOG_DIR, 'checkpoint')), shell=True)
             output = output.strip()
             output = output[output.find(']')+1:]
-            mean, maximum = re.findall('[0-9\.]+', output)
-            self.trainer.write_scalar_summary('eval_mean_score', mean)
-            self.trainer.write_scalar_summary('eval_max_score', maximum)
+            mean, maximum = re.findall('[0-9\.\-]+', output)[-2:]
+            self.trainer.write_scalar_summary('mean_score', mean)
+            self.trainer.write_scalar_summary('max_score', maximum)
 
     return TrainConfig(
         dataset=dataset_train,
@@ -269,7 +277,7 @@ def get_config(romfile):
             HumanHyperParamSetter((dataset_train, 'exploration'), 'hyper.txt'),
             TargetNetworkUpdator(M),
             dataset_train,
-            PeriodicCallback(Evaluator(), 1),
+            PeriodicCallback(Evaluator(), 2),
         ]),
         session_config=get_default_sess_config(0.5),
         model=M,

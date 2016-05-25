@@ -19,10 +19,10 @@ from tensorpack.callbacks.base import Callback
 Implement RL-related data preprocessing
 """
 
-__all__ = ['ExpReplay', 'RLEnvironment', 'NaiveRLEnvironment']
+__all__ = ['ExpReplay', 'RLEnvironment', 'NaiveRLEnvironment', 'HistoryFramePlayer']
 
 Experience = namedtuple('Experience',
-        ['state', 'action', 'reward', 'next', 'isOver'])
+        ['state', 'action', 'reward', 'isOver'])
 
 class RLEnvironment(object):
     __meta__ = ABCMeta
@@ -65,6 +65,49 @@ class NaiveRLEnvironment(RLEnvironment):
         self.k = act
         return (self.k, self.k > 10)
 
+class ProxyPlayer(RLEnvironment):
+    def __init__(self, player):
+        self.player = player
+
+    def get_stat(self):
+        return self.player.get_stat()
+
+    def reset_stat(self):
+        self.player.reset_stat()
+
+    def current_state(self):
+        return self.player.current_state()
+
+    def action(self, act):
+        return self.player.action(act)
+
+class HistoryFramePlayer(ProxyPlayer):
+    def __init__(self, player, hist_len):
+        super(HistoryFramePlayer, self).__init__(player)
+        self.history = deque(maxlen=hist_len)
+
+        s = self.player.current_state()
+        self.history.append(s)
+
+    def current_state(self):
+        assert len(self.history) != 0
+        diff_len = self.history.maxlen - len(self.history)
+        if diff_len == 0:
+            return np.concatenate(self.history, axis=2)
+        zeros = [np.zeros_like(self.history[0]) for k in range(diff_len)]
+        for k in self.history:
+            zeros.append(k)
+        return np.concatenate(zeros, axis=2)
+
+    def action(self, act):
+        r, isOver = self.player.action(act)
+        s = self.player.current_state()
+        self.history.append(s)
+
+        if isOver:  # s would be a new episode
+            self.history.clear()
+            self.history.append(s)
+        return (r, isOver)
 
 class ExpReplay(DataFlow, Callback):
     """
@@ -82,11 +125,15 @@ class ExpReplay(DataFlow, Callback):
             end_exploration=0.1,
             exploration_epoch_anneal=0.002,
             reward_clip=None,
-            new_experience_per_step=1
+            new_experience_per_step=1,
+            history_len=1
             ):
         """
-        :param predictor: callabale. called with a state, return a distribution
+        :param predictor: a callabale calling the up-to-date network.
+            called with a state, return a distribution
         :param player: a `RLEnvironment`
+        :param num_actions: int
+        :param history_len: length of history frames to concat. zero-filled initial frames
         """
         for k, v in locals().items():
             if k != 'self':
@@ -106,51 +153,83 @@ class ExpReplay(DataFlow, Callback):
         raise RuntimeError("Don't run me in multiple processes")
 
     def _populate_exp(self):
-        p = self.rng.rand()
         old_s = self.player.current_state()
-        if p <= self.exploration:
+        if self.rng.rand() <= self.exploration:
             act = self.rng.choice(range(self.num_actions))
         else:
-            act = np.argmax(self.predictor(old_s))  # TODO race condition in session?
+            # build a history state
+            ss = [old_s]
+            for k in range(1, self.history_len):
+                hist_exp = self.mem[-k]
+                if hist_exp.isOver:
+                    ss.append(np.zeros_like(ss[0]))
+                else:
+                    ss.append(hist_exp.state)
+            ss = np.concatenate(ss, axis=2)
+            act = np.argmax(self.predictor(ss))
         reward, isOver = self.player.action(act)
         if self.reward_clip:
             reward = np.clip(reward, self.reward_clip[0], self.reward_clip[1])
-        s = self.player.current_state()
 
-        #def view_state(state):
-            #""" for debug state representation"""
-            #r = np.concatenate([state[:,:,k] for k in range(state.shape[2])], axis=1)
-            #print r.shape
-            #cv2.imshow("state", r)
-            #cv2.waitKey()
-        #print act, reward
-        #view_state(s)
-
-        # s is considered useless if isOver==True
-        self.mem.append(Experience(old_s, act, reward, s, isOver))
+        self.mem.append(Experience(old_s, act, reward, isOver))
 
     def get_data(self):
+        # new s is considered useless if isOver==True
         while True:
-            idxs = self.rng.randint(len(self.mem), size=self.batch_size)
-            batch_exp = [self.mem[k] for k in idxs]
+            batch_exp = [self.sample_one() for _ in range(self.batch_size)]
+
+            def view_state(state, next_state):
+                """ for debug state representation"""
+                r = np.concatenate([state[:,:,k] for k in range(self.history_len)], axis=1)
+                r2 = np.concatenate([next_state[:,:,k] for k in range(self.history_len)], axis=1)
+                print r.shape
+                r = np.concatenate([r, r2], axis=0)
+                cv2.imshow("state", r)
+                cv2.waitKey()
+            exp = batch_exp[0]
+            print("Act: ", exp[3], " reward:", exp[2], " isOver: ", exp[4])
+            view_state(exp[0], exp[1])
+
             yield self._process_batch(batch_exp)
             for _ in range(self.new_experience_per_step):
                 self._populate_exp()
 
-    def _process_batch(self, batch_exp):
-        state_shape = batch_exp[0].state.shape
-        state = np.zeros((self.batch_size, ) + state_shape, dtype='float32')
-        next_state = np.zeros((self.batch_size, ) + state_shape, dtype='float32')
-        reward = np.zeros((self.batch_size,), dtype='float32')
-        action = np.zeros((self.batch_size,), dtype='int32')
-        isOver = np.zeros((self.batch_size,), dtype='bool')
+    def sample_one(self):
+        """ return the transition tuple for
+            [idx, idx+history_len] -> [idx+1, idx+1+history_len]
+            it's the transition from state idx+history_len-1 to state idx+history_len
+        """
+        # look for a state to start with
+        # when x.isOver==True, (x+1).state is of a different episode
+        idx = self.rng.randint(len(self.mem) - self.history_len - 1)
+        start_idx = idx + self.history_len - 1
 
-        for idx, b in enumerate(batch_exp):
-            state[idx] = b.state
-            action[idx] = b.action
-            next_state[idx] = b.next
-            reward[idx] = b.reward
-            isOver[idx] = b.isOver
+        def concat(idx):
+            v = [self.mem[x].state for x in range(idx, idx+self.history_len)]
+            return np.concatenate(v, axis=2)
+        state = concat(idx)
+        next_state = concat(idx + 1)
+        reward = self.mem[start_idx].reward
+        action = self.mem[start_idx].action
+        isOver = self.mem[start_idx].isOver
+
+        # zero-fill state before starting
+        zero_fill = False
+        for k in range(1, self.history_len):
+            if self.mem[start_idx-k].isOver:
+                zero_fill = True
+            if zero_fill:
+                state[:,:,-k-1] = 0
+                if k + 2 <= self.history_len:
+                    next_state[:,:,-k-2] = 0
+        return (state, next_state, reward, action, isOver)
+
+    def _process_batch(self, batch_exp):
+        state = np.array([e[0] for e in batch_exp])
+        next_state = np.array([e[1] for e in batch_exp])
+        reward = np.array([e[2] for e in batch_exp])
+        action = np.array([e[3] for e in batch_exp])
+        isOver = np.array([e[4] for e in batch_exp])
         return [state, action, reward, next_state, isOver]
 
     # Callback-related:
@@ -170,12 +249,16 @@ class ExpReplay(DataFlow, Callback):
 
 
 if __name__ == '__main__':
-    from tensorpack.dataflow.dataset import AtariDriver, AtariPlayer
+    from tensorpack.dataflow.dataset import AtariPlayer
+    import sys
     predictor = lambda x: np.array([1,1,1,1])
     predictor.initialized = False
-    E = AtariExpReplay(predictor, predictor,
-            AtariPlayer(AtariDriver('../../space_invaders.bin', viz=0.01)),
-            populate_size=1000)
+    player = AtariPlayer(sys.argv[1], viz=0, frame_skip=20)
+    E = ExpReplay(predictor,
+            player=player,
+            num_actions=player.get_num_actions(),
+            populate_size=1001,
+            history_len=4)
     E.init_memory()
 
     for k in E.get_data():
