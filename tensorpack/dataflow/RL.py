@@ -159,18 +159,22 @@ class ExpReplay(DataFlow, Callback):
         else:
             # build a history state
             ss = [old_s]
+
+            isOver = False
             for k in range(1, self.history_len):
                 hist_exp = self.mem[-k]
                 if hist_exp.isOver:
+                    isOver = True
+                if isOver:
                     ss.append(np.zeros_like(ss[0]))
                 else:
                     ss.append(hist_exp.state)
+            ss.reverse()
             ss = np.concatenate(ss, axis=2)
             act = np.argmax(self.predictor(ss))
         reward, isOver = self.player.action(act)
         if self.reward_clip:
             reward = np.clip(reward, self.reward_clip[0], self.reward_clip[1])
-
         self.mem.append(Experience(old_s, act, reward, isOver))
 
     def get_data(self):
@@ -178,17 +182,18 @@ class ExpReplay(DataFlow, Callback):
         while True:
             batch_exp = [self.sample_one() for _ in range(self.batch_size)]
 
-            def view_state(state, next_state):
-                """ for debug state representation"""
-                r = np.concatenate([state[:,:,k] for k in range(self.history_len)], axis=1)
-                r2 = np.concatenate([next_state[:,:,k] for k in range(self.history_len)], axis=1)
-                print r.shape
-                r = np.concatenate([r, r2], axis=0)
-                cv2.imshow("state", r)
-                cv2.waitKey()
-            exp = batch_exp[0]
-            print("Act: ", exp[3], " reward:", exp[2], " isOver: ", exp[4])
-            view_state(exp[0], exp[1])
+            #def view_state(state, next_state):
+                #""" for debugging state representation"""
+                #r = np.concatenate([state[:,:,k] for k in range(self.history_len)], axis=1)
+                #r2 = np.concatenate([next_state[:,:,k] for k in range(self.history_len)], axis=1)
+                #r = np.concatenate([r, r2], axis=0)
+                #print r.shape
+                #cv2.imshow("state", r)
+                #cv2.waitKey()
+            #exp = batch_exp[0]
+            #print("Act: ", exp[3], " reward:", exp[2], " isOver: ", exp[4])
+            #if exp[2] or exp[4]:
+                #view_state(exp[0], exp[1])
 
             yield self._process_batch(batch_exp)
             for _ in range(self.new_experience_per_step):
@@ -247,13 +252,12 @@ class ExpReplay(DataFlow, Callback):
                 self.trainer.write_scalar_summary('expreplay/' + k, v)
         self.player.reset_stat()
 
-
 if __name__ == '__main__':
     from tensorpack.dataflow.dataset import AtariPlayer
     import sys
     predictor = lambda x: np.array([1,1,1,1])
     predictor.initialized = False
-    player = AtariPlayer(sys.argv[1], viz=0, frame_skip=20)
+    player = AtariPlayer(sys.argv[1], viz=0, frame_skip=10, height_range=(36, 204))
     E = ExpReplay(predictor,
             player=player,
             num_actions=player.get_num_actions(),
@@ -262,6 +266,8 @@ if __name__ == '__main__':
     E.init_memory()
 
     for k in E.get_data():
+        import IPython as IP;
+        IP.embed(config=IP.terminal.ipapp.load_default_config())
         pass
         #import IPython;
         #IPython.embed(config=IPython.terminal.ipapp.load_default_config())

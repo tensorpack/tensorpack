@@ -35,14 +35,13 @@ BATCH_SIZE = 32
 IMAGE_SIZE = 84
 NUM_ACTIONS = None
 FRAME_HISTORY = 4
-ACTION_REPEAT = 3
-#HEIGHT_RANGE = (36, 204)    # for breakout
-HEIGHT_RANGE = (28, -8)   # for pong
+ACTION_REPEAT = 4
+HEIGHT_RANGE = (36, 204)    # for breakout
+#HEIGHT_RANGE = (28, -8)   # for pong
 GAMMA = 0.99
-BATCH_SIZE = 32
 
 INIT_EXPLORATION = 1
-EXPLORATION_EPOCH_ANNEAL = 0.0020
+EXPLORATION_EPOCH_ANNEAL = 0.008
 END_EXPLORATION = 0.1
 
 MEMORY_SIZE = 1e6
@@ -71,8 +70,8 @@ class Model(ModelDesc):
             l = Conv2D('conv2', l, out_channel=64, kernel_shape=4)
             l = MaxPooling('pool2', l, 2)
             l = Conv2D('conv3', l, out_channel=64, kernel_shape=3)
-            l = MaxPooling('pool3', l, 2)
-            l = Conv2D('conv4', l, out_channel=64, kernel_shape=3)
+            #l = MaxPooling('pool3', l, 2)
+            #l = Conv2D('conv4', l, out_channel=64, kernel_shape=3)
 
         l = FullyConnected('fc0', l, 512, nl=lambda x, name: LeakyReLU.f(x, 0.01, name))
         l = FullyConnected('fct', l, out_dim=NUM_ACTIONS, nl=tf.identity)
@@ -90,13 +89,14 @@ class Model(ModelDesc):
         with tf.variable_scope('target'):
             targetQ_predict_value = tf.stop_gradient(
                     self._get_DQN_prediction(next_state, False))    # NxA
-            target = tf.select(isOver, reward, reward +
-                    GAMMA * tf.reduce_max(targetQ_predict_value, 1))    # Nx1
+            target = reward + (1 - tf.cast(isOver, tf.int32)) *
+                    GAMMA * tf.reduce_max(targetQ_predict_value, 1)    # Nx1
 
         sqrcost = tf.square(target - pred_action_value)
         abscost = tf.abs(target - pred_action_value)    # robust error func
         cost = tf.select(abscost < 1, sqrcost, abscost)
-        summary.add_param_summary([('.*/W', ['histogram'])])   # monitor histogram of all W
+        summary.add_param_summary([('conv.*/W', ['histogram', 'rms']),
+                                   ('fc.*/W', ['histogram', 'rms']) ])   # monitor all W
         self.cost = tf.reduce_mean(cost, name='cost')
 
     def update_target_param(self):

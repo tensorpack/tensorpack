@@ -88,6 +88,9 @@ class Callback(object):
     def _trigger_epoch(self):
         pass
 
+    def __str__(self):
+        return type(self).__name__
+
 class ProxyCallback(Callback):
     def __init__(self, cb):
         self.cb = cb
@@ -103,6 +106,9 @@ class ProxyCallback(Callback):
 
     def _trigger_epoch(self):
         self.cb.trigger_epoch()
+
+    def __str__(self):
+        return str(self.cb)
 
 class PeriodicCallback(ProxyCallback):
     """
@@ -121,4 +127,7 @@ class PeriodicCallback(ProxyCallback):
         if self.epoch_num % self.period == 0:
             self.cb.epoch_num = self.epoch_num - 1
             self.cb.trigger_epoch()
+
+    def __str__(self):
+        return "Periodic-" + str(self.cb)
 

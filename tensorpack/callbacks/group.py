@@ -141,8 +141,9 @@ class Callbacks(Callback):
 
         test_sess_restored = False
         for cb in self.cbs:
+            display_name = str(cb)
             if isinstance(cb.type, TrainCallbackType):
-                with tm.timed_callback(type(cb).__name__):
+                with tm.timed_callback(display_name):
                     cb.trigger_epoch()
             else:
                 if not test_sess_restored:
@@ -150,6 +151,6 @@ class Callbacks(Callback):
                         self.test_callback_context.restore_checkpoint()
                     test_sess_restored = True
                 with self.test_callback_context.test_context(), \
-                        tm.timed_callback(type(cb).__name__):
+                        tm.timed_callback(display_name):
                     cb.trigger_epoch()
         tm.log()
