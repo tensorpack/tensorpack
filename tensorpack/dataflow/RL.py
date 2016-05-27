@@ -125,7 +125,7 @@ class ExpReplay(DataFlow, Callback):
             end_exploration=0.1,
             exploration_epoch_anneal=0.002,
             reward_clip=None,
-            new_experience_per_step=1,
+            update_frequency=1,
             history_len=1
             ):
         """
@@ -196,7 +196,7 @@ class ExpReplay(DataFlow, Callback):
                 #view_state(exp[0], exp[1])
 
             yield self._process_batch(batch_exp)
-            for _ in range(self.new_experience_per_step):
+            for _ in range(self.update_frequency):
                 self._populate_exp()
 
     def sample_one(self):

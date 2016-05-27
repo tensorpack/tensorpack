@@ -2,12 +2,13 @@
 # File: base.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import tensorflow as tf
 from abc import ABCMeta, abstractmethod
+import signal
+import re
 from six.moves import range
 import tqdm
-import re
 
+import tensorflow as tf
 from .config import TrainConfig
 from ..utils import *
 from ..callbacks import StatHolder
@@ -135,8 +136,12 @@ class Trainer(object):
         """
         tf.train.start_queue_runners(
             sess=self.sess, coord=self.coord, daemon=True, start=True)
+
+        # avoid sigint get handled by other processes
+        sigint_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
         for k in self.extra_threads_procs:
             k.start()
+        signal.signal(signal.SIGINT, sigint_handler)
 
 
     def process_grads(self, grads):

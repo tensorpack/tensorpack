@@ -8,6 +8,11 @@ import multiprocessing
 import atexit
 import bisect
 import weakref
+import six
+if six.PY2:
+    import subprocess32 as subprocess
+else:
+    import subprocess
 
 __all__ = ['StoppableThread', 'LoopThread', 'ensure_proc_terminate',
            'OrderedResultGatherProc', 'OrderedContainer', 'DIE']
@@ -69,6 +74,18 @@ def ensure_proc_terminate(proc):
     assert isinstance(proc, multiprocessing.Process)
     atexit.register(stop_proc_by_weak_ref, weakref.ref(proc))
 
+def subproc_call(cmd, timeout=None):
+    try:
+        output = subprocess.check_output(
+                cmd, stderr=subprocess.STDOUT,
+                shell=True, timeout=timeout)
+        return output
+    except subprocess.TimeoutExpired as e:
+        logger.warn("Timeout in evaluation!")
+        logger.warn(e.output)
+    except subprocess.CalledProcessError as e:
+        logger.warn("Evaluation script failed: {}".format(e.returncode))
+        logger.warn(e.output)
 
 class OrderedContainer(object):
     """
