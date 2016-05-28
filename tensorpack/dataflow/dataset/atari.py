@@ -36,7 +36,7 @@ class AtariPlayer(RLEnvironment):
         self.ale = ALEInterface()
         self.rng = get_rng(self)
 
-        self.ale.setInt("random_seed", self.rng.randint(self.rng.randint(0, 1000)))
+        self.ale.setInt("random_seed", self.rng.randint(0, 1000))
         self.ale.setInt("frame_skip", frame_skip)
         self.ale.setBool('color_averaging', True)
         self.ale.loadROM(rom_file)
@@ -125,7 +125,7 @@ if __name__ == '__main__':
         #im = a.grab_image()
         #cv2.imshow(a.romname, im)
         act = rng.choice(range(num))
-        print act
+        print(act)
         r, o = a.action(act)
         a.current_state()
         #time.sleep(0.1)

@@ -266,7 +266,6 @@ if __name__ == '__main__':
     if args.task != 'train':
         assert args.load is not None
 
-    global ROM_FILE
     ROM_FILE = args.rom
 
     if args.task == 'play':

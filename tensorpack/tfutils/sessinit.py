@@ -12,8 +12,12 @@ import six
 
 from ..utils import logger
 
-__all__ = ['SessionInit', 'NewSession', 'SaverRestore', 'ParamRestore',
+__all__ = ['SessionInit', 'NewSession', 'SaverRestore',
+           'ParamRestore',
+           'JustCurrentSession',
            'dump_session_params']
+
+# TODO they initialize_all at the beginning by default.
 
 class SessionInit(object):
     """ Base class for utilities to initialize a session"""
@@ -29,6 +33,11 @@ class SessionInit(object):
     @abstractmethod
     def _init(self, sess):
         pass
+
+class JustCurrentSession(SessionInit):
+    """ Just use the current default session. This is a no-op placeholder"""
+    def _init(self, sess):
+        logger.info("Using the current running session ..")
 
 class NewSession(SessionInit):
     """
@@ -139,7 +148,7 @@ class ParamRestore(SessionInit):
 
 def dump_session_params(path):
     """ Dump value of all trainable variables to a dict and save to `path` as
-    npy format.
+    npy format, loadable by ParamRestore
     """
     var = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
     result = {}
