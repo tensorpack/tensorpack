@@ -8,9 +8,10 @@ import numpy as np
 from collections import deque
 from .envbase import ProxyPlayer
 
-__all__ = ['HistoryFramePlayer']
+__all__ = ['HistoryFramePlayer', 'PreventStuckPlayer']
 
 class HistoryFramePlayer(ProxyPlayer):
+    """ Include history frames in state, or use black images"""
     def __init__(self, player, hist_len):
         super(HistoryFramePlayer, self).__init__(player)
         self.history = deque(maxlen=hist_len)
@@ -38,5 +39,26 @@ class HistoryFramePlayer(ProxyPlayer):
             self.history.append(s)
         return (r, isOver)
 
-class AvoidNoOpPlayer(ProxyPlayer):
-    pass # TODO
+class PreventStuckPlayer(ProxyPlayer):
+    """ Prevent the player from getting stuck (repeating a no-op)
+    by inserting a different action. Useful in games such as Atari Breakout
+    where the agent needs to press the 'start' button to start playing.
+    """
+    # TODO hash the state as well?
+    def __init__(self, player, nr_repeat, action):
+        """
+        :param nr_repeat: trigger the 'action' after this many of repeated action
+        :param action: the action to be triggered to get out of stuck
+        """
+        super(PreventStuckPlayer, self).__init__(player)
+        self.act_que = deque(maxlen=nr_repeat)
+        self.trigger_action = action
+
+    def action(self, act):
+        self.act_que.append(act)
+        if self.act_que.count(self.act_que[0]) == self.act_que.maxlen:
+            act = self.trigger_action
+        r, isOver = self.player.action(act)
+        if isOver:
+            self.act_que.clear()
+        return (r, isOver)

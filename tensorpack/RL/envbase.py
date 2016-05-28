@@ -51,6 +51,7 @@ class NaiveRLEnvironment(RLEnvironment):
         return (self.k, self.k > 10)
 
 class ProxyPlayer(RLEnvironment):
+    """ Serve as a proxy another player """
     def __init__(self, player):
         self.player = player
 
@@ -65,4 +66,8 @@ class ProxyPlayer(RLEnvironment):
 
     def action(self, act):
         return self.player.action(act)
+
+    @property
+    def stats(self):
+        return self.player.stats
 
