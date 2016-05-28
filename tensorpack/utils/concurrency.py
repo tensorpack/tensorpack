@@ -123,18 +123,28 @@ class OrderedResultGatherProc(multiprocessing.Process):
     Gather indexed data from a data queue, and produce results with the
     original index-based order.
     """
-    def __init__(self, data_queue, start=0):
-        super(self.__class__, self).__init__()
+    def __init__(self, data_queue, nr_producer, start=0):
+        """
+        :param data_queue: a multiprocessing.Queue to produce input dp
+        :param nr_producer: number of producer processes. Will terminate after receiving this many of DIE sentinel.
+        :param start: the first task index
+        """
+        super(OrderedResultGatherProc, self).__init__()
         self.data_queue = data_queue
         self.ordered_container = OrderedContainer(start=start)
         self.result_queue = multiprocessing.Queue()
+        self.nr_producer = nr_producer
 
     def run(self):
+        nr_end = 0
         try:
             while True:
                 task_id, data = self.data_queue.get()
                 if task_id == DIE:
                     self.result_queue.put((task_id, data))
+                    nr_end += 1
+                    if nr_end == self.nr_producer:
+                        return
                 else:
                     self.ordered_container.put(task_id, data)
                     while self.ordered_container.has_next():

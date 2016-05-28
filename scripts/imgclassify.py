@@ -12,7 +12,7 @@ import imp
 from tensorpack.utils import *
 from tensorpack.utils import sessinit
 from tensorpack.dataflow import *
-from tensorpack.predict import PredictConfig, DatasetPredictor
+from tensorpack.predict import PredictConfig, SimpleDatasetPredictor
 
 
 parser = argparse.ArgumentParser()
@@ -26,6 +26,8 @@ args = parser.parse_args()
 
 get_config_func = imp.load_source('config_script', args.config).get_config
 
+# TODO not sure if it this script is still working
+
 with tf.Graph().as_default() as G:
     train_config = get_config_func()
     config = PredictConfig(
@@ -37,9 +39,9 @@ with tf.Graph().as_default() as G:
     )
 
     ds = ImageFromFile(args.images, 3, resize=(227, 227))
-    predictor = DatasetPredictor(config, ds, batch=128)
+    ds = BatchData(ds, 128, remainder=True)
+    predictor = SimpleDatasetPredictor(config, ds)
     res = predictor.get_all_result()
-    res = [k.output for k in res]
 
     if args.output_type == 'label':
         for r in res:

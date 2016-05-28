@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 # File: concurrency.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
-import multiprocessing
+
+import multiprocessing, threading
 import tensorflow as tf
 from ..utils.concurrency import DIE
 from ..tfutils.modelutils import describe_model
@@ -11,16 +12,17 @@ from ..tfutils import *
 
 from .common import *
 
-__all__ = ['ParallelPredictWorker', 'QueuePredictWorker']
+__all__ = ['MultiProcessPredictWorker', 'MultiProcessQueuePredictWorker']
 
-class ParallelPredictWorker(multiprocessing.Process):
+class MultiProcessPredictWorker(multiprocessing.Process):
+    """ Base class for predict worker that runs in multiprocess"""
     def __init__(self, idx, gpuid, config):
         """
         :param idx: index of the worker. the 0th worker will print log.
         :param gpuid: absolute id of the GPU to be used. set to -1 to use CPU.
         :param config: a `PredictConfig`
         """
-        super(ParallelPredictWorker, self).__init__()
+        super(MultiProcessPredictWorker, self).__init__()
         self.idx = idx
         self.gpuid = gpuid
         self.config = config
@@ -41,17 +43,17 @@ class ParallelPredictWorker(multiprocessing.Process):
             if self.idx == 0:
                 describe_model()
 
-class QueuePredictWorker(ParallelPredictWorker):
+class MultiProcessQueuePredictWorker(MultiProcessPredictWorker):
     """ A worker process to run predictor on one GPU """
     def __init__(self, idx, gpuid, inqueue, outqueue, config):
         """
         :param idx: index of the worker. the 0th worker will print log.
         :param gpuid: id of the GPU to be used. set to -1 to use CPU.
-        :param inqueue: input queue to get data point
-        :param outqueue: output queue put result
+        :param inqueue: input queue to get data point. elements are (task_id, dp)
+        :param outqueue: output queue put result. elements are (task_id, output)
         :param config: a `PredictConfig`
         """
-        super(QueuePredictWorker, self).__init__(idx, gpuid, config)
+        super(MultiProcessQueuePredictWorker, self).__init__(idx, gpuid, config)
         self.inqueue = inqueue
         self.outqueue = outqueue
 
@@ -63,5 +65,19 @@ class QueuePredictWorker(ParallelPredictWorker):
                 self.outqueue.put((DIE, None))
                 return
             else:
-                res = PredictResult(dp, self.func(dp))
-                self.outqueue.put((tid, res))
+                self.outqueue.put((tid, self.func(dp)))
+
+class MultiThreadPredictWorker(threading.Thread):
+    def __init__(self, idx, gpuid, config):
+        """
+        :param idx: index of the worker. the 0th worker will print log.
+        :param gpuid: absolute id of the GPU to be used. set to -1 to use CPU.
+        :param config: a `PredictConfig`
+        """
+        super(MultiProcessPredictWorker, self).__init__()
+        self.idx = idx
+        self.gpuid = gpuid
+        self.config = config
+
+    def run(self):
+        pass

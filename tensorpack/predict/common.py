@@ -45,7 +45,7 @@ class PredictConfig(object):
         :param output_var_names: a list of names of the output variables to predict, the
             variables can be any computable tensor in the graph.
             Predict specific output might not require all input variables.
-        :param nr_gpu: default to 1. Use CUDA_VISIBLE_DEVICES to control which GPU to use sepcifically.
+        :param return_input: whether to produce (input, output) pair or just output. default to False.
         """
         def assert_type(v, tp):
             assert isinstance(v, tp), v.__class__
@@ -54,7 +54,7 @@ class PredictConfig(object):
         self.model = kwargs.pop('model')
         self.input_data_mapping = kwargs.pop('input_data_mapping', None)
         self.output_var_names = kwargs.pop('output_var_names')
-        self.nr_gpu = kwargs.pop('nr_gpu', 1)
+        self.return_input = kwargs.pop('return_input', False)
         assert len(kwargs) == 0, 'Unknown arguments: {}'.format(str(kwargs.keys()))
 
 def get_predict_func(config):

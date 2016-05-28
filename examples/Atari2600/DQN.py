@@ -170,7 +170,7 @@ def eval_model_multiprocess(model_path):
             session_init=SaverRestore(model_path),
             output_var_names=['fct/output:0'])
 
-    class Worker(ParallelPredictWorker):
+    class Worker(MultiProcessPredictWorker):
         def __init__(self, idx, gpuid, config, outqueue):
             super(Worker, self).__init__(idx, gpuid, config)
             self.outq = outqueue

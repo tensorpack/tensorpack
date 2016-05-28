@@ -39,7 +39,7 @@ def dataflow_to_process_queue(ds, size, nr_consumer):
     :param nr_consumer: number of consumer of the queue.
         will add this many of `DIE` sentinel to the end of the queue.
     :returns: (queue, process). The process will take data from `ds` to fill
-        the queue once you start it.
+        the queue once you start it. Each element is (task_id, dp).
     """
     q = multiprocessing.Queue(size)
     class EnqueProc(multiprocessing.Process):
