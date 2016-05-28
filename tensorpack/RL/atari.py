@@ -8,9 +8,10 @@ import time
 import os
 import cv2
 from collections import deque
-from ...utils import get_rng, logger
-from ...utils.stat import StatCounter
-from ..RL import RLEnvironment
+from ..utils import get_rng, logger
+from ..utils.stat import StatCounter
+
+from .envbase import RLEnvironment
 
 try:
     from ale_python_interface import ALEInterface

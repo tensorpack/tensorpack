@@ -18,12 +18,11 @@ from tensorpack.models import  *
 from tensorpack.utils import  *
 from tensorpack.utils.concurrency import ensure_proc_terminate, subproc_call
 from tensorpack.utils.stat import  *
-from tensorpack.predict import PredictConfig, get_predict_func, ParallelPredictWorker
+from tensorpack.predict import PredictConfig, get_predict_func, MultiProcessPredictWorker
 from tensorpack.tfutils import symbolic_functions as symbf
 from tensorpack.callbacks import *
 
-from tensorpack.dataflow.dataset import AtariPlayer
-from tensorpack.dataflow.RL import ExpReplay
+from tensorpack.RL import AtariPlayer, ExpReplay
 
 """
 Implement DQN in:

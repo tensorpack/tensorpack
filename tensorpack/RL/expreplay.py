@@ -1,113 +1,21 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
-# File: RL.py
+# File: expreplay.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-from abc import abstractmethod, ABCMeta
-import random
 import numpy as np
-from collections import deque, namedtuple, defaultdict
+from collections import deque, namedtuple
 from tqdm import tqdm
-import cv2
 import six
 
-from .base import DataFlow
-from tensorpack.utils import *
-from tensorpack.callbacks.base import Callback
+from ..dataflow import DataFlow
+from ..utils import *
+from ..callbacks.base import Callback
 
-"""
-Implement RL-related data preprocessing
-"""
-
-__all__ = ['ExpReplay', 'RLEnvironment', 'NaiveRLEnvironment', 'HistoryFramePlayer']
+__all__ = ['ExpReplay']
 
 Experience = namedtuple('Experience',
         ['state', 'action', 'reward', 'isOver'])
-
-class RLEnvironment(object):
-    __meta__ = ABCMeta
-
-    def __init__(self):
-        self.reset_stat()
-
-    @abstractmethod
-    def current_state(self):
-        """
-        Observe, return a state representation
-        """
-
-    @abstractmethod
-    def action(self, act):
-        """
-        Perform an action
-        :params act: the action
-        :returns: (reward, isOver)
-        """
-
-    @abstractmethod
-    def get_stat(self):
-        """
-        return a dict of statistics (e.g., score) after running for a while
-        """
-
-    def reset_stat(self):
-        """ reset the statistics counter"""
-        self.stats = defaultdict(list)
-
-class NaiveRLEnvironment(RLEnvironment):
-    """ for testing only"""
-    def __init__(self):
-        self.k = 0
-    def current_state(self):
-        self.k += 1
-        return self.k
-    def action(self, act):
-        self.k = act
-        return (self.k, self.k > 10)
-
-class ProxyPlayer(RLEnvironment):
-    def __init__(self, player):
-        self.player = player
-
-    def get_stat(self):
-        return self.player.get_stat()
-
-    def reset_stat(self):
-        self.player.reset_stat()
-
-    def current_state(self):
-        return self.player.current_state()
-
-    def action(self, act):
-        return self.player.action(act)
-
-class HistoryFramePlayer(ProxyPlayer):
-    def __init__(self, player, hist_len):
-        super(HistoryFramePlayer, self).__init__(player)
-        self.history = deque(maxlen=hist_len)
-
-        s = self.player.current_state()
-        self.history.append(s)
-
-    def current_state(self):
-        assert len(self.history) != 0
-        diff_len = self.history.maxlen - len(self.history)
-        if diff_len == 0:
-            return np.concatenate(self.history, axis=2)
-        zeros = [np.zeros_like(self.history[0]) for k in range(diff_len)]
-        for k in self.history:
-            zeros.append(k)
-        return np.concatenate(zeros, axis=2)
-
-    def action(self, act):
-        r, isOver = self.player.action(act)
-        s = self.player.current_state()
-        self.history.append(s)
-
-        if isOver:  # s would be a new episode
-            self.history.clear()
-            self.history.append(s)
-        return (r, isOver)
 
 class ExpReplay(DataFlow, Callback):
     """
@@ -182,6 +90,7 @@ class ExpReplay(DataFlow, Callback):
         while True:
             batch_exp = [self.sample_one() for _ in range(self.batch_size)]
 
+            #import cv2
             #def view_state(state, next_state):
                 #""" for debugging state representation"""
                 #r = np.concatenate([state[:,:,k] for k in range(self.history_len)], axis=1)
@@ -253,7 +162,7 @@ class ExpReplay(DataFlow, Callback):
         self.player.reset_stat()
 
 if __name__ == '__main__':
-    from tensorpack.dataflow.dataset import AtariPlayer
+    from .atari import AtariPlayer
     import sys
     predictor = lambda x: np.array([1,1,1,1])
     predictor.initialized = False
