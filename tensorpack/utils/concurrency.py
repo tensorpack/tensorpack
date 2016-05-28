@@ -14,6 +14,8 @@ if six.PY2:
 else:
     import subprocess
 
+from . import logger
+
 __all__ = ['StoppableThread', 'LoopThread', 'ensure_proc_terminate',
            'OrderedResultGatherProc', 'OrderedContainer', 'DIE']
 

@@ -4,15 +4,74 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
-from abc import abstractmethod, ABCMeta
+from abc import abstractmethod, ABCMeta, abstractproperty
 import operator
+import six
 
 from .base import Callback
 from ..utils import logger
 from ..tfutils import get_op_var_name
 
 __all__ = ['HyperParamSetter', 'HumanHyperParamSetter',
-           'ScheduledHyperParamSetter']
+           'ScheduledHyperParamSetter',
+           'HyperParam', 'GraphVarParam', 'ObjAttrParam']
+
+class HyperParam(object):
+    """ Base class for a hyper param"""
+    __metaclass__ = ABCMeta
+
+    def setup_graph(self):
+        """ setup the graph in `setup_graph` callback stage, if necessary"""
+        pass
+
+    @abstractmethod
+    def set_value(self, v):
+        """ define how the value of the param will be set"""
+        pass
+
+    @abstractproperty
+    def readable_name(self):
+        pass
+
+class GraphVarParam(HyperParam):
+    """ a variable in the graph"""
+    def __init__(self, name, shape=[]):
+        self.name = name
+        self.shape = shape
+        self._readable_name, self.var_name = get_op_var_name(name)
+
+    def setup_graph(self):
+        all_vars = tf.all_variables()
+        for v in all_vars:
+            if v.name == self.var_name:
+                self.var = v
+                break
+        else:
+            raise ValueError("{} is not a VARIABLE in the graph!".format(self.var_name))
+
+        self.val_holder = tf.placeholder(tf.float32, shape=self.shape,
+                                         name=self._readable_name + '_feed')
+        self.assign_op = self.var.assign(self.val_holder)
+
+    def set_value(self, v):
+        self.assign_op.eval(feed_dict={self.val_holder:v})
+
+    @property
+    def readable_name(self):
+        return self._readable_name
+
+class ObjAttrParam(HyperParam):
+    """ an attribute of an object"""
+    def __init__(self, obj, attrname):
+        self.obj = obj
+        self.attrname = attrname
+
+    def set_value(self, v):
+        setattr(self.obj, self.attrname, v)
+
+    @property
+    def readable_name(self):
+        return self.attrname
 
 class HyperParamSetter(Callback):
     """
@@ -20,51 +79,33 @@ class HyperParamSetter(Callback):
     """
     __metaclass__ = ABCMeta
 
-    TF_VAR = 0
-    OBJ_ATTR = 1
-
-    def __init__(self, param, shape=[]):
+    def __init__(self, param):
         """
-        :param param: either a name of the variable in the graph, or a (object, attribute) tuple
-        :param shape: shape of the param
+        :param param: a `HyperParam` instance, or a string (assumed to be a scalar `GraphVarParam`)
         """
-        if isinstance(param, tuple):
-            self.param_type = HyperParamSetter.OBJ_ATTR
-            self.obj_attr = param
-            self.readable_name = param[1]
-        else:
-            self.param_type = HyperParamSetter.TF_VAR
-            self.readable_name, self.var_name = get_op_var_name(param)
-        self.shape = shape
+        # if a string, assumed to be a scalar graph variable
+        if isinstance(param, six.string_types):
+            param = GraphVarParam(param)
+        assert isinstance(param, HyperParam), type(param)
+        self.param = param
         self.last_value = None
 
     def _setup_graph(self):
-        if self.param_type == HyperParamSetter.TF_VAR:
-            all_vars = tf.all_variables()
-            for v in all_vars:
-                if v.name == self.var_name:
-                    self.var = v
-                    break
-            else:
-                raise ValueError("{} is not a VARIABLE in the graph!".format(self.var_name))
+        self.param.setup_graph()
 
-            self.val_holder = tf.placeholder(tf.float32, shape=self.shape,
-                                             name=self.readable_name + '_feed')
-            self.assign_op = self.var.assign(self.val_holder)
-
-    def get_current_value(self):
+    def get_value_to_set(self):
         """
         :returns: the value to assign to the variable now.
         """
-        ret = self._get_current_value()
+        ret = self._get_value_to_set()
         if ret is not None and ret != self.last_value:
             logger.info("{} at epoch {} will change to {}".format(
-                self.readable_name, self.epoch_num + 1, ret))
+                self.param.readable_name, self.epoch_num + 1, ret))
         self.last_value = ret
         return ret
 
     @abstractmethod
-    def _get_current_value(self):
+    def _get_value_to_set(self):
         pass
 
     def _trigger_epoch(self):
@@ -74,12 +115,9 @@ class HyperParamSetter(Callback):
         self._set_param()
 
     def _set_param(self):
-        v = self.get_current_value()
+        v = self.get_value_to_set()
         if v is not None:
-            if self.param_type == HyperParamSetter.TF_VAR:
-                self.assign_op.eval(feed_dict={self.val_holder:v})
-            else:
-                setattr(self.obj_attr[0], self.obj_attr[1], v)
+            self.param.set_value(v)
 
 class HumanHyperParamSetter(HyperParamSetter):
     """
@@ -92,18 +130,18 @@ class HumanHyperParamSetter(HyperParamSetter):
         self.file_name = file_name
         super(HumanHyperParamSetter, self).__init__(param)
 
-    def  _get_current_value(self):
+    def  _get_value_to_set(self):
         try:
             with open(self.file_name) as f:
                 lines = f.readlines()
             lines = [s.strip().split(':') for s in lines]
             dic = {str(k):float(v) for k, v in lines}
-            ret = dic[self.readable_name]
+            ret = dic[self.param.readable_name]
             return ret
         except:
             logger.warn(
                 "Failed to parse {} in {}".format(
-                    self.readable_name, self.file_name))
+                    self.param.readable_name, self.file_name))
             return None
 
 class ScheduledHyperParamSetter(HyperParamSetter):
@@ -118,11 +156,9 @@ class ScheduledHyperParamSetter(HyperParamSetter):
         self.schedule = sorted(schedule, key=operator.itemgetter(0))
         super(ScheduledHyperParamSetter, self).__init__(param)
 
-    def _get_current_value(self):
+    def _get_value_to_set(self):
         for e, v in self.schedule:
             if e == self.epoch_num:
                 return v
         return None
-
-
 

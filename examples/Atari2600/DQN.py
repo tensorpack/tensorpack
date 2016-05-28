@@ -16,7 +16,7 @@ from collections import deque
 from tensorpack import *
 from tensorpack.models import  *
 from tensorpack.utils import  *
-from tensorpack.utils.concurrency import ensure_proc_terminate
+from tensorpack.utils.concurrency import ensure_proc_terminate, subproc_call
 from tensorpack.utils.stat import  *
 from tensorpack.predict import PredictConfig, get_predict_func, ParallelPredictWorker
 from tensorpack.tfutils import symbolic_functions as symbf
@@ -33,7 +33,6 @@ for atari games
 
 BATCH_SIZE = 32
 IMAGE_SIZE = 84
-NUM_ACTIONS = None
 FRAME_HISTORY = 4
 ACTION_REPEAT = 4
 HEIGHT_RANGE = (36, 204)    # for breakout
@@ -49,6 +48,15 @@ INIT_MEMORY_SIZE = 50000
 STEP_PER_EPOCH = 10000
 EVAL_EPISODE = 100
 
+NUM_ACTIONS = None
+ROM_FILE = None
+
+def get_player(viz=False):
+    pl = AtariPlayer(ROM_FILE, viz=viz, height_range=HEIGHT_RANGE, frame_skip=ACTION_REPEAT)
+    global NUM_ACTIONS
+    NUM_ACTIONS = pl.get_num_actions()
+    return pl
+
 class Model(ModelDesc):
     def _get_input_vars(self):
         assert NUM_ACTIONS is not None
@@ -56,8 +64,7 @@ class Model(ModelDesc):
                 InputVar(tf.int32, (None,), 'action'),
                 InputVar(tf.float32, (None,), 'reward'),
                 InputVar(tf.float32, (None, IMAGE_SIZE, IMAGE_SIZE, FRAME_HISTORY), 'next_state'),
-                InputVar(tf.bool, (None,), 'isOver')
-                ]
+                InputVar(tf.bool, (None,), 'isOver') ]
 
     def _get_DQN_prediction(self, image, is_training):
         """ image: [0,255]"""
@@ -89,7 +96,7 @@ class Model(ModelDesc):
         with tf.variable_scope('target'):
             targetQ_predict_value = tf.stop_gradient(
                     self._get_DQN_prediction(next_state, False))    # NxA
-            target = reward + (1 - tf.cast(isOver, tf.int32)) *
+            target = reward + (1.0 - tf.cast(isOver, tf.float32)) * \
                     GAMMA * tf.reduce_max(targetQ_predict_value, 1)    # Nx1
 
         sqrcost = tf.square(target - pred_action_value)
@@ -108,7 +115,7 @@ class Model(ModelDesc):
                 new_name = target_name.replace('target/', '')
                 logger.info("{} <- {}".format(target_name, new_name))
                 ops.append(v.assign(tf.get_default_graph().get_tensor_by_name(new_name + ':0')))
-        return tf.group(*ops)
+        return tf.group(*ops, name='update_target_network')
 
     def get_gradient_processor(self):
         return [MapGradient(lambda grad: \
@@ -120,28 +127,11 @@ def current_predictor(state):
     pred = pred_var.eval(feed_dict={'state:0': [state]})
     return pred[0]
 
-class TargetNetworkUpdator(Callback):
-    def __init__(self, M):
-        self.M = M
-
-    def _setup_graph(self):
-        self.update_op = self.M.update_target_param()
-
-    def _update(self):
-        logger.info("Delayed Predictor updating...")
-        self.update_op.run()
-
-    def _before_train(self):
-        self._update()
-
-    def _trigger_epoch(self):
-        self._update()
-
 def play_one_episode(player, func, verbose=False):
     tot_reward = 0
     que = deque(maxlen=30)
     while True:
-        s = player.current_state()  # XXX
+        s = player.current_state()
         outputs = func([[s]])
         action_value = outputs[0][0]
         act = action_value.argmax()
@@ -160,16 +150,10 @@ def play_one_episode(player, func, verbose=False):
         if isOver:
             return tot_reward
 
-def play_model(model_path, romfile):
-    player = HistoryFramePlayer(AtariPlayer(
-        romfile, viz=0.01, height_range=HEIGHT_RANGE,
-        frame_skip=ACTION_REPEAT), FRAME_HISTORY)
-    global NUM_ACTIONS
-    NUM_ACTIONS = player.player.get_num_actions()
-
-    M = Model()
+def play_model(model_path):
+    player = HistoryFramePlayer(get_player(0.01), FRAME_HISTORY)
     cfg = PredictConfig(
-            model=M,
+            model=Model(),
             input_data_mapping=[0],
             session_init=SaverRestore(model_path),
             output_var_names=['fct/output:0'])
@@ -178,7 +162,7 @@ def play_model(model_path, romfile):
         score = play_one_episode(player, predfunc)
         print("Total:", score)
 
-def eval_model_multiprocess(model_path, romfile):
+def eval_model_multiprocess(model_path):
     M = Model()
     cfg = PredictConfig(
             model=M,
@@ -192,11 +176,7 @@ def eval_model_multiprocess(model_path, romfile):
             self.outq = outqueue
 
         def run(self):
-            player = HistoryFramePlayer(AtariPlayer(
-                romfile, viz=0, height_range=HEIGHT_RANGE,
-                frame_skip=ACTION_REPEAT), FRAME_HISTORY)
-            global NUM_ACTIONS
-            NUM_ACTIONS = player.player.get_num_actions()
+            player = HistoryFramePlayer(get_player(), FRAME_HISTORY)
             self._init_runtime()
             while True:
                 score = play_one_episode(player, self.func)
@@ -216,32 +196,32 @@ def eval_model_multiprocess(model_path, romfile):
             r = q.get()
             stat.feed(r)
     finally:
-        for p in procs:
-            p.terminate()
-            p.join()
-        if stat.count() > 0:
-            logger.info("Average Score: {}; Max Score: {}".format(
-                stat.average, stat.max))
-            return (stat.average, stat.max)
-        else:
-            return (0, 0)
+        logger.info("Average Score: {}; Max Score: {}".format(
+            stat.average, stat.max))
 
+class Evaluator(Callback):
+    def _trigger_epoch(self):
+        logger.info("Evaluating...")
+        output = subproc_call(
+                "CUDA_VISIBLE_DEVICES=  {} --task eval --rom {} --load {}".format(
+                sys.argv[0], romfile, os.path.join(logger.LOG_DIR, 'checkpoint')),
+                timeout=10*60)
+        if output:
+            last = output.strip().split('\n')[-1]
+            last = last[last.find(']')+1:]
+            mean, maximum = re.findall('[0-9\.\-]+', last)[-2:]
+            self.trainer.write_scalar_summary('mean_score', mean)
+            self.trainer.write_scalar_summary('max_score', maximum)
 
-def get_config(romfile):
+def get_config():
     basename = os.path.basename(__file__)
     logger.set_logger_dir(
         os.path.join('train_log', basename[:basename.rfind('.')]))
+
     M = Model()
-
-    player = AtariPlayer(
-        romfile, height_range=HEIGHT_RANGE,
-        frame_skip=ACTION_REPEAT)
-    global NUM_ACTIONS
-    NUM_ACTIONS = player.get_num_actions()
-
     dataset_train = ExpReplay(
             predictor=current_predictor,
-            player=player,
+            player=get_player(),
             num_actions=NUM_ACTIONS,
             memory_size=MEMORY_SIZE,
             batch_size=BATCH_SIZE,
@@ -255,18 +235,6 @@ def get_config(romfile):
     lr = tf.Variable(0.00025, trainable=False, name='learning_rate')
     tf.scalar_summary('learning_rate', lr)
 
-    class Evaluator(Callback):
-        def _trigger_epoch(self):
-            logger.info("Evaluating...")
-            output = subprocess.check_output(
-"""CUDA_VISIBLE_DEVICES=  {} --task eval --rom {} --load {} 2>&1 | grep Average""".format(
-    sys.argv[0], romfile, os.path.join(logger.LOG_DIR, 'checkpoint')), shell=True)
-            output = output.strip()
-            output = output[output.find(']')+1:]
-            mean, maximum = re.findall('[0-9\.\-]+', output)[-2:]
-            self.trainer.write_scalar_summary('mean_score', mean)
-            self.trainer.write_scalar_summary('max_score', maximum)
-
     return TrainConfig(
         dataset=dataset_train,
         optimizer=tf.train.AdamOptimizer(lr, epsilon=1e-3),
@@ -274,15 +242,13 @@ def get_config(romfile):
             StatPrinter(),
             ModelSaver(),
             HumanHyperParamSetter('learning_rate', 'hyper.txt'),
-            HumanHyperParamSetter((dataset_train, 'exploration'), 'hyper.txt'),
-            TargetNetworkUpdator(M),
+            HumanHyperParamSetter(ObjAttrParam(dataset_train, 'exploration'), 'hyper.txt'),
+            RunOp(lambda: M.update_target_param()),
             dataset_train,
             PeriodicCallback(Evaluator(), 2),
         ]),
-        session_config=get_default_sess_config(0.5),
         model=M,
         step_per_epoch=STEP_PER_EPOCH,
-        max_epoch=10000,
     )
 
 if __name__ == '__main__':
@@ -300,15 +266,18 @@ if __name__ == '__main__':
     if args.task != 'train':
         assert args.load is not None
 
+    global ROM_FILE
+    ROM_FILE = args.rom
+
     if args.task == 'play':
-        play_model(args.load, args.rom)
+        play_model(args.load)
         sys.exit()
     if args.task == 'eval':
-        eval_model_multiprocess(args.load, args.rom)
+        eval_model_multiprocess(args.load)
         sys.exit()
 
     with tf.Graph().as_default():
-        config = get_config(args.rom)
+        config = get_config()
         if args.load:
             config.session_init = SaverRestore(args.load)
         SimpleTrainer(config).train()

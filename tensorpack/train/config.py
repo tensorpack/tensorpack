@@ -30,7 +30,7 @@ class TrainConfig(object):
         :param model: a `ModelDesc` instance.j
         :param starting_epoch: int. default to be 1.
         :param step_per_epoch: the number of steps (SGD updates) to perform in each epoch.
-        :param max_epoch: maximum number of epoch to run training. default to 100
+        :param max_epoch: maximum number of epoch to run training. default to inf
         :param nr_tower: int. number of towers. default to 1.
         :param extra_threads_procs: list of `Startable` threads or processes
         """
@@ -51,7 +51,7 @@ class TrainConfig(object):
         assert_type(self.session_init, SessionInit)
         self.step_per_epoch = int(kwargs.pop('step_per_epoch'))
         self.starting_epoch = int(kwargs.pop('starting_epoch', 1))
-        self.max_epoch = int(kwargs.pop('max_epoch', 100))
+        self.max_epoch = int(kwargs.pop('max_epoch', 99999))
         assert self.step_per_epoch > 0 and self.max_epoch > 0
         self.nr_tower = int(kwargs.pop('nr_tower', 1))
         self.extra_threads_procs = kwargs.pop('extra_threads_procs', [])
