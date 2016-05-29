@@ -43,7 +43,7 @@ EXPLORATION_EPOCH_ANNEAL = 0.008
 END_EXPLORATION = 0.1
 
 MEMORY_SIZE = 1e6
-INIT_MEMORY_SIZE = 500
+INIT_MEMORY_SIZE = 50000
 STEP_PER_EPOCH = 10000
 EVAL_EPISODE = 100
 
@@ -87,16 +87,23 @@ class Model(ModelDesc):
         state, action, reward, next_state, isOver = inputs
         self.predict_value = self._get_DQN_prediction(state, is_training)
         action_onehot = tf.one_hot(action, NUM_ACTIONS, 1.0, 0.0)
-        pred_action_value = tf.reduce_sum(self.predict_value * action_onehot, 1)    #Nx1
+        pred_action_value = tf.reduce_sum(self.predict_value * action_onehot, 1)    #N,
         max_pred_reward = tf.reduce_mean(tf.reduce_max(
             self.predict_value, 1), name='predict_reward')
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, max_pred_reward)
+        self.greedy_choice = tf.argmax(self.predict_value, 1)   # N,
 
         with tf.variable_scope('target'):
-            targetQ_predict_value = tf.stop_gradient(
-                    self._get_DQN_prediction(next_state, False))    # NxA
-            target = reward + (1.0 - tf.cast(isOver, tf.float32)) * \
-                    GAMMA * tf.reduce_max(targetQ_predict_value, 1)    # Nx1
+            targetQ_predict_value = self._get_DQN_prediction(next_state, False)    # NxA
+
+            # DQN
+            best_v = tf.reduce_max(targetQ_predict_value, 1)    # N,
+
+            # Double-DQN
+            #predict_onehot = tf.one_hot(self.greedy_choice, NUM_ACTIONS, 1.0, 0.0)
+            #best_v = tf.reduce_sum(targetQ_predict_value * predict_onehot, 1)
+
+            target = reward + (1.0 - tf.cast(isOver, tf.float32)) * GAMMA * tf.stop_gradient(best_v)
 
         sqrcost = tf.square(target - pred_action_value)
         abscost = tf.abs(target - pred_action_value)    # robust error func
