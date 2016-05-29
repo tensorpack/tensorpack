@@ -12,6 +12,7 @@ from ..utils import *
 
 __all__ = ['Callbacks']
 
+# --- Test-Callback related stuff seems not very useful.
 @contextmanager
 def create_test_graph(trainer):
     model = trainer.model
@@ -30,33 +31,6 @@ def create_test_session(trainer):
     with create_test_graph(trainer):
         with tf.Session() as sess:
             yield sess
-
-class CallbackTimeLogger(object):
-    def __init__(self):
-        self.times = []
-        self.tot = 0
-
-    def add(self, name, time):
-        self.tot += time
-        self.times.append((name, time))
-
-    @contextmanager
-    def timed_callback(self, name):
-        s = time.time()
-        yield
-        self.add(name, time.time() - s)
-
-    def log(self):
-        """ log the time of some heavy callbacks """
-        if self.tot < 3:
-            return
-        msgs = []
-        for name, t in self.times:
-            if t / self.tot > 0.3 and t > 1:
-                msgs.append("{}:{:.3f}sec".format(name, t))
-        logger.info(
-            "Callbacks took {:.3f} sec in total. {}".format(
-                self.tot, '; '.join(msgs)))
 
 class TestCallbackContext(object):
     """
@@ -91,6 +65,34 @@ class TestCallbackContext(object):
     def test_context(self):
         with self.graph.as_default(), self.sess.as_default():
             yield
+# ---
+
+class CallbackTimeLogger(object):
+    def __init__(self):
+        self.times = []
+        self.tot = 0
+
+    def add(self, name, time):
+        self.tot += time
+        self.times.append((name, time))
+
+    @contextmanager
+    def timed_callback(self, name):
+        s = time.time()
+        yield
+        self.add(name, time.time() - s)
+
+    def log(self):
+        """ log the time of some heavy callbacks """
+        if self.tot < 3:
+            return
+        msgs = []
+        for name, t in self.times:
+            if t / self.tot > 0.3 and t > 1:
+                msgs.append("{}:{:.3f}sec".format(name, t))
+        logger.info(
+            "Callbacks took {:.3f} sec in total. {}".format(
+                self.tot, '; '.join(msgs)))
 
 class Callbacks(Callback):
     """

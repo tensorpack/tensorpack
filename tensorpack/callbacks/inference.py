@@ -13,7 +13,7 @@ from ..utils import *
 from ..utils.stat import *
 from ..tfutils import *
 from ..tfutils.summary import *
-from .base import Callback, TestCallbackType
+from .base import Callback
 
 __all__ = ['InferenceRunner', 'ClassificationError',
         'ScalarStats', 'Inferencer', 'BinaryClassificationStats']
@@ -63,7 +63,6 @@ class InferenceRunner(Callback):
     """
     A callback that runs different kinds of inferencer.
     """
-    #type = TestCallbackType()
 
     def __init__(self, ds, vcs):
         """
