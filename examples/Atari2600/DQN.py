@@ -22,7 +22,7 @@ from tensorpack.predict import PredictConfig, get_predict_func, MultiProcessPred
 from tensorpack.tfutils import symbolic_functions as symbf
 from tensorpack.callbacks import *
 
-from tensorpack.RL import AtariPlayer, ExpReplay
+from tensorpack.RL import *
 
 """
 Implement DQN in:
@@ -43,7 +43,7 @@ EXPLORATION_EPOCH_ANNEAL = 0.008
 END_EXPLORATION = 0.1
 
 MEMORY_SIZE = 1e6
-INIT_MEMORY_SIZE = 50000
+INIT_MEMORY_SIZE = 500
 STEP_PER_EPOCH = 10000
 EVAL_EPISODE = 100
 
@@ -86,7 +86,7 @@ class Model(ModelDesc):
     def _build_graph(self, inputs, is_training):
         state, action, reward, next_state, isOver = inputs
         self.predict_value = self._get_DQN_prediction(state, is_training)
-        action_onehot = symbf.one_hot(action, NUM_ACTIONS)
+        action_onehot = tf.one_hot(action, NUM_ACTIONS, 1.0, 0.0)
         pred_action_value = tf.reduce_sum(self.predict_value * action_onehot, 1)    #Nx1
         max_pred_reward = tf.reduce_mean(tf.reduce_max(
             self.predict_value, 1), name='predict_reward')
@@ -128,7 +128,6 @@ def current_predictor(state):
 
 def play_one_episode(player, func, verbose=False):
     tot_reward = 0
-    que = deque(maxlen=30)
     while True:
         s = player.current_state()
         outputs = func([[s]])
@@ -138,10 +137,6 @@ def play_one_episode(player, func, verbose=False):
             print action_value, act
         if random.random() < 0.01:
             act = random.choice(range(NUM_ACTIONS))
-        if len(que) == que.maxlen \
-                and que.count(que[0]) == que.maxlen:
-            act = 1 # hack, avoid stuck
-        que.append(act)
         if verbose:
             print(act)
         reward, isOver = player.action(act)
@@ -150,7 +145,7 @@ def play_one_episode(player, func, verbose=False):
             return tot_reward
 
 def play_model(model_path):
-    player = HistoryFramePlayer(get_player(0.01), FRAME_HISTORY)
+    player = PreventStuckPlayer(HistoryFramePlayer(get_player(0.01), FRAME_HISTORY), 30, 1)
     cfg = PredictConfig(
             model=Model(),
             input_data_mapping=[0],
@@ -162,9 +157,8 @@ def play_model(model_path):
         print("Total:", score)
 
 def eval_model_multiprocess(model_path):
-    M = Model()
     cfg = PredictConfig(
-            model=M,
+            model=Model(),
             input_data_mapping=[0],
             session_init=SaverRestore(model_path),
             output_var_names=['fct/output:0'])
@@ -175,17 +169,16 @@ def eval_model_multiprocess(model_path):
             self.outq = outqueue
 
         def run(self):
-            player = HistoryFramePlayer(get_player(), FRAME_HISTORY)
+            player = PreventStuckPlayer(HistoryFramePlayer(get_player(), FRAME_HISTORY), 30, 1)
             self._init_runtime()
             while True:
                 score = play_one_episode(player, self.func)
                 self.outq.put(score)
 
-    NR_PROC = min(multiprocessing.cpu_count() // 2, 10)
-    procs = []
+    NR_PROC = min(multiprocessing.cpu_count() // 2, 8)
     q = multiprocessing.Queue()
-    for k in range(NR_PROC):
-        procs.append(Worker(k, -1, cfg, q))
+    gpuid = get_gpus()[0]
+    procs = [Worker(k, gpuid, cfg, q) for k in range(NR_PROC)]
     ensure_proc_terminate(procs)
     for k in procs:
         k.start()
@@ -202,8 +195,8 @@ class Evaluator(Callback):
     def _trigger_epoch(self):
         logger.info("Evaluating...")
         output = subproc_call(
-                "CUDA_VISIBLE_DEVICES=  {} --task eval --rom {} --load {}".format(
-                sys.argv[0], romfile, os.path.join(logger.LOG_DIR, 'checkpoint')),
+                "{} --task eval --rom {} --load {}".format(
+                sys.argv[0], ROM_FILE, os.path.join(logger.LOG_DIR, 'checkpoint')),
                 timeout=10*60)
         if output:
             last = output.strip().split('\n')[-1]
@@ -246,6 +239,8 @@ def get_config():
             dataset_train,
             PeriodicCallback(Evaluator(), 2),
         ]),
+        # save memory for multiprocess evaluator
+        session_config=get_default_sess_config(0.3),
         model=M,
         step_per_epoch=STEP_PER_EPOCH,
     )

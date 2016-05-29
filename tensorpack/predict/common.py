@@ -78,7 +78,8 @@ def get_predict_func(config):
     output_vars = [tf.get_default_graph().get_tensor_by_name(get_op_var_name(n)[1])
                    for n in output_var_names]
 
-    sess = tf.Session()
+    # start with minimal memory, but allow growth
+    sess = tf.Session(config=get_default_sess_config(0.01))
     config.session_init.init(sess)
 
     def run_input(dp):

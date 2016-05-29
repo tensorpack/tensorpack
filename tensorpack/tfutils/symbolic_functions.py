@@ -4,6 +4,7 @@
 
 import tensorflow as tf
 import numpy as np
+from ..utils import logger
 
 def one_hot(y, num_labels):
     """
@@ -11,15 +12,8 @@ def one_hot(y, num_labels):
     :param num_labels: an int. number of output classes
     :returns: an NxC onehot matrix.
     """
-    with tf.op_scope([y, num_labels], 'one_hot'):
-        batch_size = tf.size(y)
-        y = tf.expand_dims(y, 1)
-        indices = tf.expand_dims(tf.range(0, batch_size), 1)
-        concated = tf.concat(1, [indices, y])
-        onehot_labels = tf.sparse_to_dense(
-            concated, tf.pack([batch_size, num_labels]), 1.0, 0.0)
-        onehot_labels.set_shape([None, num_labels])
-        return tf.cast(onehot_labels, tf.float32)
+    logger.warn("symbf.one_hot is deprecated in favor of more general tf.one_hot")
+    return tf.one_hot(y, num_labels, 1.0, 0.0, name='one_hot')
 
 def prediction_incorrect(logits, label, topk=1):
     """

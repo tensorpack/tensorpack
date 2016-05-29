@@ -12,7 +12,7 @@ import numpy as np
 from . import logger
 
 __all__ = ['timed_operation', 'change_env',
-        'get_rng', 'memoized', 'get_nr_gpu']
+        'get_rng', 'memoized', 'get_nr_gpu', 'get_gpus']
 
 #def expand_dim_if_necessary(var, dp):
 #    """
@@ -83,5 +83,10 @@ def get_rng(self):
 
 def get_nr_gpu():
     env = os.environ['CUDA_VISIBLE_DEVICES']
-    assert env is not None
+    assert env is not None  # TODO
     return len(env.split(','))
+
+def get_gpus():
+    env = os.environ['CUDA_VISIBLE_DEVICES']
+    assert env is not None  # TODO
+    return map(int, env.strip().split(','))
