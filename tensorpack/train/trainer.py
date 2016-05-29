@@ -117,7 +117,7 @@ class QueueInputTrainer(Trainer):
         self.async = async
         if self.async:
             assert self.config.nr_tower > 1
-        self._dequed_inputs = []
+        self.dequed_inputs = []
 
     @staticmethod
     def _average_grads(tower_grads):
@@ -140,7 +140,7 @@ class QueueInputTrainer(Trainer):
         assert len(ret) == len(self.input_vars)
         for qv, v in zip(ret, self.input_vars):
             qv.set_shape(v.get_shape())
-        self._dequed_inputs.append(ret)
+        self.dequed_inputs.append(ret)
         return ret
 
     def _single_tower_grad(self):
@@ -241,27 +241,31 @@ class QueueInputTrainer(Trainer):
             summary_str = self.summary_op.eval()
             self._process_summary(summary_str)
 
-    def get_predict_func(self, input_names, output_names):
+    def get_predict_func(self, input_names, output_names, tower=0):
+        """
+        :param tower: return the kth predict_func
+        """
+        tower = tower % self.config.nr_tower
+        logger.info("Prepare a predictor function for tower{} ...".format(tower))
         raw_input_vars = get_vars_by_names(input_names)
         input_var_idxs = [self.input_vars.index(v) for v in raw_input_vars]
 
-        if self.config.nr_tower == 1:
-            dequed = self._dequed_inputs[0]
-            input_vars = [dequed[k] for k in input_var_idxs]
-            output_vars = get_vars_by_names(output_names)
-        else:
-            # TODO naive impl: use the first tower only
-            dequed = self._dequed_inputs[0]
-            input_vars = [dequed[k] for k in input_var_idxs]
-            output_names = ['tower0/' + n for n in output_names]
-            output_vars = get_vars_by_names(output_names)
+        dequed = self.dequed_inputs[tower]
+        input_vars = [dequed[k] for k in input_var_idxs]
 
+        if self.config.nr_tower > 1:
+            output_names = ['tower{}/'.format(tower) + n for n in output_names]
+
+        output_vars = get_vars_by_names(output_names)
         def func(inputs):
             assert len(inputs) == len(input_vars)
             feed = dict(zip(input_vars, inputs))
             return self.sess.run(output_vars, feed_dict=feed)
         return func
 
+    def get_predict_funcs(self, input_names, output_names, n):
+        return [self.get_predict_func(input_name, output_names, k)
+                for k in range(n)]
 
 def start_train(config):
     tr = QueueInputTrainer(config)

@@ -5,6 +5,9 @@
 
 import multiprocessing, threading
 import tensorflow as tf
+from six.moves import queue, range
+
+
 from ..utils.concurrency import DIE
 from ..tfutils.modelutils import describe_model
 from ..utils import logger
@@ -12,10 +15,20 @@ from ..tfutils import *
 
 from .common import *
 
-__all__ = ['MultiProcessPredictWorker', 'MultiProcessQueuePredictWorker']
+try:
+    if six.PY2:
+        from tornado.concurrent import Future
+    else:
+        from concurrent.futures import Future
+except ImportError:
+    logger.warn("Cannot import Future in either tornado.concurrent or py3 standard lib. MultiThreadAsyncPredictor won't be available.")
+    __all__ = ['MultiProcessPredictWorker', 'MultiProcessQueuePredictWorker']
+else:
+    __all__ = ['MultiProcessPredictWorker', 'MultiProcessQueuePredictWorker',
+                'MultiThreadAsyncPredictor']
 
 class MultiProcessPredictWorker(multiprocessing.Process):
-    """ Base class for predict worker that runs in multiprocess"""
+    """ Base class for predict worker that runs offline in multiprocess"""
     def __init__(self, idx, gpuid, config):
         """
         :param idx: index of the worker. the 0th worker will print log.
@@ -44,7 +57,7 @@ class MultiProcessPredictWorker(multiprocessing.Process):
                 describe_model()
 
 class MultiProcessQueuePredictWorker(MultiProcessPredictWorker):
-    """ A worker process to run predictor on one GPU """
+    """ A predictor worker that takes input and produces output by queue"""
     def __init__(self, idx, gpuid, inqueue, outqueue, config):
         """
         :param inqueue: input queue to get data point. elements are (task_id, dp)
@@ -64,17 +77,40 @@ class MultiProcessQueuePredictWorker(MultiProcessPredictWorker):
             else:
                 self.outqueue.put((tid, self.func(dp)))
 
-#class CurrentSessionPredictor():
-    #def __init__(self, idx, gpuid, config):
-        #"""
-        #:param idx: index of the worker. the 0th worker will print log.
-        #:param gpuid: absolute id of the GPU to be used. set to -1 to use CPU.
-        #:param config: a `PredictConfig`
-        #"""
-        #super(MultiProcessPredictWorker, self).__init__()
-        #self.idx = idx
-        #self.gpuid = gpuid
-        #self.config = config
+class PerdictorWorkerThread(threading.Thread):
+    def __init__(self, queue, pred_func):
+        super(PredictorWorkerThread, self).__init__()
+        self.queue = queue
+        self.func = pred_func
+        self.daemon = True
 
-    #def run(self):
-        #pass
+    def run(self):
+        while True:
+            inputs, f = self.queue.get()
+            outputs = self.func(inputs)
+            f.set_result(outputs)
+
+class MultiThreadAsyncPredictor(object):
+    """
+    An online predictor (use the current active session) that works with
+    QueueInputTrainer. Use async interface, support multi-thread and multi-GPU.
+    """
+    def __init__(self, trainer, input_names, output_names, nr_thread):
+        """
+        :param trainer: a `QueueInputTrainer` instance.
+        """
+        self.input_queue = queue.Queue()
+        self.threads = [PredictorWorkerThread(self.input_queue, f)
+            for f in trainer.get_predict_funcs(input_names, output_names, nr_thread)]
+
+    def run(self):
+        for t in self.threads:
+            t.start()
+
+    def put_task(self, inputs, callback=None):
+        """ return a Future of output."""
+        f = Future()
+        self.input_queue.put((inputs, f))
+        if callback is not None:
+            f.add_done_callback(callback)
+        return f

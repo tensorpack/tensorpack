@@ -52,8 +52,16 @@ class Trainer(object):
 
     @abstractmethod
     def get_predict_func(self, input_names, output_names):
-        """ return a predict function"""
+        """ return a predictor function"""
         pass
+
+    def get_predict_funcs(self, input_names, output_names, n):
+        """ return n predictor functions.
+            Can be overwritten by subclasses to exploit more
+            parallelism among funcs.
+        """
+        return [self.get_predict_func(input_name, output_names)
+                for k in range(n)]
 
     def trigger_epoch(self):
         self._trigger_epoch()
