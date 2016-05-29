@@ -50,6 +50,11 @@ class Trainer(object):
         """ run an iteration"""
         pass
 
+    @abstractmethod
+    def get_predict_func(self, input_names, output_names):
+        """ return a predict function"""
+        pass
+
     def trigger_epoch(self):
         self._trigger_epoch()
         self.config.callbacks.trigger_epoch()

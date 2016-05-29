@@ -9,9 +9,6 @@ import os, sys
 import argparse
 
 from tensorpack import *
-from tensorpack.models import  *
-from tensorpack.utils import  *
-from tensorpack.callbacks import *
 
 """
 MNIST ConvNet example.
@@ -117,6 +114,5 @@ if __name__ == '__main__':
         config = get_config()
         if args.load:
             config.session_init = SaverRestore(args.load)
-        #QueueInputTrainer(config).train()
-        SimpleInputTrainer(config).train()
+        QueueInputTrainer(config).train()
 
