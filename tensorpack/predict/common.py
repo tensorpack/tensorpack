@@ -46,6 +46,7 @@ class PredictConfig(object):
             variables can be any computable tensor in the graph.
             Predict specific output might not require all input variables.
         :param return_input: whether to produce (input, output) pair or just output. default to False.
+            It's only effective for `DatasetPredictorBase`.
         """
         def assert_type(v, tp):
             assert isinstance(v, tp), v.__class__

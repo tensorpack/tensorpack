@@ -20,7 +20,7 @@ class ModelDesc(object):
 
     def get_input_vars(self):
         """
-        Create or return (if already created) input TF vars in the graph.
+        Create or return (if already created) raw input TF placeholder vars in the graph.
 
         :returns: the list of raw input vars in the graph
         """

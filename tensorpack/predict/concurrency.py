@@ -47,11 +47,8 @@ class MultiProcessQueuePredictWorker(MultiProcessPredictWorker):
     """ A worker process to run predictor on one GPU """
     def __init__(self, idx, gpuid, inqueue, outqueue, config):
         """
-        :param idx: index of the worker. the 0th worker will print log.
-        :param gpuid: id of the GPU to be used. set to -1 to use CPU.
         :param inqueue: input queue to get data point. elements are (task_id, dp)
         :param outqueue: output queue put result. elements are (task_id, output)
-        :param config: a `PredictConfig`
         """
         super(MultiProcessQueuePredictWorker, self).__init__(idx, gpuid, config)
         self.inqueue = inqueue
@@ -67,17 +64,17 @@ class MultiProcessQueuePredictWorker(MultiProcessPredictWorker):
             else:
                 self.outqueue.put((tid, self.func(dp)))
 
-class MultiThreadPredictWorker(threading.Thread):
-    def __init__(self, idx, gpuid, config):
-        """
-        :param idx: index of the worker. the 0th worker will print log.
-        :param gpuid: absolute id of the GPU to be used. set to -1 to use CPU.
-        :param config: a `PredictConfig`
-        """
-        super(MultiProcessPredictWorker, self).__init__()
-        self.idx = idx
-        self.gpuid = gpuid
-        self.config = config
+#class CurrentSessionPredictor():
+    #def __init__(self, idx, gpuid, config):
+        #"""
+        #:param idx: index of the worker. the 0th worker will print log.
+        #:param gpuid: absolute id of the GPU to be used. set to -1 to use CPU.
+        #:param config: a `PredictConfig`
+        #"""
+        #super(MultiProcessPredictWorker, self).__init__()
+        #self.idx = idx
+        #self.gpuid = gpuid
+        #self.config = config
 
-    def run(self):
-        pass
+    #def run(self):
+        #pass

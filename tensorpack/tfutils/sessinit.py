@@ -37,7 +37,7 @@ class SessionInit(object):
 class JustCurrentSession(SessionInit):
     """ Just use the current default session. This is a no-op placeholder"""
     def _init(self, sess):
-        logger.info("Using the current running session ..")
+        pass
 
 class NewSession(SessionInit):
     """

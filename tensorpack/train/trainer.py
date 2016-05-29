@@ -27,9 +27,8 @@ class SimpleTrainer(Trainer):
 
     def train(self):
         model = self.model
-        input_vars = model.get_input_vars()
-        self.input_vars = input_vars
-        model.build_graph(input_vars, True)
+        self.input_vars = model.get_input_vars()
+        model.build_graph(self.input_vars, True)
         cost_var = model.get_cost()
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, cost_var)
 
@@ -52,6 +51,26 @@ class SimpleTrainer(Trainer):
             feed = dict(zip(self.input_vars, data))
             summary_str = self.summary_op.eval(feed_dict=feed)
             self._process_summary(summary_str)
+
+    def get_predict_func(self, input_names, output_names):
+        input_vars = []
+        for n in input_names:
+            opn, varn = get_op_var_name(n)
+            v = tf.get_default_graph().get_tensor_by_name(varn)
+            assert v in self.input_vars
+            input_vars.append(v)
+        output_vars = []
+        for n in output_names:
+            opn, varn = get_op_var_name(n)
+            v = tf.get_default_graph().get_tensor_by_name(varn)
+            output_vars.append(v)
+
+        def func(inputs):
+            assert len(inputs) == len(input_vars)
+            feed = dict(zip(input_vars, inputs))
+            return self.sess.run(output_vars, feed_dict=feed)
+        return func
+
 
 class EnqueueThread(threading.Thread):
     def __init__(self, trainer, queue, enqueue_op, raw_input_var):
@@ -84,7 +103,6 @@ class EnqueueThread(threading.Thread):
                 self.coord.request_stop()
             finally:
                 logger.info("Enqueue Thread Exited.")
-
 
 class QueueInputTrainer(Trainer):
     """
