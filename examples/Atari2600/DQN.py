@@ -136,7 +136,6 @@ def current_predictor(state):
     return pred[0]
 
 def play_one_episode(player, func, verbose=False):
-    tot_reward = 0
     while True:
         s = player.current_state()
         outputs = func([[s]])
@@ -149,9 +148,10 @@ def play_one_episode(player, func, verbose=False):
         if verbose:
             print(act)
         reward, isOver = player.action(act)
-        tot_reward += reward
         if isOver:
-            return tot_reward
+            sc = player.stats['score'][0]
+            player.reset_stat()
+            return sc
 
 def play_model(model_path):
     player = PreventStuckPlayer(HistoryFramePlayer(get_player(0.01), FRAME_HISTORY), 30, 1)
