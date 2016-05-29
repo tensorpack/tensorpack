@@ -50,8 +50,10 @@ EVAL_EPISODE = 100
 NUM_ACTIONS = None
 ROM_FILE = None
 
-def get_player(viz=False):
-    pl = AtariPlayer(ROM_FILE, viz=viz, height_range=HEIGHT_RANGE, frame_skip=ACTION_REPEAT)
+def get_player(viz=False, train=False):
+    player = AtariPlayer(ROM_FILE, height_range=HEIGHT_RANGE,
+            frame_skip=ACTION_REPEAT, image_shape=IMAGE_SIZE[::-1], viz=viz,
+            live_lost_as_eoe=train)
     global NUM_ACTIONS
     NUM_ACTIONS = pl.get_num_actions()
     return pl
@@ -220,7 +222,7 @@ def get_config():
     M = Model()
     dataset_train = ExpReplay(
             predictor=current_predictor,
-            player=get_player(),
+            player=get_player(train=True),
             num_actions=NUM_ACTIONS,
             memory_size=MEMORY_SIZE,
             batch_size=BATCH_SIZE,

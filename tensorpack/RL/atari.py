@@ -26,13 +26,16 @@ class AtariPlayer(RLEnvironment):
     A wrapper for atari emulator.
     """
     def __init__(self, rom_file, viz=0, height_range=(None,None),
-            frame_skip=4, image_shape=(84, 84), nullop_start=30):
+            frame_skip=4, image_shape=(84, 84), nullop_start=30,
+            live_lost_as_eoe=True):
         """
         :param rom_file: path to the rom
         :param frame_skip: skip every k frames
         :param image_shape: (w, h)
         :param height_range: (h1, h2) to cut
         :param viz: the delay. visualize the game while running. 0 to disable
+        :param nullop_start: start with random number of null ops
+        :param live_losts_as_eoe: consider lost of lives as end of episode.  useful for training.
         """
         super(AtariPlayer, self).__init__()
         self.ale = ALEInterface()
@@ -45,6 +48,8 @@ class AtariPlayer(RLEnvironment):
         self.ale.setFloat('repeat_action_probability', 0.0)
 
         self.ale.loadROM(rom_file)
+
+
         self.width, self.height = self.ale.getScreenDims()
         self.actions = self.ale.getMinimalActionSet()
 
@@ -56,6 +61,7 @@ class AtariPlayer(RLEnvironment):
             cv2.startWindowThread()
             cv2.namedWindow(self.romname)
 
+        self.live_lost_as_eoe = live_lost_as_eoe
         self.frame_skip = frame_skip
         self.nullop_start = nullop_start
         self.height_range = height_range
@@ -101,6 +107,7 @@ class AtariPlayer(RLEnvironment):
 
         # random null-ops start
         n = self.rng.randint(self.nullop_start)
+        self.last_raw_screen = self._grab_raw_image()
         for k in range(n):
             if k == n - 1:
                 self.last_raw_screen = self._grab_raw_image()
@@ -118,7 +125,8 @@ class AtariPlayer(RLEnvironment):
                 self.last_raw_screen = self._grab_raw_image()
             r += self.ale.act(self.actions[act])
             newlives = self.ale.lives()
-            if self.ale.game_over() or newlives < oldlives:
+            if self.ale.game_over() or \
+                    (self.live_lost_as_eoe and newlives < oldlives):
                 break
 
         self.current_episode_score.feed(r)
@@ -126,7 +134,8 @@ class AtariPlayer(RLEnvironment):
         if isOver:
             self.stats['score'].append(self.current_episode_score.sum)
             self._reset()
-        isOver = isOver or newlives < oldlives
+        if self.live_lost_as_eoe:
+            isOver = isOver or newlives < oldlives
         return (r, isOver)
 
     def get_stat(self):

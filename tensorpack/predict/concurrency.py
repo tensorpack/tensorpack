@@ -5,6 +5,7 @@
 
 import multiprocessing, threading
 import tensorflow as tf
+import six
 from six.moves import queue, range
 
 
