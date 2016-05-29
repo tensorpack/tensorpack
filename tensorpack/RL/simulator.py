@@ -17,7 +17,7 @@ __all__ = ['SimulatorProcess', 'SimulatorMaster']
 
 class SimulatorProcess(multiprocessing.Process):
     """ A process that simulates a player """
-    __meta__ = ABCMeta
+    __metaclass__ = ABCMeta
 
     def __init__(self, idx, server_name):
         """

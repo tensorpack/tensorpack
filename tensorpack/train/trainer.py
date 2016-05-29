@@ -246,7 +246,8 @@ class QueueInputTrainer(Trainer):
         :param tower: return the kth predict_func
         """
         tower = tower % self.config.nr_tower
-        logger.info("Prepare a predictor function for tower{} ...".format(tower))
+        if self.config.nr_tower > 1:
+            logger.info("Prepare a predictor function for tower{} ...".format(tower))
         raw_input_vars = get_vars_by_names(input_names)
         input_var_idxs = [self.input_vars.index(v) for v in raw_input_vars]
 

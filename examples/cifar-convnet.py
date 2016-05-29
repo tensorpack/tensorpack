@@ -100,7 +100,7 @@ def get_data(train_or_test, cifar_classnum):
     ds = AugmentImageComponent(ds, augmentors)
     ds = BatchData(ds, 128, remainder=not isTrain)
     if isTrain:
-        ds = PrefetchData(ds, 10, 5)
+        ds = PrefetchDataZMQ(ds, 5)
     return ds
 
 def get_config(cifar_classnum):
@@ -156,5 +156,5 @@ if __name__ == '__main__':
             config.session_init = SaverRestore(args.load)
         if args.gpu:
             config.nr_tower = len(args.gpu.split(','))
-        #QueueInputTrainer(config).train()
-        SimpleTrainer(config).train()
+        QueueInputTrainer(config).train()
+        #SimpleTrainer(config).train()

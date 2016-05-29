@@ -11,6 +11,7 @@ import tqdm
 import tensorflow as tf
 from .config import TrainConfig
 from ..utils import *
+from ..utils.concurrency import start_proc_mask_signal
 from ..callbacks import StatHolder
 from ..tfutils import *
 from ..tfutils.summary import create_summary
@@ -151,10 +152,7 @@ class Trainer(object):
             sess=self.sess, coord=self.coord, daemon=True, start=True)
 
         # avoid sigint get handled by other processes
-        sigint_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
-        for k in self.extra_threads_procs:
-            k.start()
-        signal.signal(signal.SIGINT, sigint_handler)
+        start_proc_mask_signal(self.extra_threads_procs)
 
 
     def process_grads(self, grads):

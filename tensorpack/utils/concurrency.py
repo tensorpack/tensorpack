@@ -7,6 +7,7 @@ import threading
 import multiprocessing
 import atexit
 import bisect
+import signal
 import weakref
 import six
 if six.PY2:
@@ -17,7 +18,8 @@ else:
 from . import logger
 
 __all__ = ['StoppableThread', 'LoopThread', 'ensure_proc_terminate',
-           'OrderedResultGatherProc', 'OrderedContainer', 'DIE']
+           'OrderedResultGatherProc', 'OrderedContainer', 'DIE',
+           'start_proc_mask_signal']
 
 class StoppableThread(threading.Thread):
     def __init__(self):
@@ -76,6 +78,15 @@ def ensure_proc_terminate(proc):
     assert isinstance(proc, multiprocessing.Process)
     atexit.register(stop_proc_by_weak_ref, weakref.ref(proc))
 
+def start_proc_mask_signal(proc):
+    if not isinstance(proc, list):
+        proc = [proc]
+
+    sigint_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
+    for p in proc:
+        p.start()
+    signal.signal(signal.SIGINT, sigint_handler)
+
 def subproc_call(cmd, timeout=None):
     try:
         output = subprocess.check_output(
@@ -116,7 +127,6 @@ class OrderedContainer(object):
         del self.data[0]
         self.wait_for += 1
         return rank, ret
-
 
 class OrderedResultGatherProc(multiprocessing.Process):
     """

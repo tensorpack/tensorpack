@@ -31,10 +31,12 @@ for atari games
 """
 
 BATCH_SIZE = 32
-IMAGE_SIZE = 84
+IMAGE_SIZE = (84, 84)
 FRAME_HISTORY = 4
 ACTION_REPEAT = 4
 HEIGHT_RANGE = (36, 204)    # for breakout
+CHANNEL = FRAME_HISTORY
+IMAGE_SHAPE3 = IMAGE_SIZE + (CHANNEL,)
 #HEIGHT_RANGE = (28, -8)   # for pong
 GAMMA = 0.99
 
@@ -51,7 +53,7 @@ NUM_ACTIONS = None
 ROM_FILE = None
 
 def get_player(viz=False, train=False):
-    player = AtariPlayer(ROM_FILE, height_range=HEIGHT_RANGE,
+    pl = AtariPlayer(ROM_FILE, height_range=HEIGHT_RANGE,
             frame_skip=ACTION_REPEAT, image_shape=IMAGE_SIZE[::-1], viz=viz,
             live_lost_as_eoe=train)
     global NUM_ACTIONS
@@ -61,10 +63,10 @@ def get_player(viz=False, train=False):
 class Model(ModelDesc):
     def _get_input_vars(self):
         assert NUM_ACTIONS is not None
-        return [InputVar(tf.float32, (None, IMAGE_SIZE, IMAGE_SIZE, FRAME_HISTORY), 'state'),
+        return [InputVar(tf.float32, (None,) + IMAGE_SHAPE3, 'state'),
                 InputVar(tf.int32, (None,), 'action'),
                 InputVar(tf.float32, (None,), 'reward'),
-                InputVar(tf.float32, (None, IMAGE_SIZE, IMAGE_SIZE, FRAME_HISTORY), 'next_state'),
+                InputVar(tf.float32, (None,) + IMAGE_SHAPE3, 'next_state'),
                 InputVar(tf.bool, (None,), 'isOver') ]
 
     def _get_DQN_prediction(self, image, is_training):
