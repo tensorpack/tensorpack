@@ -8,14 +8,9 @@ import argparse
 import numpy as np
 import os
 
-from tensorpack.train import TrainConfig, QueueInputTrainer
-from tensorpack.models import *
-from tensorpack.callbacks import *
-from tensorpack.utils import *
-from tensorpack.tfutils import *
-from tensorpack.tfutils.symbolic_functions import *
+from tensorpack import *
+import tensorpack.tfutils.symbolic_functions as symbf
 from tensorpack.tfutils.summary import *
-from tensorpack.dataflow import *
 
 """
 A small convnet model for cifar 10 or cifar100 dataset.
@@ -65,7 +60,7 @@ class Model(ModelDesc):
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, cost)
 
         # compute the number of failed samples, for ClassificationError to use at test time
-        wrong = prediction_incorrect(logits, label)
+        wrong = symbf.prediction_incorrect(logits, label)
         nr_wrong = tf.reduce_sum(wrong, name='wrong')
         # monitor training error
         tf.add_to_collection(
@@ -161,4 +156,5 @@ if __name__ == '__main__':
             config.session_init = SaverRestore(args.load)
         if args.gpu:
             config.nr_tower = len(args.gpu.split(','))
-        QueueInputTrainer(config).train()
+        #QueueInputTrainer(config).train()
+        SimpleTrainer(config).train()

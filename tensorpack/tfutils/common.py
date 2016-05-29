@@ -7,9 +7,11 @@ from ..utils.naming import *
 import tensorflow as tf
 
 __all__ = ['get_default_sess_config',
-            'get_global_step',
-            'get_global_step_var',
-            'get_op_var_name']
+           'get_global_step',
+           'get_global_step_var',
+           'get_op_var_name',
+           'get_vars_by_names'
+           ]
 
 def get_default_sess_config(mem_fraction=0.9):
     """
@@ -53,3 +55,14 @@ def get_op_var_name(name):
         return name[:-2], name
     else:
         return name, name + ':0'
+
+def get_vars_by_names(names):
+    """
+    Get a list of variables in the default graph by a list of names
+    """
+    ret = []
+    G = tf.get_default_graph()
+    for n in names:
+        opn, varn = get_op_var_name(n)
+        ret.append(G.get_tensor_by_name(varn))
+    return ret

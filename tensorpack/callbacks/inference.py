@@ -13,7 +13,7 @@ from ..utils import *
 from ..utils.stat import *
 from ..tfutils import *
 from ..tfutils.summary import *
-from .base import Callback, TestCallbackType
+from .base import Callback
 
 __all__ = ['InferenceRunner', 'ClassificationError',
         'ScalarStats', 'Inferencer', 'BinaryClassificationStats']
@@ -63,7 +63,6 @@ class InferenceRunner(Callback):
     """
     A callback that runs different kinds of inferencer.
     """
-    type = TestCallbackType()
 
     def __init__(self, ds, vcs):
         """
@@ -82,12 +81,15 @@ class InferenceRunner(Callback):
     def _before_train(self):
         self.input_vars = self.trainer.model.reuse_input_vars()
         self._find_output_tensors()
+        input_names = [x.name for x in self.input_vars]
+        self.pred_func = self.trainer.get_predict_func(
+                input_names, self.output_tensors)
         for v in self.vcs:
             v.trainer = self.trainer
 
     def _find_output_tensors(self):
-        self.output_tensors = []
-        self.vc_to_vars = []
+        self.output_tensors = []    # list of names
+        self.vc_to_vars = []    # list of list of (var_name: output_idx)
         for vc in self.vcs:
             vc_vars = vc._get_output_tensors()
             def find_oid(var):
@@ -99,12 +101,6 @@ class InferenceRunner(Callback):
             vc_vars = [(var, find_oid(var)) for var in vc_vars]
             self.vc_to_vars.append(vc_vars)
 
-        # convert name to tensors
-        def get_tensor(name):
-            _, varname = get_op_var_name(name)
-            return self.graph.get_tensor_by_name(varname)
-        self.output_tensors = list(map(get_tensor, self.output_tensors))
-
     def _trigger_epoch(self):
         for vc in self.vcs:
             vc.before_inference()
@@ -112,8 +108,9 @@ class InferenceRunner(Callback):
         sess = tf.get_default_session()
         with tqdm(total=self.ds.size(), ascii=True) as pbar:
             for dp in self.ds.get_data():
-                feed = dict(zip(self.input_vars, dp))   # TODO custom dp mapping?
-                outputs = sess.run(self.output_tensors, feed_dict=feed)
+                #feed = dict(zip(self.input_vars, dp))   # TODO custom dp mapping?
+                #outputs = sess.run(self.output_tensors, feed_dict=feed)
+                outputs = self.pred_func(dp)
                 for vc, varsmap in zip(self.vcs, self.vc_to_vars):
                     vc_output = [outputs[k[1]] for k in varsmap]
                     vc.datapoint(dp, vc_output)
