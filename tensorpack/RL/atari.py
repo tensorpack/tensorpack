@@ -42,6 +42,8 @@ class AtariPlayer(RLEnvironment):
         self.rng = get_rng(self)
 
         self.ale.setInt("random_seed", self.rng.randint(0, 10000))
+        self.ale.setBool("showinfo", False)
+        #ALEInterface.setLoggerMode(ALEInterface.Logger.Warning)
         self.ale.setInt("frame_skip", 1)
         self.ale.setBool('color_averaging', False)
         # manual.pdf suggests otherwise. may need to check
