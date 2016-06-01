@@ -5,7 +5,6 @@
 
 import multiprocessing
 import threading
-import zmq
 import weakref
 from abc import abstractmethod, ABCMeta
 from collections import defaultdict, namedtuple
@@ -14,6 +13,13 @@ from tensorpack.utils.serialize import *
 from tensorpack.utils.concurrency import *
 
 __all__ = ['SimulatorProcess', 'SimulatorMaster']
+
+try:
+    import zmq
+except ImportError:
+    logger.warn("Error in 'import zmq'. RL simulator won't be available.")
+    __all__ = []
+
 
 class SimulatorProcess(multiprocessing.Process):
     """ A process that simulates a player """
