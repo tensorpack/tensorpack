@@ -5,8 +5,9 @@
 
 import multiprocessing, threading
 import tensorflow as tf
+import time
 import six
-from six.moves import queue, range
+from six.moves import queue, range, zip
 
 
 from ..utils.concurrency import DIE
@@ -89,10 +90,43 @@ class PredictorWorkerThread(threading.Thread):
         self.id = id
 
     def run(self):
+        #self.xxx = None
+        def fetch():
+            batched = []
+            futures = []
+            inp, f = self.queue.get()
+            batched.append(inp)
+            futures.append(f)
+            while True:
+                try:
+                    inp, f = self.queue.get_nowait()
+                    batched.append(inp)
+                    futures.append(f)
+                    if len(batched) == 128:
+                        break
+                except queue.Empty:
+                    break
+            return batched, futures
+        #self.xxx = None
         while True:
-            inputs, f = self.queue.get()
-            outputs = self.func(inputs)
-            f.set_result(outputs)
+            # normal input
+            #inputs, f = self.queue.get()
+            #outputs = self.func(inputs)
+            #f.set_result(outputs)
+
+            batched, futures = fetch()
+            #print "batched size: ", len(batched)
+            outputs = self.func([batched])
+            #if self.xxx is None:
+                #outputs = self.func([batched])
+                #self.xxx = outputs
+            #else:
+                #outputs = [None, None]
+                #outputs[0] = [self.xxx[0][0]] * len(batched)
+                #outputs[1] = [self.xxx[1][0]] * len(batched)
+
+            for idx, f in enumerate(futures):
+                f.set_result([k[idx] for k in outputs])
 
 class MultiThreadAsyncPredictor(object):
     """
@@ -117,7 +151,7 @@ class MultiThreadAsyncPredictor(object):
     def put_task(self, inputs, callback=None):
         """ return a Future of output."""
         f = Future()
-        self.input_queue.put((inputs, f))
         if callback is not None:
             f.add_done_callback(callback)
+        self.input_queue.put((inputs, f))
         return f

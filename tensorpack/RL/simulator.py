@@ -101,7 +101,8 @@ class SimulatorMaster(threading.Thread):
                         ident, _, msg = self.socket.recv_multipart(zmq.NOBLOCK)
                     break
                 except zmq.ZMQError:
-                    time.sleep(0.01)
+                    #pass
+                    time.sleep(0.001)
             #assert  _ == ""
             client = self.clients[ident]
             client.protocol_state = 1 - client.protocol_state   # first flip the state
