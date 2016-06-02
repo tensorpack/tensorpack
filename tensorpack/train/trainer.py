@@ -265,7 +265,7 @@ class QueueInputTrainer(Trainer):
         return func
 
     def get_predict_funcs(self, input_names, output_names, n):
-        return [self.get_predict_func(input_name, output_names, k)
+        return [self.get_predict_func(input_names, output_names, k)
                 for k in range(n)]
 
 def start_train(config):

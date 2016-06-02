@@ -61,12 +61,25 @@ class SimulatorMaster(threading.Thread):
     """
     __metaclass__ = ABCMeta
 
+    class ClientState(object):
+        def __init__(self):
+            self.protocol_state = 0 # state in communication
+            self.memory = []    # list of Experience
+
+    class Experience(object):
+        """ A transition of state, or experience"""
+        def __init__(self, state, action, reward):
+            self.state = state
+            self.action = action
+            self.reward = reward
+
     def __init__(self, server_name):
         super(SimulatorMaster, self).__init__()
         self.server_name = server_name
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.ROUTER)
         self.socket.bind(self.server_name)
+        self.socket_lock = threading.Lock()
         self.daemon = True
 
         def clean_context(sok, context):
@@ -76,41 +89,31 @@ class SimulatorMaster(threading.Thread):
         atexit.register(clean_context, self.socket, self.context)
 
     def run(self):
-        class ClientState(object):
-            def __init__(self):
-                self.protocol_state = 0 # state in communication
-                self.memory = []    # list of Experience
-
-        class Experience(object):
-            """ A transition of state, or experience"""
-            def __init__(self, state, action, reward):
-                self.state = state
-                self.action = action
-                self.reward = reward
-
-        self.clients = defaultdict(ClientState)
+        self.clients = defaultdict(SimulatorMaster.ClientState)
         while True:
             ident, _, msg = self.socket.recv_multipart()
+            #assert  _ == ""
             client = self.clients[ident]
-            if client.protocol_state == 0:   # state-action
+            client.protocol_state = 1 - client.protocol_state   # first flip the state
+            if not client.protocol_state == 0:   # state-action
                 state = loads(msg)
-                action = self._get_action(state)
-                self.socket.send_multipart([ident, _, dumps(action)])
-                client.memory.append(Experience(state, action, None))
+                self._on_state(state, ident)
             else:       # reward-response
                 reward, isOver = loads(msg)
-                assert isinstance(isOver, bool)
                 client.memory[-1].reward = reward
                 if isOver:
                     self._on_episode_over(client)
                 else:
                     self._on_datapoint(client)
-                self.socket.send_multipart([ident, _, dumps('Thanks')])
-            client.protocol_state = 1 - client.protocol_state   # flip the state
+                self.send_multipart_threadsafe([ident, _, dumps('Thanks')])
+
+    def send_multipart_threadsafe(self, data):
+        with self.socket_lock:
+            self.socket.send_multipart(data)
 
     @abstractmethod
-    def _get_action(self, state):
-        """response to state"""
+    def _on_state(self, state, ident):
+        """response to state sent by ident. Preferrably an async call"""
 
     @abstractmethod
     def _on_episode_over(self, client):

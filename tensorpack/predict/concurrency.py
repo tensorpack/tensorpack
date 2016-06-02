@@ -19,6 +19,8 @@ from .common import *
 try:
     if six.PY2:
         from tornado.concurrent import Future
+        import tornado.options as options
+        options.parse_command_line(['--logging=debug'])
     else:
         from concurrent.futures import Future
 except ImportError:
@@ -78,12 +80,13 @@ class MultiProcessQueuePredictWorker(MultiProcessPredictWorker):
             else:
                 self.outqueue.put((tid, self.func(dp)))
 
-class PerdictorWorkerThread(threading.Thread):
-    def __init__(self, queue, pred_func):
+class PredictorWorkerThread(threading.Thread):
+    def __init__(self, queue, pred_func, id):
         super(PredictorWorkerThread, self).__init__()
         self.queue = queue
         self.func = pred_func
         self.daemon = True
+        self.id = id
 
     def run(self):
         while True:
@@ -101,8 +104,11 @@ class MultiThreadAsyncPredictor(object):
         :param trainer: a `QueueInputTrainer` instance.
         """
         self.input_queue = queue.Queue(maxsize=nr_thread*2)
-        self.threads = [PredictorWorkerThread(self.input_queue, f)
-            for f in trainer.get_predict_funcs(input_names, output_names, nr_thread)]
+        self.threads = [
+            PredictorWorkerThread(self.input_queue, f, id)
+            for id, f in enumerate(
+                trainer.get_predict_funcs(
+                    input_names, output_names, nr_thread))]
 
     def run(self):
         for t in self.threads:
