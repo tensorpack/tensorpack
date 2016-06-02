@@ -4,6 +4,7 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import multiprocessing
+import time
 import threading
 import weakref
 from abc import abstractmethod, ABCMeta
@@ -68,10 +69,12 @@ class SimulatorMaster(threading.Thread):
 
     class Experience(object):
         """ A transition of state, or experience"""
-        def __init__(self, state, action, reward):
+        def __init__(self, state, action, reward, misc=None):
+            """ misc: whatever other attribute you want to save"""
             self.state = state
             self.action = action
             self.reward = reward
+            self.misc = misc
 
     def __init__(self, server_name):
         super(SimulatorMaster, self).__init__()
@@ -91,7 +94,14 @@ class SimulatorMaster(threading.Thread):
     def run(self):
         self.clients = defaultdict(SimulatorMaster.ClientState)
         while True:
-            ident, _, msg = self.socket.recv_multipart()
+            while True:
+                # avoid the lock being acquired here forever
+                try:
+                    with self.socket_lock:
+                        ident, _, msg = self.socket.recv_multipart(zmq.NOBLOCK)
+                    break
+                except zmq.ZMQError:
+                    time.sleep(0.01)
             #assert  _ == ""
             client = self.clients[ident]
             client.protocol_state = 1 - client.protocol_state   # first flip the state

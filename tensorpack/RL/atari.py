@@ -9,7 +9,7 @@ import os
 import cv2
 from collections import deque
 from six.moves import range
-from ..utils import get_rng, logger
+from ..utils import get_rng, logger, memoized
 from ..utils.stat import StatCounter
 
 from .envbase import RLEnvironment
@@ -20,6 +20,10 @@ except ImportError:
     logger.warn("Cannot import ale_python_interface, Atari won't be available.")
 
 __all__ = ['AtariPlayer']
+
+@memoized
+def log_once():
+    logger.warn("https://github.com/mgbellemare/Arcade-Learning-Environment/pull/171 is not merged!")
 
 class AtariPlayer(RLEnvironment):
     """
@@ -43,10 +47,12 @@ class AtariPlayer(RLEnvironment):
 
         self.ale.setInt("random_seed", self.rng.randint(0, 10000))
         self.ale.setBool("showinfo", False)
+
         try:
             ALEInterface.setLoggerMode(ALEInterface.Logger.Warning)
         except AttributeError:
-            logger.warn("https://github.com/mgbellemare/Arcade-Learning-Environment/pull/171 is not merged!")
+            log_once()
+
         self.ale.setInt("frame_skip", 1)
         self.ale.setBool('color_averaging', False)
         # manual.pdf suggests otherwise. may need to check

@@ -27,16 +27,23 @@ class GradientProcessor(object):
     def _process(self, grads):
         pass
 
+
+_summaried_gradient = set()
+
 class SummaryGradient(GradientProcessor):
     """
     Summary history and RMS for each graident variable
     """
     def _process(self, grads):
         for grad, var in grads:
-            tf.histogram_summary(var.op.name + '/grad', grad)
+            name = var.op.name
+            if name in _summaried_gradient:
+                continue
+            _summaried_gradient.add(name)
+            tf.histogram_summary(name + '/grad', grad)
             tf.add_to_collection(MOVING_SUMMARY_VARS_KEY,
                                  tf.sqrt(tf.reduce_mean(tf.square(grad)),
-                                         name=var.op.name + '/gradRMS'))
+                                         name=name + '/gradRMS'))
         return grads
 
 
@@ -46,7 +53,6 @@ class CheckGradient(GradientProcessor):
     """
     def _process(self, grads):
         for grad, var in grads:
-            assert grad is not None, "Grad is None for variable {}".format(var.name)
             # TODO make assert work
             tf.Assert(tf.reduce_all(tf.is_finite(var)), [var])
         return grads

@@ -191,13 +191,13 @@ class QueueInputTrainer(Trainer):
                 grads = QueueInputTrainer._average_grads(grad_list)
                 grads = self.process_grads(grads)
             else:
-                grad_list = [self.process_grads(g) for g in grad_list]
                 # pretend to average the grads, in order to make async and
                 # sync have consistent effective learning rate
                 def scale(grads):
                     return [(grad / self.config.nr_tower, var) for grad, var in grads]
                 grad_list = map(scale, grad_list)
-                grads = grad_list[0]  # use grad from the first tower for routinely stuff
+                grad_list = [self.process_grads(g) for g in grad_list]
+                grads = grad_list[0]  # use grad from the first tower for the main iteration
         else:
             grads = self._single_tower_grad()
             grads = self.process_grads(grads)
@@ -207,6 +207,7 @@ class QueueInputTrainer(Trainer):
             summary_moving_average())
 
         if self.async:
+            # prepare train_op for the rest of the towers
             self.threads = []
             for k in range(1, self.config.nr_tower):
                 train_op = self.config.optimizer.apply_gradients(grad_list[k])
