@@ -43,7 +43,10 @@ class AtariPlayer(RLEnvironment):
 
         self.ale.setInt("random_seed", self.rng.randint(0, 10000))
         self.ale.setBool("showinfo", False)
-        #ALEInterface.setLoggerMode(ALEInterface.Logger.Warning)
+        try:
+            ALEInterface.setLoggerMode(ALEInterface.Logger.Warning)
+        except AttributeError:
+            logger.warn("https://github.com/mgbellemare/Arcade-Learning-Environment/pull/171 is not merged!")
         self.ale.setInt("frame_skip", 1)
         self.ale.setBool('color_averaging', False)
         # manual.pdf suggests otherwise. may need to check

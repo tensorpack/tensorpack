@@ -14,6 +14,7 @@ if six.PY2:
     import subprocess32 as subprocess
 else:
     import subprocess
+from six.moves import queue
 
 from . import logger
 
@@ -22,15 +23,37 @@ __all__ = ['StoppableThread', 'LoopThread', 'ensure_proc_terminate',
            'start_proc_mask_signal']
 
 class StoppableThread(threading.Thread):
+    """
+    A thread that has a 'stop' event.
+    """
     def __init__(self):
         super(StoppableThread, self).__init__()
         self._stop = threading.Event()
 
     def stop(self):
+        """ stop the thread"""
         self._stop.set()
 
     def stopped(self):
+        """ check whether the thread is stopped or not"""
         return self._stop.isSet()
+
+    def queue_put_stoppable(self, q, obj):
+        """ put obj to queue, but will give up if the thread is stopped"""
+        while not self.stopped():
+            try:
+                q.put(obj, timeout=5)
+                break
+            except queue.Queue.Full:
+                pass
+
+    def queue_get_stoppable(self, q):
+        """ take obj from queue, but will give up if the thread is stopped"""
+        while not self.stopped():
+            try:
+                return q.get(timeout=5)
+            except queue.Queue.Full:
+                pass
 
 class LoopThread(threading.Thread):
     """ A pausable thread that simply runs a loop"""

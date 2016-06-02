@@ -42,7 +42,7 @@ class PredictConfig(object):
                 input_data_mapping: [0] # the first component in a datapoint should map to `image_var`
 
         :param model: a `ModelDesc` instance
-        :param output_var_names: a list of names of the output variables to predict, the
+        :param output_var_names: a list of names of the output tensors to predict, the
             variables can be any computable tensor in the graph.
             Predict specific output might not require all input variables.
         :param return_input: whether to produce (input, output) pair or just output. default to False.

@@ -63,6 +63,10 @@ def get_player(viz=False, train=False):
             live_lost_as_eoe=train)
     global NUM_ACTIONS
     NUM_ACTIONS = pl.get_num_actions()
+
+    if not train:
+        pl = HistoryFramePlayer(pl, FRAME_HISTORY)
+        pl = PreventStuckPlayer(pl, 30, 1)
     return pl
 
 class Model(ModelDesc):
@@ -162,7 +166,7 @@ def play_one_episode(player, func, verbose=False):
             return sc
 
 def play_model(model_path):
-    player = PreventStuckPlayer(HistoryFramePlayer(get_player(0.013), FRAME_HISTORY), 30, 1)
+    player = get_player(0.013)
     cfg = PredictConfig(
             model=Model(),
             input_data_mapping=[0],
@@ -180,15 +184,10 @@ def eval_with_funcs(predict_funcs):
             self.func = func
             self.q = queue
         def run(self):
-            player = PreventStuckPlayer(HistoryFramePlayer(get_player(), FRAME_HISTORY), 30, 1)
+            player = get_player()
             while not self.stopped():
                 score = play_one_episode(player, self.func)
-                while not self.stopped():
-                    try:
-                        self.q.put(score, timeout=5)
-                        break
-                    except queue.Queue.Full:
-                        pass
+                self.queue_put_stoppable(self.q, score)
 
     q = queue.Queue()
     threads = [Worker(f, q) for f in predict_funcs]
@@ -201,9 +200,9 @@ def eval_with_funcs(predict_funcs):
         for _ in tqdm(range(EVAL_EPISODE)):
             r = q.get()
             stat.feed(r)
+    finally:
         for k in threads: k.stop()
         for k in threads: k.join()
-    finally:
         return (stat.average, stat.max)
 
 def eval_model_multithread(model_path):

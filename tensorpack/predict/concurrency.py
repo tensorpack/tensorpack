@@ -58,7 +58,7 @@ class MultiProcessPredictWorker(multiprocessing.Process):
                 describe_model()
 
 class MultiProcessQueuePredictWorker(MultiProcessPredictWorker):
-    """ A predictor worker that takes input and produces output by queue"""
+    """ An offline predictor worker that takes input and produces output by queue"""
     def __init__(self, idx, gpuid, inqueue, outqueue, config):
         """
         :param inqueue: input queue to get data point. elements are (task_id, dp)
@@ -100,7 +100,7 @@ class MultiThreadAsyncPredictor(object):
         """
         :param trainer: a `QueueInputTrainer` instance.
         """
-        self.input_queue = queue.Queue()
+        self.input_queue = queue.Queue(maxsize=nr_thread*2)
         self.threads = [PredictorWorkerThread(self.input_queue, f)
             for f in trainer.get_predict_funcs(input_names, output_names, nr_thread)]
 
