@@ -90,7 +90,6 @@ class SaverRestore(SessionInit):
                     del vars_multimap[k]
             yield ret
 
-
     @staticmethod
     def _read_checkpoint_vars(model_path):
         reader = tf.train.NewCheckpointReader(model_path)
@@ -112,8 +111,11 @@ class SaverRestore(SessionInit):
                 name = new_name
             if name in vars_available:
                 var_dict[name].append(v)
+                vars_available.remove(name)
             else:
                 logger.warn("Param {} not found in checkpoint! Will not restore.".format(v.op.name))
+        #for name in vars_available:
+            #logger.warn("Param {} in checkpoint doesn't appear in the graph!".format(name))
         return var_dict
 
 class ParamRestore(SessionInit):

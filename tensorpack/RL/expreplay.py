@@ -52,6 +52,14 @@ class ExpReplay(DataFlow, Callback):
 
     def init_memory(self):
         logger.info("Populating replay memory...")
+
+        # fill some for the history
+        old_exploration = self.exploration
+        self.exploration = 1
+        for k in range(self.history_len):
+            self._populate_exp()
+        self.exploration = old_exploration
+
         with tqdm(total=self.populate_size) as pbar:
             while len(self.mem) < self.populate_size:
                 self._populate_exp()
