@@ -189,7 +189,7 @@ def eval_with_funcs(predict_funcs):
                 score = play_one_episode(player, self.func)
                 self.queue_put_stoppable(self.q, score)
 
-    q = queue.Queue()
+    q = queue.Queue(maxsize=3)
     threads = [Worker(f, q) for f in predict_funcs]
 
     for k in threads:

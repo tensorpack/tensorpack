@@ -11,6 +11,7 @@ import tqdm
 import tensorflow as tf
 from .config import TrainConfig
 from ..utils import *
+from ..utils.timer import *
 from ..utils.concurrency import start_proc_mask_signal
 from ..callbacks import StatHolder
 from ..tfutils import *

@@ -11,7 +11,7 @@ import numpy as np
 
 from . import logger
 
-__all__ = ['timed_operation', 'change_env',
+__all__ = ['change_env',
         'get_rng', 'memoized', 'get_nr_gpu', 'get_gpus']
 
 #def expand_dim_if_necessary(var, dp):
@@ -27,15 +27,6 @@ __all__ = ['timed_operation', 'change_env',
 #        new_shape = [k if k else 1 for k in shape]
 #        dp = dp.reshape(new_shape)
 #    return dp
-
-@contextmanager
-def timed_operation(msg, log_start=False):
-    if log_start:
-        logger.info('start {} ...'.format(msg))
-    start = time.time()
-    yield
-    logger.info('{} finished, time={:.2f}sec.'.format(
-        msg, time.time() - start))
 
 @contextmanager
 def change_env(name, val):

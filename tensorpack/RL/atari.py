@@ -158,18 +158,44 @@ class AtariPlayer(RLEnvironment):
 
 if __name__ == '__main__':
     import sys
-    a = AtariPlayer(sys.argv[1],
-            viz=0.03, height_range=(28,-8))
-    num = a.get_num_actions()
-    rng = get_rng(num)
     import time
-    while True:
-        #im = a.grab_image()
-        #cv2.imshow(a.romname, im)
-        act = rng.choice(range(num))
-        print(act)
-        r, o = a.action(act)
-        a.current_state()
-        #time.sleep(0.1)
-        print(r, o)
+
+    def benchmark():
+        a = AtariPlayer(sys.argv[1], viz=False, height_range=(28,-8))
+        num = a.get_num_actions()
+        rng = get_rng(num)
+        start = time.time()
+        cnt = 0
+        while True:
+            act = rng.choice(range(num))
+            r, o = a.action(act)
+            a.current_state()
+            cnt += 1
+            if cnt == 5000:
+                break
+        print time.time() - start
+
+    if len(sys.argv) == 3 and sys.argv[2] == 'benchmark':
+        import threading, multiprocessing
+        for k in range(3):
+            #th = multiprocessing.Process(target=benchmark)
+            th = threading.Thread(target=benchmark)
+            th.start()
+            time.sleep(0.02)
+        benchmark()
+    else:
+        a = AtariPlayer(sys.argv[1],
+                viz=0.03, height_range=(28,-8))
+        num = a.get_num_actions()
+        rng = get_rng(num)
+        import time
+        while True:
+            #im = a.grab_image()
+            #cv2.imshow(a.romname, im)
+            act = rng.choice(range(num))
+            print(act)
+            r, o = a.action(act)
+            a.current_state()
+            #time.sleep(0.1)
+            print(r, o)
 

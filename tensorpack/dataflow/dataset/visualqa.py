@@ -5,6 +5,7 @@
 
 from ..base import DataFlow
 from ...utils import *
+from ...utils.timer import *
 from six.moves import zip, map
 from collections import Counter
 import json
