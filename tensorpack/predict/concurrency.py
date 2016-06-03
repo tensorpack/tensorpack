@@ -13,6 +13,7 @@ from six.moves import queue, range, zip
 from ..utils.concurrency import DIE
 from ..tfutils.modelutils import describe_model
 from ..utils import logger
+from ..utils.timer import *
 from ..tfutils import *
 
 from .common import *
@@ -97,12 +98,14 @@ class PredictorWorkerThread(threading.Thread):
             inp, f = self.queue.get()
             batched.append(inp)
             futures.append(f)
+            #print "func queue:", self.queue.qsize()
+            #return batched, futures
             while True:
                 try:
                     inp, f = self.queue.get_nowait()
                     batched.append(inp)
                     futures.append(f)
-                    if len(batched) == 128:
+                    if len(batched) == 5:
                         break
                 except queue.Empty:
                     break
@@ -137,7 +140,7 @@ class MultiThreadAsyncPredictor(object):
         """
         :param trainer: a `QueueInputTrainer` instance.
         """
-        self.input_queue = queue.Queue(maxsize=nr_thread*2)
+        self.input_queue = queue.Queue(maxsize=nr_thread*10)
         self.threads = [
             PredictorWorkerThread(self.input_queue, f, id)
             for id, f in enumerate(

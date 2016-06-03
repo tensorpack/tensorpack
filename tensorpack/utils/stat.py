@@ -15,6 +15,7 @@ class StatCounter(object):
     def reset(self):
         self.values = []
 
+    @property
     def count(self):
         return len(self.values)
 

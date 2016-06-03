@@ -8,6 +8,7 @@ from contextlib import contextmanager
 import time
 from collections import defaultdict
 import six
+import atexit
 
 from .stat import StatCounter
 from . import logger
@@ -33,5 +34,10 @@ def total_timer(msg):
     _TOTAL_TIMER_DATA[msg].feed(t)
 
 def print_total_timer():
+    if len(_TOTAL_TIMER_DATA) == 0:
+        return
     for k, v in six.iteritems(_TOTAL_TIMER_DATA):
-        logger.info("Total Time: {} -> {} sec".format(k, v.sum))
+        logger.info("Total Time: {} -> {} sec, {} times".format(
+            k, v.sum, v.count))
+
+atexit.register(print_total_timer)
