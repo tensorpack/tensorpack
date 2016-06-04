@@ -21,8 +21,6 @@ from .common import *
 try:
     if six.PY2:
         from tornado.concurrent import Future
-        import tornado.options as options
-        options.parse_command_line(['--logging=debug'])
     else:
         from concurrent.futures import Future
 except ImportError:
@@ -146,6 +144,9 @@ class MultiThreadAsyncPredictor(object):
             for id, f in enumerate(
                 trainer.get_predict_funcs(
                     input_names, output_names, nr_thread))]
+        # TODO XXX set logging here to avoid affecting TF logging
+        import tornado.options as options
+        options.parse_command_line(['--logging=debug'])
 
     def run(self):
         for t in self.threads:

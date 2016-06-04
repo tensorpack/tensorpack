@@ -11,7 +11,8 @@ from ..utils import *
 
 __all__ = ['BatchData', 'FixedSizeData', 'FakeData', 'MapData',
            'RepeatedData', 'MapDataComponent', 'RandomChooseData',
-           'RandomMixData', 'JoinData', 'ConcatData', 'SelectComponent']
+           'RandomMixData', 'JoinData', 'ConcatData', 'SelectComponent',
+           'DataFromQueue']
 
 class BatchData(ProxyDataFlow):
     def __init__(self, ds, batch_size, remainder=False):
@@ -25,7 +26,11 @@ class BatchData(ProxyDataFlow):
         """
         super(BatchData, self).__init__(ds)
         if not remainder:
-            assert batch_size <= ds.size()
+            try:
+                s = ds.size()
+                assert batch_size <= ds.size()
+            except NotImplementedError:
+                pass
         self.batch_size = batch_size
         self.remainder = remainder
 
@@ -312,6 +317,16 @@ class JoinData(DataFlow):
         finally:
             for itr in itrs:
                 del itr
+
+class DataFromQueue(DataFlow):
+    """ provide data from a queue
+    """
+    def __init__(self, queue):
+        self.queue = queue
+
+    def get_data(self):
+        while True:
+            yield self.queue.get()
 
 def SelectComponent(ds, idxs):
     """

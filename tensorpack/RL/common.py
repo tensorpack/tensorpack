@@ -8,7 +8,7 @@ import numpy as np
 from collections import deque
 from .envbase import ProxyPlayer
 
-__all__ = ['HistoryFramePlayer', 'PreventStuckPlayer']
+__all__ = ['HistoryFramePlayer', 'PreventStuckPlayer', 'LimitLengthPlayer']
 
 class HistoryFramePlayer(ProxyPlayer):
     """ Include history frames in state, or use black images"""
@@ -61,4 +61,20 @@ class PreventStuckPlayer(ProxyPlayer):
         r, isOver = self.player.action(act)
         if isOver:
             self.act_que.clear()
+        return (r, isOver)
+
+class LimitLengthPlayer(ProxyPlayer):
+    """ Limit the total number of actions in an episode"""
+    def __init__(self, player, limit):
+        super(LimitLengthPlayer, self).__init__(player)
+        self.limit = limit
+        self.cnt = 0
+
+    def action(self, act):
+        r, isOver = self.player.action(act)
+        self.cnt += 1
+        if self.cnt == self.limit:
+            isOver = True
+        if isOver:
+            self.cnt == 0
         return (r, isOver)

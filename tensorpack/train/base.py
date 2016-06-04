@@ -152,9 +152,9 @@ class Trainer(object):
         tf.train.start_queue_runners(
             sess=self.sess, coord=self.coord, daemon=True, start=True)
 
-        # avoid sigint get handled by other processes
-        start_proc_mask_signal(self.extra_threads_procs)
-
+        with self.sess.as_default():
+            # avoid sigint get handled by other processes
+            start_proc_mask_signal(self.extra_threads_procs)
 
     def process_grads(self, grads):
         g = []

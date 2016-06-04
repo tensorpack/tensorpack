@@ -39,6 +39,20 @@ class RLEnvironment(object):
         """ reset the statistics counter"""
         self.stats = defaultdict(list)
 
+    def play_one_episode(self, func, stat='score'):
+        """ play one episode for eval.
+            :params func: call with the state and return an action
+            :returns: the score of this episode
+        """
+        while True:
+            s = self.current_state()
+            act = func(s)
+            r, isOver = self.action(act)
+            if isOver:
+                s = self.stats[stat]
+                self.reset_stat()
+                return s
+
 class NaiveRLEnvironment(RLEnvironment):
     """ for testing only"""
     def __init__(self):
@@ -70,4 +84,7 @@ class ProxyPlayer(RLEnvironment):
     @property
     def stats(self):
         return self.player.stats
+
+    def play_one_episode(self, func, stat='score'):
+        return self.player.play_one_episode(self, func, stat)
 

@@ -140,7 +140,7 @@ class HumanHyperParamSetter(HyperParamSetter):
             return ret
         except:
             logger.warn(
-                "Failed to parse {} in {}".format(
+                "Failed to find {} in {}".format(
                     self.param.readable_name, self.file_name))
             return None
 

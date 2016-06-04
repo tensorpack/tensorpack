@@ -78,3 +78,8 @@ def print_stat(x):
         Use it like: x = print_stat(x)
     """
     return tf.Print(x, [tf.reduce_mean(x), x], summarize=20)
+
+def rms(x, name=None):
+    if name is None:
+        name = x.op.name + '/rms'
+    return tf.sqrt(tf.reduce_mean(tf.square(x)), name=name)

@@ -148,22 +148,14 @@ class Model(ModelDesc):
         return self.predict_value.eval(feed_dict={'state:0': [state]})[0]
 
 def play_one_episode(player, func, verbose=False):
-    while True:
-        s = player.current_state()
-        outputs = func([[s]])
-        action_value = outputs[0][0]
-        act = action_value.argmax()
-        if verbose:
-            print action_value, act
+    def f(s):
+        act = func([[s]])[0][0].argmax()
         if random.random() < 0.01:
             act = random.choice(range(NUM_ACTIONS))
         if verbose:
             print(act)
-        reward, isOver = player.action(act)
-        if isOver:
-            sc = player.stats['score'][0]
-            player.reset_stat()
-            return sc
+        return act
+    return player.play_one_episode(f)
 
 def play_model(model_path):
     player = get_player(0.013)

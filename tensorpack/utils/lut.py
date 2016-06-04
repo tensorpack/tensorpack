@@ -20,3 +20,6 @@ class LookUpTable(object):
 
     def get_idx(self, obj):
         return self.obj2idx[obj]
+
+    def __str__(self):
+        return self.idx2obj.__str__()
