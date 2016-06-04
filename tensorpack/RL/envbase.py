@@ -24,16 +24,20 @@ class RLEnvironment(object):
     @abstractmethod
     def action(self, act):
         """
-        Perform an action
+        Perform an action. Will automatically start a new episode if isOver==True
         :params act: the action
         :returns: (reward, isOver)
         """
 
     @abstractmethod
+    def restart_episode(self):
+        """ Start a new episode, even if the current hasn't ended """
+
     def get_stat(self):
         """
-        return a dict of statistics (e.g., score) after running for a while
+        return a dict of statistics (e.g., score) for all the episodes since last call to reset_stat
         """
+        return {}
 
     def reset_stat(self):
         """ reset the statistics counter"""
@@ -63,6 +67,8 @@ class NaiveRLEnvironment(RLEnvironment):
     def action(self, act):
         self.k = act
         return (self.k, self.k > 10)
+    def restart_episode(self):
+        pass
 
 class ProxyPlayer(RLEnvironment):
     """ Serve as a proxy another player """
@@ -85,6 +91,5 @@ class ProxyPlayer(RLEnvironment):
     def stats(self):
         return self.player.stats
 
-    def play_one_episode(self, func, stat='score'):
-        return self.player.play_one_episode(self, func, stat)
-
+    def restart_episode(self):
+        self.player.restart_episode()

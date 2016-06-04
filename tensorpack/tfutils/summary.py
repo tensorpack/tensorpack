@@ -74,7 +74,7 @@ def add_param_summary(summary_lists):
         name = p.name
         for rgx, actions in summary_lists:
             if not rgx.endswith('$'):
-                rgx = rgx + '$'
+                rgx = rgx + '(:0)?$'
             if re.match(rgx, name):
                 for act in actions:
                     perform(p, act)

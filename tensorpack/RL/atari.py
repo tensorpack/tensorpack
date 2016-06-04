@@ -34,7 +34,7 @@ class AtariPlayer(RLEnvironment):
             live_lost_as_eoe=True):
         """
         :param rom_file: path to the rom
-        :param frame_skip: skip every k frames
+        :param frame_skip: skip every k frames and repeat the action
         :param image_shape: (w, h)
         :param height_range: (h1, h2) to cut
         :param viz: the delay. visualize the game while running. 0 to disable
@@ -57,9 +57,7 @@ class AtariPlayer(RLEnvironment):
         self.ale.setBool('color_averaging', False)
         # manual.pdf suggests otherwise. may need to check
         self.ale.setFloat('repeat_action_probability', 0.0)
-
         self.ale.loadROM(rom_file)
-
 
         self.width, self.height = self.ale.getScreenDims()
         self.actions = self.ale.getMinimalActionSet()
@@ -77,9 +75,9 @@ class AtariPlayer(RLEnvironment):
         self.nullop_start = nullop_start
         self.height_range = height_range
         self.image_shape = image_shape
-        self.current_episode_score = StatCounter()
 
-        self._reset()
+        self.current_episode_score = StatCounter()
+        self.restart_episode()
 
     def _grab_raw_image(self):
         """
@@ -112,7 +110,9 @@ class AtariPlayer(RLEnvironment):
         """
         return len(self.actions)
 
-    def _reset(self):
+    def restart_episode(self):
+        if self.current_episode_score.count > 0:
+            self.stats['score'].append(self.current_episode_score.sum)
         self.current_episode_score.reset()
         self.ale.reset_game()
 
@@ -143,8 +143,7 @@ class AtariPlayer(RLEnvironment):
         self.current_episode_score.feed(r)
         isOver = self.ale.game_over()
         if isOver:
-            self.stats['score'].append(self.current_episode_score.sum)
-            self._reset()
+            self.restart_episode()
         if self.live_lost_as_eoe:
             isOver = isOver or newlives < oldlives
         return (r, isOver)

@@ -155,7 +155,7 @@ def play_one_episode(player, func, verbose=False):
         if verbose:
             print(act)
         return act
-    return player.play_one_episode(f)
+    return np.mean(player.play_one_episode(f))
 
 def play_model(model_path):
     player = get_player(0.013)

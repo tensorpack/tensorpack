@@ -21,14 +21,17 @@ class StatCounter(object):
 
     @property
     def average(self):
+        assert len(self.values)
         return np.mean(self.values)
 
     @property
     def sum(self):
+        assert len(self.values)
         return np.sum(self.values)
 
     @property
     def max(self):
+        assert len(self.values)
         return max(self.values)
 
 class Accuracy(object):

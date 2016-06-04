@@ -39,6 +39,11 @@ class HistoryFramePlayer(ProxyPlayer):
             self.history.append(s)
         return (r, isOver)
 
+    def restart_episode(self):
+        super(HistoryFramePlayer, self).restart_episode()
+        self.history.clear()
+        self.history.append(self.player.current_state())
+
 class PreventStuckPlayer(ProxyPlayer):
     """ Prevent the player from getting stuck (repeating a no-op)
     by inserting a different action. Useful in games such as Atari Breakout
@@ -63,6 +68,10 @@ class PreventStuckPlayer(ProxyPlayer):
             self.act_que.clear()
         return (r, isOver)
 
+    def restart_episode(self):
+        super(PreventStuckPlayer, self).restart_episode()
+        self.act_que.clear()
+
 class LimitLengthPlayer(ProxyPlayer):
     """ Limit the total number of actions in an episode"""
     def __init__(self, player, limit):
@@ -73,8 +82,14 @@ class LimitLengthPlayer(ProxyPlayer):
     def action(self, act):
         r, isOver = self.player.action(act)
         self.cnt += 1
-        if self.cnt == self.limit:
+        if self.cnt >= self.limit:
             isOver = True
+            self.player.restart_episode()
         if isOver:
-            self.cnt == 0
+            print self.cnt
+            self.cnt = 0
         return (r, isOver)
+
+    def restart_episode(self):
+        super(LimitLengthPlayer, self).restart_episode()
+        self.cnt = 0
