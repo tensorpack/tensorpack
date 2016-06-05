@@ -4,10 +4,10 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
-import time
-import os
+import time, os
 import cv2
 from collections import deque
+import six
 from six.moves import range
 from ..utils import get_rng, logger, memoized
 from ..utils.stat import StatCounter
@@ -37,7 +37,10 @@ class AtariPlayer(RLEnvironment):
         :param frame_skip: skip every k frames and repeat the action
         :param image_shape: (w, h)
         :param height_range: (h1, h2) to cut
-        :param viz: the delay. visualize the game while running. 0 to disable
+        :param viz: visualization to be done.
+            Set to 0 to disable.
+            Set to a positive number to be the delay between frames to show.
+            Set to a string to be a directory to store frames.
         :param nullop_start: start with random number of null ops
         :param live_losts_as_eoe: consider lost of lives as end of episode.  useful for training.
         """
@@ -57,18 +60,24 @@ class AtariPlayer(RLEnvironment):
         self.ale.setBool('color_averaging', False)
         # manual.pdf suggests otherwise. may need to check
         self.ale.setFloat('repeat_action_probability', 0.0)
-        self.ale.loadROM(rom_file)
 
-        self.width, self.height = self.ale.getScreenDims()
-        self.actions = self.ale.getMinimalActionSet()
-
+        # viz setup
+        if isinstance(viz, six.string_types):
+            assert os.path.isdir(viz), viz
+            self.ale.setString('record_screen_dir', viz)
+            viz = 0
         if isinstance(viz, int):
             viz = float(viz)
         self.viz = viz
-        self.romname = os.path.basename(rom_file)
         if self.viz and isinstance(self.viz, float):
+            self.windowname = os.path.basename(rom_file)
             cv2.startWindowThread()
-            cv2.namedWindow(self.romname)
+            cv2.namedWindow(self.windowname)
+
+        self.ale.loadROM(rom_file)
+        self.width, self.height = self.ale.getScreenDims()
+        self.actions = self.ale.getMinimalActionSet()
+
 
         self.live_lost_as_eoe = live_lost_as_eoe
         self.frame_skip = frame_skip
@@ -95,7 +104,7 @@ class AtariPlayer(RLEnvironment):
         ret = np.maximum(ret, self.last_raw_screen)
         if self.viz:
             if isinstance(self.viz, float):
-                cv2.imshow(self.romname, ret)
+                cv2.imshow(self.windowname, ret)
                 time.sleep(self.viz)
         ret = ret[self.height_range[0]:self.height_range[1],:]
         # 0.299,0.587.0.114. same as rgb2y in torch/image

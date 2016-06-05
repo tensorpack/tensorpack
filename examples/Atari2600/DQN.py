@@ -28,21 +28,15 @@ from tensorpack.callbacks import *
 
 from tensorpack.RL import *
 
-"""
-Implement DQN in:
-Human-level Control Through Deep Reinforcement Learning
-for atari games. Use the variants in:
-Deep Reinforcement Learning with Double Q-learning.
-"""
-
 BATCH_SIZE = 32
 IMAGE_SIZE = (84, 84)
 FRAME_HISTORY = 4
-ACTION_REPEAT = 3
+ACTION_REPEAT = 4
 HEIGHT_RANGE = (36, 204)    # for breakout
+#HEIGHT_RANGE = (28, -8)   # for pong
+
 CHANNEL = FRAME_HISTORY
 IMAGE_SHAPE3 = IMAGE_SIZE + (CHANNEL,)
-#HEIGHT_RANGE = (28, -8)   # for pong
 GAMMA = 0.99
 
 INIT_EXPLORATION = 1
@@ -52,7 +46,7 @@ END_EXPLORATION = 0.1
 MEMORY_SIZE = 1e6
 INIT_MEMORY_SIZE = 50000
 STEP_PER_EPOCH = 10000
-EVAL_EPISODE = 100
+EVAL_EPISODE = 50
 
 NUM_ACTIONS = None
 ROM_FILE = None
@@ -63,10 +57,10 @@ def get_player(viz=False, train=False):
             live_lost_as_eoe=train)
     global NUM_ACTIONS
     NUM_ACTIONS = pl.get_num_actions()
-
     if not train:
         pl = HistoryFramePlayer(pl, FRAME_HISTORY)
         pl = PreventStuckPlayer(pl, 30, 1)
+    pl = LimitLengthPlayer(pl, 20000)
     return pl
 
 class Model(ModelDesc):
@@ -81,7 +75,7 @@ class Model(ModelDesc):
     def _get_DQN_prediction(self, image, is_training):
         """ image: [0,255]"""
         image = image / 255.0
-        with argscope(Conv2D, nl=tf.nn.relu, use_bias=True):
+        with argscope(Conv2D, nl=PReLU.f, use_bias=True):
             l = Conv2D('conv0', image, out_channel=32, kernel_shape=5, stride=1)
             l = MaxPooling('pool0', l, 2)
             l = Conv2D('conv1', l, out_channel=32, kernel_shape=5, stride=1)
@@ -158,7 +152,11 @@ def play_one_episode(player, func, verbose=False):
     return np.mean(player.play_one_episode(f))
 
 def play_model(model_path):
-    player = get_player(0.013)
+    import uuid
+    dirname = 'record' + str(uuid.uuid1())[:6]
+    print dirname
+    os.mkdir(dirname)
+    player = get_player(viz=dirname)
     cfg = PredictConfig(
             model=Model(),
             input_data_mapping=[0],
@@ -168,8 +166,9 @@ def play_model(model_path):
     while True:
         score = play_one_episode(player, predfunc)
         print("Total:", score)
+        break
 
-def eval_with_funcs(predict_funcs):
+def eval_with_funcs(predict_funcs, nr_eval=EVAL_EPISODE):
     class Worker(StoppableThread):
         def __init__(self, func, queue):
             super(Worker, self).__init__()
@@ -181,7 +180,7 @@ def eval_with_funcs(predict_funcs):
                 score = play_one_episode(player, self.func)
                 self.queue_put_stoppable(self.q, score)
 
-    q = queue.Queue(maxsize=3)
+    q = queue.Queue(maxsize=2)
     threads = [Worker(f, q) for f in predict_funcs]
 
     for k in threads:
@@ -189,10 +188,11 @@ def eval_with_funcs(predict_funcs):
         time.sleep(0.1) # avoid simulator bugs
     stat = StatCounter()
     try:
-        for _ in tqdm(range(EVAL_EPISODE)):
+        for _ in tqdm(range(nr_eval)):
             r = q.get()
             stat.feed(r)
     finally:
+        logger.info("Waiting for all the workers to finish the last run...")
         for k in threads: k.stop()
         for k in threads: k.join()
         return (stat.average, stat.max)
@@ -214,9 +214,14 @@ class Evaluator(Callback):
         NR_PROC = min(multiprocessing.cpu_count() // 2, 8)
         self.pred_funcs = [self.trainer.get_predict_func(
            ['state'], ['fct/output'])] * NR_PROC
+        self.eval_episode = EVAL_EPISODE
 
     def _trigger_epoch(self):
-        mean, max = eval_with_funcs(self.pred_funcs)
+        t = time.time()
+        mean, max = eval_with_funcs(self.pred_funcs, nr_eval=self.eval_episode)
+        t = time.time() - t
+        if t > 8 * 60:  # eval takes too long
+            self.eval_episode = int(self.eval_episode * 0.89)
         self.trainer.write_scalar_summary('mean_score', mean)
         self.trainer.write_scalar_summary('max_score', max)
 
@@ -240,7 +245,7 @@ def get_config():
             reward_clip=(-1, 1),
             history_len=FRAME_HISTORY)
 
-    lr = tf.Variable(0.00025, trainable=False, name='learning_rate')
+    lr = tf.Variable(0.0004, trainable=False, name='learning_rate')
     tf.scalar_summary('learning_rate', lr)
 
     return TrainConfig(
