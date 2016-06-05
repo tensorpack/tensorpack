@@ -44,7 +44,7 @@ class StoppableThread(threading.Thread):
             try:
                 q.put(obj, timeout=5)
                 break
-            except queue.Queue.Full:
+            except queue.Full:
                 pass
 
     def queue_get_stoppable(self, q):
@@ -52,7 +52,7 @@ class StoppableThread(threading.Thread):
         while not self.stopped():
             try:
                 return q.get(timeout=5)
-            except queue.Queue.Full:
+            except queue.Empty:
                 pass
 
 class LoopThread(threading.Thread):

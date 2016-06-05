@@ -29,9 +29,9 @@ class RLEnvironment(object):
         :returns: (reward, isOver)
         """
 
-    @abstractmethod
     def restart_episode(self):
         """ Start a new episode, even if the current hasn't ended """
+        raise NotImplementedError()
 
     def get_stat(self):
         """
