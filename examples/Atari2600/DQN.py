@@ -152,11 +152,7 @@ def play_one_episode(player, func, verbose=False):
     return np.mean(player.play_one_episode(f))
 
 def play_model(model_path):
-    import uuid
-    dirname = 'record' + str(uuid.uuid1())[:6]
-    print dirname
-    os.mkdir(dirname)
-    player = get_player(viz=dirname)
+    player = get_player(viz=0.01)
     cfg = PredictConfig(
             model=Model(),
             input_data_mapping=[0],
@@ -166,7 +162,6 @@ def play_model(model_path):
     while True:
         score = play_one_episode(player, predfunc)
         print("Total:", score)
-        break
 
 def eval_with_funcs(predict_funcs, nr_eval=EVAL_EPISODE):
     class Worker(StoppableThread):
