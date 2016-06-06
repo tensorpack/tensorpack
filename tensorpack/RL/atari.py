@@ -12,7 +12,7 @@ from six.moves import range
 from ..utils import get_rng, logger, memoized
 from ..utils.stat import StatCounter
 
-from .envbase import RLEnvironment
+from .envbase import RLEnvironment, DiscreteActionSpace
 
 try:
     from ale_python_interface import ALEInterface
@@ -104,6 +104,7 @@ class AtariPlayer(RLEnvironment):
         ret = np.maximum(ret, self.last_raw_screen)
         if self.viz:
             if isinstance(self.viz, float):
+                #m = cv2.resize(ret, (1920,1200))
                 cv2.imshow(self.windowname, ret)
                 time.sleep(self.viz)
         ret = ret[self.height_range[0]:self.height_range[1],:]
@@ -113,11 +114,8 @@ class AtariPlayer(RLEnvironment):
         ret = np.expand_dims(ret, axis=2)
         return ret
 
-    def get_num_actions(self):
-        """
-        :returns: the number of legal actions
-        """
-        return len(self.actions)
+    def get_action_space(self):
+        return DiscreteActionSpace(len(self.actions))
 
     def restart_episode(self):
         if self.current_episode_score.count > 0:
@@ -170,7 +168,7 @@ if __name__ == '__main__':
 
     def benchmark():
         a = AtariPlayer(sys.argv[1], viz=False, height_range=(28,-8))
-        num = a.get_num_actions()
+        num = a.get_action_space().num_actions()
         rng = get_rng(num)
         start = time.time()
         cnt = 0
@@ -194,7 +192,7 @@ if __name__ == '__main__':
     else:
         a = AtariPlayer(sys.argv[1],
                 viz=0.03, height_range=(28,-8))
-        num = a.get_num_actions()
+        num = a.get_action_space().num_actions()
         rng = get_rng(num)
         import time
         while True:

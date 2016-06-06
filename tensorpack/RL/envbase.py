@@ -6,8 +6,11 @@
 
 from abc import abstractmethod, ABCMeta
 from collections import defaultdict
+import random
+from ..utils import get_rng
 
-__all__ = ['RLEnvironment', 'NaiveRLEnvironment', 'ProxyPlayer']
+__all__ = ['RLEnvironment', 'NaiveRLEnvironment', 'ProxyPlayer',
+           'DiscreteActionSpace']
 
 class RLEnvironment(object):
     __meta__ = ABCMeta
@@ -33,6 +36,10 @@ class RLEnvironment(object):
         """ Start a new episode, even if the current hasn't ended """
         raise NotImplementedError()
 
+    def get_action_space(self):
+        """ return an `ActionSpace` instance"""
+        raise NotImplementedError()
+
     def get_stat(self):
         """
         return a dict of statistics (e.g., score) for all the episodes since last call to reset_stat
@@ -40,7 +47,7 @@ class RLEnvironment(object):
         return {}
 
     def reset_stat(self):
-        """ reset the statistics counter"""
+        """ reset all statistics counter"""
         self.stats = defaultdict(list)
 
     def play_one_episode(self, func, stat='score'):
@@ -57,6 +64,28 @@ class RLEnvironment(object):
                 self.reset_stat()
                 return s
 
+class ActionSpace(object):
+    def __init__(self):
+        self.rng = get_rng(self)
+
+    @abstractmethod
+    def sample(self):
+        pass
+
+    def num_actions(self):
+        raise NotImplementedError()
+
+class DiscreteActionSpace(ActionSpace):
+    def __init__(self, num):
+        super(DiscreteActionSpace, self).__init__()
+        self.num = num
+
+    def sample(self):
+        return self.rng.randint(self.num)
+
+    def num_actions(self):
+        return self.num
+
 class NaiveRLEnvironment(RLEnvironment):
     """ for testing only"""
     def __init__(self):
@@ -67,8 +96,6 @@ class NaiveRLEnvironment(RLEnvironment):
     def action(self, act):
         self.k = act
         return (self.k, self.k > 10)
-    def restart_episode(self):
-        pass
 
 class ProxyPlayer(RLEnvironment):
     """ Serve as a proxy another player """
@@ -93,3 +120,6 @@ class ProxyPlayer(RLEnvironment):
 
     def restart_episode(self):
         self.player.restart_episode()
+
+    def get_action_space(self):
+        return self.player.get_action_space()

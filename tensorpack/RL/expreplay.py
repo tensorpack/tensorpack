@@ -25,10 +25,10 @@ class ExpReplay(DataFlow, Callback):
     def __init__(self,
             predictor,
             player,
-            num_actions,
-            memory_size=1e6,
             batch_size=32,
-            populate_size=50000,
+            memory_size=1e6,
+            populate_size=None, # deprecated
+            init_memory_size=50000,
             exploration=1,
             end_exploration=0.1,
             exploration_epoch_anneal=0.002,
@@ -37,20 +37,27 @@ class ExpReplay(DataFlow, Callback):
             history_len=1
             ):
         """
-        :param predictor: a callabale calling the up-to-date network.
-            called with a state, return a distribution
-        :param player: a `RLEnvironment`
-        :param num_actions: int
+        :param predictor: a callabale running the up-to-date network.
+            called with a state, return a distribution.
+        :param player: an `RLEnvironment`
         :param history_len: length of history frames to concat. zero-filled initial frames
+        :param update_frequency: number of new transitions to add to memory
+            after sampling a batch of transitions for training
         """
+        # XXX back-compat
+        if populate_size is not None:
+            logger.warn("populate_size in ExpReplay is deprecated in favor of init_memory_size")
+            init_memory_size = populate_size
+
         for k, v in locals().items():
             if k != 'self':
                 setattr(self, k, v)
+        self.num_actions = player.get_action_space().num_actions()
         logger.info("Number of Legal actions: {}".format(self.num_actions))
         self.mem = deque(maxlen=memory_size)
         self.rng = get_rng(self)
 
-    def init_memory(self):
+    def _init_memory(self):
         logger.info("Populating replay memory...")
 
         # fill some for the history
@@ -60,8 +67,8 @@ class ExpReplay(DataFlow, Callback):
             self._populate_exp()
         self.exploration = old_exploration
 
-        with tqdm(total=self.populate_size) as pbar:
-            while len(self.mem) < self.populate_size:
+        with tqdm(total=self.init_memory_size) as pbar:
+            while len(self.mem) < self.init_memory_size:
                 self._populate_exp()
                 pbar.update()
 
@@ -96,7 +103,7 @@ class ExpReplay(DataFlow, Callback):
     def get_data(self):
         # new s is considered useless if isOver==True
         while True:
-            batch_exp = [self.sample_one() for _ in range(self.batch_size)]
+            batch_exp = [self._sample_one() for _ in range(self.batch_size)]
 
             #import cv2
             #def view_state(state, next_state):
@@ -116,7 +123,7 @@ class ExpReplay(DataFlow, Callback):
             for _ in range(self.update_frequency):
                 self._populate_exp()
 
-    def sample_one(self):
+    def _sample_one(self):
         """ return the transition tuple for
             [idx, idx+history_len] -> [idx+1, idx+1+history_len]
             it's the transition from state idx+history_len-1 to state idx+history_len
@@ -155,14 +162,14 @@ class ExpReplay(DataFlow, Callback):
         return [state, action, reward, next_state, isOver]
 
     # Callback-related:
-
     def _before_train(self):
-        self.init_memory()
+        self._init_memory()
 
     def _trigger_epoch(self):
         if self.exploration > self.end_exploration:
             self.exploration -= self.exploration_epoch_anneal
             logger.info("Exploration changed to {}".format(self.exploration))
+        # log player statistics
         stats = self.player.get_stat()
         for k, v in six.iteritems(stats):
             if isinstance(v, float):
@@ -177,10 +184,10 @@ if __name__ == '__main__':
     player = AtariPlayer(sys.argv[1], viz=0, frame_skip=10, height_range=(36, 204))
     E = ExpReplay(predictor,
             player=player,
-            num_actions=player.get_num_actions(),
+            num_actions=player.get_action_space().num_actions(),
             populate_size=1001,
             history_len=4)
-    E.init_memory()
+    E._init_memory()
 
     for k in E.get_data():
         import IPython as IP;

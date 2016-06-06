@@ -13,20 +13,16 @@ import subprocess
 import multiprocessing, threading
 from collections import deque
 
-from six.moves import queue
-from tqdm import tqdm
-
 from tensorpack import *
 from tensorpack.models import  *
 from tensorpack.utils import  *
-from tensorpack.utils.concurrency import (ensure_proc_terminate, \
-        subproc_call, StoppableThread)
-from tensorpack.utils.stat import  *
-from tensorpack.predict import PredictConfig, get_predict_func, MultiProcessPredictWorker
+from tensorpack.utils.concurrency import *
 from tensorpack.tfutils import symbolic_functions as symbf
 from tensorpack.callbacks import *
 
 from tensorpack.RL import *
+import common
+from common import play_model, Evaluator, eval_model_multithread
 
 BATCH_SIZE = 32
 IMAGE_SIZE = (84, 84)
@@ -56,16 +52,18 @@ def get_player(viz=False, train=False):
             frame_skip=ACTION_REPEAT, image_shape=IMAGE_SIZE[::-1], viz=viz,
             live_lost_as_eoe=train)
     global NUM_ACTIONS
-    NUM_ACTIONS = pl.get_num_actions()
+    NUM_ACTIONS = pl.get_action_space().num_actions()
     if not train:
         pl = HistoryFramePlayer(pl, FRAME_HISTORY)
         pl = PreventStuckPlayer(pl, 30, 1)
     pl = LimitLengthPlayer(pl, 20000)
     return pl
+common.get_player = get_player  # so that eval functions in common can use the player
 
 class Model(ModelDesc):
     def _get_input_vars(self):
-        assert NUM_ACTIONS is not None
+        if NUM_ACTIONS is None:
+            p = get_player(); del p
         return [InputVar(tf.float32, (None,) + IMAGE_SHAPE3, 'state'),
                 InputVar(tf.int64, (None,), 'action'),
                 InputVar(tf.float32, (None,), 'reward'),
@@ -141,85 +139,6 @@ class Model(ModelDesc):
     def predictor(self, state):
         return self.predict_value.eval(feed_dict={'state:0': [state]})[0]
 
-def play_one_episode(player, func, verbose=False):
-    def f(s):
-        act = func([[s]])[0][0].argmax()
-        if random.random() < 0.01:
-            act = random.choice(range(NUM_ACTIONS))
-        if verbose:
-            print(act)
-        return act
-    return np.mean(player.play_one_episode(f))
-
-def play_model(model_path):
-    player = get_player(viz=0.01)
-    cfg = PredictConfig(
-            model=Model(),
-            input_data_mapping=[0],
-            session_init=SaverRestore(model_path),
-            output_var_names=['fct/output:0'])
-    predfunc = get_predict_func(cfg)
-    while True:
-        score = play_one_episode(player, predfunc)
-        print("Total:", score)
-
-def eval_with_funcs(predict_funcs, nr_eval=EVAL_EPISODE):
-    class Worker(StoppableThread):
-        def __init__(self, func, queue):
-            super(Worker, self).__init__()
-            self.func = func
-            self.q = queue
-        def run(self):
-            player = get_player()
-            while not self.stopped():
-                score = play_one_episode(player, self.func)
-                self.queue_put_stoppable(self.q, score)
-
-    q = queue.Queue(maxsize=2)
-    threads = [Worker(f, q) for f in predict_funcs]
-
-    for k in threads:
-        k.start()
-        time.sleep(0.1) # avoid simulator bugs
-    stat = StatCounter()
-    try:
-        for _ in tqdm(range(nr_eval)):
-            r = q.get()
-            stat.feed(r)
-    finally:
-        logger.info("Waiting for all the workers to finish the last run...")
-        for k in threads: k.stop()
-        for k in threads: k.join()
-        return (stat.average, stat.max)
-
-def eval_model_multithread(model_path):
-    cfg = PredictConfig(
-            model=Model(),
-            input_data_mapping=[0],
-            session_init=SaverRestore(model_path),
-            output_var_names=['fct/output:0'])
-    p = get_player(); del p # set NUM_ACTIONS
-    func = get_predict_func(cfg)
-    NR_PROC = min(multiprocessing.cpu_count() // 2, 8)
-    mean, max = eval_with_funcs([func] * NR_PROC)
-    logger.info("Average Score: {}; Max Score: {}".format(mean, max))
-
-class Evaluator(Callback):
-    def _before_train(self):
-        NR_PROC = min(multiprocessing.cpu_count() // 2, 8)
-        self.pred_funcs = [self.trainer.get_predict_func(
-           ['state'], ['fct/output'])] * NR_PROC
-        self.eval_episode = EVAL_EPISODE
-
-    def _trigger_epoch(self):
-        t = time.time()
-        mean, max = eval_with_funcs(self.pred_funcs, nr_eval=self.eval_episode)
-        t = time.time() - t
-        if t > 8 * 60:  # eval takes too long
-            self.eval_episode = int(self.eval_episode * 0.89)
-        self.trainer.write_scalar_summary('mean_score', mean)
-        self.trainer.write_scalar_summary('max_score', max)
-
 def get_config():
     basename = os.path.basename(__file__)
     logger.set_logger_dir(
@@ -229,10 +148,9 @@ def get_config():
     dataset_train = ExpReplay(
             predictor=M.predictor,
             player=get_player(train=True),
-            num_actions=NUM_ACTIONS,
-            memory_size=MEMORY_SIZE,
             batch_size=BATCH_SIZE,
-            populate_size=INIT_MEMORY_SIZE,
+            memory_size=MEMORY_SIZE,
+            init_memory_size=INIT_MEMORY_SIZE,
             exploration=INIT_EXPLORATION,
             end_exploration=END_EXPLORATION,
             exploration_epoch_anneal=EXPLORATION_EPOCH_ANNEAL,
@@ -253,7 +171,7 @@ def get_config():
             HumanHyperParamSetter(ObjAttrParam(dataset_train, 'exploration'), 'hyper.txt'),
             RunOp(lambda: M.update_target_param()),
             dataset_train,
-            PeriodicCallback(Evaluator(), 2),
+            PeriodicCallback(Evaluator(EVAL_EPISODE), 2),
         ]),
         # save memory for multiprocess evaluator
         session_config=get_default_sess_config(0.3),
@@ -272,20 +190,15 @@ if __name__ == '__main__':
 
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
-
     if args.task != 'train':
         assert args.load is not None
-
     ROM_FILE = args.rom
 
     if args.task == 'play':
-        play_model(args.load)
-        sys.exit()
-    if args.task == 'eval':
-        eval_model_multithread(args.load)
-        sys.exit()
-
-    with tf.Graph().as_default():
+        play_model(Model(), args.load)
+    elif args.task == 'eval':
+        eval_model_multithread(Model(), args.load, EVAL_EPISODE)
+    else:
         config = get_config()
         if args.load:
             config.session_init = SaverRestore(args.load)

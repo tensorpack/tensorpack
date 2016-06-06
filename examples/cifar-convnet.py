@@ -52,7 +52,6 @@ class Model(ModelDesc):
         l = tf.nn.dropout(l, keep_prob)
         l = FullyConnected('fc1', l, 512,
                            b_init=tf.constant_initializer(0.1))
-        # fc will have activation summary by default. disable for the output layer
         logits = FullyConnected('linear', l, out_dim=self.cifar_classnum, nl=tf.identity)
 
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)
