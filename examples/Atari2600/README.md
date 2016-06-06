@@ -11,4 +11,4 @@ To run:
 ./DQN.py --rom breakout.rom --gpu 0
 ```
 
-A demo trained with Double-DQN is available at [youtube](https://youtu.be/o21mddZtE5Y)
+A demo trained with Double-DQN on breakout is available at [youtube](https://youtu.be/o21mddZtE5Y).

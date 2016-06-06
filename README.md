@@ -1,13 +1,14 @@
 # tensorpack
 Neural Network Toolbox on TensorFlow
 
-In development. API might change a bit.
-See [examples](https://github.com/ppwwyyxx/tensorpack/tree/master/examples) to learn.
+In development but usable. API might change a bit.
+
+See some interesting [examples](https://github.com/ppwwyyxx/tensorpack/tree/master/examples) to learn.
 
 ## Features:
 
 Focused on modularity:
 
-+ Models has Scoped abstraction of common models.
++ Models has scoped abstraction of common models.
 + Dataflow defines data preprocessing in pure Python.
-+ Callbacks systems to control training behavior.
++ Callbacks systems controls training behavior.

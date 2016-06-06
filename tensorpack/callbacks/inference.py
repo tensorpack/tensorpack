@@ -156,7 +156,7 @@ class ScalarStats(Inferencer):
 
 class ClassificationError(Inferencer):
     """
-    Validate the accuracy from a `wrong` variable
+    Compute classification error from a `wrong` variable
 
     The `wrong` variable is supposed to be an integer equal to the number of failed samples in this batch.
     You can use `tf.nn.in_top_k` to record top-k error as well.
@@ -164,12 +164,12 @@ class ClassificationError(Inferencer):
     This callback produce the "true" error,
     taking account of the fact that batches might not have the same size in
     testing (because the size of test set might not be a multiple of batch size).
-    In theory, the result could be different from what produced by ValidationStatPrinter.
+    Therefore the result is different from averaging the error rate of each batch.
     """
     def __init__(self, wrong_var_name='wrong:0', summary_name='validation_error'):
         """
         :param wrong_var_name: name of the `wrong` variable
-        :param summary_name: an optional prefix for logging
+        :param summary_name: the name for logging
         """
         self.wrong_var_name = wrong_var_name
         self.summary_name = summary_name
@@ -189,6 +189,9 @@ class ClassificationError(Inferencer):
         self.trainer.write_scalar_summary(self.summary_name, self.err_stat.accuracy)
 
 class BinaryClassificationStats(Inferencer):
+    """ Compute precision/recall in binary classification, given the
+    prediction vector and the label vector.
+    """
 
     def __init__(self, pred_var_name, label_var_name, summary_prefix='val'):
         """
