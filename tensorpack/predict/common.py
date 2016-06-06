@@ -84,9 +84,6 @@ def get_predict_func(config):
     config.session_init.init(sess)
 
     def run_input(dp):
-        assert len(input_map) == len(dp), \
-            "Graph has {} inputs but dataset only gives {} components!".format(
-                    len(input_map), len(dp))
         feed = dict(zip(input_map, dp))
         return sess.run(output_vars, feed_dict=feed)
     return run_input

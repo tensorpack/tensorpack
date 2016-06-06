@@ -28,13 +28,8 @@ def play_one_episode(player, func, verbose=False):
         return act
     return np.mean(player.play_one_episode(f))
 
-def play_model(M, model_path):
+def play_model(cfg):
     player = get_player(viz=0.01)
-    cfg = PredictConfig(
-            model=M,
-            input_data_mapping=[0],
-            session_init=SaverRestore(model_path),
-            output_var_names=['fct/output:0'])
     predfunc = get_predict_func(cfg)
     while True:
         score = play_one_episode(player, predfunc)
@@ -73,25 +68,21 @@ def eval_with_funcs(predict_funcs, nr_eval):
             return (stat.average, stat.max)
         return (0, 0)
 
-def eval_model_multithread(M, model_path, nr_eval):
-    cfg = PredictConfig(
-            model=M,
-            input_data_mapping=[0],
-            session_init=SaverRestore(model_path),
-            output_var_names=['fct/output:0'])
+def eval_model_multithread(cfg, nr_eval):
     func = get_predict_func(cfg)
     NR_PROC = min(multiprocessing.cpu_count() // 2, 8)
     mean, max = eval_with_funcs([func] * NR_PROC, nr_eval)
     logger.info("Average Score: {}; Max Score: {}".format(mean, max))
 
 class Evaluator(Callback):
-    def __init__(self, nr_eval):
+    def __init__(self, nr_eval, output_name):
         self.eval_episode = nr_eval
+        self.output_name = output_name
 
     def _before_train(self):
         NR_PROC = min(multiprocessing.cpu_count() // 2, 8)
         self.pred_funcs = [self.trainer.get_predict_func(
-           ['state'], ['fct/output'])] * NR_PROC
+           ['state'], [self.output_name])] * NR_PROC
 
     def _trigger_epoch(self):
         t = time.time()

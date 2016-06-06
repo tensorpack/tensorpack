@@ -171,7 +171,7 @@ def get_config():
             HumanHyperParamSetter(ObjAttrParam(dataset_train, 'exploration'), 'hyper.txt'),
             RunOp(lambda: M.update_target_param()),
             dataset_train,
-            PeriodicCallback(Evaluator(EVAL_EPISODE), 2),
+            PeriodicCallback(Evaluator(EVAL_EPISODE, 'fct/output:0'), 2),
         ]),
         # save memory for multiprocess evaluator
         session_config=get_default_sess_config(0.3),
@@ -194,10 +194,15 @@ if __name__ == '__main__':
         assert args.load is not None
     ROM_FILE = args.rom
 
-    if args.task == 'play':
-        play_model(Model(), args.load)
-    elif args.task == 'eval':
-        eval_model_multithread(Model(), args.load, EVAL_EPISODE)
+    if args.task != 'train':
+        cfg = PredictConfig(
+                model=Model(),
+                session_init=SaverRestore(args.load),
+                output_var_names=['fct/output:0'])
+        if args.task == 'play':
+            play_model(cfg)
+        elif args.task == 'eval':
+            eval_model_multithread(cfg, EVAL_EPISODE)
     else:
         config = get_config()
         if args.load:
