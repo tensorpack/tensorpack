@@ -59,6 +59,7 @@ class SimulatorProcess(multiprocessing.Process):
             action = loads(data)
             reward, isOver = player.action(action)
             c2s_socket.send(dumps((reward, isOver)), copy=False)
+            noop = s2c_socket.recv(copy=False)
             #cnt += 1
             #if cnt % 100 == 0:
                 #print_total_timer()
@@ -122,9 +123,9 @@ class SimulatorMaster(threading.Thread):
                 reward, isOver = loads(msg)
                 client.memory[-1].reward = reward
                 if isOver:
-                    self._on_episode_over(client)
+                    self._on_episode_over(ident)
                 else:
-                    self._on_datapoint(client)
+                    self._on_datapoint(ident)
 
     @abstractmethod
     def _on_state(self, state, ident):
