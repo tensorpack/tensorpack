@@ -17,7 +17,8 @@ from ..utils.concurrency import LoopThread
 from ..tfutils.summary import summary_moving_average
 from ..tfutils import *
 
-__all__ = ['SimpleTrainer', 'QueueInputTrainer', 'start_train']
+__all__ = ['SimpleTrainer', 'QueueInputTrainer',
+        'AsyncMultiGPUTrainer', 'SyncMultiGPUTrainer']
 
 class SimpleTrainer(Trainer):
     def run_step(self):
@@ -269,7 +270,9 @@ class QueueInputTrainer(Trainer):
         return [self.get_predict_func(input_names, output_names, k)
                 for k in range(n)]
 
-def start_train(config):
-    tr = QueueInputTrainer(config)
-    tr.train()
+def AsyncMultiGPUTrainer(config):
+    return QueueInputTrainer(config, async=True)
+
+def SyncMultiGPUTrainer(config):
+    return QueueInputTrainer(config)
 

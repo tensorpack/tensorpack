@@ -55,28 +55,33 @@ class StoppableThread(threading.Thread):
             except queue.Empty:
                 pass
 
-class LoopThread(threading.Thread):
+class LoopThread(StoppableThread):
     """ A pausable thread that simply runs a loop"""
-    def __init__(self, func):
+    def __init__(self, func, pausable=True):
         """
         :param func: the function to run
         """
         super(LoopThread, self).__init__()
-        self.func = func
-        self.lock = threading.Lock()
+        self._func = func
+        self._pausable = pausable
+        if pausable:
+            self._lock = threading.Lock()
         self.daemon = True
 
     def run(self):
-        while True:
-            self.lock.acquire()
-            self.lock.release()
-            self.func()
+        while not self.stopped():
+            if self._pausable:
+                self._lock.acquire()
+                self._lock.release()
+            self._func()
 
     def pause(self):
-        self.lock.acquire()
+        assert self._pausable
+        self._lock.acquire()
 
     def resume(self):
-        self.lock.release()
+        assert self._pausable
+        self._lock.release()
 
 
 class DIE(object):
