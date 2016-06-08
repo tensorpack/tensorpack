@@ -3,9 +3,9 @@
 # File: cifar10-resnet.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
+import numpy as np
 import tensorflow as tf
 import argparse
-import numpy as np
 import os
 
 from tensorpack.train import TrainConfig, QueueInputTrainer
