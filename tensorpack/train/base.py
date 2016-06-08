@@ -16,7 +16,6 @@ from ..utils.concurrency import start_proc_mask_signal
 from ..callbacks import StatHolder
 from ..tfutils import *
 from ..tfutils.summary import create_summary
-from ..tfutils.modelutils import describe_model
 
 __all__ = ['Trainer']
 
@@ -141,7 +140,6 @@ class Trainer(object):
                 self.sess.close()
 
     def init_session_and_coord(self):
-        describe_model()
         self.sess = tf.Session(config=self.config.session_config)
         self.coord = tf.train.Coordinator()
 

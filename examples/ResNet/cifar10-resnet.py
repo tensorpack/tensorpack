@@ -8,14 +8,9 @@ import tensorflow as tf
 import argparse
 import os
 
-from tensorpack.train import TrainConfig, QueueInputTrainer
-from tensorpack.models import *
-from tensorpack.callbacks import *
-from tensorpack.utils import *
-from tensorpack.tfutils import *
+from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
-from tensorpack.dataflow import *
 
 """
 CIFAR10-resnet example.
@@ -186,11 +181,9 @@ if __name__ == '__main__':
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
-    with tf.Graph().as_default():
-        with tf.device('/cpu:0'):
-            config = get_config()
-        if args.load:
-            config.session_init = SaverRestore(args.load)
-        if args.gpu:
-            config.nr_tower = len(args.gpu.split(','))
-        QueueInputTrainer(config).train()
+    config = get_config()
+    if args.load:
+        config.session_init = SaverRestore(args.load)
+    if args.gpu:
+        config.nr_tower = len(args.gpu.split(','))
+    SyncMultiGPUTrainer(config).train()
