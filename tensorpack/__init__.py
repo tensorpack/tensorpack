@@ -18,3 +18,4 @@ from .utils import *
 from .tfutils import *
 from .callbacks import *
 from .dataflow import *
+from .predict import *
