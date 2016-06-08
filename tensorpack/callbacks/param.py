@@ -7,6 +7,7 @@ import tensorflow as tf
 from abc import abstractmethod, ABCMeta, abstractproperty
 import operator
 import six
+import os
 
 from .base import Callback
 from ..utils import logger
@@ -29,6 +30,7 @@ class HyperParam(object):
         """ define how the value of the param will be set"""
         pass
 
+    @property
     def readable_name(self):
         """ A name to display"""
         return self._readable_name

@@ -138,6 +138,7 @@ class Model(ModelDesc):
 
     def predictor(self, state):
         return self.predict_value.eval(feed_dict={'state:0': [state]})[0]
+        #return self.predict_value.eval(feed_dict={'input_deque:0': [state]})[0]
 
 def get_config():
     basename = os.path.basename(__file__)
@@ -174,7 +175,7 @@ def get_config():
             PeriodicCallback(Evaluator(EVAL_EPISODE, 'fct/output:0'), 2),
         ]),
         # save memory for multiprocess evaluator
-        session_config=get_default_sess_config(0.3),
+        session_config=get_default_sess_config(0.6),
         model=M,
         step_per_epoch=STEP_PER_EPOCH,
     )
@@ -208,4 +209,5 @@ if __name__ == '__main__':
         if args.load:
             config.session_init = SaverRestore(args.load)
         SimpleTrainer(config).train()
+        #QueueInputTrainer(config).train()
 
