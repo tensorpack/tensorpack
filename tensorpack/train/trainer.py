@@ -5,20 +5,16 @@
 import tensorflow as tf
 import threading
 import time
-import re
-import functools
 from six.moves import zip
 
 from .base import Trainer
 from ..dataflow.common import RepeatedData
 from ..utils import *
-from ..utils.concurrency import LoopThread
 from ..tfutils.summary import summary_moving_average
 from ..tfutils.modelutils import describe_model
 from ..tfutils import *
 
-__all__ = ['SimpleTrainer', 'QueueInputTrainer',
-        'AsyncMultiGPUTrainer', 'SyncMultiGPUTrainer']
+__all__ = ['SimpleTrainer', 'QueueInputTrainer']
 
 class SimpleTrainer(Trainer):
     def run_step(self):
@@ -110,6 +106,7 @@ class QueueInputTrainer(Trainer):
         :param config: a `TrainConfig` instance
         :param input_queue: a `tf.QueueBase` instance to be used to buffer datapoints.
             Defaults to a FIFO queue of size 100.
+        :param predict_tower: list of gpu idx to run prediction. default to be [0].
         """
         super(QueueInputTrainer, self).__init__(config)
         self.input_vars = self.model.get_input_vars()
@@ -119,7 +116,7 @@ class QueueInputTrainer(Trainer):
         else:
             self.input_queue = input_queue
         if predict_tower is None:
-            # by default, use first training tower for prediction
+            # by default, use the first training gpu for prediction
             predict_tower = [0]
         self.predict_tower = predict_tower
         self.dequed_inputs = None
@@ -144,7 +141,7 @@ class QueueInputTrainer(Trainer):
                 self.model.build_graph(inputs, False)
 
     def _single_tower_grad(self):
-        """ Get grad and cost for single-tower case"""
+        """ Get grad and cost for single-tower"""
         self.dequed_inputs = model_inputs = self._get_model_inputs()
         self.model.build_graph(model_inputs, True)
         cost_var = self.model.get_cost()
@@ -153,13 +150,14 @@ class QueueInputTrainer(Trainer):
         return grads
 
     def _build_enque_thread(self):
-        # create a thread that keeps filling the queue
+        """ create a thread that keeps filling the queue """
         enqueue_op = self.input_queue.enqueue(self.input_vars)
         self.input_th = EnqueueThread(self, self.input_queue, enqueue_op, self.input_vars)
         self.extra_threads_procs.append(self.input_th)
 
     def train(self):
-        assert self.config.nr_tower == 1, "QueueInputTrainer only supports 1 tower!"
+        assert self.config.nr_tower == 1, \
+                "QueueInputTrainer doesn't support multigpu! Use Sync/AsyncMultiGPUTrainer instead."
         self.init_session_and_coord()
         self._build_enque_thread()
 
@@ -207,119 +205,3 @@ class QueueInputTrainer(Trainer):
         return [self.get_predict_func(input_names, output_names, k)
                 for k in range(n)]
 
-class MultiGPUTrainer(QueueInputTrainer):
-    """ Base class for multi-gpu training"""
-    def __init__(self, config, input_queue=None, predict_tower=None):
-        super(MultiGPUTrainer, self).__init__(config, input_queue, predict_tower)
-        assert config.nr_tower > 1
-        self.dequed_inputs = []
-
-    @staticmethod
-    def _average_grads(tower_grads):
-        ret = []
-        for grad_and_vars in zip(*tower_grads):
-            v = grad_and_vars[0][1]
-            try:
-                grad = tf.add_n([x[0] for x in grad_and_vars]) / float(len(tower_grads))
-            except AssertionError:
-                logger.error("Error while processing gradients of {}".format(v.name))
-                raise
-            ret.append((grad, v))
-        return ret
-
-    def _multi_tower_grads(self):
-        logger.info("Training a model of {} tower".format(self.config.nr_tower))
-
-        grad_list = []
-        for i in range(self.config.nr_tower):
-            with tf.device('/gpu:{}'.format(i)), \
-                    tf.name_scope('tower{}'.format(i)) as scope:
-                logger.info("Building graph for training tower {}...".format(i))
-                model_inputs = self._get_model_inputs()    # each tower dequeue from input queue
-                self.dequed_inputs.append(model_inputs)
-                self.model.build_graph(model_inputs, True)
-                cost_var = self.model.get_cost() # build tower
-
-                # gate_gradienst=0 seems to be faster?
-                grad_list.append(
-                    self.config.optimizer.compute_gradients(cost_var, gate_gradients=0))
-
-                if i == 0:
-                    tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, cost_var)
-                    tf.get_variable_scope().reuse_variables()
-                    # avoid repeated summary from each device
-                    backup = backup_collection(self.SUMMARY_BACKUP_KEYS)
-        restore_collection(backup)
-        return grad_list
-
-class SyncMultiGPUTrainer(MultiGPUTrainer):
-    def train(self):
-        self.init_session_and_coord()
-        self._build_enque_thread()
-
-        grad_list = self._multi_tower_grads()
-
-        grads = MultiGPUTrainer._average_grads(grad_list)
-        grads = self.process_grads(grads)
-
-        self.train_op = tf.group(
-            self.config.optimizer.apply_gradients(grads, get_global_step_var()),
-            summary_moving_average())
-        describe_model()
-
-        self._build_predict_tower()
-
-        # [debug]: do nothing in training
-        #self.train_op = self.dequed_inputs[0][0] + self.dequed_inputs[1][0]
-        self.main_loop()
-
-class AsyncMultiGPUTrainer(MultiGPUTrainer):
-    def train(self):
-        self.init_session_and_coord()
-        self._build_enque_thread()
-
-        grad_list = self._multi_tower_grads()
-        # pretend to average the grads, in order to make async and
-        # sync have consistent effective learning rate
-        def scale(grads):
-            return [(grad / self.config.nr_tower, var) for grad, var in grads]
-        grad_list = map(scale, grad_list)
-        grad_list = [self.process_grads(g) for g in grad_list]
-        grads = grad_list[0]  # use grad from the first tower for the main iteration
-
-        self.train_op = tf.group(
-            self.config.optimizer.apply_gradients(grads, get_global_step_var()),
-            summary_moving_average())
-        describe_model()
-
-        # prepare train_op for the rest of the towers
-        self.threads = []
-        for k in range(1, self.config.nr_tower):
-            train_op = self.config.optimizer.apply_gradients(grad_list[k])
-            f = lambda op=train_op: self.sess.run([op]) # avoid late-binding
-            th = LoopThread(f)
-            th.pause()
-            th.start()
-            self.threads.append(th)
-        self.async_running = False
-
-        self._build_predict_tower()
-
-        # [debug]: do nothing in training
-        #self.train_op = self.dequed_inputs[0][0] + self.dequed_inputs[1][0]
-        self.main_loop()
-
-    def run_step(self):
-        if not self.async_running:
-            self.async_running = True
-            for th in self.threads: # resume all threads
-                th.resume()
-        self.sess.run([self.train_op])    # faster since train_op return None
-
-    def _trigger_epoch(self):
-        self.async_running = False
-        for th in self.threads:
-            th.pause()
-        if self.summary_op is not None:
-            summary_str = self.summary_op.eval()
-            self._process_summary(summary_str)

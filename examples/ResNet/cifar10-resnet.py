@@ -141,6 +141,10 @@ def get_data(train_or_test):
     return ds
 
 def get_config():
+    basename = os.path.basename(__file__)
+    logger.set_logger_dir(
+        os.path.join('train_log', basename[:basename.rfind('.')]))
+
     # prepare dataset
     dataset_train = get_data('train')
     step_per_epoch = dataset_train.size()
@@ -173,10 +177,6 @@ if __name__ == '__main__':
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.') # nargs='*' in multi mode
     parser.add_argument('--load', help='load model')
     args = parser.parse_args()
-
-    basename = os.path.basename(__file__)
-    logger.set_logger_dir(
-        os.path.join('train_log', basename[:basename.rfind('.')]))
 
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu

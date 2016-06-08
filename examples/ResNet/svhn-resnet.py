@@ -8,16 +8,9 @@ import argparse
 import numpy as np
 import os
 
-from tensorpack.train import TrainConfig, QueueInputTrainer
-from tensorpack.models import *
-from tensorpack.callbacks import *
-from tensorpack.utils import *
-from tensorpack.tfutils import *
+from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
-from tensorpack.dataflow import *
-from tensorpack.dataflow import imgaug
-
 
 """
 ResNet-110 for SVHN Digit Classification.
@@ -151,6 +144,10 @@ def get_data(train_or_test):
     return ds
 
 def get_config():
+    basename = os.path.basename(__file__)
+    logger.set_logger_dir(
+        os.path.join('train_log', basename[:basename.rfind('.')]))
+
     # prepare dataset
     dataset_train = get_data('train')
     step_per_epoch = dataset_train.size()
@@ -184,18 +181,12 @@ if __name__ == '__main__':
     parser.add_argument('--load', help='load model')
     args = parser.parse_args()
 
-    basename = os.path.basename(__file__)
-    logger.set_logger_dir(
-        os.path.join('train_log', basename[:basename.rfind('.')]))
-
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
-    with tf.Graph().as_default():
-        with tf.device('/cpu:0'):
-            config = get_config()
-        if args.load:
-            config.session_init = SaverRestore(args.load)
-        if args.gpu:
-            config.nr_tower = len(args.gpu.split(','))
-        QueueInputTrainer(config).train()
+    config = get_config()
+    if args.load:
+        config.session_init = SaverRestore(args.load)
+    if args.gpu:
+        config.nr_tower = len(args.gpu.split(','))
+    SyncMultiGPUTrainer(config).train()

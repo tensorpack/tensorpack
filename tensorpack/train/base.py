@@ -88,7 +88,7 @@ class Trainer(object):
         summary = tf.Summary.FromString(summary_str)
         for val in summary.value:
             if val.WhichOneof('value') == 'simple_value':
-                val.tag = re.sub('tower[0-9]+/', '', val.tag)   # TODO move to subclasses
+                val.tag = re.sub('tower[p0-9]+/', '', val.tag)   # TODO move to subclasses
                 self.stat_holder.add_stat(val.tag, val.simple_value)
         self.summary_writer.add_summary(summary, self.global_step)
 
