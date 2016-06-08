@@ -43,7 +43,7 @@ class SimulatorProcess(multiprocessing.Process):
         context = zmq.Context()
         c2s_socket = context.socket(zmq.DEALER)
         c2s_socket.identity = 'simulator-{}'.format(self.idx)
-        #c2s_socket.set_hwm(2)
+        c2s_socket.set_hwm(2)
         c2s_socket.connect(self.c2s)
 
         s2c_socket = context.socket(zmq.DEALER)
@@ -54,8 +54,7 @@ class SimulatorProcess(multiprocessing.Process):
         #cnt = 0
         while True:
             state = player.current_state()
-            #c2s_socket.send(dumps(state), copy=False)
-            c2s_socket.send('h')
+            c2s_socket.send(dumps(state), copy=False)
             #with total_timer('client recv_action'):
             data = s2c_socket.recv(copy=False)
             action = loads(data)
@@ -126,8 +125,7 @@ class SimulatorMaster(threading.Thread):
             client = self.clients[ident]
             client.protocol_state = 1 - client.protocol_state   # first flip the state
             if not client.protocol_state == 0:   # state-action
-                #state = loads(msg)
-                state = np.zeros((84, 84, 4), dtype='float32')
+                state = loads(msg)
                 self._on_state(state, ident)
             else:       # reward-response
                 reward, isOver = loads(msg)

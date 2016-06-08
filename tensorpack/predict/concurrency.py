@@ -112,6 +112,7 @@ class PredictorWorkerThread(threading.Thread):
             batched, futures = fetch()
             #print "batched size: ", len(batched), "queuesize: ", self.queue.qsize()
             outputs = self.func([batched])
+            # debug, for speed testing
             #if self.xxx is None:
                 #outputs = self.func([batched])
                 #self.xxx = outputs
