@@ -81,42 +81,36 @@ class MultiProcessQueuePredictWorker(MultiProcessPredictWorker):
                 self.outqueue.put((tid, self.func(dp)))
 
 class PredictorWorkerThread(threading.Thread):
-    def __init__(self, queue, pred_func, id):
+    def __init__(self, queue, pred_func, id, batch_size=5):
         super(PredictorWorkerThread, self).__init__()
         self.queue = queue
         self.func = pred_func
         self.daemon = True
+        self.batch_size = batch_size
         self.id = id
 
     def run(self):
-        #self.xxx = None
         def fetch():
-            batched = []
-            futures = []
+            batched, futures = [], []
             inp, f = self.queue.get()
             batched.append(inp)
             futures.append(f)
-            #print "func queue:", self.queue.qsize()
-            #return batched, futures
+            if self.batch_size == 1:
+                return batched, futures
             while True:
                 try:
                     inp, f = self.queue.get_nowait()
                     batched.append(inp)
                     futures.append(f)
-                    if len(batched) == 5:
+                    if len(batched) == self.batch_size:
                         break
                 except queue.Empty:
                     break
             return batched, futures
         #self.xxx = None
         while True:
-            # normal input
-            #inputs, f = self.queue.get()
-            #outputs = self.func(inputs)
-            #f.set_result(outputs)
-
             batched, futures = fetch()
-            #print "batched size: ", len(batched)
+            #print "batched size: ", len(batched), "queuesize: ", self.queue.qsize()
             outputs = self.func([batched])
             #if self.xxx is None:
                 #outputs = self.func([batched])
@@ -134,13 +128,13 @@ class MultiThreadAsyncPredictor(object):
     An online predictor (use the current active session) that works with
     QueueInputTrainer. Use async interface, support multi-thread and multi-GPU.
     """
-    def __init__(self, trainer, input_names, output_names, nr_thread):
+    def __init__(self, trainer, input_names, output_names, nr_thread, batch_size=5):
         """
         :param trainer: a `QueueInputTrainer` instance.
         """
         self.input_queue = queue.Queue(maxsize=nr_thread*10)
         self.threads = [
-            PredictorWorkerThread(self.input_queue, f, id)
+            PredictorWorkerThread(self.input_queue, f, id, batch_size)
             for id, f in enumerate(
                 trainer.get_predict_funcs(
                     input_names, output_names, nr_thread))]

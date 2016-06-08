@@ -9,6 +9,7 @@ import threading
 import weakref
 from abc import abstractmethod, ABCMeta
 from collections import defaultdict, namedtuple
+import numpy as np
 from six.moves import queue
 
 from ..utils.timer import *
@@ -53,12 +54,14 @@ class SimulatorProcess(multiprocessing.Process):
         #cnt = 0
         while True:
             state = player.current_state()
-            c2s_socket.send(dumps(state), copy=False)
+            #c2s_socket.send(dumps(state), copy=False)
+            c2s_socket.send('h')
             #with total_timer('client recv_action'):
             data = s2c_socket.recv(copy=False)
             action = loads(data)
             reward, isOver = player.action(action)
             c2s_socket.send(dumps((reward, isOver)), copy=False)
+            #with total_timer('client recv_ack'):
             ACK = s2c_socket.recv(copy=False)
             #cnt += 1
             #if cnt % 100 == 0:
@@ -103,7 +106,7 @@ class SimulatorMaster(threading.Thread):
         self.daemon = True
 
         # queueing messages to client
-        self.send_queue = queue.Queue(maxsize=50)
+        self.send_queue = queue.Queue(maxsize=100)
         self.send_thread = LoopThread(lambda:
                 self.s2c_socket.send_multipart(self.send_queue.get()))
         self.send_thread.start()
@@ -123,7 +126,8 @@ class SimulatorMaster(threading.Thread):
             client = self.clients[ident]
             client.protocol_state = 1 - client.protocol_state   # first flip the state
             if not client.protocol_state == 0:   # state-action
-                state = loads(msg)
+                #state = loads(msg)
+                state = np.zeros((84, 84, 4), dtype='float32')
                 self._on_state(state, ident)
             else:       # reward-response
                 reward, isOver = loads(msg)

@@ -76,6 +76,7 @@ class EnqueueThread(threading.Thread):
         self.queue = queue
         self.close_op = self.queue.close(cancel_pending_enqueues=True)
 
+        self.size_op = self.queue.size()
         self.daemon = True
 
     def run(self):
@@ -86,6 +87,8 @@ class EnqueueThread(threading.Thread):
                         if self.coord.should_stop():
                             return
                         feed = dict(zip(self.input_vars, dp))
+                        #_, size = self.sess.run([self.op, self.size_op], feed_dict=feed)
+                        #print size
                         self.op.run(feed_dict=feed)
             except tf.errors.CancelledError as e:
                 pass
@@ -102,7 +105,9 @@ class QueueInputTrainer(Trainer):
     Support multi GPU.
     """
 
-    def __init__(self, config, input_queue=None, async=False):
+    def __init__(self, config, input_queue=None,
+            async=False,
+            predict_tower=None):
         """
         :param config: a `TrainConfig` instance
         :param input_queue: a `tf.QueueBase` instance to be used to buffer datapoints.
@@ -119,6 +124,10 @@ class QueueInputTrainer(Trainer):
         if self.async:
             assert self.config.nr_tower > 1
         self.dequed_inputs = []
+        if predict_tower is None:
+            # by default, only use first training tower for prediction
+            predict_tower = [0]
+        self.predict_tower = predict_tower
 
     @staticmethod
     def _average_grads(tower_grads):
@@ -144,6 +153,15 @@ class QueueInputTrainer(Trainer):
         self.dequed_inputs.append(ret)
         return ret
 
+    def _build_predict_tower(self):
+        inputs = self.model.get_input_vars()
+        for k in self.predict_tower:
+            logger.info("Building graph for predict tower 0{}...".format(k))
+            with tf.device('/gpu:{}'.format(k)), \
+                    tf.name_scope('tower0{}'.format(k)):
+                self.model.build_graph(inputs, False)
+                tf.get_variable_scope().reuse_variables()
+
     def _single_tower_grad(self):
         """ Get grad and cost for single-tower case"""
         model_inputs = self._get_model_inputs()
@@ -159,12 +177,14 @@ class QueueInputTrainer(Trainer):
         # to avoid repeated summary from each device
         collect_dedup = [tf.GraphKeys.SUMMARIES, MOVING_SUMMARY_VARS_KEY]
         kept_summaries = {}
+        for k in collect_dedup:
+            del tf.get_collection_ref(k)[:]
 
         grad_list = []
         for i in range(self.config.nr_tower):
             with tf.device('/gpu:{}'.format(i)), \
                     tf.name_scope('tower{}'.format(i)) as scope:
-                logger.info("Building graph for tower {}...".format(i))
+                logger.info("Building graph for training tower {}...".format(i))
                 model_inputs = self._get_model_inputs()    # each tower dequeue from input queue
                 self.model.build_graph(model_inputs, True)
                 cost_var = self.model.get_cost() # build tower
@@ -186,6 +206,7 @@ class QueueInputTrainer(Trainer):
     def train(self):
         enqueue_op = self.input_queue.enqueue(self.input_vars)
 
+        self._build_predict_tower()
         if self.config.nr_tower > 1:
             grad_list = self._multi_tower_grads()
             if not self.async:
@@ -219,10 +240,13 @@ class QueueInputTrainer(Trainer):
                 self.threads.append(th)
             self.async_running = False
 
+
         self.init_session_and_coord()
         # create a thread that keeps filling the queue
         self.input_th = EnqueueThread(self, self.input_queue, enqueue_op, self.input_vars)
         self.extra_threads_procs.append(self.input_th)
+        # do nothing in training
+        #self.train_op = self.dequed_inputs[0][0] + self.dequed_inputs[1][0]
         self.main_loop()
 
     def run_step(self):
@@ -247,22 +271,18 @@ class QueueInputTrainer(Trainer):
         """
         :param tower: return the kth predict_func
         """
-        tower = tower % self.config.nr_tower
+        tower = self.predict_tower[tower % len(self.predict_tower)]
         if self.config.nr_tower > 1:
-            logger.info("Prepare a predictor function for tower{} ...".format(tower))
+            logger.info("Prepare a predictor function for tower0{} ...".format(tower))
         raw_input_vars = get_vars_by_names(input_names)
-        input_var_idxs = [self.input_vars.index(v) for v in raw_input_vars]
-
-        dequed = self.dequed_inputs[tower]
-        input_vars = [dequed[k] for k in input_var_idxs]
 
         if self.config.nr_tower > 1:
-            output_names = ['tower{}/'.format(tower) + n for n in output_names]
+            output_names = ['tower0{}/'.format(tower) + n for n in output_names]
 
         output_vars = get_vars_by_names(output_names)
         def func(inputs):
-            assert len(inputs) == len(input_vars)
-            feed = dict(zip(input_vars, inputs))
+            assert len(inputs) == len(raw_input_vars)
+            feed = dict(zip(raw_input_vars, inputs))
             return self.sess.run(output_vars, feed_dict=feed)
         return func
 

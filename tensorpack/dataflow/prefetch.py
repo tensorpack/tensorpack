@@ -10,7 +10,7 @@ import uuid
 import os
 
 from .base import ProxyDataFlow
-from ..utils.concurrency import ensure_proc_terminate
+from ..utils.concurrency import *
 from ..utils.serialize import *
 from ..utils import logger
 
@@ -107,8 +107,7 @@ class PrefetchDataZMQ(ProxyDataFlow):
 
         self.procs = [PrefetchProcessZMQ(self.ds, self.pipename)
                       for _ in range(self.nr_proc)]
-        for x in self.procs:
-            x.start()
+        start_proc_mask_signal(self.procs)
 
         # __del__ not guranteed to get called at exit
         import atexit
