@@ -28,6 +28,7 @@ def log_once():
 class AtariPlayer(RLEnvironment):
     """
     A wrapper for atari emulator.
+    NOTE: will automatically restart when a real episode ends
     """
     def __init__(self, rom_file, viz=0, height_range=(None,None),
             frame_skip=4, image_shape=(84, 84), nullop_start=30,
@@ -58,7 +59,7 @@ class AtariPlayer(RLEnvironment):
 
         self.ale.setInt("frame_skip", 1)
         self.ale.setBool('color_averaging', False)
-        # manual.pdf suggests otherwise. may need to check
+        # manual.pdf suggests otherwise.
         self.ale.setFloat('repeat_action_probability', 0.0)
 
         # viz setup
