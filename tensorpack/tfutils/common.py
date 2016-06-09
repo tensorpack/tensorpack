@@ -5,13 +5,19 @@
 
 from ..utils.naming import *
 import tensorflow as tf
+from copy import copy
+import six
+from contextlib import contextmanager
 
 __all__ = ['get_default_sess_config',
            'get_global_step',
            'get_global_step_var',
            'get_op_var_name',
-           'get_vars_by_names'
-           ]
+           'get_vars_by_names',
+           'backup_collection',
+           'restore_collection',
+           'clear_collection',
+           'freeze_collection']
 
 def get_default_sess_config(mem_fraction=0.9):
     """
@@ -66,3 +72,24 @@ def get_vars_by_names(names):
         opn, varn = get_op_var_name(n)
         ret.append(G.get_tensor_by_name(varn))
     return ret
+
+def backup_collection(keys):
+    ret = {}
+    for k in keys:
+        ret[k] = copy(tf.get_collection(k))
+    return ret
+
+def restore_collection(backup):
+    for k, v in six.iteritems(backup):
+        del tf.get_collection_ref(k)[:]
+        tf.get_collection_ref(k).extend(v)
+
+def clear_collection(keys):
+    for k in keys:
+        del tf.get_collection_ref(k)[:]
+
+@contextmanager
+def freeze_collection(keys):
+    backup = backup_collection(keys)
+    yield
+    restore_collection(backup)

@@ -36,7 +36,7 @@ class ModelSaver(Callback):
         var_dict = {}
         for v in vars:
             name = v.op.name
-            if re.match('tower[1-9]', name):
+            if re.match('tower[p1-9]', name):
                 #logger.info("Skip {} when saving model.".format(name))
                 continue
             if 'tower0/' in name:

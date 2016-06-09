@@ -5,7 +5,9 @@
 
 import tensorflow as tf
 from copy import copy
+import re
 
+from ..utils import logger
 from ._common import layer_register
 
 __all__ = ['BatchNorm']
@@ -48,9 +50,35 @@ def BatchNorm(x, use_local_stat=True, decay=0.9, epsilon=1e-5):
     else:
         batch_mean, batch_var = tf.nn.moments(x, [0, 1, 2], keep_dims=False)
 
-    ema = tf.train.ExponentialMovingAverage(decay=decay)
-    ema_apply_op = ema.apply([batch_mean, batch_var])
-    ema_mean, ema_var = ema.average(batch_mean), ema.average(batch_var)
+    emaname = 'EMA'
+    if not batch_mean.name.startswith('towerp'):
+        ema = tf.train.ExponentialMovingAverage(decay=decay, name=emaname)
+        ema_apply_op = ema.apply([batch_mean, batch_var])
+        ema_mean, ema_var = ema.average(batch_mean), ema.average(batch_var)
+    else:
+        # use training-statistics in prediction
+        assert not use_local_stat
+        # have to do this again to get actual name. see issue:
+        # https://github.com/tensorflow/tensorflow/issues/2740
+        ema = tf.train.ExponentialMovingAverage(decay=decay, name=emaname)
+        ema_apply_op = ema.apply([batch_mean, batch_var])
+        ema_mean, ema_var = ema.average(batch_mean), ema.average(batch_var)
+
+
+        G = tf.get_default_graph()
+        try:
+            mean_name = re.sub('towerp[0-9]+/', '', ema_mean.name)
+            var_name = re.sub('towerp[0-9]+/', '', ema_var.name)
+            #var_name = batch_var.op.name[prefixlen:] + '/' + emaname + ':0'
+            ema_mean = G.get_tensor_by_name(mean_name)
+            ema_var = G.get_tensor_by_name(var_name)
+        except KeyError:
+            mean_name = re.sub('towerp[0-9]+/', 'tower0/', ema_mean.name)
+            var_name = re.sub('towerp[0-9]+/', 'tower0/', ema_var.name)
+            ema_mean = G.get_tensor_by_name(mean_name)
+            ema_var = G.get_tensor_by_name(var_name)
+        #logger.info("In prediction, using {} instead of {} for {}".format(
+            #mean_name, ema_mean.name, batch_mean.name))
 
     if use_local_stat:
         with tf.control_dependencies([ema_apply_op]):
@@ -58,6 +86,7 @@ def BatchNorm(x, use_local_stat=True, decay=0.9, epsilon=1e-5):
                 x, batch_mean, batch_var, beta, gamma, epsilon, 'bn')
     else:
         batch = tf.cast(tf.shape(x)[0], tf.float32)
+        # XXX TODO batch==1?
         mean, var = ema_mean, ema_var * batch / (batch - 1) # unbiased variance estimator
         return tf.nn.batch_normalization(
             x, mean, var, beta, gamma, epsilon, 'bn')

@@ -16,7 +16,6 @@ from ..utils.concurrency import start_proc_mask_signal
 from ..callbacks import StatHolder
 from ..tfutils import *
 from ..tfutils.summary import create_summary
-from ..tfutils.modelutils import describe_model
 
 __all__ = ['Trainer']
 
@@ -89,7 +88,7 @@ class Trainer(object):
         summary = tf.Summary.FromString(summary_str)
         for val in summary.value:
             if val.WhichOneof('value') == 'simple_value':
-                val.tag = re.sub('tower[0-9]+/', '', val.tag)   # TODO move to subclasses
+                val.tag = re.sub('tower[p0-9]+/', '', val.tag)   # TODO move to subclasses
                 self.stat_holder.add_stat(val.tag, val.simple_value)
         self.summary_writer.add_summary(summary, self.global_step)
 
@@ -141,7 +140,6 @@ class Trainer(object):
                 self.sess.close()
 
     def init_session_and_coord(self):
-        describe_model()
         self.sess = tf.Session(config=self.config.session_config)
         self.coord = tf.train.Coordinator()
 

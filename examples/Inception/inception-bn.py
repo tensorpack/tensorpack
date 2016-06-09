@@ -196,10 +196,9 @@ if __name__ == '__main__':
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
-    with tf.Graph().as_default():
-        config = get_config()
-        if args.load:
-            config.session_init = SaverRestore(args.load)
-        if args.gpu:
-            config.nr_tower = len(args.gpu.split(','))
-        QueueInputTrainer(config).train()
+    config = get_config()
+    if args.load:
+        config.session_init = SaverRestore(args.load)
+    if args.gpu:
+        config.nr_tower = len(args.gpu.split(','))
+    SyncMultiGPUTrainer(config).train()

@@ -37,7 +37,7 @@ def print_total_timer():
     if len(_TOTAL_TIMER_DATA) == 0:
         return
     for k, v in six.iteritems(_TOTAL_TIMER_DATA):
-        logger.info("Total Time: {} -> {} sec, {} times".format(
-            k, v.sum, v.count))
+        logger.info("Total Time: {} -> {} sec, {} times, {} sec/time".format(
+            k, v.sum, v.count, v.average))
 
 atexit.register(print_total_timer)

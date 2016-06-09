@@ -14,12 +14,8 @@ import multiprocessing, threading
 from collections import deque
 
 from tensorpack import *
-from tensorpack.models import  *
-from tensorpack.utils import  *
 from tensorpack.utils.concurrency import *
 from tensorpack.tfutils import symbolic_functions as symbf
-from tensorpack.callbacks import *
-
 from tensorpack.RL import *
 import common
 from common import play_model, Evaluator, eval_model_multithread

@@ -106,8 +106,10 @@ class SaverRestore(SessionInit):
         var_dict = defaultdict(list)
         for v in vars_to_restore:
             name = v.op.name
+            if 'towerp' in name:
+                logger.warn("Anything from prediction tower shouldn't be saved.")
             if 'tower' in name:
-                new_name = re.sub('tower[0-9]+/', '', name)
+                new_name = re.sub('tower[p0-9]+/', '', name)
                 name = new_name
             if name in vars_available:
                 var_dict[name].append(v)

@@ -90,7 +90,7 @@ def summary_moving_average():
     vars_to_summary = tf.get_collection(MOVING_SUMMARY_VARS_KEY)
     avg_maintain_op = averager.apply(vars_to_summary)
     for idx, c in enumerate(vars_to_summary):
-        name = re.sub('tower[0-9]+/', '', c.op.name)
+        name = re.sub('tower[p0-9]+/', '', c.op.name)
         tf.scalar_summary(name, averager.average(c))
     return avg_maintain_op
 
