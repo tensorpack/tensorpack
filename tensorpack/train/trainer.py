@@ -107,6 +107,7 @@ class QueueInputTrainer(Trainer):
         :param input_queue: a `tf.QueueBase` instance to be used to buffer datapoints.
             Defaults to a FIFO queue of size 100.
         :param predict_tower: list of gpu idx to run prediction. default to be [0].
+            Use -1 for cpu.
         """
         super(QueueInputTrainer, self).__init__(config)
         self.input_vars = self.model.get_input_vars()
@@ -136,7 +137,7 @@ class QueueInputTrainer(Trainer):
         tf.get_variable_scope().reuse_variables()
         for k in self.predict_tower:
             logger.info("Building graph for predict towerp{}...".format(k))
-            with tf.device('/gpu:{}'.format(k)), \
+            with tf.device('/gpu:{}'.format(k) if k >= 0 else '/cpu:0'), \
                     tf.name_scope('towerp{}'.format(k)):
                 self.model.build_graph(inputs, False)
 

@@ -81,29 +81,31 @@ class MultiProcessQueuePredictWorker(MultiProcessPredictWorker):
                 self.outqueue.put((tid, self.func(dp)))
 
 class PredictorWorkerThread(threading.Thread):
-    def __init__(self, queue, pred_func, id, batch_size=5):
+    def __init__(self, queue, pred_func, id, nr_input_var, batch_size=5):
         super(PredictorWorkerThread, self).__init__()
         self.queue = queue
         self.func = pred_func
         self.daemon = True
         self.batch_size = batch_size
+        self.nr_input_var = nr_input_var
         self.id = id
 
     def run(self):
         def fetch():
-            batched, futures = [], []
+            batched, futures = [[] for _ in range(self.nr_input_var)], []
             inp, f = self.queue.get()
-            batched.append(inp)
+            for k in range(self.nr_input_var):
+                batched[k].append(inp[k])
             futures.append(f)
-            if self.batch_size == 1:
-                return batched, futures
-            while True:
+            # fill a batch
+            cnt = 1
+            while cnt < self.batch_size:
                 try:
                     inp, f = self.queue.get_nowait()
-                    batched.append(inp)
+                    for k in range(self.nr_input_var):
+                        batched[k].append(inp[k])
                     futures.append(f)
-                    if len(batched) == self.batch_size:
-                        break
+                    cnt += 1
                 except queue.Empty:
                     break
             return batched, futures
@@ -111,7 +113,7 @@ class PredictorWorkerThread(threading.Thread):
         while True:
             batched, futures = fetch()
             #print "batched size: ", len(batched), "queuesize: ", self.queue.qsize()
-            outputs = self.func([batched])
+            outputs = self.func(batched)
             # debug, for speed testing
             #if self.xxx is None:
                 #outputs = self.func([batched])
@@ -135,7 +137,9 @@ class MultiThreadAsyncPredictor(object):
         """
         self.input_queue = queue.Queue(maxsize=nr_thread*10)
         self.threads = [
-            PredictorWorkerThread(self.input_queue, f, id, batch_size)
+            PredictorWorkerThread(
+                self.input_queue, f, id,
+                len(input_names), batch_size=batch_size)
             for id, f in enumerate(
                 trainer.get_predict_funcs(
                     input_names, output_names, nr_thread))]
@@ -148,7 +152,10 @@ class MultiThreadAsyncPredictor(object):
             t.start()
 
     def put_task(self, inputs, callback=None):
-        """ return a Future of output."""
+        """
+        :params inputs: a data point (list of component) matching input_names (not batched)
+        :params callback: a callback to get called with the list of outputs
+        :returns: a Future of output."""
         f = Future()
         if callback is not None:
             f.add_done_callback(callback)

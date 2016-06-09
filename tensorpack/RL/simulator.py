@@ -10,6 +10,7 @@ import weakref
 from abc import abstractmethod, ABCMeta
 from collections import defaultdict, namedtuple
 import numpy as np
+import six
 from six.moves import queue
 
 from ..utils.timer import *
@@ -84,12 +85,13 @@ class SimulatorMaster(threading.Thread):
 
     class Experience(object):
         """ A transition of state, or experience"""
-        def __init__(self, state, action, reward, misc=None):
-            """ misc: whatever other attribute you want to save"""
+        def __init__(self, state, action, reward, **kwargs):
+            """ kwargs: whatever other attribute you want to save"""
             self.state = state
             self.action = action
             self.reward = reward
-            self.misc = misc
+            for k, v in six.iteritems(kwargs):
+                setattr(self, k, v)
 
     def __init__(self, pipe_c2s, pipe_s2c):
         super(SimulatorMaster, self).__init__()
@@ -120,7 +122,7 @@ class SimulatorMaster(threading.Thread):
         atexit.register(clean_context, [self.c2s_socket, self.s2c_socket], self.context)
 
     def run(self):
-        self.clients = defaultdict(SimulatorMaster.ClientState)
+        self.clients = defaultdict(self.ClientState)
         while True:
             ident, msg = self.c2s_socket.recv_multipart()
             client = self.clients[ident]

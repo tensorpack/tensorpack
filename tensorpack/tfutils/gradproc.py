@@ -92,7 +92,7 @@ class MapGradient(GradientProcessor):
     def __init__(self, func, regex='.*'):
         """
         :param func: takes a tensor and returns a tensor
-        ;param regex: used to match variables. default to match all variables.
+        :param regex: used to match variables. default to match all variables.
         """
         self.func = func
         if not regex.endswith('$'):

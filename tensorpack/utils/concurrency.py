@@ -122,10 +122,10 @@ def subproc_call(cmd, timeout=None):
                 shell=True, timeout=timeout)
         return output
     except subprocess.TimeoutExpired as e:
-        logger.warn("Timeout in evaluation!")
+        logger.warn("Command timeout!")
         logger.warn(e.output)
     except subprocess.CalledProcessError as e:
-        logger.warn("Evaluation script failed: {}".format(e.returncode))
+        logger.warn("Commnad failed: {}".format(e.returncode))
         logger.warn(e.output)
 
 class OrderedContainer(object):
