@@ -108,6 +108,7 @@ class SimulatorMaster(threading.Thread):
         self.send_queue = queue.Queue(maxsize=100)
         self.send_thread = LoopThread(lambda:
                 self.s2c_socket.send_multipart(self.send_queue.get()))
+        self.send_thread.daemon = True
         self.send_thread.start()
 
         # make sure socket get closed at the end

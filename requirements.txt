@@ -2,4 +2,5 @@ termcolor
 pillow
 scipy
 tqdm
-dill
+msgpack
+msgpack-numpy
