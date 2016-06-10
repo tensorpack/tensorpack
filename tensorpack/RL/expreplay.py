@@ -170,10 +170,14 @@ class ExpReplay(DataFlow, Callback):
             self.exploration -= self.exploration_epoch_anneal
             logger.info("Exploration changed to {}".format(self.exploration))
         # log player statistics
-        stats = self.player.get_stat()
+        stats = self.player.stats
         for k, v in six.iteritems(stats):
-            if isinstance(v, float):
-                self.trainer.write_scalar_summary('expreplay/' + k, v)
+            try:
+                mean, max = np.mean(v), np.max(v)
+                self.trainer.write_scalar_summary('expreplay/mean_' + k, mean)
+                self.trainer.write_scalar_summary('expreplay/max_' + k, max)
+            except:
+                pass
         self.player.reset_stat()
 
 if __name__ == '__main__':

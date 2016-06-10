@@ -10,9 +10,11 @@ from .envbase import ProxyPlayer
 __all__ = ['HistoryFramePlayer']
 
 class HistoryFramePlayer(ProxyPlayer):
-    """ Include history frames in state, or use black images"""
+    """ Include history frames in state, or use black images
+        Assume player will do auto-restart.
+    """
     def __init__(self, player, hist_len):
-        """ :params hist_len: total length of the state, including the current
+        """ :param hist_len: total length of the state, including the current
             and `hist_len-1` history"""
         super(HistoryFramePlayer, self).__init__(player)
         self.history = deque(maxlen=hist_len)

@@ -28,7 +28,7 @@ class RLEnvironment(object):
     def action(self, act):
         """
         Perform an action. Will automatically start a new episode if isOver==True
-        :params act: the action
+        :param act: the action
         :returns: (reward, isOver)
         """
 
@@ -40,19 +40,13 @@ class RLEnvironment(object):
         """ return an `ActionSpace` instance"""
         raise NotImplementedError()
 
-    def get_stat(self):
-        """
-        return a dict of statistics (e.g., score) for all the episodes since last call to reset_stat
-        """
-        return {}
-
     def reset_stat(self):
         """ reset all statistics counter"""
         self.stats = defaultdict(list)
 
     def play_one_episode(self, func, stat='score'):
         """ play one episode for eval.
-            :params func: call with the state and return an action
+            :param func: call with the state and return an action
             :returns: the score of this episode
         """
         while True:
@@ -101,9 +95,6 @@ class ProxyPlayer(RLEnvironment):
     """ Serve as a proxy another player """
     def __init__(self, player):
         self.player = player
-
-    def get_stat(self):
-        return self.player.get_stat()
 
     def reset_stat(self):
         self.player.reset_stat()

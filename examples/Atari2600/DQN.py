@@ -168,7 +168,7 @@ def get_config():
             HumanHyperParamSetter(ObjAttrParam(dataset_train, 'exploration'), 'hyper.txt'),
             RunOp(lambda: M.update_target_param()),
             dataset_train,
-            PeriodicCallback(Evaluator(EVAL_EPISODE, 'fct/output:0'), 2),
+            PeriodicCallback(Evaluator(EVAL_EPISODE, ['state'], ['fct/output']), 2),
         ]),
         # save memory for multiprocess evaluator
         session_config=get_default_sess_config(0.6),

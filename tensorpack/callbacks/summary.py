@@ -47,11 +47,11 @@ class StatHolder(object):
         """
         self.print_tag = None if print_tag is None else set(print_tag)
 
-    def get_stat_now(self, k):
+    def get_stat_now(self, key):
         """
         Return the value of a stat in the current epoch.
         """
-        return self.stat_now[k]
+        return self.stat_now[key]
 
     def finalize(self):
         """

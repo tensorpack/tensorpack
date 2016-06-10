@@ -44,10 +44,8 @@ def logSoftmax(x):
     :param x: NxC tensor.
     :returns: NxC tensor.
     """
-    with tf.op_scope([x], 'logSoftmax'):
-        z = x - tf.reduce_max(x, 1, keep_dims=True)
-        logprob = z - tf.log(tf.reduce_sum(tf.exp(z), 1, keep_dims=True))
-        return logprob
+    logger.warn("symbf.logSoftmax is deprecated in favor of tf.nn.log_softmax")
+    return tf.nn.log_softmax(x)
 
 def class_balanced_binary_class_cross_entropy(pred, label, name='cross_entropy_loss'):
     """
@@ -73,11 +71,13 @@ def class_balanced_binary_class_cross_entropy(pred, label, name='cross_entropy_l
     cost = tf.reduce_mean(cost, name=name)
     return cost
 
-def print_stat(x):
+def print_stat(x, message=None):
     """ a simple print op.
         Use it like: x = print_stat(x)
     """
-    return tf.Print(x, [tf.reduce_mean(x), x], summarize=20)
+    if message is None:
+        message = x.op.name
+    return tf.Print(x, [tf.reduce_mean(x), x], summarize=20, message=message)
 
 def rms(x, name=None):
     if name is None:

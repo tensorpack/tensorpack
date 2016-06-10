@@ -156,13 +156,6 @@ class AtariPlayer(RLEnvironment):
             isOver = isOver or newlives < oldlives
         return (r, isOver)
 
-    def get_stat(self):
-        try:
-            return {'avg_score': np.mean(self.stats['score']),
-                    'max_score': float(np.max(self.stats['score'])) }
-        except ValueError:
-            return {}
-
 if __name__ == '__main__':
     import sys
     import time
