@@ -7,8 +7,9 @@ import os, sys
 from six.moves import urllib
 
 def mkdir_p(dirname):
+    """ make a dir recursively, but do nothing if the dir exists"""
     assert dirname is not None
-    if dirname == '':
+    if dirname == '' or os.path.isdir(dirname):
         return
     try:
         os.makedirs(dirname)
