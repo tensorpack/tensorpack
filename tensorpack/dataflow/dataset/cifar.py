@@ -13,10 +13,9 @@ from six.moves import urllib, range
 import copy
 import logging
 
-from ...utils import logger, get_rng
+from ...utils import logger, get_rng, get_dataset_dir
 from ...utils.fs import download
 from ..base import DataFlow
-from .common import get_dataset_dir
 
 __all__ = ['Cifar10', 'Cifar100']
 

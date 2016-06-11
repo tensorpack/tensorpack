@@ -7,10 +7,9 @@ import tarfile
 import cv2
 import numpy as np
 
-from ...utils import logger, get_rng
+from ...utils import logger, get_rng, get_dataset_dir
 from ...utils.fs import mkdir_p, download
 from ..base import DataFlow
-from .common import get_dataset_dir
 
 __all__ = ['ILSVRCMeta', 'ILSVRC12']
 

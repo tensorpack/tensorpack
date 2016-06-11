@@ -9,7 +9,7 @@ import cv2
 from collections import deque
 import six
 from six.moves import range
-from ..utils import get_rng, logger, memoized
+from ..utils import get_rng, logger, memoized, get_dataset_dir
 from ..utils.stat import StatCounter
 
 from .envbase import RLEnvironment, DiscreteActionSpace
@@ -46,6 +46,10 @@ class AtariPlayer(RLEnvironment):
         :param live_losts_as_eoe: consider lost of lives as end of episode.  useful for training.
         """
         super(AtariPlayer, self).__init__()
+        if not os.path.isfile(rom_file) and '/' not in rom_file:
+            rom_file = os.path.join(get_dataset_dir('atari_rom'), rom_file)
+        assert os.path.isfile(rom_file), "rom {} not found".format(rom_file)
+
         self.ale = ALEInterface()
         self.rng = get_rng(self)
 

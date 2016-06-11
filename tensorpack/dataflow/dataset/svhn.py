@@ -10,9 +10,8 @@ import scipy
 import scipy.io
 from six.moves import range
 
-from ...utils import logger, get_rng
+from ...utils import logger, get_rng, get_dataset_dir
 from ..base import DataFlow
-from .common import get_dataset_dir
 
 __all__ = ['SVHNDigit']
 

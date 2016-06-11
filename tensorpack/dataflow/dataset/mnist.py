@@ -9,10 +9,9 @@ import random
 import numpy
 from six.moves import urllib, range
 
-from ...utils import logger
+from ...utils import logger, get_dataset_dir
 from ...utils.fs import download
 from ..base import DataFlow
-from .common import get_dataset_dir
 
 __all__ = ['Mnist']
 

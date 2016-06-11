@@ -7,10 +7,10 @@ import os, glob
 import cv2
 import numpy as np
 from scipy.io import loadmat
-from ...utils import logger, get_rng
+
+from ...utils import logger, get_rng, get_dataset_dir
 from ...utils.fs import download
 from ..base import DataFlow
-from .common import get_dataset_dir
 
 __all__ = ['BSDS500']
 
