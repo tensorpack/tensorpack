@@ -3,8 +3,8 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import sys, os
+import cv2
 import multiprocessing
-from scipy.misc import imsave
 
 from ..utils.fs import mkdir_p
 
@@ -28,8 +28,7 @@ def dump_dataset_images(ds, dirname, max_count=None, index=0):
         if i > max_count:
             return
         img = dp[index]
-        imsave(os.path.join(dirname, "{}.jpg".format(i)), img)
-
+        cv2.imwrite(os.path.join(dirname, "{}.jpg".format(i)), img)
 
 def dataflow_to_process_queue(ds, size, nr_consumer):
     """

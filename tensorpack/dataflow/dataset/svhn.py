@@ -6,14 +6,17 @@
 import os
 import random
 import numpy as np
-import scipy
-import scipy.io
 from six.moves import range
 
 from ...utils import logger, get_rng, get_dataset_dir
 from ..base import DataFlow
 
-__all__ = ['SVHNDigit']
+try:
+    import scipy.io
+    __all__ = ['SVHNDigit']
+except ImportError:
+    logger.error("Cannot import scipy. SVHNDigit dataset won't be available!")
+    __all__ = []
 
 SVHN_URL = "http://ufldl.stanford.edu/housenumbers/"
 

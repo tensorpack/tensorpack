@@ -1,3 +1,4 @@
+scipy
 nltk
 h5py
 pyzmq

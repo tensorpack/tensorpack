@@ -1,6 +1,5 @@
 termcolor
 pillow
-scipy
 tqdm
 msgpack
 msgpack-numpy

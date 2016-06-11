@@ -6,14 +6,17 @@
 import os, glob
 import cv2
 import numpy as np
-from scipy.io import loadmat
 
 from ...utils import logger, get_rng, get_dataset_dir
 from ...utils.fs import download
 from ..base import DataFlow
 
-__all__ = ['BSDS500']
-
+try:
+    from scipy.io import loadmat
+    __all__ = ['BSDS500']
+except ImportError:
+    logger.error("Cannot import scipy. BSDS500 dataset won't be available!")
+    __all__ = []
 
 DATA_URL = "http://www.eecs.berkeley.edu/Research/Projects/CS/vision/grouping/BSR/BSR_bsds500.tgz"
 IMG_W, IMG_H = 481, 321
