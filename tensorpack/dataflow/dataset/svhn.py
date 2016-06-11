@@ -15,7 +15,7 @@ try:
     import scipy.io
     __all__ = ['SVHNDigit']
 except ImportError:
-    logger.error("Cannot import scipy. SVHNDigit dataset won't be available!")
+    logger.warn("Cannot import scipy. SVHNDigit dataset won't be available!")
     __all__ = []
 
 SVHN_URL = "http://ufldl.stanford.edu/housenumbers/"

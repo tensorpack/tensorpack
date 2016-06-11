@@ -16,7 +16,7 @@ __all__ = []
 
 class MyFormatter(logging.Formatter):
     def format(self, record):
-        date = colored('[%(asctime)s %(lineno)d@%(filename)s:%(name)s]', 'green')
+        date = colored('[%(asctime)s @%(filename)s:%(lineno)d]', 'green')
         msg = '%(message)s'
         if record.levelno == logging.WARNING:
             fmt = date + ' ' + colored('WRN', 'red', attrs=['blink']) + ' ' + msg
@@ -27,25 +27,22 @@ class MyFormatter(logging.Formatter):
         if hasattr(self, '_style'):
             # Python3 compatibilty
             self._style._fmt = fmt
-            self._fmt = fmt
-        else:
-            self._fmt = fmt
+        self._fmt = fmt
         return super(MyFormatter, self).format(record)
 
 def getlogger():
     logger = logging.getLogger('tensorpack')
     logger.propagate = False
     logger.setLevel(logging.INFO)
-    handler = logging.StreamHandler()
+    handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(MyFormatter(datefmt='%d %H:%M:%S'))
     logger.addHandler(handler)
     return logger
+logger = getlogger()
+
 
 def get_time_str():
     return datetime.now().strftime('%m%d-%H%M%S')
-
-logger = getlogger()
-
 # logger file and directory:
 global LOG_FILE, LOG_DIR
 def _set_file(path):
