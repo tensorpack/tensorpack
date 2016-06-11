@@ -10,6 +10,7 @@ from scipy.io import loadmat
 from ...utils import logger, get_rng
 from ...utils.fs import download
 from ..base import DataFlow
+from .common import get_dataset_dir
 
 __all__ = ['BSDS500']
 
@@ -36,7 +37,7 @@ class BSDS500(DataFlow):
         """
         # check and download data
         if data_dir is None:
-            data_dir = os.path.join(os.path.dirname(__file__), 'bsds500_data')
+            data_dir = get_dataset_dir('bsds500_data')
         if not os.path.isdir(os.path.join(data_dir, 'BSR')):
             download(DATA_URL, data_dir)
             filename = DATA_URL.split('/')[-1]

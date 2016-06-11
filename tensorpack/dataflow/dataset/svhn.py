@@ -12,6 +12,7 @@ from six.moves import range
 
 from ...utils import logger, get_rng
 from ..base import DataFlow
+from .common import get_dataset_dir
 
 __all__ = ['SVHNDigit']
 
@@ -36,9 +37,7 @@ class SVHNDigit(DataFlow):
             self.X, self.Y = SVHNDigit.Cache[name]
             return
         if data_dir is None:
-            data_dir = os.path.join(
-                os.path.dirname(__file__),
-                'svhn_data')
+            data_dir = get_dataset_dir('svhn_data')
         assert name in ['train', 'test', 'extra'], name
         filename = os.path.join(data_dir, name + '_32x32.mat')
         assert os.path.isfile(filename), \

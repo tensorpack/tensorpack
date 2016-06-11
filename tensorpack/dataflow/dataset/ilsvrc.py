@@ -8,8 +8,9 @@ import cv2
 import numpy as np
 
 from ...utils import logger, get_rng
-from ..base import DataFlow
 from ...utils.fs import mkdir_p, download
+from ..base import DataFlow
+from .common import get_dataset_dir
 
 __all__ = ['ILSVRCMeta', 'ILSVRC12']
 
@@ -28,7 +29,7 @@ class ILSVRCMeta(object):
     """
     def __init__(self, dir=None):
         if dir is None:
-            dir = os.path.join(os.path.dirname(__file__), 'ilsvrc_metadata')
+            dir = get_dataset_dir('ilsvrc_metadata')
         self.dir = dir
         mkdir_p(self.dir)
         self.caffe_pb_file = os.path.join(self.dir, 'caffe_pb2.py')
@@ -91,8 +92,7 @@ class ILSVRC12(DataFlow):
         name: 'train' or 'val' or 'test'
         """
         assert name in ['train', 'test', 'val']
-        self.dir = dir
-        self.name = name
+        self.full_dir = os.path.join(dir, name)
         self.shuffle = shuffle
         self.meta = ILSVRCMeta(meta_dir)
         self.imglist = self.meta.get_image_list(name)
@@ -116,7 +116,7 @@ class ILSVRC12(DataFlow):
             self.rng.shuffle(idxs)
         for k in idxs:
             tp = self.imglist[k]
-            fname = os.path.join(self.dir, self.name, tp[0]).strip()
+            fname = os.path.join(self.full_dir, tp[0]).strip()
             im = cv2.imread(fname, cv2.IMREAD_COLOR)
             assert im is not None, fname
             if im.ndim == 2:
