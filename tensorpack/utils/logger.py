@@ -35,7 +35,7 @@ def getlogger():
     logger.propagate = False
     logger.setLevel(logging.INFO)
     handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(MyFormatter(datefmt='%d %H:%M:%S'))
+    handler.setFormatter(MyFormatter(datefmt='%m%d %H:%M:%S'))
     logger.addHandler(handler)
     return logger
 logger = getlogger()
@@ -52,7 +52,7 @@ def _set_file(path):
         info("Log file '{}' backuped to '{}'".format(path, backup_name))
     hdl = logging.FileHandler(
         filename=path, encoding='utf-8', mode='w')
-    hdl.setFormatter(MyFormatter(datefmt='%d %H:%M:%S'))
+    hdl.setFormatter(MyFormatter(datefmt='%m%d %H:%M:%S'))
     logger.addHandler(hdl)
 
 def set_logger_dir(dirname, action=None):

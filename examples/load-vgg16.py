@@ -10,7 +10,7 @@ import os
 import argparse
 import cPickle as pkl
 
-from tensorpack.train import TrainConfig, start_train
+from tensorpack.train import TrainConfig
 from tensorpack.predict import PredictConfig, get_predict_func
 from tensorpack.models import *
 from tensorpack.utils import *
@@ -82,6 +82,7 @@ def run_test(path, input):
         model=Model(),
         input_data_mapping=[0],
         session_init=ParamRestore(param_dict),
+        session_config=get_default_sess_config(0.9),
         output_var_names=['output:0']   # output:0 is the probability distribution
     )
     predict_func = get_predict_func(pred_config)

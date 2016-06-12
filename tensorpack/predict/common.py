@@ -50,7 +50,8 @@ class PredictConfig(object):
         """
         def assert_type(v, tp):
             assert isinstance(v, tp), v.__class__
-        self.session_config = kwargs.pop('session_config', None)
+        self.session_config = kwargs.pop('session_config',
+            get_default_sess_config(0.3))
         self.session_init = kwargs.pop('session_init')
         self.model = kwargs.pop('model')
         self.input_data_mapping = kwargs.pop('input_data_mapping', None)
@@ -80,7 +81,7 @@ def get_predict_func(config):
                    for n in output_var_names]
 
     # XXX does it work? start with minimal memory, but allow growth
-    sess = tf.Session(config=get_default_sess_config(0.3))
+    sess = tf.Session(config=config.session_config)
     config.session_init.init(sess)
 
     def run_input(dp):
