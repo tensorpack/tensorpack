@@ -133,8 +133,8 @@ class Model(ModelDesc):
                 SummaryGradient()]
 
     def predictor(self, state):
+        # TODO change to a multitower predictor for speedup
         return self.predict_value.eval(feed_dict={'state:0': [state]})[0]
-        #return self.predict_value.eval(feed_dict={'input_deque:0': [state]})[0]
 
 def get_config():
     basename = os.path.basename(__file__)
@@ -206,4 +206,5 @@ if __name__ == '__main__':
             config.session_init = SaverRestore(args.load)
         SimpleTrainer(config).train()
         #QueueInputTrainer(config).train()
+        # TODO test if QueueInput affects learning
 

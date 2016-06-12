@@ -84,8 +84,7 @@ class EnqueueThread(threading.Thread):
                         if self.coord.should_stop():
                             return
                         feed = dict(zip(self.input_vars, dp))
-                        #_, size = self.sess.run([self.op, self.size_op], feed_dict=feed)
-                        #print size
+                        #print self.sess.run([self.op, self.size_op], feed_dict=feed)[1]
                         self.op.run(feed_dict=feed)
             except tf.errors.CancelledError as e:
                 pass
@@ -144,7 +143,7 @@ class QueueInputTrainer(Trainer):
     def _single_tower_grad(self):
         """ Get grad and cost for single-tower"""
         self.dequed_inputs = model_inputs = self._get_model_inputs()
-        self.model.build_graph(model_inputs, True)
+        self.model.build_graph(self.dequed_inputs, True)
         cost_var = self.model.get_cost()
         grads = self.config.optimizer.compute_gradients(cost_var)
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, cost_var)
