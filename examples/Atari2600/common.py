@@ -52,7 +52,6 @@ def eval_with_funcs(predict_funcs, nr_eval):
 
     for k in threads:
         k.start()
-        time.sleep(0.1) # avoid simulator bugs
     stat = StatCounter()
     try:
         for _ in tqdm(range(nr_eval)):

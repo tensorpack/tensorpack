@@ -7,6 +7,7 @@ import numpy as np
 import time, os
 import cv2
 from collections import deque
+import threading
 import six
 from six.moves import range
 from ..utils import get_rng, logger, memoized, get_dataset_dir
@@ -24,6 +25,8 @@ __all__ = ['AtariPlayer']
 @memoized
 def log_once():
     logger.warn("https://github.com/mgbellemare/Arcade-Learning-Environment/pull/171 is not merged!")
+
+_ALE_LOCK = threading.Lock()
 
 class AtariPlayer(RLEnvironment):
     """
@@ -50,36 +53,38 @@ class AtariPlayer(RLEnvironment):
             rom_file = os.path.join(get_dataset_dir('atari_rom'), rom_file)
         assert os.path.isfile(rom_file), "rom {} not found".format(rom_file)
 
-        self.ale = ALEInterface()
-        self.rng = get_rng(self)
-
-        self.ale.setInt("random_seed", self.rng.randint(0, 10000))
-        self.ale.setBool("showinfo", False)
-
         try:
             ALEInterface.setLoggerMode(ALEInterface.Logger.Warning)
         except AttributeError:
             log_once()
 
-        self.ale.setInt("frame_skip", 1)
-        self.ale.setBool('color_averaging', False)
-        # manual.pdf suggests otherwise.
-        self.ale.setFloat('repeat_action_probability', 0.0)
+        # avoid simulator bugs: https://github.com/mgbellemare/Arcade-Learning-Environment/issues/86
+        with _ALE_LOCK:
+            self.ale = ALEInterface()
+            self.rng = get_rng(self)
 
-        # viz setup
-        if isinstance(viz, six.string_types):
-            assert os.path.isdir(viz), viz
-            self.ale.setString('record_screen_dir', viz)
-            viz = 0
-        if isinstance(viz, int):
-            viz = float(viz)
-        self.viz = viz
-        if self.viz and isinstance(self.viz, float):
-            self.windowname = os.path.basename(rom_file)
-            cv2.startWindowThread()
-            cv2.namedWindow(self.windowname)
+            self.ale.setInt("random_seed", self.rng.randint(0, 10000))
+            self.ale.setBool("showinfo", False)
 
-        self.ale.loadROM(rom_file)
+            self.ale.setInt("frame_skip", 1)
+            self.ale.setBool('color_averaging', False)
+            # manual.pdf suggests otherwise.
+            self.ale.setFloat('repeat_action_probability', 0.0)
+
+            # viz setup
+            if isinstance(viz, six.string_types):
+                assert os.path.isdir(viz), viz
+                self.ale.setString('record_screen_dir', viz)
+                viz = 0
+            if isinstance(viz, int):
+                viz = float(viz)
+            self.viz = viz
+            if self.viz and isinstance(self.viz, float):
+                self.windowname = os.path.basename(rom_file)
+                cv2.startWindowThread()
+                cv2.namedWindow(self.windowname)
+
+            self.ale.loadROM(rom_file)
         self.width, self.height = self.ale.getScreenDims()
         self.actions = self.ale.getMinimalActionSet()
 
