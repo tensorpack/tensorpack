@@ -64,7 +64,6 @@ def BatchNorm(x, use_local_stat=True, decay=0.9, epsilon=1e-5):
         ema_apply_op = ema.apply([batch_mean, batch_var])
         ema_mean, ema_var = ema.average(batch_mean), ema.average(batch_var)
 
-
         G = tf.get_default_graph()
         try:
             mean_name = re.sub('towerp[0-9]+/', '', ema_mean.name)

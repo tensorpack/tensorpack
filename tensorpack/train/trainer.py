@@ -90,9 +90,9 @@ class EnqueueThread(threading.Thread):
                 pass
             except Exception:
                 logger.exception("Exception in EnqueueThread:")
+            finally:
                 self.sess.run(self.close_op)
                 self.coord.request_stop()
-            finally:
                 logger.info("Enqueue Thread Exited.")
 
 class QueueInputTrainer(Trainer):
