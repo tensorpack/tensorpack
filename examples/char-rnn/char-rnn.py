@@ -13,11 +13,8 @@ import six
 from six.moves import map, range
 
 from tensorpack import *
-from tensorpack.models import  *
-from tensorpack.utils import  *
 from tensorpack.tfutils.gradproc import  *
 from tensorpack.utils.lut import LookUpTable
-from tensorpack.callbacks import *
 
 from tensorflow.python.ops import rnn_cell
 from tensorflow.python.ops import rnn
@@ -190,8 +187,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
-    else:
-        os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
     if args.command == 'sample':
         param.softmax_temprature = args.temperature
@@ -199,9 +194,8 @@ if __name__ == '__main__':
         sample(args.load, args.start, args.num)
         sys.exit()
     else:
-        with tf.Graph().as_default():
-            config = get_config()
-            if args.load:
-                config.session_init = SaverRestore(args.load)
-            QueueInputTrainer(config).train()
+        config = get_config()
+        if args.load:
+            config.session_init = SaverRestore(args.load)
+        QueueInputTrainer(config).train()
 
