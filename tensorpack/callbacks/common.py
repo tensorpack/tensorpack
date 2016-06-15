@@ -29,6 +29,7 @@ class ModelSaver(Callback):
             var_list=ModelSaver._get_vars(),
             max_to_keep=self.keep_recent,
             keep_checkpoint_every_n_hours=self.keep_freq)
+        self.meta_graph_written = False
 
     @staticmethod
     def _get_vars():
@@ -51,7 +52,10 @@ class ModelSaver(Callback):
         self.saver.save(
             tf.get_default_session(),
             self.path,
-            global_step=self.global_step)
+            global_step=self.global_step,
+            write_meta_graph=not self.meta_graph_written)
+        if not self.meta_graph_written:
+            self.meta_graph_written = True
 
 class MinSaver(Callback):
     def __init__(self, monitor_stat):
