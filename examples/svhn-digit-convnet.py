@@ -60,7 +60,6 @@ class Model(ModelDesc):
         self.cost = tf.add_n([cost, wd_cost], name='cost')
 
 def get_config():
-    #anchors = np.mgrid[0:4,0:4][:,1:,1:].transpose(1,2,0).reshape((-1,2)) / 4.0
     # prepare dataset
     d1 = dataset.SVHNDigit('train')
     d2 = dataset.SVHNDigit('extra')
@@ -71,19 +70,16 @@ def get_config():
         imgaug.Resize((40, 40)),
         imgaug.Brightness(30),
         imgaug.Contrast((0.5,1.5)),
-        imgaug.GaussianDeform(  # this is slow
+        imgaug.GaussianDeform(  # this is slow. only use it when you have lots of cpus
             [(0.2, 0.2), (0.2, 0.8), (0.8,0.8), (0.8,0.2)],
             (40,40), 0.2, 3),
     ]
     data_train = AugmentImageComponent(data_train, augmentors)
     data_train = BatchData(data_train, 128)
-    nr_proc = 5
-    data_train = PrefetchData(data_train, 5, nr_proc)
+    data_train = PrefetchData(data_train, 5, 5)
     step_per_epoch = data_train.size()
 
-    augmentors = [
-        imgaug.Resize((40, 40)),
-    ]
+    augmentors = [ imgaug.Resize((40, 40)) ]
     data_test = AugmentImageComponent(data_test, augmentors)
     data_test = BatchData(data_test, 128, remainder=True)
 
