@@ -52,6 +52,10 @@ class Accuracy(object):
             return 0
         return self.corr * 1.0 / self.tot
 
+    @property
+    def count(self):
+        return self.tot
+
 
 class BinaryStatistics(object):
     """

@@ -31,10 +31,15 @@ class Discretizer1D(Discretizer):
 
 class UniformDiscretizer1D(Discretizer1D):
     def __init__(self, minv, maxv, spacing):
+        """
+        :params minv: minimum value of the first bin
+        :params maxv: maximum value of the last bin
+        :param spacing: width of a bin
+        """
         self.minv = float(minv)
         self.maxv = float(maxv)
         self.spacing = float(spacing)
-        self.nr_bin = np.ceil((self.maxv - self.minv) / self.spacing)
+        self.nr_bin = int(np.ceil((self.maxv - self.minv) / self.spacing))
 
     def get_nr_bin(self):
         return self.nr_bin
@@ -51,6 +56,8 @@ class UniformDiscretizer1D(Discretizer1D):
                 0, self.nr_bin - 1))
 
     def get_distribution(self, v, smooth_factor=0.05, smooth_radius=2):
+        """ return a smoothed one-hot distribution of the sample v.
+        """
         b = self.get_bin(v)
         ret = np.zeros((self.nr_bin, ), dtype='float32')
         ret[b] = 1.0
