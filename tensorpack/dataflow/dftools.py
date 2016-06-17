@@ -6,6 +6,7 @@ import sys, os
 import cv2
 import multiprocessing
 
+from ..utils.concurrency import DIE
 from ..utils.fs import mkdir_p
 
 __all__ = ['dump_dataset_images', 'dataflow_to_process_queue']

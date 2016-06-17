@@ -1,6 +1,6 @@
+pillow
 scipy
 nltk
 h5py
 pyzmq
-subprocess32
 tornado

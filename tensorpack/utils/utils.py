@@ -91,7 +91,8 @@ def get_dataset_dir(name):
     if d:
         assert os.path.isdir(d)
     else:
-        d = os.path.join(os.path.dirname(__file__), '..', 'dataflow', 'dataset')
+        d = os.path.abspath(os.path.join(
+                    os.path.dirname(__file__), '..', 'dataflow', 'dataset'))
         logger.info("TENSORPACK_DATASET not set, using {} for dataset.".format(d))
     return os.path.join(d, name)
 

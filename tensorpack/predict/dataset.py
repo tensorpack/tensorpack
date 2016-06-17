@@ -6,6 +6,8 @@
 from six.moves import range
 from tqdm import tqdm
 from abc import ABCMeta, abstractmethod
+import multiprocessing
+import os
 
 from ..dataflow import DataFlow, BatchData
 from ..dataflow.dftools import dataflow_to_process_queue
