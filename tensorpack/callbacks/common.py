@@ -49,11 +49,14 @@ class ModelSaver(Callback):
         return var_dict
 
     def _trigger_epoch(self):
-        self.saver.save(
-            tf.get_default_session(),
-            self.path,
-            global_step=self.global_step,
-            write_meta_graph=not self.meta_graph_written)
+        try:
+            self.saver.save(
+                tf.get_default_session(),
+                self.path,
+                global_step=self.global_step,
+                write_meta_graph=not self.meta_graph_written)
+        except Exception:   # disk error sometimes..
+            logger.exception("Exception in ModelSaver.trigger_epoch!")
         if not self.meta_graph_written:
             self.meta_graph_written = True
 

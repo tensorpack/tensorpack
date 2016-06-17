@@ -115,3 +115,5 @@ weston, improving neural grammatical model flow images is allows belief networks
 generating neural networks, there is not the initial particular marked pseudo-cameral rnns
 sophett, pattern wlth designs for faster than the inference in deep learning. in nips (most),
 ```
+
+See [blog of Andrej Karpathy](http://karpathy.github.io/2015/05/21/rnn-effectiveness/) for more interesting stories on this topic.

@@ -69,9 +69,12 @@ class StatHolder(object):
 
     def _write_stat(self):
         tmp_filename = self.filename + '.tmp'
-        with open(tmp_filename, 'w') as f:
-            json.dump(self.stat_history, f)
-        os.rename(tmp_filename, self.filename)
+        try:
+            with open(tmp_filename, 'w') as f:
+                json.dump(self.stat_history, f)
+            os.rename(tmp_filename, self.filename)
+        except IOError: # disk error sometimes..
+            logger.exception("Exception in StatHolder.finalize()!")
 
 class StatPrinter(Callback):
     """
