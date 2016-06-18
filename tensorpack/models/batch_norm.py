@@ -48,17 +48,20 @@ def BatchNorm(x, use_local_stat=True, decay=0.9, epsilon=1e-5):
         batch_mean, batch_var = tf.nn.moments(x, [0], keep_dims=False)
     else:
         batch_mean, batch_var = tf.nn.moments(x, [0, 1, 2], keep_dims=False)
+    # just to make a clear name.
+    batch_mean = tf.identity(batch_mean, 'mean')
+    batch_var = tf.identity(batch_var, 'variance')
 
     emaname = 'EMA'
-    in_train_tower = not batch_mean.name.startswith('towerp')
-    if in_train_tower:
+    in_main_tower = not batch_mean.name.startswith('towerp')
+    if in_main_tower:
         ema = tf.train.ExponentialMovingAverage(decay=decay, name=emaname)
         ema_apply_op = ema.apply([batch_mean, batch_var])
         ema_mean, ema_var = ema.average(batch_mean), ema.average(batch_var)
     else:
         # use training-statistics in prediction
         assert not use_local_stat
-        # have to do this again to get actual name. see issue:
+        # XXX have to do this again to get actual name. see issue:
         # https://github.com/tensorflow/tensorflow/issues/2740
         ema = tf.train.ExponentialMovingAverage(decay=decay, name=emaname)
         ema_apply_op = ema.apply([batch_mean, batch_var])

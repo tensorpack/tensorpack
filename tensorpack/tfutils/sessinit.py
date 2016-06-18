@@ -132,7 +132,8 @@ class ParamRestore(SessionInit):
 
     def _init(self, sess):
         sess.run(tf.initialize_all_variables())
-        variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
+        # allow restore non-trainable variables
+        variables = tf.get_collection(tf.GraphKeys.VARIABLES)
         var_dict = dict([v.name, v] for v in variables)
         for name, value in six.iteritems(self.prms):
             if not name.endswith(':0'):
@@ -145,7 +146,8 @@ class ParamRestore(SessionInit):
             logger.info("Restoring param {}".format(name))
             varshape = tuple(var.get_shape().as_list())
             if varshape != value.shape:
-                assert np.prod(varshape) == np.prod(value.shape)
+                assert np.prod(varshape) == np.prod(value.shape), \
+                        "{}: {}!={}".format(name, varshape, value.shape)
                 logger.warn("Param {} is reshaped during loading!".format(name))
                 value = value.reshape(varshape)
             sess.run(var.assign(value))
