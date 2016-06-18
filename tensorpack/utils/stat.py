@@ -3,7 +3,7 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 import numpy as np
 
-__all__ = ['StatCounter', 'Accuracy', 'BinaryStatistics', 'RatioStatistics']
+__all__ = ['StatCounter', 'Accuracy', 'BinaryStatistics', 'RatioCounter']
 
 class StatCounter(object):
     def __init__(self):
@@ -34,7 +34,7 @@ class StatCounter(object):
         assert len(self._values)
         return max(self._values)
 
-class RatioStatistics(object):
+class RatioCounter(object):
     def __init__(self):
         self.reset()
 
@@ -56,7 +56,7 @@ class RatioStatistics(object):
     def count(self):
         return self._tot
 
-class Accuracy(RatioStatistics):
+class Accuracy(RatioCounter):
     @property
     def accuracy(self):
         return self.ratio
