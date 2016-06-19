@@ -178,7 +178,7 @@ class ClassificationError(Inferencer):
         return [self.wrong_var_name]
 
     def _before_inference(self):
-        self.err_stat = Accuracy()
+        self.err_stat = RatioCounter()
 
     def _datapoint(self, dp, outputs):
         batch_size = dp[0].shape[0]   # assume batched input
@@ -186,7 +186,7 @@ class ClassificationError(Inferencer):
         self.err_stat.feed(wrong, batch_size)
 
     def _after_inference(self):
-        self.trainer.write_scalar_summary(self.summary_name, self.err_stat.accuracy)
+        self.trainer.write_scalar_summary(self.summary_name, self.err_stat.ratio)
 
 class BinaryClassificationStats(Inferencer):
     """ Compute precision/recall in binary classification, given the

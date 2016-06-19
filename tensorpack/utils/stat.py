@@ -6,6 +6,7 @@ import numpy as np
 __all__ = ['StatCounter', 'Accuracy', 'BinaryStatistics', 'RatioCounter']
 
 class StatCounter(object):
+    """ A simple counter"""
     def __init__(self):
         self.reset()
 
@@ -35,6 +36,7 @@ class StatCounter(object):
         return max(self._values)
 
 class RatioCounter(object):
+    """ A counter to count ratio of something"""
     def __init__(self):
         self.reset()
 
@@ -57,6 +59,7 @@ class RatioCounter(object):
         return self._tot
 
 class Accuracy(RatioCounter):
+    """ A RatioCounter with a fancy name """
     @property
     def accuracy(self):
         return self.ratio

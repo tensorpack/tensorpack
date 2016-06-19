@@ -47,7 +47,7 @@ class TrainConfig(object):
 
         self.session_config = kwargs.pop('session_config', get_default_sess_config())
         assert_type(self.session_config, tf.ConfigProto)
-        self.session_init = kwargs.pop('session_init', NewSession())
+        self.session_init = kwargs.pop('session_init', JustCurrentSession())
         assert_type(self.session_init, SessionInit)
         self.step_per_epoch = int(kwargs.pop('step_per_epoch'))
         self.starting_epoch = int(kwargs.pop('starting_epoch', 1))

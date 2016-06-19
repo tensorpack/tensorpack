@@ -8,3 +8,6 @@ The train error shown here is a moving average of the error rate of each batch i
 The validation error here is computed on test set.
 
 ![cifar10](https://github.com/ppwwyyxx/tensorpack/raw/master/examples/ResNet/cifar10-resnet.png)
+
+Download model:
+[Cifar10 n=18](https://drive.google.com/open?id=0B308TeQzmFDLeHpSaHAxWGV1WDg)

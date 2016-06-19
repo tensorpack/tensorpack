@@ -27,10 +27,16 @@ def download(url, dir):
         sys.stdout.write('\r>> Downloading %s %.1f%%' %
                          (fname, float(count * block_size) / float(total_size) * 100.0))
         sys.stdout.flush()
-    fpath, _ = urllib.request.urlretrieve(url, fpath, reporthook=_progress)
-    statinfo = os.stat(fpath)
+    try:
+        fpath, _ = urllib.request.urlretrieve(url, fpath, reporthook=_progress)
+        statinfo = os.stat(fpath)
+        size = statinfo.st_size
+    except:
+        logger.error("Failed to download {}".format(url))
+        raise
+    assert size > 0, "Download an empty file!"
     sys.stdout.write('\n')
-    print('Succesfully downloaded ' + fname + " " + str(statinfo.st_size) + ' bytes.')
+    print('Succesfully downloaded ' + fname + " " + str(size) + ' bytes.')
     return fpath
 
 if __name__ == '__main__':

@@ -50,7 +50,8 @@ class ILSVRCMeta(object):
 
         proto_path = download(CAFFE_PROTO_URL, self.dir)
         ret = os.system('cd {} && protoc caffe.proto --python_out .'.format(self.dir))
-        assert ret == 0, "caffe proto compilation failed!"
+        assert ret == 0, \
+                "caffe proto compilation failed! Did you install protoc?"
 
     def get_image_list(self, name):
         """

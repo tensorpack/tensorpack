@@ -105,6 +105,7 @@ class Trainer(object):
         get_global_step_var()   # ensure there is such var, before finalizing the graph
         callbacks = self.config.callbacks
         callbacks.setup_graph(self)
+        self.sess.run(tf.initialize_all_variables())
         self.config.session_init.init(self.sess)
         tf.get_default_graph().finalize()
         self._start_concurrency()
