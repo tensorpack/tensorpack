@@ -105,9 +105,9 @@ class PredictorWorkerThread(threading.Thread):
                     for k in range(self.nr_input_var):
                         batched[k].append(inp[k])
                     futures.append(f)
-                    cnt += 1
                 except queue.Empty:
                     break
+                cnt += 1
             return batched, futures
         #self.xxx = None
         while True:
@@ -116,12 +116,9 @@ class PredictorWorkerThread(threading.Thread):
             outputs = self.func(batched)
             # debug, for speed testing
             #if self.xxx is None:
-                #outputs = self.func([batched])
-                #self.xxx = outputs
+                #self.xxx = outputs = self.func([batched])
             #else:
-                #outputs = [None, None]
-                #outputs[0] = [self.xxx[0][0]] * len(batched)
-                #outputs[1] = [self.xxx[1][0]] * len(batched)
+                #outputs = [[self.xxx[0][0]] * len(batched), [self.xxx[1][0]] * len(batched)]
 
             for idx, f in enumerate(futures):
                 f.set_result([k[idx] for k in outputs])

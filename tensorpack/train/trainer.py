@@ -138,7 +138,7 @@ class QueueInputTrainer(Trainer):
         inputs = self.model.get_input_vars()
         tf.get_variable_scope().reuse_variables()
         for k in self.predict_tower:
-            logger.info("Building graph for predict towerp{}...".format(k))
+            logger.info("Building graph for predict tower p{}...".format(k))
             with tf.device('/gpu:{}'.format(k) if k >= 0 else '/cpu:0'), \
                     tf.name_scope('towerp{}'.format(k)):
                 self.model.build_graph(inputs, False)

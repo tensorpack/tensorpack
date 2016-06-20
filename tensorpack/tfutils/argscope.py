@@ -13,8 +13,7 @@ __all__ = ['argscope', 'get_arg_scope']
 _ArgScopeStack = []
 
 @contextmanager
-def argscope(layers, **kwargs):
-    param = kwargs
+def argscope(layers, **param):
     if not isinstance(layers, list):
         layers = [layers]
 
@@ -35,6 +34,10 @@ def argscope(layers, **kwargs):
     del _ArgScopeStack[-1]
 
 def get_arg_scope():
+    """ return the current argscope
+        an argscope is a dict of dict:
+            dict[layername] = {arg: val}
+    """
     if len(_ArgScopeStack) > 0:
         return _ArgScopeStack[-1]
     else:

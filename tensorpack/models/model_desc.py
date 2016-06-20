@@ -7,10 +7,10 @@ from abc import ABCMeta, abstractmethod
 import tensorflow as tf
 from collections import namedtuple
 
-from ..utils import logger
+from ..utils import logger, INPUT_VARS_KEY
 from ..tfutils import *
 
-__all__ = ['ModelDesc', 'InputVar']
+__all__ = ['ModelDesc', 'InputVar', 'ModelFromMetaGraph']
 
 InputVar = namedtuple('InputVar', ['type', 'shape', 'name'])
 
@@ -32,6 +32,8 @@ class ModelDesc(object):
         ret = []
         for v in input_vars:
             ret.append(tf.placeholder(v.type, shape=v.shape, name=v.name))
+        for v in ret:
+            tf.add_to_collection(INPUT_VARS_KEY, v)
         return ret
 
     def reuse_input_vars(self):
@@ -57,28 +59,12 @@ class ModelDesc(object):
         """
         self._build_graph(model_inputs, is_training)
 
-    #@abstractmethod
+    @abstractmethod
     def _build_graph(self, inputs, is_training):
-        if self._old_version():
-            self.model_inputs = inputs
-            self.is_training = is_training
-        else:
-            raise NotImplementedError()
-
-    def _old_version(self):
-        # for backward-compat only.
-        import inspect
-        args = inspect.getargspec(self._get_cost)
-        return len(args.args) == 3
+        pass
 
     def get_cost(self):
-        if self._old_version():
-            assert type(self.is_training) == bool
-            logger.warn("!!!using _get_cost to setup the graph is deprecated in favor of _build_graph")
-            logger.warn("See examples for details.")
-            return self._get_cost(self.model_inputs, self.is_training)
-        else:
-            return self._get_cost()
+        return self._get_cost()
 
     def _get_cost(self, *args):
         return self.cost
@@ -86,4 +72,28 @@ class ModelDesc(object):
     def get_gradient_processor(self):
         """ Return a list of GradientProcessor. They will be executed in order"""
         return [CheckGradient()]#, SummaryGradient()]
+
+
+class ModelFromMetaGraph(ModelDesc):
+    """
+    Load the whole exact TF graph from a saved meta_graph.
+    Only useful for inference.
+    """
+    def __init__(self, filename):
+        tf.train.import_meta_graph(filename)
+        all_coll = tf.get_default_graph().get_all_collection_keys()
+        for k in [INPUT_VARS_KEY, tf.GraphKeys.TRAINABLE_VARIABLES,
+                tf.GraphKeys.VARIABLES]:
+            assert k in all_coll, \
+                    "Collection {} not found in metagraph!".format(k)
+
+    def get_input_vars(self):
+        return tf.get_collection(INPUT_VARS_KEY)
+
+    def _get_input_vars(self):
+        raise NotImplementedError("Shouldn't call here")
+
+    def _build_graph(self, _, __):
+        """ Do nothing. Graph was imported already """
+        pass
 

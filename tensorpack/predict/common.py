@@ -50,8 +50,9 @@ class PredictConfig(object):
         """
         def assert_type(v, tp):
             assert isinstance(v, tp), v.__class__
-        self.session_config = kwargs.pop('session_config',
-            get_default_sess_config(0.3))
+        # XXX does it work? start with minimal memory, but allow growth.
+        # allow_growth doesn't seem to work very well in TF.
+        self.session_config = kwargs.pop('session_config', get_default_sess_config(0.3))
         self.session_init = kwargs.pop('session_init')
         self.model = kwargs.pop('model')
         self.input_data_mapping = kwargs.pop('input_data_mapping', None)
@@ -61,7 +62,7 @@ class PredictConfig(object):
 
 def get_predict_func(config):
     """
-    Produce a simple predictor function in a newly-created session without any parallelism.
+    Produce a simple predictor function run inside a new session.
     :param config: a `PredictConfig` instance.
     :returns: A prediction function that takes a list of input values, and return
         a list of output values defined in ``config.output_var_names``.
@@ -77,10 +78,8 @@ def get_predict_func(config):
         input_map = [input_vars[k] for k in config.input_data_mapping]
 
     # check output_var_names against output_vars
-    output_vars = [tf.get_default_graph().get_tensor_by_name(get_op_var_name(n)[1])
-                   for n in output_var_names]
+    output_vars = get_vars_by_names(output_var_names)
 
-    # XXX does it work? start with minimal memory, but allow growth
     sess = tf.Session(config=config.session_config)
     config.session_init.init(sess)
 
