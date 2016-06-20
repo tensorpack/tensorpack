@@ -13,15 +13,15 @@ from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
 
 """
-CIFAR10-resnet example.
+CIFAR10 ResNet example. See:
 Deep Residual Learning for Image Recognition, arxiv:1512.03385
 This implementation uses the variants proposed in:
 Identity Mappings in Deep Residual Networks, arxiv:1603.05027
 
-I can reproduce the results for
-n=5, about 7.1% val error after 67k step with 2 TitanX (6.1it/s)
-n=18, about 6.0% val error after 62k step with 2 TitanX (about 10hr)
-n=30: a 182-layer network, about 5.6% val error after 51k step with 2 GPUs
+I can reproduce the results on 2 TitanX for
+n=5, about 7.1% val error after 67k step (8.6 step/s)
+n=18, about 5.7% val error (2.45 step/s)
+n=30: a 182-layer network, about 5.6% val error after 51k step (1.55 step/s)
 This model uses the whole training set instead of a train-val split.
 """
 
@@ -169,7 +169,7 @@ def get_config():
         session_config=sess_config,
         model=Model(n=18),
         step_per_epoch=step_per_epoch,
-        max_epoch=500,
+        max_epoch=400,
     )
 
 if __name__ == '__main__':

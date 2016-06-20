@@ -13,9 +13,14 @@ import tensorpack.tfutils.symbolic_functions as symbf
 from tensorpack.tfutils.summary import *
 
 """
-A small convnet model for cifar 10 or cifar100 dataset.
+A small convnet model for Cifar10 or Cifar100 dataset.
 
-For Cifar10: 90% validation accuracy after 40k step.
+Cifar10:
+    90% validation accuracy after 40k step.
+    91% accuracy after 80k step.
+    18.8 step/s on TitanX
+
+Not a good for Cifar100, just for demonstration.
 """
 
 class Model(ModelDesc):
