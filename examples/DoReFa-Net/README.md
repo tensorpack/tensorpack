@@ -8,7 +8,7 @@ The provided model is an AlexNet with 1 bit weights, 2 bit activations, trained 
 
 To use the script. You'll need:
 
-+ [TensorFlow](tensorflow.org) >= 0.8
++ [TensorFlow](https://tensorflow.org) >= 0.8
 
 + [tensorpack](https://github.com/ppwwyyxx/tensorpack):
 
@@ -21,21 +21,23 @@ export PYTHONPATH=$PYTHONPATH:`readlink -f tensorpack`
 + Download the model at [google drive](https://drive.google.com/open?id=0B308TeQzmFDLa0xOeVQwcXg1ZjQ)
 
 ## Load and run the model
-We publish the model in two file formats:
+We published the model in two file formats:
 
-1. `alexnet.npy`. It's simply a numpy dict of {param name: value}. Use it with:
++ `alexnet.npy`. It's simply a dict of {param name: value}.
+You can load it with `np.load('alexnet.npy').item()` for other purposes.
+Run the model with:
 
 ```
 ./alexnet.py --load alexnet.npy [--input img.jpg] [--data path/to/data]
 ```
 
-2. `alexnet.meta` + `alexnet.tfmodel`. A TensorFlow MetaGraph proto and a saved checkpoint.
++ `alexnet.meta` + `alexnet.tfmodel`. A TensorFlow MetaGraph proto and a saved checkpoint.
 
 ```
 ./alexnet.py --graph alexnet.meta --load alexnet.tfmodel [--input path/to/img.jpg] [--data path/to/ILSVRC12]
 ```
 
-One of `--data` or `--input` must be present, to either run classification on some input images, or run evaluation on ILSVRC12 validation set.
+In both cases, one of `--data` or `--input` must be present, to either run classification on some input images, or run evaluation on ILSVRC12 validation set.
 To eval on ILSVRC12, `path/to/ILSVRC12` must have a subdirectory named 'val' containing all the validation images.
 
 ## Support
