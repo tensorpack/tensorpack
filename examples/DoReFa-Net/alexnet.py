@@ -8,15 +8,6 @@ import argparse
 import numpy as np
 import os
 
-"""
-Run the pretrained model of paper:
-DoReFa-Net: Training Low Bitwidth Convolutional Neural Networks with Low Bitwidth Gradients
-http://arxiv.org/abs/1606.06160
-
-Model can be downloaded at:
-https://drive.google.com/drive/u/2/folders/0B308TeQzmFDLa0xOeVQwcXg1ZjQ
-"""
-
 from tensorpack import *
 from tensorpack.utils.stat import RatioCounter
 from tensorpack.tfutils.symbolic_functions import prediction_incorrect
@@ -76,7 +67,7 @@ def eval_on_ILSVRC12(model, sess_init, data_dir):
     ]
     ds = AugmentImageComponent(ds, transformers)
     ds = BatchData(ds, 128, remainder=True)
-    ds = PrefetchDataZMQ(ds, 10)    # TODO use PrefetchData as fallback
+    ds = PrefetchData(ds, 10, nr_proc=1)
 
     cfg = PredictConfig(
         model=model,
@@ -155,6 +146,7 @@ op/variable names")
         raise RuntimeError("Unsupported model type!")
 
     if args.data:
+        assert os.path.isdir(os.path.join(args.data, 'val'))
         eval_on_ILSVRC12(M, sess_init, args.data)
     elif args.input:
         run_test(M, sess_init, args.input)
