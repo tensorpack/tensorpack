@@ -4,12 +4,16 @@ This is the official script to load and run pretrained model for the paper:
 
 (Work in Progress. More instructions to come soon)
 
-This is a low bitwidth AlexNet model (with normal convolutions instead of the original "split" convolutions)
-
+This is an AlexNet model with 1 bit weights, 2 bit activations, trained with 4 bit gradients.
 
 ## Preparation:
 
-+ To use the script. You'll need [tensorpack](https://github.com/ppwwyyxx/tensorpack) and some other dependencies:
+To use the script. You'll need:
+
++ [TensorFlow](tensorflow.org) >= 0.8
+
++ [tensorpack](https://github.com/ppwwyyxx/tensorpack) and pyzmq:
+
 ```
 git clone https://github.com/ppwwyyxx/tensorpack
 pip install --user -r tensorpack/requirements.txt
