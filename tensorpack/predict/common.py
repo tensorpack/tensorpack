@@ -6,6 +6,7 @@ import tensorflow as tf
 from collections import namedtuple
 from six.moves import zip
 
+from tensorpack.models import ModelDesc
 from ..tfutils import *
 
 import multiprocessing
@@ -53,8 +54,10 @@ class PredictConfig(object):
         # XXX does it work? start with minimal memory, but allow growth.
         # allow_growth doesn't seem to work very well in TF.
         self.session_config = kwargs.pop('session_config', get_default_sess_config(0.3))
-        self.session_init = kwargs.pop('session_init')
+        self.session_init = kwargs.pop('session_init', JustCurrentSession())
+        assert_type(self.session_init, SessionInit)
         self.model = kwargs.pop('model')
+        assert_type(self.model, ModelDesc)
         self.input_data_mapping = kwargs.pop('input_data_mapping', None)
         self.output_var_names = kwargs.pop('output_var_names')
         self.return_input = kwargs.pop('return_input', False)
@@ -86,4 +89,5 @@ def get_predict_func(config):
     def run_input(dp):
         feed = dict(zip(input_map, dp))
         return sess.run(output_vars, feed_dict=feed)
+    run_input.session = sess
     return run_input

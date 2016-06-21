@@ -68,7 +68,9 @@ class SaverRestore(SessionInit):
         chkpt_vars = SaverRestore._read_checkpoint_vars(self.path)
         vars_map = SaverRestore._get_vars_to_restore_multimap(chkpt_vars)
         for dic in SaverRestore._produce_restore_dict(vars_map):
-            saver = tf.train.Saver(var_list=dic)
+            # multiple saver under same name scope would cause error:
+            # training/saver.py: assert restore_op.name.endswith("restore_all"), restore_op.name
+            saver = tf.train.Saver(var_list=dic, name=str(id(dic)))
             saver.restore(sess, self.path)
 
     def set_path(self, model_path):
@@ -148,7 +150,10 @@ class ParamRestore(SessionInit):
                         "{}: {}!={}".format(name, varshape, value.shape)
                 logger.warn("Param {} is reshaped during loading!".format(name))
                 value = value.reshape(varshape)
-            sess.run(var.assign(value))
+            # assign(value) creates ops with values being saved, doubling the size of metagraph
+            # assign(placeholder) works better here
+            p = tf.placeholder(value.dtype, shape=value.shape)
+            sess.run(var.assign(p), feed_dict={p:value})
 
 def ChainInit(SessionInit):
     """ Init a session by a list of SessionInit instance."""

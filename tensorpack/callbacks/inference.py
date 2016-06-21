@@ -121,7 +121,7 @@ class InferenceRunner(Callback):
 
 class ScalarStats(Inferencer):
     """
-    Write stat and summary of some scalar tensor.
+    Write some scalar tensor to both stat and summary.
     The output of the given Ops must be a scalar.
     The value will be averaged over all data points in the dataset.
     """

@@ -96,4 +96,3 @@ class ModelFromMetaGraph(ModelDesc):
     def _build_graph(self, _, __):
         """ Do nothing. Graph was imported already """
         pass
-

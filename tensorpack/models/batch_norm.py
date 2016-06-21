@@ -42,7 +42,7 @@ def BatchNorm(x, use_local_stat=True, decay=0.9, epsilon=1e-5):
     assert n_out is not None
     beta = tf.get_variable('beta', [n_out])
     gamma = tf.get_variable('gamma', [n_out],
-        initializer=tf.constant_initializer(1.0))
+        initializer=tf.ones_initializer)
 
     if len(shape) == 2:
         batch_mean, batch_var = tf.nn.moments(x, [0], keep_dims=False)
