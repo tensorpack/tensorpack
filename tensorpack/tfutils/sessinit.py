@@ -143,9 +143,11 @@ class ParamRestore(SessionInit):
             except (ValueError, KeyError):
                 logger.warn("Param {} not found in this graph".format(name))
                 continue
+            del var_dict[name]
             logger.info("Restoring param {}".format(name))
             varshape = tuple(var.get_shape().as_list())
             if varshape != value.shape:
+            # TODO only allow reshape when set(shape) is the same or different by 1
                 assert np.prod(varshape) == np.prod(value.shape), \
                         "{}: {}!={}".format(name, varshape, value.shape)
                 logger.warn("Param {} is reshaped during loading!".format(name))
@@ -154,6 +156,8 @@ class ParamRestore(SessionInit):
             # assign(placeholder) works better here
             p = tf.placeholder(value.dtype, shape=value.shape)
             sess.run(var.assign(p), feed_dict={p:value})
+        if var_dict:
+            logger.warn("Some variables in the graph are not restored: {}".format(str(var_dict)))
 
 def ChainInit(SessionInit):
     """ Init a session by a list of SessionInit instance."""
