@@ -18,7 +18,7 @@ pip install --user -r tensorpack/requirements.txt
 export PYTHONPATH=$PYTHONPATH:`readlink -f tensorpack`
 ```
 
-+ Download the model at [google drive](https://drive.google.com/drive/u/2/folders/0B308TeQzmFDLa0xOeVQwcXg1ZjQ)
++ Download the model at [google drive](https://drive.google.com/open?id=0B308TeQzmFDLa0xOeVQwcXg1ZjQ)
 
 ## Load and run the model
 We publish the model in two file formats:
