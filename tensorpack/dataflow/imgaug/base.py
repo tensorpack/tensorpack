@@ -6,7 +6,7 @@ from abc import abstractmethod, ABCMeta
 from ...utils import get_rng
 from six.moves import zip
 
-__all__ = ['ImageAugmentor', 'AugmentorList']
+__all__ = ['ImageAugmentor', 'AugmentorList', 'AugmentWithFunc']
 
 class ImageAugmentor(object):
     """ Base class for an image augmentor"""
@@ -63,6 +63,14 @@ class ImageAugmentor(object):
             size = []
         return low + self.rng.rand(*size) * (high - low)
 
+class AugmentWithFunc(ImageAugmentor):
+    """ func: takes an image and return an image"""
+    def __init__(self, func):
+        self.func = func
+
+    def _augment(self, img, _):
+        return self.func(img)
+
 class AugmentorList(ImageAugmentor):
     """
     Augment by a list of augmentors
@@ -98,3 +106,5 @@ class AugmentorList(ImageAugmentor):
         """ Will reset state of each augmentor """
         for a in self.augs:
             a.reset_state()
+
+
