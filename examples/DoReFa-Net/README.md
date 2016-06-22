@@ -10,7 +10,7 @@ To use the script. You'll need:
 
 + [TensorFlow](https://tensorflow.org) >= 0.8
 
-+ OpenCV Bindings for Python
++ OpenCV bindings for Python
 
 + [tensorpack](https://github.com/ppwwyyxx/tensorpack):
 
@@ -46,3 +46,17 @@ To eval on ILSVRC12, `path/to/ILSVRC12` must have a subdirectory named 'val' con
 
 Please use [github issues](https://github.com/ppwwyyxx/tensorpack/issues) for any issues related to the code.
 Send email to the authors for other questions related to the paper.
+
+## Citation
+
+If you use our models in your research, please cite:
+```
+@article{zhou2016dorefa,
+  author    = {Shuchang Zhou and Zekun Ni and Xinyu Zhou and He Wen and Yuxin Wu and Yuheng Zou},
+  title     = {DoReFa-Net: Training Low Bitwidth Convolutional Neural Networks with Low Bitwidth Gradients},
+  journal   = {CoRR},
+  volume    = {abs/1606.06160},
+  year      = {2016},
+  url       = {http://arxiv.org/abs/1606.06160},
+}
+```
