@@ -56,7 +56,7 @@ class ILSVRCMeta(object):
     def get_image_list(self, name):
         """
         :param name: 'train' or 'val' or 'test'
-        :returns list of image filenames
+        :returns list of (image filename, cls)
         """
         assert name in ['train', 'val', 'test']
         fname = os.path.join(self.dir, name + '.txt')
@@ -66,7 +66,7 @@ class ILSVRCMeta(object):
             for line in f.readlines():
                 name, cls = line.strip().split()
                 ret.append((name, int(cls)))
-            return ret
+        return ret
 
     def get_per_pixel_mean(self, size=None):
         """

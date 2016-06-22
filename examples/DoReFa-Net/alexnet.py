@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 # Author: Yuheng Zou, Yuxin Wu {zouyuheng,wyx}@megvii.com
 
@@ -108,8 +108,8 @@ def run_test(model, sess_init, inputs):
 
         meta = dataset.ILSVRCMeta().get_synset_words_1000()
         names = [meta[i] for i in ret]
-        print f + ":"
-        print list(zip(names, prob[ret]))
+        print(f + ":")
+        print(list(zip(names, prob[ret])))
 
     # save the metagraph
     #saver = tf.train.Saver()
@@ -131,14 +131,14 @@ if __name__ == '__main__':
         M = ModelFromMetaGraph(args.graph)
     else:
         # build the graph from scratch
-        logger.warn("Building the graph from scratch might result \
+        logger.warn("[DoReFa-Net] Building the graph from scratch might result \
 in compatibility issues in the future, if TensorFlow changes some of its \
 op/variable names")
         M = Model()
 
     if args.load.endswith('.npy'):
         # load from a parameter dict
-        param_dict= np.load(args.load).item()
+        param_dict= np.load(args.load, encoding='latin1').item()
         sess_init = ParamRestore(param_dict)
     elif args.load.endswith('.tfmodel'):
         sess_init = SaverRestore(args.load)

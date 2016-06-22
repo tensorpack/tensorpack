@@ -10,6 +10,8 @@ To use the script. You'll need:
 
 + [TensorFlow](https://tensorflow.org) >= 0.8
 
++ OpenCV Bindings for Python
+
 + [tensorpack](https://github.com/ppwwyyxx/tensorpack):
 
 ```
