@@ -50,15 +50,19 @@ class ModelSaver(Callback):
 
     def _trigger_epoch(self):
         try:
+            if not self.meta_graph_written:
+                self.saver.export_meta_graph(
+                        os.path.join(logger.LOG_DIR,
+                            'graph-{}.meta'.format(logger.get_time_str())),
+                        collection_list=self.graph.get_all_collection_keys())
+                self.meta_graph_written = True
             self.saver.save(
                 tf.get_default_session(),
                 self.path,
                 global_step=self.global_step,
-                write_meta_graph=not self.meta_graph_written)
+                write_meta_graph=False)
         except Exception:   # disk error sometimes..
             logger.exception("Exception in ModelSaver.trigger_epoch!")
-        if not self.meta_graph_written:
-            self.meta_graph_written = True
 
 class MinSaver(Callback):
     def __init__(self, monitor_stat):

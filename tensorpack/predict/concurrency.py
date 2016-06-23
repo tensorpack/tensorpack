@@ -69,6 +69,8 @@ class MultiProcessQueuePredictWorker(MultiProcessPredictWorker):
         super(MultiProcessQueuePredictWorker, self).__init__(idx, gpuid, config)
         self.inqueue = inqueue
         self.outqueue = outqueue
+        assert isinstance(self.inqueue, multiprocessing.Queue)
+        assert isinstance(self.outqueue, multiprocessing.Queue)
 
     def run(self):
         self._init_runtime()
@@ -91,29 +93,11 @@ class PredictorWorkerThread(threading.Thread):
         self.id = id
 
     def run(self):
-        def fetch():
-            batched, futures = [[] for _ in range(self.nr_input_var)], []
-            inp, f = self.queue.get()
-            for k in range(self.nr_input_var):
-                batched[k].append(inp[k])
-            futures.append(f)
-            # fill a batch
-            cnt = 1
-            while cnt < self.batch_size:
-                try:
-                    inp, f = self.queue.get_nowait()
-                    for k in range(self.nr_input_var):
-                        batched[k].append(inp[k])
-                    futures.append(f)
-                except queue.Empty:
-                    break
-                cnt += 1
-            return batched, futures
         #self.xxx = None
         while True:
-            batched, futures = fetch()
-            #print "batched size: ", len(batched), "queuesize: ", self.queue.qsize()
+            batched, futures = self.fetch_batch()
             outputs = self.func(batched)
+            #print "batched size: ", len(batched), "queuesize: ", self.queue.qsize()
             # debug, for speed testing
             #if self.xxx is None:
                 #self.xxx = outputs = self.func([batched])
@@ -123,23 +107,39 @@ class PredictorWorkerThread(threading.Thread):
             for idx, f in enumerate(futures):
                 f.set_result([k[idx] for k in outputs])
 
+    def fetch_batch(self):
+        """ Fetch a batch of data without waiting"""
+        batched, futures = [[] for _ in range(self.nr_input_var)], []
+        inp, f = self.queue.get()
+        for k in range(self.nr_input_var):
+            batched[k].append(inp[k])
+        futures.append(f)
+        cnt = 1
+        while cnt < self.batch_size:
+            try:
+                inp, f = self.queue.get_nowait()
+                for k in range(self.nr_input_var):
+                    batched[k].append(inp[k])
+                futures.append(f)
+            except queue.Empty:
+                break
+            cnt += 1
+        return batched, futures
+
 class MultiThreadAsyncPredictor(object):
     """
-    An online predictor (use the current active session) that works with
-    QueueInputTrainer. Use async interface, support multi-thread and multi-GPU.
+    An multithread predictor which run a list of predict func.
+    Use async interface, support multi-thread and multi-GPU.
     """
-    def __init__(self, trainer, input_names, output_names, nr_thread, batch_size=5):
-        """
-        :param trainer: a `QueueInputTrainer` instance.
-        """
+    def __init__(self, funcs, batch_size=5):
+        """ :param funcs: a list of predict func"""
         self.input_queue = queue.Queue(maxsize=nr_thread*10)
         self.threads = [
             PredictorWorkerThread(
                 self.input_queue, f, id,
                 len(input_names), batch_size=batch_size)
-            for id, f in enumerate(
-                trainer.get_predict_funcs(
-                    input_names, output_names, nr_thread))]
+            for id, f in enumerate(funcs)]
+
         # TODO XXX set logging here to avoid affecting TF logging
         import tornado.options as options
         options.parse_command_line(['--logging=debug'])
