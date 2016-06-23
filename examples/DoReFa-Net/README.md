@@ -54,6 +54,9 @@ To eval on ILSVRC12, `path/to/ILSVRC12` must have a subdirectory named 'val' con
 Please use [github issues](https://github.com/ppwwyyxx/tensorpack/issues) for any issues related to the code.
 Send email to the authors for other questions related to the paper.
 
+Note that although the model uses low bitwidth weights, activations and gradients, those numbers in
+this script are still represented in `tf.float32`. We're not releasing our run-time kernel to speed up.
+
 ## Citation
 
 If you use our models in your research, please cite:
