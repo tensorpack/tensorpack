@@ -83,13 +83,12 @@ class MultiProcessQueuePredictWorker(MultiProcessPredictWorker):
                 self.outqueue.put((tid, self.func(dp)))
 
 class PredictorWorkerThread(threading.Thread):
-    def __init__(self, queue, pred_func, id, nr_input_var, batch_size=5):
+    def __init__(self, queue, pred_func, id, batch_size=5):
         super(PredictorWorkerThread, self).__init__()
         self.queue = queue
         self.func = pred_func
         self.daemon = True
         self.batch_size = batch_size
-        self.nr_input_var = nr_input_var
         self.id = id
 
     def run(self):
@@ -109,16 +108,17 @@ class PredictorWorkerThread(threading.Thread):
 
     def fetch_batch(self):
         """ Fetch a batch of data without waiting"""
-        batched, futures = [[] for _ in range(self.nr_input_var)], []
         inp, f = self.queue.get()
-        for k in range(self.nr_input_var):
+        nr_input_var = len(inp)
+        batched, futures = [[] for _ in range(nr_input_var)], []
+        for k in range(nr_input_var):
             batched[k].append(inp[k])
         futures.append(f)
         cnt = 1
         while cnt < self.batch_size:
             try:
                 inp, f = self.queue.get_nowait()
-                for k in range(self.nr_input_var):
+                for k in range(nr_input_var):
                     batched[k].append(inp[k])
                 futures.append(f)
             except queue.Empty:
@@ -133,11 +133,10 @@ class MultiThreadAsyncPredictor(object):
     """
     def __init__(self, funcs, batch_size=5):
         """ :param funcs: a list of predict func"""
-        self.input_queue = queue.Queue(maxsize=nr_thread*10)
+        self.input_queue = queue.Queue(maxsize=len(funcs)*10)
         self.threads = [
             PredictorWorkerThread(
-                self.input_queue, f, id,
-                len(input_names), batch_size=batch_size)
+                self.input_queue, f, id, batch_size=batch_size)
             for id, f in enumerate(funcs)]
 
         # TODO XXX set logging here to avoid affecting TF logging
