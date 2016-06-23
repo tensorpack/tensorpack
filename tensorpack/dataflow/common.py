@@ -5,7 +5,7 @@
 from __future__ import division
 import copy
 import numpy as np
-from six.moves import range
+from six.moves import range, map
 from .base import DataFlow, ProxyDataFlow
 from ..utils import *
 
@@ -251,8 +251,8 @@ class RandomMixData(DataFlow):
         sums = np.cumsum(self.sizes)
         idxs = np.arange(self.size())
         self.rng.shuffle(idxs)
-        idxs = np.array(map(
-            lambda x: np.searchsorted(sums, x, 'right'), idxs))
+        idxs = np.array(list(map(
+            lambda x: np.searchsorted(sums, x, 'right'), idxs)))
         itrs = [k.get_data() for k in self.df_lists]
         assert idxs.max() == len(itrs) - 1, "{}!={}".format(idxs.max(), len(itrs)-1)
         for k in idxs:

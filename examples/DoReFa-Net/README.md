@@ -1,10 +1,10 @@
-This is the official script to load and run pretrained model for the paper:
+This is the official script to train, or run pretrained model for the paper:
 
 [DoReFa-Net: Training Low Bitwidth Convolutional Neural Networks with Low Bitwidth Gradients](http://arxiv.org/abs/1606.06160), by Zhou et al.
 
-The provided model is an AlexNet with 1 bit weights, 2 bit activations, trained with 4 bit gradients.
+Training code for SVHN is available.
 
-Training code available soon.
+The provided pretrained model is an AlexNet with 1 bit weights, 2 bit activations, trained with 4 bit gradients.
 
 ## Preparation:
 
@@ -22,7 +22,12 @@ pip install --user -r tensorpack/requirements.txt
 export PYTHONPATH=$PYTHONPATH:`readlink -f tensorpack`
 ```
 
-+ Download the model at [google drive](https://drive.google.com/open?id=0B308TeQzmFDLa0xOeVQwcXg1ZjQ)
++ To perform training, you'll also need [pyzmq](https://github.com/zeromq/pyzmq):
+```
+pip install --user pyzmq
+```
+
++ Pretrained model is hosted at [google drive](https://drive.google.com/open?id=0B308TeQzmFDLa0xOeVQwcXg1ZjQ)
 
 ## Load and run the model
 We published the model in two file formats:
