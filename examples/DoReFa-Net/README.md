@@ -4,6 +4,8 @@ This is the official script to load and run pretrained model for the paper:
 
 The provided model is an AlexNet with 1 bit weights, 2 bit activations, trained with 4 bit gradients.
 
+Training code available soon.
+
 ## Preparation:
 
 To use the script. You'll need:
