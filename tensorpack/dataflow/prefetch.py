@@ -95,11 +95,12 @@ class PrefetchProcessZMQ(multiprocessing.Process):
 
 class PrefetchDataZMQ(ProxyDataFlow):
     """ Work the same as `PrefetchData`, but faster. """
-    def __init__(self, ds, nr_proc=1):
+    def __init__(self, ds, nr_proc=1, pipedir='.'):
         """
         :param ds: a `DataFlow` instance.
         :param nr_proc: number of processes to use. When larger than 1, order
             of datapoints will be random.
+        :param pipedir: a local directory where the pipes would be. Useful if you're running on non-local FS such as NFS.
         """
         super(PrefetchDataZMQ, self).__init__(ds)
         try:
@@ -110,7 +111,8 @@ class PrefetchDataZMQ(ProxyDataFlow):
 
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.PULL)
-        self.pipename = "ipc://dataflow-pipe-" + str(uuid.uuid1())[:6]
+        assert os.path.isdir(pipedir)
+        self.pipename = "ipc://{}/dataflow-pipe-".format(pipedir.rstrip('/')) + str(uuid.uuid1())[:6]
         self.socket.set_hwm(5)  # a little bit faster than default, don't know why
         self.socket.bind(self.pipename)
 
@@ -130,9 +132,16 @@ class PrefetchDataZMQ(ProxyDataFlow):
             yield dp
 
     def __del__(self):
-        logger.info("Prefetch process exiting...")
+        # on exit, logger may not be functional anymore
+        try:
+            logger.info("Prefetch process exiting...")
+        except:
+            pass
         if not self.context.closed:
             self.context.destroy(0)
         for x in self.procs:
             x.terminate()
-        logger.info("Prefetch process exited.")
+        try:
+            logger.info("Prefetch process exited.")
+        except:
+            pass

@@ -75,7 +75,7 @@ class AugmentorList(ImageAugmentor):
         super(AugmentorList, self).__init__()
 
     def _get_augment_params(self, img):
-        # the next augmentor requires the previos one to finish
+        # the next augmentor requires the previous one to finish
         raise RuntimeError("Cannot simply get parameters of a AugmentorList!")
 
     def _augment_return_params(self, img):
