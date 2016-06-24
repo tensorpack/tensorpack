@@ -12,8 +12,12 @@ See some interesting [examples](https://github.com/ppwwyyxx/tensorpack/tree/mast
 
 ## Features:
 
-Focused on modularity:
+Focused on modularity. Just have to define the three components in training:
 
-+ Models has scoped abstraction of common models.
-+ Dataflow defines data preprocessing in pure Python.
-+ Callbacks systems controls training behavior.
+1. The model, or the graph. Define its input and output. `models/` has some scoped abstraction of common models.
+
+2. The data. All data producer has a unified `DataFlow` interface, and this interface can be chained
+	 to perform complex preprocessing. It uses multiprocess to avoid performance bottleneck.
+
+3. The callbacks. They include everything you want to do besides the training iterations:
+	change hyperparameters, save model, print logs, run validation, and more.

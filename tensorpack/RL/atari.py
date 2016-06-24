@@ -26,6 +26,7 @@ __all__ = ['AtariPlayer']
 def log_once():
     logger.warn("https://github.com/mgbellemare/Arcade-Learning-Environment/pull/171 is not merged!")
 
+ROM_URL = "https://github.com/openai/atari-py/tree/master/atari_py/atari_roms"
 _ALE_LOCK = threading.Lock()
 
 class AtariPlayer(RLEnvironment):
@@ -51,7 +52,8 @@ class AtariPlayer(RLEnvironment):
         super(AtariPlayer, self).__init__()
         if not os.path.isfile(rom_file) and '/' not in rom_file:
             rom_file = os.path.join(get_dataset_dir('atari_rom'), rom_file)
-        assert os.path.isfile(rom_file), "rom {} not found".format(rom_file)
+        assert os.path.isfile(rom_file), \
+                "rom {} not found. Please download at {}".format(rom_file, ROM_URL)
 
         try:
             ALEInterface.setLoggerMode(ALEInterface.Logger.Warning)
