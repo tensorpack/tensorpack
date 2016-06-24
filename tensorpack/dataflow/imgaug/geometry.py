@@ -25,6 +25,6 @@ class Rotation(ImageAugmentor):
         return cv2.getRotationMatrix2D(tuple(center), deg, 1)
 
     def _augment(self, img, rot_m):
-        return cv2.warpAffine(img rot_m, img.shape[1::-1],
+        return cv2.warpAffine(img, rot_m, img.shape[1::-1],
                 flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
 
