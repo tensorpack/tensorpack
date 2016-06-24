@@ -77,7 +77,7 @@ def eval_on_ILSVRC12(model, sess_init, data_dir):
         im = cv2.resize(im, tuple(desSize), interpolation=cv2.INTER_CUBIC)
         return im
     transformers = [
-        imgaug.AugmentWithFunc(resize_func),
+        imgaug.MapImage(resize_func),
         imgaug.CenterCrop((224, 224)),
     ]
     ds = AugmentImageComponent(ds, transformers)

@@ -5,7 +5,7 @@
 from .base import ImageAugmentor
 import numpy as np
 
-__all__ = ['Brightness', 'Contrast', 'MeanVarianceNormalize']
+__all__ = ['Brightness', 'Contrast', 'MeanVarianceNormalize', 'GaussianBlur', 'Gamma']
 
 class Brightness(ImageAugmentor):
     """
@@ -72,3 +72,31 @@ class MeanVarianceNormalize(ImageAugmentor):
         std = np.maximum(std, 1.0 / np.sqrt(np.prod(img.shape)))
         img = (img - mean) / std
         return img
+
+
+class GaussianBlur(ImageAugmentor):
+    def __init__(self, max_size=3):
+        """:params max_size: (maximum kernel size-1)/2"""
+        self._init(locals())
+
+    def _get_augment_params(self, img):
+        sx, sy = self.rng.randint(self.max_size, size=(2,))
+        sx = sx * 2 + 1
+        sy = sy * 2 + 1
+        return sx, sy
+
+    def _augment(self, img, s):
+        return cv2.GaussianBlur(img, s, sigmaX=0, sigmaY=0,
+                borderType=cv2.BORDER_REPLICATE)
+
+
+class Gamma(ImageAugmentor):
+    def __init__(self, range=(-0.5, 0.5)):
+        self._init(locals())
+    def _get_augment_params(self, _):
+        return self._rand_range(*self.range)
+    def _augment(self, img, gamma):
+        lut = ((np.arange(256, dtype='float32') / 255) ** (1. / (1. + gamma)) * 255).astype('uint8')
+        cv2.LUT(img, lut, img)
+        return img
+

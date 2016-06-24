@@ -1,10 +1,10 @@
 Reproduce DQN in:
 
-**Human-level Control Through Deep Reinforcement Learning**
+[Human-level Control Through Deep Reinforcement Learning](http://www.nature.com/nature/journal/v518/n7540/full/nature14236.html)
 
 and Double-DQN in:
 
-**Deep Reinforcement Learning with Double Q-learning**
+[Deep Reinforcement Learning with Double Q-learning](http://arxiv.org/abs/1509.06461)
 
 Can reproduce the claimed performance, on several games I've tested with.
 
@@ -21,9 +21,11 @@ To train:
 ```
 ./DQN.py --rom breakout.bin --gpu 0
 ```
-Training speed is about 7.3 iteration/s on 1 Tesla M40. It takes days to learn well (see figure above).
+Training speed is about 7.3 iteration/s on 1 Tesla M40
+(faster than this at the beginning, but will slow down due to exploration annealing).
+It takes days to learn well (see figure above).
 
-To play:
+To visualize the agent:
 ```
 ./DQN.py --rom breakout.bin --task play --load pretrained.model
 ```
