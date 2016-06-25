@@ -42,22 +42,21 @@ class Model(ModelDesc):
 
         image = image / 4.0     # just to make range smaller
         with argscope(Conv2D, nl=BNReLU(is_training), use_bias=False, kernel_shape=3):
-            l = Conv2D('conv1.1', image, out_channel=64)
-            l = Conv2D('conv1.2', l, out_channel=64)
-            l = MaxPooling('pool1', l, 3, stride=2, padding='SAME')
-
-            l = Conv2D('conv2.1', l, out_channel=128)
-            l = Conv2D('conv2.2', l, out_channel=128)
-            l = MaxPooling('pool2', l, 3, stride=2, padding='SAME')
-
-            l = Conv2D('conv3.1', l, out_channel=128, padding='VALID')
-            l = Conv2D('conv3.2', l, out_channel=128, padding='VALID')
-        l = FullyConnected('fc0', l, 1024 + 512,
-                           b_init=tf.constant_initializer(0.1))
-        l = tf.nn.dropout(l, keep_prob)
-        l = FullyConnected('fc1', l, 512,
-                           b_init=tf.constant_initializer(0.1))
-        logits = FullyConnected('linear', l, out_dim=self.cifar_classnum, nl=tf.identity)
+            logits = LinearWrap(image) \
+                    .Conv2D('conv1.1', out_channel=64) \
+                    .Conv2D('conv1.2', out_channel=64) \
+                    .MaxPooling('pool1', 3, stride=2, padding='SAME') \
+                    .Conv2D('conv2.1', out_channel=128) \
+                    .Conv2D('conv2.2', out_channel=128) \
+                    .MaxPooling('pool2', 3, stride=2, padding='SAME') \
+                    .Conv2D('conv3.1', out_channel=128, padding='VALID') \
+                    .Conv2D('conv3.2', out_channel=128, padding='VALID') \
+                    .FullyConnected('fc0', 1024 + 512,
+                           b_init=tf.constant_initializer(0.1)) \
+                    .tf.nn.dropout(keep_prob) \
+                    .FullyConnected('fc1', 512,
+                           b_init=tf.constant_initializer(0.1)) \
+                    .FullyConnected('linear', out_dim=self.cifar_classnum, nl=tf.identity)()
 
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
