@@ -2,6 +2,8 @@ This is the official script to train, or run pretrained model for the paper:
 
 [DoReFa-Net: Training Low Bitwidth Convolutional Neural Networks with Low Bitwidth Gradients](http://arxiv.org/abs/1606.06160), by Zhou et al.
 
+We are hosting a demo at CVPR16 on behalf of Megvii, Inc.
+
 Training code for SVHN is available.
 
 The provided pretrained model is an AlexNet with 1 bit weights, 2 bit activations, trained with 4 bit gradients.
