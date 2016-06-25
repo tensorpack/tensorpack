@@ -101,40 +101,43 @@ class Model(ModelDesc):
         def activate(x):
             return fa(cabs(x))
 
-        l = image / 256.0
+        image = image / 256.0
 
         with argscope(BatchNorm, decay=0.9, epsilon=1e-4, use_local_stat=is_training), \
                 argscope(Conv2D, use_bias=False, nl=tf.identity):
-            l = Conv2D('conv0', l, 48, 5, padding='VALID', use_bias=True)
-            l = MaxPooling('pool0', l, 2, padding='SAME')
-            l = activate(l)
-            # 18
+            logits = (LinearWrap(image)
+                .Conv2D('conv0', 48, 5, padding='VALID', use_bias=True)
+                .MaxPooling('pool0', 2, padding='SAME')
+                .apply(activate)
+                # 18
+                .Conv2D('conv1', 64, 3, padding='SAME')
+                .apply(fg)
+                .BatchNorm('bn1').apply(activate)
 
-            l = Conv2D('conv1', l, 64, 3, padding='SAME')
-            l = activate(BatchNorm('bn1', fg(l)))
+                .Conv2D('conv2', 64, 3, padding='SAME')
+                .apply(fg)
+                .BatchNorm('bn2')
+                .MaxPooling('pool1', 2, padding='SAME')
+                .apply(activate)
+                # 9
+                .Conv2D('conv3', 128, 3, padding='VALID')
+                .apply(fg)
+                .BatchNorm('bn3').apply(activate)
+                # 7
 
-            l = Conv2D('conv2', l, 64, 3, padding='SAME')
-            l = BatchNorm('bn2', fg(l))
-            l = MaxPooling('pool1', l, 2, padding='SAME')
-            l = activate(l)
-            # 9
-            l = Conv2D('conv3', l, 128, 3, padding='VALID')
-            l = activate(BatchNorm('bn3', fg(l)))
-            # 7
+                .Conv2D('conv4', 128, 3, padding='SAME')
+                .apply(fg)
+                .BatchNorm('bn4').apply(activate)
 
-            l = Conv2D('conv4', l, 128, 3, padding='SAME')
-            l = activate(BatchNorm('bn4', fg(l)))
-
-            l = Conv2D('conv5', l, 128, 3, padding='VALID')
-            l = activate(BatchNorm('bn5', fg(l)))
-            # 5
-
-            l = tf.nn.dropout(l, 0.5 if is_training else 1.0)
-            l = Conv2D('conv6', l, 512, 5, padding='VALID')
-            l = BatchNorm('bn6', fg(l))
-            l = cabs(l)
-
-            logits = FullyConnected('fc1', l, 10, nl=tf.identity)
+                .Conv2D('conv5', 128, 3, padding='VALID')
+                .apply(fg)
+                .BatchNorm('bn5').apply(activate)
+                # 5
+                .tf.nn.dropout(0.5 if is_training else 1.0)
+                .Conv2D('conv6', 512, 5, padding='VALID')
+                .apply(fg).BatchNorm('bn6')
+                .apply(cabs)
+                .FullyConnected('fc1', 10, nl=tf.identity)())
         prob = tf.nn.softmax(logits, name='output')
 
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)

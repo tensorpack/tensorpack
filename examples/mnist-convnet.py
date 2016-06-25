@@ -34,16 +34,16 @@ class Model(ModelDesc):
         nl = PReLU.f
         image = image * 2 - 1
         with argscope(Conv2D, kernel_shape=3, nl=nl, out_channel=32):
-            logits = LinearWrap(image) \
-                    .Conv2D('conv0', padding='VALID') \
-                    .MaxPooling('pool0', 2) \
-                    .Conv2D('conv1', padding='SAME') \
-                    .Conv2D('conv2', padding='VALID') \
-                    .MaxPooling('pool1', 2) \
-                    .Conv2D('conv3', padding='VALID') \
-                    .FullyConnected('fc0', 512) \
-                    .tf.nn.dropout(keep_prob) \
-                    .FullyConnected('fc1', out_dim=10, nl=tf.identity)()
+            logits = (LinearWrap(image) # the starting brace is only for line-breaking
+                    .Conv2D('conv0', padding='VALID')
+                    .MaxPooling('pool0', 2)
+                    .Conv2D('conv1', padding='SAME')
+                    .Conv2D('conv2', padding='VALID')
+                    .MaxPooling('pool1', 2)
+                    .Conv2D('conv3', padding='VALID')
+                    .FullyConnected('fc0', 512)
+                    .tf.nn.dropout(keep_prob)
+                    .FullyConnected('fc1', out_dim=10, nl=tf.identity)())
         prob = tf.nn.softmax(logits, name='prob')
 
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)

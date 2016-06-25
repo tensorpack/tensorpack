@@ -3,22 +3,14 @@
 # File: load-alexnet.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
-import cv2  # tf bug
 import tensorflow as tf
 import numpy as np
 import os
 import argparse
-import cPickle as pkl
 
-from tensorpack.train import TrainConfig
-from tensorpack.predict import PredictConfig, get_predict_func
-from tensorpack.models import *
-from tensorpack.utils import *
-from tensorpack.tfutils import *
+from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
-from tensorpack.callbacks import *
-from tensorpack.dataflow import *
 from tensorpack.dataflow.dataset import ILSVRCMeta
 
 """

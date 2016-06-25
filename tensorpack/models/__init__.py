@@ -54,9 +54,14 @@ class LinearWrap(object):
             return f
         else:
             if layer_name != 'tf':
-                logger.warn("You're calling LinearWrap with something neither a layer nor 'tf'. Not officially supported yet!")
+                logger.warn("You're calling LinearWrap.__getattr__ with something neither a layer nor 'tf'. Not officially supported yet!")
             assert isinstance(layer, ModuleType)
             return LinearWrap.TFModuleFunc(layer, self._t)
+
+    def apply(self, func, *args, **kwargs):
+        """ send tensor to the first argument of a simple func"""
+        ret = func(self._t, *args, **kwargs)
+        return LinearWrap(ret)
 
     def __call__(self):
         return self._t

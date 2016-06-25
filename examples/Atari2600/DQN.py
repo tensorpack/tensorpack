@@ -71,21 +71,22 @@ class Model(ModelDesc):
         """ image: [0,255]"""
         image = image / 255.0
         with argscope(Conv2D, nl=PReLU.f, use_bias=True):
-            l = Conv2D('conv0', image, out_channel=32, kernel_shape=5, stride=1)
-            l = MaxPooling('pool0', l, 2)
-            l = Conv2D('conv1', l, out_channel=32, kernel_shape=5, stride=1)
-            l = MaxPooling('pool1', l, 2)
-            l = Conv2D('conv2', l, out_channel=64, kernel_shape=4)
-            l = MaxPooling('pool2', l, 2)
-            l = Conv2D('conv3', l, out_channel=64, kernel_shape=3)
+            l = (LinearWrap(image)
+                .Conv2D('conv0', out_channel=32, kernel_shape=5)
+                .MaxPooling('pool0', 2)
+                .Conv2D('conv1', out_channel=32, kernel_shape=5)
+                .MaxPooling('pool1', 2)
+                .Conv2D('conv2', out_channel=64, kernel_shape=4)
+                .MaxPooling('pool2', 2)
+                .Conv2D('conv3', out_channel=64, kernel_shape=3)
 
-            # the original arch
-            #l = Conv2D('conv0', image, out_channel=32, kernel_shape=8, stride=4)
-            #l = Conv2D('conv1', l, out_channel=64, kernel_shape=4, stride=2)
-            #l = Conv2D('conv2', l, out_channel=64, kernel_shape=3)
+                # the original arch
+                #.Conv2D('conv0', image, out_channel=32, kernel_shape=8, stride=4)
+                #.Conv2D('conv1', out_channel=64, kernel_shape=4, stride=2)
+                #.Conv2D('conv2', out_channel=64, kernel_shape=3)
 
-        l = FullyConnected('fc0', l, 512, nl=lambda x, name: LeakyReLU.f(x, 0.01, name))
-        l = FullyConnected('fct', l, out_dim=NUM_ACTIONS, nl=tf.identity)
+                .FullyConnected('fc0', 512, nl=lambda x, name: LeakyReLU.f(x, 0.01, name))
+                .FullyConnected('fct', NUM_ACTIONS, nl=tf.identity)())
         return l
 
     def _build_graph(self, inputs, is_training):
