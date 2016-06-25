@@ -117,7 +117,7 @@ def FixedUnPooling(x, shape, unpool_mat=None):
 @layer_register()
 def BilinearUpSample(x, shape):
     """
-    Bilinear upsample the input images.
+    Non-parametric bilinear upsample the input images.
     :param x: input NHWC tensor
     :param shape: an integer
     """

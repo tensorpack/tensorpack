@@ -135,7 +135,6 @@ class Model(ModelDesc):
                 SummaryGradient()]
 
     def predictor(self, state):
-        # TODO use multitower predictor to speed up training
         return self.predict_value.eval(feed_dict={'state:0': [state]})[0]
 
 def get_config():

@@ -30,6 +30,7 @@ class LinearWrap(object):
         def __init__(self, mod, tensor):
             self._mod = mod
             self._t = tensor
+
         def __getattr__(self, name):
             ret = getattr(self._mod, name)
             if isinstance(ret, ModuleType):
@@ -64,6 +65,9 @@ class LinearWrap(object):
         return LinearWrap(ret)
 
     def __call__(self):
+        return self._t
+
+    def tensor(self):
         return self._t
 
 

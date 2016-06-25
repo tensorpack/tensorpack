@@ -28,17 +28,17 @@ class Model(ModelDesc):
 
         image = image / 128.0 - 1
 
-        logits = LinearWrap(image) \
-                .Conv2D('conv1', 24, 5, padding='VALID') \
-                .MaxPooling('pool1', 2, padding='SAME') \
-                .Conv2D('conv2', 32, 3, padding='VALID') \
-                .Conv2D('conv3', 32, 3, padding='VALID') \
-                .MaxPooling('pool2', 2, padding='SAME') \
-                .Conv2D('conv4', 64, 3, padding='VALID') \
-                .tf.nn.dropout(keep_prob) \
+        logits = (LinearWrap(image)
+                .Conv2D('conv1', 24, 5, padding='VALID')
+                .MaxPooling('pool1', 2, padding='SAME')
+                .Conv2D('conv2', 32, 3, padding='VALID')
+                .Conv2D('conv3', 32, 3, padding='VALID')
+                .MaxPooling('pool2', 2, padding='SAME')
+                .Conv2D('conv4', 64, 3, padding='VALID')
+                .tf.nn.dropout(keep_prob)
                 .FullyConnected('fc0', 512,
-                        b_init=tf.constant_initializer(0.1)) \
-                .FullyConnected('linear', out_dim=10, nl=tf.identity)()
+                        b_init=tf.constant_initializer(0.1))
+                .FullyConnected('linear', out_dim=10, nl=tf.identity)())
         prob = tf.nn.softmax(logits, name='output')
 
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)

@@ -21,7 +21,8 @@ The original experiements are performed on a proprietary framework.
 This is our attempt to reproduce it on tensorpack.
 
 This config, with (W,A,G)=(1,1,4), can reach 3.1~3.2% error after 150 epochs.
-With the GaussianDeform augmentor, it will reach 2.8~2.9%.
+With the GaussianDeform augmentor, it will reach 2.8~2.9%
+(we are not using this augmentor in the paper).
 """
 
 BITW = 1
@@ -65,13 +66,13 @@ def get_dorefa(bitW, bitA, bitG):
             x = tf.clip_by_value(x, 0.0, 1.0)
             x = quantize(x, bitG) - 0.5
             return x * maxx * 2
+    GRAD_DEFINED = True
 
     def fg(x):
         if bitG == 32:
             return x
         with G.gradient_override_map({"Identity": "FGGrad"}):
             return tf.identity(x)
-    GRAD_DEFINED = True
     return fw, fa, fg
 
 class Model(ModelDesc):
