@@ -55,17 +55,17 @@ def BatchNorm(x, use_local_stat=True, decay=0.9, epsilon=1e-5):
     emaname = 'EMA'
     in_main_tower = not batch_mean.name.startswith('towerp')
     if in_main_tower:
-        ema = tf.train.ExponentialMovingAverage(decay=decay, name=emaname)
-        ema_apply_op = ema.apply([batch_mean, batch_var])
-        ema_mean, ema_var = ema.average(batch_mean), ema.average(batch_var)
+        with tf.name_scope(None): # https://github.com/tensorflow/tensorflow/issues/2740
+            ema = tf.train.ExponentialMovingAverage(decay=decay, name=emaname)
+            ema_apply_op = ema.apply([batch_mean, batch_var])
+            ema_mean, ema_var = ema.average(batch_mean), ema.average(batch_var)
     else:
         # use training-statistics in prediction
         assert not use_local_stat
-        # XXX have to do this again to get actual name. see issue:
-        # https://github.com/tensorflow/tensorflow/issues/2740
-        ema = tf.train.ExponentialMovingAverage(decay=decay, name=emaname)
-        ema_apply_op = ema.apply([batch_mean, batch_var])
-        ema_mean, ema_var = ema.average(batch_mean), ema.average(batch_var)
+        with tf.name_scope(None): # https://github.com/tensorflow/tensorflow/issues/2740
+            ema = tf.train.ExponentialMovingAverage(decay=decay, name=emaname)
+            ema_apply_op = ema.apply([batch_mean, batch_var])
+            ema_mean, ema_var = ema.average(batch_mean), ema.average(batch_var)
 
         G = tf.get_default_graph()
         # find training statistics in training tower

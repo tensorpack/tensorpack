@@ -71,7 +71,7 @@ class Model(ModelDesc):
         """ image: [0,255]"""
         image = image / 255.0
         with argscope(Conv2D, nl=PReLU.f, use_bias=True):
-            l = (LinearWrap(image)
+            return (LinearWrap(image)
                 .Conv2D('conv0', out_channel=32, kernel_shape=5)
                 .MaxPooling('pool0', 2)
                 .Conv2D('conv1', out_channel=32, kernel_shape=5)
@@ -87,7 +87,6 @@ class Model(ModelDesc):
 
                 .FullyConnected('fc0', 512, nl=lambda x, name: LeakyReLU.f(x, 0.01, name))
                 .FullyConnected('fct', NUM_ACTIONS, nl=tf.identity)())
-        return l
 
     def _build_graph(self, inputs, is_training):
         state, action, reward, next_state, isOver = inputs

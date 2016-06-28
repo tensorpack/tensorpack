@@ -10,7 +10,7 @@ from ..utils import *
 from . import get_global_step_var
 
 __all__ = ['create_summary', 'add_param_summary', 'add_activation_summary',
-           'summary_moving_average']
+           'add_moving_summary', 'summary_moving_average']
 
 def create_summary(name, v):
     """
@@ -42,8 +42,8 @@ def add_param_summary(summary_lists):
     """
     Add summary for all trainable variables matching the regex
 
-    :param summary_lists: list of (regex, [list of action to perform]).
-        Action can be 'mean', 'scalar', 'histogram', 'sparsity', 'rms'
+    :param summary_lists: list of (regex, [list of summary type to perform]).
+        Type can be 'mean', 'scalar', 'histogram', 'sparsity', 'rms'
     """
     def perform(var, action):
         ndim = var.get_shape().ndims
@@ -66,7 +66,7 @@ def add_param_summary(summary_lists):
             tf.scalar_summary(name + '/rms',
                     tf.sqrt(tf.reduce_mean(tf.square(var))))
             return
-        raise RuntimeError("Unknown action {}".format(action))
+        raise RuntimeError("Unknown summary type: {}".format(action))
 
     import re
     params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
@@ -78,6 +78,9 @@ def add_param_summary(summary_lists):
             if re.match(rgx, name):
                 for act in actions:
                     perform(p, act)
+
+def add_moving_summary(v):
+    tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, v)
 
 def summary_moving_average():
     """ Create a MovingAverage op and summary for all variables in
