@@ -25,3 +25,15 @@ Focused on modularity. Just have to define the three components in training:
 
 With the above components defined, tensorpack trainer will run the training iterations for you.
 Multi-GPU training is ready to use by simply changing the trainer.
+
+## Dependencies:
+
++ Python 2 or 3
++ TensorFlow
++ Python bindings for OpenCV
++ other requirements:
+```
+pip install --user -r requirements.txt
+```
+
+

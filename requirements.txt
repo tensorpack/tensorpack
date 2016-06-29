@@ -2,4 +2,4 @@ termcolor
 tqdm
 msgpack-python
 msgpack-numpy
-subprocess32
+subprocess32; python_version < '3.0'
