@@ -29,11 +29,16 @@ Multi-GPU training is ready to use by simply changing the trainer.
 ## Dependencies:
 
 + Python 2 or 3
-+ TensorFlow
++ TensorFlow >= 0.8
 + Python bindings for OpenCV
 + other requirements:
 ```
 pip install --user -r requirements.txt
+pip install --user -r opt-requirements.txt (some optional dependencies)
+```
++ allow `import tensorpack` everywhere:
+```
+export PYTHONPATH=$PYTHONPATH:`readlink -f path/to/tensorpack`
 ```
 
 

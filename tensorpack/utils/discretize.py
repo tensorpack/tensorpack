@@ -8,7 +8,7 @@ from abc import abstractmethod, ABCMeta
 import numpy as np
 from six.moves import range
 
-__all__ = ['UniformDiscretizer1D']
+__all__ = ['UniformDiscretizer1D', 'UniformDiscretizerND']
 
 @memoized
 def log_once(s):
@@ -74,8 +74,31 @@ class UniformDiscretizer1D(Discretizer1D):
         return ret
 
 
+class UniformDiscretizerND(Discretizer):
+    def __init__(self, *min_max_spacing):
+        """
+        :params min_max_spacing: (minv, maxv, spacing) for each dimension
+        """
+        self.n = len(min_max_spacing)
+        self.discretizers = [UniformDiscretizer1D(*k) for k in min_max_spacing]
+        self.nr_bins = [k.get_nr_bin() for k in self.discretizers]
+
+    def get_nr_bin(self):
+        return np.prod(self.nr_bins)
+
+    def get_bin(self, v):
+        assert len(v) == self.n
+        bin_id = [self.discretizers[k].get_bin(v[k]) for k in range(self.n)]
+
+        acc, res = 1, 0
+        for k in reversed(list(range(self.n))):
+            res += bin_id[k] * acc
+            acc *= self.nr_bins[k]
+        return res
+
 if __name__ == '__main__':
-    u = UniformDiscretizer1D(-10, 10, 0.12)
+    #u = UniformDiscretizer1D(-10, 10, 0.12)
+    u = UniformDiscretizerND((0, 100, 1), (0, 100, 1), (0, 100, 1))
     import IPython as IP;
     IP.embed(config=IP.terminal.ipapp.load_default_config())
 
