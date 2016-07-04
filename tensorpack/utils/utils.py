@@ -89,7 +89,7 @@ def get_gpus():
 def get_dataset_dir(name):
     d = os.environ.get('TENSORPACK_DATASET', None)
     if d:
-        assert os.path.isdir(d)
+        assert os.path.isdir(d), d
     else:
         d = os.path.abspath(os.path.join(
                     os.path.dirname(__file__), '..', 'dataflow', 'dataset'))
