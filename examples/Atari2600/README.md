@@ -8,7 +8,7 @@ and Double-DQN in:
 
 Can reproduce the claimed performance, on several games I've tested with.
 
-![DQN](https://github.com/ppwwyyxx/tensorpack/raw/master/examples/Atari2600/DoubleDQN-breakout.png)
+![DQN](examples/Atari2600/DoubleDQN-breakout.png)
 
 A demo trained with Double-DQN on breakout is available at [youtube](https://youtu.be/o21mddZtE5Y).
 

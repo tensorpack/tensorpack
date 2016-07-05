@@ -7,7 +7,7 @@ with the variants proposed in "Identity Mappings in Deep Residual Networks", [ht
 The train error shown here is a moving average of the error rate of each batch in training.
 The validation error here is computed on test set.
 
-![cifar10](https://github.com/ppwwyyxx/tensorpack/raw/master/examples/ResNet/cifar10-resnet.png)
+![cifar10](examples/ResNet/cifar10-resnet.png)
 
 <!--
    -Download model:
