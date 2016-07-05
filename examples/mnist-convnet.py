@@ -21,8 +21,7 @@ IMAGE_SIZE = 28
 class Model(ModelDesc):
     def _get_input_vars(self):
         return [InputVar(tf.float32, (None, IMAGE_SIZE, IMAGE_SIZE), 'input'),
-                InputVar(tf.int32, (None,), 'label')
-               ]
+                InputVar(tf.int32, (None,), 'label') ]
 
     def _build_graph(self, input_vars, is_training):
         is_training = bool(is_training)

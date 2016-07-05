@@ -62,3 +62,7 @@ target/
 *.dat
 
 *.bin
+*.tfmodel
+*.meta
+*.log*
+model-*

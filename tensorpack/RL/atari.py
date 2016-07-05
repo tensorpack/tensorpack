@@ -51,7 +51,7 @@ class AtariPlayer(RLEnvironment):
         """
         super(AtariPlayer, self).__init__()
         if not os.path.isfile(rom_file) and '/' not in rom_file:
-            rom_file = os.path.join(get_dataset_dir('atari_rom'), rom_file)
+            rom_file = get_dataset_dir('atari_rom', rom_file)
         assert os.path.isfile(rom_file), \
                 "rom {} not found. Please download at {}".format(rom_file, ROM_URL)
 

@@ -86,13 +86,12 @@ def get_gpus():
     assert env is not None  # TODO
     return map(int, env.strip().split(','))
 
-def get_dataset_dir(name):
+def get_dataset_dir(*args):
     d = os.environ.get('TENSORPACK_DATASET', None)
-    if d:
-        assert os.path.isdir(d), d
-    else:
+    if d is None:
         d = os.path.abspath(os.path.join(
                     os.path.dirname(__file__), '..', 'dataflow', 'dataset'))
         logger.info("TENSORPACK_DATASET not set, using {} for dataset.".format(d))
-    return os.path.join(d, name)
+    assert os.path.isdir(d), d
+    return os.path.join(d, *args)
 
