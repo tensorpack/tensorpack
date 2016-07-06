@@ -106,9 +106,7 @@ class Model(ModelDesc):
             [grad], param.grad_clip)[0][0])]
 
 def get_config():
-    basename = os.path.basename(__file__)
-    logger.set_logger_dir(
-        os.path.join('train_log', basename[:basename.rfind('.')]))
+    logger.auto_set_dir()
 
     ds = CharRNNData(param.corpus, 100000)
     ds = BatchData(ds, param.batch_size)

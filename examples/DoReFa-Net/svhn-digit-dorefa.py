@@ -164,9 +164,7 @@ class Model(ModelDesc):
         self.cost = tf.add_n([cost, wd_cost], name='cost')
 
 def get_config():
-    basename = os.path.basename(__file__)
-    logger.set_logger_dir(
-        os.path.join('train_log', basename[:basename.rfind('.')]))
+    logger.auto_set_dir()
 
     # prepare dataset
     d1 = dataset.SVHNDigit('train')

@@ -141,9 +141,7 @@ def get_data(train_or_test):
     return ds
 
 def get_config():
-    basename = os.path.basename(__file__)
-    logger.set_logger_dir(
-        os.path.join('train_log', basename[:basename.rfind('.')]))
+    logger.auto_set_dir()
 
     # prepare dataset
     dataset_train = get_data('train')

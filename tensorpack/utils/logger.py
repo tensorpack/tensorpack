@@ -14,7 +14,7 @@ from .fs import mkdir_p
 
 __all__ = []
 
-class MyFormatter(logging.Formatter):
+class _MyFormatter(logging.Formatter):
     def format(self, record):
         date = colored('[%(asctime)s @%(filename)s:%(lineno)d]', 'green')
         msg = '%(message)s'
@@ -28,17 +28,17 @@ class MyFormatter(logging.Formatter):
             # Python3 compatibilty
             self._style._fmt = fmt
         self._fmt = fmt
-        return super(MyFormatter, self).format(record)
+        return super(_MyFormatter, self).format(record)
 
-def getlogger():
+def _getlogger():
     logger = logging.getLogger('tensorpack')
     logger.propagate = False
     logger.setLevel(logging.INFO)
     handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(MyFormatter(datefmt='%m%d %H:%M:%S'))
+    handler.setFormatter(_MyFormatter(datefmt='%m%d %H:%M:%S'))
     logger.addHandler(handler)
     return logger
-logger = getlogger()
+_logger = _getlogger()
 
 
 def get_time_str():
@@ -52,8 +52,8 @@ def _set_file(path):
         info("Log file '{}' backuped to '{}'".format(path, backup_name))
     hdl = logging.FileHandler(
         filename=path, encoding='utf-8', mode='w')
-    hdl.setFormatter(MyFormatter(datefmt='%m%d %H:%M:%S'))
-    logger.addHandler(hdl)
+    hdl.setFormatter(_MyFormatter(datefmt='%m%d %H:%M:%S'))
+    _logger.addHandler(hdl)
 
 def set_logger_dir(dirname, action=None):
     """
@@ -63,10 +63,10 @@ def set_logger_dir(dirname, action=None):
     """
     global LOG_FILE, LOG_DIR
     if os.path.isdir(dirname):
-        logger.warn("""\
+        _logger.warn("""\
 Directory {} exists! Please either backup/delete it, or use a new directory \
 unless you're resuming from a previous task.""".format(dirname))
-        logger.info("Select Action: k (keep) / b (backup) / d (delete) / n (new):")
+        _logger.info("Select Action: k (keep) / b (backup) / d (delete) / n (new):")
         if not action:
             while True:
                 act = input().lower().strip()
@@ -92,10 +92,21 @@ unless you're resuming from a previous task.""".format(dirname))
     LOG_FILE = os.path.join(dirname, 'log.log')
     _set_file(LOG_FILE)
 
+# export logger functions
+for func in ['info', 'warning', 'error', 'critical', 'warn', 'exception', 'debug']:
+    locals()[func] = getattr(_logger, func)
+
 def disable_logger():
+    """ disable all logging ability from this moment"""
     for func in ['info', 'warning', 'error', 'critical', 'warn', 'exception', 'debug']:
         globals()[func] = lambda x: None
 
-# export logger functions
-for func in ['info', 'warning', 'error', 'critical', 'warn', 'exception', 'debug']:
-    locals()[func] = getattr(logger, func)
+def auto_set_dir(action=None):
+    """ set log directory to a subdir inside 'train_log', with the name being
+    the main python file currently running"""
+    mod = sys.modules['__main__']
+    basename = os.path.basename(mod.__file__)
+    set_logger_dir(
+            os.path.join('train_log',
+                basename[:basename.rfind('.')]),
+            action=action)

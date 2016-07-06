@@ -15,7 +15,6 @@ MNIST ConvNet example.
 about 0.6% validation error after 30 epochs.
 """
 
-BATCH_SIZE = 128
 IMAGE_SIZE = 28
 
 class Model(ModelDesc):
@@ -65,14 +64,15 @@ class Model(ModelDesc):
         summary.add_param_summary([('.*/W', ['histogram'])])   # monitor histogram of all W
         self.cost = tf.add_n([wd_cost, cost], name='cost')
 
-def get_config():
-    basename = os.path.basename(__file__)
-    logger.set_logger_dir(
-        os.path.join('train_log', basename[:basename.rfind('.')]))
+def get_data():
+    train = BatchData(dataset.Mnist('train'), 128)
+    test = BatchData(dataset.Mnist('test'), 256, remainder=True)
+    return train, test
 
-    # prepare dataset
-    dataset_train = BatchData(dataset.Mnist('train'), 128)
-    dataset_test = BatchData(dataset.Mnist('test'), 256, remainder=True)
+def get_config():
+    logger.auto_set_dir()
+
+    dataset_train, dataset_test = get_data()
     step_per_epoch = dataset_train.size()
 
     lr = tf.train.exponential_decay(

@@ -14,4 +14,5 @@ Experiements are repeated 15 times for p=0, 10 times for p=0.02 & 0.05, and 5 ti
 of p. All experiements run for 100 epochs, with lr decay, which are enough for them to converge.
 
 I suppose the disturb method works as a random noise to prevent SGD from getting stuck.
-Despite the positive results here, I still doubt whether the method works for ImageNet.
+It doesn't work for harder problems such as SVHN (details to follow). And I don't believe
+it will work for ImageNet.

@@ -137,9 +137,7 @@ class Model(ModelDesc):
         return self.predict_value.eval(feed_dict={'state:0': [state]})[0]
 
 def get_config():
-    basename = os.path.basename(__file__)
-    logger.set_logger_dir(
-        os.path.join('train_log', basename[:basename.rfind('.')]))
+    logger.auto_set_dir()
 
     M = Model()
     dataset_train = ExpReplay(

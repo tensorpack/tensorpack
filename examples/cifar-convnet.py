@@ -107,6 +107,8 @@ def get_data(train_or_test, cifar_classnum):
     return ds
 
 def get_config(cifar_classnum):
+    logger.auto_set_dir()
+
     # prepare dataset
     dataset_train = get_data('train', cifar_classnum)
     step_per_epoch = dataset_train.size()
@@ -143,10 +145,6 @@ if __name__ == '__main__':
     parser.add_argument('--classnum', help='10 for cifar10 or 100 for cifar100',
                         type=int, default=10)
     args = parser.parse_args()
-
-    basename = os.path.basename(__file__)
-    logger.set_logger_dir(
-        os.path.join('train_log', basename[:basename.rfind('.')]))
 
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu

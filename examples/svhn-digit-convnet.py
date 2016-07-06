@@ -56,11 +56,10 @@ class Model(ModelDesc):
         wd_cost = regularize_cost('fc.*/W', l2_regularizer(0.00001))
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, wd_cost)
 
-        add_param_summary([('.*/W', ['histogram', 'sparsity'])])   # monitor W
+        add_param_summary([('.*/W', ['histogram', 'rms'])])   # monitor W
         self.cost = tf.add_n([cost, wd_cost], name='cost')
 
-def get_config():
-    # prepare dataset
+def get_data():
     d1 = dataset.SVHNDigit('train')
     d2 = dataset.SVHNDigit('extra')
     data_train = RandomMixData([d1, d2])
@@ -77,11 +76,17 @@ def get_config():
     data_train = AugmentImageComponent(data_train, augmentors)
     data_train = BatchData(data_train, 128)
     data_train = PrefetchData(data_train, 5, 5)
-    step_per_epoch = data_train.size()
 
     augmentors = [ imgaug.Resize((40, 40)) ]
     data_test = AugmentImageComponent(data_test, augmentors)
     data_test = BatchData(data_test, 128, remainder=True)
+    return data_train, data_test
+
+def get_config():
+    logger.auto_set_dir()
+
+    data_train, data_test = get_data()
+    step_per_epoch = data_train.size()
 
     lr = tf.train.exponential_decay(
         learning_rate=1e-3,
@@ -109,10 +114,6 @@ if __name__ == '__main__':
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.') # nargs='*' in multi mode
     parser.add_argument('--load', help='load model')
     args = parser.parse_args()
-
-    basename = os.path.basename(__file__)
-    logger.set_logger_dir(
-        os.path.join('train_log', basename[:basename.rfind('.')]))
 
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu

@@ -149,6 +149,7 @@ def get_data(train_or_test):
 
 
 def get_config():
+    logger.auto_set_dir()
     # prepare dataset
     dataset_train = get_data('train')
     step_per_epoch = 5000
@@ -184,14 +185,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.') # nargs='*' in multi mode
     parser.add_argument('--load', help='load model')
-    parser.add_argument('--data', help='ImageNet data root directory',
-                        required=True)
-    global args
+    parser.add_argument('--data', help='ImageNet data root directory', required=True)
     args = parser.parse_args()
-
-    basename = os.path.basename(__file__)
-    logger.set_logger_dir(
-        os.path.join('train_log', basename[:basename.rfind('.')]))
 
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
