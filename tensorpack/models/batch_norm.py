@@ -64,20 +64,20 @@ def BatchNorm(x, use_local_stat=True, decay=0.9, epsilon=1e-5):
         assert not use_local_stat
         with tf.name_scope(None):
             ema = tf.train.ExponentialMovingAverage(decay=decay, name=emaname)
-            ema_apply_op = ema.apply([batch_mean, batch_var])
-            ema_mean, ema_var = ema.average(batch_mean), ema.average(batch_var)
+            mean_var_name = ema.average_name(batch_mean) + ':0'
+            var_var_name = ema.average_name(batch_var) + ':0'
 
         G = tf.get_default_graph()
         # find training statistics in training tower
         try:
-            mean_name = re.sub('towerp[0-9]+/', '', ema_mean.name)
-            var_name = re.sub('towerp[0-9]+/', '', ema_var.name)
+            mean_name = re.sub('towerp[0-9]+/', '', mean_var_name)
+            var_name = re.sub('towerp[0-9]+/', '', var_var_name)
             #var_name = batch_var.op.name[prefixlen:] + '/' + emaname + ':0'
             ema_mean = G.get_tensor_by_name(mean_name)
             ema_var = G.get_tensor_by_name(var_name)
         except KeyError:
-            mean_name = re.sub('towerp[0-9]+/', 'tower0/', ema_mean.name)
-            var_name = re.sub('towerp[0-9]+/', 'tower0/', ema_var.name)
+            mean_name = re.sub('towerp[0-9]+/', 'tower0/', mean_var_name)
+            var_name = re.sub('towerp[0-9]+/', 'tower0/', var_var_name)
             ema_mean = G.get_tensor_by_name(mean_name)
             ema_var = G.get_tensor_by_name(var_name)
         #logger.info("In prediction, using {} instead of {} for {}".format(

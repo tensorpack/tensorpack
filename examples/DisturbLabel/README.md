@@ -1,7 +1,8 @@
 
 ## DisturbLabel
 
-I ran into the paper [DisturbLabel: Regularizing CNN on the Loss Layer](https://arxiv.org/abs/1605.00055) on CVPR16.
+I ran into the paper [DisturbLabel: Regularizing CNN on the Loss Layer](https://arxiv.org/abs/1605.00055) on CVPR16,
+which basically said that noisy data gives you better performance.
 As many, I didn't believe the method and the results at first.
 
 This is a simple mnist training script with DisturbLabel. It uses the architecture in the paper and

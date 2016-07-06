@@ -94,7 +94,11 @@ class SaverRestore(SessionInit):
     @staticmethod
     def _read_checkpoint_vars(model_path):
         reader = tf.train.NewCheckpointReader(model_path)
-        return set(reader.get_variable_to_shape_map().keys())
+        ckpt_vars = reader.get_variable_to_shape_map().keys()
+        for v in ckpt_vars:
+            if v.startswith('towerp'):
+                logger.warn("Found {} in checkpoint. Anything from prediction tower shouldn't be saved.".format(v.name))
+        return set(ckpt_vars)
 
     @staticmethod
     def _get_vars_to_restore_multimap(vars_available):
@@ -102,13 +106,14 @@ class SaverRestore(SessionInit):
         Get a dict of {var_name: [var, var]} to restore
         :param vars_available: varaibles available in the checkpoint, for existence checking
         """
-        # TODO warn if some variable in checkpoint is not used
         vars_to_restore = tf.all_variables()
         var_dict = defaultdict(list)
         for v in vars_to_restore:
             name = v.op.name
             if 'towerp' in name:
-                logger.warn("Anything from prediction tower shouldn't be saved.")
+                logger.warn("Variable {} in prediction tower shouldn't exist.".format(v.name))
+                # don't overwrite anything in the current prediction graph
+                continue
             if 'tower' in name:
                 new_name = re.sub('tower[p0-9]+/', '', name)
                 name = new_name
@@ -117,6 +122,7 @@ class SaverRestore(SessionInit):
                 vars_available.remove(name)
             else:
                 logger.warn("Param {} not found in checkpoint! Will not restore.".format(v.op.name))
+        # TODO warn if some variable in checkpoint is not used
         #for name in vars_available:
             #logger.warn("Param {} in checkpoint doesn't appear in the graph!".format(name))
         return var_dict
