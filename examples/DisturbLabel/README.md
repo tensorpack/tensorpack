@@ -15,9 +15,10 @@ of p. All experiements run for 100 epochs, with lr decay, which are enough for t
 
 I suppose the disturb method works as a random noise to prevent SGD from getting stuck.
 However it didn't work for harder problems such as SVHN:
+
 ![svhn](svhn.png)
 
-The SVHN experiement used the model & hyperparemeters as my original [svhn example](../svhn-digit-convnet.py).
+The SVHN experiements used the model & hyperparemeters as my original [svhn example](../svhn-digit-convnet.py).
 Experiements were all repeated 10 times to get the error bar.
 
-And I don't believe it will work for ImageNet.
+And I don't believe it will work for ImageNet either.
