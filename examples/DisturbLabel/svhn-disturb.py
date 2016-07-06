@@ -14,7 +14,8 @@ from tensorpack.tfutils.summary import *
 from disturb import DisturbLabel
 import imp
 
-svhn_example = imp.load_source('svhn_example', '../svhn-digit-convnet.py')
+svhn_example = imp.load_source('svhn_example',
+        os.path.join(os.path.dirname(__file__), '..', 'svhn-digit-convnet.py')))
 Model = svhn_example.Model
 get_config = svhn_example.get_config
 

@@ -14,7 +14,7 @@ __all__ = ['UniformDiscretizer1D', 'UniformDiscretizerND']
 def log_once(s):
     logger.warn(s)
 
-# just placeholder
+# just a placeholder
 class Discretizer(object):
     __metaclass__ = ABCMeta
 
@@ -54,6 +54,9 @@ class UniformDiscretizer1D(Discretizer1D):
         return int(np.clip(
                 (v - self.minv) / self.spacing,
                 0, self.nr_bin - 1))
+
+    def get_bin_center(self, bin_id):
+        return self.minv + self.spacing * (bin_id + 0.5)
 
     def get_distribution(self, v, smooth_factor=0.05, smooth_radius=2):
         """ return a smoothed one-hot distribution of the sample v.
@@ -95,6 +98,19 @@ class UniformDiscretizerND(Discretizer):
             res += bin_id[k] * acc
             acc *= self.nr_bins[k]
         return res
+
+    def _get_bin_id_nd(self, bin_id):
+        ret = []
+        for k in reversed(list(range(self.n))):
+            nr = self.nr_bins[k]
+            v = bin_id % nr
+            bin_id = bin_id / nr
+            ret.append(v)
+        return list(reversed(ret))
+
+    def get_bin_center(self, bin_id):
+        bin_id_nd = self._get_bin_id_nd(bin_id)
+        return [self.discretizers[k].get_bin_center(bin_id_nd[k]) for k in range(self.n)]
 
 if __name__ == '__main__':
     #u = UniformDiscretizer1D(-10, 10, 0.12)
