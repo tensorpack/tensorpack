@@ -36,9 +36,8 @@ Multi-GPU training is ready to use by simply changing the trainer.
 pip install --user -r requirements.txt
 pip install --user -r opt-requirements.txt (some optional dependencies)
 ```
++ Use [tcmalloc](http://goog-perftools.sourceforge.net/doc/tcmalloc.html) whenever possible: see [TF issue](https://github.com/tensorflow/tensorflow/issues/2942)
 + allow `import tensorpack` everywhere:
 ```
 export PYTHONPATH=$PYTHONPATH:`readlink -f path/to/tensorpack`
 ```
-
-

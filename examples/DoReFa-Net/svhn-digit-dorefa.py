@@ -20,6 +20,8 @@ http://arxiv.org/abs/1606.06160
 The original experiements are performed on a proprietary framework.
 This is our attempt to reproduce it on tensorpack.
 
+You'll need tcmalloc to avoid large memory consumption: https://github.com/tensorflow/tensorflow/issues/2942
+
 This config, with (W,A,G)=(1,1,4), can reach 3.1~3.2% error after 150 epochs.
 With the GaussianDeform augmentor, it will reach 2.8~2.9%
 (we are not using this augmentor in the paper).
