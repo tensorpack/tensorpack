@@ -144,7 +144,7 @@ def get_data(train_or_test):
     ds = AugmentImageComponent(ds, augmentors)
     ds = BatchData(ds, BATCH_SIZE, remainder=not isTrain)
     if isTrain:
-        ds = PrefetchData(ds, 20, 5)
+        ds = PrefetchDataZMQ(ds, 5)
     return ds
 
 

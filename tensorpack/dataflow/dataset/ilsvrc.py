@@ -146,16 +146,18 @@ class ILSVRC12CaffeLMDB(DataFlow):
         self._meta = ILSVRCMeta()
         self._shuffle = shuffle
         self.rng = get_rng(self)
+        self._txn = self._lmdb.begin()
+        self._size = self._txn.stat()['entries']
         if shuffle:
             with timed_operation("Loading LMDB keys ..."):
-                self.keys = [k for k, _ in self._lmdb.begin().cursor()]
+                self.keys = [k for k, _ in self._txn.cursor()]
 
     def reset_state(self):
         self._txn = self._lmdb.begin()
         self.rng = get_rng(self)
 
     def size(self):
-        return self._txn.stat()['entries']
+        return self._size
 
     def get_data(self):
         import imp

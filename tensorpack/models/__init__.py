@@ -48,14 +48,14 @@ class LinearWrap(object):
     def __getattr__(self, layer_name):
         layer = eval(layer_name)
         if hasattr(layer, 'f'):
-            # a registered tensorpack layer
+            # this is a registered tensorpack layer
             def f(name, *args, **kwargs):
                 ret = layer(name, self._t, *args, **kwargs)
                 return LinearWrap(ret)
             return f
         else:
             if layer_name != 'tf':
-                logger.warn("You're calling LinearWrap.__getattr__ with something neither a layer nor 'tf'. Not officially supported yet!")
+                logger.warn("You're calling LinearWrap.__getattr__ with something neither a layer nor 'tf'!")
             assert isinstance(layer, ModuleType)
             return LinearWrap.TFModuleFunc(layer, self._t)
 
