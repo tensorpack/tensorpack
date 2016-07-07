@@ -51,7 +51,7 @@ class SaverRestore(SessionInit):
     """
     Restore an old model saved by `ModelSaver`.
     """
-    def __init__(self, model_path):
+    def __init__(self, model_path, prefix=None):
         """
         :param model_path: a model file or a ``checkpoint`` file.
         """
@@ -61,12 +61,13 @@ class SaverRestore(SessionInit):
                 os.path.dirname(model_path)).model_checkpoint_path
             assert os.path.isfile(model_path)
         self.set_path(model_path)
+        self.prefix = prefix
 
     def _init(self, sess):
         logger.info(
             "Restoring checkpoint from {}.".format(self.path))
         chkpt_vars = SaverRestore._read_checkpoint_vars(self.path)
-        vars_map = SaverRestore._get_vars_to_restore_multimap(chkpt_vars)
+        vars_map = self._get_vars_to_restore_multimap(chkpt_vars)
         for dic in SaverRestore._produce_restore_dict(vars_map):
             # multiple saver under same name scope would cause error:
             # training/saver.py: assert restore_op.name.endswith("restore_all"), restore_op.name
@@ -93,6 +94,7 @@ class SaverRestore(SessionInit):
 
     @staticmethod
     def _read_checkpoint_vars(model_path):
+        """ return a set of strings """
         reader = tf.train.NewCheckpointReader(model_path)
         ckpt_vars = reader.get_variable_to_shape_map().keys()
         for v in ckpt_vars:
@@ -100,11 +102,10 @@ class SaverRestore(SessionInit):
                 logger.warn("Found {} in checkpoint. Anything from prediction tower shouldn't be saved.".format(v.name))
         return set(ckpt_vars)
 
-    @staticmethod
-    def _get_vars_to_restore_multimap(vars_available):
+    def _get_vars_to_restore_multimap(self, vars_available):
         """
         Get a dict of {var_name: [var, var]} to restore
-        :param vars_available: varaibles available in the checkpoint, for existence checking
+        :param vars_available: varaible names available in the checkpoint, for existence checking
         """
         vars_to_restore = tf.all_variables()
         var_dict = defaultdict(list)
@@ -117,6 +118,8 @@ class SaverRestore(SessionInit):
             if 'tower' in name:
                 new_name = re.sub('tower[p0-9]+/', '', name)
                 name = new_name
+            if self.prefix and name.startswith(self.prefix):
+                name = name[len(self.prefix)+1:]
             if name in vars_available:
                 var_dict[name].append(v)
                 vars_available.remove(name)
