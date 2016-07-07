@@ -174,20 +174,19 @@ class ILSVRC12CaffeLMDB(DataFlow):
                 return None
             return [img.transpose(1, 2, 0), datum.label]
 
-        with self._txn:
-            if not self._shuffle:
-                c = self._txn.cursor()
-                while c.next():
-                    k, v = c.item()
-                    v = parse(k, v)
-                    if v: yield v
-            else:
-                s = self.size()
-                for i in range(s):
-                    k = self.rng.choice(self.keys)
-                    v = self._txn.get(k)
-                    v = parse(k, v)
-                    if v: yield v
+        if not self._shuffle:
+            c = self._txn.cursor()
+            while c.next():
+                k, v = c.item()
+                v = parse(k, v)
+                if v: yield v
+        else:
+            s = self.size()
+            for i in range(s):
+                k = self.rng.choice(self.keys)
+                v = self._txn.get(k)
+                v = parse(k, v)
+                if v: yield v
 
 if __name__ == '__main__':
     meta = ILSVRCMeta()
