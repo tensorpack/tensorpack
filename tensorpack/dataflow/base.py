@@ -5,6 +5,7 @@
 
 
 from abc import abstractmethod, ABCMeta
+from ..utils import get_rng
 
 __all__ = ['DataFlow', 'ProxyDataFlow']
 
