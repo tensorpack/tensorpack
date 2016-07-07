@@ -150,7 +150,7 @@ class MultiThreadAsyncPredictor(object):
     def put_task(self, inputs, callback=None):
         """
         :param inputs: a data point (list of component) matching input_names (not batched)
-        :param callback: a callback to get called with the list of outputs
+        :param callback: a thread-safe callback to get called with the list of outputs
         :returns: a Future of output."""
         f = Future()
         if callback is not None:

@@ -78,7 +78,7 @@ def get_predict_func(config):
     if config.input_data_mapping is None:
         input_map = input_vars
     else:
-        input_map = [input_vars[k] for k in config.input_data_mapping]
+        input_map = [input_vars[k] for k in config.input_data_mapping if k >= 0]
 
     # check output_var_names against output_vars
     output_vars = get_vars_by_names(output_var_names)

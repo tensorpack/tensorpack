@@ -95,7 +95,7 @@ class PrefetchProcessZMQ(multiprocessing.Process):
 
 class PrefetchDataZMQ(ProxyDataFlow):
     """ Work the same as `PrefetchData`, but faster. """
-    def __init__(self, ds, nr_proc=1, pipedir='.'):
+    def __init__(self, ds, nr_proc=1, pipedir=None):
         """
         :param ds: a `DataFlow` instance.
         :param nr_proc: number of processes to use. When larger than 1, order
@@ -111,7 +111,10 @@ class PrefetchDataZMQ(ProxyDataFlow):
 
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.PULL)
-        assert os.path.isdir(pipedir)
+
+        if pipedir is None:
+            pipedir = os.environ.get('TENSORPACK_PIPEDIR', '.')
+        assert os.path.isdir(pipedir), pipedir
         self.pipename = "ipc://{}/dataflow-pipe-".format(pipedir.rstrip('/')) + str(uuid.uuid1())[:6]
         self.socket.set_hwm(5)  # a little bit faster than default, don't know why
         self.socket.bind(self.pipename)
