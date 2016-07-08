@@ -6,7 +6,7 @@ from .base import ImageAugmentor
 import numpy as np
 import cv2
 
-__all__ = ['Flip', 'Resize', 'RandomResize', 'JpegNoise']
+__all__ = ['Flip', 'Resize', 'RandomResize']
 
 class Flip(ImageAugmentor):
     """
@@ -58,7 +58,7 @@ class Resize(ImageAugmentor):
 
 class RandomResize(ImageAugmentor):
     """ randomly rescale w and h of the image"""
-    def __init__(self, xrange, yrange, minimum=None, aspect_ratio_thres=0.2):
+    def __init__(self, xrange, yrange, minimum=(0,0), aspect_ratio_thres=0.15):
         """
         :param xrange: (min, max) scaling ratio
         :param yrange: (min, max) scaling ratio
@@ -82,14 +82,3 @@ class RandomResize(ImageAugmentor):
     def _augment(self, img, dsize):
         return cv2.resize(img, dsize, interpolation=cv2.INTER_CUBIC)
 
-
-class JpegNoise(ImageAugmentor):
-    def __init__(self, quality_range=(40, 100)):
-        self._init(locals())
-
-    def _get_augment_params(self, img):
-        return self._rand_range(*self.quality_range)
-
-    def _augment(self, img, q):
-        return cv2.imdecode(cv2.imencode('.jpg', img,
-            [cv2.IMWRITE_JPEG_QUALITY, q])[1], 1)

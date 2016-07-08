@@ -6,7 +6,11 @@
 
 from .base import ImageAugmentor
 
-__all__ = ['RandomChooseAug', 'MapImage']
+__all__ = ['RandomChooseAug', 'MapImage', 'Identity']
+
+class Identity(ImageAugmentor):
+    def _augment(self, img, _):
+        return img
 
 class RandomChooseAug(ImageAugmentor):
     def __init__(self, aug_lists):

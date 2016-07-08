@@ -90,7 +90,7 @@ class ILSVRCMeta(object):
         obj = caffepb.BlobProto()
 
         mean_file = os.path.join(self.dir, 'imagenet_mean.binaryproto')
-        with open(mean_file) as f:
+        with open(mean_file, 'rb') as f:
             obj.ParseFromString(f.read())
         arr = np.array(obj.data).reshape((3, 256, 256)).astype('float32')
         arr = np.transpose(arr, [1,2,0])
@@ -105,6 +105,7 @@ class ILSVRC12(DataFlow):
         """
         assert name in ['train', 'test', 'val']
         self.full_dir = os.path.join(dir, name)
+        assert os.path.isdir(self.full_dir), self.full_dir
         self.shuffle = shuffle
         self.meta = ILSVRCMeta(meta_dir)
         self.imglist = self.meta.get_image_list(name)

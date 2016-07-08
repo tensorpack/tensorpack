@@ -324,10 +324,10 @@ class LocallyShuffleData(ProxyDataFlow, RNGDataFlow):
             self.rng.shuffle(self.q)
             for _ in range(self.q.maxlen):
                 yield self.q.popleft()
+                self.q.append(next(self.ds_itr))
                 cnt += 1
                 if cnt == self.size():
                     return
-                self.q.append(next(self.ds_itr))
 
 
 def SelectComponent(ds, idxs):
