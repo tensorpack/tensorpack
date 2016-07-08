@@ -22,6 +22,7 @@ class StatHolder(object):
         :param log_dir: directory to save the stats.
         """
         self.set_print_tag([])
+        self.blacklist_tag = set()
         self.stat_now = {}
 
         self.log_dir = log_dir
@@ -47,6 +48,9 @@ class StatHolder(object):
         """
         self.print_tag = None if print_tag is None else set(print_tag)
 
+    def add_blacklist_tag(self, blacklist_tag):
+        self.blacklist_tag |= set(blacklist_tag)
+
     def get_stat_now(self, key):
         """
         Return the value of a stat in the current epoch.
@@ -65,7 +69,8 @@ class StatHolder(object):
     def _print_stat(self):
         for k, v in sorted(self.stat_now.items(), key=operator.itemgetter(0)):
             if self.print_tag is None or k in self.print_tag:
-                logger.info('{}: {:.5g}'.format(k, v))
+                if k not in self.blacklist_tag:
+                    logger.info('{}: {:.5g}'.format(k, v))
 
     def _write_stat(self):
         tmp_filename = self.filename + '.tmp'

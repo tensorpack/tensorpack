@@ -61,7 +61,17 @@ class ModelSaver(Callback):
                 self.path,
                 global_step=self.global_step,
                 write_meta_graph=False)
-        except Exception:   # disk error sometimes..
+
+            # create a symbolic link for the latest model
+            latest = self.saver.last_checkpoints[-1]
+            basename = os.path.basename(latest)
+            linkname = os.path.join(os.path.dirname(latest), 'latest')
+            try:
+                os.unlink(linkname)
+            except FileNotFoundError:
+                pass
+            os.symlink(basename, linkname)
+        except Exception:   # disk error sometimes.. just ignore
             logger.exception("Exception in ModelSaver.trigger_epoch!")
 
 class MinSaver(Callback):

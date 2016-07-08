@@ -68,6 +68,7 @@ class Trainer(object):
         self._trigger_epoch()
         self.config.callbacks.trigger_epoch()
         self.summary_writer.flush()
+        self.stat_holder.add_stat('global_step', self.global_step)
         self.stat_holder.finalize()
 
     @abstractmethod
@@ -83,6 +84,8 @@ class Trainer(object):
         self.summary_op = tf.merge_all_summaries()
         # create an empty StatHolder
         self.stat_holder = StatHolder(logger.LOG_DIR)
+        # save global_step in stat.json, but don't print it
+        self.stat_holder.add_blacklist_tag(['global_step'])
 
     def _process_summary(self, summary_str):
         summary = tf.Summary.FromString(summary_str)
