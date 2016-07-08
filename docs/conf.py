@@ -35,7 +35,7 @@ import mock
 
 MOCK_MODULES = ['numpy', 'scipy', 'tensorflow', 'scipy.misc', 'h5py', 'nltk',
                 'cv2', 'scipy.io', 'dill', 'zmq', 'subprocess32', 'lmdb',
-                'tornado']
+                'tornado', 'msgpack', 'msgpack_numpy']
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock(name=mod_name)
 
