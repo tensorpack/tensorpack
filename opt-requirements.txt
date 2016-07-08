@@ -4,3 +4,4 @@ nltk
 h5py
 pyzmq
 tornado; python_version < '3.0'
+lmdb

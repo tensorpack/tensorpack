@@ -4,14 +4,16 @@
 
 import os, sys
 from contextlib import contextmanager
+import inspect, functools
 from datetime import datetime
 import time
 import collections
 import numpy as np
+import six
 
 from . import logger
 
-__all__ = ['change_env',
+__all__ = ['change_env', 'map_arg',
         'get_rng', 'memoized',
         'get_nr_gpu',
         'get_gpus',
@@ -69,6 +71,22 @@ class memoized(object):
     def __get__(self, obj, objtype):
        '''Support instance methods.'''
        return functools.partial(self.__call__, obj)
+
+def map_arg(**maps):
+    """
+    Apply a mapping on certains argument before calling original function.
+    maps: {key: map_func}
+    """
+    def deco(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            argmap = inspect.getcallargs(func, *args, **kwargs)
+            for k, map_func in six.iteritems(maps):
+                if k in argmap:
+                    argmap[k] = map_func(argmap[k])
+            return func(**argmap)
+        return wrapper
+    return deco
 
 def get_rng(obj=None):
     """ obj: some object to use to generate random seed"""

@@ -4,6 +4,7 @@
 
 from .base import ImageAugmentor
 import numpy as np
+import cv2
 
 __all__ = ['Brightness', 'Contrast', 'MeanVarianceNormalize', 'GaussianBlur', 'Gamma']
 
@@ -97,6 +98,7 @@ class Gamma(ImageAugmentor):
         return self._rand_range(*self.range)
     def _augment(self, img, gamma):
         lut = ((np.arange(256, dtype='float32') / 255) ** (1. / (1. + gamma)) * 255).astype('uint8')
-        cv2.LUT(img, lut, img)
+        img = (img * 255.0).astype('uint8')
+        img = cv2.LUT(img, lut).astype('float32') / 255.0
         return img
 

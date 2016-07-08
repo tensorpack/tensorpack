@@ -7,6 +7,7 @@ import numpy as np
 import tensorflow as tf
 import math
 from ._common import *
+from ..utils import map_arg
 
 __all__ = ['Conv2D']
 

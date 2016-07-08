@@ -145,6 +145,7 @@ class Model(ModelDesc):
                 .apply(fg).BatchNorm('bn6')
                 .apply(cabs)
                 .FullyConnected('fc1', 10, nl=tf.identity)())
+        tf.get_variable = old_get_variable
         prob = tf.nn.softmax(logits, name='output')
 
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)

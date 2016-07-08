@@ -34,15 +34,13 @@ def layer_register(summary_activation=False, log_shape=True):
     #@decorator only enable me when building docs.
     def wrapper(func):
         @wraps(func)
-        def wrapped_func(*args, **kwargs):
-            name = args[0]
-            assert isinstance(name, six.string_types), \
-                    'name must be the first argument. Args: {}'.format(args)
-            args = args[1:]
+        def wrapped_func(name, inputs, *args, **kwargs):
+            assert isinstance(name, six.string_types), name
             do_summary = kwargs.pop(
                 'summary_activation', summary_activation)
-            inputs = args[0]
+            args = (inputs,) + args
 
+            # TODO use inspect.getcallargs to enhance?
             # update from current argument scope
             actual_args = copy.copy(get_arg_scope()[func.__name__])
             actual_args.update(kwargs)

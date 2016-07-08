@@ -71,8 +71,8 @@ class RandomResize(ImageAugmentor):
         while True:
             sx = self._rand_range(*self.xrange)
             sy = self._rand_range(*self.yrange)
-            destX = max(sx * img.shape[1], self.minimum[0])
-            destY = max(sy * img.shape[0], self.minimum[1])
+            destX = int(max(sx * img.shape[1], self.minimum[0]))
+            destY = int(max(sy * img.shape[0], self.minimum[1]))
             oldr = img.shape[1] * 1.0 / img.shape[0]
             newr = destX * 1.0 / destY
             diff = abs(newr - oldr) / oldr

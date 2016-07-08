@@ -6,11 +6,30 @@
 
 from .base import ImageAugmentor
 
-__all__ = ['RandomChooseAug', 'MapImage', 'Identity']
+__all__ = ['RandomChooseAug', 'MapImage', 'Identity', 'RandomApplyAug']
 
 class Identity(ImageAugmentor):
     def _augment(self, img, _):
         return img
+
+class RandomApplyAug(ImageAugmentor):
+    """ Randomly apply the augmentor with a prob. Otherwise do nothing"""
+    def __init__(self, aug, prob):
+        self._init(locals())
+
+    def _get_augment_params(self, img):
+        p = self.rng.rand()
+        if p < self.prob:
+            prm = self.aug._get_augment_params(img)
+            return (True, prm)
+        else:
+            return (False, None)
+
+    def _augment(self, img, prm):
+        if not prm[0]:
+            return img
+        else:
+            return self.aug._augment(img, prm[1])
 
 class RandomChooseAug(ImageAugmentor):
     def __init__(self, aug_lists):

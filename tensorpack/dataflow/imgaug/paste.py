@@ -8,7 +8,7 @@ from .base import ImageAugmentor
 from abc import abstractmethod
 import numpy as np
 
-__all__ = [ 'CenterPaste', 'ConstantBackgroundFiller']
+__all__ = [ 'CenterPaste', 'BackgroundFiller', 'ConstantBackgroundFiller']
 
 
 class BackgroundFiller(object):
