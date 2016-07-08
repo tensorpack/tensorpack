@@ -34,7 +34,8 @@ import mock
                 #+ ', '.join(["{}={}".format(k,v) for k,v in kwargs.items()]) + ')'
 
 MOCK_MODULES = ['numpy', 'scipy', 'tensorflow', 'scipy.misc', 'h5py', 'nltk',
-                'cv2', 'scipy.io', 'dill', 'zmq']
+                'cv2', 'scipy.io', 'dill', 'zmq', 'subprocess32', 'lmdb',
+                'tornado']
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock(name=mod_name)
 

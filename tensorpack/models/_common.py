@@ -5,8 +5,7 @@
 import tensorflow as tf
 from functools import wraps
 import six
-import copy
-#from decorator import decorator
+import copy, os
 
 from ..tfutils import *
 from ..tfutils.modelutils import *
@@ -31,7 +30,8 @@ def layer_register(summary_activation=False, log_shape=True):
         Can be overriden when creating the layer.
     :param log_shape: log input/output shape of this layer
     """
-    #@decorator only enable me when building docs.
+
+
     def wrapper(func):
         @wraps(func)
         def wrapped_func(name, inputs, *args, **kwargs):
@@ -69,6 +69,13 @@ def layer_register(summary_activation=False, log_shape=True):
                 return outputs
         wrapped_func.f = func   # attribute to access the underlining function object
         return wrapped_func
+
+    # need some special handling for RTD to work with the arguments
+    on_rtd = os.environ.get('READTHEDOCS') == 'True'
+    if on_rtd:
+        from decorator import decorator
+        wrapper = decorator(wrapper)
+
     return wrapper
 
 def shape2d(a):

@@ -18,7 +18,7 @@ def describe_model():
         msg.append("{}: shape={}, dim={}".format(
             v.name, shape.as_list(), ele))
     size_mb = total * 4 / 1024.0**2
-    msg.append("Total param={} ({:01f} MB)".format(total, size_mb))
+    msg.append("Total param={} ({:01f} MB assuming all float32)".format(total, size_mb))
     logger.info("Model Params: {}".format('\n'.join(msg)))
 
 
