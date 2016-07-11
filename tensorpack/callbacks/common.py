@@ -68,10 +68,10 @@ class ModelSaver(Callback):
             linkname = os.path.join(os.path.dirname(latest), 'latest')
             try:
                 os.unlink(linkname)
-            except FileNotFoundError:
+            except OSError:
                 pass
             os.symlink(basename, linkname)
-        except Exception:   # disk error sometimes.. just ignore
+        except OSError, IOError:   # disk error sometimes.. just ignore it
             logger.exception("Exception in ModelSaver.trigger_epoch!")
 
 class MinSaver(Callback):
