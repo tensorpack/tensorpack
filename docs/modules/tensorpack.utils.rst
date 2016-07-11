@@ -12,6 +12,14 @@ tensorpack.utils.concurrency module
     :undoc-members:
     :show-inheritance:
 
+tensorpack.utils.discretize module
+----------------------------------
+
+.. automodule:: tensorpack.utils.discretize
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 tensorpack.utils.fs module
 --------------------------
 
@@ -60,10 +68,26 @@ tensorpack.utils.rect module
     :undoc-members:
     :show-inheritance:
 
+tensorpack.utils.serialize module
+---------------------------------
+
+.. automodule:: tensorpack.utils.serialize
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 tensorpack.utils.stat module
 ----------------------------
 
 .. automodule:: tensorpack.utils.stat
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+tensorpack.utils.timer module
+-----------------------------
+
+.. automodule:: tensorpack.utils.timer
     :members:
     :undoc-members:
     :show-inheritance:

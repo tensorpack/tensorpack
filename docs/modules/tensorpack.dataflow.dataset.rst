@@ -4,10 +4,18 @@ tensorpack.dataflow.dataset package
 Submodules
 ----------
 
-tensorpack.dataflow.dataset.cifar10 module
+tensorpack.dataflow.dataset.bsds500 module
 ------------------------------------------
 
-.. automodule:: tensorpack.dataflow.dataset.cifar10
+.. automodule:: tensorpack.dataflow.dataset.bsds500
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+tensorpack.dataflow.dataset.cifar module
+----------------------------------------
+
+.. automodule:: tensorpack.dataflow.dataset.cifar
     :members:
     :undoc-members:
     :show-inheritance:

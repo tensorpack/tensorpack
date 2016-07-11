@@ -28,10 +28,34 @@ tensorpack.dataflow.imgaug.deform module
     :undoc-members:
     :show-inheritance:
 
+tensorpack.dataflow.imgaug.geometry module
+------------------------------------------
+
+.. automodule:: tensorpack.dataflow.imgaug.geometry
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 tensorpack.dataflow.imgaug.imgproc module
 -----------------------------------------
 
 .. automodule:: tensorpack.dataflow.imgaug.imgproc
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+tensorpack.dataflow.imgaug.meta module
+--------------------------------------
+
+.. automodule:: tensorpack.dataflow.imgaug.meta
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+tensorpack.dataflow.imgaug.noise module
+---------------------------------------
+
+.. automodule:: tensorpack.dataflow.imgaug.noise
     :members:
     :undoc-members:
     :show-inheritance:

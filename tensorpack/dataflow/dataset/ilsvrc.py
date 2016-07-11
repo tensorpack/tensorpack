@@ -28,15 +28,9 @@ def log_once(s): logger.warn(s)
 CAFFE_ILSVRC12_URL = "http://dl.caffe.berkeleyvision.org/caffe_ilsvrc12.tar.gz"
 CAFFE_PROTO_URL = "https://github.com/BVLC/caffe/raw/master/src/caffe/proto/caffe.proto"
 
-"""
-Preprocess training set like this:
-    cd train
-    for i in *.tar; do dir=${i%.tar}; echo $dir; mkdir -p $dir; tar xf $i -C $dir; done
-"""
-
 class ILSVRCMeta(object):
     """
-    Provide metadata for ILSVRC dataset.
+    Some metadata for ILSVRC dataset.
     """
     def __init__(self, dir=None):
         if dir is None:
@@ -68,7 +62,7 @@ class ILSVRCMeta(object):
     def get_image_list(self, name):
         """
         :param name: 'train' or 'val' or 'test'
-        :returns list of (image filename, cls)
+        :returns: list of (image filename, cls)
         """
         assert name in ['train', 'val', 'test']
         fname = os.path.join(self.dir, name + '.txt')
@@ -83,7 +77,7 @@ class ILSVRCMeta(object):
     def get_per_pixel_mean(self, size=None):
         """
         :param size: return image size in [h, w]. default to (256, 256)
-        :returns per-pixel mean as an array of shape (h, w, 3) in range [0, 255]
+        :returns: per-pixel mean as an array of shape (h, w, 3) in range [0, 255]
         """
         import imp
         caffepb = imp.load_source('caffepb', self.caffe_pb_file)
@@ -101,9 +95,36 @@ class ILSVRCMeta(object):
 class ILSVRC12(DataFlow):
     def __init__(self, dir, name, meta_dir=None, shuffle=True):
         """
+        :param dir: A directory containing a subdir named `name`, where the
+            original ILSVRC12_`name`.tar gets decompressed.
         :param name: 'train' or 'val' or 'test'
-        :param dir: A directory containing a subdir named `name`, inside which the
-        original ILSVRC12_`name`.tar gets decompressed.
+
+        Dir should have the following structure:
+
+        .. code-block:: none
+
+            dir/
+              train/
+                n02134418/
+                  n02134418_198.JPEG
+                  ...
+                ...
+              val/
+                ILSVRC2012_val_00000001.JPEG
+                ...
+              test/
+                ILSVRC2012_test_00000001.JPEG
+                ...
+
+        After decompress ILSVRC12_img_train.tar, you can use the following
+        command to build the above structure for `train/`:
+
+        .. code-block:: none
+
+            find -type f | parallel -P 10 'mkdir -p {/.} && tar xf {} -C {/.}'
+
+            Or:
+            for i in *.tar; do dir=${i%.tar}; echo $dir; mkdir -p $dir; tar xf $i -C $dir; done
         """
         assert name in ['train', 'test', 'val']
         self.full_dir = os.path.join(dir, name)

@@ -14,8 +14,10 @@ class HistoryFramePlayer(ProxyPlayer):
         Assume player will do auto-restart.
     """
     def __init__(self, player, hist_len):
-        """ :param hist_len: total length of the state, including the current
-            and `hist_len-1` history"""
+        """
+        :param hist_len: total length of the state, including the current
+            and `hist_len-1` history
+        """
         super(HistoryFramePlayer, self).__init__(player)
         self.history = deque(maxlen=hist_len)
 

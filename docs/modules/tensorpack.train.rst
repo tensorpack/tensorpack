@@ -20,6 +20,14 @@ tensorpack.train.config module
     :undoc-members:
     :show-inheritance:
 
+tensorpack.train.multigpu module
+--------------------------------
+
+.. automodule:: tensorpack.train.multigpu
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 tensorpack.train.trainer module
 -------------------------------
 

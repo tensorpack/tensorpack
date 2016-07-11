@@ -48,12 +48,9 @@ class ModelDesc(object):
 
     def build_graph(self, model_inputs, is_training):
         """
-        setup the whole graph.
-        :param model_inputs: a list of input variable in the graph
-            e.g.: [image_var, label_var] with:
+        Setup the whole graph.
 
-            * image_var: bx28x28
-            * label_var: bx1 integer
+        :param model_inputs: a list of input variable in the graph.
         :param is_training: a boolean
         :returns: the cost to minimize. a scalar variable
         """

@@ -154,7 +154,7 @@ class ScheduledHyperParamSetter(HyperParamSetter):
     def __init__(self, param, schedule):
         """
         :param schedule: [(epoch1, val1), (epoch2, val2), (epoch3, val3), ...]
-        The value is fixed to val1 in epoch [epoch1, epoch2), and so on.
+            The value is fixed to val1 in epoch [epoch1, epoch2), and so on.
         """
         schedule = [(int(a), float(b)) for a, b in schedule]
         self.schedule = sorted(schedule, key=operator.itemgetter(0))

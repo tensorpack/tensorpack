@@ -60,6 +60,14 @@ tensorpack.dataflow.prefetch module
     :undoc-members:
     :show-inheritance:
 
+tensorpack.dataflow.raw module
+------------------------------
+
+.. automodule:: tensorpack.dataflow.raw
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 
 Module contents
 ---------------

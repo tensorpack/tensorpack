@@ -18,6 +18,7 @@ import sys, os, re
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('../'))
+os.environ['TENSORPACK_DOC_BUILDING'] = '1'
 
 import mock
 
@@ -34,8 +35,8 @@ import mock
                 #+ ', '.join(["{}={}".format(k,v) for k,v in kwargs.items()]) + ')'
 
 MOCK_MODULES = ['numpy', 'scipy', 'tensorflow', 'scipy.misc', 'h5py', 'nltk',
-                'cv2', 'scipy.io', 'dill', 'zmq', 'subprocess32', 'lmdb',
-                'tornado', 'msgpack', 'msgpack_numpy']
+                'cv2', 'scipy.io', 'dill', 'zmq', 'subprocess32', 'lmdb', 'tornado.concurrent',
+                'tornado', 'msgpack', 'msgpack_numpy', 'ale_python_interface']
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock(name=mod_name)
 
@@ -320,17 +321,18 @@ def skip(app, what, name, obj, skip, options):
         return False
     return skip
 
-def get_rst(app, what, name, obj, options, signature,
+def process_signature(app, what, name, obj, options, signature,
             return_annotation):
     if signature:
         # replace Mock function names
         signature = re.sub('<Mock name=\'([^\']+)\'.*>', '\g<1>', signature)
         signature = re.sub('tensorflow', 'tf', signature)
+    # signature: arg list
     return signature, return_annotation
 
 def setup(app):
     from recommonmark.transform import AutoStructify
-    app.connect('autodoc-process-signature', get_rst)
+    app.connect('autodoc-process-signature', process_signature)
     app.connect("autodoc-skip-member", skip)
     app.add_config_value(
         'recommonmark_config',

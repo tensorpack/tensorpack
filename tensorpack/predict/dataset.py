@@ -66,9 +66,10 @@ class MultiProcessDatasetPredictor(DatasetPredictorBase):
     def __init__(self, config, dataset, nr_proc, use_gpu=True):
         """
         Run prediction in multiprocesses, on either CPU or GPU. Mix mode not supported.
+
         :param nr_proc: number of processes to use
         :param use_gpu: use GPU or CPU.
-            if GPU, then nr_proc cannot be larger than the total number of GPUs available
+            If GPU, then nr_proc cannot be larger than the total number of GPUs available
             in CUDA_VISIBLE_DEVICES or in the system.
         """
         assert config.return_input == False, "return_input not supported for MultiProcessDatasetPredictor"

@@ -66,6 +66,7 @@ class PredictConfig(object):
 def get_predict_func(config):
     """
     Produce a simple predictor function run inside a new session.
+
     :param config: a `PredictConfig` instance.
     :returns: A prediction function that takes a list of input values, and return
         a list of output values defined in ``config.output_var_names``.

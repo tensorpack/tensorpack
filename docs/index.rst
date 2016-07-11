@@ -17,16 +17,16 @@ Contents:
    user/models
 
 .. toctree::
-  :maxdepth: 2
+  :maxdepth: 1
 
-  modules/tensorpack
 
-..
   modules/tensorpack.models
-  modules/tensorpack.tfutils
-  modules/tensorpack.train
+  modules/tensorpack.dataflow
   modules/tensorpack.callbacks
+  modules/tensorpack.train
   modules/tensorpack.utils
+  modules/tensorpack.tfutils
+  modules/tensorpack.RL
 
 
 Indices and tables

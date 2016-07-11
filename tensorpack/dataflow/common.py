@@ -265,9 +265,12 @@ class ConcatData(DataFlow):
 class JoinData(DataFlow):
     """
     Join the components from each DataFlow.
-    e.g.: df1: [dp1, dp2]
-          df2: [dp3, dp4]
-          join: [dp1, dp2, dp3, dp4]
+
+    .. code-block:: none
+
+        e.g.: df1: [dp1, dp2]
+              df2: [dp3, dp4]
+              join: [dp1, dp2, dp3, dp4]
     """
     def __init__(self, df_lists):
         """

@@ -34,6 +34,7 @@ def dump_dataset_images(ds, dirname, max_count=None, index=0):
 def dataflow_to_process_queue(ds, size, nr_consumer):
     """
     Convert a `DataFlow` to a multiprocessing.Queue.
+
     :param ds: a `DataFlow`
     :param size: size of the queue
     :param nr_consumer: number of consumer of the queue.

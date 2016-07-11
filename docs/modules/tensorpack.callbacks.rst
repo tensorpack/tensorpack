@@ -28,6 +28,14 @@ tensorpack.callbacks.dump module
     :undoc-members:
     :show-inheritance:
 
+tensorpack.callbacks.graph module
+---------------------------------
+
+.. automodule:: tensorpack.callbacks.graph
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 tensorpack.callbacks.group module
 ---------------------------------
 

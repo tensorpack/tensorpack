@@ -68,6 +68,14 @@ tensorpack.models.regularize module
     :undoc-members:
     :show-inheritance:
 
+tensorpack.models.softmax module
+--------------------------------
+
+.. automodule:: tensorpack.models.softmax
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 
 Module contents
 ---------------

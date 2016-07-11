@@ -70,9 +70,10 @@ def layer_register(summary_activation=False, log_shape=True):
         wrapped_func.f = func   # attribute to access the underlining function object
         return wrapped_func
 
-    # need some special handling for RTD to work with the arguments
-    on_rtd = os.environ.get('READTHEDOCS') == 'True'
-    if on_rtd:
+    # need some special handling for sphinx to work with the arguments
+    on_doc = os.environ.get('READTHEDOCS') == 'True' \
+            or os.environ.get('TENSORPACK_DOC_BUILDING')
+    if on_doc:
         from decorator import decorator
         wrapper = decorator(wrapper)
 

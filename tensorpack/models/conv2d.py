@@ -60,4 +60,3 @@ def Conv2D(x, out_channel, kernel_shape,
         conv = tf.concat(3, outputs)
     return nl(tf.nn.bias_add(conv, b) if use_bias else conv, name='output')
 
-

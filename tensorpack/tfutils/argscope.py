@@ -34,9 +34,9 @@ def argscope(layers, **param):
     del _ArgScopeStack[-1]
 
 def get_arg_scope():
-    """ return the current argscope
-        an argscope is a dict of dict:
-            dict[layername] = {arg: val}
+    """
+    :returns: the current argscope.
+        An argscope is a dict of dict: dict[layername] = {arg: val}
     """
     if len(_ArgScopeStack) > 0:
         return _ArgScopeStack[-1]
