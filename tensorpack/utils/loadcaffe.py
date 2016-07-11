@@ -11,8 +11,13 @@ import os
 
 from six.moves import zip
 
-from .utils import change_env
+from .utils import change_env, get_dataset_dir
+from .fs import download
 from . import logger
+
+__all__ = ['load_caffe']
+
+CAFFE_PROTO_URL = "https://github.com/BVLC/caffe/raw/master/src/caffe/proto/caffe.proto"
 
 def get_processor():
     ret = {}
@@ -67,6 +72,17 @@ def load_caffe(model_desc, model_file):
     logger.info("Model loaded from caffe. Params: " + \
                 " ".join(sorted(param_dict.keys())))
     return param_dict
+
+def get_caffe_pb():
+    dir = get_dataset_dir('caffe')
+    caffe_pb_file = os.path.join(dir, 'caffe_pb2.py')
+    if not os.path.isfile(caffe_pb_file):
+        proto_path = download(CAFFE_PROTO_URL, dir)
+        ret = os.system('cd {} && protoc caffe.proto --python_out .'.format(dir))
+        assert ret == 0, \
+                "caffe proto compilation failed! Did you install protoc?"
+    import imp
+    return imp.load_source('caffepb', caffe_pb_file)
 
 if __name__ == '__main__':
     import argparse

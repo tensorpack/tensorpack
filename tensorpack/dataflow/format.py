@@ -2,7 +2,9 @@
 # File: format.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-from ..utils import logger
+from ..utils import logger, get_rng
+from ..utils.timer import timed_operation
+from ..utils.loadcaffe import get_caffe_pb
 from .base import DataFlow
 
 import random
@@ -98,9 +100,7 @@ class CaffeLMDB(LMDBData):
         """
         super(CaffeLMDB, self).__init__(lmdb_dir, shuffle)
 
-        import imp
-        meta = ILSVRCMeta()
-        self.cpb = imp.load_source('cpb', meta.caffe_pb_file)
+        self.cpb = get_caffe_pb()
 
     def get_data(self):
         datum = self.cpb.Datum()
