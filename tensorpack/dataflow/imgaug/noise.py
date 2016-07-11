@@ -14,11 +14,11 @@ class JpegNoise(ImageAugmentor):
         self._init(locals())
 
     def _get_augment_params(self, img):
-        return self._rand_range(*self.quality_range)
+        return self.rng.randint(*self.quality_range)
 
     def _augment(self, img, q):
-        return cv2.imdecode(cv2.imencode('.jpg', img,
-            [cv2.IMWRITE_JPEG_QUALITY, q])[1], 1)
+        enc = cv2.imencode('.jpg', img, [cv2.IMWRITE_JPEG_QUALITY, q])[1]
+        return cv2.imdecode(enc, 1)
 
 
 class GaussianNoise(ImageAugmentor):

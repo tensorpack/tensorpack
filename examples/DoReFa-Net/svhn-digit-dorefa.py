@@ -25,6 +25,9 @@ You'll need tcmalloc to avoid large memory consumption: https://github.com/tenso
 This config, with (W,A,G)=(1,1,4), can reach 3.1~3.2% error after 150 epochs.
 With the GaussianDeform augmentor, it will reach 2.8~2.9%
 (we are not using this augmentor in the paper).
+
+with (W,A,G)=(1,2,4), error is 3.0~3.1%.
+with (W,A,G)=(32,32,32), error is about 2.9%.
 """
 
 BITW = 1

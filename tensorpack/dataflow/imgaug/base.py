@@ -61,7 +61,7 @@ class ImageAugmentor(object):
             low, high = 0, low
         if size == None:
             size = []
-        return low + self.rng.rand(*size) * (high - low)
+        return self.rng.uniform(low, high, size)
 
 class AugmentorList(ImageAugmentor):
     """

@@ -3,6 +3,7 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 from .base import ImageAugmentor
+from ...utils import logger
 import numpy as np
 import cv2
 
@@ -68,6 +69,7 @@ class RandomResize(ImageAugmentor):
         self._init(locals())
 
     def _get_augment_params(self, img):
+        cnt = 0
         while True:
             sx = self._rand_range(*self.xrange)
             sy = self._rand_range(*self.yrange)
@@ -78,6 +80,9 @@ class RandomResize(ImageAugmentor):
             diff = abs(newr - oldr) / oldr
             if diff <= self.aspect_ratio_thres:
                 return (destX, destY)
+            cnt += 1
+            if cnt > 50:
+                logger.warn("RandomResize failed to augment an image")
 
     def _augment(self, img, dsize):
         return cv2.resize(img, dsize, interpolation=cv2.INTER_CUBIC)
