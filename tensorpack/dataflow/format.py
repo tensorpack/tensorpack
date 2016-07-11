@@ -16,6 +16,13 @@ except ImportError:
 else:
     __all__ = ['HDF5Data']
 
+try:
+    import lmdb
+except ImportError:
+    logger.warn("Error in 'import lmdb'. LMDBData won't be available.")
+else:
+    __all__.extend(['LMDBData', 'CaffeLMDB'])
+
 
 """
 Adapters for different data format.
@@ -49,3 +56,64 @@ class HDF5Data(DataFlow):
         for k in idxs:
             yield [dp[k] for dp in self.dps]
 
+
+class LMDBData(DataFlow):
+    """ Read a lmdb and produce k,v pair """
+    def __init__(self, lmdb_dir, shuffle=True):
+        self._lmdb = lmdb.open(lmdb_dir, readonly=True, lock=False,
+                map_size=1099511627776 * 2, max_readers=100)
+        self._txn = self._lmdb.begin()
+        self._shuffle = shuffle
+        self.rng = get_rng(self)
+        self._size = self._txn.stat()['entries']
+        if shuffle:
+            with timed_operation("Loading LMDB keys ...", log_start=True):
+                self.keys = [k for k, _ in self._txn.cursor()]
+
+    def reset_state(self):
+        self._txn = self._lmdb.begin()
+        self.rng = get_rng(self)
+
+    def size(self):
+        return self._size
+
+    def get_data(self):
+        if not self._shuffle:
+            c = self._txn.cursor()
+            while c.next():
+                k, v = c.item()
+                yield [k, v]
+        else:
+            s = self.size()
+            for i in range(s):
+                k = self.rng.choice(self.keys)
+                v = self._txn.get(k)
+                yield [k, v]
+
+class CaffeLMDB(LMDBData):
+    """ Read a Caffe LMDB file where each value contains a caffe.Datum protobuf """
+    def __init__(self, lmdb_dir, shuffle=True):
+        """
+        :param shuffle: about 3 times slower
+        """
+        super(CaffeLMDB, self).__init__(lmdb_dir, shuffle)
+
+        import imp
+        meta = ILSVRCMeta()
+        self.cpb = imp.load_source('cpb', meta.caffe_pb_file)
+
+    def get_data(self):
+        datum = self.cpb.Datum()
+        def parse(k, v):
+            try:
+                datum.ParseFromString(v)
+                img = np.fromstring(datum.data, dtype=np.uint8)
+                img = img.reshape(datum.channels, datum.height, datum.width)
+            except Exception:
+                log_once("Cannot read key {}".format(k))
+                return None
+            return [img.transpose(1, 2, 0), datum.label]
+
+        for dp in super(CaffeLMDB, self).get_data():
+            v = parse(dp[0], dp[1])
+            if v: yield v
