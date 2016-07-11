@@ -25,7 +25,9 @@ def download(url, dir):
 
     def _progress(count, block_size, total_size):
         sys.stdout.write('\r>> Downloading %s %.1f%%' %
-                         (fname, float(count * block_size) / float(total_size) * 100.0))
+                         (fname,
+                             min(float(count * block_size)/ total_size,
+                                 1.0) * 100.0))
         sys.stdout.flush()
     try:
         fpath, _ = urllib.request.urlretrieve(url, fpath, reporthook=_progress)

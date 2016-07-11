@@ -18,7 +18,7 @@ __all__ = ['total_timer', 'timed_operation', 'print_total_timer']
 @contextmanager
 def timed_operation(msg, log_start=False):
     if log_start:
-        logger.info('start {} ...'.format(msg))
+        logger.info('Start {} ...'.format(msg))
     start = time.time()
     yield
     logger.info('{} finished, time={:.2f}sec.'.format(

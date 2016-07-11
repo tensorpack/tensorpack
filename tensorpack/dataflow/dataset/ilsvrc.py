@@ -101,7 +101,9 @@ class ILSVRCMeta(object):
 class ILSVRC12(DataFlow):
     def __init__(self, dir, name, meta_dir=None, shuffle=True):
         """
-        name: 'train' or 'val' or 'test'
+        :param name: 'train' or 'val' or 'test'
+        :param dir: A directory containing a subdir named `name`, inside which the
+        original ILSVRC12_`name`.tar gets decompressed.
         """
         assert name in ['train', 'test', 'val']
         self.full_dir = os.path.join(dir, name)
@@ -136,7 +138,9 @@ class ILSVRC12(DataFlow):
                 im = np.expand_dims(im, 2).repeat(3,2)
             yield [im, tp[1]]
 
+# TODO more generally, just CaffeLMDB
 class ILSVRC12CaffeLMDB(DataFlow):
+    """ Read a Caffe LMDB file where each value contains a caffe.Datum protobuf """
     def __init__(self, lmdb_dir, shuffle=True):
         """
         :param shuffle: about 3 times slower
@@ -150,7 +154,7 @@ class ILSVRC12CaffeLMDB(DataFlow):
         self._txn = self._lmdb.begin()
         self._size = self._txn.stat()['entries']
         if shuffle:
-            with timed_operation("Loading LMDB keys ..."):
+            with timed_operation("Loading LMDB keys ...", log_start=True):
                 self.keys = [k for k, _ in self._txn.cursor()]
 
     def reset_state(self):
