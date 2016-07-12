@@ -9,6 +9,8 @@ class DisturbLabel(ProxyDataFlow):
     def __init__(self, ds, prob):
         super(DisturbLabel, self).__init__(ds)
         self.prob = prob
+
+    def reset_state(self):
         self.rng = get_rng(self)
 
     def get_data(self):

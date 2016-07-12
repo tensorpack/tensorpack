@@ -29,7 +29,7 @@ class DataFlow(object):
 
     def reset_state(self):
         """
-        Reset state of the dataflow,
+        Reset state of the dataflow. Will always be called before consuming data points.
         for example, RNG **HAS** to be reset here if used in the DataFlow.
         Otherwise it may not work well with prefetching, because different
         processes will have the same RNG state.
@@ -39,9 +39,6 @@ class DataFlow(object):
 
 class RNGDataFlow(DataFlow):
     """ A dataflow with rng"""
-    def __init__(self):
-        self.rng = get_rng(self)
-
     def reset_state(self):
         self.rng = get_rng(self)
 

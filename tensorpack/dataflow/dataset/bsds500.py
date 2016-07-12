@@ -9,7 +9,7 @@ import numpy as np
 
 from ...utils import logger, get_rng, get_dataset_dir
 from ...utils.fs import download
-from ..base import DataFlow
+from ..base import RNGDataFlow
 
 try:
     from scipy.io import loadmat
@@ -21,7 +21,7 @@ except ImportError:
 DATA_URL = "http://www.eecs.berkeley.edu/Research/Projects/CS/vision/grouping/BSR/BSR_bsds500.tgz"
 IMG_W, IMG_H = 481, 321
 
-class BSDS500(DataFlow):
+class BSDS500(RNGDataFlow):
     """
     `Berkeley Segmentation Data Set and Benchmarks 500
     <http://www.eecs.berkeley.edu/Research/Projects/CS/vision/grouping/resources.html#bsds500>`_.
@@ -53,10 +53,6 @@ class BSDS500(DataFlow):
         self.shuffle = shuffle
         assert name in ['train', 'test', 'val']
         self._load(name)
-        self.rng = get_rng(self)
-
-    def reset_state(self):
-        self.rng = get_rng(self)
 
     def _load(self, name):
         image_glob = os.path.join(self.data_root, 'images', name, '*.jpg')

@@ -40,6 +40,7 @@ class SimpleTrainer(Trainer):
         self.init_session_and_coord()
         describe_model()
         # create an infinte data producer
+        self.config.dataset.reset_state()
         self.data_producer = RepeatedData(self.config.dataset, -1).get_data()
         self.main_loop()
 
@@ -62,21 +63,22 @@ class SimpleTrainer(Trainer):
         return func
 
 class EnqueueThread(threading.Thread):
-    def __init__(self, trainer, queue, enqueue_op, raw_input_var):
+    def __init__(self, trainer):
         super(EnqueueThread, self).__init__()
         self.sess = trainer.sess
         self.coord = trainer.coord
         self.dataflow = RepeatedData(trainer.config.dataset, -1)
 
-        self.input_vars = raw_input_var
-        self.op = enqueue_op
-        self.queue = queue
+        self.input_vars = trainer.input_vars
+        self.queue = trainer.input_queue
+        self.op = self.queue.enqueue(self.input_vars)
         self.close_op = self.queue.close(cancel_pending_enqueues=True)
 
         self.size_op = self.queue.size()
         self.daemon = True
 
     def run(self):
+        self.dataflow.reset_state()
         with self.sess.as_default():
             try:
                 while True:
@@ -155,8 +157,7 @@ class QueueInputTrainer(Trainer):
 
     def _build_enque_thread(self):
         """ create a thread that keeps filling the queue """
-        enqueue_op = self.input_queue.enqueue(self.input_vars)
-        self.input_th = EnqueueThread(self, self.input_queue, enqueue_op, self.input_vars)
+        self.input_th = EnqueueThread(self)
         self.extra_threads_procs.append(self.input_th)
 
     def train(self):

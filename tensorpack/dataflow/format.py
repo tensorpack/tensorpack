@@ -5,7 +5,7 @@
 from ..utils import logger, get_rng
 from ..utils.timer import timed_operation
 from ..utils.loadcaffe import get_caffe_pb
-from .base import DataFlow
+from .base import RNGDataFlow
 
 import random
 from tqdm import tqdm
@@ -31,7 +31,7 @@ else:
 Adapters for different data format.
 """
 
-class HDF5Data(DataFlow):
+class HDF5Data(RNGDataFlow):
     """
     Zip data from different paths in an HDF5 file. Will load all data into memory.
     """
@@ -55,19 +55,18 @@ class HDF5Data(DataFlow):
     def get_data(self):
         idxs = list(range(self._size))
         if self.shuffle:
-            random.shuffle(idxs)
+            self.rng.shuffle(idxs)
         for k in idxs:
             yield [dp[k] for dp in self.dps]
 
 
-class LMDBData(DataFlow):
+class LMDBData(RNGDataFlow):
     """ Read a lmdb and produce k,v pair """
     def __init__(self, lmdb_dir, shuffle=True):
         self._lmdb = lmdb.open(lmdb_dir, readonly=True, lock=False,
                 map_size=1099511627776 * 2, max_readers=100)
         self._txn = self._lmdb.begin()
         self._shuffle = shuffle
-        self.rng = get_rng(self)
         self._size = self._txn.stat()['entries']
         if shuffle:
             self.keys = self._txn.get('__keys__')
@@ -81,8 +80,8 @@ class LMDBData(DataFlow):
                             pbar.update()
 
     def reset_state(self):
+        super(LMDBData, self).reset_state()
         self._txn = self._lmdb.begin()
-        self.rng = get_rng(self)
 
     def size(self):
         return self._size
@@ -96,8 +95,8 @@ class LMDBData(DataFlow):
                     yield [k, v]
         else:
             s = self.size()
-            for i in range(s):
-                k = self.rng.choice(self.keys)
+            self.rng.shuffle(self.keys)
+            for k in self.keys:
                 v = self._txn.get(k)
                 yield [k, v]
 

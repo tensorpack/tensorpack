@@ -29,6 +29,7 @@ args = parser.parse_args()
 
 get_config_func = imp.load_source('config_script', args.config).get_config
 config = get_config_func()
+config.dataset.reset_state()
 
 if args.output:
     mkdir_p(args.output)

@@ -11,7 +11,7 @@ from six.moves import urllib, range
 
 from ...utils import logger, get_dataset_dir
 from ...utils.fs import download
-from ..base import DataFlow
+from ..base import RNGDataFlow
 
 __all__ = ['Mnist']
 
@@ -92,7 +92,7 @@ class DataSet(object):
     def num_examples(self):
         return self._num_examples
 
-class Mnist(DataFlow):
+class Mnist(RNGDataFlow):
     """
     Return [image, label],
         image is 28x28 in the range [0,1]
@@ -136,7 +136,7 @@ class Mnist(DataFlow):
         ds = self.train if self.train_or_test == 'train' else self.test
         idxs = list(range(ds.num_examples))
         if self.shuffle:
-            random.shuffle(idxs)
+            self.rng.shuffle(idxs)
         for k in idxs:
             img = ds.images[k].reshape((28, 28))
             label = ds.labels[k]

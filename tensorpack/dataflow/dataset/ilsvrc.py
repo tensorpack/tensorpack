@@ -11,7 +11,7 @@ from six.moves import range
 from ...utils import logger, get_rng, get_dataset_dir, memoized
 from ...utils.loadcaffe import get_caffe_pb
 from ...utils.fs import mkdir_p, download
-from ..base import DataFlow
+from ..base import RNGDataFlow
 
 __all__ = ['ILSVRCMeta', 'ILSVRC12']
 
@@ -79,7 +79,7 @@ class ILSVRCMeta(object):
             arr = cv2.resize(arr, size[::-1])
         return arr
 
-class ILSVRC12(DataFlow):
+class ILSVRC12(RNGDataFlow):
     def __init__(self, dir, name, meta_dir=None, shuffle=True):
         """
         :param dir: A directory containing a subdir named `name`, where the
@@ -119,16 +119,9 @@ class ILSVRC12(DataFlow):
         self.shuffle = shuffle
         self.meta = ILSVRCMeta(meta_dir)
         self.imglist = self.meta.get_image_list(name)
-        self.rng = get_rng(self)
 
     def size(self):
         return len(self.imglist)
-
-    def reset_state(self):
-        """
-        reset rng for shuffle
-        """
-        self.rng = get_rng(self)
 
     def get_data(self):
         """

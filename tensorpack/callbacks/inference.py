@@ -106,6 +106,7 @@ class InferenceRunner(Callback):
             vc.before_inference()
 
         sess = tf.get_default_session()
+        self.ds.reset_state()
         with tqdm(total=self.ds.size(), ascii=True) as pbar:
             for dp in self.ds.get_data():
                 #feed = dict(zip(self.input_vars, dp))   # TODO custom dp mapping?
