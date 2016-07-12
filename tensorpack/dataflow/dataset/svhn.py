@@ -9,7 +9,7 @@ import numpy as np
 from six.moves import range
 
 from ...utils import logger, get_rng, get_dataset_dir
-from ..base import DataFlow
+from ..base import RNGDataFlow
 
 try:
     import scipy.io
@@ -20,7 +20,7 @@ except ImportError:
 
 SVHN_URL = "http://ufldl.stanford.edu/housenumbers/"
 
-class SVHNDigit(DataFlow):
+class SVHNDigit(RNGDataFlow):
     """
     SVHN Cropped Digit Dataset
     return img of 32x32x3, label of 0-9
@@ -33,7 +33,6 @@ class SVHNDigit(DataFlow):
         :param data_dir: a directory containing the original {train,test,extra}_32x32.mat
         """
         self.shuffle = shuffle
-        self.rng = get_rng(self)
 
         if name in SVHNDigit.Cache:
             self.X, self.Y = SVHNDigit.Cache[name]
@@ -53,9 +52,6 @@ class SVHNDigit(DataFlow):
 
     def size(self):
         return self.X.shape[0]
-
-    def reset_state(self):
-        self.rng = get_rng(self)
 
     def get_data(self):
         n = self.X.shape[0]

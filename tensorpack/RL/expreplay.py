@@ -24,6 +24,9 @@ class ExpReplay(DataFlow, Callback):
     """
     Implement experience replay in the paper
     `Human-level control through deep reinforcement learning`.
+
+    This implementation provides the interface as an DataFlow.
+    This DataFlow is not fork-safe (doesn't support multiprocess prefetching)
     """
     def __init__(self,
             predictor,
@@ -79,9 +82,6 @@ class ExpReplay(DataFlow, Callback):
                 self._populate_exp()
                 pbar.update()
         self._init_memory_flag.set()
-
-    def reset_state(self):
-        raise RuntimeError("Don't run me in multiple processes")
 
     def _populate_exp(self):
         """ populate a transition by epsilon-greedy"""

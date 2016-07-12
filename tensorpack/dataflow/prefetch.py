@@ -35,7 +35,7 @@ class PrefetchProcess(multiprocessing.Process):
         self.queue = queue
 
     def run(self):
-        # reset RNG of ds so each process will produce different data
+        # reset all ds so each process will produce different data
         self.ds.reset_state()
         while True:
             for dp in self.ds.get_data():
@@ -72,6 +72,10 @@ class PrefetchData(ProxyDataFlow):
                 break
             dp = self.queue.get()
             yield dp
+
+    def reset_state(self):
+        # do nothing. all ds are reset once and only once in spawned processes
+        pass
 
 class PrefetchProcessZMQ(multiprocessing.Process):
     def __init__(self, ds, conn_name):
@@ -133,6 +137,10 @@ class PrefetchDataZMQ(ProxyDataFlow):
                 break
             dp = loads(self.socket.recv(copy=False))
             yield dp
+
+    def reset_state(self):
+        # do nothing. all ds are reset once and only once in spawned processes
+        pass
 
     def __del__(self):
         # on exit, logger may not be functional anymore

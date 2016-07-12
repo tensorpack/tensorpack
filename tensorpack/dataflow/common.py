@@ -306,11 +306,7 @@ class JoinData(DataFlow):
 class LocallyShuffleData(ProxyDataFlow, RNGDataFlow):
     def __init__(self, ds, cache_size):
         ProxyDataFlow.__init__(self, ds)
-        RNGDataFlow.__init__(self)
         self.q = deque(maxlen=cache_size)
-        self.ds_wrap = RepeatedData(ds, -1)
-        self.ds_itr = self.ds_wrap.get_data()
-        self.current_cnt = 0
 
     def reset_state(self):
         ProxyDataFlow.reset_state(self)

@@ -15,7 +15,7 @@ import logging
 
 from ...utils import logger, get_rng, get_dataset_dir
 from ...utils.fs import download
-from ..base import DataFlow
+from ..base import RNGDataFlow
 
 __all__ = ['Cifar10', 'Cifar100']
 
@@ -77,7 +77,7 @@ def get_filenames(dir, cifar_classnum):
                      os.path.join(dir, 'cifar-100-python', 'test')]
     return filenames
 
-class CifarBase(DataFlow):
+class CifarBase(RNGDataFlow):
     """
     Return [image, label],
         image is 32x32x3 in the range [0,255]
@@ -106,10 +106,6 @@ class CifarBase(DataFlow):
         self.data = read_cifar(self.fs, cifar_classnum)
         self.dir = dir
         self.shuffle = shuffle
-        self.rng = get_rng(self)
-
-    def reset_state(self):
-        self.rng = get_rng(self)
 
     def size(self):
         return 50000 if self.train_or_test == 'train' else 10000

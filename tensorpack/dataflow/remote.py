@@ -23,6 +23,7 @@ def serve_data(ds, addr):
     socket.bind(addr)
     ds = RepeatedData(ds, -1)
     try:
+        ds.reset_state()
         logger.info("Serving data at {}".format(addr))
         while True:
             for dp in ds.get_data():

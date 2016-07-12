@@ -23,6 +23,7 @@ def dump_dataset_images(ds, dirname, max_count=None, index=0):
     mkdir_p(dirname)
     if max_count is None:
         max_count = sys.maxint
+    ds.reset_state()
     for i, dp in enumerate(ds.get_data()):
         if i % 100 == 0:
             print(i)
@@ -34,6 +35,7 @@ def dump_dataset_images(ds, dirname, max_count=None, index=0):
 def dataflow_to_process_queue(ds, size, nr_consumer):
     """
     Convert a `DataFlow` to a multiprocessing.Queue.
+    The dataflow will only be reset in the spawned process.
 
     :param ds: a `DataFlow`
     :param size: size of the queue
@@ -50,6 +52,7 @@ def dataflow_to_process_queue(ds, size, nr_consumer):
             self.q = q
 
         def run(self):
+            self.ds.reset_state()
             try:
                 for idx, dp in enumerate(self.ds.get_data()):
                     self.q.put((idx, dp))
