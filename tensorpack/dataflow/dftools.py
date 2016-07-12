@@ -60,4 +60,3 @@ def dataflow_to_process_queue(ds, size, nr_consumer):
     proc = EnqueProc(ds, q, nr_consumer)
     return q, proc
 
-

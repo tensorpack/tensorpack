@@ -71,7 +71,7 @@ class ModelSaver(Callback):
             except OSError:
                 pass
             os.symlink(basename, linkname)
-        except OSError, IOError:   # disk error sometimes.. just ignore it
+        except (OSError, IOError):   # disk error sometimes.. just ignore it
             logger.exception("Exception in ModelSaver.trigger_epoch!")
 
 class MinSaver(Callback):
