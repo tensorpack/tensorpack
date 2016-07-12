@@ -125,11 +125,13 @@ class PrefetchDataZMQ(ProxyDataFlow):
 
         self.procs = [PrefetchProcessZMQ(self.ds, self.pipename)
                       for _ in range(self.nr_proc)]
-        start_proc_mask_signal(self.procs)
-
+        self.start_processes()
         # __del__ not guranteed to get called at exit
         import atexit
         atexit.register(lambda x: x.__del__(), self)
+
+    def start_processes(self):
+        start_proc_mask_signal(self.procs)
 
     def get_data(self):
         for k in itertools.count():
