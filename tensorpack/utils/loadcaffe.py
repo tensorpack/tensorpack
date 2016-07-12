@@ -15,7 +15,7 @@ from .utils import change_env, get_dataset_dir
 from .fs import download
 from . import logger
 
-__all__ = ['load_caffe']
+__all__ = ['load_caffe', 'get_caffe_pb']
 
 CAFFE_PROTO_URL = "https://github.com/BVLC/caffe/raw/master/src/caffe/proto/caffe.proto"
 
