@@ -32,6 +32,7 @@ def Conv2D(x, out_channel, kernel_shape,
     """
     in_shape = x.get_shape().as_list()
     in_channel = in_shape[-1]
+    assert in_channel is not None, "Input to Conv2D cannot have unknown channel!"
     assert in_channel % split == 0
     assert out_channel % split == 0
 

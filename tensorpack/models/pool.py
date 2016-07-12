@@ -74,7 +74,9 @@ def UnPooling2x2ZeroFilled(x):
         return tf.reshape(out, out_size)
     else:
         sh = tf.shape(x)
-        return tf.reshape(out, [-1, sh[1] * 2, sh[2] * 2, sh[3]])
+        ret = tf.reshape(out, tf.pack([-1, sh[1] * 2, sh[2] * 2, sh[3]]))
+        ret.set_shape([None, None, None, sh[3]])
+        return ret
 
 @layer_register()
 def FixedUnPooling(x, shape, unpool_mat=None):

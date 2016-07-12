@@ -90,5 +90,6 @@ def get_predict_func(config):
     def run_input(dp):
         feed = dict(zip(input_map, dp))
         return sess.run(output_vars, feed_dict=feed)
+    # XXX hack. so the caller can get access to the session.
     run_input.session = sess
     return run_input
