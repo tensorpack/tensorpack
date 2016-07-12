@@ -21,7 +21,7 @@ INPUT_SHAPE = 224
 Inception-BN model on ILSVRC12.
 See "Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift", arxiv:1502.03167
 
-This config reaches 71% single-crop validation error after 300k steps with 6 TitanX.
+This config reaches 71% single-crop validation accuracy after 300k steps with 6 TitanX.
 Learning rate may need a different schedule for different number of GPUs (because batch size will be different).
 """
 
@@ -171,9 +171,9 @@ def get_config():
                 ClassificationError('wrong-top5', 'val-top5-error')]),
             #HumanHyperParamSetter('learning_rate', 'hyper-googlenet.txt')
             ScheduledHyperParamSetter('learning_rate',
-                                      [(8, 0.03), (13, 0.02), (16, 5e-3),
-                                       (18, 3e-3), (24, 1e-3), (26, 2e-4),
-                                       (28, 5e-5) ])
+                                      [(8, 0.03), (14, 0.02), (17, 5e-3),
+                                       (19, 3e-3), (24, 1e-3), (26, 2e-4),
+                                       (30, 5e-5) ])
         ]),
         session_config=sess_config,
         model=Model(),

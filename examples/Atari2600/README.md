@@ -15,8 +15,10 @@ Claimed performance in the paper can be reproduced, on several games I've tested
 
 A demo trained with Double-DQN on breakout game is available at [youtube](https://youtu.be/o21mddZtE5Y).
 
-DQN would typically take 2~3 days of training to reach a score of 400 on breakout, but it only takes <4 hours on 1 GPU with my A3C implementation.
-This is probably the fastest RL trainer you'd find.
+<!--
+   -DQN would typically take 2~3 days of training to reach a score of 400 on breakout, but my A3C implementation only takes <4 hours on 1 GPU.
+   -This is probably the fastest RL trainer you'd find.
+	 -->
 
 ## How to use
 
