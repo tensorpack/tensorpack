@@ -103,11 +103,12 @@ class Trainer(object):
 
     def main_loop(self):
         # some final operations that might modify the graph
-        logger.info("Preparing for training...")
         self._init_summary()
         get_global_step_var()   # ensure there is such var, before finalizing the graph
+        logger.info("Setup callbacks ...")
         callbacks = self.config.callbacks
         callbacks.setup_graph(self)
+        logger.info("Initializing graph variables ...")
         self.sess.run(tf.initialize_all_variables())
         self.config.session_init.init(self.sess)
         tf.get_default_graph().finalize()
@@ -153,6 +154,7 @@ class Trainer(object):
         """
         Run all threads before starting training
         """
+        logger.info("Starting all threads & procs ...")
         tf.train.start_queue_runners(
             sess=self.sess, coord=self.coord, daemon=True, start=True)
 
