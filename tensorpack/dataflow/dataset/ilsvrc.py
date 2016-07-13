@@ -44,6 +44,15 @@ class ILSVRCMeta(object):
         lines = [x.strip() for x in open(fname).readlines()]
         return dict(enumerate(lines))
 
+    def get_synset_1000(self):
+        """
+        :returns a dict of {cls_number: synset_id}
+        """
+        fname = os.path.join(self.dir, 'synsets.txt')
+        assert os.path.isfile(fname)
+        lines = [x.strip() for x in open(fname).readlines()]
+        return dict(enumerate(lines))
+
     def _download_caffe_meta(self):
         fpath = download(CAFFE_ILSVRC12_URL, self.dir)
         tarfile.open(fpath, 'r:gz').extractall(self.dir)
@@ -80,11 +89,16 @@ class ILSVRCMeta(object):
         return arr
 
 class ILSVRC12(RNGDataFlow):
-    def __init__(self, dir, name, meta_dir=None, shuffle=True):
+    def __init__(self, dir, name, meta_dir=None, shuffle=True,
+            dir_structure='original'):
         """
         :param dir: A directory containing a subdir named `name`, where the
             original ILSVRC12_`name`.tar gets decompressed.
         :param name: 'train' or 'val' or 'test'
+        :param dir_structure: the dir structure of 'val' or 'test'.
+            if is 'original' then keep the original decompressed dir with list
+            of image files. if equals to 'train', use the `train/` dir
+            structure with class name as subdirectories.
 
         Dir should have the following structure:
 
@@ -114,10 +128,13 @@ class ILSVRC12(RNGDataFlow):
         """
         assert name in ['train', 'test', 'val']
         self.full_dir = os.path.join(dir, name)
+        self.name = name
         assert os.path.isdir(self.full_dir), self.full_dir
         self.shuffle = shuffle
-        self.meta = ILSVRCMeta(meta_dir)
-        self.imglist = self.meta.get_image_list(name)
+        meta = ILSVRCMeta(meta_dir)
+        self.imglist = meta.get_image_list(name)
+        self.dir_structure = dir_structure
+        self.synset = meta.get_synset_1000()
 
     def size(self):
         return len(self.imglist)
@@ -127,16 +144,20 @@ class ILSVRC12(RNGDataFlow):
         Produce original images or shape [h, w, 3], and label
         """
         idxs = np.arange(len(self.imglist))
+        isTrain = self.name == 'train'
         if self.shuffle:
             self.rng.shuffle(idxs)
         for k in idxs:
-            tp = self.imglist[k]
-            fname = os.path.join(self.full_dir, tp[0]).strip()
-            im = cv2.imread(fname, cv2.IMREAD_COLOR)
+            fname, label = self.imglist[k]
+            if not isTrain and self.dir_structure != 'original':
+                fname = os.path.join(self.full_dir, self.synset[label], fname)
+            else:
+                fname = os.path.join(self.full_dir, fname)
+            im = cv2.imread(fname.strip(), cv2.IMREAD_COLOR)
             assert im is not None, fname
             if im.ndim == 2:
                 im = np.expand_dims(im, 2).repeat(3,2)
-            yield [im, tp[1]]
+            yield [im, label]
 
 
 if __name__ == '__main__':
