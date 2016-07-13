@@ -122,7 +122,7 @@ class HumanHyperParamSetter(HyperParamSetter):
     """
     Set hyperparameters by loading the value from a file each time it get called.
     """
-    def __init__(self, param, file_name):
+    def __init__(self, param, file_name='hyper.txt'):
         """
         :param file_name: a file containing the value of the variable.
             Each line in the file is a k:v pair, where k is

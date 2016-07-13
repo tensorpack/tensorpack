@@ -144,12 +144,12 @@ class ILSVRC12(RNGDataFlow):
         Produce original images or shape [h, w, 3], and label
         """
         idxs = np.arange(len(self.imglist))
-        isTrain = self.name == 'train'
+        add_label_to_fname = (self.name != 'train' and self.dir_structure != 'original')
         if self.shuffle:
             self.rng.shuffle(idxs)
         for k in idxs:
             fname, label = self.imglist[k]
-            if not isTrain and self.dir_structure != 'original':
+            if add_label_to_fname:
                 fname = os.path.join(self.full_dir, self.synset[label], fname)
             else:
                 fname = os.path.join(self.full_dir, fname)

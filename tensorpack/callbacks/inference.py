@@ -107,7 +107,7 @@ class InferenceRunner(Callback):
 
         sess = tf.get_default_session()
         self.ds.reset_state()
-        with tqdm(total=self.ds.size(), ascii=True) as pbar:
+        with tqdm(total=self.ds.size(), **get_tqdm_kwargs()) as pbar:
             for dp in self.ds.get_data():
                 #feed = dict(zip(self.input_vars, dp))   # TODO custom dp mapping?
                 #outputs = sess.run(self.output_tensors, feed_dict=feed)

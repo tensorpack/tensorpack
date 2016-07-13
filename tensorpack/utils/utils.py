@@ -17,7 +17,9 @@ __all__ = ['change_env', 'map_arg',
         'get_rng', 'memoized',
         'get_nr_gpu',
         'get_gpus',
-        'get_dataset_dir']
+        'get_dataset_dir',
+        'get_tqdm_kwargs'
+        ]
 
 #def expand_dim_if_necessary(var, dp):
 #    """
@@ -113,3 +115,18 @@ def get_dataset_dir(*args):
     assert os.path.isdir(d), d
     return os.path.join(d, *args)
 
+
+def get_tqdm_kwargs(**kwargs):
+    default = dict(
+            smoothing=0.5,
+            dynamic_ncols=True,
+            ascii=True,
+            bar_format='{l_bar}{bar}|{n_fmt}/{total_fmt}[{elapsed}<{remaining},{rate_noinv_fmt}]'
+            )
+    f = kwargs.get('file', sys.stderr)
+    if f.isatty():
+        default['mininterval'] = 0.5
+    else:
+        default['mininterval'] = 60
+    default.update(kwargs)
+    return default

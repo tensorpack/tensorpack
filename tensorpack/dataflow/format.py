@@ -107,7 +107,6 @@ class CaffeLMDB(LMDBData):
         :param shuffle: about 3 times slower
         """
         super(CaffeLMDB, self).__init__(lmdb_dir, shuffle)
-
         self.cpb = get_caffe_pb()
 
     def get_data(self):

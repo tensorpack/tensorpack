@@ -126,11 +126,7 @@ class Trainer(object):
                             epoch, self.global_step + self.config.step_per_epoch)):
                         for step in tqdm.trange(
                                 self.config.step_per_epoch,
-                                leave=True, mininterval=0.5,
-                                smoothing=0.5,
-                                dynamic_ncols=True,
-                                ascii=True):
-                                #bar_format='{l_bar}{bar}|{n_fmt}/{total_fmt} [{elapsed}<{remaining},{rate_noinv_fmt}]'):
+                                **get_tqdm_kwargs(leave=True)):
                             if self.coord.should_stop():
                                 return
                             self.run_step()

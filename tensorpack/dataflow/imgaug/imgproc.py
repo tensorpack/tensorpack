@@ -98,7 +98,7 @@ class Gamma(ImageAugmentor):
         return self._rand_range(*self.range)
     def _augment(self, img, gamma):
         lut = ((np.arange(256, dtype='float32') / 255) ** (1. / (1. + gamma)) * 255).astype('uint8')
-        img = (img * 255.0).astype('uint8')
-        img = cv2.LUT(img, lut).astype('float32') / 255.0
+        img = img.astype('uint8')
+        img = cv2.LUT(img, lut).astype('float32')
         return img
 
