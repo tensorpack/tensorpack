@@ -73,8 +73,8 @@ def UnPooling2x2ZeroFilled(x):
         out_size = [-1, sh[1] * 2, sh[2] * 2, sh[3]]
         return tf.reshape(out, out_size)
     else:
-        sh = tf.shape(x)
-        ret = tf.reshape(out, tf.pack([-1, sh[1] * 2, sh[2] * 2, sh[3]]))
+        shv = tf.shape(x)
+        ret = tf.reshape(out, tf.pack([-1, shv[1] * 2, shv[2] * 2, sh[3]]))
         ret.set_shape([None, None, None, sh[3]])
         return ret
 
