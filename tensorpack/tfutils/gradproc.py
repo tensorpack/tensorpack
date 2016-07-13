@@ -6,7 +6,8 @@
 import tensorflow as tf
 from abc import ABCMeta, abstractmethod
 import re
-from ..utils import logger, MOVING_SUMMARY_VARS_KEY
+from ..utils import logger
+from .summary import add_moving_summary
 
 __all__ = ['GradientProcessor', 'SummaryGradient', 'CheckGradient',
            'ScaleGradient', 'MapGradient']
@@ -41,9 +42,9 @@ class SummaryGradient(GradientProcessor):
                 continue
             _summaried_gradient.add(name)
             tf.histogram_summary(name + '/grad', grad)
-            tf.add_to_collection(MOVING_SUMMARY_VARS_KEY,
-                                 tf.sqrt(tf.reduce_mean(tf.square(grad)),
-                                         name=name + '/gradRMS'))
+            add_moving_summary(tf.sqrt(
+                tf.reduce_mean(tf.square(grad)),
+                name=name + '/gradRMS'))
         return grads
 
 

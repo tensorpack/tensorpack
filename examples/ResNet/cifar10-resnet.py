@@ -100,19 +100,17 @@ class Model(ModelDesc):
 
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
-        tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, cost)
 
         wrong = prediction_incorrect(logits, label)
         nr_wrong = tf.reduce_sum(wrong, name='wrong')
         # monitor training error
-        tf.add_to_collection(
-            MOVING_SUMMARY_VARS_KEY, tf.reduce_mean(wrong, name='train_error'))
+        add_moving_summary(tf.reduce_mean(wrong, name='train_error'))
 
         # weight decay on all W of fc layers
         wd_w = tf.train.exponential_decay(0.0002, get_global_step_var(),
                                           480000, 0.2, True)
         wd_cost = tf.mul(wd_w, regularize_cost('.*/W', tf.nn.l2_loss), name='wd_cost')
-        tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, wd_cost)
+        add_moving_summary(cost, wd_cost)
 
         add_param_summary([('.*/W', ['histogram'])])   # monitor W
         self.cost = tf.add_n([cost, wd_cost], name='cost')

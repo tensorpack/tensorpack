@@ -42,22 +42,19 @@ class Model(mnist_example.Model):
                     .FullyConnected('fc1', out_dim=10, nl=tf.identity)())
         prob = tf.nn.softmax(logits, name='prob')
 
-        cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)
-        cost = tf.reduce_mean(cost, name='cross_entropy_loss')
-        tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, cost)
-
         # compute the number of failed samples, for ClassificationError to use at test time
         wrong = symbolic_functions.prediction_incorrect(logits, label)
         nr_wrong = tf.reduce_sum(wrong, name='wrong')
         # monitor training error
-        tf.add_to_collection(
-            MOVING_SUMMARY_VARS_KEY, tf.reduce_mean(wrong, name='train_error'))
+        add_moving_summary(tf.reduce_mean(wrong, name='train_error'))
 
+        cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)
+        cost = tf.reduce_mean(cost, name='cross_entropy_loss')
         # weight decay on all W of fc layers
         wd_cost = tf.mul(1e-5,
                          regularize_cost('fc.*/W', tf.nn.l2_loss),
                          name='regularize_loss')
-        tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, wd_cost)
+        add_moving_summary(cost, wd_cost)
 
         self.cost = tf.add_n([wd_cost, cost], name='cost')
 

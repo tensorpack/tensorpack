@@ -16,6 +16,7 @@ from collections import deque
 from tensorpack import *
 from tensorpack.utils.concurrency import *
 from tensorpack.tfutils import symbolic_functions as symbf
+from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.RL import *
 import common
 from common import play_model, Evaluator, eval_model_multithread
@@ -95,7 +96,7 @@ class Model(ModelDesc):
         pred_action_value = tf.reduce_sum(self.predict_value * action_onehot, 1)    #N,
         max_pred_reward = tf.reduce_mean(tf.reduce_max(
             self.predict_value, 1), name='predict_reward')
-        tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, max_pred_reward)
+        add_moving_summary(max_pred_reward)
         self.greedy_choice = tf.argmax(self.predict_value, 1)   # N,
 
         with tf.variable_scope('target'):

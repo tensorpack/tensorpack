@@ -79,8 +79,15 @@ def add_param_summary(summary_lists):
                 for act in actions:
                     perform(p, act)
 
-def add_moving_summary(v):
-    tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, v)
+def add_moving_summary(v, *args):
+    """
+    :param v: tensor or list of tensor to summary
+    """
+    if not isinstance(v, list):
+        v = [v]
+    v.extend(args)
+    for x in v:
+        tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, x)
 
 def summary_moving_average():
     """ Create a MovingAverage op and summary for all variables in

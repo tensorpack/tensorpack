@@ -107,9 +107,8 @@ class ILSVRC12(RNGDataFlow):
         command to build the above structure for `train/`:
 
         .. code-block:: none
-
-            find -type f | parallel -P 10 'mkdir -p {/.} && tar xf {} -C {/.}'
-
+            tar xvf ILSVRC12_img_train.tar -C train && cd train
+            find -type f -name '*.tar' | parallel -P 10 'echo {} && mkdir -p {/.} && tar xf {} -C {/.}'
             Or:
             for i in *.tar; do dir=${i%.tar}; echo $dir; mkdir -p $dir; tar xf $i -C $dir; done
         """

@@ -98,24 +98,21 @@ class Model(ModelDesc):
         loss3 = tf.reduce_mean(loss3, name='loss3')
 
         cost = tf.add_n([loss3, 0.3 * loss2, 0.3 * loss1], name='weighted_cost')
-        for k in [cost, loss1, loss2, loss3]:
-            tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, k)
+        add_moving_summary([cost, loss1, loss2, loss3])
 
         wrong = prediction_incorrect(logits, label, 1)
         nr_wrong = tf.reduce_sum(wrong, name='wrong-top1')
-        tf.add_to_collection(
-            MOVING_SUMMARY_VARS_KEY, tf.reduce_mean(wrong, name='train_error_top1'))
+        add_moving_summary(tf.reduce_mean(wrong, name='train_error_top1'))
 
         wrong = prediction_incorrect(logits, label, 5)
         nr_wrong = tf.reduce_sum(wrong, name='wrong-top5')
-        tf.add_to_collection(
-            MOVING_SUMMARY_VARS_KEY, tf.reduce_mean(wrong, name='train_error_top5'))
+        add_moving_summary(tf.reduce_mean(wrong, name='train_error_top5'))
 
         # weight decay on all W of fc layers
         wd_w = tf.train.exponential_decay(0.0002, get_global_step_var(),
                                           80000, 0.7, True)
         wd_cost = tf.mul(wd_w, regularize_cost('.*/W', tf.nn.l2_loss), name='l2_regularize_loss')
-        tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, wd_cost)
+        add_moving_summary(wd_cost)
 
         add_param_summary([('.*/W', ['histogram'])])   # monitor W
         self.cost = tf.add_n([cost, wd_cost], name='cost')
@@ -144,7 +141,7 @@ def get_data(train_or_test):
     ds = AugmentImageComponent(ds, augmentors)
     ds = BatchData(ds, BATCH_SIZE, remainder=not isTrain)
     if isTrain:
-        ds = PrefetchDataZMQ(ds, 5)
+        ds = PrefetchDataZMQ(ds, 6)
     return ds
 
 
