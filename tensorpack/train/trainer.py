@@ -175,13 +175,23 @@ class QueueInputTrainer(Trainer):
 
         self.train_op = tf.group(
             self.config.optimizer.apply_gradients(grads, get_global_step_var()),
-            summary_moving_average())
+            summary_moving_average(), 'train_op')
 
         self.main_loop()
 
     def run_step(self):
         """ just run self.train_op"""
         self.sess.run([self.train_op])
+        #run_metadata = tf.RunMetadata()
+        #self.sess.run([self.train_op],
+                #options=tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE),
+                #run_metadata=run_metadata
+                #)
+        #from tensorflow.python.client import timeline
+        #trace = timeline.Timeline(step_stats=run_metadata.step_stats)
+        #trace_file = open('timeline.ctf.json', 'w')
+        #trace_file.write(trace.generate_chrome_trace_format())
+        #import sys; sys.exit()
 
     def _trigger_epoch(self):
         # need to run summary_op every epoch

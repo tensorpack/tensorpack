@@ -48,7 +48,8 @@ class Callback(object):
         self.graph = tf.get_default_graph()
         self.epoch_num = self.trainer.config.starting_epoch - 1
         # self.epoch_num is always the number of epochs that finished updating parameters.
-        self._setup_graph()
+        with tf.name_scope(type(self).__name__):
+            self._setup_graph()
 
     def _setup_graph(self):
         pass

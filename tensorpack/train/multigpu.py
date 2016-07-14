@@ -25,14 +25,15 @@ class MultiGPUTrainer(QueueInputTrainer):
     @staticmethod
     def _average_grads(tower_grads):
         ret = []
-        for grad_and_vars in zip(*tower_grads):
-            v = grad_and_vars[0][1]
-            try:
-                grad = tf.add_n([x[0] for x in grad_and_vars]) / float(len(tower_grads))
-            except:
-                logger.error("Error while processing gradients of {}".format(v.name))
-                raise
-            ret.append((grad, v))
+        with tf.name_scope('average_grad'):
+            for grad_and_vars in zip(*tower_grads):
+                v = grad_and_vars[0][1]
+                try:
+                    grad = tf.add_n([x[0] for x in grad_and_vars]) / float(len(tower_grads))
+                except:
+                    logger.error("Error while processing gradients of {}".format(v.name))
+                    raise
+                ret.append((grad, v))
         return ret
 
     def _multi_tower_grads(self):
@@ -73,7 +74,7 @@ class SyncMultiGPUTrainer(MultiGPUTrainer):
 
         self.train_op = tf.group(
             self.config.optimizer.apply_gradients(grads, get_global_step_var()),
-            summary_moving_average())
+            summary_moving_average(), name='train_op')
         describe_model()
 
         with freeze_collection(self.SUMMARY_BACKUP_KEYS):
@@ -92,14 +93,15 @@ class AsyncMultiGPUTrainer(MultiGPUTrainer):
         # pretend to average the grads, in order to make async and
         # sync have consistent effective learning rate
         def scale(grads):
-            return [(grad / self.config.nr_tower, var) for grad, var in grads]
+            with tf.name_scope('async_scale_grad'):
+                return [(grad / self.config.nr_tower, var) for grad, var in grads]
         grad_list = map(scale, grad_list)
         grad_list = [self.process_grads(g) for g in grad_list]
 
         # use grad from the first tower for iteration in main thread
         self.train_op = tf.group(
             self.config.optimizer.apply_gradients(grad_list[0], get_global_step_var()),
-            summary_moving_average())
+            summary_moving_average(), name='train_op')
         describe_model()
 
         # prepare train_op for the rest of the towers

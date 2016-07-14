@@ -22,7 +22,8 @@ class GradientProcessor(object):
         :param grads: list of (grad, var)
         :returns: symbolic gradients with the same type as input
         """
-        return self._process(grads)
+        with tf.name_scope(type(self).__name__):
+            return self._process(grads)
 
     @abstractmethod
     def _process(self, grads):

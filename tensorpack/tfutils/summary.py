@@ -32,11 +32,12 @@ def add_activation_summary(x, name=None):
         "Summary a scalar with histogram? Maybe use scalar instead. FIXME!"
     if name is None:
         name = x.name
-    tf.histogram_summary(name + '/activation', x)
-    tf.scalar_summary(name + '/activation_sparsity', tf.nn.zero_fraction(x))
-    tf.scalar_summary(
-            name + '/activation_rms',
-            tf.sqrt(tf.reduce_mean(tf.square(x))))
+    with tf.name_scope('act_summary'):
+        tf.histogram_summary(name + '/activation', x)
+        tf.scalar_summary(name + '/activation_sparsity', tf.nn.zero_fraction(x))
+        tf.scalar_summary(
+                name + '/activation_rms',
+                tf.sqrt(tf.reduce_mean(tf.square(x))))
 
 def add_param_summary(summary_lists):
     """
@@ -70,14 +71,15 @@ def add_param_summary(summary_lists):
 
     import re
     params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
-    for p in params:
-        name = p.name
-        for rgx, actions in summary_lists:
-            if not rgx.endswith('$'):
-                rgx = rgx + '(:0)?$'
-            if re.match(rgx, name):
-                for act in actions:
-                    perform(p, act)
+    with tf.name_scope('param_summary'):
+        for p in params:
+            name = p.name
+            for rgx, actions in summary_lists:
+                if not rgx.endswith('$'):
+                    rgx = rgx + '(:0)?$'
+                if re.match(rgx, name):
+                    for act in actions:
+                        perform(p, act)
 
 def add_moving_summary(v, *args):
     """
@@ -94,13 +96,15 @@ def summary_moving_average():
         MOVING_SUMMARY_VARS_KEY.
         :returns: a op to maintain these average.
     """
-    global_step_var = get_global_step_var()
-    averager = tf.train.ExponentialMovingAverage(
-        0.99, num_updates=global_step_var, name='moving_averages')
-    vars_to_summary = tf.get_collection(MOVING_SUMMARY_VARS_KEY)
-    avg_maintain_op = averager.apply(vars_to_summary)
-    for idx, c in enumerate(vars_to_summary):
-        name = re.sub('tower[p0-9]+/', '', c.op.name)
-        tf.scalar_summary(name, averager.average(c))
-    return avg_maintain_op
+    with tf.name_scope('EMA_summary'):
+        global_step_var = get_global_step_var()
+        with tf.name_scope(None):
+            averager = tf.train.ExponentialMovingAverage(
+                0.99, num_updates=global_step_var, name='EMA')
+            vars_to_summary = tf.get_collection(MOVING_SUMMARY_VARS_KEY)
+            avg_maintain_op = averager.apply(vars_to_summary)
+        for idx, c in enumerate(vars_to_summary):
+            name = re.sub('tower[p0-9]+/', '', c.op.name)
+            tf.scalar_summary(name, averager.average(c))
+        return avg_maintain_op
 
