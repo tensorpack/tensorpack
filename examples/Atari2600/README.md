@@ -7,16 +7,19 @@ Reproduce the following methods:
 [Deep Reinforcement Learning with Double Q-learning](http://arxiv.org/abs/1509.06461)
 
 + A3C in [Asynchronous Methods for Deep Reinforcement Learning](http://arxiv.org/abs/1602.01783). (I
-used a modified version where each batch contains transitions from different simulators, which I called "Batch A3C".)
+used a modified version where each batch contains transitions from different simulators, which I called "Batch-A3C".)
 
 Claimed performance in the paper can be reproduced, on several games I've tested with.
 
 ![DQN](curve-breakout.png)
 
-A demo trained with Double-DQN on breakout game is available at [youtube](https://youtu.be/o21mddZtE5Y).
-
-DQN would typically take 2~3 days of training to reach a score of 400 on breakout, but my A3C implementation only takes <2 hours on 1 GPU.
+DQN was trained on 1 GPU and it typically took 2~3 days of training to reach a score of 400 on breakout game.
+My Batch-A3C implementation only took <2 hours with 2 GPUs (one for training and one for simulation).
 This is probably the fastest RL trainer you'd find.
+
+The x-axis is the number of iterations not wall time. The iteration speed is 6.7it/s for B-A3C and 7.3it/s for D-DQN.
+
+A demo trained with Double-DQN on breakout is available at [youtube](https://youtu.be/o21mddZtE5Y).
 
 ## How to use
 
@@ -29,7 +32,6 @@ To train:
 ```
 Training speed is about 7.3 iteration/s on 1 Tesla M40
 (faster than this at the beginning, but will slow down due to exploration annealing).
-It takes days to learn well (see figure above).
 
 To visualize the agent:
 ```

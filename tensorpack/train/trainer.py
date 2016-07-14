@@ -118,7 +118,7 @@ class QueueInputTrainer(Trainer):
         # use a smaller queue size for now, to avoid https://github.com/tensorflow/tensorflow/issues/2942
         if input_queue is None:
             self.input_queue = tf.FIFOQueue(
-                    30, [x.dtype for x in self.input_vars], name='input_queue')
+                    50, [x.dtype for x in self.input_vars], name='input_queue')
         else:
             self.input_queue = input_queue
         if predict_tower is None:

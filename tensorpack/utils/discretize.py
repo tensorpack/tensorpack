@@ -92,14 +92,9 @@ class UniformDiscretizerND(Discretizer):
     def get_bin(self, v):
         assert len(v) == self.n
         bin_id = [self.discretizers[k].get_bin(v[k]) for k in range(self.n)]
+        return self.get_bin_from_nd_bin_ids(bin_id)
 
-        acc, res = 1, 0
-        for k in reversed(list(range(self.n))):
-            res += bin_id[k] * acc
-            acc *= self.nr_bins[k]
-        return res
-
-    def _get_bin_id_nd(self, bin_id):
+    def get_nd_bin_ids(self, bin_id):
         ret = []
         for k in reversed(list(range(self.n))):
             nr = self.nr_bins[k]
@@ -108,8 +103,18 @@ class UniformDiscretizerND(Discretizer):
             ret.append(v)
         return list(reversed(ret))
 
+    def get_bin_from_nd_bin_ids(self, bin_ids):
+        acc, res = 1, 0
+        for k in reversed(list(range(self.n))):
+            res += bin_ids[k] * acc
+            acc *= self.nr_bins[k]
+        return res
+
+    def get_nr_bin_nd(self):
+        return self.nr_bins
+
     def get_bin_center(self, bin_id):
-        bin_id_nd = self._get_bin_id_nd(bin_id)
+        bin_id_nd = self.get_nd_bin_ids(bin_id)
         return [self.discretizers[k].get_bin_center(bin_id_nd[k]) for k in range(self.n)]
 
 if __name__ == '__main__':

@@ -100,19 +100,27 @@ class LMDBData(RNGDataFlow):
                 v = self._txn.get(k)
                 yield [k, v]
 
-class CaffeLMDB(LMDBData):
-    """ Read a Caffe LMDB file where each value contains a caffe.Datum protobuf """
-    def __init__(self, lmdb_dir, shuffle=True):
+class LMDBDataDecoder(LMDBData):
+    def __init__(self, lmdb_dir, decoder, shuffle=True):
         """
-        :param shuffle: about 3 times slower
+        :param decoder: a function taking k, v and return a data point,
+            or return None to skip
         """
-        super(CaffeLMDB, self).__init__(lmdb_dir, shuffle)
-        self.cpb = get_caffe_pb()
+        super(LMDBDataDecoder, self).__init__(lmdb_dir, shuffle)
+        self.decoder = decoder
 
     def get_data(self):
-        datum = self.cpb.Datum()
-        def parse(k, v):
+        for dp in super(LMDBDataDecoder, self).get_data():
+            v = self.decoder(dp[0], dp[1])
+            if v: yield v
+
+class CaffeLMDB(LMDBDataDecoder):
+    """ Read a Caffe LMDB file where each value contains a caffe.Datum protobuf """
+    def __init__(self, lmdb_dir, shuffle=True):
+        cpb = get_caffe_pb()
+        def decoder(k, v):
             try:
+                datum = cpb.Datum()
                 datum.ParseFromString(v)
                 img = np.fromstring(datum.data, dtype=np.uint8)
                 img = img.reshape(datum.channels, datum.height, datum.width)
@@ -121,6 +129,5 @@ class CaffeLMDB(LMDBData):
                 return None
             return [img.transpose(1, 2, 0), datum.label]
 
-        for dp in super(CaffeLMDB, self).get_data():
-            v = parse(dp[0], dp[1])
-            if v: yield v
+        super(CaffeLMDB, self).__init__(
+                lmdb_dir, decoder=decoder, shuffle=shuffle)
