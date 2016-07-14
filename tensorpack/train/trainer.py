@@ -86,7 +86,7 @@ class EnqueueThread(threading.Thread):
                         if self.coord.should_stop():
                             return
                         feed = dict(zip(self.input_vars, dp))
-                        #print self.sess.run([self.op, self.size_op], feed_dict=feed)[1]
+                        #print 'TFQ:', self.sess.run([self.op, self.size_op], feed_dict=feed)[1]
                         self.op.run(feed_dict=feed)
             except tf.errors.CancelledError as e:
                 pass
@@ -149,9 +149,16 @@ class QueueInputTrainer(Trainer):
     def _single_tower_grad(self):
         """ Get grad and cost for single-tower"""
         self.dequed_inputs = model_inputs = self._get_model_inputs()
+
+        # test the overhead of queue
+        #with tf.device('/gpu:0'):
+            #self.dequed_inputs = [tf.Variable(tf.random_normal([128,224,224,3],
+                #dtype=tf.float32), trainable=False),
+                #tf.Variable(tf.ones([128], dtype=tf.int32), trainable=False)]
         self.model.build_graph(self.dequed_inputs, True)
         cost_var = self.model.get_cost()
-        grads = self.config.optimizer.compute_gradients(cost_var)
+        grads = self.config.optimizer.compute_gradients(
+                cost_var, gate_gradients=0) # GATE_NONE
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, cost_var)
         return grads
 
@@ -181,7 +188,7 @@ class QueueInputTrainer(Trainer):
 
     def run_step(self):
         """ just run self.train_op"""
-        self.sess.run([self.train_op])
+        self.sess.run(self.train_op)
         #run_metadata = tf.RunMetadata()
         #self.sess.run([self.train_op],
                 #options=tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE),
@@ -192,6 +199,8 @@ class QueueInputTrainer(Trainer):
         #trace_file = open('timeline.ctf.json', 'w')
         #trace_file.write(trace.generate_chrome_trace_format())
         #import sys; sys.exit()
+
+        #self.sess.run([self.dequed_inputs[1]])
 
     def _trigger_epoch(self):
         # need to run summary_op every epoch

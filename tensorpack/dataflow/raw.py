@@ -10,8 +10,8 @@ from .base import DataFlow, RNGDataFlow
 __all__ = ['FakeData', 'DataFromQueue', 'DataFromList']
 
 class FakeData(RNGDataFlow):
-    """ Generate fake random data of given shapes"""
-    def __init__(self, shapes, size):
+    """ Generate fake fixed data of given shapes"""
+    def __init__(self, shapes, size, random=True):
         """
         :param shapes: a list of lists/tuples
         :param size: size of this DataFlow
@@ -19,14 +19,19 @@ class FakeData(RNGDataFlow):
         super(FakeData, self).__init__()
         self.shapes = shapes
         self._size = int(size)
+        self.random = random
 
     def size(self):
         return self._size
 
     def get_data(self):
-        for _ in range(self._size):
-            yield [self.rng.random_sample(k).astype('float32') for k in self.shapes]
-            #yield [self.rng.random_sample(k) for k in self.shapes]
+        if self.random:
+            for _ in range(self._size):
+                yield [self.rng.rand(*k).astype('float32') for k in self.shapes]
+        else:
+            v = [self.rng.rand(*k).astype('float32') for k in self.shapes]
+            for _ in range(self._size):
+                yield v
 
 class DataFromQueue(DataFlow):
     """ Produce data from a queue """

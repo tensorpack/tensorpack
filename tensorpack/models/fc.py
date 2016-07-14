@@ -35,9 +35,8 @@ def FullyConnected(x, out_dim,
     if b_init is None:
         b_init = tf.constant_initializer()
 
-    with tf.device('/cpu:0'):
-        W = tf.get_variable('W', [in_dim, out_dim], initializer=W_init)
-        if use_bias:
-            b = tf.get_variable('b', [out_dim], initializer=b_init)
+    W = tf.get_variable('W', [in_dim, out_dim], initializer=W_init)
+    if use_bias:
+        b = tf.get_variable('b', [out_dim], initializer=b_init)
     prod = tf.nn.xw_plus_b(x, W, b) if use_bias else tf.matmul(x, W)
     return nl(prod, name='output')
