@@ -136,9 +136,9 @@ class Trainer(object):
             except (KeyboardInterrupt, Exception):
                 raise
             finally:
-                self.coord.request_stop()
                 # Do I need to run queue.close?
                 callbacks.after_train()
+                self.coord.request_stop()
                 self.summary_writer.close()
                 self.sess.close()
 
