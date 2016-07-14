@@ -2,30 +2,30 @@
 # File: prefetch.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
-import multiprocessing
+import multiprocessing as mp
 from threading import Thread
 import itertools
-from six.moves import range
+from six.moves import range, zip
 from six.moves.queue import Queue
 import uuid
 import os
 
 from .base import ProxyDataFlow
 from ..utils.concurrency import *
-from ..utils.serialize import *
-from ..utils import logger
+from ..utils.serialize import loads, dumps
+from ..utils import logger, change_env
 
 try:
     import zmq
 except ImportError:
     logger.warn("Error in 'import zmq'. PrefetchDataZMQ won't be available.")
-    __all__ = ['PrefetchData']
+    __all__ = ['PrefetchData', 'BlockParallel']
 else:
-    __all__ = ['PrefetchData', 'PrefetchDataZMQ']
+    __all__.extend(['PrefetchDataZMQ', 'PrefetchOnGPUs'])
 
 
-class PrefetchProcess(multiprocessing.Process):
-    def __init__(self, ds, queue):
+class PrefetchProcess(mp.Process):
+    def __init__(self, ds, queue, reset_after_spawn=True):
         """
         :param ds: ds to take data from
         :param queue: output queue to put results in
@@ -33,10 +33,12 @@ class PrefetchProcess(multiprocessing.Process):
         super(PrefetchProcess, self).__init__()
         self.ds = ds
         self.queue = queue
+        self.reset_after_spawn = reset_after_spawn
 
     def run(self):
-        # reset all ds so each process will produce different data
-        self.ds.reset_state()
+        if self.reset_after_spawn:
+            # reset all ds so each process will produce different data
+            self.ds.reset_state()
         while True:
             for dp in self.ds.get_data():
                 self.queue.put(dp)
@@ -59,7 +61,7 @@ class PrefetchData(ProxyDataFlow):
             self._size = -1
         self.nr_proc = nr_proc
         self.nr_prefetch = nr_prefetch
-        self.queue = multiprocessing.Queue(self.nr_prefetch)
+        self.queue = mp.Queue(self.nr_prefetch)
         self.procs = [PrefetchProcess(self.ds, self.queue)
                       for _ in range(self.nr_proc)]
         ensure_proc_terminate(self.procs)
@@ -77,7 +79,16 @@ class PrefetchData(ProxyDataFlow):
         # do nothing. all ds are reset once and only once in spawned processes
         pass
 
-class PrefetchProcessZMQ(multiprocessing.Process):
+def BlockParallel(ds, queue_size):
+    """
+    Insert `BlockParallel` in dataflow pipeline to block parallelism on ds
+
+    :param ds: a `DataFlow`
+    :param queue_size: size of the queue used
+    """
+    return PrefetchData(ds, queue_size, 1)
+
+class PrefetchProcessZMQ(mp.Process):
     def __init__(self, ds, conn_name):
         """
         :param ds: a `DataFlow` instance.
@@ -158,3 +169,16 @@ class PrefetchDataZMQ(ProxyDataFlow):
             logger.info("Prefetch process exited.")
         except:
             pass
+
+class PrefetchOnGPUs(PrefetchDataZMQ):
+    """ Prefetch with each process having a specific CUDA_VISIBLE_DEVICES"""
+    def __init__(self, ds, gpus, pipedir=None):
+        super(PrefetchOnGPUs, self).__init__(ds, len(gpus), pipedir)
+        self.gpus = gpus
+
+    def start_processes(self):
+        with mask_sigint():
+            for gpu, proc in zip(self.gpus, self.procs):
+                with change_gpu(gpu):
+                    proc.start()
+

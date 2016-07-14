@@ -7,6 +7,7 @@ import threading
 import multiprocessing
 import atexit
 import bisect
+from contextlib import contextmanager
 import signal
 import weakref
 import six
@@ -20,7 +21,7 @@ from . import logger
 
 __all__ = ['StoppableThread', 'LoopThread', 'ensure_proc_terminate',
            'OrderedResultGatherProc', 'OrderedContainer', 'DIE',
-           'start_proc_mask_signal']
+           'mask_sigint', 'start_proc_mask_signal']
 
 class StoppableThread(threading.Thread):
     """
@@ -106,14 +107,20 @@ def ensure_proc_terminate(proc):
     assert isinstance(proc, multiprocessing.Process)
     atexit.register(stop_proc_by_weak_ref, weakref.ref(proc))
 
+
+@contextmanager
+def mask_sigint():
+    sigint_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
+    yield
+    signal.signal(signal.SIGINT, sigint_handler)
+
 def start_proc_mask_signal(proc):
     if not isinstance(proc, list):
         proc = [proc]
 
-    sigint_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
-    for p in proc:
-        p.start()
-    signal.signal(signal.SIGINT, sigint_handler)
+    with mask_sigint():
+        for p in proc:
+            p.start()
 
 def subproc_call(cmd, timeout=None):
     try:

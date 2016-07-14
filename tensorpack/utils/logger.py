@@ -64,25 +64,21 @@ def set_logger_dir(dirname, action=None):
     global LOG_FILE, LOG_DIR
     if os.path.isdir(dirname):
         _logger.warn("""\
-Directory {} exists! Please either backup/delete it, or use a new directory \
-unless you're resuming from a previous task.""".format(dirname))
+Directory {} exists! Please either backup/delete it, or use a new directory. \
+If you're resuming from a previous run you can choose to keep it.""".format(dirname))
         _logger.info("Select Action: k (keep) / b (backup) / d (delete) / n (new):")
-        if not action:
-            while True:
-                act = input().lower().strip()
-                if act:
-                    break
-        else:
-            act = action
+        while not action:
+            action = input().lower().strip()
+        act = action
         if act == 'b':
             backup_name = dirname + get_time_str()
             shutil.move(dirname, backup_name)
-            info("Directory'{}' backuped to '{}'".format(dirname, backup_name))
+            info("Directory '{}' backuped to '{}'".format(dirname, backup_name))
         elif act == 'd':
             shutil.rmtree(dirname)
         elif act == 'n':
             dirname = dirname + get_time_str()
-            info("Use a different log directory {}".format(dirname))
+            info("Use a new log directory {}".format(dirname))
         elif act == 'k':
             pass
         else:

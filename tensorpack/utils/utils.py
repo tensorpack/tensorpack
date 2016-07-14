@@ -13,10 +13,9 @@ import six
 
 from . import logger
 
-__all__ = ['change_env', 'map_arg',
+__all__ = ['change_env',
+        'map_arg',
         'get_rng', 'memoized',
-        'get_nr_gpu',
-        'get_gpus',
         'get_dataset_dir',
         'get_tqdm_kwargs'
         ]
@@ -95,16 +94,6 @@ def get_rng(obj=None):
     seed = (id(obj) + os.getpid() +
             int(datetime.now().strftime("%Y%m%d%H%M%S%f"))) % 4294967295
     return np.random.RandomState(seed)
-
-def get_nr_gpu():
-    env = os.environ.get('CUDA_VISIBLE_DEVICES', None)
-    assert env is not None  # TODO
-    return len(env.split(','))
-
-def get_gpus():
-    env = os.environ.get('CUDA_VISIBLE_DEVICES', None)
-    assert env is not None  # TODO
-    return map(int, env.strip().split(','))
 
 def get_dataset_dir(*args):
     d = os.environ.get('TENSORPACK_DATASET', None)
