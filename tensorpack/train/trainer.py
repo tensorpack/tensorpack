@@ -182,7 +182,7 @@ class QueueInputTrainer(Trainer):
 
         self.train_op = tf.group(
             self.config.optimizer.apply_gradients(grads, get_global_step_var()),
-            summary_moving_average(), 'train_op')
+            summary_moving_average(), name='train_op')
 
         self.main_loop()
 

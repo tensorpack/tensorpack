@@ -77,7 +77,7 @@ class ExpReplay(DataFlow, Callback):
 
         with tqdm(total=self.init_memory_size) as pbar:
             while len(self.mem) < self.init_memory_size:
-                #from copy import deepcopy  # for debug
+                #from copy import deepcopy  # quickly fill the memory for debug
                 #self.mem.append(deepcopy(self.mem[0]))
                 self._populate_exp()
                 pbar.update()

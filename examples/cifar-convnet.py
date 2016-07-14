@@ -18,7 +18,7 @@ A small convnet model for Cifar10 or Cifar100 dataset.
 Cifar10:
     90% validation accuracy after 40k step.
     91% accuracy after 80k step.
-    18.8 step/s on TitanX
+    19.3 step/s on Tesla M40
 
 Not a good for Cifar100, just for demonstration.
 """

@@ -14,7 +14,9 @@ from tensorpack.tfutils.summary import *
 
 """
 SVHN convnet.
-About 3.0% validation error after 70 epoch.  2.5% after 130 epoch.
+About 3.0% validation error after 70 epoch. 2.5% after 130 epoch.
+
+Each epoch is set to 4721 iterations. The speed is about 44 it/s on a Tesla M30
 """
 
 class Model(ModelDesc):

@@ -17,7 +17,7 @@ DQN was trained on 1 GPU and it typically took 2~3 days of training to reach a s
 My Batch-A3C implementation only took <2 hours with 2 GPUs (one for training and one for simulation).
 This is probably the fastest RL trainer you'd find.
 
-The x-axis is the number of iterations not wall time. The iteration speed is 6.7it/s for B-A3C and 7.3it/s for D-DQN.
+The x-axis is the number of iterations not wall time, but iteration speed is about 7.8it/s for both models.
 
 A demo trained with Double-DQN on breakout is available at [youtube](https://youtu.be/o21mddZtE5Y).
 

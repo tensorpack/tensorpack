@@ -3,7 +3,7 @@
 # File: gpu.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-
+import os
 from .utils import change_env
 
 __all__ = ['change_gpu', 'get_nr_gpu', 'get_gpus']
