@@ -15,11 +15,11 @@ from ..utils.concurrency import *
 from ..utils.serialize import loads, dumps
 from ..utils import logger, change_env
 
+__all__ = ['PrefetchData', 'BlockParallel']
 try:
     import zmq
 except ImportError:
     logger.warn("Error in 'import zmq'. PrefetchDataZMQ won't be available.")
-    __all__ = ['PrefetchData', 'BlockParallel']
 else:
     __all__.extend(['PrefetchDataZMQ', 'PrefetchOnGPUs'])
 
