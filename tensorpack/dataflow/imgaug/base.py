@@ -16,7 +16,6 @@ class ImageAugmentor(object):
         self.reset_state()
 
     def _init(self, params=None):
-        self.reset_state()
         if params:
             for k, v in params.items():
                 if k != 'self':

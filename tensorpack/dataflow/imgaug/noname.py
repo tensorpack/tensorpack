@@ -22,7 +22,7 @@ class Flip(ImageAugmentor):
         :param prob: probability of flip.
         """
         if horiz and vert:
-            raise ValueError("Please use two Flip, with both 0.5 prob")
+            raise ValueError("Please use two Flip instead.")
         elif horiz:
             self.code = 1
         elif vert:

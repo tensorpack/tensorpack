@@ -7,10 +7,12 @@ import tarfile
 import cv2
 import numpy as np
 from six.moves import range
+import xml.etree.ElementTree as ET
 
 from ...utils import logger, get_rng, get_dataset_dir, memoized
 from ...utils.loadcaffe import get_caffe_pb
 from ...utils.fs import mkdir_p, download
+from ...utils.timer import timed_operation
 from ..base import RNGDataFlow
 
 __all__ = ['ILSVRCMeta', 'ILSVRC12']
@@ -20,7 +22,6 @@ def log_once(s): logger.warn(s)
 
 CAFFE_ILSVRC12_URL = "http://dl.caffe.berkeleyvision.org/caffe_ilsvrc12.tar.gz"
 
-# TODO move caffe_pb outside
 class ILSVRCMeta(object):
     """
     Some metadata for ILSVRC dataset.
@@ -90,15 +91,16 @@ class ILSVRCMeta(object):
 
 class ILSVRC12(RNGDataFlow):
     def __init__(self, dir, name, meta_dir=None, shuffle=True,
-            dir_structure='original'):
+            dir_structure='original', include_bb=False):
         """
         :param dir: A directory containing a subdir named `name`, where the
             original ILSVRC12_`name`.tar gets decompressed.
         :param name: 'train' or 'val' or 'test'
-        :param dir_structure: the dir structure of 'val' or 'test'.
-            if is 'original' then keep the original decompressed dir with list
-            of image files. if equals to 'train', use the `train/` dir
+        :param dir_structure: The dir structure of 'val' or 'test'.
+            If is 'original' then keep the original decompressed dir with list
+            of image files (as below). If equals to 'train', use the `train/` dir
             structure with class name as subdirectories.
+        :param include_bb: Include the bounding box. Useful in training.
 
         Dir should have the following structure:
 
@@ -116,6 +118,11 @@ class ILSVRC12(RNGDataFlow):
               test/
                 ILSVRC2012_test_00000001.JPEG
                 ...
+              bbox/
+                n02134418/
+                  n02134418_198.xml
+                  ...
+                ...
 
         After decompress ILSVRC12_img_train.tar, you can use the following
         command to build the above structure for `train/`:
@@ -125,6 +132,7 @@ class ILSVRC12(RNGDataFlow):
             find -type f -name '*.tar' | parallel -P 10 'echo {} && mkdir -p {/.} && tar xf {} -C {/.}'
             Or:
             for i in *.tar; do dir=${i%.tar}; echo $dir; mkdir -p $dir; tar xf $i -C $dir; done
+
         """
         assert name in ['train', 'test', 'val']
         self.full_dir = os.path.join(dir, name)
@@ -136,12 +144,19 @@ class ILSVRC12(RNGDataFlow):
         self.dir_structure = dir_structure
         self.synset = meta.get_synset_1000()
 
+        if include_bb:
+            assert name == 'train', 'Bounding box only available for training'
+            self.bblist = ILSVRC12.get_training_bbox(
+                    os.path.join(dir, 'bbox'), self.imglist)
+        self.include_bb = include_bb
+
     def size(self):
         return len(self.imglist)
 
     def get_data(self):
         """
-        Produce original images or shape [h, w, 3], and label
+        Produce original images of shape [h, w, 3], and label,
+        and optionally a bbox of [xmin, ymin, xmax, ymax] in [0, 1]
         """
         idxs = np.arange(len(self.imglist))
         add_label_to_fname = (self.name != 'train' and self.dir_structure != 'original')
@@ -157,15 +172,55 @@ class ILSVRC12(RNGDataFlow):
             assert im is not None, fname
             if im.ndim == 2:
                 im = np.expand_dims(im, 2).repeat(3,2)
-            yield [im, label]
+            if self.include_bb:
+                bb = self.bblist[k]
+                if not bb:
+                    bb = [0, 0, 1, 1]
+                yield [im, label, bb]
+            else:
+                yield [im, label]
 
+    @staticmethod
+    def get_training_bbox(bbox_dir, imglist):
+        ret = []
+
+        def parse_bbox(fname):
+            root = ET.parse(fname).getroot()
+            size = root.find('size').getchildren()
+            size = map(int, [size[0].text, size[1].text])
+
+            box = root.find('object').find('bndbox').getchildren()
+            box = map(lambda x: float(x.text), box)
+            box[0] /= size[0]
+            box[1] /= size[1]
+            box[2] /= size[0]
+            box[3] /= size[1]
+            return np.asarray(box, dtype='float32')
+
+        with timed_operation('Loading Bounding Boxes ...'):
+            cnt = 0
+            import tqdm
+            for k in tqdm.trange(len(imglist)):
+                fname = imglist[k][0]
+                fname = fname[:-4] + 'xml'
+                fname = os.path.join(bbox_dir, fname)
+                try:
+                    ret.append(parse_bbox(fname))
+                    cnt += 1
+                except KeyboardInterrupt:
+                    raise
+                except:
+                    ret.append(None)
+            logger.info("{}/{} images have bounding box.".format(cnt, len(imglist)))
+        return ret
 
 if __name__ == '__main__':
     meta = ILSVRCMeta()
-    print(meta.get_per_pixel_mean())
     #print(meta.get_synset_words_1000())
 
-    #ds = ILSVRC12('/home/wyx/data/imagenet', 'val')
+    ds = ILSVRC12('/home/wyx/data/fake_ilsvrc/', 'train', include_bb=True,
+            shuffle=False)
+    ds.reset_state()
 
     for k in ds.get_data():
         from IPython import embed; embed()
