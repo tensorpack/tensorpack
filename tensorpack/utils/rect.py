@@ -3,6 +3,7 @@
 # File: rect.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
+import numpy as np
 
 class Rect(object):
     """
@@ -11,12 +12,13 @@ class Rect(object):
     """
     __slots__ = ['x', 'y', 'w', 'h']
 
-    def __init__(self, x=0, y=0, w=0, h=0):
+    def __init__(self, x=0, y=0, w=0, h=0, allow_neg=False):
         self.x = x
         self.y = y
         self.w = w
         self.h = h
-        assert min(self.x, self.y, self.w, self.h) >= 0
+        if not allow_neg:
+            assert min(self.x, self.y, self.w, self.h) >= 0
 
     @property
     def x0(self):
@@ -68,4 +70,36 @@ class Rect(object):
         assert self.validate(img.shape[:2])
         return img[self.y0:self.y1+1, self.x0:self.x1+1]
 
+    def expand(self, frac):
+        neww = self.w * frac
+        newh = self.h * frac
+        newx = self.x - (neww - self.w) * 0.5
+        newy = self.y - (newh - self.h) * 0.5
+        return Rect(*(map(int, [newx, newy, neww, newh])), allow_neg=True)
+
+    def roi_zeropad(self, img):
+        shp = list(img.shape)
+        shp[0] = self.h
+        shp[1] = self.w
+        ret = np.zeros(tuple(shp), dtype=img.dtype)
+
+        xstart = 0 if self.x >= 0 else -self.x
+        ystart = 0 if self.y >= 0 else -self.y
+
+        xmin = max(self.x0, 0)
+        ymin = max(self.y0, 0)
+        xmax = min(self.x1, img.shape[1])
+        ymax = min(self.y1, img.shape[0])
+        patch = img[ymin:ymax, xmin:xmax]
+        ret[ystart:ystart+patch.shape[0],xstart:xstart+patch.shape[1]] = patch
+        return ret
+
     __repr__ = __str__
+
+
+if __name__ == '__main__':
+    x = Rect(2, 1, 3, 3, allow_neg=True)
+
+    img = np.random.rand(3,3)
+    print img
+    print x.roi_zeropad(img)

@@ -45,7 +45,7 @@ class SummaryGradient(GradientProcessor):
             tf.histogram_summary(name + '/grad', grad)
             add_moving_summary(tf.sqrt(
                 tf.reduce_mean(tf.square(grad)),
-                name=name + '/gradRMS'))
+                name=name + '/RMS'))
         return grads
 
 

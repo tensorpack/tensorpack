@@ -21,7 +21,7 @@ INPUT_SHAPE = 224
 Inception-BN model on ILSVRC12.
 See "Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift", arxiv:1502.03167
 
-This config reaches 71% single-crop validation accuracy after 300k steps with 6 TitanX.
+This config reaches 71% single-crop validation accuracy after 150k steps with 6 TitanX.
 Learning rate may need a different schedule for different number of GPUs (because batch size will be different).
 """
 
