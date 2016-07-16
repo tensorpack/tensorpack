@@ -67,10 +67,11 @@ class Rect(object):
         return True
 
     def roi(self, img):
-        assert self.validate(img.shape[:2])
+        assert self.validate(img.shape[:2]), "{} vs {}".format(self, img.shape[:2])
         return img[self.y0:self.y1+1, self.x0:self.x1+1]
 
     def expand(self, frac):
+        assert frac > 1.0, frac
         neww = self.w * frac
         newh = self.h * frac
         newx = self.x - (neww - self.w) * 0.5

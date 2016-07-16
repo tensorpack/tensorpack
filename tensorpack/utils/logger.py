@@ -45,6 +45,7 @@ def get_time_str():
     return datetime.now().strftime('%m%d-%H%M%S')
 # logger file and directory:
 global LOG_FILE, LOG_DIR
+LOG_DIR = None
 def _set_file(path):
     if os.path.isfile(path):
         backup_name = path + '.' + get_time_str()
@@ -63,10 +64,11 @@ def set_logger_dir(dirname, action=None):
     """
     global LOG_FILE, LOG_DIR
     if os.path.isdir(dirname):
-        _logger.warn("""\
+        if not action:
+            _logger.warn("""\
 Directory {} exists! Please either backup/delete it, or use a new directory. \
 If you're resuming from a previous run you can choose to keep it.""".format(dirname))
-        _logger.info("Select Action: k (keep) / b (backup) / d (delete) / n (new):")
+            _logger.info("Select Action: k (keep) / b (backup) / d (delete) / n (new):")
         while not action:
             action = input().lower().strip()
         act = action
@@ -97,9 +99,11 @@ def disable_logger():
     for func in ['info', 'warning', 'error', 'critical', 'warn', 'exception', 'debug']:
         globals()[func] = lambda x: None
 
-def auto_set_dir(action=None):
+def auto_set_dir(action=None, overwrite_setting=False):
     """ set log directory to a subdir inside 'train_log', with the name being
     the main python file currently running"""
+    if LOG_DIR is not None and not overwrite_setting:
+        return
     mod = sys.modules['__main__']
     basename = os.path.basename(mod.__file__)
     set_logger_dir(

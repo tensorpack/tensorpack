@@ -145,9 +145,10 @@ class ILSVRC12(RNGDataFlow):
         self.synset = meta.get_synset_1000()
 
         if include_bb:
+            bbdir = os.path.join(dir, 'bbox') if not \
+                    isinstance(include_bb, six.string_types) else include_bb
             assert name == 'train', 'Bounding box only available for training'
-            self.bblist = ILSVRC12.get_training_bbox(
-                    os.path.join(dir, 'bbox'), self.imglist)
+            self.bblist = ILSVRC12.get_training_bbox(bbdir, self.imglist)
         self.include_bb = include_bb
 
     def size(self):
@@ -156,7 +157,7 @@ class ILSVRC12(RNGDataFlow):
     def get_data(self):
         """
         Produce original images of shape [h, w, 3], and label,
-        and optionally a bbox of [xmin, ymin, xmax, ymax] in [0, 1]
+        and optionally a bbox of [xmin, ymin, xmax, ymax]
         """
         idxs = np.arange(len(self.imglist))
         add_label_to_fname = (self.name != 'train' and self.dir_structure != 'original')
@@ -174,8 +175,8 @@ class ILSVRC12(RNGDataFlow):
                 im = np.expand_dims(im, 2).repeat(3,2)
             if self.include_bb:
                 bb = self.bblist[k]
-                if not bb:
-                    bb = [0, 0, 1, 1]
+                if bb is None:
+                    bb = [0, 0, im.shape[1]-1, im.shape[0]-1]
                 yield [im, label, bb]
             else:
                 yield [im, label]
@@ -191,10 +192,10 @@ class ILSVRC12(RNGDataFlow):
 
             box = root.find('object').find('bndbox').getchildren()
             box = map(lambda x: float(x.text), box)
-            box[0] /= size[0]
-            box[1] /= size[1]
-            box[2] /= size[0]
-            box[3] /= size[1]
+            #box[0] /= size[0]
+            #box[1] /= size[1]
+            #box[2] /= size[0]
+            #box[3] /= size[1]
             return np.asarray(box, dtype='float32')
 
         with timed_operation('Loading Bounding Boxes ...'):

@@ -8,7 +8,8 @@ from ...utils.rect import Rect
 from six.moves import range
 import numpy as np
 
-__all__ = ['RandomCrop', 'CenterCrop', 'FixedCrop', 'RandomCropRandomShape']
+__all__ = ['RandomCrop', 'CenterCrop', 'FixedCrop',
+        'RandomCropRandomShape', 'perturb_BB']
 
 class RandomCrop(ImageAugmentor):
     """ Randomly crop the image into a smaller one """

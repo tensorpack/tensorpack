@@ -25,6 +25,10 @@ class RandomApplyAug(ImageAugmentor):
         else:
             return (False, None)
 
+    def reset_state(self):
+        super(RandomApplyAug, self).reset_state()
+        self.aug.reset_state()
+
     def _augment(self, img, prm):
         if not prm[0]:
             return img
@@ -43,6 +47,11 @@ class RandomChooseAug(ImageAugmentor):
         else:
             prob = 1.0 / len(aug_lists)
             self._init(locals())
+
+    def reset_state(self):
+        super(RandomChooseAug, self).reset_state()
+        for a in self.aug_lists:
+            a.reset_state()
 
     def _get_augment_params(self, img):
         aug_idx = self.rng.choice(len(self.aug_lists), p=self.prob)

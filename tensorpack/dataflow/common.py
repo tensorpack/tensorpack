@@ -68,8 +68,15 @@ class BatchData(ProxyDataFlow):
                 tp = 'float32'
             else:
                 tp = dt.dtype
-            result.append(
-                np.array([x[k] for x in data_holder], dtype=tp))
+            try:
+                result.append(
+                    np.array([x[k] for x in data_holder], dtype=tp))
+            except KeyboardInterrupt:
+                raise
+            except:
+                logger.exception("Cannot batch data. Perhaps they are of inconsistent shape?")
+                import IPython as IP;
+                IP.embed(config=IP.terminal.ipapp.load_default_config())
         return result
 
 class FixedSizeData(ProxyDataFlow):

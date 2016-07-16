@@ -26,6 +26,7 @@ parser.add_argument('--index',
 parser.add_argument('-n', '--number', help='number of images to dump',
                     default=10, type=int)
 args = parser.parse_args()
+logger.auto_set_dir(action='d')
 
 get_config_func = imp.load_source('config_script', args.config).get_config
 config = get_config_func()
