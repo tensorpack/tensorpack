@@ -30,10 +30,10 @@ get_config_func = imp.load_source('config_script', args.config).get_config
 
 with tf.Graph().as_default() as G:
     train_config = get_config_func()
+    M = train_config.model
     config = PredictConfig(
-        inputs=train_config.inputs,
-        input_dataset_mapping=[train_config.inputs[0]],  # assume first component is image
-        get_model_func=train_config.get_model_func,
+        input_var_names=[M.get_input_vars_desc()[0].name],  # assume first component is image
+        model=M,
         session_init=sessinit.SaverRestore(args.model),
         output_var_names=['output:0']
     )

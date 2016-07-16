@@ -9,7 +9,7 @@ from tqdm import tqdm
 from six.moves import queue
 
 from tensorpack import *
-from tensorpack.predict import PredictConfig, get_predict_func, MultiProcessPredictWorker
+from tensorpack.predict import get_predict_func
 from tensorpack.utils.concurrency import *
 from tensorpack.utils.stat import  *
 from tensorpack.callbacks import *

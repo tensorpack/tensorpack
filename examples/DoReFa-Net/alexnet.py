@@ -104,7 +104,7 @@ def eval_on_ILSVRC12(model, sess_init, data_dir):
 def run_test(model, sess_init, inputs):
     pred_config = PredictConfig(
         model=model,
-        input_data_mapping=[0],
+        input_var_names=['input'],
         session_init=sess_init,
         session_config=get_default_sess_config(0.9),
         output_var_names=['prob:0']

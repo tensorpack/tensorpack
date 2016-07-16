@@ -42,6 +42,10 @@ class ModelDesc(object):
         g = tf.get_default_graph()
         return [g.get_tensor_by_name(name + ":0") for name in input_var_names]
 
+    def get_input_vars_desc(self):
+        """ return a list of `InputVar` instance"""
+        return self._get_input_vars()
+
     @abstractmethod
     def _get_input_vars(self):
         """:returns: a list of InputVar """
