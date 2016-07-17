@@ -16,7 +16,7 @@ from ..utils import logger
 from ..utils.timer import *
 from ..tfutils import *
 
-from .base import OfflinePredictor
+from .base import *
 
 try:
     if six.PY2:
@@ -116,34 +116,39 @@ class PredictorWorkerThread(threading.Thread):
             cnt += 1
         return batched, futures
 
-class MultiThreadAsyncPredictor(object):
+class MultiThreadAsyncPredictor(AsyncPredictorBase):
     """
-    An multithread predictor which run a list of predict func.
-    Use async interface, support multi-thread and multi-GPU.
+    An multithread online async predictor which run a list of OnlinePredictor.
+    It would do an extra batching internally.
     """
-    def __init__(self, funcs, batch_size=5):
-        """ :param funcs: a list of predict func"""
-        self.input_queue = queue.Queue(maxsize=len(funcs)*10)
+    def __init__(self, predictors, batch_size=5):
+        """ :param predictors: a list of OnlinePredictor"""
+        for k in predictors:
+            assert isinstance(k, OnlinePredictor), type(k)
+        self.input_queue = queue.Queue(maxsize=len(predictors)*10)
         self.threads = [
             PredictorWorkerThread(
                 self.input_queue, f, id, batch_size=batch_size)
-            for id, f in enumerate(funcs)]
+            for id, f in enumerate(predictors)]
 
-        # TODO XXX set logging here to avoid affecting TF logging
-        import tornado.options as options
-        options.parse_command_line(['--logging=debug'])
+        if six.PY2:
+            # TODO XXX set logging here to avoid affecting TF logging
+            import tornado.options as options
+            options.parse_command_line(['--logging=debug'])
 
-    def run(self):
+    def start(self):
         for t in self.threads:
             t.start()
 
-    def put_task(self, inputs, callback=None):
+    def run(self):      # temporarily for back-compatibility
+        self.start()
+
+    def put_task(self, dp, callback=None):
         """
-        :param inputs: a data point (list of component) matching input_names (not batched)
-        :param callback: a thread-safe callback to get called with the list of outputs
-        :returns: a Future of output."""
+        dp must be non-batched, i.e. single instance
+        """
         f = Future()
         if callback is not None:
             f.add_done_callback(callback)
-        self.input_queue.put((inputs, f))
+        self.input_queue.put((dp, f))
         return f

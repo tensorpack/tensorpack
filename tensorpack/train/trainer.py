@@ -30,6 +30,7 @@ class PredictorFactory(object):
         self.tower_built = False
 
     def get_predictor(self, input_names, output_names, tower):
+        """ Return an online predictor"""
         if not self.tower_built:
             self._build_predict_tower()
         tower = self.towers[tower % len(self.towers)]
@@ -204,7 +205,7 @@ class QueueInputTrainer(Trainer):
         self.main_loop()
 
     def run_step(self):
-        """ just run self.train_op"""
+        """ Simply run self.train_op"""
         self.sess.run(self.train_op)
         #run_metadata = tf.RunMetadata()
         #self.sess.run([self.train_op],

@@ -5,9 +5,10 @@
 
 from abc import abstractmethod, ABCMeta, abstractproperty
 import tensorflow as tf
+import six
 from ..tfutils import get_vars_by_names
 
-__all__ = ['OnlinePredictor', 'OfflinePredictor']
+__all__ = ['OnlinePredictor', 'OfflinePredictor', 'AsyncPredictorBase']
 
 
 class PredictorBase(object):
@@ -31,7 +32,27 @@ class PredictorBase(object):
         :param dp: input datapoint.  must have the same length as input_var_names
         :return: output as defined by the config
         """
-        pass
+
+class AsyncPredictorBase(PredictorBase):
+    @abstractmethod
+    def put_task(self, dp, callback=None):
+        """
+        :param dp: A data point (list of component) as inputs.
+            (It should be either batched or not batched depending on the predictor implementation)
+        :param callback: a thread-safe callback to get called with the list of
+        outputs of (inputs, outputs) pair
+        :return: a Future of outputs
+        """
+
+    @abstractmethod
+    def start(self):
+        """ Start workers """
+
+    def _do_call(self, dp):
+        assert six.PY3, "With Python2, sync methods not available for async predictor"
+        fut = self.put_task(dp)
+        # in Tornado, Future.result() doesn't wait
+        return fut.result()
 
 class OnlinePredictor(PredictorBase):
     def __init__(self, sess, input_vars, output_vars, return_input=False):
@@ -64,3 +85,19 @@ class OfflinePredictor(OnlinePredictor):
             config.session_init.init(sess)
             super(OfflinePredictor, self).__init__(
                     sess, input_vars, output_vars, config.return_input)
+
+
+class AsyncOnlinePredictor(PredictorBase):
+    def __init__(self, sess, enqueue_op, output_vars, return_input=False):
+        """
+        :param enqueue_op: an op to feed inputs with.
+        :param output_vars: a list of directly-runnable (no extra feeding requirements)
+            vars producing the outputs.
+        """
+        self.session = sess
+        self.enqop = enqueue_op
+        self.output_vars = output_vars
+        self.return_input = return_input
+
+    def put_task(self, dp, callback):
+        pass

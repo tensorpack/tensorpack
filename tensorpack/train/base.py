@@ -62,7 +62,7 @@ class Trainer(object):
             Can be overwritten by subclasses to exploit more
             parallelism among funcs.
         """
-        return [self.get_predict_func(input_name, output_names) for k in range(n)]
+        return [self.get_predict_func(input_names, output_names) for k in range(n)]
 
     def trigger_epoch(self):
         self._trigger_epoch()
