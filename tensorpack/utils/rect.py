@@ -102,5 +102,5 @@ if __name__ == '__main__':
     x = Rect(2, 1, 3, 3, allow_neg=True)
 
     img = np.random.rand(3,3)
-    print img
-    print x.roi_zeropad(img)
+    print(img)
+    print(x.roi_zeropad(img))

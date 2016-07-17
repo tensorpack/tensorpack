@@ -8,11 +8,14 @@ import time
 from six.moves import zip
 
 from .base import Trainer
+
 from ..dataflow.common import RepeatedData
-from ..utils import *
 from ..tfutils.summary import summary_moving_average
 from ..tfutils.modelutils import describe_model
+
+from ..utils import *
 from ..tfutils import *
+from ..predict import OnlinePredictor
 
 __all__ = ['SimpleTrainer', 'QueueInputTrainer']
 
@@ -56,11 +59,7 @@ class SimpleTrainer(Trainer):
         for v in input_vars:
             assert v in self.input_vars
         output_vars = get_vars_by_names(output_names)
-        def func(inputs):
-            assert len(inputs) == len(input_vars)
-            feed = dict(zip(input_vars, inputs))
-            return self.sess.run(output_vars, feed_dict=feed)
-        return func
+        return OnlinePredictor(self.sess, input_vars, output_vars)
 
 class EnqueueThread(threading.Thread):
     def __init__(self, trainer):
@@ -218,11 +217,7 @@ class QueueInputTrainer(Trainer):
         raw_input_vars = get_vars_by_names(input_names)
         output_names = ['towerp{}/'.format(tower) + n for n in output_names]
         output_vars = get_vars_by_names(output_names)
-        def func(inputs):
-            assert len(inputs) == len(raw_input_vars)
-            feed = dict(zip(raw_input_vars, inputs))
-            return self.sess.run(output_vars, feed_dict=feed)
-        return func
+        return OnlinePredictor(self.sess, raw_input_vars, output_vars)
 
     def get_predict_funcs(self, input_names, output_names, n):
         """ return n predicts functions evenly on each predict_tower"""
