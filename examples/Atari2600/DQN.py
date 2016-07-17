@@ -134,15 +134,12 @@ class Model(ModelDesc):
                 tf.clip_by_global_norm([grad], 5)[0][0]),
                 SummaryGradient()]
 
-    def predictor(self, state):
-        return self.predict_value.eval(feed_dict={'state:0': [state]})[0]
-
 def get_config():
     logger.auto_set_dir()
 
     M = Model()
     dataset_train = ExpReplay(
-            predictor=M.predictor,
+            predictor_io_names=(['state'], ['fct/output']),
             player=get_player(train=True),
             batch_size=BATCH_SIZE,
             memory_size=MEMORY_SIZE,
