@@ -39,8 +39,7 @@ class ModelDesc(object):
     def reuse_input_vars(self):
         """ Find and return already-defined input_vars in default graph"""
         input_var_names = [k.name for k in self._get_input_vars()]
-        g = tf.get_default_graph()
-        return [g.get_tensor_by_name(name + ":0") for name in input_var_names]
+        return get_vars_by_names(input_var_names)
 
     def get_input_vars_desc(self):
         """ return a list of `InputVar` instance"""
