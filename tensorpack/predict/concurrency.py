@@ -16,7 +16,7 @@ from ..utils import logger
 from ..utils.timer import *
 from ..tfutils import *
 
-from .common import *
+from .base import OfflinePredictor
 
 try:
     if six.PY2:
@@ -24,7 +24,7 @@ try:
     else:
         from concurrent.futures import Future
 except ImportError:
-    logger.warn("Cannot import Future in either tornado.concurrent or py3 standard lib. MultiThreadAsyncPredictor won't be available.")
+    logger.warn("Cannot import Future in tornado.concurrent. MultiThreadAsyncPredictor won't be available.")
     __all__ = ['MultiProcessPredictWorker', 'MultiProcessQueuePredictWorker']
 else:
     __all__ = ['MultiProcessPredictWorker', 'MultiProcessQueuePredictWorker',
@@ -32,41 +32,31 @@ else:
 
 class MultiProcessPredictWorker(multiprocessing.Process):
     """ Base class for predict worker that runs offline in multiprocess"""
-    def __init__(self, idx, gpuid, config):
+    def __init__(self, idx, config):
         """
         :param idx: index of the worker. the 0th worker will print log.
-        :param gpuid: absolute id of the GPU to be used. set to -1 to use CPU.
         :param config: a `PredictConfig`
         """
         super(MultiProcessPredictWorker, self).__init__()
         self.idx = idx
-        self.gpuid = gpuid
         self.config = config
 
     def _init_runtime(self):
-        if self.gpuid >= 0:
-            logger.info("Worker {} uses GPU {}".format(self.idx, self.gpuid))
-            os.environ['CUDA_VISIBLE_DEVICES'] = str(self.gpuid)
-        else:
-            logger.info("Worker {} uses CPU".format(self.idx))
-            os.environ['CUDA_VISIBLE_DEVICES'] = ''
-        G = tf.Graph()     # build a graph for each process, because they don't need to share anything
-        with G.as_default():
-            if self.idx != 0:
-                from tensorpack.models._common import disable_layer_logging
-                disable_layer_logging()
-            self.func = get_predict_func(self.config)
-            if self.idx == 0:
-                describe_model()
+        if self.idx != 0:
+            from tensorpack.models._common import disable_layer_logging
+            disable_layer_logging()
+        self.func = OfflinePredictor(self.config)
+        if self.idx == 0:
+            describe_model()
 
 class MultiProcessQueuePredictWorker(MultiProcessPredictWorker):
     """ An offline predictor worker that takes input and produces output by queue"""
-    def __init__(self, idx, gpuid, inqueue, outqueue, config):
+    def __init__(self, idx, inqueue, outqueue, config):
         """
         :param inqueue: input queue to get data point. elements are (task_id, dp)
         :param outqueue: output queue put result. elements are (task_id, output)
         """
-        super(MultiProcessQueuePredictWorker, self).__init__(idx, gpuid, config)
+        super(MultiProcessQueuePredictWorker, self).__init__(idx, config)
         self.inqueue = inqueue
         self.outqueue = outqueue
         assert isinstance(self.inqueue, multiprocessing.Queue)

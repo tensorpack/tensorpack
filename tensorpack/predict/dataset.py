@@ -3,7 +3,7 @@
 # File: dataset.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-from six.moves import range
+from six.moves import range, zip
 from tqdm import tqdm
 from abc import ABCMeta, abstractmethod
 import multiprocessing
@@ -14,7 +14,8 @@ from ..dataflow.dftools import dataflow_to_process_queue
 from ..utils.concurrency import ensure_proc_terminate, OrderedResultGatherProc, DIE
 
 from .concurrency import MultiProcessQueuePredictWorker
-from .common import *
+from .common import PredictConfig
+from .base import OfflinePredictor
 
 __all__ = ['DatasetPredictorBase', 'SimpleDatasetPredictor',
         'MultiProcessDatasetPredictor']
@@ -34,7 +35,7 @@ class DatasetPredictorBase(object):
 
     @abstractmethod
     def get_result(self):
-        """ Generate (inpupt, output) pair of output, for each input in dataset"""
+        """ A generator function, produce output for each input in dataset"""
         pass
 
     def get_all_result(self):
@@ -49,17 +50,14 @@ class SimpleDatasetPredictor(DatasetPredictorBase):
     """
     def __init__(self, config, dataset):
         super(SimpleDatasetPredictor, self).__init__(config, dataset)
-        self.func = get_predict_func(config)
+        self.predictor = OfflinePredictor(config)
 
     def get_result(self):
         """ A generator to produce prediction for each data"""
         with tqdm(total=self.dataset.size()) as pbar:
             for dp in self.dataset.get_data():
-                res = self.func(dp)
-                if self.config.return_input:
-                    yield (dp, res)
-                else:
-                    yield res
+                res = self.predictor(dp)
+                yield res
                 pbar.update()
 
 class MultiProcessDatasetPredictor(DatasetPredictorBase):
@@ -69,11 +67,11 @@ class MultiProcessDatasetPredictor(DatasetPredictorBase):
 
         :param nr_proc: number of processes to use
         :param use_gpu: use GPU or CPU.
-            If GPU, then nr_proc cannot be larger than the total number of GPUs available
-            in CUDA_VISIBLE_DEVICES or in the system.
+            If GPU, then nr_proc cannot be more than what's in CUDA_VISIBLE_DEVICES
         """
-        assert config.return_input == False, "return_input not supported for MultiProcessDatasetPredictor"
-        assert nr_proc > 1
+        if config.return_input:
+            logger.warn("Using the option `return_input` in MultiProcessDatasetPredictor might be slow")
+        assert nr_proc > 1, nr_proc
         super(MultiProcessDatasetPredictor, self).__init__(config, dataset)
 
         self.nr_proc = nr_proc
@@ -91,7 +89,7 @@ class MultiProcessDatasetPredictor(DatasetPredictorBase):
                 # TODO number of GPUs not checked
                 gpus = list(range(self.nr_gpu))
         else:
-            gpus = [-1] * self.nr_proc
+            gpus = [''] * self.nr_proc
         self.workers = [MultiProcessQueuePredictWorker(
                     i, gpus[i], self.inqueue, self.outqueue, self.config)
                         for i in range(self.nr_proc)]
@@ -100,7 +98,13 @@ class MultiProcessDatasetPredictor(DatasetPredictorBase):
 
         # setup all the procs
         self.inqueue_proc.start()
-        for p in self.workers: p.start()
+        for p, gpuid in zip(self.workers, gpus):
+            if gpuid == '':
+                logger.info("Worker {} uses CPU".format(p.idx))
+            else:
+                logger.info("Worker {} uses GPU {}".format(p.idx, gpuid))
+            with change_gpu(gpuid):
+                p.start()
         self.result_queue.start()
         ensure_proc_terminate(self.workers + [self.result_queue, self.inqueue_proc])
 

@@ -211,7 +211,7 @@ class QueueInputTrainer(Trainer):
     def get_predict_func(self, input_names, output_names, tower=0):
         """
         :param tower: return the kth predict_func
-        :returns: a predictor function
+        :returns: an `OnlinePredictor`
         """
         tower = self.predict_tower[tower % len(self.predict_tower)]
         raw_input_vars = get_vars_by_names(input_names)
@@ -220,7 +220,7 @@ class QueueInputTrainer(Trainer):
         return OnlinePredictor(self.sess, raw_input_vars, output_vars)
 
     def get_predict_funcs(self, input_names, output_names, n):
-        """ return n predicts functions evenly on each predict_tower"""
+        """ return n predictors evenly on each predict_tower"""
         return [self.get_predict_func(input_names, output_names, k)
                 for k in range(n)]
 

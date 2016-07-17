@@ -196,7 +196,7 @@ if __name__ == '__main__':
         cfg = PredictConfig(
                 model=Model(),
                 session_init=SaverRestore(args.load),
-                input_var_names=['state']
+                input_var_names=['state'],
                 output_var_names=['fct/output:0'])
         if args.task == 'play':
             play_model(cfg)
