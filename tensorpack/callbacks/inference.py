@@ -78,7 +78,7 @@ class InferenceRunner(Callback):
         for v in self.vcs:
             assert isinstance(v, Inferencer), str(v)
 
-    def _before_train(self):
+    def _setup_graph(self):
         self.input_vars = self.trainer.model.reuse_input_vars()
         self._find_output_tensors()
         input_names = [x.name for x in self.input_vars]

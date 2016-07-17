@@ -9,6 +9,9 @@ GLOBAL_STEP_VAR_NAME = 'global_step:0'
 MOVING_SUMMARY_VARS_KEY = 'MOVING_SUMMARY_VARIABLES'
 INPUT_VARS_KEY = 'INPUT_VARIABLES'
 
+import tensorflow as tf
+SUMMARY_BACKUP_KEYS = [tf.GraphKeys.SUMMARIES, MOVING_SUMMARY_VARS_KEY]
+
 # export all upper case variables
 all_local_names = locals().keys()
 __all__ = [x for x in all_local_names if x.isupper()]

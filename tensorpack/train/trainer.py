@@ -15,9 +15,41 @@ from ..tfutils.modelutils import describe_model
 
 from ..utils import *
 from ..tfutils import *
+from ..tfutils.summary import add_moving_summary
 from ..predict import OnlinePredictor
 
 __all__ = ['SimpleTrainer', 'QueueInputTrainer']
+
+class PredictorFactory(object):
+    """ Make predictors for a trainer"""
+    PREFIX = 'towerp'
+
+    def __init__(self, trainer, towers):
+        self.trainer = trainer
+        self.towers = towers
+        self.tower_built = False
+
+    def get_predictor(self, input_names, output_names, tower):
+        if not self.tower_built:
+            self._build_predict_tower()
+        tower = self.towers[tower % len(self.towers)]
+        raw_input_vars = get_vars_by_names(input_names)
+        output_names = ['{}{}/'.format(self.PREFIX, tower) + n for n in output_names]
+        output_vars = get_vars_by_names(output_names)
+        return OnlinePredictor(self.trainer.sess, raw_input_vars, output_vars)
+
+    def _build_predict_tower(self):
+        # build_predict_tower might get called anywhere, but 'towerp' should be the outermost name scope
+        with tf.name_scope(None), \
+                freeze_collection(SUMMARY_BACKUP_KEYS):
+            inputs = self.trainer.model.get_input_vars()
+            tf.get_variable_scope().reuse_variables()
+            for k in self.towers:
+                logger.info("Building graph for predictor tower {}...".format(k))
+                with tf.device('/gpu:{}'.format(k) if k >= 0 else '/cpu:0'), \
+                        tf.name_scope('{}{}'.format(self.PREFIX, k)):
+                    self.trainer.model.build_graph(inputs, False)
+        self.tower_built = True
 
 class SimpleTrainer(Trainer):
     def run_step(self):
@@ -30,7 +62,7 @@ class SimpleTrainer(Trainer):
         self.input_vars = model.get_input_vars()
         model.build_graph(self.input_vars, True)
         cost_var = model.get_cost()
-        tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, cost_var)
+        add_moving_summary(cost_var)
 
         grads = self.config.optimizer.compute_gradients(cost_var)
         grads = self.process_grads(grads)
@@ -55,11 +87,9 @@ class SimpleTrainer(Trainer):
             self._process_summary(summary_str)
 
     def get_predict_func(self, input_names, output_names):
-        input_vars = get_vars_by_names(input_names)
-        for v in input_vars:
-            assert v in self.input_vars
-        output_vars = get_vars_by_names(output_names)
-        return OnlinePredictor(self.sess, input_vars, output_vars)
+        if not hasattr(self, 'predictor_factory'):
+            self.predictor_factory = PredictorFactory(self, [0])
+        return self.predictor_factory.get_predictor(input_names, output_names, 0)
 
 class EnqueueThread(threading.Thread):
     def __init__(self, trainer):
@@ -102,8 +132,6 @@ class EnqueueThread(threading.Thread):
 class QueueInputTrainer(Trainer):
     """ Single GPU Trainer, takes input from a queue"""
 
-    SUMMARY_BACKUP_KEYS = [tf.GraphKeys.SUMMARIES, MOVING_SUMMARY_VARS_KEY]
-
     def __init__(self, config, input_queue=None, predict_tower=None):
         """
         :param config: a `TrainConfig` instance
@@ -120,10 +148,12 @@ class QueueInputTrainer(Trainer):
                     50, [x.dtype for x in self.input_vars], name='input_queue')
         else:
             self.input_queue = input_queue
+
         if predict_tower is None:
             # by default, use the first training gpu for prediction
             predict_tower = [0]
-        self.predict_tower = predict_tower
+        self.predictor_factory = PredictorFactory(self, predict_tower)
+
         self.dequed_inputs = None
 
     def _get_model_inputs(self):
@@ -135,15 +165,6 @@ class QueueInputTrainer(Trainer):
         for qv, v in zip(ret, self.input_vars):
             qv.set_shape(v.get_shape())
         return ret
-
-    def _build_predict_tower(self):
-        inputs = self.model.get_input_vars()
-        tf.get_variable_scope().reuse_variables()
-        for k in self.predict_tower:
-            logger.info("Building graph for predict tower p{}...".format(k))
-            with tf.device('/gpu:{}'.format(k) if k >= 0 else '/cpu:0'), \
-                    tf.name_scope('towerp{}'.format(k)):
-                self.model.build_graph(inputs, False)
 
     def _single_tower_grad(self):
         """ Get grad and cost for single-tower"""
@@ -158,13 +179,13 @@ class QueueInputTrainer(Trainer):
         cost_var = self.model.get_cost()
         grads = self.config.optimizer.compute_gradients(
                 cost_var, gate_gradients=0) # GATE_NONE
-        tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, cost_var)
+        add_moving_summary(cost_var)
         return grads
 
     def _build_enque_thread(self):
         """ create a thread that keeps filling the queue """
         self.input_th = EnqueueThread(self)
-        self.extra_threads_procs.append(self.input_th)
+        self._extra_threads_procs.append(self.input_th)
 
     def train(self):
         assert self.config.nr_tower == 1, \
@@ -175,9 +196,6 @@ class QueueInputTrainer(Trainer):
         grads = self._single_tower_grad()
         grads = self.process_grads(grads)
         describe_model()
-
-        with freeze_collection(self.SUMMARY_BACKUP_KEYS):
-            self._build_predict_tower()
 
         self.train_op = tf.group(
             self.config.optimizer.apply_gradients(grads, get_global_step_var()),
@@ -213,14 +231,5 @@ class QueueInputTrainer(Trainer):
         :param tower: return the kth predict_func
         :returns: an `OnlinePredictor`
         """
-        tower = self.predict_tower[tower % len(self.predict_tower)]
-        raw_input_vars = get_vars_by_names(input_names)
-        output_names = ['towerp{}/'.format(tower) + n for n in output_names]
-        output_vars = get_vars_by_names(output_names)
-        return OnlinePredictor(self.sess, raw_input_vars, output_vars)
-
-    def get_predict_funcs(self, input_names, output_names, n):
-        """ return n predictors evenly on each predict_tower"""
-        return [self.get_predict_func(input_names, output_names, k)
-                for k in range(n)]
+        return self.predictor_factory.get_predictor(input_names, output_names, tower)
 

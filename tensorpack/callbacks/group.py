@@ -113,12 +113,13 @@ class Callbacks(Callback):
         self.test_callback_context = TestCallbackContext()
 
     def _setup_graph(self):
-        for cb in self.cbs:
-            if isinstance(cb.type, TrainCallbackType):
-                cb.setup_graph(self.trainer)
-            else:
-                with self.test_callback_context.create_context(self.trainer):
+        with tf.name_scope(None):
+            for cb in self.cbs:
+                if isinstance(cb.type, TrainCallbackType):
                     cb.setup_graph(self.trainer)
+                else:
+                    with self.test_callback_context.create_context(self.trainer):
+                        cb.setup_graph(self.trainer)
 
     def _before_train(self):
         for cb in self.cbs:

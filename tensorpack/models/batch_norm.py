@@ -52,6 +52,7 @@ def BatchNorm(x, use_local_stat=True, decay=0.9, epsilon=1e-5):
     batch_mean = tf.identity(batch_mean, 'mean')
     batch_var = tf.identity(batch_var, 'variance')
 
+    # XXX hack....
     emaname = 'EMA'
     in_main_tower = not batch_mean.name.startswith('towerp')
     if in_main_tower:

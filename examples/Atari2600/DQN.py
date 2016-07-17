@@ -203,7 +203,5 @@ if __name__ == '__main__':
         config = get_config()
         if args.load:
             config.session_init = SaverRestore(args.load)
-        SimpleTrainer(config).train()
-        # TODO test if queue trainer works
-        #QueueInputTrainer(config).train()
+        QueueInputTrainer(config).train()
 

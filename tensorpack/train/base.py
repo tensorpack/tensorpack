@@ -39,7 +39,8 @@ class Trainer(object):
         assert isinstance(config, TrainConfig), type(config)
         self.config = config
         self.model = config.model
-        self.extra_threads_procs = config.extra_threads_procs
+        self.model.get_input_vars()  # ensure they are present
+        self._extra_threads_procs = config.extra_threads_procs
 
     @abstractmethod
     def train(self):
@@ -53,7 +54,7 @@ class Trainer(object):
 
     @abstractmethod
     def get_predict_func(self, input_names, output_names):
-        """ return a predictor function"""
+        """ return a online predictor"""
         pass
 
     def get_predict_funcs(self, input_names, output_names, n):
@@ -61,8 +62,7 @@ class Trainer(object):
             Can be overwritten by subclasses to exploit more
             parallelism among funcs.
         """
-        return [self.get_predict_func(input_name, output_names)
-                for k in range(n)]
+        return [self.get_predict_func(input_name, output_names) for k in range(n)]
 
     def trigger_epoch(self):
         self._trigger_epoch()
@@ -156,7 +156,7 @@ class Trainer(object):
 
         with self.sess.as_default():
             # avoid sigint get handled by other processes
-            start_proc_mask_signal(self.extra_threads_procs)
+            start_proc_mask_signal(self._extra_threads_procs)
 
     def process_grads(self, grads):
         g = []

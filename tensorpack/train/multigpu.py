@@ -59,7 +59,7 @@ class MultiGPUTrainer(QueueInputTrainer):
                     tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, cost_var)
                     tf.get_variable_scope().reuse_variables()
                     # avoid repeated summary from each device
-                    backup = backup_collection(self.SUMMARY_BACKUP_KEYS)
+                    backup = backup_collection(SUMMARY_BACKUP_KEYS)
         restore_collection(backup)
         return grad_list
 
@@ -77,9 +77,6 @@ class SyncMultiGPUTrainer(MultiGPUTrainer):
             self.config.optimizer.apply_gradients(grads, get_global_step_var()),
             summary_moving_average(), name='train_op')
         describe_model()
-
-        with freeze_collection(self.SUMMARY_BACKUP_KEYS):
-            self._build_predict_tower()
 
         # [debug]: do nothing in training
         #self.train_op = self.dequed_inputs[0][0] + self.dequed_inputs[1][0]
@@ -107,8 +104,6 @@ class AsyncMultiGPUTrainer(MultiGPUTrainer):
 
         self._start_async_threads(grad_list)
 
-        with freeze_collection(self.SUMMARY_BACKUP_KEYS):
-            self._build_predict_tower()
         self.main_loop()
 
     def _start_async_threads(self, grad_list):
