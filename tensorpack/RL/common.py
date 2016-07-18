@@ -8,7 +8,8 @@ import numpy as np
 from collections import deque
 from .envbase import ProxyPlayer
 
-__all__ = ['PreventStuckPlayer', 'LimitLengthPlayer', 'AutoRestartPlayer']
+__all__ = ['PreventStuckPlayer', 'LimitLengthPlayer', 'AutoRestartPlayer',
+        'MapPlayerState']
 
 class PreventStuckPlayer(ProxyPlayer):
     """ Prevent the player from getting stuck (repeating a no-op)
@@ -68,3 +69,11 @@ class AutoRestartPlayer(ProxyPlayer):
         if isOver:
             self.player.restart_episode()
         return r, isOver
+
+class MapPlayerState(ProxyPlayer):
+    def __init__(self, player, func):
+        super(MapPlayerState, self).__init__(player)
+        self.func = func
+
+    def current_state(self):
+        return self.func(self.player.current_state())
