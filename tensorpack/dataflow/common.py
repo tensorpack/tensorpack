@@ -318,22 +318,28 @@ class LocallyShuffleData(ProxyDataFlow, RNGDataFlow):
     def reset_state(self):
         ProxyDataFlow.reset_state(self)
         RNGDataFlow.reset_state(self)
-        self.ds_wrap = RepeatedData(self.ds, -1)
-        self.ds_itr = self.ds_wrap.get_data()
+        self.ds_itr = self.ds.get_data()
         self.current_cnt = 0
 
     def get_data(self):
         for _ in range(self.q.maxlen - len(self.q)):
-            self.q.append(next(self.ds_itr))
-        cnt = 0
+            try:
+                self.q.append(next(self.ds_itr))
+            except StopIteration:
+                logger.error("LocallyShuffleData: cache_size is larger than the size of ds!")
         while True:
             self.rng.shuffle(self.q)
             for _ in range(self.q.maxlen):
                 yield self.q.popleft()
-                self.q.append(next(self.ds_itr))
-                cnt += 1
-                if cnt == self.size():
+                try:
+                    self.q.append(next(self.ds_itr))
+                except StopIteration:
+                    # produce the rest and return
+                    self.rng.shuffle(self.q)
+                    for v in self.q:
+                        yield v
                     return
+
 
 
 def SelectComponent(ds, idxs):
