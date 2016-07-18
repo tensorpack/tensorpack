@@ -92,7 +92,8 @@ class AsyncMultiGPUTrainer(MultiGPUTrainer):
         # sync have consistent effective learning rate
         def scale(grads):
             with tf.name_scope('async_scale_grad'):
-                return [(grad / self.config.nr_tower, var) for grad, var in grads]
+                return [(grad / self.config.nr_tower if grad is not None else None, var)
+                            for grad, var in grads]
         grad_list = map(scale, grad_list)
         grad_list = [self.process_grads(g) for g in grad_list]
 

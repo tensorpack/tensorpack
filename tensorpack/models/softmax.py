@@ -15,7 +15,7 @@ def SoftMax(x, use_temperature=False, temperature_init=1.0):
     :param x: a 2D tensor
     """
     if use_temperature:
-        t = tf.get_variable('temp', [1],
+        t = tf.get_variable('invtemp', [],
                 initializer=tf.constant_initializer(1.0 / float(temperature_init)))
         x = x * t
     return tf.nn.softmax(x, name='output')
