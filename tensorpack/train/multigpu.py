@@ -115,7 +115,7 @@ class AsyncMultiGPUTrainer(MultiGPUTrainer):
             train_op = self.config.optimizer.apply_gradients(grad_list[k])
             def f(op=train_op): # avoid late-binding
                 self.sess.run([op])
-                self.async_step_counter.next()
+                next(self.async_step_counter)
             th = LoopThread(f)
             th.pause()
             th.start()
@@ -127,7 +127,7 @@ class AsyncMultiGPUTrainer(MultiGPUTrainer):
             self.async_running = True
             for th in self.training_threads: # resume all threads
                 th.resume()
-        self.async_step_counter.next()
+        next(self.async_step_counter)
         super(AsyncMultiGPUTrainer, self).run_step()
 
     def _trigger_epoch(self):

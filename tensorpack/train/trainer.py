@@ -202,6 +202,9 @@ class QueueInputTrainer(Trainer):
             self.config.optimizer.apply_gradients(grads, get_global_step_var()),
             summary_moving_average(), name='train_op')
 
+        # skip training
+        #self.train_op = tf.group(*self.dequed_inputs)
+
         self.main_loop()
 
     def run_step(self):
@@ -218,8 +221,6 @@ class QueueInputTrainer(Trainer):
         #trace_file.write(trace.generate_chrome_trace_format())
         #import sys; sys.exit()
 
-        #self.sess.run([self.dequed_inputs[1]])
-
     def _trigger_epoch(self):
         # need to run summary_op every epoch
         # note that summary_op will take a data from the queue
@@ -234,3 +235,5 @@ class QueueInputTrainer(Trainer):
         """
         return self.predictor_factory.get_predictor(input_names, output_names, tower)
 
+    def get_predict_funcs(self, input_names, output_names, n):
+        return [self.get_predict_func(input_names, output_names, k) for k in range(n)]

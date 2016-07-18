@@ -39,33 +39,30 @@ class SimulatorProcess(multiprocessing.Process):
         self.c2s = pipe_c2s
         self.s2c = pipe_s2c
 
+        self.identity = u'simulator-{}'.format(self.idx).encode('utf-8')
+
     def run(self):
         player = self._build_player()
         context = zmq.Context()
-        c2s_socket = context.socket(zmq.DEALER)
-        c2s_socket.identity = 'simulator-{}'.format(self.idx)
+        c2s_socket = context.socket(zmq.PUSH)
+        c2s_socket.setsockopt(zmq.IDENTITY, self.identity)
         c2s_socket.set_hwm(2)
         c2s_socket.connect(self.c2s)
 
         s2c_socket = context.socket(zmq.DEALER)
-        s2c_socket.identity = 'simulator-{}'.format(self.idx)
+        s2c_socket.setsockopt(zmq.IDENTITY, self.identity)
         #s2c_socket.set_hwm(5)
         s2c_socket.connect(self.s2c)
 
-        #cnt = 0
+        state = player.current_state()
+        reward, isOver = 0, False
         while True:
-            state = player.current_state()
-            c2s_socket.send(dumps(state), copy=False)
-            #with total_timer('client recv_action'):
-            data = s2c_socket.recv(copy=False)
-            action = loads(data)
+            c2s_socket.send(dumps(
+                (self.identity, state, reward, isOver)),
+                copy=False)
+            action = loads(s2c_socket.recv(copy=False))
             reward, isOver = player.action(action)
-            c2s_socket.send(dumps((reward, isOver)), copy=False)
-            #with total_timer('client recv_ack'):
-            ACK = s2c_socket.recv(copy=False)
-            #cnt += 1
-            #if cnt % 100 == 0:
-                #print_total_timer()
+            state = player.current_state()
 
     @abstractmethod
     def _build_player(self):
@@ -80,7 +77,6 @@ class SimulatorMaster(threading.Thread):
 
     class ClientState(object):
         def __init__(self):
-            self.protocol_state = 0 # state in communication
             self.memory = []    # list of Experience
 
     class Experience(object):
@@ -95,21 +91,25 @@ class SimulatorMaster(threading.Thread):
 
     def __init__(self, pipe_c2s, pipe_s2c):
         super(SimulatorMaster, self).__init__()
+        self.daemon = True
+
         self.context = zmq.Context()
 
-        self.c2s_socket = self.context.socket(zmq.ROUTER)
+        self.c2s_socket = self.context.socket(zmq.PULL)
         self.c2s_socket.bind(pipe_c2s)
-
+        self.c2s_socket.set_hwm(10)
         self.s2c_socket = self.context.socket(zmq.ROUTER)
         self.s2c_socket.bind(pipe_s2c)
-
-        self.socket_lock = threading.Lock()
-        self.daemon = True
+        self.s2c_socket.set_hwm(10)
 
         # queueing messages to client
         self.send_queue = queue.Queue(maxsize=100)
-        self.send_thread = LoopThread(lambda:
-                self.s2c_socket.send_multipart(self.send_queue.get()))
+
+        def f():
+            msg = self.send_queue.get()
+            # slow
+            self.s2c_socket.send_multipart(msg, copy=False)
+        self.send_thread = LoopThread(f)
         self.send_thread.daemon = True
         self.send_thread.start()
 
@@ -123,21 +123,25 @@ class SimulatorMaster(threading.Thread):
 
     def run(self):
         self.clients = defaultdict(self.ClientState)
+        #cnt = 0
         while True:
-            ident, msg = self.c2s_socket.recv_multipart()
+            #cnt += 1
+            #if cnt % 3000 == 0:
+                #print_total_timer()
+            msg = loads(self.c2s_socket.recv(copy=False).bytes)
+            ident, state, reward, isOver = msg
             client = self.clients[ident]
-            client.protocol_state = 1 - client.protocol_state   # first flip the state
-            if not client.protocol_state == 0:   # state-action
-                state = loads(msg)
-                self._on_state(state, ident)
-            else:       # reward-response
-                reward, isOver = loads(msg)
+
+            # check if reward&isOver is valid
+            # in the first message, only state is valid
+            if len(client.memory) > 0:
                 client.memory[-1].reward = reward
                 if isOver:
                     self._on_episode_over(ident)
                 else:
                     self._on_datapoint(ident)
-                self.send_queue.put([ident, 'Thanks'])  # just an ACK
+            # feed state and return action
+            self._on_state(state, ident)
 
     @abstractmethod
     def _on_state(self, state, ident):

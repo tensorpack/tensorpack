@@ -82,16 +82,16 @@ class PredictorWorkerThread(threading.Thread):
         self.id = id
 
     def run(self):
-        #self.xxx = None
         while True:
             batched, futures = self.fetch_batch()
             outputs = self.func(batched)
-            #print "batched size: ", len(batched[0]), "queuesize: ", self.queue.qsize()
+            #print "Worker {} batched {} Queue {}".format(
+                    #self.id, len(futures), self.queue.qsize())
             # debug, for speed testing
-            #if self.xxx is None:
-                #self.xxx = outputs = self.func([batched])
+            #if not hasattr(self, 'xxx'):
+                #self.xxx = outputs = self.func(batched)
             #else:
-                #outputs = [[self.xxx[0][0]] * len(batched), [self.xxx[1][0]] * len(batched)]
+                #outputs = [[self.xxx[0][0]] * len(batched[0]), [self.xxx[1][0]] * len(batched[0])]
 
             for idx, f in enumerate(futures):
                 f.set_result([k[idx] for k in outputs])
@@ -125,7 +125,9 @@ class MultiThreadAsyncPredictor(AsyncPredictorBase):
         """ :param predictors: a list of OnlinePredictor"""
         for k in predictors:
             assert isinstance(k, OnlinePredictor), type(k)
-        self.input_queue = queue.Queue(maxsize=len(predictors)*10)
+            # TODO use predictors.return_input here
+            assert k.return_input == False
+        self.input_queue = queue.Queue(maxsize=len(predictors)*100)
         self.threads = [
             PredictorWorkerThread(
                 self.input_queue, f, id, batch_size=batch_size)

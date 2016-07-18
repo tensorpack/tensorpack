@@ -39,9 +39,9 @@ class AsyncPredictorBase(PredictorBase):
         """
         :param dp: A data point (list of component) as inputs.
             (It should be either batched or not batched depending on the predictor implementation)
-        :param callback: a thread-safe callback to get called with the list of
-        outputs of (inputs, outputs) pair
-        :return: a Future of outputs
+        :param callback: a thread-safe callback to get called with
+            either outputs or (inputs, outputs)
+        :return: a Future of results
         """
 
     @abstractmethod

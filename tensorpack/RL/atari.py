@@ -65,18 +65,18 @@ class AtariPlayer(RLEnvironment):
             self.ale = ALEInterface()
             self.rng = get_rng(self)
 
-            self.ale.setInt("random_seed", self.rng.randint(0, 10000))
-            self.ale.setBool("showinfo", False)
+            self.ale.setInt(b"random_seed", self.rng.randint(0, 10000))
+            self.ale.setBool(b"showinfo", False)
 
-            self.ale.setInt("frame_skip", 1)
-            self.ale.setBool('color_averaging', False)
+            self.ale.setInt(b"frame_skip", 1)
+            self.ale.setBool(b'color_averaging', False)
             # manual.pdf suggests otherwise.
-            self.ale.setFloat('repeat_action_probability', 0.0)
+            self.ale.setFloat(b'repeat_action_probability', 0.0)
 
             # viz setup
             if isinstance(viz, six.string_types):
                 assert os.path.isdir(viz), viz
-                self.ale.setString('record_screen_dir', viz)
+                self.ale.setString(b'record_screen_dir', viz)
                 viz = 0
             if isinstance(viz, int):
                 viz = float(viz)
@@ -86,7 +86,7 @@ class AtariPlayer(RLEnvironment):
                 cv2.startWindowThread()
                 cv2.namedWindow(self.windowname)
 
-            self.ale.loadROM(rom_file)
+            self.ale.loadROM(rom_file.encode('utf-8'))
         self.width, self.height = self.ale.getScreenDims()
         self.actions = self.ale.getMinimalActionSet()
 
@@ -184,7 +184,7 @@ if __name__ == '__main__':
             cnt += 1
             if cnt == 5000:
                 break
-        print time.time() - start
+        print(time.time() - start)
 
     if len(sys.argv) == 3 and sys.argv[2] == 'benchmark':
         import threading, multiprocessing
