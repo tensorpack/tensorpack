@@ -29,15 +29,15 @@ class StoppableThread(threading.Thread):
     """
     def __init__(self):
         super(StoppableThread, self).__init__()
-        self._stop = threading.Event()
+        self._stop_evt = threading.Event()
 
     def stop(self):
         """ stop the thread"""
-        self._stop.set()
+        self._stop_evt.set()
 
     def stopped(self):
         """ check whether the thread is stopped or not"""
-        return self._stop.isSet()
+        return self._stop_evt.isSet()
 
     def queue_put_stoppable(self, q, obj):
         """ put obj to queue, but will give up if the thread is stopped"""
