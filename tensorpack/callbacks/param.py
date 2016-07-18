@@ -142,9 +142,9 @@ class HumanHyperParamSetter(HyperParamSetter):
             ret = dic[self.param.readable_name]
             return ret
         except:
-            logger.warn(
-                "Failed to find {} in {}".format(
-                    self.param.readable_name, self.file_name))
+            #logger.warn(
+                #"Cannot find {} in {}".format(
+                    #self.param.readable_name, self.file_name))
             return None
 
 class ScheduledHyperParamSetter(HyperParamSetter):

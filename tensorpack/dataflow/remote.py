@@ -3,6 +3,7 @@
 # File: remote.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
+from ..utils import logger
 try:
     import zmq
 except ImportError:
