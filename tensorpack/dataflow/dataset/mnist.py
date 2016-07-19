@@ -9,7 +9,7 @@ import random
 import numpy
 from six.moves import urllib, range
 
-from ...utils import logger, get_dataset_dir
+from ...utils import logger, get_dataset_path
 from ...utils.fs import download
 from ..base import RNGDataFlow
 
@@ -103,7 +103,7 @@ class Mnist(RNGDataFlow):
             train_or_test: string either 'train' or 'test'
         """
         if dir is None:
-            dir = get_dataset_dir('mnist_data')
+            dir = get_dataset_path('mnist_data')
         assert train_or_test in ['train', 'test']
         self.train_or_test = train_or_test
         self.shuffle = shuffle

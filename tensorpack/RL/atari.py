@@ -10,7 +10,7 @@ from collections import deque
 import threading
 import six
 from six.moves import range
-from ..utils import get_rng, logger, memoized, get_dataset_dir
+from ..utils import get_rng, logger, memoized, get_dataset_path
 from ..utils.stat import StatCounter
 
 from .envbase import RLEnvironment, DiscreteActionSpace
@@ -51,7 +51,7 @@ class AtariPlayer(RLEnvironment):
         """
         super(AtariPlayer, self).__init__()
         if not os.path.isfile(rom_file) and '/' not in rom_file:
-            rom_file = get_dataset_dir('atari_rom', rom_file)
+            rom_file = get_dataset_path('atari_rom', rom_file)
         assert os.path.isfile(rom_file), \
                 "rom {} not found. Please download at {}".format(rom_file, ROM_URL)
 

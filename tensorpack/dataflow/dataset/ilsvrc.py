@@ -9,7 +9,7 @@ import numpy as np
 from six.moves import range
 import xml.etree.ElementTree as ET
 
-from ...utils import logger, get_rng, get_dataset_dir, memoized
+from ...utils import logger, get_rng, get_dataset_path, memoized
 from ...utils.loadcaffe import get_caffe_pb
 from ...utils.fs import mkdir_p, download
 from ...utils.timer import timed_operation
@@ -28,7 +28,7 @@ class ILSVRCMeta(object):
     """
     def __init__(self, dir=None):
         if dir is None:
-            dir = get_dataset_dir('ilsvrc_metadata')
+            dir = get_dataset_path('ilsvrc_metadata')
         self.dir = dir
         mkdir_p(self.dir)
         self.caffepb = get_caffe_pb()

@@ -8,7 +8,7 @@ import random
 import numpy as np
 from six.moves import range
 
-from ...utils import logger, get_rng, get_dataset_dir
+from ...utils import logger, get_rng, get_dataset_path
 from ..base import RNGDataFlow
 
 try:
@@ -38,7 +38,7 @@ class SVHNDigit(RNGDataFlow):
             self.X, self.Y = SVHNDigit.Cache[name]
             return
         if data_dir is None:
-            data_dir = get_dataset_dir('svhn_data')
+            data_dir = get_dataset_path('svhn_data')
         assert name in ['train', 'test', 'extra'], name
         filename = os.path.join(data_dir, name + '_32x32.mat')
         assert os.path.isfile(filename), \

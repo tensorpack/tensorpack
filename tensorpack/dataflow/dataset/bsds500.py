@@ -7,7 +7,7 @@ import os, glob
 import cv2
 import numpy as np
 
-from ...utils import logger, get_rng, get_dataset_dir
+from ...utils import logger, get_rng, get_dataset_path
 from ...utils.fs import download
 from ..base import RNGDataFlow
 
@@ -40,7 +40,7 @@ class BSDS500(RNGDataFlow):
         """
         # check and download data
         if data_dir is None:
-            data_dir = get_dataset_dir('bsds500_data')
+            data_dir = get_dataset_path('bsds500_data')
         if not os.path.isdir(os.path.join(data_dir, 'BSR')):
             download(DATA_URL, data_dir)
             filename = DATA_URL.split('/')[-1]

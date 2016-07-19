@@ -16,7 +16,7 @@ from . import logger
 __all__ = ['change_env',
         'map_arg',
         'get_rng', 'memoized',
-        'get_dataset_dir',
+        'get_dataset_path',
         'get_tqdm_kwargs'
         ]
 
@@ -95,7 +95,7 @@ def get_rng(obj=None):
             int(datetime.now().strftime("%Y%m%d%H%M%S%f"))) % 4294967295
     return np.random.RandomState(seed)
 
-def get_dataset_dir(*args):
+def get_dataset_path(*args):
     d = os.environ.get('TENSORPACK_DATASET', None)
     if d is None:
         d = os.path.abspath(os.path.join(

@@ -11,7 +11,7 @@ import os
 
 from six.moves import zip
 
-from .utils import change_env, get_dataset_dir
+from .utils import change_env, get_dataset_path
 from .fs import download
 from . import logger
 
@@ -74,7 +74,7 @@ def load_caffe(model_desc, model_file):
     return param_dict
 
 def get_caffe_pb():
-    dir = get_dataset_dir('caffe')
+    dir = get_dataset_path('caffe')
     caffe_pb_file = os.path.join(dir, 'caffe_pb2.py')
     if not os.path.isfile(caffe_pb_file):
         proto_path = download(CAFFE_PROTO_URL, dir)
