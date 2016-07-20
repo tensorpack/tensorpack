@@ -6,15 +6,6 @@ import tensorflow as tf
 import numpy as np
 from ..utils import logger
 
-def one_hot(y, num_labels):
-    """
-    :param y: prediction. an Nx1 int tensor.
-    :param num_labels: an int. number of output classes
-    :returns: an NxC onehot matrix.
-    """
-    logger.warn("symbf.one_hot is deprecated in favor of more general tf.one_hot")
-    return tf.one_hot(y, num_labels, 1.0, 0.0, name='one_hot')
-
 def prediction_incorrect(logits, label, topk=1):
     """
     :param logits: NxC

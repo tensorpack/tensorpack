@@ -11,8 +11,6 @@ import collections
 import numpy as np
 import six
 
-from . import logger
-
 __all__ = ['change_env',
         'map_arg',
         'get_rng', 'memoized',
@@ -50,28 +48,39 @@ class memoized(object):
     (not reevaluated).
     '''
     def __init__(self, func):
-       self.func = func
-       self.cache = {}
+        self.func = func
+        self.cache = {}
 
     def __call__(self, *args):
-       if not isinstance(args, collections.Hashable):
-          # uncacheable. a list, for instance.
-          # better to not cache than blow up.
-          return self.func(*args)
-       if args in self.cache:
-          return self.cache[args]
-       else:
-          value = self.func(*args)
-          self.cache[args] = value
-          return value
+        if not isinstance(args, collections.Hashable):
+            # uncacheable. a list, for instance.
+            # better to not cache than blow up.
+            return self.func(*args)
+        if args in self.cache:
+           return self.cache[args]
+        else:
+            value = self.func(*args)
+            self.cache[args] = value
+            return value
 
     def __repr__(self):
-       '''Return the function's docstring.'''
-       return self.func.__doc__
+        '''Return the function's docstring.'''
+        return self.func.__doc__
 
     def __get__(self, obj, objtype):
-       '''Support instance methods.'''
-       return functools.partial(self.__call__, obj)
+        '''Support instance methods.'''
+        return functools.partial(self.__call__, obj)
+
+
+#_GLOBAL_MEMOIZED_CACHE = dict()
+#def global_memoized(func):
+    #""" Make sure that the same `memoized` object is returned on different
+        #calls to global_memoized(func)
+    #"""
+    #ret = _GLOBAL_MEMOIZED_CACHE.get(func, None)
+    #if ret is None:
+        #ret = _GLOBAL_MEMOIZED_CACHE[func] = memoized(func)
+    #return ret
 
 def map_arg(**maps):
     """
@@ -96,6 +105,7 @@ def get_rng(obj=None):
     return np.random.RandomState(seed)
 
 def get_dataset_path(*args):
+    from . import logger
     d = os.environ.get('TENSORPACK_DATASET', None)
     if d is None:
         d = os.path.abspath(os.path.join(

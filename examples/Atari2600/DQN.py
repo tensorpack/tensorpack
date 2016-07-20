@@ -92,7 +92,7 @@ class Model(ModelDesc):
     def _build_graph(self, inputs, is_training):
         state, action, reward, next_state, isOver = inputs
         self.predict_value = self._get_DQN_prediction(state, is_training)
-        action_onehot = tf.one_hot(action, NUM_ACTIONS, 1.0, 0.0)
+        action_onehot = tf.one_hot(action, NUM_ACTIONS)
         pred_action_value = tf.reduce_sum(self.predict_value * action_onehot, 1)    #N,
         max_pred_reward = tf.reduce_mean(tf.reduce_max(
             self.predict_value, 1), name='predict_reward')

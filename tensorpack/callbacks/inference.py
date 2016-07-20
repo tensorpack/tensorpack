@@ -6,6 +6,7 @@ import tensorflow as tf
 import numpy as np
 from tqdm import tqdm
 from abc import ABCMeta, abstractmethod
+import six
 from six.moves import zip, map
 
 from ..dataflow import DataFlow
@@ -43,8 +44,9 @@ class Inferencer(object):
     def after_inference(self):
         """
         Called after a round of inference ends.
+        Returns a dict of statistics.
         """
-        self._after_inference()
+        return self._after_inference()
 
     def _after_inference(self):
         pass
@@ -84,8 +86,6 @@ class InferenceRunner(Callback):
         input_names = [x.name for x in self.input_vars]
         self.pred_func = self.trainer.get_predict_func(
                 input_names, self.output_tensors)
-        for v in self.vcs:
-            v.trainer = self.trainer
 
     def _find_output_tensors(self):
         self.output_tensors = []    # list of names
@@ -118,7 +118,14 @@ class InferenceRunner(Callback):
                 pbar.update()
 
         for vc in self.vcs:
-            vc.after_inference()
+            ret = vc.after_inference()
+            for k, v in six.iteritems(ret):
+                try:
+                    v = float(v)
+                except:
+                    logger.warn("{} returns a non-scalar statistics!".format(type(vc).__name__))
+                    continue
+                self.trainer.write_scalar_summary(k, v)
 
 class ScalarStats(Inferencer):
     """
@@ -150,10 +157,12 @@ class ScalarStats(Inferencer):
         self.stats = np.mean(self.stats, axis=0)
         assert len(self.stats) == len(self.names)
 
+        ret = {}
         for stat, name in zip(self.stats, self.names):
             opname, _ = get_op_var_name(name)
             name = '{}_{}'.format(self.prefix, opname) if self.prefix else opname
-            self.trainer.write_scalar_summary(name, stat)
+            ret[name] = stat
+        return ret
 
 class ClassificationError(Inferencer):
     """
@@ -187,7 +196,7 @@ class ClassificationError(Inferencer):
         self.err_stat.feed(wrong, batch_size)
 
     def _after_inference(self):
-        self.trainer.write_scalar_summary(self.summary_name, self.err_stat.ratio)
+        return {self.summary_name: self.err_stat.ratio}
 
 class BinaryClassificationStats(Inferencer):
     """ Compute precision/recall in binary classification, given the
@@ -214,5 +223,5 @@ class BinaryClassificationStats(Inferencer):
         self.stat.feed(pred, label)
 
     def _after_inference(self):
-        self.trainer.write_scalar_summary(self.prefix + '_precision', self.stat.precision)
-        self.trainer.write_scalar_summary(self.prefix + '_recall', self.stat.recall)
+        return {self.prefix + '_precision': self.stat.precision,
+                self.prefix + '_recall': self.stat.recall}
