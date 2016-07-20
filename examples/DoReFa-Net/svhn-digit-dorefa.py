@@ -11,78 +11,34 @@ import os
 from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
+from dorefa import get_dorefa
 
 """
-Code for the paper:
+This is a tensorpack script for the SVHN results in paper:
 DoReFa-Net: Training Low Bitwidth Convolutional Neural Networks with Low Bitwidth Gradients
 http://arxiv.org/abs/1606.06160
 
 The original experiements are performed on a proprietary framework.
-This is our attempt to reproduce it on tensorpack.
+This is our attempt to reproduce it on tensorpack/tensorflow.
 
-You'll need tcmalloc to avoid large memory consumption: https://github.com/tensorflow/tensorflow/issues/2942
+Accuracy:
+    With (W,A,G)=(1,1,4), can reach 3.1~3.2% error after 150 epochs.
+    With the GaussianDeform augmentor, it will reach 2.8~2.9%
+    (we are not using this augmentor in the paper).
 
-This config, with (W,A,G)=(1,1,4), can reach 3.1~3.2% error after 150 epochs.
-With the GaussianDeform augmentor, it will reach 2.8~2.9%
-(we are not using this augmentor in the paper).
+    With (W,A,G)=(1,2,4), error is 3.0~3.1%.
+    With (W,A,G)=(32,32,32), error is about 2.9%.
 
-with (W,A,G)=(1,2,4), error is 3.0~3.1%.
-with (W,A,G)=(32,32,32), error is about 2.9%.
+Speed:
+    About 18 iteration/s on 1 Tesla M40. (4721 iterations / epoch)
+
+To Run:
+    ./svhn-digit-dorefa.py --dorefa 1,2,4
 """
 
 BITW = 1
 BITA = 2
 BITG = 4
-
-GRAD_DEFINED = False
-def get_dorefa(bitW, bitA, bitG):
-    """ return the three quantization functions fw, fa, fg, for weights,
-    activations and gradients respectively"""
-    G = tf.get_default_graph()
-
-    def quantize(x, k):
-        n = float(2**k-1)
-        with G.gradient_override_map({"Floor": "Identity"}):
-            return tf.round(x * n) / n
-
-    def fw(x):
-        if bitW == 32:
-            return x
-        if bitW == 1:   # BWN
-            with G.gradient_override_map({"Sign": "Identity"}):
-                E = tf.stop_gradient(tf.reduce_mean(tf.abs(x)))
-                return tf.sign(x / E) * E
-        x = tf.tanh(x)
-        x = x / tf.reduce_max(tf.abs(x)) * 0.5 + 0.5
-        return 2 * quantize(x, bitW) - 1
-
-    def fa(x):
-        if bitA == 32:
-            return x
-        return quantize(x, bitA)
-
-    global GRAD_DEFINED
-    if not GRAD_DEFINED:
-        @tf.RegisterGradient("FGGrad")
-        def grad_fg(op, x):
-            rank = x.get_shape().ndims
-            assert rank is not None
-            maxx = tf.reduce_max(tf.abs(x), list(range(1,rank)), keep_dims=True)
-            x = x / maxx
-            n = float(2**bitG-1)
-            x = x * 0.5 + 0.5 + tf.random_uniform(
-                    tf.shape(x), minval=-0.5/n, maxval=0.5/n)
-            x = tf.clip_by_value(x, 0.0, 1.0)
-            x = quantize(x, bitG) - 0.5
-            return x * maxx * 2
-    GRAD_DEFINED = True
-
-    def fg(x):
-        if bitG == 32:
-            return x
-        with G.gradient_override_map({"Identity": "FGGrad"}):
-            return tf.identity(x)
-    return fw, fa, fg
 
 class Model(ModelDesc):
     def _get_input_vars(self):
