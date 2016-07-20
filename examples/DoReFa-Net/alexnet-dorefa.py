@@ -9,7 +9,7 @@ import argparse
 import numpy as np
 import multiprocessing
 import msgpack
-import os
+import os, sys
 
 from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
@@ -36,7 +36,7 @@ Accuracy:
 Speed:
     About 3.5 iteration/s on 4 Tesla M40. (Each epoch is set to 10000 iterations)
 
-To Run:
+To Train:
     ./alexnet-dorefa.py --dorefa 1,2,6 --data PATH --gpu 0,1,2,3
 
     PATH should look like:
@@ -53,6 +53,9 @@ To Run:
     And better to have:
         Fast disk random access (Not necessarily SSD. I used a RAID of HDD, but not sure if plain HDD is enough)
         More than 12 CPU cores (for data processing)
+
+To Run Pretrained Model:
+    ./alexnet-dorefa.py --load pretrained126.tfmodel --run a.jpg --dorefa 1,2,6
 """
 
 BITW = 1
@@ -238,6 +241,46 @@ def get_config():
         max_epoch=100,
     )
 
+def run_image(model, sess_init, inputs):
+    pred_config = PredictConfig(
+        model=model,
+        session_init=sess_init,
+        session_config=get_default_sess_config(0.9),
+        input_var_names=['input'],
+        output_var_names=['output']
+    )
+    predict_func = get_predict_func(pred_config)
+    meta = dataset.ILSVRCMeta()
+    pp_mean = meta.get_per_pixel_mean()
+    pp_mean_224 = pp_mean[16:-16,16:-16,:]
+    words = meta.get_synset_words_1000()
+
+    def resize_func(im):
+        h, w = im.shape[:2]
+        scale = 256.0 / min(h, w)
+        desSize = map(int, (max(224, min(w, scale * w)),\
+                            max(224, min(h, scale * h))))
+        im = cv2.resize(im, tuple(desSize), interpolation=cv2.INTER_CUBIC)
+        return im
+    transformers = imgaug.AugmentorList([
+        imgaug.MapImage(resize_func),
+        imgaug.CenterCrop((224, 224)),
+        imgaug.MapImage(lambda x: x - pp_mean_224),
+    ])
+    for f in inputs:
+        assert os.path.isfile(f)
+        img = cv2.imread(f).astype('float32')
+        assert img is not None
+
+        img = transformers.augment(img)[np.newaxis, :,:,:]
+        outputs = predict_func([img])[0]
+        prob = outputs[0]
+        ret = prob.argsort()[-10:][::-1]
+
+        names = [words[i] for i in ret]
+        print(f + ":")
+        print(list(zip(names, prob[ret])))
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='the physical ids of GPUs to use')
@@ -246,12 +289,17 @@ if __name__ == '__main__':
     parser.add_argument('--dorefa',
             help='number of bits for W,A,G, separated by comma. Defaults to \'1,2,4\'',
             default='1,2,4')
+    parser.add_argument('--run', help='run on a list of images', nargs='*')
     args = parser.parse_args()
 
     BITW, BITA, BITG = map(int, args.dorefa.split(','))
 
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
+
+    if args.run:
+        run_image(Model(), SaverRestore(args.load), args.run)
+        sys.exit()
 
     config = get_config()
     if args.load:
