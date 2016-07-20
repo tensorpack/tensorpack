@@ -2,10 +2,12 @@ This is the official script to train, or run pretrained model for the paper:
 
 [DoReFa-Net: Training Low Bitwidth Convolutional Neural Networks with Low Bitwidth Gradients](http://arxiv.org/abs/1606.06160), by Zhou et al.
 
-We hosted a demo at CVPR16 on behalf of Megvii, Inc, running real-time DoReFa-Net on both ARM and FPGA.
-But we're not planning to release the runtime bit-op library.
+We hosted a demo at CVPR16 on behalf of Megvii, Inc, running real-time half-VGG size DoReFa-Net on both ARM and FPGA.
+But we're not planning to release those runtime bit-op libraries for now. In these examples, bit operations are run in float32.
 
-Pretrained model for 1-2-6-AlexNet will be available shortly.
+Pretrained model for 1-2-6-AlexNet is available at
+[google drive](https://drive.google.com/a/ megvii.com/folderview?id=0B308TeQzmFDLa0xOeVQwcXg1ZjQ).
+It's provided in the format of numpy dictionary, so it should be very easy to port into other applications.
 
 ## Preparation:
 

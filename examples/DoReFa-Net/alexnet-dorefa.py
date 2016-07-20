@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 # File: alexnet-dorefa.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
+# Author: Yuxin Wu, Yuheng Zou ({wyx,zyh}@megvii.com)
 
 import cv2
 import tensorflow as tf
@@ -25,8 +25,8 @@ The original experiements are performed on a proprietary framework.
 This is our attempt to reproduce it on tensorpack/tensorflow.
 
 Accuracy:
-    Trained with 4 GPUs and (W,A,G)=(1,2,6), it can reach top-1 single-crop validation error of 52%,
-    after 64 epochs. The number is a bit better than what's in the paper
+    Trained with 4 GPUs and (W,A,G)=(1,2,6), it can reach top-1 single-crop validation error of 51%,
+    after 70 epochs. This number is a bit better than what's in the paper
     probably due to more sophisticated augmentors.
 
     Note that the effective batch size in SyncMultiGPUTrainer is actually
@@ -55,12 +55,12 @@ To Train:
         More than 12 CPU cores (for data processing)
 
 To Run Pretrained Model:
-    ./alexnet-dorefa.py --load pretrained126.tfmodel --run a.jpg --dorefa 1,2,6
+    ./alexnet-dorefa.py --load alexnet-126.npy --run a.jpg --dorefa 1,2,6
 """
 
 BITW = 1
 BITA = 2
-BITG = 4
+BITG = 6
 BATCH_SIZE = 32
 
 class Model(ModelDesc):
@@ -155,7 +155,9 @@ class Model(ModelDesc):
 
 def get_data(dataset_name):
     isTrain = dataset_name == 'train'
-    ds = dataset.ILSVRC12(args.data, dataset_name,
+    #ds = dataset.ILSVRC12(args.data, dataset_name,
+            #shuffle=True if isTrain else False)
+    ds = dataset.ILSVRC12('/home/wyx/data/fake_ilsvrc', dataset_name,
             shuffle=True if isTrain else False)
 
     meta = dataset.ILSVRCMeta()
@@ -284,12 +286,12 @@ def run_image(model, sess_init, inputs):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='the physical ids of GPUs to use')
-    parser.add_argument('--load', help='load a checkpoint')
+    parser.add_argument('--load', help='load a checkpoint, or a npy (given as the pretrained model)')
     parser.add_argument('--data', help='ILSVRC dataset dir')
     parser.add_argument('--dorefa',
             help='number of bits for W,A,G, separated by comma. Defaults to \'1,2,4\'',
             default='1,2,4')
-    parser.add_argument('--run', help='run on a list of images', nargs='*')
+    parser.add_argument('--run', help='run on a list of images with the pretrained model', nargs='*')
     args = parser.parse_args()
 
     BITW, BITA, BITG = map(int, args.dorefa.split(','))
@@ -298,7 +300,8 @@ if __name__ == '__main__':
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
     if args.run:
-        run_image(Model(), SaverRestore(args.load), args.run)
+        assert args.load.endswith('.npy')
+        run_image(Model(), ParamRestore(np.load(args.load, encoding='latin1').item()), args.run)
         sys.exit()
 
     config = get_config()

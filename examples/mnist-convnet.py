@@ -107,5 +107,6 @@ if __name__ == '__main__':
     config = get_config()
     if args.load:
         config.session_init = SaverRestore(args.load)
-    QueueInputTrainer(config).train()
+    #QueueInputTrainer(config).train()
+    SimpleTrainer(config).train()
 

@@ -7,7 +7,7 @@ import tensorflow as tf
 from copy import copy
 import re
 
-from ..utils import logger
+from ..utils import logger, EXTRA_SAVE_VARS_KEY
 from ._common import layer_register
 
 __all__ = ['BatchNorm']
@@ -60,6 +60,8 @@ def BatchNorm(x, use_local_stat=True, decay=0.9, epsilon=1e-5):
             ema = tf.train.ExponentialMovingAverage(decay=decay, name=emaname)
             ema_apply_op = ema.apply([batch_mean, batch_var])
             ema_mean, ema_var = ema.average(batch_mean), ema.average(batch_var)
+            tf.add_to_collection(EXTRA_SAVE_VARS_KEY, ema_mean)
+            tf.add_to_collection(EXTRA_SAVE_VARS_KEY, ema_var)
     else:
         # use training-statistics in prediction
         assert not use_local_stat

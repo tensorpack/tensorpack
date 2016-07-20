@@ -10,7 +10,7 @@ import re
 import tensorflow as tf
 import six
 
-from ..utils import logger
+from ..utils import logger, EXTRA_SAVE_VARS_KEY
 
 __all__ = ['SessionInit', 'NewSession', 'SaverRestore',
            'ParamRestore', 'ChainInit',
@@ -188,6 +188,7 @@ def dump_session_params(path):
     npy format, loadable by ParamRestore
     """
     var = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
+    var.extend(tf.get_collection(EXTRA_SAVE_VARS_KEY))
     result = {}
     for v in var:
         name = v.name.replace(":0", "")
