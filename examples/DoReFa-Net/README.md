@@ -1,4 +1,4 @@
-This is the official script to train, or run pretrained model for the paper:
+Code and model for the paper:
 
 [DoReFa-Net: Training Low Bitwidth Convolutional Neural Networks with Low Bitwidth Gradients](http://arxiv.org/abs/1606.06160), by Zhou et al.
 
