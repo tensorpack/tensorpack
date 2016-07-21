@@ -17,6 +17,7 @@ __all__ = ['total_timer', 'timed_operation',
         'print_total_timer', 'IterSpeedCounter']
 
 class IterSpeedCounter(object):
+    """ To count how often some code gets reached"""
     def __init__(self, print_every, name=None):
         self.cnt = 0
         self.print_every = int(print_every)

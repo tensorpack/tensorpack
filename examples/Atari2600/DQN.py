@@ -92,24 +92,27 @@ class Model(ModelDesc):
     def _build_graph(self, inputs, is_training):
         state, action, reward, next_state, isOver = inputs
         self.predict_value = self._get_DQN_prediction(state, is_training)
-        action_onehot = tf.one_hot(action, NUM_ACTIONS)
+        action_onehot = tf.one_hot(action, NUM_ACTIONS, 1.0, 0.0)
         pred_action_value = tf.reduce_sum(self.predict_value * action_onehot, 1)    #N,
         max_pred_reward = tf.reduce_mean(tf.reduce_max(
             self.predict_value, 1), name='predict_reward')
         add_moving_summary(max_pred_reward)
-        self.greedy_choice = tf.argmax(self.predict_value, 1)   # N,
 
         with tf.variable_scope('target'):
             targetQ_predict_value = self._get_DQN_prediction(next_state, False)    # NxA
 
-            # DQN
-            #best_v = tf.reduce_max(targetQ_predict_value, 1)    # N,
+        # DQN
+        #best_v = tf.reduce_max(targetQ_predict_value, 1)    # N,
 
-            # Double-DQN
-            predict_onehot = tf.one_hot(self.greedy_choice, NUM_ACTIONS, 1.0, 0.0)
-            best_v = tf.reduce_sum(targetQ_predict_value * predict_onehot, 1)
+        # Double-DQN
+        tf.get_variable_scope().reuse_variables()
+        next_predict_value = self._get_DQN_prediction(next_state, is_training)
+        self.greedy_choice = tf.argmax(next_predict_value, 1)   # N,
+        predict_onehot = tf.one_hot(self.greedy_choice, NUM_ACTIONS, 1.0, 0.0)
+        best_v = tf.reduce_sum(targetQ_predict_value * predict_onehot, 1)
 
-            target = reward + (1.0 - tf.cast(isOver, tf.float32)) * GAMMA * tf.stop_gradient(best_v)
+
+        target = reward + (1.0 - tf.cast(isOver, tf.float32)) * GAMMA * tf.stop_gradient(best_v)
 
         sqrcost = tf.square(target - pred_action_value)
         abscost = tf.abs(target - pred_action_value)    # robust error func
