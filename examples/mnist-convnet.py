@@ -9,7 +9,6 @@ import os, sys
 import argparse
 
 from tensorpack import *
-from tensorpack.tfutils.summary import add_moving_summary
 
 """
 MNIST ConvNet example.
@@ -52,13 +51,13 @@ class Model(ModelDesc):
         wrong = symbolic_functions.prediction_incorrect(logits, label)
         nr_wrong = tf.reduce_sum(wrong, name='wrong')
         # monitor training error
-        add_moving_summary(tf.reduce_mean(wrong, name='train_error'))
+        summary.add_moving_summary(tf.reduce_mean(wrong, name='train_error'))
 
         # weight decay on all W of fc layers
         wd_cost = tf.mul(1e-5,
                          regularize_cost('fc.*/W', tf.nn.l2_loss),
                          name='regularize_loss')
-        add_moving_summary(cost, wd_cost)
+        summary.add_moving_summary(cost, wd_cost)
 
         summary.add_param_summary([('.*/W', ['histogram'])])   # monitor histogram of all W
         self.cost = tf.add_n([wd_cost, cost], name='cost')

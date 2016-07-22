@@ -14,7 +14,7 @@ __all__ = ['Maxout', 'PReLU', 'LeakyReLU', 'BNReLU', 'NonLinearity']
 @layer_register(log_shape=False)
 def Maxout(x, num_unit):
     """
-    Maxout networks as in `Maxout Networks <http://arxiv.org/abs/1302.4389>`_.
+    Maxout as in `Maxout Networks <http://arxiv.org/abs/1302.4389>`_.
 
     :param input: a NHWC or NC tensor.
     :param num_unit: a int. must be divisible by C.

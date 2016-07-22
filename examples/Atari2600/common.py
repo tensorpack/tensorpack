@@ -54,7 +54,7 @@ def eval_with_funcs(predict_funcs, nr_eval):
         k.start()
     stat = StatCounter()
     try:
-        for _ in tqdm(range(nr_eval)):
+        for _ in tqdm(range(nr_eval), **get_tqdm_kwargs()):
             r = q.get()
             stat.feed(r)
     except:
