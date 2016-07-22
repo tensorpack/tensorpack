@@ -155,8 +155,7 @@ class Model(ModelDesc):
 
 def get_data(dataset_name):
     isTrain = dataset_name == 'train'
-    ds = dataset.ILSVRC12(args.data, dataset_name,
-            shuffle=True if isTrain else False)
+    ds = dataset.ILSVRC12(args.data, dataset_name, shuffle=isTrain)
 
     meta = dataset.ILSVRCMeta()
     pp_mean = meta.get_per_pixel_mean()
