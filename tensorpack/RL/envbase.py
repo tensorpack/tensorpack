@@ -51,16 +51,19 @@ class RLEnvironment(object):
     def play_one_episode(self, func, stat='score'):
         """ play one episode for eval.
             :param func: call with the state and return an action
-            :returns: the score of this episode
+            :param stat: a key or list of keys in stats
+            :returns: the stat(s) after running this episode
         """
+        if not isinstance(stat, list):
+            stat = [stat]
         while True:
             s = self.current_state()
             act = func(s)
             r, isOver = self.action(act)
             if isOver:
-                s = self.stats[stat]
+                s = [self.stats[k] for k in stat]
                 self.reset_stat()
-                return s
+                return s if len(s) > 1 else s[0]
 
 class ActionSpace(object):
     def __init__(self):

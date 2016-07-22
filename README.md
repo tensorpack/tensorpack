@@ -5,14 +5,14 @@ Still in development, but usable.
 
 See some interesting [examples](https://github.com/ppwwyyxx/tensorpack/tree/master/examples) to learn about the framework:
 
-+ [DoReFa-Net: low bitwidth CNN](https://github.com/ppwwyyxx/tensorpack/tree/master/examples/DoReFa-Net)
-+ [Double-DQN for playing Atari games](https://github.com/ppwwyyxx/tensorpack/tree/master/examples/Atari2600)
-+ [ResNet for Cifar10 classification](https://github.com/ppwwyyxx/tensorpack/tree/master/examples/ResNet)
-+ [char-rnn language model](https://github.com/ppwwyyxx/tensorpack/tree/master/examples/char-rnn)
++ [DoReFa-Net: training binary / low bitwidth CNN](examples/DoReFa-Net)
++ [Double-DQN for playing Atari games](examples/Atari2600)
++ [ResNet for Cifar10 classification](examples/ResNet)
++ [char-rnn language model](examples/char-rnn)
 
 ## Features:
 
-Focused on modularity. Just have to define the three components in training:
+Focused on modularity. Just have to define the three components to start a training:
 
 1. The model, or the graph. Define the graph as well as its inputs and outputs. `models/` has some scoped abstraction of common models.
 
