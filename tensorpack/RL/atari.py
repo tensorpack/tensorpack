@@ -32,7 +32,8 @@ _ALE_LOCK = threading.Lock()
 class AtariPlayer(RLEnvironment):
     """
     A wrapper for atari emulator.
-    NOTE: will automatically restart when a real episode ends
+    Will automatically restart when a real episode ends (isOver might be just
+    lost of lives but not game over).
     """
     def __init__(self, rom_file, viz=0, height_range=(None,None),
             frame_skip=4, image_shape=(84, 84), nullop_start=30,
@@ -129,9 +130,10 @@ class AtariPlayer(RLEnvironment):
     def get_action_space(self):
         return DiscreteActionSpace(len(self.actions))
 
+    def finish_episode(self):
+        self.stats['score'].append(self.current_episode_score.sum)
+
     def restart_episode(self):
-        if self.current_episode_score.count > 0:
-            self.stats['score'].append(self.current_episode_score.sum)
         self.current_episode_score.reset()
         self.ale.reset_game()
 
@@ -162,6 +164,7 @@ class AtariPlayer(RLEnvironment):
         self.current_episode_score.feed(r)
         isOver = self.ale.game_over()
         if isOver:
+            self.finish_episode()
             self.restart_episode()
         if self.live_lost_as_eoe:
             isOver = isOver or newlives < oldlives

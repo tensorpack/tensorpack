@@ -36,6 +36,10 @@ class RLEnvironment(object):
         """ Start a new episode, even if the current hasn't ended """
         raise NotImplementedError()
 
+    def finish_episode(self):
+        """ get called when an episode finished"""
+        pass
+
     def get_action_space(self):
         """ return an `ActionSpace` instance"""
         raise NotImplementedError()
@@ -111,6 +115,9 @@ class ProxyPlayer(RLEnvironment):
 
     def restart_episode(self):
         self.player.restart_episode()
+
+    def finish_episode(self):
+        self.player.finish_episode()
 
     def get_action_space(self):
         return self.player.get_action_space()

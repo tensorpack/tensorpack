@@ -49,14 +49,3 @@ class HistoryFramePlayer(ProxyPlayer):
         self.history.clear()
         self.history.append(self.player.current_state())
 
-class TimePointHistoryFramePlayer(HistoryFramePlayer):
-    """ Include history from a list of time points in the past"""
-    def __init__(self, player, hists):
-        """ hists: a list of positive integers. 1 means the last frame"""
-        queue_size = max(hists) + 1
-        super(TimePointHistoryFramePlayer, self).__init__(player, queue_size)
-        self.hists = hists
-
-    def current_state(self):
-        # TODO
-        pass

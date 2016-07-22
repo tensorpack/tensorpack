@@ -40,7 +40,9 @@ class PreventStuckPlayer(ProxyPlayer):
         self.act_que.clear()
 
 class LimitLengthPlayer(ProxyPlayer):
-    """ Limit the total number of actions in an episode"""
+    """ Limit the total number of actions in an episode.
+        Does not auto restart.
+    """
     def __init__(self, player, limit):
         super(LimitLengthPlayer, self).__init__(player)
         self.limit = limit
@@ -51,10 +53,6 @@ class LimitLengthPlayer(ProxyPlayer):
         self.cnt += 1
         if self.cnt >= self.limit:
             isOver = True
-            self.player.restart_episode()
-        if isOver:
-            #print self.cnt, self.player.stats  # to see what limit is appropriate
-            self.cnt = 0
         return (r, isOver)
 
     def restart_episode(self):
@@ -67,6 +65,7 @@ class AutoRestartPlayer(ProxyPlayer):
     def action(self, act):
         r, isOver = self.player.action(act)
         if isOver:
+            self.player.finish_episode()
             self.player.restart_episode()
         return r, isOver
 
