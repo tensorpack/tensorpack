@@ -12,7 +12,7 @@ See some interesting [examples](https://github.com/ppwwyyxx/tensorpack/tree/mast
 
 ## Features:
 
-Focused on modularity. Just have to define the three components to start a training:
+Focus on modularity. You just have to define the following three components to start a training:
 
 1. The model, or the graph. Define the graph as well as its inputs and outputs. `models/` has some scoped abstraction of common models.
 

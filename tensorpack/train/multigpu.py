@@ -38,13 +38,14 @@ class MultiGPUTrainer(QueueInputTrainer):
         return ret
 
     def _multi_tower_grads(self):
-        logger.info("Training a model of {} tower".format(self.config.nr_tower))
+        logger.info("Training a model of {} tower".format(
+            len(self.config.tower)))
 
         grad_list = []
-        for i in range(self.config.nr_tower):
-            with tf.device('/gpu:{}'.format(i)), \
-                    tf.name_scope('tower{}'.format(i)) as scope:
-                logger.info("Building graph for training tower {}...".format(i))
+        for idx, t in enumerate(self.config.tower):
+            with tf.device('/gpu:{}'.format(t)), \
+                    tf.name_scope('tower{}'.format(idx)) as scope:
+                logger.info("Building graph for training tower {}...".format(idx))
                 model_inputs = self._get_model_inputs()    # each tower dequeue from input queue
                 self.dequed_inputs.append(model_inputs)
 
@@ -55,7 +56,7 @@ class MultiGPUTrainer(QueueInputTrainer):
                 grad_list.append(
                     self.config.optimizer.compute_gradients(cost_var, gate_gradients=0))
 
-                if i == 0:
+                if idx == 0:
                     tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, cost_var)
                     tf.get_variable_scope().reuse_variables()
                     # avoid repeated summary from each device

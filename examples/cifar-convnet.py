@@ -20,7 +20,7 @@ Cifar10:
     91% accuracy after 80k step.
     19.3 step/s on Tesla M40
 
-Not a good for Cifar100, just for demonstration.
+Not a good model for Cifar100, just for demonstration.
 """
 
 class Model(ModelDesc):

@@ -138,7 +138,7 @@ class QueueInputTrainer(Trainer):
         :param config: a `TrainConfig` instance
         :param input_queue: a `tf.QueueBase` instance to be used to buffer datapoints.
             Defaults to a FIFO queue of size 100.
-        :param predict_tower: list of gpu idx to run prediction. default to be [0].
+        :param predict_tower: list of gpu relative idx to run prediction. default to be [0].
             Use -1 for cpu.
         """
         super(QueueInputTrainer, self).__init__(config)
@@ -189,7 +189,7 @@ class QueueInputTrainer(Trainer):
         self._extra_threads_procs.append(self.input_th)
 
     def train(self):
-        assert self.config.nr_tower == 1, \
+        assert len(self.config.tower) == 1, \
                 "QueueInputTrainer doesn't support multigpu! Use Sync/AsyncMultiGPUTrainer instead."
         self.init_session_and_coord()
         self._build_enque_thread()

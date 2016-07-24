@@ -31,7 +31,8 @@ class TrainConfig(object):
         :param starting_epoch: int. default to be 1.
         :param step_per_epoch: the number of steps (SGD updates) to perform in each epoch.
         :param max_epoch: maximum number of epoch to run training. default to inf
-        :param nr_tower: int. number of towers. default to 1.
+        :param nr_tower: int. number of training towers. default to 1.
+        :param tower: list of training towers in relative id. default to `range(nr_tower)` if nr_tower is given.
         :param extra_threads_procs: list of `Startable` threads or processes
         """
         def assert_type(v, tp):
@@ -53,7 +54,17 @@ class TrainConfig(object):
         self.starting_epoch = int(kwargs.pop('starting_epoch', 1))
         self.max_epoch = int(kwargs.pop('max_epoch', 99999))
         assert self.step_per_epoch > 0 and self.max_epoch > 0
-        self.nr_tower = int(kwargs.pop('nr_tower', 1))
+
+        nr_tower = kwargs.pop('nr_tower', None)
+        tower = kwargs.pop('tower', None)
+        assert nr_tower is None or tower is None, "Cannot set both nr_tower and tower!"
+        if nr_tower:
+            tower = list(range(nr_tower))
+        else:
+            if isinstance(tower, int):
+                tower = list(range(tower))
+        self.tower = tower
+
         self.extra_threads_procs = kwargs.pop('extra_threads_procs', [])
         assert len(kwargs) == 0, 'Unknown arguments: {}'.format(str(kwargs.keys()))
 

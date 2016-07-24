@@ -13,10 +13,10 @@ from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
 
 """
-SVHN convnet.
+A very small SVHN convnet model (only 0.8m parameters).
 About 3.0% validation error after 70 epoch. 2.5% after 130 epoch.
 
-Each epoch is set to 4721 iterations. The speed is about 44 it/s on a Tesla M30
+Each epoch is set to 4721 iterations. The speed is about 44 it/s on a Tesla M40
 """
 
 class Model(ModelDesc):

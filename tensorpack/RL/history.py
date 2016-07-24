@@ -32,6 +32,7 @@ class HistoryFramePlayer(ProxyPlayer):
         zeros = [np.zeros_like(self.history[0]) for k in range(diff_len)]
         for k in self.history:
             zeros.append(k)
+        assert len(zeros) == self.history.maxlen
         return np.concatenate(zeros, axis=2)
 
     def action(self, act):
