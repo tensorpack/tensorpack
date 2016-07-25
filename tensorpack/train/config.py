@@ -55,6 +55,13 @@ class TrainConfig(object):
         self.max_epoch = int(kwargs.pop('max_epoch', 99999))
         assert self.step_per_epoch > 0 and self.max_epoch > 0
 
+        if 'nr_tower' in kwargs or 'tower' in kwargs:
+            self.set_tower(**kwargs)
+
+        self.extra_threads_procs = kwargs.pop('extra_threads_procs', [])
+        assert len(kwargs) == 0, 'Unknown arguments: {}'.format(str(kwargs.keys()))
+
+    def set_tower(self, **kwargs):
         nr_tower = kwargs.pop('nr_tower', None)
         tower = kwargs.pop('tower', None)
         assert nr_tower is None or tower is None, "Cannot set both nr_tower and tower!"
@@ -64,7 +71,4 @@ class TrainConfig(object):
             if isinstance(tower, int):
                 tower = list(range(tower))
         self.tower = tower
-
-        self.extra_threads_procs = kwargs.pop('extra_threads_procs', [])
-        assert len(kwargs) == 0, 'Unknown arguments: {}'.format(str(kwargs.keys()))
-
+        assert isinstance(self.tower, list)

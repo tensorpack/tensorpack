@@ -93,7 +93,7 @@ class AsyncMultiGPUTrainer(MultiGPUTrainer):
         # sync have consistent effective learning rate
         def scale(grads):
             with tf.name_scope('async_scale_grad'):
-                return [(grad / self.config.nr_tower if grad is not None else None, var)
+                return [(grad / len(self.config.tower) if grad is not None else None, var)
                             for grad, var in grads]
         grad_list = map(scale, grad_list)
         grad_list = [self.process_grads(g) for g in grad_list]
@@ -113,7 +113,7 @@ class AsyncMultiGPUTrainer(MultiGPUTrainer):
         # itertools.count is atomic w.r.t. python threads
         self.async_step_counter = itertools.count()
         self.training_threads = []
-        for k in range(1, self.config.nr_tower):
+        for k in range(1, len(self.config.tower)):
             train_op = self.config.optimizer.apply_gradients(grad_list[k])
             def f(op=train_op): # avoid late-binding
                 self.sess.run([op])
