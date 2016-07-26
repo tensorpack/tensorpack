@@ -3,7 +3,7 @@ Neural Network Toolbox on TensorFlow
 
 Still in development, but usable.
 
-See some interesting [examples](https://github.com/ppwwyyxx/tensorpack/tree/master/examples) to learn about the framework:
+See some interesting [examples](examples) to learn about the framework:
 
 + [DoReFa-Net: training binary / low bitwidth CNN](examples/DoReFa-Net)
 + [Double-DQN for playing Atari games](examples/Atari2600)
@@ -15,13 +15,19 @@ See some interesting [examples](https://github.com/ppwwyyxx/tensorpack/tree/mast
 Focus on modularity. You just have to define the following three components to start a training:
 
 1. The model, or the graph. Define the graph as well as its inputs and outputs. `models/` has some scoped abstraction of common models.
+	`LinearWrap` and `argscope` makes large models look simpler.
 
-2. The data. All data producer has an unified `DataFlow` interface, and this interface can be chained
-	 to perform complex preprocessing. It uses multiprocess to avoid performance bottleneck on data
-	 loading.
+2. The data. tensorpack allows and encourages complex data processing.
 
-3. The callbacks. They include everything you want to do apart from the training iterations:
-	change hyperparameters, save models, print logs, run validation, and more.
+	+ All data producer has an unified `DataFlow` interface, allowing them to be composed to perform complex preprocessing.
+	+ Use Python to easily handle your own data format, yet still keep a good training speed thanks to multiprocess prefetch & TF Queue prefetch.
+	For example, InceptionV3 can run in the same speed as the official code which reads data using TF operators.
+
+3. The callbacks, including everything you want to do apart from the training iterations. For example:
+	+ Change hyperparameters
+	+ Save models
+	+ Print some variables of interest
+	+ Run inference on a test dataset
 
 With the above components defined, tensorpack trainer will run the training iterations for you.
 Multi-GPU training is ready to use by simply changing the trainer.
