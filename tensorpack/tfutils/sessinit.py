@@ -54,6 +54,7 @@ class SaverRestore(SessionInit):
     def __init__(self, model_path, prefix=None):
         """
         :param model_path: a model file or a ``checkpoint`` file.
+        :param prefix: add a `prefix/` for every variable in this checkpoint
         """
         assert os.path.isfile(model_path)
         if os.path.basename(model_path) == 'checkpoint':

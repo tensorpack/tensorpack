@@ -111,7 +111,6 @@ class Model(ModelDesc):
         predict_onehot = tf.one_hot(self.greedy_choice, NUM_ACTIONS, 1.0, 0.0)
         best_v = tf.reduce_sum(targetQ_predict_value * predict_onehot, 1)
 
-
         target = reward + (1.0 - tf.cast(isOver, tf.float32)) * GAMMA * tf.stop_gradient(best_v)
 
         sqrcost = tf.square(target - pred_action_value)

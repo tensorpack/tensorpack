@@ -57,6 +57,8 @@ class TrainConfig(object):
 
         if 'nr_tower' in kwargs or 'tower' in kwargs:
             self.set_tower(**kwargs)
+        else:
+            self.tower = [0]
 
         self.extra_threads_procs = kwargs.pop('extra_threads_procs', [])
         assert len(kwargs) == 0, 'Unknown arguments: {}'.format(str(kwargs.keys()))
@@ -72,3 +74,11 @@ class TrainConfig(object):
                 tower = list(range(tower))
         self.tower = tower
         assert isinstance(self.tower, list)
+
+    @property
+    def nr_tower(self):
+        return len(self.tower)
+
+    @nr_tower.setter
+    def nr_tower(self, value):
+        self.tower = list(range(value))
