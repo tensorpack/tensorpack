@@ -23,9 +23,8 @@ Focus on modularity. You just have to define the following three components to s
 	+ Use Python to easily handle your own data format, yet still keep a good training speed thanks to multiprocess prefetch & TF Queue prefetch.
 	For example, InceptionV3 can run in the same speed as the official code which reads data using TF operators.
 
-3. The callbacks, including everything you want to do apart from the training iterations. For example:
-	+ Change hyperparameters
-	+ Save models
+3. The callbacks, including everything you want to do apart from the training iterations. Such as:
+	+ Change hyperparameters during training
 	+ Print some variables of interest
 	+ Run inference on a test dataset
 
