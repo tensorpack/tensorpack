@@ -332,11 +332,11 @@ class LocallyShuffleData(ProxyDataFlow, RNGDataFlow):
             dp = next(self.ds_itr)
             for _ in range(self.nr_reuse):
                 self.q.append(dp)
-        for _ in range(self.q.maxlen - len(self.q)):
-            try:
+        try:
+            while self.q.maxlen > len(self.q):
                 add_next()
-            except StopIteration:
-                logger.error("LocallyShuffleData: cache_size is larger than the size of ds!")
+        except StopIteration:
+            logger.error("LocallyShuffleData: cache_size is larger than the size of ds!")
         while True:
             self.rng.shuffle(self.q)
             for _ in range(self.q.maxlen):
