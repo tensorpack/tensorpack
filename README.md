@@ -14,7 +14,7 @@ See some interesting [examples](examples) to learn about the framework:
 
 Focus on modularity. You just have to define the following three components to start a training:
 
-1. The model, or the graph. Define the graph as well as its inputs and outputs. `models/` has some scoped abstraction of common models.
+1. The model, or the graph. `models/` has some scoped abstraction of common models.
 	`LinearWrap` and `argscope` makes large models look simpler.
 
 2. The data. tensorpack allows and encourages complex data processing.

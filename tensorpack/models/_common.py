@@ -31,7 +31,6 @@ def layer_register(summary_activation=False, log_shape=True):
     :param log_shape: log input/output shape of this layer
     """
 
-
     def wrapper(func):
         @wraps(func)
         def wrapped_func(name, inputs, *args, **kwargs):
@@ -91,5 +90,5 @@ def shape2d(a):
     raise RuntimeError("Illegal shape: {}".format(a))
 
 def shape4d(a):
-    # for use with tensorflow
+    # for use with tensorflow NHWC ops
     return [1] + shape2d(a) + [1]

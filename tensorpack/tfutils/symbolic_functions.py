@@ -68,9 +68,12 @@ def print_stat(x, message=None):
     """
     if message is None:
         message = x.op.name
-    return tf.Print(x, [tf.reduce_mean(x), x], summarize=20, message=message)
+    return tf.Print(x, [tf.reduce_mean(x), x], summarize=20,
+            message=message, name='print_' + x.op.name)
 
 def rms(x, name=None):
     if name is None:
         name = x.op.name + '/rms'
+        with tf.name_scope(None):   # name already contains the scope
+            return tf.sqrt(tf.reduce_mean(tf.square(x)), name=name)
     return tf.sqrt(tf.reduce_mean(tf.square(x)), name=name)

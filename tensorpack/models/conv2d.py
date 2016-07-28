@@ -23,7 +23,7 @@ def Conv2D(x, out_channel, kernel_shape,
     :param kernel_shape: (h, w) or a int
     :param stride: (h, w) or a int. default to 1
     :param padding: 'valid' or 'same'. default to 'same'
-    :param split: split channels as used in Alexnet. a int default to 1
+    :param split: split channels as used in Alexnet. Default to 1 (no split)
     :param W_init: initializer for W. default to `xavier_initializer_conv2d`.
     :param b_init: initializer for b. default to zero initializer.
     :param nl: nonlinearity. default to `relu`.

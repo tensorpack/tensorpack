@@ -9,7 +9,7 @@ from copy import copy
 from ._common import *
 from .batch_norm import BatchNorm
 
-__all__ = ['Maxout', 'PReLU', 'LeakyReLU', 'BNReLU', 'NonLinearity']
+__all__ = ['Maxout', 'PReLU', 'LeakyReLU', 'BNReLU']
 
 @layer_register(log_shape=False)
 def Maxout(x, num_unit):
@@ -44,9 +44,8 @@ def PReLU(x, init=tf.constant_initializer(0.001), name=None):
     alpha = tf.get_variable('alpha', [], initializer=init)
     x = ((1 + alpha) * x + (1 - alpha) * tf.abs(x))
     if name is None:
-        return x * 0.5
-    else:
-        return tf.mul(x, 0.5, name=name)
+        name = 'output'
+    return tf.mul(x, 0.5, name=name)
 
 @layer_register(log_shape=False)
 def LeakyReLU(x, alpha, name=None):
@@ -61,11 +60,10 @@ def LeakyReLU(x, alpha, name=None):
     alpha = float(alpha)
     x = ((1 + alpha) * x + (1 - alpha) * tf.abs(x))
     if name is None:
-        return x * 0.5
-    else:
-        return tf.mul(x, 0.5, name=name)
+        name = 'output'
+    return tf.mul(x, 0.5, name=name)
 
-# I'm not a layer, but I return a layer.
+# I'm not a layer, but I return a nonlinearity.
 def BNReLU(is_training, **kwargs):
     """
     :param is_traning: boolean
@@ -77,11 +75,3 @@ def BNReLU(is_training, **kwargs):
         x = tf.nn.relu(x, name=name)
         return x
     return BNReLU
-
-@layer_register(log_shape=False)
-def NonLinearity(x, nl):
-    """
-    :param input: any tensor.
-    :param nl: any Tensorflow Operation
-    """
-    return nl(x, name='output')

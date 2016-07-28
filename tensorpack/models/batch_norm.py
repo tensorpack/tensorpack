@@ -22,7 +22,7 @@ def BatchNorm(x, use_local_stat=True, decay=0.9, epsilon=1e-5):
     Batch normalization layer as described in:
 
     `Batch Normalization: Accelerating Deep Network Training by
-    Reducing Internal Covariate Shift <http://arxiv.org/abs/1502.03167>`_.
+    Reducing Internal Covariance Shift <http://arxiv.org/abs/1502.03167>`_.
 
     Notes:
 
@@ -52,10 +52,9 @@ def BatchNorm(x, use_local_stat=True, decay=0.9, epsilon=1e-5):
     batch_mean = tf.identity(batch_mean, 'mean')
     batch_var = tf.identity(batch_var, 'variance')
 
-    # XXX hack....
+    # XXX a hack to handle training tower & prediction tower together....
     emaname = 'EMA'
-    in_main_tower = not batch_mean.name.startswith('towerp')
-    if in_main_tower:
+    if not batch_mean.name.startswith('towerp'):
         with tf.name_scope(None): # https://github.com/tensorflow/tensorflow/issues/2740
             ema = tf.train.ExponentialMovingAverage(decay=decay, name=emaname)
             ema_apply_op = ema.apply([batch_mean, batch_var])
