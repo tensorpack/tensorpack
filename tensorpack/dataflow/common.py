@@ -311,9 +311,15 @@ class JoinData(DataFlow):
                 del itr
 
 class LocallyShuffleData(ProxyDataFlow, RNGDataFlow):
-    def __init__(self, ds, cache_size):
+    def __init__(self, ds, cache_size, nr_reuse=1):
+        """
+        Cache a number of datapoints and shuffle them.
+        :param cache_size: size of the cache
+        :param nr_reuse: reuse each datapoints several times
+        """
         ProxyDataFlow.__init__(self, ds)
         self.q = deque(maxlen=cache_size)
+        self.nr_reuse = nr_reuse
 
     def reset_state(self):
         ProxyDataFlow.reset_state(self)
@@ -322,24 +328,28 @@ class LocallyShuffleData(ProxyDataFlow, RNGDataFlow):
         self.current_cnt = 0
 
     def get_data(self):
+        def add_next():
+            dp = next(self.ds_itr)
+            for _ in range(self.nr_reuse):
+                self.q.append(dp)
         for _ in range(self.q.maxlen - len(self.q)):
             try:
-                self.q.append(next(self.ds_itr))
+                add_next()
             except StopIteration:
                 logger.error("LocallyShuffleData: cache_size is larger than the size of ds!")
         while True:
             self.rng.shuffle(self.q)
             for _ in range(self.q.maxlen):
-                yield self.q.popleft()
+                for _ in range(self.nr_reuse):
+                    yield self.q.popleft()
                 try:
-                    self.q.append(next(self.ds_itr))
+                    add_next()
                 except StopIteration:
                     # produce the rest and return
                     self.rng.shuffle(self.q)
                     for v in self.q:
                         yield v
                     return
-
 
 
 def SelectComponent(ds, idxs):
