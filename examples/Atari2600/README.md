@@ -21,7 +21,7 @@ Both were trained on one GPU with an extra GPU for simulation.
 This is probably the fastest RL trainer you'd find.
 
 The x-axis is the number of iterations, not wall time.
-Iteration speed on Tesla M40 is about 10.7it/s for B-A3C.
+Iteration speed on Tesla M40 is about 9.7it/s for B-A3C.
 D-DQN is faster at the beginning but will converge to 12it/s due of exploration annealing.
 
 A demo trained with Double-DQN on breakout is available at [youtube](https://youtu.be/o21mddZtE5Y).

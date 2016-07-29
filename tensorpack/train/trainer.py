@@ -16,7 +16,7 @@ from ..tfutils.modelutils import describe_model
 from ..utils import *
 from ..tfutils import *
 from ..tfutils.summary import add_moving_summary
-from ..predict import OnlinePredictor
+from ..predict import OnlinePredictor, build_multi_tower_prediction_graph
 
 __all__ = ['SimpleTrainer', 'QueueInputTrainer']
 
@@ -24,32 +24,35 @@ class PredictorFactory(object):
     """ Make predictors for a trainer"""
     PREFIX = 'towerp'
 
-    def __init__(self, trainer, towers):
-        self.trainer = trainer
+    def __init__(self, sess, model, towers):
+        """
+        :param towers: list of gpu relative id
+        """
+        self.sess = sess
+        self.model = model
         self.towers = towers
         self.tower_built = False
 
     def get_predictor(self, input_names, output_names, tower):
-        """ Return an online predictor"""
+        """
+        :param tower: need the kth tower (not the gpu id)
+        :returns: an online predictor
+        """
         if not self.tower_built:
             self._build_predict_tower()
         tower = self.towers[tower % len(self.towers)]
         raw_input_vars = get_vars_by_names(input_names)
         output_names = ['{}{}/'.format(self.PREFIX, tower) + n for n in output_names]
         output_vars = get_vars_by_names(output_names)
-        return OnlinePredictor(self.trainer.sess, raw_input_vars, output_vars)
+        return OnlinePredictor(self.sess, raw_input_vars, output_vars)
 
     def _build_predict_tower(self):
         # build_predict_tower might get called anywhere, but 'towerp' should be the outermost name scope
+        tf.get_variable_scope().reuse_variables()
         with tf.name_scope(None), \
                 freeze_collection(SUMMARY_BACKUP_KEYS):
-            inputs = self.trainer.model.get_input_vars()
-            tf.get_variable_scope().reuse_variables()
-            for k in self.towers:
-                logger.info("Building graph for predictor tower {}...".format(k))
-                with tf.device('/gpu:{}'.format(k) if k >= 0 else '/cpu:0'), \
-                        tf.name_scope('{}{}'.format(self.PREFIX, k)):
-                    self.trainer.model.build_graph(inputs, False)
+            build_multi_tower_prediction_graph(
+                    self.model, self.towers, prefix=self.PREFIX)
         self.tower_built = True
 
 class SimpleTrainer(Trainer):
@@ -89,7 +92,7 @@ class SimpleTrainer(Trainer):
 
     def get_predict_func(self, input_names, output_names):
         if not hasattr(self, 'predictor_factory'):
-            self.predictor_factory = PredictorFactory(self, [0])
+            self.predictor_factory = PredictorFactory(self.sess, self.model, [0])
         return self.predictor_factory.get_predictor(input_names, output_names, 0)
 
 class EnqueueThread(threading.Thread):
@@ -150,11 +153,8 @@ class QueueInputTrainer(Trainer):
         else:
             self.input_queue = input_queue
 
-        if predict_tower is None:
-            # by default, use the first training gpu for prediction
-            predict_tower = [0]
-        self.predictor_factory = PredictorFactory(self, predict_tower)
-
+        # by default, use the first training gpu for prediction
+        self.predict_tower = predict_tower or [0]
         self.dequed_inputs = None
 
     def _get_model_inputs(self):
@@ -233,6 +233,9 @@ class QueueInputTrainer(Trainer):
         :param tower: return the kth predict_func
         :returns: an `OnlinePredictor`
         """
+        if not hasattr(self, 'predictor_factory'):
+            self.predictor_factory = PredictorFactory(
+                    self.sess, self.model, self.predict_tower)
         return self.predictor_factory.get_predictor(input_names, output_names, tower)
 
     def get_predict_funcs(self, input_names, output_names, n):

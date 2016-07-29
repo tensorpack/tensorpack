@@ -21,6 +21,7 @@ class PreventStuckPlayer(ProxyPlayer):
         """
         :param nr_repeat: trigger the 'action' after this many of repeated action
         :param action: the action to be triggered to get out of stuck
+        Does auto-reset, but doesn't auto-restart the underlying player.
         """
         super(PreventStuckPlayer, self).__init__(player)
         self.act_que = deque(maxlen=nr_repeat)
@@ -41,7 +42,7 @@ class PreventStuckPlayer(ProxyPlayer):
 
 class LimitLengthPlayer(ProxyPlayer):
     """ Limit the total number of actions in an episode.
-        Does not auto restart.
+        Does auto-reset, but doesn't auto-restart the underlying player.
     """
     def __init__(self, player, limit):
         super(LimitLengthPlayer, self).__init__(player)
@@ -53,6 +54,8 @@ class LimitLengthPlayer(ProxyPlayer):
         self.cnt += 1
         if self.cnt >= self.limit:
             isOver = True
+        if isOver:
+            self.cnt = 0
         return (r, isOver)
 
     def restart_episode(self):

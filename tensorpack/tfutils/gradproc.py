@@ -48,16 +48,19 @@ class SummaryGradient(GradientProcessor):
                 name=name + '/RMS'))
         return grads
 
-
 class CheckGradient(GradientProcessor):
     """
     Check for numeric issue
     """
     def _process(self, grads):
+        ret = []
         for grad, var in grads:
-            # TODO make assert work
-            tf.Assert(tf.reduce_all(tf.is_finite(var)), [var])
-        return grads
+            op = tf.Assert(tf.reduce_all(tf.is_finite(var)),
+                    [var], summarize=100)
+            with tf.control_dependencies([op]):
+                grad = tf.identity(grad)
+                ret.append((grad, var))
+        return ret
 
 class ScaleGradient(GradientProcessor):
     """

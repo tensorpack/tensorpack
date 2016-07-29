@@ -42,6 +42,9 @@ class MultiProcessPredictWorker(multiprocessing.Process):
         self.config = config
 
     def _init_runtime(self):
+        """ Call _init_runtime under different CUDA_VISIBLE_DEVICES, you'll
+            have workers that run on multiGPUs
+        """
         if self.idx != 0:
             from tensorpack.models._common import disable_layer_logging
             disable_layer_logging()
@@ -71,6 +74,7 @@ class MultiProcessQueuePredictWorker(MultiProcessPredictWorker):
                 return
             else:
                 self.outqueue.put((tid, self.func(dp)))
+
 
 class PredictorWorkerThread(threading.Thread):
     def __init__(self, queue, pred_func, id, batch_size=5):
@@ -118,13 +122,13 @@ class PredictorWorkerThread(threading.Thread):
 
 class MultiThreadAsyncPredictor(AsyncPredictorBase):
     """
-    An multithread online async predictor which run a list of OnlinePredictor.
+    An multithread online async predictor which run a list of PredictorBase.
     It would do an extra batching internally.
     """
     def __init__(self, predictors, batch_size=5):
         """ :param predictors: a list of OnlinePredictor"""
         for k in predictors:
-            assert isinstance(k, OnlinePredictor), type(k)
+            #assert isinstance(k, OnlinePredictor), type(k)
             # TODO use predictors.return_input here
             assert k.return_input == False
         self.input_queue = queue.Queue(maxsize=len(predictors)*100)
