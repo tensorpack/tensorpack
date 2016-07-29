@@ -62,7 +62,7 @@ class SimpleTrainer(Trainer):
         model = self.model
         self.input_vars = model.get_input_vars()
         model.build_graph(self.input_vars, True)
-        cost_var = model.get_cost()
+        cost_var = model.get_cost() # TODO assert scalar
         add_moving_summary(cost_var)
 
         grads = self.config.optimizer.compute_gradients(cost_var)

@@ -11,6 +11,8 @@ import tensorflow as tf
 import six
 
 from ..utils import logger, EXTRA_SAVE_VARS_KEY
+from .common import get_op_var_name
+from .sessupdate import SessionUpdate
 
 __all__ = ['SessionInit', 'NewSession', 'SaverRestore',
            'ParamRestore', 'ChainInit',
@@ -142,35 +144,26 @@ class ParamRestore(SessionInit):
         """
         :param param_dict: a dict of {name: value}
         """
-        self.prms = param_dict
+        self.prms = {get_op_var_name(n)[1]: v for n, v in six.iteritems(param_dict)}
 
     def _init(self, sess):
-        # allow restore non-trainable variables
         variables = tf.get_collection(tf.GraphKeys.VARIABLES)
-        var_dict = dict([v.name, v] for v in variables)
-        for name, value in six.iteritems(self.prms):
-            if not name.endswith(':0'):
-                name = name + ':0'
-            try:
-                var = var_dict[name]
-            except (ValueError, KeyError):
-                logger.warn("Param {} not found in this graph".format(name))
-                continue
-            del var_dict[name]
-            logger.info("Restoring param {}".format(name))
-            varshape = tuple(var.get_shape().as_list())
-            if varshape != value.shape:
-            # TODO only allow reshape when set(shape) is the same or different by 1
-                assert np.prod(varshape) == np.prod(value.shape), \
-                        "{}: {}!={}".format(name, varshape, value.shape)
-                logger.warn("Param {} is reshaped during loading!".format(name))
-                value = value.reshape(varshape)
-            # assign(value) creates ops with values being saved, doubling the size of metagraph
-            # assign(placeholder) works better here
-            p = tf.placeholder(value.dtype, shape=value.shape)
-            sess.run(var.assign(p), feed_dict={p:value})
-        if var_dict:
-            logger.warn("Some variables in the graph are not restored: {}".format(str(var_dict)))
+
+        variable_names = set([k.name for k in variables])
+        param_names = set(six.iterkeys(self.prms))
+
+        intersect = variable_names and param_names
+
+        logger.info("Params to restore: {}".format(
+            ', '.join(map(str, intersect))))
+        for k in variable_names - param_names:
+            logger.warn("Variable {} in the graph won't be restored!".format(k))
+        for k in param_names - variable_names:
+            logger.warn("Param {} not found in this graph!".format(k))
+        upd = SessionUpdate(sess, [v for v in variables if v.name in intersect])
+        logger.info("Restoring from param dict ...")
+        upd.update({name: value for name, value in six.iteritems(self.prms) if name in intersect})
+
 
 def ChainInit(SessionInit):
     """ Init a session by a list of SessionInit instance."""
