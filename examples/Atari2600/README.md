@@ -1,3 +1,5 @@
+![breakout](breakout.jpg)
+
 Reproduce the following reinforcement learning methods:
 
 + Nature-DQN in:

@@ -87,17 +87,17 @@ class OfflinePredictor(OnlinePredictor):
                     sess, input_vars, output_vars, config.return_input)
 
 
-class AsyncOnlinePredictor(PredictorBase):
-    def __init__(self, sess, enqueue_op, output_vars, return_input=False):
-        """
-        :param enqueue_op: an op to feed inputs with.
-        :param output_vars: a list of directly-runnable (no extra feeding requirements)
-            vars producing the outputs.
-        """
-        self.session = sess
-        self.enqop = enqueue_op
-        self.output_vars = output_vars
-        self.return_input = return_input
+#class AsyncOnlinePredictor(PredictorBase):
+    #def __init__(self, sess, enqueue_op, output_vars, return_input=False):
+        #"""
+        #:param enqueue_op: an op to feed inputs with.
+        #:param output_vars: a list of directly-runnable (no extra feeding requirements)
+            #vars producing the outputs.
+        #"""
+        #self.session = sess
+        #self.enqop = enqueue_op
+        #self.output_vars = output_vars
+        #self.return_input = return_input
 
-    def put_task(self, dp, callback):
-        pass
+    #def put_task(self, dp, callback):
+        #pass
