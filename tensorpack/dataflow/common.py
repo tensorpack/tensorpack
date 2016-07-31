@@ -13,7 +13,20 @@ from ..utils import *
 __all__ = ['BatchData', 'FixedSizeData', 'MapData',
            'RepeatedData', 'MapDataComponent', 'RandomChooseData',
            'RandomMixData', 'JoinData', 'ConcatData', 'SelectComponent',
-           'LocallyShuffleData']
+           'LocallyShuffleData', 'TestDataSpeed']
+
+class TestDataSpeed(ProxyDataFlow):
+    def __init__(self, ds, size=1000):
+        super(TestDataSpeed, self).__init__(ds)
+        self.test_size = size
+
+    def get_data(self):
+        from tqdm import tqdm
+        with tqdm(range(self.test_size), **get_tqdm_kwargs()) as pbar:
+            for dp in self.ds.get_data():
+                pbar.update()
+        for dp in self.ds.get_data():
+            yield dp
 
 class BatchData(ProxyDataFlow):
     def __init__(self, ds, batch_size, remainder=False):

@@ -104,7 +104,7 @@ def build_multi_tower_prediction_graph(model, towers, prefix='towerp'):
             model._build_graph(input_vars, False)
             tf.get_variable_scope().reuse_variables()
 
-def MultiTowerOfflinePredictor(OnlinePredictor):
+class MultiTowerOfflinePredictor(OnlinePredictor):
     PREFIX = 'towerp'
     def __init__(self, config, towers):
         self.graph = tf.Graph()
