@@ -16,9 +16,11 @@ Claimed performance in the paper can be reproduced, on several games I've tested
 ![DQN](curve-breakout.png)
 
 DQN typically took 2 days of training to reach a score of 400 on breakout game.
-My Batch-A3C implementation only took <2 hours (one for training and one for simulation).
+My Batch-A3C implementation only took <2 hours.
 Both were trained on one GPU with an extra GPU for simulation.
-This is probably the fastest RL trainer you'd find.
+<!--
+   -This is probably the fastest RL trainer you'd find.
+	 -->
 
 The x-axis is the number of iterations, not wall time.
 Iteration speed on Tesla M40 is about 9.7it/s for B-A3C.

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-A general curve plotter used to create curves like:
+A general curve plotter to create curves such as:
 https://github.com/ppwwyyxx/tensorpack/tree/master/examples/ResNet
 
 A simplest example:

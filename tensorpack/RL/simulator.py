@@ -27,7 +27,9 @@ except ImportError:
 
 
 class SimulatorProcess(multiprocessing.Process):
-    """ A process that simulates a player """
+    """
+    A process that simulates a player and communicates to master to get the next action
+    """
     __metaclass__ = ABCMeta
 
     def __init__(self, idx, pipe_c2s, pipe_s2c):
