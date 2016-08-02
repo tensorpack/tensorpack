@@ -4,7 +4,6 @@
 
 import os
 from abc import abstractmethod, ABCMeta
-import numpy as np
 from collections import defaultdict
 import re
 import tensorflow as tf
@@ -12,12 +11,11 @@ import six
 
 from ..utils import logger, EXTRA_SAVE_VARS_KEY
 from .common import get_op_var_name
-from .sessupdate import SessionUpdate
+from .varmanip import SessionUpdate
 
 __all__ = ['SessionInit', 'NewSession', 'SaverRestore',
            'ParamRestore', 'ChainInit',
-           'JustCurrentSession',
-           'dump_session_params']
+           'JustCurrentSession']
 
 # TODO they initialize_all at the beginning by default.
 
@@ -180,17 +178,3 @@ def ChainInit(SessionInit):
     def _init(self, sess):
         for i in self.inits:
             i.init(sess)
-
-def dump_session_params(path):
-    """ Dump value of all trainable variables to a dict and save to `path` as
-    npy format, loadable by ParamRestore
-    """
-    var = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
-    var.extend(tf.get_collection(EXTRA_SAVE_VARS_KEY))
-    result = {}
-    for v in var:
-        name = v.name.replace(":0", "")
-        result[name] = v.eval()
-    logger.info("Variables to save to {}:".format(path))
-    logger.info(str(result.keys()))
-    np.save(path, result)
