@@ -77,3 +77,8 @@ def rms(x, name=None):
         with tf.name_scope(None):   # name already contains the scope
             return tf.sqrt(tf.reduce_mean(tf.square(x)), name=name)
     return tf.sqrt(tf.reduce_mean(tf.square(x)), name=name)
+
+def get_scalar_var(name, init_value):
+    return tf.get_variable(name, shape=[],
+            initializer=tf.constant_initializer(init_value),
+            trainable=False)

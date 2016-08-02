@@ -21,7 +21,7 @@ See "Rethinking the Inception Architecture for Computer Vision", arxiv:1512.0056
 
 This config follows the official inceptionv3 setup (https://github.com/tensorflow/models/tree/master/inception/inception)
 with much much fewer lines of code.
-It reaches 73.5% single-crop validation accuracy, same as the official code,
+It reaches 74.5% single-crop validation accuracy, slightly better than the official code,
 and has the same running speed as well.
 """
 

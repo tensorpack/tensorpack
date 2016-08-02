@@ -8,6 +8,7 @@ See some interesting [examples](examples) to learn about the framework:
 + [DoReFa-Net: training binary / low bitwidth CNN](examples/DoReFa-Net)
 + [Double-DQN for playing Atari games](examples/Atari2600)
 + [ResNet for Cifar10 classification](examples/ResNet)
++ [IncpetionV3 on ImageNet](examples/Inception/inceptionv3.py)
 + [char-rnn language model](examples/char-rnn)
 
 ## Features:
