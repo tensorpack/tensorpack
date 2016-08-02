@@ -15,6 +15,7 @@ from ..tfutils import get_op_var_name
 
 __all__ = ['HyperParamSetter', 'HumanHyperParamSetter',
            'ScheduledHyperParamSetter',
+           'NonDecreasingStatMonitorParamSetter',
            'HyperParam', 'GraphVarParam', 'ObjAttrParam']
 
 class HyperParam(object):
@@ -36,7 +37,7 @@ class HyperParam(object):
         return self._readable_name
 
 class GraphVarParam(HyperParam):
-    """ a variable in the graph"""
+    """ a variable in the graph can be a hyperparam"""
     def __init__(self, name, shape=[]):
         self.name = name
         self.shape = shape
@@ -58,8 +59,11 @@ class GraphVarParam(HyperParam):
     def set_value(self, v):
         self.assign_op.eval(feed_dict={self.val_holder:v})
 
+    def get_value(self):
+        return self.var.eval()
+
 class ObjAttrParam(HyperParam):
-    """ an attribute of an object"""
+    """ an attribute of an object can be a hyperparam"""
     def __init__(self, obj, attrname, readable_name=None):
         """ :param readable_name: default to be attrname."""
         self.obj = obj
@@ -71,6 +75,9 @@ class ObjAttrParam(HyperParam):
 
     def set_value(self, v):
         setattr(self.obj, self.attrname, v)
+
+    def get_value(self, v):
+        return getattr(self.obj, self.attrname)
 
 class HyperParamSetter(Callback):
     """
@@ -98,10 +105,13 @@ class HyperParamSetter(Callback):
         """
         ret = self._get_value_to_set()
         if ret is not None and ret != self.last_value:
-            logger.info("{} at epoch {} will change to {}".format(
+            logger.info("{} at epoch {} will change to {:.8f}".format(
                 self.param.readable_name, self.epoch_num + 1, ret))
         self.last_value = ret
         return ret
+
+    def get_current_value(self):
+        return self.param.get_value()
 
     @abstractmethod
     def _get_value_to_set(self):
@@ -164,5 +174,45 @@ class ScheduledHyperParamSetter(HyperParamSetter):
         for e, v in self.schedule:
             if e == self.epoch_num:
                 return v
+        return None
+
+class NonDecreasingStatMonitorParamSetter(HyperParamSetter):
+    """
+    Set hyperparameter by a func, if a specific stat wasn't
+    monotonically decreasing $a$ times out of the last $b$ epochs
+    """
+    def __init__(self, param, stat_name, value_func,
+            last_k=5,
+            min_non_decreasing=2
+            ):
+        """
+        Change param by `new_value = value_func(old_value)`,
+        if `stat_name` wasn't decreasing >=2 times in the lastest 5 times of
+            statistics update.
+
+        For example, if error wasn't decreasing, anneal the learning rate:
+            NonDecreasingStatMonitorParamSetter('learning_rate', 'val-error', lambda x: x * 0.2)
+        """
+        super(NonDecreasingStatMonitorParamSetter, self).__init__(param)
+        self.stat_name = stat_name
+        self.value_func = value_func
+        self.last_k = last_k
+        self.min_non_decreasing = min_non_decreasing
+        self.last_changed_epoch = 0
+
+    def _get_value_to_set(self):
+        holder = self.trainer.stat_holder
+        hist = holder.get_stat_history(self.stat_name)
+        if len(hist) < self.last_k+1 or \
+                self.epoch_num - self.last_changed_epoch < self.last_k:
+            return None
+        hist = hist[-self.last_k-1:]    # len==last_k+1
+        cnt = 0
+        for k in range(self.last_k):
+            if hist[k] <= hist[k+1]:
+                cnt += 1
+        if cnt >= self.min_non_decreasing \
+                and hist[-1] >= hist[0]:
+            return self.value_func(self.get_current_value())
         return None
 

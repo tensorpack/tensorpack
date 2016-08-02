@@ -57,6 +57,15 @@ class StatHolder(object):
         """
         return self.stat_now[key]
 
+    def get_stat_history(self, key):
+        ret = []
+        for h in self.stat_history:
+            v = h.get(key, None)
+            if v is not None: ret.append(v)
+        v = self.stat_now.get(key, None)
+        if v is not None: ret.append(v)
+        return ret
+
     def finalize(self):
         """
         Called after finishing adding stats. Will print and write stats to disk.

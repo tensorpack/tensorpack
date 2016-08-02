@@ -87,7 +87,7 @@ def get_config():
             StatPrinter(),
             ModelSaver(),
             InferenceRunner(dataset_test,
-                [ScalarStats('cost'), ClassificationError() ])
+                [ScalarStats('cost'), ClassificationError() ]),
         ]),
         session_config=get_default_sess_config(0.5),
         model=Model(),
