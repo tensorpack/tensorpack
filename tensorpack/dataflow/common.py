@@ -28,6 +28,11 @@ class TestDataSpeed(ProxyDataFlow):
         for dp in self.ds.get_data():
             yield dp
 
+    def start_test(self):
+        self.ds.reset_state()
+        for k in self.get_data():
+            pass
+
 class BatchData(ProxyDataFlow):
     def __init__(self, ds, batch_size, remainder=False):
         """

@@ -91,8 +91,9 @@ class Model(ModelDesc):
         # seqlen is 1 in inference. don't need loop_function
         outputs, last_state = rnn.rnn(cell, input_list, initial, scope='rnnlm')
         self.last_state = tf.identity(last_state, 'last_state')
+
         # seqlen x (Bxrnnsize)
-        output = tf.reshape(tf.concat(1, outputs), [-1, param.rnn_size])  # (seqlenxB) x rnnsize
+        output = tf.reshape(tf.concat(1, outputs), [-1, param.rnn_size])  # (Bxseqlen) x rnnsize
         logits = FullyConnected('fc', output, param.vocab_size, nl=tf.identity)
         self.prob = tf.nn.softmax(logits / param.softmax_temprature)
 

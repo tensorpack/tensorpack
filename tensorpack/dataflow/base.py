@@ -7,7 +7,7 @@
 from abc import abstractmethod, ABCMeta
 from ..utils import get_rng
 
-__all__ = ['DataFlow', 'ProxyDataFlow']
+__all__ = ['DataFlow', 'ProxyDataFlow', 'RNGDataFlow']
 
 class DataFlow(object):
     """ Base class for all DataFlow """
