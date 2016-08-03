@@ -26,7 +26,7 @@ class GaussianNoise(ImageAugmentor):
         self._init(locals())
 
     def _get_augment_params(self, img):
-        return self.rng.randn(img.shape)
+        return self.rng.randn(*img.shape)
 
     def _augment(self, img, noise):
         ret = img + noise

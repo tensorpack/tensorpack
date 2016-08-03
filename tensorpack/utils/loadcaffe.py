@@ -64,11 +64,14 @@ def load_caffe(model_desc, model_file):
             prev_data_shape = net.blobs[prev_blob_name].data.shape[1:]
         except ValueError:
             prev_data_shape = None
+        logger.info("Processing layer {} of type {}".format(
+            layername, layer.type))
         if layer.type in param_processors:
             param_dict.update(param_processors[layer.type](
                 layername, layer.blobs, prev_data_shape))
         else:
-            assert len(layer.blobs) == 0, len(layer.blobs)
+            if len(layer.blobs) != 0:
+                logger.warn("Layer type {} not supported!".format(layer.type))
     logger.info("Model loaded from caffe. Params: " + \
                 " ".join(sorted(param_dict.keys())))
     return param_dict

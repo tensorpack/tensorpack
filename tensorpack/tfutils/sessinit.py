@@ -150,7 +150,7 @@ class ParamRestore(SessionInit):
         variable_names = set([k.name for k in variables])
         param_names = set(six.iterkeys(self.prms))
 
-        intersect = variable_names and param_names
+        intersect = variable_names & param_names
 
         logger.info("Params to restore: {}".format(
             ', '.join(map(str, intersect))))
@@ -159,12 +159,13 @@ class ParamRestore(SessionInit):
         for k in param_names - variable_names:
             logger.warn("Variable {} in the dict not found in this graph!".format(k))
 
+
         upd = SessionUpdate(sess, [v for v in variables if v.name in intersect])
         logger.info("Restoring from dict ...")
         upd.update({name: value for name, value in six.iteritems(self.prms) if name in intersect})
 
 
-def ChainInit(SessionInit):
+class ChainInit(SessionInit):
     """ Init a session by a list of SessionInit instance."""
     def __init__(self, sess_inits, new_session=True):
         """

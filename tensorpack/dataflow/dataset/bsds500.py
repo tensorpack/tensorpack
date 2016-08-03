@@ -59,7 +59,7 @@ class BSDS500(RNGDataFlow):
         image_files = glob.glob(image_glob)
         gt_dir = os.path.join(self.data_root, 'groundTruth', name)
         self.data = np.zeros((len(image_files), IMG_H, IMG_W, 3), dtype='uint8')
-        self.label = np.zeros((len(image_files), IMG_H, IMG_W), dtype='bool')
+        self.label = np.zeros((len(image_files), IMG_H, IMG_W), dtype='float32')
 
         for idx, f in enumerate(image_files):
             im = cv2.imread(f, cv2.IMREAD_COLOR)
@@ -73,14 +73,15 @@ class BSDS500(RNGDataFlow):
             gt = loadmat(gt_file)['groundTruth'][0]
             n_annot = gt.shape[0]
             gt = sum(gt[k]['Boundaries'][0][0] for k in range(n_annot))
-            gt[gt < 3] = 0
-            gt[gt != 0] = 1
+            gt[gt > 3] = 3
+            gt = gt / 3.0
             if gt.shape[0] > gt.shape[1]:
                 gt = gt.transpose()
             assert gt.shape == (IMG_H, IMG_W)
 
             self.data[idx] = im
             self.label[idx] = gt
+        #self.label[self.label<0.9] = 0
 
     def size(self):
         return self.data.shape[0]

@@ -11,7 +11,9 @@ __all__ = ['Rotation']
 
 class Rotation(ImageAugmentor):
     """ Random rotate the image w.r.t a random center"""
-    def __init__(self, max_deg, center_range=(0,1)):
+    def __init__(self, max_deg, center_range=(0,1),
+            interp=cv2.INTER_CUBIC,
+            border=cv2.BORDER_REPLICATE):
         """
         :param max_deg: max abs value of the rotation degree
         :param center_range: the location of the rotation center
@@ -25,6 +27,7 @@ class Rotation(ImageAugmentor):
         return cv2.getRotationMatrix2D(tuple(center), deg, 1)
 
     def _augment(self, img, rot_m):
-        return cv2.warpAffine(img, rot_m, img.shape[1::-1],
-                flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
+        ret = cv2.warpAffine(img, rot_m, img.shape[1::-1],
+                flags=self.interp, borderMode=self.border)
+        return ret
 

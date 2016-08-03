@@ -92,16 +92,16 @@ def FixedUnPooling(x, shape, unpool_mat=None):
     shape = shape2d(shape)
 
     # a faster implementation for this special case
-    if shape[0] == 2 and  shape[1] == 2 and unpool_mat is None:
+    if shape[0] == 2 and shape[1] == 2 and unpool_mat is None:
         return UnPooling2x2ZeroFilled(x)
 
     input_shape = tf.shape(x)
     if unpool_mat is None:
         mat = np.zeros(shape, dtype='float32')
         mat[0][0] = 1
-        unpool_mat = tf.Variable(mat, trainable=False, name='unpool_mat')
+        unpool_mat = tf.constant(mat, name='unpool_mat')
     elif isinstance(unpool_mat, np.ndarray):
-        unpool_mat = tf.Variable(unpool_mat, trainable=False, name='unpool_mat')
+        unpool_mat = tf.constant(unpool_mat, name='unpool_mat')
     assert unpool_mat.get_shape().as_list() == list(shape)
 
     # perform a tensor-matrix kronecker product

@@ -8,6 +8,7 @@ import re
 
 from ..utils import *
 from . import get_global_step_var
+from .symbolic_functions import rms
 
 __all__ = ['create_summary', 'add_param_summary', 'add_activation_summary',
            'add_moving_summary', 'summary_moving_average']
@@ -36,8 +37,7 @@ def add_activation_summary(x, name=None):
         tf.histogram_summary(name + '/activation', x)
         tf.scalar_summary(name + '/activation_sparsity', tf.nn.zero_fraction(x))
         tf.scalar_summary(
-                name + '/activation_rms',
-                tf.sqrt(tf.reduce_mean(tf.square(x))))
+                name + '/activation_rms', rms(x))
 
 def add_param_summary(summary_lists):
     """
@@ -64,12 +64,10 @@ def add_param_summary(summary_lists):
             tf.scalar_summary(name + '/mean', tf.reduce_mean(var))
             return
         if action == 'rms':
-            tf.scalar_summary(name + '/rms',
-                    tf.sqrt(tf.reduce_mean(tf.square(var))))
+            tf.scalar_summary(name + '/rms', rms(var))
             return
         raise RuntimeError("Unknown summary type: {}".format(action))
 
-    import re
     params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
     with tf.name_scope('param_summary'):
         for p in params:
@@ -84,6 +82,7 @@ def add_param_summary(summary_lists):
 def add_moving_summary(v, *args):
     """
     :param v: tensor or list of tensor to summary
+    :param args: tensors to summary
     """
     if not isinstance(v, list):
         v = [v]

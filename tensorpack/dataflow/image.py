@@ -57,6 +57,7 @@ class AugmentImageComponent(MapDataComponent):
 
 
 class AugmentImagesTogether(MapData):
+    """ Augment a list of images of the same shape, with the same parameters"""
     def __init__(self, ds, augmentors, index=(0,1)):
         """
         :param ds: a `DataFlow` instance.
