@@ -72,7 +72,8 @@ class ModelDesc(object):
     def get_gradient_processor(self):
         """ Return a list of GradientProcessor. They will be executed in order"""
         return [#SummaryGradient(),
-                CheckGradient()]
+                #CheckGradient()
+                ]
 
 
 class ModelFromMetaGraph(ModelDesc):

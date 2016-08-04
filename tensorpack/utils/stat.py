@@ -85,8 +85,7 @@ class BinaryStatistics(object):
         :param pred: 0/1 np array
         :param label: 0/1 np array of the same size
         """
-        nr = label.size
-        assert pred.size == label.size
+        assert pred.shape == label.shape
         self.nr_pos += (label == 1).sum()
         self.nr_neg += (label == 0).sum()
         self.nr_pred_pos += (pred == 1).sum()
