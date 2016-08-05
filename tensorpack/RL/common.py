@@ -54,9 +54,10 @@ class LimitLengthPlayer(ProxyPlayer):
         self.cnt += 1
         if self.cnt >= self.limit:
             isOver = True
-        if isOver:
             self.finish_episode()
             self.restart_episode()
+        if isOver:
+            self.cnt = 0
         return (r, isOver)
 
     def restart_episode(self):
