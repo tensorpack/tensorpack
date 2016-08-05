@@ -33,7 +33,9 @@ Accuracy:
     BATCH_SIZE * NUM_GPU. With a different number of GPUs in use, things might
     be a bit different, especially for learning rate.
 
-    With (W,A,G)=(32,32,32), 43.3% error.
+    With (W,A,G)=(32,32,32), 43% error.
+    With (W,A,G)=(1,2,6), 51% error.
+    With (W,A,G)=(1,2,4), 63% error.
 
 Speed:
     About 3.5 iteration/s on 4 Tesla M40. (Each epoch is set to 10000 iterations)
