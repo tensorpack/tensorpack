@@ -13,12 +13,12 @@ See some interesting [examples](examples) to learn about the framework:
 
 ## Features:
 
-Focus on modularity. You just have to define the following three components to start a training:
+You need to abstract your training task into three components:
 
-1. The model, or the graph. `models/` has some scoped abstraction of common models.
+1. Model, or graph. `models/` has some scoped abstraction of common models.
 	`LinearWrap` and `argscope` makes large models look simpler.
 
-2. The data. tensorpack allows and encourages complex data processing.
+2. Data. tensorpack allows and encourages complex data processing.
 
 	+ All data producer has an unified `DataFlow` interface, allowing them to be composed to perform complex preprocessing.
 	+ Use Python to easily handle your own data format, yet still keep a good training speed thanks to multiprocess prefetch & TF Queue prefetch.
@@ -30,7 +30,7 @@ Focus on modularity. You just have to define the following three components to s
 	+ Run inference on a test dataset
 
 With the above components defined, tensorpack trainer will run the training iterations for you.
-Multi-GPU training is ready to use by simply changing the trainer.
+Multi-GPU training is ready to use by simply switching the trainer.
 
 ## Dependencies:
 

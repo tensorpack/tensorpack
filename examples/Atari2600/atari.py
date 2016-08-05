@@ -10,15 +10,12 @@ from collections import deque
 import threading
 import six
 from six.moves import range
-from ..utils import get_rng, logger, memoized, get_dataset_path
-from ..utils.stat import StatCounter
+from tensorpack.utils import get_rng, logger, memoized, get_dataset_path
+from tensorpack.utils.stat import StatCounter
 
-from .envbase import RLEnvironment, DiscreteActionSpace
+from tensorpack.RL.envbase import RLEnvironment, DiscreteActionSpace
 
-try:
-    from ale_python_interface import ALEInterface
-except ImportError:
-    logger.warn("Cannot import ale_python_interface, Atari won't be available.")
+from ale_python_interface import ALEInterface
 
 __all__ = ['AtariPlayer']
 

@@ -105,8 +105,8 @@ class SaverRestore(SessionInit):
 
     def _get_vars_to_restore_multimap(self, vars_available):
         """
-        Get a dict of {var_name: [var, var]} to restore
         :param vars_available: varaible names available in the checkpoint, for existence checking
+        :returns: a dict of {var_name: [var, var]} to restore
         """
         vars_to_restore = tf.all_variables()
         var_dict = defaultdict(list)
@@ -114,12 +114,11 @@ class SaverRestore(SessionInit):
         for v in vars_to_restore:
             name = v.op.name
             if 'towerp' in name:
-                logger.warn("Variable {} in prediction tower shouldn't exist.".format(v.name))
+                logger.error("No variable should be under 'towerp' name scope".format(v.name))
                 # don't overwrite anything in the current prediction graph
                 continue
             if 'tower' in name:
-                new_name = re.sub('tower[p0-9]+/', '', name)
-                name = new_name
+                name = re.sub('tower[p0-9]+/', '', name)
             if self.prefix and name.startswith(self.prefix):
                 name = name[len(self.prefix)+1:]
             if name in vars_available:
@@ -127,11 +126,11 @@ class SaverRestore(SessionInit):
                 chkpt_vars_used.add(name)
                 #vars_available.remove(name)
             else:
-                logger.warn("Variable {} not found in checkpoint!".format(v.op.name))
+                logger.warn("Variable {} in the graph not found in checkpoint!".format(v.op.name))
         if len(chkpt_vars_used) < len(vars_available):
             unused = vars_available - chkpt_vars_used
             for name in unused:
-                logger.warn("Variable {} in checkpoint doesn't exist in the graph!".format(name))
+                logger.warn("Variable {} in checkpoint not found in the graph!".format(name))
         return var_dict
 
 class ParamRestore(SessionInit):
@@ -155,9 +154,9 @@ class ParamRestore(SessionInit):
         logger.info("Params to restore: {}".format(
             ', '.join(map(str, intersect))))
         for k in variable_names - param_names:
-            logger.warn("Variable {} in the graph not getting restored!".format(k))
+            logger.warn("Variable {} in the graph not found in the dict!".format(k))
         for k in param_names - variable_names:
-            logger.warn("Variable {} in the dict not found in this graph!".format(k))
+            logger.warn("Variable {} in the dict not found in the graph!".format(k))
 
 
         upd = SessionUpdate(sess, [v for v in variables if v.name in intersect])

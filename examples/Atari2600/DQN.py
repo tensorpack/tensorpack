@@ -18,8 +18,10 @@ from tensorpack.utils.concurrency import *
 from tensorpack.tfutils import symbolic_functions as symbf
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.RL import *
+
 import common
 from common import play_model, Evaluator, eval_model_multithread
+from atari import AtariPlayer
 
 BATCH_SIZE = 64
 IMAGE_SIZE = (84, 84)
@@ -54,7 +56,7 @@ def get_player(viz=False, train=False):
     if not train:
         pl = HistoryFramePlayer(pl, FRAME_HISTORY)
         pl = PreventStuckPlayer(pl, 30, 1)
-    pl = LimitLengthPlayer(pl, 20000)
+    pl = LimitLengthPlayer(pl, 30000)
     return pl
 common.get_player = get_player  # so that eval functions in common can use the player
 

@@ -6,6 +6,7 @@
 import tensorflow as tf
 from abc import ABCMeta, abstractmethod
 import re
+import inspect
 from ..utils import logger
 from .symbolic_functions import rms
 from .summary import add_moving_summary
@@ -37,11 +38,19 @@ class MapGradient(GradientProcessor):
     """
     def __init__(self, func, regex='.*'):
         """
-        :param func: takes a (grad, var) pair and returns a grad. If return None, the
+        :param func: takes a grad or (grad, var) pair and returns a grad. If return None, the
             gradient is discarded.
         :param regex: used to match variables. default to match all variables.
         """
-        self.func = func
+        args = inspect.getargspec(func).args
+        arg_num = len(args) - inspect.ismethod(func)
+        assert arg_num in [1, 2], \
+                "The function must take 1 or 2 arguments!  ({})".format(args)
+        if arg_num == 1:
+            self.func = lambda grad, var: func(grad)
+        else:
+            self.func = func
+
         if not regex.endswith('$'):
             regex = regex + '$'
         self.regex = regex
