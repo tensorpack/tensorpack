@@ -4,17 +4,19 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 
+import time
+from ..utils import logger
 try:
     import gym
 except ImportError:
     logger.warn("Cannot import gym. GymEnv won't be available.")
 
-import time
-from ..utils import logger
 from ..utils.fs import *
 from ..utils.stat import *
 
 from .envbase import RLEnvironment, DiscreteActionSpace
+
+__all__ = ['GymEnv']
 
 class GymEnv(RLEnvironment):
     """
