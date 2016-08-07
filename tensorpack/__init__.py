@@ -19,3 +19,6 @@ from .tfutils import *
 from .callbacks import *
 from .dataflow import *
 from .predict import *
+
+if int(numpy.__version__.split('.')[1]) < 9:
+    logger.warn("Numpy < 1.9 could be extremely slow on some tasks.")

@@ -60,6 +60,7 @@ class RLEnvironment(object):
             s = self.current_state()
             act = func(s)
             r, isOver = self.action(act)
+            #print r
             if isOver:
                 s = [self.stats[k] for k in stat]
                 self.reset_stat()

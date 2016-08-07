@@ -2,7 +2,6 @@
 # -*- coding: UTF-8 -*-
 # File: cifar-convnet.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
-import numpy
 import tensorflow as tf
 import argparse
 import numpy as np
@@ -101,7 +100,7 @@ def get_data(train_or_test, cifar_classnum):
     ds = AugmentImageComponent(ds, augmentors)
     ds = BatchData(ds, 128, remainder=not isTrain)
     if isTrain:
-        ds = PrefetchDataZMQ(ds, 5)
+        ds = PrefetchData(ds, 3, 2)
     return ds
 
 def get_config(cifar_classnum):

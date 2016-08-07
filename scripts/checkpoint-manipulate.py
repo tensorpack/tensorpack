@@ -4,6 +4,7 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 
+import numpy as np
 from tensorpack.tfutils.varmanip import dump_chkpt_vars
 import tensorflow as tf
 import sys
