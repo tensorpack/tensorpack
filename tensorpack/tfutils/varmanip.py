@@ -36,7 +36,6 @@ def get_savename_from_varname(
         name = savename_prefix + '/' + name
     return name
 
-
 class SessionUpdate(object):
     """ Update the variables in a session """
     def __init__(self, sess, vars_to_update):
@@ -87,7 +86,10 @@ def dump_session_params(path):
     var.extend(tf.get_collection(EXTRA_SAVE_VARS_KEY))
     result = {}
     for v in var:
-        name = v.name.replace(":0", "")
+        name = get_savename_from_varname(v.name)
+        if name in result:
+            logger.info("Variable {} would be stored instead of another with \
+the same name".format(v.name))
         result[name] = v.eval()
     logger.info("Variables to save to {}:".format(path))
     logger.info(str(result.keys()))

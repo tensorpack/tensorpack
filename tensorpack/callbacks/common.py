@@ -8,6 +8,7 @@ import re
 
 from .base import Callback
 from ..utils import *
+from ..tfutils.varmanip import get_savename_from_varname
 
 __all__ = ['ModelSaver']
 
@@ -15,37 +16,42 @@ class ModelSaver(Callback):
     """
     Save the model to logger directory.
     """
-    def __init__(self, keep_recent=10, keep_freq=0.5):
+    def __init__(self, keep_recent=10, keep_freq=0.5,
+            var_collections=tf.GraphKeys.VARIABLES):
         """
         :param keep_recent: see `tf.train.Saver` documentation.
         :param keep_freq: see `tf.train.Saver` documentation.
         """
         self.keep_recent = keep_recent
         self.keep_freq = keep_freq
+        if not isinstance(var_collections, list):
+            var_collections = [var_collections]
+        self.var_collections = var_collections
 
     def _setup_graph(self):
+        vars = []
+        for key in self.var_collections:
+            vars.extend(tf.get_collection(key))
         self.path = os.path.join(logger.LOG_DIR, 'model')
         self.saver = tf.train.Saver(
-            var_list=ModelSaver._get_vars(),
+            var_list=ModelSaver._get_var_dict(vars),
             max_to_keep=self.keep_recent,
             keep_checkpoint_every_n_hours=self.keep_freq)
         self.meta_graph_written = False
 
     @staticmethod
-    def _get_vars():
-        vars = tf.all_variables()
+    def _get_var_dict(vars):
         var_dict = {}
         for v in vars:
-            name = v.name
-            if re.match('tower[p1-9]', name):
-                #logger.info("Skip {} when saving model.".format(name))
-                continue
-            if 'tower0/' in name:
-                new_name = name.replace('tower0/', '')
-                logger.info(
-                    "{} renamed to {} when saving model.".format(name, new_name))
-                name = new_name
-            var_dict[name] = v
+            name = get_savename_from_varname(v.name)
+            if name not in var_dict:
+                if name != v.name:
+                    logger.info(
+                        "{} renamed to {} when saving model.".format(v.name, name))
+                var_dict[name] = v
+            else:
+                logger.warn("Variable {} won't be saved \
+because {} will be saved".format(v.name, var_dict[name].name))
         return var_dict
 
     def _trigger_epoch(self):

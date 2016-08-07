@@ -15,7 +15,7 @@ from ..tfutils import get_op_var_name
 
 __all__ = ['HyperParamSetter', 'HumanHyperParamSetter',
            'ScheduledHyperParamSetter',
-           'NonDecreasingStatMonitorParamSetter',
+           'StatMonitorParamSetter',
            'HyperParam', 'GraphVarParam', 'ObjAttrParam']
 
 class HyperParam(object):
@@ -176,14 +176,15 @@ class ScheduledHyperParamSetter(HyperParamSetter):
                 return v
         return None
 
-class NonDecreasingStatMonitorParamSetter(HyperParamSetter):
+class StatMonitorParamSetter(HyperParamSetter):
     """
     Set hyperparameter by a func, if a specific stat wasn't
-    monotonically decreasing $a$ times out of the last $b$ epochs
+    monotonically decreasing/increasing $a$ times out of the last $b$ epochs
     """
     def __init__(self, param, stat_name, value_func,
             last_k=5,
-            min_non_decreasing=2
+            min_non_decreasing=2,
+            reverse=False
             ):
         """
         Change param by `new_value = value_func(old_value)`,
@@ -192,6 +193,8 @@ class NonDecreasingStatMonitorParamSetter(HyperParamSetter):
 
         For example, if error wasn't decreasing, anneal the learning rate:
             NonDecreasingStatMonitorParamSetter('learning_rate', 'val-error', lambda x: x * 0.2)
+
+        If reverse==True, use 'increasing' instead of decreasing
         """
         super(NonDecreasingStatMonitorParamSetter, self).__init__(param)
         self.stat_name = stat_name
@@ -199,6 +202,11 @@ class NonDecreasingStatMonitorParamSetter(HyperParamSetter):
         self.last_k = last_k
         self.min_non_decreasing = min_non_decreasing
         self.last_changed_epoch = 0
+
+        if not reverse:
+            self.less_than = lambda x, y: x <= y
+        else:
+            self.less_than = lambda x, y: x >= y
 
     def _get_value_to_set(self):
         holder = self.trainer.stat_holder
@@ -209,10 +217,10 @@ class NonDecreasingStatMonitorParamSetter(HyperParamSetter):
         hist = hist[-self.last_k-1:]    # len==last_k+1
         cnt = 0
         for k in range(self.last_k):
-            if hist[k] <= hist[k+1]:
+            if self.less_than(hist[k], hist[k+1]):
                 cnt += 1
         if cnt >= self.min_non_decreasing \
-                and hist[-1] >= hist[0]:
+                and self.less_than(hist[0], hist[-1]):
             return self.value_func(self.get_current_value())
         return None
 
