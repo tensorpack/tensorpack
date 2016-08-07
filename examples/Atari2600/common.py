@@ -39,12 +39,21 @@ def eval_with_funcs(predict_funcs, nr_eval):
     class Worker(StoppableThread):
         def __init__(self, func, queue):
             super(Worker, self).__init__()
-            self.func = func
+            self._func = func
             self.q = queue
+
+        def func(self, *args, **kwargs):
+            if self.stopped():
+                raise RuntimeError("stopped!")
+            return self._func(*args, **kwargs)
+
         def run(self):
             player = get_player()
             while not self.stopped():
-                score = play_one_episode(player, self.func)
+                try:
+                    score = play_one_episode(player, self.func)
+                except RuntimeError:
+                    return
                 self.queue_put_stoppable(self.q, score)
 
     q = queue.Queue(maxsize=2)

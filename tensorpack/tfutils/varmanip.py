@@ -9,6 +9,7 @@ from collections import defaultdict
 import re
 import numpy as np
 from ..utils import logger
+from ..utils.naming import *
 
 __all__ = ['SessionUpdate', 'dump_session_params', 'dump_chkpt_vars',
         'get_savename_from_varname']

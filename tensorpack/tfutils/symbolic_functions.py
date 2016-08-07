@@ -78,6 +78,13 @@ def rms(x, name=None):
             return tf.sqrt(tf.reduce_mean(tf.square(x)), name=name)
     return tf.sqrt(tf.reduce_mean(tf.square(x)), name=name)
 
+def clipped_l2_loss(x, name=None):
+    if name is None:
+        name = 'clipped_l2_loss'
+    sqrcost = tf.square(x)
+    abscost = tf.abs(x)
+    return tf.select(abscost < 1, sqrcost, abscost, name=name)
+
 def get_scalar_var(name, init_value):
     return tf.get_variable(name, shape=[],
             initializer=tf.constant_initializer(init_value),

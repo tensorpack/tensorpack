@@ -7,23 +7,39 @@ import argparse
 import tensorflow as tf
 import imp
 
-from tensorpack.utils import *
+from tensorpack import *
 from tensorpack.tfutils import sessinit, varmanip
-from tensorpack.dataflow import *
 
 parser = argparse.ArgumentParser()
-parser.add_argument(dest='config')
+parser.add_argument('--config', help='config file')
+parser.add_argument('--meta', help='metagraph file')
 parser.add_argument(dest='model')
 parser.add_argument(dest='output')
 args = parser.parse_args()
 
-get_config_func = imp.load_source('config_script', args.config).get_config
+assert args.config or args.meta, "Either config or metagraph must be present!"
 
 with tf.Graph().as_default() as G:
-    config = get_config_func()
-    config.model.build_graph(config.model.get_input_vars(), is_training=False)
+    if args.config:
+        MODEL = imp.load_source('config_script', args.config).Model
+        M = MODEL()
+        M.build_graph(M.get_input_vars(), is_training=False)
+    else:
+        M = ModelFromMetaGraph(args.meta)
+
+    # loading...
     init = sessinit.SaverRestore(args.model)
     sess = tf.Session()
     init.init(sess)
+
+    # dump ...
     with sess.as_default():
-        varmanip.dump_session_params(args.output)
+        if args.output.endswith('npy'):
+            varmanip.dump_session_params(args.output)
+        else:
+            var = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
+            var.extend(tf.get_collection(EXTRA_SAVE_VARS_KEY))
+            logger.info("Variables to dump:")
+            logger.info(", ".join([v.name for v in var]))
+            saver = tf.train.Saver(var_list=var)
+            saver.save(sess, args.output, write_meta_graph=False)

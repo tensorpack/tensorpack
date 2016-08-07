@@ -24,9 +24,9 @@ class GymEnv(RLEnvironment):
     """
     def __init__(self, name, dumpdir=None, viz=False):
         self.gymenv = gym.make(name)
-        #if dumpdir:
-            #mkdir_p(dumpdir)
-            #self.gymenv.monitor.start(dumpdir, force=True, seed=0)
+        if dumpdir:
+            mkdir_p(dumpdir)
+            self.gymenv.monitor.start(dumpdir)
 
         self.reset_stat()
         self.rwd_counter = StatCounter()
