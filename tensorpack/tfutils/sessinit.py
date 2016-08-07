@@ -11,7 +11,7 @@ import six
 
 from ..utils import logger, EXTRA_SAVE_VARS_KEY
 from .common import get_op_var_name
-from .varmanip import SessionUpdate
+from .varmanip import SessionUpdate, get_savename_from_varname
 
 __all__ = ['SessionInit', 'NewSession', 'SaverRestore',
            'ParamRestore', 'ChainInit',
@@ -112,19 +112,17 @@ class SaverRestore(SessionInit):
         var_dict = defaultdict(list)
         chkpt_vars_used = set()
         for v in vars_to_restore:
-            name = v.op.name
-            if 'towerp' in name:
-                logger.error("No variable should be under 'towerp' name scope".format(v.name))
-                # don't overwrite anything in the current prediction graph
-                continue
-            if 'tower' in name:
-                name = re.sub('tower[p0-9]+/', '', name)
-            if self.prefix and name.startswith(self.prefix):
-                name = name[len(self.prefix)+1:]
+            name = get_savename_from_varname(v.name, varname_prefix=self.prefix)
+            # try to load both 'varname' and 'opname' from checkpoint
+            # because some old checkpoint might not have ':0'
             if name in vars_available:
                 var_dict[name].append(v)
                 chkpt_vars_used.add(name)
-                #vars_available.remove(name)
+            elif name.endswith(':0'):
+                name = name[:-2]
+                if name in vars_available:
+                    var_dict[name].append(v)
+                    chkpt_vars_used.add(name)
             else:
                 logger.warn("Variable {} in the graph not found in checkpoint!".format(v.op.name))
         if len(chkpt_vars_used) < len(vars_available):
@@ -141,12 +139,13 @@ class ParamRestore(SessionInit):
         """
         :param param_dict: a dict of {name: value}
         """
+        # use varname (with :0) for consistency
         self.prms = {get_op_var_name(n)[1]: v for n, v in six.iteritems(param_dict)}
 
     def _init(self, sess):
         variables = tf.get_collection(tf.GraphKeys.VARIABLES)
 
-        variable_names = set([k.name for k in variables])
+        variable_names = set([get_savename_from_varname(k.name) for k in variables])
         param_names = set(six.iterkeys(self.prms))
 
         intersect = variable_names & param_names
@@ -159,7 +158,9 @@ class ParamRestore(SessionInit):
             logger.warn("Variable {} in the dict not found in the graph!".format(k))
 
 
-        upd = SessionUpdate(sess, [v for v in variables if v.name in intersect])
+        upd = SessionUpdate(sess,
+                [v for v in variables if \
+                    get_savename_from_varname(v.name) in intersect])
         logger.info("Restoring from dict ...")
         upd.update({name: value for name, value in six.iteritems(self.prms) if name in intersect})
 

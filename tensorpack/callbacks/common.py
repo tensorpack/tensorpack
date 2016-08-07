@@ -36,7 +36,7 @@ class ModelSaver(Callback):
         vars = tf.all_variables()
         var_dict = {}
         for v in vars:
-            name = v.op.name
+            name = v.name
             if re.match('tower[p1-9]', name):
                 #logger.info("Skip {} when saving model.".format(name))
                 continue
