@@ -40,6 +40,9 @@ def get_global_step_var():
     try:
         return tf.get_default_graph().get_tensor_by_name(GLOBAL_STEP_VAR_NAME)
     except KeyError:
+        scope = tf.get_variable_scope()
+        assert scope.name == '', \
+                "Creating global_step_var under a variable scope would cause problems!"
         var = tf.Variable(
             0, trainable=False, name=GLOBAL_STEP_OP_NAME)
         return var

@@ -3,6 +3,7 @@
 # File: dump-model-params.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
+import numpy as np
 import argparse
 import tensorflow as tf
 import imp
@@ -28,7 +29,10 @@ with tf.Graph().as_default() as G:
         M = ModelFromMetaGraph(args.meta)
 
     # loading...
-    init = sessinit.SaverRestore(args.model)
+    if args.model.endswith('.npy'):
+        init = sessinit.ParamRestore(np.load(args.model).item())
+    else:
+        init = sessinit.SaverRestore(args.model)
     sess = tf.Session()
     init.init(sess)
 

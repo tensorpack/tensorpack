@@ -10,4 +10,4 @@ The validation error here is computed on test set.
 ![cifar10](cifar10-resnet.png)
 
 Download model:
-[Cifar10 ResNet-110 (n=18)](https://github.com/ppwwyyxx/tensorpack/releases/tag/cifar10-resnet-110)
+[Cifar10 ResNet-110 (n=18)](https://drive.google.com/open?id=0B9IPQTvr2BBkTXBlZmh1cmlnQ0k)
