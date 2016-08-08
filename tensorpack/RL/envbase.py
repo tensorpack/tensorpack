@@ -88,6 +88,12 @@ class DiscreteActionSpace(ActionSpace):
     def num_actions(self):
         return self.num
 
+    def __repr__(self):
+        return "DiscreteActionSpace({})".format(self.num)
+
+    def __str__(self):
+        return "DiscreteActionSpace({})".format(self.num)
+
 class NaiveRLEnvironment(RLEnvironment):
     """ for testing only"""
     def __init__(self):

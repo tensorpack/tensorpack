@@ -34,7 +34,6 @@ def get_player(viz=False, train=False, dumpdir=None):
     pl = HistoryFramePlayer(pl, FRAME_HISTORY)
     if not train:
         pl = PreventStuckPlayer(pl, 30, 1)
-    pl = LimitLengthPlayer(pl, 40000)
     return pl
 
 class MySimulatorWorker(SimulatorProcess):
