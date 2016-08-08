@@ -21,13 +21,12 @@ class TrainConfig(object):
         :param dataset: the dataset to train. a `DataFlow` instance.
         :param optimizer: a `tf.train.Optimizer` instance defining the optimizer for trainig.
         :param callbacks: a `callback.Callbacks` instance. Define
-            the callbacks to perform during training. It has to contain a
-            SummaryWriter and a PeriodicSaver
+            the callbacks to perform during training.
         :param session_config: a `tf.ConfigProto` instance to instantiate the
             session. default to a session running 1 GPU.
         :param session_init: a `sessinit.SessionInit` instance to
             initialize variables of a session. default to a new session.
-        :param model: a `ModelDesc` instance.j
+        :param model: a `ModelDesc` instance.
         :param starting_epoch: int. default to be 1.
         :param step_per_epoch: the number of steps (SGD updates) to perform in each epoch.
         :param max_epoch: maximum number of epoch to run training. default to inf
@@ -63,9 +62,7 @@ class TrainConfig(object):
         self.extra_threads_procs = kwargs.pop('extra_threads_procs', [])
         assert len(kwargs) == 0, 'Unknown arguments: {}'.format(str(kwargs.keys()))
 
-    def set_tower(self, **kwargs):
-        nr_tower = kwargs.pop('nr_tower', None)
-        tower = kwargs.pop('tower', None)
+    def set_tower(self, nr_tower=None, tower=None):
         assert nr_tower is None or tower is None, "Cannot set both nr_tower and tower!"
         if nr_tower:
             tower = list(range(nr_tower))

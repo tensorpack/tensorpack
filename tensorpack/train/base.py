@@ -68,8 +68,6 @@ class Trainer(object):
         self._trigger_epoch()
         self.config.callbacks.trigger_epoch()
         self.summary_writer.flush()
-        self.stat_holder.add_stat('global_step', self.global_step)
-        self.stat_holder.finalize()
 
     @abstractmethod
     def _trigger_epoch(self):

@@ -108,6 +108,14 @@ class Callbacks(Callback):
             if not isinstance(cb.type, (TrainCallbackType, TestCallbackType)):
                 raise ValueError(
                     "Unknown callback running graph {}!".format(str(cb.type)))
+        # move "StatPrinter" to the last
+        for cb in cbs:
+            if isinstance(cb, StatPrinter):
+                sp = cb
+                cbs.remove(sp)
+                cbs.append(sp)
+                break
+        print(cbs)
 
         self.cbs = cbs
         self.test_callback_context = TestCallbackContext()

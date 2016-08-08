@@ -103,3 +103,7 @@ class StatPrinter(Callback):
 
     def _before_train(self):
         self.trainer.stat_holder.set_print_tag(self.print_tag)
+
+    def _trigger_epoch(self):
+        self.trainer.stat_holder.add_stat('global_step', self.global_step)
+        self.trainer.stat_holder.finalize()
