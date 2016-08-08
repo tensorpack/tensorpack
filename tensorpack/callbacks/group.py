@@ -7,7 +7,7 @@ from contextlib import contextmanager
 import time
 
 from .base import Callback, TrainCallbackType, TestCallbackType
-from .summary import *
+from .stat import *
 from ..utils import *
 
 __all__ = ['Callbacks']
