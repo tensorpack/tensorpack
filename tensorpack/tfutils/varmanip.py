@@ -61,9 +61,6 @@ class SessionUpdate(object):
         for name, value in six.iteritems(prms):
             assert name in self.assign_ops
             for p, v, op in self.assign_ops[name]:
-                if 'fc0/W' in name:
-                    import IPython as IP;
-                    IP.embed(config=IP.terminal.ipapp.load_default_config())
                 varshape = tuple(v.get_shape().as_list())
                 if varshape != value.shape:
                     # TODO only allow reshape when shape different by empty axis
@@ -71,13 +68,7 @@ class SessionUpdate(object):
                             "{}: {}!={}".format(name, varshape, value.shape)
                     logger.warn("Param {} is reshaped during assigning".format(name))
                     value = value.reshape(varshape)
-                if 'fc0/W' in name:
-                    import IPython as IP;
-                    IP.embed(config=IP.terminal.ipapp.load_default_config())
                 self.sess.run(op, feed_dict={p: value})
-                if 'fc0/W' in name:
-                    import IPython as IP;
-                    IP.embed(config=IP.terminal.ipapp.load_default_config())
 
 def dump_session_params(path):
     """ Dump value of all trainable + to_save variables to a dict and save to `path` as

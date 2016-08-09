@@ -88,7 +88,7 @@ class Evaluator(Callback):
         self.input_names = input_names
         self.output_names = output_names
 
-    def _before_train(self):
+    def _setup_graph(self):
         NR_PROC = min(multiprocessing.cpu_count() // 2, 8)
         self.pred_funcs = [self.trainer.get_predict_func(
             self.input_names, self.output_names)] * NR_PROC

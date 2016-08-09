@@ -6,8 +6,15 @@
 import numpy as np
 from six.moves import range
 from .base import DataFlow, RNGDataFlow
+from ..utils.serialize import loads
 
 __all__ = ['FakeData', 'DataFromQueue', 'DataFromList']
+try:
+    import zmq
+except:
+    pass
+else:
+    __all__.append('DataFromSocket')
 
 class FakeData(RNGDataFlow):
     """ Generate fake fixed data of given shapes"""
@@ -43,7 +50,6 @@ class DataFromQueue(DataFlow):
         while True:
             yield self.queue.get()
 
-
 class DataFromList(RNGDataFlow):
     """ Produce data from a list"""
     def __init__(self, lst, shuffle=True):
@@ -62,4 +68,21 @@ class DataFromList(RNGDataFlow):
             idxs = self.rng.shuffle(np.arange(len(self.lst)))
             for k in idxs:
                 yield self.lst[k]
+
+class DataFromSocket(DataFlow):
+    """ Produce data from a zmq socket"""
+    def __init__(self, socket_name):
+        self._name = socket_name
+
+    def get_data(self):
+        try:
+            ctx = zmq.Context()
+            socket = ctx.socket(zmq.PULL)
+            socket.bind(self._name)
+
+            while True:
+                dp = loads(socket.recv(copy=False))
+                yield dp
+        finally:
+            ctx.destroy(linger=0)
 

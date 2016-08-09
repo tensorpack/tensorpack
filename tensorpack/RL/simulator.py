@@ -3,6 +3,7 @@
 # File: simulator.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
+import tensorflow as tf
 import multiprocessing as mp
 import time
 import threading
@@ -13,18 +14,33 @@ import numpy as np
 import six
 from six.moves import queue
 
+from ..callbacks import Callback
+from ..tfutils.varmanip import SessionUpdate
+from ..predict import OfflinePredictor
+from ..utils import logger
 from ..utils.timer import *
 from ..utils.serialize import *
 from ..utils.concurrency import *
 
 __all__ = ['SimulatorProcess', 'SimulatorMaster',
-        'StateExchangeSimulatorProcess', 'SimulatorProcessSharedWeight']
+        'SimulatorProcessStateExchange', 'SimulatorProcessSharedWeight',
+        'TransitionExperience', 'WeightSync']
 
 try:
     import zmq
 except ImportError:
     logger.warn("Error in 'import zmq'. RL simulator won't be available.")
     __all__ = []
+
+class TransitionExperience(object):
+    """ A transition of state, or experience"""
+    def __init__(self, state, action, reward, **kwargs):
+        """ kwargs: whatever other attribute you want to save"""
+        self.state = state
+        self.action = action
+        self.reward = reward
+        for k, v in six.iteritems(kwargs):
+            setattr(self, k, v)
 
 class SimulatorProcessBase(mp.Process):
     __metaclass__ = ABCMeta
@@ -39,7 +55,7 @@ class SimulatorProcessBase(mp.Process):
         pass
 
 
-class StateExchangeSimulatorProcess(SimulatorProcessBase):
+class SimulatorProcessStateExchange(SimulatorProcessBase):
     """
     A process that simulates a player and communicates to master to
     send states and receive the next action
@@ -50,7 +66,7 @@ class StateExchangeSimulatorProcess(SimulatorProcessBase):
         """
         :param idx: idx of this process
         """
-        super(StateExchangeSimulatorProcess, self).__init__(idx)
+        super(SimulatorProcessStateExchange, self).__init__(idx)
         self.c2s = pipe_c2s
         self.s2c = pipe_s2c
 
@@ -78,7 +94,7 @@ class StateExchangeSimulatorProcess(SimulatorProcessBase):
             state = player.current_state()
 
 # compatibility
-SimulatorProcess = StateExchangeSimulatorProcess
+SimulatorProcess = SimulatorProcessStateExchange
 
 class SimulatorMaster(threading.Thread):
     """ A base thread to communicate with all StateExchangeSimulatorProcess.
@@ -90,16 +106,6 @@ class SimulatorMaster(threading.Thread):
     class ClientState(object):
         def __init__(self):
             self.memory = []    # list of Experience
-
-    class Experience(object):
-        """ A transition of state, or experience"""
-        def __init__(self, state, action, reward, **kwargs):
-            """ kwargs: whatever other attribute you want to save"""
-            self.state = state
-            self.action = action
-            self.reward = reward
-            for k, v in six.iteritems(kwargs):
-                setattr(self, k, v)
 
     def __init__(self, pipe_c2s, pipe_s2c):
         super(SimulatorMaster, self).__init__()
@@ -170,8 +176,7 @@ class SimulatorMaster(threading.Thread):
         """
 
     def __del__(self):
-        self.socket.close()
-        self.context.term()
+        self.context.destroy(linger=0)
 
 
 class SimulatorProcessDF(SimulatorProcessBase):
@@ -191,18 +196,15 @@ class SimulatorProcessDF(SimulatorProcessBase):
         self.c2s_socket.connect(self.pipe_c2s)
 
         self._prepare()
-        while True:
-            dp = self._produce_datapoint()
-            self.c2s_socket.send(dumps(
-                (self.identity, dp)
-                ), copy=False)
+        for dp in self.get_data():
+            self.c2s_socket.send(dumps(dp), copy=False)
 
     @abstractmethod
     def _prepare(self):
         pass
 
     @abstractmethod
-    def _produce_datapoint(self):
+    def get_data(self):
         pass
 
 
@@ -212,31 +214,61 @@ class SimulatorProcessSharedWeight(SimulatorProcessDF):
 
     Start me under some CUDA_VISIBLE_DEVICES set!
     """
-    def __init__(self, idx, pipe_c2s, evt, shared_dic):
+    def __init__(self, idx, pipe_c2s, condvar, shared_dic, pred_config):
         super(SimulatorProcessSharedWeight, self).__init__(idx, pipe_c2s)
-        self.evt = evt
+        self.condvar = condvar
         self.shared_dic = shared_dic
+        self.pred_config = pred_config
 
     def _prepare(self):
-        self._build_session()
+        self.predictor = OfflinePredictor(self.pred_config)
+        with self.predictor.graph.as_default():
+            vars_to_update = self._params_to_update()
+            self.sess_updater = SessionUpdate(
+                    self.predictor.session, vars_to_update)
+        # TODO setup callback for explore?
+        self.predictor.graph.finalize()
 
-        # start a thread to wait for evt
+        self.weight_lock = threading.Lock()
+
+        # start a thread to wait for notification
         def func():
-            self.evt.wait()
-            self._trigger_evt()
-        self.evt_th = LoopThread(func, pausable=False)
+            self.condvar.acquire()
+            while True:
+                self.condvar.wait()
+                self._trigger_evt()
+        self.evt_th = threading.Thread(target=func)
+        self.evt_th.daemon = True
         self.evt_th.start()
 
-    @abstractmethod
     def _trigger_evt(self):
-        pass
-        #self.sess_updater.update(self.shared_dic['params'])
+        with self.weight_lock:
+            self.sess_updater.update(self.shared_dic['params'])
 
-    @abstractmethod
-    def _build_session(self):
-        # build session and self.sess_updaer
-        pass
+    def _params_to_update(self):
+        # can be overwritten to update more params
+        return tf.trainable_variables()
 
+class WeightSync(Callback):
+    """ Sync weight from main process to shared_dic and notify"""
+    def __init__(self, condvar, shared_dic):
+        self.condvar = condvar
+        self.shared_dic = shared_dic
+
+    def _setup_graph(self):
+        self.vars = self._params_to_update()
+
+    def _params_to_update(self):
+        # can be overwritten to update more params
+        return tf.trainable_variables()
+
+    def _trigger_epoch(self):
+        logger.info("Updating weights ...")
+        dic = {v.name: v.eval() for v in self.vars}
+        self.shared_dic['params'] = dic
+        self.condvar.acquire()
+        self.condvar.notify_all()
+        self.condvar.release()
 
 if __name__ == '__main__':
     import random
