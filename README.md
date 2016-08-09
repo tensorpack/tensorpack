@@ -13,7 +13,7 @@ See some interesting [examples](examples) to learn about the framework:
 
 ## Features:
 
-You need to abstract your training task into three components:
+Abstract your training task into three components:
 
 1. Model, or graph. `models/` has some scoped abstraction of common models.
 	`LinearWrap` and `argscope` makes large models look simpler.
@@ -43,8 +43,8 @@ Multi-GPU training is ready to use by simply switching the trainer.
 pip install --user -r requirements.txt
 pip install --user -r opt-requirements.txt (some optional dependencies, you can install later if needed)
 ```
-+ Use [tcmalloc](http://goog-perftools.sourceforge.net/doc/tcmalloc.html) whenever possible: see [TF issue](https://github.com/tensorflow/tensorflow/issues/2942)
-+ allow `import tensorpack` everywhere:
++ Use [tcmalloc](http://goog-perftools.sourceforge.net/doc/tcmalloc.html) whenever possible
++ Enable `import tensorpack`:
 ```
 export PYTHONPATH=$PYTHONPATH:`readlink -f path/to/tensorpack`
 ```

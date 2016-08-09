@@ -115,7 +115,6 @@ class Callbacks(Callback):
                 cbs.remove(sp)
                 cbs.append(sp)
                 break
-        print(cbs)
 
         self.cbs = cbs
         self.test_callback_context = TestCallbackContext()
