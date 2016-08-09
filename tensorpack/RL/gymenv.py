@@ -11,19 +11,23 @@ try:
 except ImportError:
     logger.warn("Cannot import gym. GymEnv won't be available.")
 
+import threading
+
 from ..utils.fs import *
 from ..utils.stat import *
-
 from .envbase import RLEnvironment, DiscreteActionSpace
 
 __all__ = ['GymEnv']
+
+_ALE_LOCK = threading.Lock()
 
 class GymEnv(RLEnvironment):
     """
     An OpenAI/gym wrapper. Will auto restart.
     """
     def __init__(self, name, dumpdir=None, viz=False):
-        self.gymenv = gym.make(name)
+        with _ALE_LOCK:
+            self.gymenv = gym.make(name)
         if dumpdir:
             mkdir_p(dumpdir)
             self.gymenv.monitor.start(dumpdir)
