@@ -67,7 +67,8 @@ def set_logger_dir(dirname, action=None):
     if os.path.isdir(dirname):
         if not action:
             _logger.warn("""\
-Directory {} exists! Please either backup/delete it, or use a new directory. \
+Directory {} exists! Please either backup/delete it, or use a new directory.""")
+            _logger.warn("""\
 If you're resuming from a previous run you can choose to keep it.""".format(dirname))
             _logger.info("Select Action: k (keep) / b (backup) / d (delete) / n (new):")
         while not action:
