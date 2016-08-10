@@ -117,6 +117,9 @@ class EnqueueThread(threading.Thread):
             try:
                 while True:
                     for dp in self.dataflow.get_data():
+                        #import IPython;
+                        #IPython.embed(config=IPython.terminal.ipapp.load_default_config())
+
                         if self.coord.should_stop():
                             return
                         feed = dict(zip(self.input_vars, dp))

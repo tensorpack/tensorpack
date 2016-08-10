@@ -62,8 +62,7 @@ class AtariPlayer(RLEnvironment):
         with _ALE_LOCK:
             self.ale = ALEInterface()
             self.rng = get_rng(self)
-
-            self.ale.setInt(b"random_seed", self.rng.randint(0, 10000))
+            self.ale.setInt(b"random_seed", self.rng.randint(0, 30000))
             self.ale.setBool(b"showinfo", False)
 
             self.ale.setInt(b"frame_skip", 1)
@@ -132,7 +131,8 @@ class AtariPlayer(RLEnvironment):
 
     def restart_episode(self):
         self.current_episode_score.reset()
-        self.ale.reset_game()
+        with _ALE_LOCK:
+            self.ale.reset_game()
 
         # random null-ops start
         n = self.rng.randint(self.nullop_start)
@@ -160,11 +160,12 @@ class AtariPlayer(RLEnvironment):
 
         self.current_episode_score.feed(r)
         isOver = self.ale.game_over()
-        if isOver:
-            self.finish_episode()
-            self.restart_episode()
         if self.live_lost_as_eoe:
             isOver = isOver or newlives < oldlives
+        if isOver:
+            self.finish_episode()
+        if self.ale.game_over():
+            self.restart_episode()
         return (r, isOver)
 
 if __name__ == '__main__':

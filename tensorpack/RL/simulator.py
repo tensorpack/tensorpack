@@ -14,6 +14,7 @@ import numpy as np
 import six
 from six.moves import queue
 
+from ..models._common import disable_layer_logging
 from ..callbacks import Callback
 from ..tfutils.varmanip import SessionUpdate
 from ..predict import OfflinePredictor
@@ -221,6 +222,7 @@ class SimulatorProcessSharedWeight(SimulatorProcessDF):
         self.pred_config = pred_config
 
     def _prepare(self):
+        disable_layer_logging()
         self.predictor = OfflinePredictor(self.pred_config)
         with self.predictor.graph.as_default():
             vars_to_update = self._params_to_update()
@@ -244,6 +246,7 @@ class SimulatorProcessSharedWeight(SimulatorProcessDF):
     def _trigger_evt(self):
         with self.weight_lock:
             self.sess_updater.update(self.shared_dic['params'])
+            logger.info("Updated.")
 
     def _params_to_update(self):
         # can be overwritten to update more params
@@ -262,7 +265,12 @@ class WeightSync(Callback):
         # can be overwritten to update more params
         return tf.trainable_variables()
 
+    def _before_train(self):
+        self._sync()
     def _trigger_epoch(self):
+        self._sync()
+
+    def _sync(self):
         logger.info("Updating weights ...")
         dic = {v.name: v.eval() for v in self.vars}
         self.shared_dic['params'] = dic
