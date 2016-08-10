@@ -192,11 +192,11 @@ class StatMonitorParamSetter(HyperParamSetter):
             statistics update.
 
         For example, if error wasn't decreasing, anneal the learning rate:
-            NonDecreasingStatMonitorParamSetter('learning_rate', 'val-error', lambda x: x * 0.2)
+            StatMonitorParamSetter('learning_rate', 'val-error', lambda x: x * 0.2)
 
         If reverse==True, use 'increasing' instead of decreasing
         """
-        super(NonDecreasingStatMonitorParamSetter, self).__init__(param)
+        super(StatMonitorParamSetter, self).__init__(param)
         self.stat_name = stat_name
         self.value_func = value_func
         self.last_k = last_k
