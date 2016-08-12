@@ -10,7 +10,7 @@ from .base import Callback
 from ..utils import *
 from ..tfutils.varmanip import get_savename_from_varname
 
-__all__ = ['ModelSaver']
+__all__ = ['ModelSaver', 'MinSaver', 'MaxSaver']
 
 class ModelSaver(Callback):
     """
@@ -81,15 +81,22 @@ because {} will be saved".format(v.name, var_dict[name].name))
             logger.exception("Exception in ModelSaver.trigger_epoch!")
 
 class MinSaver(Callback):
-    def __init__(self, monitor_stat):
+    def __init__(self, monitor_stat, reverse=True):
         self.monitor_stat = monitor_stat
+        self.reverse = reverse
         self.min = None
 
     def _get_stat(self):
         return self.trainer.stat_holder.get_stat_now(self.monitor_stat)
 
+    def _need_save(self):
+        if self.reverse:
+            return self._get_stat() > self.min
+        else:
+            return self._get_stat() < self.min
+
     def _trigger_epoch(self):
-        if self.min is None or self._get_stat() < self.min:
+        if self.min is None or self._need_save():
             self.min = self._get_stat()
             self._save()
 
@@ -97,10 +104,17 @@ class MinSaver(Callback):
         ckpt = tf.train.get_checkpoint_state(logger.LOG_DIR)
         if ckpt is None:
             raise RuntimeError(
-                "Cannot find a checkpoint state. Do you forget to use ModelSaver before MinSaver?")
+                "Cannot find a checkpoint state. Do you forget to use ModelSaver?")
         path = chpt.model_checkpoint_path
-        newname = os.path.join(logger.LOG_DIR, 'min_' + self.monitor_stat)
+        newname = os.path.join(logger.LOG_DIR,
+                'max_' if self.reverse else 'min_' + self.monitor_stat)
         shutil.copy(path, newname)
-        logger.info("Model with minimum {} saved.".format(self.monitor_stat))
+        logger.info("Model with {} {} saved.".format(
+            'maximum' if self.reverse else 'minimum', self.monitor_stat))
+
+class MaxSaver(MinSaver):
+    def __init__(self, monitor_stat):
+        super(MaxSaver, self).__init__(monitor_stat, True)
+
 
 
