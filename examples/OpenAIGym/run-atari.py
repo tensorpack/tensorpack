@@ -22,18 +22,14 @@ IMAGE_SHAPE3 = IMAGE_SIZE + (CHANNEL,)
 NUM_ACTIONS = None
 ENV_NAME = None
 
-def get_player(viz=False, train=False, dumpdir=None):
+def get_player(dumpdir=None):
     pl = GymEnv(ENV_NAME, dumpdir=dumpdir)
-    def func(img):
-        return cv2.resize(img, IMAGE_SIZE[::-1])
-    pl = MapPlayerState(pl, func)
+    pl = MapPlayerState(pl, lambda img: cv2.resize(img, IMAGE_SIZE[::-1]))
 
     global NUM_ACTIONS
     NUM_ACTIONS = pl.get_action_space().num_actions()
 
     pl = HistoryFramePlayer(pl, FRAME_HISTORY)
-    if not train:
-        pl = PreventStuckPlayer(pl, 30, 1)
     return pl
 
 class MySimulatorWorker(SimulatorProcess):
@@ -68,10 +64,6 @@ class Model(ModelDesc):
         state, action, futurereward = inputs
         policy = self._get_NN_prediction(state, is_training)
         self.logits = tf.nn.softmax(policy, name='logits')
-
-    def get_gradient_processor(self):
-        return [MapGradient(lambda grad: tf.clip_by_average_norm(grad, 0.1)),
-                SummaryGradient()]
 
 def play_one_episode(player, func, verbose=False):
     def f(s):
@@ -109,5 +101,5 @@ if __name__ == '__main__':
             model=Model(),
             session_init=SaverRestore(args.load),
             input_var_names=['state'],
-            output_var_names=['logits:0'])
+            output_var_names=['logits'])
     run_submission(cfg)

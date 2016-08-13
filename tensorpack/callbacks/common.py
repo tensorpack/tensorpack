@@ -107,9 +107,9 @@ class MinSaver(Callback):
                 "Cannot find a checkpoint state. Do you forget to use ModelSaver?")
         path = chpt.model_checkpoint_path
         newname = os.path.join(logger.LOG_DIR,
-                'max_' if self.reverse else 'min_' + self.monitor_stat)
+                'max-' if self.reverse else 'min-' + self.monitor_stat)
         shutil.copy(path, newname)
-        logger.info("Model with {} {} saved.".format(
+        logger.info("Model with {} '{}' saved.".format(
             'maximum' if self.reverse else 'minimum', self.monitor_stat))
 
 class MaxSaver(MinSaver):
