@@ -221,6 +221,7 @@ class StatMonitorParamSetter(HyperParamSetter):
                 cnt += 1
         if cnt >= self.min_non_decreasing \
                 and self.less_than(hist[0], hist[-1]):
+            self.last_changed_epoch = self.epoch_num
             return self.value_func(self.get_current_value())
         return None
 
