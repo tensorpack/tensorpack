@@ -43,7 +43,11 @@ with tf.Graph().as_default() as G:
         else:
             var = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
             var.extend(tf.get_collection(EXTRA_SAVE_VARS_KEY))
+            var_dict = {}
+            for v in var:
+                name = varmanip.get_savename_from_varname(v.name)
+                var_dict[name] = v
             logger.info("Variables to dump:")
-            logger.info(", ".join([v.name for v in var]))
-            saver = tf.train.Saver(var_list=var)
+            logger.info(", ".join(var_dict.keys()))
+            saver = tf.train.Saver(var_list=var_dict)
             saver.save(sess, args.output, write_meta_graph=False)
