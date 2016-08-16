@@ -76,7 +76,7 @@ def run_submission(cfg):
     dirname = 'gym-submit'
     player = get_player(dumpdir=dirname)
     predfunc = get_predict_func(cfg)
-    for k in range(10):
+    for k in range(100):
         if k != 0:
             player.restart_episode()
         score = play_one_episode(player, predfunc)
