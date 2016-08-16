@@ -25,7 +25,7 @@ class GymEnv(RLEnvironment):
     """
     An OpenAI/gym wrapper. Will auto restart.
     """
-    def __init__(self, name, dumpdir=None, viz=False):
+    def __init__(self, name, dumpdir=None, viz=False, auto_restart=True):
         with _ALE_LOCK:
             self.gymenv = gym.make(name)
         if dumpdir:
@@ -35,6 +35,7 @@ class GymEnv(RLEnvironment):
         self.reset_stat()
         self.rwd_counter = StatCounter()
         self.restart_episode()
+        self.auto_restart = auto_restart
         self.viz = viz
 
     def restart_episode(self):
@@ -55,7 +56,8 @@ class GymEnv(RLEnvironment):
         self.rwd_counter.feed(r)
         if isOver:
             self.finish_episode()
-            self.restart_episode()
+            if self.auto_restart:
+                self.restart_episode()
         return r, isOver
 
     def get_action_space(self):

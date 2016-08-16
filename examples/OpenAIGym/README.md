@@ -7,10 +7,15 @@
 
 Models are available for the following gym atari environments (click links for videos):
 
-+ [Breakout-v0](https://gym.openai.com/evaluations/eval_L55gczPrQJamMGihq9tzA)
-+ [AirRaid-v0](https://gym.openai.com/evaluations/eval_zIeNk5MxSGOmvGEUxrZDUw)
-+ [Asterix-v0](https://gym.openai.com/evaluations/eval_mees2c58QfKm5GspCjRfCA)
++ [AirRaid-v0](https://gym.openai.com/evaluations/eval_zIeNk5MxSGOmvGEUxrZDUw) (a bit flickering, don't know why)
++ [Alien-v0](https://gym.openai.com/evaluations/eval_8NR1IvjTQkSIT6En4xSMA)
 + [Amidar-v0](https://gym.openai.com/evaluations/eval_HwEazbHtTYGpCialv9uPhA)
++ [Assault-v0](https://gym.openai.com/evaluations/eval_tCiHwy5QrSdFVucSbBV6Q)
++ [Asterix-v0](https://gym.openai.com/evaluations/eval_mees2c58QfKm5GspCjRfCA)
++ [Asteroids-v0](https://gym.openai.com/evaluations/eval_8eHKsRL4RzuZEq9AOLZA)
++ [Atlantis-v0](https://gym.openai.com/evaluations/eval_Z1B3d7A1QCaQk1HpO1Rg)
++ [Breakout-v0](https://gym.openai.com/evaluations/eval_L55gczPrQJamMGihq9tzA)
++ [Pong-v0](https://gym.openai.com/evaluations/eval_8L7SV59nSW6GGbbP3N4G6w)
 + [Seaquest-v0](https://gym.openai.com/evaluations/eval_N2624y3NSJWrOgoMSpOi4w)
 
-Note that atari game settings in gym is more difficult than the settings DeepMind papers, therefore the scores are not comparable.
+Note that atari game settings in gym is quite different from DeepMind papers, so the scores are not comparable.

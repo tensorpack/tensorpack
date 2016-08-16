@@ -271,8 +271,9 @@ def get_config():
                 ClassificationError('wrong-top1', 'val-top1-error'),
                 ClassificationError('wrong-top5', 'val-top5-error')]),
             ScheduledHyperParamSetter('learning_rate',
-                                      [(5, 0.03), (7, 0.01), (9, 0.006),
-                                       (15, 0.001), (20, 2e-4), (24, 6e-5)]),
+                                      [(5, 0.03), (9, 0.01), (12, 0.006),
+                                       (17, 0.003), (22, 1e-3), (36, 2e-4),
+                                       (41, 8e-5), (48, 1e-5), (53, 2e-6)]),
             HumanHyperParamSetter('learning_rate')
         ]),
         session_config=sess_config,

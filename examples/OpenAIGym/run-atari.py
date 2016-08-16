@@ -23,7 +23,7 @@ NUM_ACTIONS = None
 ENV_NAME = None
 
 def get_player(dumpdir=None):
-    pl = GymEnv(ENV_NAME, dumpdir=dumpdir)
+    pl = GymEnv(ENV_NAME, dumpdir=dumpdir, auto_restart=False)
     pl = MapPlayerState(pl, lambda img: cv2.resize(img, IMAGE_SIZE[::-1]))
 
     global NUM_ACTIONS
@@ -31,10 +31,6 @@ def get_player(dumpdir=None):
 
     pl = HistoryFramePlayer(pl, FRAME_HISTORY)
     return pl
-
-class MySimulatorWorker(SimulatorProcess):
-    def _build_player(self):
-        return get_player(train=True)
 
 class Model(ModelDesc):
     def _get_input_vars(self):
@@ -80,7 +76,9 @@ def run_submission(cfg):
     dirname = 'gym-submit'
     player = get_player(dumpdir=dirname)
     predfunc = get_predict_func(cfg)
-    for _ in range(100):
+    for k in range(10):
+        if k != 0:
+            player.restart_episode()
         score = play_one_episode(player, predfunc)
         print("Score:", score)
 
