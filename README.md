@@ -29,6 +29,7 @@ Abstract your training task into three components:
 	+ Print some variables of interest
 	+ Run inference on a test dataset
 	+ Run some operations once a while
+	+ Send the accuracy to your phone
 
 With the above components defined, tensorpack trainer will run the training iterations for you.
 Multi-GPU training is ready to use by simply switching the trainer.

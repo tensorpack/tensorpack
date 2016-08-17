@@ -3,15 +3,14 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import tensorflow as tf
-import re
-import os
+import re, os
 import operator
 import json
 
 from .base import Callback
 from ..utils import *
 
-__all__ = ['StatHolder', 'StatPrinter']
+__all__ = ['StatHolder', 'StatPrinter', 'SendStat']
 
 class StatHolder(object):
     """
@@ -107,3 +106,27 @@ class StatPrinter(Callback):
     def _trigger_epoch(self):
         self.trainer.stat_holder.add_stat('global_step', self.global_step)
         self.trainer.stat_holder.finalize()
+
+class SendStat(Callback):
+    """
+    Execute a command with some specific stats.
+    For example, send the stats to your phone through pushbullet:
+
+        SendStat('curl -u your_id: https://api.pushbullet.com/v2/pushes \
+            -d type=note -d title="validation error" \
+            -d body={validation_error} > /dev/null 2>&1',
+                'validation_error')
+    """
+    def __init__(self, command, stats):
+        self.command = command
+        if not isinstance(stats, list):
+            stats = [stats]
+        self.stats = stats
+
+    def _trigger_epoch(self):
+        holder = self.trainer.stat_holder
+        v = {k: holder.get_stat_now(k) for k in self.stats}
+        cmd = self.command.format(**v)
+        ret = os.system(cmd)
+        if ret != 0:
+            logger.error("Command {} failed with ret={}!".format(cmd, ret))

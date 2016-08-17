@@ -19,9 +19,12 @@ Models are available for the following gym atari environments (click links for v
 + [DoubleDunk-v0](https://gym.openai.com/evaluations/eval_FI1GpF4TlCuf29KccTpQ)
 + [ElevatorAction-v0](https://gym.openai.com/evaluations/eval_SqeAouMvR0icRivx2xprZg)
 + [FishingDerby-v0](https://gym.openai.com/evaluations/eval_pPLCnFXsTVaayrIboDOs0g)
++ [JourneyEscape](https://gym.openai.com/evaluations/eval_S9nQuXLRSu7S5x21Ay6AA)
 + [Pong-v0](https://gym.openai.com/evaluations/eval_8L7SV59nSW6GGbbP3N4G6w)
++ [Qbert-v0](https://gym.openai.com/evaluations/eval_wekCJkrWQm9NrOUzltXg)
 + [Seaquest-v0](https://gym.openai.com/evaluations/eval_N2624y3NSJWrOgoMSpOi4w)
 + [Tennis-v0](https://gym.openai.com/evaluations/eval_gDjJD0MMS1yLm1T0hdqI4g)
++ [UpNDown-v0](https://gym.openai.com/evaluations/eval_KmkvMJkxQFSED20wFUMdIA)
 + [VideoPinball-v0](https://gym.openai.com/evaluations/eval_PWwzNhVFR2CxjYvEsPfT1g)
 
 Note that atari game settings in gym are quite different from DeepMind papers, so the scores are not comparable. The most notable differences are:
