@@ -78,12 +78,16 @@ def rms(x, name=None):
             return tf.sqrt(tf.reduce_mean(tf.square(x)), name=name)
     return tf.sqrt(tf.reduce_mean(tf.square(x)), name=name)
 
-def clipped_l2_loss(x, name=None):
+def huber_loss(x, delta=1, name=None):
     if name is None:
-        name = 'clipped_l2_loss'
+        name = 'huber_loss'
     sqrcost = tf.square(x)
     abscost = tf.abs(x)
-    return tf.select(abscost < 1, sqrcost, abscost, name=name)
+    return tf.reduce_sum(
+            tf.select(abscost < delta,
+                sqrcost * 0.5,
+                abscost * delta - 0.5 * delta ** 2),
+            name=name)
 
 def get_scalar_var(name, init_value):
     return tf.get_variable(name, shape=[],

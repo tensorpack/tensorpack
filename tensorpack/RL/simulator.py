@@ -126,7 +126,6 @@ class SimulatorMaster(threading.Thread):
 
         def f():
             msg = self.send_queue.get()
-            # slow
             self.s2c_socket.send_multipart(msg, copy=False)
         self.send_thread = LoopThread(f)
         self.send_thread.daemon = True
@@ -142,11 +141,7 @@ class SimulatorMaster(threading.Thread):
 
     def run(self):
         self.clients = defaultdict(self.ClientState)
-        #cnt = 0
         while True:
-            #cnt += 1
-            #if cnt % 3000 == 0:
-                #print_total_timer()
             msg = loads(self.c2s_socket.recv(copy=False).bytes)
             ident, state, reward, isOver = msg
             client = self.clients[ident]
@@ -179,7 +174,6 @@ class SimulatorMaster(threading.Thread):
     def __del__(self):
         self.context.destroy(linger=0)
 
-
 class SimulatorProcessDF(SimulatorProcessBase):
     """ A simulator which contains a forward model itself, allowing
     it to produce data points directly """
@@ -207,7 +201,6 @@ class SimulatorProcessDF(SimulatorProcessBase):
     @abstractmethod
     def get_data(self):
         pass
-
 
 class SimulatorProcessSharedWeight(SimulatorProcessDF):
     """ A simulator process with an extra thread waiting for event,

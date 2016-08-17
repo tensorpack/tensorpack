@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# File: summary.py
+# File: stat.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import tensorflow as tf
