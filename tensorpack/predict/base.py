@@ -23,7 +23,15 @@ class PredictorBase(object):
     return_input
     """
 
-    def __call__(self, dp):
+    def __call__(self, *args):
+        """
+        if len(args) == 1, assume args[0] is a datapoint (a list)
+        else, assume args is a datapoinnt
+        """
+        if len(args) != 1:
+            dp = args
+        else:
+            dp = args[0]
         output = self._do_call(dp)
         if self.return_input:
             return (dp, output)
