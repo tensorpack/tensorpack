@@ -15,8 +15,8 @@ Experiements were repeated 15 times for p=0, 10 times for p=0.02 & 0.05, and 5 t
 of p. All experiements run for 100 epochs, with lr decay, which are enough for them to converge.
 
 I suppose the disturb method works as a random noise that could prevent SGD from getting stuck, if
-training data are too easy or too few.
-It didn't work for harder problems such as SVHN:
+training data are too easy to fit or too few.
+The method didn't work for slightly harder problems such as SVHN:
 
 ![svhn](svhn.png)
 
