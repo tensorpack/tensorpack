@@ -155,3 +155,4 @@ if __name__ == '__main__':
         if args.gpu:
             config.nr_tower = len(args.gpu.split(','))
         QueueInputTrainer(config).train()
+        #AsyncMultiGPUTrainer(config).train()

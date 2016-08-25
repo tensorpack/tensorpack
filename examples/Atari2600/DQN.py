@@ -115,7 +115,7 @@ class Model(ModelDesc):
 
         target = reward + (1.0 - tf.cast(isOver, tf.float32)) * GAMMA * tf.stop_gradient(best_v)
 
-        cost = symbf.clipped_l2_loss(target - pred_action_value)
+        cost = symbf.huber_loss(target - pred_action_value)
         summary.add_param_summary([('conv.*/W', ['histogram', 'rms']),
                                    ('fc.*/W', ['histogram', 'rms']) ])   # monitor all W
         self.cost = tf.reduce_mean(cost, name='cost')
