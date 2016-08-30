@@ -27,12 +27,27 @@ class TowerContext(object):
         self._is_training = is_training
 
     @property
+    def is_main_training_tower(self):
+        return self.is_training and (self._name == '' or self._name == 'tower0')
+
+    @property
     def is_main_tower(self):
         return self._name == '' or self._name == 'tower0'
 
     @property
     def is_training(self):
         return self._is_training
+
+    def find_tensor_in_main_tower(self, graph, name):
+        if self.is_main_tower:
+            return graph.get_tensor_by_name(name)
+        if name.startswith('towerp'):
+            newname = re.sub('towerp[0-9]+/', '', name)
+            try:
+                return graph.get_tensor_by_name(newname)
+            except KeyError:
+                newname = re.sub('towerp[0-9]+/', 'tower0/', name)
+                return graph.get_tensor_by_name(newname)
 
     def __enter__(self):
         global _CurrentTowerContext
