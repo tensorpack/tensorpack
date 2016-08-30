@@ -7,6 +7,7 @@ from abc import abstractmethod, ABCMeta, abstractproperty
 import tensorflow as tf
 import six
 
+from ..models import TowerContext
 from ..utils import logger
 from ..tfutils import get_vars_by_names
 
@@ -88,7 +89,8 @@ class OfflinePredictor(OnlinePredictor):
         self.graph = tf.Graph()
         with self.graph.as_default():
             input_vars = config.model.get_input_vars()
-            config.model._build_graph(input_vars, False)
+            with TowerContext('', False):
+                config.model.build_graph(input_vars)
 
             input_vars = get_vars_by_names(config.input_var_names)
             output_vars = get_vars_by_names(config.output_var_names)
@@ -99,7 +101,7 @@ class OfflinePredictor(OnlinePredictor):
                     sess, input_vars, output_vars, config.return_input)
 
 
-def build_multi_tower_prediction_graph(model, towers, prefix='towerp'):
+def build_multi_tower_prediction_graph(model, towers):
     """
     :param towers: a list of gpu relative id.
     """
@@ -107,26 +109,24 @@ def build_multi_tower_prediction_graph(model, towers, prefix='towerp'):
     for k in towers:
         logger.info(
 "Building graph for predictor tower {}...".format(k))
-        with tf.device('/gpu:{}'.format(k) if k >= 0 else '/cpu:0'),\
-                tf.name_scope('{}{}'.format(prefix, k)):
-            model._build_graph(input_vars, False)
+        with tf.device('/gpu:{}'.format(k) if k >= 0 else '/cpu:0'), \
+                TowerContext('towerp{}'.format(k)):
+            model.build_graph(input_vars)
             tf.get_variable_scope().reuse_variables()
 
 class MultiTowerOfflinePredictor(OnlinePredictor):
-    PREFIX = 'towerp'
     def __init__(self, config, towers):
         self.graph = tf.Graph()
         self.predictors = []
         with self.graph.as_default():
             # TODO backup summary keys?
-            build_multi_tower_prediction_graph(config.model, towers, self.PREFIX)
+            build_multi_tower_prediction_graph(config.model, towers)
 
             self.sess = tf.Session(config=config.session_config)
             config.session_init.init(self.sess)
 
             input_vars = get_vars_by_names(config.input_var_names)
 
-            # use the first tower for compatible PredictorBase interface
             for k in towers:
                 output_vars = get_vars_by_names(
                         ['{}{}/'.format(self.PREFIX, k) + n \
@@ -135,6 +135,7 @@ class MultiTowerOfflinePredictor(OnlinePredictor):
                     self.sess, input_vars, output_vars, config.return_input))
 
     def _do_call(self, dp):
+        # use the first tower for compatible PredictorBase interface
         return self.predictors[0]._do_call(dp)
 
     def get_predictors(self, n):

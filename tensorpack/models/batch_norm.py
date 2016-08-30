@@ -7,6 +7,7 @@ import tensorflow as tf
 from copy import copy
 import re
 
+from .model_desc import get_current_tower_context
 from ..utils import logger, EXTRA_SAVE_VARS_KEY
 from ._common import layer_register
 
@@ -54,6 +55,7 @@ def BatchNorm(x, use_local_stat=True, decay=0.9, epsilon=1e-5):
 
     # XXX a hack to handle training tower & prediction tower together....
     emaname = 'EMA'
+    #ctx = get_current_model_context()
     if not batch_mean.name.startswith('towerp'):
         # training tower
         with tf.name_scope(None): # https://github.com/tensorflow/tensorflow/issues/2740

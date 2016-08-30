@@ -10,19 +10,18 @@ from six.moves import zip
 from .base import Trainer
 
 from ..dataflow.common import RepeatedData
-from ..tfutils.summary import summary_moving_average
-from ..tfutils.modelutils import describe_model
 
+from ..models import TowerContext
 from ..utils import *
 from ..tfutils import *
-from ..tfutils.summary import add_moving_summary
+from ..tfutils.summary import summary_moving_average, add_moving_summary
+from ..tfutils.modelutils import describe_model
 from ..predict import OnlinePredictor, build_multi_tower_prediction_graph
 
 __all__ = ['SimpleTrainer', 'QueueInputTrainer']
 
 class PredictorFactory(object):
     """ Make predictors for a trainer"""
-    PREFIX = 'towerp'
 
     def __init__(self, sess, model, towers):
         """
@@ -42,7 +41,7 @@ class PredictorFactory(object):
             self._build_predict_tower()
         tower = self.towers[tower % len(self.towers)]
         raw_input_vars = get_vars_by_names(input_names)
-        output_names = ['{}{}/'.format(self.PREFIX, tower) + n for n in output_names]
+        output_names = ['towerp{}/'.format(tower) + n for n in output_names]
         output_vars = get_vars_by_names(output_names)
         return OnlinePredictor(self.sess, raw_input_vars, output_vars)
 
@@ -52,7 +51,7 @@ class PredictorFactory(object):
         with tf.name_scope(None), \
                 freeze_collection(SUMMARY_BACKUP_KEYS):
             build_multi_tower_prediction_graph(
-                    self.model, self.towers, prefix=self.PREFIX)
+                    self.model, self.towers)
         self.tower_built = True
 
 class SimpleTrainer(Trainer):
@@ -64,8 +63,9 @@ class SimpleTrainer(Trainer):
     def train(self):
         model = self.model
         self.input_vars = model.get_input_vars()
-        model.build_graph(self.input_vars, True)
-        cost_var = model.get_cost() # TODO assert scalar
+        with TowerContext(''):
+            model.build_graph(self.input_vars)
+            cost_var = model.get_cost() # TODO assert scalar
         add_moving_summary(cost_var)
 
         grads = self.config.optimizer.compute_gradients(cost_var)
@@ -180,8 +180,9 @@ class QueueInputTrainer(Trainer):
             #self.dequed_inputs = [tf.Variable(tf.random_normal([128,224,224,3],
                 #dtype=tf.float32), trainable=False),
                 #tf.Variable(tf.ones([128], dtype=tf.int32), trainable=False)]
-        self.model.build_graph(self.dequed_inputs, True)
-        cost_var = self.model.get_cost()
+        with TowerContext(''):
+            self.model.build_graph(self.dequed_inputs)
+            cost_var = self.model.get_cost()
         grads = self.config.optimizer.compute_gradients(
                 cost_var, gate_gradients=0) # GATE_NONE
         add_moving_summary(cost_var)

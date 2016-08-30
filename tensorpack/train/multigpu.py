@@ -7,6 +7,7 @@ import tensorflow as tf
 import itertools, re
 from six.moves import zip, range
 
+from ..models import TowerContext
 from ..utils import *
 from ..utils.concurrency import LoopThread
 from ..tfutils.summary import summary_moving_average
@@ -26,7 +27,7 @@ class MultiGPUTrainer(QueueInputTrainer):
     @staticmethod
     def _average_grads(tower_grads):
         ret = []
-        with tf.name_scope('average_grad'):
+        with tf.name_scope('AvgGrad'):
             for grad_and_vars in zip(*tower_grads):
                 v = grad_and_vars[0][1]
                 try:
@@ -44,12 +45,12 @@ class MultiGPUTrainer(QueueInputTrainer):
         grad_list = []
         for idx, t in enumerate(self.config.tower):
             with tf.device('/gpu:{}'.format(t)), \
-                    tf.name_scope('tower{}'.format(idx)) as scope:
+                    TowerContext('tower{}'.format(idx)) as scope:
                 logger.info("Building graph for training tower {}...".format(idx))
                 model_inputs = self._get_model_inputs()    # each tower dequeue from input queue
                 self.dequed_inputs.append(model_inputs)
 
-                self.model.build_graph(model_inputs, True)
+                self.model.build_graph(model_inputs)
                 cost_var = self.model.get_cost() # build tower
 
                 # TODO gate_gradienst=0 seems to be faster?
@@ -92,7 +93,7 @@ class AsyncMultiGPUTrainer(MultiGPUTrainer):
         # pretend to average the grads, in order to make async and
         # sync have consistent effective learning rate
         def scale(grads):
-            with tf.name_scope('async_scale_grad'):
+            with tf.name_scope('AsyncScaleGrad'):
                 return [(grad / len(self.config.tower) if grad is not None else None, var)
                             for grad, var in grads]
         grad_list = map(scale, grad_list)

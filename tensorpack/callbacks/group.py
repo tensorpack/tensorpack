@@ -12,61 +12,6 @@ from ..utils import *
 
 __all__ = ['Callbacks']
 
-# --- Test-Callback related stuff seems not very useful.
-@contextmanager
-def create_test_graph(trainer):
-    model = trainer.model
-    with tf.Graph().as_default() as Gtest:
-        # create a global step var in test graph
-        global_step_var = tf.Variable(
-            0, trainable=False, name=GLOBAL_STEP_OP_NAME)
-        input_vars = model.get_input_vars()
-        model.build_graph(input_vars, False)
-        cost = model.get_cost()
-        yield Gtest
-
-@contextmanager
-def create_test_session(trainer):
-    """ create a test-time session from trainer"""
-    with create_test_graph(trainer):
-        with tf.Session() as sess:
-            yield sess
-
-class TestCallbackContext(object):
-    """
-    A class holding the context needed for running TestCallback
-    """
-    def __init__(self):
-        self.sess = None
-
-    @contextmanager
-    def create_context(self, trainer):
-        if self.sess is None:
-            with create_test_session(trainer) as sess:
-                self.sess = sess
-                self.graph = sess.graph
-                # no tower in test graph. just keep it as what it is
-                self.saver = tf.train.Saver()
-        with self.graph.as_default(), self.sess.as_default():
-            yield
-
-    # TODO also do this for after_train?
-
-    def restore_checkpoint(self):
-        ckpt = tf.train.get_checkpoint_state(logger.LOG_DIR)
-        if ckpt is None:
-            raise RuntimeError(
-                "Cannot find a checkpoint state. Do you forget to use ModelSaver before all TestCallback?")
-        logger.info(
-            "Restore checkpoint from {}".format(ckpt.model_checkpoint_path))
-        self.saver.restore(self.sess, ckpt.model_checkpoint_path)
-
-    @contextmanager
-    def test_context(self):
-        with self.graph.as_default(), self.sess.as_default():
-            yield
-# ---
-
 class CallbackTimeLogger(object):
     def __init__(self):
         self.times = []
