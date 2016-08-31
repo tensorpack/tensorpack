@@ -30,7 +30,7 @@ class Model(ModelDesc):
         return [InputVar(tf.float32, [None, INPUT_SHAPE, INPUT_SHAPE, 3], 'input'),
                 InputVar(tf.int32, [None], 'label') ]
 
-    def _build_graph(self, input_vars, is_training):
+    def _build_graph(self, input_vars):
         image, label = input_vars
         image = image / 128.0
 
@@ -57,7 +57,7 @@ class Model(ModelDesc):
                 outs.append(x4)
                 return tf.concat(3, outs, name='concat')
 
-        with argscope(Conv2D, nl=BNReLU(is_training), use_bias=False):
+        with argscope(Conv2D, nl=BNReLU(), use_bias=False):
             l = Conv2D('conv0', image, 64, 7, stride=2)
             l = MaxPooling('pool0', l, 3, 2, padding='SAME')
             l = Conv2D('conv1', l, 64, 1)

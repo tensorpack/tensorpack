@@ -39,7 +39,7 @@ class Model(ModelDesc):
                 InputVar(tf.int32, (None,), 'action'),
                 InputVar(tf.float32, (None,), 'futurereward') ]
 
-    def _get_NN_prediction(self, image, is_training):
+    def _get_NN_prediction(self, image):
         """ image: [0,255]"""
         image = image / 255.0
         with argscope(Conv2D, nl=tf.nn.relu):
@@ -56,9 +56,9 @@ class Model(ModelDesc):
         policy = FullyConnected('fc-pi', l, out_dim=NUM_ACTIONS, nl=tf.identity)
         return policy
 
-    def _build_graph(self, inputs, is_training):
+    def _build_graph(self, inputs):
         state, action, futurereward = inputs
-        policy = self._get_NN_prediction(state, is_training)
+        policy = self._get_NN_prediction(state)
         self.logits = tf.nn.softmax(policy, name='logits')
 
 def play_one_episode(player, func, verbose=False):

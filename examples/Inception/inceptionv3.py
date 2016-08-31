@@ -33,7 +33,7 @@ class Model(ModelDesc):
         return [InputVar(tf.float32, [None, INPUT_SHAPE, INPUT_SHAPE, 3], 'input'),
                 InputVar(tf.int32, [None], 'label') ]
 
-    def _build_graph(self, input_vars, is_training):
+    def _build_graph(self, input_vars):
         image, label = input_vars
         image = image / 128.0 - 1   # ?
 
@@ -69,7 +69,7 @@ class Model(ModelDesc):
                 .Conv2D('conv277ba', ch_r, [7,1])
                 .Conv2D('conv277bb', ch, [1,7])())
 
-        nl = BNReLU(is_training, decay=0.9997, epsilon=1e-3)
+        nl = BNReLU(decay=0.9997, epsilon=1e-3)
         with argscope(Conv2D, nl=nl, use_bias=False):
             l = (LinearWrap(image)
                 .Conv2D('conv0', 32, 3, stride=2, padding='VALID') #299
@@ -168,7 +168,7 @@ class Model(ModelDesc):
 
             l = GlobalAvgPooling('gap', l)
             # 1x1x2048
-            l = tf.nn.dropout(l, keep_prob=0.8 if is_training else 1)
+            l = Dropout('drop', l, 0.8)
             logits = FullyConnected('linear', l, out_dim=1000, nl=tf.identity)
 
         loss1 = tf.nn.sparse_softmax_cross_entropy_with_logits(br1, label)

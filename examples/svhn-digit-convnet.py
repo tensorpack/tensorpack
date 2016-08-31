@@ -24,9 +24,8 @@ class Model(ModelDesc):
         return [InputVar(tf.float32, [None, 40, 40, 3], 'input'),
                 InputVar(tf.int32, [None], 'label') ]
 
-    def _build_graph(self, input_vars, is_training):
+    def _build_graph(self, input_vars):
         image, label = input_vars
-        keep_prob = tf.constant(0.5 if is_training else 1.0)
 
         image = image / 128.0 - 1
 
@@ -37,7 +36,7 @@ class Model(ModelDesc):
                 .Conv2D('conv3', 32, 3, padding='VALID')
                 .MaxPooling('pool2', 2, padding='SAME')
                 .Conv2D('conv4', 64, 3, padding='VALID')
-                .tf.nn.dropout(keep_prob)
+                .Dropout('drop', 0.5)
                 .FullyConnected('fc0', 512,
                         b_init=tf.constant_initializer(0.1))
                 .FullyConnected('linear', out_dim=10, nl=tf.identity)())

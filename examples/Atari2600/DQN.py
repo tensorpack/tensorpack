@@ -70,7 +70,7 @@ class Model(ModelDesc):
                 InputVar(tf.float32, (None,) + IMAGE_SHAPE3, 'next_state'),
                 InputVar(tf.bool, (None,), 'isOver') ]
 
-    def _get_DQN_prediction(self, image, is_training):
+    def _get_DQN_prediction(self, image):
         """ image: [0,255]"""
         image = image / 255.0
         with argscope(Conv2D, nl=PReLU.f, use_bias=True):
@@ -91,9 +91,9 @@ class Model(ModelDesc):
                 .FullyConnected('fc0', 512, nl=lambda x, name: LeakyReLU.f(x, 0.01, name))
                 .FullyConnected('fct', NUM_ACTIONS, nl=tf.identity)())
 
-    def _build_graph(self, inputs, is_training):
+    def _build_graph(self, inputs):
         state, action, reward, next_state, isOver = inputs
-        self.predict_value = self._get_DQN_prediction(state, is_training)
+        self.predict_value = self._get_DQN_prediction(state)
         action_onehot = tf.one_hot(action, NUM_ACTIONS, 1.0, 0.0)
         pred_action_value = tf.reduce_sum(self.predict_value * action_onehot, 1)    #N,
         max_pred_reward = tf.reduce_mean(tf.reduce_max(
@@ -101,14 +101,14 @@ class Model(ModelDesc):
         add_moving_summary(max_pred_reward)
 
         with tf.variable_scope('target'):
-            targetQ_predict_value = self._get_DQN_prediction(next_state, False)    # NxA
+            targetQ_predict_value = self._get_DQN_prediction(next_state)    # NxA
 
         # DQN
         #best_v = tf.reduce_max(targetQ_predict_value, 1)    # N,
 
         # Double-DQN
         tf.get_variable_scope().reuse_variables()
-        next_predict_value = self._get_DQN_prediction(next_state, is_training)
+        next_predict_value = self._get_DQN_prediction(next_state)
         self.greedy_choice = tf.argmax(next_predict_value, 1)   # N,
         predict_onehot = tf.one_hot(self.greedy_choice, NUM_ACTIONS, 1.0, 0.0)
         best_v = tf.reduce_sum(targetQ_predict_value * predict_onehot, 1)
