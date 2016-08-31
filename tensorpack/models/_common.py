@@ -22,7 +22,10 @@ def disable_layer_logging():
     # can use nonlocal in python3, but how
     globals()['_layer_logged'] = ContainEverything()
 
-def layer_register(summary_activation=False, log_shape=True):
+def layer_register(
+        summary_activation=False,
+        log_shape=True,
+        use_scope=True):
     """
     Register a layer.
     :param summary_activation: Define the default behavior of whether to
@@ -33,40 +36,52 @@ def layer_register(summary_activation=False, log_shape=True):
 
     def wrapper(func):
         @wraps(func)
-        def wrapped_func(name, inputs, *args, **kwargs):
-            assert isinstance(name, six.string_types), name
+        def wrapped_func(*args, **kwargs):
+            if use_scope:
+                name, inputs = args[0], args[1]
+                args = args[1:] # actual positional args used to call func
+                assert isinstance(name, six.string_types), name
+            else:
+                assert not log_shape and not summary_activation
+                inputs = args[0]
+                name = None
             do_summary = kwargs.pop(
                 'summary_activation', summary_activation)
-            args = (inputs,) + args
 
             # TODO use inspect.getcallargs to enhance?
             # update from current argument scope
             actual_args = copy.copy(get_arg_scope()[func.__name__])
             actual_args.update(kwargs)
 
-            with tf.variable_scope(name) as scope:
-                do_log_shape = log_shape and scope.name not in _layer_logged
-                do_summary = do_summary and scope.name not in _layer_logged
-                if do_log_shape:
-                    logger.info("{} input: {}".format(scope.name, get_shape_str(inputs)))
+            if name is not None:
+                with tf.variable_scope(name) as scope:
+                    do_log_shape = log_shape and scope.name not in _layer_logged
+                    do_summary = do_summary and scope.name not in _layer_logged
+                    if do_log_shape:
+                        logger.info("{} input: {}".format(scope.name, get_shape_str(inputs)))
 
+                    # run the actual function
+                    outputs = func(*args, **actual_args)
+
+                    if do_log_shape:
+                        # log shape info and add activation
+                        logger.info("{} output: {}".format(
+                            scope.name, get_shape_str(outputs)))
+                        _layer_logged.add(scope.name)
+
+                    if do_summary:
+                        if isinstance(outputs, list):
+                            for x in outputs:
+                                add_activation_summary(x, scope.name)
+                        else:
+                            add_activation_summary(outputs, scope.name)
+            else:
                 # run the actual function
                 outputs = func(*args, **actual_args)
+            return outputs
 
-                if do_log_shape:
-                    # log shape info and add activation
-                    logger.info("{} output: {}".format(
-                        scope.name, get_shape_str(outputs)))
-                    _layer_logged.add(scope.name)
-
-                if do_summary:
-                    if isinstance(outputs, list):
-                        for x in outputs:
-                            add_activation_summary(x, scope.name)
-                    else:
-                        add_activation_summary(outputs, scope.name)
-                return outputs
         wrapped_func.f = func   # attribute to access the underlining function object
+        wrapped_func.use_scope = use_scope
         return wrapped_func
 
     # need some special handling for sphinx to work with the arguments

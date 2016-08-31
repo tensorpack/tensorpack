@@ -7,8 +7,10 @@ import re
 
 from ..utils import logger
 from ..utils.utils import *
+from .model_desc import get_current_tower_context
+from ._common import layer_register
 
-__all__ = ['regularize_cost', 'l2_regularizer', 'l1_regularizer']
+__all__ = ['regularize_cost', 'l2_regularizer', 'l1_regularizer', 'Dropout']
 
 @memoized
 def _log_regularizer(name):
@@ -35,4 +37,11 @@ def regularize_cost(regex, func, name=None):
     if not costs:
         return 0
     return tf.add_n(costs, name=name)
+
+
+@layer_register(log_shape=False)
+def Dropout(x, prob=0.5):
+    is_training = get_current_tower_context().is_training
+    keep_prob = tf.constant(prob if is_training else 1.0)
+    return tf.nn.dropout(x, keep_prob)
 

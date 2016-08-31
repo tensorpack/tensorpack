@@ -74,7 +74,7 @@ class Model(ModelDesc):
         return [InputVar(tf.int32, (None, param.seq_len), 'input'),
                 InputVar(tf.int32, (None, param.seq_len), 'nextinput') ]
 
-    def _build_graph(self, input_vars, is_training):
+    def _build_graph(self, input_vars):
         input, nextinput = input_vars
 
         cell = rnn_cell.BasicLSTMCell(num_units=param.rnn_size)

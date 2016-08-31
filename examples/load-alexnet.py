@@ -28,10 +28,8 @@ class Model(ModelDesc):
         return [InputVar(tf.float32, (None, 227, 227, 3), 'input'),
             InputVar(tf.int32, (None,), 'label') ]
 
-    def _build_graph(self, inputs, is_training):
+    def _build_graph(self, inputs):
         # img: 227x227x3
-        is_training = bool(is_training)
-        keep_prob = tf.constant(0.5 if is_training else 1.0)
 
         image, label = inputs
 

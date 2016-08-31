@@ -72,7 +72,7 @@ class Model(ModelDesc):
         return [InputVar(tf.float32, [None, 224, 224, 3], 'input'),
                 InputVar(tf.int32, [None], 'label') ]
 
-    def _build_graph(self, input_vars, is_training):
+    def _build_graph(self, input_vars):
         image, label = input_vars
         image = image / 255.0
 
@@ -97,7 +97,7 @@ class Model(ModelDesc):
         def activate(x):
             return fa(nonlin(x))
 
-        with argscope(BatchNorm, decay=0.9, epsilon=1e-4, use_local_stat=is_training), \
+        with argscope(BatchNorm, decay=0.9, epsilon=1e-4), \
                 argscope([Conv2D, FullyConnected], use_bias=False, nl=tf.identity):
             logits = (LinearWrap(image)
                 .Conv2D('conv0', 96, 12, stride=4, padding='VALID')

@@ -8,7 +8,7 @@ import tensorflow as tf
 import numpy as np
 import os
 import argparse
-import cPickle as pkl
+import pickle as pkl
 
 from tensorpack.train import TrainConfig
 from tensorpack.predict import PredictConfig, get_predict_func
@@ -33,8 +33,6 @@ class Model(ModelDesc):
                 InputVar(tf.int32, (None,), 'label') ]
 
     def _build_graph(self, inputs, is_training):
-        is_training = bool(is_training)
-        keep_prob = tf.constant(0.5 if is_training else 1.0)
 
         image, label = inputs
 
@@ -65,9 +63,10 @@ class Model(ModelDesc):
                 .MaxPooling('pool5', 2)
                  # 7
                 .FullyConnected('fc6', 4096)
-                .tf.nn.dropout(keep_prob)
+                .Dropout('drop0', 0.5)
+                .print_tensor()
                 .FullyConnected('fc7', 4096)
-                .tf.nn.dropout(keep_prob)
+                .Dropout('drop1', 0.5)
                 .FullyConnected('fc8', out_dim=1000, nl=tf.identity)())
         prob = tf.nn.softmax(logits, name='output')
 
@@ -93,10 +92,10 @@ def run_test(path, input):
     outputs = predict_func([im])[0]
     prob = outputs[0]
     ret = prob.argsort()[-10:][::-1]
-    print ret
+    print(ret)
 
     meta = ILSVRCMeta().get_synset_words_1000()
-    print [meta[k] for k in ret]
+    print([meta[k] for k in ret])
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

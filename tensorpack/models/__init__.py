@@ -49,9 +49,14 @@ class LinearWrap(object):
         layer = eval(layer_name)
         if hasattr(layer, 'f'):
             # this is a registered tensorpack layer
-            def f(name, *args, **kwargs):
-                ret = layer(name, self._t, *args, **kwargs)
-                return LinearWrap(ret)
+            if layer.use_scope:
+                def f(name, *args, **kwargs):
+                    ret = layer(name, self._t, *args, **kwargs)
+                    return LinearWrap(ret)
+            else:
+                def f(*args, **kwargs):
+                    ret = layer(self._t, *args, **kwargs)
+                    return LinearWrap(ret)
             return f
         else:
             if layer_name != 'tf':
@@ -70,7 +75,7 @@ class LinearWrap(object):
     def tensor(self):
         return self._t
 
-    def print(self):
+    def print_tensor(self):
         print(self._t)
         return self
 

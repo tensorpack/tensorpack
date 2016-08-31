@@ -69,7 +69,7 @@ class Model(ModelDesc):
 
         image = image / 256.0
 
-        with argscope(BatchNorm, decay=0.9, epsilon=1e-4, use_local_stat=is_training), \
+        with argscope(BatchNorm, decay=0.9, epsilon=1e-4), \
                 argscope(Conv2D, use_bias=False, nl=tf.identity):
             logits = (LinearWrap(image)
                 .Conv2D('conv0', 48, 5, padding='VALID', use_bias=True)

@@ -25,9 +25,7 @@ mnist_example.get_data = get_data
 IMAGE_SIZE = 28
 
 class Model(mnist_example.Model):
-    def _build_graph(self, input_vars, is_training):
-        is_training = bool(is_training)
-        keep_prob = tf.constant(0.5 if is_training else 1.0)
+    def _build_graph(self, input_vars):
 
         image, label = input_vars
         image = tf.expand_dims(image, 3)    # add a single channel
