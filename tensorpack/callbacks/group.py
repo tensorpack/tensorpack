@@ -6,7 +6,7 @@ import tensorflow as tf
 from contextlib import contextmanager
 import time
 
-from .base import Callback, TrainCallbackType, TestCallbackType
+from .base import Callback
 from .stat import *
 from ..utils import *
 
@@ -50,9 +50,6 @@ class Callbacks(Callback):
         # check type
         for cb in cbs:
             assert isinstance(cb, Callback), cb.__class__
-            if not isinstance(cb.type, (TrainCallbackType, TestCallbackType)):
-                raise ValueError(
-                    "Unknown callback running graph {}!".format(str(cb.type)))
         # move "StatPrinter" to the last
         for cb in cbs:
             if isinstance(cb, StatPrinter):
@@ -62,24 +59,15 @@ class Callbacks(Callback):
                 break
 
         self.cbs = cbs
-        self.test_callback_context = TestCallbackContext()
 
     def _setup_graph(self):
         with tf.name_scope(None):
             for cb in self.cbs:
-                if isinstance(cb.type, TrainCallbackType):
-                    cb.setup_graph(self.trainer)
-                else:
-                    with self.test_callback_context.create_context(self.trainer):
-                        cb.setup_graph(self.trainer)
+                cb.setup_graph(self.trainer)
 
     def _before_train(self):
         for cb in self.cbs:
-            if isinstance(cb.type, TrainCallbackType):
-                cb.before_train()
-            else:
-                with self.test_callback_context.test_context():
-                    cb.before_train()
+            cb.before_train()
 
     def _after_train(self):
         for cb in self.cbs:
@@ -87,9 +75,7 @@ class Callbacks(Callback):
 
     def trigger_step(self):
         for cb in self.cbs:
-            if isinstance(cb.type, TrainCallbackType):
-                cb.trigger_step()
-        # test callback don't have trigger_step
+            cb.trigger_step()
 
     def _trigger_epoch(self):
         tm = CallbackTimeLogger()
@@ -97,15 +83,6 @@ class Callbacks(Callback):
         test_sess_restored = False
         for cb in self.cbs:
             display_name = str(cb)
-            if isinstance(cb.type, TrainCallbackType):
-                with tm.timed_callback(display_name):
-                    cb.trigger_epoch()
-            else:
-                if not test_sess_restored:
-                    with tm.timed_callback('restore checkpoint'):
-                        self.test_callback_context.restore_checkpoint()
-                    test_sess_restored = True
-                with self.test_callback_context.test_context(), \
-                        tm.timed_callback(display_name):
-                    cb.trigger_epoch()
+            with tm.timed_callback(display_name):
+                cb.trigger_epoch()
         tm.log()

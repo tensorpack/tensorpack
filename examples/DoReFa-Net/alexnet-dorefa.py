@@ -102,7 +102,6 @@ class Model(ModelDesc):
             logits = (LinearWrap(image)
                 .Conv2D('conv0', 96, 12, stride=4, padding='VALID')
                 .apply(activate)
-
                 .Conv2D('conv1', 256, 5, padding='SAME', split=2)
                 .apply(fg)
                 .BatchNorm('bn1')

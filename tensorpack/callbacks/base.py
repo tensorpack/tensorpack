@@ -10,23 +10,11 @@ from abc import abstractmethod, ABCMeta
 
 from ..utils import *
 
-__all__ = ['Callback', 'PeriodicCallback', 'TrainCallbackType', 'TestCallbackType']
-
-class TrainCallbackType(object):
-    pass
-
-class TestCallbackType(object):
-    pass
+__all__ = ['Callback', 'PeriodicCallback']
 
 class Callback(object):
     """ Base class for all callbacks """
     __metaclass__ = ABCMeta
-
-    type = TrainCallbackType()
-    """ Determine the graph that this callback should run on.
-        Either `TrainCallbackType()` or `TestCallbackType()`.
-        Default is `TrainCallbackType()`
-    """
 
     def before_train(self):
         """

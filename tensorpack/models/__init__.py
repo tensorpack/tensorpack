@@ -70,4 +70,8 @@ class LinearWrap(object):
     def tensor(self):
         return self._t
 
+    def print(self):
+        print(self._t)
+        return self
+
 
