@@ -4,6 +4,7 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 from abc import ABCMeta, abstractmethod
+import re
 import tensorflow as tf
 from collections import namedtuple
 import inspect

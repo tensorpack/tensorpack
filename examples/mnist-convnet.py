@@ -22,8 +22,8 @@ class Model(ModelDesc):
         return [InputVar(tf.float32, (None, IMAGE_SIZE, IMAGE_SIZE), 'input'),
                 InputVar(tf.int32, (None,), 'label') ]
 
-    def _build_graph(self, input_vars, is_training):
-        is_training = bool(is_training)
+    def _build_graph(self, input_vars):
+        is_training = get_current_tower_context().is_training
         keep_prob = tf.constant(0.5 if is_training else 1.0)
 
         image, label = input_vars

@@ -72,20 +72,20 @@ def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
                 tf.add_to_collection(EXTRA_SAVE_VARS_KEY, ema_var)
     else:
         assert not use_local_stat
-        with tf.name_scope(None):
-            ema = tf.train.ExponentialMovingAverage(decay=decay, name=emaname)
-
         if ctx.is_main_tower:
             # not training, but main tower. need to create the vars
             with tf.name_scope(None):
+                ema = tf.train.ExponentialMovingAverage(decay=decay, name=emaname)
                 ema_apply_op = ema.apply([batch_mean, batch_var])
                 ema_mean, ema_var = ema.average(batch_mean), ema.average(batch_var)
         else:
             # use statistics in another tower
             G = tf.get_default_graph()
             # figure out the var name
-            mean_var_name = ema.average_name(batch_mean) + ':0'
-            var_var_name = ema.average_name(batch_var) + ':0'
+            with tf.name_scope(None):
+                ema = tf.train.ExponentialMovingAverage(decay=decay, name=emaname)
+                mean_var_name = ema.average_name(batch_mean) + ':0'
+                var_var_name = ema.average_name(batch_var) + ':0'
             ema_mean = ctx.find_tensor_in_main_tower(G, mean_var_name)
             ema_var = ctx.find_tensor_in_main_tower(G, var_var_name)
             #logger.info("In prediction, using {} instead of {} for {}".format(
