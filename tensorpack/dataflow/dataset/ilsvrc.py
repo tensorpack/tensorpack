@@ -96,7 +96,7 @@ class ILSVRC12(RNGDataFlow):
         :param dir: A directory containing a subdir named `name`, where the
             original ILSVRC12_`name`.tar gets decompressed.
         :param name: 'train' or 'val' or 'test'
-        :param dir_structure: The dir structure of 'val' or 'test'.
+        :param dir_structure: The dir structure of 'val' and 'test'.
             If is 'original' then keep the original decompressed dir with list
             of image files (as below). If equals to 'train', use the `train/` dir
             structure with class name as subdirectories.

@@ -149,7 +149,7 @@ class PrefetchDataZMQ(ProxyDataFlow):
         for k in itertools.count():
             if self._size > 0 and k >= self._size:
                 break
-            dp = loads(self.socket.recv(copy=False))
+            dp = loads(self.socket.recv(copy=False).bytes)
             yield dp
 
     def reset_state(self):
