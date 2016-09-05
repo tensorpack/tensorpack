@@ -28,8 +28,8 @@ class BSDS500(RNGDataFlow):
 
     Produce (image, label) pair, where image has shape (321, 481, 3) and
     ranges in [0,255]. Label is binary and has shape (321, 481).
-    Those pixels annotated as boundaries by >= 3 annotators are
-    considered positive examples. This is used in `Holistically-Nested Edge Detection
+    Those pixels annotated as boundaries by <=2 annotators are set to 0.
+    This is used in `Holistically-Nested Edge Detection
     <http://arxiv.org/abs/1504.06375>`_.
     """
 
@@ -73,8 +73,9 @@ class BSDS500(RNGDataFlow):
             gt = loadmat(gt_file)['groundTruth'][0]
             n_annot = gt.shape[0]
             gt = sum(gt[k]['Boundaries'][0][0] for k in range(n_annot))
-            gt[gt > 3] = 3
-            gt = gt / 3.0
+            gt[gt <= 2] = 0
+            gt = gt.astype('float32')
+            gt /= np.max(gt)
             if gt.shape[0] > gt.shape[1]:
                 gt = gt.transpose()
             assert gt.shape == (IMG_H, IMG_W)

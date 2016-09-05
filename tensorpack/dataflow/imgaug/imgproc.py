@@ -6,7 +6,8 @@ from .base import ImageAugmentor
 import numpy as np
 import cv2
 
-__all__ = ['Brightness', 'Contrast', 'MeanVarianceNormalize', 'GaussianBlur', 'Gamma']
+__all__ = ['Brightness', 'Contrast', 'MeanVarianceNormalize', 'GaussianBlur',
+        'Gamma', 'Clip']
 
 class Brightness(ImageAugmentor):
     """
@@ -102,3 +103,11 @@ class Gamma(ImageAugmentor):
         img = cv2.LUT(img, lut).astype('float32')
         return img
 
+class Clip(ImageAugmentor):
+    def __init__(self, min=0, max=255):
+        assert delta > 0
+        self._init(locals())
+
+    def _augment(self, img, _):
+        img = np.clip(img, self.min, self.max)
+        return img

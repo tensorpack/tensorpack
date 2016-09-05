@@ -9,7 +9,7 @@ from .base import DataFlow, ProxyDataFlow
 from .common import MapDataComponent, MapData
 from .imgaug import AugmentorList
 
-__all__ = ['ImageFromFile', 'AugmentImageComponent', 'AugmentImagesTogether']
+__all__ = ['ImageFromFile', 'AugmentImageComponent', 'AugmentImageComponents']
 
 class ImageFromFile(DataFlow):
     """ Generate rgb images from list of files """
@@ -45,7 +45,7 @@ class AugmentImageComponent(MapDataComponent):
         """
         :param ds: a `DataFlow` instance.
         :param augmentors: a list of `ImageAugmentor` instance to be applied in order.
-        :param index: the index of the image component in the produced datapoints by `ds`. default to be 0
+        :param index: the index (or list of indices) of the image component in the produced datapoints by `ds`. default to be 0
         """
         self.augs = AugmentorList(augmentors)
         super(AugmentImageComponent, self).__init__(
@@ -56,7 +56,7 @@ class AugmentImageComponent(MapDataComponent):
         self.augs.reset_state()
 
 
-class AugmentImagesTogether(MapData):
+class AugmentImageComponents(MapData):
     """ Augment a list of images of the same shape, with the same parameters"""
     def __init__(self, ds, augmentors, index=(0,1)):
         """
@@ -75,7 +75,7 @@ class AugmentImagesTogether(MapData):
                 dp[idx] = self.augs._augment(dp[idx], prms)
             return dp
 
-        super(AugmentImagesTogether, self).__init__(ds, func)
+        super(AugmentImageComponents, self).__init__(ds, func)
 
     def reset_state(self):
         self.ds.reset_state()
