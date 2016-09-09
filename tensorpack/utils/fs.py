@@ -5,6 +5,7 @@
 
 import os, sys
 from six.moves import urllib
+from . import logger
 
 __all__ = ['mkdir_p', 'download']
 
