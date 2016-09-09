@@ -11,7 +11,6 @@ from six.moves import input
 import sys
 
 from .utils import memoized
-from .fs import mkdir_p
 
 __all__ = []
 
@@ -88,6 +87,7 @@ If you're resuming from a previous run you can choose to keep it.""")
         else:
             raise ValueError("Unknown action: {}".format(act))
     LOG_DIR = dirname
+    from .fs import mkdir_p
     mkdir_p(dirname)
     LOG_FILE = os.path.join(dirname, 'log.log')
     _set_file(LOG_FILE)
