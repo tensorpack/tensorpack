@@ -22,6 +22,7 @@ class MultiGPUTrainer(QueueInputTrainer):
     """ Base class for multi-gpu training"""
     def __init__(self, config, input_queue=None, predict_tower=None):
         super(MultiGPUTrainer, self).__init__(config, input_queue, predict_tower)
+        assert len(config.tower) >= 1, "MultiGPUTrainer must be used with at least one GPU."
         self.dequed_inputs = []
 
     @staticmethod

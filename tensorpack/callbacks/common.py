@@ -81,9 +81,10 @@ because {} will be saved".format(v.name, var_dict[name].name))
             logger.exception("Exception in ModelSaver.trigger_epoch!")
 
 class MinSaver(Callback):
-    def __init__(self, monitor_stat, reverse=True):
+    def __init__(self, monitor_stat, reverse=True, filename=None):
         self.monitor_stat = monitor_stat
         self.reverse = reverse
+        self.filename = filename
         self.min = None
 
     def _get_stat(self):
@@ -107,7 +108,8 @@ class MinSaver(Callback):
                 "Cannot find a checkpoint state. Do you forget to use ModelSaver?")
         path = chpt.model_checkpoint_path
         newname = os.path.join(logger.LOG_DIR,
-                'max-' if self.reverse else 'min-' + self.monitor_stat)
+                self.filename or
+                ('max-' if self.reverse else 'min-' + self.monitor_stat + '.tfmodel'))
         shutil.copy(path, newname)
         logger.info("Model with {} '{}' saved.".format(
             'maximum' if self.reverse else 'minimum', self.monitor_stat))

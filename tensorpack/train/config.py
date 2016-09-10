@@ -63,6 +63,8 @@ class TrainConfig(object):
         assert len(kwargs) == 0, 'Unknown arguments: {}'.format(str(kwargs.keys()))
 
     def set_tower(self, nr_tower=None, tower=None):
+        logger.warn("config.set_tower is deprecated. set config.tower or config.nr_tower directly")
+        # this is a deprecated function
         assert nr_tower is None or tower is None, "Cannot set both nr_tower and tower!"
         if nr_tower:
             tower = list(range(nr_tower))
