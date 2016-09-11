@@ -15,22 +15,9 @@ __all__ = ['change_env',
         'map_arg',
         'get_rng', 'memoized',
         'get_dataset_path',
-        'get_tqdm_kwargs'
+        'get_tqdm_kwargs',
+        'execute_only_once'
         ]
-
-#def expand_dim_if_necessary(var, dp):
-#    """
-#    Args:
-#        var: a tensor
-#        dp: a numpy array
-#    Return a reshaped version of dp, if that makes it match the valid dimension of var
-#    """
-#    shape = var.get_shape().as_list()
-#    valid_shape = [k for k in shape if k]
-#    if dp.shape == tuple(valid_shape):
-#        new_shape = [k if k else 1 for k in shape]
-#        dp = dp.reshape(new_shape)
-#    return dp
 
 @contextmanager
 def change_env(name, val):
@@ -104,13 +91,24 @@ def get_rng(obj=None):
             int(datetime.now().strftime("%Y%m%d%H%M%S%f"))) % 4294967295
     return np.random.RandomState(seed)
 
+
+_EXECUTE_HISTORY = set()
+def execute_only_once():
+    f = inspect.currentframe().f_back
+    ident =  (f.f_code.co_filename, f.f_lineno)
+    if ident in _EXECUTE_HISTORY:
+        return False
+    _EXECUTE_HISTORY.add(ident)
+    return True
+
 def get_dataset_path(*args):
-    from . import logger
     d = os.environ.get('TENSORPACK_DATASET', None)
     if d is None:
         d = os.path.abspath(os.path.join(
                     os.path.dirname(__file__), '..', 'dataflow', 'dataset'))
-        logger.info("TENSORPACK_DATASET not set, using {} for dataset.".format(d))
+        if execute_only_once():
+            from . import logger
+            logger.info("TENSORPACK_DATASET not set, using {} for dataset.".format(d))
     assert os.path.isdir(d), d
     return os.path.join(d, *args)
 

@@ -88,25 +88,30 @@ class MinSaver(Callback):
         self.min = None
 
     def _get_stat(self):
-        return self.trainer.stat_holder.get_stat_now(self.monitor_stat)
+        try:
+            v = self.trainer.stat_holder.get_stat_now(self.monitor_stat)
+        except KeyError:
+            v = None
+        return v
 
     def _need_save(self):
-        if self.reverse:
-            return self._get_stat() > self.min
-        else:
-            return self._get_stat() < self.min
+        v = self._get_stat()
+        if not v:
+            return False
+        return v > self.min if self.reverse else v < self.min
 
     def _trigger_epoch(self):
         if self.min is None or self._need_save():
             self.min = self._get_stat()
-            self._save()
+            if self.min:
+                self._save()
 
     def _save(self):
         ckpt = tf.train.get_checkpoint_state(logger.LOG_DIR)
         if ckpt is None:
             raise RuntimeError(
                 "Cannot find a checkpoint state. Do you forget to use ModelSaver?")
-        path = chpt.model_checkpoint_path
+        path = ckpt.model_checkpoint_path
         newname = os.path.join(logger.LOG_DIR,
                 self.filename or
                 ('max-' if self.reverse else 'min-' + self.monitor_stat + '.tfmodel'))

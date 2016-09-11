@@ -10,7 +10,8 @@ from collections import deque
 import threading
 import six
 from six.moves import range
-from tensorpack.utils import get_rng, logger, memoized, get_dataset_path
+from tensorpack.utils import (get_rng, logger, memoized,
+        get_dataset_path, execute_only_once)
 from tensorpack.utils.stat import StatCounter
 
 from tensorpack.RL.envbase import RLEnvironment, DiscreteActionSpace
@@ -18,10 +19,6 @@ from tensorpack.RL.envbase import RLEnvironment, DiscreteActionSpace
 from ale_python_interface import ALEInterface
 
 __all__ = ['AtariPlayer']
-
-@memoized
-def log_once():
-    logger.warn("https://github.com/mgbellemare/Arcade-Learning-Environment/pull/171 is not merged!")
 
 ROM_URL = "https://github.com/openai/atari-py/tree/master/atari_py/atari_roms"
 _ALE_LOCK = threading.Lock()
@@ -56,7 +53,8 @@ class AtariPlayer(RLEnvironment):
         try:
             ALEInterface.setLoggerMode(ALEInterface.Logger.Warning)
         except AttributeError:
-            log_once()
+            if execute_only_once():
+                logger.warn("https://github.com/mgbellemare/Arcade-Learning-Environment/pull/171 is not merged!")
 
         # avoid simulator bugs: https://github.com/mgbellemare/Arcade-Learning-Environment/issues/86
         with _ALE_LOCK:
