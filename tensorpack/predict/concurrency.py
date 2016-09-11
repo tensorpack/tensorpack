@@ -127,6 +127,7 @@ class MultiThreadAsyncPredictor(AsyncPredictorBase):
     """
     def __init__(self, predictors, batch_size=5):
         """ :param predictors: a list of OnlinePredictor"""
+        assert len(predictors)
         for k in predictors:
             #assert isinstance(k, OnlinePredictor), type(k)
             # TODO use predictors.return_input here
