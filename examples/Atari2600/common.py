@@ -15,9 +15,9 @@ from tensorpack.utils.stat import  *
 from tensorpack.callbacks import *
 
 global get_player
+get_player = None
 
 def play_one_episode(player, func, verbose=False):
-    # 0.01-greedy evaluation
     def f(s):
         spc = player.get_action_space()
         act = func([[s]])[0][0].argmax()
@@ -62,6 +62,7 @@ def eval_with_funcs(predict_funcs, nr_eval):
 
     for k in threads:
         k.start()
+        time.sleep(0.1) # avoid simulator bugs
     stat = StatCounter()
     try:
         for _ in tqdm(range(nr_eval), **get_tqdm_kwargs()):
@@ -98,7 +99,7 @@ class Evaluator(Callback):
         t = time.time()
         mean, max = eval_with_funcs(self.pred_funcs, nr_eval=self.eval_episode)
         t = time.time() - t
-        if t > 8 * 60:  # eval takes too long
-            self.eval_episode = int(self.eval_episode * 0.89)
+        if t > 10 * 60:  # eval takes too long
+            self.eval_episode = int(self.eval_episode * 0.94)
         self.trainer.write_scalar_summary('mean_score', mean)
         self.trainer.write_scalar_summary('max_score', max)

@@ -73,7 +73,7 @@ class BSDS500(RNGDataFlow):
             gt = loadmat(gt_file)['groundTruth'][0]
             n_annot = gt.shape[0]
             gt = sum(gt[k]['Boundaries'][0][0] for k in range(n_annot))
-            gt[gt <= 2] = 0
+            #gt[gt <= 2] = 0
             gt = gt.astype('float32')
             gt /= np.max(gt)
             if gt.shape[0] > gt.shape[1]:

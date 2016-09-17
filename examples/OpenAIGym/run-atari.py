@@ -22,6 +22,8 @@ IMAGE_SHAPE3 = IMAGE_SIZE + (CHANNEL,)
 NUM_ACTIONS = None
 ENV_NAME = None
 
+from common import play_one_episode
+
 def get_player(dumpdir=None):
     pl = GymEnv(ENV_NAME, dumpdir=dumpdir, auto_restart=False)
     pl = MapPlayerState(pl, lambda img: cv2.resize(img, IMAGE_SIZE[::-1]))
@@ -40,7 +42,6 @@ class Model(ModelDesc):
                 InputVar(tf.float32, (None,), 'futurereward') ]
 
     def _get_NN_prediction(self, image):
-        """ image: [0,255]"""
         image = image / 255.0
         with argscope(Conv2D, nl=tf.nn.relu):
             l = Conv2D('conv0', image, out_channel=32, kernel_shape=5)
@@ -61,17 +62,6 @@ class Model(ModelDesc):
         policy = self._get_NN_prediction(state)
         self.logits = tf.nn.softmax(policy, name='logits')
 
-def play_one_episode(player, func, verbose=False):
-    def f(s):
-        spc = player.get_action_space()
-        act = func([[s]])[0][0].argmax()
-        if random.random() < 0.001:
-            act = spc.sample()
-        if verbose:
-            print(act)
-        return act
-    return np.mean(player.play_one_episode(f))
-
 def run_submission(cfg):
     dirname = 'gym-submit'
     player = get_player(dumpdir=dirname)
@@ -80,7 +70,11 @@ def run_submission(cfg):
         if k != 0:
             player.restart_episode()
         score = play_one_episode(player, predfunc)
-        print("Score:", score)
+        print("Total:", score)
+
+def do_submit():
+    dirname = 'gym-submit'
+    gym.upload(dirname, api_key='xxx')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
