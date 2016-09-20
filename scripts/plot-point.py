@@ -9,7 +9,7 @@ A simplest example:
 $ cat examples/train_log/mnist-convnet/stat.json \
         | jq '.[] | .train_error, .validation_error' \
         | paste - - \
-        | plot-point.py --legend 'train,val' --title 'error'
+        | plot-point.py --legend 'train,val' --xlabel 'epoch' --ylabel 'error'
 
 For more usage, see `plot-point.py -h` or the code.
 """
@@ -23,8 +23,9 @@ import argparse, sys
 from collections import defaultdict
 from itertools import chain
 
-#from matplotlib import rc
+from matplotlib import rc
 #rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
+#rc('font',**{'family':'sans-serif','sans-serif':['Microsoft Yahei']})
 #rc('text', usetex=True)
 
 STDIN_FNAME = '-'
@@ -168,7 +169,7 @@ def plot_args_from_column_desc(desc):
 
 def do_plot(data_xs, data_ys):
     """
-    data_xs: list of 1d array, either of size 1 of size len(data_ys)
+    data_xs: list of 1d array, either of size 1 or size len(data_ys)
     data_ys: list of 1d array
     """
     fig = plt.figure(figsize = (16.18/1.2, 10/1.2))
@@ -214,8 +215,8 @@ def do_plot(data_xs, data_ys):
         if args.annotate_maximum or args.annotate_minimum:
             annotate_min_max(truncate_data_x, data_y, ax)
 
-    plt.xlabel(args.xlabel, fontsize='xx-large')
-    plt.ylabel(args.ylabel, fontsize='xx-large')
+    plt.xlabel(args.xlabel.decode('utf-8'), fontsize='xx-large')
+    plt.ylabel(args.ylabel.decode('utf-8'), fontsize='xx-large')
     plt.legend(loc='best', fontsize='xx-large')
 
     # adjust maxx
@@ -232,7 +233,7 @@ def do_plot(data_xs, data_ys):
     plt.title(args.title, fontdict={'fontsize': '20'})
 
     if args.output != '':
-        plt.savefig(args.output)
+        plt.savefig(args.output, bbox_inches='tight')
     if args.show:
         plt.show()
 
