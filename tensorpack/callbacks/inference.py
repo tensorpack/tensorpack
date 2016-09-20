@@ -55,7 +55,7 @@ class Inferencer(object):
         """
         Return a list of tensor names needed for this inference
         """
-        return self._get_output_vars()
+        return self._get_output_tensors()
 
     @abstractmethod
     def _get_output_tensors(self):
@@ -91,7 +91,7 @@ class InferenceRunner(Callback):
         self.output_tensors = []    # list of names
         self.vc_to_vars = []    # list of list of (var_name: output_idx)
         for vc in self.vcs:
-            vc_vars = vc._get_output_tensors()
+            vc_vars = vc.get_output_tensors()
             def find_oid(var):
                 if var in self.output_tensors:
                     return self.output_tensors.index(var)
