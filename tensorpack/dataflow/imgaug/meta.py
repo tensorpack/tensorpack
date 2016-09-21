@@ -15,6 +15,7 @@ class Identity(ImageAugmentor):
 class RandomApplyAug(ImageAugmentor):
     """ Randomly apply the augmentor with a prob. Otherwise do nothing"""
     def __init__(self, aug, prob):
+        super(RandomApplyAug, self).__init__()
         self._init(locals())
 
     def _get_augment_params(self, img):
@@ -40,6 +41,7 @@ class RandomChooseAug(ImageAugmentor):
         """
         :param aug_lists: list of augmentor, or list of (augmentor, probability) tuple
         """
+        super(RandomChooseAug, self).__init__()
         if isinstance(aug_lists[0], (tuple, list)):
             prob = [k[1] for k in aug_lists]
             aug_lists = [k[0] for k in aug_lists]

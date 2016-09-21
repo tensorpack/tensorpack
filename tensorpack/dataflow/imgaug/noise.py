@@ -11,6 +11,7 @@ __all__ = ['JpegNoise', 'GaussianNoise']
 
 class JpegNoise(ImageAugmentor):
     def __init__(self, quality_range=(40, 100)):
+        super(JpegNoise, self).__init__()
         self._init(locals())
 
     def _get_augment_params(self, img):
@@ -23,6 +24,7 @@ class JpegNoise(ImageAugmentor):
 
 class GaussianNoise(ImageAugmentor):
     def __init__(self, scale=10, clip=True):
+        super(GaussianNoise, self).__init__()
         self._init(locals())
 
     def _get_augment_params(self, img):
