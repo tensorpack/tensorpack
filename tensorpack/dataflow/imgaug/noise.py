@@ -35,3 +35,17 @@ class GaussianNoise(ImageAugmentor):
         if self.clip:
             ret = np.clip(ret, 0, 255)
         return ret
+
+class SaltPepperNoise(ImageAugmentor):
+    def __init__(self, amount=0.05, s_vs_p=0.5):
+        super(SaltPepperNoise, self).__init__()
+        self._init(locals())
+
+    def _get_augment_params(self, img):
+        return self.rng.uniform(low=0, high=1, size=img.shape)
+
+    def _augment(self, img, param):
+        ret = img.copy()
+        ret[param > (1 - self.amount * self.s_vs_p)] = 255
+        ret[param < (1 - self.s_vs_p) * self.amount] = 0
+        return ret
