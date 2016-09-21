@@ -46,8 +46,8 @@ class PredictorFactory(object):
         return OnlinePredictor(self.sess, raw_input_vars, output_vars)
 
     def _build_predict_tower(self):
-        # build_predict_tower might get called anywhere, but 'towerp' should be the outermost name scope
         tf.get_variable_scope().reuse_variables()
+        # build_predict_tower might get called anywhere, but 'towerp' should be the outermost name scope
         with tf.name_scope(None), \
                 freeze_collection(SUMMARY_BACKUP_KEYS):
             build_multi_tower_prediction_graph(
