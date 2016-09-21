@@ -1,9 +1,11 @@
+# To train an Atari game in gym:
 
-# To run a pretrained Batch-A3C atari model for 100 episodes:
+`./train-atari.py --env Breakout-v0 --gpu 0`
 
-1. install [tensorpack](https://github.com/ppwwyyxx/tensorpack)
-2. Download models from [model zoo](https://drive.google.com/open?id=0B9IPQTvr2BBkS0VhX0xmS1c5aFk)
-3. `ENV=NAME_OF_ENV ./run-atari.py --load "$ENV".tfmodel --env "$ENV"`
+# To run a pretrained Atari model for 100 episodes:
+
+1. Download models from [model zoo](https://drive.google.com/open?id=0B9IPQTvr2BBkS0VhX0xmS1c5aFk)
+2. `ENV=NAME_OF_ENV ./run-atari.py --load "$ENV".tfmodel --env "$ENV"`
 
 Models are available for the following gym atari environments (click links for videos):
 

@@ -57,7 +57,7 @@ def eval_with_funcs(predict_funcs, nr_eval):
                     return
                 self.queue_put_stoppable(self.q, score)
 
-    q = queue.Queue(maxsize=2)
+    q = queue.Queue()
     threads = [Worker(f, q) for f in predict_funcs]
 
     for k in threads:
@@ -68,12 +68,15 @@ def eval_with_funcs(predict_funcs, nr_eval):
         for _ in tqdm(range(nr_eval), **get_tqdm_kwargs()):
             r = q.get()
             stat.feed(r)
-    except:
-        logger.exception("Eval")
-    finally:
         logger.info("Waiting for all the workers to finish the last run...")
         for k in threads: k.stop()
         for k in threads: k.join()
+        while q.qsize():
+            r = q.get()
+            stat.feed(r)
+    except:
+        logger.exception("Eval")
+    finally:
         if stat.count > 0:
             return (stat.average, stat.max)
         return (0, 0)
