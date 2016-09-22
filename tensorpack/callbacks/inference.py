@@ -131,7 +131,7 @@ class ScalarStats(Inferencer):
     """
     Write some scalar tensor to both stat and summary.
     The output of the given Ops must be a scalar.
-    The value will be averaged over all data points in the dataset.
+    The value will be averaged over all data points in the inference dataflow.
     """
     def __init__(self, names_to_print, prefix='validation'):
         """

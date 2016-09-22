@@ -52,7 +52,7 @@ class TrainConfig(object):
         self.step_per_epoch = int(kwargs.pop('step_per_epoch'))
         self.starting_epoch = int(kwargs.pop('starting_epoch', 1))
         self.max_epoch = int(kwargs.pop('max_epoch', 99999))
-        assert self.step_per_epoch > 0 and self.max_epoch > 0
+        assert self.step_per_epoch >= 0 and self.max_epoch > 0
 
         if 'nr_tower' in kwargs or 'tower' in kwargs:
             self.set_tower(**kwargs)

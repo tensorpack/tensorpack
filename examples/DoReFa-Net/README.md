@@ -13,7 +13,7 @@ It's provided in the format of numpy dictionary, so it should be very easy to po
 
 To use the script. You'll need:
 
-+ [TensorFlow](https://tensorflow.org) >= 0.8
++ [TensorFlow](https://tensorflow.org) >= 0.10
 
 + OpenCV bindings for Python
 
