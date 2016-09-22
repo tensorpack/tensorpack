@@ -37,7 +37,8 @@ class GaussianNoise(ImageAugmentor):
         return ret
 
 class SaltPepperNoise(ImageAugmentor):
-    def __init__(self, amount=0.05, s_vs_p=0.5):
+    def __init__(self, white_prob=0.05, black_prob=0.05):
+        assert white_prob + black_prob <= 1, "Sum of probabilities cannot be greater than 1"
         super(SaltPepperNoise, self).__init__()
         self._init(locals())
 
@@ -45,7 +46,6 @@ class SaltPepperNoise(ImageAugmentor):
         return self.rng.uniform(low=0, high=1, size=img.shape)
 
     def _augment(self, img, param):
-        ret = img.copy()
-        ret[param > (1 - self.amount * self.s_vs_p)] = 255
-        ret[param < (1 - self.s_vs_p) * self.amount] = 0
-        return ret
+        img[param > (1 - self.white_prob)] = 255
+        img[param < self.black_prob] = 0
+        return img
