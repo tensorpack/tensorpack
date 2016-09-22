@@ -21,6 +21,7 @@ class Flip(ImageAugmentor):
         :param vert: whether or not apply vertical flip.
         :param prob: probability of flip.
         """
+        super(Flip, self).__init__()
         if horiz and vert:
             raise ValueError("Please use two Flip instead.")
         elif horiz:
@@ -66,6 +67,7 @@ class RandomResize(ImageAugmentor):
         :param minimum: (xmin, ymin). Avoid scaling down too much.
         :param aspect_ratio_thres: at most change k=20% aspect ratio
         """
+        super(RandomResize, self).__init__()
         self._init(locals())
 
     def _get_augment_params(self, img):

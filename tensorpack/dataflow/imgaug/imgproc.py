@@ -17,6 +17,7 @@ class Brightness(ImageAugmentor):
         """
         Randomly add a value within [-delta,delta], and clip in [0,255] if clip is True.
         """
+        super(Brightness, self).__init__()
         assert delta > 0
         self._init(locals())
 
@@ -40,6 +41,7 @@ class Contrast(ImageAugmentor):
         :param factor_range: an interval to random sample the `contrast_factor`.
         :param clip: boolean.
         """
+        super(Contrast, self).__init__()
         self._init(locals())
 
     def _get_augment_params(self, img):
@@ -79,6 +81,7 @@ class MeanVarianceNormalize(ImageAugmentor):
 class GaussianBlur(ImageAugmentor):
     def __init__(self, max_size=3):
         """:params max_size: (maximum kernel size-1)/2"""
+        super(GaussianBlur, self).__init__()
         self._init(locals())
 
     def _get_augment_params(self, img):
@@ -94,9 +97,12 @@ class GaussianBlur(ImageAugmentor):
 
 class Gamma(ImageAugmentor):
     def __init__(self, range=(-0.5, 0.5)):
+        super(Gamma, self).__init__()
         self._init(locals())
+
     def _get_augment_params(self, _):
         return self._rand_range(*self.range)
+
     def _augment(self, img, gamma):
         lut = ((np.arange(256, dtype='float32') / 255) ** (1. / (1. + gamma)) * 255).astype('uint8')
         img = np.clip(img, 0, 255).astype('uint8')

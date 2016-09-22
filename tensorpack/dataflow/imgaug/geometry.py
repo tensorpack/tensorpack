@@ -19,6 +19,7 @@ class Rotation(ImageAugmentor):
         :param max_deg: max abs value of the rotation degree
         :param center_range: the location of the rotation center
         """
+        super(Rotation, self).__init__()
         self._init(locals())
 
     def _get_augment_params(self, img):
@@ -37,6 +38,7 @@ class RotationAndCropValid(ImageAugmentor):
         This will produce images of different shapes.
     """
     def __init__(self, max_deg, interp=cv2.INTER_CUBIC):
+        super(RotationAndCropValid, self).__init__()
         self._init(locals())
 
     def _get_augment_params(self, img):

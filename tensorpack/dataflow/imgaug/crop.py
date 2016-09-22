@@ -17,6 +17,7 @@ class RandomCrop(ImageAugmentor):
         """
         :param crop_shape: a shape like (h, w)
         """
+        super(RandomCrop, self).__init__()
         self._init(locals())
 
     def _get_augment_params(self, img):
@@ -120,6 +121,7 @@ class RandomCropRandomShape(ImageAugmentor):
         :param perturb_ratio: perturb distance will be in [0, perturb_ratio * sqrt(w * h)]
         :param max_aspect_ratio_diff: keep aspect ratio within the range
         """
+        super(RandomCropRandomShape, self).__init__()
         self._init(locals())
 
     def _get_augment_params(self, img):
