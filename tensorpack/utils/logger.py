@@ -41,20 +41,22 @@ def _getlogger():
 _logger = _getlogger()
 
 
-def get_time_str():
+def _get_time_str():
     return datetime.now().strftime('%m%d-%H%M%S')
+
 # logger file and directory:
 global LOG_FILE, LOG_DIR
 LOG_DIR = None
 def _set_file(path):
     if os.path.isfile(path):
-        backup_name = path + '.' + get_time_str()
+        backup_name = path + '.' + _get_time_str()
         shutil.move(path, backup_name)
         info("Log file '{}' backuped to '{}'".format(path, backup_name))
     hdl = logging.FileHandler(
         filename=path, encoding='utf-8', mode='w')
     hdl.setFormatter(_MyFormatter(datefmt='%m%d %H:%M:%S'))
     _logger.addHandler(hdl)
+    _logger.info("Argv: " + ' '.join(sys.argv))
 
 def set_logger_dir(dirname, action=None):
     """
@@ -74,13 +76,13 @@ If you're resuming from a previous run you can choose to keep it.""")
             action = input().lower().strip()
         act = action
         if act == 'b':
-            backup_name = dirname + get_time_str()
+            backup_name = dirname + _get_time_str()
             shutil.move(dirname, backup_name)
             info("Directory '{}' backuped to '{}'".format(dirname, backup_name))
         elif act == 'd':
             shutil.rmtree(dirname)
         elif act == 'n':
-            dirname = dirname + get_time_str()
+            dirname = dirname + _get_time_str()
             info("Use a new log directory {}".format(dirname))
         elif act == 'k':
             pass
@@ -92,19 +94,22 @@ If you're resuming from a previous run you can choose to keep it.""")
     LOG_FILE = os.path.join(dirname, 'log.log')
     _set_file(LOG_FILE)
 
+
+_LOGGING_METHOD = ['info', 'warning', 'error', 'critical', 'warn', 'exception', 'debug']
 # export logger functions
-for func in ['info', 'warning', 'error', 'critical', 'warn', 'exception', 'debug']:
+for func in _LOGGING_METHOD:
     locals()[func] = getattr(_logger, func)
 
 def disable_logger():
     """ disable all logging ability from this moment"""
-    for func in ['info', 'warning', 'error', 'critical', 'warn', 'exception', 'debug']:
+    for func in _LOGGING_METHOD:
         globals()[func] = lambda x: None
 
-def auto_set_dir(action=None, overwrite_setting=False):
+def auto_set_dir(action=None, overwrite=False):
     """ set log directory to a subdir inside 'train_log', with the name being
     the main python file currently running"""
-    if LOG_DIR is not None and not overwrite_setting:
+    if LOG_DIR is not None and not overwrite:
+        # dir already set
         return
     mod = sys.modules['__main__']
     basename = os.path.basename(mod.__file__)
