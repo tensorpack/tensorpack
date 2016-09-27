@@ -43,4 +43,4 @@ To visualize the agent:
 ./DQN.py --rom breakout.bin --task play --load pretrained.model
 ```
 
-A3C code will be released very soon.
+A3C code and models for Atari games in OpenAI Gym are released in [examples/OpenAIGym](../OpenAIGym)

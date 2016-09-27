@@ -1,7 +1,7 @@
 
 # tensorpack examples
 
-Examples with __reproducible__ and meaningful performancce.
+Examples with __reproducible__ and meaningful performance.
 
 + [An illustrative mnist example](mnist-convnet.py)
 + [A tiny SVHN ConvNet with 97.5% accuracy](svhn-digit-convnet.py)

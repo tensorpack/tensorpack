@@ -136,7 +136,9 @@ def BilinearUpSample(x, shape):
                 ret[x,y] = (1 - abs(x / f - c)) * (1 - abs(y / f - c))
         return ret
 
-    ch = x.get_shape().as_list()[3]
+    inp_shape = x.get_shape().as_list()
+    ch = inp_shape[3]
+    assert ch is not None
 
     shape = int(shape)
     filter_shape = 2 * shape
@@ -144,9 +146,14 @@ def BilinearUpSample(x, shape):
     w = np.repeat(w, ch * ch).reshape((filter_shape, filter_shape, ch, ch))
     weight_var = tf.constant(w, tf.float32,
                              shape=(filter_shape, filter_shape, ch, ch))
-    return tf.nn.conv2d_transpose(x, weight_var,
+    deconv = tf.nn.conv2d_transpose(x, weight_var,
             tf.shape(x) * tf.constant([1, shape, shape, 1], tf.int32),
             [1,shape,shape,1], 'SAME')
+
+    if inp_shape[1]: inp_shape[1] *= shape
+    if inp_shape[2]: inp_shape[2] *= shape
+    deconv.set_shape(inp_shape)
+    return deconv
 
 
 from ._test import TestModel
