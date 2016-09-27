@@ -137,20 +137,17 @@ def BilinearUpSample(x, shape):
         return ret
 
     ch = x.get_shape().as_list()[3]
-    shape = int(shape)
-    unpool_mat = np.zeros((shape, shape), dtype='float32')
-    unpool_mat[-1,-1] = 1
-    x = FixedUnPooling('unpool', x, shape, unpool_mat)
 
+    shape = int(shape)
     filter_shape = 2 * shape
     w = bilinear_conv_filler(filter_shape)
     w = np.repeat(w, ch * ch).reshape((filter_shape, filter_shape, ch, ch))
-    weight_var = tf.constant(w,
-                             tf.float32,
+    weight_var = tf.constant(w, tf.float32,
                              shape=(filter_shape, filter_shape, ch, ch))
+    return tf.nn.conv2d_transpose(x, weight_var,
+            tf.shape(x) * tf.constant([1, shape, shape, 1], tf.int32),
+            [1,shape,shape,1], 'SAME')
 
-    output = tf.nn.conv2d(x, weight_var, [1,1,1,1], padding='SAME')
-    return output
 
 from ._test import TestModel
 class TestPool(TestModel):
@@ -179,14 +176,14 @@ class TestPool(TestModel):
         inp = tf.reshape(inp, [1, h, w, 1])
 
         output = BilinearUpSample('upsample', inp, scale)
-        res = self.run_variable(output)
+        res = self.run_variable(output)[0,:,:,0]
 
         from skimage.transform import rescale
         res2 = rescale(mat, scale)
 
-        diff = np.abs(res2 - res[0,:,:,0])
+        diff = np.abs(res2 - res)
 
-        # not equivalent to rescale on edge
+        # not equivalent to rescale on edge?
         diff[0,:] = 0
         diff[:,0] = 0
         if not diff.max() < 1e-4:
