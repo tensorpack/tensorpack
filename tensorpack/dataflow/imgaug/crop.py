@@ -25,15 +25,9 @@ class RandomCrop(ImageAugmentor):
         assert orig_shape[0] >= self.crop_shape[0] \
                 and orig_shape[1] >= self.crop_shape[1], orig_shape
         diffh = orig_shape[0] - self.crop_shape[0]
-        if diffh == 0:
-            h0 = 0
-        else:
-            h0 = self.rng.randint(diffh)
+        h0 = 0 if diffh == 0 else self.rng.randint(diffh)
         diffw = orig_shape[1] - self.crop_shape[1]
-        if diffw == 0:
-            w0 = 0
-        else:
-            w0 = self.rng.randint(diffw)
+        w0 = 0 if diffw == 0 else self.rng.randint(diffw)
         return (h0, w0)
 
     def _augment(self, img, param):

@@ -6,6 +6,7 @@ import os
 from abc import abstractmethod, ABCMeta
 from collections import defaultdict
 import re
+import numpy as np
 import tensorflow as tf
 import six
 
@@ -15,7 +16,7 @@ from .varmanip import SessionUpdate, get_savename_from_varname
 
 __all__ = ['SessionInit', 'NewSession', 'SaverRestore',
            'ParamRestore', 'ChainInit',
-           'JustCurrentSession']
+           'JustCurrentSession', 'get_model_loader']
 
 # TODO they initialize_all at the beginning by default.
 
@@ -179,3 +180,10 @@ class ChainInit(SessionInit):
     def _init(self, sess):
         for i in self.inits:
             i.init(sess)
+
+
+def get_model_loader(filename):
+    if filename.endswith('.npy'):
+        return ParamRestore(np.load(filename, encoding='latin1').item())
+    else:
+        return SaverRestore(filename)
