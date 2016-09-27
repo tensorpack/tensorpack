@@ -41,7 +41,7 @@ def _getlogger():
 _logger = _getlogger()
 
 
-def _get_time_str():
+def get_time_str():
     return datetime.now().strftime('%m%d-%H%M%S')
 
 # logger file and directory:
@@ -49,7 +49,7 @@ global LOG_FILE, LOG_DIR
 LOG_DIR = None
 def _set_file(path):
     if os.path.isfile(path):
-        backup_name = path + '.' + _get_time_str()
+        backup_name = path + '.' + get_time_str()
         shutil.move(path, backup_name)
         info("Log file '{}' backuped to '{}'".format(path, backup_name))
     hdl = logging.FileHandler(
@@ -76,13 +76,13 @@ If you're resuming from a previous run you can choose to keep it.""")
             action = input().lower().strip()
         act = action
         if act == 'b':
-            backup_name = dirname + _get_time_str()
+            backup_name = dirname + get_time_str()
             shutil.move(dirname, backup_name)
             info("Directory '{}' backuped to '{}'".format(dirname, backup_name))
         elif act == 'd':
             shutil.rmtree(dirname)
         elif act == 'n':
-            dirname = dirname + _get_time_str()
+            dirname = dirname + get_time_str()
             info("Use a new log directory {}".format(dirname))
         elif act == 'k':
             pass

@@ -145,7 +145,8 @@ def BilinearUpSample(x, shape):
     w = bilinear_conv_filler(filter_shape)
     w = np.repeat(w, ch * ch).reshape((filter_shape, filter_shape, ch, ch))
     weight_var = tf.constant(w, tf.float32,
-                             shape=(filter_shape, filter_shape, ch, ch))
+                             shape=(filter_shape, filter_shape, ch, ch),
+                             name='bilinear_upsample_filter')
     deconv = tf.nn.conv2d_transpose(x, weight_var,
             tf.shape(x) * tf.constant([1, shape, shape, 1], tf.int32),
             [1,shape,shape,1], 'SAME')
