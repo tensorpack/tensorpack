@@ -23,6 +23,7 @@ This config follows the official inceptionv3 setup (https://github.com/tensorflo
 with much much fewer lines of code.
 It reaches 74.5% single-crop validation accuracy, slightly better than the official code,
 and has the same running speed as well.
+The hyperparameters here are for 8 GPUs, so the effective batch size is 8*64 = 512.
 """
 
 BATCH_SIZE = 64
