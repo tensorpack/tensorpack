@@ -45,8 +45,8 @@ def extract_images(filename):
         buf = bytestream.read(rows * cols * num_images)
         data = numpy.frombuffer(buf, dtype=numpy.uint8)
         data = data.reshape(num_images, rows, cols, 1)
+        data = data.astype('float32') / 255.0
         return data
-
 
 def extract_labels(filename):
     """Extract the labels into a 1D uint8 numpy array [index]."""
@@ -60,37 +60,6 @@ def extract_labels(filename):
         buf = bytestream.read(num_items)
         labels = numpy.frombuffer(buf, dtype=numpy.uint8)
         return labels
-
-class DataSet(object):
-    def __init__(self, images, labels, fake_data=False):
-        """Construct a DataSet. """
-        assert images.shape[0] == labels.shape[0], (
-            'images.shape: %s labels.shape: %s' % (images.shape,
-                                                   labels.shape))
-        self._num_examples = images.shape[0]
-
-        # Convert shape from [num examples, rows, columns, depth]
-        # to [num examples, rows*columns] (assuming depth == 1)
-        assert images.shape[3] == 1
-        images = images.reshape(images.shape[0],
-                                images.shape[1] * images.shape[2])
-        # Convert from [0, 255] -> [0.0, 1.0].
-        images = images.astype(numpy.float32)
-        images = numpy.multiply(images, 1.0 / 255.0)
-        self._images = images
-        self._labels = labels
-
-    @property
-    def images(self):
-        return self._images
-
-    @property
-    def labels(self):
-        return self._labels
-
-    @property
-    def num_examples(self):
-        return self._num_examples
 
 class Mnist(RNGDataFlow):
     """
@@ -108,38 +77,33 @@ class Mnist(RNGDataFlow):
         self.train_or_test = train_or_test
         self.shuffle = shuffle
 
-        TRAIN_IMAGES = 'train-images-idx3-ubyte.gz'
-        TRAIN_LABELS = 'train-labels-idx1-ubyte.gz'
-        TEST_IMAGES = 't10k-images-idx3-ubyte.gz'
-        TEST_LABELS = 't10k-labels-idx1-ubyte.gz'
+        def get_images_and_labels(image_file, label_file):
+            f = maybe_download(image_file, dir)
+            images = extract_images(f)
+            f = maybe_download(label_file, dir)
+            labels = extract_labels(f)
+            assert images.shape[0] == labels.shape[0]
+            return images, labels
 
-        local_file = maybe_download(TRAIN_IMAGES, dir)
-        train_images = extract_images(local_file)
-
-        local_file = maybe_download(TRAIN_LABELS, dir)
-        train_labels = extract_labels(local_file)
-
-        local_file = maybe_download(TEST_IMAGES, dir)
-        test_images = extract_images(local_file)
-
-        local_file = maybe_download(TEST_LABELS, dir)
-        test_labels = extract_labels(local_file)
-
-        self.train = DataSet(train_images, train_labels)
-        self.test = DataSet(test_images, test_labels)
+        if self.train_or_test == 'train':
+            self.images, self.labels = get_images_and_labels(
+                'train-images-idx3-ubyte.gz',
+                'train-labels-idx1-ubyte.gz')
+        else:
+            self.images, self.labels = get_images_and_labels(
+                't10k-images-idx3-ubyte.gz',
+                't10k-labels-idx1-ubyte.gz')
 
     def size(self):
-        ds = self.train if self.train_or_test == 'train' else self.test
-        return ds.num_examples
+        return self.images.shape[0]
 
     def get_data(self):
-        ds = self.train if self.train_or_test == 'train' else self.test
-        idxs = list(range(ds.num_examples))
+        idxs = list(range(self.size()))
         if self.shuffle:
             self.rng.shuffle(idxs)
         for k in idxs:
-            img = ds.images[k].reshape((28, 28))
-            label = ds.labels[k]
+            img = self.images[k].reshape((28, 28))
+            label = self.labels[k]
             yield [img, label]
 
 if __name__ == '__main__':
