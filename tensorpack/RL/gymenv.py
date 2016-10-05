@@ -77,4 +77,4 @@ if __name__ == '__main__':
         r, o = env.action(act)
         env.current_state()
         if r != 0 or o:
-            print r, o
+            print(r, o)

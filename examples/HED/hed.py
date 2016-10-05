@@ -22,9 +22,10 @@ HED is a fully-convolutional architecture. This code generally would also work
 for other FCN tasks such as semantic segmentation and detection.
 
 Usage:
+    This script only needs the original BSDS dataset and applies augmentation on the fly.
+    It will automatically download the dataset to $TENSORPACK_DATASET/ if not there.
     It requires pretrained vgg16 model. See the docs in `examples/load-vgg16.py`
     for instructions to convert from vgg16 caffe model.
-    It only needs the original BSDS dataset and applies augmentation on the fly.
 
     To view augmented images:
     ./hed.py --view
@@ -35,11 +36,11 @@ Usage:
     To inference (produce heatmap at each level):
     ./hed.py --load pretrained.model --run a.jpg
 
-    To view the loss:
-    cat train_log/hed/stat.json | jq '.[] | \
-    [.xentropy1,.xentropy2,.xentropy3,.xentropy4,.xentropy5,.xentropy6] | \
+    To view the loss curve:
+    cat train_log/hed/stat.json | jq '.[] |
+    [.xentropy1,.xentropy2,.xentropy3,.xentropy4,.xentropy5,.xentropy6] |
     map(tostring) | join("\t") | .' -r | \
-            ../../scripts/plot-point.py -c 'y,y,y,y,y,y' --legend 1,2,3,4,5,final
+            ../../scripts/plot-point.py --legend 1,2,3,4,5,final --decay 0.8
 """
 
 BATCH_SIZE = 1
@@ -54,6 +55,7 @@ class Model(ModelDesc):
 
     def _build_graph(self, input_vars, is_training):
         image, edgemap = input_vars
+        # TODO fix this
         edgemap = tf.identity(edgemap, name='edgemap-tmp')
         image = image - tf.constant([104, 116, 122], dtype='float32')
 
@@ -139,12 +141,10 @@ def get_data(name):
             imgaug.Flip(horiz=True),
             imgaug.Flip(vert=True),
         ]
+        ds = AugmentImageComponents(ds, shape_aug, (0, 1))
     else:
-        # this is the original image shape in bsds
-        IMAGE_SHAPE = (320, 480)
-        #shape_aug = [imgaug.RandomCrop(IMAGE_SHAPE)]
-        shape_aug = []
-    ds = AugmentImageComponents(ds, shape_aug, (0, 1))
+        # the original image shape (320x480) in bsds is already a multiple of 16
+        pass
     def f(m):
         m[m>=0.49] = 1
         m[m<0.49] = 0
@@ -185,7 +185,6 @@ def get_config():
     return TrainConfig(
         dataset=dataset_train,
         optimizer=tf.train.AdamOptimizer(lr, epsilon=1e-3),
-        #optimizer=tf.train.MomentumOptimizer(lr, 0.9),
         callbacks=Callbacks([
             StatPrinter(),
             ModelSaver(),
@@ -215,7 +214,6 @@ def run(model_path, image_path):
         cv2.imwrite("out{}.png".format(
             '-fused' if k == 5 else str(k+1)), pred * 255)
 
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.') # nargs='*' in multi mode
@@ -227,18 +225,15 @@ if __name__ == '__main__':
     if args.view:
         ds = get_data('train')
         view_data(ds)
-        sys.exit()
-
-    if args.run:
+    elif args.run:
         run(args.load, args.run)
-        sys.exit()
+    else:
+        if args.gpu:
+            os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
-    if args.gpu:
-        os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
-
-    config = get_config()
-    if args.load:
-        config.session_init = get_model_loader(args.load)
-    if args.gpu:
-        config.nr_tower = len(args.gpu.split(','))
-    SyncMultiGPUTrainer(config).train()
+        config = get_config()
+        if args.load:
+            config.session_init = get_model_loader(args.load)
+        if args.gpu:
+            config.nr_tower = len(args.gpu.split(','))
+        SyncMultiGPUTrainer(config).train()
