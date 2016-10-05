@@ -23,4 +23,4 @@ The method didn't work for slightly harder problems such as SVHN:
 The SVHN experiements used the model & hyperparemeters as my original [svhn example](../svhn-digit-convnet.py).
 Experiements were all repeated 10 times to get the error bar.
 
-And I don't believe it will work for ImageNet either.
+And I don't believe it will work for ImageNet either. And that's a CVPR paper..

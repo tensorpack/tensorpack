@@ -1,6 +1,12 @@
 
 ## Character-Level RNN Language Model
 
+To train, create some corpus in `input.txt`, and run `./char-rnn.py train`.
+Some corpus to play with: http://cs.stanford.edu/people/karpathy/char-rnn/
+
+To genearate text, see `./char-rnn.py sample --help` for the options.
+
+
 Generate linux kernel source code:
 ```c
 static int via_playback_set_interrupt(int action, void *data, int val)
