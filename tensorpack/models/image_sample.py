@@ -14,8 +14,9 @@ __all__ = ['ImageSample']
 # See github:tensorflow#418,#206
 def sample(img, coords):
     """
-    img: bxhxwxc
-    coords: bxh2xw2x2 (y, x) integer
+    :param img: bxhxwxc
+    :param coords: bxh2xw2x2 (y, x) integer
+    :return: bxh2xw2xc image
     """
     shape = img.get_shape().as_list()[1:]
     shape2 = coords.get_shape().as_list()[1:3]
