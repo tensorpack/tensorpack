@@ -6,6 +6,7 @@ import tensorflow as tf
 import numpy as np
 from tqdm import tqdm
 from abc import ABCMeta, abstractmethod
+from collections import namedtuple
 import six
 from six.moves import zip, map
 
@@ -66,10 +67,14 @@ class InferenceRunner(Callback):
     A callback that runs different kinds of inferencer.
     """
 
-    def __init__(self, ds, infs):
+    IOTensor = namedtuple('IOTensor', ['index', 'isOutput'])
+
+    def __init__(self, ds, infs, input_tensors=None):
         """
         :param ds: inference dataset. a `DataFlow` instance.
         :param infs: a list of `Inferencer` instance.
+        :param input_tensor_names: list of tensors to feed the dataflow to.
+            default to all the input placeholders.
         """
         assert isinstance(ds, DataFlow), type(ds)
         self.ds = ds
@@ -79,27 +84,36 @@ class InferenceRunner(Callback):
             self.infs = infs
         for v in self.infs:
             assert isinstance(v, Inferencer), str(v)
+        self.input_tensors = input_tensors
 
     def _setup_graph(self):
-        self.input_vars = self.trainer.model.reuse_input_vars()
-        self._find_output_tensors()
-        input_names = [x.name for x in self.input_vars]
+        self._find_input_tensors() # these are all tensor names
+        self._find_output_tensors() # may be either tensor name or op name
         self.pred_func = self.trainer.get_predict_func(
-                input_names, self.output_tensors)
+                self.input_tensors, self.output_tensors)
+
+    def _find_input_tensors(self):
+        if self.input_tensors is None:
+            input_vars = self.trainer.model.reuse_input_vars()
+            self.input_tensors = [x.name for x in input_vars]
 
     def _find_output_tensors(self):
-        self.output_tensors = []    # list of names
-        self.inf_to_tensors = []    # list of list of (var_name: output_idx)
-        for inf in self.infs:
-            inf_tensors = inf.get_output_tensors()
-            def find_oid(t):
-                if t in self.output_tensors:
-                    return self.output_tensors.index(t)
-                else:
-                    self.output_tensors.append(t)
-                    return len(self.output_tensors) - 1
-            inf_tensors = [(t, find_oid(t)) for t in inf_tensors]
-            self.inf_to_tensors.append(inf_tensors)
+        IOTensor = InferenceRunner.IOTensor
+        self.output_tensors = []
+        def find_oid(t):
+            tensorname = get_op_tensor_name(t)[1]
+            if tensorname in self.input_tensors:
+                # this inferencer needs the input dp
+                return IOTensor(self.input_tensors.index(tensorname), False)
+            if t in self.output_tensors:
+                return IOTensor(self.output_tensors.index(t), True)
+            else:
+                self.output_tensors.append(t)
+                return IOTensor(len(self.output_tensors) - 1, True)
+        self.inf_to_tensors = [
+                [find_oid(t) for t in inf.get_output_tensors()]
+                for inf in self.infs]
+        # list of list of (var_name: IOTensor)
 
     def _trigger_epoch(self):
         for inf in self.infs:
@@ -109,11 +123,10 @@ class InferenceRunner(Callback):
         self.ds.reset_state()
         with tqdm(total=self.ds.size(), **get_tqdm_kwargs()) as pbar:
             for dp in self.ds.get_data():
-                #feed = dict(zip(self.input_vars, dp))   # TODO custom dp mapping?
-                #outputs = sess.run(self.output_tensors, feed_dict=feed)
                 outputs = self.pred_func(dp)
                 for inf, tensormap in zip(self.infs, self.inf_to_tensors):
-                    inf_output = [outputs[k[1]] for k in tensormap]
+                    inf_output = [(outputs if k.isOutput else dp)[k.index]
+                            for k in tensormap]
                     inf.datapoint(dp, inf_output)
                 pbar.update()
 
@@ -166,7 +179,7 @@ class ScalarStats(Inferencer):
 
 class ClassificationError(Inferencer):
     """
-    Compute classification error from a `wrong` variable
+    Compute classification error in batch mode, from a `wrong` variable
 
     The `wrong` variable is supposed to be an integer equal to the number of failed samples in this batch.
     You can use `tf.nn.in_top_k` to record top-k error as well.

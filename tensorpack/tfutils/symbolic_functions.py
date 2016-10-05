@@ -68,7 +68,7 @@ def print_stat(x, message=None):
     """
     if message is None:
         message = x.op.name
-    return tf.Print(x, [tf.reduce_mean(x), x], summarize=20,
+    return tf.Print(x, [tf.shape(x), tf.reduce_mean(x), x], summarize=20,
             message=message, name='print_' + x.op.name)
 
 def rms(x, name=None):

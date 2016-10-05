@@ -53,8 +53,8 @@ class RotationAndCropValid(ImageAugmentor):
         neww, newh = RotationAndCropValid.largest_rotated_rect(ret.shape[1], ret.shape[0], deg)
         neww = min(neww, ret.shape[1])
         newh = min(newh, ret.shape[0])
-        newx = center[0] - neww * 0.5
-        newy = center[1] - newh * 0.5
+        newx = int(center[0] - neww * 0.5)
+        newy = int(center[1] - newh * 0.5)
         #print(ret.shape, deg, newx, newy, neww, newh)
         return ret[newy:newy+newh,newx:newx+neww]
 
@@ -81,4 +81,4 @@ class RotationAndCropValid(ImageAugmentor):
           cos_2a = cos_a*cos_a - sin_a*sin_a
           wr,hr = (w*cos_a - h*sin_a)/cos_2a, (h*cos_a - w*sin_a)/cos_2a
 
-        return wr,hr
+        return int(wr), int(hr)

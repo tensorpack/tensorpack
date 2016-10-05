@@ -55,8 +55,6 @@ class Model(ModelDesc):
 
     def _build_graph(self, input_vars, is_training):
         image, edgemap = input_vars
-        # TODO fix this
-        edgemap = tf.identity(edgemap, name='edgemap-tmp')
         image = image - tf.constant([104, 116, 122], dtype='float32')
 
         def branch(name, l, up):
@@ -119,8 +117,8 @@ def get_data(name):
 
     class CropMultiple16(imgaug.ImageAugmentor):
         def _get_augment_params(self, img):
-            newh = img.shape[0] / 16 * 16
-            neww = img.shape[1] / 16 * 16
+            newh = img.shape[0] // 16 * 16
+            neww = img.shape[1] // 16 * 16
             assert newh > 0 and neww > 0
             diffh = img.shape[0] - newh
             h0 = 0 if diffh == 0 else self.rng.randint(diffh)
@@ -141,10 +139,12 @@ def get_data(name):
             imgaug.Flip(horiz=True),
             imgaug.Flip(vert=True),
         ]
-        ds = AugmentImageComponents(ds, shape_aug, (0, 1))
     else:
-        # the original image shape (320x480) in bsds is already a multiple of 16
-        pass
+        # the original image shape (321x481) in BSDS is not a multiple of 16
+        IMAGE_SHAPE = (320, 480)
+        shape_aug = [imgaug.RandomCrop(IMAGE_SHAPE)]
+    ds = AugmentImageComponents(ds, shape_aug, (0, 1))
+
     def f(m):
         m[m>=0.49] = 1
         m[m<0.49] = 0
@@ -163,10 +163,12 @@ def get_data(name):
         #ds = PrefetchDataZMQ(ds, 3)
     return ds
 
-def view_data(ds):
+def view_data():
+    ds = get_data('train')
     ds.reset_state()
     for ims, edgemaps in ds.get_data():
         for im, edgemap in zip(ims, edgemaps):
+            assert im.shape[0] % 16 == 0 and im.shape[1] % 16 == 0, im.shape
             cv2.imshow("im", im / 255.0)
             cv2.waitKey(1000)
             cv2.imshow("edge", edgemap)
@@ -191,7 +193,7 @@ def get_config():
             HumanHyperParamSetter('learning_rate'),
             InferenceRunner(dataset_val,
                             BinaryClassificationStats('prediction',
-                                                      'edgemap-tmp'))
+                                                      'edgemap'))
         ]),
         model=Model(),
         step_per_epoch=step_per_epoch,
@@ -207,7 +209,7 @@ def run(model_path, image_path):
     predict_func = get_predict_func(pred_config)
     im = cv2.imread(image_path)
     assert im is not None
-    im = cv2.resize(im, (im.shape[0] / 16 * 16, im.shape[1] / 16 * 16))
+    im = cv2.resize(im, (im.shape[0] // 16 * 16, im.shape[1] // 16 * 16))
     outputs = predict_func([[im.astype('float32')]])
     for k in range(6):
         pred = outputs[k][0]
@@ -223,8 +225,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.view:
-        ds = get_data('train')
-        view_data(ds)
+        view_data()
     elif args.run:
         run(args.load, args.run)
     else:

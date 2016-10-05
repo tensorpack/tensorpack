@@ -13,7 +13,9 @@ __all__ = ['get_default_sess_config',
            'get_global_step',
            'get_global_step_var',
            'get_op_var_name',
+           'get_op_tensor_name',
            'get_vars_by_names',
+           'get_tensors_by_names',
            'backup_collection',
            'restore_collection',
            'clear_collection',
@@ -53,21 +55,23 @@ def get_global_step():
         tf.get_default_session(),
         get_global_step_var())
 
-def get_op_var_name(name):
+def get_op_tensor_name(name):
     """
-    Variable name is assumed to be ``op_name + ':0'``
+    Tensor name is assumed to be ``op_name + ':0'``
 
-    :param name: an op or a variable name
-    :returns: (op_name, variable_name)
+    :param name: an op or a tensor name
+    :returns: (op_name, tensor_name)
     """
     if name.endswith(':0'):
         return name[:-2], name
     else:
         return name, name + ':0'
 
-def get_vars_by_names(names):
+get_op_var_name = get_op_tensor_name
+
+def get_tensors_by_names(names):
     """
-    Get a list of variables in the default graph by a list of names
+    Get a list of tensors in the default graph by a list of names
     """
     ret = []
     G = tf.get_default_graph()
@@ -75,6 +79,8 @@ def get_vars_by_names(names):
         opn, varn = get_op_var_name(n)
         ret.append(G.get_tensor_by_name(varn))
     return ret
+
+get_vars_by_names = get_tensors_by_names
 
 def backup_collection(keys):
     ret = {}

@@ -33,6 +33,7 @@ class PredictConfig(object):
             Predict specific output might not require all input variables.
         :param return_input: whether to return (input, output) pair or just output. default to False.
         """
+        # TODO use the name "tensor" instead of "variable"
         def assert_type(v, tp):
             assert isinstance(v, tp), v.__class__
         # XXX does it work? start with minimal memory, but allow growth.
