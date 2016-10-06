@@ -73,16 +73,14 @@ class BSDS500(RNGDataFlow):
             gt = loadmat(gt_file)['groundTruth'][0]
             n_annot = gt.shape[0]
             gt = sum(gt[k]['Boundaries'][0][0] for k in range(n_annot))
-            #gt[gt <= 2] = 0
             gt = gt.astype('float32')
-            gt /= np.max(gt)
+            gt *= 1.0 / n_annot
             if gt.shape[0] > gt.shape[1]:
                 gt = gt.transpose()
             assert gt.shape == (IMG_H, IMG_W)
 
             self.data[idx] = im
             self.label[idx] = gt
-        #self.label[self.label<0.9] = 0
 
     def size(self):
         return self.data.shape[0]

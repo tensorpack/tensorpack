@@ -107,6 +107,11 @@ class Model(ModelDesc):
         wrong = tf.cast(tf.not_equal(pred, edgemap), tf.float32)
         wrong = tf.reduce_mean(wrong, name='train_error')
 
+        wd_w = tf.train.exponential_decay(2e-4, get_global_step_var(),
+                                          80000, 0.7, True)
+        wd_cost = tf.mul(wd_w, regularize_cost('.*/W', tf.nn.l2_loss), name='wd_cost')
+        costs.append(wd_cost)
+
         add_moving_summary(costs + [wrong])
         add_param_summary([('.*/W', ['histogram'])])   # monitor W
         self.cost = tf.add_n(costs, name='cost')
@@ -142,7 +147,7 @@ def get_data(name):
     else:
         # the original image shape (321x481) in BSDS is not a multiple of 16
         IMAGE_SHAPE = (320, 480)
-        shape_aug = [imgaug.RandomCrop(IMAGE_SHAPE)]
+        shape_aug = [imgaug.CenterCrop(IMAGE_SHAPE)]
     ds = AugmentImageComponents(ds, shape_aug, (0, 1))
 
     def f(m):
@@ -177,7 +182,7 @@ def view_data():
 def get_config():
     logger.auto_set_dir()
     dataset_train = get_data('train')
-    step_per_epoch = dataset_train.size() * 20
+    step_per_epoch = dataset_train.size() * 100
     dataset_val = get_data('val')
     #dataset_test = get_data('test')
 
@@ -190,13 +195,14 @@ def get_config():
         callbacks=Callbacks([
             StatPrinter(),
             ModelSaver(),
+            ScheduledHyperParamSetter('learning_rate', [(25, 3e-6)]),
             HumanHyperParamSetter('learning_rate'),
             InferenceRunner(dataset_val,
                             BinaryClassificationStats('prediction', 'edgemap'))
         ]),
         model=Model(),
         step_per_epoch=step_per_epoch,
-        max_epoch=500,
+        max_epoch=100,
     )
 
 def run(model_path, image_path):
