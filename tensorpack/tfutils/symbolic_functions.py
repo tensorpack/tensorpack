@@ -29,15 +29,6 @@ def batch_flatten(x):
         return tf.reshape(x, [-1, np.prod(shape)])
     return tf.reshape(x, tf.pack([tf.shape(x)[0], -1]))
 
-def logSoftmax(x):
-    """
-    Batch log softmax.
-    :param x: NxC tensor.
-    :returns: NxC tensor.
-    """
-    logger.warn("symbf.logSoftmax is deprecated in favor of tf.nn.log_softmax")
-    return tf.nn.log_softmax(x)
-
 def class_balanced_binary_class_cross_entropy(pred, label, name='cross_entropy_loss'):
     """
     The class-balanced cross entropy loss for binary classification,
@@ -56,10 +47,9 @@ def class_balanced_binary_class_cross_entropy(pred, label, name='cross_entropy_l
     beta = count_neg / (count_neg + count_pos)
 
     eps = 1e-8
-    loss_pos = -beta * tf.reduce_mean(y * tf.log(tf.abs(z) + eps), 1)
-    loss_neg = (1. - beta) * tf.reduce_mean((1. - y) * tf.log(tf.abs(1. - z) + eps), 1)
-    cost = tf.sub(loss_pos, loss_neg)
-    cost = tf.reduce_mean(cost, name=name)
+    loss_pos = -beta * tf.reduce_mean(y * tf.log(z + eps))
+    loss_neg = (1. - beta) * tf.reduce_mean((1. - y) * tf.log(1. - z + eps))
+    cost = tf.sub(loss_pos, loss_neg, name=name)
     return cost
 
 def print_stat(x, message=None):

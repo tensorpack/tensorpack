@@ -133,7 +133,7 @@ def get_data(name):
     if isTrain:
         shape_aug = [
             imgaug.RandomResize(xrange=(0.7,1.5), yrange=(0.7,1.5),
-                aspect_ratio_thres=0.1),
+                aspect_ratio_thres=0.15),
             imgaug.RotationAndCropValid(90),
             CropMultiple16(),
             imgaug.Flip(horiz=True),
@@ -192,8 +192,7 @@ def get_config():
             ModelSaver(),
             HumanHyperParamSetter('learning_rate'),
             InferenceRunner(dataset_val,
-                            BinaryClassificationStats('prediction',
-                                                      'edgemap'))
+                            BinaryClassificationStats('prediction', 'edgemap'))
         ]),
         model=Model(),
         step_per_epoch=step_per_epoch,

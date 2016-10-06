@@ -85,6 +85,7 @@ class RandomResize(ImageAugmentor):
             cnt += 1
             if cnt > 50:
                 logger.warn("RandomResize failed to augment an image")
+                return img.shape[1], img.shape[0]
 
     def _augment(self, img, dsize):
         return cv2.resize(img, dsize, interpolation=cv2.INTER_CUBIC)
