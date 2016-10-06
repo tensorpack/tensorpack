@@ -63,15 +63,7 @@ def LeakyReLU(x, alpha, name=None):
         name = 'output'
     return tf.mul(x, 0.5, name=name)
 
-# I'm not a layer, but I return a nonlinearity.
-def BNReLU(is_training=None, **kwargs):
-    """
-    :param is_traning: boolean
-    :param kwargs: args for BatchNorm
-    :returns: an activation function that performs BN + ReLU (a too common combination)
-    """
-    def BNReLU(x, name=None):
-        x = BatchNorm('bn', x, use_local_stat=is_training, **kwargs)
-        x = tf.nn.relu(x, name=name)
-        return x
-    return BNReLU
+def BNReLU(x, name=None):
+    x = BatchNorm('bn', x, use_local_stat=None)
+    x = tf.nn.relu(x, name=name)
+    return x

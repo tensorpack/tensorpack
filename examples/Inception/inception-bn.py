@@ -57,7 +57,7 @@ class Model(ModelDesc):
                 outs.append(x4)
                 return tf.concat(3, outs, name='concat')
 
-        with argscope(Conv2D, nl=BNReLU(), use_bias=False):
+        with argscope(Conv2D, nl=BNReLU, use_bias=False):
             l = Conv2D('conv0', image, 64, 7, stride=2)
             l = MaxPooling('pool0', l, 3, 2, padding='SAME')
             l = Conv2D('conv1', l, 64, 1)

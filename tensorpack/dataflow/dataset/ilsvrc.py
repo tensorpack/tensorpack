@@ -156,7 +156,7 @@ class ILSVRC12(RNGDataFlow):
 
     def get_data(self):
         """
-        Produce original images of shape [h, w, 3], and label,
+        Produce original images of shape [h, w, 3(BGR)], and label,
         and optionally a bbox of [xmin, ymin, xmax, ymax]
         """
         idxs = np.arange(len(self.imglist))

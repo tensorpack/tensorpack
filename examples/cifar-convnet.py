@@ -41,7 +41,7 @@ class Model(ModelDesc):
             tf.image_summary("train_image", image, 10)
 
         image = image / 4.0     # just to make range smaller
-        with argscope(Conv2D, nl=BNReLU(), use_bias=False, kernel_shape=3):
+        with argscope(Conv2D, nl=BNReLU, use_bias=False, kernel_shape=3):
             logits = LinearWrap(image) \
                     .Conv2D('conv1.1', out_channel=64) \
                     .Conv2D('conv1.2', out_channel=64) \

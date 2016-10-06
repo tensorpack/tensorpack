@@ -7,7 +7,7 @@ import numpy as np
 import cv2
 
 __all__ = ['Brightness', 'Contrast', 'MeanVarianceNormalize', 'GaussianBlur',
-        'Gamma', 'Clip']
+        'Gamma', 'Clip', 'Saturation']
 
 class Brightness(ImageAugmentor):
     """
@@ -111,9 +111,22 @@ class Gamma(ImageAugmentor):
 
 class Clip(ImageAugmentor):
     def __init__(self, min=0, max=255):
-        assert delta > 0
         self._init(locals())
 
     def _augment(self, img, _):
         img = np.clip(img, self.min, self.max)
         return img
+
+class Saturation(ImageAugmentor):
+    """ Saturation, see 'fb.resnet.torch' https://github.com/facebook/fb.resnet.torch/blob/master/datasets/transforms.lua#L218"""
+    def __init__(self, alpha=0.4):
+        super(Saturation, self).__init__()
+        assert alpha < 1
+        self._init(locals())
+
+    def _get_augment_params(self, _):
+        return 1 + self._rand_range(-self.alpha, self.alpha)
+
+    def _augment(self, img, v):
+        grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        return img * v + (grey * (1 - v))[:,:,np.newaxis]

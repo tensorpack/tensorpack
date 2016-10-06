@@ -36,7 +36,7 @@ class Model(ModelDesc):
 
     def _build_graph(self, input_vars):
         image, label = input_vars
-        image = image / 128.0 - 1   # ?
+        image = image / 255.0   # ?
 
         def proj_kk(l, k, ch_r, ch, stride=1):
             l = Conv2D('conv{0}{0}r'.format(k), l, ch_r, 1)
@@ -70,8 +70,8 @@ class Model(ModelDesc):
                 .Conv2D('conv277ba', ch_r, [7,1])
                 .Conv2D('conv277bb', ch, [1,7])())
 
-        nl = BNReLU(decay=0.9997, epsilon=1e-3)
-        with argscope(Conv2D, nl=nl, use_bias=False):
+        with argscope(Conv2D, nl=BNReLU, use_bias=False),\
+                argscope(BatchNorm, decay=0.9997, epsilon=1e-3):
             l = (LinearWrap(image)
                 .Conv2D('conv0', 32, 3, stride=2, padding='VALID') #299
                 .Conv2D('conv1', 32, 3, padding='VALID') #149
@@ -269,8 +269,8 @@ def get_config():
         callbacks=Callbacks([
             StatPrinter(), ModelSaver(),
             InferenceRunner(dataset_val, [
-                ClassificationError('wrong-top1', 'val-top1-error'),
-                ClassificationError('wrong-top5', 'val-top5-error')]),
+                ClassificationError('wrong-top1', 'val-error-top1'),
+                ClassificationError('wrong-top5', 'val-error-top5')]),
             ScheduledHyperParamSetter('learning_rate',
                                       [(5, 0.03), (9, 0.01), (12, 0.006),
                                        (17, 0.003), (22, 1e-3), (36, 2e-4),

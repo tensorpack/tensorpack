@@ -6,10 +6,10 @@ from abc import abstractmethod, ABCMeta
 from ...utils import get_rng
 from six.moves import zip
 
-__all__ = ['ImageAugmentor', 'AugmentorList']
+__all__ = ['Augmentor', 'ImageAugmentor', 'AugmentorList']
 
-class ImageAugmentor(object):
-    """ Base class for an image augmentor"""
+class Augmentor(object):
+    """ Base class for an augmentor"""
     __metaclass__ = ABCMeta
 
     def __init__(self):
@@ -24,6 +24,40 @@ class ImageAugmentor(object):
     def reset_state(self):
         self.rng = get_rng(self)
 
+    def augment(self, d):
+        """
+        Perform augmentation on the data.
+        """
+        d, params = self._augment_return_params(d)
+        return d
+
+    def _augment_return_params(self, d):
+        """
+        Augment the image and return both image and params
+        """
+        prms = self._get_augment_params(d)
+        return (self._augment(d, prms), prms)
+
+    @abstractmethod
+    def _augment(self, d, param):
+        """
+        augment with the given param and return the new image
+        """
+
+    def _get_augment_params(self, d):
+        """
+        get the augmentor parameters
+        """
+        return None
+
+    def _rand_range(self, low=1.0, high=None, size=None):
+        if high is None:
+            low, high = 0, low
+        if size == None:
+            size = []
+        return self.rng.uniform(low, high, size)
+
+class ImageAugmentor(Augmentor):
     def augment(self, img):
         """
         Perform augmentation on the image in-place.
@@ -33,34 +67,8 @@ class ImageAugmentor(object):
         img, params = self._augment_return_params(img)
         return img
 
-    def _augment_return_params(self, img):
-        """
-        Augment the image and return both image and params
-        """
-        prms = self._get_augment_params(img)
-        return (self._augment(img, prms), prms)
-
-    @abstractmethod
-    def _augment(self, img, param):
-        """
-        augment with the given param and return the new image
-        """
-
-    def _get_augment_params(self, img):
-        """
-        get the augmentor parameters
-        """
-        return None
-
     def _fprop_coord(self, coord, param):
         return coord
-
-    def _rand_range(self, low=1.0, high=None, size=None):
-        if high is None:
-            low, high = 0, low
-        if size == None:
-            size = []
-        return self.rng.uniform(low, high, size)
 
 class AugmentorList(ImageAugmentor):
     """
