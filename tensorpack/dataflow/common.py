@@ -108,9 +108,6 @@ class BatchDataByShape(BatchData):
         super(BatchDataByShape, self).__init__(ds, batch_size, remainder=False)
         self.idx = idx
 
-    def size(self):
-        raise NotImplementedError()
-
     def reset_state(self):
         super(BatchDataByShape, self).reset_state()
         self.holder = defaultdict(list)
