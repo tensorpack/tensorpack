@@ -24,6 +24,7 @@ with much much fewer lines of code.
 It reaches 74.5% single-crop validation accuracy, slightly better than the official code,
 and has the same running speed as well.
 The hyperparameters here are for 8 GPUs, so the effective batch size is 8*64 = 512.
+With 8 TitanX it runs about 0.45 it/s.
 """
 
 BATCH_SIZE = 64

@@ -100,7 +100,7 @@ class ILSVRC12(RNGDataFlow):
             If is 'original' then keep the original decompressed dir with list
             of image files (as below). If equals to 'train', use the `train/` dir
             structure with class name as subdirectories.
-        :param include_bb: Include the bounding box. Useful in training.
+        :param include_bb: Include the bounding box. Maybe useful in training.
 
         Dir should have the following structure:
 

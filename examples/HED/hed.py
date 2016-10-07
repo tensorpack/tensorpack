@@ -43,8 +43,6 @@ Usage:
             ../../scripts/plot-point.py --legend 1,2,3,4,5,final --decay 0.8
 """
 
-BATCH_SIZE = 1
-
 class Model(ModelDesc):
     def __init__(self, is_training=True):
         self.isTrain = is_training
@@ -163,13 +161,13 @@ def get_data(name):
             imgaug.GaussianNoise(),
         ]
         ds = AugmentImageComponent(ds, augmentors)
-    ds = BatchData(ds, BATCH_SIZE, remainder=not isTrain)
-    #if isTrain:
-        #ds = PrefetchDataZMQ(ds, 3)
+    ds = BatchDataByShape(ds, 8, idx=0)
+    if isTrain:
+        ds = PrefetchDataZMQ(ds, 1)
     return ds
 
 def view_data():
-    ds = get_data('train')
+    ds = RepeatedData(get_data('train'), -1)
     ds.reset_state()
     for ims, edgemaps in ds.get_data():
         for im, edgemap in zip(ims, edgemaps):

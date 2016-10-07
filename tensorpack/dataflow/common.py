@@ -5,7 +5,7 @@
 from __future__ import division
 import copy
 import numpy as np
-from collections import deque
+from collections import deque, defaultdict
 from six.moves import range, map
 from .base import DataFlow, ProxyDataFlow, RNGDataFlow
 from ..utils import *
@@ -13,7 +13,7 @@ from ..utils import *
 __all__ = ['BatchData', 'FixedSizeData', 'MapData',
            'RepeatedData', 'MapDataComponent', 'RandomChooseData',
            'RandomMixData', 'JoinData', 'ConcatData', 'SelectComponent',
-           'LocallyShuffleData', 'TestDataSpeed']
+           'LocallyShuffleData', 'TestDataSpeed', 'BatchDataByShape']
 
 class TestDataSpeed(ProxyDataFlow):
     def __init__(self, ds, size=1000):
@@ -70,7 +70,7 @@ class BatchData(ProxyDataFlow):
             holder.append(data)
             if len(holder) == self.batch_size:
                 yield BatchData._aggregate_batch(holder)
-                holder = []
+                del holder[:]
         if self.remainder and len(holder) > 0:
             yield BatchData._aggregate_batch(holder)
 
@@ -96,6 +96,34 @@ class BatchData(ProxyDataFlow):
                 import IPython as IP;
                 IP.embed(config=IP.terminal.ipapp.load_default_config())
         return result
+
+class BatchDataByShape(BatchData):
+    def __init__(self, ds, batch_size, idx):
+        """ Group datapoint of the same shape together to batches
+
+        :param ds: a DataFlow instance. Its component must be either a scalar or a numpy array
+        :param idx: dp[idx] will be used to group datapoints. Other component
+            in dp are assumed to have the same shape.
+        """
+        super(BatchDataByShape, self).__init__(ds, batch_size, remainder=False)
+        self.idx = idx
+
+    def size(self):
+        raise NotImplementedError()
+
+    def reset_state(self):
+        super(BatchDataByShape, self).reset_state()
+        self.holder = defaultdict(list)
+
+    def get_data(self):
+        for dp in self.ds.get_data():
+            shp = dp[self.idx].shape
+            print(shp, len(self.holder))
+            holder = self.holder[shp]
+            holder.append(dp)
+            if len(holder) == self.batch_size:
+                yield BatchData._aggregate_batch(holder)
+                del holder[:]
 
 class FixedSizeData(ProxyDataFlow):
     """ Generate data from another DataFlow, but with a fixed epoch size.
