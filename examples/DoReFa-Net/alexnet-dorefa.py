@@ -144,10 +144,10 @@ class Model(ModelDesc):
 
         wrong = prediction_incorrect(logits, label, 1)
         nr_wrong = tf.reduce_sum(wrong, name='wrong-top1')
-        add_moving_summary(tf.reduce_mean(wrong, name='train_error_top1'))
+        add_moving_summary(tf.reduce_mean(wrong, name='train-error-top1'))
         wrong = prediction_incorrect(logits, label, 5)
         nr_wrong = tf.reduce_sum(wrong, name='wrong-top5')
-        add_moving_summary(tf.reduce_mean(wrong, name='train_error_top5'))
+        add_moving_summary(tf.reduce_mean(wrong, name='train-error-top5'))
 
         # weight decay on all W of fc layers
         wd_cost = regularize_cost('fc.*/W', l2_regularizer(5e-6))
@@ -235,8 +235,8 @@ def get_config():
                 'learning_rate', [(56, 2e-5), (64, 4e-6)]),
             InferenceRunner(data_test,
                 [ScalarStats('cost'),
-                 ClassificationError('wrong-top1', 'val-top1-error'),
-                 ClassificationError('wrong-top5', 'val-top5-error')])
+                 ClassificationError('wrong-top1', 'val-error-top1'),
+                 ClassificationError('wrong-top5', 'val-error-top1')])
         ]),
         model=Model(),
         step_per_epoch=10000,

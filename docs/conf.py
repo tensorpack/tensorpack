@@ -34,7 +34,7 @@ import mock
                 #', '.join(map(str, args)) + ', ' \
                 #+ ', '.join(["{}={}".format(k,v) for k,v in kwargs.items()]) + ')'
 
-MOCK_MODULES = ['numpy', 'scipy', 'tensorflow', 'scipy.misc', 'h5py', 'nltk',
+MOCK_MODULES = ['scipy', 'tensorflow', 'scipy.misc', 'h5py', 'nltk',
                 'cv2', 'scipy.io', 'dill', 'zmq', 'subprocess32', 'lmdb', 'tornado.concurrent',
                 'tornado', 'msgpack', 'msgpack_numpy', 'ale_python_interface']
 for mod_name in MOCK_MODULES:
