@@ -60,7 +60,8 @@ class Resize(ImageAugmentor):
 
 class RandomResize(ImageAugmentor):
     """ randomly rescale w and h of the image"""
-    def __init__(self, xrange, yrange, minimum=(0,0), aspect_ratio_thres=0.15):
+    def __init__(self, xrange, yrange, minimum=(0,0), aspect_ratio_thres=0.15,
+            interp=cv2.INTER_CUBIC):
         """
         :param xrange: (min, max) scaling ratio
         :param yrange: (min, max) scaling ratio
@@ -88,5 +89,5 @@ class RandomResize(ImageAugmentor):
                 return img.shape[1], img.shape[0]
 
     def _augment(self, img, dsize):
-        return cv2.resize(img, dsize, interpolation=cv2.INTER_CUBIC)
+        return cv2.resize(img, dsize, interpolation=self.interp)
 
