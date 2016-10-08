@@ -115,7 +115,6 @@ class BatchDataByShape(BatchData):
     def get_data(self):
         for dp in self.ds.get_data():
             shp = dp[self.idx].shape
-            print(shp, len(self.holder))
             holder = self.holder[shp]
             holder.append(dp)
             if len(holder) == self.batch_size:

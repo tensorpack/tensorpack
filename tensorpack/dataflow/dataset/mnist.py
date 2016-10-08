@@ -15,8 +15,6 @@ from ..base import RNGDataFlow
 
 __all__ = ['Mnist']
 
-""" This file is mostly copied from tensorflow example """
-
 SOURCE_URL = 'http://yann.lecun.com/exdb/mnist/'
 
 def maybe_download(filename, work_directory):

@@ -7,7 +7,7 @@ from .base import ImageAugmentor
 import numpy as np
 import cv2
 
-__all__ = ['JpegNoise', 'GaussianNoise']
+__all__ = ['JpegNoise', 'GaussianNoise', 'SaltPepperNoise']
 
 class JpegNoise(ImageAugmentor):
     def __init__(self, quality_range=(40, 100)):

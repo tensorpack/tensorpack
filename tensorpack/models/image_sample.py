@@ -18,11 +18,11 @@ def sample(img, coords):
     :param coords: bxh2xw2x2 (y, x) integer
     :return: bxh2xw2xc image
     """
+    coords = tf.cast(coords, tf.int32)
     shape = img.get_shape().as_list()[1:]
     shape2 = coords.get_shape().as_list()[1:3]
-    max_coor = tf.constant([shape[0] - 1, shape[1] - 1])
-    coords = tf.minimum(coords, max_coor)
-    coords = tf.maximum(coords, tf.constant(0))
+    max_coor = tf.constant([shape[0] - 1, shape[1] - 1], dtype=tf.int32)
+    coords = tf.clip_by_value(coords, 0, max_coor)
 
     w = shape[1]
     coords = tf.reshape(coords, [-1, 2])
@@ -46,8 +46,8 @@ def ImageSample(inputs):
     It mimics the same behavior described in:
     `Spatial Transformer Networks <http://arxiv.org/abs/1506.02025>`_.
 
-    :param input: [template, mapping]. template of shape NHWC. mapping of
-        shape NHW2, where each pair of the last dimension is a (y, x) real-value
+    :param input: [template, mapping]. template of shape NHWC.
+        mapping of shape NHW2, where each pair of the last dimension is a (y, x) real-value
         coordinate.
     :returns: a NHWC output tensor.
     """
@@ -55,13 +55,10 @@ def ImageSample(inputs):
     assert template.get_shape().ndims == 4 and mapping.get_shape().ndims == 4
 
     mapping = tf.maximum(mapping, 0.0)
-    lcoor = tf.cast(mapping, tf.int32)  # floor
+    lcoor = tf.floor(mapping)
     ucoor = lcoor + 1
 
-    # has to cast to int32 and then cast back
-    # tf.floor have gradient 1 w.r.t input
-    # TODO bug fixed in #951
-    diff = mapping - tf.cast(lcoor, tf.float32)
+    diff = mapping - lcoor
     neg_diff = 1.0 - diff   #bxh2xw2x2
 
     lcoory, lcoorx = tf.split(3, 2, lcoor)
