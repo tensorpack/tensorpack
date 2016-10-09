@@ -24,6 +24,9 @@ class JpegNoise(ImageAugmentor):
 
 class GaussianNoise(ImageAugmentor):
     def __init__(self, scale=10, clip=True):
+        """
+        Add a gaussian noise of the same shape to img.
+        """
         super(GaussianNoise, self).__init__()
         self._init(locals())
 
@@ -38,6 +41,9 @@ class GaussianNoise(ImageAugmentor):
 
 class SaltPepperNoise(ImageAugmentor):
     def __init__(self, white_prob=0.05, black_prob=0.05):
+        """ Salt and pepper noise.
+            Randomly set some elements in img to 0 or 255, regardless of its channels.
+        """
         assert white_prob + black_prob <= 1, "Sum of probabilities cannot be greater than 1"
         super(SaltPepperNoise, self).__init__()
         self._init(locals())
