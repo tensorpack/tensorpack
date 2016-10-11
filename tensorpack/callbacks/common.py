@@ -47,11 +47,11 @@ class ModelSaver(Callback):
             if name not in var_dict:
                 if name != v.name:
                     logger.info(
-                        "{} renamed to {} when saving model.".format(v.name, name))
+                        "[ModelSaver] {} renamed to {} when saving model.".format(v.name, name))
                 var_dict[name] = v
             else:
-                logger.warn("Variable {} won't be saved \
-because {} will be saved".format(v.name, var_dict[name].name))
+                logger.info("[ModelSaver] Variable {} won't be saved \
+due to an alternative in a different tower".format(v.name, var_dict[name].name))
         return var_dict
 
     def _trigger_epoch(self):

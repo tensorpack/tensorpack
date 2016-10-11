@@ -88,17 +88,17 @@ class Model(ModelDesc):
             l = Conv2D('conv5_3', l, 512)
             b5 = branch('branch5', l, 16)
 
-        final_map = Conv2D('convfcweight',
-                tf.concat(3, [b1, b2, b3, b4, b5]), 1, 1,
-                W_init=tf.constant_initializer(0.2), use_bias=False)
-        final_map = tf.squeeze(final_map, [3], name='predmap')
-        #final_map = tf.squeeze(tf.mul(0.2, b1 + b2 + b3 + b4 + b5),
-                #[3], name='predmap')
+        #final_map = Conv2D('convfcweight',
+                #tf.concat(3, [b1, b2, b3, b4, b5]), 1, 1,
+                #W_init=tf.constant_initializer(0.2), use_bias=False)
+        #final_map = tf.squeeze(final_map, [3], name='predmap')
+        final_map = tf.squeeze(tf.mul(0.2, b1 + b2 + b3 + b4 + b5),
+                [3], name='predmap')
         costs = []
         for idx, b in enumerate([b1, b2, b3, b4, b5, final_map]):
             output = tf.nn.sigmoid(b, name='output{}'.format(idx+1))
-            xentropy = class_balanced_binary_class_cross_entropy(
-                output, edgemap,
+            xentropy = class_balanced_sigmoid_binary_class_cross_entropy(
+                b, edgemap,
                 name='xentropy{}'.format(idx+1))
             costs.append(xentropy)
 
@@ -138,6 +138,10 @@ def get_data(name):
             h0, w0, newh, neww = param
             return img[h0:h0+newh,w0:w0+neww]
 
+    def f(m):
+        m[m>=0.50] = 1
+        m[m<0.50] = 0
+        return m
     if isTrain:
         shape_aug = [
             imgaug.RandomResize(xrange=(0.7,1.5), yrange=(0.7,1.5),
@@ -152,18 +156,12 @@ def get_data(name):
         IMAGE_SHAPE = (320, 480)
         shape_aug = [imgaug.CenterCrop(IMAGE_SHAPE)]
     ds = AugmentImageComponents(ds, shape_aug, (0, 1))
-
-    def f(m):
-        m[m>=0.51] = 1
-        m[m<0.51] = 0
-        return m
     ds = MapDataComponent(ds, f, 1)
 
     if isTrain:
         augmentors = [
             imgaug.Brightness(63, clip=False),
             imgaug.Contrast((0.4,1.5)),
-            imgaug.GaussianNoise(),
         ]
         ds = AugmentImageComponent(ds, augmentors)
         ds = BatchDataByShape(ds, 8, idx=0)
@@ -212,7 +210,7 @@ def get_config():
 
 def run(model_path, image_path):
     pred_config = PredictConfig(
-            model=Model(False),
+            model=Model(),
             input_data_mapping=[0],
             session_init=get_model_loader(model_path),
             output_var_names=['output' + str(k) for k in range(1, 7)])

@@ -46,9 +46,35 @@ def class_balanced_binary_class_cross_entropy(pred, label, name='cross_entropy_l
     count_pos = tf.reduce_sum(y)
     beta = count_neg / (count_neg + count_pos)
 
-    eps = 1e-8
+    eps = 1e-12
     loss_pos = -beta * tf.reduce_mean(y * tf.log(z + eps))
     loss_neg = (1. - beta) * tf.reduce_mean((1. - y) * tf.log(1. - z + eps))
+    cost = tf.sub(loss_pos, loss_neg, name=name)
+    return cost
+
+def class_balanced_sigmoid_binary_class_cross_entropy(pred, label, name='cross_entropy_loss'):
+    """
+    The class-balanced cross entropy loss for binary classification,
+    as in `Holistically-Nested Edge Detection
+    <http://arxiv.org/abs/1504.06375>`_.
+
+    :param pred: size: b x ANYTHING. the logits.
+    :param label: size: b x ANYTHING. the ground truth in {0,1}.
+    :returns: class-balanced binary classification cross entropy loss
+    """
+    z = batch_flatten(pred)
+    y = tf.cast(batch_flatten(label), tf.float32)
+
+    count_neg = tf.reduce_sum(1. - y)
+    count_pos = tf.reduce_sum(y)
+    beta = count_neg / (count_neg + count_pos)
+
+    #eps = 1e-12
+    logstable = tf.log(1 + tf.exp(-tf.abs(z)))
+    loss_pos = -beta * tf.reduce_mean(-y *
+            (logstable - tf.minimum(0, z)))
+    loss_neg = (1. - beta) * tf.reduce_mean((y - 1.) *
+            (logstable + tf.maximum(z, 0)))
     cost = tf.sub(loss_pos, loss_neg, name=name)
     return cost
 

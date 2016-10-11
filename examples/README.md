@@ -5,7 +5,7 @@ Examples with __reproducible__ and meaningful performance.
 
 + [An illustrative mnist example](mnist-convnet.py)
 + [A tiny SVHN ConvNet with 97.5% accuracy](svhn-digit-convnet.py)
-+ [Reproduce some reinforcement learning papers](Atari2600)
++ Reinforcement learning (DQN, A3C) on [Atari games](Atari2600) and [demos on OpenAI Gym](OpenAIGym).
 + [char-rnn for fun](char-rnn)
 + [DisturbLabel, because I don't believe the paper](DisturbLabel)
 + [DoReFa-Net: binary / low-bitwidth CNN on ImageNet](DoReFa-Net)

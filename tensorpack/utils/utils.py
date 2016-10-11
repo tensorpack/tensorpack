@@ -112,7 +112,6 @@ def get_dataset_path(*args):
     assert os.path.isdir(d), d
     return os.path.join(d, *args)
 
-
 def get_tqdm_kwargs(**kwargs):
     default = dict(
             smoothing=0.5,
