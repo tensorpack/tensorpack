@@ -72,9 +72,9 @@ def class_balanced_sigmoid_binary_class_cross_entropy(pred, label, name='cross_e
     #eps = 1e-12
     logstable = tf.log(1 + tf.exp(-tf.abs(z)))
     loss_pos = -beta * tf.reduce_mean(-y *
-            (logstable - tf.minimum(0, z)))
+            (logstable - tf.minimum(0.0, z)))
     loss_neg = (1. - beta) * tf.reduce_mean((y - 1.) *
-            (logstable + tf.maximum(z, 0)))
+            (logstable + tf.maximum(z, 0.0)))
     cost = tf.sub(loss_pos, loss_neg, name=name)
     return cost
 

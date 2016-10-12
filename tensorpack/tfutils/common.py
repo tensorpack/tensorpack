@@ -46,7 +46,7 @@ def get_global_step_var():
         assert scope.name == '', \
                 "Creating global_step_var under a variable scope would cause problems!"
         var = tf.get_variable(GLOBAL_STEP_OP_NAME, shape=[],
-                initializer=tf.constant_initializer(),
+                initializer=tf.constant_initializer(value=0, dtype=tf.int32),
                 trainable=False, dtype=tf.int32)
         return var
 
