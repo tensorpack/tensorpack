@@ -14,7 +14,9 @@ from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
 
 
-BATCH_SIZE = 64
+TOTAL_BATCH_SIZE = 64 * 6
+NR_GPU = 6
+BATCH_SIZE = TOTAL_BATCH_SIZE // NR_GPU
 INPUT_SHAPE = 224
 
 """

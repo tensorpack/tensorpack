@@ -54,7 +54,12 @@ class Model(ModelDesc):
 
         def branch(name, l, up):
             with tf.variable_scope(name) as scope:
-                l = Conv2D('convfc', l, 1, kernel_shape=1, nl=tf.identity, use_bias=True)
+                l = Conv2D('convfc', l, 1, kernel_shape=1, nl=tf.identity,
+                        use_bias=True,
+                        W_init=tf.zeros_initializer,
+                        b_init=tf.zeros_initializer)
+                #if up != 1:
+                    #l = BilinearUpSample('upsample', l, up)
                 while up != 1:
                     l = BilinearUpSample('upsample{}'.format(up), l, 2)
                     up = up / 2
@@ -88,12 +93,13 @@ class Model(ModelDesc):
             l = Conv2D('conv5_3', l, 512)
             b5 = branch('branch5', l, 16)
 
-        #final_map = Conv2D('convfcweight',
-                #tf.concat(3, [b1, b2, b3, b4, b5]), 1, 1,
-                #W_init=tf.constant_initializer(0.2), use_bias=False)
-        #final_map = tf.squeeze(final_map, [3], name='predmap')
-        final_map = tf.squeeze(tf.mul(0.2, b1 + b2 + b3 + b4 + b5),
-                [3], name='predmap')
+        final_map = Conv2D('convfcweight',
+                tf.concat(3, [b1, b2, b3, b4, b5]), 1, 1,
+                W_init=tf.constant_initializer(0.2),
+                use_bias=False, nl=tf.identity)
+        final_map = tf.squeeze(final_map, [3], name='predmap')
+        #final_map = tf.squeeze(tf.mul(0.2, b1 + b2 + b3 + b4 + b5),
+                #[3], name='predmap')
         costs = []
         for idx, b in enumerate([b1, b2, b3, b4, b5, final_map]):
             output = tf.nn.sigmoid(b, name='output{}'.format(idx+1))
@@ -116,8 +122,8 @@ class Model(ModelDesc):
         self.cost = tf.add_n(costs, name='cost')
 
     def get_gradient_processor(self):
-        return [ScaleGradient([('convfc.*', 0.1), ('conv5_.*', 100)]),
-                SummaryGradient()]
+        return [ScaleGradient([
+            ('convfcweight.*', 0.1), ('conv5_.*', 5) ]) ]
 
 def get_data(name):
     isTrain = name == 'train'
@@ -138,10 +144,6 @@ def get_data(name):
             h0, w0, newh, neww = param
             return img[h0:h0+newh,w0:w0+neww]
 
-    def f(m):
-        m[m>=0.50] = 1
-        m[m<0.50] = 0
-        return m
     if isTrain:
         shape_aug = [
             imgaug.RandomResize(xrange=(0.7,1.5), yrange=(0.7,1.5),
@@ -149,13 +151,18 @@ def get_data(name):
             imgaug.RotationAndCropValid(90),
             CropMultiple16(),
             imgaug.Flip(horiz=True),
-            imgaug.Flip(vert=True),
+            imgaug.Flip(vert=True)
         ]
     else:
         # the original image shape (321x481) in BSDS is not a multiple of 16
         IMAGE_SHAPE = (320, 480)
         shape_aug = [imgaug.CenterCrop(IMAGE_SHAPE)]
     ds = AugmentImageComponents(ds, shape_aug, (0, 1))
+
+    def f(m):
+        m[m>=0.50] = 1
+        m[m<0.50] = 0
+        return m
     ds = MapDataComponent(ds, f, 1)
 
     if isTrain:
@@ -188,17 +195,17 @@ def get_config():
     dataset_val = get_data('val')
     #dataset_test = get_data('test')
 
-    lr = tf.Variable(5e-6, trainable=False, name='learning_rate')
+    lr = tf.Variable(3e-5, trainable=False, name='learning_rate')
     tf.scalar_summary('learning_rate', lr)
 
     return TrainConfig(
         dataset=dataset_train,
-        #optimizer=tf.train.AdamOptimizer(lr, epsilon=1e-3),
-        optimizer=tf.train.MomentumOptimizer(lr, 0.9),
+        optimizer=tf.train.AdamOptimizer(lr, epsilon=1e-3),
+        #optimizer=tf.train.MomentumOptimizer(lr, 0.9),
         callbacks=Callbacks([
             StatPrinter(),
             ModelSaver(),
-            ScheduledHyperParamSetter('learning_rate', [(100, 3e-6), (200, 8e-7)]),
+            ScheduledHyperParamSetter('learning_rate', [(35, 6e-6), (50, 1e-6), (60, 8e-7)]),
             HumanHyperParamSetter('learning_rate'),
             InferenceRunner(dataset_val,
                             BinaryClassificationStats('prediction', 'edgemap'))

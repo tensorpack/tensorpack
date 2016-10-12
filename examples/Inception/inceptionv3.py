@@ -27,7 +27,9 @@ The hyperparameters here are for 8 GPUs, so the effective batch size is 8*64 = 5
 With 8 TitanX it runs about 0.45 it/s.
 """
 
-BATCH_SIZE = 64
+TOTAL_BATCH_SIZE = 512
+NR_GPU = 8
+BATCH_SIZE = TOTAL_BATCH_SIZE // NR_GPU
 INPUT_SHAPE = 299
 
 class Model(ModelDesc):
