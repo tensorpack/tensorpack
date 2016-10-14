@@ -41,11 +41,6 @@ class Model(ModelDesc):
         image, label = input_vars
         image = image / 128.0 - 1
 
-        def conv(name, l, channel, stride):
-            return Conv2D(name, l, channel, 3, stride=stride,
-                          nl=tf.identity, use_bias=False,
-                          W_init=tf.random_normal_initializer(stddev=np.sqrt(2.0/9/channel)))
-
         def residual(name, l, increase_dim=False, first=False):
             shape = l.get_shape().as_list()
             in_channel = shape[3]
@@ -63,10 +58,10 @@ class Model(ModelDesc):
                     b1 = tf.nn.relu(b1)
                 else:
                     b1 = l
-                c1 = conv('conv1', b1, out_channel, stride1)
+                c1 = Conv2D('conv1', b1, out_channel, stride=stride1)
                 b2 = BatchNorm('bn2', c1)
                 b2 = tf.nn.relu(b2)
-                c2 = conv('conv2', b2, out_channel, 1)
+                c2 = Conv2D('conv2', b2, out_channel)
 
                 if increase_dim:
                     l = AvgPooling('pool', l, 2)
@@ -75,26 +70,29 @@ class Model(ModelDesc):
                 l = c2 + l
                 return l
 
-        l = conv('conv0', image, 16, 1)
-        l = BatchNorm('bn0', l)
-        l = tf.nn.relu(l)
-        l = residual('res1.0', l, first=True)
-        for k in range(1, self.n):
-            l = residual('res1.{}'.format(k), l)
-        # 32,c=16
+        with argscope(Conv2D, nl=tf.identity, use_bias=False, kernel=3,
+                    W_init=variance_scaling_initializer(mode='FAN_OUT')):
+            l = Conv2D('conv0', image, 16)
+            l = BatchNorm('bn0', l)
+            l = tf.nn.relu(l)
+            l = residual('res1.0', l, first=True)
+            for k in range(1, self.n):
+                l = residual('res1.{}'.format(k), l)
+            # 32,c=16
 
-        l = residual('res2.0', l, increase_dim=True)
-        for k in range(1, self.n):
-            l = residual('res2.{}'.format(k), l)
-        # 16,c=32
+            l = residual('res2.0', l, increase_dim=True)
+            for k in range(1, self.n):
+                l = residual('res2.{}'.format(k), l)
+            # 16,c=32
 
-        l = residual('res3.0', l, increase_dim=True)
-        for k in range(1, self.n):
-            l = residual('res3.' + str(k), l)
-        l = BatchNorm('bnlast', l)
-        l = tf.nn.relu(l)
-        # 8,c=64
-        l = GlobalAvgPooling('gap', l)
+            l = residual('res3.0', l, increase_dim=True)
+            for k in range(1, self.n):
+                l = residual('res3.' + str(k), l)
+            l = BatchNorm('bnlast', l)
+            l = tf.nn.relu(l)
+            # 8,c=64
+            l = GlobalAvgPooling('gap', l)
+
         logits = FullyConnected('linear', l, out_dim=10, nl=tf.identity)
         prob = tf.nn.softmax(logits, name='output')
 

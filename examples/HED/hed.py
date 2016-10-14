@@ -14,35 +14,6 @@ from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
 
-
-"""
-Script to reproduce 'Holistically-Nested Edge Detection' by Saining, et al. See https://arxiv.org/abs/1504.06375.
-
-HED is a fully-convolutional architecture. This code generally would also work
-for other FCN tasks such as semantic segmentation and detection.
-
-Usage:
-    This script only needs the original BSDS dataset and applies augmentation on the fly.
-    It will automatically download the dataset to $TENSORPACK_DATASET/ if not there.
-    It requires pretrained vgg16 model. See the docs in `examples/load-vgg16.py`
-    for instructions to convert from vgg16 caffe model.
-
-    To view augmented images:
-    ./hed.py --view
-
-    To start training:
-    ./hed.py --load vgg16.npy
-
-    To inference (produce heatmap at each level):
-    ./hed.py --load pretrained.model --run a.jpg
-
-    To view the loss curve:
-    cat train_log/hed/stat.json | jq '.[] |
-    [.xentropy1,.xentropy2,.xentropy3,.xentropy4,.xentropy5,.xentropy6] |
-    map(tostring) | join("\t") | .' -r | \
-            ../../scripts/plot-point.py --legend 1,2,3,4,5,final --decay 0.8
-"""
-
 class Model(ModelDesc):
     def _get_input_vars(self):
         return [InputVar(tf.float32, [None, None, None] + [3], 'image'),
@@ -58,8 +29,6 @@ class Model(ModelDesc):
                         use_bias=True,
                         W_init=tf.zeros_initializer,
                         b_init=tf.zeros_initializer)
-                #if up != 1:
-                    #l = BilinearUpSample('upsample', l, up)
                 while up != 1:
                     l = BilinearUpSample('upsample{}'.format(up), l, 2)
                     up = up / 2
@@ -98,8 +67,6 @@ class Model(ModelDesc):
                 W_init=tf.constant_initializer(0.2),
                 use_bias=False, nl=tf.identity)
         final_map = tf.squeeze(final_map, [3], name='predmap')
-        #final_map = tf.squeeze(tf.mul(0.2, b1 + b2 + b3 + b4 + b5),
-                #[3], name='predmap')
         costs = []
         for idx, b in enumerate([b1, b2, b3, b4, b5, final_map]):
             output = tf.nn.sigmoid(b, name='output{}'.format(idx+1))
@@ -108,6 +75,7 @@ class Model(ModelDesc):
                 name='xentropy{}'.format(idx+1))
             costs.append(xentropy)
 
+        # some magic threshold
         pred = tf.cast(tf.greater(output, 0.5), tf.int32, name='prediction')
         wrong = tf.cast(tf.not_equal(pred, edgemap), tf.float32)
         wrong = tf.reduce_mean(wrong, name='train_error')
@@ -122,8 +90,7 @@ class Model(ModelDesc):
         self.cost = tf.add_n(costs, name='cost')
 
     def get_gradient_processor(self):
-        return [ScaleGradient([
-            ('convfcweight.*', 0.1), ('conv5_.*', 5) ]) ]
+        return [ScaleGradient([('convfcweight.*', 0.1), ('conv5_.*', 5)]) ]
 
 def get_data(name):
     isTrain = name == 'train'
@@ -201,18 +168,17 @@ def get_config():
     return TrainConfig(
         dataset=dataset_train,
         optimizer=tf.train.AdamOptimizer(lr, epsilon=1e-3),
-        #optimizer=tf.train.MomentumOptimizer(lr, 0.9),
         callbacks=Callbacks([
             StatPrinter(),
             ModelSaver(),
-            ScheduledHyperParamSetter('learning_rate', [(35, 6e-6), (50, 1e-6), (60, 8e-7)]),
+            ScheduledHyperParamSetter('learning_rate', [(30, 6e-6), (45, 1e-6), (60, 8e-7)]),
             HumanHyperParamSetter('learning_rate'),
             InferenceRunner(dataset_val,
                             BinaryClassificationStats('prediction', 'edgemap'))
         ]),
         model=Model(),
         step_per_epoch=step_per_epoch,
-        max_epoch=300,
+        max_epoch=100,
     )
 
 def run(model_path, image_path):
@@ -224,7 +190,7 @@ def run(model_path, image_path):
     predict_func = get_predict_func(pred_config)
     im = cv2.imread(image_path)
     assert im is not None
-    im = cv2.resize(im, (im.shape[0] // 16 * 16, im.shape[1] // 16 * 16))
+    im = cv2.resize(im, (im.shape[1] // 16 * 16, im.shape[0] // 16 * 16))
     outputs = predict_func([[im.astype('float32')]])
     for k in range(6):
         pred = outputs[k][0]
@@ -238,15 +204,14 @@ if __name__ == '__main__':
     parser.add_argument('--view', help='view dataset', action='store_true')
     parser.add_argument('--run', help='run model on images')
     args = parser.parse_args()
+    if args.gpu:
+        os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
     if args.view:
         view_data()
     elif args.run:
         run(args.load, args.run)
     else:
-        if args.gpu:
-            os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
-
         config = get_config()
         if args.load:
             config.session_init = get_model_loader(args.load)

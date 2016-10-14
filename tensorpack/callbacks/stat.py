@@ -27,7 +27,7 @@ class StatHolder(object):
         self.log_dir = log_dir
         self.filename = os.path.join(log_dir, 'stat.json')
         if os.path.isfile(self.filename):
-            logger.info("Loading stats from {}...".format(self.filename))
+            logger.info("Found stats at {}, will append to it.".format(self.filename))
             with open(self.filename) as f:
                 self.stat_history = json.load(f)
         else:
