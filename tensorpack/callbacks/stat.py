@@ -48,6 +48,7 @@ class StatHolder(object):
         self.print_tag = None if print_tag is None else set(print_tag)
 
     def add_blacklist_tag(self, blacklist_tag):
+        """ Disable printing for some tags """
         self.blacklist_tag |= set(blacklist_tag)
 
     def get_stat_now(self, key):
@@ -67,7 +68,7 @@ class StatHolder(object):
 
     def finalize(self):
         """
-        Called after finishing adding stats. Will print and write stats to disk.
+        Called after finishing adding stats for this epoch. Will print and write stats to disk.
         """
         self._print_stat()
         self.stat_history.append(self.stat_now)
@@ -102,9 +103,9 @@ class StatPrinter(Callback):
 
     def _before_train(self):
         self.trainer.stat_holder.set_print_tag(self.print_tag)
+        self.trainer.stat_holder.add_blacklist_tag(['global_step', 'epoch_num'])
 
     def _trigger_epoch(self):
-        self.trainer.stat_holder.add_stat('global_step', self.global_step)
         self.trainer.stat_holder.finalize()
 
 class SendStat(Callback):
