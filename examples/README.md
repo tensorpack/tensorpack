@@ -12,3 +12,4 @@ Examples with __reproducible__ and meaningful performance.
 + [Inception-BN with 71% accuracy](Inception/inception-bn.py)
 + [InceptionV3 with 74.5% accuracy (similar to the official code)](Inception/inceptionv3.py)
 + [ResNet for Cifar10 and SVHN](ResNet)
++ [Holistically-Nested Edge Detection](HED)
