@@ -19,10 +19,6 @@ Usage:
     ./load-alexnet.py --load alexnet.npy --input cat.png
 """
 
-BATCH_SIZE = 10
-MIN_AFTER_DEQUEUE = 500
-CAPACITY = MIN_AFTER_DEQUEUE + 3 * BATCH_SIZE
-
 class Model(ModelDesc):
     def _get_input_vars(self):
         return [InputVar(tf.float32, (None, 227, 227, 3), 'input'),
@@ -60,7 +56,7 @@ def run_test(path, input):
         input_var_names=['input'],
         session_init=ParamRestore(param_dict),
         session_config=get_default_sess_config(0.9),
-        output_var_names=['output']   # output:0 is the probability distribution
+        output_var_names=['output']   # the variable 'output' is the probability distribution
     )
     predict_func = get_predict_func(pred_config)
 

@@ -34,8 +34,7 @@ class Model(ModelDesc):
 
     def _get_input_vars(self):
         return [InputVar(tf.float32, [None, 32, 32, 3], 'input'),
-                InputVar(tf.int32, [None], 'label')
-               ]
+                InputVar(tf.int32, [None], 'label') ]
 
     def _build_graph(self, input_vars):
         image, label = input_vars
@@ -144,9 +143,6 @@ def get_config():
     step_per_epoch = dataset_train.size()
     dataset_test = get_data('test')
 
-    sess_config = get_default_sess_config(0.9)
-
-    get_global_step_var()
     lr = tf.Variable(0.01, trainable=False, name='learning_rate')
     tf.scalar_summary('learning_rate', lr)
 
@@ -154,14 +150,13 @@ def get_config():
         dataset=dataset_train,
         optimizer=tf.train.MomentumOptimizer(lr, 0.9),
         callbacks=Callbacks([
-            StatPrinter(),
-            ModelSaver(),
+            StatPrinter(), ModelSaver(),
             InferenceRunner(dataset_test,
                 [ScalarStats('cost'), ClassificationError()]),
             ScheduledHyperParamSetter('learning_rate',
                                       [(1, 0.1), (82, 0.01), (123, 0.001), (300, 0.0002)])
         ]),
-        session_config=sess_config,
+        session_config=get_default_sess_config(0.9),
         model=Model(n=18),
         step_per_epoch=step_per_epoch,
         max_epoch=400,

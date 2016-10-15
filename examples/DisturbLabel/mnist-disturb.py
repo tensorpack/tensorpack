@@ -26,9 +26,8 @@ IMAGE_SIZE = 28
 
 class Model(mnist_example.Model):
     def _build_graph(self, input_vars):
-
         image, label = input_vars
-        image = tf.expand_dims(image, 3)    # add a single channel
+        image = tf.expand_dims(image, 3)
 
         with argscope(Conv2D, kernel_shape=5):
             logits = (LinearWrap(image) # the starting brace is only for line-breaking
@@ -40,17 +39,13 @@ class Model(mnist_example.Model):
                     .FullyConnected('fc1', out_dim=10, nl=tf.identity)())
         prob = tf.nn.softmax(logits, name='prob')
 
-        # compute the number of failed samples, for ClassificationError to use at test time
         wrong = symbolic_functions.prediction_incorrect(logits, label)
         nr_wrong = tf.reduce_sum(wrong, name='wrong')
-        # monitor training error
         add_moving_summary(tf.reduce_mean(wrong, name='train_error'))
 
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
-        # weight decay on all W of fc layers
-        wd_cost = tf.mul(1e-5,
-                         regularize_cost('fc.*/W', tf.nn.l2_loss),
+        wd_cost = tf.mul(1e-5, regularize_cost('fc.*/W', tf.nn.l2_loss),
                          name='regularize_loss')
         add_moving_summary(cost, wd_cost)
 

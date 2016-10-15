@@ -44,7 +44,7 @@ svhn_example.get_data = get_data
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.') # nargs='*' in multi mode
+    parser.add_argument('--gpu', help='a gpu to use')
     parser.add_argument('--load', help='load model')
     parser.add_argument('--prob', help='disturb prob', type=float, required=True)
     args = parser.parse_args()
@@ -57,6 +57,4 @@ if __name__ == '__main__':
     config = get_config(args.prob)
     if args.load:
         config.session_init = SaverRestore(args.load)
-    if args.gpu:
-        config.nr_tower = len(args.gpu.split(','))
     QueueInputTrainer(config).train()

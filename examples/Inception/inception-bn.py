@@ -154,8 +154,6 @@ def get_config():
     step_per_epoch = 5000
     dataset_val = get_data('val')
 
-    sess_config = get_default_sess_config(0.99)
-
     lr = tf.Variable(0.045, trainable=False, name='learning_rate')
     tf.scalar_summary('learning_rate', lr)
 
@@ -163,8 +161,7 @@ def get_config():
         dataset=dataset_train,
         optimizer=tf.train.MomentumOptimizer(lr, 0.9),
         callbacks=Callbacks([
-            StatPrinter(),
-            ModelSaver(),
+            StatPrinter(), ModelSaver(),
             InferenceRunner(dataset_val, [
                 ClassificationError('wrong-top1', 'val-top1-error'),
                 ClassificationError('wrong-top5', 'val-top5-error')]),
@@ -174,7 +171,7 @@ def get_config():
                                        (19, 3e-3), (24, 1e-3), (26, 2e-4),
                                        (30, 5e-5) ])
         ]),
-        session_config=sess_config,
+        session_config=get_default_sess_config(0.99),
         model=Model(),
         step_per_epoch=step_per_epoch,
         max_epoch=80,

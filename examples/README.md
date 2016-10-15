@@ -1,9 +1,9 @@
 
 # tensorpack examples
 
-Examples with __reproducible__ and meaningful performance.
+Training examples with __reproducible__ and meaningful performance.
 
-+ [An illustrative mnist example](mnist-convnet.py)
++ [An illustrative mnist example with explanation of the framework](mnist-convnet.py)
 + [A tiny SVHN ConvNet with 97.5% accuracy](svhn-digit-convnet.py)
 + Reinforcement learning (DQN, A3C) on [Atari games](Atari2600) and [demos on OpenAI Gym](OpenAIGym).
 + [char-rnn for fun](char-rnn)

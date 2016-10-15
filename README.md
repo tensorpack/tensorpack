@@ -3,7 +3,7 @@ Neural Network Toolbox on TensorFlow
 
 Still in development, but usable.
 
-See some interesting [examples](examples) to learn about the framework:
+See some interesting [training examples](examples) to learn about the framework:
 
 + [DoReFa-Net: training binary / low bitwidth CNN](examples/DoReFa-Net)
 + [Double-DQN and A3C for playing Atari games](examples/Atari2600)

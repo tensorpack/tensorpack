@@ -151,7 +151,6 @@ class Model(ModelDesc):
                 ], name='concat')
             for x in ['a', 'b']:
                 with tf.variable_scope('incep-8-2048{}'.format(x)) as scope:
-                    #print scope.name
                     br11 = Conv2D('conv11', l, 320, 1)
                     br33 = Conv2D('conv133r', l, 384, 1)
                     br33 = tf.concat(3, [
@@ -261,8 +260,6 @@ def get_config():
     dataset_train = get_data('train')
     dataset_val = get_data('val')
 
-    sess_config = get_default_sess_config(0.9)
-
     lr = tf.Variable(0.045, trainable=False, name='learning_rate')
     tf.scalar_summary('learning_rate', lr)
 
@@ -280,7 +277,7 @@ def get_config():
                                        (41, 8e-5), (48, 1e-5), (53, 2e-6)]),
             HumanHyperParamSetter('learning_rate')
         ]),
-        session_config=sess_config,
+        session_config=get_default_sess_config(0.9),
         model=Model(),
         step_per_epoch=5000,
         max_epoch=100,

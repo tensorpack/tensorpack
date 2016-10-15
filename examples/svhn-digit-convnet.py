@@ -51,7 +51,6 @@ class Model(ModelDesc):
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
 
-        # weight decay on all W of fc layers
         wd_cost = regularize_cost('fc.*/W', l2_regularizer(0.00001))
         add_moving_summary(cost, wd_cost)
 
@@ -98,8 +97,7 @@ def get_config():
         dataset=data_train,
         optimizer=tf.train.AdamOptimizer(lr),
         callbacks=Callbacks([
-            StatPrinter(),
-            ModelSaver(),
+            StatPrinter(), ModelSaver(),
             InferenceRunner(data_test,
                 [ScalarStats('cost'), ClassificationError()])
         ]),
