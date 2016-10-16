@@ -12,6 +12,8 @@ from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
 
+from tensorflow.contrib.layers import variance_scaling_initializer
+
 """
 CIFAR10 ResNet example. See:
 Deep Residual Learning for Image Recognition, arxiv:1512.03385
@@ -69,7 +71,7 @@ class Model(ModelDesc):
                 l = c2 + l
                 return l
 
-        with argscope(Conv2D, nl=tf.identity, use_bias=False, kernel=3,
+        with argscope(Conv2D, nl=tf.identity, use_bias=False, kernel_shape=3,
                     W_init=variance_scaling_initializer(mode='FAN_OUT')):
             l = Conv2D('conv0', image, 16)
             l = BatchNorm('bn0', l)
@@ -121,8 +123,6 @@ def get_data(train_or_test):
             imgaug.CenterPaste((40, 40)),
             imgaug.RandomCrop((32, 32)),
             imgaug.Flip(horiz=True),
-            #imgaug.Brightness(20),
-            #imgaug.Contrast((0.6,1.4)),
             imgaug.MapImage(lambda x: x - pp_mean),
         ]
     else:
