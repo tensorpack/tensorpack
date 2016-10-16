@@ -65,7 +65,8 @@ class DataFromList(RNGDataFlow):
             for k in self.lst:
                 yield k
         else:
-            idxs = self.rng.shuffle(np.arange(len(self.lst)))
+            idxs = np.arange(len(self.lst))
+            self.rng.shuffle(idxs)
             for k in idxs:
                 yield self.lst[k]
 

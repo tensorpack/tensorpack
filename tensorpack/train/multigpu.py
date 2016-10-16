@@ -8,11 +8,12 @@ import itertools, re
 from six.moves import zip, range
 
 from ..models import TowerContext
-from ..utils import *
+from ..utils import logger
 from ..utils.concurrency import LoopThread
 from ..tfutils.summary import summary_moving_average
 from ..tfutils.modelutils import describe_model
-from ..tfutils import *
+from ..tfutils import (backup_collection, restore_collection,
+        get_global_step_var)
 
 from .trainer import QueueInputTrainer
 

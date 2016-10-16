@@ -393,7 +393,6 @@ class LocallyShuffleData(ProxyDataFlow, RNGDataFlow):
                         yield v
                     return
 
-
 def SelectComponent(ds, idxs):
     """
     :param ds: a :mod:`DataFlow` instance

@@ -10,11 +10,11 @@ import tqdm
 
 import tensorflow as tf
 from .config import TrainConfig
-from ..utils import *
-from ..utils.timer import *
+from ..utils import logger, get_tqdm_kwargs
+from ..utils.timer import timed_operation
 from ..utils.concurrency import start_proc_mask_signal
 from ..callbacks import StatHolder
-from ..tfutils import *
+from ..tfutils import get_global_step, get_global_step_var
 from ..tfutils.summary import create_summary
 
 __all__ = ['Trainer']
@@ -105,11 +105,12 @@ class Trainer(object):
 
     def main_loop(self):
         # some final operations that might modify the graph
-        self._init_summary()
         get_global_step_var()   # ensure there is such var, before finalizing the graph
         logger.info("Setup callbacks ...")
         callbacks = self.config.callbacks
         callbacks.setup_graph(self) # TODO use weakref instead?
+        self._init_summary()
+
         logger.info("Initializing graph variables ...")
         self.sess.run(tf.initialize_all_variables())
         self.config.session_init.init(self.sess)

@@ -7,7 +7,7 @@ import os, shutil
 import re
 
 from .base import Callback
-from ..utils import *
+from ..utils import logger
 from ..tfutils.varmanip import get_savename_from_varname
 
 __all__ = ['ModelSaver', 'MinSaver', 'MaxSaver']

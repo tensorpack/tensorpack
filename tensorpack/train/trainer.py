@@ -12,8 +12,9 @@ from .base import Trainer
 from ..dataflow.common import RepeatedData
 
 from ..models import TowerContext
-from ..utils import *
-from ..tfutils import *
+from ..utils import logger, SUMMARY_BACKUP_KEYS
+from ..tfutils import (get_vars_by_names, freeze_collection,
+        get_global_step_var)
 from ..tfutils.summary import summary_moving_average, add_moving_summary
 from ..tfutils.modelutils import describe_model
 from ..predict import OnlinePredictor, build_multi_tower_prediction_graph

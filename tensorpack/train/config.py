@@ -6,8 +6,9 @@ import tensorflow as tf
 
 from ..callbacks import Callbacks
 from ..models import ModelDesc
-from ..utils import *
-from ..tfutils import *
+from ..utils import logger
+from ..tfutils import (JustCurrentSession,
+        get_default_sess_config, SessionInit)
 from ..dataflow import DataFlow
 
 __all__ = ['TrainConfig']
