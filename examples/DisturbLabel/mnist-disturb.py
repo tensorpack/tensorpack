@@ -29,13 +29,13 @@ class Model(mnist_example.Model):
         image, label = input_vars
         image = tf.expand_dims(image, 3)
 
-        with argscope(Conv2D, kernel_shape=5):
+        with argscope(Conv2D, kernel_shape=5, nl=tf.nn.relu):
             logits = (LinearWrap(image) # the starting brace is only for line-breaking
                     .Conv2D('conv0', out_channel=32, padding='VALID')
                     .MaxPooling('pool0', 2)
                     .Conv2D('conv1', out_channel=64, padding='VALID')
                     .MaxPooling('pool1', 2)
-                    .FullyConnected('fc0', 512)
+                    .FullyConnected('fc0', 512, nl=tf.nn.relu)
                     .FullyConnected('fc1', out_dim=10, nl=tf.identity)())
         prob = tf.nn.softmax(logits, name='prob')
 

@@ -71,7 +71,7 @@ class Model(ModelDesc):
             l = inception('incep3c', l, 0, 128, 160, 64, 96, 0, 'max')
 
             br1 = Conv2D('loss1conv', l, 128, 1)
-            br1 = FullyConnected('loss1fc', br1, 1024)
+            br1 = FullyConnected('loss1fc', br1, 1024, nl=tf.nn.relu)
             br1 = FullyConnected('loss1logit', br1, 1000, nl=tf.identity)
             loss1 = tf.nn.sparse_softmax_cross_entropy_with_logits(br1, label)
             loss1 = tf.reduce_mean(loss1, name='loss1')
@@ -84,7 +84,7 @@ class Model(ModelDesc):
             l = inception('incep4e', l, 0, 128, 192, 192, 256, 0, 'max')
 
             br2 = Conv2D('loss2conv', l, 128, 1)
-            br2 = FullyConnected('loss2fc', br2, 1024)
+            br2 = FullyConnected('loss2fc', br2, 1024, nl=tf.nn.relu)
             br2 = FullyConnected('loss2logit', br2, 1000, nl=tf.identity)
             loss2 = tf.nn.sparse_softmax_cross_entropy_with_logits(br2, label)
             loss2 = tf.reduce_mean(loss2, name='loss2')

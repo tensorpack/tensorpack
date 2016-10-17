@@ -51,10 +51,10 @@ class Model(ModelDesc):
                     .MaxPooling('pool2', 3, stride=2, padding='SAME') \
                     .Conv2D('conv3.1', out_channel=128, padding='VALID') \
                     .Conv2D('conv3.2', out_channel=128, padding='VALID') \
-                    .FullyConnected('fc0', 1024 + 512,
+                    .FullyConnected('fc0', 1024 + 512, nl=tf.nn.relu,
                            b_init=tf.constant_initializer(0.1)) \
                     .tf.nn.dropout(keep_prob) \
-                    .FullyConnected('fc1', 512,
+                    .FullyConnected('fc1', 512, nl=tf.nn.relu,
                            b_init=tf.constant_initializer(0.1)) \
                     .FullyConnected('linear', out_dim=self.cifar_classnum, nl=tf.identity)()
 

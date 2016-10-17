@@ -34,7 +34,7 @@ class Model(ModelDesc):
                     up = up / 2
                 return l
 
-        with argscope(Conv2D, kernel_shape=3):
+        with argscope(Conv2D, kernel_shape=3, nl=tf.nn.relu):
             l = Conv2D('conv1_1', image, 64)
             l = Conv2D('conv1_2', l, 64)
             b1 = branch('branch1', l, 1)

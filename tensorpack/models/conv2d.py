@@ -7,7 +7,7 @@ import numpy as np
 import tensorflow as tf
 import math
 from ._common import *
-from ..utils import map_arg
+from ..utils import map_arg, logger
 
 __all__ = ['Conv2D']
 
@@ -15,7 +15,7 @@ __all__ = ['Conv2D']
 def Conv2D(x, out_channel, kernel_shape,
            padding='SAME', stride=1,
            W_init=None, b_init=None,
-           nl=tf.nn.relu, split=1, use_bias=True):
+           nl=None, split=1, use_bias=True):
     """
     2D convolution on 4D inputs.
 
@@ -59,5 +59,9 @@ def Conv2D(x, out_channel, kernel_shape,
         outputs = [tf.nn.conv2d(i, k, stride, padding)
                    for i, k in zip(inputs, kernels)]
         conv = tf.concat(3, outputs)
+    if nl is None:
+        logger.warn("[DEPRECATED] Default nonlinearity for Conv2D and FullyConnected will be deprecated.")
+        logger.warn("[DEPRECATED] Please use argscope instead.")
+        nl = tf.nn.relu
     return nl(tf.nn.bias_add(conv, b) if use_bias else conv, name='output')
 

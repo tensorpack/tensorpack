@@ -133,7 +133,7 @@ class ModelDesc(object):
         :returns: the cost to minimize. a scalar variable
         """
         if len(inspect.getargspec(self._build_graph).args) == 3:
-            logger.warn("_build_graph(self, input_vars, is_training) is deprecated! \
+            logger.warn("[DEPRECATED] _build_graph(self, input_vars, is_training) is deprecated! \
 Use _build_graph(self, input_vars) and get_current_tower_context().is_training instead.")
             self._build_graph(model_inputs, get_current_tower_context().is_training)
         else:

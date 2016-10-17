@@ -36,7 +36,7 @@ class Model(ModelDesc):
 
         image, label = inputs
 
-        with argscope(Conv2D, kernel_shape=3):
+        with argscope(Conv2D, kernel_shape=3, nl=tf.nn.relu):
             # 224
             logits = (LinearWrap(image)
                 .Conv2D('conv1_1', 64)
@@ -62,10 +62,9 @@ class Model(ModelDesc):
                 .Conv2D('conv5_3', 512)
                 .MaxPooling('pool5', 2)
                  # 7
-                .FullyConnected('fc6', 4096)
+                .FullyConnected('fc6', 4096, nl=tf.nn.relu)
                 .Dropout('drop0', 0.5)
-                .print_tensor()
-                .FullyConnected('fc7', 4096)
+                .FullyConnected('fc7', 4096, nl=tf.nn.relu)
                 .Dropout('drop1', 0.5)
                 .FullyConnected('fc8', out_dim=1000, nl=tf.identity)())
         prob = tf.nn.softmax(logits, name='output')
