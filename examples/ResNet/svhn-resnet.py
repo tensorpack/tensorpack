@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 # File: svhn-resnet.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
+# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import tensorflow as tf
 import argparse

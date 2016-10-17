@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: load-alexnet.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
+# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import tensorflow as tf
 import numpy as np

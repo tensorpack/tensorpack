@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 # File: inception-bn.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
+# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import cv2
 import argparse

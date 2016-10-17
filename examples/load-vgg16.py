@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # File: load-vgg16.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
+# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import cv2
 import tensorflow as tf
@@ -72,7 +72,6 @@ class Model(ModelDesc):
 
 def run_test(path, input):
     param_dict = np.load(path).item()
-
     pred_config = PredictConfig(
         model=Model(),
         input_var_names=['input'],

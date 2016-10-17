@@ -12,7 +12,7 @@ __all__ = ['ImageSample']
 # XXX TODO ugly.
 # really need to fix this after tensorflow supports advanced indexing
 # See github:tensorflow#418,#206
-def sample(img, coords, borderMode):
+def sample(img, coords):
     """
     :param img: bxhxwxc
     :param coords: bxh2xw2x2 (y, x) floating point (but is actually holding integer)
@@ -39,14 +39,6 @@ def sample(img, coords, borderMode):
 
     img = tf.reshape(img, [-1, shape[2]])   #bhw x c
     sampled = tf.gather(img, flat_coords)
-
-    if borderMode == 'constant':
-        mask = tf.less_equal(orig_coords, max_coor)
-        mask2 = tf.greater_equal(orig_coords, 0)
-        mask = tf.logical_and(mask, mask2)   #bxh2xw2x2
-        mask = tf.reduce_all(mask, [3]) # bxh2xw2 boolean
-        mask = tf.expand_dims(mask, 3)
-        sampled = sampled * tf.cast(mask, tf.float32)
     return sampled
 
 @layer_register()
@@ -64,8 +56,12 @@ def ImageSample(inputs, borderMode='repeat'):
     """
     template, mapping = inputs
     assert template.get_shape().ndims == 4 and mapping.get_shape().ndims == 4
+    input_shape = template.get_shape().as_list()[1:]
+    assert None not in input_shape, \
+            "Images in ImageSample layer must have fully-defined shape"
     assert borderMode in ['repeat', 'constant']
 
+    orig_mapping = mapping
     mapping = tf.maximum(mapping, 0.0)
     lcoor = tf.floor(mapping)
     ucoor = lcoor + 1
@@ -86,10 +82,19 @@ def ImageSample(inputs, borderMode='repeat'):
     #diff = tf.Print(diff, [tf.is_finite(tf.reduce_sum(diff)), tf.shape(prod),
                           #tf.reduce_max(diff), diff], summarize=50)
 
-    return tf.add_n([sample(template, lcoor, borderMode) * neg_diffx * neg_diffy,
-           sample(template, ucoor, borderMode) * diffx * diffy,
-           sample(template, lyux, borderMode) * neg_diffy * diffx,
-           sample(template, uylx, borderMode) * diffy * neg_diffx], name='sampled')
+    ret = tf.add_n([sample(template, lcoor) * neg_diffx * neg_diffy,
+           sample(template, ucoor) * diffx * diffy,
+           sample(template, lyux) * neg_diffy * diffx,
+           sample(template, uylx) * diffy * neg_diffx], name='sampled')
+    if borderMode == 'constant':
+        max_coor = tf.constant([input_shape[0] - 1, input_shape[1] - 1], dtype=tf.float32)
+        mask = tf.greater_equal(orig_mapping, 0.0)
+        mask2 = tf.less_equal(orig_mapping, max_coor)
+        mask = tf.logical_and(mask, mask2)   #bxh2xw2x2
+        mask = tf.reduce_all(mask, [3]) # bxh2xw2 boolean
+        mask = tf.expand_dims(mask, 3)
+        ret = ret * tf.cast(mask, tf.float32)
+    return ret
 
 from ._test import TestModel
 class TestSample(TestModel):
@@ -137,21 +142,21 @@ if __name__ == '__main__':
 
     h, w = 300, 400
     mapping = np.zeros((1, h, w, 2), dtype='float32')
-    diff = 2000
+    diff = 200
     for x in range(w):
         for y in range(h):
             mapping[0,y,x,:] = np.array([y-diff+0.4, x-diff+0.5])
 
     mapv = tf.Variable(mapping)
-    output = ImageSample('sample', [imv, mapv])
+    output = ImageSample('sample', [imv, mapv], borderMode='constant')
     sess = tf.Session()
     sess.run(tf.initialize_all_variables())
 
-    out = sess.run(tf.gradients(tf.reduce_sum(output), mapv))
+    #out = sess.run(tf.gradients(tf.reduce_sum(output), mapv))
     #out = sess.run(output)
-    print(out[0].min())
-    print(out[0].max())
-    print(out[0].sum())
+    #print(out[0].min())
+    #print(out[0].max())
+    #print(out[0].sum())
 
     out = sess.run([output])[0]
     im = out[0]

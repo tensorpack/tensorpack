@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 # File: DQN.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
+# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
 import tensorflow as tf
