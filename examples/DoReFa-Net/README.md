@@ -30,7 +30,7 @@ export PYTHONPATH=$PYTHONPATH:`readlink -f tensorpack`
 
 ## Support
 
-Please use [github issues](https://github.com/ppwwyyxx/tensorpack/issues) for any issues related to the code.
+Please use [github issues](https://github.com/ppwwyyxx/tensorpack/issues) for any issues related to the code itself.
 Send email to the authors for general questions related to the paper.
 
 ## Citation

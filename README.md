@@ -3,12 +3,15 @@ Neural Network Toolbox on TensorFlow
 
 Still in development, but usable.
 
-See some interesting [training examples](examples) to learn about the framework:
+See some [examples](examples) to learn about the framework.
+You can actually train them and reproduce the performance... not just see how to write code.
 
 + [DoReFa-Net: training binary / low bitwidth CNN](examples/DoReFa-Net)
-+ [Double-DQN and A3C for playing Atari games](examples/Atari2600)
-+ [ResNet for Cifar10 classification](examples/ResNet)
 + [IncpetionV3 on ImageNet](examples/Inception/inceptionv3.py)
++ [ResNet for Cifar10 classification](examples/ResNet)
++ [Fully-convolutional Network for Holistically-Nested Edge Detection](examples/HED)
++ [Double-DQN plays Atari games](examples/Atari2600)
++ [Batch-A3C plays Atari games with demos on OpenAI Gym](examples/OpenAIGym)
 + [char-rnn language model](examples/char-rnn)
 
 ## Features:

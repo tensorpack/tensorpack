@@ -9,6 +9,7 @@ from six.moves import zip, range
 
 from ..models import TowerContext
 from ..utils import logger
+from ..utils.naming import *
 from ..utils.concurrency import LoopThread
 from ..tfutils.summary import summary_moving_average
 from ..tfutils.modelutils import describe_model
