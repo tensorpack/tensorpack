@@ -223,6 +223,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     ENV_NAME = args.env
+    assert ENV_NAME
     p = get_player(); del p    # set NUM_ACTIONS
 
     if args.gpu:
@@ -235,7 +236,7 @@ if __name__ == '__main__':
                 model=Model(),
                 session_init=SaverRestore(args.load),
                 input_var_names=['state'],
-                output_var_names=['logits:0'])
+                output_var_names=['logits'])
         if args.task == 'play':
             play_model(cfg)
         elif args.task == 'eval':

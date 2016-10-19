@@ -1,11 +1,13 @@
-# To train an Atari game in gym:
+# A3C Code and models for my Gym submissions on Atari games.
+
+### To train on an Atari game:
 
 `./train-atari.py --env Breakout-v0 --gpu 0`
 
-# To run a pretrained Atari model for 100 episodes:
+### To run a pretrained Atari model for 100 episodes:
 
 1. Download models from [model zoo](https://drive.google.com/open?id=0B9IPQTvr2BBkS0VhX0xmS1c5aFk)
-2. `ENV=NAME_OF_ENV ./run-atari.py --load "$ENV".tfmodel --env "$ENV"`
+2. `ENV=Breakout-v0; ./run-atari.py --load "$ENV".tfmodel --env "$ENV"`
 
 Models are available for the following gym atari environments (click links for videos):
 
@@ -61,3 +63,4 @@ Note that atari game settings in gym are quite different from DeepMind papers, s
 + In gym, each action is randomly repeated 2~4 times.
 + In gym, inputs are RGB instead of greyscale.
 + In gym, an episode is limited to 10000 steps.
++ The action space also seems to be different.

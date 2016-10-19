@@ -15,7 +15,6 @@ from tensorpack.RL import *
 
 IMAGE_SIZE = (84, 84)
 FRAME_HISTORY = 4
-GAMMA = 0.99
 CHANNEL = FRAME_HISTORY * 3
 IMAGE_SHAPE3 = IMAGE_SIZE + (CHANNEL,)
 
@@ -84,6 +83,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     ENV_NAME = args.env
+    assert ENV_NAME
+    logger.info("Environment Name: {}".format(ENV_NAME))
     p = get_player(); del p    # set NUM_ACTIONS
 
     if args.gpu:
