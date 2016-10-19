@@ -50,13 +50,25 @@ class TrainConfig(object):
         assert_type(self.session_config, tf.ConfigProto)
         self.session_init = kwargs.pop('session_init', JustCurrentSession())
         assert_type(self.session_init, SessionInit)
-        self.step_per_epoch = int(kwargs.pop('step_per_epoch'))
+
+        self.step_per_epoch = kwargs.pop('step_per_epoch', None)
+        if self.step_per_epoch is None:
+            try:
+                self.step_per_epoch = self.dataset.size()
+            except NotImplementedError:
+                logger.exception("You must set `step_per_epoch` if dataset.size() is not implemented.")
+        else:
+            self.step_per_epoch = int(self.step_per_epoch)
+
         self.starting_epoch = int(kwargs.pop('starting_epoch', 1))
         self.max_epoch = int(kwargs.pop('max_epoch', 99999))
         assert self.step_per_epoch >= 0 and self.max_epoch > 0
 
-        if 'nr_tower' in kwargs or 'tower' in kwargs:
-            self.set_tower(**kwargs)
+        if 'nr_tower' in kwargs:
+            assert 'tower' not in kwargs, "Cannot set both nr_tower and tower in TrainConfig!"
+            self.nr_tower = kwargs.pop('nr_tower')
+        elif 'tower' in kwargs:
+            self.tower = kwargs.pop('tower')
         else:
             self.tower = [0]
 
@@ -64,8 +76,8 @@ class TrainConfig(object):
         assert len(kwargs) == 0, 'Unknown arguments: {}'.format(str(kwargs.keys()))
 
     def set_tower(self, nr_tower=None, tower=None):
-        logger.warn("config.set_tower is deprecated. set config.tower or config.nr_tower directly")
         # this is a deprecated function
+        logger.warn("config.set_tower is deprecated. set config.tower or config.nr_tower directly")
         assert nr_tower is None or tower is None, "Cannot set both nr_tower and tower!"
         if nr_tower:
             tower = list(range(nr_tower))

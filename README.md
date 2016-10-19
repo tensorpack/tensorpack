@@ -41,7 +41,7 @@ Multi-GPU training is off-the-shelf by simply switching the trainer.
 ## Dependencies:
 
 + Python 2 or 3
-+ TensorFlow >= 0.8
++ TensorFlow >= 0.10
 + Python bindings for OpenCV
 + other requirements:
 ```

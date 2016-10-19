@@ -27,6 +27,7 @@ To start training:
 ```bash
 ./hed.py --load vgg16.npy
 ```
+It takes about 100k steps (~10 hour on a TitanX) to reach a reasonable performance.
 
 To inference (produce a heatmap at each level at out*.png):
 ```bash

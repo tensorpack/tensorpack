@@ -14,9 +14,10 @@ from tensorpack.tfutils.summary import *
 
 """
 A very small SVHN convnet model (only 0.8m parameters).
-About 3.0% validation error after 70 epoch. 2.5% after 130 epoch.
+About 2.3% validation error after 70 epochs. 2.15% after 150 epochs.
 
-Each epoch is set to 4721 iterations. The speed is about 44 it/s on a Tesla M40
+Each epoch iterates over the whole training set (4721 iterations).
+Speed is about 43 it/s on TitanX.
 """
 
 class Model(ModelDesc):
@@ -29,7 +30,7 @@ class Model(ModelDesc):
 
         image = image / 128.0 - 1
 
-        with argscope(Conv2D, nl=tf.nn.relu):
+        with argscope(Conv2D, nl=BNReLU, use_bias=False):
             logits = (LinearWrap(image)
                     .Conv2D('conv1', 24, 5, padding='VALID')
                     .MaxPooling('pool1', 2, padding='SAME')
@@ -62,7 +63,7 @@ def get_data():
     d1 = dataset.SVHNDigit('train')
     d2 = dataset.SVHNDigit('extra')
     data_train = RandomMixData([d1, d2])
-    data_test = dataset.SVHNDigit('test')
+    data_test = dataset.SVHNDigit('test', shuffle=False)
 
     augmentors = [
         imgaug.Resize((40, 40)),

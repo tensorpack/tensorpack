@@ -40,7 +40,6 @@ def FullyConnected(x, out_dim,
         b = tf.get_variable('b', [out_dim], initializer=b_init)
     prod = tf.nn.xw_plus_b(x, W, b) if use_bias else tf.matmul(x, W)
     if nl is None:
-        logger.warn("[DEPRECATED] Default nonlinearity for Conv2D and FullyConnected will be deprecated.")
-        logger.warn("[DEPRECATED] Please use argscope instead.")
+        logger.warn("[DEPRECATED] Default ReLU nonlinearity for Conv2D and FullyConnected will be deprecated. Please use argscope instead.")
         nl = tf.nn.relu
     return nl(prod, name='output')
