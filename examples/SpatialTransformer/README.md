@@ -1,4 +1,4 @@
-## Spatial Transformer Network
+## Spatial Transformer Networks
 
 Reproduce the "MNIST addition" experiments in
 [Spatial Transformer Networks](https://arxiv.org/abs/1506.02025)
@@ -10,7 +10,8 @@ Here the two Spatial Transformer branches learn to localize the two digits
 and warped them separately.
 
 ![demo](demo.jpg)
-(Left: input image; Middle: output of the first STN branch (which localizes the second digit); Right: output of the second STN branch.)
+
+Left: input image; Middle: output of the first STN branch (which localizes the second digit); Right: output of the second STN branch.
 
 To train (takes about 300 epochs to reach 8.8% error):
 ```bash
