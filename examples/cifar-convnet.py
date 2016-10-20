@@ -151,7 +151,8 @@ if __name__ == '__main__':
         config = get_config(args.classnum)
         if args.load:
             config.session_init = SaverRestore(args.load)
-        if args.gpu:
-            config.nr_tower = len(args.gpu.split(','))
+
         QueueInputTrainer(config).train()
+        #if args.gpu:
+            #config.nr_tower = len(args.gpu.split(','))
         #AsyncMultiGPUTrainer(config).train()

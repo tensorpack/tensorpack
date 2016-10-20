@@ -10,6 +10,7 @@ You can actually train them and reproduce the performance... not just see how to
 + [IncpetionV3 on ImageNet](examples/Inception/inceptionv3.py)
 + [ResNet for Cifar10 classification](examples/ResNet)
 + [Fully-convolutional Network for Holistically-Nested Edge Detection](examples/HED)
++ [Spatial Transformer Networks on MNIST addition](examples/SpatialTransformer)
 + [Double-DQN plays Atari games](examples/Atari2600)
 + [Batch-A3C plays Atari games with demos on OpenAI Gym](examples/OpenAIGym)
 + [char-rnn language model](examples/char-rnn)

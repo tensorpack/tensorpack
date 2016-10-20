@@ -65,7 +65,7 @@ class Model(ModelDesc):
                 tf.expand_dims(stacked, -1), max_images=30)
 
         sampled = tf.concat(3, [sampled1, sampled2], 'sampled_concat')
-        logits = (LinearWrap(sampled) # the starting brace is only for line-breaking
+        logits = (LinearWrap(sampled)
                 .apply(symbf.batch_flatten)
                 .FullyConnected('fc1', out_dim=256, nl=tf.nn.relu)
                 .FullyConnected('fc2', out_dim=128, nl=tf.nn.relu)
@@ -86,7 +86,7 @@ class Model(ModelDesc):
 
     def get_gradient_processor(self):
         return [MapGradient(lambda grad: tf.clip_by_global_norm([grad], 5)[0][0]),
-                ScaleGradient([('STN.*', 0.3)]), SummaryGradient()]
+                ScaleGradient([('STN.*', 0.1)]), SummaryGradient()]
 
 def get_data(isTrain):
     ds = dataset.Mnist('train' if isTrain else 'test')
@@ -133,8 +133,9 @@ def view_warp(modelpath):
         outputs, affine1, affine2 = pred([img])
         for idx, viz in enumerate(outputs):
             viz = cv2.cvtColor(viz, cv2.COLOR_GRAY2BGR)
-            draw_rect(viz, affine1[idx], (0,0,255))
-            draw_rect(viz, affine2[idx], (0,0,255), offset=[IMAGE_SIZE, 0])
+            # Here we assume the second branch focuses on the first digit
+            draw_rect(viz, affine2[idx], (0,0,255))
+            draw_rect(viz, affine1[idx], (0,0,255), offset=[IMAGE_SIZE, 0])
             cv2.imwrite('{:03d}.png'.format(idx), (viz + 0.5) * 255)
         break
 
@@ -149,12 +150,12 @@ def get_config():
 
     return TrainConfig(
         dataset=dataset_train,
-        optimizer=tf.train.AdamOptimizer(lr),
+        optimizer=tf.train.AdamOptimizer(lr, epsilon=1e-3),
         callbacks=Callbacks([
             StatPrinter(), ModelSaver(),
             InferenceRunner(dataset_test,
                 [ScalarStats('cost'), ClassificationError() ]),
-            ScheduledHyperParamSetter('learning_rate', [(200, 1e-4), (400, 8e-5)])
+            ScheduledHyperParamSetter('learning_rate', [(200, 1e-4)])
         ]),
         session_config=get_default_sess_config(0.5),
         model=Model(),
@@ -172,10 +173,9 @@ if __name__ == '__main__':
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
     if args.view:
         view_warp(args.load)
-        sys.exit()
-
-    config = get_config()
-    if args.load:
-        config.session_init = SaverRestore(args.load)
-    SimpleTrainer(config).train()
+    else:
+        config = get_config()
+        if args.load:
+            config.session_init = SaverRestore(args.load)
+        SimpleTrainer(config).train()
 

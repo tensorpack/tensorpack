@@ -43,6 +43,7 @@ class Model(ModelDesc):
             l = Conv2D('conv5', l, out_channel=256, kernel_shape=3, split=2)
             l = MaxPooling('pool3', l, 3, stride=2, padding='VALID')
 
+            # This is just a script to load model, so we ignore the dropout layer
             l = FullyConnected('fc6', l, 4096)
             l = FullyConnected('fc7', l, out_dim=4096)
         # fc will have activation summary by default. disable this for the output layer
