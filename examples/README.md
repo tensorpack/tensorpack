@@ -4,9 +4,9 @@
 Training examples with __reproducible__ and meaningful performance.
 
 + [An illustrative mnist example with explanation of the framework](mnist-convnet.py)
-+ [A tiny SVHN ConvNet with 97.5% accuracy](svhn-digit-convnet.py)
++ [A tiny SVHN ConvNet with 97.8% accuracy](svhn-digit-convnet.py)
 + [Inception-BN with 71% accuracy](Inception/inception-bn.py)
-+ [InceptionV3 with 74.5% accuracy (similar to the official code)](Inception/inceptionv3.py)
++ [InceptionV3 with 74% accuracy (similar to the official code)](Inception/inceptionv3.py)
 + [DoReFa-Net: binary / low-bitwidth CNN on ImageNet](DoReFa-Net)
 + [ResNet for Cifar10 and SVHN](ResNet)
 + [Holistically-Nested Edge Detection](HED)

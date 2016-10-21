@@ -42,7 +42,7 @@ def timed_operation(msg, log_start=False):
         logger.info('Start {} ...'.format(msg))
     start = time.time()
     yield
-    logger.info('{} finished, time={:.2f}sec.'.format(
+    logger.info('{} finished, time:{:.2f}sec.'.format(
         msg, time.time() - start))
 
 _TOTAL_TIMER_DATA = defaultdict(StatCounter)

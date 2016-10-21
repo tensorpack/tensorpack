@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 # File: load-alexnet.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
@@ -15,7 +15,7 @@ from tensorpack.dataflow.dataset import ILSVRCMeta
 
 """
 Usage:
-    python2 -m tensorpack.utils.loadcaffe PATH/TO/CAFFE/{deploy.prototxt,bvlc_alexnet.caffemodel} alexnet.npy
+    python -m tensorpack.utils.loadcaffe PATH/TO/CAFFE/{deploy.prototxt,bvlc_alexnet.caffemodel} alexnet.npy
     ./load-alexnet.py --load alexnet.npy --input cat.png
 """
 

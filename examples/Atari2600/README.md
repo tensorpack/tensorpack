@@ -1,5 +1,7 @@
 ![breakout](breakout.jpg)
 
+[video demo](https://youtu.be/o21mddZtE5Y)
+
 Reproduce the following reinforcement learning methods:
 
 + Nature-DQN in:
@@ -18,15 +20,10 @@ Claimed performance in the paper can be reproduced, on several games I've tested
 DQN typically took 2 days of training to reach a score of 400 on breakout game.
 My Batch-A3C implementation only took <2 hours.
 Both were trained on one GPU with an extra GPU for simulation.
-<!--
-   -This is probably the fastest RL trainer you'd find.
-	 -->
 
 The x-axis is the number of iterations, not wall time.
 Iteration speed on Tesla M40 is about 9.7it/s for B-A3C.
 D-DQN is faster at the beginning but will converge to 12it/s due of exploration annealing.
-
-A demo trained with Double-DQN on breakout is available at [youtube](https://youtu.be/o21mddZtE5Y).
 
 ## How to use
 
@@ -40,7 +37,7 @@ To train:
 
 To visualize the agent:
 ```
-./DQN.py --rom breakout.bin --task play --load pretrained.model
+./DQN.py --rom breakout.bin --task play --load trained.model
 ```
 
 A3C code and models for Atari games in OpenAI Gym are released in [examples/OpenAIGym](../OpenAIGym)

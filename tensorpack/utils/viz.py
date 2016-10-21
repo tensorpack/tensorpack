@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # File: viz.py
-# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+# Credit: zxytim
 
 import numpy as np
 

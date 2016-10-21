@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 # File: param.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
@@ -144,6 +144,9 @@ class HumanHyperParamSetter(HyperParamSetter):
             self.file_name, self.param.readable_name))
 
     def _get_value_to_set(self):
+        # ignore if no such file exists
+        if not os.path.isfile(self.file_name):
+            return None
         try:
             with open(self.file_name) as f:
                 lines = f.readlines()
@@ -152,9 +155,9 @@ class HumanHyperParamSetter(HyperParamSetter):
             ret = dic[self.param.readable_name]
             return ret
         except:
-            #logger.warn(
-                #"Cannot find {} in {}".format(
-                    #self.param.readable_name, self.file_name))
+            logger.warn(
+                "Cannot find {} in {}".format(
+                    self.param.readable_name, self.file_name))
             return None
 
 class ScheduledHyperParamSetter(HyperParamSetter):

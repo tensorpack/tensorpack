@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 # File: load-vgg16.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
@@ -23,7 +23,7 @@ from tensorpack.dataflow.dataset import ILSVRCMeta
 
 """
 Usage:
-    python2 -m tensorpack.utils.loadcaffe PATH/TO/VGG/{VGG_ILSVRC_16_layers_deploy.prototxt,VGG_ILSVRC_16_layers.caffemodel} vgg16.npy
+    python -m tensorpack.utils.loadcaffe PATH/TO/VGG/{VGG_ILSVRC_16_layers_deploy.prototxt,VGG_ILSVRC_16_layers.caffemodel} vgg16.npy
     ./load-vgg16.py --load vgg16.npy --input cat.png
 """
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # File: simulator.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
