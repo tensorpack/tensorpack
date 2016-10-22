@@ -79,7 +79,7 @@ class CaffeLayerProcessor(object):
 
     def proc_scale(self, idx, name, param):
         bottom_name = self.net.bottom_names[name][0]
-        # find te bn layer before this scaling
+        # find the bn layer before this scaling
         for i, layer in enumerate(self.net.layers):
             if layer.type == 'BatchNorm':
                 name2 = self.layer_names[i]
@@ -88,8 +88,8 @@ class CaffeLayerProcessor(object):
                     # scaling and BN share the same bottom, should merge
                     logger.info("Merge {} and {} into one BatchNorm layer".format(
                         name, name2))
-                    return {name + '/beta': param[1].data,
-                            name + '/gamma': param[0].data }
+                    return {name2 + '/beta': param[1].data,
+                            name2 + '/gamma': param[0].data }
         # assume this scaling layer is part of some BN
         logger.error("Could not find a BN layer corresponding to this Scale layer!")
         raise ValueError()
