@@ -10,23 +10,17 @@ import tensorflow as tf
 import argparse
 import numpy as np
 from six.moves import zip
-import os, sys
-import scipy.io as sio
-import random
-import csv
 from tensorflow.contrib.layers import variance_scaling_initializer
 
 from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
-
-from DataLayer import  ReIDDataLayer
 from tensorpack.dataflow.dataset import ILSVRCMeta
 
 """
 Usage:
     python2 -m tensorpack.utils.loadcaffe PATH/TO/CAFFE/{ResNet-101-deploy.prototxt,ResNet-101-model.caffemodel} ResNet101.npy
-    ./load-alexnet.py --load ResNet-101.npy --input cat.png
+    ./load-alexnet.py --load ResNet-101.npy --input cat.png --depth 101
 """
 MODEL_DEPTH = None
 
@@ -63,8 +57,6 @@ class Model(ModelDesc):
             return l + caffe_shortcut(input, ch_in, ch_out * 4, stride)
 
         def layer(l, layername, block_func, features, count, stride, first=False):
-            if count < 1:
-                return l
             with tf.variable_scope(layername):
                 with tf.variable_scope('block0'):
                     l = block_func(l, features, stride,
@@ -101,12 +93,9 @@ class Model(ModelDesc):
 
 def run_test(path, input):
     image_mean = np.array([0.485, 0.456, 0.406], dtype='float32')
-    # param = np.load('./ResNet152.npy').item()
     param = np.load(path).item()
 
     resNet_param = { caffeResNet2tensorpackResNet(k) :v for k, v in param.iteritems()}
-    print('renaming done')
-    ####################
     pred_config = PredictConfig(
         model=Model(),
         input_var_names=['input'],
@@ -116,10 +105,7 @@ def run_test(path, input):
     )
     predict_func = get_predict_func(pred_config)
 
-    import cv2
-    import csv
     remap_func = lambda  x: (x  - image_mean * 255)
-    # im = cv2.imread( '/home/eric/re-id/train/tensorpack/cat.jpg' )
     im = cv2.imread(input)
     im = remap_func(cv2.resize(im, (224,224)))
     im = np.reshape( im, (1, 224, 224, 3)).astype('float32')
