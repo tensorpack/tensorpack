@@ -21,13 +21,11 @@ Usage:
 
 class Model(ModelDesc):
     def _get_input_vars(self):
-        return [InputVar(tf.float32, (None, 227, 227, 3), 'input'),
-            InputVar(tf.int32, (None,), 'label') ]
+        return [InputVar(tf.float32, (None, 227, 227, 3), 'input') ]
 
     def _build_graph(self, inputs):
         # img: 227x227x3
-
-        image, label = inputs
+        image = inputs[0]
 
         with argscope([Conv2D, FullyConnected], nl=tf.nn.relu):
             l = Conv2D('conv1', image, out_channel=96, kernel_shape=11, stride=4, padding='VALID')

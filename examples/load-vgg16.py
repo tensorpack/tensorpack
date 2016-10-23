@@ -29,12 +29,11 @@ Usage:
 
 class Model(ModelDesc):
     def _get_input_vars(self):
-        return [InputVar(tf.float32, (None, 224, 224, 3), 'input'),
-                InputVar(tf.int32, (None,), 'label') ]
+        return [InputVar(tf.float32, (None, 224, 224, 3), 'input') ]
 
-    def _build_graph(self, inputs, is_training):
+    def _build_graph(self, inputs):
 
-        image, label = inputs
+        image = inputs[0]
 
         with argscope(Conv2D, kernel_shape=3, nl=tf.nn.relu):
             # 224

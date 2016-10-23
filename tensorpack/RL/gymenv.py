@@ -8,6 +8,9 @@ import time
 from ..utils import logger
 try:
     import gym
+    gym.undo_logger_setup()
+    # https://github.com/openai/gym/pull/199
+    # not sure does it cause other problems
 except ImportError:
     logger.warn("Cannot import gym. GymEnv won't be available.")
 
@@ -23,7 +26,7 @@ _ALE_LOCK = threading.Lock()
 
 class GymEnv(RLEnvironment):
     """
-    An OpenAI/gym wrapper. Will auto restart.
+    An OpenAI/gym wrapper. Can optionally auto restart.
     """
     def __init__(self, name, dumpdir=None, viz=False, auto_restart=True):
         with _ALE_LOCK:
@@ -43,6 +46,7 @@ class GymEnv(RLEnvironment):
         self._ob = self.gymenv.reset()
 
     def finish_episode(self):
+        self.gymenv.monitor.flush()
         self.stats['score'].append(self.rwd_counter.sum)
 
     def current_state(self):

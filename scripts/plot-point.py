@@ -287,7 +287,7 @@ Line: {}""".format(repr(args.delimeter), line)
 
     data_ys = [data[k] for k in args.y_column_idx]
     max_ysize = max([len(t) for t in data_ys])
-    print "Size of the longest y column: ", max_ysize
+    print("Size of the longest y column: ", max_ysize)
 
     if nr_x_column:
         data_xs = [data[k] for k in args.x_column_idx]

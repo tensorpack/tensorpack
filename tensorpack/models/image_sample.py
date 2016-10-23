@@ -54,6 +54,7 @@ def ImageSample(inputs, borderMode='repeat'):
     :param borderMode: either 'repeat' or 'constant' (0)
     :returns: a NHWC output tensor.
     """
+    # TODO borderValue
     template, mapping = inputs
     assert template.get_shape().ndims == 4 and mapping.get_shape().ndims == 4
     input_shape = template.get_shape().as_list()[1:]

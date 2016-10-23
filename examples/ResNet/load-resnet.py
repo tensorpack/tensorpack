@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-# File: load-ResNet.py
+# File: load-resnet.py
 # Author: Eric Yujia Huang yujiah1@andrew.cmu.edu
 #         Yuxin Wu <ppwwyyxx@gmail.com>
-# 
+#
 
 import cv2
 import tensorflow as tf
 import argparse
+import os, re
 import numpy as np
 from six.moves import zip
 from tensorflow.contrib.layers import variance_scaling_initializer
@@ -19,19 +20,17 @@ from tensorpack.dataflow.dataset import ILSVRCMeta
 
 """
 Usage:
-    python2 -m tensorpack.utils.loadcaffe PATH/TO/CAFFE/{ResNet-101-deploy.prototxt,ResNet-101-model.caffemodel} ResNet101.npy
-    ./load-alexnet.py --load ResNet-101.npy --input cat.png --depth 101
+    python -m tensorpack.utils.loadcaffe PATH/TO/CAFFE/{ResNet-101-deploy.prototxt,ResNet-101-model.caffemodel} ResNet101.npy
+    ./load-resnet.py --load ResNet-101.npy --input cat.png --depth 101
 """
 MODEL_DEPTH = None
 
 class Model(ModelDesc):
-
     def _get_input_vars(self):
-        return [InputVar(tf.float32, [None, 224, 224, 3], 'input'),
-		InputVar(tf.int32, [None],'label')]
+        return [InputVar(tf.float32, [None, 224, 224, 3], 'input')]
 
     def _build_graph(self, input_vars):
-        image, label = input_vars
+        image = input_vars[0]
 
         def caffe_shortcut(l, n_in, n_out, stride):
             if n_in != n_out:
@@ -77,7 +76,7 @@ class Model(ModelDesc):
         with argscope(Conv2D, nl=tf.identity, use_bias=False,
                 W_init=variance_scaling_initializer(mode='FAN_OUT')):
             fc1000l = (LinearWrap(image)
-                .Conv2D('conv0', 64, 7, stride=2, nl=BNReLU ) 
+                .Conv2D('conv0', 64, 7, stride=2, nl=BNReLU )
                 .MaxPooling('pool0', shape=3, stride=2, padding='SAME')
                 .apply(layer, 'group0', block_func, 64, defs[0], 1, first=True)
                 .apply(layer, 'group1', block_func, 128, defs[1], 2)
@@ -88,8 +87,6 @@ class Model(ModelDesc):
                 .FullyConnected('fc1000', 1000, nl=tf.identity)())
 
             prob = tf.nn.softmax(fc1000l, name='prob_output')
-       
-
 
 def run_test(path, input):
     image_mean = np.array([0.485, 0.456, 0.406], dtype='float32')
@@ -100,8 +97,7 @@ def run_test(path, input):
         model=Model(),
         input_var_names=['input'],
         session_init=ParamRestore(resNet_param),
-        session_config=get_default_sess_config(0.9),
-        output_var_names=['prob_output']   # output:0 is the probability distribution
+        output_var_names=['prob_output']
     )
     predict_func = get_predict_func(pred_config)
 
@@ -120,20 +116,18 @@ def run_test(path, input):
 
 
 def caffeResNet2tensorpackResNet(caffe_layer_name):
-    import re
-    map = dict()
-        #begining & ending stage
-    map['conv1/W'] = 'conv0/W'
-    map['conv1/b'] = 'conv0/b'
-    map['bn_conv1/beta'] = 'conv0/bn/beta'
-    map['bn_conv1/gamma'] = 'conv0/bn/gamma'
-    map['bn_conv1/mean/EMA'] = 'conv0/bn/mean/EMA'
-    map['bn_conv1/variance/EMA'] = 'conv0/bn/variance/EMA'
-    map['fc1000/W'] = 'fc1000/W'
-    map['fc1000/b'] = 'fc1000/b'
-    if map.get(caffe_layer_name) != None:
-        print(caffe_layer_name + ' --> ' + map[caffe_layer_name])
-        return map[caffe_layer_name]
+    # begining & ending stage
+    name_map = {'bn_conv1/beta': 'conv0/bn/beta',
+            'bn_conv1/gamma': 'conv0/bn/gamma',
+            'bn_conv1/mean/EMA': 'conv0/bn/mean/EMA',
+            'bn_conv1/variance/EMA': 'conv0/bn/variance/EMA',
+            'conv1/W': 'conv0/W',
+            'conv1/b': 'conv0/b',
+            'fc1000/W': 'fc1000/W',
+            'fc1000/b': 'fc1000/b'}
+    if caffe_layer_ in name_map:
+        print(caffe_layer_name + ' --> ' + name_map[caffe_layer_name])
+        return name_map[caffe_layer_name]
 
     print(caffe_layer_name)
 
@@ -151,7 +145,7 @@ def caffeResNet2tensorpackResNet(caffe_layer_name):
     if s.group(0) == caffe_layer_name[0:caffe_layer_name.index('/')]:
         layer_type = s.group(1)
         layer_group = s.group(2)
-        layer_block = ord(s.group(3)) - ord('a') 
+        layer_block = ord(s.group(3)) - ord('a')
         layer_branch = s.group(4)
     else:
         # print('s group ' + s.group(0))
@@ -172,13 +166,13 @@ def caffeResNet2tensorpackResNet(caffe_layer_name):
         else:
             print('model block error!')
 
-        layer_branch = s.group(5)  
+        layer_branch = s.group(5)
 
     if s.group(0) != caffe_layer_name[0:caffe_layer_name.index('/')]:
         print('model depth error!')
-        # error handling
+        # TODO error handling
 
-    
+
     type_dict = {'res': '/conv', 'bn':'/bn', 'scale':'/bn'}
     shortcut_dict = {'res': '/convshortcut', 'bn':'/bnshortcut', 'scale':'/bnshortcut'}
 
@@ -194,7 +188,7 @@ def caffeResNet2tensorpackResNet(caffe_layer_name):
               shortcut_dict[layer_type] + tf_name
     else:
         print('renaming error!')
-        # error handling
+        # TODO error handling
     print(caffe_layer_name + ' --> ' + tf_name)
     return tf_name
 
