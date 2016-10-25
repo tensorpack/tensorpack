@@ -23,8 +23,7 @@ class TrainConfig(object):
         :param optimizer: a `tf.train.Optimizer` instance defining the optimizer for trainig.
         :param callbacks: a `callback.Callbacks` instance. Define
             the callbacks to perform during training.
-        :param session_config: a `tf.ConfigProto` instance to instantiate the
-            session. default to a session running 1 GPU.
+        :param session_config: a `tf.ConfigProto` instance to instantiate the session.
         :param session_init: a `sessinit.SessionInit` instance to
             initialize variables of a session. default to a new session.
         :param model: a `ModelDesc` instance.

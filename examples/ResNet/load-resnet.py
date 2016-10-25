@@ -22,7 +22,7 @@ from tensorpack.dataflow.dataset import ILSVRCMeta
 
 """
 Usage:
-    python -m tensorpack.utils.loadcaffe PATH/TO/CAFFE/{ResNet-101-deploy.prototxt,ResNet-101-model.caffemodel} ResNet101.npy
+    python -m tensorpack.utils.loadcaffe PATH/TO/{ResNet-101-deploy.prototxt,ResNet-101-model.caffemodel} ResNet101.npy
     ./load-resnet.py --load ResNet-101.npy --input cat.png --depth 101
 """
 MODEL_DEPTH = None
