@@ -58,6 +58,8 @@ class SaverRestore(SessionInit):
         :param prefix: add a `prefix/` for every variable in this checkpoint
         """
         assert os.path.isfile(model_path)
+        if os.path.basename(model_path) == model_path:
+            model_path = os.path.join('.', model_path)  # avoid #4921
         if os.path.basename(model_path) == 'checkpoint':
             model_path = tf.train.get_checkpoint_state(
                 os.path.dirname(model_path)).model_checkpoint_path
