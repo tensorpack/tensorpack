@@ -18,7 +18,7 @@ Also see an implementation of [DenseNet](https://github.com/YixuanLi/densenet-te
 
 ## load-resnet.py
 
-A script to convert and run ResNet{50,101,152} ImageNet models released by Kaiming.
+A script to convert and run ResNet{50,101,152} ImageNet caffe models [released by Kaiming](https://github.com/KaimingHe/deep-residual-networks).
 
 Example usage:
 ```bash

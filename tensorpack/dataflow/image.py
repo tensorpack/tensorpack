@@ -46,7 +46,10 @@ class AugmentImageComponent(MapDataComponent):
         :param augmentors: a list of `ImageAugmentor` instance to be applied in order.
         :param index: the index (or list of indices) of the image component in the produced datapoints by `ds`. default to be 0
         """
-        self.augs = AugmentorList(augmentors)
+        if isinstance(augmentors, AugmentorList):
+            self.augs = augmentors
+        else:
+            self.augs = AugmentorList(augmentors)
         super(AugmentImageComponent, self).__init__(
             ds, lambda x: self.augs.augment(x), index)
 
