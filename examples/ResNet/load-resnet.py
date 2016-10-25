@@ -16,6 +16,7 @@ from tensorflow.contrib.layers import variance_scaling_initializer
 
 from tensorpack import *
 from tensorpack.utils import logger
+from tensorpack.utils.stat import RatioCounter
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
 from tensorpack.dataflow.dataset import ILSVRCMeta
@@ -29,10 +30,11 @@ MODEL_DEPTH = None
 
 class Model(ModelDesc):
     def _get_input_vars(self):
-        return [InputVar(tf.float32, [None, 224, 224, 3], 'input')]
+        return [InputVar(tf.float32, [None, 224, 224, 3], 'input'),
+                InputVar(tf.int32, [None], 'label')]
 
     def _build_graph(self, input_vars):
-        image = input_vars[0]
+        image, label = input_vars
 
         def shortcut(l, n_in, n_out, stride):
             if n_in != n_out:
@@ -47,10 +49,10 @@ class Model(ModelDesc):
             if preact == 'both_preact':
                 l = tf.nn.relu(l, name='preact-relu')
                 input = l
-            l = Conv2D('conv1', l, ch_out, 1)
+            l = Conv2D('conv1', l, ch_out, 1, stride=stride)
             l = BatchNorm('bn1', l)
             l = tf.nn.relu(l)
-            l = Conv2D('conv2', l, ch_out, 3, stride=stride)
+            l = Conv2D('conv2', l, ch_out, 3)
             l = BatchNorm('bn2', l)
             l = tf.nn.relu(l)
             l = Conv2D('conv3', l, ch_out * 4, 1)
@@ -73,10 +75,14 @@ class Model(ModelDesc):
             152: ([3,8,36,3])
         }
         defs = cfg[MODEL_DEPTH]
+
         with argscope(Conv2D, nl=tf.identity, use_bias=False,
                 W_init=variance_scaling_initializer(mode='FAN_OUT')):
+            # tensorflow with padding=SAME will by default pad [2,3] here.
+            # but caffe conv with stride will pad [3,3]
+            image = tf.pad(image, [[0,0],[3,3],[3,3],[0,0]])
             fc1000 = (LinearWrap(image)
-                .Conv2D('conv0', 64, 7, stride=2, nl=BNReLU)
+                .Conv2D('conv0', 64, 7, stride=2, nl=BNReLU, padding='VALID')
                 .MaxPooling('pool0', shape=3, stride=2, padding='SAME')
                 .apply(layer, 'group0', 64, defs[0], 1, first=True)
                 .apply(layer, 'group1', 128, defs[1], 2)
@@ -85,27 +91,75 @@ class Model(ModelDesc):
                 .tf.nn.relu()
                 .GlobalAvgPooling('gap')
                 .FullyConnected('fc1000', 1000, nl=tf.identity)())
-            prob = tf.nn.softmax(fc1000, name='prob_output')
+        prob = tf.nn.softmax(fc1000, name='prob')
+        nr_wrong = tf.reduce_sum(prediction_incorrect(fc1000, label), name='wrong-top1')
+        nr_wrong = tf.reduce_sum(prediction_incorrect(fc1000, label, 5), name='wrong-top5')
+
+def get_inference_augmentor():
+    # load ResNet mean from Kaiming:
+    #from tensorpack.utils.loadcaffe import get_caffe_pb
+    #pb = get_caffe_pb()
+    #obj = pb.BlobProto()
+    #obj.ParseFromString(open('ResNet_mean.binaryproto').read())
+    #pp_mean_224 = np.array(obj.data).reshape(3, 224, 224)
+    #pp_mean_224 = pp_mean_224.transpose(1,2,0)
+
+    meta = ILSVRCMeta()
+    pp_mean = meta.get_per_pixel_mean()
+    pp_mean_224 = pp_mean[16:-16,16:-16,:]
+
+    def resize_func(im):
+        h, w = im.shape[:2]
+        scale = 256.0 / min(h, w)
+        desSize = map(int, [scale * w, scale * h])
+        im = cv2.resize(im, tuple(desSize), interpolation=cv2.INTER_CUBIC)
+        return im
+    transformers = imgaug.AugmentorList([
+        imgaug.MapImage(resize_func),
+        imgaug.CenterCrop((224, 224)),
+        imgaug.MapImage(lambda x: x - pp_mean_224),
+    ])
+    return transformers
 
 def run_test(params, input):
-    image_mean = np.array([0.485, 0.456, 0.406], dtype='float32')
     pred_config = PredictConfig(
         model=Model(),
-        input_var_names=['input'],
         session_init=ParamRestore(params),
-        output_var_names=['prob_output']
+        input_var_names=['input'],
+        output_var_names=['prob']
     )
     predict_func = get_predict_func(pred_config)
 
-    im = cv2.imread(input)
-    im = cv2.resize(im, (224,224)) - image_mean * 255
-    im = np.reshape( im, (1, 224, 224, 3)).astype('float32')
-    prob = predict_func([im])[0]
+    prepro = get_inference_augmentor()
+    im = cv2.imread(input).astype('float32')
+    im = prepro.augment(im)
+    im = np.reshape( im, (1, 224, 224, 3))
+    outputs = predict_func([im])
+    prob = outputs[0]
 
     ret = prob[0].argsort()[-10:][::-1]
     print(ret)
     meta = ILSVRCMeta().get_synset_words_1000()
     print([meta[k] for k in ret])
+
+def eval_on_ILSVRC12(params, data_dir):
+    ds = dataset.ILSVRC12(data_dir, 'val', shuffle=False, dir_structure='train')
+    ds = AugmentImageComponent(ds, get_inference_augmentor())
+    ds = BatchData(ds, 128, remainder=True)
+    pred_config = PredictConfig(
+        model=Model(),
+        input_var_names=['input', 'label'],
+        session_init=ParamRestore(params),
+        output_var_names=['prob', 'wrong-top1', 'wrong-top5']
+    )
+    pred = SimpleDatasetPredictor(pred_config, ds)
+    acc1, acc5 = RatioCounter(), RatioCounter()
+    for o in pred.get_result():
+        batch_size = o[0].shape[0]
+        acc1.feed(o[1], batch_size)
+        acc5.feed(o[2], batch_size)
+    print("Top1 Error: {}".format(acc1.ratio))
+    print("Top5 Error: {}".format(acc5.ratio))
 
 def name_conversion(caffe_layer_name):
     # beginning & end mapping
@@ -153,10 +207,12 @@ if __name__ == '__main__':
     parser.add_argument('--load',
                         help='.npy model file generated by tensorpack.utils.loadcaffe',
                         required=True)
-    parser.add_argument('--input', help='an input image', required=True)
     parser.add_argument('--depth', help='resnet depth', required=True, type=int, choices=[50, 101, 152])
+    parser.add_argument('--input', help='an input image')
+    parser.add_argument('--eval', help='Run evaluation on dataset')
 
     args = parser.parse_args()
+    assert args.input or args.eval, "Choose either input or eval!"
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
     # run resNet with given model (in npy format)
@@ -173,4 +229,7 @@ if __name__ == '__main__':
         logger.info("Name Transform: " + k + ' --> ' + newname)
         resnet_param[newname] = v
 
-    run_test(resnet_param, args.input)
+    if args.eval:
+        eval_on_ILSVRC12(resnet_param, args.eval)
+    else:
+        run_test(resnet_param, args.input)
