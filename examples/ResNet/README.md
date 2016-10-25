@@ -7,12 +7,10 @@ A script to convert and run ResNet{50,101,152} caffe models trained on ImageNet 
 
 Example usage:
 ```bash
-# convert the model
+# convert caffe model to npy format
 python -m tensorpack.utils.loadcaffe PATH/TO/{ResNet-101-deploy.prototxt,ResNet-101-model.caffemodel} ResNet101.npy
 # run on an image
 ./load-resnet.py --load ResNet-101.npy --input cat.jpg --depth 101
-# validate on ILSVRC12
-./load-resnet.py --load ResNet-101.npy --eval PATH/TO/ILSVRC12 --depth 101
 ```
 
 The converted models are verified on ILSVRC12 validation set.

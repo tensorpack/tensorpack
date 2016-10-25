@@ -3,7 +3,6 @@
 # File: load-resnet.py
 # Author: Eric Yujia Huang yujiah1@andrew.cmu.edu
 #         Yuxin Wu <ppwwyyxx@gmail.com>
-#
 
 import cv2
 import tensorflow as tf
@@ -21,11 +20,6 @@ from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
 from tensorpack.dataflow.dataset import ILSVRCMeta
 
-"""
-Usage:
-    python -m tensorpack.utils.loadcaffe PATH/TO/{ResNet-101-deploy.prototxt,ResNet-101-model.caffemodel} ResNet101.npy
-    ./load-resnet.py --load ResNet-101.npy --input cat.png --depth 101
-"""
 MODEL_DEPTH = None
 
 class Model(ModelDesc):
@@ -98,11 +92,9 @@ class Model(ModelDesc):
 def get_inference_augmentor():
     # load ResNet mean from Kaiming:
     #from tensorpack.utils.loadcaffe import get_caffe_pb
-    #pb = get_caffe_pb()
-    #obj = pb.BlobProto()
+    #obj = get_caffe_pb().BlobProto()
     #obj.ParseFromString(open('ResNet_mean.binaryproto').read())
-    #pp_mean_224 = np.array(obj.data).reshape(3, 224, 224)
-    #pp_mean_224 = pp_mean_224.transpose(1,2,0)
+    #pp_mean_224 = np.array(obj.data).reshape(3, 224, 224).transpose(1,2,0)
 
     meta = ILSVRCMeta()
     pp_mean = meta.get_per_pixel_mean()
@@ -209,13 +201,12 @@ if __name__ == '__main__':
                         required=True)
     parser.add_argument('--depth', help='resnet depth', required=True, type=int, choices=[50, 101, 152])
     parser.add_argument('--input', help='an input image')
-    parser.add_argument('--eval', help='Run evaluation on dataset')
+    parser.add_argument('--eval', help='ILSVRC dir to run validation on')
 
     args = parser.parse_args()
     assert args.input or args.eval, "Choose either input or eval!"
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
-    # run resNet with given model (in npy format)
     MODEL_DEPTH = args.depth
 
     param = np.load(args.load, encoding='latin1').item()
