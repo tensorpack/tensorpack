@@ -33,10 +33,17 @@ class ModelSaver(Callback):
         for key in self.var_collections:
             vars.extend(tf.get_collection(key))
         self.path = os.path.join(logger.LOG_DIR, 'model')
-        self.saver = tf.train.Saver(
-            var_list=ModelSaver._get_var_dict(vars),
-            max_to_keep=self.keep_recent,
-            keep_checkpoint_every_n_hours=self.keep_freq)
+        try:
+            self.saver = tf.train.Saver(
+                var_list=ModelSaver._get_var_dict(vars),
+                max_to_keep=self.keep_recent,
+                keep_checkpoint_every_n_hours=self.keep_freq,
+                write_version=tf.train.SaverDef.V2)
+        except:
+            self.saver = tf.train.Saver(
+                var_list=ModelSaver._get_var_dict(vars),
+                max_to_keep=self.keep_recent,
+                keep_checkpoint_every_n_hours=self.keep_freq)
         self.meta_graph_written = False
 
     @staticmethod

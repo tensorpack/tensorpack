@@ -49,5 +49,7 @@ with tf.Graph().as_default() as G:
                 var_dict[name] = v
             logger.info("Variables to dump:")
             logger.info(", ".join(var_dict.keys()))
-            saver = tf.train.Saver(var_list=var_dict)
+            saver = tf.train.Saver(
+                    var_list=var_dict,
+                    write_version=tf.train.SaverDef.V2)
             saver.save(sess, args.output, write_meta_graph=False)

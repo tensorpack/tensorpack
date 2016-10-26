@@ -34,6 +34,7 @@ class GymEnv(RLEnvironment):
         if dumpdir:
             mkdir_p(dumpdir)
             self.gymenv.monitor.start(dumpdir)
+        self.use_dir = dumpdir
 
         self.reset_stat()
         self.rwd_counter = StatCounter()
@@ -46,7 +47,8 @@ class GymEnv(RLEnvironment):
         self._ob = self.gymenv.reset()
 
     def finish_episode(self):
-        self.gymenv.monitor.flush()
+        if self.use_dir is not None:
+            self.gymenv.monitor.flush()
         self.stats['score'].append(self.rwd_counter.sum)
 
     def current_state(self):
