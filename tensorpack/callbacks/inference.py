@@ -11,10 +11,9 @@ import six
 from six.moves import zip, map
 
 from ..dataflow import DataFlow
-from ..utils import *
-from ..utils.stat import *
-from ..tfutils import *
-from ..tfutils.summary import *
+from ..utils import get_tqdm_kwargs, logger
+from ..utils.stat import RatioCounter, BinaryStatistics
+from ..tfutils import get_op_tensor_name
 from .base import Callback
 
 __all__ = ['InferenceRunner', 'ClassificationError',

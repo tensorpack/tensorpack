@@ -7,6 +7,7 @@ import tensorflow as tf
 import re
 
 from ..utils import *
+from .tower import get_current_tower_context
 from . import get_global_step_var
 from .symbolic_functions import rms
 
@@ -28,6 +29,8 @@ def add_activation_summary(x, name=None):
     Add summary to graph for an activation tensor x.
     If name is None, use x.name.
     """
+    if not get_current_tower_context().is_main_training_tower:
+        return
     ndim = x.get_shape().ndims
     assert ndim >= 2, \
         "Summary a scalar with histogram? Maybe use scalar instead. FIXME!"
@@ -46,6 +49,8 @@ def add_param_summary(summary_lists):
     :param summary_lists: list of (regex, [list of summary type to perform]).
         Type can be 'mean', 'scalar', 'histogram', 'sparsity', 'rms'
     """
+    if not get_current_tower_context().is_main_training_tower:
+        return
     def perform(var, action):
         ndim = var.get_shape().ndims
         name = var.name.replace(':0', '')
@@ -84,6 +89,8 @@ def add_moving_summary(v, *args):
     :param v: tensor or list of tensor to summary
     :param args: tensors to summary
     """
+    if not get_current_tower_context().is_main_training_tower:
+        return
     if not isinstance(v, list):
         v = [v]
     v.extend(args)

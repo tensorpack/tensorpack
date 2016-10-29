@@ -6,6 +6,8 @@ import tensorflow as tf
 
 from ..utils import logger
 
+__all__ = ['describe_model', 'get_shape_str']
+
 def describe_model():
     """ print a description of the current model parameters """
     train_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)

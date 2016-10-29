@@ -6,7 +6,7 @@
 import numpy as np
 import tensorflow as tf
 import math
-from ._common import *
+from ._common import layer_register, shape2d, shape4d
 from ..utils import map_arg, logger
 
 __all__ = ['Conv2D']

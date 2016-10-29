@@ -7,8 +7,8 @@ from contextlib import contextmanager
 import time
 
 from .base import Callback
-from .stat import *
-from ..utils import *
+from .stat import StatPrinter
+from ..utils import logger
 
 __all__ = ['Callbacks']
 

@@ -11,8 +11,10 @@ try:
     gym.undo_logger_setup()
     # https://github.com/openai/gym/pull/199
     # not sure does it cause other problems
+    __all__ = ['GymEnv']
 except ImportError:
     logger.warn("Cannot import gym. GymEnv won't be available.")
+    __all__ = []
 
 import threading
 
@@ -20,7 +22,6 @@ from ..utils.fs import *
 from ..utils.stat import *
 from .envbase import RLEnvironment, DiscreteActionSpace
 
-__all__ = ['GymEnv']
 
 _ALE_LOCK = threading.Lock()
 

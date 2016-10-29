@@ -7,9 +7,9 @@ from functools import wraps
 import six
 import copy, os
 
-from ..tfutils import *
-from ..tfutils.modelutils import *
-from ..tfutils.summary import *
+from ..tfutils.argscope import get_arg_scope
+from ..tfutils.modelutils import get_shape_str
+from ..tfutils.summary import add_activation_summary
 from ..utils import logger
 
 # make sure each layer is only logged once

@@ -7,9 +7,8 @@ from abc import abstractmethod, ABCMeta, abstractproperty
 import tensorflow as tf
 import six
 
-from ..models import TowerContext
 from ..utils import logger
-from ..tfutils import get_vars_by_names
+from ..tfutils import get_vars_by_names, TowerContext
 
 __all__ = ['OnlinePredictor', 'OfflinePredictor',
         'AsyncPredictorBase',

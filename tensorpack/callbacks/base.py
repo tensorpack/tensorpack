@@ -8,8 +8,6 @@ import os
 import time
 from abc import abstractmethod, ABCMeta
 
-from ..utils import *
-
 __all__ = ['Callback', 'PeriodicCallback']
 
 class Callback(object):

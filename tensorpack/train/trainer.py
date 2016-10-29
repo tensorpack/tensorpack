@@ -11,10 +11,9 @@ from .base import Trainer
 
 from ..dataflow.common import RepeatedData
 
-from ..models import TowerContext
 from ..utils import logger, SUMMARY_BACKUP_KEYS
 from ..tfutils import (get_vars_by_names, freeze_collection,
-        get_global_step_var)
+        get_global_step_var, TowerContext)
 from ..tfutils.summary import summary_moving_average, add_moving_summary
 from ..tfutils.modelutils import describe_model
 from ..predict import OnlinePredictor, build_multi_tower_prediction_graph
@@ -67,7 +66,7 @@ class SimpleTrainer(Trainer):
         with TowerContext(''):
             model.build_graph(self.input_vars)
             cost_var = model.get_cost() # TODO assert scalar
-        add_moving_summary(cost_var)
+            add_moving_summary(cost_var)
 
         grads = self.config.optimizer.compute_gradients(cost_var)
         grads = self.process_grads(grads)

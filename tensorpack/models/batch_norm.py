@@ -7,7 +7,7 @@ import tensorflow as tf
 from copy import copy
 import re
 
-from .model_desc import get_current_tower_context
+from ..tfutils.tower import get_current_tower_context
 from ..utils import logger, EXTRA_SAVE_VARS_KEY
 from ._common import layer_register
 

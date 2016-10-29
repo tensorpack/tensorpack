@@ -6,8 +6,8 @@ import tensorflow as tf
 import re
 
 from ..utils import logger
-from ..utils.utils import *
-from .model_desc import get_current_tower_context
+from ..utils.utils import memoized
+from ..tfutils.tower import get_current_tower_context
 from ._common import layer_register
 
 __all__ = ['regularize_cost', 'l2_regularizer', 'l1_regularizer', 'Dropout']

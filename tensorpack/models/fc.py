@@ -7,7 +7,7 @@ import tensorflow as tf
 import math
 
 from ._common import layer_register
-from ..tfutils.symbolic_functions import *
+from ..tfutils import symbolic_functions as symbf
 
 __all__ = ['FullyConnected']
 
@@ -26,7 +26,7 @@ def FullyConnected(x, out_dim,
     :param use_bias: whether to use bias. a boolean default to True
     :returns: a 2D tensor
     """
-    x = batch_flatten(x)
+    x = symbf.batch_flatten(x)
     in_dim = x.get_shape().as_list()[1]
 
     if W_init is None:

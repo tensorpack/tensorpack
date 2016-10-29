@@ -9,7 +9,8 @@ from six.moves import zip
 
 from tensorpack.models import ModelDesc
 from ..utils import logger
-from ..tfutils import *
+from ..tfutils import get_default_sess_config
+from ..tfutils.sessinit import SessionInit, JustCurrentSession
 from .base import OfflinePredictor
 
 import multiprocessing

@@ -5,8 +5,8 @@
 import tensorflow as tf
 import numpy
 
-from ._common import *
-from ..tfutils.symbolic_functions import *
+from ._common import layer_register, shape2d, shape4d
+from ..tfutils import symbolic_functions as symbf
 
 __all__ = ['MaxPooling', 'FixedUnPooling', 'AvgPooling', 'GlobalAvgPooling',
            'BilinearUpSample']
@@ -105,9 +105,9 @@ def FixedUnPooling(x, shape, unpool_mat=None):
     assert unpool_mat.get_shape().as_list() == list(shape)
 
     # perform a tensor-matrix kronecker product
-    fx = flatten(tf.transpose(x, [0, 3, 1, 2]))
+    fx = symbf.flatten(tf.transpose(x, [0, 3, 1, 2]))
     fx = tf.expand_dims(fx, -1)       # (bchw)x1
-    mat = tf.expand_dims(flatten(unpool_mat), 0)    #1x(shxsw)
+    mat = tf.expand_dims(symbf.flatten(unpool_mat), 0)    #1x(shxsw)
     prod = tf.matmul(fx, mat)    #(bchw) x(shxsw)
     prod = tf.reshape(prod, tf.pack(
         [-1, input_shape[3], input_shape[1], input_shape[2], shape[0], shape[1]]))

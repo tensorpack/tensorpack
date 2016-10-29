@@ -9,12 +9,9 @@ import time
 import six
 from six.moves import queue, range, zip
 
-
 from ..utils.concurrency import DIE
 from ..tfutils.modelutils import describe_model
 from ..utils import logger
-from ..utils.timer import *
-from ..tfutils import *
 
 from .base import *
 

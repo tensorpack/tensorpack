@@ -8,7 +8,7 @@ import operator
 import json
 
 from .base import Callback
-from ..utils import *
+from ..utils import logger
 
 __all__ = ['StatHolder', 'StatPrinter', 'SendStat']
 
