@@ -22,10 +22,10 @@ SVHN_URL = "http://ufldl.stanford.edu/housenumbers/"
 
 class SVHNDigit(RNGDataFlow):
     """
-    SVHN Cropped Digit Dataset
+    SVHN Cropped Digit Dataset.
     return img of 32x32x3, label of 0-9
     """
-    Cache = {}
+    _Cache = {}
 
     def __init__(self, name, data_dir=None, shuffle=True):
         """
@@ -34,8 +34,8 @@ class SVHNDigit(RNGDataFlow):
         """
         self.shuffle = shuffle
 
-        if name in SVHNDigit.Cache:
-            self.X, self.Y = SVHNDigit.Cache[name]
+        if name in SVHNDigit._Cache:
+            self.X, self.Y = SVHNDigit._Cache[name]
             return
         if data_dir is None:
             data_dir = get_dataset_path('svhn_data')
@@ -48,7 +48,7 @@ class SVHNDigit(RNGDataFlow):
         self.X = data['X'].transpose(3,0,1,2)
         self.Y = data['y'].reshape((-1))
         self.Y[self.Y==10] = 0
-        SVHNDigit.Cache[name] = (self.X, self.Y)
+        SVHNDigit._Cache[name] = (self.X, self.Y)
 
     def size(self):
         return self.X.shape[0]

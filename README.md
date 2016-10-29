@@ -5,7 +5,7 @@ See some [examples](examples) to learn about the framework.
 You can actually train them and reproduce the performance... not just to see how to write code.
 
 + [DoReFa-Net: training binary / low bitwidth CNN](examples/DoReFa-Net)
-+ [IncpetionV3 on ImageNet](examples/Inception/inceptionv3.py)
++ [InceptionV3 on ImageNet](examples/Inception/inceptionv3.py)
 + [ResNet for Cifar10 classification](examples/ResNet)
 + [Fully-convolutional Network for Holistically-Nested Edge Detection](examples/HED)
 + [Spatial Transformer Networks on MNIST addition](examples/SpatialTransformer)

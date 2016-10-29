@@ -97,12 +97,12 @@ class ILSVRC12(RNGDataFlow):
             original ILSVRC12_`name`.tar gets decompressed.
         :param name: 'train' or 'val' or 'test'
         :param dir_structure: The dir structure of 'val' and 'test'.
-            If is 'original' then keep the original decompressed dir with list
-            of image files (as below). If equals to 'train', use the `train/` dir
-            structure with class name as subdirectories.
+            If is 'original' then keep the original decompressed directory with list
+            of image files (as below). If set to 'train', use the the same
+            directory structure as 'train/', with class name as subdirectories.
         :param include_bb: Include the bounding box. Maybe useful in training.
 
-        Dir should have the following structure:
+        When `dir_structure=='original'`, `dir` should have the following structure:
 
         .. code-block:: none
 
@@ -128,6 +128,7 @@ class ILSVRC12(RNGDataFlow):
         command to build the above structure for `train/`:
 
         .. code-block:: none
+
             tar xvf ILSVRC12_img_train.tar -C train && cd train
             find -type f -name '*.tar' | parallel -P 10 'echo {} && mkdir -p {/.} && tar xf {} -C {/.}'
             Or:
