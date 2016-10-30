@@ -7,7 +7,7 @@ import numpy as np
 import cv2
 
 __all__ = ['Brightness', 'Contrast', 'MeanVarianceNormalize', 'GaussianBlur',
-        'Gamma', 'Clip', 'Saturation']
+        'Gamma', 'Clip', 'Saturation', 'Lighting']
 
 class Brightness(ImageAugmentor):
     """

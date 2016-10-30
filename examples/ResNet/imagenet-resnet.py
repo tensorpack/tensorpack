@@ -163,9 +163,14 @@ def get_data(train_or_test):
             Resize(),
             imgaug.RandomOrderAug(
                 [imgaug.Brightness(30, clip=False),
-                 imgaug.Gamma(),
                  imgaug.Contrast((0.8, 1.2), clip=False),
-                 imgaug.Saturation(0.4)]),
+                 imgaug.Saturation(0.4),
+                 imgaug.Lighting(0.1,
+                     eigval=[0.2175, 0.0188, 0.0045],
+                     eigvec=[[ -0.5675,  0.7192,  0.4009],
+                      [ -0.5808, -0.0045, -0.8140],
+                      [ -0.5836, -0.6948,  0.4203]]
+                 )]),
             imgaug.Clip(),
             imgaug.Flip(horiz=True),
             imgaug.MapImage(lambda x: (x * (1.0 / 255) - image_mean) / image_std),
