@@ -29,7 +29,8 @@ def add_activation_summary(x, name=None):
     Add summary to graph for an activation tensor x.
     If name is None, use x.name.
     """
-    if not get_current_tower_context().is_main_training_tower:
+    ctx = get_current_tower_context()
+    if ctx is not None and not ctx.is_main_training_tower:
         return
     ndim = x.get_shape().ndims
     assert ndim >= 2, \
@@ -49,7 +50,8 @@ def add_param_summary(summary_lists):
     :param summary_lists: list of (regex, [list of summary type to perform]).
         Type can be 'mean', 'scalar', 'histogram', 'sparsity', 'rms'
     """
-    if not get_current_tower_context().is_main_training_tower:
+    ctx = get_current_tower_context()
+    if ctx is not None and not ctx.is_main_training_tower:
         return
     def perform(var, action):
         ndim = var.get_shape().ndims
@@ -89,7 +91,8 @@ def add_moving_summary(v, *args):
     :param v: tensor or list of tensor to summary
     :param args: tensors to summary
     """
-    if not get_current_tower_context().is_main_training_tower:
+    ctx = get_current_tower_context()
+    if ctx is not None and not ctx.is_main_training_tower:
         return
     if not isinstance(v, list):
         v = [v]
