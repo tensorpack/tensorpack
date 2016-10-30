@@ -16,7 +16,7 @@ from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
 
 """
-Training code of ResNet on ImageNet. Work In Progress.
+Training code of Pre-Activation version of ResNet on ImageNet. Work In Progress.
 Top1 error is now about 0.5% higher than fb.resnet.torch.
 """
 
@@ -136,31 +136,29 @@ def get_data(train_or_test):
     image_std = np.array([0.229, 0.224, 0.225], dtype='float32')
 
     if isTrain:
-        class Resize(imgaug.ImageAugmentor):
-            def __init__(self):
-                self._init(locals())
-            def _augment(self, img, _):
-                # fbaug
-                h, w = img.shape[:2]
-                area = h * w
-                for _ in range(10):
-                    targetArea = self.rng.uniform(0.08, 1.0) * area
-                    aspectR = self.rng.uniform(0.75,1.333)
-                    ww = int(np.sqrt(targetArea * aspectR))
-                    hh = int(np.sqrt(targetArea / aspectR))
-                    if self.rng.uniform() < 0.5:
-                        ww, hh = hh, ww
-                    if hh <= h and ww <= w:
-                        x1 = 0 if w == ww else self.rng.randint(0, w - ww)
-                        y1 = 0 if h == hh else self.rng.randint(0, h - hh)
-                        out = img[y1:y1+hh,x1:x1+ww]
-                        out = cv2.resize(out, (224,224), interpolation=cv2.INTER_CUBIC)
-                        return out
-                out = cv2.resize(img, (224,224), interpolation=cv2.INTER_CUBIC)
-                return out
+        def resize_func(img):
+            # crop 8%~100% of the original image
+            # See `Going Deeper with Convolutions` by Google.
+            h, w = img.shape[:2]
+            area = h * w
+            for _ in range(10):
+                targetArea = self.rng.uniform(0.08, 1.0) * area
+                aspectR = self.rng.uniform(0.75,1.333)
+                ww = int(np.sqrt(targetArea * aspectR))
+                hh = int(np.sqrt(targetArea / aspectR))
+                if self.rng.uniform() < 0.5:
+                    ww, hh = hh, ww
+                if hh <= h and ww <= w:
+                    x1 = 0 if w == ww else self.rng.randint(0, w - ww)
+                    y1 = 0 if h == hh else self.rng.randint(0, h - hh)
+                    out = img[y1:y1+hh,x1:x1+ww]
+                    out = cv2.resize(out, (224,224), interpolation=cv2.INTER_CUBIC)
+                    return out
+            out = cv2.resize(img, (224,224), interpolation=cv2.INTER_CUBIC)
+            return out
 
         augmentors = [
-            Resize(),
+            imgaug.MapImage(resize_func),
             imgaug.RandomOrderAug(
                 [imgaug.Brightness(30, clip=False),
                  imgaug.Contrast((0.8, 1.2), clip=False),

@@ -134,12 +134,12 @@ class Saturation(ImageAugmentor):
 
 class Lighting(ImageAugmentor):
     def __init__(self, std, eigval, eigvec):
-    """ Lighting noise.
-        See `ImageNet Classification with Deep Convolutional Neural Networks - Alex`
-        The implementation follows 'fb.resnet.torch': https://github.com/facebook/fb.resnet.torch/blob/master/datasets/transforms.lua#L184
+        """ Lighting noise.
+            See `ImageNet Classification with Deep Convolutional Neural Networks - Alex`
+            The implementation follows 'fb.resnet.torch': https://github.com/facebook/fb.resnet.torch/blob/master/datasets/transforms.lua#L184
 
-        :param eigvec: each column is one eigen vector
-    """
+            :param eigvec: each column is one eigen vector
+        """
         eigval = np.asarray(eigval)
         eigvec = np.asarray(eigvec)
         assert eigval.shape == (3,)

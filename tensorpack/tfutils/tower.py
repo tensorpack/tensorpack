@@ -4,6 +4,7 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import tensorflow as tf
+import re
 
 __all__ = ['get_current_tower_context', 'TowerContext']
 
