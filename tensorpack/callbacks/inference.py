@@ -188,7 +188,7 @@ class ClassificationError(Inferencer):
     testing (because the size of test set might not be a multiple of batch size).
     Therefore the result is different from averaging the error rate of each batch.
     """
-    def __init__(self, wrong_var_name='wrong:0', summary_name='validation_error'):
+    def __init__(self, wrong_var_name='wrong:0', summary_name='val_error'):
         """
         :param wrong_var_name: name of the `wrong` variable
         :param summary_name: the name for logging
