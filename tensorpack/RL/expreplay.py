@@ -78,14 +78,16 @@ class ExpReplay(DataFlow, Callback):
 
         with tqdm(total=self.init_memory_size) as pbar:
             while len(self.mem) < self.init_memory_size:
-                #from copy import deepcopy  # quickly fill the memory for debug
-                #self.mem.append(deepcopy(self.mem[0]))
                 self._populate_exp()
                 pbar.update()
         self._init_memory_flag.set()
 
     def _populate_exp(self):
         """ populate a transition by epsilon-greedy"""
+        #if len(self.mem):
+            #from copy import deepcopy  # quickly fill the memory for debug
+            #self.mem.append(deepcopy(self.mem[0]))
+            #return
         old_s = self.player.current_state()
         if self.rng.rand() <= self.exploration:
             act = self.rng.choice(range(self.num_actions))

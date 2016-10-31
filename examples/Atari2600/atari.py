@@ -54,7 +54,7 @@ class AtariPlayer(RLEnvironment):
             ALEInterface.setLoggerMode(ALEInterface.Logger.Warning)
         except AttributeError:
             if execute_only_once():
-                logger.warn("https://github.com/mgbellemare/Arcade-Learning-Environment/pull/171 is not merged!")
+                logger.warn("You're not using latest ALE")
 
         # avoid simulator bugs: https://github.com/mgbellemare/Arcade-Learning-Environment/issues/86
         with _ALE_LOCK:
@@ -104,14 +104,13 @@ class AtariPlayer(RLEnvironment):
 
     def current_state(self):
         """
-        :returns: a gray-scale (h, w, 1) float32 image
+        :returns: a gray-scale (h, w, 1) uint8 image
         """
         ret = self._grab_raw_image()
         # max-pooled over the last screen
         ret = np.maximum(ret, self.last_raw_screen)
         if self.viz:
             if isinstance(self.viz, float):
-                #m = cv2.resize(ret, (1920,1200))
                 cv2.imshow(self.windowname, ret)
                 time.sleep(self.viz)
         ret = ret[self.height_range[0]:self.height_range[1],:].astype('float32')
@@ -119,7 +118,7 @@ class AtariPlayer(RLEnvironment):
         ret = cv2.cvtColor(ret, cv2.COLOR_RGB2GRAY)
         ret = cv2.resize(ret, self.image_shape)
         ret = np.expand_dims(ret, axis=2)
-        return ret
+        return ret.astype('uint8')  # to save some memory
 
     def get_action_space(self):
         return DiscreteActionSpace(len(self.actions))
