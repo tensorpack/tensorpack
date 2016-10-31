@@ -5,6 +5,7 @@
 from abc import ABCMeta, abstractmethod
 import signal
 import re
+import weakref
 from six.moves import range
 import tqdm
 
@@ -108,7 +109,7 @@ class Trainer(object):
         get_global_step_var()   # ensure there is such var, before finalizing the graph
         logger.info("Setup callbacks ...")
         callbacks = self.config.callbacks
-        callbacks.setup_graph(self) # TODO use weakref instead?
+        callbacks.setup_graph(weakref.proxy(self))
         self._init_summary()
 
         logger.info("Initializing graph variables ...")

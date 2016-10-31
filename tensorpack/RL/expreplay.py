@@ -33,7 +33,6 @@ class ExpReplay(DataFlow, Callback):
             player,
             batch_size=32,
             memory_size=1e6,
-            populate_size=None, # deprecated
             init_memory_size=50000,
             exploration=1,
             end_exploration=0.1,
@@ -50,10 +49,6 @@ class ExpReplay(DataFlow, Callback):
         :param update_frequency: number of new transitions to add to memory
             after sampling a batch of transitions for training
         """
-        # XXX back-compat
-        if populate_size is not None:
-            logger.warn("populate_size in ExpReplay is deprecated in favor of init_memory_size")
-            init_memory_size = populate_size
         init_memory_size = int(init_memory_size)
 
         for k, v in locals().items():

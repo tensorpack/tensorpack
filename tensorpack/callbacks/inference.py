@@ -13,7 +13,7 @@ from six.moves import zip, map
 from ..dataflow import DataFlow
 from ..utils import get_tqdm_kwargs, logger
 from ..utils.stat import RatioCounter, BinaryStatistics
-from ..tfutils import get_op_tensor_name
+from ..tfutils import get_op_tensor_name, get_op_var_name
 from .base import Callback
 
 __all__ = ['InferenceRunner', 'ClassificationError',

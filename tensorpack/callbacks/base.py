@@ -28,7 +28,7 @@ class Callback(object):
         Called before finalizing the graph.
         Use this callback to setup some ops used in the callback.
 
-        :param trainer: a :class:`train.Trainer` instance
+        :param trainer: :class:`train.Trainer` instance
         """
         self.trainer = trainer
         self.graph = tf.get_default_graph()
