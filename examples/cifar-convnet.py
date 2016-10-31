@@ -15,8 +15,7 @@ from tensorpack.tfutils.summary import *
 A small convnet model for Cifar10 or Cifar100 dataset.
 
 Cifar10:
-    90% validation accuracy after 40k step.
-    91% accuracy after 80k step.
+    91% accuracy after 50k step.
     19.3 step/s on Tesla M40
 
 Not a good model for Cifar100, just for demonstration.
@@ -66,7 +65,7 @@ class Model(ModelDesc):
         add_moving_summary(tf.reduce_mean(wrong, name='train_error'))
 
         # weight decay on all W of fc layers
-        wd_cost = tf.mul(0.004,
+        wd_cost = tf.mul(0.0004,
                          regularize_cost('fc.*/W', tf.nn.l2_loss),
                          name='regularize_loss')
         add_moving_summary(cost, wd_cost)
@@ -112,26 +111,27 @@ def get_config(cifar_classnum):
 
     sess_config = get_default_sess_config(0.5)
 
-    nr_gpu = get_nr_gpu()
-    lr = tf.train.exponential_decay(
-        learning_rate=1e-2,
-        global_step=get_global_step_var(),
-        decay_steps=step_per_epoch * (30 if nr_gpu == 1 else 20),
-        decay_rate=0.5, staircase=True, name='learning_rate')
+    lr = tf.Variable(1e-2, name='learning_rate',
+            dtype=tf.float32, trainable=False)
     tf.scalar_summary('learning_rate', lr)
+    def lr_func(lr):
+        if lr < 3e-5:
+            raise StopTraining()
+        return lr * 0.31
 
     return TrainConfig(
         dataset=dataset_train,
         optimizer=tf.train.AdamOptimizer(lr, epsilon=1e-3),
         callbacks=Callbacks([
-            StatPrinter(),
-            ModelSaver(),
-            InferenceRunner(dataset_test, ClassificationError())
+            StatPrinter(), ModelSaver(),
+            InferenceRunner(dataset_test, ClassificationError()),
+            StatMonitorParamSetter('learning_rate', 'val_error', lr_func,
+                threshold=0.001, last_k=10),
         ]),
         session_config=sess_config,
         model=Model(cifar_classnum),
         step_per_epoch=step_per_epoch,
-        max_epoch=250,
+        max_epoch=150,
     )
 
 if __name__ == '__main__':

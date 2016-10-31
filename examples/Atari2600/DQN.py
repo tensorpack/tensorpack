@@ -40,7 +40,7 @@ EXPLORATION_EPOCH_ANNEAL = 0.01
 END_EXPLORATION = 0.1
 
 MEMORY_SIZE = 1e6
-# NOTE: will consume at least 1e6 * 84 * 84 * 4 bytes = 26G memory.
+# NOTE: will consume at least 1e6 * 84 * 84 bytes == 6.6G memory.
 # Suggest using tcmalloc to manage memory space better.
 INIT_MEMORY_SIZE = 5e4
 STEP_PER_EPOCH = 10000

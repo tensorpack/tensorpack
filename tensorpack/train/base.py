@@ -18,7 +18,10 @@ from ..callbacks import StatHolder
 from ..tfutils import get_global_step, get_global_step_var
 from ..tfutils.summary import create_summary
 
-__all__ = ['Trainer']
+__all__ = ['Trainer', 'StopTraining']
+
+class StopTraining(BaseException):
+    pass
 
 class Trainer(object):
     """
@@ -138,6 +141,8 @@ class Trainer(object):
                             #callbacks.trigger_step()   # not useful?
                             self.global_step += 1
                         self.trigger_epoch()
+            except StopTraining:
+                logger.info("Training was stopped.")
             except (KeyboardInterrupt, Exception):
                 raise
             finally:

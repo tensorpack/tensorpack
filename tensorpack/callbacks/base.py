@@ -8,7 +8,7 @@ import os
 import time
 from abc import abstractmethod, ABCMeta
 
-__all__ = ['Callback', 'PeriodicCallback']
+__all__ = ['Callback', 'PeriodicCallback', 'ProxyCallback']
 
 class Callback(object):
     """ Base class for all callbacks """
