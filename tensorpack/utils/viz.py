@@ -4,6 +4,37 @@
 # Credit: zxytim
 
 import numpy as np
+import io
+import cv2
+
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    pass
+
+__all__ = ['pyplot2img', 'build_patch_list', 'pyplot_viz']
+
+def pyplot2img(plt):
+    buf = io.BytesIO()
+    plt.axis('off')
+    plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0)
+    buf.seek(0)
+    rawbuf = np.frombuffer(buf.getvalue(), dtype='uint8')
+    im = cv2.imdecode(rawbuf, cv2.IMREAD_COLOR)
+    buf.close()
+    return im
+
+def pyplot_viz(img, shape=None):
+    """ use pyplot to visualize the image
+        Note: this is quite slow. and the returned image will have a border
+    """
+    plt.clf()
+    plt.axes([0,0,1,1])
+    plt.imshow(img)
+    ret = pyplot2img(plt)
+    if shape is not None:
+        ret = cv2.resize(ret, shape)
+    return ret
 
 def minnone(x, y):
     if x is None: x = y
@@ -25,8 +56,10 @@ def build_patch_list(patch_list,
         np.random.shuffle(patch_list)
     ph, pw = patch_list.shape[1:3]
     mh, mw = max(max_height, ph + border), max(max_width, pw + border)
-    nr_row = minnone(nr_row, max_height / (ph + border))
-    nr_col = minnone(nr_col, max_width / (pw + border))
+    if nr_row is None:
+        nr_row = minnone(nr_row, max_height / (ph + border))
+    if nr_col is None:
+        nr_col = minnone(nr_col, max_width / (pw + border))
 
     canvas = np.zeros((nr_row * (ph + border) - border,
              nr_col * (pw + border) - border,

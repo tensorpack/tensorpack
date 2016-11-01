@@ -87,13 +87,11 @@ the same name".format(v.name))
     logger.info(str(result.keys()))
     np.save(path, result)
 
-def dump_chkpt_vars(model_path, output):
-    """ Dump all variables from a checkpoint """
+def dump_chkpt_vars(model_path):
+    """ Dump all variables from a checkpoint to a dict"""
     reader = tf.train.NewCheckpointReader(model_path)
     var_names = reader.get_variable_to_shape_map().keys()
     result = {}
     for n in var_names:
         result[n] = reader.get_tensor(n)
-    logger.info("Variables to save to {}:".format(output))
-    logger.info(str(result.keys()))
-    np.save(output, result)
+    return result
