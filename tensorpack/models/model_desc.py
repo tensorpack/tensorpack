@@ -12,6 +12,7 @@ import inspect
 from ..utils import logger, INPUT_VARS_KEY
 from ..tfutils.common import get_vars_by_names
 from ..tfutils.gradproc import CheckGradient
+from ..tfutils.tower import get_current_tower_context
 
 __all__ = ['ModelDesc', 'InputVar', 'ModelFromMetaGraph' ]
 
