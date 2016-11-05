@@ -73,7 +73,6 @@ class MultiGPUTrainer(QueueInputTrainer):
 
 class SyncMultiGPUTrainer(MultiGPUTrainer):
     def train(self):
-        self.init_session_and_coord()
         self._build_enque_thread()
 
         grad_list = self._multi_tower_grads()
@@ -92,7 +91,6 @@ class SyncMultiGPUTrainer(MultiGPUTrainer):
 
 class AsyncMultiGPUTrainer(MultiGPUTrainer):
     def train(self):
-        self.init_session_and_coord()
         self._build_enque_thread()
 
         grad_list = self._multi_tower_grads()

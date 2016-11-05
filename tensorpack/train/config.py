@@ -32,7 +32,6 @@ class TrainConfig(object):
         :param max_epoch: maximum number of epoch to run training. default to inf
         :param nr_tower: int. number of training towers. default to 1.
         :param tower: list of training towers in relative id. default to `range(nr_tower)` if nr_tower is given.
-        :param extra_threads_procs: list of `Startable` threads or processes
         """
         def assert_type(v, tp):
             assert isinstance(v, tp), v.__class__
@@ -72,6 +71,10 @@ class TrainConfig(object):
             self.tower = [0]
 
         self.extra_threads_procs = kwargs.pop('extra_threads_procs', [])
+        if self.extra_threads_procs:
+            logger.warn("[DEPRECATED] use the Callback StartProcOrThread instead of _extra_threads_procs")
+            from ..callbacks.concurrency import StartProcOrThread
+            self.callbacks.cbs.append(StartProcOrThread(self.extra_threads_procs))
         assert len(kwargs) == 0, 'Unknown arguments: {}'.format(str(kwargs.keys()))
 
     def set_tower(self, nr_tower=None, tower=None):

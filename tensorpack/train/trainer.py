@@ -76,7 +76,6 @@ class SimpleTrainer(Trainer):
             self.config.optimizer.apply_gradients(grads, get_global_step_var()),
             avg_maintain_op)
 
-        self.init_session_and_coord()
         describe_model()
         # create an infinte data producer
         self.config.dataset.reset_state()
@@ -196,7 +195,6 @@ class QueueInputTrainer(Trainer):
     def train(self):
         assert len(self.config.tower) == 1, \
                 "QueueInputTrainer doesn't support multigpu! Use Sync/AsyncMultiGPUTrainer instead."
-        self.init_session_and_coord()
         self._build_enque_thread()
 
         grads = self._single_tower_grad()

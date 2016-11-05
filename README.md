@@ -1,6 +1,8 @@
 # tensorpack
 Neural Network Toolbox on TensorFlow
 
+Still in development. Underlying design may change.
+
 See some [examples](examples) to learn about the framework.
 You can actually train them and reproduce the performance... not just to see how to write code.
 

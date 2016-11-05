@@ -56,13 +56,6 @@ class Callback(object):
         Could be useful to apply some tricks on parameters (clipping, low-rank, etc)
         """
 
-    @property
-    def global_step(self):
-        """
-        Access the global step value of this training.
-        """
-        return self.trainer.global_step
-
     def trigger_epoch(self):
         """
         Triggered after every epoch.
@@ -95,7 +88,7 @@ class ProxyCallback(Callback):
         self.cb.trigger_epoch()
 
     def __str__(self):
-        return str(self.cb)
+        return "Proxy-" + str(self.cb)
 
 class PeriodicCallback(ProxyCallback):
     """

@@ -22,6 +22,7 @@ import matplotlib.font_manager as fontm
 import argparse, sys
 from collections import defaultdict
 from itertools import chain
+import six
 
 from matplotlib import rc
 #rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
@@ -52,11 +53,9 @@ def get_args():
             help='title of the graph',
             default='')
     parser.add_argument('--xlabel',
-            help='x label',
-            default = 'x')
+            help='x label', type=six.text_type)
     parser.add_argument('--ylabel',
-            help='y label',
-            default='y')
+            help='y label', type=six.text_type)
     parser.add_argument('-s', '--scale',
             help='scale of each y, separated by comma')
     parser.add_argument('--annotate-maximum',
@@ -215,8 +214,10 @@ def do_plot(data_xs, data_ys):
         if args.annotate_maximum or args.annotate_minimum:
             annotate_min_max(truncate_data_x, data_y, ax)
 
-    plt.xlabel(args.xlabel.decode('utf-8'), fontsize='xx-large')
-    plt.ylabel(args.ylabel.decode('utf-8'), fontsize='xx-large')
+    if args.xlabel:
+        plt.xlabel(args.xlabel, fontsize='xx-large')
+    if args.ylabel:
+        plt.ylabel(args.ylabel, fontsize='xx-large')
     plt.legend(loc='best', fontsize='xx-large')
 
     # adjust maxx

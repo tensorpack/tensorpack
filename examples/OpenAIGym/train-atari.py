@@ -204,9 +204,9 @@ def get_config():
             HumanHyperParamSetter('entropy_beta'),
             HumanHyperParamSetter('explore_factor'),
             master,
+            StartProcOrThread(master)
             PeriodicCallback(Evaluator(EVAL_EPISODE, ['state'], ['logits']), 2),
         ]),
-        extra_threads_procs=[master],
         session_config=get_default_sess_config(0.5),
         model=M,
         step_per_epoch=STEP_PER_EPOCH,

@@ -113,9 +113,10 @@ def get_caffe_pb():
     caffe_pb_file = os.path.join(dir, 'caffe_pb2.py')
     if not os.path.isfile(caffe_pb_file):
         proto_path = download(CAFFE_PROTO_URL, dir)
+        assert os.path.isfile(os.path.join(dir, 'caffe.proto'))
         ret = os.system('cd {} && protoc caffe.proto --python_out .'.format(dir))
         assert ret == 0, \
-                "caffe proto compilation failed! Did you install protoc?"
+                "Command `protoc caffe.proto --python_out .` failed!"
     import imp
     return imp.load_source('caffepb', caffe_pb_file)
 

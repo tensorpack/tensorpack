@@ -22,6 +22,8 @@ class FakeData(RNGDataFlow):
         """
         :param shapes: a list of lists/tuples
         :param size: size of this DataFlow
+        :param random: whether to randomly generate data every iteration. note
+            that only generating the data could be time-consuming!
         """
         super(FakeData, self).__init__()
         self.shapes = shapes
