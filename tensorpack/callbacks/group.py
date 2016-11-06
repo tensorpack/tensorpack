@@ -86,3 +86,7 @@ class Callbacks(Callback):
             with tm.timed_callback(display_name):
                 cb.trigger_epoch()
         tm.log()
+
+    def append(self, cb):
+        assert isinstance(cb, Callback)
+        self.cbs.append(cb)

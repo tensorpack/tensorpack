@@ -68,7 +68,7 @@ class Trainer(object):
 
     def trigger_epoch(self):
         # by default, add this two stat
-        self.stat_holder.add_stat('global_step', self.global_step)
+        self.stat_holder.add_stat('global_step', get_global_step())
         self.stat_holder.add_stat('epoch_num', self.epoch_num)
 
         # trigger subclass
@@ -88,7 +88,7 @@ class Trainer(object):
             if val.WhichOneof('value') == 'simple_value':
                 val.tag = re.sub('tower[p0-9]+/', '', val.tag)   # TODO move to subclasses
                 self.stat_holder.add_stat(val.tag, val.simple_value)
-        self.summary_writer.add_summary(summary, self.global_step)
+        self.summary_writer.add_summary(summary, get_global_step())
 
     def write_scalar_summary(self, name, val):
         self.summary_writer.add_summary(
@@ -98,10 +98,8 @@ class Trainer(object):
 
     def finalize_graph(self):
         # some final operations that might modify the graph
-        get_global_step_var()   # ensure there is such var, before finalizing the graph
         logger.info("Setup callbacks ...")
-        callbacks = self.config.callbacks
-        callbacks.setup_graph(weakref.proxy(self))
+        self.config.callbacks.setup_graph(weakref.proxy(self))
 
         if not hasattr(logger, 'LOG_DIR'):
             raise RuntimeError("logger directory wasn't set!")
@@ -122,8 +120,8 @@ class Trainer(object):
         callbacks = self.config.callbacks
         with self.sess.as_default():
             try:
-                logger.info("Start training with global_step={}".format(get_global_step()))
                 callbacks.before_train()
+                logger.info("Start training with global_step={}".format(get_global_step()))
                 for self.epoch_num in range(
                         self.config.starting_epoch, self.config.max_epoch+1):
                     with timed_operation(

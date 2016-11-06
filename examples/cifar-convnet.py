@@ -10,6 +10,7 @@ import os
 from tensorpack import *
 import tensorpack.tfutils.symbolic_functions as symbf
 from tensorpack.tfutils.summary import *
+from tensorpack.utils.gpu import get_nr_gpu
 
 """
 A small convnet model for Cifar10 or Cifar100 dataset.
@@ -152,7 +153,10 @@ if __name__ == '__main__':
         if args.load:
             config.session_init = SaverRestore(args.load)
 
-        QueueInputTrainer(config).train()
-        #if args.gpu:
-            #config.nr_tower = len(args.gpu.split(','))
-        #AsyncMultiGPUTrainer(config).train()
+        if args.gpu:
+            config.nr_tower = len(args.gpu.split(','))
+        nr_gpu = get_nr_gpu()
+        if nr_gpu == 1:
+            QueueInputTrainer(config).train()
+        else:
+            SyncMultiGPUTrainer(config).train()

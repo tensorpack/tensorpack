@@ -17,6 +17,7 @@ from ..tfutils import (get_vars_by_names, freeze_collection,
 from ..tfutils.summary import summary_moving_average, add_moving_summary
 from ..tfutils.modelutils import describe_model
 from ..predict import OnlinePredictor, build_multi_tower_prediction_graph
+from ..callbacks.concurrency import StartProcOrThread
 
 __all__ = ['SimpleTrainer', 'QueueInputTrainer']
 
@@ -160,7 +161,7 @@ class QueueInputTrainer(Trainer):
         self.predict_tower = predict_tower or [0]
         self.dequed_inputs = None
 
-    def _get_model_inputs(self):
+    def _get_dequeued_inputs(self):
         """ Dequeue a datapoint from input_queue and return"""
         ret = self.input_queue.dequeue(name='input_deque')
         if isinstance(ret, tf.Tensor): # only one input
@@ -172,7 +173,7 @@ class QueueInputTrainer(Trainer):
 
     def _single_tower_grad(self):
         """ Get grad and cost for single-tower"""
-        self.dequed_inputs = model_inputs = self._get_model_inputs()
+        self.dequed_inputs = model_inputs = self._get_dequeued_inputs()
 
         # test the overhead of queue
         #with tf.device('/gpu:0'):
@@ -190,7 +191,7 @@ class QueueInputTrainer(Trainer):
     def _build_enque_thread(self):
         """ create a thread that keeps filling the queue """
         self.input_th = EnqueueThread(self)
-        self._extra_threads_procs.append(self.input_th)
+        self.config.callbacks.append(StartProcOrThread(self.input_th))
 
     def train(self):
         assert len(self.config.tower) == 1, \

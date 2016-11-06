@@ -54,7 +54,7 @@ class MultiGPUTrainer(QueueInputTrainer):
                     tf.variable_scope(global_scope, reuse=idx > 0), \
                     TowerContext('tower{}'.format(idx)) as scope:
                 logger.info("Building graph for training tower {}...".format(idx))
-                model_inputs = self._get_model_inputs()    # each tower dequeue from input queue
+                model_inputs = self._get_dequeued_inputs()    # each tower dequeue from input queue
                 self.dequed_inputs.append(model_inputs)
 
                 self.model.build_graph(model_inputs)

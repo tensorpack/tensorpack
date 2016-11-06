@@ -74,7 +74,7 @@ class TrainConfig(object):
         if self.extra_threads_procs:
             logger.warn("[DEPRECATED] use the Callback StartProcOrThread instead of _extra_threads_procs")
             from ..callbacks.concurrency import StartProcOrThread
-            self.callbacks.cbs.append(StartProcOrThread(self.extra_threads_procs))
+            self.callbacks.append(StartProcOrThread(self.extra_threads_procs))
         assert len(kwargs) == 0, 'Unknown arguments: {}'.format(str(kwargs.keys()))
 
     def set_tower(self, nr_tower=None, tower=None):
