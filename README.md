@@ -29,7 +29,7 @@ Describe your training task with three components:
 	+ Use Python to easily handle any of your own data format, yet still keep a good training speed thanks to multiprocess prefetch & TF Queue prefetch.
 	For example, InceptionV3 can run in the same speed as the official code which reads data using TF operators.
 
-3. Callbacks, including everything you want to do apart from the training iterations. Such as:
+3. Callbacks, including everything you want to do apart from the training iterations, such as:
 	+ Change hyperparameters during training
 	+ Print some variables of interest
 	+ Run inference on a test dataset
@@ -49,7 +49,7 @@ Multi-GPU training is off-the-shelf by simply switching the trainer.
 pip install --user -r requirements.txt
 pip install --user -r opt-requirements.txt (some optional dependencies, you can install later if needed)
 ```
-+ Use [tcmalloc](http://goog-perftools.sourceforge.net/doc/tcmalloc.html) whenever possible
++ [tcmalloc](http://goog-perftools.sourceforge.net/doc/tcmalloc.html) usually helps.
 + Enable `import tensorpack`:
 ```
 export PYTHONPATH=$PYTHONPATH:`readlink -f path/to/tensorpack`

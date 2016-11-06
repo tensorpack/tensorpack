@@ -6,13 +6,14 @@ import tensorflow as tf
 import numpy as np
 from ..utils import logger
 
-def prediction_incorrect(logits, label, topk=1):
+def prediction_incorrect(logits, label, topk=1, name='incorrect_vector'):
     """
     :param logits: NxC
     :param label: N
     :returns: a float32 vector of length N with 0/1 values, 1 meaning incorrect prediction
     """
-    return tf.cast(tf.logical_not(tf.nn.in_top_k(logits, label, topk)), tf.float32)
+    return tf.cast(tf.logical_not(tf.nn.in_top_k(logits, label, topk)),
+            tf.float32, name=name)
 
 def flatten(x):
     """

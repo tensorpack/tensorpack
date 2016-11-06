@@ -180,12 +180,10 @@ class Model(ModelDesc):
         loss2 = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)
         loss2 = tf.reduce_mean(loss2, name='loss2')
 
-        wrong = prediction_incorrect(logits, label, 1)
-        nr_wrong = tf.reduce_sum(wrong, name='wrong-top1')
+        wrong = prediction_incorrect(logits, label, 1, name='wrong-top1')
         add_moving_summary(tf.reduce_mean(wrong, name='train-error-top1'))
 
-        wrong = prediction_incorrect(logits, label, 5)
-        nr_wrong = tf.reduce_sum(wrong, name='wrong-top5')
+        wrong = prediction_incorrect(logits, label, 5, name='wrong-top5')
         add_moving_summary(tf.reduce_mean(wrong, name='train-error-top5'))
 
         # weight decay on all W of fc layers

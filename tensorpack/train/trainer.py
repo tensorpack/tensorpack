@@ -115,7 +115,6 @@ class EnqueueThread(threading.Thread):
 
     def run(self):
         self.dataflow.reset_state()
-
         with self.sess.as_default():
             try:
                 while True:

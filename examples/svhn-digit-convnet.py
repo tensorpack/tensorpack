@@ -46,7 +46,6 @@ class Model(ModelDesc):
 
         # compute the number of failed samples, for ClassificationError to use at test time
         wrong = prediction_incorrect(logits, label)
-        nr_wrong = tf.reduce_sum(wrong, name='wrong')
         # monitor training error
         add_moving_summary(tf.reduce_mean(wrong, name='train_error'))
 

@@ -62,9 +62,8 @@ class Model(ModelDesc):
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label) # a vector of length B with loss of each sample
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')  # the average cross-entropy loss
 
-        # compute the number of failed samples, for thee callback ClassificationError to use at test time
-        wrong = symbolic_functions.prediction_incorrect(logits, label)
-        nr_wrong = tf.reduce_sum(wrong, name='wrong')
+        # compute the "incorrect vector", for the callback ClassificationError to use at validation time
+        wrong = symbolic_functions.prediction_incorrect(logits, label, name='incorrect')
 
         # This will monitor training error (in a moving_average fashion):
         # 1. write the value to tensosrboard
@@ -117,7 +116,7 @@ def get_config():
             InferenceRunner(    # run inference(for validation) after every epoch
                 dataset_test,   # the DataFlow instance used for validation
                 # Calculate both the cost and the error for this DataFlow
-                [ScalarStats('cost'), ClassificationError() ]),
+                [ScalarStats('cost'), ClassificationError('incorrect')]),
         ]),
         model=Model(),
         step_per_epoch=step_per_epoch,

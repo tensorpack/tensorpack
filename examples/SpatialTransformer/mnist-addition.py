@@ -76,7 +76,6 @@ class Model(ModelDesc):
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
 
         wrong = symbolic_functions.prediction_incorrect(logits, label)
-        nr_wrong = tf.reduce_sum(wrong, name='wrong')
         summary.add_moving_summary(tf.reduce_mean(wrong, name='train_error'))
 
         wd_cost = tf.mul(1e-5, regularize_cost('fc.*/W', tf.nn.l2_loss),

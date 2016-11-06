@@ -102,12 +102,10 @@ class Model(ModelDesc):
         cost = tf.add_n([loss3, 0.3 * loss2, 0.3 * loss1], name='weighted_cost')
         add_moving_summary([cost, loss1, loss2, loss3])
 
-        wrong = prediction_incorrect(logits, label, 1)
-        nr_wrong = tf.reduce_sum(wrong, name='wrong-top1')
+        wrong = prediction_incorrect(logits, label, 1, name='wrong-top1')
         add_moving_summary(tf.reduce_mean(wrong, name='train_error_top1'))
 
-        wrong = prediction_incorrect(logits, label, 5)
-        nr_wrong = tf.reduce_sum(wrong, name='wrong-top5')
+        wrong = prediction_incorrect(logits, label, 5, name='wrong-top5')
         add_moving_summary(tf.reduce_mean(wrong, name='train_error_top5'))
 
         # weight decay on all W of fc layers

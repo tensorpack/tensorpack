@@ -40,7 +40,6 @@ class Model(mnist_example.Model):
         prob = tf.nn.softmax(logits, name='prob')
 
         wrong = symbolic_functions.prediction_incorrect(logits, label)
-        nr_wrong = tf.reduce_sum(wrong, name='wrong')
         add_moving_summary(tf.reduce_mean(wrong, name='train_error'))
 
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)

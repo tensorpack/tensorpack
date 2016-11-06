@@ -11,10 +11,11 @@ import six
 from six.moves import zip, map
 
 from ..dataflow import DataFlow
-from ..utils import get_tqdm_kwargs, logger
+from ..utils import get_tqdm_kwargs, logger, execute_only_once
 from ..utils.stat import RatioCounter, BinaryStatistics
 from ..tfutils import get_op_tensor_name, get_op_var_name
 from .base import Callback
+from .dispatcher import OutputTensorDispatcer
 
 __all__ = ['InferenceRunner', 'ClassificationError',
         'ScalarStats', 'Inferencer', 'BinaryClassificationStats']
@@ -31,14 +32,14 @@ class Inferencer(object):
     def _before_inference(self):
         pass
 
-    def datapoint(self, dp, output):
+    def datapoint(self, _, output):
         """
         Called after complete running every data point
         """
-        self._datapoint(dp, output)
+        self._datapoint(_, output)
 
     @abstractmethod
-    def _datapoint(self, dp, output):
+    def _datapoint(self, _, output):
         pass
 
     def after_inference(self):
@@ -97,21 +98,24 @@ class InferenceRunner(Callback):
             self.input_tensors = [x.name for x in input_vars]
 
     def _find_output_tensors(self):
+        dispatcer = OutputTensorDispatcer()
+        for inf in self.infs:
+            dispatcer.add_entry(inf.get_output_tensors())
+        all_names = dispatcer.get_all_names()
+
         IOTensor = InferenceRunner.IOTensor
-        self.output_tensors = []
-        def find_oid(t):
-            tensorname = get_op_tensor_name(t)[1]
-            if tensorname in self.input_tensors:
-                # this inferencer needs the input dp
-                return IOTensor(self.input_tensors.index(tensorname), False)
-            if t in self.output_tensors:
-                return IOTensor(self.output_tensors.index(t), True)
-            else:
-                self.output_tensors.append(t)
-                return IOTensor(len(self.output_tensors) - 1, True)
-        self.inf_to_tensors = [
-                [find_oid(t) for t in inf.get_output_tensors()]
-                for inf in self.infs]
+        self.output_tensors = list(filter(
+            lambda x: x not in self.input_tensors, all_names))
+        def find_oid(idxs):
+            ret = []
+            for idx in idxs:
+                name = all_names[idx]
+                if name in self.input_tensors:
+                    ret.append(IOTensor(self.input_tensors.index(name), False))
+                else:
+                    ret.append(IOTensor(self.output_tensors.index(name), True))
+            return ret
+        self.inf_to_tensors = [find_oid(t) for t in dispatcer.get_idx_for_each_entry()]
         # list of list of (var_name: IOTensor)
 
     def _trigger_epoch(self):
@@ -162,7 +166,7 @@ class ScalarStats(Inferencer):
     def _before_inference(self):
         self.stats = []
 
-    def _datapoint(self, dp, output):
+    def _datapoint(self, _, output):
         self.stats.append(output)
 
     def _after_inference(self):
@@ -180,15 +184,16 @@ class ClassificationError(Inferencer):
     """
     Compute classification error in batch mode, from a `wrong` variable
 
-    The `wrong` variable is supposed to be an integer equal to the number of failed samples in this batch.
-    You can use `tf.nn.in_top_k` to record top-k error as well.
+    The `wrong` tensor is supposed to be an 0/1 integer vector containing
+    whether each sample in the batch is incorrectly classified.
+    You can use `tf.nn.in_top_k` to produce this vector record top-k error as well.
 
     This callback produce the "true" error,
     taking account of the fact that batches might not have the same size in
     testing (because the size of test set might not be a multiple of batch size).
     Therefore the result is different from averaging the error rate of each batch.
     """
-    def __init__(self, wrong_var_name='wrong:0', summary_name='val_error'):
+    def __init__(self, wrong_var_name='incorrect_vector', summary_name='val_error'):
         """
         :param wrong_var_name: name of the `wrong` variable
         :param summary_name: the name for logging
@@ -202,9 +207,18 @@ class ClassificationError(Inferencer):
     def _before_inference(self):
         self.err_stat = RatioCounter()
 
-    def _datapoint(self, dp, outputs):
-        batch_size = dp[0].shape[0]   # assume batched input
-        wrong = int(outputs[0])
+    def _datapoint(self, _, outputs):
+        vec = outputs[0]
+        if vec.ndim == 0:
+            if execute_only_once():
+                logger.warn("[DEPRECATED] use a 'wrong vector' for ClassificationError instead of nr_wrong")
+            batch_size = _[0].shape[0]   # assume batched input
+            wrong = int(vec)
+        else:
+            # TODO put shape assertion into inferencerrunner
+            assert vec.ndim == 1, "{} is not a vector!".format(self.wrong_var_name)
+            batch_size = len(vec)
+            wrong = np.sum(vec)
         self.err_stat.feed(wrong, batch_size)
 
     def _after_inference(self):
@@ -230,7 +244,7 @@ class BinaryClassificationStats(Inferencer):
     def _before_inference(self):
         self.stat = BinaryStatistics()
 
-    def _datapoint(self, dp, outputs):
+    def _datapoint(self, _, outputs):
         pred, label = outputs
         self.stat.feed(pred, label)
 

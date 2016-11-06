@@ -59,9 +59,7 @@ class Model(ModelDesc):
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
 
-        # compute the number of failed samples, for ClassificationError to use at test time
         wrong = symbf.prediction_incorrect(logits, label)
-        nr_wrong = tf.reduce_sum(wrong, name='wrong')
         # monitor training error
         add_moving_summary(tf.reduce_mean(wrong, name='train_error'))
 

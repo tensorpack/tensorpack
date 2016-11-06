@@ -94,6 +94,12 @@ def get_rng(obj=None):
 
 _EXECUTE_HISTORY = set()
 def execute_only_once():
+    """
+    when called with:
+        if execute_only_once():
+            # do something
+    The body is guranteed to be executed only the first time.
+    """
     f = inspect.currentframe().f_back
     ident =  (f.f_code.co_filename, f.f_lineno)
     if ident in _EXECUTE_HISTORY:
