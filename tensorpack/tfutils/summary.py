@@ -106,12 +106,13 @@ def summary_moving_average():
         :returns: a op to maintain these average.
     """
     with tf.name_scope('EMA_summary'):
+        # TODO will produce EMA_summary/tower0/xxx. not elegant
         global_step_var = get_global_step_var()
         with tf.name_scope(None):
             averager = tf.train.ExponentialMovingAverage(
                 0.99, num_updates=global_step_var, name='EMA')
-            vars_to_summary = tf.get_collection(MOVING_SUMMARY_VARS_KEY)
-            avg_maintain_op = averager.apply(vars_to_summary)
+        vars_to_summary = tf.get_collection(MOVING_SUMMARY_VARS_KEY)
+        avg_maintain_op = averager.apply(vars_to_summary)
         for idx, c in enumerate(vars_to_summary):
             name = re.sub('tower[p0-9]+/', '', c.op.name)
             tf.scalar_summary(name, averager.average(c))

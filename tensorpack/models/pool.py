@@ -3,7 +3,7 @@
 # File: pool.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 import tensorflow as tf
-import numpy
+import numpy as np
 
 from ._common import layer_register, shape2d, shape4d
 from ..tfutils import symbolic_functions as symbf

@@ -10,9 +10,9 @@ import numpy as np
 import tensorflow as tf
 import six
 
-from ..utils import logger, EXTRA_SAVE_VARS_KEY
+from ..utils import logger
 from .common import get_op_var_name
-from .varmanip import SessionUpdate, get_savename_from_varname
+from .varmanip import SessionUpdate, get_savename_from_varname, is_training_specific_name
 
 __all__ = ['SessionInit', 'NewSession', 'SaverRestore',
            'ParamRestore', 'ChainInit',
@@ -127,7 +127,8 @@ class SaverRestore(SessionInit):
                     var_dict[name].append(v)
                     chkpt_vars_used.add(name)
             else:
-                logger.warn("Variable {} in the graph not found in checkpoint!".format(v.op.name))
+                if not is_training_specific_name(v.op.name):
+                    logger.warn("Variable {} in the graph not found in checkpoint!".format(v.op.name))
         if len(chkpt_vars_used) < len(vars_available):
             unused = vars_available - chkpt_vars_used
             for name in unused:
@@ -156,7 +157,8 @@ class ParamRestore(SessionInit):
         logger.info("Params to restore: {}".format(
             ', '.join(map(str, intersect))))
         for k in variable_names - param_names:
-            logger.warn("Variable {} in the graph not found in the dict!".format(k))
+            if not is_training_specific_name(k):
+                logger.warn("Variable {} in the graph not found in the dict!".format(k))
         for k in param_names - variable_names:
             logger.warn("Variable {} in the dict not found in the graph!".format(k))
 

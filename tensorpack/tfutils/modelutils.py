@@ -39,3 +39,4 @@ def get_shape_str(tensors):
         shape_str = str(tensors.get_shape().as_list())
     return shape_str
 
+

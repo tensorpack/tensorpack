@@ -10,9 +10,10 @@ import re
 import numpy as np
 from ..utils import logger
 from ..utils.naming import *
+from .common import get_op_tensor_name
 
 __all__ = ['SessionUpdate', 'dump_session_params', 'dump_chkpt_vars',
-        'get_savename_from_varname']
+        'get_savename_from_varname', 'is_training_specific_name']
 
 def get_savename_from_varname(
         varname, varname_prefix=None,
@@ -24,7 +25,7 @@ def get_savename_from_varname(
     :returns: the name used to save the variable
     """
     name = varname
-    if 'towerp' in name:
+    if 'towerp/' in name:
         logger.error("No variable should be under 'towerp' name scope".format(v.name))
         # don't overwrite anything in the current prediction graph
         return None
@@ -95,3 +96,24 @@ def dump_chkpt_vars(model_path):
     for n in var_names:
         result[n] = reader.get_tensor(n)
     return result
+
+def is_training_specific_name(name):
+    """
+    This is only used to improve logging.
+    :returns: guess whether this tensor is something only used in training.
+    """
+    # TODO: maybe simply check against TRAINABLE_VARIABLES and EXTRA_SAVE_VARS_KEY ?
+    name = get_op_tensor_name(name)[0]
+    if name.endswith('/Adam') or name.endswith('/Adam_1'):
+        return True
+    if name.endswith('/Momentum'):
+        return True
+    if name.endswith('/Adadelta') or name.endswith('/Adadelta_1'):
+        return True
+    if name.endswith('/RMSProp') or name.endswith('/RMSProp_1'):
+        return True
+    if name.endswith('/Adagrad'):
+        return True
+    if 'EMA_summary/' in name:
+        return True
+    return False
