@@ -57,6 +57,8 @@ class Callbacks(Callback):
                 cbs.remove(sp)
                 cbs.append(sp)
                 break
+        else:
+            raise ValueError("Callbacks must contain StatPrinter for stat and writer to work properly!")
 
         self.cbs = cbs
 

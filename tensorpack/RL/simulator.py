@@ -49,7 +49,7 @@ class SimulatorProcessBase(mp.Process):
     def __init__(self, idx):
         super(SimulatorProcessBase, self).__init__()
         self.idx = int(idx)
-        self.identity = u'simulator-{}'.format(self.idx).encode('utf-8')
+        self.name = self.identity = u'simulator-{}'.format(self.idx).encode('utf-8')
 
     @abstractmethod
     def _build_player(self):
@@ -111,6 +111,7 @@ class SimulatorMaster(threading.Thread):
     def __init__(self, pipe_c2s, pipe_s2c):
         super(SimulatorMaster, self).__init__()
         self.daemon = True
+        self.name = 'SimulatorMaster'
 
         self.context = zmq.Context()
 

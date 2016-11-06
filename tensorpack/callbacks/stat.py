@@ -9,6 +9,7 @@ import json
 
 from .base import Callback
 from ..utils import logger
+from ..tfutils.common import get_global_step
 
 __all__ = ['StatHolder', 'StatPrinter', 'SendStat']
 
@@ -102,11 +103,15 @@ class StatPrinter(Callback):
         self.print_tag = print_tag
 
     def _before_train(self):
-        self.trainer.stat_holder.set_print_tag(self.print_tag)
-        self.trainer.stat_holder.add_blacklist_tag(['global_step', 'epoch_num'])
+        self._stat_holder = self.trainer.stat_holder
+        self._stat_holder.set_print_tag(self.print_tag)
+        self._stat_holder.add_blacklist_tag(['global_step', 'epoch_num'])
 
     def _trigger_epoch(self):
-        self.trainer.stat_holder.finalize()
+        # by default, add this two stat
+        self._stat_holder.add_stat('global_step', get_global_step())
+        self._stat_holder.add_stat('epoch_num', self.epoch_num)
+        self._stat_holder.finalize()
 
 class SendStat(Callback):
     """

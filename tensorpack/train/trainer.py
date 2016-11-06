@@ -98,6 +98,7 @@ class SimpleTrainer(Trainer):
 class EnqueueThread(threading.Thread):
     def __init__(self, trainer):
         super(EnqueueThread, self).__init__()
+        self.name = 'EnqueueThread'
         self.sess = trainer.sess
         self.coord = trainer.coord
         self.dataflow = RepeatedData(trainer.config.dataset, -1)
@@ -117,9 +118,6 @@ class EnqueueThread(threading.Thread):
             try:
                 while True:
                     for dp in self.dataflow.get_data():
-                        #import IPython;
-                        #IPython.embed(config=IPython.terminal.ipapp.load_default_config())
-
                         if self.coord.should_stop():
                             return
                         feed = dict(zip(self.input_vars, dp))
@@ -150,7 +148,6 @@ class QueueInputTrainer(Trainer):
         """
         super(QueueInputTrainer, self).__init__(config)
         self.input_vars = self.model.get_input_vars()
-        # use a smaller queue size for now, to avoid https://github.com/tensorflow/tensorflow/issues/2942
         if input_queue is None:
             self.input_queue = tf.FIFOQueue(
                     50, [x.dtype for x in self.input_vars], name='input_queue')
@@ -174,6 +171,8 @@ class QueueInputTrainer(Trainer):
     def _single_tower_grad(self):
         """ Get grad and cost for single-tower"""
         self.dequed_inputs = model_inputs = self._get_dequeued_inputs()
+        add_moving_summary(tf.cast(
+            self.input_queue.size(), tf.float32, name='input-queue-size'))
 
         # test the overhead of queue
         #with tf.device('/gpu:0'):

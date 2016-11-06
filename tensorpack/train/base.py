@@ -42,7 +42,8 @@ class Trainer(object):
         self.config = config
         self.model = config.model
         self.model.get_input_vars()  # ensure they are present
-        self.init_session_and_coord()
+        self.sess = tf.Session(config=self.config.session_config)
+        self.coord = tf.train.Coordinator()
 
     @abstractmethod
     def train(self):
@@ -67,10 +68,6 @@ class Trainer(object):
         return [self.get_predict_func(input_names, output_names) for k in range(n)]
 
     def trigger_epoch(self):
-        # by default, add this two stat
-        self.stat_holder.add_stat('global_step', get_global_step())
-        self.stat_holder.add_stat('epoch_num', self.epoch_num)
-
         # trigger subclass
         self._trigger_epoch()
         # trigger callbacks
@@ -92,11 +89,10 @@ class Trainer(object):
 
     def write_scalar_summary(self, name, val):
         self.summary_writer.add_summary(
-                create_summary(name, val),
-                get_global_step())
+                create_summary(name, val), get_global_step())
         self.stat_holder.add_stat(name, val)
 
-    def finalize_graph(self):
+    def finalize(self):
         # some final operations that might modify the graph
         logger.info("Setup callbacks ...")
         self.config.callbacks.setup_graph(weakref.proxy(self))
@@ -111,22 +107,23 @@ class Trainer(object):
         logger.info("Initializing graph variables ...")
         self.sess.run(tf.initialize_all_variables())
         self.config.session_init.init(self.sess)
+
         tf.get_default_graph().finalize()
         tf.train.start_queue_runners(
             sess=self.sess, coord=self.coord, daemon=True, start=True)
 
     def main_loop(self):
-        self.finalize_graph()
+        self.finalize()
         callbacks = self.config.callbacks
         with self.sess.as_default():
             try:
                 callbacks.before_train()
                 logger.info("Start training with global_step={}".format(get_global_step()))
-                for self.epoch_num in range(
+                for epoch_num in range(
                         self.config.starting_epoch, self.config.max_epoch+1):
                     with timed_operation(
                         'Epoch {} (global_step {})'.format(
-                            self.epoch_num, get_global_step() + self.config.step_per_epoch)):
+                            epoch_num, get_global_step() + self.config.step_per_epoch)):
                         for step in tqdm.trange(
                                 self.config.step_per_epoch,
                                 **get_tqdm_kwargs(leave=True)):
@@ -137,17 +134,11 @@ class Trainer(object):
                         self.trigger_epoch()
             except StopTraining:
                 logger.info("Training was stopped.")
-            except (KeyboardInterrupt, Exception):
-                raise
             finally:
                 callbacks.after_train()
                 self.coord.request_stop()
                 self.summary_writer.close()
                 self.sess.close()
-
-    def init_session_and_coord(self):
-        self.sess = tf.Session(config=self.config.session_config)
-        self.coord = tf.train.Coordinator()
 
     def process_grads(self, grads):
         g = []
