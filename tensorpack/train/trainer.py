@@ -15,7 +15,6 @@ from ..utils import logger, SUMMARY_BACKUP_KEYS
 from ..tfutils import (get_vars_by_names, freeze_collection,
         get_global_step_var, TowerContext)
 from ..tfutils.summary import summary_moving_average, add_moving_summary
-from ..tfutils.modelutils import describe_model
 from ..predict import OnlinePredictor, build_multi_tower_prediction_graph
 from ..callbacks.concurrency import StartProcOrThread
 from ..tfutils.gradproc import apply_grad_processors
@@ -81,7 +80,6 @@ class SimpleTrainer(Trainer):
             self.config.optimizer.apply_gradients(grads, get_global_step_var()),
             summary_moving_average())
 
-        describe_model()
         # create an infinte data producer
         self.config.dataset.reset_state()
         self.data_producer = RepeatedData(self.config.dataset, -1).get_data()
@@ -204,7 +202,6 @@ class QueueInputTrainer(Trainer):
         grads = self._single_tower_grad()
         grads = apply_grad_processors(grads,
                 self.model.get_gradient_processor())
-        describe_model()
 
         self.train_op = tf.group(
             self.config.optimizer.apply_gradients(grads, get_global_step_var()),

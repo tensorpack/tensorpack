@@ -116,13 +116,15 @@ class ScaleGradient(MapGradient):
     """
     Scale certain gradient by a multiplier
     """
-    def __init__(self, multipliers):
+    def __init__(self, multipliers, log=True):
         """
         :param multipliers: list of (regex, float)
+        :param log: whether to do logging or not
         """
         if not isinstance(multipliers, list):
             multipliers = [multipliers]
         self.multipliers = multipliers
+        self._log = log
         super(ScaleGradient, self).__init__(self._mapper)
 
     def _mapper(self, grad, var):
@@ -133,7 +135,8 @@ class ScaleGradient(MapGradient):
                 regex = regex + '$'
 
             if re.match(regex, varname):
-                logger.info("Apply lr multiplier {} for {}".format(val, varname))
+                if self._log:
+                    logger.info("Apply lr multiplier {} for {}".format(val, varname))
                 if val != 0:    # skip zero to speed up
                     return grad * val
                 else:

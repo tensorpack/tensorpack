@@ -15,6 +15,7 @@ from ..utils import logger, get_tqdm_kwargs
 from ..utils.timer import timed_operation
 from ..callbacks import StatHolder
 from ..tfutils import get_global_step, get_global_step_var
+from ..tfutils.modelutils import describe_model
 from ..tfutils.summary import create_summary
 
 __all__ = ['Trainer', 'StopTraining']
@@ -94,6 +95,7 @@ class Trainer(object):
 
     def setup(self):
         self._setup()
+        describe_model()
         # some final operations that might modify the graph
         logger.info("Setup callbacks ...")
         self.config.callbacks.setup_graph(weakref.proxy(self))

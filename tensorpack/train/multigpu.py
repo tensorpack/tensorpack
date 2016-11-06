@@ -10,11 +10,10 @@ from six.moves import zip, range
 from ..utils import logger
 from ..utils.naming import *
 from ..utils.concurrency import LoopThread
-from ..tfutils.summary import summary_moving_average
-from ..tfutils.modelutils import describe_model
+from ..tfutils.summary import summary_moving_average, add_moving_summary
 from ..tfutils import (backup_collection, restore_collection,
         get_global_step_var, TowerContext)
-from ..tfutils.gradproc import apply_grad_processors
+from ..tfutils.gradproc import apply_grad_processors, ScaleGradient
 
 from .trainer import QueueInputTrainer
 
@@ -89,7 +88,6 @@ class SyncMultiGPUTrainer(MultiGPUTrainer):
         self.train_op = tf.group(
             self.config.optimizer.apply_gradients(grads, get_global_step_var()),
             summary_moving_average(), name='train_op')
-        describe_model()
         # [debug]: do nothing in training
         #self.train_op = self.dequed_inputs[0][0] + self.dequed_inputs[1][0]
 
@@ -101,7 +99,8 @@ class AsyncMultiGPUTrainer(MultiGPUTrainer):
         gradprocs = self.model.get_gradient_processor()
         # pretend to average the grads, in order to make async and
         # sync have consistent effective learning rate
-        gradprocs.insert(0, ScaleGradient(('.*', 1.0 / self.config.nr_tower)))
+        if self.config.nr_tower > 1:
+            gradprocs.insert(0, ScaleGradient(('.*', 1.0 / self.config.nr_tower), log=False))
         grad_list = [apply_grad_processors(g, gradprocs) for g in grad_list]
 
         # use grad from the first tower for iteration in main thread
@@ -109,7 +108,6 @@ class AsyncMultiGPUTrainer(MultiGPUTrainer):
             self.config.optimizer.apply_gradients(
                 grad_list[0], get_global_step_var()),
             summary_moving_average(), name='train_op')
-        describe_model()
 
         self._start_async_threads(grad_list)
 
