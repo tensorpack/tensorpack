@@ -12,7 +12,23 @@ from .symbolic_functions import rms
 from .summary import add_moving_summary
 
 __all__ = ['GradientProcessor', 'SummaryGradient', 'CheckGradient',
-           'ScaleGradient', 'MapGradient']
+           'ScaleGradient', 'MapGradient', 'apply_grad_processors']
+
+def apply_grad_processors(grads, gradprocs):
+    """
+    :param grads: list of (grad, var).
+    :param gradprocs: list of `GradientProcessor` instances.
+    :returns: list of (grad, var) went through the processors
+    """
+    g = []
+    for grad, var in grads:
+        if grad is None:
+            logger.warn("No Gradient w.r.t {}".format(var.op.name))
+        else:
+            g.append((grad, var))
+    for proc in gradprocs:
+        g = proc.process(g)
+    return g
 
 class GradientProcessor(object):
     __metaclass__ = ABCMeta
@@ -98,12 +114,14 @@ class CheckGradient(MapGradient):
 
 class ScaleGradient(MapGradient):
     """
-    Scale gradient by a multiplier
+    Scale certain gradient by a multiplier
     """
     def __init__(self, multipliers):
         """
         :param multipliers: list of (regex, float)
         """
+        if not isinstance(multipliers, list):
+            multipliers = [multipliers]
         self.multipliers = multipliers
         super(ScaleGradient, self).__init__(self._mapper)
 

@@ -18,6 +18,7 @@ from ..tfutils.summary import summary_moving_average, add_moving_summary
 from ..tfutils.modelutils import describe_model
 from ..predict import OnlinePredictor, build_multi_tower_prediction_graph
 from ..callbacks.concurrency import StartProcOrThread
+from ..tfutils.gradproc import apply_grad_processors
 
 __all__ = ['SimpleTrainer', 'QueueInputTrainer']
 
@@ -51,37 +52,39 @@ class PredictorFactory(object):
         # build_predict_tower might get called anywhere, but 'towerp' should be the outermost name scope
         with tf.name_scope(None), \
                 freeze_collection(SUMMARY_BACKUP_KEYS):
-            build_multi_tower_prediction_graph(
-                    self.model, self.towers)
+            build_multi_tower_prediction_graph(self.model, self.towers)
         self.tower_built = True
 
 class SimpleTrainer(Trainer):
+    def __init__(self, config):
+        super(SimpleTrainer, self).__init__(config)
+        self._predictor_factory = PredictorFactory(self.sess, self.model, [0])
+
     def run_step(self):
         data = next(self.data_producer)
         feed = dict(zip(self.input_vars, data))
         self.sess.run([self.train_op], feed_dict=feed)    # faster since train_op return None
 
-    def train(self):
+    def _setup(self):
         model = self.model
         self.input_vars = model.get_input_vars()
         with TowerContext(''):
             model.build_graph(self.input_vars)
-            cost_var = model.get_cost() # TODO assert scalar
+            cost_var = model.get_cost()
             add_moving_summary(cost_var)
 
         grads = self.config.optimizer.compute_gradients(cost_var)
-        grads = self.process_grads(grads)
+        grads = apply_grad_processors(grads,
+                self.model.get_gradient_processor())
 
-        avg_maintain_op = summary_moving_average()
         self.train_op = tf.group(
             self.config.optimizer.apply_gradients(grads, get_global_step_var()),
-            avg_maintain_op)
+            summary_moving_average())
 
         describe_model()
         # create an infinte data producer
         self.config.dataset.reset_state()
         self.data_producer = RepeatedData(self.config.dataset, -1).get_data()
-        self.main_loop()
 
     def _trigger_epoch(self):
         if self.summary_op is not None:
@@ -91,14 +94,14 @@ class SimpleTrainer(Trainer):
             self._process_summary(summary_str)
 
     def get_predict_func(self, input_names, output_names):
-        if not hasattr(self, 'predictor_factory'):
-            self.predictor_factory = PredictorFactory(self.sess, self.model, [0])
-        return self.predictor_factory.get_predictor(input_names, output_names, 0)
+        return self._predictor_factory.get_predictor(input_names, output_names, 0)
 
 class EnqueueThread(threading.Thread):
     def __init__(self, trainer):
         super(EnqueueThread, self).__init__()
         self.name = 'EnqueueThread'
+        self.daemon = True
+
         self.sess = trainer.sess
         self.coord = trainer.coord
         self.dataflow = RepeatedData(trainer.config.dataset, -1)
@@ -109,7 +112,8 @@ class EnqueueThread(threading.Thread):
         self.close_op = self.queue.close(cancel_pending_enqueues=True)
 
         self.size_op = self.queue.size()
-        self.daemon = True
+        add_moving_summary(tf.cast(
+            self.size_op, tf.float32, name='input_queue_size'))
 
     def run(self):
         self.dataflow.reset_state()
@@ -155,7 +159,9 @@ class QueueInputTrainer(Trainer):
             self.input_queue = input_queue
 
         # by default, use the first training gpu for prediction
-        self.predict_tower = predict_tower or [0]
+        predict_tower = predict_tower or [0]
+        self._predictor_factory = PredictorFactory(
+                self.sess, self.model, predict_tower)
         self.dequed_inputs = None
 
     def _get_dequeued_inputs(self):
@@ -171,8 +177,6 @@ class QueueInputTrainer(Trainer):
     def _single_tower_grad(self):
         """ Get grad and cost for single-tower"""
         self.dequed_inputs = model_inputs = self._get_dequeued_inputs()
-        add_moving_summary(tf.cast(
-            self.input_queue.size(), tf.float32, name='input-queue-size'))
 
         # test the overhead of queue
         #with tf.device('/gpu:0'):
@@ -192,23 +196,21 @@ class QueueInputTrainer(Trainer):
         self.input_th = EnqueueThread(self)
         self.config.callbacks.append(StartProcOrThread(self.input_th))
 
-    def train(self):
+    def _setup(self):
         assert len(self.config.tower) == 1, \
                 "QueueInputTrainer doesn't support multigpu! Use Sync/AsyncMultiGPUTrainer instead."
         self._build_enque_thread()
 
         grads = self._single_tower_grad()
-        grads = self.process_grads(grads)
+        grads = apply_grad_processors(grads,
+                self.model.get_gradient_processor())
         describe_model()
 
         self.train_op = tf.group(
             self.config.optimizer.apply_gradients(grads, get_global_step_var()),
             summary_moving_average(), name='train_op')
-
         # skip training
         #self.train_op = tf.group(*self.dequed_inputs)
-
-        self.main_loop()
 
     def run_step(self):
         """ Simply run self.train_op"""
@@ -236,10 +238,7 @@ class QueueInputTrainer(Trainer):
         :param tower: return the kth predict_func
         :returns: an `OnlinePredictor`
         """
-        if not hasattr(self, 'predictor_factory'):
-            self.predictor_factory = PredictorFactory(
-                    self.sess, self.model, self.predict_tower)
-        return self.predictor_factory.get_predictor(input_names, output_names, tower)
+        return self._predictor_factory.get_predictor(input_names, output_names, tower)
 
     def get_predict_funcs(self, input_names, output_names, n):
         return [self.get_predict_func(input_names, output_names, k) for k in range(n)]

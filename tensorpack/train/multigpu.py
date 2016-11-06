@@ -14,6 +14,7 @@ from ..tfutils.summary import summary_moving_average
 from ..tfutils.modelutils import describe_model
 from ..tfutils import (backup_collection, restore_collection,
         get_global_step_var, TowerContext)
+from ..tfutils.gradproc import apply_grad_processors
 
 from .trainer import QueueInputTrainer
 
@@ -32,11 +33,16 @@ class MultiGPUTrainer(QueueInputTrainer):
         with tf.name_scope('AvgGrad'):
             for grad_and_vars in zip(*tower_grads):
                 v = grad_and_vars[0][1]
-                for x in grad_and_vars:
-                    assert x[0] is not None, \
-                            "Gradient w.r.t {} is None!".format(v.name)
+                all_grad = [k[0] for k in grad_and_vars]
+
+                nones = list(set(all_grad))
+                if None in nones and len(nones) != 1:
+                    raise RuntimeError("Gradient w.r.t {} is None in some but not all towers!".format(v.name))
+                elif nones[0] is None:
+                    logger.warn("No Gradient w.r.t {}".format(var.op.name))
+                    continue
                 try:
-                    grad = tf.add_n([x[0] for x in grad_and_vars]) / float(len(tower_grads))
+                    grad = tf.add_n(all_grad) / float(len(tower_grads))
                 except:
                     logger.error("Error while processing gradients of {}".format(v.name))
                     raise
@@ -44,8 +50,7 @@ class MultiGPUTrainer(QueueInputTrainer):
         return ret
 
     def _multi_tower_grads(self):
-        logger.info("Training a model of {} tower".format(
-            len(self.config.tower)))
+        logger.info("Training a model of {} tower".format(len(self.config.tower)))
 
         grad_list = []
         global_scope = tf.get_variable_scope()
@@ -60,58 +65,53 @@ class MultiGPUTrainer(QueueInputTrainer):
                 self.model.build_graph(model_inputs)
                 cost_var = self.model.get_cost() # build tower
 
-                # TODO gate_gradienst=0 seems to be faster?
+                # TODO gate_gradienst=0 might be faster?
                 grad_list.append(
                     self.config.optimizer.compute_gradients(cost_var, gate_gradients=0))
 
                 if idx == 0:
-                    tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, cost_var)
+                    add_moving_summary(cost_var)
                     # avoid repeated summary from each device
                     backup = backup_collection(SUMMARY_BACKUP_KEYS)
         restore_collection(backup)
         return grad_list
 
 class SyncMultiGPUTrainer(MultiGPUTrainer):
-    def train(self):
+    def _setup(self):
         self._build_enque_thread()
 
         grad_list = self._multi_tower_grads()
 
         grads = MultiGPUTrainer._average_grads(grad_list)
-        grads = self.process_grads(grads)
+        grads = apply_grad_processors(grads,
+                self.model.get_gradient_processor())
 
         self.train_op = tf.group(
             self.config.optimizer.apply_gradients(grads, get_global_step_var()),
             summary_moving_average(), name='train_op')
         describe_model()
-
         # [debug]: do nothing in training
         #self.train_op = self.dequed_inputs[0][0] + self.dequed_inputs[1][0]
-        self.main_loop()
 
 class AsyncMultiGPUTrainer(MultiGPUTrainer):
-    def train(self):
+    def _setup(self):
         self._build_enque_thread()
 
         grad_list = self._multi_tower_grads()
+        gradprocs = self.model.get_gradient_processor()
         # pretend to average the grads, in order to make async and
         # sync have consistent effective learning rate
-        def scale(grads):
-            with tf.name_scope('AsyncScaleGrad'):
-                return [(grad / len(self.config.tower) if grad is not None else None, var)
-                            for grad, var in grads]
-        grad_list = map(scale, grad_list)
-        grad_list = [self.process_grads(g) for g in grad_list]
+        gradprocs.insert(0, ScaleGradient(('.*', 1.0 / self.config.nr_tower)))
+        grad_list = [apply_grad_processors(g, gradprocs) for g in grad_list]
 
         # use grad from the first tower for iteration in main thread
         self.train_op = tf.group(
-            self.config.optimizer.apply_gradients(grad_list[0], get_global_step_var()),
+            self.config.optimizer.apply_gradients(
+                grad_list[0], get_global_step_var()),
             summary_moving_average(), name='train_op')
         describe_model()
 
         self._start_async_threads(grad_list)
-
-        self.main_loop()
 
     def _start_async_threads(self, grad_list):
         # prepare train_op for the rest of the towers
@@ -145,7 +145,7 @@ class AsyncMultiGPUTrainer(MultiGPUTrainer):
             async_step_total_cnt = int(re.findall(
                 '[0-9]+', self.async_step_counter.__str__())[0])
             self.write_scalar_summary(
-                    'async_global_step', async_step_total_cnt)
+                    'async-global-step', async_step_total_cnt)
         except:
-            pass
+            logger.exception("Cannot log async-global-step")
         super(AsyncMultiGPUTrainer, self)._trigger_epoch()

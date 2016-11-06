@@ -45,10 +45,10 @@ class Trainer(object):
         self.sess = tf.Session(config=self.config.session_config)
         self.coord = tf.train.Coordinator()
 
-    @abstractmethod
     def train(self):
         """ Start training"""
-        pass
+        self.setup()
+        self.main_loop()
 
     @abstractmethod
     def run_step(self):
@@ -92,7 +92,8 @@ class Trainer(object):
                 create_summary(name, val), get_global_step())
         self.stat_holder.add_stat(name, val)
 
-    def finalize(self):
+    def setup(self):
+        self._setup()
         # some final operations that might modify the graph
         logger.info("Setup callbacks ...")
         self.config.callbacks.setup_graph(weakref.proxy(self))
@@ -112,8 +113,11 @@ class Trainer(object):
         tf.train.start_queue_runners(
             sess=self.sess, coord=self.coord, daemon=True, start=True)
 
+    @abstractmethod
+    def _setup(self):
+        """ setup Trainer-specific stuff for training"""
+
     def main_loop(self):
-        self.finalize()
         callbacks = self.config.callbacks
         with self.sess.as_default():
             try:
@@ -139,16 +143,3 @@ class Trainer(object):
                 self.coord.request_stop()
                 self.summary_writer.close()
                 self.sess.close()
-
-    def process_grads(self, grads):
-        g = []
-        for grad, var in grads:
-            if grad is None:
-                logger.warn("No Gradient w.r.t {}".format(var.op.name))
-            else:
-                g.append((grad, var))
-
-        procs = self.config.model.get_gradient_processor()
-        for proc in procs:
-            g = proc.process(g)
-        return g

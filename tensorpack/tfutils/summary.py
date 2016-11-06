@@ -98,11 +98,11 @@ def add_moving_summary(v, *args):
         v = [v]
     v.extend(args)
     for x in v:
+        assert x.get_shape().ndims == 0
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, x)
 
 def summary_moving_average():
-    """ Create a MovingAverage op and summary for all variables in
-        MOVING_SUMMARY_VARS_KEY.
+    """ Create a MovingAverage op and summary for all variables in MOVING_SUMMARY_VARS_KEY.
         :returns: a op to maintain these average.
     """
     with tf.name_scope('EMA_summary'):
@@ -113,7 +113,6 @@ def summary_moving_average():
             vars_to_summary = tf.get_collection(MOVING_SUMMARY_VARS_KEY)
             avg_maintain_op = averager.apply(vars_to_summary)
         for idx, c in enumerate(vars_to_summary):
-# TODO assert scalar
             name = re.sub('tower[p0-9]+/', '', c.op.name)
             tf.scalar_summary(name, averager.average(c))
         return avg_maintain_op
