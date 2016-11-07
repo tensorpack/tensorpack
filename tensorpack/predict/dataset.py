@@ -87,7 +87,7 @@ class MultiProcessDatasetPredictor(DatasetPredictorBase):
                                 self.nr_proc, len(gpus))
             except KeyError:
                 # TODO number of GPUs not checked
-                gpus = list(range(self.nr_gpu))
+                gpus = list(range(self.nr_proc))
         else:
             gpus = [''] * self.nr_proc
         self.workers = [MultiProcessQueuePredictWorker(

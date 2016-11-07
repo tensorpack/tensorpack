@@ -233,7 +233,7 @@ def get_config():
             InferenceRunner(data_test,
                 [ScalarStats('cost'),
                  ClassificationError('wrong-top1', 'val-error-top1'),
-                 ClassificationError('wrong-top5', 'val-error-top1')])
+                 ClassificationError('wrong-top5', 'val-error-top5')])
         ]),
         model=Model(),
         step_per_epoch=10000,

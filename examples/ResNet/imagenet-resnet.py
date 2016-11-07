@@ -13,6 +13,7 @@ import multiprocessing
 import tensorflow as tf
 from tensorflow.contrib.layers import variance_scaling_initializer
 from tensorpack import *
+from tensorpack.utils.stat import RatioCounter
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
 
