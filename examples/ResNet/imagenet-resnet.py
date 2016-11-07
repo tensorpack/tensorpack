@@ -93,7 +93,7 @@ class Model(ModelDesc):
             50: ([3,4,6,3], bottleneck),
             101: ([3,4,23,3], bottleneck)
         }
-        defs, block_func = cfg[50]
+        defs, block_func = cfg[34]
 
         with argscope(Conv2D, nl=tf.identity, use_bias=False,
                 W_init=variance_scaling_initializer(mode='FAN_OUT')):
@@ -119,8 +119,7 @@ class Model(ModelDesc):
         add_moving_summary(tf.reduce_mean(wrong, name='train-error-top5'))
 
         # weight decay on all W of fc layers
-        wd_w = tf.train.exponential_decay(1e-4, get_global_step_var(),
-                                          200000, 0.7, True)
+        wd_w = 1e-4
         wd_cost = tf.mul(wd_w, regularize_cost('.*/W', tf.nn.l2_loss), name='l2_regularize_loss')
         add_moving_summary(loss, wd_cost)
         self.cost = tf.add_n([loss, wd_cost], name='cost')
@@ -135,29 +134,30 @@ def get_data(train_or_test):
     image_std = np.array([0.229, 0.224, 0.225], dtype='float32')
 
     if isTrain:
-        def resize_func(img):
-            # crop 8%~100% of the original image
-            # See `Going Deeper with Convolutions` by Google.
-            h, w = img.shape[:2]
-            area = h * w
-            for _ in range(10):
-                targetArea = self.rng.uniform(0.08, 1.0) * area
-                aspectR = self.rng.uniform(0.75,1.333)
-                ww = int(np.sqrt(targetArea * aspectR))
-                hh = int(np.sqrt(targetArea / aspectR))
-                if self.rng.uniform() < 0.5:
-                    ww, hh = hh, ww
-                if hh <= h and ww <= w:
-                    x1 = 0 if w == ww else self.rng.randint(0, w - ww)
-                    y1 = 0 if h == hh else self.rng.randint(0, h - hh)
-                    out = img[y1:y1+hh,x1:x1+ww]
-                    out = cv2.resize(out, (224,224), interpolation=cv2.INTER_CUBIC)
-                    return out
-            out = cv2.resize(img, (224,224), interpolation=cv2.INTER_CUBIC)
-            return out
+        class Resize(imgaug.ImageAugmentor):
+            def _augment(self, img, _):
+                # crop 8%~100% of the original image
+                # See `Going Deeper with Convolutions` by Google.
+                h, w = img.shape[:2]
+                area = h * w
+                for _ in range(10):
+                    targetArea = self.rng.uniform(0.08, 1.0) * area
+                    aspectR = self.rng.uniform(0.75,1.333)
+                    ww = int(np.sqrt(targetArea * aspectR))
+                    hh = int(np.sqrt(targetArea / aspectR))
+                    if self.rng.uniform() < 0.5:
+                        ww, hh = hh, ww
+                    if hh <= h and ww <= w:
+                        x1 = 0 if w == ww else self.rng.randint(0, w - ww)
+                        y1 = 0 if h == hh else self.rng.randint(0, h - hh)
+                        out = img[y1:y1+hh,x1:x1+ww]
+                        out = cv2.resize(out, (224,224), interpolation=cv2.INTER_CUBIC)
+                        return out
+                out = cv2.resize(img, (224,224), interpolation=cv2.INTER_CUBIC)
+                return out
 
         augmentors = [
-            imgaug.MapImage(resize_func),
+            Resize(),
             imgaug.RandomOrderAug(
                 [imgaug.Brightness(30, clip=False),
                  imgaug.Contrast((0.8, 1.2), clip=False),
@@ -226,8 +226,6 @@ def eval_on_ILSVRC12(model_file, data_dir):
         batch_size = o[0].shape[0]
         acc1.feed(o[0].sum(), batch_size)
         acc5.feed(o[1].sum(), batch_size)
-        print("Top1 Error: {}".format(acc1.ratio))
-        print("Top5 Error: {}".format(acc5.ratio))
     print("Top1 Error: {}".format(acc1.ratio))
     print("Top5 Error: {}".format(acc5.ratio))
 
