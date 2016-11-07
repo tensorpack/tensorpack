@@ -10,7 +10,7 @@ def prediction_incorrect(logits, label, topk=1, name='incorrect_vector'):
     """
     :param logits: NxC
     :param label: N
-    :returns: a float32 vector of length N with 0/1 values, 1 meaning incorrect prediction
+    :returns: a float32 vector of length N with 0/1 values. 1 means incorrect prediction
     """
     return tf.cast(tf.logical_not(tf.nn.in_top_k(logits, label, topk)),
             tf.float32, name=name)
@@ -95,9 +95,7 @@ def rms(x, name=None):
             return tf.sqrt(tf.reduce_mean(tf.square(x)), name=name)
     return tf.sqrt(tf.reduce_mean(tf.square(x)), name=name)
 
-def huber_loss(x, delta=1, name=None):
-    if name is None:
-        name = 'huber_loss'
+def huber_loss(x, delta=1, name='huber_loss'):
     sqrcost = tf.square(x)
     abscost = tf.abs(x)
     return tf.reduce_sum(

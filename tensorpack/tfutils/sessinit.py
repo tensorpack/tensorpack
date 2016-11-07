@@ -54,28 +54,30 @@ class SaverRestore(SessionInit):
     """
     def __init__(self, model_path, prefix=None):
         """
-        :param model_path: a model file or a ``checkpoint`` file.
+        :param model_path: a model name (model-xxxx) or a ``checkpoint`` file.
         :param prefix: add a `prefix/` for every variable in this checkpoint
         """
-        assert os.path.isfile(model_path)
         if os.path.basename(model_path) == model_path:
             model_path = os.path.join('.', model_path)  # avoid #4921
         if os.path.basename(model_path) == 'checkpoint':
-            model_path = tf.train.get_checkpoint_state(
-                os.path.dirname(model_path)).model_checkpoint_path
-            assert os.path.isfile(model_path)
+            model_path = tf.train.latest_checkpoint(os.path.dirname(model_path))
+            # to be consistent with either v1 or v2
+        assert os.path.isfile(model_path) or os.path.isfile(model_path + '.index')
         self.set_path(model_path)
         self.prefix = prefix
 
     def _init(self, sess):
         logger.info(
-            "Restoring checkpoint from {}.".format(self.path))
+            "Restoring checkpoint from {} ...".format(self.path))
         chkpt_vars = SaverRestore._read_checkpoint_vars(self.path)
         vars_map = self._get_vars_to_restore_multimap(chkpt_vars)
         for dic in SaverRestore._produce_restore_dict(vars_map):
             # multiple saver under same name scope would cause error:
             # training/saver.py: assert restore_op.name.endswith("restore_all"), restore_op.name
-            saver = tf.train.Saver(var_list=dic, name=str(id(dic)))
+            try:
+                saver = tf.train.Saver(var_list=dic, name=str(id(dic)), write_version=2)
+            except:
+                saver = tf.train.Saver(var_list=dic, name=str(id(dic)))
             saver.restore(sess, self.path)
 
     def set_path(self, model_path):

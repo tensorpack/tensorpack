@@ -78,7 +78,7 @@ class SimpleTrainer(Trainer):
 
         self.train_op = tf.group(
             self.config.optimizer.apply_gradients(grads, get_global_step_var()),
-            summary_moving_average())
+            summary_moving_average(), name='train_op')
 
         # create an infinte data producer
         self.config.dataset.reset_state()

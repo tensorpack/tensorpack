@@ -84,7 +84,6 @@ Use _build_graph(self, input_vars) and get_current_tower_context().is_training i
                 CheckGradient()
                 ]
 
-
 class ModelFromMetaGraph(ModelDesc):
     """
     Load the whole exact TF graph from a saved meta_graph.
