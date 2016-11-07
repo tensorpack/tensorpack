@@ -12,6 +12,8 @@ import os
 from ..dataflow import DataFlow, BatchData
 from ..dataflow.dftools import dataflow_to_process_queue
 from ..utils.concurrency import ensure_proc_terminate, OrderedResultGatherProc, DIE
+from ..utils import logger
+from ..utils.gpu import change_gpu
 
 from .concurrency import MultiProcessQueuePredictWorker
 from .common import PredictConfig
@@ -89,9 +91,9 @@ class MultiProcessDatasetPredictor(DatasetPredictorBase):
                 # TODO number of GPUs not checked
                 gpus = list(range(self.nr_proc))
         else:
-            gpus = [''] * self.nr_proc
+            gpus = ['-1'] * self.nr_proc
         self.workers = [MultiProcessQueuePredictWorker(
-                    i, gpus[i], self.inqueue, self.outqueue, self.config)
+                    i, self.inqueue, self.outqueue, self.config)
                         for i in range(self.nr_proc)]
         self.result_queue = OrderedResultGatherProc(
                 self.outqueue, nr_producer=self.nr_proc)

@@ -59,8 +59,8 @@ class MultiProcessQueuePredictWorker(MultiProcessPredictWorker):
         super(MultiProcessQueuePredictWorker, self).__init__(idx, config)
         self.inqueue = inqueue
         self.outqueue = outqueue
-        assert isinstance(self.inqueue, multiprocessing.Queue)
-        assert isinstance(self.outqueue, multiprocessing.Queue)
+        assert isinstance(self.inqueue, multiprocessing.queues.Queue)
+        assert isinstance(self.outqueue, multiprocessing.queues.Queue)
 
     def run(self):
         self._init_runtime()

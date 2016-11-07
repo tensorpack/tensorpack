@@ -9,7 +9,10 @@ from .utils import change_env
 __all__ = ['change_gpu', 'get_nr_gpu', 'get_gpus']
 
 def change_gpu(val):
-    return change_env('CUDA_VISIBLE_DEVICES', str(val))
+    val = str(val)
+    if val == '-1':
+        val = ''
+    return change_env('CUDA_VISIBLE_DEVICES', val)
 
 def get_nr_gpu():
     env = os.environ.get('CUDA_VISIBLE_DEVICES', None)
