@@ -7,7 +7,7 @@ from ...utils import logger
 import numpy as np
 import cv2
 
-__all__ = ['Flip', 'Resize', 'RandomResize']
+__all__ = ['Flip', 'Resize', 'RandomResize', 'ResizeShortestEdge']
 
 class Flip(ImageAugmentor):
     """
@@ -56,6 +56,21 @@ class Resize(ImageAugmentor):
         return cv2.resize(
             img, self.shape[::-1],
             interpolation=self.interp)
+
+class ResizeShortestEdge(ImageAugmentor):
+    """ Resize the shortest edge to a certain number while
+        keeping the aspect ratio
+    """
+    def __init__(self, size):
+        size = size * 1.0
+        self._init(locals())
+
+    def _augment(self, img, _):
+        h, w = img.shape[:2]
+        scale = self.size / min(h, w)
+        desSize = map(int, [scale * w, scale * h])
+        img = cv2.resize(img, tuple(desSize), interpolation=cv2.INTER_CUBIC)
+        return img
 
 class RandomResize(ImageAugmentor):
     """ randomly rescale w and h of the image"""

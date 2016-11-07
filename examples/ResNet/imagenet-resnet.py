@@ -4,6 +4,7 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import cv2
+import sys
 import argparse
 import numpy as np
 import os
@@ -121,7 +122,6 @@ class Model(ModelDesc):
                                           200000, 0.7, True)
         wd_cost = tf.mul(wd_w, regularize_cost('.*/W', tf.nn.l2_loss), name='l2_regularize_loss')
         add_moving_summary(loss, wd_cost)
-
         self.cost = tf.add_n([loss, wd_cost], name='cost')
 
 def get_data(train_or_test):
@@ -172,14 +172,8 @@ def get_data(train_or_test):
             imgaug.MapImage(lambda x: (x * (1.0 / 255) - image_mean) / image_std),
         ]
     else:
-        def resize_func(im):
-            h, w = im.shape[:2]
-            scale = 256.0 / min(h, w)
-            desSize = map(int, [scale * w, scale * h])
-            im = cv2.resize(im, tuple(desSize), interpolation=cv2.INTER_CUBIC)
-            return im
         augmentors = [
-            imgaug.MapImage(resize_func),
+            imgaug.ResizeShortestEdge(256),
             imgaug.CenterCrop((224, 224)),
             imgaug.MapImage(lambda x: (x * (1.0 / 255) - image_mean) / image_std),
         ]
@@ -188,7 +182,6 @@ def get_data(train_or_test):
     if isTrain:
         ds = PrefetchDataZMQ(ds, min(12, multiprocessing.cpu_count()))
     return ds
-
 
 def get_config():
     # prepare dataset
@@ -209,7 +202,7 @@ def get_config():
                 ClassificationError('wrong-top1', 'val-error-top1'),
                 ClassificationError('wrong-top5', 'val-error-top5')]),
             ScheduledHyperParamSetter('learning_rate',
-                                      [(30, 1e-2), (60, 1e-3), (85, 2e-4)]),
+                              [(30, 1e-2), (60, 1e-3), (85, 1e-4), (95, 1e-5)]),
             HumanHyperParamSetter('learning_rate'),
         ]),
         session_config=sess_config,
@@ -218,17 +211,39 @@ def get_config():
         max_epoch=110,
     )
 
+def eval_on_ILSVRC12(model_file, data_dir):
+    ds = get_data('val')
+    pred_config = PredictConfig(
+        model=Model(),
+        input_var_names=['input', 'label'],
+        session_init=get_model_loader(model_file),
+        output_var_names=['wrong-top1', 'wrong-top5']
+    )
+    pred = SimpleDatasetPredictor(pred_config, ds)
+    acc1, acc5 = RatioCounter(), RatioCounter()
+    for o in pred.get_result():
+        batch_size = o[0].shape[0]
+        acc1.feed(o[0].sum(), batch_size)
+        acc5.feed(o[1].sum(), batch_size)
+        print("Top1 Error: {}".format(acc1.ratio))
+        print("Top5 Error: {}".format(acc5.ratio))
+    print("Top1 Error: {}".format(acc1.ratio))
+    print("Top5 Error: {}".format(acc5.ratio))
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.') # nargs='*' in multi mode
     parser.add_argument('--data', help='ILSVRC dataset dir')
     parser.add_argument('--load', help='load model')
+    parser.add_argument('--eval', action='store_true')
     args = parser.parse_args()
-
-    logger.auto_set_dir()
-
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
+    if args.eval:
+        eval_on_ILSVRC12(args.load, args.data)
+        sys.exit()
+
+    logger.auto_set_dir()
 
     config = get_config()
     if args.load:
