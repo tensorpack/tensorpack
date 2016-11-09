@@ -2,13 +2,15 @@
 
 [video demo](https://youtu.be/o21mddZtE5Y)
 
-Reproduce the following reinforcement learning methods:
+Reproduce the following reinforcement learning papers:
 
 + Nature-DQN in:
 [Human-level Control Through Deep Reinforcement Learning](http://www.nature.com/nature/journal/v518/n7540/full/nature14236.html)
 
 + Double-DQN in:
 [Deep Reinforcement Learning with Double Q-learning](http://arxiv.org/abs/1509.06461)
+
++ Dueling-DQN in: [Dueling Network Architectures for Deep Reinforcement Learning](https://arxiv.org/abs/1511.06581)
 
 + A3C in [Asynchronous Methods for Deep Reinforcement Learning](http://arxiv.org/abs/1602.01783). (I
 used a modified version where each batch contains transitions from different simulators, which I called "Batch-A3C".)
