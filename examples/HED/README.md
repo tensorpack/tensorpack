@@ -38,7 +38,6 @@ Models I trained can be downloaded [here](https://drive.google.com/drive/folders
 To view the loss curve:
 ```bash
 cat train_log/hed/stat.json | jq '.[] |
-[.xentropy1,.xentropy2,.xentropy3,.xentropy4,.xentropy5,.xentropy6] |
-map(tostring) | join("\t") | .' -r | \
+"\(.xentropy1)\t\(.xentropy2)\t\(.xentropy3)\t\(.xentropy4)\t\(.xentropy5)\t\(.xentropy6)"' -r | \
 				../../scripts/plot-point.py --legend 1,2,3,4,5,final --decay 0.8
 ```

@@ -62,7 +62,7 @@ class SaverRestore(SessionInit):
         if os.path.basename(model_path) == 'checkpoint':
             model_path = tf.train.latest_checkpoint(os.path.dirname(model_path))
             # to be consistent with either v1 or v2
-        assert os.path.isfile(model_path) or os.path.isfile(model_path + '.index')
+        assert os.path.isfile(model_path) or os.path.isfile(model_path + '.index'), model_path
         self.set_path(model_path)
         self.prefix = prefix
 

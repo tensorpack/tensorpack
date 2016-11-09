@@ -207,8 +207,9 @@ class StatMonitorParamSetter(HyperParamSetter):
             ):
         """
         Change param by `new_value = value_func(old_value)`,
-        if `stat_name` wasn't decreasing > threshold  times in the lastest
-            last_k times of statistics update.
+        if :
+            min(stats) >= stats[0] - threshold, where
+            stats = [`stat_nam` in latest `last_k` epochs]
 
         For example, if error wasn't decreasing, anneal the learning rate:
             StatMonitorParamSetter('learning_rate', 'val-error', lambda x: x * 0.2)
@@ -235,11 +236,11 @@ class StatMonitorParamSetter(HyperParamSetter):
         hist_first = hist[0]
         if not self.reverse:
             hist_min = min(hist)
-            if hist_min <= hist_first - self.threshold: # small enough
+            if hist_min < hist_first - self.threshold: # small enough
                 return None
         else:
             hist_max = max(hist)
-            if hist_max >= hist_first + self.threshold: # large enough
+            if hist_max > hist_first + self.threshold: # large enough
                 return None
         self.last_changed_epoch = self.epoch_num
         return self.value_func(self.get_current_value())

@@ -18,8 +18,8 @@ from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
 
 """
-Training code of Pre-Activation version of ResNet on ImageNet. Work In Progress.
-Top1 error is now about 0.5% higher than fb.resnet.torch.
+Training code of Pre-Activation version of ResNet on ImageNet.
+Mainly follow the setup in fb.resnet.torch
 """
 
 

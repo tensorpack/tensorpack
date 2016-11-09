@@ -4,7 +4,7 @@
 
 import sys, os
 import cv2
-import multiprocessing
+import multiprocessing as mp
 
 from ..utils.concurrency import DIE
 from ..utils.fs import mkdir_p
@@ -44,8 +44,8 @@ def dataflow_to_process_queue(ds, size, nr_consumer):
     :returns: (queue, process). The process will take data from `ds` to fill
         the queue once you start it. Each element is (task_id, dp).
     """
-    q = multiprocessing.Queue(size)
-    class EnqueProc(multiprocessing.Process):
+    q = mp.Queue(size)
+    class EnqueProc(mp.Process):
         def __init__(self, ds, q, nr_consumer):
             super(EnqueProc, self).__init__()
             self.ds = ds

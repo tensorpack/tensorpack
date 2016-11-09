@@ -101,7 +101,7 @@ class MultiProcessDatasetPredictor(DatasetPredictorBase):
         # setup all the procs
         self.inqueue_proc.start()
         for p, gpuid in zip(self.workers, gpus):
-            if gpuid == '':
+            if gpuid == '-1':
                 logger.info("Worker {} uses CPU".format(p.idx))
             else:
                 logger.info("Worker {} uses GPU {}".format(p.idx, gpuid))
