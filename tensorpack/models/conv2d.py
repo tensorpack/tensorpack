@@ -9,7 +9,7 @@ import math
 from ._common import layer_register, shape2d, shape4d
 from ..utils import map_arg, logger
 
-__all__ = ['Conv2D']
+__all__ = ['Conv2D', 'Deconv2D']
 
 @layer_register()
 def Conv2D(x, out_channel, kernel_shape,
@@ -20,13 +20,14 @@ def Conv2D(x, out_channel, kernel_shape,
     2D convolution on 4D inputs.
 
     :param input: a tensor of shape NHWC
+    :param out_channel: number of output channel
     :param kernel_shape: (h, w) or a int
     :param stride: (h, w) or a int. default to 1
     :param padding: 'valid' or 'same'. default to 'same'
     :param split: split channels as used in Alexnet. Default to 1 (no split)
     :param W_init: initializer for W. default to `xavier_initializer_conv2d`.
     :param b_init: initializer for b. default to zero initializer.
-    :param nl: nonlinearity. default to `relu`.
+    :param nl: nonlinearity
     :param use_bias: whether to use bias. a boolean default to True
     :returns: a NHWC tensor
     """
@@ -42,7 +43,6 @@ def Conv2D(x, out_channel, kernel_shape,
     stride = shape4d(stride)
 
     if W_init is None:
-        #W_init = tf.truncated_normal_initializer(stddev=3e-2)
         W_init = tf.contrib.layers.xavier_initializer_conv2d()
     if b_init is None:
         b_init = tf.constant_initializer()
@@ -64,3 +64,48 @@ def Conv2D(x, out_channel, kernel_shape,
         nl = tf.nn.relu
     return nl(tf.nn.bias_add(conv, b) if use_bias else conv, name='output')
 
+@layer_register()
+def Deconv2D(x, out_shape, kernel_shape,
+           stride, padding='SAME',
+           W_init=None, b_init=None,
+           nl=tf.identity, use_bias=True):
+    """
+    2D deconvolution on 4D inputs.
+
+    :param input: a tensor of shape NHWC
+    :param out_shape: either (h, w, channel), or just channel,
+        then h, w will calculated by input_shape * stride
+    :param kernel_shape: (h, w) or a int
+    :param stride: (h, w) or a int
+    :param padding: 'valid' or 'same'. default to 'same'
+    :param W_init: initializer for W. default to `xavier_initializer_conv2d`.
+    :param b_init: initializer for b. default to zero initializer.
+    :param nl: nonlinearity.
+    :param use_bias: whether to use bias. a boolean default to True
+    :returns: a NHWC tensor
+    """
+    in_shape = x.get_shape().as_list()[1:]
+    assert None is not in in_shape, "Input to Deconv2D cannot have unknown shape!"
+    in_channel = in_shape[-1]
+    kernel_shape = shape2d(kernel_shape)
+    stride2d = shape2d(stride)
+    stride4d = shape4d(stride)
+    padding = padding.upper()
+    filter_shape = kernel_shape + [in_channel, out_channel]
+
+    if isinstance(out_shape, int):
+        out_shape = tf.pack([tf.shape(x)[0],
+            stride2d[0] * in_shape[0], stride2d[1] * in_shape[1], out_shape])
+    else:
+        out_shape = tf.pack([tf.shape(x)[0]] + out_shape)
+
+    if W_init is None:
+        W_init = tf.contrib.layers.xavier_initializer_conv2d()
+    if b_init is None:
+        b_init = tf.constant_initializer()
+    W = tf.get_variable('W', filter_shape, initializer=W_init)
+    if use_bias:
+        b = tf.get_variable('b', [out_channel], initializer=b_init)
+
+    conv = tf.nn.conv2d_transpose(x, W, out_shape, stride4d, padding=padding)
+    return nl(tf.nn.bias_add(conv, b) if use_bias else conv, name='output')

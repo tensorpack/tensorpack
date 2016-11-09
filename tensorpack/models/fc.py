@@ -22,7 +22,7 @@ def FullyConnected(x, out_dim,
     :param out_dim: output dimension
     :param W_init: initializer for W. default to `xavier_initializer_conv2d`.
     :param b_init: initializer for b. default to zero initializer.
-    :param nl: nonlinearity. default to `relu`.
+    :param nl: nonlinearity
     :param use_bias: whether to use bias. a boolean default to True
     :returns: a 2D tensor
     """
