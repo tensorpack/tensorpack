@@ -15,7 +15,7 @@ from ..tfutils import (backup_collection, restore_collection,
         get_global_step_var, TowerContext)
 from ..tfutils.gradproc import apply_grad_processors, ScaleGradient
 
-from .trainer import FeedlessTrainer, SingleCostFeedlessTrainer
+from .trainer import FeedlessTrainer, SingleCostFeedlessTrainer, MultiPredictorTowerTrainer
 from .queue import QueueInputTrainer, QueueInputTrainerBase
 
 __all__ = ['AsyncMultiGPUTrainer', 'SyncMultiGPUTrainer']
@@ -37,13 +37,15 @@ class MultiGPUTrainer(FeedlessTrainer):
                 grad_list.append(get_tower_grad_func())
 
                 if idx == 0:
-                    add_moving_summary(cost_var)
                     # avoid repeated summary from each device
                     backup = backup_collection(SUMMARY_BACKUP_KEYS)
         restore_collection(backup)
         return grad_list
 
-class SyncMultiGPUTrainer(QueueInputTrainerBase, MultiGPUTrainer, SingleCostFeedlessTrainer):
+class SyncMultiGPUTrainer(QueueInputTrainerBase,
+        MultiGPUTrainer,
+        SingleCostFeedlessTrainer,
+        MultiPredictorTowerTrainer):
     def __init__(self, config, input_queue=None, predict_tower=None):
         assert len(config.tower) >= 1, "MultiGPUTrainer must be used with at least one GPU."
         super(SyncMultiGPUTrainer, self).__init__(config)
@@ -85,10 +87,12 @@ class SyncMultiGPUTrainer(QueueInputTrainerBase, MultiGPUTrainer, SingleCostFeed
     def run_step(self):
         self.sess.run(self.train_op)
 
-class AsyncMultiGPUTrainer(QueueInputTrainerBase, MultiGPUTrainer, SingleCostFeedlessTrainer):
+class AsyncMultiGPUTrainer(QueueInputTrainerBase,
+        MultiGPUTrainer,
+        SingleCostFeedlessTrainer,
+        MultiPredictorTowerTrainer):
     def __init__(self, config, input_queue=None, predict_tower=None):
-        assert len(config.tower) >= 1, "MultiGPUTrainer must be used with at least one GPU."
-        super(SyncMultiGPUTrainer, self).__init__(config)
+        super(AsyncMultiGPUTrainer, self).__init__(config)
         self._setup_predictor_factory(predict_tower)
         self._build_enque_thread(input_queue)
 
@@ -132,7 +136,7 @@ class AsyncMultiGPUTrainer(QueueInputTrainerBase, MultiGPUTrainer, SingleCostFee
             for th in self.training_threads: # resume all threads
                 th.resume()
         next(self.async_step_counter)
-        super(AsyncMultiGPUTrainer, self).run_step()
+        self.sess.run(self.train_op)
 
     def _trigger_epoch(self):
         self.async_running = False

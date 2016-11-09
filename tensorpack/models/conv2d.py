@@ -85,7 +85,7 @@ def Deconv2D(x, out_shape, kernel_shape,
     :returns: a NHWC tensor
     """
     in_shape = x.get_shape().as_list()[1:]
-    assert None is not in in_shape, "Input to Deconv2D cannot have unknown shape!"
+    assert None not in in_shape, "Input to Deconv2D cannot have unknown shape!"
     in_channel = in_shape[-1]
     kernel_shape = shape2d(kernel_shape)
     stride2d = shape2d(stride)
