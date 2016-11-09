@@ -30,8 +30,11 @@ class Trainer(object):
     Available Attritbutes:
         stat_holder: a `StatHolder` instance
         summary_writer: a `tf.SummaryWriter`
+        summary_op: a `tf.Operation` which returns summary string
         config: a `TrainConfig`
         model: a `ModelDesc`
+        sess: a `tf.Session`
+        coord: a `tf.train.Coordinator`
     """
     __metaclass__ = ABCMeta
 

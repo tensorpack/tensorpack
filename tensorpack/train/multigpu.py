@@ -15,16 +15,42 @@ from ..tfutils import (backup_collection, restore_collection,
         get_global_step_var, TowerContext)
 from ..tfutils.gradproc import apply_grad_processors, ScaleGradient
 
-from .trainer import QueueInputTrainer
+from .trainer import FeedlessTrainer
+from .queue import QueueInputTrainer
 
 __all__ = ['AsyncMultiGPUTrainer', 'SyncMultiGPUTrainer']
 
-class MultiGPUTrainer(QueueInputTrainer):
+class MultiGPUTrainer(FeedlessTrainer):
     """ Base class for multi-gpu training"""
+    def _multi_tower_grads(self):
+        logger.info("Training a model of {} tower".format(len(self.config.tower)))
+
+        grad_list = []
+        global_scope = tf.get_variable_scope()
+        for idx, t in enumerate(self.config.tower):
+            with tf.device('/gpu:{}'.format(t)), \
+                    tf.variable_scope(global_scope, reuse=idx > 0), \
+                    TowerContext('tower{}'.format(idx)) as scope:
+                logger.info("Building graph for training tower {}...".format(idx))
+                model_inputs = self._get_input_tensors_noreuse()
+                self.model.build_graph(model_inputs)
+                cost_var = self.model.get_cost() # build tower
+
+                # TODO gate_gradienst=0 might be faster?
+                grad_list.append(
+                    self.config.optimizer.compute_gradients(cost_var, gate_gradients=0))
+
+                if idx == 0:
+                    add_moving_summary(cost_var)
+                    # avoid repeated summary from each device
+                    backup = backup_collection(SUMMARY_BACKUP_KEYS)
+        restore_collection(backup)
+        return grad_list
+
+class SyncMultiGPUTrainer(QueueInputTrainer, MultiGPUTrainer):
     def __init__(self, config, input_queue=None, predict_tower=None):
         super(MultiGPUTrainer, self).__init__(config, input_queue, predict_tower)
         assert len(config.tower) >= 1, "MultiGPUTrainer must be used with at least one GPU."
-        self.dequed_inputs = []
 
     @staticmethod
     def _average_grads(tower_grads):
@@ -48,53 +74,18 @@ class MultiGPUTrainer(QueueInputTrainer):
                 ret.append((grad, v))
         return ret
 
-    def _multi_tower_grads(self):
-        logger.info("Training a model of {} tower".format(len(self.config.tower)))
-
-        grad_list = []
-        global_scope = tf.get_variable_scope()
-        for idx, t in enumerate(self.config.tower):
-            with tf.device('/gpu:{}'.format(t)), \
-                    tf.variable_scope(global_scope, reuse=idx > 0), \
-                    TowerContext('tower{}'.format(idx)) as scope:
-                logger.info("Building graph for training tower {}...".format(idx))
-                model_inputs = self._get_dequeued_inputs()    # each tower dequeue from input queue
-                self.dequed_inputs.append(model_inputs)
-
-                self.model.build_graph(model_inputs)
-                cost_var = self.model.get_cost() # build tower
-
-                # TODO gate_gradienst=0 might be faster?
-                grad_list.append(
-                    self.config.optimizer.compute_gradients(cost_var, gate_gradients=0))
-
-                if idx == 0:
-                    add_moving_summary(cost_var)
-                    # avoid repeated summary from each device
-                    backup = backup_collection(SUMMARY_BACKUP_KEYS)
-        restore_collection(backup)
-        return grad_list
-
-class SyncMultiGPUTrainer(MultiGPUTrainer):
     def _setup(self):
-        self._build_enque_thread()
-
         grad_list = self._multi_tower_grads()
-
-        grads = MultiGPUTrainer._average_grads(grad_list)
+        grads = SyncMultiGPUTrainer._average_grads(grad_list)
         grads = apply_grad_processors(grads,
                 self.model.get_gradient_processor())
 
         self.train_op = tf.group(
             self.config.optimizer.apply_gradients(grads, get_global_step_var()),
             summary_moving_average(), name='train_op')
-        # [debug]: do nothing in training
-        #self.train_op = self.dequed_inputs[0][0] + self.dequed_inputs[1][0]
 
-class AsyncMultiGPUTrainer(MultiGPUTrainer):
+class AsyncMultiGPUTrainer(QueueInputTrainer, MultiGPUTrainer):
     def _setup(self):
-        self._build_enque_thread()
-
         grad_list = self._multi_tower_grads()
         gradprocs = self.model.get_gradient_processor()
         # pretend to average the grads, in order to make async and
