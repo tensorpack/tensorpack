@@ -139,7 +139,7 @@ class Trainer(object):
                             if self.coord.should_stop():
                                 return
                             self.run_step() # implemented by subclass
-                            #callbacks.trigger_step()   # not useful?
+                            callbacks.trigger_step()   # not useful?
                         self.trigger_epoch()
             except StopTraining:
                 logger.info("Training was stopped.")

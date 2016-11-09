@@ -13,7 +13,7 @@ from ..utils.naming import *
 from .common import get_op_tensor_name
 
 __all__ = ['SessionUpdate', 'dump_session_params', 'dump_chkpt_vars',
-        'get_savename_from_varname', 'is_training_specific_name']
+        'get_savename_from_varname', 'is_training_name']
 
 def get_savename_from_varname(
         varname, varname_prefix=None,
@@ -97,7 +97,7 @@ def dump_chkpt_vars(model_path):
         result[n] = reader.get_tensor(n)
     return result
 
-def is_training_specific_name(name):
+def is_training_name(name):
     """
     This is only used to improve logging.
     :returns: guess whether this tensor is something only used in training.

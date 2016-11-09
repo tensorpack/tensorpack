@@ -12,7 +12,7 @@ import six
 
 from ..utils import logger
 from .common import get_op_var_name
-from .varmanip import SessionUpdate, get_savename_from_varname, is_training_specific_name
+from .varmanip import SessionUpdate, get_savename_from_varname, is_training_name
 
 __all__ = ['SessionInit', 'NewSession', 'SaverRestore',
            'ParamRestore', 'ChainInit',
@@ -129,7 +129,7 @@ class SaverRestore(SessionInit):
                     var_dict[name].append(v)
                     chkpt_vars_used.add(name)
             else:
-                if not is_training_specific_name(v.op.name):
+                if not is_training_name(v.op.name):
                     logger.warn("Variable {} in the graph not found in checkpoint!".format(v.op.name))
         if len(chkpt_vars_used) < len(vars_available):
             unused = vars_available - chkpt_vars_used

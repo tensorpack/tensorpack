@@ -17,7 +17,8 @@ from ..tfutils.summary import summary_moving_average, add_moving_summary
 from ..predict import OnlinePredictor, build_multi_tower_prediction_graph
 from ..tfutils.gradproc import apply_grad_processors
 
-__all__ = ['SimpleTrainer', 'FeedlessTrainer', 'MultiPredictorTowerTrainer']
+__all__ = ['SimpleTrainer', 'FeedlessTrainer', 'MultiPredictorTowerTrainer',
+        'SingleCostFeedlessTrainer']
 
 class PredictorFactory(object):
     """ Make predictors for a trainer"""
@@ -124,3 +125,16 @@ class FeedlessTrainer(Trainer):
         """ return a list of actual input tensors.
             Always return new tensors (for multi tower) if called mutliple times.
         """
+
+class SingleCostFeedlessTrainer(Trainer):
+    def _get_cost_and_grad(self):
+        """ get the cost and gradient on a new tower"""
+        actual_inputs = self._get_input_tensors_noreuse()
+        self.model.build_graph(actual_inputs)
+        cost_var = self.model.get_cost()
+        # GATE_NONE faster?
+        grads = self.config.optimizer.compute_gradients(
+                cost_var, gate_gradients=0)
+        add_moving_summary(cost_var)
+        return cost_var, grads
+

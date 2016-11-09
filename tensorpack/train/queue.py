@@ -13,7 +13,8 @@ from ..utils import logger
 from ..callbacks.concurrency import StartProcOrThread
 from ..tfutils.gradproc import apply_grad_processors
 
-from .trainer import FeedlessTrainer, MultiPredictorTowerTrainer
+from .trainer import (FeedlessTrainer, MultiPredictorTowerTrainer,
+        SingleCostFeedlessTrainer)
 
 __all__ = ['QueueInputTrainerBase', 'QueueInputTrainer']
 
@@ -88,7 +89,7 @@ class QueueInputTrainerBase(FeedlessTrainer):
                 #tf.Variable(tf.ones([128], dtype=tf.int32), trainable=False)]
         return ret
 
-class QueueInputTrainer(MultiPredictorTowerTrainer, QueueInputTrainerBase):
+class QueueInputTrainer(MultiPredictorTowerTrainer, QueueInputTrainerBase, SingleCostFeedlessTrainer):
     """ Single GPU Trainer, takes input from a queue"""
 
     def __init__(self, config, input_queue=None, predict_tower=None):
@@ -103,23 +104,12 @@ class QueueInputTrainer(MultiPredictorTowerTrainer, QueueInputTrainerBase):
         self._setup_predictor_factory(predict_tower)
         self._build_enque_thread(input_queue)
 
-    def _single_tower_grad(self, actual_inputs):
-        """ Get grad and cost for single-tower"""
-        with TowerContext(''):
-            self.model.build_graph(actual_inputs)
-            cost_var = self.model.get_cost()
-        grads = self.config.optimizer.compute_gradients(
-                cost_var, gate_gradients=0) # GATE_NONE
-        add_moving_summary(cost_var)
-        return grads
-
     def _setup(self):
         assert len(self.config.tower) == 1, \
                 "QueueInputTrainer doesn't support multigpu! Use Sync/AsyncMultiGPUTrainer instead."
-        actual_inputs = self._get_input_tensors_noreuse()
-        grads = self._single_tower_grad(actual_inputs)
-        grads = apply_grad_processors(grads,
-                self.model.get_gradient_processor())
+        with TowerContext(''):
+            cost, grads = self._get_cost_and_grad()
+        grads = apply_grad_processors(grads, self.model.get_gradient_processor())
 
         self.train_op = tf.group(
             self.config.optimizer.apply_gradients(grads, get_global_step_var()),

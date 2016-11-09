@@ -101,19 +101,21 @@ def add_moving_summary(v, *args):
         assert x.get_shape().ndims == 0
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, x)
 
-def summary_moving_average():
-    """ Create a MovingAverage op and summary for all variables in MOVING_SUMMARY_VARS_KEY.
-        :returns: a op to maintain these average.
+def summary_moving_average(tensors=None):
     """
+    Create a MovingAverage op and summary for tensors
+    :param tensors: list of tf.Tensor to summary. default to the collection MOVING_SUMMARY_VARS_KEY
+    :returns: a op to maintain these average.
+    """
+    if tensors is None:
+        tensors = tf.get_collection(MOVING_SUMMARY_VARS_KEY)
     with tf.name_scope('EMA_summary'):
         # TODO will produce EMA_summary/tower0/xxx. not elegant
-        global_step_var = get_global_step_var()
         with tf.name_scope(None):
             averager = tf.train.ExponentialMovingAverage(
-                0.99, num_updates=global_step_var, name='EMA')
-        vars_to_summary = tf.get_collection(MOVING_SUMMARY_VARS_KEY)
-        avg_maintain_op = averager.apply(vars_to_summary)
-        for idx, c in enumerate(vars_to_summary):
+                0.99, num_updates=get_global_step_var(), name='EMA')
+        avg_maintain_op = averager.apply(tensors)
+        for idx, c in enumerate(tensors):
             name = re.sub('tower[p0-9]+/', '', c.op.name)
             tf.scalar_summary(name, averager.average(c))
         return avg_maintain_op
