@@ -22,11 +22,9 @@ Training code of Pre-Activation version of ResNet on ImageNet.
 Mainly follow the setup in fb.resnet.torch
 """
 
-
-NR_GPU = 4
 TOTAL_BATCH_SIZE = 256
-BATCH_SIZE = TOTAL_BATCH_SIZE / NR_GPU
 INPUT_SHAPE = 224
+DEPTH = None
 
 class Model(ModelDesc):
     def _get_input_vars(self):
@@ -93,7 +91,7 @@ class Model(ModelDesc):
             50: ([3,4,6,3], bottleneck),
             101: ([3,4,23,3], bottleneck)
         }
-        defs, block_func = cfg[34]
+        defs, block_func = cfg[DEPTH]
 
         with argscope(Conv2D, nl=tf.identity, use_bias=False,
                 W_init=variance_scaling_initializer(mode='FAN_OUT')):
@@ -231,22 +229,29 @@ def eval_on_ILSVRC12(model_file, data_dir):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.') # nargs='*' in multi mode
+    parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
     parser.add_argument('--data', help='ILSVRC dataset dir')
     parser.add_argument('--load', help='load model')
+    parser.add_argument('-d', '--depth', help='resnet depth',
+            type=int, default=18, choices=[18, 34, 50, 101])
     parser.add_argument('--eval', action='store_true')
     args = parser.parse_args()
+
+    DEPTH = args.depth
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
     if args.eval:
+        BATCH_SIZE = 128    # something that can run on one gpu
         eval_on_ILSVRC12(args.load, args.data)
         sys.exit()
 
-    logger.auto_set_dir()
+    assert args.gpu is not None, "Need to specify a list of gpu for training!"
+    NR_GPU = len(args.gpu.split(','))
+    BATCH_SIZE = TOTAL_BATCH_SIZE / NR_GPU
 
+    logger.auto_set_dir()
     config = get_config()
     if args.load:
         config.session_init = SaverRestore(args.load)
-    if args.gpu:
-        config.nr_tower = len(args.gpu.split(','))
+    config.nr_tower = NR_GPU
     SyncMultiGPUTrainer(config).train()

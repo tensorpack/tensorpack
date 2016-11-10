@@ -8,7 +8,8 @@ import time
 from ..utils import logger
 try:
     import gym
-    gym.undo_logger_setup()
+    # TODO
+    #gym.undo_logger_setup()
     # https://github.com/openai/gym/pull/199
     # not sure does it cause other problems
     __all__ = ['GymEnv']

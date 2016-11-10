@@ -1,5 +1,13 @@
 
-ImageNet training code coming soon.
+## imagenet-resnet.py
+
+ImageNet training code of pre-activation ResNet. It follows the setup in
+[fb.resnet.torch](https://github.com/facebook/fb.resnet.torch) and get similar performance (with much fewer lines of code),
+
+| Model (WIP)        | Top 5 Error | Top 1 Error |
+|:-------------------|-------------|------------:|
+| ResNet 18          |      10.67% |      29.50% |
+| ResNet 50          |      7.13%  |      24.12% |
 
 ## load-resnet.py
 
@@ -24,8 +32,7 @@ The per-pixel mean used here is slightly different from the original.
 
 ## cifar10-resnet.py
 
-Reproduce the results in paper "Deep Residual Learning for Image Recognition", [http://arxiv.org/abs/1512.03385](http://arxiv.org/abs/1512.03385)
-with the variants proposed in "Identity Mappings in Deep Residual Networks", [https://arxiv.org/abs/1603.05027](https://arxiv.org/abs/1603.05027) on CIFAR10.
+Reproduce pre-activation ResNet on CIFAR10.
 
 The train error shown here is a moving average of the error rate of each batch in training.
 The validation error here is computed on test set.
