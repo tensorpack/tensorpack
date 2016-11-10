@@ -107,11 +107,14 @@ class StatPrinter(Callback):
         self._stat_holder.set_print_tag(self.print_tag)
         self._stat_holder.add_blacklist_tag(['global_step', 'epoch_num'])
 
+        # just try to add this stat earlier so SendStat can use
+        self._stat_holder.add_stat('epoch_num', self.epoch_num + 1)
+
     def _trigger_epoch(self):
         # by default, add this two stat
         self._stat_holder.add_stat('global_step', get_global_step())
-        self._stat_holder.add_stat('epoch_num', self.epoch_num)
         self._stat_holder.finalize()
+        self._stat_holder.add_stat('epoch_num', self.epoch_num + 1)
 
 class SendStat(Callback):
     """

@@ -2,9 +2,10 @@
 ## imagenet-resnet.py
 
 ImageNet training code of pre-activation ResNet. It follows the setup in
-[fb.resnet.torch](https://github.com/facebook/fb.resnet.torch) and get similar performance (with much fewer lines of code),
+[fb.resnet.torch](https://github.com/facebook/fb.resnet.torch) and gets similar performance (with much fewer lines of code).
+More results to come.
 
-| Model (WIP)        | Top 5 Error | Top 1 Error |
+| Model              | Top 5 Error | Top 1 Error |
 |:-------------------|-------------|------------:|
 | ResNet 18          |      10.67% |      29.50% |
 | ResNet 50          |      7.13%  |      24.12% |

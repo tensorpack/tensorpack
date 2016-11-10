@@ -27,7 +27,6 @@ class PredictConfig(object):
         :param session_init: a `utils.sessinit.SessionInit` instance to
             initialize variables of a session.
         :param input_var_names: a list of input variable names.
-        :param input_data_mapping: deprecated. used to select `input_var_names` from the `InputVars` of the model.
         :param model: a `ModelDesc` instance
         :param output_var_names: a list of names of the output tensors to predict, the
             variables can be any computable tensor in the graph.
@@ -47,13 +46,7 @@ class PredictConfig(object):
 
         # inputs & outputs
         self.input_var_names = kwargs.pop('input_var_names', None)
-        input_mapping = kwargs.pop('input_data_mapping', None)
-        if input_mapping:
-            raw_vars = self.model.get_input_vars_desc()
-            self.input_var_names = [raw_vars[k].name for k in input_mapping]
-            logger.warn('The option `input_data_mapping` was deprecated. \
-Use \'input_var_names=[{}]\' instead'.format(', '.join(self.input_var_names)))
-        elif self.input_var_names is None:
+        if self.input_var_names is None:
             # neither options is set, assume all inputs
             raw_vars = self.model.get_input_vars_desc()
             self.input_var_names = [k.name for k in raw_vars]

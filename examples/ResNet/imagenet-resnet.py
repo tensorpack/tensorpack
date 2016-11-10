@@ -116,7 +116,6 @@ class Model(ModelDesc):
         wrong = prediction_incorrect(logits, label, 5, name='wrong-top5')
         add_moving_summary(tf.reduce_mean(wrong, name='train-error-top5'))
 
-        # weight decay on all W of fc layers
         wd_w = 1e-4
         wd_cost = tf.mul(wd_w, regularize_cost('.*/W', tf.nn.l2_loss), name='l2_regularize_loss')
         add_moving_summary(loss, wd_cost)
