@@ -213,9 +213,9 @@ def eval_on_ILSVRC12(model_file, data_dir):
     ds = get_data('val')
     pred_config = PredictConfig(
         model=Model(),
-        input_var_names=['input', 'label'],
         session_init=get_model_loader(model_file),
-        output_var_names=['wrong-top1', 'wrong-top5']
+        input_names=['input', 'label'],
+        output_names=['wrong-top1', 'wrong-top5']
     )
     pred = SimpleDatasetPredictor(pred_config, ds)
     acc1, acc5 = RatioCounter(), RatioCounter()

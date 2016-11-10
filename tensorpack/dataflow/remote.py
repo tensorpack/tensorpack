@@ -26,6 +26,7 @@ def serve_data(ds, addr):
     try:
         ds.reset_state()
         logger.info("Serving data at {}".format(addr))
+        # TODO print statistics here
         while True:
             for dp in ds.get_data():
                 socket.send(dumps(dp), copy=False)

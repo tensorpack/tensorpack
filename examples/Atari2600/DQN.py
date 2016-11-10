@@ -123,7 +123,7 @@ class Model(ModelDesc):
 
         target = reward + (1.0 - tf.cast(isOver, tf.float32)) * GAMMA * tf.stop_gradient(best_v)
 
-        self.cost = symbf.huber_loss(target - pred_action_value, name='cost')
+        self.cost = tf.truediv(symbf.huber_loss(target - pred_action_value), BATCH_SIZE, name='cost')
         summary.add_param_summary([('conv.*/W', ['histogram', 'rms']),
                                    ('fc.*/W', ['histogram', 'rms']) ])   # monitor all W
 
@@ -200,8 +200,8 @@ if __name__ == '__main__':
         cfg = PredictConfig(
                 model=Model(),
                 session_init=SaverRestore(args.load),
-                input_var_names=['state'],
-                output_var_names=['Qvalue'])
+                input_names=['state'],
+                output_names=['Qvalue'])
         if args.task == 'play':
             play_model(cfg)
         elif args.task == 'eval':

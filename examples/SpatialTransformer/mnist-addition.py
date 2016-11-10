@@ -109,8 +109,8 @@ def view_warp(modelpath):
     pred = OfflinePredictor(PredictConfig(
        session_init=get_model_loader(modelpath),
        model=Model(),
-       input_var_names=['input'],
-       output_var_names=['viz', 'STN1/affine', 'STN2/affine']))
+       input_names=['input'],
+       output_names=['viz', 'STN1/affine', 'STN2/affine']))
 
     xys = np.array([[0, 0, 1],
         [WARP_TARGET_SIZE, 0, 1],

@@ -26,9 +26,9 @@ class PredictConfig(object):
 
         :param session_init: a `utils.sessinit.SessionInit` instance to
             initialize variables of a session.
-        :param input_var_names: a list of input variable names.
         :param model: a `ModelDesc` instance
-        :param output_var_names: a list of names of the output tensors to predict, the
+        :param input_names: a list of input variable names.
+        :param output_names: a list of names of the output tensors to predict, the
             variables can be any computable tensor in the graph.
             Predict specific output might not require all input variables.
         :param return_input: whether to return (input, output) pair or just output. default to False.
@@ -45,15 +45,24 @@ class PredictConfig(object):
         assert_type(self.model, ModelDesc)
 
         # inputs & outputs
-        self.input_var_names = kwargs.pop('input_var_names', None)
-        if self.input_var_names is None:
+        # TODO add deprecated warning later
+        self.input_names = kwargs.pop('input_names', None)
+        if self.input_names is None:
+            self.input_names = kwargs.pop('input_var_names', None)
+            if self.input_names is not None:
+                pass
+                #logger.warn("[Deprecated] input_var_names is deprecated in PredictConfig. Use input_names instead!")
+        if self.input_names is None:
             # neither options is set, assume all inputs
             raw_vars = self.model.get_input_vars_desc()
-            self.input_var_names = [k.name for k in raw_vars]
-        self.output_var_names = kwargs.pop('output_var_names')
-        assert len(self.input_var_names), self.input_var_names
-        for v in self.input_var_names: assert_type(v, six.string_types)
-        assert len(self.output_var_names), self.output_var_names
+            self.input_names = [k.name for k in raw_vars]
+        self.output_names = kwargs.pop('output_names', None)
+        if self.output_names is None:
+            self.output_names = kwargs.pop('output_var_names')
+            #logger.warn("[Deprecated] output_var_names is deprecated in PredictConfig. Use output_names instead!")
+        assert len(self.input_names), self.input_names
+        for v in self.input_names: assert_type(v, six.string_types)
+        assert len(self.output_names), self.output_names
 
         self.return_input = kwargs.pop('return_input', False)
         assert len(kwargs) == 0, 'Unknown arguments: {}'.format(str(kwargs.keys()))

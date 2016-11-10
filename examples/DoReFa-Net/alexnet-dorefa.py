@@ -245,8 +245,8 @@ def run_image(model, sess_init, inputs):
         model=model,
         session_init=sess_init,
         session_config=get_default_sess_config(0.9),
-        input_var_names=['input'],
-        output_var_names=['output']
+        input_names=['input'],
+        output_names=['output']
     )
     predict_func = get_predict_func(pred_config)
     meta = dataset.ILSVRCMeta()

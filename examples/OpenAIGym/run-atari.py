@@ -95,6 +95,6 @@ if __name__ == '__main__':
     cfg = PredictConfig(
             model=Model(),
             session_init=SaverRestore(args.load),
-            input_var_names=['state'],
-            output_var_names=['logits'])
+            input_names=['state'],
+            output_names=['logits'])
     run_submission(cfg, args.output, args.episode)

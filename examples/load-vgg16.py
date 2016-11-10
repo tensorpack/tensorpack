@@ -72,10 +72,10 @@ def run_test(path, input):
     param_dict = np.load(path).item()
     pred_config = PredictConfig(
         model=Model(),
-        input_var_names=['input'],
+        input_names=['input'],
         session_init=ParamRestore(param_dict),
         session_config=get_default_sess_config(0.9),
-        output_var_names=['output']   # output:0 is the probability distribution
+        output_names=['output']   # output:0 is the probability distribution
     )
     predict_func = get_predict_func(pred_config)
 

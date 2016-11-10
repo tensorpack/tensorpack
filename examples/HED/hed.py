@@ -184,9 +184,9 @@ def get_config():
 def run(model_path, image_path):
     pred_config = PredictConfig(
             model=Model(),
-            input_data_mapping=[0],
             session_init=get_model_loader(model_path),
-            output_var_names=['output' + str(k) for k in range(1, 7)])
+            input_names=['image'],
+            output_names=['output' + str(k) for k in range(1, 7)])
     predict_func = get_predict_func(pred_config)
     im = cv2.imread(image_path)
     assert im is not None

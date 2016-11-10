@@ -111,8 +111,8 @@ def run_test(params, input):
     pred_config = PredictConfig(
         model=Model(),
         session_init=ParamRestore(params),
-        input_var_names=['input'],
-        output_var_names=['prob']
+        input_names=['input'],
+        output_names=['prob']
     )
     predict_func = get_predict_func(pred_config)
 
@@ -134,9 +134,9 @@ def eval_on_ILSVRC12(params, data_dir):
     ds = BatchData(ds, 128, remainder=True)
     pred_config = PredictConfig(
         model=Model(),
-        input_var_names=['input', 'label'],
         session_init=ParamRestore(params),
-        output_var_names=['wrong-top1', 'wrong-top5']
+        input_names=['input', 'label'],
+        output_names=['wrong-top1', 'wrong-top5']
     )
     pred = SimpleDatasetPredictor(pred_config, ds)
     acc1, acc5 = RatioCounter(), RatioCounter()
