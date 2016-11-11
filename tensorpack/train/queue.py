@@ -52,15 +52,15 @@ class EnqueueThread(threading.Thread):
             except Exception:
                 logger.exception("Exception in EnqueueThread:")
             finally:
+                self.coord.request_stop()
                 try:
                     self.sess.run(self.close_op)
                 except RuntimeError:    # session already closed
                     pass
-                self.coord.request_stop()
                 logger.info("Enqueue Thread Exited.")
 
 class QueueInputTrainerBase(FeedlessTrainer):
-    def _build_enque_thread(self, input_queue):
+    def _build_enque_thread(self, input_queue=None):
         """ create a thread that keeps filling the queue """
         self.input_vars = self.model.get_input_vars()
         if input_queue is None:

@@ -11,7 +11,7 @@ from .base import Trainer
 from ..dataflow.common import RepeatedData
 
 from ..utils import logger, SUMMARY_BACKUP_KEYS
-from ..tfutils import (get_vars_by_names, freeze_collection,
+from ..tfutils import (get_tensors_by_names, freeze_collection,
         get_global_step_var, TowerContext)
 from ..tfutils.summary import summary_moving_average, add_moving_summary
 from ..predict import OnlinePredictor, build_multi_tower_prediction_graph
@@ -40,9 +40,9 @@ class PredictorFactory(object):
         if not self.tower_built:
             self._build_predict_tower()
         tower = self.towers[tower % len(self.towers)]
-        raw_input_vars = get_vars_by_names(input_names)
+        raw_input_vars = get_tensors_by_names(input_names)
         output_names = ['towerp{}/'.format(tower) + n for n in output_names]
-        output_vars = get_vars_by_names(output_names)
+        output_vars = get_tensors_by_names(output_names)
         return OnlinePredictor(self.sess, raw_input_vars, output_vars)
 
     def _build_predict_tower(self):

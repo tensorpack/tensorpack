@@ -57,11 +57,12 @@ def LeakyReLU(x, alpha, name=None):
     :param input: any tensor.
     :param alpha: the negative slope.
     """
-    alpha = float(alpha)
-    x = ((1 + alpha) * x + (1 - alpha) * tf.abs(x))
     if name is None:
         name = 'output'
-    return tf.mul(x, 0.5, name=name)
+    return tf.maximum(x, alpha * x, name=name)
+    #alpha = float(alpha)
+    #x = ((1 + alpha) * x + (1 - alpha) * tf.abs(x))
+    #return tf.mul(x, 0.5, name=name)
 
 def BNReLU(x, name=None):
     x = BatchNorm('bn', x, use_local_stat=None)

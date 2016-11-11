@@ -10,7 +10,7 @@ from collections import namedtuple
 import inspect
 
 from ..utils import logger, INPUT_VARS_KEY
-from ..tfutils.common import get_vars_by_names
+from ..tfutils.common import get_tensors_by_names
 from ..tfutils.gradproc import CheckGradient
 from ..tfutils.tower import get_current_tower_context
 
@@ -43,7 +43,7 @@ class ModelDesc(object):
     def reuse_input_vars(self):
         """ Find and return already-defined input_vars in default graph"""
         input_var_names = [k.name for k in self._get_input_vars()]
-        return get_vars_by_names(input_var_names)
+        return get_tensors_by_names(input_var_names)
 
     def get_input_vars_desc(self):
         """ return a list of `InputVar` instance"""

@@ -91,13 +91,14 @@ def Deconv2D(x, out_shape, kernel_shape,
     stride2d = shape2d(stride)
     stride4d = shape4d(stride)
     padding = padding.upper()
-    filter_shape = kernel_shape + [in_channel, out_channel]
 
     if isinstance(out_shape, int):
-        out_shape = tf.pack([tf.shape(x)[0],
-            stride2d[0] * in_shape[0], stride2d[1] * in_shape[1], out_shape])
+        out_channel = out_shape
+        shape3 = [stride2d[0] * in_shape[0], stride2d[1] * in_shape[1], out_shape]
     else:
-        out_shape = tf.pack([tf.shape(x)[0]] + out_shape)
+        out_channel = out_shape[-1]
+        shape3 = out_shape
+    filter_shape = kernel_shape + [out_channel, in_channel]
 
     if W_init is None:
         W_init = tf.contrib.layers.xavier_initializer_conv2d()
@@ -107,5 +108,7 @@ def Deconv2D(x, out_shape, kernel_shape,
     if use_bias:
         b = tf.get_variable('b', [out_channel], initializer=b_init)
 
+    out_shape = tf.pack([tf.shape(x)[0]] + shape3)
     conv = tf.nn.conv2d_transpose(x, W, out_shape, stride4d, padding=padding)
+    conv.set_shape(tf.TensorShape([None] + shape3))
     return nl(tf.nn.bias_add(conv, b) if use_bias else conv, name='output')

@@ -103,6 +103,7 @@ def is_training_name(name):
     :returns: guess whether this tensor is something only used in training.
     """
     # TODO: maybe simply check against TRAINABLE_VARIABLES and EXTRA_SAVE_VARS_KEY ?
+    # TODO or use get_slot_names()
     name = get_op_tensor_name(name)[0]
     if name.endswith('/Adam') or name.endswith('/Adam_1'):
         return True

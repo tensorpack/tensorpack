@@ -143,6 +143,8 @@ class Trainer(object):
                         self.trigger_epoch()
             except StopTraining:
                 logger.info("Training was stopped.")
+            except:
+                raise
             finally:
                 callbacks.after_train()
                 self.coord.request_stop()
