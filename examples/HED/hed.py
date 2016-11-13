@@ -160,7 +160,6 @@ def get_config():
     dataset_train = get_data('train')
     step_per_epoch = dataset_train.size() * 40
     dataset_val = get_data('val')
-    #dataset_test = get_data('test')
 
     lr = tf.Variable(3e-5, trainable=False, name='learning_rate')
     tf.scalar_summary('learning_rate', lr)
@@ -169,8 +168,7 @@ def get_config():
         dataset=dataset_train,
         optimizer=tf.train.AdamOptimizer(lr, epsilon=1e-3),
         callbacks=Callbacks([
-            StatPrinter(),
-            ModelSaver(),
+            StatPrinter(), ModelSaver(),
             ScheduledHyperParamSetter('learning_rate', [(30, 6e-6), (45, 1e-6), (60, 8e-7)]),
             HumanHyperParamSetter('learning_rate'),
             InferenceRunner(dataset_val,

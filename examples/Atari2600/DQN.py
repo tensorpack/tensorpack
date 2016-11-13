@@ -23,9 +23,6 @@ import common
 from common import play_model, Evaluator, eval_model_multithread
 from atari import AtariPlayer
 
-
-METHOD = ['DQN', 'Double', 'Dueling'][1]
-
 BATCH_SIZE = 64
 IMAGE_SIZE = (84, 84)
 FRAME_HISTORY = 4
@@ -48,6 +45,7 @@ EVAL_EPISODE = 50
 
 NUM_ACTIONS = None
 ROM_FILE = None
+METHOD = None
 
 def get_player(viz=False, train=False):
     pl = AtariPlayer(ROM_FILE, frame_skip=ACTION_REPEAT,
@@ -123,7 +121,8 @@ class Model(ModelDesc):
 
         target = reward + (1.0 - tf.cast(isOver, tf.float32)) * GAMMA * tf.stop_gradient(best_v)
 
-        self.cost = tf.truediv(symbf.huber_loss(target - pred_action_value), BATCH_SIZE, name='cost')
+        self.cost = tf.truediv(symbf.huber_loss(target - pred_action_value),
+                               tf.cast(BATCH_SIZE, tf.float32), name='cost')
         summary.add_param_summary([('conv.*/W', ['histogram', 'rms']),
                                    ('fc.*/W', ['histogram', 'rms']) ])   # monitor all W
 
@@ -188,6 +187,8 @@ if __name__ == '__main__':
     parser.add_argument('--task', help='task to perform',
             choices=['play', 'eval', 'train'], default='train')
     parser.add_argument('--rom', help='atari rom', required=True)
+    parser.add_argument('--algo', help='algorithm',
+            choices=['DQN', 'Double', 'Dueling'], default='Double')
     args = parser.parse_args()
 
     if args.gpu:
@@ -195,6 +196,7 @@ if __name__ == '__main__':
     if args.task != 'train':
         assert args.load is not None
     ROM_FILE = args.rom
+    METHOD = args.algo
 
     if args.task != 'train':
         cfg = PredictConfig(

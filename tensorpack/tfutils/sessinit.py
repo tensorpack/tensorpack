@@ -159,7 +159,7 @@ class ParamRestore(SessionInit):
         logger.info("Params to restore: {}".format(
             ', '.join(map(str, intersect))))
         for k in variable_names - param_names:
-            if not is_training_specific_name(k):
+            if not is_training_name(k):
                 logger.warn("Variable {} in the graph not found in the dict!".format(k))
         for k in param_names - variable_names:
             logger.warn("Variable {} in the dict not found in the graph!".format(k))

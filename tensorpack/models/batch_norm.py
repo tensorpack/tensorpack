@@ -59,9 +59,10 @@ def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
     ctx = get_current_tower_context()
     if use_local_stat is None:
         use_local_stat = ctx.is_training
-    assert use_local_stat == ctx.is_training
+    if use_local_stat != ctx.is_training:
+        logger.warn("[BatchNorm] use_local_stat != is_training")
 
-    if ctx.is_training:
+    if use_local_stat:
         # training tower
         with tf.name_scope(None): # https://github.com/tensorflow/tensorflow/issues/2740
             ema = tf.train.ExponentialMovingAverage(decay=decay, name=emaname)
@@ -72,7 +73,6 @@ def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
                 tf.add_to_collection(EXTRA_SAVE_VARS_KEY, ema_mean)
                 tf.add_to_collection(EXTRA_SAVE_VARS_KEY, ema_var)
     else:
-        assert not use_local_stat
         if ctx.is_main_tower:
             # not training, but main tower. need to create the vars
             with tf.name_scope(None):

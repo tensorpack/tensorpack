@@ -8,7 +8,7 @@ Training examples with __reproducible__ and meaningful performance.
 + [Inception-BN with 71% accuracy](Inception/inception-bn.py)
 + [InceptionV3 with 74% accuracy (similar to the official code)](Inception/inceptionv3.py)
 + [DoReFa-Net: binary / low-bitwidth CNN on ImageNet](DoReFa-Net)
-+ [ResNet for Cifar10 and SVHN](ResNet)
++ [ResNet for ImageNet/Cifar10/SVHN](ResNet)
 + [Holistically-Nested Edge Detection](HED)
 + [Spatial Transformer Networks on MNIST addition](SpatialTransformer)
 + [DisturbLabel, because I don't believe the paper](DisturbLabel)

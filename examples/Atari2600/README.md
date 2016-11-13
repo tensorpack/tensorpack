@@ -2,7 +2,7 @@
 
 [video demo](https://youtu.be/o21mddZtE5Y)
 
-Reproduce the following reinforcement learning papers:
+Reproduce the following reinforcement learning methods:
 
 + Nature-DQN in:
 [Human-level Control Through Deep Reinforcement Learning](http://www.nature.com/nature/journal/v518/n7540/full/nature14236.html)
@@ -29,12 +29,13 @@ D-DQN is faster at the beginning but will converge to 12it/s due of exploration 
 
 ## How to use
 
-Download [atari roms](https://github.com/openai/atari-py/tree/master/atari_py/atari_roms) to
-`$TENSORPACK_DATASET/atari_rom` (defaults to tensorpack/dataflow/dataset/atari_rom).
+Download an [atari rom](https://github.com/openai/atari-py/tree/master/atari_py/atari_roms) to
+`$TENSORPACK_DATASET/atari_rom/` (defaults to tensorpack/dataflow/dataset/atari_rom/).
 
 To train:
 ```
-./DQN.py --rom breakout.bin --gpu 0
+./DQN.py --rom breakout.bin
+# use `--algo` to select other DQN algorithms
 ```
 
 To visualize the agent:
