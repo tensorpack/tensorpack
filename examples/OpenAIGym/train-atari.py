@@ -242,16 +242,23 @@ if __name__ == '__main__':
         elif args.task == 'eval':
             eval_model_multithread(cfg, EVAL_EPISODE)
     else:
-        nr_gpu = get_nr_gpu()
-        if nr_gpu > 1:
-            predict_tower = range(nr_gpu)[-nr_gpu/2:]
+        if args.gpu:
+            nr_gpu = get_nr_gpu()
+            if nr_gpu > 1:
+                predict_tower = range(nr_gpu)[-nr_gpu/2:]
+            else:
+                predict_tower = [0]
+            PREDICTOR_THREAD = len(predict_tower) * PREDICTOR_THREAD_PER_GPU
+            train_tower = range(nr_gpu)[:-nr_gpu/2] or [0]
+            logger.info("[BA3C] Train on gpu {} and infer on gpu {}".format(
+                ','.join(map(str, train_tower)), ','.join(map(str, predict_tower))))
         else:
+            nr_gpu = 0
+            PREDICTOR_THREAD = 1
             predict_tower = [0]
-        PREDICTOR_THREAD = len(predict_tower) * PREDICTOR_THREAD_PER_GPU
+            train_tower = [0]
         config = get_config()
         if args.load:
             config.session_init = SaverRestore(args.load)
-        config.tower = range(nr_gpu)[:-nr_gpu/2] or [0]
-        logger.info("[BA3C] Train on gpu {} and infer on gpu {}".format(
-            ','.join(map(str, config.tower)), ','.join(map(str, predict_tower))))
+        config.tower = train_tower
         AsyncMultiGPUTrainer(config, predict_tower=predict_tower).train()

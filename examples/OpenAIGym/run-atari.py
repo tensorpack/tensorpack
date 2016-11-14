@@ -69,7 +69,7 @@ def run_submission(cfg, output, nr):
         if k != 0:
             player.restart_episode()
         score = play_one_episode(player, predfunc)
-        print("Total:", score)
+        print("Score:", score)
 
 def do_submit(output):
     gym.upload(output, api_key='xxx')
