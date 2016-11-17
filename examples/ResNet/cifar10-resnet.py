@@ -142,9 +142,7 @@ def get_config():
     step_per_epoch = dataset_train.size()
     dataset_test = get_data('test')
 
-    lr = tf.Variable(0.01, trainable=False, name='learning_rate')
-    tf.scalar_summary('learning_rate', lr)
-
+    lr = get_scalar_var('learning_rate', 0.01, summary=True)
     return TrainConfig(
         dataset=dataset_train,
         optimizer=tf.train.MomentumOptimizer(lr, 0.9),
@@ -155,7 +153,6 @@ def get_config():
             ScheduledHyperParamSetter('learning_rate',
                                       [(1, 0.1), (82, 0.01), (123, 0.001), (300, 0.0002)])
         ]),
-        session_config=get_default_sess_config(0.9),
         model=Model(n=18),
         step_per_epoch=step_per_epoch,
         max_epoch=400,

@@ -87,9 +87,9 @@ class OfflinePredictor(OnlinePredictor):
     def __init__(self, config):
         self.graph = tf.Graph()
         with self.graph.as_default():
-            input_vars = config.model.get_input_vars()
+            input_placehdrs = config.model.get_input_vars()
             with TowerContext('', False):
-                config.model.build_graph(input_vars)
+                config.model.build_graph(input_placehdrs)
 
             input_vars = get_tensors_by_names(config.input_names)
             output_vars = get_tensors_by_names(config.output_names)

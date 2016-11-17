@@ -188,9 +188,7 @@ def get_config():
     master = MySimulatorMaster(namec2s, names2c, M)
     dataflow = BatchData(DataFromQueue(master.queue), BATCH_SIZE)
 
-    lr = tf.Variable(0.001, trainable=False, name='learning_rate')
-    tf.scalar_summary('learning_rate', lr)
-
+    lr = symbf.get_scalar_var('learning_rate', 0.001, summary=True)
     return TrainConfig(
         dataset=dataflow,
         optimizer=tf.train.AdamOptimizer(lr, epsilon=1e-3),
@@ -200,9 +198,6 @@ def get_config():
             ScheduledHyperParamSetter('entropy_beta', [(80, 0.005)]),
             ScheduledHyperParamSetter('explore_factor',
                 [(80, 2), (100, 3), (120, 4), (140, 5)]),
-            HumanHyperParamSetter('learning_rate'),
-            HumanHyperParamSetter('entropy_beta'),
-            HumanHyperParamSetter('explore_factor'),
             master,
             StartProcOrThread(master),
             PeriodicCallback(Evaluator(EVAL_EPISODE, ['state'], ['logits']), 2),

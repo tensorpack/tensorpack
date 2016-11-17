@@ -112,8 +112,7 @@ def get_config():
     ds = BatchData(ds, param.batch_size)
     step_per_epoch = ds.size()
 
-    lr = tf.Variable(2e-3, trainable=False, name='learning_rate')
-    tf.scalar_summary('learning_rate', lr)
+    lr = symbolic_functions.get_scalar_var('learning_rate', 2e-3, summary=True)
 
     return TrainConfig(
         dataset=ds,

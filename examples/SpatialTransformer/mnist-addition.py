@@ -144,8 +144,7 @@ def get_config():
     dataset_train, dataset_test = get_data(True), get_data(False)
     step_per_epoch = dataset_train.size() * 5
 
-    lr = symbolic_functions.get_scalar_var('learning_rate', 5e-4)
-    tf.scalar_summary('learning_rate', lr)
+    lr = symbf.get_scalar_var('learning_rate', 5e-4, summary=True)
 
     return TrainConfig(
         dataset=dataset_train,

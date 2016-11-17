@@ -152,9 +152,7 @@ def get_config():
     step_per_epoch = 5000
     dataset_val = get_data('val')
 
-    lr = tf.Variable(0.045, trainable=False, name='learning_rate')
-    tf.scalar_summary('learning_rate', lr)
-
+    lr = get_scalar_var('learning_rate', 0.045, summary=True)
     return TrainConfig(
         dataset=dataset_train,
         optimizer=tf.train.MomentumOptimizer(lr, 0.9),

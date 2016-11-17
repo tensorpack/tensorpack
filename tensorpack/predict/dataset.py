@@ -56,7 +56,11 @@ class SimpleDatasetPredictor(DatasetPredictorBase):
 
     def get_result(self):
         """ A generator to produce prediction for each data"""
-        with tqdm(total=self.dataset.size()) as pbar:
+        try:
+            sz = self.dataset.size()
+        except NotImplementedError:
+            sz = 0
+        with tqdm(total=sz) as pbar:
             for dp in self.dataset.get_data():
                 res = self.predictor(dp)
                 yield res
@@ -111,7 +115,11 @@ class MultiProcessDatasetPredictor(DatasetPredictorBase):
         ensure_proc_terminate(self.workers + [self.result_queue, self.inqueue_proc])
 
     def get_result(self):
-        with tqdm(total=self.dataset.size()) as pbar:
+        try:
+            sz = self.dataset.size()
+        except NotImplementedError:
+            sz = 0
+        with tqdm(total=sz) as pbar:
             die_cnt = 0
             while True:
                 res = self.result_queue.get()

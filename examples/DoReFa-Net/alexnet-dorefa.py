@@ -219,8 +219,7 @@ def get_config():
     data_train = get_data('train')
     data_test = get_data('val')
 
-    lr = tf.Variable(1e-4, trainable=False, name='learning_rate')
-    tf.scalar_summary('learning_rate', lr)
+    lr = get_scalar_var('learning_rate', 1e-4, summary=True)
 
     return TrainConfig(
         dataset=data_train,

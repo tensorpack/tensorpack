@@ -158,8 +158,7 @@ def get_config():
             reward_clip=(-1, 1),
             history_len=FRAME_HISTORY)
 
-    lr = tf.Variable(0.001, trainable=False, name='learning_rate')
-    tf.scalar_summary('learning_rate', lr)
+    lr = symbf.get_scalar_var('learning_rate', 1e-3, summary=True)
 
     return TrainConfig(
         dataset=dataset_train,

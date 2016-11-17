@@ -110,9 +110,7 @@ def get_config(cifar_classnum):
 
     sess_config = get_default_sess_config(0.5)
 
-    lr = tf.Variable(1e-2, name='learning_rate',
-            dtype=tf.float32, trainable=False)
-    tf.scalar_summary('learning_rate', lr)
+    lr = symbf.get_scalar_var('learning_rate', 1e-2, summary=True)
     def lr_func(lr):
         if lr < 3e-5:
             raise StopTraining()

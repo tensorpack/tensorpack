@@ -258,9 +258,7 @@ def get_config():
     dataset_train = get_data('train')
     dataset_val = get_data('val')
 
-    lr = tf.Variable(0.045, trainable=False, name='learning_rate')
-    tf.scalar_summary('learning_rate', lr)
-
+    lr = get_scalar_var('learning_rate', 0.045, summary=True)
     return TrainConfig(
         dataset=dataset_train,
         optimizer=tf.train.AdamOptimizer(lr, epsilon=1e-3),

@@ -21,12 +21,12 @@ __all__ = ['get_default_sess_config',
            'clear_collection',
            'freeze_collection']
 
-def get_default_sess_config(mem_fraction=0.9):
+def get_default_sess_config(mem_fraction=0.99):
     """
     Return a better session config to use as default.
     Tensorflow default session config consume too much resources.
 
-    :param mem_fraction: fraction of memory to use.
+    :param mem_fraction: fraction of memory to use. default to 0.99
     :returns: a `tf.ConfigProto` object.
     """
     conf = tf.ConfigProto()

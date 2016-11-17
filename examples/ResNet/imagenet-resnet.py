@@ -19,7 +19,7 @@ from tensorpack.tfutils.summary import *
 
 """
 Training code of Pre-Activation version of ResNet on ImageNet.
-Mainly follow the setup in fb.resnet.torch
+It mainly follows the setup in fb.resnet.torch, and get similar performance.
 """
 
 TOTAL_BATCH_SIZE = 256
@@ -116,8 +116,7 @@ class Model(ModelDesc):
         wrong = prediction_incorrect(logits, label, 5, name='wrong-top5')
         add_moving_summary(tf.reduce_mean(wrong, name='train-error-top5'))
 
-        wd_w = 1e-4
-        wd_cost = tf.mul(wd_w, regularize_cost('.*/W', tf.nn.l2_loss), name='l2_regularize_loss')
+        wd_cost = tf.mul(1e-4, regularize_cost('.*/W', tf.nn.l2_loss), name='l2_regularize_loss')
         add_moving_summary(loss, wd_cost)
         self.cost = tf.add_n([loss, wd_cost], name='cost')
 
@@ -186,11 +185,7 @@ def get_config():
     dataset_train = get_data('train')
     dataset_val = get_data('val')
 
-    sess_config = get_default_sess_config(0.99)
-
-    lr = tf.Variable(0.1, trainable=False, name='learning_rate')
-    tf.scalar_summary('learning_rate', lr)
-
+    lr = get_scalar_var('learning_rate', 0.1, summary=True)
     return TrainConfig(
         dataset=dataset_train,
         optimizer=tf.train.MomentumOptimizer(lr, 0.9, use_nesterov=True),
@@ -203,7 +198,6 @@ def get_config():
                               [(30, 1e-2), (60, 1e-3), (85, 1e-4), (95, 1e-5)]),
             HumanHyperParamSetter('learning_rate'),
         ]),
-        session_config=sess_config,
         model=Model(),
         step_per_epoch=5000,
         max_epoch=110,

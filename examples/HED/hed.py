@@ -162,9 +162,7 @@ def get_config():
     step_per_epoch = dataset_train.size() * 40
     dataset_val = get_data('val')
 
-    lr = tf.Variable(3e-5, trainable=False, name='learning_rate')
-    tf.scalar_summary('learning_rate', lr)
-
+    lr = get_scalar_var('learning_rate', 3e-5, summary=True)
     return TrainConfig(
         dataset=dataset_train,
         optimizer=tf.train.AdamOptimizer(lr, epsilon=1e-3),

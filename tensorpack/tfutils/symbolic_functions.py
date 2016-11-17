@@ -104,7 +104,14 @@ def huber_loss(x, delta=1, name='huber_loss'):
                 abscost * delta - 0.5 * delta ** 2),
             name=name)
 
-def get_scalar_var(name, init_value):
-    return tf.get_variable(name, shape=[],
+def get_scalar_var(name, init_value, summary=False, trainable=False):
+    """
+    get a scalar variable with certain initial value
+    :param summary: summary this variable
+    """
+    ret = tf.get_variable(name, shape=[],
             initializer=tf.constant_initializer(init_value),
-            trainable=False)
+            trainable=trainable)
+    if summary:
+        tf.scalar_summary(name, ret)
+    return ret
