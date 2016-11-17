@@ -5,14 +5,14 @@
 import numpy as np
 import cv2
 import copy
-from .base import DataFlow, ProxyDataFlow
+from .base import RNGDataFlow, DataFlow, ProxyDataFlow
 from .common import MapDataComponent, MapData
 from .imgaug import AugmentorList
 
 __all__ = ['ImageFromFile', 'AugmentImageComponent', 'AugmentImageComponents']
 
-class ImageFromFile(DataFlow):
-    def __init__(self, files, channel=3, resize=None):
+class ImageFromFile(RNGDataFlow):
+    def __init__(self, files, channel=3, resize=None, shuffle=False):
         """
         Generate rgb images from list of files
         :param files: list of file paths
@@ -23,11 +23,14 @@ class ImageFromFile(DataFlow):
         self.files = files
         self.channel = int(channel)
         self.resize = resize
+        self.shuffle = shuffle
 
     def size(self):
         return len(self.files)
 
     def get_data(self):
+        if self.shuffle:
+            self.rng.shuffle(self.files)
         for f in self.files:
             im = cv2.imread(
                 f, cv2.IMREAD_GRAYSCALE if self.channel == 1 else cv2.IMREAD_COLOR)
