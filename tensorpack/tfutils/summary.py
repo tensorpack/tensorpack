@@ -7,6 +7,7 @@ import tensorflow as tf
 import re
 
 from ..utils.argtools import memoized
+from ..utils.naming import *
 from .tower import get_current_tower_context
 from . import get_global_step_var
 from .symbolic_functions import rms
