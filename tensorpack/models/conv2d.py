@@ -7,7 +7,8 @@ import numpy as np
 import tensorflow as tf
 import math
 from ._common import layer_register, shape2d, shape4d
-from ..utils import map_arg, logger
+from ..utils import logger
+from ..utils.argtools import shape2d
 
 __all__ = ['Conv2D', 'Deconv2D']
 

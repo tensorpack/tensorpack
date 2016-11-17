@@ -4,6 +4,7 @@
 
 from .base import ImageAugmentor
 from ...utils.rect import Rect
+from ...utils.argtools import shape2d
 
 from six.moves import range
 import numpy as np
@@ -17,6 +18,7 @@ class RandomCrop(ImageAugmentor):
         """
         :param crop_shape: a shape like (h, w)
         """
+        crop_shape = shape2d(crop_shape)
         super(RandomCrop, self).__init__()
         self._init(locals())
 
@@ -43,6 +45,7 @@ class CenterCrop(ImageAugmentor):
         """
         :param crop_shape: a shape like (h, w)
         """
+        crop_shape = shape2d(crop_shape)
         self._init(locals())
 
     def _augment(self, img, _):

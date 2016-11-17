@@ -4,15 +4,19 @@
 # Credit: zxytim
 
 import numpy as np
+import os, sys
 import io
 import cv2
+from .fs import mkdir_p
+from .argtools import shape2d
 
 try:
     import matplotlib.pyplot as plt
 except ImportError:
     pass
 
-__all__ = ['pyplot2img', 'build_patch_list', 'pyplot_viz']
+__all__ = ['pyplot2img', 'build_patch_list', 'pyplot_viz',
+        'dump_dataflow_images']
 
 def pyplot2img(plt):
     buf = io.BytesIO()
@@ -46,6 +50,7 @@ def build_patch_list(patch_list,
         max_width=1000, max_height=1000,
         shuffle=False, bgcolor=255):
     """
+    This is a generator.
     patch_list: bhw or bhwc
     """
     patch_list = np.asarray(patch_list)
@@ -87,6 +92,53 @@ def build_patch_list(patch_list,
         draw_patch(cur_list)
         yield canvas
         start = end
+
+def dump_dataflow_images(df, index=0, batched=True,
+        number=300, output_dir=None,
+        scale=1, resize=None, viz=None, flipRGB=False, exit_after=True):
+    if output_dir:
+        mkdir_p(output_dir)
+    if viz is not None:
+        viz = shape2d(viz)
+        vizsize = viz[0] * viz[1]
+    if resize is not None:
+        resize = tuple(shape2d(resize))
+    vizlist = []
+
+    df.reset_state()
+    cnt = 0
+    while True:
+        for dp in df.get_data():
+            if not batched:
+                imgbatch = [dp[index]]
+            else:
+                imgbatch = dp[index]
+            for img in imgbatch:
+                cnt += 1
+                if cnt == number:
+                    if exit_after:
+                        sys.exit()
+                    else:
+                        return
+                if scale != 1:
+                    img = img * scale
+                if resize is not None:
+                    img = cv2.resize(img, resize)
+                if flipRGB:
+                    img = img[:,:,::-1]
+                if output_dir:
+                    fname = os.path.join(output_dir, '{:03d}.jpg'.format(cnt))
+                    cv2.imwrite(fname, img)
+                if viz is not None:
+                    vizlist.append(img)
+            if viz is not None and len(vizlist) >= vizsize:
+                patch = next(build_patch_list(
+                    vizlist[:vizsize],
+                    nr_row=viz[0], nr_col=viz[1]))
+                cv2.imshow("df-viz", patch)
+                cv2.waitKey()
+                vizlist = vizlist[vizsize:]
+
 
 if __name__ == '__main__':
     import cv2

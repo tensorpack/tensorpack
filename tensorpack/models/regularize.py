@@ -6,7 +6,7 @@ import tensorflow as tf
 import re
 
 from ..utils import logger
-from ..utils.utils import memoized
+from ..utils.argtools import memoized
 from ..tfutils.tower import get_current_tower_context
 from ._common import layer_register
 

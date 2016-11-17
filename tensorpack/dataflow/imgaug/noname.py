@@ -4,6 +4,7 @@
 
 from .base import ImageAugmentor
 from ...utils import logger
+from ...utils.argtools import shape2d
 import numpy as np
 import cv2
 
@@ -50,6 +51,7 @@ class Resize(ImageAugmentor):
         """
         :param shape: shape in (h, w)
         """
+        shape = tuple(shape2d(shape))
         self._init(locals())
 
     def _augment(self, img, _):

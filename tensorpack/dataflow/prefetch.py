@@ -164,6 +164,7 @@ class PrefetchDataZMQ(ProxyDataFlow):
         for x in self.procs:
             x.terminate()
         try:
+            # TODO test if logger here would overwrite log file
             print("Prefetch process exited.")
         except:
             pass

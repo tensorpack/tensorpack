@@ -9,16 +9,13 @@ import numpy as np
 from six.moves import range
 import xml.etree.ElementTree as ET
 
-from ...utils import logger, get_rng, get_dataset_path, memoized
+from ...utils import logger, get_rng, get_dataset_path
 from ...utils.loadcaffe import get_caffe_pb
 from ...utils.fs import mkdir_p, download
 from ...utils.timer import timed_operation
 from ..base import RNGDataFlow
 
 __all__ = ['ILSVRCMeta', 'ILSVRC12']
-
-@memoized
-def log_once(s): logger.warn(s)
 
 CAFFE_ILSVRC12_URL = "http://dl.caffe.berkeleyvision.org/caffe_ilsvrc12.tar.gz"
 

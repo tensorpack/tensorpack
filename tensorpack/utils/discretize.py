@@ -3,7 +3,8 @@
 # File: discretize.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-from . import logger, memoized
+from . import logger
+from .argtools import memoized
 from abc import abstractmethod, ABCMeta
 import numpy as np
 from six.moves import range

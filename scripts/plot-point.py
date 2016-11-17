@@ -108,7 +108,7 @@ def annotate_min_max(data_x, data_y, ax):
     x_max, y_max = data_y[0], data_y[0]
     x_min, y_min = data_x[0], data_y[0]
 
-    for i in xrange(1, len(data_x)):
+    for i in range(1, len(data_x)):
         if data_y[i] > y_max:
             y_max = data_y[i]
             x_max = data_x[i]

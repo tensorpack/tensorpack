@@ -5,7 +5,8 @@
 import tensorflow as tf
 import numpy as np
 
-from ._common import layer_register, shape2d, shape4d
+from ._common import layer_register, shape4d
+from ..utils.argtools import shape2d
 from ..tfutils import symbolic_functions as symbf
 
 __all__ = ['MaxPooling', 'FixedUnPooling', 'AvgPooling', 'GlobalAvgPooling',

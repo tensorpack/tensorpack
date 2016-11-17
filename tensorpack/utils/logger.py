@@ -10,8 +10,6 @@ from datetime import datetime
 from six.moves import input
 import sys
 
-from .utils import memoized
-
 __all__ = []
 
 class _MyFormatter(logging.Formatter):
