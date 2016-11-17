@@ -59,10 +59,9 @@ class Trainer(object):
         """ run an iteration"""
         pass
 
-    @abstractmethod
     def get_predict_func(self, input_names, output_names):
         """ return a online predictor"""
-        pass
+        raise NotImplementedError()
 
     def get_predict_funcs(self, input_names, output_names, n):
         """ return n predictor functions.

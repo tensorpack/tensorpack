@@ -101,6 +101,7 @@ def add_moving_summary(v, *args):
         assert x.get_shape().ndims == 0
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, x)
 
+@memoized
 def summary_moving_average(tensors=None):
     """
     Create a MovingAverage op and summary for tensors
