@@ -107,9 +107,9 @@ class CheckGradient(MapGradient):
         super(CheckGradient, self).__init__(self._mapper)
 
     def _mapper(self, grad, var):
-        # this is very slow...
+        # this is very slow.... see #3649
         #op = tf.Assert(tf.reduce_all(tf.is_finite(var)), [var], summarize=100)
-        grad = tf.check_numerics(grad, 'CheckGradient')
+        grad = tf.check_numerics(grad, 'CheckGradient-' + var.op.name)
         return grad
 
 class ScaleGradient(MapGradient):

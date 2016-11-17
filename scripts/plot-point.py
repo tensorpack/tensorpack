@@ -250,7 +250,7 @@ def main():
         fin.close()
 
     # parse column format
-    nr_column = len(all_inputs[0].rstrip().split())
+    nr_column = len(all_inputs[0].rstrip().split(args.delimeter))
     if args.column is None:
         column = ['y'] * nr_column
     else:

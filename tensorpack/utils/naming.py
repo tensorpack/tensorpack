@@ -11,9 +11,6 @@ MOVING_SUMMARY_VARS_KEY = 'MOVING_SUMMARY_VARIABLES'
 # placeholders for input variables
 INPUT_VARS_KEY = 'INPUT_VARIABLES'
 
-# variables that need to be saved for inference, apart from trainable variables
-EXTRA_SAVE_VARS_KEY = 'EXTRA_SAVE_VARIABLES'
-
 import tensorflow as tf
 SUMMARY_BACKUP_KEYS = [tf.GraphKeys.SUMMARIES, MOVING_SUMMARY_VARS_KEY]
 

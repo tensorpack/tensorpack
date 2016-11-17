@@ -76,7 +76,9 @@ def dump_session_params(path):
     npy format, loadable by ParamRestore
     """
     var = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
-    var.extend(tf.get_collection(EXTRA_SAVE_VARS_KEY))
+    var.extend(tf.get_collection(tf.GraphKeys.MODEL_VARIABLES))
+    # TODO dedup
+    assert len(set(var)) == len(var), "TRAINABLE and MODEL variables have duplication!"
     result = {}
     for v in var:
         name = get_savename_from_varname(v.name)
@@ -102,7 +104,7 @@ def is_training_name(name):
     This is only used to improve logging.
     :returns: guess whether this tensor is something only used in training.
     """
-    # TODO: maybe simply check against TRAINABLE_VARIABLES and EXTRA_SAVE_VARS_KEY ?
+    # TODO: maybe simply check against TRAINABLE_VARIABLES and MODEL_VARIABLES?
     # TODO or use get_slot_names()
     name = get_op_tensor_name(name)[0]
     if name.endswith('/Adam') or name.endswith('/Adam_1'):

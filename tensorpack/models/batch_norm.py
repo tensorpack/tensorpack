@@ -4,16 +4,16 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
+from tensorflow.contrib.framework import add_model_variable
 from copy import copy
 import re
 
 from ..tfutils.tower import get_current_tower_context
-from ..utils import logger, EXTRA_SAVE_VARS_KEY
+from ..utils import logger
 from ._common import layer_register
 
 __all__ = ['BatchNorm']
 
-# http://stackoverflow.com/questions/33949786/how-could-i-use-batch-normalization-in-tensorflow
 # TF batch_norm only works for 4D tensor right now: #804
 # decay: being too close to 1 leads to slow start-up. torch use 0.9.
 # eps: torch: 1e-5. Lasagne: 1e-4
@@ -25,15 +25,10 @@ def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
     `Batch Normalization: Accelerating Deep Network Training by
     Reducing Internal Covariance Shift <http://arxiv.org/abs/1502.03167>`_.
 
-    Notes:
-
-    * Whole-population mean/variance is calculated by a running-average mean/variance.
-    * Epsilon for variance is set to 1e-5, as is `torch/nn <https://github.com/torch/nn/blob/master/BatchNormalization.lua>`_.
-
     :param input: a NHWC or NC tensor
     :param use_local_stat: bool. whether to use mean/var of this batch or the moving average.
-        Default to True in training and False in predicting.
-    :param decay: decay rate. default to 0.999.
+        Default to True in training and False in inference.
+    :param decay: decay rate. default to 0.9.
     :param epsilon: default to 1e-5.
     """
 
@@ -70,8 +65,8 @@ def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
             ema_mean, ema_var = ema.average(batch_mean), ema.average(batch_var)
             if ctx.is_main_training_tower:
                 # inside main training tower
-                tf.add_to_collection(EXTRA_SAVE_VARS_KEY, ema_mean)
-                tf.add_to_collection(EXTRA_SAVE_VARS_KEY, ema_var)
+                add_model_variable(ema_mean)
+                add_model_variable(ema_var)
     else:
         if ctx.is_main_tower:
             # not training, but main tower. need to create the vars
@@ -98,7 +93,7 @@ def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
             mul = tf.select(tf.equal(batch, 1.0), 1.0, batch / (batch - 1))
             batch_var = batch_var * mul  # use unbiased variance estimator in training
             return tf.nn.batch_normalization(
-                x, batch_mean, batch_var, beta, gamma, epsilon, 'bn')
+                x, batch_mean, batch_var, beta, gamma, epsilon, 'output')
     else:
         return tf.nn.batch_normalization(
-            x, ema_mean, ema_var, beta, gamma, epsilon, 'bn')
+            x, ema_mean, ema_var, beta, gamma, epsilon, 'output')

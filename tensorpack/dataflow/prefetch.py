@@ -2,6 +2,7 @@
 # File: prefetch.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
+from __future__ import print_function
 import multiprocessing as mp
 from threading import Thread
 import itertools
@@ -158,16 +159,12 @@ class PrefetchDataZMQ(ProxyDataFlow):
 
     def __del__(self):
         # on exit, logger may not be functional anymore
-        try:
-            logger.info("Prefetch process exiting...")
-        except:
-            pass
         if not self.context.closed:
             self.context.destroy(0)
         for x in self.procs:
             x.terminate()
         try:
-            logger.info("Prefetch process exited.")
+            print("Prefetch process exited.")
         except:
             pass
 

@@ -8,6 +8,7 @@ More results to come.
 | Model              | Top 5 Error | Top 1 Error |
 |:-------------------|-------------|------------:|
 | ResNet 18          |      10.67% |      29.50% |
+| ResNet 34          |      8.66%  |      26.45% |
 | ResNet 50          |      7.13%  |      24.12% |
 
 ## load-resnet.py
