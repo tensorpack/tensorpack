@@ -14,7 +14,7 @@ __all__ = ['ImageFromFile', 'AugmentImageComponent', 'AugmentImageComponents']
 class ImageFromFile(RNGDataFlow):
     def __init__(self, files, channel=3, resize=None, shuffle=False):
         """
-        Generate rgb images from list of files
+        Generate RGB images from list of files
         :param files: list of file paths
         :param channel: 1 or 3 channel
         :param resize: a (h, w) tuple. If given, will force a resize

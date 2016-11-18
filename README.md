@@ -7,10 +7,11 @@ See some [examples](examples) to learn about the framework.
 You can actually train them and reproduce the performance... not just to see how to write code.
 
 + [DoReFa-Net: training binary / low bitwidth CNN](examples/DoReFa-Net)
-+ [InceptionV3 on ImageNet](examples/Inception/inceptionv3.py)
 + [ResNet for ImageNet/Cifar10/SVHN classification](examples/ResNet)
++ [InceptionV3 on ImageNet](examples/Inception/inceptionv3.py)
 + [Fully-convolutional Network for Holistically-Nested Edge Detection](examples/HED)
 + [Spatial Transformer Networks on MNIST addition](examples/SpatialTransformer)
++ [Generative Adversarial Networks](examples/GAN)
 + [Double DQN plays Atari games](examples/Atari2600)
 + [Asynchronous Advantage Actor-Critic(A3C) with demos on OpenAI Gym Atari games](examples/OpenAIGym)
 + [char-rnn language model](examples/char-rnn)

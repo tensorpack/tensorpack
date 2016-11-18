@@ -170,7 +170,7 @@ def sample(path, start, length):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.') # nargs='*' in multi mode
+    parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
     parser.add_argument('--load', help='load model')
     subparsers = parser.add_subparsers(title='command', dest='command')
     parser_sample = subparsers.add_parser('sample', help='sample a trained model')

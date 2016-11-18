@@ -170,7 +170,7 @@ def get_config():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gpu', help='the GPU to use') # nargs='*' in multi mode
+    parser.add_argument('--gpu', help='the GPU to use')
     parser.add_argument('--load', help='load a checkpoint')
     parser.add_argument('--dorefa',
             help='number of bits for W,A,G, separated by comma. Defaults to \'1,2,4\'',

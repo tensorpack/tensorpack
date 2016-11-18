@@ -46,12 +46,13 @@ def minnone(x, y):
     return min(x, y)
 
 def build_patch_list(patch_list,
-        nr_row=None, nr_col=None, border=5,
+        nr_row=None, nr_col=None, border=None,
         max_width=1000, max_height=1000,
         shuffle=False, bgcolor=255):
     """
     This is a generator.
     patch_list: bhw or bhwc
+    :param border: defaults to 0.1 * max(image_width, image_height)
     """
     patch_list = np.asarray(patch_list)
     if patch_list.ndim == 3:
@@ -60,6 +61,8 @@ def build_patch_list(patch_list,
     if shuffle:
         np.random.shuffle(patch_list)
     ph, pw = patch_list.shape[1:3]
+    if border is None:
+        border = int(0.1 * max(ph, pw))
     mh, mw = max(max_height, ph + border), max(max_width, pw + border)
     if nr_row is None:
         nr_row = minnone(nr_row, max_height / (ph + border))

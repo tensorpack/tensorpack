@@ -76,7 +76,7 @@ def do_submit(output):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.') # nargs='*' in multi mode
+    parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
     parser.add_argument('--load', help='load model', required=True)
     parser.add_argument('--env', help='environment name', required=True)
     parser.add_argument('--episode', help='number of episodes to run',
