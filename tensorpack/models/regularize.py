@@ -40,8 +40,8 @@ def regularize_cost(regex, func, name=None):
 
 
 @layer_register(log_shape=False)
-def Dropout(x, prob=0.5):
+def Dropout(x, keep_prob=0.5):
     is_training = get_current_tower_context().is_training
-    keep_prob = tf.constant(prob if is_training else 1.0)
+    keep_prob = tf.constant(keep_prob if is_training else 1.0)
     return tf.nn.dropout(x, keep_prob)
 

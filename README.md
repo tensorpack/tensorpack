@@ -12,8 +12,8 @@ You can actually train them and reproduce the performance... not just to see how
 + [Fully-convolutional Network for Holistically-Nested Edge Detection](examples/HED)
 + [Spatial Transformer Networks on MNIST addition](examples/SpatialTransformer)
 + [Generative Adversarial Networks](examples/GAN)
-+ [Double DQN plays Atari games](examples/Atari2600)
-+ [Asynchronous Advantage Actor-Critic(A3C) with demos on OpenAI Gym Atari games](examples/OpenAIGym)
++ [DQN variants on Atari games](examples/Atari2600)
++ [Asynchronous Advantage Actor-Critic(A3C) with demos on OpenAI Gym](examples/OpenAIGym)
 + [char-rnn language model](examples/char-rnn)
 
 ## Features:

@@ -98,7 +98,20 @@ def build_patch_list(patch_list,
 
 def dump_dataflow_images(df, index=0, batched=True,
         number=300, output_dir=None,
-        scale=1, resize=None, viz=None, flipRGB=False, exit_after=True):
+        scale=1, resize=None, viz=None,
+        flipRGB=False, exit_after=True):
+    """
+    :param df: a DataFlow
+    :param index: the index of the image component
+    :param batched: whether the component contains batched images or not
+    :param number: how many datapoint to take from the DataFlow
+    :param output_dir: output directory to save images, default to not save.
+    :param scale: scale the value, usually either 1 or 255
+    :param resize: (h, w) or Nne, resize the images
+    :param viz: (h, w) or None, visualize the images in grid with imshow
+    :param flipRGB: apply a RGB<->BGR conversion or not
+    :param exit_after: exit the process after this function
+    """
     if output_dir:
         mkdir_p(output_dir)
     if viz is not None:

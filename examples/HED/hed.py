@@ -70,7 +70,7 @@ class Model(ModelDesc):
         costs = []
         for idx, b in enumerate([b1, b2, b3, b4, b5, final_map]):
             output = tf.nn.sigmoid(b, name='output{}'.format(idx+1))
-            xentropy = class_balanced_sigmoid_binary_class_cross_entropy(
+            xentropy = class_balanced_sigmoid_cross_entropy(
                 b, edgemap,
                 name='xentropy{}'.format(idx+1))
             costs.append(xentropy)

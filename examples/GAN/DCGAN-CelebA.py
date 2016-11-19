@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File: celebA.py
+# File: DCGAN-CelebA.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
@@ -68,8 +68,9 @@ class Model(ModelDesc):
     def _build_graph(self, input_vars):
         image_pos = input_vars[0]
         image_pos = image_pos / 128.0 - 1
-        z = tf.random_uniform(tf.pack([tf.shape(image_pos)[0], 100]), -1, 1, name='z')
-        z.set_shape([None, 100])    # issue#5680
+
+        z = tf.random_uniform([BATCH, 100], -1, 1, name='z_train')
+        z = tf.placeholder_with_default(z, [None, 100], name='z')
 
         with argscope([Conv2D, Deconv2D, FullyConnected],
                 W_init=tf.truncated_normal_initializer(stddev=0.02)):
@@ -110,7 +111,7 @@ def get_config():
         session_config=get_default_sess_config(0.5),
         model=Model(),
         step_per_epoch=300,
-        max_epoch=500,
+        max_epoch=300,
     )
 
 def sample(model_path):
@@ -119,7 +120,7 @@ def sample(model_path):
        model=Model(),
        input_names=['z'],
        output_names=['gen/gen'])
-    pred = SimpleDatasetPredictor(pred, RandomZData((128, 100)))
+    pred = SimpleDatasetPredictor(pred, RandomZData((100, 100)))
     for o in pred.get_result():
         o = o[0] + 1
         o = o * 128.0
@@ -141,6 +142,7 @@ if __name__ == '__main__':
     if args.sample:
         sample(args.load)
     else:
+        assert args.data
         config = get_config()
         if args.load:
             config.session_init = SaverRestore(args.load)

@@ -27,18 +27,18 @@ def batch_flatten(x):
     """
     shape = x.get_shape().as_list()[1:]
     if None not in shape:
-        return tf.reshape(x, [-1, np.prod(shape)])
+        return tf.reshape(x, [-1, int(np.prod(shape))])
     return tf.reshape(x, tf.pack([tf.shape(x)[0], -1]))
 
-def class_balanced_binary_class_cross_entropy(pred, label, name='cross_entropy_loss'):
+def class_balanced_cross_entropy(pred, label, name='cross_entropy_loss'):
     """
-    The class-balanced cross entropy loss for binary classification,
+    The class-balanced cross entropy loss,
     as in `Holistically-Nested Edge Detection
     <http://arxiv.org/abs/1504.06375>`_.
 
     :param pred: size: b x ANYTHING. the predictions in [0,1].
     :param label: size: b x ANYTHING. the ground truth in {0,1}.
-    :returns: class-balanced binary classification cross entropy loss
+    :returns: class-balanced cross entropy loss
     """
     z = batch_flatten(pred)
     y = tf.cast(batch_flatten(label), tf.float32)
@@ -53,30 +53,34 @@ def class_balanced_binary_class_cross_entropy(pred, label, name='cross_entropy_l
     cost = tf.sub(loss_pos, loss_neg, name=name)
     return cost
 
-def class_balanced_sigmoid_binary_class_cross_entropy(pred, label, name='cross_entropy_loss'):
+def class_balanced_sigmoid_cross_entropy(logits, label, name='cross_entropy_loss'):
     """
-    The class-balanced cross entropy loss for binary classification,
+    The class-balanced cross entropy loss,
     as in `Holistically-Nested Edge Detection
     <http://arxiv.org/abs/1504.06375>`_.
+    This is more numerically stable than class_balanced_cross_entropy
 
-    :param pred: size: b x ANYTHING. the logits.
-    :param label: size: b x ANYTHING. the ground truth in {0,1}.
-    :returns: class-balanced binary classification cross entropy loss
+    :param logits: size: the logits.
+    :param label: size: the ground truth in {0,1}, of the same shape as logits.
+    :returns: a scalar. class-balanced cross entropy loss
     """
-    z = batch_flatten(pred)
+    z = batch_flatten(logits)
     y = tf.cast(batch_flatten(label), tf.float32)
 
     count_neg = tf.reduce_sum(1. - y)
     count_pos = tf.reduce_sum(y)
     beta = count_neg / (count_neg + count_pos)
 
-    #eps = 1e-12
-    logstable = tf.log(1 + tf.exp(-tf.abs(z)))
-    loss_pos = -beta * tf.reduce_mean(-y *
-            (logstable - tf.minimum(0.0, z)))
-    loss_neg = (1. - beta) * tf.reduce_mean((y - 1.) *
-            (logstable + tf.maximum(z, 0.0)))
-    cost = tf.sub(loss_pos, loss_neg, name=name)
+    pos_weight = beta / (1 - beta)
+    cost = tf.nn.weighted_cross_entropy_with_logits(z, y, pos_weight)
+    cost = tf.reduce_mean(cost * (1 - beta), name=name)
+
+    #logstable = tf.log(1 + tf.exp(-tf.abs(z)))
+    #loss_pos = -beta * tf.reduce_mean(-y *
+            #(logstable - tf.minimum(0.0, z)))
+    #loss_neg = (1. - beta) * tf.reduce_mean((y - 1.) *
+            #(logstable + tf.maximum(z, 0.0)))
+    #cost = tf.sub(loss_pos, loss_neg, name=name)
     return cost
 
 def print_stat(x, message=None):

@@ -124,6 +124,7 @@ def get_data(train_or_test):
     pp_mean = meta.get_per_pixel_mean()
 
     if isTrain:
+        # TODO use the augmentor in GoogleNet
         augmentors = [
             imgaug.Resize((256, 256)),
             imgaug.Brightness(30, False),
