@@ -5,14 +5,13 @@
 
 import numpy as np
 import tensorflow as tf
-import glob
+import glob, pickle
 import os, sys
 import argparse
 import cv2
 
 from tensorpack import *
-from tensorpack.utils.viz import build_patch_list
-from tensorpack.utils.viz import dump_dataflow_images
+from tensorpack.utils.viz import *
 from tensorpack.tfutils.summary import add_moving_summary, summary_moving_average
 import tensorpack.tfutils.symbolic_functions as symbf
 from GAN import GANTrainer, RandomZData, build_GAN_losses
@@ -119,21 +118,38 @@ def sample(model_path):
        session_init=get_model_loader(model_path),
        model=Model(),
        input_names=['z'],
-       output_names=['gen/gen'])
+       output_names=['gen/gen', 'z'])
     pred = SimpleDatasetPredictor(pred, RandomZData((100, 100)))
     for o in pred.get_result():
-        o = o[0] + 1
+        o, zs = o[0] + 1, o[1]
         o = o * 128.0
         o = o[:,:,:,::-1]
-        viz = next(build_patch_list(o, nr_row=10, nr_col=10))
-        cv2.imshow("", viz)
-        cv2.waitKey()
+        viz = next(build_patch_list(o, nr_row=10, nr_col=10, viz=True))
+
+def interp(model_path):
+    func = OfflinePredictor(PredictConfig(
+       session_init=get_model_loader(model_path),
+       model=Model(),
+       input_names=['z'],
+       output_names=['gen/gen']))
+    dic = np.load('demo/CelebA-vec.npy').item()
+    assert np.all(
+            dic['w_smile'] - dic['w_neutral'] \
+                    + dic['m_neutral'] == dic['m_smile'])
+    imgs = []
+    for z in ['w_neutral', 'w_smile', 'm_neutral', 'm_smile']:
+        z = dic[z]
+        img = func([[z]])[0][0][:,:,::-1]
+        img = (img + 1) * 128
+        imgs.append(img)
+    viz = next(build_patch_list(imgs, nr_row=1, nr_col=4, viz=True))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
     parser.add_argument('--load', help='load model')
     parser.add_argument('--sample', action='store_true', help='run sampling')
+    parser.add_argument('--interp', action='store_true', help='run interpolation')
     parser.add_argument('--data', help='`image_align_celeba` directory of the celebA dataset')
     global args
     args = parser.parse_args()
@@ -141,6 +157,8 @@ if __name__ == '__main__':
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
     if args.sample:
         sample(args.load)
+    elif args.interp:
+        interp(args.load)
     else:
         assert args.data
         config = get_config()

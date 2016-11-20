@@ -2,6 +2,12 @@
 
 Reproduce DCGAN following the setup in [dcgan.torch](https://github.com/soumith/dcgan.torch).
 
-More results to come.
+Samples from CelebA dataset:
 
-See the docstring in each executable script for usage.
+![sample](demo/CelebA-samples.jpg)
+
+Vector arithmetic: smiling woman - neutral woman + neutral man = smiling man
+
+![vec](demo/CelebA-vec.jpg)
+
+See the docstring in the script for usage.
