@@ -126,7 +126,7 @@ def sample(model_path):
         o = o[:,:,:,::-1]
         viz = next(build_patch_list(o, nr_row=10, nr_col=10, viz=True))
 
-def interp(model_path):
+def vec(model_path):
     func = OfflinePredictor(PredictConfig(
        session_init=get_model_loader(model_path),
        model=Model(),
@@ -149,7 +149,7 @@ if __name__ == '__main__':
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
     parser.add_argument('--load', help='load model')
     parser.add_argument('--sample', action='store_true', help='run sampling')
-    parser.add_argument('--interp', action='store_true', help='run interpolation')
+    parser.add_argument('--vec', action='store_true', help='run vec arithmetic demo')
     parser.add_argument('--data', help='`image_align_celeba` directory of the celebA dataset')
     global args
     args = parser.parse_args()
@@ -157,8 +157,8 @@ if __name__ == '__main__':
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
     if args.sample:
         sample(args.load)
-    elif args.interp:
-        interp(args.load)
+    elif args.vec:
+        vec(args.load)
     else:
         assert args.data
         config = get_config()
