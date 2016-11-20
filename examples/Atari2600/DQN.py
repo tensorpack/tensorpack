@@ -72,7 +72,8 @@ class Model(ModelDesc):
     def _get_DQN_prediction(self, image):
         """ image: [0,255]"""
         image = image / 255.0
-        with argscope(Conv2D, nl=PReLU.f, use_bias=True):
+        with argscope(Conv2D, nl=PReLU.f, use_bias=True), \
+                argscope(LeakyReLU, alpha=0.01):
             l = (LinearWrap(image)
                 .Conv2D('conv0', out_channel=32, kernel_shape=5)
                 .MaxPooling('pool0', 2)
@@ -87,7 +88,7 @@ class Model(ModelDesc):
                 #.Conv2D('conv1', out_channel=64, kernel_shape=4, stride=2)
                 #.Conv2D('conv2', out_channel=64, kernel_shape=3)
 
-                .FullyConnected('fc0', 512, nl=lambda x, name: LeakyReLU.f(x, 0.01, name))())
+                .FullyConnected('fc0', 512, nl=LeakyReLU)())
         if METHOD != 'Dueling':
             Q = FullyConnected('fct', l, NUM_ACTIONS, nl=tf.identity)
         else:

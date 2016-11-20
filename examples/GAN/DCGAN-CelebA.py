@@ -50,17 +50,13 @@ class Model(ModelDesc):
         with argscope(Conv2D, nl=tf.identity, kernel_shape=5, stride=2), \
                 argscope(LeakyReLU, alpha=0.2):
             l = (LinearWrap(imgs)
-                .Conv2D('conv0', 64)
-                .LeakyReLU('lr0')
+                .Conv2D('conv0', 64, nl=LeakyReLU)
                 .Conv2D('conv1', 64*2)
-                .BatchNorm('bn1')
-                .LeakyReLU('lr1')
+                .BatchNorm('bn1').LeakyReLU()
                 .Conv2D('conv2', 64*4)
-                .BatchNorm('bn2')
-                .LeakyReLU('lr2')
+                .BatchNorm('bn2').LeakyReLU()
                 .Conv2D('conv3', 64*8)
-                .BatchNorm('bn3')
-                .LeakyReLU('lr3')
+                .BatchNorm('bn3').LeakyReLU()
                 .FullyConnected('fct', 1, nl=tf.identity)())
         return l
 

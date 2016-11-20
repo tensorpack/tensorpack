@@ -47,7 +47,7 @@ def PReLU(x, init=tf.constant_initializer(0.001), name=None):
         name = 'output'
     return tf.mul(x, 0.5, name=name)
 
-@layer_register(log_shape=False)
+@layer_register(use_scope=False, log_shape=False)
 def LeakyReLU(x, alpha, name=None):
     """
     Leaky relu as in `Rectifier Nonlinearities Improve Neural Network Acoustic
@@ -64,7 +64,7 @@ def LeakyReLU(x, alpha, name=None):
     #x = ((1 + alpha) * x + (1 - alpha) * tf.abs(x))
     #return tf.mul(x, 0.5, name=name)
 
-# TODO wrap it as a layer with use_scope=False?
+@layer_register(log_shape=False, use_scope=False)
 def BNReLU(x, name=None):
     x = BatchNorm('bn', x, use_local_stat=None)
     x = tf.nn.relu(x, name=name)

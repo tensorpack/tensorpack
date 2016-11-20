@@ -73,7 +73,8 @@ def interactive_imshow(img, lclick_cb=None, rclick_cb=None, **kwargs):
 def build_patch_list(patch_list,
         nr_row=None, nr_col=None, border=None,
         max_width=1000, max_height=1000,
-        shuffle=False, bgcolor=255, viz=False, lclick_cb=None):
+        shuffle=False, bgcolor=255,
+        viz=False, lclick_cb=None):
     """
     Generate patches.
     :param patch_list: bhw or bhwc
