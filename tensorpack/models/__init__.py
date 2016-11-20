@@ -57,7 +57,7 @@ class LinearWrap(object):
                     return LinearWrap(ret)
             else:
                 def f(*args, **kwargs):
-                    if isinstance(args[0], six.string_types):
+                    if len(args) and isinstance(args[0], six.string_types):
                         name, args = args[0], args[1:]
                         ret = layer(name, self._t, *args, **kwargs)
                     else:

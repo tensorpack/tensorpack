@@ -54,16 +54,9 @@ class Model(ModelDesc):
                 stride1 = 1
 
             with tf.variable_scope(name) as scope:
-                if not first:
-                    b1 = BatchNorm('bn1', l)
-                    b1 = tf.nn.relu(b1)
-                else:
-                    b1 = l
-                c1 = Conv2D('conv1', b1, out_channel, stride=stride1)
-                b2 = BatchNorm('bn2', c1)
-                b2 = tf.nn.relu(b2)
-                c2 = Conv2D('conv2', b2, out_channel)
-
+                b1 = l if first else BNReLU(l)
+                c1 = Conv2D('conv1', b1, out_channel, stride=stride1, nl=BNReLU)
+                c2 = Conv2D('conv2', c1, out_channel)
                 if increase_dim:
                     l = AvgPooling('pool', l, 2)
                     l = tf.pad(l, [[0,0], [0,0], [0,0], [in_channel//2, in_channel//2]])
@@ -73,9 +66,7 @@ class Model(ModelDesc):
 
         with argscope(Conv2D, nl=tf.identity, use_bias=False, kernel_shape=3,
                     W_init=variance_scaling_initializer(mode='FAN_OUT')):
-            l = Conv2D('conv0', image, 16)
-            l = BatchNorm('bn0', l)
-            l = tf.nn.relu(l)
+            l = Conv2D('conv0', image, 16, nl=BNReLU)
             l = residual('res1.0', l, first=True)
             for k in range(1, self.n):
                 l = residual('res1.{}'.format(k), l)
@@ -89,8 +80,7 @@ class Model(ModelDesc):
             l = residual('res3.0', l, increase_dim=True)
             for k in range(1, self.n):
                 l = residual('res3.' + str(k), l)
-            l = BatchNorm('bnlast', l)
-            l = tf.nn.relu(l)
+            l = BNReLU('bnlast', l)
             # 8,c=64
             l = GlobalAvgPooling('gap', l)
 
