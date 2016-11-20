@@ -60,7 +60,7 @@ class SimpleDatasetPredictor(DatasetPredictorBase):
             sz = self.dataset.size()
         except NotImplementedError:
             sz = 0
-        with tqdm(total=sz) as pbar:
+        with tqdm(total=sz, disable=(sz==0)) as pbar:
             for dp in self.dataset.get_data():
                 res = self.predictor(dp)
                 yield res
@@ -119,7 +119,7 @@ class MultiProcessDatasetPredictor(DatasetPredictorBase):
             sz = self.dataset.size()
         except NotImplementedError:
             sz = 0
-        with tqdm(total=sz) as pbar:
+        with tqdm(total=sz, disable=(sz==0)) as pbar:
             die_cnt = 0
             while True:
                 res = self.result_queue.get()

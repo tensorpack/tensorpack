@@ -10,6 +10,9 @@ More results to come.
 | ResNet 18          |      10.67% |      29.50% |
 | ResNet 34          |      8.66%  |      26.45% |
 | ResNet 50          |      7.13%  |      24.12% |
+| ResNet 101         |      6.54%  |      22.89% |
+
+![imagenet](imagenet-resnet.png)
 
 ## load-resnet.py
 
