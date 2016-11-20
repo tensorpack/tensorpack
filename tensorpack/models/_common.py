@@ -33,6 +33,7 @@ def layer_register(
         summary the output(activation) of this layer.
         Can be overriden when creating the layer.
     :param log_shape: log input/output shape of this layer
+    :param use_scope: whether to call this layer with an extra first argument as scope
     """
 
     def wrapper(func):

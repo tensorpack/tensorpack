@@ -64,6 +64,7 @@ def LeakyReLU(x, alpha, name=None):
     #x = ((1 + alpha) * x + (1 - alpha) * tf.abs(x))
     #return tf.mul(x, 0.5, name=name)
 
+# TODO wrap it as a layer with use_scope=False?
 def BNReLU(x, name=None):
     x = BatchNorm('bn', x, use_local_stat=None)
     x = tf.nn.relu(x, name=name)
