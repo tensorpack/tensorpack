@@ -2,13 +2,13 @@
 
 Reproduce DCGAN following the setup in [dcgan.torch](https://github.com/soumith/dcgan.torch).
 
-Play with the [pretrained model](https://drive.google.com/drive/folders/0B9IPQTvr2BBkLUF2M0RXU1NYSkE?usp=sharing) on CelebA face dataset.
+Play with the [pretrained model](https://drive.google.com/drive/folders/0B9IPQTvr2BBkLUF2M0RXU1NYSkE?usp=sharing) on CelebA face dataset:
 
-Generated samples:
+1. Generated samples
 
 ![sample](demo/CelebA-samples.jpg)
 
-Vector arithmetic: smiling woman - neutral woman + neutral man = smiling man
+2. Vector arithmetic: smiling woman - neutral woman + neutral man = smiling man
 
 ![vec](demo/CelebA-vec.jpg)
 
