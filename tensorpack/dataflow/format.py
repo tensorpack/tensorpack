@@ -3,10 +3,9 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
-from tqdm import tqdm
 from six.moves import range
 
-from ..utils import logger, get_rng, get_tqdm_kwargs
+from ..utils import logger, get_rng, get_tqdm
 from ..utils.timer import timed_operation
 from ..utils.loadcaffe import get_caffe_pb
 from .base import RNGDataFlow
@@ -82,7 +81,7 @@ class LMDBData(RNGDataFlow):
             if not self.keys:
                 self.keys = []
                 with timed_operation("Loading LMDB keys ...", log_start=True), \
-                        tqdm(get_tqdm_kwargs(total=self._size)) as pbar:
+                        get_tqdm(total=self._size) as pbar:
                     for k in self._txn.cursor():
                         if k != '__keys__':
                             self.keys.append(k)

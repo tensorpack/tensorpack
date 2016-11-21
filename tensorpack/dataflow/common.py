@@ -8,7 +8,7 @@ import numpy as np
 from collections import deque, defaultdict
 from six.moves import range, map
 from .base import DataFlow, ProxyDataFlow, RNGDataFlow
-from ..utils import *
+from ..utils import logger, get_tqdm
 
 __all__ = ['BatchData', 'FixedSizeData', 'MapData',
            'RepeatedData', 'MapDataComponent', 'RandomChooseData',
@@ -21,8 +21,7 @@ class TestDataSpeed(ProxyDataFlow):
         self.test_size = size
 
     def get_data(self):
-        from tqdm import tqdm
-        with tqdm(range(self.test_size), **get_tqdm_kwargs()) as pbar:
+        with get_tqdm(total=range(self.test_size)) as pbar:
             for dp in self.ds.get_data():
                 pbar.update()
         for dp in self.ds.get_data():
