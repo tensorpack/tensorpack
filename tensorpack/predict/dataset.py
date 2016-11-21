@@ -66,6 +66,7 @@ class SimpleDatasetPredictor(DatasetPredictorBase):
                 yield res
                 pbar.update()
 
+# TODO allow unordered
 class MultiProcessDatasetPredictor(DatasetPredictorBase):
     def __init__(self, config, dataset, nr_proc, use_gpu=True):
         """

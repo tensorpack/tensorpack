@@ -298,12 +298,11 @@ Line: {}""".format(repr(args.delimeter), line)
     length_ys = [len(t) for t in data_ys]
     print("Length of each column:", length_ys)
     max_ysize = max(length_ys)
-    print("Size of the longest y column: ", max_ysize)
 
     if nr_x_column:
         data_xs = [data[k] for k in args.x_column_idx]
     else:
-        data_xs = [list(range(max_ysize))]
+        data_xs = [list(range(1, max_ysize+1))]
 
     for idx, data_y in enumerate(data_ys):
         data_ys[idx] = np.asarray(data_y)

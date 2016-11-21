@@ -2,14 +2,14 @@
 # File: format.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-from ..utils import logger, get_rng
+import numpy as np
+from tqdm import tqdm
+from six.moves import range
+
+from ..utils import logger, get_rng, get_tqdm_kwargs
 from ..utils.timer import timed_operation
 from ..utils.loadcaffe import get_caffe_pb
 from .base import RNGDataFlow
-
-import random
-from tqdm import tqdm
-from six.moves import range
 
 try:
     import h5py
@@ -24,13 +24,21 @@ try:
 except ImportError:
     logger.warn("Error in 'import lmdb'. LMDBData won't be available.")
 else:
-    __all__.extend(['LMDBData', 'CaffeLMDB'])
+    __all__.extend(['LMDBData', 'CaffeLMDB', 'LMDBDataDecoder'])
+
+try:
+    import sklearn.datasets
+except ImportError:
+    logger.warn("Error in 'import sklearn'. SVMLightData won't be available.")
+else:
+    __all__.extend(['SVMLightData'])
 
 
 """
 Adapters for different data format.
 """
 
+# TODO lazy load
 class HDF5Data(RNGDataFlow):
     """
     Zip data from different paths in an HDF5 file. Will load all data into memory.
@@ -69,11 +77,12 @@ class LMDBData(RNGDataFlow):
         self._shuffle = shuffle
         self._size = self._txn.stat()['entries']
         if shuffle:
+            # get the list of keys either from __keys__ or by iterating
             self.keys = self._txn.get('__keys__')
             if not self.keys:
                 self.keys = []
                 with timed_operation("Loading LMDB keys ...", log_start=True), \
-                        tqdm(total=self._size, ascii=True) as pbar:
+                        tqdm(get_tqdm_kwargs(total=self._size)) as pbar:
                     for k in self._txn.cursor():
                         if k != '__keys__':
                             self.keys.append(k)
@@ -131,3 +140,20 @@ class CaffeLMDB(LMDBDataDecoder):
 
         super(CaffeLMDB, self).__init__(
                 lmdb_dir, decoder=decoder, shuffle=shuffle)
+
+class SVMLightData(RNGDataFlow):
+    """ Read X,y from a svmlight file """
+    def __init__(self, filename, shuffle=True):
+        self.X, self.y = sklearn.datasets.load_svmlight_file(filename)
+        self.X = np.asarray(self.X.todense())
+        self.shuffle = shuffle
+
+    def size(self):
+        return len(self.y)
+
+    def get_data(self):
+        idxs = np.arange(self.size())
+        if self.shuffle:
+            self.rng.shuffle(idxs)
+        for id in idxs:
+            yield [self.X[id,:], self.y[id]]

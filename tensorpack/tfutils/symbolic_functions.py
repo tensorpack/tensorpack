@@ -64,15 +64,14 @@ def class_balanced_sigmoid_cross_entropy(logits, label, name='cross_entropy_loss
     :param label: size: the ground truth in {0,1}, of the same shape as logits.
     :returns: a scalar. class-balanced cross entropy loss
     """
-    z = batch_flatten(logits)
-    y = tf.cast(batch_flatten(label), tf.float32)
+    y = tf.cast(label, tf.float32)
 
     count_neg = tf.reduce_sum(1. - y)
     count_pos = tf.reduce_sum(y)
     beta = count_neg / (count_neg + count_pos)
 
     pos_weight = beta / (1 - beta)
-    cost = tf.nn.weighted_cross_entropy_with_logits(z, y, pos_weight)
+    cost = tf.nn.weighted_cross_entropy_with_logits(logits, y, pos_weight)
     cost = tf.reduce_mean(cost * (1 - beta), name=name)
 
     #logstable = tf.log(1 + tf.exp(-tf.abs(z)))
