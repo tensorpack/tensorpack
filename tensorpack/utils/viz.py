@@ -16,7 +16,7 @@ except ImportError:
     pass
 
 __all__ = ['pyplot2img', 'build_patch_list', 'pyplot_viz',
-        'dump_dataflow_images']
+        'dump_dataflow_images', 'interactive_imshow']
 
 def pyplot2img(plt):
     buf = io.BytesIO()
@@ -45,21 +45,56 @@ def minnone(x, y):
     elif y is None: y = x
     return min(x, y)
 
+def interactive_imshow(img, lclick_cb=None, rclick_cb=None, **kwargs):
+    """
+    :param lclick_cb: a callback(img, x, y) for left click
+    :param kwargs: can be {key_cb_a ... key_cb_z: callback(img)}
+    """
+    name = 'random_window_name'
+    cv2.imshow(name, img)
+
+    def mouse_cb(event, x, y, *args):
+        if event == cv2.EVENT_LBUTTONUP and lclick_cb is not None:
+            lclick_cb(img, x, y)
+        elif event == cv2.EVENT_RBUTTONUP and rclick_cb is not None:
+            rclick_cb(img, x, y)
+    cv2.setMouseCallback(name, mouse_cb)
+    key = chr(cv2.waitKey(-1) & 0xff)
+    cb_name = 'key_cb_' + key
+    if cb_name in kwargs:
+        kwargs[cb_name](img)
+    elif key == 'q':
+        cv2.destroyWindow(name)
+    elif key == 'x':
+        sys.exit()
+    elif key == 's':
+        cv2.imwrite('out.png', img)
+
 def build_patch_list(patch_list,
         nr_row=None, nr_col=None, border=None,
         max_width=1000, max_height=1000,
-        shuffle=False, bgcolor=255):
+        shuffle=False, bgcolor=255,
+        viz=False, lclick_cb=None):
     """
-    This is a generator.
-    patch_list: bhw or bhwc
+    Generate patches.
+    :param patch_list: bhw or bhwc
     :param border: defaults to 0.1 * max(image_width, image_height)
+    :param nr_row, nr_col: rows and cols of the grid
+    :parma max_width, max_height: if nr_row/col are not given, use this to infer the rows and cols
+    :param shuffle: shuffle the images
+    :param bgcolor: background color
+    :param viz: use interactive imshow to visualize the results
+    :param lclick_cb: only useful when viz=True. a callback(patch, idx)
     """
+    # setup parameters
     patch_list = np.asarray(patch_list)
     if patch_list.ndim == 3:
         patch_list = patch_list[:,:,:,np.newaxis]
     assert patch_list.ndim == 4 and patch_list.shape[3] in [1, 3], patch_list.shape
     if shuffle:
         np.random.shuffle(patch_list)
+    if lclick_cb is not None:
+        viz = True
     ph, pw = patch_list.shape[1:3]
     if border is None:
         border = int(0.1 * max(ph, pw))
@@ -87,18 +122,43 @@ def build_patch_list(patch_list,
 
     nr_patch = nr_row * nr_col
     start = 0
+
+    def lclick_callback(img, x, y):
+        if lclick_cb is None:
+            return
+        x = x // (pw + border)
+        y = y // (pw + border)
+        idx = start + y * nr_col + x
+        if idx < end:
+            lclick_cb(patch_list[idx], idx)
+
     while True:
         end = start + nr_patch
         cur_list = patch_list[start:end]
         if not len(cur_list):
             return
         draw_patch(cur_list)
+        if viz:
+            interactive_imshow(canvas, lclick_cb=lclick_callback)
         yield canvas
         start = end
 
 def dump_dataflow_images(df, index=0, batched=True,
         number=300, output_dir=None,
-        scale=1, resize=None, viz=None, flipRGB=False, exit_after=True):
+        scale=1, resize=None, viz=None,
+        flipRGB=False, exit_after=True):
+    """
+    :param df: a DataFlow
+    :param index: the index of the image component
+    :param batched: whether the component contains batched images or not
+    :param number: how many datapoint to take from the DataFlow
+    :param output_dir: output directory to save images, default to not save.
+    :param scale: scale the value, usually either 1 or 255
+    :param resize: (h, w) or Nne, resize the images
+    :param viz: (h, w) or None, visualize the images in grid with imshow
+    :param flipRGB: apply a RGB<->BGR conversion or not
+    :param exit_after: exit the process after this function
+    """
     if output_dir:
         mkdir_p(output_dir)
     if viz is not None:
@@ -137,9 +197,7 @@ def dump_dataflow_images(df, index=0, batched=True,
             if viz is not None and len(vizlist) >= vizsize:
                 patch = next(build_patch_list(
                     vizlist[:vizsize],
-                    nr_row=viz[0], nr_col=viz[1]))
-                cv2.imshow("df-viz", patch)
-                cv2.waitKey()
+                    nr_row=viz[0], nr_col=viz[1], viz=True))
                 vizlist = vizlist[vizsize:]
 
 

@@ -56,6 +56,10 @@ def get_args():
             help='x label', type=six.text_type)
     parser.add_argument('--ylabel',
             help='y label', type=six.text_type)
+    parser.add_argument('--xlim',
+            help='x lim', type=float, nargs=2)
+    parser.add_argument('--ylim',
+            help='y lim', type=float, nargs=2)
     parser.add_argument('-s', '--scale',
             help='scale of each y, separated by comma')
     parser.add_argument('--annotate-maximum',
@@ -218,6 +222,10 @@ def do_plot(data_xs, data_ys):
         plt.xlabel(args.xlabel, fontsize='xx-large')
     if args.ylabel:
         plt.ylabel(args.ylabel, fontsize='xx-large')
+    if args.xlim:
+        plt.xlim(args.xlim[0], args.xlim[1])
+    if args.ylim:
+        plt.ylim(args.ylim[0], args.ylim[1])
     plt.legend(loc='best', fontsize='xx-large')
 
     # adjust maxx
@@ -250,7 +258,7 @@ def main():
         fin.close()
 
     # parse column format
-    nr_column = len(all_inputs[0].rstrip().split(args.delimeter))
+    nr_column = len(all_inputs[0].rstrip('\n').split(args.delimeter))
     if args.column is None:
         column = ['y'] * nr_column
     else:
@@ -287,13 +295,14 @@ Line: {}""".format(repr(args.delimeter), line)
                 data[idx].append(val)
 
     data_ys = [data[k] for k in args.y_column_idx]
-    max_ysize = max([len(t) for t in data_ys])
-    print("Size of the longest y column: ", max_ysize)
+    length_ys = [len(t) for t in data_ys]
+    print("Length of each column:", length_ys)
+    max_ysize = max(length_ys)
 
     if nr_x_column:
         data_xs = [data[k] for k in args.x_column_idx]
     else:
-        data_xs = [list(range(max_ysize))]
+        data_xs = [list(range(1, max_ysize+1))]
 
     for idx, data_y in enumerate(data_ys):
         data_ys[idx] = np.asarray(data_y)

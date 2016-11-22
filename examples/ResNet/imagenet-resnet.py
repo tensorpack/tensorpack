@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-# File: imagenet-resnet.py
+# File: imagenet-resnet-short.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import cv2
@@ -42,36 +42,30 @@ class Model(ModelDesc):
 
         def basicblock(l, ch_out, stride, preact):
             ch_in = l.get_shape().as_list()[-1]
-            input = l
             if preact == 'both_preact':
-                l = BatchNorm('preact', l)
-                l = tf.nn.relu(l, name='preact-relu')
+                l = BNReLU('preact', l)
                 input = l
             elif preact != 'no_preact':
-                l = BatchNorm('preact', l)
-                l = tf.nn.relu(l, name='preact-relu')
-            l = Conv2D('conv1', l, ch_out, 3, stride=stride)
-            l = BatchNorm('bn', l)
-            l = tf.nn.relu(l)
+                input = l
+                l = BNReLU('preact', l)
+            else:
+                input = l
+            l = Conv2D('conv1', l, ch_out, 3, stride=stride, nl=BNReLU)
             l = Conv2D('conv2', l, ch_out, 3)
             return l + shortcut(input, ch_in, ch_out, stride)
 
         def bottleneck(l, ch_out, stride, preact):
             ch_in = l.get_shape().as_list()[-1]
-            input = l
             if preact == 'both_preact':
-                l = BatchNorm('preact', l)
-                l = tf.nn.relu(l, name='preact-relu')
+                l = BNReLU('preact', l)
                 input = l
             elif preact != 'no_preact':
-                l = BatchNorm('preact', l)
-                l = tf.nn.relu(l, name='preact-relu')
-            l = Conv2D('conv1', l, ch_out, 1)
-            l = BatchNorm('bn1', l)
-            l = tf.nn.relu(l)
-            l = Conv2D('conv2', l, ch_out, 3, stride=stride)
-            l = BatchNorm('bn2', l)
-            l = tf.nn.relu(l)
+                input = l
+                l = BNReLU('preact', l)
+            else:
+                input = l
+            l = Conv2D('conv1', l, ch_out, 1, nl=BNReLU)
+            l = Conv2D('conv2', l, ch_out, 3, stride=stride, nl=BNReLU)
             l = Conv2D('conv3', l, ch_out * 4, 1)
             return l + shortcut(input, ch_in, ch_out * 4, stride)
 
@@ -102,8 +96,7 @@ class Model(ModelDesc):
                 .apply(layer, 'group1', block_func, 128, defs[1], 2)
                 .apply(layer, 'group2', block_func, 256, defs[2], 2)
                 .apply(layer, 'group3', block_func, 512, defs[3], 2)
-                .BatchNorm('bnlast')
-                .tf.nn.relu()
+                .BNReLU('bnlast')
                 .GlobalAvgPooling('gap')
                 .FullyConnected('linear', 1000, nl=tf.identity)())
 

@@ -24,7 +24,8 @@ with tf.Graph().as_default() as G:
     if args.config:
         MODEL = imp.load_source('config_script', args.config).Model
         M = MODEL()
-        M.build_graph(M.get_input_vars())
+        with TowerContext('', is_training=False):
+            M.build_graph(M.get_input_vars())
     else:
         M = ModelFromMetaGraph(args.meta)
 

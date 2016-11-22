@@ -6,6 +6,7 @@ import os, sys
 from contextlib import contextmanager
 import inspect
 from datetime import datetime
+from tqdm import tqdm
 import time
 import numpy as np
 
@@ -13,6 +14,7 @@ __all__ = ['change_env',
         'get_rng',
         'get_dataset_path',
         'get_tqdm_kwargs',
+        'get_tqdm',
         'execute_only_once'
         ]
 
@@ -73,3 +75,6 @@ def get_tqdm_kwargs(**kwargs):
         default['mininterval'] = 60
     default.update(kwargs)
     return default
+
+def get_tqdm(**kwargs):
+    return tqdm(**get_tqdm_kwargs(**kwargs))

@@ -56,7 +56,7 @@ class ExpReplay(DataFlow, Callback):
                 setattr(self, k, v)
         self.num_actions = player.get_action_space().num_actions()
         logger.info("Number of Legal actions: {}".format(self.num_actions))
-        self.mem = deque(maxlen=memory_size)
+        self.mem = deque(maxlen=int(memory_size))
         self.rng = get_rng(self)
         self._init_memory_flag = threading.Event()  # tell if memory has been initialized
         self._predictor_io_names = predictor_io_names

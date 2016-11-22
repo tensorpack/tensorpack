@@ -4,14 +4,13 @@
 
 import tensorflow as tf
 import numpy as np
-from tqdm import tqdm
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
 import six
 from six.moves import zip, map
 
 from ..dataflow import DataFlow
-from ..utils import get_tqdm_kwargs, logger, execute_only_once
+from ..utils import get_tqdm, logger, execute_only_once
 from ..utils.stat import RatioCounter, BinaryStatistics
 from ..tfutils import get_op_tensor_name, get_op_var_name
 from .base import Callback
@@ -124,7 +123,7 @@ class InferenceRunner(Callback):
 
         sess = tf.get_default_session()
         self.ds.reset_state()
-        with tqdm(total=self.ds.size(), **get_tqdm_kwargs()) as pbar:
+        with get_tqdm(total=self.ds.size()) as pbar:
             for dp in self.ds.get_data():
                 outputs = self.pred_func(dp)
                 for inf, tensormap in zip(self.infs, self.inf_to_tensors):

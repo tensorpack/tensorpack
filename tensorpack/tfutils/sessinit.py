@@ -134,7 +134,8 @@ class SaverRestore(SessionInit):
         if len(chkpt_vars_used) < len(vars_available):
             unused = vars_available - chkpt_vars_used
             for name in unused:
-                logger.warn("Variable {} in checkpoint not found in the graph!".format(name))
+                if not is_training_name(name):
+                    logger.warn("Variable {} in checkpoint not found in the graph!".format(name))
         return var_dict
 
 class ParamRestore(SessionInit):

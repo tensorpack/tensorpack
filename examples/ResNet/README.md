@@ -3,17 +3,20 @@
 
 Training code of pre-activation ResNet on ImageNet. It follows the setup in
 [fb.resnet.torch](https://github.com/facebook/fb.resnet.torch) and gets similar performance (with much fewer lines of code).
-More results to come.
+Models can be [downloaded here](https://drive.google.com/open?id=0B9IPQTvr2BBkTXBlZmh1cmlnQ0k).
 
 | Model              | Top 5 Error | Top 1 Error |
 |:-------------------|-------------|------------:|
 | ResNet 18          |      10.67% |      29.50% |
 | ResNet 34          |      8.66%  |      26.45% |
 | ResNet 50          |      7.13%  |      24.12% |
+| ResNet 101         |      6.54%  |      22.89% |
+
+![imagenet](imagenet-resnet.png)
 
 ## load-resnet.py
 
-A script to convert and run ResNet{50,101,152} caffe models trained on ImageNet [released by Kaiming](https://github.com/KaimingHe/deep-residual-networks).
+A script to convert and run ImageNet-ResNet{50,101,152} Caffe models [released by Kaiming](https://github.com/KaimingHe/deep-residual-networks).
 
 Example usage:
 ```bash
@@ -40,8 +43,5 @@ The train error shown here is a moving average of the error rate of each batch i
 The validation error here is computed on test set.
 
 ![cifar10](cifar10-resnet.png)
-
-Download model:
-[Cifar10 ResNet-110 (n=18)](https://drive.google.com/open?id=0B9IPQTvr2BBkTXBlZmh1cmlnQ0k)
 
 Also see an implementation of [DenseNet](https://github.com/YixuanLi/densenet-tensorflow) from [Densely Connected Convolutional Networks](https://arxiv.org/abs/1608.06993).

@@ -65,7 +65,9 @@ To Run Pretrained Model:
 BITW = 1
 BITA = 2
 BITG = 6
-BATCH_SIZE = 32
+TOTAL_BATCH_SIZE = 128
+NUM_GPU = 4
+BATCH_SIZE = TOTAL_BATCH_SIZE // NUM_GPU
 
 class Model(ModelDesc):
     def _get_input_vars(self):

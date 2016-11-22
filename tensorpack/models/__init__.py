@@ -5,6 +5,7 @@
 from pkgutil import walk_packages
 from types import ModuleType
 import tensorflow as tf
+import six
 import os
 import os.path
 from ..utils import logger
@@ -49,13 +50,18 @@ class LinearWrap(object):
         layer = eval(layer_name)
         if hasattr(layer, 'f'):
             # this is a registered tensorpack layer
+            # parse arguments by tensorpack model convention
             if layer.use_scope:
                 def f(name, *args, **kwargs):
                     ret = layer(name, self._t, *args, **kwargs)
                     return LinearWrap(ret)
             else:
                 def f(*args, **kwargs):
-                    ret = layer(self._t, *args, **kwargs)
+                    if len(args) and isinstance(args[0], six.string_types):
+                        name, args = args[0], args[1:]
+                        ret = layer(name, self._t, *args, **kwargs)
+                    else:
+                        ret = layer(self._t, *args, **kwargs)
                     return LinearWrap(ret)
             return f
         else:
