@@ -55,6 +55,7 @@ class SimpleDatasetPredictor(DatasetPredictorBase):
 
     def get_result(self):
         """ A generator to produce prediction for each data"""
+        self.dataset.reset_state()
         try:
             sz = self.dataset.size()
         except NotImplementedError:

@@ -39,7 +39,7 @@ def regularize_cost(regex, func, name=None):
     return tf.add_n(costs, name=name)
 
 
-@layer_register(log_shape=False)
+@layer_register(log_shape=False, use_scope=False)
 def Dropout(x, keep_prob=0.5, is_training=None):
     """
     :param is_training: if None, will use the current context by default.

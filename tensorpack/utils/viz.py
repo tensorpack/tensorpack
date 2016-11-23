@@ -77,7 +77,7 @@ def build_patch_list(patch_list,
         viz=False, lclick_cb=None):
     """
     Generate patches.
-    :param patch_list: bhw or bhwc
+    :param patch_list: bhw or bhwc images in [0,255]
     :param border: defaults to 0.1 * max(image_width, image_height)
     :param nr_row, nr_col: rows and cols of the grid
     :parma max_width, max_height: if nr_row/col are not given, use this to infer the rows and cols

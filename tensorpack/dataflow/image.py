@@ -22,6 +22,7 @@ class ImageFromFile(RNGDataFlow):
         assert len(files)
         self.files = files
         self.channel = int(channel)
+        self.imread_mode = cv2.IMREAD_GRAYSCALE if self.channel == 1 else cv2.IMREAD_COLOR
         self.resize = resize
         self.shuffle = shuffle
 
@@ -32,8 +33,7 @@ class ImageFromFile(RNGDataFlow):
         if self.shuffle:
             self.rng.shuffle(self.files)
         for f in self.files:
-            im = cv2.imread(
-                f, cv2.IMREAD_GRAYSCALE if self.channel == 1 else cv2.IMREAD_COLOR)
+            im = cv2.imread(f, self.imread_mode)
             if self.channel == 3:
                 im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
             if self.resize is not None:

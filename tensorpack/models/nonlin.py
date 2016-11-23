@@ -66,6 +66,6 @@ def LeakyReLU(x, alpha, name=None):
 
 @layer_register(log_shape=False, use_scope=False)
 def BNReLU(x, name=None):
-    x = BatchNorm('bn', x, use_local_stat=None)
+    x = BatchNorm('bn', x)
     x = tf.nn.relu(x, name=name)
     return x

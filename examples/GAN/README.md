@@ -1,4 +1,6 @@
-# Deep Convolutional Generative Adversarial Networks
+# Generative Adversarial Networks
+
+## DCGAN-CelebA.py
 
 Reproduce DCGAN following the setup in [dcgan.torch](https://github.com/soumith/dcgan.torch).
 
@@ -13,3 +15,8 @@ Play with the [pretrained model](https://drive.google.com/drive/folders/0B9IPQTv
 ![vec](demo/CelebA-vec.jpg)
 
 See the docstring in the script for usage.
+
+## Image2Image.py
+
+Reproduce [Image-to-image Translation with Conditional Adversarial Networks](https://arxiv.org/pdf/1611.07004v1.pdf),
+following the setup in [pix2pix](https://github.com/phillipi/pix2pix).

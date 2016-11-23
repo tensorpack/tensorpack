@@ -18,11 +18,13 @@ from GAN import GANTrainer, RandomZData, build_GAN_losses
 
 """
 DCGAN on CelebA dataset.
+The original code (dcgan.torch) uses kernel_shape=4, but I found the difference not significant.
+
 1. Download the 'aligned&cropped' version of CelebA dataset.
 2. Start training:
-    ./celebA.py --data /path/to/image_align_celeba/
+    ./DCGAN-CelebA.py --data /path/to/image_align_celeba/
 3. Visualize samples of a trained model:
-    ./celebA.py --load model.tfmodel --sample
+    ./DCGAN-CelebA.py --load model.tfmodel --sample
 """
 
 SHAPE = 64

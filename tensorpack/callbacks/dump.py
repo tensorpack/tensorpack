@@ -14,17 +14,14 @@ __all__ = ['DumpParamAsImage']
 
 class DumpParamAsImage(Callback):
     """
-    Dump a variable to image(s) after every epoch.
+    Dump a variable to image(s) after every epoch to logger.LOG_DIR.
     """
     def __init__(self, var_name, prefix=None, map_func=None, scale=255, clip=False):
         """
         :param var_name: the name of the variable.
-
         :param prefix: the filename prefix for saved images. Default is the op name.
-
         :param map_func: map the value of the variable to an image or list of
                     images of shape [h, w] or [h, w, c]. If None, will use identity
-
         :param scale: a multiplier on pixel values, applied after map_func. default to 255
         :param clip: whether to clip the result to [0, 255]
         """
