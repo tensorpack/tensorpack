@@ -54,16 +54,16 @@ def build_GAN_losses(vecpos, vecneg):
     tf.histogram_summary('sigmoid-neg', sigmneg)
 
     d_loss_pos = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
-        vecpos, tf.ones_like(vecpos)), name='d_loss_pos')
+        vecpos, tf.ones_like(vecpos)), name='d_CE_loss_pos')
     d_loss_neg = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
-        vecneg, tf.zeros_like(vecneg)), name='d_loss_neg')
+        vecneg, tf.zeros_like(vecneg)), name='d_CE_loss_neg')
 
     d_pos_acc = tf.reduce_mean(tf.cast(sigmpos > 0.5, tf.float32), name='pos_acc')
     d_neg_acc = tf.reduce_mean(tf.cast(sigmneg < 0.5, tf.float32), name='neg_acc')
 
     g_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
-        vecneg, tf.ones_like(vecneg)), name='g_loss')
-    d_loss = tf.add(d_loss_pos, d_loss_neg, name='d_loss')
+        vecneg, tf.ones_like(vecneg)), name='g_CE_loss')
+    d_loss = tf.add(d_loss_pos, d_loss_neg, name='d_CE_loss')
     add_moving_summary(d_loss_pos, d_loss_neg,
             g_loss, d_loss,
             d_pos_acc, d_neg_acc)

@@ -38,7 +38,7 @@ Accuracy:
     With (W,A,G)=(1,2,4), 63% error.
 
 Speed:
-    About 3.5 iteration/s on 4 Tesla M40. (Each epoch is set to 10000 iterations)
+    About 2.8 iteration/s on 1 TitanX. (Each epoch is set to 10000 iterations)
 
 To Train:
     ./alexnet-dorefa.py --dorefa 1,2,6 --data PATH --gpu 0,1,2,3
@@ -66,8 +66,7 @@ BITW = 1
 BITA = 2
 BITG = 6
 TOTAL_BATCH_SIZE = 128
-NUM_GPU = 4
-BATCH_SIZE = TOTAL_BATCH_SIZE // NUM_GPU
+BATCH_SIZE = 64
 
 class Model(ModelDesc):
     def _get_input_vars(self):
@@ -300,6 +299,10 @@ if __name__ == '__main__':
         assert args.load.endswith('.npy')
         run_image(Model(), ParamRestore(np.load(args.load, encoding='latin1').item()), args.run)
         sys.exit()
+
+    assert args.gpu is not None, "Need to specify a list of gpu for training!"
+    NR_GPU = len(args.gpu.split(','))
+    BATCH_SIZE = TOTAL_BATCH_SIZE // NR_GPU
 
     config = get_config()
     if args.load:

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-# File: imagenet-resnet-short.py
+# File: imagenet-resnet.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import cv2
@@ -233,7 +233,7 @@ if __name__ == '__main__':
 
     assert args.gpu is not None, "Need to specify a list of gpu for training!"
     NR_GPU = len(args.gpu.split(','))
-    BATCH_SIZE = TOTAL_BATCH_SIZE / NR_GPU
+    BATCH_SIZE = TOTAL_BATCH_SIZE // NR_GPU
 
     logger.auto_set_dir()
     config = get_config()

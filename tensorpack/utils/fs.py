@@ -5,6 +5,7 @@
 
 import os, sys
 from six.moves import urllib
+import errno
 from . import logger
 
 __all__ = ['mkdir_p', 'download']
@@ -17,7 +18,7 @@ def mkdir_p(dirname):
     try:
         os.makedirs(dirname)
     except OSError as e:
-        if e.errno != 17:
+        if e.errno != errno.EEXIST:
             raise e
 
 
