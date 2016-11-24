@@ -19,10 +19,10 @@ from GAN import GANTrainer, RandomZData, build_GAN_losses
 """
 To train:
     ./Image2Image.py --data /path/to/datadir --mode {AtoB,BtoA}
-    # datadir should contain many 512x256 images formed by A and B
+    # datadir should contain 512x256 images formed by A and B
 
 To visualize:
-    ./Image2Image.py --data /path/to/test/datadir --mode {AtoB,BtoA} --load pretrained.model
+    ./Image2Image.py --sample --data /path/to/test/datadir --mode {AtoB,BtoA} --load pretrained.model
 """
 
 SHAPE = 256
@@ -159,7 +159,6 @@ def get_config():
             StatPrinter(), ModelSaver(),
             ScheduledHyperParamSetter('learning_rate', [(200, 1e-4)])
         ]),
-        session_config=get_default_sess_config(0.8),
         model=Model(),
         step_per_epoch=300,
         max_epoch=300,
