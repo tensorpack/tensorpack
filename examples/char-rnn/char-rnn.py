@@ -15,16 +15,11 @@ from six.moves import map, range
 from tensorpack import *
 from tensorpack.tfutils.gradproc import  *
 from tensorpack.utils.lut import LookUpTable
+from tensorpack.utils.globvars import globalns as param
 
 from tensorflow.python.ops import rnn_cell
 from tensorflow.python.ops import rnn
 
-if six.PY2:
-    class NS: pass  # this is a hack
-else:
-    import types
-    NS = types.SimpleNamespace  # this is what I wanted..
-param = NS()
 # some model hyperparams to set
 param.batch_size = 128
 param.rnn_size = 256
@@ -118,9 +113,7 @@ def get_config():
         dataset=ds,
         optimizer=tf.train.AdamOptimizer(lr),
         callbacks=Callbacks([
-            StatPrinter(),
-            ModelSaver(),
-            #HumanHyperParamSetter('learning_rate', 'hyper.txt')
+            StatPrinter(), ModelSaver(),
             ScheduledHyperParamSetter('learning_rate', [(25, 2e-4)])
         ]),
         model=Model(),
@@ -128,6 +121,7 @@ def get_config():
         max_epoch=50,
     )
 
+# TODO rewrite using Predictor interface
 def sample(path, start, length):
     """
     :param path: path to the model

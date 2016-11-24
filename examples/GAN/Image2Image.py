@@ -26,7 +26,7 @@ To visualize:
 """
 
 SHAPE = 256
-BATCH = 16
+BATCH = 4
 IN_CH = 3
 OUT_CH = 3
 LAMBDA = 100
@@ -108,7 +108,7 @@ class Model(ModelDesc):
         self.g_loss = tf.add(self.g_loss, LAMBDA * errL1, name='total_g_loss')
         add_moving_summary(errL1, self.g_loss)
 
-        # visualization
+        # tensorboard visualization
         if IN_CH == 1:
             input = tf.image.grayscale_to_rgb(input)
         if OUT_CH == 1:
@@ -186,7 +186,7 @@ if __name__ == '__main__':
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
     parser.add_argument('--load', help='load model')
     parser.add_argument('--sample', action='store_true', help='run sampling')
-    parser.add_argument('--data', help='A directory of images')
+    parser.add_argument('--data', help='A directory of 512x256 images')
     parser.add_argument('--mode', choices=['AtoB', 'BtoA'], default='AtoB')
     global args
     args = parser.parse_args()
