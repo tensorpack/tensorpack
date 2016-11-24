@@ -18,7 +18,7 @@ __all__ = ['OnlinePredictor', 'OfflinePredictor',
 class PredictorBase(object):
     __metaclass__ = ABCMeta
     """
-    Property:
+    Available attributes:
     session
     return_input
     """

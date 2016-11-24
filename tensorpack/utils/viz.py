@@ -78,7 +78,7 @@ def build_patch_list(patch_list,
     """
     Generate patches.
     :param patch_list: bhw or bhwc images in [0,255]
-    :param border: defaults to 0.1 * max(image_width, image_height)
+    :param border: defaults to 0.1 * min(image_width, image_height)
     :param nr_row, nr_col: rows and cols of the grid
     :parma max_width, max_height: if nr_row/col are not given, use this to infer the rows and cols
     :param shuffle: shuffle the images
@@ -97,7 +97,7 @@ def build_patch_list(patch_list,
         viz = True
     ph, pw = patch_list.shape[1:3]
     if border is None:
-        border = int(0.1 * max(ph, pw))
+        border = int(0.1 * min(ph, pw))
     mh, mw = max(max_height, ph + border), max(max_width, pw + border)
     if nr_row is None:
         nr_row = minnone(nr_row, max_height / (ph + border))

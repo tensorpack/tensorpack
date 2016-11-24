@@ -174,12 +174,12 @@ def sample(datadir, model_path):
 
     imgs = glob.glob(os.path.join(datadir, '*.jpg'))
     ds = ImageFromFile(imgs, channel=3, shuffle=True)
-    ds = BatchData(MapData(ds, lambda dp: split_input(dp[0])), 16)
+    ds = BatchData(MapData(ds, lambda dp: split_input(dp[0])), 6)
 
     pred = SimpleDatasetPredictor(pred, ds)
     for o in pred.get_result():
-        o = o[:,:,:,::-1]
-        viz = next(build_patch_list(o, nr_row=4, nr_col=4, viz=True))
+        o = o[0][:,:,:,::-1]
+        viz = next(build_patch_list(o, nr_row=3, nr_col=2, viz=True))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -200,4 +200,3 @@ if __name__ == '__main__':
         if args.load:
             config.session_init = SaverRestore(args.load)
         GANTrainer(config, g_vs_d=1).train()
-
