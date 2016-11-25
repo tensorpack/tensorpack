@@ -4,13 +4,14 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import tensorflow as tf
+from tensorpack.utils.argtools import memoized
 
-# just a hack to avoid repeatedly registering the gradient
-GRAD_DEFINED = False
-
+@memoized
 def get_dorefa(bitW, bitA, bitG):
-    """ return the three quantization functions fw, fa, fg, for weights,
-    activations and gradients respectively"""
+    """
+    return the three quantization functions fw, fa, fg, for weights, activations and gradients respectively
+    It's unsafe to call this function multiple times with different parameters
+    """
     G = tf.get_default_graph()
 
     def quantize(x, k):
@@ -34,21 +35,18 @@ def get_dorefa(bitW, bitA, bitG):
             return x
         return quantize(x, bitA)
 
-    global GRAD_DEFINED
-    if not GRAD_DEFINED:
-        @tf.RegisterGradient("FGGrad")
-        def grad_fg(op, x):
-            rank = x.get_shape().ndims
-            assert rank is not None
-            maxx = tf.reduce_max(tf.abs(x), list(range(1,rank)), keep_dims=True)
-            x = x / maxx
-            n = float(2**bitG-1)
-            x = x * 0.5 + 0.5 + tf.random_uniform(
-                    tf.shape(x), minval=-0.5/n, maxval=0.5/n)
-            x = tf.clip_by_value(x, 0.0, 1.0)
-            x = quantize(x, bitG) - 0.5
-            return x * maxx * 2
-    GRAD_DEFINED = True
+    @tf.RegisterGradient("FGGrad")
+    def grad_fg(op, x):
+        rank = x.get_shape().ndims
+        assert rank is not None
+        maxx = tf.reduce_max(tf.abs(x), list(range(1,rank)), keep_dims=True)
+        x = x / maxx
+        n = float(2**bitG-1)
+        x = x * 0.5 + 0.5 + tf.random_uniform(
+                tf.shape(x), minval=-0.5/n, maxval=0.5/n)
+        x = tf.clip_by_value(x, 0.0, 1.0)
+        x = quantize(x, bitG) - 0.5
+        return x * maxx * 2
 
     def fg(x):
         if bitG == 32:

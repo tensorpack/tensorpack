@@ -9,7 +9,7 @@ You can actually train them and reproduce the performance... not just to see how
 + [InceptionV3 on ImageNet](examples/Inception/inceptionv3.py)
 + [Fully-convolutional Network for Holistically-Nested Edge Detection](examples/HED)
 + [Spatial Transformer Networks on MNIST addition](examples/SpatialTransformer)
-+ [Generative Adversarial Networks & Image to Image Translation](examples/GAN)
++ [Generative Adversarial Networks(GAN) variants](examples/GAN)
 + [DQN variants on Atari games](examples/Atari2600)
 + [Asynchronous Advantage Actor-Critic(A3C) with demos on OpenAI Gym](examples/OpenAIGym)
 + [char-rnn language model](examples/char-rnn)
@@ -18,17 +18,17 @@ You can actually train them and reproduce the performance... not just to see how
 
 Describe your training task with three components:
 
-1. Model, or graph. `models/` has some scoped abstraction of common models, but you can simply use
+1. __Model__, or graph. `models/` has some scoped abstraction of common models, but you can simply use
 	 any symbolic functions available in tensorflow, or most functions in slim/tflearn/tensorlayer.
-	`LinearWrap` and `argscope` makes large models look simpler.
+	`LinearWrap` and `argscope` makes large models look simpler ([vgg example](https://github.com/ppwwyyxx/tensorpack/blob/master/examples/load-vgg16.py)).
 
-2. Data. tensorpack allows and encourages complex data processing.
+2. __DataFlow__. tensorpack allows and encourages complex data processing.
 
 	+ All data producer has an unified `generator` interface, allowing them to be composed to perform complex preprocessing.
 	+ Use Python to easily handle any data format, yet still keep a good training speed thanks to multiprocess prefetch & TF Queue prefetch.
 	For example, InceptionV3 can run in the same speed as the official code which reads data using TF operators.
 
-3. Callbacks, including everything you want to do apart from the training iterations, such as:
+3. __Callbacks__, including everything you want to do apart from the training iterations, such as:
 	+ Change hyperparameters during training
 	+ Print some variables of interest
 	+ Run inference on a test dataset
@@ -38,6 +38,8 @@ Describe your training task with three components:
 With the above components defined, tensorpack trainer will run the training iterations for you.
 Multi-GPU training is off-the-shelf by simply switching the trainer.
 You can also define your own trainer for non-standard training (e.g. GAN).
+
+The components are designed to be independent. You can use only Model or DataFlow in your project.
 
 ## Dependencies:
 

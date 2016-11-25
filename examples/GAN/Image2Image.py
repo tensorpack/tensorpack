@@ -84,9 +84,9 @@ class Model(ModelDesc):
                 .BatchNorm('bn1').LeakyReLU()
                 .Conv2D('conv2', NF*4)
                 .BatchNorm('bn2').LeakyReLU()
-                .Conv2D('conv3', NF*8, stride=1)    # valid?
+                .Conv2D('conv3', NF*8, stride=1, padding='VALID')
                 .BatchNorm('bn3').LeakyReLU()
-                .Conv2D('convlast', 1, stride=1)())
+                .Conv2D('convlast', 1, stride=1, padding='VALID')())
         return l
 
     def _build_graph(self, input_vars):

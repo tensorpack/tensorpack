@@ -124,9 +124,11 @@ def get_data(train_or_test):
 
     if isTrain:
         class Resize(imgaug.ImageAugmentor):
+            """
+            crop 8%~100% of the original image
+            See `Going Deeper with Convolutions` by Google.
+            """
             def _augment(self, img, _):
-                # crop 8%~100% of the original image
-                # See `Going Deeper with Convolutions` by Google.
                 h, w = img.shape[:2]
                 area = h * w
                 for _ in range(10):

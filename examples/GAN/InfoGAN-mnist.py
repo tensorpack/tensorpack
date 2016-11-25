@@ -119,7 +119,6 @@ def sample(model_path):
 
     eye = [k for k in np.eye(10)]
     inputs = np.asarray(eye * 10)
-    print inputs.shape
     while True:
         o = pred([inputs])
         o = (o[0] + 1) * 128.0
@@ -131,7 +130,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
     parser.add_argument('--load', help='load model')
-    parser.add_argument('--sample', action='store_true')
+    parser.add_argument('--sample', action='store_true', help='visualize the space of the 10 latent codes')
     args = parser.parse_args()
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
