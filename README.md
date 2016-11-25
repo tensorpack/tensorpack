@@ -19,7 +19,7 @@ You can actually train them and reproduce the performance... not just to see how
 Describe your training task with three components:
 
 1. Model, or graph. `models/` has some scoped abstraction of common models, but you can simply use
-	 anything available in tensorflow. This part is roughly an equivalent of slim/tflearn/tensorlayer.
+	 any symbolic functions available in tensorflow, or most functions in slim/tflearn/tensorlayer.
 	`LinearWrap` and `argscope` makes large models look simpler.
 
 2. Data. tensorpack allows and encourages complex data processing.

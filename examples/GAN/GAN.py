@@ -11,7 +11,7 @@ from tensorpack.tfutils.summary import summary_moving_average, add_moving_summar
 from tensorpack.dataflow import DataFlow
 
 class GANTrainer(QueueInputTrainerBase):
-    def __init__(self, config, g_vs_d=3):
+    def __init__(self, config, g_vs_d=1):
         super(GANTrainer, self).__init__(config)
         self._build_enque_thread()
         if g_vs_d > 1:
