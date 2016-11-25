@@ -240,11 +240,11 @@ if __name__ == '__main__':
         if args.gpu:
             nr_gpu = get_nr_gpu()
             if nr_gpu > 1:
-                predict_tower = range(nr_gpu)[-nr_gpu/2:]
+                predict_tower = range(nr_gpu)[-nr_gpu//2:]
             else:
                 predict_tower = [0]
             PREDICTOR_THREAD = len(predict_tower) * PREDICTOR_THREAD_PER_GPU
-            train_tower = range(nr_gpu)[:-nr_gpu/2] or [0]
+            train_tower = range(nr_gpu)[:-nr_gpu//2] or [0]
             logger.info("[BA3C] Train on gpu {} and infer on gpu {}".format(
                 ','.join(map(str, train_tower)), ','.join(map(str, predict_tower))))
         else:
