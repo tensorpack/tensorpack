@@ -49,7 +49,8 @@ class SimulatorProcessBase(mp.Process):
     def __init__(self, idx):
         super(SimulatorProcessBase, self).__init__()
         self.idx = int(idx)
-        self.name = self.identity = u'simulator-{}'.format(self.idx).encode('utf-8')
+        self.name = u'simulator-{}'.format(self.idx)
+        self.identity = self.name.encode('utf-8')
 
     @abstractmethod
     def _build_player(self):

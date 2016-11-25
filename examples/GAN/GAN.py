@@ -25,12 +25,13 @@ class GANTrainer(QueueInputTrainerBase):
         with TowerContext(''):
             actual_inputs = self._get_input_tensors_noreuse()
             self.model.build_graph(actual_inputs)
-        self.gs_incr = tf.assign_add(get_global_step_var(), 1, name='global_step_incr')
         self.g_min = self.config.optimizer.minimize(self.model.g_loss,
                 var_list=self.model.g_vars, name='g_op')
         self.d_min = self.config.optimizer.minimize(self.model.d_loss,
-                var_list=self.model.d_vars)
-        self.d_min = tf.group(self.d_min, summary_moving_average(), name='d_op')
+                var_list=self.model.d_vars, name='d_op')
+        self.gs_incr = tf.assign_add(get_global_step_var(), 1, name='global_step_incr')
+        self.summary_op = summary_moving_average()
+        self.d_min = tf.group(self.d_min, self.summary_op)
 
     def run_step(self):
         for _ in range(self._opt_g):
