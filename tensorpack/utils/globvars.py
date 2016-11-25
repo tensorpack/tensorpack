@@ -4,8 +4,9 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import six
+import argparse
 
-__all__ = ['globalns']
+__all__ = ['globalns', 'use_global_argument']
 
 if six.PY2:
     class NS: pass
@@ -14,3 +15,12 @@ else:
     NS = types.SimpleNamespace
 
 globalns = NS()
+
+def use_global_argument(args):
+    """
+    Add the content of argparse.Namespace to globalns
+    :param args: Argument
+    """
+    assert isinstance(args, argparse.Namespace), type(args)
+    for k, v in six.iteritems(vars(args)):
+        setattr(globalns, k, v)
