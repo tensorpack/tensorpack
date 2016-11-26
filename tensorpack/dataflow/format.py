@@ -13,7 +13,7 @@ from .base import RNGDataFlow
 try:
     import h5py
 except ImportError:
-    logger.warn("Error in 'import h5py'. HDF5Data won't be available.")
+    logger.warn_dependency("HDF5Data", 'h5py')
     __all__ = []
 else:
     __all__ = ['HDF5Data']
@@ -21,14 +21,14 @@ else:
 try:
     import lmdb
 except ImportError:
-    logger.warn("Error in 'import lmdb'. LMDBData won't be available.")
+    logger.warn_dependency("LMDBData", 'lmdb')
 else:
     __all__.extend(['LMDBData', 'CaffeLMDB', 'LMDBDataDecoder'])
 
 try:
     import sklearn.datasets
 except ImportError:
-    logger.warn("Error in 'import sklearn'. SVMLightData won't be available.")
+    logger.warn_dependency('SVMLightData', 'sklearn')
 else:
     __all__.extend(['SVMLightData'])
 

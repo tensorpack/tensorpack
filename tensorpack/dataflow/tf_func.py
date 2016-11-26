@@ -9,7 +9,7 @@ from ..utils import logger
 try:
     import tensorflow as tf
 except ImportError:
-    logger.warn("Cannot import tensorflow. TFFuncMapper won't be available.")
+    logger.warn_dependency('TFFuncMapper', 'tensorflow')
     __all__ = []
 else:
     __all__ = ['TFFuncMapper']

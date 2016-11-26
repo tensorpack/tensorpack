@@ -14,7 +14,7 @@ try:
     # not sure does it cause other problems
     __all__ = ['GymEnv']
 except ImportError:
-    logger.warn("Cannot import gym. GymEnv won't be available.")
+    logger.warn_dependency('GymEnv', 'gym')
     __all__ = []
 
 import threading

@@ -69,21 +69,12 @@ class StaticDynamicShape(object):
     def __init__(self, static, dynamic):
         self.static = static
         self.dynamic = dynamic
-
-    def apply_dynamic(self, f):
-        try:
-            return f(self.static)
-        except:
-            return f(self.dynamic)
-
-    def apply_static(self, f):
-        try:
-            return f(self.static)
-        except:
-            return None
-
     def apply(self, f):
-        return StaticDynamicShape(self.apply_static(f), self.apply_dynamic(f))
+        try:
+            st = f(self.static)
+            return StaticDynamicShape(st, st)
+        except:
+            return StaticDynamicShape(None, f(self.dynamic))
 
 @layer_register()
 def Deconv2D(x, out_shape, kernel_shape,

@@ -115,3 +115,6 @@ def auto_set_dir(action=None, overwrite=False):
             os.path.join('train_log',
                 basename[:basename.rfind('.')]),
             action=action)
+
+def warn_dependency(name, dependencies):
+    warn("Failed to import '{}', {} won't be available'".format(dependencies, name))

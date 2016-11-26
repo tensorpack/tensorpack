@@ -30,7 +30,7 @@ __all__ = ['SimulatorProcess', 'SimulatorMaster',
 try:
     import zmq
 except ImportError:
-    logger.warn("Error in 'import zmq'. RL simulator won't be available.")
+    logger.warn_dependency('Simulator', 'zmq')
     __all__ = []
 
 class TransitionExperience(object):

@@ -15,7 +15,7 @@ try:
     from scipy.io import loadmat
     __all__ = ['BSDS500']
 except ImportError:
-    logger.warn("Cannot import scipy. BSDS500 dataset won't be available!")
+    logger.warn_dependency('BSDS500', 'scipy.io')
     __all__ = []
 
 DATA_URL = "http://www.eecs.berkeley.edu/Research/Projects/CS/vision/grouping/BSR/BSR_bsds500.tgz"

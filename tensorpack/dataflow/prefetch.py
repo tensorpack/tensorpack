@@ -21,7 +21,7 @@ __all__ = ['PrefetchData', 'BlockParallel']
 try:
     import zmq
 except ImportError:
-    logger.warn("Error in 'import zmq'. PrefetchDataZMQ won't be available.")
+    logger.warn_dependency('PrefetchDataZMQ', 'zmq')
 else:
     __all__.extend(['PrefetchDataZMQ', 'PrefetchOnGPUs'])
 

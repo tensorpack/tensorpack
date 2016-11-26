@@ -21,7 +21,7 @@ try:
     else:
         from concurrent.futures import Future
 except ImportError:
-    logger.warn("Cannot import Future in tornado.concurrent. MultiThreadAsyncPredictor won't be available.")
+    logger.warn_dependency('MultiThreadAsyncPredictor', 'tornado.concurrent')
     __all__ = ['MultiProcessPredictWorker', 'MultiProcessQueuePredictWorker']
 else:
     __all__ = ['MultiProcessPredictWorker', 'MultiProcessQueuePredictWorker',

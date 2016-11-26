@@ -200,7 +200,6 @@ def dump_dataflow_images(df, index=0, batched=True,
                     nr_row=viz[0], nr_col=viz[1], viz=True))
                 vizlist = vizlist[vizsize:]
 
-
 if __name__ == '__main__':
     import cv2
     imglist = []
