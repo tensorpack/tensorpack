@@ -2,15 +2,15 @@
 Neural Network Toolbox on TensorFlow
 
 See some [examples](examples) to learn about the framework.
-You can actually train them and reproduce the performance... not just to see how to write code.
+You can train them and reproduce the performance... not just to see how to write code.
 
 + [DoReFa-Net: training binary / low bitwidth CNN on ImageNet](examples/DoReFa-Net)
 + [ResNet for ImageNet/Cifar10/SVHN classification](examples/ResNet)
 + [InceptionV3 on ImageNet](examples/Inception/inceptionv3.py)
-+ [Fully-convolutional Network for Holistically-Nested Edge Detection](examples/HED)
-+ [Spatial Transformer Networks on MNIST addition](examples/SpatialTransformer)
-+ [Generative Adversarial Networks(GAN) variants](examples/GAN)
-+ [DQN variants on Atari games](examples/Atari2600)
++ [Fully-convolutional Network for Holistically-Nested Edge Detection(HED)](examples/HED)
++ [Spatial Transformer Network on MNIST addition](examples/SpatialTransformer)
++ [Generative Adversarial Network(GAN) variants](examples/GAN)
++ [Deep Q-Network(DQN) variants on Atari games](examples/Atari2600)
 + [Asynchronous Advantage Actor-Critic(A3C) with demos on OpenAI Gym](examples/OpenAIGym)
 + [char-rnn language model](examples/char-rnn)
 
@@ -20,13 +20,13 @@ Describe your training task with three components:
 
 1. __Model__, or graph. `models/` has some scoped abstraction of common models, but you can simply use
 	 any symbolic functions available in tensorflow, or most functions in slim/tflearn/tensorlayer.
-	`LinearWrap` and `argscope` makes large models look simpler ([vgg example](https://github.com/ppwwyyxx/tensorpack/blob/master/examples/load-vgg16.py)).
+	`LinearWrap` and `argscope` simplify large models ([vgg example](https://github.com/ppwwyyxx/tensorpack/blob/master/examples/load-vgg16.py)).
 
 2. __DataFlow__. tensorpack allows and encourages complex data processing.
 
 	+ All data producer has an unified `generator` interface, allowing them to be composed to perform complex preprocessing.
-	+ Use Python to easily handle any data format, yet still keep a good training speed thanks to multiprocess prefetch & TF Queue prefetch.
-	For example, InceptionV3 can run in the same speed as the official code which reads data using TF operators.
+	+ Use Python to easily handle any data format, yet still keep good performance thanks to multiprocess prefetch & TF Queue prefetch.
+	For example, InceptionV3 can run in the same speed as the official code which reads data by TF operators.
 
 3. __Callbacks__, including everything you want to do apart from the training iterations, such as:
 	+ Change hyperparameters during training

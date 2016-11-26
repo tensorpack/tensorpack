@@ -194,6 +194,7 @@ def get_model_loader(filename):
     Get a corresponding model loader by looking at the file name
     :return: either a ParamRestore or SaverRestore
     """
+    assert os.path.isfile(filename), filename
     if filename.endswith('.npy'):
         return ParamRestore(np.load(filename, encoding='latin1').item())
     else:

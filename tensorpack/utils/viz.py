@@ -144,7 +144,7 @@ def build_patch_list(patch_list,
         start = end
 
 def dump_dataflow_images(df, index=0, batched=True,
-        number=300, output_dir=None,
+        number=1000, output_dir=None,
         scale=1, resize=None, viz=None,
         flipRGB=False, exit_after=True):
     """

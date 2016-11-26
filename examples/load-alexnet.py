@@ -3,6 +3,7 @@
 # File: load-alexnet.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
+from __future__ import print_function
 import tensorflow as tf
 import numpy as np
 import os, cv2, argparse

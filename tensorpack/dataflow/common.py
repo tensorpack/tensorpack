@@ -21,7 +21,7 @@ class TestDataSpeed(ProxyDataFlow):
         self.test_size = size
 
     def get_data(self):
-        with get_tqdm(total=range(self.test_size)) as pbar:
+        with get_tqdm(total=self.test_size) as pbar:
             for dp in self.ds.get_data():
                 pbar.update()
         for dp in self.ds.get_data():
