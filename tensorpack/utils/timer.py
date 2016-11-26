@@ -10,7 +10,7 @@ from collections import defaultdict
 import six
 import atexit
 
-from .stat import StatCounter
+from .stats import StatCounter
 from . import logger
 
 __all__ = ['total_timer', 'timed_operation',

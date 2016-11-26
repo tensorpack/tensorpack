@@ -13,7 +13,7 @@ from ..utils.concurrency import DIE
 from ..tfutils.modelutils import describe_model
 from ..utils import logger
 
-from .base import *
+from .base import OfflinePredictor, AsyncPredictorBase
 
 try:
     if six.PY2:

@@ -12,7 +12,8 @@ import uuid
 import os
 
 from .base import ProxyDataFlow
-from ..utils.concurrency import *
+from ..utils.concurrency import (ensure_proc_terminate,
+        mask_sigint, start_proc_mask_signal)
 from ..utils.serialize import loads, dumps
 from ..utils import logger
 from ..utils.gpu import change_gpu
@@ -82,6 +83,7 @@ class PrefetchData(ProxyDataFlow):
         pass
 
 def BlockParallel(ds, queue_size):
+    # TODO more doc
     """
     Insert `BlockParallel` in dataflow pipeline to block parallelism on ds
 
@@ -170,7 +172,8 @@ class PrefetchDataZMQ(ProxyDataFlow):
             pass
 
 class PrefetchOnGPUs(PrefetchDataZMQ):
-    """ Prefetch with each process having a specific CUDA_VISIBLE_DEVICES"""
+    """ Prefetch with each process having a specific CUDA_VISIBLE_DEVICES
+    variable"""
     def __init__(self, ds, gpus, pipedir=None):
         self.gpus = gpus
         super(PrefetchOnGPUs, self).__init__(ds, len(gpus), pipedir)

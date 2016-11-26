@@ -19,8 +19,8 @@ except ImportError:
 
 import threading
 
-from ..utils.fs import *
-from ..utils.stat import *
+from ..utils.fs import mkdir_p
+from ..utils.stats import StatCounter
 from .envbase import RLEnvironment, DiscreteActionSpace
 
 
@@ -77,7 +77,7 @@ if __name__ == '__main__':
     env = GymEnv('Breakout-v0', viz=0.1)
     num = env.get_action_space().num_actions()
 
-    from ..utils import *
+    from ..utils import get_rng
     rng = get_rng(num)
     while True:
         act = rng.choice(range(num))

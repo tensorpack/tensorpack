@@ -17,8 +17,7 @@ from six.moves import queue
 from tensorpack import *
 from tensorpack.utils.concurrency import *
 from tensorpack.utils.serialize import *
-from tensorpack.utils.timer import *
-from tensorpack.utils.stat import  *
+from tensorpack.utils.stats import  *
 from tensorpack.tfutils import symbolic_functions as symbf
 
 from tensorpack.RL import *

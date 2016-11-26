@@ -19,9 +19,9 @@ from ..callbacks import Callback
 from ..tfutils.varmanip import SessionUpdate
 from ..predict import OfflinePredictor
 from ..utils import logger
-from ..utils.timer import *
-from ..utils.serialize import *
-from ..utils.concurrency import *
+#from ..utils.timer import *
+from ..utils.serialize import loads, dumps
+from ..utils.concurrency import LoopThread, ensure_proc_terminate
 
 __all__ = ['SimulatorProcess', 'SimulatorMaster',
         'SimulatorProcessStateExchange', 'SimulatorProcessSharedWeight',

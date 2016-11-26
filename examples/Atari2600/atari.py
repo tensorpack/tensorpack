@@ -11,7 +11,7 @@ import threading
 import six
 from six.moves import range
 from tensorpack.utils import (get_rng, logger, get_dataset_path, execute_only_once)
-from tensorpack.utils.stat import StatCounter
+from tensorpack.utils.stats import StatCounter
 
 from tensorpack.RL.envbase import RLEnvironment, DiscreteActionSpace
 

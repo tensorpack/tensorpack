@@ -11,8 +11,7 @@ from six.moves import queue
 from tensorpack import *
 from tensorpack.predict import get_predict_func
 from tensorpack.utils.concurrency import *
-from tensorpack.utils.stat import  *
-from tensorpack.callbacks import *
+from tensorpack.utils.stats import  *
 
 global get_player
 get_player = None

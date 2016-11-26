@@ -6,12 +6,11 @@
 import numpy as np
 from collections import deque, namedtuple
 import threading
-from tqdm import tqdm
 import six
 from six.moves import queue
 
 from ..dataflow import DataFlow
-from ..utils import *
+from ..utils import logger, get_tqdm
 from ..utils.concurrency import LoopThread
 from ..callbacks.base import Callback
 
@@ -71,7 +70,7 @@ class ExpReplay(DataFlow, Callback):
             self._populate_exp()
         self.exploration = old_exploration
 
-        with tqdm(total=self.init_memory_size) as pbar:
+        with get_tqdm(total=self.init_memory_size) as pbar:
             while len(self.mem) < self.init_memory_size:
                 self._populate_exp()
                 pbar.update()

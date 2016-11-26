@@ -11,7 +11,7 @@ from six.moves import zip, map
 
 from ..dataflow import DataFlow
 from ..utils import get_tqdm, logger, execute_only_once
-from ..utils.stat import RatioCounter, BinaryStatistics
+from ..utils.stats import RatioCounter, BinaryStatistics
 from ..tfutils import get_op_tensor_name, get_op_var_name
 from .base import Callback
 from .dispatcher import OutputTensorDispatcer
