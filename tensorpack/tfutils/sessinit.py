@@ -113,7 +113,10 @@ class SaverRestore(SessionInit):
         :param vars_available: varaible names available in the checkpoint, for existence checking
         :returns: a dict of {var_name: [var, var]} to restore
         """
-        vars_to_restore = tf.global_variables()
+        try:
+            vars_to_restore = tf.global_variables()
+        except AttributeError:
+            vars_to_restore = tf.all_variables()
         var_dict = defaultdict(list)
         chkpt_vars_used = set()
         for v in vars_to_restore:
@@ -150,7 +153,7 @@ class ParamRestore(SessionInit):
         self.prms = {get_op_var_name(n)[1]: v for n, v in six.iteritems(param_dict)}
 
     def _init(self, sess):
-        variables = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)
+        variables = tf.get_collection(tf.GraphKeys().VARIABLES) # TODO
 
         variable_names = set([get_savename_from_varname(k.name) for k in variables])
         param_names = set(six.iterkeys(self.prms))

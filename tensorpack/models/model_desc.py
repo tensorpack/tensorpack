@@ -93,7 +93,7 @@ class ModelFromMetaGraph(ModelDesc):
         tf.train.import_meta_graph(filename)
         all_coll = tf.get_default_graph().get_all_collection_keys()
         for k in [INPUT_VARS_KEY, tf.GraphKeys.TRAINABLE_VARIABLES,
-                tf.GraphKeys.GLOBAL_VARIABLES]:
+                tf.GraphKeys().VARIABLES]:
             assert k in all_coll, \
                     "Collection {} not found in metagraph!".format(k)
 
