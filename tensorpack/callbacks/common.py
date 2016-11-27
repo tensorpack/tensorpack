@@ -18,13 +18,18 @@ class ModelSaver(Callback):
     Save the model to logger directory.
     """
     def __init__(self, keep_recent=10, keep_freq=0.5,
-            var_collections=tf.GraphKeys().VARIABLES):
+            var_collections=None):
         """
         :param keep_recent: see `tf.train.Saver` documentation.
         :param keep_freq: see `tf.train.Saver` documentation.
         """
         self.keep_recent = keep_recent
         self.keep_freq = keep_freq
+        if var_collections is None:
+            try:
+                var_collections = tf.GraphKeys.GLOBAL_VARIABLES
+            except:
+                var_collections = tf.GraphKeys.VARIABLES
         if not isinstance(var_collections, list):
             var_collections = [var_collections]
         self.var_collections = var_collections

@@ -60,19 +60,22 @@ def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
     if use_local_stat:
         # training tower
         if ctx.is_training:
-            reuse = tf.get_variable_scope().reuse
-            with tf.name_scope(None): # https://github.com/tensorflow/tensorflow/issues/2740
-                # TODO if reuse=True, try to find and use the existing statistics
-                # how to use multiple tensors to update one EMA? seems impossbile
-                ema = tf.train.ExponentialMovingAverage(decay=decay, name=emaname)
-                ema_apply_op = ema.apply([batch_mean, batch_var])
-                ema_mean, ema_var = ema.average(batch_mean), ema.average(batch_var)
-                if ctx.is_main_training_tower:
-                    # inside main training tower
-                    add_model_variable(ema_mean)
-                    add_model_variable(ema_var)
+            #reuse = tf.get_variable_scope().reuse
+            with tf.variable_scope(tf.get_variable_scope(), reuse=False):
+                # BatchNorm in reuse scope can be tricky! Moving mean/variance are not reused
+                with tf.name_scope(None): # https://github.com/tensorflow/tensorflow/issues/2740
+                    # TODO if reuse=True, try to find and use the existing statistics
+                    # how to use multiple tensors to update one EMA? seems impossbile
+                    ema = tf.train.ExponentialMovingAverage(decay=decay, name=emaname)
+                    ema_apply_op = ema.apply([batch_mean, batch_var])
+                    ema_mean, ema_var = ema.average(batch_mean), ema.average(batch_var)
+                    if ctx.is_main_training_tower:
+                        # inside main training tower
+                        add_model_variable(ema_mean)
+                        add_model_variable(ema_var)
     else:
-        # no apply() is called here, no magic vars will get created
+        # no apply() is called here, no magic vars will get created,
+        # no reuse issue will happen
         assert not ctx.is_training
         with tf.name_scope(None):
             ema = tf.train.ExponentialMovingAverage(decay=decay, name=emaname)
@@ -81,14 +84,16 @@ def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
             sc = tf.get_variable_scope()
             if ctx.is_main_tower:
                 # main tower, but needs to use global stat. global stat must be from outside
-                # TODO when reuse=True, the variable name could actually be different
+                # TODO when reuse=True, the desired variable name could
+                # actually be different, because a different var is created
+                # for different reuse tower
                 ema_mean = tf.get_variable('mean/' + emaname, [n_out])
                 ema_var = tf.get_variable('variance/' + emaname, [n_out])
             else:
                 ## use statistics in another tower
                 G = tf.get_default_graph()
-                ema_mean = ctx.find_tensor_in_main_tower(G, mean_var_name)
-                ema_var = ctx.find_tensor_in_main_tower(G, var_var_name)
+                ema_mean = ctx.find_tensor_in_main_tower(G, mean_var_name + ':0')
+                ema_var = ctx.find_tensor_in_main_tower(G, var_var_name + ':0')
 
     if use_local_stat:
         batch = tf.cast(tf.shape(x)[0], tf.float32)
