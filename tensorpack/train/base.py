@@ -110,6 +110,7 @@ class Trainer(object):
         self.stat_holder = StatHolder(logger.LOG_DIR)
 
         logger.info("Initializing graph variables ...")
+        # TODO newsession + sessinit?
         self.sess.run(tf.initialize_all_variables())
         self.config.session_init.init(self.sess)
 

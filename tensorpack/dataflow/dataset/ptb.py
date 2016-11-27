@@ -45,7 +45,6 @@ class PennTreeBank(RNGDataFlow):
         super(PennTreeBank, self).__init__()
         if data_dir is None:
             data_dir = get_dataset_path('ptb_data')
-        assert os.path.isdir(data_dir)
         data3, word_to_id = get_raw_data(data_dir)
         self.word_to_id = word_to_id
         self.data = np.asarray(

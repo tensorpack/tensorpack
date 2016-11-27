@@ -40,7 +40,7 @@ def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
     beta = tf.get_variable('beta', [n_out],
             initializer=tf.zeros_initializer)
     gamma = tf.get_variable('gamma', [n_out],
-            initializer=tf.ones_initializer)
+            initializer=tf.constant_initializer(1.0))
 
     if len(shape) == 2:
         batch_mean, batch_var = tf.nn.moments(x, [0], keep_dims=False)
@@ -59,39 +59,44 @@ def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
 
     if use_local_stat:
         # training tower
-        with tf.name_scope(None): # https://github.com/tensorflow/tensorflow/issues/2740
-            ema = tf.train.ExponentialMovingAverage(decay=decay, name=emaname)
-            ema_apply_op = ema.apply([batch_mean, batch_var])
-            ema_mean, ema_var = ema.average(batch_mean), ema.average(batch_var)
-            if ctx.is_main_training_tower:
-                # inside main training tower
-                add_model_variable(ema_mean)
-                add_model_variable(ema_var)
-    else:
-        if ctx.is_main_tower:
-            # not training, but main tower. need to create the vars
-            with tf.name_scope(None):
+        if ctx.is_training:
+            reuse = tf.get_variable_scope().reuse
+            with tf.name_scope(None): # https://github.com/tensorflow/tensorflow/issues/2740
+                # TODO if reuse=True, try to find and use the existing statistics
+                # how to use multiple tensors to update one EMA? seems impossbile
                 ema = tf.train.ExponentialMovingAverage(decay=decay, name=emaname)
                 ema_apply_op = ema.apply([batch_mean, batch_var])
                 ema_mean, ema_var = ema.average(batch_mean), ema.average(batch_var)
-        else:
-            # use statistics in another tower
-            G = tf.get_default_graph()
-            # figure out the var name
-            with tf.name_scope(None):
-                ema = tf.train.ExponentialMovingAverage(decay=decay, name=emaname)
-                mean_var_name = ema.average_name(batch_mean) + ':0'
-                var_var_name = ema.average_name(batch_var) + ':0'
-            ema_mean = ctx.find_tensor_in_main_tower(G, mean_var_name)
-            ema_var = ctx.find_tensor_in_main_tower(G, var_var_name)
-            #logger.info("In prediction, using {} instead of {} for {}".format(
-                #mean_name, ema_mean.name, batch_mean.name))
+                if ctx.is_main_training_tower:
+                    # inside main training tower
+                    add_model_variable(ema_mean)
+                    add_model_variable(ema_var)
+    else:
+        # no apply() is called here, no magic vars will get created
+        assert not ctx.is_training
+        with tf.name_scope(None):
+            ema = tf.train.ExponentialMovingAverage(decay=decay, name=emaname)
+            mean_var_name = ema.average_name(batch_mean)
+            var_var_name = ema.average_name(batch_var)
+            sc = tf.get_variable_scope()
+            if ctx.is_main_tower:
+                # main tower, but needs to use global stat. global stat must be from outside
+                # TODO when reuse=True, the variable name could actually be different
+                ema_mean = tf.get_variable('mean/' + emaname, [n_out])
+                ema_var = tf.get_variable('variance/' + emaname, [n_out])
+            else:
+                ## use statistics in another tower
+                G = tf.get_default_graph()
+                ema_mean = ctx.find_tensor_in_main_tower(G, mean_var_name)
+                ema_var = ctx.find_tensor_in_main_tower(G, var_var_name)
 
     if use_local_stat:
-        with tf.control_dependencies([ema_apply_op]):
-            batch = tf.cast(tf.shape(x)[0], tf.float32)
-            mul = tf.select(tf.equal(batch, 1.0), 1.0, batch / (batch - 1))
-            batch_var = batch_var * mul  # use unbiased variance estimator in training
+        batch = tf.cast(tf.shape(x)[0], tf.float32)
+        mul = tf.select(tf.equal(batch, 1.0), 1.0, batch / (batch - 1))
+        batch_var = batch_var * mul  # use unbiased variance estimator in training
+
+        with tf.control_dependencies([ema_apply_op] if ctx.is_training else []):
+            # only apply EMA op if is_training
             return tf.nn.batch_normalization(
                 x, batch_mean, batch_var, beta, gamma, epsilon, 'output')
     else:
