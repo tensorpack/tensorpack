@@ -7,7 +7,7 @@
 import inspect, six, functools
 import collections
 
-__all__ = [ 'map_arg', 'memoized', 'shape2d']
+__all__ = [ 'map_arg', 'memoized', 'shape2d', 'memoized_ignoreargs']
 
 def map_arg(**maps):
     """
@@ -54,6 +54,16 @@ class memoized(object):
         '''Support instance methods.'''
         return functools.partial(self.__call__, obj)
 
+_MEMOIZED_NOARGS = {}
+def memoized_ignoreargs(func):
+    h = hash(func)  # make sure it is hashable. is it necessary?
+    def wrapper(*args):
+        if func not in _MEMOIZED_NOARGS:
+            res = func(*args)
+            _MEMOIZED_NOARGS[func] = res
+            return res
+        return _MEMOIZED_NOARGS[func]
+    return wrapper
 
 #_GLOBAL_MEMOIZED_CACHE = dict()
 #def global_memoized(func):

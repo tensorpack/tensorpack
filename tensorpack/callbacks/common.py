@@ -18,7 +18,7 @@ class ModelSaver(Callback):
     Save the model to logger directory.
     """
     def __init__(self, keep_recent=10, keep_freq=0.5,
-            var_collections=tf.GraphKeys.VARIABLES):
+            var_collections=tf.GraphKeys.GLOBAL_VARIABLES):
         """
         :param keep_recent: see `tf.train.Saver` documentation.
         :param keep_freq: see `tf.train.Saver` documentation.

@@ -15,7 +15,7 @@ from ..tfutils import get_op_var_name
 
 __all__ = ['HyperParamSetter', 'HumanHyperParamSetter',
            'ScheduledHyperParamSetter',
-           'StatMonitorParamSetter',
+           'StatMonitorParamSetter', 'HyperParamSetterWithFunc',
            'HyperParam', 'GraphVarParam', 'ObjAttrParam']
 
 class HyperParam(object):
@@ -197,15 +197,24 @@ class ScheduledHyperParamSetter(HyperParamSetter):
             v = (self.epoch_num - laste) * 1. / (e - laste) * (v - lastv) + lastv
             return v
 
+class HyperParamSetterWithFunc(HyperParamSetter):
+    def __init__(self, param, func):
+        """Set hyperparameter by a func
+        new_value = f(epoch_num, old_value)
+        """
+        super(StatMonitorParamSetter, self).__init__(param)
+        self.f = func
+
+    def _get_value_to_set(self):
+        return self.f(self.epoch_num, self.get_current_value())
+
 class StatMonitorParamSetter(HyperParamSetter):
-    """
-    Set hyperparameter by a func, when a specific stat wasn't
-    decreasing/increasing enough in the last $k$ epochs
-    """
     def __init__(self, param, stat_name, value_func, threshold,
             last_k, reverse=False
             ):
         """
+        Set hyperparameter by a func, when a specific stat wasn't
+        decreasing/increasing enough in the last $k$ epochs.
         Change param by `new_value = value_func(old_value)`,
         if :
             min(stats) >= stats[0] - threshold, where

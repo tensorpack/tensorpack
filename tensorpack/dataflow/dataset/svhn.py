@@ -4,7 +4,6 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import os
-import random
 import numpy as np
 from six.moves import range
 
