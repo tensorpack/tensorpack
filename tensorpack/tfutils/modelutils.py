@@ -3,6 +3,7 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
+from termcolor import colored
 
 from ..utils import logger
 
@@ -20,8 +21,9 @@ def describe_model():
         msg.append("{}: shape={}, dim={}".format(
             v.name, shape.as_list(), ele))
     size_mb = total * 4 / 1024.0**2
-    msg.append("Total param={} ({:01f} MB assuming all float32)".format(total, size_mb))
-    logger.info("Model Parameters: {}".format('\n'.join(msg)))
+    msg.append(colored(
+        "Total param={} ({:01f} MB assuming all float32)".format(total, size_mb), 'cyan'))
+    logger.info(colored("Model Parameters: ", 'cyan') + '\n'.join(msg))
 
 
 def get_shape_str(tensors):

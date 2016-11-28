@@ -6,6 +6,8 @@ Use A3C in [Asynchronous Methods for Deep Reinforcement Learning](http://arxiv.o
 
 `./train-atari.py --env Breakout-v0 --gpu 0`
 
+The pre-trained models are all trained with 4 GPUs.
+
 ### To run a pretrained Atari model for 100 episodes:
 
 1. Download models from [model zoo](https://drive.google.com/open?id=0B9IPQTvr2BBkS0VhX0xmS1c5aFk)

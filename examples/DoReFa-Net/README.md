@@ -13,7 +13,7 @@ It's provided in the format of numpy dictionary, so it should be very easy to po
 
 To use the script. You'll need:
 
-+ [TensorFlow](https://tensorflow.org) >= 0.10
++ TensorFlow 0.10,0.11rc1,0.11rc2. 0.11 is not supported due to [TF bug](https://github.com/tensorflow/tensorflow/issues/5888)
 
 + OpenCV bindings for Python
 
@@ -22,7 +22,7 @@ To use the script. You'll need:
 ```
 git clone https://github.com/ppwwyyxx/tensorpack
 pip install --user -r tensorpack/requirements.txt
-pip install --user pyzmq scipy
+pip install --user scipy
 export PYTHONPATH=$PYTHONPATH:`readlink -f tensorpack`
 ```
 

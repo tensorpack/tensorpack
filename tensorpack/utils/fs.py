@@ -42,6 +42,7 @@ def download(url, dir):
         raise
     assert size > 0, "Download an empty file!"
     sys.stdout.write('\n')
+    # TODO human-readable size
     print('Succesfully downloaded ' + fname + " " + str(size) + ' bytes.')
     return fpath
 
