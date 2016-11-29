@@ -32,12 +32,19 @@ class ModelDesc(object):
             return self.reuse_input_vars()
         except KeyError:
             pass
+        ret = self.get_placeholders()
+        for v in ret:
+            tf.add_to_collection(INPUT_VARS_KEY, v)
+        return ret
+
+    def get_placeholders(self, prefix=''):
+        """ build placeholders with optional prefix, for each InputVar"""
         input_vars = self._get_input_vars()
         ret = []
         for v in input_vars:
-            ret.append(tf.placeholder(v.type, shape=v.shape, name=v.name))
-        for v in ret:
-            tf.add_to_collection(INPUT_VARS_KEY, v)
+            ret.append(tf.placeholder(
+                v.type, shape=v.shape,
+                name=prefix + v.name))
         return ret
 
     def reuse_input_vars(self):

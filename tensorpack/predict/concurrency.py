@@ -46,6 +46,7 @@ class MultiProcessPredictWorker(multiprocessing.Process):
             from tensorpack.models._common import disable_layer_logging
             disable_layer_logging()
         self.predictor = OfflinePredictor(self.config)
+        import sys
         if self.idx == 0:
             with self.predictor.graph.as_default():
                 describe_model()
