@@ -1,6 +1,6 @@
-### code and models for my Gym submissions on Atari games
+### Code and models for my Gym submissions on Atari games
 
-Use A3C in [Asynchronous Methods for Deep Reinforcement Learning](http://arxiv.org/abs/1602.01783).
+Implemented A3C in [Asynchronous Methods for Deep Reinforcement Learning](http://arxiv.org/abs/1602.01783).
 
 ### To train on an Atari game:
 

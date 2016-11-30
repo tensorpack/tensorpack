@@ -91,18 +91,22 @@ class AsyncMultiGPUTrainer(QueueInputTrainerBase,
         MultiGPUTrainer,
         SingleCostFeedlessTrainer,
         MultiPredictorTowerTrainer):
-    def __init__(self, config, input_queue=None, predict_tower=None):
+    def __init__(self, config,
+            input_queue=None,
+            predict_tower=None,
+            average_gradient=True):
         super(AsyncMultiGPUTrainer, self).__init__(config)
         self._setup_predictor_factory(predict_tower)
         self._build_enque_thread(input_queue)
+        self.average_gradient = average_gradient
 
     def _setup(self):
         grad_list = MultiGPUTrainer._multi_tower_grads(
                 self.config.tower, lambda: self._get_cost_and_grad()[1])
         gradprocs = self.model.get_gradient_processor()
-        # pretend to average the grads, in order to make async and
-        # sync have consistent effective learning rate
-        if self.config.nr_tower > 1:
+        if self.average_gradient and self.config.nr_tower > 1:
+            # pretend to average the grads, in order to make async and
+            # sync have consistent effective learning rate
             gradprocs.insert(0, ScaleGradient(('.*', 1.0 / self.config.nr_tower), log=False))
         grad_list = [apply_grad_processors(g, gradprocs) for g in grad_list]
 

@@ -117,8 +117,10 @@ def sample(model_path):
        input_names=['zc'],
        output_names=['gen/gen']))
 
-    eye = [k for k in np.eye(10)]
-    inputs = np.asarray(eye * 10)
+    eye = []
+    for k in np.eye(10):
+        eye = eye + [k] * 10
+    inputs = np.asarray(eye)
     while True:
         o = pred([inputs])
         o = (o[0] + 1) * 128.0

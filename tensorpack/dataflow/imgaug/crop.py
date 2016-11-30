@@ -10,7 +10,7 @@ from six.moves import range
 import numpy as np
 
 __all__ = ['RandomCrop', 'CenterCrop', 'FixedCrop',
-        'RandomCropRandomShape', 'perturb_BB']
+        'RandomCropRandomShape', 'perturb_BB', 'RandomCropAroundBox']
 
 class RandomCrop(ImageAugmentor):
     """ Randomly crop the image into a smaller one """
@@ -109,7 +109,7 @@ def perturb_BB(image_shape, bb, max_pertub_pixel,
     return bb
 
 
-class RandomCropRandomShape(ImageAugmentor):
+class RandomCropAroundBox(ImageAugmentor):
     """
     Crop a box around a bounding box
     """
@@ -118,7 +118,7 @@ class RandomCropRandomShape(ImageAugmentor):
         :param perturb_ratio: perturb distance will be in [0, perturb_ratio * sqrt(w * h)]
         :param max_aspect_ratio_diff: keep aspect ratio within the range
         """
-        super(RandomCropRandomShape, self).__init__()
+        super(RandomCropAroundBox, self).__init__()
         self._init(locals())
 
     def _get_augment_params(self, img):
@@ -134,6 +134,34 @@ class RandomCropRandomShape(ImageAugmentor):
 
     def _fprop_coord(self, coord, param):
         raise NotImplementedError()
+
+class RandomCropRandomShape(ImageAugmentor):
+    def __init__(self, wmin, hmin,
+            wmax=None, hmax=None,
+            max_aspect_ratio=None):
+        """
+        Randomly crop a box of shape (h, w), sampled from [min, max](inclusive).
+        If max is None, will use the input image shape.
+        max_aspect_ratio is the upper bound of max(w,h)/min(w,h)
+        """
+        if max_aspect_ratio is None:
+            max_aspect_ratio = 9999999
+        self._init(locals())
+
+    def _get_augment_params(self, img):
+        hmax = self.hmax or img.shape[0]
+        wmax = self.wmax or img.shape[1]
+        h = self.rng.randint(self.hmin, hmax+1)
+        w = self.rng.randint(self.wmin, wmax+1)
+        diffh = img.shape[0] - h
+        y0 = 0 if diffh == 0 else self.rng.randint(diffh)
+        diffw = img.shape[1] - w
+        x0 = 0 if diffw == 0 else self.rng.randint(diffw)
+        return (y0,x0,h,w)
+
+    def _augment(self, img, param):
+        y0, x0, h, w = param
+        return img[y0:y0+h,x0:x0+w]
 
 if __name__ == '__main__':
     print(perturb_BB([100, 100], Rect(3, 3, 50, 50), 50))

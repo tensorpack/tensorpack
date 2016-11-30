@@ -146,6 +146,7 @@ class SimulatorMaster(threading.Thread):
         while True:
             msg = loads(self.c2s_socket.recv(copy=False).bytes)
             ident, state, reward, isOver = msg
+            # TODO check history and warn about dead client
             client = self.clients[ident]
 
             # check if reward&isOver is valid

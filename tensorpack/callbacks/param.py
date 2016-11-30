@@ -207,7 +207,7 @@ class HyperParamSetterWithFunc(HyperParamSetter):
         """Set hyperparameter by a func
         new_value = f(epoch_num, old_value)
         """
-        super(StatMonitorParamSetter, self).__init__(param)
+        super(HyperParamSetterWithFunc, self).__init__(param)
         self.f = func
 
     def _get_value_to_set(self):
