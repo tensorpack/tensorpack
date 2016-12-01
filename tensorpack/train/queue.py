@@ -63,9 +63,11 @@ class QueueInputTrainerBase(FeedlessTrainer):
     def _build_enque_thread(self, input_queue=None):
         """ create a thread that keeps filling the queue """
         self.input_vars = self.model.get_input_vars()
+        assert len(self.input_vars) > 0, "QueueInput can only be used with input placeholders!"
         if input_queue is None:
             self.input_queue = tf.FIFOQueue(
-                    50, [x.dtype for x in self.input_vars], name='input_queue')
+                    50, [x.dtype for x in self.input_vars],
+                    name='input_queue')
         else:
             self.input_queue = input_queue
         input_th = EnqueueThread(self)

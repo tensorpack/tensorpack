@@ -66,7 +66,6 @@ class Model(ModelDesc):
                 tf.concat(3, [b1, b2, b3, b4, b5]), 1, 1,
                 W_init=tf.constant_initializer(0.2),
                 use_bias=False, nl=tf.identity)
-        final_map = tf.squeeze(final_map, [3], name='predmap')
         costs = []
         for idx, b in enumerate([b1, b2, b3, b4, b5, final_map]):
             output = tf.nn.sigmoid(b, name='output{}'.format(idx+1))

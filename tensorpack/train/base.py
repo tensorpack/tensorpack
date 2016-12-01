@@ -24,19 +24,24 @@ class StopTraining(BaseException):
     pass
 
 class Trainer(object):
-    """
-    Base class for a trainer.
-
-    Available Attritbutes:
-        stat_holder: a `StatHolder` instance
-        summary_writer: a `tf.SummaryWriter`
-        summary_op: a `tf.Operation` which returns summary string
-        config: a `TrainConfig`
-        model: a `ModelDesc`
-        sess: a `tf.Session`
-        coord: a `tf.train.Coordinator`
-    """
+    """ Base class for a trainer."""
     __metaclass__ = ABCMeta
+
+    """a `StatHolder` instance"""
+    stat_holder = None
+
+    """`tf.SummaryWriter`"""
+    summary_writer = None
+    """a tf.Tensor which returns summary string"""
+    summary_op = None
+    """ TrainConfig """
+    config = None
+    """ a ModelDesc"""
+    model = None
+    """ the current session"""
+    sess = None
+    """ the `tf.train.Coordinator` """
+    coord = None
 
     def __init__(self, config):
         """

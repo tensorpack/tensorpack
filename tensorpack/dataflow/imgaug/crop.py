@@ -154,8 +154,9 @@ class RandomCropRandomShape(ImageAugmentor):
         h = self.rng.randint(self.hmin, hmax+1)
         w = self.rng.randint(self.wmin, wmax+1)
         diffh = img.shape[0] - h
-        y0 = 0 if diffh == 0 else self.rng.randint(diffh)
         diffw = img.shape[1] - w
+        assert diffh >= 0 and diffw >= 0
+        y0 = 0 if diffh == 0 else self.rng.randint(diffh)
         x0 = 0 if diffw == 0 else self.rng.randint(diffw)
         return (y0,x0,h,w)
 

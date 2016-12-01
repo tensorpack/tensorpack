@@ -105,7 +105,7 @@ def add_moving_summary(v, *args):
 @memoized
 def summary_moving_average(tensors=None):
     """
-    Create a MovingAverage op and summary for tensors
+    Create a MovingAverage op and add summary for tensors
     :param tensors: list of tf.Tensor to summary. default to the collection MOVING_SUMMARY_VARS_KEY
     :returns: a op to maintain these average.
     """

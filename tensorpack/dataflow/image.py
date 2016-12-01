@@ -19,7 +19,7 @@ class ImageFromFile(RNGDataFlow):
         :param channel: 1 or 3 channel
         :param resize: a (h, w) tuple. If given, will force a resize
         """
-        assert len(files)
+        assert len(files), "No Image Files!"
         self.files = files
         self.channel = int(channel)
         self.imread_mode = cv2.IMREAD_GRAYSCALE if self.channel == 1 else cv2.IMREAD_COLOR

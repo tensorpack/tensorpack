@@ -93,7 +93,7 @@ class InferenceRunner(Callback):
 
     def _find_input_tensors(self):
         if self.input_tensors is None:
-            input_vars = self.trainer.model.reuse_input_vars()
+            input_vars = self.trainer.model.get_input_vars()
             self.input_tensors = [x.name for x in input_vars]
 
     def _find_output_tensors(self):

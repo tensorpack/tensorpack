@@ -125,6 +125,7 @@ class FeedlessTrainer(Trainer):
         """ return a list of actual input tensors.
             Always return new tensors (for multi tower) if called mutliple times.
         """
+        pass
 
 class SingleCostFeedlessTrainer(FeedlessTrainer):
     def _get_cost_and_grad(self):

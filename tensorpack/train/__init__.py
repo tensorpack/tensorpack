@@ -8,7 +8,7 @@ import os.path
 
 def global_import(name):
     p = __import__(name, globals(), locals(), level=1)
-    lst = p.__all__ if '__all__' in dir(p) else dir(p)
+    lst = p.__all__ if '__all__' in dir(p) else []
     for k in lst:
         globals()[k] = p.__dict__[k]
     del globals()[name]
