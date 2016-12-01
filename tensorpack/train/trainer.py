@@ -126,7 +126,7 @@ class FeedlessTrainer(Trainer):
             Always return new tensors (for multi tower) if called mutliple times.
         """
 
-class SingleCostFeedlessTrainer(Trainer):
+class SingleCostFeedlessTrainer(FeedlessTrainer):
     def _get_cost_and_grad(self):
         """ get the cost and gradient on a new tower"""
         actual_inputs = self._get_input_tensors_noreuse()

@@ -98,6 +98,7 @@ class Trainer(object):
     def setup(self):
         self._setup()
         describe_model()
+        get_global_step_var()
         # some final operations that might modify the graph
         logger.info("Setup callbacks ...")
         self.config.callbacks.setup_graph(weakref.proxy(self))

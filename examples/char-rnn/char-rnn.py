@@ -90,8 +90,7 @@ class Model(ModelDesc):
         summary.add_param_summary([('.*/W', ['histogram'])])   # monitor histogram of all W
 
     def get_gradient_processor(self):
-        return [MapGradient(lambda grad: tf.clip_by_global_norm(
-            [grad], param.grad_clip)[0][0])]
+        return [GlobalNormClip(5)]
 
 def get_config():
     logger.auto_set_dir()
