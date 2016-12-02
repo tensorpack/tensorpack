@@ -165,16 +165,18 @@ class RepeatedData(ProxyDataFlow):
         :param nr: number of times to repeat ds.
             If nr == -1, repeat ds infinitely many times.
         """
+        if nr == -1:
+            nr = DataFlow.Infinity
         self.nr = nr
         super(RepeatedData, self).__init__(ds)
 
     def size(self):
-        if self.nr == -1:
+        if self.nr == DataFlow.Infinity:
             raise RuntimeError("size() is unavailable for infinite dataflow")
         return self.ds.size() * self.nr
 
     def get_data(self):
-        if self.nr == -1:
+        if self.nr == DataFlow.Infinity:
             while True:
                 for dp in self.ds.get_data():
                     yield dp

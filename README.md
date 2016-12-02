@@ -51,7 +51,6 @@ The components are designed to be independent. You can use only Model or DataFlo
 pip install --user -r requirements.txt
 pip install --user -r opt-requirements.txt (some optional dependencies, you can install later if needed)
 ```
-+ [tcmalloc](http://goog-perftools.sourceforge.net/doc/tcmalloc.html) usually helps.
 + Enable `import tensorpack`:
 ```
 export PYTHONPATH=$PYTHONPATH:`readlink -f path/to/tensorpack`

@@ -9,9 +9,14 @@ from ..utils import get_rng
 
 __all__ = ['DataFlow', 'ProxyDataFlow', 'RNGDataFlow']
 
+
 class DataFlow(object):
     """ Base class for all DataFlow """
     __metaclass__ = ABCMeta
+
+    class Infinity:
+        pass
+
 
     @abstractmethod
     def get_data(self):

@@ -50,7 +50,6 @@ class Trainer(object):
         assert isinstance(config, TrainConfig), type(config)
         self.config = config
         self.model = config.model
-        self.model.get_input_vars()  # ensure they are present
         self.sess = tf.Session(config=self.config.session_config)
         self.coord = tf.train.Coordinator()
 
