@@ -15,12 +15,13 @@ from ..tfutils import (backup_collection, restore_collection,
         get_global_step_var, TowerContext)
 from ..tfutils.gradproc import apply_grad_processors, ScaleGradient
 
-from .trainer import FeedlessTrainer, SingleCostFeedlessTrainer, MultiPredictorTowerTrainer
-from .queue import QueueInputTrainer, QueueInputTrainerBase
+from .trainer import FeedfreeTrainer, SingleCostFeedfreeTrainer, MultiPredictorTowerTrainer
+from .queue import QueueInputTrainer
+from .inputmethod import QueueInput
 
 __all__ = ['AsyncMultiGPUTrainer', 'SyncMultiGPUTrainer']
 
-class MultiGPUTrainer(FeedlessTrainer):
+class MultiGPUTrainer(FeedfreeTrainer):
     """ Base class for multi-gpu training"""
     @staticmethod
     def _multi_tower_grads(towers, get_tower_grad_func):
@@ -42,15 +43,14 @@ class MultiGPUTrainer(FeedlessTrainer):
         restore_collection(backup)
         return grad_list
 
-class SyncMultiGPUTrainer(QueueInputTrainerBase,
-        MultiGPUTrainer,
-        SingleCostFeedlessTrainer,
+class SyncMultiGPUTrainer(MultiGPUTrainer,
+        SingleCostFeedfreeTrainer,
         MultiPredictorTowerTrainer):
     def __init__(self, config, input_queue=None, predict_tower=None):
         assert len(config.tower) >= 1, "MultiGPUTrainer must be used with at least one GPU."
         super(SyncMultiGPUTrainer, self).__init__(config)
         self._setup_predictor_factory(predict_tower)
-        self._build_enque_thread(input_queue)
+        self._input_method = QueueInput(config.dataset, input_queue)
 
     @staticmethod
     def _average_grads(tower_grads):
@@ -75,6 +75,7 @@ class SyncMultiGPUTrainer(QueueInputTrainerBase,
         return ret
 
     def _setup(self):
+        super(SyncMultiGPUTrainer, self)._setup()
         grad_list = MultiGPUTrainer._multi_tower_grads(
                 self.config.tower, lambda: self._get_cost_and_grad()[1])
         grads = SyncMultiGPUTrainer._average_grads(grad_list)
@@ -87,9 +88,8 @@ class SyncMultiGPUTrainer(QueueInputTrainerBase,
     def run_step(self):
         self.sess.run(self.train_op)
 
-class AsyncMultiGPUTrainer(QueueInputTrainerBase,
-        MultiGPUTrainer,
-        SingleCostFeedlessTrainer,
+class AsyncMultiGPUTrainer(MultiGPUTrainer,
+        SingleCostFeedfreeTrainer,
         MultiPredictorTowerTrainer):
     def __init__(self, config,
             input_queue=None,
@@ -97,10 +97,11 @@ class AsyncMultiGPUTrainer(QueueInputTrainerBase,
             average_gradient=True):
         super(AsyncMultiGPUTrainer, self).__init__(config)
         self._setup_predictor_factory(predict_tower)
-        self._build_enque_thread(input_queue)
+        self._input_method = QueueInput(config.dataset, input_queue)
         self.average_gradient = average_gradient
 
     def _setup(self):
+        super(SyncMultiGPUTrainer, self)._setup()
         grad_list = MultiGPUTrainer._multi_tower_grads(
                 self.config.tower, lambda: self._get_cost_and_grad()[1])
         gradprocs = self.model.get_gradient_processor()

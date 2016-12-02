@@ -5,15 +5,15 @@
 
 import tensorflow as tf
 import numpy as np
-from tensorpack import (QueueInputTrainerBase, TowerContext,
-        get_global_step_var)
+from tensorpack import (QueueInputTrainer, TowerContext,
+        get_global_step_var, QueueInput)
 from tensorpack.tfutils.summary import summary_moving_average, add_moving_summary
 from tensorpack.dataflow import DataFlow
 
-class GANTrainer(QueueInputTrainerBase):
+class GANTrainer(QueueInputTrainer):
     def __init__(self, config, g_vs_d=1):
         super(GANTrainer, self).__init__(config)
-        self._build_enque_thread()
+        self._input_method = QueueInput(config.dataset)
         if g_vs_d > 1:
             self._opt_g = g_vs_d
             self._opt_d = 1
@@ -22,8 +22,9 @@ class GANTrainer(QueueInputTrainerBase):
             self._opt_d = int(1.0 / g_vs_d)
 
     def _setup(self):
+        super(GANTrainer, self)._setup()
         with TowerContext(''):
-            actual_inputs = self._get_input_tensors_noreuse()
+            actual_inputs = self._get_input_tensors()
             self.model.build_graph(actual_inputs)
         self.g_min = self.config.optimizer.minimize(self.model.g_loss,
                 var_list=self.model.g_vars, name='g_op')

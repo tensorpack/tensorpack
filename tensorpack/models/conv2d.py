@@ -44,7 +44,7 @@ def Conv2D(x, out_channel, kernel_shape,
     stride = shape4d(stride)
 
     if W_init is None:
-        W_init = tf.contrib.layers.xavier_initializer_conv2d()
+        W_init = tf.contrib.layers.variance_scaling_initializer()
     if b_init is None:
         b_init = tf.constant_initializer()
 

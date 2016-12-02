@@ -30,8 +30,8 @@ def FullyConnected(x, out_dim,
     in_dim = x.get_shape().as_list()[1]
 
     if W_init is None:
-        #W_init = tf.truncated_normal_initializer(stddev=1 / math.sqrt(float(in_dim)))
-        W_init = tf.uniform_unit_scaling_initializer(factor=1.43)
+        #W_init = tf.uniform_unit_scaling_initializer(factor=1.43)
+        W_init = tf.contrib.layers.variance_scaling_initializer()
     if b_init is None:
         b_init = tf.constant_initializer()
 
