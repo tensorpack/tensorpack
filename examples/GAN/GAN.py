@@ -5,15 +5,15 @@
 
 import tensorflow as tf
 import numpy as np
-from tensorpack import (QueueInputTrainer, TowerContext,
+from tensorpack import (FeedfreeTrainer, TowerContext,
         get_global_step_var, QueueInput)
 from tensorpack.tfutils.summary import summary_moving_average, add_moving_summary
 from tensorpack.dataflow import DataFlow
 
-class GANTrainer(QueueInputTrainer):
+class GANTrainer(FeedfreeTrainer):
     def __init__(self, config, g_vs_d=1):
-        super(GANTrainer, self).__init__(config)
         self._input_method = QueueInput(config.dataset)
+        super(GANTrainer, self).__init__(config)
         if g_vs_d > 1:
             self._opt_g = g_vs_d
             self._opt_d = 1

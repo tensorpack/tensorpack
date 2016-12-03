@@ -82,7 +82,7 @@ class Model(ModelDesc):
 
         self.g_loss, self.d_loss = build_GAN_losses(vecpos, vecneg)
         self.g_loss = tf.add(self.g_loss, MIloss, name='total_g_loss')
-        self.d_loss = tf.add(self.d_loss, MIloss, name='total_g_loss')
+        self.d_loss = tf.add(self.d_loss, MIloss, name='total_d_loss')
         summary.add_moving_summary(MIloss, self.g_loss, self.d_loss, Hc, Elog_qc_given_x)
 
         all_vars = tf.trainable_variables()

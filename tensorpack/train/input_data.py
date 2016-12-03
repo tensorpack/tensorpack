@@ -1,23 +1,24 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File: inputmethod.py
+# File: input_data.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import tensorflow as tf
 import threading
 from abc import ABCMeta, abstractmethod
 
+from ..dataflow.common import RepeatedData
 from ..tfutils.summary import add_moving_summary
 from ..utils import logger
 from ..callbacks.concurrency import StartProcOrThread
 
 __all__ = ['QueueInput', 'FeedfreeInput', 'TensorInput']
 
-class InputMethod(object):
+class InputData(object):
     __metaclass__ = ABCMeta
     pass
 
-class FeedInput(InputMethod):
+class FeedInput(InputData):
     def __init__(self, ds):
         self.ds = ds
 
@@ -26,8 +27,16 @@ class FeedInput(InputMethod):
 
     def _setup(self, trainer):
         self.input_vars = trainer.model.get_input_vars()
+        rds = RepeatedData(self.ds, -1)
+        rds.reset_state()
+        self.data_producer = rds.get_data()
 
-class FeedfreeInput(InputMethod):
+    def next_feed(self):
+        data = next(self.data_producer)
+        feed = dict(zip(self.input_vars, data))
+        return feed
+
+class FeedfreeInput(InputData):
     def get_input_tensors(self):
         return self._get_input_tensors()
 

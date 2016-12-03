@@ -8,15 +8,13 @@ from six.moves import zip
 
 from .base import Trainer
 
-from ..dataflow.common import RepeatedData
-
 from ..utils import logger, SUMMARY_BACKUP_KEYS
 from ..tfutils import (get_tensors_by_names, freeze_collection,
         get_global_step_var, TowerContext)
 from ..tfutils.summary import summary_moving_average, add_moving_summary
 from ..predict import OnlinePredictor, build_multi_tower_prediction_graph
 from ..tfutils.gradproc import apply_grad_processors
-from .inputmethod import FeedfreeInput
+from .input_data import FeedInput, FeedfreeInput
 
 __all__ = ['SimpleTrainer', 'FeedfreeTrainer', 'MultiPredictorTowerTrainer',
         'SingleCostFeedfreeTrainer']
@@ -59,13 +57,18 @@ class SimpleTrainer(Trainer):
     def __init__(self, config):
         super(SimpleTrainer, self).__init__(config)
         self._predictor_factory = PredictorFactory(self.sess, self.model, [0])
+        if not hasattr(config, 'dataset'):
+            self._input_method = config.data
+            assert isinstance(self._input_method, FeedInput)
+        else:
+            self._input_method = FeedInput(config.dataset)
 
     def run_step(self):
-        data = next(self.data_producer)
-        feed = dict(zip(self.input_vars, data))
+        feed = self._input_method.next_feed()
         self.sess.run([self.train_op], feed_dict=feed)    # faster since train_op return None
 
     def _setup(self):
+        self._input_method._setup(self)
         model = self.model
         self.input_vars = model.get_input_vars()
         with TowerContext(''):
@@ -81,14 +84,9 @@ class SimpleTrainer(Trainer):
             self.config.optimizer.apply_gradients(grads, get_global_step_var()),
             summary_moving_average(), name='train_op')
 
-        # create an infinte data producer
-        self.config.dataset.reset_state()
-        self.data_producer = RepeatedData(self.config.dataset, -1).get_data()
-
     def _trigger_epoch(self):
         if self.summary_op is not None:
-            data = next(self.data_producer)
-            feed = dict(zip(self.input_vars, data))
+            feed = self._input_method.next_feed()
             summary_str = self.summary_op.eval(feed_dict=feed)
             self._process_summary(summary_str)
 
@@ -126,7 +124,7 @@ class FeedfreeTrainer(Trainer):
         return self._input_method.get_input_tensors()
 
     def _setup(self):
-        assert isinstance(self._input_method, FeedfreeInput)
+        assert isinstance(self._input_method, FeedfreeInput), type(self._input_method)
         self._input_method._setup(self)
 
 class SingleCostFeedfreeTrainer(FeedfreeTrainer):
@@ -155,3 +153,4 @@ class SingleCostFeedfreeTrainer(FeedfreeTrainer):
         #trace_file = open('timeline.ctf.json', 'w')
         #trace_file.write(trace.generate_chrome_trace_format())
         #import sys; sys.exit()
+

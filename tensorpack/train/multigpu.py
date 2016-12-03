@@ -17,7 +17,7 @@ from ..tfutils.gradproc import apply_grad_processors, ScaleGradient
 
 from .trainer import FeedfreeTrainer, SingleCostFeedfreeTrainer, MultiPredictorTowerTrainer
 from .queue import QueueInputTrainer
-from .inputmethod import QueueInput
+from .input_data import QueueInput
 
 __all__ = ['AsyncMultiGPUTrainer', 'SyncMultiGPUTrainer']
 
@@ -47,10 +47,16 @@ class SyncMultiGPUTrainer(MultiGPUTrainer,
         SingleCostFeedfreeTrainer,
         MultiPredictorTowerTrainer):
     def __init__(self, config, input_queue=None, predict_tower=None):
-        assert len(config.tower) >= 1, "MultiGPUTrainer must be used with at least one GPU."
+        if hasattr(config, 'dataset'):
+            self._input_method = QueueInput(config.dataset, input_queue)
+        else:
+            self._input_method = config.data
+            assert isinstance(self._input_method, QueueInput)
         super(SyncMultiGPUTrainer, self).__init__(config)
+
         self._setup_predictor_factory(predict_tower)
-        self._input_method = QueueInput(config.dataset, input_queue)
+        assert len(config.tower) >= 1, "MultiGPUTrainer must be used with at least one GPU."
+
 
     @staticmethod
     def _average_grads(tower_grads):
@@ -95,17 +101,23 @@ class AsyncMultiGPUTrainer(MultiGPUTrainer,
             input_queue=None,
             predict_tower=None,
             average_gradient=True):
+        if hasattr(config, 'dataset'):
+            self._input_method = QueueInput(config.dataset, input_queue)
+        else:
+            self._input_method = config.data
+            assert isinstance(self._input_method, QueueInput)
         super(AsyncMultiGPUTrainer, self).__init__(config)
+
         self._setup_predictor_factory(predict_tower)
-        self._input_method = QueueInput(config.dataset, input_queue)
-        self.average_gradient = average_gradient
+        self._average_gradient = average_gradient
+
 
     def _setup(self):
         super(SyncMultiGPUTrainer, self)._setup()
         grad_list = MultiGPUTrainer._multi_tower_grads(
                 self.config.tower, lambda: self._get_cost_and_grad()[1])
         gradprocs = self.model.get_gradient_processor()
-        if self.average_gradient and self.config.nr_tower > 1:
+        if self._average_gradient and self.config.nr_tower > 1:
             # pretend to average the grads, in order to make async and
             # sync have consistent effective learning rate
             gradprocs.insert(0, ScaleGradient(('.*', 1.0 / self.config.nr_tower), log=False))
