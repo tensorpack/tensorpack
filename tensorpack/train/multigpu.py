@@ -111,9 +111,8 @@ class AsyncMultiGPUTrainer(MultiGPUTrainer,
         self._setup_predictor_factory(predict_tower)
         self._average_gradient = average_gradient
 
-
     def _setup(self):
-        super(SyncMultiGPUTrainer, self)._setup()
+        super(AsyncMultiGPUTrainer, self)._setup()
         grad_list = MultiGPUTrainer._multi_tower_grads(
                 self.config.tower, lambda: self._get_cost_and_grad()[1])
         gradprocs = self.model.get_gradient_processor()
