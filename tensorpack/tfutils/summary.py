@@ -99,7 +99,7 @@ def add_moving_summary(v, *args):
         v = [v]
     v.extend(args)
     for x in v:
-        assert x.get_shape().ndims == 0
+        assert x.get_shape().ndims == 0, x.get_shape()
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, x)
 
 @memoized

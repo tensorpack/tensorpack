@@ -17,8 +17,12 @@ from ..tfutils.tower import get_current_tower_context
 
 __all__ = ['ModelDesc', 'InputVar', 'ModelFromMetaGraph' ]
 
-_InputVar = namedtuple('InputVar', ['type', 'shape', 'name'])
+_InputVar = namedtuple('InputVar', ['type', 'shape', 'name', 'sparse'])
 class InputVar(_InputVar):
+    def __init__(self, type, shape, name, sparse=False):
+        super(InputVar, self).__init__(type, shape, name, sparse)
+    def __new__(cls, type, shape, name, sparse=False):
+        return super(InputVar, cls).__new__(cls, type, shape, name, sparse)
     def dumps(self):
         return pickle.dumps(self)
     @staticmethod
@@ -35,11 +39,11 @@ class ModelDesc(object):
 
         :returns: the list of raw input vars in the graph
         """
-        try:
-            return self._reuse_input_vars()
-        except KeyError:
-            pass
-        return self.get_placeholders()
+        if hasattr(self, 'reuse_input_vars'):
+            return self.reuse_input_vars
+        ret = self.get_placeholders()
+        self.reuse_input_vars = ret
+        return ret
 
     def get_placeholders(self, prefix=''):
         """ build placeholders with optional prefix, for each InputVar
@@ -49,15 +53,11 @@ class ModelDesc(object):
             tf.add_to_collection(INPUT_VARS_KEY, v.dumps())
         ret = []
         for v in input_vars:
-            ret.append(tf.placeholder(
+            placehdr_f = tf.placeholder if not v.sparse else tf.sparse_placeholder
+            ret.append(placehdr_f(
                 v.type, shape=v.shape,
                 name=prefix + v.name))
         return ret
-
-    def _reuse_input_vars(self):
-        """ Find and return already-defined input_vars in default graph"""
-        input_var_names = [k.name for k in self._get_input_vars()]
-        return get_tensors_by_names(input_var_names)
 
     def get_input_vars_desc(self):
         """ return a list of `InputVar` instance"""
