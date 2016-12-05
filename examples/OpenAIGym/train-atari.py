@@ -247,6 +247,7 @@ if __name__ == '__main__':
             logger.info("[BA3C] Train on gpu {} and infer on gpu {}".format(
                 ','.join(map(str, train_tower)), ','.join(map(str, predict_tower))))
         else:
+            logger.warn("Without GPU this model will never learn! CPU is only useful for debug.")
             nr_gpu = 0
             PREDICTOR_THREAD = 1
             predict_tower = [0]
