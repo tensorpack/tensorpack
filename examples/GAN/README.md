@@ -33,4 +33,5 @@ It requires the datasets released by the original authors.
 
 Reproduce a mnist experiement in InfoGAN.
 By assuming 10 latent variables corresponding to a categorical distribution and maximizing mutual information,
-the network unsupervisedly learns to map the 10 variables to 10 digits.
+the network learns to map the 10 variables to 10 digits in a completely unsupervised way.
+![infogan](demo/InfoGAN-mnist.jpg)
