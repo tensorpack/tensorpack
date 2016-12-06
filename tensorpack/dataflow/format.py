@@ -83,8 +83,8 @@ class LMDBData(RNGDataFlow):
                 with timed_operation("Loading LMDB keys ...", log_start=True), \
                         get_tqdm(total=self._size) as pbar:
                     for k in self._txn.cursor():
-                        if k != '__keys__':
-                            self.keys.append(k)
+                        if k[0] != '__keys__':
+                            self.keys.append(k[0])
                             pbar.update()
 
     def reset_state(self):
