@@ -28,6 +28,7 @@ This model uses the whole training set instead of a train-val split.
 """
 
 BATCH_SIZE = 128
+NUM_UNITS = None
 
 class Model(ModelDesc):
     def __init__(self, n):
@@ -143,7 +144,7 @@ def get_config():
             ScheduledHyperParamSetter('learning_rate',
                                       [(1, 0.1), (82, 0.01), (123, 0.001), (300, 0.0002)])
         ]),
-        model=Model(n=18),
+        model=Model(n=NUM_UNITS),
         step_per_epoch=step_per_epoch,
         max_epoch=400,
     )
@@ -151,8 +152,12 @@ def get_config():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
+    parser.add_argument('-n', '--num_units',
+            help='number of units in each stage',
+            type=int, default=18)
     parser.add_argument('--load', help='load model')
     args = parser.parse_args()
+    NUM_UNITS = args.num_units
 
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu

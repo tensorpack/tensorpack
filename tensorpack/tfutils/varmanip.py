@@ -3,7 +3,7 @@
 # File: varmanip.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import six
+import six, os
 import tensorflow as tf
 from collections import defaultdict
 import re
@@ -92,6 +92,8 @@ the same name".format(v.name))
 
 def dump_chkpt_vars(model_path):
     """ Dump all variables from a checkpoint to a dict"""
+    if os.path.basename(model_path) == model_path:
+        model_path = os.path.join('.', model_path)  # avoid #4921
     reader = tf.train.NewCheckpointReader(model_path)
     var_names = reader.get_variable_to_shape_map().keys()
     result = {}
