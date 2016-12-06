@@ -9,7 +9,7 @@ You can train them and reproduce the performance... not just to see how to write
 + [InceptionV3 on ImageNet](examples/Inception/inceptionv3.py)
 + [Fully-convolutional Network for Holistically-Nested Edge Detection(HED)](examples/HED)
 + [Spatial Transformer Network on MNIST addition](examples/SpatialTransformer)
-+ [Generative Adversarial Network(GAN) variants](examples/GAN)
++ [Generative Adversarial Network(GAN) variants (DCGAN,Image2Image,InfoGAN)](examples/GAN)
 + [Deep Q-Network(DQN) variants on Atari games](examples/Atari2600)
 + [Asynchronous Advantage Actor-Critic(A3C) with demos on OpenAI Gym](examples/OpenAIGym)
 + [char-rnn language model](examples/char-rnn)
