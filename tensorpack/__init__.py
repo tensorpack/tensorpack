@@ -15,3 +15,6 @@ from tensorpack.predict import *
 
 if int(numpy.__version__.split('.')[1]) < 9:
     logger.warn("Numpy < 1.9 could be extremely slow on some tasks.")
+
+if get_tf_version() < 10:
+    logger.error("tensorpack requires TensorFlow >= 0.10")

@@ -30,7 +30,7 @@ Accuracy:
     With (W,A,G)=(32,32,32), error is about 2.9%.
 
 Speed:
-    About 18 iteration/s on 1 Tesla M40. (4721 iterations / epoch)
+    30~35 iteration/s on 1 TitanX Pascal. (4721 iterations / epoch)
 
 To Run:
     ./svhn-digit-dorefa.py --dorefa 1,2,4
@@ -45,8 +45,9 @@ class Model(ModelDesc):
         return [InputVar(tf.float32, [None, 40, 40, 3], 'input'),
                 InputVar(tf.int32, [None], 'label') ]
 
-    def _build_graph(self, input_vars, is_training):
+    def _build_graph(self, input_vars):
         image, label = input_vars
+        is_training = get_current_tower_context().is_training
 
         fw, fa, fg = get_dorefa(BITW, BITA, BITG)
         # monkey-patch tf.get_variable to apply fw

@@ -17,7 +17,7 @@ def get_dorefa(bitW, bitA, bitG):
     def quantize(x, k):
         n = float(2**k-1)
         with G.gradient_override_map({"Floor": "Identity"}):
-            return tf.round(x * n) / n
+            return tf.floor(x * n + 0.5) / n
 
     def fw(x):
         if bitW == 32:

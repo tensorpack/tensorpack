@@ -8,7 +8,7 @@ from six.moves import urllib
 import errno
 from . import logger
 
-__all__ = ['mkdir_p', 'download']
+__all__ = ['mkdir_p', 'download', 'recursive_walk']
 
 def mkdir_p(dirname):
     """ make a dir recursively, but do nothing if the dir exists"""
@@ -20,7 +20,6 @@ def mkdir_p(dirname):
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise e
-
 
 def download(url, dir):
     mkdir_p(dir)
@@ -45,6 +44,11 @@ def download(url, dir):
     # TODO human-readable size
     print('Succesfully downloaded ' + fname + " " + str(size) + ' bytes.')
     return fpath
+
+def recursive_walk(rootdir):
+    for r, dirs, files in os.walk(rootdir):
+        for f in files:
+            yield os.path.join(r, f)
 
 if __name__ == '__main__':
     download('http://dl.caffe.berkeleyvision.org/caffe_ilsvrc12.tar.gz', '.')

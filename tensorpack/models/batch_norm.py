@@ -9,6 +9,7 @@ from tensorflow.python.training import moving_averages
 from copy import copy
 import re
 
+from ..tfutils.common import get_tf_version
 from ..tfutils.tower import get_current_tower_context
 from ..utils import logger
 from ._common import layer_register
@@ -177,4 +178,8 @@ def BatchNormV2(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
     else:
         return tf.identity(xn, name='output')
 
-BatchNorm = BatchNormV2
+if get_tf_version() >= 11:
+    BatchNorm = BatchNormV2
+else:
+    logger.warn("BatchNorm might be faster if you update TensorFlow")
+    BatchNorm = BatchNormV1

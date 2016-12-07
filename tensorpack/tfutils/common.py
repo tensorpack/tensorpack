@@ -19,7 +19,8 @@ __all__ = ['get_default_sess_config',
            'backup_collection',
            'restore_collection',
            'clear_collection',
-           'freeze_collection']
+           'freeze_collection',
+           'get_tf_version']
 
 def get_default_sess_config(mem_fraction=0.99):
     """
@@ -104,3 +105,6 @@ def freeze_collection(keys):
     backup = backup_collection(keys)
     yield
     restore_collection(backup)
+
+def get_tf_version():
+    return int(tf.__version__.split('.')[1])

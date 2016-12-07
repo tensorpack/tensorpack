@@ -8,6 +8,7 @@ import multiprocessing as mp
 import six
 from six.moves import range, map
 
+from .base import DataFlow
 from ..utils import get_tqdm, logger
 from ..utils.concurrency import DIE
 from ..utils.serialize import dumps
@@ -43,6 +44,7 @@ def dump_dataset_images(ds, dirname, max_count=None, index=0):
         cv2.imwrite(os.path.join(dirname, "{}.jpg".format(i)), img)
 
 def dump_dataflow_to_lmdb(ds, lmdb_path):
+    assert isinstance(ds, DataFlow), type(ds)
     isdir = os.path.isdir(lmdb_path)
     if isdir:
         assert not os.path.isfile(os.path.join(lmdb_path, 'data.mdb')), "LMDB file exists!"
@@ -52,16 +54,20 @@ def dump_dataflow_to_lmdb(ds, lmdb_path):
     db = lmdb.open(lmdb_path, subdir=isdir,
             map_size=1099511627776 * 2, readonly=False,
             meminit=False, map_async=True)    # need sync() at the end
-    with get_tqdm(total=ds.size()) as pbar:
+    try:
+        sz = ds.size()
+    except NotImplementedError:
+        sz = 0
+    with get_tqdm(total=sz) as pbar:
         with db.begin(write=True) as txn:
             for idx, dp in enumerate(ds.get_data()):
                 txn.put(six.binary_type(idx), dumps(dp))
                 pbar.update()
             keys = list(map(six.binary_type, range(idx + 1)))
             txn.put('__keys__', dumps(keys))
-    logger.info("Flushing database ...")
-    db.sync()
-    db.close()
+
+            logger.info("Flushing database ...")
+            db.sync()
 
 
 def dataflow_to_process_queue(ds, size, nr_consumer):
