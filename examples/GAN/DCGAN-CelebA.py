@@ -75,7 +75,7 @@ class Model(ModelDesc):
                 W_init=tf.truncated_normal_initializer(stddev=0.02)):
             with tf.variable_scope('gen'):
                 image_gen = self.generator(z)
-                tf.image_summary('gen', image_gen, max_images=30)
+                tf.summary.image('gen', image_gen, max_images=30)
             with tf.variable_scope('discrim'):
                 vecpos = self.discriminator(image_pos)
             with tf.variable_scope('discrim', reuse=True):

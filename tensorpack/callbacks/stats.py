@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# File: stat.py
+# File: stats.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import tensorflow as tf
@@ -40,6 +40,9 @@ class StatHolder(object):
         :param k: name
         :param v: value
         """
+        suffix = '-summary'
+        if k.endswith(suffix):
+            k = k[:-len(suffix)]
         self.stat_now[k] = float(v)
 
     def set_print_tag(self, print_tag):

@@ -92,7 +92,7 @@ def get_config():
         global_step=get_global_step_var(),
         decay_steps=data_train.size() * 60,
         decay_rate=0.2, staircase=True, name='learning_rate')
-    tf.scalar_summary('learning_rate', lr)
+    tf.summary.scalar('lr', lr)
 
     return TrainConfig(
         dataset=data_train,

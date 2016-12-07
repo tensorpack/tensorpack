@@ -61,7 +61,7 @@ class Model(ModelDesc):
         transform1 = tf.concat(1, [padded1[:,:,:,0], padded1[:,:,:,1]])
         transform2 = tf.concat(1, [padded2[:,:,:,0], padded2[:,:,:,1]])
         stacked = tf.concat(2, [img_orig, transform1, transform2], 'viz')
-        tf.image_summary('visualize',
+        tf.summary.image('visualize',
                 tf.expand_dims(stacked, -1), max_images=30)
 
         sampled = tf.concat(3, [sampled1, sampled2], 'sampled_concat')

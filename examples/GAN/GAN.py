@@ -52,8 +52,8 @@ class RandomZData(DataFlow):
 def build_GAN_losses(vecpos, vecneg):
     sigmpos = tf.sigmoid(vecpos)
     sigmneg = tf.sigmoid(vecneg)
-    tf.histogram_summary('sigmoid-pos', sigmpos)
-    tf.histogram_summary('sigmoid-neg', sigmneg)
+    tf.summary.histogram('sigmoid-pos', sigmpos)
+    tf.summary.histogram('sigmoid-neg', sigmneg)
 
     d_loss_pos = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
         vecpos, tf.ones_like(vecpos)), name='d_CE_loss_pos')

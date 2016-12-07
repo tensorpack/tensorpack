@@ -104,7 +104,7 @@ def get_config():
 
     # This will also put the summary in tensorboard,stat.json and print in
     # terminal, but without the moving average
-    tf.scalar_summary('learning_rate', lr)
+    tf.summary.scalar('lr', lr)
 
     # get the config which contains everything necessary in a training
     return TrainConfig(
