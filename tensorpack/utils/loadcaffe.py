@@ -97,7 +97,7 @@ class CaffeLayerProcessor(object):
 
 def load_caffe(model_desc, model_file):
     """
-    return a dict of params
+    :return: a dict of params
     """
     with change_env('GLOG_minloglevel', '2'):
         import caffe

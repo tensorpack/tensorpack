@@ -128,7 +128,7 @@ class LMDBDataDecoder(LMDBData):
 class LMDBDataPoint(LMDBDataDecoder):
     """ Read a LMDB file where each value is a serialized datapoint"""
     def __init__(self, lmdb_path, shuffle=True):
-        super(SimpleLMDBLoader, self).__init__(
+        super(LMDBDataPoint, self).__init__(
                 lmdb_path, decoder=lambda k, v: loads(v), shuffle=shuffle)
 
 class CaffeLMDB(LMDBDataDecoder):

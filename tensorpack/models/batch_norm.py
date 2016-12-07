@@ -149,7 +149,7 @@ def BatchNormV2(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
 
     if use_local_stat:
         xn, batch_mean, batch_var = tf.nn.fused_batch_norm(x, gamma, beta,
-                epsilon=epsilon, is_training=ctx.is_training)
+                epsilon=epsilon, is_training=True)
         if ctx.is_training:
             # maintain EMA if training
             update_op1 = moving_averages.assign_moving_average(

@@ -20,8 +20,9 @@ from GAN import GANTrainer, RandomZData, build_GAN_losses
 To train:
     ./Image2Image.py --data /path/to/datadir --mode {AtoB,BtoA}
     # datadir should contain 512x256 images formed by A and B
+    # training visualization will appear be in tensorboard
 
-To visualize:
+To visualize on test set:
     ./Image2Image.py --sample --data /path/to/test/datadir --mode {AtoB,BtoA} --load pretrained.model
 """
 

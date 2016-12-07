@@ -33,13 +33,13 @@ Describe your training task with three components:
 	+ Print some variables of interest
 	+ Run inference on a test dataset
 	+ Run some operations once a while
-	+ Send the accuracy to your phone
+	+ Send loss to your phone
 
 With the above components defined, tensorpack trainer will run the training iterations for you.
 Multi-GPU training is off-the-shelf by simply switching the trainer.
 You can also define your own trainer for non-standard training (e.g. GAN).
 
-The components are designed to be independent. You can use only Model or DataFlow in your project.
+The components are designed to be independent. You can use Model or DataFlow in other projects as well.
 
 ## Dependencies:
 

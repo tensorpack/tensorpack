@@ -17,12 +17,13 @@ from ..tfutils.tower import get_current_tower_context
 
 __all__ = ['ModelDesc', 'InputVar', 'ModelFromMetaGraph' ]
 
-_InputVar = namedtuple('InputVar', ['type', 'shape', 'name', 'sparse'])
-class InputVar(_InputVar):
+#_InputVar = namedtuple('InputVar', ['type', 'shape', 'name', 'sparse'])
+class InputVar(object):
     def __init__(self, type, shape, name, sparse=False):
-        super(InputVar, self).__init__(type, shape, name, sparse)
-    def __new__(cls, type, shape, name, sparse=False):
-        return super(InputVar, cls).__new__(cls, type, shape, name, sparse)
+        self.type = type
+        self.shape = shape
+        self.name = name
+        self.sparse = sparse
     def dumps(self):
         return pickle.dumps(self)
     @staticmethod
