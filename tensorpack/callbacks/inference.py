@@ -96,7 +96,13 @@ class InferenceRunner(Callback):
     def _find_input_tensors(self):
         if self.input_tensors is None:
             input_vars = self.trainer.model.get_input_vars()
-            self.input_tensors = [x.name for x in input_vars]
+            # TODO even if it works here, sparse still is unavailable
+            # because get_tensor_by_name doesn't work for sparse
+            def get_name(x):
+                if isinstance(x, tf.SparseTensor):
+                    return x.op.name.split('/')[0]
+                return x.name
+            self.input_tensors = [get_name(x) for x in input_vars]
 
     def _find_output_tensors(self):
         dispatcer = OutputTensorDispatcer()
