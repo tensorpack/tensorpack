@@ -258,6 +258,7 @@ class StatMonitorParamSetter(HyperParamSetter):
             if hist_max > hist_first + self.threshold: # large enough
                 return None
         self.last_changed_epoch = self.epoch_num
-        logger.info("[StatMonitorParamSetter] Triggered, history: " + ','.join(hist))
+        logger.info("[StatMonitorParamSetter] Triggered, history: " +
+                ','.join(map(str, hist)))
         return self.value_func(self.get_current_value())
 

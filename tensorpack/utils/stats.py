@@ -1,9 +1,10 @@
 # -*- coding: UTF-8 -*-
-# File: stat.py
+# File: stats.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 import numpy as np
 
-__all__ = ['StatCounter', 'Accuracy', 'BinaryStatistics', 'RatioCounter']
+__all__ = ['StatCounter', 'Accuracy', 'BinaryStatistics', 'RatioCounter',
+        'OnlineMoments']
 
 class StatCounter(object):
     """ A simple counter"""
@@ -116,3 +117,32 @@ class BinaryStatistics(object):
         if self.nr_pos == 0:
             return 0
         return 1 - self.recall
+
+class OnlineMoments(object):
+    def __init__(self):
+        self._mean = None
+        self._var = None
+        self._n = 0
+
+    def feed(self, x):
+        self._n += 1
+        if self._mean is None:
+            self._mean = x
+            self._var = 0
+        else:
+            diff = (x - self._mean)
+            ninv = 1.0 / self._n
+            self._mean += diff * ninv
+            self._var = (self._n-2.0)/(self._n-1) * self._var + diff * diff * ninv
+
+    @property
+    def mean(self):
+        return self._mean
+
+    @property
+    def variance(self):
+        return self._var
+
+    @property
+    def std(self):
+        return np.sqrt(self._var)

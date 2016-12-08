@@ -110,14 +110,14 @@ def summary_moving_average(tensors=None):
     """
     if tensors is None:
         tensors = tf.get_collection(MOVING_SUMMARY_VARS_KEY)
-    with tf.name_scope('EMA-summary'):
-        # TODO will produce EMA_summary/tower0/xxx. not elegant
-        with tf.name_scope(None):
-            averager = tf.train.ExponentialMovingAverage(
-                0.99, num_updates=get_global_step_var(), name='EMA')
-        avg_maintain_op = averager.apply(tensors)
-        for idx, c in enumerate(tensors):
-            name = re.sub('tower[p0-9]+/', '', c.op.name)
-            tf.summary.scalar(name, averager.average(c))
-        return avg_maintain_op
+
+    # TODO will produce tower0/xxx. not elegant
+    with tf.name_scope(None):
+        averager = tf.train.ExponentialMovingAverage(
+            0.90, num_updates=get_global_step_var(), name='EMA')
+    avg_maintain_op = averager.apply(tensors)
+    for idx, c in enumerate(tensors):
+        name = re.sub('tower[p0-9]+/', '', c.op.name)
+        tf.summary.scalar(name + '-summary', averager.average(c))
+    return avg_maintain_op
 
