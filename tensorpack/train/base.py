@@ -91,6 +91,9 @@ class Trainer(object):
         for val in summary.value:
             if val.WhichOneof('value') == 'simple_value':
                 val.tag = re.sub('tower[p0-9]+/', '', val.tag)   # TODO move to subclasses
+                suffix = '-summary' # issue#6150
+                if val.tag.endswith(suffix):
+                    val.tag = va.tag[:-len(suffix)]
                 self.stat_holder.add_stat(val.tag, val.simple_value)
         self.summary_writer.add_summary(summary, get_global_step())
 

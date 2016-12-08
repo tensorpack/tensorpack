@@ -34,6 +34,7 @@ def add_activation_summary(x, name=None):
     if ctx is not None and not ctx.is_main_training_tower:
         return
     ndim = x.get_shape().ndims
+    # TODO use scalar if found ndim == 1
     assert ndim >= 2, \
         "Summary a scalar with histogram? Maybe use scalar instead. FIXME!"
     if name is None:

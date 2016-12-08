@@ -2,7 +2,7 @@
 Neural Network Toolbox on TensorFlow
 
 See some [examples](examples) to learn about the framework.
-You can train them and reproduce the performance... not just to see how to write code.
+They're not only for demonstration of the framework -- you can train them and reproduce the results in papers.
 
 + [DoReFa-Net: training binary / low bitwidth CNN on ImageNet](examples/DoReFa-Net)
 + [ResNet for ImageNet/Cifar10/SVHN classification](examples/ResNet)
@@ -44,7 +44,7 @@ The components are designed to be independent. You can use Model or DataFlow in 
 ## Dependencies:
 
 + Python 2 or 3
-+ TensorFlow >= 0.10
++ TensorFlow >= 0.11
 + Python bindings for OpenCV
 + other requirements:
 ```

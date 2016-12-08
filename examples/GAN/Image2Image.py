@@ -19,7 +19,7 @@ from GAN import GANTrainer, RandomZData, build_GAN_losses
 """
 To train:
     ./Image2Image.py --data /path/to/datadir --mode {AtoB,BtoA}
-    # datadir should contain 512x256 images formed by A and B
+    # datadir should contain images of shpae 2s x s, formed by A and B
     # training visualization will appear be in tensorboard
 
 To visualize on test set:
@@ -128,7 +128,8 @@ def split_input(img):
     img: an 512x256x3 image
     :return: [input, output]
     """
-    input, output = img[:,:256,:], img[:,256:,:]
+    s = img.shape[0]
+    input, output = img[:,:s,:], img[:,s:,:]
     if args.mode == 'BtoA':
         input, output = output, input
     if IN_CH == 1:
