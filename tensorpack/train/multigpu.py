@@ -56,6 +56,7 @@ class SyncMultiGPUTrainer(MultiGPUTrainer,
 
         self._setup_predictor_factory(predict_tower)
         assert len(config.tower) >= 1, "MultiGPUTrainer must be used with at least one GPU."
+        assert tf.test.is_gpu_available()
 
 
     @staticmethod
@@ -110,6 +111,7 @@ class AsyncMultiGPUTrainer(MultiGPUTrainer,
 
         self._setup_predictor_factory(predict_tower)
         self._average_gradient = average_gradient
+        assert tf.test.is_gpu_available()
 
     def _setup(self):
         super(AsyncMultiGPUTrainer, self)._setup()

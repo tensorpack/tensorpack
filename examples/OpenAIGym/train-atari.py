@@ -246,14 +246,16 @@ if __name__ == '__main__':
             train_tower = range(nr_gpu)[:-nr_gpu//2] or [0]
             logger.info("[BA3C] Train on gpu {} and infer on gpu {}".format(
                 ','.join(map(str, train_tower)), ','.join(map(str, predict_tower))))
+            trainer = AsyncMultiGPUTrainer
         else:
             logger.warn("Without GPU this model will never learn! CPU is only useful for debug.")
             nr_gpu = 0
             PREDICTOR_THREAD = 1
             predict_tower = [0]
             train_tower = [0]
+            trainer = QueueInputTrainer
         config = get_config()
         if args.load:
             config.session_init = SaverRestore(args.load)
         config.tower = train_tower
-        AsyncMultiGPUTrainer(config, predict_tower=predict_tower).train()
+        trainer(config, predict_tower=predict_tower).train()

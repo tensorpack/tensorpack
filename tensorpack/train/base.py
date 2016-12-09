@@ -93,7 +93,7 @@ class Trainer(object):
                 val.tag = re.sub('tower[p0-9]+/', '', val.tag)   # TODO move to subclasses
                 suffix = '-summary' # issue#6150
                 if val.tag.endswith(suffix):
-                    val.tag = va.tag[:-len(suffix)]
+                    val.tag = val.tag[:-len(suffix)]
                 self.stat_holder.add_stat(val.tag, val.simple_value)
         self.summary_writer.add_summary(summary, get_global_step())
 
