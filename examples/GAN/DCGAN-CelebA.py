@@ -75,7 +75,7 @@ class Model(ModelDesc):
                 W_init=tf.truncated_normal_initializer(stddev=0.02)):
             with tf.variable_scope('gen'):
                 image_gen = self.generator(z)
-                tf.summary.image('gen', image_gen, max_images=30)
+                tf.summary.image('gen', image_gen, max_outputs=30)
             with tf.variable_scope('discrim'):
                 vecpos = self.discriminator(image_pos)
             with tf.variable_scope('discrim', reuse=True):
@@ -105,12 +105,11 @@ def get_config():
         optimizer=tf.train.AdamOptimizer(lr, beta1=0.5, epsilon=1e-3),
         callbacks=Callbacks([
             StatPrinter(), ModelSaver(),
-            ScheduledHyperParamSetter('learning_rate', [(200, 1e-4)])
         ]),
         session_config=get_default_sess_config(0.5),
         model=Model(),
         step_per_epoch=300,
-        max_epoch=300,
+        max_epoch=200,
     )
 
 def sample(model_path):

@@ -117,7 +117,7 @@ class Model(ModelDesc):
             fake_output = tf.image.grayscale_to_rgb(fake_output)
         viz = (tf.concat(2, [input, output, fake_output]) + 1.0) * 128.0
         viz = tf.cast(tf.clip_by_value(viz, 0, 255), tf.uint8, name='viz')
-        tf.image_summary('gen', viz, max_images=max(30, BATCH))
+        tf.image_summary('gen', viz, max_outputs=max(30, BATCH))
 
         all_vars = tf.trainable_variables()
         self.g_vars = [v for v in all_vars if v.name.startswith('gen/')]
