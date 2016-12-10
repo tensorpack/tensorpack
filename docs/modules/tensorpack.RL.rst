@@ -4,14 +4,6 @@ tensorpack.RL package
 Submodules
 ----------
 
-tensorpack.RL.atari module
---------------------------
-
-.. automodule:: tensorpack.RL.atari
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 tensorpack.RL.common module
 ---------------------------
 
@@ -32,6 +24,14 @@ tensorpack.RL.expreplay module
 ------------------------------
 
 .. automodule:: tensorpack.RL.expreplay
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+tensorpack.RL.gymenv module
+---------------------------
+
+.. automodule:: tensorpack.RL.gymenv
     :members:
     :undoc-members:
     :show-inheritance:

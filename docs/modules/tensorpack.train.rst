@@ -20,10 +20,26 @@ tensorpack.train.config module
     :undoc-members:
     :show-inheritance:
 
+tensorpack.train.input_data module
+----------------------------------
+
+.. automodule:: tensorpack.train.input_data
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 tensorpack.train.multigpu module
 --------------------------------
 
 .. automodule:: tensorpack.train.multigpu
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+tensorpack.train.queue module
+-----------------------------
+
+.. automodule:: tensorpack.train.queue
     :members:
     :undoc-members:
     :show-inheritance:

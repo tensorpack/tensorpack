@@ -4,6 +4,14 @@ tensorpack.predict package
 Submodules
 ----------
 
+tensorpack.predict.base module
+------------------------------
+
+.. automodule:: tensorpack.predict.base
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 tensorpack.predict.common module
 --------------------------------
 

@@ -106,7 +106,7 @@ class PrefetchProcessZMQ(mp.Process):
         self.ds.reset_state()
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.PUSH)
-        self.socket.set_hwm(1)
+        self.socket.set_hwm(5)
         self.socket.connect(self.conn_name)
         while True:
             for dp in self.ds.get_data():

@@ -41,7 +41,7 @@ class Model(ModelDesc):
         l = FullyConnected('fc0', z, 64 * 8 * 4 * 4, nl=tf.identity)
         l = tf.reshape(l, [-1, 4, 4, 64*8])
         l = BNReLU(l)
-        with argscope(Deconv2D, nl=BNReLU, kernel_shape=5, stride=2):
+        with argscope(Deconv2D, nl=BNReLU, kernel_shape=4, stride=2):
             l = Deconv2D('deconv1', l, [8, 8, 64 * 4])
             l = Deconv2D('deconv2', l, [16, 16, 64 * 2])
             l = Deconv2D('deconv3', l, [32, 32, 64])
@@ -51,7 +51,7 @@ class Model(ModelDesc):
 
     def discriminator(self, imgs):
         """ return a (b, 1) logits"""
-        with argscope(Conv2D, nl=tf.identity, kernel_shape=5, stride=2), \
+        with argscope(Conv2D, nl=tf.identity, kernel_shape=4, stride=2), \
                 argscope(LeakyReLU, alpha=0.2):
             l = (LinearWrap(imgs)
                 .Conv2D('conv0', 64, nl=LeakyReLU)

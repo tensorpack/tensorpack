@@ -12,10 +12,18 @@ tensorpack.callbacks.base module
     :undoc-members:
     :show-inheritance:
 
-tensorpack.callbacks.common module
-----------------------------------
+tensorpack.callbacks.concurrency module
+---------------------------------------
 
-.. automodule:: tensorpack.callbacks.common
+.. automodule:: tensorpack.callbacks.concurrency
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+tensorpack.callbacks.dispatcher module
+--------------------------------------
+
+.. automodule:: tensorpack.callbacks.dispatcher
     :members:
     :undoc-members:
     :show-inheritance:
@@ -60,10 +68,18 @@ tensorpack.callbacks.param module
     :undoc-members:
     :show-inheritance:
 
-tensorpack.callbacks.summary module
------------------------------------
+tensorpack.callbacks.saver module
+---------------------------------
 
-.. automodule:: tensorpack.callbacks.summary
+.. automodule:: tensorpack.callbacks.saver
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+tensorpack.callbacks.stats module
+---------------------------------
+
+.. automodule:: tensorpack.callbacks.stats
     :members:
     :undoc-members:
     :show-inheritance:

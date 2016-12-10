@@ -34,11 +34,22 @@ import mock
                 #', '.join(map(str, args)) + ', ' \
                 #+ ', '.join(["{}={}".format(k,v) for k,v in kwargs.items()]) + ')'
 
-MOCK_MODULES = ['scipy', 'tensorflow', 'scipy.misc', 'h5py', 'nltk',
+MOCK_MODULES = ['scipy',
+                'tensorflow', 'tensorflow.contrib',
+                'tensorflow.contrib.framework',
+                'tensorflow.models',
+                'tensorflow.models.rnn',
+                'tensorflow.models.rnn.ptb',
+                'tensorflow.python',
+                'tensorflow.python.training',
+                'sklearn.datasets',
+                'scipy.misc', 'h5py', 'nltk',
                 'cv2', 'scipy.io', 'dill', 'zmq', 'subprocess32', 'lmdb', 'tornado.concurrent',
-                'tornado', 'msgpack', 'msgpack_numpy', 'ale_python_interface']
+                'tornado', 'msgpack', 'msgpack_numpy', 'ale_python_interface',
+                'sklearn']
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock(name=mod_name)
+sys.modules['tensorflow'].__version__ = '0.12.0'
 
 import tensorpack
 from tensorpack.models import *

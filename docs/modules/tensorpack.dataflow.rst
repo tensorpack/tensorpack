@@ -68,6 +68,22 @@ tensorpack.dataflow.raw module
     :undoc-members:
     :show-inheritance:
 
+tensorpack.dataflow.remote module
+---------------------------------
+
+.. automodule:: tensorpack.dataflow.remote
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+tensorpack.dataflow.tf_func module
+----------------------------------
+
+.. automodule:: tensorpack.dataflow.tf_func
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 
 Module contents
 ---------------

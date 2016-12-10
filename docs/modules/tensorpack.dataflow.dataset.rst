@@ -36,6 +36,14 @@ tensorpack.dataflow.dataset.mnist module
     :undoc-members:
     :show-inheritance:
 
+tensorpack.dataflow.dataset.ptb module
+--------------------------------------
+
+.. automodule:: tensorpack.dataflow.dataset.ptb
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 tensorpack.dataflow.dataset.svhn module
 ---------------------------------------
 

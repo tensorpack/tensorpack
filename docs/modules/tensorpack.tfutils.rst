@@ -60,6 +60,30 @@ tensorpack.tfutils.symbolic_functions module
     :undoc-members:
     :show-inheritance:
 
+tensorpack.tfutils.tower module
+-------------------------------
+
+.. automodule:: tensorpack.tfutils.tower
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+tensorpack.tfutils.varmanip module
+----------------------------------
+
+.. automodule:: tensorpack.tfutils.varmanip
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+tensorpack.tfutils.varreplace module
+------------------------------------
+
+.. automodule:: tensorpack.tfutils.varreplace
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 
 Module contents
 ---------------

@@ -24,14 +24,15 @@ from ..utils.stats import StatCounter
 from .envbase import RLEnvironment, DiscreteActionSpace
 
 
-_ALE_LOCK = threading.Lock()
+_ENV_LOCK = threading.Lock()
 
 class GymEnv(RLEnvironment):
     """
     An OpenAI/gym wrapper. Can optionally auto restart.
+    Only support discrete action space now
     """
     def __init__(self, name, dumpdir=None, viz=False, auto_restart=True):
-        with _ALE_LOCK:
+        with _ENV_LOCK:
             self.gymenv = gym.make(name)
         if dumpdir:
             mkdir_p(dumpdir)
