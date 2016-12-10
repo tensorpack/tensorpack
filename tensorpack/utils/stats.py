@@ -119,21 +119,20 @@ class BinaryStatistics(object):
         return 1 - self.recall
 
 class OnlineMoments(object):
+    """Compute 1st and 2nd moments online
+    See algorithm at: https://www.wikiwand.com/en/Algorithms_for_calculating_variance#/Online_algorithm
+    """
     def __init__(self):
-        self._mean = None
-        self._var = None
+        self._mean = 0
+        self._M2 = 0
         self._n = 0
 
     def feed(self, x):
         self._n += 1
-        if self._mean is None:
-            self._mean = x
-            self._var = 0
-        else:
-            diff = (x - self._mean)
-            ninv = 1.0 / self._n
-            self._mean += diff * ninv
-            self._var = (self._n-2.0)/(self._n-1) * self._var + diff * diff * ninv
+        delta = x - self._mean
+        self._mean += delta * (1.0 / self._n)
+        delta2 = x - self._mean
+        self._M2 += delta * delta2
 
     @property
     def mean(self):
@@ -141,8 +140,8 @@ class OnlineMoments(object):
 
     @property
     def variance(self):
-        return self._var
+        return self._M2 / (self._n-1)
 
     @property
     def std(self):
-        return np.sqrt(self._var)
+        return np.sqrt(self.variance)

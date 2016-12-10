@@ -72,13 +72,18 @@ class HDF5Data(RNGDataFlow):
 class LMDBData(RNGDataFlow):
     """ Read a lmdb and produce k,v pair """
     def __init__(self, lmdb_path, shuffle=True):
-        self._lmdb = lmdb.open(lmdb_path, subdir=os.path.isdir(lmdb_path),
-                readonly=True, lock=False,
+        self._lmdb_path = lmdb_path
+        self._shuffle = shuffle
+        self.open_lmdb()
+
+    def open_lmdb(self):
+        self._lmdb = lmdb.open(self._lmdb_path,
+                subdir=os.path.isdir(self._lmdb_path),
+                readonly=True, lock=False, readahead=False,
                 map_size=1099511627776 * 2, max_readers=100)
         self._txn = self._lmdb.begin()
-        self._shuffle = shuffle
         self._size = self._txn.stat()['entries']
-        if shuffle:
+        if self._shuffle:
             # get the list of keys either from __keys__ or by iterating
             self.keys = loads(self._txn.get('__keys__'))
             if not self.keys:
@@ -92,7 +97,7 @@ class LMDBData(RNGDataFlow):
 
     def reset_state(self):
         super(LMDBData, self).reset_state()
-        self._txn = self._lmdb.begin()
+        self.open_lmdb()
 
     def size(self):
         return self._size

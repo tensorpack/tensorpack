@@ -4,6 +4,7 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
+import copy
 from six.moves import range
 from .base import DataFlow, RNGDataFlow
 from ..utils.serialize import loads
@@ -41,7 +42,7 @@ class FakeData(RNGDataFlow):
         else:
             v = [self.rng.rand(*k).astype(self.dtype) for k in self.shapes]
             for _ in range(self._size):
-                yield v
+                yield copy.deepcopy(v)
 
 class DataFromQueue(DataFlow):
     """ Produce data from a queue """

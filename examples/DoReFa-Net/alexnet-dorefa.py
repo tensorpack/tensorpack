@@ -54,9 +54,10 @@ To Train:
         ILSVRC2012_val_00000001.JPEG
         ...
 
-    And better to have:
+    And you'll need the following to be able to fetch data efficiently
         Fast disk random access (Not necessarily SSD. I used a RAID of HDD, but not sure if plain HDD is enough)
         More than 12 CPU cores (for data processing)
+        More than 10G of free memory
 
 To Run Pretrained Model:
     ./alexnet-dorefa.py --load alexnet-126.npy --run a.jpg --dorefa 1,2,6
@@ -303,6 +304,7 @@ if __name__ == '__main__':
     assert args.gpu is not None, "Need to specify a list of gpu for training!"
     NR_GPU = len(args.gpu.split(','))
     BATCH_SIZE = TOTAL_BATCH_SIZE // NR_GPU
+    logger.info("Batch per tower: {}".format(BATCH_SIZE))
 
     config = get_config()
     if args.load:

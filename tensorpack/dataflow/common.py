@@ -21,16 +21,15 @@ class TestDataSpeed(ProxyDataFlow):
         self.test_size = size
 
     def get_data(self):
-        with get_tqdm(total=self.test_size) as pbar:
-            for dp in self.ds.get_data():
-                pbar.update()
+        self.start_test()
         for dp in self.ds.get_data():
             yield dp
 
     def start_test(self):
         self.ds.reset_state()
-        for k in self.get_data():
-            pass
+        with get_tqdm(total=self.test_size) as pbar:
+            for dp in self.ds.get_data():
+                pbar.update()
 
 class BatchData(ProxyDataFlow):
     def __init__(self, ds, batch_size, remainder=False):

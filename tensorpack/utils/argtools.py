@@ -4,6 +4,7 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 
+import operator
 import inspect, six, functools
 import collections
 
@@ -34,16 +35,20 @@ class memoized(object):
         self.func = func
         self.cache = {}
 
-    def __call__(self, *args):
-        if not isinstance(args, collections.Hashable):
+    def __call__(self, *args, **kwargs):
+        kwlist = tuple(sorted(list(kwargs), key=operator.itemgetter(0)))
+        if not isinstance(args, collections.Hashable) or \
+                not isinstance(kwlist, collections.Hashable):
+            logger.warn("Arguments to memoized call is unhashable!")
             # uncacheable. a list, for instance.
             # better to not cache than blow up.
-            return self.func(*args)
-        if args in self.cache:
-           return self.cache[args]
+            return self.func(*args, **kwargs)
+        key = (args, kwlist)
+        if key in self.cache:
+            return self.cache[key]
         else:
-            value = self.func(*args)
-            self.cache[args] = value
+            value = self.func(*args, **kwargs)
+            self.cache[key] = value
             return value
 
     def __repr__(self):
@@ -57,9 +62,9 @@ class memoized(object):
 _MEMOIZED_NOARGS = {}
 def memoized_ignoreargs(func):
     h = hash(func)  # make sure it is hashable. is it necessary?
-    def wrapper(*args):
+    def wrapper(*args, **kwargs):
         if func not in _MEMOIZED_NOARGS:
-            res = func(*args)
+            res = func(*args, **kwargs)
             _MEMOIZED_NOARGS[func] = res
             return res
         return _MEMOIZED_NOARGS[func]

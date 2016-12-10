@@ -74,7 +74,7 @@ class EnqueueThread(threading.Thread):
                         if self.coord.should_stop():
                             return
                         feed = dict(zip(self.placehdrs, dp))
-                        #print 'TFQ:', self.sess.run([self.op, self.size_op], feed_dict=feed)[1]
+                        #print 'qsize:', self.sess.run([self.op, self.size_op], feed_dict=feed)[1]
                         self.op.run(feed_dict=feed)
             except tf.errors.CancelledError as e:
                 pass
