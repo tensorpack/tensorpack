@@ -22,6 +22,7 @@ class TrainConfig(object):
         """
         :param dataset: the dataset to train. a `DataFlow` instance.
         :param data: an `InputData` instance
+
         :param optimizer: a `tf.train.Optimizer` instance defining the optimizer for trainig.
         :param callbacks: a `callback.Callbacks` instance. Define
             the callbacks to perform during training.

@@ -131,7 +131,7 @@ class TensorInput(FeedfreeInput):
 
     def size(self):
         if self._size is None:
-            raise ValueError("size of TensorInput is None!")
+            raise ValueError("size of TensorInput is undefined!")
         return self._size
 
     def _setup(self, trainer):
@@ -139,6 +139,3 @@ class TensorInput(FeedfreeInput):
 
     def _get_input_tensors(self):
         return self.get_tensor_fn()
-
-class SplitTensorInput(FeedfreeInput):
-    pass

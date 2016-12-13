@@ -5,19 +5,15 @@
 import tensorflow as tf
 import numpy as np
 from abc import ABCMeta, abstractmethod
-from collections import namedtuple
 import sys
 import six
-from six.moves import zip, map
+from six.moves import zip
 
-from ..dataflow import DataFlow
-from ..utils import get_tqdm, logger, execute_only_once
+from ..utils import logger, execute_only_once
 from ..utils.stats import RatioCounter, BinaryStatistics
-from ..tfutils import get_op_tensor_name, get_op_var_name
-from .base import Callback
-from .dispatcher import OutputTensorDispatcer
+from ..tfutils import get_op_var_name
 
-__all__ = ['InferenceRunner', 'ClassificationError',
+__all__ = ['ClassificationError',
         'ScalarStats', 'Inferencer', 'BinaryClassificationStats']
 
 @six.add_metaclass(ABCMeta)
@@ -62,95 +58,6 @@ class Inferencer(object):
     @abstractmethod
     def _get_output_tensors(self):
         pass
-
-class InferenceRunner(Callback):
-    """
-    A callback that runs different kinds of inferencer.
-    """
-
-    IOTensor = namedtuple('IOTensor', ['index', 'isOutput'])
-
-    def __init__(self, ds, infs, input_tensors=None):
-        """
-        :param ds: inference dataset. a `DataFlow` instance.
-        :param infs: a list of `Inferencer` instance.
-        :param input_tensor_names: list of tensors to feed the dataflow to.
-            default to all the input placeholders.
-        """
-        assert isinstance(ds, DataFlow), type(ds)
-        self.ds = ds
-        if not isinstance(infs, list):
-            self.infs = [infs]
-        else:
-            self.infs = infs
-        for v in self.infs:
-            assert isinstance(v, Inferencer), str(v)
-        self.input_tensors = input_tensors
-
-    def _setup_graph(self):
-        self._find_input_tensors() # these are all tensor names
-        self._find_output_tensors() # may be either tensor name or op name
-        self.pred_func = self.trainer.get_predict_func(
-                self.input_tensors, self.output_tensors)
-
-    def _find_input_tensors(self):
-        if self.input_tensors is None:
-            input_vars = self.trainer.model.get_input_vars()
-            # TODO even if it works here, sparse still is unavailable
-            # because get_tensor_by_name doesn't work for sparse
-            def get_name(x):
-                if isinstance(x, tf.SparseTensor):
-                    return x.op.name.split('/')[0]
-                return x.name
-            self.input_tensors = [get_name(x) for x in input_vars]
-
-    def _find_output_tensors(self):
-        dispatcer = OutputTensorDispatcer()
-        for inf in self.infs:
-            dispatcer.add_entry(inf.get_output_tensors())
-        all_names = dispatcer.get_all_names()
-
-        IOTensor = InferenceRunner.IOTensor
-        self.output_tensors = list(filter(
-            lambda x: x not in self.input_tensors, all_names))
-        def find_oid(idxs):
-            ret = []
-            for idx in idxs:
-                name = all_names[idx]
-                if name in self.input_tensors:
-                    ret.append(IOTensor(self.input_tensors.index(name), False))
-                else:
-                    ret.append(IOTensor(self.output_tensors.index(name), True))
-            return ret
-        self.inf_to_tensors = [find_oid(t) for t in dispatcer.get_idx_for_each_entry()]
-        # list of list of (var_name: IOTensor)
-
-    def _trigger_epoch(self):
-        for inf in self.infs:
-            inf.before_inference()
-
-        sess = tf.get_default_session()
-        self.ds.reset_state()
-        with get_tqdm(total=self.ds.size()) as pbar:
-            for dp in self.ds.get_data():
-                outputs = self.pred_func(dp)
-                for inf, tensormap in zip(self.infs, self.inf_to_tensors):
-                    inf_output = [(outputs if k.isOutput else dp)[k.index]
-                            for k in tensormap]
-                    inf.datapoint(inf_output)
-                pbar.update()
-        self._write_summary_after_inference()
-
-    def _write_summary_after_inference(self):
-        for inf in self.infs:
-            ret = inf.after_inference()
-            for k, v in six.iteritems(ret):
-                try:
-                    v = float(v)
-                except:
-                    logger.warn("{} returns a non-scalar statistics!".format(type(inf).__name__))
-                    continue
-                self.trainer.write_scalar_summary(k, v)
 
 class ScalarStats(Inferencer):
     """

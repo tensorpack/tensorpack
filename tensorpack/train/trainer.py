@@ -71,7 +71,7 @@ class SimpleTrainer(Trainer):
         self._input_method._setup(self)
         model = self.model
         self.input_vars = model.get_input_vars()
-        with TowerContext(''):
+        with TowerContext('', is_training=True):
             model.build_graph(self.input_vars)
             cost_var = model.get_cost()
             add_moving_summary(cost_var)
@@ -153,4 +153,3 @@ class SingleCostFeedfreeTrainer(FeedfreeTrainer):
         #trace_file = open('timeline.ctf.json', 'w')
         #trace_file.write(trace.generate_chrome_trace_format())
         #import sys; sys.exit()
-

@@ -16,7 +16,6 @@ from ..tfutils import (backup_collection, restore_collection,
 from ..tfutils.gradproc import apply_grad_processors, ScaleGradient
 
 from .trainer import FeedfreeTrainer, SingleCostFeedfreeTrainer, MultiPredictorTowerTrainer
-from .queue import QueueInputTrainer
 from .input_data import QueueInput
 
 __all__ = ['AsyncMultiGPUTrainer', 'SyncMultiGPUTrainer']
