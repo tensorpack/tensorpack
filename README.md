@@ -12,7 +12,8 @@ They're not only for demonstration of the framework -- you can train them and re
 + [Generative Adversarial Network(GAN) variants (DCGAN,Image2Image,InfoGAN)](examples/GAN)
 + [Deep Q-Network(DQN) variants on Atari games](examples/Atari2600)
 + [Asynchronous Advantage Actor-Critic(A3C) with demos on OpenAI Gym](examples/OpenAIGym)
-+ [char-rnn language model](examples/char-rnn)
++ [LSTM-CTC for speech recognition](examples/TIMIT)
++ [char-RNN language model](examples/char-rnn)
 
 ## Features:
 

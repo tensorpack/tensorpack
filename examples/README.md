@@ -22,4 +22,5 @@ Training examples with __reproducible__ and meaningful performance.
 + [Generative Adversarial Network(GAN) variants (DCGAN,Image2Image,InfoGAN)](examples/GAN)
 
 ## Speech / NLP:
++ [LSTM-CTC for speech recognition](TIMIT)
 + [char-rnn for fun](char-rnn)

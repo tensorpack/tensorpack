@@ -94,7 +94,7 @@ def get_config(ds_train, ds_test):
         ]),
         model=Model(),
         step_per_epoch=step_per_epoch,
-        max_epoch=500,
+        max_epoch=300,
     )
 
 if __name__ == '__main__':
