@@ -22,7 +22,7 @@ DoReFa-Net: Training Low Bitwidth Convolutional Neural Networks with Low Bitwidt
 http://arxiv.org/abs/1606.06160
 
 The original experiements are performed on a proprietary framework.
-This is our attempt to reproduce it on tensorpack/tensorflow.
+This is our attempt to reproduce it on tensorpack & TensorFlow.
 
 Accuracy:
     Trained with 4 GPUs and (W,A,G)=(1,2,6), it can reach top-1 single-crop validation error of 51%,
@@ -40,8 +40,8 @@ Accuracy:
 Speed:
     About 2.8 iteration/s on 1 TitanX. (Each epoch is set to 10000 iterations)
 
-To Train:
-    ./alexnet-dorefa.py --dorefa 1,2,6 --data PATH --gpu 0,1,2,3
+To Train, for example:
+    ./alexnet-dorefa.py --dorefa 1,2,6 --data PATH --gpu 0,1
 
     PATH should look like:
     PATH/
