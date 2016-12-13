@@ -7,6 +7,7 @@ from . import logger
 from .argtools import memoized
 from abc import abstractmethod, ABCMeta
 import numpy as np
+import six
 from six.moves import range
 
 __all__ = ['UniformDiscretizer1D', 'UniformDiscretizerND']
@@ -16,8 +17,8 @@ def log_once(s):
     logger.warn(s)
 
 # just a placeholder
+@six.add_metaclass(ABCMeta)
 class Discretizer(object):
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def get_nr_bin(self):

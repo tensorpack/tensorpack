@@ -9,6 +9,7 @@ import tensorflow as tf
 from collections import namedtuple
 import inspect
 import pickle
+import six
 
 from ..utils import logger, INPUT_VARS_KEY
 from ..tfutils.common import get_tensors_by_names
@@ -30,9 +31,9 @@ class InputVar(object):
     def loads(buf):
         return pickle.loads(buf)
 
+@six.add_metaclass(ABCMeta)
 class ModelDesc(object):
     """ Base class for a model description """
-    __metaclass__ = ABCMeta
 
     def get_input_vars(self):
         """

@@ -55,3 +55,4 @@ pip install --user -r opt-requirements.txt (some optional dependencies, you can 
 ```
 export PYTHONPATH=$PYTHONPATH:`readlink -f path/to/tensorpack`
 ```
++ Use tcmalloc if running with large data

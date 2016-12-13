@@ -17,10 +17,9 @@ __all__ = ['HyperParamSetter', 'HumanHyperParamSetter',
            'ScheduledHyperParamSetter',
            'StatMonitorParamSetter', 'HyperParamSetterWithFunc',
            'HyperParam', 'GraphVarParam', 'ObjAttrParam']
-
+@six.add_metaclass(ABCMeta)
 class HyperParam(object):
     """ Base class for a hyper param"""
-    __metaclass__ = ABCMeta
 
     def setup_graph(self):
         """ setup the graph in `setup_graph` callback stage, if necessary"""
@@ -88,7 +87,6 @@ class HyperParamSetter(Callback):
     """
     Base class to set hyperparameters after every epoch.
     """
-    __metaclass__ = ABCMeta
 
     def __init__(self, param):
         """

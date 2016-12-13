@@ -20,9 +20,9 @@ __all__ = ['SessionInit', 'NewSession', 'SaverRestore',
 
 # TODO they initialize_all at the beginning by default.
 
+@six.add_metaclass(ABCMeta)
 class SessionInit(object):
     """ Base class for utilities to initialize a session"""
-    __metaclass__ = ABCMeta
 
     def init(self, sess):
         """ Initialize a session

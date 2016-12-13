@@ -6,6 +6,7 @@
 import tensorflow as tf
 import threading
 from abc import ABCMeta, abstractmethod
+import six
 
 from ..dataflow.common import RepeatedData
 from ..tfutils.summary import add_moving_summary
@@ -14,8 +15,8 @@ from ..callbacks.concurrency import StartProcOrThread
 
 __all__ = ['QueueInput', 'FeedfreeInput', 'TensorInput']
 
+@six.add_metaclass(ABCMeta)
 class InputData(object):
-    __metaclass__ = ABCMeta
     pass
 
 class FeedInput(InputData):

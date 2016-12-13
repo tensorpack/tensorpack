@@ -20,8 +20,8 @@ from .dispatcher import OutputTensorDispatcer
 __all__ = ['InferenceRunner', 'ClassificationError',
         'ScalarStats', 'Inferencer', 'BinaryClassificationStats']
 
+@six.add_metaclass(ABCMeta)
 class Inferencer(object):
-    __metaclass__ = ABCMeta
 
     def before_inference(self):
         """

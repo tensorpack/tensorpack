@@ -6,6 +6,7 @@ from abc import ABCMeta, abstractmethod
 import signal
 import re
 import weakref
+import six
 from six.moves import range
 import tqdm
 
@@ -22,10 +23,9 @@ __all__ = ['Trainer', 'StopTraining']
 
 class StopTraining(BaseException):
     pass
-
+@six.add_metaclass(ABCMeta)
 class Trainer(object):
     """ Base class for a trainer."""
-    __metaclass__ = ABCMeta
 
     """a `StatHolder` instance"""
     stat_holder = None

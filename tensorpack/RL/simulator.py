@@ -11,6 +11,7 @@ import weakref
 from abc import abstractmethod, ABCMeta
 from collections import defaultdict, namedtuple
 import numpy as np
+
 import six
 from six.moves import queue
 
@@ -43,8 +44,8 @@ class TransitionExperience(object):
         for k, v in six.iteritems(kwargs):
             setattr(self, k, v)
 
+@six.add_metaclass(ABCMeta)
 class SimulatorProcessBase(mp.Process):
-    __metaclass__ = ABCMeta
 
     def __init__(self, idx):
         super(SimulatorProcessBase, self).__init__()
@@ -62,8 +63,6 @@ class SimulatorProcessStateExchange(SimulatorProcessBase):
     A process that simulates a player and communicates to master to
     send states and receive the next action
     """
-    __metaclass__ = ABCMeta
-
     def __init__(self, idx, pipe_c2s, pipe_s2c):
         """
         :param idx: idx of this process
@@ -103,8 +102,6 @@ class SimulatorMaster(threading.Thread):
         It should produce action for each simulator, as well as
         defining callbacks when a transition or an episode is finished.
     """
-    __metaclass__ = ABCMeta
-
     class ClientState(object):
         def __init__(self):
             self.memory = []    # list of Experience

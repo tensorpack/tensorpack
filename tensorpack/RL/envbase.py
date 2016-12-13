@@ -6,15 +6,15 @@
 
 from abc import abstractmethod, ABCMeta
 from collections import defaultdict
+import six
 import random
 from ..utils import get_rng
 
 __all__ = ['RLEnvironment', 'NaiveRLEnvironment', 'ProxyPlayer',
            'DiscreteActionSpace']
 
+@six.add_metaclass(ABCMeta)
 class RLEnvironment(object):
-    __meta__ = ABCMeta
-
     def __init__(self):
         self.reset_stat()
 

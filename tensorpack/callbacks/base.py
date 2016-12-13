@@ -7,12 +7,13 @@ import sys
 import os
 import time
 from abc import abstractmethod, ABCMeta
+import six
 
 __all__ = ['Callback', 'PeriodicCallback', 'ProxyCallback']
 
+@six.add_metaclass(ABCMeta)
 class Callback(object):
     """ Base class for all callbacks """
-    __metaclass__ = ABCMeta
 
     def before_train(self):
         """

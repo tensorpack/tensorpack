@@ -44,6 +44,10 @@ def dump_dataset_images(ds, dirname, max_count=None, index=0):
         cv2.imwrite(os.path.join(dirname, "{}.jpg".format(i)), img)
 
 def dump_dataflow_to_lmdb(ds, lmdb_path):
+    """ Dump a `Dataflow` ds to a lmdb database, where the key is the index
+    and the data is the serialized datapoint.
+    The output database can be read directly by `LMDBDataPoint`
+    """
     assert isinstance(ds, DataFlow), type(ds)
     isdir = os.path.isdir(lmdb_path)
     if isdir:

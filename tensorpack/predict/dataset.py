@@ -7,6 +7,7 @@ from six.moves import range, zip
 from abc import ABCMeta, abstractmethod
 import multiprocessing
 import os
+import six
 
 from ..dataflow import DataFlow, BatchData
 from ..dataflow.dftools import dataflow_to_process_queue
@@ -21,9 +22,8 @@ from .base import OfflinePredictor
 __all__ = ['DatasetPredictorBase', 'SimpleDatasetPredictor',
         'MultiProcessDatasetPredictor']
 
+@six.add_metaclass(ABCMeta)
 class DatasetPredictorBase(object):
-    __metaclass__ = ABCMeta
-
     def __init__(self, config, dataset):
         """
         :param config: a `PredictConfig` instance.

@@ -20,6 +20,7 @@ from GAN import GANTrainer, RandomZData, build_GAN_losses
 To train:
     ./Image2Image.py --data /path/to/datadir --mode {AtoB,BtoA}
     # datadir should contain images of shpae 2s x s, formed by A and B
+    # you can download some data from the original pix2pix repo: https://github.com/phillipi/pix2pix#datasets
     # training visualization will appear be in tensorboard
 
 To visualize on test set:
@@ -125,7 +126,7 @@ class Model(ModelDesc):
 
 def split_input(img):
     """
-    img: an 512x256x3 image
+    img: an image with shape (s, 2s, 3)
     :return: [input, output]
     """
     s = img.shape[0]
@@ -187,7 +188,7 @@ if __name__ == '__main__':
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
     parser.add_argument('--load', help='load model')
     parser.add_argument('--sample', action='store_true', help='run sampling')
-    parser.add_argument('--data', help='A directory of 512x256 images')
+    parser.add_argument('--data', help='Image directory')
     parser.add_argument('--mode', choices=['AtoB', 'BtoA'], default='AtoB')
     global args
     args = parser.parse_args()

@@ -4,13 +4,14 @@
 
 from abc import abstractmethod, ABCMeta
 from ...utils import get_rng
+import six
 from six.moves import zip
 
 __all__ = ['Augmentor', 'ImageAugmentor', 'AugmentorList']
 
+@six.add_metaclass(ABCMeta)
 class Augmentor(object):
     """ Base class for an augmentor"""
-    __metaclass__ = ABCMeta
 
     def __init__(self):
         self.reset_state()

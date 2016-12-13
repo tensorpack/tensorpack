@@ -15,9 +15,8 @@ __all__ = ['OnlinePredictor', 'OfflinePredictor',
         'MultiTowerOfflinePredictor', 'build_multi_tower_prediction_graph',
         'DataParallelOfflinePredictor']
 
-
+@six.add_metaclass(ABCMeta)
 class PredictorBase(object):
-    __metaclass__ = ABCMeta
     """
     Available attributes:
     session
