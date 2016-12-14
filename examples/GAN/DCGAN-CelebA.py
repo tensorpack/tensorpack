@@ -77,7 +77,7 @@ class Model(ModelDesc):
                 W_init=tf.truncated_normal_initializer(stddev=0.02)):
             with tf.variable_scope('gen'):
                 image_gen = self.generator(z)
-                tf.summary.image('gen', image_gen, max_outputs=30)
+            tf.summary.image('gen', image_gen, max_outputs=30)
             with tf.variable_scope('discrim'):
                 vecpos = self.discriminator(image_pos)
             with tf.variable_scope('discrim', reuse=True):
@@ -144,4 +144,4 @@ if __name__ == '__main__':
         config = get_config()
         if args.load:
             config.session_init = SaverRestore(args.load)
-        GANTrainer(config, g_vs_d=1).train()
+        GANTrainer(config).train()

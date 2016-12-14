@@ -201,4 +201,4 @@ if __name__ == '__main__':
         config = get_config()
         if args.load:
             config.session_init = SaverRestore(args.load)
-        GANTrainer(config, g_vs_d=1).train()
+        GANTrainer(config).train()

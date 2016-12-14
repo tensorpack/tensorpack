@@ -11,15 +11,9 @@ from tensorpack.tfutils.summary import summary_moving_average, add_moving_summar
 from tensorpack.dataflow import DataFlow
 
 class GANTrainer(FeedfreeTrainer):
-    def __init__(self, config, g_vs_d=1):
+    def __init__(self, config):
         self._input_method = QueueInput(config.dataset)
         super(GANTrainer, self).__init__(config)
-        if g_vs_d > 1:
-            self._opt_g = g_vs_d
-            self._opt_d = 1
-        else:
-            self._opt_g = 1
-            self._opt_d = int(1.0 / g_vs_d)
 
     def _setup(self):
         super(GANTrainer, self)._setup()
@@ -32,14 +26,12 @@ class GANTrainer(FeedfreeTrainer):
                 var_list=self.model.d_vars, name='d_op')
         self.gs_incr = tf.assign_add(get_global_step_var(), 1, name='global_step_incr')
         self.summary_op = summary_moving_average()
-        self.d_min = tf.group(self.d_min, self.summary_op)
+        self.d_min = tf.group(self.d_min, self.summary_op, self.gs_incr)
+        #self.train_op = tf.group(self.g_min, self.d_min)
 
     def run_step(self):
-        for _ in range(self._opt_g):
-            self.sess.run(self.g_min)
-        for _ in range(self._opt_d):
-            self.sess.run(self.d_min)
-        self.sess.run(self.gs_incr)
+        self.sess.run(self.g_min)
+        self.sess.run(self.d_min)
 
 class RandomZData(DataFlow):
     def __init__(self, shape):
