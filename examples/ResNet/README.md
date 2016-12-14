@@ -3,7 +3,7 @@
 
 Training code of pre-activation ResNet on ImageNet. It follows the setup in
 [fb.resnet.torch](https://github.com/facebook/fb.resnet.torch) and gets similar performance (with much fewer lines of code).
-Models can be [downloaded here](https://drive.google.com/open?id=0B9IPQTvr2BBkTXBlZmh1cmlnQ0k).
+Models can be [downloaded here](https://goo.gl/6XjK9V).
 
 | Model              | Top 5 Error | Top 1 Error |
 |:-------------------|-------------|------------:|
@@ -16,7 +16,7 @@ Models can be [downloaded here](https://drive.google.com/open?id=0B9IPQTvr2BBkTX
 
 ## load-resnet.py
 
-A script to convert and run ImageNet-ResNet{50,101,152} Caffe models [released by Kaiming](https://github.com/KaimingHe/deep-residual-networks).
+This script only converts and runs ImageNet-ResNet{50,101,152} Caffe models [released by Kaiming](https://github.com/KaimingHe/deep-residual-networks).
 
 Example usage:
 ```bash

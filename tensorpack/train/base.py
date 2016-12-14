@@ -152,7 +152,8 @@ class Trainer(object):
                                 return
                             self.run_step() # implemented by subclass
                             callbacks.trigger_step()   # not useful?
-                        self.trigger_epoch()
+                    # trigger epoch outside the timing region.
+                    self.trigger_epoch()
             except StopTraining:
                 logger.info("Training was stopped.")
             except:

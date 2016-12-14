@@ -13,7 +13,7 @@ The pre-trained models are all trained with 4 GPUs for about 2 days.
 
 ### To run a pretrained Atari model for 100 episodes:
 
-1. Download models from [model zoo](https://drive.google.com/open?id=0B9IPQTvr2BBkS0VhX0xmS1c5aFk)
+1. Download models from [model zoo](https://goo.gl/9yIol2)
 2. `ENV=Breakout-v0; ./run-atari.py --load "$ENV".tfmodel --env "$ENV" --episode 100 --output output_dir`
 
 Models are available for the following gym atari environments (click links for videos on gym):
