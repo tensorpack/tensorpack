@@ -38,28 +38,30 @@ class Model(ModelDesc):
 
     def generator(self, z):
         """ return a image generated from z"""
-        l = FullyConnected('fc0', z, 64 * 8 * 4 * 4, nl=tf.identity)
-        l = tf.reshape(l, [-1, 4, 4, 64*8])
+        nf = 64
+        l = FullyConnected('fc0', z, nf * 8 * 4 * 4, nl=tf.identity)
+        l = tf.reshape(l, [-1, 4, 4, nf*8])
         l = BNReLU(l)
         with argscope(Deconv2D, nl=BNReLU, kernel_shape=4, stride=2):
-            l = Deconv2D('deconv1', l, [8, 8, 64 * 4])
-            l = Deconv2D('deconv2', l, [16, 16, 64 * 2])
-            l = Deconv2D('deconv3', l, [32, 32, 64])
+            l = Deconv2D('deconv1', l, [8, 8, nf * 4])
+            l = Deconv2D('deconv2', l, [16, 16, nf * 2])
+            l = Deconv2D('deconv3', l, [32, 32, nf])
             l = Deconv2D('deconv4', l, [64, 64, 3], nl=tf.identity)
             l = tf.tanh(l, name='gen')
         return l
 
     def discriminator(self, imgs):
         """ return a (b, 1) logits"""
+        nf = 64
         with argscope(Conv2D, nl=tf.identity, kernel_shape=4, stride=2), \
                 argscope(LeakyReLU, alpha=0.2):
             l = (LinearWrap(imgs)
-                .Conv2D('conv0', 64, nl=LeakyReLU)
-                .Conv2D('conv1', 64*2)
+                .Conv2D('conv0', nf, nl=LeakyReLU)
+                .Conv2D('conv1', nf*2)
                 .BatchNorm('bn1').LeakyReLU()
-                .Conv2D('conv2', 64*4)
+                .Conv2D('conv2', nf*4)
                 .BatchNorm('bn2').LeakyReLU()
-                .Conv2D('conv3', 64*8)
+                .Conv2D('conv3', nf*8)
                 .BatchNorm('bn3').LeakyReLU()
                 .FullyConnected('fct', 1, nl=tf.identity)())
         return l
@@ -124,24 +126,6 @@ def sample(model_path):
         o = o * 128.0
         o = o[:,:,:,::-1]
         viz = next(build_patch_list(o, nr_row=10, nr_col=10, viz=True))
-
-#def vec(model_path):
-    #func = OfflinePredictor(PredictConfig(
-       #session_init=get_model_loader(model_path),
-       #model=Model(),
-       #input_names=['z'],
-       #output_names=['gen/gen']))
-    #dic = np.load('demo/CelebA-vec.npy').item()
-    #assert np.all(
-            #dic['w_smile'] - dic['w_neutral'] \
-                    #+ dic['m_neutral'] == dic['m_smile'])
-    #imgs = []
-    #for z in ['w_neutral', 'w_smile', 'm_neutral', 'm_smile']:
-        #z = dic[z]
-        #img = func([[z]])[0][0][:,:,::-1]
-        #img = (img + 1) * 128
-        #imgs.append(img)
-    #viz = next(build_patch_list(imgs, nr_row=1, nr_col=4, viz=True))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

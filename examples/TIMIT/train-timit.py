@@ -57,8 +57,15 @@ class Model(ModelDesc):
         self.cost = tf.reduce_mean(loss, name='cost')
 
         logits = tf.transpose(logits, [1,0,2])
-        predictions = tf.to_int32(
-                tf.nn.ctc_beam_search_decoder(logits, seqlen)[0][0])
+
+        isTrain = get_current_tower_context().is_training
+        if isTrain:
+            # beam search is too slow to run in training
+            predictions = tf.to_int32(
+                    tf.nn.ctc_greedy_decoder(logits, seqlen)[0][0])
+        else:
+            predictions = tf.to_int32(
+                    tf.nn.ctc_beam_search_decoder(logits, seqlen)[0][0])
         err = tf.edit_distance(predictions, label, normalize=True)
         err.set_shape([None])
         err = tf.reduce_mean(err, name='error')
@@ -94,7 +101,7 @@ def get_config(ds_train, ds_test):
         ]),
         model=Model(),
         step_per_epoch=step_per_epoch,
-        max_epoch=300,
+        max_epoch=70,
     )
 
 if __name__ == '__main__':
@@ -104,7 +111,7 @@ if __name__ == '__main__':
     parser.add_argument('--train', help='path to training lmdb', required=True)
     parser.add_argument('--test', help='path to testing lmdb', required=True)
     parser.add_argument('--stat', help='path to the mean/std statistics file',
-            default='stats.data')
+                        default='stats.data')
     args = parser.parse_args()
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu

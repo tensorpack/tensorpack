@@ -15,7 +15,10 @@ cd /PATH/TO/TIMIT
 find -name '*.WAV' | parallel -P20 sox {} '{.}.wav'
 ```
 
-Extract MFCC features and save everything to LMDB database:
+Extract MFCC features and phoneme labels, and save everything to LMDB database. The preprocessing
+follows the setup in
++ Connectionist Temporal Classification: Labelling Unsegmented Sequence Data with RNN - Alex Graves
+
 ```
 ./create-lmdb.py build --dataset /PATH/TO/TIMIT/TRAIN --db train.mdb
 ./create-lmdb.py build --dataset /PATH/TO/TIMIT/TEST --db test.mdb
@@ -32,4 +35,4 @@ Compute mean/std of the training set (and save to `stats.data` by default):
 ```
 
 ### Results:
-To be done
+Get 0.28 LER (normalized edit distance) after about 40 epochs.

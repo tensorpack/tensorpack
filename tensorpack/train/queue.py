@@ -10,7 +10,7 @@ from ..tfutils import get_global_step_var
 from ..tfutils.tower import TowerContext
 from ..tfutils.gradproc import apply_grad_processors
 from ..tfutils.summary import summary_moving_average
-from .input_data import QueueInput
+from .input_data import QueueInput, FeedfreeInput
 
 from .trainer import (MultiPredictorTowerTrainer, SingleCostFeedfreeTrainer)
 
@@ -25,6 +25,7 @@ class SimpleFeedfreeTrainer(
         config.data must exists
         """
         self._input_method = config.data
+        assert isinstance(self._input_method, FeedfreeInput), self._input_method
         super(SimpleFeedfreeTrainer, self).__init__(config)
         self._setup_predictor_factory(predict_tower)
         assert len(self.config.tower) == 1, \

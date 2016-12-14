@@ -19,7 +19,7 @@ Training examples with __reproducible__ and meaningful performance.
 + [Asynchronous Advantage Actor-Critic(A3C) with demos on OpenAI Gym](OpenAIGym)
 
 ## Unsupervised:
-+ [Generative Adversarial Network(GAN) variants (DCGAN,Image2Image,InfoGAN)](examples/GAN)
++ [Generative Adversarial Network(GAN) variants, including DCGAN, Image2Image, InfoGAN](examples/GAN)
 
 ## Speech / NLP:
 + [LSTM-CTC for speech recognition](TIMIT)

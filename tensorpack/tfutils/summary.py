@@ -115,7 +115,7 @@ def summary_moving_average(tensors=None):
     # TODO will produce tower0/xxx. not elegant
     with tf.name_scope(None):
         averager = tf.train.ExponentialMovingAverage(
-            0.90, num_updates=get_global_step_var(), name='EMA')
+            0.95, num_updates=get_global_step_var(), name='EMA')
     avg_maintain_op = averager.apply(tensors)
     for idx, c in enumerate(tensors):
         name = re.sub('tower[p0-9]+/', '', c.op.name)
