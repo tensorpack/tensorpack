@@ -71,6 +71,7 @@ class RawTIMIT(DataFlow):
         self.filelists = [k for k in fs.recursive_walk(self.dirname)
                 if k.endswith('.wav')]
         logger.info("Found {} wav files ...".format(len(self.filelists)))
+        assert len(self.filelists), self.filelists
         assert label in ['phoneme', 'letter'], label
         self.label = label
 

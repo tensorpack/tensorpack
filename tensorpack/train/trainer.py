@@ -8,7 +8,7 @@ from six.moves import zip
 
 from .base import Trainer
 
-from ..utils import logger, SUMMARY_BACKUP_KEYS
+from ..utils import logger, SUMMARY_BACKUP_KEYS, PREDICT_TOWER
 from ..tfutils import (get_tensors_by_names, freeze_collection,
         get_global_step_var, TowerContext)
 from ..tfutils.summary import summary_moving_average, add_moving_summary
@@ -39,16 +39,17 @@ class PredictorFactory(object):
             self._build_predict_tower()
         tower = self.towers[tower % len(self.towers)]
         raw_input_vars = get_tensors_by_names(input_names)
-        output_names = ['towerp{}/'.format(tower) + n for n in output_names]
+        output_names = ['{}{}/'.format(PREDICT_TOWER, tower) + n for n in output_names]
         output_vars = get_tensors_by_names(output_names)
         return OnlinePredictor(self.sess, raw_input_vars, output_vars)
 
     def _build_predict_tower(self):
         tf.get_variable_scope().reuse_variables()
-        # build_predict_tower might get called anywhere, but 'towerp' should be the outermost name scope
+        # build_predict_tower might get called anywhere, but 'PREDICT_TOWER' should be the outermost name scope
         with tf.name_scope(None), \
                 freeze_collection(SUMMARY_BACKUP_KEYS):
-            build_multi_tower_prediction_graph(self.model, self.towers)
+            fn = lambda _: self.model.build_graph(self.model.get_input_vars())
+            build_multi_tower_prediction_graph(fn, self.towers)
         self.tower_built = True
 
 class SimpleTrainer(Trainer):

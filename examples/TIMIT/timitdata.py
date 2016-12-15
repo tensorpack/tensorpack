@@ -10,6 +10,7 @@ from six.moves import range
 __all__ = ['TIMITBatch']
 
 def batch_feature(feats):
+    # pad to the longest in the batch
     maxlen = max([k.shape[0] for k in feats])
     bsize = len(feats)
     ret = np.zeros((bsize, maxlen, feats[0].shape[1]))

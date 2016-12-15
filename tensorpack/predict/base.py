@@ -7,6 +7,7 @@ from abc import abstractmethod, ABCMeta, abstractproperty
 import tensorflow as tf
 import six
 
+from ..utils.naming import *
 from ..utils import logger
 from ..tfutils import get_tensors_by_names, TowerContext
 
@@ -100,17 +101,17 @@ class OfflinePredictor(OnlinePredictor):
                     sess, input_vars, output_vars, config.return_input)
 
 
-def build_multi_tower_prediction_graph(model, towers):
+def build_multi_tower_prediction_graph(build_tower_fn, towers):
     """
+    :param build_tower_fn: the function to be called inside each tower, taking tower as the argument
     :param towers: a list of gpu relative id.
     """
-    input_vars = model.get_input_vars()
     for k in towers:
         logger.info(
 "Building graph for predictor tower {}...".format(k))
         with tf.device('/gpu:{}'.format(k) if k >= 0 else '/cpu:0'), \
-                TowerContext('towerp{}'.format(k)):
-            model.build_graph(input_vars)
+                TowerContext('{}{}'.format(PREDICT_TOWER, k)):
+            build_tower_fn(k)
             tf.get_variable_scope().reuse_variables()
 
 class MultiTowerOfflinePredictor(OnlinePredictor):
@@ -119,7 +120,8 @@ class MultiTowerOfflinePredictor(OnlinePredictor):
         self.predictors = []
         with self.graph.as_default():
             # TODO backup summary keys?
-            build_multi_tower_prediction_graph(config.model, towers)
+            fn = lambda _: config.model.build_graph(config.model.get_input_vars())
+            build_multi_tower_prediction_graph(fn, towers)
 
             self.sess = tf.Session(config=config.session_config)
             config.session_init.init(self.sess)
@@ -128,7 +130,7 @@ class MultiTowerOfflinePredictor(OnlinePredictor):
 
             for k in towers:
                 output_vars = get_tensors_by_names(
-                        ['towerp{}/'.format(k) + n \
+                        ['{}{}/'.format(PREDICT_TOWER, k) + n \
                                 for n in config.output_names])
                 self.predictors.append(OnlinePredictor(
                     self.sess, input_vars, output_vars, config.return_input))
@@ -146,22 +148,22 @@ class DataParallelOfflinePredictor(OnlinePredictor):
         with self.graph.as_default():
             sess = tf.Session(config=config.session_config)
             input_var_names = []
+            output_vars = []
             for k in towers:
-                input_vars = config.model.get_placeholders(prefix='towerp{}-'.format(k))
+                towername = PREDICT_TOWER + str(k)
+                input_vars = config.model.get_placeholders(prefix=towername + '-')
                 logger.info(
         "Building graph for predictor tower {}...".format(k))
                 with tf.device('/gpu:{}'.format(k) if k >= 0 else '/cpu:0'), \
-                        TowerContext('towerp{}'.format(k)):
+                        TowerContext(towername, is_training=False):
                     config.model.build_graph(input_vars)
                     tf.get_variable_scope().reuse_variables()
                 input_var_names.extend([k.name for k in input_vars])
+                output_vars.extend(get_tensors_by_names(
+                        [towername + '/' + n \
+                                for n in config.output_names]))
 
             input_vars = get_tensors_by_names(input_var_names)
             config.session_init.init(sess)
-            output_vars = []
-            for k in towers:
-                output_vars.extend(get_tensors_by_names(
-                        ['towerp{}/'.format(k) + n \
-                                for n in config.output_names]))
             super(DataParallelOfflinePredictor, self).__init__(
                     sess, input_vars, output_vars, config.return_input)

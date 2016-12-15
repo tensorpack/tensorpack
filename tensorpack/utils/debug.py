@@ -21,9 +21,9 @@ def enable_call_trace():
             if caller:
                 caller_line_no = caller.f_lineno
                 caller_filename = caller.f_code.co_filename
-                print 'Call to `%s` on line %s:%s from %s:%s' % \
+                print('Call to `%s` on line %s:%s from %s:%s' % \
                     (func_name, func_filename, func_line_no,
-                            caller_filename, caller_line_no)
+                            caller_filename, caller_line_no))
             return
     sys.settrace(tracer)
 
@@ -31,9 +31,9 @@ if __name__ == '__main__':
     enable_call_trace()
 
     def b(a):
-        print 2
+        print(2)
     def a():
-        print 1
+        print(1)
         b(1)
 
     a()

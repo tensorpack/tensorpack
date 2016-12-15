@@ -104,8 +104,8 @@ class SaverRestore(SessionInit):
         reader = tf.train.NewCheckpointReader(model_path)
         ckpt_vars = reader.get_variable_to_shape_map().keys()
         for v in ckpt_vars:
-            if v.startswith('towerp'):
-                logger.warn("Found {} in checkpoint. Anything from prediction tower shouldn't be saved.".format(v.name))
+            if v.startswith(PREDICT_TOWER):
+                logger.error("Found {} in checkpoint. But anything from prediction tower shouldn't be saved.".format(v.name))
         return set(ckpt_vars)
 
     def _get_vars_to_restore_multimap(self, vars_available):

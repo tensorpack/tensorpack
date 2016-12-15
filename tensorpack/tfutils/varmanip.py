@@ -25,8 +25,8 @@ def get_savename_from_varname(
     :returns: the name used to save the variable
     """
     name = varname
-    if 'towerp/' in name:
-        logger.error("No variable should be under 'towerp' name scope".format(v.name))
+    if PREDICT_TOWER in name:
+        logger.error("No variable under '{}' name scope should be saved!".format(PREDICT_TOWER))
         # don't overwrite anything in the current prediction graph
         return None
     if 'tower' in name:

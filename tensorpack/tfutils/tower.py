@@ -5,6 +5,7 @@
 
 import tensorflow as tf
 import re
+from ..utils.naming import *
 
 __all__ = ['get_current_tower_context', 'TowerContext']
 
@@ -15,7 +16,7 @@ class TowerContext(object):
         """ tower_name: 'tower0', 'towerp0', or '' """
         self._name = tower_name
         if is_training is None:
-            is_training = not self._name.startswith('towerp')
+            is_training = not self._name.startswith(PREDICT_TOWER)
         self._is_training = is_training
 
     @property
@@ -52,12 +53,13 @@ class TowerContext(object):
     def find_tensor_in_main_tower(self, graph, name):
         if self.is_main_tower:
             return graph.get_tensor_by_name(name)
-        if name.startswith('towerp'):
-            newname = re.sub('towerp[0-9]+/', '', name)
+        if name.startswith(PREDICT_TOWER):
+            predict_tower_prefix = '{}[0-9]+/'.format(PREDICT_TOWER)
+            newname = re.sub(predict_tower_prefix, '', name)
             try:
                 return graph.get_tensor_by_name(newname)
             except KeyError:
-                newname = re.sub('towerp[0-9]+/', 'tower0/', name)
+                newname = re.sub(predict_tower_prefix, 'tower0/', name)
                 return graph.get_tensor_by_name(newname)
 
     def __enter__(self):
