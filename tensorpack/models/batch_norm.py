@@ -178,7 +178,7 @@ def BatchNormV2(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
     else:
         return tf.identity(xn, name='output')
 
-if get_tf_version() >= 11:
+if get_tf_version() >= 12:
     BatchNorm = BatchNormV2
 else:
     logger.warn("BatchNorm might be faster if you update TensorFlow")
