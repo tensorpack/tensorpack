@@ -15,12 +15,14 @@ from ..tfutils import (backup_collection, restore_collection,
         get_global_step_var, TowerContext)
 from ..tfutils.gradproc import apply_grad_processors, ScaleGradient
 
-from .trainer import FeedfreeTrainer, SingleCostFeedfreeTrainer, MultiPredictorTowerTrainer
+from .base import Trainer
+from .trainer import MultiPredictorTowerTrainer
+from .feedfree import SingleCostFeedfreeTrainer
 from .input_data import QueueInput
 
 __all__ = ['AsyncMultiGPUTrainer', 'SyncMultiGPUTrainer']
 
-class MultiGPUTrainer(FeedfreeTrainer):
+class MultiGPUTrainer(Trainer):
     """ Base class for multi-gpu training"""
     @staticmethod
     def _multi_tower_grads(towers, get_tower_grad_func):

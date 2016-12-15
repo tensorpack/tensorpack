@@ -5,17 +5,33 @@
 from pkgutil import walk_packages
 import os
 
+__all__ = []
+
 def _global_import(name):
     p = __import__(name, globals(), None, level=1)
     lst = p.__all__ if '__all__' in dir(p) else dir(p)
-    if name in ['common', 'argscope']:
-        del globals()[name]
     for k in lst:
         globals()[k] = p.__dict__[k]
+        __all__.append(k)
 
-_global_import('sessinit')
-_global_import('common')
-_global_import('gradproc')
-_global_import('argscope')
-_global_import('tower')
+_TO_IMPORT = set([
+    'sessinit',
+    'common',
+    'gradproc',
+    'argscope',
+    'tower'
+    ])
+
+_CURR_DIR = os.path.dirname(__file__)
+for _, module_name, _ in walk_packages(
+        [_CURR_DIR]):
+    srcpath = os.path.join(_CURR_DIR, module_name + '.py')
+    if not os.path.isfile(srcpath):
+        continue
+    if module_name.startswith('_'):
+        continue
+    if module_name in _TO_IMPORT:
+        _global_import(module_name)
+    if module_name != 'common':
+        __all__.append(module_name)
 

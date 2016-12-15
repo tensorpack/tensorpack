@@ -5,7 +5,6 @@
 
 import tensorflow as tf
 import numpy as np
-from . import *
 import unittest
 
 class TestModel(unittest.TestCase):
@@ -30,6 +29,7 @@ def run_test_case(case):
 if __name__ == '__main__':
     import tensorpack
     from tensorpack.utils import logger
+    from . import *
     logger.disable_logger()
     subs = tensorpack.models._test.TestModel.__subclasses__()
     for cls in subs:

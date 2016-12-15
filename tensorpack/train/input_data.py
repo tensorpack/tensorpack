@@ -8,7 +8,7 @@ import threading
 from abc import ABCMeta, abstractmethod
 import six
 
-from ..dataflow.common import RepeatedData
+from ..dataflow import DataFlow, RepeatedData
 from ..tfutils.summary import add_moving_summary
 from ..utils import logger
 from ..callbacks.concurrency import StartProcOrThread
@@ -21,6 +21,7 @@ class InputData(object):
 
 class FeedInput(InputData):
     def __init__(self, ds):
+        assert isinstance(ds, DataFlow), ds
         self.ds = ds
 
     def size(self):
@@ -91,6 +92,12 @@ class EnqueueThread(threading.Thread):
 
 class QueueInput(FeedfreeInput):
     def __init__(self, ds, queue=None):
+        """
+        :param ds: a `DataFlow` instance
+        :param queue: a `tf.QueueBase` instance to be used to buffer datapoints.
+            Defaults to a FIFO queue of size 50.
+        """
+        assert isinstance(ds, DataFlow), ds
         self.queue = queue
         self.ds = ds
 
