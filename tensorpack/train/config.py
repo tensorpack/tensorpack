@@ -4,12 +4,12 @@
 
 import tensorflow as tf
 
-from ..callbacks import Callbacks
+from ..callbacks.group import Callbacks
+from ..dataflow.base import DataFlow
 from ..models import ModelDesc
 from ..utils import logger
 from ..tfutils import (JustCurrentSession,
         get_default_sess_config, SessionInit)
-from ..dataflow import DataFlow
 from .input_data import InputData
 
 __all__ = ['TrainConfig']
@@ -35,6 +35,7 @@ class TrainConfig(object):
         :param max_epoch: maximum number of epoch to run training. default to inf
         :param nr_tower: int. number of training towers. default to 1.
         :param tower: list of training towers in relative id. default to `range(nr_tower)` if nr_tower is given.
+        :param predict_tower: list of prediction tower in their relative gpu id. Defaults to [0]
         """
         def assert_type(v, tp):
             assert isinstance(v, tp), v.__class__
@@ -81,6 +82,9 @@ class TrainConfig(object):
             self.tower = kwargs.pop('tower')
         else:
             self.tower = [0]
+        self.predict_tower = kwargs.pop('predict_tower', [0])
+        if isinstance(self.predict_tower, int):
+            self.predict_tower = [self.predict_tower]
 
         # TODO deprecated @Dec20
         self.extra_threads_procs = kwargs.pop('extra_threads_procs', [])

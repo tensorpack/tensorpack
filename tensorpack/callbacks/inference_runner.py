@@ -14,8 +14,20 @@ from .inference import Inferencer
 from .dispatcher import OutputTensorDispatcer
 from ..tfutils import get_op_tensor_name
 from ..utils import logger, get_tqdm
+from ..train.input_data import FeedfreeInput
 
 __all__ = ['InferenceRunner']
+
+def summary_inferencer(trainer, infs):
+    for inf in infs:
+        ret = inf.after_inference()
+        for k, v in six.iteritems(ret):
+            try:
+                v = float(v)
+            except:
+                logger.warn("{} returns a non-scalar statistics!".format(type(inf).__name__))
+                continue
+            trainer.write_scalar_summary(k, v)
 
 class InferenceRunner(Callback):
     """
@@ -31,14 +43,14 @@ class InferenceRunner(Callback):
         :param input_tensor_names: list of tensors to feed the dataflow to.
             default to all the input placeholders.
         """
-        assert isinstance(ds, DataFlow), type(ds)
+        assert isinstance(ds, DataFlow), ds
         self.ds = ds
         if not isinstance(infs, list):
             self.infs = [infs]
         else:
             self.infs = infs
         for v in self.infs:
-            assert isinstance(v, Inferencer), str(v)
+            assert isinstance(v, Inferencer), v
         self.input_tensors = input_tensors
 
     def _setup_graph(self):
@@ -96,12 +108,30 @@ class InferenceRunner(Callback):
         self._write_summary_after_inference()
 
     def _write_summary_after_inference(self):
-        for inf in self.infs:
-            ret = inf.after_inference()
-            for k, v in six.iteritems(ret):
-                try:
-                    v = float(v)
-                except:
-                    logger.warn("{} returns a non-scalar statistics!".format(type(inf).__name__))
-                    continue
-                self.trainer.write_scalar_summary(k, v)
+        summary_inferencer(self.trainer, self.infs)
+
+class FeedfreeInferenceRunner(Callback):
+    IOTensor = namedtuple('IOTensor', ['index', 'isOutput'])
+
+    def __init__(self, input, infs, input_tensors=None):
+        assert isinstance(input, FeedfreeInput), input
+        self._input_data = input
+        if not isinstance(infs, list):
+            self.infs = [infs]
+        else:
+            self.infs = infs
+        for v in self.infs:
+            assert isinstance(v, Inferencer), v
+        self.input_tensor_names = input_tensors
+
+    def _setup_graph(self):
+        self._input_data._setup(self.trainer)
+        # only 1 prediction tower will be used for inference
+        self._input_tensors = self._input_data.get_input_tensors()
+         # TODO filter by names
+        self._find_output_tensors()
+
+    def _find_output_tensors(self):
+        pass
+
+

@@ -53,9 +53,13 @@ class SyncMultiGPUTrainer(MultiGPUTrainer,
         else:
             self._input_method = config.data
             assert isinstance(self._input_method, QueueInput)
-        super(SyncMultiGPUTrainer, self).__init__(config)
 
-        self._setup_predictor_factory(predict_tower)
+        if predict_tower is not None:
+            logger.warn("[Deprecated] Argument `predict_tower` is deprecated for trainer. Use TrainConfig.predict_tower instead!")
+            config.predict_tower = predict_tower
+
+        super(SyncMultiGPUTrainer, self).__init__(config)
+        self._setup_predictor_factory(config.predict_tower)
         assert len(config.tower) >= 1, "MultiGPUTrainer must be used with at least one GPU."
         assert tf.test.is_gpu_available()
 
@@ -101,8 +105,8 @@ class AsyncMultiGPUTrainer(MultiGPUTrainer,
         MultiPredictorTowerTrainer):
     def __init__(self, config,
             input_queue=None,
-            predict_tower=None,
-            average_gradient=True):
+            average_gradient=True,
+            predict_tower=None):
         if hasattr(config, 'dataset'):
             self._input_method = QueueInput(config.dataset, input_queue)
         else:
@@ -110,7 +114,11 @@ class AsyncMultiGPUTrainer(MultiGPUTrainer,
             assert isinstance(self._input_method, QueueInput)
         super(AsyncMultiGPUTrainer, self).__init__(config)
 
-        self._setup_predictor_factory(predict_tower)
+        if predict_tower is not None:
+            logger.warn("[Deprecated] Argument `predict_tower` is deprecated for trainer. Use TrainConfig.predict_tower instead!")
+            config.predict_tower = predict_tower
+
+        self._setup_predictor_factory(config.predict_tower)
         self._average_gradient = average_gradient
         assert tf.test.is_gpu_available()
 

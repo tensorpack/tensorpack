@@ -258,4 +258,5 @@ if __name__ == '__main__':
         if args.load:
             config.session_init = SaverRestore(args.load)
         config.tower = train_tower
-        trainer(config, predict_tower=predict_tower).train()
+        config.predict_tower = predict_tower
+        trainer(config).train()

@@ -63,7 +63,7 @@ class SingleCostFeedfreeTrainer(FeedfreeTrainer):
 class SimpleFeedfreeTrainer(
         MultiPredictorTowerTrainer,
         SingleCostFeedfreeTrainer):
-    def __init__(self, config, predict_tower=None):
+    def __init__(self, config):
         """
         A trainer with single cost, single training tower and feed-free input
         config.data must exists
@@ -71,7 +71,7 @@ class SimpleFeedfreeTrainer(
         self._input_method = config.data
         assert isinstance(self._input_method, FeedfreeInput), self._input_method
         super(SimpleFeedfreeTrainer, self).__init__(config)
-        self._setup_predictor_factory(predict_tower)
+        self._setup_predictor_factory(config.predict_tower)
         assert len(self.config.tower) == 1, \
                 "SimpleFeedfreeTrainer doesn't support multigpu!"
 
@@ -99,6 +99,9 @@ class QueueInputTrainer(SimpleFeedfreeTrainer):
             Use -1 for cpu.
         """
         config.data = QueueInput(config.dataset, input_queue)
+        if predict_tower is not None:
+            logger.warn("[Deprecated] Argument `predict_tower` is deprecated for trainer. Use TrainConfig.predict_tower instead!")
+            config.predict_tower = predict_tower
         assert len(config.tower) == 1, \
                 "QueueInputTrainer doesn't support multigpu! Use Sync/AsyncMultiGPUTrainer instead."
-        super(QueueInputTrainer, self).__init__(config, predict_tower)
+        super(QueueInputTrainer, self).__init__(config)
