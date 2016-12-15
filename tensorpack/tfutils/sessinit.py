@@ -10,7 +10,7 @@ import numpy as np
 import tensorflow as tf
 import six
 
-from ..utils import logger
+from ..utils import logger, PREDICT_TOWER
 from .common import get_op_var_name
 from .varmanip import SessionUpdate, get_savename_from_varname, is_training_name
 
