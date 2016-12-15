@@ -27,8 +27,8 @@ class Model(ModelDesc):
             with tf.variable_scope(name) as scope:
                 l = Conv2D('convfc', l, 1, kernel_shape=1, nl=tf.identity,
                         use_bias=True,
-                        W_init=tf.zeros_initializer,
-                        b_init=tf.zeros_initializer)
+                        W_init=tf.constant_initializer(),
+                        b_init=tf.constant_initializer())
                 while up != 1:
                     l = BilinearUpSample('upsample{}'.format(up), l, 2)
                     up = up / 2

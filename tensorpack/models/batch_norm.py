@@ -39,7 +39,7 @@ def BatchNormV1(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
     n_out = shape[-1]  # channel
     assert n_out is not None
     beta = tf.get_variable('beta', [n_out],
-            initializer=tf.zeros_initializer)
+            initializer=tf.constant_initializer())
     gamma = tf.get_variable('gamma', [n_out],
             initializer=tf.constant_initializer(1.0))
 
@@ -131,7 +131,7 @@ def BatchNormV2(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
         x = tf.reshape(x, [-1, 1, 1, n_out])
 
     beta = tf.get_variable('beta', [n_out],
-            initializer=tf.zeros_initializer)
+            initializer=tf.constant_initializer())
     gamma = tf.get_variable('gamma', [n_out],
             initializer=tf.constant_initializer(1.0))
     # x * gamma + beta
@@ -143,9 +143,9 @@ def BatchNormV2(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
         logger.warn("[BatchNorm] use_local_stat != is_training")
 
     moving_mean = tf.get_variable('mean/EMA', [n_out],
-            initializer=tf.zeros_initializer, trainable=False)
+            initializer=tf.constant_initializer(), trainable=False)
     moving_var = tf.get_variable('variance/EMA', [n_out],
-            initializer=tf.zeros_initializer, trainable=False)
+            initializer=tf.constant_initializer(), trainable=False)
 
     if use_local_stat:
         xn, batch_mean, batch_var = tf.nn.fused_batch_norm(x, gamma, beta,

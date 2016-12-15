@@ -48,7 +48,7 @@ def get_global_step_var():
                 "Creating global_step_var under a variable scope would cause problems!"
         with tf.variable_scope(scope, reuse=False):
             var = tf.get_variable(GLOBAL_STEP_OP_NAME, shape=[],
-                    initializer=tf.zeros_initializer,
+                    initializer=tf.constant_initializer(dtype=tf.int32),
                     trainable=False, dtype=tf.int32)
         return var
 
