@@ -151,7 +151,8 @@ class DataParallelOfflinePredictor(OnlinePredictor):
             output_vars = []
             for k in towers:
                 towername = PREDICT_TOWER + str(k)
-                input_vars = config.model.get_placeholders(prefix=towername + '-')
+                input_vars = config.model.build_placeholders(
+                        prefix=towername + '-')
                 logger.info(
         "Building graph for predictor tower {}...".format(k))
                 with tf.device('/gpu:{}'.format(k) if k >= 0 else '/cpu:0'), \

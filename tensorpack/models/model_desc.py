@@ -43,11 +43,14 @@ class ModelDesc(object):
         """
         if hasattr(self, 'reuse_input_vars'):
             return self.reuse_input_vars
-        ret = self.get_placeholders()
+        ret = self.build_placeholders()
         self.reuse_input_vars = ret
         return ret
 
-    def get_placeholders(self, prefix=''):
+    # alias
+    get_reuse_placehdrs = get_input_vars
+
+    def build_placeholders(self, prefix=''):
         """ build placeholders with optional prefix, for each InputVar
         """
         input_vars = self._get_input_vars()
