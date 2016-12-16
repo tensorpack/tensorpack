@@ -26,6 +26,7 @@ class MultiGPUTrainer(Trainer):
     """ Base class for multi-gpu training"""
     @staticmethod
     def _multi_tower_grads(towers, get_tower_grad_func):
+        """ ret[i] is a lists of (grad,var) tuple for tower i"""
         logger.info("Training a model of {} tower".format(len(towers)))
 
         grad_list = []
@@ -66,6 +67,8 @@ class SyncMultiGPUTrainer(MultiGPUTrainer,
 
     @staticmethod
     def _average_grads(tower_grads):
+        if len(tower_grads) == 1:
+            return tower_grads[0]
         ret = []
         with tf.name_scope('AvgGrad'):
             for grad_and_vars in zip(*tower_grads):
@@ -90,6 +93,12 @@ class SyncMultiGPUTrainer(MultiGPUTrainer,
         super(SyncMultiGPUTrainer, self)._setup()
         grad_list = MultiGPUTrainer._multi_tower_grads(
                 self.config.tower, lambda: self._get_cost_and_grad()[1])
+
+        # debug tower performance:
+        #ops = [k[0] for k in grad_list[1]] + [k[0] for k in grad_list[0]]
+        #self.train_op = tf.group(*ops)
+        #return
+
         grads = SyncMultiGPUTrainer._average_grads(grad_list)
         grads = apply_grad_processors(grads, self.model.get_gradient_processor())
 

@@ -13,7 +13,8 @@ from ..tfutils.summary import add_moving_summary
 from ..utils import logger
 from ..callbacks.concurrency import StartProcOrThread
 
-__all__ = ['QueueInput', 'FeedfreeInput', 'TensorInput']
+__all__ = ['QueueInput', 'FeedfreeInput', 'TensorInput',
+        'DummyConstantInput']
 
 @six.add_metaclass(ABCMeta)
 class InputData(object):
@@ -129,6 +130,24 @@ class QueueInput(FeedfreeInput):
             #ret = [tf.Variable(tf.random_normal([128,224,224,3],
                 #dtype=tf.float32), trainable=False),
                 #tf.Variable(tf.ones([128], dtype=tf.int32), trainable=False)]
+        return ret
+
+class DummyConstantInput(QueueInput):
+    """ only for debugging performance issues """
+    def __init__(self, ds, shapes):
+        super(DummyConstantInput, self).__init__(ds)
+        self.shapes = shapes
+        logger.warn("Using dummy input for debug!")
+
+    def _get_input_tensors(self):
+        placehdrs = self.input_placehdrs
+        assert len(self.shapes) == len(placehdrs)
+        ret = []
+        for idx, p in enumerate(placehdrs):
+            with tf.device('/gpu:0'):
+                ret.append(tf.get_variable('dummy-' + p.op.name,
+                    shape=self.shapes[idx], dtype=p.dtype, trainable=False,
+                    initializer=tf.constant_initializer()))
         return ret
 
 class TensorInput(FeedfreeInput):

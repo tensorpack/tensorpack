@@ -31,6 +31,8 @@ def BatchNormV1(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
         Default to True in training and False in inference.
     :param decay: decay rate. default to 0.9.
     :param epsilon: default to 1e-5.
+
+    Note that only the first training tower maintains a moving average.
     """
 
     shape = x.get_shape().as_list()
@@ -122,6 +124,8 @@ def BatchNormV2(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
         Default to True in training and False in inference.
     :param decay: decay rate. default to 0.9.
     :param epsilon: default to 1e-5.
+
+    Note that only the first training tower maintains a moving average.
     """
     shape = x.get_shape().as_list()
     assert len(shape) in [2, 4]
@@ -150,29 +154,31 @@ def BatchNormV2(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
     if use_local_stat:
         xn, batch_mean, batch_var = tf.nn.fused_batch_norm(x, gamma, beta,
                 epsilon=epsilon, is_training=True)
-        if ctx.is_training:
-            # maintain EMA if training
+
+        # maintain EMA only in the main training tower
+        if ctx.is_main_training_tower:
             update_op1 = moving_averages.assign_moving_average(
                     moving_mean, batch_mean, decay, zero_debias=False,
                     name='mean_ema_op')
             update_op2 = moving_averages.assign_moving_average(
                     moving_var, batch_var, decay, zero_debias=False,
                     name='var_ema_op')
-            if ctx.is_main_training_tower:
-                add_model_variable(moving_mean)
-                add_model_variable(moving_var)
+            add_model_variable(moving_mean)
+            add_model_variable(moving_var)
     else:
         assert not ctx.is_training, "In training, local statistics has to be used!"
         # TODO do I need to add_model_variable.
-        # assume some fixed-param tasks, such as load model and fine tune one layer
+        # consider some fixed-param tasks, such as load model and fine tune one layer
 
-        # fused is slower in inference
+        # fused seems slower in inference
         #xn, _, _ = tf.nn.fused_batch_norm(x, gamma, beta,
                 #moving_mean, moving_var,
                 #epsilon=epsilon, is_training=False, name='output')
         xn = tf.nn.batch_normalization(
             x, moving_mean, moving_var, beta, gamma, epsilon)
-    if ctx.is_training:
+
+    # TODO for other towers, maybe can make it depend some op later
+    if ctx.is_main_training_tower:
         with tf.control_dependencies([update_op1, update_op2]):
             return tf.identity(xn, name='output')
     else:
