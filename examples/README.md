@@ -6,7 +6,7 @@ Training examples with __reproducible__ and meaningful performance.
 ## Vision:
 + [An illustrative mnist example with explanation of the framework](mnist-convnet.py)
 + [A tiny SVHN ConvNet with 97.8% accuracy](svhn-digit-convnet.py)
-+ [DoReFa-Net: binary / low-bitwidth CNN on ImageNet](DoReFa-Net)
++ [DoReFa-Net: training binary / low-bitwidth CNN on ImageNet](DoReFa-Net)
 + [ResNet for ImageNet/Cifar10/SVHN](ResNet)
 + [Inception-BN with 71% accuracy](Inception/inception-bn.py)
 + [InceptionV3 with 74% accuracy (similar to the official code)](Inception/inceptionv3.py)
@@ -24,3 +24,11 @@ Training examples with __reproducible__ and meaningful performance.
 ## Speech / NLP:
 + [LSTM-CTC for speech recognition](TIMIT)
 + [char-rnn for fun](char-rnn)
+
+
+Note to contributors:
+
+We have a high bar for examples. It needs to satisfy one of the following:
++ Reproduce performance of a published or well-known paper.
++ Get state-of-the-art performance on some task.
++ Illustrate a new way of using the library that are currently not covered.

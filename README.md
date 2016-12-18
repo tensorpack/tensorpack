@@ -1,19 +1,27 @@
 # tensorpack
 Neural Network Toolbox on TensorFlow
 
-See some [examples](examples) to learn about the framework.
-They're not only for demonstration of the framework -- you can train them and reproduce the results in papers.
+See some [examples](examples) to learn about the framework:
 
-+ [DoReFa-Net: training binary / low bitwidth CNN on ImageNet](examples/DoReFa-Net)
-+ [ResNet for ImageNet/Cifar10/SVHN classification](examples/ResNet)
-+ [InceptionV3 on ImageNet](examples/Inception/inceptionv3.py)
-+ [Fully-convolutional Network for Holistically-Nested Edge Detection(HED)](examples/HED)
-+ [Spatial Transformer Network on MNIST addition](examples/SpatialTransformer)
-+ [Generative Adversarial Network(GAN) variants, including DCGAN, Image2Image, InfoGAN](examples/GAN)
-+ [Deep Q-Network(DQN) variants on Atari games](examples/Atari2600)
-+ [Asynchronous Advantage Actor-Critic(A3C) with demos on OpenAI Gym](examples/OpenAIGym)
-+ [LSTM-CTC for speech recognition](examples/TIMIT)
-+ [char-RNN language model](examples/char-rnn)
+### Vision:
++ [DoReFa-Net: training binary / low-bitwidth CNN on ImageNet](DoReFa-Net)
++ [ResNet for ImageNet/Cifar10/SVHN](ResNet)
++ [InceptionV3 on ImageNet](Inception/inceptionv3.py)
++ [Fully-convolutional Network for Holistically-Nested Edge Detection(HED)](HED)
++ [Spatial Transformer Networks on MNIST addition](SpatialTransformer)
+
+### Reinforcement Learning:
++ [Deep Q-Network(DQN) variants on Atari games](Atari2600)
++ [Asynchronous Advantage Actor-Critic(A3C) with demos on OpenAI Gym](OpenAIGym)
+
+### Unsupervised Learning:
++ [Several Generative Adversarial Network(GAN) variants, including DCGAN, Image2Image, InfoGAN](examples/GAN)
+
+### Speech / NLP:
++ [LSTM-CTC for speech recognition](TIMIT)
++ [char-rnn for fun](char-rnn)
+
+The examples are not only for demonstration of the framework -- you can train them and reproduce the results in papers.
 
 ## Features:
 

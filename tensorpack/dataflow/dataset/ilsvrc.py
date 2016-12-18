@@ -68,6 +68,7 @@ class ILSVRCMeta(object):
             for line in f.readlines():
                 name, cls = line.strip().split()
                 ret.append((name, int(cls)))
+        assert len(ret)
         return ret
 
     def get_per_pixel_mean(self, size=None):
