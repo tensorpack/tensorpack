@@ -8,7 +8,7 @@ Reproduce the following GAN-related papers:
 
 + InfoGAN: Interpretable Representation Learning by Information Maximizing GAN. [paper](https://arxiv.org/abs/1606.03657)
 
-See the docstring in each script for detailed usage.
+Detailed usage is in the docstring of each script.
 
 ## DCGAN-CelebA.py
 
@@ -26,12 +26,16 @@ Play with the [pretrained model](https://drive.google.com/drive/folders/0B9IPQTv
 
 ## Image2Image.py
 
-Reproduce Image-to-Image following the setup in [pix2pix](https://github.com/phillipi/pix2pix).
+Image-to-Image following the setup in [pix2pix](https://github.com/phillipi/pix2pix).
 It requires the datasets released by the original authors.
+
+With the cityscapes dataset, it learns to generate semantic segmentation map of urban scene:
+
+![im2im](demo/im2im-cityscapes.jpg)
 
 ## InfoGAN-mnist.py
 
-Reproduce a mnist experiement in InfoGAN.
+Reproduce one mnist experiement in InfoGAN.
 By assuming 10 latent variables corresponding to a categorical distribution and maximizing mutual information,
 the network learns to map the 10 variables to 10 digits in a completely unsupervised way.
 

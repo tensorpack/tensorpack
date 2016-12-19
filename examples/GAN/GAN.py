@@ -42,6 +42,11 @@ class RandomZData(DataFlow):
             yield [np.random.uniform(-1, 1, size=self.shape)]
 
 def build_GAN_losses(vecpos, vecneg):
+    """
+    :param vecpos, vecneg: output of the discriminator (logits) for real
+        and fake images.
+    :return: (loss of G, loss of D)
+    """
     sigmpos = tf.sigmoid(vecpos)
     sigmneg = tf.sigmoid(vecneg)
     tf.summary.histogram('sigmoid-pos', sigmpos)

@@ -60,7 +60,7 @@ The components are designed to be independent. You can use Model or DataFlow in 
 pip install --user -r requirements.txt
 pip install --user -r opt-requirements.txt (some optional dependencies, you can install later if needed)
 ```
-+ Enable `import tensorpack`:
++ Enable `import tensorpack` (or use `greadlink` from `coreutils` brew package if you're on OSX):
 ```
 export PYTHONPATH=$PYTHONPATH:`readlink -f path/to/tensorpack`
 ```
