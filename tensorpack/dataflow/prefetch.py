@@ -149,11 +149,16 @@ class PrefetchDataZMQ(ProxyDataFlow):
         start_proc_mask_signal(self.procs)
 
     def get_data(self):
-        for k in itertools.count():
-            if self._size > 0 and k >= self._size:
-                break
-            dp = loads(self.socket.recv(copy=False).bytes)
-            yield dp
+        try:
+            for k in itertools.count():
+                if self._size > 0 and k >= self._size:
+                    break
+                dp = loads(self.socket.recv(copy=False).bytes)
+                yield dp
+        except zmq.ContextTerminated:
+            logger.info("ContextTerminated in Master Prefetch Process")
+        except:
+            raise
 
     def reset_state(self):
         # do nothing. all ds are reset once and only once in spawned processes
