@@ -22,6 +22,7 @@ class Model(ModelDesc):
     def _build_graph(self, input_vars):
         image, edgemap = input_vars
         image = image - tf.constant([104, 116, 122], dtype='float32')
+        edgemap = tf.expand_dims(edgemap, 3)
 
         def branch(name, l, up):
             with tf.variable_scope(name) as scope:
@@ -70,7 +71,7 @@ class Model(ModelDesc):
         for idx, b in enumerate([b1, b2, b3, b4, b5, final_map]):
             output = tf.nn.sigmoid(b, name='output{}'.format(idx+1))
             xentropy = class_balanced_sigmoid_cross_entropy(
-                tf.squeeze(b, [3]), edgemap,
+                b, edgemap,
                 name='xentropy{}'.format(idx+1))
             costs.append(xentropy)
 
