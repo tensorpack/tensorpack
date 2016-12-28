@@ -4,18 +4,14 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import cv2
-import tqdm
 import tensorflow as tf
 import numpy as np
-import os, argparse
-import matplotlib.pyplot as plt
+import argparse
 
 from tensorpack import *
 from tensorpack.utils.argtools import memoized
-from tensorpack.tfutils.symbolic_functions import *
-from tensorpack.tfutils.summary import *
-from tensorpack.dataflow.dataset import ILSVRCMeta
 
+import matplotlib.pyplot as plt
 _CM = plt.get_cmap('jet')
 def colorize(img, heatmap):
     """ img: bgr, [0,255]
@@ -105,6 +101,7 @@ def run_test(model_path, img_file):
     ))
 
     im = cv2.imread(img_file, cv2.IMREAD_COLOR).astype('float32')
+    im = cv2.resize(im, (368,368))
     out = predict_func([[im]])[0][0]
     hm = out[:,:,:14].sum(axis=2)
     viz = colorize(im, hm)
