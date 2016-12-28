@@ -168,7 +168,6 @@ class ParamRestore(SessionInit):
         for k in param_names - variable_names:
             logger.warn("Variable {} in the dict not found in the graph!".format(k))
 
-
         upd = SessionUpdate(sess,
                 [v for v in variables if \
                     get_savename_from_varname(v.name) in intersect])

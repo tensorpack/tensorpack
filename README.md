@@ -4,8 +4,8 @@ Neural Network Toolbox on TensorFlow
 See some [examples](examples) to learn about the framework:
 
 ### Vision:
-+ [DoReFa-Net: training binary / low-bitwidth CNN on ImageNet](examples/DoReFa-Net)
-+ [ResNet for ImageNet/Cifar10/SVHN](examples/ResNet)
++ [DoReFa-Net: train binary / low-bitwidth CNN on ImageNet](examples/DoReFa-Net)
++ [Train ResNet on ImageNet/Cifar10/SVHN](examples/ResNet)
 + [InceptionV3 on ImageNet](examples/Inception/inceptionv3.py)
 + [Fully-convolutional Network for Holistically-Nested Edge Detection(HED)](examples/HED)
 + [Spatial Transformer Networks on MNIST addition](examples/SpatialTransformer)

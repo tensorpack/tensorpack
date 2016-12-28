@@ -124,6 +124,19 @@ def BilinearUpSample(x, shape):
     :param x: input NHWC tensor
     :param shape: an integer, the upsample factor
     """
+    #inp_shape = tf.shape(x)
+    #return tf.image.resize_bilinear(x,
+            #tf.pack([inp_shape[1]*shape,inp_shape[2]*shape]),
+            #align_corners=True)
+
+    inp_shape = x.get_shape().as_list()
+    ch = inp_shape[3]
+    assert ch is not None
+
+    shape = int(shape)
+    filter_shape = 2 * shape
+
+
     def bilinear_conv_filler(s):
         """
         s: width, height of the conv filter
@@ -136,13 +149,6 @@ def BilinearUpSample(x, shape):
             for y in range(s):
                 ret[x,y] = (1 - abs(x / f - c)) * (1 - abs(y / f - c))
         return ret
-
-    inp_shape = x.get_shape().as_list()
-    ch = inp_shape[3]
-    assert ch is not None
-
-    shape = int(shape)
-    filter_shape = 2 * shape
     w = bilinear_conv_filler(filter_shape)
     w = np.repeat(w, ch * ch).reshape((filter_shape, filter_shape, ch, ch))
     weight_var = tf.constant(w, tf.float32,

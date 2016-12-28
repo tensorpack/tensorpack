@@ -29,9 +29,11 @@ Play with the [pretrained model](https://drive.google.com/drive/folders/0B9IPQTv
 Image-to-Image following the setup in [pix2pix](https://github.com/phillipi/pix2pix).
 It requires the datasets released by the original authors.
 
-With the cityscapes dataset, it learns to generate semantic segmentation map of urban scene:
+For example, with the cityscapes dataset, it learns to generate semantic segmentation map of urban scene:
 
 ![im2im](demo/im2im-cityscapes.jpg)
+
+This is a visualization from tensorboard. Left to right: original, ground truth, model output.
 
 ## InfoGAN-mnist.py
 
