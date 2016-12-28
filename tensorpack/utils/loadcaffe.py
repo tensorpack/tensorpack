@@ -123,9 +123,9 @@ def get_caffe_pb():
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('model')
-    parser.add_argument('weights')
-    parser.add_argument('output')
+    parser.add_argument('model', help='.prototxt file')
+    parser.add_argument('weights', help='.caffemodel file')
+    parser.add_argument('output', help='output npy file')
     args = parser.parse_args()
     ret = load_caffe(args.model, args.weights)
 
