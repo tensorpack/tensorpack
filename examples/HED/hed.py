@@ -22,7 +22,7 @@ class Model(ModelDesc):
     def _build_graph(self, input_vars):
         image, edgemap = input_vars
         image = image - tf.constant([104, 116, 122], dtype='float32')
-        edgemap = tf.expand_dims(edgemap, 3)
+        edgemap = tf.expand_dims(edgemap, 3, name='edgemap4d')
 
         def branch(name, l, up):
             with tf.variable_scope(name) as scope:
@@ -171,7 +171,7 @@ def get_config():
             ScheduledHyperParamSetter('learning_rate', [(30, 6e-6), (45, 1e-6), (60, 8e-7)]),
             HumanHyperParamSetter('learning_rate'),
             InferenceRunner(dataset_val,
-                            BinaryClassificationStats('prediction', 'edgemap'))
+                            BinaryClassificationStats('prediction', 'edgemap4d'))
         ]),
         model=Model(),
         step_per_epoch=step_per_epoch,
