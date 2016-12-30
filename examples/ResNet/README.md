@@ -2,7 +2,7 @@
 ## imagenet-resnet.py
 
 __Training__ code of pre-activation ResNet on ImageNet. It follows the setup in
-[fb.resnet.torch](https://github.com/facebook/fb.resnet.torch) and gets similar performance (with much fewer lines of code).
+[fb.resnet.torch](https://github.com/facebook/fb.resnet.torch) (except for the weight decay) and gets similar performance (with much fewer lines of code).
 Models can be [downloaded here](https://goo.gl/6XjK9V).
 
 | Model              | Top 5 Error | Top 1 Error |

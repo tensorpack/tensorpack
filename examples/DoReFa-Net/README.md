@@ -14,7 +14,7 @@ It's provided in the format of numpy dictionary, so it should be very easy to po
 
 To use the script. You'll need:
 
-+ TensorFlow >= 0.11
++ TensorFlow >= 0.12
 
 + OpenCV bindings for Python
 

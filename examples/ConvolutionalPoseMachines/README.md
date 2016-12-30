@@ -1,6 +1,7 @@
 # Convolutional Pose Machines
 
 A script to load and run pre-trained CPM model released by Shih-En. The original code in caffe is [here](https://github.com/shihenw/convolutional-pose-machines-release).
+Reference paper: [Convolutional Pose Machines](https://arxiv.org/abs/1602.00134), Shih-En et al., CVPR16.
 
 ## Usage:
 
@@ -13,7 +14,7 @@ wget https://github.com/shihenw/convolutional-pose-machines-release/raw/master/m
 python -m tensorpack.utils.loadcaffe pose_deploy_resize.prototxt pose_iter_320000.caffemodel CPM-original.npy
 ```
 
-Or you can download the converted model from [model zoo](https://drive.google.com/open?id=0B9IPQTvr2BBkRU8zM2w2ZGh3eU0)
+Or you can download the converted model from [model zoo](https://drive.google.com/open?id=0B9IPQTvr2BBkRU8zM2w2ZGh3eU0).
 
 Run it on an image, and produce `output.jpg`:
 ```
@@ -24,4 +25,4 @@ person has to be in the center of the image (and not too small).
 
 ![demo](demo.jpg)
 
-For a real-time CPM application in tensorpack, check out [Stereo Pose Machines](https://github.com/ppwwyyxx/Stereo-Pose-Machines).
+For a __real-time__ CPM application in tensorpack, check out [Stereo Pose Machines](https://github.com/ppwwyyxx/Stereo-Pose-Machines).
