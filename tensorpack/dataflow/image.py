@@ -14,7 +14,7 @@ __all__ = ['ImageFromFile', 'AugmentImageComponent', 'AugmentImageComponents']
 class ImageFromFile(RNGDataFlow):
     def __init__(self, files, channel=3, resize=None, shuffle=False):
         """
-        Generate RGB images from list of files
+        Generate images of 1 channel or 3 channels (in RGB order) from list of files.
         :param files: list of file paths
         :param channel: 1 or 3 channel
         :param resize: a (h, w) tuple. If given, will force a resize
@@ -38,6 +38,8 @@ class ImageFromFile(RNGDataFlow):
                 im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
             if self.resize is not None:
                 im = cv2.resize(im, self.resize[::-1])
+            if self.channel == 1:
+                im = im[:,:,np.newaxis]
             yield [im]
 
 
