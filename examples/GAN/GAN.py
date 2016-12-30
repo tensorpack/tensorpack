@@ -5,6 +5,7 @@
 
 import tensorflow as tf
 import numpy as np
+import time
 from tensorpack import (FeedfreeTrainer, TowerContext,
         get_global_step_var, QueueInput)
 from tensorpack.tfutils.summary import summary_moving_average, add_moving_summary
@@ -21,17 +22,19 @@ class GANTrainer(FeedfreeTrainer):
             actual_inputs = self._get_input_tensors()
             self.model.build_graph(actual_inputs)
         self.g_min = self.config.optimizer.minimize(self.model.g_loss,
-                var_list=self.model.g_vars, name='g_op')
+                var_list=self.model.g_vars, name='g_op',
+                gate_gradients=tf.train.Optimizer.GATE_NONE)
         self.d_min = self.config.optimizer.minimize(self.model.d_loss,
-                var_list=self.model.d_vars, name='d_op')
+                var_list=self.model.d_vars, name='d_op',
+                gate_gradients=tf.train.Optimizer.GATE_NONE)
         self.gs_incr = tf.assign_add(get_global_step_var(), 1, name='global_step_incr')
         self.summary_op = summary_moving_average()
-        self.d_min = tf.group(self.d_min, self.summary_op, self.gs_incr)
-        #self.train_op = tf.group(self.g_min, self.d_min)
+        with tf.control_dependencies([self.g_min]):
+            self.d_min = tf.group(self.d_min, self.summary_op, self.gs_incr)
+        self.train_op = self.d_min
 
     def run_step(self):
-        self.sess.run(self.g_min)
-        self.sess.run(self.d_min)
+        self.sess.run(self.train_op)
 
 class RandomZData(DataFlow):
     def __init__(self, shape):

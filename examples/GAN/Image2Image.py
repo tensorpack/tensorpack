@@ -28,7 +28,7 @@ To visualize on test set:
 """
 
 SHAPE = 256
-BATCH = 4
+BATCH = 1
 IN_CH = 3
 OUT_CH = 3
 LAMBDA = 100
@@ -159,7 +159,7 @@ def get_config():
         dataset=dataset,
         optimizer=tf.train.AdamOptimizer(lr, beta1=0.5, epsilon=1e-3),
         callbacks=Callbacks([
-            StatPrinter(), ModelSaver(),
+            StatPrinter(), PeriodicCallback(ModelSaver(), 3),
             ScheduledHyperParamSetter('learning_rate', [(200, 1e-4)])
         ]),
         model=Model(),

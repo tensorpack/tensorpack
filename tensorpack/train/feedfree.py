@@ -50,17 +50,22 @@ class SingleCostFeedfreeTrainer(FeedfreeTrainer):
     def run_step(self):
         """ Simply run self.train_op"""
         self.sess.run(self.train_op)
-        # debug-benchmark code:
-        #run_metadata = tf.RunMetadata()
-        #self.sess.run([self.train_op],
-                #options=tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE),
-                #run_metadata=run_metadata
-                #)
-        #from tensorflow.python.client import timeline
-        #trace = timeline.Timeline(step_stats=run_metadata.step_stats)
-        #trace_file = open('timeline.ctf.json', 'w')
-        #trace_file.write(trace.generate_chrome_trace_format())
-        #import sys; sys.exit()
+        #if not hasattr(self, 'cnt'):
+            #self.cnt = 0
+        #else:
+            #self.cnt += 1
+            #if self.cnt % 10 == 0:
+            ## debug-benchmark code:
+                #run_metadata = tf.RunMetadata()
+                #self.sess.run([self.train_op],
+                        #options=tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE),
+                        #run_metadata=run_metadata
+                        #)
+                #from tensorflow.python.client import timeline
+                #trace = timeline.Timeline(step_stats=run_metadata.step_stats)
+                #trace_file = open('timeline.ctf.json', 'w')
+                #trace_file.write(trace.generate_chrome_trace_format())
+                #import sys; sys.exit()
 
 class SimpleFeedfreeTrainer(
         MultiPredictorTowerTrainer,
