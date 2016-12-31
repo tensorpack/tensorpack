@@ -43,12 +43,7 @@ class GraphVarParam(HyperParam):
         self._readable_name, self.var_name = get_op_var_name(name)
 
     def setup_graph(self):
-        try:
-            all_vars = tf.global_variables()
-        except:
-            # TODO
-            all_vars = tf.all_variables()
-
+        all_vars = tf.global_variables()
         for v in all_vars:
             if v.name == self.var_name:
                 self.var = v

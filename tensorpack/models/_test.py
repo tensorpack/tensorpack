@@ -10,7 +10,7 @@ import unittest
 class TestModel(unittest.TestCase):
     def run_variable(self, var):
         sess = tf.Session()
-        sess.run(tf.initialize_all_variables())
+        sess.run(tf.global_variables_initializer())
         if isinstance(var, list):
             return sess.run(var)
         else:

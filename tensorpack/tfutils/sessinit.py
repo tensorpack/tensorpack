@@ -46,7 +46,7 @@ class NewSession(SessionInit):
     initializer.
     """
     def _init(self, sess):
-        sess.run(tf.initialize_all_variables())
+        sess.run(tf.global_variables_initializer())
 
 class SaverRestore(SessionInit):
     """
@@ -85,10 +85,7 @@ class SaverRestore(SessionInit):
         for dic in SaverRestore._produce_restore_dict(vars_map):
             # multiple saver under same name scope would cause error:
             # training/saver.py: assert restore_op.name.endswith("restore_all"), restore_op.name
-            try:
-                saver = tf.train.Saver(var_list=dic, name=str(id(dic)), write_version=2)
-            except:
-                saver = tf.train.Saver(var_list=dic, name=str(id(dic)))
+            saver = tf.train.Saver(var_list=dic, name=str(id(dic)), write_version=2)
             saver.restore(sess, self.path)
 
     def set_path(self, model_path):
@@ -124,10 +121,7 @@ class SaverRestore(SessionInit):
         :param vars_available: varaible names available in the checkpoint, for existence checking
         :returns: a dict of {var_name: [var, var]} to restore
         """
-        try:
-            vars_to_restore = tf.global_variables()
-        except AttributeError:
-            vars_to_restore = tf.all_variables()
+        vars_to_restore = tf.global_variables()
         var_dict = defaultdict(list)
         chkpt_vars_used = set()
         for v in vars_to_restore:

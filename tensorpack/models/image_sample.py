@@ -151,7 +151,7 @@ if __name__ == '__main__':
     mapv = tf.Variable(mapping)
     output = ImageSample('sample', [imv, mapv], borderMode='constant')
     sess = tf.Session()
-    sess.run(tf.initialize_all_variables())
+    sess.run(tf.global_variables_initializer())
 
     #out = sess.run(tf.gradients(tf.reduce_sum(output), mapv))
     #out = sess.run(output)

@@ -119,10 +119,7 @@ class Trainer(object):
 
         logger.info("Initializing graph variables ...")
         # TODO newsession + sessinit?
-        try:
-            initop = tf.global_variables_initializer()
-        except:
-            initop = tf.initialize_all_variables()
+        initop = tf.global_variables_initializer()
         self.sess.run(initop)
         self.config.session_init.init(self.sess)
 
