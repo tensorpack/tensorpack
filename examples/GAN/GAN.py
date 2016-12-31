@@ -22,16 +22,13 @@ class GANTrainer(FeedfreeTrainer):
             actual_inputs = self._get_input_tensors()
             self.model.build_graph(actual_inputs)
         self.g_min = self.config.optimizer.minimize(self.model.g_loss,
-                var_list=self.model.g_vars, name='g_op',
-                gate_gradients=tf.train.Optimizer.GATE_NONE)
-        self.d_min = self.config.optimizer.minimize(self.model.d_loss,
-                var_list=self.model.d_vars, name='d_op',
-                gate_gradients=tf.train.Optimizer.GATE_NONE)
+                var_list=self.model.g_vars, name='g_op')
+        with tf.control_dependencies([self.g_min]):
+            self.d_min = self.config.optimizer.minimize(self.model.d_loss,
+                    var_list=self.model.d_vars, name='d_op')
         self.gs_incr = tf.assign_add(get_global_step_var(), 1, name='global_step_incr')
         self.summary_op = summary_moving_average()
-        with tf.control_dependencies([self.g_min]):
-            self.d_min = tf.group(self.d_min, self.summary_op, self.gs_incr)
-        self.train_op = self.d_min
+        self.train_op = tf.group(self.d_min, self.summary_op, self.gs_incr)
 
     def run_step(self):
         self.sess.run(self.train_op)
