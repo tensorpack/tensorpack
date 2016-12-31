@@ -8,7 +8,7 @@ Reproduce the following GAN-related papers:
 
 + InfoGAN: Interpretable Representation Learning by Information Maximizing GAN. [paper](https://arxiv.org/abs/1606.03657)
 
-Detailed usage is in the docstring of each script.
+Please see the __docstring__ in each script for detailed usage.
 
 ## DCGAN-CelebA.py
 
@@ -27,7 +27,6 @@ Play with the [pretrained model](https://drive.google.com/drive/folders/0B9IPQTv
 ## Image2Image.py
 
 Image-to-Image following the setup in [pix2pix](https://github.com/phillipi/pix2pix).
-It requires the datasets released by the original authors.
 
 For example, with the cityscapes dataset, it learns to generate semantic segmentation map of urban scene:
 

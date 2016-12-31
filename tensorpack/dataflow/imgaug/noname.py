@@ -55,9 +55,12 @@ class Resize(ImageAugmentor):
         self._init(locals())
 
     def _augment(self, img, _):
-        return cv2.resize(
+        ret = cv2.resize(
             img, self.shape[::-1],
             interpolation=self.interp)
+        if img.ndim == 3 and ret.ndim == 2:
+            ret = ret[:,:,np.newaxis]
+        return ret
 
 class ResizeShortestEdge(ImageAugmentor):
     """ Resize the shortest edge to a certain number while
@@ -71,8 +74,10 @@ class ResizeShortestEdge(ImageAugmentor):
         h, w = img.shape[:2]
         scale = self.size / min(h, w)
         desSize = map(int, [scale * w, scale * h])
-        img = cv2.resize(img, tuple(desSize), interpolation=cv2.INTER_CUBIC)
-        return img
+        ret = cv2.resize(img, tuple(desSize), interpolation=cv2.INTER_CUBIC)
+        if img.ndim == 3 and ret.ndim == 2:
+            ret = ret[:,:,np.newaxis]
+        return ret
 
 class RandomResize(ImageAugmentor):
     """ randomly rescale w and h of the image"""
@@ -105,5 +110,8 @@ class RandomResize(ImageAugmentor):
                 return img.shape[1], img.shape[0]
 
     def _augment(self, img, dsize):
-        return cv2.resize(img, dsize, interpolation=self.interp)
+        ret = cv2.resize(img, dsize, interpolation=self.interp)
+        if img.ndim == 3 and ret.ndim == 2:
+            ret = ret[:,:,np.newaxis]
+        return ret
 

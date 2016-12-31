@@ -14,17 +14,21 @@ from tensorpack import *
 from tensorpack.utils.viz import *
 from tensorpack.tfutils.summary import add_moving_summary, summary_moving_average
 import tensorpack.tfutils.symbolic_functions as symbf
-from GAN import GANTrainer, RandomZData, build_GAN_losses
+from GAN import GANTrainer, build_GAN_losses
 
 """
 To train:
     ./Image2Image.py --data /path/to/datadir --mode {AtoB,BtoA}
-    # datadir should contain images of shpae 2s x s, formed by A and B
-    # you can download some data from the original pix2pix repo: https://github.com/phillipi/pix2pix#datasets
+    # datadir should contain jpg images of shpae 2s x s, formed by A and B
+    # you can download some data from the original authors: https://people.eecs.berkeley.edu/~tinghuiz/projects/pix2pix/datasets/
     # training visualization will appear be in tensorboard
 
+Speed:
+    On GTX1080 with BATCH=1, the speed is about 9.3it/s (the original torch version is 9.5it/s)
+
 To visualize on test set:
-    ./Image2Image.py --sample --data /path/to/test/datadir --mode {AtoB,BtoA} --load pretrained.model
+    ./Image2Image.py --sample --data /path/to/test/datadir --mode {AtoB,BtoA} --load model
+
 """
 
 SHAPE = 256
@@ -41,7 +45,7 @@ class Model(ModelDesc):
 
     def generator(self, imgs):
         # imgs: input: 256x256xch
-        # U-Net structure, slightly different from the original on the location of relu/lrelu
+        # U-Net structure, it's slightly different from the original on the location of relu/lrelu
         with argscope(BatchNorm, use_local_stat=True), \
                 argscope(Dropout, is_training=True):
             # always use local stat for BN, and apply dropout even in testing
@@ -118,7 +122,7 @@ class Model(ModelDesc):
             fake_output = tf.image.grayscale_to_rgb(fake_output)
         viz = (tf.concat(2, [input, output, fake_output]) + 1.0) * 128.0
         viz = tf.cast(tf.clip_by_value(viz, 0, 255), tf.uint8, name='viz')
-        tf.summary.image('gen', viz, max_outputs=max(30, BATCH))
+        tf.summary.image('input,output,fake', viz, max_outputs=max(30, BATCH))
 
         all_vars = tf.trainable_variables()
         self.g_vars = [v for v in all_vars if v.name.startswith('gen/')]
@@ -134,9 +138,9 @@ def split_input(img):
     if args.mode == 'BtoA':
         input, output = output, input
     if IN_CH == 1:
-        input = cv2.cvtColor(input, cv2.COLOR_RGB2GRAY)
+        input = cv2.cvtColor(input, cv2.COLOR_RGB2GRAY)[:,:,np.newaxis]
     if OUT_CH == 1:
-        output = cv2.cvtColor(output, cv2.COLOR_RGB2GRAY)
+        output = cv2.cvtColor(output, cv2.COLOR_RGB2GRAY)[:,:,np.newaxis]
     return [input, output]
 
 def get_data():
