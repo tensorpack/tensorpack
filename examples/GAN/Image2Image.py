@@ -198,10 +198,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
+    assert args.data
     if args.sample:
         sample(args.data, args.load)
     else:
-        assert args.data
         config = get_config()
         if args.load:
             config.session_init = SaverRestore(args.load)
