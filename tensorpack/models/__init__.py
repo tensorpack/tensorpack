@@ -27,8 +27,8 @@ for _, module_name, _ in walk_packages(
 
 
 class LinearWrap(object):
-    """ A simple wrapper to easily create linear graph,
-        for layers with one input&output, or tf function with one input&output
+    """ A simple wrapper to easily create "linear" graph,
+        consisting of layers / symbolic functions with only one input & output.
     """
 
     class TFModuleFunc(object):

@@ -10,7 +10,7 @@ from datetime import datetime
 from six.moves import input
 import sys
 
-__all__ = []
+__all__ = ['set_logger_dir', 'disable_logger', 'auto_set_dir', 'warn_dependency']
 
 class _MyFormatter(logging.Formatter):
     def format(self, record):

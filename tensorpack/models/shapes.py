@@ -14,8 +14,8 @@ def ConcatWith(x, dim, tensor):
     A wrapper around `tf.concat` to support `LinearWrap`
     :param x: the input tensor
     :param dim: the dimension along which to concatenate
-    :param tensor: a tensor or list of tensor to concatenate with x. x will be
-        at the beginning
+    :param tensor: a tensor or list of tensor to concatenate with x.
+    x will be at the beginning
     :return: tf.concat(dim, [x] + [tensor])
     """
     if type(tensor) != list:

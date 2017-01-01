@@ -165,7 +165,7 @@ class ScheduledHyperParamSetter(HyperParamSetter):
     def __init__(self, param, schedule, interp=None):
         """
         :param schedule: [(epoch1, val1), (epoch2, val2), (epoch3, val3), ...]
-            (ep, val) means set the param to `val` after the `ep`th epoch.
+            (ep, val) means set the param to "val" after the `ep`th epoch.
             If epoch == 0, the value is set before training.
         :param interp: None: no interpolation. 'linear': linear interpolation
         """

@@ -57,7 +57,7 @@ class SessionUpdate(object):
     def update(self, prms):
         """
         :param prms: dict of {variable name: value}
-        Any name in prms must be in the graph and in vars_to_update.
+            Any name in prms must be in the graph and in vars_to_update.
         """
         for name, value in six.iteritems(prms):
             assert name in self.assign_ops
