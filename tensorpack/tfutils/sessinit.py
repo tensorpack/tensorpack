@@ -141,7 +141,7 @@ class SaverRestore(SessionInit):
                     logger.warn("Variable {} in the graph not found in checkpoint!".format(v.op.name))
         if len(chkpt_vars_used) < len(vars_available):
             unused = vars_available - chkpt_vars_used
-            for name in unused:
+            for name in sorted(unused):
                 if not is_training_name(name):
                     logger.warn("Variable {} in checkpoint not found in the graph!".format(name))
         return var_dict
@@ -167,10 +167,10 @@ class ParamRestore(SessionInit):
 
         logger.info("Params to restore: {}".format(
             ', '.join(map(str, intersect))))
-        for k in variable_names - param_names:
+        for k in sorted(variable_names - param_names):
             if not is_training_name(k):
                 logger.warn("Variable {} in the graph not found in the dict!".format(k))
-        for k in param_names - variable_names:
+        for k in sorted(param_names - variable_names):
             logger.warn("Variable {} in the dict not found in the graph!".format(k))
 
         upd = SessionUpdate(sess,

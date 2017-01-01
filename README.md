@@ -5,7 +5,7 @@ See some [examples](examples) to learn about the framework:
 
 ### Vision:
 + [DoReFa-Net: train binary / low-bitwidth CNN on ImageNet](examples/DoReFa-Net)
-+ [Train ResNet on ImageNet/Cifar10/SVHN](examples/ResNet)
++ [Train ResNet on ImageNet / Cifar10 / SVHN](examples/ResNet)
 + [InceptionV3 on ImageNet](examples/Inception/inceptionv3.py)
 + [Fully-convolutional Network for Holistically-Nested Edge Detection(HED)](examples/HED)
 + [Spatial Transformer Networks on MNIST addition](examples/SpatialTransformer)
@@ -58,10 +58,12 @@ The components are designed to be independent. You can use Model or DataFlow in 
 + other requirements:
 ```
 pip install --user -r requirements.txt
-pip install --user -r opt-requirements.txt (some optional dependencies, you can install later if needed)
+pip install --user -r opt-requirements.txt # (some optional dependencies, you can install later if needed)
 ```
-+ Enable `import tensorpack` (or use `greadlink` from `coreutils` brew package if you're on OSX):
++ Enable `import tensorpack`:
 ```
 export PYTHONPATH=$PYTHONPATH:`readlink -f path/to/tensorpack`
 ```
+(or use `greadlink` from `coreutils` brew package if you're on OSX)
+
 + Use tcmalloc if running with large data
