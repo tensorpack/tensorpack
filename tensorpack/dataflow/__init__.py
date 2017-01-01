@@ -10,12 +10,15 @@ import os.path
 from . import dataset
 from . import imgaug
 
+__all__ = []
+
 def _global_import(name):
     p = __import__(name, globals(), locals(), level=1)
     lst = p.__all__ if '__all__' in dir(p) else dir(p)
     del globals()[name]
     for k in lst:
         globals()[k] = p.__dict__[k]
+        __all__.append(k)
 
 __SKIP = ['dftools', 'dataset', 'imgaug']
 for _, module_name, _ in walk_packages(

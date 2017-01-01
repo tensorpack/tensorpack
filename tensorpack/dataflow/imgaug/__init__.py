@@ -13,6 +13,7 @@ def global_import(name):
     del globals()[name]
     for k in lst:
         globals()[k] = p.__dict__[k]
+        __all__.append(k)
 
 for _, module_name, _ in walk_packages(
         [os.path.dirname(__file__)]):

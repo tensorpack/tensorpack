@@ -26,6 +26,7 @@ Contents:
   modules/tensorpack.train
   modules/tensorpack.utils
   modules/tensorpack.tfutils
+  modules/tensorpack.predict
   modules/tensorpack.RL
 
 

@@ -19,9 +19,9 @@ class PreventStuckPlayer(ProxyPlayer):
     # TODO hash the state as well?
     def __init__(self, player, nr_repeat, action):
         """
+        It does auto-reset, but doesn't auto-restart the underlying player.
         :param nr_repeat: trigger the 'action' after this many of repeated action
         :param action: the action to be triggered to get out of stuck
-        Does auto-reset, but doesn't auto-restart the underlying player.
         """
         super(PreventStuckPlayer, self).__init__(player)
         self.act_que = deque(maxlen=nr_repeat)

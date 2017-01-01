@@ -1,9 +1,6 @@
 tensorpack.utils package
 ========================
 
-Submodules
-----------
-
 tensorpack.utils.argtools module
 --------------------------------
 
@@ -52,14 +49,6 @@ tensorpack.utils.globvars module
     :undoc-members:
     :show-inheritance:
 
-tensorpack.utils.gpu module
----------------------------
-
-.. automodule:: tensorpack.utils.gpu
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 tensorpack.utils.loadcaffe module
 ---------------------------------
 
@@ -84,13 +73,6 @@ tensorpack.utils.lut module
     :undoc-members:
     :show-inheritance:
 
-tensorpack.utils.naming module
-------------------------------
-
-.. automodule:: tensorpack.utils.naming
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
 tensorpack.utils.rect module
 ----------------------------
@@ -120,14 +102,6 @@ tensorpack.utils.timer module
 -----------------------------
 
 .. automodule:: tensorpack.utils.timer
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-tensorpack.utils.utils module
------------------------------
-
-.. automodule:: tensorpack.utils.utils
     :members:
     :undoc-members:
     :show-inheritance:
