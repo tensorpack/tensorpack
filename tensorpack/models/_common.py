@@ -5,7 +5,8 @@
 import tensorflow as tf
 from functools import wraps
 import six
-import copy, os
+import copy
+import os
 
 from ..tfutils.argscope import get_arg_scope
 from ..tfutils.modelutils import get_shape_str
@@ -16,12 +17,15 @@ from ..utils.argtools import shape2d
 # make sure each layer is only logged once
 _layer_logged = set()
 
+
 def disable_layer_logging():
     class ContainEverything:
+
         def __contains__(self, x):
             return True
     # can use nonlocal in python3, but how
     globals()['_layer_logged'] = ContainEverything()
+
 
 def layer_register(
         summary_activation=False,
@@ -42,13 +46,13 @@ def layer_register(
         def wrapped_func(*args, **kwargs):
             if use_scope:
                 name, inputs = args[0], args[1]
-                args = args[1:] # actual positional args used to call func
+                args = args[1:]  # actual positional args used to call func
                 assert isinstance(name, six.string_types), name
             else:
                 assert not log_shape and not summary_activation
                 if isinstance(args[0], six.string_types):
                     name, inputs = args[0], args[1]
-                    args = args[1:] # actual positional args used to call func
+                    args = args[1:]  # actual positional args used to call func
                 else:
                     inputs = args[0]
                     name = None
@@ -97,12 +101,13 @@ def layer_register(
 
     # need some special handling for sphinx to work with the arguments
     on_doc = os.environ.get('READTHEDOCS') == 'True' \
-            or os.environ.get('TENSORPACK_DOC_BUILDING')
+        or os.environ.get('TENSORPACK_DOC_BUILDING')
     if on_doc:
         from decorator import decorator
         wrapper = decorator(wrapper)
 
     return wrapper
+
 
 def shape4d(a):
     # for use with tensorflow NHWC ops

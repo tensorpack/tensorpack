@@ -9,11 +9,12 @@ from abc import abstractmethod
 import numpy as np
 
 __all__ = ['CenterPaste', 'BackgroundFiller', 'ConstantBackgroundFiller',
-        'RandomPaste']
+           'RandomPaste']
 
 
 class BackgroundFiller(object):
     """ Base class for all BackgroundFiller"""
+
     def fill(self, background_shape, img):
         """
         Return a proper background image of background_shape, given img
@@ -28,8 +29,10 @@ class BackgroundFiller(object):
     def _fill(self, background_shape, img):
         pass
 
+
 class ConstantBackgroundFiller(BackgroundFiller):
     """ Fill the background by a constant """
+
     def __init__(self, value):
         """
         :param value: the value to fill the background.
@@ -44,10 +47,12 @@ class ConstantBackgroundFiller(BackgroundFiller):
             return_shape = background_shape
         return np.zeros(return_shape) + self.value
 
+
 class CenterPaste(ImageAugmentor):
     """
     Paste the image onto the center of a background canvas.
     """
+
     def __init__(self, background_shape, background_filler=None):
         """
         :param background_shape: shape of the background canvas.
@@ -66,16 +71,18 @@ class CenterPaste(ImageAugmentor):
             self.background_shape, img)
         y0 = int((self.background_shape[0] - img_shape[0]) * 0.5)
         x0 = int((self.background_shape[1] - img_shape[1]) * 0.5)
-        background[y0:y0+img_shape[0], x0:x0+img_shape[1]] = img
+        background[y0:y0 + img_shape[0], x0:x0 + img_shape[1]] = img
         return background
 
     def _fprop_coord(self, coord, param):
         raise NotImplementedError()
 
+
 class RandomPaste(CenterPaste):
     """
     Randomly paste the image onto a background convas
     """
+
     def _get_augment_params(self, img):
         img_shape = img.shape[:2]
         assert self.background_shape[0] > img_shape[0] and self.background_shape[1] > img_shape[1]
@@ -89,5 +96,5 @@ class RandomPaste(CenterPaste):
         img_shape = img.shape[:2]
         background = self.background_filler.fill(
             self.background_shape, img)
-        background[y0:y0+img_shape[0], x0:x0+img_shape[1]] = img
+        background[y0:y0 + img_shape[0], x0:x0 + img_shape[1]] = img
         return background

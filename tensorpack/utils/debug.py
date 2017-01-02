@@ -7,6 +7,7 @@
 import sys
 __all__ = ['enable_call_trace']
 
+
 def enable_call_trace():
     def tracer(frame, event, arg):
         if event == 'call':
@@ -21,9 +22,9 @@ def enable_call_trace():
             if caller:
                 caller_line_no = caller.f_lineno
                 caller_filename = caller.f_code.co_filename
-                print('Call to `%s` on line %s:%s from %s:%s' % \
-                    (func_name, func_filename, func_line_no,
-                            caller_filename, caller_line_no))
+                print('Call to `%s` on line %s:%s from %s:%s' %
+                      (func_name, func_filename, func_line_no,
+                       caller_filename, caller_line_no))
             return
     sys.settrace(tracer)
 
@@ -32,6 +33,7 @@ if __name__ == '__main__':
 
     def b(a):
         print(2)
+
     def a():
         print(1)
         b(1)

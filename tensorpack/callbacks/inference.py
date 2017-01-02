@@ -14,7 +14,8 @@ from ..utils.stats import RatioCounter, BinaryStatistics
 from ..tfutils import get_op_var_name
 
 __all__ = ['ClassificationError',
-        'ScalarStats', 'Inferencer', 'BinaryClassificationStats']
+           'ScalarStats', 'Inferencer', 'BinaryClassificationStats']
+
 
 @six.add_metaclass(ABCMeta)
 class Inferencer(object):
@@ -59,12 +60,14 @@ class Inferencer(object):
     def _get_output_tensors(self):
         pass
 
+
 class ScalarStats(Inferencer):
     """
     Write some scalar tensor to both stat and summary.
     The output of the given Ops must be a scalar.
     The value will be averaged over all data points in the inference dataflow.
     """
+
     def __init__(self, names_to_print, prefix='validation'):
         """
         :param names_to_print: list of names of tensors, or just a name
@@ -96,6 +99,7 @@ class ScalarStats(Inferencer):
             ret[name] = stat
         return ret
 
+
 class ClassificationError(Inferencer):
     """
     Compute classification error in batch mode, from a `wrong` variable
@@ -109,6 +113,7 @@ class ClassificationError(Inferencer):
     testing (because the size of test set might not be a multiple of batch size).
     Therefore the result is different from averaging the error rate of each batch.
     """
+
     def __init__(self, wrong_var_name='incorrect_vector', summary_name='val_error'):
         """
         :param wrong_var_name: name of the `wrong` variable
@@ -137,6 +142,7 @@ class ClassificationError(Inferencer):
 
     def _after_inference(self):
         return {self.summary_name: self.err_stat.ratio}
+
 
 class BinaryClassificationStats(Inferencer):
     """ Compute precision/recall in binary classification, given the

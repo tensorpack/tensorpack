@@ -17,6 +17,7 @@ from .common import RepeatedData
 from ..utils import logger
 from ..utils.serialize import dumps, loads
 
+
 def serve_data(ds, addr):
     ctx = zmq.Context()
     socket = ctx.socket(zmq.PUSH)
@@ -36,7 +37,9 @@ def serve_data(ds, addr):
         if not ctx.closed:
             ctx.destroy(0)
 
+
 class RemoteData(DataFlow):
+
     def __init__(self, addr):
         self.ctx = zmq.Context()
         self.socket = self.ctx.socket(zmq.PULL)
@@ -54,7 +57,7 @@ if __name__ == '__main__':
     from .raw import FakeData
     addr = "tcp://127.0.0.1:8877"
     if sys.argv[1] == 'serve':
-        ds = FakeData([(128,244,244,3)], 1000)
+        ds = FakeData([(128, 244, 244, 3)], 1000)
         serve_data(ds, addr)
     else:
         ds = RemoteData(addr)
@@ -62,4 +65,3 @@ if __name__ == '__main__':
         with tqdm(total=10000) as pbar:
             for k in ds.get_data():
                 pbar.update()
-

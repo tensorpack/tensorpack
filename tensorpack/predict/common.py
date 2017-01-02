@@ -15,11 +15,13 @@ from .base import OfflinePredictor
 
 import multiprocessing
 
-__all__ = ['PredictConfig', 'get_predict_func', 'PredictResult' ]
+__all__ = ['PredictConfig', 'get_predict_func', 'PredictResult']
 
 PredictResult = namedtuple('PredictResult', ['input', 'output'])
 
+
 class PredictConfig(object):
+
     def __init__(self, **kwargs):
         """
         The config used by `get_predict_func`.
@@ -61,11 +63,13 @@ class PredictConfig(object):
             self.output_names = kwargs.pop('output_var_names')
             #logger.warn("[Deprecated] output_var_names is deprecated in PredictConfig. Use output_names instead!")
         assert len(self.input_names), self.input_names
-        for v in self.input_names: assert_type(v, six.string_types)
+        for v in self.input_names:
+            assert_type(v, six.string_types)
         assert len(self.output_names), self.output_names
 
         self.return_input = kwargs.pop('return_input', False)
         assert len(kwargs) == 0, 'Unknown arguments: {}'.format(str(kwargs.keys()))
+
 
 def get_predict_func(config):
     """
@@ -76,4 +80,3 @@ def get_predict_func(config):
         a list of output values defined in ``config.output_var_names``.
     """
     return OfflinePredictor(config)
-

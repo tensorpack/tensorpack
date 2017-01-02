@@ -25,8 +25,8 @@ from ..utils.serialize import loads, dumps
 from ..utils.concurrency import LoopThread, ensure_proc_terminate
 
 __all__ = ['SimulatorProcess', 'SimulatorMaster',
-        'SimulatorProcessStateExchange', 'SimulatorProcessSharedWeight',
-        'TransitionExperience', 'WeightSync']
+           'SimulatorProcessStateExchange', 'SimulatorProcessSharedWeight',
+           'TransitionExperience', 'WeightSync']
 
 try:
     import zmq
@@ -34,8 +34,10 @@ except ImportError:
     logger.warn_dependency('Simulator', 'zmq')
     __all__ = []
 
+
 class TransitionExperience(object):
     """ A transition of state, or experience"""
+
     def __init__(self, state, action, reward, **kwargs):
         """ kwargs: whatever other attribute you want to save"""
         self.state = state
@@ -43,6 +45,7 @@ class TransitionExperience(object):
         self.reward = reward
         for k, v in six.iteritems(kwargs):
             setattr(self, k, v)
+
 
 @six.add_metaclass(ABCMeta)
 class SimulatorProcessBase(mp.Process):
@@ -63,6 +66,7 @@ class SimulatorProcessStateExchange(SimulatorProcessBase):
     A process that simulates a player and communicates to master to
     send states and receive the next action
     """
+
     def __init__(self, idx, pipe_c2s, pipe_s2c):
         """
         :param idx: idx of this process
@@ -81,7 +85,7 @@ class SimulatorProcessStateExchange(SimulatorProcessBase):
 
         s2c_socket = context.socket(zmq.DEALER)
         s2c_socket.setsockopt(zmq.IDENTITY, self.identity)
-        #s2c_socket.set_hwm(5)
+        # s2c_socket.set_hwm(5)
         s2c_socket.connect(self.s2c)
 
         state = player.current_state()
@@ -97,12 +101,14 @@ class SimulatorProcessStateExchange(SimulatorProcessBase):
 # compatibility
 SimulatorProcess = SimulatorProcessStateExchange
 
+
 class SimulatorMaster(threading.Thread):
     """ A base thread to communicate with all StateExchangeSimulatorProcess.
         It should produce action for each simulator, as well as
         defining callbacks when a transition or an episode is finished.
     """
     class ClientState(object):
+
         def __init__(self):
             self.memory = []    # list of Experience
 
@@ -174,9 +180,11 @@ class SimulatorMaster(threading.Thread):
     def __del__(self):
         self.context.destroy(linger=0)
 
+
 class SimulatorProcessDF(SimulatorProcessBase):
     """ A simulator which contains a forward model itself, allowing
     it to produce data points directly """
+
     def __init__(self, idx, pipe_c2s):
         super(SimulatorProcessDF, self).__init__(idx)
         self.pipe_c2s = pipe_c2s
@@ -202,12 +210,14 @@ class SimulatorProcessDF(SimulatorProcessBase):
     def get_data(self):
         pass
 
+
 class SimulatorProcessSharedWeight(SimulatorProcessDF):
     """ A simulator process with an extra thread waiting for event,
     and take shared weight from shm.
 
     Start me under some CUDA_VISIBLE_DEVICES set!
     """
+
     def __init__(self, idx, pipe_c2s, condvar, shared_dic, pred_config):
         super(SimulatorProcessSharedWeight, self).__init__(idx, pipe_c2s)
         self.condvar = condvar
@@ -220,7 +230,7 @@ class SimulatorProcessSharedWeight(SimulatorProcessDF):
         with self.predictor.graph.as_default():
             vars_to_update = self._params_to_update()
             self.sess_updater = SessionUpdate(
-                    self.predictor.session, vars_to_update)
+                self.predictor.session, vars_to_update)
         # TODO setup callback for explore?
         self.predictor.graph.finalize()
 
@@ -245,8 +255,10 @@ class SimulatorProcessSharedWeight(SimulatorProcessDF):
         # can be overwritten to update more params
         return tf.trainable_variables()
 
+
 class WeightSync(Callback):
     """ Sync weight from main process to shared_dic and notify"""
+
     def __init__(self, condvar, shared_dic):
         self.condvar = condvar
         self.shared_dic = shared_dic
@@ -260,6 +272,7 @@ class WeightSync(Callback):
 
     def _before_train(self):
         self._sync()
+
     def _trigger_epoch(self):
         self._sync()
 
@@ -274,13 +287,18 @@ class WeightSync(Callback):
 if __name__ == '__main__':
     import random
     from tensorpack.RL import NaiveRLEnvironment
+
     class NaiveSimulator(SimulatorProcess):
+
         def _build_player(self):
             return NaiveRLEnvironment()
+
     class NaiveActioner(SimulatorActioner):
+
         def _get_action(self, state):
             time.sleep(1)
             return random.randint(1, 12)
+
         def _on_episode_over(self, client):
             #print("Over: ", client.memory)
             client.memory = []
@@ -296,4 +314,3 @@ if __name__ == '__main__':
 
     import time
     time.sleep(100)
-

@@ -10,14 +10,15 @@ import six
 from six.moves import queue
 
 from ..dataflow import DataFlow
-from ..utils import logger, get_tqdm
+from ..utils import logger, get_tqdm, get_rng
 from ..utils.concurrency import LoopThread
 from ..callbacks.base import Callback
 
 __all__ = ['ExpReplay']
 
 Experience = namedtuple('Experience',
-        ['state', 'action', 'reward', 'isOver'])
+                        ['state', 'action', 'reward', 'isOver'])
+
 
 class ExpReplay(DataFlow, Callback):
     """
@@ -27,19 +28,20 @@ class ExpReplay(DataFlow, Callback):
     This implementation provides the interface as an DataFlow.
     This DataFlow is not fork-safe (doesn't support multiprocess prefetching)
     """
+
     def __init__(self,
-            predictor_io_names,
-            player,
-            batch_size=32,
-            memory_size=1e6,
-            init_memory_size=50000,
-            exploration=1,
-            end_exploration=0.1,
-            exploration_epoch_anneal=0.002,
-            reward_clip=None,
-            update_frequency=1,
-            history_len=1
-            ):
+                 predictor_io_names,
+                 player,
+                 batch_size=32,
+                 memory_size=1e6,
+                 init_memory_size=50000,
+                 exploration=1,
+                 end_exploration=0.1,
+                 exploration_epoch_anneal=0.002,
+                 reward_clip=None,
+                 update_frequency=1,
+                 history_len=1
+                 ):
         """
         :param predictor: a callabale running the up-to-date network.
             called with a state, return a distribution.
@@ -78,10 +80,10 @@ class ExpReplay(DataFlow, Callback):
 
     def _populate_exp(self):
         """ populate a transition by epsilon-greedy"""
-        #if len(self.mem):
-            #from copy import deepcopy  # quickly fill the memory for debug
-            #self.mem.append(deepcopy(self.mem[0]))
-            #return
+        # if len(self.mem):
+        # from copy import deepcopy  # quickly fill the memory for debug
+        # self.mem.append(deepcopy(self.mem[0]))
+        # return
         old_s = self.player.current_state()
         if self.rng.rand() <= self.exploration:
             act = self.rng.choice(range(self.num_actions))
@@ -115,19 +117,19 @@ class ExpReplay(DataFlow, Callback):
         while True:
             batch_exp = [self._sample_one() for _ in range(self.batch_size)]
 
-            #import cv2  # for debug
-            #def view_state(state, next_state):
-                #""" for debugging state representation"""
-                #r = np.concatenate([state[:,:,k] for k in range(self.history_len)], axis=1)
-                #r2 = np.concatenate([next_state[:,:,k] for k in range(self.history_len)], axis=1)
-                #r = np.concatenate([r, r2], axis=0)
-                #print r.shape
-                #cv2.imshow("state", r)
-                #cv2.waitKey()
-            #exp = batch_exp[0]
-            #print("Act: ", exp[3], " reward:", exp[2], " isOver: ", exp[4])
-            #if exp[2] or exp[4]:
-                #view_state(exp[0], exp[1])
+            # import cv2  # for debug
+            # def view_state(state, next_state):
+            # """ for debugging state representation"""
+            #     r = np.concatenate([state[:,:,k] for k in range(self.history_len)], axis=1)
+            #     r2 = np.concatenate([next_state[:,:,k] for k in range(self.history_len)], axis=1)
+            #     r = np.concatenate([r, r2], axis=0)
+            #     print r.shape
+            #     cv2.imshow("state", r)
+            #     cv2.waitKey()
+            # exp = batch_exp[0]
+            # print("Act: ", exp[3], " reward:", exp[2], " isOver: ", exp[4])
+            # if exp[2] or exp[4]:
+            #     view_state(exp[0], exp[1])
 
             yield self._process_batch(batch_exp)
             self._populate_job_queue.put(1)
@@ -141,9 +143,10 @@ class ExpReplay(DataFlow, Callback):
         # when x.isOver==True, (x+1).state is of a different episode
         idx = self.rng.randint(len(self.mem) - self.history_len - 1)
 
-        samples = [self.mem[k] for k in range(idx, idx+self.history_len+1)]
+        samples = [self.mem[k] for k in range(idx, idx + self.history_len + 1)]
+
         def concat(idx):
-            v = [x.state for x in samples[idx:idx+self.history_len]]
+            v = [x.state for x in samples[idx:idx + self.history_len]]
             return np.concatenate(v, axis=2)
         state = concat(0)
         next_state = concat(1)
@@ -155,12 +158,12 @@ class ExpReplay(DataFlow, Callback):
         # zero-fill state before starting
         zero_fill = False
         for k in range(1, self.history_len):
-            if samples[start_idx-k].isOver:
+            if samples[start_idx - k].isOver:
                 zero_fill = True
             if zero_fill:
-                state[:,:,-k-1] = 0
+                state[:, :, -k - 1] = 0
                 if k + 2 <= self.history_len:
-                    next_state[:,:,-k-2] = 0
+                    next_state[:, :, -k - 2] = 0
         return (state, next_state, reward, action, isOver)
 
     def _process_batch(self, batch_exp):
@@ -178,6 +181,7 @@ class ExpReplay(DataFlow, Callback):
     def _before_train(self):
         # spawn a separate thread to run policy, can speed up 1.3x
         self._populate_job_queue = queue.Queue(maxsize=1)
+
         def populate_job_func():
             self._populate_job_queue.get()
             with self.trainer.sess.as_default():
@@ -203,22 +207,23 @@ class ExpReplay(DataFlow, Callback):
                 pass
         self.player.reset_stat()
 
+
 if __name__ == '__main__':
     from .atari import AtariPlayer
     import sys
-    predictor = lambda x: np.array([1,1,1,1])
+    predictor = lambda x: np.array([1, 1, 1, 1])
     player = AtariPlayer(sys.argv[1], viz=0, frame_skip=10, height_range=(36, 204))
     E = ExpReplay(predictor,
-            player=player,
-            num_actions=player.get_action_space().num_actions(),
-            populate_size=1001,
-            history_len=4)
+                  player=player,
+                  num_actions=player.get_action_space().num_actions(),
+                  populate_size=1001,
+                  history_len=4)
     E._init_memory()
 
     for k in E.get_data():
-        import IPython as IP;
+        import IPython as IP
         IP.embed(config=IP.terminal.ipapp.load_default_config())
         pass
-        #import IPython;
-        #IPython.embed(config=IPython.terminal.ipapp.load_default_config())
-        #break
+        # import IPython;
+        # IPython.embed(config=IPython.terminal.ipapp.load_default_config())
+        # break

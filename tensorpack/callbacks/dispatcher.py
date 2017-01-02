@@ -6,7 +6,9 @@ from ..tfutils.common import get_op_tensor_name
 
 __all__ = ['OutputTensorDispatcer']
 
+
 class OutputTensorDispatcer(object):
+
     def __init__(self):
         self._names = []
         self._idxs = []

@@ -9,7 +9,8 @@ from collections import deque
 from .envbase import ProxyPlayer
 
 __all__ = ['PreventStuckPlayer', 'LimitLengthPlayer', 'AutoRestartPlayer',
-        'MapPlayerState']
+           'MapPlayerState']
+
 
 class PreventStuckPlayer(ProxyPlayer):
     """ Prevent the player from getting stuck (repeating a no-op)
@@ -17,6 +18,7 @@ class PreventStuckPlayer(ProxyPlayer):
     where the agent needs to press the 'start' button to start playing.
     """
     # TODO hash the state as well?
+
     def __init__(self, player, nr_repeat, action):
         """
         It does auto-reset, but doesn't auto-restart the underlying player.
@@ -40,10 +42,12 @@ class PreventStuckPlayer(ProxyPlayer):
         super(PreventStuckPlayer, self).restart_episode()
         self.act_que.clear()
 
+
 class LimitLengthPlayer(ProxyPlayer):
     """ Limit the total number of actions in an episode.
         Will auto restart the underlying player on timeout
     """
+
     def __init__(self, player, limit):
         super(LimitLengthPlayer, self).__init__(player)
         self.limit = limit
@@ -64,9 +68,11 @@ class LimitLengthPlayer(ProxyPlayer):
         self.player.restart_episode()
         self.cnt = 0
 
+
 class AutoRestartPlayer(ProxyPlayer):
     """ Auto-restart the player on episode ends,
         in case some player wasn't designed to do so. """
+
     def action(self, act):
         r, isOver = self.player.action(act)
         if isOver:
@@ -74,7 +80,9 @@ class AutoRestartPlayer(ProxyPlayer):
             self.player.restart_episode()
         return r, isOver
 
+
 class MapPlayerState(ProxyPlayer):
+
     def __init__(self, player, func):
         super(MapPlayerState, self).__init__(player)
         self.func = func

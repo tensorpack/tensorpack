@@ -17,8 +17,10 @@ except:
 else:
     __all__.append('DataFromSocket')
 
+
 class FakeData(RNGDataFlow):
     """ Generate fake fixed data of given shapes"""
+
     def __init__(self, shapes, size, random=True, dtype='float32'):
         """
         :param shapes: a list of lists/tuples
@@ -44,8 +46,10 @@ class FakeData(RNGDataFlow):
             for _ in range(self._size):
                 yield copy.deepcopy(v)
 
+
 class DataFromQueue(DataFlow):
     """ Produce data from a queue """
+
     def __init__(self, queue):
         self.queue = queue
 
@@ -53,8 +57,10 @@ class DataFromQueue(DataFlow):
         while True:
             yield self.queue.get()
 
+
 class DataFromList(RNGDataFlow):
     """ Produce data from a list"""
+
     def __init__(self, lst, shuffle=True):
         super(DataFromList, self).__init__()
         self.lst = lst
@@ -73,8 +79,10 @@ class DataFromList(RNGDataFlow):
             for k in idxs:
                 yield self.lst[k]
 
+
 class DataFromSocket(DataFlow):
     """ Produce data from a zmq socket"""
+
     def __init__(self, socket_name):
         self._name = socket_name
 
@@ -89,4 +97,3 @@ class DataFromSocket(DataFlow):
                 yield dp
         finally:
             ctx.destroy(linger=0)
-

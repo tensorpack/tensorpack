@@ -5,10 +5,13 @@
 
 
 import operator
-import inspect, six, functools
+import inspect
+import six
+import functools
 import collections
 
-__all__ = [ 'map_arg', 'memoized', 'shape2d', 'memoized_ignoreargs']
+__all__ = ['map_arg', 'memoized', 'shape2d', 'memoized_ignoreargs']
+
 
 def map_arg(**maps):
     """
@@ -26,11 +29,13 @@ def map_arg(**maps):
         return wrapper
     return deco
 
+
 class memoized(object):
     '''Decorator. Caches a function's return value each time it is called.
     If called later with the same arguments, the cached value is returned
     (not reevaluated).
     '''
+
     def __init__(self, func):
         self.func = func
         self.cache = {}
@@ -60,8 +65,11 @@ class memoized(object):
         return functools.partial(self.__call__, obj)
 
 _MEMOIZED_NOARGS = {}
+
+
 def memoized_ignoreargs(func):
     h = hash(func)  # make sure it is hashable. is it necessary?
+
     def wrapper(*args, **kwargs):
         if func not in _MEMOIZED_NOARGS:
             res = func(*args, **kwargs)
@@ -70,15 +78,16 @@ def memoized_ignoreargs(func):
         return _MEMOIZED_NOARGS[func]
     return wrapper
 
-#_GLOBAL_MEMOIZED_CACHE = dict()
-#def global_memoized(func):
-    #""" Make sure that the same `memoized` object is returned on different
-        #calls to global_memoized(func)
-    #"""
-    #ret = _GLOBAL_MEMOIZED_CACHE.get(func, None)
-    #if ret is None:
-        #ret = _GLOBAL_MEMOIZED_CACHE[func] = memoized(func)
-    #return ret
+# _GLOBAL_MEMOIZED_CACHE = dict()
+# def global_memoized(func):
+#     """ Make sure that the same `memoized` object is returned on different
+#      calls to global_memoized(func)
+#     """
+#     ret = _GLOBAL_MEMOIZED_CACHE.get(func, None)
+#     if ret is None:
+#         ret = _GLOBAL_MEMOIZED_CACHE[func] = memoized(func)
+#     return ret
+
 
 def shape2d(a):
     """

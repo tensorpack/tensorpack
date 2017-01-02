@@ -19,6 +19,7 @@ except ImportError:
 
 SVHN_URL = "http://ufldl.stanford.edu/housenumbers/"
 
+
 class SVHNDigit(RNGDataFlow):
     """
     SVHN Cropped Digit Dataset.
@@ -41,12 +42,12 @@ class SVHNDigit(RNGDataFlow):
         assert name in ['train', 'test', 'extra'], name
         filename = os.path.join(data_dir, name + '_32x32.mat')
         assert os.path.isfile(filename), \
-                "File {} not found! Please download it from {}.".format(filename, SVHN_URL)
+            "File {} not found! Please download it from {}.".format(filename, SVHN_URL)
         logger.info("Loading {} ...".format(filename))
         data = scipy.io.loadmat(filename)
-        self.X = data['X'].transpose(3,0,1,2)
+        self.X = data['X'].transpose(3, 0, 1, 2)
         self.Y = data['y'].reshape((-1))
-        self.Y[self.Y==10] = 0
+        self.Y[self.Y == 10] = 0
         SVHNDigit._Cache[name] = (self.X, self.Y)
 
     def size(self):

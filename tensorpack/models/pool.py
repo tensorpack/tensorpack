@@ -12,6 +12,7 @@ from ..tfutils import symbolic_functions as symbf
 __all__ = ['MaxPooling', 'FixedUnPooling', 'AvgPooling', 'GlobalAvgPooling',
            'BilinearUpSample']
 
+
 @layer_register()
 def MaxPooling(x, shape, stride=None, padding='VALID'):
     """
@@ -31,6 +32,7 @@ def MaxPooling(x, shape, stride=None, padding='VALID'):
         stride = shape4d(stride)
 
     return tf.nn.max_pool(x, ksize=shape, strides=stride, padding=padding)
+
 
 @layer_register()
 def AvgPooling(x, shape, stride=None, padding='VALID'):
@@ -52,6 +54,7 @@ def AvgPooling(x, shape, stride=None, padding='VALID'):
 
     return tf.nn.avg_pool(x, ksize=shape, strides=stride, padding=padding)
 
+
 @layer_register()
 def GlobalAvgPooling(x):
     """
@@ -65,6 +68,8 @@ def GlobalAvgPooling(x):
     return tf.reduce_mean(x, [1, 2])
 
 # https://github.com/tensorflow/tensorflow/issues/2169
+
+
 def UnPooling2x2ZeroFilled(x):
     out = tf.concat(3, [x, tf.zeros_like(x)])
     out = tf.concat(2, [out, tf.zeros_like(out)])
@@ -78,6 +83,7 @@ def UnPooling2x2ZeroFilled(x):
         ret = tf.reshape(out, tf.pack([-1, shv[1] * 2, shv[2] * 2, sh[3]]))
         ret.set_shape([None, None, None, sh[3]])
         return ret
+
 
 @layer_register()
 def FixedUnPooling(x, shape, unpool_mat=None):
@@ -108,14 +114,15 @@ def FixedUnPooling(x, shape, unpool_mat=None):
     # perform a tensor-matrix kronecker product
     fx = symbf.flatten(tf.transpose(x, [0, 3, 1, 2]))
     fx = tf.expand_dims(fx, -1)       # (bchw)x1
-    mat = tf.expand_dims(symbf.flatten(unpool_mat), 0)    #1x(shxsw)
-    prod = tf.matmul(fx, mat)    #(bchw) x(shxsw)
+    mat = tf.expand_dims(symbf.flatten(unpool_mat), 0)  # 1x(shxsw)
+    prod = tf.matmul(fx, mat)  # (bchw) x(shxsw)
     prod = tf.reshape(prod, tf.pack(
         [-1, input_shape[3], input_shape[1], input_shape[2], shape[0], shape[1]]))
     prod = tf.transpose(prod, [0, 2, 4, 3, 5, 1])
     prod = tf.reshape(prod, tf.pack(
         [-1, input_shape[1] * shape[0], input_shape[2] * shape[1], input_shape[3]]))
     return prod
+
 
 @layer_register()
 def BilinearUpSample(x, shape):
@@ -125,9 +132,9 @@ def BilinearUpSample(x, shape):
     :param shape: an integer, the upsample factor
     """
     #inp_shape = tf.shape(x)
-    #return tf.image.resize_bilinear(x,
-            #tf.pack([inp_shape[1]*shape,inp_shape[2]*shape]),
-            #align_corners=True)
+    # return tf.image.resize_bilinear(x,
+    # tf.pack([inp_shape[1]*shape,inp_shape[2]*shape]),
+    # align_corners=True)
 
     inp_shape = x.get_shape().as_list()
     ch = inp_shape[3]
@@ -135,7 +142,6 @@ def BilinearUpSample(x, shape):
 
     shape = int(shape)
     filter_shape = 2 * shape
-
 
     def bilinear_conv_filler(s):
         """
@@ -147,7 +153,7 @@ def BilinearUpSample(x, shape):
         ret = np.zeros((s, s), dtype='float32')
         for x in range(s):
             for y in range(s):
-                ret[x,y] = (1 - abs(x / f - c)) * (1 - abs(y / f - c))
+                ret[x, y] = (1 - abs(x / f - c)) * (1 - abs(y / f - c))
         return ret
     w = bilinear_conv_filler(filter_shape)
     w = np.repeat(w, ch * ch).reshape((filter_shape, filter_shape, ch, ch))
@@ -155,17 +161,22 @@ def BilinearUpSample(x, shape):
                              shape=(filter_shape, filter_shape, ch, ch),
                              name='bilinear_upsample_filter')
     deconv = tf.nn.conv2d_transpose(x, weight_var,
-            tf.shape(x) * tf.constant([1, shape, shape, 1], tf.int32),
-            [1,shape,shape,1], 'SAME')
+                                    tf.shape(x) * tf.constant([1, shape, shape, 1], tf.int32),
+                                    [1, shape, shape, 1], 'SAME')
 
-    if inp_shape[1]: inp_shape[1] *= shape
-    if inp_shape[2]: inp_shape[2] *= shape
+    if inp_shape[1]:
+        inp_shape[1] *= shape
+    if inp_shape[2]:
+        inp_shape[2] *= shape
     deconv.set_shape(inp_shape)
     return deconv
 
 
 from ._test import TestModel
+
+
 class TestPool(TestModel):
+
     def test_fixed_unpooling(self):
         h, w = 3, 4
         mat = np.random.rand(h, w, 3).astype('float32')
@@ -173,13 +184,13 @@ class TestPool(TestModel):
         inp = tf.reshape(inp, [1, h, w, 3])
         output = FixedUnPooling('unpool', inp, 2)
         res = self.run_variable(output)
-        self.assertEqual(res.shape, (1, 2*h, 2*w, 3))
+        self.assertEqual(res.shape, (1, 2 * h, 2 * w, 3))
 
         # mat is on cornser
-        ele = res[0,::2,::2,0]
-        self.assertTrue((ele == mat[:,:,0]).all())
+        ele = res[0, ::2, ::2, 0]
+        self.assertTrue((ele == mat[:, :, 0]).all())
         # the rest are zeros
-        res[0,::2,::2,:] = 0
+        res[0, ::2, ::2, :] = 0
         self.assertTrue((res == 0).all())
 
     def test_upsample(self):
@@ -191,7 +202,7 @@ class TestPool(TestModel):
         inp = tf.reshape(inp, [1, h, w, 1])
 
         output = BilinearUpSample('upsample', inp, scale)
-        res = self.run_variable(output)[0,:,:,0]
+        res = self.run_variable(output)[0, :, :, 0]
 
         from skimage.transform import rescale
         res2 = rescale(mat, scale)
@@ -199,9 +210,9 @@ class TestPool(TestModel):
         diff = np.abs(res2 - res)
 
         # not equivalent to rescale on edge?
-        diff[0,:] = 0
-        diff[:,0] = 0
+        diff[0, :] = 0
+        diff[:, 0] = 0
         if not diff.max() < 1e-4:
-            import IPython;
+            import IPython
             IPython.embed(config=IPython.terminal.ipapp.load_default_config())
         self.assertTrue(diff.max() < 1e-4)

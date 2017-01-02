@@ -3,7 +3,8 @@
 # File: concurrency.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import multiprocessing, threading
+import multiprocessing
+import threading
 import tensorflow as tf
 import time
 import six
@@ -25,10 +26,12 @@ except ImportError:
     __all__ = ['MultiProcessPredictWorker', 'MultiProcessQueuePredictWorker']
 else:
     __all__ = ['MultiProcessPredictWorker', 'MultiProcessQueuePredictWorker',
-                'MultiThreadAsyncPredictor']
+               'MultiThreadAsyncPredictor']
+
 
 class MultiProcessPredictWorker(multiprocessing.Process):
     """ Base class for predict worker that runs offline in multiprocess"""
+
     def __init__(self, idx, config):
         """
         :param idx: index of the worker. the 0th worker will print log.
@@ -51,8 +54,10 @@ class MultiProcessPredictWorker(multiprocessing.Process):
             with self.predictor.graph.as_default():
                 describe_model()
 
+
 class MultiProcessQueuePredictWorker(MultiProcessPredictWorker):
     """ An offline predictor worker that takes input and produces output by queue"""
+
     def __init__(self, idx, inqueue, outqueue, config):
         """
         :param inqueue: input queue to get data point. elements are (task_id, dp)
@@ -76,6 +81,7 @@ class MultiProcessQueuePredictWorker(MultiProcessPredictWorker):
 
 
 class PredictorWorkerThread(threading.Thread):
+
     def __init__(self, queue, pred_func, id, batch_size=5):
         super(PredictorWorkerThread, self).__init__()
         self.queue = queue
@@ -88,13 +94,13 @@ class PredictorWorkerThread(threading.Thread):
         while True:
             batched, futures = self.fetch_batch()
             outputs = self.func(batched)
-            #print "Worker {} batched {} Queue {}".format(
-                    #self.id, len(futures), self.queue.qsize())
-            # debug, for speed testing
-            #if not hasattr(self, 'xxx'):
-                #self.xxx = outputs = self.func(batched)
-            #else:
-                #outputs = [[self.xxx[0][0]] * len(batched[0]), [self.xxx[1][0]] * len(batched[0])]
+            # print "Worker {} batched {} Queue {}".format(
+            #         self.id, len(futures), self.queue.qsize())
+            #  debug, for speed testing
+            # if not hasattr(self, 'xxx'):
+            #     self.xxx = outputs = self.func(batched)
+            # else:
+            #     outputs = [[self.xxx[0][0]] * len(batched[0]), [self.xxx[1][0]] * len(batched[0])]
 
             for idx, f in enumerate(futures):
                 f.set_result([k[idx] for k in outputs])
@@ -119,11 +125,13 @@ class PredictorWorkerThread(threading.Thread):
             cnt += 1
         return batched, futures
 
+
 class MultiThreadAsyncPredictor(AsyncPredictorBase):
     """
     An multithread online async predictor which run a list of PredictorBase.
     It would do an extra batching internally.
     """
+
     def __init__(self, predictors, batch_size=5):
         """ :param predictors: a list of OnlinePredictor"""
         assert len(predictors)
@@ -131,7 +139,7 @@ class MultiThreadAsyncPredictor(AsyncPredictorBase):
             #assert isinstance(k, OnlinePredictor), type(k)
             # TODO use predictors.return_input here
             assert k.return_input == False
-        self.input_queue = queue.Queue(maxsize=len(predictors)*100)
+        self.input_queue = queue.Queue(maxsize=len(predictors) * 100)
         self.threads = [
             PredictorWorkerThread(
                 self.input_queue, f, id, batch_size=batch_size)

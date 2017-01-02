@@ -22,6 +22,7 @@ __all__ = ['get_default_sess_config',
            'freeze_collection',
            'get_tf_version']
 
+
 def get_default_sess_config(mem_fraction=0.99):
     """
     Return a better session config to use as default.
@@ -38,6 +39,7 @@ def get_default_sess_config(mem_fraction=0.99):
     #conf.log_device_placement = True
     return conf
 
+
 def get_global_step_var():
     """ :returns: the global_step variable in the current graph. create if not existed"""
     try:
@@ -45,18 +47,20 @@ def get_global_step_var():
     except KeyError:
         scope = tf.get_variable_scope()
         assert scope.name == '', \
-                "Creating global_step_var under a variable scope would cause problems!"
+            "Creating global_step_var under a variable scope would cause problems!"
         with tf.variable_scope(scope, reuse=False):
             var = tf.get_variable(GLOBAL_STEP_OP_NAME, shape=[],
-                    initializer=tf.constant_initializer(dtype=tf.int32),
-                    trainable=False, dtype=tf.int32)
+                                  initializer=tf.constant_initializer(dtype=tf.int32),
+                                  trainable=False, dtype=tf.int32)
         return var
+
 
 def get_global_step():
     """ :returns: global_step value in current graph and session"""
     return tf.train.global_step(
         tf.get_default_session(),
         get_global_step_var())
+
 
 def get_op_tensor_name(name):
     """
@@ -72,6 +76,7 @@ def get_op_tensor_name(name):
 
 get_op_var_name = get_op_tensor_name
 
+
 def get_tensors_by_names(names):
     """
     Get a list of tensors in the default graph by a list of names
@@ -85,26 +90,31 @@ def get_tensors_by_names(names):
 
 get_vars_by_names = get_tensors_by_names
 
+
 def backup_collection(keys):
     ret = {}
     for k in keys:
         ret[k] = copy(tf.get_collection(k))
     return ret
 
+
 def restore_collection(backup):
     for k, v in six.iteritems(backup):
         del tf.get_collection_ref(k)[:]
         tf.get_collection_ref(k).extend(v)
 
+
 def clear_collection(keys):
     for k in keys:
         del tf.get_collection_ref(k)[:]
+
 
 @contextmanager
 def freeze_collection(keys):
     backup = backup_collection(keys)
     yield
     restore_collection(backup)
+
 
 def get_tf_version():
     return int(tf.__version__.split('.')[1])

@@ -18,6 +18,8 @@ __all__ = ['BatchNorm', 'BatchNormV1', 'BatchNormV2']
 
 # decay: being too close to 1 leads to slow start-up. torch use 0.9.
 # eps: torch: 1e-5. Lasagne: 1e-4
+
+
 @layer_register(log_shape=False)
 def BatchNormV1(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
     """
@@ -41,9 +43,9 @@ def BatchNormV1(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
     n_out = shape[-1]  # channel
     assert n_out is not None
     beta = tf.get_variable('beta', [n_out],
-            initializer=tf.constant_initializer())
+                           initializer=tf.constant_initializer())
     gamma = tf.get_variable('gamma', [n_out],
-            initializer=tf.constant_initializer(1.0))
+                            initializer=tf.constant_initializer(1.0))
 
     if len(shape) == 2:
         batch_mean, batch_var = tf.nn.moments(x, [0], keep_dims=False)
@@ -66,7 +68,7 @@ def BatchNormV1(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
             #reuse = tf.get_variable_scope().reuse
             with tf.variable_scope(tf.get_variable_scope(), reuse=False):
                 # BatchNorm in reuse scope can be tricky! Moving mean/variance are not reused
-                with tf.name_scope(None): # https://github.com/tensorflow/tensorflow/issues/2740
+                with tf.name_scope(None):  # https://github.com/tensorflow/tensorflow/issues/2740
                     # TODO if reuse=True, try to find and use the existing statistics
                     # how to use multiple tensors to update one EMA? seems impossbile
                     ema = tf.train.ExponentialMovingAverage(decay=decay, name=emaname)
@@ -93,7 +95,7 @@ def BatchNormV1(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
                 ema_mean = tf.get_variable('mean/' + emaname, [n_out])
                 ema_var = tf.get_variable('variance/' + emaname, [n_out])
             else:
-                ## use statistics in another tower
+                # use statistics in another tower
                 G = tf.get_default_graph()
                 ema_mean = ctx.find_tensor_in_main_tower(G, mean_var_name + ':0')
                 ema_var = ctx.find_tensor_in_main_tower(G, var_var_name + ':0')
@@ -110,6 +112,7 @@ def BatchNormV1(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
     else:
         return tf.nn.batch_normalization(
             x, ema_mean, ema_var, beta, gamma, epsilon, 'output')
+
 
 @layer_register(log_shape=False)
 def BatchNormV2(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
@@ -135,9 +138,9 @@ def BatchNormV2(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
         x = tf.reshape(x, [-1, 1, 1, n_out])
 
     beta = tf.get_variable('beta', [n_out],
-            initializer=tf.constant_initializer())
+                           initializer=tf.constant_initializer())
     gamma = tf.get_variable('gamma', [n_out],
-            initializer=tf.constant_initializer(1.0))
+                            initializer=tf.constant_initializer(1.0))
     # x * gamma + beta
 
     ctx = get_current_tower_context()
@@ -147,22 +150,22 @@ def BatchNormV2(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
         logger.warn("[BatchNorm] use_local_stat != is_training")
 
     moving_mean = tf.get_variable('mean/EMA', [n_out],
-            initializer=tf.constant_initializer(), trainable=False)
+                                  initializer=tf.constant_initializer(), trainable=False)
     moving_var = tf.get_variable('variance/EMA', [n_out],
-            initializer=tf.constant_initializer(), trainable=False)
+                                 initializer=tf.constant_initializer(), trainable=False)
 
     if use_local_stat:
         xn, batch_mean, batch_var = tf.nn.fused_batch_norm(x, gamma, beta,
-                epsilon=epsilon, is_training=True)
+                                                           epsilon=epsilon, is_training=True)
 
         # maintain EMA only in the main training tower
         if ctx.is_main_training_tower:
             update_op1 = moving_averages.assign_moving_average(
-                    moving_mean, batch_mean, decay, zero_debias=False,
-                    name='mean_ema_op')
+                moving_mean, batch_mean, decay, zero_debias=False,
+                name='mean_ema_op')
             update_op2 = moving_averages.assign_moving_average(
-                    moving_var, batch_var, decay, zero_debias=False,
-                    name='var_ema_op')
+                moving_var, batch_var, decay, zero_debias=False,
+                name='var_ema_op')
             add_model_variable(moving_mean)
             add_model_variable(moving_var)
     else:
@@ -171,9 +174,9 @@ def BatchNormV2(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
         # consider some fixed-param tasks, such as load model and fine tune one layer
 
         # fused seems slower in inference
-        #xn, _, _ = tf.nn.fused_batch_norm(x, gamma, beta,
-                #moving_mean, moving_var,
-                #epsilon=epsilon, is_training=False, name='output')
+        # xn, _, _ = tf.nn.fused_batch_norm(x, gamma, beta,
+        #   moving_mean, moving_var,
+        #   epsilon=epsilon, is_training=False, name='output')
         xn = tf.nn.batch_normalization(
             x, moving_mean, moving_var, beta, gamma, epsilon)
 

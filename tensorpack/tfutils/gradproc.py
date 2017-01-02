@@ -16,6 +16,7 @@ __all__ = ['GradientProcessor', 'SummaryGradient', 'CheckGradient',
            'ScaleGradient', 'MapGradient', 'apply_grad_processors',
            'GlobalNormClip']
 
+
 def apply_grad_processors(grads, gradprocs):
     """
     :param grads: list of (grad, var).
@@ -31,6 +32,7 @@ def apply_grad_processors(grads, gradprocs):
     for proc in gradprocs:
         g = proc.process(g)
     return g
+
 
 @six.add_metaclass(ABCMeta)
 class GradientProcessor(object):
@@ -51,6 +53,7 @@ class GradientProcessor(object):
 
 
 class GlobalNormClip(GradientProcessor):
+
     def __init__(self, global_norm):
         """ Clip by global norm
             Note that the global norm is the sum of norm for **all** gradients
@@ -63,11 +66,13 @@ class GlobalNormClip(GradientProcessor):
         g, _ = tf.clip_by_global_norm(g, self._norm, name='clip_by_global_norm')
         return list(zip(g, v))
 
+
 class MapGradient(GradientProcessor):
     """
     Apply a function on all gradient if the name matches regex.
     Keep the other gradients unchanged.
     """
+
     def __init__(self, func, regex='.*'):
         """
         :param func: takes a grad or (grad, var) pair and returns a grad. If return None, the
@@ -77,7 +82,7 @@ class MapGradient(GradientProcessor):
         args = inspect.getargspec(func).args
         arg_num = len(args) - inspect.ismethod(func)
         assert arg_num in [1, 2], \
-                "The function must take 1 or 2 arguments!  ({})".format(args)
+            "The function must take 1 or 2 arguments!  ({})".format(args)
         if arg_num == 1:
             self.func = lambda grad, var: func(grad)
         else:
@@ -100,10 +105,12 @@ class MapGradient(GradientProcessor):
 
 _summaried_gradient = set()
 
+
 class SummaryGradient(MapGradient):
     """
     Summary history and RMS for each graident variable
     """
+
     def __init__(self):
         super(SummaryGradient, self).__init__(self._mapper)
 
@@ -115,10 +122,12 @@ class SummaryGradient(MapGradient):
             add_moving_summary(rms(grad, name=name + '/rms'))
         return grad
 
+
 class CheckGradient(MapGradient):
     """
     Check for numeric issue.
     """
+
     def __init__(self):
         super(CheckGradient, self).__init__(self._mapper)
 
@@ -128,10 +137,12 @@ class CheckGradient(MapGradient):
         grad = tf.check_numerics(grad, 'CheckGradient-' + var.op.name)
         return grad
 
+
 class ScaleGradient(MapGradient):
     """
     Scale certain gradient by a multiplier
     """
+
     def __init__(self, multipliers, log=True):
         """
         :param multipliers: list of (regex, float)

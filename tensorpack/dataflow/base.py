@@ -10,13 +10,13 @@ from ..utils import get_rng
 
 __all__ = ['DataFlow', 'ProxyDataFlow', 'RNGDataFlow']
 
+
 @six.add_metaclass(ABCMeta)
 class DataFlow(object):
     """ Base class for all DataFlow """
 
     class Infinity:
         pass
-
 
     @abstractmethod
     def get_data(self):
@@ -44,11 +44,14 @@ class DataFlow(object):
 
 class RNGDataFlow(DataFlow):
     """ A dataflow with rng"""
+
     def reset_state(self):
         self.rng = get_rng(self)
 
+
 class ProxyDataFlow(DataFlow):
     """ Base class for DataFlow that proxies another"""
+
     def __init__(self, ds):
         """
         :param ds: a :mod:`DataFlow` instance to proxy

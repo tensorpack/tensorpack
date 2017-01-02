@@ -3,7 +3,8 @@
 # File: bsds500.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import os, glob
+import os
+import glob
 import cv2
 import numpy as np
 
@@ -20,6 +21,7 @@ except ImportError:
 
 DATA_URL = "http://www.eecs.berkeley.edu/Research/Projects/CS/vision/grouping/BSR/BSR_bsds500.tgz"
 IMG_W, IMG_H = 481, 321
+
 
 class BSDS500(RNGDataFlow):
     """
@@ -65,7 +67,7 @@ class BSDS500(RNGDataFlow):
             im = cv2.imread(f, cv2.IMREAD_COLOR)
             assert im is not None
             if im.shape[0] > im.shape[1]:
-                im = np.transpose(im, (1,0,2))
+                im = np.transpose(im, (1, 0, 2))
             assert im.shape[:2] == (IMG_H, IMG_W), "{} != {}".format(im.shape[:2], (IMG_H, IMG_W))
 
             imgid = os.path.basename(f).split('.')[0]
@@ -96,5 +98,5 @@ class BSDS500(RNGDataFlow):
 if __name__ == '__main__':
     a = BSDS500('val')
     for k in a.get_data():
-        cv2.imshow("haha", k[1].astype('uint8')*255)
+        cv2.imshow("haha", k[1].astype('uint8') * 255)
         cv2.waitKey(1000)

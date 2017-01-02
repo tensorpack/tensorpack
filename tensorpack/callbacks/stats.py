@@ -3,7 +3,8 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import tensorflow as tf
-import re, os
+import re
+import os
 import operator
 import json
 
@@ -13,10 +14,12 @@ from ..tfutils.common import get_global_step
 
 __all__ = ['StatHolder', 'StatPrinter', 'SendStat']
 
+
 class StatHolder(object):
     """
     A holder to keep all statistics aside from tensorflow events.
     """
+
     def __init__(self, log_dir):
         """
         :param log_dir: directory to save the stats.
@@ -62,9 +65,11 @@ class StatHolder(object):
         ret = []
         for h in self.stat_history:
             v = h.get(key, None)
-            if v is not None: ret.append(v)
+            if v is not None:
+                ret.append(v)
         v = self.stat_now.get(key, None)
-        if v is not None: ret.append(v)
+        if v is not None:
+            ret.append(v)
         return ret
 
     def finalize(self):
@@ -88,13 +93,15 @@ class StatHolder(object):
             with open(tmp_filename, 'w') as f:
                 json.dump(self.stat_history, f)
             os.rename(tmp_filename, self.filename)
-        except IOError: # disk error sometimes..
+        except IOError:  # disk error sometimes..
             logger.exception("Exception in StatHolder.finalize()!")
+
 
 class StatPrinter(Callback):
     """
     Control what stats to print.
     """
+
     def __init__(self, print_tag=None):
         """
         :param print_tag: a list of regex to match scalar summary to print.
@@ -116,6 +123,7 @@ class StatPrinter(Callback):
         self._stat_holder.finalize()
         self._stat_holder.add_stat('epoch_num', self.epoch_num + 1)
 
+
 class SendStat(Callback):
     """
     Execute a command with some specific stats.
@@ -126,6 +134,7 @@ class SendStat(Callback):
             -d body={validation_error} > /dev/null 2>&1',
             'validation_error')
     """
+
     def __init__(self, command, stats):
         self.command = command
         if not isinstance(stats, list):

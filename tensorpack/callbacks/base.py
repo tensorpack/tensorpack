@@ -11,6 +11,7 @@ import six
 
 __all__ = ['Callback', 'PeriodicCallback', 'ProxyCallback']
 
+
 @six.add_metaclass(ABCMeta)
 class Callback(object):
     """ Base class for all callbacks """
@@ -72,7 +73,9 @@ class Callback(object):
     def __str__(self):
         return type(self).__name__
 
+
 class ProxyCallback(Callback):
+
     def __init__(self, cb):
         self.cb = cb
 
@@ -91,11 +94,13 @@ class ProxyCallback(Callback):
     def __str__(self):
         return "Proxy-" + str(self.cb)
 
+
 class PeriodicCallback(ProxyCallback):
     """
     A callback to be triggered after every `period` epochs.
     Doesn't work for trigger_step
     """
+
     def __init__(self, cb, period):
         """
         :param cb: a `Callback`
@@ -111,4 +116,3 @@ class PeriodicCallback(ProxyCallback):
 
     def __str__(self):
         return "Periodic-" + str(self.cb)
-

@@ -8,6 +8,7 @@ from ._common import layer_register
 
 __all__ = ['ConcatWith']
 
+
 @layer_register(use_scope=False, log_shape=False)
 def ConcatWith(x, dim, tensor):
     """

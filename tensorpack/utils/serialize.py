@@ -10,10 +10,12 @@ msgpack_numpy.patch()
 
 __all__ = ['loads', 'dumps']
 
+
 def dumps(obj):
-    #return dill.dumps(obj)
+    # return dill.dumps(obj)
     return msgpack.dumps(obj, use_bin_type=True)
 
+
 def loads(buf):
-    #return dill.loads(buf)
+    # return dill.loads(buf)
     return msgpack.loads(buf)

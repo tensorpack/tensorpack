@@ -19,7 +19,9 @@ __all__ = ['load_caffe', 'get_caffe_pb']
 
 CAFFE_PROTO_URL = "https://github.com/BVLC/caffe/raw/master/src/caffe/proto/caffe.proto"
 
+
 class CaffeLayerProcessor(object):
+
     def __init__(self, net):
         self.net = net
         self.layer_names = net._layer_names
@@ -42,14 +44,14 @@ class CaffeLayerProcessor(object):
                 self.param_dict.update(dic)
             elif len(layer.blobs) != 0:
                 logger.warn(
-                        "{} layer contains parameters but is not supported!".format(layer.type))
+                    "{} layer contains parameters but is not supported!".format(layer.type))
         return self.param_dict
 
     def proc_conv(self, idx, name, param):
         assert len(param) <= 2
         assert param[0].data.ndim == 4
         # caffe: ch_out, ch_in, h, w
-        W = param[0].data.transpose(2,3,1,0)
+        W = param[0].data.transpose(2, 3, 1, 0)
         if len(param) == 1:
             return {name + '/W': W}
         else:
@@ -65,7 +67,7 @@ class CaffeLayerProcessor(object):
             logger.info("FC layer {} takes spatial data.".format(name))
             W = param[0].data
             # original: outx(CxHxW)
-            W = W.reshape((-1,) + prev_layer_output.shape[1:]).transpose(2,3,1,0)
+            W = W.reshape((-1,) + prev_layer_output.shape[1:]).transpose(2, 3, 1, 0)
             # become: (HxWxC)xout
         else:
             W = param[0].data.transpose()
@@ -74,8 +76,8 @@ class CaffeLayerProcessor(object):
 
     def proc_bn(self, idx, name, param):
         assert param[2].data[0] == 1.0
-        return {name +'/mean/EMA': param[0].data,
-                name +'/variance/EMA': param[1].data }
+        return {name + '/mean/EMA': param[0].data,
+                name + '/variance/EMA': param[1].data}
 
     def proc_scale(self, idx, name, param):
         bottom_name = self.net.bottom_names[name][0]
@@ -89,7 +91,7 @@ class CaffeLayerProcessor(object):
                     logger.info("Merge {} and {} into one BatchNorm layer".format(
                         name, name2))
                     return {name2 + '/beta': param[1].data,
-                            name2 + '/gamma': param[0].data }
+                            name2 + '/gamma': param[0].data}
         # assume this scaling layer is part of some BN
         logger.error("Could not find a BN layer corresponding to this Scale layer!")
         raise ValueError()
@@ -104,9 +106,10 @@ def load_caffe(model_desc, model_file):
         caffe.set_mode_cpu()
         net = caffe.Net(model_desc, model_file, caffe.TEST)
     param_dict = CaffeLayerProcessor(net).process()
-    logger.info("Model loaded from caffe. Params: " + \
+    logger.info("Model loaded from caffe. Params: " +
                 " ".join(sorted(param_dict.keys())))
     return param_dict
+
 
 def get_caffe_pb():
     dir = get_dataset_path('caffe')
@@ -116,7 +119,7 @@ def get_caffe_pb():
         assert os.path.isfile(os.path.join(dir, 'caffe.proto'))
         ret = os.system('cd {} && protoc caffe.proto --python_out .'.format(dir))
         assert ret == 0, \
-                "Command `protoc caffe.proto --python_out .` failed!"
+            "Command `protoc caffe.proto --python_out .` failed!"
     import imp
     return imp.load_source('caffepb', caffe_pb_file)
 
@@ -131,4 +134,3 @@ if __name__ == '__main__':
 
     import numpy as np
     np.save(args.output, ret)
-

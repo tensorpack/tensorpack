@@ -7,10 +7,12 @@ import six
 
 __all__ = ['LookUpTable']
 
+
 class LookUpTable(object):
+
     def __init__(self, objlist):
         self.idx2obj = dict(enumerate(objlist))
-        self.obj2idx = {v : k for k, v in six.iteritems(self.idx2obj)}
+        self.obj2idx = {v: k for k, v in six.iteritems(self.idx2obj)}
 
     def size(self):
         return len(self.idx2obj)

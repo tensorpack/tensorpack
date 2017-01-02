@@ -9,7 +9,9 @@ import cv2
 
 __all__ = ['JpegNoise', 'GaussianNoise', 'SaltPepperNoise']
 
+
 class JpegNoise(ImageAugmentor):
+
     def __init__(self, quality_range=(40, 100)):
         super(JpegNoise, self).__init__()
         self._init(locals())
@@ -23,6 +25,7 @@ class JpegNoise(ImageAugmentor):
 
 
 class GaussianNoise(ImageAugmentor):
+
     def __init__(self, sigma=1, clip=True):
         """
         Add a gaussian noise N(0, sigma^2) of the same shape to img.
@@ -39,7 +42,9 @@ class GaussianNoise(ImageAugmentor):
             ret = np.clip(ret, 0, 255)
         return ret
 
+
 class SaltPepperNoise(ImageAugmentor):
+
     def __init__(self, white_prob=0.05, black_prob=0.05):
         """ Salt and pepper noise.
             Randomly set some elements in img to 0 or 255, regardless of its channels.

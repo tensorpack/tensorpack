@@ -24,6 +24,7 @@ TRAIN_URL = 'https://raw.githubusercontent.com/tomsercu/lstm/master/data/ptb.tra
 VALID_URL = 'https://raw.githubusercontent.com/tomsercu/lstm/master/data/ptb.valid.txt'
 TEST_URL = 'https://raw.githubusercontent.com/tomsercu/lstm/master/data/ptb.test.txt'
 
+
 @memoized_ignoreargs
 def get_PennTreeBank(data_dir=None):
     if data_dir is None:
@@ -35,6 +36,5 @@ def get_PennTreeBank(data_dir=None):
     # TODO these functions in TF might not be available in the future
     word_to_id = tfreader._build_vocab(os.path.join(data_dir, 'ptb.train.txt'))
     data3 = [np.asarray(tfreader._file_to_word_ids(os.path.join(data_dir, fname), word_to_id))
-            for fname in ['ptb.train.txt', 'ptb.valid.txt', 'ptb.test.txt']]
+             for fname in ['ptb.train.txt', 'ptb.valid.txt', 'ptb.test.txt']]
     return data3, word_to_id
-

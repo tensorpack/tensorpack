@@ -4,10 +4,12 @@
 import numpy as np
 
 __all__ = ['StatCounter', 'Accuracy', 'BinaryStatistics', 'RatioCounter',
-        'OnlineMoments']
+           'OnlineMoments']
+
 
 class StatCounter(object):
     """ A simple counter"""
+
     def __init__(self):
         self.reset()
 
@@ -36,8 +38,10 @@ class StatCounter(object):
         assert len(self._values)
         return max(self._values)
 
+
 class RatioCounter(object):
     """ A counter to count ratio of something"""
+
     def __init__(self):
         self.reset()
 
@@ -59,17 +63,20 @@ class RatioCounter(object):
     def count(self):
         return self._tot
 
+
 class Accuracy(RatioCounter):
     """ A RatioCounter with a fancy name """
     @property
     def accuracy(self):
         return self.ratio
 
+
 class BinaryStatistics(object):
     """
     Statistics for binary decision,
     including precision, recall, false positive, false negative
     """
+
     def __init__(self):
         self.reset()
 
@@ -118,10 +125,12 @@ class BinaryStatistics(object):
             return 0
         return 1 - self.recall
 
+
 class OnlineMoments(object):
     """Compute 1st and 2nd moments online
     See algorithm at: https://www.wikiwand.com/en/Algorithms_for_calculating_variance#/Online_algorithm
     """
+
     def __init__(self):
         self._mean = 0
         self._M2 = 0
@@ -140,7 +149,7 @@ class OnlineMoments(object):
 
     @property
     def variance(self):
-        return self._M2 / (self._n-1)
+        return self._M2 / (self._n - 1)
 
     @property
     def std(self):

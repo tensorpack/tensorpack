@@ -11,7 +11,9 @@ __all__ = ['get_current_tower_context', 'TowerContext']
 
 _CurrentTowerContext = None
 
+
 class TowerContext(object):
+
     def __init__(self, tower_name, is_training=None):
         """ tower_name: 'tower0', 'towerp0', or '' """
         self._name = tower_name
@@ -65,7 +67,7 @@ class TowerContext(object):
     def __enter__(self):
         global _CurrentTowerContext
         assert _CurrentTowerContext is None, \
-                "Nesting TowerContext!"
+            "Nesting TowerContext!"
         _CurrentTowerContext = self
         if len(self._name):
             self._scope = tf.name_scope(self._name)
@@ -78,7 +80,7 @@ class TowerContext(object):
             self._scope.__exit__(exc_type, exc_val, exc_tb)
         return False
 
+
 def get_current_tower_context():
     global _CurrentTowerContext
     return _CurrentTowerContext
-

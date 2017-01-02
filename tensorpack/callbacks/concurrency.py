@@ -9,7 +9,9 @@ from ..utils import logger
 
 __all__ = ['StartProcOrThread']
 
+
 class StartProcOrThread(Callback):
+
     def __init__(self, procs_threads):
         """
         Start extra threads and processes before training
@@ -20,7 +22,7 @@ class StartProcOrThread(Callback):
         self._procs_threads = procs_threads
 
     def _before_train(self):
-        logger.info("Starting " +  \
-                ', '.join([k.name for k in self._procs_threads]))
+        logger.info("Starting " +
+                    ', '.join([k.name for k in self._procs_threads]))
         # avoid sigint get handled by other processes
         start_proc_mask_signal(self._procs_threads)

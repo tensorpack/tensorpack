@@ -7,7 +7,9 @@ import tensorflow as tf
 import numpy as np
 import unittest
 
+
 class TestModel(unittest.TestCase):
+
     def run_variable(self, var):
         sess = tf.Session()
         sess.run(tf.global_variables_initializer())
@@ -22,6 +24,7 @@ class TestModel(unittest.TestCase):
         else:
             return tf.Variable(args[0])
 
+
 def run_test_case(case):
     suite = unittest.TestLoader().loadTestsFromTestCase(case)
     unittest.TextTestRunner(verbosity=2).run(suite)
@@ -34,5 +37,3 @@ if __name__ == '__main__':
     subs = tensorpack.models._test.TestModel.__subclasses__()
     for cls in subs:
         run_test_case(cls)
-
-

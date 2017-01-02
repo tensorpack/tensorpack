@@ -2,7 +2,7 @@
 # File: __init__.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
-import numpy # avoid https://github.com/tensorflow/tensorflow/issues/2034
+import numpy  # avoid https://github.com/tensorflow/tensorflow/issues/2034
 import cv2  # avoid https://github.com/tensorflow/tensorflow/issues/1924
 
 from tensorpack.train import *

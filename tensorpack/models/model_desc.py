@@ -16,20 +16,26 @@ from ..tfutils.common import get_tensors_by_names
 from ..tfutils.gradproc import CheckGradient
 from ..tfutils.tower import get_current_tower_context
 
-__all__ = ['ModelDesc', 'InputVar', 'ModelFromMetaGraph' ]
+__all__ = ['ModelDesc', 'InputVar', 'ModelFromMetaGraph']
 
 #_InputVar = namedtuple('InputVar', ['type', 'shape', 'name', 'sparse'])
+
+
 class InputVar(object):
+
     def __init__(self, type, shape, name, sparse=False):
         self.type = type
         self.shape = shape
         self.name = name
         self.sparse = sparse
+
     def dumps(self):
         return pickle.dumps(self)
+
     @staticmethod
     def loads(buf):
         return pickle.loads(buf)
+
 
 @six.add_metaclass(ABCMeta)
 class ModelDesc(object):
@@ -99,22 +105,24 @@ Use _build_graph(self, input_vars) and get_current_tower_context().is_training i
 
     def get_gradient_processor(self):
         """ Return a list of GradientProcessor. They will be executed in order"""
-        return [#SummaryGradient(),
-                CheckGradient()
-                ]
+        return [  # SummaryGradient(),
+            CheckGradient()
+        ]
+
 
 class ModelFromMetaGraph(ModelDesc):
     """
     Load the whole exact TF graph from a saved meta_graph.
     Only useful for inference.
     """
+
     def __init__(self, filename):
         tf.train.import_meta_graph(filename)
         all_coll = tf.get_default_graph().get_all_collection_keys()
         for k in [INPUT_VARS_KEY, tf.GraphKeys.TRAINABLE_VARIABLES,
-                tf.GraphKeys().VARIABLES]:
+                  tf.GraphKeys().VARIABLES]:
             assert k in all_coll, \
-                    "Collection {} not found in metagraph!".format(k)
+                "Collection {} not found in metagraph!".format(k)
 
     def _get_input_vars(self):
         col = tf.get_collection(INPUT_VARS_KEY)

@@ -3,7 +3,8 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
-import os, shutil
+import os
+import shutil
 import re
 
 from .base import Callback
@@ -13,12 +14,14 @@ from ..tfutils import get_global_step
 
 __all__ = ['ModelSaver', 'MinSaver', 'MaxSaver']
 
+
 class ModelSaver(Callback):
     """
     Save the model to logger directory.
     """
+
     def __init__(self, keep_recent=10, keep_freq=0.5,
-            var_collections=None):
+                 var_collections=None):
         """
         :param keep_recent: see `tf.train.Saver` documentation.
         :param keep_freq: see `tf.train.Saver` documentation.
@@ -71,9 +74,9 @@ due to an alternative in a different tower".format(v.name, var_dict[name].name))
         try:
             if not self.meta_graph_written:
                 self.saver.export_meta_graph(
-                        os.path.join(logger.LOG_DIR,
-                            'graph-{}.meta'.format(logger.get_time_str())),
-                        collection_list=self.graph.get_all_collection_keys())
+                    os.path.join(logger.LOG_DIR,
+                                 'graph-{}.meta'.format(logger.get_time_str())),
+                    collection_list=self.graph.get_all_collection_keys())
                 self.meta_graph_written = True
             self.saver.save(
                 tf.get_default_session(),
@@ -83,7 +86,9 @@ due to an alternative in a different tower".format(v.name, var_dict[name].name))
         except (OSError, IOError):   # disk error sometimes.. just ignore it
             logger.exception("Exception in ModelSaver.trigger_epoch!")
 
+
 class MinSaver(Callback):
+
     def __init__(self, monitor_stat, reverse=True, filename=None):
         self.monitor_stat = monitor_stat
         self.reverse = reverse
@@ -116,15 +121,14 @@ class MinSaver(Callback):
                 "Cannot find a checkpoint state. Do you forget to use ModelSaver?")
         path = ckpt.model_checkpoint_path
         newname = os.path.join(logger.LOG_DIR,
-                self.filename or
-                ('max-' if self.reverse else 'min-' + self.monitor_stat + '.tfmodel'))
+                               self.filename or
+                               ('max-' if self.reverse else 'min-' + self.monitor_stat + '.tfmodel'))
         shutil.copy(path, newname)
         logger.info("Model with {} '{}' saved.".format(
             'maximum' if self.reverse else 'minimum', self.monitor_stat))
 
+
 class MaxSaver(MinSaver):
+
     def __init__(self, monitor_stat):
         super(MaxSaver, self).__init__(monitor_stat, True)
-
-
-

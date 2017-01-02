@@ -10,10 +10,12 @@ import cv2
 
 __all__ = ['Flip', 'Resize', 'RandomResize', 'ResizeShortestEdge']
 
+
 class Flip(ImageAugmentor):
     """
     Random flip.
     """
+
     def __init__(self, horiz=False, vert=False, prob=0.5):
         """
         Only one of horiz, vert can be set.
@@ -45,8 +47,10 @@ class Flip(ImageAugmentor):
     def _fprop_coord(self, coord, param):
         raise NotImplementedError()
 
+
 class Resize(ImageAugmentor):
     """ Resize image to a target size"""
+
     def __init__(self, shape, interp=cv2.INTER_CUBIC):
         """
         :param shape: shape in (h, w)
@@ -59,13 +63,15 @@ class Resize(ImageAugmentor):
             img, self.shape[::-1],
             interpolation=self.interp)
         if img.ndim == 3 and ret.ndim == 2:
-            ret = ret[:,:,np.newaxis]
+            ret = ret[:, :, np.newaxis]
         return ret
+
 
 class ResizeShortestEdge(ImageAugmentor):
     """ Resize the shortest edge to a certain number while
         keeping the aspect ratio
     """
+
     def __init__(self, size):
         size = size * 1.0
         self._init(locals())
@@ -76,13 +82,15 @@ class ResizeShortestEdge(ImageAugmentor):
         desSize = map(int, [scale * w, scale * h])
         ret = cv2.resize(img, tuple(desSize), interpolation=cv2.INTER_CUBIC)
         if img.ndim == 3 and ret.ndim == 2:
-            ret = ret[:,:,np.newaxis]
+            ret = ret[:, :, np.newaxis]
         return ret
+
 
 class RandomResize(ImageAugmentor):
     """ randomly rescale w and h of the image"""
-    def __init__(self, xrange, yrange, minimum=(0,0), aspect_ratio_thres=0.15,
-            interp=cv2.INTER_CUBIC):
+
+    def __init__(self, xrange, yrange, minimum=(0, 0), aspect_ratio_thres=0.15,
+                 interp=cv2.INTER_CUBIC):
         """
         :param xrange: (min, max) scaling ratio
         :param yrange: (min, max) scaling ratio
@@ -112,6 +120,5 @@ class RandomResize(ImageAugmentor):
     def _augment(self, img, dsize):
         ret = cv2.resize(img, dsize, interpolation=self.interp)
         if img.ndim == 3 and ret.ndim == 2:
-            ret = ret[:,:,np.newaxis]
+            ret = ret[:, :, np.newaxis]
         return ret
-

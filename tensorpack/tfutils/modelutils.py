@@ -9,6 +9,7 @@ from ..utils import logger
 
 __all__ = ['describe_model', 'get_shape_str']
 
+
 def describe_model():
     """ print a description of the current model parameters """
     train_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
@@ -40,5 +41,3 @@ def get_shape_str(tensors):
         assert isinstance(tensors, (tf.Tensor, tf.Variable)), "Not a tensor: {}".format(type(tensors))
         shape_str = str(tensors.get_shape().as_list())
     return shape_str
-
-

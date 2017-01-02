@@ -10,13 +10,14 @@ from .base import Trainer
 
 from ..utils import logger, SUMMARY_BACKUP_KEYS, PREDICT_TOWER
 from ..tfutils import (get_tensors_by_names, freeze_collection,
-        get_global_step_var, TowerContext)
+                       get_global_step_var, TowerContext)
 from ..tfutils.summary import summary_moving_average, add_moving_summary
 from ..predict import OnlinePredictor, build_multi_tower_prediction_graph
 from ..tfutils.gradproc import apply_grad_processors
 from .input_data import FeedInput, FeedfreeInput
 
-__all__ = ['SimpleTrainer','MultiPredictorTowerTrainer']
+__all__ = ['SimpleTrainer', 'MultiPredictorTowerTrainer']
+
 
 class PredictorFactory(object):
     """ Make predictors for a trainer"""
@@ -52,8 +53,10 @@ class PredictorFactory(object):
             build_multi_tower_prediction_graph(fn, self.towers)
         self.tower_built = True
 
+
 class SimpleTrainer(Trainer):
     """ A naive demo trainer """
+
     def __init__(self, config):
         super(SimpleTrainer, self).__init__(config)
         self._predictor_factory = PredictorFactory(self.sess, self.model, [0])
@@ -78,7 +81,7 @@ class SimpleTrainer(Trainer):
 
         grads = self.config.optimizer.compute_gradients(cost_var)
         grads = apply_grad_processors(grads,
-                self.model.get_gradient_processor())
+                                      self.model.get_gradient_processor())
 
         self.train_op = tf.group(
             self.config.optimizer.apply_gradients(grads, get_global_step_var()),
@@ -93,13 +96,15 @@ class SimpleTrainer(Trainer):
     def get_predict_func(self, input_names, output_names):
         return self._predictor_factory.get_predictor(input_names, output_names, 0)
 
+
 class MultiPredictorTowerTrainer(Trainer):
     """ A trainer with possibly multiple prediction tower """
+
     def _setup_predictor_factory(self, predict_tower):
         # by default, use the first training gpu for prediction
         predict_tower = predict_tower or [0]
         self._predictor_factory = PredictorFactory(
-                self.sess, self.model, predict_tower)
+            self.sess, self.model, predict_tower)
 
     def get_predict_func(self, input_names, output_names, tower=0):
         """

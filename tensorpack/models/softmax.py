@@ -8,6 +8,7 @@ from ._common import layer_register
 
 __all__ = ['SoftMax']
 
+
 @layer_register()
 def SoftMax(x, use_temperature=False, temperature_init=1.0):
     """
@@ -16,6 +17,6 @@ def SoftMax(x, use_temperature=False, temperature_init=1.0):
     """
     if use_temperature:
         t = tf.get_variable('invtemp', [],
-                initializer=tf.constant_initializer(1.0 / float(temperature_init)))
+                            initializer=tf.constant_initializer(1.0 / float(temperature_init)))
         x = x * t
     return tf.nn.softmax(x, name='output')

@@ -12,6 +12,7 @@ from ..utils import logger
 
 __all__ = ['LinearWrap']
 
+
 def _global_import(name):
     p = __import__(name, globals(), locals(), level=1)
     lst = p.__all__ if '__all__' in dir(p) else dir(p)
@@ -32,6 +33,7 @@ class LinearWrap(object):
     """
 
     class TFModuleFunc(object):
+
         def __init__(self, mod, tensor):
             self._mod = mod
             self._t = tensor
@@ -88,4 +90,3 @@ class LinearWrap(object):
     def print_tensor(self):
         print(self._t)
         return self
-

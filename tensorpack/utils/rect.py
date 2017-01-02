@@ -5,6 +5,7 @@
 
 import numpy as np
 
+
 class Rect(object):
     """
     A Rectangle.
@@ -68,7 +69,7 @@ class Rect(object):
 
     def roi(self, img):
         assert self.validate(img.shape[:2]), "{} vs {}".format(self, img.shape[:2])
-        return img[self.y0:self.y1+1, self.x0:self.x1+1]
+        return img[self.y0:self.y1 + 1, self.x0:self.x1 + 1]
 
     def expand(self, frac):
         assert frac > 1.0, frac
@@ -92,7 +93,7 @@ class Rect(object):
         xmax = min(self.x1, img.shape[1])
         ymax = min(self.y1, img.shape[0])
         patch = img[ymin:ymax, xmin:xmax]
-        ret[ystart:ystart+patch.shape[0],xstart:xstart+patch.shape[1]] = patch
+        ret[ystart:ystart + patch.shape[0], xstart:xstart + patch.shape[1]] = patch
         return ret
 
     __repr__ = __str__
@@ -101,6 +102,6 @@ class Rect(object):
 if __name__ == '__main__':
     x = Rect(2, 1, 3, 3, allow_neg=True)
 
-    img = np.random.rand(3,3)
+    img = np.random.rand(3, 3)
     print(img)
     print(x.roi_zeropad(img))

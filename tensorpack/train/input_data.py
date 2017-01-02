@@ -14,13 +14,16 @@ from ..utils import logger
 from ..callbacks.concurrency import StartProcOrThread
 
 __all__ = ['QueueInput', 'FeedfreeInput', 'TensorInput',
-        'DummyConstantInput']
+           'DummyConstantInput']
+
 
 @six.add_metaclass(ABCMeta)
 class InputData(object):
     pass
 
+
 class FeedInput(InputData):
+
     def __init__(self, ds):
         assert isinstance(ds, DataFlow), ds
         self.ds = ds
@@ -39,7 +42,9 @@ class FeedInput(InputData):
         feed = dict(zip(self.input_vars, data))
         return feed
 
+
 class FeedfreeInput(InputData):
+
     def get_input_tensors(self):
         return self._get_input_tensors()
 
@@ -49,7 +54,9 @@ class FeedfreeInput(InputData):
         always create and return a list of new input tensors
         """
 
+
 class EnqueueThread(threading.Thread):
+
     def __init__(self, trainer, queue, ds, input_placehdrs):
         super(EnqueueThread, self).__init__()
         self.name = 'EnqueueThread'
@@ -77,7 +84,7 @@ class EnqueueThread(threading.Thread):
                         if self.coord.should_stop():
                             return
                         feed = dict(zip(self.placehdrs, dp))
-                        #print 'qsize:', self.sess.run([self.op, self.size_op], feed_dict=feed)[1]
+                        # print 'qsize:', self.sess.run([self.op, self.size_op], feed_dict=feed)[1]
                         self.op.run(feed_dict=feed)
             except tf.errors.CancelledError as e:
                 pass
@@ -91,7 +98,9 @@ class EnqueueThread(threading.Thread):
                     pass
                 logger.info("Enqueue Thread Exited.")
 
+
 class QueueInput(FeedfreeInput):
+
     def __init__(self, ds, queue=None):
         """
         :param ds: a `DataFlow` instance
@@ -108,32 +117,34 @@ class QueueInput(FeedfreeInput):
     def _setup(self, trainer):
         self.input_placehdrs = trainer.model.get_input_vars()
         assert len(self.input_placehdrs) > 0, \
-                "QueueInput can only be used with input placeholders!"
+            "QueueInput can only be used with input placeholders!"
         if self.queue is None:
             self.queue = tf.FIFOQueue(
-                    50, [x.dtype for x in self.input_placehdrs],
-                    name='input_queue')
+                50, [x.dtype for x in self.input_placehdrs],
+                name='input_queue')
         self.thread = EnqueueThread(
-                trainer, self.queue, self.ds, self.input_placehdrs)
+            trainer, self.queue, self.ds, self.input_placehdrs)
         trainer.config.callbacks.append(StartProcOrThread(self.thread))
 
     def _get_input_tensors(self):
         ret = self.queue.dequeue(name='input_deque')
-        if isinstance(ret, tf.Tensor): # only one input
+        if isinstance(ret, tf.Tensor):  # only one input
             ret = [ret]
         assert len(ret) == len(self.input_placehdrs)
         for qv, v in zip(ret, self.input_placehdrs):
             qv.set_shape(v.get_shape())
 
         # test the overhead of queue
-        #with tf.device('/gpu:0'):
-            #ret = [tf.Variable(tf.random_normal([128,224,224,3],
-                #dtype=tf.float32), trainable=False),
-                #tf.Variable(tf.ones([128], dtype=tf.int32), trainable=False)]
+        # with tf.device('/gpu:0'):
+            # ret = [tf.Variable(tf.random_normal([128,224,224,3],
+            # dtype=tf.float32), trainable=False),
+            # tf.Variable(tf.ones([128], dtype=tf.int32), trainable=False)]
         return ret
+
 
 class DummyConstantInput(QueueInput):
     """ only for debugging performance issues """
+
     def __init__(self, ds, shapes):
         super(DummyConstantInput, self).__init__(ds)
         self.shapes = shapes
@@ -146,11 +157,13 @@ class DummyConstantInput(QueueInput):
         for idx, p in enumerate(placehdrs):
             with tf.device('/gpu:0'):
                 ret.append(tf.get_variable('dummy-' + p.op.name,
-                    shape=self.shapes[idx], dtype=p.dtype, trainable=False,
-                    initializer=tf.constant_initializer()))
+                                           shape=self.shapes[idx], dtype=p.dtype, trainable=False,
+                                           initializer=tf.constant_initializer()))
         return ret
 
+
 class TensorInput(FeedfreeInput):
+
     def __init__(self, get_tensor_fn, size=None):
         self.get_tensor_fn = get_tensor_fn
         self._size = size

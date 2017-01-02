@@ -12,6 +12,7 @@ These utils should be irrelevant to tensorflow.
 
 __all__ = []
 
+
 def _global_import(name):
     p = __import__(name, globals(), None, level=1)
     lst = p.__all__ if '__all__' in dir(p) else dir(p)
@@ -23,7 +24,7 @@ _TO_IMPORT = set([
     'naming',
     'utils',
     'gpu'
-    ])
+])
 
 _CURR_DIR = os.path.dirname(__file__)
 for _, module_name, _ in walk_packages(
@@ -36,5 +37,3 @@ for _, module_name, _ in walk_packages(
     if module_name in _TO_IMPORT:
         _global_import(module_name)
     __all__.append(module_name)
-
-

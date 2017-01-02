@@ -15,6 +15,7 @@ from .symbolic_functions import rms
 __all__ = ['create_summary', 'add_param_summary', 'add_activation_summary',
            'add_moving_summary', 'summary_moving_average']
 
+
 def create_summary(name, v):
     """
     Return a tf.Summary object with name and simple scalar value v
@@ -24,6 +25,7 @@ def create_summary(name, v):
     s = tf.Summary()
     s.value.add(tag=name, simple_value=v)
     return s
+
 
 def add_activation_summary(x, name=None):
     """
@@ -44,6 +46,7 @@ def add_activation_summary(x, name=None):
         tf.summary.scalar(name + '-sparsity', tf.nn.zero_fraction(x))
         tf.summary.scalar(name + '-rms', rms(x))
 
+
 def add_param_summary(summary_lists):
     """
     Add summary for all trainable variables matching the regex
@@ -54,6 +57,7 @@ def add_param_summary(summary_lists):
     ctx = get_current_tower_context()
     if ctx is not None and not ctx.is_main_training_tower:
         return
+
     def perform(var, action):
         ndim = var.get_shape().ndims
         name = var.name.replace(':0', '')
@@ -87,6 +91,7 @@ def add_param_summary(summary_lists):
                     for act in actions:
                         perform(p, act)
 
+
 def add_moving_summary(v, *args):
     """
     :param v: tensor or list of tensor to summary
@@ -101,6 +106,7 @@ def add_moving_summary(v, *args):
     for x in v:
         assert x.get_shape().ndims == 0, x.get_shape()
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, x)
+
 
 @memoized
 def summary_moving_average(tensors=None):
@@ -121,4 +127,3 @@ def summary_moving_average(tensors=None):
         name = re.sub('tower[p0-9]+/', '', c.op.name)
         tf.summary.scalar(name + '-summary', averager.average(c))
     return avg_maintain_op
-

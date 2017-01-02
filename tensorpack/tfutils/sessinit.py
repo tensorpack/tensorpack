@@ -20,6 +20,7 @@ __all__ = ['SessionInit', 'NewSession', 'SaverRestore',
 
 # TODO they initialize_all at the beginning by default.
 
+
 @six.add_metaclass(ABCMeta)
 class SessionInit(object):
     """ Base class for utilities to initialize a session"""
@@ -35,23 +36,29 @@ class SessionInit(object):
     def _init(self, sess):
         pass
 
+
 class JustCurrentSession(SessionInit):
     """ Just use the current default session. This is a no-op placeholder"""
+
     def _init(self, sess):
         pass
+
 
 class NewSession(SessionInit):
     """
     Create a new session. All variables will be initialized by their
     initializer.
     """
+
     def _init(self, sess):
         sess.run(tf.global_variables_initializer())
+
 
 class SaverRestore(SessionInit):
     """
     Restore an old model saved by `ModelSaver`.
     """
+
     def __init__(self, model_path, prefix=None):
         """
         :param model_path: a model name (model-xxxx) or a ``checkpoint`` file.
@@ -71,7 +78,7 @@ class SaverRestore(SessionInit):
             new_path = model_path.split('.index')[0]
         if new_path != model_path:
             logger.warn(
-                    "[SaverRestore] {} is corrected to {} when restoring the model.".format(model_path, new_path))
+                "[SaverRestore] {} is corrected to {} when restoring the model.".format(model_path, new_path))
             model_path = new_path
         assert os.path.isfile(model_path) or os.path.isfile(model_path + '.index'), model_path
         self.set_path(model_path)
@@ -146,10 +153,12 @@ class SaverRestore(SessionInit):
                     logger.warn("Variable {} in checkpoint not found in the graph!".format(name))
         return var_dict
 
+
 class ParamRestore(SessionInit):
     """
     Restore variables from a dictionary.
     """
+
     def __init__(self, param_dict):
         """
         :param param_dict: a dict of {name: value}
@@ -158,7 +167,7 @@ class ParamRestore(SessionInit):
         self.prms = {get_op_var_name(n)[1]: v for n, v in six.iteritems(param_dict)}
 
     def _init(self, sess):
-        variables = tf.get_collection(tf.GraphKeys().VARIABLES) # TODO
+        variables = tf.get_collection(tf.GraphKeys().VARIABLES)  # TODO
 
         variable_names = set([get_savename_from_varname(k.name) for k in variables])
         param_names = set(six.iterkeys(self.prms))
@@ -174,14 +183,15 @@ class ParamRestore(SessionInit):
             logger.warn("Variable {} in the dict not found in the graph!".format(k))
 
         upd = SessionUpdate(sess,
-                [v for v in variables if \
-                    get_savename_from_varname(v.name) in intersect])
+                            [v for v in variables if
+                             get_savename_from_varname(v.name) in intersect])
         logger.info("Restoring from dict ...")
         upd.update({name: value for name, value in six.iteritems(self.prms) if name in intersect})
 
 
 class ChainInit(SessionInit):
     """ Init a session by a list of SessionInit instance."""
+
     def __init__(self, sess_inits, new_session=True):
         """
         :params sess_inits: list of `SessionInit` instances.

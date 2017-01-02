@@ -10,8 +10,10 @@ __all__ = ['GaussianDeform', 'GaussianMap']
 
 # TODO really needs speedup
 
+
 class GaussianMap(object):
     """ Generate gaussian weighted deformation map"""
+
     def __init__(self, image_shape, sigma=0.5):
         assert len(image_shape) == 2
         self.shape = image_shape
@@ -25,17 +27,18 @@ class GaussianMap(object):
         x = x.astype('float32') / ret.shape[1] - anchor[1]
         g = np.exp(-(x**2 + y ** 2) / self.sigma)
         #cv2.imshow(" ", g)
-        #cv2.waitKey()
+        # cv2.waitKey()
         return g
+
 
 def np_sample(img, coords):
     # a numpy implementation of ImageSample layer
     coords = np.maximum(coords, 0)
-    coords = np.minimum(coords, np.array([img.shape[0]-1, img.shape[1]-1]))
+    coords = np.minimum(coords, np.array([img.shape[0] - 1, img.shape[1] - 1]))
 
     lcoor = np.floor(coords).astype('int32')
     ucoor = lcoor + 1
-    ucoor = np.minimum(ucoor, np.array([img.shape[0]-1, img.shape[1]-1]))
+    ucoor = np.minimum(ucoor, np.array([img.shape[0] - 1, img.shape[1] - 1]))
     diff = coords - lcoor
     neg_diff = 1.0 - diff
 
@@ -46,17 +49,20 @@ def np_sample(img, coords):
     diffy, diffx = np.split(diff, 2, axis=2)
     ndiffy, ndiffx = np.split(neg_diff, 2, axis=2)
 
-    ret = img[lcoory,lcoorx,:] * ndiffx * ndiffy + \
-            img[ucoory, ucoorx,:] * diffx * diffy + \
-            img[lcoory, ucoorx,:] * ndiffy * diffx + \
-            img[ucoory,lcoorx,:] * diffy * ndiffx
-    return ret[:,:,0,:]
+    ret = img[lcoory, lcoorx, :] * ndiffx * ndiffy + \
+        img[ucoory, ucoorx, :] * diffx * diffy + \
+        img[lcoory, ucoorx, :] * ndiffy * diffx + \
+        img[ucoory, lcoorx, :] * diffy * ndiffx
+    return ret[:, :, 0, :]
 
 # TODO input/output with different shape
+
+
 class GaussianDeform(ImageAugmentor):
     """
     Some kind of deformation. Quite slow.
     """
+
     def __init__(self, anchors, shape, sigma=0.5, randrange=None):
         """
         :param anchors: in [0,1] coordinate
@@ -69,13 +75,13 @@ class GaussianDeform(ImageAugmentor):
         self.anchors = anchors
         self.K = len(self.anchors)
         self.shape = shape
-        self.grid = np.mgrid[0:self.shape[0], 0:self.shape[1]].transpose(1,2,0)
-        self.grid = self.grid.astype('float32') # HxWx2
+        self.grid = np.mgrid[0:self.shape[0], 0:self.shape[1]].transpose(1, 2, 0)
+        self.grid = self.grid.astype('float32')  # HxWx2
 
         gm = GaussianMap(self.shape, sigma=sigma)
         self.gws = np.array([gm.get_gaussian_weight(ank)
-                             for ank in self.anchors], dtype='float32') # KxHxW
-        self.gws = self.gws.transpose(1, 2, 0)  #HxWxK
+                             for ank in self.anchors], dtype='float32')  # KxHxW
+        self.gws = self.gws.transpose(1, 2, 0)  # HxWxK
         if randrange is None:
             self.randrange = self.shape[0] / 8
         else:

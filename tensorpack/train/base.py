@@ -21,8 +21,11 @@ from ..tfutils.summary import create_summary
 
 __all__ = ['Trainer', 'StopTraining']
 
+
 class StopTraining(BaseException):
     pass
+
+
 @six.add_metaclass(ABCMeta)
 class Trainer(object):
     """ Base class for a trainer."""
@@ -91,7 +94,7 @@ class Trainer(object):
         for val in summary.value:
             if val.WhichOneof('value') == 'simple_value':
                 val.tag = re.sub('tower[p0-9]+/', '', val.tag)   # TODO move to subclasses
-                suffix = '-summary' # issue#6150
+                suffix = '-summary'  # issue#6150
                 if val.tag.endswith(suffix):
                     val.tag = val.tag[:-len(suffix)]
                 self.stat_holder.add_stat(val.tag, val.simple_value)
@@ -99,7 +102,7 @@ class Trainer(object):
 
     def write_scalar_summary(self, name, val):
         self.summary_writer.add_summary(
-                create_summary(name, val), get_global_step())
+            create_summary(name, val), get_global_step())
         self.stat_holder.add_stat(name, val)
 
     def setup(self):
@@ -138,7 +141,7 @@ class Trainer(object):
                 callbacks.before_train()
                 logger.info("Start training with global_step={}".format(get_global_step()))
                 for epoch_num in range(
-                        self.config.starting_epoch, self.config.max_epoch+1):
+                        self.config.starting_epoch, self.config.max_epoch + 1):
                     with timed_operation(
                         'Epoch {} (global_step {})'.format(
                             epoch_num, get_global_step() + self.config.step_per_epoch)):
@@ -147,7 +150,7 @@ class Trainer(object):
                                 **get_tqdm_kwargs(leave=True)):
                             if self.coord.should_stop():
                                 return
-                            self.run_step() # implemented by subclass
+                            self.run_step()  # implemented by subclass
                             callbacks.trigger_step()   # not useful?
                     # trigger epoch outside the timing region.
                     self.trigger_epoch()

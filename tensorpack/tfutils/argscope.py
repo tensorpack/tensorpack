@@ -12,6 +12,7 @@ __all__ = ['argscope', 'get_arg_scope']
 
 _ArgScopeStack = []
 
+
 @contextmanager
 def argscope(layers, **param):
     if not isinstance(layers, list):
@@ -32,6 +33,7 @@ def argscope(layers, **param):
     _ArgScopeStack.append(new_scope)
     yield
     del _ArgScopeStack[-1]
+
 
 def get_arg_scope():
     """

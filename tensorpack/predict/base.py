@@ -12,9 +12,10 @@ from ..utils import logger
 from ..tfutils import get_tensors_by_names, TowerContext
 
 __all__ = ['OnlinePredictor', 'OfflinePredictor',
-        'AsyncPredictorBase',
-        'MultiTowerOfflinePredictor', 'build_multi_tower_prediction_graph',
-        'DataParallelOfflinePredictor']
+           'AsyncPredictorBase',
+           'MultiTowerOfflinePredictor', 'build_multi_tower_prediction_graph',
+           'DataParallelOfflinePredictor']
+
 
 @six.add_metaclass(ABCMeta)
 class PredictorBase(object):
@@ -46,7 +47,9 @@ class PredictorBase(object):
         :return: output as defined by the config
         """
 
+
 class AsyncPredictorBase(PredictorBase):
+
     @abstractmethod
     def put_task(self, dp, callback=None):
         """
@@ -67,7 +70,9 @@ class AsyncPredictorBase(PredictorBase):
         # in Tornado, Future.result() doesn't wait
         return fut.result()
 
+
 class OnlinePredictor(PredictorBase):
+
     def __init__(self, sess, input_tensors, output_tensors, return_input=False):
         self.session = sess
         self.return_input = return_input
@@ -85,6 +90,7 @@ class OnlinePredictor(PredictorBase):
 
 class OfflinePredictor(OnlinePredictor):
     """ Build a predictor from a given config, in an independent graph"""
+
     def __init__(self, config):
         self.graph = tf.Graph()
         with self.graph.as_default():
@@ -98,7 +104,7 @@ class OfflinePredictor(OnlinePredictor):
             sess = tf.Session(config=config.session_config)
             config.session_init.init(sess)
             super(OfflinePredictor, self).__init__(
-                    sess, input_vars, output_vars, config.return_input)
+                sess, input_vars, output_vars, config.return_input)
 
 
 def build_multi_tower_prediction_graph(build_tower_fn, towers):
@@ -108,13 +114,15 @@ def build_multi_tower_prediction_graph(build_tower_fn, towers):
     """
     for k in towers:
         logger.info(
-"Building graph for predictor tower {}...".format(k))
+            "Building graph for predictor tower {}...".format(k))
         with tf.device('/gpu:{}'.format(k) if k >= 0 else '/cpu:0'), \
                 TowerContext('{}{}'.format(PREDICT_TOWER, k)):
             build_tower_fn(k)
             tf.get_variable_scope().reuse_variables()
 
+
 class MultiTowerOfflinePredictor(OnlinePredictor):
+
     def __init__(self, config, towers):
         self.graph = tf.Graph()
         self.predictors = []
@@ -130,8 +138,8 @@ class MultiTowerOfflinePredictor(OnlinePredictor):
 
             for k in towers:
                 output_vars = get_tensors_by_names(
-                        ['{}{}/'.format(PREDICT_TOWER, k) + n \
-                                for n in config.output_names])
+                    ['{}{}/'.format(PREDICT_TOWER, k) + n
+                     for n in config.output_names])
                 self.predictors.append(OnlinePredictor(
                     self.sess, input_vars, output_vars, config.return_input))
 
@@ -142,7 +150,9 @@ class MultiTowerOfflinePredictor(OnlinePredictor):
     def get_predictors(self, n):
         return [self.predictors[k % len(self.predictors)] for k in range(n)]
 
+
 class DataParallelOfflinePredictor(OnlinePredictor):
+
     def __init__(self, config, towers):
         self.graph = tf.Graph()
         with self.graph.as_default():
@@ -152,19 +162,19 @@ class DataParallelOfflinePredictor(OnlinePredictor):
             for k in towers:
                 towername = PREDICT_TOWER + str(k)
                 input_vars = config.model.build_placeholders(
-                        prefix=towername + '-')
+                    prefix=towername + '-')
                 logger.info(
-        "Building graph for predictor tower {}...".format(k))
+                    "Building graph for predictor tower {}...".format(k))
                 with tf.device('/gpu:{}'.format(k) if k >= 0 else '/cpu:0'), \
                         TowerContext(towername, is_training=False):
                     config.model.build_graph(input_vars)
                     tf.get_variable_scope().reuse_variables()
                 input_var_names.extend([k.name for k in input_vars])
                 output_vars.extend(get_tensors_by_names(
-                        [towername + '/' + n \
-                                for n in config.output_names]))
+                    [towername + '/' + n
+                     for n in config.output_names]))
 
             input_vars = get_tensors_by_names(input_var_names)
             config.session_init.init(sess)
             super(DataParallelOfflinePredictor, self).__init__(
-                    sess, input_vars, output_vars, config.return_input)
+                sess, input_vars, output_vars, config.return_input)

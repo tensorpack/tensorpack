@@ -10,8 +10,10 @@ from ..utils import logger
 
 __all__ = ['RunOp']
 
+
 class RunOp(Callback):
     """ Run an op periodically"""
+
     def __init__(self, setup_func, run_before=True, run_epoch=True):
         """
         :param setup_func: a function that returns the op in the graph
@@ -34,5 +36,5 @@ class RunOp(Callback):
         if self.run_epoch:
             self._op.run()
 
-    #def _log(self):
+    # def _log(self):
         #logger.info("Running op {} ...".format(self._op_name))

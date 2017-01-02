@@ -17,6 +17,8 @@ __all__ = ['HyperParamSetter', 'HumanHyperParamSetter',
            'ScheduledHyperParamSetter',
            'StatMonitorParamSetter', 'HyperParamSetterWithFunc',
            'HyperParam', 'GraphVarParam', 'ObjAttrParam']
+
+
 @six.add_metaclass(ABCMeta)
 class HyperParam(object):
     """ Base class for a hyper param"""
@@ -35,8 +37,10 @@ class HyperParam(object):
         """ A name to display"""
         return self._readable_name
 
+
 class GraphVarParam(HyperParam):
     """ a variable in the graph can be a hyperparam"""
+
     def __init__(self, name, shape=[]):
         self.name = name
         self.shape = shape
@@ -56,13 +60,15 @@ class GraphVarParam(HyperParam):
         self.assign_op = self.var.assign(self.val_holder)
 
     def set_value(self, v):
-        self.assign_op.eval(feed_dict={self.val_holder:v})
+        self.assign_op.eval(feed_dict={self.val_holder: v})
 
     def get_value(self):
         return self.var.eval()
 
+
 class ObjAttrParam(HyperParam):
     """ an attribute of an object can be a hyperparam"""
+
     def __init__(self, obj, attrname, readable_name=None):
         """ :param readable_name: default to be attrname."""
         self.obj = obj
@@ -77,6 +83,7 @@ class ObjAttrParam(HyperParam):
 
     def get_value(self, v):
         return getattr(self.obj, self.attrname)
+
 
 class HyperParamSetter(Callback):
     """
@@ -126,10 +133,12 @@ class HyperParamSetter(Callback):
         if v is not None:
             self.param.set_value(v)
 
+
 class HumanHyperParamSetter(HyperParamSetter):
     """
     Set hyperparameters by loading the value from a file each time it get called.
     """
+
     def __init__(self, param, file_name='hyper.txt'):
         """
         :param file_name: a file containing the value of the variable.
@@ -149,7 +158,7 @@ class HumanHyperParamSetter(HyperParamSetter):
             with open(self.file_name) as f:
                 lines = f.readlines()
             lines = [s.strip().split(':') for s in lines]
-            dic = {str(k):float(v) for k, v in lines}
+            dic = {str(k): float(v) for k, v in lines}
             ret = dic[self.param.readable_name]
             return ret
         except:
@@ -158,10 +167,12 @@ class HumanHyperParamSetter(HyperParamSetter):
                     self.param.readable_name, self.file_name))
             return None
 
+
 class ScheduledHyperParamSetter(HyperParamSetter):
     """
     Set hyperparameters by a predefined schedule.
     """
+
     def __init__(self, param, schedule, interp=None):
         """
         :param schedule: [(epoch1, val1), (epoch2, val2), (epoch3, val3), ...]
@@ -196,7 +207,9 @@ class ScheduledHyperParamSetter(HyperParamSetter):
             v = (self.epoch_num - laste) * 1. / (e - laste) * (v - lastv) + lastv
             return v
 
+
 class HyperParamSetterWithFunc(HyperParamSetter):
+
     def __init__(self, param, func):
         """Set hyperparameter by a func
         new_value = f(epoch_num, old_value)
@@ -207,10 +220,12 @@ class HyperParamSetterWithFunc(HyperParamSetter):
     def _get_value_to_set(self):
         return self.f(self.epoch_num, self.get_current_value())
 
+
 class StatMonitorParamSetter(HyperParamSetter):
+
     def __init__(self, param, stat_name, value_func, threshold,
-            last_k, reverse=False
-            ):
+                 last_k, reverse=False
+                 ):
         """
         Set hyperparameter by a func, when a specific stat wasn't
         decreasing/increasing enough in the last $k$ epochs.
@@ -236,22 +251,21 @@ class StatMonitorParamSetter(HyperParamSetter):
     def _get_value_to_set(self):
         holder = self.trainer.stat_holder
         hist = holder.get_stat_history(self.stat_name)
-        if len(hist) < self.last_k+1 or \
+        if len(hist) < self.last_k + 1 or \
                 self.epoch_num - self.last_changed_epoch < self.last_k:
             return None
-        hist = hist[-self.last_k-1:]    # len==last_k+1
+        hist = hist[-self.last_k - 1:]    # len==last_k+1
 
         hist_first = hist[0]
         if not self.reverse:
             hist_min = min(hist)
-            if hist_min < hist_first - self.threshold: # small enough
+            if hist_min < hist_first - self.threshold:  # small enough
                 return None
         else:
             hist_max = max(hist)
-            if hist_max > hist_first + self.threshold: # large enough
+            if hist_max > hist_first + self.threshold:  # large enough
                 return None
         self.last_changed_epoch = self.epoch_num
         logger.info("[StatMonitorParamSetter] Triggered, history: " +
-                ','.join(map(str, hist)))
+                    ','.join(map(str, hist)))
         return self.value_func(self.get_current_value())
-

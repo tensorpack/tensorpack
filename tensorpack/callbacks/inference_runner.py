@@ -18,6 +18,7 @@ from ..train.input_data import FeedfreeInput
 
 __all__ = ['InferenceRunner']
 
+
 def summary_inferencer(trainer, infs):
     for inf in infs:
         ret = inf.after_inference()
@@ -28,6 +29,7 @@ def summary_inferencer(trainer, infs):
                 logger.warn("{} returns a non-scalar statistics!".format(type(inf).__name__))
                 continue
             trainer.write_scalar_summary(k, v)
+
 
 class InferenceRunner(Callback):
     """
@@ -54,16 +56,17 @@ class InferenceRunner(Callback):
         self.input_tensors = input_tensors
 
     def _setup_graph(self):
-        self._find_input_tensors() # these are all tensor names
-        self._find_output_tensors() # may be either tensor name or op name
+        self._find_input_tensors()  # these are all tensor names
+        self._find_output_tensors()  # may be either tensor name or op name
         self.pred_func = self.trainer.get_predict_func(
-                self.input_tensors, self.output_tensors)
+            self.input_tensors, self.output_tensors)
 
     def _find_input_tensors(self):
         if self.input_tensors is None:
             input_vars = self.trainer.model.get_reuse_placehdrs()
             # TODO even if it works here, sparse still is unavailable
             # because get_tensor_by_name doesn't work for sparse
+
             def get_name(x):
                 if isinstance(x, tf.SparseTensor):
                     return x.op.name.split('/')[0]
@@ -79,6 +82,7 @@ class InferenceRunner(Callback):
         IOTensor = InferenceRunner.IOTensor
         self.output_tensors = list(filter(
             lambda x: x not in self.input_tensors, all_names))
+
         def find_oid(idxs):
             ret = []
             for idx in idxs:
@@ -102,13 +106,14 @@ class InferenceRunner(Callback):
                 outputs = self.pred_func(dp)
                 for inf, tensormap in zip(self.infs, self.inf_to_tensors):
                     inf_output = [(outputs if k.isOutput else dp)[k.index]
-                            for k in tensormap]
+                                  for k in tensormap]
                     inf.datapoint(inf_output)
                 pbar.update()
         self._write_summary_after_inference()
 
     def _write_summary_after_inference(self):
         summary_inferencer(self.trainer, self.infs)
+
 
 class FeedfreeInferenceRunner(Callback):
     IOTensor = namedtuple('IOTensor', ['index', 'isOutput'])
@@ -139,9 +144,9 @@ class FeedfreeInferenceRunner(Callback):
         if self.input_tensor_names is not None:
             assert isinstance(self.input_tensor_names, list)
             self._input_tensors = [k for idx, k in enumerate(self._input_tensors)
-                    if model_placehdrs[idx].name in self.input_tensor_names]
+                                   if model_placehdrs[idx].name in self.input_tensor_names]
             assert len(self._input_tensors) == len(self.input_tensor_names), \
-                    "names of input tensors are not defined in the Model"
+                "names of input tensors are not defined in the Model"
 
     def _find_output_tensors(self):
         # doesn't support output an input tensor
@@ -152,6 +157,7 @@ class FeedfreeInferenceRunner(Callback):
 
         IOTensor = InferenceRunner.IOTensor
         self.output_tensors = all_names
+
         def find_oid(idxs):
             ret = []
             for idx in idxs:
@@ -161,7 +167,6 @@ class FeedfreeInferenceRunner(Callback):
         self.inf_to_tensors = [find_oid(t) for t in dispatcer.get_idx_for_each_entry()]
         # list of list of (var_name: IOTensor)
 
-
     def _trigger_epoch(self):
         for inf in self.infs:
             inf.before_inference()
@@ -170,11 +175,11 @@ class FeedfreeInferenceRunner(Callback):
         sz = self._input_data.size()
         with get_tqdm(total=sz) as pbar:
             for _ in range(sz):
-                #outputs = self.pred_func(dp)
-                #for inf, tensormap in zip(self.infs, self.inf_to_tensors):
-                    #inf_output = [(outputs if k.isOutput else dp)[k.index]
-                            #for k in tensormap]
-                    #inf.datapoint(inf_output)
+                # outputs = self.pred_func(dp)
+                # for inf, tensormap in zip(self.infs, self.inf_to_tensors):
+                #     inf_output = [(outputs if k.isOutput else dp)[k.index]
+                #                   for k in tensormap]
+                #     inf.datapoint(inf_output)
                 pbar.update()
         self._write_summary_after_inference()
 

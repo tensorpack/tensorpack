@@ -12,11 +12,14 @@ from six.moves import range
 
 __all__ = ['UniformDiscretizer1D', 'UniformDiscretizerND']
 
+
 @memoized
 def log_once(s):
     logger.warn(s)
 
 # just a placeholder
+
+
 @six.add_metaclass(ABCMeta)
 class Discretizer(object):
 
@@ -28,10 +31,13 @@ class Discretizer(object):
     def get_bin(self, v):
         pass
 
+
 class Discretizer1D(Discretizer):
     pass
 
+
 class UniformDiscretizer1D(Discretizer1D):
+
     def __init__(self, minv, maxv, spacing):
         """
         :params minv: minimum value of the first bin
@@ -54,8 +60,8 @@ class UniformDiscretizer1D(Discretizer1D):
             log_once("UniformDiscretizer1D: value larger than max!")
             return self.nr_bin - 1
         return int(np.clip(
-                (v - self.minv) / self.spacing,
-                0, self.nr_bin - 1))
+            (v - self.minv) / self.spacing,
+            0, self.nr_bin - 1))
 
     def get_bin_center(self, bin_id):
         return self.minv + self.spacing * (bin_id + 0.5)
@@ -69,17 +75,18 @@ class UniformDiscretizer1D(Discretizer1D):
         if v >= self.maxv or v <= self.minv:
             return ret
         try:
-            for k in range(1, smooth_radius+1):
-                ret[b+k] = smooth_factor ** k
+            for k in range(1, smooth_radius + 1):
+                ret[b + k] = smooth_factor ** k
         except IndexError:
             pass
-        for k in range(1, min(smooth_radius+1, b+1)):
-            ret[b-k] = smooth_factor ** k
+        for k in range(1, min(smooth_radius + 1, b + 1)):
+            ret[b - k] = smooth_factor ** k
         ret /= ret.sum()
         return ret
 
 
 class UniformDiscretizerND(Discretizer):
+
     def __init__(self, *min_max_spacing):
         """
         :params min_max_spacing: (minv, maxv, spacing) for each dimension
@@ -122,6 +129,5 @@ class UniformDiscretizerND(Discretizer):
 if __name__ == '__main__':
     #u = UniformDiscretizer1D(-10, 10, 0.12)
     u = UniformDiscretizerND((0, 100, 1), (0, 100, 1), (0, 100, 1))
-    import IPython as IP;
+    import IPython as IP
     IP.embed(config=IP.terminal.ipapp.load_default_config())
-

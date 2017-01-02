@@ -7,6 +7,7 @@ from pkgutil import walk_packages
 
 __all__ = []
 
+
 def global_import(name):
     p = __import__(name, globals(), locals(), level=1)
     lst = p.__all__ if '__all__' in dir(p) else dir(p)
@@ -19,4 +20,3 @@ for _, module_name, _ in walk_packages(
         [os.path.dirname(__file__)]):
     if not module_name.startswith('_'):
         global_import(module_name)
-

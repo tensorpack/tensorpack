@@ -9,15 +9,17 @@ from ..dataflow.base import DataFlow
 from ..models import ModelDesc
 from ..utils import logger
 from ..tfutils import (JustCurrentSession,
-        get_default_sess_config, SessionInit)
+                       get_default_sess_config, SessionInit)
 from .input_data import InputData
 
 __all__ = ['TrainConfig']
+
 
 class TrainConfig(object):
     """
     Config for training a model with a single loss
     """
+
     def __init__(self, **kwargs):
         """
         :param dataset: the dataset to train. a `DataFlow` instance.

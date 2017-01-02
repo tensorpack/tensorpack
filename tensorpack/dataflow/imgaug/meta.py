@@ -7,14 +7,18 @@
 from .base import ImageAugmentor
 
 __all__ = ['RandomChooseAug', 'MapImage', 'Identity', 'RandomApplyAug',
-        'RandomOrderAug']
+           'RandomOrderAug']
+
 
 class Identity(ImageAugmentor):
+
     def _augment(self, img, _):
         return img
 
+
 class RandomApplyAug(ImageAugmentor):
     """ Randomly apply the augmentor with a prob. Otherwise do nothing"""
+
     def __init__(self, aug, prob):
         self._init(locals())
         super(RandomApplyAug, self).__init__()
@@ -37,7 +41,9 @@ class RandomApplyAug(ImageAugmentor):
         else:
             return self.aug._augment(img, prm[1])
 
+
 class RandomChooseAug(ImageAugmentor):
+
     def __init__(self, aug_lists):
         """
         :param aug_lists: list of augmentor, or list of (augmentor, probability) tuple
@@ -65,7 +71,9 @@ class RandomChooseAug(ImageAugmentor):
         idx, prm = prm
         return self.aug_lists[idx]._augment(img, prm)
 
+
 class RandomOrderAug(ImageAugmentor):
+
     def __init__(self, aug_lists):
         """
         Shuffle the augmentors into random order.
@@ -93,10 +101,12 @@ class RandomOrderAug(ImageAugmentor):
             img = self.aug_lists[k]._augment(img, prms[k])
         return img
 
+
 class MapImage(ImageAugmentor):
     """
     Map the image array by a function.
     """
+
     def __init__(self, func):
         """
         :param func: a function which takes a image array and return a augmented one
@@ -105,4 +115,3 @@ class MapImage(ImageAugmentor):
 
     def _augment(self, img, _):
         return self.func(img)
-

@@ -11,6 +11,7 @@ from .batch_norm import BatchNorm
 
 __all__ = ['Maxout', 'PReLU', 'LeakyReLU', 'BNReLU']
 
+
 @layer_register()
 def Maxout(x, num_unit):
     """
@@ -31,6 +32,7 @@ def Maxout(x, num_unit):
         x = tf.reshape(x, [-1, ch / num_unit, num_unit])
     return tf.reduce_max(x, ndim, name='output')
 
+
 @layer_register(log_shape=False)
 def PReLU(x, init=tf.constant_initializer(0.001), name=None):
     """
@@ -47,6 +49,7 @@ def PReLU(x, init=tf.constant_initializer(0.001), name=None):
         name = 'output'
     return tf.mul(x, 0.5, name=name)
 
+
 @layer_register(use_scope=False, log_shape=False)
 def LeakyReLU(x, alpha, name=None):
     """
@@ -62,7 +65,8 @@ def LeakyReLU(x, alpha, name=None):
     return tf.maximum(x, alpha * x, name=name)
     #alpha = float(alpha)
     #x = ((1 + alpha) * x + (1 - alpha) * tf.abs(x))
-    #return tf.mul(x, 0.5, name=name)
+    # return tf.mul(x, 0.5, name=name)
+
 
 @layer_register(log_shape=False, use_scope=False)
 def BNReLU(x, name=None):

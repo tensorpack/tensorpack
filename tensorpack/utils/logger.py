@@ -3,7 +3,8 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import logging
-import os, shutil
+import os
+import shutil
 import os.path
 from termcolor import colored
 from datetime import datetime
@@ -12,7 +13,9 @@ import sys
 
 __all__ = ['set_logger_dir', 'disable_logger', 'auto_set_dir', 'warn_dependency']
 
+
 class _MyFormatter(logging.Formatter):
+
     def format(self, record):
         date = colored('[%(asctime)s @%(filename)s:%(lineno)d]', 'green')
         msg = '%(message)s'
@@ -27,6 +30,7 @@ class _MyFormatter(logging.Formatter):
             self._style._fmt = fmt
         self._fmt = fmt
         return super(_MyFormatter, self).format(record)
+
 
 def _getlogger():
     logger = logging.getLogger('tensorpack')
@@ -45,6 +49,8 @@ def get_time_str():
 # logger file and directory:
 global LOG_FILE, LOG_DIR
 LOG_DIR = None
+
+
 def _set_file(path):
     if os.path.isfile(path):
         backup_name = path + '.' + get_time_str()
@@ -55,6 +61,7 @@ def _set_file(path):
     hdl.setFormatter(_MyFormatter(datefmt='%m%d %H:%M:%S'))
     _logger.addHandler(hdl)
     _logger.info("Argv: " + ' '.join(sys.argv))
+
 
 def set_logger_dir(dirname, action=None):
     """
@@ -98,10 +105,12 @@ _LOGGING_METHOD = ['info', 'warning', 'error', 'critical', 'warn', 'exception', 
 for func in _LOGGING_METHOD:
     locals()[func] = getattr(_logger, func)
 
+
 def disable_logger():
     """ disable all logging ability from this moment"""
     for func in _LOGGING_METHOD:
         globals()[func] = lambda x: None
+
 
 def auto_set_dir(action=None, overwrite=False):
     """ set log directory to a subdir inside 'train_log', with the name being
@@ -112,9 +121,10 @@ def auto_set_dir(action=None, overwrite=False):
     mod = sys.modules['__main__']
     basename = os.path.basename(mod.__file__)
     set_logger_dir(
-            os.path.join('train_log',
-                basename[:basename.rfind('.')]),
-            action=action)
+        os.path.join('train_log',
+                     basename[:basename.rfind('.')]),
+        action=action)
+
 
 def warn_dependency(name, dependencies):
     warn("Failed to import '{}', {} won't be available'".format(dependencies, name))

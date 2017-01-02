@@ -12,6 +12,7 @@ from ..utils.argtools import shape2d
 
 __all__ = ['Conv2D', 'Deconv2D']
 
+
 @layer_register()
 def Conv2D(x, out_channel, kernel_shape,
            padding='SAME', stride=1,
@@ -61,14 +62,18 @@ def Conv2D(x, out_channel, kernel_shape,
                    for i, k in zip(inputs, kernels)]
         conv = tf.concat(3, outputs)
     if nl is None:
-        logger.warn("[DEPRECATED] Default ReLU nonlinearity for Conv2D and FullyConnected will be deprecated. Please use argscope instead.")
+        logger.warn(
+            "[DEPRECATED] Default ReLU nonlinearity for Conv2D and FullyConnected will be deprecated. Please use argscope instead.")
         nl = tf.nn.relu
     return nl(tf.nn.bias_add(conv, b) if use_bias else conv, name='output')
 
+
 class StaticDynamicShape(object):
+
     def __init__(self, static, dynamic):
         self.static = static
         self.dynamic = dynamic
+
     def apply(self, f):
         try:
             st = f(self.static)
@@ -76,11 +81,12 @@ class StaticDynamicShape(object):
         except:
             return StaticDynamicShape(None, f(self.dynamic))
 
+
 @layer_register()
 def Deconv2D(x, out_shape, kernel_shape,
-           stride, padding='SAME',
-           W_init=None, b_init=None,
-           nl=tf.identity, use_bias=True):
+             stride, padding='SAME',
+             W_init=None, b_init=None,
+             nl=tf.identity, use_bias=True):
     """
     2D deconvolution on 4D inputs.
 

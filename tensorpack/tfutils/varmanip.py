@@ -3,7 +3,8 @@
 # File: varmanip.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import six, os
+import six
+import os
 import tensorflow as tf
 from collections import defaultdict
 import re
@@ -13,7 +14,8 @@ from ..utils.naming import *
 from .common import get_op_tensor_name
 
 __all__ = ['SessionUpdate', 'dump_session_params', 'dump_chkpt_vars',
-        'get_savename_from_varname', 'is_training_name']
+           'get_savename_from_varname', 'is_training_name']
+
 
 def get_savename_from_varname(
         varname, varname_prefix=None,
@@ -33,13 +35,15 @@ def get_savename_from_varname(
         name = re.sub('tower[p0-9]+/', '', name)
     if varname_prefix is not None \
             and name.startswith(varname_prefix):
-        name = name[len(varname_prefix)+1:]
+        name = name[len(varname_prefix) + 1:]
     if savename_prefix is not None:
         name = savename_prefix + '/' + name
     return name
 
+
 class SessionUpdate(object):
     """ Update the variables in a session """
+
     def __init__(self, sess, vars_to_update):
         """
         :param vars_to_update: a collection of variables to update
@@ -66,10 +70,11 @@ class SessionUpdate(object):
                 if varshape != value.shape:
                     # TODO only allow reshape when shape different by empty axis
                     assert np.prod(varshape) == np.prod(value.shape), \
-                            "{}: {}!={}".format(name, varshape, value.shape)
+                        "{}: {}!={}".format(name, varshape, value.shape)
                     logger.warn("Param {} is reshaped during assigning".format(name))
                     value = value.reshape(varshape)
                 self.sess.run(op, feed_dict={p: value})
+
 
 def dump_session_params(path):
     """ Dump value of all trainable + to_save variables to a dict and save to `path` as
@@ -90,6 +95,7 @@ the same name".format(v.name))
     logger.info(str(result.keys()))
     np.save(path, result)
 
+
 def dump_chkpt_vars(model_path):
     """ Dump all variables from a checkpoint to a dict"""
     if os.path.basename(model_path) == model_path:
@@ -100,6 +106,7 @@ def dump_chkpt_vars(model_path):
     for n in var_names:
         result[n] = reader.get_tensor(n)
     return result
+
 
 def is_training_name(name):
     """

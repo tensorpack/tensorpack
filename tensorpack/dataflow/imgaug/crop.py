@@ -10,10 +10,12 @@ from six.moves import range
 import numpy as np
 
 __all__ = ['RandomCrop', 'CenterCrop', 'FixedCrop',
-        'RandomCropRandomShape', 'perturb_BB', 'RandomCropAroundBox']
+           'RandomCropRandomShape', 'perturb_BB', 'RandomCropAroundBox']
+
 
 class RandomCrop(ImageAugmentor):
     """ Randomly crop the image into a smaller one """
+
     def __init__(self, crop_shape):
         """
         :param crop_shape: a shape like (h, w)
@@ -25,7 +27,7 @@ class RandomCrop(ImageAugmentor):
     def _get_augment_params(self, img):
         orig_shape = img.shape
         assert orig_shape[0] >= self.crop_shape[0] \
-                and orig_shape[1] >= self.crop_shape[1], orig_shape
+            and orig_shape[1] >= self.crop_shape[1], orig_shape
         diffh = orig_shape[0] - self.crop_shape[0]
         h0 = 0 if diffh == 0 else self.rng.randint(diffh)
         diffw = orig_shape[1] - self.crop_shape[1]
@@ -34,13 +36,15 @@ class RandomCrop(ImageAugmentor):
 
     def _augment(self, img, param):
         h0, w0 = param
-        return img[h0:h0+self.crop_shape[0],w0:w0+self.crop_shape[1]]
+        return img[h0:h0 + self.crop_shape[0], w0:w0 + self.crop_shape[1]]
 
     def _fprop_coord(self, coord, param):
         raise NotImplementedError()
 
+
 class CenterCrop(ImageAugmentor):
     """ Crop the image at the center"""
+
     def __init__(self, crop_shape):
         """
         :param crop_shape: a shape like (h, w)
@@ -52,13 +56,15 @@ class CenterCrop(ImageAugmentor):
         orig_shape = img.shape
         h0 = int((orig_shape[0] - self.crop_shape[0]) * 0.5)
         w0 = int((orig_shape[1] - self.crop_shape[1]) * 0.5)
-        return img[h0:h0+self.crop_shape[0],w0:w0+self.crop_shape[1]]
+        return img[h0:h0 + self.crop_shape[0], w0:w0 + self.crop_shape[1]]
 
     def _fprop_coord(self, coord, param):
         raise NotImplementedError()
 
+
 class FixedCrop(ImageAugmentor):
     """ Crop a rectangle at a given location"""
+
     def __init__(self, rect):
         """
         Two arguments defined the range in both axes to crop, min inclued, max excluded.
@@ -69,15 +75,16 @@ class FixedCrop(ImageAugmentor):
 
     def _augment(self, img, _):
         orig_shape = img.shape
-        return img[self.rect.y0: self.rect.y1+1,
-                   self.rect.x0: self.rect.x0+1]
+        return img[self.rect.y0: self.rect.y1 + 1,
+                   self.rect.x0: self.rect.x0 + 1]
 
     def _fprop_coord(self, coord, param):
         raise NotImplementedError()
 
+
 def perturb_BB(image_shape, bb, max_pertub_pixel,
-        rng=None, max_aspect_ratio_diff=0.3,
-        max_try=100):
+               rng=None, max_aspect_ratio_diff=0.3,
+               max_try=100):
     """
     Perturb a bounding box.
     :param image_shape: [h, w]
@@ -113,6 +120,7 @@ class RandomCropAroundBox(ImageAugmentor):
     """
     Crop a box around a bounding box
     """
+
     def __init__(self, perturb_ratio, max_aspect_ratio_diff=0.3):
         """
         :param perturb_ratio: perturb distance will be in [0, perturb_ratio * sqrt(w * h)]
@@ -124,9 +132,9 @@ class RandomCropAroundBox(ImageAugmentor):
     def _get_augment_params(self, img):
         shape = img.shape[:2]
         box = Rect(0, 0, shape[1] - 1, shape[0] - 1)
-        dist = self.perturb_ratio * np.sqrt(shape[0]*shape[1])
+        dist = self.perturb_ratio * np.sqrt(shape[0] * shape[1])
         newbox = perturb_BB(shape, box, dist,
-                self.rng, self.max_aspect_ratio_diff)
+                            self.rng, self.max_aspect_ratio_diff)
         return newbox
 
     def _augment(self, img, newbox):
@@ -135,10 +143,12 @@ class RandomCropAroundBox(ImageAugmentor):
     def _fprop_coord(self, coord, param):
         raise NotImplementedError()
 
+
 class RandomCropRandomShape(ImageAugmentor):
+
     def __init__(self, wmin, hmin,
-            wmax=None, hmax=None,
-            max_aspect_ratio=None):
+                 wmax=None, hmax=None,
+                 max_aspect_ratio=None):
         """
         Randomly crop a box of shape (h, w), sampled from [min, max](inclusive).
         If max is None, will use the input image shape.
@@ -151,18 +161,18 @@ class RandomCropRandomShape(ImageAugmentor):
     def _get_augment_params(self, img):
         hmax = self.hmax or img.shape[0]
         wmax = self.wmax or img.shape[1]
-        h = self.rng.randint(self.hmin, hmax+1)
-        w = self.rng.randint(self.wmin, wmax+1)
+        h = self.rng.randint(self.hmin, hmax + 1)
+        w = self.rng.randint(self.wmin, wmax + 1)
         diffh = img.shape[0] - h
         diffw = img.shape[1] - w
         assert diffh >= 0 and diffw >= 0
         y0 = 0 if diffh == 0 else self.rng.randint(diffh)
         x0 = 0 if diffw == 0 else self.rng.randint(diffw)
-        return (y0,x0,h,w)
+        return (y0, x0, h, w)
 
     def _augment(self, img, param):
         y0, x0, h, w = param
-        return img[y0:y0+h,x0:x0+w]
+        return img[y0:y0 + h, x0:x0 + w]
 
 if __name__ == '__main__':
     print(perturb_BB([100, 100], Rect(3, 3, 50, 50), 50))

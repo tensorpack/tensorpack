@@ -40,10 +40,13 @@ Adapters for different data format.
 """
 
 # TODO lazy load
+
+
 class HDF5Data(RNGDataFlow):
     """
     Zip data from different paths in an HDF5 file. Will load all data into memory.
     """
+
     def __init__(self, filename, data_paths, shuffle=True):
         """
         :param filename: h5 data file.
@@ -54,7 +57,7 @@ class HDF5Data(RNGDataFlow):
         logger.info("Loading {} to memory...".format(filename))
         self.dps = [self.f[k].value for k in data_paths]
         lens = [len(k) for k in self.dps]
-        assert all([k==lens[0] for k in lens])
+        assert all([k == lens[0] for k in lens])
         self._size = lens[0]
         self.shuffle = shuffle
 
@@ -71,6 +74,7 @@ class HDF5Data(RNGDataFlow):
 
 class LMDBData(RNGDataFlow):
     """ Read a lmdb and produce k,v pair """
+
     def __init__(self, lmdb_path, shuffle=True):
         self._lmdb_path = lmdb_path
         self._shuffle = shuffle
@@ -78,9 +82,9 @@ class LMDBData(RNGDataFlow):
 
     def open_lmdb(self):
         self._lmdb = lmdb.open(self._lmdb_path,
-                subdir=os.path.isdir(self._lmdb_path),
-                readonly=True, lock=False, readahead=False,
-                map_size=1099511627776 * 2, max_readers=100)
+                               subdir=os.path.isdir(self._lmdb_path),
+                               readonly=True, lock=False, readahead=False,
+                               map_size=1099511627776 * 2, max_readers=100)
         self._txn = self._lmdb.begin()
         self._size = self._txn.stat()['entries']
         if self._shuffle:
@@ -116,7 +120,9 @@ class LMDBData(RNGDataFlow):
                 v = self._txn.get(k)
                 yield [k, v]
 
+
 class LMDBDataDecoder(LMDBData):
+
     def __init__(self, lmdb_path, decoder, shuffle=True):
         """
         :param decoder: a function taking k, v and return a data point,
@@ -128,18 +134,24 @@ class LMDBDataDecoder(LMDBData):
     def get_data(self):
         for dp in super(LMDBDataDecoder, self).get_data():
             v = self.decoder(dp[0], dp[1])
-            if v: yield v
+            if v:
+                yield v
+
 
 class LMDBDataPoint(LMDBDataDecoder):
     """ Read a LMDB file where each value is a serialized datapoint"""
+
     def __init__(self, lmdb_path, shuffle=True):
         super(LMDBDataPoint, self).__init__(
-                lmdb_path, decoder=lambda k, v: loads(v), shuffle=shuffle)
+            lmdb_path, decoder=lambda k, v: loads(v), shuffle=shuffle)
+
 
 class CaffeLMDB(LMDBDataDecoder):
     """ Read a Caffe LMDB file where each value contains a caffe.Datum protobuf """
+
     def __init__(self, lmdb_path, shuffle=True):
         cpb = get_caffe_pb()
+
         def decoder(k, v):
             try:
                 datum = cpb.Datum()
@@ -152,10 +164,12 @@ class CaffeLMDB(LMDBDataDecoder):
             return [img.transpose(1, 2, 0), datum.label]
 
         super(CaffeLMDB, self).__init__(
-                lmdb_path, decoder=decoder, shuffle=shuffle)
+            lmdb_path, decoder=decoder, shuffle=shuffle)
+
 
 class SVMLightData(RNGDataFlow):
     """ Read X,y from a svmlight file """
+
     def __init__(self, filename, shuffle=True):
         self.X, self.y = sklearn.datasets.load_svmlight_file(filename)
         self.X = np.asarray(self.X.todense())
@@ -169,4 +183,4 @@ class SVMLightData(RNGDataFlow):
         if self.shuffle:
             self.rng.shuffle(idxs)
         for id in idxs:
-            yield [self.X[id,:], self.y[id]]
+            yield [self.X[id, :], self.y[id]]

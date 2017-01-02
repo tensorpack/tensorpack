@@ -15,7 +15,9 @@ __all__ = ['BatchData', 'FixedSizeData', 'MapData',
            'RandomMixData', 'JoinData', 'ConcatData', 'SelectComponent',
            'LocallyShuffleData', 'TestDataSpeed', 'BatchDataByShape']
 
+
 class TestDataSpeed(ProxyDataFlow):
+
     def __init__(self, ds, size=1000):
         super(TestDataSpeed, self).__init__(ds)
         self.test_size = size
@@ -31,7 +33,9 @@ class TestDataSpeed(ProxyDataFlow):
             for dp in self.ds.get_data():
                 pbar.update()
 
+
 class BatchData(ProxyDataFlow):
+
     def __init__(self, ds, batch_size, remainder=False):
         """
         Group data in `ds` into batches.
@@ -91,11 +95,13 @@ class BatchData(ProxyDataFlow):
                 raise
             except:
                 logger.exception("Cannot batch data. Perhaps they are of inconsistent shape?")
-                import IPython as IP;
+                import IPython as IP
                 IP.embed(config=IP.terminal.ipapp.load_default_config())
         return result
 
+
 class BatchDataByShape(BatchData):
+
     def __init__(self, ds, batch_size, idx):
         """ Group datapoint of the same shape together to batches
 
@@ -119,10 +125,12 @@ class BatchDataByShape(BatchData):
                 yield BatchData._aggregate_batch(holder)
                 del holder[:]
 
+
 class FixedSizeData(ProxyDataFlow):
     """ Generate data from another DataFlow, but with a fixed epoch size.
         The state of the underlying DataFlow is maintained among each epoch.
     """
+
     def __init__(self, ds, size):
         """
         :param ds: a :mod:`DataFlow` to produce data
@@ -154,10 +162,12 @@ class FixedSizeData(ProxyDataFlow):
             if cnt == self._size:
                 return
 
+
 class RepeatedData(ProxyDataFlow):
     """ Take data points from another `DataFlow` and produce them until
         it's exhausted for certain amount of times.
     """
+
     def __init__(self, ds, nr):
         """
         :param ds: a :mod:`DataFlow` instance.
@@ -184,8 +194,10 @@ class RepeatedData(ProxyDataFlow):
                 for dp in self.ds.get_data():
                     yield dp
 
+
 class MapData(ProxyDataFlow):
     """ Apply map/filter a function on the datapoint"""
+
     def __init__(self, ds, func):
         """
         :param ds: a :mod:`DataFlow` instance.
@@ -202,8 +214,10 @@ class MapData(ProxyDataFlow):
             if ret is not None:
                 yield ret
 
+
 class MapDataComponent(ProxyDataFlow):
     """ Apply map/filter on the given index in the datapoint"""
+
     def __init__(self, ds, func, index=0):
         """
         :param ds: a :mod:`DataFlow` instance.
@@ -222,11 +236,13 @@ class MapDataComponent(ProxyDataFlow):
                 dp[self.index] = repl   # NOTE modifying
                 yield dp
 
+
 class RandomChooseData(RNGDataFlow):
     """
     Randomly choose from several DataFlow. Stop producing when any of them is
     exhausted.
     """
+
     def __init__(self, df_lists):
         """
         :param df_lists: list of dataflow, or list of (dataflow, probability) tuple
@@ -257,10 +273,12 @@ class RandomChooseData(RNGDataFlow):
         except StopIteration:
             return
 
+
 class RandomMixData(RNGDataFlow):
     """
     Randomly choose from several dataflow, and will eventually exhaust all dataflow.  So it's a perfect mix.
     """
+
     def __init__(self, df_lists):
         """
         :param df_lists: list of dataflow.
@@ -285,14 +303,16 @@ class RandomMixData(RNGDataFlow):
         idxs = np.array(list(map(
             lambda x: np.searchsorted(sums, x, 'right'), idxs)))
         itrs = [k.get_data() for k in self.df_lists]
-        assert idxs.max() == len(itrs) - 1, "{}!={}".format(idxs.max(), len(itrs)-1)
+        assert idxs.max() == len(itrs) - 1, "{}!={}".format(idxs.max(), len(itrs) - 1)
         for k in idxs:
             yield next(itrs[k])
+
 
 class ConcatData(DataFlow):
     """
     Concatenate several dataflows.
     """
+
     def __init__(self, df_lists):
         """
         :param df_lists: list of :mod:`DataFlow` instances
@@ -311,6 +331,7 @@ class ConcatData(DataFlow):
             for dp in d.get_data():
                 yield dp
 
+
 class JoinData(DataFlow):
     """
     Join the components from each DataFlow.
@@ -321,6 +342,7 @@ class JoinData(DataFlow):
               df2: [dp3, dp4]
               join: [dp1, dp2, dp3, dp4]
     """
+
     def __init__(self, df_lists):
         """
         :param df_lists: list of :mod:`DataFlow` instances
@@ -329,7 +351,7 @@ class JoinData(DataFlow):
         self._size = self.df_lists[0].size()
         for d in self.df_lists:
             assert d.size() == self._size, \
-                    "All DataFlow must have the same size! {} != {}".format(d.size(), self._size)
+                "All DataFlow must have the same size! {} != {}".format(d.size(), self._size)
 
     def reset_state(self):
         for d in self.df_lists:
@@ -352,7 +374,9 @@ class JoinData(DataFlow):
             for itr in itrs:
                 del itr
 
+
 class LocallyShuffleData(ProxyDataFlow, RNGDataFlow):
+
     def __init__(self, ds, cache_size, nr_reuse=1):
         """
         Cache a number of datapoints and shuffle them.
@@ -393,10 +417,10 @@ class LocallyShuffleData(ProxyDataFlow, RNGDataFlow):
                         yield v
                     return
 
+
 def SelectComponent(ds, idxs):
     """
     :param ds: a :mod:`DataFlow` instance
     :param idxs: a list of datapoint component index of the original dataflow
     """
     return MapData(ds, lambda dp: [dp[i] for i in idxs])
-

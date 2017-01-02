@@ -20,10 +20,12 @@ from .common import PredictConfig
 from .base import OfflinePredictor
 
 __all__ = ['DatasetPredictorBase', 'SimpleDatasetPredictor',
-        'MultiProcessDatasetPredictor']
+           'MultiProcessDatasetPredictor']
+
 
 @six.add_metaclass(ABCMeta)
 class DatasetPredictorBase(object):
+
     def __init__(self, config, dataset):
         """
         :param config: a `PredictConfig` instance.
@@ -45,10 +47,12 @@ class DatasetPredictorBase(object):
         """
         return list(self.get_result())
 
+
 class SimpleDatasetPredictor(DatasetPredictorBase):
     """
     Run the predict_config on a given `DataFlow`.
     """
+
     def __init__(self, config, dataset):
         super(SimpleDatasetPredictor, self).__init__(config, dataset)
         self.predictor = OfflinePredictor(config)
@@ -60,14 +64,17 @@ class SimpleDatasetPredictor(DatasetPredictorBase):
             sz = self.dataset.size()
         except NotImplementedError:
             sz = 0
-        with get_tqdm(total=sz, disable=(sz==0)) as pbar:
+        with get_tqdm(total=sz, disable=(sz == 0)) as pbar:
             for dp in self.dataset.get_data():
                 res = self.predictor(dp)
                 yield res
                 pbar.update()
 
 # TODO allow unordered
+
+
 class MultiProcessDatasetPredictor(DatasetPredictorBase):
+
     def __init__(self, config, dataset, nr_proc, use_gpu=True, ordered=True):
         """
         Run prediction in multiprocesses, on either CPU or GPU. Mix mode not supported.
@@ -87,14 +94,14 @@ class MultiProcessDatasetPredictor(DatasetPredictorBase):
         self.ordered = ordered
 
         self.inqueue, self.inqueue_proc = dataflow_to_process_queue(
-                self.dataset, nr_proc * 2, self.nr_proc)    # put (idx, dp) to inqueue
+            self.dataset, nr_proc * 2, self.nr_proc)    # put (idx, dp) to inqueue
 
         if use_gpu:
             try:
                 gpus = os.environ['CUDA_VISIBLE_DEVICES'].split(',')
                 assert len(gpus) >= self.nr_proc, \
-                        "nr_proc={} while only {} gpus available".format(
-                                self.nr_proc, len(gpus))
+                    "nr_proc={} while only {} gpus available".format(
+                    self.nr_proc, len(gpus))
             except KeyError:
                 # TODO number of GPUs not checked
                 gpus = list(range(self.nr_proc))
@@ -103,8 +110,8 @@ class MultiProcessDatasetPredictor(DatasetPredictorBase):
         # worker produces (idx, result) to outqueue
         self.outqueue = multiprocessing.Queue()
         self.workers = [MultiProcessQueuePredictWorker(
-                    i, self.inqueue, self.outqueue, self.config)
-                        for i in range(self.nr_proc)]
+            i, self.inqueue, self.outqueue, self.config)
+            for i in range(self.nr_proc)]
 
         # start inqueue and workers
         self.inqueue_proc.start()
@@ -118,7 +125,7 @@ class MultiProcessDatasetPredictor(DatasetPredictorBase):
 
         if ordered:
             self.result_queue = OrderedResultGatherProc(
-                    self.outqueue, nr_producer=self.nr_proc)
+                self.outqueue, nr_producer=self.nr_proc)
             self.result_queue.start()
             ensure_proc_terminate(self.result_queue)
         else:
@@ -130,7 +137,7 @@ class MultiProcessDatasetPredictor(DatasetPredictorBase):
             sz = self.dataset.size()
         except NotImplementedError:
             sz = 0
-        with get_tqdm(total=sz, disable=(sz==0)) as pbar:
+        with get_tqdm(total=sz, disable=(sz == 0)) as pbar:
             die_cnt = 0
             while True:
                 res = self.result_queue.get()
@@ -147,4 +154,5 @@ class MultiProcessDatasetPredictor(DatasetPredictorBase):
             self.result_queue.join()
             self.result_queue.terminate()
         for p in self.workers:
-            p.join(); p.terminate()
+            p.join()
+            p.terminate()

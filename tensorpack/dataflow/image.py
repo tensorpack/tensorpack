@@ -11,7 +11,9 @@ from .imgaug import AugmentorList
 
 __all__ = ['ImageFromFile', 'AugmentImageComponent', 'AugmentImageComponents']
 
+
 class ImageFromFile(RNGDataFlow):
+
     def __init__(self, files, channel=3, resize=None, shuffle=False):
         """
         Generate images of 1 channel or 3 channels (in RGB order) from list of files.
@@ -39,11 +41,12 @@ class ImageFromFile(RNGDataFlow):
             if self.resize is not None:
                 im = cv2.resize(im, self.resize[::-1])
             if self.channel == 1:
-                im = im[:,:,np.newaxis]
+                im = im[:, :, np.newaxis]
             yield [im]
 
 
 class AugmentImageComponent(MapDataComponent):
+
     def __init__(self, ds, augmentors, index=0):
         """
         Augment the image component of datapoints
@@ -64,7 +67,8 @@ class AugmentImageComponent(MapDataComponent):
 
 
 class AugmentImageComponents(MapData):
-    def __init__(self, ds, augmentors, index=(0,1)):
+
+    def __init__(self, ds, augmentors, index=(0, 1)):
         """ Augment a list of images of the same shape, with the same parameters
         :param ds: a `DataFlow` instance.
         :param augmentors: a list of `ImageAugmentor` instance to be applied in order.

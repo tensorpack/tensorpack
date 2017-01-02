@@ -19,10 +19,12 @@ __all__ = ['ILSVRCMeta', 'ILSVRC12']
 
 CAFFE_ILSVRC12_URL = "http://dl.caffe.berkeleyvision.org/caffe_ilsvrc12.tar.gz"
 
+
 class ILSVRCMeta(object):
     """
     Some metadata for ILSVRC dataset.
     """
+
     def __init__(self, dir=None):
         if dir is None:
             dir = get_dataset_path('ilsvrc_metadata')
@@ -82,14 +84,16 @@ class ILSVRCMeta(object):
         with open(mean_file, 'rb') as f:
             obj.ParseFromString(f.read())
         arr = np.array(obj.data).reshape((3, 256, 256)).astype('float32')
-        arr = np.transpose(arr, [1,2,0])
+        arr = np.transpose(arr, [1, 2, 0])
         if size is not None:
             arr = cv2.resize(arr, size[::-1])
         return arr
 
+
 class ILSVRC12(RNGDataFlow):
+
     def __init__(self, dir, name, meta_dir=None, shuffle=True,
-            dir_structure='original', include_bb=False):
+                 dir_structure='original', include_bb=False):
         """
         :param dir: A directory containing a subdir named `name`, where the
             original ILSVRC12_`name`.tar gets decompressed.
@@ -145,7 +149,7 @@ class ILSVRC12(RNGDataFlow):
 
         if include_bb:
             bbdir = os.path.join(dir, 'bbox') if not \
-                    isinstance(include_bb, six.string_types) else include_bb
+                isinstance(include_bb, six.string_types) else include_bb
             assert name == 'train', 'Bounding box only available for training'
             self.bblist = ILSVRC12.get_training_bbox(bbdir, self.imglist)
         self.include_bb = include_bb
@@ -171,11 +175,11 @@ class ILSVRC12(RNGDataFlow):
             im = cv2.imread(fname.strip(), cv2.IMREAD_COLOR)
             assert im is not None, fname
             if im.ndim == 2:
-                im = np.expand_dims(im, 2).repeat(3,2)
+                im = np.expand_dims(im, 2).repeat(3, 2)
             if self.include_bb:
                 bb = self.bblist[k]
                 if bb is None:
-                    bb = [0, 0, im.shape[1]-1, im.shape[0]-1]
+                    bb = [0, 0, im.shape[1] - 1, im.shape[0] - 1]
                 yield [im, label, bb]
             else:
                 yield [im, label]
@@ -216,12 +220,13 @@ class ILSVRC12(RNGDataFlow):
 
 if __name__ == '__main__':
     meta = ILSVRCMeta()
-    #print(meta.get_synset_words_1000())
+    # print(meta.get_synset_words_1000())
 
     ds = ILSVRC12('/home/wyx/data/fake_ilsvrc/', 'train', include_bb=True,
-            shuffle=False)
+                  shuffle=False)
     ds.reset_state()
 
     for k in ds.get_data():
-        from IPython import embed; embed()
+        from IPython import embed
+        embed()
         break

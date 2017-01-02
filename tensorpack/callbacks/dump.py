@@ -12,10 +12,12 @@ from ..tfutils import get_op_var_name
 
 __all__ = ['DumpParamAsImage']
 
+
 class DumpParamAsImage(Callback):
     """
     Dump a variable to image(s) after every epoch to logger.LOG_DIR.
     """
+
     def __init__(self, var_name, prefix=None, map_func=None, scale=255, clip=False):
         """
         :param var_name: the name of the variable.
@@ -59,4 +61,3 @@ class DumpParamAsImage(Callback):
         if self.clip:
             res = np.clip(res, 0, 255)
         cv2.imwrite(fname, res.astype('uint8'))
-

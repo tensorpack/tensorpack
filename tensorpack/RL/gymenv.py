@@ -9,7 +9,7 @@ from ..utils import logger
 try:
     import gym
     # TODO
-    #gym.undo_logger_setup()
+    # gym.undo_logger_setup()
     # https://github.com/openai/gym/pull/199
     # not sure does it cause other problems
     __all__ = ['GymEnv']
@@ -26,11 +26,13 @@ from .envbase import RLEnvironment, DiscreteActionSpace
 
 _ENV_LOCK = threading.Lock()
 
+
 class GymEnv(RLEnvironment):
     """
     An OpenAI/gym wrapper. Can optionally auto restart.
     Only support discrete action space now
     """
+
     def __init__(self, name, dumpdir=None, viz=False, auto_restart=True):
         with _ENV_LOCK:
             self.gymenv = gym.make(name)
@@ -82,7 +84,7 @@ if __name__ == '__main__':
     rng = get_rng(num)
     while True:
         act = rng.choice(range(num))
-        #print act
+        # print act
         r, o = env.action(act)
         env.current_state()
         if r != 0 or o:

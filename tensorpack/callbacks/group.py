@@ -12,7 +12,9 @@ from ..utils import logger
 
 __all__ = ['Callbacks']
 
+
 class CallbackTimeLogger(object):
+
     def __init__(self):
         self.times = []
         self.tot = 0
@@ -39,10 +41,12 @@ class CallbackTimeLogger(object):
             "Callbacks took {:.3f} sec in total. {}".format(
                 self.tot, '; '.join(msgs)))
 
+
 class Callbacks(Callback):
     """
     A container to hold all callbacks, and execute them in the right order and proper session.
     """
+
     def __init__(self, cbs):
         """
         :param cbs: a list of `Callbacks`

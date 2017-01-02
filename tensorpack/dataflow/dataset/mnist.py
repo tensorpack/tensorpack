@@ -17,6 +17,7 @@ __all__ = ['Mnist']
 
 SOURCE_URL = 'http://yann.lecun.com/exdb/mnist/'
 
+
 def maybe_download(filename, work_directory):
     """Download the data from Yann's website, unless it's already here."""
     filepath = os.path.join(work_directory, filename)
@@ -25,9 +26,11 @@ def maybe_download(filename, work_directory):
         download(SOURCE_URL + filename, work_directory)
     return filepath
 
+
 def _read32(bytestream):
     dt = numpy.dtype(numpy.uint32).newbyteorder('>')
     return numpy.frombuffer(bytestream.read(4), dtype=dt)[0]
+
 
 def extract_images(filename):
     """Extract the images into a 4D uint8 numpy array [index, y, x, depth]."""
@@ -35,8 +38,8 @@ def extract_images(filename):
         magic = _read32(bytestream)
         if magic != 2051:
             raise ValueError(
-               'Invalid magic number %d in MNIST image file: %s' %
-               (magic, filename))
+                'Invalid magic number %d in MNIST image file: %s' %
+                (magic, filename))
         num_images = _read32(bytestream)
         rows = _read32(bytestream)
         cols = _read32(bytestream)
@@ -46,24 +49,27 @@ def extract_images(filename):
         data = data.astype('float32') / 255.0
         return data
 
+
 def extract_labels(filename):
     """Extract the labels into a 1D uint8 numpy array [index]."""
     with gzip.open(filename) as bytestream:
         magic = _read32(bytestream)
         if magic != 2049:
             raise ValueError(
-              'Invalid magic number %d in MNIST label file: %s' %
-              (magic, filename))
+                'Invalid magic number %d in MNIST label file: %s' %
+                (magic, filename))
         num_items = _read32(bytestream)
         buf = bytestream.read(num_items)
         labels = numpy.frombuffer(buf, dtype=numpy.uint8)
         return labels
+
 
 class Mnist(RNGDataFlow):
     """
     Return [image, label],
         image is 28x28 in the range [0,1]
     """
+
     def __init__(self, train_or_test, shuffle=True, dir=None):
         """
         Args:
@@ -107,6 +113,6 @@ class Mnist(RNGDataFlow):
 if __name__ == '__main__':
     ds = Mnist('train')
     for (img, label) in ds.get_data():
-        from IPython import embed; embed()
+        from IPython import embed
+        embed()
         break
-

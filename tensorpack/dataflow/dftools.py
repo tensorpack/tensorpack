@@ -2,7 +2,8 @@
 # File: dftools.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
-import sys, os
+import sys
+import os
 import cv2
 import multiprocessing as mp
 import six
@@ -23,6 +24,8 @@ else:
     __all__.extend(['dump_dataflow_to_lmdb'])
 
 # TODO pass a name_func to write label as filename?
+
+
 def dump_dataset_images(ds, dirname, max_count=None, index=0):
     """ Dump images from a `DataFlow` to a directory.
 
@@ -43,6 +46,7 @@ def dump_dataset_images(ds, dirname, max_count=None, index=0):
         img = dp[index]
         cv2.imwrite(os.path.join(dirname, "{}.jpg".format(i)), img)
 
+
 def dump_dataflow_to_lmdb(ds, lmdb_path):
     """ Dump a `Dataflow` ds to a lmdb database, where the key is the index
     and the data is the serialized datapoint.
@@ -56,8 +60,8 @@ def dump_dataflow_to_lmdb(ds, lmdb_path):
         assert not os.path.isfile(lmdb_path), "LMDB file exists!"
     ds.reset_state()
     db = lmdb.open(lmdb_path, subdir=isdir,
-            map_size=1099511627776 * 2, readonly=False,
-            meminit=False, map_async=True)    # need sync() at the end
+                   map_size=1099511627776 * 2, readonly=False,
+                   meminit=False, map_async=True)    # need sync() at the end
     try:
         sz = ds.size()
     except NotImplementedError:
@@ -87,7 +91,9 @@ def dataflow_to_process_queue(ds, size, nr_consumer):
         the queue once you start it. Each element is (task_id, dp).
     """
     q = mp.Queue(size)
+
     class EnqueProc(mp.Process):
+
         def __init__(self, ds, q, nr_consumer):
             super(EnqueProc, self).__init__()
             self.ds = ds
@@ -104,4 +110,3 @@ def dataflow_to_process_queue(ds, size, nr_consumer):
 
     proc = EnqueProc(ds, q, nr_consumer)
     return q, proc
-

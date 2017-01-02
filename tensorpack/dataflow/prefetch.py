@@ -13,7 +13,7 @@ import os
 
 from .base import ProxyDataFlow
 from ..utils.concurrency import (ensure_proc_terminate,
-        mask_sigint, start_proc_mask_signal)
+                                 mask_sigint, start_proc_mask_signal)
 from ..utils.serialize import loads, dumps
 from ..utils import logger
 from ..utils.gpu import change_gpu
@@ -28,6 +28,7 @@ else:
 
 
 class PrefetchProcess(mp.Process):
+
     def __init__(self, ds, queue, reset_after_spawn=True):
         """
         :param ds: ds to take data from
@@ -46,10 +47,12 @@ class PrefetchProcess(mp.Process):
             for dp in self.ds.get_data():
                 self.queue.put(dp)
 
+
 class PrefetchData(ProxyDataFlow):
     """
     Prefetch data from a `DataFlow` using multiprocessing
     """
+
     def __init__(self, ds, nr_prefetch, nr_proc=1):
         """
         :param ds: a `DataFlow` instance.
@@ -82,6 +85,7 @@ class PrefetchData(ProxyDataFlow):
         # do nothing. all ds are reset once and only once in spawned processes
         pass
 
+
 def BlockParallel(ds, queue_size):
     # TODO more doc
     """
@@ -92,7 +96,9 @@ def BlockParallel(ds, queue_size):
     """
     return PrefetchData(ds, queue_size, 1)
 
+
 class PrefetchProcessZMQ(mp.Process):
+
     def __init__(self, ds, conn_name):
         """
         :param ds: a `DataFlow` instance.
@@ -112,8 +118,10 @@ class PrefetchProcessZMQ(mp.Process):
             for dp in self.ds.get_data():
                 self.socket.send(dumps(dp), copy=False)
 
+
 class PrefetchDataZMQ(ProxyDataFlow):
     """ Work the same as `PrefetchData`, but faster. """
+
     def __init__(self, ds, nr_proc=1, pipedir=None):
         """
         :param ds: a `DataFlow` instance.
@@ -176,9 +184,11 @@ class PrefetchDataZMQ(ProxyDataFlow):
         except:
             pass
 
+
 class PrefetchOnGPUs(PrefetchDataZMQ):
     """ Prefetch with each process having a specific CUDA_VISIBLE_DEVICES
     variable"""
+
     def __init__(self, ds, gpus, pipedir=None):
         self.gpus = gpus
         super(PrefetchOnGPUs, self).__init__(ds, len(gpus), pipedir)
@@ -188,4 +198,3 @@ class PrefetchOnGPUs(PrefetchDataZMQ):
             for gpu, proc in zip(self.gpus, self.procs):
                 with change_gpu(gpu):
                     proc.start()
-

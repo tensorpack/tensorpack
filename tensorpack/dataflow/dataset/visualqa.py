@@ -12,6 +12,7 @@ import json
 
 __all__ = ['VisualQA']
 
+
 def read_json(fname):
     f = open(fname)
     ret = json.load(f)
@@ -19,11 +20,14 @@ def read_json(fname):
     return ret
 
 # TODO shuffle
+
+
 class VisualQA(DataFlow):
     """
     Visual QA dataset. See http://visualqa.org/
     Simply read q/a json file and produce q/a pairs in their original format.
     """
+
     def __init__(self, question_file, annotation_file):
         with timed_operation('Reading VQA JSON file'):
             qobj, aobj = list(map(read_json, [question_file, annotation_file]))
@@ -62,7 +66,7 @@ class VisualQA(DataFlow):
         """ Get the n most common words in questions
             n=4600 ~= thresh 6
         """
-        from nltk.tokenize import word_tokenize # will need to download 'punckt'
+        from nltk.tokenize import word_tokenize  # will need to download 'punckt'
         cnt = Counter()
         for q in self.questions:
             cnt.update(word_tokenize(q['question'].lower()))
@@ -72,7 +76,7 @@ class VisualQA(DataFlow):
 
 if __name__ == '__main__':
     vqa = VisualQA('/home/wyx/data/VQA/MultipleChoice_mscoco_train2014_questions.json',
-            '/home/wyx/data/VQA/mscoco_train2014_annotations.json')
+                   '/home/wyx/data/VQA/mscoco_train2014_annotations.json')
     for k in vqa.get_data():
         print(json.dumps(k))
         break

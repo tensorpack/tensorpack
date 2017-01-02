@@ -9,6 +9,7 @@ from six.moves import zip
 
 __all__ = ['Augmentor', 'ImageAugmentor', 'AugmentorList']
 
+
 @six.add_metaclass(ABCMeta)
 class Augmentor(object):
     """ Base class for an augmentor"""
@@ -58,7 +59,9 @@ class Augmentor(object):
             size = []
         return self.rng.uniform(low, high, size)
 
+
 class ImageAugmentor(Augmentor):
+
     def augment(self, img):
         """
         Perform augmentation on the image in-place.
@@ -71,10 +74,12 @@ class ImageAugmentor(Augmentor):
     def _fprop_coord(self, coord, param):
         return coord
 
+
 class AugmentorList(ImageAugmentor):
     """
     Augment by a list of augmentors
     """
+
     def __init__(self, augmentors):
         """
         :param augmentors: list of `ImageAugmentor` instance to be applied
@@ -107,4 +112,3 @@ class AugmentorList(ImageAugmentor):
         """ Will reset state of each augmentor """
         for a in self.augs:
             a.reset_state()
-

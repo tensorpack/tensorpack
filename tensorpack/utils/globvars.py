@@ -9,12 +9,14 @@ import argparse
 __all__ = ['globalns', 'use_global_argument']
 
 if six.PY2:
-    class NS: pass
+    class NS:
+        pass
 else:
     import types
     NS = types.SimpleNamespace
 
 globalns = NS()
+
 
 def use_global_argument(args):
     """

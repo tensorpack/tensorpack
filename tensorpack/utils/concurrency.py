@@ -23,10 +23,12 @@ __all__ = ['StoppableThread', 'LoopThread', 'ensure_proc_terminate',
            'OrderedResultGatherProc', 'OrderedContainer', 'DIE',
            'mask_sigint', 'start_proc_mask_signal']
 
+
 class StoppableThread(threading.Thread):
     """
     A thread that has a 'stop' event.
     """
+
     def __init__(self):
         super(StoppableThread, self).__init__()
         self._stop_evt = threading.Event()
@@ -56,8 +58,10 @@ class StoppableThread(threading.Thread):
             except queue.Empty:
                 pass
 
+
 class LoopThread(StoppableThread):
     """ A pausable thread that simply runs a loop"""
+
     def __init__(self, func, pausable=True):
         """
         :param func: the function to run
@@ -89,6 +93,7 @@ class DIE(object):
     """ A placeholder class indicating end of queue """
     pass
 
+
 def ensure_proc_terminate(proc):
     if isinstance(proc, list):
         for p in proc:
@@ -114,6 +119,7 @@ def mask_sigint():
     yield
     signal.signal(signal.SIGINT, sigint_handler)
 
+
 def start_proc_mask_signal(proc):
     if not isinstance(proc, list):
         proc = [proc]
@@ -122,11 +128,12 @@ def start_proc_mask_signal(proc):
         for p in proc:
             p.start()
 
+
 def subproc_call(cmd, timeout=None):
     try:
         output = subprocess.check_output(
-                cmd, stderr=subprocess.STDOUT,
-                shell=True, timeout=timeout)
+            cmd, stderr=subprocess.STDOUT,
+            shell=True, timeout=timeout)
         return output
     except subprocess.TimeoutExpired as e:
         logger.warn("Command timeout!")
@@ -135,10 +142,12 @@ def subproc_call(cmd, timeout=None):
         logger.warn("Commnad failed: {}".format(e.returncode))
         logger.warn(e.output)
 
+
 class OrderedContainer(object):
     """
     Like a priority queue, but will always wait for item with index (x+1) before producing (x+2).
     """
+
     def __init__(self, start=0):
         self.ranks = []
         self.data = []
@@ -163,11 +172,13 @@ class OrderedContainer(object):
         self.wait_for += 1
         return rank, ret
 
+
 class OrderedResultGatherProc(multiprocessing.Process):
     """
     Gather indexed data from a data queue, and produce results with the
     original index-based order.
     """
+
     def __init__(self, data_queue, nr_producer, start=0):
         """
         :param data_queue: a multiprocessing.Queue to produce input dp

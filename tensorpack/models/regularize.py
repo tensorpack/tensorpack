@@ -12,12 +12,14 @@ from ._common import layer_register
 
 __all__ = ['regularize_cost', 'l2_regularizer', 'l1_regularizer', 'Dropout']
 
+
 @memoized
 def _log_regularizer(name):
     logger.info("Apply regularizer for {}".format(name))
 
 l2_regularizer = tf.contrib.layers.l2_regularizer
 l1_regularizer = tf.contrib.layers.l1_regularizer
+
 
 def regularize_cost(regex, func, name=None):
     """
@@ -48,4 +50,3 @@ def Dropout(x, keep_prob=0.5, is_training=None):
         is_training = get_current_tower_context().is_training
     keep_prob = tf.constant(keep_prob if is_training else 1.0)
     return tf.nn.dropout(x, keep_prob)
-

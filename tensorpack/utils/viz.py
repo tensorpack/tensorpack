@@ -4,7 +4,8 @@
 # Credit: zxytim
 
 import numpy as np
-import os, sys
+import os
+import sys
 import io
 import cv2
 from .fs import mkdir_p
@@ -16,7 +17,8 @@ except ImportError:
     pass
 
 __all__ = ['pyplot2img', 'build_patch_list', 'pyplot_viz',
-        'dump_dataflow_images', 'interactive_imshow']
+           'dump_dataflow_images', 'interactive_imshow']
+
 
 def pyplot2img(plt):
     buf = io.BytesIO()
@@ -28,22 +30,27 @@ def pyplot2img(plt):
     buf.close()
     return im
 
+
 def pyplot_viz(img, shape=None):
     """ use pyplot to visualize the image
         Note: this is quite slow. and the returned image will have a border
     """
     plt.clf()
-    plt.axes([0,0,1,1])
+    plt.axes([0, 0, 1, 1])
     plt.imshow(img)
     ret = pyplot2img(plt)
     if shape is not None:
         ret = cv2.resize(ret, shape)
     return ret
 
+
 def minnone(x, y):
-    if x is None: x = y
-    elif y is None: y = x
+    if x is None:
+        x = y
+    elif y is None:
+        y = x
     return min(x, y)
+
 
 def interactive_imshow(img, lclick_cb=None, rclick_cb=None, **kwargs):
     """
@@ -70,11 +77,12 @@ def interactive_imshow(img, lclick_cb=None, rclick_cb=None, **kwargs):
     elif key == 's':
         cv2.imwrite('out.png', img)
 
+
 def build_patch_list(patch_list,
-        nr_row=None, nr_col=None, border=None,
-        max_width=1000, max_height=1000,
-        shuffle=False, bgcolor=255,
-        viz=False, lclick_cb=None):
+                     nr_row=None, nr_col=None, border=None,
+                     max_width=1000, max_height=1000,
+                     shuffle=False, bgcolor=255,
+                     viz=False, lclick_cb=None):
     """
     Generate patches.
     :param patch_list: bhw or bhwc images in [0,255]
@@ -89,7 +97,7 @@ def build_patch_list(patch_list,
     # setup parameters
     patch_list = np.asarray(patch_list)
     if patch_list.ndim == 3:
-        patch_list = patch_list[:,:,:,np.newaxis]
+        patch_list = patch_list[:, :, :, np.newaxis]
     assert patch_list.ndim == 4 and patch_list.shape[3] in [1, 3], patch_list.shape
     if shuffle:
         np.random.shuffle(patch_list)
@@ -105,8 +113,8 @@ def build_patch_list(patch_list,
         nr_col = minnone(nr_col, max_width / (pw + border))
 
     canvas = np.zeros((nr_row * (ph + border) - border,
-             nr_col * (pw + border) - border,
-             patch_list.shape[3]), dtype='uint8')
+                       nr_col * (pw + border) - border,
+                       patch_list.shape[3]), dtype='uint8')
 
     def draw_patch(plist):
         cur_row, cur_col = 0, 0
@@ -114,7 +122,7 @@ def build_patch_list(patch_list,
         for patch in plist:
             r0 = cur_row * (ph + border)
             c0 = cur_col * (pw + border)
-            canvas[r0:r0+ph, c0:c0+pw] = patch
+            canvas[r0:r0 + ph, c0:c0 + pw] = patch
             cur_col += 1
             if cur_col == nr_col:
                 cur_col = 0
@@ -143,10 +151,11 @@ def build_patch_list(patch_list,
         yield canvas
         start = end
 
+
 def dump_dataflow_images(df, index=0, batched=True,
-        number=1000, output_dir=None,
-        scale=1, resize=None, viz=None,
-        flipRGB=False, exit_after=True):
+                         number=1000, output_dir=None,
+                         scale=1, resize=None, viz=None,
+                         flipRGB=False, exit_after=True):
     """
     :param df: a DataFlow
     :param index: the index of the image component
@@ -188,7 +197,7 @@ def dump_dataflow_images(df, index=0, batched=True,
                 if resize is not None:
                     img = cv2.resize(img, resize)
                 if flipRGB:
-                    img = img[:,:,::-1]
+                    img = img[:, :, ::-1]
                 if output_dir:
                     fname = os.path.join(output_dir, '{:03d}.jpg'.format(cnt))
                     cv2.imwrite(fname, img)
