@@ -3,6 +3,7 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
+from contextlib import contextmanager
 import numpy as np
 
 
@@ -125,3 +126,92 @@ def get_scalar_var(name, init_value, summary=False, trainable=False):
         # this is recognized in callbacks.StatHolder
         tf.summary.scalar(name + '-summary', ret)
     return ret
+
+
+def saliency(output_op, input_op, name="saliency"):
+    """Saliency image from network
+
+    Parameters
+    ----------
+    output_op : TYPE
+        start in network
+    input_op : TYPE
+        image-node in graph
+
+    Returns
+    -------
+    TYPE
+        saliency image with size of (input_op)
+    """
+    max_outp = tf.reduce_max(output_op, 1)
+    saliency_op = tf.gradients(max_outp, input_op)[:][0]
+    saliency_op = tf.identity(saliency_op, name=name)
+    return saliency_op
+
+
+def psnr_loss(prediction, ground_truth):
+    """Peek Signal to Noise Ratio (negative)
+
+    PSNR = 20 * log10(MAXp) - 10 * log10(MSE)
+
+    Assuming MAXp == 1, then the loss "- 10 * log10(MSE)". As TF wants to minimize an objective
+    function, we implement -psnr.
+
+    Parameters
+    ----------
+    ground_truth : TYPE
+        sharp image, clean image
+    prediction : TYPE
+        blurry image, image with noise
+
+    Returns
+    -------
+    scalar
+        negative psnr
+    """
+
+    def log10(x):
+        numerator = tf.log(x)
+        denominator = tf.log(tf.constant(10, dtype=numerator.dtype))
+        return numerator / denominator
+
+    with tf.variable_scope("psnr_loss"):
+        return 10. * log10(tf.reduce_mean(tf.square(prediction - ground_truth)))
+
+
+def sobel_filter(x):
+    """Compute image gradient using Sobel-filter.
+
+    Parameters
+    ----------
+    x : TYPE
+        any tensor
+
+    Returns
+    -------
+    TYPE
+        pair of image-gradient [dx, dy]
+    """
+    filter_values = tf.constant([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]], tf.float32)
+    sobel_x = tf.reshape(filter_values, [3, 3, 1, 1])
+    sobel_y = tf.transpose(sobel_x, [1, 0, 2, 3])
+
+    dx = tf.nn.conv2d(x, sobel_x, strides=[1, 1, 1, 1], padding='SAME')
+    dy = tf.nn.conv2d(x, sobel_y, strides=[1, 1, 1, 1], padding='SAME')
+
+    return dx, dy
+
+
+@contextmanager
+def GuidedRelu():  # noqa
+    from tensorflow.python.framework import ops
+    from tensorflow.python.ops import gen_nn_ops
+
+    @ops.RegisterGradient("GuidedRelu")
+    def _GuidedReluGrad(op, grad):  # noqa
+        # guided backprop
+        return tf.where(0. < grad, gen_nn_ops._relu_grad(grad, op.outputs[0]), tf.zeros(grad.get_shape()))
+
+    g = tf.get_default_graph()
+    with g.gradient_override_map({'Relu': 'GuidedRelu'}):
+        yield

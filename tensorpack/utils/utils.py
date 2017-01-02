@@ -16,7 +16,9 @@ __all__ = ['change_env',
            'get_tqdm_kwargs',
            'get_tqdm',
            'execute_only_once',
-           'building_rtfd'
+           'building_rtfd',
+           'intensity_to_rgb',
+           'filter_intensity'
            ]
 
 
@@ -91,3 +93,62 @@ def get_tqdm(**kwargs):
 def building_rtfd():
     return os.environ.get('READTHEDOCS') == 'True' \
         or os.environ.get('TENSORPACK_DOC_BUILDING')
+
+
+def intensity_to_rgb(intensity, cmap='Blues_r'):
+    """Convert a matrix of intensities to an rgb image employing a colormap.
+
+    Nice colormaps are:
+      - Blues, Blues_r
+      - Reds, Reds_r
+      - BuGns, BuGns_r
+      - Greys, Greys_r
+
+    Args:
+        intensity (TYPE): array of intensities such as saliency
+        background (None, optional): background for heatmap
+        cmap (str, optional): used colormap (required matplotlib)
+
+    Returns:
+        TYPE: nice heatmap
+    """
+    def rgb2gray(rgb):
+        r, g, b = rgb[:, :, 0], rgb[:, :, 1], rgb[:, :, 2]
+        gray = 0.2989 * r + 0.5870 * g + 0.1140 * b
+        return gray
+
+    if not len(intensity.shape) == 2:
+        intensity = rgb2gray(intensity)
+
+    intensity = intensity.astype("float")
+    intensity -= intensity.min()
+    intensity /= intensity.max()
+
+    import matplotlib.pyplot as plt
+
+    cmap = plt.get_cmap(cmap)
+    intensity = cmap(intensity.flatten())[..., 0:3].reshape([intensity.shape[0], intensity.shape[1], 3])
+    intensity = intensity[:, :, [2, 1, 0]]
+    return intensity
+
+
+def filter_intensity(intensity, rgb):
+    """Only highlight parts having high intensity values
+
+    Args:
+        intensity (TYPE): importance of specific pixel
+        rgb (TYPE): original image
+
+    Returns:
+        TYPE: image with attention
+    """
+    assert intensity.shape[:2] == rgb.shape[:2]
+
+    intensity = intensity.astype("float")
+    intensity -= intensity.min()
+    intensity /= intensity.max()
+    intensity = 1 - intensity
+
+    gray = rgb * 0 + 255 // 2
+
+    return intensity[:, :, None] * gray + (1 - intensity[:, :, None]) * rgb
