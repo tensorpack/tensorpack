@@ -124,7 +124,7 @@ class SendStat(Callback):
         SendStat('curl -u your_id: https://api.pushbullet.com/v2/pushes \
             -d type=note -d title="validation error" \
             -d body={validation_error} > /dev/null 2>&1',
-                'validation_error')
+            'validation_error')
     """
     def __init__(self, command, stats):
         self.command = command
