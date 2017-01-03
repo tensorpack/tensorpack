@@ -54,8 +54,8 @@ def Conv2D(x, out_channel, kernel_shape,
         conv = tf.nn.conv2d(x, W, stride, padding)
     else:
         # TODO rename to split later
-        inputs = tf.split_v(x, split, 3)
-        kernels = tf.split_v(W, split, 3)
+        inputs = tf.split(x, split, 3)
+        kernels = tf.split(W, split, 3)
         outputs = [tf.nn.conv2d(i, k, stride, padding)
                    for i, k in zip(inputs, kernels)]
         conv = tf.concat_v2(outputs, 3)
