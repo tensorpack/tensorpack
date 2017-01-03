@@ -7,8 +7,6 @@
 import numpy as np
 from tensorpack.tfutils.varmanip import dump_chkpt_vars
 from tensorpack.utils import logger
-import tensorflow as tf
-import sys
 import argparse
 
 parser = argparse.ArgumentParser()
@@ -26,4 +24,5 @@ logger.info(str(params.keys()))
 if args.dump:
     np.save(args.dump, params)
 if args.shell:
-    import IPython as IP; IP.embed(config=IP.terminal.ipapp.load_default_config())
+    import IPython as IP
+    IP.embed(config=IP.terminal.ipapp.load_default_config())

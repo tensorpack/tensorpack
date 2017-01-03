@@ -8,8 +8,9 @@ import argparse
 import tensorflow as tf
 import imp
 
-from tensorpack import *
+from tensorpack import TowerContext, logger, ModelFromMetaGraph
 from tensorpack.tfutils import sessinit, varmanip
+from tensorpack.utils.naming import EXTRA_SAVE_VARS_KEY
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--config', help='config file')
@@ -51,6 +52,6 @@ with tf.Graph().as_default() as G:
             logger.info("Variables to dump:")
             logger.info(", ".join(var_dict.keys()))
             saver = tf.train.Saver(
-                    var_list=var_dict,
-                    write_version=tf.train.SaverDef.V2)
+                var_list=var_dict,
+                write_version=tf.train.SaverDef.V2)
             saver.save(sess, args.output, write_meta_graph=False)

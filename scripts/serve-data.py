@@ -1,12 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File: serve_data.py
+# File: serve-data.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import argparse
 import imp
-#import cv2
-#import os
 from tensorpack.dataflow import serve_data
 
 parser = argparse.ArgumentParser()

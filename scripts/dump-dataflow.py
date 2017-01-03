@@ -1,17 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-# File: dump_train_config.py
+# File: dump-dataflow.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import argparse
 import cv2
-import tensorflow as tf
 import imp
 import tqdm
 import os
 from tensorpack.utils import logger
 from tensorpack.utils.fs import mkdir_p
-from tensorpack.dataflow import *
+from tensorpack.dataflow import RepeatedData
 
 
 parser = argparse.ArgumentParser()
@@ -54,6 +53,3 @@ with tqdm.tqdm(total=NR_DP_TEST, leave=True, unit='data points') as pbar:
         if idx > NR_DP_TEST:
             break
         pbar.update()
-
-
-
