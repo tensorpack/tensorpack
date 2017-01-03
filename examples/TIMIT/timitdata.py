@@ -9,14 +9,16 @@ from six.moves import range
 
 __all__ = ['TIMITBatch']
 
+
 def batch_feature(feats):
     # pad to the longest in the batch
     maxlen = max([k.shape[0] for k in feats])
     bsize = len(feats)
     ret = np.zeros((bsize, maxlen, feats[0].shape[1]))
     for idx, feat in enumerate(feats):
-        ret[idx,:feat.shape[0],:] = feat
+        ret[idx, :feat.shape[0], :] = feat
     return ret
+
 
 def sparse_label(labels):
     maxlen = max([k.shape[0] for k in labels])
@@ -31,7 +33,9 @@ def sparse_label(labels):
     values = np.asarray(values)
     return (indices, values, shape)
 
+
 class TIMITBatch(ProxyDataFlow):
+
     def __init__(self, ds, batch):
         self.batch = batch
         self.ds = ds
@@ -52,4 +56,3 @@ class TIMITBatch(ProxyDataFlow):
             batchlab = sparse_label(labs)
             seqlen = np.asarray([k.shape[0] for k in feats])
             yield [batchfeat, batchlab[0], batchlab[1], batchlab[2], seqlen]
-

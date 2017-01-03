@@ -5,7 +5,8 @@
 
 import numpy as np
 import tensorflow as tf
-import os, sys
+import os
+import sys
 import argparse
 
 from tensorpack import *
@@ -13,8 +14,9 @@ from disturb import DisturbLabel
 
 import imp
 mnist_example = imp.load_source('mnist_example',
-        os.path.join(os.path.dirname(__file__), '..', 'mnist-convnet.py'))
+                                os.path.join(os.path.dirname(__file__), '..', 'mnist-convnet.py'))
 get_config = mnist_example.get_config
+
 
 def get_data():
     dataset_train = BatchData(DisturbLabel(dataset.Mnist('train'), args.prob), 128)
@@ -24,19 +26,21 @@ mnist_example.get_data = get_data
 
 IMAGE_SIZE = 28
 
+
 class Model(mnist_example.Model):
+
     def _build_graph(self, input_vars):
         image, label = input_vars
         image = tf.expand_dims(image, 3)
 
         with argscope(Conv2D, kernel_shape=5, nl=tf.nn.relu):
-            logits = (LinearWrap(image) # the starting brace is only for line-breaking
-                    .Conv2D('conv0', out_channel=32, padding='VALID')
-                    .MaxPooling('pool0', 2)
-                    .Conv2D('conv1', out_channel=64, padding='VALID')
-                    .MaxPooling('pool1', 2)
-                    .FullyConnected('fc0', 512, nl=tf.nn.relu)
-                    .FullyConnected('fc1', out_dim=10, nl=tf.identity)())
+            logits = (LinearWrap(image)  # the starting brace is only for line-breaking
+                      .Conv2D('conv0', out_channel=32, padding='VALID')
+                      .MaxPooling('pool0', 2)
+                      .Conv2D('conv1', out_channel=64, padding='VALID')
+                      .MaxPooling('pool1', 2)
+                      .FullyConnected('fc0', 512, nl=tf.nn.relu)
+                      .FullyConnected('fc1', out_dim=10, nl=tf.identity)())
         prob = tf.nn.softmax(logits, name='prob')
 
         wrong = symbolic_functions.prediction_incorrect(logits, label)
@@ -63,4 +67,3 @@ if __name__ == '__main__':
     if args.load:
         config.session_init = SaverRestore(args.load)
     QueueInputTrainer(config).train()
-

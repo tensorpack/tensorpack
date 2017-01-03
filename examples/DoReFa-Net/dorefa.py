@@ -6,6 +6,7 @@
 import tensorflow as tf
 from tensorpack.utils.argtools import memoized
 
+
 @memoized
 def get_dorefa(bitW, bitA, bitG):
     """
@@ -15,7 +16,7 @@ def get_dorefa(bitW, bitA, bitG):
     G = tf.get_default_graph()
 
     def quantize(x, k):
-        n = float(2**k-1)
+        n = float(2**k - 1)
         with G.gradient_override_map({"Floor": "Identity"}):
             return tf.floor(x * n + 0.5) / n
 
@@ -39,11 +40,11 @@ def get_dorefa(bitW, bitA, bitG):
     def grad_fg(op, x):
         rank = x.get_shape().ndims
         assert rank is not None
-        maxx = tf.reduce_max(tf.abs(x), list(range(1,rank)), keep_dims=True)
+        maxx = tf.reduce_max(tf.abs(x), list(range(1, rank)), keep_dims=True)
         x = x / maxx
-        n = float(2**bitG-1)
+        n = float(2**bitG - 1)
         x = x * 0.5 + 0.5 + tf.random_uniform(
-                tf.shape(x), minval=-0.5/n, maxval=0.5/n)
+            tf.shape(x), minval=-0.5 / n, maxval=0.5 / n)
         x = tf.clip_by_value(x, 0.0, 1.0)
         x = quantize(x, bitG) - 0.5
         return x * maxx * 2
@@ -54,4 +55,3 @@ def get_dorefa(bitW, bitA, bitG):
         with G.gradient_override_map({"Identity": "FGGrad"}):
             return tf.identity(x)
     return fw, fa, fg
-

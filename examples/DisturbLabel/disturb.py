@@ -5,7 +5,9 @@
 
 from tensorpack import ProxyDataFlow, get_rng
 
+
 class DisturbLabel(ProxyDataFlow):
+
     def __init__(self, ds, prob):
         super(DisturbLabel, self).__init__(ds)
         self.prob = prob
@@ -19,4 +21,3 @@ class DisturbLabel(ProxyDataFlow):
             if self.rng.rand() < self.prob:
                 l = self.rng.choice(10)
             yield [img, l]
-

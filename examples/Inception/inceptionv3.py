@@ -32,10 +32,12 @@ NR_GPU = 8
 BATCH_SIZE = TOTAL_BATCH_SIZE // NR_GPU
 INPUT_SHAPE = 299
 
+
 class Model(ModelDesc):
+
     def _get_input_vars(self):
         return [InputVar(tf.float32, [None, INPUT_SHAPE, INPUT_SHAPE, 3], 'input'),
-                InputVar(tf.int32, [None], 'label') ]
+                InputVar(tf.int32, [None], 'label')]
 
     def _build_graph(self, input_vars):
         image, label = input_vars
@@ -61,28 +63,28 @@ class Model(ModelDesc):
 
         def proj_77(l, ch_r, ch):
             return (LinearWrap(l)
-                .Conv2D('conv77r', ch_r, 1)
-                .Conv2D('conv77a', ch_r, [1,7])
-                .Conv2D('conv77b', ch, [7,1])())
+                    .Conv2D('conv77r', ch_r, 1)
+                    .Conv2D('conv77a', ch_r, [1, 7])
+                    .Conv2D('conv77b', ch, [7, 1])())
 
         def proj_277(l, ch_r, ch):
             return (LinearWrap(l)
-                .Conv2D('conv277r', ch_r, 1)
-                .Conv2D('conv277aa', ch_r, [7,1])
-                .Conv2D('conv277ab', ch_r, [1,7])
-                .Conv2D('conv277ba', ch_r, [7,1])
-                .Conv2D('conv277bb', ch, [1,7])())
+                    .Conv2D('conv277r', ch_r, 1)
+                    .Conv2D('conv277aa', ch_r, [7, 1])
+                    .Conv2D('conv277ab', ch_r, [1, 7])
+                    .Conv2D('conv277ba', ch_r, [7, 1])
+                    .Conv2D('conv277bb', ch, [1, 7])())
 
         with argscope(Conv2D, nl=BNReLU, use_bias=False),\
                 argscope(BatchNorm, decay=0.9997, epsilon=1e-3):
             l = (LinearWrap(image)
-                .Conv2D('conv0', 32, 3, stride=2, padding='VALID') #299
-                .Conv2D('conv1', 32, 3, padding='VALID') #149
-                .Conv2D('conv2', 64, 3, padding='SAME') # 147
-                .MaxPooling('pool2', 3, 2)
-                .Conv2D('conv3', 80, 1, padding='SAME') # 73
-                .Conv2D('conv4', 192, 3, padding='VALID') # 71
-                .MaxPooling('pool4', 3, 2)()) # 35
+                 .Conv2D('conv0', 32, 3, stride=2, padding='VALID')  # 299
+                 .Conv2D('conv1', 32, 3, padding='VALID')  # 149
+                 .Conv2D('conv2', 64, 3, padding='SAME')  # 147
+                 .MaxPooling('pool2', 3, 2)
+                 .Conv2D('conv3', 80, 1, padding='SAME')  # 73
+                 .Conv2D('conv4', 192, 3, padding='VALID')  # 71
+                 .MaxPooling('pool4', 3, 2)())  # 35
 
             with tf.variable_scope('incep-35-256a'):
                 l = tf.concat(3, [
@@ -140,7 +142,7 @@ class Model(ModelDesc):
                 br1 = AvgPooling('avgpool', l, 5, 3, padding='VALID')
                 br1 = Conv2D('conv11', br1, 128, 1)
                 shape = br1.get_shape().as_list()
-                br1 = Conv2D('convout', br1, 768, shape[1:3], padding='VALID') # TODO gauss, stddev=0.01
+                br1 = Conv2D('convout', br1, 768, shape[1:3], padding='VALID')  # TODO gauss, stddev=0.01
                 br1 = FullyConnected('fc', br1, 1000, nl=tf.identity)
 
             with tf.variable_scope('incep-17-1280a'):
@@ -194,27 +196,30 @@ class Model(ModelDesc):
 
         self.cost = tf.add_n([0.4 * loss1, loss2, wd_cost], name='cost')
 
+
 def get_data(train_or_test):
     isTrain = train_or_test == 'train'
 
     ds = dataset.ILSVRC12(args.data, train_or_test,
-            shuffle=True if isTrain else False, dir_structure='train')
+                          shuffle=True if isTrain else False, dir_structure='train')
     meta = dataset.ILSVRCMeta()
     pp_mean = meta.get_per_pixel_mean()
     pp_mean_299 = cv2.resize(pp_mean, (299, 299))
 
     if isTrain:
         class Resize(imgaug.ImageAugmentor):
+
             def __init__(self):
                 self._init(locals())
+
             def _augment(self, img, _):
                 h, w = img.shape[:2]
                 size = 299
                 scale = self.rng.randint(size, 340) * 1.0 / min(h, w)
                 scaleX = scale * self.rng.uniform(0.85, 1.15)
                 scaleY = scale * self.rng.uniform(0.85, 1.15)
-                desSize = map(int, (max(size, min(w, scaleX * w)),\
-                    max(size, min(h, scaleY * h))))
+                desSize = map(int, (max(size, min(w, scaleX * w)),
+                                    max(size, min(h, scaleY * h))))
                 dst = cv2.resize(img, tuple(desSize), interpolation=cv2.INTER_CUBIC)
                 return dst
 
@@ -224,11 +229,11 @@ def get_data(train_or_test):
             imgaug.RandomApplyAug(imgaug.GaussianBlur(3), 0.5),
             imgaug.Brightness(30, True),
             imgaug.Gamma(),
-            imgaug.Contrast((0.8,1.2), True),
+            imgaug.Contrast((0.8, 1.2), True),
             imgaug.RandomCrop((299, 299)),
             imgaug.RandomApplyAug(imgaug.JpegNoise(), 0.8),
             imgaug.RandomApplyAug(imgaug.GaussianDeform(
-                [(0.2, 0.2), (0.2, 0.8), (0.8,0.8), (0.8,0.2)],
+                [(0.2, 0.2), (0.2, 0.8), (0.8, 0.8), (0.8, 0.2)],
                 (299, 299), 0.2, 3), 0.1),
             imgaug.Flip(horiz=True),
             imgaug.MapImage(lambda x: x - pp_mean_299),
@@ -237,7 +242,7 @@ def get_data(train_or_test):
         def resize_func(im):
             h, w = im.shape[:2]
             scale = 340.0 / min(h, w)
-            desSize = map(int, (max(299, min(w, scale * w)),\
+            desSize = map(int, (max(299, min(w, scale * w)),
                                 max(299, min(h, scale * h))))
             im = cv2.resize(im, tuple(desSize), interpolation=cv2.INTER_CUBIC)
             return im

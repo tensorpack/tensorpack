@@ -5,7 +5,8 @@
 
 import numpy as np
 import tensorflow as tf
-import os, sys
+import os
+import sys
 import argparse
 
 """
@@ -18,12 +19,14 @@ from tensorpack import *
 
 IMAGE_SIZE = 28
 
+
 class Model(ModelDesc):
+
     def _get_input_vars(self):
         """Define all the input variables (with type, shape, name) that'll be
         fed into the graph to produce a cost.  """
         return [InputVar(tf.float32, (None, IMAGE_SIZE, IMAGE_SIZE), 'input'),
-                InputVar(tf.int32, (None,), 'label') ]
+                InputVar(tf.int32, (None,), 'label')]
 
     def _build_graph(self, input_vars):
         """This function should build the model which takes the input variables
@@ -47,19 +50,20 @@ class Model(ModelDesc):
             l = MaxPooling('pool0', image, 2)
             ...  """
 
-            logits = (LinearWrap(image) # the starting brace is only for line-breaking
-                    .Conv2D('conv0')
-                    .MaxPooling('pool0', 2)
-                    .Conv2D('conv1', padding='SAME')
-                    .Conv2D('conv2')
-                    .MaxPooling('pool1', 2)
-                    .Conv2D('conv3')
-                    .FullyConnected('fc0', 512, nl=tf.nn.relu)
-                    .Dropout('dropout', 0.5)
-                    .FullyConnected('fc1', out_dim=10, nl=tf.identity)())
+            logits = (LinearWrap(image)  # the starting brace is only for line-breaking
+                      .Conv2D('conv0')
+                      .MaxPooling('pool0', 2)
+                      .Conv2D('conv1', padding='SAME')
+                      .Conv2D('conv2')
+                      .MaxPooling('pool1', 2)
+                      .Conv2D('conv3')
+                      .FullyConnected('fc0', 512, nl=tf.nn.relu)
+                      .Dropout('dropout', 0.5)
+                      .FullyConnected('fc1', out_dim=10, nl=tf.identity)())
         prob = tf.nn.softmax(logits, name='prob')   # a Bx10 with probabilities
 
-        cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label) # a vector of length B with loss of each sample
+        cost = tf.nn.sparse_softmax_cross_entropy_with_logits(
+            logits, label)  # a vector of length B with loss of each sample
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')  # the average cross-entropy loss
 
         # compute the "incorrect vector", for the callback ClassificationError to use at validation time
@@ -83,10 +87,12 @@ class Model(ModelDesc):
         summary.add_param_summary([('.*/W', ['histogram'])])
         self.cost = tf.add_n([wd_cost, cost], name='cost')
 
+
 def get_data():
     train = BatchData(dataset.Mnist('train'), 128)
     test = BatchData(dataset.Mnist('test'), 256, remainder=True)
     return train, test
+
 
 def get_config():
     # automatically setup the directory train_log/mnist-convnet for logging
@@ -135,4 +141,3 @@ if __name__ == '__main__':
     if args.load:
         config.session_init = SaverRestore(args.load)
     SimpleTrainer(config).train()
-

@@ -6,7 +6,9 @@
 from __future__ import print_function
 import tensorflow as tf
 import numpy as np
-import os, cv2, argparse
+import os
+import cv2
+import argparse
 
 from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
@@ -19,9 +21,11 @@ Usage:
     ./load-alexnet.py --load alexnet.npy --input cat.png
 """
 
+
 class Model(ModelDesc):
+
     def _get_input_vars(self):
-        return [InputVar(tf.float32, (None, 227, 227, 3), 'input') ]
+        return [InputVar(tf.float32, (None, 227, 227, 3), 'input')]
 
     def _build_graph(self, inputs):
         # img: 227x227x3
@@ -48,6 +52,7 @@ class Model(ModelDesc):
         logits = FullyConnected('fc8', l, out_dim=1000, nl=tf.identity)
         prob = tf.nn.softmax(logits, name='prob')
 
+
 def run_test(path, input):
     param_dict = np.load(path, encoding='latin1').item()
     predict_func = OfflinePredictor(PredictConfig(
@@ -59,8 +64,8 @@ def run_test(path, input):
 
     im = cv2.imread(input)
     assert im is not None, input
-    im = cv2.resize(im, (227, 227))[:,:,::-1].reshape(
-            (1,227,227,3)).astype('float32') - 110
+    im = cv2.resize(im, (227, 227))[:, :, ::-1].reshape(
+        (1, 227, 227, 3)).astype('float32') - 110
     outputs = predict_func([im])[0]
     prob = outputs[0]
     ret = prob.argsort()[-10:][::-1]

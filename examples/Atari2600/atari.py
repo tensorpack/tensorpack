@@ -4,7 +4,8 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
-import time, os
+import time
+import os
 import cv2
 from collections import deque
 import threading
@@ -22,15 +23,17 @@ __all__ = ['AtariPlayer']
 ROM_URL = "https://github.com/openai/atari-py/tree/master/atari_py/atari_roms"
 _ALE_LOCK = threading.Lock()
 
+
 class AtariPlayer(RLEnvironment):
     """
     A wrapper for atari emulator.
     Will automatically restart when a real episode ends (isOver might be just
     lost of lives but not game over).
     """
-    def __init__(self, rom_file, viz=0, height_range=(None,None),
-            frame_skip=4, image_shape=(84, 84), nullop_start=30,
-            live_lost_as_eoe=True):
+
+    def __init__(self, rom_file, viz=0, height_range=(None, None),
+                 frame_skip=4, image_shape=(84, 84), nullop_start=30,
+                 live_lost_as_eoe=True):
         """
         :param rom_file: path to the rom
         :param frame_skip: skip every k frames and repeat the action
@@ -47,7 +50,7 @@ class AtariPlayer(RLEnvironment):
         if not os.path.isfile(rom_file) and '/' not in rom_file:
             rom_file = get_dataset_path('atari_rom', rom_file)
         assert os.path.isfile(rom_file), \
-                "rom {} not found. Please download at {}".format(rom_file, ROM_URL)
+            "rom {} not found. Please download at {}".format(rom_file, ROM_URL)
 
         try:
             ALEInterface.setLoggerMode(ALEInterface.Logger.Warning)
@@ -84,7 +87,6 @@ class AtariPlayer(RLEnvironment):
         self.width, self.height = self.ale.getScreenDims()
         self.actions = self.ale.getMinimalActionSet()
 
-
         self.live_lost_as_eoe = live_lost_as_eoe
         self.frame_skip = frame_skip
         self.nullop_start = nullop_start
@@ -112,7 +114,7 @@ class AtariPlayer(RLEnvironment):
             if isinstance(self.viz, float):
                 cv2.imshow(self.windowname, ret)
                 time.sleep(self.viz)
-        ret = ret[self.height_range[0]:self.height_range[1],:].astype('float32')
+        ret = ret[self.height_range[0]:self.height_range[1], :].astype('float32')
         # 0.299,0.587.0.114. same as rgb2y in torch/image
         ret = cv2.cvtColor(ret, cv2.COLOR_RGB2GRAY)
         ret = cv2.resize(ret, self.image_shape)
@@ -169,7 +171,7 @@ if __name__ == '__main__':
     import time
 
     def benchmark():
-        a = AtariPlayer(sys.argv[1], viz=False, height_range=(28,-8))
+        a = AtariPlayer(sys.argv[1], viz=False, height_range=(28, -8))
         num = a.get_action_space().num_actions()
         rng = get_rng(num)
         start = time.time()
@@ -184,7 +186,8 @@ if __name__ == '__main__':
         print(time.time() - start)
 
     if len(sys.argv) == 3 and sys.argv[2] == 'benchmark':
-        import threading, multiprocessing
+        import threading
+        import multiprocessing
         for k in range(3):
             #th = multiprocessing.Process(target=benchmark)
             th = threading.Thread(target=benchmark)
@@ -193,7 +196,7 @@ if __name__ == '__main__':
         benchmark()
     else:
         a = AtariPlayer(sys.argv[1],
-                viz=0.03, height_range=(28,-8))
+                        viz=0.03, height_range=(28, -8))
         num = a.get_action_space().num_actions()
         rng = get_rng(num)
         import time
@@ -204,6 +207,5 @@ if __name__ == '__main__':
             print(act)
             r, o = a.action(act)
             a.current_state()
-            #time.sleep(0.1)
+            # time.sleep(0.1)
             print(r, o)
-

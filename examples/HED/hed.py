@@ -8,16 +8,19 @@ import tensorflow as tf
 import argparse
 import numpy as np
 from six.moves import zip
-import os, sys
+import os
+import sys
 
 from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
 
+
 class Model(ModelDesc):
+
     def _get_input_vars(self):
         return [InputVar(tf.float32, [None, None, None, 3], 'image'),
-                InputVar(tf.int32, [None, None, None], 'edgemap') ]
+                InputVar(tf.int32, [None, None, None], 'edgemap')]
 
     def _build_graph(self, input_vars):
         image, edgemap = input_vars
@@ -27,9 +30,9 @@ class Model(ModelDesc):
         def branch(name, l, up):
             with tf.variable_scope(name) as scope:
                 l = Conv2D('convfc', l, 1, kernel_shape=1, nl=tf.identity,
-                        use_bias=True,
-                        W_init=tf.constant_initializer(),
-                        b_init=tf.constant_initializer())
+                           use_bias=True,
+                           W_init=tf.constant_initializer(),
+                           b_init=tf.constant_initializer())
                 while up != 1:
                     l = BilinearUpSample('upsample{}'.format(up), l, 2)
                     up = up / 2
@@ -64,15 +67,15 @@ class Model(ModelDesc):
             b5 = branch('branch5', l, 16)
 
         final_map = Conv2D('convfcweight',
-                tf.concat(3, [b1, b2, b3, b4, b5]), 1, 1,
-                W_init=tf.constant_initializer(0.2),
-                use_bias=False, nl=tf.identity)
+                           tf.concat(3, [b1, b2, b3, b4, b5]), 1, 1,
+                           W_init=tf.constant_initializer(0.2),
+                           use_bias=False, nl=tf.identity)
         costs = []
         for idx, b in enumerate([b1, b2, b3, b4, b5, final_map]):
-            output = tf.nn.sigmoid(b, name='output{}'.format(idx+1))
+            output = tf.nn.sigmoid(b, name='output{}'.format(idx + 1))
             xentropy = class_balanced_sigmoid_cross_entropy(
                 b, edgemap,
-                name='xentropy{}'.format(idx+1))
+                name='xentropy{}'.format(idx + 1))
             costs.append(xentropy)
 
         # some magic threshold
@@ -91,13 +94,15 @@ class Model(ModelDesc):
             self.cost = tf.add_n(costs, name='cost')
 
     def get_gradient_processor(self):
-        return [ScaleGradient([('convfcweight.*', 0.1), ('conv5_.*', 5)]) ]
+        return [ScaleGradient([('convfcweight.*', 0.1), ('conv5_.*', 5)])]
+
 
 def get_data(name):
     isTrain = name == 'train'
     ds = dataset.BSDS500(name, shuffle=True)
 
     class CropMultiple16(imgaug.ImageAugmentor):
+
         def _get_augment_params(self, img):
             newh = img.shape[0] // 16 * 16
             neww = img.shape[1] // 16 * 16
@@ -110,12 +115,12 @@ def get_data(name):
 
         def _augment(self, img, param):
             h0, w0, newh, neww = param
-            return img[h0:h0+newh,w0:w0+neww]
+            return img[h0:h0 + newh, w0:w0 + neww]
 
     if isTrain:
         shape_aug = [
-            imgaug.RandomResize(xrange=(0.7,1.5), yrange=(0.7,1.5),
-                aspect_ratio_thres=0.15),
+            imgaug.RandomResize(xrange=(0.7, 1.5), yrange=(0.7, 1.5),
+                                aspect_ratio_thres=0.15),
             imgaug.RotationAndCropValid(90),
             CropMultiple16(),
             imgaug.Flip(horiz=True),
@@ -128,15 +133,15 @@ def get_data(name):
     ds = AugmentImageComponents(ds, shape_aug, (0, 1))
 
     def f(m):
-        m[m>=0.50] = 1
-        m[m<0.50] = 0
+        m[m >= 0.50] = 1
+        m[m < 0.50] = 0
         return m
     ds = MapDataComponent(ds, f, 1)
 
     if isTrain:
         augmentors = [
             imgaug.Brightness(63, clip=False),
-            imgaug.Contrast((0.4,1.5)),
+            imgaug.Contrast((0.4, 1.5)),
         ]
         ds = AugmentImageComponent(ds, augmentors)
         ds = BatchDataByShape(ds, 8, idx=0)
@@ -144,6 +149,7 @@ def get_data(name):
     else:
         ds = BatchData(ds, 1)
     return ds
+
 
 def view_data():
     ds = RepeatedData(get_data('train'), -1)
@@ -155,6 +161,7 @@ def view_data():
             cv2.waitKey(1000)
             cv2.imshow("edge", edgemap)
             cv2.waitKey(1000)
+
 
 def get_config():
     logger.auto_set_dir()
@@ -178,12 +185,13 @@ def get_config():
         max_epoch=100,
     )
 
+
 def run(model_path, image_path, output):
     pred_config = PredictConfig(
-            model=Model(),
-            session_init=get_model_loader(model_path),
-            input_names=['image'],
-            output_names=['output' + str(k) for k in range(1, 7)])
+        model=Model(),
+        session_init=get_model_loader(model_path),
+        input_names=['image'],
+        output_names=['output' + str(k) for k in range(1, 7)])
     predict_func = get_predict_func(pred_config)
     im = cv2.imread(image_path)
     assert im is not None
@@ -193,7 +201,7 @@ def run(model_path, image_path, output):
         for k in range(6):
             pred = outputs[k][0]
             cv2.imwrite("out{}.png".format(
-                '-fused' if k == 5 else str(k+1)), pred * 255)
+                '-fused' if k == 5 else str(k + 1)), pred * 255)
     else:
         pred = outputs[5][0]
         cv2.imwrite(output, pred * 255)

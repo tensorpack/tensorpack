@@ -5,7 +5,8 @@
 
 import numpy as np
 import tensorflow as tf
-import os, sys
+import os
+import sys
 import cv2
 import argparse
 
@@ -16,9 +17,11 @@ from GAN import GANTrainer, build_GAN_losses
 
 BATCH = 128
 
+
 class Model(ModelDesc):
+
     def _get_input_vars(self):
-        return [InputVar(tf.float32, (None, 28, 28), 'input') ]
+        return [InputVar(tf.float32, (None, 28, 28), 'input')]
 
     def generator(self, z):
         l = FullyConnected('fc0', z, 1024, nl=BNReLU)
@@ -34,18 +37,18 @@ class Model(ModelDesc):
         with argscope(Conv2D, nl=tf.identity, kernel_shape=4, stride=2), \
                 argscope(LeakyReLU, alpha=0.2):
             l = (LinearWrap(imgs)
-                .Conv2D('conv0', 64)
-                .LeakyReLU()
-                .Conv2D('conv1', 128)
-                .BatchNorm('bn1').LeakyReLU()
-                .FullyConnected('fc1', 1024, nl=tf.identity)
-                .BatchNorm('bn2').LeakyReLU()())
+                 .Conv2D('conv0', 64)
+                 .LeakyReLU()
+                 .Conv2D('conv1', 128)
+                 .BatchNorm('bn1').LeakyReLU()
+                 .FullyConnected('fc1', 1024, nl=tf.identity)
+                 .BatchNorm('bn2').LeakyReLU()())
 
             logits = FullyConnected('fct', l, 1, nl=tf.identity)
             encoder = (LinearWrap(l)
-                    .FullyConnected('fce1', 128, nl=tf.identity)
-                    .BatchNorm('bne').LeakyReLU()
-                    .FullyConnected('fce-out', 10, nl=tf.identity)())
+                       .FullyConnected('fce1', 128, nl=tf.identity)
+                       .BatchNorm('bne').LeakyReLU()
+                       .FullyConnected('fce-out', 10, nl=tf.identity)())
         return logits, encoder
 
     def _build_graph(self, input_vars):
@@ -54,7 +57,7 @@ class Model(ModelDesc):
 
         prior_prob = tf.constant([0.1] * 10, name='prior_prob')
         # assume first 10 is categorical
-        ids = tf.multinomial(tf.zeros([BATCH, 10]), num_samples=1)[:,0]
+        ids = tf.multinomial(tf.zeros([BATCH, 10]), num_samples=1)[:, 0]
         zc = tf.one_hot(ids, 10, name='zc_train')
         zc = tf.placeholder_with_default(zc, [None, 10], name='zc')
 
@@ -63,7 +66,7 @@ class Model(ModelDesc):
         z = tf.concat(1, [zc, z], name='fullz')
 
         with argscope([Conv2D, Deconv2D, FullyConnected],
-                W_init=tf.truncated_normal_initializer(stddev=0.02)):
+                      W_init=tf.truncated_normal_initializer(stddev=0.02)):
             with tf.variable_scope('gen'):
                 image_gen = self.generator(z)
                 tf.summary.image('gen', image_gen, max_outputs=30)
@@ -71,10 +74,10 @@ class Model(ModelDesc):
                 vecpos, _ = self.discriminator(image_pos)
             with tf.variable_scope('discrim', reuse=True):
                 vecneg, dist_param = self.discriminator(image_gen)
-                logprob = tf.nn.log_softmax(dist_param) # log prob of each category
+                logprob = tf.nn.log_softmax(dist_param)  # log prob of each category
 
         # Q(c|x) = Q(zc | image_gen)
-        log_qc_given_x = tf.reduce_sum(logprob * zc, 1, name='logQc_x') # bx1
+        log_qc_given_x = tf.reduce_sum(logprob * zc, 1, name='logQc_x')  # bx1
         log_qc = tf.reduce_sum(prior_prob * zc, 1, name='logQc')
         Elog_qc_given_x = tf.reduce_mean(log_qc_given_x, name='ElogQc_x')
         Hc = tf.reduce_mean(-log_qc, name='Hc')
@@ -89,10 +92,12 @@ class Model(ModelDesc):
         self.g_vars = [v for v in all_vars if v.name.startswith('gen/')]
         self.d_vars = [v for v in all_vars if v.name.startswith('discrim/')]
 
+
 def get_data():
     ds = ConcatData([dataset.Mnist('train'), dataset.Mnist('test')])
     ds = BatchData(ds, BATCH)
     return ds
+
 
 def get_config():
     logger.auto_set_dir()
@@ -110,12 +115,13 @@ def get_config():
         max_epoch=100,
     )
 
+
 def sample(model_path):
     pred = OfflinePredictor(PredictConfig(
-       session_init=get_model_loader(model_path),
-       model=Model(),
-       input_names=['zc'],
-       output_names=['gen/gen']))
+        session_init=get_model_loader(model_path),
+        model=Model(),
+        input_names=['zc'],
+        output_names=['gen/gen']))
 
     eye = []
     for k in np.eye(10):
@@ -143,4 +149,3 @@ if __name__ == '__main__':
         if args.load:
             config.session_init = SaverRestore(args.load)
         GANTrainer(config).train()
-

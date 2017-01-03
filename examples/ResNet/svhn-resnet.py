@@ -20,10 +20,11 @@ You might need to adjust the learning rate schedule when running with 1 GPU.
 
 import imp
 cifar_example = imp.load_source('cifar_example',
-        os.path.join(os.path.dirname(__file__), 'cifar10-resnet.py'))
+                                os.path.join(os.path.dirname(__file__), 'cifar10-resnet.py'))
 Model = cifar_example.Model
 
 BATCH_SIZE = 128
+
 
 def get_data(train_or_test):
     isTrain = train_or_test == 'train'
@@ -39,9 +40,9 @@ def get_data(train_or_test):
         augmentors = [
             imgaug.CenterPaste((40, 40)),
             imgaug.Brightness(10),
-            imgaug.Contrast((0.8,1.2)),
+            imgaug.Contrast((0.8, 1.2)),
             imgaug.GaussianDeform(  # this is slow. without it, can only reach 1.9% error
-                [(0.2, 0.2), (0.2, 0.8), (0.8,0.8), (0.8,0.2)],
+                [(0.2, 0.2), (0.2, 0.8), (0.8, 0.8), (0.8, 0.2)],
                 (40, 40), 0.2, 3),
             imgaug.RandomCrop((32, 32)),
             imgaug.MapImage(lambda x: x - pp_mean),
@@ -55,6 +56,7 @@ def get_data(train_or_test):
     if isTrain:
         ds = PrefetchData(ds, 5, 5)
     return ds
+
 
 def get_config():
     logger.auto_set_dir()
@@ -72,7 +74,7 @@ def get_config():
             StatPrinter(),
             ModelSaver(),
             InferenceRunner(dataset_test,
-                [ScalarStats('cost'), ClassificationError() ]),
+                            [ScalarStats('cost'), ClassificationError()]),
             ScheduledHyperParamSetter('learning_rate',
                                       [(1, 0.1), (20, 0.01), (28, 0.001), (50, 0.0001)])
         ]),

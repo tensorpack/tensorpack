@@ -5,11 +5,15 @@
 
 import numpy as np
 import tensorflow as tf
-import os, sys, re, time
+import os
+import sys
+import re
+import time
 import random
 import uuid
 import argparse
-import multiprocessing, threading
+import multiprocessing
+import threading
 from collections import deque
 import six
 from six.moves import queue
@@ -17,7 +21,7 @@ from six.moves import queue
 from tensorpack import *
 from tensorpack.utils.concurrency import *
 from tensorpack.utils.serialize import *
-from tensorpack.utils.stats import  *
+from tensorpack.utils.stats import *
 from tensorpack.tfutils import symbolic_functions as symbf
 
 from tensorpack.RL import *
@@ -42,8 +46,10 @@ EVALUATE_PROC = min(multiprocessing.cpu_count() // 2, 20)
 NUM_ACTIONS = None
 ENV_NAME = None
 
+
 def get_player(viz=False, train=False, dumpdir=None):
     pl = GymEnv(ENV_NAME, dumpdir=dumpdir)
+
     def func(img):
         return cv2.resize(img, IMAGE_SIZE[::-1])
     pl = MapPlayerState(pl, func)
@@ -58,16 +64,20 @@ def get_player(viz=False, train=False, dumpdir=None):
     return pl
 common.get_player = get_player
 
+
 class MySimulatorWorker(SimulatorProcess):
+
     def _build_player(self):
         return get_player(train=True)
 
+
 class Model(ModelDesc):
+
     def _get_input_vars(self):
         assert NUM_ACTIONS is not None
         return [InputVar(tf.float32, (None,) + IMAGE_SHAPE3, 'state'),
                 InputVar(tf.int64, (None,), 'action'),
-                InputVar(tf.float32, (None,), 'futurereward') ]
+                InputVar(tf.float32, (None,), 'futurereward')]
 
     def _get_NN_prediction(self, image):
         image = image / 255.0
@@ -89,11 +99,11 @@ class Model(ModelDesc):
     def _build_graph(self, inputs):
         state, action, futurereward = inputs
         policy, self.value = self._get_NN_prediction(state)
-        self.value = tf.squeeze(self.value, [1], name='pred_value') # (B,)
+        self.value = tf.squeeze(self.value, [1], name='pred_value')  # (B,)
         self.logits = tf.nn.softmax(policy, name='logits')
 
         expf = tf.get_variable('explore_factor', shape=[],
-                initializer=tf.constant_initializer(1), trainable=False)
+                               initializer=tf.constant_initializer(1), trainable=False)
         logitsT = tf.nn.softmax(policy * expf, name='logitsT')
         is_training = get_current_tower_context().is_training
         if not is_training:
@@ -101,38 +111,40 @@ class Model(ModelDesc):
         log_probs = tf.log(self.logits + 1e-6)
 
         log_pi_a_given_s = tf.reduce_sum(
-                log_probs * tf.one_hot(action, NUM_ACTIONS), 1)
+            log_probs * tf.one_hot(action, NUM_ACTIONS), 1)
         advantage = tf.sub(tf.stop_gradient(self.value), futurereward, name='advantage')
         policy_loss = tf.reduce_sum(log_pi_a_given_s * advantage, name='policy_loss')
         xentropy_loss = tf.reduce_sum(
-                self.logits * log_probs, name='xentropy_loss')
+            self.logits * log_probs, name='xentropy_loss')
         value_loss = tf.nn.l2_loss(self.value - futurereward, name='value_loss')
 
         pred_reward = tf.reduce_mean(self.value, name='predict_reward')
         advantage = symbf.rms(advantage, name='rms_advantage')
         summary.add_moving_summary(policy_loss, xentropy_loss, value_loss, pred_reward, advantage)
         entropy_beta = tf.get_variable('entropy_beta', shape=[],
-                initializer=tf.constant_initializer(0.01), trainable=False)
+                                       initializer=tf.constant_initializer(0.01), trainable=False)
         self.cost = tf.add_n([policy_loss, xentropy_loss * entropy_beta, value_loss])
         self.cost = tf.truediv(self.cost,
-                tf.cast(tf.shape(futurereward)[0], tf.float32),
-                name='cost')
+                               tf.cast(tf.shape(futurereward)[0], tf.float32),
+                               name='cost')
 
     def get_gradient_processor(self):
         return [MapGradient(lambda grad: tf.clip_by_average_norm(grad, 0.1)),
                 SummaryGradient()]
 
+
 class MySimulatorMaster(SimulatorMaster, Callback):
+
     def __init__(self, pipe_c2s, pipe_s2c, model):
         super(MySimulatorMaster, self).__init__(pipe_c2s, pipe_s2c)
         self.M = model
-        self.queue = queue.Queue(maxsize=BATCH_SIZE*8*2)
+        self.queue = queue.Queue(maxsize=BATCH_SIZE * 8 * 2)
 
     def _setup_graph(self):
         self.sess = self.trainer.sess
         self.async_predictor = MultiThreadAsyncPredictor(
-                self.trainer.get_predict_funcs(['state'], ['logitsT', 'pred_value'],
-                PREDICTOR_THREAD), batch_size=15)
+            self.trainer.get_predict_funcs(['state'], ['logitsT', 'pred_value'],
+                                           PREDICTOR_THREAD), batch_size=15)
         self.async_predictor.run()
 
     def _on_state(self, state, ident):
@@ -172,6 +184,7 @@ class MySimulatorMaster(SimulatorMaster, Callback):
         else:
             client.memory = []
 
+
 def get_config():
     logger.auto_set_dir()
     M = Model()
@@ -196,7 +209,7 @@ def get_config():
             ScheduledHyperParamSetter('learning_rate', [(80, 0.0003), (120, 0.0001)]),
             ScheduledHyperParamSetter('entropy_beta', [(80, 0.005)]),
             ScheduledHyperParamSetter('explore_factor',
-                [(80, 2), (100, 3), (120, 4), (140, 5)]),
+                                      [(80, 2), (100, 3), (120, 4), (140, 5)]),
             master,
             StartProcOrThread(master),
             PeriodicCallback(Evaluator(EVAL_EPISODE, ['state'], ['logits']), 2),
@@ -213,12 +226,13 @@ if __name__ == '__main__':
     parser.add_argument('--load', help='load model')
     parser.add_argument('--env', help='env', required=True)
     parser.add_argument('--task', help='task to perform',
-            choices=['play', 'eval', 'train'], default='train')
+                        choices=['play', 'eval', 'train'], default='train')
     args = parser.parse_args()
 
     ENV_NAME = args.env
     assert ENV_NAME
-    p = get_player(); del p    # set NUM_ACTIONS
+    p = get_player()
+    del p    # set NUM_ACTIONS
 
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
@@ -227,10 +241,10 @@ if __name__ == '__main__':
 
     if args.task != 'train':
         cfg = PredictConfig(
-                model=Model(),
-                session_init=SaverRestore(args.load),
-                input_names=['state'],
-                output_names=['logits'])
+            model=Model(),
+            session_init=SaverRestore(args.load),
+            input_names=['state'],
+            output_names=['logits'])
         if args.task == 'play':
             play_model(cfg)
         elif args.task == 'eval':
@@ -239,11 +253,11 @@ if __name__ == '__main__':
         if args.gpu:
             nr_gpu = get_nr_gpu()
             if nr_gpu > 1:
-                predict_tower = range(nr_gpu)[-nr_gpu//2:]
+                predict_tower = range(nr_gpu)[-nr_gpu // 2:]
             else:
                 predict_tower = [0]
             PREDICTOR_THREAD = len(predict_tower) * PREDICTOR_THREAD_PER_GPU
-            train_tower = range(nr_gpu)[:-nr_gpu//2] or [0]
+            train_tower = range(nr_gpu)[:-nr_gpu // 2] or [0]
             logger.info("[BA3C] Train on gpu {} and infer on gpu {}".format(
                 ','.join(map(str, train_tower)), ','.join(map(str, predict_tower))))
             trainer = AsyncMultiGPUTrainer

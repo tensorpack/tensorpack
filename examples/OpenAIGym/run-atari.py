@@ -5,7 +5,10 @@
 
 import numpy as np
 import tensorflow as tf
-import os, sys, re, time
+import os
+import sys
+import re
+import time
 import random
 import argparse
 import six
@@ -23,6 +26,7 @@ ENV_NAME = None
 
 from common import play_one_episode
 
+
 def get_player(dumpdir=None):
     pl = GymEnv(ENV_NAME, dumpdir=dumpdir, auto_restart=False)
     pl = MapPlayerState(pl, lambda img: cv2.resize(img, IMAGE_SIZE[::-1]))
@@ -33,12 +37,14 @@ def get_player(dumpdir=None):
     pl = HistoryFramePlayer(pl, FRAME_HISTORY)
     return pl
 
+
 class Model(ModelDesc):
+
     def _get_input_vars(self):
         assert NUM_ACTIONS is not None
         return [InputVar(tf.float32, (None,) + IMAGE_SHAPE3, 'state'),
                 InputVar(tf.int32, (None,), 'action'),
-                InputVar(tf.float32, (None,), 'futurereward') ]
+                InputVar(tf.float32, (None,), 'futurereward')]
 
     def _get_NN_prediction(self, image):
         image = image / 255.0
@@ -61,6 +67,7 @@ class Model(ModelDesc):
         policy = self._get_NN_prediction(state)
         self.logits = tf.nn.softmax(policy, name='logits')
 
+
 def run_submission(cfg, output, nr):
     player = get_player(dumpdir=output)
     predfunc = get_predict_func(cfg)
@@ -71,6 +78,7 @@ def run_submission(cfg, output, nr):
         score = play_one_episode(player, predfunc)
         print("Score:", score)
 
+
 def do_submit(output):
     gym.upload(output, api_key='xxx')
 
@@ -80,21 +88,22 @@ if __name__ == '__main__':
     parser.add_argument('--load', help='load model', required=True)
     parser.add_argument('--env', help='environment name', required=True)
     parser.add_argument('--episode', help='number of episodes to run',
-            type=int, default=100)
+                        type=int, default=100)
     parser.add_argument('--output', help='output directory', default='gym-submit')
     args = parser.parse_args()
 
     ENV_NAME = args.env
     assert ENV_NAME
     logger.info("Environment Name: {}".format(ENV_NAME))
-    p = get_player(); del p    # set NUM_ACTIONS
+    p = get_player()
+    del p    # set NUM_ACTIONS
 
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
     cfg = PredictConfig(
-            model=Model(),
-            session_init=SaverRestore(args.load),
-            input_names=['state'],
-            output_names=['logits'])
+        model=Model(),
+        session_init=SaverRestore(args.load),
+        input_names=['state'],
+        output_names=['logits'])
     run_submission(cfg, args.output, args.episode)

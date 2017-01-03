@@ -27,10 +27,12 @@ This config reaches 71% single-crop validation accuracy after 150k steps with 6 
 Learning rate may need a different schedule for different number of GPUs (because batch size will be different).
 """
 
+
 class Model(ModelDesc):
+
     def _get_input_vars(self):
         return [InputVar(tf.float32, [None, INPUT_SHAPE, INPUT_SHAPE, 3], 'input'),
-                InputVar(tf.int32, [None], 'label') ]
+                InputVar(tf.int32, [None], 'label')]
 
     def _build_graph(self, input_vars):
         image, label = input_vars
@@ -117,6 +119,7 @@ class Model(ModelDesc):
         add_param_summary([('.*/W', ['histogram'])])   # monitor W
         self.cost = tf.add_n([cost, wd_cost], name='cost')
 
+
 def get_data(train_or_test):
     isTrain = train_or_test == 'train'
     ds = dataset.ILSVRC12(args.data, train_or_test, shuffle=True if isTrain else False)
@@ -128,7 +131,7 @@ def get_data(train_or_test):
         augmentors = [
             imgaug.Resize((256, 256)),
             imgaug.Brightness(30, False),
-            imgaug.Contrast((0.8,1.2), True),
+            imgaug.Contrast((0.8, 1.2), True),
             imgaug.MapImage(lambda x: x - pp_mean),
             imgaug.RandomCrop((224, 224)),
             imgaug.Flip(horiz=True),
@@ -166,7 +169,7 @@ def get_config():
             ScheduledHyperParamSetter('learning_rate',
                                       [(8, 0.03), (14, 0.02), (17, 5e-3),
                                        (19, 3e-3), (24, 1e-3), (26, 2e-4),
-                                       (30, 5e-5) ])
+                                       (30, 5e-5)])
         ]),
         session_config=get_default_sess_config(0.99),
         model=Model(),

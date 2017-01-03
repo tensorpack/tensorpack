@@ -5,7 +5,8 @@
 
 import tensorflow as tf
 import numpy as np
-import os, sys
+import os
+import sys
 import argparse
 from collections import Counter
 import operator
@@ -13,7 +14,7 @@ import six
 from six.moves import map, range
 
 from tensorpack import *
-from tensorpack.tfutils.gradproc import  *
+from tensorpack.tfutils.gradproc import *
 from tensorpack.utils.globvars import globalns as param
 import tensorpack.tfutils.symbolic_functions as symbf
 from timitdata import TIMITBatch
@@ -21,13 +22,15 @@ from timitdata import TIMITBatch
 BATCH = 64
 NLAYER = 2
 HIDDEN = 128
-NR_CLASS =  61 + 1
+NR_CLASS = 61 + 1
 FEATUREDIM = 39
 
+
 class Model(ModelDesc):
+
     def _get_input_vars(self):
         return [InputVar(tf.float32, [None, None, FEATUREDIM], 'feat'),   # bxmaxseqx39
-                InputVar(tf.int64, None, 'labelidx'),   #label is b x maxlen, sparse
+                InputVar(tf.int64, None, 'labelidx'),  # label is b x maxlen, sparse
                 InputVar(tf.int32, None, 'labelvalue'),
                 InputVar(tf.int64, None, 'labelshape'),
                 InputVar(tf.int32, [None], 'seqlen'),   # b
@@ -43,36 +46,37 @@ class Model(ModelDesc):
         initial = cell.zero_state(tf.shape(feat)[0], tf.float32)
 
         outputs, last_state = tf.nn.dynamic_rnn(cell, feat,
-                seqlen, initial,
-                dtype=tf.float32, scope='rnn')
+                                                seqlen, initial,
+                                                dtype=tf.float32, scope='rnn')
 
         # o: b x t x HIDDEN
         output = tf.reshape(outputs, [-1, HIDDEN])  # (Bxt) x rnnsize
         logits = FullyConnected('fc', output, NR_CLASS, nl=tf.identity,
-                W_init=tf.truncated_normal_initializer(stddev=0.01))
+                                W_init=tf.truncated_normal_initializer(stddev=0.01))
         logits = tf.reshape(logits, (BATCH, -1, NR_CLASS))
 
         loss = tf.nn.ctc_loss(logits, label, seqlen, time_major=False)
 
         self.cost = tf.reduce_mean(loss, name='cost')
 
-        logits = tf.transpose(logits, [1,0,2])
+        logits = tf.transpose(logits, [1, 0, 2])
 
         isTrain = get_current_tower_context().is_training
         if isTrain:
             # beam search is too slow to run in training
             predictions = tf.to_int32(
-                    tf.nn.ctc_greedy_decoder(logits, seqlen)[0][0])
+                tf.nn.ctc_greedy_decoder(logits, seqlen)[0][0])
         else:
             predictions = tf.to_int32(
-                    tf.nn.ctc_beam_search_decoder(logits, seqlen)[0][0])
+                tf.nn.ctc_beam_search_decoder(logits, seqlen)[0][0])
         err = tf.edit_distance(predictions, label, normalize=True)
         err.set_shape([None])
         err = tf.reduce_mean(err, name='error')
         summary.add_moving_summary(err)
 
     def get_gradient_processor(self):
-        return [GlobalNormClip(5), SummaryGradient() ]
+        return [GlobalNormClip(5), SummaryGradient()]
+
 
 def get_data(path, isTrain, stat_file):
     ds = LMDBDataPoint(path, shuffle=isTrain)
@@ -82,6 +86,7 @@ def get_data(path, isTrain, stat_file):
     if isTrain:
         ds = PrefetchDataZMQ(ds, 1)
     return ds
+
 
 def get_config(ds_train, ds_test):
     step_per_epoch = ds_train.size()
@@ -94,7 +99,7 @@ def get_config(ds_train, ds_test):
         callbacks=Callbacks([
             StatPrinter(), ModelSaver(),
             StatMonitorParamSetter('learning_rate', 'error',
-                lambda x: x * 0.2, 0, 5),
+                                   lambda x: x * 0.2, 0, 5),
             HumanHyperParamSetter('learning_rate'),
             PeriodicCallback(
                 InferenceRunner(ds_test, [ScalarStats('error')]), 2),
@@ -124,4 +129,3 @@ if __name__ == '__main__':
     if args.load:
         config.session_init = SaverRestore(args.load)
     QueueInputTrainer(config).train()
-

@@ -5,8 +5,10 @@
 
 import numpy as np
 import tensorflow as tf
-import glob, pickle
-import os, sys
+import glob
+import pickle
+import os
+import sys
 import argparse
 import cv2
 
@@ -32,15 +34,17 @@ CFG.SHAPE = 64
 CFG.BATCH = 128
 CFG.Z_DIM = 100
 
+
 class Model(ModelDesc):
+
     def _get_input_vars(self):
-        return [InputVar(tf.float32, (None, CFG.SHAPE, CFG.SHAPE, 3), 'input') ]
+        return [InputVar(tf.float32, (None, CFG.SHAPE, CFG.SHAPE, 3), 'input')]
 
     def generator(self, z):
         """ return a image generated from z"""
         nf = 64
         l = FullyConnected('fc0', z, nf * 8 * 4 * 4, nl=tf.identity)
-        l = tf.reshape(l, [-1, 4, 4, nf*8])
+        l = tf.reshape(l, [-1, 4, 4, nf * 8])
         l = BNReLU(l)
         with argscope(Deconv2D, nl=BNReLU, kernel_shape=4, stride=2):
             l = Deconv2D('deconv1', l, [8, 8, nf * 4])
@@ -56,14 +60,14 @@ class Model(ModelDesc):
         with argscope(Conv2D, nl=tf.identity, kernel_shape=4, stride=2), \
                 argscope(LeakyReLU, alpha=0.2):
             l = (LinearWrap(imgs)
-                .Conv2D('conv0', nf, nl=LeakyReLU)
-                .Conv2D('conv1', nf*2)
-                .BatchNorm('bn1').LeakyReLU()
-                .Conv2D('conv2', nf*4)
-                .BatchNorm('bn2').LeakyReLU()
-                .Conv2D('conv3', nf*8)
-                .BatchNorm('bn3').LeakyReLU()
-                .FullyConnected('fct', 1, nl=tf.identity)())
+                 .Conv2D('conv0', nf, nl=LeakyReLU)
+                 .Conv2D('conv1', nf * 2)
+                 .BatchNorm('bn1').LeakyReLU()
+                 .Conv2D('conv2', nf * 4)
+                 .BatchNorm('bn2').LeakyReLU()
+                 .Conv2D('conv3', nf * 8)
+                 .BatchNorm('bn3').LeakyReLU()
+                 .FullyConnected('fct', 1, nl=tf.identity)())
         return l
 
     def _build_graph(self, input_vars):
@@ -74,7 +78,7 @@ class Model(ModelDesc):
         z = tf.placeholder_with_default(z, [None, CFG.Z_DIM], name='z')
 
         with argscope([Conv2D, Deconv2D, FullyConnected],
-                W_init=tf.truncated_normal_initializer(stddev=0.02)):
+                      W_init=tf.truncated_normal_initializer(stddev=0.02)):
             with tf.variable_scope('gen'):
                 image_gen = self.generator(z)
             tf.summary.image('gen', image_gen, max_outputs=30)
@@ -88,15 +92,17 @@ class Model(ModelDesc):
         self.g_vars = [v for v in all_vars if v.name.startswith('gen/')]
         self.d_vars = [v for v in all_vars if v.name.startswith('discrim/')]
 
+
 def get_data():
     datadir = CFG.data
     imgs = glob.glob(datadir + '/*.jpg')
     ds = ImageFromFile(imgs, channel=3, shuffle=True)
-    augs = [ imgaug.CenterCrop(140), imgaug.Resize(64) ]
+    augs = [imgaug.CenterCrop(140), imgaug.Resize(64)]
     ds = AugmentImageComponent(ds, augs)
     ds = BatchData(ds, CFG.BATCH)
     ds = PrefetchDataZMQ(ds, 1)
     return ds
+
 
 def get_config():
     logger.auto_set_dir()
@@ -114,17 +120,18 @@ def get_config():
         max_epoch=200,
     )
 
+
 def sample(model_path):
     pred = PredictConfig(
-       session_init=get_model_loader(model_path),
-       model=Model(),
-       input_names=['z'],
-       output_names=['gen/gen', 'z'])
+        session_init=get_model_loader(model_path),
+        model=Model(),
+        input_names=['z'],
+        output_names=['gen/gen', 'z'])
     pred = SimpleDatasetPredictor(pred, RandomZData((100, 100)))
     for o in pred.get_result():
         o, zs = o[0] + 1, o[1]
         o = o * 128.0
-        o = o[:,:,:,::-1]
+        o = o[:, :, :, ::-1]
         viz = next(build_patch_list(o, nr_row=10, nr_col=10, viz=True))
 
 if __name__ == '__main__':

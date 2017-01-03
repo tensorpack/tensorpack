@@ -2,8 +2,10 @@
 # -*- coding: utf-8 -*-
 # File: common.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
-import random, time
-import threading, multiprocessing
+import random
+import time
+import threading
+import multiprocessing
 import numpy as np
 from tqdm import tqdm
 from six.moves import queue
@@ -11,10 +13,11 @@ from six.moves import queue
 from tensorpack import *
 from tensorpack.predict import get_predict_func
 from tensorpack.utils.concurrency import *
-from tensorpack.utils.stats import  *
+from tensorpack.utils.stats import *
 
 global get_player
 get_player = None
+
 
 def play_one_episode(player, func, verbose=False):
     def f(s):
@@ -27,6 +30,7 @@ def play_one_episode(player, func, verbose=False):
         return act
     return np.mean(player.play_one_episode(f))
 
+
 def play_model(cfg):
     player = get_player(viz=0.01)
     predfunc = get_predict_func(cfg)
@@ -34,8 +38,10 @@ def play_model(cfg):
         score = play_one_episode(player, predfunc)
         print("Total:", score)
 
+
 def eval_with_funcs(predict_funcs, nr_eval):
     class Worker(StoppableThread):
+
         def __init__(self, func, queue):
             super(Worker, self).__init__()
             self._func = func
@@ -51,7 +57,7 @@ def eval_with_funcs(predict_funcs, nr_eval):
             while not self.stopped():
                 try:
                     score = play_one_episode(player, self.func)
-                    #print "Score, ", score
+                    # print "Score, ", score
                 except RuntimeError:
                     return
                 self.queue_put_stoppable(self.q, score)
@@ -61,15 +67,17 @@ def eval_with_funcs(predict_funcs, nr_eval):
 
     for k in threads:
         k.start()
-        time.sleep(0.1) # avoid simulator bugs
+        time.sleep(0.1)  # avoid simulator bugs
     stat = StatCounter()
     try:
         for _ in tqdm(range(nr_eval), **get_tqdm_kwargs()):
             r = q.get()
             stat.feed(r)
         logger.info("Waiting for all the workers to finish the last run...")
-        for k in threads: k.stop()
-        for k in threads: k.join()
+        for k in threads:
+            k.stop()
+        for k in threads:
+            k.join()
         while q.qsize():
             r = q.get()
             stat.feed(r)
@@ -80,13 +88,16 @@ def eval_with_funcs(predict_funcs, nr_eval):
             return (stat.average, stat.max)
         return (0, 0)
 
+
 def eval_model_multithread(cfg, nr_eval):
     func = get_predict_func(cfg)
     NR_PROC = min(multiprocessing.cpu_count() // 2, 8)
     mean, max = eval_with_funcs([func] * NR_PROC, nr_eval)
     logger.info("Average Score: {}; Max Score: {}".format(mean, max))
 
+
 class Evaluator(Callback):
+
     def __init__(self, nr_eval, input_names, output_names):
         self.eval_episode = nr_eval
         self.input_names = input_names

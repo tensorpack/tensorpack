@@ -5,8 +5,10 @@
 
 import numpy as np
 import tensorflow as tf
-import glob, pickle
-import os, sys
+import glob
+import pickle
+import os
+import sys
 import argparse
 import cv2
 
@@ -36,12 +38,14 @@ BATCH = 1
 IN_CH = 3
 OUT_CH = 3
 LAMBDA = 100
-NF = 64 # number of filter
+NF = 64  # number of filter
+
 
 class Model(ModelDesc):
+
     def _get_input_vars(self):
-        return [InputVar(tf.float32, (None, SHAPE, SHAPE, IN_CH), 'input') ,
-                InputVar(tf.float32, (None, SHAPE, SHAPE, OUT_CH), 'output') ]
+        return [InputVar(tf.float32, (None, SHAPE, SHAPE, IN_CH), 'input'),
+                InputVar(tf.float32, (None, SHAPE, SHAPE, OUT_CH), 'output')]
 
     def generator(self, imgs):
         # imgs: input: 256x256xch
@@ -50,49 +54,49 @@ class Model(ModelDesc):
                 argscope(Dropout, is_training=True):
             # always use local stat for BN, and apply dropout even in testing
             with argscope(Conv2D, kernel_shape=4, stride=2,
-                    nl=lambda x, name: LeakyReLU(BatchNorm('bn', x), name=name)):
+                          nl=lambda x, name: LeakyReLU(BatchNorm('bn', x), name=name)):
                 e1 = Conv2D('conv1', imgs, NF, nl=LeakyReLU)
-                e2 = Conv2D('conv2', e1, NF*2)
-                e3 = Conv2D('conv3', e2, NF*4)
-                e4 = Conv2D('conv4', e3, NF*8)
-                e5 = Conv2D('conv5', e4, NF*8)
-                e6 = Conv2D('conv6', e5, NF*8)
-                e7 = Conv2D('conv7', e6, NF*8)
-                e8 = Conv2D('conv8', e7, NF*8, nl=BNReLU)  # 1x1
+                e2 = Conv2D('conv2', e1, NF * 2)
+                e3 = Conv2D('conv3', e2, NF * 4)
+                e4 = Conv2D('conv4', e3, NF * 8)
+                e5 = Conv2D('conv5', e4, NF * 8)
+                e6 = Conv2D('conv6', e5, NF * 8)
+                e7 = Conv2D('conv7', e6, NF * 8)
+                e8 = Conv2D('conv8', e7, NF * 8, nl=BNReLU)  # 1x1
             with argscope(Deconv2D, nl=BNReLU, kernel_shape=4, stride=2):
                 return (LinearWrap(e8)
-                    .Deconv2D('deconv1', NF*8)
-                    .Dropout()
-                    .ConcatWith(3, e7)
-                    .Deconv2D('deconv2', NF*8)
-                    .Dropout()
-                    .ConcatWith(3, e6)
-                    .Deconv2D('deconv3', NF*8)
-                    .Dropout()
-                    .ConcatWith(3, e5)
-                    .Deconv2D('deconv4', NF*8)
-                    .ConcatWith(3, e4)
-                    .Deconv2D('deconv5', NF*4)
-                    .ConcatWith(3, e3)
-                    .Deconv2D('deconv6', NF*2)
-                    .ConcatWith(3, e2)
-                    .Deconv2D('deconv7', NF*1)
-                    .ConcatWith(3, e1)
-                    .Deconv2D('deconv8', OUT_CH, nl=tf.tanh)())
+                        .Deconv2D('deconv1', NF * 8)
+                        .Dropout()
+                        .ConcatWith(3, e7)
+                        .Deconv2D('deconv2', NF * 8)
+                        .Dropout()
+                        .ConcatWith(3, e6)
+                        .Deconv2D('deconv3', NF * 8)
+                        .Dropout()
+                        .ConcatWith(3, e5)
+                        .Deconv2D('deconv4', NF * 8)
+                        .ConcatWith(3, e4)
+                        .Deconv2D('deconv5', NF * 4)
+                        .ConcatWith(3, e3)
+                        .Deconv2D('deconv6', NF * 2)
+                        .ConcatWith(3, e2)
+                        .Deconv2D('deconv7', NF * 1)
+                        .ConcatWith(3, e1)
+                        .Deconv2D('deconv8', OUT_CH, nl=tf.tanh)())
 
     def discriminator(self, inputs, outputs):
         """ return a (b, 1) logits"""
         l = tf.concat(3, [inputs, outputs])
         with argscope(Conv2D, nl=tf.identity, kernel_shape=4, stride=2):
             l = (LinearWrap(l)
-                .Conv2D('conv0', NF, nl=LeakyReLU)
-                .Conv2D('conv1', NF*2)
-                .BatchNorm('bn1').LeakyReLU()
-                .Conv2D('conv2', NF*4)
-                .BatchNorm('bn2').LeakyReLU()
-                .Conv2D('conv3', NF*8, stride=1, padding='VALID')
-                .BatchNorm('bn3').LeakyReLU()
-                .Conv2D('convlast', 1, stride=1, padding='VALID')())
+                 .Conv2D('conv0', NF, nl=LeakyReLU)
+                 .Conv2D('conv1', NF * 2)
+                 .BatchNorm('bn1').LeakyReLU()
+                 .Conv2D('conv2', NF * 4)
+                 .BatchNorm('bn2').LeakyReLU()
+                 .Conv2D('conv3', NF * 8, stride=1, padding='VALID')
+                 .BatchNorm('bn3').LeakyReLU()
+                 .Conv2D('convlast', 1, stride=1, padding='VALID')())
         return l
 
     def _build_graph(self, input_vars):
@@ -100,7 +104,7 @@ class Model(ModelDesc):
         input, output = input / 128.0 - 1, output / 128.0 - 1
 
         with argscope([Conv2D, Deconv2D],
-                W_init=tf.truncated_normal_initializer(stddev=0.02)), \
+                      W_init=tf.truncated_normal_initializer(stddev=0.02)), \
                 argscope(LeakyReLU, alpha=0.2):
             with tf.variable_scope('gen'):
                 fake_output = self.generator(input)
@@ -128,20 +132,22 @@ class Model(ModelDesc):
         self.g_vars = [v for v in all_vars if v.name.startswith('gen/')]
         self.d_vars = [v for v in all_vars if v.name.startswith('discrim/')]
 
+
 def split_input(img):
     """
     img: an image with shape (s, 2s, 3)
     :return: [input, output]
     """
     s = img.shape[0]
-    input, output = img[:,:s,:], img[:,s:,:]
+    input, output = img[:, :s, :], img[:, s:, :]
     if args.mode == 'BtoA':
         input, output = output, input
     if IN_CH == 1:
-        input = cv2.cvtColor(input, cv2.COLOR_RGB2GRAY)[:,:,np.newaxis]
+        input = cv2.cvtColor(input, cv2.COLOR_RGB2GRAY)[:, :, np.newaxis]
     if OUT_CH == 1:
-        output = cv2.cvtColor(output, cv2.COLOR_RGB2GRAY)[:,:,np.newaxis]
+        output = cv2.cvtColor(output, cv2.COLOR_RGB2GRAY)[:, :, np.newaxis]
     return [input, output]
+
 
 def get_data():
     datadir = args.data
@@ -149,11 +155,12 @@ def get_data():
     imgs = glob.glob(os.path.join(datadir, '*.jpg'))
     ds = ImageFromFile(imgs, channel=3, shuffle=True)
     ds = MapData(ds, lambda dp: split_input(dp[0]))
-    augs = [ imgaug.Resize(286), imgaug.RandomCrop(256) ]
+    augs = [imgaug.Resize(286), imgaug.RandomCrop(256)]
     ds = AugmentImageComponents(ds, augs, (0, 1))
     ds = BatchData(ds, BATCH)
     ds = PrefetchDataZMQ(ds, 1)
     return ds
+
 
 def get_config():
     logger.auto_set_dir()
@@ -171,12 +178,13 @@ def get_config():
         max_epoch=300,
     )
 
+
 def sample(datadir, model_path):
     pred = PredictConfig(
-       session_init=get_model_loader(model_path),
-       model=Model(),
-       input_names=['input', 'output'],
-       output_names=['viz'])
+        session_init=get_model_loader(model_path),
+        model=Model(),
+        input_names=['input', 'output'],
+        output_names=['viz'])
 
     imgs = glob.glob(os.path.join(datadir, '*.jpg'))
     ds = ImageFromFile(imgs, channel=3, shuffle=True)
@@ -184,7 +192,7 @@ def sample(datadir, model_path):
 
     pred = SimpleDatasetPredictor(pred, ds)
     for o in pred.get_result():
-        o = o[0][:,:,:,::-1]
+        o = o[0][:, :, :, ::-1]
         viz = next(build_patch_list(o, nr_row=3, nr_col=2, viz=True))
 
 if __name__ == '__main__':

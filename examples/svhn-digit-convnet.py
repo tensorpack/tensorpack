@@ -20,10 +20,12 @@ Each epoch iterates over the whole training set (4721 iterations).
 Speed is about 43 it/s on TitanX.
 """
 
+
 class Model(ModelDesc):
+
     def _get_input_vars(self):
         return [InputVar(tf.float32, [None, 40, 40, 3], 'input'),
-                InputVar(tf.int32, [None], 'label') ]
+                InputVar(tf.int32, [None], 'label')]
 
     def _build_graph(self, input_vars):
         image, label = input_vars
@@ -32,16 +34,16 @@ class Model(ModelDesc):
 
         with argscope(Conv2D, nl=BNReLU, use_bias=False):
             logits = (LinearWrap(image)
-                    .Conv2D('conv1', 24, 5, padding='VALID')
-                    .MaxPooling('pool1', 2, padding='SAME')
-                    .Conv2D('conv2', 32, 3, padding='VALID')
-                    .Conv2D('conv3', 32, 3, padding='VALID')
-                    .MaxPooling('pool2', 2, padding='SAME')
-                    .Conv2D('conv4', 64, 3, padding='VALID')
-                    .Dropout('drop', 0.5)
-                    .FullyConnected('fc0', 512,
-                            b_init=tf.constant_initializer(0.1), nl=tf.nn.relu)
-                    .FullyConnected('linear', out_dim=10, nl=tf.identity)())
+                      .Conv2D('conv1', 24, 5, padding='VALID')
+                      .MaxPooling('pool1', 2, padding='SAME')
+                      .Conv2D('conv2', 32, 3, padding='VALID')
+                      .Conv2D('conv3', 32, 3, padding='VALID')
+                      .MaxPooling('pool2', 2, padding='SAME')
+                      .Conv2D('conv4', 64, 3, padding='VALID')
+                      .Dropout('drop', 0.5)
+                      .FullyConnected('fc0', 512,
+                                      b_init=tf.constant_initializer(0.1), nl=tf.nn.relu)
+                      .FullyConnected('linear', out_dim=10, nl=tf.identity)())
         prob = tf.nn.softmax(logits, name='output')
 
         # compute the number of failed samples, for ClassificationError to use at test time
@@ -58,6 +60,7 @@ class Model(ModelDesc):
         add_param_summary([('.*/W', ['histogram', 'rms'])])   # monitor W
         self.cost = tf.add_n([cost, wd_cost], name='cost')
 
+
 def get_data():
     d1 = dataset.SVHNDigit('train')
     d2 = dataset.SVHNDigit('extra')
@@ -67,19 +70,20 @@ def get_data():
     augmentors = [
         imgaug.Resize((40, 40)),
         imgaug.Brightness(30),
-        imgaug.Contrast((0.5,1.5)),
+        imgaug.Contrast((0.5, 1.5)),
         imgaug.GaussianDeform(  # this is slow. only use it when you have lots of cpus
-            [(0.2, 0.2), (0.2, 0.8), (0.8,0.8), (0.8,0.2)],
-            (40,40), 0.2, 3),
+            [(0.2, 0.2), (0.2, 0.8), (0.8, 0.8), (0.8, 0.2)],
+            (40, 40), 0.2, 3),
     ]
     data_train = AugmentImageComponent(data_train, augmentors)
     data_train = BatchData(data_train, 128)
     data_train = PrefetchData(data_train, 5, 5)
 
-    augmentors = [ imgaug.Resize((40, 40)) ]
+    augmentors = [imgaug.Resize((40, 40))]
     data_test = AugmentImageComponent(data_test, augmentors)
     data_test = BatchData(data_test, 128, remainder=True)
     return data_train, data_test
+
 
 def get_config():
     logger.auto_set_dir()
@@ -100,7 +104,7 @@ def get_config():
         callbacks=Callbacks([
             StatPrinter(), ModelSaver(),
             InferenceRunner(data_test,
-                [ScalarStats('cost'), ClassificationError()])
+                            [ScalarStats('cost'), ClassificationError()])
         ]),
         model=Model(),
         step_per_epoch=step_per_epoch,

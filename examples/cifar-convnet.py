@@ -22,7 +22,9 @@ Cifar10:
 Not a good model for Cifar100, just for demonstration.
 """
 
+
 class Model(ModelDesc):
+
     def __init__(self, cifar_classnum):
         super(Model, self).__init__()
         self.cifar_classnum = cifar_classnum
@@ -30,7 +32,7 @@ class Model(ModelDesc):
     def _get_input_vars(self):
         return [InputVar(tf.float32, [None, 30, 30, 3], 'input'),
                 InputVar(tf.int32, [None], 'label')
-               ]
+                ]
 
     def _build_graph(self, input_vars):
         image, label = input_vars
@@ -43,18 +45,18 @@ class Model(ModelDesc):
         image = image / 4.0     # just to make range smaller
         with argscope(Conv2D, nl=BNReLU, use_bias=False, kernel_shape=3):
             logits = LinearWrap(image) \
-                    .Conv2D('conv1.1', out_channel=64) \
-                    .Conv2D('conv1.2', out_channel=64) \
-                    .MaxPooling('pool1', 3, stride=2, padding='SAME') \
-                    .Conv2D('conv2.1', out_channel=128) \
-                    .Conv2D('conv2.2', out_channel=128) \
-                    .MaxPooling('pool2', 3, stride=2, padding='SAME') \
-                    .Conv2D('conv3.1', out_channel=128, padding='VALID') \
-                    .Conv2D('conv3.2', out_channel=128, padding='VALID') \
-                    .FullyConnected('fc0', 1024 + 512, nl=tf.nn.relu) \
-                    .tf.nn.dropout(keep_prob) \
-                    .FullyConnected('fc1', 512, nl=tf.nn.relu) \
-                    .FullyConnected('linear', out_dim=self.cifar_classnum, nl=tf.identity)()
+                .Conv2D('conv1.1', out_channel=64) \
+                .Conv2D('conv1.2', out_channel=64) \
+                .MaxPooling('pool1', 3, stride=2, padding='SAME') \
+                .Conv2D('conv2.1', out_channel=128) \
+                .Conv2D('conv2.2', out_channel=128) \
+                .MaxPooling('pool2', 3, stride=2, padding='SAME') \
+                .Conv2D('conv3.1', out_channel=128, padding='VALID') \
+                .Conv2D('conv3.2', out_channel=128, padding='VALID') \
+                .FullyConnected('fc0', 1024 + 512, nl=tf.nn.relu) \
+                .tf.nn.dropout(keep_prob) \
+                .FullyConnected('fc1', 512, nl=tf.nn.relu) \
+                .FullyConnected('linear', out_dim=self.cifar_classnum, nl=tf.identity)()
 
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
@@ -72,6 +74,7 @@ class Model(ModelDesc):
         add_param_summary([('.*/W', ['histogram'])])   # monitor W
         self.cost = tf.add_n([cost, wd_cost], name='cost')
 
+
 def get_data(train_or_test, cifar_classnum):
     isTrain = train_or_test == 'train'
     if cifar_classnum == 10:
@@ -83,10 +86,10 @@ def get_data(train_or_test, cifar_classnum):
             imgaug.RandomCrop((30, 30)),
             imgaug.Flip(horiz=True),
             imgaug.Brightness(63),
-            imgaug.Contrast((0.2,1.8)),
+            imgaug.Contrast((0.2, 1.8)),
             imgaug.GaussianDeform(
-                [(0.2, 0.2), (0.2, 0.8), (0.8,0.8), (0.8,0.2)],
-                (30,30), 0.2, 3),
+                [(0.2, 0.2), (0.2, 0.8), (0.8, 0.8), (0.8, 0.2)],
+                (30, 30), 0.2, 3),
             imgaug.MeanVarianceNormalize(all_channel=True)
         ]
     else:
@@ -100,6 +103,7 @@ def get_data(train_or_test, cifar_classnum):
         ds = PrefetchData(ds, 3, 2)
     return ds
 
+
 def get_config(cifar_classnum):
     logger.auto_set_dir()
 
@@ -111,6 +115,7 @@ def get_config(cifar_classnum):
     sess_config = get_default_sess_config(0.5)
 
     lr = symbf.get_scalar_var('learning_rate', 1e-2, summary=True)
+
     def lr_func(lr):
         if lr < 3e-5:
             raise StopTraining()
@@ -123,7 +128,7 @@ def get_config(cifar_classnum):
             StatPrinter(), ModelSaver(),
             InferenceRunner(dataset_test, ClassificationError()),
             StatMonitorParamSetter('learning_rate', 'val_error', lr_func,
-                threshold=0.001, last_k=10),
+                                   threshold=0.001, last_k=10),
         ]),
         session_config=sess_config,
         model=Model(cifar_classnum),

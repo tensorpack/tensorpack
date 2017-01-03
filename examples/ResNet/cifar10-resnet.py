@@ -30,14 +30,16 @@ This model uses the whole training set instead of a train-val split.
 BATCH_SIZE = 128
 NUM_UNITS = None
 
+
 class Model(ModelDesc):
+
     def __init__(self, n):
         super(Model, self).__init__()
         self.n = n
 
     def _get_input_vars(self):
         return [InputVar(tf.float32, [None, 32, 32, 3], 'input'),
-                InputVar(tf.int32, [None], 'label') ]
+                InputVar(tf.int32, [None], 'label')]
 
     def _build_graph(self, input_vars):
         image, label = input_vars
@@ -60,13 +62,13 @@ class Model(ModelDesc):
                 c2 = Conv2D('conv2', c1, out_channel)
                 if increase_dim:
                     l = AvgPooling('pool', l, 2)
-                    l = tf.pad(l, [[0,0], [0,0], [0,0], [in_channel//2, in_channel//2]])
+                    l = tf.pad(l, [[0, 0], [0, 0], [0, 0], [in_channel // 2, in_channel // 2]])
 
                 l = c2 + l
                 return l
 
         with argscope(Conv2D, nl=tf.identity, use_bias=False, kernel_shape=3,
-                    W_init=variance_scaling_initializer(mode='FAN_OUT')):
+                      W_init=variance_scaling_initializer(mode='FAN_OUT')):
             l = Conv2D('conv0', image, 16, nl=BNReLU)
             l = residual('res1.0', l, first=True)
             for k in range(1, self.n):
@@ -104,6 +106,7 @@ class Model(ModelDesc):
         add_param_summary([('.*/W', ['histogram'])])   # monitor W
         self.cost = tf.add_n([cost, wd_cost], name='cost')
 
+
 def get_data(train_or_test):
     isTrain = train_or_test == 'train'
     ds = dataset.Cifar10(train_or_test)
@@ -125,6 +128,7 @@ def get_data(train_or_test):
         ds = PrefetchData(ds, 3, 2)
     return ds
 
+
 def get_config():
     logger.auto_set_dir()
 
@@ -140,7 +144,7 @@ def get_config():
         callbacks=Callbacks([
             StatPrinter(), ModelSaver(),
             InferenceRunner(dataset_test,
-                [ScalarStats('cost'), ClassificationError()]),
+                            [ScalarStats('cost'), ClassificationError()]),
             ScheduledHyperParamSetter('learning_rate',
                                       [(1, 0.1), (82, 0.01), (123, 0.001), (300, 0.0002)])
         ]),
@@ -153,8 +157,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
     parser.add_argument('-n', '--num_units',
-            help='number of units in each stage',
-            type=int, default=18)
+                        help='number of units in each stage',
+                        type=int, default=18)
     parser.add_argument('--load', help='load model')
     args = parser.parse_args()
     NUM_UNITS = args.num_units

@@ -26,10 +26,12 @@ TOTAL_BATCH_SIZE = 256
 INPUT_SHAPE = 224
 DEPTH = None
 
+
 class Model(ModelDesc):
+
     def _get_input_vars(self):
         return [InputVar(tf.float32, [None, INPUT_SHAPE, INPUT_SHAPE, 3], 'input'),
-                InputVar(tf.int32, [None], 'label') ]
+                InputVar(tf.int32, [None], 'label')]
 
     def _build_graph(self, input_vars):
         image, label = input_vars
@@ -73,32 +75,32 @@ class Model(ModelDesc):
             with tf.variable_scope(layername):
                 with tf.variable_scope('block0'):
                     l = block_func(l, features, stride,
-                            'no_preact' if first else 'both_preact')
+                                   'no_preact' if first else 'both_preact')
                 for i in range(1, count):
                     with tf.variable_scope('block{}'.format(i)):
                         l = block_func(l, features, 1, 'default')
                 return l
 
         cfg = {
-            18: ([2,2,2,2], basicblock),
-            34: ([3,4,6,3], basicblock),
-            50: ([3,4,6,3], bottleneck),
-            101: ([3,4,23,3], bottleneck)
+            18: ([2, 2, 2, 2], basicblock),
+            34: ([3, 4, 6, 3], basicblock),
+            50: ([3, 4, 6, 3], bottleneck),
+            101: ([3, 4, 23, 3], bottleneck)
         }
         defs, block_func = cfg[DEPTH]
 
         with argscope(Conv2D, nl=tf.identity, use_bias=False,
-                W_init=variance_scaling_initializer(mode='FAN_OUT')):
+                      W_init=variance_scaling_initializer(mode='FAN_OUT')):
             logits = (LinearWrap(image)
-                .Conv2D('conv0', 64, 7, stride=2, nl=BNReLU)
-                .MaxPooling('pool0', shape=3, stride=2, padding='SAME')
-                .apply(layer, 'group0', block_func, 64, defs[0], 1, first=True)
-                .apply(layer, 'group1', block_func, 128, defs[1], 2)
-                .apply(layer, 'group2', block_func, 256, defs[2], 2)
-                .apply(layer, 'group3', block_func, 512, defs[3], 2)
-                .BNReLU('bnlast')
-                .GlobalAvgPooling('gap')
-                .FullyConnected('linear', 1000, nl=tf.identity)())
+                      .Conv2D('conv0', 64, 7, stride=2, nl=BNReLU)
+                      .MaxPooling('pool0', shape=3, stride=2, padding='SAME')
+                      .apply(layer, 'group0', block_func, 64, defs[0], 1, first=True)
+                      .apply(layer, 'group1', block_func, 128, defs[1], 2)
+                      .apply(layer, 'group2', block_func, 256, defs[2], 2)
+                      .apply(layer, 'group3', block_func, 512, defs[3], 2)
+                      .BNReLU('bnlast')
+                      .GlobalAvgPooling('gap')
+                      .FullyConnected('linear', 1000, nl=tf.identity)())
 
         loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)
         loss = tf.reduce_mean(loss, name='xentropy-loss')
@@ -113,12 +115,13 @@ class Model(ModelDesc):
         add_moving_summary(loss, wd_cost)
         self.cost = tf.add_n([loss, wd_cost], name='cost')
 
+
 def get_data(train_or_test):
     isTrain = train_or_test == 'train'
 
     datadir = args.data
     ds = dataset.ILSVRC12(datadir, train_or_test,
-            shuffle=True if isTrain else False, dir_structure='original')
+                          shuffle=True if isTrain else False, dir_structure='original')
     image_mean = np.array([0.485, 0.456, 0.406], dtype='float32')
     image_std = np.array([0.229, 0.224, 0.225], dtype='float32')
 
@@ -128,12 +131,13 @@ def get_data(train_or_test):
             crop 8%~100% of the original image
             See `Going Deeper with Convolutions` by Google.
             """
+
             def _augment(self, img, _):
                 h, w = img.shape[:2]
                 area = h * w
                 for _ in range(10):
                     targetArea = self.rng.uniform(0.08, 1.0) * area
-                    aspectR = self.rng.uniform(0.75,1.333)
+                    aspectR = self.rng.uniform(0.75, 1.333)
                     ww = int(np.sqrt(targetArea * aspectR))
                     hh = int(np.sqrt(targetArea / aspectR))
                     if self.rng.uniform() < 0.5:
@@ -141,10 +145,10 @@ def get_data(train_or_test):
                     if hh <= h and ww <= w:
                         x1 = 0 if w == ww else self.rng.randint(0, w - ww)
                         y1 = 0 if h == hh else self.rng.randint(0, h - hh)
-                        out = img[y1:y1+hh,x1:x1+ww]
-                        out = cv2.resize(out, (224,224), interpolation=cv2.INTER_CUBIC)
+                        out = img[y1:y1 + hh, x1:x1 + ww]
+                        out = cv2.resize(out, (224, 224), interpolation=cv2.INTER_CUBIC)
                         return out
-                out = cv2.resize(img, (224,224), interpolation=cv2.INTER_CUBIC)
+                out = cv2.resize(img, (224, 224), interpolation=cv2.INTER_CUBIC)
                 return out
 
         augmentors = [
@@ -154,11 +158,11 @@ def get_data(train_or_test):
                  imgaug.Contrast((0.8, 1.2), clip=False),
                  imgaug.Saturation(0.4),
                  imgaug.Lighting(0.1,
-                     eigval=[0.2175, 0.0188, 0.0045],
-                     eigvec=[[ -0.5675,  0.7192,  0.4009],
-                      [ -0.5808, -0.0045, -0.8140],
-                      [ -0.5836, -0.6948,  0.4203]]
-                 )]),
+                                 eigval=[0.2175, 0.0188, 0.0045],
+                                 eigvec=[[-0.5675,  0.7192,  0.4009],
+                                         [-0.5808, -0.0045, -0.8140],
+                                         [-0.5836, -0.6948,  0.4203]]
+                                 )]),
             imgaug.Clip(),
             imgaug.Flip(horiz=True),
             imgaug.MapImage(lambda x: (x * (1.0 / 255) - image_mean) / image_std),
@@ -175,6 +179,7 @@ def get_data(train_or_test):
         ds = PrefetchDataZMQ(ds, min(12, multiprocessing.cpu_count()))
     return ds
 
+
 def get_config():
     # prepare dataset
     dataset_train = get_data('train')
@@ -190,13 +195,14 @@ def get_config():
                 ClassificationError('wrong-top1', 'val-error-top1'),
                 ClassificationError('wrong-top5', 'val-error-top5')]),
             ScheduledHyperParamSetter('learning_rate',
-                              [(30, 1e-2), (60, 1e-3), (85, 1e-4), (95, 1e-5)]),
+                                      [(30, 1e-2), (60, 1e-3), (85, 1e-4), (95, 1e-5)]),
             HumanHyperParamSetter('learning_rate'),
         ]),
         model=Model(),
         step_per_epoch=5000,
         max_epoch=110,
     )
+
 
 def eval_on_ILSVRC12(model_file, data_dir):
     ds = get_data('val')
@@ -221,7 +227,7 @@ if __name__ == '__main__':
     parser.add_argument('--data', help='ILSVRC dataset dir')
     parser.add_argument('--load', help='load model')
     parser.add_argument('-d', '--depth', help='resnet depth',
-            type=int, default=18, choices=[18, 34, 50, 101])
+                        type=int, default=18, choices=[18, 34, 50, 101])
     parser.add_argument('--eval', action='store_true')
     args = parser.parse_args()
 

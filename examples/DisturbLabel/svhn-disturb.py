@@ -16,20 +16,20 @@ import imp
 
 svhn_example = imp.load_source('svhn_example',
         os.path.join(os.path.dirname(__file__), '..', 'svhn-digit-convnet.py')))
-Model = svhn_example.Model
-get_config = svhn_example.get_config
+Model=svhn_example.Model
+get_config=svhn_example.get_config
 
 def get_data():
-    d1 = dataset.SVHNDigit('train')
-    d2 = dataset.SVHNDigit('extra')
-    data_train = RandomMixData([d1, d2])
-    data_train = DisturbLabel(data_train, args.prob)
-    data_test = dataset.SVHNDigit('test')
+    d1=dataset.SVHNDigit('train')
+    d2=dataset.SVHNDigit('extra')
+    data_train=RandomMixData([d1, d2])
+    data_train=DisturbLabel(data_train, args.prob)
+    data_test=dataset.SVHNDigit('test')
 
-    augmentors = [
+    augmentors=[
         imgaug.Resize((40, 40)),
         imgaug.Brightness(30),
-        imgaug.Contrast((0.5,1.5)),
+        imgaug.Contrast((0.5, 1.5)),
     ]
     data_train = AugmentImageComponent(data_train, augmentors)
     data_train = BatchData(data_train, 128)
