@@ -61,9 +61,9 @@ class Model(ModelDesc):
         zc = tf.one_hot(ids, 10, name='zc_train')
         zc = tf.placeholder_with_default(zc, [None, 10], name='zc')
 
-        z = tf.random_uniform(tf.pack([tf.shape(zc)[0], 90]), -1, 1, name='z_train')
+        z = tf.random_uniform(tf.stack([tf.shape(zc)[0], 90]), -1, 1, name='z_train')
         z = tf.placeholder_with_default(z, [None, 90], name='z')
-        z = tf.concat(1, [zc, z], name='fullz')
+        z = tf.concat_v2([zc, z], 1, name='fullz')
 
         with argscope([Conv2D, Deconv2D, FullyConnected],
                       W_init=tf.truncated_normal_initializer(stddev=0.02)):

@@ -12,13 +12,13 @@ __all__ = ['ConcatWith']
 @layer_register(use_scope=False, log_shape=False)
 def ConcatWith(x, dim, tensor):
     """
-    A wrapper around `tf.concat` to support `LinearWrap`
+    A wrapper around `tf.concat_v2` to support `LinearWrap`
     :param x: the input tensor
     :param dim: the dimension along which to concatenate
     :param tensor: a tensor or list of tensor to concatenate with x.
     x will be at the beginning
-    :return: tf.concat(dim, [x] + [tensor])
+    :return: tf.concat_v2([x] + [tensor], dim)
     """
     if type(tensor) != list:
         tensor = [tensor]
-    return tf.concat(dim, [x] + tensor)
+    return tf.concat_v2([x] + tensor, dim)

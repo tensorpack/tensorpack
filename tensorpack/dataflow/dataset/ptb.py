@@ -12,7 +12,7 @@ from ...utils.argtools import memoized_ignoreargs
 try:
     from tensorflow.models.rnn.ptb import reader as tfreader
 except ImportError:
-    logger.warn_dependency('PennTreeBank', 'tensorflow')
+    logger.warn_dependency('PennTreeBank', 'tensorflow.models.rnn.ptb.reader')
     __all__ = []
 else:
     __all__ = ['get_PennTreeBank']

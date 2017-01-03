@@ -30,7 +30,7 @@ def batch_flatten(x):
     shape = x.get_shape().as_list()[1:]
     if None not in shape:
         return tf.reshape(x, [-1, int(np.prod(shape))])
-    return tf.reshape(x, tf.pack([tf.shape(x)[0], -1]))
+    return tf.reshape(x, tf.stack([tf.shape(x)[0], -1]))
 
 
 def class_balanced_cross_entropy(pred, label, name='cross_entropy_loss'):

@@ -73,8 +73,8 @@ def GlobalAvgPooling(x):
 
 
 def UnPooling2x2ZeroFilled(x):
-    out = tf.concat(3, [x, tf.zeros_like(x)])
-    out = tf.concat(2, [out, tf.zeros_like(out)])
+    out = tf.concat_v2([x, tf.zeros_like(x)], 3)
+    out = tf.concat_v2([out, tf.zeros_like(out)], 2)
 
     sh = x.get_shape().as_list()
     if None not in sh[1:]:
@@ -82,7 +82,7 @@ def UnPooling2x2ZeroFilled(x):
         return tf.reshape(out, out_size)
     else:
         shv = tf.shape(x)
-        ret = tf.reshape(out, tf.pack([-1, shv[1] * 2, shv[2] * 2, sh[3]]))
+        ret = tf.reshape(out, tf.stack([-1, shv[1] * 2, shv[2] * 2, sh[3]]))
         ret.set_shape([None, None, None, sh[3]])
         return ret
 
@@ -118,10 +118,10 @@ def FixedUnPooling(x, shape, unpool_mat=None):
     fx = tf.expand_dims(fx, -1)       # (bchw)x1
     mat = tf.expand_dims(symbf.flatten(unpool_mat), 0)  # 1x(shxsw)
     prod = tf.matmul(fx, mat)  # (bchw) x(shxsw)
-    prod = tf.reshape(prod, tf.pack(
+    prod = tf.reshape(prod, tf.stack(
         [-1, input_shape[3], input_shape[1], input_shape[2], shape[0], shape[1]]))
     prod = tf.transpose(prod, [0, 2, 4, 3, 5, 1])
-    prod = tf.reshape(prod, tf.pack(
+    prod = tf.reshape(prod, tf.stack(
         [-1, input_shape[1] * shape[0], input_shape[2] * shape[1], input_shape[3]]))
     return prod
 
@@ -135,7 +135,7 @@ def BilinearUpSample(x, shape):
     """
     # inp_shape = tf.shape(x)
     # return tf.image.resize_bilinear(x,
-    # tf.pack([inp_shape[1]*shape,inp_shape[2]*shape]),
+    # tf.stack([inp_shape[1]*shape,inp_shape[2]*shape]),
     # align_corners=True)
 
     inp_shape = x.get_shape().as_list()

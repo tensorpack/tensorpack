@@ -53,11 +53,12 @@ def Conv2D(x, out_channel, kernel_shape,
     if split == 1:
         conv = tf.nn.conv2d(x, W, stride, padding)
     else:
-        inputs = tf.split(3, split, x)
-        kernels = tf.split(3, split, W)
+        # TODO rename to split later
+        inputs = tf.split_v(x, split, 3)
+        kernels = tf.split_v(W, split, 3)
         outputs = [tf.nn.conv2d(i, k, stride, padding)
                    for i, k in zip(inputs, kernels)]
-        conv = tf.concat(3, outputs)
+        conv = tf.concat_v2(outputs, 3)
     if nl is None:
         logger.warn(
             "[DEPRECATED] Default ReLU nonlinearity for Conv2D and FullyConnected will be deprecated. "
@@ -130,7 +131,7 @@ def Deconv2D(x, out_shape, kernel_shape,
     if use_bias:
         b = tf.get_variable('b', [out_channel], initializer=b_init)
 
-    out_shape_dyn = tf.pack([tf.shape(x)[0]] + shp3_dyn)
+    out_shape_dyn = tf.stack([tf.shape(x)[0]] + shp3_dyn)
     conv = tf.nn.conv2d_transpose(x, W, out_shape_dyn, stride4d, padding=padding)
     conv.set_shape(tf.TensorShape([None] + shp3_static))
     return nl(tf.nn.bias_add(conv, b) if use_bias else conv, name='output')

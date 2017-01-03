@@ -67,7 +67,7 @@ class Model(ModelDesc):
             b5 = branch('branch5', l, 16)
 
         final_map = Conv2D('convfcweight',
-                           tf.concat(3, [b1, b2, b3, b4, b5]), 1, 1,
+                           tf.concat_v2([b1, b2, b3, b4, b5], 3), 1, 1,
                            W_init=tf.constant_initializer(0.2),
                            use_bias=False, nl=tf.identity)
         costs = []
