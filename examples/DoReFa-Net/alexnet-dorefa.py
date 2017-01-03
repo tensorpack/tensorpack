@@ -15,6 +15,7 @@ import sys
 from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
+from tensorpack.tfutils.varreplace import replace_get_variable
 from dorefa import get_dorefa
 
 """
@@ -82,9 +83,10 @@ class Model(ModelDesc):
         image = image / 255.0
 
         fw, fa, fg = get_dorefa(BITW, BITA, BITG)
-        # monkey-patch tf.get_variable to apply fw
+
         old_get_variable = tf.get_variable
 
+        # monkey-patch tf.get_variable to apply fw
         def new_get_variable(name, shape=None, **kwargs):
             v = old_get_variable(name, shape, **kwargs)
             # don't binarize first and last layer
@@ -93,7 +95,6 @@ class Model(ModelDesc):
             else:
                 logger.info("Binarizing weight {}".format(v.op.name))
                 return fw(v)
-        tf.get_variable = new_get_variable
 
         def nonlin(x):
             if BITA == 32:
@@ -103,7 +104,8 @@ class Model(ModelDesc):
         def activate(x):
             return fa(nonlin(x))
 
-        with argscope(BatchNorm, decay=0.9, epsilon=1e-4), \
+        with replace_get_variable(new_get_variable), \
+                argscope(BatchNorm, decay=0.9, epsilon=1e-4), \
                 argscope([Conv2D, FullyConnected], use_bias=False, nl=tf.identity):
             logits = (LinearWrap(image)
                       .Conv2D('conv0', 96, 12, stride=4, padding='VALID')
@@ -141,7 +143,6 @@ class Model(ModelDesc):
                       .BatchNorm('bnfc1')
                       .apply(nonlin)
                       .FullyConnected('fct', 1000, use_bias=True)())
-        tf.get_variable = old_get_variable
 
         prob = tf.nn.softmax(logits, name='output')
 

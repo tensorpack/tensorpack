@@ -1,12 +1,16 @@
 language: "python"
 python:
    - "2.7"
+   - "3.5"
 sudo: false
 cache: pip
 
-before_script:
+install:
   - pip install flake8
+
+before_script:
   - flake8 --version
+
 script:
   - flake8 .
   - cd examples && flake8 .

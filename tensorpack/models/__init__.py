@@ -7,6 +7,8 @@ from types import ModuleType
 import six
 import os
 import os.path
+# this line is necessary for TFModuleFunc to work
+import tensorflow as tf  # noqa: F401
 from ..utils import logger
 
 __all__ = ['LinearWrap']

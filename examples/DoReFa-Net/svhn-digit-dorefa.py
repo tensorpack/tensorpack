@@ -11,6 +11,7 @@ import os
 from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
+from tensorpack.tfutils.varreplace import replace_get_variable
 from dorefa import get_dorefa
 
 """
@@ -52,9 +53,10 @@ class Model(ModelDesc):
         is_training = get_current_tower_context().is_training
 
         fw, fa, fg = get_dorefa(BITW, BITA, BITG)
-        # monkey-patch tf.get_variable to apply fw
+
         old_get_variable = tf.get_variable
 
+        # monkey-patch tf.get_variable to apply fw
         def new_get_variable(name, shape=None, **kwargs):
             v = old_get_variable(name, shape, **kwargs)
             # don't binarize first and last layer
@@ -63,7 +65,6 @@ class Model(ModelDesc):
             else:
                 logger.info("Binarizing weight {}".format(v.op.name))
                 return fw(v)
-        tf.get_variable = new_get_variable
 
         def cabs(x):
             return tf.minimum(1.0, tf.abs(x), name='cabs')
@@ -73,7 +74,8 @@ class Model(ModelDesc):
 
         image = image / 256.0
 
-        with argscope(BatchNorm, decay=0.9, epsilon=1e-4), \
+        with replace_get_variable(new_get_variable), \
+                argscope(BatchNorm, decay=0.9, epsilon=1e-4), \
                 argscope(Conv2D, use_bias=False, nl=tf.identity):
             logits = (LinearWrap(image)
                       .Conv2D('conv0', 48, 5, padding='VALID', use_bias=True)
@@ -108,7 +110,6 @@ class Model(ModelDesc):
                       .apply(fg).BatchNorm('bn6')
                       .apply(cabs)
                       .FullyConnected('fc1', 10, nl=tf.identity)())
-        tf.get_variable = old_get_variable
         prob = tf.nn.softmax(logits, name='output')
 
         # compute the number of failed samples
