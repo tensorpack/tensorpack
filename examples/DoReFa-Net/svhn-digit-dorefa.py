@@ -140,8 +140,8 @@ def get_config():
         imgaug.Brightness(30),
         imgaug.Contrast((0.5, 1.5)),
         # imgaug.GaussianDeform(  # this is slow but helpful. only use it when you have lots of cpus
-        #[(0.2, 0.2), (0.2, 0.8), (0.8,0.8), (0.8,0.2)],
-        #(40,40), 0.2, 3),
+        # [(0.2, 0.2), (0.2, 0.8), (0.8,0.8), (0.8,0.2)],
+        # (40,40), 0.2, 3),
     ]
     data_train = AugmentImageComponent(data_train, augmentors)
     data_train = BatchData(data_train, 128)
@@ -172,6 +172,7 @@ def get_config():
         step_per_epoch=step_per_epoch,
         max_epoch=200,
     )
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

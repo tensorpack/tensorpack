@@ -62,6 +62,8 @@ def get_player(viz=False, train=False, dumpdir=None):
         pl = PreventStuckPlayer(pl, 30, 1)
     pl = LimitLengthPlayer(pl, 40000)
     return pl
+
+
 common.get_player = get_player
 
 
@@ -219,6 +221,7 @@ def get_config():
         step_per_epoch=STEP_PER_EPOCH,
         max_epoch=1000,
     )
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

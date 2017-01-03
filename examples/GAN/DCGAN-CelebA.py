@@ -134,6 +134,7 @@ def sample(model_path):
         o = o[:, :, :, ::-1]
         viz = next(build_patch_list(o, nr_row=10, nr_col=10, viz=True))
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')

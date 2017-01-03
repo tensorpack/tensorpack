@@ -74,6 +74,7 @@ def run_test(path, input):
     meta = ILSVRCMeta().get_synset_words_1000()
     print("Top10 class names:", [meta[k] for k in ret])
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')

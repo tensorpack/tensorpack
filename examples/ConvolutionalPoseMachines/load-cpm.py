@@ -113,6 +113,7 @@ def run_test(model_path, img_file):
     viz = colorize(im, hm)
     cv2.imwrite("output.jpg", viz)
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--load', required=True, help='.npy model file')

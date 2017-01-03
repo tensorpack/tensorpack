@@ -167,6 +167,7 @@ def get_config():
         max_epoch=500,
     )
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')

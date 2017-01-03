@@ -95,10 +95,10 @@ class Model(ModelDesc):
 
 def get_inference_augmentor():
     # load ResNet mean from Kaiming:
-    #from tensorpack.utils.loadcaffe import get_caffe_pb
-    #obj = get_caffe_pb().BlobProto()
+    # from tensorpack.utils.loadcaffe import get_caffe_pb
+    # obj = get_caffe_pb().BlobProto()
     # obj.ParseFromString(open('ResNet_mean.binaryproto').read())
-    #pp_mean_224 = np.array(obj.data).reshape(3, 224, 224).transpose(1,2,0)
+    # pp_mean_224 = np.array(obj.data).reshape(3, 224, 224).transpose(1,2,0)
 
     meta = ILSVRCMeta()
     pp_mean = meta.get_per_pixel_mean()
@@ -193,6 +193,7 @@ def name_conversion(caffe_layer_name):
     tf_name = 'group{}/block{}/{}'.format(
         int(layer_group) - 2, layer_block, layer_type) + tf_name
     return tf_name
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

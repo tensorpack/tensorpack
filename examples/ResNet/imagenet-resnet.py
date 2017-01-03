@@ -159,9 +159,9 @@ def get_data(train_or_test):
                  imgaug.Saturation(0.4),
                  imgaug.Lighting(0.1,
                                  eigval=[0.2175, 0.0188, 0.0045],
-                                 eigvec=[[-0.5675,  0.7192,  0.4009],
+                                 eigvec=[[-0.5675, 0.7192, 0.4009],
                                          [-0.5808, -0.0045, -0.8140],
-                                         [-0.5836, -0.6948,  0.4203]]
+                                         [-0.5836, -0.6948, 0.4203]]
                                  )]),
             imgaug.Clip(),
             imgaug.Flip(horiz=True),
@@ -220,6 +220,7 @@ def eval_on_ILSVRC12(model_file, data_dir):
         acc5.feed(o[1].sum(), batch_size)
     print("Top1 Error: {}".format(acc1.ratio))
     print("Top5 Error: {}".format(acc5.ratio))
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

@@ -22,8 +22,9 @@ def get_data():
     dataset_train = BatchData(DisturbLabel(dataset.Mnist('train'), args.prob), 128)
     dataset_test = BatchData(dataset.Mnist('test'), 256, remainder=True)
     return dataset_train, dataset_test
-mnist_example.get_data = get_data
 
+
+mnist_example.get_data = get_data
 IMAGE_SIZE = 28
 
 
@@ -53,6 +54,7 @@ class Model(mnist_example.Model):
         add_moving_summary(cost, wd_cost)
 
         self.cost = tf.add_n([wd_cost, cost], name='cost')
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

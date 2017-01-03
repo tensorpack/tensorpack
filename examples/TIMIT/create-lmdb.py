@@ -15,8 +15,12 @@ from tensorpack.utils.stats import OnlineMoments
 import bob.ap
 
 CHARSET = set(string.ascii_lowercase + ' ')
-PHONEME_LIST = "aa,ae,ah,ao,aw,ax,ax-h,axr,ay,b,bcl,ch,d,dcl,dh,dx,eh,el,em,en,eng,epi,er,ey,f,g,gcl,h#,hh,hv,ih,ix,iy,jh,k,kcl,l,m,n,ng,nx,ow,oy,p,pau,pcl,q,r,s,sh,t,tcl,th,uh,uw,ux,v,w,y,z,zh".split(
-    ',')
+PHONEME_LIST = [
+    'aa', 'ae', 'ah', 'ao', 'aw', 'ax', 'ax-h', 'axr', 'ay', 'b', 'bcl', 'ch', 'd', 'dcl', 'dh',
+    'dx', 'eh', 'el', 'em', 'en', 'eng', 'epi', 'er', 'ey', 'f', 'g', 'gcl', 'h#', 'hh', 'hv', 'ih',
+    'ix', 'iy', 'jh', 'k', 'kcl', 'l', 'm', 'n', 'ng', 'nx', 'ow', 'oy', 'p', 'pau', 'pcl', 'q', 'r',
+    's', 'sh', 't', 'tcl', 'th', 'uh', 'uw', 'ux', 'v', 'w', 'y', 'z', 'zh']
+
 PHONEME_DIC = {v: k for k, v in enumerate(PHONEME_LIST)}
 WORD_DIC = {v: k for k, v in enumerate(string.ascii_lowercase + ' ')}
 
@@ -109,6 +113,7 @@ def compute_mean_std(db, fname):
     logger.info("Writing to {} ...".format(fname))
     with open(fname, 'wb') as f:
         f.write(serialize.dumps([o.mean, o.std]))
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

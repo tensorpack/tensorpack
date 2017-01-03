@@ -62,6 +62,8 @@ def get_player(viz=False, train=False):
         pl = PreventStuckPlayer(pl, 30, 1)
     pl = LimitLengthPlayer(pl, 30000)
     return pl
+
+
 common.get_player = get_player  # so that eval functions in common can use the player
 
 
@@ -92,9 +94,9 @@ class Model(ModelDesc):
                  .Conv2D('conv3', out_channel=64, kernel_shape=3)
 
                  # the original arch
-                 #.Conv2D('conv0', image, out_channel=32, kernel_shape=8, stride=4)
-                 #.Conv2D('conv1', out_channel=64, kernel_shape=4, stride=2)
-                 #.Conv2D('conv2', out_channel=64, kernel_shape=3)
+                 # .Conv2D('conv0', image, out_channel=32, kernel_shape=8, stride=4)
+                 # .Conv2D('conv1', out_channel=64, kernel_shape=4, stride=2)
+                 # .Conv2D('conv2', out_channel=64, kernel_shape=3)
 
                  .FullyConnected('fc0', 512, nl=LeakyReLU)())
         if METHOD != 'Dueling':
@@ -180,14 +182,15 @@ def get_config():
             RunOp(lambda: M.update_target_param()),
             dataset_train,
             PeriodicCallback(Evaluator(EVAL_EPISODE, ['state'], ['Qvalue']), 3),
-            #HumanHyperParamSetter('learning_rate', 'hyper.txt'),
-            #HumanHyperParamSetter(ObjAttrParam(dataset_train, 'exploration'), 'hyper.txt'),
+            # HumanHyperParamSetter('learning_rate', 'hyper.txt'),
+            # HumanHyperParamSetter(ObjAttrParam(dataset_train, 'exploration'), 'hyper.txt'),
         ]),
         # save memory for multiprocess evaluator
         session_config=get_default_sess_config(0.6),
         model=M,
         step_per_epoch=STEP_PER_EPOCH,
     )
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

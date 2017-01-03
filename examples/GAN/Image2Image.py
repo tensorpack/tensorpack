@@ -22,7 +22,8 @@ from GAN import GANTrainer, build_GAN_losses
 To train:
     ./Image2Image.py --data /path/to/datadir --mode {AtoB,BtoA}
     # datadir should contain jpg images of shpae 2s x s, formed by A and B
-    # you can download some data from the original authors: https://people.eecs.berkeley.edu/~tinghuiz/projects/pix2pix/datasets/
+    # you can download some data from the original authors:
+    # https://people.eecs.berkeley.edu/~tinghuiz/projects/pix2pix/datasets/
     # training visualization will appear be in tensorboard
 
 Speed:
@@ -193,7 +194,8 @@ def sample(datadir, model_path):
     pred = SimpleDatasetPredictor(pred, ds)
     for o in pred.get_result():
         o = o[0][:, :, :, ::-1]
-        viz = next(build_patch_list(o, nr_row=3, nr_col=2, viz=True))
+        next(build_patch_list(o, nr_row=3, nr_col=2, viz=True))
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

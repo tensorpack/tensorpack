@@ -17,7 +17,8 @@ from tensorpack.dataflow.dataset import ILSVRCMeta
 
 """
 Usage:
-    python -m tensorpack.utils.loadcaffe PATH/TO/VGG/{VGG_ILSVRC_16_layers_deploy.prototxt,VGG_ILSVRC_16_layers.caffemodel} vgg16.npy
+    python -m tensorpack.utils.loadcaffe \
+            PATH/TO/VGG/{VGG_ILSVRC_16_layers_deploy.prototxt,VGG_ILSVRC_16_layers.caffemodel} vgg16.npy
     ./load-vgg16.py --load vgg16.npy --input cat.png
 """
 
@@ -83,6 +84,7 @@ def run_test(path, input):
 
     meta = ILSVRCMeta().get_synset_words_1000()
     print("Top10 class names:", [meta[k] for k in ret])
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

@@ -134,6 +134,7 @@ def sample(model_path):
         viz = cv2.resize(viz, (800, 800))
         interactive_imshow(viz)
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')

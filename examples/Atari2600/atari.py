@@ -166,9 +166,9 @@ class AtariPlayer(RLEnvironment):
             self.restart_episode()
         return (r, isOver)
 
+
 if __name__ == '__main__':
     import sys
-    import time
 
     def benchmark():
         a = AtariPlayer(sys.argv[1], viz=False, height_range=(28, -8))
@@ -189,7 +189,7 @@ if __name__ == '__main__':
         import threading
         import multiprocessing
         for k in range(3):
-            #th = multiprocessing.Process(target=benchmark)
+            # th = multiprocessing.Process(target=benchmark)
             th = threading.Thread(target=benchmark)
             th.start()
             time.sleep(0.02)
@@ -201,8 +201,8 @@ if __name__ == '__main__':
         rng = get_rng(num)
         import time
         while True:
-            #im = a.grab_image()
-            #cv2.imshow(a.romname, im)
+            # im = a.grab_image()
+            # cv2.imshow(a.romname, im)
             act = rng.choice(range(num))
             print(act)
             r, o = a.action(act)

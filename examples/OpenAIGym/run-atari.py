@@ -15,6 +15,7 @@ import six
 
 from tensorpack import *
 from tensorpack.RL import *
+from common import play_one_episode
 
 IMAGE_SIZE = (84, 84)
 FRAME_HISTORY = 4
@@ -23,8 +24,6 @@ IMAGE_SHAPE3 = IMAGE_SIZE + (CHANNEL,)
 
 NUM_ACTIONS = None
 ENV_NAME = None
-
-from common import play_one_episode
 
 
 def get_player(dumpdir=None):
@@ -81,6 +80,7 @@ def run_submission(cfg, output, nr):
 
 def do_submit(output):
     gym.upload(output, api_key='xxx')
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

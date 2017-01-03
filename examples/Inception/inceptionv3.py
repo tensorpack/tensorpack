@@ -19,7 +19,8 @@ import multiprocessing
 InceptionV3 on ILSVRC12.
 See "Rethinking the Inception Architecture for Computer Vision", arxiv:1512.00567
 
-This config follows the official inceptionv3 setup (https://github.com/tensorflow/models/tree/master/inception/inception)
+This config follows the official inceptionv3 setup
+(https://github.com/tensorflow/models/tree/master/inception/inception)
 with much much fewer lines of code.
 It reaches 74% single-crop validation accuracy,
 and has the same running speed as the official code.
@@ -283,6 +284,7 @@ def get_config():
         step_per_epoch=5000,
         max_epoch=100,
     )
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

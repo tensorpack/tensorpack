@@ -290,6 +290,7 @@ def run_image(model, sess_init, inputs):
         print(f + ":")
         print(list(zip(names, prob[ret])))
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='the physical ids of GPUs to use')
