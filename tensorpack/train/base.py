@@ -3,7 +3,6 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from abc import ABCMeta, abstractmethod
-import signal
 import re
 import weakref
 import six

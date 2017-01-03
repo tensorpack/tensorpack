@@ -3,18 +3,16 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
-import time
-from six.moves import zip
 
 from .base import Trainer
 
-from ..utils import logger, SUMMARY_BACKUP_KEYS, PREDICT_TOWER
+from ..utils import SUMMARY_BACKUP_KEYS, PREDICT_TOWER
 from ..tfutils import (get_tensors_by_names, freeze_collection,
                        get_global_step_var, TowerContext)
 from ..tfutils.summary import summary_moving_average, add_moving_summary
 from ..predict import OnlinePredictor, build_multi_tower_prediction_graph
 from ..tfutils.gradproc import apply_grad_processors
-from .input_data import FeedInput, FeedfreeInput
+from .input_data import FeedInput
 
 __all__ = ['SimpleTrainer', 'MultiPredictorTowerTrainer']
 
@@ -49,7 +47,8 @@ class PredictorFactory(object):
         # build_predict_tower might get called anywhere, but 'PREDICT_TOWER' should be the outermost name scope
         with tf.name_scope(None), \
                 freeze_collection(SUMMARY_BACKUP_KEYS):
-            fn = lambda _: self.model.build_graph(self.model.get_input_vars())
+            def fn(_):
+                self.model.build_graph(self.model.get_input_vars())
             build_multi_tower_prediction_graph(fn, self.towers)
         self.tower_built = True
 

@@ -11,13 +11,15 @@ from contextlib import contextmanager
 import signal
 import weakref
 import six
+from six.moves import queue
+
+from . import logger
+
 if six.PY2:
     import subprocess32 as subprocess
 else:
     import subprocess
-from six.moves import queue
 
-from . import logger
 
 __all__ = ['StoppableThread', 'LoopThread', 'ensure_proc_terminate',
            'OrderedResultGatherProc', 'OrderedContainer', 'DIE',

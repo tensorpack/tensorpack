@@ -9,9 +9,7 @@ import numpy as np
 from ...utils import logger, get_dataset_path
 from ...utils.fs import download
 from ...utils.argtools import memoized_ignoreargs
-from ..base import RNGDataFlow
 try:
-    import tensorflow
     from tensorflow.models.rnn.ptb import reader as tfreader
 except ImportError:
     logger.warn_dependency('PennTreeBank', 'tensorflow')

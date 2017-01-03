@@ -7,10 +7,8 @@ import tensorflow as tf
 import multiprocessing as mp
 import time
 import threading
-import weakref
 from abc import abstractmethod, ABCMeta
-from collections import defaultdict, namedtuple
-import numpy as np
+from collections import defaultdict
 
 import six
 from six.moves import queue
@@ -20,7 +18,6 @@ from ..callbacks import Callback
 from ..tfutils.varmanip import SessionUpdate
 from ..predict import OfflinePredictor
 from ..utils import logger
-#from ..utils.timer import *
 from ..utils.serialize import loads, dumps
 from ..utils.concurrency import LoopThread, ensure_proc_terminate
 
@@ -97,6 +94,7 @@ class SimulatorProcessStateExchange(SimulatorProcessBase):
             action = loads(s2c_socket.recv(copy=False).bytes)
             reward, isOver = player.action(action)
             state = player.current_state()
+
 
 # compatibility
 SimulatorProcess = SimulatorProcessStateExchange
@@ -284,6 +282,7 @@ class WeightSync(Callback):
         self.condvar.notify_all()
         self.condvar.release()
 
+
 if __name__ == '__main__':
     import random
     from tensorpack.RL import NaiveRLEnvironment
@@ -293,14 +292,13 @@ if __name__ == '__main__':
         def _build_player(self):
             return NaiveRLEnvironment()
 
-    class NaiveActioner(SimulatorActioner):
-
+    class NaiveActioner(SimulatorMaster):
         def _get_action(self, state):
             time.sleep(1)
             return random.randint(1, 12)
 
         def _on_episode_over(self, client):
-            #print("Over: ", client.memory)
+            # print("Over: ", client.memory)
             client.memory = []
             client.state = 0
 
@@ -312,5 +310,4 @@ if __name__ == '__main__':
     ensure_proc_terminate(procs)
     th.start()
 
-    import time
     time.sleep(100)

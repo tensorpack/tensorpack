@@ -4,7 +4,6 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
-import numpy as np
 import unittest
 
 
@@ -28,6 +27,7 @@ class TestModel(unittest.TestCase):
 def run_test_case(case):
     suite = unittest.TestLoader().loadTestsFromTestCase(case)
     unittest.TextTestRunner(verbosity=2).run(suite)
+
 
 if __name__ == '__main__':
     import tensorpack

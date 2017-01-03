@@ -5,11 +5,11 @@
 import os
 import tarfile
 import cv2
+import six
 import numpy as np
-from six.moves import range
 import xml.etree.ElementTree as ET
 
-from ...utils import logger, get_rng, get_dataset_path
+from ...utils import logger, get_dataset_path
 from ...utils.loadcaffe import get_caffe_pb
 from ...utils.fs import mkdir_p, download
 from ...utils.timer import timed_operation
@@ -195,10 +195,10 @@ class ILSVRC12(RNGDataFlow):
 
             box = root.find('object').find('bndbox').getchildren()
             box = map(lambda x: float(x.text), box)
-            #box[0] /= size[0]
-            #box[1] /= size[1]
-            #box[2] /= size[0]
-            #box[3] /= size[1]
+            # box[0] /= size[0]
+            # box[1] /= size[1]
+            # box[2] /= size[0]
+            # box[3] /= size[1]
             return np.asarray(box, dtype='float32')
 
         with timed_operation('Loading Bounding Boxes ...'):
@@ -217,6 +217,7 @@ class ILSVRC12(RNGDataFlow):
                     ret.append(None)
             logger.info("{}/{} images have bounding box.".format(cnt, len(imglist)))
         return ret
+
 
 if __name__ == '__main__':
     meta = ILSVRCMeta()

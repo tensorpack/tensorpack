@@ -86,7 +86,6 @@ class Callbacks(Callback):
     def _trigger_epoch(self):
         tm = CallbackTimeLogger()
 
-        test_sess_restored = False
         for cb in self.cbs:
             display_name = str(cb)
             with tm.timed_callback(display_name):

@@ -48,6 +48,7 @@ def timed_operation(msg, log_start=False):
     logger.info('{} finished, time:{:.2f}sec.'.format(
         msg, time.time() - start))
 
+
 _TOTAL_TIMER_DATA = defaultdict(StatCounter)
 
 
@@ -65,5 +66,6 @@ def print_total_timer():
     for k, v in six.iteritems(_TOTAL_TIMER_DATA):
         logger.info("Total Time: {} -> {:.2f} sec, {} times, {:.3g} sec/time".format(
             k, v.sum, v.count, v.average))
+
 
 atexit.register(print_total_timer)

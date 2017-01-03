@@ -4,7 +4,7 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
-from abc import abstractmethod, ABCMeta, abstractproperty
+from abc import abstractmethod, ABCMeta
 import operator
 import six
 import os

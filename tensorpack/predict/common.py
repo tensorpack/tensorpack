@@ -2,18 +2,13 @@
 # File: common.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
-import tensorflow as tf
 from collections import namedtuple
 import six
-from six.moves import zip
 
 from tensorpack.models import ModelDesc
-from ..utils import logger
 from ..tfutils import get_default_sess_config
 from ..tfutils.sessinit import SessionInit, JustCurrentSession
 from .base import OfflinePredictor
-
-import multiprocessing
 
 __all__ = ['PredictConfig', 'get_predict_func', 'PredictResult']
 
@@ -53,7 +48,7 @@ class PredictConfig(object):
             self.input_names = kwargs.pop('input_var_names', None)
             if self.input_names is not None:
                 pass
-                #logger.warn("[Deprecated] input_var_names is deprecated in PredictConfig. Use input_names instead!")
+                # logger.warn("[Deprecated] input_var_names is deprecated in PredictConfig. Use input_names instead!")
         if self.input_names is None:
             # neither options is set, assume all inputs
             raw_vars = self.model.get_input_vars_desc()
@@ -61,7 +56,7 @@ class PredictConfig(object):
         self.output_names = kwargs.pop('output_names', None)
         if self.output_names is None:
             self.output_names = kwargs.pop('output_var_names')
-            #logger.warn("[Deprecated] output_var_names is deprecated in PredictConfig. Use output_names instead!")
+            # logger.warn("[Deprecated] output_var_names is deprecated in PredictConfig. Use output_names instead!")
         assert len(self.input_names), self.input_names
         for v in self.input_names:
             assert_type(v, six.string_types)

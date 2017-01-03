@@ -55,7 +55,7 @@ class Augmentor(object):
     def _rand_range(self, low=1.0, high=None, size=None):
         if high is None:
             low, high = 0, low
-        if size == None:
+        if size is None:
             size = []
         return self.rng.uniform(low, high, size)
 

@@ -4,7 +4,6 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
-from copy import copy
 
 from ._common import layer_register
 from .batch_norm import BatchNorm
@@ -63,8 +62,8 @@ def LeakyReLU(x, alpha, name=None):
     if name is None:
         name = 'output'
     return tf.maximum(x, alpha * x, name=name)
-    #alpha = float(alpha)
-    #x = ((1 + alpha) * x + (1 - alpha) * tf.abs(x))
+    # alpha = float(alpha)
+    # x = ((1 + alpha) * x + (1 - alpha) * tf.abs(x))
     # return tf.mul(x, 0.5, name=name)
 
 

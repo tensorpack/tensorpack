@@ -11,11 +11,11 @@ from datetime import datetime
 from six.moves import input
 import sys
 
-__all__ = ['set_logger_dir', 'disable_logger', 'auto_set_dir', 'warn_dependency']
+__all__ = ['set_logger_dir', 'disable_logger', 'auto_set_dir',
+           'warn_dependency']
 
 
 class _MyFormatter(logging.Formatter):
-
     def format(self, record):
         date = colored('[%(asctime)s @%(filename)s:%(lineno)d]', 'green')
         msg = '%(message)s'
@@ -40,11 +40,18 @@ def _getlogger():
     handler.setFormatter(_MyFormatter(datefmt='%m%d %H:%M:%S'))
     logger.addHandler(handler)
     return logger
+
+
 _logger = _getlogger()
+_LOGGING_METHOD = ['info', 'warning', 'error', 'critical', 'warn', 'exception', 'debug']
+# export logger functions
+for func in _LOGGING_METHOD:
+    locals()[func] = getattr(_logger, func)
 
 
 def get_time_str():
     return datetime.now().strftime('%m%d-%H%M%S')
+
 
 # logger file and directory:
 global LOG_FILE, LOG_DIR
@@ -55,7 +62,7 @@ def _set_file(path):
     if os.path.isfile(path):
         backup_name = path + '.' + get_time_str()
         shutil.move(path, backup_name)
-        info("Log file '{}' backuped to '{}'".format(path, backup_name))
+        info("Log file '{}' backuped to '{}'".format(path, backup_name))  # noqa: F821
     hdl = logging.FileHandler(
         filename=path, encoding='utf-8', mode='w')
     hdl.setFormatter(_MyFormatter(datefmt='%m%d %H:%M:%S'))
@@ -83,12 +90,12 @@ If you're resuming from a previous run you can choose to keep it.""")
         if act == 'b':
             backup_name = dirname + get_time_str()
             shutil.move(dirname, backup_name)
-            info("Directory '{}' backuped to '{}'".format(dirname, backup_name))
+            info("Directory '{}' backuped to '{}'".format(dirname, backup_name))  # noqa: F821
         elif act == 'd':
             shutil.rmtree(dirname)
         elif act == 'n':
             dirname = dirname + get_time_str()
-            info("Use a new log directory {}".format(dirname))
+            info("Use a new log directory {}".format(dirname))  # noqa: F821
         elif act == 'k':
             pass
         else:
@@ -98,12 +105,6 @@ If you're resuming from a previous run you can choose to keep it.""")
     mkdir_p(dirname)
     LOG_FILE = os.path.join(dirname, 'log.log')
     _set_file(LOG_FILE)
-
-
-_LOGGING_METHOD = ['info', 'warning', 'error', 'critical', 'warn', 'exception', 'debug']
-# export logger functions
-for func in _LOGGING_METHOD:
-    locals()[func] = getattr(_logger, func)
 
 
 def disable_logger():
@@ -127,4 +128,4 @@ def auto_set_dir(action=None, overwrite=False):
 
 
 def warn_dependency(name, dependencies):
-    warn("Failed to import '{}', {} won't be available'".format(dependencies, name))
+    warn("Failed to import '{}', {} won't be available'".format(dependencies, name))  # noqa: F821

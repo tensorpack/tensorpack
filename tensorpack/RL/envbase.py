@@ -7,7 +7,6 @@
 from abc import abstractmethod, ABCMeta
 from collections import defaultdict
 import six
-import random
 from ..utils import get_rng
 
 __all__ = ['RLEnvironment', 'NaiveRLEnvironment', 'ProxyPlayer',

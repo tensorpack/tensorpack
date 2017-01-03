@@ -4,10 +4,10 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
-import math
 
 from ._common import layer_register
 from ..tfutils import symbolic_functions as symbf
+from ..utils import logger
 
 __all__ = ['FullyConnected']
 
@@ -31,7 +31,6 @@ def FullyConnected(x, out_dim,
     in_dim = x.get_shape().as_list()[1]
 
     if W_init is None:
-        #W_init = tf.uniform_unit_scaling_initializer(factor=1.43)
         W_init = tf.contrib.layers.variance_scaling_initializer()
     if b_init is None:
         b_init = tf.constant_initializer()
@@ -42,6 +41,7 @@ def FullyConnected(x, out_dim,
     prod = tf.nn.xw_plus_b(x, W, b) if use_bias else tf.matmul(x, W)
     if nl is None:
         logger.warn(
-            "[DEPRECATED] Default ReLU nonlinearity for Conv2D and FullyConnected will be deprecated. Please use argscope instead.")
+            "[DEPRECATED] Default ReLU nonlinearity for Conv2D and FullyConnected will be deprecated."
+            " Please use argscope instead.")
         nl = tf.nn.relu
     return nl(prod, name='output')

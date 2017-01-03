@@ -6,6 +6,7 @@
 import tensorflow as tf
 
 from ._common import layer_register
+from ._test import TestModel
 
 __all__ = ['ImageSample']
 
@@ -82,7 +83,7 @@ def ImageSample(inputs, borderMode='repeat'):
     diffy, diffx = tf.split(3, 2, diff)
     neg_diffy, neg_diffx = tf.split(3, 2, neg_diff)
 
-    #prod = tf.reduce_prod(diff, 3, keep_dims=True)
+    # prod = tf.reduce_prod(diff, 3, keep_dims=True)
     # diff = tf.Print(diff, [tf.is_finite(tf.reduce_sum(diff)), tf.shape(prod),
     # tf.reduce_max(diff), diff], summarize=50)
 
@@ -99,8 +100,6 @@ def ImageSample(inputs, borderMode='repeat'):
         mask = tf.expand_dims(mask, 3)
         ret = ret * tf.cast(mask, tf.float32)
     return ret
-
-from ._test import TestModel
 
 
 class TestSample(TestModel):
@@ -128,9 +127,9 @@ class TestSample(TestModel):
         bimg = np.random.rand(2, h, w, 3).astype('float32')
 
         # mat = np.array([
-        #[[[1,1], [1.2,1.2]], [[-1, -1], [2.5, 2.5]]],
-        #[[[1,1], [1.2,1.2]], [[-1, -1], [2.5, 2.5]]]
-        #], dtype='float32')  #2x2x2x2
+        # [[[1,1], [1.2,1.2]], [[-1, -1], [2.5, 2.5]]],
+        # [[[1,1], [1.2,1.2]], [[-1, -1], [2.5, 2.5]]]
+        # ], dtype='float32')  #2x2x2x2
         mat = (np.random.rand(2, 5, 5, 2) - 0.2) * np.array([h + 3, w + 3])
         true_res = np_sample(bimg, np.floor(mat + 0.5).astype('int32'))
 
@@ -140,10 +139,10 @@ class TestSample(TestModel):
 
         self.assertTrue((res == true_res).all())
 
+
 if __name__ == '__main__':
     import cv2
     import numpy as np
-    import sys
     im = cv2.imread('cat.jpg')
     im = im.reshape((1,) + im.shape).astype('float32')
     imv = tf.Variable(im)
@@ -160,8 +159,8 @@ if __name__ == '__main__':
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
 
-    #out = sess.run(tf.gradients(tf.reduce_sum(output), mapv))
-    #out = sess.run(output)
+    # out = sess.run(tf.gradients(tf.reduce_sum(output), mapv))
+    # out = sess.run(output)
     # print(out[0].min())
     # print(out[0].max())
     # print(out[0].sum())

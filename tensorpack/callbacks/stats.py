@@ -2,8 +2,6 @@
 # File: stats.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import tensorflow as tf
-import re
 import os
 import operator
 import json

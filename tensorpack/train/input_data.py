@@ -86,7 +86,7 @@ class EnqueueThread(threading.Thread):
                         feed = dict(zip(self.placehdrs, dp))
                         # print 'qsize:', self.sess.run([self.op, self.size_op], feed_dict=feed)[1]
                         self.op.run(feed_dict=feed)
-            except tf.errors.CancelledError as e:
+            except tf.errors.CancelledError:
                 pass
             except Exception:
                 logger.exception("Exception in EnqueueThread:")

@@ -4,7 +4,6 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 
-import numpy as np
 from collections import deque
 from .envbase import ProxyPlayer
 

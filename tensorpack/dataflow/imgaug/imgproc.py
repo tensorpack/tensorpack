@@ -131,7 +131,8 @@ class Clip(ImageAugmentor):
 class Saturation(ImageAugmentor):
 
     def __init__(self, alpha=0.4):
-        """ Saturation, see 'fb.resnet.torch' https://github.com/facebook/fb.resnet.torch/blob/master/datasets/transforms.lua#L218
+        """ Saturation,
+        see 'fb.resnet.torch' https://github.com/facebook/fb.resnet.torch/blob/master/datasets/transforms.lua#L218
         """
         super(Saturation, self).__init__()
         assert alpha < 1
@@ -150,7 +151,8 @@ class Lighting(ImageAugmentor):
     def __init__(self, std, eigval, eigvec):
         """ Lighting noise.
             See `ImageNet Classification with Deep Convolutional Neural Networks - Alex`
-            The implementation follows 'fb.resnet.torch': https://github.com/facebook/fb.resnet.torch/blob/master/datasets/transforms.lua#L184
+            The implementation follows 'fb.resnet.torch':
+            https://github.com/facebook/fb.resnet.torch/blob/master/datasets/transforms.lua#L184
 
             :param eigvec: each column is one eigen vector
         """

@@ -4,7 +4,6 @@
 
 import tensorflow as tf
 import numpy as np
-from ..utils import logger
 
 
 def prediction_incorrect(logits, label, topk=1, name='incorrect_vector'):
@@ -79,12 +78,10 @@ def class_balanced_sigmoid_cross_entropy(logits, label, name='cross_entropy_loss
     cost = tf.nn.weighted_cross_entropy_with_logits(logits, y, pos_weight)
     cost = tf.reduce_mean(cost * (1 - beta), name=name)
 
-    #logstable = tf.log(1 + tf.exp(-tf.abs(z)))
-    # loss_pos = -beta * tf.reduce_mean(-y *
-    #(logstable - tf.minimum(0.0, z)))
-    # loss_neg = (1. - beta) * tf.reduce_mean((y - 1.) *
-    #(logstable + tf.maximum(z, 0.0)))
-    #cost = tf.sub(loss_pos, loss_neg, name=name)
+    # logstable = tf.log(1 + tf.exp(-tf.abs(z)))
+    # loss_pos = -beta * tf.reduce_mean(-y * (logstable - tf.minimum(0.0, z)))
+    # loss_neg = (1. - beta) * tf.reduce_mean((y - 1.) * (logstable + tf.maximum(z, 0.0)))
+    # cost = tf.sub(loss_pos, loss_neg, name=name)
     return cost
 
 

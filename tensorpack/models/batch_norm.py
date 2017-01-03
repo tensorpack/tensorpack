@@ -6,8 +6,6 @@
 import tensorflow as tf
 from tensorflow.contrib.framework import add_model_variable
 from tensorflow.python.training import moving_averages
-from copy import copy
-import re
 
 from ..tfutils.common import get_tf_version
 from ..tfutils.tower import get_current_tower_context
@@ -65,7 +63,7 @@ def BatchNormV1(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
     if use_local_stat:
         # training tower
         if ctx.is_training:
-            #reuse = tf.get_variable_scope().reuse
+            # reuse = tf.get_variable_scope().reuse
             with tf.variable_scope(tf.get_variable_scope(), reuse=False):
                 # BatchNorm in reuse scope can be tricky! Moving mean/variance are not reused
                 with tf.name_scope(None):  # https://github.com/tensorflow/tensorflow/issues/2740
@@ -86,7 +84,6 @@ def BatchNormV1(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
             ema = tf.train.ExponentialMovingAverage(decay=decay, name=emaname)
             mean_var_name = ema.average_name(batch_mean)
             var_var_name = ema.average_name(batch_var)
-            sc = tf.get_variable_scope()
             if ctx.is_main_tower:
                 # main tower, but needs to use global stat. global stat must be from outside
                 # TODO when reuse=True, the desired variable name could
@@ -186,6 +183,7 @@ def BatchNormV2(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
             return tf.identity(xn, name='output')
     else:
         return tf.identity(xn, name='output')
+
 
 if get_tf_version() >= 12:
     BatchNorm = BatchNormV2

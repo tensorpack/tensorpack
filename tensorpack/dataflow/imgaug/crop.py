@@ -74,7 +74,6 @@ class FixedCrop(ImageAugmentor):
         self._init(locals())
 
     def _augment(self, img, _):
-        orig_shape = img.shape
         return img[self.rect.y0: self.rect.y1 + 1,
                    self.rect.x0: self.rect.x0 + 1]
 
@@ -173,6 +172,7 @@ class RandomCropRandomShape(ImageAugmentor):
     def _augment(self, img, param):
         y0, x0, h, w = param
         return img[y0:y0 + h, x0:x0 + w]
+
 
 if __name__ == '__main__':
     print(perturb_BB([100, 100], Rect(3, 3, 50, 50), 50))

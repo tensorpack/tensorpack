@@ -5,7 +5,7 @@
 
 import tensorflow as tf
 import re
-from ..utils.naming import *
+from ..utils.naming import PREDICT_TOWER
 
 __all__ = ['get_current_tower_context', 'TowerContext']
 
@@ -49,7 +49,7 @@ class TowerContext(object):
         with tf.variable_scope(self._name) as scope:
             with tf.variable_scope(scope, reuse=False):
                 scope = tf.get_variable_scope()
-                assert scope.reuse == False
+                assert not scope.reuse
                 return tf.get_variable(*args, **kwargs)
 
     def find_tensor_in_main_tower(self, graph, name):

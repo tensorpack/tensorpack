@@ -9,9 +9,9 @@ import re
 from six.moves import zip, range
 
 from ..utils import logger
-from ..utils.naming import *
+from ..utils.naming import SUMMARY_BACKUP_KEYS
 from ..utils.concurrency import LoopThread
-from ..tfutils.summary import summary_moving_average, add_moving_summary
+from ..tfutils.summary import summary_moving_average
 from ..tfutils import (backup_collection, restore_collection,
                        get_global_step_var, TowerContext)
 from ..tfutils.gradproc import apply_grad_processors, ScaleGradient
@@ -36,7 +36,7 @@ class MultiGPUTrainer(Trainer):
         for idx, t in enumerate(towers):
             with tf.device('/gpu:{}'.format(t)), \
                     tf.variable_scope(global_scope, reuse=idx > 0), \
-                    TowerContext('tower{}'.format(idx)) as scope:
+                    TowerContext('tower{}'.format(idx)):
                 logger.info("Building graph for training tower {}...".format(idx))
 
                 grad_list.append(get_tower_grad_func())
@@ -60,7 +60,8 @@ class SyncMultiGPUTrainer(MultiGPUTrainer,
             assert isinstance(self._input_method, QueueInput)
 
         if predict_tower is not None:
-            logger.warn("[Deprecated] Argument `predict_tower` is deprecated for trainer. Use TrainConfig.predict_tower instead!")
+            logger.warn("[Deprecated] Argument `predict_tower` is deprecated for trainer. "
+                        "Use TrainConfig.predict_tower instead!")
             config.predict_tower = predict_tower
 
         super(SyncMultiGPUTrainer, self).__init__(config)
@@ -82,7 +83,7 @@ class SyncMultiGPUTrainer(MultiGPUTrainer,
                 if None in nones and len(nones) != 1:
                     raise RuntimeError("Gradient w.r.t {} is None in some but not all towers!".format(v.name))
                 elif nones[0] is None:
-                    logger.warn("No Gradient w.r.t {}".format(var.op.name))
+                    logger.warn("No Gradient w.r.t {}".format(v.op.name))
                     continue
                 try:
                     grad = tf.add_n(all_grad) / float(len(tower_grads))
@@ -98,8 +99,8 @@ class SyncMultiGPUTrainer(MultiGPUTrainer,
             self.config.tower, lambda: self._get_cost_and_grad()[1])
 
         # debug tower performance:
-        #ops = [k[0] for k in grad_list[1]] + [k[0] for k in grad_list[0]]
-        #self.train_op = tf.group(*ops)
+        # ops = [k[0] for k in grad_list[1]] + [k[0] for k in grad_list[0]]
+        # self.train_op = tf.group(*ops)
         # return
 
         grads = SyncMultiGPUTrainer._average_grads(grad_list)
@@ -129,7 +130,8 @@ class AsyncMultiGPUTrainer(MultiGPUTrainer,
         super(AsyncMultiGPUTrainer, self).__init__(config)
 
         if predict_tower is not None:
-            logger.warn("[Deprecated] Argument `predict_tower` is deprecated for trainer. Use TrainConfig.predict_tower instead!")
+            logger.warn("[Deprecated] Argument `predict_tower` is deprecated for trainer. "
+                        "Use TrainConfig.predict_tower instead!")
             config.predict_tower = predict_tower
 
         self._setup_predictor_factory(config.predict_tower)

@@ -3,10 +3,7 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
-import sys
-import os
-import time
-from abc import abstractmethod, ABCMeta
+from abc import ABCMeta
 import six
 
 __all__ = ['Callback', 'PeriodicCallback', 'ProxyCallback']

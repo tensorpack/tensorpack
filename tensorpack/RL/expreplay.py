@@ -211,7 +211,9 @@ class ExpReplay(DataFlow, Callback):
 if __name__ == '__main__':
     from .atari import AtariPlayer
     import sys
-    predictor = lambda x: np.array([1, 1, 1, 1])
+
+    def predictor(x):
+        np.array([1, 1, 1, 1])
     player = AtariPlayer(sys.argv[1], viz=0, frame_skip=10, height_range=(36, 204))
     E = ExpReplay(predictor,
                   player=player,

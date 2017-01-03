@@ -26,7 +26,7 @@ class GaussianMap(object):
         y = y.astype('float32') / ret.shape[0] - anchor[0]
         x = x.astype('float32') / ret.shape[1] - anchor[1]
         g = np.exp(-(x**2 + y ** 2) / self.sigma)
-        #cv2.imshow(" ", g)
+        # cv2.imshow(" ", g)
         # cv2.waitKey()
         return g
 

@@ -5,9 +5,8 @@
 
 import os
 import numpy as np
-from six.moves import range
 
-from ...utils import logger, get_rng, get_dataset_path
+from ...utils import logger, get_dataset_path
 from ..base import RNGDataFlow
 
 try:
@@ -70,6 +69,7 @@ class SVHNDigit(RNGDataFlow):
         b = SVHNDigit('test')
         c = SVHNDigit('extra')
         return np.concatenate((a.X, b.X, c.X)).mean(axis=0)
+
 
 if __name__ == '__main__':
     a = SVHNDigit('train')

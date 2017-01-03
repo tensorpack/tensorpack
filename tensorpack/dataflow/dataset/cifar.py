@@ -5,16 +5,13 @@
 #         Yukun Chen <cykustc@gmail.com>
 
 import os
-import sys
 import pickle
 import numpy as np
-import random
 import six
-from six.moves import urllib, range
+from six.moves import range
 import copy
-import logging
 
-from ...utils import logger, get_rng, get_dataset_path
+from ...utils import logger, get_dataset_path
 from ...utils.fs import download
 from ..base import RNGDataFlow
 
@@ -151,6 +148,7 @@ class Cifar100(CifarBase):
 
     def __init__(self, train_or_test, shuffle=True, dir=None):
         super(Cifar100, self).__init__(train_or_test, shuffle, dir, 100)
+
 
 if __name__ == '__main__':
     ds = Cifar10('train')

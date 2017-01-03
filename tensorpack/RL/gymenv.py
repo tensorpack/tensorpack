@@ -76,6 +76,7 @@ class GymEnv(RLEnvironment):
         assert isinstance(spc, gym.spaces.discrete.Discrete)
         return DiscreteActionSpace(spc.n)
 
+
 if __name__ == '__main__':
     env = GymEnv('Breakout-v0', viz=0.1)
     num = env.get_action_space().num_actions()

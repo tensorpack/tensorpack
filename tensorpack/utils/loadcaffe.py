@@ -3,13 +3,8 @@
 # File: loadcaffe.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-from collections import namedtuple, defaultdict
-from abc import abstractmethod
 import numpy as np
-import copy
 import os
-
-from six.moves import zip
 
 from .utils import change_env, get_dataset_path
 from .fs import download
@@ -115,13 +110,14 @@ def get_caffe_pb():
     dir = get_dataset_path('caffe')
     caffe_pb_file = os.path.join(dir, 'caffe_pb2.py')
     if not os.path.isfile(caffe_pb_file):
-        proto_path = download(CAFFE_PROTO_URL, dir)
+        download(CAFFE_PROTO_URL, dir)
         assert os.path.isfile(os.path.join(dir, 'caffe.proto'))
         ret = os.system('cd {} && protoc caffe.proto --python_out .'.format(dir))
         assert ret == 0, \
             "Command `protoc caffe.proto --python_out .` failed!"
     import imp
     return imp.load_source('caffepb', caffe_pb_file)
+
 
 if __name__ == '__main__':
     import argparse
@@ -132,5 +128,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
     ret = load_caffe(args.model, args.weights)
 
-    import numpy as np
     np.save(args.output, ret)

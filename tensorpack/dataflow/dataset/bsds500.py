@@ -8,7 +8,7 @@ import glob
 import cv2
 import numpy as np
 
-from ...utils import logger, get_rng, get_dataset_path
+from ...utils import logger, get_dataset_path
 from ...utils.fs import download
 from ..base import RNGDataFlow
 

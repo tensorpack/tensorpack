@@ -6,7 +6,6 @@
 from .base import ImageAugmentor
 import math
 import cv2
-import numpy as np
 
 __all__ = ['Rotation', 'RotationAndCropValid']
 
@@ -59,7 +58,7 @@ class RotationAndCropValid(ImageAugmentor):
         newh = min(newh, ret.shape[0])
         newx = int(center[0] - neww * 0.5)
         newy = int(center[1] - newh * 0.5)
-        #print(ret.shape, deg, newx, newy, neww, newh)
+        # print(ret.shape, deg, newx, newy, neww, newh)
         return ret[newy:newy + newh, newx:newx + neww]
 
     @staticmethod

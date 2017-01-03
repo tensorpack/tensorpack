@@ -54,5 +54,6 @@ def recursive_walk(rootdir):
         for f in files:
             yield os.path.join(r, f)
 
+
 if __name__ == '__main__':
     download('http://dl.caffe.berkeleyvision.org/caffe_ilsvrc12.tar.gz', '.')

@@ -53,9 +53,6 @@ class TFFuncMapper(ProxyDataFlow):
 
 if __name__ == '__main__':
     from .raw import FakeData
-    from .prefetch import PrefetchDataZMQ
-    from .image import AugmentImageComponent
-    from . import imgaug
     ds = FakeData([[224, 224, 3]], 100000, random=False)
 
     def tf_aug(v):
@@ -69,6 +66,9 @@ if __name__ == '__main__':
                       tf_aug,
                       lambda dp, f: [f([dp[0]])[0]]
                       )
+    # from .prefetch import PrefetchDataZMQ
+    # from .image import AugmentImageComponent
+    # from . import imgaug
     # ds = AugmentImageComponent(ds,
     #   [imgaug.Brightness(0.1, clip=False),
     #    imgaug.Contrast((0.8, 1.2), clip=False),

@@ -106,7 +106,6 @@ def build_patch_list(patch_list,
     ph, pw = patch_list.shape[1:3]
     if border is None:
         border = int(0.1 * min(ph, pw))
-    mh, mw = max(max_height, ph + border), max(max_width, pw + border)
     if nr_row is None:
         nr_row = minnone(nr_row, max_height / (ph + border))
     if nr_col is None:
@@ -204,13 +203,13 @@ def dump_dataflow_images(df, index=0, batched=True,
                 if viz is not None:
                     vizlist.append(img)
             if viz is not None and len(vizlist) >= vizsize:
-                patch = next(build_patch_list(
+                next(build_patch_list(
                     vizlist[:vizsize],
                     nr_row=viz[0], nr_col=viz[1], viz=True))
                 vizlist = vizlist[vizsize:]
 
+
 if __name__ == '__main__':
-    import cv2
     imglist = []
     for i in range(100):
         fname = "{:03d}.png".format(i)

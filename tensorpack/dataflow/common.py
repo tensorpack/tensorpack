@@ -3,7 +3,6 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 from __future__ import division
-import copy
 import numpy as np
 from collections import deque, defaultdict
 from six.moves import range, map
@@ -48,7 +47,6 @@ class BatchData(ProxyDataFlow):
         super(BatchData, self).__init__(ds)
         if not remainder:
             try:
-                s = ds.size()
                 assert batch_size <= ds.size()
             except NotImplementedError:
                 pass

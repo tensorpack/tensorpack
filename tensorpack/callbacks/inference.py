@@ -2,14 +2,13 @@
 # File: inference.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
-import tensorflow as tf
 import numpy as np
 from abc import ABCMeta, abstractmethod
 import sys
 import six
 from six.moves import zip
 
-from ..utils import logger, execute_only_once
+from ..utils import logger
 from ..utils.stats import RatioCounter, BinaryStatistics
 from ..tfutils import get_op_var_name
 

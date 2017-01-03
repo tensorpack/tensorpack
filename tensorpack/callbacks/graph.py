@@ -6,7 +6,6 @@
 """ Graph related callbacks"""
 
 from .base import Callback
-from ..utils import logger
 
 __all__ = ['RunOp']
 
@@ -26,7 +25,7 @@ class RunOp(Callback):
 
     def _setup_graph(self):
         self._op = self.setup_func()
-        #self._op_name = self._op.name
+        # self._op_name = self._op.name
 
     def _before_train(self):
         if self.run_before:
@@ -35,6 +34,3 @@ class RunOp(Callback):
     def _trigger_epoch(self):
         if self.run_epoch:
             self._op.run()
-
-    # def _log(self):
-        #logger.info("Running op {} ...".format(self._op_name))

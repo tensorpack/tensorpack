@@ -5,9 +5,8 @@
 
 import os
 import gzip
-import random
 import numpy
-from six.moves import urllib, range
+from six.moves import range
 
 from ...utils import logger, get_dataset_path
 from ...utils.fs import download
@@ -109,6 +108,7 @@ class Mnist(RNGDataFlow):
             img = self.images[k].reshape((28, 28))
             label = self.labels[k]
             yield [img, label]
+
 
 if __name__ == '__main__':
     ds = Mnist('train')

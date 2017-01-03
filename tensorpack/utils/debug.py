@@ -28,6 +28,7 @@ def enable_call_trace():
             return
     sys.settrace(tracer)
 
+
 if __name__ == '__main__':
     enable_call_trace()
 

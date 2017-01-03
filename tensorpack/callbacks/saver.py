@@ -5,7 +5,6 @@
 import tensorflow as tf
 import os
 import shutil
-import re
 
 from .base import Callback
 from ..utils import logger

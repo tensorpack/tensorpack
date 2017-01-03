@@ -51,6 +51,7 @@ class RemoteData(DataFlow):
             dp = loads(self.socket.recv(copy=False))
             yield dp
 
+
 if __name__ == '__main__':
     import sys
     from tqdm import tqdm

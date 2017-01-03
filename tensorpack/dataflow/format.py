@@ -6,10 +6,11 @@ import numpy as np
 from six.moves import range
 import os
 
-from ..utils import logger, get_rng, get_tqdm
+from ..utils import logger, get_tqdm
 from ..utils.timer import timed_operation
 from ..utils.loadcaffe import get_caffe_pb
 from ..utils.serialize import loads
+from ..utils.argtools import log_once
 from .base import RNGDataFlow
 
 try:
@@ -114,7 +115,6 @@ class LMDBData(RNGDataFlow):
                 if k != '__keys__':
                     yield [k, v]
         else:
-            s = self.size()
             self.rng.shuffle(self.keys)
             for k in self.keys:
                 v = self._txn.get(k)
@@ -159,7 +159,7 @@ class CaffeLMDB(LMDBDataDecoder):
                 img = np.fromstring(datum.data, dtype=np.uint8)
                 img = img.reshape(datum.channels, datum.height, datum.width)
             except Exception:
-                log_once("Cannot read key {}".format(k))
+                log_once("Cannot read key {}".format(k), 'warn')
                 return None
             return [img.transpose(1, 2, 0), datum.label]
 

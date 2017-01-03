@@ -4,25 +4,19 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 from abc import ABCMeta, abstractmethod
-import re
 import tensorflow as tf
-from collections import namedtuple
 import inspect
 import pickle
 import six
 
 from ..utils import logger, INPUT_VARS_KEY
-from ..tfutils.common import get_tensors_by_names
 from ..tfutils.gradproc import CheckGradient
 from ..tfutils.tower import get_current_tower_context
 
 __all__ = ['ModelDesc', 'InputVar', 'ModelFromMetaGraph']
 
-#_InputVar = namedtuple('InputVar', ['type', 'shape', 'name', 'sparse'])
-
 
 class InputVar(object):
-
     def __init__(self, type, shape, name, sparse=False):
         self.type = type
         self.shape = shape

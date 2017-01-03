@@ -3,21 +3,13 @@
 # File: discretize.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-from . import logger
-from .argtools import memoized
+from .argtools import log_once
 from abc import abstractmethod, ABCMeta
 import numpy as np
 import six
 from six.moves import range
 
 __all__ = ['UniformDiscretizer1D', 'UniformDiscretizerND']
-
-
-@memoized
-def log_once(s):
-    logger.warn(s)
-
-# just a placeholder
 
 
 @six.add_metaclass(ABCMeta)
@@ -54,10 +46,10 @@ class UniformDiscretizer1D(Discretizer1D):
 
     def get_bin(self, v):
         if v < self.minv:
-            log_once("UniformDiscretizer1D: value smaller than min!")
+            log_once("UniformDiscretizer1D: value smaller than min!", 'warn')
             return 0
         if v > self.maxv:
-            log_once("UniformDiscretizer1D: value larger than max!")
+            log_once("UniformDiscretizer1D: value larger than max!", 'warn')
             return self.nr_bin - 1
         return int(np.clip(
             (v - self.minv) / self.spacing,
@@ -126,8 +118,9 @@ class UniformDiscretizerND(Discretizer):
         bin_id_nd = self.get_nd_bin_ids(bin_id)
         return [self.discretizers[k].get_bin_center(bin_id_nd[k]) for k in range(self.n)]
 
+
 if __name__ == '__main__':
-    #u = UniformDiscretizer1D(-10, 10, 0.12)
+    # u = UniformDiscretizer1D(-10, 10, 0.12)
     u = UniformDiscretizerND((0, 100, 1), (0, 100, 1), (0, 100, 1))
     import IPython as IP
     IP.embed(config=IP.terminal.ipapp.load_default_config())

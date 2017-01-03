@@ -10,7 +10,7 @@ from collections import defaultdict
 import re
 import numpy as np
 from ..utils import logger
-from ..utils.naming import *
+from ..utils.naming import PREDICT_TOWER
 from .common import get_op_tensor_name
 
 __all__ = ['SessionUpdate', 'dump_session_params', 'dump_chkpt_vars',
@@ -51,7 +51,7 @@ class SessionUpdate(object):
         self.sess = sess
         self.assign_ops = defaultdict(list)
         for v in vars_to_update:
-            #p = tf.placeholder(v.dtype, shape=v.get_shape())
+            # p = tf.placeholder(v.dtype, shape=v.get_shape())
             with tf.device('/cpu:0'):
                 p = tf.placeholder(v.dtype)
                 savename = get_savename_from_varname(v.name)

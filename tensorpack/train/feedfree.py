@@ -10,7 +10,7 @@ from ..tfutils import get_global_step_var
 from ..tfutils.tower import TowerContext
 from ..tfutils.gradproc import apply_grad_processors
 from ..tfutils.summary import summary_moving_average, add_moving_summary
-from .input_data import QueueInput, FeedfreeInput, DummyConstantInput
+from .input_data import QueueInput, FeedfreeInput
 
 from .base import Trainer
 from .trainer import MultiPredictorTowerTrainer
@@ -98,7 +98,7 @@ class SimpleFeedfreeTrainer(
             self.config.optimizer.apply_gradients(grads, get_global_step_var()),
             summary_moving_average(), name='train_op')
         # skip training
-        #self.train_op = tf.group(*self.dequed_inputs)
+        # self.train_op = tf.group(*self.dequed_inputs)
 
 
 class QueueInputTrainer(SimpleFeedfreeTrainer):
@@ -114,7 +114,8 @@ class QueueInputTrainer(SimpleFeedfreeTrainer):
         """
         config.data = QueueInput(config.dataset, input_queue)
         if predict_tower is not None:
-            logger.warn("[Deprecated] Argument `predict_tower` is deprecated for trainer. Use TrainConfig.predict_tower instead!")
+            logger.warn("[Deprecated] Argument `predict_tower` is deprecated for trainer. "
+                        "Use TrainConfig.predict_tower instead!")
             config.predict_tower = predict_tower
         assert len(config.tower) == 1, \
             "QueueInputTrainer doesn't support multigpu! Use Sync/AsyncMultiGPUTrainer instead."

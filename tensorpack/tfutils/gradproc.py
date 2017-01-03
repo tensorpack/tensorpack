@@ -103,6 +103,7 @@ class MapGradient(GradientProcessor):
                 ret.append((grad, var))
         return ret
 
+
 _summaried_gradient = set()
 
 
@@ -133,7 +134,7 @@ class CheckGradient(MapGradient):
 
     def _mapper(self, grad, var):
         # this is very slow.... see #3649
-        #op = tf.Assert(tf.reduce_all(tf.is_finite(var)), [var], summarize=100)
+        # op = tf.Assert(tf.reduce_all(tf.is_finite(var)), [var], summarize=100)
         grad = tf.check_numerics(grad, 'CheckGradient-' + var.op.name)
         return grad
 

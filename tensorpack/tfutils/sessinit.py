@@ -5,7 +5,6 @@
 import os
 from abc import abstractmethod, ABCMeta
 from collections import defaultdict
-import re
 import numpy as np
 import tensorflow as tf
 import six
@@ -120,7 +119,8 @@ class SaverRestore(SessionInit):
         ckpt_vars = reader.get_variable_to_shape_map().keys()
         for v in ckpt_vars:
             if v.startswith(PREDICT_TOWER):
-                logger.error("Found {} in checkpoint. But anything from prediction tower shouldn't be saved.".format(v.name))
+                logger.error("Found {} in checkpoint. "
+                             "But anything from prediction tower shouldn't be saved.".format(v.name))
         return set(ckpt_vars)
 
     def _get_vars_to_restore_multimap(self, vars_available):

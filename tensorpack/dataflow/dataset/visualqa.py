@@ -4,8 +4,7 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from ..base import DataFlow
-from ...utils import *
-from ...utils.timer import *
+from ...utils.timer import timed_operation
 from six.moves import zip, map
 from collections import Counter
 import json
@@ -74,12 +73,11 @@ class VisualQA(DataFlow):
         ret = cnt.most_common(n)
         return [k[0] for k in ret]
 
+
 if __name__ == '__main__':
     vqa = VisualQA('/home/wyx/data/VQA/MultipleChoice_mscoco_train2014_questions.json',
                    '/home/wyx/data/VQA/mscoco_train2014_annotations.json')
     for k in vqa.get_data():
         print(json.dumps(k))
         break
-#    vqa.get_common_question_words(100)
     vqa.get_common_answer(100)
-    #from IPython import embed; embed()

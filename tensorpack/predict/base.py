@@ -3,11 +3,11 @@
 # File: base.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-from abc import abstractmethod, ABCMeta, abstractproperty
+from abc import abstractmethod, ABCMeta
 import tensorflow as tf
 import six
 
-from ..utils.naming import *
+from ..utils.naming import PREDICT_TOWER
 from ..utils import logger
 from ..tfutils import get_tensors_by_names, TowerContext
 
@@ -128,7 +128,8 @@ class MultiTowerOfflinePredictor(OnlinePredictor):
         self.predictors = []
         with self.graph.as_default():
             # TODO backup summary keys?
-            fn = lambda _: config.model.build_graph(config.model.get_input_vars())
+            def fn(_):
+                config.model.build_graph(config.model.get_input_vars())
             build_multi_tower_prediction_graph(fn, towers)
 
             self.sess = tf.Session(config=config.session_config)

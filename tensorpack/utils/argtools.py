@@ -9,8 +9,9 @@ import inspect
 import six
 import functools
 import collections
+from . import logger
 
-__all__ = ['map_arg', 'memoized', 'shape2d', 'memoized_ignoreargs']
+__all__ = ['map_arg', 'memoized', 'shape2d', 'memoized_ignoreargs', 'log_once']
 
 
 def map_arg(**maps):
@@ -64,11 +65,12 @@ class memoized(object):
         '''Support instance methods.'''
         return functools.partial(self.__call__, obj)
 
+
 _MEMOIZED_NOARGS = {}
 
 
 def memoized_ignoreargs(func):
-    h = hash(func)  # make sure it is hashable. is it necessary?
+    hash(func)  # make sure it is hashable. TODO is it necessary?
 
     def wrapper(*args, **kwargs):
         if func not in _MEMOIZED_NOARGS:
@@ -99,3 +101,8 @@ def shape2d(a):
         assert len(a) == 2
         return list(a)
     raise RuntimeError("Illegal shape: {}".format(a))
+
+
+@memoized
+def log_once(message, func):
+    getattr(logger, func)(message)

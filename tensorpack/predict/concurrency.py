@@ -5,10 +5,8 @@
 
 import multiprocessing
 import threading
-import tensorflow as tf
-import time
 import six
-from six.moves import queue, range, zip
+from six.moves import queue, range
 
 from ..utils.concurrency import DIE
 from ..tfutils.modelutils import describe_model
@@ -49,7 +47,6 @@ class MultiProcessPredictWorker(multiprocessing.Process):
             from tensorpack.models._common import disable_layer_logging
             disable_layer_logging()
         self.predictor = OfflinePredictor(self.config)
-        import sys
         if self.idx == 0:
             with self.predictor.graph.as_default():
                 describe_model()
@@ -136,9 +133,9 @@ class MultiThreadAsyncPredictor(AsyncPredictorBase):
         """ :param predictors: a list of OnlinePredictor"""
         assert len(predictors)
         for k in predictors:
-            #assert isinstance(k, OnlinePredictor), type(k)
+            # assert isinstance(k, OnlinePredictor), type(k)
             # TODO use predictors.return_input here
-            assert k.return_input == False
+            assert not k.return_input
         self.input_queue = queue.Queue(maxsize=len(predictors) * 100)
         self.threads = [
             PredictorWorkerThread(

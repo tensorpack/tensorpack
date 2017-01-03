@@ -4,10 +4,8 @@
 
 from __future__ import print_function
 import multiprocessing as mp
-from threading import Thread
 import itertools
 from six.moves import range, zip
-from six.moves.queue import Queue
 import uuid
 import os
 
@@ -127,7 +125,8 @@ class PrefetchDataZMQ(ProxyDataFlow):
         :param ds: a `DataFlow` instance.
         :param nr_proc: number of processes to use. When larger than 1, order
             of datapoints will be random.
-        :param pipedir: a local directory where the pipes would be. Useful if you're running on non-local FS such as NFS.
+        :param pipedir: a local directory where the pipes would be.
+            Useful if you're running on non-local FS such as NFS.
         """
         super(PrefetchDataZMQ, self).__init__(ds)
         try:

@@ -9,7 +9,7 @@ import multiprocessing
 import os
 import six
 
-from ..dataflow import DataFlow, BatchData
+from ..dataflow import DataFlow
 from ..dataflow.dftools import dataflow_to_process_queue
 from ..utils.concurrency import ensure_proc_terminate, OrderedResultGatherProc, DIE
 from ..utils import logger, get_tqdm

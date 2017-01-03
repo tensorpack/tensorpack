@@ -12,7 +12,6 @@ from ..dataflow import DataFlow
 from .base import Callback
 from .inference import Inferencer
 from .dispatcher import OutputTensorDispatcer
-from ..tfutils import get_op_tensor_name
 from ..utils import logger, get_tqdm
 from ..train.input_data import FeedfreeInput
 
@@ -99,7 +98,6 @@ class InferenceRunner(Callback):
         for inf in self.infs:
             inf.before_inference()
 
-        sess = tf.get_default_session()
         self.ds.reset_state()
         with get_tqdm(total=self.ds.size()) as pbar:
             for dp in self.ds.get_data():
@@ -171,7 +169,6 @@ class FeedfreeInferenceRunner(Callback):
         for inf in self.infs:
             inf.before_inference()
 
-        sess = tf.get_default_session()
         sz = self._input_data.size()
         with get_tqdm(total=sz) as pbar:
             for _ in range(sz):

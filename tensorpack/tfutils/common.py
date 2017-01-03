@@ -3,7 +3,7 @@
 # File: common.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
-from ..utils.naming import *
+from ..utils.naming import GLOBAL_STEP_VAR_NAME, GLOBAL_STEP_OP_NAME
 import tensorflow as tf
 from copy import copy
 import six
@@ -36,7 +36,7 @@ def get_default_sess_config(mem_fraction=0.99):
     conf.gpu_options.allocator_type = 'BFC'
     conf.gpu_options.allow_growth = True
     conf.allow_soft_placement = True
-    #conf.log_device_placement = True
+    # conf.log_device_placement = True
     return conf
 
 
@@ -74,6 +74,7 @@ def get_op_tensor_name(name):
     else:
         return name, name + ':0'
 
+
 get_op_var_name = get_op_tensor_name
 
 
@@ -87,6 +88,7 @@ def get_tensors_by_names(names):
         opn, varn = get_op_var_name(n)
         ret.append(G.get_tensor_by_name(varn))
     return ret
+
 
 get_vars_by_names = get_tensors_by_names
 

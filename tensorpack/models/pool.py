@@ -8,6 +8,8 @@ import numpy as np
 from ._common import layer_register, shape4d
 from ..utils.argtools import shape2d
 from ..tfutils import symbolic_functions as symbf
+from ._test import TestModel
+
 
 __all__ = ['MaxPooling', 'FixedUnPooling', 'AvgPooling', 'GlobalAvgPooling',
            'BilinearUpSample']
@@ -131,7 +133,7 @@ def BilinearUpSample(x, shape):
     :param x: input NHWC tensor
     :param shape: an integer, the upsample factor
     """
-    #inp_shape = tf.shape(x)
+    # inp_shape = tf.shape(x)
     # return tf.image.resize_bilinear(x,
     # tf.pack([inp_shape[1]*shape,inp_shape[2]*shape]),
     # align_corners=True)
@@ -170,9 +172,6 @@ def BilinearUpSample(x, shape):
         inp_shape[2] *= shape
     deconv.set_shape(inp_shape)
     return deconv
-
-
-from ._test import TestModel
 
 
 class TestPool(TestModel):

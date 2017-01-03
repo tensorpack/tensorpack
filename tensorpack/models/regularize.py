@@ -17,6 +17,7 @@ __all__ = ['regularize_cost', 'l2_regularizer', 'l1_regularizer', 'Dropout']
 def _log_regularizer(name):
     logger.info("Apply regularizer for {}".format(name))
 
+
 l2_regularizer = tf.contrib.layers.l2_regularizer
 l1_regularizer = tf.contrib.layers.l1_regularizer
 

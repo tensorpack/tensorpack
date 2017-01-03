@@ -8,7 +8,6 @@ from contextlib import contextmanager
 import inspect
 from datetime import datetime
 from tqdm import tqdm
-import time
 import numpy as np
 
 __all__ = ['change_env',
