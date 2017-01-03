@@ -7,12 +7,14 @@ import os
 
 __all__ = []
 
+
 def _global_import(name):
     p = __import__(name, globals(), None, level=1)
     lst = p.__all__ if '__all__' in dir(p) else dir(p)
     for k in lst:
         globals()[k] = p.__dict__[k]
         __all__.append(k)
+
 
 _TO_IMPORT = set([
     'sessinit',
@@ -34,4 +36,3 @@ for _, module_name, _ in walk_packages(
         _global_import(module_name)
     if module_name != 'common':
         __all__.append(module_name)
-

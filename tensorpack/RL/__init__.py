@@ -3,7 +3,6 @@
 #  Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 from pkgutil import walk_packages
-import importlib
 import os
 import os.path
 
@@ -17,6 +16,7 @@ def _global_import(name):
     for k in lst:
         globals()[k] = p.__dict__[k]
         __all__.append(k)
+
 
 for _, module_name, _ in walk_packages(
         [os.path.dirname(__file__)]):

@@ -1,0 +1,15 @@
+language: "python"
+python:
+   - "2.7"
+sudo: false
+cache: pip
+
+before_script:
+  - pip install flake8
+  - flake8 --version
+script:
+  - flake8 .
+  - cd examples && flake8 .
+
+notifications:
+  email: false
