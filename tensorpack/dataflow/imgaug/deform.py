@@ -6,13 +6,12 @@ from .base import ImageAugmentor
 from ...utils import logger
 import numpy as np
 
-__all__ = ['GaussianDeform', 'GaussianMap']
-
-# TODO really needs speedup
+__all__ = ['GaussianDeform']
 
 
 class GaussianMap(object):
     """ Generate gaussian weighted deformation map"""
+    # TODO really needs speedup
 
     def __init__(self, image_shape, sigma=0.5):
         assert len(image_shape) == 2
@@ -20,6 +19,10 @@ class GaussianMap(object):
         self.sigma = sigma
 
     def get_gaussian_weight(self, anchor):
+        """
+        Args:
+            anchor: coordinate of the center
+        """
         ret = np.zeros(self.shape, dtype='float32')
 
         y, x = np.mgrid[:self.shape[0], :self.shape[1]]
@@ -55,20 +58,20 @@ def np_sample(img, coords):
         img[ucoory, lcoorx, :] * diffy * ndiffx
     return ret[:, :, 0, :]
 
-# TODO input/output with different shape
-
 
 class GaussianDeform(ImageAugmentor):
     """
-    Some kind of deformation. Quite slow.
+    Some kind of slow deformation.
     """
+    # TODO input/output with different shape
 
     def __init__(self, anchors, shape, sigma=0.5, randrange=None):
         """
-        :param anchors: in [0,1] coordinate
-        :param shape: image shape in [h, w]
-        :param sigma: sigma for Gaussian weight
-        :param randrange: default to shape[0] / 8
+        Args:
+            anchors (list): list of center coordinates in range [0,1].
+            shape(list or tuple): image shape in [h, w].
+            sigma (float): sigma for Gaussian weight
+            randrange (int): offset range. Defaults to shape[0] / 8
         """
         logger.warn("GaussianDeform is slow. Consider using it with 4 or more prefetching processes.")
         super(GaussianDeform, self).__init__()

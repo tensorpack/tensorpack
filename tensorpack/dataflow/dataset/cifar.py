@@ -80,17 +80,7 @@ def get_filenames(dir, cifar_classnum):
 
 
 class CifarBase(RNGDataFlow):
-    """
-    Return [image, label],
-        image is 32x32x3 in the range [0,255]
-    """
-
     def __init__(self, train_or_test, shuffle=True, dir=None, cifar_classnum=10):
-        """
-        Args:
-            train_or_test: string either 'train' or 'test'
-            shuffle: default to True
-        """
         assert train_or_test in ['train', 'test']
         assert cifar_classnum == 10 or cifar_classnum == 100
         self.cifar_classnum = cifar_classnum
@@ -139,13 +129,22 @@ class CifarBase(RNGDataFlow):
 
 
 class Cifar10(CifarBase):
-
+    """
+    Produces [image, label] in Cifar10 dataset,
+    image is 32x32x3 in the range [0,255].
+    label is an int.
+    """
     def __init__(self, train_or_test, shuffle=True, dir=None):
+        """
+        Args:
+            train_or_test (str): either 'train' or 'test'.
+            shuffle (bool): shuffle the dataset.
+        """
         super(Cifar10, self).__init__(train_or_test, shuffle, dir, 10)
 
 
 class Cifar100(CifarBase):
-
+    """ Similar to Cifar10"""
     def __init__(self, train_or_test, shuffle=True, dir=None):
         super(Cifar100, self).__init__(train_or_test, shuffle, dir, 100)
 

@@ -12,9 +12,8 @@ __all__ = ['Brightness', 'Contrast', 'MeanVarianceNormalize', 'GaussianBlur',
 
 class Brightness(ImageAugmentor):
     """
-    Random adjust brightness.
+    Randomly adjust brightness.
     """
-
     def __init__(self, delta, clip=True):
         """
         Randomly add a value within [-delta,delta], and clip in [0,255] if clip is True.
@@ -36,14 +35,14 @@ class Brightness(ImageAugmentor):
 
 class Contrast(ImageAugmentor):
     """
-    Apply x = (x - mean) * contrast_factor + mean to each channel
-    and clip to [0, 255]
+    Apply ``x = (x - mean) * contrast_factor + mean`` to each channel.
     """
 
     def __init__(self, factor_range, clip=True):
         """
-        :param factor_range: an interval to random sample the `contrast_factor`.
-        :param clip: boolean.
+        Args:
+            factor_range (list or tuple): an interval to randomly sample the `contrast_factor`.
+            clip (bool): clip to [0, 255] if True.
         """
         super(Contrast, self).__init__()
         self._init(locals())
@@ -61,14 +60,15 @@ class Contrast(ImageAugmentor):
 
 class MeanVarianceNormalize(ImageAugmentor):
     """
-    Linearly scales image to have zero mean and unit norm.
-    x = (x - mean) / adjusted_stddev
-    where adjusted_stddev = max(stddev, 1.0/sqrt(num_pixels * channels))
+    Linearly scales the image to have zero mean and unit norm.
+    ``x = (x - mean) / adjusted_stddev``
+    where ``adjusted_stddev = max(stddev, 1.0/sqrt(num_pixels * channels))``
     """
 
     def __init__(self, all_channel=True):
         """
-        :param all_channel: if True, normalize all channels together. else separately.
+        Args:
+            all_channel (bool): if True, normalize all channels together. else separately.
         """
         self.all_channel = all_channel
 
@@ -85,9 +85,13 @@ class MeanVarianceNormalize(ImageAugmentor):
 
 
 class GaussianBlur(ImageAugmentor):
+    """ Gaussian blur the image with random window size"""
 
     def __init__(self, max_size=3):
-        """:params max_size: (maximum kernel size-1)/2"""
+        """
+        Args:
+            max_size (int): max possible Gaussian window size would be 2 * max_size + 1
+        """
         super(GaussianBlur, self).__init__()
         self._init(locals())
 
@@ -103,8 +107,12 @@ class GaussianBlur(ImageAugmentor):
 
 
 class Gamma(ImageAugmentor):
-
+    """ Randomly adjust gamma """
     def __init__(self, range=(-0.5, 0.5)):
+        """
+        Args:
+            range(list or tuple): gamma range
+        """
         super(Gamma, self).__init__()
         self._init(locals())
 
@@ -119,8 +127,13 @@ class Gamma(ImageAugmentor):
 
 
 class Clip(ImageAugmentor):
+    """ Clip the pixel values """
 
     def __init__(self, min=0, max=255):
+        """
+        Args:
+            min, max: the clip range
+        """
         self._init(locals())
 
     def _augment(self, img, _):
@@ -129,10 +142,15 @@ class Clip(ImageAugmentor):
 
 
 class Saturation(ImageAugmentor):
+    """ Randomly adjust saturation.
+        Follows the implementation in `fb.resnet.torch
+        <https://github.com/facebook/fb.resnet.torch/blob/master/datasets/transforms.lua#L218>`_
+    """
 
     def __init__(self, alpha=0.4):
-        """ Saturation,
-        see 'fb.resnet.torch' https://github.com/facebook/fb.resnet.torch/blob/master/datasets/transforms.lua#L218
+        """
+        Args:
+            alpha(float): maximum saturation change.
         """
         super(Saturation, self).__init__()
         assert alpha < 1
@@ -147,14 +165,19 @@ class Saturation(ImageAugmentor):
 
 
 class Lighting(ImageAugmentor):
+    """ Lighting noise, as in the paper
+        `ImageNet Classification with Deep Convolutional Neural Networks
+        <https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf>`_.
+        The implementation follows `fb.resnet.torch
+        <https://github.com/facebook/fb.resnet.torch/blob/master/datasets/transforms.lua#L184>`_.
+    """
 
     def __init__(self, std, eigval, eigvec):
-        """ Lighting noise.
-            See `ImageNet Classification with Deep Convolutional Neural Networks - Alex`
-            The implementation follows 'fb.resnet.torch':
-            https://github.com/facebook/fb.resnet.torch/blob/master/datasets/transforms.lua#L184
-
-            :param eigvec: each column is one eigen vector
+        """
+        Args:
+            std (float): maximum standard deviation
+            eigval: a vector of (3,). The eigenvalues of 3 channels.
+            eigvec: a 3x3 matrix. Each column is one eigen vector.
         """
         eigval = np.asarray(eigval)
         eigvec = np.asarray(eigvec)

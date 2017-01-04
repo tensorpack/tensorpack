@@ -19,6 +19,14 @@ from ..utils.serialize import dumps, loads
 
 
 def serve_data(ds, addr):
+    """
+    Serve the DataFlow on a ZMQ socket addr.
+    It will dump and send each datapoint to this addr with a PUSH socket.
+
+    Args:
+        ds (DataFlow): DataFlow to serve. Will infinitely loop over the DataFlow.
+        addr: a ZMQ socket addr.
+    """
     ctx = zmq.Context()
     socket = ctx.socket(zmq.PUSH)
     socket.set_hwm(10)
@@ -27,7 +35,7 @@ def serve_data(ds, addr):
     try:
         ds.reset_state()
         logger.info("Serving data at {}".format(addr))
-        # TODO print statistics here
+        # TODO print statistics such as speed
         while True:
             for dp in ds.get_data():
                 socket.send(dumps(dp), copy=False)
@@ -39,17 +47,25 @@ def serve_data(ds, addr):
 
 
 class RemoteData(DataFlow):
-
+    """ Produce data from a ZMQ socket.  """
     def __init__(self, addr):
-        self.ctx = zmq.Context()
-        self.socket = self.ctx.socket(zmq.PULL)
-        self.socket.set_hwm(10)
-        self.socket.connect(addr)
+        """
+        Args:
+            addr (str): addr of the socket to connect to.
+        """
+        self._addr = addr
 
     def get_data(self):
-        while True:
-            dp = loads(self.socket.recv(copy=False))
-            yield dp
+        try:
+            ctx = zmq.Context()
+            socket = ctx.socket(zmq.PULL)
+            socket.connect(self._addr)
+
+            while True:
+                dp = loads(socket.recv(copy=False))
+                yield dp
+        finally:
+            ctx.destroy(linger=0)
 
 
 if __name__ == '__main__':

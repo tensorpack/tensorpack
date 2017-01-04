@@ -69,9 +69,11 @@ extensions = [
     #'sphinx.ext.coverage',
     #'sphinx.ext.mathjax',
     'sphinx.ext.mathbase',
+    'sphinx.ext.intersphinx',
     'sphinx.ext.viewcode',
 ]
 napoleon_google_docstring = True
+napoleon_include_init_with_doc = True
 napoleon_numpy_docstring = False
 napoleon_use_rtype = False
 
@@ -332,11 +334,9 @@ texinfo_documents = [
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
 
-def skip(app, what, name, obj, skip, options):
-    # keep __init__
-    if name == "__init__":
-        return False
-    return skip
+
+intersphinx_timeout = 0.1
+intersphinx_mapping = {'python': ('https://docs.python.org/3.4', None)}
 
 def process_signature(app, what, name, obj, options, signature,
             return_annotation):
@@ -350,7 +350,6 @@ def process_signature(app, what, name, obj, options, signature,
 def setup(app):
     from recommonmark.transform import AutoStructify
     app.connect('autodoc-process-signature', process_signature)
-    app.connect("autodoc-skip-member", skip)
     app.add_config_value(
         'recommonmark_config',
         {'url_resolver': lambda url: \

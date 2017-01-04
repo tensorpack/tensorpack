@@ -25,20 +25,20 @@ IMG_W, IMG_H = 481, 321
 
 class BSDS500(RNGDataFlow):
     """
-    `Berkeley Segmentation Data Set and Benchmarks 500
+    `Berkeley Segmentation Data Set and Benchmarks 500 dataset
     <http://www.eecs.berkeley.edu/Research/Projects/CS/vision/grouping/resources.html#bsds500>`_.
 
-    Produce (image, label) pair, where image has shape (321, 481, 3) and
-    ranges in [0,255]. Label is binary and has shape (321, 481).
-    Those pixels annotated as boundaries by <=2 annotators are set to 0.
-    This is used in `Holistically-Nested Edge Detection
-    <http://arxiv.org/abs/1504.06375>`_.
+    Produce ``(image, label)`` pair, where ``image`` has shape (321, 481, 3(BGR)) and
+    ranges in [0,255].
+    ``Label`` is a floating point image of shape (321, 481) in range [0, 1].
+    The value of each pixel is ``number of times it is annotated as edge / total number of annotators for this image``.
     """
 
     def __init__(self, name, data_dir=None, shuffle=True):
         """
-        :param name: 'train', 'test', 'val'
-        :param data_dir: a directory containing the original 'BSR' directory.
+        Args:
+            name (str): 'train', 'test', 'val'
+            data_dir (str): a directory containing the original 'BSR' directory.
         """
         # check and download data
         if data_dir is None:

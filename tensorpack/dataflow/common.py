@@ -9,24 +9,33 @@ from six.moves import range, map
 from .base import DataFlow, ProxyDataFlow, RNGDataFlow
 from ..utils import logger, get_tqdm
 
-__all__ = ['BatchData', 'FixedSizeData', 'MapData',
-           'RepeatedData', 'MapDataComponent', 'RandomChooseData',
+__all__ = ['TestDataSpeed', 'BatchData', 'BatchDataByShape', 'FixedSizeData', 'MapData',
+           'MapDataComponent', 'RepeatedData', 'RandomChooseData',
            'RandomMixData', 'JoinData', 'ConcatData', 'SelectComponent',
-           'LocallyShuffleData', 'TestDataSpeed', 'BatchDataByShape']
+           'LocallyShuffleData']
 
 
 class TestDataSpeed(ProxyDataFlow):
-
+    """ Test the speed of some DataFlow """
     def __init__(self, ds, size=1000):
+        """
+        Args:
+            ds (DataFlow): the DataFlow to test.
+            size (int): number of datapoints to fetch.
+        """
         super(TestDataSpeed, self).__init__(ds)
         self.test_size = size
 
     def get_data(self):
+        """ Will start testing at the beginning, then produce data normally. """
         self.start_test()
         for dp in self.ds.get_data():
             yield dp
 
     def start_test(self):
+        """
+        Start testing with a progress bar.
+        """
         self.ds.reset_state()
         with get_tqdm(total=self.test_size) as pbar:
             for dp in self.ds.get_data():
@@ -34,15 +43,18 @@ class TestDataSpeed(ProxyDataFlow):
 
 
 class BatchData(ProxyDataFlow):
-
+    """
+    Group data into batches.
+    """
     def __init__(self, ds, batch_size, remainder=False):
         """
-        Group data in `ds` into batches.
-
-        :param ds: a DataFlow instance. Its component must be either a scalar or a numpy array
-        :param remainder: whether to return the remaining data smaller than a batch_size.
-            If set True, will possibly return a data point of a smaller 1st dimension.
-            Otherwise, all generated data are guranteed to have the same size.
+        Args:
+            ds (DataFlow): Its components must be either scalars or :class:`np.ndarray`.
+                Each component has to be of the same shape across datapoints.
+            batch_size(int): batch size
+            remainder (bool): whether to return the remaining data smaller than a batch_size.
+                If set True, it will possibly generates a data point of a smaller batch size.
+                Otherwise, all generated data are guranteed to have the same size.
         """
         super(BatchData, self).__init__(ds)
         if not remainder:
@@ -63,7 +75,8 @@ class BatchData(ProxyDataFlow):
 
     def get_data(self):
         """
-        :returns: produce batched data by tiling data on an extra 0th dimension.
+        Yields:
+            Batched data by stacking each component on an extra 0th dimension.
         """
         holder = []
         for data in self.ds.get_data():
@@ -99,13 +112,23 @@ class BatchData(ProxyDataFlow):
 
 
 class BatchDataByShape(BatchData):
+    """
+    Group datapoints of the same shape together to batches.
+    It doesn't require input DataFlow to be homogeneous anymore: it can have
+    datapoints of different shape, and batches will be formed from those who
+    have the same shape.
 
+    It is implemented by a dict{shape -> datapoints}.
+    Datapoints of uncommon shapes may never be enough to form a batch and
+    never get generated.
+    """
     def __init__(self, ds, batch_size, idx):
-        """ Group datapoint of the same shape together to batches
-
-        :param ds: a DataFlow instance. Its component must be either a scalar or a numpy array
-        :param idx: dp[idx] will be used to group datapoints. Other component
-            in dp are assumed to have the same shape.
+        """
+        Args:
+            ds (DataFlow): input DataFlow. ``dp[idx]`` has to be an :class:`np.ndarray`.
+            batch_size (int): batch size
+            idx (int): ``dp[idx].shape`` will be used to group datapoints.
+                Other components are assumed to have the same shape.
         """
         super(BatchDataByShape, self).__init__(ds, batch_size, remainder=False)
         self.idx = idx
@@ -125,14 +148,14 @@ class BatchDataByShape(BatchData):
 
 
 class FixedSizeData(ProxyDataFlow):
-    """ Generate data from another DataFlow, but with a fixed epoch size.
-        The state of the underlying DataFlow is maintained among each epoch.
+    """ Generate data from another DataFlow, but with a fixed size.
+        The state of the underlying DataFlow won't be reset when it's exhausted.
     """
-
     def __init__(self, ds, size):
         """
-        :param ds: a :mod:`DataFlow` to produce data
-        :param size: a int
+        Args:
+            ds (DataFlow): input dataflow
+            size (int): size
         """
         super(FixedSizeData, self).__init__(ds)
         self._size = int(size)
@@ -142,9 +165,6 @@ class FixedSizeData(ProxyDataFlow):
         return self._size
 
     def get_data(self):
-        """
-        Produce data from ds, stop at size
-        """
         if self.itr is None:
             self.itr = self.ds.get_data()
         cnt = 0
@@ -161,47 +181,16 @@ class FixedSizeData(ProxyDataFlow):
                 return
 
 
-class RepeatedData(ProxyDataFlow):
-    """ Take data points from another `DataFlow` and produce them until
-        it's exhausted for certain amount of times.
-    """
-
-    def __init__(self, ds, nr):
-        """
-        :param ds: a :mod:`DataFlow` instance.
-        :param nr: number of times to repeat ds.
-            If nr == -1, repeat ds infinitely many times.
-        """
-        if nr == -1:
-            nr = DataFlow.Infinity
-        self.nr = nr
-        super(RepeatedData, self).__init__(ds)
-
-    def size(self):
-        if self.nr == DataFlow.Infinity:
-            raise RuntimeError("size() is unavailable for infinite dataflow")
-        return self.ds.size() * self.nr
-
-    def get_data(self):
-        if self.nr == DataFlow.Infinity:
-            while True:
-                for dp in self.ds.get_data():
-                    yield dp
-        else:
-            for _ in range(self.nr):
-                for dp in self.ds.get_data():
-                    yield dp
-
-
 class MapData(ProxyDataFlow):
-    """ Apply map/filter a function on the datapoint"""
+    """ Apply a mapper/filter on the DataFlow"""
 
     def __init__(self, ds, func):
         """
-        :param ds: a :mod:`DataFlow` instance.
-        :param func: a function that takes a original datapoint, returns a new
-            datapoint. return None to skip this data point.
-            Note that if you use filter, ds.size() won't be correct.
+        Args:
+            ds (DataFlow): input DataFlow
+            func (datapoint -> datapoint | None): takes a datapoint and returns a new
+                datapoint. Return None to discard this data point.
+                Note that if you use the filter feature, ``ds.size()`` will be incorrect.
         """
         super(MapData, self).__init__(ds)
         self.func = func
@@ -214,14 +203,16 @@ class MapData(ProxyDataFlow):
 
 
 class MapDataComponent(ProxyDataFlow):
-    """ Apply map/filter on the given index in the datapoint"""
+    """ Apply a mapper/filter on a datapoint component"""
 
     def __init__(self, ds, func, index=0):
         """
-        :param ds: a :mod:`DataFlow` instance.
-        :param func: a function that takes a datapoint component dp[index], returns a
-            new value of dp[index]. return None to skip this datapoint.
-            Note that if you use filter, ds.size() won't be correct.
+        Args:
+            ds (DataFlow): input DataFlow.
+            func (TYPE -> TYPE|None): takes ``dp[index]``, returns a new value for ``dp[index]``.
+                return None to discard this datapoint.
+                Note that if you use the filter feature, ``ds.size()`` will be incorrect.
+            index (int): index of the component.
         """
         super(MapDataComponent, self).__init__(ds)
         self.func = func
@@ -235,15 +226,52 @@ class MapDataComponent(ProxyDataFlow):
                 yield dp
 
 
+class RepeatedData(ProxyDataFlow):
+    """ Take data points from another DataFlow and produce them until
+        it's exhausted for certain amount of times.
+    """
+
+    def __init__(self, ds, nr):
+        """
+        Args:
+            ds (DataFlow): input DataFlow
+            nr (int): number of times to repeat ds.
+                Set to -1 to repeat ``ds`` infinite times.
+        """
+        self.nr = nr
+        super(RepeatedData, self).__init__(ds)
+
+    def size(self):
+        """
+        Raises:
+            :class:`ValueError` when nr == -1.
+        """
+        if self.nr == -1:
+            raise ValueError("size() is unavailable for infinite dataflow")
+        return self.ds.size() * self.nr
+
+    def get_data(self):
+        if self.nr == -1:
+            while True:
+                for dp in self.ds.get_data():
+                    yield dp
+        else:
+            for _ in range(self.nr):
+                for dp in self.ds.get_data():
+                    yield dp
+
+
 class RandomChooseData(RNGDataFlow):
     """
-    Randomly choose from several DataFlow. Stop producing when any of them is
-    exhausted.
+    Randomly choose from several DataFlow.
+    Stop producing when any of them is exhausted.
     """
 
     def __init__(self, df_lists):
         """
-        :param df_lists: list of dataflow, or list of (dataflow, probability) tuple
+        Args:
+            df_lists (list): a list of DataFlow, or a list of (DataFlow, probability) tuples.
+                Probabilities must sum to 1 if used.
         """
         super(RandomChooseData, self).__init__()
         if isinstance(df_lists[0], (tuple, list)):
@@ -274,13 +302,14 @@ class RandomChooseData(RNGDataFlow):
 
 class RandomMixData(RNGDataFlow):
     """
-    Randomly choose from several dataflow, and will eventually exhaust all dataflow.  So it's a perfect mix.
+    Perfectly mix datapoints from several DataFlow. Will stop when all DataFlow exhausted.
     """
 
     def __init__(self, df_lists):
         """
-        :param df_lists: list of dataflow.
-            All DataFlow in `df_lists` must have :func:`size()` implemented
+        Args:
+            df_lists (list): a list of DataFlow.
+                All DataFlow must implement ``size()``.
         """
         super(RandomMixData, self).__init__()
         self.df_lists = df_lists
@@ -308,12 +337,13 @@ class RandomMixData(RNGDataFlow):
 
 class ConcatData(DataFlow):
     """
-    Concatenate several dataflows.
+    Concatenate several dataflows. Produce datapoints from them one by one.
     """
 
     def __init__(self, df_lists):
         """
-        :param df_lists: list of :mod:`DataFlow` instances
+        Args:
+            df_lists (list): a list of DataFlow.
         """
         self.df_lists = df_lists
 
@@ -334,16 +364,19 @@ class JoinData(DataFlow):
     """
     Join the components from each DataFlow.
 
+    Examples:
+
     .. code-block:: none
 
-        e.g.: df1: [dp1, dp2]
-              df2: [dp3, dp4]
-              join: [dp1, dp2, dp3, dp4]
+        dp1: [c1, c2]
+        dp2: [c3, c4]
+        join: [c1, c2, c3, c4]
     """
 
     def __init__(self, df_lists):
         """
-        :param df_lists: list of :mod:`DataFlow` instances
+        Args:
+            df_lists (list): a list of DataFlow. All must have the same ``size()``.
         """
         self.df_lists = df_lists
         self._size = self.df_lists[0].size()
@@ -373,13 +406,37 @@ class JoinData(DataFlow):
                 del itr
 
 
+def SelectComponent(ds, idxs):
+    """
+    Select / reorder components from datapoints.
+
+    Args:
+        ds (DataFlow): input DataFlow.
+        idxs (list[int]): a list of component indices.
+
+    Example:
+
+    .. code-block:: none
+
+        dp: [c1, c2, c3]
+        idxs: [2,1]
+        output dp: [c3, c2]
+    """
+    return MapData(ds, lambda dp: [dp[i] for i in idxs])
+
+
 class LocallyShuffleData(ProxyDataFlow, RNGDataFlow):
+    """ Maintain a pool to cache datapoints, and shuffle before producing them.
+        This can be used as an alternative when a complete random read is too expensive for the
+        data source.
+    """
 
     def __init__(self, ds, cache_size, nr_reuse=1):
         """
-        Cache a number of datapoints and shuffle them.
-        :param cache_size: size of the cache
-        :param nr_reuse: reuse each datapoints several times
+        Args:
+            ds (DataFlow): input DataFlow.
+            cache_size (int): size of the cache.
+            nr_reuse (int): reuse each datapoints several times to improve speed.
         """
         ProxyDataFlow.__init__(self, ds)
         self.q = deque(maxlen=cache_size)
@@ -414,11 +471,3 @@ class LocallyShuffleData(ProxyDataFlow, RNGDataFlow):
                     for v in self.q:
                         yield v
                     return
-
-
-def SelectComponent(ds, idxs):
-    """
-    :param ds: a :mod:`DataFlow` instance
-    :param idxs: a list of datapoint component index of the original dataflow
-    """
-    return MapData(ds, lambda dp: [dp[i] for i in idxs])

@@ -48,15 +48,19 @@ class PrefetchProcess(mp.Process):
 
 class PrefetchData(ProxyDataFlow):
     """
-    Prefetch data from a `DataFlow` using multiprocessing
+    Prefetch data from a DataFlow using Python multiprocessing utilities.
+
+    Note:
+        This is significantly slower than :class:`PrefetchDataZMQ` when data
+        is large.
     """
 
     def __init__(self, ds, nr_prefetch, nr_proc=1):
         """
-        :param ds: a `DataFlow` instance.
-        :param nr_prefetch: size of the queue to hold prefetched datapoints.
-        :param nr_proc: number of processes to use. When larger than 1, order
-            of data points will be random.
+        Args:
+            ds (DataFlow): input DataFlow.
+            nr_prefetch (int): size of the queue to hold prefetched datapoints.
+            nr_proc (int): number of processes to use.
         """
         super(PrefetchData, self).__init__(ds)
         try:
@@ -85,9 +89,8 @@ class PrefetchData(ProxyDataFlow):
 
 
 def BlockParallel(ds, queue_size):
-    # TODO more doc
     """
-    Insert `BlockParallel` in dataflow pipeline to block parallelism on ds
+    Insert ``BlockParallel`` in dataflow pipeline to block parallelism on ds.
 
     :param ds: a `DataFlow`
     :param queue_size: size of the queue used
@@ -96,7 +99,6 @@ def BlockParallel(ds, queue_size):
 
 
 class PrefetchProcessZMQ(mp.Process):
-
     def __init__(self, ds, conn_name):
         """
         :param ds: a `DataFlow` instance.
@@ -118,15 +120,17 @@ class PrefetchProcessZMQ(mp.Process):
 
 
 class PrefetchDataZMQ(ProxyDataFlow):
-    """ Work the same as `PrefetchData`, but faster. """
-
+    """
+    Prefetch data from a DataFlow using multiple processes, with ZMQ for
+    communication.
+    """
     def __init__(self, ds, nr_proc=1, pipedir=None):
         """
-        :param ds: a `DataFlow` instance.
-        :param nr_proc: number of processes to use. When larger than 1, order
-            of datapoints will be random.
-        :param pipedir: a local directory where the pipes would be.
-            Useful if you're running on non-local FS such as NFS.
+        Args:
+            ds (DataFlow): input DataFlow.
+            nr_proc (int): number of processes to use.
+            pipedir (str): a local directory where the pipes should be put.
+                Useful if you're running on non-local FS such as NFS or GlusterFS.
         """
         super(PrefetchDataZMQ, self).__init__(ds)
         try:
@@ -185,10 +189,20 @@ class PrefetchDataZMQ(ProxyDataFlow):
 
 
 class PrefetchOnGPUs(PrefetchDataZMQ):
-    """ Prefetch with each process having a specific CUDA_VISIBLE_DEVICES
-    variable"""
+    """
+    Prefetch with each process having its own ``CUDA_VISIBLE_DEVICES`` variable
+    mapped to one GPU.
+    """
 
     def __init__(self, ds, gpus, pipedir=None):
+        """
+        Args:
+            ds (DataFlow): input DataFlow.
+            gpus (list[int]): list of GPUs to use. Will also start this many
+                of processes.
+            pipedir (str): a local directory where the pipes should be put.
+                Useful if you're running on non-local FS such as NFS or GlusterFS.
+        """
         self.gpus = gpus
         super(PrefetchOnGPUs, self).__init__(ds, len(gpus), pipedir)
 

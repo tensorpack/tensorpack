@@ -10,7 +10,7 @@ from six.moves import range
 import numpy as np
 
 __all__ = ['RandomCrop', 'CenterCrop', 'FixedCrop',
-           'RandomCropRandomShape', 'perturb_BB', 'RandomCropAroundBox']
+           'perturb_BB', 'RandomCropAroundBox', 'RandomCropRandomShape']
 
 
 class RandomCrop(ImageAugmentor):
@@ -18,7 +18,8 @@ class RandomCrop(ImageAugmentor):
 
     def __init__(self, crop_shape):
         """
-        :param crop_shape: a shape like (h, w)
+        Args:
+            crop_shape: (h, w) tuple or a int
         """
         crop_shape = shape2d(crop_shape)
         super(RandomCrop, self).__init__()
@@ -47,7 +48,8 @@ class CenterCrop(ImageAugmentor):
 
     def __init__(self, crop_shape):
         """
-        :param crop_shape: a shape like (h, w)
+        Args:
+            crop_shape: (h, w) tuple or a int
         """
         crop_shape = shape2d(crop_shape)
         self._init(locals())
@@ -67,9 +69,8 @@ class FixedCrop(ImageAugmentor):
 
     def __init__(self, rect):
         """
-        Two arguments defined the range in both axes to crop, min inclued, max excluded.
-
-        :param rect: a `Rect` instance
+        Args:
+            rect(Rect): min included, max excluded.
         """
         self._init(locals())
 
@@ -86,12 +87,15 @@ def perturb_BB(image_shape, bb, max_pertub_pixel,
                max_try=100):
     """
     Perturb a bounding box.
-    :param image_shape: [h, w]
-    :param bb: a `Rect` instance
-    :param max_pertub_pixel: pertubation on each coordinate
-    :param max_aspect_ratio_diff: result can't have an aspect ratio too different from the original
-    :param max_try: if cannot find a valid bounding box, return the original
-    :returns: new bounding box
+
+    Args:
+        image_shape: [h, w]
+        bb (Rect): original bounding box
+        max_pertub_pixel: pertubation on each coordinate
+        max_aspect_ratio_diff: result can't have an aspect ratio too different from the original
+        max_try: if cannot find a valid bounding box, return the original
+    Returns:
+        new bounding box
     """
     orig_ratio = bb.h * 1.0 / bb.w
     if rng is None:
@@ -117,13 +121,15 @@ def perturb_BB(image_shape, bb, max_pertub_pixel,
 
 class RandomCropAroundBox(ImageAugmentor):
     """
-    Crop a box around a bounding box
+    Crop a box around a bounding box by some random pertubation
     """
 
     def __init__(self, perturb_ratio, max_aspect_ratio_diff=0.3):
         """
-        :param perturb_ratio: perturb distance will be in [0, perturb_ratio * sqrt(w * h)]
-        :param max_aspect_ratio_diff: keep aspect ratio within the range
+        Args:
+            perturb_ratio (float): perturb distance will be in
+                ``[0, perturb_ratio * sqrt(w * h)]``
+            max_aspect_ratio_diff (float): keep aspect ratio difference within the range
         """
         super(RandomCropAroundBox, self).__init__()
         self._init(locals())
@@ -144,14 +150,18 @@ class RandomCropAroundBox(ImageAugmentor):
 
 
 class RandomCropRandomShape(ImageAugmentor):
+    """ Random crop with a random shape"""
 
     def __init__(self, wmin, hmin,
                  wmax=None, hmax=None,
                  max_aspect_ratio=None):
         """
-        Randomly crop a box of shape (h, w), sampled from [min, max](inclusive).
+        Randomly crop a box of shape (h, w), sampled from [min, max] (both inclusive).
         If max is None, will use the input image shape.
-        max_aspect_ratio is the upper bound of max(w,h)/min(w,h)
+
+        Args:
+            wmin, hmin, wmax, hmax: range to sample shape.
+            max_aspect_ratio (float): the upper bound of ``max(w,h)/min(w,h)``.
         """
         if max_aspect_ratio is None:
             max_aspect_ratio = 9999999

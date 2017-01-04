@@ -138,7 +138,7 @@ class ModelFromMetaGraph(ModelDesc):
     def __init__(self, filename):
         """
         Args:
-            filename(str): file name of the saved meta graph.
+            filename (str): file name of the saved meta graph.
         """
         tf.train.import_meta_graph(filename)
         all_coll = tf.get_default_graph().get_all_collection_keys()

@@ -65,14 +65,15 @@ def extract_labels(filename):
 
 class Mnist(RNGDataFlow):
     """
-    Return [image, label],
-        image is 28x28 in the range [0,1]
+    Produces [image, label] in MNIST dataset,
+    image is 28x28 in the range [0,1], label is an int.
     """
 
     def __init__(self, train_or_test, shuffle=True, dir=None):
         """
         Args:
-            train_or_test: string either 'train' or 'test'
+            train_or_test (str): either 'train' or 'test'
+            shuffle (bool): shuffle the dataset
         """
         if dir is None:
             dir = get_dataset_path('mnist_data')

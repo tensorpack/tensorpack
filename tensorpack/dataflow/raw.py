@@ -7,26 +7,21 @@ import numpy as np
 import copy
 from six.moves import range
 from .base import DataFlow, RNGDataFlow
-from ..utils.serialize import loads
 
 __all__ = ['FakeData', 'DataFromQueue', 'DataFromList']
-try:
-    import zmq
-except:
-    pass
-else:
-    __all__.append('DataFromSocket')
 
 
 class FakeData(RNGDataFlow):
-    """ Generate fake fixed data of given shapes"""
+    """ Generate fake data of given shapes"""
 
-    def __init__(self, shapes, size, random=True, dtype='float32'):
+    def __init__(self, shapes, size=1000, random=True, dtype='float32'):
         """
-        :param shapes: a list of lists/tuples
-        :param size: size of this DataFlow
-        :param random: whether to randomly generate data every iteration. note
-            that only generating the data could be time-consuming!
+        Args:
+            shapes (list): a list of lists/tuples. Shapes of each component.
+            size (int): size of this DataFlow.
+            random (bool): whether to randomly generate data every iteration.
+                Note that merely generating the data could sometimes be time-consuming!
+            dtype (str): data type.
         """
         super(FakeData, self).__init__()
         self.shapes = shapes
@@ -49,8 +44,11 @@ class FakeData(RNGDataFlow):
 
 class DataFromQueue(DataFlow):
     """ Produce data from a queue """
-
     def __init__(self, queue):
+        """
+        Args:
+            queue (queue): a queue with ``get()`` method.
+        """
         self.queue = queue
 
     def get_data(self):
@@ -62,6 +60,11 @@ class DataFromList(RNGDataFlow):
     """ Produce data from a list"""
 
     def __init__(self, lst, shuffle=True):
+        """
+        Args:
+            lst (list): input list.
+            shuffle (bool): shuffle data.
+        """
         super(DataFromList, self).__init__()
         self.lst = lst
         self.shuffle = shuffle
@@ -78,22 +81,3 @@ class DataFromList(RNGDataFlow):
             self.rng.shuffle(idxs)
             for k in idxs:
                 yield self.lst[k]
-
-
-class DataFromSocket(DataFlow):
-    """ Produce data from a zmq socket"""
-
-    def __init__(self, socket_name):
-        self._name = socket_name
-
-    def get_data(self):
-        try:
-            ctx = zmq.Context()
-            socket = ctx.socket(zmq.PULL)
-            socket.bind(self._name)
-
-            while True:
-                dp = loads(socket.recv(copy=False))
-                yield dp
-        finally:
-            ctx.destroy(linger=0)

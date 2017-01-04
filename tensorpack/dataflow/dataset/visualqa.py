@@ -18,13 +18,11 @@ def read_json(fname):
     f.close()
     return ret
 
-# TODO shuffle
-
 
 class VisualQA(DataFlow):
     """
-    Visual QA dataset. See http://visualqa.org/
-    Simply read q/a json file and produce q/a pairs in their original format.
+    `Visual QA <http://visualqa.org/>`_ dataset.
+    It simply reads q/a json file and produce q/a pairs in their original format.
     """
 
     def __init__(self, question_file, annotation_file):

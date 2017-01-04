@@ -17,8 +17,11 @@ class Rotation(ImageAugmentor):
                  interp=cv2.INTER_CUBIC,
                  border=cv2.BORDER_REPLICATE):
         """
-        :param max_deg: max abs value of the rotation degree
-        :param center_range: the location of the rotation center
+        Args:
+            max_deg (float): max abs value of the rotation degree (in angle).
+            center_range (tuple): (min, max) range of the random rotation center.
+            interp: cv2 interpolation method
+            border: cv2 border method
         """
         super(Rotation, self).__init__()
         self._init(locals())
@@ -36,11 +39,16 @@ class Rotation(ImageAugmentor):
 
 
 class RotationAndCropValid(ImageAugmentor):
-    """ Random rotate and crop the largest possible rect without the border
-        This will produce images of different shapes.
+    """ Random rotate and then crop the largest possible rectangle.
+        Note that this will produce images of different shapes.
     """
 
     def __init__(self, max_deg, interp=cv2.INTER_CUBIC):
+        """
+        Args:
+            max_deg (float): max abs value of the rotation degree (in angle).
+            interp: cv2 interpolation method
+        """
         super(RotationAndCropValid, self).__init__()
         self._init(locals())
 
@@ -63,7 +71,10 @@ class RotationAndCropValid(ImageAugmentor):
 
     @staticmethod
     def largest_rotated_rect(w, h, angle):
-        """ http://stackoverflow.com/questions/16702966/rotate-image-and-crop-out-black-borders """
+        """
+        Get largest rectangle after rotation.
+        http://stackoverflow.com/questions/16702966/rotate-image-and-crop-out-black-borders
+        """
         angle = angle / 180.0 * math.pi
         if w <= 0 or h <= 0:
             return 0, 0

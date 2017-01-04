@@ -59,9 +59,9 @@ def Dropout(x, keep_prob=0.5, is_training=None):
     Neural Networks from Overfitting <http://dl.acm.org/citation.cfm?id=2670313>`_.
 
     Args:
-        keep_prob: the probability that each element is kept. It is only used
+        keep_prob (float): the probability that each element is kept. It is only used
             when is_training=True.
-        is_training: If None, will use the current :class:`tensorpack.tfutils.TowerContext`
+        is_training (bool): If None, will use the current :class:`tensorpack.tfutils.TowerContext`
             to figure out.
     """
     if is_training is None:

@@ -22,7 +22,7 @@ CAFFE_ILSVRC12_URL = "http://dl.caffe.berkeleyvision.org/caffe_ilsvrc12.tar.gz"
 
 class ILSVRCMeta(object):
     """
-    Some metadata for ILSVRC dataset.
+    Provide methods to access metadata for ILSVRC dataset.
     """
 
     def __init__(self, dir=None):
@@ -37,7 +37,8 @@ class ILSVRCMeta(object):
 
     def get_synset_words_1000(self):
         """
-        :returns a dict of {cls_number: cls_name}
+        Returns:
+            dict: {cls_number: cls_name}
         """
         fname = os.path.join(self.dir, 'synset_words.txt')
         assert os.path.isfile(fname)
@@ -46,7 +47,8 @@ class ILSVRCMeta(object):
 
     def get_synset_1000(self):
         """
-        :returns a dict of {cls_number: synset_id}
+        Returns:
+            dict: {cls_number: synset_id}
         """
         fname = os.path.join(self.dir, 'synsets.txt')
         assert os.path.isfile(fname)
@@ -59,8 +61,10 @@ class ILSVRCMeta(object):
 
     def get_image_list(self, name):
         """
-        :param name: 'train' or 'val' or 'test'
-        :returns: list of (image filename, cls)
+        Args:
+            name (str): 'train' or 'val' or 'test'
+        Returns:
+            list: list of (image filename, label)
         """
         assert name in ['train', 'val', 'test']
         fname = os.path.join(self.dir, name + '.txt')
@@ -75,8 +79,10 @@ class ILSVRCMeta(object):
 
     def get_per_pixel_mean(self, size=None):
         """
-        :param size: return image size in [h, w]. default to (256, 256)
-        :returns: per-pixel mean as an array of shape (h, w, 3) in range [0, 255]
+        Args:
+            size (tuple): image size in (h, w). Defaults to (256, 256).
+        Returns:
+            np.ndarray: per-pixel mean of shape (h, w, 3 (BGR)) in range [0, 255].
         """
         obj = self.caffepb.BlobProto()
 
@@ -91,18 +97,26 @@ class ILSVRCMeta(object):
 
 
 class ILSVRC12(RNGDataFlow):
-
+    """
+    Produces ILSVRC12 images of shape [h, w, 3(BGR)], and a label between [0, 999],
+    and optionally a bounding box of [xmin, ymin, xmax, ymax].
+    """
     def __init__(self, dir, name, meta_dir=None, shuffle=True,
                  dir_structure='original', include_bb=False):
         """
-        :param dir: A directory containing a subdir named `name`, where the
-            original ILSVRC12_`name`.tar gets decompressed.
-        :param name: 'train' or 'val' or 'test'
-        :param dir_structure: The dir structure of 'val' and 'test'.
-            If is 'original' then keep the original decompressed directory with list
-            of image files (as below). If set to 'train', use the the same
-            directory structure as 'train/', with class name as subdirectories.
-        :param include_bb: Include the bounding box. Maybe useful in training.
+        Args:
+            dir (str): A directory containing a subdir named ``name``, where the
+                original ``ILSVRC12_img_{name}.tar`` gets decompressed.
+            name (str): 'train' or 'val' or 'test'.
+            shuffle (bool): shuffle the dataset.
+            dir_structure (str): The dir structure of 'val' and 'test' directory.
+                If is 'original', it expects the original decompressed
+                directory, which only has list of image files (as below).
+                If set to 'train', it expects the same two-level
+                directory structure simlar to 'train/'.
+            include_bb (bool): Include the bounding box. Maybe useful in training.
+
+        Examples:
 
         When `dir_structure=='original'`, `dir` should have the following structure:
 
@@ -120,22 +134,16 @@ class ILSVRC12(RNGDataFlow):
               test/
                 ILSVRC2012_test_00000001.JPEG
                 ...
-              bbox/
-                n02134418/
-                  n02134418_198.xml
-                  ...
-                ...
 
-        After decompress ILSVRC12_img_train.tar, you can use the following
-        command to build the above structure for `train/`:
+        With ILSVRC12_img_*.tar, you can use the following
+        command to build the above structure:
 
         .. code-block:: none
 
-            tar xvf ILSVRC12_img_train.tar -C train && cd train
+            mkdir val && tar xvf ILSVRC12_img_val.tar -C val
+            mkdir test && tar xvf ILSVRC12_img_test.tar -C test
+            mkdir train && tar xvf ILSVRC12_img_train.tar -C train && cd train
             find -type f -name '*.tar' | parallel -P 10 'echo {} && mkdir -p {/.} && tar xf {} -C {/.}'
-            Or:
-            for i in *.tar; do dir=${i%.tar}; echo $dir; mkdir -p $dir; tar xf $i -C $dir; done
-
         """
         assert name in ['train', 'test', 'val']
         self.full_dir = os.path.join(dir, name)
@@ -158,10 +166,6 @@ class ILSVRC12(RNGDataFlow):
         return len(self.imglist)
 
     def get_data(self):
-        """
-        Produce original images of shape [h, w, 3(BGR)], and label,
-        and optionally a bbox of [xmin, ymin, xmax, ymax]
-        """
         idxs = np.arange(len(self.imglist))
         add_label_to_fname = (self.name != 'train' and self.dir_structure != 'original')
         if self.shuffle:

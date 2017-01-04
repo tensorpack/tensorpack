@@ -26,7 +26,7 @@ try:
 except ImportError:
     logger.warn_dependency("LMDBData", 'lmdb')
 else:
-    __all__.extend(['LMDBData', 'CaffeLMDB', 'LMDBDataDecoder', 'LMDBDataPoint'])
+    __all__.extend(['LMDBData', 'LMDBDataDecoder', 'LMDBDataPoint', 'CaffeLMDB'])
 
 try:
     import sklearn.datasets
@@ -40,19 +40,23 @@ else:
 Adapters for different data format.
 """
 
-# TODO lazy load
-
 
 class HDF5Data(RNGDataFlow):
     """
-    Zip data from different paths in an HDF5 file. Will load all data into memory.
+    Zip data from different paths in an HDF5 file.
+
+    Warning:
+        The current implementation will load all data into memory.
     """
+    # TODO lazy load
 
     def __init__(self, filename, data_paths, shuffle=True):
         """
-        :param filename: h5 data file.
-        :param data_paths: list of h5 paths to zipped. For example ['images', 'labels']
-        :param shuffle: shuffle the order of all data.
+        Args:
+            filename (str): h5 data file.
+            data_paths (list): list of h5 paths to zipped.
+                For example `['images', 'labels']`.
+            shuffle (bool): shuffle all data.
         """
         self.f = h5py.File(filename, 'r')
         logger.info("Loading {} to memory...".format(filename))
@@ -74,9 +78,13 @@ class HDF5Data(RNGDataFlow):
 
 
 class LMDBData(RNGDataFlow):
-    """ Read a lmdb and produce k,v pair """
-
+    """ Read a LMDB database and produce (k,v) pairs """
     def __init__(self, lmdb_path, shuffle=True):
+        """
+        Args:
+            lmdb_path (str): a directory or a file.
+            shuffle (bool): shuffle the keys or not.
+        """
         self._lmdb_path = lmdb_path
         self._shuffle = shuffle
         self.open_lmdb()
@@ -122,11 +130,14 @@ class LMDBData(RNGDataFlow):
 
 
 class LMDBDataDecoder(LMDBData):
-
+    """ Read a LMDB database and produce a decoded output."""
     def __init__(self, lmdb_path, decoder, shuffle=True):
         """
-        :param decoder: a function taking k, v and return a data point,
-            or return None to skip
+        Args:
+            lmdb_path (str): a directory or a file.
+            decoder (k,v -> dp | None): a function taking k, v and returning a datapoint,
+                or return None to discard.
+            shuffle (bool): shuffle the keys or not.
         """
         super(LMDBDataDecoder, self).__init__(lmdb_path, shuffle)
         self.decoder = decoder
@@ -139,17 +150,31 @@ class LMDBDataDecoder(LMDBData):
 
 
 class LMDBDataPoint(LMDBDataDecoder):
-    """ Read a LMDB file where each value is a serialized datapoint"""
+    """ Read a LMDB file and produce deserialized values.
+        This can work with :func:`tensorpack.dataflow.dftools.dump_dataflow_to_lmdb`. """
 
     def __init__(self, lmdb_path, shuffle=True):
+        """
+        Args:
+            lmdb_path (str): a directory or a file.
+            shuffle (bool): shuffle the keys or not.
+        """
         super(LMDBDataPoint, self).__init__(
             lmdb_path, decoder=lambda k, v: loads(v), shuffle=shuffle)
 
 
 class CaffeLMDB(LMDBDataDecoder):
-    """ Read a Caffe LMDB file where each value contains a caffe.Datum protobuf """
+    """
+    Read a Caffe LMDB file where each value contains a ``caffe.Datum`` protobuf.
+    Produces datapoints of the format: [HWC image, label].
+    """
 
     def __init__(self, lmdb_path, shuffle=True):
+        """
+        Args:
+            lmdb_path (str): a directory or a file.
+            shuffle (bool): shuffle the keys or not.
+        """
         cpb = get_caffe_pb()
 
         def decoder(k, v):
@@ -168,9 +193,14 @@ class CaffeLMDB(LMDBDataDecoder):
 
 
 class SVMLightData(RNGDataFlow):
-    """ Read X,y from a svmlight file """
+    """ Read X,y from a svmlight file, and produce [X_i, y_i] pairs. """
 
     def __init__(self, filename, shuffle=True):
+        """
+        Args:
+            filename (str): input file
+            shuffle (bool): shuffle the data
+        """
         self.X, self.y = sklearn.datasets.load_svmlight_file(filename)
         self.X = np.asarray(self.X.todense())
         self.shuffle = shuffle

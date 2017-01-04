@@ -11,15 +11,22 @@ __all__ = ['RandomChooseAug', 'MapImage', 'Identity', 'RandomApplyAug',
 
 
 class Identity(ImageAugmentor):
-
+    """ A no-op augmentor """
     def _augment(self, img, _):
         return img
 
 
 class RandomApplyAug(ImageAugmentor):
-    """ Randomly apply the augmentor with a prob. Otherwise do nothing"""
+    """ Randomly apply the augmentor with a probability.
+        Otherwise do nothing
+    """
 
     def __init__(self, aug, prob):
+        """
+        Args:
+            aug (ImageAugmentor): an augmentor
+            prob (float): the probability
+        """
         self._init(locals())
         super(RandomApplyAug, self).__init__()
 
@@ -43,10 +50,11 @@ class RandomApplyAug(ImageAugmentor):
 
 
 class RandomChooseAug(ImageAugmentor):
-
+    """ Randomly choose one from a list of augmentors """
     def __init__(self, aug_lists):
         """
-        :param aug_lists: list of augmentor, or list of (augmentor, probability) tuple
+        Args:
+            aug_lists (list): list of augmentors, or list of (augmentor, probability) tuples
         """
         if isinstance(aug_lists[0], (tuple, list)):
             prob = [k[1] for k in aug_lists]
@@ -73,11 +81,15 @@ class RandomChooseAug(ImageAugmentor):
 
 
 class RandomOrderAug(ImageAugmentor):
+    """
+    Apply the augmentors with randomized order.
+    """
 
     def __init__(self, aug_lists):
         """
-        Shuffle the augmentors into random order.
-        :param aug_lists: list of augmentor, or list of (augmentor, probability) tuple
+        Args:
+            aug_lists (list): list of augmentors.
+                The augmentors are assumed to not change the shape of images.
         """
         self._init(locals())
         super(RandomOrderAug, self).__init__()
@@ -109,7 +121,8 @@ class MapImage(ImageAugmentor):
 
     def __init__(self, func):
         """
-        :param func: a function which takes a image array and return a augmented one
+        Args:
+            func: a function which takes an image array and return an augmented one
         """
         self.func = func
 

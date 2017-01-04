@@ -21,15 +21,17 @@ SVHN_URL = "http://ufldl.stanford.edu/housenumbers/"
 
 class SVHNDigit(RNGDataFlow):
     """
-    SVHN Cropped Digit Dataset.
-    return img of 32x32x3, label of 0-9
+    `SVHN <http://ufldl.stanford.edu/housenumbers/>`_ Cropped Digit Dataset.
+    Produces [img, label], img of 32x32x3 in range [0,255], label of 0-9
     """
     _Cache = {}
 
     def __init__(self, name, data_dir=None, shuffle=True):
         """
-        :param name: 'train', 'test', or 'extra'
-        :param data_dir: a directory containing the original {train,test,extra}_32x32.mat
+        Args:
+            name (str): 'train', 'test', or 'extra'.
+            data_dir (str): a directory containing the original {train,test,extra}_32x32.mat.
+            shuffle (bool): shuffle the dataset.
         """
         self.shuffle = shuffle
 

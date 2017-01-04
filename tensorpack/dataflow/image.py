@@ -12,13 +12,13 @@ __all__ = ['ImageFromFile', 'AugmentImageComponent', 'AugmentImageComponents']
 
 
 class ImageFromFile(RNGDataFlow):
-
+    """ Produce images read from a list of files. """
     def __init__(self, files, channel=3, resize=None, shuffle=False):
         """
-        Generate images of 1 channel or 3 channels (in RGB order) from list of files.
-        :param files: list of file paths
-        :param channel: 1 or 3 channel
-        :param resize: a (h, w) tuple. If given, will force a resize
+        Args:
+            files (list): list of file paths.
+            channel (int): 1 or 3. Produce RGB images if channel==3.
+            resize (tuple): (h, w). If given, resize the image.
         """
         assert len(files), "No image files given to ImageFromFile!"
         self.files = files
@@ -45,14 +45,15 @@ class ImageFromFile(RNGDataFlow):
 
 
 class AugmentImageComponent(MapDataComponent):
-
+    """
+    Apply image augmentors on 1 component.
+    """
     def __init__(self, ds, augmentors, index=0):
         """
-        Augment the image component of datapoints
-        :param ds: a `DataFlow` instance.
-        :param augmentors: a list of `ImageAugmentor` instance to be applied in order.
-        :param index: the index (or list of indices) of the image component
-            in the produced datapoints by `ds`. default to be 0
+        Args:
+            ds (DataFlow): input DataFlow.
+            augmentors (AugmentorList): a list of :class:`imgaug.ImageAugmentor` to be applied in order.
+            index (int): the index of the image component to be augmented.
         """
         if isinstance(augmentors, AugmentorList):
             self.augs = augmentors
@@ -67,12 +68,16 @@ class AugmentImageComponent(MapDataComponent):
 
 
 class AugmentImageComponents(MapData):
+    """
+    Apply image augmentors on several components, with shared augmentation parameters.
+    """
 
     def __init__(self, ds, augmentors, index=(0, 1)):
-        """ Augment a list of images of the same shape, with the same parameters
-        :param ds: a `DataFlow` instance.
-        :param augmentors: a list of `ImageAugmentor` instance to be applied in order.
-        :param index: tuple of indices of the image components
+        """
+        Args:
+            ds (DataFlow): input DataFlow.
+            augmentors (AugmentorList): a list of :class:`imgaug.ImageAugmentor` instance to be applied in order.
+            index: tuple of indices of components.
         """
         self.augs = AugmentorList(augmentors)
         self.ds = ds

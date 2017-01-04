@@ -12,7 +12,9 @@ except ImportError:
     logger.warn_dependency('TFFuncMapper', 'tensorflow')
     __all__ = []
 else:
-    __all__ = ['TFFuncMapper']
+    __all__ = []
+
+""" This file was deprecated """
 
 
 class TFFuncMapper(ProxyDataFlow):

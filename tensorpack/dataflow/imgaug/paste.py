@@ -19,9 +19,11 @@ class BackgroundFiller(object):
         """
         Return a proper background image of background_shape, given img
 
-        :param background_shape: a shape of [h, w]
-        :param img: an image
-        :returns: a background image
+        Args:
+            background_shape: a shape of [h, w]
+            img: an image
+        Returns:
+            a background image
         """
         return self._fill(background_shape, img)
 
@@ -35,7 +37,8 @@ class ConstantBackgroundFiller(BackgroundFiller):
 
     def __init__(self, value):
         """
-        :param value: the value to fill the background.
+        Args:
+            value (float): the value to fill the background.
         """
         self.value = value
 
@@ -55,8 +58,9 @@ class CenterPaste(ImageAugmentor):
 
     def __init__(self, background_shape, background_filler=None):
         """
-        :param background_shape: shape of the background canvas.
-        :param background_filler: a `BackgroundFiller` instance. Default to zero-filler.
+        Args:
+            background_shape (tuple): shape of the background canvas.
+            background_filler (BackgroundFiller): How to fill the background. Defaults to zero-filler.
         """
         if background_filler is None:
             background_filler = ConstantBackgroundFiller(0)

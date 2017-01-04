@@ -13,20 +13,18 @@ __all__ = ['Flip', 'Resize', 'RandomResize', 'ResizeShortestEdge']
 
 class Flip(ImageAugmentor):
     """
-    Random flip.
+    Random flip the image either horizontally or vertically.
     """
-
     def __init__(self, horiz=False, vert=False, prob=0.5):
         """
-        Only one of horiz, vert can be set.
-
-        :param horiz: whether or not apply horizontal flip.
-        :param vert: whether or not apply vertical flip.
-        :param prob: probability of flip.
+        Args:
+            horiz (bool): use horizontal flip.
+            vert (bool): use vertical flip.
+            prob (float): probability of flip.
         """
         super(Flip, self).__init__()
         if horiz and vert:
-            raise ValueError("Please use two Flip instead.")
+            raise ValueError("Cannot do both horiz and vert. Please use two Flip instead.")
         elif horiz:
             self.code = 1
         elif vert:
@@ -53,7 +51,9 @@ class Resize(ImageAugmentor):
 
     def __init__(self, shape, interp=cv2.INTER_CUBIC):
         """
-        :param shape: shape in (h, w)
+        Args:
+            shape: (h, w) tuple or a int
+            interp: cv2 interpolation method
         """
         shape = tuple(shape2d(shape))
         self._init(locals())
@@ -68,11 +68,16 @@ class Resize(ImageAugmentor):
 
 
 class ResizeShortestEdge(ImageAugmentor):
-    """ Resize the shortest edge to a certain number while
-        keeping the aspect ratio
+    """
+    Resize the shortest edge to a certain number while
+    keeping the aspect ratio.
     """
 
     def __init__(self, size):
+        """
+        Args:
+            size (int): the size to resize the shortest edge to.
+        """
         size = size * 1.0
         self._init(locals())
 
@@ -87,15 +92,18 @@ class ResizeShortestEdge(ImageAugmentor):
 
 
 class RandomResize(ImageAugmentor):
-    """ randomly rescale w and h of the image"""
+    """ Randomly rescale w and h of the image"""
 
     def __init__(self, xrange, yrange, minimum=(0, 0), aspect_ratio_thres=0.15,
                  interp=cv2.INTER_CUBIC):
         """
-        :param xrange: (min, max) scaling ratio
-        :param yrange: (min, max) scaling ratio
-        :param minimum: (xmin, ymin). Avoid scaling down too much.
-        :param aspect_ratio_thres: at most change k=20% aspect ratio
+        Args:
+            xrange (tuple): (min, max) range of scaling ratio for w
+            yrange (tuple): (min, max) range of scaling ratio for h
+            minimum (tuple): (xmin, ymin). avoid scaling down too much.
+            aspect_ratio_thres (float): discard samples which change aspect ratio
+                larger than this threshold.
+            interp: cv2 interpolation method
         """
         super(RandomResize, self).__init__()
         self._init(locals())

@@ -24,6 +24,7 @@ class Augmentor(object):
                     setattr(self, k, v)
 
     def reset_state(self):
+        """ reset rng and other state """
         self.rng = get_rng(self)
 
     def augment(self, d):
@@ -64,9 +65,13 @@ class ImageAugmentor(Augmentor):
 
     def augment(self, img):
         """
-        Perform augmentation on the image in-place.
-        :param img: an [h,w] or [h,w,c] image
-        :returns: the augmented image, always of type 'float32'
+        Perform augmentation on the image (possibly) in-place.
+
+        Args:
+            img (np.ndarray): an [h,w] or [h,w,c] image.
+
+        Returns:
+            np.ndarray: the augmented image, always of type float32.
         """
         img, params = self._augment_return_params(img)
         return img
@@ -82,7 +87,8 @@ class AugmentorList(ImageAugmentor):
 
     def __init__(self, augmentors):
         """
-        :param augmentors: list of `ImageAugmentor` instance to be applied
+        Args:
+            augmentors (list): list of :class:`ImageAugmentor` instance to be applied.
         """
         self.augs = augmentors
         super(AugmentorList, self).__init__()
