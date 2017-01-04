@@ -48,15 +48,18 @@ def sample(img, coords):
 @layer_register()
 def ImageSample(inputs, borderMode='repeat'):
     """
-    Sample the template image, using the given coordinate, by bilinear interpolation.
-    It mimics the same behavior described in:
+    Sample the template image using the given coordinate, by bilinear interpolation.
+    This was described in the paper:
     `Spatial Transformer Networks <http://arxiv.org/abs/1506.02025>`_.
 
-    :param input: [template, mapping]. template of shape NHWC.
-        mapping of shape NHW2, where each pair of the last dimension is a (y, x) real-value
-        coordinate.
-    :param borderMode: either 'repeat' or 'constant' (0)
-    :returns: a NHWC output tensor.
+    Args:
+        inputs (list): [template, coords]. template has shape NHWC.
+            coords has shape (N,H',W',2), where each pair of the last dimension is a (y, x) real-value
+            coordinate.
+        borderMode: either "repeat" or "constant" (zero-filled)
+
+    Returns:
+        a (N,H',W',C) tensor.
     """
     # TODO borderValue
     template, mapping = inputs

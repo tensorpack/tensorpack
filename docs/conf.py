@@ -36,6 +36,7 @@ import mock
 
 MOCK_MODULES = ['scipy',
                 'tensorflow', 'tensorflow.contrib',
+                'tensorflow.python.ops',
                 'tensorflow.contrib.framework',
                 'tensorflow.models',
                 'tensorflow.models.rnn',
@@ -64,10 +65,15 @@ from tensorpack.models import *
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx.ext.coverage',
-    'sphinx.ext.mathjax',
+    'sphinx.ext.napoleon',
+    #'sphinx.ext.coverage',
+    #'sphinx.ext.mathjax',
+    'sphinx.ext.mathbase',
     'sphinx.ext.viewcode',
 ]
+napoleon_google_docstring = True
+napoleon_numpy_docstring = False
+napoleon_use_rtype = False
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

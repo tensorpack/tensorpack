@@ -7,7 +7,7 @@ from types import ModuleType
 import six
 import os
 import os.path
-# this line is necessary for TFModuleFunc to work
+# this line is necessary for _TFModuleFunc to work
 import tensorflow as tf  # noqa: F401
 from ..utils import logger
 
@@ -34,8 +34,7 @@ class LinearWrap(object):
         consisting of layers / symbolic functions with only one input & output.
     """
 
-    class TFModuleFunc(object):
-
+    class _TFModuleFunc(object):
         def __init__(self, mod, tensor):
             self._mod = mod
             self._t = tensor
@@ -43,7 +42,7 @@ class LinearWrap(object):
         def __getattr__(self, name):
             ret = getattr(self._mod, name)
             if isinstance(ret, ModuleType):
-                return LinearWrap.TFModuleFunc(ret, self._t)
+                return LinearWrap._TFModuleFunc(ret, self._t)
             else:
                 # assume to be a tf function
                 def f(*args, **kwargs):
@@ -52,6 +51,10 @@ class LinearWrap(object):
                 return f
 
     def __init__(self, tensor):
+        """
+        Args:
+            tensor (tf.Tensor): the tensor to wrap
+        """
         self._t = tensor
 
     def __getattr__(self, layer_name):
@@ -76,10 +79,15 @@ class LinearWrap(object):
             if layer_name != 'tf':
                 logger.warn("You're calling LinearWrap.__getattr__ with something neither a layer nor 'tf'!")
             assert isinstance(layer, ModuleType)
-            return LinearWrap.TFModuleFunc(layer, self._t)
+            return LinearWrap._TFModuleFunc(layer, self._t)
 
     def apply(self, func, *args, **kwargs):
-        """ send tensor to the first argument of a simple func"""
+        """
+        Apply a function on the wrapped tensor.
+
+        Returns:
+            LinearWrap: ``LinearWrap(func(self.tensor(), *args, **kwargs))``.
+        """
         ret = func(self._t, *args, **kwargs)
         return LinearWrap(ret)
 
@@ -87,8 +95,20 @@ class LinearWrap(object):
         return self._t
 
     def tensor(self):
+        """
+        Equivalent to ``self.__call__()``.
+
+        Returns:
+            tf.Tensor: the underlying wrapped tensor.
+        """
         return self._t
 
     def print_tensor(self):
+        """
+        Print the underlying tensor and return self. Can be useful to get the
+        name of tensors inside :class:`LinearWrap`.
+
+        :return: self
+        """
         print(self._t)
         return self

@@ -18,13 +18,13 @@ __all__ = ['MaxPooling', 'FixedUnPooling', 'AvgPooling', 'GlobalAvgPooling',
 @layer_register()
 def MaxPooling(x, shape, stride=None, padding='VALID'):
     """
-    MaxPooling on images.
+    Max Pooling on 4D tensors.
 
-    :param input: NHWC tensor.
-    :param shape: int or [h, w]
-    :param stride: int or [h, w]. default to be shape.
-    :param padding: 'valid' or 'same'. default to 'valid'
-    :returns: NHWC tensor.
+    Args:
+        x (tf.Tensor): a NHWC tensor.
+        shape: int or (h, w) tuple
+        stride: int or (h, w) tuple. Defaults to be the same as shape.
+        padding (str): 'valid' or 'same'.
     """
     padding = padding.upper()
     shape = shape4d(shape)
@@ -39,13 +39,13 @@ def MaxPooling(x, shape, stride=None, padding='VALID'):
 @layer_register()
 def AvgPooling(x, shape, stride=None, padding='VALID'):
     """
-    Average pooling on images.
+    Average Pooling on 4D tensors.
 
-    :param input: NHWC tensor.
-    :param shape: int or [h, w]
-    :param stride: int or [h, w]. default to be shape.
-    :param padding: 'valid' or 'same'. default to 'valid'
-    :returns: NHWC tensor.
+    Args:
+        x (tf.Tensor): a NHWC tensor.
+        shape: int or (h, w) tuple
+        stride: int or (h, w) tuple. Defaults to be the same as shape.
+        padding (str): 'valid' or 'same'.
     """
     padding = padding.upper()
     shape = shape4d(shape)
@@ -60,19 +60,20 @@ def AvgPooling(x, shape, stride=None, padding='VALID'):
 @layer_register()
 def GlobalAvgPooling(x):
     """
-    Global average pooling as in `Network In Network
+    Global average pooling as in the paper `Network In Network
     <http://arxiv.org/abs/1312.4400>`_.
 
-    :param input: NHWC tensor.
-    :returns: NC tensor.
+    Args:
+        x (tf.Tensor): a NHWC tensor.
+    Returns:
+        tf.Tensor: a NC tensor.
     """
     assert x.get_shape().ndims == 4
     return tf.reduce_mean(x, [1, 2])
 
-# https://github.com/tensorflow/tensorflow/issues/2169
-
 
 def UnPooling2x2ZeroFilled(x):
+    # https://github.com/tensorflow/tensorflow/issues/2169
     out = tf.concat_v2([x, tf.zeros_like(x)], 3)
     out = tf.concat_v2([out, tf.zeros_like(out)], 2)
 
@@ -90,13 +91,13 @@ def UnPooling2x2ZeroFilled(x):
 @layer_register()
 def FixedUnPooling(x, shape, unpool_mat=None):
     """
-    Unpool the input with a fixed mat to perform kronecker product with.
+    Unpool the input with a fixed matrix to perform kronecker product with.
 
-    :param input: NHWC tensor
-    :param shape: int or [h, w]
-    :param unpool_mat: a tf/np matrix with size=shape. If None, will use a mat
-        with 1 at top-left corner.
-    :returns: NHWC tensor
+    Args:
+        x (tf.Tensor): a NHWC tensor
+        shape: int or (h, w) tuple
+        unpool_mat: a tf.Tensor or np.ndarray 2D matrix with size=shape.
+            If is None, will use a matrix with 1 at top-left corner.
     """
     shape = shape2d(shape)
 
@@ -129,9 +130,11 @@ def FixedUnPooling(x, shape, unpool_mat=None):
 @layer_register()
 def BilinearUpSample(x, shape):
     """
-    Deterministic bilinear upsample the input images.
-    :param x: input NHWC tensor
-    :param shape: an integer, the upsample factor
+    Deterministic bilinearly-upsample the input images.
+
+    Args:
+        x (tf.Tensor): a NHWC tensor
+        shape (int): the upsample factor
     """
     # inp_shape = tf.shape(x)
     # return tf.image.resize_bilinear(x,

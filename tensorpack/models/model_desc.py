@@ -17,7 +17,15 @@ __all__ = ['ModelDesc', 'InputVar', 'ModelFromMetaGraph']
 
 
 class InputVar(object):
+    """ Store metadata about input placeholders. """
     def __init__(self, type, shape, name, sparse=False):
+        """
+        Args:
+            type: tf type of the tensor.
+            shape (list):
+            name (str):
+            sparse (bool): whether to use ``tf.sparse_placeholder``.
+        """
         self.type = type
         self.shape = shape
         self.name = name
@@ -39,7 +47,8 @@ class ModelDesc(object):
         """
         Create or return (if already created) raw input TF placeholder vars in the graph.
 
-        :returns: the list of raw input vars in the graph
+        Returns:
+            list[tf.Tensor]: the list of input placeholders in the graph.
         """
         if hasattr(self, 'reuse_input_vars'):
             return self.reuse_input_vars
@@ -51,7 +60,12 @@ class ModelDesc(object):
     get_reuse_placehdrs = get_input_vars
 
     def build_placeholders(self, prefix=''):
-        """ build placeholders with optional prefix, for each InputVar
+        """
+        For each InputVar, create new placeholders with optional prefix and
+        return them. Useful when building new towers.
+
+        Returns:
+            list[tf.Tensor]: the list of built placeholders.
         """
         input_vars = self._get_input_vars()
         for v in input_vars:
@@ -65,20 +79,25 @@ class ModelDesc(object):
         return ret
 
     def get_input_vars_desc(self):
-        """ return a list of `InputVar` instance"""
+        """
+        Returns:
+            list[:class:`InputVar`]: list of the underlying :class:`InputVar`.
+        """
         return self._get_input_vars()
 
     @abstractmethod
     def _get_input_vars(self):
-        """:returns: a list of InputVar """
+        """
+        :returns: a list of InputVar
+        """
 
     def build_graph(self, model_inputs):
         """
-        Setup the whole graph.
+        Build the whole symbolic graph.
 
-        :param model_inputs: a list of input variable in the graph.
-        :param is_training: a boolean
-        :returns: the cost to minimize. a scalar variable
+        Args:
+            model_inputs (list[tf.Tensor]): a list of inputs, corresponding to
+                InputVars of this model.
         """
         if len(inspect.getargspec(self._build_graph).args) == 3:
             logger.warn("[DEPRECATED] _build_graph(self, input_vars, is_training) is deprecated! \
@@ -92,13 +111,19 @@ Use _build_graph(self, input_vars) and get_current_tower_context().is_training i
         pass
 
     def get_cost(self):
+        """
+        Return the cost tensor in the graph. Called by some of the :class:`tensorpack.train.Trainer` which
+        assumes single-cost models.
+        """
         return self._get_cost()
 
     def _get_cost(self, *args):
         return self.cost
 
     def get_gradient_processor(self):
-        """ Return a list of GradientProcessor. They will be executed in order"""
+        """ Return a list of :class:`tensorpack.tfutils.GradientProcessor`.
+            They will be executed by the trainer in the given order.
+        """
         return [  # SummaryGradient(),
             CheckGradient()
         ]
@@ -106,11 +131,15 @@ Use _build_graph(self, input_vars) and get_current_tower_context().is_training i
 
 class ModelFromMetaGraph(ModelDesc):
     """
-    Load the whole exact TF graph from a saved meta_graph.
+    Load the exact TF graph from a saved meta_graph.
     Only useful for inference.
     """
 
     def __init__(self, filename):
+        """
+        Args:
+            filename(str): file name of the saved meta graph.
+        """
         tf.train.import_meta_graph(filename)
         all_coll = tf.get_default_graph().get_all_collection_keys()
         for k in [INPUT_VARS_KEY, tf.GraphKeys.TRAINABLE_VARIABLES,

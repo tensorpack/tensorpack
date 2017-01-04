@@ -12,8 +12,14 @@ __all__ = ['SoftMax']
 @layer_register()
 def SoftMax(x, use_temperature=False, temperature_init=1.0):
     """
-    A SoftMax layer (no linear projection) with optional temperature
-    :param x: a 2D tensor
+    A SoftMax layer (w/o linear projection) with optional temperature, as
+    defined in the paper `Distilling the Knowledge in a Neural Network
+    <https://arxiv.org/abs/1503.02531>`_.
+
+    Args:
+        x (tf.Tensor): input
+        use_temperature (bool): use a learnable temperature or not.
+        temperature_init (float): initial value of the temperature.
     """
     if use_temperature:
         t = tf.get_variable('invtemp', [],

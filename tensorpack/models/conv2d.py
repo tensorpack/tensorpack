@@ -5,7 +5,6 @@
 
 import tensorflow as tf
 from ._common import layer_register, shape2d, shape4d
-from ..utils import logger
 
 __all__ = ['Conv2D', 'Deconv2D']
 
@@ -14,21 +13,22 @@ __all__ = ['Conv2D', 'Deconv2D']
 def Conv2D(x, out_channel, kernel_shape,
            padding='SAME', stride=1,
            W_init=None, b_init=None,
-           nl=None, split=1, use_bias=True):
+           nl=tf.identity, split=1, use_bias=True):
     """
     2D convolution on 4D inputs.
 
-    :param input: a tensor of shape NHWC
-    :param out_channel: number of output channel
-    :param kernel_shape: (h, w) or a int
-    :param stride: (h, w) or a int. default to 1
-    :param padding: 'valid' or 'same'. default to 'same'
-    :param split: split channels as used in Alexnet. Default to 1 (no split)
-    :param W_init: initializer for W. default to `xavier_initializer_conv2d`.
-    :param b_init: initializer for b. default to zero initializer.
-    :param nl: nonlinearity
-    :param use_bias: whether to use bias. a boolean default to True
-    :returns: a NHWC tensor
+    Args:
+        x (tf.Tensor): a tensor of shape NHWC.
+            Must have known number of channels, but can have other unknown dimensions.
+        out_channel (int): number of output channel.
+        kernel_shape: (h, w) tuple or a int.
+        stride: (h, w) tuple or a int.
+        padding (str): 'valid' or 'same'. Case insensitive.
+        split (int): Split channels as used in Alexnet. Defaults to 1 (no split).
+        W_init: initializer for W. Defaults to `variance_scaling_initializer`.
+        b_init: initializer for b. Defaults to zero.
+        nl: a nonlinearity function.
+        use_bias (bool): whether to use bias.
     """
     in_shape = x.get_shape().as_list()
     in_channel = in_shape[-1]
@@ -53,22 +53,15 @@ def Conv2D(x, out_channel, kernel_shape,
     if split == 1:
         conv = tf.nn.conv2d(x, W, stride, padding)
     else:
-        # TODO rename to split later
         inputs = tf.split(x, split, 3)
         kernels = tf.split(W, split, 3)
         outputs = [tf.nn.conv2d(i, k, stride, padding)
                    for i, k in zip(inputs, kernels)]
         conv = tf.concat_v2(outputs, 3)
-    if nl is None:
-        logger.warn(
-            "[DEPRECATED] Default ReLU nonlinearity for Conv2D and FullyConnected will be deprecated. "
-            "Please use argscope instead.")
-        nl = tf.nn.relu
     return nl(tf.nn.bias_add(conv, b) if use_bias else conv, name='output')
 
 
 class StaticDynamicShape(object):
-
     def __init__(self, static, dynamic):
         self.static = static
         self.dynamic = dynamic
@@ -89,17 +82,18 @@ def Deconv2D(x, out_shape, kernel_shape,
     """
     2D deconvolution on 4D inputs.
 
-    :param input: a tensor of shape NHWC
-    :param out_shape: either (h, w, channel), or just channel,
-        then h, w will calculated by input_shape * stride
-    :param kernel_shape: (h, w) or a int
-    :param stride: (h, w) or a int
-    :param padding: 'valid' or 'same'. default to 'same'
-    :param W_init: initializer for W. default to `xavier_initializer_conv2d`.
-    :param b_init: initializer for b. default to zero initializer.
-    :param nl: nonlinearity.
-    :param use_bias: whether to use bias. a boolean default to True
-    :returns: a NHWC tensor
+    Args:
+        x (tf.Tensor): a tensor of shape NHWC.
+            Must have known number of channels, but can have other unknown dimensions.
+        out_shape: (h, w, channel) tuple, or just a integer channel,
+            then (h, w) will be calculated by input_shape * stride
+        kernel_shape: (h, w) tuple or a int.
+        stride: (h, w) tuple or a int.
+        padding (str): 'valid' or 'same'. Case insensitive.
+        W_init: initializer for W. Defaults to `variance_scaling_initializer`.
+        b_init: initializer for b. Defaults to zero.
+        nl: a nonlinearity function.
+        use_bias (bool): whether to use bias.
     """
     in_shape = x.get_shape().as_list()[1:]
     in_channel = in_shape[-1]

@@ -7,7 +7,6 @@ import tensorflow as tf
 
 from ._common import layer_register
 from ..tfutils import symbolic_functions as symbf
-from ..utils import logger
 
 __all__ = ['FullyConnected']
 
@@ -15,17 +14,17 @@ __all__ = ['FullyConnected']
 @layer_register()
 def FullyConnected(x, out_dim,
                    W_init=None, b_init=None,
-                   nl=None, use_bias=True):
+                   nl=tf.identity, use_bias=True):
     """
-    Fully-Connected layer.
+    Fully-Connected layer. Takes a N>1D tensor and returns a 2D tensor.
 
-    :param input: a tensor to be flattened except the first dimension.
-    :param out_dim: output dimension
-    :param W_init: initializer for W. default to `xavier_initializer_conv2d`.
-    :param b_init: initializer for b. default to zero initializer.
-    :param nl: nonlinearity
-    :param use_bias: whether to use bias. a boolean default to True
-    :returns: a 2D tensor
+    Args:
+        x (tf.Tensor): a tensor to be flattened except for the first dimension.
+        out_dim (int): output dimension
+        W_init: initializer for W. Defaults to `variance_scaling_initializer`.
+        b_init: initializer for b. Defaults to zero.
+        nl: a nonlinearity function
+        use_bias (bool): whether to use bias.
     """
     x = symbf.batch_flatten(x)
     in_dim = x.get_shape().as_list()[1]
@@ -39,9 +38,4 @@ def FullyConnected(x, out_dim,
     if use_bias:
         b = tf.get_variable('b', [out_dim], initializer=b_init)
     prod = tf.nn.xw_plus_b(x, W, b) if use_bias else tf.matmul(x, W)
-    if nl is None:
-        logger.warn(
-            "[DEPRECATED] Default ReLU nonlinearity for Conv2D and FullyConnected will be deprecated."
-            " Please use argscope instead.")
-        nl = tf.nn.relu
     return nl(prod, name='output')

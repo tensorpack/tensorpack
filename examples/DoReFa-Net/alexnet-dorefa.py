@@ -69,7 +69,7 @@ BITW = 1
 BITA = 2
 BITG = 6
 TOTAL_BATCH_SIZE = 128
-BATCH_SIZE = 64
+BATCH_SIZE = None
 
 
 class Model(ModelDesc):

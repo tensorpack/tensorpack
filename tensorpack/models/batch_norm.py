@@ -20,21 +20,6 @@ __all__ = ['BatchNorm', 'BatchNormV1', 'BatchNormV2']
 
 @layer_register(log_shape=False)
 def BatchNormV1(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
-    """
-    Batch normalization layer as described in:
-
-    `Batch Normalization: Accelerating Deep Network Training by
-    Reducing Internal Covariance Shift <http://arxiv.org/abs/1502.03167>`_.
-
-    :param input: a NHWC or NC tensor
-    :param use_local_stat: bool. whether to use mean/var of this batch or the moving average.
-        Default to True in training and False in inference.
-    :param decay: decay rate. default to 0.9.
-    :param epsilon: default to 1e-5.
-
-    Note that only the first training tower maintains a moving average.
-    """
-
     shape = x.get_shape().as_list()
     assert len(shape) in [2, 4]
 
@@ -114,18 +99,8 @@ def BatchNormV1(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
 @layer_register(log_shape=False)
 def BatchNormV2(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
     """
-    Batch normalization layer as described in:
-
-    `Batch Normalization: Accelerating Deep Network Training by
-    Reducing Internal Covariance Shift <http://arxiv.org/abs/1502.03167>`_.
-
-    :param input: a NHWC or NC tensor
-    :param use_local_stat: bool. whether to use mean/var of this batch or the moving average.
-        Default to True in training and False in inference.
-    :param decay: decay rate. default to 0.9.
-    :param epsilon: default to 1e-5.
-
-    Note that only the first training tower maintains a moving average.
+    A slightly faster but equivalent version of BatchNormV1, which uses
+    ``fused_batch_norm`` in training.
     """
     shape = x.get_shape().as_list()
     assert len(shape) in [2, 4]
@@ -185,8 +160,27 @@ def BatchNormV2(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
         return tf.identity(xn, name='output')
 
 
-if get_tf_version() >= 12:
-    BatchNorm = BatchNormV2
-else:
-    logger.warn("BatchNorm might be faster if you update TensorFlow")
-    BatchNorm = BatchNormV1
+def BatchNorm(*args, **kwargs):
+    """
+    Batch normalization layer, as described in the paper:
+    `Batch Normalization: Accelerating Deep Network Training by
+    Reducing Internal Covariance Shift <http://arxiv.org/abs/1502.03167>`_.
+
+    Args:
+        x (tf.Tensor): a NHWC or NC tensor.
+        use_local_stat (bool): whether to use mean/var of the current batch or the moving average.
+            Defaults to True in training and False in inference.
+        decay (float): decay rate of moving average.
+        epsilon (float): epsilon to avoid divide-by-zero.
+
+    Note:
+        * In multi-tower training, only the first training tower maintains a moving average.
+
+        * It automatically selects :meth:`BatchNormV1` or :meth:`BatchNormV2`
+          according to availability.
+    """
+    if get_tf_version() >= 12:
+        return BatchNormV2(*args, **kwargs)
+    else:
+        logger.warn("BatchNorm might be faster if you update TensorFlow")
+        return BatchNormV1(*args, **kwargs)

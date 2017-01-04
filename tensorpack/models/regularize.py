@@ -22,11 +22,21 @@ l2_regularizer = tf.contrib.layers.l2_regularizer
 l1_regularizer = tf.contrib.layers.l1_regularizer
 
 
-def regularize_cost(regex, func, name=None):
+def regularize_cost(regex, func, name='regularize_cost'):
     """
     Apply a regularizer on every trainable variable matching the regex.
 
-    :param func: a function that takes a tensor and return a scalar.
+    Args:
+        regex (str): a regex to match variable names, e.g. "conv.*/W"
+        func: the regularization function, which takes a tensor and returns a scalar tensor.
+
+    Returns:
+        tf.Tensor: the total regularization cost.
+
+    Example:
+        .. code-block:: python
+
+            cost = cost + regularize_cost("fc.*/W", l2_regularizer(1e-5))
     """
     G = tf.get_default_graph()
     params = G.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
@@ -45,7 +55,14 @@ def regularize_cost(regex, func, name=None):
 @layer_register(log_shape=False, use_scope=False)
 def Dropout(x, keep_prob=0.5, is_training=None):
     """
-    :param is_training: if None, will use the current context by default.
+    Dropout layer as in the paper `Dropout: a Simple Way to Prevent
+    Neural Networks from Overfitting <http://dl.acm.org/citation.cfm?id=2670313>`_.
+
+    Args:
+        keep_prob: the probability that each element is kept. It is only used
+            when is_training=True.
+        is_training: If None, will use the current :class:`tensorpack.tfutils.TowerContext`
+            to figure out.
     """
     if is_training is None:
         is_training = get_current_tower_context().is_training
