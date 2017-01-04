@@ -15,7 +15,8 @@ __all__ = ['change_env',
            'get_dataset_path',
            'get_tqdm_kwargs',
            'get_tqdm',
-           'execute_only_once'
+           'execute_only_once',
+           'building_rtfd'
            ]
 
 
@@ -85,3 +86,8 @@ def get_tqdm_kwargs(**kwargs):
 
 def get_tqdm(**kwargs):
     return tqdm(**get_tqdm_kwargs(**kwargs))
+
+
+def building_rtfd():
+    return os.environ.get('READTHEDOCS') == 'True' \
+        or os.environ.get('TENSORPACK_DOC_BUILDING')

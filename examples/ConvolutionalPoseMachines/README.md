@@ -3,6 +3,8 @@
 A script to load and run pre-trained CPM model released by Shih-En. The original code in caffe is [here](https://github.com/shihenw/convolutional-pose-machines-release).
 Reference paper: [Convolutional Pose Machines](https://arxiv.org/abs/1602.00134), Shih-En et al., CVPR16.
 
+Also check out [Stereo Pose Machines](https://github.com/ppwwyyxx/Stereo-Pose-Machines), a __real-time__ CPM application based on tensorpack.
+
 ## Usage:
 
 Prepare the model:
@@ -24,5 +26,3 @@ Input image will get resized to 368x368. Note that this CPM comes without person
 person has to be in the center of the image (and not too small).
 
 ![demo](demo.jpg)
-
-For a __real-time__ CPM application in tensorpack, check out [Stereo Pose Machines](https://github.com/ppwwyyxx/Stereo-Pose-Machines).

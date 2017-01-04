@@ -6,12 +6,11 @@ import tensorflow as tf
 from functools import wraps
 import six
 import copy
-import os
 
 from ..tfutils.argscope import get_arg_scope
 from ..tfutils.modelutils import get_shape_str
 from ..tfutils.summary import add_activation_summary
-from ..utils import logger
+from ..utils import logger, building_rtfd
 from ..utils.argtools import shape2d
 
 # make sure each layer is only logged once
@@ -100,9 +99,7 @@ def layer_register(
         return wrapped_func
 
     # need some special handling for sphinx to work with the arguments
-    on_doc = os.environ.get('READTHEDOCS') == 'True' \
-        or os.environ.get('TENSORPACK_DOC_BUILDING')
-    if on_doc:
+    if building_rtfd():
         from decorator import decorator
         wrapper = decorator(wrapper)
 

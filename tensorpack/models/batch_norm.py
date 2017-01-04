@@ -9,7 +9,7 @@ from tensorflow.python.training import moving_averages
 
 from ..tfutils.common import get_tf_version
 from ..tfutils.tower import get_current_tower_context
-from ..utils import logger
+from ..utils import logger, building_rtfd
 from ._common import layer_register
 
 __all__ = ['BatchNorm', 'BatchNormV1', 'BatchNormV2']
@@ -99,8 +99,25 @@ def BatchNormV1(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
 @layer_register(log_shape=False)
 def BatchNormV2(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
     """
-    A slightly faster but equivalent version of BatchNormV1, which uses
-    ``fused_batch_norm`` in training.
+    Batch normalization layer, as described in the paper:
+    `Batch Normalization: Accelerating Deep Network Training by
+    Reducing Internal Covariance Shift <http://arxiv.org/abs/1502.03167>`_.
+
+    Args:
+        x (tf.Tensor): a NHWC or NC tensor.
+        use_local_stat (bool): whether to use mean/var of the current batch or the moving average.
+            Defaults to True in training and False in inference.
+        decay (float): decay rate of moving average.
+        epsilon (float): epsilon to avoid divide-by-zero.
+
+    Note:
+        * In multi-tower training, only the first training tower maintains a moving average.
+
+        * It automatically selects :meth:`BatchNormV1` or :meth:`BatchNormV2`
+          according to availability.
+
+        * This is a slightly faster but equivalent version of BatchNormV1. It uses
+          ``fused_batch_norm`` in training.
     """
     shape = x.get_shape().as_list()
     assert len(shape) in [2, 4]
@@ -160,27 +177,8 @@ def BatchNormV2(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
         return tf.identity(xn, name='output')
 
 
-def BatchNorm(*args, **kwargs):
-    """
-    Batch normalization layer, as described in the paper:
-    `Batch Normalization: Accelerating Deep Network Training by
-    Reducing Internal Covariance Shift <http://arxiv.org/abs/1502.03167>`_.
-
-    Args:
-        x (tf.Tensor): a NHWC or NC tensor.
-        use_local_stat (bool): whether to use mean/var of the current batch or the moving average.
-            Defaults to True in training and False in inference.
-        decay (float): decay rate of moving average.
-        epsilon (float): epsilon to avoid divide-by-zero.
-
-    Note:
-        * In multi-tower training, only the first training tower maintains a moving average.
-
-        * It automatically selects :meth:`BatchNormV1` or :meth:`BatchNormV2`
-          according to availability.
-    """
-    if get_tf_version() >= 12:
-        return BatchNormV2(*args, **kwargs)
-    else:
-        logger.warn("BatchNorm might be faster if you update TensorFlow")
-        return BatchNormV1(*args, **kwargs)
+if building_rtfd() or get_tf_version() >= 12:
+    BatchNorm = BatchNormV2
+else:
+    logger.warn("BatchNorm might be faster if you update TensorFlow")
+    BatchNorm = BatchNormV1
