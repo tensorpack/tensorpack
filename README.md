@@ -1,7 +1,7 @@
 # tensorpack
 Neural Network Toolbox on TensorFlow
 
-See some [examples](examples) to learn about the framework:
+Docs & tutorials should be ready within a month. See some [examples](examples) to learn about the framework:
 
 ### Vision:
 + [DoReFa-Net: train binary / low-bitwidth CNN on ImageNet](examples/DoReFa-Net)
