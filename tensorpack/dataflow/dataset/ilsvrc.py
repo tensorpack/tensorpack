@@ -101,7 +101,7 @@ class ILSVRC12(RNGDataFlow):
     Produces ILSVRC12 images of shape [h, w, 3(BGR)], and a label between [0, 999],
     and optionally a bounding box of [xmin, ymin, xmax, ymax].
     """
-    def __init__(self, dir, name, meta_dir=None, shuffle=True,
+    def __init__(self, dir, name, meta_dir=None, shuffle=None,
                  dir_structure='original', include_bb=False):
         """
         Args:
@@ -109,6 +109,7 @@ class ILSVRC12(RNGDataFlow):
                 original ``ILSVRC12_img_{name}.tar`` gets decompressed.
             name (str): 'train' or 'val' or 'test'.
             shuffle (bool): shuffle the dataset.
+                Defaults to True if name=='train'.
             dir_structure (str): The dir structure of 'val' and 'test' directory.
                 If is 'original', it expects the original decompressed
                 directory, which only has list of image files (as below).
@@ -149,6 +150,8 @@ class ILSVRC12(RNGDataFlow):
         self.full_dir = os.path.join(dir, name)
         self.name = name
         assert os.path.isdir(self.full_dir), self.full_dir
+        if shuffle is None:
+            shuffle = name == 'train'
         self.shuffle = shuffle
         meta = ILSVRCMeta(meta_dir)
         self.imglist = meta.get_image_list(name)

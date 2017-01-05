@@ -33,7 +33,9 @@ def MaxPooling(x, shape, stride=None, padding='VALID'):
     else:
         stride = shape4d(stride)
 
-    return tf.nn.max_pool(x, ksize=shape, strides=stride, padding=padding)
+    return tf.nn.max_pool(x, ksize=shape,
+                          strides=stride, padding=padding,
+                          name='output')
 
 
 @layer_register()
@@ -54,7 +56,8 @@ def AvgPooling(x, shape, stride=None, padding='VALID'):
     else:
         stride = shape4d(stride)
 
-    return tf.nn.avg_pool(x, ksize=shape, strides=stride, padding=padding)
+    return tf.nn.avg_pool(x, ksize=shape,
+                          strides=stride, padding=padding, name='output')
 
 
 @layer_register()
@@ -69,7 +72,7 @@ def GlobalAvgPooling(x):
         tf.Tensor: a NC tensor.
     """
     assert x.get_shape().ndims == 4
-    return tf.reduce_mean(x, [1, 2])
+    return tf.reduce_mean(x, [1, 2], name='output')
 
 
 def UnPooling2x2ZeroFilled(x):

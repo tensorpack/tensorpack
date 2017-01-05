@@ -6,9 +6,12 @@ We hosted a demo at CVPR16 on behalf of Megvii, Inc, running a real-time 1/4-VGG
 We're not planning to release our C++ runtime for bit-operations.
 In this repo, bit operations are performed through `tf.float32`.
 
-Pretrained model for 1-2-6-AlexNet is available at
-[google drive](https://drive.google.com/a/%20megvii.com/folderview?id=0B308TeQzmFDLa0xOeVQwcXg1ZjQ).
-It's provided in the format of numpy dictionary, so it should be very easy to port into other applications.
+Pretrained model for (1,4,32)-ResNet18 and (1,2,6)-AlexNet are available at
+[google drive](https://drive.google.com/a/megvii.com/folderview?id=0B308TeQzmFDLa0xOeVQwcXg1ZjQ).
+They're provided in the format of numpy dictionary, so it should be very easy to port into other applications.
+The binary-weight 4-bit-activation ResNet-18 model has 59.2% top-1 validation error.
+
+Alternative link to this page: [http://dorefa.net](http://dorefa.net)
 
 ## Preparation:
 
@@ -27,7 +30,7 @@ pip install --user scipy
 export PYTHONPATH=$PYTHONPATH:`readlink -f tensorpack`
 ```
 
-+ Look at the docstring in `svhn-digit-dorefa.py` or `alexnet-dorefa.py` to see detailed usage and performance.
++ Look at the docstring in `*-dorefa.py` to see detailed usage and performance.
 
 ## Support
 
