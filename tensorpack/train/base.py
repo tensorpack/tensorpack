@@ -175,6 +175,8 @@ class Trainer(object):
                     self.trigger_epoch()
             except StopTraining:
                 logger.info("Training was stopped.")
+            except KeyboardInterrupt:
+                logger.info("Detected Ctrl+C and shutdown training.")
             except:
                 raise
             finally:
