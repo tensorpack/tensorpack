@@ -122,13 +122,14 @@ class Model(ModelDesc):
 
         pred_reward = tf.reduce_mean(self.value, name='predict_reward')
         advantage = symbf.rms(advantage, name='rms_advantage')
-        summary.add_moving_summary(policy_loss, xentropy_loss, value_loss, pred_reward, advantage)
         entropy_beta = tf.get_variable('entropy_beta', shape=[],
                                        initializer=tf.constant_initializer(0.01), trainable=False)
         self.cost = tf.add_n([policy_loss, xentropy_loss * entropy_beta, value_loss])
         self.cost = tf.truediv(self.cost,
                                tf.cast(tf.shape(futurereward)[0], tf.float32),
                                name='cost')
+        summary.add_moving_summary(policy_loss, xentropy_loss,
+                                   value_loss, pred_reward, advantage, self.cost)
 
     def get_gradient_processor(self):
         return [MapGradient(lambda grad: tf.clip_by_average_norm(grad, 0.1)),

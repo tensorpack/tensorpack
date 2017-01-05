@@ -156,10 +156,10 @@ class Model(ModelDesc):
 
         # weight decay on all W of fc layers
         wd_cost = regularize_cost('fc.*/W', l2_regularizer(5e-6))
-        add_moving_summary(cost, wd_cost)
 
         add_param_summary([('.*/W', ['histogram', 'rms'])])
         self.cost = tf.add_n([cost, wd_cost], name='cost')
+        add_moving_summary(cost, wd_cost, self.cost)
 
 
 def get_data(dataset_name):

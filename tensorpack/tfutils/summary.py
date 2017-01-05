@@ -116,7 +116,7 @@ def summary_moving_average(tensors=None):
     :returns: a op to maintain these average.
     """
     if tensors is None:
-        tensors = tf.get_collection(MOVING_SUMMARY_VARS_KEY)
+        tensors = set(tf.get_collection(MOVING_SUMMARY_VARS_KEY))
 
     # TODO will produce tower0/xxx. not elegant
     with tf.name_scope(None):

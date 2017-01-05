@@ -136,6 +136,7 @@ class Model(ModelDesc):
                                tf.cast(BATCH_SIZE, tf.float32), name='cost')
         summary.add_param_summary([('conv.*/W', ['histogram', 'rms']),
                                    ('fc.*/W', ['histogram', 'rms'])])   # monitor all W
+        add_moving_summary(self.cost)
 
     def update_target_param(self):
         vars = tf.trainable_variables()

@@ -112,6 +112,7 @@ def BatchNormV2(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
 
     Note:
         * In multi-tower training, only the first training tower maintains a moving average.
+          This is consistent with most frameworks.
 
         * It automatically selects :meth:`BatchNormV1` or :meth:`BatchNormV2`
           according to availability.

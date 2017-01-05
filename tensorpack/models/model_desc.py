@@ -11,6 +11,7 @@ import six
 
 from ..utils import logger, INPUT_VARS_KEY
 from ..tfutils.gradproc import CheckGradient
+from ..tfutils.summary import add_moving_summary
 from ..tfutils.tower import get_current_tower_context
 
 __all__ = ['ModelDesc', 'InputVar', 'ModelFromMetaGraph']
@@ -113,43 +114,33 @@ Use _build_graph(self, input_vars) and get_current_tower_context().is_training i
     def get_cost(self):
         """
         Return the cost tensor in the graph. Called by some of the :class:`tensorpack.train.Trainer` which
-        assumes single-cost models. Apply tfSlim modifications.
-        """
+        assumes single-cost models.
 
-        # current scope
-        scope = tf.get_variable_scope()
+        This function also apply tfslim collections to the cost automatically, including
+        ``tf.GraphKeys.REGULARIZATION_LOSSES`` and
+        ``tf.GraphKeys.UPDATE_OPS``. This is because slim users would expect
+        the regularizer being automatically applied once used in slim layers.
+        """
 
         # the model cost so far
         cost = self._get_cost()
 
-        # In contrast to this lib, when using tfSlim the user expect
-        #         "with slim.arg_scope([...], weights_regularizer=slim.l2_regularizer(0.001)"
-        # to regularize these layers automatically. Note, this already contains the multiplier!
-        regulization_losses = 0
-        # try to prevent regEx error, iff scope name is empty ("")
-        try:
-            regulization_losses = set(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES, scope=scope))
-        except Exception:
-            regulization_losses = set(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES))
-
-        # TODO: check if "scope=scope" should be used here too
+        regulization_losses = set(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES))
         if len(regulization_losses) > 0:
-            cost += tf.add_n(regulization_losses, name="regularize_loss")
+            reg_loss = tf.add_n(list(regulization_losses), name="regularize_loss")
+            cost = tf.add(reg_loss, cost, name='total_cost')
+            add_moving_summary(reg_loss, cost)
 
         # As these batch-norm statistics quickly accumulate, there is no significant loss of accuracy
         # if only the main tower handles all batch-normalization updates, which are then shared across
         # the towers
         ctx = get_current_tower_context()
         if ctx is not None and ctx.is_main_training_tower:
-            # if there is no entry in tf.GraphKeys.UPDATE_OPS, then there is a regEx exception
-            try:
-                non_grad_updates = set(tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope=scope))
-            except Exception:
-                non_grad_updates = set(tf.get_collection(tf.GraphKeys.UPDATE_OPS))
+            non_grad_updates = set(tf.get_collection(tf.GraphKeys.UPDATE_OPS))
             if non_grad_updates:
-                    with tf.control_dependencies(non_grad_updates):
-                        barrier = tf.control_flow_ops.no_op(name='batchnorm_barrier')
-                    cost = tf.control_flow_ops.with_dependencies([barrier], cost)
+                with tf.control_dependencies(non_grad_updates):
+                    barrier = tf.control_flow_ops.no_op(name='update_ops_barrier')
+                cost = tf.control_flow_ops.with_dependencies([barrier], cost)
         return cost
 
     def _get_cost(self, *args):

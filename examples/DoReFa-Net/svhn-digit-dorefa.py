@@ -121,10 +121,10 @@ class Model(ModelDesc):
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
         # weight decay on all W of fc layers
         wd_cost = regularize_cost('fc.*/W', l2_regularizer(1e-7))
-        add_moving_summary(cost, wd_cost)
 
         add_param_summary([('.*/W', ['histogram', 'rms'])])
         self.cost = tf.add_n([cost, wd_cost], name='cost')
+        add_moving_summary(cost, wd_cost, self.cost)
 
 
 def get_config():
