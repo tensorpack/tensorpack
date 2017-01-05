@@ -19,12 +19,17 @@ __all__ = ['InputData', 'QueueInput', 'FeedfreeInput', 'TensorInput',
 
 @six.add_metaclass(ABCMeta)
 class InputData(object):
+    """ Base class for the abstract InputData. """
     pass
 
 
 class FeedInput(InputData):
-
+    """ Input by iterating over a DataFlow and feed datapoints. """
     def __init__(self, ds):
+        """
+        Args:
+            ds (DataFlow): the input DataFlow.
+        """
         assert isinstance(ds, DataFlow), ds
         self.ds = ds
 
@@ -44,8 +49,14 @@ class FeedInput(InputData):
 
 
 class FeedfreeInput(InputData):
+    """ Abstract base for input without feed,
+    e.g. by queue or other operations. """
 
     def get_input_tensors(self):
+        """
+        Returns:
+            list: A list of tensors corresponding to the inputs of the model.
+        """
         return self._get_input_tensors()
 
     @abstractmethod
@@ -100,12 +111,14 @@ class EnqueueThread(threading.Thread):
 
 
 class QueueInput(FeedfreeInput):
+    """ Input by enqueueing datapoints from a DataFlow to a TF queue, and dequeue
+        tensors to the graph. """
 
     def __init__(self, ds, queue=None):
         """
-        :param ds: a `DataFlow` instance
-        :param queue: a `tf.QueueBase` instance to be used to buffer datapoints.
-            Defaults to a FIFO queue of size 50.
+        Args:
+            ds(DataFlow): the input DataFlow.
+            queue (tf.QueueBase): Defaults to a FIFO queue of size 50.
         """
         assert isinstance(ds, DataFlow), ds
         self.queue = queue
@@ -142,11 +155,10 @@ class QueueInput(FeedfreeInput):
         return ret
 
 
-class DummyConstantInput(QueueInput):
-    """ only for debugging performance issues """
+class DummyConstantInput(FeedfreeInput):
+    """ Input some constant variables. Only for debugging performance issues """
 
-    def __init__(self, ds, shapes):
-        super(DummyConstantInput, self).__init__(ds)
+    def __init__(self, shapes):
         self.shapes = shapes
         logger.warn("Using dummy input for debug!")
 
@@ -163,8 +175,15 @@ class DummyConstantInput(QueueInput):
 
 
 class TensorInput(FeedfreeInput):
+    """ Input from a list of tensors, e.g. a TF data reading pipeline. """
 
     def __init__(self, get_tensor_fn, size=None):
+        """
+        Args:
+            get_tensor_fn: a function which returns a list of input tensors
+                when called.
+            size(int): size of this input. Use None to leave it undefined.
+        """
         self.get_tensor_fn = get_tensor_fn
         self._size = size
 

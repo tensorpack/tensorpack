@@ -21,7 +21,7 @@ from .trainer import MultiPredictorTowerTrainer
 from .feedfree import SingleCostFeedfreeTrainer
 from .input_data import QueueInput
 
-__all__ = ['AsyncMultiGPUTrainer', 'SyncMultiGPUTrainer']
+__all__ = ['SyncMultiGPUTrainer', 'AsyncMultiGPUTrainer']
 
 
 class MultiGPUTrainer(Trainer):
@@ -51,8 +51,16 @@ class MultiGPUTrainer(Trainer):
 class SyncMultiGPUTrainer(MultiGPUTrainer,
                           SingleCostFeedfreeTrainer,
                           MultiPredictorTowerTrainer):
+    """
+    A multi-tower multi-GPU trainer which synchronoizes the gradients computed
+    from each tower and averages them.
+    """
 
     def __init__(self, config, input_queue=None, predict_tower=None):
+        """
+        Args:
+            config, input_queue: same as in :class:`QueueInputTrainer`.
+        """
         if config.dataflow is not None:
             self._input_method = QueueInput(config.dataflow, input_queue)
         else:
@@ -65,7 +73,7 @@ class SyncMultiGPUTrainer(MultiGPUTrainer,
             config.predict_tower = predict_tower
 
         super(SyncMultiGPUTrainer, self).__init__(config)
-        self._setup_predictor_factory(config.predict_tower)
+        self._setup_predictor_factory()
         assert len(config.tower) >= 1, "MultiGPUTrainer must be used with at least one GPU."
         assert tf.test.is_gpu_available()
 
@@ -117,11 +125,22 @@ class SyncMultiGPUTrainer(MultiGPUTrainer,
 class AsyncMultiGPUTrainer(MultiGPUTrainer,
                            SingleCostFeedfreeTrainer,
                            MultiPredictorTowerTrainer):
+    """
+    A multi-tower multi-GPU trainer where each tower independently
+    asynchronously updates the model without locking.
+    """
 
     def __init__(self, config,
                  input_queue=None,
-                 average_gradient=True,
+                 scale_gradient=True,
                  predict_tower=None):
+        """
+        Args:
+            config, input_queue: same as in :class:`QueueInputTrainer`.
+            scale_gradient (bool): if True, will scale each gradient by
+                ``1.0/nr_tower``, to make Async and Sync Trainer have the same
+                effective learning rate.
+        """
         if config.dataflow is not None:
             self._input_method = QueueInput(config.dataflow, input_queue)
         else:
@@ -134,8 +153,8 @@ class AsyncMultiGPUTrainer(MultiGPUTrainer,
                         "Use TrainConfig.predict_tower instead!")
             config.predict_tower = predict_tower
 
-        self._setup_predictor_factory(config.predict_tower)
-        self._average_gradient = average_gradient
+        self._setup_predictor_factory()
+        self._scale_gradient = scale_gradient
         assert tf.test.is_gpu_available()
 
     def _setup(self):
@@ -143,7 +162,7 @@ class AsyncMultiGPUTrainer(MultiGPUTrainer,
         grad_list = MultiGPUTrainer._multi_tower_grads(
             self.config.tower, lambda: self._get_cost_and_grad()[1])
         gradprocs = self.model.get_gradient_processor()
-        if self._average_gradient and self.config.nr_tower > 1:
+        if self._scale_gradient and self.config.nr_tower > 1:
             # pretend to average the grads, in order to make async and
             # sync have consistent effective learning rate
             gradprocs.insert(0, ScaleGradient(('.*', 1.0 / self.config.nr_tower), log=False))

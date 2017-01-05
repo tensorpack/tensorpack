@@ -54,9 +54,14 @@ class PredictorFactory(object):
 
 
 class SimpleTrainer(Trainer):
-    """ A naive demo trainer """
+    """ A naive demo trainer which iterates over a DataFlow and feed into the
+    graph. It's not efficient compared to QueueInputTrainer or others."""
 
     def __init__(self, config):
+        """
+        Args:
+            config (TrainConfig): the training config.
+        """
         super(SimpleTrainer, self).__init__(config)
         self._predictor_factory = PredictorFactory(self.sess, self.model, [0])
         if config.dataflow is None:
@@ -66,6 +71,7 @@ class SimpleTrainer(Trainer):
             self._input_method = FeedInput(config.dataflow)
 
     def run_step(self):
+        """ Feed data into the graph and run the updates. """
         feed = self._input_method.next_feed()
         self.sess.run([self.train_op], feed_dict=feed)    # faster since train_op return None
 
@@ -99,11 +105,10 @@ class SimpleTrainer(Trainer):
 class MultiPredictorTowerTrainer(Trainer):
     """ A trainer with possibly multiple prediction tower """
 
-    def _setup_predictor_factory(self, predict_tower):
+    def _setup_predictor_factory(self):
         # by default, use the first training gpu for prediction
-        predict_tower = predict_tower or [0]
         self._predictor_factory = PredictorFactory(
-            self.sess, self.model, predict_tower)
+            self.sess, self.model, self.config.predict_tower)
 
     def get_predict_func(self, input_names, output_names, tower=0):
         """

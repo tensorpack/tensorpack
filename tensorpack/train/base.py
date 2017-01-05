@@ -77,6 +77,9 @@ class Trainer(object):
             Can be overwritten by subclasses to exploit more
             parallelism among predictors.
         """
+        if len(self.config.predict_tower) > 1:
+            logger.warn(
+                "[Speed] Have set multiple predict_tower, but only have naive `get_predict_funcs` implementation")
         return [self.get_predict_func(input_names, output_names) for k in range(n)]
 
     def trigger_epoch(self):

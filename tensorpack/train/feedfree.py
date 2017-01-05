@@ -92,7 +92,7 @@ class SimpleFeedfreeTrainer(
         self._input_method = config.data
         assert isinstance(self._input_method, FeedfreeInput), self._input_method
         super(SimpleFeedfreeTrainer, self).__init__(config)
-        self._setup_predictor_factory(config.predict_tower)
+        self._setup_predictor_factory()
         assert len(self.config.tower) == 1, \
             "SimpleFeedfreeTrainer doesn't support multigpu!"
 
@@ -111,22 +111,23 @@ class SimpleFeedfreeTrainer(
 
 class QueueInputTrainer(SimpleFeedfreeTrainer):
     """
-    A trainer which automatically wraps ``config.dataflow``
+    A trainer which automatically wraps ``config.dataflow`` by a
+    :class:`QueueInput`.
     """
 
     def __init__(self, config, input_queue=None, predict_tower=None):
         """
         Single tower Trainer, takes input from a queue
 
-        :param config: a `TrainConfig` instance. config.dataflow must exist
-        :param input_queue: a `tf.QueueBase` instance
-        :param predict_tower: list of gpu relative idx to run prediction. default to be [0].
-            Use -1 for cpu.
+        Args:
+            config(TrainConfig): a `TrainConfig` instance. config.dataflow must exist.
+            input_queue(tf.QueueBase): an input queue. Defaults to the
+                :class:`QueueInput` default.
         """
         config.data = QueueInput(config.dataflow, input_queue)
         if predict_tower is not None:
             logger.warn("[Deprecated] Argument `predict_tower` is deprecated for trainer. "
-                        "Use TrainConfig.predict_tower instead!")
+                        "Use TrainConfig(predict_tower=...) instead!")
             config.predict_tower = predict_tower
         assert len(config.tower) == 1, \
             "QueueInputTrainer doesn't support multigpu! Use Sync/AsyncMultiGPUTrainer instead."
