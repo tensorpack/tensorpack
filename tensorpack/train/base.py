@@ -22,32 +22,30 @@ __all__ = ['Trainer', 'StopTraining']
 
 
 class StopTraining(BaseException):
+    """
+    An exception thrown to stop training.
+    """
     pass
 
 
 @six.add_metaclass(ABCMeta)
 class Trainer(object):
-    """ Base class for a trainer."""
+    """ Base class for a trainer.
 
-    """a `StatHolder` instance"""
-    stat_holder = None
-
-    """`tf.SummaryWriter`"""
-    summary_writer = None
-    """a tf.Tensor which returns summary string"""
-    summary_op = None
-    """ TrainConfig """
-    config = None
-    """ a ModelDesc"""
-    model = None
-    """ the current session"""
-    sess = None
-    """ the `tf.train.Coordinator` """
-    coord = None
+    Attributes:
+        stat_holder (StatHolder)
+        summary_writer (tf.summary.FileWriter)
+        summary_op (tf.Operation): an Op which outputs all summaries.
+        config (TrainConfig): the config used in this trainer.
+        model (ModelDesc)
+        sess (tf.Session): the current session in use.
+        coord (tf.train.Coordinator)
+    """
 
     def __init__(self, config):
         """
-        :param config: a `TrainConfig` instance
+        Args:
+            config (TrainConfig): the train config.
         """
         assert isinstance(config, TrainConfig), type(config)
         self.config = config
@@ -56,27 +54,35 @@ class Trainer(object):
         self.coord = tf.train.Coordinator()
 
     def train(self):
-        """ Start training"""
+        """ Start training """
         self.setup()
         self.main_loop()
 
     @abstractmethod
     def run_step(self):
-        """ run an iteration"""
-        pass
+        """ Abstract method. Run one iteration. """
 
     def get_predict_func(self, input_names, output_names):
-        """ return a online predictor"""
+        """
+        Args:
+            input_names (list), output_names(list): list of names
+
+        Returns:
+            an OnlinePredictor
+        """
         raise NotImplementedError()
 
     def get_predict_funcs(self, input_names, output_names, n):
-        """ return n predictor functions.
+        """ Return n predictors.
             Can be overwritten by subclasses to exploit more
-            parallelism among funcs.
+            parallelism among predictors.
         """
         return [self.get_predict_func(input_names, output_names) for k in range(n)]
 
     def trigger_epoch(self):
+        """
+        Called after each epoch.
+        """
         # trigger subclass
         self._trigger_epoch()
         # trigger callbacks
@@ -85,7 +91,6 @@ class Trainer(object):
 
     @abstractmethod
     def _trigger_epoch(self):
-        """ This is called right after all steps in an epoch are finished"""
         pass
 
     def _process_summary(self, summary_str):
@@ -100,11 +105,21 @@ class Trainer(object):
         self.summary_writer.add_summary(summary, get_global_step())
 
     def write_scalar_summary(self, name, val):
+        """
+        Write a scalar sumary to both TF events file and StatHolder.
+
+        Args:
+            name(str)
+            val(float)
+        """
         self.summary_writer.add_summary(
             create_summary(name, val), get_global_step())
         self.stat_holder.add_stat(name, val)
 
     def setup(self):
+        """
+        Setup the trainer and be ready for the main loop.
+        """
         self._setup()
         describe_model()
         get_global_step_var()
@@ -120,7 +135,6 @@ class Trainer(object):
         self.stat_holder = StatHolder(logger.LOG_DIR)
 
         logger.info("Initializing graph variables ...")
-        # TODO newsession + sessinit?
         initop = tf.global_variables_initializer()
         self.sess.run(initop)
         self.config.session_init.init(self.sess)
@@ -134,6 +148,9 @@ class Trainer(object):
         """ setup Trainer-specific stuff for training"""
 
     def main_loop(self):
+        """
+        Run the main training loop.
+        """
         callbacks = self.config.callbacks
         with self.sess.as_default():
             try:

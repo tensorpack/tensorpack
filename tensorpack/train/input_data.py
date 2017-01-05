@@ -13,7 +13,7 @@ from ..tfutils.summary import add_moving_summary
 from ..utils import logger
 from ..callbacks.concurrency import StartProcOrThread
 
-__all__ = ['QueueInput', 'FeedfreeInput', 'TensorInput',
+__all__ = ['InputData', 'QueueInput', 'FeedfreeInput', 'TensorInput',
            'DummyConstantInput']
 
 

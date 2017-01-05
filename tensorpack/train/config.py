@@ -17,54 +17,64 @@ __all__ = ['TrainConfig']
 
 class TrainConfig(object):
     """
-    Config for training a model with a single loss
+    Config for trainer.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, dataset=None, data=None,
+                 model=None, optimizer=None, callbacks=None,
+                 session_config=get_default_sess_config(),
+                 session_init=None,
+                 starting_epoch=1, step_per_epoch=None, max_epoch=99999,
+                 nr_tower=1, tower=None, predict_tower=[0],
+                 **kwargs):
         """
-        :param dataset: the dataset to train. a `DataFlow` instance.
-        :param data: an `InputData` instance
+        Args:
+            dataset (DataFlow): the dataset to train.
+            data (InputData): an `InputData` instance. Only one of ``dataset``
+                or ``data`` has to be present.
+            model (ModelDesc): the model to train.
+            optimizer (tf.train.Optimizer): the optimizer for trainig.
+            callbacks (Callbacks): the callbacks to perform during training.
+            session_config (tf.ConfigProto): the config used to instantiate the session.
+            session_init (SessionInit): how to initialize variables of a session. Defaults to a new session.
+            starting_epoch (int): The index of the first epoch.
+            step_per_epoch (int): the number of steps (defined by :meth:`Trainer.run_step`) to run in each epoch.
+                Defaults to the input data size.
+            max_epoch (int): maximum number of epoch to run training.
+            nr_tower (int): number of training towers.
+            tower (list of int): list of training towers in relative id.
+            predict_tower (list of int): list of prediction towers in their relative gpu id.
+        """
 
-        :param optimizer: a `tf.train.Optimizer` instance defining the optimizer for trainig.
-        :param callbacks: a `callback.Callbacks` instance. Define
-            the callbacks to perform during training.
-        :param session_config: a `tf.ConfigProto` instance to instantiate the session.
-        :param session_init: a `sessinit.SessionInit` instance to
-            initialize variables of a session. default to a new session.
-        :param model: a `ModelDesc` instance.
-        :param starting_epoch: int. default to be 1.
-        :param step_per_epoch: the number of steps (SGD updates) to perform in each epoch.
-        :param max_epoch: maximum number of epoch to run training. default to inf
-        :param nr_tower: int. number of training towers. default to 1.
-        :param tower: list of training towers in relative id. default to `range(nr_tower)` if nr_tower is given.
-        :param predict_tower: list of prediction tower in their relative gpu id. Defaults to [0]
-        """
+        # TODO type checker decorator
         def assert_type(v, tp):
             assert isinstance(v, tp), v.__class__
-        if 'dataset' in kwargs:
-            assert 'data' not in kwargs, "dataset and data cannot be both presented in TrainConfig!"
-            self.dataset = kwargs.pop('dataset')
+        if dataset is not None:
+            assert data is None, "dataset and data cannot be both presented in TrainConfig!"
+            self.dataset = dataset
             assert_type(self.dataset, DataFlow)
         else:
-            self.data = kwargs.pop('data')
+            self.data = data
             assert_type(self.data, InputData)
 
-        self.optimizer = kwargs.pop('optimizer')
+        self.optimizer = optimizer
         assert_type(self.optimizer, tf.train.Optimizer)
-        self.callbacks = kwargs.pop('callbacks')
+        self.callbacks = callbacks
         assert_type(self.callbacks, Callbacks)
-        self.model = kwargs.pop('model')
+        self.model = model
         assert_type(self.model, ModelDesc)
 
-        self.session_config = kwargs.pop('session_config', get_default_sess_config())
+        self.session_config = session_config
         assert_type(self.session_config, tf.ConfigProto)
-        self.session_init = kwargs.pop('session_init', JustCurrentSession())
+        if session_init is None:
+            session_init = JustCurrentSession()
+        self.session_init = session_init
         assert_type(self.session_init, SessionInit)
 
-        self.step_per_epoch = kwargs.pop('step_per_epoch', None)
+        self.step_per_epoch = step_per_epoch
         if self.step_per_epoch is None:
             try:
-                if hasattr(self, 'dataset'):
+                if dataset is not None:
                     self.step_per_epoch = self.dataset.size()
                 else:
                     self.step_per_epoch = self.data.size()
@@ -73,22 +83,20 @@ class TrainConfig(object):
         else:
             self.step_per_epoch = int(self.step_per_epoch)
 
-        self.starting_epoch = int(kwargs.pop('starting_epoch', 1))
-        self.max_epoch = int(kwargs.pop('max_epoch', 99999))
+        self.starting_epoch = int(starting_epoch)
+        self.max_epoch = int(max_epoch)
         assert self.step_per_epoch >= 0 and self.max_epoch > 0
 
-        if 'nr_tower' in kwargs:
-            assert 'tower' not in kwargs, "Cannot set both nr_tower and tower in TrainConfig!"
-            self.nr_tower = kwargs.pop('nr_tower')
-        elif 'tower' in kwargs:
-            self.tower = kwargs.pop('tower')
-        else:
-            self.tower = [0]
-        self.predict_tower = kwargs.pop('predict_tower', [0])
+        self.nr_tower = nr_tower
+        if tower is not None:
+            assert self.nr_tower == 1, "Cannot set both nr_tower and tower in TrainConfig!"
+            self.tower = tower
+
+        self.predict_tower = predict_tower
         if isinstance(self.predict_tower, int):
             self.predict_tower = [self.predict_tower]
 
-        # TODO deprecated @Dec20
+        # TODO deprecated @Jan20
         self.extra_threads_procs = kwargs.pop('extra_threads_procs', [])
         if self.extra_threads_procs:
             logger.warn("[DEPRECATED] use the Callback StartProcOrThread instead of _extra_threads_procs")

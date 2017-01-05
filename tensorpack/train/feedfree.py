@@ -15,11 +15,14 @@ from .input_data import QueueInput, FeedfreeInput
 from .base import Trainer
 from .trainer import MultiPredictorTowerTrainer
 
-__all__ = ['FeedfreeTrainer', 'SingleCostFeedfreeTrainer', 'SimpleFeedfreeTrainer', 'QueueInputTrainer']
+__all__ = ['FeedfreeTrainer', 'SingleCostFeedfreeTrainer',
+           'SimpleFeedfreeTrainer', 'QueueInputTrainer']
 
 
 class FeedfreeTrainer(Trainer):
-    """ A trainer which runs iteration without feed_dict (therefore faster) """
+    """ A trainer which runs iteration without feed_dict (therefore faster)
+        Expect ``self.data`` to be a :class:`FeedfreeInput`.
+    """
 
     def _trigger_epoch(self):
         # need to run summary_op every epoch
@@ -37,7 +40,7 @@ class FeedfreeTrainer(Trainer):
 
 
 class SingleCostFeedfreeTrainer(FeedfreeTrainer):
-
+    """ A feedfree Trainer which assumes a single cost. """
     def _get_cost_and_grad(self):
         """ get the cost and gradient on a new tower"""
         actual_inputs = self._get_input_tensors()
@@ -52,7 +55,7 @@ class SingleCostFeedfreeTrainer(FeedfreeTrainer):
         return cost_var, grads
 
     def run_step(self):
-        """ Simply run self.train_op"""
+        """ Simply run ``self.train_op``, which minimizes the cost."""
         self.sess.run(self.train_op)
         # if not hasattr(self, 'cnt'):
         #     self.cnt = 0
