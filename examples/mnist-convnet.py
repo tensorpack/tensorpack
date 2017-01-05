@@ -114,7 +114,7 @@ def get_config():
 
     # get the config which contains everything necessary in a training
     return TrainConfig(
-        dataset=dataset_train,  # the DataFlow instance for training
+        dataflow=dataset_train,  # the DataFlow instance for training
         optimizer=tf.train.AdamOptimizer(lr),
         callbacks=Callbacks([
             StatPrinter(),  # print statistics in terminal after every epoch

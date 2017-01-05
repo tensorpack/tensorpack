@@ -99,7 +99,7 @@ def get_config():
     tf.summary.scalar('lr', lr)
 
     return TrainConfig(
-        dataset=data_train,
+        dataflow=data_train,
         optimizer=tf.train.AdamOptimizer(lr),
         callbacks=Callbacks([
             StatPrinter(), ModelSaver(),

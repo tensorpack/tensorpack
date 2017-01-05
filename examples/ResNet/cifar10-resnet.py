@@ -139,7 +139,7 @@ def get_config():
 
     lr = get_scalar_var('learning_rate', 0.01, summary=True)
     return TrainConfig(
-        dataset=dataset_train,
+        dataflow=dataset_train,
         optimizer=tf.train.MomentumOptimizer(lr, 0.9),
         callbacks=Callbacks([
             StatPrinter(), ModelSaver(),

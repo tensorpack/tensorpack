@@ -20,7 +20,7 @@ class TrainConfig(object):
     Config for trainer.
     """
 
-    def __init__(self, dataset=None, data=None,
+    def __init__(self, dataflow=None, data=None,
                  model=None, optimizer=None, callbacks=None,
                  session_config=get_default_sess_config(),
                  session_init=None,
@@ -29,8 +29,8 @@ class TrainConfig(object):
                  **kwargs):
         """
         Args:
-            dataset (DataFlow): the dataset to train.
-            data (InputData): an `InputData` instance. Only one of ``dataset``
+            dataflow (DataFlow): the dataflow to train.
+            data (InputData): an `InputData` instance. Only one of ``dataflow``
                 or ``data`` has to be present.
             model (ModelDesc): the model to train.
             optimizer (tf.train.Optimizer): the optimizer for trainig.
@@ -49,13 +49,19 @@ class TrainConfig(object):
         # TODO type checker decorator
         def assert_type(v, tp):
             assert isinstance(v, tp), v.__class__
-        if dataset is not None:
-            assert data is None, "dataset and data cannot be both presented in TrainConfig!"
-            self.dataset = dataset
-            assert_type(self.dataset, DataFlow)
+
+        if 'dataset' in kwargs:
+            dataflow = kwargs.pop('dataset')
+            logger.warn("[Deprecated] TrainConfig.dataset has been deprecated. Use TrainConfig.dataflow instead.")
+        if dataflow is not None:
+            assert data is None, "dataflow and data cannot be both presented in TrainConfig!"
+            self.dataflow = dataflow
+            assert_type(self.dataflow, DataFlow)
+            self.data = None
         else:
             self.data = data
             assert_type(self.data, InputData)
+            self.dataflow = None
 
         self.optimizer = optimizer
         assert_type(self.optimizer, tf.train.Optimizer)
@@ -74,8 +80,8 @@ class TrainConfig(object):
         self.step_per_epoch = step_per_epoch
         if self.step_per_epoch is None:
             try:
-                if dataset is not None:
-                    self.step_per_epoch = self.dataset.size()
+                if dataflow is not None:
+                    self.step_per_epoch = self.dataflow.size()
                 else:
                     self.step_per_epoch = self.data.size()
             except NotImplementedError:

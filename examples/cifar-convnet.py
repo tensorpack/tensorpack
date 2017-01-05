@@ -122,7 +122,7 @@ def get_config(cifar_classnum):
         return lr * 0.31
 
     return TrainConfig(
-        dataset=dataset_train,
+        dataflow=dataset_train,
         optimizer=tf.train.AdamOptimizer(lr, epsilon=1e-3),
         callbacks=Callbacks([
             StatPrinter(), ModelSaver(),

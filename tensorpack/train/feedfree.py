@@ -15,12 +15,12 @@ from .input_data import QueueInput, FeedfreeInput
 from .base import Trainer
 from .trainer import MultiPredictorTowerTrainer
 
-__all__ = ['FeedfreeTrainer', 'SingleCostFeedfreeTrainer',
+__all__ = ['FeedfreeTrainerBase', 'SingleCostFeedfreeTrainer',
            'SimpleFeedfreeTrainer', 'QueueInputTrainer']
 
 
-class FeedfreeTrainer(Trainer):
-    """ A trainer which runs iteration without feed_dict (therefore faster)
+class FeedfreeTrainerBase(Trainer):
+    """ A base trainer which runs iteration without feed_dict (therefore faster)
         Expect ``self.data`` to be a :class:`FeedfreeInput`.
     """
 
@@ -39,7 +39,7 @@ class FeedfreeTrainer(Trainer):
         self._input_method._setup(self)
 
 
-class SingleCostFeedfreeTrainer(FeedfreeTrainer):
+class SingleCostFeedfreeTrainer(FeedfreeTrainerBase):
     """ A feedfree Trainer which assumes a single cost. """
     def _get_cost_and_grad(self):
         """ get the cost and gradient on a new tower"""
@@ -78,11 +78,16 @@ class SingleCostFeedfreeTrainer(FeedfreeTrainer):
 class SimpleFeedfreeTrainer(
         MultiPredictorTowerTrainer,
         SingleCostFeedfreeTrainer):
+    """
+    A trainer with single cost, single training tower, any number of
+    prediction tower, and feed-free input.
+    """
 
     def __init__(self, config):
         """
-        A trainer with single cost, single training tower and feed-free input
-        config.data must exists
+        Args:
+            config (TrainConfig): ``config.data`` must exist and is a
+                :class:`FeedfreeInput`.
         """
         self._input_method = config.data
         assert isinstance(self._input_method, FeedfreeInput), self._input_method
@@ -105,17 +110,20 @@ class SimpleFeedfreeTrainer(
 
 
 class QueueInputTrainer(SimpleFeedfreeTrainer):
+    """
+    A trainer which automatically wraps ``config.dataflow``
+    """
 
     def __init__(self, config, input_queue=None, predict_tower=None):
         """
         Single tower Trainer, takes input from a queue
 
-        :param config: a `TrainConfig` instance. config.dataset must exist
+        :param config: a `TrainConfig` instance. config.dataflow must exist
         :param input_queue: a `tf.QueueBase` instance
         :param predict_tower: list of gpu relative idx to run prediction. default to be [0].
             Use -1 for cpu.
         """
-        config.data = QueueInput(config.dataset, input_queue)
+        config.data = QueueInput(config.dataflow, input_queue)
         if predict_tower is not None:
             logger.warn("[Deprecated] Argument `predict_tower` is deprecated for trainer. "
                         "Use TrainConfig.predict_tower instead!")

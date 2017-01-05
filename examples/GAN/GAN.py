@@ -6,13 +6,13 @@
 import tensorflow as tf
 import numpy as np
 import time
-from tensorpack import (FeedfreeTrainer, TowerContext,
+from tensorpack import (FeedfreeTrainerBase, TowerContext,
                         get_global_step_var, QueueInput)
 from tensorpack.tfutils.summary import summary_moving_average, add_moving_summary
 from tensorpack.dataflow import DataFlow
 
 
-class GANTrainer(FeedfreeTrainer):
+class GANTrainer(FeedfreeTrainerBase):
 
     def __init__(self, config):
         self._input_method = QueueInput(config.dataset)

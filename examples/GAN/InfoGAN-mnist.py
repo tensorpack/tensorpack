@@ -104,7 +104,7 @@ def get_config():
     dataset = get_data()
     lr = symbf.get_scalar_var('learning_rate', 2e-4, summary=True)
     return TrainConfig(
-        dataset=dataset,
+        dataflow=dataset,
         optimizer=tf.train.AdamOptimizer(lr, beta1=0.5, epsilon=1e-3),
         callbacks=Callbacks([
             StatPrinter(), ModelSaver(),

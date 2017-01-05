@@ -53,8 +53,8 @@ class SyncMultiGPUTrainer(MultiGPUTrainer,
                           MultiPredictorTowerTrainer):
 
     def __init__(self, config, input_queue=None, predict_tower=None):
-        if hasattr(config, 'dataset'):
-            self._input_method = QueueInput(config.dataset, input_queue)
+        if config.dataflow is not None:
+            self._input_method = QueueInput(config.dataflow, input_queue)
         else:
             self._input_method = config.data
             assert isinstance(self._input_method, QueueInput)
@@ -122,8 +122,8 @@ class AsyncMultiGPUTrainer(MultiGPUTrainer,
                  input_queue=None,
                  average_gradient=True,
                  predict_tower=None):
-        if hasattr(config, 'dataset'):
-            self._input_method = QueueInput(config.dataset, input_queue)
+        if config.dataflow is not None:
+            self._input_method = QueueInput(config.dataflow, input_queue)
         else:
             self._input_method = config.data
             assert isinstance(self._input_method, QueueInput)

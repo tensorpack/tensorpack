@@ -161,7 +161,7 @@ def get_config():
     tf.summary.scalar('lr', lr)
 
     return TrainConfig(
-        dataset=data_train,
+        dataflow=data_train,
         optimizer=tf.train.AdamOptimizer(lr, epsilon=1e-5),
         callbacks=Callbacks([
             StatPrinter(),

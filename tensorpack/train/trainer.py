@@ -59,11 +59,11 @@ class SimpleTrainer(Trainer):
     def __init__(self, config):
         super(SimpleTrainer, self).__init__(config)
         self._predictor_factory = PredictorFactory(self.sess, self.model, [0])
-        if not hasattr(config, 'dataset'):
+        if config.dataflow is None:
             self._input_method = config.data
             assert isinstance(self._input_method, FeedInput)
         else:
-            self._input_method = FeedInput(config.dataset)
+            self._input_method = FeedInput(config.dataflow)
 
     def run_step(self):
         feed = self._input_method.next_feed()

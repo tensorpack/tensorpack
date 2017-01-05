@@ -107,7 +107,7 @@ def get_config():
     lr = symbolic_functions.get_scalar_var('learning_rate', 2e-3, summary=True)
 
     return TrainConfig(
-        dataset=ds,
+        dataflow=ds,
         optimizer=tf.train.AdamOptimizer(lr),
         callbacks=Callbacks([
             StatPrinter(), ModelSaver(),
