@@ -11,11 +11,34 @@ from six.moves import zip, range
 from ..dataflow import DataFlow
 from .base import Callback
 from .inference import Inferencer
-from .dispatcher import OutputTensorDispatcer
 from ..utils import logger, get_tqdm
+from ..tfutils.common import get_op_tensor_name
 from ..train.input_data import FeedfreeInput
 
 __all__ = ['InferenceRunner']
+
+
+class OutputTensorDispatcer(object):
+    def __init__(self):
+        self._names = []
+        self._idxs = []
+
+    def add_entry(self, names):
+        v = []
+        for n in names:
+            tensorname = get_op_tensor_name(n)[1]
+            if tensorname in self._names:
+                v.append(self._names.index(tensorname))
+            else:
+                self._names.append(tensorname)
+                v.append(len(self._names) - 1)
+        self._idxs.append(v)
+
+    def get_all_names(self):
+        return self._names
+
+    def get_idx_for_each_entry(self):
+        return self._idxs
 
 
 def summary_inferencer(trainer, infs):
@@ -32,17 +55,19 @@ def summary_inferencer(trainer, infs):
 
 class InferenceRunner(Callback):
     """
-    A callback that runs different kinds of inferencer.
+    A callback that runs a list of :class:`Inferencer` on some
+    :class:`DataFlow`.
     """
 
-    IOTensor = namedtuple('IOTensor', ['index', 'isOutput'])
+    _IOTensor = namedtuple('IOTensor', ['index', 'isOutput'])
 
     def __init__(self, ds, infs, input_tensors=None):
         """
-        :param ds: inference dataset. a `DataFlow` instance.
-        :param infs: a list of `Inferencer` instance.
-        :param input_tensor_names: list of tensors to feed the dataflow to.
-            default to all the input placeholders.
+        Args:
+            ds (DataFlow): the DataFlow to run inferencer on.
+            infs (list): a list of `Inferencer` instances.
+            input_tensor_names(list): list of tensors to feed the dataflow to.
+                Defaults to all the input placeholders.
         """
         assert isinstance(ds, DataFlow), ds
         self.ds = ds
@@ -78,7 +103,7 @@ class InferenceRunner(Callback):
             dispatcer.add_entry(inf.get_output_tensors())
         all_names = dispatcer.get_all_names()
 
-        IOTensor = InferenceRunner.IOTensor
+        IOTensor = InferenceRunner._IOTensor
         self.output_tensors = list(filter(
             lambda x: x not in self.input_tensors, all_names))
 

@@ -13,40 +13,59 @@ from .base import Callback
 from ..utils import logger
 from ..tfutils import get_op_var_name
 
-__all__ = ['HyperParamSetter', 'HumanHyperParamSetter',
+__all__ = ['HyperParam', 'GraphVarParam', 'ObjAttrParam',
+           'HyperParamSetter', 'HumanHyperParamSetter',
            'ScheduledHyperParamSetter',
            'StatMonitorParamSetter', 'HyperParamSetterWithFunc',
-           'HyperParam', 'GraphVarParam', 'ObjAttrParam']
+           ]
 
 
 @six.add_metaclass(ABCMeta)
 class HyperParam(object):
-    """ Base class for a hyper param"""
+    """ Base class for a hyperparam. """
 
     def setup_graph(self):
-        """ setup the graph in `setup_graph` callback stage, if necessary"""
+        """ setup the graph in ``setup_graph`` callback stage, if necessary"""
         pass
 
     @abstractmethod
     def set_value(self, v):
-        """ define how the value of the param will be set"""
+        """
+        Set the value of the param.
+
+        Args:
+            v: the value to be set
+        """
+        pass
+
+    @abstractmethod
+    def get_value(self):
+        """
+        Get the value of the param.
+        """
         pass
 
     @property
     def readable_name(self):
-        """ A name to display"""
+        """ A name to display """
         return self._readable_name
 
 
 class GraphVarParam(HyperParam):
-    """ a variable in the graph can be a hyperparam"""
+    """ A variable in the graph (e.g. learning_rate) can be a hyperparam"""
 
     def __init__(self, name, shape=[]):
+        """
+        Args:
+            name(str): name of the variable.
+            shape(list): shape of the variable.
+        """
         self.name = name
         self.shape = shape
         self._readable_name, self.var_name = get_op_var_name(name)
 
     def setup_graph(self):
+        """ Will setup the assign operator for that variable. """
         all_vars = tf.global_variables()
         for v in all_vars:
             if v.name == self.var_name:
@@ -60,17 +79,24 @@ class GraphVarParam(HyperParam):
         self.assign_op = self.var.assign(self.val_holder)
 
     def set_value(self, v):
+        """ Assign the variable a new value. """
         self.assign_op.eval(feed_dict={self.val_holder: v})
 
     def get_value(self):
+        """ Evaluate the variable. """
         return self.var.eval()
 
 
 class ObjAttrParam(HyperParam):
-    """ an attribute of an object can be a hyperparam"""
+    """ An attribute of an object can be a hyperparam. """
 
     def __init__(self, obj, attrname, readable_name=None):
-        """ :param readable_name: default to be attrname."""
+        """
+        Args:
+            obj: the object
+            attrname (str): the attribute
+            readable_name(str): The name to display. Defaults to be ``attrname``.
+        """
         self.obj = obj
         self.attrname = attrname
         if readable_name is None:
@@ -87,12 +113,14 @@ class ObjAttrParam(HyperParam):
 
 class HyperParamSetter(Callback):
     """
-    Base class to set hyperparameters after every epoch.
+    An abstract base callback to set hyperparameters in every epoch.
     """
 
     def __init__(self, param):
         """
-        :param param: a `HyperParam` instance, or a string (assumed to be a scalar `GraphVarParam`)
+        Args:
+            param(HyperParam or str): if is a :class:`str`, it is assumed to
+                be a :class:`GraphVarParam`.
         """
         # if a string, assumed to be a scalar graph variable
         if isinstance(param, six.string_types):
@@ -106,7 +134,13 @@ class HyperParamSetter(Callback):
 
     def get_value_to_set(self):
         """
-        :returns: the value to assign to the variable now.
+        Returns:
+            The value to assign to the variable.
+
+        Note:
+            Subclasses will implemenet the abstract method
+            :meth:`_get_value_to_set`, which should return a new value to
+            set, or return None to do nothing.
         """
         ret = self._get_value_to_set()
         if ret is not None and ret != self.last_value:
@@ -115,12 +149,16 @@ class HyperParamSetter(Callback):
         self.last_value = ret
         return ret
 
-    def get_current_value(self):
-        return self.param.get_value()
-
     @abstractmethod
     def _get_value_to_set(self):
         pass
+
+    def get_current_value(self):
+        """
+        Returns:
+            The current value of the param.
+        """
+        return self.param.get_value()
 
     def _trigger_epoch(self):
         self._set_param()
@@ -136,14 +174,19 @@ class HyperParamSetter(Callback):
 
 class HumanHyperParamSetter(HyperParamSetter):
     """
-    Set hyperparameters by loading the value from a file each time it get called.
+    Set hyperparameter by loading the value from a file each time it get called.
+    This is useful for manually tuning some parameters (e.g. learning_rate)
+    without interrupting the training.
     """
 
     def __init__(self, param, file_name='hyper.txt'):
         """
-        :param file_name: a file containing the value of the variable.
-            Each line in the file is a k:v pair, where k is
-            param.readable_name, and v is the value
+        Args:
+            param: same as in :class:`HyperParamSetter`.
+            file_name(str): a file containing the value of the variable.
+                Each line in the file is a k:v pair, where k is
+                param.readable_name, and v is the value. If the pair is not found,
+                the param will not be changed.
         """
         super(HumanHyperParamSetter, self).__init__(param)
         self.file_name = os.path.join(logger.LOG_DIR, file_name)
@@ -170,15 +213,25 @@ class HumanHyperParamSetter(HyperParamSetter):
 
 class ScheduledHyperParamSetter(HyperParamSetter):
     """
-    Set hyperparameters by a predefined schedule.
+    Set hyperparameters by a predefined epoch-based schedule.
     """
 
     def __init__(self, param, schedule, interp=None):
         """
-        :param schedule: [(epoch1, val1), (epoch2, val2), (epoch3, val3), ...]
-            (ep, val) means set the param to "val" after the `ep`th epoch.
-            If epoch == 0, the value is set before training.
-        :param interp: None: no interpolation. 'linear': linear interpolation
+        Args:
+            param: same as in :class:`HyperParamSetter`.
+            schedule(list): with the format ``[(epoch1, val1), (epoch2, val2),
+                (epoch3, val3), ...]``.
+                Each ``(ep, val)`` pair means to set the param
+                to "val" after the `ep`th epoch.
+                If ep == 0, the value will be set before training.
+            interp: None: no interpolation. 'linear': linear interpolation
+
+        Example:
+            .. code-block:: python
+
+                ScheduledHyperParamSetter('learning_rate',
+                                          [(30, 1e-2), (60, 1e-3), (85, 1e-4), (95, 1e-5)]),
         """
         schedule = [(int(a), float(b)) for a, b in schedule]
         self.schedule = sorted(schedule, key=operator.itemgetter(0))
@@ -209,10 +262,20 @@ class ScheduledHyperParamSetter(HyperParamSetter):
 
 
 class HyperParamSetterWithFunc(HyperParamSetter):
-
+    """ Set the parameter by a function of epoch num and old value. """
     def __init__(self, param, func):
-        """Set hyperparameter by a func
-        new_value = f(epoch_num, old_value)
+        """
+        Args:
+            param: same as in :class:`HyperParamSetter`.
+            func: ``param`` will be set by ``new_value = func(epoch_num, old_value)``.
+
+        Example:
+            Decrease by a factor of 0.9 every two epochs:
+
+            .. code-block:: python
+
+                HyperParamSetterWithFunc('learning_rate',
+                                         lambda e, x: x * 0.9 if e % 2 == 0 else x)
         """
         super(HyperParamSetterWithFunc, self).__init__(param)
         self.f = func
@@ -222,22 +285,32 @@ class HyperParamSetterWithFunc(HyperParamSetter):
 
 
 class StatMonitorParamSetter(HyperParamSetter):
-
+    """
+    Change the param by monitoring the change of a statistic.
+    Change when it wasn't decreasing/increasing enough.
+    """
     def __init__(self, param, stat_name, value_func, threshold,
-                 last_k, reverse=False
-                 ):
+                 last_k, reverse=False):
         """
-        Set hyperparameter by a func, when a specific stat wasn't
-        decreasing/increasing enough in the last $k$ epochs.
-        Change param by `new_value = value_func(old_value)`,
-        if :
-            min(stats) >= stats[0] - threshold, where
-            stats = [`stat_nam` in latest `last_k` epochs]
+        Args:
+            param: same as in :class:`HyperParamSetter`.
+            stat_name (str): name of the statistics.
+            value_func (float -> float): a function which returns a new value
+                taking the old value.
+            threshold (float): change threshold.
+            last_k (int): last k epochs.
+            reverse (bool): monitor increasing instead of decreasing.
 
-        For example, if error wasn't decreasing, anneal the learning rate:
-            StatMonitorParamSetter('learning_rate', 'val-error', lambda x: x * 0.2)
+        This callback will change param by ``new_value = value_func(old_value)``, when:
+        ``min(stats) >= stats[0] - threshold``, where
+        ``stats = [stat_name in last k epochs]``
 
-        If reverse==True, use 'increasing' instead of decreasing
+        Example:
+            If validation error wasn't decreasing for 5 epochs, anneal the learning rate:
+
+            .. code-block:: python
+
+                StatMonitorParamSetter('learning_rate', 'val-error', lambda x: x * 0.2, 0, 5)
         """
         super(StatMonitorParamSetter, self).__init__(param)
         self.stat_name = stat_name

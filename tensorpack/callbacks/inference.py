@@ -12,12 +12,13 @@ from ..utils import logger
 from ..utils.stats import RatioCounter, BinaryStatistics
 from ..tfutils import get_op_var_name
 
-__all__ = ['ClassificationError',
-           'ScalarStats', 'Inferencer', 'BinaryClassificationStats']
+__all__ = ['ScalarStats', 'Inferencer',
+           'ClassificationError', 'BinaryClassificationStats']
 
 
 @six.add_metaclass(ABCMeta)
 class Inferencer(object):
+    """ Base class of Inferencer. To be used with :class:`InferenceRunner`. """
 
     def before_inference(self):
         """
@@ -30,7 +31,11 @@ class Inferencer(object):
 
     def datapoint(self, output):
         """
-        Called after complete running every data point
+        Called after each new datapoint finished the forward inference.
+
+        Args:
+            output(list): list of output this inferencer needs. Has the same
+                length as ``self.get_output_tensors()``.
         """
         self._datapoint(output)
 
@@ -41,8 +46,8 @@ class Inferencer(object):
     def after_inference(self):
         """
         Called after a round of inference ends.
-        Returns a dict of statistics which will be logged by the InferenceRunner.
-        The inferencer needs to handle other kind of logging by their own.
+        Returns a dict of statistics which will be logged by the :class:`InferenceRunner`.
+        The inferencer needs to handle other type of logging by itself, if there is any.
         """
         return self._after_inference()
 
@@ -51,7 +56,7 @@ class Inferencer(object):
 
     def get_output_tensors(self):
         """
-        Return a list of tensor names needed for this inference
+        Return a list of tensor names this inferencer needed.
         """
         return self._get_output_tensors()
 
@@ -62,15 +67,16 @@ class Inferencer(object):
 
 class ScalarStats(Inferencer):
     """
-    Write some scalar tensor to both stat and summary.
-    The output of the given Ops must be a scalar.
-    The value will be averaged over all data points in the inference dataflow.
+    Statistics of some scalar tensor.
+    The value will be averaged over all given datapoints.
     """
 
     def __init__(self, names_to_print, prefix='validation'):
         """
-        :param names_to_print: list of names of tensors, or just a name
-        :param prefix: an optional prefix for logging
+        Args:
+            names_to_print(list or str): list of names or just one name. The
+                corresponding tensors have to be scalar.
+            prefix(str): a prefix for logging
         """
         if not isinstance(names_to_print, list):
             self.names = [names_to_print]
@@ -85,6 +91,8 @@ class ScalarStats(Inferencer):
         self.stats = []
 
     def _datapoint(self, output):
+        for o in output:
+            assert isinstance(o, (float, np.float32)), type(o)
         self.stats.append(output)
 
     def _after_inference(self):
@@ -101,24 +109,27 @@ class ScalarStats(Inferencer):
 
 class ClassificationError(Inferencer):
     """
-    Compute classification error in batch mode, from a `wrong` variable
+    Compute classification error in batch mode, from a ``wrong`` tensor.
 
-    The `wrong` tensor is supposed to be an 0/1 integer vector containing
-    whether each sample in the batch is incorrectly classified.
-    You can use `tf.nn.in_top_k` to produce this vector record top-k error as well.
+    The ``wrong`` tensor is supposed to be an binary vector containing
+    whether each sample in the batch is *incorrectly* classified.
+    You can use ``tf.nn.in_top_k`` to produce this vector.
 
-    This callback produce the "true" error,
+    This Inferencer produces the "true" error,
     taking account of the fact that batches might not have the same size in
     testing (because the size of test set might not be a multiple of batch size).
-    Therefore the result is different from averaging the error rate of each batch.
+    Therefore the result can be different from averaging the error rate of each batch.
     """
 
-    def __init__(self, wrong_var_name='incorrect_vector', summary_name='val_error'):
+    def __init__(self, wrong_tensor_name='incorrect_vector', summary_name='val_error'):
         """
-        :param wrong_var_name: name of the `wrong` variable
-        :param summary_name: the name for logging
+        Args:
+            wrong_tensor_name(str): name of the ``wrong`` tensor.
+                The default is the same as the default output name of
+                :meth:`prediction_incorrect`.
+            summary_name(str): the name for logging.
         """
-        self.wrong_var_name = wrong_var_name
+        self.wrong_var_name = wrong_tensor_name
         self.summary_name = summary_name
 
     def _get_output_tensors(self):
@@ -144,21 +155,23 @@ class ClassificationError(Inferencer):
 
 
 class BinaryClassificationStats(Inferencer):
-    """ Compute precision/recall in binary classification, given the
+    """
+    Compute precision / recall in binary classification, given the
     prediction vector and the label vector.
     """
 
-    def __init__(self, pred_var_name, label_var_name, summary_prefix='val'):
+    def __init__(self, pred_tensor_name, label_tensor_name, summary_prefix='val'):
         """
-        :param pred_var_name: name of the 0/1 prediction tensor.
-        :param label_var_name: name of the 0/1 label tensor.
+        Args:
+            pred_tensor_name(str): name of the 0/1 prediction tensor.
+            label_tensor_name(str): name of the 0/1 label tensor.
         """
-        self.pred_var_name = pred_var_name
-        self.label_var_name = label_var_name
+        self.pred_tensor_name = pred_tensor_name
+        self.label_tensor_name = label_tensor_name
         self.prefix = summary_prefix
 
     def _get_output_tensors(self):
-        return [self.pred_var_name, self.label_var_name]
+        return [self.pred_tensor_name, self.label_tensor_name]
 
     def _before_inference(self):
         self.stat = BinaryStatistics()

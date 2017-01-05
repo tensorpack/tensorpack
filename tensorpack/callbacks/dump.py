@@ -8,26 +8,27 @@ import numpy as np
 
 from .base import Callback
 from ..utils import logger
-from ..tfutils import get_op_var_name
+from ..tfutils import get_op_tensor_name
 
 __all__ = ['DumpParamAsImage']
 
 
 class DumpParamAsImage(Callback):
     """
-    Dump a variable to image(s) after every epoch to logger.LOG_DIR.
+    Dump a variable to image(s) to ``logger.LOG_DIR`` after every epoch.
     """
 
     def __init__(self, var_name, prefix=None, map_func=None, scale=255, clip=False):
         """
-        :param var_name: the name of the variable.
-        :param prefix: the filename prefix for saved images. Default is the op name.
-        :param map_func: map the value of the variable to an image or list of
-                    images of shape [h, w] or [h, w, c]. If None, will use identity
-        :param scale: a multiplier on pixel values, applied after map_func. default to 255
-        :param clip: whether to clip the result to [0, 255]
+        Args:
+            var_name (str): the name of the variable.
+            prefix (str): the filename prefix for saved images. Defaults to the Op name.
+            map_func: map the value of the variable to an image or list of
+                 images of shape [h, w] or [h, w, c]. If None, will use identity.
+            scale (float): a multiplier on pixel values, applied after map_func.
+            clip (bool): whether to clip the result to [0, 255].
         """
-        op_name, self.var_name = get_op_var_name(var_name)
+        op_name, self.var_name = get_op_tensor_name(var_name)
         self.func = map_func
         if prefix is None:
             self.prefix = op_name
@@ -45,7 +46,7 @@ class DumpParamAsImage(Callback):
         val = self.trainer.sess.run(self.var)
         if self.func is not None:
             val = self.func(val)
-        if isinstance(val, list):
+        if isinstance(val, list) or val.ndim == 4:
             for idx, im in enumerate(val):
                 self._dump_image(im, idx)
         else:

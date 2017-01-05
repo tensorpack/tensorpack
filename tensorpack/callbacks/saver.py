@@ -16,22 +16,19 @@ __all__ = ['ModelSaver', 'MinSaver', 'MaxSaver']
 
 class ModelSaver(Callback):
     """
-    Save the model to logger directory.
+    Save the model to ``logger.LOG_DIR`` directory every epoch.
     """
 
     def __init__(self, keep_recent=10, keep_freq=0.5,
-                 var_collections=None):
+                 var_collections=tf.GraphKeys.GLOBAL_VARIABLES):
         """
-        :param keep_recent: see `tf.train.Saver` documentation.
-        :param keep_freq: see `tf.train.Saver` documentation.
+        Args:
+            keep_recent(int): see ``tf.train.Saver`` documentation.
+            keep_freq(int): see ``tf.train.Saver`` documentation.
+            var_collections (str or list): the variable collection (or list of collections) o save.
         """
         self.keep_recent = keep_recent
         self.keep_freq = keep_freq
-        if var_collections is None:
-            try:
-                var_collections = tf.GraphKeys.GLOBAL_VARIABLES
-            except:
-                var_collections = tf.GraphKeys.VARIABLES
         if not isinstance(var_collections, list):
             var_collections = [var_collections]
         self.var_collections = var_collections
@@ -87,8 +84,25 @@ due to an alternative in a different tower".format(v.name, var_dict[name].name))
 
 
 class MinSaver(Callback):
+    """
+    Separately save the model with minimum value of some statistics.
+    """
+    def __init__(self, monitor_stat, reverse=False, filename=None):
+        """
+        Args:
+            monitor_stat(str): the name of the statistics.
+            reverse (bool): if True, will save the maximum.
+            filename (str): the name for the saved model.
+                Defaults to ``min-{monitor_stat}.tfmodel``.
 
-    def __init__(self, monitor_stat, reverse=True, filename=None):
+        Example:
+            Save the model with minimum validation error to
+            "min-val-error.tfmodel" under ``logger.LOG_DIR``:
+
+            .. code-block:: python
+
+                MinSaver('val-error')
+        """
         self.monitor_stat = monitor_stat
         self.reverse = reverse
         self.filename = filename
@@ -128,6 +142,14 @@ class MinSaver(Callback):
 
 
 class MaxSaver(MinSaver):
-
-    def __init__(self, monitor_stat):
-        super(MaxSaver, self).__init__(monitor_stat, True)
+    """
+    Separately save the model with maximum value of some statistics.
+    """
+    def __init__(self, monitor_stat, filename=None):
+        """
+        Args:
+            monitor_stat(str): the name of the statistics.
+            filename (str): the name for the saved model.
+                Defaults to ``max-{monitor_stat}.tfmodel``.
+        """
+        super(MaxSaver, self).__init__(monitor_stat, True, filename=filename)

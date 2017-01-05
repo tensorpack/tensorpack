@@ -11,15 +11,19 @@ __all__ = ['StartProcOrThread']
 
 
 class StartProcOrThread(Callback):
+    """
+    Start some threads or processes before training.
+    """
 
-    def __init__(self, procs_threads):
+    def __init__(self, startable):
         """
-        Start extra threads and processes before training
-        :param procs_threads: list of processes or threads
+        Args:
+            startable(list): list of processes or threads which have ``start()`` method.
+                Can also be a single instance of process of thread.
         """
-        if not isinstance(procs_threads, list):
-            procs_threads = [procs_threads]
-        self._procs_threads = procs_threads
+        if not isinstance(startable, list):
+            startable = [startable]
+        self._procs_threads = startable
 
     def _before_train(self):
         logger.info("Starting " +

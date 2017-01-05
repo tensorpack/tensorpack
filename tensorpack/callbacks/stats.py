@@ -20,7 +20,8 @@ class StatHolder(object):
 
     def __init__(self, log_dir):
         """
-        :param log_dir: directory to save the stats.
+        Args:
+            log_dir(str): directory to save the stats.
         """
         self.set_print_tag([])
         self.blacklist_tag = set()
@@ -38,19 +39,24 @@ class StatHolder(object):
     def add_stat(self, k, v):
         """
         Add a stat.
-        :param k: name
-        :param v: value
         """
         self.stat_now[k] = float(v)
 
     def set_print_tag(self, print_tag):
         """
         Set name of stats to print.
+
+        Args:
+            print_tag: a collection of string.
         """
         self.print_tag = None if print_tag is None else set(print_tag)
 
     def add_blacklist_tag(self, blacklist_tag):
-        """ Disable printing for some tags """
+        """ Disable printing for some tags
+
+        Args:
+            blacklist_tag: a collection of string.
+        """
         self.blacklist_tag |= set(blacklist_tag)
 
     def get_stat_now(self, key):
@@ -60,6 +66,10 @@ class StatHolder(object):
         return self.stat_now[key]
 
     def get_stat_history(self, key):
+        """
+        Returns:
+            list: all history of a stat.
+        """
         ret = []
         for h in self.stat_history:
             v = h.get(key, None)
@@ -97,13 +107,14 @@ class StatHolder(object):
 
 class StatPrinter(Callback):
     """
-    Control what stats to print.
+    A callback to control what stats to print. Print everything by default.
     """
 
     def __init__(self, print_tag=None):
         """
-        :param print_tag: a list of regex to match scalar summary to print.
-            If None, will print all scalar tags
+        Args:
+            print_tag: a list of stat names to print.
+                If None, will print all scalar tags.
         """
         self.print_tag = print_tag
 
@@ -125,15 +136,25 @@ class StatPrinter(Callback):
 class SendStat(Callback):
     """
     Execute a command with some specific stats.
-    For example, send the stats to your phone through pushbullet:
-
-        SendStat('curl -u your_id: https://api.pushbullet.com/v2/pushes \
-            -d type=note -d title="validation error" \
-            -d body={validation_error} > /dev/null 2>&1',
-            'validation_error')
+    This is useful for, e.g. building a custom statistics monitor.
     """
-
     def __init__(self, command, stats):
+        """
+        Args:
+            command(str): a command to execute. Use format string with stat
+                names as keys.
+            stats(list or str): stat name(s) to use.
+
+        Example:
+            Send the stats to your phone through pushbullet:
+
+            .. code-block:: python
+
+                SendStat('curl -u your_id: https://api.pushbullet.com/v2/pushes \\
+                         -d type=note -d title="validation error" \\
+                         -d body={validation_error} > /dev/null 2>&1',
+                         'validation_error')
+        """
         self.command = command
         if not isinstance(stats, list):
             stats = [stats]

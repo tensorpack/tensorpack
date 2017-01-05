@@ -44,12 +44,14 @@ class CallbackTimeLogger(object):
 
 class Callbacks(Callback):
     """
-    A container to hold all callbacks, and execute them in the right order and proper session.
+    A container to hold all callbacks, and execute them in the right order
+    (e.g. :class:`StatPrinter` will be executed at last).
     """
 
     def __init__(self, cbs):
         """
-        :param cbs: a list of `Callbacks`
+        Args:
+            cbs(list): a list of :class:`Callback` instances.
         """
         # check type
         for cb in cbs:

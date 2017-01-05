@@ -27,7 +27,8 @@ class Callback(object):
         Called before finalizing the graph.
         Use this callback to setup some ops used in the callback.
 
-        :param trainer: :class:`train.Trainer` instance
+        Args:
+            trainer(Trainer): the trainer which calls the callback
         """
         self.trainer = trainer
         self.graph = tf.get_default_graph()
@@ -59,7 +60,7 @@ class Callback(object):
         """
         Triggered after every epoch.
 
-        In this function, self.epoch_num would be the number of epoch finished.
+        In this function, ``self.epoch_num`` would be the number of epoch finished.
         """
         self.epoch_num += 1
         self._trigger_epoch()
@@ -72,8 +73,15 @@ class Callback(object):
 
 
 class ProxyCallback(Callback):
+    """ A callback which proxy all methods to another callback.
+        It's useful as a base class of callbacks which decorate other callbacks.
+    """
 
     def __init__(self, cb):
+        """
+        Args:
+            cb(Callback): the underlying callback
+        """
         self.cb = cb
 
     def _before_train(self):
@@ -94,14 +102,20 @@ class ProxyCallback(Callback):
 
 class PeriodicCallback(ProxyCallback):
     """
-    A callback to be triggered after every `period` epochs.
-    Doesn't work for trigger_step
+    Wrap a callback so that it is triggered after every ``period`` epochs.
+
+    Doesn't work for ``trigger_step``.
     """
 
     def __init__(self, cb, period):
         """
-        :param cb: a `Callback`
-        :param period: int
+        Args:
+            cb(Callback): the callback to be triggered periodically
+            period(int): the period
+
+        Note:
+            In ``cb``, ``self.epoch_num`` will not be the true number of
+            epochs any more.
         """
         super(PeriodicCallback, self).__init__(cb)
         self.period = int(period)
