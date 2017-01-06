@@ -34,5 +34,4 @@ for _, module_name, _ in walk_packages(
         continue
     if module_name in _TO_IMPORT:
         _global_import(module_name)
-    if module_name != 'common':
-        __all__.append(module_name)
+__all__.extend(['sessinit', 'gradproc'])

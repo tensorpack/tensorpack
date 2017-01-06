@@ -14,13 +14,30 @@ _ArgScopeStack = []
 
 
 @contextmanager
-def argscope(layers, **param):
+def argscope(layers, **kwargs):
+    """
+    Args:
+        layers (list or layer): layer or list of layers to apply the arguments.
+
+    Returns:
+        a context where all appearance of these layer will by default have the
+        arguments specified by kwargs.
+
+    Example:
+        .. code-block:: python
+
+            with argscope(Conv2D, kernel_shape=3, nl=tf.nn.relu, out_channel=32):
+                x = Conv2D('conv0', x)
+                x = Conv2D('conv1', x)
+                x = Conv2D('conv2', x, out_channel=64)  # override argscope
+
+    """
     if not isinstance(layers, list):
         layers = [layers]
 
     def _check_args_exist(l):
         args = inspect.getargspec(l).args
-        for k, v in six.iteritems(param):
+        for k, v in six.iteritems(kwargs):
             assert k in args, "No argument {} in {}".format(k, l.__name__)
 
     for l in layers:
@@ -29,7 +46,7 @@ def argscope(layers, **param):
 
     new_scope = copy.copy(get_arg_scope())
     for l in layers:
-        new_scope[l.__name__].update(param)
+        new_scope[l.__name__].update(kwargs)
     _ArgScopeStack.append(new_scope)
     yield
     del _ArgScopeStack[-1]
@@ -37,8 +54,10 @@ def argscope(layers, **param):
 
 def get_arg_scope():
     """
-    :returns: the current argscope.
-        An argscope is a dict of dict: dict[layername] = {arg: val}
+    Returns:
+        dict: the current argscope.
+
+    An argscope is a dict of dict: ``dict[layername] = {arg: val}``
     """
     if len(_ArgScopeStack) > 0:
         return _ArgScopeStack[-1]

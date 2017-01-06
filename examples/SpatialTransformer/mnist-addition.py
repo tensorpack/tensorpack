@@ -88,7 +88,7 @@ class Model(ModelDesc):
 
     def get_gradient_processor(self):
         return [MapGradient(lambda grad: tf.clip_by_global_norm([grad], 5)[0][0]),
-                ScaleGradient([('STN.*', 0.1)]), SummaryGradient()]
+                ScaleGradient(('STN.*', 0.1)), SummaryGradient()]
 
 
 def get_data(isTrain):

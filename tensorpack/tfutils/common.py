@@ -28,8 +28,10 @@ def get_default_sess_config(mem_fraction=0.99):
     Return a better session config to use as default.
     Tensorflow default session config consume too much resources.
 
-    :param mem_fraction: fraction of memory to use. default to 0.99
-    :returns: a `tf.ConfigProto` object.
+    Args:
+        mem_fraction(float): fraction of memory to use.
+    Returns:
+        tf.ConfigProto: the config to use.
     """
     conf = tf.ConfigProto()
     conf.gpu_options.per_process_gpu_memory_fraction = mem_fraction
@@ -41,7 +43,11 @@ def get_default_sess_config(mem_fraction=0.99):
 
 
 def get_global_step_var():
-    """ :returns: the global_step variable in the current graph. create if not existed"""
+    """
+    Returns:
+        tf.Tensor: the global_step variable in the current graph. create if
+        doesn't exist.
+    """
     try:
         return tf.get_default_graph().get_tensor_by_name(GLOBAL_STEP_VAR_NAME)
     except KeyError:
@@ -56,7 +62,9 @@ def get_global_step_var():
 
 
 def get_global_step():
-    """ :returns: global_step value in current graph and session"""
+    """
+    Returns:
+        float: global_step value in current graph and session"""
     return tf.train.global_step(
         tf.get_default_session(),
         get_global_step_var())
@@ -66,8 +74,10 @@ def get_op_tensor_name(name):
     """
     Tensor name is assumed to be ``op_name + ':0'``
 
-    :param name: an op or a tensor name
-    :returns: (op_name, tensor_name)
+    Args:
+        name(str): name of an op or a tensor
+    Returns:
+        tuple: (op_name, tensor_name)
     """
     if name.endswith(':0'):
         return name[:-2], name
@@ -80,7 +90,10 @@ get_op_var_name = get_op_tensor_name
 
 def get_tensors_by_names(names):
     """
-    Get a list of tensors in the default graph by a list of names
+    Get a list of tensors in the default graph by a list of names.
+
+    Args:
+        names (list):
     """
     ret = []
     G = tf.get_default_graph()
@@ -94,6 +107,12 @@ get_vars_by_names = get_tensors_by_names
 
 
 def backup_collection(keys):
+    """
+    Args:
+        keys (list): list of collection keys to backup
+    Returns:
+        dict: the backup
+    """
     ret = {}
     for k in keys:
         ret[k] = copy(tf.get_collection(k))
@@ -101,22 +120,45 @@ def backup_collection(keys):
 
 
 def restore_collection(backup):
+    """
+    Restore from a collection backup.
+
+    Args:
+        backup (dict):
+    """
     for k, v in six.iteritems(backup):
         del tf.get_collection_ref(k)[:]
         tf.get_collection_ref(k).extend(v)
 
 
 def clear_collection(keys):
+    """
+    Clear some collections.
+
+    Args:
+        keys(list): list of collection keys.
+    """
     for k in keys:
         del tf.get_collection_ref(k)[:]
 
 
 @contextmanager
 def freeze_collection(keys):
+    """
+    Args:
+        keys(list): list of collection keys to freeze.
+
+    Returns:
+        a context where the collections are in the end restored to its initial state.
+    """
     backup = backup_collection(keys)
     yield
     restore_collection(backup)
 
 
 def get_tf_version():
+    """
+    Returns:
+        int:
+    """
     return int(tf.__version__.split('.')[1])

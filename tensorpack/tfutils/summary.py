@@ -102,8 +102,10 @@ def add_param_summary(*summary_lists):
 
 def add_moving_summary(v, *args):
     """
-    :param v: tensor or list of tensor to summary
-    :param args: tensors to summary
+    Args:
+        v (tf.Tensor or list): tensor or list of tensors to summary. Must have
+            scalar type.
+        args: tensors to summary (support positional arguments)
     """
     ctx = get_current_tower_context()
     if ctx is not None and not ctx.is_main_training_tower:
@@ -119,9 +121,14 @@ def add_moving_summary(v, *args):
 @memoized
 def summary_moving_average(tensors=None):
     """
-    Create a MovingAverage op and add summary for tensors
-    :param tensors: list of tf.Tensor to summary. default to the collection MOVING_SUMMARY_VARS_KEY
-    :returns: a op to maintain these average.
+    Create a MovingAverage Op and add summary Op for all the moving averages.
+    This is called by the trainer.
+
+    Args:
+        tensors(list): list of tf.Tensor to summary. hefaults to the
+            collection ````MOVING_SUMMARY_VARS_KEY``.
+    Returns:
+        tf.Operation: an op to maintain these average.
     """
     if tensors is None:
         tensors = set(tf.get_collection(MOVING_SUMMARY_VARS_KEY))
