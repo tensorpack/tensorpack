@@ -2,7 +2,6 @@
 # File: common.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
-from collections import namedtuple
 import six
 
 from tensorpack.models import ModelDesc
@@ -10,25 +9,20 @@ from ..tfutils import get_default_sess_config
 from ..tfutils.sessinit import SessionInit, JustCurrentSession
 from .base import OfflinePredictor
 
-__all__ = ['PredictConfig', 'get_predict_func', 'PredictResult']
-
-PredictResult = namedtuple('PredictResult', ['input', 'output'])
+__all__ = ['PredictConfig', 'get_predict_func']
 
 
 class PredictConfig(object):
 
     def __init__(self, **kwargs):
         """
-        The config used by `get_predict_func`.
-
-        :param session_init: a `utils.sessinit.SessionInit` instance to
-            initialize variables of a session.
-        :param model: a `ModelDesc` instance
-        :param input_names: a list of input variable names.
-        :param output_names: a list of names of the output tensors to predict, the
-            variables can be any computable tensor in the graph.
-            Predict specific output might not require all input variables.
-        :param return_input: whether to return (input, output) pair or just output. default to False.
+        Args:
+            session_init (SessionInit): how to initialize variables of the session.
+            model (ModelDesc): the model to use.
+            input_names (list): a list of input tensor names.
+            output_names (list): a list of names of the output tensors to predict, the
+                tensors can be any computable tensor in the graph.
+            return_input: same as in :attr:`PredictorBase.return_input`.
         """
         # TODO use the name "tensor" instead of "variable"
         def assert_type(v, tp):
@@ -68,10 +62,6 @@ class PredictConfig(object):
 
 def get_predict_func(config):
     """
-    Produce a offline predictor run inside a new session.
-
-    :param config: a `PredictConfig` instance.
-    :returns: A callable predictor that takes a list of input values, and return
-        a list of output values defined in ``config.output_var_names``.
+    Equivalent to ``OfflinePredictor(config)``.
     """
     return OfflinePredictor(config)

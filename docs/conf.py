@@ -73,6 +73,7 @@ extensions = [
 ]
 napoleon_google_docstring = True
 napoleon_include_init_with_doc = True
+napoleon_include_special_with_doc = True
 napoleon_numpy_docstring = False
 napoleon_use_rtype = False
 

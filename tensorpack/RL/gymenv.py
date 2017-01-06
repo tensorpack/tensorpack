@@ -30,10 +30,17 @@ _ENV_LOCK = threading.Lock()
 class GymEnv(RLEnvironment):
     """
     An OpenAI/gym wrapper. Can optionally auto restart.
-    Only support discrete action space now
+    Only support discrete action space for now.
     """
 
     def __init__(self, name, dumpdir=None, viz=False, auto_restart=True):
+        """
+        Args:
+            name (str): the gym environment name.
+            dumpdir (str): the directory to dump recordings to.
+            viz (bool): whether to start visualization.
+            auto_restart (bool): whether to restart after episode ends.
+        """
         with _ENV_LOCK:
             self.gymenv = gym.make(name)
         if dumpdir:

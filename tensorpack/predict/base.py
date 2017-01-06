@@ -11,8 +11,8 @@ from ..utils.naming import PREDICT_TOWER
 from ..utils import logger
 from ..tfutils import get_tensors_by_names, TowerContext
 
-__all__ = ['OnlinePredictor', 'OfflinePredictor',
-           'AsyncPredictorBase',
+__all__ = ['PredictorBase', 'AsyncPredictorBase',
+           'OnlinePredictor', 'OfflinePredictor',
            'MultiTowerOfflinePredictor', 'build_multi_tower_prediction_graph',
            'DataParallelOfflinePredictor']
 
@@ -20,15 +20,29 @@ __all__ = ['OnlinePredictor', 'OfflinePredictor',
 @six.add_metaclass(ABCMeta)
 class PredictorBase(object):
     """
-    Available attributes:
-    session
-    return_input
+    Base class for all predictors.
+
+    Attributes:
+        session (tf.Session):
+        return_input (bool): whether the call will also return (inputs, outputs)
+            or just outpus
     """
 
     def __call__(self, *args):
         """
-        if len(args) == 1, assume args[0] is a datapoint (a list)
-        else, assume args is a datapoinnt
+        Call the predictor on some inputs.
+
+        If ``len(args) == 1``, assume ``args[0]`` is a datapoint (a list).
+        otherwise, assume ``args`` is a datapoinnt
+
+        Examples:
+            When you have a predictor which takes a datapoint [e1, e2], you
+            can call it in two ways:
+
+            .. code-block:: python
+
+                predictor(e1, e2)
+                predictor([e1, e2])
         """
         if len(args) != 1:
             dp = args
@@ -49,15 +63,18 @@ class PredictorBase(object):
 
 
 class AsyncPredictorBase(PredictorBase):
+    """ Base class for all async predictors. """
 
     @abstractmethod
     def put_task(self, dp, callback=None):
         """
-        :param dp: A data point (list of component) as inputs.
-            (It should be either batched or not batched depending on the predictor implementation)
-        :param callback: a thread-safe callback to get called with
-            either outputs or (inputs, outputs)
-        :return: a Future of results
+        Args:
+            dp (list): A datapoint as inputs. It could be either batched or not
+                batched depending on the predictor implementation).
+            callback: a thread-safe callback to get called with
+                either outputs or (inputs, outputs).
+        Returns:
+            concurrent.futures.Future: a Future of results
         """
 
     @abstractmethod
@@ -72,8 +89,16 @@ class AsyncPredictorBase(PredictorBase):
 
 
 class OnlinePredictor(PredictorBase):
+    """ A predictor which directly use an existing session. """
 
     def __init__(self, sess, input_tensors, output_tensors, return_input=False):
+        """
+        Args:
+            sess (tf.Session): an existing session.
+            input_tensors (list): list of names.
+            output_tensors (list): list of names.
+            return_input (bool): same as :attr:`PredictorBase.return_input`.
+        """
         self.session = sess
         self.return_input = return_input
 
@@ -89,9 +114,13 @@ class OnlinePredictor(PredictorBase):
 
 
 class OfflinePredictor(OnlinePredictor):
-    """ Build a predictor from a given config, in an independent graph"""
+    """ A predictor built from a given config, in a new graph. """
 
     def __init__(self, config):
+        """
+        Args:
+            config (PredictConfig): the config to use.
+        """
         self.graph = tf.Graph()
         with self.graph.as_default():
             input_placehdrs = config.model.get_input_vars()
@@ -109,8 +138,10 @@ class OfflinePredictor(OnlinePredictor):
 
 def build_multi_tower_prediction_graph(build_tower_fn, towers):
     """
-    :param build_tower_fn: the function to be called inside each tower, taking tower as the argument
-    :param towers: a list of gpu relative id.
+    Args:
+        build_tower_fn: a function that will be called inside each tower,
+            taking tower id as the argument.
+        towers: a list of relative GPU id.
     """
     for k in towers:
         logger.info(
@@ -122,8 +153,14 @@ def build_multi_tower_prediction_graph(build_tower_fn, towers):
 
 
 class MultiTowerOfflinePredictor(OnlinePredictor):
+    """ A multi-tower multi-GPU predictor. """
 
     def __init__(self, config, towers):
+        """
+        Args:
+            config (PredictConfig): the config to use.
+            towers: a list of relative GPU id.
+        """
         self.graph = tf.Graph()
         self.predictors = []
         with self.graph.as_default():
@@ -149,12 +186,24 @@ class MultiTowerOfflinePredictor(OnlinePredictor):
         return self.predictors[0]._do_call(dp)
 
     def get_predictors(self, n):
+        """
+        Returns:
+            PredictorBase: the nth predictor on the nth GPU.
+        """
         return [self.predictors[k % len(self.predictors)] for k in range(n)]
 
 
 class DataParallelOfflinePredictor(OnlinePredictor):
+    """ A data-parallel predictor.
+    It runs different towers in parallel.
+    """
 
     def __init__(self, config, towers):
+        """
+        Args:
+            config (PredictConfig): the config to use.
+            towers: a list of relative GPU id.
+        """
         self.graph = tf.Graph()
         with self.graph.as_default():
             sess = tf.Session(config=config.session_config)

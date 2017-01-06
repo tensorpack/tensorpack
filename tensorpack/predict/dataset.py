@@ -25,11 +25,15 @@ __all__ = ['DatasetPredictorBase', 'SimpleDatasetPredictor',
 
 @six.add_metaclass(ABCMeta)
 class DatasetPredictorBase(object):
+    """ Base class for dataset predictors.
+        These are predictors which run over a :class:`DataFlow`.
+    """
 
     def __init__(self, config, dataset):
         """
-        :param config: a `PredictConfig` instance.
-        :param dataset: a `DataFlow` instance.
+        Args:
+            config (PredictConfig): the config of predictor.
+            dataset (DataFlow): the DataFlow to run on.
         """
         assert isinstance(dataset, DataFlow)
         assert isinstance(config, PredictConfig)
@@ -38,27 +42,29 @@ class DatasetPredictorBase(object):
 
     @abstractmethod
     def get_result(self):
-        """ A generator function, produce output for each input in dataset"""
+        """
+        Yields:
+            output for each datapoint in the DataFlow.
+        """
         pass
 
     def get_all_result(self):
         """
-        Run over the dataset and return a list of all predictions.
+        Returns:
+            list: all outputs for all datapoints in the DataFlow.
         """
         return list(self.get_result())
 
 
 class SimpleDatasetPredictor(DatasetPredictorBase):
     """
-    Run the predict_config on a given `DataFlow`.
+    Simply create one predictor and run it on the DataFlow.
     """
-
     def __init__(self, config, dataset):
         super(SimpleDatasetPredictor, self).__init__(config, dataset)
         self.predictor = OfflinePredictor(config)
 
     def get_result(self):
-        """ A generator to produce prediction for each data"""
         self.dataset.reset_state()
         try:
             sz = self.dataset.size()
@@ -70,20 +76,26 @@ class SimpleDatasetPredictor(DatasetPredictorBase):
                 yield res
                 pbar.update()
 
-# TODO allow unordered
-
 
 class MultiProcessDatasetPredictor(DatasetPredictorBase):
+    """
+    Run prediction in multiprocesses, on either CPU or GPU.
+    Each process fetch datapoints as tasks and run predictions independently.
+    """
+    # TODO allow unordered
 
     def __init__(self, config, dataset, nr_proc, use_gpu=True, ordered=True):
         """
-        Run prediction in multiprocesses, on either CPU or GPU. Mix mode not supported.
-
-        :param nr_proc: number of processes to use
-        :param use_gpu: use GPU or CPU.
-            If GPU, then nr_proc cannot be more than what's in CUDA_VISIBLE_DEVICES
-        :param ordered: produce results with the original order of the
-            dataflow. a bit slower.
+        Args:
+            config: same as in :class:`DatasetPredictorBase`.
+            dataset: same as in :class:`DatasetPredictorBase`.
+            nr_proc (int): number of processes to use
+            use_gpu (bool): use GPU or CPU.
+                If GPU, then ``nr_proc`` cannot be more than what's in
+                CUDA_VISIBLE_DEVICES.
+            ordered (bool): produce outputs in the original order of the
+                datapoints. This will be a bit slower. Otherwise, :meth:`get_result` will produce
+                outputs in any order.
         """
         if config.return_input:
             logger.warn("Using the option `return_input` in MultiProcessDatasetPredictor might be slow")
