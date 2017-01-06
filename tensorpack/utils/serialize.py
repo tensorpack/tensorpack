@@ -11,8 +11,18 @@ __all__ = ['loads', 'dumps']
 
 
 def dumps(obj):
+    """
+    Serialize an object.
+
+    Returns:
+        str
+    """
     return msgpack.dumps(obj, use_bin_type=True)
 
 
 def loads(buf):
+    """
+    Args:
+        buf (str): serialized object.
+    """
     return msgpack.loads(buf)

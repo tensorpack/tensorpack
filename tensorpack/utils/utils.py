@@ -22,6 +22,14 @@ __all__ = ['change_env',
 
 @contextmanager
 def change_env(name, val):
+    """
+    Args:
+        name(str), val(str):
+
+    Returns:
+        a context where the environment variable ``name`` being set to
+        ``val``. It will be set back after the context exits.
+    """
     oldval = os.environ.get(name, None)
     os.environ[name] = val
     yield
@@ -32,7 +40,14 @@ def change_env(name, val):
 
 
 def get_rng(obj=None):
-    """ obj: some object to use to generate random seed"""
+    """
+    Get a good RNG.
+
+    Args:
+        obj: some object to use to generate random seed.
+    Returns:
+        np.random.RandomState: the RNG.
+    """
     seed = (id(obj) + os.getpid() +
             int(datetime.now().strftime("%Y%m%d%H%M%S%f"))) % 4294967295
     return np.random.RandomState(seed)
@@ -43,10 +58,18 @@ _EXECUTE_HISTORY = set()
 
 def execute_only_once():
     """
-    when called with:
-        if execute_only_once():
-            # do something
-    The body is guranteed to be executed only the first time.
+    Each called in the code to this function is guranteed to return True the
+    first time and False afterwards.
+
+    Returns:
+        bool: whether this is the first time this function gets called from
+            this line of code.
+
+    Example:
+        .. code-block:: python
+
+            if execute_only_once():
+                # do something only once
     """
     f = inspect.currentframe().f_back
     ident = (f.f_code.co_filename, f.f_lineno)
@@ -57,6 +80,15 @@ def execute_only_once():
 
 
 def get_dataset_path(*args):
+    """
+    Get the path to some dataset under ``$TENSORPACK_DATASET``.
+
+    Args:
+        args: strings to be joined to form path.
+
+    Returns:
+        str: path to the dataset.
+    """
     d = os.environ.get('TENSORPACK_DATASET', None)
     if d is None:
         d = os.path.abspath(os.path.join(
@@ -69,6 +101,14 @@ def get_dataset_path(*args):
 
 
 def get_tqdm_kwargs(**kwargs):
+    """
+    Return default arguments to be used with tqdm.
+
+    Args:
+        kwargs: extra arguments to be used.
+    Returns:
+        dict:
+    """
     default = dict(
         smoothing=0.5,
         dynamic_ncols=True,
@@ -85,9 +125,15 @@ def get_tqdm_kwargs(**kwargs):
 
 
 def get_tqdm(**kwargs):
+    """ Similar to :func:`get_tqdm_kwargs`, but returns the tqdm object
+    directly. """
     return tqdm(**get_tqdm_kwargs(**kwargs))
 
 
 def building_rtfd():
+    """
+    Returns:
+        bool: if tensorpack is imported to generate docs now.
+    """
     return os.environ.get('READTHEDOCS') == 'True' \
         or os.environ.get('TENSORPACK_DOC_BUILDING')

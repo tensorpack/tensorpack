@@ -3,7 +3,7 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 import numpy as np
 
-__all__ = ['StatCounter', 'Accuracy', 'BinaryStatistics', 'RatioCounter',
+__all__ = ['StatCounter', 'BinaryStatistics', 'RatioCounter', 'Accuracy',
            'OnlineMoments']
 
 
@@ -14,6 +14,10 @@ class StatCounter(object):
         self.reset()
 
     def feed(self, v):
+        """
+        Args:
+            v(float or np.ndarray): has to be the same shape between calls.
+        """
         self._values.append(v)
 
     def reset(self):
@@ -40,7 +44,7 @@ class StatCounter(object):
 
 
 class RatioCounter(object):
-    """ A counter to count ratio of something"""
+    """ A counter to count ratio of something. """
 
     def __init__(self):
         self.reset()
@@ -50,6 +54,11 @@ class RatioCounter(object):
         self._cnt = 0
 
     def feed(self, cnt, tot=1):
+        """
+        Args:
+            cnt(int): the count of some event of interest.
+            tot(int): the total number of events.
+        """
         self._tot += tot
         self._cnt += cnt
 
@@ -61,6 +70,10 @@ class RatioCounter(object):
 
     @property
     def count(self):
+        """
+        Returns:
+            int: the total
+        """
         return self._tot
 
 
@@ -90,8 +103,9 @@ class BinaryStatistics(object):
 
     def feed(self, pred, label):
         """
-        :param pred: 0/1 np array
-        :param label: 0/1 np array of the same size
+        Args:
+            pred (np.ndarray): binary array.
+            label (np.ndarray): binary array of the same size.
         """
         assert pred.shape == label.shape, "{} != {}".format(pred.shape, label.shape)
         self.nr_pos += (label == 1).sum()
@@ -127,7 +141,8 @@ class BinaryStatistics(object):
 
 
 class OnlineMoments(object):
-    """Compute 1st and 2nd moments online
+    """Compute 1st and 2nd moments online (to avoid storing all elements).
+
     See algorithm at: https://www.wikiwand.com/en/Algorithms_for_calculating_variance#/Online_algorithm
     """
 
@@ -137,6 +152,10 @@ class OnlineMoments(object):
         self._n = 0
 
     def feed(self, x):
+        """
+        Args:
+            x (float or np.ndarray): must have the same shape.
+        """
         self._n += 1
         delta = x - self._mean
         self._mean += delta * (1.0 / self._n)

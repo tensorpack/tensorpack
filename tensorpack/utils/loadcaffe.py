@@ -94,7 +94,13 @@ class CaffeLayerProcessor(object):
 
 def load_caffe(model_desc, model_file):
     """
-    :return: a dict of params
+    Load a caffe model. You must be able to ``import caffe`` to use this
+    function.
+    Args:
+        model_desc (str): path to caffe model description file (.prototxt).
+        model_file (str): path to caffe model parameter file (.caffemodel).
+    Returns:
+        dict: the parameters.
     """
     with change_env('GLOG_minloglevel', '2'):
         import caffe
@@ -107,6 +113,11 @@ def load_caffe(model_desc, model_file):
 
 
 def get_caffe_pb():
+    """
+    Get caffe protobuf.
+    Returns:
+        The imported caffe protobuf module.
+    """
     dir = get_dataset_path('caffe')
     caffe_pb_file = os.path.join(dir, 'caffe_pb2.py')
     if not os.path.isfile(caffe_pb_file):

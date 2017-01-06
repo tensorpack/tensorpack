@@ -29,12 +29,12 @@ class Discretizer1D(Discretizer):
 
 
 class UniformDiscretizer1D(Discretizer1D):
-
     def __init__(self, minv, maxv, spacing):
         """
-        :params minv: minimum value of the first bin
-        :params maxv: maximum value of the last bin
-        :param spacing: width of a bin
+        Args:
+            minv(float): minimum value of the first bin
+            maxv(float): maximum value of the last bin
+            spacing(float): width of a bin
         """
         self.minv = float(minv)
         self.maxv = float(maxv)
@@ -42,9 +42,19 @@ class UniformDiscretizer1D(Discretizer1D):
         self.nr_bin = int(np.ceil((self.maxv - self.minv) / self.spacing))
 
     def get_nr_bin(self):
+        """
+        Returns:
+            int: number of bins
+        """
         return self.nr_bin
 
     def get_bin(self, v):
+        """
+        Args:
+            v(float): value
+        Returns:
+            int: the bin index for value ``v``.
+        """
         if v < self.minv:
             log_once("UniformDiscretizer1D: value smaller than min!", 'warn')
             return 0
@@ -56,10 +66,23 @@ class UniformDiscretizer1D(Discretizer1D):
             0, self.nr_bin - 1))
 
     def get_bin_center(self, bin_id):
+        """
+        Args:
+            bin_id(int)
+        Returns:
+            float: the center of this bin.
+        """
         return self.minv + self.spacing * (bin_id + 0.5)
 
     def get_distribution(self, v, smooth_factor=0.05, smooth_radius=2):
-        """ return a smoothed one-hot distribution of the sample v.
+        """
+        Args:
+            v(float): a sample
+            smooth_factor(float):
+            smooth_radius(int):
+        Returns:
+            numpy.ndarray: array of length ``self.nr_bin``, a smoothed one-hot
+            distribution centered at the bin of sample ``v``.
         """
         b = self.get_bin(v)
         ret = np.zeros((self.nr_bin, ), dtype='float32')
@@ -78,10 +101,11 @@ class UniformDiscretizer1D(Discretizer1D):
 
 
 class UniformDiscretizerND(Discretizer):
-
+    """ A combination of several :class:`UniformDiscretizer1D`. """
     def __init__(self, *min_max_spacing):
         """
-        :params min_max_spacing: (minv, maxv, spacing) for each dimension
+        Args:
+            min_max_spacing: (minv, maxv, spacing) for each dimension
         """
         self.n = len(min_max_spacing)
         self.discretizers = [UniformDiscretizer1D(*k) for k in min_max_spacing]

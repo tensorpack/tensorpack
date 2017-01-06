@@ -8,8 +8,9 @@ import numpy as np
 
 class Rect(object):
     """
-    A Rectangle.
-    Note that x1 = x+w, not x+w-1 or something
+    A rectangle class.
+
+    Note that x1 = x + w, not x+w-1 or something else.
     """
     __slots__ = ['x', 'y', 'w', 'h']
 
@@ -51,9 +52,11 @@ class Rect(object):
 
     def validate(self, shape=None):
         """
-        Is a valid bounding box within this shape
-        :param shape: [h, w]
-        :returns: boolean
+        Check that this rect is a valid bounding box within this shape.
+        Args:
+            shape: [h, w]
+        Returns:
+            bool
         """
         if min(self.x, self.y) < 0:
             return False

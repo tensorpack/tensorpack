@@ -13,7 +13,11 @@ __all__ = ['mkdir_p', 'download', 'recursive_walk']
 
 
 def mkdir_p(dirname):
-    """ make a dir recursively, but do nothing if the dir exists"""
+    """ Make a dir recursively, but do nothing if the dir exists
+
+    Args:
+        dirname(str):
+    """
     assert dirname is not None
     if dirname == '' or os.path.isdir(dirname):
         return
@@ -25,6 +29,10 @@ def mkdir_p(dirname):
 
 
 def download(url, dir):
+    """
+    Download URL to a directory. Will figure out the filename automatically
+    from URL.
+    """
     mkdir_p(dir)
     fname = url.split('/')[-1]
     fpath = os.path.join(dir, fname)
@@ -50,6 +58,10 @@ def download(url, dir):
 
 
 def recursive_walk(rootdir):
+    """
+    Yields:
+        str: All files in rootdir, recursively.
+    """
     for r, dirs, files in os.walk(rootdir):
         for f in files:
             yield os.path.join(r, f)

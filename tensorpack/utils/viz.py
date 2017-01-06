@@ -16,11 +16,12 @@ try:
 except ImportError:
     pass
 
-__all__ = ['pyplot2img', 'build_patch_list', 'pyplot_viz',
-           'dump_dataflow_images', 'interactive_imshow']
+__all__ = ['pyplot2img', 'interactive_imshow', 'build_patch_list',
+           'pyplot_viz', 'dump_dataflow_images']
 
 
 def pyplot2img(plt):
+    """ Convert a pyplot instance to image """
     buf = io.BytesIO()
     plt.axis('off')
     plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0)
@@ -32,8 +33,13 @@ def pyplot2img(plt):
 
 
 def pyplot_viz(img, shape=None):
-    """ use pyplot to visualize the image
-        Note: this is quite slow. and the returned image will have a border
+    """ Use pyplot to visualize the image. e.g., when input is grayscale, the result
+    will automatically have a colormap.
+
+    Returns:
+        np.ndarray: an image.
+    Note:
+        this is quite slow. and the returned image will have a border
     """
     plt.clf()
     plt.axes([0, 0, 1, 1])
@@ -54,8 +60,17 @@ def minnone(x, y):
 
 def interactive_imshow(img, lclick_cb=None, rclick_cb=None, **kwargs):
     """
-    :param lclick_cb: a callback(img, x, y) for left click
-    :param kwargs: can be {key_cb_a ... key_cb_z: callback(img)}
+    Args:
+        img (np.ndarray): an image to show.
+        lclick_cb: a callback func(img, x, y) for left click event.
+        kwargs: can be {key_cb_a: callback_img, key_cb_b: callback_img}, to
+            specify a callback func(img) for keypress.
+
+    Some existing keypress event handler:
+
+    * q: destroy the current window
+    * x: execute ``sys.exit()``
+    * s: save image to "out.png"
     """
     name = 'random_window_name'
     cv2.imshow(name, img)
@@ -84,15 +99,27 @@ def build_patch_list(patch_list,
                      shuffle=False, bgcolor=255,
                      viz=False, lclick_cb=None):
     """
-    Generate patches.
-    :param patch_list: bhw or bhwc images in [0,255]
-    :param border: defaults to 0.1 * min(image_width, image_height)
-    :param nr_row, nr_col: rows and cols of the grid
-    :parma max_width, max_height: if nr_row/col are not given, use this to infer the rows and cols
-    :param shuffle: shuffle the images
-    :param bgcolor: background color
-    :param viz: use interactive imshow to visualize the results
-    :param lclick_cb: only useful when viz=True. a callback(patch, idx)
+    Stacked patches into grid, to produce visualizations like the following:
+
+    .. image:: https://github.com/ppwwyyxx/tensorpack/raw/master/examples/GAN/demo/CelebA-samples.jpg
+
+    Args:
+        patch_list(np.ndarray): NHW or NHWC images in [0,255].
+        nr_row(int), nr_col(int): rows and cols of the grid.
+        border(int): border length between images.
+            Defaults to ``0.1 * min(image_w, image_h)``.
+        max_width(int), max_height(int): Maximum allowed size of the
+            visualization image. If ``nr_row/nr_col`` are not given, will use this to infer the rows and cols.
+        shuffle(bool): shuffle the images inside ``patch_list``.
+        bgcolor(int): background color in [0, 255].
+        viz(bool): whether to use :func:`interactive_imshow` to visualize the results.
+        lclick_cb: A callback function to get called when ``viz==True`` and an
+            image get clicked. It takes the image patch and its index in
+            ``patch_list`` as arguments. (The index is invalid when
+            ``shuffle==True``.)
+
+    Yields:
+        np.ndarray: the visualization image.
     """
     # setup parameters
     patch_list = np.asarray(patch_list)
@@ -156,16 +183,22 @@ def dump_dataflow_images(df, index=0, batched=True,
                          scale=1, resize=None, viz=None,
                          flipRGB=False, exit_after=True):
     """
-    :param df: a DataFlow
-    :param index: the index of the image component
-    :param batched: whether the component contains batched images or not
-    :param number: how many datapoint to take from the DataFlow
-    :param output_dir: output directory to save images, default to not save.
-    :param scale: scale the value, usually either 1 or 255
-    :param resize: (h, w) or Nne, resize the images
-    :param viz: (h, w) or None, visualize the images in grid with imshow
-    :param flipRGB: apply a RGB<->BGR conversion or not
-    :param exit_after: exit the process after this function
+    Dump or visualize images of a :class:`DataFlow`.
+
+    Args:
+        df (DataFlow): the DataFlow.
+        index (int): the index of the image component.
+        batched (bool): whether the component contains batched images (NHW or
+            NHWC) or not (HW or HWC).
+        number (int): how many datapoint to take from the DataFlow.
+        output_dir (str): output directory to save images, default to not save.
+        scale (float): scale the value, usually either 1 or 255.
+        resize (tuple or None): tuple of (h, w) to resize the images to.
+        viz (tuple or None): tuple of (h, w) determining the grid size to use
+            with :func:`build_patch_list` for visualization. No visualization will happen by
+            default.
+        flipRGB (bool): apply a RGB<->BGR conversion or not.
+        exit_after (bool): ``sys.exit()`` after this function.
     """
     if output_dir:
         mkdir_p(output_dir)

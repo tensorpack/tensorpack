@@ -73,8 +73,10 @@ def _set_file(path):
 def set_logger_dir(dirname, action=None):
     """
     Set the directory for global logging.
-    :param dirname: log directory
-    :param action: an action (k/b/d/n) to be performed. Will ask user by default.
+
+    Args:
+        dirname(str): log directory
+        action(str): an action of ("k","b","d","n") to be performed. Will ask user by default.
     """
     global LOG_FILE, LOG_DIR
     if os.path.isdir(dirname):
@@ -108,13 +110,14 @@ If you're resuming from a previous run you can choose to keep it.""")
 
 
 def disable_logger():
-    """ disable all logging ability from this moment"""
+    """ Disable all logging ability from this moment"""
     for func in _LOGGING_METHOD:
         globals()[func] = lambda x: None
 
 
 def auto_set_dir(action=None, overwrite=False):
-    """ set log directory to a subdir inside 'train_log', with the name being
+    """
+    Set log directory to a subdir inside "train_log", with the name being
     the main python file currently running"""
     if LOG_DIR is not None and not overwrite:
         # dir already set
@@ -128,4 +131,5 @@ def auto_set_dir(action=None, overwrite=False):
 
 
 def warn_dependency(name, dependencies):
+    """ Print warning about an import failure due to missing dependencies. """
     warn("Failed to import '{}', {} won't be available'".format(dependencies, name))  # noqa: F821

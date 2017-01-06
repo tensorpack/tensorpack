@@ -4,20 +4,23 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 
-import operator
 import inspect
 import six
-import functools
-import collections
 from . import logger
+if six.PY2:
+    import functools32 as functools
+else:
+    import functools
 
 __all__ = ['map_arg', 'memoized', 'shape2d', 'memoized_ignoreargs', 'log_once']
 
 
 def map_arg(**maps):
     """
-    Apply a mapping on certains argument before calling original function.
-    maps: {key: map_func}
+    Apply a mapping on certains argument before calling the original function.
+
+    Args:
+        maps (dict): {key: map_func}
     """
     def deco(func):
         @functools.wraps(func)
@@ -31,45 +34,18 @@ def map_arg(**maps):
     return deco
 
 
-class memoized(object):
-    '''Decorator. Caches a function's return value each time it is called.
-    If called later with the same arguments, the cached value is returned
-    (not reevaluated).
-    '''
-
-    def __init__(self, func):
-        self.func = func
-        self.cache = {}
-
-    def __call__(self, *args, **kwargs):
-        kwlist = tuple(sorted(list(kwargs), key=operator.itemgetter(0)))
-        if not isinstance(args, collections.Hashable) or \
-                not isinstance(kwlist, collections.Hashable):
-            logger.warn("Arguments to memoized call is unhashable!")
-            # uncacheable. a list, for instance.
-            # better to not cache than blow up.
-            return self.func(*args, **kwargs)
-        key = (args, kwlist)
-        if key in self.cache:
-            return self.cache[key]
-        else:
-            value = self.func(*args, **kwargs)
-            self.cache[key] = value
-            return value
-
-    def __repr__(self):
-        '''Return the function's docstring.'''
-        return self.func.__doc__
-
-    def __get__(self, obj, objtype):
-        '''Support instance methods.'''
-        return functools.partial(self.__call__, obj)
+memoized = functools.lru_cache(maxsize=None)
+""" Equivalent to :func:`functools.lru_cache` """
 
 
 _MEMOIZED_NOARGS = {}
 
 
 def memoized_ignoreargs(func):
+    """
+    A decorator. It performs memoization ignoring the arguments used to call
+    the function.
+    """
     hash(func)  # make sure it is hashable. TODO is it necessary?
 
     def wrapper(*args, **kwargs):
@@ -93,7 +69,13 @@ def memoized_ignoreargs(func):
 
 def shape2d(a):
     """
-    a: a int or tuple/list of length 2
+    Ensure a 2D shape.
+
+    Args:
+        a: a int or tuple/list of length 2
+
+    Returns:
+        list: of length 2. if ``a`` is a int, return ``[a, a]``.
     """
     if type(a) == int:
         return [a, a]
@@ -105,4 +87,12 @@ def shape2d(a):
 
 @memoized
 def log_once(message, func):
+    """
+    Log certain message only once. Call this function more than one times with
+    the same message will result in no-op.
+
+    Args:
+        message(str): message to log
+        func(str): the name of the logger method. e.g. "info", "warn", "error".
+    """
     getattr(logger, func)(message)
