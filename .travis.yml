@@ -1,19 +1,46 @@
-language: "python"
-python:
-   - "2.7"
-   - "3.5"
 sudo: false
-cache: pip
+dist: trusty
+language: "python"
+
+cache:
+  pip: true
+  apt: true
+
+addons:
+    apt:
+        sources:
+            - ubuntu-toolchain-r-test
+        packages:
+            - g++-4.8
+            - python-dev
+            - python-opencv
+            - libopencv-dev
+
+matrix:
+    fast_finish: true
+    include:
+        - os: linux
+          python: 2.7
+          env: TF_BINARY_URL=https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-0.12.1-cp27-none-linux_x86_64.whl
+        - os: linux
+          python: 3.5
+          env: TF_BINARY_URL=https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-0.12.1-cp35-cp35m-linux_x86_64.whl
 
 install:
-  - pip install flake8
+    - echo $TRAVIS_PYTHON_VERSION
+    - pip install -U h5py six numpy termcolor flake8
+    - travis_retry pip install  --upgrade ${TF_BINARY_URL}
 
 before_script:
-  - flake8 --version
+    - flake8 --version
 
 script:
-  - flake8 .
-  - cd examples && flake8 .
+    - flake8 .
+    - cd examples && flake8 . 
+    - cd ../
+    - export PYTHONPATH=$PYTHONPATH:/home/travis/build/ppwwyyxx/tensorpack
+    - python unittest/test_examples.py
+
 
 notifications:
-  email: false
+    email: false
