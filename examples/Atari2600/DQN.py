@@ -134,8 +134,8 @@ class Model(ModelDesc):
 
         self.cost = tf.truediv(symbf.huber_loss(target - pred_action_value),
                                tf.cast(BATCH_SIZE, tf.float32), name='cost')
-        summary.add_param_summary([('conv.*/W', ['histogram', 'rms']),
-                                   ('fc.*/W', ['histogram', 'rms'])])   # monitor all W
+        summary.add_param_summary(('conv.*/W', ['histogram', 'rms']),
+                                  ('fc.*/W', ['histogram', 'rms']))   # monitor all W
         add_moving_summary(self.cost)
 
     def update_target_param(self):

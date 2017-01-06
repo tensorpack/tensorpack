@@ -107,9 +107,9 @@ class Model(ModelDesc):
             summary.add_moving_summary(cost)
 
         # monitor histogram of all weight (of conv and fc layers) in tensorboard
-        summary.add_param_summary([('.*/W', ['histogram', 'rms']),
-                                   ('.*/weights', ['histogram', 'rms'])  # to also work with slim
-                                   ])
+        summary.add_param_summary(('.*/W', ['histogram', 'rms']),
+                                  ('.*/weights', ['histogram', 'rms'])  # to also work with slim
+                                  )
 
 
 def get_data():

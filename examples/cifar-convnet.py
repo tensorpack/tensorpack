@@ -71,7 +71,7 @@ class Model(ModelDesc):
                          name='regularize_loss')
         add_moving_summary(cost, wd_cost)
 
-        add_param_summary([('.*/W', ['histogram'])])   # monitor W
+        add_param_summary(('.*/W', ['histogram']))   # monitor W
         self.cost = tf.add_n([cost, wd_cost], name='cost')
 
 

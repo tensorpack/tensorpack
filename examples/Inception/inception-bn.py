@@ -115,7 +115,7 @@ class Model(ModelDesc):
                                           80000, 0.7, True)
         wd_cost = tf.mul(wd_w, regularize_cost('.*/W', tf.nn.l2_loss), name='l2_regularize_loss')
 
-        add_param_summary([('.*/W', ['histogram'])])   # monitor W
+        add_param_summary(('.*/W', ['histogram']))   # monitor W
         self.cost = tf.add_n([cost, wd_cost], name='cost')
         add_moving_summary(wd_cost, self.cost)
 

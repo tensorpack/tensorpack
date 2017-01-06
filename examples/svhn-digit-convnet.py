@@ -57,7 +57,7 @@ class Model(ModelDesc):
         wd_cost = regularize_cost('fc.*/W', l2_regularizer(0.00001))
         add_moving_summary(cost, wd_cost)
 
-        add_param_summary([('.*/W', ['histogram', 'rms'])])   # monitor W
+        add_param_summary(('.*/W', ['histogram', 'rms']))   # monitor W
         self.cost = tf.add_n([cost, wd_cost], name='cost')
 
 
