@@ -13,13 +13,13 @@ from collections import defaultdict
 import six
 from six.moves import queue
 
-from ..models.common import disable_layer_logging
-from ..callbacks import Callback
-from ..tfutils.varmanip import SessionUpdate
-from ..predict import OfflinePredictor
-from ..utils import logger
-from ..utils.serialize import loads, dumps
-from ..utils.concurrency import LoopThread, ensure_proc_terminate
+from tensorpack.models.common import disable_layer_logging
+from tensorpack.callbacks import Callback
+from tensorpack.tfutils.varmanip import SessionUpdate
+from tensorpack.predict import OfflinePredictor
+from tensorpack.utils import logger
+from tensorpack.utils.serialize import loads, dumps
+from tensorpack.utils.concurrency import LoopThread, ensure_proc_terminate
 
 __all__ = ['SimulatorProcess', 'SimulatorMaster',
            'SimulatorProcessStateExchange', 'SimulatorProcessSharedWeight',

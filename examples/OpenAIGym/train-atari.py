@@ -25,6 +25,7 @@ from tensorpack.utils.stats import *
 from tensorpack.tfutils import symbolic_functions as symbf
 
 from tensorpack.RL import *
+from simulator import *
 import common
 from common import (play_model, Evaluator, eval_model_multithread)
 
