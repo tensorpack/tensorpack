@@ -45,7 +45,7 @@ class MultiProcessPredictWorker(multiprocessing.Process):
             have workers that run on multiGPUs
         """
         if self.idx != 0:
-            from tensorpack.models._common import disable_layer_logging
+            from tensorpack.models.common import disable_layer_logging
             disable_layer_logging()
         self.predictor = OfflinePredictor(self.config)
         if self.idx == 0:

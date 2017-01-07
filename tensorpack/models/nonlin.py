@@ -5,7 +5,7 @@
 
 import tensorflow as tf
 
-from ._common import layer_register
+from .common import layer_register
 from .batch_norm import BatchNorm
 
 __all__ = ['Maxout', 'PReLU', 'LeakyReLU', 'BNReLU']

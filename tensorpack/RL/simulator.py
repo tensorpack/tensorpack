@@ -13,7 +13,7 @@ from collections import defaultdict
 import six
 from six.moves import queue
 
-from ..models._common import disable_layer_logging
+from ..models.common import disable_layer_logging
 from ..callbacks import Callback
 from ..tfutils.varmanip import SessionUpdate
 from ..predict import OfflinePredictor

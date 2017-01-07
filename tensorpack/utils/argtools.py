@@ -12,7 +12,8 @@ if six.PY2:
 else:
     import functools
 
-__all__ = ['map_arg', 'memoized', 'shape2d', 'memoized_ignoreargs', 'log_once']
+__all__ = ['map_arg', 'memoized', 'shape2d', 'shape4d',
+           'memoized_ignoreargs', 'log_once']
 
 
 def map_arg(**maps):
@@ -83,6 +84,19 @@ def shape2d(a):
         assert len(a) == 2
         return list(a)
     raise RuntimeError("Illegal shape: {}".format(a))
+
+
+def shape4d(a):
+    """
+    Ensuer a 4D shape, to use with NHWC functions.
+
+    Args:
+        a: a int or tuple/list of length 2
+
+    Returns:
+        list: of length 4. if ``a`` is a int, return ``[1, a, a, 1]``.
+    """
+    return [1] + shape2d(a) + [1]
 
 
 @memoized

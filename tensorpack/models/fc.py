@@ -5,7 +5,7 @@
 
 import tensorflow as tf
 
-from ._common import layer_register
+from .common import layer_register
 from ..tfutils import symbolic_functions as symbf
 
 __all__ = ['FullyConnected']

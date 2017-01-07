@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-# File: _common.py
+# File: common.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
@@ -11,15 +11,19 @@ from ..tfutils.argscope import get_arg_scope
 from ..tfutils.modelutils import get_shape_str
 from ..tfutils.summary import add_activation_summary
 from ..utils import logger, building_rtfd
-from ..utils.argtools import shape2d
 
 # make sure each layer is only logged once
 _layer_logged = set()
 
+__all__ = ['layer_register', 'disable_layer_logging']
+
 
 def disable_layer_logging():
+    """
+    Disable the shape logging for all layers from this moment on. Can be
+    useful when creating multiple towers.
+    """
     class ContainEverything:
-
         def __contains__(self, x):
             return True
     # can use nonlocal in python3, but how
@@ -32,12 +36,15 @@ def layer_register(
         use_scope=True):
     """
     Register a layer.
-    :param summary_activation: Define the default behavior of whether to
-        summary the output(activation) of this layer.
-        Can be overriden when creating the layer.
-    :param log_shape: log input/output shape of this layer
-    :param use_scope: whether to call this layer with an extra first argument as scope
-        if set to False, will try to figure out whether the first argument is scope name
+
+    Args:
+        summary_activation (bool): Define the default behavior of whether to
+            summary the output(activation) of this layer.
+            Can be overriden when creating the layer.
+        log_shape (bool): log input/output shape of this layer
+        use_scope (bool): whether to call this layer with an extra first argument as scope.
+            If set to False, will try to figure out whether the first argument
+            is scope name or not.
     """
 
     def wrapper(func):
@@ -104,8 +111,3 @@ def layer_register(
         wrapper = decorator(wrapper)
 
     return wrapper
-
-
-def shape4d(a):
-    # for use with tensorflow NHWC ops
-    return [1] + shape2d(a) + [1]

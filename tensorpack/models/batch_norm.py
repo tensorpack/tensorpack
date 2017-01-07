@@ -10,7 +10,7 @@ from tensorflow.python.training import moving_averages
 from ..tfutils.common import get_tf_version
 from ..tfutils.tower import get_current_tower_context
 from ..utils import logger, building_rtfd
-from ._common import layer_register
+from .common import layer_register
 
 __all__ = ['BatchNorm', 'BatchNormV1', 'BatchNormV2']
 
