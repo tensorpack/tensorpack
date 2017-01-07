@@ -33,5 +33,7 @@ for _, module_name, _ in walk_packages(
     if module_name.startswith('_'):
         continue
     if module_name in _TO_IMPORT:
-        _global_import(module_name)
+        _global_import(module_name)  # import the content to tfutils.*
+    else:
+        __all__.append(module_name)  # import the module separately
 __all__.extend(['sessinit', 'gradproc'])
