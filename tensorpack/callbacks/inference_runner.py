@@ -77,7 +77,7 @@ class InferenceRunner(Callback):
             self.infs = infs
         for v in self.infs:
             assert isinstance(v, Inferencer), v
-        self.input_tensors = input_tensors
+        self.input_tensors = input_tensors  # names actually
 
     def _setup_graph(self):
         self._find_input_tensors()  # these are all tensor names
@@ -141,7 +141,7 @@ class InferenceRunner(Callback):
 class FeedfreeInferenceRunner(Callback):
     IOTensor = namedtuple('IOTensor', ['index', 'isOutput'])
 
-    def __init__(self, input, infs, input_tensors=None):
+    def __init__(self, input, infs, input_names=None):
         assert isinstance(input, FeedfreeInput), input
         self._input_data = input
         if not isinstance(infs, list):
@@ -150,7 +150,9 @@ class FeedfreeInferenceRunner(Callback):
             self.infs = infs
         for v in self.infs:
             assert isinstance(v, Inferencer), v
-        self.input_tensor_names = input_tensors
+        if input_names is not None:
+            assert isinstance(input_names, list)
+        self._input_names = input_names
 
     def _setup_graph(self):
         self._find_input_tensors()  # tensors
@@ -162,17 +164,20 @@ class FeedfreeInferenceRunner(Callback):
         # only 1 prediction tower will be used for inference
         self._input_tensors = self._input_data.get_input_tensors()
         model_placehdrs = self.trainer.model.get_reuse_placehdrs()
+        if self.input_names is not None:
+            assert len(self.input_names) == len(self._input_tensors), \
+                "[FeedfreeInferenceRunner] input_names must have the same length as the input data."
+            # XXX incorrect
+            self._input_tensors = [k for idx, k in enumerate(self._input_tensors)
+                                   if model_placehdrs[idx].name in self.input_names]
+            assert len(self._input_tensors) == len(self.input_names), \
+                "[FeedfreeInferenceRunner] all input_tensors must be defined as InputVar in the Model!"
+
         assert len(self._input_tensors) == len(model_placehdrs), \
             "FeedfreeInput doesn't produce correct number of output tensors"
-        if self.input_tensor_names is not None:
-            assert isinstance(self.input_tensor_names, list)
-            self._input_tensors = [k for idx, k in enumerate(self._input_tensors)
-                                   if model_placehdrs[idx].name in self.input_tensor_names]
-            assert len(self._input_tensors) == len(self.input_tensor_names), \
-                "names of input tensors are not defined in the Model"
 
     def _find_output_tensors(self):
-        # doesn't support output an input tensor
+        # TODO doesn't support output an input tensor
         dispatcer = OutputTensorDispatcer()
         for inf in self.infs:
             dispatcer.add_entry(inf.get_output_tensors())
