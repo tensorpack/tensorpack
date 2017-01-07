@@ -10,4 +10,4 @@ cd "$PROG_DIR"
 make clean
 #sphinx-apidoc -o modules ../tensorpack -f -d 10
 make html
-xdotool windowactivate --sync $(xdotool search --desktop 0 Chromium) key F5
+#xdotool windowactivate --sync $(xdotool search --desktop 0 Chromium) key F5

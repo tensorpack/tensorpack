@@ -144,7 +144,7 @@ class Clip(ImageAugmentor):
 class Saturation(ImageAugmentor):
     """ Randomly adjust saturation.
         Follows the implementation in `fb.resnet.torch
-        <https://github.com/facebook/fb.resnet.torch/blob/master/datasets/transforms.lua#L218>`_
+        <https://github.com/facebook/fb.resnet.torch/blob/master/datasets/transforms.lua#L218>`__.
     """
 
     def __init__(self, alpha=0.4):
@@ -169,7 +169,7 @@ class Lighting(ImageAugmentor):
         `ImageNet Classification with Deep Convolutional Neural Networks
         <https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf>`_.
         The implementation follows `fb.resnet.torch
-        <https://github.com/facebook/fb.resnet.torch/blob/master/datasets/transforms.lua#L184>`_.
+        <https://github.com/facebook/fb.resnet.torch/blob/master/datasets/transforms.lua#L184>`__.
     """
 
     def __init__(self, std, eigval, eigvec):
