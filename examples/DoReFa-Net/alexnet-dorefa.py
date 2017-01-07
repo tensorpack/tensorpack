@@ -155,7 +155,7 @@ class Model(ModelDesc):
         add_moving_summary(tf.reduce_mean(wrong, name='train-error-top5'))
 
         # weight decay on all W of fc layers
-        wd_cost = regularize_cost('fc.*/W', l2_regularizer(5e-6))
+        wd_cost = regularize_cost('fc.*/W', l2_regularizer(5e-6), name='regularize_cost')
 
         add_param_summary(('.*/W', ['histogram', 'rms']))
         self.cost = tf.add_n([cost, wd_cost], name='cost')

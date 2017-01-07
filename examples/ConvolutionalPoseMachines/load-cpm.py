@@ -14,6 +14,15 @@ from tensorpack.utils.argtools import memoized
 import matplotlib.pyplot as plt
 _CM = plt.get_cmap('jet')
 
+"""
+15 channels:
+0-1 head, neck
+2-4 right shoulder, right elbow, right wrist
+5-7 left shoulder, left elbow, left wrist
+8-10 right hip, right knee, right ankle
+11-13 left hip, left knee, left ankle
+14: background
+"""
 
 def colorize(img, heatmap):
     """ img: bgr, [0,255]
@@ -37,7 +46,6 @@ def get_gaussian_map():
 
 
 class Model(ModelDesc):
-
     def _get_input_vars(self):
         return [InputVar(tf.float32, (None, 368, 368, 3), 'input'),
                 InputVar(tf.float32, (None, 368, 368, 15), 'label'),
