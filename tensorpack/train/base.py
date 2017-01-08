@@ -163,7 +163,8 @@ class Trainer(object):
                         self.config.starting_epoch, self.config.max_epoch + 1):
                     with timed_operation(
                         'Epoch {} (global_step {})'.format(
-                            epoch_num, get_global_step() + self.config.step_per_epoch)):
+                            epoch_num, get_global_step() + self.config.step_per_epoch),
+                            log_start=True):
                         for step in tqdm.trange(
                                 self.config.step_per_epoch,
                                 **get_tqdm_kwargs(leave=True)):

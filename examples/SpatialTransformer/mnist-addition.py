@@ -75,7 +75,7 @@ class Model(ModelDesc):
                   .FullyConnected('fct', out_dim=19, nl=tf.identity)())
         prob = tf.nn.softmax(logits, name='prob')
 
-        cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)
+        cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
 
         wrong = symbolic_functions.prediction_incorrect(logits, label)

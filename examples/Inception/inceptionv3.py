@@ -177,10 +177,10 @@ class Model(ModelDesc):
             l = Dropout('drop', l, 0.8)
             logits = FullyConnected('linear', l, out_dim=1000, nl=tf.identity)
 
-        loss1 = tf.nn.sparse_softmax_cross_entropy_with_logits(br1, label)
+        loss1 = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=br1, labels=label)
         loss1 = tf.reduce_mean(loss1, name='loss1')
 
-        loss2 = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)
+        loss2 = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         loss2 = tf.reduce_mean(loss2, name='loss2')
 
         wrong = prediction_incorrect(logits, label, 1, name='wrong-top1')

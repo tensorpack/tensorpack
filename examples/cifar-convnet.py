@@ -58,7 +58,7 @@ class Model(ModelDesc):
                 .FullyConnected('fc1', 512, nl=tf.nn.relu) \
                 .FullyConnected('linear', out_dim=self.cifar_classnum, nl=tf.identity)()
 
-        cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)
+        cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
 
         wrong = symbf.prediction_incorrect(logits, label)

@@ -51,7 +51,7 @@ class Model(ModelDesc):
         # monitor training error
         add_moving_summary(tf.reduce_mean(wrong, name='train_error'))
 
-        cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)
+        cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
 
         wd_cost = regularize_cost('fc.*/W', l2_regularizer(0.00001))

@@ -75,7 +75,7 @@ class Model(ModelDesc):
             br1 = Conv2D('loss1conv', l, 128, 1)
             br1 = FullyConnected('loss1fc', br1, 1024, nl=tf.nn.relu)
             br1 = FullyConnected('loss1logit', br1, 1000, nl=tf.identity)
-            loss1 = tf.nn.sparse_softmax_cross_entropy_with_logits(br1, label)
+            loss1 = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=br1, labels=label)
             loss1 = tf.reduce_mean(loss1, name='loss1')
 
             # 14
@@ -88,7 +88,7 @@ class Model(ModelDesc):
             br2 = Conv2D('loss2conv', l, 128, 1)
             br2 = FullyConnected('loss2fc', br2, 1024, nl=tf.nn.relu)
             br2 = FullyConnected('loss2logit', br2, 1000, nl=tf.identity)
-            loss2 = tf.nn.sparse_softmax_cross_entropy_with_logits(br2, label)
+            loss2 = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=br2, labels=label)
             loss2 = tf.reduce_mean(loss2, name='loss2')
 
             # 7
@@ -98,7 +98,7 @@ class Model(ModelDesc):
 
         logits = FullyConnected('linear', l, out_dim=1000, nl=tf.identity)
         prob = tf.nn.softmax(logits, name='output')
-        loss3 = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)
+        loss3 = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         loss3 = tf.reduce_mean(loss3, name='loss3')
 
         cost = tf.add_n([loss3, 0.3 * loss2, 0.3 * loss1], name='weighted_cost')

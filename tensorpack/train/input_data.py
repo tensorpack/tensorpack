@@ -189,7 +189,7 @@ class TensorInput(FeedfreeInput):
 
     def size(self):
         if self._size is None:
-            raise ValueError("size of TensorInput is undefined!")
+            raise NotImplementedError("size of TensorInput is undefined!")
         return self._size
 
     def _setup(self, trainer):

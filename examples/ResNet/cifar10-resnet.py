@@ -90,7 +90,7 @@ class Model(ModelDesc):
         logits = FullyConnected('linear', l, out_dim=10, nl=tf.identity)
         prob = tf.nn.softmax(logits, name='output')
 
-        cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)
+        cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
 
         wrong = prediction_incorrect(logits, label)

@@ -9,11 +9,13 @@ import six
 from six.moves import zip, range
 
 from ..dataflow import DataFlow
-from .base import Callback
-from .inference import Inferencer
-from ..utils import logger, get_tqdm
+from ..utils import logger, get_tqdm, PREDICT_TOWER
 from ..tfutils.common import get_op_tensor_name
 from ..train.input_data import FeedfreeInput
+from ..predict import build_prediction_graph
+
+from .base import Callback
+from .inference import Inferencer
 
 __all__ = ['InferenceRunner']
 
@@ -142,6 +144,10 @@ class FeedfreeInferenceRunner(Callback):
     IOTensor = namedtuple('IOTensor', ['index', 'isOutput'])
 
     def __init__(self, input, infs, input_names=None):
+        """
+        Args:
+            input_names (list): must be a subset of the names of InputVar.
+        """
         assert isinstance(input, FeedfreeInput), input
         self._input_data = input
         if not isinstance(infs, list):
@@ -154,10 +160,20 @@ class FeedfreeInferenceRunner(Callback):
             assert isinstance(input_names, list)
         self._input_names = input_names
 
+        try:
+            self._size = input.size()
+        except NotImplementedError:
+            raise ValueError("Input used in FeedfreeInferencecRunner must have a size!")
+
     def _setup_graph(self):
         self._find_input_tensors()  # tensors
+
+        def fn(_):
+            self.trainer.model.build_graph(self._input_tensors)
+        build_prediction_graph(fn, [0])
+        self._tower_prefix = PREDICT_TOWER + '0'
+
         self._find_output_tensors()
-        # TODO build tower
 
     def _find_input_tensors(self):
         self._input_data._setup(self.trainer)
@@ -165,25 +181,32 @@ class FeedfreeInferenceRunner(Callback):
         self._input_tensors = self._input_data.get_input_tensors()
         model_placehdrs = self.trainer.model.get_reuse_placehdrs()
         if self.input_names is not None:
+            raise NotImplementedError("Random code. Not tested.")
             assert len(self.input_names) == len(self._input_tensors), \
                 "[FeedfreeInferenceRunner] input_names must have the same length as the input data."
-            # XXX incorrect
-            self._input_tensors = [k for idx, k in enumerate(self._input_tensors)
-                                   if model_placehdrs[idx].name in self.input_names]
-            assert len(self._input_tensors) == len(self.input_names), \
-                "[FeedfreeInferenceRunner] all input_tensors must be defined as InputVar in the Model!"
+            for n, tensor in zip(self.input_names, self._input_tensors):
+                opname, _ = get_op_tensor_name(n)
+                for idx, hdr in enumerate(model_placehdrs):
+                    if hdr.name == opname:
+                        model_placehdrs[idx] = tensor
+                        break
+                else:
+                    raise ValueError(
+                        "{} doesn't appear in the InputVar of the model!".format(n))
+            self._input_tensors = model_placehdrs
 
         assert len(self._input_tensors) == len(model_placehdrs), \
-            "FeedfreeInput doesn't produce correct number of output tensors"
+            "[FeedfreeInferenceRunner] Unmatched length of input tensors!"
 
     def _find_output_tensors(self):
         # TODO doesn't support output an input tensor
+        # TODO find tensors, not names
         dispatcer = OutputTensorDispatcer()
         for inf in self.infs:
             dispatcer.add_entry(inf.get_output_tensors())
         all_names = dispatcer.get_all_names()
 
-        IOTensor = InferenceRunner.IOTensor
+        IOTensor = FeedfreeInferenceRunner.IOTensor
         self.output_tensors = all_names
 
         def find_oid(idxs):

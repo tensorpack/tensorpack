@@ -102,7 +102,7 @@ class Model(ModelDesc):
                       .GlobalAvgPooling('gap')
                       .FullyConnected('linear', 1000, nl=tf.identity)())
 
-        loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)
+        loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         loss = tf.reduce_mean(loss, name='xentropy-loss')
 
         wrong = prediction_incorrect(logits, label, 1, name='wrong-top1')

@@ -80,7 +80,7 @@ class Model(ModelDesc):
         prob = tf.nn.softmax(logits, name='prob')   # a Bx10 with probabilities
 
         # a vector of length B with loss of each sample
-        cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)
+        cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')  # the average cross-entropy loss
 
         # compute the "incorrect vector", for the callback ClassificationError to use at validation time
