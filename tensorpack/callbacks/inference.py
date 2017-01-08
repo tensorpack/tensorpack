@@ -10,7 +10,7 @@ from six.moves import zip
 
 from ..utils import logger
 from ..utils.stats import RatioCounter, BinaryStatistics
-from ..tfutils import get_op_var_name
+from ..tfutils import get_op_tensor_name
 
 __all__ = ['ScalarStats', 'Inferencer',
            'ClassificationError', 'BinaryClassificationStats']
@@ -56,9 +56,10 @@ class Inferencer(object):
 
     def get_output_tensors(self):
         """
-        Return a list of tensor names this inferencer needed.
+        Return a list of tensor names (guranteed not op name) this inferencer needs.
         """
-        return self._get_output_tensors()
+        ret = self._get_output_tensors()
+        return [get_op_tensor_name(n)[1] for n in ret]
 
     @abstractmethod
     def _get_output_tensors(self):
@@ -101,7 +102,7 @@ class ScalarStats(Inferencer):
 
         ret = {}
         for stat, name in zip(self.stats, self.names):
-            opname, _ = get_op_var_name(name)
+            opname, _ = get_op_tensor_name(name)
             name = '{}_{}'.format(self.prefix, opname) if self.prefix else opname
             ret[name] = stat
         return ret
@@ -129,11 +130,11 @@ class ClassificationError(Inferencer):
                 :meth:`prediction_incorrect`.
             summary_name(str): the name for logging.
         """
-        self.wrong_var_name = wrong_tensor_name
+        self.wrong_tensor_name = wrong_tensor_name
         self.summary_name = summary_name
 
     def _get_output_tensors(self):
-        return [self.wrong_var_name]
+        return [self.wrong_tensor_name]
 
     def _before_inference(self):
         self.err_stat = RatioCounter()
@@ -145,7 +146,7 @@ class ClassificationError(Inferencer):
             sys.exit(1)
         else:
             # TODO put shape assertion into inferencerrunner
-            assert vec.ndim == 1, "{} is not a vector!".format(self.wrong_var_name)
+            assert vec.ndim == 1, "{} is not a vector!".format(self.wrong_tensor_name)
             batch_size = len(vec)
             wrong = np.sum(vec)
         self.err_stat.feed(wrong, batch_size)

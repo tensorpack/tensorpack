@@ -72,14 +72,16 @@ def get_global_step():
 
 def get_op_tensor_name(name):
     """
-    Tensor name is assumed to be ``op_name + ':0'``
+    Will automatically determine if ``name`` is a tensor name (ends with ':x')
+    or a op name.
+    If it is an op name, the corresponding tensor name is assumed to be ``op_name + ':0'``.
 
     Args:
         name(str): name of an op or a tensor
     Returns:
         tuple: (op_name, tensor_name)
     """
-    if name.endswith(':0'):
+    if name[-2] == ':':
         return name[:-2], name
     else:
         return name, name + ':0'
