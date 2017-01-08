@@ -59,7 +59,7 @@ def class_balanced_cross_entropy(pred, label, name='cross_entropy_loss'):
     eps = 1e-12
     loss_pos = -beta * tf.reduce_mean(y * tf.log(z + eps))
     loss_neg = (1. - beta) * tf.reduce_mean((1. - y) * tf.log(1. - z + eps))
-    cost = tf.sub(loss_pos, loss_neg, name=name)
+    cost = tf.subtract(loss_pos, loss_neg, name=name)
     return cost
 
 

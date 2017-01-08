@@ -86,7 +86,7 @@ class Model(ModelDesc):
         if get_current_tower_context().is_training:
             wd_w = tf.train.exponential_decay(2e-4, get_global_step_var(),
                                               80000, 0.7, True)
-            wd_cost = tf.mul(wd_w, regularize_cost('.*/W', tf.nn.l2_loss), name='wd_cost')
+            wd_cost = tf.multiply(wd_w, regularize_cost('.*/W', tf.nn.l2_loss), name='wd_cost')
             costs.append(wd_cost)
 
             add_param_summary(('.*/W', ['histogram']))   # monitor W

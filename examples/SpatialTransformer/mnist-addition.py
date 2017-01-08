@@ -81,8 +81,8 @@ class Model(ModelDesc):
         wrong = symbolic_functions.prediction_incorrect(logits, label)
         summary.add_moving_summary(tf.reduce_mean(wrong, name='train_error'))
 
-        wd_cost = tf.mul(1e-5, regularize_cost('fc.*/W', tf.nn.l2_loss),
-                         name='regularize_loss')
+        wd_cost = tf.multiply(1e-5, regularize_cost('fc.*/W', tf.nn.l2_loss),
+                              name='regularize_loss')
         summary.add_moving_summary(cost, wd_cost)
         self.cost = tf.add_n([wd_cost, cost], name='cost')
 

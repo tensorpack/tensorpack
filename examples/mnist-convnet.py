@@ -96,9 +96,9 @@ class Model(ModelDesc):
         if not USE_SLIM:
             # Use a regex to find parameters to apply weight decay.
             # Here we apply a weight decay on all W (weight matrix) of all fc layers
-            wd_cost = tf.mul(1e-5,
-                             regularize_cost('fc.*/W', tf.nn.l2_loss),
-                             name='regularize_loss')
+            wd_cost = tf.multiply(1e-5,
+                                  regularize_cost('fc.*/W', tf.nn.l2_loss),
+                                  name='regularize_loss')
             self.cost = tf.add_n([wd_cost, cost], name='total_cost')
             summary.add_moving_summary(cost, wd_cost, self.cost)
         else:

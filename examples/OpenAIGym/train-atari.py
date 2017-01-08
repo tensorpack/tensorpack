@@ -115,7 +115,7 @@ class Model(ModelDesc):
 
         log_pi_a_given_s = tf.reduce_sum(
             log_probs * tf.one_hot(action, NUM_ACTIONS), 1)
-        advantage = tf.sub(tf.stop_gradient(self.value), futurereward, name='advantage')
+        advantage = tf.subtract(tf.stop_gradient(self.value), futurereward, name='advantage')
         policy_loss = tf.reduce_sum(log_pi_a_given_s * advantage, name='policy_loss')
         xentropy_loss = tf.reduce_sum(
             self.logits * log_probs, name='xentropy_loss')

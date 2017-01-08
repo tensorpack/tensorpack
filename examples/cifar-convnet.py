@@ -66,9 +66,7 @@ class Model(ModelDesc):
         add_moving_summary(tf.reduce_mean(wrong, name='train_error'))
 
         # weight decay on all W of fc layers
-        wd_cost = tf.mul(0.0004,
-                         regularize_cost('fc.*/W', tf.nn.l2_loss),
-                         name='regularize_loss')
+        wd_cost = regularize_cost('fc.*/W', l2_regularizer(4e-4), name='regularize_loss')
         add_moving_summary(cost, wd_cost)
 
         add_param_summary(('.*/W', ['histogram']))   # monitor W

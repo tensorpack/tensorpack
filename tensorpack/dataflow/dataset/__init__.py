@@ -18,7 +18,11 @@ def global_import(name):
         __all__.append(k)
 
 
+_CURR_DIR = os.path.dirname(__file__)
 for _, module_name, _ in walk_packages(
-        [os.path.dirname(__file__)]):
+        [_CURR_DIR]):
+    srcpath = os.path.join(_CURR_DIR, module_name + '.py')
+    if not os.path.isfile(srcpath):
+        continue
     if not module_name.startswith('_'):
         global_import(module_name)

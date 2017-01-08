@@ -111,7 +111,7 @@ class Model(ModelDesc):
         wrong = prediction_incorrect(logits, label, 5, name='wrong-top5')
         add_moving_summary(tf.reduce_mean(wrong, name='train-error-top5'))
 
-        wd_cost = tf.mul(1e-4, regularize_cost('.*/W', tf.nn.l2_loss), name='l2_regularize_loss')
+        wd_cost = regularize_cost('.*/W', l2_regularizer(1e-4), name='l2_regularize_loss')
         add_moving_summary(loss, wd_cost)
         self.cost = tf.add_n([loss, wd_cost], name='cost')
 
