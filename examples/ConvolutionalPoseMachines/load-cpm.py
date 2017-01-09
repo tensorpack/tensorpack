@@ -24,6 +24,7 @@ _CM = plt.get_cmap('jet')
 14: background
 """
 
+
 def colorize(img, heatmap):
     """ img: bgr, [0,255]
         heatmap: [0,1]

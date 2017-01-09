@@ -16,4 +16,8 @@ script:
   - cd examples && flake8 .
 
 notifications:
-  email: false
+  email:
+    recipients:
+      - ppwwyyxxc@gmail.com
+    on_success: never
+    on_failure: change # default: always

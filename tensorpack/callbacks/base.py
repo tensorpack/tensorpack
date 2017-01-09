@@ -6,21 +6,12 @@ import tensorflow as tf
 from abc import ABCMeta
 import six
 
-__all__ = ['Callback', 'PeriodicCallback', 'ProxyCallback']
+__all__ = ['Callback', 'PeriodicCallback', 'ProxyCallback', 'CallbackFactory']
 
 
 @six.add_metaclass(ABCMeta)
 class Callback(object):
     """ Base class for all callbacks """
-
-    def before_train(self):
-        """
-        Called right before the first iteration.
-        """
-        self._before_train()
-
-    def _before_train(self):
-        pass
 
     def setup_graph(self, trainer):
         """
@@ -40,13 +31,13 @@ class Callback(object):
     def _setup_graph(self):
         pass
 
-    def after_train(self):
+    def before_train(self):
         """
-        Called after training.
+        Called right before the first iteration.
         """
-        self._after_train()
+        self._before_train()
 
-    def _after_train(self):
+    def _before_train(self):
         pass
 
     def trigger_step(self):
@@ -66,6 +57,15 @@ class Callback(object):
         self._trigger_epoch()
 
     def _trigger_epoch(self):
+        pass
+
+    def after_train(self):
+        """
+        Called after training.
+        """
+        self._after_train()
+
+    def _after_train(self):
         pass
 
     def __str__(self):
@@ -127,3 +127,35 @@ class PeriodicCallback(ProxyCallback):
 
     def __str__(self):
         return "Periodic-" + str(self.cb)
+
+
+class CallbackFactory(Callback):
+    """
+    Create a callback with some lambdas.
+    """
+    def __init__(self, setup_graph=None, before_train=None,
+                 trigger_epoch=None, after_train=None):
+        """
+        Each lambda takes ``self`` as the only argument.
+        """
+
+        self._cb_setup_graph = setup_graph
+        self._cb_before_train = before_train
+        self._cb_trigger_epoch = trigger_epoch
+        self._cb_after_train = after_train
+
+    def _setup_graph(self):
+        if self._cb_setup_graph:
+            self._cb_setup_graph(self)
+
+    def _before_train(self):
+        if self._cb_before_train:
+            self._cb_before_train(self)
+
+    def _trigger_epoch(self):
+        if self._cb_trigger_epoch:
+            self._cb_trigger_epoch(self)
+
+    def _after_train(self):
+        if self._cb_after_train:
+            self._cb_after_train(self)
