@@ -52,6 +52,7 @@ needs_sphinx = '1.4'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.todo',
     'sphinx.ext.napoleon',
     # 'sphinx.ext.coverage',
     'sphinx.ext.mathjax',
@@ -66,7 +67,11 @@ napoleon_include_special_with_doc = True
 napoleon_numpy_docstring = False
 napoleon_use_rtype = False
 
-intersphinx_timeout = 0.1
+if os.environ.get('READTHEDOCS') == 'True':
+    intersphinx_timeout = 10
+else:
+    # skip this when building locally
+    intersphinx_timeout = 0.1
 intersphinx_mapping = {'python': ('https://docs.python.org/3.4', None)}
 # -------------------------
 

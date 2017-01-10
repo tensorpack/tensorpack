@@ -10,10 +10,10 @@ from six.moves import range, map
 from .base import DataFlow, ProxyDataFlow, RNGDataFlow
 from ..utils import logger, get_tqdm
 
-__all__ = ['TestDataSpeed', 'BatchData', 'BatchDataByShape', 'FixedSizeData', 'MapData',
+__all__ = ['TestDataSpeed', 'PrintData', 'BatchData', 'BatchDataByShape', 'FixedSizeData', 'MapData',
            'MapDataComponent', 'RepeatedData', 'RandomChooseData',
            'RandomMixData', 'JoinData', 'ConcatData', 'SelectComponent',
-           'LocallyShuffleData', 'PrintData']
+           'LocallyShuffleData']
 
 
 class TestDataSpeed(ProxyDataFlow):
@@ -479,11 +479,13 @@ class PrintData(ProxyDataFlow):
     Behave like an identity mapping but print shapes of produced datapoints once during construction.
 
     Attributes:
-        label (str): label to identify the data when using this debugging on multiple places
+        label (str): label to identify the data when using this debugging on multiple places.
         num (int): number of iterations
 
     Example:
         To enable this debugging output, you should place it somewhere in your dataflow like
+
+        .. code-block:: python
 
             def get_data():
                 ds = CaffeLMDB('path/to/lmdb')
@@ -493,6 +495,8 @@ class PrintData(ProxyDataFlow):
             ds = get_data()
 
         The output looks like:
+
+        .. code-block:: none
 
             [0110 09:22:21 @common.py:589] DataFlow Info:
             datapoint 0<2 with 4 elements consists of
@@ -511,7 +515,7 @@ class PrintData(ProxyDataFlow):
         """
         Args:
             ds (DataFlow): input DataFlow.
-            num (int): number of dataflow points.
+            num (int): number of dataflow points to print.
             label (str, optional): label to identify this call, when using multiple times
         """
         super(PrintData, self).__init__(ds)
@@ -519,7 +523,7 @@ class PrintData(ProxyDataFlow):
         self.label = label
         self.print_info()
 
-    def analyze_input_data(self, el, k, depth=1):
+    def _analyze_input_data(self, el, k, depth=1):
         """
         Gather useful debug information from a datapoint.
 
@@ -591,7 +595,7 @@ class PrintData(ProxyDataFlow):
             if isinstance(dummy, list):
                 msg.append("datapoint %i<%i with %i elements consists of" % (i, self.num, len(dummy)))
                 for k, entry in enumerate(dummy):
-                    msg.append(self.analyze_input_data(entry, k))
+                    msg.append(self._analyze_input_data(entry, k))
         label = "" if self.label is "" else " (" + self.label + ")"
         logger.info(colored("DataFlow Info%s:" % label, 'cyan') + '\n'.join(msg))
 
