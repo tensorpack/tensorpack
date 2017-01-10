@@ -16,7 +16,7 @@ from ..utils import logger, get_tqdm
 from ..utils.gpu import change_gpu
 
 from .concurrency import MultiProcessQueuePredictWorker
-from .common import PredictConfig
+from .config import PredictConfig
 from .base import OfflinePredictor
 
 __all__ = ['DatasetPredictorBase', 'SimpleDatasetPredictor',
