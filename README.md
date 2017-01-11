@@ -1,4 +1,5 @@
 # tensorpack
+[![Build Status](https://travis-ci.org/ppwwyyxx/tensorpack.svg?branch=master)](https://travis-ci.org/ppwwyyxx/tensorpack)
 Neural Network Toolbox on TensorFlow
 
 Docs & tutorials should be ready within a month. See some [examples](examples) to learn about the framework:
