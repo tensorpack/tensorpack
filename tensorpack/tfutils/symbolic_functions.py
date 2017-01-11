@@ -121,10 +121,10 @@ def huber_loss(x, delta=1, name='huber_loss'):
     """
     sqrcost = tf.square(x)
     abscost = tf.abs(x)
-    return tf.select(abscost < delta,
-                     sqrcost * 0.5,
-                     abscost * delta - 0.5 * delta ** 2,
-                     name=name)
+    return tf.where(abscost < delta,
+                    sqrcost * 0.5,
+                    abscost * delta - 0.5 * delta ** 2,
+                    name=name)
 
 
 def get_scalar_var(name, init_value, summary=False, trainable=False):

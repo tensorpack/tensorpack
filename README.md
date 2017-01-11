@@ -58,7 +58,7 @@ The components are designed to be independent. You can use Model or DataFlow in 
 + other requirements:
 ```
 pip install --user -r requirements.txt
-pip install --user -r opt-requirements.txt # (some optional dependencies, you can install later if needed)
+pip install --user -r opt-requirements.txt # (some optional dependencies required by certain submodule, you can install later if needed)
 ```
 + Enable `import tensorpack`:
 ```

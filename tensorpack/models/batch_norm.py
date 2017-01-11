@@ -84,7 +84,7 @@ def BatchNormV1(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
 
     if use_local_stat:
         batch = tf.cast(tf.shape(x)[0], tf.float32)
-        mul = tf.select(tf.equal(batch, 1.0), 1.0, batch / (batch - 1))
+        mul = tf.where(tf.equal(batch, 1.0), 1.0, batch / (batch - 1))
         batch_var = batch_var * mul  # use unbiased variance estimator in training
 
         with tf.control_dependencies([ema_apply_op] if ctx.is_training else []):

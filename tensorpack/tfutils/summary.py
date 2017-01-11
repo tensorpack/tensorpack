@@ -62,7 +62,7 @@ def add_param_summary(*summary_lists):
     ctx = get_current_tower_context()
     if ctx is not None and not ctx.is_main_training_tower:
         return
-    if len(summary_lists) == 0 and isinstance(summary_lists[0], list):
+    if len(summary_lists) == 1 and isinstance(summary_lists[0], list):
         logger.warn("[Deprecated] Use positional args to call add_param_summary() instead of a list.")
         summary_lists = summary_lists[0]
 

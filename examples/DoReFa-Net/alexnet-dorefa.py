@@ -35,7 +35,8 @@ Accuracy:
     BATCH_SIZE * NUM_GPU. With a different number of GPUs in use, things might
     be a bit different, especially for learning rate.
 
-    With (W,A,G)=(32,32,32), 43% error.
+    With (W,A,G)=(32,32,32) -- full precision baseline, 43% error.
+    With (W,A,G)=(1,32,32) -- BWN, 46% error.
     With (W,A,G)=(1,2,6), 51% error.
     With (W,A,G)=(1,2,4), 63% error.
 
