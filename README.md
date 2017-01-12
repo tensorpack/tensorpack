@@ -1,6 +1,7 @@
 # tensorpack
-[![Build Status](https://travis-ci.org/ppwwyyxx/tensorpack.svg?branch=master)](https://travis-ci.org/ppwwyyxx/tensorpack)
 Neural Network Toolbox on TensorFlow
+
+[![Build Status](https://travis-ci.org/ppwwyyxx/tensorpack.svg?branch=master)](https://travis-ci.org/ppwwyyxx/tensorpack)
 
 Docs & tutorials should be ready within a month. See some [examples](examples) to learn about the framework:
 
@@ -21,6 +22,7 @@ Docs & tutorials should be ready within a month. See some [examples](examples) t
 ### Speech / NLP:
 + [LSTM-CTC for speech recognition](examples/TIMIT)
 + [char-rnn for fun](examples/char-rnn)
++ [LSTM language model on PennTreebank](examples/PennTreebank)
 
 The examples are not only for demonstration of the framework -- you can train them and reproduce the results in papers.
 

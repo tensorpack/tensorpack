@@ -31,6 +31,9 @@ matrix:
 install:
     - echo $TRAVIS_PYTHON_VERSION
     - pip install -U flake8 opencv-python
+    # Here we use opencv-python to overcome some travis probelms.
+    # Users are not recommended to use opencv-python because it brings issues working on GPU
+    # together with tensorflow.
     - if [ -e requirements.txt ]; then pip install -r requirements.txt;else pip install -r requirements.pip;fi
     - ./tests/install-tensorflow.sh
 

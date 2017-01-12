@@ -25,11 +25,12 @@ Training examples with __reproducible__ and meaningful performance.
 ## Speech / NLP:
 + [LSTM-CTC for speech recognition](TIMIT)
 + [char-rnn for fun](char-rnn)
++ [LSTM language model on PennTreebank](PennTreebank)
 
 
 Note to contributors:
 
-We have a high bar for examples. It needs to satisfy one of the following:
+Example needs to satisfy one of the following:
 + Reproduce performance of a published or well-known paper.
 + Get state-of-the-art performance on some task.
 + Illustrate a new way of using the library that are currently not covered.
