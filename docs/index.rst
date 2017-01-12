@@ -7,6 +7,7 @@ tensorpack is in early development.
   :maxdepth: 2
 
   user/tutorials
+  casestudies/index
   modules/index
 
 Indices and tables
