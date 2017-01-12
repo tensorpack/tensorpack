@@ -16,15 +16,15 @@ Training examples with __reproducible__ and meaningful performance.
 + Load a pre-trained [Convolutional Pose Machines](ConvolutionalPoseMachines/).
 
 ## Reinforcement Learning:
-+ [Deep Q-Network(DQN) variants on Atari games](Atari2600)
-+ [Asynchronous Advantage Actor-Critic(A3C) with demos on OpenAI Gym](OpenAIGym)
++ [Deep Q-Network(DQN) variants on Atari games](DeepQNetwork)
++ [Asynchronous Advantage Actor-Critic(A3C) with demos on OpenAI Gym](A3C-Gym)
 
 ## Unsupervised:
 + [Generative Adversarial Network(GAN) variants, including DCGAN, Image2Image, InfoGAN](GAN)
 
 ## Speech / NLP:
-+ [LSTM-CTC for speech recognition](TIMIT)
-+ [char-rnn for fun](char-rnn)
++ [LSTM-CTC for speech recognition](CTC-TIMIT)
++ [char-rnn for fun](Char-RNN)
 + [LSTM language model on PennTreebank](PennTreebank)
 
 
