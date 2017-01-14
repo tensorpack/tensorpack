@@ -49,7 +49,7 @@ class Flip(ImageAugmentor):
 class Resize(ImageAugmentor):
     """ Resize image to a target size"""
 
-    def __init__(self, shape, interp=cv2.INTER_CUBIC):
+    def __init__(self, shape, interp=cv2.INTER_LINEAR):
         """
         Args:
             shape: (h, w) tuple or a int
@@ -85,7 +85,7 @@ class ResizeShortestEdge(ImageAugmentor):
         h, w = img.shape[:2]
         scale = self.size / min(h, w)
         desSize = map(int, [scale * w, scale * h])
-        ret = cv2.resize(img, tuple(desSize), interpolation=cv2.INTER_CUBIC)
+        ret = cv2.resize(img, tuple(desSize), interpolation=cv2.INTER_LINEAR)
         if img.ndim == 3 and ret.ndim == 2:
             ret = ret[:, :, np.newaxis]
         return ret
@@ -95,7 +95,7 @@ class RandomResize(ImageAugmentor):
     """ Randomly rescale w and h of the image"""
 
     def __init__(self, xrange, yrange, minimum=(0, 0), aspect_ratio_thres=0.15,
-                 interp=cv2.INTER_CUBIC):
+                 interp=cv2.INTER_LINEAR):
         """
         Args:
             xrange (tuple): (min, max) range of scaling ratio for w

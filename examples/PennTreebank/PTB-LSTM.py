@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File: ptb-lstm.py
+# File: PTB-LSTM.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import tensorflow as tf
@@ -53,11 +53,10 @@ class Model(ModelDesc):
         input, nextinput = input_vars
         initializer = tf.random_uniform_initializer(-0.05, 0.05)
 
-        with tf.variable_scope('LSTM', initializer=initializer):
-            cell = rnn.BasicLSTMCell(num_units=HIDDEN_SIZE, forget_bias=0.0)
-            if is_training:
-                cell = rnn.DropoutWrapper(cell, output_keep_prob=DROPOUT)
-            cell = rnn.MultiRNNCell([cell] * NUM_LAYER)
+        cell = rnn.BasicLSTMCell(num_units=HIDDEN_SIZE, forget_bias=0.0)
+        if is_training:
+            cell = rnn.DropoutWrapper(cell, output_keep_prob=DROPOUT)
+        cell = rnn.MultiRNNCell([cell] * NUM_LAYER)
 
         def get_v(n):
             return tf.get_variable(n, [BATCH, HIDDEN_SIZE],
@@ -71,13 +70,13 @@ class Model(ModelDesc):
         input_feature = tf.nn.embedding_lookup(embeddingW, input)  # B x seqlen x hiddensize
         input_feature = Dropout(input_feature, DROPOUT)
 
-        input_list = tf.unstack(input_feature, num=SEQ_LEN, axis=1)  # seqlen x (Bxhidden)
-        outputs, last_state = rnn.static_rnn(cell, input_list, state_var, scope='rnn')
+        with tf.variable_scope('LSTM', initializer=initializer):
+            input_list = tf.unstack(input_feature, num=SEQ_LEN, axis=1)  # seqlen x (Bxhidden)
+            outputs, last_state = rnn.static_rnn(cell, input_list, state_var, scope='rnn')
 
         # seqlen x (Bxrnnsize)
         output = tf.reshape(tf.concat_v2(outputs, 1), [-1, HIDDEN_SIZE])  # (Bxseqlen) x hidden
-        logits = FullyConnected('fc', output, VOCAB_SIZE, nl=tf.identity,
-                                W_init=initializer)
+        logits = FullyConnected('fc', output, VOCAB_SIZE, nl=tf.identity, W_init=initializer, b_init=initializer)
         xent_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
             logits=logits, labels=symbolic_functions.flatten(nextinput))
 

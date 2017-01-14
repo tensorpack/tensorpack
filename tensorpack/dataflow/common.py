@@ -499,12 +499,12 @@ class PrintData(ProxyDataFlow):
         .. code-block:: none
 
             [0110 09:22:21 @common.py:589] DataFlow Info:
-            datapoint 0<2 with 4 elements consists of
+            datapoint 0<2 with 4 components consists of
                dp 0: is float of shape () with range [0.0816501893251]
                dp 1: is ndarray of shape (64, 64) with range [0.1300, 0.6895]
                dp 2: is ndarray of shape (64, 64) with range [-1.2248, 1.2177]
                dp 3: is ndarray of shape (9, 9) with range [-0.6045, 0.6045]
-            datapoint 1<2 with 4 elements consists of
+            datapoint 1<2 with 4 components consists of
                dp 0: is float of shape () with range [5.88252075399]
                dp 1: is ndarray of shape (64, 64) with range [0.0072, 0.9371]
                dp 2: is ndarray of shape (64, 64) with range [-0.9011, 0.8491]
@@ -539,7 +539,7 @@ class PrintData(ProxyDataFlow):
             string: debug message
         """
         if isinstance(el, list):
-            return "%s is list of %i elements " % (" " * (depth * 2), len(el))
+            return "%s is list of %i elements" % (" " * (depth * 2), len(el))
         else:
             el_type = el.__class__.__name__
 
@@ -593,7 +593,7 @@ class PrintData(ProxyDataFlow):
         msg = [""]
         for i, dummy in enumerate(cutoff(ds.get_data(), self.num)):
             if isinstance(dummy, list):
-                msg.append("datapoint %i<%i with %i elements consists of" % (i, self.num, len(dummy)))
+                msg.append("datapoint %i<%i with %i components consists of" % (i, self.num, len(dummy)))
                 for k, entry in enumerate(dummy):
                     msg.append(self._analyze_input_data(entry, k))
         label = "" if self.label is "" else " (" + self.label + ")"

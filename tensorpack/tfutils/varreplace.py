@@ -20,6 +20,11 @@ def replace_get_variable(fn):
     Returns:
         a context where ``tf.get_variable`` and
         ``variable_scope.get_variable`` are replaced with ``fn``.
+
+    Note that originally ``tf.get_variable ==
+    tensorflow.python.ops.variable_scope.get_variable``. But some code such as
+    some in `rnn_cell/`, uses the latter one to get variable, therefore both
+    need to be replaced.
     """
     old_getv = tf.get_variable
     old_vars_getv = variable_scope.get_variable

@@ -33,4 +33,4 @@ Note to contributors:
 Example needs to satisfy one of the following:
 + Reproduce performance of a published or well-known paper.
 + Get state-of-the-art performance on some task.
-+ Illustrate a new way of using the library that are currently not covered.
++ Illustrate a new way of using the library that is currently not covered.
