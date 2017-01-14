@@ -13,9 +13,8 @@ from tensorpack.dataflow import DataFlow
 
 
 class GANTrainer(FeedfreeTrainerBase):
-
     def __init__(self, config):
-        self._input_method = QueueInput(config.dataset)
+        self._input_method = QueueInput(config.dataflow)
         super(GANTrainer, self).__init__(config)
 
     def _setup(self):

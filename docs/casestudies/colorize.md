@@ -287,6 +287,7 @@ lr = symbolic_functions.get_scalar_var('learning_rate', 1e-4, summary=True)
 ```
 
 This essentially creates a non-trainable variable with initial value `1e-4` and also track this value inside TensorBoard.
+You can certainly just use `lr = 1e-4`, but then you'll lose the ability to modify it during training (through callbacks).
 Let's have a look at the entire code:
 
 ```python
