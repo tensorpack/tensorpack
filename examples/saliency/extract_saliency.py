@@ -56,30 +56,46 @@ def run(model_path, image_path):
     im = cv2.resize(im, (IMAGE_SIZE, IMAGE_SIZE))
     im = im.astype(np.float32)[:, :, ::-1]
 
-    saliency_images = predict_func([[im]])[0]
+    saliency_images = predict_func([[im]])[0][0]
 
-    abs_saliency = (1 - np.abs(saliency_images).max(axis=-1))
-    abs_saliency -= abs_saliency.min()
-    abs_saliency /= abs_saliency.max()
-    pos_saliency = (np.maximum(0, saliency_images) / saliency_images.max())
-    neg_saliency = (np.maximum(0, -saliency_images) / -saliency_images.min())
+    abs_saliency = np.abs(saliency_images).max(axis=-1)
+    pos_saliency = np.maximum(0, saliency_images)
+    neg_saliency = np.maximum(0, -saliency_images)
 
-    abs_saliency = abs_saliency[0, :, :]
-    pos_saliency = pos_saliency[0, :, :, [2, 1, 0]].transpose(1, 2, 0)
-    neg_saliency = neg_saliency[0, :, :, [2, 1, 0]].transpose(1, 2, 0)
+    pos_saliency = cv2.cvtColor(pos_saliency, cv2.COLOR_RGB2GRAY)
+    neg_saliency = cv2.cvtColor(neg_saliency, cv2.COLOR_RGB2GRAY)
 
-    cv2.imwrite("abs_saliency.jpg", tp.utils.intensity_to_rgb(abs_saliency, cmap='Blues') * 255.)
-    cv2.imwrite("pos_saliency.jpg", tp.utils.intensity_to_rgb(pos_saliency, cmap='Blues') * 255.)
-    cv2.imwrite("neg_saliency.jpg", tp.utils.intensity_to_rgb(neg_saliency, cmap='Blues') * 255.)
-
-    intensity = 1 - abs_saliency
+    cv2.imwrite("abs_saliency.jpg", tp.utils.intensity_to_rgb(abs_saliency,
+                cmap='jet', normalize=True)[:, :, ::-1])
+    cv2.imwrite("pos_saliency.jpg", tp.utils.intensity_to_rgb(pos_saliency,
+                cmap='jet', normalize=True)[:, :, ::-1])
+    cv2.imwrite("neg_saliency.jpg", tp.utils.intensity_to_rgb(neg_saliency,
+                cmap='jet', normalize=True)[:, :, ::-1])
 
     highres_img = cv2.imread("cat.jpg")
-    rsl = tp.utils.intensity_to_rgb(highres_img[:, :, 0], cmap='Blues')
-    cv2.imwrite("intensity.jpg", rsl * 255)
 
-    intensity = cv2.resize(intensity, (highres_img.shape[1], highres_img.shape[0]))
-    rsl = tp.utils.filter_intensity(intensity, highres_img)
+    def filter_intensity(intensity, rgb):
+        """ Only highlight parts having high intensity values
+
+        Args:
+            intensity (TYPE): importance of specific pixel
+            rgb (TYPE): original image
+
+        Returns:
+            image with attention
+        """
+        assert intensity.shape[:2] == rgb.shape[:2]
+
+        intensity = intensity.astype("float")
+        intensity -= intensity.min()
+        intensity /= intensity.max()
+
+        gray = rgb * 0 + 255 // 2
+
+        return intensity[:, :, None] * gray + (1 - intensity[:, :, None]) * rgb
+
+    abs_saliency = cv2.resize(abs_saliency, (highres_img.shape[1], highres_img.shape[0]))
+    rsl = filter_intensity(abs_saliency, highres_img)
     cv2.imwrite("heatmap.jpg", rsl)
 
 

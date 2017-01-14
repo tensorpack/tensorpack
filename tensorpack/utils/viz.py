@@ -17,7 +17,7 @@ except ImportError:
     pass
 
 __all__ = ['pyplot2img', 'build_patch_list', 'pyplot_viz',
-           'dump_dataflow_images', 'interactive_imshow']
+           'dump_dataflow_images', 'interactive_imshow', 'intensity_to_rgb']
 
 
 def pyplot2img(plt):
@@ -207,6 +207,34 @@ def dump_dataflow_images(df, index=0, batched=True,
                     vizlist[:vizsize],
                     nr_row=viz[0], nr_col=viz[1], viz=True))
                 vizlist = vizlist[vizsize:]
+
+
+def intensity_to_rgb(intensity, cmap='rainbow', normalize=False):
+    """
+    Convert a 1-channel matrix of intensities to an RGB image employing a colormap.
+    This function requires matplotlib. See `matplotlib colormaps
+    <http://matplotlib.org/examples/color/colormaps_reference.html>`_ for a
+    list of available colormap.
+
+    Args:
+        intensity (np.ndarray): array of intensities such as saliency.
+        cmap (str): name of the colormap to use.
+        normalize (bool): if True, will normalize the intensity so that it has
+            minimum 0 and maximum 1.
+
+    Returns:
+        np.ndarray: an RGB float32 image in range [0, 255], a colored heatmap.
+    """
+    assert intensity.ndim == 2, intensity.shape
+    intensity = intensity.astype("float")
+
+    if normalize:
+        intensity -= intensity.min()
+        intensity /= intensity.max()
+
+    cmap = plt.get_cmap(cmap)
+    intensity = cmap(intensity)[..., :3]
+    return intensity.astype('float32') * 255.0
 
 
 if __name__ == '__main__':
