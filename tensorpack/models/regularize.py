@@ -8,7 +8,7 @@ import re
 from ..utils import logger
 from ..utils.argtools import memoized
 from ..tfutils.tower import get_current_tower_context
-from ._common import layer_register
+from .common import layer_register
 
 __all__ = ['regularize_cost', 'l2_regularizer', 'l1_regularizer', 'Dropout']
 

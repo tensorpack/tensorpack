@@ -7,6 +7,7 @@ import tensorflow as tf
 import re
 
 from ..utils.argtools import memoized
+from ..utils import logger
 from ..utils.naming import MOVING_SUMMARY_VARS_KEY
 from .tower import get_current_tower_context
 from . import get_global_step_var
@@ -18,7 +19,8 @@ __all__ = ['create_summary', 'add_param_summary', 'add_activation_summary',
 
 def create_summary(name, v):
     """
-    Return a tf.Summary object with name and simple scalar value v
+    Returns:
+        tf.Summary: a tf.Summary object with name and simple scalar value v.
     """
     assert isinstance(name, six.string_types), type(name)
     v = float(v)
@@ -29,8 +31,10 @@ def create_summary(name, v):
 
 def add_activation_summary(x, name=None):
     """
-    Add summary to graph for an activation tensor x.
-    If name is None, use x.name.
+    Add summary for an activation tensor x.  If name is None, use x.name.
+
+    Args:
+        x (tf.Tensor): the tensor to summary.
     """
     ctx = get_current_tower_context()
     if ctx is not None and not ctx.is_main_training_tower:
@@ -47,16 +51,20 @@ def add_activation_summary(x, name=None):
         tf.summary.scalar(name + '-rms', rms(x))
 
 
-def add_param_summary(summary_lists):
+def add_param_summary(*summary_lists):
     """
-    Add summary for all trainable variables matching the regex
+    Add summary Ops for all trainable variables matching the regex.
 
-    :param summary_lists: list of (regex, [list of summary type to perform]).
-        Type can be 'mean', 'scalar', 'histogram', 'sparsity', 'rms'
+    Args:
+        summary_lists (list): each is (regex, [list of summary type to perform]).
+        Summary type can be 'mean', 'scalar', 'histogram', 'sparsity', 'rms'
     """
     ctx = get_current_tower_context()
     if ctx is not None and not ctx.is_main_training_tower:
         return
+    if len(summary_lists) == 1 and isinstance(summary_lists[0], list):
+        logger.warn("[Deprecated] Use positional args to call add_param_summary() instead of a list.")
+        summary_lists = summary_lists[0]
 
     def perform(var, action):
         ndim = var.get_shape().ndims
@@ -94,8 +102,10 @@ def add_param_summary(summary_lists):
 
 def add_moving_summary(v, *args):
     """
-    :param v: tensor or list of tensor to summary
-    :param args: tensors to summary
+    Args:
+        v (tf.Tensor or list): tensor or list of tensors to summary. Must have
+            scalar type.
+        args: tensors to summary (support positional arguments)
     """
     ctx = get_current_tower_context()
     if ctx is not None and not ctx.is_main_training_tower:
@@ -111,12 +121,17 @@ def add_moving_summary(v, *args):
 @memoized
 def summary_moving_average(tensors=None):
     """
-    Create a MovingAverage op and add summary for tensors
-    :param tensors: list of tf.Tensor to summary. default to the collection MOVING_SUMMARY_VARS_KEY
-    :returns: a op to maintain these average.
+    Create a MovingAverage Op and add summary Op for all the moving averages.
+    This is called by the trainer.
+
+    Args:
+        tensors(list): list of tf.Tensor to summary. hefaults to the
+            collection ````MOVING_SUMMARY_VARS_KEY``.
+    Returns:
+        tf.Operation: an op to maintain these average.
     """
     if tensors is None:
-        tensors = tf.get_collection(MOVING_SUMMARY_VARS_KEY)
+        tensors = set(tf.get_collection(MOVING_SUMMARY_VARS_KEY))
 
     # TODO will produce tower0/xxx. not elegant
     with tf.name_scope(None):

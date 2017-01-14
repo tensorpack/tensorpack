@@ -23,10 +23,14 @@ Experience = namedtuple('Experience',
 class ExpReplay(DataFlow, Callback):
     """
     Implement experience replay in the paper
-    `Human-level control through deep reinforcement learning`.
+    `Human-level control through deep reinforcement learning
+    <http://www.nature.com/nature/journal/v518/n7540/full/nature14236.html>`_.
 
-    This implementation provides the interface as an DataFlow.
-    This DataFlow is not fork-safe (doesn't support multiprocess prefetching)
+    This implementation provides the interface as a :class:`DataFlow`.
+    This DataFlow is __not__ fork-safe (thus doesn't support multiprocess prefetching).
+
+    This implementation only works with Q-learning. It assumes that state is
+    batch-able, and the network takes batched inputs.
     """
 
     def __init__(self,
@@ -43,12 +47,14 @@ class ExpReplay(DataFlow, Callback):
                  history_len=1
                  ):
         """
-        :param predictor: a callabale running the up-to-date network.
-            called with a state, return a distribution.
-        :param player: an `RLEnvironment`
-        :param history_len: length of history frames to concat. zero-filled initial frames
-        :param update_frequency: number of new transitions to add to memory
-            after sampling a batch of transitions for training
+        Args:
+            predictor_io_names (tuple of list of str): input/output names to
+                predict Q value from state.
+            player (RLEnvironment): the player.
+            history_len (int): length of history frames to concat. Zero-filled
+                initial frames.
+            update_frequency (int): number of new transitions to add to memory
+                after sampling a batch of transitions for training.
         """
         init_memory_size = int(init_memory_size)
 

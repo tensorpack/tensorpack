@@ -11,7 +11,8 @@ import six
 
 from ..utils import logger, PREDICT_TOWER
 from .common import get_op_var_name
-from .varmanip import SessionUpdate, get_savename_from_varname, is_training_name
+from .varmanip import (SessionUpdate, get_savename_from_varname,
+                       is_training_name, get_checkpoint_path)
 
 __all__ = ['SessionInit', 'NewSession', 'SaverRestore',
            'ParamRestore', 'ChainInit',
@@ -22,12 +23,14 @@ __all__ = ['SessionInit', 'NewSession', 'SaverRestore',
 
 @six.add_metaclass(ABCMeta)
 class SessionInit(object):
-    """ Base class for utilities to initialize a session"""
+    """ Base class for utilities to initialize a session. """
 
     def init(self, sess):
-        """ Initialize a session
+        """
+        Initialize a session
 
-        :param sess: a `tf.Session`
+        Args:
+            sess (tf.Session): the session
         """
         self._init(sess)
 
@@ -37,7 +40,7 @@ class SessionInit(object):
 
 
 class JustCurrentSession(SessionInit):
-    """ Just use the current default session. This is a no-op placeholder"""
+    """ This is a no-op placeholder"""
 
     def _init(self, sess):
         pass
@@ -45,8 +48,7 @@ class JustCurrentSession(SessionInit):
 
 class NewSession(SessionInit):
     """
-    Create a new session. All variables will be initialized by their
-    initializer.
+    Initialize global variables by their initializer.
     """
 
     def _init(self, sess):
@@ -55,32 +57,17 @@ class NewSession(SessionInit):
 
 class SaverRestore(SessionInit):
     """
-    Restore an old model saved by `ModelSaver`.
+    Restore an old model saved by :class:`ModelSaver`.
     """
 
     def __init__(self, model_path, prefix=None):
         """
-        :param model_path: a model name (model-xxxx) or a ``checkpoint`` file.
-        :param prefix: add a `prefix/` for every variable in this checkpoint
+        Args:
+            model_path (str): a model name (model-xxxx) or a ``checkpoint`` file.
+            prefix (str): during restore, add a ``prefix/`` for every variable in this checkpoint
         """
-        if os.path.basename(model_path) == model_path:
-            model_path = os.path.join('.', model_path)  # avoid #4921 and #6142
-        if os.path.basename(model_path) == 'checkpoint':
-            model_path = tf.train.latest_checkpoint(os.path.dirname(model_path))
-            # to be consistent with either v1 or v2
-
-        # fix paths if provided a wrong one
-        new_path = model_path
-        if '00000-of-00001' in model_path:
-            new_path = model_path.split('.data')[0]
-        elif model_path.endswith('.index'):
-            new_path = model_path.split('.index')[0]
-        if new_path != model_path:
-            logger.warn(
-                "[SaverRestore] {} is corrected to {} when restoring the model.".format(model_path, new_path))
-            model_path = new_path
-        assert os.path.isfile(model_path) or os.path.isfile(model_path + '.index'), model_path
-        self.set_path(model_path)
+        model_path = get_checkpoint_path(model_path)
+        self.path = model_path
         self.prefix = prefix
 
     def _init(self, sess):
@@ -93,9 +80,6 @@ class SaverRestore(SessionInit):
             # training/saver.py: assert restore_op.name.endswith("restore_all"), restore_op.name
             saver = tf.train.Saver(var_list=dic, name=str(id(dic)), write_version=2)
             saver.restore(sess, self.path)
-
-    def set_path(self, model_path):
-        self.path = model_path
 
     @staticmethod
     def _produce_restore_dict(vars_multimap):
@@ -161,7 +145,8 @@ class ParamRestore(SessionInit):
 
     def __init__(self, param_dict):
         """
-        :param param_dict: a dict of {name: value}
+        Args:
+            param_dict (dict): a dict of {name: value}
         """
         # use varname (with :0) for consistency
         self.prms = {get_op_var_name(n)[1]: v for n, v in six.iteritems(param_dict)}
@@ -190,12 +175,17 @@ class ParamRestore(SessionInit):
 
 
 class ChainInit(SessionInit):
-    """ Init a session by a list of SessionInit instance."""
+    """ Initialize a session by a list of :class:`SessionInit` instance, executed one by one.
+    This can be useful for, e.g., loading several models from different files
+    to form a composition of models.
+    """
 
     def __init__(self, sess_inits, new_session=True):
         """
-        :params sess_inits: list of `SessionInit` instances.
-        :params new_session: add a `NewSession()` and the beginning, if not there
+        Args:
+            sess_inits (list): list of :class:`SessionInit` instances.
+            new_session (bool): add a ``NewSession()`` and the beginning, if
+                not there.
         """
         if new_session and not isinstance(sess_inits[0], NewSession):
             sess_inits.insert(0, NewSession())
@@ -208,8 +198,11 @@ class ChainInit(SessionInit):
 
 def get_model_loader(filename):
     """
-    Get a corresponding model loader by looking at the file name
-    :return: either a ParamRestore or SaverRestore
+    Get a corresponding model loader by looking at the file name.
+
+    Returns:
+        SessInit: either a :class:`ParamRestore` (if name ends with 'npy') or
+        :class:`SaverRestore` (otherwise).
     """
     if filename.endswith('.npy'):
         assert os.path.isfile(filename), filename

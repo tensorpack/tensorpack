@@ -6,3 +6,4 @@ msgpack-python
 msgpack-numpy
 pyzmq
 subprocess32; python_version < '3.0'
+functools32; python_version < '3.0'

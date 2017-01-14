@@ -89,9 +89,10 @@ class Model(ModelDesc):
         self.prob = tf.nn.softmax(logits / param.softmax_temprature)
 
         xent_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
-            logits, symbolic_functions.flatten(nextinput))
+            logits=logits, labels=symbolic_functions.flatten(nextinput))
         self.cost = tf.reduce_mean(xent_loss, name='cost')
-        summary.add_param_summary([('.*/W', ['histogram'])])   # monitor histogram of all W
+        summary.add_param_summary(('.*/W', ['histogram']))   # monitor histogram of all W
+        summary.add_moving_summary(self.cost)
 
     def get_gradient_processor(self):
         return [GlobalNormClip(5)]

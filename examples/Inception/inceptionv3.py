@@ -177,10 +177,10 @@ class Model(ModelDesc):
             l = Dropout('drop', l, 0.8)
             logits = FullyConnected('linear', l, out_dim=1000, nl=tf.identity)
 
-        loss1 = tf.nn.sparse_softmax_cross_entropy_with_logits(br1, label)
+        loss1 = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=br1, labels=label)
         loss1 = tf.reduce_mean(loss1, name='loss1')
 
-        loss2 = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)
+        loss2 = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         loss2 = tf.reduce_mean(loss2, name='loss2')
 
         wrong = prediction_incorrect(logits, label, 1, name='wrong-top1')
@@ -192,10 +192,10 @@ class Model(ModelDesc):
         # weight decay on all W of fc layers
         wd_w = tf.train.exponential_decay(0.00004, get_global_step_var(),
                                           80000, 0.7, True)
-        wd_cost = tf.mul(wd_w, regularize_cost('.*/W', tf.nn.l2_loss), name='l2_regularize_loss')
-        add_moving_summary(loss1, loss2, wd_cost)
+        wd_cost = tf.multiply(wd_w, regularize_cost('.*/W', tf.nn.l2_loss), name='l2_regularize_loss')
 
         self.cost = tf.add_n([0.4 * loss1, loss2, wd_cost], name='cost')
+        add_moving_summary(loss1, loss2, wd_cost, self.cost)
 
 
 def get_data(train_or_test):

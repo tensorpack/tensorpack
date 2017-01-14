@@ -12,16 +12,17 @@ from ..utils import logger
 from .symbolic_functions import rms
 from .summary import add_moving_summary
 
-__all__ = ['GradientProcessor', 'SummaryGradient', 'CheckGradient',
-           'ScaleGradient', 'MapGradient', 'apply_grad_processors',
-           'GlobalNormClip']
+__all__ = ['GradientProcessor', 'GlobalNormClip', 'MapGradient', 'SummaryGradient', 'CheckGradient',
+           'ScaleGradient', 'apply_grad_processors']
 
 
 def apply_grad_processors(grads, gradprocs):
     """
-    :param grads: list of (grad, var).
-    :param gradprocs: list of `GradientProcessor` instances.
-    :returns: list of (grad, var) went through the processors
+    Args:
+        grads (list): list of (grad, var).
+        gradprocs (list): list of :class:`GradientProcessor` instances.
+    Returns:
+        list: list of (grad, var) went through the processors.
     """
     g = []
     for grad, var in grads:
@@ -36,13 +37,18 @@ def apply_grad_processors(grads, gradprocs):
 
 @six.add_metaclass(ABCMeta)
 class GradientProcessor(object):
+    """ Base class for all gradient processors.
 
+    Subclass should override the ``_process()`` method.
+    """
     def process(self, grads):
         """
         Process the symbolic gradients.
 
-        :param grads: list of (grad, var)
-        :returns: symbolic gradients with the same type as input
+        Args:
+            grads (list): list of (grad, var).
+        Returns:
+            list: processed gradients, with the same type as input.
         """
         with tf.name_scope(type(self).__name__):
             return self._process(grads)
@@ -53,10 +59,16 @@ class GradientProcessor(object):
 
 
 class GlobalNormClip(GradientProcessor):
+    """ Clip by global norm.
+        The global norm is the sum of norm for **all** gradients.
+
+        See :func:`tf.clip_by_global_norm` for more information.
+    """
 
     def __init__(self, global_norm):
-        """ Clip by global norm
-            Note that the global norm is the sum of norm for **all** gradients
+        """
+        Args:
+            global_norm(float): the threshold to clip with.
         """
         self._norm = global_norm
 
@@ -75,9 +87,10 @@ class MapGradient(GradientProcessor):
 
     def __init__(self, func, regex='.*'):
         """
-        :param func: takes a grad or (grad, var) pair and returns a grad. If return None, the
-            gradient is discarded.
-        :param regex: used to match variables. default to match all variables.
+        Args:
+            func: takes a grad or (grad, var) pair and returns a grad. If return None, the
+                gradient is discarded (hence no update to the variable will happen).
+            regex (str): used to match variables. Defaults to match all variables.
         """
         args = inspect.getargspec(func).args
         arg_num = len(args) - inspect.ismethod(func)
@@ -109,7 +122,7 @@ _summaried_gradient = set()
 
 class SummaryGradient(MapGradient):
     """
-    Summary history and RMS for each graident variable
+    Summary histogram and RMS for each graident variable.
     """
 
     def __init__(self):
@@ -127,6 +140,7 @@ class SummaryGradient(MapGradient):
 class CheckGradient(MapGradient):
     """
     Check for numeric issue.
+    See :func:`tf.check_numerics` for more information.
     """
 
     def __init__(self):
@@ -141,13 +155,21 @@ class CheckGradient(MapGradient):
 
 class ScaleGradient(MapGradient):
     """
-    Scale certain gradient by a multiplier
+    Scale certain gradient by a multiplier.
     """
 
     def __init__(self, multipliers, log=True):
         """
-        :param multipliers: list of (regex, float)
-        :param log: whether to do logging or not
+        Args:
+            multipliers (tuple or list): tuple of (regex, float), or list of tuples.
+            log (bool): whether to do logging or not
+
+        Example:
+            Use double learning rate for all the bias (as in caffe):
+
+            .. code-block:: python
+
+                ScaleGradient(('.*/b', 2))
         """
         if not isinstance(multipliers, list):
             multipliers = [multipliers]

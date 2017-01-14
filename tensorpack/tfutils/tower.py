@@ -13,9 +13,14 @@ _CurrentTowerContext = None
 
 
 class TowerContext(object):
+    """ A context where the current model is being built in. """
 
     def __init__(self, tower_name, is_training=None):
-        """ tower_name: 'tower0', 'towerp0', or '' """
+        """
+        Args:
+            tower_name (str): 'tower0', 'towerp0', or ''
+            is_training (bool): if None, automatically determine from tower_name.
+        """
         self._name = tower_name
         if is_training is None:
             is_training = not self._name.startswith(PREDICT_TOWER)
@@ -39,12 +44,15 @@ class TowerContext(object):
 
     def get_variable_on_tower(self, *args, **kwargs):
         """
-        Get a variable for this tower specifically, without reusing.
-        Tensorflow doesn't allow reuse=False scope under a
-        reuse=True scope. This method provides a work around.
+        Get a variable for this tower specifically, without reusing, even if
+        it is called under a ``reuse=True`` variable scope.
+
+        Tensorflow doesn't allow us to disable reuse under a
+        ``reuse=True`` scope. This method provides a work around.
         See https://www.tensorflow.org/versions/master/how_tos/variable_scope/index.html#basics-of-tfvariable-scope
 
-        :param args, kwargs: same as tf.get_variable()
+        Args:
+            args: same as ``tf.get_variable()``.
         """
         with tf.variable_scope(self._name) as scope:
             with tf.variable_scope(scope, reuse=False):

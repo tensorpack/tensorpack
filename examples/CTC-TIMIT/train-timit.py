@@ -72,7 +72,7 @@ class Model(ModelDesc):
         err = tf.edit_distance(predictions, label, normalize=True)
         err.set_shape([None])
         err = tf.reduce_mean(err, name='error')
-        summary.add_moving_summary(err)
+        summary.add_moving_summary(err, self.cost)
 
     def get_gradient_processor(self):
         return [GlobalNormClip(5), SummaryGradient()]

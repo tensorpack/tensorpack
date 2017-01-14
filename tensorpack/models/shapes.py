@@ -4,7 +4,7 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import tensorflow as tf
-from ._common import layer_register
+from .common import layer_register
 
 __all__ = ['ConcatWith']
 

@@ -25,6 +25,7 @@ from tensorpack.utils.stats import *
 from tensorpack.tfutils import symbolic_functions as symbf
 
 from tensorpack.RL import *
+from simulator import *
 import common
 from common import (play_model, Evaluator, eval_model_multithread)
 
@@ -114,7 +115,7 @@ class Model(ModelDesc):
 
         log_pi_a_given_s = tf.reduce_sum(
             log_probs * tf.one_hot(action, NUM_ACTIONS), 1)
-        advantage = tf.sub(tf.stop_gradient(self.value), futurereward, name='advantage')
+        advantage = tf.subtract(tf.stop_gradient(self.value), futurereward, name='advantage')
         policy_loss = tf.reduce_sum(log_pi_a_given_s * advantage, name='policy_loss')
         xentropy_loss = tf.reduce_sum(
             self.logits * log_probs, name='xentropy_loss')
@@ -122,13 +123,14 @@ class Model(ModelDesc):
 
         pred_reward = tf.reduce_mean(self.value, name='predict_reward')
         advantage = symbf.rms(advantage, name='rms_advantage')
-        summary.add_moving_summary(policy_loss, xentropy_loss, value_loss, pred_reward, advantage)
         entropy_beta = tf.get_variable('entropy_beta', shape=[],
                                        initializer=tf.constant_initializer(0.01), trainable=False)
         self.cost = tf.add_n([policy_loss, xentropy_loss * entropy_beta, value_loss])
         self.cost = tf.truediv(self.cost,
                                tf.cast(tf.shape(futurereward)[0], tf.float32),
                                name='cost')
+        summary.add_moving_summary(policy_loss, xentropy_loss,
+                                   value_loss, pred_reward, advantage, self.cost)
 
     def get_gradient_processor(self):
         return [MapGradient(lambda grad: tf.clip_by_average_norm(grad, 0.1)),

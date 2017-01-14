@@ -81,7 +81,7 @@ class Model(ModelDesc):
         log_qc = tf.reduce_sum(prior_prob * zc, 1, name='logQc')
         Elog_qc_given_x = tf.reduce_mean(log_qc_given_x, name='ElogQc_x')
         Hc = tf.reduce_mean(-log_qc, name='Hc')
-        MIloss = tf.mul(Hc + Elog_qc_given_x, -1.0, name='neg_MI')
+        MIloss = tf.multiply(Hc + Elog_qc_given_x, -1.0, name='neg_MI')
 
         self.g_loss, self.d_loss = build_GAN_losses(vecpos, vecneg)
         self.g_loss = tf.add(self.g_loss, MIloss, name='total_g_loss')

@@ -47,13 +47,13 @@ class Model(mnist_example.Model):
         wrong = symbolic_functions.prediction_incorrect(logits, label)
         add_moving_summary(tf.reduce_mean(wrong, name='train_error'))
 
-        cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)
+        cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
-        wd_cost = tf.mul(1e-5, regularize_cost('fc.*/W', tf.nn.l2_loss),
-                         name='regularize_loss')
-        add_moving_summary(cost, wd_cost)
+        wd_cost = tf.multiply(1e-5, regularize_cost('fc.*/W', tf.nn.l2_loss),
+                              name='regularize_loss')
 
         self.cost = tf.add_n([wd_cost, cost], name='cost')
+        add_moving_summary(cost, wd_cost, self.cost)
 
 
 if __name__ == '__main__':

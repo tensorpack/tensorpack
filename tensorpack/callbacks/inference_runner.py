@@ -9,13 +9,15 @@ import six
 from six.moves import zip, range
 
 from ..dataflow import DataFlow
+from ..utils import logger, get_tqdm, PREDICT_TOWER, SUMMARY_BACKUP_KEYS
+from ..tfutils.common import get_op_tensor_name, freeze_collection
+from ..train.input_data import FeedfreeInput
+from ..predict import build_prediction_graph
+
 from .base import Callback
 from .inference import Inferencer
-from ..utils import logger, get_tqdm
-from ..tfutils.common import get_op_tensor_name
-from ..train.input_data import FeedfreeInput
 
-__all__ = ['InferenceRunner']
+__all__ = ['InferenceRunner', 'FeedfreeInferenceRunner']
 
 
 class OutputTensorDispatcer(object):
@@ -39,6 +41,12 @@ class OutputTensorDispatcer(object):
 
     def get_idx_for_each_entry(self):
         return self._idxs
+
+    def get_names_for_each_entry(self):
+        ret = []
+        for t in self._idxs:
+            ret.append([self._names[k] for k in t])
+        return ret
 
 
 def summary_inferencer(trainer, infs):
@@ -77,7 +85,7 @@ class InferenceRunner(Callback):
             self.infs = infs
         for v in self.infs:
             assert isinstance(v, Inferencer), v
-        self.input_tensors = input_tensors
+        self.input_tensors = input_tensors  # names actually
 
     def _setup_graph(self):
         self._find_input_tensors()  # these are all tensor names
@@ -107,17 +115,16 @@ class InferenceRunner(Callback):
         self.output_tensors = list(filter(
             lambda x: x not in self.input_tensors, all_names))
 
-        def find_oid(idxs):
+        def find_tensors(names):
             ret = []
-            for idx in idxs:
-                name = all_names[idx]
+            for name in names:
                 if name in self.input_tensors:
                     ret.append(IOTensor(self.input_tensors.index(name), False))
                 else:
                     ret.append(IOTensor(self.output_tensors.index(name), True))
             return ret
-        self.inf_to_tensors = [find_oid(t) for t in dispatcer.get_idx_for_each_entry()]
-        # list of list of (var_name: IOTensor)
+        self.inf_to_tensors = [find_tensors(t) for t in dispatcer.get_names_for_each_entry()]
+        # list of list of IOTensor
 
     def _trigger_epoch(self):
         for inf in self.infs:
@@ -139,9 +146,18 @@ class InferenceRunner(Callback):
 
 
 class FeedfreeInferenceRunner(Callback):
-    IOTensor = namedtuple('IOTensor', ['index', 'isOutput'])
+    """ A callback that runs a list of :class:`Inferencer` on some
+    :class:`FeedfreeInput`, such as some tensor from a TensorFlow data reading
+    pipeline.
+    """
 
-    def __init__(self, input, infs, input_tensors=None):
+    def __init__(self, input, infs, input_names=None):
+        """
+        Args:
+            input (FeedfreeInput): the input to use. Must have ``size()``.
+            infs (list): list of :class:`Inferencer` to run.
+            input_names (list): must be a subset of the names of InputVar.
+        """
         assert isinstance(input, FeedfreeInput), input
         self._input_data = input
         if not isinstance(infs, list):
@@ -150,58 +166,77 @@ class FeedfreeInferenceRunner(Callback):
             self.infs = infs
         for v in self.infs:
             assert isinstance(v, Inferencer), v
-        self.input_tensor_names = input_tensors
+        if input_names is not None:
+            assert isinstance(input_names, list)
+        self._input_names = input_names
+
+        try:
+            self._size = input.size()
+        except NotImplementedError:
+            raise ValueError("Input used in FeedfreeInferencecRunner must have a size!")
 
     def _setup_graph(self):
         self._find_input_tensors()  # tensors
+
+        tf.get_variable_scope().reuse_variables()
+
+        # overwrite the FeedfreeInferenceRunner scope
+        with tf.name_scope(None), \
+                freeze_collection(SUMMARY_BACKUP_KEYS):
+            def fn(_):
+                self.trainer.model.build_graph(self._input_tensors)
+            build_prediction_graph(fn, [0])
+        self._tower_prefix = PREDICT_TOWER + '0'
+
         self._find_output_tensors()
-        # TODO build tower
 
     def _find_input_tensors(self):
         self._input_data._setup(self.trainer)
         # only 1 prediction tower will be used for inference
         self._input_tensors = self._input_data.get_input_tensors()
         model_placehdrs = self.trainer.model.get_reuse_placehdrs()
+        if self._input_names is not None:
+            raise NotImplementedError("Random code. Not tested.")
+            assert len(self._input_names) == len(self._input_tensors), \
+                "[FeedfreeInferenceRunner] input_names must have the same length as the input data."
+            for n, tensor in zip(self.input_names, self._input_tensors):
+                opname, _ = get_op_tensor_name(n)
+                for idx, hdr in enumerate(model_placehdrs):
+                    if hdr.name == opname:
+                        model_placehdrs[idx] = tensor
+                        break
+                else:
+                    raise ValueError(
+                        "{} doesn't appear in the InputVar of the model!".format(n))
+            self._input_tensors = model_placehdrs
+
         assert len(self._input_tensors) == len(model_placehdrs), \
-            "FeedfreeInput doesn't produce correct number of output tensors"
-        if self.input_tensor_names is not None:
-            assert isinstance(self.input_tensor_names, list)
-            self._input_tensors = [k for idx, k in enumerate(self._input_tensors)
-                                   if model_placehdrs[idx].name in self.input_tensor_names]
-            assert len(self._input_tensors) == len(self.input_tensor_names), \
-                "names of input tensors are not defined in the Model"
+            "[FeedfreeInferenceRunner] Unmatched length of input tensors!"
 
     def _find_output_tensors(self):
-        # doesn't support output an input tensor
+        # TODO doesn't support output an input tensor
         dispatcer = OutputTensorDispatcer()
         for inf in self.infs:
             dispatcer.add_entry(inf.get_output_tensors())
         all_names = dispatcer.get_all_names()
+        G = tf.get_default_graph()
+        self._output_tensors = [G.get_tensor_by_name(
+            self._tower_prefix + '/' + n) for n in all_names]
+        self._sess = self.trainer.sess
 
-        IOTensor = InferenceRunner.IOTensor
-        self.output_tensors = all_names
-
-        def find_oid(idxs):
-            ret = []
-            for idx in idxs:
-                name = all_names[idx]
-                ret.append(IOTensor(self.output_tensors.index(name), True))
-            return ret
-        self.inf_to_tensors = [find_oid(t) for t in dispatcer.get_idx_for_each_entry()]
-        # list of list of (var_name: IOTensor)
+        # list of list of id
+        self.inf_to_idxs = dispatcer.get_idx_for_each_entry()
 
     def _trigger_epoch(self):
         for inf in self.infs:
             inf.before_inference()
 
-        sz = self._input_data.size()
-        with get_tqdm(total=sz) as pbar:
-            for _ in range(sz):
-                # outputs = self.pred_func(dp)
-                # for inf, tensormap in zip(self.infs, self.inf_to_tensors):
-                #     inf_output = [(outputs if k.isOutput else dp)[k.index]
-                #                   for k in tensormap]
-                #     inf.datapoint(inf_output)
+        with get_tqdm(total=self._size) as pbar:
+            for _ in range(self._size):
+                outputs = self._sess.run(fetches=self._output_tensors)
+                for inf, idlist in zip(self.infs, self.inf_to_idxs):
+                    inf_output = [outputs[k] for k in idlist]
+                    inf.datapoint(inf_output)
                 pbar.update()
         self._write_summary_after_inference()
 

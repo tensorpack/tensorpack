@@ -30,6 +30,7 @@ class StatHolder(object):
         self.log_dir = log_dir
         self.filename = os.path.join(log_dir, 'stat.json')
         if os.path.isfile(self.filename):
+            # TODO make a backup first?
             logger.info("Found stats at {}, will append to it.".format(self.filename))
             with open(self.filename) as f:
                 self.stat_history = json.load(f)
@@ -62,13 +63,16 @@ class StatHolder(object):
     def get_stat_now(self, key):
         """
         Return the value of a stat in the current epoch.
+
+        Raises:
+            KeyError if the key hasn't been added in this epoch.
         """
         return self.stat_now[key]
 
     def get_stat_history(self, key):
         """
         Returns:
-            list: all history of a stat.
+            list: all history of a stat. Empty if there is not history of this name.
         """
         ret = []
         for h in self.stat_history:
@@ -82,7 +86,8 @@ class StatHolder(object):
 
     def finalize(self):
         """
-        Called after finishing adding stats for this epoch. Will print and write stats to disk.
+        Called after finishing adding stats for this epoch.
+        Will print and write stats to disk.
         """
         self._print_stat()
         self.stat_history.append(self.stat_now)

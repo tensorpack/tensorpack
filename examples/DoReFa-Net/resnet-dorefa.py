@@ -107,7 +107,7 @@ class Model(ModelDesc):
                       .BatchNorm('lastbn')
                       .apply(nonlin)
                       .GlobalAvgPooling('gap')
-                      .tf.mul(49)  # this is due to a bug in our model design
+                      .tf.multiply(49)  # this is due to a bug in our model design
                       .FullyConnected('fct', 1000)())
         prob = tf.nn.softmax(logits, name='output')
         wrong = prediction_incorrect(logits, label, 1, name='wrong-top1')

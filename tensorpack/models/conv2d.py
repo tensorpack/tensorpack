@@ -4,7 +4,8 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
-from ._common import layer_register, shape2d, shape4d
+from .common import layer_register
+from ..utils.argtools import shape2d, shape4d
 
 __all__ = ['Conv2D', 'Deconv2D']
 

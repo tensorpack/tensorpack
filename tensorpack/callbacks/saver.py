@@ -16,15 +16,17 @@ __all__ = ['ModelSaver', 'MinSaver', 'MaxSaver']
 
 class ModelSaver(Callback):
     """
-    Save the model to ``logger.LOG_DIR`` directory every epoch.
+    Save the model every epoch.
     """
 
     def __init__(self, keep_recent=10, keep_freq=0.5,
+                 checkpoint_dir=None,
                  var_collections=tf.GraphKeys.GLOBAL_VARIABLES):
         """
         Args:
             keep_recent(int): see ``tf.train.Saver`` documentation.
             keep_freq(int): see ``tf.train.Saver`` documentation.
+            checkpoint_dir (str): Defaults to ``logger.LOG_DIR``.
             var_collections (str or list): the variable collection (or list of collections) o save.
         """
         self.keep_recent = keep_recent
@@ -32,23 +34,20 @@ class ModelSaver(Callback):
         if not isinstance(var_collections, list):
             var_collections = [var_collections]
         self.var_collections = var_collections
+        if checkpoint_dir is None:
+            checkpoint_dir = logger.LOG_DIR
+        self.checkpoint_dir = checkpoint_dir
 
     def _setup_graph(self):
         vars = []
         for key in self.var_collections:
             vars.extend(tf.get_collection(key))
-        self.path = os.path.join(logger.LOG_DIR, 'model')
-        try:
-            self.saver = tf.train.Saver(
-                var_list=ModelSaver._get_var_dict(vars),
-                max_to_keep=self.keep_recent,
-                keep_checkpoint_every_n_hours=self.keep_freq,
-                write_version=tf.train.SaverDef.V2)
-        except:
-            self.saver = tf.train.Saver(
-                var_list=ModelSaver._get_var_dict(vars),
-                max_to_keep=self.keep_recent,
-                keep_checkpoint_every_n_hours=self.keep_freq)
+        self.path = os.path.join(self.checkpoint_dir, 'model')
+        self.saver = tf.train.Saver(
+            var_list=ModelSaver._get_var_dict(vars),
+            max_to_keep=self.keep_recent,
+            keep_checkpoint_every_n_hours=self.keep_freq,
+            write_version=tf.train.SaverDef.V2)
         self.meta_graph_written = False
 
     @staticmethod
@@ -70,7 +69,7 @@ due to an alternative in a different tower".format(v.name, var_dict[name].name))
         try:
             if not self.meta_graph_written:
                 self.saver.export_meta_graph(
-                    os.path.join(logger.LOG_DIR,
+                    os.path.join(self.checkpoint_dir,
                                  'graph-{}.meta'.format(logger.get_time_str())),
                     collection_list=self.graph.get_all_collection_keys())
                 self.meta_graph_written = True
@@ -97,11 +96,16 @@ class MinSaver(Callback):
 
         Example:
             Save the model with minimum validation error to
-            "min-val-error.tfmodel" under ``logger.LOG_DIR``:
+            "min-val-error.tfmodel":
 
             .. code-block:: python
 
                 MinSaver('val-error')
+
+        Note:
+            It assumes that :class:`ModelSaver` is used with
+            ``checkpoint_dir=logger.LOG_DIR`` (the default). And it will save
+            the model to that directory as well.
         """
         self.monitor_stat = monitor_stat
         self.reverse = reverse

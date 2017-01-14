@@ -35,7 +35,8 @@ Accuracy:
     BATCH_SIZE * NUM_GPU. With a different number of GPUs in use, things might
     be a bit different, especially for learning rate.
 
-    With (W,A,G)=(32,32,32), 43% error.
+    With (W,A,G)=(32,32,32) -- full precision baseline, 43% error.
+    With (W,A,G)=(1,32,32) -- BWN, 46% error.
     With (W,A,G)=(1,2,6), 51% error.
     With (W,A,G)=(1,2,4), 63% error.
 
@@ -146,7 +147,7 @@ class Model(ModelDesc):
 
         prob = tf.nn.softmax(logits, name='output')
 
-        cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)
+        cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
 
         wrong = prediction_incorrect(logits, label, 1, name='wrong-top1')
@@ -155,11 +156,11 @@ class Model(ModelDesc):
         add_moving_summary(tf.reduce_mean(wrong, name='train-error-top5'))
 
         # weight decay on all W of fc layers
-        wd_cost = regularize_cost('fc.*/W', l2_regularizer(5e-6))
-        add_moving_summary(cost, wd_cost)
+        wd_cost = regularize_cost('fc.*/W', l2_regularizer(5e-6), name='regularize_cost')
 
-        add_param_summary([('.*/W', ['histogram', 'rms'])])
+        add_param_summary(('.*/W', ['histogram', 'rms']))
         self.cost = tf.add_n([cost, wd_cost], name='cost')
+        add_moving_summary(cost, wd_cost, self.cost)
 
 
 def get_data(dataset_name):

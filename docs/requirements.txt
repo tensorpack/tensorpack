@@ -3,4 +3,5 @@ numpy
 tqdm
 nltk
 decorator
+Sphinx==1.5.1
 recommonmark==0.4.0

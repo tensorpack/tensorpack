@@ -35,7 +35,7 @@ Download an [atari rom](https://github.com/openai/atari-py/tree/master/atari_py/
 To train:
 ```
 ./DQN.py --rom breakout.bin
-# use `--algo` to select other DQN algorithms
+# use `--algo` to select other DQN algorithms. See `-h` for more options.
 ```
 
 To visualize the agent:
@@ -43,4 +43,4 @@ To visualize the agent:
 ./DQN.py --rom breakout.bin --task play --load trained.model
 ```
 
-A3C code and models for Atari games in OpenAI Gym are released in [examples/OpenAIGym](../OpenAIGym)
+A3C code and models for Atari games in OpenAI Gym are released in [examples/A3C-Gym](../A3C-Gym)

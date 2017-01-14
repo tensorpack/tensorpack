@@ -15,6 +15,7 @@ __all__ = ['RLEnvironment', 'NaiveRLEnvironment', 'ProxyPlayer',
 
 @six.add_metaclass(ABCMeta)
 class RLEnvironment(object):
+    """ Base class of RL environment. """
 
     def __init__(self):
         self.reset_stat()
@@ -29,8 +30,11 @@ class RLEnvironment(object):
     def action(self, act):
         """
         Perform an action. Will automatically start a new episode if isOver==True
-        :param act: the action
-        :returns: (reward, isOver)
+
+        Args:
+            act: the action
+        Returns:
+            tuple: (reward, isOver)
         """
 
     def restart_episode(self):
@@ -38,22 +42,26 @@ class RLEnvironment(object):
         raise NotImplementedError()
 
     def finish_episode(self):
-        """ get called when an episode finished"""
+        """ Get called when an episode finished"""
         pass
 
     def get_action_space(self):
-        """ return an `ActionSpace` instance"""
+        """ Returns:
+            :class:`ActionSpace` """
         raise NotImplementedError()
 
     def reset_stat(self):
-        """ reset all statistics counter"""
+        """ Reset all statistics counter"""
         self.stats = defaultdict(list)
 
     def play_one_episode(self, func, stat='score'):
-        """ play one episode for eval.
-            :param func: call with the state and return an action
-            :param stat: a key or list of keys in stats
-            :returns: the stat(s) after running this episode
+        """ Play one episode for eval.
+
+        Args:
+            func: the policy function. Takes a state and returns an action.
+            stat: a key or list of keys in stats to return.
+        Returns:
+            the stat(s) after running this episode
         """
         if not isinstance(stat, list):
             stat = [stat]
@@ -101,7 +109,7 @@ class DiscreteActionSpace(ActionSpace):
 
 
 class NaiveRLEnvironment(RLEnvironment):
-    """ for testing only"""
+    """ For testing only"""
 
     def __init__(self):
         self.k = 0
@@ -116,7 +124,7 @@ class NaiveRLEnvironment(RLEnvironment):
 
 
 class ProxyPlayer(RLEnvironment):
-    """ Serve as a proxy another player """
+    """ Serve as a proxy to another player """
 
     def __init__(self, player):
         self.player = player

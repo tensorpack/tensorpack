@@ -75,20 +75,20 @@ class Model(ModelDesc):
                   .FullyConnected('fct', out_dim=19, nl=tf.identity)())
         prob = tf.nn.softmax(logits, name='prob')
 
-        cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)
+        cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
 
         wrong = symbolic_functions.prediction_incorrect(logits, label)
         summary.add_moving_summary(tf.reduce_mean(wrong, name='train_error'))
 
-        wd_cost = tf.mul(1e-5, regularize_cost('fc.*/W', tf.nn.l2_loss),
-                         name='regularize_loss')
+        wd_cost = tf.multiply(1e-5, regularize_cost('fc.*/W', tf.nn.l2_loss),
+                              name='regularize_loss')
         summary.add_moving_summary(cost, wd_cost)
         self.cost = tf.add_n([wd_cost, cost], name='cost')
 
     def get_gradient_processor(self):
         return [MapGradient(lambda grad: tf.clip_by_global_norm([grad], 5)[0][0]),
-                ScaleGradient([('STN.*', 0.1)]), SummaryGradient()]
+                ScaleGradient(('STN.*', 0.1)), SummaryGradient()]
 
 
 def get_data(isTrain):

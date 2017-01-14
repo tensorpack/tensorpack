@@ -58,7 +58,7 @@ class Model(ModelDesc):
                 .FullyConnected('fc1', 512, nl=tf.nn.relu) \
                 .FullyConnected('linear', out_dim=self.cifar_classnum, nl=tf.identity)()
 
-        cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)
+        cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
 
         wrong = symbf.prediction_incorrect(logits, label)
@@ -66,12 +66,10 @@ class Model(ModelDesc):
         add_moving_summary(tf.reduce_mean(wrong, name='train_error'))
 
         # weight decay on all W of fc layers
-        wd_cost = tf.mul(0.0004,
-                         regularize_cost('fc.*/W', tf.nn.l2_loss),
-                         name='regularize_loss')
+        wd_cost = regularize_cost('fc.*/W', l2_regularizer(4e-4), name='regularize_loss')
         add_moving_summary(cost, wd_cost)
 
-        add_param_summary([('.*/W', ['histogram'])])   # monitor W
+        add_param_summary(('.*/W', ['histogram']))   # monitor W
         self.cost = tf.add_n([cost, wd_cost], name='cost')
 
 

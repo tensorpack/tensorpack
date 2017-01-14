@@ -5,7 +5,7 @@
 
 import tensorflow as tf
 
-from ._common import layer_register
+from .common import layer_register
 from ._test import TestModel
 
 __all__ = ['ImageSample']

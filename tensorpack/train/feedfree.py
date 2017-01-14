@@ -9,7 +9,7 @@ from ..utils import logger
 from ..tfutils import get_global_step_var
 from ..tfutils.tower import TowerContext
 from ..tfutils.gradproc import apply_grad_processors
-from ..tfutils.summary import summary_moving_average, add_moving_summary
+from ..tfutils.summary import summary_moving_average
 from .input_data import QueueInput, FeedfreeInput
 
 from .base import Trainer
@@ -51,7 +51,6 @@ class SingleCostFeedfreeTrainer(FeedfreeTrainerBase):
             cost_var,
             gate_gradients=tf.train.Optimizer.GATE_NONE,
             colocate_gradients_with_ops=False)
-        add_moving_summary(cost_var)
         return cost_var, grads
 
     def run_step(self):

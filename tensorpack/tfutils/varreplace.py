@@ -14,6 +14,18 @@ _ORIG_GET_VARIABLE = tf.get_variable
 
 @contextmanager
 def replace_get_variable(fn):
+    """
+    Args:
+        fn: a function taking the same arguments as ``tf.get_variable``.
+    Returns:
+        a context where ``tf.get_variable`` and
+        ``variable_scope.get_variable`` are replaced with ``fn``.
+
+    Note that originally ``tf.get_variable ==
+    tensorflow.python.ops.variable_scope.get_variable``. But some code such as
+    some in `rnn_cell/`, uses the latter one to get variable, therefore both
+    need to be replaced.
+    """
     old_getv = tf.get_variable
     old_vars_getv = variable_scope.get_variable
 
@@ -26,8 +38,10 @@ def replace_get_variable(fn):
 
 def freeze_get_variable():
     """
-    Return a contextmanager, where all variables returned by
-    `get_variable` will have no gradients.
+    Return a context, where all variables (reused or not) returned by
+    ``get_variable`` will have no gradients (surrounded by ``tf.stop_gradient``).
+    But they will still be in ``TRAINABLE_VARIABLES`` collections so they will get
+    saved correctly. This is useful to fix certain variables for fine-tuning.
 
     Example:
         .. code-block:: python

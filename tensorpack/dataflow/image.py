@@ -17,7 +17,7 @@ class ImageFromFile(RNGDataFlow):
         """
         Args:
             files (list): list of file paths.
-            channel (int): 1 or 3. Produce RGB images if channel==3.
+            channel (int): 1 or 3. Will convert grayscale to RGB images if channel==3.
             resize (tuple): (h, w). If given, resize the image.
         """
         assert len(files), "No image files given to ImageFromFile!"

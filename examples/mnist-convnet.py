@@ -5,6 +5,7 @@
 
 import numpy as np
 import tensorflow as tf
+import tensorflow.contrib.slim as slim
 import os
 import sys
 import argparse
@@ -18,6 +19,7 @@ about 0.6% validation error after 30 epochs.
 from tensorpack import *
 
 IMAGE_SIZE = 28
+USE_SLIM = False
 
 
 class Model(ModelDesc):
@@ -39,31 +41,46 @@ class Model(ModelDesc):
         image = tf.expand_dims(image, 3)
 
         image = image * 2 - 1   # center the pixels values at zero
-        # The context manager `argscope` sets the default option for all the layers under
-        # this context. Here we use 32 channel convolution with shape 3x3 and
-        # PReLU as nonlinearity.
-        with argscope(Conv2D, kernel_shape=3, nl=PReLU.f, out_channel=32):
-            """
-            LinearWrap is just a convenient way to compose a linear symbolic graph.
-            You can also do the equivalent in tensorflow style:
-            l = Conv2D('conv0', image)
-            l = MaxPooling('pool0', image, 2)
-            ...  """
 
-            logits = (LinearWrap(image)  # the starting brace is only for line-breaking
-                      .Conv2D('conv0')
-                      .MaxPooling('pool0', 2)
-                      .Conv2D('conv1', padding='SAME')
-                      .Conv2D('conv2')
-                      .MaxPooling('pool1', 2)
-                      .Conv2D('conv3')
-                      .FullyConnected('fc0', 512, nl=tf.nn.relu)
-                      .Dropout('dropout', 0.5)
-                      .FullyConnected('fc1', out_dim=10, nl=tf.identity)())
+        if USE_SLIM:
+            is_training = get_current_tower_context().is_training
+            with slim.arg_scope([slim.layers.fully_connected],
+                                weights_regularizer=slim.l2_regularizer(1e-5)):
+                l = slim.layers.conv2d(image, 32, [3, 3], scope='conv0')
+                l = slim.layers.max_pool2d(l, [2, 2], scope='pool0')
+                l = slim.layers.conv2d(l, 32, [3, 3], padding='SAME', scope='conv1')
+                l = slim.layers.conv2d(l, 32, [3, 3], scope='conv2')
+                l = slim.layers.max_pool2d(l, [2, 2], scope='pool1')
+                l = slim.layers.conv2d(l, 32, [3, 3], scope='conv3')
+                l = slim.layers.flatten(l, scope='flatten')
+                l = slim.layers.fully_connected(l, 512, scope='fc0')
+                l = slim.layers.dropout(l, is_training=is_training)
+                logits = slim.layers.fully_connected(l, 10, activation_fn=None, scope='fc1')
+        else:
+            # The context manager `argscope` sets the default option for all the layers under
+            # this context. Here we use 32 channel convolution with shape 3x3
+            with argscope(Conv2D, kernel_shape=3, nl=tf.nn.relu, out_channel=32):
+                """
+                LinearWrap is just a convenient way to compose a linear symbolic graph.
+                You can also do the equivalent in tensorflow style:
+                l = Conv2D('conv0', image)
+                l = MaxPooling('pool0', l, 2)
+                ...  """
+
+                logits = (LinearWrap(image)  # the starting brace is only for line-breaking
+                          .Conv2D('conv0')
+                          .MaxPooling('pool0', 2)
+                          .Conv2D('conv1', padding='SAME')
+                          .Conv2D('conv2')
+                          .MaxPooling('pool1', 2)
+                          .Conv2D('conv3')
+                          .FullyConnected('fc0', 512, nl=tf.nn.relu)
+                          .Dropout('dropout', 0.5)
+                          .FullyConnected('fc1', out_dim=10, nl=tf.identity)())
         prob = tf.nn.softmax(logits, name='prob')   # a Bx10 with probabilities
 
-        cost = tf.nn.sparse_softmax_cross_entropy_with_logits(
-            logits, label)  # a vector of length B with loss of each sample
+        # a vector of length B with loss of each sample
+        cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')  # the average cross-entropy loss
 
         # compute the "incorrect vector", for the callback ClassificationError to use at validation time
@@ -76,16 +93,23 @@ class Model(ModelDesc):
         train_error = tf.reduce_mean(wrong, name='train_error')
         summary.add_moving_summary(train_error)
 
-        # Use a regex to find parameters to apply weight decay.
-        # Here we apply a weight decay on all W (weight matrix) of all fc layers
-        wd_cost = tf.mul(1e-5,
-                         regularize_cost('fc.*/W', tf.nn.l2_loss),
-                         name='regularize_loss')
-        summary.add_moving_summary(cost, wd_cost)
+        if not USE_SLIM:
+            # Use a regex to find parameters to apply weight decay.
+            # Here we apply a weight decay on all W (weight matrix) of all fc layers
+            wd_cost = tf.multiply(1e-5,
+                                  regularize_cost('fc.*/W', tf.nn.l2_loss),
+                                  name='regularize_loss')
+            self.cost = tf.add_n([wd_cost, cost], name='total_cost')
+            summary.add_moving_summary(cost, wd_cost, self.cost)
+        else:
+            # slim already adds regularization to a collection, no extra handling
+            self.cost = cost
+            summary.add_moving_summary(cost)
 
         # monitor histogram of all weight (of conv and fc layers) in tensorboard
-        summary.add_param_summary([('.*/W', ['histogram'])])
-        self.cost = tf.add_n([wd_cost, cost], name='cost')
+        summary.add_param_summary(('.*/W', ['histogram', 'rms']),
+                                  ('.*/weights', ['histogram', 'rms'])  # to also work with slim
+                                  )
 
 
 def get_data():
@@ -122,7 +146,7 @@ def get_config():
             InferenceRunner(    # run inference(for validation) after every epoch
                 dataset_test,   # the DataFlow instance used for validation
                 # Calculate both the cost and the error for this DataFlow
-                [ScalarStats('cost'), ClassificationError('incorrect')]),
+                [ScalarStats('cross_entropy_loss'), ClassificationError('incorrect')]),
         ]),
         model=Model(),
         step_per_epoch=step_per_epoch,

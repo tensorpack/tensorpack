@@ -36,15 +36,18 @@ class StoppableThread(threading.Thread):
         self._stop_evt = threading.Event()
 
     def stop(self):
-        """ stop the thread"""
+        """ Stop the thread"""
         self._stop_evt.set()
 
     def stopped(self):
-        """ check whether the thread is stopped or not"""
+        """
+        Returns:
+            bool: whether the thread is stopped or not
+        """
         return self._stop_evt.isSet()
 
     def queue_put_stoppable(self, q, obj):
-        """ put obj to queue, but will give up if the thread is stopped"""
+        """ Put obj to queue, but will give up when the thread is stopped"""
         while not self.stopped():
             try:
                 q.put(obj, timeout=5)
@@ -53,7 +56,7 @@ class StoppableThread(threading.Thread):
                 pass
 
     def queue_get_stoppable(self, q):
-        """ take obj from queue, but will give up if the thread is stopped"""
+        """ Take obj from queue, but will give up when the thread is stopped"""
         while not self.stopped():
             try:
                 return q.get(timeout=5)
@@ -66,7 +69,8 @@ class LoopThread(StoppableThread):
 
     def __init__(self, func, pausable=True):
         """
-        :param func: the function to run
+        Args:
+            func: the function to run
         """
         super(LoopThread, self).__init__()
         self._func = func
@@ -83,10 +87,12 @@ class LoopThread(StoppableThread):
             self._func()
 
     def pause(self):
+        """ Pause the loop """
         assert self._pausable
         self._lock.acquire()
 
     def resume(self):
+        """ Resume the loop """
         assert self._pausable
         self._lock.release()
 
@@ -97,6 +103,12 @@ class DIE(object):
 
 
 def ensure_proc_terminate(proc):
+    """
+    Make sure processes terminate when main process exit.
+
+    Args:
+        proc (multiprocessing.Process or list)
+    """
     if isinstance(proc, list):
         for p in proc:
             ensure_proc_terminate(p)
@@ -117,12 +129,21 @@ def ensure_proc_terminate(proc):
 
 @contextmanager
 def mask_sigint():
+    """
+    Returns:
+        a context where ``SIGINT`` is ignored.
+    """
     sigint_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
     yield
     signal.signal(signal.SIGINT, sigint_handler)
 
 
 def start_proc_mask_signal(proc):
+    """ Start process(es) with SIGINT ignored.
+
+    Args:
+        proc: (multiprocessing.Process or list)
+    """
     if not isinstance(proc, list):
         proc = [proc]
 
@@ -132,6 +153,12 @@ def start_proc_mask_signal(proc):
 
 
 def subproc_call(cmd, timeout=None):
+    """
+    Execute a command with timeout, and return both STDOUT/STDERR.
+    Args:
+        cmd(str): the command to execute.
+        timeout(float): timeout in seconds.
+    """
     try:
         output = subprocess.check_output(
             cmd, stderr=subprocess.STDOUT,
@@ -147,15 +174,28 @@ def subproc_call(cmd, timeout=None):
 
 class OrderedContainer(object):
     """
-    Like a priority queue, but will always wait for item with index (x+1) before producing (x+2).
+    Like a queue, but will always wait to receive item with rank
+    (x+1) and produce (x+1) before producing (x+2).
+
+    Warning:
+        It is not thread-safe.
     """
 
     def __init__(self, start=0):
+        """
+        Args:
+            start(int): the starting rank.
+        """
         self.ranks = []
         self.data = []
         self.wait_for = start
 
     def put(self, rank, val):
+        """
+        Args:
+            rank(int): rank of th element. All elements must have different ranks.
+            val: an object
+        """
         idx = bisect.bisect(self.ranks, rank)
         self.ranks.insert(idx, rank)
         self.data.insert(idx, val)
@@ -183,9 +223,11 @@ class OrderedResultGatherProc(multiprocessing.Process):
 
     def __init__(self, data_queue, nr_producer, start=0):
         """
-        :param data_queue: a multiprocessing.Queue to produce input dp
-        :param nr_producer: number of producer processes. Will terminate after receiving this many of DIE sentinel.
-        :param start: the first task index
+        Args:
+            data_queue(multiprocessing.Queue): a queue which contains datapoints.
+            nr_producer(int): number of producer processes. This process will
+                terminate after receiving this many of :class:`DIE` sentinel.
+            start(int): the rank of the first object
         """
         super(OrderedResultGatherProc, self).__init__()
         self.data_queue = data_queue

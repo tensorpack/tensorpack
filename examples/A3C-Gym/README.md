@@ -11,6 +11,9 @@ Training with a significant slower speed (e.g. on CPU) will give bad performance
 probably because of async issues.
 The pre-trained models are all trained with 4 GPUs for about 2 days.
 
+Occasionally processes may not get terminated completely, therefore it is suggested to use systemd-run to run any
+multiprocess Python program to get a cgroup dedicated for the task.
+
 ### To run a pretrained Atari model for 100 episodes:
 
 1. Download models from [model zoo](https://goo.gl/9yIol2)

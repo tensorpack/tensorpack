@@ -20,8 +20,10 @@ globalns = NS()
 
 def use_global_argument(args):
     """
-    Add the content of argparse.Namespace to globalns
-    :param args: Argument
+    Add the content of :class:`argparse.Namespace` to globalns.
+
+    Args:
+        args (argparse.Namespace): arguments
     """
     assert isinstance(args, argparse.Namespace), type(args)
     for k, v in six.iteritems(vars(args)):

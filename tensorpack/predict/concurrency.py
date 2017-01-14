@@ -32,8 +32,9 @@ class MultiProcessPredictWorker(multiprocessing.Process):
 
     def __init__(self, idx, config):
         """
-        :param idx: index of the worker. the 0th worker will print log.
-        :param config: a `PredictConfig`
+        Args:
+            idx (int): index of the worker. the 0th worker will print log.
+            config (PredictConfig): the config to use.
         """
         super(MultiProcessPredictWorker, self).__init__()
         self.idx = idx
@@ -44,7 +45,7 @@ class MultiProcessPredictWorker(multiprocessing.Process):
             have workers that run on multiGPUs
         """
         if self.idx != 0:
-            from tensorpack.models._common import disable_layer_logging
+            from tensorpack.models.common import disable_layer_logging
             disable_layer_logging()
         self.predictor = OfflinePredictor(self.config)
         if self.idx == 0:
@@ -53,12 +54,17 @@ class MultiProcessPredictWorker(multiprocessing.Process):
 
 
 class MultiProcessQueuePredictWorker(MultiProcessPredictWorker):
-    """ An offline predictor worker that takes input and produces output by queue"""
+    """
+    An offline predictor worker that takes input and produces output by queue.
+    Each process will exit when they see :class:`DIE`.
+    """
 
     def __init__(self, idx, inqueue, outqueue, config):
         """
-        :param inqueue: input queue to get data point. elements are (task_id, dp)
-        :param outqueue: output queue put result. elements are (task_id, output)
+        Args:
+            idx, config: same as in :class:`MultiProcessPredictWorker`.
+            inqueue (multiprocessing.Queue): input queue to get data point. elements are (task_id, dp)
+            outqueue (multiprocessing.Queue): output queue to put result. elements are (task_id, output)
         """
         super(MultiProcessQueuePredictWorker, self).__init__(idx, config)
         self.inqueue = inqueue
@@ -125,12 +131,16 @@ class PredictorWorkerThread(threading.Thread):
 
 class MultiThreadAsyncPredictor(AsyncPredictorBase):
     """
-    An multithread online async predictor which run a list of PredictorBase.
+    An multithread online async predictor which runs a list of PredictorBase.
     It would do an extra batching internally.
     """
 
     def __init__(self, predictors, batch_size=5):
-        """ :param predictors: a list of OnlinePredictor"""
+        """
+        Args:
+            predictors (list): a list of OnlinePredictor avaiable to use.
+            batch_size (int): the maximum of an internal batch.
+        """
         assert len(predictors)
         for k in predictors:
             # assert isinstance(k, OnlinePredictor), type(k)
@@ -156,7 +166,7 @@ class MultiThreadAsyncPredictor(AsyncPredictorBase):
 
     def put_task(self, dp, callback=None):
         """
-        dp must be non-batched, i.e. single instance
+        Same as in :meth:`AsyncPredictorBase.put_task`.
         """
         f = Future()
         if callback is not None:

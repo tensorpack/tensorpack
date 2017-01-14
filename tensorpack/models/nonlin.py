@@ -5,7 +5,7 @@
 
 import tensorflow as tf
 
-from ._common import layer_register
+from .common import layer_register
 from .batch_norm import BatchNorm
 
 __all__ = ['Maxout', 'PReLU', 'LeakyReLU', 'BNReLU']
@@ -50,7 +50,7 @@ def PReLU(x, init=0.001, name='output'):
     init = tf.constant_initializer(init)
     alpha = tf.get_variable('alpha', [], initializer=init)
     x = ((1 + alpha) * x + (1 - alpha) * tf.abs(x))
-    return tf.mul(x, 0.5, name=name)
+    return tf.multiply(x, 0.5, name=name)
 
 
 @layer_register(use_scope=False, log_shape=False)

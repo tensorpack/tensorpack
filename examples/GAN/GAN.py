@@ -13,9 +13,8 @@ from tensorpack.dataflow import DataFlow
 
 
 class GANTrainer(FeedfreeTrainerBase):
-
     def __init__(self, config):
-        self._input_method = QueueInput(config.dataset)
+        self._input_method = QueueInput(config.dataflow)
         super(GANTrainer, self).__init__(config)
 
     def _setup(self):
@@ -59,15 +58,15 @@ def build_GAN_losses(vecpos, vecneg):
     tf.summary.histogram('sigmoid-neg', sigmneg)
 
     d_loss_pos = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
-        vecpos, tf.ones_like(vecpos)), name='d_CE_loss_pos')
+        logits=vecpos, labels=tf.ones_like(vecpos)), name='d_CE_loss_pos')
     d_loss_neg = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
-        vecneg, tf.zeros_like(vecneg)), name='d_CE_loss_neg')
+        logits=vecneg, labels=tf.zeros_like(vecneg)), name='d_CE_loss_neg')
 
     d_pos_acc = tf.reduce_mean(tf.cast(sigmpos > 0.5, tf.float32), name='pos_acc')
     d_neg_acc = tf.reduce_mean(tf.cast(sigmneg < 0.5, tf.float32), name='neg_acc')
 
     g_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
-        vecneg, tf.ones_like(vecneg)), name='g_CE_loss')
+        logits=vecneg, labels=tf.ones_like(vecneg)), name='g_CE_loss')
     d_loss = tf.add(d_loss_pos, d_loss_neg, name='d_CE_loss')
     add_moving_summary(d_loss_pos, d_loss_neg,
                        g_loss, d_loss,

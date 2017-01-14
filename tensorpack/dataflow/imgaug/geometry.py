@@ -14,7 +14,7 @@ class Rotation(ImageAugmentor):
     """ Random rotate the image w.r.t a random center"""
 
     def __init__(self, max_deg, center_range=(0, 1),
-                 interp=cv2.INTER_CUBIC,
+                 interp=cv2.INTER_LINEAR,
                  border=cv2.BORDER_REPLICATE):
         """
         Args:
@@ -43,7 +43,7 @@ class RotationAndCropValid(ImageAugmentor):
         Note that this will produce images of different shapes.
     """
 
-    def __init__(self, max_deg, interp=cv2.INTER_CUBIC):
+    def __init__(self, max_deg, interp=cv2.INTER_LINEAR):
         """
         Args:
             max_deg (float): max abs value of the rotation degree (in angle).

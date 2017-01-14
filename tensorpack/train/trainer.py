@@ -9,8 +9,8 @@ from .base import Trainer
 from ..utils import SUMMARY_BACKUP_KEYS, PREDICT_TOWER
 from ..tfutils import (get_tensors_by_names, freeze_collection,
                        get_global_step_var, TowerContext)
-from ..tfutils.summary import summary_moving_average, add_moving_summary
-from ..predict import OnlinePredictor, build_multi_tower_prediction_graph
+from ..tfutils.summary import summary_moving_average
+from ..predict import OnlinePredictor, build_prediction_graph
 from ..tfutils.gradproc import apply_grad_processors
 from .input_data import FeedInput
 
@@ -49,7 +49,7 @@ class PredictorFactory(object):
                 freeze_collection(SUMMARY_BACKUP_KEYS):
             def fn(_):
                 self.model.build_graph(self.model.get_input_vars())
-            build_multi_tower_prediction_graph(fn, self.towers)
+            build_prediction_graph(fn, self.towers)
         self.tower_built = True
 
 
@@ -82,7 +82,6 @@ class SimpleTrainer(Trainer):
         with TowerContext('', is_training=True):
             model.build_graph(self.input_vars)
             cost_var = model.get_cost()
-            add_moving_summary(cost_var)
 
         grads = self.config.optimizer.compute_gradients(cost_var)
         grads = apply_grad_processors(grads,

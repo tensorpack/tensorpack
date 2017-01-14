@@ -10,7 +10,7 @@ from tensorflow.python.training import moving_averages
 from ..tfutils.common import get_tf_version
 from ..tfutils.tower import get_current_tower_context
 from ..utils import logger, building_rtfd
-from ._common import layer_register
+from .common import layer_register
 
 __all__ = ['BatchNorm', 'BatchNormV1', 'BatchNormV2']
 
@@ -84,7 +84,7 @@ def BatchNormV1(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
 
     if use_local_stat:
         batch = tf.cast(tf.shape(x)[0], tf.float32)
-        mul = tf.select(tf.equal(batch, 1.0), 1.0, batch / (batch - 1))
+        mul = tf.where(tf.equal(batch, 1.0), 1.0, batch / (batch - 1))
         batch_var = batch_var * mul  # use unbiased variance estimator in training
 
         with tf.control_dependencies([ema_apply_op] if ctx.is_training else []):
@@ -112,6 +112,7 @@ def BatchNormV2(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
 
     Note:
         * In multi-tower training, only the first training tower maintains a moving average.
+          This is consistent with most frameworks.
 
         * It automatically selects :meth:`BatchNormV1` or :meth:`BatchNormV2`
           according to availability.

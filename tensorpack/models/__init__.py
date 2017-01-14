@@ -92,6 +92,10 @@ class LinearWrap(object):
         return LinearWrap(ret)
 
     def __call__(self):
+        """
+        Returns:
+            tf.Tensor: the underlying wrapped tensor.
+        """
         return self._t
 
     def tensor(self):

@@ -1,19 +1,56 @@
-language: "python"
-python:
-   - "2.7"
-   - "3.5"
 sudo: false
-cache: pip
+dist: "trusty"
+language: "python"
+
+cache:
+  pip: true
+  apt: true
+
+addons:
+    apt:
+        sources:
+            ubuntu-toolchain-r-test
+matrix:
+    fast_finish: true
+    include:
+        - os: linux
+          python: 2.7
+          env: TF_VERSION=0.12.1 TF_TYPE=release
+        - os: linux
+          python: 3.5
+          env: TF_VERSION=0.12.1 TF_TYPE=release
+        - os: linux
+          python: 2.7
+          env: TF_VERSION=0.12.1 TF_TYPE=nightly
+        - os: linux
+          python: 3.5
+          env: TF_VERSION=0.12.1 TF_TYPE=nightly
+    allow_failures:
+        - env: TF_VERSION=0.12.1 TF_TYPE=nightly
 
 install:
-  - pip install flake8
+    - echo $TRAVIS_PYTHON_VERSION
+    - pip install -U flake8 opencv-python
+    # Here we use opencv-python to overcome some travis probelms.
+    # Users are not recommended to use opencv-python because it brings issues working on GPU
+    # together with tensorflow.
+    - if [ -e requirements.txt ]; then pip install -r requirements.txt;else pip install -r requirements.pip;fi
+    - ./tests/install-tensorflow.sh
 
 before_script:
-  - flake8 --version
+    - flake8 --version
+    - python -c "import cv2; print('OpenCV '+ cv2.__version__)"
+    - python -c "import tensorflow as tf; print('TensorFlow '+ tf.__version__)"
 
 script:
-  - flake8 .
-  - cd examples && flake8 .
+    - flake8 .
+    - cd examples && flake8 .
+    - export PYTHONPATH=$PYTHONPATH:$TRAVIS_BUILD_DIR
+    - cd $TRAVIS_BUILD_DIR && python tests/test_examples.py
 
 notifications:
-  email: false
+  email:
+    recipients:
+      - ppwwyyxxc@gmail.com
+    on_success: never
+    on_failure: change # default: always

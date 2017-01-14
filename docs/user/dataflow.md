@@ -1,11 +1,11 @@
 
-## Dataflow
+# Dataflow
 
 Dataflow uses Python generator to produce data.
 
-A Dataflow has to implement the `get_data()` generator method, which generates a `datapoint` when called.
-A datapoint must be a list of picklable Python object, each is called a `component` of the datapoint.
-For example to train on MNIST dataset, you can define a Dataflow that produces datapoints of shape `[(BATCH, 28, 28), (BATCH,)]`.
+A Dataflow has to implement the `get_data()` generator method, which yields `datapoints` when called.
+A datapoint must be a list of Python object, each is called a `component` of the datapoint.
+For example, to train on MNIST dataset, you can define a Dataflow that produces datapoints of shape `[(BATCH, 28, 28), (BATCH,)]`.
 
 Then, multiple Dataflows can be composed together to build a complex data-preprocessing pipeline,
 including __reading from disk, batching, augmentations, prefetching__, etc. These components written in Python

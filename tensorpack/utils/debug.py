@@ -9,6 +9,7 @@ __all__ = ['enable_call_trace']
 
 
 def enable_call_trace():
+    """ Enable trace for calls to any function. """
     def tracer(frame, event, arg):
         if event == 'call':
             co = frame.f_code
