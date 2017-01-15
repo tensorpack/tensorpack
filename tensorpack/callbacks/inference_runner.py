@@ -9,7 +9,7 @@ import six
 from six.moves import zip, range
 
 from ..dataflow import DataFlow
-from ..utils import logger, get_tqdm, PREDICT_TOWER, SUMMARY_BACKUP_KEYS
+from ..utils import logger, get_tqdm, SUMMARY_BACKUP_KEYS
 from ..tfutils.common import get_op_tensor_name, freeze_collection
 from ..tfutils import TowerContext
 from ..train.input_data import FeedfreeInput
@@ -189,7 +189,7 @@ class FeedfreeInferenceRunner(Callback):
                 freeze_collection(SUMMARY_BACKUP_KEYS):
             def fn(_):
                 self.trainer.model.build_graph(self._input_tensors)
-            build_prediction_graph(fn, [0], prefix=self._prefix)  # TODO use towerp1 to support multiple FeedfreeInferenceRunner
+            build_prediction_graph(fn, [0], prefix=self._prefix)
         self._tower_prefix = TowerContext.get_predict_tower_name(self._prefix, 0)
 
         self._find_output_tensors()

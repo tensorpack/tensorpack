@@ -7,7 +7,6 @@ from abc import abstractmethod, ABCMeta
 import tensorflow as tf
 import six
 
-from ..utils.naming import PREDICT_TOWER
 from ..utils import logger
 from ..tfutils import get_tensors_by_names, TowerContext
 
