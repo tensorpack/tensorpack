@@ -138,9 +138,9 @@ Use _build_graph(self, input_vars) and get_current_tower_context().is_training i
         if ctx is not None and ctx.is_main_training_tower:
             non_grad_updates = set(tf.get_collection(tf.GraphKeys.UPDATE_OPS))
             if non_grad_updates:
+                logger.info("Apply UPDATE_OPS collection on cost.")
                 with tf.control_dependencies(non_grad_updates):
-                    barrier = tf.control_flow_ops.no_op(name='update_ops_barrier')
-                cost = tf.control_flow_ops.with_dependencies([barrier], cost)
+                    cost = tf.identity(cost)
         return cost
 
     def _get_cost(self, *args):

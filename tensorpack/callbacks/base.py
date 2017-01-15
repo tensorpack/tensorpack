@@ -11,7 +11,17 @@ __all__ = ['Callback', 'PeriodicCallback', 'ProxyCallback', 'CallbackFactory']
 
 @six.add_metaclass(ABCMeta)
 class Callback(object):
-    """ Base class for all callbacks """
+    """ Base class for all callbacks
+
+    Attributes:
+        epoch_num(int): the number of epochs that have completed the update
+        trainer(Trainer): the trainer
+        graph(tf.Graph): the graph
+
+    Note:
+        These attributes are available only after (and including)
+        :meth:`_setup_graph`.
+    """
 
     def setup_graph(self, trainer):
         """
@@ -24,7 +34,6 @@ class Callback(object):
         self.trainer = trainer
         self.graph = tf.get_default_graph()
         self.epoch_num = self.trainer.config.starting_epoch - 1
-        # self.epoch_num is always the number of epochs that finished updating parameters.
         with tf.name_scope(type(self).__name__):
             self._setup_graph()
 
@@ -50,8 +59,6 @@ class Callback(object):
     def trigger_epoch(self):
         """
         Triggered after every epoch.
-
-        In this function, ``self.epoch_num`` would be the number of epoch finished.
         """
         self.epoch_num += 1
         self._trigger_epoch()

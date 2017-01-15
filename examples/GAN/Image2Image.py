@@ -159,7 +159,7 @@ def get_data():
     augs = [imgaug.Resize(286), imgaug.RandomCrop(256)]
     ds = AugmentImageComponents(ds, augs, (0, 1))
     ds = BatchData(ds, BATCH)
-    ds = PrefetchDataZMQ(ds, 1)
+    ds = PrefetchData(ds, 100, 1)
     return ds
 
 

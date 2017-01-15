@@ -144,17 +144,20 @@ def get_predict_func(config):
     return OfflinePredictor(config)
 
 
-def build_prediction_graph(build_tower_fn, towers=[0]):
+def build_prediction_graph(build_tower_fn, towers=[0], prefix=''):
     """
     Args:
         build_tower_fn: a function that will be called inside each tower,
             taking tower id as the argument.
         towers: a list of relative GPU id.
+        prefix: an extra prefix in tower name. The final tower prefix will be
+            determined by :meth:`TowerContext.get_predict_tower_name`.
     """
     for k in towers:
         logger.info(
-            "Building graph for predictor tower {}...".format(k))
+            "Building prediction graph for towerid={} with prefix='{}' ...".format(k, prefix))
+        towername = TowerContext.get_predict_tower_name(prefix, k)
         with tf.device('/gpu:{}'.format(k) if k >= 0 else '/cpu:0'), \
-                TowerContext('{}{}'.format(PREDICT_TOWER, k)):
+                TowerContext(towername, is_training=False):
             build_tower_fn(k)
             tf.get_variable_scope().reuse_variables()

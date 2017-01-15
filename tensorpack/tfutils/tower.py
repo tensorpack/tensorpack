@@ -72,6 +72,20 @@ class TowerContext(object):
                 newname = re.sub(predict_tower_prefix, 'tower0/', name)
                 return graph.get_tensor_by_name(newname)
 
+    @staticmethod
+    def get_predict_tower_name(prefix, towerid=0):
+        """
+        Args:
+            prefix(str): an alphanumeric prefix.
+            towerid(int): an integer, the id of this predict tower, usually
+                used to choose the GPU id.
+        Returns:
+            str: the final tower name used to create a predict tower.
+                Currently it is ``PREDICT_TOWER + prefix + towerid``.
+        """
+        assert prefix == '' or prefix.isalnum()
+        return PREDICT_TOWER + prefix + str(towerid)
+
     def __enter__(self):
         global _CurrentTowerContext
         assert _CurrentTowerContext is None, \

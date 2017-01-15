@@ -11,6 +11,7 @@ from six.moves import zip, range
 from ..dataflow import DataFlow
 from ..utils import logger, get_tqdm, PREDICT_TOWER, SUMMARY_BACKUP_KEYS
 from ..tfutils.common import get_op_tensor_name, freeze_collection
+from ..tfutils import TowerContext
 from ..train.input_data import FeedfreeInput
 from ..predict import build_prediction_graph
 
@@ -151,12 +152,14 @@ class FeedfreeInferenceRunner(Callback):
     pipeline.
     """
 
-    def __init__(self, input, infs, input_names=None):
+    def __init__(self, input, infs, input_names=None, prefix=''):
         """
         Args:
             input (FeedfreeInput): the input to use. Must have ``size()``.
             infs (list): list of :class:`Inferencer` to run.
             input_names (list): must be a subset of the names of InputVar.
+            prefix(str): an prefix used to build the tower. Must be set
+                differently if more than one :class:`FeedfreeInferenceRunner` are used.
         """
         assert isinstance(input, FeedfreeInput), input
         self._input_data = input
@@ -174,6 +177,7 @@ class FeedfreeInferenceRunner(Callback):
             self._size = input.size()
         except NotImplementedError:
             raise ValueError("Input used in FeedfreeInferencecRunner must have a size!")
+        self._prefix = prefix
 
     def _setup_graph(self):
         self._find_input_tensors()  # tensors
@@ -185,8 +189,8 @@ class FeedfreeInferenceRunner(Callback):
                 freeze_collection(SUMMARY_BACKUP_KEYS):
             def fn(_):
                 self.trainer.model.build_graph(self._input_tensors)
-            build_prediction_graph(fn, [0])
-        self._tower_prefix = PREDICT_TOWER + '0'
+            build_prediction_graph(fn, [0], prefix=self._prefix)  # TODO use towerp1 to support multiple FeedfreeInferenceRunner
+        self._tower_prefix = TowerContext.get_predict_tower_name(self._prefix, 0)
 
         self._find_output_tensors()
 

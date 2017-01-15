@@ -105,8 +105,9 @@ class Trainer(object):
             summary (tf.Summary or str): a summary object, or a str which will
                 be interpreted as a serialized tf.Summary protobuf.
         """
-        if isinstance(summary, six.string_types):
+        if isinstance(summary, six.binary_type):
             summary = tf.Summary.FromString(summary)
+        assert isinstance(summary, tf.Summary), type(summary)
         for val in summary.value:
             if val.WhichOneof('value') == 'simple_value':
                 val.tag = re.sub('tower[p0-9]+/', '', val.tag)   # TODO move to subclasses

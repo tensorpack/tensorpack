@@ -75,8 +75,8 @@ class SingleCostFeedfreeTrainer(FeedfreeTrainerBase):
 
 
 class SimpleFeedfreeTrainer(
-        MultiPredictorTowerTrainer,
-        SingleCostFeedfreeTrainer):
+        SingleCostFeedfreeTrainer,
+        MultiPredictorTowerTrainer):
     """
     A trainer with single cost, single training tower, any number of
     prediction tower, and feed-free input.
