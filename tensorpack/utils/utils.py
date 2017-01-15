@@ -16,7 +16,7 @@ __all__ = ['change_env',
            'get_tqdm_kwargs',
            'get_tqdm',
            'execute_only_once',
-           'building_rtfd'
+           'building_rtfd',
            ]
 
 
