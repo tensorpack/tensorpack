@@ -78,6 +78,7 @@ due to an alternative in a different tower".format(v.name, var_dict[name].name))
                 self.path,
                 global_step=get_global_step(),
                 write_meta_graph=False)
+            logger.info("Model saved to %s" % tf.train.get_checkpoint_state(self.checkpoint_dir).model_checkpoint_path)
         except (OSError, IOError):   # disk error sometimes.. just ignore it
             logger.exception("Exception in ModelSaver.trigger_epoch!")
 
