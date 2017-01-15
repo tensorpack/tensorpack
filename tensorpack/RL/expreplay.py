@@ -207,8 +207,8 @@ class ExpReplay(DataFlow, Callback):
         for k, v in six.iteritems(stats):
             try:
                 mean, max = np.mean(v), np.max(v)
-                self.trainer.write_scalar_summary('expreplay/mean_' + k, mean)
-                self.trainer.write_scalar_summary('expreplay/max_' + k, max)
+                self.trainer.add_scalar_summary('expreplay/mean_' + k, mean)
+                self.trainer.add_scalar_summary('expreplay/max_' + k, max)
             except:
                 pass
         self.player.reset_stat()

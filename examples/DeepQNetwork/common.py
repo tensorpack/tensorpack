@@ -114,5 +114,5 @@ class Evaluator(Callback):
         t = time.time() - t
         if t > 10 * 60:  # eval takes too long
             self.eval_episode = int(self.eval_episode * 0.94)
-        self.trainer.write_scalar_summary('mean_score', mean)
-        self.trainer.write_scalar_summary('max_score', max)
+        self.trainer.add_scalar_summary('mean_score', mean)
+        self.trainer.add_scalar_summary('max_score', max)

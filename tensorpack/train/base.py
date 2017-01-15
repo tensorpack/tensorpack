@@ -16,7 +16,7 @@ from ..utils.timer import timed_operation
 from ..callbacks import StatHolder
 from ..tfutils import get_global_step, get_global_step_var
 from ..tfutils.modelutils import describe_model
-from ..tfutils.summary import create_summary
+from ..tfutils.summary import create_scalar_summary
 
 __all__ = ['Trainer', 'StopTraining']
 
@@ -96,8 +96,14 @@ class Trainer(object):
     def _trigger_epoch(self):
         pass
 
-    def _process_summary(self, summary_str):
-        summary = tf.Summary.FromString(summary_str)
+    def add_summary(self, summary):
+        """
+        Add summary to ``self.summary_writer``, and also
+        add scalar summary to ``self.stat_holder``.
+
+        Args:
+            summary (tf.Summary): a summary object.
+        """
         for val in summary.value:
             if val.WhichOneof('value') == 'simple_value':
                 val.tag = re.sub('tower[p0-9]+/', '', val.tag)   # TODO move to subclasses
@@ -107,17 +113,15 @@ class Trainer(object):
                 self.stat_holder.add_stat(val.tag, val.simple_value)
         self.summary_writer.add_summary(summary, get_global_step())
 
-    def write_scalar_summary(self, name, val):
+    def add_scalar_summary(self, name, val):
         """
-        Write a scalar sumary to both TF events file and StatHolder.
+        Add a scalar sumary to both TF events file and StatHolder.
 
         Args:
             name(str)
             val(float)
         """
-        self.summary_writer.add_summary(
-            create_summary(name, val), get_global_step())
-        self.stat_holder.add_stat(name, val)
+        self.add_summary(create_scalar_summary(name, val))
 
     def setup(self):
         """

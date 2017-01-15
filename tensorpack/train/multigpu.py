@@ -209,7 +209,7 @@ class AsyncMultiGPUTrainer(MultiGPUTrainer,
             if self.config.tower > 1:
                 async_step_total_cnt = int(re.findall(
                     '[0-9]+', self.async_step_counter.__str__())[0])
-                self.write_scalar_summary(
+                self.add_scalar_summary(
                     'async_global_step', async_step_total_cnt)
         except:
             logger.exception("Cannot log async_global_step")

@@ -95,7 +95,7 @@ class SimpleTrainer(Trainer):
         if self.summary_op is not None:
             feed = self._input_method.next_feed()
             summary_str = self.summary_op.eval(feed_dict=feed)
-            self._process_summary(summary_str)
+            self.add_summary(tf.Summary.FromString(summary_str))
 
     def get_predict_func(self, input_names, output_names):
         return self._predictor_factory.get_predictor(input_names, output_names, 0)

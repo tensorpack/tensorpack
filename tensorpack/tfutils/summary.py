@@ -13,11 +13,11 @@ from .tower import get_current_tower_context
 from . import get_global_step_var
 from .symbolic_functions import rms
 
-__all__ = ['create_summary', 'add_param_summary', 'add_activation_summary',
+__all__ = ['create_scalar_summary', 'add_param_summary', 'add_activation_summary',
            'add_moving_summary', 'summary_moving_average']
 
 
-def create_summary(name, v):
+def create_scalar_summary(name, v):
     """
     Returns:
         tf.Summary: a tf.Summary object with name and simple scalar value v.

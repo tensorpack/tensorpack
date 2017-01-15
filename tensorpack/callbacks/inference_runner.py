@@ -58,7 +58,7 @@ def summary_inferencer(trainer, infs):
             except:
                 logger.warn("{} returns a non-scalar statistics!".format(type(inf).__name__))
                 continue
-            trainer.write_scalar_summary(k, v)
+            trainer.add_scalar_summary(k, v)
 
 
 class InferenceRunner(Callback):

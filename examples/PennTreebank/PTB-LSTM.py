@@ -135,7 +135,7 @@ def get_config():
             FeedfreeInferenceRunner(val_data, [ScalarStats(['cost'])]),
             CallbackFactory(
                 trigger_epoch=lambda self:
-                self.trainer.write_scalar_summary(
+                self.trainer.add_scalar_summary(
                     'validation_perplexity',
                     np.exp(self.trainer.stat_holder.get_stat_now('validation_cost') / SEQ_LEN))),
             RunOp(lambda: M.reset_lstm_state()),
