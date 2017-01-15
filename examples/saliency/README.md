@@ -18,8 +18,8 @@ tar -xzvf resnet_v1_50_2016_08_28.tar.gz
 <p align="center"> <img src="./guided-relu-demo.jpg" width="800"> </p>
 
 Left to right:
-+ original cat image
-+ the magnitude in saliency map
++ the original cat image
++ the magnitude in the saliency map
 + the magnitude blended with the original image
 + positive correlated pixels (keep original color)
-+ negative correlated pixels
++ negative correlated pixels (keep original color)
