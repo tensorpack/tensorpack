@@ -243,7 +243,7 @@ def dump_dataflow_images(df, index=0, batched=True,
                 vizlist = vizlist[vizsize:]
 
 
-def intensity_to_rgb(intensity, cmap='rainbow', normalize=False):
+def intensity_to_rgb(intensity, cmap='jet', normalize=False):
     """
     Convert a 1-channel matrix of intensities to an RGB image employing a colormap.
     This function requires matplotlib. See `matplotlib colormaps

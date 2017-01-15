@@ -177,7 +177,7 @@ def psnr_loss(prediction, ground_truth, name='psnr_loss'):
 
 
 @contextmanager
-def GuidedReLU():
+def guided_relu():
     """
     Returns:
         A context where the gradient of :meth:`tf.nn.relu` is replaced by
@@ -196,3 +196,19 @@ def GuidedReLU():
     g = tf.get_default_graph()
     with g.gradient_override_map({'Relu': 'GuidedReLU'}):
         yield
+
+
+def saliency_map(output, input, name="saliency_map"):
+    """
+    Produce a saliency map as described in the paper:
+    `Deep Inside Convolutional Networks: Visualising Image Classification Models and Saliency Maps
+    <https://arxiv.org/abs/1312.6034>`_.
+    The saliency map is the gradient of the max element in output w.r.t input.
+
+    Returns:
+        tf.Tensor: the saliency map. Has the same shape as input.
+    """
+    max_outp = tf.reduce_max(output, 1)
+    saliency_op = tf.gradients(max_outp, input)[:][0]
+    saliency_op = tf.identity(saliency_op, name=name)
+    return saliency_op
