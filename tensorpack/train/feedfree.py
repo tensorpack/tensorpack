@@ -29,7 +29,7 @@ class FeedfreeTrainerBase(Trainer):
         # note that summary_op will take a data from the queue
         if self.summary_op is not None:
             summary_str = self.summary_op.eval()
-            self.add_summary(tf.Summary.FromString(summary_str))
+            self.add_summary(summary_str)
 
     def _get_input_tensors(self):
         return self._input_method.get_input_tensors()

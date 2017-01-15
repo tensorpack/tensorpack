@@ -9,7 +9,7 @@ produce the sum of them.
 Here the two Spatial Transformer branches learn to localize the two digits
 and warped them separately.
 
-![demo](demo.jpg)
+<p align="center"> <img src="./demo.jpg" width="400"> </p>
 
 Left: input image; Middle: output of the first STN branch (which localizes the second digit); Right: output of the second STN branch.
 

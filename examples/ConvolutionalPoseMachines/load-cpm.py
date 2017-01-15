@@ -11,9 +11,6 @@ import argparse
 from tensorpack import *
 from tensorpack.utils.argtools import memoized
 
-import matplotlib.pyplot as plt
-_CM = plt.get_cmap('jet')
-
 """
 15 channels:
 0-1 head, neck
@@ -29,7 +26,7 @@ def colorize(img, heatmap):
     """ img: bgr, [0,255]
         heatmap: [0,1]
     """
-    heatmap = _CM(heatmap)[:, :, [2, 1, 0]] * 255.0
+    heatmap = viz.intensity_to_rgb(heatmap, cmap='jet')[:, :, ::-1]
     return img * 0.5 + heatmap * 0.5
 
 

@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 
 import cv2
-import cPickle as pickle
 import sys
 import os
 import numpy as np
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 from tensorflow.contrib.slim.nets import resnet_v1
+
 import tensorpack as tp
 import tensorpack.utils.viz as viz
 

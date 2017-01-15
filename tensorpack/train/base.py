@@ -102,8 +102,11 @@ class Trainer(object):
         add scalar summary to ``self.stat_holder``.
 
         Args:
-            summary (tf.Summary): a summary object.
+            summary (tf.Summary or str): a summary object, or a str which will
+                be interpreted as a serialized tf.Summary protobuf.
         """
+        if isinstance(summary, six.string_types):
+            summary = tf.Summary.FromString(summary)
         for val in summary.value:
             if val.WhichOneof('value') == 'simple_value':
                 val.tag = re.sub('tower[p0-9]+/', '', val.tag)   # TODO move to subclasses
@@ -116,10 +119,6 @@ class Trainer(object):
     def add_scalar_summary(self, name, val):
         """
         Add a scalar sumary to both TF events file and StatHolder.
-
-        Args:
-            name(str)
-            val(float)
         """
         self.add_summary(create_scalar_summary(name, val))
 
