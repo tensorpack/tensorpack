@@ -11,6 +11,7 @@ Docs & tutorials should be ready within a month. See some [examples](examples) t
 + [InceptionV3 on ImageNet](examples/Inception/inceptionv3.py)
 + [Fully-convolutional Network for Holistically-Nested Edge Detection(HED)](examples/HED)
 + [Spatial Transformer Networks on MNIST addition](examples/SpatialTransformer)
++ [Visualize Saliency Maps by Guided ReLU](examples/Saliency)
 
 ### Reinforcement Learning:
 + [Deep Q-Network(DQN) variants on Atari games](examples/DeepQNetwork)
