@@ -161,6 +161,8 @@ class ModelFromMetaGraph(ModelDesc):
     Only useful for inference.
     """
 
+    # TODO can this be really used for inference?
+
     def __init__(self, filename):
         """
         Args:

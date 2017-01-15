@@ -66,7 +66,7 @@ class SimpleTrainer(Trainer):
         self._predictor_factory = PredictorFactory(self.sess, self.model, [0])
         if config.dataflow is None:
             self._input_method = config.data
-            assert isinstance(self._input_method, FeedInput)
+            assert isinstance(self._input_method, FeedInput), type(self._input_method)
         else:
             self._input_method = FeedInput(config.dataflow)
 
@@ -93,7 +93,7 @@ class SimpleTrainer(Trainer):
 
     def _trigger_epoch(self):
         if self.summary_op is not None:
-            feed = self._input_method.next_feed()
+            feed = self._input_method.last_feed()
             summary_str = self.summary_op.eval(feed_dict=feed)
             self.add_summary(summary_str)
 

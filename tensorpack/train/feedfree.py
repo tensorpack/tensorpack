@@ -25,8 +25,8 @@ class FeedfreeTrainerBase(Trainer):
     """
 
     def _trigger_epoch(self):
-        # need to run summary_op every epoch
-        # note that summary_op will take a data from the queue
+        # run summary_op every epoch
+        # TODO summary_op will take a data! This is not good for TensorInput.
         if self.summary_op is not None:
             summary_str = self.summary_op.eval()
             self.add_summary(summary_str)

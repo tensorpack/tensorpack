@@ -45,7 +45,11 @@ class FeedInput(InputData):
     def next_feed(self):
         data = next(self.data_producer)
         feed = dict(zip(self.input_vars, data))
+        self._last_feed = feed
         return feed
+
+    def last_feed(self):
+        return self._last_feed
 
 
 class FeedfreeInput(InputData):
