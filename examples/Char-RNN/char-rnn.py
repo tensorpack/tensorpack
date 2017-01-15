@@ -69,8 +69,8 @@ class Model(ModelDesc):
     def _build_graph(self, input_vars):
         input, nextinput = input_vars
 
-        cell = tf.nn.rnn_cell.BasicLSTMCell(num_units=param.rnn_size)
-        cell = tf.nn.rnn_cell.MultiRNNCell([cell] * param.num_rnn_layer)
+        cell = tf.contrib.rnn.BasicLSTMCell(num_units=param.rnn_size)
+        cell = tf.contrib.rnn.MultiRNNCell([cell] * param.num_rnn_layer)
 
         self.initial = initial = cell.zero_state(tf.shape(input)[0], tf.float32)
 
