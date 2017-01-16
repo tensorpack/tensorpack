@@ -69,8 +69,8 @@ class Model(ModelDesc):
     def _build_graph(self, input_vars):
         input, nextinput = input_vars
 
-        cell = tf.nn.rnn_cell.BasicLSTMCell(num_units=param.rnn_size)
-        cell = tf.nn.rnn_cell.MultiRNNCell([cell] * param.num_rnn_layer)
+        cell = tf.contrib.rnn.BasicLSTMCell(num_units=param.rnn_size)
+        cell = tf.contrib.rnn.MultiRNNCell([cell] * param.num_rnn_layer)
 
         self.initial = initial = cell.zero_state(tf.shape(input)[0], tf.float32)
 
@@ -80,7 +80,7 @@ class Model(ModelDesc):
         input_list = tf.unstack(input_feature, axis=1)  # seqlen x (Bxrnnsize)
 
         # seqlen is 1 in inference. don't need loop_function
-        outputs, last_state = tf.nn.rnn(cell, input_list, initial, scope='rnnlm')
+        outputs, last_state = tf.contrib.rnn.static_rnn(cell, input_list, initial, scope='rnnlm')
         self.last_state = tf.identity(last_state, 'last_state')
 
         # seqlen x (Bxrnnsize)
