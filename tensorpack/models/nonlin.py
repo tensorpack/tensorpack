@@ -21,7 +21,7 @@ def Maxout(x, num_unit):
         num_unit (int): a int. Must be divisible by C.
 
     Returns:
-        tf.Tensor: of shape NHW(C/num_unit).
+        tf.Tensor: of shape NHW(C/num_unit) named ``output``.
     """
     input_shape = x.get_shape().as_list()
     ndim = len(input_shape)
@@ -46,6 +46,10 @@ def PReLU(x, init=0.001, name='output'):
         x (tf.Tensor): input
         init (float): initial value for the learnable slope.
         name (str): name of the output.
+
+    Variable Names:
+
+    * ``alpha``: learnable slope.
     """
     init = tf.constant_initializer(init)
     alpha = tf.get_variable('alpha', [], initializer=init)

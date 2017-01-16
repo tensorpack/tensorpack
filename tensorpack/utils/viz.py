@@ -182,7 +182,7 @@ def build_patch_list(patch_list,
 def dump_dataflow_images(df, index=0, batched=True,
                          number=1000, output_dir=None,
                          scale=1, resize=None, viz=None,
-                         flipRGB=False, exit_after=True):
+                         flipRGB=False):
     """
     Dump or visualize images of a :class:`DataFlow`.
 
@@ -199,7 +199,6 @@ def dump_dataflow_images(df, index=0, batched=True,
             with :func:`build_patch_list` for visualization. No visualization will happen by
             default.
         flipRGB (bool): apply a RGB<->BGR conversion or not.
-        exit_after (bool): ``sys.exit()`` after this function.
     """
     if output_dir:
         mkdir_p(output_dir)
@@ -221,10 +220,7 @@ def dump_dataflow_images(df, index=0, batched=True,
             for img in imgbatch:
                 cnt += 1
                 if cnt == number:
-                    if exit_after:
-                        sys.exit()
-                    else:
-                        return
+                    return
                 if scale != 1:
                     img = img * scale
                 if resize is not None:

@@ -7,17 +7,17 @@ import tensorflow as tf
 from tensorflow.contrib.framework import add_model_variable
 from tensorflow.python.training import moving_averages
 
-from ..tfutils.common import get_tf_version
 from ..tfutils.tower import get_current_tower_context
-from ..utils import logger, building_rtfd
+from ..utils import logger
 from .common import layer_register
 
-__all__ = ['BatchNorm', 'BatchNormV1', 'BatchNormV2']
+__all__ = ['BatchNorm']
 
 # decay: being too close to 1 leads to slow start-up. torch use 0.9.
 # eps: torch: 1e-5. Lasagne: 1e-4
 
 
+# Deprecated. Only kept for future reference.
 @layer_register(log_shape=False)
 def BatchNormV1(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
     shape = x.get_shape().as_list()
@@ -110,6 +110,16 @@ def BatchNormV2(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
         decay (float): decay rate of moving average.
         epsilon (float): epsilon to avoid divide-by-zero.
 
+    Returns:
+        tf.Tensor: a tensor named ``output`` with the same shape of x.
+
+    Variable Names:
+
+    * ``beta``: the bias term.
+    * ``gamma``: the scale term. Input will be transformed by ``x * gamma + beta``.
+    * ``mean/EMA``: the moving average of mean.
+    * ``variance/EMA``: the moving average of variance.
+
     Note:
         * In multi-tower training, only the first training tower maintains a moving average.
           This is consistent with most frameworks.
@@ -171,6 +181,7 @@ def BatchNormV2(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
             x, moving_mean, moving_var, beta, gamma, epsilon)
 
     # TODO for other towers, maybe can make it depend some op later
+    # TODO update it later (similar to slim) might be faster?
     if ctx.is_main_training_tower:
         with tf.control_dependencies([update_op1, update_op2]):
             return tf.identity(xn, name='output')
@@ -178,8 +189,4 @@ def BatchNormV2(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
         return tf.identity(xn, name='output')
 
 
-if building_rtfd() or get_tf_version() >= 12:
-    BatchNorm = BatchNormV2
-else:
-    logger.warn("BatchNorm might be faster if you update TensorFlow")
-    BatchNorm = BatchNormV1
+BatchNorm = BatchNormV2

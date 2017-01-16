@@ -25,6 +25,9 @@ def MaxPooling(x, shape, stride=None, padding='VALID'):
         shape: int or (h, w) tuple
         stride: int or (h, w) tuple. Defaults to be the same as shape.
         padding (str): 'valid' or 'same'.
+
+    Returns:
+        tf.Tensor: a NHWC tensor named ``output``.
     """
     padding = padding.upper()
     shape = shape4d(shape)
@@ -48,6 +51,9 @@ def AvgPooling(x, shape, stride=None, padding='VALID'):
         shape: int or (h, w) tuple
         stride: int or (h, w) tuple. Defaults to be the same as shape.
         padding (str): 'valid' or 'same'.
+
+    Returns:
+        tf.Tensor: a NHWC tensor named ``output``.
     """
     padding = padding.upper()
     shape = shape4d(shape)
@@ -69,7 +75,7 @@ def GlobalAvgPooling(x):
     Args:
         x (tf.Tensor): a NHWC tensor.
     Returns:
-        tf.Tensor: a NC tensor.
+        tf.Tensor: a NC tensor named ``output``.
     """
     assert x.get_shape().ndims == 4
     return tf.reduce_mean(x, [1, 2], name='output')
@@ -101,6 +107,9 @@ def FixedUnPooling(x, shape, unpool_mat=None):
         shape: int or (h, w) tuple
         unpool_mat: a tf.Tensor or np.ndarray 2D matrix with size=shape.
             If is None, will use a matrix with 1 at top-left corner.
+
+    Returns:
+        tf.Tensor: a NHWC tensor.
     """
     shape = shape2d(shape)
 
@@ -138,6 +147,9 @@ def BilinearUpSample(x, shape):
     Args:
         x (tf.Tensor): a NHWC tensor
         shape (int): the upsample factor
+
+    Returns:
+        tf.Tensor: a NHWC tensor.
     """
     # inp_shape = tf.shape(x)
     # return tf.image.resize_bilinear(x,

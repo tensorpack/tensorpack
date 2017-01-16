@@ -25,6 +25,14 @@ def FullyConnected(x, out_dim,
         b_init: initializer for b. Defaults to zero.
         nl: a nonlinearity function
         use_bias (bool): whether to use bias.
+
+    Returns:
+        tf.Tensor: a NC tensor named ``output``.
+
+    Variable Names:
+
+    * ``W``: weights
+    * ``b``: bias
     """
     x = symbf.batch_flatten(x)
     in_dim = x.get_shape().as_list()[1]

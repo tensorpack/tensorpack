@@ -11,13 +11,16 @@ Pretrained model for (1,4,32)-ResNet18 and (1,2,6)-AlexNet are available at
 They're provided in the format of numpy dictionary, so it should be very easy to port into other applications.
 The __binary-weight 4-bit-activation ResNet-18__ model has 59.2% top-1 validation accuracy.
 
+Note that when (W,A,G) is set to (1,32,32), this code is also an implementation of [Binary Weight Network](https://arxiv.org/abs/1511.00363).
+But with (W,A,G) set to (1,1,32), it is not equivalent to [XNOR-Net](https://arxiv.org/abs/1603.05279), although it won't be hard to implement it.
+
 Alternative link to this page: [http://dorefa.net](http://dorefa.net)
 
 ## Preparation:
 
 To use the script. You'll need:
 
-+ TensorFlow >= 0.12
++ TensorFlow >= 0.12.1
 
 + OpenCV bindings for Python
 

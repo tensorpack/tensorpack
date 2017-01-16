@@ -59,7 +59,7 @@ def ImageSample(inputs, borderMode='repeat'):
         borderMode: either "repeat" or "constant" (zero-filled)
 
     Returns:
-        a (N,H',W',C) tensor.
+        tf.Tensor: a tensor named ``output`` of shape (N,H',W',C).
     """
     # TODO borderValue
     template, mapping = inputs
@@ -102,7 +102,7 @@ def ImageSample(inputs, borderMode='repeat'):
         mask = tf.reduce_all(mask, [3])  # bxh2xw2 boolean
         mask = tf.expand_dims(mask, 3)
         ret = ret * tf.cast(mask, tf.float32)
-    return ret
+    return tf.identity(ret, name='output')
 
 
 class TestSample(TestModel):

@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# File: softmax.py
+# -*- coding: utf-8 -*- File: softmax.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import tensorflow as tf
@@ -17,9 +16,17 @@ def SoftMax(x, use_temperature=False, temperature_init=1.0):
     <https://arxiv.org/abs/1503.02531>`_.
 
     Args:
-        x (tf.Tensor): input
+        x (tf.Tensor): input of any dimension. Softmax will be performed on
+            the last dimension.
         use_temperature (bool): use a learnable temperature or not.
         temperature_init (float): initial value of the temperature.
+
+    Returns:
+        tf.Tensor: a tensor of the same shape named ``output``.
+
+    Variable Names:
+
+    * ``invtemp``: 1.0/temperature.
     """
     if use_temperature:
         t = tf.get_variable('invtemp', [],

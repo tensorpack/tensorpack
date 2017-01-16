@@ -30,6 +30,14 @@ def Conv2D(x, out_channel, kernel_shape,
         b_init: initializer for b. Defaults to zero.
         nl: a nonlinearity function.
         use_bias (bool): whether to use bias.
+
+    Returns:
+        tf.Tensor: a NHWC tensor named ``output``.
+
+    Variable Names:
+
+    * ``W``: weights
+    * ``b``: bias
     """
     in_shape = x.get_shape().as_list()
     in_channel = in_shape[-1]
@@ -95,6 +103,14 @@ def Deconv2D(x, out_shape, kernel_shape,
         b_init: initializer for b. Defaults to zero.
         nl: a nonlinearity function.
         use_bias (bool): whether to use bias.
+
+    Returns:
+        tf.Tensor: a NHWC tensor named ``output``.
+
+    Variable Names:
+
+    * ``W``: weights
+    * ``b``: bias
     """
     in_shape = x.get_shape().as_list()[1:]
     in_channel = in_shape[-1]

@@ -19,6 +19,7 @@ def ConcatWith(x, dim, tensor):
         dim (int): the dimension along which to concatenate
         tensor (list[tf.Tensor]): a tensor or list of tensors to concatenate with x.
             x will be at the beginning
+
     Returns:
         tf.Tensor: ``tf.concat_v2([x] + tensor, dim)``
     """
