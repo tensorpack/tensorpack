@@ -7,9 +7,65 @@ import tensorflow as tf
 import numpy as np
 import time
 from tensorpack import (FeedfreeTrainerBase, TowerContext,
-                        get_global_step_var, QueueInput)
+                        get_global_step_var, QueueInput, ModelDesc)
 from tensorpack.tfutils.summary import summary_moving_average, add_moving_summary
 from tensorpack.dataflow import DataFlow
+
+
+class GANModelDesc(ModelDesc):
+    def collect_variables(self):
+        """Extract variables given by prefix
+
+        Returns
+        -------
+        TYPE
+            Description
+        """
+        all_vars = tf.trainable_variables()
+        self.g_vars = [v for v in all_vars if v.name.startswith('gen/')]
+        self.d_vars = [v for v in all_vars if v.name.startswith('discrim/')]
+
+    def build_losses(self, logits_real, logits_fake, reuse=False):
+        """Produce loss function of GAN
+
+        D and G play two-player minimax game with value function V(G,D)
+
+          min_G max _D V(D, G) = IE_{x ~ p_data} [log D(x)] + IE_{z ~ p_fake} [log (1 - D(G(z)))]
+
+        Note, we swap 0, 1 labels as suggested in "Improving GANs".
+
+        Parameters
+        ----------
+        logits_real : TYPE
+            discrim logits from real samples
+        logits_fake : TYPE
+            discrim logits from fake samples produced by generator
+
+        """
+        with tf.name_scope("GAN_loss"):
+            score_real = tf.sigmoid(logits_real)
+            score_fake = tf.sigmoid(logits_fake)
+            tf.summary.histogram('score-real', score_real)
+            tf.summary.histogram('score-fake', score_fake)
+
+            with tf.name_scope("discrim"):
+                d_loss_pos = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
+                    logits=logits_real, labels=tf.zeros_like(logits_real)), name='loss_real')
+                d_loss_neg = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
+                    logits=logits_fake, labels=tf.ones_like(logits_fake)), name='loss_fake')
+
+                d_pos_acc = tf.reduce_mean(tf.cast(score_real < 0.5, tf.float32), name='accuracy_real')
+                d_neg_acc = tf.reduce_mean(tf.cast(score_fake > 0.5, tf.float32), name='accuracy_fake')
+
+                self.d_accuracy = tf.add(.5 * d_pos_acc, .5 * d_neg_acc, name='accuracy')
+                self.d_loss = tf.add(.5 * d_loss_pos, .5 * d_loss_neg, name='loss')
+
+            with tf.name_scope("gen"):
+                self.g_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
+                    logits=logits_fake, labels=tf.zeros_like(logits_fake)), name='loss')
+                self.g_accuracy = tf.reduce_mean(tf.cast(score_fake < 0.5, tf.float32), name='accuracy')
+
+            add_moving_summary(self.g_loss, self.d_loss, self.d_accuracy, self.g_accuracy)
 
 
 class GANTrainer(FeedfreeTrainerBase):
@@ -44,31 +100,3 @@ class RandomZData(DataFlow):
     def get_data(self):
         while True:
             yield [np.random.uniform(-1, 1, size=self.shape)]
-
-
-def build_GAN_losses(vecpos, vecneg):
-    """
-    :param vecpos, vecneg: output of the discriminator (logits) for real
-        and fake images.
-    :return: (loss of G, loss of D)
-    """
-    sigmpos = tf.sigmoid(vecpos)
-    sigmneg = tf.sigmoid(vecneg)
-    tf.summary.histogram('sigmoid-pos', sigmpos)
-    tf.summary.histogram('sigmoid-neg', sigmneg)
-
-    d_loss_pos = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
-        logits=vecpos, labels=tf.ones_like(vecpos)), name='d_CE_loss_pos')
-    d_loss_neg = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
-        logits=vecneg, labels=tf.zeros_like(vecneg)), name='d_CE_loss_neg')
-
-    d_pos_acc = tf.reduce_mean(tf.cast(sigmpos > 0.5, tf.float32), name='pos_acc')
-    d_neg_acc = tf.reduce_mean(tf.cast(sigmneg < 0.5, tf.float32), name='neg_acc')
-
-    g_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
-        logits=vecneg, labels=tf.ones_like(vecneg)), name='g_CE_loss')
-    d_loss = tf.add(d_loss_pos, d_loss_neg, name='d_CE_loss')
-    add_moving_summary(d_loss_pos, d_loss_neg,
-                       g_loss, d_loss,
-                       d_pos_acc, d_neg_acc)
-    return g_loss, d_loss

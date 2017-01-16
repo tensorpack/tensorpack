@@ -20,6 +20,7 @@ _TO_IMPORT = set([
     'sessinit',
     'common',
     'gradproc',
+    'distributions',
     'argscope',
     'tower'
     ])

@@ -13,17 +13,19 @@ import argparse
 from tensorpack import *
 from tensorpack.utils.viz import *
 import tensorpack.tfutils.symbolic_functions as symbf
-from GAN import GANTrainer, build_GAN_losses
+from GAN import GANTrainer, GANModelDesc
 
 BATCH = 128
 
 
-class Model(ModelDesc):
+class Model(GANModelDesc):
 
     def _get_input_vars(self):
         return [InputVar(tf.float32, (None, 28, 28), 'input')]
 
-    def generator(self, z):
+    def generator(self, z, c):
+        z = tf.concat_v2([c, z], 1, name='fullz')
+
         l = FullyConnected('fc0', z, 1024, nl=BNReLU)
         l = FullyConnected('fc1', l, 128 * 7 * 7, nl=BNReLU)
         l = tf.reshape(l, [-1, 7, 7, 128])
@@ -52,45 +54,39 @@ class Model(ModelDesc):
         return logits, encoder
 
     def _build_graph(self, input_vars):
-        image_pos = input_vars[0]
-        image_pos = tf.expand_dims(image_pos * 2.0 - 1, -1)
 
-        prior_prob = tf.constant([0.1] * 10, name='prior_prob')
-        # assume first 10 is categorical
-        ids = tf.multinomial(tf.zeros([BATCH, 10]), num_samples=1)[:, 0]
-        zc = tf.one_hot(ids, 10, name='zc_train')
-        zc = tf.placeholder_with_default(zc, [None, 10], name='zc')
+        latent_factor = CategoricalDistribution("cat", 10)
+
+        real_sample = input_vars[0]
+        real_sample = tf.expand_dims(real_sample * 2.0 - 1, -1)
+
+        zc = latent_factor.code(BATCH, name='zc')
 
         z = tf.random_uniform(tf.stack([tf.shape(zc)[0], 90]), -1, 1, name='z_train')
         z = tf.placeholder_with_default(z, [None, 90], name='z')
-        z = tf.concat_v2([zc, z], 1, name='fullz')
 
         with argscope([Conv2D, Deconv2D, FullyConnected],
                       W_init=tf.truncated_normal_initializer(stddev=0.02)):
             with tf.variable_scope('gen'):
-                image_gen = self.generator(z)
-                tf.summary.image('gen', image_gen, max_outputs=30)
+                fake_sample = self.generator(z, zc)
+                tf.summary.image('gen', fake_sample, max_outputs=30)
+
             with tf.variable_scope('discrim'):
-                vecpos, _ = self.discriminator(image_pos)
+                real_pred, _ = self.discriminator(real_sample)
+
             with tf.variable_scope('discrim', reuse=True):
-                vecneg, dist_param = self.discriminator(image_gen)
-                logprob = tf.nn.log_softmax(dist_param)  # log prob of each category
+                fake_pred, dist_param = self.discriminator(fake_sample)
+                prob = tf.nn.softmax(dist_param)  # log prob of each category
 
-        # Q(c|x) = Q(zc | image_gen)
-        log_qc_given_x = tf.reduce_sum(logprob * zc, 1, name='logQc_x')  # bx1
-        log_qc = tf.reduce_sum(prior_prob * zc, 1, name='logQc')
-        Elog_qc_given_x = tf.reduce_mean(log_qc_given_x, name='ElogQc_x')
-        Hc = tf.reduce_mean(-log_qc, name='Hc')
-        MIloss = tf.multiply(Hc + Elog_qc_given_x, -1.0, name='neg_MI')
+        Hc = latent_factor.entropy(zc)
+        MIloss = latent_factor.mutual_information(zc, prob)
 
-        self.g_loss, self.d_loss = build_GAN_losses(vecpos, vecneg)
-        self.g_loss = tf.add(self.g_loss, MIloss, name='total_g_loss')
-        self.d_loss = tf.add(self.d_loss, MIloss, name='total_d_loss')
-        summary.add_moving_summary(MIloss, self.g_loss, self.d_loss, Hc, Elog_qc_given_x)
+        self.build_losses(real_pred, fake_pred)
+        self.g_loss = tf.subtract(self.g_loss, MIloss, name='total_g_loss')
+        self.d_loss = tf.subtract(self.d_loss, MIloss, name='total_d_loss')
+        summary.add_moving_summary(MIloss, self.g_loss, self.d_loss, Hc)
 
-        all_vars = tf.trainable_variables()
-        self.g_vars = [v for v in all_vars if v.name.startswith('gen/')]
-        self.d_vars = [v for v in all_vars if v.name.startswith('discrim/')]
+        self.collect_variables()
 
 
 def get_data():
