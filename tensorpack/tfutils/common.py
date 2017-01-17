@@ -81,7 +81,7 @@ def get_op_tensor_name(name):
     Returns:
         tuple: (op_name, tensor_name)
     """
-    if name[-2] == ':':
+    if len(name) >= 3 and name[-2] == ':':
         return name[:-2], name
     else:
         return name, name + ':0'
