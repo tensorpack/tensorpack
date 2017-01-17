@@ -124,8 +124,9 @@ class Model(ModelDesc):
             best_v = tf.reduce_max(targetQ_predict_value, 1)    # N,
         else:
             # Double-DQN
-            tf.get_variable_scope().reuse_variables()
-            next_predict_value = self._get_DQN_prediction(next_state)
+            sc = tf.get_variable_scope()
+            with tf.variable_scope(sc, reuse=True):
+                next_predict_value = self._get_DQN_prediction(next_state)
             self.greedy_choice = tf.argmax(next_predict_value, 1)   # N,
             predict_onehot = tf.one_hot(self.greedy_choice, NUM_ACTIONS, 1.0, 0.0)
             best_v = tf.reduce_sum(targetQ_predict_value * predict_onehot, 1)
