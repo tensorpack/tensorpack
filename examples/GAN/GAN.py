@@ -13,34 +13,63 @@ from tensorpack.dataflow import DataFlow
 
 
 class GANModelDesc(ModelDesc):
-    def collect_variables(self):
-        """Extract variables given by prefix
 
-        Returns
-        -------
-        TYPE
-            Description
+    def generate_code(self, factors=[], code_len=100, name='z'):
+        """Generate input-node for noise data
+
+        Examples:
+            l1 = CategoricalDistribution("cat", 10) # len 10
+            l2 = UniformDistribution("uni", 2)      # len 2
+
+            z1 = l1.sample(BATCH, name='zc')
+            z2 = l2.sample(BATCH, name='zu')
+
+            z = self.generate_code([z1, z2], code_len=100)
+
+        Args:
+            factors (list, optional): tensors encoding different noise
+            code_len (int, optional): total length of code
+            name (str, optional): name for full code placeholder
+
+        Returns:
+            tf.Tensor: placeholder for noise
+        """
+        with tf.name_scope("latent_factors"):
+            batch_size = tf.shape(factors[0])[0]
+
+            factor_len = np.sum([z.get_shape().as_list()[1] for z in factors])
+            noise_len = code_len - factor_len
+
+            # generate fully noisy input
+            z = tf.random_uniform(tf.stack([batch_size, noise_len]), -1, 1, name='z_train')
+            # define placeholder
+            z = tf.placeholder_with_default(z, [None, noise_len], name='z')
+
+            factors.append(z)
+            z = tf.concat_v2(factors, 1, name=name)
+            return z
+
+    def collect_variables(self):
+        """Extract variables by prefix
         """
         all_vars = tf.trainable_variables()
         self.g_vars = [v for v in all_vars if v.name.startswith('gen/')]
         self.d_vars = [v for v in all_vars if v.name.startswith('discrim/')]
 
-    def build_losses(self, logits_real, logits_fake, reuse=False):
-        """Produce loss function of GAN
+    def build_losses(self, logits_real, logits_fake):
+        """D and G play two-player minimax game with value function V(G,D)
 
-        D and G play two-player minimax game with value function V(G,D)
 
           min_G max _D V(D, G) = IE_{x ~ p_data} [log D(x)] + IE_{z ~ p_fake} [log (1 - D(G(z)))]
 
         Note, we swap 0, 1 labels as suggested in "Improving GANs".
 
-        Parameters
-        ----------
-        logits_real : TYPE
-            discrim logits from real samples
-        logits_fake : TYPE
-            discrim logits from fake samples produced by generator
+        Args:
+            logits_real (tf.Tensor): discrim logits from real samples
+            logits_fake (tf.Tensor): discrim logits from fake samples produced by generator
 
+        Returns:
+            tf.Tensor: Description
         """
         with tf.name_scope("GAN_loss"):
             score_real = tf.sigmoid(logits_real)

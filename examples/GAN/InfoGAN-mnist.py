@@ -35,7 +35,6 @@ class Model(GANModelDesc):
         return l
 
     def discriminator(self, imgs):
-        """ return a (b, 1) logits"""
         with argscope(Conv2D, nl=tf.identity, kernel_shape=4, stride=2), \
                 argscope(LeakyReLU, alpha=0.2):
             l = (LinearWrap(imgs)
@@ -47,23 +46,26 @@ class Model(GANModelDesc):
                  .BatchNorm('bn2').LeakyReLU()())
 
             logits = FullyConnected('fct', l, 1, nl=tf.identity)
-            encoder = (LinearWrap(l)
-                       .FullyConnected('fce1', 128, nl=tf.identity)
-                       .BatchNorm('bne').LeakyReLU()
-                       .FullyConnected('fce-out', 10, nl=tf.identity)())
-        return logits, encoder
+            encoder1 = (LinearWrap(l)
+                        .FullyConnected('fce1', 128, nl=tf.identity)
+                        .BatchNorm('bne').LeakyReLU()
+                        .FullyConnected('fce-out', 10 + 4, nl=tf.identity)())
+            encoder2 = encoder1[:, 10:14]
+            encoder1 = encoder1[:, :10]
+        return logits, encoder1, encoder2
 
     def _build_graph(self, input_vars):
 
-        latent_factor = CategoricalDistribution("cat", 10)
+        factor1 = CategoricalDistribution("cat", 10)
+        factor2 = UniformDistribution("uni", 2)
 
         real_sample = input_vars[0]
         real_sample = tf.expand_dims(real_sample * 2.0 - 1, -1)
 
-        zc = latent_factor.code(BATCH, name='zc')
+        zc = factor1.sample(BATCH, name='zc')
+        zu = factor2.sample(BATCH, name='zu')
 
-        z = tf.random_uniform(tf.stack([tf.shape(zc)[0], 90]), -1, 1, name='z_train')
-        z = tf.placeholder_with_default(z, [None, 90], name='z')
+        z = self.generate_code([zc, zu])
 
         with argscope([Conv2D, Deconv2D, FullyConnected],
                       W_init=tf.truncated_normal_initializer(stddev=0.02)):
@@ -72,20 +74,27 @@ class Model(GANModelDesc):
                 tf.summary.image('gen', fake_sample, max_outputs=30)
 
             with tf.variable_scope('discrim'):
-                real_pred, _ = self.discriminator(real_sample)
+                real_pred, _, _ = self.discriminator(real_sample)
 
             with tf.variable_scope('discrim', reuse=True):
-                fake_pred, dist_param = self.discriminator(fake_sample)
-                prob = tf.nn.softmax(dist_param)  # log prob of each category
+                fake_pred, dist_param1, dist_param2 = self.discriminator(fake_sample)
+                observed_params1 = factor1.model_param(dist_param1)
+                observed_params2 = factor2.model_param(dist_param2)
 
-        Hc = latent_factor.entropy(zc)
-        MIloss = latent_factor.mutual_information(zc, prob)
+        with tf.name_scope("mutual_information"):
+            mi1 = factor1.mutual_information(zc, observed_params1)
+            mi2 = factor2.mutual_information(zu, observed_params2) * 2 - 1
+            mi = tf.add(mi1, mi2, name="total")
 
+        # default GAN objective
         self.build_losses(real_pred, fake_pred)
-        self.g_loss = tf.subtract(self.g_loss, MIloss, name='total_g_loss')
-        self.d_loss = tf.subtract(self.d_loss, MIloss, name='total_d_loss')
-        summary.add_moving_summary(MIloss, self.g_loss, self.d_loss, Hc)
+        # subtract mutual information for latent factores (we want to maximize them)
+        self.g_loss = tf.subtract(self.g_loss, mi, name='total_g_loss')
+        self.d_loss = tf.subtract(self.d_loss, mi, name='total_d_loss')
 
+        summary.add_moving_summary(mi1, mi2, mi, self.g_loss, self.d_loss)
+
+        # distinguish between variables of generator and discriminator updates
         self.collect_variables()
 
 
@@ -116,18 +125,38 @@ def sample(model_path):
     pred = OfflinePredictor(PredictConfig(
         session_init=get_model_loader(model_path),
         model=Model(),
-        input_names=['zc'],
+        input_names=['zc', 'zu'],
         output_names=['gen/gen']))
 
-    eye = []
-    for k in np.eye(10):
-        eye = eye + [k] * 10
-    inputs = np.asarray(eye)
+    # sample all one-hot encodings (10 times)
+    zc = np.tile(np.eye(10), [10, 1])
+    # sample continuos variables from -1 to +1
+    value_range = np.arange(100, dtype=np.float32) / 50 - 1
+
     while True:
-        o = pred([inputs])
+        # only categorical turned on
+        zu = np.zeros((100, 2))
+        o = pred([zc, zu * 0])
         o = (o[0] + 1) * 128.0
-        viz = next(build_patch_list(o, nr_row=10, nr_col=10))
-        viz = cv2.resize(viz, (800, 800))
+        viz1 = next(build_patch_list(o, nr_row=10, nr_col=10))
+        viz1 = cv2.resize(viz1, (300, 300))
+
+        # show effect of first continous variable
+        zu = np.stack((value_range, value_range * 0), 1)
+        o = pred([zc, zu])
+        o = (o[0] + 1) * 128.0
+        viz2 = next(build_patch_list(o, nr_row=10, nr_col=10))
+        viz2 = cv2.resize(viz2, (300, 300))
+
+        # show effect of second continous variable
+        zu = np.stack((value_range * 0, value_range), 1)
+        o = pred([zc, zu])
+        o = (o[0] + 1) * 128.0
+        viz3 = next(build_patch_list(o, nr_row=10, nr_col=10))
+        viz3 = cv2.resize(viz3, (300, 300))
+
+        viz = stack_images([viz1, viz2, viz3])
+
         interactive_imshow(viz)
 
 

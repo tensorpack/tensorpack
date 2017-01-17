@@ -18,7 +18,7 @@ except ImportError:
 
 
 __all__ = ['pyplot2img', 'interactive_imshow', 'build_patch_list',
-           'pyplot_viz', 'dump_dataflow_images', 'intensity_to_rgb']
+           'pyplot_viz', 'dump_dataflow_images', 'intensity_to_rgb', 'stack_images']
 
 
 def pyplot2img(plt):
@@ -280,3 +280,29 @@ if __name__ == '__main__':
             imglist, max_width=500, max_height=200)):
         of = "patch{:02d}.png".format(idx)
         cv2.imwrite(of, patch)
+
+
+def stack_images(imgs, vertical=False):
+    rows = [x.shape[0] for x in imgs]
+    cols = [x.shape[1] for x in imgs]
+
+    if vertical:
+        if len(imgs[0].shape) == 2:
+            out = np.zeros((np.sum(rows), max(cols)), dtype='uint8')
+        else:
+            out = np.zeros((np.sum(rows), max(cols), 3), dtype='uint8')
+    else:
+        if len(imgs[0].shape) == 2:
+            out = np.zeros((max(rows), np.sum(cols)), dtype='uint8')
+        else:
+            out = np.zeros((max(rows), np.sum(cols), 3), dtype='uint8')
+
+    offset = 0
+    for i, img in enumerate(imgs):
+        if vertical:
+            out[offset:offset + rows[i], :cols[i]] = img
+            offset += rows[i]
+        else:
+            out[:rows[i], offset:offset + cols[i]] = img
+            offset += cols[i]
+    return out
