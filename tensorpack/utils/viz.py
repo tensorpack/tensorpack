@@ -295,8 +295,6 @@ def stack_images(imgs, vertical=False):
     rows = [x.shape[0] for x in imgs]
     cols = [x.shape[1] for x in imgs]
 
-    assert imgs.max() > 1, "expect images within range [0, 255]"
-
     if vertical:
         if len(imgs[0].shape) == 2:
             out = np.zeros((np.sum(rows), max(cols)), dtype='uint8')
@@ -310,6 +308,7 @@ def stack_images(imgs, vertical=False):
 
     offset = 0
     for i, img in enumerate(imgs):
+        assert img.max() > 1, "expect images within range [0, 255]"
         if vertical:
             out[offset:offset + rows[i], :cols[i]] = img
             offset += rows[i]

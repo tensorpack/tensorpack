@@ -136,7 +136,7 @@ def sample(model_path):
 
     while True:
         # only categorical turned on
-        z_noise = np.random.uniform(-1, 1, (100, 88))
+        z_noise = np.random.uniform(-1, 1, (100, 62))
         o = pred([z_cat, z_uni * 0, z_uni * 0, z_noise])
         o = (o[0] + 1) * 128.0
         viz1 = next(build_patch_list(o, nr_row=10, nr_col=10))
