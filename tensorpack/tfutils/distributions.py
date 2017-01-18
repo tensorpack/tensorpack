@@ -173,7 +173,7 @@ class Distribution(object):
 
 
 class CategoricalDistribution(Distribution):
-    """Represent categorical distribution
+    """Represent categorical distribution.
 
     Attributes:
         cardinality (int): number of categories
@@ -208,8 +208,8 @@ class UniformDistribution(Distribution):
     """Represent uniform distribution U(-1,1).
 
     Remarks:
-        There is not such a thing as uniform distributed real numbers.
-        Hence, we model prior and posterior as a Gaussian
+        There is not such a thing as uniformly distributed real numbers.
+        Hence, this implements a Gaussian with uniform sample_prior.
 
     Attributes:
         dim (int): dimension
@@ -229,6 +229,7 @@ class UniformDistribution(Distribution):
         if self.fixed_std:
             mean = theta
             stddev = tf.ones_like(mean)
+            exponent = (x - mean)
         else:
             if len(theta.get_shape()) == 1:
                 l = theta.get_shape()[0] // 2
@@ -240,8 +241,7 @@ class UniformDistribution(Distribution):
                 stddev = theta[:, l:self.dim * 2]
 
             stddev = tf.sqrt(tf.exp(stddev) + eps)
-
-        exponent = (x - mean) / (stddev + eps)
+            exponent = (x - mean) / (stddev + eps)
 
         return tf.reduce_sum(
             - 0.5 * np.log(2 * np.pi) - tf.log(stddev + eps) - 0.5 * tf.square(exponent),
@@ -273,7 +273,7 @@ class UniformDistribution(Distribution):
 
 class NoiseDistribution(Distribution):
     """This is not really a distribution, but we implement it as a factor
-    without model parameters to simply the actual code.
+    without model parameters to simplify the actual code.
     """
     def __init__(self, name, dim):
         super(NoiseDistribution, self).__init__(name)
@@ -362,7 +362,7 @@ class ProductDistribution(Distribution):
             batch_size (int): number of samples
 
         Remarks:
-            This also creates placeholder allowing for inference with custom input.
+            This also creates placeholder allowing to do inference with custom input.
 
         Returns:
             tf.Placeholder: placeholder with a default of samples

@@ -55,12 +55,11 @@ class Model(GANModelDesc):
         real_sample = input_vars[0]
         real_sample = tf.expand_dims(real_sample * 2.0 - 1, -1)
 
-        # latent space is cat(10) x uni(2) x noise(88)
-        factor1 = CategoricalDistribution("cat", 10)
-        factor2 = UniformDistribution("uni_a", 1)
-        factor3 = UniformDistribution("uni_b", 1)
-        factor4 = NoiseDistribution("noise", 88)
-        self.factors = ProductDistribution("factors", [factor1, factor2, factor3, factor4])
+        # latent space is cat(10) x uni(1) x uni(1) x noise(62)
+        self.factors = ProductDistribution("factors", [CategoricalDistribution("cat", 10),
+                                                       UniformDistribution("uni_a", 1),
+                                                       UniformDistribution("uni_b", 1),
+                                                       NoiseDistribution("noise", 62)])
 
         z = self.factors.sample(BATCH)
 
