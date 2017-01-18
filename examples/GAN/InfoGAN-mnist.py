@@ -23,9 +23,7 @@ class Model(GANModelDesc):
     def _get_input_vars(self):
         return [InputVar(tf.float32, (None, 28, 28), 'input')]
 
-    def generator(self, z, c):
-        z = tf.concat_v2([c, z], 1, name='fullz')
-
+    def generator(self, z):
         l = FullyConnected('fc0', z, 1024, nl=BNReLU)
         l = FullyConnected('fc1', l, 128 * 7 * 7, nl=BNReLU)
         l = tf.reshape(l, [-1, 7, 7, 128])
@@ -46,53 +44,53 @@ class Model(GANModelDesc):
                  .BatchNorm('bn2').LeakyReLU()())
 
             logits = FullyConnected('fct', l, 1, nl=tf.identity)
-            encoder1 = (LinearWrap(l)
-                        .FullyConnected('fce1', 128, nl=tf.identity)
-                        .BatchNorm('bne').LeakyReLU()
-                        .FullyConnected('fce-out', 10 + 4, nl=tf.identity)())
-            encoder2 = encoder1[:, 10:14]
-            encoder1 = encoder1[:, :10]
-        return logits, encoder1, encoder2
+            encoder = (LinearWrap(l)
+                       .FullyConnected('fce1', 128, nl=tf.identity)
+                       .BatchNorm('bne').LeakyReLU()
+                       .FullyConnected('fce-out', self.factors.param_dim(), nl=tf.identity)())
+        return logits, encoder
 
     def _build_graph(self, input_vars):
-
-        factor1 = CategoricalDistribution("cat", 10)
-        factor2 = UniformDistribution("uni", 2)
 
         real_sample = input_vars[0]
         real_sample = tf.expand_dims(real_sample * 2.0 - 1, -1)
 
-        zc = factor1.sample(BATCH, name='zc')
-        zu = factor2.sample(BATCH, name='zu')
+        # latent space is cat(10) x uni(2) x noise(88)
+        factor1 = CategoricalDistribution("cat", 10)
+        factor2 = UniformDistribution("uni", 2)
+        factor3 = NoiseDistribution("noise", 88)
+        self.factors = ProductDistribution("factors", [factor1, factor2, factor3])
 
-        z = self.generate_code([zc, zu])
+        z = self.factors.sample(BATCH)
 
         with argscope([Conv2D, Deconv2D, FullyConnected],
                       W_init=tf.truncated_normal_initializer(stddev=0.02)):
             with tf.variable_scope('gen'):
-                fake_sample = self.generator(z, zc)
+                fake_sample = self.generator(z)
                 tf.summary.image('gen', fake_sample, max_outputs=30)
 
             with tf.variable_scope('discrim'):
-                real_pred, _, _ = self.discriminator(real_sample)
+                real_pred, _ = self.discriminator(real_sample)
 
             with tf.variable_scope('discrim', reuse=True):
-                fake_pred, dist_param1, dist_param2 = self.discriminator(fake_sample)
-                observed_params1 = factor1.model_param(dist_param1)
-                observed_params2 = factor2.model_param(dist_param2)
+                fake_pred, dist_param = self.discriminator(fake_sample)
+
+        # post-process all dist_params from discriminator
+        model_param = self.factors.model_param(dist_param)
 
         with tf.name_scope("mutual_information"):
-            mi1 = factor1.mutual_information(zc, observed_params1)
-            mi2 = factor2.mutual_information(zu, observed_params2) * 2 - 1
-            mi = tf.add(mi1, mi2, name="total")
+            MIs = self.factors.mutual_information(z, model_param)
+            mi = tf.add_n(MIs, name="total")
+        summary.add_moving_summary(MIs + [mi])
 
         # default GAN objective
         self.build_losses(real_pred, fake_pred)
+
         # subtract mutual information for latent factores (we want to maximize them)
         self.g_loss = tf.subtract(self.g_loss, mi, name='total_g_loss')
         self.d_loss = tf.subtract(self.d_loss, mi, name='total_d_loss')
 
-        summary.add_moving_summary(mi1, mi2, mi, self.g_loss, self.d_loss)
+        summary.add_moving_summary(self.g_loss, self.d_loss)
 
         # distinguish between variables of generator and discriminator updates
         self.collect_variables()
@@ -125,7 +123,7 @@ def sample(model_path):
     pred = OfflinePredictor(PredictConfig(
         session_init=get_model_loader(model_path),
         model=Model(),
-        input_names=['zc', 'zu'],
+        input_names=['z_cat', 'z_uni'],
         output_names=['gen/gen']))
 
     # sample all one-hot encodings (10 times)

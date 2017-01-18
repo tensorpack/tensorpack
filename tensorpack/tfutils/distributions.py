@@ -3,7 +3,8 @@ from functools import wraps
 import numpy as np
 from ..utils import logger
 
-__all__ = ['CategoricalDistribution', 'UniformDistribution']
+__all__ = ['CategoricalDistribution', 'UniformDistribution',
+           'NoiseDistribution', 'ProductDistribution']
 
 
 def class_scope(method):
@@ -52,6 +53,9 @@ class Distribution(object):
 
     @class_scope
     def mutual_information(self, s, x):
+        return self._mutual_infomation(s, x)
+
+    def _mutual_information(self, s, x):
         """Approximates mutual information.
 
         I(s;x) = H(s) - H(s|x)
@@ -72,7 +76,7 @@ class Distribution(object):
         """
         entr = self.entropy(s)
         cross_entr = self.cross_entropy(s, x)
-        return tf.subtract(entr, cross_entr)
+        return tf.subtract(entr, cross_entr, name="mi_%s" % self.name)
 
     @class_scope
     def entropy(self, p):
@@ -125,11 +129,14 @@ class Distribution(object):
 
     def sample(self, batch_size, name="zc"):
         s = self._sample(batch_size, name)
-        logger.info("sample of distribution '%s' (%s) has name '%s'" % (self.name, self.__class__.__name__,
-                                                                        s.name[:-2]))
         return s
 
-    def size(self):
+    def param_dim(self):
+        """Distribution parameters require different memory spaces.
+        """
+        raise NotImplementedError
+
+    def input_dim(self):
         """Distribution parameters require different memory spaces.
         """
         raise NotImplementedError
@@ -167,13 +174,16 @@ class CategoricalDistribution(Distribution):
     def _sample(self, batch_size, name="zc"):
         ids = tf.multinomial(tf.zeros([batch_size, self.cardinality]), num_samples=1)[:, 0]
         zc = tf.one_hot(ids, self.cardinality)
-        zc = tf.placeholder_with_default(zc, [None, self.cardinality], name=name)
+        # zc = tf.placeholder_with_default(zc, [None, self.cardinality], name=name)
         return zc
 
     def _model_param(self, dist_param):
         return tf.nn.softmax(dist_param)
 
-    def size(self):
+    def param_dim(self):
+        return self.cardinality
+
+    def input_dim(self):
         return self.cardinality
 
 
@@ -220,28 +230,68 @@ class UniformDistribution(Distribution):
 
     def _sample(self, batch_size, name="zc"):
         zc = tf.random_uniform([batch_size, self.dim], -1, 1)
-        zc = tf.placeholder_with_default(zc, [None, self.dim], name=name)
+        # zc = tf.placeholder_with_default(zc, [None, self.dim], name=name)
         return zc
 
     def _model_param(self, dist_param):
         return dist_param
 
-    def size(self):
+    def param_dim(self):
         # [mu, sigma]
         return 2 * self.dim
 
+    def input_dim(self):
+        return self.dim
 
-class ProductDistribution(object):
-    """docstring for ProductDistribution (see Product-Space)"""
+
+class NoiseDistribution(Distribution):
+    """This is not really a distribution, but we implement it as a factor
+    without model parameters to simply the actual code.
+    """
+    def __init__(self, name, dim):
+        super(NoiseDistribution, self).__init__(name)
+        self.dim = dim
+
+    def _loglikelihood(self, x, theta):
+        return 0
+
+    def _prior(self):
+        return 0
+
+    def _sample(self, batch_size, name="zc"):
+        zc = tf.random_uniform([batch_size, self.dim], -1, 1)
+        return zc
+
+    def _model_param(self, dist_param):
+        return 0
+
+    def param_dim(self):
+        return 0
+
+    def input_dim(self):
+        return self.dim
+
+
+class ProductDistribution(Distribution):
+    """Represent a product distribution"""
     def __init__(self, name, dists):
         super(ProductDistribution, self).__init__(name)
         self.dists = dists
 
-    def size(self):
-        return np.sum([d.size() for d in self.dists])
+    def param_dim(self):
+        """Number of estimated parameters required from discriminator.
 
-    def splitter(self, s):
-        """Input is split into list of chunks according dist.size() along 2-axis
+        Remarks:
+            Some distribution like d-dim Gaussian require 2*d parameters
+            for mean and variance.
+
+        Returns:
+            int: required parameters
+        """
+        return np.sum([d.param_dim() for d in self.dists])
+
+    def splitter(self, s, output=False):
+        """Input is split into list of chunks according dist.param_dim() along 2-axis
 
         Args:
             s (tf.Tensor): batch of vectors with shape BxN
@@ -251,33 +301,57 @@ class ProductDistribution(object):
         """
         offset = 0
         for dist in self.dists:
-            yield s[:, offset:offset + dist.size()]
-            offset += dist.size()
+            if output:
+                off = dist.param_dim()
+            else:
+                off = dist.input_dim()
 
-    @class_scope
-    def mutual_information(self, ss, xs):
-        """Summary
-        
+            yield s[:, offset:offset + off]
+            offset += off
+
+    def mutual_information(self, s, x):
+        """Return mutual information of all factors but skip noise.
+
         Args:
-            ss (TYPE): Description
-            xs (TYPE): Description
-        
+            s (tf.Tensor): unobserved information
+            x (tf.Tensor): observed information
+
+        Remarks:
+            This returns a list, as one might use different weights for each factor.
+
         Returns:
-            TYPE: Description
+            list(tf.Tensor): all mutual informations
         """
         MIs = []  # noqa
-        with tf.name_scope("mutual_information"):
-            for dist, s, x in zip(self.dists, self.splitter(ss), self.splitter(xs)):
-                MIs.append(dist.mutual_information(s, x))
+        for dist, si, xi in zip(self.dists, self.splitter(s, False), self.splitter(x)):
+            if dist.param_dim() > 0:
+                MIs.append(dist._mutual_information(si, xi))
+        return MIs
 
-            return tf.add_n(MIs, name="total")
+    def sample(self, batch_size, name="z_full"):
+        """Sample from all factors.
 
-    def sample(self, batch_size, names=None):
+        Args:
+            batch_size (int): number of samples
+
+        Remarks:
+            This also creates placeholder allowing for inference with custom input.
+
+        Returns:
+            tf.Placeholder: placeholder with a default of samples
+        """
+        samples = []
         for k, dist in enumerate(self.dists):
-            name = 1 if names is not None else names[k]
-            z = dists.sample(batch_size, name=name)
+            init = dist._sample(batch_size)
+            plh = tf.placeholder_with_default(init, [batch_size, dist.input_dim()], name='z_' + dist.name)
+            samples.append(plh)
+            logger.info("Placeholder for %s(%s) is %s " % (dist.name, dist.__class__.__name__, plh.name[:-2]))
+        return tf.concat_v2(samples, 1, name=name)
 
-        s = self._sample(batch_size, name)
-        logger.info("sample of distribution '%s' (%s) has name '%s'" % (self.name, self.__class__.__name__,
-                                                                        s.name[:-2]))
-        return s
+    @class_scope
+    def model_param(self, dist_params, name="model_param"):
+        rsl = []
+        for dist, dist_param in zip(self.dists, self.splitter(dist_params)):
+            if dist.param_dim() > 0:
+                rsl.append(dist.model_param(dist_param))
+        return tf.concat_v2(rsl, 1, name=name)

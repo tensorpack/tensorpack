@@ -14,40 +14,40 @@ from tensorpack.dataflow import DataFlow
 
 class GANModelDesc(ModelDesc):
 
-    def generate_code(self, factors=[], code_len=100, name='z'):
-        """Generate input-node for noise data
+    # def generate_code(self, factors=[], code_len=100, name='z'):
+    #     """Generate input-node for noise data
 
-        Examples:
-            l1 = CategoricalDistribution("cat", 10) # len 10
-            l2 = UniformDistribution("uni", 2)      # len 2
+    #     Examples:
+    #         l1 = CategoricalDistribution("cat", 10) # len 10
+    #         l2 = UniformDistribution("uni", 2)      # len 2
 
-            z1 = l1.sample(BATCH, name='zc')
-            z2 = l2.sample(BATCH, name='zu')
+    #         z1 = l1.sample(BATCH, name='zc')
+    #         z2 = l2.sample(BATCH, name='zu')
 
-            z = self.generate_code([z1, z2], code_len=100)
+    #         z = self.generate_code([z1, z2], code_len=100)
 
-        Args:
-            factors (list, optional): tensors encoding different noise
-            code_len (int, optional): total length of code
-            name (str, optional): name for full code placeholder
+    #     Args:
+    #         factors (list, optional): tensors encoding different noise
+    #         code_len (int, optional): total length of code
+    #         name (str, optional): name for full code placeholder
 
-        Returns:
-            tf.Tensor: placeholder for noise
-        """
-        with tf.name_scope("latent_factors"):
-            batch_size = tf.shape(factors[0])[0]
+    #     Returns:
+    #         tf.Tensor: placeholder for noise
+    #     """
+    #     with tf.name_scope("latent_factors"):
+    #         batch_size = tf.shape(factors[0])[0]
 
-            factor_len = np.sum([z.get_shape().as_list()[1] for z in factors])
-            noise_len = code_len - factor_len
+    #         factor_len = np.sum([z.get_shape().as_list()[1] for z in factors])
+    #         noise_len = code_len - factor_len
 
-            # generate fully noisy input
-            z = tf.random_uniform(tf.stack([batch_size, noise_len]), -1, 1, name='z_train')
-            # define placeholder
-            z = tf.placeholder_with_default(z, [None, noise_len], name='z')
+    #         # generate fully noisy input
+    #         z = tf.random_uniform(tf.stack([batch_size, noise_len]), -1, 1, name='z_train')
+    #         # define placeholder
+    #         z = tf.placeholder_with_default(z, [None, noise_len], name='z')
 
-            factors.append(z)
-            z = tf.concat_v2(factors, 1, name=name)
-            return z
+    #         factors.append(z)
+    #         z = tf.concat_v2(factors, 1, name=name)
+    #         return z
 
     def collect_variables(self):
         """Extract variables by prefix
