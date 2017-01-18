@@ -77,10 +77,10 @@ class Model(GANModelDesc):
                 fake_pred, dist_param = self.discriminator(fake_sample)
 
         # post-process all dist_params from discriminator
-        model_param = self.factors.model_param(dist_param)
+        encoder_activation = self.factors.encoder_activation(dist_param)
 
         with tf.name_scope("mutual_information"):
-            MIs = self.factors.mutual_information(z, model_param)
+            MIs = self.factors.mutual_information(z, encoder_activation)
             mi = tf.add_n(MIs, name="total")
         summary.add_moving_summary(MIs + [mi])
 

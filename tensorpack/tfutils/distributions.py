@@ -76,6 +76,8 @@ class Distribution(object):
         """
         entr = self.entropy(s)
         cross_entr = self.cross_entropy(s, x)
+        print "entro", entr.get_shape()
+        print "cross_entr", cross_entr.get_shape()
         return tf.subtract(entr, cross_entr, name="mi_%s" % self.name)
 
     @class_scope
@@ -110,22 +112,28 @@ class Distribution(object):
 
     @class_scope
     def loglikelihood_prior(self, x):
-        s = self._prior()
+        batch_size = x.get_shape().as_list()[0]
+        print self.__class__.__name__
+        print "batch_size", batch_size
+        s = self.prior(batch_size)
+        print "s", s.get_shape()
+        print "x", x.get_shape()
         return self._loglikelihood(x, s)
 
     @class_scope
-    def prior(self):
+    def prior(self, batch_size):
         """Return prior of distribution or anything getting reasonable
         results.
 
         Returns:
             TYPE: Description
         """
-        return self._prior()
+        p = self._prior(batch_size)
+        return p
 
     @class_scope
-    def model_param(self, dist_param):
-        return self._model_param(dist_param)
+    def encoder_activation(self, dist_param):
+        return self._encoder_activation(dist_param)
 
     def sample(self, batch_size, name="zc"):
         s = self._sample(batch_size, name)
@@ -144,13 +152,13 @@ class Distribution(object):
     def _loglikelihood(self, x, theta):
         raise NotImplementedError
 
-    def _prior(self):
+    def _prior(self, batch_size):
         raise NotImplementedError
 
     def _sample(self, batch_size, name="zc"):
         raise NotImplementedError
 
-    def _model_param(self, dist_param):
+    def _encoder_activation(self, dist_param):
         return dist_param
 
 
@@ -168,15 +176,16 @@ class CategoricalDistribution(Distribution):
         eps = 1e-8
         return tf.reduce_sum(tf.log(theta + eps) * x, reduction_indices=1)
 
-    def _prior(self):
-        return tf.constant([1.0 / self.cardinality] * self.cardinality)
+    def _prior(self, batch_size):
+        return tf.ones([batch_size, self.cardinality]) * (1.0 / self.cardinality)
+        # return tf.constant([batch_size, 1.0 / self.cardinality] * self.cardinality)
 
     def _sample(self, batch_size, name="zc"):
         ids = tf.multinomial(tf.zeros([batch_size, self.cardinality]), num_samples=1)[:, 0]
         zc = tf.one_hot(ids, self.cardinality)
         return zc
 
-    def _model_param(self, dist_param):
+    def _encoder_activation(self, dist_param):
         return tf.nn.softmax(dist_param)
 
     def param_dim(self):
@@ -203,7 +212,7 @@ class UniformDistribution(Distribution):
 
     def _loglikelihood(self, x, theta):
         eps = 1e-8
-        # TODO: move to _model_param
+        # TODO: move to _encoder_activation
         # two cases of theta:
         # - entropy: theta (4,)
         # - cross-entr: theta (?, 4)
@@ -230,21 +239,20 @@ class UniformDistribution(Distribution):
             reduction_indices=1
         )
 
-    def _prior(self):
+    def _prior(self, batch_size):
         if self.fixed_std:
-            return tf.zeros([self.param_dim()])
+            return tf.zeros([batch_size, self.param_dim()])
         else:
-            return tf.concat_v2([tf.zeros([self.param_dim()]), tf.ones([self.param_dim()])], 1, name=name)
+            return tf.concat_v2([tf.zeros([batch_size, self.param_dim()]),
+                                 tf.ones([batch_size, self.param_dim()])], 1)
 
     def _sample(self, batch_size, name="zc"):
-        zc = tf.random_uniform([batch_size, self.dim], -1, 1)
-        return zc
+        return tf.random_uniform([batch_size, self.dim], -1, 1)
 
-    def _model_param(self, dist_param):
+    def _encoder_activation(self, dist_param):
         return dist_param
 
     def param_dim(self):
-        # [mu, sigma]
         if self.fixed_std:
             return self.dim
         else:
@@ -272,7 +280,7 @@ class NoiseDistribution(Distribution):
         zc = tf.random_uniform([batch_size, self.dim], -1, 1)
         return zc
 
-    def _model_param(self, dist_param):
+    def _encoder_activation(self, dist_param):
         return 0
 
     def param_dim(self):
@@ -359,9 +367,9 @@ class ProductDistribution(Distribution):
         return tf.concat_v2(samples, 1, name=name)
 
     @class_scope
-    def model_param(self, dist_params, name="model_param"):
+    def encoder_activation(self, dist_params, name="encoder_activation"):
         rsl = []
         for dist, dist_param in zip(self.dists, self.splitter(dist_params)):
             if dist.param_dim() > 0:
-                rsl.append(dist.model_param(dist_param))
+                rsl.append(dist.encoder_activation(dist_param))
         return tf.concat_v2(rsl, 1, name=name)
