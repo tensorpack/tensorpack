@@ -77,8 +77,8 @@ def class_balanced_sigmoid_cross_entropy(logits, label, name='cross_entropy_loss
 
     pos_weight = beta / (1 - beta)
     cost = tf.nn.weighted_cross_entropy_with_logits(logits=logits, targets=y, pos_weight=pos_weight)
-    cost = tf.reduce_mean(cost * (1 - beta), name=name)
-    return cost
+    cost = tf.reduce_mean(cost * (1 - beta))
+    return tf.where(tf.equal(count_pos, 0.0), 0.0, cost, name=name)
 
 
 def print_stat(x, message=None):
