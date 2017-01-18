@@ -283,8 +283,19 @@ if __name__ == '__main__':
 
 
 def stack_images(imgs, vertical=False):
+    """Stack images with different shapes and different number of channels.
+
+    Args:
+        imgs (np.array): imgage
+        vertical (bool, optional): stack images vertically
+
+    Returns:
+        np.array: stacked images
+    """
     rows = [x.shape[0] for x in imgs]
     cols = [x.shape[1] for x in imgs]
+
+    assert imgs.max() > 1, "expect images within range [0, 255]"
 
     if vertical:
         if len(imgs[0].shape) == 2:
