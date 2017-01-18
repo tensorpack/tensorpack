@@ -129,7 +129,7 @@ def sample(model_path):
 
     # sample all one-hot encodings (10 times)
     z_cat = np.tile(np.eye(10), [10, 1])
-    # sample continuos variables from -2 to +2
+    # sample continuos variables from -2 to +2 as mentioned in the paper
     z_uni = np.linspace(-2.0, 2.0, num=100)
     z_uni = z_uni[:, None]
 

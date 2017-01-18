@@ -10,7 +10,8 @@ __all__ = ['CategoricalDistribution', 'UniformDistribution',
 def class_scope(method):
     """Enhance TensorBoard graph visualization by grouping operators.
 
-    If class of method has member "name", then this is used for name-scoping.
+    If class of method has a member "name", then this is used for name-scoping. This groups
+    multiple operations at the graph view in Tensorboard.
 
     Args:
         method (function): method from a python class
@@ -31,7 +32,8 @@ def class_scope(method):
             distr_name = self.name
         else:
             distr_name = self.__class__.__name__
-        # is not already scoped with current class to prevent nested scopes due to nested methods
+        # only when it is not already scoped with current class, we scope it
+        # TODO: remove this ugly hack, but there is currently no other way
         if distr_name not in tf.no_op(name='.').name[:-1]:
             with tf.name_scope(distr_name + "_" + method.__name__):
                 return method(self, *method_args, **method_kwargs)
@@ -41,7 +43,7 @@ def class_scope(method):
 
 
 class Distribution(object):
-    """Represent a distribution.
+    """Represent a distribution with all (approx.) properties.
     """
 
     def __init__(self, name):
@@ -76,8 +78,6 @@ class Distribution(object):
         """
         entr = self.entropy(s)
         cross_entr = self.cross_entropy(s, x)
-        print "entro", entr.get_shape()
-        print "cross_entr", cross_entr.get_shape()
         return tf.subtract(entr, cross_entr, name="mi_%s" % self.name)
 
     @class_scope
@@ -112,27 +112,37 @@ class Distribution(object):
 
     @class_scope
     def loglikelihood_prior(self, x):
+        """Return likelihood from prior for this distribution
+
+        Args:
+            x (tf.Tensor): observations
+
+        Returns:
+            tf.Tensor: prior of current distribution
+        """
         batch_size = x.get_shape().as_list()[0]
-        print self.__class__.__name__
-        print "batch_size", batch_size
         s = self.prior(batch_size)
-        print "s", s.get_shape()
-        print "x", x.get_shape()
         return self._loglikelihood(x, s)
 
     @class_scope
     def prior(self, batch_size):
-        """Return prior of distribution or anything getting reasonable
-        results.
+        """Return prior of distribution or anything getting reasonable, that matches the shapes of the observations.
 
         Returns:
-            TYPE: Description
+            tf.Tensor: fixed prior
         """
-        p = self._prior(batch_size)
-        return p
+        return self._prior(batch_size)
 
     @class_scope
     def encoder_activation(self, dist_param):
+        """When predicting parameters of the distribution
+
+        Args:
+            dist_param (tf.Tensor): parameters from encoder network
+
+        Returns:
+            tf.Tensor: transformed parameters
+        """
         return self._encoder_activation(dist_param)
 
     def sample(self, batch_size, name="zc"):
@@ -140,7 +150,7 @@ class Distribution(object):
         return s
 
     def param_dim(self):
-        """Distribution parameters require different memory spaces.
+        """The size of parameters which should be estimated by the encoder (real memory consumption)
         """
         raise NotImplementedError
 
@@ -178,7 +188,6 @@ class CategoricalDistribution(Distribution):
 
     def _prior(self, batch_size):
         return tf.ones([batch_size, self.cardinality]) * (1.0 / self.cardinality)
-        # return tf.constant([batch_size, 1.0 / self.cardinality] * self.cardinality)
 
     def _sample(self, batch_size, name="zc"):
         ids = tf.multinomial(tf.zeros([batch_size, self.cardinality]), num_samples=1)[:, 0]
