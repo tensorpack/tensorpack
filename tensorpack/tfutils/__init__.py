@@ -17,8 +17,8 @@ def _global_import(name):
 
 
 _TO_IMPORT = set([
-    'sessinit',
     'common',
+    'sessinit',
     'gradproc',
     'argscope',
     'tower'

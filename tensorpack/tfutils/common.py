@@ -12,10 +12,9 @@ from contextlib import contextmanager
 __all__ = ['get_default_sess_config',
            'get_global_step',
            'get_global_step_var',
-           'get_op_var_name',
            'get_op_tensor_name',
-           'get_vars_by_names',
            'get_tensors_by_names',
+           'get_op_or_tensor_by_name',
            'backup_collection',
            'restore_collection',
            'clear_collection',
@@ -87,9 +86,6 @@ def get_op_tensor_name(name):
         return name, name + ':0'
 
 
-get_op_var_name = get_op_tensor_name
-
-
 def get_tensors_by_names(names):
     """
     Get a list of tensors in the default graph by a list of names.
@@ -100,12 +96,17 @@ def get_tensors_by_names(names):
     ret = []
     G = tf.get_default_graph()
     for n in names:
-        opn, varn = get_op_var_name(n)
+        opn, varn = get_op_tensor_name(n)
         ret.append(G.get_tensor_by_name(varn))
     return ret
 
 
-get_vars_by_names = get_tensors_by_names
+def get_op_or_tensor_by_name(name):
+    G = tf.get_default_graph()
+    if len(name) >= 3 and name[-2] == ':':
+        return G.get_tensor_by_name(name)
+    else:
+        return G.get_operation_by_name(name)
 
 
 def backup_collection(keys):

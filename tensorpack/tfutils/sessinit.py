@@ -10,7 +10,7 @@ import tensorflow as tf
 import six
 
 from ..utils import logger, PREDICT_TOWER
-from .common import get_op_var_name
+from .common import get_op_tensor_name
 from .varmanip import (SessionUpdate, get_savename_from_varname,
                        is_training_name, get_checkpoint_path)
 
@@ -149,7 +149,7 @@ class ParamRestore(SessionInit):
             param_dict (dict): a dict of {name: value}
         """
         # use varname (with :0) for consistency
-        self.prms = {get_op_var_name(n)[1]: v for n, v in six.iteritems(param_dict)}
+        self.prms = {get_op_tensor_name(n)[1]: v for n, v in six.iteritems(param_dict)}
 
     def _init(self, sess):
         variables = tf.get_collection(tf.GraphKeys().VARIABLES)  # TODO

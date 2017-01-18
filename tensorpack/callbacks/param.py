@@ -11,7 +11,7 @@ import os
 
 from .base import Callback
 from ..utils import logger
-from ..tfutils import get_op_var_name
+from ..tfutils import get_op_tensor_name
 
 __all__ = ['HyperParam', 'GraphVarParam', 'ObjAttrParam',
            'HyperParamSetter', 'HumanHyperParamSetter',
@@ -62,7 +62,7 @@ class GraphVarParam(HyperParam):
         """
         self.name = name
         self.shape = shape
-        self._readable_name, self.var_name = get_op_var_name(name)
+        self._readable_name, self.var_name = get_op_tensor_name(name)
 
     def setup_graph(self):
         """ Will setup the assign operator for that variable. """
