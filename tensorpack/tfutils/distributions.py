@@ -115,7 +115,7 @@ class Distribution(object):
 
     @class_scope
     def prior(self):
-        """Return prior of distribution and anthing getting reasonable
+        """Return prior of distribution or anything getting reasonable
         results.
 
         Returns:
@@ -191,7 +191,7 @@ class UniformDistribution(Distribution):
 
     Remarks:
         There is not such a thing as uniform distributed real numbers.
-        Hence, we model prior and posterior aus a Gaussian
+        Hence, we model prior and posterior as a Gaussian
 
     Attributes:
         dim (int): dimension
@@ -231,7 +231,10 @@ class UniformDistribution(Distribution):
         )
 
     def _prior(self):
-        return tf.random_uniform([self.param_dim()], minval=-1., maxval=1.)
+        if self.fixed_std:
+            return tf.zeros([self.param_dim()])
+        else:
+            return tf.concat_v2([tf.zeros([self.param_dim()]), tf.ones([self.param_dim()])], 1, name=name)
 
     def _sample(self, batch_size, name="zc"):
         zc = tf.random_uniform([batch_size, self.dim], -1, 1)
