@@ -174,7 +174,6 @@ class CategoricalDistribution(Distribution):
     def _sample(self, batch_size, name="zc"):
         ids = tf.multinomial(tf.zeros([batch_size, self.cardinality]), num_samples=1)[:, 0]
         zc = tf.one_hot(ids, self.cardinality)
-        # zc = tf.placeholder_with_default(zc, [None, self.cardinality], name=name)
         return zc
 
     def _model_param(self, dist_param):
@@ -197,9 +196,10 @@ class UniformDistribution(Distribution):
     Attributes:
         dim (int): dimension
     """
-    def __init__(self, name, dim):
+    def __init__(self, name, dim, fixed_std=True):
         super(UniformDistribution, self).__init__(name)
         self.dim = dim
+        self.fixed_std = fixed_std
 
     def _loglikelihood(self, x, theta):
         eps = 1e-8
@@ -207,17 +207,22 @@ class UniformDistribution(Distribution):
         # two cases of theta:
         # - entropy: theta (4,)
         # - cross-entr: theta (?, 4)
-        if len(theta.get_shape()) == 1:
-            l = theta.get_shape()[0] // 2
-            mean = theta[:l]
-            stddev = theta[l:self.dim * 2]
-        else:
-            l = theta.get_shape()[1] // 2
-            mean = theta[:, 0:l]
-            stddev = theta[:, l:self.dim * 2]
 
-        # only predict mean
-        stddev = tf.ones_like(stddev)
+        if self.fixed_std:
+            mean = theta
+            stddev = tf.ones_like(mean)
+        else:
+            if len(theta.get_shape()) == 1:
+                l = theta.get_shape()[0] // 2
+                mean = theta[:l]
+                stddev = theta[l:self.dim * 2]
+            else:
+                l = theta.get_shape()[1] // 2
+                mean = theta[:, 0:l]
+                stddev = theta[:, l:self.dim * 2]
+
+            stddev = tf.sqrt(tf.exp(stddev) + eps)
+
         exponent = (x - mean) / (stddev + eps)
 
         return tf.reduce_sum(
@@ -226,11 +231,10 @@ class UniformDistribution(Distribution):
         )
 
     def _prior(self):
-        return tf.random_uniform([self.dim * 2], minval=-1., maxval=1.)
+        return tf.random_uniform([self.param_dim()], minval=-1., maxval=1.)
 
     def _sample(self, batch_size, name="zc"):
         zc = tf.random_uniform([batch_size, self.dim], -1, 1)
-        # zc = tf.placeholder_with_default(zc, [None, self.dim], name=name)
         return zc
 
     def _model_param(self, dist_param):
@@ -238,7 +242,10 @@ class UniformDistribution(Distribution):
 
     def param_dim(self):
         # [mu, sigma]
-        return 2 * self.dim
+        if self.fixed_std:
+            return self.dim
+        else:
+            return 2 * self.dim
 
     def input_dim(self):
         return self.dim

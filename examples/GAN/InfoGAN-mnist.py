@@ -57,9 +57,10 @@ class Model(GANModelDesc):
 
         # latent space is cat(10) x uni(2) x noise(88)
         factor1 = CategoricalDistribution("cat", 10)
-        factor2 = UniformDistribution("uni", 2)
-        factor3 = NoiseDistribution("noise", 88)
-        self.factors = ProductDistribution("factors", [factor1, factor2, factor3])
+        factor2 = UniformDistribution("uni_a", 1)
+        factor3 = UniformDistribution("uni_b", 1)
+        factor4 = NoiseDistribution("noise", 88)
+        self.factors = ProductDistribution("factors", [factor1, factor2, factor3, factor4])
 
         z = self.factors.sample(BATCH)
 
@@ -123,35 +124,36 @@ def sample(model_path):
     pred = OfflinePredictor(PredictConfig(
         session_init=get_model_loader(model_path),
         model=Model(),
-        input_names=['z_cat', 'z_uni'],
+        input_names=['z_cat', 'z_uni_a', 'z_uni_b', 'z_noise'],
         output_names=['gen/gen']))
 
     # sample all one-hot encodings (10 times)
-    zc = np.tile(np.eye(10), [10, 1])
-    # sample continuos variables from -1 to +1
-    value_range = np.arange(100, dtype=np.float32) / 50 - 1
+    z_cat = np.tile(np.eye(10), [10, 1])
+    # sample continuos variables from -2 to +2
+    z_uni = np.linspace(-2.0, 2.0, num=100)
+    z_uni = z_uni[:, None]
+
+    IMG_SIZE = 400
 
     while True:
         # only categorical turned on
-        zu = np.zeros((100, 2))
-        o = pred([zc, zu * 0])
+        z_noise = np.random.uniform(-1, 1, (100, 88))
+        o = pred([z_cat, z_uni * 0, z_uni * 0, z_noise])
         o = (o[0] + 1) * 128.0
         viz1 = next(build_patch_list(o, nr_row=10, nr_col=10))
-        viz1 = cv2.resize(viz1, (300, 300))
+        viz1 = cv2.resize(viz1, (IMG_SIZE, IMG_SIZE))
 
-        # show effect of first continous variable
-        zu = np.stack((value_range, value_range * 0), 1)
-        o = pred([zc, zu])
+        # show effect of first continous variable with fixed noise
+        o = pred([z_cat, z_uni, z_uni * 0, z_noise * 0])
         o = (o[0] + 1) * 128.0
         viz2 = next(build_patch_list(o, nr_row=10, nr_col=10))
-        viz2 = cv2.resize(viz2, (300, 300))
+        viz2 = cv2.resize(viz2, (IMG_SIZE, IMG_SIZE))
 
-        # show effect of second continous variable
-        zu = np.stack((value_range * 0, value_range), 1)
-        o = pred([zc, zu])
+        # show effect of second continous variable with fixed noise
+        o = pred([z_cat, z_uni * 0, z_uni, z_noise * 0])
         o = (o[0] + 1) * 128.0
         viz3 = next(build_patch_list(o, nr_row=10, nr_col=10))
-        viz3 = cv2.resize(viz3, (300, 300))
+        viz3 = cv2.resize(viz3, (IMG_SIZE, IMG_SIZE))
 
         viz = stack_images([viz1, viz2, viz3])
 
@@ -167,6 +169,7 @@ if __name__ == '__main__':
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
     if args.sample:
+        BATCH = 100
         sample(args.load)
     else:
         config = get_config()
