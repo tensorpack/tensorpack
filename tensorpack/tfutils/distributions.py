@@ -2,51 +2,54 @@ import tensorflow as tf
 from functools import wraps
 import numpy as np
 from ..utils import logger
+from ..tfutils import get_name_scope_name
 
 __all__ = ['Distribution',
-           'CategoricalDistribution', 'UniformDistribution',
+           'CategoricalDistribution', 'GaussianDistributionUniformPrior',
            'NoiseDistribution', 'ProductDistribution']
 
+# TODO encoder_activation and the ProductDistribution class brings many redundant concat and split
 
-def class_scope(method):
-    """Enhance TensorBoard graph visualization by grouping operators.
 
-    If class of method has a member "name", then this is used for name-scoping. This groups
-    multiple operations at the graph view in Tensorboard.
-
-    Args:
-        method (function): method from a python class
-
-    Remarks:
-        This is just syntatic sugar to prevent wrinting:
-            with tf.name_scope(...):
-                ...
-        in each method.
-
-    Returns:
-        TYPE: results of given function
+def class_scope(func):
     """
-    @wraps(method)
-    def _impl(self, *method_args, **method_kwargs):
-        # is there specific name_scope?
-        if hasattr(self, "name"):
-            distr_name = self.name
-        else:
+    A decorator which wraps a function with a name_scope: "{class_name}_{method_name}".
+    The "{class_name}" is either ``cls.name`` or simply the class name.
+    It helps enhance TensorBoard graph visualization by grouping operators.
+
+    This is just syntatic sugar to prevent wrinting: with
+    ``tf.name_scope(...)`` in each method.
+    """
+
+    @wraps(func)
+    def _impl(self, *args, **kwargs):
+        # is there a specific name?
+        distr_name = self.name
+        if distr_name is None:
             distr_name = self.__class__.__name__
-        # only when it is not already scoped with current class, we scope it
-        # TODO: remove this ugly hack, but there is currently no other way
-        if distr_name not in tf.no_op(name='.').name[:-1]:
-            with tf.name_scope(distr_name + "_" + method.__name__):
-                return method(self, *method_args, **method_kwargs)
+        # scope it only when it is not already scoped with current class
+        if distr_name not in get_name_scope_name():
+            with tf.name_scope(distr_name + "_" + func.__name__):
+                return func(self, *args, **kwargs)
         else:
-            return method(self, *method_args, **method_kwargs)
+            return func(self, *args, **kwargs)
     return _impl
 
 
 class Distribution(object):
-    """ Base class of symbolic distribution utilities (the distrbution
-    parameters can be symbolic tensors). """
+    """
+    Base class of symbolic distribution utilities
+    (the distrbution parameters can be symbolic tensors).
+    """
+
+    name = None
+
     def __init__(self, name):
+        """
+        Args:
+            name(str): the name to be used for scope and tensors in this
+                distribution.
+        """
         self.name = name
 
     @class_scope
@@ -247,14 +250,9 @@ class CategoricalDistribution(Distribution):
         return self.cardinality
 
 
-class UniformDistribution(Distribution):
-    """Uniform distribution with prior U(-1,1).
-
-    Note:
-        This actually implements a Gaussian with uniform sample_prior.
-
-    Attributes:
-        dim (int): dimension
+class GaussianDistributionUniformPrior(Distribution):
+    """Gaussian distribution with prior U(-1,1).
+    It implements a Gaussian with uniform :meth:`sample_prior` method.
     """
     def __init__(self, name, dim, fixed_std=True):
         """
@@ -262,24 +260,19 @@ class UniformDistribution(Distribution):
             dim(int): the dimension of samples.
             fixed_std (bool): if True, will use 1 as std for all dimensions.
         """
-        super(UniformDistribution, self).__init__(name)
+        super(GaussianDistributionUniformPrior, self).__init__(name)
         self.dim = dim
         self.fixed_std = fixed_std
 
     def _loglikelihood(self, x, theta):
         eps = 1e-8
-        # TODO move things to activation
 
         if self.fixed_std:
             mean = theta
             stddev = tf.ones_like(mean)
             exponent = (x - mean)
         else:
-            l = theta.get_shape()[1] // 2
-            mean = theta[:, 0:l]
-            stddev = theta[:, l:self.dim * 2]
-
-            stddev = tf.sqrt(tf.exp(stddev) + eps)
+            mean, stddev = tf.split(theta, 2, axis=1)
             exponent = (x - mean) / (stddev + eps)
 
         return tf.reduce_sum(
@@ -298,7 +291,12 @@ class UniformDistribution(Distribution):
         return tf.random_uniform([batch_size, self.dim], -1, 1)
 
     def _encoder_activation(self, dist_param):
-        return dist_param
+        if self.fixed_std:
+            return dist_param
+        else:
+            mean, stddev = tf.split(dist_param, 2, axis=1)
+            stddev = tf.sqrt(tf.exp(stddev))
+            return tf.concat_v2([mean, stddev], axis=1)
 
     def param_dim(self):
         if self.fixed_std:
@@ -357,20 +355,20 @@ class ProductDistribution(Distribution):
     def param_dim(self):
         return np.sum([d.param_dim() for d in self.dists])
 
-    def _splitter(self, s, output=False):
+    def _splitter(self, s, param):
         """Input is split into a list of chunks according
             to dist.param_dim() along axis=1
 
         Args:
             s (tf.Tensor): batch of vectors with shape (batch, param_dim or sample_dim)
-            output (bool): split by param_dim if output=True. otherwise split by sample_dim
+            param (bool): split params, otherwise split samples
 
         Yields:
             tf.Tensor: chunk from input of length N_i with sum N_i = N
         """
         offset = 0
         for dist in self.dists:
-            if output:
+            if param:
                 off = dist.param_dim()
             else:
                 off = dist.sample_dim()
@@ -380,7 +378,8 @@ class ProductDistribution(Distribution):
 
     def mutual_information(self, x, theta):
         """
-        Return mutual information of all distributions but skip noise.
+        Return mutual information of all distributions but skip the
+        unparameterized ones.
 
         Note:
             It returns a list, as one might use different weights for each
@@ -415,7 +414,7 @@ class ProductDistribution(Distribution):
 
     def _encoder_activation(self, dist_params):
         rsl = []
-        for dist, dist_param in zip(self.dists, self._splitter(dist_params)):
+        for dist, dist_param in zip(self.dists, self._splitter(dist_params, True)):
             if dist.param_dim() > 0:
                 rsl.append(dist._encoder_activation(dist_param))
         return tf.concat_v2(rsl, 1)

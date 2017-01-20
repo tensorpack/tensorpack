@@ -12,6 +12,7 @@ import argparse
 
 from tensorpack import *
 from tensorpack.utils.viz import *
+from tensorpack.tfutils.distributions import *
 import tensorpack.tfutils.symbolic_functions as symbf
 from GAN import GANTrainer, GANModelDesc
 
@@ -57,8 +58,8 @@ class Model(GANModelDesc):
 
         # latent space is cat(10) x uni(1) x uni(1) x noise(62)
         self.factors = ProductDistribution("factors", [CategoricalDistribution("cat", 10),
-                                                       UniformDistribution("uni_a", 1),
-                                                       UniformDistribution("uni_b", 1),
+                                                       GaussianDistributionUniformPrior("uni_a", 1),
+                                                       GaussianDistributionUniformPrior("uni_b", 1),
                                                        NoiseDistribution("noise", 62)])
 
         z = self.factors.sample_prior(BATCH, name='zc')
