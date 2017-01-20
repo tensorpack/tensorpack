@@ -61,7 +61,7 @@ class Model(GANModelDesc):
                                                        UniformDistribution("uni_b", 1),
                                                        NoiseDistribution("noise", 62)])
 
-        z = self.factors.sample(BATCH)
+        z = self.factors.sample_prior(BATCH)
 
         with argscope([Conv2D, Deconv2D, FullyConnected],
                       W_init=tf.truncated_normal_initializer(stddev=0.02)):

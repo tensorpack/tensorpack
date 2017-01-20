@@ -3,7 +3,8 @@ from functools import wraps
 import numpy as np
 from ..utils import logger
 
-__all__ = ['CategoricalDistribution', 'UniformDistribution',
+__all__ = ['Distribution',
+           'CategoricalDistribution', 'UniformDistribution',
            'NoiseDistribution', 'ProductDistribution']
 
 
@@ -43,119 +44,159 @@ def class_scope(method):
 
 
 class Distribution(object):
-    """Represent a distribution with all (approx.) properties.
-    """
-
+    """ Base class of symbolic distribution utilities (the distrbution
+    parameters can be symbolic tensors). """
     def __init__(self, name):
         self.name = name
 
     @class_scope
     def loglikelihood(self, x, theta):
-        return self._loglikelihood(x, theta)
-
-    @class_scope
-    def mutual_information(self, s, x):
-        return self._mutual_infomation(s, x)
-
-    def _mutual_information(self, s, x):
-        """Approximates mutual information.
-
-        I(s;x) = H(s) - H(s|x)
-               = entropy - cross_entropy
-               >= H(s) + IE_(p(s,x)) log q(s|x)
-
-        Remarks:
-            Think about this as a results "x" from a coin-toss with side "s":
-            Mutial information represents all information about "s" given an observation x.
-            We just return a lower-bound as an approximation.
-
+        """
         Args:
-            s (tf.Tensor): unobserved information
-            x (tf.Tensor): observed information
+            x: samples of shape (batch, sample_dim)
+            theta: model parameters of shape (batch, param_dim)
 
         Returns:
-            tf.Tensor: approximated mutual information
+            log likelihood of each sample, of shape (batch,)
         """
-        entr = self.entropy(s)
-        cross_entr = self.cross_entropy(s, x)
-        return tf.subtract(entr, cross_entr, name="mi_%s" % self.name)
+        assert x.get_shape().ndims == 2 and \
+            x.get_shape()[1] == self.sample_dim(), \
+            x.get_shape()
+        assert theta.get_shape().ndims == 2 and \
+            theta.get_shape()[1] == self.param_dim(), \
+            theta.get_shape()
 
-    @class_scope
-    def entropy(self, p):
-        """Estimate of entropy from batch of samples (as average).
-
-        H(p) = IE[I(p)] = - sum( p(p_i) log p(p_i) )
-             ~ mean (negative loglikelihood)
-
-        Args:
-            p (tf.Tensor): samples from batch
-
-        Returns:
-            tf.Tensor: estimated entropy
-        """
-        return tf.reduce_mean(-self.loglikelihood_prior(p), name="entropy")
-
-    @class_scope
-    def cross_entropy(self, p, q):
-        """Estimate of cross-entropy from batch of samples.
-
-        H(p, q) = - sum( p(x_i) log q(x_i) )
-
-        Args:
-            p (tf.Tensor): Description
-            q (tf.Tensor): Description
-
-        Returns:
-            tf.Tensor: estimated cross-entropy
-        """
-        return tf.reduce_mean(-self.loglikelihood(p, q), name="cross_entropy")
+        ret = self._loglikelihood(x, theta)
+        assert ret.get_shape().ndims == 1, ret.get_shape()
+        return ret
 
     @class_scope
     def loglikelihood_prior(self, x):
-        """Return likelihood from prior for this distribution
+        """likelihood from prior for this distribution
 
         Args:
-            x (tf.Tensor): observations
+            x: samples of shape (batch, sample_dim)
 
         Returns:
-            tf.Tensor: prior of current distribution
+            a symbolic vector containing loglikelihood of each sample,
+            using prior of this distribution.
         """
         batch_size = x.get_shape().as_list()[0]
         s = self.prior(batch_size)
         return self._loglikelihood(x, s)
 
     @class_scope
-    def prior(self, batch_size):
-        """Return prior of distribution or anything getting reasonable, that matches the shapes of the observations.
+    def mutual_information(self, x, theta):
+        """
+        Approximates mutual information between x and some information s.
+        Here we return a variational lower bound of the mutual information,
+        assuming a proposal distribution Q(x|s) (which approximates P(x|s) )
+        has the form of this distribution parameterized by theta.
+
+
+        .. math::
+
+            I(x;s) = H(x) - H(x|s)
+                   = H(x) + E[\log P(x|s)]
+                   \\ge H(x) + E_{x \sim P(x|s)}[\log Q(x|s)]
+
+        Args:
+            x: samples of shape (batch, sample_dim)
+            theta: parameters defining the proposal distribution Q. shape (batch, param_dim).
 
         Returns:
-            tf.Tensor: fixed prior
+            lower-bounded mutual information, a scalar tensor.
+        """
+        return self._mutual_infomation(x, theta)
+
+    def _mutual_information(self, x, theta):
+        entr = self.prior_entropy(x)
+        cross_entr = self.entropy(x, theta)
+        return tf.subtract(entr, cross_entr, name="mutual_information")
+
+    @class_scope
+    def prior_entropy(self, x):
+        r"""
+        Estimated entropy from a batch of samples (as average), where the
+        likelihood of samples is estimated using the prior distribution.
+
+        .. math::
+
+            H(x) = -E[\log p(x_i)], \text{where } p \text{ is the prior}
+
+        Args:
+            x: samples of shape (batch, sample_dim)
+
+        Returns:
+            a scalar, estimated entropy.
+        """
+        return tf.reduce_mean(-self.loglikelihood_prior(x), name="prior_entropy")
+
+    @class_scope
+    def entropy(self, x, theta):
+        r""" Entropy of a batch of samples, sampled from this distribution
+            parameterized by theta.
+
+        .. math::
+
+            H(x) = - E[\log p(x_i)], \text{where } p \text{ is parameterized by } \theta.
+
+        Args:
+            x: samples of shape (batch, sample_dim)
+            theta: model parameters of shape (batch, param_dim)
+
+        Returns:
+            a scalar tensor, the entropy.
+        """
+        return tf.reduce_mean(-self.loglikelihood(x, theta), name="entropy")
+
+    @class_scope
+    def prior(self, batch_size):
+        """Get the prior parameters of this distribution.
+
+        Returns:
+            a (Batch, param_dim) 2D tensor, containing priors of
+            this distribution repeated for batch_size times.
         """
         return self._prior(batch_size)
 
     @class_scope
     def encoder_activation(self, dist_param):
-        """When predicting parameters of the distribution
+        """ An activation function to produce
+            feasible distribution parameters from unconstrained raw network output.
 
         Args:
-            dist_param (tf.Tensor): parameters from encoder network
+            dist_param: output from a network, of shape (batch, param_dim).
 
         Returns:
-            tf.Tensor: transformed parameters
+            a tensor of the same shape, the distribution parameters.
         """
         return self._encoder_activation(dist_param)
 
-    def sample(self, batch_size, name="zc"):
-        s = self._sample(batch_size, name)
+    def sample_prior(self, batch_size, name="zc"):
+        """
+        Sample a batch of data with the prior distribution.
+
+        Args:
+            batch_size(int):
+
+        Returns:
+            samples of shape (batch, sample_dim)
+        """
+        s = self._sample_prior(batch_size, name)
         return s
 
     def param_dim(self):
-        """The size of parameters which should be estimated by the encoder (real memory consumption)
+        """
+        Returns:
+            int: the dimension of parameters of this distribution.
         """
         raise NotImplementedError
 
-    def input_dim(self):
-        """Distribution parameters require different memory spaces.
+    def sample_dim(self):
+        """
+        Returns:
+            int: the dimension of samples out of this distribution.
         """
         raise NotImplementedError
 
@@ -165,7 +206,7 @@ class Distribution(object):
     def _prior(self, batch_size):
         raise NotImplementedError
 
-    def _sample(self, batch_size, name="zc"):
+    def _sample_prior(self, batch_size, name="zc"):
         raise NotImplementedError
 
     def _encoder_activation(self, dist_param):
@@ -189,7 +230,7 @@ class CategoricalDistribution(Distribution):
     def _prior(self, batch_size):
         return tf.ones([batch_size, self.cardinality]) * (1.0 / self.cardinality)
 
-    def _sample(self, batch_size, name="zc"):
+    def _sample_prior(self, batch_size, name="zc"):
         ids = tf.multinomial(tf.zeros([batch_size, self.cardinality]), num_samples=1)[:, 0]
         zc = tf.one_hot(ids, self.cardinality)
         return zc
@@ -200,7 +241,7 @@ class CategoricalDistribution(Distribution):
     def param_dim(self):
         return self.cardinality
 
-    def input_dim(self):
+    def sample_dim(self):
         return self.cardinality
 
 
@@ -255,7 +296,7 @@ class UniformDistribution(Distribution):
             return tf.concat_v2([tf.zeros([batch_size, self.param_dim()]),
                                  tf.ones([batch_size, self.param_dim()])], 1)
 
-    def _sample(self, batch_size, name="zc"):
+    def _sample_prior(self, batch_size, name="zc"):
         return tf.random_uniform([batch_size, self.dim], -1, 1)
 
     def _encoder_activation(self, dist_param):
@@ -267,7 +308,7 @@ class UniformDistribution(Distribution):
         else:
             return 2 * self.dim
 
-    def input_dim(self):
+    def sample_dim(self):
         return self.dim
 
 
@@ -285,7 +326,7 @@ class NoiseDistribution(Distribution):
     def _prior(self):
         return 0
 
-    def _sample(self, batch_size, name="zc"):
+    def _sample_prior(self, batch_size, name="zc"):
         zc = tf.random_uniform([batch_size, self.dim], -1, 1)
         return zc
 
@@ -295,7 +336,7 @@ class NoiseDistribution(Distribution):
     def param_dim(self):
         return 0
 
-    def input_dim(self):
+    def sample_dim(self):
         return self.dim
 
 
@@ -317,7 +358,7 @@ class ProductDistribution(Distribution):
         """
         return np.sum([d.param_dim() for d in self.dists])
 
-    def splitter(self, s, output=False):
+    def _splitter(self, s, output=False):
         """Input is split into list of chunks according dist.param_dim() along 2-axis
 
         Args:
@@ -331,7 +372,7 @@ class ProductDistribution(Distribution):
             if output:
                 off = dist.param_dim()
             else:
-                off = dist.input_dim()
+                off = dist.sample_dim()
 
             yield s[:, offset:offset + off]
             offset += off
@@ -350,12 +391,12 @@ class ProductDistribution(Distribution):
             list(tf.Tensor): all mutual informations
         """
         MIs = []  # noqa
-        for dist, si, xi in zip(self.dists, self.splitter(s, False), self.splitter(x)):
+        for dist, si, xi in zip(self.dists, self._splitter(s, False), self._splitter(x)):
             if dist.param_dim() > 0:
                 MIs.append(dist._mutual_information(si, xi))
         return MIs
 
-    def sample(self, batch_size, name="z_full"):
+    def sample_prior(self, batch_size, name="z_full"):
         """Sample from all factors.
 
         Args:
@@ -369,8 +410,8 @@ class ProductDistribution(Distribution):
         """
         samples = []
         for k, dist in enumerate(self.dists):
-            init = dist._sample(batch_size)
-            plh = tf.placeholder_with_default(init, [batch_size, dist.input_dim()], name='z_' + dist.name)
+            init = dist._sample_prior(batch_size)
+            plh = tf.placeholder_with_default(init, [batch_size, dist.sample_dim()], name='z_' + dist.name)
             samples.append(plh)
             logger.info("Placeholder for %s(%s) is %s " % (dist.name, dist.__class__.__name__, plh.name[:-2]))
         return tf.concat_v2(samples, 1, name=name)
@@ -378,7 +419,7 @@ class ProductDistribution(Distribution):
     @class_scope
     def encoder_activation(self, dist_params, name="encoder_activation"):
         rsl = []
-        for dist, dist_param in zip(self.dists, self.splitter(dist_params)):
+        for dist, dist_param in zip(self.dists, self._splitter(dist_params)):
             if dist.param_dim() > 0:
                 rsl.append(dist.encoder_activation(dist_param))
         return tf.concat_v2(rsl, 1, name=name)
