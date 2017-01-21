@@ -7,10 +7,18 @@ import numpy as np
 from tensorpack.dataflow import dataset, BatchData
 
 
-def get_test_data():
+def get_test_data(batch=128):
     ds = dataset.Mnist('test')
-    ds = BatchData(ds, 128)
+    ds = BatchData(ds, batch)
     return ds
+
+
+def get_digits_by_label(images, labels):
+    data_dict = []
+    for clazz in range(0, 10):
+        clazz_filter = np.where(labels == clazz)
+        data_dict.append(list(images[clazz_filter].reshape((-1, 28, 28))))
+    return data_dict
 
 
 class MnistPairs(dataset.Mnist):
@@ -28,55 +36,26 @@ class MnistPairs(dataset.Mnist):
     def __init__(self, train_or_test):
         super(MnistPairs, self).__init__(train_or_test, shuffle=False)
         # now categorize these digits
-        self.data_dict = []
-        for clazz in range(0, 10):
-            clazz_filter = np.where(self.labels == clazz)
-            self.data_dict.append(self.images[clazz_filter])
+        self.data_dict = get_digits_by_label(self.images, self.labels)
+
+    def pick(self, label):
+        idx = self.rng.randint(len(self.data_dict[label]))
+        return self.data_dict[label][idx].astype(np.float32)
 
     def get_data(self):
         while True:
-            pick_label = self.rng.randint(10)
-            pick_other = pick_label
             y = self.rng.randint(2)
-
             if y == 0:
-                # pair with different digits
-                offset = self.rng.randint(9)
-                pick_other = (pick_label + offset + 1) % 10
-                assert not pick_label == pick_other
+                pick_label, pick_other = self.rng.choice(10, size=2, replace=False)
+            else:
+                pick_label = self.rng.randint(10)
+                pick_other = pick_label
 
-            l = self.rng.randint(len(self.data_dict[pick_label]))
-            r = self.rng.randint(len(self.data_dict[pick_other]))
-
-            l = np.reshape(self.data_dict[pick_label][l], [28, 28]).astype(np.float32)
-            r = np.reshape(self.data_dict[pick_other][r], [28, 28]).astype(np.float32)
-
-            yield [l, r, y]
+            yield [self.pick(pick_label), self.pick(pick_other), y]
 
 
-class MnistTriplets(dataset.Mnist):
-    def __init__(self, train_or_test):
-        super(MnistTriplets, self).__init__(train_or_test, shuffle=False)
-
-        # now categorize these digits
-        self.data_dict = []
-        for clazz in range(0, 10):
-            clazz_filter = np.where(self.labels == clazz)
-            self.data_dict.append(self.images[clazz_filter])
-
+class MnistTriplets(MnistPairs):
     def get_data(self):
         while True:
-            pick_label = self.rng.randint(10)
-            offset = self.rng.randint(9)
-            pick_other = (pick_label + offset + 1) % 10
-            assert not pick_label == pick_other
-
-            a = self.rng.randint(len(self.data_dict[pick_label]))
-            p = self.rng.randint(len(self.data_dict[pick_label]))
-            n = self.rng.randint(len(self.data_dict[pick_other]))
-
-            a = np.reshape(self.data_dict[pick_label][a], [28, 28]).astype(np.float32)
-            p = np.reshape(self.data_dict[pick_label][p], [28, 28]).astype(np.float32)
-            n = np.reshape(self.data_dict[pick_other][n], [28, 28]).astype(np.float32)
-
-            yield [a, p, n]
+            pick_label, pick_other = self.rng.choice(10, size=2, replace=False)
+            yield [self.pick(pick_label), self.pick(pick_label), self.pick(pick_other)]

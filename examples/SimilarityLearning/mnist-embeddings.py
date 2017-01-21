@@ -139,13 +139,13 @@ def get_config(model):
 
     return TrainConfig(
         dataflow=dataset,
+        model=model(),
         optimizer=tf.train.GradientDescentOptimizer(lr),
         callbacks=Callbacks([
             StatPrinter(),
             ModelSaver(),
             ScheduledHyperParamSetter('learning_rate', [(10, 1e-5), (20, 1e-6)])
         ]),
-        model=model(),
         step_per_epoch=step_per_epoch,
         max_epoch=20,
     )
