@@ -63,10 +63,10 @@ class Distribution(object):
             log likelihood of each sample, of shape (batch,)
         """
         assert x.get_shape().ndims == 2 and \
-            x.get_shape()[1] == self.sample_dim(), \
+            x.get_shape()[1] == self.sample_dim, \
             x.get_shape()
         assert theta.get_shape().ndims == 2 and \
-            theta.get_shape()[1] == self.param_dim(), \
+            theta.get_shape()[1] == self.param_dim, \
             theta.get_shape()
 
         ret = self._loglikelihood(x, theta)
@@ -84,6 +84,9 @@ class Distribution(object):
             a symbolic vector containing loglikelihood of each sample,
             using prior of this distribution.
         """
+        assert x.get_shape().ndims == 2 and \
+            x.get_shape()[1] == self.sample_dim, \
+            x.get_shape()
         batch_size = x.get_shape().as_list()[0]
         s = self.prior(batch_size)
         return self._loglikelihood(x, s)
@@ -188,6 +191,7 @@ class Distribution(object):
         s = self._sample_prior(batch_size)
         return s
 
+    @property
     def param_dim(self):
         """
         Returns:
@@ -195,6 +199,7 @@ class Distribution(object):
         """
         raise NotImplementedError
 
+    @property
     def sample_dim(self):
         """
         Returns:
@@ -243,9 +248,11 @@ class CategoricalDistribution(Distribution):
     def _encoder_activation(self, dist_param):
         return tf.nn.softmax(dist_param)
 
+    @property
     def param_dim(self):
         return self.cardinality
 
+    @property
     def sample_dim(self):
         return self.cardinality
 
@@ -282,10 +289,10 @@ class GaussianDistributionUniformPrior(Distribution):
 
     def _prior(self, batch_size):
         if self.fixed_std:
-            return tf.zeros([batch_size, self.param_dim()])
+            return tf.zeros([batch_size, self.param_dim])
         else:
-            return tf.concat_v2([tf.zeros([batch_size, self.param_dim()]),
-                                 tf.ones([batch_size, self.param_dim()])], 1)
+            return tf.concat_v2([tf.zeros([batch_size, self.param_dim]),
+                                 tf.ones([batch_size, self.param_dim])], 1)
 
     def _sample_prior(self, batch_size):
         return tf.random_uniform([batch_size, self.dim], -1, 1)
@@ -295,15 +302,18 @@ class GaussianDistributionUniformPrior(Distribution):
             return dist_param
         else:
             mean, stddev = tf.split(dist_param, 2, axis=1)
+            # this is from https://github.com/openai/InfoGAN. don't know why
             stddev = tf.sqrt(tf.exp(stddev))
             return tf.concat_v2([mean, stddev], axis=1)
 
+    @property
     def param_dim(self):
         if self.fixed_std:
             return self.dim
         else:
             return 2 * self.dim
 
+    @property
     def sample_dim(self):
         return self.dim
 
@@ -335,9 +345,11 @@ class NoiseDistribution(Distribution):
     def _encoder_activation(self, dist_param):
         return 0
 
+    @property
     def param_dim(self):
         return 0
 
+    @property
     def sample_dim(self):
         return self.dim
 
@@ -352,12 +364,13 @@ class ProductDistribution(Distribution):
         super(ProductDistribution, self).__init__(name)
         self.dists = dists
 
+    @property
     def param_dim(self):
-        return np.sum([d.param_dim() for d in self.dists])
+        return np.sum([d.param_dim for d in self.dists])
 
     def _splitter(self, s, param):
         """Input is split into a list of chunks according
-            to dist.param_dim() along axis=1
+            to dist.param_dim along axis=1
 
         Args:
             s (tf.Tensor): batch of vectors with shape (batch, param_dim or sample_dim)
@@ -369,9 +382,9 @@ class ProductDistribution(Distribution):
         offset = 0
         for dist in self.dists:
             if param:
-                off = dist.param_dim()
+                off = dist.param_dim
             else:
-                off = dist.sample_dim()
+                off = dist.sample_dim
 
             yield s[:, offset:offset + off]
             offset += off
@@ -392,7 +405,7 @@ class ProductDistribution(Distribution):
         for dist, xi, ti in zip(self.dists,
                                 self._splitter(x, False),
                                 self._splitter(theta, True)):
-            if dist.param_dim() > 0:
+            if dist.param_dim > 0:
                 MIs.append(dist.mutual_information(xi, ti))
         return MIs
 
@@ -407,7 +420,7 @@ class ProductDistribution(Distribution):
         samples = []
         for k, dist in enumerate(self.dists):
             init = dist._sample_prior(batch_size)
-            plh = tf.placeholder_with_default(init, [batch_size, dist.sample_dim()], name='z_' + dist.name)
+            plh = tf.placeholder_with_default(init, [batch_size, dist.sample_dim], name='z_' + dist.name)
             samples.append(plh)
             logger.info("Placeholder for %s(%s) is %s " % (dist.name, dist.__class__.__name__, plh.name[:-2]))
         return tf.concat_v2(samples, 1, name=name)
@@ -415,6 +428,6 @@ class ProductDistribution(Distribution):
     def _encoder_activation(self, dist_params):
         rsl = []
         for dist, dist_param in zip(self.dists, self._splitter(dist_params, True)):
-            if dist.param_dim() > 0:
+            if dist.param_dim > 0:
                 rsl.append(dist._encoder_activation(dist_param))
         return tf.concat_v2(rsl, 1)

@@ -48,7 +48,7 @@ class Model(GANModelDesc):
             encoder = (LinearWrap(l)
                        .FullyConnected('fce1', 128, nl=tf.identity)
                        .BatchNorm('bne').LeakyReLU()
-                       .FullyConnected('fce-out', self.factors.param_dim(), nl=tf.identity)())
+                       .FullyConnected('fce-out', self.factors.param_dim, nl=tf.identity)())
         return logits, encoder
 
     def _build_graph(self, input_vars):
@@ -70,6 +70,7 @@ class Model(GANModelDesc):
                 fake_sample = self.generator(z)
                 tf.summary.image('gen', fake_sample, max_outputs=30)
 
+            # TODO investigate how bn stats should be updated across two discrim
             with tf.variable_scope('discrim'):
                 real_pred, _ = self.discriminator(real_sample)
 
