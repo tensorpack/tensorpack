@@ -285,7 +285,7 @@ def cosine_loss(left, right, y):
         y = 2 * tf.cast(y, tf.float32) - 1
         pred = tf.reduce_sum(left * right, 1) / (l2_norm(left) * l2_norm(right) + 1e-10)
 
-        return tf.nn.l2_loss(y - pred) / tf.shape(left)[0]
+        return tf.nn.l2_loss(y - pred) / tf.cast(tf.shape(left)[0], tf.float32)
 
 
 def triplet_loss(anchor, positive, negative, margin, extra=False):
@@ -320,8 +320,8 @@ def triplet_loss(anchor, positive, negative, margin, extra=False):
         loss = tf.reduce_mean(tf.maximum(0., margin + d_pos - d_neg))
 
         if extra:
-            pos_dist = tf.reduce_mean(tf.sqrt(d_pos + 1e-10))
-            neg_dist = tf.reduce_mean(tf.sqrt(d_neg + 1e-10))
+            pos_dist = tf.reduce_mean(tf.sqrt(d_pos + 1e-10), name='pos-dist')
+            neg_dist = tf.reduce_mean(tf.sqrt(d_neg + 1e-10), name='neg-dist')
             return loss, pos_dist, neg_dist
         else:
             return loss
@@ -356,8 +356,8 @@ def soft_triplet_loss(anchor, positive, negative, extra=True):
         loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=ones))
 
         if extra:
-            pos_dist = tf.reduce_mean(d_pos)
-            neg_dist = tf.reduce_mean(d_neg)
+            pos_dist = tf.reduce_mean(d_pos, name='pos-dist')
+            neg_dist = tf.reduce_mean(d_neg, name='neg-dist')
             return loss, pos_dist, neg_dist
         else:
             return loss
