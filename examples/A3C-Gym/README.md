@@ -6,7 +6,7 @@ Implemented A3C in [Asynchronous Methods for Deep Reinforcement Learning](http:/
 
 `./train-atari.py --env Breakout-v0 --gpu 0`
 
-It should run at a speed of 6~10 iteration/s on 1 GPU.
+It should run at a speed of 6~10 iteration/s on 1 GPU plus 12+ CPU cores.
 Training with a significant slower speed (e.g. on CPU) will give bad performance,
 probably because of async issues.
 The pre-trained models are all trained with 4 GPUs for about 2 days.

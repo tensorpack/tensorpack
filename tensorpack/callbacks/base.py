@@ -5,6 +5,7 @@
 import tensorflow as tf
 from abc import ABCMeta
 import six
+from ..tfutils.common import get_op_or_tensor_by_name
 
 __all__ = ['Callback', 'PeriodicCallback', 'ProxyCallback', 'CallbackFactory']
 
@@ -49,12 +50,42 @@ class Callback(object):
     def _before_train(self):
         pass
 
-    def trigger_step(self):
+    def trigger_step(self, *args):
         """
-        Callback to be triggered after every step (every backpropagation)
+        Callback to be triggered after every step (every backpropagation).
+
+        Args:
+            args: a list of values corresponding to :meth:`extra_fetches`.
 
         Could be useful to apply some tricks on parameters (clipping, low-rank, etc)
         """
+        self._trigger_step(*args)
+
+    def _trigger_step(self, *args):
+        pass
+
+    def extra_fetches(self):
+        """
+        Returns:
+            list: a list of elements to be fetched in every step and
+                passed to :meth:`trigger_step`. Elements can be
+                Operations/Tensors, or names of Operations/Tensors.
+
+        This function will be called only after the graph is finalized.
+
+        This function should be a pure function (i.e. no side-effect when called)
+        """
+        fetches = self._extra_fetches()
+        ret = []
+        for f in fetches:
+            if isinstance(f, (tf.Tensor, tf.Operation)):
+                ret.append(f)
+            else:
+                ret.append(get_op_or_tensor_by_name(f))
+        return ret
+
+    def _extra_fetches(self):
+        return []
 
     def trigger_epoch(self):
         """
@@ -110,8 +141,6 @@ class ProxyCallback(Callback):
 class PeriodicCallback(ProxyCallback):
     """
     Wrap a callback so that it is triggered after every ``period`` epochs.
-
-    Doesn't work for ``trigger_step``.
     """
 
     def __init__(self, cb, period):

@@ -13,6 +13,7 @@ Training examples with __reproducible__ and meaningful performance.
 + [Fully-convolutional Network for Holistically-Nested Edge Detection(HED)](HED)
 + [Spatial Transformer Networks on MNIST addition](SpatialTransformer)
 + [Visualize Saliency Maps by Guided ReLU](Saliency)
++ [Similarity Learning on MNIST](SimilarityLearning)
 + Load a pre-trained [AlexNet](load-alexnet.py) or [VGG16](load-vgg16.py) model.
 + Load a pre-trained [Convolutional Pose Machines](ConvolutionalPoseMachines/).
 

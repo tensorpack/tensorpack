@@ -4,6 +4,7 @@
 
 import tensorflow as tf
 from contextlib import contextmanager
+from collections import defaultdict
 import time
 
 from .base import Callback
@@ -67,6 +68,7 @@ class Callbacks(Callback):
             raise ValueError("Callbacks must contain StatPrinter for stat and writer to work properly!")
 
         self.cbs = cbs
+        self._extra_fetches_cache = None
 
     def _setup_graph(self):
         with tf.name_scope(None):
@@ -81,9 +83,30 @@ class Callbacks(Callback):
         for cb in self.cbs:
             cb.after_train()
 
-    def trigger_step(self):
-        for cb in self.cbs:
-            cb.trigger_step()
+    def _extra_fetches(self):
+        if self._extra_fetches_cache is not None:
+            return self._extra_fetches_cache
+        # TODO use dispatch mechanism to avoid duplication
+        self._cbid_to_fetchid = defaultdict(list)
+        ret = []
+        for idx, cb in enumerate(self.cbs):
+            fetch = cb.extra_fetches()
+            if len(fetch) == 0:
+                continue
+            for f in fetch:
+                ret.append(f)
+                self._cbid_to_fetchid[idx].append(len(ret)-1)
+        self._extra_fetches_cache = ret
+        return ret
+
+    def _trigger_step(self, *args):
+        for idx, cb in enumerate(self.cbs):
+            fid = self._cbid_to_fetchid[idx]
+            if len(fid) == 0:
+                cb.trigger_step()
+            else:
+                data = [args[k] for k in fid]
+                cb.trigger_step(*data)
 
     def _trigger_epoch(self):
         tm = CallbackTimeLogger()

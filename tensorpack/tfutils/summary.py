@@ -137,8 +137,8 @@ def summary_moving_average(tensors=None):
     with tf.name_scope(None):
         averager = tf.train.ExponentialMovingAverage(
             0.95, num_updates=get_global_step_var(), name='EMA')
-    avg_maintain_op = averager.apply(tensors)
-    for idx, c in enumerate(tensors):
-        name = re.sub('tower[p0-9]+/', '', c.op.name)
-        tf.summary.scalar(name + '-summary', averager.average(c))
+        avg_maintain_op = averager.apply(tensors)
+        for idx, c in enumerate(tensors):
+            name = re.sub('tower[p0-9]+/', '', c.op.name)
+            tf.summary.scalar(name + '-summary', averager.average(c))
     return avg_maintain_op

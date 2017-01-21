@@ -11,7 +11,9 @@ and warped them separately.
 
 <p align="center"> <img src="./demo.jpg" width="400"> </p>
 
-Left: input image; Middle: output of the first STN branch (which localizes the second digit); Right: output of the second STN branch.
+* Left: input image.
+* Middle: output of the first STN branch (which localizes the second digit).
+* Right: output of the second STN branch.
 
 To train (takes about 300 epochs to reach 8.8% error):
 ```bash
