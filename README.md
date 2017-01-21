@@ -12,6 +12,7 @@ Docs & tutorials should be ready within a month. See some [examples](examples) t
 + [Fully-convolutional Network for Holistically-Nested Edge Detection(HED)](examples/HED)
 + [Spatial Transformer Networks on MNIST addition](examples/SpatialTransformer)
 + [Visualize Saliency Maps by Guided ReLU](examples/Saliency)
++ [Similarity Learning on MNIST](examples/SimilarityLearning)
 
 ### Reinforcement Learning:
 + [Deep Q-Network(DQN) variants on Atari games](examples/DeepQNetwork)
