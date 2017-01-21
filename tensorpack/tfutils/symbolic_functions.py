@@ -154,10 +154,10 @@ def psnr_loss(prediction, ground_truth, name='psnr_loss'):
 
     .. math::
 
-        PSNR = 20 \cdot log_{10}(MAX_p) - 10 \cdot log_{10}(MSE)
+        PSNR = 20 \cdot \log_{10}(MAX_p) - 10 \cdot \log_{10}(MSE)
 
     This function assumes the maximum possible value of the signal is 1,
-    therefore the PSNR is simply ``- 10 * log10(MSE)``.
+    therefore the PSNR is simply :math:`- 10 \cdot \log_{10}(MSE)`.
 
     Args:
         prediction: a :class:`tf.Tensor` representing the prediction signal.
@@ -215,12 +215,12 @@ def saliency_map(output, input, name="saliency_map"):
 
 
 def contrastive_loss(left, right, y, margin, extra=False):
-    """Loss for Siamese networks as described in the paper:
+    r"""Loss for Siamese networks as described in the paper:
     `Learning a Similarity Metric Discriminatively, with Application to Face
     Verification <http://yann.lecun.com/exdb/publis/pdf/chopra-05.pdf>`_ by Chopra et al.
 
     .. math::
-        \\frac{1}{2} [y \cdot d^2 + (1-y) \cdot \max(0, m - d)^2], d = \Vert l - r \Vert_2
+        \frac{1}{2} [y \cdot d^2 + (1-y) \cdot \max(0, m - d)^2], d = \Vert l - r \Vert_2
 
     Args:
         left (tf.Tensor): left feature vectors of shape [Batch, N].
@@ -230,13 +230,13 @@ def contrastive_loss(left, right, y, margin, extra=False):
         extra (bool): also return distances for pos and neg.
 
     Returns:
-        tf.Tensor: constrastive_loss (averaged over the batch), [pos_dist, neg_dist]
+        tf.Tensor: constrastive_loss (averaged over the batch), (and optionally average_pos_dist, average_neg_dist)
     """
     with tf.name_scope("constrastive_loss"):
         y = tf.cast(y, tf.float32)
 
         delta = tf.reduce_sum(tf.square(left - right), 1)
-        delta_sqrt = tf.sqrt(delta + 1e-6)
+        delta_sqrt = tf.sqrt(delta + 1e-10)
 
         match_loss = delta
         missmatch_loss = tf.square(tf.nn.relu(margin - delta_sqrt))
@@ -258,10 +258,11 @@ def contrastive_loss(left, right, y, margin, extra=False):
 
 
 def cosine_loss(left, right, y):
-    """Loss for Siamese networks (cosine version).
+    r"""Loss for Siamese networks (cosine version).
+    Same as :func:`contrastive_loss` but with different similarity measurment.
 
-    Remarks:
-        Same as :func:`contrastive_loss` but with different similarity measurment.
+    .. math::
+        [\frac{l \cdot r}{\lVert l\rVert \lVert r\rVert} - (2y-1)]^2
 
     Args:
         left (tf.Tensor): left feature vectors of shape [Batch, N].
@@ -284,12 +285,13 @@ def cosine_loss(left, right, y):
         y = 2 * tf.cast(y, tf.float32) - 1
         pred = tf.reduce_sum(left * right, 1) / (l2_norm(left) * l2_norm(right) + 1e-10)
 
-        return tf.nn.l2_loss(y - pred)
+        return tf.nn.l2_loss(y - pred) / tf.shape(left)[0]
 
 
 def triplet_loss(anchor, positive, negative, margin, extra=False):
-    """Loss for Triplet networks as described in the paper:
-    `FaceNet: A Unified Embedding for Face Recognition and Clustering <https://arxiv.org/abs/1503.03832>`
+    r"""Loss for Triplet networks as described in the paper:
+    `FaceNet: A Unified Embedding for Face Recognition and Clustering
+    <https://arxiv.org/abs/1503.03832>`_
     by Schroff et al.
 
     Learn embeddings from an anchor point and a similar input (positive) as
@@ -305,7 +307,7 @@ def triplet_loss(anchor, positive, negative, margin, extra=False):
         positive (tf.Tensor): features of positive match of the same shape.
         negative (tf.Tensor): features of negative match of the same shape.
         margin (float): horizont for negative examples
-        extra (bool, optional): return additional endpoints
+        extra (bool): also return distances for pos and neg.
 
     Returns:
         tf.Tensor: triplet-loss as scalar (and optionally average_pos_dist, average_neg_dist)
@@ -318,8 +320,8 @@ def triplet_loss(anchor, positive, negative, margin, extra=False):
         loss = tf.reduce_mean(tf.maximum(0., margin + d_pos - d_neg))
 
         if extra:
-            pos_dist = tf.reduce_mean(tf.sqrt(d_pos + 1e-6))
-            neg_dist = tf.reduce_mean(tf.sqrt(d_neg + 1e-6))
+            pos_dist = tf.reduce_mean(tf.sqrt(d_pos + 1e-10))
+            neg_dist = tf.reduce_mean(tf.sqrt(d_neg + 1e-10))
             return loss, pos_dist, neg_dist
         else:
             return loss
@@ -327,19 +329,23 @@ def triplet_loss(anchor, positive, negative, margin, extra=False):
 
 def soft_triplet_loss(anchor, positive, negative, extra=True):
     """Loss for triplet networks as described in the paper:
-    `Deep Metric Learning using Triplet Network <https://arxiv.org/pdf/1412.6622.pdf>` by Hoffer et al.
+    `Deep Metric Learning using Triplet Network
+    <https://arxiv.org/abs/1412.6622>`_ by Hoffer et al.
+
+    It is a softmax loss using :math:`(anchor-positive)^2` and
+    :math:`(anchor-negative)^2` as logits.
 
     Args:
         anchor (tf.Tensor): anchor feature vectors of shape [Batch, N].
         positive (tf.Tensor): features of positive match of the same shape.
         negative (tf.Tensor): features of negative match of the same shape.
-        extra (bool, optional): return additional endpoints
+        extra (bool): also return distances for pos and neg.
 
     Returns:
-        tf.Tensor: triplet-loss as scalar
+        tf.Tensor: triplet-loss as scalar (and optionally average_pos_dist, average_neg_dist)
     """
 
-    eps = 1e-6
+    eps = 1e-10
     with tf.name_scope("soft_triplet_loss"):
         d_pos = tf.sqrt(tf.reduce_sum(tf.square(anchor - positive), 1) + eps)
         d_neg = tf.sqrt(tf.reduce_sum(tf.square(anchor - negative), 1) + eps)
