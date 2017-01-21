@@ -9,6 +9,7 @@ import time
 from tensorpack import (FeedfreeTrainerBase, TowerContext,
                         get_global_step_var, QueueInput, ModelDesc)
 from tensorpack.tfutils.summary import summary_moving_average, add_moving_summary
+from tensorpack.tfutils.gradproc import apply_grad_processors, CheckGradient
 from tensorpack.dataflow import DataFlow
 
 
@@ -61,6 +62,12 @@ class GANModelDesc(ModelDesc):
 
             add_moving_summary(self.g_loss, self.d_loss, self.d_accuracy, self.g_accuracy)
 
+    def get_gradient_processor_g(self):
+        return [CheckGradient()]
+
+    def get_gradient_processor_d(self):
+        return [CheckGradient()]
+
 
 class GANTrainer(FeedfreeTrainerBase):
     def __init__(self, config):
@@ -72,11 +79,18 @@ class GANTrainer(FeedfreeTrainerBase):
         with TowerContext(''):
             actual_inputs = self._get_input_tensors()
             self.model.build_graph(actual_inputs)
-        self.g_min = self.config.optimizer.minimize(self.model.g_loss,
-                                                    var_list=self.model.g_vars, name='g_op')
+        grads = self.config.optimizer.compute_gradients(
+            self.model.g_loss, var_list=self.model.g_vars)
+        grads = apply_grad_processors(
+            grads, self.model.get_gradient_processor_g())
+        self.g_min = self.config.optimizer.apply_gradients(grads, name='g_op')
         with tf.control_dependencies([self.g_min]):
-            self.d_min = self.config.optimizer.minimize(self.model.d_loss,
-                                                        var_list=self.model.d_vars, name='d_op')
+            grads = self.config.optimizer.compute_gradients(
+                self.model.d_loss, var_list=self.model.d_vars)
+            grads = apply_grad_processors(
+                grads, self.model.get_gradient_processor_d())
+            self.d_min = self.config.optimizer.apply_gradients(grads, name='d_op')
+
         self.gs_incr = tf.assign_add(get_global_step_var(), 1, name='global_step_incr')
         self.summary_op = summary_moving_average()
         self.train_op = tf.group(self.d_min, self.summary_op, self.gs_incr)

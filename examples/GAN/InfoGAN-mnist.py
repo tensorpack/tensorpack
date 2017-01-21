@@ -14,9 +14,11 @@ from tensorpack import *
 from tensorpack.utils.viz import *
 from tensorpack.tfutils.distributions import *
 import tensorpack.tfutils.symbolic_functions as symbf
+from tensorpack.tfutils.gradproc import ScaleGradient, CheckGradient
 from GAN import GANTrainer, GANModelDesc
 
 BATCH = 128
+NOISE_DIM = 62
 
 
 class Model(GANModelDesc):
@@ -30,7 +32,7 @@ class Model(GANModelDesc):
         l = tf.reshape(l, [-1, 7, 7, 128])
         l = Deconv2D('deconv1', l, [14, 14, 64], 4, 2, nl=BNReLU)
         l = Deconv2D('deconv2', l, [28, 28, 1], 4, 2, nl=tf.identity)
-        l = tf.nn.tanh(l, name='gen')
+        l = tf.tanh(l, name='gen')
         return l
 
     def discriminator(self, imgs):
@@ -52,15 +54,14 @@ class Model(GANModelDesc):
         return logits, encoder
 
     def _build_graph(self, input_vars):
-
         real_sample = input_vars[0]
         real_sample = tf.expand_dims(real_sample * 2.0 - 1, -1)
 
-        # latent space is cat(10) x uni(1) x uni(1) x noise(62)
+        # latent space is cat(10) x uni(1) x uni(1) x noise(NOISE_DIM)
         self.factors = ProductDistribution("factors", [CategoricalDistribution("cat", 10),
                                                        GaussianDistributionUniformPrior("uni_a", 1),
                                                        GaussianDistributionUniformPrior("uni_b", 1),
-                                                       NoiseDistribution("noise", 62)])
+                                                       NoiseDistribution("noise", NOISE_DIM)])
 
         z = self.factors.sample_prior(BATCH, name='zc')
 
@@ -68,7 +69,8 @@ class Model(GANModelDesc):
                       W_init=tf.truncated_normal_initializer(stddev=0.02)):
             with tf.variable_scope('gen'):
                 fake_sample = self.generator(z)
-                tf.summary.image('gen', fake_sample, max_outputs=30)
+                fake_sample_viz = tf.cast((fake_sample + 1) * 128.0, tf.uint8, name='viz')
+                tf.summary.image('gen', fake_sample_viz, max_outputs=30)
 
             # TODO investigate how bn stats should be updated across two discrim
             with tf.variable_scope('discrim'):
@@ -97,6 +99,9 @@ class Model(GANModelDesc):
         # distinguish between variables of generator and discriminator updates
         self.collect_variables()
 
+    def get_gradient_processor_g(self):
+        return [CheckGradient(), ScaleGradient(('.*', 5), log=False)]
+
 
 def get_data():
     ds = ConcatData([dataset.Mnist('train'), dataset.Mnist('test')])
@@ -110,7 +115,7 @@ def get_config():
     lr = symbf.get_scalar_var('learning_rate', 2e-4, summary=True)
     return TrainConfig(
         dataflow=dataset,
-        optimizer=tf.train.AdamOptimizer(lr, beta1=0.5, epsilon=1e-3),
+        optimizer=tf.train.AdamOptimizer(lr, beta1=0.5, epsilon=1e-6),
         callbacks=Callbacks([
             StatPrinter(), ModelSaver(),
         ]),
@@ -126,7 +131,7 @@ def sample(model_path):
         session_init=get_model_loader(model_path),
         model=Model(),
         input_names=['z_cat', 'z_uni_a', 'z_uni_b', 'z_noise'],
-        output_names=['gen/gen']))
+        output_names=['gen/viz']))
 
     # sample all one-hot encodings (10 times)
     z_cat = np.tile(np.eye(10), [10, 1])
@@ -138,25 +143,24 @@ def sample(model_path):
 
     while True:
         # only categorical turned on
-        z_noise = np.random.uniform(-1, 1, (100, 62))
-        o = pred([z_cat, z_uni * 0, z_uni * 0, z_noise])
-        o = (o[0] + 1) * 128.0
+        z_noise = np.random.uniform(-1, 1, (100, NOISE_DIM))
+        o = pred([z_cat, z_uni * 0, z_uni * 0, z_noise])[0]
         viz1 = next(build_patch_list(o, nr_row=10, nr_col=10))
         viz1 = cv2.resize(viz1, (IMG_SIZE, IMG_SIZE))
 
         # show effect of first continous variable with fixed noise
-        o = pred([z_cat, z_uni, z_uni * 0, z_noise * 0])
-        o = (o[0] + 1) * 128.0
+        o = pred([z_cat, z_uni, z_uni * 0, z_noise * 0])[0]
         viz2 = next(build_patch_list(o, nr_row=10, nr_col=10))
         viz2 = cv2.resize(viz2, (IMG_SIZE, IMG_SIZE))
 
         # show effect of second continous variable with fixed noise
-        o = pred([z_cat, z_uni * 0, z_uni, z_noise * 0])
-        o = (o[0] + 1) * 128.0
+        o = pred([z_cat, z_uni * 0, z_uni, z_noise * 0])[0]
         viz3 = next(build_patch_list(o, nr_row=10, nr_col=10))
         viz3 = cv2.resize(viz3, (IMG_SIZE, IMG_SIZE))
 
-        viz = stack_images([viz1, viz2, viz3])
+        viz = next(build_patch_list(
+            [viz1, viz2, viz3],
+            nr_row=1, nr_col=3, border=5, bgcolor=(255, 0, 0)))
 
         interactive_imshow(viz)
 
