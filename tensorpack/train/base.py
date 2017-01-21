@@ -133,6 +133,7 @@ class Trainer(object):
         # some final operations that might modify the graph
         logger.info("Setup callbacks ...")
         self.config.callbacks.setup_graph(weakref.proxy(self))
+        self._extra_fetches = self.config.callbacks.extra_fetches()
 
         if not hasattr(logger, 'LOG_DIR'):
             raise RuntimeError("logger directory wasn't set!")
