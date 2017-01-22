@@ -19,7 +19,9 @@ __all__ = ['get_default_sess_config',
            'restore_collection',
            'clear_collection',
            'freeze_collection',
-           'get_tf_version']
+           'get_tf_version',
+           'get_name_scope_name'
+           ]
 
 
 def get_default_sess_config(mem_fraction=0.99):
@@ -165,3 +167,15 @@ def get_tf_version():
         int:
     """
     return int(tf.__version__.split('.')[1])
+
+
+def get_name_scope_name():
+    """
+    Returns:
+        str: the name of the current name scope, without the ending '/'.
+    """
+    g = tf.get_default_graph()
+    s = "RANDOM_STR_ABCDEFG"
+    unique = g.unique_name(s)
+    scope = unique[:-len(s)].rstrip('/')
+    return scope

@@ -12,13 +12,16 @@ import argparse
 
 from tensorpack import *
 from tensorpack.utils.viz import *
+from tensorpack.tfutils.distributions import *
 import tensorpack.tfutils.symbolic_functions as symbf
-from GAN import GANTrainer, build_GAN_losses
+from tensorpack.tfutils.gradproc import ScaleGradient, CheckGradient
+from GAN import GANTrainer, GANModelDesc
 
 BATCH = 128
+NOISE_DIM = 62
 
 
-class Model(ModelDesc):
+class Model(GANModelDesc):
 
     def _get_input_vars(self):
         return [InputVar(tf.float32, (None, 28, 28), 'input')]
@@ -29,13 +32,12 @@ class Model(ModelDesc):
         l = tf.reshape(l, [-1, 7, 7, 128])
         l = Deconv2D('deconv1', l, [14, 14, 64], 4, 2, nl=BNReLU)
         l = Deconv2D('deconv2', l, [28, 28, 1], 4, 2, nl=tf.identity)
-        l = tf.nn.tanh(l, name='gen')
+        l = tf.tanh(l, name='gen')
         return l
 
     def discriminator(self, imgs):
-        """ return a (b, 1) logits"""
         with argscope(Conv2D, nl=tf.identity, kernel_shape=4, stride=2), \
-                argscope(LeakyReLU, alpha=0.2):
+                argscope(LeakyReLU, alpha=0.1):
             l = (LinearWrap(imgs)
                  .Conv2D('conv0', 64)
                  .LeakyReLU()
@@ -48,49 +50,57 @@ class Model(ModelDesc):
             encoder = (LinearWrap(l)
                        .FullyConnected('fce1', 128, nl=tf.identity)
                        .BatchNorm('bne').LeakyReLU()
-                       .FullyConnected('fce-out', 10, nl=tf.identity)())
+                       .FullyConnected('fce-out', self.factors.param_dim, nl=tf.identity)())
         return logits, encoder
 
     def _build_graph(self, input_vars):
-        image_pos = input_vars[0]
-        image_pos = tf.expand_dims(image_pos * 2.0 - 1, -1)
+        real_sample = input_vars[0]
+        real_sample = tf.expand_dims(real_sample * 2.0 - 1, -1)
 
-        prior_prob = tf.constant([0.1] * 10, name='prior_prob')
-        # assume first 10 is categorical
-        ids = tf.multinomial(tf.zeros([BATCH, 10]), num_samples=1)[:, 0]
-        zc = tf.one_hot(ids, 10, name='zc_train')
-        zc = tf.placeholder_with_default(zc, [None, 10], name='zc')
+        # latent space is cat(10) x uni(1) x uni(1) x noise(NOISE_DIM)
+        self.factors = ProductDistribution("factors", [CategoricalDistribution("cat", 10),
+                                                       GaussianDistributionUniformPrior("uni_a", 1),
+                                                       GaussianDistributionUniformPrior("uni_b", 1),
+                                                       NoiseDistribution("noise", NOISE_DIM)])
 
-        z = tf.random_uniform(tf.stack([tf.shape(zc)[0], 90]), -1, 1, name='z_train')
-        z = tf.placeholder_with_default(z, [None, 90], name='z')
-        z = tf.concat_v2([zc, z], 1, name='fullz')
+        z = self.factors.sample_prior(BATCH, name='zc')
 
         with argscope([Conv2D, Deconv2D, FullyConnected],
                       W_init=tf.truncated_normal_initializer(stddev=0.02)):
             with tf.variable_scope('gen'):
-                image_gen = self.generator(z)
-                tf.summary.image('gen', image_gen, max_outputs=30)
+                fake_sample = self.generator(z)
+                fake_sample_viz = tf.cast((fake_sample + 1) * 128.0, tf.uint8, name='viz')
+                tf.summary.image('gen', fake_sample_viz, max_outputs=30)
+
+            # TODO investigate how bn stats should be updated across two discrim
             with tf.variable_scope('discrim'):
-                vecpos, _ = self.discriminator(image_pos)
+                real_pred, _ = self.discriminator(real_sample)
+
             with tf.variable_scope('discrim', reuse=True):
-                vecneg, dist_param = self.discriminator(image_gen)
-                logprob = tf.nn.log_softmax(dist_param)  # log prob of each category
+                fake_pred, dist_param = self.discriminator(fake_sample)
 
-        # Q(c|x) = Q(zc | image_gen)
-        log_qc_given_x = tf.reduce_sum(logprob * zc, 1, name='logQc_x')  # bx1
-        log_qc = tf.reduce_sum(prior_prob * zc, 1, name='logQc')
-        Elog_qc_given_x = tf.reduce_mean(log_qc_given_x, name='ElogQc_x')
-        Hc = tf.reduce_mean(-log_qc, name='Hc')
-        MIloss = tf.multiply(Hc + Elog_qc_given_x, -1.0, name='neg_MI')
+        # post-process all dist_params from discriminator
+        encoder_activation = self.factors.encoder_activation(dist_param)
 
-        self.g_loss, self.d_loss = build_GAN_losses(vecpos, vecneg)
-        self.g_loss = tf.add(self.g_loss, MIloss, name='total_g_loss')
-        self.d_loss = tf.add(self.d_loss, MIloss, name='total_d_loss')
-        summary.add_moving_summary(MIloss, self.g_loss, self.d_loss, Hc, Elog_qc_given_x)
+        with tf.name_scope("mutual_information"):
+            MIs = self.factors.mutual_information(z, encoder_activation)
+            mi = tf.add_n(MIs, name="total")
+        summary.add_moving_summary(MIs + [mi])
 
-        all_vars = tf.trainable_variables()
-        self.g_vars = [v for v in all_vars if v.name.startswith('gen/')]
-        self.d_vars = [v for v in all_vars if v.name.startswith('discrim/')]
+        # default GAN objective
+        self.build_losses(real_pred, fake_pred)
+
+        # subtract mutual information for latent factores (we want to maximize them)
+        self.g_loss = tf.subtract(self.g_loss, mi, name='total_g_loss')
+        self.d_loss = tf.subtract(self.d_loss, mi, name='total_d_loss')
+
+        summary.add_moving_summary(self.g_loss, self.d_loss)
+
+        # distinguish between variables of generator and discriminator updates
+        self.collect_variables()
+
+    def get_gradient_processor_g(self):
+        return [CheckGradient(), ScaleGradient(('.*', 5), log=False)]
 
 
 def get_data():
@@ -105,7 +115,7 @@ def get_config():
     lr = symbf.get_scalar_var('learning_rate', 2e-4, summary=True)
     return TrainConfig(
         dataflow=dataset,
-        optimizer=tf.train.AdamOptimizer(lr, beta1=0.5, epsilon=1e-3),
+        optimizer=tf.train.AdamOptimizer(lr, beta1=0.5, epsilon=1e-6),
         callbacks=Callbacks([
             StatPrinter(), ModelSaver(),
         ]),
@@ -120,18 +130,38 @@ def sample(model_path):
     pred = OfflinePredictor(PredictConfig(
         session_init=get_model_loader(model_path),
         model=Model(),
-        input_names=['zc'],
-        output_names=['gen/gen']))
+        input_names=['z_cat', 'z_uni_a', 'z_uni_b', 'z_noise'],
+        output_names=['gen/viz']))
 
-    eye = []
-    for k in np.eye(10):
-        eye = eye + [k] * 10
-    inputs = np.asarray(eye)
+    # sample all one-hot encodings (10 times)
+    z_cat = np.tile(np.eye(10), [10, 1])
+    # sample continuos variables from -2 to +2 as mentioned in the paper
+    z_uni = np.linspace(-2.0, 2.0, num=100)
+    z_uni = z_uni[:, None]
+
+    IMG_SIZE = 400
+
     while True:
-        o = pred([inputs])
-        o = (o[0] + 1) * 128.0
-        viz = next(build_patch_list(o, nr_row=10, nr_col=10))
-        viz = cv2.resize(viz, (800, 800))
+        # only categorical turned on
+        z_noise = np.random.uniform(-1, 1, (100, NOISE_DIM))
+        o = pred([z_cat, z_uni * 0, z_uni * 0, z_noise])[0]
+        viz1 = next(build_patch_list(o, nr_row=10, nr_col=10))
+        viz1 = cv2.resize(viz1, (IMG_SIZE, IMG_SIZE))
+
+        # show effect of first continous variable with fixed noise
+        o = pred([z_cat, z_uni, z_uni * 0, z_noise * 0])[0]
+        viz2 = next(build_patch_list(o, nr_row=10, nr_col=10))
+        viz2 = cv2.resize(viz2, (IMG_SIZE, IMG_SIZE))
+
+        # show effect of second continous variable with fixed noise
+        o = pred([z_cat, z_uni * 0, z_uni, z_noise * 0])[0]
+        viz3 = next(build_patch_list(o, nr_row=10, nr_col=10))
+        viz3 = cv2.resize(viz3, (IMG_SIZE, IMG_SIZE))
+
+        viz = next(build_patch_list(
+            [viz1, viz2, viz3],
+            nr_row=1, nr_col=3, border=5, bgcolor=(255, 0, 0)))
+
         interactive_imshow(viz)
 
 
@@ -144,6 +174,7 @@ if __name__ == '__main__':
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
     if args.sample:
+        BATCH = 100
         sample(args.load)
     else:
         config = get_config()

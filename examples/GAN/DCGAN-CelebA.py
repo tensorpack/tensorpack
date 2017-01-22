@@ -17,7 +17,7 @@ from tensorpack.utils.viz import *
 from tensorpack.tfutils.summary import add_moving_summary, summary_moving_average
 from tensorpack.utils.globvars import globalns as CFG, use_global_argument
 import tensorpack.tfutils.symbolic_functions as symbf
-from GAN import GANTrainer, RandomZData, build_GAN_losses
+from GAN import GANTrainer, RandomZData, GANModelDesc
 
 """
 DCGAN on CelebA dataset.
@@ -35,7 +35,7 @@ CFG.BATCH = 128
 CFG.Z_DIM = 100
 
 
-class Model(ModelDesc):
+class Model(GANModelDesc):
 
     def _get_input_vars(self):
         return [InputVar(tf.float32, (None, CFG.SHAPE, CFG.SHAPE, 3), 'input')]
@@ -87,10 +87,8 @@ class Model(ModelDesc):
             with tf.variable_scope('discrim', reuse=True):
                 vecneg = self.discriminator(image_gen)
 
-        self.g_loss, self.d_loss = build_GAN_losses(vecpos, vecneg)
-        all_vars = tf.trainable_variables()
-        self.g_vars = [v for v in all_vars if v.name.startswith('gen/')]
-        self.d_vars = [v for v in all_vars if v.name.startswith('discrim/')]
+        self.build_losses(vecpos, vecneg)
+        self.collect_variables()
 
 
 def get_data():

@@ -18,7 +18,7 @@ except ImportError:
 
 
 __all__ = ['pyplot2img', 'interactive_imshow', 'build_patch_list',
-           'pyplot_viz', 'dump_dataflow_images', 'intensity_to_rgb']
+           'pyplot_viz', 'dump_dataflow_images', 'intensity_to_rgb', 'stack_images']
 
 
 def pyplot2img(plt):
@@ -62,7 +62,7 @@ def minnone(x, y):
 def interactive_imshow(img, lclick_cb=None, rclick_cb=None, **kwargs):
     """
     Args:
-        img (np.ndarray): an image to show.
+        img (np.ndarray): an image (expect BGR) to show.
         lclick_cb: a callback func(img, x, y) for left click event.
         kwargs: can be {key_cb_a: callback_img, key_cb_b: callback_img}, to
             specify a callback func(img) for keypress.
@@ -112,7 +112,8 @@ def build_patch_list(patch_list,
         max_width(int), max_height(int): Maximum allowed size of the
             visualization image. If ``nr_row/nr_col`` are not given, will use this to infer the rows and cols.
         shuffle(bool): shuffle the images inside ``patch_list``.
-        bgcolor(int): background color in [0, 255].
+        bgcolor(int or 3-tuple): background color in [0, 255]. Either an int
+            or a BGR tuple.
         viz(bool): whether to use :func:`interactive_imshow` to visualize the results.
         lclick_cb: A callback function to get called when ``viz==True`` and an
             image get clicked. It takes the image patch and its index in
@@ -139,13 +140,21 @@ def build_patch_list(patch_list,
     if nr_col is None:
         nr_col = minnone(nr_col, max_width / (pw + border))
 
+    if isinstance(bgcolor, int):
+        bgchannel = 1
+    else:
+        bgchannel = 3
+    canvas_channel = max(patch_list.shape[3], bgchannel)
     canvas = np.zeros((nr_row * (ph + border) - border,
                        nr_col * (pw + border) - border,
-                       patch_list.shape[3]), dtype='uint8')
+                       canvas_channel), dtype='uint8')
 
     def draw_patch(plist):
         cur_row, cur_col = 0, 0
-        canvas.fill(bgcolor)
+        if bgchannel == 1:
+            canvas.fill(bgcolor)
+        else:
+            canvas[:, :, :] = bgcolor
         for patch in plist:
             r0 = cur_row * (ph + border)
             c0 = cur_col * (pw + border)
@@ -265,6 +274,42 @@ def intensity_to_rgb(intensity, cmap='cubehelix', normalize=False):
     cmap = plt.get_cmap(cmap)
     intensity = cmap(intensity)[..., :3]
     return intensity.astype('float32') * 255.0
+
+
+def stack_images(imgs, vertical=False):
+    """Stack images with different shapes and different number of channels.
+
+    Args:
+        imgs (np.array): imgage
+        vertical (bool, optional): stack images vertically
+
+    Returns:
+        np.array: stacked images
+    """
+    rows = [x.shape[0] for x in imgs]
+    cols = [x.shape[1] for x in imgs]
+
+    if vertical:
+        if len(imgs[0].shape) == 2:
+            out = np.zeros((np.sum(rows), max(cols)), dtype='uint8')
+        else:
+            out = np.zeros((np.sum(rows), max(cols), 3), dtype='uint8')
+    else:
+        if len(imgs[0].shape) == 2:
+            out = np.zeros((max(rows), np.sum(cols)), dtype='uint8')
+        else:
+            out = np.zeros((max(rows), np.sum(cols), 3), dtype='uint8')
+
+    offset = 0
+    for i, img in enumerate(imgs):
+        assert img.max() > 1, "expect images within range [0, 255]"
+        if vertical:
+            out[offset:offset + rows[i], :cols[i]] = img
+            offset += rows[i]
+        else:
+            out[:rows[i], offset:offset + cols[i]] = img
+            offset += cols[i]
+    return out
 
 
 if __name__ == '__main__':

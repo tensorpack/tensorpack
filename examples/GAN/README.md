@@ -37,7 +37,7 @@ This is a visualization from tensorboard. Left to right: original, ground truth,
 ## InfoGAN-mnist.py
 
 Reproduce one mnist experiement in InfoGAN.
-By assuming 10 latent variables corresponding to a categorical distribution and maximizing mutual information,
-the network learns to map the 10 variables to 10 digits in a completely unsupervised way.
+By assuming 10 latent variables corresponding to a categorical distribution, and 2 latent variables corresponding to an "uniform distributioN" and maximizing mutual information,
+the network learns to map the 10 variables to 10 digits and the other two latent variables to rotation and thickness in a completely unsupervised way.
 
 ![infogan](demo/InfoGAN-mnist.jpg)

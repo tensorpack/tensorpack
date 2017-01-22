@@ -16,7 +16,7 @@ from tensorpack import *
 from tensorpack.utils.viz import *
 from tensorpack.tfutils.summary import add_moving_summary, summary_moving_average
 import tensorpack.tfutils.symbolic_functions as symbf
-from GAN import GANTrainer, build_GAN_losses
+from GAN import GANTrainer, GANModelDesc
 
 """
 To train:
@@ -42,7 +42,7 @@ LAMBDA = 100
 NF = 64  # number of filter
 
 
-class Model(ModelDesc):
+class Model(GANModelDesc):
 
     def _get_input_vars(self):
         return [InputVar(tf.float32, (None, SHAPE, SHAPE, IN_CH), 'input'),
@@ -114,7 +114,7 @@ class Model(ModelDesc):
             with tf.variable_scope('discrim', reuse=True):
                 fake_pred = self.discriminator(input, fake_output)
 
-        self.g_loss, self.d_loss = build_GAN_losses(real_pred, fake_pred)
+        self.build_losses(real_pred, fake_pred)
         errL1 = tf.reduce_mean(tf.abs(fake_output - output), name='L1_loss')
         self.g_loss = tf.add(self.g_loss, LAMBDA * errL1, name='total_g_loss')
         add_moving_summary(errL1, self.g_loss)
@@ -129,9 +129,7 @@ class Model(ModelDesc):
         viz = tf.cast(tf.clip_by_value(viz, 0, 255), tf.uint8, name='viz')
         tf.summary.image('input,output,fake', viz, max_outputs=max(30, BATCH))
 
-        all_vars = tf.trainable_variables()
-        self.g_vars = [v for v in all_vars if v.name.startswith('gen/')]
-        self.d_vars = [v for v in all_vars if v.name.startswith('discrim/')]
+        self.collect_variables()
 
 
 def split_input(img):
