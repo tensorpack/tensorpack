@@ -152,11 +152,12 @@ def build_prediction_graph(build_tower_fn, towers=[0], prefix=''):
         prefix: an extra prefix in tower name. The final tower prefix will be
             determined by :meth:`TowerContext.get_predict_tower_name`.
     """
-    for k in towers:
+    for idx, k in enumerate(towers):
         logger.info(
             "Building prediction graph for towerid={} with prefix='{}' ...".format(k, prefix))
         towername = TowerContext.get_predict_tower_name(prefix, k)
         with tf.device('/gpu:{}'.format(k) if k >= 0 else '/cpu:0'), \
-                TowerContext(towername, is_training=False):
+                TowerContext(towername, is_training=False), \
+                tf.variable_scope(tf.get_variable_scope(),
+                                  reuse=True if idx > 0 else None):
             build_tower_fn(k)
-            tf.get_variable_scope().reuse_variables()

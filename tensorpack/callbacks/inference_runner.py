@@ -182,10 +182,9 @@ class FeedfreeInferenceRunner(Callback):
     def _setup_graph(self):
         self._find_input_tensors()  # tensors
 
-        tf.get_variable_scope().reuse_variables()
-
-        # overwrite the FeedfreeInferenceRunner scope
-        with tf.name_scope(None), \
+        # overwrite the FeedfreeInferenceRunner name scope
+        with tf.variable_scope(tf.get_variable_scope(), reuse=True), \
+                tf.name_scope(None), \
                 freeze_collection(SUMMARY_BACKUP_KEYS):
             def fn(_):
                 self.trainer.model.build_graph(self._input_tensors)

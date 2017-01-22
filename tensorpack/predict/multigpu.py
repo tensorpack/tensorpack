@@ -71,16 +71,17 @@ class DataParallelOfflinePredictor(OnlinePredictor):
             sess = tf.Session(config=config.session_config)
             input_var_names = []
             output_vars = []
-            for k in towers:
+            for idx, k in enumerate(towers):
                 towername = PREDICT_TOWER + str(k)
                 input_vars = config.model.build_placeholders(
                     prefix=towername + '-')
                 logger.info(
                     "Building graph for predictor tower {}...".format(k))
                 with tf.device('/gpu:{}'.format(k) if k >= 0 else '/cpu:0'), \
-                        TowerContext(towername, is_training=False):
+                        TowerContext(towername, is_training=False), \
+                        tf.variable_scope(tf.get_variable_scope(),
+                                          reuse=True if idx > 0 else None):
                     config.model.build_graph(input_vars)
-                    tf.get_variable_scope().reuse_variables()
                 input_var_names.extend([k.name for k in input_vars])
                 output_vars.extend(get_tensors_by_names(
                     [towername + '/' + n
