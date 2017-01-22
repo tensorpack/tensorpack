@@ -37,7 +37,7 @@ class Model(GANModelDesc):
 
     def discriminator(self, imgs):
         with argscope(Conv2D, nl=tf.identity, kernel_shape=4, stride=2), \
-                argscope(LeakyReLU, alpha=0.2):
+                argscope(LeakyReLU, alpha=0.1):
             l = (LinearWrap(imgs)
                  .Conv2D('conv0', 64)
                  .LeakyReLU()
