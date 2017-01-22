@@ -257,6 +257,10 @@ class ProductDistribution(Distribution):
     def param_dim(self):
         return np.sum([d.param_dim for d in self.dists])
 
+    @property
+    def sample_dim(self):
+        return np.sum([d.sample_dim for d in self.dists])
+
     def _splitter(self, s, param):
         """Input is split into a list of chunks according
             to dist.param_dim along axis=1

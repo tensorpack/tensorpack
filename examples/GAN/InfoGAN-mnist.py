@@ -64,12 +64,12 @@ class Model(GANModelDesc):
                                                        GaussianDistribution("uni_a", 1),
                                                        GaussianDistribution("uni_b", 1)])
         # prior: the assumption how the factors are presented in the dataset
-        prior = tf.constant([0.1] * 10 + [0,0], tf.float32, [12], name='prior')
+        prior = tf.constant([0.1] * 10 + [0, 0], tf.float32, [12], name='prior')
         batch_prior = tf.tile(tf.expand_dims(prior, 0), [BATCH, 1], name='batch_prior')
 
         # sample the latent code zc:
         sample = self.factors.dists[0].sample(
-            BATCH, tf.constant([0.1]*10, tf.float32, shape=[10]))
+            BATCH, tf.constant([0.1] * 10, tf.float32, shape=[10]))
         z_cat = symbf.remove_shape(sample, 0, name='z_cat')
         # still sample the latent code from a uniform distribution.
         z_uni_a = symbf.remove_shape(
