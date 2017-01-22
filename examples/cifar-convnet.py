@@ -17,7 +17,7 @@ A small convnet model for Cifar10 or Cifar100 dataset.
 
 Cifar10:
     91% accuracy after 50k step.
-    19.3 step/s on Tesla M40
+    30 step/s on TitanX
 
 Not a good model for Cifar100, just for demonstration.
 """
@@ -98,7 +98,7 @@ def get_data(train_or_test, cifar_classnum):
     ds = AugmentImageComponent(ds, augmentors)
     ds = BatchData(ds, 128, remainder=not isTrain)
     if isTrain:
-        ds = PrefetchData(ds, 3, 2)
+        ds = PrefetchDataZMQ(ds, 3)
     return ds
 
 

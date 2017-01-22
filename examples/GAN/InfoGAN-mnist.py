@@ -60,8 +60,7 @@ class Model(GANModelDesc):
         # latent space is cat(10) x uni(1) x uni(1) x noise(NOISE_DIM)
         self.factors = ProductDistribution("factors", [CategoricalDistribution("cat", 10),
                                                        GaussianDistribution("uni_a", 1),
-                                                       GaussianDistribution("uni_b", 1),
-                                                      ])
+                                                       GaussianDistribution("uni_b", 1)])
 
         # sample the latent code zc:
         idxs = tf.squeeze(tf.multinomial(tf.zeros([BATCH, 10]), 1), 1)
