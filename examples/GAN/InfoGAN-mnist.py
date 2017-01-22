@@ -58,22 +58,30 @@ class Model(GANModelDesc):
         real_sample = tf.expand_dims(real_sample * 2.0 - 1, -1)
 
         # latent space is cat(10) x uni(1) x uni(1) x noise(NOISE_DIM)
+        # OpenAI code actually uses Gaussian distribution for uniform, except
+        # in the sample step. We follow the official implementation for now.
         self.factors = ProductDistribution("factors", [CategoricalDistribution("cat", 10),
                                                        GaussianDistribution("uni_a", 1),
                                                        GaussianDistribution("uni_b", 1)])
+        # prior: the assumption how the factors are presented in the dataset
+        prior = tf.constant([0.1] * 10 + [0,0], tf.float32, [12], name='prior')
+        batch_prior = tf.tile(tf.expand_dims(prior, 0), [BATCH, 1], name='batch_prior')
 
         # sample the latent code zc:
-        idxs = tf.squeeze(tf.multinomial(tf.zeros([BATCH, 10]), 1), 1)
-        sample = tf.one_hot(idxs, 10)
+        sample = self.factors.dists[0].sample(
+            BATCH, tf.constant([0.1]*10, tf.float32, shape=[10]))
         z_cat = symbf.remove_shape(sample, 0, name='z_cat')
+        # still sample the latent code from a uniform distribution.
         z_uni_a = symbf.remove_shape(
             tf.random_uniform([BATCH, 1], -1, 1), 0, name='z_uni_a')
         z_uni_b = symbf.remove_shape(
             tf.random_uniform([BATCH, 1], -1, 1), 0, name='z_uni_b')
+        zc = tf.concat_v2([z_cat, z_uni_a, z_uni_b], 1, name='z_code')
+        # TODO ideally this can be done by self.factors.sample, if sample
+        # method is consistent with the distribution
+
         z_noise = symbf.remove_shape(
             tf.random_uniform([BATCH, NOISE_DIM], -1, 1), 0, name='z_noise')
-
-        zc = tf.concat_v2([z_cat, z_uni_a, z_uni_b], 1, name='z_code')
         z = tf.concat_v2([zc, z_noise], 1, name='z')
 
         with argscope([Conv2D, Deconv2D, FullyConnected],
@@ -110,16 +118,25 @@ class Model(GANModelDesc):
         of self.factors, and whose parameters are predicted by the discriminator network.
         """
         with tf.name_scope("mutual_information"):
-            ents = self.factors.entropy(zc, encoder_activation)
-            cond_entropy = tf.add_n(ents, name="total_conditional_entropy")
-            summary.add_moving_summary(cond_entropy, *ents)
+            ents = self.factors.entropy(zc, batch_prior)
+            entropy = tf.add_n(ents, name='total_entropy')
+            # Note that dropping this term has no effect because the entropy
+            # of prior is a constant. The paper mentioned it but didn't use it.
+            # Adding this term may make the curve less stable because the
+            # entropy estimated from the samples is not the true value.
+
+            cond_ents = self.factors.entropy(zc, encoder_activation)
+            cond_entropy = tf.add_n(cond_ents, name="total_conditional_entropy")
+
+            MI = tf.subtract(entropy, cond_entropy, name='mutual_information')
+            summary.add_moving_summary(entropy, cond_entropy, MI, *ents)
 
         # default GAN objective
         self.build_losses(real_pred, fake_pred)
 
         # subtract mutual information for latent factores (we want to maximize them)
-        self.g_loss = tf.add(self.g_loss, cond_entropy, name='total_g_loss')
-        self.d_loss = tf.add(self.d_loss, cond_entropy, name='total_d_loss')
+        self.g_loss = tf.subtract(self.g_loss, MI, name='total_g_loss')
+        self.d_loss = tf.subtract(self.d_loss, MI, name='total_d_loss')
 
         summary.add_moving_summary(self.g_loss, self.d_loss)
 
@@ -127,6 +144,7 @@ class Model(GANModelDesc):
         self.collect_variables()
 
     def get_gradient_processor_g(self):
+        # generator learns 5 times faster
         return [CheckGradient(), ScaleGradient(('.*', 5), log=False)]
 
 

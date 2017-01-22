@@ -363,6 +363,7 @@ def soft_triplet_loss(anchor, positive, negative, extra=True):
             return loss
 
 
+# TODO not a good name.
 def remove_shape(x, axis, name):
     """
     Make the static shape of a tensor less specific, by

@@ -89,6 +89,32 @@ class Distribution(object):
         return tf.reduce_mean(-self.loglikelihood(x, theta), name="entropy")
 
     @class_scope
+    def sample(self, batch_size, theta):
+        """
+        Sample a batch of vectors from this distrbution parameterized by theta.
+
+        Args:
+            batch_size(int): the batch size.
+            theta: a tensor of shape (param_dim,) or (batch, param_dim).
+
+        Returns:
+            a batch of samples of shape (batch, sample_dim)
+        """
+        assert isinstance(batch_size, int), batch_size
+        shp = theta.get_shape()
+        assert shp.ndims in [1, 2] and shp[-1] == self.sample_dim, shp
+        if shp.ndims == 1:
+            theta = tf.tile(tf.expand_dims(theta, 0), [batch_size, 1],
+                            name='tiled_theta')
+        else:
+            assert shp[0] == batch_size, shp
+        x = self._sample(batch_size, theta)
+        assert x.get_shape().ndims == 2 and \
+            x.get_shape()[1] == self.sample_dim, \
+            x.get_shape()
+        return x
+
+    @class_scope
     def encoder_activation(self, dist_param):
         """ An activation function to produce
             feasible distribution parameters from unconstrained raw network output.
@@ -107,7 +133,7 @@ class Distribution(object):
         Returns:
             int: the dimension of parameters of this distribution.
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
     @property
     def sample_dim(self):
@@ -115,13 +141,16 @@ class Distribution(object):
         Returns:
             int: the dimension of samples out of this distribution.
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def _loglikelihood(self, x, theta):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def _encoder_activation(self, dist_param):
         return dist_param
+
+    def _sample(self, batch_size, theta):
+        raise NotImplementedError()
 
 
 class CategoricalDistribution(Distribution):
@@ -142,6 +171,11 @@ class CategoricalDistribution(Distribution):
 
     def _encoder_activation(self, dist_param):
         return tf.nn.softmax(dist_param)
+
+    def _sample(self, batch_size, theta):
+        ids = tf.squeeze(tf.multinomial(
+            tf.log(theta + 1e-8), num_samples=1), 1)
+        return tf.one_hot(ids, self.cardinality, name='sample')
 
     @property
     def param_dim(self):
@@ -187,6 +221,15 @@ class GaussianDistribution(Distribution):
             # this is from https://github.com/openai/InfoGAN. don't know why
             stddev = tf.sqrt(tf.exp(stddev))
             return tf.concat_v2([mean, stddev], axis=1)
+
+    def _sample(self, batch_size, theta):
+        if self.fixed_std:
+            mean = theta
+            stddev = 1
+        else:
+            mean, stddev = tf.split(theta, 2, axis=1)
+        e = tf.random_normal(tf.shape(mean))
+        return tf.add(mean, e * stddev, name='sample')
 
     @property
     def param_dim(self):
@@ -257,3 +300,9 @@ class ProductDistribution(Distribution):
             if dist.param_dim > 0:
                 rsl.append(dist._encoder_activation(dist_param))
         return tf.concat_v2(rsl, 1)
+
+    def _sample(self, batch_size, theta):
+        ret = []
+        for dist, ti in zip(self.dists, self._splitter(theta, True)):
+            ret.append(dist._sample(batch_size, ti))
+        return tf.concat_v2(ret, 1, name='sample')
