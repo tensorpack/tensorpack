@@ -59,11 +59,23 @@ class Model(GANModelDesc):
 
         # latent space is cat(10) x uni(1) x uni(1) x noise(NOISE_DIM)
         self.factors = ProductDistribution("factors", [CategoricalDistribution("cat", 10),
-                                                       GaussianDistributionUniformPrior("uni_a", 1),
-                                                       GaussianDistributionUniformPrior("uni_b", 1),
-                                                       NoiseDistribution("noise", NOISE_DIM)])
+                                                       GaussianDistribution("uni_a", 1),
+                                                       GaussianDistribution("uni_b", 1),
+                                                      ])
 
-        z = self.factors.sample_prior(BATCH, name='zc')
+        # sample the latent code zc:
+        idxs = tf.squeeze(tf.multinomial(tf.zeros([BATCH, 10]), 1), 1)
+        sample = tf.one_hot(idxs, 10)
+        z_cat = symbf.remove_shape(sample, 0, name='z_cat')
+        z_uni_a = symbf.remove_shape(
+            tf.random_uniform([BATCH, 1], -1, 1), 0, name='z_uni_a')
+        z_uni_b = symbf.remove_shape(
+            tf.random_uniform([BATCH, 1], -1, 1), 0, name='z_uni_b')
+        z_noise = symbf.remove_shape(
+            tf.random_uniform([BATCH, NOISE_DIM], -1, 1), 0, name='z_noise')
+
+        zc = tf.concat_v2([z_cat, z_uni_a, z_uni_b], 1, name='z_code')
+        z = tf.concat_v2([zc, z_noise], 1, name='z')
 
         with argscope([Conv2D, Deconv2D, FullyConnected],
                       W_init=tf.truncated_normal_initializer(stddev=0.02)):
@@ -79,20 +91,36 @@ class Model(GANModelDesc):
             with tf.variable_scope('discrim', reuse=True):
                 fake_pred, dist_param = self.discriminator(fake_sample)
 
-        # post-process all dist_params from discriminator
+        # post-process output vector from discriminator to become valid
+        # distribution parameters
         encoder_activation = self.factors.encoder_activation(dist_param)
 
+        """
+        Mutual information between x (i.e. zc in this case) and some
+        information s (the generated samples in this case):
+
+                    I(x;s) = H(x) - H(x|s)
+                           = H(x) + E[\log P(x|s)]
+
+        The distribution from which zc is sampled, in this case, is set to a fixed prior already.
+        For the second term, we can maximize its variational lower bound:
+                    E_{x \sim P(x|s)}[\log Q(x|s)]
+        where Q(x|s) is a proposal distribution to approximate P(x|s).
+
+        Here, Q(x|s) is assumed to be a distribution which shares the form
+        of self.factors, and whose parameters are predicted by the discriminator network.
+        """
         with tf.name_scope("mutual_information"):
-            MIs = self.factors.mutual_information(z, encoder_activation)
-            mi = tf.add_n(MIs, name="total")
-        summary.add_moving_summary(MIs + [mi])
+            ents = self.factors.entropy(zc, encoder_activation)
+            cond_entropy = tf.add_n(ents, name="total_conditional_entropy")
+            summary.add_moving_summary(cond_entropy, *ents)
 
         # default GAN objective
         self.build_losses(real_pred, fake_pred)
 
         # subtract mutual information for latent factores (we want to maximize them)
-        self.g_loss = tf.subtract(self.g_loss, mi, name='total_g_loss')
-        self.d_loss = tf.subtract(self.d_loss, mi, name='total_d_loss')
+        self.g_loss = tf.add(self.g_loss, cond_entropy, name='total_g_loss')
+        self.d_loss = tf.add(self.d_loss, cond_entropy, name='total_d_loss')
 
         summary.add_moving_summary(self.g_loss, self.d_loss)
 

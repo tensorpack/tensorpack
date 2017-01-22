@@ -361,3 +361,28 @@ def soft_triplet_loss(anchor, positive, negative, extra=True):
             return loss, pos_dist, neg_dist
         else:
             return loss
+
+def remove_shape(x, axis, name):
+    """
+    Make the static shape of a tensor less specific, by
+    using :func:`tf.placeholder_with_default`.
+    See `tensorflow#5680
+    <https://github.com/tensorflow/tensorflow/issues/5680>`_.
+
+    Args:
+        x: a tensor
+        axis(int or list of ints): the axes to reset shape to None.
+        name(str): name of the output tensor
+
+    Returns:
+        a tensor equal to x, but shape information is partially cleared
+    """
+    shp = x.get_shape().as_list()
+    if not isinstance(axis, list):
+        axis = [axis]
+    for a in axis:
+        if shp[a] is None:
+            raise ValueError("Axis {} of shape {} is already unknown!".format(a, shp))
+        shp[a] = None
+    x = tf.placeholder_with_default(x, shape=shp, name=name)
+    return x
