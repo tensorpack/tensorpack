@@ -7,11 +7,10 @@ import re
 import weakref
 import six
 from six.moves import range
-import tqdm
 
 import tensorflow as tf
 from .config import TrainConfig
-from ..utils import logger, get_tqdm_kwargs
+from ..utils import logger
 from ..utils.timer import timed_operation
 from ..callbacks import StatHolder
 from ..tfutils import get_global_step, get_global_step_var
@@ -33,14 +32,18 @@ class Trainer(object):
     """ Base class for a trainer.
 
     Attributes:
-        stat_holder (StatHolder)
-        summary_writer (tf.summary.FileWriter)
-        summary_op (tf.Operation): an Op which outputs all summaries.
         config (TrainConfig): the config used in this trainer.
         model (ModelDesc)
         sess (tf.Session): the current session in use.
         coord (tf.train.Coordinator)
+
+        stat_holder (StatHolder)
+        summary_writer (tf.summary.FileWriter)
+        summary_op (tf.Operation): an Op which outputs all summaries.
+
         extra_fetches (list): list of tensors/ops to fetch by :meth:`run_step`.
+        epoch_num (int): the current epoch number.
+        step_num (int): the current step number (in an epoch).
     """
 
     def __init__(self, config):
@@ -53,6 +56,9 @@ class Trainer(object):
         self.model = config.model
         self.sess = tf.Session(config=self.config.session_config)
         self.coord = tf.train.Coordinator()
+
+        self.epoch_num = self.config.starting_epoch
+        self.step_num = 0
 
     def train(self):
         """ Start training """
@@ -165,15 +171,13 @@ class Trainer(object):
             try:
                 callbacks.before_train()
                 logger.info("Start training with global_step={}".format(get_global_step()))
-                for epoch_num in range(
+                for self.epoch_num in range(
                         self.config.starting_epoch, self.config.max_epoch + 1):
                     with timed_operation(
                         'Epoch {} (global_step {})'.format(
-                            epoch_num, get_global_step() + self.config.step_per_epoch),
+                            self.epoch_num, get_global_step() + self.config.step_per_epoch),
                             log_start=True):
-                        for step in tqdm.trange(
-                                self.config.step_per_epoch,
-                                **get_tqdm_kwargs(leave=True)):
+                        for self.step_num in range(self.config.step_per_epoch):
                             if self.coord.should_stop():
                                 return
                             fetch_data = self.run_step()  # implemented by subclass

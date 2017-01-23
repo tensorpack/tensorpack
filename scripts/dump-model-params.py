@@ -10,7 +10,6 @@ import imp
 
 from tensorpack import TowerContext, logger, ModelFromMetaGraph
 from tensorpack.tfutils import sessinit, varmanip
-from tensorpack.utils.naming import EXTRA_SAVE_VARS_KEY
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--config', help='config file')
@@ -44,7 +43,7 @@ with tf.Graph().as_default() as G:
             varmanip.dump_session_params(args.output)
         else:
             var = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
-            var.extend(tf.get_collection(EXTRA_SAVE_VARS_KEY))
+            var.extend(tf.get_collection(tf.GraphKeys.MODEL_VARIABLES))
             var_dict = {}
             for v in var:
                 name = varmanip.get_savename_from_varname(v.name)

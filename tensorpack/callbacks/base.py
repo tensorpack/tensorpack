@@ -15,9 +15,10 @@ class Callback(object):
     """ Base class for all callbacks
 
     Attributes:
-        epoch_num(int): the number of epochs that have completed the update
-        trainer(Trainer): the trainer
-        graph(tf.Graph): the graph
+        epoch_num(int): the epoch that have completed the update.
+        step_num(int): the step number in the current epoch.
+        trainer(Trainer): the trainer.
+        graph(tf.Graph): the graph.
 
     Note:
         These attributes are available only after (and including)
@@ -34,7 +35,6 @@ class Callback(object):
         """
         self.trainer = trainer
         self.graph = tf.get_default_graph()
-        self.epoch_num = self.trainer.config.starting_epoch - 1
         with tf.name_scope(type(self).__name__):
             self._setup_graph()
 
@@ -91,7 +91,6 @@ class Callback(object):
         """
         Triggered after every epoch.
         """
-        self.epoch_num += 1
         self._trigger_epoch()
 
     def _trigger_epoch(self):
@@ -105,6 +104,14 @@ class Callback(object):
 
     def _after_train(self):
         pass
+
+    @property
+    def epoch_num(self):
+        return self.trainer.epoch_num
+
+    @property
+    def step_num(self):
+        return self.trainer.step_num
 
     def __str__(self):
         return type(self).__name__
@@ -128,11 +135,14 @@ class ProxyCallback(Callback):
     def _setup_graph(self):
         self.cb.setup_graph(self.trainer)
 
-    def _after_train(self):
-        self.cb.after_train()
-
     def _trigger_epoch(self):
         self.cb.trigger_epoch()
+
+    def _trigger_step(self, *args):
+        self.cb.trigger_step(*args)
+
+    def _after_train(self):
+        self.cb.after_train()
 
     def __str__(self):
         return "Proxy-" + str(self.cb)

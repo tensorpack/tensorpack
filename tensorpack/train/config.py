@@ -4,7 +4,9 @@
 
 import tensorflow as tf
 
-from ..callbacks import Callbacks, SummaryMovingAverage, StatPrinter
+from ..callbacks import (
+        Callbacks, SummaryMovingAverage,
+        StatPrinter, ProgressBar)
 from ..dataflow.base import DataFlow
 from ..models import ModelDesc
 from ..utils import logger
@@ -38,8 +40,8 @@ class TrainConfig(object):
             callbacks (list): a list of :class:`Callback` to perform during training.
             extra_callbacks (list): the same as ``callbacks``. This argument
                 is only used to provide the defaults. The defaults are
-                ``[SummaryMovingAverage(), StatPrinter()]``. The list of
-                callbacks that will be used in the end is ``callbacks + extra_callbacks``.
+                ``[SummaryMovingAverage(), ProgressBar(), StatPrinter()]``. The list of
+                callbacks that will be used in the end are ``callbacks + extra_callbacks``.
             session_config (tf.ConfigProto): the config used to instantiate the session.
             session_init (SessionInit): how to initialize variables of a session. Defaults to a new session.
             starting_epoch (int): The index of the first epoch.
@@ -80,7 +82,7 @@ class TrainConfig(object):
             callbacks = callbacks.cbs[:-1]  # the last one is StatPrinter()
         assert_type(callbacks, list)
         if extra_callbacks is None:
-            extra_callbacks = [SummaryMovingAverage(), StatPrinter()]
+            extra_callbacks = [SummaryMovingAverage(), ProgressBar(), StatPrinter()]
         self.callbacks = callbacks + extra_callbacks
         assert_type(self.callbacks, list)
         self.callbacks = Callbacks(self.callbacks)

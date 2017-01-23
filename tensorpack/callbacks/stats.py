@@ -112,7 +112,8 @@ class StatHolder(object):
 
 class StatPrinter(Callback):
     """
-    A callback to control what stats to print. Print everything by default.
+    A callback to control what stats to print. Enable by default to print
+    everything in trainer.stat_holder.
     """
 
     def __init__(self, print_tag=None):

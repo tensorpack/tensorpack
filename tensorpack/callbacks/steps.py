@@ -8,13 +8,14 @@
 import tensorflow as tf
 import re
 from six.moves import zip
+import tqdm
 
-from ..utils import logger
+from ..utils import logger, get_tqdm_kwargs
 from ..utils.naming import MOVING_SUMMARY_VARS_KEY
 from ..tfutils.common import get_op_tensor_name, get_global_step_var
 from .base import Callback
 
-__all__ = ['StepStatPrinter', 'SummaryMovingAverage']
+__all__ = ['StepStatPrinter', 'SummaryMovingAverage', 'ProgressBar']
 
 
 class StepStatPrinter(Callback):
@@ -38,7 +39,7 @@ class StepStatPrinter(Callback):
 
 class SummaryMovingAverage(Callback):
     """ Maintain the moving average of the tensors
-        in every step, and summarize them.
+        in every step, and summarize them. Enabled by default.
     """
     def __init__(self, collection=MOVING_SUMMARY_VARS_KEY, decay=0.95):
         """
@@ -65,3 +66,17 @@ class SummaryMovingAverage(Callback):
 
     def _extra_fetches(self):
         return [self.ema_op]
+
+
+class ProgressBar(Callback):
+    """ A progress bar based on tqdm. Enabled by default. """
+    def _before_train(self):
+        self._total = self.trainer.config.step_per_epoch
+        self._tqdm_args = get_tqdm_kwargs(leave=True)
+
+    def _trigger_step(self, *args):
+        if self.step_num == 0:
+            self._bar = tqdm.trange(self._total, **self._tqdm_args)
+        self._bar.update()
+        if self.step_num == self._total - 1:
+            self._bar.__exit__()
