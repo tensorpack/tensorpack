@@ -32,7 +32,6 @@ class GaussianWithUniformSample(GaussianDistribution):
 
 
 class Model(GANModelDesc):
-
     def _get_input_vars(self):
         return [InputVar(tf.float32, (None, 28, 28), 'input')]
 
@@ -75,10 +74,10 @@ class Model(GANModelDesc):
         prior = tf.constant([0.1] * 10 + [0, 0], tf.float32, [12], name='prior')
         batch_prior = tf.tile(tf.expand_dims(prior, 0), [BATCH, 1], name='batch_prior')
 
-        # sample the latent code zc:
-        zc = symbf.remove_shape(self.factors.sample(BATCH, prior), 0, name='z_code')
-
-        z_noise = symbf.remove_shape(
+        # sample the latent code:
+        zc = symbf.shapeless_placeholder(
+            self.factors.sample(BATCH, prior), 0, name='z_code')
+        z_noise = symbf.shapeless_placeholder(
             tf.random_uniform([BATCH, NOISE_DIM], -1, 1), 0, name='z_noise')
         z = tf.concat_v2([zc, z_noise], 1, name='z')
 
