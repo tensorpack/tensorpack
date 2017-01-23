@@ -8,13 +8,12 @@ import numpy as np
 import time
 from tensorpack import (FeedfreeTrainerBase, TowerContext,
                         get_global_step_var, QueueInput, ModelDesc)
-from tensorpack.tfutils.summary import summary_moving_average, add_moving_summary
+from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.tfutils.gradproc import apply_grad_processors, CheckGradient
 from tensorpack.dataflow import DataFlow
 
 
 class GANModelDesc(ModelDesc):
-
     def collect_variables(self):
         """Extract variables by prefix
         """

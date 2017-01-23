@@ -177,7 +177,10 @@ class Trainer(object):
                             if self.coord.should_stop():
                                 return
                             fetch_data = self.run_step()  # implemented by subclass
-                            if fetch_data:
+                            if fetch_data is None:
+                                # the old Trainer
+                                callbacks.trigger_step()
+                            else:
                                 callbacks.trigger_step(*fetch_data)
                     # trigger epoch outside the timing region.
                     self.trigger_epoch()

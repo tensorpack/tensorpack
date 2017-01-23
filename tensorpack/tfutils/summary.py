@@ -6,15 +6,13 @@ import six
 import tensorflow as tf
 import re
 
-from ..utils.argtools import memoized
 from ..utils import logger
 from ..utils.naming import MOVING_SUMMARY_VARS_KEY
 from .tower import get_current_tower_context
-from . import get_global_step_var
 from .symbolic_functions import rms
 
 __all__ = ['create_scalar_summary', 'add_param_summary', 'add_activation_summary',
-           'add_moving_summary', 'summary_moving_average']
+           'add_moving_summary']
 
 
 def create_scalar_summary(name, v):
@@ -116,29 +114,3 @@ def add_moving_summary(v, *args):
     for x in v:
         assert x.get_shape().ndims == 0, x.get_shape()
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, x)
-
-
-@memoized
-def summary_moving_average(tensors=None):
-    """
-    Create a MovingAverage Op and add summary Op for all the moving averages.
-    This is called by the trainer.
-
-    Args:
-        tensors(list): list of tf.Tensor to summary. hefaults to the
-            collection ````MOVING_SUMMARY_VARS_KEY``.
-    Returns:
-        tf.Operation: an op to maintain these average.
-    """
-    if tensors is None:
-        tensors = set(tf.get_collection(MOVING_SUMMARY_VARS_KEY))
-
-    # TODO will produce tower0/xxx. not elegant
-    with tf.name_scope(None):
-        averager = tf.train.ExponentialMovingAverage(
-            0.95, num_updates=get_global_step_var(), name='EMA')
-        avg_maintain_op = averager.apply(tensors)
-        for idx, c in enumerate(tensors):
-            name = re.sub('tower[p0-9]+/', '', c.op.name)
-            tf.summary.scalar(name + '-summary', averager.average(c))
-    return avg_maintain_op

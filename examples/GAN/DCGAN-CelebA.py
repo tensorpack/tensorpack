@@ -14,7 +14,7 @@ import cv2
 
 from tensorpack import *
 from tensorpack.utils.viz import *
-from tensorpack.tfutils.summary import add_moving_summary, summary_moving_average
+from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.utils.globvars import globalns as CFG, use_global_argument
 import tensorpack.tfutils.symbolic_functions as symbf
 from GAN import GANTrainer, RandomZData, GANModelDesc
