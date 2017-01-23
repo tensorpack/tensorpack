@@ -72,7 +72,7 @@ class SimpleTrainer(Trainer):
     def run_step(self):
         """ Feed data into the graph and run the updates. """
         feed = self._input_method.next_feed()
-        ret = self.sess.run([self.train_op] + self.extra_fetches,
+        ret = self.sess.run([self.train_op] + self.get_extra_fetches(),
                             feed_dict=feed)
         return ret[1:]
 

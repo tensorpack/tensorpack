@@ -98,7 +98,7 @@ class GANTrainer(FeedfreeTrainerBase):
         self.train_op = self.d_min
 
     def run_step(self):
-        ret = self.sess.run([self.train_op] + self.extra_fetches)
+        ret = self.sess.run([self.train_op] + self.get_extra_fetches())
         return ret[1:]
 
 

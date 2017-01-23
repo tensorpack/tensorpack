@@ -160,6 +160,7 @@ def BatchNormV2(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
 
         # maintain EMA only in the main training tower
         if ctx.is_main_training_tower:
+            # TODO a way to use debias in multitower.
             update_op1 = moving_averages.assign_moving_average(
                 moving_mean, batch_mean, decay, zero_debias=False,
                 name='mean_ema_op')

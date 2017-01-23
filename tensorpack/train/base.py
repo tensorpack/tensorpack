@@ -41,7 +41,6 @@ class Trainer(object):
         summary_writer (tf.summary.FileWriter)
         summary_op (tf.Operation): an Op which outputs all summaries.
 
-        extra_fetches (list): list of tensors/ops to fetch by :meth:`run_step`.
         epoch_num (int): the current epoch number.
         step_num (int): the current step number (in an epoch).
     """
@@ -130,6 +129,15 @@ class Trainer(object):
         """
         self.add_summary(create_scalar_summary(name, val))
 
+    def get_extra_fetches(self):
+        """
+        Returns:
+            list: list of tensors/ops to fetch in each step.
+
+        This function should only get called after :meth:`setup()` has finished.
+        """
+        return self._extra_fetches
+
     def setup(self):
         """
         Setup the trainer and be ready for the main loop.
@@ -140,7 +148,7 @@ class Trainer(object):
         # some final operations that might modify the graph
         logger.info("Setup callbacks ...")
         self.config.callbacks.setup_graph(weakref.proxy(self))
-        self.extra_fetches = self.config.callbacks.extra_fetches()
+        self._extra_fetches = self.config.callbacks.extra_fetches()
 
         if not hasattr(logger, 'LOG_DIR'):
             raise RuntimeError("logger directory wasn't set!")
