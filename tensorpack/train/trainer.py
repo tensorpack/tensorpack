@@ -9,7 +9,6 @@ from .base import Trainer
 from ..utils import SUMMARY_BACKUP_KEYS, PREDICT_TOWER
 from ..tfutils import (get_tensors_by_names, freeze_collection,
                        get_global_step_var, TowerContext)
-from ..tfutils.summary import summary_moving_average
 from ..predict import OnlinePredictor, build_prediction_graph
 from ..tfutils.gradproc import apply_grad_processors
 from .input_data import FeedInput
@@ -43,10 +42,10 @@ class PredictorFactory(object):
         return OnlinePredictor(self.sess, raw_input_vars, output_vars)
 
     def _build_predict_tower(self):
-        tf.get_variable_scope().reuse_variables()
         # build_predict_tower might get called anywhere, but 'PREDICT_TOWER' should be the outermost name scope
         with tf.name_scope(None), \
-                freeze_collection(SUMMARY_BACKUP_KEYS):
+                freeze_collection(SUMMARY_BACKUP_KEYS), \
+                tf.variable_scope(tf.get_variable_scope(), reuse=True):
             def fn(_):
                 self.model.build_graph(self.model.get_input_vars())
             build_prediction_graph(fn, self.towers)
@@ -73,7 +72,9 @@ class SimpleTrainer(Trainer):
     def run_step(self):
         """ Feed data into the graph and run the updates. """
         feed = self._input_method.next_feed()
-        self.sess.run([self.train_op], feed_dict=feed)    # faster since train_op return None
+        ret = self.sess.run([self.train_op] + self.extra_fetches,
+                            feed_dict=feed)
+        return ret[1:]
 
     def _setup(self):
         self._input_method._setup(self)
@@ -87,9 +88,8 @@ class SimpleTrainer(Trainer):
         grads = apply_grad_processors(grads,
                                       self.model.get_gradient_processor())
 
-        self.train_op = tf.group(
-            self.config.optimizer.apply_gradients(grads, get_global_step_var()),
-            summary_moving_average(), name='train_op')
+        self.train_op = self.config.optimizer.apply_gradients(
+                grads, get_global_step_var(), name='min_op')
 
     def _trigger_epoch(self):
         if self.summary_op is not None:

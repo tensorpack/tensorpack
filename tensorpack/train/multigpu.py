@@ -11,7 +11,6 @@ from six.moves import zip, range
 from ..utils import logger
 from ..utils.naming import SUMMARY_BACKUP_KEYS
 from ..utils.concurrency import LoopThread
-from ..tfutils.summary import summary_moving_average
 from ..tfutils import (backup_collection, restore_collection,
                        get_global_step_var, TowerContext)
 from ..tfutils.gradproc import apply_grad_processors, ScaleGradient
@@ -113,13 +112,8 @@ class SyncMultiGPUTrainer(MultiGPUTrainer,
 
         grads = SyncMultiGPUTrainer._average_grads(grad_list)
         grads = apply_grad_processors(grads, self.model.get_gradient_processor())
-
-        self.train_op = tf.group(
-            self.config.optimizer.apply_gradients(grads, get_global_step_var()),
-            summary_moving_average(), name='train_op')
-
-    def run_step(self):
-        self.sess.run(self.train_op)
+        self.train_op = self.config.optimizer.apply_gradients(
+            grads, get_global_step_var(), name='min_op')
 
 
 class AsyncMultiGPUTrainer(MultiGPUTrainer,
@@ -169,10 +163,8 @@ class AsyncMultiGPUTrainer(MultiGPUTrainer,
         grad_list = [apply_grad_processors(g, gradprocs) for g in grad_list]
 
         # use grad from the first tower for iteration in main thread
-        self.train_op = tf.group(
-            self.config.optimizer.apply_gradients(
-                grad_list[0], get_global_step_var()),
-            summary_moving_average(), name='train_op')
+        self.train_op = self.config.optimizer.apply_gradients(
+            grad_list[0], get_global_step_var(), name='min_op')
 
         self._start_async_threads(grad_list)
 
@@ -199,7 +191,7 @@ class AsyncMultiGPUTrainer(MultiGPUTrainer,
             for th in self.training_threads:  # resume all threads
                 th.resume()
         next(self.async_step_counter)
-        self.sess.run(self.train_op)
+        return super(AsyncMultiGPUTrainer, self).run_step()
 
     def _trigger_epoch(self):
         self.async_running = False

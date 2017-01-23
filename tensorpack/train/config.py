@@ -4,7 +4,7 @@
 
 import tensorflow as tf
 
-from ..callbacks.group import Callbacks
+from ..callbacks import Callbacks, SummaryMovingAverage, StatPrinter
 from ..dataflow.base import DataFlow
 from ..models import ModelDesc
 from ..utils import logger
@@ -21,7 +21,8 @@ class TrainConfig(object):
     """
 
     def __init__(self, dataflow=None, data=None,
-                 model=None, optimizer=None, callbacks=None,
+                 model=None, optimizer=None,
+                 callbacks=None, extra_callbacks=None,
                  session_config=get_default_sess_config(),
                  session_init=None,
                  starting_epoch=1, step_per_epoch=None, max_epoch=99999,
@@ -34,7 +35,11 @@ class TrainConfig(object):
                 or ``data`` has to be present.
             model (ModelDesc): the model to train.
             optimizer (tf.train.Optimizer): the optimizer for trainig.
-            callbacks (Callbacks): the callbacks to perform during training.
+            callbacks (list): a list of :class:`Callback` to perform during training.
+            extra_callbacks (list): the same as ``callbacks``. This argument
+                is only used to provide the defaults. The defaults are
+                ``[SummaryMovingAverage(), StatPrinter()]``. The list of
+                callbacks that will be used in the end is ``callbacks + extra_callbacks``.
             session_config (tf.ConfigProto): the config used to instantiate the session.
             session_init (SessionInit): how to initialize variables of a session. Defaults to a new session.
             starting_epoch (int): The index of the first epoch.
@@ -50,6 +55,7 @@ class TrainConfig(object):
         def assert_type(v, tp):
             assert isinstance(v, tp), v.__class__
 
+        # process data
         if 'dataset' in kwargs:
             dataflow = kwargs.pop('dataset')
             logger.warn("[Deprecated] TrainConfig.dataset has been deprecated. Use TrainConfig.dataflow instead.")
@@ -65,8 +71,20 @@ class TrainConfig(object):
 
         self.optimizer = optimizer
         assert_type(self.optimizer, tf.train.Optimizer)
-        self.callbacks = callbacks
-        assert_type(self.callbacks, Callbacks)
+
+        if isinstance(callbacks, Callbacks):
+            # keep quiet now because I haven't determined the final API yet.
+            # logger.warn("[Deprecated] API of TrainConfig(callbacks=) has changed!")
+            # logger.warn("[Deprecated] Please change the option 'callbacks=' to a list of "
+                        # "callbacks without StatPrinter().")
+            callbacks = callbacks.cbs[:-1]  # the last one is StatPrinter()
+        assert_type(callbacks, list)
+        if extra_callbacks is None:
+            extra_callbacks = [SummaryMovingAverage(), StatPrinter()]
+        self.callbacks = callbacks + extra_callbacks
+        assert_type(self.callbacks, list)
+        self.callbacks = Callbacks(self.callbacks)
+
         self.model = model
         assert_type(self.model, ModelDesc)
 
@@ -102,12 +120,6 @@ class TrainConfig(object):
         if isinstance(self.predict_tower, int):
             self.predict_tower = [self.predict_tower]
 
-        # TODO deprecated @Jan20
-        self.extra_threads_procs = kwargs.pop('extra_threads_procs', [])
-        if self.extra_threads_procs:
-            logger.warn("[DEPRECATED] use the Callback StartProcOrThread instead of _extra_threads_procs")
-            from ..callbacks.concurrency import StartProcOrThread
-            self.callbacks.append(StartProcOrThread(self.extra_threads_procs))
         assert len(kwargs) == 0, 'Unknown arguments: {}'.format(str(kwargs.keys()))
 
     def set_tower(self, nr_tower=None, tower=None):

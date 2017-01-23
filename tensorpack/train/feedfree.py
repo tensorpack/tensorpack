@@ -9,7 +9,6 @@ from ..utils import logger
 from ..tfutils import get_global_step_var
 from ..tfutils.tower import TowerContext
 from ..tfutils.gradproc import apply_grad_processors
-from ..tfutils.summary import summary_moving_average
 from .input_data import QueueInput, FeedfreeInput
 
 from .base import Trainer
@@ -55,7 +54,8 @@ class SingleCostFeedfreeTrainer(FeedfreeTrainerBase):
 
     def run_step(self):
         """ Simply run ``self.train_op``, which minimizes the cost."""
-        self.sess.run(self.train_op)
+        ret = self.sess.run([self.train_op] + self.extra_fetches)
+        return ret[1:]
         # if not hasattr(self, 'cnt'):
         #     self.cnt = 0
         # else:
@@ -101,9 +101,8 @@ class SimpleFeedfreeTrainer(
             cost, grads = self._get_cost_and_grad()
         grads = apply_grad_processors(grads, self.model.get_gradient_processor())
 
-        self.train_op = tf.group(
-            self.config.optimizer.apply_gradients(grads, get_global_step_var()),
-            summary_moving_average(), name='train_op')
+        self.train_op = self.config.optimizer.apply_gradients(
+                grads, get_global_step_var(), name='min_op')
         # skip training
         # self.train_op = tf.group(*self.dequed_inputs)
 

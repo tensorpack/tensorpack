@@ -40,6 +40,7 @@ class Trainer(object):
         model (ModelDesc)
         sess (tf.Session): the current session in use.
         coord (tf.train.Coordinator)
+        extra_fetches (list): list of tensors/ops to fetch by :meth:`run_step`.
     """
 
     def __init__(self, config):
@@ -133,7 +134,7 @@ class Trainer(object):
         # some final operations that might modify the graph
         logger.info("Setup callbacks ...")
         self.config.callbacks.setup_graph(weakref.proxy(self))
-        self._extra_fetches = self.config.callbacks.extra_fetches()
+        self.extra_fetches = self.config.callbacks.extra_fetches()
 
         if not hasattr(logger, 'LOG_DIR'):
             raise RuntimeError("logger directory wasn't set!")
@@ -175,8 +176,9 @@ class Trainer(object):
                                 **get_tqdm_kwargs(leave=True)):
                             if self.coord.should_stop():
                                 return
-                            self.run_step()  # implemented by subclass
-                            callbacks.trigger_step()   # not useful?
+                            fetch_data = self.run_step()  # implemented by subclass
+                            if fetch_data:
+                                callbacks.trigger_step(*fetch_data)
                     # trigger epoch outside the timing region.
                     self.trigger_epoch()
             except StopTraining:

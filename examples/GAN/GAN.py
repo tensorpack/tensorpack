@@ -79,24 +79,28 @@ class GANTrainer(FeedfreeTrainerBase):
         with TowerContext(''):
             actual_inputs = self._get_input_tensors()
             self.model.build_graph(actual_inputs)
+
+        # optimize G
         grads = self.config.optimizer.compute_gradients(
             self.model.g_loss, var_list=self.model.g_vars)
         grads = apply_grad_processors(
             grads, self.model.get_gradient_processor_g())
         self.g_min = self.config.optimizer.apply_gradients(grads, name='g_op')
+
+        # optimize D
         with tf.control_dependencies([self.g_min]):
             grads = self.config.optimizer.compute_gradients(
                 self.model.d_loss, var_list=self.model.d_vars)
             grads = apply_grad_processors(
                 grads, self.model.get_gradient_processor_d())
-            self.d_min = self.config.optimizer.apply_gradients(grads, name='d_op')
+            self.d_min = self.config.optimizer.apply_gradients(
+                grads, get_global_step_var(), name='d_op')
 
-        self.gs_incr = tf.assign_add(get_global_step_var(), 1, name='global_step_incr')
-        self.summary_op = summary_moving_average()
-        self.train_op = tf.group(self.d_min, self.summary_op, self.gs_incr)
+        self.train_op = self.d_min
 
     def run_step(self):
-        self.sess.run(self.train_op)
+        ret = self.sess.run([self.train_op] + self.extra_fetches)
+        return ret[1:]
 
 
 class RandomZData(DataFlow):
