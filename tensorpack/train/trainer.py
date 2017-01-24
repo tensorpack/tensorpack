@@ -7,9 +7,8 @@ import tensorflow as tf
 from .base import Trainer
 
 from ..utils import SUMMARY_BACKUP_KEYS, PREDICT_TOWER
-from ..tfutils import (get_tensors_by_names,
-                       freeze_collection,
-                       TowerContext)
+from ..tfutils import get_tensors_by_names, TowerContext
+from ..tfutils.collection import freeze_collection
 from ..predict import OnlinePredictor, build_prediction_graph
 from ..tfutils.gradproc import apply_grad_processors
 from .input_data import FeedInput

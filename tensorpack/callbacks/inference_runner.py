@@ -10,7 +10,8 @@ from six.moves import zip, range
 
 from ..dataflow import DataFlow
 from ..utils import logger, get_tqdm, SUMMARY_BACKUP_KEYS
-from ..tfutils.common import get_op_tensor_name, freeze_collection
+from ..tfutils.common import get_op_tensor_name
+from ..tfutils.collection import freeze_collection
 from ..tfutils import TowerContext
 from ..train.input_data import FeedfreeInput
 from ..predict import build_prediction_graph

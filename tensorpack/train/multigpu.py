@@ -11,7 +11,8 @@ from six.moves import zip, range
 from ..utils import logger
 from ..utils.naming import SUMMARY_BACKUP_KEYS
 from ..utils.concurrency import LoopThread
-from ..tfutils import (backup_collection, restore_collection, TowerContext)
+from ..tfutils.tower import TowerContext
+from ..tfutils.collection import backup_collection, restore_collection
 from ..tfutils.gradproc import apply_grad_processors, ScaleGradient
 
 from .base import Trainer

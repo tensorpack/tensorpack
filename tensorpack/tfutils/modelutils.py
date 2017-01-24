@@ -23,7 +23,7 @@ def describe_model():
             v.name, shape.as_list(), ele))
     size_mb = total * 4 / 1024.0**2
     msg.append(colored(
-        "Total param={} ({:01f} MB assuming all float32)".format(total, size_mb), 'cyan'))
+        "Total #param={} ({:.02f} MB assuming all float32)".format(total, size_mb), 'cyan'))
     logger.info(colored("Model Parameters: ", 'cyan') + '\n'.join(msg))
 
 

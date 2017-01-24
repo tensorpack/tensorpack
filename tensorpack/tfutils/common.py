@@ -4,9 +4,6 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
-from copy import copy
-import six
-from contextlib import contextmanager
 
 from ..utils.naming import GLOBAL_STEP_VAR_NAME, GLOBAL_STEP_OP_NAME, GLOBAL_STEP_INCR_OP_NAME
 from ..utils.argtools import memoized
@@ -17,10 +14,6 @@ __all__ = ['get_default_sess_config',
            'get_op_tensor_name',
            'get_tensors_by_names',
            'get_op_or_tensor_by_name',
-           'backup_collection',
-           'restore_collection',
-           'clear_collection',
-           'freeze_collection',
            'get_tf_version',
            'get_name_scope_name'
            ]
@@ -115,56 +108,6 @@ def get_op_or_tensor_by_name(name):
         return G.get_tensor_by_name(name)
     else:
         return G.get_operation_by_name(name)
-
-
-def backup_collection(keys):
-    """
-    Args:
-        keys (list): list of collection keys to backup
-    Returns:
-        dict: the backup
-    """
-    ret = {}
-    for k in keys:
-        ret[k] = copy(tf.get_collection(k))
-    return ret
-
-
-def restore_collection(backup):
-    """
-    Restore from a collection backup.
-
-    Args:
-        backup (dict):
-    """
-    for k, v in six.iteritems(backup):
-        del tf.get_collection_ref(k)[:]
-        tf.get_collection_ref(k).extend(v)
-
-
-def clear_collection(keys):
-    """
-    Clear some collections.
-
-    Args:
-        keys(list): list of collection keys.
-    """
-    for k in keys:
-        del tf.get_collection_ref(k)[:]
-
-
-@contextmanager
-def freeze_collection(keys):
-    """
-    Args:
-        keys(list): list of collection keys to freeze.
-
-    Returns:
-        a context where the collections are in the end restored to its initial state.
-    """
-    backup = backup_collection(keys)
-    yield
-    restore_collection(backup)
 
 
 def get_tf_version():

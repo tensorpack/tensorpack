@@ -4,6 +4,7 @@
 
 from abc import ABCMeta, abstractmethod
 import re
+import time
 import weakref
 import six
 from six.moves import range
@@ -11,7 +12,6 @@ from six.moves import range
 import tensorflow as tf
 from .config import TrainConfig
 from ..utils import logger
-from ..utils.timer import timed_operation
 from ..callbacks import StatHolder
 from ..tfutils import get_global_step_value
 from ..tfutils.modelutils import describe_model
@@ -177,28 +177,28 @@ class Trainer(object):
         with self.sess.as_default():
             try:
                 callbacks.before_train()
-                logger.info("Start training with global_step={}".format(get_global_step_value()))
                 for self.epoch_num in range(
                         self.config.starting_epoch, self.config.max_epoch + 1):
-                    with timed_operation(
-                        'Epoch {} (global_step {})'.format(
-                            self.epoch_num, get_global_step_value() + self.config.step_per_epoch),
-                            log_start=True):
-                        for self.step_num in range(self.config.step_per_epoch):
-                            if self.coord.should_stop():
-                                return
-                            fetch_data = self.run_step()  # implemented by subclass
-                            if fetch_data is None:
-                                # the old Trainer
-                                callbacks.trigger_step()
-                            else:
-                                callbacks.trigger_step(*fetch_data)
+                    logger.info("Start Epoch {} ...".format(self.epoch_num))
+                    start_time = time.time()
+                    for self.step_num in range(self.config.step_per_epoch):
+                        if self.coord.should_stop():
+                            return
+                        fetch_data = self.run_step()  # implemented by subclass
+                        if fetch_data is None:
+                            # old trainer doesn't return fetch data
+                            callbacks.trigger_step()
+                        else:
+                            callbacks.trigger_step(*fetch_data)
+                    logger.info("Epoch {} (global_step {}) finished, time:{:.2f} sec.".format(
+                        self.epoch_num, get_global_step_value(), time.time() - start_time))
+
                     # trigger epoch outside the timing region.
                     self.trigger_epoch()
             except StopTraining:
                 logger.info("Training was stopped.")
             except KeyboardInterrupt:
-                logger.info("Detected Ctrl+C and shutdown training.")
+                logger.info("Detected Ctrl-C and exiting main loop.")
             except:
                 raise
             finally:

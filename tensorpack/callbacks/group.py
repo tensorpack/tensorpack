@@ -6,6 +6,7 @@ import tensorflow as tf
 from contextlib import contextmanager
 from collections import defaultdict
 import time
+import traceback
 
 from .base import Callback
 from .stats import StatPrinter
@@ -81,7 +82,11 @@ class Callbacks(Callback):
 
     def _after_train(self):
         for cb in self.cbs:
-            cb.after_train()
+            # make sure callbacks are properly finalized
+            try:
+                cb.after_train()
+            except Exception:
+                traceback.print_exc()
 
     def _extra_fetches(self):
         if self._extra_fetches_cache is not None:

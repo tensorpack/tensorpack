@@ -15,7 +15,7 @@ from ..utils.naming import (
     MOVING_SUMMARY_VARS_KEY,
     GLOBAL_STEP_INCR_VAR_NAME,
     LOCAL_STEP_OP_NAME)
-from ..tfutils.common import get_op_tensor_name, get_global_step_var
+from ..tfutils.common import get_op_tensor_name, get_global_step_var, get_global_step_value
 from .base import Callback
 
 __all__ = ['StepStatPrinter', 'MaintainStepCounter',
@@ -58,6 +58,11 @@ class MaintainStepCounter(Callback):
         self.local_step = tf.mod(
             self.gs_incr_var, self.trainer.config.step_per_epoch,
             name=LOCAL_STEP_OP_NAME)
+
+    def _before_train(self):
+        gs_val = get_global_step_value()
+        if gs_val != 0:
+            logger.info("Start training with global_step={}".format(gs_val))
 
     def _extra_fetches(self):
         return [self.gs_incr_var.op]
