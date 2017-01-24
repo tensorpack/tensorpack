@@ -1,6 +1,10 @@
-### Code and models for my Gym submissions on Atari games
+### Code and models for Atari games in gym
 
 Implemented A3C in [Asynchronous Methods for Deep Reinforcement Learning](http://arxiv.org/abs/1602.01783).
+
+Results of the same code trained on 47 different Atari games were uploaded on OpenAI Gym.
+You can see them in [my gym page](https://gym.openai.com/users/ppwwyyxx).
+Most of them are the best reproducible results on gym.
 
 ### To train on an Atari game:
 
@@ -19,7 +23,7 @@ multiprocess Python program to get a cgroup dedicated for the task.
 1. Download models from [model zoo](https://goo.gl/9yIol2)
 2. `ENV=Breakout-v0; ./run-atari.py --load "$ENV".tfmodel --env "$ENV" --episode 100 --output output_dir`
 
-Models are available for the following gym atari environments (click links for videos on gym):
+Models are available for the following atari environments (click to watch videos of my agent):
 
 + [AirRaid](https://gym.openai.com/evaluations/eval_zIeNk5MxSGOmvGEUxrZDUw) (this one is flickering, don't know why)
 + [Alien](https://gym.openai.com/evaluations/eval_8NR1IvjTQkSIT6En4xSMA)
