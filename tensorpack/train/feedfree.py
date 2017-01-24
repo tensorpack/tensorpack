@@ -6,7 +6,6 @@
 import tensorflow as tf
 
 from ..utils import logger
-from ..tfutils import get_global_step_var
 from ..tfutils.tower import TowerContext
 from ..tfutils.gradproc import apply_grad_processors
 from .input_data import QueueInput, FeedfreeInput
@@ -101,8 +100,7 @@ class SimpleFeedfreeTrainer(
             cost, grads = self._get_cost_and_grad()
         grads = apply_grad_processors(grads, self.model.get_gradient_processor())
 
-        self.train_op = self.config.optimizer.apply_gradients(
-                grads, get_global_step_var(), name='min_op')
+        self.train_op = self.config.optimizer.apply_gradients(grads, name='min_op')
         # skip training
         # self.train_op = tf.group(*self.dequed_inputs)
 

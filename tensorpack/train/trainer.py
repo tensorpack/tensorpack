@@ -7,8 +7,9 @@ import tensorflow as tf
 from .base import Trainer
 
 from ..utils import SUMMARY_BACKUP_KEYS, PREDICT_TOWER
-from ..tfutils import (get_tensors_by_names, freeze_collection,
-                       get_global_step_var, TowerContext)
+from ..tfutils import (get_tensors_by_names,
+                       freeze_collection,
+                       TowerContext)
 from ..predict import OnlinePredictor, build_prediction_graph
 from ..tfutils.gradproc import apply_grad_processors
 from .input_data import FeedInput
@@ -88,8 +89,7 @@ class SimpleTrainer(Trainer):
         grads = apply_grad_processors(grads,
                                       self.model.get_gradient_processor())
 
-        self.train_op = self.config.optimizer.apply_gradients(
-                grads, get_global_step_var(), name='min_op')
+        self.train_op = self.config.optimizer.apply_gradients(grads, name='min_op')
 
     def _trigger_epoch(self):
         if self.summary_op is not None:

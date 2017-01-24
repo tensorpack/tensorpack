@@ -3,11 +3,13 @@
 # File: common.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
-from ..utils.naming import GLOBAL_STEP_VAR_NAME, GLOBAL_STEP_OP_NAME
 import tensorflow as tf
 from copy import copy
 import six
 from contextlib import contextmanager
+
+from ..utils.naming import GLOBAL_STEP_VAR_NAME, GLOBAL_STEP_OP_NAME, GLOBAL_STEP_INCR_OP_NAME
+from ..utils.argtools import memoized
 
 __all__ = ['get_default_sess_config',
            'get_global_step_value',
@@ -43,6 +45,7 @@ def get_default_sess_config(mem_fraction=0.99):
     return conf
 
 
+@memoized
 def get_global_step_var():
     """
     Returns:
@@ -54,11 +57,14 @@ def get_global_step_var():
     except KeyError:
         scope = tf.get_variable_scope()
         assert scope.name == '', \
-            "Creating global_step_var under a variable scope would cause problems!"
-        with tf.variable_scope(scope, reuse=False):
+            "The global_step variable should be created under the root variable scope!"
+        with tf.variable_scope(scope, reuse=False), \
+                tf.name_scope(None):
             var = tf.get_variable(GLOBAL_STEP_OP_NAME,
                                   initializer=0,
                                   trainable=False, dtype=tf.int32)
+            # also create the incr operation
+            tf.assign_add(var, 1, name=GLOBAL_STEP_INCR_OP_NAME)
         return var
 
 

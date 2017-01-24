@@ -11,11 +11,15 @@ from six.moves import zip
 import tqdm
 
 from ..utils import logger, get_tqdm_kwargs
-from ..utils.naming import MOVING_SUMMARY_VARS_KEY
+from ..utils.naming import (
+    MOVING_SUMMARY_VARS_KEY,
+    GLOBAL_STEP_INCR_VAR_NAME,
+    LOCAL_STEP_OP_NAME)
 from ..tfutils.common import get_op_tensor_name, get_global_step_var
 from .base import Callback
 
-__all__ = ['StepStatPrinter', 'SummaryMovingAverage', 'ProgressBar']
+__all__ = ['StepStatPrinter', 'MaintainStepCounter',
+           'SummaryMovingAverage', 'ProgressBar']
 
 
 class StepStatPrinter(Callback):
@@ -39,6 +43,24 @@ class StepStatPrinter(Callback):
         assert len(args) == len(self._names), len(args)
         for n, v in zip(self._names, args):
             logger.info("{}: {}".format(n, v))
+
+
+class MaintainStepCounter(Callback):
+    """
+    It maintains the global step in the graph and also creates the local step tensor.
+    This callback is always enabled by the trainer, and you wouldn't need to
+    use it.
+    """
+    def _setup_graph(self):
+        # ensure it exists
+        get_global_step_var()
+        self.gs_incr_var = self.trainer.sess.graph.get_tensor_by_name(GLOBAL_STEP_INCR_VAR_NAME)
+        self.local_step = tf.mod(
+            self.gs_incr_var, self.trainer.config.step_per_epoch,
+            name=LOCAL_STEP_OP_NAME)
+
+    def _extra_fetches(self):
+        return [self.gs_incr_var.op]
 
 
 class SummaryMovingAverage(Callback):

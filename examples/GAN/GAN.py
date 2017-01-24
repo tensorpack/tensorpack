@@ -7,7 +7,7 @@ import tensorflow as tf
 import numpy as np
 import time
 from tensorpack import (FeedfreeTrainerBase, TowerContext,
-                        get_global_step_var, QueueInput, ModelDesc)
+                        QueueInput, ModelDesc)
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.tfutils.gradproc import apply_grad_processors, CheckGradient
 from tensorpack.dataflow import DataFlow
@@ -92,8 +92,7 @@ class GANTrainer(FeedfreeTrainerBase):
                 self.model.d_loss, var_list=self.model.d_vars)
             grads = apply_grad_processors(
                 grads, self.model.get_gradient_processor_d())
-            self.d_min = self.config.optimizer.apply_gradients(
-                grads, get_global_step_var(), name='d_op')
+            self.d_min = self.config.optimizer.apply_gradients(grads, name='d_op')
 
         self.train_op = self.d_min
 

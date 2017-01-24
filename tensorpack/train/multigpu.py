@@ -11,8 +11,7 @@ from six.moves import zip, range
 from ..utils import logger
 from ..utils.naming import SUMMARY_BACKUP_KEYS
 from ..utils.concurrency import LoopThread
-from ..tfutils import (backup_collection, restore_collection,
-                       get_global_step_var, TowerContext)
+from ..tfutils import (backup_collection, restore_collection, TowerContext)
 from ..tfutils.gradproc import apply_grad_processors, ScaleGradient
 
 from .base import Trainer
@@ -112,8 +111,7 @@ class SyncMultiGPUTrainer(MultiGPUTrainer,
 
         grads = SyncMultiGPUTrainer._average_grads(grad_list)
         grads = apply_grad_processors(grads, self.model.get_gradient_processor())
-        self.train_op = self.config.optimizer.apply_gradients(
-            grads, get_global_step_var(), name='min_op')
+        self.train_op = self.config.optimizer.apply_gradients(grads, name='min_op')
 
 
 class AsyncMultiGPUTrainer(MultiGPUTrainer,
@@ -163,8 +161,7 @@ class AsyncMultiGPUTrainer(MultiGPUTrainer,
         grad_list = [apply_grad_processors(g, gradprocs) for g in grad_list]
 
         # use grad from the first tower for iteration in main thread
-        self.train_op = self.config.optimizer.apply_gradients(
-            grad_list[0], get_global_step_var(), name='min_op')
+        self.train_op = self.config.optimizer.apply_gradients(grad_list[0], name='min_op')
 
         self._start_async_threads(grad_list)
 

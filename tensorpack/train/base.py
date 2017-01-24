@@ -13,7 +13,7 @@ from .config import TrainConfig
 from ..utils import logger
 from ..utils.timer import timed_operation
 from ..callbacks import StatHolder
-from ..tfutils import get_global_step_var, get_global_step_value
+from ..tfutils import get_global_step_value
 from ..tfutils.modelutils import describe_model
 from ..tfutils.summary import create_scalar_summary
 
@@ -144,7 +144,6 @@ class Trainer(object):
         """
         self._setup()
         describe_model()
-        get_global_step_var()   # ensure such var exists
         # some final operations that might modify the graph
         logger.info("Setup callbacks ...")
         self.config.callbacks.setup_graph(weakref.proxy(self))
