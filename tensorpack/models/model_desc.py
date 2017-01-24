@@ -17,6 +17,8 @@ from ..tfutils.tower import get_current_tower_context
 __all__ = ['ModelDesc', 'InputVar', 'ModelFromMetaGraph']
 
 
+# TODO "variable" is not a right name to use across this file.
+
 class InputVar(object):
     """ Store metadata about input placeholders. """
     def __init__(self, type, shape, name, sparse=False):

@@ -21,9 +21,13 @@ __all__ = ['StepStatPrinter', 'SummaryMovingAverage', 'ProgressBar']
 class StepStatPrinter(Callback):
     """ It prints the value of some tensors in each step.
     It's just a demo of how trigger_step works but you should in general use
-    :func:`print_stat` or :func:`tf.Print` instead. """
+    :func:`symbolic_functions.print_stat` or :func:`tf.Print` instead. """
 
     def __init__(self, names):
+        """
+        Args:
+            names(list): list of string, the names of the tensor to print.
+        """
         names = [get_op_tensor_name(n)[1] for n in names]
         logger.warn("Using print_stat or tf.Print in the graph is much faster than StepStatPrinter!")
         self._names = names
@@ -79,4 +83,4 @@ class ProgressBar(Callback):
             self._bar = tqdm.trange(self._total, **self._tqdm_args)
         self._bar.update()
         if self.step_num == self._total - 1:
-            self._bar.__exit__()
+            self._bar.close()
