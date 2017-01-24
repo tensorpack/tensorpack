@@ -13,7 +13,7 @@ from .config import TrainConfig
 from ..utils import logger
 from ..utils.timer import timed_operation
 from ..callbacks import StatHolder
-from ..tfutils import get_global_step, get_global_step_var
+from ..tfutils import get_global_step_var, get_global_step_value
 from ..tfutils.modelutils import describe_model
 from ..tfutils.summary import create_scalar_summary
 
@@ -121,7 +121,7 @@ class Trainer(object):
                 if val.tag.endswith(suffix):
                     val.tag = val.tag[:-len(suffix)]
                 self.stat_holder.add_stat(val.tag, val.simple_value)
-        self.summary_writer.add_summary(summary, get_global_step())
+        self.summary_writer.add_summary(summary, get_global_step_value())
 
     def add_scalar_summary(self, name, val):
         """
@@ -144,7 +144,7 @@ class Trainer(object):
         """
         self._setup()
         describe_model()
-        get_global_step_var()
+        get_global_step_var()   # ensure such var exists
         # some final operations that might modify the graph
         logger.info("Setup callbacks ...")
         self.config.callbacks.setup_graph(weakref.proxy(self))
@@ -178,12 +178,12 @@ class Trainer(object):
         with self.sess.as_default():
             try:
                 callbacks.before_train()
-                logger.info("Start training with global_step={}".format(get_global_step()))
+                logger.info("Start training with global_step={}".format(get_global_step_value()))
                 for self.epoch_num in range(
                         self.config.starting_epoch, self.config.max_epoch + 1):
                     with timed_operation(
                         'Epoch {} (global_step {})'.format(
-                            self.epoch_num, get_global_step() + self.config.step_per_epoch),
+                            self.epoch_num, get_global_step_value() + self.config.step_per_epoch),
                             log_start=True):
                         for self.step_num in range(self.config.step_per_epoch):
                             if self.coord.should_stop():

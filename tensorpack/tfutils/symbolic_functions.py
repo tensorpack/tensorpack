@@ -140,8 +140,7 @@ def get_scalar_var(name, init_value, summary=False, trainable=False):
     Returns:
         tf.Variable: the variable
     """
-    ret = tf.get_variable(name, shape=[],
-                          initializer=tf.constant_initializer(init_value),
+    ret = tf.get_variable(name, initializer=init_value,
                           trainable=trainable)
     if summary:
         # this is recognized in callbacks.StatHolder

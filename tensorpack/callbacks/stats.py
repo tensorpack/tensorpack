@@ -8,7 +8,7 @@ import json
 
 from .base import Callback
 from ..utils import logger
-from ..tfutils.common import get_global_step
+from ..tfutils.common import get_global_step_value
 
 __all__ = ['StatHolder', 'StatPrinter', 'SendStat']
 
@@ -134,7 +134,7 @@ class StatPrinter(Callback):
 
     def _trigger_epoch(self):
         # by default, add this two stat
-        self._stat_holder.add_stat('global_step', get_global_step())
+        self._stat_holder.add_stat('global_step', get_global_step_value())
         self._stat_holder.finalize()
         self._stat_holder.add_stat('epoch_num', self.epoch_num + 1)
 

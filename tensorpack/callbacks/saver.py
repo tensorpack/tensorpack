@@ -9,7 +9,6 @@ import shutil
 from .base import Callback
 from ..utils import logger
 from ..tfutils.varmanip import get_savename_from_varname
-from ..tfutils import get_global_step
 
 __all__ = ['ModelSaver', 'MinSaver', 'MaxSaver']
 
@@ -76,7 +75,7 @@ due to an alternative in a different tower".format(v.name, var_dict[name].name))
             self.saver.save(
                 tf.get_default_session(),
                 self.path,
-                global_step=get_global_step(),
+                global_step=tf.train.get_global_step(),
                 write_meta_graph=False)
             logger.info("Model saved to %s" % tf.train.get_checkpoint_state(self.checkpoint_dir).model_checkpoint_path)
         except (OSError, IOError):   # disk error sometimes.. just ignore it

@@ -10,7 +10,7 @@ import six
 from contextlib import contextmanager
 
 __all__ = ['get_default_sess_config',
-           'get_global_step',
+           'get_global_step_value',
            'get_global_step_var',
            'get_op_tensor_name',
            'get_tensors_by_names',
@@ -56,16 +56,16 @@ def get_global_step_var():
         assert scope.name == '', \
             "Creating global_step_var under a variable scope would cause problems!"
         with tf.variable_scope(scope, reuse=False):
-            var = tf.get_variable(GLOBAL_STEP_OP_NAME, shape=[],
-                                  initializer=tf.constant_initializer(dtype=tf.int32),
+            var = tf.get_variable(GLOBAL_STEP_OP_NAME,
+                                  initializer=0,
                                   trainable=False, dtype=tf.int32)
         return var
 
 
-def get_global_step():
+def get_global_step_value():
     """
     Returns:
-        float: global_step value in current graph and session"""
+        int: global_step value in current graph and session"""
     return tf.train.global_step(
         tf.get_default_session(),
         get_global_step_var())
