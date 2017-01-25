@@ -144,22 +144,25 @@ class SimulatorMaster(threading.Thread):
 
     def run(self):
         self.clients = defaultdict(self.ClientState)
-        while True:
-            msg = loads(self.c2s_socket.recv(copy=False).bytes)
-            ident, state, reward, isOver = msg
-            # TODO check history and warn about dead client
-            client = self.clients[ident]
+        try:
+            while True:
+                msg = loads(self.c2s_socket.recv(copy=False).bytes)
+                ident, state, reward, isOver = msg
+                # TODO check history and warn about dead client
+                client = self.clients[ident]
 
-            # check if reward&isOver is valid
-            # in the first message, only state is valid
-            if len(client.memory) > 0:
-                client.memory[-1].reward = reward
-                if isOver:
-                    self._on_episode_over(ident)
-                else:
-                    self._on_datapoint(ident)
-            # feed state and return action
-            self._on_state(state, ident)
+                # check if reward&isOver is valid
+                # in the first message, only state is valid
+                if len(client.memory) > 0:
+                    client.memory[-1].reward = reward
+                    if isOver:
+                        self._on_episode_over(ident)
+                    else:
+                        self._on_datapoint(ident)
+                # feed state and return action
+                self._on_state(state, ident)
+        except zmq.ContextTerminated:
+            logger.info("[Simulator] Context was terminated.")
 
     @abstractmethod
     def _on_state(self, state, ident):

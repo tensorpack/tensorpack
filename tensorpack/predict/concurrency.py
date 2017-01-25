@@ -4,11 +4,10 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import multiprocessing
-import threading
 import six
 from six.moves import queue, range
 
-from ..utils.concurrency import DIE
+from ..utils.concurrency import DIE, StoppableThread
 from ..tfutils.modelutils import describe_model
 from ..utils import logger
 
@@ -83,8 +82,7 @@ class MultiProcessQueuePredictWorker(MultiProcessPredictWorker):
                 self.outqueue.put((tid, self.predictor(dp)))
 
 
-class PredictorWorkerThread(threading.Thread):
-
+class PredictorWorkerThread(StoppableThread):
     def __init__(self, queue, pred_func, id, batch_size=5):
         super(PredictorWorkerThread, self).__init__()
         self.queue = queue
@@ -94,7 +92,7 @@ class PredictorWorkerThread(threading.Thread):
         self.id = id
 
     def run(self):
-        while True:
+        while not self.stopped():
             batched, futures = self.fetch_batch()
             outputs = self.func(batched)
             # print "Worker {} batched {} Queue {}".format(
