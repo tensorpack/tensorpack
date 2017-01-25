@@ -6,23 +6,20 @@
 """ Some common step callbacks. """
 
 import tensorflow as tf
-import re
 from six.moves import zip
 import tqdm
 
 from ..utils import logger, get_tqdm_kwargs
-from ..utils.naming import (
-    MOVING_SUMMARY_VARS_KEY,
-    GLOBAL_STEP_INCR_VAR_NAME,
-    LOCAL_STEP_OP_NAME)
+from ..utils.naming import (GLOBAL_STEP_INCR_OP_NAME,
+                            LOCAL_STEP_OP_NAME)
 from ..tfutils.common import get_op_tensor_name, get_global_step_var, get_global_step_value
 from .base import Callback
 
-__all__ = ['StepStatPrinter', 'MaintainStepCounter',
-           'SummaryMovingAverage', 'ProgressBar']
+__all__ = ['StepTensorPrinter', 'MaintainStepCounter',
+           'ProgressBar']
 
 
-class StepStatPrinter(Callback):
+class StepTensorPrinter(Callback):
     """ It prints the value of some tensors in each step.
     It's just a demo of how trigger_step works but you should in general use
     :func:`symbolic_functions.print_stat` or :func:`tf.Print` instead. """
@@ -30,10 +27,10 @@ class StepStatPrinter(Callback):
     def __init__(self, names):
         """
         Args:
-            names(list): list of string, the names of the tensor to print.
+            names(list): list of string, the names of the tensors to print.
         """
         names = [get_op_tensor_name(n)[1] for n in names]
-        logger.warn("Using print_stat or tf.Print in the graph is much faster than StepStatPrinter!")
+        logger.warn("Using print_stat or tf.Print in the graph is much faster than StepTensorPrinter!")
         self._names = names
 
     def _extra_fetches(self):
@@ -53,11 +50,14 @@ class MaintainStepCounter(Callback):
     """
     def _setup_graph(self):
         # ensure it exists
-        get_global_step_var()
-        self.gs_incr_var = self.trainer.sess.graph.get_tensor_by_name(GLOBAL_STEP_INCR_VAR_NAME)
-        self.local_step = tf.mod(
-            self.gs_incr_var, self.trainer.config.step_per_epoch,
-            name=LOCAL_STEP_OP_NAME)
+        gs_var = get_global_step_var()
+        with tf.name_scope(None):
+            self.gs_incr_var = tf.assign_add(
+                gs_var, 1,
+                name=GLOBAL_STEP_INCR_OP_NAME)
+            self.local_step = tf.mod(
+                self.gs_incr_var, self.trainer.config.step_per_epoch,
+                name=LOCAL_STEP_OP_NAME)
 
     def _before_train(self):
         gs_val = get_global_step_value()
@@ -66,37 +66,6 @@ class MaintainStepCounter(Callback):
 
     def _extra_fetches(self):
         return [self.gs_incr_var.op]
-
-
-class SummaryMovingAverage(Callback):
-    """ Maintain the moving average of the tensors
-        in every step, and summarize them. Enabled by default.
-    """
-    def __init__(self, collection=MOVING_SUMMARY_VARS_KEY, decay=0.95):
-        """
-        Args:
-            collection(str): the collection of tensors to summarize. The
-                default would work with :func:`add_moving_summary`.
-            decay(float): the decay of the moving average.
-        """
-        self._collection = collection
-        self._decay = decay
-
-    def _setup_graph(self):
-        tensors = set(tf.get_collection(self._collection))
-
-        # TODO will produce tower0/xxx. not elegant
-        with tf.name_scope(None):
-            averager = tf.train.ExponentialMovingAverage(
-                self._decay, num_updates=get_global_step_var(), name='EMA')
-            avg_maintain_op = averager.apply(tensors)
-            for idx, c in enumerate(tensors):
-                name = re.sub('tower[p0-9]+/', '', c.op.name)
-                tf.summary.scalar(name + '-summary', averager.average(c))
-        self.ema_op = avg_maintain_op
-
-    def _extra_fetches(self):
-        return [self.ema_op]
 
 
 class ProgressBar(Callback):

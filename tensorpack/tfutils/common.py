@@ -5,17 +5,23 @@
 
 import tensorflow as tf
 
-from ..utils.naming import GLOBAL_STEP_VAR_NAME, GLOBAL_STEP_OP_NAME, GLOBAL_STEP_INCR_OP_NAME
+from ..utils.naming import (
+    GLOBAL_STEP_VAR_NAME,
+    GLOBAL_STEP_OP_NAME,
+    LOCAL_STEP_VAR_NAME)
+from ..utils import logger
 from ..utils.argtools import memoized
 
 __all__ = ['get_default_sess_config',
+
            'get_global_step_value',
            'get_global_step_var',
+           'get_local_step_var',
+
            'get_op_tensor_name',
            'get_tensors_by_names',
            'get_op_or_tensor_by_name',
-           'get_tf_version',
-           'get_name_scope_name'
+           'get_name_scope_name',
            ]
 
 
@@ -56,8 +62,6 @@ def get_global_step_var():
             var = tf.get_variable(GLOBAL_STEP_OP_NAME,
                                   initializer=0,
                                   trainable=False, dtype=tf.int32)
-            # also create the incr operation
-            tf.assign_add(var, 1, name=GLOBAL_STEP_INCR_OP_NAME)
         return var
 
 
@@ -68,6 +72,15 @@ def get_global_step_value():
     return tf.train.global_step(
         tf.get_default_session(),
         get_global_step_var())
+
+
+@memoized
+def get_local_step_var():
+    try:
+        return tf.get_default_graph().get_tensor_by_name(LOCAL_STEP_VAR_NAME)
+    except KeyError:
+        logger.warn("get_local_step_var() is only available to use in callbacks!")
+        raise
 
 
 def get_op_tensor_name(name):
@@ -108,14 +121,6 @@ def get_op_or_tensor_by_name(name):
         return G.get_tensor_by_name(name)
     else:
         return G.get_operation_by_name(name)
-
-
-def get_tf_version():
-    """
-    Returns:
-        int:
-    """
-    return int(tf.__version__.split('.')[1])
 
 
 def get_name_scope_name():
