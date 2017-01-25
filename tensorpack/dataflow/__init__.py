@@ -2,7 +2,7 @@
 #  File: __init__.py
 #  Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
-from pkgutil import walk_packages
+from pkgutil import iter_modules
 import os
 import os.path
 
@@ -22,7 +22,7 @@ def _global_import(name):
 
 
 __SKIP = ['dftools', 'dataset', 'imgaug']
-for _, module_name, _ in walk_packages(
+for _, module_name, __ in iter_modules(
         [os.path.dirname(__file__)]):
     if not module_name.startswith('_') and \
             module_name not in __SKIP:

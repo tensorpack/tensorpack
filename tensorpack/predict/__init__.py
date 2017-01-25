@@ -2,7 +2,7 @@
 #  File: __init__.py
 #  Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
-from pkgutil import walk_packages
+from pkgutil import iter_modules
 import os
 import os.path
 
@@ -19,7 +19,7 @@ def global_import(name):
 
 
 _CURR_DIR = os.path.dirname(__file__)
-for _, module_name, _ in walk_packages(
+for _, module_name, _ in iter_modules(
         [_CURR_DIR]):
     srcpath = os.path.join(_CURR_DIR, module_name + '.py')
     if not os.path.isfile(srcpath):

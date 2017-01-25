@@ -2,7 +2,7 @@
 #  File: __init__.py
 #  Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
-from pkgutil import walk_packages
+from pkgutil import iter_modules
 from types import ModuleType
 import six
 import os
@@ -23,7 +23,7 @@ def _global_import(name):
         __all__.append(k)
 
 
-for _, module_name, _ in walk_packages(
+for _, module_name, _ in iter_modules(
         [os.path.dirname(__file__)]):
     if not module_name.startswith('_'):
         _global_import(module_name)
