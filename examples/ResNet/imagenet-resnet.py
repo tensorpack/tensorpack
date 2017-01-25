@@ -189,15 +189,15 @@ def get_config():
     return TrainConfig(
         dataflow=dataset_train,
         optimizer=tf.train.MomentumOptimizer(lr, 0.9, use_nesterov=True),
-        callbacks=Callbacks([
-            StatPrinter(), ModelSaver(),
+        callbacks=[
+            ModelSaver(),
             InferenceRunner(dataset_val, [
                 ClassificationError('wrong-top1', 'val-error-top1'),
                 ClassificationError('wrong-top5', 'val-error-top5')]),
             ScheduledHyperParamSetter('learning_rate',
                                       [(30, 1e-2), (60, 1e-3), (85, 1e-4), (95, 1e-5)]),
             HumanHyperParamSetter('learning_rate'),
-        ]),
+        ],
         model=Model(),
         step_per_epoch=5000,
         max_epoch=110,

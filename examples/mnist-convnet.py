@@ -140,14 +140,13 @@ def get_config():
     return TrainConfig(
         dataflow=dataset_train,  # the DataFlow instance for training
         optimizer=tf.train.AdamOptimizer(lr),
-        callbacks=Callbacks([
-            StatPrinter(),  # print statistics in terminal after every epoch
+        callbacks=[
             ModelSaver(),   # save the model after every epoch
             InferenceRunner(    # run inference(for validation) after every epoch
                 dataset_test,   # the DataFlow instance used for validation
                 # Calculate both the cost and the error for this DataFlow
                 [ScalarStats('cross_entropy_loss'), ClassificationError('incorrect')]),
-        ]),
+        ],
         model=Model(),
         step_per_epoch=step_per_epoch,
         max_epoch=100,

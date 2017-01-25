@@ -59,13 +59,20 @@ class Callbacks(Callback):
         for cb in cbs:
             assert isinstance(cb, Callback), cb.__class__
         # move "StatPrinter" to the last
-        for cb in cbs:
+        # TODO don't need to manually move in the future.
+        found = False
+        for idx, cb in enumerate(cbs):
             if isinstance(cb, StatPrinter):
+                if found:
+                    raise ValueError("Callbacks cannot contain two StatPrinter!")
                 sp = cb
                 cbs.remove(sp)
                 cbs.append(sp)
-                break
-        else:
+                if idx != len(cbs) - 1:
+                    logger.warn("StatPrinter should appear as the last element of callbacks! "
+                                "This is now fixed automatically, but may not work in the future.")
+                found = True
+        if not found:
             raise ValueError("Callbacks must contain StatPrinter for stat and writer to work properly!")
 
         self.cbs = cbs

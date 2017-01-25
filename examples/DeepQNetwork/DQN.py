@@ -177,8 +177,8 @@ def get_config():
     return TrainConfig(
         dataflow=dataset_train,
         optimizer=tf.train.AdamOptimizer(lr, epsilon=1e-3),
-        callbacks=Callbacks([
-            StatPrinter(), ModelSaver(),
+        callbacks=[
+            ModelSaver(),
             ScheduledHyperParamSetter('learning_rate',
                                       [(150, 4e-4), (250, 1e-4), (350, 5e-5)]),
             RunOp(lambda: M.update_target_param()),
@@ -186,7 +186,7 @@ def get_config():
             PeriodicCallback(Evaluator(EVAL_EPISODE, ['state'], ['Qvalue']), 3),
             # HumanHyperParamSetter('learning_rate', 'hyper.txt'),
             # HumanHyperParamSetter(ObjAttrParam(dataset_train, 'exploration'), 'hyper.txt'),
-        ]),
+        ],
         # save memory for multiprocess evaluator
         session_config=get_default_sess_config(0.6),
         model=M,

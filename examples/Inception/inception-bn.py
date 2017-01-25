@@ -160,17 +160,16 @@ def get_config():
     return TrainConfig(
         dataflow=dataset_train,
         optimizer=tf.train.MomentumOptimizer(lr, 0.9),
-        callbacks=Callbacks([
-            StatPrinter(), ModelSaver(),
+        callbacks=[
+            ModelSaver(),
             InferenceRunner(dataset_val, [
                 ClassificationError('wrong-top1', 'val-top1-error'),
                 ClassificationError('wrong-top5', 'val-top5-error')]),
-            # HumanHyperParamSetter('learning_rate', 'hyper-googlenet.txt')
             ScheduledHyperParamSetter('learning_rate',
                                       [(8, 0.03), (14, 0.02), (17, 5e-3),
                                        (19, 3e-3), (24, 1e-3), (26, 2e-4),
                                        (30, 5e-5)])
-        ]),
+        ],
         session_config=get_default_sess_config(0.99),
         model=Model(),
         step_per_epoch=step_per_epoch,

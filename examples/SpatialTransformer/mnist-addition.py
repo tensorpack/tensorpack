@@ -155,12 +155,12 @@ def get_config():
     return TrainConfig(
         dataflow=dataset_train,
         optimizer=tf.train.AdamOptimizer(lr, epsilon=1e-3),
-        callbacks=Callbacks([
-            StatPrinter(), ModelSaver(),
+        callbacks=[
+            ModelSaver(),
             InferenceRunner(dataset_test,
                             [ScalarStats('cost'), ClassificationError()]),
             ScheduledHyperParamSetter('learning_rate', [(200, 1e-4)])
-        ]),
+        ],
         session_config=get_default_sess_config(0.5),
         model=Model(),
         step_per_epoch=step_per_epoch,

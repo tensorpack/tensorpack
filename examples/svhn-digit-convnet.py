@@ -101,11 +101,11 @@ def get_config():
     return TrainConfig(
         dataflow=data_train,
         optimizer=tf.train.AdamOptimizer(lr),
-        callbacks=Callbacks([
-            StatPrinter(), ModelSaver(),
+        callbacks=[
+            ModelSaver(),
             InferenceRunner(data_test,
                             [ScalarStats('cost'), ClassificationError()])
-        ]),
+        ],
         model=Model(),
         step_per_epoch=step_per_epoch,
         max_epoch=350,

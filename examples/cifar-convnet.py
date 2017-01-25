@@ -122,12 +122,12 @@ def get_config(cifar_classnum):
     return TrainConfig(
         dataflow=dataset_train,
         optimizer=tf.train.AdamOptimizer(lr, epsilon=1e-3),
-        callbacks=Callbacks([
-            StatPrinter(), ModelSaver(),
+        callbacks=[
+            ModelSaver(),
             InferenceRunner(dataset_test, ClassificationError()),
             StatMonitorParamSetter('learning_rate', 'val_error', lr_func,
                                    threshold=0.001, last_k=10),
-        ]),
+        ],
         session_config=sess_config,
         model=Model(cifar_classnum),
         step_per_epoch=step_per_epoch,

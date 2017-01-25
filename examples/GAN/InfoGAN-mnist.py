@@ -158,9 +158,7 @@ def get_config():
     return TrainConfig(
         dataflow=dataset,
         optimizer=tf.train.AdamOptimizer(lr, beta1=0.5, epsilon=1e-6),
-        callbacks=Callbacks([
-            StatPrinter(), ModelSaver(),
-        ]),
+        callbacks=[ModelSaver()],
         session_config=get_default_sess_config(0.5),
         model=Model(),
         step_per_epoch=500,

@@ -96,14 +96,14 @@ def get_config(ds_train, ds_test):
     return TrainConfig(
         dataflow=ds_train,
         optimizer=tf.train.AdamOptimizer(lr, epsilon=1e-3),
-        callbacks=Callbacks([
-            StatPrinter(), ModelSaver(),
+        callbacks=[
+            ModelSaver(),
             StatMonitorParamSetter('learning_rate', 'error',
                                    lambda x: x * 0.2, 0, 5),
             HumanHyperParamSetter('learning_rate'),
             PeriodicCallback(
                 InferenceRunner(ds_test, [ScalarStats('error')]), 2),
-        ]),
+        ],
         model=Model(),
         step_per_epoch=step_per_epoch,
         max_epoch=70,

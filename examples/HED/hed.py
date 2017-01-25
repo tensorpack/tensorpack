@@ -173,13 +173,13 @@ def get_config():
     return TrainConfig(
         dataflow=dataset_train,
         optimizer=tf.train.AdamOptimizer(lr, epsilon=1e-3),
-        callbacks=Callbacks([
-            StatPrinter(), ModelSaver(),
+        callbacks=[
+            ModelSaver(),
             ScheduledHyperParamSetter('learning_rate', [(30, 6e-6), (45, 1e-6), (60, 8e-7)]),
             HumanHyperParamSetter('learning_rate'),
             InferenceRunner(dataset_val,
                             BinaryClassificationStats('prediction', 'edgemap4d'))
-        ]),
+        ],
         model=Model(),
         step_per_epoch=step_per_epoch,
         max_epoch=100,

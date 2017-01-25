@@ -168,10 +168,10 @@ def get_config():
     return TrainConfig(
         dataflow=dataset,
         optimizer=tf.train.AdamOptimizer(lr, beta1=0.5, epsilon=1e-3),
-        callbacks=Callbacks([
-            StatPrinter(), PeriodicCallback(ModelSaver(), 3),
+        callbacks=[
+            PeriodicCallback(ModelSaver(), 3),
             ScheduledHyperParamSetter('learning_rate', [(200, 1e-4)])
-        ]),
+        ],
         model=Model(),
         step_per_epoch=dataset.size(),
         max_epoch=300,

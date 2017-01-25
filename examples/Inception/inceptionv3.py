@@ -268,8 +268,8 @@ def get_config():
     return TrainConfig(
         dataflow=dataset_train,
         optimizer=tf.train.AdamOptimizer(lr, epsilon=1e-3),
-        callbacks=Callbacks([
-            StatPrinter(), ModelSaver(),
+        callbacks=[
+            ModelSaver(),
             InferenceRunner(dataset_val, [
                 ClassificationError('wrong-top1', 'val-error-top1'),
                 ClassificationError('wrong-top5', 'val-error-top5')]),
@@ -278,7 +278,7 @@ def get_config():
                                        (17, 0.003), (22, 1e-3), (36, 2e-4),
                                        (41, 8e-5), (48, 1e-5), (53, 2e-6)]),
             HumanHyperParamSetter('learning_rate')
-        ]),
+        ],
         session_config=get_default_sess_config(0.9),
         model=Model(),
         step_per_epoch=5000,

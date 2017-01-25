@@ -102,7 +102,6 @@ class GANTrainer(FeedfreeTrainerBase):
 
 
 class RandomZData(DataFlow):
-
     def __init__(self, shape):
         super(RandomZData, self).__init__()
         self.shape = shape

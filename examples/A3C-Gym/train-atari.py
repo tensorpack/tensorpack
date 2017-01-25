@@ -207,8 +207,8 @@ def get_config():
     return TrainConfig(
         dataflow=dataflow,
         optimizer=tf.train.AdamOptimizer(lr, epsilon=1e-3),
-        callbacks=Callbacks([
-            StatPrinter(), ModelSaver(),
+        callbacks=[
+            ModelSaver(),
             ScheduledHyperParamSetter('learning_rate', [(80, 0.0003), (120, 0.0001)]),
             ScheduledHyperParamSetter('entropy_beta', [(80, 0.005)]),
             ScheduledHyperParamSetter('explore_factor',
@@ -216,7 +216,7 @@ def get_config():
             master,
             StartProcOrThread(master),
             PeriodicCallback(Evaluator(EVAL_EPISODE, ['state'], ['logits']), 2),
-        ]),
+        ],
         session_config=get_default_sess_config(0.5),
         model=M,
         step_per_epoch=STEP_PER_EPOCH,

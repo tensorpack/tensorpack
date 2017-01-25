@@ -126,8 +126,8 @@ def get_config():
         data=train_data,
         model=M,
         optimizer=tf.train.GradientDescentOptimizer(lr),
-        callbacks=Callbacks([
-            StatPrinter(), ModelSaver(),
+        callbacks=[
+            ModelSaver(),
             HyperParamSetterWithFunc(
                 'learning_rate',
                 lambda e, x: x * 0.80 if e > 6 else x),
@@ -139,7 +139,7 @@ def get_config():
                     'validation_perplexity',
                     np.exp(self.trainer.stat_holder.get_stat_now('validation_cost') / SEQ_LEN))),
             RunOp(lambda: M.reset_lstm_state()),
-        ]),
+        ],
         max_epoch=70,
     )
 

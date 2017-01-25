@@ -141,11 +141,10 @@ def get_config(model):
         dataflow=dataset,
         model=model(),
         optimizer=tf.train.GradientDescentOptimizer(lr),
-        callbacks=Callbacks([
-            StatPrinter(),
+        callbacks=[
             ModelSaver(),
             ScheduledHyperParamSetter('learning_rate', [(10, 1e-5), (20, 1e-6)])
-        ]),
+        ],
         step_per_epoch=step_per_epoch,
         max_epoch=20,
     )

@@ -70,14 +70,13 @@ def get_config():
     return TrainConfig(
         dataflow=dataset_train,
         optimizer=tf.train.MomentumOptimizer(lr, 0.9),
-        callbacks=Callbacks([
-            StatPrinter(),
+        callbacks=[
             ModelSaver(),
             InferenceRunner(dataset_test,
                             [ScalarStats('cost'), ClassificationError()]),
             ScheduledHyperParamSetter('learning_rate',
                                       [(1, 0.1), (20, 0.01), (28, 0.001), (50, 0.0001)])
-        ]),
+        ],
         model=Model(n=18),
         step_per_epoch=step_per_epoch,
         max_epoch=500,

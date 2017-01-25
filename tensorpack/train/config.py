@@ -79,9 +79,9 @@ class TrainConfig(object):
 
         if isinstance(callbacks, Callbacks):
             # keep quiet now because I haven't determined the final API yet.
-            # logger.warn("[Deprecated] API of TrainConfig(callbacks=) has changed!")
-            # logger.warn("[Deprecated] Please change the option 'callbacks=' to a list of "
-                        # "callbacks without StatPrinter().")
+            logger.warn("[Deprecated] API of TrainConfig(callbacks=) has changed!")
+            logger.warn("[Deprecated] Please change the argument 'callbacks=' to a *list* of "
+                        "callbacks without StatPrinter().")
             callbacks = callbacks.cbs[:-1]  # the last one is StatPrinter()
         assert_type(callbacks, list)
         if extra_callbacks is None:

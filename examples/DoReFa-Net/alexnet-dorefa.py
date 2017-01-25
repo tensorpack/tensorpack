@@ -236,8 +236,8 @@ def get_config():
     return TrainConfig(
         dataflow=data_train,
         optimizer=tf.train.AdamOptimizer(lr, epsilon=1e-5),
-        callbacks=Callbacks([
-            StatPrinter(), ModelSaver(),
+        callbacks=[
+            ModelSaver(),
             # HumanHyperParamSetter('learning_rate'),
             ScheduledHyperParamSetter(
                 'learning_rate', [(56, 2e-5), (64, 4e-6)]),
@@ -245,7 +245,7 @@ def get_config():
                             [ScalarStats('cost'),
                              ClassificationError('wrong-top1', 'val-error-top1'),
                              ClassificationError('wrong-top5', 'val-error-top5')])
-        ]),
+        ],
         model=Model(),
         step_per_epoch=10000,
         max_epoch=100,
