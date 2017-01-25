@@ -68,25 +68,14 @@ class Trainer(object):
     def run_step(self):
         """ Abstract method. Run one iteration. """
 
-    def get_predict_func(self, input_names, output_names):
+    def get_extra_fetches(self):
         """
-        Args:
-            input_names (list), output_names(list): list of names
-
         Returns:
-            an OnlinePredictor
-        """
-        raise NotImplementedError()
+            list: list of tensors/ops to fetch in each step.
 
-    def get_predict_funcs(self, input_names, output_names, n):
-        """ Return n predictors.
-            Can be overwritten by subclasses to exploit more
-            parallelism among predictors.
+        This function should only get called after :meth:`setup()` has finished.
         """
-        if len(self.config.predict_tower) > 1:
-            logger.warn(
-                "[Speed] Have set multiple predict_tower, but only have naive `get_predict_funcs` implementation")
-        return [self.get_predict_func(input_names, output_names) for k in range(n)]
+        return self._extra_fetches
 
     def trigger_epoch(self):
         """
@@ -129,28 +118,21 @@ class Trainer(object):
         """
         self.add_summary(create_scalar_summary(name, val))
 
-    def get_extra_fetches(self):
-        """
-        Returns:
-            list: list of tensors/ops to fetch in each step.
-
-        This function should only get called after :meth:`setup()` has finished.
-        """
-        return self._extra_fetches
-
     def setup(self):
         """
         Setup the trainer and be ready for the main loop.
         """
-        self._setup()
+        if not hasattr(logger, 'LOG_DIR'):
+            raise RuntimeError("logger directory wasn't set!")
+
+        self._setup()   # subclass will setup the graph
+
         describe_model()
         # some final operations that might modify the graph
         logger.info("Setup callbacks ...")
         self.config.callbacks.setup_graph(weakref.proxy(self))
         self._extra_fetches = self.config.callbacks.extra_fetches()
 
-        if not hasattr(logger, 'LOG_DIR'):
-            raise RuntimeError("logger directory wasn't set!")
         self.summary_writer = tf.summary.FileWriter(logger.LOG_DIR, graph=self.sess.graph)
         self.summary_op = tf.summary.merge_all()
         # create an empty StatHolder
@@ -206,3 +188,23 @@ class Trainer(object):
                 self.coord.request_stop()
                 self.summary_writer.close()
                 self.sess.close()
+
+    def get_predict_func(self, input_names, output_names):
+        """
+        Args:
+            input_names (list), output_names(list): list of names
+
+        Returns:
+            an OnlinePredictor
+        """
+        raise NotImplementedError()
+
+    def get_predict_funcs(self, input_names, output_names, n):
+        """ Return n predictors.
+            Can be overwritten by subclasses to exploit more
+            parallelism among predictors.
+        """
+        if len(self.config.predict_tower) > 1:
+            logger.warn(
+                "[Speed] Have set multiple predict_tower, but only have naive `get_predict_funcs` implementation")
+        return [self.get_predict_func(input_names, output_names) for k in range(n)]

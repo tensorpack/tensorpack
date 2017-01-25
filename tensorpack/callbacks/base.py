@@ -168,7 +168,6 @@ class PeriodicCallback(ProxyCallback):
 
     def _trigger_epoch(self):
         if self.epoch_num % self.period == 0:
-            self.cb.epoch_num = self.epoch_num - 1
             self.cb.trigger_epoch()
 
     def __str__(self):

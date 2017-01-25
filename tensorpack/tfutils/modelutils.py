@@ -13,6 +13,9 @@ __all__ = ['describe_model', 'get_shape_str']
 def describe_model():
     """ Print a description of the current model parameters """
     train_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
+    if len(train_vars) == 0:
+        logger.info("No trainable variables in the graph!")
+        return
     msg = [""]
     total = 0
     for v in train_vars:

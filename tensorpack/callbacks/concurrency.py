@@ -27,6 +27,6 @@ class StartProcOrThread(Callback):
 
     def _before_train(self):
         logger.info("Starting " +
-                    ', '.join([k.name for k in self._procs_threads]))
+                    ', '.join([k.name for k in self._procs_threads]) + ' ...')
         # avoid sigint get handled by other processes
         start_proc_mask_signal(self._procs_threads)
