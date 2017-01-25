@@ -8,6 +8,10 @@ so you won't need to look at here very often.
 Here are a list of things that were changed, starting from an early version.
 TensorFlow itself also changes API and those are not listed here.
 
+* 2017/01/25. Argument order of `models.ConcatWith` is changed to follow the API change in
+	TensorFlow upstream.
+* 2017/01/25. `TrainConfig(callbacks=)` now takes a list of `Callback` instances. See [commit](https://github.com/ppwwyyxx/tensorpack/commit/243e957fe6d62a0cfb5728bd77fb3e005d6603e4)
+	on how to change your code.
 * 2017/01/06. `summary.add_moving_summary` now takes any number of positional arguments instead of a list.
 	See [commit](https://github.com/ppwwyyxx/tensorpack/commit/bbf41d9e58053f843d0471e6d2d87ff714a79a90) to change your code.
 * 2017/01/05. The argument `TrainConfig(dataset=)` is renamed to `TrainConfig(dataflow=)`.

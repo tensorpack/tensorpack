@@ -116,8 +116,13 @@ class Distribution(object):
 
     @class_scope
     def encoder_activation(self, dist_param):
-        """ An activation function to produce
-            feasible distribution parameters from unconstrained raw network output.
+        """ An activation function which transform unconstrained raw network output
+            to a vector of feasible distribution parameters.
+
+            Note that for each distribution,
+            there are many feasible ways to design this function and it's hard to say which is better.
+            The default implementations in the distrbution classes here is
+            just one reasonable way to do this.
 
         Args:
             dist_param: output from a network, of shape (batch, param_dim).
@@ -218,8 +223,9 @@ class GaussianDistribution(Distribution):
             return dist_param
         else:
             mean, stddev = tf.split(dist_param, 2, axis=1)
-            # this is from https://github.com/openai/InfoGAN. don't know why
-            stddev = tf.sqrt(tf.exp(stddev))
+            stddev = tf.exp(stddev)  # just make it positive and assume it's stddev
+            # OpenAI code assumes exp(input) is variance. https://github.com/openai/InfoGAN.
+            # not sure if there is any theory about this.
             return tf.concat_v2([mean, stddev], axis=1)
 
     def _sample(self, batch_size, theta):
