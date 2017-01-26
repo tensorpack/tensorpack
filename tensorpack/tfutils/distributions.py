@@ -172,7 +172,7 @@ class CategoricalDistribution(Distribution):
 
     def _loglikelihood(self, x, theta):
         eps = 1e-8
-        return tf.reduce_sum(tf.log(theta + eps) * x, reduction_indices=1)
+        return tf.reduce_sum(tf.log(theta + eps) * x, 1)
 
     def _encoder_activation(self, dist_param):
         return tf.nn.softmax(dist_param)
@@ -214,8 +214,7 @@ class GaussianDistribution(Distribution):
             exponent = (x - mean) / (stddev + eps)
 
         return tf.reduce_sum(
-            - 0.5 * np.log(2 * np.pi) - tf.log(stddev + eps) - 0.5 * tf.square(exponent),
-            reduction_indices=1
+            - 0.5 * np.log(2 * np.pi) - tf.log(stddev + eps) - 0.5 * tf.square(exponent), 1
         )
 
     def _encoder_activation(self, dist_param):
