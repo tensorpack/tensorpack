@@ -7,6 +7,7 @@ import operator
 import json
 
 from .base import Callback
+from .trigger import Triggerable
 from ..utils import logger
 from ..tfutils.common import get_global_step_value
 
@@ -139,7 +140,7 @@ class StatPrinter(Callback):
         self._stat_holder.add_stat('epoch_num', self.epoch_num + 1)
 
 
-class SendStat(Callback):
+class SendStat(Triggerable):
     """
     Execute a command with some specific stats.
     This is useful for, e.g. building a custom statistics monitor.

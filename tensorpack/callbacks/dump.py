@@ -6,29 +6,34 @@ import os
 import cv2
 import numpy as np
 
-from .base import Callback
+from .trigger import Triggerable
 from ..utils import logger
 from ..tfutils import get_op_tensor_name
 
 __all__ = ['DumpParamAsImage']
 
 
-class DumpParamAsImage(Callback):
+class DumpParamAsImage(Triggerable):
     """
-    Dump a variable to image(s) to ``logger.LOG_DIR`` after every epoch.
+    Dump a tensor to image(s) to ``logger.LOG_DIR`` after every epoch.
+
+    Note that it requires the tensor is directly evaluable, i.e. either inputs
+    are not its dependency (e.g. the weights of the model), or the inputs are
+    feedfree (in which case this callback will take an extra datapoint from
+    the input pipeline).
     """
 
-    def __init__(self, var_name, prefix=None, map_func=None, scale=255, clip=False):
+    def __init__(self, tensor_name, prefix=None, map_func=None, scale=255, clip=False):
         """
         Args:
-            var_name (str): the name of the variable.
+            tensor_name (str): the name of the tensor.
             prefix (str): the filename prefix for saved images. Defaults to the Op name.
-            map_func: map the value of the variable to an image or list of
+            map_func: map the value of the tensor to an image or list of
                  images of shape [h, w] or [h, w, c]. If None, will use identity.
             scale (float): a multiplier on pixel values, applied after map_func.
             clip (bool): whether to clip the result to [0, 255].
         """
-        op_name, self.var_name = get_op_tensor_name(var_name)
+        op_name, self.tensor_name = get_op_tensor_name(tensor_name)
         self.func = map_func
         if prefix is None:
             self.prefix = op_name
@@ -40,10 +45,10 @@ class DumpParamAsImage(Callback):
 
     def _before_train(self):
         # TODO might not work for multiGPU?
-        self.var = self.graph.get_tensor_by_name(self.var_name)
+        self._tensor = self.graph.get_tensor_by_name(self.tensor_name)
 
-    def _trigger_epoch(self):
-        val = self.trainer.sess.run(self.var)
+    def _trigger(self):
+        val = self.trainer.sess.run(self._tensor)
         if self.func is not None:
             val = self.func(val)
         if isinstance(val, list) or val.ndim == 4:

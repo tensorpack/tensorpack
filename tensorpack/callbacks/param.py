@@ -9,7 +9,7 @@ import operator
 import six
 import os
 
-from .base import Callback
+from .trigger import Triggerable
 from ..utils import logger
 from ..tfutils import get_op_tensor_name
 
@@ -111,7 +111,7 @@ class ObjAttrParam(HyperParam):
         return getattr(self.obj, self.attrname)
 
 
-class HyperParamSetter(Callback):
+class HyperParamSetter(Triggerable):
     """
     An abstract base callback to set hyperparameters in every epoch.
     """
@@ -160,7 +160,7 @@ class HyperParamSetter(Callback):
         """
         return self.param.get_value()
 
-    def _trigger_epoch(self):
+    def _trigger(self):
         self._set_param()
 
     def _before_train(self):

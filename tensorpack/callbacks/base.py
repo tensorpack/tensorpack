@@ -150,14 +150,16 @@ class ProxyCallback(Callback):
 
 class PeriodicCallback(ProxyCallback):
     """
-    Wrap a callback so that it is triggered after every ``period`` epochs.
+    Wrap a callback so that after every ``period`` epochs, its :meth:`trigger_epoch`
+    method is called.
+    Note that this method will proxy the :meth:`trigger_step` method as-is.
     """
 
     def __init__(self, cb, period):
         """
         Args:
             cb(Callback): the callback to be triggered periodically
-            period(int): the period
+            period(int): the period, the number of epochs for a callback to be triggered.
 
         Note:
             In ``cb``, ``self.epoch_num`` will not be the true number of

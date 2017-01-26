@@ -9,11 +9,12 @@ import shutil
 from .base import Callback
 from ..utils import logger
 from ..tfutils.varmanip import get_savename_from_varname
+from .trigger import Triggerable
 
 __all__ = ['ModelSaver', 'MinSaver', 'MaxSaver']
 
 
-class ModelSaver(Callback):
+class ModelSaver(Triggerable):
     """
     Save the model every epoch.
     """
@@ -64,7 +65,7 @@ class ModelSaver(Callback):
 due to an alternative in a different tower".format(v.name, var_dict[name].name))
         return var_dict
 
-    def _trigger_epoch(self):
+    def _trigger(self):
         try:
             if not self.meta_graph_written:
                 self.saver.export_meta_graph(
