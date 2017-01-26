@@ -55,7 +55,7 @@ class MaintainStepCounter(Callback):
             self.gs_incr_var = tf.assign_add(
                 gs_var, 1,
                 name=GLOBAL_STEP_INCR_OP_NAME)
-            self.local_step = tf.mod(
+            tf.mod(
                 self.gs_incr_var, self.trainer.config.step_per_epoch,
                 name=LOCAL_STEP_OP_NAME)
 
@@ -75,8 +75,8 @@ class ProgressBar(Callback):
         self._tqdm_args = get_tqdm_kwargs(leave=True)
 
     def _trigger_step(self, *args):
-        if self.step_num == 0:
+        if self.local_step == 0:
             self._bar = tqdm.trange(self._total, **self._tqdm_args)
         self._bar.update()
-        if self.step_num == self._total - 1:
+        if self.local_step == self._total - 1:
             self._bar.close()

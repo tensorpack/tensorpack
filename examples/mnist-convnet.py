@@ -141,7 +141,7 @@ def get_config():
         dataflow=dataset_train,  # the DataFlow instance for training
         optimizer=tf.train.AdamOptimizer(lr),
         callbacks=[
-            ModelSaver(),   # save the model after every epoch
+            PeriodicTrigger(ModelSaver(), every_k_steps=100),   # save the model after every epoch
             InferenceRunner(    # run inference(for validation) after every epoch
                 dataset_test,   # the DataFlow instance used for validation
                 # Calculate both the cost and the error for this DataFlow

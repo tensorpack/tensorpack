@@ -6,10 +6,10 @@
 from abc import abstractmethod, ABCMeta
 import six
 
-from .base import Callback
+from .base import Callback, ProxyCallback
 
 
-__all__ = ['Triggerable']
+__all__ = ['Triggerable', 'PeriodicTrigger']
 
 
 @six.add_metaclass(ABCMeta)
@@ -43,3 +43,38 @@ class Triggerable(Callback):
     def _trigger_epoch(self):
         """ If used as a callback directly, run the trigger every epoch."""
         self.trigger()
+
+
+class PeriodicTrigger(ProxyCallback):
+    """
+    Trigger a :class:`Triggerable` callback every k steps or every k epochs.
+    """
+    def __init__(self, triggerable, every_k_steps=None, every_k_epochs=None):
+        """
+        Args:
+            triggerable (Triggerable): a Triggerable instance.
+            every_k_steps (int): trigger when ``local_step % k == 0``. Set to
+                None to disable.
+            every_k_epochs (int): trigger when ``epoch_num % k == 0``. Set to
+                None to disable.
+
+        every_k_steps and every_k_epochs can be both set, but cannot be both NOne.
+        """
+        assert isinstance(triggerable, Triggerable), type(triggerable)
+        super(PeriodicTrigger, self).__init__(triggerable)
+        assert (every_k_epochs is not None) or (every_k_steps is not None), \
+            "every_k_steps and every_k_epochs cannot be both None!"
+        self._step_k = every_k_steps
+        self._epoch_k = every_k_epochs
+
+    def _trigger_step(self, *args):
+        if self._step_k is None:
+            return
+        if self.local_step % self._step_k == 0:
+            self.cb.trigger()
+
+    def _trigger_epoch(self, *args):
+        if self._epoch_k is None:
+            return
+        if self.local_step % self._epoch_k == 0:
+            self.cb.trigger()

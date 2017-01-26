@@ -42,7 +42,7 @@ class Trainer(object):
         summary_op (tf.Operation): an Op which outputs all summaries.
 
         epoch_num (int): the current epoch number.
-        step_num (int): the current step number (in an epoch).
+        local_step (int): the current step number (in an epoch).
     """
 
     def __init__(self, config):
@@ -57,7 +57,7 @@ class Trainer(object):
         self.coord = tf.train.Coordinator()
 
         self.epoch_num = self.config.starting_epoch
-        self.step_num = 0
+        self.local_step = 0
 
     def train(self):
         """ Start training """
@@ -163,7 +163,7 @@ class Trainer(object):
                         self.config.starting_epoch, self.config.max_epoch + 1):
                     logger.info("Start Epoch {} ...".format(self.epoch_num))
                     start_time = time.time()
-                    for self.step_num in range(self.config.step_per_epoch):
+                    for self.local_step in range(self.config.step_per_epoch):
                         if self.coord.should_stop():
                             return
                         fetch_data = self.run_step()  # implemented by subclass

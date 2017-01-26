@@ -16,7 +16,7 @@ class Callback(object):
 
     Attributes:
         epoch_num(int): the epoch that have completed the update.
-        step_num(int): the step number in the current epoch.
+        local_step(int): the local step number in the current epoch.
         trainer(Trainer): the trainer.
         graph(tf.Graph): the graph.
 
@@ -110,8 +110,8 @@ class Callback(object):
         return self.trainer.epoch_num
 
     @property
-    def step_num(self):
-        return self.trainer.step_num
+    def local_step(self):
+        return self.trainer.local_step
 
     def __str__(self):
         return type(self).__name__
@@ -127,6 +127,7 @@ class ProxyCallback(Callback):
         Args:
             cb(Callback): the underlying callback
         """
+        assert isinstance(cb, Callback), type(cb)
         self.cb = cb
 
     def _before_train(self):
