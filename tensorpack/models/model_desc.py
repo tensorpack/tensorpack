@@ -5,7 +5,6 @@
 
 from abc import ABCMeta, abstractmethod
 import tensorflow as tf
-import inspect
 import pickle
 import six
 
@@ -102,12 +101,7 @@ class ModelDesc(object):
             model_inputs (list[tf.Tensor]): a list of inputs, corresponding to
                 InputVars of this model.
         """
-        if len(inspect.getargspec(self._build_graph).args) == 3:
-            logger.warn("[DEPRECATED] _build_graph(self, input_vars, is_training) is deprecated! \
-Use _build_graph(self, input_vars) and get_current_tower_context().is_training instead.")
-            self._build_graph(model_inputs, get_current_tower_context().is_training)
-        else:
-            self._build_graph(model_inputs)
+        self._build_graph(model_inputs)
 
     @abstractmethod
     def _build_graph(self, inputs):

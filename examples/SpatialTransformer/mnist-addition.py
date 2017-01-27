@@ -148,7 +148,7 @@ def get_config():
     logger.auto_set_dir()
 
     dataset_train, dataset_test = get_data(True), get_data(False)
-    step_per_epoch = dataset_train.size() * 5
+    steps_per_epoch = dataset_train.size() * 5
 
     lr = symbf.get_scalar_var('learning_rate', 5e-4, summary=True)
 
@@ -163,7 +163,7 @@ def get_config():
         ],
         session_config=get_default_sess_config(0.5),
         model=Model(),
-        step_per_epoch=step_per_epoch,
+        steps_per_epoch=steps_per_epoch,
         max_epoch=500,
     )
 

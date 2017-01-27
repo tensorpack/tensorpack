@@ -133,7 +133,7 @@ def get_config(model):
     logger.auto_set_dir()
 
     dataset = model.get_data()
-    step_per_epoch = dataset.size()
+    steps_per_epoch = dataset.size()
 
     lr = symbf.get_scalar_var('learning_rate', 1e-4, summary=True)
 
@@ -145,7 +145,7 @@ def get_config(model):
             ModelSaver(),
             ScheduledHyperParamSetter('learning_rate', [(10, 1e-5), (20, 1e-6)])
         ],
-        step_per_epoch=step_per_epoch,
+        steps_per_epoch=steps_per_epoch,
         max_epoch=20,
     )
 

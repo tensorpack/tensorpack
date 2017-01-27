@@ -112,7 +112,7 @@ def get_config():
         callbacks=[ModelSaver()],
         session_config=get_default_sess_config(0.5),
         model=Model(),
-        step_per_epoch=300,
+        steps_per_epoch=300,
         max_epoch=200,
     )
 

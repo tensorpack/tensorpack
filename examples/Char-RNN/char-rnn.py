@@ -103,7 +103,7 @@ def get_config():
 
     ds = CharRNNData(param.corpus, 100000)
     ds = BatchData(ds, param.batch_size)
-    step_per_epoch = ds.size()
+    steps_per_epoch = ds.size()
 
     lr = symbolic_functions.get_scalar_var('learning_rate', 2e-3, summary=True)
 
@@ -115,7 +115,7 @@ def get_config():
             ScheduledHyperParamSetter('learning_rate', [(25, 2e-4)])
         ],
         model=Model(),
-        step_per_epoch=step_per_epoch,
+        steps_per_epoch=steps_per_epoch,
         max_epoch=50,
     )
 

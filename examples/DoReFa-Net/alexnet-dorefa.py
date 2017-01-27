@@ -247,7 +247,7 @@ def get_config():
                              ClassificationError('wrong-top5', 'val-error-top5')])
         ],
         model=Model(),
-        step_per_epoch=10000,
+        steps_per_epoch=10000,
         max_epoch=100,
     )
 

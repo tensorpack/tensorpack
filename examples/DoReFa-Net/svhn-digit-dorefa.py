@@ -147,7 +147,7 @@ def get_config():
     data_train = AugmentImageComponent(data_train, augmentors)
     data_train = BatchData(data_train, 128)
     data_train = PrefetchDataZMQ(data_train, 5)
-    step_per_epoch = data_train.size()
+    steps_per_epoch = data_train.size()
 
     augmentors = [imgaug.Resize((40, 40))]
     data_test = AugmentImageComponent(data_test, augmentors)
@@ -169,7 +169,7 @@ def get_config():
                             [ScalarStats('cost'), ClassificationError()])
         ],
         model=Model(),
-        step_per_epoch=step_per_epoch,
+        steps_per_epoch=steps_per_epoch,
         max_epoch=200,
     )
 

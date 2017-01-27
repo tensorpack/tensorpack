@@ -173,7 +173,7 @@ def get_config():
             ScheduledHyperParamSetter('learning_rate', [(200, 1e-4)])
         ],
         model=Model(),
-        step_per_epoch=dataset.size(),
+        steps_per_epoch=dataset.size(),
         max_epoch=300,
     )
 

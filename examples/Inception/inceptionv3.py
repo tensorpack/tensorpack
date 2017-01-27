@@ -281,7 +281,7 @@ def get_config():
         ],
         session_config=get_default_sess_config(0.9),
         model=Model(),
-        step_per_epoch=5000,
+        steps_per_epoch=5000,
         max_epoch=100,
     )
 

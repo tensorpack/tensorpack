@@ -124,7 +124,7 @@ def get_config():
 
     dataset_train, dataset_test = get_data()
     # how many iterations you want in each epoch
-    step_per_epoch = dataset_train.size()
+    steps_per_epoch = dataset_train.size()
 
     lr = tf.train.exponential_decay(
         learning_rate=1e-3,
@@ -148,7 +148,7 @@ def get_config():
                 [ScalarStats('cross_entropy_loss'), ClassificationError('incorrect')]),
         ],
         model=Model(),
-        step_per_epoch=step_per_epoch,
+        steps_per_epoch=steps_per_epoch,
         max_epoch=100,
     )
 

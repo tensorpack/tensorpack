@@ -199,7 +199,7 @@ def get_config():
             HumanHyperParamSetter('learning_rate'),
         ],
         model=Model(),
-        step_per_epoch=5000,
+        steps_per_epoch=5000,
         max_epoch=110,
     )
 

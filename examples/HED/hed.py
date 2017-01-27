@@ -166,7 +166,7 @@ def view_data():
 def get_config():
     logger.auto_set_dir()
     dataset_train = get_data('train')
-    step_per_epoch = dataset_train.size() * 40
+    steps_per_epoch = dataset_train.size() * 40
     dataset_val = get_data('val')
 
     lr = get_scalar_var('learning_rate', 3e-5, summary=True)
@@ -181,7 +181,7 @@ def get_config():
                             BinaryClassificationStats('prediction', 'edgemap4d'))
         ],
         model=Model(),
-        step_per_epoch=step_per_epoch,
+        steps_per_epoch=steps_per_epoch,
         max_epoch=100,
     )
 

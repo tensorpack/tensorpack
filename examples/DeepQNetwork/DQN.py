@@ -190,7 +190,7 @@ def get_config():
         # save memory for multiprocess evaluator
         session_config=get_default_sess_config(0.6),
         model=M,
-        step_per_epoch=STEP_PER_EPOCH,
+        steps_per_epoch=STEP_PER_EPOCH,
     )
 
 

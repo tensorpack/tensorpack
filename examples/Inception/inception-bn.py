@@ -153,7 +153,7 @@ def get_config():
     logger.auto_set_dir()
     # prepare dataset
     dataset_train = get_data('train')
-    step_per_epoch = 5000
+    steps_per_epoch = 5000
     dataset_val = get_data('val')
 
     lr = get_scalar_var('learning_rate', 0.045, summary=True)
@@ -172,7 +172,7 @@ def get_config():
         ],
         session_config=get_default_sess_config(0.99),
         model=Model(),
-        step_per_epoch=step_per_epoch,
+        steps_per_epoch=steps_per_epoch,
         max_epoch=80,
     )
 

@@ -110,11 +110,11 @@ def get_config():
     data3, wd2id = get_PennTreeBank()
     global VOCAB_SIZE
     VOCAB_SIZE = len(wd2id)
-    step_per_epoch = (data3[0].shape[0] // BATCH - 1) // SEQ_LEN
+    steps_per_epoch = (data3[0].shape[0] // BATCH - 1) // SEQ_LEN
 
     train_data = TensorInput(
         lambda: ptb_producer(data3[0], BATCH, SEQ_LEN),
-        step_per_epoch)
+        steps_per_epoch)
     val_data = TensorInput(
         lambda: ptb_producer(data3[1], BATCH, SEQ_LEN),
         (data3[1].shape[0] // BATCH - 1) // SEQ_LEN)

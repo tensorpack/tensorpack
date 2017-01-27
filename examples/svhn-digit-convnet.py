@@ -89,7 +89,7 @@ def get_config():
     logger.auto_set_dir()
 
     data_train, data_test = get_data()
-    step_per_epoch = data_train.size()
+    steps_per_epoch = data_train.size()
 
     lr = tf.train.exponential_decay(
         learning_rate=1e-3,
@@ -107,7 +107,7 @@ def get_config():
                             [ScalarStats('cost'), ClassificationError()])
         ],
         model=Model(),
-        step_per_epoch=step_per_epoch,
+        steps_per_epoch=steps_per_epoch,
         max_epoch=350,
     )
 

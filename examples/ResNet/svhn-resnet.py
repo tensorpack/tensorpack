@@ -63,7 +63,7 @@ def get_config():
 
     # prepare dataset
     dataset_train = get_data('train')
-    step_per_epoch = dataset_train.size()
+    steps_per_epoch = dataset_train.size()
     dataset_test = get_data('test')
 
     lr = get_scalar_var('learning_rate', 0.01, summary=True)
@@ -78,7 +78,7 @@ def get_config():
                                       [(1, 0.1), (20, 0.01), (28, 0.001), (50, 0.0001)])
         ],
         model=Model(n=18),
-        step_per_epoch=step_per_epoch,
+        steps_per_epoch=steps_per_epoch,
         max_epoch=500,
     )
 

@@ -89,7 +89,7 @@ def get_data(path, isTrain, stat_file):
 
 
 def get_config(ds_train, ds_test):
-    step_per_epoch = ds_train.size()
+    steps_per_epoch = ds_train.size()
 
     lr = symbolic_functions.get_scalar_var('learning_rate', 5e-3, summary=True)
 
@@ -105,7 +105,7 @@ def get_config(ds_train, ds_test):
                 InferenceRunner(ds_test, [ScalarStats('error')]), 2),
         ],
         model=Model(),
-        step_per_epoch=step_per_epoch,
+        steps_per_epoch=steps_per_epoch,
         max_epoch=70,
     )
 
