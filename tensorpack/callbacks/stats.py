@@ -6,8 +6,7 @@ import os
 import operator
 import json
 
-from .base import Callback
-from .trigger import Triggerable
+from .base import Triggerable
 from ..utils import logger
 
 __all__ = ['StatHolder', 'StatPrinter', 'SendStat']
@@ -110,7 +109,7 @@ class StatHolder(object):
             logger.exception("Exception in StatHolder.finalize()!")
 
 
-class StatPrinter(Callback):
+class StatPrinter(Triggerable):
     """
     A callback to control what stats to print. Enable by default to print
     everything in trainer.stat_holder.
@@ -132,7 +131,7 @@ class StatPrinter(Callback):
         # just try to add this stat earlier so SendStat can use
         self._stat_holder.add_stat('epoch_num', self.epoch_num + 1)
 
-    def _trigger_epoch(self):
+    def _trigger(self):
         # by default, add this two stat
         self._stat_holder.add_stat('global_step', self.global_step)
         self._stat_holder.finalize()

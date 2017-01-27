@@ -6,7 +6,7 @@ import os
 import cv2
 import numpy as np
 
-from .trigger import Triggerable
+from .base import Triggerable
 from ..utils import logger
 from ..tfutils import get_op_tensor_name
 

@@ -3,11 +3,11 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 import six
 from ..tfutils.common import get_op_or_tensor_by_name, get_global_step_value
 
-__all__ = ['Callback', 'PeriodicCallback', 'ProxyCallback', 'CallbackFactory']
+__all__ = ['Callback', 'ProxyCallback', 'CallbackFactory', 'Triggerable']
 
 
 @six.add_metaclass(ABCMeta)
@@ -128,6 +128,39 @@ class Callback(object):
         return type(self).__name__
 
 
+@six.add_metaclass(ABCMeta)
+class Triggerable(Callback):
+    """
+    Base class for "triggerable" callback. It has a method :meth:`Triggerable.trigger()`
+    which can be triggered either inside an epoch or between epochs.
+    The higher-level wrapper will take the responsibility to determine when
+    to trigger.
+
+    If an triggerable is used as a callback directly (instead of under other
+    higher-level wrapper to control the trigger), it will by default trigger after
+    every epoch. This is mainly for backward-compatibilty and convenience.
+    """
+
+    def trigger(self):
+        """
+        Trigger something.
+        Note that this method may be called both inside an epoch and after an epoch.
+
+        Some operations (e.g. writing scalar stats) currently will cause
+        problems if run inside an epoch. This will be fixed in the future.
+        """
+        # TODO
+        self._trigger()
+
+    @abstractmethod
+    def _trigger(self):
+        pass
+
+    def _trigger_epoch(self):
+        """ If used as a callback directly, run the trigger every epoch."""
+        self.trigger()
+
+
 class ProxyCallback(Callback):
     """ A callback which proxy all methods to another callback.
         It's useful as a base class of callbacks which decorate other callbacks.
@@ -158,34 +191,6 @@ class ProxyCallback(Callback):
 
     def __str__(self):
         return "Proxy-" + str(self.cb)
-
-
-class PeriodicCallback(ProxyCallback):
-    """
-    Wrap a callback so that after every ``period`` epochs, its :meth:`trigger_epoch`
-    method is called.
-    Note that this method will proxy the :meth:`trigger_step` method as-is.
-    """
-
-    def __init__(self, cb, period):
-        """
-        Args:
-            cb(Callback): the callback to be triggered periodically
-            period(int): the period, the number of epochs for a callback to be triggered.
-
-        Note:
-            In ``cb``, ``self.epoch_num`` will not be the true number of
-            epochs any more.
-        """
-        super(PeriodicCallback, self).__init__(cb)
-        self.period = int(period)
-
-    def _trigger_epoch(self):
-        if self.epoch_num % self.period == 0:
-            self.cb.trigger_epoch()
-
-    def __str__(self):
-        return "Periodic-" + str(self.cb)
 
 
 class CallbackFactory(Callback):

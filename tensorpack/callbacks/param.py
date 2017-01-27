@@ -9,7 +9,7 @@ import operator
 import six
 import os
 
-from .trigger import Triggerable
+from .base import Triggerable
 from ..utils import logger
 from ..tfutils import get_op_tensor_name
 

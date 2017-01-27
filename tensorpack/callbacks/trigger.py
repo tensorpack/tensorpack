@@ -3,46 +3,10 @@
 # File: trigger.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-from abc import abstractmethod, ABCMeta
-import six
-
-from .base import Callback, ProxyCallback
+from .base import ProxyCallback, Triggerable
 
 
-__all__ = ['Triggerable', 'PeriodicTrigger']
-
-
-@six.add_metaclass(ABCMeta)
-class Triggerable(Callback):
-    """
-    Base class for "triggerable" callback. It has a method :meth:`Triggerable.trigger()`
-    which can be triggered either inside an epoch or between epochs.
-    The higher-level wrapper will take the responsibility to determine when
-    to trigger.
-
-    If an triggerable is used as a callback directly (instead of under other
-    higher-level wrapper to control the trigger), it will by default trigger after
-    every epoch. This is mainly for backward-compatibilty and convenience.
-    """
-
-    def trigger(self):
-        """
-        Trigger something.
-        Note that this method may be called both inside an epoch and after an epoch.
-
-        Some operations (e.g. writing scalar stats) currently will cause
-        problems if run inside an epoch. This will be fixed in the future.
-        """
-        # TODO
-        self._trigger()
-
-    @abstractmethod
-    def _trigger(self):
-        pass
-
-    def _trigger_epoch(self):
-        """ If used as a callback directly, run the trigger every epoch."""
-        self.trigger()
+__all__ = ['PeriodicTrigger', 'PeriodicCallback']
 
 
 class PeriodicTrigger(ProxyCallback):
@@ -78,3 +42,37 @@ class PeriodicTrigger(ProxyCallback):
             return
         if self.epoch_num % self._epoch_k == 0:
             self.cb.trigger()
+
+    def __str__(self):
+        return "PeriodicTrigger-" + str(self.cb)
+
+
+class PeriodicCallback(ProxyCallback):
+    """
+    Wrap a callback so that after every ``period`` epochs, its :meth:`trigger_epoch`
+    method is called.
+
+    Note that this wrapper will proxy the :meth:`trigger_step` method as-is.
+    To schedule a :class:`Triggerable` callback more frequent than once per
+    epoch, use :class:`PeriodicTrigger` instead.
+    """
+
+    def __init__(self, cb, period):
+        """
+        Args:
+            cb(Callback): the callback to be triggered periodically
+            period(int): the period, the number of epochs for a callback to be triggered.
+
+        Note:
+            In ``cb``, ``self.epoch_num`` will not be the true number of
+            epochs any more.
+        """
+        super(PeriodicCallback, self).__init__(cb)
+        self.period = int(period)
+
+    def _trigger_epoch(self):
+        if self.epoch_num % self.period == 0:
+            self.cb.trigger_epoch()
+
+    def __str__(self):
+        return "Periodic-" + str(self.cb)

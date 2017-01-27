@@ -5,7 +5,7 @@
 
 """ Graph related callbacks"""
 
-from .trigger import Triggerable
+from .base import Triggerable
 
 __all__ = ['RunOp']
 

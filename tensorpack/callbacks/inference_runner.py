@@ -16,7 +16,7 @@ from ..tfutils import TowerContext
 from ..train.input_data import FeedfreeInput
 from ..predict import build_prediction_graph
 
-from .base import Callback
+from .base import Triggerable
 from .inference import Inferencer
 
 __all__ = ['InferenceRunner', 'FeedfreeInferenceRunner']
@@ -63,7 +63,7 @@ def summary_inferencer(trainer, infs):
             trainer.add_scalar_summary(k, v)
 
 
-class InferenceRunner(Callback):
+class InferenceRunner(Triggerable):
     """
     A callback that runs a list of :class:`Inferencer` on some
     :class:`DataFlow`.
@@ -128,7 +128,7 @@ class InferenceRunner(Callback):
         self.inf_to_tensors = [find_tensors(t) for t in dispatcer.get_names_for_each_entry()]
         # list of list of IOTensor
 
-    def _trigger_epoch(self):
+    def _trigger(self):
         for inf in self.infs:
             inf.before_inference()
 
@@ -147,7 +147,7 @@ class InferenceRunner(Callback):
         summary_inferencer(self.trainer, self.infs)
 
 
-class FeedfreeInferenceRunner(Callback):
+class FeedfreeInferenceRunner(Triggerable):
     """ A callback that runs a list of :class:`Inferencer` on some
     :class:`FeedfreeInput`, such as some tensor from a TensorFlow data reading
     pipeline.
@@ -231,7 +231,7 @@ class FeedfreeInferenceRunner(Callback):
         # list of list of id
         self.inf_to_idxs = dispatcer.get_idx_for_each_entry()
 
-    def _trigger_epoch(self):
+    def _trigger(self):
         for inf in self.infs:
             inf.before_inference()
 

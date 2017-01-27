@@ -6,10 +6,9 @@ import tensorflow as tf
 import os
 import shutil
 
-from .base import Callback
+from .base import Triggerable
 from ..utils import logger
 from ..tfutils.varmanip import get_savename_from_varname
-from .trigger import Triggerable
 
 __all__ = ['ModelSaver', 'MinSaver', 'MaxSaver']
 
@@ -83,7 +82,7 @@ due to an alternative in a different tower".format(v.name, var_dict[name].name))
             logger.exception("Exception in ModelSaver.trigger_epoch!")
 
 
-class MinSaver(Callback):
+class MinSaver(Triggerable):
     """
     Separately save the model with minimum value of some statistics.
     """
@@ -126,7 +125,7 @@ class MinSaver(Callback):
             return False
         return v > self.min if self.reverse else v < self.min
 
-    def _trigger_epoch(self):
+    def _trigger(self):
         if self.min is None or self._need_save():
             self.min = self._get_stat()
             if self.min:
