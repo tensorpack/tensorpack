@@ -76,5 +76,5 @@ class PeriodicTrigger(ProxyCallback):
     def _trigger_epoch(self, *args):
         if self._epoch_k is None:
             return
-        if self.local_step % self._epoch_k == 0:
+        if self.epoch_num % self._epoch_k == 0:
             self.cb.trigger()

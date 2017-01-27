@@ -163,7 +163,7 @@ class Trainer(object):
                         self.config.starting_epoch, self.config.max_epoch + 1):
                     logger.info("Start Epoch {} ...".format(self.epoch_num))
                     start_time = time.time()
-                    for self.local_step in range(self.config.step_per_epoch):
+                    for self.local_step in range(self.config.steps_per_epoch):
                         if self.coord.should_stop():
                             return
                         fetch_data = self.run_step()  # implemented by subclass

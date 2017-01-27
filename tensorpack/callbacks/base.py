@@ -5,7 +5,7 @@
 import tensorflow as tf
 from abc import ABCMeta
 import six
-from ..tfutils.common import get_op_or_tensor_by_name
+from ..tfutils.common import get_op_or_tensor_by_name, get_global_step_value
 
 __all__ = ['Callback', 'PeriodicCallback', 'ProxyCallback', 'CallbackFactory']
 
@@ -15,8 +15,10 @@ class Callback(object):
     """ Base class for all callbacks
 
     Attributes:
-        epoch_num(int): the epoch that have completed the update.
-        local_step(int): the local step number in the current epoch.
+        epoch_num(int): the current epoch num, starting from 1.
+        local_step(int): the current local step number (1-based) in the current epoch.
+            which is also the number of steps that have finished.
+        global_step(int): the number of global steps that have finished.
         trainer(Trainer): the trainer.
         graph(tf.Graph): the graph.
 
@@ -33,6 +35,7 @@ class Callback(object):
         Args:
             trainer(Trainer): the trainer which calls the callback
         """
+        self._steps_per_epoch = trainer.config.steps_per_epoch
         self.trainer = trainer
         self.graph = tf.get_default_graph()
         with tf.name_scope(type(self).__name__):
@@ -45,6 +48,7 @@ class Callback(object):
         """
         Called right before the first iteration.
         """
+        self._starting_step = get_global_step_value()
         self._before_train()
 
     def _before_train(self):
@@ -111,7 +115,14 @@ class Callback(object):
 
     @property
     def local_step(self):
-        return self.trainer.local_step
+        # inside trainer, we're still in the 'local_step' loop, so the number is off by 1
+        return self.trainer.local_step + 1
+
+    @property
+    def global_step(self):
+        return self._starting_step + \
+                self._steps_per_epoch * (self.epoch_num - 1) + \
+                self.local_step
 
     def __str__(self):
         return type(self).__name__

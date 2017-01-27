@@ -28,7 +28,7 @@ class TrainConfig(object):
                  callbacks=None, extra_callbacks=None,
                  session_config=get_default_sess_config(),
                  session_init=None,
-                 starting_epoch=1, step_per_epoch=None, max_epoch=99999,
+                 starting_epoch=1, steps_per_epoch=None, max_epoch=99999,
                  nr_tower=1, tower=None, predict_tower=[0],
                  **kwargs):
         """
@@ -48,7 +48,7 @@ class TrainConfig(object):
             session_config (tf.ConfigProto): the config used to instantiate the session.
             session_init (SessionInit): how to initialize variables of a session. Defaults to a new session.
             starting_epoch (int): The index of the first epoch.
-            step_per_epoch (int): the number of steps (defined by :meth:`Trainer.run_step`) to run in each epoch.
+            steps_per_epoch (int): the number of steps (defined by :meth:`Trainer.run_step`) to run in each epoch.
                 Defaults to the input data size.
             max_epoch (int): maximum number of epoch to run training.
             nr_tower (int): number of training towers.
@@ -103,21 +103,26 @@ class TrainConfig(object):
         self.session_init = session_init
         assert_type(self.session_init, SessionInit)
 
-        self.step_per_epoch = step_per_epoch
-        if self.step_per_epoch is None:
+        if steps_per_epoch is None:
+            steps_per_epoch = kwargs.pop('step_per_epoch', None)
+            if steps_per_epoch is not None:
+                # TODO deprecate @Mar.27
+                logger.warn("[Deprecated] Use steps_per_epoch instead of step_per_epoch!")
+        if steps_per_epoch is None:
             try:
                 if dataflow is not None:
-                    self.step_per_epoch = self.dataflow.size()
+                    steps_per_epoch = self.dataflow.size()
                 else:
-                    self.step_per_epoch = self.data.size()
+                    steps_per_epoch = self.data.size()
             except NotImplementedError:
-                logger.exception("You must set `step_per_epoch` if dataset.size() is not implemented.")
+                logger.exception("You must set `steps_per_epoch` if dataset.size() is not implemented.")
         else:
-            self.step_per_epoch = int(self.step_per_epoch)
+            steps_per_epoch = int(steps_per_epoch)
+        self.steps_per_epoch = steps_per_epoch
 
         self.starting_epoch = int(starting_epoch)
         self.max_epoch = int(max_epoch)
-        assert self.step_per_epoch >= 0 and self.max_epoch > 0
+        assert self.steps_per_epoch >= 0 and self.max_epoch > 0
 
         self.nr_tower = nr_tower
         if tower is not None:
