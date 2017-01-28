@@ -8,6 +8,7 @@ import itertools
 from six.moves import range, zip
 import uuid
 import os
+import zmq
 
 from .base import ProxyDataFlow
 from ..utils.concurrency import (ensure_proc_terminate,
@@ -16,13 +17,7 @@ from ..utils.serialize import loads, dumps
 from ..utils import logger
 from ..utils.gpu import change_gpu
 
-__all__ = ['PrefetchData', 'BlockParallel']
-try:
-    import zmq
-except ImportError:
-    logger.warn_dependency('PrefetchDataZMQ', 'zmq')
-else:
-    __all__.extend(['PrefetchDataZMQ', 'PrefetchOnGPUs'])
+__all__ = ['PrefetchData', 'BlockParallel', 'PrefetchDataZMQ', 'PrefetchOnGPUs']
 
 
 class PrefetchProcess(mp.Process):

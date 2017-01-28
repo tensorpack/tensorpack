@@ -12,6 +12,7 @@ from collections import defaultdict
 
 import six
 from six.moves import queue
+import zmq
 
 from tensorpack.models.common import disable_layer_logging
 from tensorpack.callbacks import Callback
@@ -24,12 +25,6 @@ from tensorpack.utils.concurrency import LoopThread, ensure_proc_terminate
 __all__ = ['SimulatorProcess', 'SimulatorMaster',
            'SimulatorProcessStateExchange', 'SimulatorProcessSharedWeight',
            'TransitionExperience', 'WeightSync']
-
-try:
-    import zmq
-except ImportError:
-    logger.warn_dependency('Simulator', 'zmq')
-    __all__ = []
 
 
 class TransitionExperience(object):

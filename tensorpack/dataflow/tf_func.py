@@ -3,22 +3,14 @@
 # File: tf_func.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
+import tensorflow as tf
 from .base import ProxyDataFlow
-from ..utils import logger
 
-try:
-    import tensorflow as tf
-except ImportError:
-    logger.warn_dependency('TFFuncMapper', 'tensorflow')
-    __all__ = []
-else:
-    __all__ = []
 
 """ This file was deprecated """
 
 
 class TFFuncMapper(ProxyDataFlow):
-
     def __init__(self, ds,
                  get_placeholders, symbf, apply_symbf_on_dp, device='/cpu:0'):
         """

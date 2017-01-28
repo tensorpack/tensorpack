@@ -15,13 +15,8 @@ from ..utils.concurrency import DIE
 from ..utils.serialize import dumps
 from ..utils.fs import mkdir_p
 
-__all__ = ['dump_dataset_images', 'dataflow_to_process_queue']
-try:
-    import lmdb
-except ImportError:
-    logger.warn_dependency("dump_dataflow_to_lmdb", 'lmdb')
-else:
-    __all__.extend(['dump_dataflow_to_lmdb'])
+__all__ = ['dump_dataset_images', 'dataflow_to_process_queue',
+           'dump_dataflow_to_lmdb']
 
 
 def dump_dataset_images(ds, dirname, max_count=None, index=0):
@@ -82,6 +77,13 @@ def dump_dataflow_to_lmdb(ds, lmdb_path):
 
             logger.info("Flushing database ...")
             db.sync()
+
+
+try:
+    import lmdb
+except ImportError:
+    from ..utils.dependency import create_dummy_func
+    dump_dataflow_to_lmdb = create_dummy_func('dump_dataflow_to_lmdb', 'lmdb') # noqa
 
 
 def dataflow_to_process_queue(ds, size, nr_consumer):

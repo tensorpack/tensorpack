@@ -8,17 +8,11 @@ import glob
 import cv2
 import numpy as np
 
-from ...utils import logger, get_dataset_path
+from ...utils import get_dataset_path
 from ...utils.fs import download
 from ..base import RNGDataFlow
 
-try:
-    from scipy.io import loadmat
-    __all__ = ['BSDS500']
-except ImportError:
-    logger.warn_dependency('BSDS500', 'scipy.io')
-    __all__ = []
-
+__all__ = ['BSDS500']
 DATA_URL = "http://www.eecs.berkeley.edu/Research/Projects/CS/vision/grouping/BSR/BSR_bsds500.tgz"
 IMG_W, IMG_H = 481, 321
 
@@ -94,6 +88,12 @@ class BSDS500(RNGDataFlow):
         for k in idxs:
             yield [self.data[k], self.label[k]]
 
+
+try:
+    from scipy.io import loadmat
+except ImportError:
+    from ...utils.dependency import create_dummy_class
+    BSDS500 = create_dummy_class('BSDS500', 'scipy.io')  # noqa
 
 if __name__ == '__main__':
     a = BSDS500('val')

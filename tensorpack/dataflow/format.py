@@ -13,28 +13,8 @@ from ..utils.serialize import loads
 from ..utils.argtools import log_once
 from .base import RNGDataFlow
 
-try:
-    import h5py
-except ImportError:
-    logger.warn_dependency("HDF5Data", 'h5py')
-    __all__ = []
-else:
-    __all__ = ['HDF5Data']
-
-try:
-    import lmdb
-except ImportError:
-    logger.warn_dependency("LMDBData", 'lmdb')
-else:
-    __all__.extend(['LMDBData', 'LMDBDataDecoder', 'LMDBDataPoint', 'CaffeLMDB'])
-
-try:
-    import sklearn.datasets
-except ImportError:
-    logger.warn_dependency('SVMLightData', 'sklearn')
-else:
-    __all__.extend(['SVMLightData'])
-
+__all__ = ['HDF5Data', 'LMDBData', 'LMDBDataDecoder', 'LMDBDataPoint',
+           'CaffeLMDB', 'SVMLightData']
 
 """
 Adapters for different data format.
@@ -214,3 +194,21 @@ class SVMLightData(RNGDataFlow):
             self.rng.shuffle(idxs)
         for id in idxs:
             yield [self.X[id, :], self.y[id]]
+
+
+from ..utils.dependency import create_dummy_class   # noqa
+try:
+    import h5py
+except ImportError:
+    HDF5Data = create_dummy_class('HDF5Data', 'h5py')   # noqa
+
+try:
+    import lmdb
+except ImportError:
+    for klass in ['LMDBData', 'LMDBDataDecoder', 'LMDBDataPoint', 'CaffeLMDB']:
+        globals()[klass] = create_dummy_class(klass, 'lmdb')
+
+try:
+    import sklearn.datasets
+except ImportError:
+    SVMLightData = create_dummy_class('SVMLightData', 'sklearn')   # noqa

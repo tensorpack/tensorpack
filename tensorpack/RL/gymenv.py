@@ -5,18 +5,6 @@
 
 
 import time
-from ..utils import logger
-try:
-    import gym
-    # TODO
-    # gym.undo_logger_setup()
-    # https://github.com/openai/gym/pull/199
-    # not sure does it cause other problems
-    __all__ = ['GymEnv']
-except ImportError:
-    logger.warn_dependency('GymEnv', 'gym')
-    __all__ = []
-
 import threading
 
 from ..utils.fs import mkdir_p
@@ -24,6 +12,7 @@ from ..utils.stats import StatCounter
 from .envbase import RLEnvironment, DiscreteActionSpace
 
 
+__all__ = ['GymEnv']
 _ENV_LOCK = threading.Lock()
 
 
@@ -82,6 +71,17 @@ class GymEnv(RLEnvironment):
         spc = self.gymenv.action_space
         assert isinstance(spc, gym.spaces.discrete.Discrete)
         return DiscreteActionSpace(spc.n)
+
+
+try:
+    import gym
+    # TODO
+    # gym.undo_logger_setup()
+    # https://github.com/openai/gym/pull/199
+    # not sure does it cause other problems
+except ImportError:
+    from ..utils.dependency import create_dummy_class
+    GymEnv = create_dummy_class('GymEnv', 'gym')    # noqa
 
 
 if __name__ == '__main__':

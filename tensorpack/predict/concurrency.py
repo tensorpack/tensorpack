@@ -9,21 +9,10 @@ from six.moves import queue, range
 
 from ..utils.concurrency import DIE, StoppableThread
 from ..tfutils.modelutils import describe_model
-from ..utils import logger
-
 from .base import OfflinePredictor, AsyncPredictorBase
 
-try:
-    if six.PY2:
-        from tornado.concurrent import Future
-    else:
-        from concurrent.futures import Future
-except ImportError:
-    logger.warn_dependency('MultiThreadAsyncPredictor', 'tornado.concurrent')
-    __all__ = ['MultiProcessPredictWorker', 'MultiProcessQueuePredictWorker']
-else:
-    __all__ = ['MultiProcessPredictWorker', 'MultiProcessQueuePredictWorker',
-               'MultiThreadAsyncPredictor']
+__all__ = ['MultiProcessPredictWorker', 'MultiProcessQueuePredictWorker',
+           'MultiThreadAsyncPredictor']
 
 
 class MultiProcessPredictWorker(multiprocessing.Process):
@@ -171,3 +160,13 @@ class MultiThreadAsyncPredictor(AsyncPredictorBase):
             f.add_done_callback(callback)
         self.input_queue.put((dp, f))
         return f
+
+
+try:
+    if six.PY2:
+        from tornado.concurrent import Future
+    else:
+        from concurrent.futures import Future
+except ImportError:
+    from ..utils.dependency import create_dummy_class
+    MultiThreadAsyncPredictor = create_dummy_class('MultiThreadAsyncPredictor', 'tornado.concurrent')  # noqa

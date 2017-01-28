@@ -11,8 +11,7 @@ from datetime import datetime
 from six.moves import input
 import sys
 
-__all__ = ['set_logger_dir', 'disable_logger', 'auto_set_dir',
-           'warn_dependency']
+__all__ = ['set_logger_dir', 'disable_logger', 'auto_set_dir']
 
 
 class _MyFormatter(logging.Formatter):
@@ -128,8 +127,3 @@ def auto_set_dir(action=None, overwrite=False):
         os.path.join('train_log',
                      basename[:basename.rfind('.')]),
         action=action)
-
-
-def warn_dependency(name, dependencies):
-    """ Print warning about an import failure due to missing dependencies. """
-    warn("Failed to import '{}', {} won't be available'".format(dependencies, name))  # noqa: F821

@@ -9,12 +9,7 @@ import numpy as np
 from ...utils import logger, get_dataset_path
 from ..base import RNGDataFlow
 
-try:
-    import scipy.io
-    __all__ = ['SVHNDigit']
-except ImportError:
-    logger.warn_dependency('SVHNDigit', 'scipy.io')
-    __all__ = []
+__all__ = ['SVHNDigit']
 
 SVHN_URL = "http://ufldl.stanford.edu/housenumbers/"
 
@@ -72,6 +67,12 @@ class SVHNDigit(RNGDataFlow):
         c = SVHNDigit('extra')
         return np.concatenate((a.X, b.X, c.X)).mean(axis=0)
 
+
+try:
+    import scipy.io
+except ImportError:
+    from ...utils.dependency import create_dummy_class
+    SVHNDigit = create_dummy_class('SVHNDigit', 'scipy.io')  # noqa
 
 if __name__ == '__main__':
     a = SVHNDigit('train')
