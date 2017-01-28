@@ -69,11 +69,6 @@ class Callbacks(Callback):
                     logger.warn("StatPrinter should appear as the last element of callbacks! "
                                 "This is now fixed automatically, but may not work in the future.")
                 break
-        else:
-            raise ValueError("Callbacks must contain StatPrinter for stat and writer to work properly!")
-        nr_printer = sum([int(isinstance(cb, StatPrinter)) for cb in cbs])
-        if nr_printer != 1:
-            raise ValueError("Callbacks must contain one StatPrinter!")
 
         self.cbs = cbs
         self._extra_fetches_cache = None

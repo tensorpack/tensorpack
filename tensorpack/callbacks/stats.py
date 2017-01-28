@@ -36,10 +36,18 @@ class StatHolder(object):
         else:
             self.stat_history = []
 
-    def add_stat(self, k, v):
+        # global step of the current list of stat
+        self._current_gs = -1
+
+    def add_stat(self, k, v, global_step, epoch_num):
         """
         Add a stat.
         """
+        if global_step != self._current_gs:
+            self._push()
+            self._current_gs = global_step
+            self.stat_now['epoch_num'] = epoch_num
+            self.stat_now['global_step'] = global_step
         self.stat_now[k] = float(v)
 
     def set_print_tag(self, print_tag):
@@ -85,13 +93,18 @@ class StatHolder(object):
 
     def finalize(self):
         """
-        Called after finishing adding stats for this epoch.
-        Will print and write stats to disk.
+        Print and write stats to disk.
+        This method is idempotent.
         """
         self._print_stat()
-        self.stat_history.append(self.stat_now)
-        self.stat_now = {}
-        self._write_stat()
+        self._push()
+
+    def _push(self):
+        """ Note that this method is idempotent"""
+        if len(self.stat_now):
+            self.stat_history.append(self.stat_now)
+            self.stat_now = {}
+            self._write_stat()
 
     def _print_stat(self):
         for k, v in sorted(self.stat_now.items(), key=operator.itemgetter(0)):
@@ -128,15 +141,8 @@ class StatPrinter(Triggerable):
         self._stat_holder.set_print_tag(self.print_tag)
         self._stat_holder.add_blacklist_tag(['global_step', 'epoch_num'])
 
-        # just try to add this stat earlier so SendStat can use
-        self._stat_holder.add_stat('epoch_num', self.epoch_num + 1)
-
     def _trigger(self):
-        # by default, add this two stat
-        self._stat_holder.add_stat('global_step', self.global_step)
         self._stat_holder.finalize()
-        # this is for the next group of stat
-        self._stat_holder.add_stat('epoch_num', self.epoch_num + 1)
 
 
 class SendStat(Triggerable):

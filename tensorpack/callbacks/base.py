@@ -120,9 +120,7 @@ class Callback(object):
 
     @property
     def global_step(self):
-        return self._starting_step + \
-                self._steps_per_epoch * (self.epoch_num - 1) + \
-                self.local_step
+        return self.trainer.global_step
 
     def __str__(self):
         return type(self).__name__

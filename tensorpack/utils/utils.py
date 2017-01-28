@@ -133,7 +133,7 @@ def get_tqdm(**kwargs):
 def building_rtfd():
     """
     Returns:
-        bool: if tensorpack is imported to generate docs now.
+        bool: if tensorpack is being imported to generate docs now.
     """
     return os.environ.get('READTHEDOCS') == 'True' \
         or os.environ.get('TENSORPACK_DOC_BUILDING')

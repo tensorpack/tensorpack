@@ -109,7 +109,9 @@ class Trainer(object):
                 suffix = '-summary'  # issue#6150
                 if val.tag.endswith(suffix):
                     val.tag = val.tag[:-len(suffix)]
-                self.stat_holder.add_stat(val.tag, val.simple_value)
+                self.stat_holder.add_stat(
+                    val.tag, val.simple_value,
+                    self.global_step, self.epoch_num)
         self.summary_writer.add_summary(summary, get_global_step_value())
 
     def add_scalar_summary(self, name, val):
@@ -151,12 +153,19 @@ class Trainer(object):
     def _setup(self):
         """ setup Trainer-specific stuff for training"""
 
+    @property
+    def global_step(self):
+        return self._starting_step + \
+                self.config.steps_per_epoch * (self.epoch_num - 1) + \
+                self.local_step + 1
+
     def main_loop(self):
         """
         Run the main training loop.
         """
         callbacks = self.config.callbacks
         with self.sess.as_default():
+            self._starting_step = get_global_step_value()
             try:
                 callbacks.before_train()
                 for self.epoch_num in range(
@@ -173,7 +182,7 @@ class Trainer(object):
                         else:
                             callbacks.trigger_step(*fetch_data)
                     logger.info("Epoch {} (global_step {}) finished, time:{:.2f} sec.".format(
-                        self.epoch_num, get_global_step_value(), time.time() - start_time))
+                        self.epoch_num, self.global_step, time.time() - start_time))
 
                     # trigger epoch outside the timing region.
                     self.trigger_epoch()
