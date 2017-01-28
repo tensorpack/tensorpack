@@ -11,7 +11,7 @@ from .batch_norm import BatchNorm
 __all__ = ['Maxout', 'PReLU', 'LeakyReLU', 'BNReLU']
 
 
-@layer_register()
+@layer_register(use_scope=False)
 def Maxout(x, num_unit):
     """
     Maxout as in the paper `Maxout Networks <http://arxiv.org/abs/1302.4389>`_.

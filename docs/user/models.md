@@ -80,11 +80,19 @@ Basically, a layer is a symbolic function with the following rules:
 
 By making a symbolic function a "layer", the following thing will happen:
 + You will call the function with a scope argument, e.g. `Conv2D('conv0', x, 32, 3)`.
-	Everything happening in this function will be under the variable scope 'conv0'.
+	Everything happening in this function will be under the variable scope 'conv0'. You can register
+	the layer with `use_scope=False` to disable this feature.
 + Static shapes of input/output will be logged.
 + It will then work with `argscope` to easily define default arguments. `argscope` will work for all
 	the arguments except the input.
 + It will work with `LinearWrap` if the output of the previous layer matches the input of the next layer.
 
 Take a look at the [Inception example](../examples/Inception/inception-bn.py#L36) to see how a complicated model can be described with these primitives.
+
+There are also a number of symbolic functions in the `tfutils.symbolic_functions` module.
+There isn't a rule about what kind of symbolic functions should be made a layer -- they're quite
+similar anyway. But in general I define the following kinds of symbolic functions as layers:
++ Functions which contain variables. A variable scope is almost always helpful for such function.
++ Functions which are commonly referred to as "layers", such as pooling. This make a model
+	definition more straightforward.
 

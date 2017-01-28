@@ -13,9 +13,28 @@ from ..tfutils.summary import add_activation_summary
 from ..utils import logger, building_rtfd
 
 # make sure each layer is only logged once
-_layer_logged = set()
+_LAYER_LOGGED = set()
+_LAYER_REGISTERED = {}
 
-__all__ = ['layer_register', 'disable_layer_logging']
+__all__ = ['layer_register', 'disable_layer_logging', 'get_registered_layer']
+
+
+def _register(name, func):
+    if name in _LAYER_REGISTERED:
+        raise ValueError("Layer named {} is already registered!".format(name))
+    if name in ['tf']:
+        raise ValueError(logger.error("A layer cannot be named {}".format(name)))
+    _LAYER_REGISTERED[name] = func
+
+
+def get_registered_layer(name):
+    """
+    Args:
+        name (str): the name of the layer, e.g. 'Conv2D'
+    Returns:
+        the wrapped layer function, or None if not registered.
+    """
+    return _LAYER_REGISTERED.get(name, None)
 
 
 def disable_layer_logging():
@@ -27,7 +46,7 @@ def disable_layer_logging():
         def __contains__(self, x):
             return True
     # can use nonlocal in python3, but how
-    globals()['_layer_logged'] = ContainEverything()
+    globals()['_LAYER_LOGGED'] = ContainEverything()
 
 
 def layer_register(
@@ -76,8 +95,8 @@ def layer_register(
 
             if name is not None:
                 with tf.variable_scope(name) as scope:
-                    do_log_shape = log_shape and scope.name not in _layer_logged
-                    do_summary = do_summary and scope.name not in _layer_logged
+                    do_log_shape = log_shape and scope.name not in _LAYER_LOGGED
+                    do_summary = do_summary and scope.name not in _LAYER_LOGGED
                     if do_log_shape:
                         logger.info("{} input: {}".format(scope.name, get_shape_str(inputs)))
 
@@ -88,7 +107,7 @@ def layer_register(
                         # log shape info and add activation
                         logger.info("{} output: {}".format(
                             scope.name, get_shape_str(outputs)))
-                        _layer_logged.add(scope.name)
+                        _LAYER_LOGGED.add(scope.name)
 
                     if do_summary:
                         if isinstance(outputs, list):
@@ -101,8 +120,9 @@ def layer_register(
                 outputs = func(*args, **actual_args)
             return outputs
 
-        wrapped_func.f = func   # attribute to access the underlining function object
+        wrapped_func.f = func   # attribute to access the underlying function object
         wrapped_func.use_scope = use_scope
+        _register(func.__name__, wrapped_func)
         return wrapped_func
 
     # need some special handling for sphinx to work with the arguments
