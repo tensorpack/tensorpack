@@ -83,8 +83,8 @@ def GlobalAvgPooling(x):
 
 def UnPooling2x2ZeroFilled(x):
     # https://github.com/tensorflow/tensorflow/issues/2169
-    out = tf.concat_v2([x, tf.zeros_like(x)], 3)
-    out = tf.concat_v2([out, tf.zeros_like(out)], 2)
+    out = tf.concat([x, tf.zeros_like(x)], 3)
+    out = tf.concat([out, tf.zeros_like(out)], 2)
 
     sh = x.get_shape().as_list()
     if None not in sh[1:]:

@@ -80,8 +80,8 @@ def ImageSample(inputs, borderMode='repeat'):
     lcoory, lcoorx = tf.split(lcoor, 2, 3)
     ucoory, ucoorx = tf.split(ucoor, 2, 3)
 
-    lyux = tf.concat_v2([lcoory, ucoorx], 3)
-    uylx = tf.concat_v2([ucoory, lcoorx], 3)
+    lyux = tf.concat([lcoory, ucoorx], 3)
+    uylx = tf.concat([ucoory, lcoorx], 3)
 
     diffy, diffx = tf.split(diff, 2, 3)
     neg_diffy, neg_diffx = tf.split(neg_diff, 2, 3)

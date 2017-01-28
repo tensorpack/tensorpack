@@ -87,7 +87,7 @@ class Model(GANModelDesc):
 
     def discriminator(self, inputs, outputs):
         """ return a (b, 1) logits"""
-        l = tf.concat_v2([inputs, outputs], 3)
+        l = tf.concat([inputs, outputs], 3)
         with argscope(Conv2D, nl=tf.identity, kernel_shape=4, stride=2):
             l = (LinearWrap(l)
                  .Conv2D('conv0', NF, nl=LeakyReLU)
@@ -125,7 +125,7 @@ class Model(GANModelDesc):
         if OUT_CH == 1:
             output = tf.image.grayscale_to_rgb(output)
             fake_output = tf.image.grayscale_to_rgb(fake_output)
-        viz = (tf.concat_v2([input, output, fake_output], 2) + 1.0) * 128.0
+        viz = (tf.concat([input, output, fake_output], 2) + 1.0) * 128.0
         viz = tf.cast(tf.clip_by_value(viz, 0, 255), tf.uint8, name='viz')
         tf.summary.image('input,output,fake', viz, max_outputs=max(30, BATCH))
 

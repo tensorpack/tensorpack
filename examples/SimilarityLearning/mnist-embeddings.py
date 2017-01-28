@@ -32,7 +32,7 @@ class EmbeddingModel(ModelDesc):
         list_split = 0
         if isinstance(x, list):
             list_split = len(x)
-            x = tf.concat_v2(x, 0)
+            x = tf.concat(x, 0)
 
         # pre-process MNIST dataflow data
         x = tf.expand_dims(x, 3)

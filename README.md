@@ -58,7 +58,7 @@ The components are designed to be independent. You can use Model or DataFlow in 
 ## Dependencies:
 
 + Python 2 or 3
-+ TensorFlow >= 0.12
++ TensorFlow >= 1.0.0rc0
 + Python bindings for OpenCV
 + other requirements:
 ```

@@ -59,7 +59,7 @@ class Model(ModelDesc):
                 if nrpool != 0:  # pool + passthrough if nrpool == 0
                     x4 = Conv2D('poolproj', x4, nrpool, 1)
                 outs.append(x4)
-                return tf.concat_v2(outs, 3, name='concat')
+                return tf.concat(outs, 3, name='concat')
 
         with argscope(Conv2D, nl=BNReLU, use_bias=False):
             l = Conv2D('conv0', image, 64, 7, stride=2)

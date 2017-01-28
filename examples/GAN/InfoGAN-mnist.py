@@ -79,7 +79,7 @@ class Model(GANModelDesc):
             self.factors.sample(BATCH, prior), 0, name='z_code')
         z_noise = symbf.shapeless_placeholder(
             tf.random_uniform([BATCH, NOISE_DIM], -1, 1), 0, name='z_noise')
-        z = tf.concat_v2([zc, z_noise], 1, name='z')
+        z = tf.concat([zc, z_noise], 1, name='z')
 
         with argscope([Conv2D, Deconv2D, FullyConnected],
                       W_init=tf.truncated_normal_initializer(stddev=0.02)):

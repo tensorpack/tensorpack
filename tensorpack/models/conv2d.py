@@ -66,7 +66,7 @@ def Conv2D(x, out_channel, kernel_shape,
         kernels = tf.split(W, split, 3)
         outputs = [tf.nn.conv2d(i, k, stride, padding)
                    for i, k in zip(inputs, kernels)]
-        conv = tf.concat_v2(outputs, 3)
+        conv = tf.concat(outputs, 3)
     return nl(tf.nn.bias_add(conv, b) if use_bias else conv, name='output')
 
 

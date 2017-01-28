@@ -84,7 +84,7 @@ class Model(ModelDesc):
         self.last_state = tf.identity(last_state, 'last_state')
 
         # seqlen x (Bxrnnsize)
-        output = tf.reshape(tf.concat_v2(outputs, 1), [-1, param.rnn_size])  # (Bxseqlen) x rnnsize
+        output = tf.reshape(tf.concat(outputs, 1), [-1, param.rnn_size])  # (Bxseqlen) x rnnsize
         logits = FullyConnected('fc', output, param.vocab_size, nl=tf.identity)
         self.prob = tf.nn.softmax(logits / param.softmax_temprature)
 

@@ -20,7 +20,7 @@ Alternative link to this page: [http://dorefa.net](http://dorefa.net)
 
 To use the script. You'll need:
 
-+ TensorFlow >= 0.12.1
++ TensorFlow >= 1.0.0rc0
 
 + OpenCV bindings for Python
 

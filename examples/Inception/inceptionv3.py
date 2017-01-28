@@ -88,21 +88,21 @@ class Model(ModelDesc):
                  .MaxPooling('pool4', 3, 2)())  # 35
 
             with tf.variable_scope('incep-35-256a'):
-                l = tf.concat_v2([
+                l = tf.concat([
                     Conv2D('conv11', l, 64, 1),
                     proj_kk(l, 5, 48, 64),
                     proj_233(l, 64, 96),
                     pool_proj(l, 32, 'avg')
                 ], 3, name='concat')
             with tf.variable_scope('incep-35-288a'):
-                l = tf.concat_v2([
+                l = tf.concat([
                     Conv2D('conv11', l, 64, 1),
                     proj_kk(l, 5, 48, 64),
                     proj_233(l, 64, 96),
                     pool_proj(l, 64, 'avg')
                 ], 3, name='concat')
             with tf.variable_scope('incep-35-288b'):
-                l = tf.concat_v2([
+                l = tf.concat([
                     Conv2D('conv11', l, 64, 1),
                     proj_kk(l, 5, 48, 64),
                     proj_233(l, 64, 96),
@@ -110,13 +110,13 @@ class Model(ModelDesc):
                 ], 3, name='concat')
             # 35x35x288
             with tf.variable_scope('incep-17-768a'):
-                l = tf.concat_v2([
+                l = tf.concat([
                     Conv2D('conv3x3', l, 384, 3, stride=2, padding='VALID'),
                     proj_233(l, 64, 96, stride=2),
                     MaxPooling('maxpool', l, 3, 2)
                 ], 3, name='concat')
             with tf.variable_scope('incep-17-768b'):
-                l = tf.concat_v2([
+                l = tf.concat([
                     Conv2D('conv11', l, 192, 1),
                     proj_77(l, 128, 192),
                     proj_277(l, 128, 192),
@@ -124,14 +124,14 @@ class Model(ModelDesc):
                 ], 3, name='concat')
             for x in ['c', 'd']:
                 with tf.variable_scope('incep-17-768{}'.format(x)):
-                    l = tf.concat_v2([
+                    l = tf.concat([
                         Conv2D('conv11', l, 192, 1),
                         proj_77(l, 160, 192),
                         proj_277(l, 160, 192),
                         pool_proj(l, 192, 'avg')
                     ], 3, name='concat')
             with tf.variable_scope('incep-17-768e'):
-                l = tf.concat_v2([
+                l = tf.concat([
                     Conv2D('conv11', l, 192, 1),
                     proj_77(l, 192, 192),
                     proj_277(l, 192, 192),
@@ -147,7 +147,7 @@ class Model(ModelDesc):
                 br1 = FullyConnected('fc', br1, 1000, nl=tf.identity)
 
             with tf.variable_scope('incep-17-1280a'):
-                l = tf.concat_v2([
+                l = tf.concat([
                     proj_kk(l, 3, 192, 320, stride=2),
                     Conv2D('conv73', proj_77(l, 192, 192), 192, 3, stride=2, padding='VALID'),
                     MaxPooling('maxpool', l, 3, 2)
@@ -156,18 +156,18 @@ class Model(ModelDesc):
                 with tf.variable_scope('incep-8-2048{}'.format(x)) as scope:
                     br11 = Conv2D('conv11', l, 320, 1)
                     br33 = Conv2D('conv133r', l, 384, 1)
-                    br33 = tf.concat_v2([
+                    br33 = tf.concat([
                         Conv2D('conv133a', br33, 384, [1, 3]),
                         Conv2D('conv133b', br33, 384, [3, 1])
                     ], 3, name='conv133')
 
                     br233 = proj_kk(l, 3, 448, 384)
-                    br233 = tf.concat_v2([
+                    br233 = tf.concat([
                         Conv2D('conv233a', br233, 384, [1, 3]),
                         Conv2D('conv233b', br233, 384, [3, 1]),
                     ], 3, name='conv233')
 
-                    l = tf.concat_v2([
+                    l = tf.concat([
                         br11, br33, br233,
                         pool_proj(l, 192, 'avg')
                     ], 3, name='concat')

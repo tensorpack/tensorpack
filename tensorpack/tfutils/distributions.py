@@ -225,7 +225,7 @@ class GaussianDistribution(Distribution):
             stddev = tf.exp(stddev)  # just make it positive and assume it's stddev
             # OpenAI code assumes exp(input) is variance. https://github.com/openai/InfoGAN.
             # not sure if there is any theory about this.
-            return tf.concat_v2([mean, stddev], axis=1)
+            return tf.concat([mean, stddev], axis=1)
 
     def _sample(self, batch_size, theta):
         if self.fixed_std:
@@ -308,10 +308,10 @@ class ProductDistribution(Distribution):
         for dist, dist_param in zip(self.dists, self._splitter(dist_params, True)):
             if dist.param_dim > 0:
                 rsl.append(dist._encoder_activation(dist_param))
-        return tf.concat_v2(rsl, 1)
+        return tf.concat(rsl, 1)
 
     def _sample(self, batch_size, theta):
         ret = []
         for dist, ti in zip(self.dists, self._splitter(theta, True)):
             ret.append(dist._sample(batch_size, ti))
-        return tf.concat_v2(ret, 1, name='sample')
+        return tf.concat(ret, 1, name='sample')

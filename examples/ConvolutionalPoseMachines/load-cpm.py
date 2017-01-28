@@ -82,7 +82,7 @@ class Model(ModelDesc):
                       .Conv2D('conv4_7_CPM', 128)())
 
         def add_stage(stage, l):
-            l = tf.concat_v2([l, shared, pool_center], 3,
+            l = tf.concat([l, shared, pool_center], 3,
                              name='concat_stage{}'.format(stage))
             for i in range(1, 6):
                 l = Conv2D('Mconv{}_stage{}'.format(i, stage), l, 128)
