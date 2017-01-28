@@ -10,6 +10,9 @@ if [ $TF_TYPE == "release" ]; then
 	if [[ $TRAVIS_PYTHON_VERSION == 3.5* ]]; then
 		TF_BINARY_URL=https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-${TF_VERSION}-cp35-cp35m-linux_x86_64.whl
 	fi
+	if [[ $TRAVIS_PYTHON_VERSION == 3.6* ]]; then
+		TF_BINARY_URL=https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-${TF_VERSION}-cp36-cp36m-linux_x86_64.whl
+	fi
 fi
 if [ $TF_TYPE == "nightly" ]; then
 	if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then
