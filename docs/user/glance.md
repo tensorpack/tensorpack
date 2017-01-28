@@ -3,21 +3,6 @@
 
 The following guide introduces some core concepts of TensorPack. In contrast to several other libraries TensorPack contains of several modules to build complex deep learning algorithms and train models with high accuracy and high speed.
 
-### DataFlow
-To train neural network architectures on extensive training data this library provides a data flow mechanism. This consists of several readers, mappings (e.g. image augmentations) and efficient prefetching.
-
-The following code reads images from a database produced in the fashion of Caffe and add several modifications such as resizing them to $255\times 255$ and converting these to gray-scale images. 
-
-````python
-ds = CaffeLMDB('/path/to/caffe/lmdb', shuffle=False)
-ds = AugmentImageComponent(ds, [imgaug.Resize((225, 225))])
-ds = MapData(ds, lambda dp: [np.dot(dp[0], [0.299, 0.587, 0.114])[:, :]])
-ds = BatchData(ds, 128)
-ds = PrefetchData(ds, 3, 2)
-````
-
-In addition, the input data is gathered in batches of 128 entries and prefetched in an extra process to avoid slow-downs due to GIL.
-
 ### Layers and Architectures
 The library also contains several pre-implemented neural network modules and layers:
 - Convolution, Deconvolution
@@ -51,7 +36,7 @@ You only need to configure your training protocol like
 
 ````python
 config =  TrainConfig(
-            dataflow=my_dataflow, 
+            dataflow=my_dataflow,
             optimizer=tf.train.AdamOptimizer(lr),
             callbacks=Callbacks([ModelSaver(), ...]),
             model=Model())

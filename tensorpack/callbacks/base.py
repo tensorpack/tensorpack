@@ -130,9 +130,9 @@ class Callback(object):
 class Triggerable(Callback):
     """
     Base class for "triggerable" callback. It has a method :meth:`Triggerable.trigger()`
-    which can be triggered either inside an epoch or between epochs.
-    The higher-level wrapper will take the responsibility to determine when
-    to trigger.
+    which can be called either inside an epoch or between epochs.
+    Other higher-level wrappers will take the responsibility to determine **when**
+    to call the trigger.
 
     If an triggerable is used as a callback directly (instead of under other
     higher-level wrapper to control the trigger), it will by default trigger after
@@ -143,11 +143,7 @@ class Triggerable(Callback):
         """
         Trigger something.
         Note that this method may be called both inside an epoch and after an epoch.
-
-        Some operations (e.g. writing scalar stats) currently will cause
-        problems if run inside an epoch. This will be fixed in the future.
         """
-        # TODO
         self._trigger()
 
     @abstractmethod

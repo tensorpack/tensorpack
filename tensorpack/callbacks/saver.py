@@ -26,7 +26,7 @@ class ModelSaver(Triggerable):
             keep_recent(int): see ``tf.train.Saver`` documentation.
             keep_freq(int): see ``tf.train.Saver`` documentation.
             checkpoint_dir (str): Defaults to ``logger.LOG_DIR``.
-            var_collections (str or list): the variable collection (or list of collections) o save.
+            var_collections (str or list of str): collection of the variables (or list of collections) to save.
         """
         self.keep_recent = keep_recent
         self.keep_freq = keep_freq

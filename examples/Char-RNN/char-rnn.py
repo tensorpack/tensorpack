@@ -30,7 +30,6 @@ param.corpus = 'input.txt'
 
 
 class CharRNNData(RNGDataFlow):
-
     def __init__(self, input_file, size):
         self.seq_length = param.seq_len
         self._size = size
@@ -61,7 +60,6 @@ class CharRNNData(RNGDataFlow):
 
 
 class Model(ModelDesc):
-
     def _get_input_vars(self):
         return [InputVar(tf.int32, (None, param.seq_len), 'input'),
                 InputVar(tf.int32, (None, param.seq_len), 'nextinput')]
