@@ -35,7 +35,6 @@ INPUT_SHAPE = 299
 
 
 class Model(ModelDesc):
-
     def _get_input_vars(self):
         return [InputVar(tf.float32, [None, INPUT_SHAPE, INPUT_SHAPE, 3], 'input'),
                 InputVar(tf.int32, [None], 'label')]
@@ -209,7 +208,6 @@ def get_data(train_or_test):
 
     if isTrain:
         class Resize(imgaug.ImageAugmentor):
-
             def __init__(self):
                 self._init(locals())
 

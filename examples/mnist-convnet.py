@@ -23,7 +23,6 @@ USE_SLIM = False
 
 
 class Model(ModelDesc):
-
     def _get_input_vars(self):
         """Define all the input variables (with type, shape, name) that'll be
         fed into the graph to produce a cost.  """

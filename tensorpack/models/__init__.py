@@ -91,6 +91,17 @@ class LinearWrap(object):
         ret = func(self._t, *args, **kwargs)
         return LinearWrap(ret)
 
+    def apply2(self, func, *args, **kwargs):
+        """
+        Apply a function on the wrapped tensor. The tensor
+        will be the second argument of func.
+
+        Returns:
+            LinearWrap: ``LinearWrap(func(args[0], self.tensor(), *args[1:], **kwargs))``.
+        """
+        ret = func(args[0], self._t, *(args[1:]), **kwargs)
+        return LinearWrap(ret)
+
     def __call__(self):
         """
         Returns:

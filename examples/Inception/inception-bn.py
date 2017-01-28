@@ -29,7 +29,6 @@ Learning rate may need a different schedule for different number of GPUs (becaus
 
 
 class Model(ModelDesc):
-
     def _get_input_vars(self):
         return [InputVar(tf.float32, [None, INPUT_SHAPE, INPUT_SHAPE, 3], 'input'),
                 InputVar(tf.int32, [None], 'label')]
@@ -62,19 +61,21 @@ class Model(ModelDesc):
                 return tf.concat(outs, 3, name='concat')
 
         with argscope(Conv2D, nl=BNReLU, use_bias=False):
-            l = Conv2D('conv0', image, 64, 7, stride=2)
-            l = MaxPooling('pool0', l, 3, 2, padding='SAME')
-            l = Conv2D('conv1', l, 64, 1)
-            l = Conv2D('conv2', l, 192, 3)
-            l = MaxPooling('pool2', l, 3, 2, padding='SAME')
+            l = (LinearWrap(image)
+                 .Conv2D('conv0', 64, 7, stride=2)
+                 .MaxPooling('pool0', 3, 2, padding='SAME')
+                 .Conv2D('conv1', 64, 1)
+                 .Conv2D('conv2', 192, 3)
+                 .MaxPooling('pool2', 3, 2, padding='SAME')())
             # 28
             l = inception('incep3a', l, 64, 64, 64, 64, 96, 32, 'avg')
             l = inception('incep3b', l, 64, 64, 96, 64, 96, 64, 'avg')
             l = inception('incep3c', l, 0, 128, 160, 64, 96, 0, 'max')
 
-            br1 = Conv2D('loss1conv', l, 128, 1)
-            br1 = FullyConnected('loss1fc', br1, 1024, nl=tf.nn.relu)
-            br1 = FullyConnected('loss1logit', br1, 1000, nl=tf.identity)
+            br1 = (LinearWrap(l)
+                   .Conv2D('loss1conv', 128, 1)
+                   .FullyConnected('loss1fc', 1024, nl=tf.nn.relu)
+                   .FullyConnected('loss1logit', 1000, nl=tf.identity)())
             loss1 = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=br1, labels=label)
             loss1 = tf.reduce_mean(loss1, name='loss1')
 
@@ -96,7 +97,7 @@ class Model(ModelDesc):
             l = inception('incep5b', l, 352, 192, 320, 192, 224, 128, 'max')
             l = GlobalAvgPooling('gap', l)
 
-        logits = FullyConnected('linear', l, out_dim=1000, nl=tf.identity)
+            logits = FullyConnected('linear', l, out_dim=1000, nl=tf.identity)
         prob = tf.nn.softmax(logits, name='output')
         loss3 = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         loss3 = tf.reduce_mean(loss3, name='loss3')

@@ -8,34 +8,38 @@ which yields a `datapoint` when called.
 A datapoint must be a **list** of Python objects which I called the `components` of this datapoint.
 
 For example, to train on MNIST dataset, you can define a Dataflow
-that produces datapoints of shape `[(BATCH, 28, 28), (BATCH,)]`.
+that produces datapoints of two elements: a numpy array of shape (64, 28, 28), and an array of shape (64,).
 
 ### Composition of DataFlow
 One good thing about having a standard interface is to be able to provide
 the greatest code reusablility.
 There are a lot of existing modules in tensorpack which you can use to compose
 complex Dataflow instances with a long pre-processing pipeline. A whole pipeline usually
-includes __read from disk (or other sources), augmentations, group into batches,
-prefetching__, etc. An example is as the following:
+would __read from disk (or other sources), apply augmentations, group into batches,
+prefetch data__, etc. An example is as the following:
 
 ````python
 # define a Dataflow which produces image-label pairs from a caffe lmdb database
-ds = CaffeLMDB('/path/to/caffe/lmdb', shuffle=False)
+df = CaffeLMDB('/path/to/caffe/lmdb', shuffle=False)
 # resize the image component of each datapoint
-ds = AugmentImageComponent(ds, [imgaug.Resize((225, 225))])
+df = AugmentImageComponent(df, [imgaug.Resize((225, 225))])
 # group data into batches of size 128
-ds = BatchData(ds, 128)
+df = BatchData(df, 128)
 # start 3 processes to run the dataflow in parallel, and transfer the data with ZeroMQ
-ds = PrefetchDataZMQ(ds, 3)
+df = PrefetchDataZMQ(df, 3)
 ````
-Another complicated example is the [ResNet training script](https://github.com/ppwwyyxx/tensorpack/blob/master/examples/ResNet/imagenet-resnet.py)
+Another complicated example is the [ResNet training script](../examples/ResNet/imagenet-resnet.py)
 with all the data preprocessing.
 
 All these modules are written in Python,
 so you can easily implement whatever opeartions/transformations you need,
-without worring about adding data reading operators to TensorFlow.
+without worrying about adding operators to TensorFlow.
 In the mean time, thanks to the prefetching, it can still run fast enough for
 tasks as large as ImageNet training.
+
+<!--
+   - TODO mention RL, distributed data, and zmq operator in the future.
+	 -->
 
 ### Reuse in other frameworks
 Another good thing about Dataflow is that it is independent of
@@ -54,9 +58,9 @@ module, which you can take as a reference.
 A Dataflow has a `get_data()` method which yields a datapoint every time.
 ```python
 class MyDataFlow(DataFlow):
-	  def get_data(self):
-		    for k in range(100):
-					  yield datapoint
+  def get_data(self):
+    for k in range(100):
+		  yield datapoint
 ```
 
 Optionally, Dataflow can implement the following two methods:
@@ -66,6 +70,6 @@ Optionally, Dataflow can implement the following two methods:
 
 + `reset_state()`. It's necessary if your Dataflow uses RNG. This
 	method should reset the internal state of this Dataflow (including RNG). It get called after a fork, so that different child
-	processes will have different random seed.
+	processes will have different random seed. You can also inherit `RNGDataFlow` which does this for `self.rng` already.
 
-With this "low-level" Dataflow implemented, you can then compose it with existing modules.
+With this "low-level" Dataflow defined, you can then compose it with existing modules.
