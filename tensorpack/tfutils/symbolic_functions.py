@@ -148,8 +148,8 @@ def get_scalar_var(name, init_value, summary=False, trainable=False):
     return ret
 
 
-def psnr_loss(prediction, ground_truth, name='psnr_loss'):
-    """Negative `Peek Signal to Noise Ratio <https://en.wikipedia.org/wiki/Peak_signal-to-noise_ratio>`_.
+def psnr(prediction, ground_truth, name='psnr'):
+    """`Peek Signal to Noise Ratio <https://en.wikipedia.org/wiki/Peak_signal-to-noise_ratio>`_.
 
     .. math::
 
@@ -163,7 +163,7 @@ def psnr_loss(prediction, ground_truth, name='psnr_loss'):
         ground_truth: another :class:`tf.Tensor` with the same shape.
 
     Returns:
-        A scalar tensor. The negative PSNR (for minimization).
+        A scalar tensor representing the PSNR.
     """
 
     def log10(x):
@@ -172,7 +172,7 @@ def psnr_loss(prediction, ground_truth, name='psnr_loss'):
         return numerator / denominator
 
     return tf.multiply(log10(tf.reduce_mean(tf.square(prediction - ground_truth))),
-                       10., name=name)
+                       -10., name=name)
 
 
 @contextmanager
