@@ -29,9 +29,8 @@ IMAGE_SIZE = 28
 
 
 class Model(mnist_example.Model):
-
-    def _build_graph(self, input_vars):
-        image, label = input_vars
+    def _build_graph(self, inputs):
+        image, label = inputs
         image = tf.expand_dims(image, 3)
 
         with argscope(Conv2D, kernel_shape=5, nl=tf.nn.relu):

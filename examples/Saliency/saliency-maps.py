@@ -16,11 +16,11 @@ IMAGE_SIZE = 224
 
 
 class Model(tp.ModelDesc):
-    def _get_input_vars(self):
+    def _get_inputs(self):
         return [tp.InputVar(tf.float32, (IMAGE_SIZE, IMAGE_SIZE, 3), 'image')]
 
-    def _build_graph(self, input_vars):
-        orig_image = input_vars[0]
+    def _build_graph(self, inputs):
+        orig_image = inputs[0]
         mean = tf.get_variable('resnet_v1_50/mean_rgb', shape=[3])
         with tp.symbolic_functions.guided_relu():
             with slim.arg_scope(resnet_v1.resnet_arg_scope(is_training=False)):

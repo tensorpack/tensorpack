@@ -23,18 +23,18 @@ USE_SLIM = False
 
 
 class Model(ModelDesc):
-    def _get_input_vars(self):
+    def _get_inputs(self):
         """Define all the input variables (with type, shape, name) that'll be
         fed into the graph to produce a cost.  """
         return [InputVar(tf.float32, (None, IMAGE_SIZE, IMAGE_SIZE), 'input'),
                 InputVar(tf.int32, (None,), 'label')]
 
-    def _build_graph(self, input_vars):
+    def _build_graph(self, inputs):
         """This function should build the model which takes the input variables
         and define self.cost at the end"""
 
-        # input_vars contains a list of input variables defined above
-        image, label = input_vars
+        # inputs contains a list of input variables defined above
+        image, label = inputs
         # In tensorflow, inputs to convolution function are assumed to be
         # NHWC. Add a single channel here.
         image = tf.expand_dims(image, 3)

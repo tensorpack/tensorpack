@@ -43,8 +43,7 @@ NF = 64  # number of filter
 
 
 class Model(GANModelDesc):
-
-    def _get_input_vars(self):
+    def _get_inputs(self):
         return [InputVar(tf.float32, (None, SHAPE, SHAPE, IN_CH), 'input'),
                 InputVar(tf.float32, (None, SHAPE, SHAPE, OUT_CH), 'output')]
 
@@ -100,8 +99,8 @@ class Model(GANModelDesc):
                  .Conv2D('convlast', 1, stride=1, padding='VALID')())
         return l
 
-    def _build_graph(self, input_vars):
-        input, output = input_vars
+    def _build_graph(self, inputs):
+        input, output = inputs
         input, output = input / 128.0 - 1, output / 128.0 - 1
 
         with argscope([Conv2D, Deconv2D],

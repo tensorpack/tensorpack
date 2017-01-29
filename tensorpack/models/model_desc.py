@@ -87,11 +87,14 @@ class ModelDesc(object):
         """
         return self._get_input_vars()
 
-    @abstractmethod
-    def _get_input_vars(self):
+    def _get_input_vars(self):  # keep backward compatibility
         """
         :returns: a list of InputVar
         """
+        return self._get_inputs()
+
+    def _get_inputs(self):  # this is a better name than _get_input_vars
+        raise NotImplementedError()
 
     def build_graph(self, model_inputs):
         """
@@ -171,7 +174,7 @@ class ModelFromMetaGraph(ModelDesc):
             assert k in all_coll, \
                 "Collection {} not found in metagraph!".format(k)
 
-    def _get_input_vars(self):
+    def _get_inputs(self):
         col = tf.get_collection(INPUT_VARS_KEY)
         col = [InputVar.loads(v) for v in col]
         return col

@@ -37,12 +37,12 @@ class Model(ModelDesc):
         super(Model, self).__init__()
         self.n = n
 
-    def _get_input_vars(self):
+    def _get_inputs(self):
         return [InputVar(tf.float32, [None, 32, 32, 3], 'input'),
                 InputVar(tf.int32, [None], 'label')]
 
-    def _build_graph(self, input_vars):
-        image, label = input_vars
+    def _build_graph(self, inputs):
+        image, label = inputs
         image = image / 128.0 - 1
 
         def residual(name, l, increase_dim=False, first=False):

@@ -32,7 +32,7 @@ class GaussianWithUniformSample(GaussianDistribution):
 
 
 class Model(GANModelDesc):
-    def _get_input_vars(self):
+    def _get_inputs(self):
         return [InputVar(tf.float32, (None, 28, 28), 'input')]
 
     def generator(self, z):
@@ -62,8 +62,8 @@ class Model(GANModelDesc):
                        .FullyConnected('fce-out', self.factors.param_dim, nl=tf.identity)())
         return logits, encoder
 
-    def _build_graph(self, input_vars):
-        real_sample = input_vars[0]
+    def _build_graph(self, inputs):
+        real_sample = inputs[0]
         real_sample = tf.expand_dims(real_sample * 2.0 - 1, -1)
 
         # latent space is cat(10) x uni(1) x uni(1) x noise(NOISE_DIM)

@@ -24,18 +24,17 @@ Not a good model for Cifar100, just for demonstration.
 
 
 class Model(ModelDesc):
-
     def __init__(self, cifar_classnum):
         super(Model, self).__init__()
         self.cifar_classnum = cifar_classnum
 
-    def _get_input_vars(self):
+    def _get_inputs(self):
         return [InputVar(tf.float32, [None, 30, 30, 3], 'input'),
                 InputVar(tf.int32, [None], 'label')
                 ]
 
-    def _build_graph(self, input_vars):
-        image, label = input_vars
+    def _build_graph(self, inputs):
+        image, label = inputs
         is_training = get_current_tower_context().is_training
         keep_prob = tf.constant(0.5 if is_training else 1.0)
 

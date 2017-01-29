@@ -68,8 +68,7 @@ common.get_player = get_player  # so that eval functions in common can use the p
 
 
 class Model(ModelDesc):
-
-    def _get_input_vars(self):
+    def _get_inputs(self):
         if NUM_ACTIONS is None:
             p = get_player()
             del p

@@ -36,8 +36,7 @@ CFG.Z_DIM = 100
 
 
 class Model(GANModelDesc):
-
-    def _get_input_vars(self):
+    def _get_inputs(self):
         return [InputVar(tf.float32, (None, CFG.SHAPE, CFG.SHAPE, 3), 'input')]
 
     def generator(self, z):
@@ -70,8 +69,8 @@ class Model(GANModelDesc):
                  .FullyConnected('fct', 1, nl=tf.identity)())
         return l
 
-    def _build_graph(self, input_vars):
-        image_pos = input_vars[0]
+    def _build_graph(self, inputs):
+        image_pos = inputs[0]
         image_pos = image_pos / 128.0 - 1
 
         z = tf.random_uniform([CFG.BATCH, CFG.Z_DIM], -1, 1, name='z_train')

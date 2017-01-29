@@ -17,13 +17,12 @@ from tensorpack.tfutils.summary import *
 
 
 class Model(ModelDesc):
-
-    def _get_input_vars(self):
+    def _get_inputs(self):
         return [InputVar(tf.float32, [None, None, None, 3], 'image'),
                 InputVar(tf.int32, [None, None, None], 'edgemap')]
 
-    def _build_graph(self, input_vars):
-        image, edgemap = input_vars
+    def _build_graph(self, inputs):
+        image, edgemap = inputs
         image = image - tf.constant([104, 116, 122], dtype='float32')
         edgemap = tf.expand_dims(edgemap, 3, name='edgemap4d')
 

@@ -61,20 +61,20 @@ class SiameseModel(EmbeddingModel):
         ds = BatchData(ds, 128 // 2)
         return ds
 
-    def _get_input_vars(self):
+    def _get_inputs(self):
         return [InputVar(tf.float32, (None, 28, 28), 'input'),
                 InputVar(tf.float32, (None, 28, 28), 'input_y'),
                 InputVar(tf.int32, (None,), 'label')]
 
-    def _build_graph(self, input_vars):
+    def _build_graph(self, inputs):
         # get inputs
-        x, y, label = input_vars
+        x, y, label = inputs
         # embed them
         x, y = self.embed([x, y])
 
         # tag the embedding of 'input' with name 'emb', just for inference later on
         with tf.variable_scope(tf.get_variable_scope(), reuse=True):
-            tf.identity(self.embed(input_vars[0]), name="emb")
+            tf.identity(self.embed(inputs[0]), name="emb")
 
         # compute the actual loss
         cost, pos_dist, neg_dist = symbf.contrastive_loss(x, y, label, 5., extra=True)
@@ -85,12 +85,12 @@ class SiameseModel(EmbeddingModel):
 
 
 class CosineModel(SiameseModel):
-    def _build_graph(self, input_vars):
-        x, y, label = input_vars
+    def _build_graph(self, inputs):
+        x, y, label = inputs
         x, y = self.embed([x, y])
 
         with tf.variable_scope(tf.get_variable_scope(), reuse=True):
-            tf.identity(self.embed(input_vars[0]), name="emb")
+            tf.identity(self.embed(inputs[0]), name="emb")
 
         cost = symbf.cosine_loss(x, y, label)
         self.cost = tf.identity(cost, name="cost")
@@ -104,7 +104,7 @@ class TripletModel(EmbeddingModel):
         ds = BatchData(ds, 128 // 3)
         return ds
 
-    def _get_input_vars(self):
+    def _get_inputs(self):
         return [InputVar(tf.float32, (None, 28, 28), 'input'),
                 InputVar(tf.float32, (None, 28, 28), 'input_p'),
                 InputVar(tf.float32, (None, 28, 28), 'input_n')]
@@ -112,12 +112,12 @@ class TripletModel(EmbeddingModel):
     def loss(self, a, p, n):
         return symbf.triplet_loss(a, p, n, 5., extra=True)
 
-    def _build_graph(self, input_vars):
-        a, p, n = input_vars
+    def _build_graph(self, inputs):
+        a, p, n = inputs
         a, p, n = self.embed([a, p, n])
 
         with tf.variable_scope(tf.get_variable_scope(), reuse=True):
-            tf.identity(self.embed(input_vars[0]), name="emb")
+            tf.identity(self.embed(inputs[0]), name="emb")
 
         cost, pos_dist, neg_dist = self.loss(a, p, n)
         self.cost = tf.identity(cost, name="cost")

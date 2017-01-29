@@ -38,8 +38,7 @@ def get_player(dumpdir=None):
 
 
 class Model(ModelDesc):
-
-    def _get_input_vars(self):
+    def _get_inputs(self):
         assert NUM_ACTIONS is not None
         return [InputVar(tf.float32, (None,) + IMAGE_SHAPE3, 'state'),
                 InputVar(tf.int32, (None,), 'action'),

@@ -60,12 +60,12 @@ class CharRNNData(RNGDataFlow):
 
 
 class Model(ModelDesc):
-    def _get_input_vars(self):
+    def _get_inputs(self):
         return [InputVar(tf.int32, (None, param.seq_len), 'input'),
                 InputVar(tf.int32, (None, param.seq_len), 'nextinput')]
 
-    def _build_graph(self, input_vars):
-        input, nextinput = input_vars
+    def _build_graph(self, inputs):
+        input, nextinput = inputs
 
         cell = tf.contrib.rnn.BasicLSTMCell(num_units=param.rnn_size)
         cell = tf.contrib.rnn.MultiRNNCell([cell] * param.num_rnn_layer)
@@ -131,18 +131,18 @@ def sample(path, start, length):
     ds = CharRNNData(param.corpus, 100000)
 
     model = Model()
-    input_vars = model.get_input_vars()
-    model.build_graph(input_vars, False)
+    inputs = model.get_reuse_placehdrs()
+    model.build_graph(inputs, False)
     sess = tf.Session()
     tfutils.SaverRestore(path).init(sess)
 
     dummy_input = np.zeros((1, 1), dtype='int32')
     with sess.as_default():
         # feed the starting sentence
-        state = model.initial.eval({input_vars[0]: dummy_input})
+        state = model.initial.eval({inputs[0]: dummy_input})
         for c in start[:-1]:
             x = np.array([[ds.lut.get_idx(c)]], dtype='int32')
-            state = model.last_state.eval({input_vars[0]: x, model.initial: state})
+            state = model.last_state.eval({inputs[0]: x, model.initial: state})
 
         def pick(prob):
             t = np.cumsum(prob)
@@ -155,7 +155,7 @@ def sample(path, start, length):
         for k in range(length):
             x = np.array([[ds.lut.get_idx(c)]], dtype='int32')
             [prob, state] = sess.run([model.prob, model.last_state],
-                                     {input_vars[0]: x, model.initial: state})
+                                     {inputs[0]: x, model.initial: state})
             c = ds.lut.get_obj(pick(prob[0]))
             ret += c
         print(ret)

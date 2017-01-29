@@ -27,8 +27,7 @@ FEATUREDIM = 39
 
 
 class Model(ModelDesc):
-
-    def _get_input_vars(self):
+    def _get_inputs(self):
         return [InputVar(tf.float32, [None, None, FEATUREDIM], 'feat'),   # bxmaxseqx39
                 InputVar(tf.int64, None, 'labelidx'),  # label is b x maxlen, sparse
                 InputVar(tf.int32, None, 'labelvalue'),
@@ -36,8 +35,8 @@ class Model(ModelDesc):
                 InputVar(tf.int32, [None], 'seqlen'),   # b
                 ]
 
-    def _build_graph(self, input_vars):
-        feat, labelidx, labelvalue, labelshape, seqlen = input_vars
+    def _build_graph(self, inputs):
+        feat, labelidx, labelvalue, labelshape, seqlen = inputs
         label = tf.SparseTensor(labelidx, labelvalue, labelshape)
 
         cell = tf.contrib.rnn.BasicLSTMCell(num_units=HIDDEN)

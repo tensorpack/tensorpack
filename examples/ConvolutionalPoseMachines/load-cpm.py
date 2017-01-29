@@ -44,7 +44,7 @@ def get_gaussian_map():
 
 
 class Model(ModelDesc):
-    def _get_input_vars(self):
+    def _get_inputs(self):
         return [InputVar(tf.float32, (None, 368, 368, 3), 'input'),
                 InputVar(tf.float32, (None, 368, 368, 15), 'label'),
                 ]

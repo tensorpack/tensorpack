@@ -44,13 +44,13 @@ def get_PennTreeBank(data_dir=None):
 
 
 class Model(ModelDesc):
-    def _get_input_vars(self):
+    def _get_inputs(self):
         return [InputVar(tf.int32, (None, SEQ_LEN), 'input'),
                 InputVar(tf.int32, (None, SEQ_LEN), 'nextinput')]
 
-    def _build_graph(self, input_vars):
+    def _build_graph(self, inputs):
         is_training = get_current_tower_context().is_training
-        input, nextinput = input_vars
+        input, nextinput = inputs
         initializer = tf.random_uniform_initializer(-0.05, 0.05)
 
         cell = rnn.BasicLSTMCell(num_units=HIDDEN_SIZE, forget_bias=0.0)
