@@ -6,18 +6,18 @@ you'll need to subclass `ModelDesc` and implement several methods:
 
 ```python
 class MyModel(ModelDesc):
-	def _get_input_vars(self):
+	def _get_inputs(self):
 		return [InputVar(...), InputVar(...)]
 
-	def _build_graph(self, input_tensors):
+	def _build_graph(self, inputs):
 		# build the graph
 ```
 
-Basically, `_get_input_vars` should define the metainfo of the input
+Basically, `_get_inputs` should define the metainfo of the input
 of the model. It should match what is produced by the data you're training with.
 `_build_graph` should add tensors/operations to the graph, where
 the argument `input_tensors` is the list of input tensors matching the return value of
-`_get_input_vars`.
+`_get_inputs`.
 
 You can use any symbolic functions in `_build_graph`, including TensorFlow core library
 functions, TensorFlow slim layers, or functions in other packages such as tflean, tensorlayer.

@@ -34,7 +34,7 @@ class GymEnv(RLEnvironment):
             self.gymenv = gym.make(name)
         if dumpdir:
             mkdir_p(dumpdir)
-            self.gymenv.monitor.start(dumpdir)
+            self.gymenv = gym.wrappers.Monitor(self.gymenv, dumpdir)
         self.use_dir = dumpdir
 
         self.reset_stat()
@@ -75,6 +75,7 @@ class GymEnv(RLEnvironment):
 
 try:
     import gym
+    import gym.wrappers
     # TODO
     # gym.undo_logger_setup()
     # https://github.com/openai/gym/pull/199

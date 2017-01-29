@@ -17,6 +17,7 @@ from tensorpack import *
 from tensorpack.tfutils.gradproc import *
 from tensorpack.utils.lut import LookUpTable
 from tensorpack.utils.globvars import globalns as param
+rnn = tf.contrib.rnn
 
 # some model hyperparams to set
 param.batch_size = 128
@@ -67,10 +68,18 @@ class Model(ModelDesc):
     def _build_graph(self, inputs):
         input, nextinput = inputs
 
-        cell = tf.contrib.rnn.BasicLSTMCell(num_units=param.rnn_size)
-        cell = tf.contrib.rnn.MultiRNNCell([cell] * param.num_rnn_layer)
+        cell = rnn.BasicLSTMCell(num_units=param.rnn_size)
+        cell = rnn.MultiRNNCell([cell] * param.num_rnn_layer)
 
-        self.initial = initial = cell.zero_state(tf.shape(input)[0], tf.float32)
+        def get_v(n):
+            ret = tf.get_variable(n + '_unused', [param.batch_size, param.rnn_size],
+                                  trainable=False,
+                                  initializer=tf.constant_initializer())
+            ret = symbolic_functions.shapeless_placeholder(ret, 0, name=n)
+            return ret
+        self.initial = initial = \
+            (rnn.LSTMStateTuple(get_v('c0'), get_v('h0')),
+             rnn.LSTMStateTuple(get_v('c1'), get_v('h1')))
 
         embeddingW = tf.get_variable('embedding', [param.vocab_size, param.rnn_size])
         input_feature = tf.nn.embedding_lookup(embeddingW, input)  # B x seqlen x rnnsize
@@ -78,13 +87,13 @@ class Model(ModelDesc):
         input_list = tf.unstack(input_feature, axis=1)  # seqlen x (Bxrnnsize)
 
         # seqlen is 1 in inference. don't need loop_function
-        outputs, last_state = tf.contrib.rnn.static_rnn(cell, input_list, initial, scope='rnnlm')
+        outputs, last_state = rnn.static_rnn(cell, input_list, initial, scope='rnnlm')
         self.last_state = tf.identity(last_state, 'last_state')
 
         # seqlen x (Bxrnnsize)
         output = tf.reshape(tf.concat(outputs, 1), [-1, param.rnn_size])  # (Bxseqlen) x rnnsize
         logits = FullyConnected('fc', output, param.vocab_size, nl=tf.identity)
-        self.prob = tf.nn.softmax(logits / param.softmax_temprature)
+        self.prob = tf.nn.softmax(logits / param.softmax_temprature, name='prob')
 
         xent_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
             logits=logits, labels=symbolic_functions.flatten(nextinput))
@@ -130,35 +139,32 @@ def sample(path, start, length):
     param.seq_len = 1
     ds = CharRNNData(param.corpus, 100000)
 
-    model = Model()
-    inputs = model.get_reuse_placehdrs()
-    model.build_graph(inputs, False)
-    sess = tf.Session()
-    tfutils.SaverRestore(path).init(sess)
+    pred = OfflinePredictor(PredictConfig(
+        model=Model(),
+        session_init=SaverRestore(path),
+        input_names=['input', 'c0', 'h0', 'c1', 'h1'],
+        output_names=['prob', 'last_state']))
 
-    dummy_input = np.zeros((1, 1), dtype='int32')
-    with sess.as_default():
-        # feed the starting sentence
-        state = model.initial.eval({inputs[0]: dummy_input})
-        for c in start[:-1]:
-            x = np.array([[ds.lut.get_idx(c)]], dtype='int32')
-            state = model.last_state.eval({inputs[0]: x, model.initial: state})
+    # feed the starting sentence
+    initial = np.zeros((1, param.rnn_size))
+    for c in start[:-1]:
+        x = np.array([[ds.lut.get_idx(c)]], dtype='int32')
+        _, state = pred(x, initial, initial, initial, initial)
 
-        def pick(prob):
-            t = np.cumsum(prob)
-            s = np.sum(prob)
-            return(int(np.searchsorted(t, np.random.rand(1) * s)))
+    def pick(prob):
+        t = np.cumsum(prob)
+        s = np.sum(prob)
+        return(int(np.searchsorted(t, np.random.rand(1) * s)))
 
-        # generate more
-        ret = start
-        c = start[-1]
-        for k in range(length):
-            x = np.array([[ds.lut.get_idx(c)]], dtype='int32')
-            [prob, state] = sess.run([model.prob, model.last_state],
-                                     {inputs[0]: x, model.initial: state})
-            c = ds.lut.get_obj(pick(prob[0]))
-            ret += c
-        print(ret)
+    # generate more
+    ret = start
+    c = start[-1]
+    for k in range(length):
+        x = np.array([[ds.lut.get_idx(c)]], dtype='int32')
+        prob, state = pred(x, state[0, 0], state[0, 1], state[1, 0], state[1, 1])
+        c = ds.lut.get_obj(pick(prob[0]))
+        ret += c
+    print(ret)
 
 
 if __name__ == '__main__':
