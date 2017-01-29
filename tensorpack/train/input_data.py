@@ -71,7 +71,6 @@ class FeedfreeInput(InputData):
 
 
 class EnqueueThread(threading.Thread):
-
     def __init__(self, trainer, queue, ds, input_placehdrs):
         super(EnqueueThread, self).__init__()
         self.name = 'EnqueueThread'

@@ -42,11 +42,9 @@ class StartProcOrThread(Callback):
             return
         for k in self._procs_threads:
             if isinstance(k, mp.Process):
+                logger.info("Stopping {} ...".format(k.name))
                 k.terminate()
                 k.join()
             elif isinstance(k, StoppableThread):
+                logger.info("Stopping {} ...".format(k.name))
                 k.stop()
-            else:
-                logger.warn(
-                    "[StartProcOrThread] {} "
-                    "is neither a Process nor a StoppableThread, won't stop it.".format(k.name))
