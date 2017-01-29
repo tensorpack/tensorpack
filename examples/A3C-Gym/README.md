@@ -25,7 +25,7 @@ multiprocess Python program to get a cgroup dedicated for the task.
 
 Models are available for the following atari environments (click to watch videos of my agent):
 
-+ [AirRaid](https://gym.openai.com/evaluations/eval_zIeNk5MxSGOmvGEUxrZDUw) (this one is flickering, don't know why)
++ [AirRaid](https://gym.openai.com/evaluations/eval_zIeNk5MxSGOmvGEUxrZDUw) (this one is flickering due to [gym settings](https://github.com/openai/gym/issues/378))
 + [Alien](https://gym.openai.com/evaluations/eval_8NR1IvjTQkSIT6En4xSMA)
 + [Amidar](https://gym.openai.com/evaluations/eval_HwEazbHtTYGpCialv9uPhA)
 + [Assault](https://gym.openai.com/evaluations/eval_tCiHwy5QrSdFVucSbBV6Q)

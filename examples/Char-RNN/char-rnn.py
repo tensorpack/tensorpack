@@ -38,11 +38,15 @@ class CharRNNData(RNGDataFlow):
 
         logger.info("Loading corpus...")
         # preprocess data
-        with open(input_file) as f:
+        with open(input_file, 'rb') as f:
             data = f.read()
+        if six.PY2:
+            data = bytearray(data)
+        data = [chr(c) for c in data if c < 128]    # TODO this is Py2 only
         counter = Counter(data)
         char_cnt = sorted(counter.items(), key=operator.itemgetter(1), reverse=True)
         self.chars = [x[0] for x in char_cnt]
+        print(sorted(self.chars))
         self.vocab_size = len(self.chars)
         param.vocab_size = self.vocab_size
         self.lut = LookUpTable(self.chars)
