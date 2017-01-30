@@ -155,6 +155,8 @@ def split_input(img):
 
 def colorization_input(img):
     assert img.ndim == 3
+    if min(img.shape[:2]) < SHAPE:
+        return None   # skip the image
     # create gray + RGB pairs
     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)[:, :, np.newaxis]
     return [gray, img]
@@ -162,7 +164,6 @@ def colorization_input(img):
 
 def get_data():
     datadir = args.data
-    # assume each image is 512x256 split to left and right
     imgs = glob.glob(os.path.join(datadir, '*.jpg'))
     ds = ImageFromFile(imgs, channel=3, shuffle=True)
 

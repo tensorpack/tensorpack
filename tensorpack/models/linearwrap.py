@@ -60,7 +60,9 @@ class LinearWrap(object):
                 logger.warn(
                     "You're calling LinearWrap.__getattr__ with {}:"
                     " neither a layer nor 'tf'!".format(layer_name))
-            assert isinstance(layer, ModuleType)
+            import tensorflow as tf  # noqa
+            layer = eval(layer_name)
+            assert isinstance(layer, ModuleType), layer
             return LinearWrap._TFModuleFunc(layer, self._t)
 
     def apply(self, func, *args, **kwargs):

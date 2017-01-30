@@ -7,6 +7,7 @@ import cv2
 from .base import RNGDataFlow
 from .common import MapDataComponent, MapData
 from .imgaug import AugmentorList
+from ..utils import logger
 
 __all__ = ['ImageFromFile', 'AugmentImageComponent', 'AugmentImageComponents']
 
@@ -81,14 +82,23 @@ class AugmentImageComponents(MapData):
         """
         self.augs = AugmentorList(augmentors)
         self.ds = ds
+        self._nr_error = 0
 
         def func(dp):
-            im = dp[index[0]]
-            im, prms = self.augs._augment_return_params(im)
-            dp[index[0]] = im
-            for idx in index[1:]:
-                dp[idx] = self.augs._augment(dp[idx], prms)
-            return dp
+            try:
+                im = dp[index[0]]
+                im, prms = self.augs._augment_return_params(im)
+                dp[index[0]] = im
+                for idx in index[1:]:
+                    dp[idx] = self.augs._augment(dp[idx], prms)
+                return dp
+            except KeyboardInterrupt:
+                raise
+            except Exception:
+                self._nr_error += 1
+                if self._nr_error % 1000 == 0:
+                    logger.warn("Got {} augmentation errors.".format(self._nr_error))
+                return None
 
         super(AugmentImageComponents, self).__init__(ds, func)
 
