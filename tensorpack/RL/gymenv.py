@@ -48,7 +48,6 @@ class GymEnv(RLEnvironment):
         self._ob = self.gymenv.reset()
 
     def finish_episode(self):
-        self.gymenv.close()
         self.stats['score'].append(self.rwd_counter.sum)
 
     def current_state(self):

@@ -41,7 +41,6 @@ class TransitionExperience(object):
 
 @six.add_metaclass(ABCMeta)
 class SimulatorProcessBase(mp.Process):
-
     def __init__(self, idx):
         super(SimulatorProcessBase, self).__init__()
         self.idx = int(idx)
