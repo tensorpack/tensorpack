@@ -97,7 +97,6 @@ def eval_model_multithread(cfg, nr_eval):
 
 
 class Evaluator(Callback):
-
     def __init__(self, nr_eval, input_names, output_names):
         self.eval_episode = nr_eval
         self.input_names = input_names

@@ -102,23 +102,29 @@ class RandomResize(ImageAugmentor):
             yrange (tuple): (min, max) range of scaling ratio for h
             minimum (tuple): (xmin, ymin). avoid scaling down too much.
             aspect_ratio_thres (float): discard samples which change aspect ratio
-                larger than this threshold.
+                larger than this threshold. Set to 0 to keep aspect ratio.
             interp: cv2 interpolation method
         """
         super(RandomResize, self).__init__()
+        assert aspect_ratio_thres >= 0
+        if aspect_ratio_thres == 0:
+            assert xrange == yrange
         self._init(locals())
 
     def _get_augment_params(self, img):
         cnt = 0
         while True:
             sx = self._rand_range(*self.xrange)
-            sy = self._rand_range(*self.yrange)
+            if self.aspect_ratio_thres == 0:
+                sy = sx
+            else:
+                sy = self._rand_range(*self.yrange)
             destX = int(max(sx * img.shape[1], self.minimum[0]))
             destY = int(max(sy * img.shape[0], self.minimum[1]))
             oldr = img.shape[1] * 1.0 / img.shape[0]
             newr = destX * 1.0 / destY
             diff = abs(newr - oldr) / oldr
-            if diff <= self.aspect_ratio_thres:
+            if diff <= self.aspect_ratio_thres + 1e-7:
                 return (destX, destY)
             cnt += 1
             if cnt > 50:

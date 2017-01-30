@@ -188,6 +188,9 @@ class TensorInput(FeedfreeInput):
             size(int): size of this input. Use None to leave it undefined.
         """
         self.get_tensor_fn = get_tensor_fn
+        if size is not None:
+            size = int(size)
+            assert size > 0
         self._size = size
 
     def size(self):

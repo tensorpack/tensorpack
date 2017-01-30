@@ -57,7 +57,9 @@ class LinearWrap(object):
             return f
         else:
             if layer_name != 'tf':
-                logger.warn("You're calling LinearWrap.__getattr__ with something neither a layer nor 'tf'!")
+                logger.warn(
+                    "You're calling LinearWrap.__getattr__ with {}:"
+                    " neither a layer nor 'tf'!".format(layer_name))
             assert isinstance(layer, ModuleType)
             return LinearWrap._TFModuleFunc(layer, self._t)
 

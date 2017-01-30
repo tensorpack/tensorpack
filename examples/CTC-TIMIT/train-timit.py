@@ -22,8 +22,8 @@ from timitdata import TIMITBatch
 BATCH = 64
 NLAYER = 2
 HIDDEN = 128
-NR_CLASS = 61 + 1
-FEATUREDIM = 39
+NR_CLASS = 61 + 1   # 61 phoneme + epsilon
+FEATUREDIM = 39     # MFCC feature dimension
 
 
 class Model(ModelDesc):
@@ -100,8 +100,9 @@ def get_config(ds_train, ds_test):
             StatMonitorParamSetter('learning_rate', 'error',
                                    lambda x: x * 0.2, 0, 5),
             HumanHyperParamSetter('learning_rate'),
-            PeriodicCallback(
-                InferenceRunner(ds_test, [ScalarStats('error')]), 2),
+            PeriodicTrigger(
+                InferenceRunner(ds_test, [ScalarStats('error')]),
+                every_k_epochs=2),
         ],
         model=Model(),
         steps_per_epoch=steps_per_epoch,

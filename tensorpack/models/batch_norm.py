@@ -97,7 +97,7 @@ def BatchNormV1(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
 
 
 @layer_register(log_shape=False)
-def BatchNormV2(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
+def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
     """
     Batch normalization layer, as described in the paper:
     `Batch Normalization: Accelerating Deep Network Training by
@@ -188,6 +188,3 @@ def BatchNormV2(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
             return tf.identity(xn, name='output')
     else:
         return tf.identity(xn, name='output')
-
-
-BatchNorm = BatchNormV2
