@@ -10,3 +10,5 @@ Test.
   glance
   dataflow
   models
+  trainer
+  callbacks

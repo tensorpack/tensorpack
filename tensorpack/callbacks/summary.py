@@ -10,10 +10,10 @@ from ..utils.naming import MOVING_SUMMARY_VARS_KEY
 from ..tfutils.common import get_global_step_var
 from .base import Callback
 
-__all__ = ['SummaryMovingAverage']
+__all__ = ['MovingAverageSummary']
 
 
-class SummaryMovingAverage(Callback):
+class MovingAverageSummary(Callback):
     """ Maintain the moving average of the tensors
         in every step, and summarize them. Enabled by default.
     """
