@@ -152,7 +152,7 @@ class ParamRestore(SessionInit):
         self.prms = {get_op_tensor_name(n)[1]: v for n, v in six.iteritems(param_dict)}
 
     def _init(self, sess):
-        variables = tf.get_collection(tf.GraphKeys().VARIABLES)  # TODO
+        variables = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)  # TODO
 
         variable_names = set([get_savename_from_varname(k.name) for k in variables])
         param_names = set(six.iterkeys(self.prms))

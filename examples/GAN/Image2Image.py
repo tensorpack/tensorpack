@@ -25,10 +25,6 @@ To train Image-to-Image translation model with image pairs:
     # you can download some data from the original authors:
     # https://people.eecs.berkeley.edu/~tinghuiz/projects/pix2pix/datasets/
 
-To train colorization:
-    ./Image2Image.py --data /path/to/datadir --mode colorization --batch 4
-    # datadir should contain colored jpg images
-
 Speed:
     On GTX1080 with BATCH=1, the speed is about 9.3it/s (the original torch version is 9.5it/s)
 
@@ -153,33 +149,15 @@ def split_input(img):
     return [input, output]
 
 
-def colorization_input(img):
-    assert img.ndim == 3
-    if min(img.shape[:2]) < SHAPE:
-        return None   # skip the image
-    # create gray + RGB pairs
-    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)[:, :, np.newaxis]
-    return [gray, img]
-
-
 def get_data():
     datadir = args.data
     imgs = glob.glob(os.path.join(datadir, '*.jpg'))
     ds = ImageFromFile(imgs, channel=3, shuffle=True)
 
-    if args.mode == 'colorization':
-        # colorization mode
-        ds = MapData(ds, lambda dp: colorization_input(dp[0]))
-        augs = [imgaug.RandomResize(
-                xrange=(0.75, 1.5), yrange=(0.75, 1.5),
-                minimum=(SHAPE, SHAPE),
-                aspect_ratio_thres=0),
-                imgaug.RandomCrop(SHAPE)]
-    else:
-        # Image-to-Image translation mode
-        ds = MapData(ds, lambda dp: split_input(dp[0]))
-        assert SHAPE < 286  # this is the parameter used in the paper
-        augs = [imgaug.Resize(286), imgaug.RandomCrop(SHAPE)]
+    # Image-to-Image translation mode
+    ds = MapData(ds, lambda dp: split_input(dp[0]))
+    assert SHAPE < 286  # this is the parameter used in the paper
+    augs = [imgaug.Resize(286), imgaug.RandomCrop(SHAPE)]
     ds = AugmentImageComponents(ds, augs, (0, 1))
     ds = BatchData(ds, BATCH)
     ds = PrefetchData(ds, 100, 1)
@@ -226,7 +204,7 @@ if __name__ == '__main__':
     parser.add_argument('--load', help='load model')
     parser.add_argument('--sample', action='store_true', help='run sampling')
     parser.add_argument('--data', help='Image directory')
-    parser.add_argument('--mode', choices=['AtoB', 'BtoA', 'colorization'], default='AtoB')
+    parser.add_argument('--mode', choices=['AtoB', 'BtoA'], default='AtoB')
     parser.add_argument('-b', '--batch', type=int, default=1)
     global args
     args = parser.parse_args()
@@ -235,10 +213,6 @@ if __name__ == '__main__':
     assert args.data
 
     BATCH = args.batch
-
-    if args.mode == 'colorization':
-        IN_CH = 1
-        OUT_CH = 3
 
     if args.sample:
         sample(args.data, args.load)
