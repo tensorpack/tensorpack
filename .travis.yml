@@ -54,3 +54,16 @@ notifications:
       - ppwwyyxxc@gmail.com
     on_success: never
     on_failure: change # default: always
+
+# upload current version from release branch automatically
+deploy:
+  provider: pypi
+  user: tensorpack-deploy
+  distributions: sdist bdist_egg bdist_wheel
+  password:
+    # @p please change this ppwwyyxxc
+    secure: b4f6y1xw5B/RXXnOu6JIaNcgOBZ0/CkNaMeEXsoQSewYZNwobLPYA
+  on:
+    tags: true
+    repo: ppwwyyxxc/tensorpack
+    condition: "$TF_VERSION=1.0.0rc0 $TF_TYPE=release"
