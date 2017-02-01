@@ -213,7 +213,7 @@ def saliency_map(output, input, name="saliency_map"):
     return saliency_op
 
 
-def contrastive_loss(left, right, y, margin, extra=False):
+def contrastive_loss(left, right, y, margin, extra=False, scope="constrastive_loss"):
     r"""Loss for Siamese networks as described in the paper:
     `Learning a Similarity Metric Discriminatively, with Application to Face
     Verification <http://yann.lecun.com/exdb/publis/pdf/chopra-05.pdf>`_ by Chopra et al.
@@ -231,7 +231,7 @@ def contrastive_loss(left, right, y, margin, extra=False):
     Returns:
         tf.Tensor: constrastive_loss (averaged over the batch), (and optionally average_pos_dist, average_neg_dist)
     """
-    with tf.name_scope("constrastive_loss"):
+    with tf.name_scope(scope):
         y = tf.cast(y, tf.float32)
 
         delta = tf.reduce_sum(tf.square(left - right), 1)
@@ -256,7 +256,7 @@ def contrastive_loss(left, right, y, margin, extra=False):
             return loss
 
 
-def cosine_loss(left, right, y):
+def cosine_loss(left, right, y, scope="cosine_loss"):
     r"""Loss for Siamese networks (cosine version).
     Same as :func:`contrastive_loss` but with different similarity measurment.
 
@@ -280,14 +280,14 @@ def cosine_loss(left, right, y):
         with tf.name_scope("l2_norm"):
             return tf.sqrt(tf.reduce_sum(tf.square(t), 1) + eps)
 
-    with tf.name_scope("cosine_loss"):
+    with tf.name_scope(scope):
         y = 2 * tf.cast(y, tf.float32) - 1
         pred = tf.reduce_sum(left * right, 1) / (l2_norm(left) * l2_norm(right) + 1e-10)
 
         return tf.nn.l2_loss(y - pred) / tf.cast(tf.shape(left)[0], tf.float32)
 
 
-def triplet_loss(anchor, positive, negative, margin, extra=False):
+def triplet_loss(anchor, positive, negative, margin, extra=False, scope="triplet_loss"):
     r"""Loss for Triplet networks as described in the paper:
     `FaceNet: A Unified Embedding for Face Recognition and Clustering
     <https://arxiv.org/abs/1503.03832>`_
@@ -312,7 +312,7 @@ def triplet_loss(anchor, positive, negative, margin, extra=False):
         tf.Tensor: triplet-loss as scalar (and optionally average_pos_dist, average_neg_dist)
     """
 
-    with tf.name_scope("triplet_loss"):
+    with tf.name_scope(scope):
         d_pos = tf.reduce_sum(tf.square(anchor - positive), 1)
         d_neg = tf.reduce_sum(tf.square(anchor - negative), 1)
 
@@ -326,7 +326,7 @@ def triplet_loss(anchor, positive, negative, margin, extra=False):
             return loss
 
 
-def soft_triplet_loss(anchor, positive, negative, extra=True):
+def soft_triplet_loss(anchor, positive, negative, extra=True, scope="soft_triplet_loss"):
     """Loss for triplet networks as described in the paper:
     `Deep Metric Learning using Triplet Network
     <https://arxiv.org/abs/1412.6622>`_ by Hoffer et al.
@@ -345,7 +345,7 @@ def soft_triplet_loss(anchor, positive, negative, extra=True):
     """
 
     eps = 1e-10
-    with tf.name_scope("soft_triplet_loss"):
+    with tf.name_scope(scope):
         d_pos = tf.sqrt(tf.reduce_sum(tf.square(anchor - positive), 1) + eps)
         d_neg = tf.sqrt(tf.reduce_sum(tf.square(anchor - negative), 1) + eps)
 

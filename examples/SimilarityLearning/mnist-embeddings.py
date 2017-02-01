@@ -77,7 +77,7 @@ class SiameseModel(EmbeddingModel):
             tf.identity(self.embed(inputs[0]), name="emb")
 
         # compute the actual loss
-        cost, pos_dist, neg_dist = symbf.contrastive_loss(x, y, label, 5., extra=True)
+        cost, pos_dist, neg_dist = symbf.contrastive_loss(x, y, label, 5., extra=True, scope="loss")
         self.cost = tf.identity(cost, name="cost")
 
         # track these values during training
@@ -92,7 +92,7 @@ class CosineModel(SiameseModel):
         with tf.variable_scope(tf.get_variable_scope(), reuse=True):
             tf.identity(self.embed(inputs[0]), name="emb")
 
-        cost = symbf.cosine_loss(x, y, label)
+        cost = symbf.cosine_loss(x, y, label, scope="loss")
         self.cost = tf.identity(cost, name="cost")
         add_moving_summary(self.cost)
 
@@ -110,7 +110,7 @@ class TripletModel(EmbeddingModel):
                 InputVar(tf.float32, (None, 28, 28), 'input_n')]
 
     def loss(self, a, p, n):
-        return symbf.triplet_loss(a, p, n, 5., extra=True)
+        return symbf.triplet_loss(a, p, n, 5., extra=True, scope="loss")
 
     def _build_graph(self, inputs):
         a, p, n = inputs
@@ -120,22 +120,27 @@ class TripletModel(EmbeddingModel):
             tf.identity(self.embed(inputs[0]), name="emb")
 
         cost, pos_dist, neg_dist = self.loss(a, p, n)
+
         self.cost = tf.identity(cost, name="cost")
         add_moving_summary(pos_dist, neg_dist, self.cost)
 
 
 class SoftTripletModel(TripletModel):
     def loss(self, a, p, n):
-        return symbf.soft_triplet_loss(a, p, n)
+        return symbf.soft_triplet_loss(a, p, n, scope="loss")
 
 
-def get_config(model):
+def get_config(model, algorithm_name):
     logger.auto_set_dir()
 
     dataset = model.get_data()
     steps_per_epoch = dataset.size()
 
     lr = symbf.get_scalar_var('learning_rate', 1e-4, summary=True)
+
+    extra_display = ["cost"]
+    if not algorithm_name == "cosine":
+        extra_display = extra_display + ["loss/pos-dist", "loss/neg-dist"]
 
     return TrainConfig(
         dataflow=dataset,
@@ -145,6 +150,10 @@ def get_config(model):
             ModelSaver(),
             ScheduledHyperParamSetter('learning_rate', [(10, 1e-5), (20, 1e-6)])
         ],
+        extra_callbacks=[
+            MovingAverageSummary(),
+            ProgressBar(extra_display),
+            StatPrinter()],
         steps_per_epoch=steps_per_epoch,
         max_epoch=20,
     )
@@ -213,7 +222,7 @@ if __name__ == '__main__':
         if FLAGS.visualize:
             visualize(FLAGS.load, ALGO_CONFIGS[FLAGS.algorithm])
         else:
-            config = get_config(ALGO_CONFIGS[FLAGS.algorithm])
+            config = get_config(ALGO_CONFIGS[FLAGS.algorithm], FLAGS.algorithm)
             if FLAGS.load:
                 config.session_init = SaverRestore(FLAGS.load)
             else:
