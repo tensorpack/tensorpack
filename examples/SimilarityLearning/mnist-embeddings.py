@@ -130,13 +130,17 @@ class SoftTripletModel(TripletModel):
         return symbf.soft_triplet_loss(a, p, n, scope="loss")
 
 
-def get_config(model):
+def get_config(model, algorithm_name):
     logger.auto_set_dir()
 
     dataset = model.get_data()
     steps_per_epoch = dataset.size()
 
     lr = symbf.get_scalar_var('learning_rate', 1e-4, summary=True)
+
+    extra_display = ["cost"]
+    if not algorithm_name == "cosine":
+        extra_display = extra_display + ["loss/pos-dist", "loss/neg-dist"]
 
     return TrainConfig(
         dataflow=dataset,
@@ -148,7 +152,7 @@ def get_config(model):
         ],
         extra_callbacks=[
             MovingAverageSummary(),
-            ProgressBar(["cost", "loss/pos-dist", "loss/neg-dist"]),
+            ProgressBar(extra_display),
             StatPrinter()],
         steps_per_epoch=steps_per_epoch,
         max_epoch=20,
@@ -218,7 +222,7 @@ if __name__ == '__main__':
         if FLAGS.visualize:
             visualize(FLAGS.load, ALGO_CONFIGS[FLAGS.algorithm])
         else:
-            config = get_config(ALGO_CONFIGS[FLAGS.algorithm])
+            config = get_config(ALGO_CONFIGS[FLAGS.algorithm], FLAGS.algorithm)
             if FLAGS.load:
                 config.session_init = SaverRestore(FLAGS.load)
             else:
