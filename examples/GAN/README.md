@@ -1,12 +1,14 @@
 # Generative Adversarial Networks
 
-Reproduce the following GAN-related papers:
+Reproduce the following GAN-related methods:
 
-+ Unsupervised Representation Learning with DCGAN. [paper](https://arxiv.org/abs/1511.06434)
++ DCGAN ([Unsupervised Representation Learning with DCGAN](https://arxiv.org/abs/1511.06434))
 
-+ Image-to-image Translation with Conditional Adversarial Networks. [paper](https://arxiv.org/pdf/1611.07004v1.pdf)
++ pix2pix ([Image-to-image Translation with Conditional Adversarial Networks](https://arxiv.org/pdf/1611.07004v1.pdf))
 
-+ InfoGAN: Interpretable Representation Learning by Information Maximizing GAN. [paper](https://arxiv.org/abs/1606.03657)
++ InfoGAN ([InfoGAN: Interpretable Representation Learning by Information Maximizing GAN](https://arxiv.org/abs/1606.03657))
+
++ Conditional GAN
 
 Please see the __docstring__ in each script for detailed usage.
 
@@ -46,3 +48,6 @@ It then maximizes mutual information between these latent variables and the imag
 * Middle: 1 continuous latent variable controlled the rotation.
 * Right: another continuous latent variable controlled the thickness.
 
+## ConditionalGAN-mnist.py
+
+Train a simple GAN on mnist, conditioned on the class labels.

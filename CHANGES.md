@@ -19,6 +19,7 @@ TensorFlow itself also changes API and those are not listed here.
 	See [commit](https://github.com/ppwwyyxx/tensorpack/commit/651a5aea8f9aacad7147542021dcf106fc824bc2) to change your code.
 * 2016/12/15. The `predict_tower` option is in `TrainConfig` now instead of `Trainer`. See
 	[commit](https://github.com/ppwwyyxx/tensorpack/commit/99c70935a7f72050f45891fbbcc49c4ce43aedce).
+* 2016/11/10. The `{input,output}_var_names` argument in `PredictConfig` is renamed to `{input,output}_names`. See [commit](https://github.com/ppwwyyxx/tensorpack/commit/77bcc8b1afc984a569f6ec3eda0a3c47b4e2923a).
 * 2016/11/06. The inferencer `ClassificationError` now expects the vector tensor returned by
 	`prediction_incorrect` instead of the "wrong" tensor. See [commit](https://github.com/ppwwyyxx/tensorpack/commit/740e9d8ca146af5a911f68a369dd7348243a2253)
 	to make changes.

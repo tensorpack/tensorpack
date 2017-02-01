@@ -17,6 +17,14 @@ import tensorpack.tfutils.symbolic_functions as symbf
 from tensorpack.tfutils.gradproc import ScaleGradient, CheckGradient
 from GAN import GANTrainer, GANModelDesc
 
+"""
+To train:
+    ./InfoGAN-mnist.py
+
+To visualize:
+    ./InfoGAN-mnist.py --sample --load path/to/model
+"""
+
 BATCH = 128
 NOISE_DIM = 62
 

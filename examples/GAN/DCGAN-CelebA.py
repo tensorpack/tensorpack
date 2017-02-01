@@ -27,7 +27,7 @@ The original code (dcgan.torch) uses kernel_shape=4, but I found the difference 
 2. Start training:
     ./DCGAN-CelebA.py --data /path/to/image_align_celeba/
 3. Visualize samples of a trained model:
-    ./DCGAN-CelebA.py --load model.tfmodel --sample
+    ./DCGAN-CelebA.py --load path/to/model --sample
 """
 
 CFG.SHAPE = 64
