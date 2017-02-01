@@ -181,6 +181,9 @@ def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
         xn = tf.nn.batch_normalization(
             x, moving_mean, moving_var, beta, gamma, epsilon)
 
+    if len(shape) == 2:
+        xn = tf.squeeze(xn, [1, 2])
+
     # TODO for other towers, maybe can make it depend some op later
     # TODO update it later (similar to slim) might be faster?
     if ctx.is_main_training_tower:
