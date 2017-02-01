@@ -70,13 +70,30 @@ class MaintainStepCounter(Callback):
 
 class ProgressBar(Callback):
     """ A progress bar based on tqdm. Enabled by default. """
+
+    def __init__(self, names=[]):
+        """
+        Args:
+            names(list): list of string, the names of the tensors to display.
+        """
+        super(ProgressBar, self).__init__()
+        self._names = [get_op_tensor_name(n)[1] for n in names]
+        self._tags = [get_op_tensor_name(n)[0].split("/")[-1] for n in names]
+
+    def _extra_fetches(self):
+        return self._names
+
     def _before_train(self):
         self._total = self.trainer.config.steps_per_epoch
         self._tqdm_args = get_tqdm_kwargs(leave=True)
+        if self._names is not []:
+            self._tqdm_args['bar_format'] = self._tqdm_args['bar_format'] + "{postfix} "
 
     def _trigger_step(self, *args):
         if self.local_step == 1:
             self._bar = tqdm.trange(self._total, **self._tqdm_args)
+        self._bar.set_postfix(zip(self._tags, args))
         self._bar.update()
+
         if self.local_step == self._total:
             self._bar.close()
