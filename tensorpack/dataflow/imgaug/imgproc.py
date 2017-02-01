@@ -6,8 +6,27 @@ from .base import ImageAugmentor
 import numpy as np
 import cv2
 
-__all__ = ['Brightness', 'Contrast', 'MeanVarianceNormalize', 'GaussianBlur',
+__all__ = ['Grayscale', 'Brightness', 'Contrast', 'MeanVarianceNormalize', 'GaussianBlur',
            'Gamma', 'Clip', 'Saturation', 'Lighting']
+
+
+class Grayscale(ImageAugmentor):
+    """
+    Convert image to grayscale.
+    """
+
+    def __init__(self, keep_dim=False):
+        """
+        Args:
+            keep_dim: return image of shape [H, W, 1] or [H, W]
+        """
+        self._init(locals())
+
+    def _augment(self, img, _):
+        grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        if self.keep_dim:
+            grey = grey[..., None]
+        return grey
 
 
 class Brightness(ImageAugmentor):
@@ -102,8 +121,8 @@ class GaussianBlur(ImageAugmentor):
         return sx, sy
 
     def _augment(self, img, s):
-        return cv2.GaussianBlur(img, s, sigmaX=0, sigmaY=0,
-                                borderType=cv2.BORDER_REPLICATE)
+        return np.reshape(cv2.GaussianBlur(img, s, sigmaX=0, sigmaY=0,
+                                           borderType=cv2.BORDER_REPLICATE), img.shape)
 
 
 class Gamma(ImageAugmentor):
