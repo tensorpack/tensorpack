@@ -6,31 +6,48 @@ from .base import ImageAugmentor
 import numpy as np
 import cv2
 
-__all__ = ['Colorspace', 'Hue', 'Grayscale', 'Brightness', 'Contrast', 'MeanVarianceNormalize',
+__all__ = ['ColorSpace', 'Hue', 'Grayscale', 'Brightness', 'Contrast', 'MeanVarianceNormalize',
            'GaussianBlur', 'Gamma', 'Clip', 'Saturation', 'Lighting']
 
 
-class Colorspace(ImageAugmentor):
+class ColorSpace(ImageAugmentor):
     """
     Convert into another colorspace.
     """
-    def __init__(self, mode=cv2.COLOR_BGR2GRAY, keep_dim=True):
+    def __init__(self, mode=cv2.COLOR_BGR2GRAY, keep_dims=True):
         """
         Args:
-            mode: conversion direction (e.g., `cv2.COLOR_BGR2HSV`)
+            mode: opencv colorspace conversion code (e.g., `cv2.COLOR_BGR2HSV`)
+            keep_dims (bool): keep the dimension of image unchanged if opencv
+                changes it.
         """
         self._init(locals())
 
     def _augment(self, img, _):
         transf = cv2.cvtColor(img, self.mode)
-        if self.keep_dim:
+        if self.keep_dims:
             if len(transf.shape) is not len(img.shape):
                 transf = transf[..., None]
         return transf
 
 
+class Grayscale(ColorSpace):
+    """
+    Convert image to grayscale.
+    """
+
+    def __init__(self, keep_dims=True, rgb=False):
+        """
+        Args:
+            keep_dims (bool): return image of shape [H, W, 1] instead of [H, W]
+            rgb (bool): interpret input as RGB instead of the default BGR
+        """
+        mode = cv2.COLOR_RGB2GRAY if rgb else cv2.COLOR_BGR2GRAY
+        super(Grayscale, self).__init__(mode, keep_dims)
+
+
 class Hue(ImageAugmentor):
-    """ Randomly change color hue of bgr input.
+    """ Randomly change color hue of a BGR input.
     """
 
     def __init__(self, range=(0, 180)):
@@ -49,21 +66,6 @@ class Hue(ImageAugmentor):
         hsv[..., 0] = (hsv[..., 0] + hue) % 180
         img = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
         return img
-
-
-class Grayscale(Colorspace):
-    """
-    Convert image to grayscale.
-    """
-
-    def __init__(self, keep_dim=True, rgb=False):
-        """
-        Args:
-            keep_dim: return image of shape [H, W, 1] or [H, W]
-            rgb: interpret input as RGB instead of BGR
-        """
-        mode = cv2.COLOR_RGB2GRAY if rgb else cv2.COLOR_BGR2GRAY
-        super(Grayscale, self).__init__(mode, keep_dim)
 
 
 class Brightness(ImageAugmentor):
@@ -198,7 +200,7 @@ class Clip(ImageAugmentor):
 
 
 class Saturation(ImageAugmentor):
-    """ Randomly adjust saturation.
+    """ Randomly adjust saturation of BGR input.
         Follows the implementation in `fb.resnet.torch
         <https://github.com/facebook/fb.resnet.torch/blob/master/datasets/transforms.lua#L218>`__.
     """
