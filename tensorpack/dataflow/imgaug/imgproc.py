@@ -15,15 +15,20 @@ class Grayscale(ImageAugmentor):
     Convert image to grayscale.
     """
 
-    def __init__(self, keep_dim=False):
+    def __init__(self, keep_dim=False, rgb=False):
         """
         Args:
             keep_dim: return image of shape [H, W, 1] or [H, W]
+            rgb: use rgb instead of bgr
         """
         self._init(locals())
 
     def _augment(self, img, _):
-        grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        flag = cv2.COLOR_BGR2GRAY
+        if self.rgb:
+            flag = cv2.COLOR_RGB2GRAY
+
+        grey = cv2.cvtColor(img, flag)
         if self.keep_dim:
             grey = grey[..., None]
         return grey
