@@ -14,18 +14,18 @@ class ColorSpace(ImageAugmentor):
     """
     Convert into another colorspace.
     """
-    def __init__(self, mode=cv2.COLOR_BGR2GRAY, keep_dims=True):
+    def __init__(self, mode=cv2.COLOR_BGR2GRAY, keepdims=True):
         """
         Args:
             mode: opencv colorspace conversion code (e.g., `cv2.COLOR_BGR2HSV`)
-            keep_dims (bool): keep the dimension of image unchanged if opencv
+            keepdims (bool): keep the dimension of image unchanged if opencv
                 changes it.
         """
         self._init(locals())
 
     def _augment(self, img, _):
         transf = cv2.cvtColor(img, self.mode)
-        if self.keep_dims:
+        if self.keepdims:
             if len(transf.shape) is not len(img.shape):
                 transf = transf[..., None]
         return transf
@@ -36,14 +36,14 @@ class Grayscale(ColorSpace):
     Convert image to grayscale.
     """
 
-    def __init__(self, keep_dims=True, rgb=False):
+    def __init__(self, keepdims=True, rgb=False):
         """
         Args:
-            keep_dims (bool): return image of shape [H, W, 1] instead of [H, W]
+            keepdims (bool): return image of shape [H, W, 1] instead of [H, W]
             rgb (bool): interpret input as RGB instead of the default BGR
         """
         mode = cv2.COLOR_RGB2GRAY if rgb else cv2.COLOR_BGR2GRAY
-        super(Grayscale, self).__init__(mode, keep_dims)
+        super(Grayscale, self).__init__(mode, keepdims)
 
 
 class Hue(ImageAugmentor):
