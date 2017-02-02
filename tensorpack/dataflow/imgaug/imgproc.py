@@ -6,32 +6,64 @@ from .base import ImageAugmentor
 import numpy as np
 import cv2
 
-__all__ = ['Grayscale', 'Brightness', 'Contrast', 'MeanVarianceNormalize', 'GaussianBlur',
-           'Gamma', 'Clip', 'Saturation', 'Lighting']
+__all__ = ['Colorspace', 'Hue', 'Grayscale', 'Brightness', 'Contrast', 'MeanVarianceNormalize',
+           'GaussianBlur', 'Gamma', 'Clip', 'Saturation', 'Lighting']
 
 
-class Grayscale(ImageAugmentor):
+class Colorspace(ImageAugmentor):
     """
-    Convert image to grayscale.
+    Convert into another colorspace.
     """
-
-    def __init__(self, keep_dim=False, rgb=False):
+    def __init__(self, mode=cv2.COLOR_BGR2GRAY, keep_dim=True):
         """
         Args:
-            keep_dim: return image of shape [H, W, 1] or [H, W]
-            rgb: use rgb instead of bgr
+            mode: conversion direction (e.g., `cv2.COLOR_BGR2HSV`)
         """
         self._init(locals())
 
     def _augment(self, img, _):
-        flag = cv2.COLOR_BGR2GRAY
-        if self.rgb:
-            flag = cv2.COLOR_RGB2GRAY
-
-        grey = cv2.cvtColor(img, flag)
+        transf = cv2.cvtColor(img, self.mode)
         if self.keep_dim:
-            grey = grey[..., None]
-        return grey
+            if len(transf.shape) is not len(img.shape):
+                transf = transf[..., None]
+        return transf
+
+
+class Hue(ImageAugmentor):
+    """ Randomly change color hue of bgr input.
+    """
+
+    def __init__(self, range=(0, 180)):
+        """
+        Args:
+            range(list or tuple): hue range
+        """
+        self._init(locals())
+
+    def _get_augment_params(self, _):
+        return self._rand_range(*self.range)
+
+    def _augment(self, img, hue):
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        # Note, OpenCV used 0-179 degree instead of 0-359 degree
+        hsv[..., 0] = (hsv[..., 0] + hue) % 180
+        img = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+        return img
+
+
+class Grayscale(Colorspace):
+    """
+    Convert image to grayscale.
+    """
+
+    def __init__(self, keep_dim=True, rgb=False):
+        """
+        Args:
+            keep_dim: return image of shape [H, W, 1] or [H, W]
+            rgb: interpret input as RGB instead of BGR
+        """
+        mode = cv2.COLOR_RGB2GRAY if rgb else cv2.COLOR_BGR2GRAY
+        super(Grayscale, self).__init__(mode, keep_dim)
 
 
 class Brightness(ImageAugmentor):
