@@ -7,7 +7,7 @@ import numpy as np
 import cv2
 
 __all__ = ['Brightness', 'Contrast', 'MeanVarianceNormalize', 'GaussianBlur',
-           'Gamma', 'Clip', 'Saturation', 'Lighting']
+           'Gamma', 'Clip', 'Saturation', 'Lighting', 'Hue']
 
 
 class Brightness(ImageAugmentor):
@@ -194,4 +194,26 @@ class Lighting(ImageAugmentor):
         v = v.reshape((3, 1))
         inc = np.dot(self.eigvec, v).reshape((3,))
         img += inc
+        return img
+
+
+class Hue(ImageAugmentor):
+    """ Randomly change color hue of bgr input.
+    """
+
+    def __init__(self, range=(0, 180)):
+        """
+        Args:
+            range(list or tuple): hue range
+        """
+        self._init(locals())
+
+    def _get_augment_params(self, _):
+        return self._rand_range(*self.range)
+
+    def _augment(self, img, hue):
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        # Note, OpenCV used 0-179 degree instead of 0-359 degree
+        hsv[..., 0] = (hsv[..., 0] + hue) % 180
+        img = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
         return img
