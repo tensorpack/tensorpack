@@ -59,38 +59,54 @@ class HDF5Data(RNGDataFlow):
 
 class LMDBData(RNGDataFlow):
     """ Read a LMDB database and produce (k,v) pairs """
-    def __init__(self, lmdb_path, shuffle=True):
+    def __init__(self, lmdb_path, shuffle=True, key_format=None):
         """
         Args:
             lmdb_path (str): a directory or a file.
             shuffle (bool): shuffle the keys or not.
+            key_format (str): specify the format of the keys, e.g. `'{:0>8d}'`
         """
         self._lmdb_path = lmdb_path
         self._shuffle = shuffle
-        self.open_lmdb()
+        self.key_format = key_format
+        self.open_lmdb(key_format)
 
-    def open_lmdb(self):
+    def open_lmdb(self, key_format=None):
+        def find_keys(txn, size):
+            logger.warn("Traversing the database to find keys is slow. Your should specify the key_format.")
+            keys = []
+            with timed_operation("Loading LMDB keys ...", log_start=True), \
+                    get_tqdm(total=size) as pbar:
+                for k in self._txn.cursor():
+                    if k[0] != '__keys__':
+                        keys.append(k[0])
+                        pbar.update()
+            return keys
         self._lmdb = lmdb.open(self._lmdb_path,
                                subdir=os.path.isdir(self._lmdb_path),
                                readonly=True, lock=False, readahead=False,
                                map_size=1099511627776 * 2, max_readers=100)
         self._txn = self._lmdb.begin()
         self._size = self._txn.stat()['entries']
+
+        logger.info("Found {} entries in {}".format(self._size, self._lmdb_path))
+
         if self._shuffle:
             # get the list of keys either from __keys__ or by iterating
-            self.keys = loads(self._txn.get('__keys__'))
-            if not self.keys:
-                self.keys = []
-                with timed_operation("Loading LMDB keys ...", log_start=True), \
-                        get_tqdm(total=self._size) as pbar:
-                    for k in self._txn.cursor():
-                        if k[0] != '__keys__':
-                            self.keys.append(k[0])
-                            pbar.update()
+            if key_format is None:
+                try:
+                    self.keys = loads(self._txn.get('__keys__'))
+                except Exception:
+                    self.keys = find_keys(self._txn, self._size)
+            else:
+                # check if key-format like '{:0>8d}' was given
+                if isinstance(key_format, basestring):
+                    self.keys = map(lambda x: key_format.format(x), list(np.arange(self._size)))
+                else:
+                    self.keys = key_format
 
     def reset_state(self):
         super(LMDBData, self).reset_state()
-        self.open_lmdb()
 
     def size(self):
         return self._size
@@ -103,6 +119,8 @@ class LMDBData(RNGDataFlow):
                 if k != '__keys__':
                     yield [k, v]
         else:
+            if not hasattr(self, "rng"):
+                self.reset_state()
             self.rng.shuffle(self.keys)
             for k in self.keys:
                 v = self._txn.get(k)
@@ -111,15 +129,16 @@ class LMDBData(RNGDataFlow):
 
 class LMDBDataDecoder(LMDBData):
     """ Read a LMDB database and produce a decoded output."""
-    def __init__(self, lmdb_path, decoder, shuffle=True):
+    def __init__(self, lmdb_path, decoder, shuffle=True, key_format=None):
         """
         Args:
             lmdb_path (str): a directory or a file.
             decoder (k,v -> dp | None): a function taking k, v and returning a datapoint,
                 or return None to discard.
             shuffle (bool): shuffle the keys or not.
+            key_format (str): specify the format of the keys, e.g. `'{:0>8d}'`
         """
-        super(LMDBDataDecoder, self).__init__(lmdb_path, shuffle)
+        super(LMDBDataDecoder, self).__init__(lmdb_path, shuffle=shuffle, key_format=key_format)
         self.decoder = decoder
 
     def get_data(self):
@@ -133,27 +152,32 @@ class LMDBDataPoint(LMDBDataDecoder):
     """ Read a LMDB file and produce deserialized values.
         This can work with :func:`tensorpack.dataflow.dftools.dump_dataflow_to_lmdb`. """
 
-    def __init__(self, lmdb_path, shuffle=True):
+    def __init__(self, lmdb_path, shuffle=True, key_format=None):
         """
         Args:
             lmdb_path (str): a directory or a file.
             shuffle (bool): shuffle the keys or not.
+            key_format (str): specify the format of the keys, e.g. `'{:0>8d}'`
         """
         super(LMDBDataPoint, self).__init__(
-            lmdb_path, decoder=lambda k, v: loads(v), shuffle=shuffle)
+            lmdb_path, decoder=lambda k, v: loads(v), shuffle=shuffle, key_format=key_format)
 
 
 class CaffeLMDB(LMDBDataDecoder):
     """
     Read a Caffe LMDB file where each value contains a ``caffe.Datum`` protobuf.
     Produces datapoints of the format: [HWC image, label].
+
+    Example:
+        ds = CaffeLMDB("/tmp/validation", keys='{:0>8d}')
     """
 
-    def __init__(self, lmdb_path, shuffle=True):
+    def __init__(self, lmdb_path, shuffle=True, key_format=None):
         """
         Args:
             lmdb_path (str): a directory or a file.
             shuffle (bool): shuffle the keys or not.
+            key_format (str): specify the format of the keys, e.g. `'{:0>8d}'`
         """
         cpb = get_caffe_pb()
 
@@ -169,7 +193,7 @@ class CaffeLMDB(LMDBDataDecoder):
             return [img.transpose(1, 2, 0), datum.label]
 
         super(CaffeLMDB, self).__init__(
-            lmdb_path, decoder=decoder, shuffle=shuffle)
+            lmdb_path, decoder=decoder, shuffle=shuffle, key_format=key_format)
 
 
 class SVMLightData(RNGDataFlow):
