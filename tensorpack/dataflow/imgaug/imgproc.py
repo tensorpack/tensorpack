@@ -6,8 +6,66 @@ from .base import ImageAugmentor
 import numpy as np
 import cv2
 
-__all__ = ['Brightness', 'Contrast', 'MeanVarianceNormalize', 'GaussianBlur',
-           'Gamma', 'Clip', 'Saturation', 'Lighting']
+__all__ = ['ColorSpace', 'Hue', 'Grayscale', 'Brightness', 'Contrast', 'MeanVarianceNormalize',
+           'GaussianBlur', 'Gamma', 'Clip', 'Saturation', 'Lighting']
+
+
+class ColorSpace(ImageAugmentor):
+    """
+    Convert into another colorspace.
+    """
+    def __init__(self, mode=cv2.COLOR_BGR2GRAY, keepdims=True):
+        """
+        Args:
+            mode: opencv colorspace conversion code (e.g., `cv2.COLOR_BGR2HSV`)
+            keepdims (bool): keep the dimension of image unchanged if opencv
+                changes it.
+        """
+        self._init(locals())
+
+    def _augment(self, img, _):
+        transf = cv2.cvtColor(img, self.mode)
+        if self.keepdims:
+            if len(transf.shape) is not len(img.shape):
+                transf = transf[..., None]
+        return transf
+
+
+class Grayscale(ColorSpace):
+    """
+    Convert image to grayscale.
+    """
+
+    def __init__(self, keepdims=True, rgb=False):
+        """
+        Args:
+            keepdims (bool): return image of shape [H, W, 1] instead of [H, W]
+            rgb (bool): interpret input as RGB instead of the default BGR
+        """
+        mode = cv2.COLOR_RGB2GRAY if rgb else cv2.COLOR_BGR2GRAY
+        super(Grayscale, self).__init__(mode, keepdims)
+
+
+class Hue(ImageAugmentor):
+    """ Randomly change color hue of a BGR input.
+    """
+
+    def __init__(self, range=(0, 180)):
+        """
+        Args:
+            range(list or tuple): hue range
+        """
+        self._init(locals())
+
+    def _get_augment_params(self, _):
+        return self._rand_range(*self.range)
+
+    def _augment(self, img, hue):
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        # Note, OpenCV used 0-179 degree instead of 0-359 degree
+        hsv[..., 0] = (hsv[..., 0] + hue) % 180
+        img = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+        return img
 
 
 class Brightness(ImageAugmentor):
@@ -102,8 +160,8 @@ class GaussianBlur(ImageAugmentor):
         return sx, sy
 
     def _augment(self, img, s):
-        return cv2.GaussianBlur(img, s, sigmaX=0, sigmaY=0,
-                                borderType=cv2.BORDER_REPLICATE)
+        return np.reshape(cv2.GaussianBlur(img, s, sigmaX=0, sigmaY=0,
+                                           borderType=cv2.BORDER_REPLICATE), img.shape)
 
 
 class Gamma(ImageAugmentor):
@@ -142,7 +200,7 @@ class Clip(ImageAugmentor):
 
 
 class Saturation(ImageAugmentor):
-    """ Randomly adjust saturation.
+    """ Randomly adjust saturation of BGR input.
         Follows the implementation in `fb.resnet.torch
         <https://github.com/facebook/fb.resnet.torch/blob/master/datasets/transforms.lua#L218>`__.
     """
