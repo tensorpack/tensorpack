@@ -3,6 +3,7 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
+import six
 from six.moves import range
 import os
 
@@ -100,7 +101,7 @@ class LMDBData(RNGDataFlow):
                     self.keys = find_keys(self._txn, self._size)
             else:
                 # check if key-format like '{:0>8d}' was given
-                if isinstance(key_format, basestring):
+                if isinstance(key_format, six.string_types):
                     self.keys = map(lambda x: key_format.format(x), list(np.arange(self._size)))
                 else:
                     self.keys = key_format
