@@ -59,14 +59,14 @@ class Model(ModelDesc):
         # For visualization in tensorboard
         padded1 = tf.pad(sampled1, [[0, 0], [HALF_DIFF, HALF_DIFF], [HALF_DIFF, HALF_DIFF], [0, 0]])
         padded2 = tf.pad(sampled2, [[0, 0], [HALF_DIFF, HALF_DIFF], [HALF_DIFF, HALF_DIFF], [0, 0]])
-        img_orig = tf.concat([image[:, :, :, 0], image[:, :, :, 1]], 1)  # b x 2h  x w
-        transform1 = tf.concat([padded1[:, :, :, 0], padded1[:, :, :, 1]], 1)
-        transform2 = tf.concat([padded2[:, :, :, 0], padded2[:, :, :, 1]], 1)
-        stacked = tf.concat([img_orig, transform1, transform2], 2, 'viz')
+        img_orig = tf.concat(1, [image[:, :, :, 0], image[:, :, :, 1]])  # b x 2h  x w
+        transform1 = tf.concat(1, [padded1[:, :, :, 0], padded1[:, :, :, 1]])
+        transform2 = tf.concat(1, [padded2[:, :, :, 0], padded2[:, :, :, 1]])
+        stacked = tf.concat(2, [img_orig, transform1, transform2], 'viz')
         tf.summary.image('visualize',
                          tf.expand_dims(stacked, -1), max_outputs=30)
 
-        sampled = tf.concat([sampled1, sampled2], 3, 'sampled_concat')
+        sampled = tf.concat(3, [sampled1, sampled2], 'sampled_concat')
         logits = (LinearWrap(sampled)
                   .apply(symbf.batch_flatten)
                   .FullyConnected('fc1', out_dim=256, nl=tf.nn.relu)
