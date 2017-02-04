@@ -1,17 +1,31 @@
 from setuptools import setup
-import sys
 
-req = ['numpy',
-       'six',
-       'termcolor',
-       'tqdm>4.11.1',
-       'msgpack-python',
-       'msgpack-numpy',
-       'pyzmq'
-       ]
-if sys.version_info.major == 2:
-    req.extend(['subprocess32', 'functools32'])
+req = [
+    'numpy',
+    'six',
+    'termcolor',
+    'tqdm>4.11.1',
+    'msgpack-python',
+    'msgpack-numpy',
+    'pyzmq',
+    'subprocess32;python_version<"3.0"',
+    'functools32;python_version<"3.0"',
+]
+extra_req = [
+    'pillow',
+    'scipy',
+    'h5py',
+    'lmdb',
+    'matplotlib',
+    'scikit-learn',
+    'tornado;python_version<"3.0"',
+]
 
 # TODO:
-# setup_requires, extras_requires, scripts
-setup(install_requires=req)
+# setup_requires, scripts
+setup(
+    install_requires=req,
+    extras_require={
+        'all': extra_req
+    },
+)
