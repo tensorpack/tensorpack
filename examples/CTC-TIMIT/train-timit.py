@@ -39,8 +39,8 @@ class Model(ModelDesc):
         feat, labelidx, labelvalue, labelshape, seqlen = inputs
         label = tf.SparseTensor(labelidx, labelvalue, labelshape)
 
-        cell = tf.contrib.rnn.BasicLSTMCell(num_units=HIDDEN)
-        cell = tf.contrib.rnn.MultiRNNCell([cell] * NLAYER)
+        cell = tf.contrib.rnn.LSTMBlockCell(num_units=HIDDEN)
+        cell = tf.contrib.nn.rnn_cell.MultiRNNCell([cell] * NLAYER)
 
         initial = cell.zero_state(tf.shape(feat)[0], tf.float32)
 
