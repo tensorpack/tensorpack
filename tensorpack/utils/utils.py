@@ -95,7 +95,7 @@ def get_dataset_path(*args):
             os.path.dirname(__file__), '..', 'dataflow', 'dataset'))
         if execute_only_once():
             from . import logger
-            logger.info("TENSORPACK_DATASET not set, using {} for dataset.".format(d))
+            logger.warn("TENSORPACK_DATASET not set, using {} for dataset.".format(d))
     assert os.path.isdir(d), d
     return os.path.join(d, *args)
 

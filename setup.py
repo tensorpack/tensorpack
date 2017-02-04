@@ -12,7 +12,6 @@ req = ['numpy',
 if sys.version_info.major == 2:
     req.extend(['subprocess32', 'functools32'])
 
-setup(version='0.1',
-      install_requires=req,
-      zip_safe=False    # dataset and __init__ use file
-      )
+# TODO:
+# setup_requires, extras_requires, scripts
+setup(install_requires=req)

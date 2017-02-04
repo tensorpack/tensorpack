@@ -8,6 +8,8 @@ from types import ModuleType
 from ..utils import logger
 from .common import get_registered_layer
 
+__all__ = ['LinearWrap']
+
 
 class LinearWrap(object):
     """ A simple wrapper to easily create "linear" graph,

@@ -9,6 +9,8 @@ from .base import ProxyDataFlow
 
 """ This file was deprecated """
 
+__all__ = []
+
 
 class TFFuncMapper(ProxyDataFlow):
     def __init__(self, ds,
