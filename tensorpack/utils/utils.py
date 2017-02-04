@@ -10,9 +10,9 @@ from datetime import datetime
 from tqdm import tqdm
 import numpy as np
 
+
 __all__ = ['change_env',
            'get_rng',
-           'get_dataset_path',
            'get_tqdm_kwargs',
            'get_tqdm',
            'execute_only_once',
@@ -77,27 +77,6 @@ def execute_only_once():
         return False
     _EXECUTE_HISTORY.add(ident)
     return True
-
-
-def get_dataset_path(*args):
-    """
-    Get the path to some dataset under ``$TENSORPACK_DATASET``.
-
-    Args:
-        args: strings to be joined to form path.
-
-    Returns:
-        str: path to the dataset.
-    """
-    d = os.environ.get('TENSORPACK_DATASET', None)
-    if d is None:
-        d = os.path.abspath(os.path.join(
-            os.path.dirname(__file__), '..', 'dataflow', 'dataset'))
-        if execute_only_once():
-            from . import logger
-            logger.warn("TENSORPACK_DATASET not set, using {} for dataset.".format(d))
-    assert os.path.isdir(d), d
-    return os.path.join(d, *args)
 
 
 def get_tqdm_kwargs(**kwargs):

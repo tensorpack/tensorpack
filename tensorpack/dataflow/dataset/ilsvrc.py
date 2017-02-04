@@ -9,9 +9,9 @@ import six
 import numpy as np
 import xml.etree.ElementTree as ET
 
-from ...utils import logger, get_dataset_path
+from ...utils import logger
 from ...utils.loadcaffe import get_caffe_pb
-from ...utils.fs import mkdir_p, download
+from ...utils.fs import mkdir_p, download, get_dataset_path
 from ...utils.timer import timed_operation
 from ..base import RNGDataFlow
 

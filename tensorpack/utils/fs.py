@@ -8,8 +8,9 @@ import sys
 from six.moves import urllib
 import errno
 from . import logger
+from .utils import execute_only_once
 
-__all__ = ['mkdir_p', 'download', 'recursive_walk']
+__all__ = ['mkdir_p', 'download', 'recursive_walk', 'get_dataset_path']
 
 
 def mkdir_p(dirname):
@@ -65,6 +66,38 @@ def recursive_walk(rootdir):
     for r, dirs, files in os.walk(rootdir):
         for f in files:
             yield os.path.join(r, f)
+
+
+def get_dataset_path(*args):
+    """
+    Get the path to some dataset under ``$TENSORPACK_DATASET``.
+
+    Args:
+        args: strings to be joined to form path.
+
+    Returns:
+        str: path to the dataset.
+    """
+    d = os.environ.get('TENSORPACK_DATASET', None)
+    if d is None:
+        old_d = os.path.abspath(os.path.join(
+            os.path.dirname(__file__), '..', 'dataflow', 'dataset'))
+        old_d_ret = os.path.join(d, *args)
+        new_d = os.path.expanduser('~/tensorpack_data')
+        if os.path.isdir(old_d_ret):
+            # there is an old dir containing data, use it for back-compat
+            logger.warn("You seem to have old data at {}. This is no longer \
+                the default location. You'll need to move it to {} \
+                (the new default location) or another directory set by \
+                $TENSORPACK_DATASET.".format(old_d, new_d))
+        d = new_d
+        if execute_only_once():
+            logger.warn("$TENSORPACK_DATASET not set, using {} for dataset.".format(d))
+        if not os.path.isdir(d):
+            mkdir_p(d)
+            logger.info("Created the directory {}.".format(d))
+    assert os.path.isdir(d), d
+    return os.path.join(d, *args)
 
 
 if __name__ == '__main__':

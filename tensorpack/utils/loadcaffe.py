@@ -6,8 +6,8 @@
 import numpy as np
 import os
 
-from .utils import change_env, get_dataset_path
-from .fs import download
+from .utils import change_env
+from .fs import download, get_dataset_path
 from . import logger
 
 __all__ = ['load_caffe', 'get_caffe_pb']

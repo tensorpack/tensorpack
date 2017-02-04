@@ -6,7 +6,8 @@
 import os
 import numpy as np
 
-from ...utils import logger, get_dataset_path
+from ...utils import logger
+from ...utils.fs import get_dataset_path
 from ..base import RNGDataFlow
 
 __all__ = ['SVHNDigit']

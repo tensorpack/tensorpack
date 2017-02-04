@@ -11,8 +11,8 @@ import six
 from six.moves import range
 import copy
 
-from ...utils import logger, get_dataset_path
-from ...utils.fs import download
+from ...utils import logger
+from ...utils.fs import download, get_dataset_path
 from ..base import RNGDataFlow
 
 __all__ = ['Cifar10', 'Cifar100']

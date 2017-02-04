@@ -8,8 +8,7 @@ import glob
 import cv2
 import numpy as np
 
-from ...utils import get_dataset_path
-from ...utils.fs import download
+from ...utils.fs import download, get_dataset_path
 from ..base import RNGDataFlow
 
 __all__ = ['BSDS500']

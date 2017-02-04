@@ -8,8 +8,8 @@ import gzip
 import numpy
 from six.moves import range
 
-from ...utils import logger, get_dataset_path
-from ...utils.fs import download
+from ...utils import logger
+from ...utils.fs import download, get_dataset_path
 from ..base import RNGDataFlow
 
 __all__ = ['Mnist']

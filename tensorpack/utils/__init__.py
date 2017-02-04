@@ -24,7 +24,7 @@ def _global_import(name):
 _TO_IMPORT = set([
     'naming',
     'utils',
-    'gpu'
+    'gpu'   # TODO don't export it
 ])
 
 _CURR_DIR = os.path.dirname(__file__)

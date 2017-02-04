@@ -6,7 +6,7 @@
 import os
 from .utils import change_env
 
-__all__ = ['change_gpu', 'get_nr_gpu', 'get_gpus']
+__all__ = ['change_gpu', 'get_nr_gpu']
 
 
 def change_gpu(val):
@@ -28,13 +28,3 @@ def get_nr_gpu():
     env = os.environ.get('CUDA_VISIBLE_DEVICES', None)
     assert env is not None, 'gpu not set!'  # TODO
     return len(env.split(','))
-
-
-def get_gpus():
-    """
-    Returns:
-        list: a list of int of GPU id.
-    """
-    env = os.environ.get('CUDA_VISIBLE_DEVICES', None)
-    assert env is not None, 'gpu not set!'  # TODO
-    return map(int, env.strip().split(','))
