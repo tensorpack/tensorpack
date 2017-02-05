@@ -19,7 +19,8 @@ Docs & tutorials should be ready within a month. See some [examples](examples) t
 + [Asynchronous Advantage Actor-Critic(A3C) with demos on OpenAI Gym](examples/A3C-Gym)
 
 ### Unsupervised Learning:
-+ [Generative Adversarial Network(GAN) variants, including DCGAN, Image2Image, InfoGAN](examples/GAN)
++ [Generative Adversarial Network(GAN) variants](examples/GAN), including DCGAN, InfoGAN, Conditional GAN, Image to Image.
+
 
 ### Speech / NLP:
 + [LSTM-CTC for speech recognition](examples/CTC-TIMIT)

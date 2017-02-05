@@ -15,7 +15,6 @@ import cv2
 from tensorpack import *
 from tensorpack.utils.viz import *
 from tensorpack.tfutils.summary import add_moving_summary
-from tensorpack.utils.globvars import globalns as CFG, use_global_argument
 import tensorpack.tfutils.symbolic_functions as symbf
 from GAN import GANTrainer, RandomZData, GANModelDesc
 
@@ -30,14 +29,14 @@ The original code (dcgan.torch) uses kernel_shape=4, but I found the difference 
     ./DCGAN-CelebA.py --load path/to/model --sample
 """
 
-CFG.SHAPE = 64
-CFG.BATCH = 128
-CFG.Z_DIM = 100
+SHAPE = 64
+BATCH = 128
+Z_DIM = 100
 
 
 class Model(GANModelDesc):
     def _get_inputs(self):
-        return [InputVar(tf.float32, (None, CFG.SHAPE, CFG.SHAPE, 3), 'input')]
+        return [InputVar(tf.float32, (None, SHAPE, SHAPE, 3), 'input')]
 
     def generator(self, z):
         """ return a image generated from z"""
@@ -73,8 +72,8 @@ class Model(GANModelDesc):
         image_pos = inputs[0]
         image_pos = image_pos / 128.0 - 1
 
-        z = tf.random_uniform([CFG.BATCH, CFG.Z_DIM], -1, 1, name='z_train')
-        z = tf.placeholder_with_default(z, [None, CFG.Z_DIM], name='z')
+        z = tf.random_uniform([BATCH, Z_DIM], -1, 1, name='z_train')
+        z = tf.placeholder_with_default(z, [None, Z_DIM], name='z')
 
         with argscope([Conv2D, Deconv2D, FullyConnected],
                       W_init=tf.truncated_normal_initializer(stddev=0.02)):
@@ -91,12 +90,13 @@ class Model(GANModelDesc):
 
 
 def get_data():
-    datadir = CFG.data
+    global args
+    datadir = args.data
     imgs = glob.glob(datadir + '/*.jpg')
     ds = ImageFromFile(imgs, channel=3, shuffle=True)
     augs = [imgaug.CenterCrop(140), imgaug.Resize(64)]
     ds = AugmentImageComponent(ds, augs)
-    ds = BatchData(ds, CFG.BATCH)
+    ds = BatchData(ds, BATCH)
     ds = PrefetchDataZMQ(ds, 1)
     return ds
 
@@ -137,7 +137,6 @@ if __name__ == '__main__':
     parser.add_argument('--sample', action='store_true', help='run sampling')
     parser.add_argument('--data', help='`image_align_celeba` directory of the celebA dataset')
     args = parser.parse_args()
-    use_global_argument(args)
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
     if args.sample:

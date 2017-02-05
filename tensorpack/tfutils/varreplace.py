@@ -7,7 +7,7 @@ import tensorflow as tf
 from tensorflow.python.ops import variable_scope
 from contextlib import contextmanager
 
-__all__ = ['replace_get_variable', 'freeze_get_variable']
+__all__ = ['replace_get_variable', 'freeze_get_variable', 'remap_get_variable']
 
 _ORIG_GET_VARIABLE = tf.get_variable
 
@@ -16,7 +16,7 @@ _ORIG_GET_VARIABLE = tf.get_variable
 def replace_get_variable(fn):
     """
     Args:
-        fn: a function taking the same arguments as ``tf.get_variable``.
+        fn: a function compatible with ``tf.get_variable``.
     Returns:
         a context where ``tf.get_variable`` and
         ``variable_scope.get_variable`` are replaced with ``fn``.
@@ -36,6 +36,19 @@ def replace_get_variable(fn):
     variable_scope.get_variable = old_vars_getv
 
 
+def remap_get_variable(fn):
+    """ Similar to :func:`replace_get_variable`, but the function `fn`
+    takes the variable returned by the original `tf.get_variable` call
+    and return a tensor.
+    """
+    old_getv = tf.get_variable
+
+    def new_get_variable(name, shape=None, **kwargs):
+        v = old_getv(name, shape, **kwargs)
+        return fn(v)
+    return replace_get_variable(new_get_variable)
+
+
 def freeze_get_variable():
     """
     Return a context, where all variables (reused or not) returned by
@@ -49,9 +62,5 @@ def freeze_get_variable():
             with varreplace.freeze_get_variable():
                 x = FullyConnected('fc', x, 1000)   # fc/* will not be trained
     """
-    old_get_variable = tf.get_variable
-
-    def fn(name, shape=None, **kwargs):
-        v = old_get_variable(name, shape, **kwargs)
-        return tf.stop_gradient(v)
-    return replace_get_variable(fn)
+    return remap_get_variable(
+        lambda v: tf.stop_gradient(v))

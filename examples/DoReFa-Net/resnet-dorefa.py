@@ -13,7 +13,7 @@ from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
 from tensorpack.utils.stats import RatioCounter
-from tensorpack.tfutils.varreplace import replace_get_variable
+from tensorpack.tfutils.varreplace import remap_get_variable
 from dorefa import get_dorefa
 
 """
@@ -44,10 +44,10 @@ class Model(ModelDesc):
         fw, fa, fg = get_dorefa(BITW, BITA, BITG)
         old_get_variable = tf.get_variable
 
-        def new_get_variable(name, shape=None, **kwargs):
-            v = old_get_variable(name, shape, **kwargs)
+        def new_get_variable(v):
+            name = v.op.name
             # don't binarize first and last layer
-            if name != 'W' or 'conv1' in v.op.name or 'fct' in v.op.name:
+            if not name.endswith('W') or 'conv1' in name or 'fct' in name:
                 return v
             else:
                 logger.info("Binarizing weight {}".format(v.op.name))
@@ -90,7 +90,7 @@ class Model(ModelDesc):
                     x = resblock(x, channel, 1)
             return x
 
-        with replace_get_variable(new_get_variable), \
+        with remap_get_variable(new_get_variable), \
                 argscope(BatchNorm, decay=0.9, epsilon=1e-4), \
                 argscope(Conv2D, use_bias=False, nl=tf.identity):
             logits = (LinearWrap(image)
