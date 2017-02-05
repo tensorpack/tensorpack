@@ -106,6 +106,7 @@ class LMDBData(RNGDataFlow):
 
     def reset_state(self):
         super(LMDBData, self).reset_state()
+        self.open_lmdb(self.keys)
 
     def size(self):
         return self._size
@@ -118,8 +119,6 @@ class LMDBData(RNGDataFlow):
                 if k != '__keys__':
                     yield [k, v]
         else:
-            if not hasattr(self, "rng"):
-                self.reset_state()
             self.rng.shuffle(self.keys)
             for k in self.keys:
                 v = self._txn.get(k)
