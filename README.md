@@ -38,13 +38,13 @@ Describe your training task with three components:
 
 2. __DataFlow__. tensorpack allows and encourages complex data processing.
 
-	+ All data producer has an unified `generator` interface, allowing them to be composed to perform complex preprocessing.
+	+ All data producer has an unified interface, allowing them to be composed to perform complex preprocessing.
 	+ Use Python to easily handle any data format, yet still keep good performance thanks to multiprocess prefetch & TF Queue prefetch.
 	For example, InceptionV3 can run in the same speed as the official code which reads data by TF operators.
 
 3. __Callbacks__, including everything you want to do apart from the training iterations, such as:
 	+ Change hyperparameters during training
-	+ Print some variables of interest
+	+ Print some tensors of interest
 	+ Run inference on a test dataset
 	+ Run some operations once a while
 	+ Send loss to your phone
@@ -52,8 +52,6 @@ Describe your training task with three components:
 With the above components defined, tensorpack trainer will run the training iterations for you.
 Multi-GPU training is off-the-shelf by simply switching the trainer.
 You can also define your own trainer for non-standard training (e.g. GAN).
-
-The components are designed to be independent. You can use Model or DataFlow in other projects as well.
 
 ## Dependencies:
 
