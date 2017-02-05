@@ -27,6 +27,6 @@ with the following PSNR values:
 | Example       | PSNR (paper)  | PSNR (re-implementation) |
 | ------------- | ------------- | ------------------------ |
 | Set14/SRF3/1  | 23.72db       | 20.83db                  |
-| Set14/SRF3/5  | 21.48db       | 24.82db                  |
+| Set14/SRF3/5  | 24.82db       | 21.48db                  |
 | Set14/SRF3/11 | 33.66db       | 28.47db                  |
 
