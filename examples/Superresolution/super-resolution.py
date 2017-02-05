@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Author: PatWie <mail@patwie.com>
+# Author: TensorPack contributors
 
 import numpy as np
 import tensorflow as tf
