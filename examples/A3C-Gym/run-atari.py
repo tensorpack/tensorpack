@@ -12,6 +12,7 @@ import time
 import random
 import argparse
 import six
+import cv2
 
 from tensorpack import *
 from tensorpack.RL import *
