@@ -14,7 +14,6 @@ try:
     import pypandoc
     long_description = pypandoc.convert_file('README.md', 'rst')
 except ImportError:
-    raise
     long_description = open('README.md').read()
 
 # configure requirements
