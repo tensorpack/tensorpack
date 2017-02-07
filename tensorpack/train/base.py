@@ -155,9 +155,12 @@ class Trainer(object):
 
     @property
     def global_step(self):
-        return self._starting_step + \
-                self.config.steps_per_epoch * (self.epoch_num - 1) + \
-                self.local_step + 1
+        try:
+            return self._starting_step + \
+                    self.config.steps_per_epoch * (self.epoch_num - 1) + \
+                    self.local_step + 1
+        except AttributeError:
+            return get_global_step_value()
 
     def main_loop(self):
         """

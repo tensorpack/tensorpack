@@ -39,5 +39,5 @@ To view the loss curve:
 ```bash
 cat train_log/hed/stat.json | jq '.[] |
 "\(.xentropy1)\t\(.xentropy2)\t\(.xentropy3)\t\(.xentropy4)\t\(.xentropy5)\t\(.xentropy6)"' -r | \
-				../../scripts/plot-point.py --legend 1,2,3,4,5,final --decay 0.8
+				tpk-plot-point --legend 1,2,3,4,5,final --decay 0.8
 ```

@@ -7,6 +7,7 @@ from contextlib import contextmanager
 import numpy as np
 
 
+# this function exists for backwards-compatibilty
 def prediction_incorrect(logits, label, topk=1, name='incorrect_vector'):
     """
     Args:

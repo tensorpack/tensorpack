@@ -48,6 +48,7 @@ for s in scripts:
 setup(
     version=__version__,
     install_requires=req,
+    tests_require=['flake8']
     extras_require={
         'all': extra_req
     },

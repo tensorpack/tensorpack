@@ -54,20 +54,17 @@ With the above components defined, tensorpack trainer will run the training iter
 Multi-GPU training is off-the-shelf by simply switching the trainer.
 You can also define your own trainer for non-standard training (e.g. GAN).
 
-## Dependencies:
+## Install:
+
+Dependencies:
 
 + Python 2 or 3
 + TensorFlow >= 1.0.0rc0
 + Python bindings for OpenCV
-+ other requirements:
-```
-pip install --user -r requirements.txt
-pip install --user -r opt-requirements.txt # (some optional dependencies required by certain submodule, you can install later if needed)
-```
-+ Enable `import tensorpack`:
-```
-export PYTHONPATH=$PYTHONPATH:`readlink -f path/to/tensorpack`
-```
-(or use `greadlink` from `coreutils` brew package if you're on OSX)
++ (optional) use tcmalloc if running with large data
 
-+ Use tcmalloc if running with large data
+```
+git clone https://github.com/ppwwyyxx/tensorpack/ && cd tensorpack
+pip install --user --upgrade .
+pip install --user -r opt-requirements.txt # (some optional dependencies required by certain submodules, you can install later if prompted)
+```
