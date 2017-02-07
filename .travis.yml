@@ -25,12 +25,12 @@ matrix:
         - env: TF_VERSION=0.12.1 TF_TYPE=nightly
 
 install:
-    - echo $TRAVIS_PYTHON_VERSION
-    - pip install -U flake8 opencv-python
+    # some packages on travis seem too old to work
+    - pip install -U pip packaging
+    - pip install flake8 opencv-python
     # Here we use opencv-python to overcome some travis probelms.
     # Users are not recommended to use opencv-python because it brings issues working on GPU
     # together with tensorflow.
-    # - if [ -e requirements.txt ]; then pip install -r requirements.txt;else pip install -r requirements.pip;fi
     - ./tests/install-tensorflow.sh
     - pip install .
 
@@ -42,7 +42,6 @@ before_script:
 script:
     - flake8 .
     - cd examples && flake8 .
-    # - export PYTHONPATH=$PYTHONPATH:$TRAVIS_BUILD_DIR
     - cd $TRAVIS_BUILD_DIR && python tests/test_examples.py
 
 notifications:
