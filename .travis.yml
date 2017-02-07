@@ -1,52 +1,81 @@
 sudo: false
-dist: "trusty"
-language: "python"
+dist: trusty
+language: python
 
 cache:
   pip: true
   apt: true
 
+addons:
+  apt:
+    packages:
+    - pandoc
+
 matrix:
-    fast_finish: true
-    include:
-        - os: linux
-          python: 2.7
-          env: TF_VERSION=1.0.0rc1 TF_TYPE=release
-        - os: linux
-          python: 3.5
-          env: TF_VERSION=1.0.0rc1 TF_TYPE=release
-        - os: linux
-          python: 2.7
-          env: TF_VERSION=0.12.1 TF_TYPE=nightly
-        - os: linux
-          python: 3.5
-          env: TF_VERSION=0.12.1 TF_TYPE=nightly
-    allow_failures:
-        - env: TF_VERSION=0.12.1 TF_TYPE=nightly
+  fast_finish: true
+  include:
+  - os: linux
+    python: 2.7
+    env: TF_VERSION=1.0.0rc1 TF_TYPE=release
+  - os: linux
+    python: 3.5
+    env: TF_VERSION=1.0.0rc1 TF_TYPE=release
+  - os: linux
+    python: 2.7
+    env: TF_VERSION=1.0.0rc1 TF_TYPE=nightly
+  - os: linux
+    python: 3.5
+    env: TF_VERSION=1.0.0rc1 TF_TYPE=nightly
+  allow_failures:
+  - env: TF_VERSION=1.0.0rc1 TF_TYPE=nightly
 
 install:
-    # some packages on travis seem too old to work
-    - pip install -U pip packaging
-    - pip install flake8 opencv-python
-    # Here we use opencv-python to overcome some travis probelms.
-    # Users are not recommended to use opencv-python because it brings issues working on GPU
-    # together with tensorflow.
-    - ./tests/install-tensorflow.sh
-    - pip install .
+- pip install -U pip    # the pip version on travis is too old
+- pip install flake8 opencv-python pypandoc
+  # here we use opencv-python, but users are in general not recommended to use this package,
+  # because it brings issues working with tensorflow on gpu
+- ./tests/install-tensorflow.sh
+- pip install .
 
 before_script:
-    - flake8 --version
-    - python -c "import cv2; print('OpenCV '+ cv2.__version__)"
-    - python -c "import tensorflow as tf; print('TensorFlow '+ tf.__version__)"
+- flake8 --version
+- python -c "import cv2; print('OpenCV '+ cv2.__version__)"
+- python -c "import tensorflow as tf; print('TensorFlow '+ tf.__version__)"
 
 script:
-    - flake8 .
-    - cd examples && flake8 .
-    - cd $TRAVIS_BUILD_DIR && python tests/test_examples.py
+- flake8 .
+- cd examples && flake8 .
+- cd $TRAVIS_BUILD_DIR && python tests/test_examples.py
 
 notifications:
   email:
     recipients:
-      - ppwwyyxxc@gmail.com
+    - ppwwyyxxc@gmail.com
     on_success: never
-    on_failure: change # default: always
+    on_failure: change
+
+deploy:
+- provider: pypi
+  user: ppwwyyxx
+  distributions: "sdist bdist_wheel"
+  skip_upload_docs: true
+  password:
+    secure: lnNfzPFSk4HF7seuu63CoUa0g4V0JPs42H5FTzWecEIro8IqjdaAvzNKuhu9E4rkrMXPzoYYA6gC4YhseT7N/jg7lyV/Nn1koGXK1gmzu5JnXZXHw5/Ri0I3hOF3OFpEvkR39tzV0r5HsO0JIU3pl11+bBS8iloEtzdTPaUaRgyYxyZGrHl8l3VnUyM50PRnPGDouK6DHxJmknnFCOZFCrEpwN4zpOs55c1rChjJ8aql69rSsXQOUP8++jRtGwgqEvHh0K86uGm1AJUYvSWmcoD+5Urcg8LGaQzySmXtJnFgxtzsORactIEJoAteSMXufWZITn4OQ5VQkc4/CfU0HgHioQw86dpdJrfOLkhEx65JxfUsQiOTgpcTOgYYEda6+dY4cnTTpj2fASVDhQMQ/vo+Ab/W14nYG8z0IPwGJ1qDXRO6AtPD7vbah2LdHQTUTiAbbtva7NWuKbFiVxD2tdrVQHKWqmKXw+JF5F8TBDEnUxFtulW2hbM+vwu6mPxbYQZEpONjLKSa7qiZ8jQZ8cy9KatQYkqPLeGEbgI+IsmA4bnJJennToyWZ2N4W071ddtLB7hDH4ZRVdaLVYtfeKW/b/+YGX3N8p5cMKGIDjpGyF0BocFalQ7gYfg2ouAn1RyEPkCaw6ntA2uzIgvTqxU5inWJCFn20Ogst0oIaPs=
+  on:
+    tags: true
+    repo: ppwwyyxx/tensorpack
+    python: "3.5"
+    condition: "$TF_TYPE = release"
+
+- provider: pypi
+  server: https://testpypi.python.org/pypi
+  user: ppwwyyxx
+  distributions: "sdist bdist_wheel"
+  skip_upload_docs: true
+  password:
+    secure: lnNfzPFSk4HF7seuu63CoUa0g4V0JPs42H5FTzWecEIro8IqjdaAvzNKuhu9E4rkrMXPzoYYA6gC4YhseT7N/jg7lyV/Nn1koGXK1gmzu5JnXZXHw5/Ri0I3hOF3OFpEvkR39tzV0r5HsO0JIU3pl11+bBS8iloEtzdTPaUaRgyYxyZGrHl8l3VnUyM50PRnPGDouK6DHxJmknnFCOZFCrEpwN4zpOs55c1rChjJ8aql69rSsXQOUP8++jRtGwgqEvHh0K86uGm1AJUYvSWmcoD+5Urcg8LGaQzySmXtJnFgxtzsORactIEJoAteSMXufWZITn4OQ5VQkc4/CfU0HgHioQw86dpdJrfOLkhEx65JxfUsQiOTgpcTOgYYEda6+dY4cnTTpj2fASVDhQMQ/vo+Ab/W14nYG8z0IPwGJ1qDXRO6AtPD7vbah2LdHQTUTiAbbtva7NWuKbFiVxD2tdrVQHKWqmKXw+JF5F8TBDEnUxFtulW2hbM+vwu6mPxbYQZEpONjLKSa7qiZ8jQZ8cy9KatQYkqPLeGEbgI+IsmA4bnJJennToyWZ2N4W071ddtLB7hDH4ZRVdaLVYtfeKW/b/+YGX3N8p5cMKGIDjpGyF0BocFalQ7gYfg2ouAn1RyEPkCaw6ntA2uzIgvTqxU5inWJCFn20Ogst0oIaPs=
+  on:
+    branch: test-travis
+    repo: ppwwyyxx/tensorpack
+    python: "3.5"
+    condition: "$TF_TYPE = release"

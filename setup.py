@@ -9,6 +9,14 @@ libinfo = {'__file__': libinfo_py}
 exec(compile(open(libinfo_py, "rb").read(), libinfo_py, 'exec'), libinfo, libinfo)
 __version__ = libinfo['__version__']
 
+# produce rst readme for pypi
+try:
+    import pypandoc
+    long_description = pypandoc.convert_file('README.md', 'rst')
+except ImportError:
+    raise
+    long_description = open('README.md').read()
+
 # configure requirements
 req = [
     'numpy',
@@ -47,10 +55,13 @@ for s in scripts:
 
 setup(
     version=__version__,
+    description='Neural Network Toolbox on TensorFlow',
+    long_description=long_description,
+
     install_requires=req,
     tests_require=['flake8'],
     extras_require={
         'all': extra_req
     },
-    scripts=scripts_to_install
+    scripts=scripts_to_install,
 )
