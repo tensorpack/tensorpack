@@ -77,10 +77,12 @@ class LMDBData(RNGDataFlow):
         """
         self._lmdb_path = lmdb_path
         self._shuffle = shuffle
-        self.keys = keys
-        self.open_lmdb(keys)
 
-    def open_lmdb(self, keys=None):
+        self.open_lmdb()
+        logger.info("Found {} entries in {}".format(self._size, self._lmdb_path))
+        self._set_keys(keys)
+
+    def _set_keys(self, keys=None):
         def find_keys(txn, size):
             logger.warn("Traversing the database to find keys is slow. Your should specify the keys.")
             keys = []
@@ -91,15 +93,6 @@ class LMDBData(RNGDataFlow):
                     keys.append(k[0])
                     pbar.update()
             return keys
-
-        self._lmdb = lmdb.open(self._lmdb_path,
-                               subdir=os.path.isdir(self._lmdb_path),
-                               readonly=True, lock=False, readahead=False,
-                               map_size=1099511627776 * 2, max_readers=100)
-        self._txn = self._lmdb.begin()
-        self._size = self._txn.stat()['entries']
-
-        logger.info("Found {} entries in {}".format(self._size, self._lmdb_path))
 
         if self._shuffle:
             if keys is None:
@@ -112,10 +105,21 @@ class LMDBData(RNGDataFlow):
                 # check if key-format like '{:0>8d}' was given
                 if isinstance(keys, six.string_types):
                     self.keys = map(lambda x: keys.format(x), list(np.arange(self._size)))
+                else:
+                    self.keys = keys
+
+    def open_lmdb(self):
+        self._lmdb = lmdb.open(self._lmdb_path,
+                               subdir=os.path.isdir(self._lmdb_path),
+                               readonly=True, lock=False, readahead=False,
+                               map_size=1099511627776 * 2, max_readers=100)
+        self._txn = self._lmdb.begin()
+        self._size = self._txn.stat()['entries']
 
     def reset_state(self):
+        self._lmdb.close()
         super(LMDBData, self).reset_state()
-        self.open_lmdb(self.keys)
+        self.open_lmdb()
 
     def size(self):
         return self._size
