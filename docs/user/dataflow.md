@@ -7,8 +7,9 @@ A Dataflow has a `get_data()` generator method,
 which yields a `datapoint` when called.
 A datapoint must be a **list** of Python objects which I called the `components` of this datapoint.
 
-For example, to train on MNIST dataset, you can define a Dataflow
-that produces datapoints of two elements: a numpy array of shape (64, 28, 28), and an array of shape (64,).
+For example, to train on MNIST dataset, you can build a Dataflow
+that produces datapoints of two elements (components):
+a numpy array of shape (64, 28, 28), and an array of shape (64,).
 
 ### Composition of DataFlow
 One good thing about having a standard interface is to be able to provide
@@ -25,10 +26,10 @@ df = CaffeLMDB('/path/to/caffe/lmdb', shuffle=False)
 df = AugmentImageComponent(df, [imgaug.Resize((225, 225))])
 # group data into batches of size 128
 df = BatchData(df, 128)
-# start 3 processes to run the dataflow in parallel, and transfer the data with ZeroMQ
+# start 3 processes to run the dataflow in parallel, and transfer data with ZeroMQ
 df = PrefetchDataZMQ(df, 3)
 ````
-Another complicated example is the [ResNet training script](../examples/ResNet/imagenet-resnet.py)
+A more complicated example is the [ResNet training script](../examples/ResNet/imagenet-resnet.py)
 with all the data preprocessing.
 
 All these modules are written in Python,
@@ -60,7 +61,9 @@ A Dataflow has a `get_data()` method which yields a datapoint every time.
 class MyDataFlow(DataFlow):
   def get_data(self):
     for k in range(100):
-		  yield datapoint
+			digit = np.random.rand(28, 28)
+			label = np.random.randint(10)
+      yield [digit, label]
 ```
 
 Optionally, Dataflow can implement the following two methods:

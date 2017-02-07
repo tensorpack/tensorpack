@@ -1,8 +1,6 @@
 
 # Trainers
 
-## Trainer
-
 Training is basically **running something again and again**.
 Tensorpack base trainer implements the logic of *running the iteration*,
 and other trainers implement *what the iteration is*.
@@ -54,7 +52,7 @@ The existing trainers should be enough for single-cost optimization tasks. If yo
 want to do something inside the trainer, consider writing it as a callback, or
 write an issue to see if there is a better solution than creating new trainers.
 
-For other tasks, you might need a new trainer.
+For certain tasks, you might need a new trainer.
 The [GAN trainer](../examples/GAN/GAN.py) is one example of how to implement
 new trainers.
 

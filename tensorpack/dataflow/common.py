@@ -41,7 +41,7 @@ class TestDataSpeed(ProxyDataFlow):
         with get_tqdm(total=self.test_size, leave=True) as pbar:
             for idx, dp in enumerate(self.ds.get_data()):
                 pbar.update()
-                if idx == self.test_size:
+                if idx == self.test_size - 1:
                     break
 
 
@@ -439,7 +439,8 @@ class LocallyShuffleData(ProxyDataFlow, RNGDataFlow):
         Args:
             ds (DataFlow): input DataFlow.
             cache_size (int): size of the cache.
-            nr_reuse (int): reuse each datapoints several times to improve speed.
+            nr_reuse (int): reuse each datapoints several times to improve
+                speed, but may hurt your model.
         """
         ProxyDataFlow.__init__(self, ds)
         self.q = deque(maxlen=cache_size)

@@ -24,7 +24,7 @@ TrainConfig(
   callbacks=[
     # save the model every epoch
     ModelSaver(),
-    # run inference on another Dataflow every epoch, compute top1/top5 classification error and save them
+    # run inference on another Dataflow every epoch, compute top1/top5 classification error and save them in log
     InferenceRunner(dataset_val, [
         ClassificationError('wrong-top1', 'val-error-top1'),
         ClassificationError('wrong-top5', 'val-error-top5')]),
@@ -39,12 +39,12 @@ TrainConfig(
                -d body={val-error-top1} > /dev/null 2>&1',
                'val-error-top1')
   ],
-  extra_callbacks=[    # these are already enabled by default
+  extra_callbacks=[    # these callbacks are already enabled by default
     # maintain and summarize moving average of some tensors (e.g. training loss, training error)
     MovingAverageSummary(),
     # draw a nice progress bar
     ProgressBar(),
-    # print all the statistics I've created and scalar tensors I've summarized
+    # print all the statistics I've created, and scalar tensors I've summarized
     StatPrinter(),
   ]
 )
