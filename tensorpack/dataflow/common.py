@@ -38,9 +38,11 @@ class TestDataSpeed(ProxyDataFlow):
         Start testing with a progress bar.
         """
         self.ds.reset_state()
-        with get_tqdm(total=self.test_size) as pbar:
-            for dp in self.ds.get_data():
+        with get_tqdm(total=self.test_size, leave=True) as pbar:
+            for idx, dp in enumerate(self.ds.get_data()):
                 pbar.update()
+                if idx == self.test_size:
+                    break
 
 
 class BatchData(ProxyDataFlow):

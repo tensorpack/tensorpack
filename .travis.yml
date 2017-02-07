@@ -63,6 +63,7 @@ deploy:
     secure: lnNfzPFSk4HF7seuu63CoUa0g4V0JPs42H5FTzWecEIro8IqjdaAvzNKuhu9E4rkrMXPzoYYA6gC4YhseT7N/jg7lyV/Nn1koGXK1gmzu5JnXZXHw5/Ri0I3hOF3OFpEvkR39tzV0r5HsO0JIU3pl11+bBS8iloEtzdTPaUaRgyYxyZGrHl8l3VnUyM50PRnPGDouK6DHxJmknnFCOZFCrEpwN4zpOs55c1rChjJ8aql69rSsXQOUP8++jRtGwgqEvHh0K86uGm1AJUYvSWmcoD+5Urcg8LGaQzySmXtJnFgxtzsORactIEJoAteSMXufWZITn4OQ5VQkc4/CfU0HgHioQw86dpdJrfOLkhEx65JxfUsQiOTgpcTOgYYEda6+dY4cnTTpj2fASVDhQMQ/vo+Ab/W14nYG8z0IPwGJ1qDXRO6AtPD7vbah2LdHQTUTiAbbtva7NWuKbFiVxD2tdrVQHKWqmKXw+JF5F8TBDEnUxFtulW2hbM+vwu6mPxbYQZEpONjLKSa7qiZ8jQZ8cy9KatQYkqPLeGEbgI+IsmA4bnJJennToyWZ2N4W071ddtLB7hDH4ZRVdaLVYtfeKW/b/+YGX3N8p5cMKGIDjpGyF0BocFalQ7gYfg2ouAn1RyEPkCaw6ntA2uzIgvTqxU5inWJCFn20Ogst0oIaPs=
   on:
     tags: true
+    branch: master
     repo: ppwwyyxx/tensorpack
     python: "3.5"
     condition: "$TF_TYPE = release"
