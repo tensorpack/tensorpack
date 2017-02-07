@@ -10,11 +10,13 @@ import six
 
 from ..dataflow import DataFlow, RepeatedData
 from ..tfutils.summary import add_moving_summary
+from ..tfutils import get_op_tensor_name
 from ..utils import logger
 from ..callbacks.concurrency import StartProcOrThread
 
-__all__ = ['InputData', 'QueueInput', 'FeedfreeInput', 'TensorInput',
-           'DummyConstantInput']
+__all__ = ['InputData', 'FeedfreeInput',
+           'QueueInput', 'BatchQueueInput',
+           'TensorInput', 'DummyConstantInput']
 
 
 @six.add_metaclass(ABCMeta)
@@ -90,9 +92,9 @@ class EnqueueThread(threading.Thread):
             self.size_op, tf.float32, name='input_queue_size'))
 
     def run(self):
-        self.dataflow.reset_state()
-        with self.sess.as_default():
-            try:
+        try:
+            self.dataflow.reset_state()
+            with self.sess.as_default():
                 while True:
                     for dp in self.dataflow.get_data():
                         if self.coord.should_stop():
@@ -100,22 +102,23 @@ class EnqueueThread(threading.Thread):
                         feed = dict(zip(self.placehdrs, dp))
                         # print 'qsize:', self.sess.run([self.op, self.size_op], feed_dict=feed)[1]
                         self.op.run(feed_dict=feed)
-            except tf.errors.CancelledError:
+        except tf.errors.CancelledError:
+            pass
+        except Exception:
+            logger.exception("Exception in EnqueueThread:")
+        finally:
+            self.coord.request_stop()
+            try:
+                self.sess.run(self.close_op)
+            except RuntimeError:    # session already closed
                 pass
-            except Exception:
-                logger.exception("Exception in EnqueueThread:")
-            finally:
-                self.coord.request_stop()
-                try:
-                    self.sess.run(self.close_op)
-                except RuntimeError:    # session already closed
-                    pass
-                logger.info("Enqueue Thread Exited.")
+            logger.info("Enqueue Thread Exited.")
 
 
 class QueueInput(FeedfreeInput):
-    """ Input by enqueueing datapoints from a DataFlow to a TF queue, and dequeue
-        tensors to the graph. """
+    """ Enqueue datapoints from a DataFlow to a TF queue.
+        And the model receives dequeued tensors.
+    """
 
     def __init__(self, ds, queue=None):
         """
@@ -144,6 +147,7 @@ class QueueInput(FeedfreeInput):
 
     def _get_input_tensors(self):
         ret = self.queue.dequeue(name='input_deque')
+        print(ret)
         if isinstance(ret, tf.Tensor):  # only one input
             ret = [ret]
         assert len(ret) == len(self.input_placehdrs)
@@ -155,6 +159,70 @@ class QueueInput(FeedfreeInput):
             # ret = [tf.Variable(tf.random_normal([128,224,224,3],
             # dtype=tf.float32), trainable=False),
             # tf.Variable(tf.ones([128], dtype=tf.int32), trainable=False)]
+        return ret
+
+
+class BatchQueueInput(FeedfreeInput):
+    """ Enqueue datapoints from a DataFlow to a TF queue.
+        And the model receives batches formed by concatenating
+        dequeued tensors.
+    """
+    def __init__(self, ds, batch_size, queue=None):
+        """
+        Args:
+            ds(DataFlow): the input DataFlow.
+            batch_size(int): the batch size.
+            queue (tf.QueueBase): Defaults to a FIFO queue of size 3000.
+        """
+        assert isinstance(ds, DataFlow), ds
+        self.queue = queue
+        self.ds = ds
+        self.batch_size = int(batch_size)
+
+    def size(self):
+        return self.ds.size() // self.batch_size
+
+    def _setup(self, trainer):
+        self.input_placehdrs = trainer.model.get_input_vars()
+        assert len(self.input_placehdrs) > 0, \
+            "QueueInput can only be used with input placeholders!"
+
+        # prepare placeholders without the first dimension
+        placehdrs_nobatch = []
+        for p in self.input_placehdrs:
+            placehdrs_nobatch.append(tf.placeholder(
+                dtype=p.dtype, shape=p.get_shape().as_list()[1:],
+                name=get_op_tensor_name(p.name)[0] + '-nobatch'))
+
+        # dequeue_many requires fully-defined shapes
+        shape_err = "Use of BatchQueueInput requires input variables to have fully-defined "
+        "shapes except for the batch dimension"
+        shapes = []
+        for p in placehdrs_nobatch:
+            assert p.get_shape().is_fully_defined(), shape_err
+            shapes.append(p.get_shape())
+
+        if self.queue is None:
+            self.queue = tf.FIFOQueue(
+                3000, [x.dtype for x in self.input_placehdrs],
+                shapes=shapes,
+                name='input_queue')
+        for shp in self.queue.shapes:
+            assert shp.is_fully_defined(), shape_err
+
+        self.thread = EnqueueThread(
+            trainer, self.queue, self.ds, placehdrs_nobatch)
+        trainer.config.callbacks.append(StartProcOrThread(self.thread))
+
+    def _get_input_tensors(self):
+        ret = self.queue.dequeue_many(self.batch_size, name='input_deque')
+        if isinstance(ret, tf.Tensor):  # only one input
+            ret = [ret]
+        assert len(ret) == len(self.input_placehdrs)
+        for qv, v in zip(ret, self.input_placehdrs):
+            shp = v.get_shape().as_list()
+            shp[0] = self.batch_size
+            qv.set_shape(shp)
         return ret
 
 

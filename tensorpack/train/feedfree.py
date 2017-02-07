@@ -105,26 +105,22 @@ class SimpleFeedfreeTrainer(
         # self.train_op = tf.group(*self.dequed_inputs)
 
 
-class QueueInputTrainer(SimpleFeedfreeTrainer):
+def QueueInputTrainer(config, input_queue=None, predict_tower=None):
     """
-    A trainer which automatically wraps ``config.dataflow`` by a
+    A wrapper trainer which automatically wraps ``config.dataflow`` by a
     :class:`QueueInput`.
+    It is an equivalent of ``SimpleFeedfreeTrainer(config)`` with ``config.data = QueueInput(dataflow)``.
+
+    Args:
+        config(TrainConfig): a `TrainConfig` instance. config.dataflow must exist.
+        input_queue(tf.QueueBase): an input queue. Defaults to the
+            :class:`QueueInput` default.
     """
-
-    def __init__(self, config, input_queue=None, predict_tower=None):
-        """
-        Single tower Trainer, takes input from a queue
-
-        Args:
-            config(TrainConfig): a `TrainConfig` instance. config.dataflow must exist.
-            input_queue(tf.QueueBase): an input queue. Defaults to the
-                :class:`QueueInput` default.
-        """
-        config.data = QueueInput(config.dataflow, input_queue)
-        if predict_tower is not None:
-            logger.warn("[Deprecated] Argument `predict_tower` is deprecated for trainer. "
-                        "Use TrainConfig(predict_tower=...) instead!")
-            config.predict_tower = predict_tower
-        assert len(config.tower) == 1, \
-            "QueueInputTrainer doesn't support multigpu! Use Sync/AsyncMultiGPUTrainer instead."
-        super(QueueInputTrainer, self).__init__(config)
+    config.data = QueueInput(config.dataflow, input_queue)
+    if predict_tower is not None:
+        logger.warn("[Deprecated] Argument `predict_tower` is deprecated for trainer. "
+                    "Use TrainConfig(predict_tower=...) instead!")
+        config.predict_tower = predict_tower
+    assert len(config.tower) == 1, \
+        "QueueInputTrainer doesn't support multigpu! Use Sync/AsyncMultiGPUTrainer instead."
+    return SimpleFeedfreeTrainer(config)

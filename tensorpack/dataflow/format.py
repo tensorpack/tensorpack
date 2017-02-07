@@ -67,10 +67,10 @@ class LMDBData(RNGDataFlow):
             lmdb_path (str): a directory or a file.
             shuffle (bool): shuffle the keys or not.
             keys (list of str or str): list of str as the keys, used only when shuffle is True.
-                It can also be a format string e.g. `'{:0>8d}'` which will be
-                formatted with the indices from 0 to `total_size - 1`.
+                It can also be a format string e.g. ``{:0>8d}`` which will be
+                formatted with the indices from 0 to *total_size - 1*.
 
-                If not provided, it will then look in the database for `__keys__` which
+                If not provided, it will then look in the database for ``__keys__`` which
                 :func:`dump_dataflow_to_lmdb` used to store the list of keys.
                 If still not found, it will iterate over the database to find
                 all the keys.
@@ -177,7 +177,7 @@ def CaffeLMDB(lmdb_path, shuffle=True, keys=None):
         a :class:`LMDBDataDecoder` instance.
 
     Example:
-        ds = CaffeLMDB("/tmp/validation", keys='{:0>8d}')
+        ``ds = CaffeLMDB("/tmp/validation", keys='{:0>8d}')``
     """
 
     cpb = get_caffe_pb()
