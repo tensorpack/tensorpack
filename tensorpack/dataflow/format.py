@@ -13,6 +13,7 @@ from ..utils.loadcaffe import get_caffe_pb
 from ..utils.serialize import loads
 from ..utils.argtools import log_once
 from .base import RNGDataFlow
+from .common import MapData
 
 __all__ = ['HDF5Data', 'LMDBData', 'LMDBDataDecoder', 'LMDBDataPoint',
            'CaffeLMDB', 'SVMLightData']
@@ -133,69 +134,66 @@ class LMDBData(RNGDataFlow):
                 yield [k, v]
 
 
-class LMDBDataDecoder(LMDBData):
+class LMDBDataDecoder(MapData):
     """ Read a LMDB database and produce a decoded output."""
-    def __init__(self, lmdb_path, decoder, shuffle=True, keys=None):
+    def __init__(self, lmdb_data, decoder):
         """
         Args:
-            lmdb_path, shuffle, keys: same as :class:`LMDBData`.
+            lmdb_data: a :class:`LMDBData` instance.
             decoder (k,v -> dp | None): a function taking k, v and returning a datapoint,
                 or return None to discard.
         """
-        super(LMDBDataDecoder, self).__init__(lmdb_path, shuffle=shuffle, keys=keys)
-        self.decoder = decoder
-
-    def get_data(self):
-        for dp in super(LMDBDataDecoder, self).get_data():
-            v = self.decoder(dp[0], dp[1])
-            if v:
-                yield v
+        def f(dp):
+            return decoder(dp[0], dp[1])
+        super(LMDBDataDecoder, self).__init__(lmdb_data, f)
 
 
-class LMDBDataPoint(LMDBDataDecoder):
+class LMDBDataPoint(MapData):
     """ Read a LMDB file and produce deserialized values.
         This can work with :func:`tensorpack.dataflow.dftools.dump_dataflow_to_lmdb`. """
 
-    def __init__(self, lmdb_path, shuffle=True, keys=None):
+    def __init__(self, lmdb_data):
         """
         Args:
-            lmdb_path (str): a directory or a file.
-            shuffle (bool): shuffle the keys or not.
-            keys (list): list of keys for lmdb file or the key format `'{:0>8d}'`
+            lmdb_data: a :class:`LMDBData` instance.
         """
-        super(LMDBDataPoint, self).__init__(
-            lmdb_path, decoder=lambda k, v: loads(v), shuffle=shuffle, keys=keys)
+        def f(dp):
+            return loads(dp[1])
+        super(LMDBDataPoint, self).__init__(lmdb_data, f)
 
 
-class CaffeLMDB(LMDBDataDecoder):
+def CaffeLMDB(lmdb_path, shuffle=True, keys=None):
     """
     Read a Caffe LMDB file where each value contains a ``caffe.Datum`` protobuf.
     Produces datapoints of the format: [HWC image, label].
+
+    Note that Caffe LMDB format is not efficient: it stores serialized raw
+    arrays rather than JPEG images.
+
+    Args:
+        lmdb_path, shuffle, keys: same as :class:`LMDBData`.
+
+    Returns:
+        a :class:`LMDBDataDecoder` instance.
 
     Example:
         ds = CaffeLMDB("/tmp/validation", keys='{:0>8d}')
     """
 
-    def __init__(self, lmdb_path, shuffle=True, keys=None):
-        """
-        Args:
-            lmdb_path, shuffle, keys: same as :class:`LMDBData`.
-        """
-        cpb = get_caffe_pb()
+    cpb = get_caffe_pb()
+    lmdb_data = LMDBData(lmdb_path, shuffle, keys)
 
-        def decoder(k, v):
-            try:
-                datum = cpb.Datum()
-                datum.ParseFromString(v)
-                img = np.fromstring(datum.data, dtype=np.uint8)
-                img = img.reshape(datum.channels, datum.height, datum.width)
-            except Exception:
-                log_once("Cannot read key {}".format(k), 'warn')
-                return None
-            return [img.transpose(1, 2, 0), datum.label]
-
-        super(CaffeLMDB, self).__init__(
-            lmdb_path, decoder=decoder, shuffle=shuffle, keys=keys)
+    def decoder(k, v):
+        try:
+            datum = cpb.Datum()
+            datum.ParseFromString(v)
+            img = np.fromstring(datum.data, dtype=np.uint8)
+            img = img.reshape(datum.channels, datum.height, datum.width)
+        except Exception:
+            log_once("Cannot read key {}".format(k), 'warn')
+            return None
+        return [img.transpose(1, 2, 0), datum.label]
+    return LMDBDataDecoder(lmdb_data, decoder)
 
 
 class SVMLightData(RNGDataFlow):

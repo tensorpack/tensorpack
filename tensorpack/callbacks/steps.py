@@ -86,13 +86,14 @@ class ProgressBar(Callback):
     def _before_train(self):
         self._total = self.trainer.config.steps_per_epoch
         self._tqdm_args = get_tqdm_kwargs(leave=True)
-        if self._names is not []:
+        if len(self._names):
             self._tqdm_args['bar_format'] = self._tqdm_args['bar_format'] + "{postfix} "
 
     def _trigger_step(self, *args):
         if self.local_step == 1:
             self._bar = tqdm.trange(self._total, **self._tqdm_args)
-        self._bar.set_postfix(zip(self._tags, args))
+        if len(self._names):
+            self._bar.set_postfix(zip(self._tags, args))
         self._bar.update()
 
         if self.local_step == self._total:

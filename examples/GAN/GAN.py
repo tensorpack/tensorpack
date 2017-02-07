@@ -14,16 +14,20 @@ from tensorpack.dataflow import DataFlow
 
 
 class GANModelDesc(ModelDesc):
-    def collect_variables(self):
-        """Extract variables by prefix
+    def collect_variables(self, g_scope='gen', d_scope='discrim'):
+        """
+        Assign self.g_vars to the parameters under scope `g_scope`,
+        and same with self.d_vars.
         """
         all_vars = tf.trainable_variables()
-        self.g_vars = [v for v in all_vars if v.name.startswith('gen/')]
-        self.d_vars = [v for v in all_vars if v.name.startswith('discrim/')]
+        self.g_vars = [v for v in all_vars if v.name.startswith(g_scope + '/')]
+        self.d_vars = [v for v in all_vars if v.name.startswith(d_scope + '/')]
+        # TODO after TF1.0.0rc1
+        # self.g_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, g_scope)
+        # self.d_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, d_scope)
 
     def build_losses(self, logits_real, logits_fake):
         """D and G play two-player minimax game with value function V(G,D)
-
 
           min_G max _D V(D, G) = IE_{x ~ p_data} [log D(x)] + IE_{z ~ p_fake} [log (1 - D(G(z)))]
 

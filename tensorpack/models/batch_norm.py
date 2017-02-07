@@ -121,14 +121,8 @@ def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
     * ``variance/EMA``: the moving average of variance.
 
     Note:
-        * In multi-tower training, only the first training tower maintains a moving average.
-          This is consistent with most frameworks.
-
-        * It automatically selects :meth:`BatchNormV1` or :meth:`BatchNormV2`
-          according to availability.
-
-        * This is a slightly faster but equivalent version of BatchNormV1. It uses
-          ``fused_batch_norm`` in training.
+        In multi-tower training, only the first training tower maintains a moving average.
+        This is consistent with most frameworks.
     """
     shape = x.get_shape().as_list()
     assert len(shape) in [2, 4]
