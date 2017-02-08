@@ -22,7 +22,6 @@ Speed is about 43 it/s on TitanX.
 
 
 class Model(ModelDesc):
-
     def _get_inputs(self):
         return [InputVar(tf.float32, [None, 40, 40, 3], 'input'),
                 InputVar(tf.int32, [None], 'label')]

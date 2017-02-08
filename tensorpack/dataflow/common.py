@@ -438,27 +438,34 @@ def SelectComponent(ds, idxs):
 
 
 class LocallyShuffleData(ProxyDataFlow, RNGDataFlow):
-    """ Maintain a pool to cache datapoints, and shuffle before producing them.
-        This can be used as an alternative when a complete random read is too expensive for the
-        data source.
+    """ Maintain a pool to buffer datapoints, and shuffle before producing them.
+        This can be used as an alternative when a complete random read is too expensive
+        or impossible for the data source.
     """
 
-    def __init__(self, ds, cache_size, nr_reuse=1):
+    def __init__(self, ds, buffer_size, nr_reuse=1, shuffle_interval=None):
         """
         Args:
             ds (DataFlow): input DataFlow.
-            cache_size (int): size of the cache.
+            buffer_size (int): size of the buffer.
             nr_reuse (int): reuse each datapoints several times to improve
                 speed, but may hurt your model.
+            shuffle_interval (int): shuffle the buffer after this many
+                datapoints went through it. Frequent shuffle on large buffer
+                may affect speed, but infrequent shuffle may affect
+                randomness. Defaults to buffer_size / 3
         """
         ProxyDataFlow.__init__(self, ds)
-        self.q = deque(maxlen=cache_size)
+        self.q = deque(maxlen=buffer_size)
+        if shuffle_interval is None:
+            shuffle_interval = int(buffer_size // 3)
+        self.shuffle_interval = shuffle_interval
         self.nr_reuse = nr_reuse
 
     def reset_state(self):
         ProxyDataFlow.reset_state(self)
         RNGDataFlow.reset_state(self)
-        self.ds_itr = RepeatedData(self.ds).get_data()
+        self.ds_itr = RepeatedData(self.ds, -1).get_data()
         self.current_cnt = 0
 
     def _add_data(self):
@@ -475,7 +482,7 @@ class LocallyShuffleData(ProxyDataFlow, RNGDataFlow):
         cnt = 0
         while True:
             self.rng.shuffle(self.q)
-            for _ in range(self.q.maxlen):
+            for _ in range(self.shuffle_interval):
                 # the inner loop maintains the queue size (almost) unchanged
                 for _ in range(self.nr_reuse):
                     yield self.q.popleft()

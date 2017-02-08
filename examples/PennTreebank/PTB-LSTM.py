@@ -78,7 +78,7 @@ class Model(ModelDesc):
         output = tf.reshape(tf.concat(outputs, 1), [-1, HIDDEN_SIZE])  # (Bxseqlen) x hidden
         logits = FullyConnected('fc', output, VOCAB_SIZE, nl=tf.identity, W_init=initializer, b_init=initializer)
         xent_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
-            logits=logits, labels=symbolic_functions.flatten(nextinput))
+            logits=logits, labels=tf.reshape(nextinput, [-1]))
 
         update_state_op = tf.group(
             tf.assign(state_var[0].c, last_state[0].c),

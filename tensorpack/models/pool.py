@@ -7,7 +7,6 @@ import numpy as np
 
 from .common import layer_register
 from ..utils.argtools import shape2d, shape4d
-from ..tfutils import symbolic_functions as symbf
 from ._test import TestModel
 
 
@@ -127,9 +126,9 @@ def FixedUnPooling(x, shape, unpool_mat=None):
     assert unpool_mat.get_shape().as_list() == list(shape)
 
     # perform a tensor-matrix kronecker product
-    fx = symbf.flatten(tf.transpose(x, [0, 3, 1, 2]))
+    fx = tf.reshape(tf.transpose(x, [0, 3, 1, 2]), [-1])
     fx = tf.expand_dims(fx, -1)       # (bchw)x1
-    mat = tf.expand_dims(symbf.flatten(unpool_mat), 0)  # 1x(shxsw)
+    mat = tf.expand_dims(tf.reshape(unpool_mat, [-1]), 0)  # 1x(shxsw)
     prod = tf.matmul(fx, mat)  # (bchw) x(shxsw)
     prod = tf.reshape(prod, tf.stack(
         [-1, input_shape[3], input_shape[1], input_shape[2], shape[0], shape[1]]))

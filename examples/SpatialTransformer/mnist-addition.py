@@ -68,7 +68,6 @@ class Model(ModelDesc):
 
         sampled = tf.concat([sampled1, sampled2], 3, 'sampled_concat')
         logits = (LinearWrap(sampled)
-                  .apply(symbf.batch_flatten)
                   .FullyConnected('fc1', out_dim=256, nl=tf.nn.relu)
                   .FullyConnected('fc2', out_dim=128, nl=tf.nn.relu)
                   .FullyConnected('fct', out_dim=19, nl=tf.identity)())

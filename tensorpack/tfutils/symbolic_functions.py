@@ -369,8 +369,8 @@ def shapeless_placeholder(x, axis, name):
 
     If you want to feed to a tensor, the shape of the feed value must match
     the tensor's static shape. This function creates a placeholder which
-    defaults to x if not fed, but has a less specific static shape.
-    See `tensorflow#5680
+    defaults to x if not fed, but has a less specific static shape than x.
+    See also `tensorflow#5680
     <https://github.com/tensorflow/tensorflow/issues/5680>`_.
 
     Args:
