@@ -8,7 +8,7 @@ might not be correct.
 .. toctree::
   :maxdepth: 2
 
-  user/tutorials
+  tutorial/index
   casestudies/index
   modules/index
 

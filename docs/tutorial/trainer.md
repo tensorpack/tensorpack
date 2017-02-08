@@ -1,5 +1,5 @@
 
-# Trainers
+# Trainer
 
 Training is basically **running something again and again**.
 Tensorpack base trainer implements the logic of *running the iteration*,
@@ -12,15 +12,14 @@ therefore you can use these trainers as long as you set `self.cost` in `ModelDes
 as did in most examples.
 
 Most existing trainers were implemented with a TensorFlow queue to prefetch and buffer
-training data, which is significantly faster than
-a naive `sess.run(..., feed_dict={...})`.
+training data, which is faster than a naive `sess.run(..., feed_dict={...})`.
 There are also multi-GPU trainers which includes the logic of data-parallel multi-GPU training,
 with either synchronous update or asynchronous update. You can enable multi-GPU training
 by just changing one line.
 
 To use trainers, pass a `TrainConfig` to configure them:
 
-````python
+```python
 config = TrainConfig(
            dataflow=my_dataflow,
            optimizer=tf.train.AdamOptimizer(0.01),
@@ -36,7 +35,7 @@ config = TrainConfig(
 
 # start multi-GPU training with synchronous update:
 SyncMultiGPUTrainer(config).train()
-````
+```
 
 Trainers just run some iterations, so there is no limit in where the data come from
 or what to do in an iteration.

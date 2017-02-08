@@ -5,10 +5,11 @@ Tutorials
 Test.
 
 .. toctree::
-  :maxdepth: 2
+  :maxdepth: 1
 
   glance
   dataflow
-  models
+  efficient-data
+  model
   trainer
-  callbacks
+  callback

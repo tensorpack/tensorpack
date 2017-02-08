@@ -1,5 +1,5 @@
 
-# Callbacks
+# Callback
 
 Apart from the actual training iterations that minimizes the cost,
 you almost surely would like to do something else during training.
