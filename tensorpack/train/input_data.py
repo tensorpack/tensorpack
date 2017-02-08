@@ -147,7 +147,6 @@ class QueueInput(FeedfreeInput):
 
     def _get_input_tensors(self):
         ret = self.queue.dequeue(name='input_deque')
-        print(ret)
         if isinstance(ret, tf.Tensor):  # only one input
             ret = [ret]
         assert len(ret) == len(self.input_placehdrs)

@@ -19,7 +19,8 @@ from ..utils.serialize import loads, dumps
 from ..utils import logger
 from ..utils.gpu import change_gpu
 
-__all__ = ['PrefetchData', 'PrefetchDataZMQ', 'PrefetchOnGPUs']
+__all__ = ['PrefetchData', 'PrefetchDataZMQ', 'PrefetchOnGPUs',
+           'ThreadedMapData', 'StartNewProcess']
 
 
 class PrefetchProcess(mp.Process):
@@ -68,8 +69,7 @@ class PrefetchData(ProxyDataFlow):
         self.procs = [PrefetchProcess(self.ds, self.queue)
                       for _ in range(self.nr_proc)]
         ensure_proc_terminate(self.procs)
-        for x in self.procs:
-            x.start()
+        start_proc_mask_signal(self.procs)
 
     def get_data(self):
         for k in itertools.count():
@@ -105,6 +105,9 @@ class PrefetchDataZMQ(ProxyDataFlow):
     """
     Prefetch data from a DataFlow using multiple processes, with ZMQ for
     communication.
+
+    Note that this dataflow is not fork-safe. You cannot nest this dataflow
+    into another PrefetchDataZMQ or PrefetchData.
     """
     def __init__(self, ds, nr_proc=1, pipedir=None, hwm=50):
         """
@@ -262,3 +265,21 @@ class ThreadedMapData(ProxyDataFlow):
         for _ in range(sz):
             self._in_queue.put(next(self._itr))
             yield self._out_queue.get()
+
+
+def StartNewProcess(ds, queue_size):
+    """
+    Run ds in a new process, and use multiprocessing.queue to send data back.
+
+    Args:
+        ds (DataFlow): a DataFlow.
+        queue_size (int): the size of queue.
+
+    Returns:
+        a fork-safe DataFlow, therefore is safe to use under another PrefetchData or
+        PrefetchDataZMQ.
+
+    Note:
+        There could be a zmq version of this in the future.
+    """
+    return PrefetchData(ds, queue_size, 1)

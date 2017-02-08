@@ -70,8 +70,8 @@ class AugmentImageComponent(MapDataComponent):
                 raise
             except Exception:
                 self._nr_error += 1
-                if self._nr_error % 1000 == 0:
-                    logger.warn("Got {} augmentation errors.".format(self._nr_error))
+                if self._nr_error % 1000 == 0 or self._nr_error < 10:
+                    logger.exception("Got {} augmentation errors.".format(self._nr_error))
                 return None
             return ret
 
@@ -111,8 +111,8 @@ class AugmentImageComponents(MapData):
                 raise
             except Exception:
                 self._nr_error += 1
-                if self._nr_error % 1000 == 0:
-                    logger.warn("Got {} augmentation errors.".format(self._nr_error))
+                if self._nr_error % 1000 == 0 or self._nr_error < 10:
+                    logger.exception("Got {} augmentation errors.".format(self._nr_error))
                 return None
 
         super(AugmentImageComponents, self).__init__(ds, func)

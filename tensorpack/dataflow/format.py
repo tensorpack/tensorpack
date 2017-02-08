@@ -111,7 +111,7 @@ class LMDBData(RNGDataFlow):
     def open_lmdb(self):
         self._lmdb = lmdb.open(self._lmdb_path,
                                subdir=os.path.isdir(self._lmdb_path),
-                               readonly=True, lock=False, readahead=False,
+                               readonly=True, lock=False, readahead=True,
                                map_size=1099511627776 * 2, max_readers=100)
         self._txn = self._lmdb.begin()
         self._size = self._txn.stat()['entries']
