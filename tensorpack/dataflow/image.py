@@ -60,8 +60,23 @@ class AugmentImageComponent(MapDataComponent):
             self.augs = augmentors
         else:
             self.augs = AugmentorList(augmentors)
+
+        self._nr_error = 0
+
+        def func(x):
+            try:
+                ret = self.augs.augment(x)
+            except KeyboardInterrupt:
+                raise
+            except Exception:
+                self._nr_error += 1
+                if self._nr_error % 1000 == 0:
+                    logger.warn("Got {} augmentation errors.".format(self._nr_error))
+                return None
+            return ret
+
         super(AugmentImageComponent, self).__init__(
-            ds, lambda x: self.augs.augment(x), index)
+            ds, func, index)
 
     def reset_state(self):
         self.ds.reset_state()

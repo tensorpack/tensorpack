@@ -102,7 +102,7 @@ class Callbacks(Callback):
                 continue
             for f in fetch:
                 ret.append(f)
-                self._cbid_to_fetchid[idx].append(len(ret)-1)
+                self._cbid_to_fetchid[idx].append(len(ret) - 1)
         self._extra_fetches_cache = ret
         return ret
 

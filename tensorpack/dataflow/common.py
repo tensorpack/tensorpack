@@ -205,9 +205,8 @@ class MapData(ProxyDataFlow):
                 yield ret
 
 
-class MapDataComponent(ProxyDataFlow):
+class MapDataComponent(MapData):
     """ Apply a mapper/filter on a datapoint component"""
-
     def __init__(self, ds, func, index=0):
         """
         Args:
@@ -217,16 +216,13 @@ class MapDataComponent(ProxyDataFlow):
                 Note that if you use the filter feature, ``ds.size()`` will be incorrect.
             index (int): index of the component.
         """
-        super(MapDataComponent, self).__init__(ds)
-        self.func = func
-        self.index = index
-
-    def get_data(self):
-        for dp in self.ds.get_data():
-            repl = self.func(dp[self.index])
-            if repl is not None:
-                dp[self.index] = repl   # NOTE modifying
-                yield dp
+        def f(dp):
+            r = func(dp[index])
+            if r is None:
+                return None
+            dp[index] = r
+            return dp
+        super(MapDataComponent, self).__init__(ds, f)
 
 
 class RepeatedData(ProxyDataFlow):

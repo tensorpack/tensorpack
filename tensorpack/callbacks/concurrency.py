@@ -48,3 +48,4 @@ class StartProcOrThread(Callback):
             elif isinstance(k, StoppableThread):
                 logger.info("Stopping {} ...".format(k.name))
                 k.stop()
+                k.join()
