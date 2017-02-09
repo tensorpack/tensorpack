@@ -22,10 +22,9 @@ See "Rethinking the Inception Architecture for Computer Vision", arxiv:1512.0056
 This config follows the official inceptionv3 setup
 (https://github.com/tensorflow/models/tree/master/inception/inception)
 with much much fewer lines of code.
-It reaches 74% single-crop validation accuracy,
-and has the same running speed as the official code.
+It reaches 74% single-crop validation accuracy, similar to the official code.
+
 The hyperparameters here are for 8 GPUs, so the effective batch size is 8*64 = 512.
-With 8 TitanX it runs about 0.45 it/s.
 """
 
 TOTAL_BATCH_SIZE = 512

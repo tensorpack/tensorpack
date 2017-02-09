@@ -38,7 +38,9 @@ class TestDataSpeed(ProxyDataFlow):
         Start testing with a progress bar.
         """
         self.ds.reset_state()
-        with get_tqdm(total=self.test_size, leave=True) as pbar:
+        # add smoothing for speed benchmark
+        with get_tqdm(total=self.test_size,
+                      leave=True, smoothing=0.2) as pbar:
             for idx, dp in enumerate(self.ds.get_data()):
                 pbar.update()
                 if idx == self.test_size - 1:

@@ -29,11 +29,16 @@ DEPTH = None
 
 class Model(ModelDesc):
     def _get_inputs(self):
-        return [InputVar(tf.float32, [None, INPUT_SHAPE, INPUT_SHAPE, 3], 'input'),
+        return [InputVar(tf.uint8, [None, INPUT_SHAPE, INPUT_SHAPE, 3], 'input'),
                 InputVar(tf.int32, [None], 'label')]
 
     def _build_graph(self, inputs):
         image, label = inputs
+        image = tf.cast(image, tf.float32) * (1.0 / 255)
+
+        image_mean = tf.constant([0.485, 0.456, 0.406], dtype=tf.float32)
+        image_std = tf.constant([0.229, 0.224, 0.225], dtype=tf.float32)
+        image = (image - image_mean) / image_std
 
         def shortcut(l, n_in, n_out, stride):
             if n_in != n_out:
@@ -121,9 +126,6 @@ def get_data(train_or_test):
     datadir = args.data
     ds = dataset.ILSVRC12(datadir, train_or_test,
                           shuffle=True if isTrain else False, dir_structure='original')
-    image_mean = np.array([0.485, 0.456, 0.406], dtype='float32')
-    image_std = np.array([0.229, 0.224, 0.225], dtype='float32')
-
     if isTrain:
         class Resize(imgaug.ImageAugmentor):
             """
@@ -164,18 +166,18 @@ def get_data(train_or_test):
                                  )]),
             imgaug.Clip(),
             imgaug.Flip(horiz=True),
-            imgaug.MapImage(lambda x: (x * (1.0 / 255) - image_mean) / image_std),
+            imgaug.ToUint8()
         ]
     else:
         augmentors = [
             imgaug.ResizeShortestEdge(256),
             imgaug.CenterCrop((224, 224)),
-            imgaug.MapImage(lambda x: (x * (1.0 / 255) - image_mean) / image_std),
+            imgaug.ToUint8()
         ]
     ds = AugmentImageComponent(ds, augmentors)
-    ds = BatchData(ds, BATCH_SIZE, remainder=not isTrain)
     if isTrain:
         ds = PrefetchDataZMQ(ds, min(20, multiprocessing.cpu_count()))
+    ds = BatchData(ds, BATCH_SIZE, remainder=not isTrain)
     return ds
 
 
