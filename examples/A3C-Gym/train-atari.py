@@ -254,8 +254,8 @@ if __name__ == '__main__':
         elif args.task == 'eval':
             eval_model_multithread(cfg, EVAL_EPISODE)
     else:
-        if args.gpu:
-            nr_gpu = get_nr_gpu()
+        nr_gpu = get_nr_gpu()
+        if nr_gpu > 0:
             if nr_gpu > 1:
                 predict_tower = range(nr_gpu)[-nr_gpu // 2:]
             else:

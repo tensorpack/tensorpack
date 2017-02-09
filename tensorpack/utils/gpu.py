@@ -5,6 +5,7 @@
 
 import os
 from .utils import change_env
+from . import logger
 
 __all__ = ['change_gpu', 'get_nr_gpu']
 
@@ -26,5 +27,10 @@ def get_nr_gpu():
         int: the number of GPU from ``CUDA_VISIBLE_DEVICES``.
     """
     env = os.environ.get('CUDA_VISIBLE_DEVICES', None)
-    assert env is not None, 'gpu not set!'  # TODO
-    return len(env.split(','))
+    if env is not None:
+        return len(env.split(','))
+    logger.info("Loading local devices by TensorFlow ...")
+    from tensorflow.python.client import device_lib
+    device_protos = device_lib.list_local_devices()
+    gpus = [x.name for x in device_protos if x.device_type == 'GPU']
+    return len(gpus)

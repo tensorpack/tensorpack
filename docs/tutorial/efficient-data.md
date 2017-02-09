@@ -59,9 +59,10 @@ there are ways to understand which one is the bottleneck:
 
 ### Load ImageNet efficiently
 
-We take ImageNet dataset as an example of how to optimize a DataFlow for speed.
+We take ImageNet dataset as an example of how to optimize a DataFlow.
 We use ILSVRC12 training set, which contains 1.28 million images.
-Following the [ResNet example](../examples/ResNet), our pre-processing need images in their original resolution, so we don't resize them.
+Following the [ResNet example](../examples/ResNet), our pre-processing need images in their original resolution, so we'll read the original
+dataset instead of a down-sampled version here.
 The average resolution is about 400x350 <sup>[[1]]</sup>.
 The original images (JPEG compressed) are 140G in total.
 

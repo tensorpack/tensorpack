@@ -1,6 +1,6 @@
 ### Code and models for Atari games in gym
 
-Implemented A3C in [Asynchronous Methods for Deep Reinforcement Learning](http://arxiv.org/abs/1602.01783).
+Implemented Multi-GPU version of the A3C algorithm in [Asynchronous Methods for Deep Reinforcement Learning](http://arxiv.org/abs/1602.01783).
 
 Results of the same code trained on 47 different Atari games were uploaded on OpenAI Gym.
 You can see them in [my gym page](https://gym.openai.com/users/ppwwyyxx).
@@ -8,14 +8,16 @@ Most of them are the best reproducible results on gym.
 
 ### To train on an Atari game:
 
-`./train-atari.py --env Breakout-v0 --gpu 0`
+`CUDA_VISIBLE_DEVICES=0 ./train-atari.py --env Breakout-v0`
 
 It should run at a speed of 6~10 iteration/s on 1 GPU plus 12+ CPU cores.
-Training with a significant slower speed (e.g. on CPU) will give bad performance,
+Training with a significant slower speed (e.g. on CPU) will result in very bad score,
 probably because of async issues.
 The pre-trained models are all trained with 4 GPUs for about 2 days.
+But note that multi-GPU doesn't give you obvious speedup here,
+because the bottleneck is not computation but data.
 
-Occasionally processes may not get terminated completely, therefore it is suggested to use systemd-run to run any
+Occasionally, processes may not get terminated completely, therefore it is suggested to use `systemd-run` to run any
 multiprocess Python program to get a cgroup dedicated for the task.
 
 ### To run a pretrained Atari model for 100 episodes:
