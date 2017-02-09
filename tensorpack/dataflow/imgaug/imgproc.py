@@ -54,7 +54,7 @@ class Brightness(ImageAugmentor):
         img += v
         if self.clip or old_dtype == np.uint8:
             img = np.clip(img, 0, 255)
-        return img.asypte(old_dtype)
+        return img.astype(old_dtype)
 
 
 class Contrast(ImageAugmentor):
@@ -227,5 +227,7 @@ class Lighting(ImageAugmentor):
         v = v * self.eigval
         v = v.reshape((3, 1))
         inc = np.dot(self.eigvec, v).reshape((3,))
-        img += inc
+        img = np.add(img, inc)
+        if old_dtype == np.uint8:
+            img = np.clip(img, 0, 255)
         return img.astype(old_dtype)
