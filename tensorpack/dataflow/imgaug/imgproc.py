@@ -228,4 +228,6 @@ class Lighting(ImageAugmentor):
         v = v.reshape((3, 1))
         inc = np.dot(self.eigvec, v).reshape((3,))
         img = np.add(img, inc)
+        if old_dtype == np.uint8:
+            img = np.clip(img, 0, 255)
         return img.astype(old_dtype)
