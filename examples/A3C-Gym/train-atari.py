@@ -14,6 +14,7 @@ import uuid
 import argparse
 import multiprocessing
 import threading
+import cv2
 from collections import deque
 import six
 from six.moves import queue
