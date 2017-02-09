@@ -5,9 +5,7 @@ import shutil
 # setup metainfo
 CURRENT_DIR = os.path.dirname(__file__)
 libinfo_py = os.path.join(CURRENT_DIR, 'tensorpack/libinfo.py')
-libinfo = {'__file__': libinfo_py}
-exec(compile(open(libinfo_py, "rb").read(), libinfo_py, 'exec'), libinfo, libinfo)
-__version__ = libinfo['__version__']
+exec(open(libinfo_py, "rb").read())
 
 # produce rst readme for pypi
 try:

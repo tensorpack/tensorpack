@@ -99,7 +99,6 @@ class AugmentorList(ImageAugmentor):
 
     def _augment_return_params(self, img):
         assert img.ndim in [2, 3], img.ndim
-        img = img.astype('float32')
 
         prms = []
         for a in self.augs:
@@ -109,7 +108,6 @@ class AugmentorList(ImageAugmentor):
 
     def _augment(self, img, param):
         assert img.ndim in [2, 3], img.ndim
-        img = img.astype('float32')
         for aug, prm in zip(self.augs, param):
             img = aug._augment(img, prm)
         return img

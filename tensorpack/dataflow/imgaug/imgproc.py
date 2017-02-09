@@ -6,44 +6,8 @@ from .base import ImageAugmentor
 import numpy as np
 import cv2
 
-__all__ = ['ColorSpace', 'Hue', 'Grayscale', 'Brightness', 'Contrast', 'MeanVarianceNormalize',
+__all__ = ['Hue', 'Brightness', 'Contrast', 'MeanVarianceNormalize',
            'GaussianBlur', 'Gamma', 'Clip', 'Saturation', 'Lighting']
-
-
-class ColorSpace(ImageAugmentor):
-    """
-    Convert into another colorspace.
-    """
-    def __init__(self, mode=cv2.COLOR_BGR2GRAY, keepdims=True):
-        """
-        Args:
-            mode: opencv colorspace conversion code (e.g., `cv2.COLOR_BGR2HSV`)
-            keepdims (bool): keep the dimension of image unchanged if opencv
-                changes it.
-        """
-        self._init(locals())
-
-    def _augment(self, img, _):
-        transf = cv2.cvtColor(img, self.mode)
-        if self.keepdims:
-            if len(transf.shape) is not len(img.shape):
-                transf = transf[..., None]
-        return transf
-
-
-class Grayscale(ColorSpace):
-    """
-    Convert image to grayscale.
-    """
-
-    def __init__(self, keepdims=True, rgb=False):
-        """
-        Args:
-            keepdims (bool): return image of shape [H, W, 1] instead of [H, W]
-            rgb (bool): interpret input as RGB instead of the default BGR
-        """
-        mode = cv2.COLOR_RGB2GRAY if rgb else cv2.COLOR_BGR2GRAY
-        super(Grayscale, self).__init__(mode, keepdims)
 
 
 class Hue(ImageAugmentor):
@@ -85,10 +49,12 @@ class Brightness(ImageAugmentor):
         return v
 
     def _augment(self, img, v):
+        old_dtype = img.dtype
+        img = img.astype('float32')
         img += v
-        if self.clip:
+        if self.clip or old_dtype == np.uint8:
             img = np.clip(img, 0, 255)
-        return img
+        return img.asypte(old_dtype)
 
 
 class Contrast(ImageAugmentor):
@@ -109,18 +75,23 @@ class Contrast(ImageAugmentor):
         return self._rand_range(*self.factor_range)
 
     def _augment(self, img, r):
+        old_dtype = img.dtype
+        img = img.astype('float32')
         mean = np.mean(img, axis=(0, 1), keepdims=True)
         img = (img - mean) * r + mean
-        if self.clip:
+        if self.clip or old_dtype == np.uint8:
             img = np.clip(img, 0, 255)
-        return img
+        return img.astype(old_dtype)
 
 
 class MeanVarianceNormalize(ImageAugmentor):
     """
     Linearly scales the image to have zero mean and unit norm.
     ``x = (x - mean) / adjusted_stddev``
-    where ``adjusted_stddev = max(stddev, 1.0/sqrt(num_pixels * channels))``
+    where ``adjusted_stddev = max(stddev, 1.0/sqrt(num_pixels * channels))
+
+    This augmentor always returns float32 images.
+    ``
     """
 
     def __init__(self, all_channel=True):
@@ -131,6 +102,7 @@ class MeanVarianceNormalize(ImageAugmentor):
         self.all_channel = all_channel
 
     def _augment(self, img, _):
+        img = img.astype('float32')
         if self.all_channel:
             mean = np.mean(img)
             std = np.std(img)
@@ -178,9 +150,10 @@ class Gamma(ImageAugmentor):
         return self._rand_range(*self.range)
 
     def _augment(self, img, gamma):
+        old_dtype = img.dtype
         lut = ((np.arange(256, dtype='float32') / 255) ** (1. / (1. + gamma)) * 255).astype('uint8')
         img = np.clip(img, 0, 255).astype('uint8')
-        img = cv2.LUT(img, lut).astype('float32')
+        img = cv2.LUT(img, lut).astype(old_dtype)
         return img
 
 
@@ -218,8 +191,10 @@ class Saturation(ImageAugmentor):
         return 1 + self._rand_range(-self.alpha, self.alpha)
 
     def _augment(self, img, v):
+        old_dtype = img.dtype
         grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        return img * v + (grey * (1 - v))[:, :, np.newaxis]
+        ret = img * v + (grey * (1 - v))[:, :, np.newaxis]
+        return ret.astype(old_dtype)
 
 
 class Lighting(ImageAugmentor):
@@ -248,8 +223,9 @@ class Lighting(ImageAugmentor):
         return self.rng.randn(3) * self.std
 
     def _augment(self, img, v):
+        old_dtype = img.dtype
         v = v * self.eigval
         v = v.reshape((3, 1))
         inc = np.dot(self.eigvec, v).reshape((3,))
         img += inc
-        return img
+        return img.astype(old_dtype)

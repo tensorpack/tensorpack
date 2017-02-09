@@ -10,7 +10,7 @@ not necessarily the best for different scenarios.
 
 ### Use TensorFlow queues
 
-In general, ``feed_dict`` is slow and should never appear in your critical loop.
+In general, `feed_dict` is slow and should never appear in your critical loop.
 i.e., you should avoid loops like this:
 ```python
 while True:
@@ -31,10 +31,44 @@ while True:
   minimize_op.run()	 # minimize_op was built from dequeued tensors
 ```
 
-This is automatically handled by tensorpack trainers already (unless you used the demo ``SimpleTrainer``),
+This is now automatically handled by tensorpack trainers already (unless you used the demo ``SimpleTrainer``),
 see [Trainer](trainer.md) for details.
 TensorFlow is providing staging interface which may further improve the speed. This is
 [issue#140](https://github.com/ppwwyyxx/tensorpack/issues/140).
 
+You can also avoid `feed_dict` by using TensorFlow native operators to read data, which is also
+supported here.
+It probably allows you to reach the best performance, but at the cost of implementing the
+reading / preprocessing ops in C++ if there isn't one for your task. We won't talk about it here.
+
 ### Figure out your bottleneck
 
+For training we will only worry about the throughput but not the latency.
+Thread 1 & 2 runs in parallel, and the faster one will block to wait for the slower one.
+So the overall throughput will appear to be the slower one.
+
+There isn't a way to accurately benchmark the two threads while they are running, without introducing overhead. But
+there are ways to understand which one is the bottleneck:
+
+1. Use the average occupancy (size) of the queue. This information is summarized after every epoch (TODO depend on #125).
+	If the queue is nearly empty, then the data thread is the bottleneck.
+
+2. Benchmark them separately. You can use `TestDataSpeed` to benchmark a DataFlow, and
+	 use `FakeData` as a fast replacement in a dry run to benchmark the training
+	 iterations.
+
+### Load ImageNet efficiently
+
+We take ImageNet dataset as an example of how to optimize a DataFlow for speed.
+We use ILSVRC12 training set, which contains 1.28 million images.
+Following the [ResNet example](../examples/ResNet), our pre-processing need images in their original resolution, so we don't resize them.
+The average resolution is about 400x350 <sup>[[1]]</sup>.
+The original images (JPEG compressed) are 140G in total.
+
+
+
+[1]: #ref
+
+<div id=ref> </div>
+
+[[1]]. [ImageNet: A Large-Scale Hierarchical Image Database](http://www.image-net.org/papers/imagenet_cvpr09.pdf), CVPR09

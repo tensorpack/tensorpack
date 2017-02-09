@@ -18,7 +18,7 @@ __all__ = ['TestDataSpeed', 'PrintData', 'BatchData', 'BatchDataByShape', 'Fixed
 
 class TestDataSpeed(ProxyDataFlow):
     """ Test the speed of some DataFlow """
-    def __init__(self, ds, size=1000):
+    def __init__(self, ds, size=5000):
         """
         Args:
             ds (DataFlow): the DataFlow to test.
@@ -117,7 +117,7 @@ class BatchData(ProxyDataFlow):
                     tp = dt.dtype
                 try:
                     result.append(
-                        np.array([x[k] for x in data_holder], dtype=tp))
+                        np.asarray([x[k] for x in data_holder], dtype=tp))
                 except KeyboardInterrupt:
                     raise
                 except:
