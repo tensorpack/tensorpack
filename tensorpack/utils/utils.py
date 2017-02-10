@@ -124,16 +124,16 @@ def building_rtfd():
 def deprecated(text, eos=None):
     """Log deprecation warning.
     Args:
-        text (str, optional): addition information
+        text (str, optional): information
         eos (str, optional): end of service date as tuple "YYYY-MM-DD"
 
     Example:
-        @deprecated("you should use bar instead", "2017-11-4")
+        @deprecated("Explanation what to do instead.", "2017-11-4")
         def foo(...):
             pass
 
-        deprecated("foo", "2017-11-4")("you should use bar instead")
-        deprecated("foo is renamed to bar ", "2017-11-4")()
+        deprecated("deprecated_item")("This is an info about an alternative.", "2017-11-4")
+        deprecated("A sentence about a remark.", "2017-11-4")()
     """
 
     def get_location():
