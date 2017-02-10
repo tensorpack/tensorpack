@@ -10,7 +10,7 @@ from ..callbacks import (
     MaintainStepCounter)
 from ..dataflow.base import DataFlow
 from ..models import ModelDesc
-from ..utils import logger
+from ..utils import logger, deprecated
 from ..tfutils import (JustCurrentSession,
                        get_default_sess_config, SessionInit)
 from .input_data import InputData
@@ -62,7 +62,7 @@ class TrainConfig(object):
         # process data
         if 'dataset' in kwargs:
             dataflow = kwargs.pop('dataset')
-            logger.warn("[Deprecated] TrainConfig.dataset has been deprecated. Use TrainConfig.dataflow instead.")
+            deprecated("TrainConfig.dataset")("Use TrainConfig.dataflow instead.")
         if dataflow is not None:
             assert data is None, "dataflow and data cannot be both presented in TrainConfig!"
             self.dataflow = dataflow
@@ -75,9 +75,9 @@ class TrainConfig(object):
 
         if isinstance(callbacks, Callbacks):
             # keep quiet now because I haven't determined the final API yet.
-            logger.warn("[Deprecated] API of TrainConfig(callbacks=) has changed!")
-            logger.warn("[Deprecated] Please change the argument 'callbacks=' to a *list* of "
-                        "callbacks without StatPrinter().")
+            deprecated("TrainConfig(callbacks=Callbacks([...]))")("Change the argument 'callbacks=' to a *list* of "
+                                                                  "callbacks without StatPrinter().")
+
             callbacks = callbacks.cbs[:-1]  # the last one is StatPrinter()
         assert_type(callbacks, list)
         if extra_callbacks is None:
@@ -103,7 +103,7 @@ class TrainConfig(object):
             steps_per_epoch = kwargs.pop('step_per_epoch', None)
             if steps_per_epoch is not None:
                 # TODO deprecate @Mar.27
-                logger.warn("[Deprecated] Use steps_per_epoch instead of step_per_epoch!")
+                deprecated("step_per_epoch")("Use steps_per_epoch instead!")
         if steps_per_epoch is None:
             try:
                 if dataflow is not None:
@@ -140,7 +140,7 @@ class TrainConfig(object):
     def set_tower(self, nr_tower=None, tower=None):
         # this is a deprecated function
         # TODO Deprecate @ Mar 15
-        logger.warn("config.set_tower is deprecated. set config.tower or config.nr_tower directly")
+        deprecated("config.set_tower")("Set config.tower or config.nr_tower directly.")
         assert nr_tower is None or tower is None, "Cannot set both nr_tower and tower!"
         if nr_tower:
             tower = list(range(nr_tower))

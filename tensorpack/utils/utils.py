@@ -9,6 +9,8 @@ import inspect
 from datetime import datetime
 from tqdm import tqdm
 import numpy as np
+import functools
+import logger
 
 
 __all__ = ['change_env',
@@ -17,6 +19,7 @@ __all__ = ['change_env',
            'get_tqdm',
            'execute_only_once',
            'building_rtfd',
+           'deprecated'
            ]
 
 
@@ -116,3 +119,59 @@ def building_rtfd():
     """
     return os.environ.get('READTHEDOCS') == 'True' \
         or os.environ.get('TENSORPACK_DOC_BUILDING')
+
+
+def deprecated(text, eos=None):
+    """Log deprecation warning.
+    Args:
+        text (str, optional): addition information
+        eos (str, optional): end of service date as tuple "YYYY-MM-DD"
+
+    Example:
+        @deprecated("you should use bar instead", "2017-11-4")
+        def foo(...):
+            pass
+
+        deprecated("foo", "2017-11-4")("you should use bar instead")
+        deprecated("foo is renamed to bar ", "2017-11-4")()
+    """
+
+    def get_location():
+        import inspect
+        frame = inspect.currentframe()
+        if frame:
+            callstack = inspect.getouterframes(frame)[-1]
+            return '%s:%i' % (callstack[1], callstack[2])
+        else:
+            stack = inspect.stack(0)
+            entry = stack[2]
+            return '%s:%i' % (entry[1], entry[2])
+
+    def deprecated_inner(func, fix=None):
+        end_of_service = ""
+        if fix:
+            end_of_service = " after " + datetime(*map(int, fix.split("-"))).strftime("%d %b")
+        elif eos:
+            end_of_service = " after " + datetime(*map(int, eos.split("-"))).strftime("%d %b")
+        # function-decorator
+        if callable(func):
+            @functools.wraps(func)
+            def new_func(*args, **kwargs):
+                warn_msg = "%s is deprecated%s [%s]."
+                warn_msg = warn_msg % (func.__name__, end_of_service, get_location())
+                if text:
+                    warn_msg += " %s" % text
+                logger.warn(warn_msg)
+                return func(*args, **kwargs)
+            return new_func
+        else:
+            # now func, text = text, func
+            if len(func) > 0:
+                warn_msg = "%s is deprecated%s [%s]. %s"
+                warn_msg = warn_msg % (text, end_of_service, get_location(), func)
+            else:
+                warn_msg = "%s Legacy periods ends%s "
+                warn_msg = warn_msg % (text, end_of_service)
+            logger.warn(warn_msg)
+
+    return deprecated_inner

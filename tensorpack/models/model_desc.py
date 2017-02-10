@@ -8,7 +8,7 @@ import tensorflow as tf
 import pickle
 import six
 
-from ..utils import logger, INPUTS_KEY
+from ..utils import logger, INPUTS_KEY, deprecated
 from ..tfutils.gradproc import CheckGradient
 from ..tfutils.summary import add_moving_summary
 from ..tfutils.tower import get_current_tower_context
@@ -63,9 +63,9 @@ class ModelDesc(object):
         self.reuse_input_vars = ret
         return ret
 
+    @deprecated("Use get_reused_placehdrs() instead.", "2017-04-11")
     def get_input_vars(self):
         # this wasn't a public API anyway
-        logger.warn("[Deprecated] get_input_vars() was renamed to get_reused_placehdrs()!")
         return self.get_reused_placehdrs()
 
     def build_placeholders(self, prefix=''):
@@ -98,8 +98,7 @@ class ModelDesc(object):
         """
         :returns: a list of InputDesc
         """
-        # TODO deprecate @ Apr 11
-        logger.warn("[Deprecated] _get_input_vars() is renamed to _get_inputs()")
+        deprecated("_get_input_vars() is renamed to _get_inputs().", "2017-04-11")("")
         return self._get_input_vars()
 
     def _get_input_vars(self):  # keep backward compatibility
