@@ -29,6 +29,25 @@ def flatten(x):
     return tf.reshape(x, [-1])
 
 
+def clip(tensor, lower=0, upper=0.01, use_locking=False):
+    """Clip the value.
+
+    Remarks:
+        The function `tf.clip_by_value` just returns a tensor with clipped
+        values and no operation.
+
+    Args:
+        tensor: incoming tensor of arbitrary shape
+        lower (float, optional): lower bound
+        upper (float, optional): upper bound
+
+    Returns:
+        clipped tensor
+    """
+    with tf.name_scope("clip_%s" % tensor.name.replace(':0', '')):
+        return tensor.assign(tf.clip_by_value(tensor, lower, upper), use_locking=use_locking)
+
+
 def batch_flatten(x):
     """
     Flatten the tensor except the first dimension.
