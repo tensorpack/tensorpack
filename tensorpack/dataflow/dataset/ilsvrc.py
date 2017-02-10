@@ -98,7 +98,7 @@ class ILSVRCMeta(object):
 
 class ILSVRC12(RNGDataFlow):
     """
-    Produces ILSVRC12 images of shape [h, w, 3(BGR)], and a label between [0, 999],
+    Produces uint8 ILSVRC12 images of shape [h, w, 3(BGR)], and a label between [0, 999],
     and optionally a bounding box of [xmin, ymin, xmax, ymax].
     """
     def __init__(self, dir, name, meta_dir=None, shuffle=None,

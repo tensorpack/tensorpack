@@ -6,7 +6,9 @@
 import multiprocessing
 import six
 from six.moves import queue, range
+import tensorflow as tf
 
+from ..utils import logger
 from ..utils.concurrency import DIE, StoppableThread
 from ..tfutils.modelutils import describe_model
 from .base import OfflinePredictor, AsyncPredictorBase
@@ -83,7 +85,13 @@ class PredictorWorkerThread(StoppableThread):
     def run(self):
         while not self.stopped():
             batched, futures = self.fetch_batch()
-            outputs = self.func(batched)
+            try:
+                outputs = self.func(batched)
+            except tf.errors.CancelledError:
+                for f in futures:
+                    f.cancel()
+                logger.warn("PredictorWorkerThread id={}, call was cancelled.".format(self.id))
+                return
             # print "Worker {} batched {} Queue {}".format(
             #         self.id, len(futures), self.queue.qsize())
             #  debug, for speed testing

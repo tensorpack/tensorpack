@@ -66,6 +66,18 @@ dataset instead of a down-sampled version here.
 The average resolution is about 400x350 <sup>[[1]]</sup>.
 The original images (JPEG compressed) are 140G in total.
 
+We start from a simple DataFlow:
+```python
+from tensorpack import *
+ds = dataset.ILSVRC12('/path/to/ILSVRC12', 'train', shuffle=True)
+ds = BatchData(ds, 256, use_list=True)
+TestDataSpeed(ds).start_test()
+```
+
+Here the first `ds` simply reads original images from filesystem, and second `ds` batch them, so
+that we can test the speed of this DataFlow in the unit of batch per second. By default `BatchData`
+will concatenate the data into an ndarray, but since images are originally of different shapes, we use
+`use_list=True` so that it just produces lists.
 
 
 [1]: #ref

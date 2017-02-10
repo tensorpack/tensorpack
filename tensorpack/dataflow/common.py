@@ -56,7 +56,7 @@ class BatchData(ProxyDataFlow):
     of the original datapoints.
     """
 
-    def __init__(self, ds, batch_size, remainder=False, allow_list=False):
+    def __init__(self, ds, batch_size, remainder=False, use_list=False):
         """
         Args:
             ds (DataFlow): Its components must be either scalars or :class:`np.ndarray`.
@@ -65,7 +65,7 @@ class BatchData(ProxyDataFlow):
             remainder (bool): whether to return the remaining data smaller than a batch_size.
                 If set True, it will possibly generates a data point of a smaller batch size.
                 Otherwise, all generated data are guranteed to have the same size.
-            allow_list (bool): if True, it will run faster by producing a list
+            use_list (bool): if True, it will run faster by producing a list
                 of datapoints instead of an ndarray of datapoints, avoiding an
                 extra copy.
         """
@@ -77,7 +77,7 @@ class BatchData(ProxyDataFlow):
                 pass
         self.batch_size = batch_size
         self.remainder = remainder
-        self.allow_list = allow_list
+        self.use_list = use_list
 
     def size(self):
         ds_size = self.ds.size()
@@ -96,17 +96,17 @@ class BatchData(ProxyDataFlow):
         for data in self.ds.get_data():
             holder.append(data)
             if len(holder) == self.batch_size:
-                yield BatchData._aggregate_batch(holder, self.allow_list)
+                yield BatchData._aggregate_batch(holder, self.use_list)
                 del holder[:]
         if self.remainder and len(holder) > 0:
-            yield BatchData._aggregate_batch(holder, self.allow_list)
+            yield BatchData._aggregate_batch(holder, self.use_list)
 
     @staticmethod
-    def _aggregate_batch(data_holder, allow_list):
+    def _aggregate_batch(data_holder, use_list):
         size = len(data_holder[0])
         result = []
         for k in range(size):
-            if allow_list:
+            if use_list:
                 result.append(
                     [x[k] for x in data_holder])
             else:

@@ -178,6 +178,7 @@ class AsyncMultiGPUTrainer(MultiGPUTrainer,
                 self.sess.run([op])
                 next(self.async_step_counter)
             th = LoopThread(f)
+            th.name = "AsyncLoopThread-{}".format(k)
             th.pause()
             th.start()
             self.training_threads.append(th)
