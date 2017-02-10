@@ -49,6 +49,7 @@ InputVar = InputDesc
 class ModelDesc(object):
     """ Base class for a model description """
 
+# inputs:
     def get_reused_placehdrs(self):
         """
         Create or return (if already created) raw input TF placeholders in the graph.
@@ -97,13 +98,14 @@ class ModelDesc(object):
         """
         :returns: a list of InputDesc
         """
-        # TODO deprecate @ Mar 11
+        # TODO deprecate @ Apr 11
         logger.warn("[Deprecated] _get_input_vars() is renamed to _get_inputs()")
         return self._get_input_vars()
 
     def _get_input_vars(self):  # keep backward compatibility
         raise NotImplementedError()
 
+# graph, cost, optimizer:
     def build_graph(self, model_inputs):
         """
         Build the whole symbolic graph.
@@ -152,6 +154,16 @@ class ModelDesc(object):
 
     def _get_cost(self, *args):
         return self.cost
+
+    def get_optimizer(self):
+        """
+        Returns:
+            a :class:`tf.train.Optimizer` instance.
+        """
+        return self._get_optimizer()
+
+    def _get_optimizer(self):
+        raise NotImplementedError()
 
     def get_gradient_processor(self):
         """ Return a list of :class:`tensorpack.tfutils.GradientProcessor`.

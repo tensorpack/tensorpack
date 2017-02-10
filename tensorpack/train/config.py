@@ -24,7 +24,7 @@ class TrainConfig(object):
     """
 
     def __init__(self, dataflow=None, data=None,
-                 model=None, optimizer=None,
+                 model=None,
                  callbacks=None, extra_callbacks=None,
                  session_config=get_default_sess_config(),
                  session_init=None,
@@ -37,7 +37,6 @@ class TrainConfig(object):
             data (InputData): an `InputData` instance. Only one of ``dataflow``
                 or ``data`` has to be present.
             model (ModelDesc): the model to train.
-            optimizer (tf.train.Optimizer): the optimizer for trainig.
             callbacks (list): a list of :class:`Callback` to perform during training.
             extra_callbacks (list): the same as ``callbacks``. This argument
                 is only used to provide the defaults. The defaults are
@@ -73,9 +72,6 @@ class TrainConfig(object):
             self.data = data
             assert_type(self.data, InputData)
             self.dataflow = None
-
-        self.optimizer = optimizer
-        assert_type(self.optimizer, tf.train.Optimizer)
 
         if isinstance(callbacks, Callbacks):
             # keep quiet now because I haven't determined the final API yet.
@@ -133,10 +129,17 @@ class TrainConfig(object):
         if isinstance(self.predict_tower, int):
             self.predict_tower = [self.predict_tower]
 
+        if 'optimizer' in kwargs:
+            self.optimizer = kwargs.pop('optimizer')
+            assert_type(self.optimizer, tf.train.Optimizer)
+        else:
+            self.optimizer = None
+
         assert len(kwargs) == 0, 'Unknown arguments: {}'.format(str(kwargs.keys()))
 
     def set_tower(self, nr_tower=None, tower=None):
         # this is a deprecated function
+        # TODO Deprecate @ Mar 15
         logger.warn("config.set_tower is deprecated. set config.tower or config.nr_tower directly")
         assert nr_tower is None or tower is None, "Cannot set both nr_tower and tower!"
         if nr_tower:

@@ -84,11 +84,14 @@ class SimpleTrainer(Trainer):
             model.build_graph(self.input_vars)
             cost_var = model.get_cost()
 
-        grads = self.config.optimizer.compute_gradients(cost_var)
+        opt = self.config.optimizer
+        if not opt:
+            opt = model.get_optimizer()
+        grads = opt.compute_gradients(cost_var)
         grads = apply_grad_processors(grads,
                                       self.model.get_gradient_processor())
 
-        self.train_op = self.config.optimizer.apply_gradients(grads, name='min_op')
+        self.train_op = opt.apply_gradients(grads, name='min_op')
 
     def _trigger_epoch(self):
         if self.summary_op is not None:

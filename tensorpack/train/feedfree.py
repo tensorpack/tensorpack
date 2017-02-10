@@ -21,7 +21,6 @@ class FeedfreeTrainerBase(Trainer):
     """ A base trainer which runs iteration without feed_dict (therefore faster)
         Expect ``self.data`` to be a :class:`FeedfreeInput`.
     """
-
     def _trigger_epoch(self):
         # run summary_op every epoch
         # TODO FIXME summary_op will take a data! This is not good for TensorInput.
@@ -45,7 +44,11 @@ class SingleCostFeedfreeTrainer(FeedfreeTrainerBase):
         self.model.build_graph(actual_inputs)
         cost_var = self.model.get_cost()
         # GATE_NONE faster?
-        grads = self.config.optimizer.compute_gradients(
+        opt = self.config.optimizer
+        if opt is None:
+            opt = self.model.get_optimizer()  # XXX TODO not gonna work if optimizer modifies grad
+            self.config.optimizer = opt
+        grads = opt.compute_gradients(
             cost_var,
             gate_gradients=tf.train.Optimizer.GATE_NONE,
             colocate_gradients_with_ops=False)
