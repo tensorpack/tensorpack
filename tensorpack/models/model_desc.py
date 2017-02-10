@@ -41,6 +41,7 @@ class InputDesc(object):
         return pickle.loads(buf)
 
 
+# TODO print warning?
 InputVar = InputDesc
 
 
@@ -62,6 +63,7 @@ class ModelDesc(object):
         return ret
 
     def get_input_vars(self):
+        # this wasn't a public API anyway
         logger.warn("[Deprecated] get_input_vars() was renamed to get_reused_placehdrs()!")
         return self.get_reused_placehdrs()
 
@@ -95,6 +97,7 @@ class ModelDesc(object):
         """
         :returns: a list of InputDesc
         """
+        # TODO deprecate @ Mar 11
         logger.warn("[Deprecated] _get_input_vars() is renamed to _get_inputs()")
         return self._get_input_vars()
 

@@ -41,7 +41,7 @@ class GaussianWithUniformSample(GaussianDistribution):
 
 class Model(GANModelDesc):
     def _get_inputs(self):
-        return [InputVar(tf.float32, (None, 28, 28), 'input')]
+        return [InputDesc(tf.float32, (None, 28, 28), 'input')]
 
     def generator(self, z):
         l = FullyConnected('fc0', z, 1024, nl=BNReLU)

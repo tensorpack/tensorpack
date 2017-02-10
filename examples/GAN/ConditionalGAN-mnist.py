@@ -27,9 +27,9 @@ BATCH = 128
 
 
 class Model(GANModelDesc):
-    def _get_input_vars(self):
-        return [InputVar(tf.float32, (None, 28, 28), 'input'),
-                InputVar(tf.int32, (None,), 'label')]
+    def _get_inputs(self):
+        return [InputDesc(tf.float32, (None, 28, 28), 'input'),
+                InputDesc(tf.int32, (None,), 'label')]
 
     def generator(self, z, y):
         l = FullyConnected('fc0', tf.concat([z, y], 1), 1024, nl=BNReLU)

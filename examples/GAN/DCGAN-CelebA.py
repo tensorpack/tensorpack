@@ -36,7 +36,7 @@ Z_DIM = 100
 
 class Model(GANModelDesc):
     def _get_inputs(self):
-        return [InputVar(tf.float32, (None, SHAPE, SHAPE, 3), 'input')]
+        return [InputDesc(tf.float32, (None, SHAPE, SHAPE, 3), 'input')]
 
     def generator(self, z):
         """ return a image generated from z"""

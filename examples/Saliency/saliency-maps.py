@@ -17,7 +17,7 @@ IMAGE_SIZE = 224
 
 class Model(tp.ModelDesc):
     def _get_inputs(self):
-        return [tp.InputVar(tf.float32, (IMAGE_SIZE, IMAGE_SIZE, 3), 'image')]
+        return [tp.InputDesc(tf.float32, (IMAGE_SIZE, IMAGE_SIZE, 3), 'image')]
 
     def _build_graph(self, inputs):
         orig_image = inputs[0]

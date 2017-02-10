@@ -26,8 +26,8 @@ class Model(ModelDesc):
     def _get_inputs(self):
         """Define all the input variables (with type, shape, name) that'll be
         fed into the graph to produce a cost.  """
-        return [InputVar(tf.float32, (None, IMAGE_SIZE, IMAGE_SIZE), 'input'),
-                InputVar(tf.int32, (None,), 'label')]
+        return [InputDesc(tf.float32, (None, IMAGE_SIZE, IMAGE_SIZE), 'input'),
+                InputDesc(tf.int32, (None,), 'label')]
 
     def _build_graph(self, inputs):
         """This function should build the model which takes the input variables

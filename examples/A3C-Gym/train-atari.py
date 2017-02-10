@@ -78,9 +78,9 @@ class MySimulatorWorker(SimulatorProcess):
 class Model(ModelDesc):
     def _get_inputs(self):
         assert NUM_ACTIONS is not None
-        return [InputVar(tf.float32, (None,) + IMAGE_SHAPE3, 'state'),
-                InputVar(tf.int64, (None,), 'action'),
-                InputVar(tf.float32, (None,), 'futurereward')]
+        return [InputDesc(tf.float32, (None,) + IMAGE_SHAPE3, 'state'),
+                InputDesc(tf.int64, (None,), 'action'),
+                InputDesc(tf.float32, (None,), 'futurereward')]
 
     def _get_NN_prediction(self, image):
         image = image / 255.0

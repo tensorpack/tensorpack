@@ -18,8 +18,8 @@ from tensorpack.tfutils.summary import *
 
 class Model(ModelDesc):
     def _get_inputs(self):
-        return [InputVar(tf.float32, [None, None, None, 3], 'image'),
-                InputVar(tf.int32, [None, None, None], 'edgemap')]
+        return [InputDesc(tf.float32, [None, None, None, 3], 'image'),
+                InputDesc(tf.int32, [None, None, None], 'edgemap')]
 
     def _build_graph(self, inputs):
         image, edgemap = inputs

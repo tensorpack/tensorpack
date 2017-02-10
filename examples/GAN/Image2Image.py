@@ -44,8 +44,8 @@ NF = 64  # number of filter
 
 class Model(GANModelDesc):
     def _get_inputs(self):
-        return [InputVar(tf.float32, (None, SHAPE, SHAPE, IN_CH), 'input'),
-                InputVar(tf.float32, (None, SHAPE, SHAPE, OUT_CH), 'output')]
+        return [InputDesc(tf.float32, (None, SHAPE, SHAPE, IN_CH), 'input'),
+                InputDesc(tf.float32, (None, SHAPE, SHAPE, OUT_CH), 'output')]
 
     def generator(self, imgs):
         # imgs: input: 256x256xch

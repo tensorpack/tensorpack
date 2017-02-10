@@ -158,7 +158,7 @@ class FeedfreeInferenceRunner(Triggerable):
         Args:
             input (FeedfreeInput): the input to use. Must have ``size()``.
             infs (list): list of :class:`Inferencer` to run.
-            input_names (list): must be a subset of the names of InputVar.
+            input_names (list): must be a subset of the names in InputDesc.
             prefix(str): an prefix used to build the tower. Must be set
                 differently if more than one :class:`FeedfreeInferenceRunner` are used.
         """
@@ -211,7 +211,7 @@ class FeedfreeInferenceRunner(Triggerable):
                         break
                 else:
                     raise ValueError(
-                        "{} doesn't appear in the InputVar of the model!".format(n))
+                        "{} doesn't appear in the InputDesc of the model!".format(n))
             self._input_tensors = model_placehdrs
 
         assert len(self._input_tensors) == len(model_placehdrs), \

@@ -72,11 +72,11 @@ class Model(ModelDesc):
         if NUM_ACTIONS is None:
             p = get_player()
             del p
-        return [InputVar(tf.float32, (None,) + IMAGE_SHAPE3, 'state'),
-                InputVar(tf.int64, (None,), 'action'),
-                InputVar(tf.float32, (None,), 'reward'),
-                InputVar(tf.float32, (None,) + IMAGE_SHAPE3, 'next_state'),
-                InputVar(tf.bool, (None,), 'isOver')]
+        return [InputDesc(tf.float32, (None,) + IMAGE_SHAPE3, 'state'),
+                InputDesc(tf.int64, (None,), 'action'),
+                InputDesc(tf.float32, (None,), 'reward'),
+                InputDesc(tf.float32, (None,) + IMAGE_SHAPE3, 'next_state'),
+                InputDesc(tf.bool, (None,), 'isOver')]
 
     def _get_DQN_prediction(self, image):
         """ image: [0,255]"""

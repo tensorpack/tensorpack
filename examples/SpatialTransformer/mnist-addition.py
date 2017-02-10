@@ -20,8 +20,8 @@ HALF_DIFF = (IMAGE_SIZE - WARP_TARGET_SIZE) // 2
 
 class Model(ModelDesc):
     def _get_inputs(self):
-        return [InputVar(tf.float32, (None, IMAGE_SIZE, IMAGE_SIZE, 2), 'input'),
-                InputVar(tf.int32, (None,), 'label')]
+        return [InputDesc(tf.float32, (None, IMAGE_SIZE, IMAGE_SIZE, 2), 'input'),
+                InputDesc(tf.int32, (None,), 'label')]
 
     def _build_graph(self, inputs):
         xys = np.array([(y, x, 1) for y in range(WARP_TARGET_SIZE)

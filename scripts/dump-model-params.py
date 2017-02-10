@@ -25,7 +25,7 @@ with tf.Graph().as_default() as G:
         MODEL = imp.load_source('config_script', args.config).Model
         M = MODEL()
         with TowerContext('', is_training=False):
-            M.build_graph(M.get_input_vars())
+            M.build_graph(M.get_reused_placehdrs())
     else:
         M = ModelFromMetaGraph(args.meta)
 

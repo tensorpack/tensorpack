@@ -25,10 +25,9 @@ MODEL_DEPTH = None
 
 
 class Model(ModelDesc):
-
-    def _get_input_vars(self):
-        return [InputVar(tf.float32, [None, 224, 224, 3], 'input'),
-                InputVar(tf.int32, [None], 'label')]
+    def _get_inputs(self):
+        return [InputDesc(tf.float32, [None, 224, 224, 3], 'input'),
+                InputDesc(tf.int32, [None], 'label')]
 
     def _build_graph(self, input_vars):
         image, label = input_vars

@@ -25,7 +25,7 @@ Usage:
 class Model(ModelDesc):
 
     def _get_inputs(self):
-        return [InputVar(tf.float32, (None, 227, 227, 3), 'input')]
+        return [InputDesc(tf.float32, (None, 227, 227, 3), 'input')]
 
     def _build_graph(self, inputs):
         # img: 227x227x3

@@ -7,7 +7,7 @@ you'll need to subclass `ModelDesc` and implement several methods:
 ```python
 class MyModel(ModelDesc):
 	def _get_inputs(self):
-		return [InputVar(...), InputVar(...)]
+		return [InputDesc(...), InputDesc(...)]
 
 	def _build_graph(self, inputs):
 		# build the graph

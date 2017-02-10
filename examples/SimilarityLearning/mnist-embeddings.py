@@ -62,9 +62,9 @@ class SiameseModel(EmbeddingModel):
         return ds
 
     def _get_inputs(self):
-        return [InputVar(tf.float32, (None, 28, 28), 'input'),
-                InputVar(tf.float32, (None, 28, 28), 'input_y'),
-                InputVar(tf.int32, (None,), 'label')]
+        return [InputDesc(tf.float32, (None, 28, 28), 'input'),
+                InputDesc(tf.float32, (None, 28, 28), 'input_y'),
+                InputDesc(tf.int32, (None,), 'label')]
 
     def _build_graph(self, inputs):
         # get inputs
@@ -105,9 +105,9 @@ class TripletModel(EmbeddingModel):
         return ds
 
     def _get_inputs(self):
-        return [InputVar(tf.float32, (None, 28, 28), 'input'),
-                InputVar(tf.float32, (None, 28, 28), 'input_p'),
-                InputVar(tf.float32, (None, 28, 28), 'input_n')]
+        return [InputDesc(tf.float32, (None, 28, 28), 'input'),
+                InputDesc(tf.float32, (None, 28, 28), 'input_p'),
+                InputDesc(tf.float32, (None, 28, 28), 'input_n')]
 
     def loss(self, a, p, n):
         return symbf.triplet_loss(a, p, n, 5., extra=True, scope="loss")

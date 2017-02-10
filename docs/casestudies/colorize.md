@@ -145,8 +145,7 @@ If you are surprised how far we already are, you will enjoy how easy it is to de
 
 ```python
 class Model(ModelDesc):
-
-    def _get_input_vars(self):
+    def _get_inputs(self):
         pass
 
     def _build_graph(self, input_vars):
@@ -154,7 +153,7 @@ class Model(ModelDesc):
 ```
 
 The framework expects:
-- a definition of inputs in `_get_input_vars`
+- a definition of inputs in `_get_inputs`
 - a computation graph containing the actual network layers in `_build_graph`
 - In single-cost optimization problem, a member `self.cost` representing the loss function we would like to minimize.
 
@@ -163,23 +162,23 @@ Our dataflow produces data which looks like `[(32, 256, 256), (32, 256, 256, 3)]
 The first entry is the luminance channel as input and the latter is the original RGB image with all three channels. So we will write
 
 ```python
-def _get_input_vars(self):
-        return [InputVar(tf.float32, (None, 256, 256), 'luminance'),
-                InputVar(tf.int32, (None, 256, 256, 3), 'rgb')]
+def _get_inputs(self):
+        return [InputDesc(tf.float32, (None, 256, 256), 'luminance'),
+                InputDesc(tf.int32, (None, 256, 256, 3), 'rgb')]
 ```
 
 This is pretty straight forward, isn't it? We defined the shapes of the input and give each entry a name.
 You can certainly use 32 instead of `None`, but since the model itself doesn't really need to know
 the batch size, using `None` offers the extra flexibility to run inference with a different batch size in the same graph.
 
-From now, the `input_vars` in `_build_graph(self, input_vars)` will be the tensors of the defined shapes in the method `_get_input_vars`. We can therefore write
+From now, the `input_vars` in `_build_graph(self, input_vars)` will be the tensors of the defined shapes in the method `_get_inputs`. We can therefore write
 
 ```python
 class Model(ModelDesc):
 
-    def _get_input_vars(self):
-        return [InputVar(tf.float32, (None, 256, 256), 'luminance'),
-                InputVar(tf.int32, (None, 256, 256, 3), 'rgb')]
+    def _get_inputs(self):
+        return [InputDesc(tf.float32, (None, 256, 256), 'luminance'),
+                InputDesc(tf.int32, (None, 256, 256, 3), 'rgb')]
 
     def _build_graph(self, input_vars):
         luminance, rgb = input_vars  # (None, 256, 256), (None, 256, 256, 3)
@@ -354,7 +353,7 @@ class OnlineExport(Callback):
         pass
 ```
 
-Can you remember the method `_get_input_vars` in our model? We used the name `luminance` to identify one input.
+Can you remember the method `_get_inputs` in our model? We used the name `luminance` to identify one input.
 If not, this is the best time to go back in this text and read how to specify input variables for the network.
 In the deconvolution step there was also:
 

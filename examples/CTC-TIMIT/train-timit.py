@@ -28,11 +28,11 @@ FEATUREDIM = 39     # MFCC feature dimension
 
 class Model(ModelDesc):
     def _get_inputs(self):
-        return [InputVar(tf.float32, [None, None, FEATUREDIM], 'feat'),   # bxmaxseqx39
-                InputVar(tf.int64, None, 'labelidx'),  # label is b x maxlen, sparse
-                InputVar(tf.int32, None, 'labelvalue'),
-                InputVar(tf.int64, None, 'labelshape'),
-                InputVar(tf.int32, [None], 'seqlen'),   # b
+        return [InputDesc(tf.float32, [None, None, FEATUREDIM], 'feat'),   # bxmaxseqx39
+                InputDesc(tf.int64, None, 'labelidx'),  # label is b x maxlen, sparse
+                InputDesc(tf.int32, None, 'labelvalue'),
+                InputDesc(tf.int64, None, 'labelshape'),
+                InputDesc(tf.int32, [None], 'seqlen'),   # b
                 ]
 
     def _build_graph(self, inputs):
