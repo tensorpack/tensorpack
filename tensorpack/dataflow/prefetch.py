@@ -20,7 +20,7 @@ from ..utils import logger
 from ..utils.gpu import change_gpu
 
 __all__ = ['PrefetchData', 'PrefetchDataZMQ', 'PrefetchOnGPUs',
-           'ThreadedMapData', 'StartNewProcess']
+           'ThreadedMapData']
 
 
 class PrefetchProcess(mp.Process):
@@ -265,21 +265,3 @@ class ThreadedMapData(ProxyDataFlow):
         for _ in range(sz):
             self._in_queue.put(next(self._itr))
             yield self._out_queue.get()
-
-
-def StartNewProcess(ds, queue_size):
-    """
-    Run ds in a new process, and use multiprocessing.queue to send data back.
-
-    Args:
-        ds (DataFlow): a DataFlow.
-        queue_size (int): the size of queue.
-
-    Returns:
-        a fork-safe DataFlow, therefore is safe to use under another PrefetchData or
-        PrefetchDataZMQ.
-
-    Note:
-        There could be a zmq version of this in the future.
-    """
-    return PrefetchData(ds, queue_size, 1)

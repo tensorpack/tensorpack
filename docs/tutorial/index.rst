@@ -9,7 +9,8 @@ Test.
 
   glance
   dataflow
-  efficient-data
+  tf-queue
+  efficient-dataflow
   model
   trainer
   callback

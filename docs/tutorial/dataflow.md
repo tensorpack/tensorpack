@@ -61,18 +61,20 @@ A Dataflow has a `get_data()` method which yields a datapoint every time.
 class MyDataFlow(DataFlow):
   def get_data(self):
     for k in range(100):
-			digit = np.random.rand(28, 28)
-			label = np.random.randint(10)
+      digit = np.random.rand(28, 28)
+      label = np.random.randint(10)
       yield [digit, label]
 ```
 
 Optionally, Dataflow can implement the following two methods:
 
-+ `size()`. Return the number of elements the generator can produce. Certain modules might require this to be
-	implemented. For example, only Dataflows with the same number of elements can be joined together.
++ `size()`. Return the number of elements the generator can produce. Certain modules might require this.
+	For example, only Dataflows with the same number of elements can be joined together.
 
-+ `reset_state()`. It's necessary if your Dataflow uses RNG. This
-	method should reset the internal state of this Dataflow (including RNG). It get called after a fork, so that different child
-	processes will have different random seed. You can also inherit `RNGDataFlow` which does this for `self.rng` already.
++ `reset_state()`. It's guranteed that the process which uses this DataFlow will invoke this method before using it.
+	So if this DataFlow needs to something after a `fork()`, you should put it here.
 
-With this "low-level" Dataflow defined, you can then compose it with existing modules.
+	A typical situation is when your Dataflow uses random number generator (RNG). Then you'd need to reset the RNG here,
+	otherwise child processes will have the same random seed. The `RNGDataFlow` class does this already.
+
+With a "low-level" Dataflow defined, you can then compose it with existing modules.

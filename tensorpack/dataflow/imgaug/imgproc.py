@@ -88,10 +88,9 @@ class MeanVarianceNormalize(ImageAugmentor):
     """
     Linearly scales the image to have zero mean and unit norm.
     ``x = (x - mean) / adjusted_stddev``
-    where ``adjusted_stddev = max(stddev, 1.0/sqrt(num_pixels * channels))
+    where ``adjusted_stddev = max(stddev, 1.0/sqrt(num_pixels * channels))``
 
     This augmentor always returns float32 images.
-    ``
     """
 
     def __init__(self, all_channel=True):
