@@ -19,8 +19,8 @@ PREDICT_TOWER = 'towerp'
 # extra variables to summarize during training in a moving-average way
 MOVING_SUMMARY_VARS_KEY = 'MOVING_SUMMARY_VARIABLES'
 
-# placeholders for input variables
-INPUT_VARS_KEY = 'INPUT_VARIABLES'
+# metainfo for input tensors
+INPUTS_KEY = 'INPUTS_METAINFO'
 
 SUMMARY_BACKUP_KEYS = [tf.GraphKeys.SUMMARIES, MOVING_SUMMARY_VARS_KEY]
 

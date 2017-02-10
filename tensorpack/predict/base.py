@@ -123,7 +123,7 @@ class OfflinePredictor(OnlinePredictor):
         """
         self.graph = tf.Graph()
         with self.graph.as_default():
-            input_placehdrs = config.model.get_input_vars()
+            input_placehdrs = config.model.get_reused_placehdrs()
             with TowerContext('', False):
                 config.model.build_graph(input_placehdrs)
 

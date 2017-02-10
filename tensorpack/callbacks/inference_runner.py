@@ -97,7 +97,7 @@ class InferenceRunner(Triggerable):
 
     def _find_input_tensors(self):
         if self.input_tensors is None:
-            input_vars = self.trainer.model.get_reuse_placehdrs()
+            input_vars = self.trainer.model.get_reused_placehdrs()
             # TODO even if it works here, sparse still is unavailable
             # because get_tensor_by_name doesn't work for sparse
 
@@ -198,7 +198,7 @@ class FeedfreeInferenceRunner(Triggerable):
         self._input_data._setup(self.trainer)
         # only 1 prediction tower will be used for inference
         self._input_tensors = self._input_data.get_input_tensors()
-        model_placehdrs = self.trainer.model.get_reuse_placehdrs()
+        model_placehdrs = self.trainer.model.get_reused_placehdrs()
         if self._input_names is not None:
             raise NotImplementedError("Random code. Not tested.")
             assert len(self._input_names) == len(self._input_tensors), \

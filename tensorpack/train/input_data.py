@@ -39,14 +39,14 @@ class FeedInput(InputData):
         return self.ds.size()
 
     def _setup(self, trainer):
-        self.input_vars = trainer.model.get_input_vars()
+        self.input_placehdrs = trainer.model.get_reused_placehdrs()
         rds = RepeatedData(self.ds, -1)
         rds.reset_state()
         self.data_producer = rds.get_data()
 
     def next_feed(self):
         data = next(self.data_producer)
-        feed = dict(zip(self.input_vars, data))
+        feed = dict(zip(self.input_placehdrs, data))
         self._last_feed = feed
         return feed
 
@@ -134,7 +134,7 @@ class QueueInput(FeedfreeInput):
         return self.ds.size()
 
     def _setup(self, trainer):
-        self.input_placehdrs = trainer.model.get_input_vars()
+        self.input_placehdrs = trainer.model.get_reused_placehdrs()
         assert len(self.input_placehdrs) > 0, \
             "QueueInput can only be used with input placeholders!"
         if self.queue is None:
@@ -182,7 +182,7 @@ class BatchQueueInput(FeedfreeInput):
         return self.ds.size() // self.batch_size
 
     def _setup(self, trainer):
-        self.input_placehdrs = trainer.model.get_input_vars()
+        self.input_placehdrs = trainer.model.get_reused_placehdrs()
         assert len(self.input_placehdrs) > 0, \
             "QueueInput can only be used with input placeholders!"
 
@@ -194,7 +194,7 @@ class BatchQueueInput(FeedfreeInput):
                 name=get_op_tensor_name(p.name)[0] + '-nobatch'))
 
         # dequeue_many requires fully-defined shapes
-        shape_err = "Use of BatchQueueInput requires input variables to have fully-defined "
+        shape_err = "Use of BatchQueueInput requires inputs to have fully-defined "
         "shapes except for the batch dimension"
         shapes = []
         for p in placehdrs_nobatch:
@@ -226,7 +226,7 @@ class BatchQueueInput(FeedfreeInput):
 
 
 class DummyConstantInput(FeedfreeInput):
-    """ Input some constant variables. Only for debugging performance issues """
+    """ Input some constant tensor. Only for debugging performance issues """
 
     def __init__(self, shapes):
         self.shapes = shapes
@@ -238,9 +238,10 @@ class DummyConstantInput(FeedfreeInput):
         ret = []
         for idx, p in enumerate(placehdrs):
             with tf.device('/gpu:0'):
-                ret.append(tf.get_variable('dummy-' + p.op.name,
-                                           shape=self.shapes[idx], dtype=p.dtype, trainable=False,
-                                           initializer=tf.constant_initializer()))
+                ret.append(tf.get_variable(
+                    'dummy-' + p.op.name, shape=self.shapes[idx],
+                    dtype=p.dtype, trainable=False,
+                    initializer=tf.constant_initializer()))
         return ret
 
 

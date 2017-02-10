@@ -28,7 +28,7 @@ class MultiTowerOfflinePredictor(OnlinePredictor):
         with self.graph.as_default():
             # TODO backup summary keys?
             def fn(_):
-                config.model.build_graph(config.model.get_input_vars())
+                config.model.build_graph(config.model.get_reused_placehdrs())
             build_prediction_graph(fn, towers)
 
             self.sess = tf.Session(config=config.session_config)

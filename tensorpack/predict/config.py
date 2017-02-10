@@ -47,7 +47,7 @@ class PredictConfig(object):
         self.input_names = input_names
         if self.input_names is None:
             # neither options is set, assume all inputs
-            raw_vars = self.model.get_input_vars_desc()
+            raw_vars = self.model.get_inputs_desc()
             self.input_names = [k.name for k in raw_vars]
         self.output_names = output_names
         assert_type(self.output_names, list)

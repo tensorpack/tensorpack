@@ -66,7 +66,7 @@ class LMDBData(RNGDataFlow):
         Args:
             lmdb_path (str): a directory or a file.
             shuffle (bool): shuffle the keys or not.
-            keys (list of str or str): list of str as the keys, used only when shuffle is True.
+            keys (list[str] or str): list of str as the keys, used only when shuffle is True.
                 It can also be a format string e.g. ``{:0>8d}`` which will be
                 formatted with the indices from 0 to *total_size - 1*.
 

@@ -8,17 +8,17 @@ import tensorflow as tf
 import pickle
 import six
 
-from ..utils import logger, INPUT_VARS_KEY
+from ..utils import logger, INPUTS_KEY
 from ..tfutils.gradproc import CheckGradient
 from ..tfutils.summary import add_moving_summary
 from ..tfutils.tower import get_current_tower_context
 
-__all__ = ['ModelDesc', 'InputVar', 'ModelFromMetaGraph']
+__all__ = ['InputDesc', 'InputVar', 'ModelDesc', 'ModelFromMetaGraph']
+
+# TODO "variable" is not the right name to use for input here.
 
 
-# TODO "variable" is not a right name to use across this file.
-
-class InputVar(object):
+class InputDesc(object):
     """ Store metadata about input placeholders. """
     def __init__(self, type, shape, name, sparse=False):
         """
@@ -41,13 +41,16 @@ class InputVar(object):
         return pickle.loads(buf)
 
 
+InputVar = InputDesc
+
+
 @six.add_metaclass(ABCMeta)
 class ModelDesc(object):
     """ Base class for a model description """
 
-    def get_input_vars(self):
+    def get_reused_placehdrs(self):
         """
-        Create or return (if already created) raw input TF placeholder vars in the graph.
+        Create or return (if already created) raw input TF placeholders in the graph.
 
         Returns:
             list[tf.Tensor]: the list of input placeholders in the graph.
@@ -58,20 +61,21 @@ class ModelDesc(object):
         self.reuse_input_vars = ret
         return ret
 
-    # alias
-    get_reuse_placehdrs = get_input_vars
+    def get_input_vars(self):
+        logger.warn("[Deprecated] get_input_vars() was renamed to get_reused_placehdrs()!")
+        return self.get_reused_placehdrs()
 
     def build_placeholders(self, prefix=''):
         """
-        For each InputVar, create new placeholders with optional prefix and
+        For each input, create new placeholders with optional prefix and
         return them. Useful when building new towers.
 
         Returns:
             list[tf.Tensor]: the list of built placeholders.
         """
-        input_vars = self._get_input_vars()
+        input_vars = self._get_inputs()
         for v in input_vars:
-            tf.add_to_collection(INPUT_VARS_KEY, v.dumps())
+            tf.add_to_collection(INPUTS_KEY, v.dumps())
         ret = []
         for v in input_vars:
             placehdr_f = tf.placeholder if not v.sparse else tf.sparse_placeholder
@@ -80,20 +84,21 @@ class ModelDesc(object):
                 name=prefix + v.name))
         return ret
 
-    def get_input_vars_desc(self):
+    def get_inputs_desc(self):
         """
         Returns:
-            list[:class:`InputVar`]: list of the underlying :class:`InputVar`.
-        """
-        return self._get_input_vars()
-
-    def _get_input_vars(self):  # keep backward compatibility
-        """
-        :returns: a list of InputVar
+            list[:class:`InputDesc`]: list of the underlying :class:`InputDesc`.
         """
         return self._get_inputs()
 
     def _get_inputs(self):  # this is a better name than _get_input_vars
+        """
+        :returns: a list of InputDesc
+        """
+        logger.warn("[Deprecated] _get_input_vars() is renamed to _get_inputs()")
+        return self._get_input_vars()
+
+    def _get_input_vars(self):  # keep backward compatibility
         raise NotImplementedError()
 
     def build_graph(self, model_inputs):
@@ -102,7 +107,7 @@ class ModelDesc(object):
 
         Args:
             model_inputs (list[tf.Tensor]): a list of inputs, corresponding to
-                InputVars of this model.
+                InputDesc of this model.
         """
         self._build_graph(model_inputs)
 
@@ -169,14 +174,14 @@ class ModelFromMetaGraph(ModelDesc):
         """
         tf.train.import_meta_graph(filename)
         all_coll = tf.get_default_graph().get_all_collection_keys()
-        for k in [INPUT_VARS_KEY, tf.GraphKeys.TRAINABLE_VARIABLES,
+        for k in [INPUTS_KEY, tf.GraphKeys.TRAINABLE_VARIABLES,
                   tf.GraphKeys.GLOBAL_VARIABLES]:
             assert k in all_coll, \
                 "Collection {} not found in metagraph!".format(k)
 
     def _get_inputs(self):
-        col = tf.get_collection(INPUT_VARS_KEY)
-        col = [InputVar.loads(v) for v in col]
+        col = tf.get_collection(INPUTS_KEY)
+        col = [InputDesc.loads(v) for v in col]
         return col
 
     def _build_graph(self, _, __):

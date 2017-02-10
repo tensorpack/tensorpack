@@ -47,7 +47,7 @@ class PredictorFactory(object):
                 freeze_collection(SUMMARY_BACKUP_KEYS), \
                 tf.variable_scope(tf.get_variable_scope(), reuse=True):
             def fn(_):
-                self.model.build_graph(self.model.get_input_vars())
+                self.model.build_graph(self.model.get_reused_placehdrs())
             build_prediction_graph(fn, self.towers)
         self.tower_built = True
 
@@ -79,7 +79,7 @@ class SimpleTrainer(Trainer):
     def _setup(self):
         self._input_method._setup(self)
         model = self.model
-        self.input_vars = model.get_input_vars()
+        self.input_vars = model.get_reused_placehdrs()
         with TowerContext('', is_training=True):
             model.build_graph(self.input_vars)
             cost_var = model.get_cost()
