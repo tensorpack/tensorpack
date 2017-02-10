@@ -74,13 +74,9 @@ class GraphVarParam(HyperParam):
         else:
             raise ValueError("{} is not a VARIABLE in the graph!".format(self.var_name))
 
-        self.val_holder = tf.placeholder(tf.float32, shape=self.shape,
-                                         name=self._readable_name + '_feed')
-        self.assign_op = self.var.assign(self.val_holder)
-
     def set_value(self, v):
         """ Assign the variable a new value. """
-        self.assign_op.eval(feed_dict={self.val_holder: v})
+        self.var.load(v)
 
     def get_value(self):
         """ Evaluate the variable. """

@@ -146,7 +146,8 @@ class ILSVRC12(RNGDataFlow):
             mkdir train && tar xvf ILSVRC12_img_train.tar -C train && cd train
             find -type f -name '*.tar' | parallel -P 10 'echo {} && mkdir -p {/.} && tar xf {} -C {/.}'
         """
-        assert name in ['train', 'test', 'val']
+        assert name in ['train', 'test', 'val'], name
+        assert os.path.isdir(dir), dir
         self.full_dir = os.path.join(dir, name)
         self.name = name
         assert os.path.isdir(self.full_dir), self.full_dir

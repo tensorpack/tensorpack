@@ -1,10 +1,11 @@
-
 # Efficient DataFlow
 
 This tutorial gives an overview of how to build an efficient DataFlow, using ImageNet
 dataset as an example.
 Our goal in the end is to have
 a generator which yields ImageNet datapoints (after proper preprocessing) as fast as possible.
+Since it is simply a generator interface, you can use the DataFlow in other frameworks (e.g. Keras)
+or your own code as well.
 
 We use ILSVRC12 training set, which contains 1.28 million images.
 Following the [ResNet example](../examples/ResNet), our pre-processing need images in their original resolution,
@@ -120,7 +121,7 @@ It will generate a database file of 140G. We build a DataFlow to read the LMDB f
 ```
 from tensorpack import *
 ds = LMDBData('/path/to/ILSVRC-train.lmdb', shuffle=False)
-ds = BatchData(ds, 256, allow_list=True)
+ds = BatchData(ds, 256, use_list=True)
 TestDataSpeed(ds).start_test()
 ```
 Depending on whether the OS has cached the file for you (and how large the RAM is), the above script
@@ -134,7 +135,7 @@ As a reference, on Samsung SSD 850, the uncached speed is about 16it/s.
 
 	  ds = LMDBData('/path/to/ILSVRC-train.lmdb', shuffle=False)
 	  ds = LocallyShuffleData(ds, 50000)
-	  ds = BatchData(ds, 256, allow_list=True)
+	  ds = BatchData(ds, 256, use_list=True)
 ```
 Instead of shuffling all the training data in every epoch (which would require random read),
 the added line above maintains a buffer of datapoints and shuffle them once a while.
@@ -153,7 +154,7 @@ Then we add necessary transformations:
     ds = AugmentImageComponent(ds, lots_of_augmentors)
     ds = BatchData(ds, 256)
 ```
-1. `LMDBData` deserialized the datapoints (from string to [jpeg_string, label])
+1. `LMDBData` deserialize the datapoints (from string to [jpeg_string, label])
 2. Use opencv to decode the first component into ndarray
 3. Apply augmentations to the ndarray
 
@@ -172,7 +173,7 @@ Both imdecode and the augmentors can be quite slow. We can parallelize them like
     ds = BatchData(ds, 256)
 ```
 
-Since we are reading the database sequentially, have multiple identical instances of the
+Since we are reading the database sequentially, having multiple identical instances of the
 underlying DataFlow will result in biased data distribution. Therefore we use `PrefetchData` to
 launch the underlying DataFlow in one independent process, and only parallelize the transformations.
 (`PrefetchDataZMQ` is faster but not fork-safe, so the first prefetch has to be `PrefetchData`. This is [issue#138])

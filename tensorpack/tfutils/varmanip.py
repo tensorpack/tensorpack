@@ -54,14 +54,10 @@ class SessionUpdate(object):
             vars_to_update: a collection of variables to update
         """
         self.sess = sess
-        self.assign_ops = defaultdict(list)
+        self.name_map = defaultdict(list)
         for v in vars_to_update:
-            # p = tf.placeholder(v.dtype, shape=v.get_shape())
-            with tf.device('/cpu:0'):
-                p = tf.placeholder(v.dtype)
-                savename = get_savename_from_varname(v.name)
-                # multiple vars might share one savename
-                self.assign_ops[savename].append((p, v, v.assign(p)))
+            savename = get_savename_from_varname(v.name)
+            self.name_map[savename].append(v)
 
     def update(self, prms):
         """
@@ -70,8 +66,8 @@ class SessionUpdate(object):
                 Any name in prms must be in the graph and in vars_to_update.
         """
         for name, value in six.iteritems(prms):
-            assert name in self.assign_ops
-            for p, v, op in self.assign_ops[name]:
+            assert name in self.name_map
+            for v in self.name_map[name]:
                 varshape = tuple(v.get_shape().as_list())
                 if varshape != value.shape:
                     # TODO only allow reshape when shape different by empty axis
@@ -79,7 +75,7 @@ class SessionUpdate(object):
                         "{}: {}!={}".format(name, varshape, value.shape)
                     logger.warn("Param {} is reshaped during assigning".format(name))
                     value = value.reshape(varshape)
-                self.sess.run(op, feed_dict={p: value})
+                v.load(value, session=self.sess)
 
 
 def dump_session_params(path):

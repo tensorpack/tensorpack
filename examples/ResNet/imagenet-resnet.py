@@ -132,7 +132,6 @@ def get_data(train_or_test):
             crop 8%~100% of the original image
             See `Going Deeper with Convolutions` by Google.
             """
-
             def _augment(self, img, _):
                 h, w = img.shape[:2]
                 area = h * w

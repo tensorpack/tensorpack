@@ -20,9 +20,9 @@ from GAN import GANTrainer, RandomZData, GANModelDesc
 
 """
 DCGAN on CelebA dataset.
-The original code (dcgan.torch) uses kernel_shape=4, but I found the difference not significant.
 
-1. Download the 'aligned&cropped' version of CelebA dataset.
+1. Download the 'aligned&cropped' version of CelebA dataset
+   (or just use any directory of jpg files).
 2. Start training:
     ./DCGAN-CelebA.py --data /path/to/image_align_celeba/
 3. Visualize samples of a trained model:
