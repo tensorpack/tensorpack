@@ -133,7 +133,7 @@ def deprecated(text, eos=None):
             pass
 
         deprecated("deprecated_item")("This is an info about an alternative.", "2017-11-4")
-        deprecated("A sentence about a remark.", "2017-11-4")()
+        deprecated("A sentence about a remark.", "2017-11-4")("")
     """
 
     def get_location():
@@ -153,8 +153,8 @@ def deprecated(text, eos=None):
             end_of_service = " after " + datetime(*map(int, fix.split("-"))).strftime("%d %b")
         elif eos:
             end_of_service = " after " + datetime(*map(int, eos.split("-"))).strftime("%d %b")
-        # function-decorator
-        if callable(func):
+        # we only need to test against user-defined functions, not using callable(..)
+        if inspect.isfunction(func):
             @functools.wraps(func)
             def new_func(*args, **kwargs):
                 warn_msg = "%s is deprecated%s [%s]."
@@ -170,7 +170,7 @@ def deprecated(text, eos=None):
                 warn_msg = "%s is deprecated%s [%s]. %s"
                 warn_msg = warn_msg % (text, end_of_service, get_location(), func)
             else:
-                warn_msg = "%s Legacy periods ends%s "
+                warn_msg = "%s Legacy periods ends%s."
                 warn_msg = warn_msg % (text, end_of_service)
             logger.warn(warn_msg)
 
