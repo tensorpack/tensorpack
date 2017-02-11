@@ -51,7 +51,7 @@ class SingleCostFeedfreeTrainer(FeedfreeTrainerBase):
         grads = opt.compute_gradients(
             cost_var,
             gate_gradients=tf.train.Optimizer.GATE_NONE,
-            colocate_gradients_with_ops=False)
+            colocate_gradients_with_ops=True)
         return cost_var, grads
 
     def run_step(self):

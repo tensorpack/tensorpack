@@ -154,10 +154,9 @@ class QueueInput(FeedfreeInput):
             qv.set_shape(v.get_shape())
 
         # test the overhead of queue
-        # with tf.device('/gpu:0'):
-            # ret = [tf.Variable(tf.random_normal([128,224,224,3],
-            # dtype=tf.float32), trainable=False),
-            # tf.Variable(tf.ones([128], dtype=tf.int32), trainable=False)]
+        # ret = [tf.Variable(tf.random_normal([64,224,224,3],
+        # dtype=tf.float32), trainable=False),
+        # tf.Variable(tf.ones([64], dtype=tf.int32), trainable=False)]
         return ret
 
 

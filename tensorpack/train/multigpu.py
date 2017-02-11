@@ -46,6 +46,26 @@ class MultiGPUTrainer(Trainer):
         restore_collection(backup)
         return grad_list
 
+    @staticmethod
+    def _multi_tower_costs(towers, get_tower_cost_func):
+        logger.info("Training a model of {} tower".format(len(towers)))
+
+        cost_list = []
+        global_scope = tf.get_variable_scope()
+        for idx, t in enumerate(towers):
+            with tf.device('/gpu:{}'.format(t)), \
+                    tf.variable_scope(global_scope, reuse=idx > 0), \
+                    TowerContext('tower{}'.format(idx)):
+                logger.info("Building graph for training tower {}...".format(idx))
+
+                cost_list.append(get_tower_cost_func())
+
+                if idx == 0:
+                    # avoid repeated summary from each device
+                    backup = backup_collection(SUMMARY_BACKUP_KEYS)
+        restore_collection(backup)
+        return cost_list
+
 
 class SyncMultiGPUTrainer(MultiGPUTrainer,
                           SingleCostFeedfreeTrainer,
@@ -55,10 +75,15 @@ class SyncMultiGPUTrainer(MultiGPUTrainer,
     from each tower and averages them.
     """
 
-    def __init__(self, config, input_queue=None, predict_tower=None):
+    def __init__(self, config, input_queue=None,
+                 average_cost=False,
+                 predict_tower=None):
         """
         Args:
             config, input_queue: same as in :class:`QueueInputTrainer`.
+            average_cost (bool): average the cost (instead of gradients) from
+                each tower and did backprop only once. Should no make
+                difference mathematically, but may affect speed.
         """
         if config.dataflow is not None:
             self._input_method = QueueInput(config.dataflow, input_queue)
@@ -75,6 +100,7 @@ class SyncMultiGPUTrainer(MultiGPUTrainer,
         self._setup_predictor_factory()
         assert len(config.tower) >= 1, "MultiGPUTrainer must be used with at least one GPU."
         assert tf.test.is_gpu_available()
+        self.average_cost = average_cost
 
     @staticmethod
     def _average_grads(tower_grads):
@@ -102,15 +128,37 @@ class SyncMultiGPUTrainer(MultiGPUTrainer,
 
     def _setup(self):
         super(SyncMultiGPUTrainer, self)._setup()
-        grad_list = MultiGPUTrainer._multi_tower_grads(
-            self.config.tower, lambda: self._get_cost_and_grad()[1])
+        if not self.average_cost:
+            grad_list = MultiGPUTrainer._multi_tower_grads(
+                self.config.tower, lambda: self._get_cost_and_grad()[1])
 
-        # debug tower performance:
-        # ops = [k[0] for k in grad_list[1]] + [k[0] for k in grad_list[0]]
-        # self.train_op = tf.group(*ops)
-        # return
+            # debug tower performance (without update):
+            # ops = [k[0] for k in grad_list[1]] + [k[0] for k in grad_list[0]]
+            # self.train_op = tf.group(*ops)
+            # return
 
-        grads = SyncMultiGPUTrainer._average_grads(grad_list)
+            grads = SyncMultiGPUTrainer._average_grads(grad_list)
+            # grads = grad_list[0]
+        else:
+            def get_cost():
+                actual_inputs = self._get_input_tensors()
+                self.model.build_graph(actual_inputs)
+                return self.model.get_cost()
+
+            cost_list = MultiGPUTrainer._multi_tower_costs(
+                self.config.tower, get_cost)
+            cost = tf.multiply(tf.add_n(cost_list), 1.0 / len(cost_list),
+                               name='averaged_cost')
+
+            opt = self.config.optimizer
+            if opt is None:
+                opt = self.model.get_optimizer()
+                self.config.optimizer = opt
+            grads = opt.compute_gradients(
+                cost,
+                gate_gradients=tf.train.Optimizer.GATE_NONE,
+                colocate_gradients_with_ops=True)
+
         grads = apply_grad_processors(grads, self.model.get_gradient_processor())
         self.train_op = self.config.optimizer.apply_gradients(grads, name='min_op')
 
