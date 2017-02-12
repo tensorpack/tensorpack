@@ -66,10 +66,8 @@ def get_config():
     steps_per_epoch = dataset_train.size()
     dataset_test = get_data('test')
 
-    lr = get_scalar_var('learning_rate', 0.01, summary=True)
     return TrainConfig(
         dataflow=dataset_train,
-        optimizer=tf.train.MomentumOptimizer(lr, 0.9),
         callbacks=[
             ModelSaver(),
             InferenceRunner(dataset_test,

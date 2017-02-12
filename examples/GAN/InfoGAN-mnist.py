@@ -146,9 +146,12 @@ class Model(GANModelDesc):
         # distinguish between variables of generator and discriminator updates
         self.collect_variables()
 
-    def get_gradient_processor_g(self):
+    def _get_optimizer(self):
+        lr = symbf.get_scalar_var('learning_rate', 2e-4, summary=True)
+        opt = tf.train.AdamOptimizer(lr, beta1=0.5, epsilon=1e-6)
         # generator learns 5 times faster
-        return [gradproc.ScaleGradient(('.*', 5), log=False)]
+        return optimizer.apply_grad_processors(
+            opt, [gradproc.ScaleGradient(('gen/.*', 5), log=True)])
 
 
 def get_data():
@@ -159,11 +162,8 @@ def get_data():
 
 def get_config():
     logger.auto_set_dir()
-    dataset = get_data()
-    lr = symbf.get_scalar_var('learning_rate', 2e-4, summary=True)
     return TrainConfig(
-        dataflow=dataset,
-        optimizer=tf.train.AdamOptimizer(lr, beta1=0.5, epsilon=1e-6),
+        dataflow=get_data(),
         callbacks=[ModelSaver()],
         session_config=get_default_sess_config(0.5),
         model=Model(),

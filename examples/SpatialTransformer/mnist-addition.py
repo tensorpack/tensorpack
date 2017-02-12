@@ -85,9 +85,13 @@ class Model(ModelDesc):
         summary.add_moving_summary(cost, wd_cost)
         self.cost = tf.add_n([wd_cost, cost], name='cost')
 
-    def get_gradient_processor(self):
-        return [gradproc.ScaleGradient(('STN.*', 0.1)),
-                gradproc.SummaryGradient()]
+    def _get_optimizer(self):
+        lr = symbf.get_scalar_var('learning_rate', 5e-4, summary=True)
+        opt = tf.train.AdamOptimizer(lr, epsilon=1e-3)
+        return optimizer.apply_grad_processors(
+            opt, [
+                gradproc.ScaleGradient(('STN.*', 0.1)),
+                gradproc.SummaryGradient()])
 
 
 def get_data(isTrain):
@@ -149,11 +153,9 @@ def get_config():
     dataset_train, dataset_test = get_data(True), get_data(False)
     steps_per_epoch = dataset_train.size() * 5
 
-    lr = symbf.get_scalar_var('learning_rate', 5e-4, summary=True)
-
     return TrainConfig(
+        model=Model(),
         dataflow=dataset_train,
-        optimizer=tf.train.AdamOptimizer(lr, epsilon=1e-3),
         callbacks=[
             ModelSaver(),
             InferenceRunner(dataset_test,
@@ -161,7 +163,6 @@ def get_config():
             ScheduledHyperParamSetter('learning_rate', [(200, 1e-4)])
         ],
         session_config=get_default_sess_config(0.5),
-        model=Model(),
         steps_per_epoch=steps_per_epoch,
         max_epoch=500,
     )

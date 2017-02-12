@@ -114,6 +114,10 @@ class Model(ModelDesc):
         add_moving_summary(loss, wd_cost)
         self.cost = tf.add_n([loss, wd_cost], name='cost')
 
+    def _get_optimizer(self):
+        lr = get_scalar_var('learning_rate', 0.1, summary=True)
+        return tf.train.MomentumOptimizer(lr, 0.9, use_nesterov=True)
+
 
 def get_data(train_or_test):
     isTrain = train_or_test == 'train'
@@ -176,14 +180,11 @@ def get_data(train_or_test):
 
 
 def get_config():
-    # prepare dataset
     dataset_train = get_data('train')
     dataset_val = get_data('val')
 
-    lr = get_scalar_var('learning_rate', 0.1, summary=True)
     return TrainConfig(
         dataflow=dataset_train,
-        optimizer=tf.train.MomentumOptimizer(lr, 0.9, use_nesterov=True),
         callbacks=[
             ModelSaver(),
             InferenceRunner(dataset_val, [

@@ -24,6 +24,7 @@ from tensorpack.utils.concurrency import *
 from tensorpack.utils.serialize import *
 from tensorpack.utils.stats import *
 from tensorpack.tfutils import symbolic_functions as symbf
+from tensorpack.tfutils.gradproc import MapGradient, SummaryGradient
 
 from tensorpack.RL import *
 from simulator import *
@@ -132,9 +133,14 @@ class Model(ModelDesc):
         summary.add_moving_summary(policy_loss, xentropy_loss,
                                    value_loss, pred_reward, advantage, self.cost)
 
-    def get_gradient_processor(self):
-        return [gradproc.MapGradient(lambda grad: tf.clip_by_average_norm(grad, 0.1)),
-                gradproc.SummaryGradient()]
+    def _get_optimizer(self):
+        lr = symbf.get_scalar_var('learning_rate', 0.001, summary=True)
+        opt = tf.train.AdamOptimizer(lr, epsilon=1e-3)
+
+        gradprocs = [MapGradient(lambda grad: tf.clip_by_average_norm(grad, 0.1)),
+                     SummaryGradient()]
+        opt = optimizer.apply_grad_processors(opt, gradprocs)
+        return opt
 
 
 class MySimulatorMaster(SimulatorMaster, Callback):
@@ -202,11 +208,8 @@ def get_config():
 
     master = MySimulatorMaster(namec2s, names2c, M)
     dataflow = BatchData(DataFromQueue(master.queue), BATCH_SIZE)
-
-    lr = symbf.get_scalar_var('learning_rate', 0.001, summary=True)
     return TrainConfig(
         dataflow=dataflow,
-        optimizer=tf.train.AdamOptimizer(lr, epsilon=1e-3),
         callbacks=[
             ModelSaver(),
             ScheduledHyperParamSetter('learning_rate', [(80, 0.0003), (120, 0.0001)]),
@@ -269,8 +272,7 @@ if __name__ == '__main__':
             logger.warn("Without GPU this model will never learn! CPU is only useful for debug.")
             nr_gpu = 0
             PREDICTOR_THREAD = 1
-            predict_tower = [0]
-            train_tower = [0]
+            predict_tower, train_tower = [0], [0]
             trainer = QueueInputTrainer
         config = get_config()
         if args.load:

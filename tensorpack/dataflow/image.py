@@ -37,7 +37,7 @@ class ImageFromFile(RNGDataFlow):
         for f in self.files:
             im = cv2.imread(f, self.imread_mode)
             if self.channel == 3:
-                im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
+                im = im[:, :, ::-1]
             if self.resize is not None:
                 im = cv2.resize(im, self.resize[::-1])
             if self.channel == 1:

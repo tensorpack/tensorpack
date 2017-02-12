@@ -53,6 +53,10 @@ class EmbeddingModel(ModelDesc):
 
         return embeddings
 
+    def _get_optimizer(self):
+        lr = symbf.get_scalar_var('learning_rate', 1e-4, summary=True)
+        return tf.train.GradientDescentOptimizer(lr)
+
 
 class SiameseModel(EmbeddingModel):
     @staticmethod
@@ -133,19 +137,13 @@ class SoftTripletModel(TripletModel):
 def get_config(model, algorithm_name):
     logger.auto_set_dir()
 
-    dataset = model.get_data()
-    steps_per_epoch = dataset.size()
-
-    lr = symbf.get_scalar_var('learning_rate', 1e-4, summary=True)
-
     extra_display = ["cost"]
     if not algorithm_name == "cosine":
         extra_display = extra_display + ["loss/pos-dist", "loss/neg-dist"]
 
     return TrainConfig(
-        dataflow=dataset,
+        dataflow=model.get_data(),
         model=model(),
-        optimizer=tf.train.GradientDescentOptimizer(lr),
         callbacks=[
             ModelSaver(),
             ScheduledHyperParamSetter('learning_rate', [(10, 1e-5), (20, 1e-6)])
@@ -154,7 +152,6 @@ def get_config(model, algorithm_name):
             MovingAverageSummary(),
             ProgressBar(extra_display),
             StatPrinter()],
-        steps_per_epoch=steps_per_epoch,
         max_epoch=20,
     )
 

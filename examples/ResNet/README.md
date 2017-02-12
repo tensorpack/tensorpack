@@ -12,8 +12,9 @@ Models can be [downloaded here](https://goo.gl/6XjK9V).
 | ResNet 50          |      7.13%  |      24.12% |
 | ResNet 101         |      6.54%  |      22.89% |
 
+To train, just run:
 ```bash
-./imagenet-resnet.py --data /path/to/ILSVRC --gpu 0,1,2,3 -d 18
+./imagenet-resnet.py --data /path/to/original/ILSVRC --gpu 0,1,2,3 -d 18
 ```
 
 ![imagenet](imagenet-resnet.png)

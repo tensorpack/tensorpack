@@ -149,9 +149,11 @@ class Model(ModelDesc):
                 ops.append(v.assign(tf.get_default_graph().get_tensor_by_name(new_name + ':0')))
         return tf.group(*ops, name='update_target_network')
 
-    def get_gradient_processor(self):
-        return [gradproc.GlobalNormalClip(10),
-                gradproc.SummaryGradient()]
+    def _get_optimizer(self):
+        lr = symbf.get_scalar_var('learning_rate', 1e-3, summary=True)
+        opt = tf.train.AdamOptimizer(lr, epsilon=1e-3)
+        return optimizer.apply_grad_processors(
+            opt, [gradproc.GlobalNormalClip(10), gradproc.SummaryGradient()])
 
 
 def get_config():
@@ -171,11 +173,8 @@ def get_config():
         reward_clip=(-1, 1),
         history_len=FRAME_HISTORY)
 
-    lr = symbf.get_scalar_var('learning_rate', 1e-3, summary=True)
-
     return TrainConfig(
         dataflow=dataset_train,
-        optimizer=tf.train.AdamOptimizer(lr, epsilon=1e-3),
         callbacks=[
             ModelSaver(),
             ScheduledHyperParamSetter('learning_rate',
@@ -186,7 +185,7 @@ def get_config():
             # HumanHyperParamSetter('learning_rate', 'hyper.txt'),
             # HumanHyperParamSetter(ObjAttrParam(dataset_train, 'exploration'), 'hyper.txt'),
         ],
-        # save memory for multiprocess evaluator
+        # save memory for multi-thread evaluator
         session_config=get_default_sess_config(0.6),
         model=M,
         steps_per_epoch=STEP_PER_EPOCH,

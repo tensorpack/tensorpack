@@ -13,6 +13,7 @@ from ..models import ModelDesc
 from ..utils import logger, log_deprecated
 from ..tfutils import (JustCurrentSession,
                        get_default_sess_config, SessionInit)
+from ..tfutils.optimizer import apply_grad_processors
 from .input_data import InputData
 
 __all__ = ['TrainConfig']
@@ -130,6 +131,9 @@ class TrainConfig(object):
             self.predict_tower = [self.predict_tower]
 
         if 'optimizer' in kwargs:
+            log_deprecated("TrainConfig(optimizer=...)",
+                           "Use ModelDesc._get_optimizer() instead.",
+                           "2017-04-12")
             self._optimizer = kwargs.pop('optimizer')
             assert_type(self._optimizer, tf.train.Optimizer)
         else:
@@ -160,7 +164,14 @@ class TrainConfig(object):
     def optimizer(self):
         """ for back-compatibilty only. will remove in the future"""
         if self._optimizer:
-            return self._optimizer
-        opt = self.model.get_optimizer()
-        self._optimizer = opt
+            opt = self._optimizer
+        else:
+            opt = self.model.get_optimizer()
+        gradproc = self.model.get_gradient_processor()
+        if gradproc:
+            log_deprecated("ModelDesc.get_gradient_processor()",
+                           "Use gradient processor to build an optimizer instead.", "2017-04-12")
+            opt = apply_grad_processors(opt, gradproc)
+        if not self._optimizer:
+            self._optimizer = opt
         return opt

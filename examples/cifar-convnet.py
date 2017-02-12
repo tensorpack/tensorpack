@@ -71,6 +71,10 @@ class Model(ModelDesc):
         add_param_summary(('.*/W', ['histogram']))   # monitor W
         self.cost = tf.add_n([cost, wd_cost], name='cost')
 
+    def _get_optimizer(self):
+        lr = symbf.get_scalar_var('learning_rate', 1e-2, summary=True)
+        return tf.train.AdamOptimizer(lr, epsilon=1e-3)
+
 
 def get_data(train_or_test, cifar_classnum):
     isTrain = train_or_test == 'train'
@@ -106,21 +110,17 @@ def get_config(cifar_classnum):
 
     # prepare dataset
     dataset_train = get_data('train', cifar_classnum)
-    steps_per_epoch = dataset_train.size()
     dataset_test = get_data('test', cifar_classnum)
 
     sess_config = get_default_sess_config(0.5)
-
-    lr = symbf.get_scalar_var('learning_rate', 1e-2, summary=True)
 
     def lr_func(lr):
         if lr < 3e-5:
             raise StopTraining()
         return lr * 0.31
-
     return TrainConfig(
+        model=Model(cifar_classnum),
         dataflow=dataset_train,
-        optimizer=tf.train.AdamOptimizer(lr, epsilon=1e-3),
         callbacks=[
             ModelSaver(),
             InferenceRunner(dataset_test, ClassificationError()),
@@ -128,8 +128,6 @@ def get_config(cifar_classnum):
                                    threshold=0.001, last_k=10),
         ],
         session_config=sess_config,
-        model=Model(cifar_classnum),
-        steps_per_epoch=steps_per_epoch,
         max_epoch=150,
     )
 

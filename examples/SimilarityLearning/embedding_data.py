@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # File: embedding_data.py
-# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+# Author: tensorpack contributors
 
 import numpy as np
 from tensorpack.dataflow import dataset, BatchData
