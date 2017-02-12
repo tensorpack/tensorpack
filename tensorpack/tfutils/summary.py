@@ -6,7 +6,7 @@ import six
 import tensorflow as tf
 import re
 
-from ..utils import logger, log_deprecated
+from ..utils import log_deprecated
 from ..utils.naming import MOVING_SUMMARY_VARS_KEY
 from .tower import get_current_tower_context
 from .symbolic_functions import rms
