@@ -25,6 +25,9 @@ n=5, about 7.1% val error after 67k steps (8.6 step/s)
 n=18, about 5.95% val error after 80k steps (2.6 step/s)
 n=30: a 182-layer network, about 5.6% val error after 51k steps (1.55 step/s)
 This model uses the whole training set instead of a train-val split.
+
+To train:
+    ./cifar10-resnet.py --gpu 0,1
 """
 
 BATCH_SIZE = 128

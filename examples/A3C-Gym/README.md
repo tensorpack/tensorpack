@@ -10,17 +10,20 @@ Most of them are the best reproducible results on gym.
 
 `CUDA_VISIBLE_DEVICES=0 ./train-atari.py --env Breakout-v0`
 
-It should run at a speed of 6~10 iteration/s on 1 GPU plus 12+ CPU cores.
-Training with a significant slower speed (e.g. on CPU) will result in very bad score,
-probably because of async issues.
+It should run at a speed of 6~10 iterations/s on 1 GPU plus 12+ CPU cores.
+In each iteration it trains on a batch of 128 new states.
 
 The pre-trained models are all trained with 4 GPUs for about 2 days.
-But note that multi-GPU doesn't give you obvious speedup here,
-because the bottleneck in this implementation is not computation but data. On machines without huge memory, you may also need to
-enable tcmalloc to keep training throughput more stable.
+But on simple games like Breakout, you can get good performance within several hours.
+Also note that multi-GPU doesn't give you obvious speedup here,
+because the bottleneck in this implementation is not computation but data.
 
-Occasionally, processes may not get terminated completely, therefore it is suggested to use `systemd-run` to run any
+Some practicical notes:
+
+1. On machines without huge memory, enabling tcmalloc may keep training throughput more stable.
+2. Occasionally, processes may not get terminated completely. It is suggested to use `systemd-run` to run any
 multiprocess Python program to get a cgroup dedicated for the task.
+3. Training with a significant slower speed (e.g. on CPU) will result in very bad score, probably because of async issues.
 
 ### To run a pretrained Atari model for 100 episodes:
 

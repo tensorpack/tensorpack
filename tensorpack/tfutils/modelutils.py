@@ -1,13 +1,15 @@
 # -*- coding: UTF-8 -*-
 # File: modelutils.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
+# Author: tensorpack contributors
 
 import tensorflow as tf
 from termcolor import colored
 
 from ..utils import logger
+from .summary import add_moving_summary
+from .tower import get_current_tower_context
 
-__all__ = ['describe_model', 'get_shape_str']
+__all__ = ['describe_model', 'get_shape_str', 'apply_slim_collections']
 
 
 def describe_model():
@@ -46,3 +48,36 @@ def get_shape_str(tensors):
         assert isinstance(tensors, (tf.Tensor, tf.Variable)), "Not a tensor: {}".format(type(tensors))
         shape_str = str(tensors.get_shape().as_list())
     return shape_str
+
+
+def apply_slim_collections(cost):
+    """
+    Apply slim collections to the cost, including:
+
+    1. adding the cost with the regularizers in ``tf.GraphKeys.REGULARIZATION_LOSSES``.
+    2. make the cost depend on ``tf.GraphKeys.UPDATE_OPS``.
+
+    Args:
+        cost: a scalar tensor
+
+    Return:
+        a scalar tensor, the cost after applying the collections.
+    """
+    regulization_losses = set(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES))
+    if len(regulization_losses) > 0:
+        logger.info("Applying REGULARIZATION_LOSSES on cost.")
+        reg_loss = tf.add_n(list(regulization_losses), name="regularize_loss")
+        cost = tf.add(reg_loss, cost, name='total_cost')
+        add_moving_summary(reg_loss, cost)
+
+    # As these batch-norm statistics quickly accumulate, there is no significant loss of accuracy
+    # if only the main tower handles all batch-normalization updates, which are then shared across
+    # the towers
+    ctx = get_current_tower_context()
+    if ctx is not None and ctx.is_main_training_tower:
+        non_grad_updates = set(tf.get_collection(tf.GraphKeys.UPDATE_OPS))
+        if non_grad_updates:
+            logger.info("Applying UPDATE_OPS collection on cost.")
+            with tf.control_dependencies(non_grad_updates):
+                cost = tf.identity(cost, name='cost_with_update')
+    return cost

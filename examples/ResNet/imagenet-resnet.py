@@ -17,11 +17,6 @@ from tensorpack.utils.stats import RatioCounter
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
 
-"""
-Training code of Pre-Activation version of ResNet on ImageNet.
-It mainly follows the setup in fb.resnet.torch, and get similar performance.
-"""
-
 TOTAL_BATCH_SIZE = 256
 INPUT_SHAPE = 224
 DEPTH = None

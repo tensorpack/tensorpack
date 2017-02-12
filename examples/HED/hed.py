@@ -93,7 +93,8 @@ class Model(ModelDesc):
             add_moving_summary(costs + [wrong, self.cost])
 
     def get_gradient_processor(self):
-        return [ScaleGradient([('convfcweight.*', 0.1), ('conv5_.*', 5)])]
+        return [gradproc.ScaleGradient([
+            ('convfcweight.*', 0.1), ('conv5_.*', 5)])]
 
 
 def get_data(name):

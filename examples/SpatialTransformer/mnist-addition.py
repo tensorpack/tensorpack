@@ -86,8 +86,8 @@ class Model(ModelDesc):
         self.cost = tf.add_n([wd_cost, cost], name='cost')
 
     def get_gradient_processor(self):
-        return [MapGradient(lambda grad: tf.clip_by_global_norm([grad], 5)[0][0]),
-                ScaleGradient(('STN.*', 0.1)), SummaryGradient()]
+        return [gradproc.ScaleGradient(('STN.*', 0.1)),
+                gradproc.SummaryGradient()]
 
 
 def get_data(isTrain):

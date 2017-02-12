@@ -9,9 +9,10 @@ import pickle
 import six
 
 from ..utils import logger, INPUTS_KEY, deprecated, log_deprecated
+from ..utils.argtools import memoized
+from ..tfutils.modelutils import apply_slim_collections
+
 from ..tfutils.gradproc import CheckGradient
-from ..tfutils.summary import add_moving_summary
-from ..tfutils.tower import get_current_tower_context
 
 __all__ = ['InputDesc', 'InputVar', 'ModelDesc', 'ModelFromMetaGraph']
 
@@ -41,8 +42,10 @@ class InputDesc(object):
         return pickle.loads(buf)
 
 
-# TODO print warning?
-InputVar = InputDesc
+class InputVar(InputDesc):
+    def __init__(self, *args, **kwargs):
+        logger.warn("[Deprecated] InputVar was renamed to InputDesc!")
+        super(InputVar, self).__init__(*args, **kwargs)
 
 
 @six.add_metaclass(ABCMeta)
@@ -50,6 +53,7 @@ class ModelDesc(object):
     """ Base class for a model description """
 
 # inputs:
+    @memoized
     def get_reused_placehdrs(self):
         """
         Create or return (if already created) raw input TF placeholders in the graph.
@@ -57,11 +61,7 @@ class ModelDesc(object):
         Returns:
             list[tf.Tensor]: the list of input placeholders in the graph.
         """
-        if hasattr(self, 'reuse_input_vars'):
-            return self.reuse_input_vars
-        ret = self.build_placeholders()
-        self.reuse_input_vars = ret
-        return ret
+        return self.build_placeholders()
 
     @deprecated("Use get_reused_placehdrs() instead.", "2017-04-11")
     def get_input_vars(self):
@@ -70,7 +70,7 @@ class ModelDesc(object):
 
     def build_placeholders(self, prefix=''):
         """
-        For each input, create new placeholders with optional prefix and
+        For each InputDesc, create new placeholders with optional prefix and
         return them. Useful when building new towers.
 
         Returns:
@@ -104,7 +104,6 @@ class ModelDesc(object):
     def _get_input_vars(self):  # keep backward compatibility
         raise NotImplementedError()
 
-# graph, cost, optimizer:
     def build_graph(self, model_inputs):
         """
         Build the whole symbolic graph.
@@ -121,41 +120,33 @@ class ModelDesc(object):
 
     def get_cost(self):
         """
-        Return the cost tensor in the graph. Called by some of the :class:`tensorpack.train.Trainer` which
-        assumes single-cost models.
+        Return the cost tensor in the graph.
+        Used by some of the tensorpack :class:`Trainer` which assumes single-cost models.
+        You can ignore this method if you use your own trainer with more than one cost.
 
-        This function also apply tfslim collections to the cost automatically, including
-        ``tf.GraphKeys.REGULARIZATION_LOSSES`` and
-        ``tf.GraphKeys.UPDATE_OPS``. This is because slim users would expect
-        the regularizer being automatically applied once used in slim layers.
+        It calls :meth:`ModelDesc._get_cost()` which by default returns
+        ``self.cost``. You can override :meth:`_get_cost()` if needed.
+
+        This function also applies tfslim collections to the cost automatically,
+        including ``tf.GraphKeys.REGULARIZATION_LOSSES`` and ``tf.GraphKeys.UPDATE_OPS``.
+        This is because slim users would expect the regularizer being automatically applied once used in slim layers.
         """
-
-        # the model cost so far
         cost = self._get_cost()
-
-        regulization_losses = set(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES))
-        if len(regulization_losses) > 0:
-            reg_loss = tf.add_n(list(regulization_losses), name="regularize_loss")
-            cost = tf.add(reg_loss, cost, name='total_cost')
-            add_moving_summary(reg_loss, cost)
-
-        # As these batch-norm statistics quickly accumulate, there is no significant loss of accuracy
-        # if only the main tower handles all batch-normalization updates, which are then shared across
-        # the towers
-        ctx = get_current_tower_context()
-        if ctx is not None and ctx.is_main_training_tower:
-            non_grad_updates = set(tf.get_collection(tf.GraphKeys.UPDATE_OPS))
-            if non_grad_updates:
-                logger.info("Apply UPDATE_OPS collection on cost.")
-                with tf.control_dependencies(non_grad_updates):
-                    cost = tf.identity(cost)
-        return cost
+        return apply_slim_collections(cost)
 
     def _get_cost(self, *args):
         return self.cost
 
+    @memoized
     def get_optimizer(self):
         """
+        Return the optimizer used in the task.
+        Used by some of the tensorpack :class:`Trainer` which only uses a single optimizer.
+        You can ignore this method if you use your own trainer with more than one optimizers.
+
+        Users of :class:`ModelDesc` will need to implement `_get_optimizer()`,
+        which will only be called once per each model.
+
         Returns:
             a :class:`tf.train.Optimizer` instance.
         """
@@ -165,7 +156,7 @@ class ModelDesc(object):
         raise NotImplementedError()
 
     def get_gradient_processor(self):
-        """ Return a list of :class:`tensorpack.tfutils.GradientProcessor`.
+        """ (Deprecated) Return a list of :class:`tensorpack.tfutils.GradientProcessor`.
             They will be executed by the trainer in the given order.
         """
         return [  # SummaryGradient(),
@@ -179,7 +170,7 @@ class ModelFromMetaGraph(ModelDesc):
     Only useful for inference.
     """
 
-    # TODO can this be really used for inference?
+    # TODO this class may not be functional anymore.
 
     def __init__(self, filename):
         """

@@ -96,16 +96,12 @@ class Model(GANModelDesc):
                 fake_sample_viz = tf.cast((fake_sample + 1) * 128.0, tf.uint8, name='viz')
                 tf.summary.image('gen', fake_sample_viz, max_outputs=30)
 
-            # TODO investigate how bn stats should be updated across two discrim
+            # may need to investigate how bn stats should be updated across two discrim
             with tf.variable_scope('discrim'):
                 real_pred, _ = self.discriminator(real_sample)
 
             with tf.variable_scope('discrim', reuse=True):
                 fake_pred, dist_param = self.discriminator(fake_sample)
-
-        # post-process output vector from discriminator to become valid
-        # distribution parameters
-        encoder_activation = self.factors.encoder_activation(dist_param)
 
         """
         Mutual information between x (i.e. zc in this case) and some
@@ -130,6 +126,8 @@ class Model(GANModelDesc):
             # Adding this term may make the curve less stable because the
             # entropy estimated from the samples is not the true value.
 
+            # post-process output vector from discriminator to obtain valid distribution parameters
+            encoder_activation = self.factors.encoder_activation(dist_param)
             cond_ents = self.factors.entropy(zc, encoder_activation)
             cond_entropy = tf.add_n(cond_ents, name="total_conditional_entropy")
 
@@ -139,7 +137,7 @@ class Model(GANModelDesc):
         # default GAN objective
         self.build_losses(real_pred, fake_pred)
 
-        # subtract mutual information for latent factores (we want to maximize them)
+        # subtract mutual information for latent factors (we want to maximize them)
         self.g_loss = tf.subtract(self.g_loss, MI, name='total_g_loss')
         self.d_loss = tf.subtract(self.d_loss, MI, name='total_d_loss')
 
@@ -150,7 +148,7 @@ class Model(GANModelDesc):
 
     def get_gradient_processor_g(self):
         # generator learns 5 times faster
-        return [CheckGradient(), ScaleGradient(('.*', 5), log=False)]
+        return [gradproc.ScaleGradient(('.*', 5), log=False)]
 
 
 def get_data():

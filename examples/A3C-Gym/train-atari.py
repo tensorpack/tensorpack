@@ -133,8 +133,8 @@ class Model(ModelDesc):
                                    value_loss, pred_reward, advantage, self.cost)
 
     def get_gradient_processor(self):
-        return [MapGradient(lambda grad: tf.clip_by_average_norm(grad, 0.1)),
-                SummaryGradient()]
+        return [gradproc.MapGradient(lambda grad: tf.clip_by_average_norm(grad, 0.1)),
+                gradproc.SummaryGradient()]
 
 
 class MySimulatorMaster(SimulatorMaster, Callback):

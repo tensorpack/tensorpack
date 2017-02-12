@@ -180,6 +180,8 @@ def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
 
     # TODO for other towers, maybe can make it depend some op later
     # TODO update it later (similar to slim) might be faster?
+    # TODO main tower already has too many work, would it be faster to update
+    # it only on the last tower?
     if ctx.is_main_training_tower:
         with tf.control_dependencies([update_op1, update_op2]):
             return tf.identity(xn, name='output')

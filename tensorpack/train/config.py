@@ -130,10 +130,10 @@ class TrainConfig(object):
             self.predict_tower = [self.predict_tower]
 
         if 'optimizer' in kwargs:
-            self.optimizer = kwargs.pop('optimizer')
-            assert_type(self.optimizer, tf.train.Optimizer)
+            self._optimizer = kwargs.pop('optimizer')
+            assert_type(self._optimizer, tf.train.Optimizer)
         else:
-            self.optimizer = None
+            self._optimizer = None
 
         assert len(kwargs) == 0, 'Unknown arguments: {}'.format(str(kwargs.keys()))
 
@@ -155,3 +155,12 @@ class TrainConfig(object):
     @nr_tower.setter
     def nr_tower(self, value):
         self.tower = list(range(value))
+
+    @property
+    def optimizer(self):
+        """ for back-compatibilty only. will remove in the future"""
+        if self._optimizer:
+            return self._optimizer
+        opt = self.model.get_optimizer()
+        self._optimizer = opt
+        return opt

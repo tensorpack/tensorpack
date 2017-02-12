@@ -20,7 +20,7 @@ def apply_grad_processors(grads, gradprocs):
     """
     Args:
         grads (list): list of (grad, var).
-        gradprocs (list): list of :class:`GradientProcessor` instances.
+        gradprocs (list[GradientProcessor]): gradient processors to apply.
     Returns:
         list: list of (grad, var) went through the processors.
     """

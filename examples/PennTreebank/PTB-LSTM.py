@@ -101,7 +101,7 @@ class Model(ModelDesc):
                         s[1].h.assign(z))
 
     def get_gradient_processor(self):
-        return [GlobalNormClip(5)]
+        return [gradproc.GlobalNormClip(5)]
 
 
 def get_config():

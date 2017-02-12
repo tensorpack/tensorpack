@@ -74,7 +74,7 @@ class Model(ModelDesc):
         summary.add_moving_summary(err, self.cost)
 
     def get_gradient_processor(self):
-        return [GlobalNormClip(5), SummaryGradient()]
+        return [gradproc.GlobalNormClip(5), gradproc.SummaryGradient()]
 
 
 def get_data(path, isTrain, stat_file):
