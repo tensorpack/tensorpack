@@ -8,7 +8,7 @@ import tensorflow as tf
 import pickle
 import six
 
-from ..utils import logger, INPUTS_KEY, deprecated
+from ..utils import logger, INPUTS_KEY, deprecated, log_deprecated
 from ..tfutils.gradproc import CheckGradient
 from ..tfutils.summary import add_moving_summary
 from ..tfutils.tower import get_current_tower_context
@@ -98,7 +98,7 @@ class ModelDesc(object):
         """
         :returns: a list of InputDesc
         """
-        deprecated("_get_input_vars() is renamed to _get_inputs().", "2017-04-11")("")
+        log_deprecated("", "_get_input_vars() was renamed to _get_inputs().", "2017-04-11")
         return self._get_input_vars()
 
     def _get_input_vars(self):  # keep backward compatibility

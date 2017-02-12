@@ -142,7 +142,7 @@ class ClassificationError(Inferencer):
     def _datapoint(self, outputs):
         vec = outputs[0]
         if vec.ndim == 0:
-            logger.error("[DEPRECATED] use a 'wrong vector' for ClassificationError instead of nr_wrong")
+            logger.error("[DEPRECATED] use a 'wrong vector' for ClassificationError instead of nr_wrong. Exiting..")
             sys.exit(1)
         else:
             # TODO put shape assertion into inferencerrunner

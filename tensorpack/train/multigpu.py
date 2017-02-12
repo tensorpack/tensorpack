@@ -8,7 +8,7 @@ import itertools
 import re
 from six.moves import zip, range
 
-from ..utils import logger, deprecated
+from ..utils import logger, log_deprecated
 from ..utils.naming import SUMMARY_BACKUP_KEYS
 from ..utils.concurrency import LoopThread
 from ..tfutils.tower import TowerContext
@@ -67,7 +67,7 @@ class SyncMultiGPUTrainer(MultiGPUTrainer,
             assert isinstance(self._input_method, QueueInput)
 
         if predict_tower is not None:
-            deprecated("Argument `predict_tower` in trainer")("Use TrainConfig(predict_tower=...) instead!")
+            log_deprecated("Argument `predict_tower` in trainer", "Use TrainConfig(predict_tower=...) instead!")
             config.predict_tower = predict_tower
 
         super(SyncMultiGPUTrainer, self).__init__(config)
@@ -141,8 +141,7 @@ class AsyncMultiGPUTrainer(MultiGPUTrainer,
         super(AsyncMultiGPUTrainer, self).__init__(config)
 
         if predict_tower is not None:
-            logger.warn("[Deprecated] Argument `predict_tower` is deprecated for trainer. "
-                        "Use TrainConfig.predict_tower instead!")
+            log_deprecated("Argument `predict_tower` in trainer", "Use TrainConfig.predict_tower instead!")
             config.predict_tower = predict_tower
 
         self._setup_predictor_factory()

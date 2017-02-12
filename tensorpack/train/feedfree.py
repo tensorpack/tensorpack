@@ -5,7 +5,7 @@
 
 import tensorflow as tf
 
-from ..utils import deprecated
+from ..utils import log_deprecated
 from ..tfutils.tower import TowerContext
 from ..tfutils.gradproc import apply_grad_processors
 from .input_data import QueueInput, FeedfreeInput
@@ -121,7 +121,7 @@ def QueueInputTrainer(config, input_queue=None, predict_tower=None):
     """
     config.data = QueueInput(config.dataflow, input_queue)
     if predict_tower is not None:
-        deprecated("Argument `predict_tower` in trainer")("Use TrainConfig(predict_tower=...) instead!")
+        log_deprecated("Argument `predict_tower` in trainer", "Use TrainConfig(predict_tower=...) instead!")
         config.predict_tower = predict_tower
     assert len(config.tower) == 1, \
         "QueueInputTrainer doesn't support multigpu! Use Sync/AsyncMultiGPUTrainer instead."

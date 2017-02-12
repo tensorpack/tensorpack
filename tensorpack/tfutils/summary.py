@@ -6,7 +6,7 @@ import six
 import tensorflow as tf
 import re
 
-from ..utils import logger
+from ..utils import logger, log_deprecated
 from ..utils.naming import MOVING_SUMMARY_VARS_KEY
 from .tower import get_current_tower_context
 from .symbolic_functions import rms
@@ -61,7 +61,7 @@ def add_param_summary(*summary_lists):
     if ctx is not None and not ctx.is_main_training_tower:
         return
     if len(summary_lists) == 1 and isinstance(summary_lists[0], list):
-        logger.warn("[Deprecated] Use positional args to call add_param_summary() instead of a list.")
+        log_deprecated(text="Use positional args to call add_param_summary() instead of a list.")
         summary_lists = summary_lists[0]
 
     def perform(var, action):
