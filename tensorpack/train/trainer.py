@@ -10,7 +10,6 @@ from ..utils import SUMMARY_BACKUP_KEYS, PREDICT_TOWER
 from ..tfutils import get_tensors_by_names, TowerContext
 from ..tfutils.collection import freeze_collection
 from ..predict import OnlinePredictor, build_prediction_graph
-from ..tfutils.gradproc import apply_grad_processors
 from .input_data import FeedInput
 
 __all__ = ['SimpleTrainer', 'MultiPredictorTowerTrainer']
@@ -86,9 +85,6 @@ class SimpleTrainer(Trainer):
 
         opt = self.config.optimizer
         grads = opt.compute_gradients(cost_var)
-        grads = apply_grad_processors(grads,
-                                      self.model.get_gradient_processor())
-
         self.train_op = opt.apply_gradients(grads, name='min_op')
 
     def _trigger_epoch(self):

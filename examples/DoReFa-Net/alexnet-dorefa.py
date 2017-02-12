@@ -161,6 +161,10 @@ class Model(ModelDesc):
         self.cost = tf.add_n([cost, wd_cost], name='cost')
         add_moving_summary(cost, wd_cost, self.cost)
 
+    def _get_optimizer(self):
+        lr = get_scalar_var('learning_rate', 1e-4, summary=True)
+        return tf.train.AdamOptimizer(lr, epsilon=1e-5)
+
 
 def get_data(dataset_name):
     isTrain = dataset_name == 'train'
@@ -225,16 +229,11 @@ def get_data(dataset_name):
 
 def get_config():
     logger.auto_set_dir()
-
-    # prepare dataset
     data_train = get_data('train')
     data_test = get_data('val')
 
-    lr = get_scalar_var('learning_rate', 1e-4, summary=True)
-
     return TrainConfig(
         dataflow=data_train,
-        optimizer=tf.train.AdamOptimizer(lr, epsilon=1e-5),
         callbacks=[
             ModelSaver(),
             # HumanHyperParamSetter('learning_rate'),

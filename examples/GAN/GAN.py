@@ -65,12 +65,6 @@ class GANModelDesc(ModelDesc):
 
             add_moving_summary(self.g_loss, self.d_loss, self.d_accuracy, self.g_accuracy)
 
-    def get_gradient_processor_g(self):
-        return [CheckGradient()]
-
-    def get_gradient_processor_d(self):
-        return [CheckGradient()]
-
 
 class GANTrainer(FeedfreeTrainerBase):
     def __init__(self, config):
@@ -86,16 +80,12 @@ class GANTrainer(FeedfreeTrainerBase):
         # optimize G
         grads = self.config.optimizer.compute_gradients(
             self.model.g_loss, var_list=self.model.g_vars)
-        grads = apply_grad_processors(
-            grads, self.model.get_gradient_processor_g())
         self.g_min = self.config.optimizer.apply_gradients(grads, name='g_op')
 
         # optimize D
         with tf.control_dependencies([self.g_min]):
             grads = self.config.optimizer.compute_gradients(
                 self.model.d_loss, var_list=self.model.d_vars)
-            grads = apply_grad_processors(
-                grads, self.model.get_gradient_processor_d())
             self.d_min = self.config.optimizer.apply_gradients(grads, name='d_op')
 
         self.train_op = self.d_min

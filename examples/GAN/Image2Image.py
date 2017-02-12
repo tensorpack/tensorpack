@@ -130,6 +130,10 @@ class Model(GANModelDesc):
 
         self.collect_variables()
 
+    def _get_optimizer(self):
+        lr = symbolic_functions.get_scalar_var('learning_rate', 2e-4, summary=True)
+        return tf.train.AdamOptimizer(lr, beta1=0.5, epsilon=1e-3)
+
 
 def split_input(img):
     """
@@ -167,10 +171,8 @@ def get_data():
 def get_config():
     logger.auto_set_dir()
     dataset = get_data()
-    lr = symbolic_functions.get_scalar_var('learning_rate', 2e-4, summary=True)
     return TrainConfig(
         dataflow=dataset,
-        optimizer=tf.train.AdamOptimizer(lr, beta1=0.5, epsilon=1e-3),
         callbacks=[
             PeriodicTrigger(ModelSaver(), every_k_epochs=3),
             ScheduledHyperParamSetter('learning_rate', [(200, 1e-4)])

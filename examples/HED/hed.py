@@ -92,9 +92,12 @@ class Model(ModelDesc):
             self.cost = tf.add_n(costs, name='cost')
             add_moving_summary(costs + [wrong, self.cost])
 
-    def get_gradient_processor(self):
-        return [gradproc.ScaleGradient([
-            ('convfcweight.*', 0.1), ('conv5_.*', 5)])]
+    def _get_optimizer(self):
+        lr = get_scalar_var('learning_rate', 3e-5, summary=True)
+        opt = tf.train.AdamOptimizer(lr, epsilon=1e-3)
+        return optimizer.apply_grad_processors(
+            opt, [gradproc.ScaleGradient(
+                [('convfcweight.*', 0.1), ('conv5_.*', 5)])])
 
 
 def get_data(name):
@@ -102,7 +105,6 @@ def get_data(name):
     ds = dataset.BSDS500(name, shuffle=True)
 
     class CropMultiple16(imgaug.ImageAugmentor):
-
         def _get_augment_params(self, img):
             newh = img.shape[0] // 16 * 16
             neww = img.shape[1] // 16 * 16
@@ -132,7 +134,7 @@ def get_data(name):
         shape_aug = [imgaug.CenterCrop(IMAGE_SHAPE)]
     ds = AugmentImageComponents(ds, shape_aug, (0, 1))
 
-    def f(m):
+    def f(m):   # thresholding
         m[m >= 0.50] = 1
         m[m < 0.50] = 0
         return m
@@ -169,10 +171,8 @@ def get_config():
     steps_per_epoch = dataset_train.size() * 40
     dataset_val = get_data('val')
 
-    lr = get_scalar_var('learning_rate', 3e-5, summary=True)
     return TrainConfig(
         dataflow=dataset_train,
-        optimizer=tf.train.AdamOptimizer(lr, epsilon=1e-3),
         callbacks=[
             ModelSaver(),
             ScheduledHyperParamSetter('learning_rate', [(30, 6e-6), (45, 1e-6), (60, 8e-7)]),

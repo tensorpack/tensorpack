@@ -125,6 +125,15 @@ class Model(ModelDesc):
         self.cost = tf.add_n([cost, wd_cost], name='cost')
         add_moving_summary(cost, wd_cost, self.cost)
 
+    def _get_optimizer(self):
+        lr = tf.train.exponential_decay(
+            learning_rate=1e-3,
+            global_step=get_global_step_var(),
+            decay_steps=4721 * 100,
+            decay_rate=0.5, staircase=True, name='learning_rate')
+        tf.summary.scalar('lr', lr)
+        return tf.train.AdamOptimizer(lr, epsilon=1e-5)
+
 
 def get_config():
     logger.auto_set_dir()
@@ -146,29 +155,19 @@ def get_config():
     data_train = AugmentImageComponent(data_train, augmentors)
     data_train = BatchData(data_train, 128)
     data_train = PrefetchDataZMQ(data_train, 5)
-    steps_per_epoch = data_train.size()
 
     augmentors = [imgaug.Resize((40, 40))]
     data_test = AugmentImageComponent(data_test, augmentors)
     data_test = BatchData(data_test, 128, remainder=True)
 
-    lr = tf.train.exponential_decay(
-        learning_rate=1e-3,
-        global_step=get_global_step_var(),
-        decay_steps=data_train.size() * 100,
-        decay_rate=0.5, staircase=True, name='learning_rate')
-    tf.summary.scalar('lr', lr)
-
     return TrainConfig(
         dataflow=data_train,
-        optimizer=tf.train.AdamOptimizer(lr, epsilon=1e-5),
         callbacks=[
             ModelSaver(),
             InferenceRunner(data_test,
                             [ScalarStats('cost'), ClassificationError()])
         ],
         model=Model(),
-        steps_per_epoch=steps_per_epoch,
         max_epoch=200,
     )
 

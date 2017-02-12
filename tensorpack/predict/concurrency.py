@@ -90,7 +90,7 @@ class PredictorWorkerThread(StoppableThread):
             except tf.errors.CancelledError:
                 for f in futures:
                     f.cancel()
-                logger.warn("PredictorWorkerThread id={}, call was cancelled.".format(self.id))
+                logger.warn("In PredictorWorkerThread id={}, call was cancelled.".format(self.id))
                 return
             # print "Worker {} batched {} Queue {}".format(
             #         self.id, len(futures), self.queue.qsize())

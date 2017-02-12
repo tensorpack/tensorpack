@@ -23,7 +23,6 @@ Usage:
 
 
 class Model(ModelDesc):
-
     def _get_inputs(self):
         return [InputDesc(tf.float32, (None, 227, 227, 3), 'input')]
 

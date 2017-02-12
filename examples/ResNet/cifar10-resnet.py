@@ -109,6 +109,11 @@ class Model(ModelDesc):
         add_param_summary(('.*/W', ['histogram']))   # monitor W
         self.cost = tf.add_n([cost, wd_cost], name='cost')
 
+    def _get_optimizer(self):
+        lr = get_scalar_var('learning_rate', 0.01, summary=True)
+        opt = tf.train.MomentumOptimizer(lr, 0.9)
+        return opt
+
 
 def get_data(train_or_test):
     isTrain = train_or_test == 'train'
@@ -140,10 +145,8 @@ def get_config():
     steps_per_epoch = dataset_train.size()
     dataset_test = get_data('test')
 
-    lr = get_scalar_var('learning_rate', 0.01, summary=True)
     return TrainConfig(
         dataflow=dataset_train,
-        optimizer=tf.train.MomentumOptimizer(lr, 0.9),
         callbacks=[
             ModelSaver(),
             InferenceRunner(dataset_test,

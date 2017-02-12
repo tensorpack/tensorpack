@@ -6,6 +6,8 @@
 import tensorflow as tf
 from .gradproc import apply_grad_processors as apply_gradproc
 
+__all__ = ['apply_grad_processors', 'ProxyOptimizer']
+
 
 class ProxyOptimizer(tf.train.Optimizer):
     def __init__(self, opt):

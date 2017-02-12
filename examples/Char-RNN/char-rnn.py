@@ -14,7 +14,7 @@ import six
 from six.moves import map, range
 
 from tensorpack import *
-from tensorpack.tfutils.gradproc import *
+from tensorpack.tfutils.gradproc import GlobalNormClip
 from tensorpack.utils.lut import LookUpTable
 from tensorpack.utils.globvars import globalns as param
 rnn = tf.contrib.rnn
@@ -42,7 +42,7 @@ class CharRNNData(RNGDataFlow):
             data = f.read()
         if six.PY2:
             data = bytearray(data)
-        data = [chr(c) for c in data if c < 128]    # TODO this is Py2 only
+        data = [chr(c) for c in data if c < 128]
         counter = Counter(data)
         char_cnt = sorted(counter.items(), key=operator.itemgetter(1), reverse=True)
         self.chars = [x[0] for x in char_cnt]
@@ -105,8 +105,10 @@ class Model(ModelDesc):
         summary.add_param_summary(('.*/W', ['histogram']))   # monitor histogram of all W
         summary.add_moving_summary(self.cost)
 
-    def get_gradient_processor(self):
-        return [gradproc.GlobalNormClip(5)]
+    def _get_optimizer(self):
+        lr = symbolic_functions.get_scalar_var('learning_rate', 2e-3, summary=True)
+        opt = tf.train.AdamOptimizer(lr)
+        return optimizer.apply_grad_processors(opt, [GlobalNormClip(5)])
 
 
 def get_config():
@@ -116,11 +118,8 @@ def get_config():
     ds = BatchData(ds, param.batch_size)
     steps_per_epoch = ds.size()
 
-    lr = symbolic_functions.get_scalar_var('learning_rate', 2e-3, summary=True)
-
     return TrainConfig(
         dataflow=ds,
-        optimizer=tf.train.AdamOptimizer(lr),
         callbacks=[
             ModelSaver(),
             ScheduledHyperParamSetter('learning_rate', [(25, 2e-4)])

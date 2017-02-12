@@ -12,8 +12,6 @@ from ..utils import logger, INPUTS_KEY, deprecated, log_deprecated
 from ..utils.argtools import memoized
 from ..tfutils.modelutils import apply_slim_collections
 
-from ..tfutils.gradproc import CheckGradient
-
 __all__ = ['InputDesc', 'InputVar', 'ModelDesc', 'ModelFromMetaGraph']
 
 # TODO "variable" is not the right name to use for input here.
@@ -156,12 +154,7 @@ class ModelDesc(object):
         raise NotImplementedError()
 
     def get_gradient_processor(self):
-        """ (Deprecated) Return a list of :class:`tensorpack.tfutils.GradientProcessor`.
-            They will be executed by the trainer in the given order.
-        """
-        return [  # SummaryGradient(),
-            CheckGradient()
-        ]
+        return []
 
 
 class ModelFromMetaGraph(ModelDesc):

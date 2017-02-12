@@ -112,6 +112,17 @@ class Model(ModelDesc):
                                   ('.*/weights', ['histogram', 'rms'])  # to also work with slim
                                   )
 
+    def _get_optimizer(self):
+        lr = tf.train.exponential_decay(
+            learning_rate=1e-3,
+            global_step=get_global_step_var(),
+            decay_steps=468 * 10,
+            decay_rate=0.3, staircase=True, name='learning_rate')
+        # This will also put the summary in tensorboard, stat.json and print in terminal
+        # but this time without moving average
+        tf.summary.scalar('lr', lr)
+        return tf.train.AdamOptimizer(lr)
+
 
 def get_data():
     train = BatchData(dataset.Mnist('train'), 128)
@@ -127,20 +138,9 @@ def get_config():
     # how many iterations you want in each epoch
     steps_per_epoch = dataset_train.size()
 
-    lr = tf.train.exponential_decay(
-        learning_rate=1e-3,
-        global_step=get_global_step_var(),
-        decay_steps=dataset_train.size() * 10,
-        decay_rate=0.3, staircase=True, name='learning_rate')
-
-    # This will also put the summary in tensorboard,stat.json and print in
-    # terminal, but without the moving average
-    tf.summary.scalar('lr', lr)
-
     # get the config which contains everything necessary in a training
     return TrainConfig(
         dataflow=dataset_train,  # the DataFlow instance for training
-        optimizer=tf.train.AdamOptimizer(lr),
         callbacks=[
             ModelSaver(),   # save the model after every epoch
             InferenceRunner(    # run inference(for validation) after every epoch

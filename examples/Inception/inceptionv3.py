@@ -8,12 +8,11 @@ import argparse
 import numpy as np
 import os
 import tensorflow as tf
+import multiprocessing
 
 from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
-
-import multiprocessing
 
 """
 InceptionV3 on ILSVRC12.
@@ -195,6 +194,10 @@ class Model(ModelDesc):
         self.cost = tf.add_n([0.4 * loss1, loss2, wd_cost], name='cost')
         add_moving_summary(loss1, loss2, wd_cost, self.cost)
 
+    def _get_optimizer(self):
+        lr = get_scalar_var('learning_rate', 0.045, summary=True)
+        return tf.train.AdamOptimizer(lr, epsilon=1e-3)
+
 
 def get_data(train_or_test):
     isTrain = train_or_test == 'train'
@@ -261,10 +264,8 @@ def get_config():
     dataset_train = get_data('train')
     dataset_val = get_data('val')
 
-    lr = get_scalar_var('learning_rate', 0.045, summary=True)
     return TrainConfig(
         dataflow=dataset_train,
-        optimizer=tf.train.AdamOptimizer(lr, epsilon=1e-3),
         callbacks=[
             ModelSaver(),
             InferenceRunner(dataset_val, [

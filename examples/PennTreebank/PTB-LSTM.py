@@ -100,8 +100,11 @@ class Model(ModelDesc):
                         s[1].c.assign(z),
                         s[1].h.assign(z))
 
-    def get_gradient_processor(self):
-        return [gradproc.GlobalNormClip(5)]
+    def _get_optimizer(self):
+        lr = symbolic_functions.get_scalar_var('learning_rate', 1, summary=True)
+        opt = tf.train.GradientDescentOptimizer(lr)
+        return optimizer.apply_grad_processors(
+            opt, [gradproc.GlobalNormClip(5)])
 
 
 def get_config():
@@ -120,12 +123,9 @@ def get_config():
         (data3[1].shape[0] // BATCH - 1) // SEQ_LEN)
 
     M = Model()
-
-    lr = symbolic_functions.get_scalar_var('learning_rate', 1, summary=True)
     return TrainConfig(
         data=train_data,
         model=M,
-        optimizer=tf.train.GradientDescentOptimizer(lr),
         callbacks=[
             ModelSaver(),
             HyperParamSetterWithFunc(

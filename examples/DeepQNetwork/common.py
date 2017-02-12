@@ -41,7 +41,6 @@ def play_model(cfg):
 
 def eval_with_funcs(predict_funcs, nr_eval):
     class Worker(StoppableThread):
-
         def __init__(self, func, queue):
             super(Worker, self).__init__()
             self._func = func

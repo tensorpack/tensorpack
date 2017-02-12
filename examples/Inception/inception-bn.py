@@ -120,6 +120,10 @@ class Model(ModelDesc):
         self.cost = tf.add_n([cost, wd_cost], name='cost')
         add_moving_summary(wd_cost, self.cost)
 
+    def _get_optimizer(self):
+        lr = get_scalar_var('learning_rate', 0.045, summary=True)
+        return tf.train.MomentumOptimizer(lr, 0.9)
+
 
 def get_data(train_or_test):
     isTrain = train_or_test == 'train'
@@ -157,10 +161,8 @@ def get_config():
     steps_per_epoch = 5000
     dataset_val = get_data('val')
 
-    lr = get_scalar_var('learning_rate', 0.045, summary=True)
     return TrainConfig(
         dataflow=dataset_train,
-        optimizer=tf.train.MomentumOptimizer(lr, 0.9),
         callbacks=[
             ModelSaver(),
             InferenceRunner(dataset_val, [

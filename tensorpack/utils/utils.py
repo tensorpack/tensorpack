@@ -135,7 +135,7 @@ def log_deprecated(name="", text="", eos=""):
         eos = "after " + datetime(*map(int, eos.split("-"))).strftime("%d %b")
     if name:
         if eos:
-            warn_msg = "%s will be deprecated on %s. %s" % (name, eos, text)
+            warn_msg = "%s will be deprecated %s. %s" % (name, eos, text)
         else:
             warn_msg = "%s was deprecated. %s" % (name, text)
     else:

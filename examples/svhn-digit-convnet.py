@@ -59,6 +59,15 @@ class Model(ModelDesc):
         add_param_summary(('.*/W', ['histogram', 'rms']))   # monitor W
         self.cost = tf.add_n([cost, wd_cost], name='cost')
 
+    def _get_optimizer(self):
+        lr = tf.train.exponential_decay(
+            learning_rate=1e-3,
+            global_step=get_global_step_var(),
+            decay_steps=4721 * 60,
+            decay_rate=0.2, staircase=True, name='learning_rate')
+        tf.summary.scalar('lr', lr)
+        return tf.train.AdamOptimizer(lr)
+
 
 def get_data():
     d1 = dataset.SVHNDigit('train')
@@ -86,20 +95,11 @@ def get_data():
 
 def get_config():
     logger.auto_set_dir()
-
     data_train, data_test = get_data()
     steps_per_epoch = data_train.size()
 
-    lr = tf.train.exponential_decay(
-        learning_rate=1e-3,
-        global_step=get_global_step_var(),
-        decay_steps=data_train.size() * 60,
-        decay_rate=0.2, staircase=True, name='learning_rate')
-    tf.summary.scalar('lr', lr)
-
     return TrainConfig(
         dataflow=data_train,
-        optimizer=tf.train.AdamOptimizer(lr),
         callbacks=[
             ModelSaver(),
             InferenceRunner(data_test,
