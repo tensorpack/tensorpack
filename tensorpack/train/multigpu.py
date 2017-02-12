@@ -82,10 +82,11 @@ class SyncMultiGPUTrainer(MultiGPUTrainer,
         Args:
             config, input_queue: same as in :class:`QueueInputTrainer`.
             average_cost (bool): average the cost (instead of gradients) from
-                each tower and did backprop only once. Should no make
+                each tower and did backprop only once. This option should make no
                 difference mathematically, but may affect speed.
         """
         if config.dataflow is not None:
+            # use queueinput by default. May need to avoid this in the future (when more input type is available)
             self._input_method = QueueInput(config.dataflow, input_queue)
         else:
             self._input_method = config.data

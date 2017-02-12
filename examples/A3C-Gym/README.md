@@ -19,6 +19,7 @@ Also note that multi-GPU doesn't give you obvious speedup here,
 because the bottleneck in this implementation is not computation but data.
 
 Some practicical notes:
+
 1. On machines without huge memory, enabling tcmalloc may keep training throughput more stable.
 2. Occasionally, processes may not get terminated completely. It is suggested to use `systemd-run` to run any
 multiprocess Python program to get a cgroup dedicated for the task.

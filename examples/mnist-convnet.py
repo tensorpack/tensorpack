@@ -24,8 +24,10 @@ USE_SLIM = False
 
 class Model(ModelDesc):
     def _get_inputs(self):
-        """Define all the input variables (with type, shape, name) that'll be
-        fed into the graph to produce a cost.  """
+        """
+        Define all the inputs (with type, shape, name) that
+        the graph will need.
+        """
         return [InputDesc(tf.float32, (None, IMAGE_SIZE, IMAGE_SIZE), 'input'),
                 InputDesc(tf.int32, (None,), 'label')]
 

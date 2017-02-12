@@ -150,8 +150,8 @@ class Model(ModelDesc):
         return tf.group(*ops, name='update_target_network')
 
     def get_gradient_processor(self):
-        return [MapGradient(lambda grad: tf.clip_by_global_norm([grad], 5)[0][0]),
-                SummaryGradient()]
+        return [gradproc.GlobalNormalClip(10),
+                gradproc.SummaryGradient()]
 
 
 def get_config():

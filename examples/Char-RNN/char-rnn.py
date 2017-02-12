@@ -106,7 +106,7 @@ class Model(ModelDesc):
         summary.add_moving_summary(self.cost)
 
     def get_gradient_processor(self):
-        return [GlobalNormClip(5)]
+        return [gradproc.GlobalNormClip(5)]
 
 
 def get_config():
