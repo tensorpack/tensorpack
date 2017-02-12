@@ -151,7 +151,7 @@ class Model(GANModelDesc):
         opt = tf.train.AdamOptimizer(lr, beta1=0.5, epsilon=1e-6)
         # generator learns 5 times faster
         return optimizer.apply_grad_processors(
-            opt, [gradproc.ScaleGradient(('.*', 5), log=False)])
+            opt, [gradproc.ScaleGradient(('gen/.*', 5), log=True)])
 
 
 def get_data():

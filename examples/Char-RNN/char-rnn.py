@@ -116,7 +116,6 @@ def get_config():
 
     ds = CharRNNData(param.corpus, 100000)
     ds = BatchData(ds, param.batch_size)
-    steps_per_epoch = ds.size()
 
     return TrainConfig(
         dataflow=ds,
@@ -125,11 +124,8 @@ def get_config():
             ScheduledHyperParamSetter('learning_rate', [(25, 2e-4)])
         ],
         model=Model(),
-        steps_per_epoch=steps_per_epoch,
         max_epoch=50,
     )
-
-# TODO rewrite using Predictor interface
 
 
 def sample(path, start, length):

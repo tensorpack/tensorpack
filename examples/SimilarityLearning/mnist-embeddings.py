@@ -137,15 +137,12 @@ class SoftTripletModel(TripletModel):
 def get_config(model, algorithm_name):
     logger.auto_set_dir()
 
-    dataset = model.get_data()
-    steps_per_epoch = dataset.size()
-
     extra_display = ["cost"]
     if not algorithm_name == "cosine":
         extra_display = extra_display + ["loss/pos-dist", "loss/neg-dist"]
 
     return TrainConfig(
-        dataflow=dataset,
+        dataflow=model.get_data(),
         model=model(),
         callbacks=[
             ModelSaver(),
@@ -155,7 +152,6 @@ def get_config(model, algorithm_name):
             MovingAverageSummary(),
             ProgressBar(extra_display),
             StatPrinter()],
-        steps_per_epoch=steps_per_epoch,
         max_epoch=20,
     )
 

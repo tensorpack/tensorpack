@@ -158,7 +158,6 @@ def get_data():
     imgs = glob.glob(os.path.join(datadir, '*.jpg'))
     ds = ImageFromFile(imgs, channel=3, shuffle=True)
 
-    # Image-to-Image translation mode
     ds = MapData(ds, lambda dp: split_input(dp[0]))
     assert SHAPE < 286  # this is the parameter used in the paper
     augs = [imgaug.Resize(286), imgaug.RandomCrop(SHAPE)]

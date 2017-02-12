@@ -140,6 +140,7 @@ def get_config():
 
     # get the config which contains everything necessary in a training
     return TrainConfig(
+        model=Model(),
         dataflow=dataset_train,  # the DataFlow instance for training
         callbacks=[
             ModelSaver(),   # save the model after every epoch
@@ -148,7 +149,6 @@ def get_config():
                 # Calculate both the cost and the error for this DataFlow
                 [ScalarStats('cross_entropy_loss'), ClassificationError('incorrect')]),
         ],
-        model=Model(),
         steps_per_epoch=steps_per_epoch,
         max_epoch=100,
     )

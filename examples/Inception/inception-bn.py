@@ -156,9 +156,7 @@ def get_data(train_or_test):
 
 def get_config():
     logger.auto_set_dir()
-    # prepare dataset
     dataset_train = get_data('train')
-    steps_per_epoch = 5000
     dataset_val = get_data('val')
 
     return TrainConfig(
@@ -175,7 +173,7 @@ def get_config():
         ],
         session_config=get_default_sess_config(0.99),
         model=Model(),
-        steps_per_epoch=steps_per_epoch,
+        steps_per_epoch=5000,
         max_epoch=80,
     )
 

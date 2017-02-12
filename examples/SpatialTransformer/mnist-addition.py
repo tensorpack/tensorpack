@@ -154,6 +154,7 @@ def get_config():
     steps_per_epoch = dataset_train.size() * 5
 
     return TrainConfig(
+        model=Model(),
         dataflow=dataset_train,
         callbacks=[
             ModelSaver(),
@@ -162,7 +163,6 @@ def get_config():
             ScheduledHyperParamSetter('learning_rate', [(200, 1e-4)])
         ],
         session_config=get_default_sess_config(0.5),
-        model=Model(),
         steps_per_epoch=steps_per_epoch,
         max_epoch=500,
     )

@@ -96,17 +96,15 @@ def get_data():
 def get_config():
     logger.auto_set_dir()
     data_train, data_test = get_data()
-    steps_per_epoch = data_train.size()
 
     return TrainConfig(
+        model=Model(),
         dataflow=data_train,
         callbacks=[
             ModelSaver(),
             InferenceRunner(data_test,
                             [ScalarStats('cost'), ClassificationError()])
         ],
-        model=Model(),
-        steps_per_epoch=steps_per_epoch,
         max_epoch=350,
     )
 
