@@ -85,8 +85,6 @@ class SimpleTrainer(Trainer):
             cost_var = model.get_cost()
 
         opt = self.config.optimizer
-        if not opt:
-            opt = model.get_optimizer()
         grads = opt.compute_gradients(cost_var)
         grads = apply_grad_processors(grads,
                                       self.model.get_gradient_processor())

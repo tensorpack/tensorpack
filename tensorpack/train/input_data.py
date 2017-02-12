@@ -152,11 +152,6 @@ class QueueInput(FeedfreeInput):
         assert len(ret) == len(self.input_placehdrs)
         for qv, v in zip(ret, self.input_placehdrs):
             qv.set_shape(v.get_shape())
-
-        # test the overhead of queue
-        # ret = [tf.Variable(tf.random_normal([64,224,224,3],
-        # dtype=tf.float32), trainable=False),
-        # tf.Variable(tf.ones([64], dtype=tf.int32), trainable=False)]
         return ret
 
 
@@ -225,9 +220,14 @@ class BatchQueueInput(FeedfreeInput):
 
 
 class DummyConstantInput(FeedfreeInput):
-    """ Input some constant tensor. Only for debugging performance issues """
+    """ Input with some random tensor placed on GPU.
+        Useful for debugging performance issues """
 
     def __init__(self, shapes):
+        """
+        Args:
+            shapes (list[list]): a list of fully-sepcified shapes.
+        """
         self.shapes = shapes
         logger.warn("Using dummy input for debug!")
 
@@ -236,11 +236,9 @@ class DummyConstantInput(FeedfreeInput):
         assert len(self.shapes) == len(placehdrs)
         ret = []
         for idx, p in enumerate(placehdrs):
-            with tf.device('/gpu:0'):
-                ret.append(tf.get_variable(
-                    'dummy-' + p.op.name, shape=self.shapes[idx],
-                    dtype=p.dtype, trainable=False,
-                    initializer=tf.constant_initializer()))
+            ret.append(tf.get_variable(
+                'dummy-' + p.op.name, shape=self.shapes[idx],
+                dtype=p.dtype, trainable=False))
         return ret
 
 

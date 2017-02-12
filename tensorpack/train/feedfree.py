@@ -39,15 +39,12 @@ class FeedfreeTrainerBase(Trainer):
 class SingleCostFeedfreeTrainer(FeedfreeTrainerBase):
     """ A feedfree Trainer which assumes a single cost. """
     def _get_cost_and_grad(self):
-        """ get the cost and gradient on a new tower"""
+        """ get the cost and gradient"""
         actual_inputs = self._get_input_tensors()
         self.model.build_graph(actual_inputs)
         cost_var = self.model.get_cost()
-        # GATE_NONE faster?
         opt = self.config.optimizer
-        if opt is None:
-            opt = self.model.get_optimizer()  # XXX TODO not gonna work if optimizer modifies grad
-            self.config.optimizer = opt
+        # GATE_NONE faster?
         grads = opt.compute_gradients(
             cost_var,
             gate_gradients=tf.train.Optimizer.GATE_NONE,

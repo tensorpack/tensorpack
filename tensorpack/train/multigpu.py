@@ -151,9 +151,6 @@ class SyncMultiGPUTrainer(MultiGPUTrainer,
                                name='averaged_cost')
 
             opt = self.config.optimizer
-            if opt is None:
-                opt = self.model.get_optimizer()
-                self.config.optimizer = opt
             grads = opt.compute_gradients(
                 cost,
                 gate_gradients=tf.train.Optimizer.GATE_NONE,

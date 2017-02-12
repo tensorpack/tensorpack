@@ -105,7 +105,8 @@ class ModelDesc(object):
     def _get_input_vars(self):  # keep backward compatibility
         raise NotImplementedError()
 
-# graph, cost, optimizer:
+# build graph:
+
     def build_graph(self, model_inputs):
         """
         Build the whole symbolic graph.
@@ -120,6 +121,7 @@ class ModelDesc(object):
     def _build_graph(self, inputs):
         pass
 
+# set cost. Only for single-cost model.
     def get_cost(self):
         """
         Return the cost tensor in the graph. Called by some of the :class:`tensorpack.train.Trainer` which
@@ -155,6 +157,8 @@ class ModelDesc(object):
     def _get_cost(self, *args):
         return self.cost
 
+# set optimizer. only for single-optimizer model.
+
     def get_optimizer(self):
         """
         Returns:
@@ -180,7 +184,7 @@ class ModelFromMetaGraph(ModelDesc):
     Only useful for inference.
     """
 
-    # TODO can this be really used for inference?
+    # TODO this class may not be functional anymore.
 
     def __init__(self, filename):
         """
