@@ -73,9 +73,7 @@ class GANTrainer(FeedfreeTrainerBase):
 
     def _setup(self):
         super(GANTrainer, self)._setup()
-        with TowerContext(''):
-            actual_inputs = self._get_input_tensors()
-            self.model.build_graph(actual_inputs)
+        self.build_train_tower()
         opt = self.model.get_optimizer()
 
         self.g_min = opt.minimize(self.model.g_loss, var_list=self.model.g_vars, name='g_op')

@@ -6,7 +6,7 @@
 import tensorflow as tf
 
 from ..utils import log_deprecated
-from ..tfutils.tower import TowerContext
+from ..tfutils.tower import TowerContext, get_current_tower_context
 from .input_data import QueueInput, FeedfreeInput
 
 from .base import Trainer
@@ -27,8 +27,20 @@ class FeedfreeTrainerBase(Trainer):
             summary_str = self.summary_op.eval()
             self.add_summary(summary_str)
 
-    def _get_input_tensors(self):
-        return self._input_method.get_input_tensors()
+    def build_train_tower(self):
+        """
+        Get input tensors from `self.input_method` and build the graph.
+        """
+        def f():
+            inputs = self._input_method.get_input_tensors()
+            self.model.build_graph(inputs)
+        ctx = get_current_tower_context()
+        if ctx is None:
+            with TowerContext(''):
+                f()
+        else:
+            assert ctx.is_training, ctx
+            f()
 
     def _setup(self):
         assert isinstance(self._input_method, FeedfreeInput), type(self._input_method)
@@ -39,16 +51,15 @@ class SingleCostFeedfreeTrainer(FeedfreeTrainerBase):
     """ A feedfree Trainer which assumes a single cost. """
     def _get_cost_and_grad(self):
         """ get the cost and gradient"""
-        actual_inputs = self._get_input_tensors()
-        self.model.build_graph(actual_inputs)
-        cost_var = self.model.get_cost()
+        self.build_train_tower()
+        cost = self.model.get_cost()
         opt = self.config.optimizer
         # GATE_NONE faster?
         grads = opt.compute_gradients(
-            cost_var,
+            cost,
             gate_gradients=tf.train.Optimizer.GATE_NONE,
             colocate_gradients_with_ops=True)
-        return cost_var, grads
+        return cost, grads
 
     def run_step(self):
         """ Simply run ``self.train_op``, which minimizes the cost."""

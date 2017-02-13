@@ -23,19 +23,17 @@ os.environ['TENSORPACK_DOC_BUILDING'] = '1'
 
 
 MOCK_MODULES = ['scipy',
-                'tensorflow', 'tensorflow.contrib',
-                'tensorflow.python.ops',
-                'tensorflow.contrib.framework',
-                'tensorflow.models',
-                'tensorflow.models.rnn',
-                'tensorflow.models.rnn.ptb',
-                'tensorflow.python',
-                'tensorflow.python.training',
-                'sklearn.datasets',
+                #'tensorflow', 'tensorflow.contrib',
+                #'tensorflow.python.ops',
+                #'tensorflow.contrib.framework',
+                #'tensorflow.python',
+                #'tensorflow.python.training',
+                'sklearn.datasets', 'sklearn',
                 'scipy.misc', 'h5py', 'nltk',
-                'cv2', 'scipy.io', 'dill', 'zmq', 'subprocess32', 'lmdb', 'tornado.concurrent',
-                'tornado', 'msgpack', 'msgpack_numpy', 'ale_python_interface',
-                'sklearn', 'functools32']
+                'cv2', 'scipy.io', 'dill', 'zmq', 'subprocess32', 'lmdb',
+                'tornado.concurrent', 'tornado',
+                'msgpack', 'msgpack_numpy',
+                'gym', 'functools32']
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock(name=mod_name)
 

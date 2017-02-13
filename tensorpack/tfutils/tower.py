@@ -102,6 +102,10 @@ class TowerContext(object):
             self._scope.__exit__(exc_type, exc_val, exc_tb)
         return False
 
+    def __str__(self):
+        return "TowerContext(name={}, is_training={})".format(
+            self._name, self._is_training)
+
 
 def get_current_tower_context():
     global _CurrentTowerContext

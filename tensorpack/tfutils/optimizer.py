@@ -11,6 +11,9 @@ __all__ = ['apply_grad_processors', 'ProxyOptimizer',
 
 
 class ProxyOptimizer(tf.train.Optimizer):
+    """
+    A transparent proxy which delegates all methods of :class:`tf.train.Optimizer`
+    """
     def __init__(self, opt):
         self._opt = opt
 
@@ -54,8 +57,8 @@ def apply_grad_processors(opt, gradprocs):
 
 class PostProcessVariablesOptimizer(ProxyOptimizer):
     """
-    An optimizer which applies an operation to variables (e.g. clipping,
-    quantization) after updating the gradient.
+    An optimizer which applies an operation to variables
+    (e.g. clipping, quantization) after updating the gradient.
     """
     def __init__(self, opt, func, colocate=True):
         """

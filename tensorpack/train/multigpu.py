@@ -141,8 +141,7 @@ class SyncMultiGPUTrainer(MultiGPUTrainer,
             # grads = grad_list[0]
         else:
             def get_cost():
-                actual_inputs = self._get_input_tensors()
-                self.model.build_graph(actual_inputs)
+                self.build_train_tower()
                 return self.model.get_cost()
 
             cost_list = MultiGPUTrainer._multi_tower_costs(
