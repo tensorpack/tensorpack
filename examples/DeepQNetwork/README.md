@@ -19,12 +19,12 @@ Claimed performance in the paper can be reproduced, on several games I've tested
 
 ![DQN](curve-breakout.png)
 
-DQN typically took 2 days of training to reach a score of 400 on breakout game.
+DQN typically took 2 days of training to reach a score of 400 on breakout game (same as the paper).
 My Batch-A3C implementation only took <2 hours.
 Both were trained on one GPU with an extra GPU for simulation.
 
 The x-axis is the number of iterations, not wall time.
-D-DQN is faster at the beginning but will converge to 12 batches/s (768 frames/s) due of exploration annealing.
+Double-DQN is faster at the beginning but will converge to 12 batches/s (768 frames/s) due of exploration annealing.
 
 ## How to use
 

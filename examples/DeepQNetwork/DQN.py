@@ -153,7 +153,7 @@ class Model(ModelDesc):
         lr = symbf.get_scalar_var('learning_rate', 1e-3, summary=True)
         opt = tf.train.AdamOptimizer(lr, epsilon=1e-3)
         return optimizer.apply_grad_processors(
-            opt, [gradproc.GlobalNormalClip(10), gradproc.SummaryGradient()])
+            opt, [gradproc.GlobalNormClip(10), gradproc.SummaryGradient()])
 
 
 def get_config():
