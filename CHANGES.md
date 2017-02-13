@@ -8,6 +8,8 @@ so you won't need to look at here very often.
 Here are a list of things that were changed, starting from an early version.
 TensorFlow itself also changes API and those are not listed here.
 
++ 2017/02/12. `TrainConfig(optimizer=)` was deprecated. Now optimizer is set in `ModelDesc`. And
+	gradient processors become part of an optimizer. See [commit](https://github.com/ppwwyyxx/tensorpack/commit/d1041a77a9c59d8c9abf64f389f3b605d65b483e).
 * 2017/02/11. `_get_input_vars()` in `ModelDesc` was renamed to `_get_inputs`. `InputVar` was
 	renamed to `InputDesc`. See [commit](https://github.com/ppwwyyxx/tensorpack/commit/5b29bda9f17d7b587259e13963c4c8093e8387f8).
 * 2017/01/27. `TrainConfig(step_per_epoch)` was renamed to `steps_per_epoch`. See [commit](https://github.com/ppwwyyxx/tensorpack/commit/a9dd0b8ec34209ab86a92875589dbbc4716e73ef).

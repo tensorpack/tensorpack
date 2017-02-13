@@ -109,8 +109,8 @@ def QueueInputTrainer(config, input_queue=None, predict_tower=None):
     It is an equivalent of ``SimpleFeedfreeTrainer(config)`` with ``config.data = QueueInput(dataflow)``.
 
     Args:
-        config(TrainConfig): a `TrainConfig` instance. config.dataflow must exist.
-        input_queue(tf.QueueBase): an input queue. Defaults to the
+        config (TrainConfig): a `TrainConfig` instance. config.dataflow must exist.
+        input_queue (tf.QueueBase): an input queue. Defaults to the
             :class:`QueueInput` default.
     """
     config.data = QueueInput(config.dataflow, input_queue)

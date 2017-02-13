@@ -21,10 +21,9 @@ To use trainers, pass a `TrainConfig` to configure them:
 
 ```python
 config = TrainConfig(
-           dataflow=my_dataflow,
-           optimizer=tf.train.AdamOptimizer(0.01),
-           callbacks=[...]
            model=MyModel()
+           dataflow=my_dataflow,
+           callbacks=[...]
          )
 
 # start training:

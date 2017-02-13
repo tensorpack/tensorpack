@@ -76,18 +76,11 @@ class GANTrainer(FeedfreeTrainerBase):
         with TowerContext(''):
             actual_inputs = self._get_input_tensors()
             self.model.build_graph(actual_inputs)
+        opt = self.model.get_optimizer()
 
-        # optimize G
-        grads = self.config.optimizer.compute_gradients(
-            self.model.g_loss, var_list=self.model.g_vars)
-        self.g_min = self.config.optimizer.apply_gradients(grads, name='g_op')
-
-        # optimize D
+        self.g_min = opt.minimize(self.model.g_loss, var_list=self.model.g_vars, name='g_op')
         with tf.control_dependencies([self.g_min]):
-            grads = self.config.optimizer.compute_gradients(
-                self.model.d_loss, var_list=self.model.d_vars)
-            self.d_min = self.config.optimizer.apply_gradients(grads, name='d_op')
-
+            self.d_min = opt.minimize(self.model.d_loss, var_list=self.model.d_vars, name='d_op')
         self.train_op = self.d_min
 
     def run_step(self):

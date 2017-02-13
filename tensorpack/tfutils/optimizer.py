@@ -6,7 +6,8 @@
 import tensorflow as tf
 from .gradproc import apply_grad_processors as apply_gradproc
 
-__all__ = ['apply_grad_processors', 'ProxyOptimizer']
+__all__ = ['apply_grad_processors', 'ProxyOptimizer',
+           'PostProcessVariablesOptimizer']
 
 
 class ProxyOptimizer(tf.train.Optimizer):
@@ -49,3 +50,43 @@ def apply_grad_processors(opt, gradprocs):
             g = apply_gradproc(grads_and_vars, self._gradprocs)
             return self._opt.apply_gradients(g, global_step, name)
     return _ApplyGradientProcessor(opt, gradprocs)
+
+
+class PostProcessVariablesOptimizer(ProxyOptimizer):
+    """
+    An optimizer which applies an operation to variables (e.g. clipping,
+    quantization) after updating the gradient.
+    """
+    def __init__(self, opt, func, colocate=True):
+        """
+        Args:
+            opt (tf.train.Optimizer):
+            func (tf.Variable -> tf.Operation or None): the operation needed
+                to perform for this variable after the gradient update.
+            colocate (boolean): colocate the function with the variable.
+        """
+        super(PostProcessVariablesOptimizer, self).__init__(opt)
+        self._func = func
+        self._colocate = colocate
+
+    def apply_gradients(self, grads_and_vars, global_step=None, name=None):
+        update_op = super(PostProcessVariablesOptimizer, self).apply_gradients(
+            grads_and_vars, global_step)
+        ops = []
+        with tf.control_dependencies([update_op]):
+            for _, var in grads_and_vars:
+                with self._maybe_colocate(var):
+                    op = self._func(var)
+                    assert isinstance(op, tf.Operation), op
+                    if op is not None:
+                        ops.append(op)
+        update_op = tf.group(update_op, *ops, name=name)
+        return update_op
+
+    def _maybe_colocate(self, var):
+        G = tf.get_default_graph()
+        if self._colocate:
+            with G.colocate_with(var):
+                yield
+        else:
+            yield
