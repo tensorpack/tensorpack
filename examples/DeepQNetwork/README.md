@@ -24,8 +24,7 @@ My Batch-A3C implementation only took <2 hours.
 Both were trained on one GPU with an extra GPU for simulation.
 
 The x-axis is the number of iterations, not wall time.
-Iteration speed on Tesla M40 is about 9.7it/s for B-A3C.
-D-DQN is faster at the beginning but will converge to 12it/s due of exploration annealing.
+D-DQN is faster at the beginning but will converge to 12 batches/s (768 frames/s) due of exploration annealing.
 
 ## How to use
 

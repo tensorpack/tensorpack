@@ -4,6 +4,7 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import tensorflow as tf
+from contextlib import contextmanager
 from .gradproc import apply_grad_processors as apply_gradproc
 
 __all__ = ['apply_grad_processors', 'ProxyOptimizer',
@@ -86,6 +87,7 @@ class PostProcessVariablesOptimizer(ProxyOptimizer):
         update_op = tf.group(update_op, *ops, name=name)
         return update_op
 
+    @contextmanager
     def _maybe_colocate(self, var):
         G = tf.get_default_graph()
         if self._colocate:
