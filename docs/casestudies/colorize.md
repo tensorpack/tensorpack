@@ -1,6 +1,8 @@
 
 # Colorize
 
+NOTE: this page is a bit outdated. Will be updated soon.
+
 As creating a neural network for digit classification seems to be a bit outdated, we will create a fictional network that learns to colorize grayscale images. In this case-study, you will learn to do the following using TensorPack.
 
 - DataFlow

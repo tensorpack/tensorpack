@@ -2,8 +2,9 @@
 Neural Network Toolbox on TensorFlow
 
 [![Build Status](https://travis-ci.org/ppwwyyxx/tensorpack.svg?branch=master)](https://travis-ci.org/ppwwyyxx/tensorpack)
+[![badge](https://readthedocs.org/projects/pip/badge/?version=latest)](http://tensorpack.readthedocs.io/en/latest/index.html)
 
-Docs & tutorials should be ready within a month. See some [examples](examples) to learn about the framework:
+Tutorials are not fully finished. See some [examples](examples) to learn about the framework:
 
 ### Vision:
 + [DoReFa-Net: train binary / low-bitwidth CNN on ImageNet](examples/DoReFa-Net)
