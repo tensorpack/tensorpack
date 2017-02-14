@@ -22,6 +22,7 @@ from GAN import GANTrainer, RandomZData, GANModelDesc
 DCGAN on CelebA dataset.
 
 1. Download the 'aligned&cropped' version of CelebA dataset
+   from http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html
    (or just use any directory of jpg files).
 2. Start training:
     ./DCGAN-CelebA.py --data /path/to/image_align_celeba/
@@ -39,7 +40,7 @@ class Model(GANModelDesc):
         return [InputDesc(tf.float32, (None, SHAPE, SHAPE, 3), 'input')]
 
     def generator(self, z):
-        """ return a image generated from z"""
+        """ return an image generated from z"""
         nf = 64
         l = FullyConnected('fc0', z, nf * 8 * 4 * 4, nl=tf.identity)
         l = tf.reshape(l, [-1, 4, 4, nf * 8])
@@ -79,7 +80,7 @@ class Model(GANModelDesc):
                       W_init=tf.truncated_normal_initializer(stddev=0.02)):
             with tf.variable_scope('gen'):
                 image_gen = self.generator(z)
-            tf.summary.image('gen', image_gen, max_outputs=30)
+            tf.summary.image('generated-samples', image_gen, max_outputs=30)
             with tf.variable_scope('discrim'):
                 vecpos = self.discriminator(image_pos)
             with tf.variable_scope('discrim', reuse=True):
@@ -106,10 +107,8 @@ def get_data():
 
 
 def get_config():
-    logger.auto_set_dir()
-    dataset = get_data()
     return TrainConfig(
-        dataflow=dataset,
+        dataflow=get_data(),
         callbacks=[ModelSaver()],
         session_config=get_default_sess_config(0.5),
         model=Model(),
@@ -145,6 +144,7 @@ if __name__ == '__main__':
         sample(args.load)
     else:
         assert args.data
+        logger.auto_set_dir()
         config = get_config()
         if args.load:
             config.session_init = SaverRestore(args.load)

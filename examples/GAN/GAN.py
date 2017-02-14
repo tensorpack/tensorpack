@@ -31,14 +31,9 @@ class GANModelDesc(ModelDesc):
 
           min_G max _D V(D, G) = IE_{x ~ p_data} [log D(x)] + IE_{z ~ p_fake} [log (1 - D(G(z)))]
 
-        Note, we swap 0, 1 labels as suggested in "Improving GANs".
-
         Args:
             logits_real (tf.Tensor): discrim logits from real samples
             logits_fake (tf.Tensor): discrim logits from fake samples produced by generator
-
-        Returns:
-            tf.Tensor: Description
         """
         with tf.name_scope("GAN_loss"):
             score_real = tf.sigmoid(logits_real)
@@ -48,20 +43,20 @@ class GANModelDesc(ModelDesc):
 
             with tf.name_scope("discrim"):
                 d_loss_pos = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
-                    logits=logits_real, labels=tf.zeros_like(logits_real)), name='loss_real')
+                    logits=logits_real, labels=tf.ones_like(logits_real)), name='loss_real')
                 d_loss_neg = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
-                    logits=logits_fake, labels=tf.ones_like(logits_fake)), name='loss_fake')
+                    logits=logits_fake, labels=tf.zeros_like(logits_fake)), name='loss_fake')
 
-                d_pos_acc = tf.reduce_mean(tf.cast(score_real < 0.5, tf.float32), name='accuracy_real')
-                d_neg_acc = tf.reduce_mean(tf.cast(score_fake > 0.5, tf.float32), name='accuracy_fake')
+                d_pos_acc = tf.reduce_mean(tf.cast(score_real > 0.5, tf.float32), name='accuracy_real')
+                d_neg_acc = tf.reduce_mean(tf.cast(score_fake < 0.5, tf.float32), name='accuracy_fake')
 
                 self.d_accuracy = tf.add(.5 * d_pos_acc, .5 * d_neg_acc, name='accuracy')
                 self.d_loss = tf.add(.5 * d_loss_pos, .5 * d_loss_neg, name='loss')
 
             with tf.name_scope("gen"):
                 self.g_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
-                    logits=logits_fake, labels=tf.zeros_like(logits_fake)), name='loss')
-                self.g_accuracy = tf.reduce_mean(tf.cast(score_fake < 0.5, tf.float32), name='accuracy')
+                    logits=logits_fake, labels=tf.ones_like(logits_fake)), name='loss')
+                self.g_accuracy = tf.reduce_mean(tf.cast(score_fake > 0.5, tf.float32), name='accuracy')
 
             add_moving_summary(self.g_loss, self.d_loss, self.d_accuracy, self.g_accuracy)
 
@@ -76,6 +71,7 @@ class GANTrainer(FeedfreeTrainerBase):
         self.build_train_tower()
         opt = self.model.get_optimizer()
 
+        # by default, run one d_min after one g_min
         self.g_min = opt.minimize(self.model.g_loss, var_list=self.model.g_vars, name='g_op')
         with tf.control_dependencies([self.g_min]):
             self.d_min = opt.minimize(self.model.d_loss, var_list=self.model.d_vars, name='d_op')

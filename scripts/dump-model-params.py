@@ -35,6 +35,7 @@ with tf.Graph().as_default() as G:
     else:
         init = sessinit.SaverRestore(args.model)
     sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
+    sess.run(tf.global_variables_initializer())
     init.init(sess)
 
     # dump ...
