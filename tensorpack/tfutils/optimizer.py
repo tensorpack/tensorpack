@@ -8,7 +8,7 @@ from contextlib import contextmanager
 from .gradproc import apply_grad_processors as apply_gradproc
 
 __all__ = ['apply_grad_processors', 'ProxyOptimizer',
-           'PostProcessVariablesOptimizer']
+           'PostProcessOptimizer', 'VariableAssignmentOptimizer']
 
 
 class ProxyOptimizer(tf.train.Optimizer):
@@ -56,10 +56,10 @@ def apply_grad_processors(opt, gradprocs):
     return _ApplyGradientProcessor(opt, gradprocs)
 
 
-class PostProcessVariablesOptimizer(ProxyOptimizer):
+class PostProcessOptimizer(ProxyOptimizer):
     """
-    An optimizer which applies an operation to variables
-    (e.g. clipping, quantization) after updating the gradient.
+    An optimizer which applies some "post-processing operation" per variable
+    (e.g. clipping, quantization) after the gradient update.
     """
     def __init__(self, opt, func, colocate=True):
         """
@@ -69,12 +69,12 @@ class PostProcessVariablesOptimizer(ProxyOptimizer):
                 to perform for this variable after the gradient update.
             colocate (boolean): colocate the function with the variable.
         """
-        super(PostProcessVariablesOptimizer, self).__init__(opt)
+        super(PostProcessOptimizer, self).__init__(opt)
         self._func = func
         self._colocate = colocate
 
     def apply_gradients(self, grads_and_vars, global_step=None, name=None):
-        update_op = super(PostProcessVariablesOptimizer, self).apply_gradients(
+        update_op = super(PostProcessOptimizer, self).apply_gradients(
             grads_and_vars, global_step)
         ops = []
         with tf.control_dependencies([update_op]):
@@ -95,3 +95,23 @@ class PostProcessVariablesOptimizer(ProxyOptimizer):
                 yield
         else:
             yield
+
+
+class VariableAssignmentOptimizer(PostProcessOptimizer):
+    """
+    An optimizer which assigns each variable a new value (e.g. clipping,
+    quantization) after the gradient update.
+    """
+    def __init__(self, opt, func):
+        """
+        Args:
+            opt (tf.train.Optimizer):
+            func (tf.Variable -> tf.Tensor or None): the new value to be
+                assigned to this variable after the gradient update.
+        """
+        def f(v):
+            t = func(v)
+            if t is None:
+                return t
+            return tf.assign(v, t, use_locking=False).op
+        super(VariableAssignmentOptimizer, self).__init__(opt, f)
