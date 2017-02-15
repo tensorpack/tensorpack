@@ -172,7 +172,7 @@ class SendStat(Triggerable):
             stats = [stats]
         self.stats = stats
 
-    def _trigger_epoch(self):
+    def _trigger(self):
         holder = self.trainer.stat_holder
         v = {k: holder.get_stat_now(k) for k in self.stats}
         cmd = self.command.format(**v)
