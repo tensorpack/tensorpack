@@ -60,8 +60,8 @@ def get_global_step_var():
         with tf.variable_scope(scope, reuse=False), \
                 tf.name_scope(None):
             var = tf.get_variable(GLOBAL_STEP_OP_NAME,
-                                  initializer=0,
-                                  trainable=False, dtype=tf.int32)
+                                  initializer=tf.constant(0, dtype=tf.int64),
+                                  trainable=False, dtype=tf.int64)
         return var
 
 

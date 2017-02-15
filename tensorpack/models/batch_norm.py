@@ -118,7 +118,7 @@ def get_bn_variables(x, use_scale, use_bias):
                                   initializer=tf.constant_initializer(), trainable=False)
     moving_var = tf.get_variable('variance/EMA', [n_out],
                                  initializer=tf.constant_initializer(), trainable=False)
-    return beta, gamma, moving_mean, moving_var
+    return x, beta, gamma, moving_mean, moving_var
 
 
 def update_bn_ema(xn, batch_mean, batch_var, moving_mean, moving_var, decay):
@@ -171,7 +171,7 @@ def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5,
         with the official inceptionv3 example).
     """
     shape = x.get_shape().as_list()
-    beta, gamma, moving_mean, moving_var = get_bn_variables(x, use_scale, use_bias)
+    x, beta, gamma, moving_mean, moving_var = get_bn_variables(x, use_scale, use_bias)
 
     ctx = get_current_tower_context()
     if use_local_stat is None:
@@ -231,7 +231,7 @@ def BatchRenorm(x, rmax, dmax, decay=0.9, epsilon=1e-5,
     """
 
     shape = x.get_shape().as_list()
-    beta, gamma, moving_mean, moving_var = get_bn_variables(x, use_scale, use_bias)
+    x, beta, gamma, moving_mean, moving_var = get_bn_variables(x, use_scale, use_bias)
 
     ctx = get_current_tower_context()
     use_local_stat = ctx.is_training

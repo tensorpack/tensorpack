@@ -4,7 +4,6 @@
 
 import os
 from abc import abstractmethod, ABCMeta
-from collections import defaultdict
 import numpy as np
 import tensorflow as tf
 import six
@@ -57,7 +56,7 @@ class NewSession(SessionInit):
 
 class SaverRestore(SessionInit):
     """
-    Restore an old model saved by :class:`ModelSaver`.
+    Restore a tensorflow checkpoint saved by :class:`tf.train.Saver` or :class:`ModelSaver`.
     """
 
     def __init__(self, model_path, prefix=None):
@@ -73,28 +72,26 @@ class SaverRestore(SessionInit):
     def _init(self, sess):
         logger.info(
             "Restoring checkpoint from {} ...".format(self.path))
-        chkpt_vars = SaverRestore._read_checkpoint_vars(self.path)
-        vars_map = self._get_vars_to_restore_multimap(chkpt_vars)
-        for dic in SaverRestore._produce_restore_dict(vars_map):
-            # multiple saver under same name scope would cause error:
-            # training/saver.py: assert restore_op.name.endswith("restore_all"), restore_op.name
-            saver = tf.train.Saver(var_list=dic, name=str(id(dic)), write_version=2)
-            saver.restore(sess, self.path)
+        reader, chkpt_vars = SaverRestore._read_checkpoint_vars(self.path)
+        graph_vars = tf.global_variables()
+        chkpt_vars_used = set()
 
-    @staticmethod
-    def _produce_restore_dict(vars_multimap):
-        """
-        Produce {var_name: var} dict that can be used by `tf.train.Saver`, from a {var_name: [vars]} dict.
-        """
-        while len(vars_multimap):
-            ret = {}
-            for k in list(vars_multimap.keys()):
-                v = vars_multimap[k]
-                ret[k] = v[-1]
-                del v[-1]
-                if not len(v):
-                    del vars_multimap[k]
-            yield ret
+        with sess.as_default():
+            for v in graph_vars:
+                name = get_savename_from_varname(v.name, varname_prefix=self.prefix)
+                if name in chkpt_vars:
+                    val = reader.get_tensor(name)
+                    SessionUpdate.load_value_to_var(v, val)
+                    chkpt_vars_used.add(name)
+                else:
+                    vname = v.op.name
+                    if not is_training_name(vname):
+                        logger.warn("Variable {} in the graph not found in checkpoint!".format(vname))
+            if len(chkpt_vars_used) < len(chkpt_vars):
+                unused = chkpt_vars - chkpt_vars_used
+                for name in sorted(unused):
+                    if not is_training_name(name):
+                        logger.warn("Variable {} in checkpoint not found in the graph!".format(name))
 
     @staticmethod
     def _read_checkpoint_vars(model_path):
@@ -105,37 +102,7 @@ class SaverRestore(SessionInit):
             if v.startswith(PREDICT_TOWER):
                 logger.error("Found {} in checkpoint. "
                              "But anything from prediction tower shouldn't be saved.".format(v.name))
-        return set(ckpt_vars)
-
-    def _get_vars_to_restore_multimap(self, vars_available):
-        """
-        :param vars_available: varaible names available in the checkpoint, for existence checking
-        :returns: a dict of {var_name: [var, var]} to restore
-        """
-        vars_to_restore = tf.global_variables()
-        var_dict = defaultdict(list)
-        chkpt_vars_used = set()
-        for v in vars_to_restore:
-            name = get_savename_from_varname(v.name, varname_prefix=self.prefix)
-            # try to load both 'varname' and 'opname' from checkpoint
-            # because some old checkpoint might not have ':0'
-            if name in vars_available:
-                var_dict[name].append(v)
-                chkpt_vars_used.add(name)
-            elif name.endswith(':0'):
-                name = name[:-2]
-                if name in vars_available:
-                    var_dict[name].append(v)
-                    chkpt_vars_used.add(name)
-            else:
-                if not is_training_name(v.op.name):
-                    logger.warn("Variable {} in the graph not found in checkpoint!".format(v.op.name))
-        if len(chkpt_vars_used) < len(vars_available):
-            unused = vars_available - chkpt_vars_used
-            for name in sorted(unused):
-                if not is_training_name(name):
-                    logger.warn("Variable {} in checkpoint not found in the graph!".format(name))
-        return var_dict
+        return reader, set(ckpt_vars)
 
 
 class ParamRestore(SessionInit):

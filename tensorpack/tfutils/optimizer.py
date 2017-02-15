@@ -6,6 +6,7 @@
 import tensorflow as tf
 from contextlib import contextmanager
 from .gradproc import apply_grad_processors as apply_gradproc
+from .gradproc import FilterNoneGrad
 
 __all__ = ['apply_grad_processors', 'ProxyOptimizer',
            'PostProcessOptimizer', 'VariableAssignmentOptimizer']
@@ -115,3 +116,59 @@ class VariableAssignmentOptimizer(PostProcessOptimizer):
                 return t
             return tf.assign(v, t, use_locking=False).op
         super(VariableAssignmentOptimizer, self).__init__(opt, f)
+
+
+class AccumGradOptimizer(ProxyOptimizer):
+    def __init__(self, opt, niter):
+        super(AccumGradOptimizer, self).__init__(opt)
+        self._niter = niter
+        self._name = "AccumGrad"
+        self._counter = None
+
+    def _create_accum_slots(self, var_list):
+        slots = []
+        for v in var_list:
+            s = self._zeros_slot(v, "accum", self._name)
+            slots.append(s)
+        return slots
+
+    def apply_gradients(self, grads_and_vars, global_step=None, name=None):
+        assert global_step is None, \
+            "AccumGradOptimizer doesn't support the option global_step! " \
+            "Please maintain it yourself."
+        grads_and_vars = FilterNoneGrad().process(grads_and_vars)
+        vs = []
+        for g, v in grads_and_vars:
+            assert isinstance(g, tf.Tensor) and isinstance(v, tf.Variable), \
+                "AccumGradOptimizer only works for dense update! " \
+                "Types of v and g are {} and {}".format(type(v), type(g))
+            vs.append(v)
+        with tf.control_dependencies(None):
+            slots = self._create_accum_slots(vs)
+            slots_and_vars = [(s, gv[1]) for s, gv in zip(slots, grads_and_vars)]
+
+            # Create the counter on the same device as the first variable.
+            with tf.variable_scope(self._name), \
+                    tf.colocate_with(vs[0]):
+                counter = tf.Variable(
+                    0, name="counter", trainable=False, dtype=tf.int32)
+
+        ops = []
+        for s, gv in zip(slots, grads_and_vars):
+            g, v = gv
+            ops.append(s.assign_add(s, g))
+        update_counter = tf.assign_add(counter, 1, name='update_counter')
+        update_slot_op = tf.group(update_counter, *ops, name='update_slot')
+
+        def update_grad():
+            update_op = self._opt.apply_gradients(slots_and_vars)
+            with tf.control_dependencies([update_op]):
+                clear_ops = [tf.assign(s, 0.0) for s in slots]
+            return tf.group(*clear_ops, name='update_grad')
+
+        pred = tf.equal(tf.mod(counter, self._niter), 0)
+        with tf.control_dependencies([update_slot_op]):
+            if name is None:
+                name = 'cond_update_grad'
+            op = tf.cond(pred, update_grad, lambda: tf.no_op(), name=name)
+        return op
