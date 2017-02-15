@@ -17,7 +17,7 @@ except ImportError:
     pass
 
 
-__all__ = ['pyplot2img', 'pyplot_viz', 'interactive_imshow',
+__all__ = ['pyplot2img', 'interactive_imshow',
            'stack_patches', 'gen_stack_patches',
            'dump_dataflow_images', 'intensity_to_rgb']
 
@@ -34,31 +34,13 @@ def pyplot2img(plt):
     return im
 
 
-def pyplot_viz(img, shape=None):
-    """ Use pyplot to visualize the image. e.g., when input is grayscale, the result
-    will automatically have a colormap.
-
-    Returns:
-        np.ndarray: an image.
-    Note:
-        this is quite slow. and the returned image will have a border
-    """
-    plt.clf()
-    plt.axes([0, 0, 1, 1])
-    plt.imshow(img)
-    ret = pyplot2img(plt)
-    if shape is not None:
-        ret = cv2.resize(ret, shape)
-    return ret
-
-
 def interactive_imshow(img, lclick_cb=None, rclick_cb=None, **kwargs):
     """
     Args:
         img (np.ndarray): an image (expect BGR) to show.
-        lclick_cb: a callback func(img, x, y) for left click event.
+        lclick_cb, rclick_cb: a callback ``func(img, x, y)`` for left/right click event.
         kwargs: can be {key_cb_a: callback_img, key_cb_b: callback_img}, to
-            specify a callback func(img) for keypress.
+            specify a callback ``func(img)`` for keypress.
 
     Some existing keypress event handler:
 
@@ -187,7 +169,7 @@ def stack_patches(
         nr_row(int), nr_col(int): rows and cols of the grid.
             ``nr_col * nr_row`` must be equal to ``len(patch_list)``.
         border(int): border length between images.
-            Defaults to ``0.1 * min(image_w, image_h)``.
+            Defaults to ``0.1 * min(patch_width, patch_height)``.
         pad (boolean): when `patch_list` is a list, pad all patches to the maximum height and width.
             This option allows stacking patches of different shapes together.
         bgcolor(int or 3-tuple): background color in [0, 255]. Either an int

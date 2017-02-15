@@ -17,13 +17,10 @@ __all__ = ['SessionInit', 'NewSession', 'SaverRestore',
            'ParamRestore', 'ChainInit',
            'JustCurrentSession', 'get_model_loader']
 
-# TODO they initialize_all at the beginning by default.
-
 
 @six.add_metaclass(ABCMeta)
 class SessionInit(object):
     """ Base class for utilities to initialize a session. """
-
     def init(self, sess):
         """
         Initialize a session
@@ -40,7 +37,6 @@ class SessionInit(object):
 
 class JustCurrentSession(SessionInit):
     """ This is a no-op placeholder"""
-
     def _init(self, sess):
         pass
 
@@ -49,7 +45,6 @@ class NewSession(SessionInit):
     """
     Initialize global variables by their initializer.
     """
-
     def _init(self, sess):
         sess.run(tf.global_variables_initializer())
 
@@ -62,7 +57,7 @@ class SaverRestore(SessionInit):
     def __init__(self, model_path, prefix=None):
         """
         Args:
-            model_path (str): a model name (model-xxxx) or a ``checkpoint`` file.
+            model_path (str): path to the model (model-xxxx) or a ``checkpoint`` file.
             prefix (str): during restore, add a ``prefix/`` for every variable in this checkpoint
         """
         model_path = get_checkpoint_path(model_path)
@@ -150,7 +145,7 @@ class ChainInit(SessionInit):
     def __init__(self, sess_inits, new_session=True):
         """
         Args:
-            sess_inits (list): list of :class:`SessionInit` instances.
+            sess_inits (list[SessionInit]): list of :class:`SessionInit` instances.
             new_session (bool): add a ``NewSession()`` and the beginning, if
                 not there.
         """

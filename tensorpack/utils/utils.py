@@ -45,7 +45,7 @@ def change_env(name, val):
 
 def get_rng(obj=None):
     """
-    Get a good RNG.
+    Get a good RNG seeded with time, pid and the object.
 
     Args:
         obj: some object to use to generate random seed.

@@ -10,6 +10,8 @@ Reproduce the following GAN-related methods:
 
 + Conditional GAN
 
++ [Wasserstein GAN](https://arxiv.org/abs/1701.07875)
+
 Please see the __docstring__ in each script for detailed usage.
 
 ## DCGAN-CelebA.py
@@ -51,3 +53,7 @@ It then maximizes mutual information between these latent variables and the imag
 ## ConditionalGAN-mnist.py
 
 Train a simple GAN on mnist, conditioned on the class labels.
+
+## WGAN-CelebA.py
+
+Reproduce WGAN by some small modifications on DCGAN-CelebA.py.
