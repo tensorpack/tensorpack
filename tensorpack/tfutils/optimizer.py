@@ -83,8 +83,8 @@ class PostProcessOptimizer(ProxyOptimizer):
             for _, var in grads_and_vars:
                 with self._maybe_colocate(var):
                     op = self._func(var)
-                    assert isinstance(op, tf.Operation), op
                     if op is not None:
+                        assert isinstance(op, tf.Operation), op
                         ops.append(op)
         update_op = tf.group(update_op, *ops, name=name)
         return update_op

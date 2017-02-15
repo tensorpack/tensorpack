@@ -39,7 +39,16 @@ class Model(DCGAN.Model):
 
     def _get_optimizer(self):
         lr = symbolic_functions.get_scalar_var('learning_rate', 1e-4, summary=True)
-        return tf.train.RMSPropOptimizer(lr)
+        opt = tf.train.RMSPropOptimizer(lr)
+
+        # add clipping to D optimizer
+        def clip(p):
+            n = p.op.name
+            if not n.startswith('discrim/'):
+                return None
+            logger.info("Clip {}".format(n))
+            return tf.clip_by_value(p, -0.01, 0.01)
+        return optimizer.VariableAssignmentOptimizer(opt, clip)
 
 
 DCGAN.BATCH = 64
@@ -67,17 +76,10 @@ class WGANTrainer(FeedfreeTrainerBase):
         super(WGANTrainer, self)._setup()
         self.build_train_tower()
 
-        # add clipping to D optimizer
-        def clip(p):
-            n = p.op.name
-            logger.info("Clip {}".format(n))
-            return tf.clip_by_value(p, -0.01, 0.01)
-        opt_G = self.model.get_optimizer()
-        opt_D = optimizer.VariableAssignmentOptimizer(opt_G, clip)
-
-        self.d_min = opt_D.minimize(
+        opt = self.model.get_optimizer()
+        self.d_min = opt.minimize(
             self.model.d_loss, var_list=self.model.d_vars, name='d_min')
-        self.g_min = opt_G.minimize(
+        self.g_min = opt.minimize(
             self.model.g_loss, var_list=self.model.g_vars, name='g_op')
 
     def run_step(self):

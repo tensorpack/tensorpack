@@ -202,7 +202,7 @@ def stack_patches(
     canvas.draw_patches(patch_list)
     if viz:
         interactive_imshow(canvas.canvas, lclick_cb=lclick_callback)
-    return canvas
+    return canvas.canvas
 
 
 def gen_stack_patches(patch_list,
@@ -260,7 +260,7 @@ def gen_stack_patches(patch_list,
         canvas.draw_patches(cur_list)
         if viz:
             interactive_imshow(canvas.canvas, lclick_cb=lclick_callback)
-        yield canvas
+        yield canvas.canvas
         start = end
 
 
