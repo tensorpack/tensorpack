@@ -192,24 +192,24 @@ def sample(model_path):
         z_noise = np.random.uniform(-1, 1, (100, NOISE_DIM))
         zc = np.concatenate((z_cat, z_uni * 0, z_uni * 0), axis=1)
         o = pred(zc, z_noise)[0]
-        viz1 = next(build_patch_list(o, nr_row=10, nr_col=10))
+        viz1 = stack_patches(o, nr_row=10, nr_col=10)
         viz1 = cv2.resize(viz1, (IMG_SIZE, IMG_SIZE))
 
         # show effect of first continous variable with fixed noise
         zc = np.concatenate((z_cat, z_uni, z_uni * 0), axis=1)
         o = pred(zc, z_noise * 0)[0]
-        viz2 = next(build_patch_list(o, nr_row=10, nr_col=10))
+        viz2 = stack_patches(o, nr_row=10, nr_col=10)
         viz2 = cv2.resize(viz2, (IMG_SIZE, IMG_SIZE))
 
         # show effect of second continous variable with fixed noise
         zc = np.concatenate((z_cat, z_uni * 0, z_uni), axis=1)
         o = pred(zc, z_noise * 0)[0]
-        viz3 = next(build_patch_list(o, nr_row=10, nr_col=10))
+        viz3 = stack_patches(o, nr_row=10, nr_col=10)
         viz3 = cv2.resize(viz3, (IMG_SIZE, IMG_SIZE))
 
-        viz = next(build_patch_list(
+        viz = stack_patches(
             [viz1, viz2, viz3],
-            nr_row=1, nr_col=3, border=5, bgcolor=(255, 0, 0)))
+            nr_row=1, nr_col=3, border=5, bgcolor=(255, 0, 0))
 
         interactive_imshow(viz)
 

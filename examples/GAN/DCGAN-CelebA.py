@@ -121,7 +121,7 @@ def sample(model_path):
         o, zs = o[0] + 1, o[1]
         o = o * 128.0
         o = o[:, :, :, ::-1]
-        viz = next(build_patch_list(o, nr_row=10, nr_col=10, viz=True))
+        viz = stack_patches(o, nr_row=10, nr_col=10, viz=True)
 
 
 if __name__ == '__main__':

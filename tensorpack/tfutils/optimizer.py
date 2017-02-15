@@ -124,7 +124,7 @@ class AccumGradOptimizer(ProxyOptimizer):
     An optimizer which accumulates gradients across :math:`k` :meth:`minimize` calls,
     and apply them together in every :math:`k`th :meth:`minimize` call.
     This is equivalent to using a :math:`k` times larger batch size plus a
-    :math:`k` times larger learning rate, but use much less memory.
+    :math:`k` times larger learning rate, but uses much less memory.
     """
 
     def __init__(self, opt, niter):

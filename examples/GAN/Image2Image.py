@@ -196,7 +196,7 @@ def sample(datadir, model_path):
     pred = SimpleDatasetPredictor(pred, ds)
     for o in pred.get_result():
         o = o[0][:, :, :, ::-1]
-        next(build_patch_list(o, nr_row=3, nr_col=2, viz=True))
+        stack_patches(o, nr_row=3, nr_col=2, viz=True)
 
 
 if __name__ == '__main__':

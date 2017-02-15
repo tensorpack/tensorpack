@@ -125,7 +125,7 @@ def sample(model_path):
     pred = SimpleDatasetPredictor(pred, ds)
     for o in pred.get_result():
         o = o[0] * 255.0
-        viz = next(build_patch_list(o, nr_row=10, nr_col=10))
+        viz = stack_patches(o, nr_row=10, nr_col=10)
         viz = cv2.resize(viz, (800, 800))
         interactive_imshow(viz)
 
