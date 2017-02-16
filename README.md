@@ -20,7 +20,7 @@ Tutorials are not fully finished. See some [examples](examples) to learn about t
 + [Asynchronous Advantage Actor-Critic(A3C) with demos on OpenAI Gym](examples/A3C-Gym)
 
 ### Unsupervised Learning:
-+ [Generative Adversarial Network(GAN) variants](examples/GAN), including DCGAN, InfoGAN, Conditional GAN, Image to Image.
++ [Generative Adversarial Network(GAN) variants](examples/GAN), including DCGAN, InfoGAN, Conditional GAN, WGAN, Image to Image.
 
 
 ### Speech / NLP:

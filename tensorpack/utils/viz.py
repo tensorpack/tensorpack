@@ -48,7 +48,7 @@ def interactive_imshow(img, lclick_cb=None, rclick_cb=None, **kwargs):
     * x: execute ``sys.exit()``
     * s: save image to "out.png"
     """
-    name = 'random_window_name'
+    name = 'tensorpack_viz_window'
     cv2.imshow(name, img)
 
     def mouse_cb(event, x, y, *args):

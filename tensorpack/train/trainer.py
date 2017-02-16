@@ -107,8 +107,11 @@ class MultiPredictorTowerTrainer(Trainer):
 
     def get_predict_func(self, input_names, output_names, tower=0):
         """
-        :param tower: return the kth predict_func
-        :returns: an `OnlinePredictor`
+        Args:
+            tower (int): return the kth predict_func
+
+        Returns:
+            an OnlinePredictor instance
         """
         return self._predictor_factory.get_predictor(input_names, output_names, tower)
 

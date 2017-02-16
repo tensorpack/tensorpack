@@ -7,7 +7,7 @@ Training examples with __reproducible__ and meaningful performance.
 + [An illustrative mnist example with explanation of the framework](mnist-convnet.py)
 + [A tiny SVHN ConvNet with 97.8% accuracy](svhn-digit-convnet.py)
 + [DoReFa-Net: training binary / low-bitwidth CNN on ImageNet](DoReFa-Net)
-+ [ResNet for ImageNet/Cifar10/SVHN](ResNet)
++ [Train ResNet for ImageNet/Cifar10/SVHN](ResNet)
 + [Inception-BN with 71% accuracy](Inception/inception-bn.py)
 + [InceptionV3 with 74% accuracy (similar to the official code)](Inception/inceptionv3.py)
 + [Fully-convolutional Network for Holistically-Nested Edge Detection(HED)](HED)
@@ -21,8 +21,8 @@ Training examples with __reproducible__ and meaningful performance.
 + [Deep Q-Network(DQN) variants on Atari games](DeepQNetwork)
 + [Asynchronous Advantage Actor-Critic(A3C) with demos on OpenAI Gym](A3C-Gym)
 
-## Unsupervised:
-+ [Generative Adversarial Network(GAN) variants, including DCGAN, Image2Image, InfoGAN](GAN)
+## Unsupervised Learning:
++ [Generative Adversarial Network(GAN) variants](GAN), including DCGAN, InfoGAN, Conditional GAN, WGAN, Image to Image.
 
 ## Speech / NLP:
 + [LSTM-CTC for speech recognition](CTC-TIMIT)

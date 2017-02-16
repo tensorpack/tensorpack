@@ -49,6 +49,32 @@ class NewSession(SessionInit):
         sess.run(tf.global_variables_initializer())
 
 
+class CheckpointReaderAdapter(object):
+    """
+    An adapter to work around old checkpoint format, where the keys are op
+    names instead of tensor names (with :0).
+    """
+    def __init__(self, reader):
+        self._reader = reader
+        m = self._reader.get_variable_to_shape_map()
+        self._map = {k if k.endswith(':0') else k + ':0': v
+                     for k, v in m.iteritems()}
+
+    def get_variable_to_shape_map(self):
+        return self._map
+
+    def get_tensor(self, name):
+        if self._reader.has_tensor(name):
+            return self._reader.get_tensor(name)
+        if name in self._map:
+            assert name.endswith(':0'), name
+            name = name[:-2]
+        return self._reader.get_tensor(name)
+
+    def has_tensor(self, name):
+        return name in self._map
+
+
 class SaverRestore(SessionInit):
     """
     Restore a tensorflow checkpoint saved by :class:`tf.train.Saver` or :class:`ModelSaver`.
@@ -92,6 +118,7 @@ class SaverRestore(SessionInit):
     def _read_checkpoint_vars(model_path):
         """ return a set of strings """
         reader = tf.train.NewCheckpointReader(model_path)
+        reader = CheckpointReaderAdapter(reader)
         ckpt_vars = reader.get_variable_to_shape_map().keys()
         for v in ckpt_vars:
             if v.startswith(PREDICT_TOWER):
