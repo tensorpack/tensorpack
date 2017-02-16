@@ -77,7 +77,7 @@ def apply_slim_collections(cost):
     if ctx is not None and ctx.is_main_training_tower:
         non_grad_updates = set(tf.get_collection(tf.GraphKeys.UPDATE_OPS))
         if non_grad_updates:
-            logger.info("Applying UPDATE_OPS collection on cost.")
+            logger.info("Applying UPDATE_OPS collection from the first tower on cost.")
             with tf.control_dependencies(non_grad_updates):
                 cost = tf.identity(cost, name='cost_with_update')
     return cost

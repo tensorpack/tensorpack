@@ -23,6 +23,8 @@ from GAN import GANTrainer, RandomZData, GANModelDesc
 
 You can also train on other images (just use any directory of jpg files in
 `--data`). But you may need to change the preprocessing steps in `get_data()`.
+
+A pretrained model on CelebA is at https://drive.google.com/open?id=0B9IPQTvr2BBkLUF2M0RXU1NYSkE
 """
 
 SHAPE = 64

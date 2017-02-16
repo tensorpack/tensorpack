@@ -102,7 +102,7 @@ class ExpReplay(DataFlow, Callback):
         # self.mem.append(deepcopy(self.mem[0]))
         # return
         old_s = self.player.current_state()
-        if self.rng.rand() <= self.exploration:
+        if self.rng.rand() <= self.exploration or len(self.mem) < 5:
             act = self.rng.choice(range(self.num_actions))
         else:
             # build a history state

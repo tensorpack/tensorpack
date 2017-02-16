@@ -241,11 +241,11 @@ def BatchRenorm(x, rmax, dmax, decay=0.9, epsilon=1e-5,
     if use_local_stat:
         xn, batch_mean, batch_var = tf.nn.fused_batch_norm(x, gamma, beta,
                                                            epsilon=epsilon, is_training=True)
-        moving_sigma = tf.sqrt(moving_var, 'sigma')
+        inv_sigma = tf.rsqrt(moving_var, 'inv_sigma')
         r = tf.stop_gradient(tf.clip_by_value(
-            tf.sqrt(batch_var / moving_var), 1.0 / rmax, rmax))
+            tf.sqrt(batch_var) * inv_sigma, 1.0 / rmax, rmax))
         d = tf.stop_gradient(tf.clip_by_value(
-            (batch_mean - moving_mean) / moving_sigma,
+            (batch_mean - moving_mean) * inv_sigma,
             -dmax, dmax))
         xn = xn * r + d
     else:

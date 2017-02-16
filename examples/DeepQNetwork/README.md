@@ -19,7 +19,7 @@ Claimed performance in the paper can be reproduced, on several games I've tested
 
 ![DQN](curve-breakout.png)
 
-DQN typically took 2 days of training to reach a score of 400 on breakout game (same as the paper).
+DQN typically took 1.5 days of training to reach a score of 400 on breakout game (same as the paper).
 My Batch-A3C implementation only took <2 hours.
 Both were trained on one GPU with an extra GPU for simulation.
 

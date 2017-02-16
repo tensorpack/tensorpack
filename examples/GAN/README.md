@@ -12,13 +12,11 @@ Reproduce the following GAN-related methods:
 
 + [Wasserstein GAN](https://arxiv.org/abs/1701.07875)
 
-Please see the __docstring__ in each script for detailed usage.
+Please see the __docstring__ in each script for detailed usage and pretrained models.
 
 ## DCGAN-CelebA.py
 
 Reproduce DCGAN following the setup in [dcgan.torch](https://github.com/soumith/dcgan.torch).
-
-Play with the [pretrained model](https://drive.google.com/drive/folders/0B9IPQTvr2BBkLUF2M0RXU1NYSkE?usp=sharing) on CelebA face dataset:
 
 + Generated samples
 

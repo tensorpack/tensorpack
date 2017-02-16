@@ -73,7 +73,7 @@ class ResizeShortestEdge(ImageAugmentor):
     keeping the aspect ratio.
     """
 
-    def __init__(self, size):
+    def __init__(self, size, interp=cv2.INTER_LINEAR):
         """
         Args:
             size (int): the size to resize the shortest edge to.
@@ -85,7 +85,7 @@ class ResizeShortestEdge(ImageAugmentor):
         h, w = img.shape[:2]
         scale = self.size / min(h, w)
         desSize = map(int, [scale * w, scale * h])
-        ret = cv2.resize(img, tuple(desSize), interpolation=cv2.INTER_LINEAR)
+        ret = cv2.resize(img, tuple(desSize), interpolation=self.interp)
         if img.ndim == 3 and ret.ndim == 2:
             ret = ret[:, :, np.newaxis]
         return ret

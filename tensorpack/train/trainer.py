@@ -40,6 +40,7 @@ class PredictorFactory(object):
 
         def get_name_in_tower(name):
             return PREDICT_TOWER + str(tower) + '/' + name
+
         def maybe_inside_tower(name):
             name = get_op_tensor_name(name)[0]
             if name in placeholder_names:
