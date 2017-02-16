@@ -7,7 +7,7 @@ import tensorflow as tf
 from .base import Trainer
 
 from ..utils import SUMMARY_BACKUP_KEYS, PREDICT_TOWER
-from ..tfutils import get_tensors_by_names, TowerContext
+from ..tfutils import get_tensors_by_names, TowerContext, get_op_tensor_name
 from ..tfutils.collection import freeze_collection
 from ..predict import OnlinePredictor, build_prediction_graph
 from .input_data import FeedInput
@@ -35,8 +35,22 @@ class PredictorFactory(object):
         if not self.tower_built:
             self._build_predict_tower()
         tower = self.towers[tower % len(self.towers)]
+
+        placeholder_names = set([k.name for k in self.model.get_inputs_desc()])
+
+        def get_name_in_tower(name):
+            return PREDICT_TOWER + str(tower) + '/' + name
+        def maybe_inside_tower(name):
+            name = get_op_tensor_name(name)[0]
+            if name in placeholder_names:
+                return name
+            else:
+                return get_name_in_tower(name)
+
+        input_names = map(maybe_inside_tower, input_names)
         raw_input_vars = get_tensors_by_names(input_names)
-        output_names = ['{}{}/'.format(PREDICT_TOWER, tower) + n for n in output_names]
+
+        output_names = map(get_name_in_tower, output_names)
         output_vars = get_tensors_by_names(output_names)
         return OnlinePredictor(self.sess, raw_input_vars, output_vars)
 

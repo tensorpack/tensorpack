@@ -49,12 +49,12 @@ class Model(GANModelDesc):
         l = tf.reshape(l, [-1, 7, 7, 128])
         l = Deconv2D('deconv1', l, [14, 14, 64], 4, 2, nl=BNReLU)
         l = Deconv2D('deconv2', l, [28, 28, 1], 4, 2, nl=tf.identity)
-        l = tf.tanh(l, name='gen')
+        l = tf.sigmoid(l, name='gen')
         return l
 
     def discriminator(self, imgs):
         with argscope(Conv2D, nl=tf.identity, kernel_shape=4, stride=2), \
-                argscope(LeakyReLU, alpha=0.1):
+                argscope(LeakyReLU, alpha=0.2):
             l = (LinearWrap(imgs)
                  .Conv2D('conv0', 64)
                  .LeakyReLU()
@@ -72,7 +72,7 @@ class Model(GANModelDesc):
 
     def _build_graph(self, inputs):
         real_sample = inputs[0]
-        real_sample = tf.expand_dims(real_sample * 2.0 - 1, -1)
+        real_sample = tf.expand_dims(real_sample, -1)
 
         # latent space is cat(10) x uni(1) x uni(1) x noise(NOISE_DIM)
         self.factors = ProductDistribution("factors", [CategoricalDistribution("cat", 10),
@@ -93,7 +93,7 @@ class Model(GANModelDesc):
                       W_init=tf.truncated_normal_initializer(stddev=0.02)):
             with tf.variable_scope('gen'):
                 fake_sample = self.generator(z)
-                fake_sample_viz = tf.cast((fake_sample + 1) * 128.0, tf.uint8, name='viz')
+                fake_sample_viz = tf.cast((fake_sample) * 255.0, tf.uint8, name='viz')
                 tf.summary.image('gen', fake_sample_viz, max_outputs=30)
 
             # may need to investigate how bn stats should be updated across two discrim
@@ -164,7 +164,7 @@ def get_config():
     logger.auto_set_dir()
     return TrainConfig(
         dataflow=get_data(),
-        callbacks=[ModelSaver()],
+        callbacks=[ModelSaver(keep_freq=0.1)],
         session_config=get_default_sess_config(0.5),
         model=Model(),
         steps_per_epoch=500,

@@ -41,6 +41,8 @@ class StartProcOrThread(Callback):
         if not self._stop_at_last:
             return
         for k in self._procs_threads:
+            if not k.is_alive():
+                continue
             if isinstance(k, mp.Process):
                 logger.info("Stopping {} ...".format(k.name))
                 k.terminate()
