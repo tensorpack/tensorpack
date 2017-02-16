@@ -26,6 +26,7 @@ from tensorpack.RL import *
 import common
 from common import play_model, Evaluator, eval_model_multithread
 from atari import AtariPlayer
+from expreplay import ExpReplay
 
 BATCH_SIZE = 64
 IMAGE_SIZE = (84, 84)
@@ -160,7 +161,7 @@ def get_config():
     logger.auto_set_dir()
 
     M = Model()
-    dataset_train = ExpReplay(
+    expreplay = ExpReplay(
         predictor_io_names=(['state'], ['Qvalue']),
         player=get_player(train=True),
         batch_size=BATCH_SIZE,
@@ -174,21 +175,22 @@ def get_config():
         history_len=FRAME_HISTORY)
 
     return TrainConfig(
-        dataflow=dataset_train,
+        dataflow=expreplay,
         callbacks=[
             ModelSaver(),
             ScheduledHyperParamSetter('learning_rate',
                                       [(150, 4e-4), (250, 1e-4), (350, 5e-5)]),
             RunOp(lambda: M.update_target_param()),
-            dataset_train,
+            expreplay,
+            StartProcOrThread(expreplay.get_simulator_thread()),
             PeriodicCallback(Evaluator(EVAL_EPISODE, ['state'], ['Qvalue']), 3),
             # HumanHyperParamSetter('learning_rate', 'hyper.txt'),
-            # HumanHyperParamSetter(ObjAttrParam(dataset_train, 'exploration'), 'hyper.txt'),
+            # HumanHyperParamSetter(ObjAttrParam(expreplay, 'exploration'), 'hyper.txt'),
         ],
-        # save memory for multi-thread evaluator
-        session_config=get_default_sess_config(0.6),
         model=M,
         steps_per_epoch=STEP_PER_EPOCH,
+        # run the simulator on a separate GPU if available
+        predict_tower=[1] if get_nr_gpu() > 1 else [0],
     )
 
 
