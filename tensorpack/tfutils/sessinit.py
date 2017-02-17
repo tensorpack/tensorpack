@@ -143,7 +143,7 @@ class ParamRestore(SessionInit):
     def _init(self, sess):
         variables = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)  # TODO
 
-        variable_names = set([get_savename_from_varname(k.name) for k in variables])
+        variable_names = set([k.name for k in variables])
         param_names = set(six.iterkeys(self.prms))
 
         intersect = variable_names & param_names
@@ -156,9 +156,7 @@ class ParamRestore(SessionInit):
         for k in sorted(param_names - variable_names):
             logger.warn("Variable {} in the dict not found in the graph!".format(k))
 
-        upd = SessionUpdate(sess,
-                            [v for v in variables if
-                             get_savename_from_varname(v.name) in intersect])
+        upd = SessionUpdate(sess, [v for v in variables if v.name in intersect])
         logger.info("Restoring from dict ...")
         upd.update({name: value for name, value in six.iteritems(self.prms) if name in intersect})
 

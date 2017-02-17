@@ -7,7 +7,6 @@ import six
 import os
 import tensorflow as tf
 from collections import defaultdict
-import re
 import numpy as np
 from ..utils import logger
 from ..utils.naming import PREDICT_TOWER
@@ -34,8 +33,6 @@ def get_savename_from_varname(
         logger.error("No variable under '{}' name scope should be saved!".format(PREDICT_TOWER))
         # don't overwrite anything in the current prediction graph
         return None
-    if 'tower' in name:
-        name = re.sub('tower[p0-9]+/', '', name)
     if varname_prefix is not None \
             and name.startswith(varname_prefix):
         name = name[len(varname_prefix) + 1:]
@@ -56,8 +53,7 @@ class SessionUpdate(object):
         self.sess = sess
         self.name_map = defaultdict(list)
         for v in vars_to_update:
-            savename = get_savename_from_varname(v.name)
-            self.name_map[savename].append(v)
+            self.name_map[v.name].append(v)
 
     @staticmethod
     def load_value_to_var(var, val, strict=False):
@@ -133,11 +129,7 @@ def dump_session_params(path):
     assert len(set(var)) == len(var), "TRAINABLE and MODEL variables have duplication!"
     result = {}
     for v in var:
-        name = get_savename_from_varname(v.name)
-        if name in result:
-            logger.info("Variable {} would be stored instead of another with \
-the same name".format(v.name))
-        result[name] = v.eval()
+        result[v.name] = v.eval()
     logger.info("Variables to save to {}:".format(path))
     logger.info(str(result.keys()))
     np.save(path, result)
