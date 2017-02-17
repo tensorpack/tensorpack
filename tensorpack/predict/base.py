@@ -23,7 +23,6 @@ class PredictorBase(object):
     Base class for all predictors.
 
     Attributes:
-        session (tf.Session):
         return_input (bool): whether the call will also return (inputs, outputs)
             or just outpus
     """
@@ -91,25 +90,30 @@ class AsyncPredictorBase(PredictorBase):
 class OnlinePredictor(PredictorBase):
     """ A predictor which directly use an existing session. """
 
-    def __init__(self, sess, input_tensors, output_tensors, return_input=False):
+    def __init__(self, input_tensors, output_tensors,
+                 return_input=False, sess=None):
         """
         Args:
-            sess (tf.Session): an existing session.
             input_tensors (list): list of names.
             output_tensors (list): list of names.
             return_input (bool): same as :attr:`PredictorBase.return_input`.
+            sess (tf.Session): the session this predictor runs in. If None,
+                will use the default session.
         """
-        self.session = sess
         self.return_input = return_input
-
         self.input_tensors = input_tensors
         self.output_tensors = output_tensors
+        self.sess = sess
 
     def _do_call(self, dp):
         assert len(dp) == len(self.input_tensors), \
             "{} != {}".format(len(dp), len(self.input_tensors))
         feed = dict(zip(self.input_tensors, dp))
-        output = self.session.run(self.output_tensors, feed_dict=feed)
+        if self.sess is None:
+            sess = tf.get_default_session()
+        else:
+            sess = self.sess
+        output = sess.run(self.output_tensors, feed_dict=feed)
         return output
 
 
@@ -133,7 +137,7 @@ class OfflinePredictor(OnlinePredictor):
             sess = tf.Session(config=config.session_config)
             config.session_init.init(sess)
             super(OfflinePredictor, self).__init__(
-                sess, input_vars, output_vars, config.return_input)
+                input_vars, output_vars, config.return_input, sess)
 
 
 def get_predict_func(config):

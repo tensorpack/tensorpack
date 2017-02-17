@@ -41,7 +41,7 @@ class MultiTowerOfflinePredictor(OnlinePredictor):
                     ['{}{}/'.format(PREDICT_TOWER, k) + n
                      for n in config.output_names])
                 self.predictors.append(OnlinePredictor(
-                    self.sess, input_vars, output_vars, config.return_input))
+                    input_vars, output_vars, config.return_input, self.sess))
 
     def _do_call(self, dp):
         # use the first tower for compatible PredictorBase interface
@@ -90,4 +90,4 @@ class DataParallelOfflinePredictor(OnlinePredictor):
             input_vars = get_tensors_by_names(input_var_names)
             config.session_init.init(sess)
             super(DataParallelOfflinePredictor, self).__init__(
-                sess, input_vars, output_vars, config.return_input)
+                input_vars, output_vars, config.return_input, sess)

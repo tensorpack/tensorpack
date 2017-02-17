@@ -4,7 +4,6 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import tensorflow as tf
-import threading
 from abc import ABCMeta, abstractmethod
 import six
 
@@ -12,6 +11,7 @@ from ..dataflow import DataFlow, RepeatedData
 from ..tfutils.summary import add_moving_summary
 from ..tfutils import get_op_tensor_name
 from ..utils import logger
+from ..utils.concurrency import ShareSessionThread
 from ..callbacks.concurrency import StartProcOrThread
 
 __all__ = ['InputData', 'FeedfreeInput',
@@ -72,8 +72,8 @@ class FeedfreeInput(InputData):
         """
 
 
-class EnqueueThread(threading.Thread):
-    def __init__(self, trainer, queue, ds, input_placehdrs):
+class EnqueueThread(ShareSessionThread):
+    def __init__(self, queue, ds, input_placehdrs):
         super(EnqueueThread, self).__init__()
         self.name = 'EnqueueThread'
         self.daemon = True
@@ -81,8 +81,6 @@ class EnqueueThread(threading.Thread):
         self.dataflow = ds
         self.queue = queue
 
-        self.sess = trainer.sess
-        self.coord = trainer.coord
         self.placehdrs = input_placehdrs
 
         self.op = self.queue.enqueue(self.placehdrs)
@@ -92,27 +90,20 @@ class EnqueueThread(threading.Thread):
             self.size_op, tf.float32, name='input_queue_size'))
 
     def run(self):
-        try:
-            self.dataflow.reset_state()
-            with self.sess.as_default():
+        with self.default_sess():
+            try:
+                self.dataflow.reset_state()
                 while True:
                     for dp in self.dataflow.get_data():
-                        if self.coord.should_stop():
-                            return
                         feed = dict(zip(self.placehdrs, dp))
                         # print 'qsize:', self.sess.run([self.op, self.size_op], feed_dict=feed)[1]
                         self.op.run(feed_dict=feed)
-        except tf.errors.CancelledError:
-            pass
-        except Exception:
-            logger.exception("Exception in EnqueueThread:")
-        finally:
-            self.coord.request_stop()
-            try:
-                self.sess.run(self.close_op)
-            except RuntimeError:    # session already closed
+            except tf.errors.CancelledError:
                 pass
-            logger.info("Enqueue Thread Exited.")
+            except Exception:
+                logger.exception("Exception in EnqueueThread:")
+            finally:
+                logger.info("EnqueueThread Exited.")
 
 
 class QueueInput(FeedfreeInput):
@@ -141,8 +132,7 @@ class QueueInput(FeedfreeInput):
             self.queue = tf.FIFOQueue(
                 50, [x.dtype for x in self.input_placehdrs],
                 name='input_queue')
-        self.thread = EnqueueThread(
-            trainer, self.queue, self.ds, self.input_placehdrs)
+        self.thread = EnqueueThread(self.queue, self.ds, self.input_placehdrs)
         trainer.config.callbacks.append(StartProcOrThread(self.thread))
 
     def _get_input_tensors(self):
@@ -203,8 +193,7 @@ class BatchQueueInput(FeedfreeInput):
         for shp in self.queue.shapes:
             assert shp.is_fully_defined(), shape_err
 
-        self.thread = EnqueueThread(
-            trainer, self.queue, self.ds, placehdrs_nobatch)
+        self.thread = EnqueueThread(self.queue, self.ds, placehdrs_nobatch)
         trainer.config.callbacks.append(StartProcOrThread(self.thread))
 
     def _get_input_tensors(self):

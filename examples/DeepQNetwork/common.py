@@ -40,7 +40,7 @@ def play_model(cfg):
 
 
 def eval_with_funcs(predict_funcs, nr_eval):
-    class Worker(StoppableThread):
+    class Worker(StoppableThread, ShareSessionThread):
         def __init__(self, func, queue):
             super(Worker, self).__init__()
             self._func = func
@@ -52,14 +52,15 @@ def eval_with_funcs(predict_funcs, nr_eval):
             return self._func(*args, **kwargs)
 
         def run(self):
-            player = get_player(train=False)
-            while not self.stopped():
-                try:
-                    score = play_one_episode(player, self.func)
-                    # print "Score, ", score
-                except RuntimeError:
-                    return
-                self.queue_put_stoppable(self.q, score)
+            with self.default_sess():
+                player = get_player(train=False)
+                while not self.stopped():
+                    try:
+                        score = play_one_episode(player, self.func)
+                        # print "Score, ", score
+                    except RuntimeError:
+                        return
+                    self.queue_put_stoppable(self.q, score)
 
     q = queue.Queue()
     threads = [Worker(f, q) for f in predict_funcs]

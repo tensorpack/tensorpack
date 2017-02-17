@@ -11,7 +11,7 @@ from six.moves import queue
 
 from tensorpack.dataflow import DataFlow
 from tensorpack.utils import logger, get_tqdm, get_rng
-from tensorpack.utils.concurrency import LoopThread
+from tensorpack.utils.concurrency import LoopThread, ShareSessionThread
 from tensorpack.callbacks.base import Callback
 
 __all__ = ['ExpReplay']
@@ -75,10 +75,9 @@ class ExpReplay(DataFlow, Callback):
         # spawn a separate thread to run policy, can speed up 1.3x
         def populate_job_func():
             self._populate_job_queue.get()
-            with self.trainer.sess.as_default():
-                for _ in range(self.update_frequency):
-                    self._populate_exp()
-        th = LoopThread(populate_job_func, pausable=False)
+            for _ in range(self.update_frequency):
+                self._populate_exp()
+        th = ShareSessionThread(LoopThread(populate_job_func, pausable=False))
         th.name = "SimulatorThread"
         return th
 

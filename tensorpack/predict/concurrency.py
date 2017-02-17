@@ -9,9 +9,9 @@ from six.moves import queue, range
 import tensorflow as tf
 
 from ..utils import logger
-from ..utils.concurrency import DIE, StoppableThread
+from ..utils.concurrency import DIE, StoppableThread, ShareSessionThread
 from ..tfutils.modelutils import describe_model
-from .base import OfflinePredictor, AsyncPredictorBase
+from .base import OnlinePredictor, OfflinePredictor, AsyncPredictorBase
 
 __all__ = ['MultiProcessPredictWorker', 'MultiProcessQueuePredictWorker',
            'MultiThreadAsyncPredictor']
@@ -73,7 +73,7 @@ class MultiProcessQueuePredictWorker(MultiProcessPredictWorker):
                 self.outqueue.put((tid, self.predictor(dp)))
 
 
-class PredictorWorkerThread(StoppableThread):
+class PredictorWorkerThread(StoppableThread, ShareSessionThread):
     def __init__(self, queue, pred_func, id, batch_size=5):
         super(PredictorWorkerThread, self).__init__()
         self.queue = queue
@@ -83,25 +83,26 @@ class PredictorWorkerThread(StoppableThread):
         self.id = id
 
     def run(self):
-        while not self.stopped():
-            batched, futures = self.fetch_batch()
-            try:
-                outputs = self.func(batched)
-            except tf.errors.CancelledError:
-                for f in futures:
-                    f.cancel()
-                logger.warn("In PredictorWorkerThread id={}, call was cancelled.".format(self.id))
-                return
-            # print "Worker {} batched {} Queue {}".format(
-            #         self.id, len(futures), self.queue.qsize())
-            #  debug, for speed testing
-            # if not hasattr(self, 'xxx'):
-            #     self.xxx = outputs = self.func(batched)
-            # else:
-            #     outputs = [[self.xxx[0][0]] * len(batched[0]), [self.xxx[1][0]] * len(batched[0])]
+        with self.default_sess():
+            while not self.stopped():
+                batched, futures = self.fetch_batch()
+                try:
+                    outputs = self.func(batched)
+                except tf.errors.CancelledError:
+                    for f in futures:
+                        f.cancel()
+                    logger.warn("In PredictorWorkerThread id={}, call was cancelled.".format(self.id))
+                    return
+                # print "Worker {} batched {} Queue {}".format(
+                #         self.id, len(futures), self.queue.qsize())
+                #  debug, for speed testing
+                # if not hasattr(self, 'xxx'):
+                #     self.xxx = outputs = self.func(batched)
+                # else:
+                #     outputs = [[self.xxx[0][0]] * len(batched[0]), [self.xxx[1][0]] * len(batched[0])]
 
-            for idx, f in enumerate(futures):
-                f.set_result([k[idx] for k in outputs])
+                for idx, f in enumerate(futures):
+                    f.set_result([k[idx] for k in outputs])
 
     def fetch_batch(self):
         """ Fetch a batch of data without waiting"""
@@ -137,9 +138,12 @@ class MultiThreadAsyncPredictor(AsyncPredictorBase):
             batch_size (int): the maximum of an internal batch.
         """
         assert len(predictors)
+        self._need_default_sess = False
         for k in predictors:
-            # assert isinstance(k, OnlinePredictor), type(k)
-            # TODO use predictors.return_input here
+            assert isinstance(k, OnlinePredictor), type(k)
+            if k.sess is None:
+                self._need_default_sess = True
+            # TODO support predictors.return_input here
             assert not k.return_input
         self.input_queue = queue.Queue(maxsize=len(predictors) * 100)
         self.threads = [
@@ -153,6 +157,10 @@ class MultiThreadAsyncPredictor(AsyncPredictorBase):
             options.parse_command_line(['--logging=debug'])
 
     def start(self):
+        if self._need_default_sess:
+            assert tf.get_default_session() is not None, \
+                "Not session is bind to predictors, " \
+                "MultiThreadAsyncPredictor.start() has to be called under a default session!"
         for t in self.threads:
             t.start()
 

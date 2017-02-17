@@ -23,8 +23,8 @@ from tensorpack.utils.serialize import loads, dumps
 from tensorpack.utils.concurrency import LoopThread, ensure_proc_terminate
 
 __all__ = ['SimulatorProcess', 'SimulatorMaster',
-           'SimulatorProcessStateExchange', 'SimulatorProcessSharedWeight',
-           'TransitionExperience', 'WeightSync']
+           'SimulatorProcessStateExchange',
+           'TransitionExperience']
 
 
 class TransitionExperience(object):

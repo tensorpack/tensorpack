@@ -21,9 +21,9 @@ This implementation uses the variants proposed in:
 Identity Mappings in Deep Residual Networks, arxiv:1603.05027
 
 I can reproduce the results on 2 TitanX for
-n=5, about 7.1% val error after 67k steps (8.6 step/s)
-n=18, about 5.95% val error after 80k steps (2.6 step/s)
-n=30: a 182-layer network, about 5.6% val error after 51k steps (1.55 step/s)
+n=5, about 7.1% val error after 67k steps (15 step/s)
+n=18, about 5.95% val error after 80k steps (4.2 step/s)
+n=30: a 182-layer network, about 5.6% val error after 51k steps (2.5 step/s)
 This model uses the whole training set instead of a train-val split.
 
 To train:
@@ -131,7 +131,7 @@ def get_data(train_or_test):
             imgaug.MapImage(lambda x: x - pp_mean)
         ]
     ds = AugmentImageComponent(ds, augmentors)
-    ds = BatchData(ds, 128, remainder=not isTrain)
+    ds = BatchData(ds, BATCH_SIZE, remainder=not isTrain)
     if isTrain:
         ds = PrefetchData(ds, 3, 2)
     return ds

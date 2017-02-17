@@ -35,7 +35,6 @@ class Trainer(object):
         config (TrainConfig): the config used in this trainer.
         model (ModelDesc)
         sess (tf.Session): the current session in use.
-        coord (tf.train.Coordinator)
 
         stat_holder (StatHolder)
         summary_writer (tf.summary.FileWriter)
@@ -53,10 +52,8 @@ class Trainer(object):
         assert isinstance(config, TrainConfig), type(config)
         self.config = config
         self.model = config.model
-        self.sess = tf.Session(config=self.config.session_config)
-        self.coord = tf.train.Coordinator()
 
-        self.epoch_num = self.config.starting_epoch
+        self.epoch_num = self.config.starting_epoch - 1
         self.local_step = 0
 
     def train(self):
@@ -131,23 +128,28 @@ class Trainer(object):
 
         describe_model()
         # some final operations that might modify the graph
-        logger.info("Setup callbacks ...")
+        logger.info("Setup callbacks graph ...")
         self.config.callbacks.setup_graph(weakref.proxy(self))
         self._extra_fetches = self.config.callbacks.extra_fetches()
 
-        self.summary_writer = tf.summary.FileWriter(logger.LOG_DIR, graph=self.sess.graph)
-        self.summary_op = tf.summary.merge_all()
+        logger.info("Setup summaries ...")
+        self.summary_writer = tf.summary.FileWriter(logger.LOG_DIR, graph=tf.get_default_graph())
+        self.summary_op = tf.summary.merge_all()    # XXX not good
         # create an empty StatHolder
         self.stat_holder = StatHolder(logger.LOG_DIR)
 
-        logger.info("Initializing graph variables ...")
-        initop = tf.global_variables_initializer()
-        self.sess.run(initop)
+        def after_init(_, __):
+            logger.info("Graph variables initialized.")
+        scaffold = tf.train.Scaffold(
+            init_op=tf.global_variables_initializer(),
+            init_fn=after_init)
+        logger.info("Finalize the graph, create the session ...")
+        self.monitored_sess = tf.train.MonitoredSession(
+            session_creator=tf.train.ChiefSessionCreator(
+                scaffold=scaffold, config=self.config.session_config),
+            hooks=None)
+        self.sess = self.monitored_sess._tf_sess()
         self.config.session_init.init(self.sess)
-
-        tf.get_default_graph().finalize()
-        tf.train.start_queue_runners(
-            sess=self.sess, coord=self.coord, daemon=True, start=True)
 
     @abstractmethod
     def _setup(self):
@@ -176,7 +178,7 @@ class Trainer(object):
                     logger.info("Start Epoch {} ...".format(self.epoch_num))
                     start_time = time.time()
                     for self.local_step in range(self.config.steps_per_epoch):
-                        if self.coord.should_stop():
+                        if self.monitored_sess.should_stop():
                             return
                         fetch_data = self.run_step()  # implemented by subclass
                         if fetch_data is None:
@@ -197,9 +199,8 @@ class Trainer(object):
                 raise
             finally:
                 callbacks.after_train()
-                self.coord.request_stop()
                 self.summary_writer.close()
-                self.sess.close()
+                self.monitored_sess.close()
 
     def get_predict_func(self, input_names, output_names):
         """

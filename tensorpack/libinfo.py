@@ -6,4 +6,4 @@ import cv2  # noqa
 import os
 os.environ['OPENCV_OPENCL_RUNTIME'] = ''
 
-__version__ = '0.1.5'
+__version__ = '0.1.6'

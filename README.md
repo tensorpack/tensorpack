@@ -62,9 +62,6 @@ Dependencies:
 + Python 2 or 3
 + TensorFlow >= 1.0.0rc0
 + Python bindings for OpenCV
-+ (optional) use tcmalloc if running with large data
-
 ```
 pip install --user -U git+https://github.com/ppwwyyxx/tensorpack.git
-pip install --user -r opt-requirements.txt # (some optional dependencies required by certain submodules, you can install later if prompted)
 ```

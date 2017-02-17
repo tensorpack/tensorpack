@@ -226,18 +226,19 @@ class FeedfreeInferenceRunner(Triggerable):
         G = tf.get_default_graph()
         self._output_tensors = [G.get_tensor_by_name(
             self._tower_prefix + '/' + n) for n in all_names]
-        self._sess = self.trainer.sess
 
         # list of list of id
         self.inf_to_idxs = dispatcer.get_idx_for_each_entry()
 
     def _trigger(self):
+        sess = tf.get_default_session()
+
         for inf in self.infs:
             inf.before_inference()
 
         with get_tqdm(total=self._size) as pbar:
             for _ in range(self._size):
-                outputs = self._sess.run(fetches=self._output_tensors)
+                outputs = sess.run(fetches=self._output_tensors)
                 for inf, idlist in zip(self.infs, self.inf_to_idxs):
                     inf_output = [outputs[k] for k in idlist]
                     inf.datapoint(inf_output)

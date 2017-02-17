@@ -199,7 +199,7 @@ class AsyncMultiGPUTrainer(MultiGPUTrainer,
             # pretend to average the grads, in order to make async and
             # sync have consistent effective learning rate
             gradproc = ScaleGradient(('.*', 1.0 / self.config.nr_tower), log=False)
-            grad_list = [apply_grad_processors(g, [gradproc]) for g in grad_list]
+            grad_list = apply_grad_processors(grad_list, [gradproc])
 
         # use grad from the first tower for iteration in main thread
         self.train_op = self.config.optimizer.apply_gradients(grad_list[0], name='min_op')
@@ -216,7 +216,7 @@ class AsyncMultiGPUTrainer(MultiGPUTrainer,
 
             def f(op=train_op):  # avoid late-binding
                 self.sess.run([op])
-                next(self.async_step_counter)
+                next(self.async_step_counter)   # atomic due to GIL
             th = LoopThread(f)
             th.name = "AsyncLoopThread-{}".format(k)
             th.pause()

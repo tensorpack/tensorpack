@@ -38,7 +38,7 @@ CHANNEL = FRAME_HISTORY * 3
 IMAGE_SHAPE3 = IMAGE_SIZE + (CHANNEL,)
 
 LOCAL_TIME_MAX = 5
-STEP_PER_EPOCH = 6000
+STEPS_PER_EPOCH = 6000
 EVAL_EPISODE = 50
 BATCH_SIZE = 128
 SIMULATOR_PROC = 50
@@ -150,11 +150,12 @@ class MySimulatorMaster(SimulatorMaster, Callback):
         self.queue = queue.Queue(maxsize=BATCH_SIZE * 8 * 2)
 
     def _setup_graph(self):
-        self.sess = self.trainer.sess
         self.async_predictor = MultiThreadAsyncPredictor(
             self.trainer.get_predict_funcs(['state'], ['logitsT', 'pred_value'],
                                            PREDICTOR_THREAD), batch_size=15)
-        self.async_predictor.run()
+
+    def _before_train(self):
+        self.async_predictor.start()
 
     def _on_state(self, state, ident):
         def cb(outputs):
@@ -222,7 +223,7 @@ def get_config():
         ],
         session_config=get_default_sess_config(0.5),
         model=M,
-        steps_per_epoch=STEP_PER_EPOCH,
+        steps_per_epoch=STEPS_PER_EPOCH,
         max_epoch=1000,
     )
 

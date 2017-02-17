@@ -18,19 +18,20 @@ __all__ = ['SimpleTrainer', 'MultiPredictorTowerTrainer']
 class PredictorFactory(object):
     """ Make predictors for a trainer"""
 
-    def __init__(self, sess, model, towers):
+    def __init__(self, model, towers):
         """
         :param towers: list of gpu relative id
         """
-        self.sess = sess
         self.model = model
         self.towers = towers
         self.tower_built = False
 
     def get_predictor(self, input_names, output_names, tower):
         """
-        :param tower: need the kth tower (not the gpu id)
-        :returns: an online predictor
+        Args:
+            tower: need the kth tower (not the gpu id)
+        Returns:
+            an online predictor (which has to be used under a default session)
         """
         if not self.tower_built:
             self._build_predict_tower()
@@ -53,7 +54,7 @@ class PredictorFactory(object):
 
         output_names = map(get_name_in_tower, output_names)
         output_vars = get_tensors_by_names(output_names)
-        return OnlinePredictor(self.sess, raw_input_vars, output_vars)
+        return OnlinePredictor(raw_input_vars, output_vars)
 
     def _build_predict_tower(self):
         # build_predict_tower might get called anywhere, but 'PREDICT_TOWER' should be the outermost name scope
@@ -76,7 +77,7 @@ class SimpleTrainer(Trainer):
             config (TrainConfig): the training config.
         """
         super(SimpleTrainer, self).__init__(config)
-        self._predictor_factory = PredictorFactory(self.sess, self.model, [0])
+        self._predictor_factory = PredictorFactory(self.model, [0])
         if config.dataflow is None:
             self._input_method = config.data
             assert isinstance(self._input_method, FeedInput), type(self._input_method)
@@ -118,7 +119,7 @@ class MultiPredictorTowerTrainer(Trainer):
     def _setup_predictor_factory(self):
         # by default, use the first training gpu for prediction
         self._predictor_factory = PredictorFactory(
-            self.sess, self.model, self.config.predict_tower)
+            self.model, self.config.predict_tower)
 
     def get_predict_func(self, input_names, output_names, tower=0):
         """
