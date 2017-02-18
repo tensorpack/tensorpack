@@ -14,12 +14,13 @@ __all__ = ['Conv2D', 'Deconv2D']
 def Conv2D(x, out_channel, kernel_shape,
            padding='SAME', stride=1,
            W_init=None, b_init=None,
-           nl=tf.identity, split=1, use_bias=True):
+           nl=tf.identity, split=1, use_bias=True,
+           data_format='NHWC'):
     """
     2D convolution on 4D inputs.
 
     Args:
-        x (tf.Tensor): a tensor of shape NHWC.
+        x (tf.Tensor): a 4D tensor.
             Must have known number of channels, but can have other unknown dimensions.
         out_channel (int): number of output channel.
         kernel_shape: (h, w) tuple or a int.
@@ -32,7 +33,7 @@ def Conv2D(x, out_channel, kernel_shape,
         use_bias (bool): whether to use bias.
 
     Returns:
-        tf.Tensor: a NHWC tensor named ``output``.
+        tf.Tensor named ``output``.
 
     Variable Names:
 
@@ -40,7 +41,8 @@ def Conv2D(x, out_channel, kernel_shape,
     * ``b``: bias
     """
     in_shape = x.get_shape().as_list()
-    in_channel = in_shape[-1]
+    channel_axis = 3 if data_format == 'NHWC' else 1
+    in_channel = in_shape[channel_axis]
     assert in_channel is not None, "[Conv2D] Input cannot have unknown channel!"
     assert in_channel % split == 0
     assert out_channel % split == 0
@@ -48,7 +50,7 @@ def Conv2D(x, out_channel, kernel_shape,
     kernel_shape = shape2d(kernel_shape)
     padding = padding.upper()
     filter_shape = kernel_shape + [in_channel / split, out_channel]
-    stride = shape4d(stride)
+    stride = shape4d(stride, data_format=data_format)
 
     if W_init is None:
         W_init = tf.contrib.layers.variance_scaling_initializer()
@@ -60,14 +62,14 @@ def Conv2D(x, out_channel, kernel_shape,
         b = tf.get_variable('b', [out_channel], initializer=b_init)
 
     if split == 1:
-        conv = tf.nn.conv2d(x, W, stride, padding)
+        conv = tf.nn.conv2d(x, W, stride, padding, data_format=data_format)
     else:
-        inputs = tf.split(x, split, 3)
+        inputs = tf.split(x, split, channel_axis)
         kernels = tf.split(W, split, 3)
-        outputs = [tf.nn.conv2d(i, k, stride, padding)
+        outputs = [tf.nn.conv2d(i, k, stride, padding, data_format=data_format)
                    for i, k in zip(inputs, kernels)]
-        conv = tf.concat(outputs, 3)
-    return nl(tf.nn.bias_add(conv, b) if use_bias else conv, name='output')
+        conv = tf.concat(outputs, channel_axis)
+    return nl(tf.nn.bias_add(conv, b, data_format=data_format) if use_bias else conv, name='output')
 
 
 class StaticDynamicShape(object):

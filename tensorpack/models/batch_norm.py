@@ -52,7 +52,7 @@ def BatchNormV1(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
             with tf.variable_scope(tf.get_variable_scope(), reuse=False):
                 # BatchNorm in reuse scope can be tricky! Moving mean/variance are not reused
                 with tf.name_scope(None):  # https://github.com/tensorflow/tensorflow/issues/2740
-                    # TODO if reuse=True, try to find and use the existing statistics
+                    # if reuse=True, try to find and use the existing statistics
                     # how to use multiple tensors to update one EMA? seems impossbile
                     ema = tf.train.ExponentialMovingAverage(decay=decay, name=emaname)
                     ema_apply_op = ema.apply([batch_mean, batch_var])
@@ -71,7 +71,7 @@ def BatchNormV1(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
             var_var_name = ema.average_name(batch_var)
             if ctx.is_main_tower:
                 # main tower, but needs to use global stat. global stat must be from outside
-                # TODO when reuse=True, the desired variable name could
+                # when reuse=True, the desired variable name could
                 # actually be different, because a different var is created
                 # for different reuse tower
                 ema_mean = tf.get_variable('mean/' + emaname, [n_out])
@@ -96,14 +96,7 @@ def BatchNormV1(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
             x, ema_mean, ema_var, beta, gamma, epsilon, 'output')
 
 
-def get_bn_variables(x, use_scale, use_bias):
-    shape = x.get_shape().as_list()
-    assert len(shape) in [2, 4]
-    n_out = shape[-1]  # channel
-    assert n_out is not None, "Input to BatchNorm cannot have unknown channels!"
-    if len(shape) == 2:
-        x = tf.reshape(x, [-1, 1, 1, n_out])
-
+def get_bn_variables(n_out, use_scale, use_bias):
     if use_bias:
         beta = tf.get_variable('beta', [n_out], initializer=tf.constant_initializer())
     else:
@@ -118,11 +111,10 @@ def get_bn_variables(x, use_scale, use_bias):
                                   initializer=tf.constant_initializer(), trainable=False)
     moving_var = tf.get_variable('variance/EMA', [n_out],
                                  initializer=tf.constant_initializer(), trainable=False)
-    return x, beta, gamma, moving_mean, moving_var
+    return beta, gamma, moving_mean, moving_var
 
 
 def update_bn_ema(xn, batch_mean, batch_var, moving_mean, moving_var, decay):
-    # TODO update it later (similar to slim) might be faster?
     # TODO is there a way to use zero_debias in multi-GPU?
     update_op1 = moving_averages.assign_moving_average(
         moving_mean, batch_mean, decay, zero_debias=False,
@@ -138,7 +130,7 @@ def update_bn_ema(xn, batch_mean, batch_var, moving_mean, moving_var, decay):
 
 @layer_register(log_shape=False)
 def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5,
-              use_scale=True, use_bias=True):
+              use_scale=True, use_bias=True, data_format='NHWC'):
     """
     Batch Normalization layer, as described in the paper:
     `Batch Normalization: Accelerating Deep Network Training by
@@ -171,7 +163,18 @@ def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5,
         with the official inceptionv3 example).
     """
     shape = x.get_shape().as_list()
-    x, beta, gamma, moving_mean, moving_var = get_bn_variables(x, use_scale, use_bias)
+    assert len(shape) in [2, 4]
+    if len(shape) == 2:
+        data_format = 'NCHW'
+    if data_format == 'NCHW':
+        n_out = shape[1]
+    else:
+        n_out = shape[-1]  # channel
+    if len(shape) == 2:
+        x = tf.reshape(x, [-1, n_out, 1, 1])
+    assert n_out is not None, "Input to BatchNorm cannot have unknown channels!"
+
+    beta, gamma, moving_mean, moving_var = get_bn_variables(n_out, use_scale, use_bias)
 
     ctx = get_current_tower_context()
     if use_local_stat is None:
@@ -182,22 +185,25 @@ def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5,
         logger.warn("[BatchNorm] use_local_stat != is_training")
 
     if use_local_stat:
-        xn, batch_mean, batch_var = tf.nn.fused_batch_norm(x, gamma, beta,
-                                                           epsilon=epsilon, is_training=True)
+        xn, batch_mean, batch_var = tf.nn.fused_batch_norm(
+            x, gamma, beta, epsilon=epsilon,
+            is_training=True, data_format=data_format)
     else:
         assert not ctx.is_training, "In training, local statistics has to be used!"
-        # fused seems slower in inference
-        # xn, _, _ = tf.nn.fused_batch_norm(x, gamma, beta,
-        #   moving_mean, moving_var,
-        #   epsilon=epsilon, is_training=False, name='output')
-        xn = tf.nn.batch_normalization(
-            x, moving_mean, moving_var, beta, gamma, epsilon)
+        if data_format == 'NCHW':
+            # fused is slower in inference, but support NCHW
+            xn, _, _ = tf.nn.fused_batch_norm(x, gamma, beta,
+                moving_mean, moving_var,
+                epsilon=epsilon, is_training=False, data_format=data_format)
+        else:
+            xn = tf.nn.batch_normalization(
+                x, moving_mean, moving_var, beta, gamma, epsilon)
 
     if len(shape) == 2:
-        xn = tf.squeeze(xn, [1, 2])
+        axis = [2, 3] if data_format == 'NCHW' else [1, 2]
+        xn = tf.squeeze(xn, axis)
 
     # maintain EMA only on one GPU.
-    # TODO the first GPU already has too many work, might be faster to update it on a different GPU
     if ctx.is_main_training_tower:
         return update_bn_ema(xn, batch_mean, batch_var, moving_mean, moving_var, decay)
     else:
@@ -231,7 +237,11 @@ def BatchRenorm(x, rmax, dmax, decay=0.9, epsilon=1e-5,
     """
 
     shape = x.get_shape().as_list()
-    x, beta, gamma, moving_mean, moving_var = get_bn_variables(x, use_scale, use_bias)
+    assert len(shape) in [2, 4]
+    n_out = shape[-1]
+    if len(shape) == 2:
+        x = tf.reshape(x, [-1, 1, 1, n_out])
+    beta, gamma, moving_mean, moving_var = get_bn_variables(n_out, use_scale, use_bias)
 
     ctx = get_current_tower_context()
     use_local_stat = ctx.is_training

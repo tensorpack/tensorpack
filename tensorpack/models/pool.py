@@ -14,59 +14,58 @@ __all__ = ['MaxPooling', 'FixedUnPooling', 'AvgPooling', 'GlobalAvgPooling',
            'BilinearUpSample']
 
 
+def _Pooling(func, x, shape, stride, padding, data_format):
+    padding = padding.upper()
+    shape = shape4d(shape, data_format=data_format)
+    if stride is None:
+        stride = shape
+    else:
+        stride = shape4d(stride, data_format=data_format)
+
+    return func(x, ksize=shape,
+                strides=stride, padding=padding,
+                data_format=data_format,
+                name='output')
+
+
 @layer_register()
-def MaxPooling(x, shape, stride=None, padding='VALID'):
+def MaxPooling(x, shape, stride=None, padding='VALID', data_format='NHWC'):
     """
     Max Pooling on 4D tensors.
 
     Args:
-        x (tf.Tensor): a NHWC tensor.
+        x (tf.Tensor): a 4D tensor.
         shape: int or (h, w) tuple
         stride: int or (h, w) tuple. Defaults to be the same as shape.
         padding (str): 'valid' or 'same'.
 
     Returns:
-        tf.Tensor: a NHWC tensor named ``output``.
+        tf.Tensor named ``output``.
     """
-    padding = padding.upper()
-    shape = shape4d(shape)
-    if stride is None:
-        stride = shape
-    else:
-        stride = shape4d(stride)
-
-    return tf.nn.max_pool(x, ksize=shape,
-                          strides=stride, padding=padding,
-                          name='output')
+    return _Pooling(tf.nn.max_pool, x, shape, stride, padding,
+                    data_format=data_format)
 
 
 @layer_register()
-def AvgPooling(x, shape, stride=None, padding='VALID'):
+def AvgPooling(x, shape, stride=None, padding='VALID', data_format='NHWC'):
     """
     Average Pooling on 4D tensors.
 
     Args:
-        x (tf.Tensor): a NHWC tensor.
+        x (tf.Tensor): a 4D tensor.
         shape: int or (h, w) tuple
         stride: int or (h, w) tuple. Defaults to be the same as shape.
         padding (str): 'valid' or 'same'.
 
     Returns:
-        tf.Tensor: a NHWC tensor named ``output``.
+        tf.Tensor named ``output``.
     """
-    padding = padding.upper()
-    shape = shape4d(shape)
-    if stride is None:
-        stride = shape
-    else:
-        stride = shape4d(stride)
-
-    return tf.nn.avg_pool(x, ksize=shape,
-                          strides=stride, padding=padding, name='output')
+    return _Pooling(tf.nn.avg_pool, x, shape, stride, padding,
+                    data_format=data_format)
 
 
 @layer_register()
-def GlobalAvgPooling(x):
+def GlobalAvgPooling(x, data_format='NHWC'):
     """
     Global average pooling as in the paper `Network In Network
     <http://arxiv.org/abs/1312.4400>`_.
@@ -77,7 +76,9 @@ def GlobalAvgPooling(x):
         tf.Tensor: a NC tensor named ``output``.
     """
     assert x.get_shape().ndims == 4
-    return tf.reduce_mean(x, [1, 2], name='output')
+    assert data_format in ['NHWC', 'NCHW']
+    axis = [1, 2] if data_format == 'NHWC' else [2, 3]
+    return tf.reduce_mean(x, axis, name='output')
 
 
 def UnPooling2x2ZeroFilled(x):

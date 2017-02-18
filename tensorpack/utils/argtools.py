@@ -86,17 +86,22 @@ def shape2d(a):
     raise RuntimeError("Illegal shape: {}".format(a))
 
 
-def shape4d(a):
+def shape4d(a, data_format='NHWC'):
     """
-    Ensuer a 4D shape, to use with NHWC functions.
+    Ensuer a 4D shape, to use with 4D symbolic functions.
 
     Args:
         a: a int or tuple/list of length 2
 
     Returns:
-        list: of length 4. if ``a`` is a int, return ``[1, a, a, 1]``.
+        list: of length 4. if ``a`` is a int, return ``[1, a, a, 1]`` or ``[1,
+            1, a, a]`` depending on data_format.
     """
-    return [1] + shape2d(a) + [1]
+    s2d = shape2d(a)
+    if data_format == 'NHWC':
+        return [1] + s2d + [1]
+    else:
+        return [1, 1] + s2d
 
 
 @memoized

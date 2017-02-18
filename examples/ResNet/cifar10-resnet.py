@@ -21,9 +21,9 @@ This implementation uses the variants proposed in:
 Identity Mappings in Deep Residual Networks, arxiv:1603.05027
 
 I can reproduce the results on 2 TitanX for
-n=5, about 7.1% val error after 67k steps (15 step/s)
-n=18, about 5.95% val error after 80k steps (4.2 step/s)
-n=30: a 182-layer network, about 5.6% val error after 51k steps (2.5 step/s)
+n=5, about 7.1% val error after 67k steps (20.4 step/s)
+n=18, about 5.95% val error after 80k steps (5.6 step/s)
+n=30: a 182-layer network, about 5.6% val error after 51k steps (3.4 step/s)
 This model uses the whole training set instead of a train-val split.
 
 To train:
@@ -47,10 +47,11 @@ class Model(ModelDesc):
     def _build_graph(self, inputs):
         image, label = inputs
         image = image / 128.0 - 1
+        image = tf.transpose(image, [0, 3, 1, 2])
 
         def residual(name, l, increase_dim=False, first=False):
             shape = l.get_shape().as_list()
-            in_channel = shape[3]
+            in_channel = shape[1]
 
             if increase_dim:
                 out_channel = in_channel * 2
@@ -65,12 +66,14 @@ class Model(ModelDesc):
                 c2 = Conv2D('conv2', c1, out_channel)
                 if increase_dim:
                     l = AvgPooling('pool', l, 2)
-                    l = tf.pad(l, [[0, 0], [0, 0], [0, 0], [in_channel // 2, in_channel // 2]])
+                    l = tf.pad(l, [[0, 0], [in_channel // 2, in_channel // 2], [0, 0], [0, 0]])
 
                 l = c2 + l
                 return l
 
-        with argscope(Conv2D, nl=tf.identity, use_bias=False, kernel_shape=3,
+        with argscope([Conv2D, AvgPooling, BatchNorm, GlobalAvgPooling],
+                      data_format='NCHW'), \
+            argscope(Conv2D, nl=tf.identity, use_bias=False, kernel_shape=3,
                       W_init=variance_scaling_initializer(mode='FAN_OUT')):
             l = Conv2D('conv0', image, 16, nl=BNReLU)
             l = residual('res1.0', l, first=True)
