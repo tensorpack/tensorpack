@@ -42,6 +42,7 @@ Describe your training task with three components:
 
 	+ All data producer has an unified interface, so they can be composed and reused to perform complex preprocessing.
 	+ Allows you to process data from Python without blocking the training, thanks to multiprocess prefetch & TF Queue prefetch.
+		Even on a small CNN example, it runs [2x faster](https://gist.github.com/ppwwyyxx/8d95da79f8d97036a7d67c2416c851b6) than the equivalent Keras code.
 
 3. __Callbacks__, including everything you want to do apart from the training iterations, such as:
 	+ Change hyperparameters during training
