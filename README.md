@@ -34,24 +34,26 @@ The examples are not only for demonstration of the framework -- you can train th
 
 Describe your training task with three components:
 
-1. __Model__, or graph. `models/` has some scoped abstraction of common models, but you can simply use
-	 any symbolic functions available in tensorflow, or most functions in slim/tflearn/tensorlayer.
-	`LinearWrap` and `argscope` simplify large models ([vgg example](https://github.com/ppwwyyxx/tensorpack/blob/master/examples/load-vgg16.py)).
+1. __DataFlow__. process data in Python, with ease and speed.
 
-2. __DataFlow__. tensorpack allows and encourages complex data processing.
+	+ Allows you to process data in Python without blocking the training, thanks to multiprocess prefetch & TF Queue prefetch.
+	+ All data producer has a unified interface, so they can be composed and reused to perform complex preprocessing.
 
-	+ All data producer has an unified interface, so they can be composed and reused to perform complex preprocessing.
-	+ Allows you to process data from Python without blocking the training, thanks to multiprocess prefetch & TF Queue prefetch.
-		Even on a small CNN example, it runs [2x faster](https://gist.github.com/ppwwyyxx/8d95da79f8d97036a7d67c2416c851b6) than the equivalent Keras code.
-
-3. __Callbacks__, including everything you want to do apart from the training iterations, such as:
+2. __Callbacks__, including everything you want to do apart from the training iterations, such as:
 	+ Change hyperparameters during training
 	+ Print some tensors of interest
 	+ Run inference on a test dataset
 	+ Run some operations once a while
 	+ Send loss to your phone
 
+3. __Model__, or graph. `models/` has some scoped abstraction of common models, but you can just use
+	 symbolic functions available in tensorflow, or in slim/tflearn/tensorlayer.
+	`LinearWrap` and `argscope` simplify large models ([e.g. vgg example](https://github.com/ppwwyyxx/tensorpack/blob/master/examples/load-vgg16.py)).
+
 With the above components defined, tensorpack trainer will run the training iterations for you.
+Trainer was written with performance in mind.
+Even on a small CNN example, the training runs [2x faster](https://gist.github.com/ppwwyyxx/8d95da79f8d97036a7d67c2416c851b6) than the equivalent Keras code.
+
 Multi-GPU training is off-the-shelf by simply switching the trainer.
 You can also define your own trainer for non-standard training (e.g. GAN).
 
