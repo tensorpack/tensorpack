@@ -147,6 +147,7 @@ def get_checkpoint_path(model_path):
     if os.path.basename(model_path) == model_path:
         model_path = os.path.join('.', model_path)  # avoid #4921 and #6142
     if os.path.basename(model_path) == 'checkpoint':
+        assert os.path.isfile(model_path), model_path
         model_path = tf.train.latest_checkpoint(os.path.dirname(model_path))
         # to be consistent with either v1 or v2
 

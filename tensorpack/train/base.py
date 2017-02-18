@@ -138,6 +138,8 @@ class Trainer(object):
         # create an empty StatHolder
         self.stat_holder = StatHolder(logger.LOG_DIR)
 
+        self.config.session_init._setup_graph()
+
         def after_init(_, __):
             logger.info("Graph variables initialized.")
         scaffold = tf.train.Scaffold(
@@ -149,7 +151,7 @@ class Trainer(object):
                 scaffold=scaffold, config=self.config.session_config),
             hooks=None)
         self.sess = self.monitored_sess._tf_sess()
-        self.config.session_init.init(self.sess)
+        self.config.session_init._run_init(self.sess)
 
     @abstractmethod
     def _setup(self):

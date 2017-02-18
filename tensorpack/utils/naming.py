@@ -17,12 +17,12 @@ LOCAL_STEP_VAR_NAME = 'local_step:0'
 PREDICT_TOWER = 'towerp'
 
 # extra variables to summarize during training in a moving-average way
-MOVING_SUMMARY_VARS_KEY = 'MOVING_SUMMARY_VARIABLES'
+MOVING_SUMMARY_OPS_KEY = 'MOVING_SUMMARY_OPS'
 
 # metainfo for input tensors
 INPUTS_KEY = 'INPUTS_METAINFO'
 
-SUMMARY_BACKUP_KEYS = [tf.GraphKeys.SUMMARIES, MOVING_SUMMARY_VARS_KEY]
+SUMMARY_BACKUP_KEYS = [tf.GraphKeys.SUMMARIES, MOVING_SUMMARY_OPS_KEY]
 
 # export all upper case variables
 all_local_names = locals().keys()

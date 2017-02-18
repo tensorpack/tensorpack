@@ -3,22 +3,20 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import os
-from abc import abstractmethod, ABCMeta
 import numpy as np
 import tensorflow as tf
 import six
 
-from ..utils import logger, PREDICT_TOWER
+from ..utils import logger
 from .common import get_op_tensor_name
 from .varmanip import (SessionUpdate, get_savename_from_varname,
                        is_training_name, get_checkpoint_path)
 
-__all__ = ['SessionInit', 'NewSession', 'SaverRestore',
+__all__ = ['SessionInit', 'NewSession', 'SaverRestore', 'SaverRestoreRelaxed',
            'ParamRestore', 'ChainInit',
            'JustCurrentSession', 'get_model_loader']
 
 
-@six.add_metaclass(ABCMeta)
 class SessionInit(object):
     """ Base class for utilities to initialize a session. """
     def init(self, sess):
@@ -30,23 +28,31 @@ class SessionInit(object):
         """
         self._init(sess)
 
-    @abstractmethod
     def _init(self, sess):
+        self._setup_graph()
+        self._run_init(sess)
+
+    def _setup_graph(self):
+        pass
+
+    def _run_init(self, sess):
         pass
 
 
 class JustCurrentSession(SessionInit):
     """ This is a no-op placeholder"""
-    def _init(self, sess):
-        pass
+    pass
 
 
 class NewSession(SessionInit):
     """
     Initialize global variables by their initializer.
     """
-    def _init(self, sess):
-        sess.run(tf.global_variables_initializer())
+    def _setup_graph(self):
+        self.op = tf.global_variables_initializer()
+
+    def _run_init(self, sess):
+        sess.run(self.op)
 
 
 class CheckpointReaderAdapter(object):
@@ -58,7 +64,7 @@ class CheckpointReaderAdapter(object):
         self._reader = reader
         m = self._reader.get_variable_to_shape_map()
         self._map = {k if k.endswith(':0') else k + ':0': v
-                     for k, v in m.iteritems()}
+                     for k, v in six.iteritems(m)}
 
     def get_variable_to_shape_map(self):
         return self._map
@@ -74,23 +80,77 @@ class CheckpointReaderAdapter(object):
     def has_tensor(self, name):
         return name in self._map
 
+    # some checkpoint might not have ':0'
+    def get_real_name(self, name):
+        if self._reader.has_tensor(name):
+            return name
+        assert self.has_tensor(name)
+        return name[:-2]
+
 
 class SaverRestore(SessionInit):
     """
     Restore a tensorflow checkpoint saved by :class:`tf.train.Saver` or :class:`ModelSaver`.
     """
-
     def __init__(self, model_path, prefix=None):
         """
         Args:
-            model_path (str): path to the model (model-xxxx) or a ``checkpoint`` file.
+            model_path (str): a model name (model-xxxx) or a ``checkpoint`` file.
             prefix (str): during restore, add a ``prefix/`` for every variable in this checkpoint
         """
         model_path = get_checkpoint_path(model_path)
         self.path = model_path
         self.prefix = prefix
 
-    def _init(self, sess):
+    def _setup_graph(self):
+        dic = self._get_restore_dict()
+        self.saver = tf.train.Saver(var_list=dic, name=str(id(dic)))
+
+    def _run_init(self, sess):
+        logger.info("Restoring checkpoint from {} ...".format(self.path))
+        self.saver.restore(sess, self.path)
+
+    @staticmethod
+    def _read_checkpoint_vars(model_path):
+        """ return a set of strings """
+        reader = tf.train.NewCheckpointReader(model_path)
+        reader = CheckpointReaderAdapter(reader)    # use an adapter to standardize the name
+        ckpt_vars = reader.get_variable_to_shape_map().keys()
+        return reader, set(ckpt_vars)
+
+    def _get_restore_dict(self):
+        reader, chkpt_vars = SaverRestore._read_checkpoint_vars(self.path)
+        graph_vars = tf.global_variables()
+        var_dict = {}
+        chkpt_vars_used = set()
+        for v in graph_vars:
+            name = get_savename_from_varname(v.name, varname_prefix=self.prefix)
+            if reader.has_tensor(name):
+                ckpt_name = reader.get_real_name(name)
+                assert ckpt_name not in var_dict, "Restore conflict: {} and {}".format(v.name, var_dict[ckpt_name].name)
+                var_dict[ckpt_name] = v
+                chkpt_vars_used.add(name)
+            else:
+                vname = v.op.name
+                if not is_training_name(vname):
+                    logger.warn("Variable {} in the graph not found in checkpoint!".format(vname))
+        if len(chkpt_vars_used) < len(chkpt_vars):
+            unused = chkpt_vars - chkpt_vars_used
+            for name in sorted(unused):
+                if not is_training_name(name):
+                    logger.warn("Variable {} in checkpoint not found in the graph!".format(name))
+        return var_dict
+
+
+class SaverRestoreRelaxed(SaverRestore):
+    """ Same as :class:`SaverRestore`, but has more relaxed constraints.
+
+        It allows upcasting certain variables, or reshape certain
+        variables when there is a mismatch that can be fixed.
+        Another advantage is that it doesn't add any new ops to the graph.
+        But it is also slower than :class:`SaverRestore`.
+    """
+    def _run_init(self, sess):
         logger.info(
             "Restoring checkpoint from {} ...".format(self.path))
         reader, chkpt_vars = SaverRestore._read_checkpoint_vars(self.path)
@@ -114,18 +174,6 @@ class SaverRestore(SessionInit):
                     if not is_training_name(name):
                         logger.warn("Variable {} in checkpoint not found in the graph!".format(name))
 
-    @staticmethod
-    def _read_checkpoint_vars(model_path):
-        """ return a set of strings """
-        reader = tf.train.NewCheckpointReader(model_path)
-        reader = CheckpointReaderAdapter(reader)
-        ckpt_vars = reader.get_variable_to_shape_map().keys()
-        for v in ckpt_vars:
-            if v.startswith(PREDICT_TOWER):
-                logger.error("Found {} in checkpoint. "
-                             "But anything from prediction tower shouldn't be saved.".format(v.name))
-        return reader, set(ckpt_vars)
-
 
 class ParamRestore(SessionInit):
     """
@@ -140,7 +188,7 @@ class ParamRestore(SessionInit):
         # use varname (with :0) for consistency
         self.prms = {get_op_tensor_name(n)[1]: v for n, v in six.iteritems(param_dict)}
 
-    def _init(self, sess):
+    def _run_init(self, sess):
         variables = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)  # TODO
 
         variable_names = set([k.name for k in variables])
@@ -181,6 +229,14 @@ class ChainInit(SessionInit):
     def _init(self, sess):
         for i in self.inits:
             i.init(sess)
+
+    def _setup_graph(self):
+        for i in self.inits:
+            i._setup_graph()
+
+    def _run_init(self, sess):
+        for i in self.inits:
+            i._run_init(sess)
 
 
 def get_model_loader(filename):

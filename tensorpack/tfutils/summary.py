@@ -7,9 +7,10 @@ import tensorflow as tf
 import re
 
 from ..utils import log_deprecated
-from ..utils.naming import MOVING_SUMMARY_VARS_KEY
+from ..utils.naming import MOVING_SUMMARY_OPS_KEY
 from .tower import get_current_tower_context
 from .symbolic_functions import rms
+from .common import get_global_step_var
 
 __all__ = ['create_scalar_summary', 'add_param_summary', 'add_activation_summary',
            'add_moving_summary']
@@ -98,13 +99,21 @@ def add_param_summary(*summary_lists):
                         perform(p, act)
 
 
-def add_moving_summary(v, *args):
+def add_moving_summary(v, *args, **kwargs):
     """
     Args:
         v (tf.Tensor or list): tensor or list of tensors to summary. Must have
             scalar type.
         args: tensors to summary (support positional arguments)
+        decay (float): the decay rate. Defaults to 0.95.
+        collection (str): the name of the collection to add EMA-maintaining ops.
+            The default will work together with the default
+            :class:`MovingAverageSummary` callback.
     """
+    decay = kwargs.pop('decay', 0.95)
+    coll = kwargs.pop('collection', MOVING_SUMMARY_OPS_KEY)
+    assert len(kwargs) == 0, "Unknown arguments: " + str(kwargs)
+
     ctx = get_current_tower_context()
     if ctx is not None and not ctx.is_main_training_tower:
         return
@@ -112,5 +121,15 @@ def add_moving_summary(v, *args):
         v = [v]
     v.extend(args)
     for x in v:
+        assert isinstance(x, tf.Tensor), x
         assert x.get_shape().ndims == 0, x.get_shape()
-        tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, x)
+    # TODO will produce tower0/xxx?
+    with tf.name_scope(None):
+        averager = tf.train.ExponentialMovingAverage(
+            decay, num_updates=get_global_step_var(), name='EMA')
+        avg_maintain_op = averager.apply(v)
+    for c in v:
+        name = re.sub('tower[p0-9]+/', '', c.op.name)
+        tf.summary.scalar(name + '-summary', averager.average(c))
+
+    tf.add_to_collection(coll, avg_maintain_op)

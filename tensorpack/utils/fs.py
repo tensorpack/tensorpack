@@ -29,18 +29,19 @@ def mkdir_p(dirname):
             raise e
 
 
-def download(url, dir):
+def download(url, dir, filename=None):
     """
     Download URL to a directory. Will figure out the filename automatically
     from URL.
     """
     mkdir_p(dir)
-    fname = url.split('/')[-1]
-    fpath = os.path.join(dir, fname)
+    if filename is None:
+        filename = url.split('/')[-1]
+    fpath = os.path.join(dir, filename)
 
     def _progress(count, block_size, total_size):
         sys.stdout.write('\r>> Downloading %s %.1f%%' %
-                         (fname,
+                         (filename,
                              min(float(count * block_size) / total_size,
                                  1.0) * 100.0))
         sys.stdout.flush()
@@ -54,7 +55,7 @@ def download(url, dir):
     assert size > 0, "Download an empty file!"
     sys.stdout.write('\n')
     # TODO human-readable size
-    print('Succesfully downloaded ' + fname + " " + str(size) + ' bytes.')
+    print('Succesfully downloaded ' + filename + " " + str(size) + ' bytes.')
     return fpath
 
 
