@@ -40,9 +40,8 @@ Describe your training task with three components:
 
 2. __DataFlow__. tensorpack allows and encourages complex data processing.
 
-	+ All data producer has an unified interface, allowing them to be composed to perform complex preprocessing.
-	+ Use Python to easily handle any data format, yet still keep good performance thanks to multiprocess prefetch & TF Queue prefetch.
-	For example, InceptionV3 can run in the same speed as the official code which reads data by TF operators.
+	+ All data producer has an unified interface, so they can be composed and reused to perform complex preprocessing.
+	+ Allows you to process data from Python without blocking the training, thanks to multiprocess prefetch & TF Queue prefetch.
 
 3. __Callbacks__, including everything you want to do apart from the training iterations, such as:
 	+ Change hyperparameters during training

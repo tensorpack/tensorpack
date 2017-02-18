@@ -89,7 +89,8 @@ class StaticDynamicShape(object):
 def Deconv2D(x, out_shape, kernel_shape,
              stride, padding='SAME',
              W_init=None, b_init=None,
-             nl=tf.identity, use_bias=True):
+             nl=tf.identity, use_bias=True,
+             data_format='NHWC'):
     """
     2D deconvolution on 4D inputs.
 
@@ -114,25 +115,33 @@ def Deconv2D(x, out_shape, kernel_shape,
     * ``W``: weights
     * ``b``: bias
     """
-    in_shape = x.get_shape().as_list()[1:]
-    in_channel = in_shape[-1]
+    in_shape = x.get_shape().as_list()
+    channel_axis = 3 if data_format == 'NHWC' else 1
+    in_channel = in_shape[channel_axis]
     assert in_channel is not None, "[Deconv2D] Input cannot have unknown channel!"
     kernel_shape = shape2d(kernel_shape)
     stride2d = shape2d(stride)
-    stride4d = shape4d(stride)
+    stride4d = shape4d(stride, data_format=data_format)
     padding = padding.upper()
+    in_shape_dyn = tf.shape(x)
 
     if isinstance(out_shape, int):
         out_channel = out_shape
-        shp3_0 = StaticDynamicShape(in_shape[0], tf.shape(x)[1]).apply(lambda x: stride2d[0] * x)
-        shp3_1 = StaticDynamicShape(in_shape[1], tf.shape(x)[2]).apply(lambda x: stride2d[1] * x)
-        shp3_dyn = [shp3_0.dynamic, shp3_1.dynamic, out_channel]
-        shp3_static = [shp3_0.static, shp3_1.static, out_channel]
+        if data_format == 'NHWC':
+            shp3_0 = StaticDynamicShape(in_shape[1], in_shape_dyn[1]).apply(lambda x: stride2d[0] * x)
+            shp3_1 = StaticDynamicShape(in_shape[2], in_shape_dyn[2]).apply(lambda x: stride2d[1] * x)
+            shp3_dyn = [shp3_0.dynamic, shp3_1.dynamic, out_channel]
+            shp3_static = [shp3_0.static, shp3_1.static, out_channel]
+        else:
+            shp3_0 = StaticDynamicShape(in_shape[2], in_shape_dyn[2]).apply(lambda x: stride2d[0] * x)
+            shp3_1 = StaticDynamicShape(in_shape[3], in_shape_dyn[3]).apply(lambda x: stride2d[1] * x)
+            shp3_dyn = [out_channel, shp3_0.dynamic, shp3_1.dynamic]
+            shp3_static = [out_channel, shp3_0.static, shp3_1.static]
     else:
         for k in out_shape:
             if not isinstance(k, int):
-                raise ValueError("[Deconv2D] out_shape is invalid!")
-        out_channel = out_shape[-1]
+                raise ValueError("[Deconv2D] out_shape {} is invalid!".format(k))
+        out_channel = out_shape[channel_axis]
         shp3_static = shp3_dyn = out_shape
     filter_shape = kernel_shape + [out_channel, in_channel]
 
@@ -145,6 +154,7 @@ def Deconv2D(x, out_shape, kernel_shape,
         b = tf.get_variable('b', [out_channel], initializer=b_init)
 
     out_shape_dyn = tf.stack([tf.shape(x)[0]] + shp3_dyn)
-    conv = tf.nn.conv2d_transpose(x, W, out_shape_dyn, stride4d, padding=padding)
+    conv = tf.nn.conv2d_transpose(
+        x, W, out_shape_dyn, stride4d, padding=padding, data_format=data_format)
     conv.set_shape(tf.TensorShape([None] + shp3_static))
-    return nl(tf.nn.bias_add(conv, b) if use_bias else conv, name='output')
+    return nl(tf.nn.bias_add(conv, b, data_format=data_format) if use_bias else conv, name='output')

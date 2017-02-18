@@ -41,7 +41,9 @@ Accuracy:
     With (W,A,G)=(1,2,4), 63% error.
 
 Speed:
-    About 2.8 iteration/s on 1 TitanX. (Each epoch is set to 10000 iterations)
+    About 2.2 iteration/s on 1 TitanX. (Each epoch is set to 10000 iterations)
+    Note that this code was written early without using NCHW format. You
+    should expect a 30% speed up after switching to NCHW format.
 
 To Train, for example:
     ./alexnet-dorefa.py --dorefa 1,2,6 --data PATH --gpu 0,1
@@ -176,7 +178,6 @@ def get_data(dataset_name):
 
     if isTrain:
         class Resize(imgaug.ImageAugmentor):
-
             def __init__(self):
                 self._init(locals())
 

@@ -17,7 +17,7 @@ A small convnet model for Cifar10 or Cifar100 dataset.
 
 Cifar10:
     91% accuracy after 50k step.
-    30 step/s on TitanX
+    41 step/s on TitanX
 
 Not a good model for Cifar100, just for demonstration.
 """
@@ -40,9 +40,11 @@ class Model(ModelDesc):
 
         if is_training:
             tf.summary.image("train_image", image, 10)
+        image = tf.transpose(image, [0, 3, 1, 2])
 
         image = image / 4.0     # just to make range smaller
-        with argscope(Conv2D, nl=BNReLU, use_bias=False, kernel_shape=3):
+        with argscope(Conv2D, nl=BNReLU, use_bias=False, kernel_shape=3), \
+                argscope([Conv2D, MaxPooling, BatchNorm], data_format='NCHW'):
             logits = LinearWrap(image) \
                 .Conv2D('conv1.1', out_channel=64) \
                 .Conv2D('conv1.2', out_channel=64) \
@@ -101,7 +103,7 @@ def get_data(train_or_test, cifar_classnum):
     ds = AugmentImageComponent(ds, augmentors)
     ds = BatchData(ds, 128, remainder=not isTrain)
     if isTrain:
-        ds = PrefetchDataZMQ(ds, 3)
+        ds = PrefetchDataZMQ(ds, 5)
     return ds
 
 

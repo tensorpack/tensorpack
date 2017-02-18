@@ -34,6 +34,7 @@ class Model(ModelDesc):
         image_mean = tf.constant([0.485, 0.456, 0.406], dtype=tf.float32)
         image_std = tf.constant([0.229, 0.224, 0.225], dtype=tf.float32)
         image = (image - image_mean) / image_std
+        image = tf.transpose(image, [0, 3, 1, 2])
 
         def shortcut(l, n_in, n_out, stride):
             if n_in != n_out:
@@ -42,7 +43,7 @@ class Model(ModelDesc):
                 return l
 
         def basicblock(l, ch_out, stride, preact):
-            ch_in = l.get_shape().as_list()[-1]
+            ch_in = l.get_shape().as_list()[1]
             if preact == 'both_preact':
                 l = BNReLU('preact', l)
                 input = l
@@ -56,7 +57,7 @@ class Model(ModelDesc):
             return l + shortcut(input, ch_in, ch_out, stride)
 
         def bottleneck(l, ch_out, stride, preact):
-            ch_in = l.get_shape().as_list()[-1]
+            ch_in = l.get_shape().as_list()[1]
             if preact == 'both_preact':
                 l = BNReLU('preact', l)
                 input = l
@@ -89,7 +90,8 @@ class Model(ModelDesc):
         defs, block_func = cfg[DEPTH]
 
         with argscope(Conv2D, nl=tf.identity, use_bias=False,
-                      W_init=variance_scaling_initializer(mode='FAN_OUT')):
+                      W_init=variance_scaling_initializer(mode='FAN_OUT')), \
+                argscope([Conv2D, MaxPooling, GlobalAvgPooling, BatchNorm], data_format='NCHW'):
             logits = (LinearWrap(image)
                       .Conv2D('conv0', 64, 7, stride=2, nl=BNReLU)
                       .MaxPooling('pool0', shape=3, stride=2, padding='SAME')
@@ -120,6 +122,7 @@ class Model(ModelDesc):
 
 
 def get_data(train_or_test):
+    # return FakeData([[64, 224,224,3],[64]], 1000, random=False, dtype='uint8')
     isTrain = train_or_test == 'train'
 
     datadir = args.data

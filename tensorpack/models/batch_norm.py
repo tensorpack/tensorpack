@@ -192,7 +192,8 @@ def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5,
         assert not ctx.is_training, "In training, local statistics has to be used!"
         if data_format == 'NCHW':
             # fused is slower in inference, but support NCHW
-            xn, _, _ = tf.nn.fused_batch_norm(x, gamma, beta,
+            xn, _, _ = tf.nn.fused_batch_norm(
+                x, gamma, beta,
                 moving_mean, moving_var,
                 epsilon=epsilon, is_training=False, data_format=data_format)
         else:
