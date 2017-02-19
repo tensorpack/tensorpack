@@ -172,7 +172,7 @@ def get_config():
     )
 
     def update_target_param():
-        vars = tf.trainable_variables()
+        vars = tf.global_variables()
         ops = []
         G = tf.get_default_graph()
         for v in vars:
