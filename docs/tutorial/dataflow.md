@@ -47,6 +47,14 @@ Another good thing about Dataflow is that it is independent of
 tensorpack internals. You can just use it as an efficient data processing pipeline,
 and plug it into other frameworks.
 
+To use a DataFlow, you'll need to call `reset_state()` first to initialize it, and then use the generator however you
+want:
+```python
+df = get_some_df()
+df.reset_state()
+generator = df.get_data()
+```
+
 ### Write your own Dataflow
 
 There are several existing Dataflow, e.g. ImageFromFile, DataFromList, which you can

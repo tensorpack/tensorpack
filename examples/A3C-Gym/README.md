@@ -10,8 +10,8 @@ Most of them are the best reproducible results on gym.
 
 `CUDA_VISIBLE_DEVICES=0 ./train-atari.py --env Breakout-v0`
 
-It should run at a speed of 6~10 iterations/s on 1 GPU plus 12+ CPU cores.
-In each iteration it trains on a batch of 128 new states.
+The speed is about 6~10 iterations/s on 1 GPU plus 12+ CPU cores.
+In each iteration it trains on a batch of 128 new states. The network architecture is larger than what's used in the original paper.
 
 The pre-trained models are all trained with 4 GPUs for about 2 days.
 But on simple games like Breakout, you can get good performance within several hours.

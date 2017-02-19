@@ -90,7 +90,7 @@ class Model(ModelDesc):
                  .MaxPooling('pool2', 2)
                  .Conv2D('conv3', out_channel=64, kernel_shape=3)
 
-                 # the original arch
+                 # the original arch is 2x faster
                  # .Conv2D('conv0', image, out_channel=32, kernel_shape=8, stride=4)
                  # .Conv2D('conv1', out_channel=64, kernel_shape=4, stride=2)
                  # .Conv2D('conv2', out_channel=64, kernel_shape=3)

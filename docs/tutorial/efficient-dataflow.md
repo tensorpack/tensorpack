@@ -157,7 +157,7 @@ Then we add necessary transformations:
     ds = AugmentImageComponent(ds, lots_of_augmentors)
     ds = BatchData(ds, 256)
 ```
-1. `LMDBData` deserialize the datapoints (from string to [jpeg_string, label])
+1. `LMDBDataPoint` deserialize the datapoints (from string to [jpeg_string, label])
 2. Use OpenCV to decode the first component into ndarray
 3. Apply augmentations to the ndarray
 

@@ -100,7 +100,6 @@ class SimulatorMaster(threading.Thread):
         defining callbacks when a transition or an episode is finished.
     """
     class ClientState(object):
-
         def __init__(self):
             self.memory = []    # list of Experience
 
@@ -176,6 +175,7 @@ class SimulatorMaster(threading.Thread):
         self.context.destroy(linger=0)
 
 
+# ------------------- the following code are not used at all. Just experimental
 class SimulatorProcessDF(SimulatorProcessBase):
     """ A simulator which contains a forward model itself, allowing
     it to produce data points directly """

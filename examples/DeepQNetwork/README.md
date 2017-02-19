@@ -24,6 +24,8 @@ My Batch-A3C implementation only took <2 hours.
 Both were trained on one GPU with an extra GPU for simulation.
 
 Double-DQN runs at 18 batches/s (1152 frames/s) on TitanX.
+Note that I wasn't using the network architecture in the paper.
+If switched to the network in the paper it could run 2x faster.
 
 ## How to use
 
