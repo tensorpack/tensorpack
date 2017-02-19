@@ -11,7 +11,6 @@ from tqdm import tqdm
 from six.moves import queue
 
 from tensorpack import *
-from tensorpack.predict import get_predict_func
 from tensorpack.utils.concurrency import *
 from tensorpack.utils.stats import *
 
@@ -33,7 +32,7 @@ def play_one_episode(player, func, verbose=False):
 
 def play_model(cfg):
     player = get_player(viz=0.01)
-    predfunc = get_predict_func(cfg)
+    predfunc = OfflinePredictor(cfg)
     while True:
         score = play_one_episode(player, predfunc)
         print("Total:", score)
@@ -96,7 +95,7 @@ def eval_model_multithread(cfg, nr_eval):
     logger.info("Average Score: {}; Max Score: {}".format(mean, max))
 
 
-class Evaluator(Callback):
+class Evaluator(Triggerable):
     def __init__(self, nr_eval, input_names, output_names):
         self.eval_episode = nr_eval
         self.input_names = input_names
@@ -107,7 +106,7 @@ class Evaluator(Callback):
         self.pred_funcs = [self.trainer.get_predict_func(
             self.input_names, self.output_names)] * NR_PROC
 
-    def _trigger_epoch(self):
+    def _trigger(self):
         t = time.time()
         mean, max = eval_with_funcs(self.pred_funcs, nr_eval=self.eval_episode)
         t = time.time() - t

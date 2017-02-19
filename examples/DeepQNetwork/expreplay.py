@@ -124,8 +124,7 @@ class ExpReplay(DataFlow, Callback):
                  batch_size,
                  memory_size, init_memory_size,
                  exploration, end_exploration, exploration_epoch_anneal,
-                 update_frequency, history_len,
-                 reward_clip=None):
+                 update_frequency, history_len):
         """
         Args:
             predictor_io_names (tuple of list of str): input/output names to
@@ -191,8 +190,6 @@ class ExpReplay(DataFlow, Callback):
             q_values = self.predictor([[history]])[0][0]
             act = np.argmax(q_values)
         reward, isOver = self.player.action(act)
-        if self.reward_clip:
-            reward = np.clip(reward, self.reward_clip[0], self.reward_clip[1])
         self.mem.append(Experience(old_s, act, reward, isOver))
 
     def debug_sample(self, sample):
@@ -236,7 +233,8 @@ class ExpReplay(DataFlow, Callback):
 
     def _before_train(self):
         self._init_memory()
-        # TODO start thread here
+        self._simulator_th = self.get_simulator_thread()
+        self._simulator_th.start()
 
     def _trigger_epoch(self):
         if self.exploration > self.end_exploration:

@@ -43,7 +43,7 @@ MEMORY_SIZE = 1e6
 # NOTE: will consume at least 1e6 * 84 * 84 bytes == 6.6G memory.
 # Suggest using tcmalloc to manage memory space better.
 INIT_MEMORY_SIZE = 5e4
-STEP_PER_EPOCH = 10000
+STEPS_PER_EPOCH = 10000
 EVAL_EPISODE = 50
 
 NUM_ACTIONS = None
@@ -54,8 +54,6 @@ METHOD = None
 def get_player(viz=False, train=False):
     pl = AtariPlayer(ROM_FILE, frame_skip=ACTION_REPEAT,
                      image_shape=IMAGE_SIZE[::-1], viz=viz, live_lost_as_eoe=train)
-    global NUM_ACTIONS
-    NUM_ACTIONS = pl.get_action_space().num_actions()
     if not train:
         pl = MapPlayerState(pl, lambda im: im[:, :, np.newaxis])
         pl = HistoryFramePlayer(pl, FRAME_HISTORY)
@@ -69,9 +67,8 @@ common.get_player = get_player  # so that eval functions in common can use the p
 
 class Model(ModelDesc):
     def _get_inputs(self):
-        if NUM_ACTIONS is None:
-            p = get_player()
-            del p
+        # use a combined state, where the first channels are the current state,
+        # and the last 4 channels are the next state
         return [InputDesc(tf.uint8,
                           (None,) + IMAGE_SIZE + (CHANNEL + 1,),
                           'comb_state'),
@@ -102,28 +99,31 @@ class Model(ModelDesc):
         if METHOD != 'Dueling':
             Q = FullyConnected('fct', l, NUM_ACTIONS, nl=tf.identity)
         else:
+            # Dueling DQN
             V = FullyConnected('fctV', l, 1, nl=tf.identity)
             As = FullyConnected('fctA', l, NUM_ACTIONS, nl=tf.identity)
             Q = tf.add(As, V - tf.reduce_mean(As, 1, keep_dims=True))
         return tf.identity(Q, name='Qvalue')
 
     def _build_graph(self, inputs):
-        ctx = get_current_tower_context()
         comb_state, action, reward, isOver = inputs
         comb_state = tf.cast(comb_state, tf.float32)
         state = tf.slice(comb_state, [0, 0, 0, 0], [-1, -1, -1, 4], name='state')
         self.predict_value = self._get_DQN_prediction(state)
-        if not ctx.is_training:
+        if not get_current_tower_context().is_training:
             return
 
+        reward = tf.clip_by_value(reward, -1, 1)
         next_state = tf.slice(comb_state, [0, 0, 0, 1], [-1, -1, -1, 4], name='next_state')
         action_onehot = tf.one_hot(action, NUM_ACTIONS, 1.0, 0.0)
+
         pred_action_value = tf.reduce_sum(self.predict_value * action_onehot, 1)  # N,
         max_pred_reward = tf.reduce_mean(tf.reduce_max(
             self.predict_value, 1), name='predict_reward')
         summary.add_moving_summary(max_pred_reward)
 
-        with tf.variable_scope('target'):
+        with tf.variable_scope('target'), \
+                collection.freeze_collection([tf.GraphKeys.TRAINABLE_VARIABLES]):
             targetQ_predict_value = self._get_DQN_prediction(next_state)    # NxA
 
         if METHOD != 'Double':
@@ -145,17 +145,6 @@ class Model(ModelDesc):
         summary.add_param_summary(('conv.*/W', ['histogram', 'rms']),
                                   ('fc.*/W', ['histogram', 'rms']))   # monitor all W
         summary.add_moving_summary(self.cost)
-
-    def update_target_param(self):
-        vars = tf.trainable_variables()
-        ops = []
-        for v in vars:
-            target_name = v.op.name
-            if target_name.startswith('target'):
-                new_name = target_name.replace('target/', '')
-                logger.info("{} <- {}".format(target_name, new_name))
-                ops.append(v.assign(tf.get_default_graph().get_tensor_by_name(new_name + ':0')))
-        return tf.group(*ops, name='update_target_network')
 
     def _get_optimizer(self):
         lr = symbf.get_scalar_var('learning_rate', 1e-3, summary=True)
@@ -179,9 +168,20 @@ def get_config():
         end_exploration=END_EXPLORATION,
         exploration_epoch_anneal=EXPLORATION_EPOCH_ANNEAL,
         update_frequency=4,
-        history_len=FRAME_HISTORY,
-        reward_clip=(-1, 1)
+        history_len=FRAME_HISTORY
     )
+
+    def update_target_param():
+        vars = tf.trainable_variables()
+        ops = []
+        G = tf.get_default_graph()
+        for v in vars:
+            target_name = v.op.name
+            if target_name.startswith('target'):
+                new_name = target_name.replace('target/', '')
+                logger.info("{} <- {}".format(target_name, new_name))
+                ops.append(v.assign(G.get_tensor_by_name(new_name + ':0')))
+        return tf.group(*ops, name='update_target_network')
 
     return TrainConfig(
         dataflow=expreplay,
@@ -189,15 +189,15 @@ def get_config():
             ModelSaver(),
             ScheduledHyperParamSetter('learning_rate',
                                       [(150, 4e-4), (250, 1e-4), (350, 5e-5)]),
-            RunOp(lambda: M.update_target_param()),
+            RunOp(update_target_param),
             expreplay,
-            StartProcOrThread(expreplay.get_simulator_thread()),
-            PeriodicCallback(Evaluator(EVAL_EPISODE, ['state'], ['Qvalue']), 3),
+            PeriodicTrigger(Evaluator(
+                EVAL_EPISODE, ['state'], ['Qvalue']), every_k_epochs=5),
             # HumanHyperParamSetter('learning_rate', 'hyper.txt'),
             # HumanHyperParamSetter(ObjAttrParam(expreplay, 'exploration'), 'hyper.txt'),
         ],
         model=M,
-        steps_per_epoch=STEP_PER_EPOCH,
+        steps_per_epoch=STEPS_PER_EPOCH,
         # run the simulator on a separate GPU if available
         predict_tower=[1] if get_nr_gpu() > 1 else [0],
     )
@@ -220,6 +220,11 @@ if __name__ == '__main__':
         assert args.load is not None
     ROM_FILE = args.rom
     METHOD = args.algo
+
+    # set num_actions
+    pl = AtariPlayer(ROM_FILE, viz=False)
+    NUM_ACTIONS = pl.get_action_space().num_actions()
+    del pl
 
     if args.task != 'train':
         cfg = PredictConfig(

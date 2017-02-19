@@ -19,12 +19,11 @@ Claimed performance in the paper can be reproduced, on several games I've tested
 
 ![DQN](curve-breakout.png)
 
-DQN typically took 1.5 days of training to reach a score of 400 on breakout game (same as the paper).
+DQN typically took 1 day of training to reach a score of 400 on breakout game (same as the paper).
 My Batch-A3C implementation only took <2 hours.
 Both were trained on one GPU with an extra GPU for simulation.
 
-The x-axis is the number of iterations, not wall time.
-Double-DQN is faster at the beginning but will converge to 12 batches/s (768 frames/s) due of exploration annealing.
+Double-DQN runs at 18 batches/s (1152 frames/s) on TitanX.
 
 ## How to use
 
@@ -37,9 +36,10 @@ To train:
 # use `--algo` to select other DQN algorithms. See `-h` for more options.
 ```
 
-To visualize the agent:
+To watch the agent play:
 ```
 ./DQN.py --rom breakout.bin --task play --load trained.model
 ```
+A pretrained model on breakout can be downloaded [here](https://drive.google.com/open?id=0B9IPQTvr2BBkN1Jrei1xWW0yR28).
 
 A3C code and models for Atari games in OpenAI Gym are released in [examples/A3C-Gym](../A3C-Gym)
