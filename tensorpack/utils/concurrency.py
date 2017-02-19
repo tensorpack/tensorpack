@@ -116,7 +116,11 @@ class ShareSessionThread(threading.Thread):
 
     @contextmanager
     def default_sess(self):
-        with self._sess.as_default():
+        if self._sess:
+            with self._sess.as_default():
+                yield
+        else:
+            logger.warn("ShareSessionThread {} wasn't under a default session!".format(self.name))
             yield
 
     def start(self):

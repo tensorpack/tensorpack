@@ -90,7 +90,7 @@ def eval_with_funcs(predict_funcs, nr_eval):
 
 
 def eval_model_multithread(cfg, nr_eval):
-    func = get_predict_func(cfg)
+    func = OfflinePredictor(cfg)
     NR_PROC = min(multiprocessing.cpu_count() // 2, 8)
     mean, max = eval_with_funcs([func] * NR_PROC, nr_eval)
     logger.info("Average Score: {}; Max Score: {}".format(mean, max))
