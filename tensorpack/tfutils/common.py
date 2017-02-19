@@ -116,11 +116,24 @@ def get_tensors_by_names(names):
 
 
 def get_op_or_tensor_by_name(name):
+    """
+    Get either tf.Operation of tf.Tensor from names.
+
+    Args:
+        name (list[str] or str): names of operations or tensors.
+    """
     G = tf.get_default_graph()
-    if len(name) >= 3 and name[-2] == ':':
-        return G.get_tensor_by_name(name)
+
+    def f(n):
+        if len(n) >= 3 and n[-2] == ':':
+            return G.get_tensor_by_name(n)
+        else:
+            return G.get_operation_by_name(n)
+
+    if not isinstance(name, list):
+        return f(name)
     else:
-        return G.get_operation_by_name(name)
+        return map(f, name)
 
 
 def get_name_scope_name():

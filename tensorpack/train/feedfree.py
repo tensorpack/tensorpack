@@ -63,8 +63,7 @@ class SingleCostFeedfreeTrainer(FeedfreeTrainerBase):
 
     def run_step(self):
         """ Simply run ``self.train_op``, which minimizes the cost."""
-        ret = self.sess.run([self.train_op] + self.get_extra_fetches())
-        return ret[1:]
+        self.monitored_sess.run(self.train_op)
         # if not hasattr(self, 'cnt'):
         #     self.cnt = 0
         # else:

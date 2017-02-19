@@ -72,7 +72,8 @@ class Trainer(object):
 
         This function should only get called after :meth:`setup()` has finished.
         """
-        return self._extra_fetches
+        # TODO remove this func
+        return []
 
     def trigger_epoch(self):
         """
@@ -130,7 +131,6 @@ class Trainer(object):
         # some final operations that might modify the graph
         logger.info("Setup callbacks graph ...")
         self.config.callbacks.setup_graph(weakref.proxy(self))
-        self._extra_fetches = self.config.callbacks.extra_fetches()
 
         logger.info("Setup summaries ...")
         self.summary_writer = tf.summary.FileWriter(logger.LOG_DIR, graph=tf.get_default_graph())
@@ -149,7 +149,7 @@ class Trainer(object):
         self.monitored_sess = tf.train.MonitoredSession(
             session_creator=tf.train.ChiefSessionCreator(
                 scaffold=scaffold, config=self.config.session_config),
-            hooks=None)
+            hooks=self.config.callbacks.get_hooks())
         self.sess = self.monitored_sess._tf_sess()
         self.config.session_init._run_init(self.sess)
 
@@ -182,12 +182,7 @@ class Trainer(object):
                     for self.local_step in range(self.config.steps_per_epoch):
                         if self.monitored_sess.should_stop():
                             return
-                        fetch_data = self.run_step()  # implemented by subclass
-                        if fetch_data is None:
-                            # old trainer doesn't return fetch data
-                            callbacks.trigger_step()
-                        else:
-                            callbacks.trigger_step(*fetch_data)
+                        self.run_step()  # implemented by subclass
                     logger.info("Epoch {} (global_step {}) finished, time:{:.2f} sec.".format(
                         self.epoch_num, self.global_step, time.time() - start_time))
 

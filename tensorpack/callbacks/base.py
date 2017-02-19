@@ -85,6 +85,7 @@ class Callback(object):
             if isinstance(f, (tf.Tensor, tf.Operation)):
                 ret.append(f)
             else:
+                # warn about speed
                 ret.append(get_op_or_tensor_by_name(f))
         return ret
 
