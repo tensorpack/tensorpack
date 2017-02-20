@@ -9,20 +9,10 @@ import traceback
 
 from .base import Callback
 from .stats import StatPrinter
+from .hooks import CallbackToHook
 from ..utils import logger
 
 __all__ = ['Callbacks']
-
-
-class CallbackHook(tf.train.SessionRunHook):
-    def __init__(self, cb):
-        self.cb = cb
-
-    def before_run(self, ctx):
-        return self.cb.before_run(ctx)
-
-    def after_run(self, ctx, vals):
-        self.cb.after_run(ctx, vals)
 
 
 class CallbackTimeLogger(object):
@@ -99,7 +89,7 @@ class Callbacks(Callback):
                 traceback.print_exc()
 
     def get_hooks(self):
-        return [CallbackHook(cb) for cb in self.cbs]
+        return [CallbackToHook(cb) for cb in self.cbs]
 
     def trigger_step(self):
         for cb in self.cbs:

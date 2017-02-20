@@ -119,15 +119,14 @@ class Trainer(object):
 
         describe_model()
         # some final operations that might modify the graph
-        logger.info("Setup callbacks graph ...")
-        self.config.callbacks.setup_graph(weakref.proxy(self))
-
         logger.info("Setup summaries ...")
         self.summary_writer = tf.summary.FileWriter(logger.LOG_DIR, graph=tf.get_default_graph())
         self.summary_op = tf.summary.merge_all()    # XXX not good
         # create an empty StatHolder
         self.stat_holder = StatHolder(logger.LOG_DIR)
 
+        logger.info("Setup callbacks graph ...")
+        self.config.callbacks.setup_graph(weakref.proxy(self))
         self.config.session_init._setup_graph()
 
         def after_init(_, __):
