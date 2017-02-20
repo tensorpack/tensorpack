@@ -134,7 +134,7 @@ class HyperParamSetter(Triggerable):
             The value to assign to the variable.
 
         Note:
-            Subclasses will implemenet the abstract method
+            Subclasses will implement the abstract method
             :meth:`_get_value_to_set`, which should return a new value to
             set, or return None to do nothing.
         """

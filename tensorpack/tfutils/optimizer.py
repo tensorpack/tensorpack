@@ -69,7 +69,7 @@ class PostProcessOptimizer(ProxyOptimizer):
             opt (tf.train.Optimizer):
             func (tf.Variable -> tf.Operation or None): the operation needed
                 to perform for this variable after the gradient update.
-            colocate (boolean): colocate the function with the variable.
+            colocate (boolean): collocate the function with the variable.
         """
         super(PostProcessOptimizer, self).__init__(opt)
         self._func = func

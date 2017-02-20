@@ -91,7 +91,7 @@ def perturb_BB(image_shape, bb, max_pertub_pixel,
     Args:
         image_shape: [h, w]
         bb (Rect): original bounding box
-        max_pertub_pixel: pertubation on each coordinate
+        max_pertub_pixel: perturbation on each coordinate
         max_aspect_ratio_diff: result can't have an aspect ratio too different from the original
         max_try: if cannot find a valid bounding box, return the original
     Returns:
@@ -121,7 +121,7 @@ def perturb_BB(image_shape, bb, max_pertub_pixel,
 
 class RandomCropAroundBox(ImageAugmentor):
     """
-    Crop a box around a bounding box by some random pertubation
+    Crop a box around a bounding box by some random perturbation
     """
 
     def __init__(self, perturb_ratio, max_aspect_ratio_diff=0.3):

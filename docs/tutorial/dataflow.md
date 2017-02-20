@@ -5,7 +5,7 @@ Dataflow is a unified interface to produce data.
 
 A Dataflow has a `get_data()` generator method,
 which yields a `datapoint` when called.
-A datapoint must be a **list** of Python objects which I called the `components` of this datapoint.
+A data point must be a **list** of Python objects which I called the `components` of this data point.
 
 For example, to train on MNIST dataset, you can build a Dataflow
 that produces datapoints of two elements (components):
@@ -22,7 +22,7 @@ prefetch data__, etc. An example is as the following:
 ````python
 # define a Dataflow which produces image-label pairs from a caffe lmdb database
 df = CaffeLMDB('/path/to/caffe/lmdb', shuffle=False)
-# resize the image component of each datapoint
+# resize the image component of each data point
 df = AugmentImageComponent(df, [imgaug.Resize((225, 225))])
 # group data into batches of size 128
 df = BatchData(df, 128)
@@ -33,7 +33,7 @@ A more complicated example is the [ResNet training script](../examples/ResNet/im
 with all the data preprocessing.
 
 All these modules are written in Python,
-so you can easily implement whatever opeartions/transformations you need,
+so you can easily implement whatever operations/transformations you need,
 without worrying about adding operators to TensorFlow.
 In the mean time, thanks to the prefetching, it can still run fast enough for
 tasks as large as ImageNet training.
@@ -56,7 +56,7 @@ Dataflow implementations for several well-known datasets are provided in the
 [dataflow.dataset](http://tensorpack.readthedocs.io/en/latest/modules/tensorpack.dataflow.dataset.html)
 module, which you can take as a reference.
 
-A Dataflow has a `get_data()` method which yields a datapoint every time.
+A Dataflow has a `get_data()` method which yields a data point every time.
 ```python
 class MyDataFlow(DataFlow):
   def get_data(self):
@@ -71,7 +71,7 @@ Optionally, Dataflow can implement the following two methods:
 + `size()`. Return the number of elements the generator can produce. Certain modules might require this.
 	For example, only Dataflows with the same number of elements can be joined together.
 
-+ `reset_state()`. It's guranteed that the process which uses this DataFlow will invoke this method before using it.
++ `reset_state()`. It's guaranteed that the process which uses this DataFlow will invoke this method before using it.
 	So if this DataFlow needs to something after a `fork()`, you should put it here.
 
 	A typical situation is when your Dataflow uses random number generator (RNG). Then you'd need to reset the RNG here,

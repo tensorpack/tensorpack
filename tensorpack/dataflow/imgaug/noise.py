@@ -31,7 +31,7 @@ class JpegNoise(ImageAugmentor):
 
 class GaussianNoise(ImageAugmentor):
     """
-    Add random gaussian noise N(0, sigma^2) of the same shape to img.
+    Add random Gaussian noise N(0, sigma^2) of the same shape to img.
     """
     def __init__(self, sigma=1, clip=True):
         """

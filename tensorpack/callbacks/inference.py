@@ -56,7 +56,7 @@ class Inferencer(object):
 
     def get_output_tensors(self):
         """
-        Return a list of tensor names (guranteed not op name) this inferencer needs.
+        Return a list of tensor names (guaranteed not op name) this inferencer needs.
         """
         ret = self._get_output_tensors()
         return [get_op_tensor_name(n)[1] for n in ret]
@@ -145,7 +145,7 @@ class ClassificationError(Inferencer):
             logger.error("[DEPRECATED] use a 'wrong vector' for ClassificationError instead of nr_wrong. Exiting..")
             sys.exit(1)
         else:
-            # TODO put shape assertion into inferencerrunner
+            # TODO put shape assertion into inference-runner
             assert vec.ndim == 1, "{} is not a vector!".format(self.wrong_tensor_name)
             batch_size = len(vec)
             wrong = np.sum(vec)

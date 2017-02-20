@@ -17,7 +17,7 @@ class BackgroundFiller(object):
 
     def fill(self, background_shape, img):
         """
-        Return a proper background image of background_shape, given img
+        Return a proper background image of background_shape, given img.
 
         Args:
             background_shape: a shape of [h, w]
@@ -84,7 +84,7 @@ class CenterPaste(ImageAugmentor):
 
 class RandomPaste(CenterPaste):
     """
-    Randomly paste the image onto a background convas
+    Randomly paste the image onto a background convas.
     """
 
     def _get_augment_params(self, img):

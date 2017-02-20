@@ -39,7 +39,7 @@ class MergeAllSummaries(Callback):
     def __init__(self, run_alone=False, key=tf.GraphKeys.SUMMARIES):
         """
         Args:
-            run_alone (bool): whether to eval the summaries alone.
+            run_alone (bool): whether to evaluate the summaries alone.
                 If True, summaries will be evaluated after each epoch alone.
                 If False, summaries will be evaluated together with other
                 `sess.run` calls, in the last step of each epoch.
