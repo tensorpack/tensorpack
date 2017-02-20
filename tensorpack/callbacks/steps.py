@@ -12,7 +12,9 @@ import tqdm
 from ..utils import logger, get_tqdm_kwargs
 from ..utils.naming import (GLOBAL_STEP_INCR_OP_NAME,
                             LOCAL_STEP_OP_NAME)
-from ..tfutils.common import get_op_tensor_name, get_global_step_var, get_global_step_value
+from ..tfutils.common import (
+    get_op_tensor_name, get_global_step_var,
+    get_global_step_value, get_op_or_tensor_by_name)
 from .base import Callback
 
 __all__ = ['StepTensorPrinter', 'MaintainStepCounter',
@@ -33,8 +35,11 @@ class StepTensorPrinter(Callback):
         logger.warn("Using print_stat or tf.Print in the graph is much faster than StepTensorPrinter!")
         self._names = names
 
+    def _before_train(self):
+        self._fetches = get_op_or_tensor_by_name(self._names)
+
     def _extra_fetches(self):
-        return self._names
+        return self._fetches
 
     def _trigger_step(self, *args):
         assert len(args) == len(self._names), len(args)
@@ -63,9 +68,15 @@ class MaintainStepCounter(Callback):
         gs_val = get_global_step_value()
         if gs_val != 0:
             logger.info("Start training with global_step={}".format(gs_val))
+        self._last_updated = self.trainer.local_step
 
     def _extra_fetches(self):
-        return [self.gs_incr_var.op]
+        # increase global_step, when trainer.local_step changed
+        if self.trainer.local_step != self._last_updated:
+            self._last_updated = self.trainer.local_step
+            return [self.gs_incr_var.op]
+        else:
+            return []
 
 
 class ProgressBar(Callback):
@@ -80,21 +91,33 @@ class ProgressBar(Callback):
         self._names = [get_op_tensor_name(n)[1] for n in names]
         self._tags = [get_op_tensor_name(n)[0].split("/")[-1] for n in names]
 
-    def _extra_fetches(self):
-        return self._names
-
     def _before_train(self):
+        self._fetches = get_op_or_tensor_by_name(self._names)
+        self._last_updated = self.trainer.local_step
+
         self._total = self.trainer.config.steps_per_epoch
         self._tqdm_args = get_tqdm_kwargs(leave=True)
         if len(self._names):
             self._tqdm_args['bar_format'] = self._tqdm_args['bar_format'] + "{postfix} "
 
-    def _trigger_step(self, *args):
-        if self.local_step == 1:
-            self._bar = tqdm.trange(self._total, **self._tqdm_args)
-        if len(self._names):
-            self._bar.set_postfix(zip(self._tags, args))
-        self._bar.update()
+    def _extra_fetches(self):
+        if self.trainer.local_step != self._last_updated:
+            # local_step == number of steps that have finished in this epoch
+            self._last_updated = self.trainer.local_step
 
-        if self.local_step == self._total:
-            self._bar.close()
+            if self.trainer.local_step == 0:
+                self._bar = tqdm.trange(self._total, **self._tqdm_args)
+            else:
+                self._bar.update()
+
+            # XXX TODO move this to trigger_step after rename
+            if self.trainer.local_step == self._total - 1:
+                self._bar.close()
+
+            return self._fetches
+        else:
+            return []
+
+    def _trigger_step(self, *args):
+        if len(args):
+            self._bar.set_postfix(zip(self._tags, args))

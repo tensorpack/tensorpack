@@ -4,6 +4,7 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
+from six.moves import map
 
 from ..utils.naming import (
     GLOBAL_STEP_VAR_NAME,
@@ -133,7 +134,7 @@ def get_op_or_tensor_by_name(name):
     if not isinstance(name, list):
         return f(name)
     else:
-        return map(f, name)
+        return list(map(f, name))
 
 
 def get_name_scope_name():

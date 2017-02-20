@@ -102,7 +102,6 @@ class Callbacks(Callback):
                 traceback.print_exc()
 
     def get_hooks(self):
-        # TODO skip
         return [CallbackHook(cb) for cb in self.cbs]
 
     def _trigger_epoch(self):

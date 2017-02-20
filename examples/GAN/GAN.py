@@ -77,10 +77,6 @@ class GANTrainer(FeedfreeTrainerBase):
             self.d_min = opt.minimize(self.model.d_loss, var_list=self.model.d_vars, name='d_op')
         self.train_op = self.d_min
 
-    def run_step(self):
-        ret = self.sess.run([self.train_op] + self.get_extra_fetches())
-        return ret[1:]
-
 
 class RandomZData(DataFlow):
     def __init__(self, shape):

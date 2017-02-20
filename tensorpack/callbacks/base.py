@@ -115,11 +115,6 @@ class Callback(object):
         return self.trainer.epoch_num
 
     @property
-    def local_step(self):
-        # inside trainer, we're still in the 'local_step' loop, so the number is off by 1
-        return self.trainer.local_step + 1
-
-    @property
     def global_step(self):
         return self.trainer.global_step
 

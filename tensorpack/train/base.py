@@ -54,7 +54,7 @@ class Trainer(object):
         self.model = config.model
 
         self.epoch_num = self.config.starting_epoch - 1
-        self.local_step = 0
+        self.local_step = -1
 
     def train(self):
         """ Start training """
