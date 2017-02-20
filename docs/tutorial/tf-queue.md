@@ -15,7 +15,7 @@ while True:
   minimize_op.run(feed_dict={'X': X, 'y': y})
 ```
 However, when you need to load data from Python-side, this is the only available interface in frameworks such as Keras, tflearn.
-This is part of the reason why [tensorpack is fast](https://gist.github.com/ppwwyyxx/8d95da79f8d97036a7d67c2416c851b6).
+This is part of the reason why [tensorpack is faster](https://gist.github.com/ppwwyyxx/8d95da79f8d97036a7d67c2416c851b6).
 
 You should use something like this instead:
 ```python

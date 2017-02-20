@@ -3,21 +3,21 @@
 This tutorial gives an overview of how to build an efficient DataFlow, using ImageNet
 dataset as an example.
 Our goal in the end is to have
-a generator which yields ImageNet datapoints (after proper preprocessing) as fast as possible.
+a __generator__ which yields preprocessed ImageNet images and labels as fast as possible.
 Since it is simply a generator interface, you can use the DataFlow in other frameworks (e.g. Keras)
 or your own code as well.
 
 We use ILSVRC12 training set, which contains 1.28 million images.
-Following the [ResNet example](../examples/ResNet), our pre-processing need images in their original resolution,
-so we'll read the original dataset instead of a down-sampled version here.
-The average resolution is about 400x350 <sup>[[1]]</sup>.
 The original images (JPEG compressed) are 140G in total.
+The average resolution is about 400x350 <sup>[[1]]</sup>.
+Following the [ResNet example](../examples/ResNet), we need images in their original resolution,
+so we'll read the original dataset instead of a down-sampled version.
+We'll need to reach a speed of, roughly 1k images per second, to keep GPUs busy.
 
 Note that the actual performance would depend on not only the disk, but also
 memory (for caching) and CPU (for data processing).
-You'll need to tune the parameters (#processes, #threads, size of buffer, etc.)
-or change the pipeline for new tasks and new machines
-to achieve better performance.
+You'll definitely need to tune the parameters (#processes, #threads, size of buffer, etc.)
+or change the pipeline for new tasks and new machines to achieve best performance.
 
 ## Random Read
 
