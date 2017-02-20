@@ -158,7 +158,7 @@ class Triggerable(Callback):
 
     If an triggerable is used as a callback directly (instead of under other
     higher-level wrapper to control the trigger), it will by default trigger after
-    every epoch. This is mainly for backward-compatibilty and convenience.
+    every epoch. This is mainly for backward-compatibility and convenience.
 
     .. document private functions
     .. automethod:: _trigger

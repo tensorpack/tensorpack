@@ -14,7 +14,7 @@ def class_scope(func):
     The "{class_name}" is either ``cls.name`` or simply the class name.
     It helps enhance TensorBoard graph visualization by grouping operators.
 
-    This is just syntatic sugar to prevent wrinting: with
+    This is just syntactic sugar to prevent writing: with
     ``tf.name_scope(...)`` in each method.
     """
 
@@ -36,7 +36,7 @@ def class_scope(func):
 class Distribution(object):
     """
     Base class of symbolic distribution utilities
-    (the distrbution parameters can be symbolic tensors).
+    (the distribution parameters can be symbolic tensors).
     """
 
     name = None
@@ -73,7 +73,7 @@ class Distribution(object):
     @class_scope
     def entropy(self, x, theta):
         r""" Entropy of this distribution parameterized by theta,
-            esimtated from a batch of samples.
+            estimated from a batch of samples.
 
         .. math::
 
@@ -91,7 +91,7 @@ class Distribution(object):
     @class_scope
     def sample(self, batch_size, theta):
         """
-        Sample a batch of vectors from this distrbution parameterized by theta.
+        Sample a batch of vectors from this distribution parameterized by theta.
 
         Args:
             batch_size(int): the batch size.
@@ -121,7 +121,7 @@ class Distribution(object):
 
             Note that for each distribution,
             there are many feasible ways to design this function and it's hard to say which is better.
-            The default implementations in the distrbution classes here is
+            The default implementations in the distribution classes here is
             just one reasonable way to do this.
 
         Args:

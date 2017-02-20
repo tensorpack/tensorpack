@@ -134,7 +134,7 @@ _summaried_gradient = set()
 # TODO let the maintain op depend on grad directly ?
 class SummaryGradient(MapGradient):
     """
-    Summary histogram and RMS for each graident variable.
+    Summary histogram and RMS for each gradient variable.
     """
 
     def __init__(self):

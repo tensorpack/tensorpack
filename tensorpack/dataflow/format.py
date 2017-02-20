@@ -181,7 +181,9 @@ def CaffeLMDB(lmdb_path, shuffle=True, keys=None):
         a :class:`LMDBDataDecoder` instance.
 
     Example:
-        ``ds = CaffeLMDB("/tmp/validation", keys='{:0>8d}')``
+
+    .. code-block:: none
+        ds = CaffeLMDB("/tmp/validation", keys='{:0>8d}')
     """
 
     cpb = get_caffe_pb()

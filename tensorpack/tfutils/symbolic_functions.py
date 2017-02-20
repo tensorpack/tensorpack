@@ -259,7 +259,7 @@ def contrastive_loss(left, right, y, margin, extra=False, scope="constrastive_lo
 
 def cosine_loss(left, right, y, scope="cosine_loss"):
     r"""Loss for Siamese networks (cosine version).
-    Same as :func:`contrastive_loss` but with different similarity measurment.
+    Same as :func:`contrastive_loss` but with different similarity measurement.
 
     .. math::
         [\frac{l \cdot r}{\lVert l\rVert \lVert r\rVert} - (2y-1)]^2
@@ -306,7 +306,7 @@ def triplet_loss(anchor, positive, negative, margin, extra=False, scope="triplet
         anchor (tf.Tensor): anchor feature vectors of shape [Batch, N].
         positive (tf.Tensor): features of positive match of the same shape.
         negative (tf.Tensor): features of negative match of the same shape.
-        margin (float): horizont for negative examples
+        margin (float): horizon for negative examples
         extra (bool): also return distances for pos and neg.
 
     Returns:

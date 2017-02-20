@@ -33,7 +33,7 @@ A more complicated example is the [ResNet training script](../examples/ResNet/im
 with all the data preprocessing.
 
 All these modules are written in Python,
-so you can easily implement whatever opeartions/transformations you need,
+so you can easily implement whatever operations/transformations you need,
 without worrying about adding operators to TensorFlow.
 In the mean time, thanks to the prefetching, it can still run fast enough for
 tasks as large as ImageNet training.
@@ -71,7 +71,7 @@ Optionally, Dataflow can implement the following two methods:
 + `size()`. Return the number of elements the generator can produce. Certain modules might require this.
 	For example, only Dataflows with the same number of elements can be joined together.
 
-+ `reset_state()`. It's guranteed that the process which uses this DataFlow will invoke this method before using it.
++ `reset_state()`. It's guaranteed that the process which uses this DataFlow will invoke this method before using it.
 	So if this DataFlow needs to something after a `fork()`, you should put it here.
 
 	A typical situation is when your Dataflow uses random number generator (RNG). Then you'd need to reset the RNG here,
