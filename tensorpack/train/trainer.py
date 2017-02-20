@@ -101,12 +101,6 @@ class SimpleTrainer(Trainer):
         grads = opt.compute_gradients(cost_var)
         self.train_op = opt.apply_gradients(grads, name='min_op')
 
-    def _trigger_epoch(self):
-        if self.summary_op is not None:
-            feed = self._input_method.last_feed()
-            summary_str = self.summary_op.eval(feed_dict=feed)
-            self.add_summary(summary_str)
-
     def get_predict_func(self, input_names, output_names):
         return self._predictor_factory.get_predictor(input_names, output_names, 0)
 

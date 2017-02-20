@@ -20,13 +20,6 @@ class FeedfreeTrainerBase(Trainer):
     """ A base trainer which runs iteration without feed_dict (therefore faster)
         Expect ``self.data`` to be a :class:`FeedfreeInput`.
     """
-    def _trigger_epoch(self):
-        # run summary_op every epoch
-        # TODO FIXME summary_op will take a data! This is not good for TensorInput.
-        if self.summary_op is not None:
-            summary_str = self.summary_op.eval()
-            self.add_summary(summary_str)
-
     def build_train_tower(self):
         """
         Get input tensors from `self.input_method` and build the graph.

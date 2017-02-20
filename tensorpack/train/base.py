@@ -38,7 +38,6 @@ class Trainer(object):
 
         stat_holder (StatHolder)
         summary_writer (tf.summary.FileWriter)
-        summary_op (tf.Operation): an Op which outputs all summaries.
 
         epoch_num (int): the number of epochs that have finished.
         local_step (int): the number of steps that have finished in the current epoch.
@@ -75,7 +74,6 @@ class Trainer(object):
         self.config.callbacks.trigger_epoch()
         self.summary_writer.flush()
 
-    @abstractmethod
     def _trigger_epoch(self):
         pass
 
@@ -121,7 +119,6 @@ class Trainer(object):
         # some final operations that might modify the graph
         logger.info("Setup summaries ...")
         self.summary_writer = tf.summary.FileWriter(logger.LOG_DIR, graph=tf.get_default_graph())
-        self.summary_op = tf.summary.merge_all()    # XXX not good
         # create an empty StatHolder
         self.stat_holder = StatHolder(logger.LOG_DIR)
 
@@ -178,8 +175,7 @@ class Trainer(object):
                     logger.info("Epoch {} (global_step {}) finished, time:{:.2f} sec.".format(
                         self.epoch_num, self.global_step, time.time() - start_time))
 
-                    # trigger epoch outside the timing region.
-                    self.trigger_epoch()
+                    self.trigger_epoch()  # trigger epoch outside the timing region.
             except StopTraining:
                 logger.info("Training was stopped.")
             except KeyboardInterrupt:
