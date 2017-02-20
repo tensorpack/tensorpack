@@ -69,18 +69,18 @@ class Callback(object):
     def _after_run(self, run_context, run_values):
         pass
 
-    def extra_fetches(self):
+    def before_run(self, ctx):
         """
-        Returns:
-            list: a list of elements to be fetched in every step and
-                passed to :meth:`trigger_step`. Elements can be
-                Operations/Tensors, or names of Operations/Tensors.
-
-        This function will be called only after the graph is finalized.
-
-        This function should be a pure function (i.e. no side-effect when called)
+        Same as ``tf.train.SessionRunHook.before_run``.
         """
-        fetches = self._extra_fetches()
+        fetches = self._before_run(ctx)
+        if isinstance(fetches, tf.train.SessionRunArgs):
+            return fetches
+        if fetches is None:
+            return None
+
+        # also support list of names
+        assert isinstance(fetches, list), fetches
         ret = []
         for f in fetches:
             if isinstance(f, (tf.Tensor, tf.Operation)):
@@ -88,10 +88,10 @@ class Callback(object):
             else:
                 # warn about speed
                 ret.append(get_op_or_tensor_by_name(f))
-        return ret
+        return tf.train.SessionRunArgs(fetches=ret)
 
-    def _extra_fetches(self):
-        return []
+    def _before_run(self, ctx):
+        return None
 
     def trigger_epoch(self):
         """
@@ -180,7 +180,11 @@ class ProxyCallback(Callback):
     def _after_train(self):
         self.cb.after_train()
 
-    # TODO before/after_run
+    def _before_run(self, ctx):
+        self.cb._before_run(ctx)
+
+    def _after_run(self, ctx, run_values):
+        self.cb._after_run(ctx, run_values)
 
     def __str__(self):
         return "Proxy-" + str(self.cb)

@@ -38,10 +38,10 @@ class StepTensorPrinter(Callback):
     def _before_train(self):
         self._fetches = get_op_or_tensor_by_name(self._names)
 
-    def _extra_fetches(self):
+    def _before_run(self, _):
         return self._fetches
 
-    def _after_run(self, ctx, vals):
+    def _after_run(self, _, vals):
         args = vals.results
         assert len(args) == len(self._names), len(args)
         for n, v in zip(self._names, args):
@@ -71,13 +71,13 @@ class MaintainStepCounter(Callback):
             logger.info("Start training with global_step={}".format(gs_val))
         self._last_updated = self.trainer.local_step
 
-    def _extra_fetches(self):
+    def _before_run(self, _):
         # increase global_step, when trainer.local_step changed
         if self.trainer.local_step != self._last_updated:
             self._last_updated = self.trainer.local_step
             return [self.gs_incr_var.op]
         else:
-            return []
+            return None
 
 
 class ProgressBar(Callback):
@@ -101,9 +101,8 @@ class ProgressBar(Callback):
         if len(self._names):
             self._tqdm_args['bar_format'] = self._tqdm_args['bar_format'] + "{postfix} "
 
-    def _extra_fetches(self):
+    def _before_run(self, _):
         if self.trainer.local_step != self._last_updated:
-            # local_step == number of steps that have finished in this epoch
             self._last_updated = self.trainer.local_step
 
             if self.trainer.local_step == 0:
@@ -111,9 +110,9 @@ class ProgressBar(Callback):
 
             return self._fetches
         else:
-            return []
+            return None
 
-    def _after_run(self, ctx, run_values):
+    def _after_run(self, _, run_values):
         res = run_values.results
         if len(res):
             self._bar.set_postfix(zip(self._tags, res))

@@ -64,10 +64,6 @@ class PeriodicCallback(ProxyCallback):
         Args:
             cb(Callback): the callback to be triggered periodically
             period(int): the period, the number of epochs for a callback to be triggered.
-
-        Note:
-            In ``cb``, ``self.epoch_num`` will not be the true number of
-            epochs any more.
         """
         super(PeriodicCallback, self).__init__(cb)
         self.period = int(period)

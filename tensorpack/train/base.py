@@ -40,8 +40,8 @@ class Trainer(object):
         summary_writer (tf.summary.FileWriter)
         summary_op (tf.Operation): an Op which outputs all summaries.
 
-        epoch_num (int): the current epoch number.
-        local_step (int): the current step number (in an epoch).
+        epoch_num (int): the number of epochs that have finished.
+        local_step (int): the number of steps that have finished in the current epoch.
     """
 
     def __init__(self, config):
@@ -64,16 +64,6 @@ class Trainer(object):
     @abstractmethod
     def run_step(self):
         """ Abstract method. Run one iteration. """
-
-    def get_extra_fetches(self):
-        """
-        Returns:
-            list: list of tensors/ops to fetch in each step.
-
-        This function should only get called after :meth:`setup()` has finished.
-        """
-        # TODO remove this func
-        return []
 
     def trigger_epoch(self):
         """
@@ -162,7 +152,7 @@ class Trainer(object):
         try:
             return self._starting_step + \
                 self.config.steps_per_epoch * (self.epoch_num - 1) + \
-                self.local_step + 1
+                self.local_step + 1  # +1: the ongoing step
         except AttributeError:
             return get_global_step_value()
 

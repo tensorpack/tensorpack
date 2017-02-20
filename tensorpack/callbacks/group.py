@@ -18,9 +18,8 @@ class CallbackHook(tf.train.SessionRunHook):
     def __init__(self, cb):
         self.cb = cb
 
-    def before_run(self, _):
-        return tf.train.SessionRunArgs(
-            fetches=self.cb.extra_fetches())
+    def before_run(self, ctx):
+        return self.cb.before_run(ctx)
 
     def after_run(self, ctx, vals):
         self.cb.after_run(ctx, vals)
@@ -81,7 +80,6 @@ class Callbacks(Callback):
                 break
 
         self.cbs = cbs
-        self._extra_fetches_cache = None
 
     def _setup_graph(self):
         with tf.name_scope(None):
