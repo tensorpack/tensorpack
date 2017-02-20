@@ -22,9 +22,8 @@ class CallbackHook(tf.train.SessionRunHook):
         return tf.train.SessionRunArgs(
             fetches=self.cb.extra_fetches())
 
-    def after_run(self, _, vals):
-        res = vals.results
-        self.cb.trigger_step(*res)
+    def after_run(self, ctx, vals):
+        self.cb.after_run(ctx, vals)
 
 
 class CallbackTimeLogger(object):
@@ -103,6 +102,10 @@ class Callbacks(Callback):
 
     def get_hooks(self):
         return [CallbackHook(cb) for cb in self.cbs]
+
+    def trigger_step(self):
+        for cb in self.cbs:
+            cb.trigger_step()
 
     def _trigger_epoch(self):
         tm = CallbackTimeLogger()

@@ -183,6 +183,7 @@ class Trainer(object):
                         if self.monitored_sess.should_stop():
                             return
                         self.run_step()  # implemented by subclass
+                        callbacks.trigger_step()
                     logger.info("Epoch {} (global_step {}) finished, time:{:.2f} sec.".format(
                         self.epoch_num, self.global_step, time.time() - start_time))
 

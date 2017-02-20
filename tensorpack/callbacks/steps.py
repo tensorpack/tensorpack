@@ -41,7 +41,8 @@ class StepTensorPrinter(Callback):
     def _extra_fetches(self):
         return self._fetches
 
-    def _trigger_step(self, *args):
+    def _after_run(self, ctx, vals):
+        args = vals.results
         assert len(args) == len(self._names), len(args)
         for n, v in zip(self._names, args):
             logger.info("{}: {}".format(n, v))
@@ -107,17 +108,17 @@ class ProgressBar(Callback):
 
             if self.trainer.local_step == 0:
                 self._bar = tqdm.trange(self._total, **self._tqdm_args)
-            else:
-                self._bar.update()
-
-            # XXX TODO move this to trigger_step after rename
-            if self.trainer.local_step == self._total - 1:
-                self._bar.close()
 
             return self._fetches
         else:
             return []
 
-    def _trigger_step(self, *args):
-        if len(args):
-            self._bar.set_postfix(zip(self._tags, args))
+    def _after_run(self, ctx, run_values):
+        res = run_values.results
+        if len(res):
+            self._bar.set_postfix(zip(self._tags, res))
+
+    def _trigger_step(self):
+        self._bar.update()
+        if self.trainer.local_step == self._total - 1:
+            self._bar.close()

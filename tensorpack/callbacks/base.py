@@ -54,18 +54,19 @@ class Callback(object):
     def _before_train(self):
         pass
 
-    def trigger_step(self, *args):
+    def trigger_step(self):
         """
-        Callback to be triggered after every step (every backpropagation).
-
-        Args:
-            args: a list of values corresponding to :meth:`extra_fetches`.
-
-        Could be useful to apply some tricks on parameters (clipping, low-rank, etc)
+        Callback to be triggered after every run_step.
         """
-        self._trigger_step(*args)
+        self._trigger_step()
 
-    def _trigger_step(self, *args):
+    def _trigger_step(self):
+        pass
+
+    def after_run(self, run_context, run_values):
+        self._after_run(run_context, run_values)
+
+    def _after_run(self, run_context, run_values):
         pass
 
     def extra_fetches(self):
@@ -173,11 +174,13 @@ class ProxyCallback(Callback):
     def _trigger_epoch(self):
         self.cb.trigger_epoch()
 
-    def _trigger_step(self, *args):
-        self.cb.trigger_step(*args)
+    def _trigger_step(self):
+        self.cb.trigger_step()
 
     def _after_train(self):
         self.cb.after_train()
+
+    # TODO before/after_run
 
     def __str__(self):
         return "Proxy-" + str(self.cb)

@@ -31,7 +31,7 @@ class PeriodicTrigger(ProxyCallback):
         self._step_k = every_k_steps
         self._epoch_k = every_k_epochs
 
-    def _trigger_step(self, *args):
+    def _trigger_step(self):
         if self._step_k is None:
             return
         # trigger_step is triggered after run_step, so
@@ -39,7 +39,7 @@ class PeriodicTrigger(ProxyCallback):
         if (self.trainer.local_step + 1) % self._step_k == 0:
             self.cb.trigger()
 
-    def _trigger_epoch(self, *args):
+    def _trigger_epoch(self):
         if self._epoch_k is None:
             return
         if self.epoch_num % self._epoch_k == 0:
