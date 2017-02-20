@@ -6,11 +6,8 @@
 import tensorflow as tf
 import numpy as np
 import time
-from tensorpack import (FeedfreeTrainerBase, TowerContext,
-                        QueueInput, ModelDesc)
+from tensorpack import (FeedfreeTrainerBase, QueueInput, ModelDesc, DataFlow)
 from tensorpack.tfutils.summary import add_moving_summary
-from tensorpack.tfutils.gradproc import apply_grad_processors, CheckGradient
-from tensorpack.dataflow import DataFlow
 
 
 class GANModelDesc(ModelDesc):
@@ -19,12 +16,8 @@ class GANModelDesc(ModelDesc):
         Assign self.g_vars to the parameters under scope `g_scope`,
         and same with self.d_vars.
         """
-        all_vars = tf.trainable_variables()
-        self.g_vars = [v for v in all_vars if v.name.startswith(g_scope + '/')]
-        self.d_vars = [v for v in all_vars if v.name.startswith(d_scope + '/')]
-        # TODO after TF1.0.0rc1
-        # self.g_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, g_scope)
-        # self.d_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, d_scope)
+        self.g_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, g_scope)
+        self.d_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, d_scope)
 
     def build_losses(self, logits_real, logits_fake):
         """D and G play two-player minimax game with value function V(G,D)

@@ -70,7 +70,7 @@ def get_config():
 class WGANTrainer(FeedfreeTrainerBase):
     """ A new trainer which runs two optimization ops with 5:1 ratio.
         This is to be consistent with the original code, but I found just
-        running them 1:1 (i.e. using the existing GANTrainer) also works well.
+        running them 1:1 (i.e. just using the existing GANTrainer) also works well.
     """
     def __init__(self, config):
         self._input_method = QueueInput(config.dataflow)

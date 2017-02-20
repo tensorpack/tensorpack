@@ -28,15 +28,19 @@ Double-DQN runs at 18 batches/s (1152 frames/s) on TitanX.
 ## How to use
 
 Download an [atari rom](https://github.com/openai/atari-py/tree/master/atari_py/atari_roms) to
-`$TENSORPACK_DATASET/atari_rom/` (defaults to tensorpack/dataflow/dataset/atari_rom/).
+`$TENSORPACK_DATASET/atari_rom/` (defaults to ~/tensorpack_data/atari_rom/), e.g.:
+```
+mkdir -p ~/tensorpack_data/atari_rom
+wget https://github.com/openai/atari-py/raw/master/atari_py/atari_roms/breakout.bin -O ~/tensorpack_data/atari_rom/breakout.bin
+```
 
-To train:
+Start Training:
 ```
 ./DQN.py --rom breakout.bin
 # use `--algo` to select other DQN algorithms. See `-h` for more options.
 ```
 
-To watch the agent play:
+Watch the agent play:
 ```
 ./DQN.py --rom breakout.bin --task play --load trained.model
 ```

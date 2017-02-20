@@ -54,4 +54,4 @@ Train a simple GAN on mnist, conditioned on the class labels.
 
 ## WGAN-CelebA.py
 
-Reproduce WGAN by some small modifications on DCGAN-CelebA.py.
+Reproduce Wasserstein GAN by some small modifications on DCGAN-CelebA.py.

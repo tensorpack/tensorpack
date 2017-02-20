@@ -34,8 +34,9 @@ that we can measure the speed of this DataFlow in terms of "batch per second". B
 will concatenate the data into an `numpy.ndarray`, but since images are originally of different shapes, we use
 `use_list=True` so that it just produces lists.
 
-On an SSD you probably can already observe good speed here (e.g. 5 it/s), but on HDD the speed may be just 1 it/s,
-because we're doing random read on the filesystem (regardless of whether `shuffle` is True).
+On an SSD you probably can already observe good speed here (e.g. 5 it/s, that is 1280 samples/s), but on HDD the speed may be just 1 it/s,
+because we're doing heavy random read on the filesystem (regardless of whether `shuffle` is True).
+Note that for smaller datasets, random read + prefetching is usually enough.
 
 We'll now add the cheapest pre-processing now to get an ndarray in the end instead of a list
 (because TensorFlow will need ndarray eventually):
@@ -176,7 +177,7 @@ Both imdecode and the augmentors can be quite slow. We can parallelize them like
 Since we are reading the database sequentially, having multiple identical instances of the
 underlying DataFlow will result in biased data distribution. Therefore we use `PrefetchData` to
 launch the underlying DataFlow in one independent process, and only parallelize the transformations.
-(`PrefetchDataZMQ` is faster but not fork-safe, so the first prefetch has to be `PrefetchData`. This is [issue#138])
+(`PrefetchDataZMQ` is faster but not fork-safe, so the first prefetch has to be `PrefetchData`. This is [issue#138](https://github.com/ppwwyyxx/tensorpack/issues/138))
 
 Let me summarize what the above DataFlow does:
 1. One process reads LMDB file, shuffle them in a buffer and put them into a `multiprocessing.Queue` (used by `PrefetchData`).
@@ -186,7 +187,7 @@ Let me summarize what the above DataFlow does:
 	 how the `Trainer` is implemented.
 
 The above DataFlow can run at a speed of 5~10 batches per second, if you have good CPUs, RAM, disks and augmentors.
-As a reference, tensorpack can train ResNet-18 (a shallow ResNet) at 5.5 batches per second on 4 TitanX Pascal.
+As a reference, tensorpack can train ResNet-18 (a shallow ResNet) at 4.4 batches (of 256 samples) per second on 4 old TitanX.
 So DataFlow won't be a serious bottleneck if configured properly.
 
 ## Larger Datasets?
