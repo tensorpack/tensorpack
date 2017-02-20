@@ -88,8 +88,8 @@ class WGANTrainer(FeedfreeTrainerBase):
 
     def run_step(self):
         for k in range(5):
-            self.monitored_sess.run(self.d_min)
-        self.monitored_sess.run(self.g_min)
+            self.hooked_sess.run(self.d_min)
+        self.hooked_sess.run(self.g_min)
 
 
 if __name__ == '__main__':

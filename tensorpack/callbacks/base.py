@@ -74,10 +74,10 @@ class Callback(object):
         Same as ``tf.train.SessionRunHook.before_run``.
         """
         fetches = self._before_run(ctx)
-        if isinstance(fetches, tf.train.SessionRunArgs):
-            return fetches
         if fetches is None:
             return None
+        if isinstance(fetches, tf.train.SessionRunArgs):
+            return fetches
 
         # also support list of names
         assert isinstance(fetches, list), fetches

@@ -10,8 +10,7 @@ from six.moves import zip
 import tqdm
 
 from ..utils import logger, get_tqdm_kwargs
-from ..utils.naming import (GLOBAL_STEP_INCR_OP_NAME,
-                            LOCAL_STEP_OP_NAME)
+from ..utils.naming import GLOBAL_STEP_INCR_OP_NAME
 from ..tfutils.common import (
     get_op_tensor_name, get_global_step_var,
     get_global_step_value, get_op_or_tensor_by_name)
@@ -61,9 +60,10 @@ class MaintainStepCounter(Callback):
             self.gs_incr_var = tf.assign_add(
                 gs_var, 1,
                 name=GLOBAL_STEP_INCR_OP_NAME)
-            tf.mod(
-                self.gs_incr_var, self.trainer.config.steps_per_epoch,
-                name=LOCAL_STEP_OP_NAME)
+            # tf.mod(
+            #     self.gs_incr_var, self.trainer.config.steps_per_epoch,
+            #     name=LOCAL_STEP_OP_NAME)
+        self._fetches = tf.train.SessionRunArgs(self.gs_incr_var)
 
     def _before_train(self):
         gs_val = get_global_step_value()
@@ -75,7 +75,7 @@ class MaintainStepCounter(Callback):
         # increase global_step, when trainer.local_step changed
         if self.trainer.local_step != self._last_updated:
             self._last_updated = self.trainer.local_step
-            return [self.gs_incr_var.op]
+            return self._fetches
         else:
             return None
 
@@ -93,12 +93,14 @@ class ProgressBar(Callback):
         self._tags = [get_op_tensor_name(n)[0].split("/")[-1] for n in names]
 
     def _before_train(self):
-        self._fetches = get_op_or_tensor_by_name(self._names)
         self._last_updated = self.trainer.local_step
 
         self._total = self.trainer.config.steps_per_epoch
         self._tqdm_args = get_tqdm_kwargs(leave=True)
-        if len(self._names):
+
+        self._fetches = get_op_or_tensor_by_name(self._names) or None
+        if self._fetches:
+            self._fetches = tf.train.SessionRunArgs(self._fetches)
             self._tqdm_args['bar_format'] = self._tqdm_args['bar_format'] + "{postfix} "
 
     def _before_run(self, _):
@@ -114,7 +116,7 @@ class ProgressBar(Callback):
 
     def _after_run(self, _, run_values):
         res = run_values.results
-        if len(res):
+        if res:
             self._bar.set_postfix(zip(self._tags, res))
 
     def _trigger_step(self):

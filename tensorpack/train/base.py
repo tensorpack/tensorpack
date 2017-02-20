@@ -140,7 +140,9 @@ class Trainer(object):
             session_creator=tf.train.ChiefSessionCreator(
                 scaffold=scaffold, config=self.config.session_config),
             hooks=self.config.callbacks.get_hooks())
-        self.sess = self.monitored_sess._tf_sess()
+        self.hooked_sess = self.monitored_sess  # just create an alias
+
+        self.sess = self.monitored_sess._tf_sess()  # expose the underlying session also
         self.config.session_init._run_init(self.sess)
 
     @abstractmethod
