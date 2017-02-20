@@ -46,25 +46,9 @@ class FeedfreeTrainerBase(Trainer):
         assert isinstance(self._input_method, FeedfreeInput), type(self._input_method)
         self._input_method._setup(self)
 
-
-class SingleCostFeedfreeTrainer(FeedfreeTrainerBase):
-    """ A feedfree Trainer which assumes a single cost. """
-    def _get_cost_and_grad(self):
-        """ get the cost and gradient"""
-        self.build_train_tower()
-        cost = self.model.get_cost()
-        opt = self.config.optimizer
-        # GATE_NONE faster?
-        grads = opt.compute_gradients(
-            cost,
-            gate_gradients=tf.train.Optimizer.GATE_NONE,
-            colocate_gradients_with_ops=True)
-        return cost, grads
-
     def run_step(self):
         """ Simply run ``self.train_op``, which minimizes the cost."""
-        ret = self.sess.run([self.train_op] + self.get_extra_fetches())
-        return ret[1:]
+        self.hooked_sess.run(self.train_op)
         # if not hasattr(self, 'cnt'):
         #     self.cnt = 0
         # else:
@@ -81,6 +65,21 @@ class SingleCostFeedfreeTrainer(FeedfreeTrainerBase):
         #         trace_file = open('timeline.ctf.json', 'w')
         #         trace_file.write(trace.generate_chrome_trace_format())
         #         import sys; sys.exit()
+
+
+class SingleCostFeedfreeTrainer(FeedfreeTrainerBase):
+    """ A feedfree Trainer which assumes a single cost. """
+    def _get_cost_and_grad(self):
+        """ get the cost and gradient"""
+        self.build_train_tower()
+        cost = self.model.get_cost()
+        opt = self.config.optimizer
+        # GATE_NONE faster?
+        grads = opt.compute_gradients(
+            cost,
+            gate_gradients=tf.train.Optimizer.GATE_NONE,
+            colocate_gradients_with_ops=True)
+        return cost, grads
 
 
 class SimpleFeedfreeTrainer(

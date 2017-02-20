@@ -129,6 +129,7 @@ def add_moving_summary(v, *args, **kwargs):
             decay, num_updates=get_global_step_var(), name='EMA')
         avg_maintain_op = averager.apply(v)
     for c in v:
+        # TODO do this in the EMA callback?
         name = re.sub('tower[p0-9]+/', '', c.op.name)
         tf.summary.scalar(name + '-summary', averager.average(c))
 

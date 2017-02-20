@@ -4,19 +4,18 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
+from six.moves import map
 
 from ..utils.naming import (
     GLOBAL_STEP_VAR_NAME,
-    GLOBAL_STEP_OP_NAME,
-    LOCAL_STEP_VAR_NAME)
-from ..utils import logger
+    GLOBAL_STEP_OP_NAME)
 from ..utils.argtools import memoized
 
 __all__ = ['get_default_sess_config',
 
            'get_global_step_value',
            'get_global_step_var',
-           'get_local_step_var',
+           #'get_local_step_var',
 
            'get_op_tensor_name',
            'get_tensors_by_names',
@@ -74,13 +73,13 @@ def get_global_step_value():
         get_global_step_var())
 
 
-@memoized
-def get_local_step_var():
-    try:
-        return tf.get_default_graph().get_tensor_by_name(LOCAL_STEP_VAR_NAME)
-    except KeyError:
-        logger.warn("get_local_step_var() is only available to use in callbacks!")
-        raise
+# @memoized
+# def get_local_step_var():
+#     try:
+#         return tf.get_default_graph().get_tensor_by_name(LOCAL_STEP_VAR_NAME)
+#     except KeyError:
+#         logger.warn("get_local_step_var() is only available to use in callbacks!")
+#         raise
 
 
 def get_op_tensor_name(name):
@@ -116,11 +115,24 @@ def get_tensors_by_names(names):
 
 
 def get_op_or_tensor_by_name(name):
+    """
+    Get either tf.Operation of tf.Tensor from names.
+
+    Args:
+        name (list[str] or str): names of operations or tensors.
+    """
     G = tf.get_default_graph()
-    if len(name) >= 3 and name[-2] == ':':
-        return G.get_tensor_by_name(name)
+
+    def f(n):
+        if len(n) >= 3 and n[-2] == ':':
+            return G.get_tensor_by_name(n)
+        else:
+            return G.get_operation_by_name(n)
+
+    if not isinstance(name, list):
+        return f(name)
     else:
-        return G.get_operation_by_name(name)
+        return list(map(f, name))
 
 
 def get_name_scope_name():

@@ -54,42 +54,44 @@ class Callback(object):
     def _before_train(self):
         pass
 
-    def trigger_step(self, *args):
+    def trigger_step(self):
         """
-        Callback to be triggered after every step (every backpropagation).
-
-        Args:
-            args: a list of values corresponding to :meth:`extra_fetches`.
-
-        Could be useful to apply some tricks on parameters (clipping, low-rank, etc)
+        Callback to be triggered after every run_step.
         """
-        self._trigger_step(*args)
+        self._trigger_step()
 
-    def _trigger_step(self, *args):
+    def _trigger_step(self):
         pass
 
-    def extra_fetches(self):
-        """
-        Returns:
-            list: a list of elements to be fetched in every step and
-                passed to :meth:`trigger_step`. Elements can be
-                Operations/Tensors, or names of Operations/Tensors.
+    def after_run(self, run_context, run_values):
+        self._after_run(run_context, run_values)
 
-        This function will be called only after the graph is finalized.
+    def _after_run(self, run_context, run_values):
+        pass
 
-        This function should be a pure function (i.e. no side-effect when called)
+    def before_run(self, ctx):
         """
-        fetches = self._extra_fetches()
+        Same as ``tf.train.SessionRunHook.before_run``.
+        """
+        fetches = self._before_run(ctx)
+        if fetches is None:
+            return None
+        if isinstance(fetches, tf.train.SessionRunArgs):
+            return fetches
+
+        # also support list of names
+        assert isinstance(fetches, list), fetches
         ret = []
         for f in fetches:
             if isinstance(f, (tf.Tensor, tf.Operation)):
                 ret.append(f)
             else:
+                # warn about speed
                 ret.append(get_op_or_tensor_by_name(f))
-        return ret
+        return tf.train.SessionRunArgs(fetches=ret)
 
-    def _extra_fetches(self):
-        return []
+    def _before_run(self, ctx):
+        return None
 
     def trigger_epoch(self):
         """
@@ -112,11 +114,6 @@ class Callback(object):
     @property
     def epoch_num(self):
         return self.trainer.epoch_num
-
-    @property
-    def local_step(self):
-        # inside trainer, we're still in the 'local_step' loop, so the number is off by 1
-        return self.trainer.local_step + 1
 
     @property
     def global_step(self):
@@ -177,11 +174,17 @@ class ProxyCallback(Callback):
     def _trigger_epoch(self):
         self.cb.trigger_epoch()
 
-    def _trigger_step(self, *args):
-        self.cb.trigger_step(*args)
+    def _trigger_step(self):
+        self.cb.trigger_step()
 
     def _after_train(self):
         self.cb.after_train()
+
+    def _before_run(self, ctx):
+        self.cb._before_run(ctx)
+
+    def _after_run(self, ctx, run_values):
+        self.cb._after_run(ctx, run_values)
 
     def __str__(self):
         return "Proxy-" + str(self.cb)

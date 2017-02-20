@@ -28,5 +28,5 @@ class MovingAverageSummary(Callback):
         ops = tf.get_collection(self._collection)
         self.ema_op = tf.group(*ops, name='summary_moving_averages')
 
-    def _extra_fetches(self):
+    def _before_run(self, _):
         return [self.ema_op]
