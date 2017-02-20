@@ -10,8 +10,9 @@ import six
 from six.moves import range
 
 import tensorflow as tf
+from .predict import PredictorFactory
 from .config import TrainConfig
-from ..utils import logger
+from ..utils import logger, deprecated
 from ..callbacks import StatHolder
 from ..tfutils import get_global_step_value
 from ..tfutils.modelutils import describe_model
@@ -62,7 +63,8 @@ class Trainer(object):
 
     @abstractmethod
     def run_step(self):
-        """ Abstract method. Run one iteration. """
+        """ Abstract method: run one iteration. Subclass should define what is "iteration".
+        """
 
     def trigger_epoch(self):
         """
@@ -102,7 +104,7 @@ class Trainer(object):
 
     def add_scalar_summary(self, name, val):
         """
-        Add a scalar sumary to both TF events file and StatHolder.
+        Add a scalar summary to both TF events file and StatHolder.
         """
         self.add_summary(create_scalar_summary(name, val))
 
@@ -187,22 +189,29 @@ class Trainer(object):
                 self.summary_writer.close()
                 self.monitored_sess.close()
 
-    def get_predict_func(self, input_names, output_names):
+    def get_predict_func(self, input_names, output_names, tower=0):
         """
         Args:
             input_names (list), output_names(list): list of names
+            tower (int): return the predictor on the kth tower, defined by ``config.predict_tower``.
 
         Returns:
-            an OnlinePredictor
+            an :class:`OnlinePredictor`.
         """
-        raise NotImplementedError()
+        if not hasattr(self, '_predictor_factory'):
+            self._predictor_factory = PredictorFactory(
+                self.model, self.config.predict_tower)
+        return self._predictor_factory.get_predictor(input_names, output_names, tower)
 
     def get_predict_funcs(self, input_names, output_names, n):
-        """ Return n predictors.
-            Can be overwritten by subclasses to exploit more
-            parallelism among predictors.
-        """
-        if len(self.config.predict_tower) > 1:
+        """ Return n predictors. """
+        nr_tower = len(self.config.predict_tower)
+        if nr_tower < n:
             logger.warn(
-                "[Speed] Have set multiple predict_tower, but only have naive `get_predict_funcs` implementation")
-        return [self.get_predict_func(input_names, output_names) for k in range(n)]
+                "Requested {} predictor but only have {} predict towers! "
+                "Predictors will be assigned to GPUs in round-robin.".format(n, nr_tower))
+        return [self.get_predict_func(input_names, output_names, k % nr_tower) for k in range(n)]
+
+    @deprecated("Don't need to call it any more!", "2017-03-20")
+    def _setup_predictor_factory(self):
+        pass

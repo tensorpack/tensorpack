@@ -51,6 +51,7 @@ for s in scripts:
     scripts_to_install.append(newname)
 
 setup(
+    name='tensorpack',
     version=__version__,
     description='Neural Network Toolbox on TensorFlow',
     long_description=long_description,

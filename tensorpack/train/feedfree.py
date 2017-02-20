@@ -10,7 +10,6 @@ from ..tfutils.tower import TowerContext, get_current_tower_context
 from .input_data import QueueInput, FeedfreeInput
 
 from .base import Trainer
-from .trainer import MultiPredictorTowerTrainer
 
 __all__ = ['FeedfreeTrainerBase', 'SingleCostFeedfreeTrainer',
            'SimpleFeedfreeTrainer', 'QueueInputTrainer']
@@ -40,7 +39,7 @@ class FeedfreeTrainerBase(Trainer):
         self._input_method._setup(self)
 
     def run_step(self):
-        """ Simply run ``self.train_op``, which minimizes the cost."""
+        """ Simply run ``self.train_op``."""
         self.hooked_sess.run(self.train_op)
         # if not hasattr(self, 'cnt'):
         #     self.cnt = 0
@@ -75,9 +74,7 @@ class SingleCostFeedfreeTrainer(FeedfreeTrainerBase):
         return cost, grads
 
 
-class SimpleFeedfreeTrainer(
-        SingleCostFeedfreeTrainer,
-        MultiPredictorTowerTrainer):
+class SimpleFeedfreeTrainer(SingleCostFeedfreeTrainer):
     """
     A trainer with single cost, single training tower, any number of
     prediction tower, and feed-free input.
@@ -92,7 +89,6 @@ class SimpleFeedfreeTrainer(
         self._input_method = config.data
         assert isinstance(self._input_method, FeedfreeInput), self._input_method
         super(SimpleFeedfreeTrainer, self).__init__(config)
-        self._setup_predictor_factory()
         assert len(self.config.tower) == 1, \
             "SimpleFeedfreeTrainer doesn't support multigpu!"
 
@@ -116,7 +112,11 @@ def QueueInputTrainer(config, input_queue=None, predict_tower=None):
         input_queue (tf.QueueBase): an input queue. Defaults to the
             :class:`QueueInput` default.
     """
-    config.data = QueueInput(config.dataflow, input_queue)
+    if config.dataflow is not None:
+        config.data = QueueInput(config.dataflow, input_queue)
+    else:
+        assert isinstance(config.data, QueueInput), config.data
+
     if predict_tower is not None:
         log_deprecated("Argument `predict_tower` in trainer", "Use TrainConfig(predict_tower=...) instead!")
         config.predict_tower = predict_tower

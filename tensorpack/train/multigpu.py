@@ -16,7 +16,6 @@ from ..tfutils.collection import backup_collection, restore_collection
 from ..tfutils.gradproc import apply_grad_processors, ScaleGradient
 
 from .base import Trainer
-from .trainer import MultiPredictorTowerTrainer
 from .feedfree import SingleCostFeedfreeTrainer
 from .input_data import QueueInput
 
@@ -68,8 +67,7 @@ class MultiGPUTrainer(Trainer):
 
 
 class SyncMultiGPUTrainer(MultiGPUTrainer,
-                          SingleCostFeedfreeTrainer,
-                          MultiPredictorTowerTrainer):
+                          SingleCostFeedfreeTrainer):
     """
     A multi-tower multi-GPU trainer which synchronoizes the gradients computed
     from each tower and averages them.
@@ -97,7 +95,6 @@ class SyncMultiGPUTrainer(MultiGPUTrainer,
             config.predict_tower = predict_tower
 
         super(SyncMultiGPUTrainer, self).__init__(config)
-        self._setup_predictor_factory()
         assert len(config.tower) >= 1, "MultiGPUTrainer must be used with at least one GPU."
         assert tf.test.is_gpu_available()
         self.average_cost = average_cost
@@ -158,8 +155,7 @@ class SyncMultiGPUTrainer(MultiGPUTrainer,
 
 
 class AsyncMultiGPUTrainer(MultiGPUTrainer,
-                           SingleCostFeedfreeTrainer,
-                           MultiPredictorTowerTrainer):
+                           SingleCostFeedfreeTrainer):
     """
     A multi-tower multi-GPU trainer where each tower independently
     asynchronously updates the model without locking.
@@ -187,7 +183,6 @@ class AsyncMultiGPUTrainer(MultiGPUTrainer,
             log_deprecated("Argument `predict_tower` in trainer", "Use TrainConfig.predict_tower instead!")
             config.predict_tower = predict_tower
 
-        self._setup_predictor_factory()
         self._scale_gradient = scale_gradient
         assert tf.test.is_gpu_available()
 

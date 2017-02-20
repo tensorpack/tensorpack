@@ -74,23 +74,25 @@ class Model(ModelDesc):
             input_list = tf.unstack(input_feature, num=SEQ_LEN, axis=1)  # seqlen x (Bxhidden)
             outputs, last_state = rnn.static_rnn(cell, input_list, state_var, scope='rnn')
 
+        # update the hidden state after a rnn loop completes
+        update_state_ops = [
+            tf.assign(state_var[0].c, last_state[0].c),
+            tf.assign(state_var[0].h, last_state[0].h),
+            tf.assign(state_var[1].c, last_state[1].c),
+            tf.assign(state_var[1].h, last_state[1].h)]
+
         # seqlen x (Bxrnnsize)
         output = tf.reshape(tf.concat(outputs, 1), [-1, HIDDEN_SIZE])  # (Bxseqlen) x hidden
         logits = FullyConnected('fc', output, VOCAB_SIZE, nl=tf.identity, W_init=initializer, b_init=initializer)
         xent_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
             logits=logits, labels=tf.reshape(nextinput, [-1]))
 
-        update_state_op = tf.group(
-            tf.assign(state_var[0].c, last_state[0].c),
-            tf.assign(state_var[0].h, last_state[0].h),
-            tf.assign(state_var[1].c, last_state[1].c),
-            tf.assign(state_var[1].h, last_state[1].h), name='update_state')
-        with tf.control_dependencies([update_state_op]):
+        with tf.control_dependencies(update_state_ops):
             self.cost = tf.truediv(tf.reduce_sum(xent_loss),
                                    tf.cast(BATCH, tf.float32), name='cost')  # log-perplexity
 
         perpl = tf.exp(self.cost / SEQ_LEN, name='perplexity')
-        summary.add_moving_summary(perpl)
+        summary.add_moving_summary(perpl, self.cost)
 
     def reset_lstm_state(self):
         s = self.state
@@ -98,7 +100,7 @@ class Model(ModelDesc):
         return tf.group(s[0].c.assign(z),
                         s[0].h.assign(z),
                         s[1].c.assign(z),
-                        s[1].h.assign(z))
+                        s[1].h.assign(z), name='reset_lstm_state')
 
     def _get_optimizer(self):
         lr = symbolic_functions.get_scalar_var('learning_rate', 1, summary=True)

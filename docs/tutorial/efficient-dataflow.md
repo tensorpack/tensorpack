@@ -19,6 +19,9 @@ memory (for caching) and CPU (for data processing).
 You'll definitely need to tune the parameters (#processes, #threads, size of buffer, etc.)
 or change the pipeline for new tasks and new machines to achieve best performance.
 
+This tutorial is quite complicated, because you do need these knowledge of hardware & system to run fast on ImageNet-sized dataset.
+However, for small datasets (e.g., several GBs), a proper prefetch should work well enough.
+
 ## Random Read
 
 We start from a simple DataFlow:
@@ -36,7 +39,6 @@ will concatenate the data into an `numpy.ndarray`, but since images are original
 
 On an SSD you probably can already observe good speed here (e.g. 5 it/s, that is 1280 samples/s), but on HDD the speed may be just 1 it/s,
 because we're doing heavy random read on the filesystem (regardless of whether `shuffle` is True).
-Note that for smaller datasets, random read + prefetching is usually enough.
 
 We'll now add the cheapest pre-processing now to get an ndarray in the end instead of a list
 (because TensorFlow will need ndarray eventually):
@@ -187,7 +189,7 @@ Let me summarize what the above DataFlow does:
 	 how the `Trainer` is implemented.
 
 The above DataFlow can run at a speed of 5~10 batches per second, if you have good CPUs, RAM, disks and augmentors.
-As a reference, tensorpack can train ResNet-18 (a shallow ResNet) at 4.4 batches (of 256 samples) per second on 4 old TitanX.
+As a reference, tensorpack can train ResNet-18 (a shallow ResNet) at 4.5 batches (of 256 samples) per second on 4 old TitanX.
 So DataFlow won't be a serious bottleneck if configured properly.
 
 ## Larger Datasets?
