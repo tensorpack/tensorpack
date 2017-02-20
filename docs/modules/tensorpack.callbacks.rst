@@ -3,5 +3,5 @@ tensorpack.callbacks package
 
 .. automodule:: tensorpack.callbacks
     :members:
-    :undoc-members:
+    :no-undoc-members:
     :show-inheritance:
