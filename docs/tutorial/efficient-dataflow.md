@@ -139,7 +139,7 @@ As a reference, on Samsung SSD 850, the uncached speed is about 16it/s.
 	  ds = BatchData(ds, 256, use_list=True)
 ```
 Instead of shuffling all the training data in every epoch (which would require random read),
-the added line above maintains a buffer of data points and shuffle them once a while.
+the added line above maintains a buffer of datapoints and shuffle them once a while.
 It won't affect the model as long as the buffer is large enough,
 but it can also consume a lot of memory if too large.
 
@@ -155,7 +155,7 @@ Then we add necessary transformations:
     ds = AugmentImageComponent(ds, lots_of_augmentors)
     ds = BatchData(ds, 256)
 ```
-1. `LMDBData` deserialize the data points (from string to [jpeg_string, label])
+1. `LMDBData` deserialize the datapoints (from string to [jpeg_string, label])
 2. Use OpenCV to decode the first component into ndarray
 3. Apply augmentations to the ndarray
 

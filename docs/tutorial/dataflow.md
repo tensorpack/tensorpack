@@ -5,7 +5,7 @@ Dataflow is a unified interface to produce data.
 
 A Dataflow has a `get_data()` generator method,
 which yields a `datapoint` when called.
-A data point must be a **list** of Python objects which I called the `components` of this data point.
+A datapoint must be a **list** of Python objects which I called the `components` of this datapoint.
 
 For example, to train on MNIST dataset, you can build a Dataflow
 that produces datapoints of two elements (components):
@@ -22,7 +22,7 @@ prefetch data__, etc. An example is as the following:
 ````python
 # define a Dataflow which produces image-label pairs from a caffe lmdb database
 df = CaffeLMDB('/path/to/caffe/lmdb', shuffle=False)
-# resize the image component of each data point
+# resize the image component of each datapoint
 df = AugmentImageComponent(df, [imgaug.Resize((225, 225))])
 # group data into batches of size 128
 df = BatchData(df, 128)
@@ -56,7 +56,7 @@ Dataflow implementations for several well-known datasets are provided in the
 [dataflow.dataset](http://tensorpack.readthedocs.io/en/latest/modules/tensorpack.dataflow.dataset.html)
 module, which you can take as a reference.
 
-A Dataflow has a `get_data()` method which yields a data point every time.
+A Dataflow has a `get_data()` method which yields a datapoint every time.
 ```python
 class MyDataFlow(DataFlow):
   def get_data(self):
