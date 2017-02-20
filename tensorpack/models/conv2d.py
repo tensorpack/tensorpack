@@ -141,7 +141,7 @@ def Deconv2D(x, out_shape, kernel_shape,
         for k in out_shape:
             if not isinstance(k, int):
                 raise ValueError("[Deconv2D] out_shape {} is invalid!".format(k))
-        out_channel = out_shape[channel_axis]
+        out_channel = out_shape[channel_axis - 1]
         shp3_static = shp3_dyn = out_shape
     filter_shape = kernel_shape + [out_channel, in_channel]
 
