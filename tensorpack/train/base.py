@@ -12,13 +12,13 @@ from six.moves import range
 import tensorflow as tf
 from .predict import PredictorFactory
 from .config import TrainConfig
-from ..utils import logger, deprecated
+from ..utils import logger, deprecated, log_deprecated
 from ..callbacks import StatHolder
 from ..tfutils import get_global_step_value
 from ..tfutils.modelutils import describe_model
 from ..tfutils.summary import create_scalar_summary
 
-__all__ = ['Trainer', 'StopTraining']
+__all__ = ['Trainer', 'StopTraining', 'MultiPredictorTowerTrainer']
 
 
 class StopTraining(BaseException):
@@ -214,3 +214,9 @@ class Trainer(object):
     @deprecated("Don't need to call it any more!", "2017-03-20")
     def _setup_predictor_factory(self):
         pass
+
+
+# back-compat
+class MultiPredictorTowerTrainer(Trainer):
+    def __init__(self, *args, **kwargs):
+        log_deprecated("MultiPredictorTowerTrainer", "Just remove it instead.", "2017-03-21")
