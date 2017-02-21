@@ -29,16 +29,16 @@ while True:
   minimize_op.run()	 # minimize_op was built from dequeued tensors
 ```
 
-This is now automatically handled by tensorpack trainers already (unless you used the demo ``SimpleTrainer``),
+This is now automatically handled by tensorpack trainers already,
 see [Trainer](trainer.md) for details.
 
 TensorFlow provides staging interface which will further improve the speed in the future. This is
 [issue#140](https://github.com/ppwwyyxx/tensorpack/issues/140).
 
 You can also avoid `feed_dict` by using TensorFlow native operators to read data, which is also
-supported here.
+supported in tensorpack.
 It probably allows you to reach the best performance, but at the cost of implementing the
-reading / preprocessing ops in C++ if there isn't one for your task. We won't talk about it here.
+reading / preprocessing ops in C++ if there isn't one for your task.
 
 ## Figure out the bottleneck
 
@@ -49,9 +49,8 @@ So the overall throughput will appear to be the slower one.
 There isn't a way to accurately benchmark the two threads while they are running, without introducing overhead. But
 there are ways to understand which one is the bottleneck:
 
-1. Use the average occupancy (size) of the queue. This information is summarized after every epoch (TODO depend on #125).
+1. Use the average occupancy (size) of the queue. This information is summarized after every epoch.
 	If the queue is nearly empty, then the data thread is the bottleneck.
 
 2. Benchmark them separately. You can use `TestDataSpeed` to benchmark a DataFlow, and
-	 use `FakeData` as a fast replacement in a dry run to benchmark the training
-	 iterations.
+	 use `FakeData` as a fast replacement in a dry run, to benchmark the training iterations.

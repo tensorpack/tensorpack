@@ -62,9 +62,9 @@ use to read images or load data from a list.
 But in general, you'll probably need to write a new Dataflow to produce data for your task.
 Dataflow implementations for several well-known datasets are provided in the
 [dataflow.dataset](http://tensorpack.readthedocs.io/en/latest/modules/tensorpack.dataflow.dataset.html)
-module, which you can take as a reference.
+module, you can take them as a reference.
 
-A Dataflow has a `get_data()` method which yields a datapoint every time.
+Usually you just need to implement the `get_data()` method which yields a datapoint every time.
 ```python
 class MyDataFlow(DataFlow):
   def get_data(self):
@@ -79,7 +79,7 @@ Optionally, Dataflow can implement the following two methods:
 + `size()`. Return the number of elements the generator can produce. Certain modules might require this.
 	For example, only Dataflows with the same number of elements can be joined together.
 
-+ `reset_state()`. It's guaranteed that the process which uses this DataFlow will invoke this method before using it.
++ `reset_state()`. It's guaranteed that the actual process which runs a DataFlow will invoke this method before using it.
 	So if this DataFlow needs to something after a `fork()`, you should put it here.
 
 	A typical situation is when your Dataflow uses random number generator (RNG). Then you'd need to reset the RNG here,

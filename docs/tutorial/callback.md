@@ -39,11 +39,13 @@ TrainConfig(
                -d body={val-error-top1} > /dev/null 2>&1',
                'val-error-top1')
   ],
-  extra_callbacks=[    # these callbacks are already enabled by default
+  extra_callbacks=[    # these callbacks are enabled by default already
     # maintain and summarize moving average of some tensors (e.g. training loss, training error)
     MovingAverageSummary(),
     # draw a nice progress bar
     ProgressBar(),
+		# run `tf.summary.merge_all` and save results every epoch
+		MergeAllSummaries(),
     # print all the statistics I've created, and scalar tensors I've summarized
     StatPrinter(),
   ]

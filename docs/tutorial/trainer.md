@@ -9,7 +9,7 @@ Most neural network training tasks are single-cost optimization.
 Tensorpack provides some trainer implementations for such tasks.
 These trainers will by default minimizes `ModelDesc.cost`,
 therefore you can use these trainers as long as you set `self.cost` in `ModelDesc._build_graph()`,
-as did in most examples.
+as most examples did.
 
 Most existing trainers were implemented with a TensorFlow queue to prefetch and buffer
 training data, which is faster than a naive `sess.run(..., feed_dict={...})`.
