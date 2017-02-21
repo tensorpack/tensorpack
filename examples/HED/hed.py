@@ -192,7 +192,7 @@ def run(model_path, image_path, output):
         session_init=get_model_loader(model_path),
         input_names=['image'],
         output_names=['output' + str(k) for k in range(1, 7)])
-    predict_func = get_predict_func(pred_config)
+    predict_func = OfflinePredictor(pred_config)
     im = cv2.imread(image_path)
     assert im is not None
     im = cv2.resize(im, (im.shape[1] // 16 * 16, im.shape[0] // 16 * 16))

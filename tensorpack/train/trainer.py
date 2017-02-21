@@ -6,7 +6,6 @@ from .base import Trainer
 
 from ..tfutils import TowerContext
 from .input_data import FeedInput
-from .predict import PredictorFactory
 
 __all__ = ['SimpleTrainer']
 
@@ -21,7 +20,6 @@ class SimpleTrainer(Trainer):
             config (TrainConfig): the training config.
         """
         super(SimpleTrainer, self).__init__(config)
-        self._predictor_factory = PredictorFactory(self.model, [0])
         if config.dataflow is None:
             self._input_method = config.data
             assert isinstance(self._input_method, FeedInput), type(self._input_method)
@@ -44,6 +42,3 @@ class SimpleTrainer(Trainer):
         opt = self.config.optimizer
         grads = opt.compute_gradients(cost_var)
         self.train_op = opt.apply_gradients(grads, name='min_op')
-
-    def get_predict_func(self, input_names, output_names):
-        return self._predictor_factory.get_predictor(input_names, output_names, 0)

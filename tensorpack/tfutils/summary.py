@@ -6,7 +6,7 @@ import six
 import tensorflow as tf
 import re
 
-from ..utils import log_deprecated
+from ..utils import log_deprecated, logger
 from ..utils.naming import MOVING_SUMMARY_OPS_KEY
 from .tower import get_current_tower_context
 from .symbolic_functions import rms
@@ -39,9 +39,9 @@ def add_activation_summary(x, name=None):
     if ctx is not None and not ctx.is_main_training_tower:
         return
     ndim = x.get_shape().ndims
-    # TODO use scalar if found ndim == 1
-    assert ndim >= 2, \
-        "Summary a scalar with histogram? Maybe use scalar instead. FIXME!"
+    if ndim < 2:
+        logger.warn("Cannot summarize scalar activation {}".format(x.name))
+        return
     if name is None:
         name = x.name
     with tf.name_scope('activation-summary'):

@@ -1,14 +1,14 @@
 
 # Dataflow
 
-Dataflow is a unified interface to produce data.
+Dataflow is an interface to produce data.
 
 A Dataflow has a `get_data()` generator method,
 which yields a `datapoint` when called.
 A datapoint must be a **list** of Python objects which I called the `components` of this datapoint.
 
 For example, to train on MNIST dataset, you can build a Dataflow
-that produces datapoints of two elements (components):
+that yields datapoints of two elements (components):
 a numpy array of shape (64, 28, 28), and an array of shape (64,).
 
 ### Composition of DataFlow

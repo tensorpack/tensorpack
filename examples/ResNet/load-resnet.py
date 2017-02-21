@@ -118,7 +118,7 @@ def run_test(params, input):
         input_names=['input'],
         output_names=['prob']
     )
-    predict_func = get_predict_func(pred_config)
+    predict_func = OfflinePredictor(pred_config)
 
     prepro = get_inference_augmentor()
     im = cv2.imread(input).astype('float32')

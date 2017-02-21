@@ -6,6 +6,7 @@
 import tensorflow as tf
 from ..utils import SUMMARY_BACKUP_KEYS, PREDICT_TOWER
 from ..tfutils.collection import freeze_collection
+from ..utils.argtools import memoized
 from ..tfutils import get_tensors_by_names, get_op_tensor_name
 from ..predict import OnlinePredictor, build_prediction_graph
 
@@ -15,14 +16,14 @@ __all__ = ['PredictorFactory']
 class PredictorFactory(object):
     """ Make predictors for a trainer"""
 
-    def __init__(self, model, towers):
+    def __init__(self, trainer):
         """
         Args:
             towers (list[int]): list of gpu id
         """
-        self.model = model
-        self.towers = towers
-        self.tower_built = False
+        self.model = trainer.model
+        self.towers = trainer.config.predict_tower
+        assert isinstance(self.towers, list)
 
     def get_predictor(self, input_names, output_names, tower):
         """
@@ -31,8 +32,7 @@ class PredictorFactory(object):
         Returns:
             an online predictor (which has to be used under a default session)
         """
-        if not self.tower_built:
-            self._build_predict_tower()
+        self._build_predict_tower()
         tower = self.towers[tower]
 
         placeholder_names = set([k.name for k in self.model.get_inputs_desc()])
@@ -54,12 +54,13 @@ class PredictorFactory(object):
         output_vars = get_tensors_by_names(output_names)
         return OnlinePredictor(raw_input_vars, output_vars)
 
+    @memoized
     def _build_predict_tower(self):
-        # build_predict_tower might get called anywhere, but 'PREDICT_TOWER' should be the outermost name scope
+        # build_predict_tower might get called anywhere, but 'PREDICT_TOWER'
+        # should always be the outermost name scope
         with tf.name_scope(None), \
                 freeze_collection(SUMMARY_BACKUP_KEYS), \
                 tf.variable_scope(tf.get_variable_scope(), reuse=True):
             def fn(_):
                 self.model.build_graph(self.model.get_reused_placehdrs())
             build_prediction_graph(fn, self.towers)
-        self.tower_built = True

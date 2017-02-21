@@ -69,7 +69,7 @@ class Model(ModelDesc):
 
 def run_submission(cfg, output, nr):
     player = get_player(dumpdir=output)
-    predfunc = get_predict_func(cfg)
+    predfunc = OfflinePredictor(cfg)
     logger.info("Start evaluation: ")
     for k in range(nr):
         if k != 0:

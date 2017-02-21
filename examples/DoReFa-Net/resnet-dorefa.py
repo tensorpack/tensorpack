@@ -129,7 +129,7 @@ def run_image(model, sess_init, inputs):
         input_names=['input'],
         output_names=['output']
     )
-    predict_func = get_predict_func(pred_config)
+    predict_func = OfflinePredictor(pred_config)
     meta = dataset.ILSVRCMeta()
     words = meta.get_synset_words_1000()
 

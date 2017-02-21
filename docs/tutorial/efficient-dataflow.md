@@ -20,7 +20,7 @@ You'll definitely need to tune the parameters (#processes, #threads, size of buf
 or change the pipeline for new tasks and new machines to achieve best performance.
 
 This tutorial is quite complicated, because you do need these knowledge of hardware & system to run fast on ImageNet-sized dataset.
-However, for small datasets (e.g., several GBs), a proper prefetch should work well enough.
+However, for __small datasets__ (e.g., several GBs), a proper prefetch should work well enough.
 
 ## Random Read
 
@@ -32,9 +32,15 @@ ds1 = BatchData(ds0, 256, use_list=True)
 TestDataSpeed(ds1).start_test()
 ```
 
-Here `ds0` simply reads original images from filesystem, and `ds1` batch them, so
-that we can measure the speed of this DataFlow in terms of "batch per second". By default `BatchData`
-will concatenate the data into an `numpy.ndarray`, but since images are originally of different shapes, we use
+Here `ds0` simply reads original images from filesystem. It is implemented simply by:
+```python
+for filename, label in filelist:
+  yield [cv2.imread(filename), label]
+```
+
+And `ds1` batch the datapoints from `ds0`, so that we can measure the speed of this DataFlow in terms of "batch per second".
+By default `BatchData`
+will stack the datapoints into an `numpy.ndarray`, but since images are originally of different shapes, we use
 `use_list=True` so that it just produces lists.
 
 On an SSD you probably can already observe good speed here (e.g. 5 it/s, that is 1280 samples/s), but on HDD the speed may be just 1 it/s,

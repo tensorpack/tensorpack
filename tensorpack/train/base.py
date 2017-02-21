@@ -199,8 +199,7 @@ class Trainer(object):
             an :class:`OnlinePredictor`.
         """
         if not hasattr(self, '_predictor_factory'):
-            self._predictor_factory = PredictorFactory(
-                self.model, self.config.predict_tower)
+            self._predictor_factory = PredictorFactory(self)
         return self._predictor_factory.get_predictor(input_names, output_names, tower)
 
     def get_predict_funcs(self, input_names, output_names, n):

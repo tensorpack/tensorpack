@@ -259,7 +259,7 @@ def run_image(model, sess_init, inputs):
         input_names=['input'],
         output_names=['output']
     )
-    predict_func = get_predict_func(pred_config)
+    predict_func = OfflinePredictor(pred_config)
     meta = dataset.ILSVRCMeta()
     pp_mean = meta.get_per_pixel_mean()
     pp_mean_224 = pp_mean[16:-16, 16:-16, :]
