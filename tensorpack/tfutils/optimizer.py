@@ -5,7 +5,6 @@
 
 import tensorflow as tf
 from contextlib import contextmanager
-from .gradproc import apply_grad_processors as apply_gradproc
 from .gradproc import FilterNoneGrad
 
 __all__ = ['apply_grad_processors', 'ProxyOptimizer',
@@ -48,13 +47,19 @@ def apply_grad_processors(opt, gradprocs):
 
     class _ApplyGradientProcessor(ProxyOptimizer):
         def __init__(self, opt, gradprocs):
-            self._gradprocs = gradprocs
+            self._gradprocs = [FilterNoneGrad()] + gradprocs
             super(_ApplyGradientProcessor, self).__init__(opt)
 
         def apply_gradients(self, grads_and_vars,
                             global_step=None, name=None):
-            g = apply_gradproc(grads_and_vars, self._gradprocs)
+            g = self._apply(grads_and_vars)
             return self._opt.apply_gradients(g, global_step, name)
+
+        def _apply(self, g):
+            for proc in self._gradprocs:
+                g = proc.process(g)
+            return g
+
     return _ApplyGradientProcessor(opt, gradprocs)
 
 

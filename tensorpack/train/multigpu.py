@@ -13,7 +13,7 @@ from ..utils.naming import SUMMARY_BACKUP_KEYS
 from ..utils.concurrency import LoopThread
 from ..tfutils.tower import TowerContext
 from ..tfutils.collection import backup_collection, restore_collection
-from ..tfutils.gradproc import apply_grad_processors, ScaleGradient
+from ..tfutils.gradproc import FilterNoneGrad, ScaleGradient
 
 from .base import Trainer
 from .feedfree import SingleCostFeedfreeTrainer
@@ -190,11 +190,12 @@ class AsyncMultiGPUTrainer(MultiGPUTrainer,
         super(AsyncMultiGPUTrainer, self)._setup()
         grad_list = MultiGPUTrainer._multi_tower_grads(
             self.config.tower, lambda: self._get_cost_and_grad()[1])
+        grad_list = FilterNoneGrad().process(grad_list)
         if self._scale_gradient and self.config.nr_tower > 1:
             # pretend to average the grads, in order to make async and
             # sync have consistent effective learning rate
             gradproc = ScaleGradient(('.*', 1.0 / self.config.nr_tower), log=False)
-            grad_list = apply_grad_processors(grad_list, [gradproc])
+            grad_list = gradproc.process(grad_list)
 
         # use grad from the first tower for iteration in main thread
         self.train_op = self.config.optimizer.apply_gradients(grad_list[0], name='min_op')

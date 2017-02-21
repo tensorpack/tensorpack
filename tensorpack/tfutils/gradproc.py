@@ -12,23 +12,9 @@ from ..utils import logger
 from .symbolic_functions import rms
 from .summary import add_moving_summary
 
-__all__ = ['GradientProcessor', 'FilterNoneGrad', 'GlobalNormClip', 'MapGradient', 'SummaryGradient', 'CheckGradient',
-           'ScaleGradient', 'apply_grad_processors']
-
-
-def apply_grad_processors(grads, gradprocs):
-    """
-    Args:
-        grads (list): list of (grad, var).
-        gradprocs (list[GradientProcessor]): gradient processors to apply.
-    Returns:
-        list: list of (grad, var) went through the processors.
-    """
-    gradprocs.insert(0, FilterNoneGrad())
-    g = grads
-    for proc in gradprocs:
-        g = proc.process(g)
-    return g
+__all__ = ['GradientProcessor',
+           'FilterNoneGrad', 'GlobalNormClip', 'MapGradient', 'SummaryGradient',
+           'CheckGradient', 'ScaleGradient']
 
 
 @six.add_metaclass(ABCMeta)
@@ -118,13 +104,17 @@ class MapGradient(GradientProcessor):
 
     def _process(self, grads):
         ret = []
+        matched = False
         for grad, var in grads:
             if re.match(self.regex, var.op.name):
+                matched = True
                 grad = self.func(grad, var)
                 if grad is not None:
                     ret.append((grad, var))
             else:
                 ret.append((grad, var))
+        if not matched:
+            logger.warn("[MapGradient] No match was found for regex {}.".format(self.regex))
         return ret
 
 
