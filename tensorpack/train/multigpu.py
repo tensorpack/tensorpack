@@ -190,12 +190,12 @@ class AsyncMultiGPUTrainer(MultiGPUTrainer,
         super(AsyncMultiGPUTrainer, self)._setup()
         grad_list = MultiGPUTrainer._multi_tower_grads(
             self.config.tower, lambda: self._get_cost_and_grad()[1])
-        grad_list = FilterNoneGrad().process(grad_list)
+        grad_list = [FilterNoneGrad().process(gv) for gv in grad_list]
         if self._scale_gradient and self.config.nr_tower > 1:
             # pretend to average the grads, in order to make async and
             # sync have consistent effective learning rate
             gradproc = ScaleGradient(('.*', 1.0 / self.config.nr_tower), log=False)
-            grad_list = gradproc.process(grad_list)
+            grad_list = [gradproc.process(gv) for gv in grad_list]
 
         # use grad from the first tower for iteration in main thread
         self.train_op = self.config.optimizer.apply_gradients(grad_list[0], name='min_op')

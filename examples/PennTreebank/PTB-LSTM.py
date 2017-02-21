@@ -124,6 +124,10 @@ def get_config():
         lambda: ptb_producer(data3[1], BATCH, SEQ_LEN),
         (data3[1].shape[0] // BATCH - 1) // SEQ_LEN)
 
+    test_data = TensorInput(
+        lambda: ptb_producer(data3[2], BATCH, SEQ_LEN),
+        (data3[2].shape[0] // BATCH - 1) // SEQ_LEN)
+
     M = Model()
     return TrainConfig(
         data=train_data,
@@ -135,12 +139,20 @@ def get_config():
                 lambda e, x: x * 0.80 if e > 6 else x),
             RunOp(lambda: M.reset_lstm_state()),
             FeedfreeInferenceRunner(val_data, [ScalarStats(['cost'])]),
+            RunOp(lambda: M.reset_lstm_state()),
+            FeedfreeInferenceRunner(
+                test_data,
+                [ScalarStats(['cost'], prefix='test')], prefix='test'),
+            RunOp(lambda: M.reset_lstm_state()),
             CallbackFactory(
                 trigger_epoch=lambda self:
-                self.trainer.add_scalar_summary(
+                [self.trainer.add_scalar_summary(
                     'validation_perplexity',
-                    np.exp(self.trainer.stat_holder.get_stat_now('validation_cost') / SEQ_LEN))),
-            RunOp(lambda: M.reset_lstm_state()),
+                    np.exp(self.trainer.stat_holder.get_stat_now('validation_cost') / SEQ_LEN)),
+                 self.trainer.add_scalar_summary(
+                     'test_perplexity',
+                     np.exp(self.trainer.stat_holder.get_stat_now('test_cost') / SEQ_LEN))]
+            ),
         ],
         max_epoch=70,
     )
