@@ -2,6 +2,7 @@
 # File: config.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
+import tensorflow as tf
 import six
 
 from ..models import ModelDesc
@@ -17,10 +18,12 @@ class PredictConfig(object):
     def __init__(self, model,
                  session_creator=None,
                  session_init=None,
-                 session_config=None,
                  input_names=None,
                  output_names=None,
-                 return_input=False):
+                 return_input=False,
+                 create_graph=True,
+                 session_config=None,   # deprecated
+                 ):
         """
         Args:
             model (ModelDesc): the model to use.
@@ -32,7 +35,9 @@ class PredictConfig(object):
                 inputs of the model.
             output_names (list): a list of names of the output tensors to predict, the
                 tensors can be any computable tensor in the graph.
-            return_input: same as in :attr:`PredictorBase.return_input`.
+            return_input (bool): same as in :attr:`PredictorBase.return_input`.
+            create_graph (bool): create a new graph, or use the default graph
+                when then predictor is first initialized.
         """
         def assert_type(v, tp):
             assert isinstance(v, tp), v.__class__
@@ -68,3 +73,9 @@ class PredictConfig(object):
         assert len(self.output_names), self.output_names
 
         self.return_input = bool(return_input)
+        self.create_graph = bool(create_graph)
+
+    def _maybe_create_graph(self):
+        if self.create_graph:
+            return tf.Graph()
+        return tf.get_default_graph()

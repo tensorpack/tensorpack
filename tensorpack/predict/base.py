@@ -8,11 +8,15 @@ import tensorflow as tf
 import six
 
 from ..utils import logger
+from ..utils.argtools import memoized
+from ..utils.naming import SUMMARY_BACKUP_KEYS
 from ..tfutils import get_tensors_by_names, TowerContext
+from ..tfutils.collection import freeze_collection
 
 __all__ = ['PredictorBase', 'AsyncPredictorBase',
            'OnlinePredictor', 'OfflinePredictor',
            'get_predict_func',
+           'PredictorTowerBuilder',
            'build_prediction_graph',
            ]
 
@@ -119,14 +123,15 @@ class OnlinePredictor(PredictorBase):
 
 
 class OfflinePredictor(OnlinePredictor):
-    """ A predictor built from a given config, in a new graph. """
+    """ A predictor built from a given config.
+        A sinlge-tower model will be built without any prefix. """
 
     def __init__(self, config):
         """
         Args:
             config (PredictConfig): the config to use.
         """
-        self.graph = tf.Graph()
+        self.graph = config._maybe_create_graph()
         with self.graph.as_default():
             input_placehdrs = config.model.get_reused_placehdrs()
             with TowerContext('', False):
@@ -148,23 +153,52 @@ def get_predict_func(config):
     return OfflinePredictor(config)
 
 
+class PredictorTowerBuilder(object):
+    """
+    A builder which caches the predictor tower it has built.
+    """
+    def __init__(self, build_tower_fn, prefix=''):
+        """
+        Args:
+            build_tower_fn: a function that will be called inside each tower, taking tower id as the argument.
+            prefix: an extra prefix in tower name. The final tower prefix will be
+                determined by :meth:`TowerContext.get_predict_tower_name`.
+        """
+        self._fn = build_tower_fn
+        self._prefix = prefix
+
+    @memoized
+    def build(self, tower):
+        """
+        Args:
+            tower (int): the tower will be built on device '/gpu:{tower}', or
+                '/cpu:0' if tower is -1.
+        """
+        towername = TowerContext.get_predict_tower_name(tower, self._prefix)
+        if self._prefix:
+            msg = "Building predictor graph {} on gpu={} with prefix='{}' ...".format(
+                towername, tower, self._prefix)
+        else:
+            msg = "Building predictor graph {} on gpu={} ...".format(towername, tower)
+        logger.info(msg)
+        # No matter where this get called, clear any existing name scope.
+        with tf.name_scope(None),   \
+                freeze_collection(SUMMARY_BACKUP_KEYS), \
+                tf.device('/gpu:{}'.format(tower) if tower >= 0 else '/cpu:0'), \
+                TowerContext(towername, is_training=False):
+            self._fn(tower)
+
+
 def build_prediction_graph(build_tower_fn, towers=[0], prefix=''):
     """
-    Build graph on each tower.
-
-    Args:
-        build_tower_fn: a function that will be called inside each tower,
-            taking tower id as the argument.
-        towers: a list of relative GPU id.
-        prefix: an extra prefix in tower name. The final tower prefix will be
-            determined by :meth:`TowerContext.get_predict_tower_name`.
+    Execute `build_tower_fn` on each tower.
+    Just a wrapper on :class:`PredictorTowerBuilder` to run on several towers
+    together.
     """
-    for idx, k in enumerate(towers):
-        logger.info(
-            "Building prediction graph for towerid={} with prefix='{}' ...".format(k, prefix))
-        towername = TowerContext.get_predict_tower_name(prefix, k)
-        with tf.device('/gpu:{}'.format(k) if k >= 0 else '/cpu:0'), \
-                TowerContext(towername, is_training=False), \
-                tf.variable_scope(tf.get_variable_scope(),
-                                  reuse=True if idx > 0 else None):
-            build_tower_fn(k)
+    builder = PredictorTowerBuilder(build_tower_fn, prefix)
+    for idx, t in enumerate(towers):
+        # The first variable scope may or may not reuse (depending on the existing
+        # context), but the rest have to reuse.
+        with tf.variable_scope(
+                tf.get_variable_scope(), reuse=True if idx > 0 else None):
+            builder.build(t)

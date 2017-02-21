@@ -124,6 +124,7 @@ class QueueInput(FeedfreeInput):
     def size(self):
         return self.ds.size()
 
+    # TODO XXX use input data mapping. not all placeholders are needed
     def _setup(self, trainer):
         self.input_placehdrs = trainer.model.get_reused_placehdrs()
         assert len(self.input_placehdrs) > 0, \

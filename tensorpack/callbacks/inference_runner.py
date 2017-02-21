@@ -183,6 +183,7 @@ class FeedfreeInferenceRunner(Triggerable):
     def _setup_graph(self):
         self._find_input_tensors()  # tensors
 
+        # TODO reuse predictor code
         # overwrite the FeedfreeInferenceRunner name scope
         with tf.variable_scope(tf.get_variable_scope(), reuse=True), \
                 tf.name_scope(None), \
@@ -190,7 +191,7 @@ class FeedfreeInferenceRunner(Triggerable):
             def fn(_):
                 self.trainer.model.build_graph(self._input_tensors)
             build_prediction_graph(fn, [0], prefix=self._prefix)
-        self._tower_prefix = TowerContext.get_predict_tower_name(self._prefix, 0)
+        self._tower_prefix = TowerContext.get_predict_tower_name(0, self._prefix)
 
         self._find_output_tensors()
 

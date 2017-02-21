@@ -73,7 +73,7 @@ class TowerContext(object):
                 return graph.get_tensor_by_name(newname)
 
     @staticmethod
-    def get_predict_tower_name(prefix, towerid=0):
+    def get_predict_tower_name(towerid=0, prefix=''):
         """
         Args:
             prefix(str): an alphanumeric prefix.
@@ -91,6 +91,7 @@ class TowerContext(object):
         assert _CurrentTowerContext is None, \
             "Nesting TowerContext!"
         _CurrentTowerContext = self
+        # TODO enter name_scope(None) first
         if len(self._name):
             self._scope = tf.name_scope(self._name)
             return self._scope.__enter__()

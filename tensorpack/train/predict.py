@@ -4,11 +4,8 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import tensorflow as tf
-from ..utils import SUMMARY_BACKUP_KEYS, PREDICT_TOWER
-from ..tfutils.collection import freeze_collection
-from ..utils.argtools import memoized
-from ..tfutils import get_tensors_by_names, get_op_tensor_name
-from ..predict import OnlinePredictor, build_prediction_graph
+from ..predict import (OnlinePredictor,
+                       PredictorTowerBuilder, MultiTowerOfflinePredictor)
 
 __all__ = ['PredictorFactory']
 
@@ -23,45 +20,27 @@ class PredictorFactory(object):
         """
         self.model = trainer.model
         self.towers = trainer.config.predict_tower
+
+        def fn(_):
+            self.model.build_graph(self.model.get_reused_placehdrs())
+        self._tower_builder = PredictorTowerBuilder(fn)
         assert isinstance(self.towers, list)
 
     # TODO sess option
     def get_predictor(self, input_names, output_names, tower):
         """
         Args:
-            tower (int): need the kth tower (not the gpu id)
+            tower (int): need the kth tower (not the gpu id, but the id in TrainConfig.predict_tower)
         Returns:
             an online predictor (which has to be used under a default session)
         """
-        self._build_predict_tower()
-        tower = self.towers[tower]
+        tower = self.towers[tower]  # TODO is it good?
+        with tf.variable_scope(tf.get_variable_scope(), reuse=True):
+            # just ensure the tower exists. won't rebuild
+            self._tower_builder.build(tower)
 
         placeholder_names = set([k.name for k in self.model.get_inputs_desc()])
-
-        def get_name_in_tower(name):
-            return PREDICT_TOWER + str(tower) + '/' + name
-
-        def maybe_inside_tower(name):
-            name = get_op_tensor_name(name)[0]
-            if name in placeholder_names:
-                return name
-            else:
-                return get_name_in_tower(name)
-
-        input_names = map(maybe_inside_tower, input_names)
-        raw_input_tensors = get_tensors_by_names(input_names)
-
-        output_names = map(get_name_in_tower, output_names)
-        output_tensors = get_tensors_by_names(output_names)
-        return OnlinePredictor(raw_input_tensors, output_tensors)
-
-    @memoized
-    def _build_predict_tower(self):
-        # build_predict_tower might get called anywhere, but 'PREDICT_TOWER'
-        # should always be the outermost name scope
-        with tf.name_scope(None), \
-                freeze_collection(SUMMARY_BACKUP_KEYS), \
-                tf.variable_scope(tf.get_variable_scope(), reuse=True):
-            def fn(_):
-                self.model.build_graph(self.model.get_reused_placehdrs())
-            build_prediction_graph(fn, self.towers)
+        get_tensor_fn = MultiTowerOfflinePredictor.get_tensors_maybe_in_tower
+        in_tensors = get_tensor_fn(placeholder_names, input_names, tower)
+        out_tensors = get_tensor_fn(placeholder_names, output_names, tower)
+        return OnlinePredictor(in_tensors, out_tensors)
