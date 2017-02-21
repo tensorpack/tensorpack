@@ -14,7 +14,7 @@ __all__ = ['PredictorFactory']
 
 
 class PredictorFactory(object):
-    """ Make predictors for a trainer"""
+    """ Make predictors from a trainer."""
 
     def __init__(self, trainer):
         """
@@ -25,6 +25,7 @@ class PredictorFactory(object):
         self.towers = trainer.config.predict_tower
         assert isinstance(self.towers, list)
 
+    # TODO sess option
     def get_predictor(self, input_names, output_names, tower):
         """
         Args:
@@ -48,11 +49,11 @@ class PredictorFactory(object):
                 return get_name_in_tower(name)
 
         input_names = map(maybe_inside_tower, input_names)
-        raw_input_vars = get_tensors_by_names(input_names)
+        raw_input_tensors = get_tensors_by_names(input_names)
 
         output_names = map(get_name_in_tower, output_names)
-        output_vars = get_tensors_by_names(output_names)
-        return OnlinePredictor(raw_input_vars, output_vars)
+        output_tensors = get_tensors_by_names(output_names)
+        return OnlinePredictor(raw_input_tensors, output_tensors)
 
     @memoized
     def _build_predict_tower(self):

@@ -5,14 +5,14 @@
 import tensorflow as tf
 from abc import ABCMeta, abstractmethod
 import six
-from ..tfutils.common import get_op_or_tensor_by_name, get_global_step_value
+from ..tfutils.common import get_op_or_tensor_by_name
 
 __all__ = ['Callback', 'ProxyCallback', 'CallbackFactory', 'Triggerable']
 
 
 @six.add_metaclass(ABCMeta)
 class Callback(object):
-    """ Base class for all callbacks
+    """ Base class for all callbacks.
 
     Attributes:
         epoch_num(int): the number of the current epoch.
@@ -50,7 +50,6 @@ class Callback(object):
         pass
 
     def before_train(self):
-        self._starting_step = get_global_step_value()
         self._before_train()
 
     def _before_train(self):

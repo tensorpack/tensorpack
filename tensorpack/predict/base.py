@@ -88,7 +88,8 @@ class AsyncPredictorBase(PredictorBase):
 
 
 class OnlinePredictor(PredictorBase):
-    """ A predictor which directly use an existing session. """
+    """ A predictor which directly use an existing session and given tensors.
+    """
 
     def __init__(self, input_tensors, output_tensors,
                  return_input=False, sess=None):
@@ -131,13 +132,13 @@ class OfflinePredictor(OnlinePredictor):
             with TowerContext('', False):
                 config.model.build_graph(input_placehdrs)
 
-            input_vars = get_tensors_by_names(config.input_names)
-            output_vars = get_tensors_by_names(config.output_names)
+            input_tensors = get_tensors_by_names(config.input_names)
+            output_tensors = get_tensors_by_names(config.output_names)
 
-            sess = tf.Session(config=config.session_config)
+            sess = config.session_creator.create_session()
             config.session_init.init(sess)
             super(OfflinePredictor, self).__init__(
-                input_vars, output_vars, config.return_input, sess)
+                input_tensors, output_tensors, config.return_input, sess)
 
 
 def get_predict_func(config):
@@ -149,6 +150,8 @@ def get_predict_func(config):
 
 def build_prediction_graph(build_tower_fn, towers=[0], prefix=''):
     """
+    Build graph on each tower.
+
     Args:
         build_tower_fn: a function that will be called inside each tower,
             taking tower id as the argument.

@@ -8,7 +8,7 @@ import six
 from six.moves import queue, range
 import tensorflow as tf
 
-from ..utils import logger
+from ..utils import logger, deprecated
 from ..utils.concurrency import DIE, StoppableThread, ShareSessionThread
 from ..tfutils.modelutils import describe_model
 from .base import OnlinePredictor, OfflinePredictor, AsyncPredictorBase
@@ -27,6 +27,7 @@ class MultiProcessPredictWorker(multiprocessing.Process):
             config (PredictConfig): the config to use.
         """
         super(MultiProcessPredictWorker, self).__init__()
+        self.name = "MultiProcessPredictWorker-{}".format(idx)
         self.idx = idx
         self.config = config
 
@@ -76,6 +77,7 @@ class MultiProcessQueuePredictWorker(MultiProcessPredictWorker):
 class PredictorWorkerThread(StoppableThread, ShareSessionThread):
     def __init__(self, queue, pred_func, id, batch_size=5):
         super(PredictorWorkerThread, self).__init__()
+        self.name = "PredictorWorkerThread-{}".format(id)
         self.queue = queue
         self.func = pred_func
         self.daemon = True
@@ -112,22 +114,20 @@ class PredictorWorkerThread(StoppableThread, ShareSessionThread):
         for k in range(nr_input_var):
             batched[k].append(inp[k])
         futures.append(f)
-        cnt = 1
-        while cnt < self.batch_size:
+        while len(futures) < self.batch_size:
             try:
                 inp, f = self.queue.get_nowait()
                 for k in range(nr_input_var):
                     batched[k].append(inp[k])
                 futures.append(f)
             except queue.Empty:
-                break
-            cnt += 1
+                break   # do not wait
         return batched, futures
 
 
 class MultiThreadAsyncPredictor(AsyncPredictorBase):
     """
-    An multithread online async predictor which runs a list of PredictorBase.
+    An multithread online async predictor which runs a list of OnlinePredictor.
     It would do an extra batching internally.
     """
 
@@ -164,6 +164,7 @@ class MultiThreadAsyncPredictor(AsyncPredictorBase):
         for t in self.threads:
             t.start()
 
+    @deprecated("Use 'start()' instead!", "2017-03-11")
     def run(self):      # temporarily for back-compatibility
         self.start()
 

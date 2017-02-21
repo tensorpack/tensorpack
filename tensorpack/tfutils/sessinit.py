@@ -12,13 +12,13 @@ from .common import get_op_tensor_name
 from .varmanip import (SessionUpdate, get_savename_from_varname,
                        is_training_name, get_checkpoint_path)
 
-__all__ = ['SessionInit', 'NewSession', 'SaverRestore', 'SaverRestoreRelaxed',
+__all__ = ['SessionInit', 'SaverRestore', 'SaverRestoreRelaxed',
            'ParamRestore', 'ChainInit',
            'JustCurrentSession', 'get_model_loader']
 
 
 class SessionInit(object):
-    """ Base class for utilities to initialize a session. """
+    """ Base class for utilities to initialize a (existing) session. """
     def init(self, sess):
         """
         Initialize a session
@@ -42,17 +42,6 @@ class SessionInit(object):
 class JustCurrentSession(SessionInit):
     """ This is a no-op placeholder"""
     pass
-
-
-class NewSession(SessionInit):
-    """
-    Initialize global variables by their initializer.
-    """
-    def _setup_graph(self):
-        self.op = tf.global_variables_initializer()
-
-    def _run_init(self, sess):
-        sess.run(self.op)
 
 
 class CheckpointReaderAdapter(object):
@@ -207,15 +196,11 @@ class ChainInit(SessionInit):
     to form a composition of models.
     """
 
-    def __init__(self, sess_inits, new_session=True):
+    def __init__(self, sess_inits):
         """
         Args:
             sess_inits (list[SessionInit]): list of :class:`SessionInit` instances.
-            new_session (bool): add a ``NewSession()`` and the beginning, if
-                not there.
         """
-        if new_session and not isinstance(sess_inits[0], NewSession):
-            sess_inits.insert(0, NewSession())
         self.inits = sess_inits
 
     def _init(self, sess):

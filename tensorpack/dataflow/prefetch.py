@@ -154,6 +154,7 @@ class PrefetchDataZMQ(ProxyDataFlow):
                 yield dp
         except zmq.ContextTerminated:
             logger.info("ContextTerminated in Master Prefetch Process")
+            return
         except:
             raise
 

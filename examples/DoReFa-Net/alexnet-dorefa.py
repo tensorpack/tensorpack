@@ -255,7 +255,6 @@ def run_image(model, sess_init, inputs):
     pred_config = PredictConfig(
         model=model,
         session_init=sess_init,
-        session_config=get_default_sess_config(0.9),
         input_names=['input'],
         output_names=['output']
     )
