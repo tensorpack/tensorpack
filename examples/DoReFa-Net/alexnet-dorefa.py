@@ -258,7 +258,7 @@ def run_image(model, sess_init, inputs):
         input_names=['input'],
         output_names=['output']
     )
-    predict_func = OfflinePredictor(pred_config)
+    predictor = OfflinePredictor(pred_config)
     meta = dataset.ILSVRCMeta()
     pp_mean = meta.get_per_pixel_mean()
     pp_mean_224 = pp_mean[16:-16, 16:-16, :]
@@ -282,7 +282,7 @@ def run_image(model, sess_init, inputs):
         assert img is not None
 
         img = transformers.augment(img)[np.newaxis, :, :, :]
-        outputs = predict_func([img])[0]
+        outputs = predictor([img])[0]
         prob = outputs[0]
         ret = prob.argsort()[-10:][::-1]
 

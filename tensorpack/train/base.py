@@ -189,7 +189,7 @@ class Trainer(object):
                 self.summary_writer.close()
                 self.monitored_sess.close()
 
-    def get_predict_func(self, input_names, output_names, tower=0):
+    def get_predictor(self, input_names, output_names, tower=0):
         """
         Args:
             input_names (list), output_names(list): list of names
@@ -200,16 +200,25 @@ class Trainer(object):
         """
         if not hasattr(self, '_predictor_factory'):
             self._predictor_factory = PredictorFactory(self)
+        nr_tower = len(self.config.predict_tower)
+        if nr_tower < tower:
+            logger.warn(
+                "Requested the {}th predictor but only have {} predict towers! "
+                "Predictors will be assigned to GPUs in round-robin.".format(tower, nr_tower))
+        tower = tower % nr_tower
         return self._predictor_factory.get_predictor(input_names, output_names, tower)
 
-    def get_predict_funcs(self, input_names, output_names, n):
+    def get_predictors(self, input_names, output_names, n):
         """ Return n predictors. """
-        nr_tower = len(self.config.predict_tower)
-        if nr_tower < n:
-            logger.warn(
-                "Requested {} predictor but only have {} predict towers! "
-                "Predictors will be assigned to GPUs in round-robin.".format(n, nr_tower))
-        return [self.get_predict_func(input_names, output_names, k % nr_tower) for k in range(n)]
+        return [self.get_predictor(input_names, output_names, k) for k in range(n)]
+
+    @deprecated("Use get_predictor instead!", "2017-05-20")
+    def get_predict_func(self, input_names, output_names, tower=0):
+        return self.get_predictor(input_names, output_names, tower)
+
+    @deprecated("Use get_predictors instead!", "2017-05-20")
+    def get_predict_funcs(self, input_names, output_names, n):
+        return self.get_predictors(input_names, output_names, n)
 
     @deprecated("Don't need to call it any more!", "2017-03-20")
     def _setup_predictor_factory(self):

@@ -54,7 +54,7 @@ class Model(ModelDesc):
 
 def run_test(path, input):
     param_dict = np.load(path, encoding='latin1').item()
-    predict_func = OfflinePredictor(PredictConfig(
+    predictor = OfflinePredictor(PredictConfig(
         model=Model(),
         session_init=ParamRestore(param_dict),
         input_names=['input'],
@@ -65,7 +65,7 @@ def run_test(path, input):
     assert im is not None, input
     im = cv2.resize(im, (227, 227))[:, :, ::-1].reshape(
         (1, 227, 227, 3)).astype('float32') - 110
-    outputs = predict_func([im])[0]
+    outputs = predictor([im])[0]
     prob = outputs[0]
     ret = prob.argsort()[-10:][::-1]
     print("Top10 predictions:", ret)

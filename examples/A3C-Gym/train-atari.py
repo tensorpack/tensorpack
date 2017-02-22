@@ -151,8 +151,8 @@ class MySimulatorMaster(SimulatorMaster, Callback):
 
     def _setup_graph(self):
         self.async_predictor = MultiThreadAsyncPredictor(
-            self.trainer.get_predict_funcs(['state'], ['logitsT', 'pred_value'],
-                                           PREDICTOR_THREAD), batch_size=15)
+            self.trainer.get_predictors(['state'], ['logitsT', 'pred_value'],
+                                        PREDICTOR_THREAD), batch_size=15)
 
     def _before_train(self):
         self.async_predictor.start()

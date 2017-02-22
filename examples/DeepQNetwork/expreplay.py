@@ -229,7 +229,7 @@ class ExpReplay(DataFlow, Callback):
         return [state, action, reward, isOver]
 
     def _setup_graph(self):
-        self.predictor = self.trainer.get_predict_func(*self.predictor_io_names)
+        self.predictor = self.trainer.get_predictor(*self.predictor_io_names)
 
     def _before_train(self):
         self._init_memory()

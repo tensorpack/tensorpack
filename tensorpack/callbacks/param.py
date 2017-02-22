@@ -218,8 +218,8 @@ class ScheduledHyperParamSetter(HyperParamSetter):
             param: same as in :class:`HyperParamSetter`.
             schedule (list): with the format ``[(epoch1, val1), (epoch2, val2), (epoch3, val3)]``.
                 Each ``(ep, val)`` pair means to set the param
-                to "val" after the completion of `ep` th epoch.
-                If ep == 0, the value will be set before training.
+                to "val" __after__ the completion of `ep` th epoch.
+                If ep == 0, the value will be set before the first epoch.
             interp: None: no interpolation. 'linear': linear interpolation
 
         Example:
@@ -263,6 +263,7 @@ class HyperParamSetterWithFunc(HyperParamSetter):
         Args:
             param: same as in :class:`HyperParamSetter`.
             func: ``param`` will be set by ``new_value = func(epoch_num, old_value)``.
+                ``epoch_num`` is the number of epochs that have finished.
 
         Example:
             Decrease by a factor of 0.9 every two epochs:

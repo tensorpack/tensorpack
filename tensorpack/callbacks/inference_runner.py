@@ -92,7 +92,7 @@ class InferenceRunner(Triggerable):
     def _setup_graph(self):
         self._find_input_tensors()  # these are all tensor names
         self._find_output_tensors()  # may be either tensor name or op name
-        self.pred_func = self.trainer.get_predict_func(
+        self.predictor = self.trainer.get_predictor(
             self.input_tensors, self.output_tensors)
 
     def _find_input_tensors(self):
@@ -135,7 +135,7 @@ class InferenceRunner(Triggerable):
         self.ds.reset_state()
         with get_tqdm(total=self.ds.size()) as pbar:
             for dp in self.ds.get_data():
-                outputs = self.pred_func(dp)
+                outputs = self.predictor(dp)
                 for inf, tensormap in zip(self.infs, self.inf_to_tensors):
                     inf_output = [(outputs if k.isOutput else dp)[k.index]
                                   for k in tensormap]

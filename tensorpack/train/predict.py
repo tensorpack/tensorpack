@@ -26,7 +26,6 @@ class PredictorFactory(object):
         self._tower_builder = PredictorTowerBuilder(fn)
         assert isinstance(self.towers, list)
 
-    # TODO sess option
     def get_predictor(self, input_names, output_names, tower):
         """
         Args:

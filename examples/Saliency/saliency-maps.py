@@ -30,7 +30,7 @@ class Model(tp.ModelDesc):
 
 
 def run(model_path, image_path):
-    predict_func = tp.OfflinePredictor(tp.PredictConfig(
+    predictor = tp.OfflinePredictor(tp.PredictConfig(
         model=Model(),
         session_init=tp.get_model_loader(model_path),
         input_names=['image'],
@@ -42,7 +42,7 @@ def run(model_path, image_path):
     im = cv2.resize(im, (IMAGE_SIZE, IMAGE_SIZE))
     im = im.astype(np.float32)[:, :, ::-1]
 
-    saliency_images = predict_func([im])[0]
+    saliency_images = predictor([im])[0]
 
     abs_saliency = np.abs(saliency_images).max(axis=-1)
     pos_saliency = np.maximum(0, saliency_images)

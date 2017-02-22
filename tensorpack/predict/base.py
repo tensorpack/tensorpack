@@ -7,7 +7,7 @@ from abc import abstractmethod, ABCMeta
 import tensorflow as tf
 import six
 
-from ..utils import logger
+from ..utils import logger, deprecated
 from ..utils.argtools import memoized
 from ..utils.naming import SUMMARY_BACKUP_KEYS
 from ..tfutils import get_tensors_by_names, TowerContext
@@ -146,6 +146,7 @@ class OfflinePredictor(OnlinePredictor):
                 input_tensors, output_tensors, config.return_input, sess)
 
 
+@deprecated("Use OfflinePredictor instead!", "2017-05-20")
 def get_predict_func(config):
     """
     Equivalent to ``OfflinePredictor(config)``.

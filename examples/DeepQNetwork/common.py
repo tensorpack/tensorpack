@@ -38,7 +38,7 @@ def play_model(cfg):
         print("Total:", score)
 
 
-def eval_with_funcs(predict_funcs, nr_eval):
+def eval_with_funcs(predictors, nr_eval):
     class Worker(StoppableThread, ShareSessionThread):
         def __init__(self, func, queue):
             super(Worker, self).__init__()
@@ -62,7 +62,7 @@ def eval_with_funcs(predict_funcs, nr_eval):
                     self.queue_put_stoppable(self.q, score)
 
     q = queue.Queue()
-    threads = [Worker(f, q) for f in predict_funcs]
+    threads = [Worker(f, q) for f in predictors]
 
     for k in threads:
         k.start()
@@ -103,7 +103,7 @@ class Evaluator(Triggerable):
 
     def _setup_graph(self):
         NR_PROC = min(multiprocessing.cpu_count() // 2, 20)
-        self.pred_funcs = [self.trainer.get_predict_func(
+        self.pred_funcs = [self.trainer.get_predictor(
             self.input_names, self.output_names)] * NR_PROC
 
     def _trigger(self):

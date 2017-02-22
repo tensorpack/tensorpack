@@ -349,7 +349,7 @@ class OnlineExport(Callback):
         self.example_input = color.rgb2lab(cv2.imread('myimage.jpg')[:, :, ::-1])[:, :, 0] # read rgb image and extract luminance
 
     def _setup_graph(self):
-        self.predictor = self.trainer.get_predict_func(['luminance'], ['prediction/output'])
+        self.predictor = self.trainer.get_predictor(['luminance'], ['prediction/output'])
 
     def _trigger_epoch(self):
         pass
@@ -367,7 +367,7 @@ you can simply `print(prediction)` to find out the name.
 
 These two names allows us to build the inference part of the network in
 ```python
-self.trainer.get_predict_func(['luminance', 'prediction/output'])
+self.trainer.get_predictor(['luminance', 'prediction/output'])
 ```
 
 This is very convenient because in the `_tigger_epoch` we can use:
@@ -385,7 +385,7 @@ class OnlineExport(Callback):
         self.example_input = color.rgb2lab(cv2.imread('myimage.jpg')[:, :, [2, 1, 0]])[:, :, 0]
 
     def _setup_graph(self):
-        self.trainer.get_predict_func(['luminance', 'prediction/output'])
+        self.trainer.get_predictor(['luminance', 'prediction/output'])
 
     def _trigger_epoch(self):
         hopefully_cool_rgb = self.pred([[self.example_input]])[0][0]
