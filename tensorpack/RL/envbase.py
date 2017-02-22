@@ -9,7 +9,7 @@ from collections import defaultdict
 import six
 from ..utils import get_rng
 
-__all__ = ['RLEnvironment', 'NaiveRLEnvironment', 'ProxyPlayer',
+__all__ = ['RLEnvironment', 'ProxyPlayer',
            'DiscreteActionSpace']
 
 

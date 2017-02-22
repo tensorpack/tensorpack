@@ -33,7 +33,7 @@ class PredictorFactory(object):
         Returns:
             an online predictor (which has to be used under a default session)
         """
-        tower = self.towers[tower]  # TODO is it good?
+        tower = self.towers[tower]
         with tf.variable_scope(tf.get_variable_scope(), reuse=True):
             # just ensure the tower exists. won't rebuild
             self._tower_builder.build(tower)

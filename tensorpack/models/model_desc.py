@@ -8,7 +8,9 @@ import tensorflow as tf
 import pickle
 import six
 
-from ..utils import logger, INPUTS_KEY, deprecated, log_deprecated
+from ..utils import logger
+from ..utils.naming import INPUTS_KEY
+from ..utils.develop import deprecated, log_deprecated
 from ..utils.argtools import memoized
 from ..tfutils.modelutils import apply_slim_collections
 

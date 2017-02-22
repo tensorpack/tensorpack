@@ -76,10 +76,11 @@ class MultiTowerOfflinePredictor(OnlinePredictor):
 
 
 class DataParallelOfflinePredictor(OnlinePredictor):
-    """ A data-parallel predictor.
-        Its input is: [input[0] in tower[0], input[1] in tower[0], ...,
-                      input[0] in tower[1], input[1] in tower[1], ...]
-        And same for the output.
+    """
+    A data-parallel predictor.
+    Note that it doesn't split/concat inputs/outputs automatically.
+    Its input is: ``[input[0] in tower[0], input[1] in tower[0], ..., input[0] in tower[1], input[1] in tower[1], ...]``
+    And same for the output.
     """
 
     def __init__(self, config, towers):

@@ -8,7 +8,8 @@ import itertools
 import re
 from six.moves import zip, range
 
-from ..utils import logger, log_deprecated
+from ..utils import logger
+from ..utils.develop import log_deprecated
 from ..utils.naming import SUMMARY_BACKUP_KEYS
 from ..utils.concurrency import LoopThread
 from ..tfutils.tower import TowerContext

@@ -5,7 +5,7 @@
 
 import tensorflow as tf
 
-from ..utils import log_deprecated
+from ..utils.develop import log_deprecated
 from ..tfutils.tower import TowerContext, get_current_tower_context
 from .input_data import QueueInput, FeedfreeInput
 

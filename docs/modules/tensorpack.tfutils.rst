@@ -1,10 +1,50 @@
 tensorpack.tfutils package
 ==========================
 
+tensorpack.tfutils.collection module
+------------------------------------
+
+.. automodule:: tensorpack.tfutils.collection
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+tensorpack.tfutils.distributions module
+---------------------------------------
+
+.. automodule:: tensorpack.tfutils.distributions
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+tensorpack.tfutils.gradproc module
+------------------------------------
+
+.. automodule:: tensorpack.tfutils.gradproc
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 tensorpack.tfutils.modelutils module
 ------------------------------------
 
 .. automodule:: tensorpack.tfutils.modelutils
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+tensorpack.tfutils.optimizer module
+------------------------------------
+
+.. automodule:: tensorpack.tfutils.optimizer
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+tensorpack.tfutils.sesscreate module
+------------------------------------
+
+.. automodule:: tensorpack.tfutils.sesscreate
     :members:
     :undoc-members:
     :show-inheritance:

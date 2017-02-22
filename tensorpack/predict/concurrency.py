@@ -8,7 +8,8 @@ import six
 from six.moves import queue, range
 import tensorflow as tf
 
-from ..utils import logger, deprecated
+from ..utils import logger
+from ..utils.develop import deprecated
 from ..utils.concurrency import DIE, StoppableThread, ShareSessionThread
 from ..tfutils.modelutils import describe_model
 from .base import OnlinePredictor, OfflinePredictor, AsyncPredictorBase
@@ -185,5 +186,5 @@ try:
     else:
         from concurrent.futures import Future
 except ImportError:
-    from ..utils.dependency import create_dummy_class
+    from ..utils.develop import create_dummy_class
     MultiThreadAsyncPredictor = create_dummy_class('MultiThreadAsyncPredictor', 'tornado.concurrent')  # noqa

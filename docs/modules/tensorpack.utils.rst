@@ -17,13 +17,6 @@ tensorpack.utils.concurrency module
     :undoc-members:
     :show-inheritance:
 
-tensorpack.utils.debug module
------------------------------
-
-.. automodule:: tensorpack.utils.debug
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
 tensorpack.utils.discretize module
 ----------------------------------

@@ -10,7 +10,8 @@ import copy
 from ..tfutils.argscope import get_arg_scope
 from ..tfutils.modelutils import get_shape_str
 from ..tfutils.summary import add_activation_summary
-from ..utils import logger, building_rtfd
+from ..utils import logger
+from ..utils.develop import building_rtfd
 
 # make sure each layer is only logged once
 _LAYER_LOGGED = set()

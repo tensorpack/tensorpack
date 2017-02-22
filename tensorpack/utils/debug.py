@@ -5,7 +5,6 @@
 
 
 import sys
-__all__ = ['enable_call_trace']
 
 
 def enable_call_trace():

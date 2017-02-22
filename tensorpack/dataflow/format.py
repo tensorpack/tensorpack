@@ -181,9 +181,9 @@ def CaffeLMDB(lmdb_path, shuffle=True, keys=None):
         a :class:`LMDBDataDecoder` instance.
 
     Example:
+        .. code-block:: python
 
-    .. code-block:: none
-        ds = CaffeLMDB("/tmp/validation", keys='{:0>8d}')
+            ds = CaffeLMDB("/tmp/validation", keys='{:0>8d}')
     """
 
     cpb = get_caffe_pb()
@@ -226,7 +226,7 @@ class SVMLightData(RNGDataFlow):
             yield [self.X[id, :], self.y[id]]
 
 
-from ..utils.dependency import create_dummy_class   # noqa
+from ..utils.develop import create_dummy_class   # noqa
 try:
     import h5py
 except ImportError:

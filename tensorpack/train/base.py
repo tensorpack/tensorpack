@@ -12,7 +12,8 @@ from six.moves import range
 import tensorflow as tf
 from .predict import PredictorFactory
 from .config import TrainConfig
-from ..utils import logger, deprecated, log_deprecated
+from ..utils import logger
+from ..utils.develop import deprecated, log_deprecated
 from ..callbacks import StatHolder
 from ..tfutils import get_global_step_value
 from ..tfutils.modelutils import describe_model

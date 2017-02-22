@@ -82,7 +82,7 @@ def dump_dataflow_to_lmdb(ds, lmdb_path):
 try:
     import lmdb
 except ImportError:
-    from ..utils.dependency import create_dummy_func
+    from ..utils.develop import create_dummy_func
     dump_dataflow_to_lmdb = create_dummy_func('dump_dataflow_to_lmdb', 'lmdb') # noqa
 
 

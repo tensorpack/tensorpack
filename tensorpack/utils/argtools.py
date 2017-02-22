@@ -94,8 +94,8 @@ def shape4d(a, data_format='NHWC'):
         a: a int or tuple/list of length 2
 
     Returns:
-        list: of length 4. if ``a`` is a int, return ``[1, a, a, 1]`` or ``[1,
-            1, a, a]`` depending on data_format.
+        list: of length 4. if ``a`` is a int, return ``[1, a, a, 1]``
+            or ``[1, 1, a, a]`` depending on data_format.
     """
     s2d = shape2d(a)
     if data_format == 'NHWC':

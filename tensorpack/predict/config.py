@@ -6,7 +6,7 @@ import tensorflow as tf
 import six
 
 from ..models import ModelDesc
-from ..utils import log_deprecated
+from ..utils.develop import log_deprecated
 from ..tfutils import get_default_sess_config
 from ..tfutils.sessinit import SessionInit, JustCurrentSession
 from ..tfutils.sesscreate import NewSession

@@ -10,7 +10,8 @@ from ..callbacks import (
     MaintainStepCounter)
 from ..dataflow.base import DataFlow
 from ..models import ModelDesc
-from ..utils import logger, log_deprecated
+from ..utils import logger
+from ..utils.develop import log_deprecated
 from ..tfutils import (JustCurrentSession,
                        get_default_sess_config, SessionInit)
 from ..tfutils.optimizer import apply_grad_processors
@@ -130,6 +131,8 @@ class TrainConfig(object):
         self.predict_tower = predict_tower
         if isinstance(self.predict_tower, int):
             self.predict_tower = [self.predict_tower]
+        assert len(set(self.predict_tower)) == len(self.predict_tower), \
+            "Cannot have duplicated predict_tower!"
 
         if 'optimizer' in kwargs:
             log_deprecated("TrainConfig(optimizer=...)",

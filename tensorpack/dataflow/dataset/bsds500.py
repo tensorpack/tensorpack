@@ -91,7 +91,7 @@ class BSDS500(RNGDataFlow):
 try:
     from scipy.io import loadmat
 except ImportError:
-    from ...utils.dependency import create_dummy_class
+    from ...utils.develop import create_dummy_class
     BSDS500 = create_dummy_class('BSDS500', 'scipy.io')  # noqa
 
 if __name__ == '__main__':

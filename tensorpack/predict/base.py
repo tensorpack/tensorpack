@@ -7,7 +7,8 @@ from abc import abstractmethod, ABCMeta
 import tensorflow as tf
 import six
 
-from ..utils import logger, deprecated
+from ..utils import logger
+from ..utils.develop import deprecated
 from ..utils.argtools import memoized
 from ..utils.naming import SUMMARY_BACKUP_KEYS
 from ..tfutils import get_tensors_by_names, TowerContext
@@ -60,8 +61,10 @@ class PredictorBase(object):
     @abstractmethod
     def _do_call(self, dp):
         """
-        :param dp: input datapoint.  must have the same length as input_names
-        :return: output as defined by the config
+        Args:
+            dp: input datapoint.  must have the same length as input_names
+        Returns:
+            output as defined by the config
         """
 
 

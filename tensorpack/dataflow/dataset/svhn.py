@@ -72,7 +72,7 @@ class SVHNDigit(RNGDataFlow):
 try:
     import scipy.io
 except ImportError:
-    from ...utils.dependency import create_dummy_class
+    from ...utils.develop import create_dummy_class
     SVHNDigit = create_dummy_class('SVHNDigit', 'scipy.io')  # noqa
 
 if __name__ == '__main__':

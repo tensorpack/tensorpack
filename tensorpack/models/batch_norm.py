@@ -217,7 +217,7 @@ def BatchRenorm(x, rmax, dmax, decay=0.9, epsilon=1e-5,
     """
     Batch Renormalization layer, as described in the paper:
     `Batch Renormalization: Towards Reducing Minibatch Dependence in Batch-Normalized Models
-     <https://arxiv.org/abs/1702.03275>`_.
+    <https://arxiv.org/abs/1702.03275>`_.
 
     Args:
         x (tf.Tensor): a NHWC or NC tensor.
