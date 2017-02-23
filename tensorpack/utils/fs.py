@@ -4,9 +4,9 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import os
-import sys
 from six.moves import urllib
 import errno
+import tqdm
 from . import logger
 from .utils import execute_only_once
 
@@ -31,29 +31,32 @@ def mkdir_p(dirname):
 
 def download(url, dir, filename=None):
     """
-    Download URL to a directory. Will figure out the filename automatically
-    from URL.
+    Download URL to a directory.
+    Will figure out the filename automatically from URL, if not given.
     """
     mkdir_p(dir)
     if filename is None:
         filename = url.split('/')[-1]
     fpath = os.path.join(dir, filename)
 
-    def _progress(count, block_size, total_size):
-        sys.stdout.write('\r>> Downloading %s %.1f%%' %
-                         (filename,
-                             min(float(count * block_size) / total_size,
-                                 1.0) * 100.0))
-        sys.stdout.flush()
+    def hook(t):
+        last_b = [0]
+
+        def inner(b, bsize, tsize=None):
+            if tsize is not None:
+                t.total = tsize
+            t.update((b - last_b[0]) * bsize)
+            last_b[0] = b
+        return inner
     try:
-        fpath, _ = urllib.request.urlretrieve(url, fpath, reporthook=_progress)
+        with tqdm.tqdm(unit='B', unit_scale=True, miniters=1, desc=filename) as t:
+            fpath, _ = urllib.request.urlretrieve(url, fpath, reporthook=hook(t))
         statinfo = os.stat(fpath)
         size = statinfo.st_size
     except:
         logger.error("Failed to download {}".format(url))
         raise
     assert size > 0, "Download an empty file!"
-    sys.stdout.write('\n')
     # TODO human-readable size
     print('Succesfully downloaded ' + filename + " " + str(size) + ' bytes.')
     return fpath

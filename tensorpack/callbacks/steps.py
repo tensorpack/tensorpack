@@ -123,3 +123,6 @@ class ProgressBar(Callback):
         self._bar.update()
         if self.trainer.local_step == self._total - 1:
             self._bar.close()
+
+    def _after_train(self):
+        self._bar.close()
