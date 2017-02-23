@@ -32,13 +32,12 @@ class SimpleTrainer(Trainer):
         self.hooked_sess.run(self.train_op, feed_dict=feed)
 
     def _setup(self):
-        self._input_method._setup(self)
+        self._input_method.setup_training(self)
         model = self.model
-        self.input_vars = model.get_reused_placehdrs()
+        self.inputs = model.get_reused_placehdrs()
         with TowerContext('', is_training=True):
-            model.build_graph(self.input_vars)
+            model.build_graph(self.inputs)
             cost_var = model.get_cost()
 
         opt = self.config.optimizer
-        grads = opt.compute_gradients(cost_var)
-        self.train_op = opt.apply_gradients(grads, name='min_op')
+        self.train_op = opt.minimize(cost_var, name='min_op')

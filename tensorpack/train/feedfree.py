@@ -36,7 +36,7 @@ class FeedfreeTrainerBase(Trainer):
 
     def _setup(self):
         assert isinstance(self._input_method, FeedfreeInput), type(self._input_method)
-        self._input_method._setup(self)
+        self._input_method.setup_training(self)
 
     def run_step(self):
         """ Simply run ``self.train_op``."""

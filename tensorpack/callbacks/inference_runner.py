@@ -12,7 +12,7 @@ from ..utils import logger, get_tqdm
 from ..dataflow import DataFlow
 from ..tfutils.common import get_op_tensor_name
 from ..tfutils import TowerContext
-from ..train.input_data import FeedfreeInput
+from ..train.input_data import TensorInput
 from ..predict import PredictorTowerBuilder
 
 from .base import Triggerable
@@ -161,7 +161,7 @@ class FeedfreeInferenceRunner(Triggerable):
             prefix(str): an prefix used to build the tower. Must be set
                 differently if more than one :class:`FeedfreeInferenceRunner` are used.
         """
-        assert isinstance(input, FeedfreeInput), input
+        assert isinstance(input, TensorInput), input
         self._input_data = input
         if not isinstance(infs, list):
             self.infs = [infs]
@@ -192,7 +192,7 @@ class FeedfreeInferenceRunner(Triggerable):
         self._find_output_tensors()
 
     def _find_input_tensors(self):
-        self._input_data._setup(self.trainer)
+        self._input_data.setup(self.trainer.model)
         # only 1 prediction tower will be used for inference
         self._input_tensors = self._input_data.get_input_tensors()
         model_placehdrs = self.trainer.model.get_reused_placehdrs()

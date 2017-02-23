@@ -22,7 +22,12 @@ __all__ = ['InputData', 'FeedfreeInput',
 @six.add_metaclass(ABCMeta)
 class InputData(object):
     """ Base class for the abstract InputData. """
-    pass
+
+    def setup(self, model):
+        pass
+
+    def setup_training(self, trainer):
+        self.setup(trainer.model)
 
 
 class FeedInput(InputData):
@@ -38,8 +43,8 @@ class FeedInput(InputData):
     def size(self):
         return self.ds.size()
 
-    def _setup(self, trainer):
-        self.input_placehdrs = trainer.model.get_reused_placehdrs()
+    def setup(self, model):
+        self.input_placehdrs = model.get_reused_placehdrs()
         rds = RepeatedData(self.ds, -1)
         rds.reset_state()
         self.data_producer = rds.get_data()
@@ -58,18 +63,16 @@ class FeedfreeInput(InputData):
     """ Abstract base for input without feed,
     e.g. by queue or other operations. """
 
+    @abstractmethod
     def get_input_tensors(self):
         """
         Returns:
             list: A list of tensors corresponding to the inputs of the model.
+                Always create and return a list of new input tensors when called.
         """
-        return self._get_input_tensors()
 
-    @abstractmethod
-    def _get_input_tensors(self):
-        """
-        always create and return a list of new input tensors
-        """
+    def get_client_threads(self):
+        return []
 
 
 class EnqueueThread(ShareSessionThread):
@@ -125,18 +128,21 @@ class QueueInput(FeedfreeInput):
         return self.ds.size()
 
     # TODO XXX use input data mapping. not all placeholders are needed
-    def _setup(self, trainer):
-        self.input_placehdrs = trainer.model.get_reused_placehdrs()
+    def setup(self, model):
+        self.input_placehdrs = model.get_reused_placehdrs()
         assert len(self.input_placehdrs) > 0, \
-            "QueueInput can only be used with input placeholders!"
+            "QueueInput has to be used with input placeholders!"
         if self.queue is None:
             self.queue = tf.FIFOQueue(
                 50, [x.dtype for x in self.input_placehdrs],
                 name='input_queue')
         self.thread = EnqueueThread(self.queue, self.ds, self.input_placehdrs)
+
+    def setup_training(self, trainer):
+        self.setup(trainer.model)
         trainer.config.callbacks.append(StartProcOrThread(self.thread))
 
-    def _get_input_tensors(self):
+    def get_input_tensors(self):
         ret = self.queue.dequeue(name='input_deque')
         if isinstance(ret, tf.Tensor):  # only one input
             ret = [ret]
@@ -166,10 +172,10 @@ class BatchQueueInput(FeedfreeInput):
     def size(self):
         return self.ds.size() // self.batch_size
 
-    def _setup(self, trainer):
-        self.input_placehdrs = trainer.model.get_reused_placehdrs()
+    def setup(self, model):
+        self.input_placehdrs = model.get_reused_placehdrs()
         assert len(self.input_placehdrs) > 0, \
-            "QueueInput can only be used with input placeholders!"
+            "BatchQueueInput has to be used with input placeholders!"
 
         # prepare placeholders without the first dimension
         placehdrs_nobatch = []
@@ -195,9 +201,12 @@ class BatchQueueInput(FeedfreeInput):
             assert shp.is_fully_defined(), shape_err
 
         self.thread = EnqueueThread(self.queue, self.ds, placehdrs_nobatch)
+
+    def setup_training(self, trainer):
+        self.setup(trainer.model)
         trainer.config.callbacks.append(StartProcOrThread(self.thread))
 
-    def _get_input_tensors(self):
+    def get_input_tensors(self):
         ret = self.queue.dequeue_many(self.batch_size, name='input_deque')
         if isinstance(ret, tf.Tensor):  # only one input
             ret = [ret]
@@ -221,7 +230,7 @@ class DummyConstantInput(FeedfreeInput):
         self.shapes = shapes
         logger.warn("Using dummy input for debug!")
 
-    def _get_input_tensors(self):
+    def get_input_tensors(self):
         placehdrs = self.input_placehdrs
         assert len(self.shapes) == len(placehdrs)
         ret = []
@@ -253,8 +262,5 @@ class TensorInput(FeedfreeInput):
             raise NotImplementedError("size of TensorInput is undefined!")
         return self._size
 
-    def _setup(self, trainer):
-        pass
-
-    def _get_input_tensors(self):
+    def get_input_tensors(self):
         return self.get_tensor_fn()
