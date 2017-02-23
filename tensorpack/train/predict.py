@@ -5,7 +5,7 @@
 
 import tensorflow as tf
 from ..predict import (OnlinePredictor,
-                       PredictorTowerBuilder, MultiTowerOfflinePredictor)
+                       PredictorTowerBuilder)
 
 __all__ = ['PredictorFactory']
 
@@ -39,7 +39,7 @@ class PredictorFactory(object):
             self._tower_builder.build(tower)
 
         placeholder_names = set([k.name for k in self.model.get_inputs_desc()])
-        get_tensor_fn = MultiTowerOfflinePredictor.get_tensors_maybe_in_tower
+        get_tensor_fn = PredictorTowerBuilder.get_tensors_maybe_in_tower
         in_tensors = get_tensor_fn(placeholder_names, input_names, tower)
         out_tensors = get_tensor_fn(placeholder_names, output_names, tower)
         return OnlinePredictor(in_tensors, out_tensors)

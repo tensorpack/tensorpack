@@ -11,7 +11,7 @@ from ..utils import logger
 from ..utils.develop import deprecated
 from ..utils.argtools import memoized
 from ..utils.naming import SUMMARY_BACKUP_KEYS
-from ..tfutils import get_tensors_by_names, TowerContext
+from ..tfutils import get_tensors_by_names, TowerContext, get_op_tensor_name
 from ..tfutils.collection import freeze_collection
 
 __all__ = ['PredictorBase', 'AsyncPredictorBase',
@@ -191,6 +191,19 @@ class PredictorTowerBuilder(object):
                 tf.device('/gpu:{}'.format(tower) if tower >= 0 else '/cpu:0'), \
                 TowerContext(towername, is_training=False):
             self._fn(tower)
+
+    @staticmethod
+    def get_tensors_maybe_in_tower(placeholder_names, names, k, prefix=''):
+        def maybe_inside_tower(name):
+            name = get_op_tensor_name(name)[0]
+            if name in placeholder_names:
+                return name
+            else:
+                # if the name is not a placeholder, use it's name in each tower
+                return TowerContext.get_predict_tower_name(k, prefix) + '/' + name
+        names = list(map(maybe_inside_tower, names))
+        tensors = get_tensors_by_names(names)
+        return tensors
 
 
 def build_prediction_graph(build_tower_fn, towers=[0], prefix=''):

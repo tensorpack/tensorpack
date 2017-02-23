@@ -4,8 +4,8 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from ..utils import logger
-from ..tfutils import get_tensors_by_names, TowerContext, get_op_tensor_name
-from .base import OnlinePredictor, build_prediction_graph
+from ..tfutils import get_tensors_by_names, TowerContext
+from .base import OnlinePredictor, build_prediction_graph, PredictorTowerBuilder
 
 __all__ = ['MultiTowerOfflinePredictor',
            'DataParallelOfflinePredictor']
@@ -33,25 +33,12 @@ class MultiTowerOfflinePredictor(OnlinePredictor):
             self.sess = config.session_creator.create_session()
             config.session_init.init(self.sess)
 
-            get_tensor_fn = MultiTowerOfflinePredictor.get_tensors_maybe_in_tower
+            get_tensor_fn = PredictorTowerBuilder.get_tensors_maybe_in_tower
             for k in towers:
                 input_tensors = get_tensor_fn(placeholder_names, config.input_names, k)
                 output_tensors = get_tensor_fn(placeholder_names, config.output_names, k)
                 self.predictors.append(OnlinePredictor(
                     input_tensors, output_tensors, config.return_input, self.sess))
-
-    @staticmethod
-    def get_tensors_maybe_in_tower(placeholder_names, names, k):
-        def maybe_inside_tower(name):
-            name = get_op_tensor_name(name)[0]
-            if name in placeholder_names:
-                return name
-            else:
-                # if the name is not a placeholder, use it's name in each tower
-                return TowerContext.get_predict_tower_name(k) + '/' + name
-        names = map(maybe_inside_tower, names)
-        tensors = get_tensors_by_names(names)
-        return tensors
 
     def _do_call(self, dp):
         # use the first tower for compatible PredictorBase interface

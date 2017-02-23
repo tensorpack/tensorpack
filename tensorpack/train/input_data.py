@@ -23,11 +23,26 @@ __all__ = ['InputData', 'FeedfreeInput',
 class InputData(object):
     """ Base class for the abstract InputData. """
 
+    @abstractmethod
+    def get_input_tensors(self):
+        """
+        Returns:
+            list: A list of tensors corresponding to the inputs of the model.
+                Always create and return a list of new input tensors when called.
+        """
+
     def setup(self, model):
         pass
 
     def setup_training(self, trainer):
         self.setup(trainer.model)
+
+    @abstractmethod
+    def reset_state(self):
+        pass
+
+    def next_feed(self):
+        return []
 
 
 class FeedInput(InputData):
@@ -49,30 +64,25 @@ class FeedInput(InputData):
         rds.reset_state()
         self.data_producer = rds.get_data()
 
-    def next_feed(self):
-        data = next(self.data_producer)
-        feed = dict(zip(self.input_placehdrs, data))
-        self._last_feed = feed
-        return feed
+    def reset_state(self):
+        rds = RepeatedData(self.ds, -1)
+        rds.reset_state()
+        self.data_producer = rds.get_data()
 
-    def last_feed(self):
-        return self._last_feed
+    def get_input_tensors(self):
+        return self.input_placehdrs
+
+    def next_feed(self):
+        return next(self.data_producer)
 
 
 class FeedfreeInput(InputData):
     """ Abstract base for input without feed,
     e.g. by queue or other operations. """
 
-    @abstractmethod
-    def get_input_tensors(self):
-        """
-        Returns:
-            list: A list of tensors corresponding to the inputs of the model.
-                Always create and return a list of new input tensors when called.
-        """
-
-    def get_client_threads(self):
-        return []
+    def reset_state(self):
+        # TODO cannot reset
+        pass
 
 
 class EnqueueThread(ShareSessionThread):
@@ -233,6 +243,9 @@ class DummyConstantInput(FeedfreeInput):
         """
         self.shapes = shapes
         logger.warn("Using dummy input for debug!")
+
+    def setup(self, model):
+        self.input_placehdrs = model.get_reused_placehdrs()
 
     def get_input_tensors(self):
         placehdrs = self.input_placehdrs

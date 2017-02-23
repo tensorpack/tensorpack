@@ -5,14 +5,16 @@
 
 import tensorflow as tf
 from collections import namedtuple
+import tqdm
 import six
+import copy
 from six.moves import zip, range
 
-from ..utils import logger, get_tqdm
+from ..utils import logger, get_tqdm_kwargs, get_tqdm
 from ..dataflow import DataFlow
 from ..tfutils.common import get_op_tensor_name
 from ..tfutils import TowerContext
-from ..train.input_data import TensorInput
+from ..train.input_data import TensorInput, FeedInput
 from ..predict import PredictorTowerBuilder
 
 from .base import Triggerable
@@ -78,8 +80,9 @@ class InferenceRunner(Triggerable):
             input_tensor_names(list): list of tensors to feed the dataflow to.
                 Defaults to all the input placeholders.
         """
-        assert isinstance(ds, DataFlow), ds
-        self.ds = ds
+        if isinstance(ds, DataFlow):
+            self.ds = FeedInput(ds)
+        assert isinstance(self.ds, FeedInput), self.ds
         if not isinstance(infs, list):
             self.infs = [infs]
         else:
@@ -132,14 +135,13 @@ class InferenceRunner(Triggerable):
             inf.before_inference()
 
         self.ds.reset_state()
-        with get_tqdm(total=self.ds.size()) as pbar:
-            for dp in self.ds.get_data():
-                outputs = self.predictor(dp)
-                for inf, tensormap in zip(self.infs, self.inf_to_tensors):
-                    inf_output = [(outputs if k.isOutput else dp)[k.index]
-                                  for k in tensormap]
-                    inf.datapoint(inf_output)
-                pbar.update()
+        for _ in tqdm.trange(self.ds.size(), **get_tqdm_kwargs()):
+            dp = self.ds.next_feed()
+            outputs = self.predictor(dp)
+            for inf, tensormap in zip(self.infs, self.inf_to_tensors):
+                inf_output = [(outputs if k.isOutput else dp)[k.index]
+                              for k in tensormap]
+                inf.datapoint(inf_output)
         self._write_summary_after_inference()
 
     def _write_summary_after_inference(self):
@@ -195,7 +197,7 @@ class FeedfreeInferenceRunner(Triggerable):
         self._input_data.setup(self.trainer.model)
         # only 1 prediction tower will be used for inference
         self._input_tensors = self._input_data.get_input_tensors()
-        model_placehdrs = self.trainer.model.get_reused_placehdrs()
+        model_placehdrs = copy.copy(self.trainer.model.get_reused_placehdrs())
         if self._input_names is not None:
             raise NotImplementedError("Random code. Not tested.")
             assert len(self._input_names) == len(self._input_tensors), \

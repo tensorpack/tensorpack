@@ -76,9 +76,9 @@ class TowerContext(object):
     def get_predict_tower_name(towerid=0, prefix=''):
         """
         Args:
-            prefix(str): an alphanumeric prefix.
             towerid(int): an integer, the id of this predict tower, usually
                 used to choose the GPU id.
+            prefix(str): an alphanumeric prefix.
         Returns:
             str: the final tower name used to create a predict tower.
                 Currently it is ``PREDICT_TOWER + prefix + towerid``.

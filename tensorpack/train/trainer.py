@@ -28,7 +28,8 @@ class SimpleTrainer(Trainer):
 
     def run_step(self):
         """ Feed data into the graph and run the updates. """
-        feed = self._input_method.next_feed()
+        dp = self._input_method.next_feed()
+        feed = dict(zip(self.inputs, dp))
         self.hooked_sess.run(self.train_op, feed_dict=feed)
 
     def _setup(self):
