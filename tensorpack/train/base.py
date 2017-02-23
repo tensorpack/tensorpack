@@ -129,8 +129,10 @@ class Trainer(object):
         self.config.callbacks.setup_graph(weakref.proxy(self))
         self.config.session_init._setup_graph()
 
-        def after_init(_, __):
+        def after_init(scaffold, sess):
             logger.info("Graph variables initialized.")
+            self.config.session_init._run_init(sess)
+
         scaffold = tf.train.Scaffold(
             init_op=tf.global_variables_initializer(),
             init_fn=after_init)
@@ -140,9 +142,7 @@ class Trainer(object):
                 scaffold=scaffold, config=self.config.session_config),
             hooks=self.config.callbacks.get_hooks())
         self.hooked_sess = self.monitored_sess  # just create an alias
-
         self.sess = self.monitored_sess._tf_sess()  # expose the underlying session also
-        self.config.session_init._run_init(self.sess)
 
     @abstractmethod
     def _setup(self):
