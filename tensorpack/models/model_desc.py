@@ -80,11 +80,12 @@ class ModelDesc(object):
         for v in input_vars:
             tf.add_to_collection(INPUTS_KEY, v.dumps())
         ret = []
-        for v in input_vars:
-            placehdr_f = tf.placeholder if not v.sparse else tf.sparse_placeholder
-            ret.append(placehdr_f(
-                v.type, shape=v.shape,
-                name=prefix + v.name))
+        with tf.name_scope(None):   # clear any name scope it might get called in
+            for v in input_vars:
+                placehdr_f = tf.placeholder if not v.sparse else tf.sparse_placeholder
+                ret.append(placehdr_f(
+                    v.type, shape=v.shape,
+                    name=prefix + v.name))
         return ret
 
     def get_inputs_desc(self):
