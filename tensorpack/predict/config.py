@@ -9,7 +9,7 @@ from ..models import ModelDesc
 from ..utils.develop import log_deprecated
 from ..tfutils import get_default_sess_config
 from ..tfutils.sessinit import SessionInit, JustCurrentSession
-from ..tfutils.sesscreate import NewSession
+from ..tfutils.sesscreate import NewSessionCreator
 
 __all__ = ['PredictConfig']
 
@@ -28,7 +28,7 @@ class PredictConfig(object):
         Args:
             model (ModelDesc): the model to use.
             session_creator (tf.train.SessionCreator): how to create the
-                session. Defaults to :class:`sesscreate.NewSession()`.
+                session. Defaults to :class:`sesscreate.NewSessionCreator()`.
             session_init (SessionInit): how to initialize variables of the session.
                 Defaults to do nothing.
             input_names (list): a list of input tensor names. Defaults to all
@@ -52,9 +52,9 @@ class PredictConfig(object):
         if session_creator is None:
             if session_config is not None:
                 log_deprecated("PredictConfig(session_config=)", "Use session_creator instead!", "2017-04-20")
-                self.session_creator = NewSession(config=session_config)
+                self.session_creator = NewSessionCreator(config=session_config)
             else:
-                self.session_creator = NewSession(config=get_default_sess_config(0.4))
+                self.session_creator = NewSessionCreator(config=get_default_sess_config(0.4))
         else:
             self.session_creator = session_creator
 

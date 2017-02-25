@@ -10,11 +10,14 @@ import six
 from six.moves import range
 
 import tensorflow as tf
+from tensorflow.python.training.monitored_session \
+    import _HookedSession as HookedSession
+
 from .predict import PredictorFactory
 from .config import TrainConfig
 from ..utils import logger
 from ..utils.develop import deprecated, log_deprecated
-from ..callbacks import StatHolder
+from ..callbacks import StatHolder, Callback, Callbacks, MaintainStepCounter
 from ..tfutils import get_global_step_value
 from ..tfutils.modelutils import describe_model
 from ..tfutils.summary import create_scalar_summary
@@ -57,6 +60,24 @@ class Trainer(object):
         self.epoch_num = self.config.starting_epoch - 1
         self.local_step = -1
 
+        self._callbacks = []
+        self.register_callback(MaintainStepCounter())
+        for cb in self.config.callbacks:
+            self.register_callback(cb)
+
+    def register_callback(self, cb):
+        """
+        Use this method before :meth:`Trainer._setup` finishes,
+        to register a callback to the trainer.
+
+        The hooks of the registered callback will be bind to the
+        `self.hooked_sess` session.
+        """
+        assert isinstance(cb, Callback), cb
+        assert not isinstance(self._callbacks, Callbacks), \
+            "Cannot register more callbacks after trainer was setup!"
+        self._callbacks.append(cb)
+
     def train(self):
         """ Start training """
         self.setup()
@@ -74,7 +95,7 @@ class Trainer(object):
         # trigger subclass
         self._trigger_epoch()
         # trigger callbacks
-        self.config.callbacks.trigger_epoch()
+        self._callbacks.trigger_epoch()
         self.summary_writer.flush()
 
     def _trigger_epoch(self):
@@ -126,7 +147,9 @@ class Trainer(object):
         self.stat_holder = StatHolder(logger.LOG_DIR)
 
         logger.info("Setup callbacks graph ...")
-        self.config.callbacks.setup_graph(weakref.proxy(self))
+        self._callbacks = Callbacks(self._callbacks)
+        self._callbacks.setup_graph(weakref.proxy(self))
+
         self.config.session_init._setup_graph()
 
         def after_init(scaffold, sess):
@@ -140,9 +163,11 @@ class Trainer(object):
         self.monitored_sess = tf.train.MonitoredSession(
             session_creator=tf.train.ChiefSessionCreator(
                 scaffold=scaffold, config=self.config.session_config),
-            hooks=self.config.callbacks.get_hooks())
-        self.hooked_sess = self.monitored_sess  # just create an alias
+            hooks=None)
         self.sess = self.monitored_sess._tf_sess()  # expose the underlying session also
+
+        hooks = self._callbacks.get_hooks()
+        self.hooked_sess = HookedSession(self.sess, hooks)
 
     @abstractmethod
     def _setup(self):
@@ -161,11 +186,10 @@ class Trainer(object):
         """
         Run the main training loop.
         """
-        callbacks = self.config.callbacks
         with self.sess.as_default():
             self._starting_step = get_global_step_value()
             try:
-                callbacks.before_train()
+                self._callbacks.before_train()
                 for self.epoch_num in range(
                         self.config.starting_epoch, self.config.max_epoch + 1):
                     logger.info("Start Epoch {} ...".format(self.epoch_num))
@@ -174,7 +198,7 @@ class Trainer(object):
                         if self.monitored_sess.should_stop():
                             return
                         self.run_step()  # implemented by subclass
-                        callbacks.trigger_step()
+                        self._callbacks.trigger_step()
                     logger.info("Epoch {} (global_step {}) finished, time:{:.2f} sec.".format(
                         self.epoch_num, self.global_step, time.time() - start_time))
 
@@ -186,7 +210,7 @@ class Trainer(object):
             except:
                 raise
             finally:
-                callbacks.after_train()
+                self._callbacks.after_train()
                 self.summary_writer.close()
                 self.monitored_sess.close()
 

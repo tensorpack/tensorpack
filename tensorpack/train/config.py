@@ -6,8 +6,7 @@ import tensorflow as tf
 
 from ..callbacks import (
     Callbacks, MovingAverageSummary,
-    StatPrinter, ProgressBar, MergeAllSummaries,
-    MaintainStepCounter)
+    StatPrinter, ProgressBar, MergeAllSummaries)
 from ..dataflow.base import DataFlow
 from ..models import ModelDesc
 from ..utils import logger
@@ -89,9 +88,8 @@ class TrainConfig(object):
                 ProgressBar(),
                 MergeAllSummaries(),
                 StatPrinter()]
-        self.callbacks = [MaintainStepCounter()] + callbacks + extra_callbacks
+        self.callbacks = callbacks + extra_callbacks
         assert_type(self.callbacks, list)
-        self.callbacks = Callbacks(self.callbacks)
 
         self.model = model
         assert_type(self.model, ModelDesc)

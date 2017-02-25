@@ -155,7 +155,7 @@ class QueueInput(FeedfreeInput):
 
     def setup_training(self, trainer):
         self.setup(trainer.model)
-        trainer.config.callbacks.append(StartProcOrThread(self.thread))
+        trainer.register_callback(StartProcOrThread(self.thread))
 
     def get_input_tensors(self):
         ret = self.queue.dequeue(name='input_deque')
@@ -219,7 +219,7 @@ class BatchQueueInput(FeedfreeInput):
 
     def setup_training(self, trainer):
         self.setup(trainer.model)
-        trainer.config.callbacks.append(StartProcOrThread(self.thread))
+        trainer.register_callback(StartProcOrThread(self.thread))
 
     def get_input_tensors(self):
         ret = self.queue.dequeue_many(self.batch_size, name='input_deque')

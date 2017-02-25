@@ -5,10 +5,10 @@
 
 import tensorflow as tf
 
-__all__ = ['NewSession', 'ReuseSession']
+__all__ = ['NewSessionCreator', 'ReuseSessionCreator']
 
 
-class NewSession(tf.train.SessionCreator):
+class NewSessionCreator(tf.train.SessionCreator):
     def __init__(self, target='', graph=None, config=None):
         """
         Args:
@@ -22,7 +22,7 @@ class NewSession(tf.train.SessionCreator):
         return tf.Session(target=self.target, graph=self.graph, config=self.config)
 
 
-class ReuseSession(tf.train.SessionCreator):
+class ReuseSessionCreator(tf.train.SessionCreator):
     def __init__(self, sess):
         """
         Args:
