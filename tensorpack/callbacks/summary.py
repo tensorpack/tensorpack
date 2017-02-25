@@ -68,9 +68,9 @@ class MergeAllSummaries(Callback):
         summary = run_values.results
         if summary is None:
             return
-        self.trainer.add_summary(summary)
+        self.trainer.monitors.put_summary(summary)
 
     def _trigger_epoch(self):
         if self._run_alone:
             summary = self.summary_op.eval()
-            self.trainer.add_summary(summary)
+            self.trainer.monitors.put_summary(summary)

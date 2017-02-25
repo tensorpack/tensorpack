@@ -146,12 +146,12 @@ def get_config():
             RunOp(lambda: M.reset_lstm_state()),
             CallbackFactory(
                 trigger_epoch=lambda self:
-                [self.trainer.add_scalar_summary(
+                [self.trainer.monitors.put(
                     'validation_perplexity',
-                    np.exp(self.trainer.stat_holder.get_stat_now('validation_cost') / SEQ_LEN)),
-                 self.trainer.add_scalar_summary(
+                    np.exp(self.trainer.monitors.get_latest('validation_cost') / SEQ_LEN)),
+                 self.trainer.monitors.put(
                      'test_perplexity',
-                     np.exp(self.trainer.stat_holder.get_stat_now('test_cost') / SEQ_LEN))]
+                     np.exp(self.trainer.monitors.get_latest('test_cost') / SEQ_LEN))]
             ),
         ],
         max_epoch=70,

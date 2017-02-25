@@ -98,7 +98,7 @@ class MinSaver(Triggerable):
 
     def _get_stat(self):
         try:
-            v = self.trainer.stat_holder.get_stat_now(self.monitor_stat)
+            v = self.trainer.monitors.get_latest(self.monitor_stat)
         except KeyError:
             v = None
         return v

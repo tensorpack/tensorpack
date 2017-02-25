@@ -63,7 +63,7 @@ def summary_inferencer(trainer, infs):
             except:
                 logger.warn("{} returns a non-scalar statistics!".format(type(inf).__name__))
                 continue
-            trainer.add_scalar_summary(k, v)
+            trainer.monitors.put(k, v)
 
 
 class InferenceRunner(Triggerable):

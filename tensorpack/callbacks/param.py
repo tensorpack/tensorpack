@@ -318,8 +318,7 @@ class StatMonitorParamSetter(HyperParamSetter):
         self.last_changed_epoch = 0
 
     def _get_value_to_set(self):
-        holder = self.trainer.stat_holder
-        hist = holder.get_stat_history(self.stat_name)
+        hist = self.trainer.monitors.get_history(self.stat_name)
         if len(hist) < self.last_k + 1 or \
                 self.epoch_num - self.last_changed_epoch < self.last_k:
             return None

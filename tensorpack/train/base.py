@@ -3,7 +3,6 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from abc import ABCMeta, abstractmethod
-import re
 import time
 import weakref
 import six
@@ -15,12 +14,12 @@ from tensorflow.python.training.monitored_session \
 
 from .predict import PredictorFactory
 from .config import TrainConfig
+from .monitor import Monitors, TrainingMonitor
 from ..utils import logger
 from ..utils.develop import deprecated, log_deprecated
-from ..callbacks import StatHolder, Callback, Callbacks, MaintainStepCounter
+from ..callbacks import Callback, Callbacks, MaintainStepCounter
 from ..tfutils import get_global_step_value
 from ..tfutils.modelutils import describe_model
-from ..tfutils.summary import create_scalar_summary
 
 __all__ = ['Trainer', 'StopTraining', 'MultiPredictorTowerTrainer']
 
@@ -40,9 +39,7 @@ class Trainer(object):
         config (TrainConfig): the config used in this trainer.
         model (ModelDesc)
         sess (tf.Session): the current session in use.
-
-        stat_holder (StatHolder)
-        summary_writer (tf.summary.FileWriter)
+        monitors (Monitors): the monitors
 
         epoch_num (int): the number of epochs that have finished.
         local_step (int): the number of steps that have finished in the current epoch.
@@ -65,6 +62,8 @@ class Trainer(object):
         for cb in self.config.callbacks:
             self.register_callback(cb)
 
+        self.monitors = config.monitors
+
     def register_callback(self, cb):
         """
         Use this method before :meth:`Trainer._setup` finishes,
@@ -78,6 +77,12 @@ class Trainer(object):
             "Cannot register more callbacks after trainer was setup!"
         self._callbacks.append(cb)
 
+    def register_monitor(self, mon):
+        assert isinstance(mon, TrainingMonitor), mon
+        assert not isinstance(self.monitors, Monitors), \
+            "Cannot register more monitors after trainer was setup!"
+        self.monitors.append(mon)
+
     def train(self):
         """ Start training """
         self.setup()
@@ -88,47 +93,8 @@ class Trainer(object):
         """ Abstract method: run one iteration. Subclass should define what is "iteration".
         """
 
-    def trigger_epoch(self):
-        """
-        Called after each epoch.
-        """
-        # trigger subclass
-        self._trigger_epoch()
-        # trigger callbacks
-        self._callbacks.trigger_epoch()
-        self.summary_writer.flush()
-
     def _trigger_epoch(self):
         pass
-
-    def add_summary(self, summary):
-        """
-        Add summary to ``self.summary_writer``, and also
-        add scalar summary to ``self.stat_holder``.
-
-        Args:
-            summary (tf.Summary or str): a summary object, or a str which will
-                be interpreted as a serialized tf.Summary protobuf.
-        """
-        if isinstance(summary, six.binary_type):
-            summary = tf.Summary.FromString(summary)
-        assert isinstance(summary, tf.Summary), type(summary)
-        for val in summary.value:
-            if val.WhichOneof('value') == 'simple_value':
-                val.tag = re.sub('tower[p0-9]+/', '', val.tag)   # TODO move to subclasses
-                suffix = '-summary'  # issue#6150
-                if val.tag.endswith(suffix):
-                    val.tag = val.tag[:-len(suffix)]
-                self.stat_holder.add_stat(
-                    val.tag, val.simple_value,
-                    self.global_step, self.epoch_num)
-        self.summary_writer.add_summary(summary, get_global_step_value())
-
-    def add_scalar_summary(self, name, val):
-        """
-        Add a scalar summary to both TF events file and StatHolder.
-        """
-        self.add_summary(create_scalar_summary(name, val))
 
     def setup(self):
         """
@@ -141,10 +107,9 @@ class Trainer(object):
 
         describe_model()
         # some final operations that might modify the graph
-        logger.info("Setup summaries ...")
-        self.summary_writer = tf.summary.FileWriter(logger.LOG_DIR, graph=tf.get_default_graph())
-        # create an empty StatHolder
-        self.stat_holder = StatHolder(logger.LOG_DIR)
+        logger.info("Setup monitors ...")
+        self.monitors = Monitors(self.monitors)
+        self.monitors.setup(weakref.proxy(self))
 
         logger.info("Setup callbacks graph ...")
         self._callbacks = Callbacks(self._callbacks)
@@ -202,7 +167,10 @@ class Trainer(object):
                     logger.info("Epoch {} (global_step {}) finished, time:{:.2f} sec.".format(
                         self.epoch_num, self.global_step, time.time() - start_time))
 
-                    self.trigger_epoch()  # trigger epoch outside the timing region.
+                    # trigger epoch outside the timing region.
+                    self._trigger_epoch()
+                    self._callbacks.trigger_epoch()
+                    self.monitors.flush()
             except StopTraining:
                 logger.info("Training was stopped.")
             except KeyboardInterrupt:
@@ -211,9 +179,10 @@ class Trainer(object):
                 raise
             finally:
                 self._callbacks.after_train()
-                self.summary_writer.close()
+                self.monitors.close()
                 self.monitored_sess.close()
 
+    # Predictor related methods:    TODO
     def get_predictor(self, input_names, output_names, tower=0):
         """
         Args:
