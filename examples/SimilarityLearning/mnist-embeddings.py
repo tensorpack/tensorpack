@@ -151,7 +151,9 @@ def get_config(model, algorithm_name):
         extra_callbacks=[
             MovingAverageSummary(),
             ProgressBar(extra_display),
-            StatPrinter()],
+            MergeAllSummaries(),
+            StatPrinter()
+        ],
         max_epoch=20,
     )
 
