@@ -135,7 +135,7 @@ class SoftTripletModel(TripletModel):
 
 
 def get_config(model, algorithm_name):
-    logger.auto_set_dir()
+    logger.auto_set_dir(label=algorithm_name)
 
     extra_display = ["cost"]
     if not algorithm_name == "cosine":
