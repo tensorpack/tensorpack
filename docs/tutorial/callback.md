@@ -46,8 +46,6 @@ TrainConfig(
     ProgressBar(),
 		# run `tf.summary.merge_all` and save results every epoch
 		MergeAllSummaries(),
-    # print all the statistics I've created, and scalar tensors I've summarized
-    StatPrinter(),
   ]
 )
 ```

@@ -21,19 +21,34 @@ class TrainingMonitor(object):
     """
     Monitor a training progress, by processing different types of
     summary/statistics from trainer.
+
+    .. document private functions
+    .. automethod:: _setup
     """
     def setup(self, trainer):
         self._trainer = trainer
         self._setup()
 
     def _setup(self):
+        """ Override this method to setup the monitor."""
         pass
 
     def put_summary(self, summary):
+        """
+        Process a tf.Summary.
+        """
         pass
 
-    def put(self, name, val):   # TODO split by types?
+    def put(self, name, val):
+        """
+        Process a key-value pair.
+        """
         pass
+
+    def put_scalar(self, name, val):
+        self.put(name, val)
+
+    # TODO put other types
 
     def flush(self):
         pass
@@ -47,6 +62,9 @@ class NoOpMonitor(TrainingMonitor):
 
 
 class Monitors(TrainingMonitor):
+    """
+    Merge monitors together for trainer to use.
+    """
     def __init__(self, monitors):
         # TODO filter by names
         self._scalar_history = ScalarHistory()
@@ -68,9 +86,9 @@ class Monitors(TrainingMonitor):
         for m in self._monitors:
             m.put_summary(summary)
 
-    def _dispatch_put(self, name, val):
+    def _dispatch_put_scalar(self, name, val):
         for m in self._monitors:
-            m.put(name, val)
+            m.put_scalar(name, val)
 
     def put_summary(self, summary):
         if isinstance(summary, six.binary_type):
@@ -86,24 +104,35 @@ class Monitors(TrainingMonitor):
                 suffix = '-summary'  # issue#6150
                 if val.tag.endswith(suffix):
                     val.tag = val.tag[:-len(suffix)]
-                self._dispatch_put(val.tag, val.simple_value)
+                self._dispatch_put_scalar(val.tag, val.simple_value)
 
     def put(self, name, val):
-        val = float(val)    # TODO only support numeric for now
+        val = float(val)    # TODO only support scalar for now
+        self.put_scalar(name, val)
 
-        self._dispatch_put(name, val)
+    def put_scalar(self, name, val):
+        self._dispatch_put_scalar(name, val)
         s = tf.Summary()
         s.value.add(tag=name, simple_value=val)
         self._dispatch_put_summary(s)
 
     def get_latest(self, name):
+        """
+        Get latest scalar value of some data.
+        """
         return self._scalar_history.get_latest(name)
 
     def get_history(self, name):
+        """
+        Get a history of the scalar value of some data.
+        """
         return self._scalar_history.get_history(name)
 
 
 class TFSummaryWriter(TrainingMonitor):
+    """
+    Write summaries to TensorFlow event file.
+    """
     def __new__(cls):
         if logger.LOG_DIR:
             return super(TFSummaryWriter, cls).__new__(cls)
@@ -126,6 +155,9 @@ class TFSummaryWriter(TrainingMonitor):
 
 
 class JSONWriter(TrainingMonitor):
+    """
+    Write all scalar data to a json, grouped by their global step.
+    """
     def __new__(cls):
         if logger.LOG_DIR:
             return super(JSONWriter, cls).__new__(cls)
@@ -150,7 +182,7 @@ class JSONWriter(TrainingMonitor):
 
         self._last_gs = -1
 
-    def put(self, name, val):
+    def put_scalar(self, name, val):
         gs = self._trainer.global_step
         if gs != self._last_gs:
             self._push()
@@ -181,6 +213,9 @@ class JSONWriter(TrainingMonitor):
 
 # TODO print interval
 class ScalarPrinter(TrainingMonitor):
+    """
+    Print all scalar data in terminal.
+    """
     def __init__(self):
         self._whitelist = None
         self._blacklist = set([])
@@ -188,7 +223,7 @@ class ScalarPrinter(TrainingMonitor):
     def setup(self, _):
         self._dic = {}
 
-    def put(self, name, val):
+    def put_scalar(self, name, val):
         self._dic[name] = float(val)
 
     def _print_stat(self):
@@ -203,10 +238,13 @@ class ScalarPrinter(TrainingMonitor):
 
 
 class ScalarHistory(TrainingMonitor):
+    """
+    Only used by monitors internally.
+    """
     def setup(self, _):
         self._dic = defaultdict(list)
 
-    def put(self, name, val):
+    def put_scalar(self, name, val):
         self._dic[name].append(float(val))
 
     def get_latest(self, name):

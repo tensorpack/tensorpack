@@ -5,12 +5,12 @@ API Documentation
   :maxdepth: 1
 
 
-  tensorpack.models
-  tensorpack.dataflow
-  tensorpack.callbacks
-  tensorpack.train
-  tensorpack.utils
-  tensorpack.tfutils
-  tensorpack.predict
-  tensorpack.RL
+  models
+  dataflow
+  callbacks
+  train
+  predict
+  tfutils
+  utils
+  RL
 
