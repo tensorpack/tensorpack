@@ -18,8 +18,16 @@ __all__ = ['TrainingMonitor', 'Monitors',
 
 
 class TrainingMonitor(object):
+    """
+    Monitor a training progress, by processing different types of
+    summary/statistics from trainer.
+    """
     def setup(self, trainer):
         self._trainer = trainer
+        self._setup()
+
+    def _setup(self):
+        pass
 
     def put_summary(self, summary):
         pass
@@ -32,6 +40,10 @@ class TrainingMonitor(object):
 
     def close(self):
         pass
+
+
+class NoOpMonitor(TrainingMonitor):
+    pass
 
 
 class Monitors(TrainingMonitor):
@@ -92,6 +104,13 @@ class Monitors(TrainingMonitor):
 
 
 class TFSummaryWriter(TrainingMonitor):
+    def __new__(cls):
+        if logger.LOG_DIR:
+            return super(TFSummaryWriter, cls).__new__(cls)
+        else:
+            logger.warn("logger directory was not set. Ignore TFSummaryWriter.")
+            return NoOpMonitor()
+
     def setup(self, trainer):
         super(TFSummaryWriter, self).setup(trainer)
         self._writer = tf.summary.FileWriter(logger.LOG_DIR, graph=tf.get_default_graph())
@@ -107,6 +126,13 @@ class TFSummaryWriter(TrainingMonitor):
 
 
 class JSONWriter(TrainingMonitor):
+    def __new__(cls):
+        if logger.LOG_DIR:
+            return super(JSONWriter, cls).__new__(cls)
+        else:
+            logger.warn("logger directory was not set. Ignore JSONWriter.")
+            return NoOpMonitor()
+
     def setup(self, trainer):
         super(JSONWriter, self).setup(trainer)
         self._dir = logger.LOG_DIR

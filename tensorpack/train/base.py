@@ -43,6 +43,7 @@ class Trainer(object):
 
         epoch_num (int): the number of epochs that have finished.
         local_step (int): the number of steps that have finished in the current epoch.
+        global_step (int): the number of steps that have finished.
     """
 
     def __init__(self, config):
@@ -59,10 +60,12 @@ class Trainer(object):
 
         self._callbacks = []
         self.register_callback(MaintainStepCounter())
-        for cb in self.config.callbacks:
+        for cb in config.callbacks:
             self.register_callback(cb)
 
-        self.monitors = config.monitors
+        self.monitors = []
+        for m in config.monitors:
+            self.register_monitor(m)
 
     def register_callback(self, cb):
         """
@@ -100,9 +103,6 @@ class Trainer(object):
         """
         Setup the trainer and be ready for the main loop.
         """
-        if not hasattr(logger, 'LOG_DIR'):
-            raise RuntimeError("logger directory wasn't set!")
-
         self._setup()   # subclass will setup the graph
 
         describe_model()

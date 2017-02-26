@@ -34,6 +34,7 @@ class ModelSaver(Triggerable):
         self.var_collections = var_collections
         if checkpoint_dir is None:
             checkpoint_dir = logger.LOG_DIR
+        assert os.path.isdir(checkpoint_dir), checkpoint_dir
         self.checkpoint_dir = checkpoint_dir
 
     def _setup_graph(self):
