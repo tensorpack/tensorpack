@@ -57,6 +57,8 @@ class OutputTensorDispatcher(object):
 def summary_inferencer(trainer, infs):
     for inf in infs:
         ret = inf.after_inference()
+        if ret is None:
+            continue
         for k, v in six.iteritems(ret):
             try:
                 v = float(v)
