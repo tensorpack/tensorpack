@@ -194,6 +194,10 @@ class PredictorTowerBuilder(object):
 
     @staticmethod
     def get_tensors_maybe_in_tower(placeholder_names, names, k, prefix=''):
+        """
+        Args:
+            placeholders (list): A list of __op__ name.
+        """
         def maybe_inside_tower(name):
             name = get_op_tensor_name(name)[0]
             if name in placeholder_names:

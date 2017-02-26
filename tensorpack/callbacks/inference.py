@@ -91,8 +91,6 @@ class ScalarStats(Inferencer):
         self.stats = []
 
     def _datapoint(self, output):
-        for o in output:
-            assert isinstance(o, (float, np.float32)), type(o)
         self.stats.append(output)
 
     def _after_inference(self):
