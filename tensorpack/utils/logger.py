@@ -69,7 +69,7 @@ def _set_file(path):
     _logger.info("Argv: " + ' '.join(sys.argv))
 
 
-def set_logger_dir(dirname, action=None):
+def set_logger_dir(dirname, action=None, label=None):
     """
     Set the directory for global logging.
 
@@ -77,6 +77,10 @@ def set_logger_dir(dirname, action=None):
         dirname(str): log directory
         action(str): an action of ("k","b","d","n") to be performed. Will ask user by default.
     """
+
+    if not label:
+        label = get_time_str()
+
     global LOG_FILE, LOG_DIR
     if os.path.isdir(dirname):
         if not action:
@@ -89,13 +93,13 @@ If you're resuming from a previous run you can choose to keep it.""")
             action = input().lower().strip()
         act = action
         if act == 'b':
-            backup_name = dirname + get_time_str()
+            backup_name = dirname + label
             shutil.move(dirname, backup_name)
             info("Directory '{}' backuped to '{}'".format(dirname, backup_name))  # noqa: F821
         elif act == 'd':
             shutil.rmtree(dirname)
         elif act == 'n':
-            dirname = dirname + get_time_str()
+            dirname = dirname + label
             info("Use a new log directory {}".format(dirname))  # noqa: F821
         elif act == 'k':
             pass
@@ -114,7 +118,7 @@ def disable_logger():
         globals()[func] = lambda x: None
 
 
-def auto_set_dir(action=None, overwrite=False):
+def auto_set_dir(action=None, overwrite=False, label=None):
     """
     Set log directory to a subdir inside "train_log", with the name being
     the main python file currently running"""
@@ -126,4 +130,4 @@ def auto_set_dir(action=None, overwrite=False):
     set_logger_dir(
         os.path.join('train_log',
                      basename[:basename.rfind('.')]),
-        action=action)
+        action=action, label=label)
