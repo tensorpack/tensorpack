@@ -112,5 +112,5 @@ class Evaluator(Triggerable):
         t = time.time() - t
         if t > 10 * 60:  # eval takes too long
             self.eval_episode = int(self.eval_episode * 0.94)
-        self.trainer.add_scalar_summary('mean_score', mean)
-        self.trainer.add_scalar_summary('max_score', max)
+        self.trainer.monitors.put('mean_score', mean)
+        self.trainer.monitors.put('max_score', max)
