@@ -34,7 +34,6 @@ To visualize on test set:
 
 """
 
-SHAPE = 256
 BATCH = 1
 IN_CH = 3
 OUT_CH = 3
@@ -44,6 +43,7 @@ NF = 64  # number of filter
 
 class Model(GANModelDesc):
     def _get_inputs(self):
+        SHAPE = 256
         return [InputDesc(tf.float32, (None, SHAPE, SHAPE, IN_CH), 'input'),
                 InputDesc(tf.float32, (None, SHAPE, SHAPE, OUT_CH), 'output')]
 
@@ -159,8 +159,7 @@ def get_data():
     ds = ImageFromFile(imgs, channel=3, shuffle=True)
 
     ds = MapData(ds, lambda dp: split_input(dp[0]))
-    assert SHAPE < 286  # this is the parameter used in the paper
-    augs = [imgaug.Resize(286), imgaug.RandomCrop(SHAPE)]
+    augs = [imgaug.Resize(286), imgaug.RandomCrop(256)]
     ds = AugmentImageComponents(ds, augs, (0, 1))
     ds = BatchData(ds, BATCH)
     ds = PrefetchData(ds, 100, 1)

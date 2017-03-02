@@ -6,8 +6,7 @@ import sys
 import os
 import cv2
 import multiprocessing as mp
-import six
-from six.moves import range, map
+from six.moves import range
 
 from .base import DataFlow
 from ..utils import get_tqdm, logger
@@ -68,15 +67,17 @@ def dump_dataflow_to_lmdb(ds, lmdb_path):
     except NotImplementedError:
         sz = 0
     with get_tqdm(total=sz) as pbar:
-        with db.begin(write=True) as txn:
-            for idx, dp in enumerate(ds.get_data()):
-                txn.put(six.binary_type(idx), dumps(dp))
+        for idx, dp in enumerate(ds.get_data()):
+            with db.begin(write=True) as txn:
+                txn.put(u'{}'.format(idx).encode('ascii'), dumps(dp))
                 pbar.update()
-            keys = list(map(six.binary_type, range(idx + 1)))
-            txn.put('__keys__', dumps(keys))
+        keys = [u'{}'.format(k).encode('ascii') for k in range(idx + 1)]
+        with db.begin(write=True) as txn:
+            txn.put(b'__keys__', dumps(keys))
 
-            logger.info("Flushing database ...")
-            db.sync()
+        logger.info("Flushing database ...")
+        db.sync()
+    db.close()
 
 
 try:
