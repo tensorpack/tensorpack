@@ -124,6 +124,8 @@ def update_bn_ema(xn, batch_mean, batch_var, moving_mean, moving_var, decay):
         name='var_ema_op')
     add_model_variable(moving_mean)
     add_model_variable(moving_var)
+
+    # seems faster than delayed update, but might behave otherwise in distributed settings.
     with tf.control_dependencies([update_op1, update_op2]):
         return tf.identity(xn, name='output')
 
