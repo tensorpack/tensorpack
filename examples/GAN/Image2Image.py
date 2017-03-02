@@ -191,7 +191,9 @@ def sample(datadir, model_path):
 
     imgs = glob.glob(os.path.join(datadir, '*.jpg'))
     ds = ImageFromFile(imgs, channel=3, shuffle=True)
-    ds = BatchData(MapData(ds, lambda dp: split_input(dp[0])), 6)
+    ds = MapData(ds, lambda dp: split_input(dp[0]))
+    ds = AugmentImageComponents(ds, [imgaug.Resize(256)], (0, 1))
+    ds = BatchData(ds, 6)
 
     pred = SimpleDatasetPredictor(pred, ds)
     for o in pred.get_result():
