@@ -41,7 +41,7 @@ def dump_dataset_images(ds, dirname, max_count=None, index=0):
         cv2.imwrite(os.path.join(dirname, "{}.jpg".format(i)), img)
 
 
-def dump_dataflow_to_lmdb(ds, lmdb_path):
+def dump_dataflow_to_lmdb(ds, lmdb_path, write_frequency=5000):
     """
     Dump a Dataflow to a lmdb database, where the keys are indices and values
     are serialized datapoints.
@@ -51,6 +51,7 @@ def dump_dataflow_to_lmdb(ds, lmdb_path):
     Args:
         ds (DataFlow): the DataFlow to dump.
         lmdb_path (str): output path. Either a directory or a mdb file.
+        write_frequency (int): the frequency to write back data to disk.
     """
     assert isinstance(ds, DataFlow), type(ds)
     isdir = os.path.isdir(lmdb_path)
@@ -73,7 +74,7 @@ def dump_dataflow_to_lmdb(ds, lmdb_path):
         try:
             while True:
                 with db.begin(write=True) as txn:
-                    for _ in range(1000):
+                    for _ in range(write_frequency):
                         idx += 1
                         dp = next(itr)
                         txn.put(u'{}'.format(idx).encode('ascii'), dumps(dp))
