@@ -67,13 +67,19 @@ def dump_dataflow_to_lmdb(ds, lmdb_path):
     except NotImplementedError:
         sz = 0
     with get_tqdm(total=sz) as pbar:
-        txn = db.begin(write=True)
-        for idx, dp in enumerate(ds.get_data()):
-            if (idx + 1) % 1000 == 0:
-                txn.commit()
-                txn = db.begin(write=True)
-            txn.put(u'{}'.format(idx).encode('ascii'), dumps(dp))
-            pbar.update()
+        idx = -1
+        itr = ds.get_data()
+
+        try:
+            while True:
+                with db.begin(write=True) as txn:
+                    for _ in range(1000):
+                        idx += 1
+                        dp = next(itr)
+                        txn.put(u'{}'.format(idx).encode('ascii'), dumps(dp))
+                        pbar.update()
+        except StopIteration:
+            pass
         keys = [u'{}'.format(k).encode('ascii') for k in range(idx + 1)]
         with db.begin(write=True) as txn:
             txn.put(b'__keys__', dumps(keys))
