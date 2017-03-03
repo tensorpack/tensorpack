@@ -86,4 +86,4 @@ Note that atari game settings in gym are quite different from DeepMind papers, s
 + In gym, an episode is limited to 10000 steps.
 + The action space also seems to be different.
 
-Also see the DQN implementation [here](../Atari2600)
+Also see the DQN implementation [here](../DeepQNetwork)
