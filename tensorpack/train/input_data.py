@@ -113,14 +113,14 @@ class EnqueueThread(ShareSessionThread):
                         # print 'qsize:', self.sess.run([self.op, self.size_op], feed_dict=feed)[1]
                         self.op.run(feed_dict=feed)
             except (tf.errors.CancelledError, tf.errors.OutOfRangeError):
+                pass
+            except Exception:
+                logger.exception("Exception in EnqueueThread:")
+            finally:
                 try:
                     self.close_op.run()
                 except Exception:
                     pass
-                return
-            except Exception:
-                logger.exception("Exception in EnqueueThread:")
-            finally:
                 logger.info("EnqueueThread Exited.")
 
 

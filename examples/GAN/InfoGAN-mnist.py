@@ -3,11 +3,11 @@
 # File: InfoGAN-mnist.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
+import cv2
 import numpy as np
 import tensorflow as tf
 import os
 import sys
-import cv2
 import argparse
 
 from tensorpack import *

@@ -4,7 +4,6 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
-import tensorflow as tf
 import os
 import sys
 import re
@@ -18,6 +17,7 @@ import cv2
 from collections import deque
 import six
 from six.moves import queue
+import tensorflow as tf
 
 from tensorpack import *
 from tensorpack.utils.concurrency import *

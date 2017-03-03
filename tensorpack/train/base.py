@@ -171,7 +171,7 @@ class Trainer(object):
                     self._trigger_epoch()
                     self._callbacks.trigger_epoch()
                     self.monitors.flush()
-            except StopTraining:
+            except (StopTraining, tf.errors.OutOfRangeError):
                 logger.info("Training was stopped.")
             except KeyboardInterrupt:
                 logger.info("Detected Ctrl-C and exiting main loop.")

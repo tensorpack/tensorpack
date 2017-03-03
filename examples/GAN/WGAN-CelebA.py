@@ -3,12 +3,12 @@
 # File: WGAN-CelebA.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import tensorflow as tf
 import os
 import argparse
 
 from tensorpack import *
 from tensorpack.tfutils.summary import add_moving_summary
+import tensorflow as tf
 from GAN import GANTrainer
 
 """

@@ -3,7 +3,6 @@
 # File: PTB-LSTM.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import tensorflow as tf
 import numpy as np
 import os
 import argparse
@@ -16,6 +15,8 @@ from tensorpack.utils.argtools import memoized_ignoreargs
 
 import reader as tfreader
 from reader import ptb_producer
+
+import tensorflow as tf
 rnn = tf.contrib.rnn
 
 SEQ_LEN = 35

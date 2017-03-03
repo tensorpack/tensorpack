@@ -4,12 +4,12 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
-import tensorflow as tf
 import os
 import sys
 import argparse
 
 from tensorpack import *
+import tensorflow as tf
 from disturb import DisturbLabel
 
 import imp

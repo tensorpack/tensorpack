@@ -4,7 +4,6 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
-import tensorflow as tf
 
 import os
 import sys
@@ -21,6 +20,7 @@ from tensorpack import *
 from tensorpack.utils.concurrency import *
 from tensorpack.tfutils import symbolic_functions as symbf
 from tensorpack.RL import *
+import tensorflow as tf
 
 import common
 from common import play_model, Evaluator, eval_model_multithread

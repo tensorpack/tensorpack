@@ -3,11 +3,8 @@
 # File: mnist-embeddings.py
 # Author: PatWie <mail@patwie.com>
 
-import tensorflow as tf
-from tensorflow.python.platform import flags
-import tensorflow.contrib.slim as slim
-
 import numpy as np
+import os
 
 import matplotlib
 from matplotlib import offsetbox
@@ -16,6 +13,11 @@ import matplotlib.pyplot as plt
 from tensorpack import *
 import tensorpack.tfutils.symbolic_functions as symbf
 from tensorpack.tfutils.summary import add_moving_summary
+
+import tensorflow as tf
+from tensorflow.python.platform import flags
+import tensorflow.contrib.slim as slim
+
 from embedding_data import get_test_data, MnistPairs, MnistTriplets
 
 
@@ -135,7 +137,9 @@ class SoftTripletModel(TripletModel):
 
 
 def get_config(model, algorithm_name):
-    logger.auto_set_dir()
+    logger.set_logger_dir(
+        os.path.join('train_log',
+                     'mnist-embeddings-{}'.format(algorithm_name)))
 
     extra_display = ["cost"]
     if not algorithm_name == "cosine":

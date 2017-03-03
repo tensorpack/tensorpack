@@ -3,7 +3,6 @@
 # File: char-rnn.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import tensorflow as tf
 import numpy as np
 import os
 import sys
@@ -17,6 +16,8 @@ from tensorpack import *
 from tensorpack.tfutils.gradproc import GlobalNormClip
 from tensorpack.utils.lut import LookUpTable
 from tensorpack.utils.globvars import globalns as param
+
+import tensorflow as tf
 rnn = tf.contrib.rnn
 
 # some model hyperparams to set

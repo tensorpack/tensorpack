@@ -4,7 +4,6 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
-import tensorflow as tf
 import os
 import sys
 import re
@@ -13,6 +12,7 @@ import random
 import argparse
 import six
 import cv2
+import tensorflow as tf
 
 from tensorpack import *
 from tensorpack.RL import *

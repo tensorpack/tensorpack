@@ -3,16 +3,17 @@
 # File: svhn-disturb.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import tensorflow as tf
 import argparse
 import numpy as np
 import os
+import imp
 
 from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
+import tensorflow as tf
+
 from disturb import DisturbLabel
-import imp
 
 svhn_example = imp.load_source('svhn_example',
                                os.path.join(os.path.dirname(__file__), '..', 'svhn-digit-convnet.py'))

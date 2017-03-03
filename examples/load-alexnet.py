@@ -4,7 +4,6 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from __future__ import print_function
-import tensorflow as tf
 import numpy as np
 import os
 import cv2
@@ -14,6 +13,7 @@ from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
 from tensorpack.dataflow.dataset import ILSVRCMeta
+import tensorflow as tf
 
 """
 Usage:

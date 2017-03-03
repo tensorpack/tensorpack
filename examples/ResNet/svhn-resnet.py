@@ -3,7 +3,6 @@
 # File: svhn-resnet.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import tensorflow as tf
 import argparse
 import numpy as np
 import os
@@ -11,6 +10,7 @@ import os
 from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
+import tensorflow as tf
 
 """
 ResNet-110 for SVHN Digit Classification.

@@ -4,7 +4,6 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
-import tensorflow as tf
 import argparse
 import os
 
@@ -12,6 +11,7 @@ from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
 
+import tensorflow as tf
 from tensorflow.contrib.layers import variance_scaling_initializer
 
 """

@@ -2,12 +2,12 @@
 # -*- coding: UTF-8 -*-
 # File: cifar-convnet.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+from tensorpack import *
 import tensorflow as tf
 import argparse
 import numpy as np
 import os
 
-from tensorpack import *
 import tensorpack.tfutils.symbolic_functions as symbf
 from tensorpack.tfutils.summary import *
 from tensorpack.utils.gpu import get_nr_gpu

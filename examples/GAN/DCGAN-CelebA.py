@@ -3,7 +3,6 @@
 # File: DCGAN-CelebA.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import tensorflow as tf
 import glob
 import os, sys
 import argparse
@@ -11,6 +10,8 @@ import argparse
 from tensorpack import *
 from tensorpack.utils.viz import *
 from tensorpack.tfutils.summary import add_moving_summary
+import tensorflow as tf
+
 from GAN import GANTrainer, RandomZData, GANModelDesc
 
 """

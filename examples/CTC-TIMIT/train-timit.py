@@ -3,7 +3,6 @@
 # File: train-timit.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import tensorflow as tf
 import numpy as np
 import os
 import sys
@@ -17,7 +16,10 @@ from tensorpack import *
 from tensorpack.tfutils.gradproc import SummaryGradient, GlobalNormClip
 from tensorpack.utils.globvars import globalns as param
 import tensorpack.tfutils.symbolic_functions as symbf
+import tensorflow as tf
+
 from timitdata import TIMITBatch
+
 
 BATCH = 64
 NLAYER = 2

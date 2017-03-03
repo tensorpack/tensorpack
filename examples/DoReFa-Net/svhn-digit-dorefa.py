@@ -3,7 +3,6 @@
 # File: svhn-digit-dorefa.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import tensorflow as tf
 import argparse
 import numpy as np
 import os
@@ -12,6 +11,8 @@ from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
 from tensorpack.tfutils.varreplace import remap_get_variable
+import tensorflow as tf
+
 from dorefa import get_dorefa
 
 """

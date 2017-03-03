@@ -2,10 +2,10 @@
 # -*- coding: UTF-8 -*-
 # File: resnet-dorefa.py
 
+import cv2
 import tensorflow as tf
 import argparse
 import numpy as np
-import cv2
 import os
 import sys
 

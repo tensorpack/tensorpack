@@ -3,6 +3,7 @@
 # File: Image2Image.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
+import cv2
 import numpy as np
 import tensorflow as tf
 import glob
@@ -10,7 +11,6 @@ import pickle
 import os
 import sys
 import argparse
-import cv2
 
 from tensorpack import *
 from tensorpack.utils.viz import *

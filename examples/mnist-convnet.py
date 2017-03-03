@@ -4,8 +4,6 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
-import tensorflow as tf
-import tensorflow.contrib.slim as slim
 import os
 import sys
 import argparse
@@ -17,6 +15,8 @@ about 0.6% validation error after 30 epochs.
 
 # Just import everything into current namespace
 from tensorpack import *
+import tensorflow as tf
+import tensorflow.contrib.slim as slim
 
 IMAGE_SIZE = 28
 USE_SLIM = False
