@@ -30,6 +30,8 @@ def replace_get_variable(fn):
     old_vars_getv = variable_scope.get_variable
 
     tf.get_variable = fn
+    # doesn't seem to be working?
+    # and when it works, remap might call fn twice
     variable_scope.get_variable = fn
     yield
     tf.get_variable = old_getv
