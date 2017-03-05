@@ -6,8 +6,33 @@
 from .base import ImageAugmentor
 import math
 import cv2
+import numpy as np
 
-__all__ = ['Rotation', 'RotationAndCropValid']
+__all__ = ['Shift', 'Rotation', 'RotationAndCropValid']
+
+
+class Shift(ImageAugmentor):
+    """ Random horizontal and vertical shifts """
+
+    def __init__(self, horiz_frac=0, vert_frac=0,
+                 border=cv2.BORDER_REPLICATE):
+        """
+        Args:
+            horiz_frac: max abs fraction for horizontal shift
+            vert_frac: max abs fraction for horizontal shift
+            border: cv2 border method
+        """
+        super(Shift, self).__init__()
+        self._init(locals())
+
+    def _get_augment_params(self, img):
+        return np.float32(
+            [[1, 0, np.round(self.horiz_frac * img.shape[1])], [0, 1, np.round(self.vert_frac * img.shape[0])]])
+
+    def _augment(self, img, shift_m):
+        ret = cv2.warpAffine(img, shift_m, img.shape[1::-1],
+                             borderMode=self.border)
+        return ret
 
 
 class Rotation(ImageAugmentor):
@@ -15,14 +40,16 @@ class Rotation(ImageAugmentor):
 
     def __init__(self, max_deg, center_range=(0, 1),
                  interp=cv2.INTER_LINEAR,
-                 border=cv2.BORDER_REPLICATE):
+                 border=cv2.BORDER_REPLICATE, step_deg=0):
         """
         Args:
             max_deg (float): max abs value of the rotation degree (in angle).
             center_range (tuple): (min, max) range of the random rotation center.
             interp: cv2 interpolation method
             border: cv2 border method
+            step_deg (float): stepping of the rotation degree (requires max_deg=180 and step_deg a divisor of 180)
         """
+        assert not step_deg or max_deg==180 and max_deg%step_deg == 0
         super(Rotation, self).__init__()
         self._init(locals())
 
@@ -30,6 +57,8 @@ class Rotation(ImageAugmentor):
         center = img.shape[1::-1] * self._rand_range(
             self.center_range[0], self.center_range[1], (2,))
         deg = self._rand_range(-self.max_deg, self.max_deg)
+        if self.step_deg:
+            deg = deg//self.step_deg*self.step_deg
         return cv2.getRotationMatrix2D(tuple(center), deg, 1)
 
     def _augment(self, img, rot_m):
@@ -43,17 +72,21 @@ class RotationAndCropValid(ImageAugmentor):
         Note that this will produce images of different shapes.
     """
 
-    def __init__(self, max_deg, interp=cv2.INTER_LINEAR):
+    def __init__(self, max_deg, interp=cv2.INTER_LINEAR, step_deg=0):
         """
         Args:
             max_deg (float): max abs value of the rotation degree (in angle).
             interp: cv2 interpolation method
+            step_deg (float): stepping of the rotation degree (requires max_deg=180 and step_deg a divisor of 180)
         """
+        assert not step_deg or max_deg == 180 and max_deg % step_deg == 0
         super(RotationAndCropValid, self).__init__()
         self._init(locals())
 
     def _get_augment_params(self, img):
         deg = self._rand_range(-self.max_deg, self.max_deg)
+        if self.step_deg:
+            deg = deg // self.step_deg * self.step_deg
         return deg
 
     def _augment(self, img, deg):
