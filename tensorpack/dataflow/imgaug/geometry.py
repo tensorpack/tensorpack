@@ -6,6 +6,7 @@
 from .base import ImageAugmentor
 import math
 import cv2
+import numpy as np
 
 __all__ = ['Rotation', 'RotationAndCropValid']
 
@@ -95,4 +96,4 @@ class RotationAndCropValid(ImageAugmentor):
             cos_2a = cos_a * cos_a - sin_a * sin_a
             wr, hr = (w * cos_a - h * sin_a) / cos_2a, (h * cos_a - w * sin_a) / cos_2a
 
-        return int(wr), int(hr)
+        return np.round(wr), np.round(hr)
