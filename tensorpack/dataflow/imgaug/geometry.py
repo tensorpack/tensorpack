@@ -26,8 +26,12 @@ class Shift(ImageAugmentor):
         self._init(locals())
 
     def _get_augment_params(self, img):
+        max_dx = self.horiz_frac * img.shape[1]
+        max_dy = self.vert_frac * img.shape[0]
+        dx = np.round(self._rand_range(-max_dx, max_dx))
+        dy = np.round(self._rand_range(-max_dy, max_dy))
         return np.float32(
-            [[1, 0, np.round(self.horiz_frac * img.shape[1])], [0, 1, np.round(self.vert_frac * img.shape[0])]])
+            [[1, 0, dx], [0, 1, dy]])
 
     def _augment(self, img, shift_m):
         ret = cv2.warpAffine(img, shift_m, img.shape[1::-1],
@@ -58,8 +62,8 @@ class Rotation(ImageAugmentor):
             self.center_range[0], self.center_range[1], (2,))
         deg = self._rand_range(-self.max_deg, self.max_deg)
         if self.step_deg:
-            deg = deg//self.step_deg*self.step_deg
-        return cv2.getRotationMatrix2D(tuple(center), deg, 1)
+            deg = deg // self.step_deg * self.step_deg
+        return cv2.getRotationMatrix2D(tuple(center-0.5), deg, 1)
 
     def _augment(self, img, rot_m):
         ret = cv2.warpAffine(img, rot_m, img.shape[1::-1],
@@ -91,7 +95,7 @@ class RotationAndCropValid(ImageAugmentor):
 
     def _augment(self, img, deg):
         center = (img.shape[1] * 0.5, img.shape[0] * 0.5)
-        rot_m = cv2.getRotationMatrix2D(center, deg, 1)
+        rot_m = cv2.getRotationMatrix2D((center[0]-0.5, center[1]-0.5), deg, 1)
         ret = cv2.warpAffine(img, rot_m, img.shape[1::-1],
                              flags=self.interp, borderMode=cv2.BORDER_CONSTANT)
         neww, newh = RotationAndCropValid.largest_rotated_rect(ret.shape[1], ret.shape[0], deg)
@@ -127,5 +131,4 @@ class RotationAndCropValid(ImageAugmentor):
             # fully constrained case: crop touches all 4 sides
             cos_2a = cos_a * cos_a - sin_a * sin_a
             wr, hr = (w * cos_a - h * sin_a) / cos_2a, (h * cos_a - w * sin_a) / cos_2a
-
-        return int(wr), int(hr)
+        return int(np.round(wr)), int(np.round(hr))
