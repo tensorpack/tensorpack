@@ -43,6 +43,8 @@ with argscope(Conv2D, out_channel=32, kernel_shape=3, nl=tf.nn.relu):
 			 .Conv2D('conv2', kernel_shape=5)
 			 .FullyConnected('fc0', 512, nl=tf.nn.relu)
 			 .Dropout('dropout', 0.5)
+			 .tf.multiply(0.5)
+			 .apply(func, *args, **kwargs)
 			 .FullyConnected('fc1', out_dim=10, nl=tf.identity)())
 ```
 is equivalent to:
@@ -53,6 +55,8 @@ l = Conv2D('conv1', l, 32, 3, padding='SAME', nl=tf.nn.relu)
 l = Conv2D('conv2', l, 32, 5, nl=tf.nn.relu)
 l = FullyConnected('fc0', l, 512, nl=tf.nn.relu)
 l = Dropout('dropout', l, 0.5)
+l = tf.multiply(l, 0.5)
+l = func(l, *args, **kwargs)
 l = FullyConnected('fc1', l, 10, nl=tf.identity)
 ```
 

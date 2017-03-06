@@ -69,18 +69,18 @@ def dump_dataflow_to_lmdb(ds, lmdb_path, write_frequency=5000):
         sz = 0
     with get_tqdm(total=sz) as pbar:
         idx = -1
-        itr = ds.get_data()
 
-        try:
-            while True:
-                with db.begin(write=True) as txn:
-                    for _ in range(write_frequency):
-                        idx += 1
-                        dp = next(itr)
-                        txn.put(u'{}'.format(idx).encode('ascii'), dumps(dp))
-                        pbar.update()
-        except StopIteration:
-            pass
+        # lmdb transaction is not exception-safe!
+        # although it has a contextmanager interface
+        txn = db.begin(write=True)
+        for idx, dp in enumerate(ds.get_data()):
+            txn.put(u'{}'.format(idx).encode('ascii'), dumps(dp))
+            pbar.update()
+            if (idx + 1) % write_frequency == 0:
+                txn.commit()
+                txn = db.begin(write=True)
+        txn.commit()
+
         keys = [u'{}'.format(k).encode('ascii') for k in range(idx + 1)]
         with db.begin(write=True) as txn:
             txn.put(b'__keys__', dumps(keys))

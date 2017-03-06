@@ -53,7 +53,7 @@ class Rotation(ImageAugmentor):
             border: cv2 border method
             step_deg (float): stepping of the rotation degree (requires max_deg=180 and step_deg a divisor of 180)
         """
-        assert not step_deg or max_deg==180 and max_deg%step_deg == 0
+        assert not step_deg or max_deg == 180 and max_deg % step_deg == 0
         super(Rotation, self).__init__()
         self._init(locals())
 
@@ -132,3 +132,4 @@ class RotationAndCropValid(ImageAugmentor):
             cos_2a = cos_a * cos_a - sin_a * sin_a
             wr, hr = (w * cos_a - h * sin_a) / cos_2a, (h * cos_a - w * sin_a) / cos_2a
         return int(np.round(wr)), int(np.round(hr))
+
