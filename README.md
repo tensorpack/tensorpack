@@ -65,5 +65,6 @@ Dependencies:
 + TensorFlow >= 1.0.0
 + Python bindings for OpenCV
 ```
-pip install --user -U git+https://github.com/ppwwyyxx/tensorpack.git
+pip install -U git+https://github.com/ppwwyyxx/tensorpack.git
+# or add `--user` to avoid system-wide installation.
 ```

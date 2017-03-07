@@ -1,3 +1,6 @@
+import setuptools
+version = int(setuptools.__version__.split('.')[0])
+assert version > 30, "tensorpack installation requires setuptools > 30"
 from setuptools import setup
 import os
 import shutil
