@@ -95,7 +95,7 @@ SimulatorProcess = SimulatorProcessStateExchange
 
 
 class SimulatorMaster(threading.Thread):
-    """ A base thread to communicate with all StateExchangeSimulatorProcess.
+    """ A base thread to communicate with all SimulatorProcessStateExchange.
         It should produce action for each simulator, as well as
         defining callbacks when a transition or an episode is finished.
     """
