@@ -98,7 +98,7 @@ class CosineModel(SiameseModel):
         with tf.variable_scope(tf.get_variable_scope(), reuse=True):
             tf.identity(self.embed(inputs[0]), name="emb")
 
-        cost = symbf.cosine_loss(x, y, label, scope="loss")
+        cost = symbf.siamese_cosine_loss(x, y, label, scope="loss")
         self.cost = tf.identity(cost, name="cost")
         add_moving_summary(self.cost)
 

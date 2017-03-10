@@ -257,7 +257,7 @@ def contrastive_loss(left, right, y, margin, extra=False, scope="constrastive_lo
             return loss
 
 
-def cosine_loss(left, right, y, scope="cosine_loss"):
+def siamese_cosine_loss(left, right, y, scope="cosine_loss"):
     r"""Loss for Siamese networks (cosine version).
     Same as :func:`contrastive_loss` but with different similarity measurement.
 

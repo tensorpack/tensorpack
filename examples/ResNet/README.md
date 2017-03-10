@@ -16,7 +16,7 @@ To train, just run:
 ```bash
 ./imagenet-resnet.py --data /path/to/original/ILSVRC --gpu 0,1,2,3 -d 18
 ```
-The speed is 1860 samples/s on 4 TitanX Pascal, and 1160 it/s on 4 old TitanX, provided that your data is fast
+The speed is 1860 samples/s on 4 TitanX Pascal, and 1160 samples/s on 4 old TitanX, if your data is fast
 enough. See the [tutorial](http://tensorpack.readthedocs.io/en/latest/tutorial/efficient-dataflow.html) on how to speed up your data.
 
 ![imagenet](imagenet-resnet.png)
