@@ -15,6 +15,8 @@ from ..tfutils import get_op_tensor_name
 __all__ = ['ScalarStats', 'Inferencer',
            'ClassificationError', 'BinaryClassificationStats']
 
+# TODO rename get_output_tensors to get_output_names
+
 
 @six.add_metaclass(ABCMeta)
 class Inferencer(object):

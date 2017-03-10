@@ -196,7 +196,8 @@ class MySimulatorMaster(SimulatorMaster, Callback):
 
 
 def get_config():
-    logger.auto_set_dir()
+    dirname = os.path.join('train_log', 'train-atari-{}'.format(ENV_NAME))
+    logger.set_logger_dir(dirname)
     M = Model()
 
     name_base = str(uuid.uuid1())[:6]

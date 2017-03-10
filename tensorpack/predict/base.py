@@ -192,11 +192,14 @@ class PredictorTowerBuilder(object):
                 TowerContext(towername, is_training=False):
             self._fn(tower)
 
+    # useful only when the placeholders don't have tower prefix
+    # note that in DataParallel predictor, placeholders do have tower prefix
     @staticmethod
-    def get_tensors_maybe_in_tower(placeholder_names, names, k, prefix=''):
+    def get_tensors_maybe_in_tower(placeholder_names, names, tower, prefix=''):
         """
         Args:
             placeholders (list): A list of __op__ name.
+            tower (int): relative GPU id.
         """
         def maybe_inside_tower(name):
             name = get_op_tensor_name(name)[0]
@@ -204,7 +207,7 @@ class PredictorTowerBuilder(object):
                 return name
             else:
                 # if the name is not a placeholder, use it's name in each tower
-                return TowerContext.get_predict_tower_name(k, prefix) + '/' + name
+                return TowerContext.get_predict_tower_name(tower, prefix) + '/' + name
         names = list(map(maybe_inside_tower, names))
         tensors = get_tensors_by_names(names)
         return tensors

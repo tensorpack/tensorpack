@@ -199,6 +199,8 @@ def CaffeLMDB(lmdb_path, shuffle=True, keys=None):
             log_once("Cannot read key {}".format(k), 'warn')
             return None
         return [img.transpose(1, 2, 0), datum.label]
+    logger.warn("Caffe LMDB format doesn't store jpeg-compressed images, \
+        it's not recommended due to its inferior performance.")
     return LMDBDataDecoder(lmdb_data, decoder)
 
 

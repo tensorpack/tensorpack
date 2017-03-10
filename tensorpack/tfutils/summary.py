@@ -125,6 +125,7 @@ def add_moving_summary(v, *args, **kwargs):
         assert isinstance(x, tf.Tensor), x
         assert x.get_shape().ndims == 0, x.get_shape()
     # TODO will produce tower0/xxx?
+    # TODO use zero_debias
     with tf.name_scope(None):
         averager = tf.train.ExponentialMovingAverage(
             decay, num_updates=get_global_step_var(), name='EMA')
