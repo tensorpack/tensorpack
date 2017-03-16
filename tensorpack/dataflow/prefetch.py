@@ -106,16 +106,17 @@ class PrefetchDataZMQ(ProxyDataFlow):
     Prefetch data from a DataFlow using multiple processes, with ZMQ for
     communication.
 
+    A local directory is needed to put the ZMQ pipes.
+    You can set this with env var $TENSORPACK_PIPEDIR if you're running on non-local FS such as NFS or GlusterFS.
+
     Note that this dataflow is not fork-safe. You cannot nest this dataflow
     into another PrefetchDataZMQ or PrefetchData.
     """
-    def __init__(self, ds, nr_proc=1, pipedir=None, hwm=50):
+    def __init__(self, ds, nr_proc=1, hwm=50):
         """
         Args:
             ds (DataFlow): input DataFlow.
             nr_proc (int): number of processes to use.
-            pipedir (str): a local directory where the pipes should be put.
-                Useful if you're running on non-local FS such as NFS or GlusterFS.
             hwm (int): the zmq "high-water mark" for both sender and receiver.
         """
         super(PrefetchDataZMQ, self).__init__(ds)
@@ -128,8 +129,7 @@ class PrefetchDataZMQ(ProxyDataFlow):
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.PULL)
 
-        if pipedir is None:
-            pipedir = os.environ.get('TENSORPACK_PIPEDIR', '.')
+        pipedir = os.environ.get('TENSORPACK_PIPEDIR', '.')
         assert os.path.isdir(pipedir), pipedir
         self.pipename = "ipc://{}/dataflow-pipe-".format(pipedir.rstrip('/')) + str(uuid.uuid1())[:6]
         self.socket.set_hwm(hwm)

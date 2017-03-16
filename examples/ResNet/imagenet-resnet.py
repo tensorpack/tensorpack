@@ -31,6 +31,8 @@ class Model(ModelDesc):
         image, label = inputs
         image = tf.cast(image, tf.float32) * (1.0 / 255)
 
+        # Wrong mean/std are used for compatibility with pre-trained models.
+        # Should actually add a RGB-BGR conversion here.
         image_mean = tf.constant([0.485, 0.456, 0.406], dtype=tf.float32)
         image_std = tf.constant([0.229, 0.224, 0.225], dtype=tf.float32)
         image = (image - image_mean) / image_std
@@ -159,11 +161,14 @@ def get_data(train_or_test):
                 [imgaug.Brightness(30, clip=False),
                  imgaug.Contrast((0.8, 1.2), clip=False),
                  imgaug.Saturation(0.4),
+                 # rgb-bgr conversion
                  imgaug.Lighting(0.1,
-                                 eigval=[0.2175, 0.0188, 0.0045],
-                                 eigvec=[[-0.5675, 0.7192, 0.4009],
-                                         [-0.5808, -0.0045, -0.8140],
-                                         [-0.5836, -0.6948, 0.4203]]
+                                 eigval=[0.2175, 0.0188, 0.0045][::-1],
+                                 eigvec=np.array(
+                                     [[-0.5675, 0.7192, 0.4009],
+                                      [-0.5808, -0.0045, -0.8140],
+                                      [-0.5836, -0.6948, 0.4203]],
+                                     dtype='float32')[::-1, ::-1]
                                  )]),
             imgaug.Clip(),
             imgaug.Flip(horiz=True),
