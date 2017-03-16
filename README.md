@@ -39,7 +39,7 @@ Describe your training task with three components:
 	+ Allows you to process data in Python without blocking the training, by multiprocess prefetch & TF Queue prefetch.
 	+ All data producer has a unified interface, you can compose and reuse them to perform complex preprocessing.
 
-2. __Callbacks__, customizable, like `tf.train.SessionRunHook` but more than that. Includes everything you want to do apart from the training iterations, such as:
+2. __Callbacks__, like `tf.train.SessionRunHook`, plugins, or extensions. Write a callback to implement everything you want to do apart from the training iterations, such as:
 	+ Change hyperparameters during training
 	+ Print some tensors of interest
 	+ Run inference on a test dataset
@@ -51,7 +51,6 @@ Describe your training task with three components:
 	`LinearWrap` and `argscope` simplify large models (e.g. [vgg example](https://github.com/ppwwyyxx/tensorpack/blob/master/examples/load-vgg16.py)).
 
 With the above components defined, tensorpack trainer runs the training iterations for you.
-Trainer was written with performance in mind:
 Even on a small CNN example, the training runs [2x faster](https://gist.github.com/ppwwyyxx/8d95da79f8d97036a7d67c2416c851b6) than the equivalent Keras code.
 
 Multi-GPU training is off-the-shelf by simply switching the trainer.

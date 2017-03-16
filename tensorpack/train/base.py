@@ -20,6 +20,7 @@ from ..utils.develop import deprecated, log_deprecated
 from ..callbacks import Callback, Callbacks, MaintainStepCounter
 from ..tfutils import get_global_step_value
 from ..tfutils.modelutils import describe_model
+from ..tfutils.sesscreate import NewSessionCreator
 
 __all__ = ['Trainer', 'StopTraining', 'MultiPredictorTowerTrainer']
 
@@ -115,21 +116,19 @@ class Trainer(object):
         self._callbacks = Callbacks(self._callbacks)
         self._callbacks.setup_graph(weakref.proxy(self))
 
-        self.config.session_init._setup_graph()
-
-        def after_init(scaffold, sess):
-            logger.info("Graph variables initialized.")
-            self.config.session_init._run_init(sess)
-
-        scaffold = tf.train.Scaffold(
-            init_op=tf.global_variables_initializer(),
-            init_fn=after_init)
+        # create session
+        sess_creator = NewSessionCreator(config=self.config.session_config)
         logger.info("Finalize the graph, create the session ...")
         self.monitored_sess = tf.train.MonitoredSession(
-            session_creator=tf.train.ChiefSessionCreator(
-                scaffold=scaffold, config=self.config.session_config),
-            hooks=None)
+            session_creator=sess_creator, hooks=None)
         self.sess = self.monitored_sess._tf_sess()  # expose the underlying session also
+
+        # init session
+        init_op = tf.global_variables_initializer()
+        self.sess.run(init_op)
+        logger.info("Graph variables initialized.")
+        self.config.session_init.init(self.sess)
+        self.sess.graph.finalize()
 
         hooks = self._callbacks.get_hooks()
         self.hooked_sess = HookedSession(self.sess, hooks)

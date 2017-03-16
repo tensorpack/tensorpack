@@ -1,13 +1,13 @@
 
 # Dataflow
 
-Dataflow is an interface to produce data.
+Dataflow is a library to help you build Python iterators to load data.
 
 A Dataflow has a `get_data()` generator method,
-which yields a `datapoint` when called.
-A datapoint must be a **list** of Python objects which I called the `components` of this datapoint.
+which yields `datapoints`.
+A datapoint must be a **list** of Python objects which I called the `components` of a datapoint.
 
-For example, to train on MNIST dataset, you can build a Dataflow
+For example, to train on MNIST dataset, you can build a Dataflow with a `get_data()` method
 that yields datapoints of two elements (components):
 a numpy array of shape (64, 28, 28), and an array of shape (64,).
 
@@ -17,7 +17,7 @@ the greatest code reusablility.
 There are a lot of existing modules in tensorpack which you can use to compose
 complex Dataflow instances with a long pre-processing pipeline. A whole pipeline usually
 would __read from disk (or other sources), apply augmentations, group into batches,
-prefetch data__, etc. An example is as the following:
+prefetch data__, etc. A simple example is as the following:
 
 ````python
 # define a Dataflow which produces image-label pairs from a caffe lmdb database
@@ -26,7 +26,7 @@ df = CaffeLMDB('/path/to/caffe/lmdb', shuffle=False)
 df = AugmentImageComponent(df, [imgaug.Resize((225, 225))])
 # group data into batches of size 128
 df = BatchData(df, 128)
-# start 3 processes to run the dataflow in parallel, and transfer data with ZeroMQ
+# start 3 processes to run the dataflow in parallel, and communicate with ZeroMQ
 df = PrefetchDataZMQ(df, 3)
 ````
 A more complicated example is the [ResNet training script](../examples/ResNet/imagenet-resnet.py)
