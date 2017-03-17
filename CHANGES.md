@@ -9,7 +9,7 @@ Here are a list of things that were changed, starting from an early version.
 TensorFlow itself also changes API and those are not listed here.
 
 + 2017/03/16. `session_config` option in `TrainConfig` and `PredictConfig` is deprecated.
-	Use `session_creator` to define how to create session instead.
+	Use `session_creator` to define how to create session instead. See [commit](https://github.com/ppwwyyxx/tensorpack/commit/ccae46f4a3ca89dc3df901a338eef8447d19a730).
 + 2017/02/20. The interface of step callbacks are changed to be the same as `tf.train.SessionRunHook`.
 	If you haven't written any custom step callbacks, there is nothing to do. Otherwise please refer
 	to the [existing callbacks](https://github.com/ppwwyyxx/tensorpack/blob/master/tensorpack/callbacks/steps.py).

@@ -55,4 +55,4 @@ class HookToCallback(Callback):
         self._hook.after_run(ctx, run_values)
 
     def _after_train(self):
-        self._hook.end()
+        self._hook.end(self.trainer.sess)
