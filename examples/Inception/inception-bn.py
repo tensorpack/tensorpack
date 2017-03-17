@@ -171,7 +171,6 @@ def get_config():
                                        (19, 3e-3), (24, 1e-3), (26, 2e-4),
                                        (30, 5e-5)])
         ],
-        session_config=get_default_sess_config(0.99),
         model=Model(),
         steps_per_epoch=5000,
         max_epoch=80,

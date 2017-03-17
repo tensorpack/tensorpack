@@ -162,7 +162,8 @@ def get_config():
                             [ScalarStats('cost'), ClassificationError()]),
             ScheduledHyperParamSetter('learning_rate', [(200, 1e-4)])
         ],
-        session_config=get_default_sess_config(0.5),
+        session_creator=sesscreate.NewSessionCreator(
+            config=get_default_sess_config(0.5)),
         steps_per_epoch=steps_per_epoch,
         max_epoch=500,
     )

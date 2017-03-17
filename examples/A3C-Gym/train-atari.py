@@ -222,7 +222,8 @@ def get_config():
             StartProcOrThread(master),
             PeriodicCallback(Evaluator(EVAL_EPISODE, ['state'], ['logits']), 2),
         ],
-        session_config=get_default_sess_config(0.5),
+        session_creator=sesscreate.NewSessionCreator(
+            config=get_default_sess_config(0.5)),
         model=M,
         steps_per_epoch=STEPS_PER_EPOCH,
         max_epoch=1000,

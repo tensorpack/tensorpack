@@ -107,7 +107,6 @@ def get_config():
         model=Model(),
         dataflow=get_data(args.data),
         callbacks=[ModelSaver()],
-        session_config=get_default_sess_config(0.5),
         steps_per_epoch=300,
         max_epoch=200,
     )

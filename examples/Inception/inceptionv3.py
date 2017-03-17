@@ -277,7 +277,6 @@ def get_config():
                                        (41, 8e-5), (48, 1e-5), (53, 2e-6)]),
             HumanHyperParamSetter('learning_rate')
         ],
-        session_config=get_default_sess_config(0.9),
         model=Model(),
         steps_per_epoch=5000,
         max_epoch=100,

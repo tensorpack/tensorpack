@@ -108,7 +108,6 @@ def get_config():
     return TrainConfig(
         dataflow=dataset,
         callbacks=[ModelSaver()],
-        session_config=get_default_sess_config(0.5),
         model=Model(),
         steps_per_epoch=500,
         max_epoch=100,

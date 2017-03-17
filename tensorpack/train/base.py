@@ -20,7 +20,6 @@ from ..utils.develop import deprecated, log_deprecated
 from ..callbacks import Callback, Callbacks, MaintainStepCounter
 from ..tfutils import get_global_step_value
 from ..tfutils.modelutils import describe_model
-from ..tfutils.sesscreate import NewSessionCreator
 
 __all__ = ['Trainer', 'StopTraining', 'MultiPredictorTowerTrainer']
 
@@ -117,11 +116,11 @@ class Trainer(object):
         self._callbacks.setup_graph(weakref.proxy(self))
 
         # create session
-        sess_creator = NewSessionCreator(config=self.config.session_config)
+        sess_creator = self.config.session_creator
         logger.info("Finalize the graph, create the session ...")
-        self.monitored_sess = tf.train.MonitoredSession(
+        self._monitored_sess = tf.train.MonitoredSession(
             session_creator=sess_creator, hooks=None)
-        self.sess = self.monitored_sess._tf_sess()  # expose the underlying session also
+        self.sess = self._monitored_sess._tf_sess()  # expose the underlying session also
 
         # init session
         init_op = tf.global_variables_initializer()
@@ -159,7 +158,7 @@ class Trainer(object):
                     logger.info("Start Epoch {} ...".format(self.epoch_num))
                     start_time = time.time()
                     for self.local_step in range(self.config.steps_per_epoch):
-                        if self.monitored_sess.should_stop():
+                        if self._monitored_sess.should_stop():
                             return
                         self.run_step()  # implemented by subclass
                         self._callbacks.trigger_step()
@@ -179,7 +178,7 @@ class Trainer(object):
             finally:
                 self._callbacks.after_train()
                 self.monitors.close()
-                self.monitored_sess.close()
+                self._monitored_sess.close()
 
     # Predictor related methods:    TODO
     def get_predictor(self, input_names, output_names, tower=0):

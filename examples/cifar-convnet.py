@@ -114,8 +114,6 @@ def get_config(cifar_classnum):
     dataset_train = get_data('train', cifar_classnum)
     dataset_test = get_data('test', cifar_classnum)
 
-    sess_config = get_default_sess_config(0.5)
-
     def lr_func(lr):
         if lr < 3e-5:
             raise StopTraining()
@@ -129,7 +127,6 @@ def get_config(cifar_classnum):
             StatMonitorParamSetter('learning_rate', 'val_error', lr_func,
                                    threshold=0.001, last_k=10),
         ],
-        session_config=sess_config,
         max_epoch=150,
     )
 

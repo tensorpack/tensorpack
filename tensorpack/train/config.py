@@ -13,6 +13,7 @@ from ..utils import logger
 from ..utils.develop import log_deprecated
 from ..tfutils import (JustCurrentSession,
                        get_default_sess_config, SessionInit)
+from ..tfutils.sesscreate import NewSessionCreator
 from ..tfutils.optimizer import apply_grad_processors
 from .input_data import InputData
 from .monitor import TFSummaryWriter, JSONWriter, ScalarPrinter
@@ -30,7 +31,7 @@ class TrainConfig(object):
                  model=None,
                  callbacks=None, extra_callbacks=None,
                  monitors=None,
-                 session_config=get_default_sess_config(), session_init=None,
+                 session_creator=None, session_config=None, session_init=None,
                  starting_epoch=1, steps_per_epoch=None, max_epoch=99999,
                  nr_tower=1, tower=None, predict_tower=[0],
                  **kwargs):
@@ -47,8 +48,12 @@ class TrainConfig(object):
                 callbacks that will be used in the end are ``callbacks + extra_callbacks``.
             monitors (list): a list of :class:`TrainingMonitor`.
                 Defaults to ``[TFSummaryWriter(), JSONWriter(), ScalarPrinter()]``.
-            session_config (tf.ConfigProto): the config used to instantiate the session.
-            session_init (SessionInit): how to initialize variables of a session. Defaults to a new session.
+            session_creator (tf.train.SessionCreator): how to create the
+                session. Defaults to :class:`sesscreate.NewSessionCreator()`
+                with the config returned by
+                :func:`tfutils.get_default_sess_config()`.
+            session_init (SessionInit): how to initialize variables of a
+                session. Defaults to do nothing.
             starting_epoch (int): The index of the first epoch.
             steps_per_epoch (int): the number of steps (defined by :meth:`Trainer.run_step`) to run in each epoch.
                 Defaults to the input data size.
@@ -99,12 +104,21 @@ class TrainConfig(object):
         self.model = model
         assert_type(self.model, ModelDesc)
 
-        self.session_config = session_config
-        assert_type(self.session_config, tf.ConfigProto)
         if session_init is None:
             session_init = JustCurrentSession()
         self.session_init = session_init
         assert_type(self.session_init, SessionInit)
+
+        if session_creator is None:
+            if session_config is not None:
+                log_deprecated(
+                    "TrainConfig(session_config=)",
+                    "Use session_creator=NewSessionCreator(config=) instead!", "2017-05-20")
+                self.session_creator = NewSessionCreator(config=session_config)
+            else:
+                self.session_creator = NewSessionCreator(config=get_default_sess_config())
+        else:
+            self.session_creator = session_creator
 
         if steps_per_epoch is None:
             steps_per_epoch = kwargs.pop('step_per_epoch', None)

@@ -61,7 +61,6 @@ def get_config():
         # use the same data in the DCGAN example
         dataflow=DCGAN.get_data(args.data),
         callbacks=[ModelSaver()],
-        session_config=get_default_sess_config(0.5),
         steps_per_epoch=300,
         max_epoch=200,
     )
