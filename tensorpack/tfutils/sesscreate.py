@@ -4,6 +4,7 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import tensorflow as tf
+from .common import get_default_sess_config
 
 __all__ = ['NewSessionCreator', 'ReuseSessionCreator', 'SessionCreatorAdapter']
 
@@ -13,8 +14,11 @@ class NewSessionCreator(tf.train.SessionCreator):
         """
         Args:
             target, graph, config: same as :meth:`Session.__init__()`.
+            config: defaults to :func:`tfutils.get_default_sess_config()`
         """
         self.target = target
+        if config is None:
+            config = get_default_sess_config()
         self.config = config
         self.graph = graph
 
