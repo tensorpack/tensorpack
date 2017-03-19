@@ -13,6 +13,7 @@ import numpy as np
 
 __all__ = ['change_env',
            'get_rng',
+           'fix_rng_seed',
            'get_tqdm_kwargs',
            'get_tqdm',
            'execute_only_once',
@@ -38,6 +39,21 @@ def change_env(name, val):
         os.environ[name] = oldval
 
 
+_RNG_SEED = None
+
+
+def fix_rng_seed(seed):
+    """
+    Args:
+        seed (int):
+
+    Note:
+        See https://github.com/ppwwyyxx/tensorpack/issues/196.
+    """
+    global _RNG_SEED
+    _RNG_SEED = int(seed)
+
+
 def get_rng(obj=None):
     """
     Get a good RNG seeded with time, pid and the object.
@@ -49,6 +65,8 @@ def get_rng(obj=None):
     """
     seed = (id(obj) + os.getpid() +
             int(datetime.now().strftime("%Y%m%d%H%M%S%f"))) % 4294967295
+    if _RNG_SEED is not None:
+        seed = _RNG_SEED
     return np.random.RandomState(seed)
 
 
