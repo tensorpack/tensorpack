@@ -7,7 +7,7 @@ from abc import ABCMeta
 import six
 from ..tfutils.common import get_op_or_tensor_by_name
 
-__all__ = ['Callback', 'ProxyCallback', 'CallbackFactory']
+__all__ = ['Callback', 'ProxyCallback', 'CallbackFactory', 'Triggerable']
 
 
 @six.add_metaclass(ABCMeta)
@@ -159,6 +159,10 @@ class Callback(object):
 
     def __str__(self):
         return type(self).__name__
+
+
+# back-compat. in case someone write something in triggerable
+Triggerable = Callback
 
 
 class ProxyCallback(Callback):
