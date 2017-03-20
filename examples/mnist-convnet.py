@@ -71,7 +71,7 @@ class Model(ModelDesc):
                 logits = (LinearWrap(image)  # the starting brace is only for line-breaking
                           .Conv2D('conv0')
                           .MaxPooling('pool0', 2)
-                          .Conv2D('conv1', padding='SAME')
+                          .Conv2D('conv1')
                           .Conv2D('conv2')
                           .MaxPooling('pool1', 2)
                           .Conv2D('conv3')

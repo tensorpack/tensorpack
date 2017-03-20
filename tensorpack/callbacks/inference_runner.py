@@ -56,7 +56,7 @@ def summary_inferencer(trainer, infs):
 @six.add_metaclass(ABCMeta)
 class InferenceRunnerBase(Callback):
     """ Base methods for inference runner"""
-    def __init__(self, input, infs, input_names=None, prefix=''):
+    def __init__(self, input, infs, input_names=None, prefix='', extra_hooks=None):
         """
         Args:
             input (InputData): the input to use. Must have ``size()``.
@@ -64,6 +64,7 @@ class InferenceRunnerBase(Callback):
             input_names (list): must be a subset of the names in InputDesc.
             prefix(str): an prefix used to build the tower. Must be set
                 differently if more than one :class:`InferenceRunner` are used.
+            extra_hooks (list): extra ``SessionRunHook`` to run with the evaluation.
         """
         self._input_data = input
         if not isinstance(infs, list):
@@ -81,6 +82,10 @@ class InferenceRunnerBase(Callback):
         except NotImplementedError:
             raise ValueError("Input used in InferenceRunner must have a size!")
         self._prefix = prefix
+
+        if extra_hooks is None:
+            extra_hooks = []
+        self._extra_hooks = extra_hooks
 
     def _setup_input_names(self):
         # just use all the placeholders, if input_name is None
@@ -111,6 +116,7 @@ class InferenceRunnerBase(Callback):
         self._hooks = [self._build_hook(inf) for inf in self.infs]
 
     def _before_train(self):
+        self._hooks.extend(self._extra_hooks)
         self._hooked_sess = HookedSession(self.trainer.sess, self._hooks)
 
     def _get_tensors_maybe_in_tower(self, names):
@@ -148,7 +154,7 @@ class InferenceRunner(InferenceRunnerBase):
     :class:`DataFlow`.
     """
 
-    def __init__(self, ds, infs, input_names=None):
+    def __init__(self, ds, infs, input_names=None, extra_hooks=None):
         """
         Args:
             ds (DataFlow): the DataFlow to run inferencer on.
@@ -158,7 +164,8 @@ class InferenceRunner(InferenceRunnerBase):
         """
         assert isinstance(ds, DataFlow), ds
         input = FeedInput(ds)
-        super(InferenceRunner, self).__init__(input, infs, input_names, prefix='')
+        super(InferenceRunner, self).__init__(
+            input, infs, input_names, prefix='', extra_hooks=extra_hooks)
 
     def _find_input_tensors(self):
         return self.trainer.model.get_reused_placehdrs()
@@ -178,7 +185,7 @@ class FeedfreeInferenceRunner(InferenceRunnerBase):
     pipeline.
     """
 
-    def __init__(self, input, infs, input_names=None, prefix=''):
+    def __init__(self, input, infs, input_names=None, prefix='', extra_hooks=None):
         """
         Args:
             input (TensorInput): the input to use. Must have ``size()``.
@@ -188,7 +195,8 @@ class FeedfreeInferenceRunner(InferenceRunnerBase):
                 differently if more than one :class:`FeedfreeInferenceRunner` are used.
         """
         assert isinstance(input, TensorInput), input
-        super(FeedfreeInferenceRunner, self).__init__(input, infs, input_names, prefix)
+        super(FeedfreeInferenceRunner, self).__init__(
+            input, infs, input_names, prefix=prefix, extra_hooks=extra_hooks)
 
     def _setup_input_names(self):
         super(FeedfreeInferenceRunner, self)._setup_input_names()

@@ -121,5 +121,6 @@ def QueueInputTrainer(config, input_queue=None, predict_tower=None):
         log_deprecated("Argument `predict_tower` in trainer", "Use TrainConfig(predict_tower=...) instead!")
         config.predict_tower = predict_tower
     assert len(config.tower) == 1, \
-        "QueueInputTrainer doesn't support multigpu! Use Sync/AsyncMultiGPUTrainer instead."
+        "Got nr_tower={}, but QueueInputTrainer doesn't support multigpu!" \
+        " Use Sync/AsyncMultiGPUTrainer instead.".format(len(config.tower))
     return SimpleFeedfreeTrainer(config)
