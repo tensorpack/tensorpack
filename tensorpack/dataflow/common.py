@@ -102,7 +102,7 @@ class BatchData(ProxyDataFlow):
             yield BatchData._aggregate_batch(holder, self.use_list)
 
     @staticmethod
-    def _aggregate_batch(data_holder, use_list):
+    def _aggregate_batch(data_holder, use_list=False):
         size = len(data_holder[0])
         result = []
         for k in range(size):
@@ -390,20 +390,25 @@ class JoinData(DataFlow):
     def __init__(self, df_lists):
         """
         Args:
-            df_lists (list): a list of DataFlow. All must have the same ``size()``.
+            df_lists (list): a list of DataFlow.
+                All must have the same ``size()``, or don't have size.
         """
         self.df_lists = df_lists
-        self._size = self.df_lists[0].size()
-        for d in self.df_lists:
-            assert d.size() == self._size, \
-                "All DataFlow must have the same size! {} != {}".format(d.size(), self._size)
+
+        try:
+            self._size = self.df_lists[0].size()
+            for d in self.df_lists:
+                assert d.size() == self._size, \
+                    "All DataFlow must have the same size! {} != {}".format(d.size(), self._size)
+        except Exception:
+            logger.info("[JoinData] Size check failed for the list of dataflow to be joined!")
 
     def reset_state(self):
         for d in self.df_lists:
             d.reset_state()
 
     def size(self):
-        return self._size
+        return self.df_lists[0].size()
 
     def get_data(self):
         itrs = [k.get_data() for k in self.df_lists]
