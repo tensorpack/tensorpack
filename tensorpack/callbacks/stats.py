@@ -4,14 +4,14 @@
 
 import os
 
-from .base import Triggerable
+from .base import Callback
 from ..utils import logger
 from ..utils.develop import log_deprecated
 
 __all__ = ['StatPrinter', 'SendStat']
 
 
-class StatPrinter(Triggerable):
+class StatPrinter(Callback):
     def __init__(self, print_tag=None):
         log_deprecated("StatPrinter",
                        "No need to add StatPrinter to callbacks anymore!",
@@ -19,7 +19,7 @@ class StatPrinter(Triggerable):
 
 
 # TODO make it into monitor?
-class SendStat(Triggerable):
+class SendStat(Callback):
     """
     Execute a command with some specific stats.
     This is useful for, e.g. building a custom statistics monitor.

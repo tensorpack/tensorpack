@@ -6,13 +6,13 @@ import tensorflow as tf
 import os
 import shutil
 
-from .base import Triggerable
+from .base import Callback
 from ..utils import logger
 
 __all__ = ['ModelSaver', 'MinSaver', 'MaxSaver']
 
 
-class ModelSaver(Triggerable):
+class ModelSaver(Callback):
     """
     Save the model every epoch.
     """
@@ -67,7 +67,7 @@ class ModelSaver(Triggerable):
             logger.exception("Exception in ModelSaver.trigger_epoch!")
 
 
-class MinSaver(Triggerable):
+class MinSaver(Callback):
     """
     Separately save the model with minimum value of some statistics.
     """

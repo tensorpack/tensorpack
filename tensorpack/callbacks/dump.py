@@ -6,14 +6,14 @@ import os
 import cv2
 import numpy as np
 
-from .base import Triggerable
+from .base import Callback
 from ..utils import logger
 from ..tfutils import get_op_tensor_name
 
 __all__ = ['DumpParamAsImage']
 
 
-class DumpParamAsImage(Triggerable):
+class DumpParamAsImage(Callback):
     """
     Dump a tensor to image(s) to ``logger.LOG_DIR`` after every epoch.
 

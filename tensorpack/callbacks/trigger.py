@@ -3,7 +3,8 @@
 # File: trigger.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-from .base import ProxyCallback, Triggerable
+from .base import ProxyCallback, Callback
+from ..utils.develop import log_deprecated
 
 
 __all__ = ['PeriodicTrigger', 'PeriodicCallback']
@@ -11,12 +12,12 @@ __all__ = ['PeriodicTrigger', 'PeriodicCallback']
 
 class PeriodicTrigger(ProxyCallback):
     """
-    Trigger a :class:`Triggerable` callback every k steps or every k epochs.
+    Schedule to trigger a callback every k steps or every k epochs by its ``_trigger()`` method.
     """
     def __init__(self, triggerable, every_k_steps=None, every_k_epochs=None):
         """
         Args:
-            triggerable (Triggerable): a Triggerable instance.
+            triggerable (Callback): a Callback instance with a _trigger method to be called.
             every_k_steps (int): trigger when ``local_step % k == 0``. Set to
                 None to disable.
             every_k_epochs (int): trigger when ``epoch_num % k == 0``. Set to
@@ -24,7 +25,7 @@ class PeriodicTrigger(ProxyCallback):
 
         every_k_steps and every_k_epochs can be both set, but cannot be both NOne.
         """
-        assert isinstance(triggerable, Triggerable), type(triggerable)
+        assert isinstance(triggerable, Callback), type(triggerable)
         super(PeriodicTrigger, self).__init__(triggerable)
         assert (every_k_epochs is not None) or (every_k_steps is not None), \
             "every_k_steps and every_k_epochs cannot be both None!"
@@ -54,9 +55,8 @@ class PeriodicCallback(ProxyCallback):
     Wrap a callback so that after every ``period`` epochs, its :meth:`trigger_epoch`
     method is called.
 
-    Note that this wrapper will proxy the :meth:`trigger_step` method as-is.
-    To schedule a :class:`Triggerable` callback more frequent than once per
-    epoch, use :class:`PeriodicTrigger` instead.
+    This wrapper is legacy. It will only proxy the :meth:`trigger_step` method as-is.
+    To be able to schedule a callback more frequent than once per epoch, use :class:`PeriodicTrigger` instead.
     """
 
     def __init__(self, cb, period):
@@ -67,6 +67,7 @@ class PeriodicCallback(ProxyCallback):
         """
         super(PeriodicCallback, self).__init__(cb)
         self.period = int(period)
+        log_deprecated("PeriodicCallback", "Use the more powerful `PeriodicTrigger`.")
 
     def _trigger_epoch(self):
         if self.epoch_num % self.period == 0:

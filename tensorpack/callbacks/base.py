@@ -3,11 +3,11 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
 import six
 from ..tfutils.common import get_op_or_tensor_by_name
 
-__all__ = ['Callback', 'ProxyCallback', 'CallbackFactory', 'Triggerable']
+__all__ = ['Callback', 'ProxyCallback', 'CallbackFactory']
 
 
 @six.add_metaclass(ABCMeta)
@@ -31,6 +31,7 @@ class Callback(object):
     .. automethod:: _after_run
     .. automethod:: _trigger_step
     .. automethod:: _trigger_epoch
+    .. automethod:: _trigger
     .. automethod:: _after_train
     """
 
@@ -111,7 +112,7 @@ class Callback(object):
 
     def _trigger_step(self):
         """
-        Called after each :meth:`Trainer.run_step()` completes.
+        Called after each :meth:`Trainer.run_step()` completes. Defaults to no-op.
 
         You can override it to implement, e.g. a ProgressBar.
         """
@@ -122,7 +123,20 @@ class Callback(object):
 
     def _trigger_epoch(self):
         """
-        Called after the completion of every epoch.
+        Called after the completion of every epoch. Defaults to call ``self.trigger()``
+        """
+        self.trigger()
+
+    def trigger(self):
+        self._trigger()
+
+    def _trigger(self):
+        """
+        Override this method to define a general trigger behavior, to be used with trigger schedulers.
+        Note that the schedulers (e.g. :class:`PeriodicTrigger`) might call this
+        method both inside an epoch and after an epoch.
+
+        When used without the scheduler, this method by default will be called by `trigger_epoch()`.
         """
         pass
 
@@ -145,40 +159,6 @@ class Callback(object):
 
     def __str__(self):
         return type(self).__name__
-
-
-@six.add_metaclass(ABCMeta)
-class Triggerable(Callback):
-    """
-    Base class for "triggerable" callback. It has a method :meth:`Triggerable.trigger()`
-    which can be called either inside an epoch or between epochs.
-    Other higher-level wrappers will take the responsibility to determine **when**
-    to call the trigger.
-
-    If an triggerable is used as a callback directly (instead of under other
-    higher-level wrapper to control the trigger), it will by default trigger after
-    every epoch. This is mainly for backward-compatibility and convenience.
-
-    .. document private functions
-    .. automethod:: _trigger
-    .. automethod:: _trigger_epoch
-    """
-
-    def trigger(self):
-        self._trigger()
-
-    @abstractmethod
-    def _trigger(self):
-        """
-        Override this method to define what to trigger.
-        Note that this method may be called both inside an epoch and after an epoch.
-        """
-        pass
-
-    def _trigger_epoch(self):
-        """ If a :class:`Triggerable` is used as a callback directly,
-            the default behavior is to run the trigger every epoch."""
-        self.trigger()
 
 
 class ProxyCallback(Callback):

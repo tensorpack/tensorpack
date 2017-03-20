@@ -20,7 +20,7 @@ from ..tfutils.tower import TowerContext
 from ..train.input_data import TensorInput, FeedInput
 from ..predict import PredictorTowerBuilder
 
-from .base import Triggerable
+from .base import Callback
 from .inference import Inferencer
 
 __all__ = ['InferenceRunner', 'FeedfreeInferenceRunner',
@@ -54,7 +54,7 @@ def summary_inferencer(trainer, infs):
 
 
 @six.add_metaclass(ABCMeta)
-class InferenceRunnerBase(Triggerable):
+class InferenceRunnerBase(Callback):
     """ Base methods for inference runner"""
     def __init__(self, input, infs, input_names=None, prefix=''):
         """

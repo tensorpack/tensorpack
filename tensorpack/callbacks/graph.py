@@ -5,12 +5,12 @@
 
 """ Graph related callbacks"""
 
-from .base import Triggerable
+from .base import Callback
 
 __all__ = ['RunOp']
 
 
-class RunOp(Triggerable):
+class RunOp(Callback):
     """ Run an Op. """
 
     def __init__(self, setup_func, run_before=True, run_epoch=True):
