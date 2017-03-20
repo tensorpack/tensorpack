@@ -64,7 +64,7 @@ class Model(ModelDesc):
     def _build_graph(self, inputs):
         state, action, futurereward = inputs
         policy = self._get_NN_prediction(state)
-        self.logits = tf.nn.softmax(policy, name='logits')
+        policy = tf.nn.softmax(policy, name='policy')
 
 
 def run_submission(cfg, output, nr):
@@ -105,5 +105,5 @@ if __name__ == '__main__':
         model=Model(),
         session_init=SaverRestore(args.load),
         input_names=['state'],
-        output_names=['logits'])
+        output_names=['policy'])
     run_submission(cfg, args.output, args.episode)

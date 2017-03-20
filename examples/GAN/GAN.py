@@ -43,15 +43,15 @@ class GANModelDesc(ModelDesc):
                 d_pos_acc = tf.reduce_mean(tf.cast(score_real > 0.5, tf.float32), name='accuracy_real')
                 d_neg_acc = tf.reduce_mean(tf.cast(score_fake < 0.5, tf.float32), name='accuracy_fake')
 
-                self.d_accuracy = tf.add(.5 * d_pos_acc, .5 * d_neg_acc, name='accuracy')
+                d_accuracy = tf.add(.5 * d_pos_acc, .5 * d_neg_acc, name='accuracy')
                 self.d_loss = tf.add(.5 * d_loss_pos, .5 * d_loss_neg, name='loss')
 
             with tf.name_scope("gen"):
                 self.g_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
                     logits=logits_fake, labels=tf.ones_like(logits_fake)), name='loss')
-                self.g_accuracy = tf.reduce_mean(tf.cast(score_fake > 0.5, tf.float32), name='accuracy')
+                g_accuracy = tf.reduce_mean(tf.cast(score_fake > 0.5, tf.float32), name='accuracy')
 
-            add_moving_summary(self.g_loss, self.d_loss, self.d_accuracy, self.g_accuracy)
+            add_moving_summary(self.g_loss, self.d_loss, d_accuracy, g_accuracy)
 
 
 class GANTrainer(FeedfreeTrainerBase):
