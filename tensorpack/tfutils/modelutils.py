@@ -4,6 +4,7 @@
 
 import tensorflow as tf
 from termcolor import colored
+from tabulate import tabulate
 
 from ..utils import logger
 from .summary import add_moving_summary
@@ -18,18 +19,18 @@ def describe_model():
     if len(train_vars) == 0:
         logger.info("No trainable variables in the graph!")
         return
-    msg = [""]
     total = 0
+    data = []
     for v in train_vars:
         shape = v.get_shape()
         ele = shape.num_elements()
         total += ele
-        msg.append("{}: shape={}, dim={}".format(
-            v.name, shape.as_list(), ele))
+        data.append([v.name, shape.as_list(), ele])
+    table = tabulate(data, headers=['name', 'shape', 'dim'])
     size_mb = total * 4 / 1024.0**2
-    msg.append(colored(
-        "Total #param={} ({:.02f} MB assuming all float32)".format(total, size_mb), 'cyan'))
-    logger.info(colored("Model Parameters: ", 'cyan') + '\n'.join(msg))
+    summary_msg = colored(
+        "\nTotal #param={} ({:.02f} MB assuming all float32)".format(total, size_mb), 'cyan')
+    logger.info(colored("Model Parameters: \n", 'cyan') + table + summary_msg)
 
 
 def get_shape_str(tensors):

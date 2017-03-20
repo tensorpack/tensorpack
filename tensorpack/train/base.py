@@ -117,10 +117,8 @@ class Trainer(object):
         self._callbacks.setup_graph(weakref.proxy(self))
 
         # create session
-        sess_creator = self.config.session_creator
         logger.info("Finalize the graph, create the session ...")
-
-        self.sess = sess_creator.create_session()
+        self.sess = self.config.session_creator.create_session()
         self._monitored_sess = tf.train.MonitoredSession(
             session_creator=ReuseSessionCreator(self.sess), hooks=None)
 

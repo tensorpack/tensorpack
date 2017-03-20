@@ -18,26 +18,11 @@ except ImportError:
     long_description = open('README.md').read()
 
 # configure requirements
-req = [
-    'numpy',
-    'six',
-    'termcolor',
-    'tqdm>4.11.1',
-    'msgpack-python',
-    'msgpack-numpy',
-    'pyzmq',
-    'subprocess32;python_version<"3.0"',
-    'functools32;python_version<"3.0"',
-]
-extra_req = [
-    'pillow',
-    'scipy',
-    'h5py',
-    'lmdb',
-    'matplotlib',
-    'scikit-learn',
-    'tornado;python_version<"3.0"',
-]
+reqfile = os.path.join(CURRENT_DIR, 'requirements.txt')
+req = [x.strip() for x in open(reqfile).readlines()]
+
+reqfile = os.path.join(CURRENT_DIR, 'opt-requirements.txt')
+extra_req = [x.strip() for x in open(reqfile).readlines()]
 
 # parse scripts
 scripts = ['scripts/plot-point.py', 'scripts/dump-model-params.py']
