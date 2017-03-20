@@ -22,12 +22,7 @@ sys.path.insert(0, os.path.abspath('../'))
 os.environ['TENSORPACK_DOC_BUILDING'] = '1'
 
 
-MOCK_MODULES = ['scipy',
-                #'tensorflow', 'tensorflow.contrib',
-                #'tensorflow.python.ops',
-                #'tensorflow.contrib.framework',
-                #'tensorflow.python',
-                #'tensorflow.python.training',
+MOCK_MODULES = ['scipy', 'tabulate',
                 'sklearn.datasets', 'sklearn',
                 'scipy.misc', 'h5py', 'nltk',
                 'cv2', 'scipy.io', 'dill', 'zmq', 'subprocess32', 'lmdb',

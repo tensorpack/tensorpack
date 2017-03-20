@@ -20,7 +20,6 @@ except ImportError:
 # configure requirements
 reqfile = os.path.join(CURRENT_DIR, 'requirements.txt')
 req = [x.strip() for x in open(reqfile).readlines()]
-
 reqfile = os.path.join(CURRENT_DIR, 'opt-requirements.txt')
 extra_req = [x.strip() for x in open(reqfile).readlines()]
 
@@ -43,7 +42,6 @@ setup(
     version=__version__,
     description='Neural Network Toolbox on TensorFlow',
     long_description=long_description,
-
     install_requires=req,
     tests_require=['flake8'],
     extras_require={

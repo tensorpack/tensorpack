@@ -6,7 +6,7 @@
 import tensorflow as tf
 
 from ..utils.naming import MOVING_SUMMARY_OPS_KEY
-from .base import Callback
+from .base import Callback, Triggerable
 
 __all__ = ['MovingAverageSummary', 'MergeAllSummaries']
 
@@ -32,7 +32,7 @@ class MovingAverageSummary(Callback):
         return [self.ema_op]
 
 
-class MergeAllSummaries(Callback):
+class MergeAllSummaries(Triggerable):
     """
     Evaluate all summaries by `tf.summary.merge_all`, and write to logs.
     """
@@ -70,7 +70,15 @@ class MergeAllSummaries(Callback):
             return
         self.trainer.monitors.put_summary(summary)
 
+    def _summary_run_alone(self):
+        summary = self.summary_op.eval()
+        self.trainer.monitors.put_summary(summary)
+
     def _trigger_epoch(self):
         if self._run_alone:
-            summary = self.summary_op.eval()
-            self.trainer.monitors.put_summary(summary)
+            self._summary_run_alone()
+
+    def _trigger(self):
+        assert self._run_alone, \
+            "MergeAllSummaries can be used as a trigger only if run_alone=True."
+        self._summary_run_alone()
