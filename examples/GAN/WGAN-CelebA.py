@@ -9,7 +9,7 @@ import argparse
 from tensorpack import *
 from tensorpack.tfutils.summary import add_moving_summary
 import tensorflow as tf
-from GAN import GANTrainer
+from GAN import SplitGANTrainer
 
 """
 Wasserstein-GAN.
@@ -61,34 +61,9 @@ def get_config():
         # use the same data in the DCGAN example
         dataflow=DCGAN.get_data(args.data),
         callbacks=[ModelSaver()],
-        steps_per_epoch=300,
+        steps_per_epoch=500,
         max_epoch=200,
     )
-
-
-class WGANTrainer(FeedfreeTrainerBase):
-    """ A new trainer which runs two optimization ops with 5:1 ratio.
-        This is to be consistent with the original code, but I found just
-        running them 1:1 (i.e. just using the existing GANTrainer) also works well.
-    """
-    def __init__(self, config):
-        self._input_method = QueueInput(config.dataflow)
-        super(WGANTrainer, self).__init__(config)
-
-    def _setup(self):
-        super(WGANTrainer, self)._setup()
-        self.build_train_tower()
-
-        opt = self.model.get_optimizer()
-        self.d_min = opt.minimize(
-            self.model.d_loss, var_list=self.model.d_vars, name='d_min')
-        self.g_min = opt.minimize(
-            self.model.g_loss, var_list=self.model.g_vars, name='g_op')
-
-    def run_step(self):
-        for k in range(5):
-            self.hooked_sess.run(self.d_min)
-        self.hooked_sess.run(self.g_min)
 
 
 if __name__ == '__main__':
@@ -105,4 +80,8 @@ if __name__ == '__main__':
         config = get_config()
         if args.load:
             config.session_init = SaverRestore(args.load)
-        WGANTrainer(config).train()
+        """
+        This is to be consistent with the original code, but I found just
+        running them 1:1 (i.e. just using the existing GANTrainer) also works well.
+        """
+        SplitGANTrainer(config, d_interval=5).train()

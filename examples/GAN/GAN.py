@@ -71,6 +71,36 @@ class GANTrainer(FeedfreeTrainerBase):
         self.train_op = self.d_min
 
 
+class SplitGANTrainer(FeedfreeTrainerBase):
+    """ A new trainer which runs two optimization ops with a certain ratio.  """
+    def __init__(self, config, d_interval=1):
+        """
+        Args:
+            d_interval: will run d_opt only after this many of g_opt.
+        """
+        self._input_method = QueueInput(config.dataflow)
+        self._d_interval = d_interval
+        super(SplitGANTrainer, self).__init__(config)
+
+    def _setup(self):
+        super(SplitGANTrainer, self)._setup()
+        self.build_train_tower()
+
+        opt = self.model.get_optimizer()
+        self.d_min = opt.minimize(
+            self.model.d_loss, var_list=self.model.d_vars, name='d_min')
+        self.g_min = opt.minimize(
+            self.model.g_loss, var_list=self.model.g_vars, name='g_min')
+        self._cnt = 0
+
+    def run_step(self):
+        self._cnt += 1
+        if self._cnt % (self._d_interval) == 0:
+            self.hooked_sess.run(self.d_min)
+        else:
+            self.hooked_sess.run(self.g_min)
+
+
 class RandomZData(DataFlow):
     def __init__(self, shape):
         super(RandomZData, self).__init__()
