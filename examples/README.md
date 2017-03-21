@@ -18,7 +18,7 @@ Training examples with __reproducible__ and meaningful performance.
 + Load a pre-trained [Convolutional Pose Machines](ConvolutionalPoseMachines/).
 
 ## Reinforcement Learning:
-+ [Deep Q-Network(DQN) variants on Atari games](DeepQNetwork)
++ [Deep Q-Network(DQN) variants on Atari games](DeepQNetwork), including DQN, DoubleDQN, DuelingDQN.
 + [Asynchronous Advantage Actor-Critic(A3C) with demos on OpenAI Gym](A3C-Gym)
 
 ## Unsupervised Learning:
