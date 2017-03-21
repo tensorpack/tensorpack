@@ -9,7 +9,7 @@ import argparse
 from tensorpack import *
 from tensorpack.tfutils.summary import add_moving_summary
 import tensorflow as tf
-from GAN import SplitGANTrainer
+from GAN import SeparateGANTrainer
 
 """
 Wasserstein-GAN.
@@ -84,4 +84,4 @@ if __name__ == '__main__':
         This is to be consistent with the original code, but I found just
         running them 1:1 (i.e. just using the existing GANTrainer) also works well.
         """
-        SplitGANTrainer(config, d_interval=5).train()
+        SeparateGANTrainer(config, d_interval=5).train()

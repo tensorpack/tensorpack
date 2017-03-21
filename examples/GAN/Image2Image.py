@@ -205,14 +205,13 @@ if __name__ == '__main__':
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
     parser.add_argument('--load', help='load model')
     parser.add_argument('--sample', action='store_true', help='run sampling')
-    parser.add_argument('--data', help='Image directory')
+    parser.add_argument('--data', help='Image directory', required=True)
     parser.add_argument('--mode', choices=['AtoB', 'BtoA'], default='AtoB')
     parser.add_argument('-b', '--batch', type=int, default=1)
     global args
     args = parser.parse_args()
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
-    assert args.data
 
     BATCH = args.batch
 

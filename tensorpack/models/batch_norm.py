@@ -96,13 +96,13 @@ def BatchNormV1(x, use_local_stat=None, decay=0.9, epsilon=1e-5):
             x, ema_mean, ema_var, beta, gamma, epsilon, 'output')
 
 
-def get_bn_variables(n_out, use_scale, use_bias):
+def get_bn_variables(n_out, use_scale, use_bias, gamma_init):
     if use_bias:
         beta = tf.get_variable('beta', [n_out], initializer=tf.constant_initializer())
     else:
         beta = tf.zeros([n_out], name='beta')
     if use_scale:
-        gamma = tf.get_variable('gamma', [n_out], initializer=tf.constant_initializer(1.0))
+        gamma = tf.get_variable('gamma', [n_out], initializer=gamma_init)
     else:
         gamma = tf.ones([n_out], name='gamma')
     # x * gamma + beta
@@ -132,7 +132,8 @@ def update_bn_ema(xn, batch_mean, batch_var, moving_mean, moving_var, decay):
 
 @layer_register(log_shape=False)
 def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5,
-              use_scale=True, use_bias=True, data_format='NHWC'):
+              use_scale=True, use_bias=True,
+              gamma_init=tf.constant_initializer(1.0), data_format='NHWC'):
     """
     Batch Normalization layer, as described in the paper:
     `Batch Normalization: Accelerating Deep Network Training by
@@ -145,14 +146,16 @@ def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5,
         decay (float): decay rate of moving average.
         epsilon (float): epsilon to avoid divide-by-zero.
         use_scale, use_bias (bool): whether to use the extra affine transformation or not.
+        gamma_init: initializer for gamma (the scale).
 
     Returns:
         tf.Tensor: a tensor named ``output`` with the same shape of x.
 
     Variable Names:
 
-    * ``beta``: the bias term.
-    * ``gamma``: the scale term. Input will be transformed by ``x * gamma + beta``.
+    * ``beta``: the bias term. Will be zero-inited by default.
+    * ``gamma``: the scale term. Will be one-inited by default.
+        Input will be transformed by ``x * gamma + beta``.
     * ``mean/EMA``: the moving average of mean.
     * ``variance/EMA``: the moving average of variance.
 
@@ -176,7 +179,7 @@ def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5,
         x = tf.reshape(x, [-1, 1, 1, n_out])
     assert n_out is not None, "Input to BatchNorm cannot have unknown channels!"
 
-    beta, gamma, moving_mean, moving_var = get_bn_variables(n_out, use_scale, use_bias)
+    beta, gamma, moving_mean, moving_var = get_bn_variables(n_out, use_scale, use_bias, gamma_init)
 
     ctx = get_current_tower_context()
     if use_local_stat is None:
@@ -245,7 +248,8 @@ def BatchRenorm(x, rmax, dmax, decay=0.9, epsilon=1e-5,
     n_out = shape[-1]
     if len(shape) == 2:
         x = tf.reshape(x, [-1, 1, 1, n_out])
-    beta, gamma, moving_mean, moving_var = get_bn_variables(n_out, use_scale, use_bias)
+    beta, gamma, moving_mean, moving_var = get_bn_variables(
+        n_out, use_scale, use_bias, tf.constant_initializer(1.0))
 
     ctx = get_current_tower_context()
     use_local_stat = ctx.is_training
