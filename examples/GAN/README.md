@@ -12,6 +12,8 @@ Reproduce the following GAN-related methods:
 
 + [Wasserstein GAN](https://arxiv.org/abs/1701.07875)
 
++ DiscoGAN ([Learning to Discover Cross-Domain Relations with Generative Adversarial Networks](https://arxiv.org/abs/1703.05192))
+
 Please see the __docstring__ in each script for detailed usage and pretrained models.
 
 ## DCGAN-CelebA.py
@@ -55,3 +57,7 @@ Train a simple GAN on mnist, conditioned on the class labels.
 ## WGAN-CelebA.py
 
 Reproduce Wasserstein GAN by some small modifications on DCGAN-CelebA.py.
+
+## DiscoGAN-CelebA.py
+
+Reproduce DiscoGAN on CelebA.

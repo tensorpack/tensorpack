@@ -1,0 +1,228 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# File: DiscoGAN-CelebA.py
+# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+
+import os, sys
+import argparse
+from six.moves import map, zip
+import numpy as np
+
+from tensorpack import *
+from tensorpack.utils.viz import *
+import tensorpack.tfutils.symbolic_functions as symbf
+from tensorpack.tfutils.summary import add_moving_summary
+import tensorflow as tf
+from GAN import SeparateGANTrainer, GANModelDesc
+
+"""
+1. Download "aligned&cropped" version of celebA to /path/to/img_ailgn_celeba.
+2. Put list_attr_celeba.txt into that directory as well.
+3. Start training gender transfer:
+    ./DiscoGAN-CelebA.py --data /path/to/img_align_celeba --style-A Male
+4. Visualization on test set to be done. But you can visualize the images in tensorboard now.
+
+With TF1.0.1, cuda 8.0, cudnn 5.1.10,
+the training on 64x64 images of batch 64 runs 5.4 it/s on Tesla M40.
+This is 2.4x as fast as the original PyTorch implementation.
+
+This is surprising to myself, so I'm not sure my comparison is correct.
+The cause is probably that in the torch implementation,
+a backward() seems to compute gradients for ALL parameters, which is not necessary in GAN.
+"""
+
+SHAPE = 64
+BATCH = 64
+NF = 64  # channel size
+
+
+def BNLReLU(x, name):
+    x = BatchNorm('bn', x)
+    return LeakyReLU(x)
+
+
+class Model(GANModelDesc):
+    def _get_inputs(self):
+        return [InputDesc(tf.float32, (None, SHAPE, SHAPE, 3), 'inputA'),
+                InputDesc(tf.float32, (None, SHAPE, SHAPE, 3), 'inputB')]
+
+    def generator(self, img):
+        with argscope([Conv2D, Deconv2D],
+                      nl=BNLReLU, kernel_shape=4, stride=2, use_bias=False), \
+                argscope(Deconv2D, nl=BNReLU):
+            l = (LinearWrap(img)
+                 .Conv2D('conv0', NF, nl=LeakyReLU)
+                 .Conv2D('conv1', NF * 2)
+                 .Conv2D('conv2', NF * 4)
+                 .Conv2D('conv3', NF * 8)
+                 .Deconv2D('deconv0', NF * 4)
+                 .Deconv2D('deconv1', NF * 2)
+                 .Deconv2D('deconv2', NF * 1)
+                 .Deconv2D('deconv3', 3, nl=tf.identity)
+                 .tf.sigmoid()())
+        return l
+
+    def discriminator(self, img):
+        with argscope(Conv2D, nl=BNLReLU, kernel_shape=4, stride=2):
+            l = Conv2D('conv0', img, NF, nl=LeakyReLU)
+            relu1 = Conv2D('conv1', l, NF * 2)
+            relu2 = Conv2D('conv2', relu1, NF * 4)
+            relu3 = Conv2D('conv3', relu2, NF * 8)
+            logits = FullyConnected('fc', relu3, 1, nl=tf.identity)
+        return logits, [relu1, relu2, relu3]
+
+    def get_feature_match_loss(self, feats_real, feats_fake):
+        losses = []
+        for real, fake in zip(feats_real, feats_fake):
+            loss = tf.reduce_mean(tf.squared_difference(
+                tf.reduce_mean(real, 0),
+                tf.reduce_mean(fake, 0)),
+                name='mse_feat_' + real.op.name)
+            losses.append(loss)
+        ret = tf.add_n(losses, name='feature_match_loss')
+        add_moving_summary(ret)
+        return ret
+
+    def _build_graph(self, inputs):
+        A, B = inputs
+        A = tf.transpose(A / 255.0, [0, 3, 1, 2])
+        B = tf.transpose(B / 255.0, [0, 3, 1, 2])
+
+        # use the initializers from torch
+        with argscope([Conv2D, Deconv2D, FullyConnected],
+                      W_init=tf.contrib.layers.variance_scaling_initializer(factor=0.333, uniform=True),
+                      use_bias=False), \
+                argscope(BatchNorm, gamma_init=tf.random_uniform_initializer()), \
+                argscope([Conv2D, Deconv2D, BatchNorm], data_format='NCHW'), \
+                argscope(LeakyReLU, alpha=0.2):
+            with tf.variable_scope('gen'):
+                with tf.variable_scope('B'):
+                    AB = self.generator(A)
+                with tf.variable_scope('A'):
+                    BA = self.generator(B)
+                with tf.variable_scope('A', reuse=True):
+                    ABA = self.generator(AB)
+                with tf.variable_scope('B', reuse=True):
+                    BAB = self.generator(BA)
+
+            viz_A_recon = tf.concat([A, AB, ABA], axis=3, name='viz_A_recon')
+            viz_B_recon = tf.concat([B, BA, BAB], axis=3, name='viz_B_recon')
+            tf.summary.image('Arecon', tf.transpose(viz_A_recon, [0, 2, 3, 1]), max_outputs=30)
+            tf.summary.image('Brecon', tf.transpose(viz_B_recon, [0, 2, 3, 1]), max_outputs=30)
+
+            with tf.variable_scope('discrim'):
+                with tf.variable_scope('A'):
+                    A_dis_real, A_feats_real = self.discriminator(A)
+                with tf.variable_scope('A', reuse=True):
+                    A_dis_fake, A_feats_fake = self.discriminator(BA)
+
+                with tf.variable_scope('B'):
+                    B_dis_real, B_feats_real = self.discriminator(B)
+                with tf.variable_scope('B', reuse=True):
+                    B_dis_fake, B_feats_fake = self.discriminator(AB)
+
+        with tf.name_scope('LossA'):
+            # reconstruction loss
+            recon_loss_A = tf.reduce_mean(tf.squared_difference(A, ABA), name='recon_loss')
+            # gan loss
+            self.build_losses(A_dis_real, A_dis_fake)
+            G_loss_A = self.g_loss
+            D_loss_A = self.d_loss
+            # feature matching loss
+            fm_loss_A = self.get_feature_match_loss(A_feats_real, A_feats_fake)
+
+        with tf.name_scope('LossB'):
+            recon_loss_B = tf.reduce_mean(tf.squared_difference(B, BAB), name='recon_loss')
+            self.build_losses(B_dis_real, B_dis_fake)
+            G_loss_B = self.g_loss
+            D_loss_B = self.d_loss
+            fm_loss_B = self.get_feature_match_loss(B_feats_real, B_feats_fake)
+
+        global_step = get_global_step_var()
+        rate = tf.train.piecewise_constant(global_step, [np.int64(10000)], [0.01, 0.5])
+        rate = tf.identity(rate, name='rate')   # mitigate a TF bug
+        g_loss = tf.add_n([
+            ((G_loss_A + G_loss_B) * 0.1 +
+             (fm_loss_A + fm_loss_B) * 0.9) * (1 - rate),
+            (recon_loss_A + recon_loss_B) * rate], name='G_loss_total')
+        d_loss = tf.add_n([D_loss_A, D_loss_B], name='D_loss_total')
+
+        self.collect_variables('gen', 'discrim')
+        # weight decay
+        wd_g = regularize_cost('gen/.*/W', l2_regularizer(1e-5), name='G_regularize')
+        wd_d = regularize_cost('discrim/.*/W', l2_regularizer(1e-5), name='D_regularize')
+
+        self.g_loss = g_loss + wd_g
+        self.d_loss = d_loss + wd_d
+
+        add_moving_summary(recon_loss_A, recon_loss_B, rate, g_loss, d_loss, wd_g, wd_d)
+
+    def _get_optimizer(self):
+        lr = symbolic_functions.get_scalar_var('learning_rate', 2e-4, summary=True)
+        return tf.train.AdamOptimizer(lr, beta1=0.5, epsilon=1e-3)
+
+
+def get_celebA_data(datadir, styleA, styleB=None):
+    def read_attr(attrfname):
+        with open(attrfname) as f:
+            nr_record = int(f.readline())
+            headers = f.readline().strip().split()
+            data = []
+            for line in f:
+                line = line.strip().split()[1:]
+                line = list(map(int, line))
+                assert len(line) == len(headers)
+                data.append(line)
+            assert len(data) == nr_record
+            return headers, np.asarray(data, dtype='int8')
+
+    headers, attrs = read_attr(os.path.join(datadir, 'list_attr_celeba.txt'))
+    idxA = headers.index(styleA)
+    listA = np.nonzero(attrs[:, idxA] == 1)[0]
+    if styleB is not None:
+        idxB = headers.index(styleB)
+        listB = np.nonzero(attrs[:, idxB] == 1)[0]
+    else:
+        listB = np.nonzero(attrs[:, idxA] == -1)[0]
+
+    def get_filelist(idxlist):
+        return [os.path.join(datadir, '{:06d}.jpg'.format(x + 1))
+                for x in idxlist]
+
+    dfA = ImageFromFile(get_filelist(listA), channel=3, shuffle=True)
+    dfB = ImageFromFile(get_filelist(listB), channel=3, shuffle=True)
+    df = JoinData([dfA, dfB])
+    augs = [
+        imgaug.CenterCrop(160),
+        imgaug.Resize(64)]
+    df = AugmentImageComponents(df, augs, (0, 1))
+    df = BatchData(df, BATCH)
+    df = PrefetchDataZMQ(df, 1)
+    return df
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--data', required=True,
+        help='the img_align_celeba directory. should also contain list_attr_celeba.txt')
+    parser.add_argument('--style-A', help='style of A', default='Male')
+    parser.add_argument('--style-B', help='style of B')
+    parser.add_argument('--load', help='load model')
+    args = parser.parse_args()
+
+    logger.auto_set_dir()
+
+    data = get_celebA_data(args.data, args.style_A, args.style_B)
+
+    config = TrainConfig(
+        model=Model(),
+        dataflow=data,
+        callbacks=[ModelSaver()],
+        steps_per_epoch=300,
+        max_epoch=200,
+        session_init=SaverRestore(args.load) if args.load else None
+    )
+
+    # train 1 D after 2 G
+    SeparateGANTrainer(config, 2).train()

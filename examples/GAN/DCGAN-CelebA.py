@@ -18,7 +18,7 @@ from GAN import GANTrainer, RandomZData, GANModelDesc
 1. Download the 'aligned&cropped' version of CelebA dataset
    from http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html
 2. Start training:
-    ./DCGAN-CelebA.py --data /path/to/image_align_celeba/
+    ./DCGAN-CelebA.py --data /path/to/img_align_celeba/
 3. Visualize samples of a trained model:
     ./DCGAN-CelebA.py --load path/to/model --sample
 
