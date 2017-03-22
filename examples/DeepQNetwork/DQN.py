@@ -78,7 +78,7 @@ class Model(ModelDesc):
     def _get_DQN_prediction(self, image):
         """ image: [0,255]"""
         image = image / 255.0
-        with argscope(Conv2D, nl=PReLU.f, use_bias=True), \
+        with argscope(Conv2D, nl=PReLU.symbolic_function, use_bias=True), \
                 argscope(LeakyReLU, alpha=0.01):
             l = (LinearWrap(image)
                  .Conv2D('conv0', out_channel=32, kernel_shape=5)

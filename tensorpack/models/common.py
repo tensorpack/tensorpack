@@ -9,7 +9,6 @@ import copy
 
 from ..tfutils.argscope import get_arg_scope
 from ..tfutils.modelutils import get_shape_str
-from ..tfutils.summary import add_activation_summary
 from ..utils import logger
 from ..utils.develop import building_rtfd
 
@@ -51,16 +50,12 @@ def disable_layer_logging():
 
 
 def layer_register(
-        summary_activation=False,
         log_shape=True,
         use_scope=True):
     """
     Register a layer.
 
     Args:
-        summary_activation (bool): Define the default behavior of whether to
-            summary the output(activation) of this layer.
-            Can be overriden when creating the layer.
         log_shape (bool): log input/output shape of this layer
         use_scope (bool): whether to call this layer with an extra first argument as scope.
             If set to False, will try to figure out whether the first argument
@@ -75,7 +70,7 @@ def layer_register(
                 args = args[1:]  # actual positional args used to call func
                 assert isinstance(name, six.string_types), name
             else:
-                assert not log_shape and not summary_activation
+                assert not log_shape
                 if isinstance(args[0], six.string_types):
                     name, inputs = args[0], args[1]
                     args = args[1:]  # actual positional args used to call func
@@ -86,18 +81,15 @@ def layer_register(
                     (isinstance(inputs, (list, tuple)) and
                         isinstance(inputs[0], (tf.Tensor, tf.Variable)))):
                 raise ValueError("Invalid inputs to layer: " + str(inputs))
-            do_summary = kwargs.pop(
-                'summary_activation', summary_activation)
 
             # TODO use inspect.getcallargs to enhance?
             # update from current argument scope
             actual_args = copy.copy(get_arg_scope()[func.__name__])
             actual_args.update(kwargs)
 
-            if name is not None:
+            if name is not None:        # use scope
                 with tf.variable_scope(name) as scope:
                     do_log_shape = log_shape and scope.name not in _LAYER_LOGGED
-                    do_summary = do_summary and scope.name not in _LAYER_LOGGED
                     if do_log_shape:
                         logger.info("{} input: {}".format(scope.name, get_shape_str(inputs)))
 
@@ -109,19 +101,12 @@ def layer_register(
                         logger.info("{} output: {}".format(
                             scope.name, get_shape_str(outputs)))
                         _LAYER_LOGGED.add(scope.name)
-
-                    if do_summary:
-                        if isinstance(outputs, list):
-                            for x in outputs:
-                                add_activation_summary(x, scope.name)
-                        else:
-                            add_activation_summary(outputs, scope.name)
             else:
                 # run the actual function
                 outputs = func(*args, **actual_args)
             return outputs
 
-        wrapped_func.f = func   # attribute to access the underlying function object
+        wrapped_func.symbolic_function = func   # attribute to access the underlying function object
         wrapped_func.use_scope = use_scope
         _register(func.__name__, wrapped_func)
         return wrapped_func
