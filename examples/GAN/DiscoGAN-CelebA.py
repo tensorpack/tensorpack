@@ -48,7 +48,7 @@ class Model(GANModelDesc):
 
     def generator(self, img):
         with argscope([Conv2D, Deconv2D],
-                      nl=BNLReLU, kernel_shape=4, stride=2, use_bias=False), \
+                      nl=BNLReLU, kernel_shape=4, stride=2), \
                 argscope(Deconv2D, nl=BNReLU):
             l = (LinearWrap(img)
                  .Conv2D('conv0', NF, nl=LeakyReLU)
@@ -107,8 +107,8 @@ class Model(GANModelDesc):
 
             viz_A_recon = tf.concat([A, AB, ABA], axis=3, name='viz_A_recon')
             viz_B_recon = tf.concat([B, BA, BAB], axis=3, name='viz_B_recon')
-            tf.summary.image('Arecon', tf.transpose(viz_A_recon, [0, 2, 3, 1]), max_outputs=30)
-            tf.summary.image('Brecon', tf.transpose(viz_B_recon, [0, 2, 3, 1]), max_outputs=30)
+            tf.summary.image('Arecon', tf.transpose(viz_A_recon, [0, 2, 3, 1]), max_outputs=50)
+            tf.summary.image('Brecon', tf.transpose(viz_B_recon, [0, 2, 3, 1]), max_outputs=50)
 
             with tf.variable_scope('discrim'):
                 with tf.variable_scope('A'):
@@ -220,7 +220,7 @@ if __name__ == '__main__':
         dataflow=data,
         callbacks=[ModelSaver()],
         steps_per_epoch=300,
-        max_epoch=200,
+        max_epoch=1000,
         session_init=SaverRestore(args.load) if args.load else None
     )
 

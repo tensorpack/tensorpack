@@ -8,12 +8,12 @@ from termcolor import colored
 from collections import deque, defaultdict
 from six.moves import range, map
 from .base import DataFlow, ProxyDataFlow, RNGDataFlow
-from ..utils import logger, get_tqdm
+from ..utils import logger, get_tqdm, get_rng
 
 __all__ = ['TestDataSpeed', 'PrintData', 'BatchData', 'BatchDataByShape', 'FixedSizeData', 'MapData',
            'MapDataComponent', 'RepeatedData', 'RandomChooseData',
            'RandomMixData', 'JoinData', 'ConcatData', 'SelectComponent',
-           'LocallyShuffleData']
+           'LocallyShuffleData', 'CacheData']
 
 
 class TestDataSpeed(ProxyDataFlow):
@@ -497,6 +497,36 @@ class LocallyShuffleData(ProxyDataFlow, RNGDataFlow):
                 if cnt >= sz:
                     return
                 self._add_data()
+
+
+class CacheData(ProxyDataFlow):
+    """
+    Cache a dataflow completely in memory.
+    """
+    def __init__(self, ds, shuffle=False):
+        """
+        Args:
+            ds (DataFlow): input DataFlow.
+            shuffle (bool): whether to shuffle the datapoints before producing them.
+        """
+        self.shuffle = shuffle
+        super(CacheData, self).__init__(ds)
+
+    def reset_state(self):
+        super(CacheData, self).reset_state()
+        if self.shuffle:
+            self.rng = get_rng(self)
+        self.buffer = []
+
+    def get_data(self):
+        if len(self.buffer):
+            self.rng.shuffle(self.buffer)
+            for dp in self.buffer:
+                yield dp
+        else:
+            for dp in self.ds.get_data():
+                yield dp
+                self.buffer.append(dp)
 
 
 class PrintData(ProxyDataFlow):
