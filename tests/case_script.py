@@ -1,3 +1,4 @@
+from abc import abstractproperty
 import unittest
 import subprocess
 import shlex
@@ -56,6 +57,10 @@ class PythonScript(threading.Thread):
 
 class TestPythonScript(unittest.TestCase):
 
+    @abstractproperty
+    def script(self):
+        pass
+
     @staticmethod
     def clear_trainlog(script):
         script = os.path.basename(script)
@@ -68,3 +73,9 @@ class TestPythonScript(unittest.TestCase):
         if args:
             cmd += " " + " ".join(args)
         PythonScript(cmd, timeout=timeout).execute()
+
+    def setUp(self):
+        TestPythonScript.clear_trainlog(self.script)
+
+    def tearDown(self):
+        TestPythonScript.clear_trainlog(self.script)
