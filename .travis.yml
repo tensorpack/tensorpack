@@ -5,6 +5,8 @@ language: python
 cache:
   pip: true
   apt: true
+  directories:
+    - $HOME/tensorpack_data
 
 addons:
   apt:
@@ -45,7 +47,9 @@ before_script:
 script:
 - flake8 .
 - cd examples && flake8 .
-- cd $TRAVIS_BUILD_DIR && python tests/test_examples.py
+- mkdir $HOME/tensorpack_data
+- export TENSORPACK_DATASET=$HOME/tensorpack_data
+- cd $TRAVIS_BUILD_DIR/tests && python run.py
 
 notifications:
 - email:
