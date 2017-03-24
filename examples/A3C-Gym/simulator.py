@@ -6,6 +6,7 @@
 import tensorflow as tf
 import multiprocessing as mp
 import time
+import os
 import threading
 from abc import abstractmethod, ABCMeta
 from collections import defaultdict
@@ -105,6 +106,7 @@ class SimulatorMaster(threading.Thread):
 
     def __init__(self, pipe_c2s, pipe_s2c):
         super(SimulatorMaster, self).__init__()
+        assert os.name != 'nt', "Doesn't support windows!"
         self.daemon = True
         self.name = 'SimulatorMaster'
 
