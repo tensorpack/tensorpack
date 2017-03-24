@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # File: develop.py
-# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+# Author: tensorpack contributors
 
 
 """ Utilities for developers only.

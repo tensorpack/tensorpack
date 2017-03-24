@@ -11,11 +11,6 @@ import cv2
 from .fs import mkdir_p
 from .argtools import shape2d
 
-try:
-    import matplotlib.pyplot as plt
-except ImportError:
-    pass
-
 
 __all__ = ['pyplot2img', 'interactive_imshow',
            'stack_patches', 'gen_stack_patches',
@@ -351,6 +346,12 @@ def intensity_to_rgb(intensity, cmap='cubehelix', normalize=False):
     intensity = cmap(intensity)[..., :3]
     return intensity.astype('float32') * 255.0
 
+from ..utils.develop import create_dummy_func   # noqa
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    pyplot2img = create_dummy_func('pyplot2img')    # noqa
+    intensity_to_rgb = create_dummy_func('intensity_to_rgb')    # noqa
 
 if __name__ == '__main__':
     if False:
