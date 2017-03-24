@@ -47,7 +47,7 @@ before_script:
 script:
 - flake8 .
 - cd examples && flake8 .
-- mkdir $HOME/tensorpack_data
+- mkdir -p $HOME/tensorpack_data
 - export TENSORPACK_DATASET=$HOME/tensorpack_data
 - cd $TRAVIS_BUILD_DIR/tests && python run.py
 
