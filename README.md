@@ -4,7 +4,7 @@ Neural Network Toolbox on TensorFlow
 [![Build Status](https://travis-ci.org/ppwwyyxx/tensorpack.svg?branch=master)](https://travis-ci.org/ppwwyyxx/tensorpack)
 [![badge](https://readthedocs.org/projects/pip/badge/?version=latest)](http://tensorpack.readthedocs.io/en/latest/index.html)
 
-Tutorials are not finished. See some [examples](examples) to learn about the framework:
+See some [examples](examples) to learn about the framework:
 
 ### Vision:
 + [DoReFa-Net: train binary / low-bitwidth CNN on ImageNet](examples/DoReFa-Net)
@@ -53,7 +53,7 @@ With the above components defined, tensorpack trainer runs the training iteratio
 Even on a small CNN example, the training runs [2x faster](https://gist.github.com/ppwwyyxx/8d95da79f8d97036a7d67c2416c851b6) than the equivalent Keras code.
 
 Multi-GPU training is off-the-shelf by simply switching the trainer.
-You can also define your own trainer for non-standard training (e.g. GAN).
+You can also define your own trainer for different style of training (e.g. GAN).
 
 ## Install:
 

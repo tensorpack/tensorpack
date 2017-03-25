@@ -350,8 +350,8 @@ from ..utils.develop import create_dummy_func   # noqa
 try:
     import matplotlib.pyplot as plt
 except ImportError:
-    pyplot2img = create_dummy_func('pyplot2img')    # noqa
-    intensity_to_rgb = create_dummy_func('intensity_to_rgb')    # noqa
+    pyplot2img = create_dummy_func('pyplot2img', 'matplotlib')    # noqa
+    intensity_to_rgb = create_dummy_func('intensity_to_rgb', 'matplotlib')    # noqa
 
 if __name__ == '__main__':
     if False:
