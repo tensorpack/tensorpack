@@ -76,7 +76,7 @@ class FixedCrop(ImageAugmentor):
 
     def _augment(self, img, _):
         return img[self.rect.y0: self.rect.y1 + 1,
-                   self.rect.x0: self.rect.x0 + 1]
+                   self.rect.x0: self.rect.x1 + 1]
 
     def _fprop_coord(self, coord, param):
         raise NotImplementedError()
