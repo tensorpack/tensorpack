@@ -1,13 +1,13 @@
 
-# Dataflow
+# DataFlow
 
-Dataflow is a library to help you build Python iterators to load data.
+DataFlow is a library to help you build Python iterators to load data.
 
-A Dataflow has a `get_data()` generator method,
+A DataFlow has a `get_data()` generator method,
 which yields `datapoints`.
 A datapoint must be a **list** of Python objects which I called the `components` of a datapoint.
 
-For example, to train on MNIST dataset, you can build a Dataflow with a `get_data()` method
+For example, to train on MNIST dataset, you can build a DataFlow with a `get_data()` method
 that yields datapoints of two elements (components):
 a numpy array of shape (64, 28, 28), and an array of shape (64,).
 
@@ -15,13 +15,13 @@ a numpy array of shape (64, 28, 28), and an array of shape (64,).
 One good thing about having a standard interface is to be able to provide
 the greatest code reusablility.
 There are a lot of existing modules in tensorpack which you can use to compose
-complex Dataflow instances with a long pre-processing pipeline. A whole pipeline usually
+complex DataFlow instances with a long pre-processing pipeline. A whole pipeline usually
 would __read from disk (or other sources), apply augmentations, group into batches,
 prefetch data__, etc. A simple example is as the following:
 
 ````python
-# define a Dataflow which produces image-label pairs from a caffe lmdb database
-df = CaffeLMDB('/path/to/caffe/lmdb', shuffle=False)
+# a DataFlow you implement to produce [image,label] pairs from whatever sources:
+df = MyDataFlow(shuffle=True)
 # resize the image component of each datapoint
 df = AugmentImageComponent(df, [imgaug.Resize((225, 225))])
 # group data into batches of size 128
@@ -43,46 +43,21 @@ tasks as large as ImageNet training.
 	 -->
 
 ### Reuse in other frameworks
-Another good thing about Dataflow is that it is independent of
+Another good thing about DataFlow is that it is independent of
 tensorpack internals. You can just use it as an efficient data processing pipeline,
 and plug it into other frameworks.
 
-To use a DataFlow, you'll need to call `reset_state()` first to initialize it, and then use the generator however you
-want:
+To use a DataFlow independently, you'll need to call `reset_state()` first to initialize it,
+and then use the generator however you want:
 ```python
 df = get_some_df()
 df.reset_state()
 generator = df.get_data()
+for dp in generator:
+	# dp is now a list. do whatever
 ```
 
-### Write your own Dataflow
-
-There are several existing Dataflow, e.g. ImageFromFile, DataFromList, which you can
-use to read images or load data from a list.
-But in general, you'll probably need to write a new Dataflow to produce data for your task.
-Dataflow implementations for several well-known datasets are provided in the
-[dataflow.dataset](http://tensorpack.readthedocs.io/en/latest/modules/tensorpack.dataflow.dataset.html)
-module, you can take them as a reference.
-
-Usually you just need to implement the `get_data()` method which yields a datapoint every time.
-```python
-class MyDataFlow(DataFlow):
-  def get_data(self):
-    for k in range(100):
-      digit = np.random.rand(28, 28)
-      label = np.random.randint(10)
-      yield [digit, label]
-```
-
-Optionally, Dataflow can implement the following two methods:
-
-+ `size()`. Return the number of elements the generator can produce. Certain modules might require this.
-	For example, only Dataflows with the same number of elements can be joined together.
-
-+ `reset_state()`. It's guaranteed that the actual process which runs a DataFlow will invoke this method before using it.
-	So if this DataFlow needs to something after a `fork()`, you should put it here.
-
-	A typical situation is when your Dataflow uses random number generator (RNG). Then you'd need to reset the RNG here,
-	otherwise child processes will have the same random seed. The `RNGDataFlow` class does this already.
-
-With a "low-level" Dataflow defined, you can then compose it with existing modules.
+Unless you're working with standard data types (image folders, LMDB, etc),
+you would usually want to write your own DataFlow.
+See [another tutorial](http://tensorpack.readthedocs.io/en/latest/tutorial/extend/dataflow.html)
+for details.

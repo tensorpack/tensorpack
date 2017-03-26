@@ -2,7 +2,10 @@
 Tutorials
 ---------------------
 
-Test.
+To be completed.
+
+user tutorials
+========================
 
 .. toctree::
   :maxdepth: 1
@@ -13,3 +16,14 @@ Test.
   model
   trainer
   callback
+
+extend tensorpack
+=================
+
+.. toctree::
+  :maxdepth: 1
+
+  extend/dataflow
+  extend/model
+  extend/trainer
+  extend/callback

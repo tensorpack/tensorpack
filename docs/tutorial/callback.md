@@ -49,8 +49,3 @@ TrainConfig(
   ]
 )
 ```
-
-
-## Write a callback
-
-TODO
