@@ -4,6 +4,7 @@
 
 import numpy as np
 import cv2
+import copy as copy_mod
 from .base import RNGDataFlow
 from .common import MapDataComponent, MapData
 from .imgaug import AugmentorList
@@ -49,12 +50,15 @@ class AugmentImageComponent(MapDataComponent):
     """
     Apply image augmentors on 1 component.
     """
-    def __init__(self, ds, augmentors, index=0):
+    def __init__(self, ds, augmentors, index=0, copy=False):
         """
         Args:
             ds (DataFlow): input DataFlow.
             augmentors (AugmentorList): a list of :class:`imgaug.ImageAugmentor` to be applied in order.
             index (int): the index of the image component to be augmented.
+            copy (bool): make a copy of input images so the original data
+                won't be modified. Turn it on when it's dangerous to
+                modify the input (e.g. when inputs are persistent in memory).
         """
         if isinstance(augmentors, AugmentorList):
             self.augs = augmentors
@@ -65,6 +69,8 @@ class AugmentImageComponent(MapDataComponent):
 
         def func(x):
             try:
+                if copy:
+                    x = copy_mod.deepcopy(x)
                 ret = self.augs.augment(x)
             except KeyboardInterrupt:
                 raise
@@ -88,24 +94,28 @@ class AugmentImageComponents(MapData):
     Apply image augmentors on several components, with shared augmentation parameters.
     """
 
-    def __init__(self, ds, augmentors, index=(0, 1)):
+    def __init__(self, ds, augmentors, index=(0, 1), copy=False):
         """
         Args:
             ds (DataFlow): input DataFlow.
             augmentors (AugmentorList): a list of :class:`imgaug.ImageAugmentor` instance to be applied in order.
             index: tuple of indices of components.
+            copy (bool): make a copy of input images so the original data
+                won't be modified. Turn it on when it's dangerous to
+                modify the input (e.g. when inputs are persistent in memory).
         """
         self.augs = AugmentorList(augmentors)
         self.ds = ds
         self._nr_error = 0
 
         def func(dp):
+            copy_func = lambda x: x if copy else copy_mod.deepcopy  # noqa
             try:
-                im = dp[index[0]]
+                im = copy_func(dp[index[0]])
                 im, prms = self.augs._augment_return_params(im)
                 dp[index[0]] = im
                 for idx in index[1:]:
-                    dp[idx] = self.augs._augment(dp[idx], prms)
+                    dp[idx] = self.augs._augment(copy_func(dp[idx]), prms)
                 return dp
             except KeyboardInterrupt:
                 raise

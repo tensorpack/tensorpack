@@ -108,7 +108,8 @@ class CifarBase(RNGDataFlow):
         if self.shuffle:
             self.rng.shuffle(idxs)
         for k in idxs:
-            yield copy.copy(self.data[k])
+            # since cifar is quite small, just do it for safety
+            yield copy.deepcopy(self.data[k])
 
     def get_per_pixel_mean(self):
         """

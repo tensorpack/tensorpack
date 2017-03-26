@@ -4,6 +4,7 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import os
+import copy
 import glob
 import cv2
 import numpy as np
@@ -85,7 +86,7 @@ class BSDS500(RNGDataFlow):
         if self.shuffle:
             self.rng.shuffle(idxs)
         for k in idxs:
-            yield [self.data[k], self.label[k]]
+            yield [copy.copy(self.data[k]), self.label[k]]
 
 
 try:
