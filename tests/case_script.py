@@ -51,7 +51,7 @@ class PythonScript(threading.Thread):
         else:
             # something unexpected happend here, this script was supposed to survive at leat the timeout
             if len(self.err) is not 0:
-                stderr = "\n".join([" " * 10 + v for v in self.err.split("\n")])
+                stderr = "\n".join([" " * 10 + str(v) for v in self.err.split("\n")])
                 raise AssertionError(stderr)
 
 
