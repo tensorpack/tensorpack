@@ -73,3 +73,7 @@ class MergeAllSummaries(Callback):
     def _trigger(self):
         summary = self.summary_op.eval()
         self.trainer.monitors.put_summary(summary)
+
+    def _trigger_epoch(self):
+        if self._run_alone:
+            self._trigger()

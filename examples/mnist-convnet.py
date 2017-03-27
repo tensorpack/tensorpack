@@ -78,6 +78,7 @@ class Model(ModelDesc):
                           .FullyConnected('fc0', 512, nl=tf.nn.relu)
                           .Dropout('dropout', 0.5)
                           .FullyConnected('fc1', out_dim=10, nl=tf.identity)())
+
         prob = tf.nn.softmax(logits, name='prob')   # a Bx10 with probabilities
 
         # a vector of length B with loss of each sample
