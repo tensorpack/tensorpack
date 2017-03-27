@@ -109,13 +109,14 @@ class AugmentImageComponents(MapData):
         self._nr_error = 0
 
         def func(dp):
-            copy_func = lambda x: x if copy else copy_mod.deepcopy  # noqa
+            copy_func = copy_mod.deepcopy if copy else lambda x: x  # noqa
+            dp = copy_func(dp)
             try:
-                im = copy_func(dp[index[0]])
+                im = dp[index[0]]
                 im, prms = self.augs._augment_return_params(im)
                 dp[index[0]] = im
                 for idx in index[1:]:
-                    dp[idx] = self.augs._augment(copy_func(dp[idx]), prms)
+                    dp[idx] = self.augs._augment(dp[idx], prms)
                 return dp
             except KeyboardInterrupt:
                 raise
