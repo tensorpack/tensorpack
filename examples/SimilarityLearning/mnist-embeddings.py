@@ -6,10 +6,6 @@
 import numpy as np
 import os
 
-import matplotlib
-from matplotlib import offsetbox
-import matplotlib.pyplot as plt
-
 from tensorpack import *
 import tensorpack.tfutils.symbolic_functions as symbf
 from tensorpack.tfutils.summary import add_moving_summary
@@ -19,6 +15,15 @@ from tensorflow.python.platform import flags
 import tensorflow.contrib.slim as slim
 
 from embedding_data import get_test_data, MnistPairs, MnistTriplets
+
+MATPLOTLIB_AVAIBLABLE = False
+try:
+    import matplotlib
+    from matplotlib import offsetbox
+    import matplotlib.pyplot as plt
+    MATPLOTLIB_AVAIBLABLE = True
+except ImportError:
+    MATPLOTLIB_AVAIBLABLE = False
 
 
 FLAGS = flags.FLAGS
@@ -162,6 +167,9 @@ def get_config(model, algorithm_name):
 
 
 def visualize(model_path, model):
+    if not MATPLOTLIB_AVAIBLABLE:
+        logger.error("visualize requires matplotlib package ...")
+        return
     pred = OfflinePredictor(PredictConfig(
         session_init=get_model_loader(model_path),
         model=model(),
