@@ -71,8 +71,7 @@ def fake_ilsvrc12():
     mkdir('ilsvrc/train/n02134419')
 
     mkdir('ilsvrc/val')
-    mkdir('ilsvrc/val/n02134418')
-    mkdir('ilsvrc/val/n02134419')
+    mkdir('ilsvrc/test')
 
     # image is some random noise
     def fake_image(shape=(255, 225, 3)):
@@ -82,7 +81,8 @@ def fake_ilsvrc12():
         for i in range(2):
             fn = 'ilsvrc/train/n%s/n%s_%i.JPEG' % (subset, subset, i)
             cv2.imwrite(fn, fake_image())
-            cv2.imwrite('ilsvrc/val/n%s/n%s_%i.JPEG' % (subset, subset, i), fake_image())
+        cv2.imwrite('val/ILSVRC2012_val_%s.JPEG' % (subset), fake_image())
+        cv2.imwrite('test/ILSVRC2012_test_%s.JPEG' % (subset), fake_image())
 
     # download caffe_ilsvrc12.tar.gz if not cached yet
     tp_data_dir = os.path.join(os.environ['HOME'], 'tensorpack_data')
@@ -93,18 +93,20 @@ def fake_ilsvrc12():
         fpath = os.path.join(tp_data_dir, 'caffe_ilsvrc12.tar.gz')
     tarfile.open(fpath, 'r:gz').extractall('ilsvrc')
 
-    # the ILSVRC dataset class uses this file to get the image paths
+    # the ILSVRC dataset class uses these files to get the image paths
     with open('ilsvrc/train.txt', 'w') as f:
-        f.write('ILSVRC2012_train_00000000.JPEG 65\n')
-        f.write('ILSVRC2012_train_00000001.JPEG 65\n')
+        f.write('n02134418/n02134418_0.JPEG 0\n')
+        f.write('n02134418/n02134418_1.JPEG 0\n')
+        f.write('n02134419/n02134419_0.JPEG 0\n')
+        f.write('n02134419/n02134419_1.JPEG 0\n')
 
     with open('ilsvrc/val.txt', 'w') as f:
-        f.write('ILSVRC2012_val_00000000.JPEG 65\n')
-        f.write('ILSVRC2012_val_00000001.JPEG 65\n')
+        f.write('ILSVRC2012_val_02134418.JPEG 0\n')
+        f.write('ILSVRC2012_val_02134419.JPEG 0\n')
 
     with open('ilsvrc/test.txt', 'w') as f:
-        f.write('ILSVRC2012_test_00000000.JPEG 65\n')
-        f.write('ILSVRC2012_test_00000001.JPEG 65\n')
+        f.write('ILSVRC2012_test_02134418.JPEG 0\n')
+        f.write('ILSVRC2012_test_02134419.JPEG 0\n')
 
 
 class ResnetTest(TestPythonScript):
