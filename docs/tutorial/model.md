@@ -28,7 +28,7 @@ such as conv/deconv, fc, batch normalization, pooling layers, and some custom lo
 Using the tensorpack implementations, you can also benefit from `argscope` and `LinearWrap` to
 simplify the code.
 
-## argscope and LinearWrap
+### argscope and LinearWrap
 `argscope` gives you a context with default arguments.
 `LinearWrap` allows you to simplify "linear structure" models by
 adding the layers one by one.
@@ -58,4 +58,16 @@ l = Dropout('dropout', l, 0.5)
 l = tf.multiply(l, 0.5)
 l = func(l, *args, **kwargs)
 l = FullyConnected('fc1', l, 10, nl=tf.identity)
+```
+
+### Use Models outside Tensorpack
+
+You can use the tensorpack models alone as a simple symbolic function library, and write your own
+training code instead of using tensorpack trainers.
+
+To do this, just enter a [TowerContext](http://tensorpack.readthedocs.io/en/latest/modules/tfutils.html#tensorpack.tfutils.TowerContext)
+when you define your model:
+```python
+with TowerContext('', is_training=True):
+	# call any tensorpack symbolic functions
 ```

@@ -1,5 +1,5 @@
 
-# Callback
+# Callbacks
 
 Apart from the actual training iterations that minimizes the cost,
 you almost surely would like to do something else during training.
@@ -40,12 +40,12 @@ TrainConfig(
                'val-error-top1')
   ],
   extra_callbacks=[    # these callbacks are enabled by default already
-    # maintain and summarize moving average of some tensors (e.g. training loss, training error)
+    # maintain and summarize moving average of some tensors defined in the model (e.g. training loss, training error)
     MovingAverageSummary(),
     # draw a nice progress bar
     ProgressBar(),
-		# run `tf.summary.merge_all` and save results every epoch
-		MergeAllSummaries(),
+    # run `tf.summary.merge_all` and save results every epoch
+    MergeAllSummaries(),
   ]
 )
 ```

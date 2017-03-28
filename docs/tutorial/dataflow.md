@@ -38,11 +38,16 @@ without worrying about adding operators to TensorFlow.
 In the mean time, thanks to the prefetching, it can still run fast enough for
 tasks as large as ImageNet training.
 
+Unless you're working with standard data types (image folders, LMDB, etc),
+you would usually want to write your own DataFlow.
+See [another tutorial](http://tensorpack.readthedocs.io/en/latest/tutorial/extend/dataflow.html)
+for details.
+
 <!--
    - TODO mention RL, distributed data, and zmq operator in the future.
 	 -->
 
-### Reuse in other frameworks
+### Use DataFlow outside Tensorpack
 Another good thing about DataFlow is that it is independent of
 tensorpack internals. You can just use it as an efficient data processing pipeline,
 and plug it into other frameworks.
@@ -50,14 +55,10 @@ and plug it into other frameworks.
 To use a DataFlow independently, you'll need to call `reset_state()` first to initialize it,
 and then use the generator however you want:
 ```python
-df = get_some_df()
+df = SomeDataFlow()
+
 df.reset_state()
 generator = df.get_data()
 for dp in generator:
 	# dp is now a list. do whatever
 ```
-
-Unless you're working with standard data types (image folders, LMDB, etc),
-you would usually want to write your own DataFlow.
-See [another tutorial](http://tensorpack.readthedocs.io/en/latest/tutorial/extend/dataflow.html)
-for details.
