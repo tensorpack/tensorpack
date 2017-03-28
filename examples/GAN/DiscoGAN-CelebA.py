@@ -220,7 +220,7 @@ if __name__ == '__main__':
         dataflow=data,
         callbacks=[ModelSaver()],
         steps_per_epoch=300,
-        max_epoch=1000,
+        max_epoch=250,
         session_init=SaverRestore(args.load) if args.load else None
     )
 
