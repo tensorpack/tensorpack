@@ -123,15 +123,13 @@ class MinSaver(Callback):
             raise RuntimeError(
                 "Cannot find a checkpoint state. Do you forget to use ModelSaver?")
         path = ckpt.model_checkpoint_path
-########newname = os.path.join(logger.LOG_DIR,
-########                       self.filename or
-########                       ('max-' if self.reverse else 'min-' + self.monitor_stat + '.tfmodel'))
-        newname = os.path.join(logger.LOG_DIR, 
+
+        newname = os.path.join(logger.LOG_DIR,
                                self.filename or
                                ('max-' if self.reverse else 'min-' + self.monitor_stat))
-        FilesToCopy = glob.glob(path+'*')
-        for FileToCopy in FilesToCopy:
-            shutil.copy(FileToCopy, FileToCopy.replace(path, newname))
+        files_to_copy = glob.glob(path + '*')
+        for file_to_copy in files_to_copy:
+            shutil.copy(file_to_copy, file_to_copy.replace(path, newname))
         #shutil.copy(path, newname)
         logger.info("Model with {} '{}' saved.".format(
             'maximum' if self.reverse else 'minimum', self.monitor_stat))
