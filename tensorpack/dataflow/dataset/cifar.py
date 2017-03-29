@@ -9,7 +9,6 @@ import pickle
 import numpy as np
 import six
 from six.moves import range
-import copy
 
 from ...utils import logger
 from ...utils.fs import download, get_dataset_path
@@ -109,7 +108,7 @@ class CifarBase(RNGDataFlow):
             self.rng.shuffle(idxs)
         for k in idxs:
             # since cifar is quite small, just do it for safety
-            yield copy.deepcopy(self.data[k])
+            yield self.data[k]
 
     def get_per_pixel_mean(self):
         """

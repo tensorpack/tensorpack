@@ -147,7 +147,7 @@ def get_data(train_or_test):
             imgaug.MapImage(lambda x: x - pp_mean),
             imgaug.CenterCrop((224, 224)),
         ]
-    ds = AugmentImageComponent(ds, augmentors)
+    ds = AugmentImageComponent(ds, augmentors, copy=False)
     ds = BatchData(ds, BATCH_SIZE, remainder=not isTrain)
     if isTrain:
         ds = PrefetchDataZMQ(ds, 6)

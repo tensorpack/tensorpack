@@ -5,7 +5,6 @@
 
 import os
 import numpy as np
-import copy
 
 from ...utils import logger
 from ...utils.fs import get_dataset_path
@@ -58,7 +57,7 @@ class SVHNDigit(RNGDataFlow):
             self.rng.shuffle(idxs)
         for k in idxs:
             # since svhn is quite small, just do it for safety
-            yield [copy.copy(self.X[k]), self.Y[k]]
+            yield [self.X[k], self.Y[k]]
 
     @staticmethod
     def get_per_pixel_mean():

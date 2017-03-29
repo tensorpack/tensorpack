@@ -180,7 +180,7 @@ def get_data(train_or_test):
             imgaug.CenterCrop((224, 224)),
             imgaug.ToUint8()
         ]
-    ds = AugmentImageComponent(ds, augmentors)
+    ds = AugmentImageComponent(ds, augmentors, copy=False)
     if isTrain:
         ds = PrefetchDataZMQ(ds, min(20, multiprocessing.cpu_count()))
     ds = BatchData(ds, BATCH_SIZE, remainder=not isTrain)

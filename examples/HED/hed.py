@@ -132,7 +132,7 @@ def get_data(name):
         # the original image shape (321x481) in BSDS is not a multiple of 16
         IMAGE_SHAPE = (320, 480)
         shape_aug = [imgaug.CenterCrop(IMAGE_SHAPE)]
-    ds = AugmentImageComponents(ds, shape_aug, (0, 1))
+    ds = AugmentImageComponents(ds, shape_aug, (0, 1), copy=False)
 
     def f(m):   # thresholding
         m[m >= 0.50] = 1
@@ -145,7 +145,7 @@ def get_data(name):
             imgaug.Brightness(63, clip=False),
             imgaug.Contrast((0.4, 1.5)),
         ]
-        ds = AugmentImageComponent(ds, augmentors)
+        ds = AugmentImageComponent(ds, augmentors, copy=False)
         ds = BatchDataByShape(ds, 8, idx=0)
         ds = PrefetchDataZMQ(ds, 1)
     else:

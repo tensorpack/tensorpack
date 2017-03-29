@@ -23,8 +23,9 @@ function library. Tensopack trainers integrate these two components and add more
   details such as multi-GPU training. At the same time it keeps the power of customization to you
   through callbacks.
 
-* :doc:`callback` are like ``tf.train.SessionRunHook`` plugins, or extensions. During training,
+* Callbacks are like ``tf.train.SessionRunHook``, or plugins, or extensions. During training,
   everything you want to do other than the main iterations can be defined through callbacks.
+  See :doc:`callback` for some examples what you can do.
 
 User Tutorials
 ========================

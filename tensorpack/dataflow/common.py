@@ -4,6 +4,7 @@
 
 from __future__ import division
 import numpy as np
+from copy import copy
 from termcolor import colored
 from collections import deque, defaultdict
 from six.moves import range, map
@@ -209,6 +210,9 @@ class MapData(ProxyDataFlow):
             func (datapoint -> datapoint | None): takes a datapoint and returns a new
                 datapoint. Return None to discard this data point.
                 Note that if you use the filter feature, ``ds.size()`` will be incorrect.
+
+        Note:
+            Be careful if func modifies datapoints.
         """
         super(MapData, self).__init__(ds)
         self.func = func
@@ -230,11 +234,16 @@ class MapDataComponent(MapData):
                 return None to discard this datapoint.
                 Note that if you use the filter feature, ``ds.size()`` will be incorrect.
             index (int): index of the component.
+
+        Note:
+            This proxy itself doesn't modify the datapoints. But be careful because func
+            may modify the components.
         """
         def f(dp):
             r = func(dp[index])
             if r is None:
                 return None
+            dp = copy(dp)   # avoid modifying the list
             dp[index] = r
             return dp
         super(MapDataComponent, self).__init__(ds, f)
