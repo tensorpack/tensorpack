@@ -47,6 +47,12 @@ class TestDataSpeed(ProxyDataFlow):
                 if idx == self.test_size - 1:
                     break
 
+    def start(self):
+        """
+        Alias of start_test.
+        """
+        self.start_test()
+
 
 class BatchData(ProxyDataFlow):
     """
