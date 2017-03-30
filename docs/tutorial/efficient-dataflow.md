@@ -198,11 +198,31 @@ The above DataFlow can run at a speed of 5~10 batches per second, if you have go
 As a reference, tensorpack can train ResNet-18 (a shallow ResNet) at 4.5 batches (of 256 samples) per second on 4 old TitanX.
 So DataFlow won't be a serious bottleneck if configured properly.
 
-## Larger Datasets?
+## More Efficient DataFlow
 
-For larger datasets (and smaller networks) you could be seriously bounded by CPU or disk speed of a single machine.
+To work with larger datasets (or smaller networks, or more GPUS) you could be seriously bounded by CPU or disk speed of a single machine.
 Then it's best to run DataFlow distributely and collect them on the
-training machine. Currently there is only little support for this feature.
+training machine. E.g.:
+```python
+# Data Machine #1, process 1-20:
+df = MyLargeData()
+send_dataflow_zmq(df, 'tcp://1.2.3.4:8877')
+```
+```python
+# Data Machine #2, process 1-20:
+df = MyLargeData()
+send_dataflow_zmq(df, 'tcp://1.2.3.4:8877')
+```
+```python
+# Training Machine, process 1-10:
+df = MyLargeData()
+send_dataflow_zmq(df, 'ipc:///tmp/ipc-socket')
+```
+```python
+# Training Machine, training process
+df = RemoteDataZMQ('ipc:///tmp/ipc-socket', 'tcp://0.0.0.0:8877')
+TestDataSpeed(df).start_test()
+```
 
 
 [1]: #ref
