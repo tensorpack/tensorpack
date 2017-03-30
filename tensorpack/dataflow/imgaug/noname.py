@@ -39,8 +39,12 @@ class Flip(ImageAugmentor):
 
     def _augment(self, img, do):
         if do:
-            img = cv2.flip(img, self.code)
-        return img
+            ret = cv2.flip(img, self.code)
+            if img.ndim == 3 and ret.ndim == 2:
+                ret = ret[:, :, np.newaxis]
+        else:
+            ret = img
+        return ret
 
     def _fprop_coord(self, coord, param):
         raise NotImplementedError()

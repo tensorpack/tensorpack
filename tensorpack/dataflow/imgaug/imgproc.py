@@ -152,8 +152,10 @@ class Gamma(ImageAugmentor):
         old_dtype = img.dtype
         lut = ((np.arange(256, dtype='float32') / 255) ** (1. / (1. + gamma)) * 255).astype('uint8')
         img = np.clip(img, 0, 255).astype('uint8')
-        img = cv2.LUT(img, lut).astype(old_dtype)
-        return img
+        ret = cv2.LUT(img, lut).astype(old_dtype)
+        if img.ndim == 3 and ret.ndim == 2:
+            ret = ret[:, :, np.newaxis]
+        return ret
 
 
 class Clip(ImageAugmentor):

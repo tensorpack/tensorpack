@@ -37,6 +37,8 @@ class Shift(ImageAugmentor):
     def _augment(self, img, shift_m):
         ret = cv2.warpAffine(img, shift_m, img.shape[1::-1],
                              borderMode=self.border)
+        if img.ndim == 3 and ret.ndim == 2:
+            ret = ret[:, :, np.newaxis]
         return ret
 
 
@@ -71,6 +73,8 @@ class Rotation(ImageAugmentor):
     def _augment(self, img, rot_m):
         ret = cv2.warpAffine(img, rot_m, img.shape[1::-1],
                              flags=self.interp, borderMode=self.border)
+        if img.ndim == 3 and ret.ndim == 2:
+            ret = ret[:, :, np.newaxis]
         return ret
 
 
@@ -99,6 +103,8 @@ class RotationAndCropValid(ImageAugmentor):
         rot_m = cv2.getRotationMatrix2D((center[0] - 0.5, center[1] - 0.5), deg, 1)
         ret = cv2.warpAffine(img, rot_m, img.shape[1::-1],
                              flags=self.interp, borderMode=cv2.BORDER_CONSTANT)
+        if img.ndim == 3 and ret.ndim == 2:
+            ret = ret[:, :, np.newaxis]
         neww, newh = RotationAndCropValid.largest_rotated_rect(ret.shape[1], ret.shape[0], deg)
         neww = min(neww, ret.shape[1])
         newh = min(newh, ret.shape[0])
