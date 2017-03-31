@@ -2,6 +2,7 @@ from case_script import TestPythonScript
 import os
 import shutil
 
+
 class ResnetTest(TestPythonScript):
 
     @property
