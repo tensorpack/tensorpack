@@ -23,6 +23,10 @@ DEPTH = None
 
 
 class Model(ModelDesc):
+
+    def __init__(self, data_format='NCHW'):
+        self.data_format = data_format
+
     def _get_inputs(self):
         return [InputDesc(tf.uint8, [None, INPUT_SHAPE, INPUT_SHAPE, 3], 'input'),
                 InputDesc(tf.int32, [None], 'label')]
@@ -36,7 +40,8 @@ class Model(ModelDesc):
         image_mean = tf.constant([0.485, 0.456, 0.406], dtype=tf.float32)
         image_std = tf.constant([0.229, 0.224, 0.225], dtype=tf.float32)
         image = (image - image_mean) / image_std
-        image = tf.transpose(image, [0, 3, 1, 2])
+        if self.data_format == 'NCHW':
+            image = tf.transpose(image, [0, 3, 1, 2])
 
         def shortcut(l, n_in, n_out, stride):
             if n_in != n_out:
@@ -93,7 +98,7 @@ class Model(ModelDesc):
 
         with argscope(Conv2D, nl=tf.identity, use_bias=False,
                       W_init=variance_scaling_initializer(mode='FAN_OUT')), \
-                argscope([Conv2D, MaxPooling, GlobalAvgPooling, BatchNorm], data_format='NCHW'):
+                argscope([Conv2D, MaxPooling, GlobalAvgPooling, BatchNorm], data_format=self.data_format):
             logits = (LinearWrap(image)
                       .Conv2D('conv0', 64, 7, stride=2, nl=BNReLU)
                       .MaxPooling('pool0', shape=3, stride=2, padding='SAME')
@@ -125,7 +130,7 @@ class Model(ModelDesc):
 
 def get_data(train_or_test, fake=False):
     if fake:
-        return FakeData([[64, 224,224,3],[64]], 1000, random=False, dtype='uint8')
+        return FakeData([[64, 224, 224, 3], [64]], 1000, random=False, dtype='uint8')
     isTrain = train_or_test == 'train'
 
     datadir = args.data
@@ -188,7 +193,7 @@ def get_data(train_or_test, fake=False):
     return ds
 
 
-def get_config(fake=False):
+def get_config(fake=False, data_format='NCHW'):
     dataset_train = get_data('train', fake=fake)
     dataset_val = get_data('val', fake=fake)
 
@@ -203,7 +208,7 @@ def get_config(fake=False):
                                       [(30, 1e-2), (60, 1e-3), (85, 1e-4), (95, 1e-5)]),
             HumanHyperParamSetter('learning_rate'),
         ],
-        model=Model(),
+        model=Model(data_format=data_format),
         steps_per_epoch=5000,
         max_epoch=110,
     )
@@ -234,6 +239,8 @@ if __name__ == '__main__':
     parser.add_argument('--load', help='load model')
     parser.add_argument('--fake', help='use fakedata to test or benchmark this model',
                         type=bool, default=False)
+    parser.add_argument('--data_format', help='specify NCHW or NHWC',
+                        type=str, default='NCHW')
     parser.add_argument('-d', '--depth', help='resnet depth',
                         type=int, default=18, choices=[18, 34, 50, 101])
     parser.add_argument('--eval', action='store_true')
@@ -252,7 +259,7 @@ if __name__ == '__main__':
     BATCH_SIZE = TOTAL_BATCH_SIZE // NR_GPU
 
     logger.auto_set_dir()
-    config = get_config(args.fake)
+    config = get_config(fake=args.fake, data_format=args.data_format)
     if args.load:
         config.session_init = SaverRestore(args.load)
     config.nr_tower = NR_GPU

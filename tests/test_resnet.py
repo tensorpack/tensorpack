@@ -120,7 +120,8 @@ class ResnetTest(TestPythonScript):
         fake_ilsvrc12()
 
     def test(self):
-        self.assertSurvive(self.script, args=['--data ilsvrc_metadata', '--gpu 0', '--fake True'], timeout=10)
+        self.assertSurvive(self.script, args=['--data ilsvrc_metadata',
+                                              '--gpu 0', '--fake True', '--data_format NHWC'], timeout=10)
 
     def tearDown(self):
         super(ResnetTest, self).tearDown()
