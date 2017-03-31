@@ -1,7 +1,7 @@
 from case_script import TestPythonScript
 import os
-import numpy as np
-import cv2
+# import numpy as np
+# import cv2
 import shutil
 import tarfile
 import errno
