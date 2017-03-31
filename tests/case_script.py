@@ -2,6 +2,7 @@ from abc import abstractproperty
 import unittest
 import subprocess
 import shlex
+import sys
 import threading
 import os
 import shutil
@@ -69,7 +70,7 @@ class TestPythonScript(unittest.TestCase):
             shutil.rmtree(os.path.join("train_log", script))
 
     def assertSurvive(self, script, args=None, timeout=10):  # noqa
-        cmd = "python " + script
+        cmd = "python{} {}".format(sys.version_info.major, script)
         if args:
             cmd += " " + " ".join(args)
         PythonScript(cmd, timeout=timeout).execute()
