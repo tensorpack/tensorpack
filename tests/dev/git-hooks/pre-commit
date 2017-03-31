@@ -1,0 +1,3 @@
+#!/bin/sh
+flake8 .
+cd examples && flake8 .
