@@ -66,23 +66,23 @@ def fake_ilsvrc12():
 
     # create directories
     mkdir('ilsvrc_metadata')
-    mkdir('ilsvrc_metadata/train')
-    mkdir('ilsvrc_metadata/train/n02134418')
-    mkdir('ilsvrc_metadata/train/n02134419')
+    # mkdir('ilsvrc_metadata/train')
+    # mkdir('ilsvrc_metadata/train/n02134418')
+    # mkdir('ilsvrc_metadata/train/n02134419')
 
-    mkdir('ilsvrc_metadata/val')
-    mkdir('ilsvrc_metadata/test')
+    # mkdir('ilsvrc_metadata/val')
+    # mkdir('ilsvrc_metadata/test')
 
-    # image is some random noise
-    def fake_image(shape=(255, 225, 3)):
-        return np.random.randint(0, 255, shape)
+    # # image is some random noise
+    # def fake_image(shape=(255, 225, 3)):
+    #     return np.random.randint(0, 255, shape)
 
-    for subset in ['02134418', '02134419']:
-        for i in range(2):
-            fn = 'ilsvrc_metadata/train/n%s/n%s_%i.JPEG' % (subset, subset, i)
-            cv2.imwrite(fn, fake_image())
-        cv2.imwrite('ilsvrc_metadata/val/ILSVRC2012_val_%s.JPEG' % (subset), fake_image())
-        cv2.imwrite('ilsvrc_metadata/test/ILSVRC2012_test_%s.JPEG' % (subset), fake_image())
+    # for subset in ['02134418', '02134419']:
+    #     for i in range(2):
+    #         fn = 'ilsvrc_metadata/train/n%s/n%s_%i.JPEG' % (subset, subset, i)
+    #         cv2.imwrite(fn, fake_image())
+    #     cv2.imwrite('ilsvrc_metadata/val/ILSVRC2012_val_%s.JPEG' % (subset), fake_image())
+    #     cv2.imwrite('ilsvrc_metadata/test/ILSVRC2012_test_%s.JPEG' % (subset), fake_image())
 
     # download caffe_ilsvrc12.tar.gz if not cached yet
     tp_data_dir = os.path.join(os.environ['HOME'], 'tensorpack_data')
@@ -93,20 +93,20 @@ def fake_ilsvrc12():
         fpath = os.path.join(tp_data_dir, 'caffe_ilsvrc12.tar.gz')
     tarfile.open(fpath, 'r:gz').extractall('ilsvrc_metadata')
 
-    # the ILSVRC dataset class uses these files to get the image paths
-    with open('ilsvrc_metadata/train.txt', 'w') as f:
-        f.write('n02134418/n02134418_0.JPEG 0\n')
-        f.write('n02134418/n02134418_1.JPEG 0\n')
-        f.write('n02134419/n02134419_0.JPEG 0\n')
-        f.write('n02134419/n02134419_1.JPEG 0\n')
+    # # the ILSVRC dataset class uses these files to get the image paths
+    # with open('ilsvrc_metadata/train.txt', 'w') as f:
+    #     f.write('n02134418/n02134418_0.JPEG 0\n')
+    #     f.write('n02134418/n02134418_1.JPEG 0\n')
+    #     f.write('n02134419/n02134419_0.JPEG 0\n')
+    #     f.write('n02134419/n02134419_1.JPEG 0\n')
 
-    with open('ilsvrc_metadata/val.txt', 'w') as f:
-        f.write('ILSVRC2012_val_02134418.JPEG 0\n')
-        f.write('ILSVRC2012_val_02134419.JPEG 0\n')
+    # with open('ilsvrc_metadata/val.txt', 'w') as f:
+    #     f.write('ILSVRC2012_val_02134418.JPEG 0\n')
+    #     f.write('ILSVRC2012_val_02134419.JPEG 0\n')
 
-    with open('ilsvrc_metadata/test.txt', 'w') as f:
-        f.write('ILSVRC2012_test_02134418.JPEG 0\n')
-        f.write('ILSVRC2012_test_02134419.JPEG 0\n')
+    # with open('ilsvrc_metadata/test.txt', 'w') as f:
+    #     f.write('ILSVRC2012_test_02134418.JPEG 0\n')
+    #     f.write('ILSVRC2012_test_02134419.JPEG 0\n')
 
 
 class ResnetTest(TestPythonScript):
@@ -120,7 +120,7 @@ class ResnetTest(TestPythonScript):
         fake_ilsvrc12()
 
     def test(self):
-        self.assertSurvive(self.script, args=['--data ilsvrc_metadata', '--gpu 0'], timeout=10)
+        self.assertSurvive(self.script, args=['--data ilsvrc_metadata', '--gpu 0', '--fake True'], timeout=10)
 
     def tearDown(self):
         super(ResnetTest, self).tearDown()

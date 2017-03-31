@@ -123,8 +123,9 @@ class Model(ModelDesc):
         return tf.train.MomentumOptimizer(lr, 0.9, use_nesterov=True)
 
 
-def get_data(train_or_test):
-    # return FakeData([[64, 224,224,3],[64]], 1000, random=False, dtype='uint8')
+def get_data(train_or_test, fake=False):
+    if fake:
+        return FakeData([[64, 224,224,3],[64]], 1000, random=False, dtype='uint8')
     isTrain = train_or_test == 'train'
 
     datadir = args.data
@@ -187,9 +188,9 @@ def get_data(train_or_test):
     return ds
 
 
-def get_config():
-    dataset_train = get_data('train')
-    dataset_val = get_data('val')
+def get_config(fake=False):
+    dataset_train = get_data('train', fake=fake)
+    dataset_val = get_data('val', fake=fake)
 
     return TrainConfig(
         dataflow=dataset_train,
@@ -231,6 +232,8 @@ if __name__ == '__main__':
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
     parser.add_argument('--data', help='ILSVRC dataset dir')
     parser.add_argument('--load', help='load model')
+    parser.add_argument('--fake', help='use fakedata to test or benchmark this model',
+                        type=bool, default=False)
     parser.add_argument('-d', '--depth', help='resnet depth',
                         type=int, default=18, choices=[18, 34, 50, 101])
     parser.add_argument('--eval', action='store_true')
@@ -249,7 +252,7 @@ if __name__ == '__main__':
     BATCH_SIZE = TOTAL_BATCH_SIZE // NR_GPU
 
     logger.auto_set_dir()
-    config = get_config()
+    config = get_config(args.fake)
     if args.load:
         config.session_init = SaverRestore(args.load)
     config.nr_tower = NR_GPU
