@@ -1,22 +1,11 @@
-#!/usr/bin/env python
-# -*- coding: UTF-8 -*-
-# File: test_examples.py
-# Author: Patrick Wieschollek <mail@patwie.com>
-
-import sys
+from abc import abstractproperty
+import unittest
 import subprocess
 import shlex
+import sys
 import threading
-from termcolor import colored, cprint
-
-
-COMMANDS_TO_TEST = ["python examples/mnist-convnet.py"]
-
-
-class SurviveException(Exception):
-    """Exception when process is already terminated
-    """
-    pass
+import os
+import shutil
 
 
 class PythonScript(threading.Thread):
@@ -63,35 +52,31 @@ class PythonScript(threading.Thread):
         else:
             # something unexpected happend here, this script was supposed to survive at leat the timeout
             if len(self.err) is not 0:
-                stderr = "\n".join([" " * 10 + v for v in self.err.split("\n")])
-                raise SurviveException(stderr)
+                stderr = "\n".join([" " * 10 + v for v in self.err.decode("utf-8").split("\n")])
+                raise AssertionError(stderr)
 
 
-examples_total = len(COMMANDS_TO_TEST)
-examples_passed = 0
-examples_failed = []
-max_name_length = max([len(v) for v in COMMANDS_TO_TEST]) + 10
+class TestPythonScript(unittest.TestCase):
 
-cprint("Test %i python scripts with timeout" % (examples_total), 'yellow', attrs=['bold'])
+    @abstractproperty
+    def script(self):
+        pass
 
-for example_name in COMMANDS_TO_TEST:
-    string = "test: %s %s" % (example_name, " " * (max_name_length - len(example_name)))
-    sys.stdout.write(colored(string, 'yellow', attrs=['bold']))
-    try:
-        PythonScript(example_name).execute()
-        cprint("... works", 'green', attrs=['bold'])
-        examples_passed += 1
-    except Exception as stderr_message:
-        cprint("... examples_failed", 'red', attrs=['bold'])
-        print(stderr_message)
-        examples_failed.append(example_name)
+    @staticmethod
+    def clear_trainlog(script):
+        script = os.path.basename(script)
+        script = script[:-3]
+        if os.path.isdir(os.path.join("train_log", script)):
+            shutil.rmtree(os.path.join("train_log", script))
 
-print("\n\n")
-cprint("Summary:    TEST examples_passed %i / %i" % (examples_passed, examples_total), 'yellow', attrs=['bold'])
-if examples_total != examples_passed:
-    print("The following script examples_failed:")
-    for failed_script in examples_failed:
-        print("  - %s" % failed_script)
-    sys.exit(1)
-else:
-    sys.exit(0)
+    def assertSurvive(self, script, args=None, timeout=10):  # noqa
+        cmd = "python{} {}".format(sys.version_info.major, script)
+        if args:
+            cmd += " " + " ".join(args)
+        PythonScript(cmd, timeout=timeout).execute()
+
+    def setUp(self):
+        TestPythonScript.clear_trainlog(self.script)
+
+    def tearDown(self):
+        TestPythonScript.clear_trainlog(self.script)
