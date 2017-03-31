@@ -12,7 +12,7 @@ class CharRNNTest(TestPythonScript):
 
     @property
     def script(self):
-        return '../examples/GAN/InfoGAN-mnist.py'
+        return '../examples/Char-RNN/char-rnn.py'
 
     def setUp(self):
         super(CharRNNTest, self).setUp()
@@ -20,7 +20,7 @@ class CharRNNTest(TestPythonScript):
             f.write(random_content())
 
     def test(self):
-        self.assertSurvive(self.script, args=None, timeout=10)
+        self.assertSurvive(self.script, args=['--gpu 0', 'train'], timeout=10)
 
     def tearDown(self):
         super(CharRNNTest, self).tearDown()

@@ -5,7 +5,7 @@ class InfoGANTest(TestPythonScript):
 
     @property
     def script(self):
-        return '../examples/mnist-convnet.py'
+        return '../examples/GAN/InfoGAN-mnist.py'
 
     def test(self):
         self.assertSurvive(self.script, args=None, timeout=10)
