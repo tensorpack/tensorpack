@@ -74,7 +74,7 @@ class Model(ModelDesc):
         input, nextinput = inputs
 
         cell = rnn.MultiRNNCell([rnn.BasicLSTMCell(num_units=param.rnn_size)
-            for _ in range(param.num_rnn_layer)])
+                                for _ in range(param.num_rnn_layer)])
 
         def get_v(n):
             ret = tf.get_variable(n + '_unused', [param.batch_size, param.rnn_size],
