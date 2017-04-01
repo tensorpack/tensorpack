@@ -12,11 +12,11 @@ from ..utils.timer import timed_operation
 from ..utils.loadcaffe import get_caffe_pb
 from ..utils.serialize import loads
 from ..utils.argtools import log_once
-from .base import RNGDataFlow
+from .base import RNGDataFlow, DataFlow
 from .common import MapData
 
 __all__ = ['HDF5Data', 'LMDBData', 'LMDBDataDecoder', 'LMDBDataPoint',
-           'CaffeLMDB', 'SVMLightData']
+           'CaffeLMDB', 'SVMLightData', 'TFRecordData']
 
 """
 Adapters for different data format.
@@ -228,6 +228,25 @@ class SVMLightData(RNGDataFlow):
             yield [self.X[id, :], self.y[id]]
 
 
+class TFRecordData(DataFlow):
+    """
+    Produce datapoints from a TFRecord file, assuming each record is
+    serialized by :func:`serialize.dumps`.
+    This class works with :func:`dftools.dump_dataflow_to_tfrecord`.
+    """
+    def __init__(self, path, size=None):
+        self._gen = tf.python_io.tf_record_iterator(path)
+        self._size = size
+
+    def size(self):
+        if self._size:
+            return self._size
+        return super(TFRecordData, self).size()
+
+    def get_data(self):
+        for dp in self._gen:
+            yield loads(dp)
+
 from ..utils.develop import create_dummy_class   # noqa
 try:
     import h5py
@@ -244,3 +263,8 @@ try:
     import sklearn.datasets
 except ImportError:
     SVMLightData = create_dummy_class('SVMLightData', 'sklearn')   # noqa
+
+try:
+    import tensorflow as tf
+except ImportError:
+    TFRecordData = create_dummy_class('TFRecordData', 'tensorflow')   # noqa

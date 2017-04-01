@@ -129,13 +129,6 @@ def dump_dataflow_to_lmdb(df, lmdb_path, write_frequency=5000):
     db.close()
 
 
-from ..utils.develop import create_dummy_func  # noqa
-try:
-    import lmdb
-except ImportError:
-    dump_dataflow_to_lmdb = create_dummy_func('dump_dataflow_to_lmdb', 'lmdb') # noqa
-
-
 def dump_dataflow_to_tfrecord(df, path):
     """
     Dump all datapoints of a Dataflow to a TensorFlow TFRecord file,
@@ -150,6 +143,12 @@ def dump_dataflow_to_tfrecord(df, path):
         for dp in df.get_data():
             writer.write(dumps(dp))
 
+
+from ..utils.develop import create_dummy_func  # noqa
+try:
+    import lmdb
+except ImportError:
+    dump_dataflow_to_lmdb = create_dummy_func('dump_dataflow_to_lmdb', 'lmdb') # noqa
 
 try:
     import tensorflow as tf

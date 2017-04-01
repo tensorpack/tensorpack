@@ -81,3 +81,22 @@ class DataFromList(RNGDataFlow):
             self.rng.shuffle(idxs)
             for k in idxs:
                 yield self.lst[k]
+
+
+class DataFromGenerator(DataFlow):
+    """
+    Wrap a generator to a DataFlow
+    """
+    def __init__(self, gen, size=None):
+        self._gen = gen
+        self._size = size
+
+    def size(self):
+        if self._size:
+            return self._size
+        return super(DataFromGenerator, self).size()
+
+    def get_data(self):
+        # yield from
+        for dp in self._gen:
+            yield dp
