@@ -11,7 +11,8 @@ We use ILSVRC12 training set, which contains 1.28 million images.
 The original images (JPEG compressed) are 140G in total.
 The average resolution is about 400x350 <sup>[[1]]</sup>.
 Following the [ResNet example](../examples/ResNet), we need images in their original resolution,
-so we'll read the original dataset instead of a down-sampled version.
+so we'll read the original dataset instead of a down-sampled version, and
+apply complicated preprocessing to it.
 We'll need to reach a speed of, roughly 1000 images per second, to keep GPUs busy.
 
 Note that the actual performance would depend on not only the disk, but also
@@ -163,6 +164,7 @@ Then we add necessary transformations:
     ds = AugmentImageComponent(ds, lots_of_augmentors)
     ds = BatchData(ds, 256)
 ```
+
 1. `LMDBDataPoint` deserialize the datapoints (from string to [jpeg_string, label])
 2. Use OpenCV to decode the first component into ndarray
 3. Apply augmentations to the ndarray
@@ -188,6 +190,7 @@ launch the underlying DataFlow in one independent process, and only parallelize 
 (`PrefetchDataZMQ` is faster but not fork-safe, so the first prefetch has to be `PrefetchData`. This is [issue#138](https://github.com/ppwwyyxx/tensorpack/issues/138))
 
 Let me summarize what the above DataFlow does:
+
 1. One process reads LMDB file, shuffle them in a buffer and put them into a `multiprocessing.Queue` (used by `PrefetchData`).
 2. 25 processes take items from the queue, decode and process them into [image, label] pairs, and
 	 send them through ZMQ IPC pipes.

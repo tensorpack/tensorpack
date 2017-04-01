@@ -152,15 +152,13 @@ todo_include_todos = True
 # a list of builtin themes.
 import sphinx_rtd_theme
 html_theme = "sphinx_rtd_theme"
+# Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-#html_theme_options = {}
-
-# Add any paths that contain custom themes here, relative to this directory.
-#html_theme_path = []
+html_theme_options = {}
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
@@ -228,6 +226,8 @@ html_show_copyright = True
 
 # This is the file name suffix for HTML files (e.g. ".xhtml").
 #html_file_suffix = None
+
+html_compact_lists = False
 
 # Language to be used for generating the HTML full-text search index.
 # Sphinx supports the following languages:
