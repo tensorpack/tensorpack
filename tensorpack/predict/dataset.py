@@ -10,7 +10,7 @@ import os
 import six
 
 from ..dataflow import DataFlow
-from ..dataflow.dftools import dataflow_to_process_queue
+from ..dataflow.dftools import dump_dataflow_to_process_queue
 from ..utils.concurrency import ensure_proc_terminate, OrderedResultGatherProc, DIE
 from ..utils import logger, get_tqdm
 from ..utils.gpu import change_gpu
@@ -105,7 +105,7 @@ class MultiProcessDatasetPredictor(DatasetPredictorBase):
         self.nr_proc = nr_proc
         self.ordered = ordered
 
-        self.inqueue, self.inqueue_proc = dataflow_to_process_queue(
+        self.inqueue, self.inqueue_proc = dump_dataflow_to_process_queue(
             self.dataset, nr_proc * 2, self.nr_proc)    # put (idx, dp) to inqueue
 
         if use_gpu:
