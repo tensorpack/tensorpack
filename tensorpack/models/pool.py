@@ -193,8 +193,7 @@ def BilinearUpSample(x, shape):
 
 
 class TestPool(TestModel):
-
-    def test_fixed_unpooling(self):
+    def test_FixedUnPooling(self):
         h, w = 3, 4
         mat = np.random.rand(h, w, 3).astype('float32')
         inp = self.make_variable(mat)
@@ -210,7 +209,7 @@ class TestPool(TestModel):
         res[0, ::2, ::2, :] = 0
         self.assertTrue((res == 0).all())
 
-    def test_upsample(self):
+    def test_BilinearUpSample(self):
         h, w = 5, 5
         scale = 2
 
@@ -222,14 +221,16 @@ class TestPool(TestModel):
         res = self.run_variable(output)[0, :, :, 0]
 
         from skimage.transform import rescale
-        res2 = rescale(mat, scale)
+        res2 = rescale(mat, scale, mode='constant')
 
         diff = np.abs(res2 - res)
 
-        # not equivalent to rescale on edge?
+        # TODO not equivalent to rescale on edge?
         diff[0, :] = 0
+        diff[-1, :] = 0
         diff[:, 0] = 0
-        if not diff.max() < 1e-4:
-            import IPython
-            IPython.embed(config=IPython.terminal.ipapp.load_default_config())
-        self.assertTrue(diff.max() < 1e-4)
+        diff[:, -1] = 0
+        # if not diff.max() < 1e-4:
+        #     import IPython
+        #     IPython.embed(config=IPython.terminal.ipapp.load_default_config())
+        self.assertTrue(diff.max() < 1e-4, diff.max())

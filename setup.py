@@ -43,7 +43,7 @@ setup(
     description='Neural Network Toolbox on TensorFlow',
     long_description=long_description,
     install_requires=req,
-    tests_require=['flake8'],
+    tests_require=['flake8', 'scikit-image'],
     extras_require={
         'all': extra_req
     },

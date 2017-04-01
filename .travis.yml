@@ -35,7 +35,7 @@ matrix:
 
 install:
 - pip install -U pip    # the pip version on travis is too old
-- pip install flake8 opencv-python pypandoc
+- pip install flake8 scikit-image opencv-python pypandoc
   # here we use opencv-python, but users are in general not recommended to use this package,
   # because it brings issues working with tensorflow on gpu
 - ./tests/install-tensorflow.sh
@@ -51,7 +51,7 @@ script:
 - cd examples && flake8 .
 - mkdir -p $HOME/tensorpack_data
 - export TENSORPACK_DATASET=$HOME/tensorpack_data
-- cd $TRAVIS_BUILD_DIR/tests && python -m unittest discover -v
+- $TRAVIS_BUILD_DIR/tests/run-tests.sh
 
 notifications:
 - email:

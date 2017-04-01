@@ -107,7 +107,7 @@ def ImageSample(inputs, borderMode='repeat'):
 
 class TestSample(TestModel):
 
-    def test_sample(self):
+    def test_ImageSample(self):
         import numpy as np
         h, w = 3, 4
 
