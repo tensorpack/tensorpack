@@ -56,9 +56,9 @@ script:
 notifications:
 - email:
     recipients:
-    - ppwwyyxxc@gmail.com
+      - ppwwyyxxc@gmail.com
     on_success: never
-    on_failure: change
+    on_failure: always
 - webhooks:
     urls:
       - https://webhooks.gitter.im/e/cede9dbbf6630b3704b3

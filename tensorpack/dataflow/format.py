@@ -79,8 +79,9 @@ class LMDBData(RNGDataFlow):
         self._shuffle = shuffle
 
         self.open_lmdb()
-        logger.info("Found {} entries in {}".format(self._size, self._lmdb_path))
+        self._size = self._txn.stat()['entries']
         self._set_keys(keys)
+        logger.info("Found {} entries in {}".format(self._size, self._lmdb_path))
 
     def _set_keys(self, keys=None):
         def find_keys(txn, size):
@@ -94,12 +95,16 @@ class LMDBData(RNGDataFlow):
                     pbar.update()
             return keys
 
+        try:
+            self.keys = loads(self._txn.get('__keys__'))
+        except:
+            self.keys = None
+        else:
+            self._size -= 1     # delete this item
+
         if self._shuffle:
             if keys is None:
-                # get the list of keys either from __keys__ or by iterating
-                try:
-                    self.keys = loads(self._txn.get('__keys__'))
-                except Exception:
+                if self.keys is None:
                     self.keys = find_keys(self._txn, self._size)
             else:
                 # check if key-format like '{:0>8d}' was given
@@ -114,7 +119,6 @@ class LMDBData(RNGDataFlow):
                                readonly=True, lock=False, readahead=True,
                                map_size=1099511627776 * 2, max_readers=100)
         self._txn = self._lmdb.begin()
-        self._size = self._txn.stat()['entries']
 
     def reset_state(self):
         self._lmdb.close()
