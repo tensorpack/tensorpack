@@ -56,7 +56,7 @@ class Model(ModelDesc):
                                 W_init=tf.truncated_normal_initializer(stddev=0.01))
         logits = tf.reshape(logits, (BATCH, -1, NR_CLASS))
 
-        loss = tf.nn.ctc_loss(logits, label, seqlen, time_major=False)
+        loss = tf.nn.ctc_loss(label, logits, seqlen, time_major=False)
 
         self.cost = tf.reduce_mean(loss, name='cost')
 
