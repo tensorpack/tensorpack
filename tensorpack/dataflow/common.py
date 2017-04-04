@@ -406,7 +406,8 @@ class JoinData(DataFlow):
         """
         Args:
             df_lists (list): a list of DataFlow.
-                All must have the same ``size()``, or don't have size.
+                When these dataflows have different sizes, JoinData will stop when any
+                of them is exhausted.
         """
         self.df_lists = df_lists
 
@@ -423,7 +424,7 @@ class JoinData(DataFlow):
             d.reset_state()
 
     def size(self):
-        return self.df_lists[0].size()
+        return min([k.size() for k in self.df_lists])
 
     def get_data(self):
         itrs = [k.get_data() for k in self.df_lists]
@@ -433,7 +434,7 @@ class JoinData(DataFlow):
                 for itr in itrs:
                     dp.extend(next(itr))
                 yield dp
-        except StopIteration:
+        except StopIteration:   # some of them are exhausted
             pass
         finally:
             for itr in itrs:
