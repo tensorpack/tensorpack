@@ -5,7 +5,14 @@
 
 import msgpack
 import msgpack_numpy
+
+import struct
+import numpy as np
+from tensorflow.core.framework.tensor_pb2 import TensorProto
+import tensorflow.core.framework.types_pb2 as DataType
+
 msgpack_numpy.patch()
+
 
 __all__ = ['loads', 'dumps']
 
@@ -26,3 +33,55 @@ def loads(buf):
         buf (str): serialized object.
     """
     return msgpack.loads(buf)
+
+
+_DTYPE_DICT = {
+    np.float32: DataType.DT_FLOAT,
+    np.float64: DataType.DT_DOUBLE,
+    np.int32: DataType.DT_INT32,
+    np.int8: DataType.DT_INT8,
+    np.uint8: DataType.DT_UINT8,
+}
+_DTYPE_DICT = {np.dtype(k): v for k, v in _DTYPE_DICT.items()}
+
+
+# TODO support string tensor
+def to_tensor_proto(arr):
+    """
+    Convert a numpy array to TensorProto
+
+    Args:
+        arr: numpy.ndarray. only supports common numerical types
+    """
+    dtype = _DTYPE_DICT[arr.dtype]
+
+    ret = TensorProto()
+    shape = ret.tensor_shape
+    for s in arr.shape:
+        d = shape.dim.add()
+        d.size = s
+
+    ret.dtype = dtype
+
+    buf = arr.tobytes()
+    ret.tensor_content = buf
+    return ret
+
+
+def dump_tensor_protos(protos):
+    """
+    Serialize a list of :class:`TensorProto`, for communication between custom TensorFlow ops.
+
+    Args:
+        protos (list): list of :class:`TensorProto` instance
+
+    Notes:
+        The format is: <#protos(int32)>|<size 1>|<serialized proto 1>|<size 2><serialized proto 2>| ...
+    """
+
+    s = struct.pack('=i', len(protos))
+    for p in protos:
+        buf = p.SerializeToString()
+        s += struct.pack('=i', len(buf))   # won't send stuff over 2G
+        s += buf
+    return s

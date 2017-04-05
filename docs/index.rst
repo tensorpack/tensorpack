@@ -6,7 +6,7 @@ All tutorials are drafts for now. You can get an idea from them but the details
 might not be correct.
 
 .. toctree::
-  :maxdepth: 2
+  :maxdepth: 3
 
   tutorial/index
   casestudies/index
