@@ -114,7 +114,7 @@ def get_tqdm_kwargs(**kwargs):
     if f.isatty():
         default['mininterval'] = 0.5
     else:
-        default['mininterval'] = 60
+        default['mininterval'] = 300
     default.update(kwargs)
     return default
 

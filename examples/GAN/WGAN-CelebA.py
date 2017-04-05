@@ -34,7 +34,7 @@ class Model(DCGAN.Model):
     def build_losses(self, vecpos, vecneg):
         # the Wasserstein-GAN losses
         self.d_loss = tf.reduce_mean(vecneg - vecpos, name='d_loss')
-        self.g_loss = -tf.reduce_mean(vecneg, name='g_loss')
+        self.g_loss = tf.negative(tf.reduce_mean(vecneg), name='g_loss')
         add_moving_summary(self.d_loss, self.g_loss)
 
     def _get_optimizer(self):
