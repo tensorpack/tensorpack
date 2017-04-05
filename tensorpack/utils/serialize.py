@@ -9,7 +9,8 @@ import msgpack_numpy
 import struct
 import numpy as np
 from tensorflow.core.framework.tensor_pb2 import TensorProto
-import tensorflow.core.framework.types_pb2 as DataType
+# import tensorflow.core.framework.types_pb2 as DataType
+from tensorflow.core.framework.types_pb2 import *    # noqa
 
 msgpack_numpy.patch()
 
@@ -36,11 +37,11 @@ def loads(buf):
 
 
 _DTYPE_DICT = {
-    np.float32: DataType.DT_FLOAT,
-    np.float64: DataType.DT_DOUBLE,
-    np.int32: DataType.DT_INT32,
-    np.int8: DataType.DT_INT8,
-    np.uint8: DataType.DT_UINT8,
+    np.float32: DT_FLOAT,   # noqa
+    np.float64: DT_DOUBLE,  # noqa
+    np.int32: DT_INT32,     # noqa
+    np.int8: DT_INT8,       # noqa
+    np.uint8: DT_UINT8,     # noqa
 }
 _DTYPE_DICT = {np.dtype(k): v for k, v in _DTYPE_DICT.items()}
 
