@@ -4,6 +4,7 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import os
+import shutil
 import operator
 from collections import defaultdict
 import six
@@ -203,7 +204,7 @@ class JSONWriter(TrainingMonitor):
         try:
             with open(tmp_filename, 'w') as f:
                 json.dump(self._stats, f)
-            os.rename(tmp_filename, self._fname)
+            shutil.move(tmp_filename, self._fname)
         except IOError:  # disk error sometimes..
             logger.exception("Exception in StatHolder.finalize()!")
 
