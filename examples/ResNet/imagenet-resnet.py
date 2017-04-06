@@ -23,7 +23,6 @@ DEPTH = None
 
 
 class Model(ModelDesc):
-
     def __init__(self, data_format='NCHW'):
         self.data_format = data_format
 
