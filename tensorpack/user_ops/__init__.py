@@ -20,4 +20,3 @@ else:
     recv_mod = tf.load_op_library(os.path.join(file_dir, 'zmq_recv_op.so'))
     # TODO trigger recompile when load fails
     zmq_recv = recv_mod.zmq_recv
-
