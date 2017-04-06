@@ -75,7 +75,8 @@ class SessionUpdate(object):
             # TODO only allow reshape when shape different by empty axis
             assert np.prod(varshape) == np.prod(val.shape), \
                 "{}: {}!={}".format(name, varshape, val.shape)
-            logger.warn("Variable {} is reshaped during assigning".format(name))
+            logger.warn("Variable {} is reshaped {}->{} during assigning".format(
+                name, val.shape, varshape))
             val = val.reshape(varshape)
 
         # fix some common type incompatibility problem, but is certainly not enough

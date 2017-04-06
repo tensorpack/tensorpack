@@ -140,7 +140,7 @@ def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5,
     Reducing Internal Covariance Shift <http://arxiv.org/abs/1502.03167>`_.
 
     Args:
-        x (tf.Tensor): a NHWC or NC tensor.
+        x (tf.Tensor): a 4D or 2D tensor. When 4D, the layout should match data_format.
         use_local_stat (bool): whether to use mean/var of the current batch or the moving average.
             Defaults to True in training and False in inference.
         decay (float): decay rate of moving average.
@@ -202,7 +202,7 @@ def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5,
                 moving_mean, moving_var,
                 epsilon=epsilon, is_training=False, data_format=data_format)
         else:
-            xn = tf.nn.batch_normalization(
+            xn = tf.nn.batch_normalization(     # work only for NHWC when moving_mean is a vector
                 x, moving_mean, moving_var, beta, gamma, epsilon)
 
     if len(shape) == 2:
