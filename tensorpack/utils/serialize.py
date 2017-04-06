@@ -15,7 +15,8 @@ from tensorflow.core.framework import types_pb2 as DataType
 msgpack_numpy.patch()
 
 
-__all__ = ['loads', 'dumps']
+__all__ = ['loads', 'dumps', 'dumps_for_tfop', 'dump_tensor_protos',
+           'to_tensor_proto']
 
 
 def dumps(obj):
@@ -46,7 +47,7 @@ _DTYPE_DICT = {
 _DTYPE_DICT = {np.dtype(k): v for k, v in _DTYPE_DICT.items()}
 
 
-# TODO support string tensor
+# TODO support string tensor and scalar
 def to_tensor_proto(arr):
     """
     Convert a numpy array to TensorProto
@@ -86,3 +87,8 @@ def dump_tensor_protos(protos):
         s += struct.pack('=i', len(buf))   # won't send stuff over 2G
         s += buf
     return s
+
+
+def dumps_for_tfop(dp):
+    protos = [to_tensor_proto(arr) for arr in dp]
+    return dump_tensor_protos(protos)

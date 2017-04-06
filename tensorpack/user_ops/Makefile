@@ -55,5 +55,5 @@ $(OBJ_DIR)/%.d: %.cc Makefile
 	@$(CXX) $(CXXFLAGS) -MM -MT "$(OBJ_DIR)/$(<:.cc=.o) $(OBJ_DIR)/$(<:.cc=.d)" "$<"  > "$@" || rm "$@"
 
 clean:
-	@rm -rvf $(OBJ_DIR)
+	@rm -rvf $(OBJ_DIR) $(SO)
 

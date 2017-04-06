@@ -73,5 +73,9 @@ model-*
 checkpoint
 *.json
 *.prototxt
-snippet
 *.txt
+
+# my personal stuff
+snippet
+examples/private
+TODO.md

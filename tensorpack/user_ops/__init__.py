@@ -16,7 +16,6 @@ print("Compiling user ops ...")
 ret = os.system(compile_cmd)
 if ret != 0:
     print("Failed to compile user ops!")
-
-
-recv_mod = tf.load_op_library(os.path.join(file_dir, 'zmq_recv_op.so'))
-zmq_recv = recv_mod.zmq_recv
+else:
+    recv_mod = tf.load_op_library(os.path.join(file_dir, 'zmq_recv_op.so'))
+    zmq_recv = recv_mod.zmq_recv

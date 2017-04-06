@@ -16,7 +16,8 @@ from ..callbacks.concurrency import StartProcOrThread
 
 __all__ = ['InputData', 'FeedfreeInput',
            'QueueInput', 'BatchQueueInput',
-           'TensorInput', 'DummyConstantInput']
+           'ZMQInput',
+           'DummyConstantInput', 'TensorInput']
 
 
 @six.add_metaclass(ABCMeta)
@@ -154,7 +155,7 @@ class QueueInput(FeedfreeInput):
         self.thread = EnqueueThread(self.queue, self.ds, self.input_placehdrs)
 
     def setup_training(self, trainer):
-        self.setup(trainer.model)
+        super(QueueInput, self).setup_training(trainer)
         trainer.register_callback(StartProcOrThread(self.thread))
 
     def get_input_tensors(self):
@@ -218,7 +219,7 @@ class BatchQueueInput(FeedfreeInput):
         self.thread = EnqueueThread(self.queue, self.ds, placehdrs_nobatch)
 
     def setup_training(self, trainer):
-        self.setup(trainer.model)
+        super(BatchQueueInput, self).setup_training(trainer)
         trainer.register_callback(StartProcOrThread(self.thread))
 
     def get_input_tensors(self):
@@ -282,3 +283,26 @@ class TensorInput(FeedfreeInput):
 
     def get_input_tensors(self):
         return self.get_tensor_fn()
+
+
+class ZMQInput(FeedfreeInput):
+    def __init__(self, endpoint):
+        self._endpoint = endpoint
+
+    def size(self):
+        raise NotImplementedError()
+
+    def setup(self, model):
+        self.input_placehdrs = model.get_reused_placehdrs()
+        assert len(self.input_placehdrs) > 0, \
+            "ZMQInput has to be used with input placeholders!"
+
+    def get_input_tensors(self):
+        from tensorpack.user_ops import zmq_recv
+        ret = zmq_recv(self._endpoint, [x.dtype for x in self.input_placehdrs])
+        if isinstance(self._recv, tf.Tensor):
+            ret = [ret]
+        assert len(ret) == len(self.input_placehdrs)
+        for qv, v in zip(ret, self.input_placehdrs):
+            qv.set_shape(v.get_shape())
+        return ret
