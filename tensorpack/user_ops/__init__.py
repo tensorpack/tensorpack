@@ -11,7 +11,7 @@ __all__ = ['zmq_recv']
 
 include_dir = tf.sysconfig.get_include()
 file_dir = os.path.dirname(os.path.abspath(__file__))
-compile_cmd = 'make INCLUDE_DIR="-isystem {}" -C "{}"'.format(include_dir, file_dir)
+compile_cmd = 'make INCLUDE_DIR:="-isystem {}" -C "{}"'.format(include_dir, file_dir)
 print("Compiling user ops ...")
 ret = os.system(compile_cmd)
 if ret != 0:
