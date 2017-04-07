@@ -73,13 +73,16 @@ class GANTrainer(FeedfreeTrainerBase):
 
 class SeparateGANTrainer(FeedfreeTrainerBase):
     """ A GAN trainer which runs two optimization ops with a certain ratio, one in each step. """
-    def __init__(self, config, d_interval=1):
+    def __init__(self, config, d_period=1, g_period=1):
         """
         Args:
-            d_interval: will run d_opt only after this many of g_opt.
+            d_period(int): period of each d_opt run
+            g_period(int): period of each g_opt run
         """
         self._input_method = QueueInput(config.dataflow)
-        self._d_interval = d_interval
+        self._d_period = int(d_period)
+        self._g_period = int(g_period)
+        assert min(d_period, g_period) == 1
         super(SeparateGANTrainer, self).__init__(config)
 
     def _setup(self):
@@ -91,12 +94,12 @@ class SeparateGANTrainer(FeedfreeTrainerBase):
             self.model.d_loss, var_list=self.model.d_vars, name='d_min')
         self.g_min = opt.minimize(
             self.model.g_loss, var_list=self.model.g_vars, name='g_min')
-        self._cnt = 0
+        self._cnt = 1
 
     def run_step(self):
-        if self._cnt % (self._d_interval + 1) == 0:
+        if self._cnt % (self._d_period) == 0:
             self.hooked_sess.run(self.d_min)
-        else:
+        if self._cnt % (self._g_period) == 0:
             self.hooked_sess.run(self.g_min)
         self._cnt += 1
 

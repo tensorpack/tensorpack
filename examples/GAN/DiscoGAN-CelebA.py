@@ -226,4 +226,4 @@ if __name__ == '__main__':
     )
 
     # train 1 D after 2 G
-    SeparateGANTrainer(config, 2).train()
+    SeparateGANTrainer(config, d_period=3).train()

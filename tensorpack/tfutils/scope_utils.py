@@ -26,6 +26,10 @@ def get_name_scope_name():
 
 
 def auto_reuse_variable_scope(func):
+    """
+    A decorator which automatically reuse the current variable scope if the
+    function has been called with the same variable scope before.
+    """
     used_scope = set()
 
     @functools.wraps(func)

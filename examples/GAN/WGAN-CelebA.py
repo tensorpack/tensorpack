@@ -81,7 +81,6 @@ if __name__ == '__main__':
         if args.load:
             config.session_init = SaverRestore(args.load)
         """
-        This is to be consistent with the original code, but I found just
-        running them 1:1 (i.e. just using the existing GANTrainer) also works well.
+        The original code uses a different schedule.
         """
-        SeparateGANTrainer(config, d_interval=5).train()
+        SeparateGANTrainer(config, d_period=3).train()
