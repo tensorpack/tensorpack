@@ -9,19 +9,17 @@ OPTFLAGS ?= -O3 -march=native
 #OPTFLAGS ?= -g3 -fsanitize=address,undefined -O2 -lasan
 #OPTFLAGS ?= -g3 -fsanitize=leak -O2 -lubsan
 
-# optional extra packages
-#LIBS = opencv
-#INCLUDE_DIR += $(shell pkg-config --cflags $(LIBS))
-#LDFLAGS += $(shell pkg-config $(LIBS) --libs)
+# extra packages from pkg-config
+LIBS = protobuf libzmq
+INCLUDE_DIR += $(shell pkg-config --cflags $(LIBS))
+LDFLAGS += $(shell pkg-config $(LIBS) --libs)
 
-CXXFLAGS ?=
 CXXFLAGS += $(INCLUDE_DIR)
-CXXFLAGS += -Wall -Wextra -Wno-unused-parameter -Wno-ignored-qualifiers
+CXXFLAGS += -Wall -Wextra
 CXXFLAGS += $(DEFINES) -std=c++11 $(OPTFLAGS) -fPIC
 CXXFLAGS += -D_GLIBCXX_USE_CXX11_ABI=0 		# https://github.com/tensorflow/tensorflow/issues/1569
 
 LDFLAGS += $(OPTFLAGS)
-LDFLAGS += -lzmq -lprotobuf $(OMP_FLAG)
 LDFLAGS += -shared -fPIC
 
 SHELL = bash
