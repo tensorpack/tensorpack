@@ -3,7 +3,13 @@
 
 OBJ_DIR = obj
 
-CXX ?= g++
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Linux)
+	CXX ?= g++
+endif
+ifeq ($(UNAME_S),Darwin)
+	CXX ?= clang++
+endif
 
 OPTFLAGS ?= -O3 -march=native
 #OPTFLAGS ?= -g3 -fsanitize=address,undefined -O2 -lasan
@@ -17,10 +23,16 @@ LDFLAGS += $(shell pkg-config $(LIBS) --libs)
 CXXFLAGS += $(INCLUDE_DIR)
 CXXFLAGS += -Wall -Wextra
 CXXFLAGS += $(DEFINES) -std=c++11 $(OPTFLAGS) -fPIC
-CXXFLAGS += -D_GLIBCXX_USE_CXX11_ABI=0 		# https://github.com/tensorflow/tensorflow/issues/1569
+
+# https://github.com/tensorflow/tensorflow/issues/1569
+# You may need to disable this flag if you compile tensorflow yourself with gcc>=5
+CXXFLAGS += -D_GLIBCXX_USE_CXX11_ABI=0
 
 LDFLAGS += $(OPTFLAGS)
 LDFLAGS += -shared -fPIC
+ifeq ($(UNAME_S),Darwin)
+	LDFLAGS += -Wl,-undefined -Wl,dynamic_lookup
+endif
 
 SHELL = bash
 # sources to include
