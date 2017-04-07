@@ -5,8 +5,8 @@
 
 #include <string>
 #include <iostream>
-#include <zmq.hpp>
 #include <tensorflow/core/framework/tensor.pb.h>
+#include "zmq.hpp"
 
 namespace {
 inline int read_int32(const char* p) {
