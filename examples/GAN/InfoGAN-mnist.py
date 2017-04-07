@@ -13,6 +13,7 @@ import argparse
 from tensorpack import *
 from tensorpack.utils.viz import *
 from tensorpack.tfutils.distributions import *
+from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
 import tensorpack.tfutils.symbolic_functions as symbf
 from tensorpack.tfutils.gradproc import ScaleGradient, CheckGradient
 from GAN import GANTrainer, GANModelDesc
@@ -54,6 +55,7 @@ class Model(GANModelDesc):
         l = tf.sigmoid(l, name='gen')
         return l
 
+    @auto_reuse_variable_scope
     def discriminator(self, imgs):
         with argscope(Conv2D, nl=tf.identity, kernel_shape=4, stride=2), \
                 argscope(LeakyReLU, alpha=0.2):
@@ -101,8 +103,6 @@ class Model(GANModelDesc):
             # may need to investigate how bn stats should be updated across two discrim
             with tf.variable_scope('discrim'):
                 real_pred, _ = self.discriminator(real_sample)
-
-            with tf.variable_scope('discrim', reuse=True):
                 fake_pred, dist_param = self.discriminator(fake_sample)
 
         """

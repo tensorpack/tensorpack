@@ -1,7 +1,7 @@
 import tensorflow as tf
 from functools import wraps
 import numpy as np
-from ..tfutils import get_name_scope_name
+from .scope_utils import get_name_scope_name
 
 __all__ = ['Distribution',
            'CategoricalDistribution', 'GaussianDistribution',

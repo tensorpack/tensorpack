@@ -10,6 +10,7 @@ import argparse
 from tensorpack import *
 from tensorpack.utils.viz import *
 from tensorpack.tfutils.summary import add_moving_summary
+from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
 import tensorflow as tf
 
 from GAN import GANTrainer, RandomZData, GANModelDesc
@@ -51,6 +52,7 @@ class Model(GANModelDesc):
             l = tf.tanh(l, name='gen')
         return l
 
+    @auto_reuse_variable_scope
     def discriminator(self, imgs):
         """ return a (b, 1) logits"""
         nf = 64
@@ -81,7 +83,6 @@ class Model(GANModelDesc):
             tf.summary.image('generated-samples', image_gen, max_outputs=30)
             with tf.variable_scope('discrim'):
                 vecpos = self.discriminator(image_pos)
-            with tf.variable_scope('discrim', reuse=True):
                 vecneg = self.discriminator(image_gen)
 
         self.build_losses(vecpos, vecneg)

@@ -15,6 +15,7 @@ import argparse
 from tensorpack import *
 from tensorpack.utils.viz import *
 from tensorpack.tfutils.summary import add_moving_summary
+from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
 import tensorpack.tfutils.symbolic_functions as symbf
 from GAN import GANTrainer, GANModelDesc
 
@@ -84,6 +85,7 @@ class Model(GANModelDesc):
                         .ConcatWith(e1, 3)
                         .Deconv2D('deconv8', OUT_CH, nl=tf.tanh)())
 
+    @auto_reuse_variable_scope
     def discriminator(self, inputs, outputs):
         """ return a (b, 1) logits"""
         l = tf.concat([inputs, outputs], 3)
@@ -110,7 +112,6 @@ class Model(GANModelDesc):
                 fake_output = self.generator(input)
             with tf.variable_scope('discrim'):
                 real_pred = self.discriminator(input, output)
-            with tf.variable_scope('discrim', reuse=True):
                 fake_pred = self.discriminator(input, fake_output)
 
         self.build_losses(real_pred, fake_pred)

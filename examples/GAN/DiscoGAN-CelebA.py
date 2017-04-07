@@ -12,6 +12,7 @@ from tensorpack import *
 from tensorpack.utils.viz import *
 import tensorpack.tfutils.symbolic_functions as symbf
 from tensorpack.tfutils.summary import add_moving_summary
+from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
 import tensorflow as tf
 from GAN import SeparateGANTrainer, GANModelDesc
 
@@ -46,7 +47,9 @@ class Model(GANModelDesc):
         return [InputDesc(tf.float32, (None, SHAPE, SHAPE, 3), 'inputA'),
                 InputDesc(tf.float32, (None, SHAPE, SHAPE, 3), 'inputB')]
 
+    @auto_reuse_variable_scope
     def generator(self, img):
+        assert img is not None
         with argscope([Conv2D, Deconv2D],
                       nl=BNLReLU, kernel_shape=4, stride=2), \
                 argscope(Deconv2D, nl=BNReLU):
@@ -62,6 +65,7 @@ class Model(GANModelDesc):
                  .tf.sigmoid()())
         return l
 
+    @auto_reuse_variable_scope
     def discriminator(self, img):
         with argscope(Conv2D, nl=BNLReLU, kernel_shape=4, stride=2):
             l = Conv2D('conv0', img, NF, nl=LeakyReLU)
@@ -100,9 +104,8 @@ class Model(GANModelDesc):
                     AB = self.generator(A)
                 with tf.variable_scope('A'):
                     BA = self.generator(B)
-                with tf.variable_scope('A', reuse=True):
                     ABA = self.generator(AB)
-                with tf.variable_scope('B', reuse=True):
+                with tf.variable_scope('B'):
                     BAB = self.generator(BA)
 
             viz_A_recon = tf.concat([A, AB, ABA], axis=3, name='viz_A_recon')
@@ -113,12 +116,10 @@ class Model(GANModelDesc):
             with tf.variable_scope('discrim'):
                 with tf.variable_scope('A'):
                     A_dis_real, A_feats_real = self.discriminator(A)
-                with tf.variable_scope('A', reuse=True):
                     A_dis_fake, A_feats_fake = self.discriminator(BA)
 
                 with tf.variable_scope('B'):
                     B_dis_real, B_feats_real = self.discriminator(B)
-                with tf.variable_scope('B', reuse=True):
                     B_dis_fake, B_feats_fake = self.discriminator(AB)
 
         with tf.name_scope('LossA'):

@@ -19,7 +19,7 @@ from ..utils import logger
 from ..utils.develop import deprecated, log_deprecated
 from ..callbacks import Callback, Callbacks, MaintainStepCounter
 from ..tfutils import get_global_step_value
-from ..tfutils.modelutils import describe_model
+from ..tfutils.model_utils import describe_model
 from ..tfutils.sesscreate import ReuseSessionCreator
 
 __all__ = ['Trainer', 'StopTraining', 'MultiPredictorTowerTrainer']

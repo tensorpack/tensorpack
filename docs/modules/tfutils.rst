@@ -25,10 +25,18 @@ tensorpack.tfutils.gradproc module
     :undoc-members:
     :show-inheritance:
 
-tensorpack.tfutils.modelutils module
+tensorpack.tfutils.model_utils module
 ------------------------------------
 
-.. automodule:: tensorpack.tfutils.modelutils
+.. automodule:: tensorpack.tfutils.model_utils
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+tensorpack.tfutils.scope_utils module
+------------------------------------
+
+.. automodule:: tensorpack.tfutils.scope_utils
     :members:
     :undoc-members:
     :show-inheritance:

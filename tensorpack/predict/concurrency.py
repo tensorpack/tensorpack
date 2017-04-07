@@ -11,7 +11,7 @@ import tensorflow as tf
 from ..utils import logger
 from ..utils.develop import deprecated
 from ..utils.concurrency import DIE, StoppableThread, ShareSessionThread
-from ..tfutils.modelutils import describe_model
+from ..tfutils.model_utils import describe_model
 from .base import OnlinePredictor, OfflinePredictor, AsyncPredictorBase
 
 __all__ = ['MultiProcessPredictWorker', 'MultiProcessQueuePredictWorker',

@@ -8,7 +8,7 @@ import six
 import copy
 
 from ..tfutils.argscope import get_arg_scope
-from ..tfutils.modelutils import get_shape_str
+from ..tfutils.model_utils import get_shape_str
 from ..utils import logger
 from ..utils.develop import building_rtfd
 

@@ -13,6 +13,7 @@ import argparse
 from tensorpack import *
 from tensorpack.utils.viz import *
 import tensorpack.tfutils.symbolic_functions as symbf
+from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
 from GAN import GANTrainer, RandomZData, GANModelDesc
 
 """
@@ -47,6 +48,7 @@ class Model(GANModelDesc):
         l = tf.nn.tanh(l, name='gen')
         return l
 
+    @auto_reuse_variable_scope
     def discriminator(self, imgs, y):
         """ return a (b, 1) logits"""
         yv = y
@@ -86,7 +88,6 @@ class Model(GANModelDesc):
                 tf.summary.image('gen', image_gen, 30)
             with tf.variable_scope('discrim'):
                 vecpos = self.discriminator(image_pos, y)
-            with tf.variable_scope('discrim', reuse=True):
                 vecneg = self.discriminator(image_gen, y)
 
         self.build_losses(vecpos, vecneg)

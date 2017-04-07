@@ -20,7 +20,6 @@ __all__ = ['get_default_sess_config',
            'get_op_tensor_name',
            'get_tensors_by_names',
            'get_op_or_tensor_by_name',
-           'get_name_scope_name',
            ]
 
 
@@ -133,15 +132,3 @@ def get_op_or_tensor_by_name(name):
         return f(name)
     else:
         return list(map(f, name))
-
-
-def get_name_scope_name():
-    """
-    Returns:
-        str: the name of the current name scope, without the ending '/'.
-    """
-    g = tf.get_default_graph()
-    s = "RANDOM_STR_ABCDEFG"
-    unique = g.unique_name(s)
-    scope = unique[:-len(s)].rstrip('/')
-    return scope

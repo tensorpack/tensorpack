@@ -12,7 +12,7 @@ from ..utils import logger
 from ..utils.naming import INPUTS_KEY
 from ..utils.develop import deprecated, log_deprecated
 from ..utils.argtools import memoized
-from ..tfutils.modelutils import apply_slim_collections
+from ..tfutils.model_utils import apply_slim_collections
 
 __all__ = ['InputDesc', 'InputVar', 'ModelDesc', 'ModelFromMetaGraph']
 

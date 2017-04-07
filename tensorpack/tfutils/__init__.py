@@ -20,7 +20,7 @@ _TO_IMPORT = set([
     'common',
     'sessinit',
     'argscope',
-    'tower'
+    'tower',
 ])
 
 _CURR_DIR = os.path.dirname(__file__)

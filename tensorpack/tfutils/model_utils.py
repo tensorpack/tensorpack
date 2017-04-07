@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-# File: modelutils.py
+# File: model_utils.py
 # Author: tensorpack contributors
 
 import tensorflow as tf
