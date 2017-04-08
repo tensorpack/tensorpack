@@ -153,6 +153,7 @@ class SyncMultiGPUTrainer(MultiGPUTrainer,
                 cost,
                 gate_gradients=tf.train.Optimizer.GATE_NONE,
                 colocate_gradients_with_ops=True)
+        self.grads = grads
         self.train_op = self.config.optimizer.apply_gradients(grads, name='min_op')
 
 
