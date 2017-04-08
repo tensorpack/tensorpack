@@ -1,5 +1,5 @@
 # tensorpack
-Neural Network Toolbox on TensorFlow
+Neural Network Toolbox on TensorFlow.
 
 [![Build Status](https://travis-ci.org/ppwwyyxx/tensorpack.svg?branch=master)](https://travis-ci.org/ppwwyyxx/tensorpack)
 [![badge](https://readthedocs.org/projects/pip/badge/?version=latest)](http://tensorpack.readthedocs.io/en/latest/index.html)
@@ -31,29 +31,31 @@ The examples are not only for demonstration of the framework -- you can train th
 
 ## Features:
 
-Describe your training task with three components:
+It's Yet Another TF wrapper, but different in:
+1. Not focus on models.
+	+ It includes only a few common models, and helpful tools such as `LinearWrap` to simplify large models.
+	  But you can use any other TF wrappers here, such as slim/tflearn/tensorlayer.
 
-1. __DataFlow__. process data in Python, with ease and speed.
+2. Focus on large datasets.
+	+ __DataFlow__ allows you to process large datasets such as ImageNet in Python without blocking the training.
+	+ DataFlow has a unified interface, so you can compose and reuse them to perform complex preprocessing.
 
-	+ Allows you to process data in Python without blocking the training, by multiprocess prefetch & TF Queue prefetch.
-	+ All data producer has a unified interface, you can compose and reuse them to perform complex preprocessing.
+3. Focus on training speed.
+	+	Tensorpack trainer is almost always faster than `feed_dict` based wrappers.
+	  Even on a small CNN example, the training runs [2x faster](https://gist.github.com/ppwwyyxx/8d95da79f8d97036a7d67c2416c851b6) than the equivalent Keras code.
+	  More improvements to come later.
 
-2. __Callbacks__, like `tf.train.SessionRunHook`, plugins, or extensions. Write a callback to implement everything you want to do apart from the training iterations, such as:
+	+ Data-Parallel Multi-GPU training is off-the-shelf to use.
+	You can also define your own trainer for different style of training (e.g. GAN) without losing the efficiency.
+
+4. Interface of extensible __Callbacks__.
+	Write a callback to implement everything you want to do apart from the training iterations, and
+	enable it with one line of code. Common examples include:
 	+ Change hyperparameters during training
 	+ Print some tensors of interest
 	+ Run inference on a test dataset
 	+ Run some operations once a while
 	+ Send loss to your phone
-
-3. __Model__, or graph. `models/` has some scoped abstraction of common models, but you can just use
-	 symbolic functions in tensorflow or slim/tflearn/tensorlayer/etc.
-	`LinearWrap` and `argscope` simplify large models (e.g. [vgg example](https://github.com/ppwwyyxx/tensorpack/blob/master/examples/load-vgg16.py)).
-
-With the above components defined, tensorpack trainer runs the training iterations for you.
-Even on a small CNN example, the training runs [2x faster](https://gist.github.com/ppwwyyxx/8d95da79f8d97036a7d67c2416c851b6) than the equivalent Keras code.
-
-Multi-GPU training is off-the-shelf by simply switching the trainer.
-You can also define your own trainer for different style of training (e.g. GAN).
 
 ## Install:
 
