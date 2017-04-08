@@ -1,6 +1,28 @@
-*.gz
-*.npy
+# tensorpack-specific stuff
 train_log
+tensorpack/user_ops/obj
+
+*.npy
+*.bin
+*.tfmodel
+*.meta
+*.log*
+model-*
+.gitignore
+*.caffemodel
+*.png
+*.jpg
+checkpoint
+*.json
+*.prototxt
+*.txt
+
+# my personal stuff
+snippet
+examples/private
+TODO.md
+
+*.gz
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -61,21 +83,3 @@ docs/_build/
 target/
 *.dat
 
-*.bin
-*.tfmodel
-*.meta
-*.log*
-model-*
-.gitignore
-*.caffemodel
-*.png
-*.jpg
-checkpoint
-*.json
-*.prototxt
-*.txt
-
-# my personal stuff
-snippet
-examples/private
-TODO.md

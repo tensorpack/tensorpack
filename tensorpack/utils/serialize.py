@@ -78,14 +78,22 @@ def dump_tensor_protos(protos):
         protos (list): list of :class:`TensorProto` instance
 
     Notes:
-        The format is: <#protos(int32)>|<size 1>|<serialized proto 1>|<size 2><serialized proto 2>| ...
+        The format is:
+
+        [#tensors(int32)]
+        (tensor1)[size of meta proto][serialized meta proto][size of buffer][buffer]
+        (tensor2)...
     """
 
     s = struct.pack('=i', len(protos))
     for p in protos:
+        tensor_content = p.tensor_content
+        p.tensor_content = b'xxx'   # clear content
         buf = p.SerializeToString()
-        s += struct.pack('=i', len(buf))   # won't send stuff over 2G
+        s += struct.pack('=i', len(buf))
         s += buf
+        s += struct.pack('=i', len(tensor_content))    # won't send stuff over 2G
+        s += tensor_content
     return s
 
 

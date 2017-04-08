@@ -19,7 +19,8 @@ REGISTER_OP("ZMQRecv")
     .SetShapeFn(shape_inference::UnknownShape)
     .SetIsStateful()
     .Doc(R"doc(
-Receive and return a serialized list of TensorProto from a ZMQ socket.
+Receive a serialized list of Tensors from a ZMQ socket.
+The serialization format is a tensorpack custom format.
 )doc");
 
 
@@ -27,7 +28,7 @@ class ZMQRecvOp: public OpKernel {
  public:
   explicit ZMQRecvOp(OpKernelConstruction* context) : OpKernel(context) {
     OP_REQUIRES_OK(context, context->GetAttr("types", &component_types_));
-    CHECK(conn_.get() == nullptr);
+    CHECK_EQ(conn_.get(), nullptr);
 
     string endpoint;
     OP_REQUIRES_OK(context, context->GetAttr("end_point", &endpoint));
@@ -35,27 +36,34 @@ class ZMQRecvOp: public OpKernel {
   }
 
   void Compute(OpKernelContext* ctx) override {
+    //GuardedTimer tm("Compute");
     int start, stop;
     TF_CHECK_OK(this->OutputRange("output", &start, &stop));
 
-    //cout << "COMPUTE" << endl;
-    auto protos = conn_->recv_tensor_list();
+    RecvTensorList tlist;
+    conn_->recv_tensor_list(&tlist);
+    auto& tensors = tlist.tensors;
 
     OpOutputList outputs;
     OP_REQUIRES_OK(ctx, ctx->output_list("output", &outputs));
-    CHECK(protos.size() == num_components());
+    CHECK(tensors.size() == num_components());
 
     for (int i = start; i < stop; ++i) {
-      Tensor output;
+      Tensor* output = nullptr;
       int j = i - start;
-      OP_REQUIRES_OK(ctx, ctx->device()->MakeTensorFromProto(
-                              protos[j], ctx->output_alloc_attr(i), &output));
+      auto recv_dtype = tensors[j].meta.dtype();
       OP_REQUIRES(
-          ctx, component_types_[j] == output.dtype(),
+          ctx, component_types_[j] == recv_dtype,
           errors::InvalidArgument("Type mismatch between parsed tensor (",
-                                  DataTypeString(output.dtype()), ") and dtype (",
+                                  DataTypeString(recv_dtype), ") and dtype (",
                                   DataTypeString(component_types_[j]), ")"));
-      outputs.set(j, output);
+
+
+      TensorShape shape{tensors[j].meta.tensor_shape()};
+      OP_REQUIRES_OK(ctx, ctx->allocate_output(i, shape, &output));
+      auto ptr = output->bit_casted_shaped<char, 1>({shape.num_elements()});
+      memcpy(ptr.data(), tensors[j].buf, tensors[j].size);
+      outputs.set(j, *output);
     }
   }
  private:

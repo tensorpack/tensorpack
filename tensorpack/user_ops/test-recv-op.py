@@ -22,8 +22,8 @@ ENDPOINT = 'ipc://test-pipe'
 
 DATA = []
 for k in range(num):
-    arr1 = np.random.rand(k).astype('float32')
-    arr2 = (np.random.rand(k * 2) * 10).astype('uint8')
+    arr1 = np.random.rand(k + 10, k + 10).astype('float32')
+    arr2 = (np.random.rand((k + 10) * 2) * 10).astype('uint8')
     DATA.append([arr1, arr2])
 
 

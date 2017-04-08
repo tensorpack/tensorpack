@@ -89,7 +89,7 @@ class SyncMultiGPUTrainer(MultiGPUTrainer,
             self._input_method = QueueInput(config.dataflow, input_queue)
         else:
             self._input_method = config.data
-            assert isinstance(self._input_method, QueueInput)
+            # assert isinstance(self._input_method, QueueInput)
 
         if predict_tower is not None:
             log_deprecated("Argument `predict_tower` in trainer", "Use TrainConfig(predict_tower=...) instead!")

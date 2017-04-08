@@ -300,7 +300,7 @@ class ZMQInput(FeedfreeInput):
     def get_input_tensors(self):
         from tensorpack.user_ops import zmq_recv
         ret = zmq_recv(self._endpoint, [x.dtype for x in self.input_placehdrs])
-        if isinstance(self._recv, tf.Tensor):
+        if isinstance(ret, tf.Tensor):
             ret = [ret]
         assert len(ret) == len(self.input_placehdrs)
         for qv, v in zip(ret, self.input_placehdrs):

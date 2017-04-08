@@ -47,7 +47,7 @@ def send_dataflow_zmq(df, addr, hwm=50, print_interval=100, format='msgpack'):
                     q.append(time.time() - start)
                     pbar.update(1)
                     if pbar.n % print_interval == 0:
-                        pbar.write("Avg send time: {}".format(sum(q) / len(q)))
+                        pbar.write("Avg send time @{}: {}".format(pbar.n, sum(q) / len(q)))
     finally:
         socket.setsockopt(zmq.LINGER, 0)
         socket.close()
