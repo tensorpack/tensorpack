@@ -8,12 +8,13 @@ import tensorflow as tf
 import six
 
 from ..utils import logger
+from ..utils.develop import deprecated
 from .common import get_op_tensor_name
 from .varmanip import (SessionUpdate, get_savename_from_varname,
                        is_training_name, get_checkpoint_path)
 
 __all__ = ['SessionInit', 'SaverRestore', 'SaverRestoreRelaxed',
-           'ParamRestore', 'ChainInit',
+           'ParamRestore', 'DictRestore', 'ChainInit',
            'JustCurrentSession', 'get_model_loader']
 
 
@@ -156,7 +157,7 @@ class SaverRestoreRelaxed(SaverRestore):
             self._match_vars(f)
 
 
-class ParamRestore(SessionInit):
+class DictRestore(SessionInit):
     """
     Restore variables from a dictionary.
     """
@@ -190,6 +191,11 @@ class ParamRestore(SessionInit):
         upd.update({name: value for name, value in six.iteritems(self.prms) if name in intersect})
 
 
+@deprecated("Use `DictRestore` instead!", "2017-06-01")
+def ParamRestore(d):
+    return DictRestore(d)
+
+
 class ChainInit(SessionInit):
     """ Initialize a session by a list of :class:`SessionInit` instance, executed one by one.
     This can be useful for, e.g., loading several models from different files
@@ -221,11 +227,11 @@ def get_model_loader(filename):
     Get a corresponding model loader by looking at the file name.
 
     Returns:
-        SessInit: either a :class:`ParamRestore` (if name ends with 'npy') or
+        SessInit: either a :class:`DictRestore` (if name ends with 'npy') or
         :class:`SaverRestore` (otherwise).
     """
     if filename.endswith('.npy'):
         assert os.path.isfile(filename), filename
-        return ParamRestore(np.load(filename, encoding='latin1').item())
+        return DictRestore(np.load(filename, encoding='latin1').item())
     else:
         return SaverRestore(filename)

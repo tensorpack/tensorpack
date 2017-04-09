@@ -123,7 +123,10 @@ class BatchData(ProxyDataFlow):
                 elif type(dt) == float:
                     tp = 'float32'
                 else:
-                    tp = dt.dtype
+                    try:
+                        tp = dt.dtype
+                    except:
+                        raise TypeError("Unsupported type to batch: {}".format(type(dt)))
                 try:
                     result.append(
                         np.asarray([x[k] for x in data_holder], dtype=tp))

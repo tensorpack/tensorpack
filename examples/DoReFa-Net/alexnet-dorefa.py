@@ -308,7 +308,7 @@ if __name__ == '__main__':
 
     if args.run:
         assert args.load.endswith('.npy')
-        run_image(Model(), ParamRestore(np.load(args.load, encoding='latin1').item()), args.run)
+        run_image(Model(), DictRestore(np.load(args.load, encoding='latin1').item()), args.run)
         sys.exit()
 
     assert args.gpu is not None, "Need to specify a list of gpu for training!"

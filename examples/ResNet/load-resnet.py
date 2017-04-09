@@ -114,7 +114,7 @@ def get_inference_augmentor():
 def run_test(params, input):
     pred_config = PredictConfig(
         model=Model(),
-        session_init=ParamRestore(params),
+        session_init=DictRestore(params),
         input_names=['input'],
         output_names=['prob']
     )
@@ -139,7 +139,7 @@ def eval_on_ILSVRC12(params, data_dir):
     ds = BatchData(ds, 128, remainder=True)
     pred_config = PredictConfig(
         model=Model(),
-        session_init=ParamRestore(params),
+        session_init=DictRestore(params),
         input_names=['input', 'label'],
         output_names=['wrong-top1', 'wrong-top5']
     )

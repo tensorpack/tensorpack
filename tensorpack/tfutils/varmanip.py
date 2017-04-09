@@ -119,7 +119,7 @@ class SessionUpdate(object):
 def dump_session_params(path):
     """
     Dump value of all TRAINABLE + MODEL variables to a dict, and save as
-    npy format (loadable by :class:`ParamRestore`).
+    npy format (loadable by :class:`DictRestore`).
 
     Args:
         path(str): the path to save the parameters.

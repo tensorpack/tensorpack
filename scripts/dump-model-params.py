@@ -32,7 +32,7 @@ with tf.Graph().as_default() as G:
 
     # loading...
     if args.model.endswith('.npy'):
-        init = sessinit.ParamRestore(np.load(args.model).item())
+        init = sessinit.DictRestore(np.load(args.model).item())
     else:
         init = sessinit.SaverRestore(args.model)
     sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))

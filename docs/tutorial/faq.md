@@ -12,6 +12,7 @@ for more details.
 It you think:
 1. The framework has limitation so your XYZ cannot be supported, OR
 2. Your XYZ is very common, or very well-defined, so it would be nice to include it.
+
 Then it's a good time to open an issue.
 
 ## How to dump/inspect a model
@@ -25,7 +26,7 @@ expects a path without the extension.
 
 You can dump a cleaner version of the model (with only model/trainable variables), with
 `scripts/dump-model-params.py`, as a simple `var-name: value` dict saved in npy format.
-It expects a metagraph file which is also saved by `ModelSaver`.
+The script expects a metagraph file which is also saved by `ModelSaver`.
 
 
 ## How to load a model / do transfer learning

@@ -4,8 +4,8 @@
 
 import sys
 import os
-import cv2
 import multiprocessing as mp
+import cv2
 from six.moves import range
 
 from .base import DataFlow

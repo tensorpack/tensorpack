@@ -190,5 +190,5 @@ if __name__ == '__main__':
         eval_on_ILSVRC12(args.load, args.data)
     elif args.run:
         assert args.load.endswith('.npy')
-        run_image(Model(), ParamRestore(
+        run_image(Model(), DictRestore(
             np.load(args.load, encoding='latin1').item()), args.run)
