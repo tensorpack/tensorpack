@@ -22,6 +22,7 @@ assert args.config or args.meta, "Either config or metagraph must be present!"
 
 with tf.Graph().as_default() as G:
     if args.config:
+        logger.warn("Using a config script is not reliable. Please use metagraph.")
         MODEL = imp.load_source('config_script', args.config).Model
         M = MODEL()
         with TowerContext('', is_training=False):

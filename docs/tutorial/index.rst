@@ -39,6 +39,7 @@ User Tutorials
   model
   trainer
   callback
+  faq
 
 Extend Tensorpack
 =================
