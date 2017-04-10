@@ -8,6 +8,8 @@ so you won't need to look at here very often.
 Here are a list of things that were changed, starting from an early version.
 TensorFlow itself also changes API and those are not listed here.
 
++ [2017/04/09](https://github.com/ppwwyyxx/tensorpack/commit/5beab907895aec36bdcaed62e25b976aad7979b8).
+	`ParamRestore` was renamed to `DictRestore`.
 + [2017/03/16](https://github.com/ppwwyyxx/tensorpack/commit/ccae46f4a3ca89dc3df901a338eef8447d19a730).
 	`session_config` option in `TrainConfig` and `PredictConfig` is deprecated.
 	Use `session_creator` to define how to create session instead.

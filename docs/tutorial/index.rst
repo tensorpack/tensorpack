@@ -48,6 +48,7 @@ Extend Tensorpack
   :maxdepth: 1
 
   extend/dataflow
+  extend/augmentor
   extend/model
   extend/trainer
   extend/callback

@@ -18,13 +18,8 @@ See the docstring in DCGAN.py for usage.
 """
 
 # Don't want to mix two examples together, but want to reuse the code.
-# So here just import stuff from DCGAN-CelebA, and change the batch size & model
-import imp
-DCGAN = imp.load_source(
-    'DCGAN',
-    os.path.join(os.path.dirname(__file__), 'DCGAN.py'))
-
-
+# So here just import stuff from DCGAN, and change the batch size & model
+import DCGAN
 G.BATCH = 64
 
 
