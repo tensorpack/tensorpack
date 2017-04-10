@@ -12,7 +12,7 @@ __all__ = ['PeriodicTrigger', 'PeriodicCallback']
 
 class PeriodicTrigger(ProxyCallback):
     """
-    Schedule to trigger a callback every k steps or every k epochs by its ``_trigger()`` method.
+    Schedule to trigger a callback every k steps or every k epochs by its ``trigger()`` method.
     """
     def __init__(self, triggerable, every_k_steps=None, every_k_epochs=None):
         """
@@ -37,7 +37,7 @@ class PeriodicTrigger(ProxyCallback):
             return
         # trigger_step is triggered after run_step, so
         # local_step + 1 is the number of step that have finished
-        if (self.trainer.local_step + 1) % self._step_k == 0:
+        if (self.local_step + 1) % self._step_k == 0:
             self.cb.trigger()
 
     def _trigger_epoch(self):

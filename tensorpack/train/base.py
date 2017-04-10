@@ -16,13 +16,13 @@ from .predict import PredictorFactory
 from .config import TrainConfig
 from .monitor import Monitors, TrainingMonitor
 from ..utils import logger
-from ..utils.develop import deprecated, log_deprecated
+from ..utils.develop import deprecated
 from ..callbacks import Callback, Callbacks, MaintainStepCounter
 from ..tfutils import get_global_step_value
 from ..tfutils.model_utils import describe_model
 from ..tfutils.sesscreate import ReuseSessionCreator
 
-__all__ = ['Trainer', 'StopTraining', 'MultiPredictorTowerTrainer']
+__all__ = ['Trainer', 'StopTraining']
 
 
 class StopTraining(BaseException):
@@ -211,13 +211,3 @@ class Trainer(object):
     @deprecated("Use get_predictors instead!", "2017-05-20")
     def get_predict_funcs(self, input_names, output_names, n):
         return self.get_predictors(input_names, output_names, n)
-
-    @deprecated("Don't need to call it any more!", "2017-03-20")
-    def _setup_predictor_factory(self):
-        pass
-
-
-# back-compat
-class MultiPredictorTowerTrainer(Trainer):
-    def __init__(self, *args, **kwargs):
-        log_deprecated("MultiPredictorTowerTrainer", "Just remove it instead.", "2017-03-21")

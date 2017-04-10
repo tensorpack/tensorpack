@@ -60,7 +60,7 @@ class MergeAllSummaries(Callback):
     def _before_run(self, ctx):
         if self._run_alone:
             return None
-        if self.trainer.local_step == self._total - 1:
+        if self.local_step == self._total - 1:
             return self._fetches
         return None
 

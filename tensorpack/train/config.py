@@ -162,17 +162,6 @@ class TrainConfig(object):
 
         assert len(kwargs) == 0, 'Unknown arguments: {}'.format(str(kwargs.keys()))
 
-    def set_tower(self, nr_tower=None, tower=None):
-        log_deprecated("config.set_tower", "Set config.tower or config.nr_tower directly.", "2017-03-15")
-        assert nr_tower is None or tower is None, "Cannot set both nr_tower and tower!"
-        if nr_tower:
-            tower = list(range(nr_tower))
-        else:
-            if isinstance(tower, int):
-                tower = list(range(tower))
-        self.tower = tower
-        assert isinstance(self.tower, list)
-
     @property
     def nr_tower(self):
         return len(self.tower)
