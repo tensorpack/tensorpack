@@ -90,6 +90,7 @@ class ProgressBar(Callback):
         super(ProgressBar, self).__init__()
         self._names = [get_op_tensor_name(n)[1] for n in names]
         self._tags = [get_op_tensor_name(n)[0].split("/")[-1] for n in names]
+        self._bar = None
 
     def _before_train(self):
         self._last_updated = self.local_step
@@ -125,4 +126,5 @@ class ProgressBar(Callback):
             self._bar.close()
 
     def _after_train(self):
-        self._bar.close()
+        if self._bar:       # training may get killed before the first step
+            self._bar.close()
