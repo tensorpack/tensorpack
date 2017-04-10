@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File: WGAN-CelebA.py
+# File: WGAN.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import os
@@ -8,15 +8,13 @@ import argparse
 
 from tensorpack import *
 from tensorpack.tfutils.summary import add_moving_summary
+from tensorpack.utils.globvars import globalns as G
 import tensorflow as tf
 from GAN import SeparateGANTrainer
 
 """
 Wasserstein-GAN.
-See the docstring in DCGAN-CelebA.py for usage.
-
-Actually, just using the clip is enough for WGAN to work (even without BN in generator).
-The wasserstein loss is not the key factor.
+See the docstring in DCGAN.py for usage.
 """
 
 # Don't want to mix two examples together, but want to reuse the code.
@@ -24,9 +22,13 @@ The wasserstein loss is not the key factor.
 import imp
 DCGAN = imp.load_source(
     'DCGAN',
-    os.path.join(os.path.dirname(__file__), 'DCGAN-CelebA.py'))
+    os.path.join(os.path.dirname(__file__), 'DCGAN.py'))
 
 
+G.BATCH = 64
+
+
+# a hacky way to change loss & optimizer of another script
 class Model(DCGAN.Model):
     # def generator(self, z):
     # you can override generator to remove BatchNorm, it will still work in WGAN
@@ -51,33 +53,20 @@ class Model(DCGAN.Model):
         return optimizer.VariableAssignmentOptimizer(opt, clip)
 
 
-DCGAN.BATCH = 64
 DCGAN.Model = Model
 
 
-def get_config():
-    return TrainConfig(
-        model=Model(),
-        # use the same data in the DCGAN example
-        dataflow=DCGAN.get_data(args.data),
-        callbacks=[ModelSaver()],
-        steps_per_epoch=500,
-        max_epoch=200,
-    )
-
-
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--load', help='load model')
-    parser.add_argument('--sample', action='store_true', help='view generated examples')
-    parser.add_argument('--data', help='a jpeg directory')
-    args = parser.parse_args()
+    args = DCGAN.get_args()
+
     if args.sample:
         DCGAN.sample(args.load)
     else:
         assert args.data
         logger.auto_set_dir()
-        config = get_config()
+        config = DCGAN.get_config()
+        config.steps_per_epoch = 500
+
         if args.load:
             config.session_init = SaverRestore(args.load)
         """

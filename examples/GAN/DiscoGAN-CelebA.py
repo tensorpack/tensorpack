@@ -21,15 +21,14 @@ from GAN import SeparateGANTrainer, GANModelDesc
 2. Put list_attr_celeba.txt into that directory as well.
 3. Start training gender transfer:
     ./DiscoGAN-CelebA.py --data /path/to/img_align_celeba --style-A Male
-4. Visualization on test set to be done. But you can visualize the images in tensorboard now.
+4. Visualize the gender conversion images in tensorboard.
 
 With TF1.0.1, cuda 8.0, cudnn 5.1.10,
 the training on 64x64 images of batch 64 runs 5.4 it/s on Tesla M40.
 This is 2.4x as fast as the original PyTorch implementation.
 
-This is surprising to myself, so I'm not sure my comparison is correct.
 The cause is probably that in the torch implementation,
-a backward() seems to compute gradients for ALL parameters, which is not necessary in GAN.
+a backward() computes gradients for ALL parameters, which is not necessary in GAN.
 """
 
 SHAPE = 64
