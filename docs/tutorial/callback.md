@@ -44,8 +44,20 @@ TrainConfig(
     MovingAverageSummary(),
     # draw a nice progress bar
     ProgressBar(),
-    # run `tf.summary.merge_all` and save results every epoch
+    # run `tf.summary.merge_all` every epoch and send results to monitors
     MergeAllSummaries(),
-  ]
+  ],
+	monitors=[				# monitors are a special kind of callbacks. these are also enabled by default
+		# write all monitor data to tensorboard
+		TFSummaryWriter(),
+		# write all scalar data to a json file, for easy parsing
+		JSONWriter(),
+		# print all scalar data every epoch (can be configured differently)
+		ScalarPrinter(),
+	]
 )
 ```
+
+Notice that callbacks really cover every detail of training, ranging from graph operations to the progress bar.
+This means you can customize every part of the training to your preference, e.g. display something
+different in the progress bar, evaluating part of the summaries at a different frequency, etc.

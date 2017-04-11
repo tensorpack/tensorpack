@@ -4,10 +4,8 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from .base import ProxyCallback, Callback
-from ..utils.develop import log_deprecated
 
-
-__all__ = ['PeriodicTrigger', 'PeriodicCallback']
+__all__ = ['PeriodicTrigger']
 
 
 class PeriodicTrigger(ProxyCallback):
@@ -48,30 +46,3 @@ class PeriodicTrigger(ProxyCallback):
 
     def __str__(self):
         return "PeriodicTrigger-" + str(self.cb)
-
-
-class PeriodicCallback(ProxyCallback):
-    """
-    Wrap a callback so that after every ``period`` epochs, its :meth:`trigger_epoch`
-    method is called.
-
-    This wrapper is legacy. It will only proxy the :meth:`trigger_step` method as-is.
-    To be able to schedule a callback more frequent than once per epoch, use :class:`PeriodicTrigger` instead.
-    """
-
-    def __init__(self, cb, period):
-        """
-        Args:
-            cb(Callback): the callback to be triggered periodically
-            period(int): the period, the number of epochs for a callback to be triggered.
-        """
-        super(PeriodicCallback, self).__init__(cb)
-        self.period = int(period)
-        log_deprecated("PeriodicCallback", "Use the more powerful `PeriodicTrigger`.")
-
-    def _trigger_epoch(self):
-        if self.epoch_num % self.period == 0:
-            self.cb.trigger_epoch()
-
-    def __str__(self):
-        return "Periodic-" + str(self.cb)

@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # File: steps.py
-# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 """ Some common step callbacks. """
 

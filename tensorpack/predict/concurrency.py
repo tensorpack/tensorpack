@@ -9,7 +9,6 @@ from six.moves import queue, range
 import tensorflow as tf
 
 from ..utils import logger
-from ..utils.develop import deprecated
 from ..utils.concurrency import DIE, StoppableThread, ShareSessionThread
 from ..tfutils.model_utils import describe_model
 from .base import OnlinePredictor, OfflinePredictor, AsyncPredictorBase
@@ -164,10 +163,6 @@ class MultiThreadAsyncPredictor(AsyncPredictorBase):
                 "MultiThreadAsyncPredictor.start() has to be called under a default session!"
         for t in self.threads:
             t.start()
-
-    @deprecated("Use 'start()' instead!", "2017-03-11")
-    def run(self):      # temporarily for back-compatibility
-        self.start()
 
     def put_task(self, dp, callback=None):
         """

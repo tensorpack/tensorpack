@@ -4,11 +4,9 @@
 
 import numpy as np
 from abc import ABCMeta, abstractmethod
-import sys
 import six
 from six.moves import zip
 
-from ..utils import logger
 from ..utils.stats import RatioCounter, BinaryStatistics
 from ..tfutils import get_op_tensor_name
 
@@ -140,14 +138,10 @@ class ClassificationError(Inferencer):
 
     def _datapoint(self, outputs):
         vec = outputs[0]
-        if vec.ndim == 0:
-            logger.error("[DEPRECATED] use a 'wrong vector' for ClassificationError instead of nr_wrong. Exiting..")
-            sys.exit(1)
-        else:
-            # TODO put shape assertion into inference-runner
-            assert vec.ndim == 1, "{} is not a vector!".format(self.wrong_tensor_name)
-            batch_size = len(vec)
-            wrong = np.sum(vec)
+        # TODO put shape assertion into inference-runner
+        assert vec.ndim == 1, "{} is not a vector!".format(self.wrong_tensor_name)
+        batch_size = len(vec)
+        wrong = np.sum(vec)
         self.err_stat.feed(wrong, batch_size)
 
     def _after_inference(self):
