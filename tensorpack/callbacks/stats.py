@@ -15,7 +15,7 @@ class StatPrinter(Callback):
     def __init__(self, print_tag=None):
         log_deprecated("StatPrinter",
                        "No need to add StatPrinter to callbacks anymore!",
-                       "2017-03-26")
+                       "2017-05-26")
 
 
 # TODO make it into monitor?

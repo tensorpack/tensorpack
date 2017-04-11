@@ -85,7 +85,8 @@ class ProgressBar(Callback):
     def __init__(self, names=[]):
         """
         Args:
-            names(list): list of string, the names of the tensors to display.
+            names(list): list of string, the names of the tensors to monitor
+                on the progress bar.
         """
         super(ProgressBar, self).__init__()
         self._names = [get_op_tensor_name(n)[1] for n in names]
