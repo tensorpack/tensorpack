@@ -32,7 +32,7 @@ class Model(ModelDesc):
                 InputDesc(tf.int32, (None,), 'label'),
                 ]
 
-    @memoized   # this is necessary for Keras to work under tensorpack
+    @memoized   # this is necessary for sonnet/Keras to work under tensorpack
     def _build_keras_model(self):
         M = Sequential()
         M.add(KL.Conv2D(32, 3, activation='relu', input_shape=[IMAGE_SIZE, IMAGE_SIZE, 1], padding='same'))
@@ -83,6 +83,7 @@ class Model(ModelDesc):
         return tf.train.AdamOptimizer(lr)
 
 
+# Keras needs an extra input
 class KerasCallback(Callback):
     def __init__(self, isTrain):
         self._isTrain = isTrain

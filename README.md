@@ -33,8 +33,9 @@ The examples are not only for demonstration of the framework -- you can train th
 
 It's Yet Another TF wrapper, but different in:
 1. Not focus on models.
-	+ It includes only a few common models, and helpful tools such as `LinearWrap` to simplify large models.
-	  But you can use any other TF wrappers here, such as slim/tflearn/tensorlayer.
+	+ There are already too many symbolic function wrappers.
+		Tensorpack includes only a few common models, and helpful tools such as `LinearWrap` to simplify large models.
+	  But you can use any other wrappers within tensorpack, such as sonnet/Keras/slim/tflearn/tensorlayer/....
 
 2. Focus on large datasets.
 	+ __DataFlow__ allows you to process large datasets such as ImageNet in Python without blocking the training.

@@ -21,7 +21,7 @@ Basically, `_get_inputs` should define the metainfo of all the possible placehol
 the argument `input_tensors` is the list of input tensors matching `_get_inputs`.
 
 You can use any symbolic functions in `_build_graph`, including TensorFlow core library
-functions, TensorFlow slim layers, or functions in other packages such as tflean, tensorlayer.
+functions and other symbolic libraries (see below).
 
 tensorpack also contains a small collection of common model primitives,
 such as conv/deconv, fc, batch normalization, pooling layers, and some custom loss functions.
@@ -62,12 +62,23 @@ l = FullyConnected('fc1', l, 10, nl=tf.identity)
 
 ### Use Models outside Tensorpack
 
-You can use the tensorpack models alone as a simple symbolic function library, and write your own
+You can use tensorpack models alone as a simple symbolic function library, and write your own
 training code instead of using tensorpack trainers.
 
 To do this, just enter a [TowerContext](http://tensorpack.readthedocs.io/en/latest/modules/tfutils.html#tensorpack.tfutils.TowerContext)
 when you define your model:
 ```python
 with TowerContext('', is_training=True):
-	# call any tensorpack symbolic functions
+	# call any tensorpack layer
 ```
+
+### Use Other Symbolic Libraries within Tensorpack
+
+When defining the model you can construct the graph using whatever library you feel comfortable with.
+
+Usually, slim/tflearn/tensorlayer are just symbolic functions, calling them is nothing different
+from calling `tf.add`. However it's a bit different to use sonnet/Keras.
+
+sonnet/Keras manages the variable scope by their own model classes, and calling their symbolic functions
+always creates new variable scope. See the [Keras example](../examples/mnist-keras.py) for how to
+use them within tensorpack.
