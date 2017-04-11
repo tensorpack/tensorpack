@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 # File: imagenet-resnet.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import cv2
 import sys
@@ -27,6 +26,9 @@ class Model(ModelDesc):
         self.data_format = data_format
 
     def _get_inputs(self):
+        # uint8 instead of float32 is used as input type to reduce copy overhead.
+        # It might hurt the performance a liiiitle bit.
+        # The pretrained models were trained with float32.
         return [InputDesc(tf.uint8, [None, INPUT_SHAPE, INPUT_SHAPE, 3], 'input'),
                 InputDesc(tf.int32, [None], 'label')]
 
@@ -197,6 +199,7 @@ def get_config(fake=False, data_format='NCHW'):
     dataset_val = get_data('val', fake=fake)
 
     return TrainConfig(
+        model=Model(data_format=data_format),
         dataflow=dataset_train,
         callbacks=[
             ModelSaver(),
@@ -207,7 +210,6 @@ def get_config(fake=False, data_format='NCHW'):
                                       [(30, 1e-2), (60, 1e-3), (85, 1e-4), (95, 1e-5)]),
             HumanHyperParamSetter('learning_rate'),
         ],
-        model=Model(data_format=data_format),
         steps_per_epoch=5000,
         max_epoch=110,
     )

@@ -18,37 +18,17 @@ class StatPrinter(Callback):
                        "2017-05-26")
 
 
-# TODO make it into monitor?
 class SendStat(Callback):
-    """
-    Execute a command with some specific stats.
-    This is useful for, e.g. building a custom statistics monitor.
-    """
-    def __init__(self, command, stats):
-        """
-        Args:
-            command(str): a command to execute. Use format string with stat
-                names as keys.
-            stats(list or str): stat name(s) to use.
-
-        Example:
-            Send the stats to your phone through pushbullet:
-
-            .. code-block:: python
-
-                SendStat('curl -u your_id: https://api.pushbullet.com/v2/pushes \\
-                         -d type=note -d title="validation error" \\
-                         -d body={validation_error} > /dev/null 2>&1',
-                         'validation_error')
-        """
+    """ An equivalent of :class:`SendMonitorData`, but as a normal callback. """
+    def __init__(self, command, names):
         self.command = command
-        if not isinstance(stats, list):
-            stats = [stats]
-        self.stats = stats
+        if not isinstance(names, list):
+            names = [names]
+        self.names = names
 
     def _trigger(self):
         M = self.trainer.monitors
-        v = {k: M.get_latest(k) for k in self.stats}
+        v = {k: M.get_latest(k) for k in self.names}
         cmd = self.command.format(**v)
         ret = os.system(cmd)
         if ret != 0:

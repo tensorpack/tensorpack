@@ -16,7 +16,7 @@ from ..utils import logger
 from .base import Callback
 
 __all__ = ['TrainingMonitor', 'Monitors',
-           'TFSummaryWriter', 'JSONWriter', 'ScalarPrinter']
+           'TFSummaryWriter', 'JSONWriter', 'ScalarPrinter', 'SendMonitorData']
 
 
 class TrainingMonitor(Callback):
@@ -262,3 +262,55 @@ class ScalarHistory(TrainingMonitor):
 
     def get_history(self, name):
         return self._dic[name]
+
+
+class SendMonitorData(TrainingMonitor):
+    """
+    Execute a command with some specific scalar monitor data.
+    This is useful for, e.g. building a custom statistics monitor.
+
+    It will try to send once receiving all the stats
+    """
+    def __init__(self, command, names):
+        """
+        Args:
+            command(str): a command to execute. Use format string with stat
+                names as keys.
+            names(list or str): data name(s) to use.
+
+        Example:
+            Send the stats to your phone through pushbullet:
+
+            .. code-block:: python
+
+                SendMonitorData('curl -u your_id: https://api.pushbullet.com/v2/pushes \\
+                         -d type=note -d title="validation error" \\
+                         -d body={validation_error} > /dev/null 2>&1',
+                         'validation_error')
+        """
+        self.command = command
+        if not isinstance(names, list):
+            names = [names]
+        self.names = names
+        self.dic = {}
+
+    def put_scalar(self, name, val):
+        if name in self.names:
+            self.dic[name] = val
+
+    def _trigger_step(self):
+        self._try_send()
+
+    def _trigger_epoch(self):
+        self._try_send()
+
+    def _try_send(self):
+        try:
+            v = {k: self.dic[k] for k in self.names}
+        except KeyError:
+            return
+        cmd = self.command.format(**v)
+        ret = os.system(cmd)
+        if ret != 0:
+            logger.error("Command {} failed with ret={}!".format(cmd, ret))
+        self.dic = {}
