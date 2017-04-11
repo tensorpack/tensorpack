@@ -143,6 +143,8 @@ class JSONWriter(TrainingMonitor):
     """
     Write all scalar data to a json, grouped by their global step.
     """
+    FILENAME = 'stat.json'
+
     def __new__(cls):
         if logger.LOG_DIR:
             return super(JSONWriter, cls).__new__(cls)
@@ -152,7 +154,7 @@ class JSONWriter(TrainingMonitor):
 
     def _setup_graph(self):
         self._dir = logger.LOG_DIR
-        self._fname = os.path.join(self._dir, 'stat.json')
+        self._fname = os.path.join(self._dir, self.FILENAME)
 
         if os.path.isfile(self._fname):
             # TODO make a backup first?
@@ -160,6 +162,14 @@ class JSONWriter(TrainingMonitor):
             with open(self._fname) as f:
                 self._stats = json.load(f)
                 assert isinstance(self._stats, list), type(self._stats)
+
+            try:
+                epoch = self._stats[-1]['epoch_num'] + 1
+            except Exception:
+                pass
+            else:
+                logger.info("Found training history from JSON, now starting from epoch number {}.".format(epoch))
+                self.trainer.config.starting_epoch = epoch
         else:
             self._stats = []
         self._stat_now = {}

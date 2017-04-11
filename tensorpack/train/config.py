@@ -6,7 +6,8 @@ import tensorflow as tf
 
 from ..callbacks import (
     Callbacks, MovingAverageSummary,
-    ProgressBar, MergeAllSummaries)
+    ProgressBar, MergeAllSummaries,
+    TFSummaryWriter, JSONWriter, ScalarPrinter)
 from ..dataflow.base import DataFlow
 from ..models import ModelDesc
 from ..utils import logger
@@ -16,7 +17,6 @@ from ..tfutils import (JustCurrentSession,
 from ..tfutils.sesscreate import NewSessionCreator
 from ..tfutils.optimizer import apply_grad_processors
 from .input_data import InputData
-from ..callbacks.monitor import TFSummaryWriter, JSONWriter, ScalarPrinter
 
 __all__ = ['TrainConfig']
 
@@ -44,7 +44,7 @@ class TrainConfig(object):
             callbacks (list): a list of :class:`Callback` to perform during training.
             extra_callbacks (list): the same as ``callbacks``. This argument
                 is only used to provide the defaults. The defaults are
-                ``[MovingAverageSummary(), ProgressBar(), MergeAllSummaries()]``. The list of
+                ``[MovingAverageSummary(), ProgressBar(), MergeAllSummaries(), LoadEpochNum()]``. The list of
                 callbacks that will be used in the end are ``callbacks + extra_callbacks``.
             monitors (list): a list of :class:`TrainingMonitor`.
                 Defaults to ``[TFSummaryWriter(), JSONWriter(), ScalarPrinter()]``.
