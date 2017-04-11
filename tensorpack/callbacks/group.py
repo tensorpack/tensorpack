@@ -72,7 +72,7 @@ class Callbacks(Callback):
         self.cbs = cbs
 
     def _setup_graph(self):
-        with tf.name_scope(None):
+        with tf.name_scope(None):   # clear the name scope
             for cb in self.cbs:
                 cb.setup_graph(self.trainer)
 

@@ -13,24 +13,25 @@ import re
 
 import tensorflow as tf
 from ..utils import logger
+from .base import Callback
 
 __all__ = ['TrainingMonitor', 'Monitors',
            'TFSummaryWriter', 'JSONWriter', 'ScalarPrinter']
 
 
-class TrainingMonitor(object):
+class TrainingMonitor(Callback):
     """
     Monitor a training progress, by processing different types of
     summary/statistics from trainer.
 
     .. document private functions
-    .. automethod:: _setup
+    .. automethod:: _setup_graph
     """
-    def setup(self, trainer):
-        self._trainer = trainer
-        self._setup()
+    def setup_graph(self, trainer):
+        self.trainer = trainer
+        self._setup_graph()
 
-    def _setup(self):
+    def _setup_graph(self):
         """ Override this method to setup the monitor."""
         pass
 
@@ -51,12 +52,6 @@ class TrainingMonitor(object):
 
     # TODO put other types
 
-    def flush(self):
-        pass
-
-    def close(self):
-        pass
-
 
 class NoOpMonitor(TrainingMonitor):
     pass
@@ -67,21 +62,11 @@ class Monitors(TrainingMonitor):
     Merge monitors together for trainer to use.
     """
     def __init__(self, monitors):
-        # TODO filter by names
         self._scalar_history = ScalarHistory()
         self._monitors = monitors + [self._scalar_history]
 
-    def setup(self, trainer):
-        for m in self._monitors:
-            m.setup(trainer)
-
-    def flush(self):
-        for m in self._monitors:
-            m.flush()
-
-    def close(self):
-        for m in self._monitors:
-            m.close()
+    def _setup_graph(self):
+        self._scalar_history.setup_graph(self.trainer)
 
     def _dispatch_put_summary(self, summary):
         for m in self._monitors:
@@ -141,17 +126,16 @@ class TFSummaryWriter(TrainingMonitor):
             logger.warn("logger directory was not set. Ignore TFSummaryWriter.")
             return NoOpMonitor()
 
-    def setup(self, trainer):
-        super(TFSummaryWriter, self).setup(trainer)
+    def _setup_graph(self):
         self._writer = tf.summary.FileWriter(logger.LOG_DIR, graph=tf.get_default_graph())
 
     def put_summary(self, summary):
-        self._writer.add_summary(summary, self._trainer.global_step)
+        self._writer.add_summary(summary, self.trainer.global_step)
 
-    def flush(self):
+    def _trigger(self):
         self._writer.flush()
 
-    def close(self):
+    def _after_train(self):
         self._writer.close()
 
 
@@ -166,8 +150,7 @@ class JSONWriter(TrainingMonitor):
             logger.warn("logger directory was not set. Ignore JSONWriter.")
             return NoOpMonitor()
 
-    def setup(self, trainer):
-        super(JSONWriter, self).setup(trainer)
+    def _setup_graph(self):
         self._dir = logger.LOG_DIR
         self._fname = os.path.join(self._dir, 'stat.json')
 
@@ -184,11 +167,11 @@ class JSONWriter(TrainingMonitor):
         self._last_gs = -1
 
     def put_scalar(self, name, val):
-        gs = self._trainer.global_step
+        gs = self.trainer.global_step
         if gs != self._last_gs:
             self._push()
             self._last_gs = gs
-            self._stat_now['epoch_num'] = self._trainer.epoch_num
+            self._stat_now['epoch_num'] = self.trainer.epoch_num
             self._stat_now['global_step'] = gs
         self._stat_now[name] = float(val)   # TODO will fail for non-numeric
 
@@ -208,7 +191,7 @@ class JSONWriter(TrainingMonitor):
         except IOError:  # disk error sometimes..
             logger.exception("Exception in StatHolder.finalize()!")
 
-    def flush(self):
+    def _trigger(self):
         self._push()
 
 
@@ -221,7 +204,7 @@ class ScalarPrinter(TrainingMonitor):
         self._whitelist = None
         self._blacklist = set([])
 
-    def setup(self, _):
+    def _setup_graph(self):
         self._dic = {}
 
     def put_scalar(self, name, val):
@@ -233,7 +216,7 @@ class ScalarPrinter(TrainingMonitor):
                 if k not in self._blacklist:
                     logger.info('{}: {:.5g}'.format(k, v))
 
-    def flush(self):
+    def _trigger(self):
         self._print_stat()
         self._dic = {}
 
@@ -242,7 +225,7 @@ class ScalarHistory(TrainingMonitor):
     """
     Only used by monitors internally.
     """
-    def setup(self, _):
+    def _setup_graph(self):
         self._dic = defaultdict(list)
 
     def put_scalar(self, name, val):

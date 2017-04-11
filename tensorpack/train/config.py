@@ -16,7 +16,7 @@ from ..tfutils import (JustCurrentSession,
 from ..tfutils.sesscreate import NewSessionCreator
 from ..tfutils.optimizer import apply_grad_processors
 from .input_data import InputData
-from .monitor import TFSummaryWriter, JSONWriter, ScalarPrinter
+from ..callbacks.monitor import TFSummaryWriter, JSONWriter, ScalarPrinter
 
 __all__ = ['TrainConfig']
 

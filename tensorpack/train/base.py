@@ -14,10 +14,10 @@ from tensorflow.python.training.monitored_session \
 
 from .predict import PredictorFactory
 from .config import TrainConfig
-from .monitor import Monitors, TrainingMonitor
 from ..utils import logger
 from ..utils.develop import deprecated
 from ..callbacks import Callback, Callbacks, MaintainStepCounter
+from ..callbacks.monitor import Monitors, TrainingMonitor
 from ..tfutils import get_global_step_value
 from ..tfutils.model_utils import describe_model
 from ..tfutils.sesscreate import ReuseSessionCreator
@@ -40,7 +40,7 @@ class Trainer(object):
         config (TrainConfig): the config used in this trainer.
         model (ModelDesc)
         sess (tf.Session): the current session in use.
-        monitors (Monitors): the monitors
+        monitors (Monitors): the monitors. Callbacks can use it for logging.
 
         epoch_num (int): the number of epochs that have finished.
         local_step (int): the number of steps that have finished in the current epoch.
@@ -86,6 +86,7 @@ class Trainer(object):
         assert not isinstance(self.monitors, Monitors), \
             "Cannot register more monitors after trainer was setup!"
         self.monitors.append(mon)
+        self.register_callback(mon)
 
     def train(self):
         """ Start training """
@@ -106,12 +107,12 @@ class Trainer(object):
         """
         self._setup()   # subclass will setup the graph
 
-        describe_model()
-        # some final operations that might modify the graph
-        logger.info("Setup monitors ...")
         self.monitors = Monitors(self.monitors)
-        self.monitors.setup(weakref.proxy(self))
+        self.register_callback(self.monitors)
 
+        describe_model()
+
+        # some final operations that might modify the graph
         logger.info("Setup callbacks graph ...")
         self._callbacks = Callbacks(self._callbacks)
         self._callbacks.setup_graph(weakref.proxy(self))
@@ -168,7 +169,6 @@ class Trainer(object):
                     # trigger epoch outside the timing region.
                     self._trigger_epoch()
                     self._callbacks.trigger_epoch()
-                    self.monitors.flush()
             except (StopTraining, tf.errors.OutOfRangeError):
                 logger.info("Training was stopped.")
             except KeyboardInterrupt:
@@ -177,7 +177,6 @@ class Trainer(object):
                 raise
             finally:
                 self._callbacks.after_train()
-                self.monitors.close()
                 self._monitored_sess.close()
 
     # Predictor related methods:    TODO
