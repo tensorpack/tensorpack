@@ -221,7 +221,8 @@ class MapData(ProxyDataFlow):
                 Note that if you use the filter feature, ``ds.size()`` will be incorrect.
 
         Note:
-            Be careful if func modifies datapoints.
+            Please make sure func doesn't modify the components
+            unless you're certain it's safe.
         """
         super(MapData, self).__init__(ds)
         self.func = func
@@ -245,8 +246,9 @@ class MapDataComponent(MapData):
             index (int): index of the component.
 
         Note:
-            This proxy itself doesn't modify the datapoints. But be careful because func
-            may modify the components.
+            This proxy itself doesn't modify the datapoints.
+            But please make sure func doesn't modify the components
+            unless you're certain it's safe.
         """
         def f(dp):
             r = func(dp[index])

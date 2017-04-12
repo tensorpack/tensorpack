@@ -24,7 +24,7 @@ class PredictorFactory(object):
         def fn(_):
             self.model.build_graph(self.model.get_reused_placehdrs())
         self._tower_builder = PredictorTowerBuilder(fn)
-        assert isinstance(self.towers, list)
+        assert isinstance(self.towers, list), self.towers
 
     def get_predictor(self, input_names, output_names, tower):
         """
