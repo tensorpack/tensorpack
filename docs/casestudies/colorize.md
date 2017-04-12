@@ -299,7 +299,7 @@ def get_config():
     return TrainConfig(
         dataflow=dataset,
         optimizer=tf.train.AdamOptimizer(lr),
-        callbacks=[PeriodicCallback(ModelSaver(), 3)],
+        callbacks=[PeriodicTrigger(ModelSaver(), every_k_epochs=3)],
         model=Model(),
         steps_per_epoch=dataset.size(),
         max_epoch=100,

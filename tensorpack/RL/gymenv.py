@@ -84,7 +84,10 @@ except ImportError:
 
 
 if __name__ == '__main__':
-    env = GymEnv('Breakout-v0', viz=0.1)
+    import gym_ple, cv2  # noqa
+    import os
+    os.environ["SDL_VIDEODRIVER"] = "dummy"
+    env = GymEnv('FlappyBird-v0', viz=0.1)
     num = env.get_action_space().num_actions()
 
     from ..utils import get_rng
@@ -93,6 +96,10 @@ if __name__ == '__main__':
         act = rng.choice(range(num))
         # print act
         r, o = env.action(act)
-        env.current_state()
+        state = env.current_state()
+        state = cv2.resize(state[:450], (84, 84))
+        cv2.imshow("aa", state)
+        cv2.waitKey(3)
+        print(state.shape)
         if r != 0 or o:
             print(r, o)

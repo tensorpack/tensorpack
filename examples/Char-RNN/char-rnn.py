@@ -73,7 +73,7 @@ class Model(ModelDesc):
     def _build_graph(self, inputs):
         input, nextinput = inputs
 
-        cell = rnn.MultiRNNCell([rnn.BasicLSTMCell(num_units=param.rnn_size)
+        cell = rnn.MultiRNNCell([rnn.LSTMBlockCell(num_units=param.rnn_size)
                                 for _ in range(param.num_rnn_layer)])
 
         def get_v(n):
@@ -91,7 +91,6 @@ class Model(ModelDesc):
 
         input_list = tf.unstack(input_feature, axis=1)  # seqlen x (Bxrnnsize)
 
-        # seqlen is 1 in inference. don't need loop_function
         outputs, last_state = rnn.static_rnn(cell, input_list, initial, scope='rnnlm')
         self.last_state = tf.identity(last_state, 'last_state')
 

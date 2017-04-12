@@ -220,7 +220,7 @@ def get_config():
                                       [(80, 2), (100, 3), (120, 4), (140, 5)]),
             master,
             StartProcOrThread(master),
-            PeriodicCallback(Evaluator(EVAL_EPISODE, ['state'], ['policy']), 2),
+            PeriodicTrigger(Evaluator(EVAL_EPISODE, ['state'], ['policy']), every_k_epochs=2),
         ],
         session_creator=sesscreate.NewSessionCreator(
             config=get_default_sess_config(0.5)),
