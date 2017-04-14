@@ -151,11 +151,6 @@ def BilinearUpSample(x, shape):
     Returns:
         tf.Tensor: a NHWC tensor.
     """
-    # inp_shape = tf.shape(x)
-    # return tf.image.resize_bilinear(x,
-    # tf.stack([inp_shape[1]*shape,inp_shape[2]*shape]),
-    # align_corners=True)
-
     inp_shape = x.get_shape().as_list()
     ch = inp_shape[3]
     assert ch is not None
@@ -177,12 +172,16 @@ def BilinearUpSample(x, shape):
         return ret
     w = bilinear_conv_filler(filter_shape)
     w = np.repeat(w, ch * ch).reshape((filter_shape, filter_shape, ch, ch))
+
     weight_var = tf.constant(w, tf.float32,
                              shape=(filter_shape, filter_shape, ch, ch),
                              name='bilinear_upsample_filter')
-    deconv = tf.nn.conv2d_transpose(x, weight_var,
-                                    tf.shape(x) * tf.constant([1, shape, shape, 1], tf.int32),
+    x = tf.pad(x, [[0, 0], [shape - 1, shape - 1], [shape - 1, shape - 1], [0, 0]], mode='SYMMETRIC')
+    out_shape = tf.shape(x) * tf.constant([1, shape, shape, 1], tf.int32)
+    deconv = tf.nn.conv2d_transpose(x, weight_var, out_shape,
                                     [1, shape, shape, 1], 'SAME')
+    edge = shape * (shape - 1)
+    deconv = deconv[:, edge:-edge, edge:-edge, :]
 
     if inp_shape[1]:
         inp_shape[1] *= shape
@@ -221,15 +220,15 @@ class TestPool(TestModel):
         res = self.run_variable(output)[0, :, :, 0]
 
         from skimage.transform import rescale
-        res2 = rescale(mat, scale, mode='constant')
+        res2 = rescale(mat, scale, mode='edge')
 
         diff = np.abs(res2 - res)
 
         # TODO not equivalent to rescale on edge?
-        diff[0, :] = 0
-        diff[-1, :] = 0
-        diff[:, 0] = 0
-        diff[:, -1] = 0
+        #diff[0, :] = 0
+        #diff[-1, :] = 0
+        #diff[:, 0] = 0
+        #diff[:, -1] = 0
         # if not diff.max() < 1e-4:
         #     import IPython
         #     IPython.embed(config=IPython.terminal.ipapp.load_default_config())
