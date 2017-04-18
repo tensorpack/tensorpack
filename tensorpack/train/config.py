@@ -94,8 +94,8 @@ class TrainConfig(object):
                 MovingAverageSummary(),
                 ProgressBar(),
                 MergeAllSummaries()]
-        self.callbacks = callbacks + extra_callbacks
-        assert_type(self.callbacks, list)
+        self._callbacks = callbacks + extra_callbacks
+        assert_type(self._callbacks, list)
 
         if monitors is None:
             monitors = [TFSummaryWriter(), JSONWriter(), ScalarPrinter()]
@@ -169,6 +169,10 @@ class TrainConfig(object):
     @nr_tower.setter
     def nr_tower(self, value):
         self.tower = list(range(value))
+
+    @property
+    def callbacks(self):        # disable setter
+        return self._callbacks
 
     @property
     def optimizer(self):

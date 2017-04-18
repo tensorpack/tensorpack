@@ -124,7 +124,7 @@ def get_config():
         dataflow=get_data(opt.data),
         callbacks=[ModelSaver()],
         steps_per_epoch=300,
-        max_epoch=100,
+        max_epoch=200,
     )
 
 
