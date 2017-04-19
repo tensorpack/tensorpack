@@ -12,7 +12,7 @@ from .base import DataFlow, ProxyDataFlow, RNGDataFlow
 from ..utils import logger, get_tqdm, get_rng
 
 __all__ = ['TestDataSpeed', 'PrintData', 'BatchData', 'BatchDataByShape', 'FixedSizeData', 'MapData',
-           'MapDataComponent', 'RepeatedData', 'RandomChooseData',
+           'MapDataComponent', 'RepeatedData', 'RepeatedDataPoint', 'RandomChooseData',
            'RandomMixData', 'JoinData', 'ConcatData', 'SelectComponent',
            'LocallyShuffleData', 'CacheData']
 
@@ -293,6 +293,31 @@ class RepeatedData(ProxyDataFlow):
             for _ in range(self.nr):
                 for dp in self.ds.get_data():
                     yield dp
+
+
+class RepeatedDataPoint(ProxyDataFlow):
+
+    """ Take data points from another DataFlow and produce them a
+    certain number of times dp1, ..., dp1, dp2, ..., dp2, ...
+    """
+
+    def __init__(self, ds, nr):
+        """
+        Args:
+            ds (DataFlow): input DataFlow
+            nr (int): number of times to repeat each datapoint.
+        """
+        self.nr = int(nr)
+        assert self.nr >= 1, self.nr
+        super(RepeatedDataPoint, self).__init__(ds)
+
+    def size(self):
+        return self.ds.size() * self.nr
+
+    def get_data(self):
+        for dp in self.ds.get_data():
+            for _ in range(self.nr):
+                yield dp
 
 
 class RandomChooseData(RNGDataFlow):
