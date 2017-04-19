@@ -4,7 +4,7 @@
 
 from __future__ import division
 import numpy as np
-from copy import copy, deepcopy
+from copy import copy
 from termcolor import colored
 from collections import deque, defaultdict
 from six.moves import range, map
@@ -315,7 +315,7 @@ class RepeatedDataPoint(ProxyDataFlow):
     def get_data(self):
         for dp in self.ds.get_data():
             for _ in range(self.nr):
-                yield deepcopy(dp)
+                yield dp
 
 
 class RandomChooseData(RNGDataFlow):
