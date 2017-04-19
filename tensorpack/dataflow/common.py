@@ -302,14 +302,11 @@ class RepeatedDataPoint(ProxyDataFlow):
             ds (DataFlow): input DataFlow
             nr (int): number of times to repeat each datapoint.
         """
-        self.nr = nr
+        self.nr = int(nr)
+        assert self.nr >= 1, self.nr
         super(RepeatedDataPoint, self).__init__(ds)
 
     def size(self):
-        """
-        Raises:
-            :class:`ValueError` when nr == -1.
-        """
         return self.ds.size() * self.nr
 
     def get_data(self):
