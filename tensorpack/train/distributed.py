@@ -4,10 +4,22 @@
 
 import tensorflow as tf
 from .input_data import QueueInput
+import weakref
+
+from tensorflow.python.training.monitored_session \
+    import _HookedSession as HookedSession
 
 from .base import Trainer
 from .multigpu import SyncMultiGPUTrainer
 from ..utils import logger
+
+from ..callbacks.monitor import Monitors
+from ..tfutils.model_utils import describe_model
+from ..callbacks import Callbacks
+from ..tfutils.common import get_global_step_var
+
+
+__all__ = ['DistributedTrainer']
 
 
 class DistributedTrainer(Trainer):
@@ -17,23 +29,20 @@ class DistributedTrainer(Trainer):
     """
 
     def __init__(self, config, task_index, job_name, input_queue=None):
-        """Initialize a distributed version for training a network (sync-version)
+        """Initialize a distributed version for training a network across different machines
 
         Args:
-            config (TYPE): Description
-            task_index (TYPE): Description
-            job_name (TYPE): Description
-            input_queue (None, optional): Description
+            config (TrainConfig): same as in :class:`QueueInputTrainer`.
+            task_index (int): identifier for current task
+            job_name (str): parameter server "ps" or "worker"
+            input_queue (None, optional): same as in :class:`QueueInputTrainer`.
 
         Example:
-        An example of config is
+        The config should contain the cluster_spec as described in the TF documentation
             config = {
-                'cluster':{
+                cluster_spec={
                     'ps': ['machineA:2222'],
-                    'worker': [
-                        {'host': 'machineA:2223', 'gpu': [0]},
-                        {'host': 'machineB:2224', 'gpu': [1]}
-                    ]
+                    'worker': ['machineA:2223','machineB:2224']
                 }
             }
         """
@@ -42,16 +51,14 @@ class DistributedTrainer(Trainer):
         else:
             self._input_method = config.data
 
-        super(Trainer, self).__init__(config)
+        super(DistributedTrainer, self).__init__(config)
 
         # for convenience
-        cluster_config = config['cluster']
+        cluster_config = config.cluster_spec
+        assert cluster_config, "distributed version requires a cluster_spec entry"
 
         # some sanity checks
-        assert len(config.tower) >= 1, "Distributed trainer must be used with at least one tower."
-        assert len(cluster_config['ps']) >= 1, "Distributed trainer requires at least one parameter server."
-        assert len(cluster_config['worker']) >= 1, "Distributed trainer requires at least one worker."
-        errmsg = "they are only two kinds of jobs ('ps', 'worker') but {} was given".format(job_name)
+        errmsg = "they are only two kinds of jobs ('ps', 'worker') but '{}' was given".format(job_name)
         assert job_name in ["ps", "worker"], errmsg
 
         if job_name == "ps":
@@ -67,54 +74,69 @@ class DistributedTrainer(Trainer):
             assert tf.test.is_gpu_available()
 
         # specify cluster layout
-        ps_hosts = cluster_config['ps']
-        worker_hosts = [k['host'] for k in cluster_config['worker']]
-        self.cluster_spec = tf.train.ClusterSpec({"ps": ps_hosts, "worker": worker_hosts})
+        self.cluster_spec = tf.train.ClusterSpec(cluster_config)
 
         # specify current entity
         self.server = tf.train.Server(self.cluster_spec, job_name=job_name, task_index=task_index)
         self.task_index = task_index
         self.job_name = job_name
-        self.num_workers = len(worker_hosts)
 
     def _setup(self):
-        super(DistributedTrainer, self)._setup()
+        pass
 
-        cluster_config = self.config['cluster']
+    def run_step(self):
+        self.hooked_sess.run(self.train_op)
+
+    def setup(self):
+
+        self.monitors = Monitors(self.monitors)
+        self.register_callback(self.monitors)
+
+        describe_model()
+
+        # some final operations that might modify the graph
+        logger.info("Setup callbacks graph ...")
+        self._callbacks = Callbacks(self._callbacks)
+        self._callbacks.setup_graph(weakref.proxy(self))
+
         is_chief = (self.task_index == 0)
+        num_workers = len(self.config.cluster_spec['worker'])
 
         if self.job_name == "ps":
             self.server.join()
         else:
             # build model etc
-            logger.info("Building worker {}...".format(cluster_config['worker'][self.task_index]))
-            with tf.Graph().as_default():
-                with tf.device(tf.train.replica_device_setter(worker_device="/job:worker/task:%d" % self.task_index,
-                                                              cluster=self.cluster_spec)):
-                    device_trainer = SyncMultiGPUTrainer(self.config)
-                    # TODO: is this place the best spot for this code?
-                    opt = device_trainer.config.optimizer
-                    opt = tf.train.SyncReplicasOptimizer(opt, replicas_to_aggregate=self.num_workers,
-                                                         total_num_replicas=self.num_workers)
-                    device_trainer.config.optimizer = opt
-                    device_trainer._setup()
+            logger.info("Building worker {}...".format(self.config.cluster_spec['worker'][self.task_index]))
+            with tf.device(tf.train.replica_device_setter(worker_device="/job:worker/task:%d" % self.task_index,
+                                                          cluster=self.cluster_spec)):
+                device_trainer = SyncMultiGPUTrainer(self.config)
 
-                    init_token_op = opt.get_init_tokens_op()
-                    chief_queue_runner = opt.get_chief_queue_runner()
+                opt = device_trainer.config.optimizer
+                # we omit the "setup()"-part
+                device_trainer._setup()
 
-                    # this should be actually part of sessinit.py or sesscreate.py
-                    global_step = tf.train.get_global_step()  # really?
-                    init = tf.global_variables_initializer()
-                    sv = tf.train.Supervisor(is_chief=is_chief,
-                                             init_op=init,
-                                             global_step=global_step)
-                    # Create a session for running Ops on the Graph.
-                    config_proto = tf.ConfigProto(allow_soft_placement=True)
-                    sess = sv.prepare_or_wait_for_session(self.server.target, config=config_proto)
+                init_token_op = opt.get_init_tokens_op()
+                chief_queue_runner = opt.get_chief_queue_runner()
 
-                    # TODO: create a new sess-init class for distributed setting
-                    self.train_op = opt.apply_gradients(device_trainer.grads, name='min_op')
+                global_step = get_global_step_var()
 
-                if is_chief:
-                    sv.start_queue_runners(sess, [chief_queue_runner])
-                    sess.run(init_token_op)
+                # init session
+                init_op = tf.global_variables_initializer()
+
+                logger.info("Graph variables initialized.")
+                self.train_op = opt.apply_gradients(device_trainer.grads, name='min_op', global_step=global_step)
+
+            config_proto = tf.ConfigProto(allow_soft_placement=True)
+            sv = tf.train.Supervisor(is_chief=is_chief, init_op=init_op)
+            self.sess = sv.prepare_or_wait_for_session(self.server.target, config=config_proto)
+
+            if is_chief:
+                sv.start_queue_runners(self.sess, [chief_queue_runner])
+                self.sess.run(init_token_op)
+
+        hooks = self._callbacks.get_hooks()
+        self.hooked_sess = HookedSession(self.sess, hooks)
+
+        # create session
+        logger.info("Finalize the graph, create the session ...")
+        # self.sess.graph.finalize()
