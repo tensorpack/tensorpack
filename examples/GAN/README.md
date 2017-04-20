@@ -16,6 +16,8 @@ Reproduce the following GAN-related methods:
 
 + DiscoGAN ([Learning to Discover Cross-Domain Relations with Generative Adversarial Networks](https://arxiv.org/abs/1703.05192))
 
++ BEGAN ([BEGAN: Boundary Equilibrium Generative Adversarial Networks](https://arxiv.org/abs/1703.10717))
+
 Please see the __docstring__ in each script for detailed usage and pretrained models.
 
 ## DCGAN.py
@@ -56,9 +58,9 @@ It then maximizes mutual information between these latent variables and the imag
 
 Train a simple GAN on mnist, conditioned on the class labels.
 
-## WGAN.py, Improved-WGAN.py
+## WGAN.py, Improved-WGAN.py, BEGAN.py
 
-Just some small modifications on top of DCGAN.py.
+These variants are implemented by some small modifications on top of DCGAN.py.
 
 ## DiscoGAN-CelebA.py
 

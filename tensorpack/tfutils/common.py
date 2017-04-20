@@ -34,11 +34,21 @@ def get_default_sess_config(mem_fraction=0.99):
         tf.ConfigProto: the config to use.
     """
     conf = tf.ConfigProto()
+
+    conf.allow_soft_placement = True
+    # conf.log_device_placement = True
+
+    # https://github.com/tensorflow/tensorflow/issues/9322#issuecomment-295758107
+    # can speed up a bit
+    conf.intra_op_parallelism_threads = 1
+    conf.inter_op_parallelism_threads = 0
+
     conf.gpu_options.per_process_gpu_memory_fraction = mem_fraction
     conf.gpu_options.allocator_type = 'BFC'
     conf.gpu_options.allow_growth = True
-    conf.allow_soft_placement = True
-    # conf.log_device_placement = True
+    # force gpu compatible?
+
+    conf.graph_options.optimizer_options.global_jit_level = tf.OptimizerOptions.ON_1
     return conf
 
 
