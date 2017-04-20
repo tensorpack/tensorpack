@@ -65,6 +65,7 @@ def layer_register(
     def wrapper(func):
         @wraps(func)
         def wrapped_func(*args, **kwargs):
+            assert args[0] is not None, args
             if use_scope:
                 name, inputs = args[0], args[1]
                 args = args[1:]  # actual positional args used to call func

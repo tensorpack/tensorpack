@@ -81,6 +81,8 @@ class TrainConfig(object):
             assert_type(self.data, InputData)
             self.dataflow = None
 
+        if callbacks is None:
+            callbacks = []
         if isinstance(callbacks, Callbacks):
             # keep quiet now because I haven't determined the final API yet.
             log_deprecated(
