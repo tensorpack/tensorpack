@@ -92,7 +92,6 @@ class Model(GANModelDesc):
             x = tf.cast(x, tf.uint8)
             tf.summary.image(name, x, max_outputs=30)
 
-
         with argscope([Conv2D, FullyConnected],
                       W_init=tf.truncated_normal_initializer(stddev=0.02)):
             with tf.variable_scope('gen'):
@@ -149,6 +148,7 @@ def get_config():
         steps_per_epoch=500,
         max_epoch=400,
     )
+
 
 if __name__ == '__main__':
     args = DCGAN.get_args()
