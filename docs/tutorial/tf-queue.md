@@ -1,8 +1,8 @@
 
-# How data goes into graph
+# How data goes into the graph
 
 This tutorial covers how data goes from DataFlow to TensorFlow graph.
-They are tensorpack internal details, but it's important to know
+They are tensorpack internal details, but it is important to know
 if you care about efficiency.
 
 ## Use TensorFlow queues
@@ -15,7 +15,7 @@ while True:
   minimize_op.run(feed_dict={'X': X, 'y': y})
 ```
 However, when you need to load data from Python-side, this is the only available interface in frameworks such as Keras, tflearn.
-This is part of the reason why [tensorpack is faster](https://gist.github.com/ppwwyyxx/8d95da79f8d97036a7d67c2416c851b6).
+This is part of the reason why [tensorpack is faster](https://gist.github.com/ppwwyyxx/8d95da79f8d97036a7d67c2416c851b6) than examples from other packages.
 
 You should use something like this instead:
 ```python
@@ -42,12 +42,11 @@ reading / preprocessing ops in C++ if there isn't one for your task.
 
 ## Figure out the bottleneck
 
-For training we will only worry about the throughput but not the latency.
-Thread 1 & 2 runs in parallel, and the faster one will block to wait for the slower one.
+For training, we will only worry about the throughput but not the latency.
+Thread 1 & 2 runs in parallel and the faster one will block to wait for the slower one.
 So the overall throughput will appear to be the slower one.
 
-There isn't a way to accurately benchmark the two threads while they are running, without introducing overhead. But
-there are ways to understand which one is the bottleneck:
+There isn't a way to accurately benchmark the two threads while they are running, without introducing overhead. However, are ways to understand which one is the bottleneck:
 
 1. Use the average occupancy (size) of the queue. This information is summarized after every epoch.
 	If the queue is nearly empty, then the data thread is the bottleneck.
