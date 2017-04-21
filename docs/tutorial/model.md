@@ -77,7 +77,7 @@ with TowerContext('', is_training=True):
 When defining the model you can construct the graph using whatever library you feel comfortable with.
 
 Usually, slim/tflearn/tensorlayer are just symbolic functions, calling them is nothing different
-from calling `tf.add`. However it's a bit different to use sonnet/Keras.
+from calling `tf.add`. However it is a bit different to use sonnet/Keras.
 
 sonnet/Keras manages the variable scope by their own model classes, and calling their symbolic functions
 always creates new variable scope. See the [Keras example](../examples/mnist-keras.py) for how to

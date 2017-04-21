@@ -2,12 +2,12 @@
 ## Implement a layer
 
 Symbolic functions should be nothing new to you.
-Using symbolic functions is not special in tensorpack: you can use any symbolic functions you've
+Using symbolic functions is not special in tensorpack: you can use any symbolic functions you have
 made or seen elsewhere with tensorpack layers.
 You can use symbolic functions from slim/tflearn/tensorlayer, and even Keras ([with some tricks](../../examples/mnist-keras.py)).
 So you never **have to** implement a tensorpack layer.
 
-If you'd like, you can make a symbolic function become a "layer" by following some simple rules, and then gain benefits from the framework.
+If you would like, you can make a symbolic function become a "layer" by following some simple rules, and then gain benefits from the framework.
 
 Take a look at the [Convolutional Layer](../../tensorpack/models/conv2d.py#L14) implementation for an example of how to define a layer:
 
@@ -34,10 +34,10 @@ By making a symbolic function a "layer", the following things will happen:
 + `argscope` will then work for all its arguments except the input tensor(s).
 + It will work with `LinearWrap`: you can use it if the output of one layer matches the input of the next layer.
 
-There are also a number of (non-layer) symbolic functions in the `tfutils.symbolic_functions` module.
-There isn't a rule about what kind of symbolic functions should be made a layer -- they're quite
-similar anyway. But in general I define the following symbolic functions as layers:
+There are also some (non-layer) symbolic functions in the `tfutils.symbolic_functions` module.
+There is not a rule about what kind of symbolic functions should be made a layer -- they are quite
+similar anyway. However, in general, I define the following symbolic functions as layers:
 + Functions which contain variables. A variable scope is almost always helpful for such functions.
-+ Functions which are commonly referred to as "layers", such as pooling. This make a model
++ Functions which are commonly referred to as "layers", such as pooling. This makes a model
 	definition more straightforward.
 

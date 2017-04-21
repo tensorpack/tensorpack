@@ -1,7 +1,7 @@
 
 ### Write an image augmentor
 
-First thing to note: an augmentor is a part of the DataFlow, so you can always
+The first thing to note: an augmentor is a part of the DataFlow, so you can always
 [write a DataFlow](http://tensorpack.readthedocs.io/en/latest/tutorial/extend/dataflow.html)
 to do whatever operations to your data, rather than writing an augmentor.
 Augmentors just sometimes make things easier.
@@ -9,9 +9,9 @@ Augmentors just sometimes make things easier.
 An augmentor maps images to images.
 If you have such a mapping function `f` already, you can simply use `imgaug.MapImage(f)` as the
 augmentor, or use `MapDataComponent(df, f, index)` as the DataFlow.
-In other words, for simple mapping you don't need to write an augmentor.
+In other words, for simple mapping you do not need to write an augmentor.
 
-An augmentor does something more than applying the mapping. The interface you'll need to implement
+An augmentor does something more than applying the mapping. The interface you will need to implement
 is:
 
 ```python
@@ -27,9 +27,9 @@ class MyAug(imgaug.ImageAugmentor):
 It does the following extra things for you:
 
 1. `self.rng` is a `np.random.RandomState` object,
-	guranteed to have different seeds when you use multiprocess prefetch.
-	In multiprocess settings, you'll always need it to generate random numbers.
+	guaranteed to have different seeds when you use multiprocess prefetch.
+	In multiprocess settings, you will always need it to generate random numbers.
 
 2. Random parameters and the actual augmentation is separated. This allows you to apply the
 	same random transformation to several images (with `AugmentImageComponents`),
-	which is important to tasks such as segmentation.
+	which is essential to tasks such as segmentation.
