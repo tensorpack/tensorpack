@@ -13,7 +13,8 @@ __all__ = ['RunOp']
 class RunOp(Callback):
     """ Run an Op. """
 
-    def __init__(self, setup_func, run_before=True, run_epoch=True):
+    def __init__(self, setup_func,
+                 run_before=True, run_as_trigger=True):
         """
         Args:
             setup_func: a function that returns the Op in the graph
@@ -27,7 +28,7 @@ class RunOp(Callback):
         """
         self.setup_func = setup_func
         self.run_before = run_before
-        self.run_epoch = run_epoch
+        self.run_as_trigger = run_as_trigger
 
     def _setup_graph(self):
         self._op = self.setup_func()
@@ -37,5 +38,5 @@ class RunOp(Callback):
             self._op.run()
 
     def _trigger(self):
-        if self.run_epoch:
+        if self.run_as_trigger:
             self._op.run()
