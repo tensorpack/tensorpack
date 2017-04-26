@@ -164,7 +164,7 @@ def psnr(prediction, ground_truth, maxp=None, name='psnr'):
     Returns:
         A scalar tensor representing the PSNR.
     """
-    
+
     maxp = float(maxp)
 
     def log10(x):
@@ -173,13 +173,12 @@ def psnr(prediction, ground_truth, maxp=None, name='psnr'):
             denominator = tf.log(tf.constant(10, dtype=numerator.dtype))
             return numerator / denominator
 
-    with tf.name_scope("psnr"):
-        mse = tf.reduce_mean(tf.square(prediction - ground_truth))
-        if maxp is None:
-            psnr = tf.multiply(log10(mse), -10., name=name)
-        else:
-            psnr = tf.multiply(log10(mse), -10.)
-            psnr = tf.add(tf.multiply(20., log10(maxp)), psnr, name=name)
+    mse = tf.reduce_mean(tf.square(prediction - ground_truth))
+    if maxp is None:
+        psnr = tf.multiply(log10(mse), -10., name=name)
+    else:
+        psnr = tf.multiply(log10(mse), -10.)
+        psnr = tf.add(tf.multiply(20., log10(maxp)), psnr, name=name)
 
     return psnr
 
