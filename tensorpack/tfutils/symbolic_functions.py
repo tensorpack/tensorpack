@@ -164,6 +164,8 @@ def psnr(prediction, ground_truth, maxp=None, name='psnr'):
     Returns:
         A scalar tensor representing the PSNR.
     """
+    
+    maxp = float(maxp)
 
     def log10(x):
         with tf.name_scope("log10"):
