@@ -4,6 +4,7 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import os
+import numpy as np
 import shutil
 import operator
 from collections import defaultdict
@@ -13,10 +14,26 @@ import re
 
 import tensorflow as tf
 from ..utils import logger
+from ..tfutils.summary import create_scalar_summary, create_image_summary
 from .base import Callback
 
 __all__ = ['TrainingMonitor', 'Monitors',
            'TFSummaryWriter', 'JSONWriter', 'ScalarPrinter', 'SendMonitorData']
+
+
+def image_to_nhwc(arr):
+    if arr.ndim == 4:
+        pass
+    elif arr.ndim == 3:
+        if arr.shape[-1] in [1, 3, 4]:
+            arr = arr[np.newaxis, :]
+        else:
+            arr = arr[:, :, :, np.newaxis]
+    elif arr.ndim == 2:
+        arr = arr[np.newaxis, :, :, np.newaxis]
+    else:
+        raise ValueError("Array of shape {} is not an image!".format(arr.shape))
+    return arr
 
 
 class TrainingMonitor(Callback):
@@ -48,7 +65,15 @@ class TrainingMonitor(Callback):
         pass
 
     def put_scalar(self, name, val):
-        self.put(name, val)
+        pass
+
+    def put_image(self, name, val):
+        """
+        Args:
+            val (np.ndarray): 4D (NHWC) numpy array of images.
+                If channel is 3, assumed to be RGB.
+        """
+        pass
 
     # TODO put other types
 
@@ -76,11 +101,16 @@ class Monitors(TrainingMonitor):
         for m in self._monitors:
             m.put_scalar(name, val)
 
+    def _dispatch_put_image(self, name, val):
+        for m in self._monitors:
+            m.put_image(name, val)
+
     def put_summary(self, summary):
         if isinstance(summary, six.binary_type):
             summary = tf.Summary.FromString(summary)
         assert isinstance(summary, tf.Summary), type(summary)
 
+        # TODO remove -summary suffix for summary
         self._dispatch_put_summary(summary)
 
         # TODO other types
@@ -98,8 +128,20 @@ class Monitors(TrainingMonitor):
 
     def put_scalar(self, name, val):
         self._dispatch_put_scalar(name, val)
-        s = tf.Summary()
-        s.value.add(tag=name, simple_value=val)
+        s = create_scalar_summary(name, val)
+        self._dispatch_put_summary(s)
+
+    def put_image(self, name, val):
+        """
+        Args:
+            name (str):
+            val (np.ndarray): 2D, 3D (HWC) or 4D (NHWC) numpy array of images.
+                If channel is 3, assumed to be RGB.
+        """
+        assert isinstance(val, np.ndarray)
+        arr = image_to_nhwc(val)
+        self._dispatch_put_image(name, arr)
+        s = create_image_summary(name, arr)
         self._dispatch_put_summary(s)
 
     def get_latest(self, name):

@@ -41,7 +41,7 @@ for filename, label in filelist:
 
 And `ds1` batch the datapoints from `ds0`, so that we can measure the speed of this DataFlow in terms of "batch per second".
 By default, `BatchData`
-will stack the datapoints into an `numpy.ndarray`, but since images are original of different shapes, we use
+will stack the datapoints into an `numpy.ndarray`, but since original images are of different shapes, we use
 `use_list=True` so that it just produces lists.
 
 On an SSD you probably can already observe good speed here (e.g. 5 it/s, that is 1280 samples/s), but on HDD the speed may be just 1 it/s,

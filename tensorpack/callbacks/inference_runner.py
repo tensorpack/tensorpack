@@ -47,10 +47,10 @@ def summary_inferencer(trainer, infs):
         for k, v in six.iteritems(ret):
             try:
                 v = float(v)
+                trainer.monitors.put_scalar(k, v)
             except:
                 logger.warn("{} returns a non-scalar statistics!".format(type(inf).__name__))
                 continue
-            trainer.monitors.put(k, v)
 
 
 @six.add_metaclass(ABCMeta)

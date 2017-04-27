@@ -23,7 +23,7 @@ class DumpParamAsImage(Callback):
     the input pipeline).
     """
 
-    def __init__(self, tensor_name, prefix=None, map_func=None, scale=255, clip=False):
+    def __init__(self, tensor_name, prefix=None, map_func=None, scale=255):
         """
         Args:
             tensor_name (str): the name of the tensor.
@@ -31,7 +31,6 @@ class DumpParamAsImage(Callback):
             map_func: map the value of the tensor to an image or list of
                  images of shape [h, w] or [h, w, c]. If None, will use identity.
             scale (float): a multiplier on pixel values, applied after map_func.
-            clip (bool): whether to clip the result to [0, 255].
         """
         op_name, self.tensor_name = get_op_tensor_name(tensor_name)
         self.func = map_func
@@ -41,7 +40,6 @@ class DumpParamAsImage(Callback):
             self.prefix = prefix
         self.log_dir = logger.LOG_DIR
         self.scale = scale
-        self.clip = clip
 
     def _before_train(self):
         # TODO might not work for multiGPU?
@@ -56,6 +54,7 @@ class DumpParamAsImage(Callback):
                 self._dump_image(im, idx)
         else:
             self._dump_image(val)
+        self.trainer.monitors.put_image(self.prefix, val)
 
     def _dump_image(self, im, idx=None):
         assert im.ndim in [2, 3], str(im.ndim)
@@ -64,6 +63,5 @@ class DumpParamAsImage(Callback):
             self.prefix + '-ep{:03d}{}.png'.format(
                 self.epoch_num, '-' + str(idx) if idx else ''))
         res = im * self.scale
-        if self.clip:
-            res = np.clip(res, 0, 255)
+        res = np.clip(res, 0, 255)
         cv2.imwrite(fname, res.astype('uint8'))

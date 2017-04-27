@@ -4,7 +4,9 @@
 
 import six
 import tensorflow as tf
+import cv2
 import re
+from six.moves import range
 
 from ..utils import logger
 from ..utils.develop import log_deprecated
@@ -26,6 +28,33 @@ def create_scalar_summary(name, v):
     v = float(v)
     s = tf.Summary()
     s.value.add(tag=name, simple_value=v)
+    return s
+
+
+def create_image_summary(name, val):
+    """
+    Args:
+        name(str):
+        val(np.ndarray): 4D tensor of NHWC
+
+    Returns:
+        tf.Summary:
+    """
+    assert isinstance(name, six.string_types), type(name)
+    n, h, w, c = val.shape
+    s = tf.Summary()
+    for k in range(n):
+        tag = name if n == 1 else '{}/{}'.format(name, k)
+        ret, buf = cv2.imencode('.png', val[k])
+        assert ret, "imencode failed!"
+
+        img = tf.Summary.Image()
+        img.height = h
+        img.width = w
+        # 1 - grayscale 3 - RGB 4 - RGBA
+        img.colorspace = c
+        img.encoded_image_string = buf.tostring()
+        s.value.add(tag=tag, image=img)
     return s
 
 
