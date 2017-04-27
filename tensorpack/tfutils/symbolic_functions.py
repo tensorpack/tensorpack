@@ -149,31 +149,38 @@ def get_scalar_var(name, init_value, summary=False, trainable=False):
     return ret
 
 
-def psnr(prediction, ground_truth, name='psnr'):
+def psnr(prediction, ground_truth, maxp=None, name='psnr'):
     """`Peek Signal to Noise Ratio <https://en.wikipedia.org/wiki/Peak_signal-to-noise_ratio>`_.
 
     .. math::
 
         PSNR = 20 \cdot \log_{10}(MAX_p) - 10 \cdot \log_{10}(MSE)
 
-    This function assumes the maximum possible value of the signal is 1,
-    therefore the PSNR is simply :math:`- 10 \cdot \log_{10}(MSE)`.
-
     Args:
         prediction: a :class:`tf.Tensor` representing the prediction signal.
         ground_truth: another :class:`tf.Tensor` with the same shape.
+        maxp: maximum possible pixel value of the image (255 in in 8bit images)
 
     Returns:
         A scalar tensor representing the PSNR.
     """
 
-    def log10(x):
-        numerator = tf.log(x)
-        denominator = tf.log(tf.constant(10, dtype=numerator.dtype))
-        return numerator / denominator
+    maxp = float(maxp)
 
-    return tf.multiply(log10(tf.reduce_mean(tf.square(prediction - ground_truth))),
-                       -10., name=name)
+    def log10(x):
+        with tf.name_scope("log10"):
+            numerator = tf.log(x)
+            denominator = tf.log(tf.constant(10, dtype=numerator.dtype))
+            return numerator / denominator
+
+    mse = tf.reduce_mean(tf.square(prediction - ground_truth))
+    if maxp is None:
+        psnr = tf.multiply(log10(mse), -10., name=name)
+    else:
+        psnr = tf.multiply(log10(mse), -10.)
+        psnr = tf.add(tf.multiply(20., log10(maxp)), psnr, name=name)
+
+    return psnr
 
 
 @contextmanager
