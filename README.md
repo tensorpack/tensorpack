@@ -13,7 +13,6 @@ See some [examples](examples) to learn about the framework:
 + [Fully-convolutional Network for Holistically-Nested Edge Detection(HED)](examples/HED)
 + [Spatial Transformer Networks on MNIST addition](examples/SpatialTransformer)
 + [Visualize Saliency Maps by Guided ReLU](examples/Saliency)
-+ [Similarity Learning on MNIST](examples/SimilarityLearning)
 
 ### Reinforcement Learning:
 + [Deep Q-Network(DQN) variants on Atari games](examples/DeepQNetwork), including DQN, DoubleDQN, DuelingDQN.
@@ -21,6 +20,7 @@ See some [examples](examples) to learn about the framework:
 
 ### Unsupervised Learning:
 + [Generative Adversarial Network(GAN) variants](examples/GAN), including DCGAN, InfoGAN, Conditional GAN, WGAN, BEGAN, DiscoGAN, Image to Image.
++ [Similarity Learning on MNIST](examples/SimilarityLearning)
 
 ### Speech / NLP:
 + [LSTM-CTC for speech recognition](examples/CTC-TIMIT)

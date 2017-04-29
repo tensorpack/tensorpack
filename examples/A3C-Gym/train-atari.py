@@ -211,6 +211,7 @@ def get_config():
     master = MySimulatorMaster(namec2s, names2c, M)
     dataflow = BatchData(DataFromQueue(master.queue), BATCH_SIZE)
     return TrainConfig(
+        model=M,
         dataflow=dataflow,
         callbacks=[
             ModelSaver(),
@@ -218,13 +219,14 @@ def get_config():
             ScheduledHyperParamSetter('entropy_beta', [(80, 0.005)]),
             ScheduledHyperParamSetter('explore_factor',
                                       [(80, 2), (100, 3), (120, 4), (140, 5)]),
+            HumanHyperParamSetter('learning_rate'),
+            HumanHyperParamSetter('entropy_beta'),
             master,
             StartProcOrThread(master),
             PeriodicTrigger(Evaluator(EVAL_EPISODE, ['state'], ['policy']), every_k_epochs=2),
         ],
         session_creator=sesscreate.NewSessionCreator(
             config=get_default_sess_config(0.5)),
-        model=M,
         steps_per_epoch=STEPS_PER_EPOCH,
         max_epoch=1000,
     )

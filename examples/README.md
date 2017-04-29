@@ -13,7 +13,6 @@ Training examples with __reproducible__ and meaningful performance.
 + [Fully-convolutional Network for Holistically-Nested Edge Detection(HED)](HED)
 + [Spatial Transformer Networks on MNIST addition](SpatialTransformer)
 + [Visualize Saliency Maps by Guided ReLU](Saliency)
-+ [Similarity Learning on MNIST](SimilarityLearning)
 + Load a pre-trained [AlexNet](load-alexnet.py) or [VGG16](load-vgg16.py) model.
 + Load a pre-trained [Convolutional Pose Machines](ConvolutionalPoseMachines/).
 
@@ -22,7 +21,8 @@ Training examples with __reproducible__ and meaningful performance.
 + [Asynchronous Advantage Actor-Critic(A3C) with demos on OpenAI Gym](A3C-Gym)
 
 ## Unsupervised Learning:
-+ [Generative Adversarial Network(GAN) variants](GAN), including DCGAN, InfoGAN, Conditional GAN, WGAN, DiscoGAN, Image to Image.
++ [Generative Adversarial Network(GAN) variants](GAN), including DCGAN, InfoGAN, Conditional GAN, WGAN, BEGAN, DiscoGAN, Image to Image.
++ [Similarity Learning on MNIST](SimilarityLearning)
 
 ## Speech / NLP:
 + [LSTM-CTC for speech recognition](CTC-TIMIT)
