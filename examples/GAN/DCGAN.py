@@ -4,6 +4,7 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import glob
+import numpy as np
 import os, sys
 import argparse
 
@@ -128,16 +129,17 @@ def get_config():
     )
 
 
-def sample(model_path):
+def sample(model_path, output_name='gen/gen'):
     pred = PredictConfig(
         session_init=get_model_loader(model_path),
         model=Model(),
         input_names=['z'],
-        output_names=['gen/gen', 'z'])
-    pred = SimpleDatasetPredictor(pred, RandomZData((100, 100)))
+        output_names=[output_name, 'z'])
+    pred = SimpleDatasetPredictor(pred, RandomZData((100, opt.Z_DIM)))
     for o in pred.get_result():
         o, zs = o[0] + 1, o[1]
         o = o * 128.0
+        o = np.clip(o, 0, 255)
         o = o[:, :, :, ::-1]
         viz = stack_patches(o, nr_row=10, nr_col=10, viz=True)
 

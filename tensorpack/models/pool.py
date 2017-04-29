@@ -209,7 +209,7 @@ class TestPool(TestModel):
         self.assertTrue((res == 0).all())
 
     def test_BilinearUpSample(self):
-        h, w = 5, 5
+        h, w = 12, 12
         scale = 2
 
         mat = np.random.rand(h, w).astype('float32')
@@ -224,11 +224,6 @@ class TestPool(TestModel):
 
         diff = np.abs(res2 - res)
 
-        # TODO not equivalent to rescale on edge?
-        #diff[0, :] = 0
-        #diff[-1, :] = 0
-        #diff[:, 0] = 0
-        #diff[:, -1] = 0
         # if not diff.max() < 1e-4:
         #     import IPython
         #     IPython.embed(config=IPython.terminal.ipapp.load_default_config())

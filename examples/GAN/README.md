@@ -26,11 +26,11 @@ Reproduce DCGAN following the setup in [dcgan.torch](https://github.com/soumith/
 
 + Generated samples
 
-![sample](demo/CelebA-samples.jpg)
+![sample](demo/DCGAN-CelebA-samples.jpg)
 
 + Vector arithmetic: smiling woman - neutral woman + neutral man = smiling man
 
-![vec](demo/CelebA-vec.jpg)
+![vec](demo/DCGAN-CelebA-vec.jpg)
 
 ## Image2Image.py
 
@@ -61,6 +61,9 @@ Train a simple GAN on mnist, conditioned on the class labels.
 ## WGAN.py, Improved-WGAN.py, BEGAN.py
 
 These variants are implemented by some small modifications on top of DCGAN.py.
+Some BEGAN samples:
+
+![began-sample](demo/BEGAN-CelebA-samples.jpg)
 
 ## DiscoGAN-CelebA.py
 

@@ -17,6 +17,8 @@ from GAN import GANModelDesc, GANTrainer
 """
 Boundary Equilibrium GAN.
 See the docstring in DCGAN.py for usage.
+
+A pretrained model on CelebA is at https://drive.google.com/open?id=0B5uDfUQ1JTglUmgyZV8zQmNOTVU
 """
 
 
@@ -89,7 +91,6 @@ class Model(GANModelDesc):
         def summary_image(name, x):
             x = (x + 1.0) * 128.0
             x = tf.clip_by_value(x, 0, 255)
-            x = tf.cast(x, tf.uint8)
             tf.summary.image(name, x, max_outputs=30)
 
         with argscope([Conv2D, FullyConnected],
@@ -153,7 +154,7 @@ def get_config():
 if __name__ == '__main__':
     args = DCGAN.get_args()
     if args.sample:
-        DCGAN.sample(args.load)
+        DCGAN.sample(args.load, 'gen/conv4.3/output')
     else:
         assert args.data
         logger.auto_set_dir()
