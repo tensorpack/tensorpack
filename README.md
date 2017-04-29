@@ -9,18 +9,15 @@ See some [examples](examples) to learn about the framework:
 ### Vision:
 + [DoReFa-Net: train binary / low-bitwidth CNN on ImageNet](examples/DoReFa-Net)
 + [Train ResNet on ImageNet / Cifar10 / SVHN](examples/ResNet)
-+ [InceptionV3 on ImageNet](examples/Inception/inceptionv3.py)
++ [Generative Adversarial Network(GAN) variants](examples/GAN), including DCGAN, InfoGAN, Conditional GAN, WGAN, BEGAN, DiscoGAN, Image to Image.
 + [Fully-convolutional Network for Holistically-Nested Edge Detection(HED)](examples/HED)
 + [Spatial Transformer Networks on MNIST addition](examples/SpatialTransformer)
 + [Visualize Saliency Maps by Guided ReLU](examples/Saliency)
++ [Similarity Learning on MNIST](examples/SimilarityLearning)
 
 ### Reinforcement Learning:
 + [Deep Q-Network(DQN) variants on Atari games](examples/DeepQNetwork), including DQN, DoubleDQN, DuelingDQN.
 + [Asynchronous Advantage Actor-Critic(A3C) with demos on OpenAI Gym](examples/A3C-Gym)
-
-### Unsupervised Learning:
-+ [Generative Adversarial Network(GAN) variants](examples/GAN), including DCGAN, InfoGAN, Conditional GAN, WGAN, BEGAN, DiscoGAN, Image to Image.
-+ [Similarity Learning on MNIST](examples/SimilarityLearning)
 
 ### Speech / NLP:
 + [LSTM-CTC for speech recognition](examples/CTC-TIMIT)
