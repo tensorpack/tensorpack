@@ -36,9 +36,9 @@ BATCH = 64
 NF = 64  # channel size
 
 
-def BNLReLU(x, name):
+def BNLReLU(x, name=None):
     x = BatchNorm('bn', x)
-    return LeakyReLU(x)
+    return LeakyReLU(x, name=name)
 
 
 class Model(GANModelDesc):

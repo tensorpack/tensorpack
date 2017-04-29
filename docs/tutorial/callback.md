@@ -47,14 +47,14 @@ TrainConfig(
     # run `tf.summary.merge_all` every epoch and send results to monitors
     MergeAllSummaries(),
   ],
-	monitors=[				# monitors are a special kind of callbacks. these are also enabled by default
-		# write all monitor data to tensorboard
-		TFSummaryWriter(),
-		# write all scalar data to a json file, for easy parsing
-		JSONWriter(),
-		# print all scalar data every epoch (can be configured differently)
-		ScalarPrinter(),
-	]
+  monitors=[        # monitors are a special kind of callbacks. these are also enabled by default
+    # write all monitor data to tensorboard
+    TFSummaryWriter(),
+    # write all scalar data to a json file, for easy parsing
+    JSONWriter(),
+    # print all scalar data every epoch (can be configured differently)
+    ScalarPrinter(),
+  ]
 )
 ```
 
