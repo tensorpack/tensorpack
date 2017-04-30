@@ -20,9 +20,10 @@ because the bottleneck in this implementation is not computation but data.
 
 Some practicical notes:
 
-1. Occasionally, processes may not get terminated completely. It is suggested to use `systemd-run` to run any
+1. Prefer Python 3.
+2. Occasionally, processes may not get terminated completely. It is suggested to use `systemd-run` to run any
 multiprocess Python program to get a cgroup dedicated for the task.
-2. Training with a significant slower speed (e.g. on CPU) will result in very bad score, probably because of async issues.
+3. Training with a significant slower speed (e.g. on CPU) will result in very bad score, probably because of async issues.
 
 ### To run a pretrained Atari model for 100 episodes:
 

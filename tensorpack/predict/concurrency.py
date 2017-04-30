@@ -155,6 +155,7 @@ class MultiThreadAsyncPredictor(AsyncPredictorBase):
             # TODO XXX set logging here to avoid affecting TF logging
             import tornado.options as options
             options.parse_command_line(['--logging=debug'])
+            logger.warn("MultiThreadAsyncPredictor is inefficient in Python 2! Switch to Python 3 instead.")
 
     def start(self):
         if self._need_default_sess:
