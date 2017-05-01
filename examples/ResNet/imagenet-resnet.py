@@ -235,7 +235,7 @@ def eval_on_ILSVRC12(model_file, data_dir):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
+    parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.', required=True)
     parser.add_argument('--data', help='ILSVRC dataset dir')
     parser.add_argument('--load', help='load model')
     parser.add_argument('--fake', help='use fakedata to test or benchmark this model', action='store_true')
@@ -247,14 +247,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     DEPTH = args.depth
-    if args.gpu:
-        os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
+    os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
+
     if args.eval:
         BATCH_SIZE = 128    # something that can run on one gpu
         eval_on_ILSVRC12(args.load, args.data)
         sys.exit()
 
-    assert args.gpu is not None, "Need to specify a list of gpu for training!"
     NR_GPU = len(args.gpu.split(','))
     BATCH_SIZE = TOTAL_BATCH_SIZE // NR_GPU
 

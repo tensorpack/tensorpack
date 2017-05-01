@@ -22,13 +22,11 @@ This config follows the official inceptionv3 setup
 (https://github.com/tensorflow/models/tree/master/inception/inception)
 with much much fewer lines of code.
 It reaches 74% single-crop validation accuracy, similar to the official code.
-
-The hyperparameters here are for 8 GPUs, so the effective batch size is 8*64 = 512.
 """
 
 TOTAL_BATCH_SIZE = 512
-NR_GPU = 8
-BATCH_SIZE = TOTAL_BATCH_SIZE // NR_GPU
+NR_GPU = None
+BATCH_SIZE = None
 INPUT_SHAPE = 299
 
 
@@ -285,19 +283,19 @@ def get_config():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
+    parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.', required=True)
     parser.add_argument('--data', help='ILSVRC dataset dir')
     parser.add_argument('--load', help='load model')
     args = parser.parse_args()
 
     logger.auto_set_dir()
 
-    if args.gpu:
-        os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
+    os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
+    NR_GPU = len(args.gpu.split(','))
+    BATCH_SIZE = TOTAL_BATCH_SIZE // NR_GPU
 
     config = get_config()
     if args.load:
         config.session_init = SaverRestore(args.load)
-    if args.gpu:
-        config.nr_tower = len(args.gpu.split(','))
+    config.nr_tower = NR_GPU
     SyncMultiGPUTrainer(config).train()

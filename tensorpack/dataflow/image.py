@@ -9,6 +9,7 @@ from .base import RNGDataFlow
 from .common import MapDataComponent, MapData
 from .imgaug import AugmentorList
 from ..utils import logger
+from ..utils.argtools import shape2d
 
 __all__ = ['ImageFromFile', 'AugmentImageComponent', 'AugmentImageComponents']
 
@@ -20,13 +21,13 @@ class ImageFromFile(RNGDataFlow):
         Args:
             files (list): list of file paths.
             channel (int): 1 or 3. Will convert grayscale to RGB images if channel==3.
-            resize (tuple): (h, w). If given, resize the image.
+            resize (tuple): int or (h, w) tuple. If given, resize the image.
         """
         assert len(files), "No image files given to ImageFromFile!"
         self.files = files
         self.channel = int(channel)
         self.imread_mode = cv2.IMREAD_GRAYSCALE if self.channel == 1 else cv2.IMREAD_COLOR
-        self.resize = resize
+        self.resize = shape2d(resize)
         self.shuffle = shuffle
 
     def size(self):
@@ -40,7 +41,7 @@ class ImageFromFile(RNGDataFlow):
             if self.channel == 3:
                 im = im[:, :, ::-1]
             if self.resize is not None:
-                im = cv2.resize(im, self.resize[::-1])
+                im = cv2.resize(im, tuple(self.resize[::-1]))
             if self.channel == 1:
                 im = im[:, :, np.newaxis]
             yield [im]
