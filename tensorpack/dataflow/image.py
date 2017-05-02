@@ -27,7 +27,9 @@ class ImageFromFile(RNGDataFlow):
         self.files = files
         self.channel = int(channel)
         self.imread_mode = cv2.IMREAD_GRAYSCALE if self.channel == 1 else cv2.IMREAD_COLOR
-        self.resize = shape2d(resize)
+        if resize is not None:
+            resize = shape2d(resize)
+        self.resize = resize
         self.shuffle = shuffle
 
     def size(self):
