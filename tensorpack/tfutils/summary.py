@@ -35,7 +35,7 @@ def create_image_summary(name, val):
     """
     Args:
         name(str):
-        val(np.ndarray): 4D tensor of NHWC
+        val(np.ndarray): 4D tensor of NHWC. assume RGB if C==3.
 
     Returns:
         tf.Summary:
@@ -45,7 +45,8 @@ def create_image_summary(name, val):
     s = tf.Summary()
     for k in range(n):
         tag = name if n == 1 else '{}/{}'.format(name, k)
-        ret, buf = cv2.imencode('.png', val[k])
+        # imencode assumes BGR
+        ret, buf = cv2.imencode('.png', val[k, :, :, ::-1])
         assert ret, "imencode failed!"
 
         img = tf.Summary.Image()
