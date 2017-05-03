@@ -104,13 +104,15 @@ class InferenceRunnerBase(Callback):
     def _setup_graph(self):
         self._input_data.setup(self.trainer.model)
         self._setup_input_names()
+        # Use predict_tower in train config. either gpuid or -1
+        self._predict_tower_id = self.trainer.config.predict_tower[0]
         in_tensors = self._find_input_tensors()
         assert isinstance(in_tensors, list), in_tensors
 
         with tf.variable_scope(tf.get_variable_scope(), reuse=True):
             def fn(_):
                 self.trainer.model.build_graph(in_tensors)
-            PredictorTowerBuilder(fn, self._prefix).build(0)
+            PredictorTowerBuilder(fn, self._prefix).build(self._predict_tower_id)
 
         self._feed_tensors = self._find_feed_tensors()
         self._hooks = [self._build_hook(inf) for inf in self.infs]
@@ -122,7 +124,7 @@ class InferenceRunnerBase(Callback):
     def _get_tensors_maybe_in_tower(self, names):
         placeholder_names = set([k.name for k in self.trainer.model.get_inputs_desc()])
         get_tensor_fn = PredictorTowerBuilder.get_tensors_maybe_in_tower
-        return get_tensor_fn(placeholder_names, names, 0, prefix=self._prefix)
+        return get_tensor_fn(placeholder_names, names, self._predict_tower_id, prefix=self._prefix)
 
     def _find_input_tensors(self):
         pass

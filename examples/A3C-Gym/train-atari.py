@@ -6,18 +6,23 @@
 import numpy as np
 import os
 import sys
-import re
 import time
 import random
 import uuid
 import argparse
 import multiprocessing
 import threading
+
 import cv2
-from collections import deque
+import tensorflow as tf
 import six
 from six.moves import queue
-import tensorflow as tf
+if six.PY3:
+    from concurrent import futures  # py3
+    CancelledError = futures.CancelledError
+else:
+    CancelledError = Exception
+
 
 from tensorpack import *
 from tensorpack.utils.concurrency import *
@@ -42,7 +47,7 @@ STEPS_PER_EPOCH = 6000
 EVAL_EPISODE = 50
 BATCH_SIZE = 128
 SIMULATOR_PROC = 50
-PREDICTOR_THREAD_PER_GPU = 2
+PREDICTOR_THREAD_PER_GPU = 3
 PREDICTOR_THREAD = None
 EVALUATE_PROC = min(multiprocessing.cpu_count() // 2, 20)
 
@@ -156,7 +161,11 @@ class MySimulatorMaster(SimulatorMaster, Callback):
 
     def _on_state(self, state, ident):
         def cb(outputs):
-            distrib, value = outputs.result()
+            try:
+                distrib, value = outputs.result()
+            except CancelledError:
+                logger.info("Client {} cancelled.".format(ident))
+                return
             assert np.all(np.isfinite(distrib)), distrib
             action = np.random.choice(len(distrib), p=distrib)
             client = self.clients[ident]
