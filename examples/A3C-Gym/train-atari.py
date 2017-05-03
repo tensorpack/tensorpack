@@ -29,7 +29,7 @@ from tensorpack.tfutils.gradproc import MapGradient, SummaryGradient
 from tensorpack.RL import *
 from simulator import *
 import common
-from common import (play_model, Evaluator, eval_model_multithread)
+from common import (play_model, Evaluator, eval_model_multithread, play_one_episode)
 
 IMAGE_SIZE = (84, 84)
 FRAME_HISTORY = 4
@@ -51,11 +51,8 @@ ENV_NAME = None
 
 
 def get_player(viz=False, train=False, dumpdir=None):
-    pl = GymEnv(ENV_NAME, dumpdir=dumpdir)
-
-    def func(img):
-        return cv2.resize(img, IMAGE_SIZE[::-1])
-    pl = MapPlayerState(pl, func)
+    pl = GymEnv(ENV_NAME, viz=viz, dumpdir=dumpdir)
+    pl = MapPlayerState(pl, lambda img: cv2.resize(img, IMAGE_SIZE[::-1]))
 
     global NUM_ACTIONS
     NUM_ACTIONS = pl.get_action_space().num_actions()
@@ -63,7 +60,8 @@ def get_player(viz=False, train=False, dumpdir=None):
     pl = HistoryFramePlayer(pl, FRAME_HISTORY)
     if not train:
         pl = PreventStuckPlayer(pl, 30, 1)
-    pl = LimitLengthPlayer(pl, 40000)
+    else:
+        pl = LimitLengthPlayer(pl, 40000)
     return pl
 
 
@@ -71,7 +69,6 @@ common.get_player = get_player
 
 
 class MySimulatorWorker(SimulatorProcess):
-
     def _build_player(self):
         return get_player(train=True)
 
@@ -232,17 +229,32 @@ def get_config():
     )
 
 
+def run_submission(cfg, output, nr):
+    player = get_player(train=False, dumpdir=output)
+    predfunc = OfflinePredictor(cfg)
+    logger.info("Start evaluation: ")
+    for k in range(nr):
+        if k != 0:
+            player.restart_episode()
+        score = play_one_episode(player, predfunc)
+        print("Score:", score)
+    # gym.upload(output, api_key='xxx')
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
     parser.add_argument('--load', help='load model')
     parser.add_argument('--env', help='env', required=True)
     parser.add_argument('--task', help='task to perform',
-                        choices=['play', 'eval', 'train'], default='train')
+                        choices=['play', 'eval', 'train', 'gen_submit'], default='train')
+    parser.add_argument('--output', help='output directory for submission', default='output_dir')
+    parser.add_argument('--episode', help='number of episode to eval', default=100, type=int)
     args = parser.parse_args()
 
     ENV_NAME = args.env
     assert ENV_NAME
+    logger.info("Environment Name: {}".format(ENV_NAME))
     p = get_player()
     del p    # set NUM_ACTIONS
 
@@ -260,7 +272,9 @@ if __name__ == '__main__':
         if args.task == 'play':
             play_model(cfg)
         elif args.task == 'eval':
-            eval_model_multithread(cfg, EVAL_EPISODE)
+            eval_model_multithread(cfg, args.episode)
+        elif args.task == 'gen_submit':
+            run_submission(cfg, args.output, args.episode)
     else:
         nr_gpu = get_nr_gpu()
         if nr_gpu > 0:

@@ -8,7 +8,7 @@ Most of them are the best reproducible results on gym.
 
 ### To train on an Atari game:
 
-`CUDA_VISIBLE_DEVICES=0 ./train-atari.py --env Breakout-v0`
+`./train-atari.py --env Breakout-v0 --gpu 0`
 
 The speed is about 6~10 iterations/s on 1 GPU plus 12+ CPU cores.
 In each iteration it trains on a batch of 128 new states. The network architecture is larger than what's used in the original paper.
@@ -25,10 +25,14 @@ Some practicical notes:
 multiprocess Python program to get a cgroup dedicated for the task.
 3. Training with a significant slower speed (e.g. on CPU) will result in very bad score, probably because of async issues.
 
-### To run a pretrained Atari model for 100 episodes:
+### To watch the agent play (need GUI):
+
+`./train-atari.py --task play --env Breakout-v0 --load Breakout-v0.tfmodel`
+
+### To generate gym submission with a pretrained Atari model:
 
 1. Download models from [model zoo](https://goo.gl/9yIol2)
-2. `ENV=Breakout-v0; ./run-atari.py --load "$ENV".tfmodel --env "$ENV" --episode 100 --output output_dir`
+2. `./train-atari.py --task gen_submit --load Breakout-v0.tfmodel --env Breakout-v0 --output output_dir`
 
 Models are available for the following atari environments (click to watch videos of my agent):
 
