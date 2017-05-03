@@ -25,14 +25,15 @@ Some practicical notes:
 multiprocess Python program to get a cgroup dedicated for the task.
 3. Training with a significant slower speed (e.g. on CPU) will result in very bad score, probably because of async issues.
 
-### To watch the agent play (need GUI):
+### To test a model:
 
+Download models from [model zoo](https://goo.gl/9yIol2).
+
+Watch the agent play:
 `./train-atari.py --task play --env Breakout-v0 --load Breakout-v0.tfmodel`
 
-### To generate gym submission with a pretrained Atari model:
-
-1. Download models from [model zoo](https://goo.gl/9yIol2)
-2. `./train-atari.py --task gen_submit --load Breakout-v0.tfmodel --env Breakout-v0 --output output_dir`
+Generate gym submissions:
+`./train-atari.py --task gen_submit --load Breakout-v0.tfmodel --env Breakout-v0 --output output_dir`
 
 Models are available for the following atari environments (click to watch videos of my agent):
 
