@@ -10,8 +10,10 @@ Most of them are the best reproducible results on gym.
 
 `./train-atari.py --env Breakout-v0 --gpu 0`
 
+In each iteration it trains on a batch of 128 new states.
 The speed is about 6~10 iterations/s on 1 GPU plus 12+ CPU cores.
-In each iteration it trains on a batch of 128 new states. The network architecture is larger than what's used in the original paper.
+With 2 TitanX + 20+ CPU cores, by setting `SIMULATOR_PROC=240, PREDICT_BATCH_SIZE=30, PREDICTOR_THREAD_PER_GPU=6`, it can improve to 16 it/s (2K images/s).
+Note that the network architecture is larger than what's used in the original paper.
 
 The pre-trained models are all trained with 4 GPUs for about 2 days.
 But on simple games like Breakout, you can get good performance within several hours.

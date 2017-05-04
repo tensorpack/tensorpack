@@ -17,12 +17,6 @@ import cv2
 import tensorflow as tf
 import six
 from six.moves import queue
-if six.PY3:
-    from concurrent import futures  # py3
-    CancelledError = futures.CancelledError
-else:
-    CancelledError = Exception
-
 
 from tensorpack import *
 from tensorpack.utils.concurrency import *
@@ -36,6 +30,12 @@ from simulator import *
 import common
 from common import (play_model, Evaluator, eval_model_multithread, play_one_episode)
 
+if six.PY3:
+    from concurrent import futures
+    CancelledError = futures.CancelledError
+else:
+    CancelledError = Exception
+
 IMAGE_SIZE = (84, 84)
 FRAME_HISTORY = 4
 GAMMA = 0.99
@@ -46,6 +46,7 @@ LOCAL_TIME_MAX = 5
 STEPS_PER_EPOCH = 6000
 EVAL_EPISODE = 50
 BATCH_SIZE = 128
+PREDICT_BATCH_SIZE = 15     # batch for efficient forward
 SIMULATOR_PROC = 50
 PREDICTOR_THREAD_PER_GPU = 3
 PREDICTOR_THREAD = None
@@ -154,7 +155,7 @@ class MySimulatorMaster(SimulatorMaster, Callback):
     def _setup_graph(self):
         self.async_predictor = MultiThreadAsyncPredictor(
             self.trainer.get_predictors(['state'], ['policy_explore', 'pred_value'],
-                                        PREDICTOR_THREAD), batch_size=15)
+                                        PREDICTOR_THREAD), batch_size=PREDICT_BATCH_SIZE)
 
     def _before_train(self):
         self.async_predictor.start()
