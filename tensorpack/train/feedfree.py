@@ -117,6 +117,10 @@ def QueueInputTrainer(config, input_queue=None, predict_tower=None):
     else:
         assert isinstance(config.data, QueueInput), config.data
 
+    # from tensorpack.train.input_data import QueueInput, FeedfreeInput, StagingInputWrapper, DummyConstantInput
+    # config.data = StagingInputWrapper(config.data, ['/gpu:0'])
+    # config.data = DummyConstantInput([[64,224,224,3], [64]])
+
     if predict_tower is not None:
         log_deprecated("Argument `predict_tower` in trainer", "Use TrainConfig(predict_tower=...) instead!")
         config.predict_tower = predict_tower
