@@ -4,7 +4,10 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import tensorflow as tf
-from tensorflow.contrib.staging import StagingArea
+try:
+    from tensorflow.contrib.staging import StagingArea
+except ImportError:
+    pass
 
 from itertools import chain
 from abc import ABCMeta, abstractmethod
