@@ -72,8 +72,7 @@ def Conv2D(x, out_channel, kernel_shape,
         conv = tf.concat(outputs, channel_axis)
 
     ret = nl(tf.nn.bias_add(conv, b, data_format=data_format) if use_bias else conv, name='output')
-    ret.variables = VariableHolder()
-    ret.variables.W = W
+    ret.variables = VariableHolder(W=W)
     if use_bias:
         ret.variables.b = b
     return ret
@@ -166,8 +165,7 @@ def Deconv2D(x, out_shape, kernel_shape,
     conv.set_shape(tf.TensorShape([None] + shp3_static))
     ret = nl(tf.nn.bias_add(conv, b, data_format=data_format) if use_bias else conv, name='output')
 
-    ret.variables = VariableHolder()
-    ret.variables.W = W
+    ret.variables = VariableHolder(W=W)
     if use_bias:
         ret.variables.b = b
     return ret

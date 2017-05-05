@@ -48,8 +48,7 @@ def FullyConnected(x, out_dim,
     prod = tf.nn.xw_plus_b(x, W, b) if use_bias else tf.matmul(x, W)
 
     ret = nl(prod, name='output')
-    ret.variables = VariableHolder()
-    ret.variables.W = W
+    ret.variables = VariableHolder(W=W)
     if use_bias:
         ret.variables.b = b
 

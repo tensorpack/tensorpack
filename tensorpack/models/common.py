@@ -21,7 +21,36 @@ __all__ = ['layer_register', 'disable_layer_logging', 'get_registered_layer', 'V
 
 class VariableHolder(object):
     """ A proxy to access variables defined in a layer. """
-    pass
+    def __init__(self, **kwargs):
+        """
+        Args:
+            kwargs: {name:variable}
+        """
+        self._vars = {}
+        for k, v in six.iteritems(kwargs):
+            self._add_variable(k, v)
+
+    def _add_variable(self, name, var):
+        print(name, var.name)
+        assert name not in self._vars
+        self._vars[name] = var
+
+    def __setattr__(self, name, var):
+        if not name.startswith('_'):
+            self._add_variable(name, var)
+        else:
+            # private attributes
+            super(VariableHolder, self).__setattr__(name, var)
+
+    def __getattr__(self, name):
+        return self._vars[name]
+
+    def all(self):
+        """
+        Returns:
+            list of all variables
+        """
+        return list(six.itervalues(self._vars))
 
 
 def _register(name, func):

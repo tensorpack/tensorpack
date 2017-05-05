@@ -56,8 +56,7 @@ def PReLU(x, init=0.001, name='output'):
     x = ((1 + alpha) * x + (1 - alpha) * tf.abs(x))
     ret = tf.multiply(x, 0.5, name=name)
 
-    ret.variables = VariableHolder()
-    ret.variables.alpha = alpha
+    ret.variables = VariableHolder(alpha=alpha)
     return ret
 
 
