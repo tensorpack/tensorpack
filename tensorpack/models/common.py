@@ -16,10 +16,11 @@ from ..utils.develop import building_rtfd
 _LAYER_LOGGED = set()
 _LAYER_REGISTERED = {}
 
-__all__ = ['layer_register', 'disable_layer_logging', 'get_registered_layer', 'EmptyObject']
+__all__ = ['layer_register', 'disable_layer_logging', 'get_registered_layer', 'VariableHolder']
 
 
-class EmptyObject(object):
+class VariableHolder(object):
+    """ A proxy to access variables defined in a layer. """
     pass
 
 
