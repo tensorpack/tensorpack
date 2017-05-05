@@ -5,7 +5,7 @@
 
 import tensorflow as tf
 
-from .common import layer_register
+from .common import layer_register, EmptyObject
 from ..tfutils import symbolic_functions as symbf
 
 __all__ = ['FullyConnected']
@@ -27,7 +27,7 @@ def FullyConnected(x, out_dim,
         use_bias (bool): whether to use bias.
 
     Returns:
-        tf.Tensor: a NC tensor named ``output``.
+        tf.Tensor: a NC tensor named ``output`` with attribute `variables`.
 
     Variable Names:
 
@@ -46,4 +46,11 @@ def FullyConnected(x, out_dim,
     if use_bias:
         b = tf.get_variable('b', [out_dim], initializer=b_init)
     prod = tf.nn.xw_plus_b(x, W, b) if use_bias else tf.matmul(x, W)
-    return nl(prod, name='output')
+
+    ret = nl(prod, name='output')
+    ret.variables = EmptyObject()
+    ret.variables.W = W
+    if use_bias:
+        ret.variables.b = b
+
+    return ret

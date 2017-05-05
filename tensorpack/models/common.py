@@ -16,7 +16,11 @@ from ..utils.develop import building_rtfd
 _LAYER_LOGGED = set()
 _LAYER_REGISTERED = {}
 
-__all__ = ['layer_register', 'disable_layer_logging', 'get_registered_layer']
+__all__ = ['layer_register', 'disable_layer_logging', 'get_registered_layer', 'EmptyObject']
+
+
+class EmptyObject(object):
+    pass
 
 
 def _register(name, func):
