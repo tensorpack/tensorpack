@@ -31,7 +31,6 @@ class VariableHolder(object):
             self._add_variable(k, v)
 
     def _add_variable(self, name, var):
-        print(name, var.name)
         assert name not in self._vars
         self._vars[name] = var
 
