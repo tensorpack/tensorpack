@@ -62,6 +62,9 @@ def get_player(viz=False, train=False):
 
 
 class Model(DQNModel):
+    def __init__(self):
+        super(Model, self).__init__(IMAGE_SIZE, CHANNEL, METHOD, NUM_ACTIONS, GAMMA)
+
     def _get_DQN_prediction(self, image):
         """ image: [0,255]"""
         image = image / 255.0
@@ -95,7 +98,7 @@ class Model(DQNModel):
 def get_config():
     logger.auto_set_dir()
 
-    M = Model(IMAGE_SIZE, CHANNEL, METHOD, NUM_ACTIONS, GAMMA)
+    M = Model()
     expreplay = ExpReplay(
         predictor_io_names=(['state'], ['Qvalue']),
         player=get_player(train=True),

@@ -28,7 +28,8 @@ from tensorpack.tfutils.gradproc import MapGradient, SummaryGradient
 from tensorpack.RL import *
 from simulator import *
 import common
-from common import (play_model, Evaluator, eval_model_multithread, play_one_episode)
+from common import (play_model, Evaluator, eval_model_multithread,
+                    play_one_episode, play_n_episodes)
 
 if six.PY3:
     from concurrent import futures
@@ -238,18 +239,6 @@ def get_config():
     )
 
 
-def run_submission(cfg, output, nr):
-    player = get_player(train=False, dumpdir=output)
-    predfunc = OfflinePredictor(cfg)
-    logger.info("Start evaluation: ")
-    for k in range(nr):
-        if k != 0:
-            player.restart_episode()
-        score = play_one_episode(player, predfunc)
-        print("Score:", score)
-    # gym.upload(output, api_key='xxx')
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
@@ -283,7 +272,10 @@ if __name__ == '__main__':
         elif args.task == 'eval':
             eval_model_multithread(cfg, args.episode, get_player)
         elif args.task == 'gen_submit':
-            run_submission(cfg, args.output, args.episode)
+            play_n_episodes(
+                get_player(train=False, dumpdir=args.output),
+                OfflinePredictor(cfg), args.episode)
+            # gym.upload(output, api_key='xxx')
     else:
         nr_gpu = get_nr_gpu()
         if nr_gpu > 0:

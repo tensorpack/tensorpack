@@ -93,4 +93,3 @@ class Model(ModelDesc):
                 logger.info("{} <- {}".format(target_name, new_name))
                 ops.append(v.assign(G.get_tensor_by_name(new_name + ':0')))
         return tf.group(*ops, name='update_target_network')
-

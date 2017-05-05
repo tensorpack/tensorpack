@@ -112,3 +112,12 @@ class Evaluator(Triggerable):
             self.eval_episode = int(self.eval_episode * 0.94)
         self.trainer.monitors.put('mean_score', mean)
         self.trainer.monitors.put('max_score', max)
+
+
+def play_n_episodes(player, predfunc, nr):
+    logger.info("Start evaluation: ")
+    for k in range(nr):
+        if k != 0:
+            player.restart_episode()
+        score = play_one_episode(player, predfunc)
+        print("Score:", score)
