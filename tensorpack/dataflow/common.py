@@ -566,7 +566,8 @@ class CacheData(ProxyDataFlow):
 
     def get_data(self):
         if len(self.buffer):
-            self.rng.shuffle(self.buffer)
+            if self.shuffle:
+                self.rng.shuffle(self.buffer)
             for dp in self.buffer:
                 yield dp
         else:
