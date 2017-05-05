@@ -24,8 +24,8 @@ class FeedfreeTrainerBase(Trainer):
         Get input tensors from `self.input_method` and build the graph.
         """
         def f():
-            inputs = self._input_method.get_input_tensors()
-            self.model.build_graph(inputs)
+            self._input_tensors = self._input_method.get_input_tensors()
+            self.model.build_graph(self._input_tensors)
         ctx = get_current_tower_context()
         if ctx is None:
             with TowerContext(''):
@@ -98,7 +98,7 @@ class SimpleFeedfreeTrainer(SingleCostFeedfreeTrainer):
             cost, grads = self._get_cost_and_grad()
         self.train_op = self.config.optimizer.apply_gradients(grads, name='min_op')
         # skip training
-        # self.train_op = tf.group(*self.dequed_inputs)
+        # self.train_op = tf.group(*self._input_tensors)
 
 
 def QueueInputTrainer(config, input_queue=None, predict_tower=None):
@@ -117,9 +117,9 @@ def QueueInputTrainer(config, input_queue=None, predict_tower=None):
     else:
         assert isinstance(config.data, QueueInput), config.data
 
-    # from tensorpack.train.input_data import QueueInput, FeedfreeInput, StagingInputWrapper, DummyConstantInput
+    # from tensorpack.train.input_data import StagingInputWrapper, DummyConstantInput
     # config.data = StagingInputWrapper(config.data, ['/gpu:0'])
-    # config.data = DummyConstantInput([[64,224,224,3], [64]])
+    # config.data = DummyConstantInput([[128,224,224,3], [128]])
 
     if predict_tower is not None:
         log_deprecated("Argument `predict_tower` in trainer", "Use TrainConfig(predict_tower=...) instead!")

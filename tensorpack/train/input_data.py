@@ -169,7 +169,6 @@ class QueueInput(FeedfreeInput):
 
     def get_input_tensors(self):
         ret = self.queue.dequeue(name='input_deque')
-        #ret[0]= tf.Print(ret[0], [tf.reduce_mean(ret[0])], "asdf")
         if isinstance(ret, tf.Tensor):  # only one input
             ret = [ret]
         assert len(ret) == len(self.input_placehdrs)
@@ -326,7 +325,7 @@ class StagingInputWrapper(FeedfreeInput):
             self.stage_op = stage_op
             # TODO make sure both stage/unstage are run, to avoid OOM
             self.fetches = tf.train.SessionRunArgs(
-                fetches=[stage_op])
+                fetches=[stage_op, unstage_op])
 
         def _before_train(self):
             # pre-fill the staging area
@@ -350,8 +349,8 @@ class StagingInputWrapper(FeedfreeInput):
         self.setup_staging_areas()
 
     def setup_training(self, trainer):
-        super(StagingInputWrapper, self).setup_training(trainer)
         self._input.setup_training(trainer)
+        self.setup_staging_areas()
 
         trainer.register_callback(
             StagingInputWrapper.StagingCallback(
@@ -359,11 +358,10 @@ class StagingInputWrapper(FeedfreeInput):
 
     def setup_staging_areas(self):
         for idx, device in enumerate(self._devices):
-            inputs = self._input.get_input_tensors()
-            dtypes = [x.dtype for x in inputs]
             with tf.device(device):
-                stage = StagingArea(
-                    dtypes, shapes=None)
+                inputs = self._input.get_input_tensors()
+                dtypes = [x.dtype for x in inputs]
+                stage = StagingArea(dtypes, shapes=None)
                 self._stage_ops.append(stage.put(inputs))
                 self._areas.append(stage)
                 outputs = stage.get()
