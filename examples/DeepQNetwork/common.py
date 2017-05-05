@@ -14,9 +14,6 @@ from tensorpack import *
 from tensorpack.utils.concurrency import *
 from tensorpack.utils.stats import *
 
-global get_player
-get_player = None
-
 
 def play_one_episode(player, func, verbose=False):
     def f(s):
@@ -30,15 +27,14 @@ def play_one_episode(player, func, verbose=False):
     return np.mean(player.play_one_episode(f))
 
 
-def play_model(cfg):
-    player = get_player(viz=0.01)
+def play_model(cfg, player):
     predfunc = OfflinePredictor(cfg)
     while True:
         score = play_one_episode(player, predfunc)
         print("Total:", score)
 
 
-def eval_with_funcs(predictors, nr_eval):
+def eval_with_funcs(predictors, nr_eval, get_player_fn):
     class Worker(StoppableThread, ShareSessionThread):
         def __init__(self, func, queue):
             super(Worker, self).__init__()
@@ -52,7 +48,7 @@ def eval_with_funcs(predictors, nr_eval):
 
         def run(self):
             with self.default_sess():
-                player = get_player(train=False)
+                player = get_player_fn(train=False)
                 while not self.stopped():
                     try:
                         score = play_one_episode(player, self.func)
@@ -88,18 +84,19 @@ def eval_with_funcs(predictors, nr_eval):
         return (0, 0)
 
 
-def eval_model_multithread(cfg, nr_eval):
+def eval_model_multithread(cfg, nr_eval, get_player_fn):
     func = OfflinePredictor(cfg)
     NR_PROC = min(multiprocessing.cpu_count() // 2, 8)
-    mean, max = eval_with_funcs([func] * NR_PROC, nr_eval)
+    mean, max = eval_with_funcs([func] * NR_PROC, nr_eval, get_player_fn)
     logger.info("Average Score: {}; Max Score: {}".format(mean, max))
 
 
 class Evaluator(Triggerable):
-    def __init__(self, nr_eval, input_names, output_names):
+    def __init__(self, nr_eval, input_names, output_names, get_player_fn):
         self.eval_episode = nr_eval
         self.input_names = input_names
         self.output_names = output_names
+        self.get_player_fn = get_player_fn
 
     def _setup_graph(self):
         NR_PROC = min(multiprocessing.cpu_count() // 2, 20)
@@ -108,7 +105,8 @@ class Evaluator(Triggerable):
 
     def _trigger(self):
         t = time.time()
-        mean, max = eval_with_funcs(self.pred_funcs, nr_eval=self.eval_episode)
+        mean, max = eval_with_funcs(
+            self.pred_funcs, self.eval_episode, self.get_player_fn)
         t = time.time() - t
         if t > 10 * 60:  # eval takes too long
             self.eval_episode = int(self.eval_episode * 0.94)

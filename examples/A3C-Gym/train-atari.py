@@ -71,9 +71,6 @@ def get_player(viz=False, train=False, dumpdir=None):
     return pl
 
 
-common.get_player = get_player
-
-
 class MySimulatorWorker(SimulatorProcess):
     def _build_player(self):
         return get_player(train=True)
@@ -230,7 +227,9 @@ def get_config():
             HumanHyperParamSetter('entropy_beta'),
             master,
             StartProcOrThread(master),
-            PeriodicTrigger(Evaluator(EVAL_EPISODE, ['state'], ['policy']), every_k_epochs=2),
+            PeriodicTrigger(Evaluator(
+                EVAL_EPISODE, ['state'], ['policy'], get_player),
+                every_k_epochs=2),
         ],
         session_creator=sesscreate.NewSessionCreator(
             config=get_default_sess_config(0.5)),
@@ -280,9 +279,9 @@ if __name__ == '__main__':
             input_names=['state'],
             output_names=['policy'])
         if args.task == 'play':
-            play_model(cfg)
+            play_model(cfg, get_player(viz=0.01))
         elif args.task == 'eval':
-            eval_model_multithread(cfg, args.episode)
+            eval_model_multithread(cfg, args.episode, get_player)
         elif args.task == 'gen_submit':
             run_submission(cfg, args.output, args.episode)
     else:
