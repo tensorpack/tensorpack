@@ -4,7 +4,7 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
-from .common import layer_register
+from .common import layer_register, EmptyObject
 from ..utils.argtools import shape2d, shape4d
 
 __all__ = ['Conv2D', 'Deconv2D']
@@ -33,7 +33,7 @@ def Conv2D(x, out_channel, kernel_shape,
         use_bias (bool): whether to use bias.
 
     Returns:
-        tf.Tensor named ``output``.
+        tf.Tensor named ``output`` with attribute `variables`.
 
     Variable Names:
 
@@ -58,6 +58,7 @@ def Conv2D(x, out_channel, kernel_shape,
         b_init = tf.constant_initializer()
 
     W = tf.get_variable('W', filter_shape, initializer=W_init)
+
     if use_bias:
         b = tf.get_variable('b', [out_channel], initializer=b_init)
 
@@ -69,7 +70,13 @@ def Conv2D(x, out_channel, kernel_shape,
         outputs = [tf.nn.conv2d(i, k, stride, padding, data_format=data_format)
                    for i, k in zip(inputs, kernels)]
         conv = tf.concat(outputs, channel_axis)
-    return nl(tf.nn.bias_add(conv, b, data_format=data_format) if use_bias else conv, name='output')
+
+    ret = nl(tf.nn.bias_add(conv, b, data_format=data_format) if use_bias else conv, name='output')
+    ret.variables = EmptyObject()
+    ret.variables.W = W
+    if use_bias:
+        ret.variables.b = b
+    return ret
 
 
 class StaticDynamicShape(object):
@@ -108,7 +115,7 @@ def Deconv2D(x, out_shape, kernel_shape,
         use_bias (bool): whether to use bias.
 
     Returns:
-        tf.Tensor: a NHWC tensor named ``output``.
+        tf.Tensor: a NHWC tensor named ``output`` with attribute `variables`.
 
     Variable Names:
 
@@ -157,4 +164,10 @@ def Deconv2D(x, out_shape, kernel_shape,
     conv = tf.nn.conv2d_transpose(
         x, W, out_shape_dyn, stride4d, padding=padding, data_format=data_format)
     conv.set_shape(tf.TensorShape([None] + shp3_static))
-    return nl(tf.nn.bias_add(conv, b, data_format=data_format) if use_bias else conv, name='output')
+    ret = nl(tf.nn.bias_add(conv, b, data_format=data_format) if use_bias else conv, name='output')
+
+    ret.variables = EmptyObject()
+    ret.variables.W = W
+    if use_bias:
+        ret.variables.b = b
+    return ret

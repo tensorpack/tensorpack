@@ -43,6 +43,7 @@ install:
 
 before_script:
 - flake8 --version
+- protoc --version
 - python -c "import cv2; print('OpenCV '+ cv2.__version__)"
 - python -c "import tensorflow as tf; print('TensorFlow '+ tf.__version__)"
 
