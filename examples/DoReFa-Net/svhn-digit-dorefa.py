@@ -10,7 +10,7 @@ import os
 from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
-from tensorpack.tfutils.varreplace import remap_get_variable
+from tensorpack.tfutils.varreplace import remap_variables
 import tensorflow as tf
 
 from dorefa import get_dorefa
@@ -74,7 +74,7 @@ class Model(ModelDesc):
 
         image = image / 256.0
 
-        with remap_get_variable(binarize_weight), \
+        with remap_variables(binarize_weight), \
                 argscope(BatchNorm, decay=0.9, epsilon=1e-4), \
                 argscope(Conv2D, use_bias=False, nl=tf.identity):
             logits = (LinearWrap(image)

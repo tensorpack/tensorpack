@@ -15,7 +15,7 @@ import sys
 from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
-from tensorpack.tfutils.varreplace import remap_get_variable
+from tensorpack.tfutils.varreplace import remap_variables
 from dorefa import get_dorefa
 
 """
@@ -106,7 +106,7 @@ class Model(ModelDesc):
         def activate(x):
             return fa(nonlin(x))
 
-        with remap_get_variable(new_get_variable), \
+        with remap_variables(new_get_variable), \
                 argscope(BatchNorm, decay=0.9, epsilon=1e-4), \
                 argscope([Conv2D, FullyConnected], use_bias=False, nl=tf.identity):
             logits = (LinearWrap(image)

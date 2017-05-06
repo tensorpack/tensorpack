@@ -9,7 +9,8 @@ from contextlib import contextmanager
 from ..utils.develop import deprecated
 
 __all__ = ['custom_getter_scope', 'replace_get_variable',
-           'freeze_variables', 'freeze_get_variable', 'remap_get_variable']
+           'freeze_variables', 'freeze_get_variable', 'remap_get_variable',
+           'remap_variables']
 
 
 @contextmanager
@@ -32,7 +33,7 @@ def replace_get_variable(fn):
     return custom_getter_scope(getter)
 
 
-def remap_get_variable(fn):
+def remap_variables(fn):
     """
     Use fn to map the output of any variable getter.
 
@@ -61,7 +62,12 @@ def freeze_variables():
             with varreplace.freeze_get_variable():
                 x = FullyConnected('fc', x, 1000)   # fc/* will not be trained
     """
-    return remap_get_variable(lambda v: tf.stop_gradient(v))
+    return remap_variables(lambda v: tf.stop_gradient(v))
+
+
+@deprecated("Renamed to remap_variables", "2017-11-06")
+def remap_get_variable():
+    return remap_variables()
 
 
 @deprecated("Renamed to freeze_variables", "2017-11-06")

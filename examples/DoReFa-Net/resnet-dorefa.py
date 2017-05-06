@@ -13,7 +13,7 @@ from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
 from tensorpack.utils.stats import RatioCounter
-from tensorpack.tfutils.varreplace import remap_get_variable
+from tensorpack.tfutils.varreplace import remap_variables
 from dorefa import get_dorefa
 
 """
@@ -90,7 +90,7 @@ class Model(ModelDesc):
                     x = resblock(x, channel, 1)
             return x
 
-        with remap_get_variable(new_get_variable), \
+        with remap_variables(new_get_variable), \
                 argscope(BatchNorm, decay=0.9, epsilon=1e-4), \
                 argscope(Conv2D, use_bias=False, nl=tf.identity):
             logits = (LinearWrap(image)
