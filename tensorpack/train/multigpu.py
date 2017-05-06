@@ -17,7 +17,7 @@ from ..tfutils.gradproc import FilterNoneGrad, ScaleGradient
 
 from .base import Trainer
 from .feedfree import SingleCostFeedfreeTrainer
-from .input_data import QueueInput
+from .input_data import QueueInput, StagingInputWrapper
 
 __all__ = ['SyncMultiGPUTrainer', 'AsyncMultiGPUTrainer']
 
@@ -76,12 +76,16 @@ class SyncMultiGPUTrainer(MultiGPUTrainer,
         else:
             assert input_queue is None, input_queue
             self._input_method = config.data
-            # assert isinstance(self._input_method, QueueInput)
 
-        super(SyncMultiGPUTrainer, self).__init__(config)
         assert len(config.tower) >= 1, "MultiGPUTrainer must be used with at least one tower."
         if len(config.tower) > 1:
             assert tf.test.is_gpu_available()
+
+        if not isinstance(self._input_method, StagingInputWrapper):
+            devices = ['/gpu:{}'.format(k) for k in config.tower]
+            self._input_method = StagingInputWrapper(self._input_method, devices)
+
+        super(SyncMultiGPUTrainer, self).__init__(config)
         self.average_cost = average_cost
 
     @staticmethod
@@ -161,7 +165,6 @@ class AsyncMultiGPUTrainer(MultiGPUTrainer,
         else:
             assert input_queue is None, input_queue
             self._input_method = config.data
-            assert isinstance(self._input_method, QueueInput)
         super(AsyncMultiGPUTrainer, self).__init__(config)
 
         self._scale_gradient = scale_gradient
@@ -194,7 +197,7 @@ class AsyncMultiGPUTrainer(MultiGPUTrainer,
             train_op = self.config.optimizer.apply_gradients(grad_list[k])
 
             def f(op=train_op):  # avoid late-binding
-                self.sess.run([op])
+                self.sess.run([op])         # TODO this won't work with StageInput
                 next(self.async_step_counter)   # atomic due to GIL
             th = LoopThread(f)
             th.name = "AsyncLoopThread-{}".format(k)

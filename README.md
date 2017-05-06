@@ -41,10 +41,9 @@ It's Yet Another TF wrapper, but different in:
 3. Focus on training speed.
 	+	Tensorpack trainer is almost always faster than `feed_dict` based wrappers.
 	  Even on a small CNN example, the training runs [2x faster](https://gist.github.com/ppwwyyxx/8d95da79f8d97036a7d67c2416c851b6) than the equivalent Keras code.
-	  More improvements to come later.
 
-	+ Data-Parallel Multi-GPU training is off-the-shelf to use.
-	You can also define your own trainer for different style of training (e.g. GAN) without losing the efficiency.
+	+ Data-Parallel Multi-GPU training is off-the-shelf to use. For <=4 GPUs it is as fast as [tensorflow/benchmarks](https://github.com/tensorflow/benchmarks).
+	  More improvements to come later.
 
 4. Interface of extensible __Callbacks__.
 	Write a callback to implement everything you want to do apart from the training iterations, and
