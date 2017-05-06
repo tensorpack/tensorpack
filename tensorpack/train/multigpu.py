@@ -40,9 +40,11 @@ class MultiGPUTrainer(Trainer):
         ret = []
         global_scope = tf.get_variable_scope()
         for idx, t in enumerate(towers):
-            with tf.device('/gpu:{}'.format(t)), \
-                    tf.variable_scope(global_scope, reuse=idx > 0), \
-                    TowerContext('tower{}'.format(idx)):
+            with tf.variable_scope(global_scope, reuse=idx > 0), \
+                TowerContext(
+                    'tower{}'.format(idx),
+                    device='/gpu:{}'.format(t),
+                    is_training=True):
                 logger.info("Building graph for training tower {}...".format(idx))
 
                 ret.append(func())

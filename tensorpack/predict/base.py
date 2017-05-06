@@ -186,10 +186,10 @@ class PredictorTowerBuilder(object):
             msg = "Building predictor graph {} on gpu={} ...".format(towername, tower)
         logger.info(msg)
         # No matter where this get called, clear any existing name scope.
+        device = '/gpu:{}'.format(tower) if tower >= 0 else '/cpu:0'
         with tf.name_scope(None),   \
                 freeze_collection(SUMMARY_BACKUP_KEYS), \
-                tf.device('/gpu:{}'.format(tower) if tower >= 0 else '/cpu:0'), \
-                TowerContext(towername, is_training=False):
+                TowerContext(towername, device=device, is_training=False):
             self._fn(tower)
 
     # useful only when the placeholders don't have tower prefix

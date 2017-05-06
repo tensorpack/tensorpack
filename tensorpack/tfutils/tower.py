@@ -15,13 +15,20 @@ _CurrentTowerContext = None
 class TowerContext(object):
     """ A context where the current model is being built in. """
 
-    def __init__(self, tower_name, is_training=None):
+    def __init__(self, tower_name, device=None, is_training=None):
         """
         Args:
             tower_name (str): 'tower0', 'towerp0', or ''
+            device (str): the device to use. Defaults to either cpu0 or gpu0.
             is_training (bool): if None, automatically determine from tower_name.
         """
         self._name = tower_name
+        if device is None:
+            device = '/gpu:0' if tf.test.is_gpu_available() else '/cpu:0'
+        assert self.index == int(device[-1]), \
+            "Tower name {} and device {} mismatch!".format(self._name, device)
+        self._device = device
+
         if is_training is None:
             is_training = not self._name.startswith(PREDICT_TOWER)
         self._is_training = is_training
@@ -47,6 +54,10 @@ class TowerContext(object):
         if self._name == '':
             return 0
         return int(self._name[-1])
+
+    @property
+    def device(self):
+        return self._device
 
     def find_tensor_in_main_tower(self, graph, name):
         if self.is_main_tower:
@@ -79,16 +90,18 @@ class TowerContext(object):
         assert _CurrentTowerContext is None, \
             "Nesting TowerContext!"
         _CurrentTowerContext = self
-        # TODO enter name_scope(None) first
         if len(self._name):
-            self._scope = tf.name_scope(self._name)
-            return self._scope.__enter__()
+            self._scope_ctx = tf.name_scope(self._name)
+            self._scope_ctx.__enter__()
+        self._device_ctx = tf.device(self._device)
+        self._device_ctx.__enter__()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         global _CurrentTowerContext
         _CurrentTowerContext = None
         if len(self._name):
-            self._scope.__exit__(exc_type, exc_val, exc_tb)
+            self._scope_ctx.__exit__(exc_type, exc_val, exc_tb)
+        self._device_ctx.__exit__(exc_type, exc_val, exc_tb)
         return False
 
     def __str__(self):

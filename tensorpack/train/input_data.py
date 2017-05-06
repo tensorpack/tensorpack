@@ -17,6 +17,7 @@ from six.moves import range
 from ..dataflow import DataFlow, RepeatedData
 from ..tfutils.summary import add_moving_summary
 from ..tfutils import get_op_tensor_name
+from ..tfutils.tower import get_current_tower_context
 from ..utils import logger
 from ..utils.argtools import memoized
 from ..utils.concurrency import ShareSessionThread
@@ -168,13 +169,14 @@ class QueueInput(FeedfreeInput):
         trainer.register_callback(StartProcOrThread(self.thread))
 
     def get_input_tensors(self):
-        ret = self.queue.dequeue(name='input_deque')
-        if isinstance(ret, tf.Tensor):  # only one input
-            ret = [ret]
-        assert len(ret) == len(self.input_placehdrs)
-        for qv, v in zip(ret, self.input_placehdrs):
-            qv.set_shape(v.get_shape())
-        return ret
+        with tf.device('/cpu:0'):
+            ret = self.queue.dequeue(name='input_deque')
+            if isinstance(ret, tf.Tensor):  # only one input
+                ret = [ret]
+            assert len(ret) == len(self.input_placehdrs)
+            for qv, v in zip(ret, self.input_placehdrs):
+                qv.set_shape(v.get_shape())
+            return ret
 
 
 class BatchQueueInput(FeedfreeInput):
@@ -232,15 +234,16 @@ class BatchQueueInput(FeedfreeInput):
         trainer.register_callback(StartProcOrThread(self.thread))
 
     def get_input_tensors(self):
-        ret = self.queue.dequeue_many(self.batch_size, name='input_deque')
-        if isinstance(ret, tf.Tensor):  # only one input
-            ret = [ret]
-        assert len(ret) == len(self.input_placehdrs)
-        for qv, v in zip(ret, self.input_placehdrs):
-            shp = v.get_shape().as_list()
-            shp[0] = self.batch_size
-            qv.set_shape(shp)
-        return ret
+        with tf.device('/cpu:0'):
+            ret = self.queue.dequeue_many(self.batch_size, name='input_deque')
+            if isinstance(ret, tf.Tensor):  # only one input
+                ret = [ret]
+            assert len(ret) == len(self.input_placehdrs)
+            for qv, v in zip(ret, self.input_placehdrs):
+                shp = v.get_shape().as_list()
+                shp[0] = self.batch_size
+                qv.set_shape(shp)
+            return ret
 
 
 class DummyConstantInput(FeedfreeInput):
@@ -254,7 +257,6 @@ class DummyConstantInput(FeedfreeInput):
         """
         self.shapes = shapes
         logger.warn("Using dummy input for debug!")
-        self._cnt = 0
 
     def setup(self, model):
         self.input_placehdrs = model.get_reused_placehdrs()
@@ -271,7 +273,6 @@ class DummyConstantInput(FeedfreeInput):
         # don't share variables
         for tower in range(nr_tower):
             tlist = []
-            # TODO. keep device info in tower
             with tf.device('/gpu:{}'.format(tower)):
                 for idx, p in enumerate(placehdrs):
                     tlist.append(tf.get_variable(
@@ -280,9 +281,8 @@ class DummyConstantInput(FeedfreeInput):
             self.tensors.append(tlist)
 
     def get_input_tensors(self):
-        # TODO XXX call with tower index
-        ret = self.tensors[self._cnt]
-        self._cnt += 1
+        ctx = get_current_tower_context()
+        ret = self.tensors[ctx.index]
         return ret
 
 
@@ -359,8 +359,6 @@ class StagingInputWrapper(FeedfreeInput):
         self._stage_ops = []
         self._unstage_ops = []
 
-        self._cnt_unstage = 0
-
     def setup(self, model):
         self._input.setup(model)
         self.setup_staging_areas()
@@ -390,10 +388,8 @@ class StagingInputWrapper(FeedfreeInput):
         return self._input.size()
 
     def get_input_tensors(self):
-        assert self._cnt_unstage < len(self._areas)
-        assert len(self._areas) == len(self._devices)
-        ret = self._unstage_ops[self._cnt_unstage]
-        self._cnt_unstage += 1
+        ctx = get_current_tower_context()
+        ret = self._unstage_ops[ctx.index]
         return ret
 
     @staticmethod

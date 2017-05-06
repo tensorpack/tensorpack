@@ -27,8 +27,8 @@ class FeedfreeTrainerBase(Trainer):
             self._input_tensors = self._input_method.get_input_tensors()
             self.model.build_graph(self._input_tensors)
         ctx = get_current_tower_context()
-        if ctx is None:
-            with TowerContext(''):
+        if ctx is None:     # call without a context, use a default one
+            with TowerContext('', is_training=True):
                 f()
         else:
             assert ctx.is_training, ctx
