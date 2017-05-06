@@ -48,24 +48,6 @@ class TowerContext(object):
             return 0
         return int(self._name[-1])
 
-    def get_variable_on_tower(self, *args, **kwargs):
-        """
-        Get a variable for this tower specifically, without reusing, even if
-        it is called under a ``reuse=True`` variable scope.
-
-        Tensorflow doesn't allow us to disable reuse under a
-        ``reuse=True`` scope. This method provides a work around.
-        See https://www.tensorflow.org/versions/master/how_tos/variable_scope/index.html#basics-of-tfvariable-scope
-
-        Args:
-            args: same as ``tf.get_variable()``.
-        """
-        with tf.variable_scope(self._name) as scope:
-            with tf.variable_scope(scope, reuse=False):
-                scope = tf.get_variable_scope()
-                assert not scope.reuse
-                return tf.get_variable(*args, **kwargs)
-
     def find_tensor_in_main_tower(self, graph, name):
         if self.is_main_tower:
             return graph.get_tensor_by_name(name)
