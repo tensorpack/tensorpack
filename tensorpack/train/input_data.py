@@ -254,18 +254,35 @@ class DummyConstantInput(FeedfreeInput):
         """
         self.shapes = shapes
         logger.warn("Using dummy input for debug!")
+        self._cnt = 0
 
     def setup(self, model):
         self.input_placehdrs = model.get_reused_placehdrs()
 
-    def get_input_tensors(self):
+    def setup_training(self, trainer):
+        super(DummyConstantInput, self).setup_training(trainer)
+
+        nr_tower = trainer.config.nr_tower
+
         placehdrs = self.input_placehdrs
         assert len(self.shapes) == len(placehdrs)
-        ret = []
-        for idx, p in enumerate(placehdrs):
-            ret.append(tf.get_variable(
-                'dummy-' + p.op.name, shape=self.shapes[idx],
-                dtype=p.dtype, trainable=False))
+        self.tensors = []
+
+        # don't share variables
+        for tower in range(nr_tower):
+            tlist = []
+            # TODO. keep device info in tower
+            with tf.device('/gpu:{}'.format(tower)):
+                for idx, p in enumerate(placehdrs):
+                    tlist.append(tf.get_variable(
+                        'dummy-{}-{}'.format(p.op.name, tower), shape=self.shapes[idx],
+                        dtype=p.dtype, trainable=False))
+            self.tensors.append(tlist)
+
+    def get_input_tensors(self):
+        # TODO XXX call with tower index
+        ret = self.tensors[self._cnt]
+        self._cnt += 1
         return ret
 
 
@@ -318,12 +335,10 @@ class ZMQInput(FeedfreeInput):
 
 
 class StagingInputWrapper(FeedfreeInput):
-
     class StagingCallback(Callback):
         def __init__(self, stage_op, unstage_op, nr_stage):
             self.nr_stage = nr_stage
             self.stage_op = stage_op
-            # TODO make sure both stage/unstage are run, to avoid OOM
             self.fetches = tf.train.SessionRunArgs(
                 fetches=[stage_op, unstage_op])
 
@@ -335,13 +350,15 @@ class StagingInputWrapper(FeedfreeInput):
         def _before_run(self, ctx):
             return self.fetches
 
-    def __init__(self, input, devices):
+    def __init__(self, input, devices, nr_stage=5):
         self._input = input
         assert isinstance(input, FeedfreeInput)
         self._devices = devices
+        self._nr_stage = nr_stage
         self._areas = []
         self._stage_ops = []
         self._unstage_ops = []
+
         self._cnt_unstage = 0
 
     def setup(self, model):
@@ -354,7 +371,7 @@ class StagingInputWrapper(FeedfreeInput):
 
         trainer.register_callback(
             StagingInputWrapper.StagingCallback(
-                self.get_stage_op(), self.get_unstage_op(), 5))
+                self.get_stage_op(), self.get_unstage_op(), self._nr_stage))
 
     def setup_staging_areas(self):
         for idx, device in enumerate(self._devices):

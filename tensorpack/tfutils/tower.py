@@ -42,6 +42,12 @@ class TowerContext(object):
     def name(self):
         return self._name
 
+    @property
+    def index(self):
+        if self._name == '':
+            return 0
+        return int(self._name[-1])
+
     def get_variable_on_tower(self, *args, **kwargs):
         """
         Get a variable for this tower specifically, without reusing, even if
