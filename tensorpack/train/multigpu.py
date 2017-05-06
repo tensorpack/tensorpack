@@ -81,9 +81,10 @@ class SyncMultiGPUTrainer(MultiGPUTrainer,
         if len(config.tower) > 1:
             assert tf.test.is_gpu_available()
 
-        if not isinstance(self._input_method, StagingInputWrapper):
-            devices = ['/gpu:{}'.format(k) for k in config.tower]
-            self._input_method = StagingInputWrapper(self._input_method, devices)
+            # doens't seem to improve on single GPU
+            if not isinstance(self._input_method, StagingInputWrapper):
+                devices = ['/gpu:{}'.format(k) for k in config.tower]
+                self._input_method = StagingInputWrapper(self._input_method, devices)
 
         super(SyncMultiGPUTrainer, self).__init__(config)
         self.average_cost = average_cost
