@@ -34,6 +34,7 @@ class TrainConfig(object):
                  session_creator=None, session_config=None, session_init=None,
                  starting_epoch=1, steps_per_epoch=None, max_epoch=99999,
                  nr_tower=1, tower=None, predict_tower=[0],
+                 cluster_spec=None,
                  **kwargs):
         """
         Args:
@@ -163,6 +164,14 @@ class TrainConfig(object):
             self._optimizer = None
 
         assert len(kwargs) == 0, 'Unknown arguments: {}'.format(str(kwargs.keys()))
+
+        # sanity checks for distributed settings
+        self.cluster_spec = cluster_spec
+        if cluster_spec is not None:
+            # some sanity checks
+            assert len(self.tower) >= 1, "distributed trainer must be used with at least one tower."
+            assert len(cluster_spec['ps']) >= 1, "distributed trainer requires at least one parameter server."
+            assert len(cluster_spec['worker']) >= 1, "distributed trainer requires at least one worker."
 
     @property
     def nr_tower(self):

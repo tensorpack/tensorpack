@@ -14,6 +14,7 @@ from ..utils.concurrency import LoopThread
 from ..tfutils.tower import TowerContext
 from ..tfutils.collection import backup_collection, restore_collection
 from ..tfutils.gradproc import FilterNoneGrad, ScaleGradient
+from ..tfutils.common import get_global_step_var
 
 from .base import Trainer
 from .feedfree import SingleCostFeedfreeTrainer
@@ -136,7 +137,9 @@ class SyncMultiGPUTrainer(MultiGPUTrainer,
                 cost,
                 gate_gradients=tf.train.Optimizer.GATE_NONE,
                 colocate_gradients_with_ops=True)
-        self.train_op = self.config.optimizer.apply_gradients(grads, name='min_op')
+        self.grads = grads
+        global_step = get_global_step_var()
+        self.train_op = self.config.optimizer.apply_gradients(grads, name='min_op', global_step=global_step)
 
 
 class AsyncMultiGPUTrainer(MultiGPUTrainer,

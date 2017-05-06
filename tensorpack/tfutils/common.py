@@ -65,11 +65,12 @@ def get_global_step_var():
         scope = tf.get_variable_scope()
         assert scope.name == '', \
             "The global_step variable should be created under the root variable scope!"
-        with tf.variable_scope(scope, reuse=False), \
-                tf.name_scope(None):
-            var = tf.get_variable(GLOBAL_STEP_OP_NAME,
-                                  initializer=tf.constant(0, dtype=tf.int64),
-                                  trainable=False, dtype=tf.int64)
+        with tf.device('/cpu:0'):
+            with tf.variable_scope(scope, reuse=False), \
+                    tf.name_scope(None):
+                var = tf.get_variable(GLOBAL_STEP_OP_NAME,
+                                      initializer=tf.constant(0, dtype=tf.int64),
+                                      trainable=False, dtype=tf.int64)
         return var
 
 

@@ -128,7 +128,7 @@ class Trainer(object):
         self.sess.run(init_op)
         logger.info("Graph variables initialized.")
         self.config.session_init.init(self.sess)
-        self.sess.graph.finalize()
+        # self.sess.graph.finalize()
 
         hooks = self._callbacks.get_hooks()
         self.hooked_sess = HookedSession(self.sess, hooks)
