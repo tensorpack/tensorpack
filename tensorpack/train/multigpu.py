@@ -63,20 +63,15 @@ class SyncMultiGPUTrainer(MultiGPUTrainer,
     from each tower and averages them.
     """
 
-    def __init__(self, config, input_queue=None,
-                 average_cost=False):
+    def __init__(self, config):
         """
         Args:
-            config, input_queue: same as in :class:`QueueInputTrainer`.
-            average_cost (bool): average the cost (instead of gradients) from
-                each tower and did backprop only once. This option should make no
-                difference mathematically, but may affect speed.
+            config: same as in :class:`QueueInputTrainer`.
         """
         if config.dataflow is not None:
             # use queueinput by default. May need to avoid this in the future (when more input type is available)
-            self._input_method = QueueInput(config.dataflow, input_queue)
+            self._input_method = QueueInput(config.dataflow)
         else:
-            assert input_queue is None, input_queue
             self._input_method = config.data
 
         assert len(config.tower) >= 1, "MultiGPUTrainer must be used with at least one tower."
@@ -89,7 +84,6 @@ class SyncMultiGPUTrainer(MultiGPUTrainer,
                 self._input_method = StagingInputWrapper(self._input_method, devices)
 
         super(SyncMultiGPUTrainer, self).__init__(config)
-        self.average_cost = average_cost
 
     @staticmethod
     def _average_grads(tower_grads):
@@ -117,32 +111,18 @@ class SyncMultiGPUTrainer(MultiGPUTrainer,
 
     def _setup(self):
         super(SyncMultiGPUTrainer, self)._setup()
-        if not self.average_cost:
-            grad_list = MultiGPUTrainer.multi_tower_grads(
-                self.config.tower, lambda: self._get_cost_and_grad()[1])
 
-            # debug tower performance (without update):
-            # ops = [k[0] for k in grad_list[1]] + [k[0] for k in grad_list[0]]
-            # self.train_op = tf.group(*ops)
-            # return
+        grad_list = MultiGPUTrainer.multi_tower_grads(
+            self.config.tower, lambda: self._get_cost_and_grad()[1])
 
-            grads = SyncMultiGPUTrainer._average_grads(grad_list)
-            # grads = grad_list[0]
-        else:
-            def get_cost():
-                self.build_train_tower()
-                return self.model.get_cost()
+        # debug tower performance (without update):
+        # ops = [k[0] for k in grad_list[1]] + [k[0] for k in grad_list[0]]
+        # self.train_op = tf.group(*ops)
+        # return
 
-            cost_list = MultiGPUTrainer.multi_tower_costs(
-                self.config.tower, get_cost)
-            cost = tf.multiply(tf.add_n(cost_list), 1.0 / len(cost_list),
-                               name='averaged_cost')
+        grads = SyncMultiGPUTrainer._average_grads(grad_list)
+        # grads = grad_list[0]
 
-            opt = self.config.optimizer
-            grads = opt.compute_gradients(
-                cost,
-                gate_gradients=tf.train.Optimizer.GATE_NONE,
-                colocate_gradients_with_ops=True)
         self.train_op = self.config.optimizer.apply_gradients(grads, name='min_op')
 
 
@@ -154,19 +134,17 @@ class AsyncMultiGPUTrainer(MultiGPUTrainer,
     """
 
     def __init__(self, config,
-                 input_queue=None,
                  scale_gradient=True):
         """
         Args:
-            config, input_queue: same as in :class:`QueueInputTrainer`.
+            config: same as in :class:`QueueInputTrainer`.
             scale_gradient (bool): if True, will scale each gradient by
                 ``1.0/nr_tower``, to make Async and Sync Trainer have the same
                 effective learning rate.
         """
         if config.dataflow is not None:
-            self._input_method = QueueInput(config.dataflow, input_queue)
+            self._input_method = QueueInput(config.dataflow)
         else:
-            assert input_queue is None, input_queue
             self._input_method = config.data
         super(AsyncMultiGPUTrainer, self).__init__(config)
 

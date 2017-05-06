@@ -5,7 +5,6 @@
 
 import tensorflow as tf
 
-from ..utils.develop import log_deprecated
 from ..tfutils.tower import TowerContext, get_current_tower_context
 from .input_data import QueueInput, FeedfreeInput
 
@@ -21,7 +20,7 @@ class FeedfreeTrainerBase(Trainer):
     """
     def build_train_tower(self):
         """
-        Get input tensors from `self.input_method` and build the graph.
+        Get input tensors from `self.input_method` and build the forward graph.
         """
         def f():
             self._input_tensors = self._input_method.get_input_tensors()
@@ -64,7 +63,7 @@ class SingleCostFeedfreeTrainer(FeedfreeTrainerBase):
     def _get_cost_and_grad(self):
         """ get the cost and gradient"""
         self.build_train_tower()
-        cost = self.model.get_cost()
+        cost = self.model.get_cost()    # assume single cost
         opt = self.config.optimizer
         # GATE_NONE faster?
         grads = opt.compute_gradients(
@@ -90,7 +89,8 @@ class SimpleFeedfreeTrainer(SingleCostFeedfreeTrainer):
         assert isinstance(self._input_method, FeedfreeInput), self._input_method
         super(SimpleFeedfreeTrainer, self).__init__(config)
         assert len(self.config.tower) == 1, \
-            "SimpleFeedfreeTrainer doesn't support multigpu!"
+            "Got nr_tower={}, but doesn't support multigpu!" \
+            " Use Sync/AsyncMultiGPUTrainer instead.".format(len(self.config.tower))
 
     def _setup(self):
         super(SimpleFeedfreeTrainer, self)._setup()
@@ -101,7 +101,7 @@ class SimpleFeedfreeTrainer(SingleCostFeedfreeTrainer):
         # self.train_op = tf.group(*self._input_tensors)
 
 
-def QueueInputTrainer(config, input_queue=None, predict_tower=None):
+def QueueInputTrainer(config, input_queue=None):
     """
     A wrapper trainer which automatically wraps ``config.dataflow`` by a
     :class:`QueueInput`.
@@ -117,14 +117,8 @@ def QueueInputTrainer(config, input_queue=None, predict_tower=None):
     else:
         assert isinstance(config.data, QueueInput), config.data
 
+    # debug
     # from tensorpack.train.input_data import StagingInputWrapper, DummyConstantInput
     # config.data = StagingInputWrapper(config.data, ['/gpu:0'])
     # config.data = DummyConstantInput([[128,224,224,3], [128]])
-
-    if predict_tower is not None:
-        log_deprecated("Argument `predict_tower` in trainer", "Use TrainConfig(predict_tower=...) instead!")
-        config.predict_tower = predict_tower
-    assert len(config.tower) == 1, \
-        "Got nr_tower={}, but QueueInputTrainer doesn't support multigpu!" \
-        " Use Sync/AsyncMultiGPUTrainer instead.".format(len(config.tower))
     return SimpleFeedfreeTrainer(config)

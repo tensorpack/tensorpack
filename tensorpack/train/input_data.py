@@ -293,7 +293,7 @@ class TensorInput(FeedfreeInput):
         """
         Args:
             get_tensor_fn: a function which returns a list of input tensors
-                when called.
+                when called. It will be called under a TowerContext.
             size(int): size of this input. Use None to leave it undefined.
         """
         self.get_tensor_fn = get_tensor_fn
