@@ -57,7 +57,7 @@ class Model(ModelDesc):
         old_get_variable = tf.get_variable
 
         # monkey-patch tf.get_variable to apply fw
-        def new_get_variable(v):
+        def binarize_weight(v):
             name = v.op.name
             # don't binarize first and last layer
             if not name.endswith('W') or 'conv0' in name or 'fc' in name:
@@ -74,7 +74,7 @@ class Model(ModelDesc):
 
         image = image / 256.0
 
-        with remap_get_variable(new_get_variable), \
+        with remap_get_variable(binarize_weight), \
                 argscope(BatchNorm, decay=0.9, epsilon=1e-4), \
                 argscope(Conv2D, use_bias=False, nl=tf.identity):
             logits = (LinearWrap(image)

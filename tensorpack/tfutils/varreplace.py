@@ -4,57 +4,54 @@
 # Credit: Qinyao He
 
 import tensorflow as tf
-from tensorflow.python.ops import variable_scope
 from contextlib import contextmanager
 
-__all__ = ['replace_get_variable', 'freeze_get_variable', 'remap_get_variable']
+from ..utils.develop import deprecated
 
-_ORIG_GET_VARIABLE = tf.get_variable
+__all__ = ['custom_getter_scope', 'replace_get_variable',
+           'freeze_variables', 'freeze_get_variable', 'remap_get_variable']
 
 
 @contextmanager
+def custom_getter_scope(custom_getter):
+    scope = tf.get_variable_scope()
+    with tf.variable_scope(scope, custom_getter=custom_getter):
+        yield
+
+
+@deprecated("Use custom_getter_scope instead.", "2017-11-06")
 def replace_get_variable(fn):
     """
     Args:
         fn: a function compatible with ``tf.get_variable``.
     Returns:
-        a context where ``tf.get_variable`` and
-        ``variable_scope.get_variable`` are replaced with ``fn``.
-
-    Note that originally ``tf.get_variable ==
-    tensorflow.python.ops.variable_scope.get_variable``. But some code such as
-    some in `rnn_cell/`, uses the latter one to get variable, therefore both
-    need to be replaced.
+        a context with a custom getter
     """
-    old_getv = tf.get_variable
-    old_vars_getv = variable_scope.get_variable
-
-    tf.get_variable = fn
-    # doesn't seem to be working?
-    # and when it works, remap might call fn twice
-    variable_scope.get_variable = fn
-    yield
-    tf.get_variable = old_getv
-    variable_scope.get_variable = old_vars_getv
+    def getter(_, *args, **kwargs):
+        return fn(*args, **kwargs)
+    return custom_getter_scope(getter)
 
 
 def remap_get_variable(fn):
-    """ Similar to :func:`replace_get_variable`, but the function `fn`
-    takes the variable returned by the original `tf.get_variable` call
-    and return a tensor.
     """
-    old_getv = tf.get_variable
+    Use fn to map the output of any variable getter.
 
-    def new_get_variable(name, shape=None, **kwargs):
-        v = old_getv(name, shape, **kwargs)
+    Args:
+        fn (tf.Variable -> tf.Tensor)
+
+    Returns:
+        a context where all the variables will be mapped by fn.
+    """
+    def custom_getter(getter, *args, **kwargs):
+        v = getter(*args, **kwargs)
         return fn(v)
-    return replace_get_variable(new_get_variable)
+    return custom_getter_scope(custom_getter)
 
 
-def freeze_get_variable():
+def freeze_variables():
     """
     Return a context, where all variables (reused or not) returned by
-    ``get_variable`` will have no gradients (surrounded by ``tf.stop_gradient``).
+    ``get_variable`` will have no gradients (they  will be followed by ``tf.stop_gradient``).
     But they will still be in ``TRAINABLE_VARIABLES`` collections so they will get
     saved correctly. This is useful to fix certain variables for fine-tuning.
 
@@ -64,5 +61,9 @@ def freeze_get_variable():
             with varreplace.freeze_get_variable():
                 x = FullyConnected('fc', x, 1000)   # fc/* will not be trained
     """
-    return remap_get_variable(
-        lambda v: tf.stop_gradient(v))
+    return remap_get_variable(lambda v: tf.stop_gradient(v))
+
+
+@deprecated("Renamed to freeze_variables", "2017-11-06")
+def freeze_get_variable():
+    return freeze_variables()
