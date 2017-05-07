@@ -9,7 +9,7 @@ import re
 from six.moves import zip, range
 
 from ..utils import logger
-from ..utils.naming import SUMMARY_BACKUP_KEYS
+from ..utils.naming import TOWER_FREEZE_KEYS
 from ..utils.concurrency import LoopThread
 from ..tfutils.tower import TowerContext
 from ..tfutils.collection import backup_collection, restore_collection
@@ -50,8 +50,8 @@ class MultiGPUTrainer(Trainer):
                 ret.append(func())
 
                 if idx == 0:
-                    # avoid repeated summary from each device
-                    backup = backup_collection(SUMMARY_BACKUP_KEYS)
+                    # avoid repeated summary & update_ops from each device
+                    backup = backup_collection(TOWER_FREEZE_KEYS)
         restore_collection(backup)
         return ret
 

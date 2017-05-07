@@ -24,6 +24,8 @@ INPUTS_KEY = 'INPUTS_METAINFO'
 
 SUMMARY_BACKUP_KEYS = [tf.GraphKeys.SUMMARIES, MOVING_SUMMARY_OPS_KEY]
 
+TOWER_FREEZE_KEYS = SUMMARY_BACKUP_KEYS + [tf.GraphKeys.UPDATE_OPS]
+
 # export all upper case variables
 all_local_names = locals().keys()
 __all__ = [x for x in all_local_names if x.isupper()]

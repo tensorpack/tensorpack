@@ -10,7 +10,7 @@ import six
 from ..utils import logger
 from ..utils.develop import deprecated
 from ..utils.argtools import memoized
-from ..utils.naming import SUMMARY_BACKUP_KEYS
+from ..utils.naming import TOWER_FREEZE_KEYS
 from ..tfutils import get_tensors_by_names, TowerContext, get_op_tensor_name
 from ..tfutils.collection import freeze_collection
 
@@ -188,7 +188,7 @@ class PredictorTowerBuilder(object):
         # No matter where this get called, clear any existing name scope.
         device = '/gpu:{}'.format(tower) if tower >= 0 else '/cpu:0'
         with tf.name_scope(None),   \
-                freeze_collection(SUMMARY_BACKUP_KEYS), \
+                freeze_collection(TOWER_FREEZE_KEYS), \
                 TowerContext(towername, device=device, is_training=False):
             self._fn(tower)
 
