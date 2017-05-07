@@ -161,6 +161,7 @@ def get_config(model, algorithm_name):
             MovingAverageSummary(),
             ProgressBar(extra_display),
             MergeAllSummaries(),
+            RunUpdateOps()
         ],
         max_epoch=20,
     )
