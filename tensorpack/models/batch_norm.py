@@ -126,8 +126,12 @@ def update_bn_ema(xn, batch_mean, batch_var, moving_mean, moving_var, decay):
     add_model_variable(moving_var)
 
     # seems faster than delayed update, but might behave otherwise in distributed settings.
-    with tf.control_dependencies([update_op1, update_op2]):
-        return tf.identity(xn, name='output')
+    # TODO add an option, and maybe enable it for replica mode?
+    # with tf.control_dependencies([update_op1, update_op2]):
+    # return tf.identity(xn, name='output')
+    tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_op1)
+    tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_op2)
+    return xn
 
 
 def reshape_for_bn(param, ndims, chan, data_format):

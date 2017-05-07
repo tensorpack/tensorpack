@@ -19,14 +19,12 @@ class TowerContext(object):
         """
         Args:
             tower_name (str): 'tower0', 'towerp0', or ''
-            device (str): the device to use. Defaults to either cpu0 or gpu0.
+            device (str or device function): the device to use. Defaults to either cpu0 or gpu0.
             is_training (bool): if None, automatically determine from tower_name.
         """
         self._name = tower_name
         if device is None:
             device = '/gpu:0' if tf.test.is_gpu_available() else '/cpu:0'
-        assert self.index == int(device[-1]), \
-            "Tower name {} and device {} mismatch!".format(self._name, device)
         self._device = device
 
         if is_training is None:

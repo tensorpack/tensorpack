@@ -28,7 +28,8 @@ def describe_model():
     table = tabulate(data, headers=['name', 'shape', 'dim'])
     size_mb = total * 4 / 1024.0**2
     summary_msg = colored(
-        "\nTotal #param={} ({:.02f} MB assuming all float32)".format(total, size_mb), 'cyan')
+        "\nTotal #vars={}, #param={} ({:.02f} MB assuming all float32)".format(
+            len(data), total, size_mb), 'cyan')
     logger.info(colored("Model Parameters: \n", 'cyan') + table + summary_msg)
 
 
