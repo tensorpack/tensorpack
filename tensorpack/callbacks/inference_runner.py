@@ -17,7 +17,7 @@ from ..utils import logger, get_tqdm_kwargs
 from ..dataflow import DataFlow
 from ..tfutils.common import get_op_tensor_name, get_tensors_by_names
 from ..tfutils.tower import TowerContext
-from ..train.input_data import TensorInput, FeedInput
+from ..train.input_source import TensorInput, FeedInput
 from ..predict import PredictorTowerBuilder
 
 from .base import Callback
@@ -59,14 +59,14 @@ class InferenceRunnerBase(Callback):
     def __init__(self, input, infs, input_names=None, prefix='', extra_hooks=None):
         """
         Args:
-            input (InputData): the input to use. Must have ``size()``.
+            input (InputSource): the input to use. Must have ``size()``.
             infs (list): list of :class:`Inferencer` to run.
             input_names (list): must be a subset of the names in InputDesc.
             prefix(str): an prefix used to build the tower. Must be set
                 differently if more than one :class:`InferenceRunner` are used.
             extra_hooks (list): extra ``SessionRunHook`` to run with the evaluation.
         """
-        self._input_data = input
+        self._input_source = input
         if not isinstance(infs, list):
             self.infs = [infs]
         else:
@@ -102,7 +102,7 @@ class InferenceRunnerBase(Callback):
             #     return x.name
 
     def _setup_graph(self):
-        self._input_data.setup(self.trainer.model)
+        self._input_source.setup(self.trainer.model)
         self._setup_input_names()
         # Use predict_tower in train config. either gpuid or -1
         self._predict_tower_id = self.trainer.config.predict_tower[0]
@@ -142,9 +142,9 @@ class InferenceRunnerBase(Callback):
             inf.before_inference()
 
         # iterate over the data, and run the hooked session
-        self._input_data.reset_state()
-        for _ in tqdm.trange(self._input_data.size(), **get_tqdm_kwargs()):
-            dp = self._input_data.next_feed()
+        self._input_source.reset_state()
+        for _ in tqdm.trange(self._input_source.size(), **get_tqdm_kwargs()):
+            dp = self._input_source.next_feed()
             feed = dict(zip(self._feed_tensors, dp))
             self._hooked_sess.run(fetches=[], feed_dict=feed)
         summary_inferencer(self.trainer, self.infs)
@@ -209,7 +209,7 @@ class FeedfreeInferenceRunner(InferenceRunnerBase):
                 "[FeedfreeInferenceRunner] name {} is not a model input!".format(n)
 
     def _find_input_tensors(self):
-        tensors = self._input_data.get_input_tensors()
+        tensors = self._input_source.get_input_tensors()
 
         assert len(self.input_names) == len(tensors), \
             "[FeedfreeInferenceRunner] Input names must match the " \
@@ -251,7 +251,7 @@ class DataParallelInferenceRunner(InferenceRunner):
 
     def _setup_graph(self):
         model = self.trainer.model
-        self._input_data.setup(model)
+        self._input_source.setup(model)
         self._setup_input_names()
 
         # build graph
@@ -318,21 +318,21 @@ class DataParallelInferenceRunner(InferenceRunner):
         for inf in self.infs:
             inf.before_inference()
 
-        self._input_data.reset_state()
-        total = self._input_data.size()
+        self._input_source.reset_state()
+        total = self._input_source.size()
         nr_tower = len(self._gpus)
         with tqdm.tqdm(total=total, **get_tqdm_kwargs()) as pbar:
             while total >= nr_tower:
                 dps = []
                 for k in self._gpus:
-                    dps.extend(self._input_data.next_feed())
+                    dps.extend(self._input_source.next_feed())
                 feed = dict(zip(self._feed_tensors, dps))
                 self._parallel_hooked_sess.run(fetches=[], feed_dict=feed)
                 pbar.update(nr_tower)
                 total -= nr_tower
             # take care of the rest
             while total > 0:
-                dp = self._input_data.next_feed()
+                dp = self._input_source.next_feed()
                 feed = dict(zip(self._feed_tensors[:len(dp)], dp))
                 self._hooked_sess.run(fetches=[], feed_dict=feed)
         summary_inferencer(self.trainer, self.infs)

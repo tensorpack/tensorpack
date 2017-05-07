@@ -24,6 +24,8 @@ TrainConfig(
   callbacks=[
     # save the model every epoch
     ModelSaver(),
+		# backup the model with best validation error
+		MinSaver('val-error-top1'),
     # run inference on another Dataflow every epoch, compute top1/top5 classification error and save them in log
     InferenceRunner(dataset_val, [
         ClassificationError('wrong-top1', 'val-error-top1'),
@@ -46,6 +48,8 @@ TrainConfig(
     ProgressBar(),
     # run `tf.summary.merge_all` every epoch and send results to monitors
     MergeAllSummaries(),
+		# run ops in GraphKeys.UPDATE_OPS collection along with training, if any
+		RunUpdateOps(),
   ],
   monitors=[        # monitors are a special kind of callbacks. these are also enabled by default
     # write all monitor data to tensorboard

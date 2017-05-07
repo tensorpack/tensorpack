@@ -56,7 +56,8 @@ class GANModelDesc(ModelDesc):
 
 class GANTrainer(FeedfreeTrainerBase):
     def __init__(self, config):
-        self._input_method = QueueInput(config.dataflow)
+        # TODO design better
+        self._input_source = QueueInput(config.dataflow)
         super(GANTrainer, self).__init__(config)
 
     def _setup(self):
@@ -79,7 +80,7 @@ class SeparateGANTrainer(FeedfreeTrainerBase):
             d_period(int): period of each d_opt run
             g_period(int): period of each g_opt run
         """
-        self._input_method = QueueInput(config.dataflow)
+        self._input_source = QueueInput(config.dataflow)
         self._d_period = int(d_period)
         self._g_period = int(g_period)
         assert min(d_period, g_period) == 1

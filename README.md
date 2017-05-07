@@ -34,16 +34,15 @@ It's Yet Another TF wrapper, but different in:
 		Tensorpack includes only a few common models, and helpful tools such as `LinearWrap` to simplify large models.
 	  But you can use any other wrappers within tensorpack, such as sonnet/Keras/slim/tflearn/tensorlayer/....
 
-2. Focus on large datasets.
-	+ __DataFlow__ allows you to process large datasets such as ImageNet in Python without blocking the training.
-	+ DataFlow has a unified interface, so you can compose and reuse them to perform complex preprocessing.
-
-3. Focus on training speed.
+2. Focus on __training speed__.
 	+	Tensorpack trainer is almost always faster than `feed_dict` based wrappers.
-	  Even on a small CNN example, the training runs [2x faster](https://gist.github.com/ppwwyyxx/8d95da79f8d97036a7d67c2416c851b6) than the equivalent Keras code.
+	  Even on a tiny CNN example, the training runs [2x faster](https://gist.github.com/ppwwyyxx/8d95da79f8d97036a7d67c2416c851b6) than the equivalent Keras code.
 
-	+ Data-Parallel Multi-GPU training is off-the-shelf to use. For <=4 GPUs it is as fast as [tensorflow/benchmarks](https://github.com/tensorflow/benchmarks).
-	  More improvements to come later.
+	+ Data-Parallel Multi-GPU training is off-the-shelf to use. It is as fast as Google's [benchmark code](https://github.com/tensorflow/benchmarks).
+
+3. Focus on large datasets.
+	+ __DataFlow__ allows you to process large datasets such as ImageNet in pure Python without blocking the training.
+	+ DataFlow has a unified interface, so you can compose and reuse them to perform complex preprocessing.
 
 4. Interface of extensible __Callbacks__.
 	Write a callback to implement everything you want to do apart from the training iterations, and
@@ -59,7 +58,7 @@ It's Yet Another TF wrapper, but different in:
 Dependencies:
 
 + Python 2 or 3
-+ TensorFlow >= 1.0.0
++ TensorFlow >= 1.0.0 (>=1.1.0 for Multi-GPU)
 + Python bindings for OpenCV
 ```
 pip install -U git+https://github.com/ppwwyyxx/tensorpack.git

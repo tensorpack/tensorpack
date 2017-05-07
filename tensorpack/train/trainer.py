@@ -5,7 +5,7 @@
 from .base import Trainer
 
 from ..tfutils import TowerContext
-from .input_data import FeedInput
+from .input_source import FeedInput
 
 __all__ = ['SimpleTrainer']
 
@@ -21,19 +21,19 @@ class SimpleTrainer(Trainer):
         """
         super(SimpleTrainer, self).__init__(config)
         if config.dataflow is None:
-            self._input_method = config.data
-            assert isinstance(self._input_method, FeedInput), type(self._input_method)
+            self._input_source = config.data
+            assert isinstance(self._input_source, FeedInput), type(self._input_source)
         else:
-            self._input_method = FeedInput(config.dataflow)
+            self._input_source = FeedInput(config.dataflow)
 
     def run_step(self):
         """ Feed data into the graph and run the updates. """
-        dp = self._input_method.next_feed()
+        dp = self._input_source.next_feed()
         feed = dict(zip(self.inputs, dp))
         self.hooked_sess.run(self.train_op, feed_dict=feed)
 
     def _setup(self):
-        self._input_method.setup_training(self)
+        self._input_source.setup_training(self)
         model = self.model
         self.inputs = model.get_reused_placehdrs()
         with TowerContext('', is_training=True):

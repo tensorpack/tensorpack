@@ -48,9 +48,8 @@ for details.
 	 -->
 
 ### Use DataFlow outside Tensorpack
-Another good thing about DataFlow is that it is independent of
-tensorpack internals. You can just use it as an efficient data processing pipeline
-and plug it into other frameworks.
+DataFlow is independent of both tensorpack and TensorFlow.
+You can simply use it as a data processing pipeline and plug it into any other frameworks.
 
 To use a DataFlow independently, you will need to call `reset_state()` first to initialize it,
 and then use the generator however you want:

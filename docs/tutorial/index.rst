@@ -9,7 +9,7 @@ A High Level Glance
 
   It provides a uniform interface so that data processing modules can be chained together.
   It allows you to load and process your data in pure Python and accelerate it by prefetching.
-  See also :doc:`tf-queue`  and :doc:`efficient-dataflow` for more details about the efficiency of data
+  See also :doc:`input-source`  and :doc:`efficient-dataflow` for more details about the efficiency of data
   processing.
 
 * You can use any TF-based symbolic function library to define a model in tensorpack.
@@ -34,7 +34,7 @@ User Tutorials
   :maxdepth: 1
 
   dataflow
-  tf-queue
+  input-source
   efficient-dataflow
   model
   trainer

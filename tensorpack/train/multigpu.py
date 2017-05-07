@@ -18,7 +18,7 @@ from ..tfutils.gradproc import FilterNoneGrad, ScaleGradient
 
 from .base import Trainer
 from .feedfree import SingleCostFeedfreeTrainer
-from .input_data import QueueInput, StagingInputWrapper
+from .input_source import QueueInput, StagingInputWrapper
 
 __all__ = ['SyncMultiGPUTrainer', 'AsyncMultiGPUTrainer']
 
@@ -100,17 +100,17 @@ class SyncMultiGPUTrainerParameterServer(MultiGPUTrainer, SingleCostFeedfreeTrai
         """
         if config.dataflow is not None:
             # use queueinput by default. May need to avoid this in the future (when more input type is available)
-            self._input_method = QueueInput(config.dataflow)
+            self._input_source = QueueInput(config.dataflow)
         else:
-            self._input_method = config.data
+            self._input_source = config.data
 
         if len(config.tower) > 1:
             assert tf.test.is_gpu_available()
 
             # seem to only improve on >1 GPUs
-            if not isinstance(self._input_method, StagingInputWrapper):
+            if not isinstance(self._input_source, StagingInputWrapper):
                 devices = ['/gpu:{}'.format(k) for k in config.tower]
-                self._input_method = StagingInputWrapper(self._input_method, devices)
+                self._input_source = StagingInputWrapper(self._input_source, devices)
 
         assert ps_device in ['gpu', 'cpu'], ps_device
         self._ps_device = ps_device
@@ -192,9 +192,9 @@ class AsyncMultiGPUTrainer(MultiGPUTrainer,
                 effective learning rate.
         """
         if config.dataflow is not None:
-            self._input_method = QueueInput(config.dataflow)
+            self._input_source = QueueInput(config.dataflow)
         else:
-            self._input_method = config.data
+            self._input_source = config.data
         super(AsyncMultiGPUTrainer, self).__init__(config)
 
         self._scale_gradient = scale_gradient

@@ -6,7 +6,7 @@
 import tensorflow as tf
 
 from ..tfutils.tower import TowerContext, get_current_tower_context
-from .input_data import QueueInput, FeedfreeInput
+from .input_source import QueueInput, FeedfreeInput
 
 from .base import Trainer
 
@@ -20,10 +20,10 @@ class FeedfreeTrainerBase(Trainer):
     """
     def build_train_tower(self):
         """
-        Get input tensors from `self.input_method` and build the forward graph.
+        Get input tensors from `self.input_source` and build the forward graph.
         """
         def f():
-            self._input_tensors = self._input_method.get_input_tensors()
+            self._input_tensors = self._input_source.get_input_tensors()
             self.model.build_graph(self._input_tensors)
         ctx = get_current_tower_context()
         if ctx is None:     # call without a context, use a default one
@@ -34,8 +34,8 @@ class FeedfreeTrainerBase(Trainer):
             f()
 
     def _setup(self):
-        assert isinstance(self._input_method, FeedfreeInput), type(self._input_method)
-        self._input_method.setup_training(self)
+        assert isinstance(self._input_source, FeedfreeInput), type(self._input_source)
+        self._input_source.setup_training(self)
 
     def run_step(self):
         """ Simply run ``self.train_op``."""
@@ -85,8 +85,8 @@ class SimpleFeedfreeTrainer(SingleCostFeedfreeTrainer):
             config (TrainConfig): ``config.data`` must exist and is a
                 :class:`FeedfreeInput`.
         """
-        self._input_method = config.data
-        assert isinstance(self._input_method, FeedfreeInput), self._input_method
+        self._input_source = config.data
+        assert isinstance(self._input_source, FeedfreeInput), self._input_source
         super(SimpleFeedfreeTrainer, self).__init__(config)
         assert len(self.config.tower) == 1, \
             "Got nr_tower={}, but doesn't support multigpu!" \
@@ -118,7 +118,7 @@ def QueueInputTrainer(config, input_queue=None):
         assert isinstance(config.data, QueueInput), config.data
 
     # debug
-    # from tensorpack.train.input_data import StagingInputWrapper, DummyConstantInput
+    # from tensorpack.train.input_source import StagingInputWrapper, DummyConstantInput
     # config.data = StagingInputWrapper(config.data, ['/gpu:0'])
     # config.data = DummyConstantInput([[128,224,224,3], [128]])
     return SimpleFeedfreeTrainer(config)

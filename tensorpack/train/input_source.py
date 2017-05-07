@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File: input_data.py
+# File: input_source.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import tensorflow as tf
@@ -24,15 +24,15 @@ from ..utils.concurrency import ShareSessionThread
 from ..callbacks.concurrency import StartProcOrThread
 from ..callbacks.base import Callback
 
-__all__ = ['InputData', 'FeedfreeInput',
+__all__ = ['InputSource', 'FeedfreeInput',
            'QueueInput', 'BatchQueueInput',
            'ZMQInput',
            'DummyConstantInput', 'TensorInput', 'StagingInputWrapper']
 
 
 @six.add_metaclass(ABCMeta)
-class InputData(object):
-    """ Base class for the abstract InputData. """
+class InputSource(object):
+    """ Base class for the abstract InputSource. """
 
     @abstractmethod
     def get_input_tensors(self):
@@ -56,7 +56,7 @@ class InputData(object):
         return []
 
 
-class FeedInput(InputData):
+class FeedInput(InputSource):
     """ Input by iterating over a DataFlow and feed datapoints. """
     def __init__(self, ds):
         """
@@ -87,7 +87,7 @@ class FeedInput(InputData):
         return next(self.data_producer)
 
 
-class FeedfreeInput(InputData):
+class FeedfreeInput(InputSource):
     """ Abstract base for input without feed,
     e.g. by queue or other operations. """
 

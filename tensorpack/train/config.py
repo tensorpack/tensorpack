@@ -16,7 +16,7 @@ from ..tfutils import (JustCurrentSession,
                        get_default_sess_config, SessionInit)
 from ..tfutils.sesscreate import NewSessionCreator
 from ..tfutils.optimizer import apply_grad_processors
-from .input_data import InputData
+from .input_source import InputSource
 
 __all__ = ['TrainConfig']
 
@@ -38,7 +38,7 @@ class TrainConfig(object):
         """
         Args:
             dataflow (DataFlow): the dataflow to train.
-            data (InputData): an `InputData` instance. Only one of ``dataflow``
+            data (InputSource): an `InputSource` instance. Only one of ``dataflow``
                 or ``data`` has to be present.
             model (ModelDesc): the model to train.
             callbacks (list): a list of :class:`Callback` to perform during training.
@@ -78,7 +78,7 @@ class TrainConfig(object):
             self.data = None
         else:
             self.data = data
-            assert_type(self.data, InputData)
+            assert_type(self.data, InputSource)
             self.dataflow = None
 
         if callbacks is None:
