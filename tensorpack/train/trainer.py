@@ -4,6 +4,7 @@
 
 from .base import Trainer
 
+from ..utils import logger
 from ..tfutils import TowerContext
 from .input_source import FeedInput
 
@@ -25,6 +26,7 @@ class SimpleTrainer(Trainer):
             assert isinstance(self._input_source, FeedInput), type(self._input_source)
         else:
             self._input_source = FeedInput(config.dataflow)
+        logger.warn("SimpleTrainer is slow! Do you really want to use it?")
 
     def run_step(self):
         """ Feed data into the graph and run the updates. """

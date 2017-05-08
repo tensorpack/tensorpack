@@ -28,14 +28,14 @@ config = TrainConfig(
            callbacks=[...]
          )
 
-# start training:
+# start training (with a slow trainer. See 'tutorials - Input Sources' for details):
 # SimpleTrainer(config).train()
 
 # start training with queue prefetch:
-# QueueInputTrainer(config).train()
+QueueInputTrainer(config).train()
 
 # start multi-GPU training with a synchronous update:
-SyncMultiGPUTrainer(config).train()
+# SyncMultiGPUTrainer(config).train()
 ```
 
 Trainers just run some iterations, so there is no limit to where the data come from

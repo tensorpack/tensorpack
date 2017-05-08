@@ -3,8 +3,12 @@
 
 Training examples with __reproducible__ and meaningful performance.
 
-## Vision:
+## Getting Started:
 + [An illustrative mnist example with explanation of the framework](mnist-convnet.py)
++ The same mnist example using [tf-slim](mnist-tfslim.py), [Keras](mnist-keras.py), and [with weights visualizations](mnist-visualizations.py)
++ [A boilerplate file to start with, for your own tasks](boilerplate.py)
+
+## Vision:
 + [A tiny SVHN ConvNet with 97.8% accuracy](svhn-digit-convnet.py)
 + [DoReFa-Net: training binary / low-bitwidth CNN on ImageNet](DoReFa-Net)
 + [Train ResNet for ImageNet/Cifar10/SVHN](ResNet)

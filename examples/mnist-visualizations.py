@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File: mnist-convnet.py
-# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+# File: mnist-visualizations.py
 
 import numpy as np
 import os
@@ -9,11 +8,9 @@ import sys
 import argparse
 
 """
-MNIST ConvNet example.
-about 0.6% validation error after 30 epochs.
+MNIST ConvNet example with weights/activations visualization.
 """
 
-# Just import everything into current namespace
 from tensorpack import *
 import tensorflow as tf
 import tensorpack.tfutils.symbolic_functions as symbf
@@ -73,10 +70,6 @@ def visualize_conv_activations(activation, name):
 
 class Model(ModelDesc):
     def _get_inputs(self):
-        """
-        Define all the inputs (with type, shape, name) that
-        the graph will need.
-        """
         return [InputDesc(tf.float32, (None, IMAGE_SIZE, IMAGE_SIZE), 'input'),
                 InputDesc(tf.int32, (None,), 'label')]
 
@@ -111,7 +104,6 @@ class Model(ModelDesc):
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
 
-        # compute the "incorrect vector", for the callback ClassificationError to use at validation time
         wrong = symbf.prediction_incorrect(logits, label, name='incorrect')
         accuracy = symbf.accuracy(logits, label)
 
@@ -121,9 +113,7 @@ class Model(ModelDesc):
         self.cost = tf.add_n([wd_cost, cost], name='total_cost')
         summary.add_moving_summary(cost, wd_cost, self.cost, accuracy)
 
-        summary.add_param_summary(('.*/W', ['histogram', 'rms']),
-                                  ('.*/weights', ['histogram', 'rms'])  # to also work with slim
-                                  )
+        summary.add_param_summary(('.*/W', ['histogram', 'rms']))
 
     def _get_optimizer(self):
         lr = tf.train.exponential_decay(

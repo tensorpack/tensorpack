@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # File: mnist-convnet.py
-# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
 import os
@@ -82,9 +81,7 @@ class Model(ModelDesc):
         summary.add_moving_summary(cost, wd_cost, self.cost)
 
         # monitor histogram of all weight (of conv and fc layers) in tensorboard
-        summary.add_param_summary(('.*/W', ['histogram', 'rms']),
-                                  ('.*/weights', ['histogram', 'rms'])  # to also work with slim
-                                  )
+        summary.add_param_summary(('.*/W', ['histogram', 'rms']))
 
     def _get_optimizer(self):
         lr = tf.train.exponential_decay(
@@ -141,4 +138,6 @@ if __name__ == '__main__':
     config = get_config()
     if args.load:
         config.session_init = SaverRestore(args.load)
+    # SimpleTrainer is slow, this is just a demo.
     SimpleTrainer(config).train()
+    # You can use QueueInputTrainer instead
