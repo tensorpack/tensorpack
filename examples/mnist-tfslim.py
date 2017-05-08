@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File: mnist-convnet.py
-# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+# File: mnist-tfslim.py
 
 import numpy as np
 import os
 import sys
 import argparse
+
 """
 MNIST ConvNet example.
 about 0.6% validation error after 30 epochs.
@@ -15,7 +15,7 @@ about 0.6% validation error after 30 epochs.
 # Just import everything into current namespace
 from tensorpack import *
 import tensorflow as tf
-import tensorpack.tfutils.symbolic_functions as symbf
+import tensorflow.contrib.slim as slim
 
 IMAGE_SIZE = 28
 
@@ -35,26 +35,25 @@ class Model(ModelDesc):
 
         # inputs contains a list of input variables defined above
         image, label = inputs
-
         # In tensorflow, inputs to convolution function are assumed to be
         # NHWC. Add a single channel here.
         image = tf.expand_dims(image, 3)
 
         image = image * 2 - 1   # center the pixels values at zero
 
-        # The context manager `argscope` sets the default option for all the layers under
-        # this context. Here we use 32 channel convolution with shape 3x3
-        with argscope(Conv2D, kernel_shape=3, nl=tf.nn.relu, out_channel=32):
-            logits = (LinearWrap(image)
-                      .Conv2D('conv0')
-                      .MaxPooling('pool0', 2)
-                      .Conv2D('conv1')
-                      .Conv2D('conv2')
-                      .MaxPooling('pool1', 2)
-                      .Conv2D('conv3')
-                      .FullyConnected('fc0', 512, nl=tf.nn.relu)
-                      .Dropout('dropout', 0.5)
-                      .FullyConnected('fc1', out_dim=10, nl=tf.identity)())
+        is_training = get_current_tower_context().is_training
+        with slim.arg_scope([slim.layers.fully_connected],
+                            weights_regularizer=slim.l2_regularizer(1e-5)):
+            l = slim.layers.conv2d(image, 32, [3, 3], scope='conv0')
+            l = slim.layers.max_pool2d(l, [2, 2], scope='pool0')
+            l = slim.layers.conv2d(l, 32, [3, 3], padding='SAME', scope='conv1')
+            l = slim.layers.conv2d(l, 32, [3, 3], scope='conv2')
+            l = slim.layers.max_pool2d(l, [2, 2], scope='pool1')
+            l = slim.layers.conv2d(l, 32, [3, 3], scope='conv3')
+            l = slim.layers.flatten(l, scope='flatten')
+            l = slim.layers.fully_connected(l, 512, scope='fc0')
+            l = slim.layers.dropout(l, is_training=is_training)
+            logits = slim.layers.fully_connected(l, 10, activation_fn=None, scope='fc1')
 
         prob = tf.nn.softmax(logits, name='prob')   # a Bx10 with probabilities
 
@@ -63,23 +62,18 @@ class Model(ModelDesc):
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')  # the average cross-entropy loss
 
         # compute the "incorrect vector", for the callback ClassificationError to use at validation time
-        wrong = symbf.prediction_incorrect(logits, label, name='incorrect')
-        accuracy = symbf.accuracy(logits, label, name='accuracy')
+        wrong = symbolic_functions.prediction_incorrect(logits, label, name='incorrect')
 
         # This will monitor training error (in a moving_average fashion):
         # 1. write the value to tensosrboard
         # 2. write the value to stat.json
         # 3. print the value after each epoch
         train_error = tf.reduce_mean(wrong, name='train_error')
-        summary.add_moving_summary(train_error, accuracy)
+        summary.add_moving_summary(train_error)
 
-        # Use a regex to find parameters to apply weight decay.
-        # Here we apply a weight decay on all W (weight matrix) of all fc layers
-        wd_cost = tf.multiply(1e-5,
-                              regularize_cost('fc.*/W', tf.nn.l2_loss),
-                              name='regularize_loss')
-        self.cost = tf.add_n([wd_cost, cost], name='total_cost')
-        summary.add_moving_summary(cost, wd_cost, self.cost)
+        # slim already adds regularization to a collection, no extra handling
+        self.cost = cost
+        summary.add_moving_summary(cost)
 
         # monitor histogram of all weight (of conv and fc layers) in tensorboard
         summary.add_param_summary(('.*/W', ['histogram', 'rms']),
@@ -122,8 +116,7 @@ def get_config():
             InferenceRunner(    # run inference(for validation) after every epoch
                 dataset_test,   # the DataFlow instance used for validation
                 # Calculate both the cost and the error for this DataFlow
-                [ScalarStats('cross_entropy_loss'), ScalarStats('accuracy'),
-                 ClassificationError('incorrect')]),
+                [ScalarStats('cross_entropy_loss'), ClassificationError('incorrect')]),
         ],
         steps_per_epoch=steps_per_epoch,
         max_epoch=100,
