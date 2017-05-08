@@ -22,6 +22,18 @@ def prediction_incorrect(logits, label, topk=1, name='incorrect_vector'):
                    tf.float32, name=name)
 
 
+def accuracy(logits, label, topk=1, name='accuracy'):
+    """
+    Args:
+        logits: shape [B,C].
+        label: shape [B].
+        topk(int): topk
+    Returns:
+        a single scalar
+    """
+    return tf.reduce_mean(tf.cast(tf.nn.in_top_k(logits, label, topk), tf.float32), name=name)
+
+
 def flatten(x):
     """
     Flatten the tensor.
