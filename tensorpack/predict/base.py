@@ -137,7 +137,7 @@ class OfflinePredictor(OnlinePredictor):
         self.graph = config._maybe_create_graph()
         with self.graph.as_default():
             input_placehdrs = config.model.get_reused_placehdrs()
-            with TowerContext('', False):
+            with TowerContext('', is_training=False):
                 config.model.build_graph(input_placehdrs)
 
             input_tensors = get_tensors_by_names(config.input_names)
