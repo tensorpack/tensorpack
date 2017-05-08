@@ -15,7 +15,8 @@ def Conv2D(x, out_channel, kernel_shape,
            padding='SAME', stride=1,
            W_init=None, b_init=None,
            nl=tf.identity, split=1, use_bias=True,
-           data_format='NHWC'):
+           data_format='NHWC', depthwise=False,
+           separable=False, channel_multiplier=None):
     """
     2D convolution on 4D inputs.
 
@@ -31,6 +32,9 @@ def Conv2D(x, out_channel, kernel_shape,
         b_init: initializer for b. Defaults to zero.
         nl: a nonlinearity function.
         use_bias (bool): whether to use bias.
+        depthwise (bool): whether to apply convolutions depthwise.
+        separable (bool): whether to apply separable convolutions.
+        channel_multiplier (int): channel multiplier when using separable convolutions.
 
     Returns:
         tf.Tensor named ``output`` with attribute `variables`.
@@ -38,6 +42,7 @@ def Conv2D(x, out_channel, kernel_shape,
     Variable Names:
 
     * ``W``: weights
+    * ``W_``: weights (pointwise, when separable convolution)
     * ``b``: bias
     """
     in_shape = x.get_shape().as_list()
@@ -46,10 +51,15 @@ def Conv2D(x, out_channel, kernel_shape,
     assert in_channel is not None, "[Conv2D] Input cannot have unknown channel!"
     assert in_channel % split == 0
     assert out_channel % split == 0
+    assert not (depthwise and separable), "[Conv2D] cannot apply depthwise and separable conv. simultanously!"
 
     kernel_shape = shape2d(kernel_shape)
     padding = padding.upper()
     filter_shape = kernel_shape + [in_channel / split, out_channel]
+    if separable:
+        assert channel_multiplier is not None, "[Conv2D] channel_multiplier is missing in separable conv. "
+        assert split == 1, "[Conv2D] separable convolution can only be applied without split channels!"
+        filter_shape = kernel_shape + [in_channel, channel_multiplier]
     stride = shape4d(stride, data_format=data_format)
 
     if W_init is None:
@@ -58,12 +68,24 @@ def Conv2D(x, out_channel, kernel_shape,
         b_init = tf.constant_initializer()
 
     W = tf.get_variable('W', filter_shape, initializer=W_init)
+    if separable:
+        filter_shape = [1, 1, in_channel * channel_multiplier, out_channel]
+    W_ = tf.get_variable('W_', filter_shape, initializer=W_init) if separable else None
 
     if use_bias:
         b = tf.get_variable('b', [out_channel], initializer=b_init)
 
+    func = tf.nn.conv2d
+    if depthwise:
+        func = tf.nn.depthwise_conv2d
+    if separable:
+        func = tf.nn.separable_conv2d
+
     if split == 1:
-        conv = tf.nn.conv2d(x, W, stride, padding, data_format=data_format)
+        if separable:
+            conv = func(x, W, W_, stride, padding, data_format=data_format)
+        else:
+            conv = func(x, W, stride, padding, data_format=data_format)
     else:
         inputs = tf.split(x, split, channel_axis)
         kernels = tf.split(W, split, 3)
@@ -75,6 +97,8 @@ def Conv2D(x, out_channel, kernel_shape,
     ret.variables = VariableHolder(W=W)
     if use_bias:
         ret.variables.b = b
+    if separable:
+        ret.variables.W_ = W_
     return ret
 
 
