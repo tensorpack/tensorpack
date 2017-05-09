@@ -198,10 +198,10 @@ class FixedSizeData(ProxyDataFlow):
         cnt = 0
         while True:
             try:
-                dp = self.itr.next()
+                dp = next(self.itr)
             except StopIteration:
                 self.itr = self.ds.get_data()
-                dp = self.itr.next()
+                dp = next(self.itr)
 
             cnt += 1
             yield dp
