@@ -40,13 +40,13 @@ class FakeData(RNGDataFlow):
             for _ in range(self._size):
                 val = []
                 for k in range(len(self.shapes)):
-                    v = self.rng.rand(*self.shapes[k]) * self.domain[k][1] + self.domain[k][0]
+                    v = self.rng.rand(*self.shapes[k]) * (self.domain[k][1] - self.domain[k][0]) + self.domain[k][0]
                     val.append(v.astype(self.dtype[k]))
                 yield val
         else:
             val = []
             for k in range(len(self.shapes)):
-                v = self.rng.rand(*self.shapes[k]) * self.domain[k][1] + self.domain[k][0]
+                v = self.rng.rand(*self.shapes[k]) * (self.domain[k][1] - self.domain[k][0]) + self.domain[k][0]
                 val.append(v.astype(self.dtype[k]))
             for _ in range(self._size):
                 yield copy.deepcopy(val)
