@@ -54,7 +54,7 @@ class AtariPlayer(RLEnvironment):
             "rom {} not found. Please download at {}".format(rom_file, ROM_URL)
 
         try:
-            ALEInterface.setLoggerMode(ALEInterface.Logger.Warning)
+            ALEInterface.setLoggerMode(ALEInterface.Logger.Error)
         except AttributeError:
             if execute_only_once():
                 logger.warn("You're not using latest ALE")

@@ -47,6 +47,7 @@ class Model(ModelDesc):
     def _build_graph(self, inputs):
         image, label = inputs
         image = image / 128.0
+        assert tf.test.is_gpu_available()
         image = tf.transpose(image, [0, 3, 1, 2])
 
         def residual(name, l, increase_dim=False, first=False):

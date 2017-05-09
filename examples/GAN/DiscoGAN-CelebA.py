@@ -211,6 +211,7 @@ if __name__ == '__main__':
     parser.add_argument('--load', help='load model')
     args = parser.parse_args()
 
+    assert tf.test.is_gpu_available()
     logger.auto_set_dir()
 
     data = get_celebA_data(args.data, args.style_A, args.style_B)

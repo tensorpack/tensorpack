@@ -40,11 +40,15 @@ class Model(ModelDesc):
 
         if is_training:
             tf.summary.image("train_image", image, 10)
-        image = tf.transpose(image, [0, 3, 1, 2])
+        if tf.test.is_gpu_available():
+            image = tf.transpose(image, [0, 3, 1, 2])
+            data_format = 'NCHW'
+        else:
+            data_format = 'NHWC'
 
         image = image / 4.0     # just to make range smaller
         with argscope(Conv2D, nl=BNReLU, use_bias=False, kernel_shape=3), \
-                argscope([Conv2D, MaxPooling, BatchNorm], data_format='NCHW'):
+                argscope([Conv2D, MaxPooling, BatchNorm], data_format=data_format):
             logits = LinearWrap(image) \
                 .Conv2D('conv1.1', out_channel=64) \
                 .Conv2D('conv1.2', out_channel=64) \

@@ -23,6 +23,8 @@ DEPTH = None
 
 class Model(ModelDesc):
     def __init__(self, data_format='NCHW'):
+        if data_format == 'NCHW':
+            assert tf.test.is_gpu_available()
         self.data_format = data_format
 
     def _get_inputs(self):
