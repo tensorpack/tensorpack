@@ -13,19 +13,21 @@ All code is in this file is the most minimalistic way to solve a deep-learning p
 """
 
 BATCH_SIZE = 16
+SHAPE = 28
+CHANNELS = 3
 
 
 class Model(ModelDesc):
     def _get_inputs(self):
-        return [InputDesc(tf.float32, (None, 28, 28, 1), 'input'),
+        return [InputDesc(tf.float32, (None, SHAPE, SHAPE, CHANNELS), 'input'),
                 InputDesc(tf.int32, (None,), 'label')]
 
     def _build_graph(self, inputs):
         image, label = inputs
         image = image * 2 - 1
 
-        self.cost = tf.identity(0, name='total_costs')
-        summary.add_moving_summary(cost)
+        self.cost = tf.identity(0., name='total_costs')
+        summary.add_moving_summary(self.cost)
 
     def _get_optimizer(self):
         lr = symbolic_functions.get_scalar_var('learning_rate', 5e-3, summary=True)
@@ -33,9 +35,9 @@ class Model(ModelDesc):
 
 
 def get_data(subset):
-    ds = None  # something.get_data() that yields [[28, 28, 1], [1]]
-    # ...
-
+    # something that yields [[SHAPE, SHAPE, CHANNELS], [1]]
+    ds = FakeData([[SHAPE, SHAPE, CHANNELS], [1]], 1000, random=False,
+                  dtype=['float32', 'uint8'], domain=[(0, 255), (0, 10)])
     ds = PrefetchDataZMQ(ds, 2)
     ds = BatchData(ds, BATCH_SIZE)
     return ds

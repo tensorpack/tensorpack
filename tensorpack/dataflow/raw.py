@@ -5,6 +5,7 @@
 
 import numpy as np
 import copy
+import six
 from six.moves import range
 from .base import DataFlow, RNGDataFlow
 
@@ -14,20 +15,22 @@ __all__ = ['FakeData', 'DataFromQueue', 'DataFromList']
 class FakeData(RNGDataFlow):
     """ Generate fake data of given shapes"""
 
-    def __init__(self, shapes, size=1000, random=True, dtype='float32'):
+    def __init__(self, shapes, size=1000, random=True, dtype='float32', domain=(0, 1)):
         """
         Args:
             shapes (list): a list of lists/tuples. Shapes of each component.
             size (int): size of this DataFlow.
             random (bool): whether to randomly generate data every iteration.
                 Note that merely generating the data could sometimes be time-consuming!
-            dtype (str): data type.
+            dtype (str): data type as string or a list of data types.
+            domain (str): domain of values as tuple/list.
         """
         super(FakeData, self).__init__()
         self.shapes = shapes
         self._size = int(size)
         self.random = random
-        self.dtype = dtype
+        self.dtype = [dtype] * len(shapes) if isinstance(dtype, six.string_types) else dtype
+        self.domain = [domain] * len(shapes) if isinstance(domain, tuple) else domain
 
     def size(self):
         return self._size
@@ -35,11 +38,18 @@ class FakeData(RNGDataFlow):
     def get_data(self):
         if self.random:
             for _ in range(self._size):
-                yield [self.rng.rand(*k).astype(self.dtype) for k in self.shapes]
+                val = []
+                for k in range(len(self.shapes)):
+                    v = self.rng.rand(*self.shapes[k]) * (self.domain[k][1] - self.domain[k][0]) + self.domain[k][0]
+                    val.append(v.astype(self.dtype[k]))
+                yield val
         else:
-            v = [self.rng.rand(*k).astype(self.dtype) for k in self.shapes]
+            val = []
+            for k in range(len(self.shapes)):
+                v = self.rng.rand(*self.shapes[k]) * (self.domain[k][1] - self.domain[k][0]) + self.domain[k][0]
+                val.append(v.astype(self.dtype[k]))
             for _ in range(self._size):
-                yield copy.deepcopy(v)
+                yield copy.deepcopy(val)
 
 
 class DataFromQueue(DataFlow):
