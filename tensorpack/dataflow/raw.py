@@ -22,8 +22,8 @@ class FakeData(RNGDataFlow):
             size (int): size of this DataFlow.
             random (bool): whether to randomly generate data every iteration.
                 Note that merely generating the data could sometimes be time-consuming!
-            dtype (str): data type as string or a list of data types.
-            domain (str): domain of values as tuple/list.
+            dtype (str or list): data type as string, or a list of data types.
+            domain (tuple or list): (min, max) tuple, or a list of such tuples
         """
         super(FakeData, self).__init__()
         self.shapes = shapes
@@ -31,6 +31,8 @@ class FakeData(RNGDataFlow):
         self.random = random
         self.dtype = [dtype] * len(shapes) if isinstance(dtype, six.string_types) else dtype
         self.domain = [domain] * len(shapes) if isinstance(domain, tuple) else domain
+        assert len(self.dtype) == len(self.shapes)
+        assert len(self.domain) == len(self.domain)
 
     def size(self):
         return self._size
@@ -49,7 +51,7 @@ class FakeData(RNGDataFlow):
                 v = self.rng.rand(*self.shapes[k]) * (self.domain[k][1] - self.domain[k][0]) + self.domain[k][0]
                 val.append(v.astype(self.dtype[k]))
             for _ in range(self._size):
-                yield copy.deepcopy(val)
+                yield copy.copy(val)
 
 
 class DataFromQueue(DataFlow):
