@@ -153,7 +153,7 @@ class QueueInput(FeedfreeInput):
     def size(self):
         return self.ds.size()
 
-    # TODO XXX use input data mapping. not all placeholders are needed
+    # TODO use input data mapping. not all placeholders are needed
     def setup(self, model):
         self.input_placehdrs = model.get_reused_placehdrs()
         assert len(self.input_placehdrs) > 0, \
@@ -335,7 +335,14 @@ class ZMQInput(FeedfreeInput):
 
 
 class StagingInputWrapper(FeedfreeInput):
+    """
+    A wrapper around a feedfree input, to prefetch it in StagingArea (usually on GPUs).
+    """
     class StagingCallback(Callback):
+        """
+        A callback registered by this input source, to make sure stage/unstage
+        is run at each step.
+        """
         def __init__(self, stage_op, unstage_op, nr_stage):
             self.nr_stage = nr_stage
             self.stage_op = stage_op
@@ -351,6 +358,12 @@ class StagingInputWrapper(FeedfreeInput):
             return self.fetches
 
     def __init__(self, input, devices, nr_stage=5):
+        """
+        Args:
+            input: a :class:`FeedfreeInput`
+            devices: list of devices to be used for each training tower
+            nr_stage: number of elements to prefetch
+        """
         self._input = input
         assert isinstance(input, FeedfreeInput)
         self._devices = devices
