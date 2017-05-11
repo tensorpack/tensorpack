@@ -173,12 +173,8 @@ class ExpReplay(DataFlow, Callback):
 
     def _populate_exp(self):
         """ populate a transition by epsilon-greedy"""
-        # if len(self.mem) > 4 and not self._init_memory_flag.is_set():
-        #     from copy import deepcopy  # quickly fill the memory for debug
-        #     self.mem.append(deepcopy(self.mem._hist[0]))
-        #     return
         old_s = self.player.current_state()
-        if self.rng.rand() <= self.exploration or len(self.mem) < 5:
+        if self.rng.rand() <= self.exploration or (len(self.mem) <= self.history_len):
             act = self.rng.choice(range(self.num_actions))
         else:
             # build a history state
