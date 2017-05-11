@@ -27,12 +27,13 @@ __all__ = ['MultiGPUTrainerBase', 'SyncMultiGPUTrainer',
 class MultiGPUTrainerBase(Trainer):
     """ Base class for multi-gpu training"""
     @staticmethod
-    def build_on_multi_tower(towers, func, devices=None):
+    def build_on_multi_tower(towers, func, devices=None, var_strategy='shared'):
         """
         Args:
             towers: list of gpu relative ids
             func: a lambda to be called inside each tower
             devices: a list of devices to be used. By default will use GPUs in towers.
+            var_strategy (str):
 
         Returns:
             List of outputs of ``func``, evaluated on each tower.
@@ -40,17 +41,19 @@ class MultiGPUTrainerBase(Trainer):
         logger.info("Training a model of {} tower".format(len(towers)))
 
         ret = []
-        global_scope = tf.get_variable_scope()
         if devices is not None:
             assert len(devices) == len(towers)
+
         for idx, t in enumerate(towers):
             device = devices[idx] if devices is not None else '/gpu:{}'.format(t)
-            with tf.variable_scope(global_scope, reuse=idx > 0), \
-                TowerContext(
+            with TowerContext(
                     'tower{}'.format(idx),
-                    device=device,
-                    is_training=True):
-                logger.info("Building graph for training tower {}...".format(idx))
+                    device=device, is_training=True,
+                    var_strategy=var_strategy):
+                if idx == t:
+                    logger.info("Building graph for training tower {}...".format(idx))
+                else:
+                    logger.info("Building graph for training tower {} on device {}...".format(idx, t))
 
                 ret.append(func())
 
@@ -92,14 +95,15 @@ class LeastLoadedDeviceSetter(object):
 class SyncMultiGPUTrainerParameterServer(MultiGPUTrainerBase, SingleCostFeedfreeTrainer):
     """
     A multi-tower multi-GPU trainer which synchronoizes the gradients computed
-    from each tower, averages them and update to variables stored on PS.
+    from each tower, averages them and update to variables stored across all
+    GPUs or on CPU.
     """
 
     def __init__(self, config, ps_device='gpu'):
         """
         Args:
             config: same as in :class:`QueueInputTrainer`.
-            ps_device: either 'gpu' or 'cpu'
+            ps_device: either 'gpu' or 'cpu', where variables are stored.
         """
         if config.dataflow is not None:
             # use queueinput by default. May need to avoid this in the future (when more input type is available)

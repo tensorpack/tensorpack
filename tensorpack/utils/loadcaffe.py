@@ -123,9 +123,11 @@ def get_caffe_pb():
     if not os.path.isfile(caffe_pb_file):
         download(CAFFE_PROTO_URL, dir)
         assert os.path.isfile(os.path.join(dir, 'caffe.proto'))
-        ret = os.system('cd {} && protoc caffe.proto --python_out .'.format(dir))
+        cmd = 'cd {} && protoc caffe.proto --python_out .'.format(dir)
+        ret = os.system(cmd)
         assert ret == 0, \
-            "Command `protoc caffe.proto --python_out .` failed!"
+            "Command `{}` failed!".format(cmd)
+        assert os.path.isfile(caffe_pb_file), caffe_pb_file
     import imp
     return imp.load_source('caffepb', caffe_pb_file)
 

@@ -6,6 +6,7 @@ import tensorflow as tf
 from termcolor import colored
 from tabulate import tabulate
 
+from ..tfutils.tower import get_current_tower_context
 from ..utils import logger
 from .summary import add_moving_summary
 
@@ -62,7 +63,9 @@ def apply_slim_collections(cost):
         a scalar tensor, the cost after applying the collections.
     """
     regulization_losses = set(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES))
+    ctx = get_current_tower_context()
     if len(regulization_losses) > 0:
+        assert not ctx.has_own_variables, "REGULARIZATION_LOSSES collection doesn't work in replicated mode!"
         logger.info("Applying REGULARIZATION_LOSSES on cost.")
         reg_loss = tf.add_n(list(regulization_losses), name="regularize_loss")
         cost = tf.add(reg_loss, cost, name='total_cost')

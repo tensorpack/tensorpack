@@ -15,12 +15,15 @@ _CurrentTowerContext = None
 class TowerContext(object):
     """ A context where the current model is being built in. """
 
-    def __init__(self, tower_name, device=None, is_training=None):
+    def __init__(self, tower_name,
+                 device=None, is_training=None,
+                 var_strategy='shared'):
         """
         Args:
             tower_name (str): 'tower0', 'towerp0', or ''
             device (str or device function): the device to use. Defaults to either cpu0 or gpu0.
             is_training (bool): if None, automatically determine from tower_name.
+            var_strategy (str): either 'shared' or 'replicated'.
         """
         self._name = tower_name
         if device is None:
@@ -30,6 +33,11 @@ class TowerContext(object):
         if is_training is None:
             is_training = not self._name.startswith(PREDICT_TOWER)
         self._is_training = is_training
+
+        assert var_strategy in ['replicated', 'shared'], var_strategy
+        self._var_strategy = var_strategy
+        if self._var_strategy == 'replicated':
+            assert self._name
 
     @property
     def is_main_training_tower(self):
@@ -42,6 +50,10 @@ class TowerContext(object):
     @property
     def is_training(self):
         return self._is_training
+
+    @property
+    def has_own_variables(self):
+        return self._var_strategy == 'replicated'
 
     @property
     def name(self):
@@ -88,18 +100,25 @@ class TowerContext(object):
         assert _CurrentTowerContext is None, \
             "Nesting TowerContext!"
         _CurrentTowerContext = self
+        self._ctxs = []
         if len(self._name):
-            self._scope_ctx = tf.name_scope(self._name)
-            self._scope_ctx.__enter__()
-        self._device_ctx = tf.device(self._device)
-        self._device_ctx.__enter__()
+            if self.has_own_variables:
+                # open new variable scopes
+                self._ctxs.append(tf.variable_scope(self._name))
+            else:
+                # use existing variable scope
+                self._ctxs.append(tf.variable_scope(
+                    tf.get_variable_scope(), reuse=self.index > 0))
+                self._ctxs.append(tf.name_scope(self._name))
+        self._ctxs.append(tf.device(self._device))
+        for c in self._ctxs:
+            c.__enter__()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         global _CurrentTowerContext
         _CurrentTowerContext = None
-        if len(self._name):
-            self._scope_ctx.__exit__(exc_type, exc_val, exc_tb)
-        self._device_ctx.__exit__(exc_type, exc_val, exc_tb)
+        for c in self._ctxs[::-1]:
+            c.__exit__(exc_type, exc_val, exc_tb)
         return False
 
     def __str__(self):
