@@ -64,7 +64,7 @@ class SingleCostFeedfreeTrainer(FeedfreeTrainerBase):
         """ get the cost and gradient"""
         self.build_train_tower()
         cost = self.model.get_cost()    # assume single cost
-        opt = self.config.optimizer     # TODO XXX
+        opt = self.model.get_optimizer()
         # GATE_NONE faster?
         grads = opt.compute_gradients(
             cost,
@@ -96,7 +96,8 @@ class SimpleFeedfreeTrainer(SingleCostFeedfreeTrainer):
         super(SimpleFeedfreeTrainer, self)._setup()
         with TowerContext('', is_training=True):
             cost, grads = self._get_cost_and_grad()
-        self.train_op = self.config.optimizer.apply_gradients(grads, name='min_op')
+        opt = self.model.get_optimizer()
+        self.train_op = opt.apply_gradients(grads, name='min_op')
         # skip training
         # self.train_op = tf.group(*self._input_tensors)
 

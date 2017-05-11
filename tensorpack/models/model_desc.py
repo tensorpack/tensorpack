@@ -10,13 +10,10 @@ import six
 
 from ..utils import logger
 from ..utils.naming import INPUTS_KEY
-from ..utils.develop import deprecated, log_deprecated
 from ..utils.argtools import memoized
 from ..tfutils.model_utils import apply_slim_collections
 
 __all__ = ['InputDesc', 'InputVar', 'ModelDesc', 'ModelFromMetaGraph']
-
-# TODO "variable" is not the right name to use for input here.
 
 
 class InputDesc(object):
@@ -50,7 +47,8 @@ class InputVar(InputDesc):
 
 @six.add_metaclass(ABCMeta)
 class ModelDesc(object):
-    """ Base class for a model description """
+    """ Base class for a model description.
+    """
 
 # inputs:
     @memoized
@@ -63,11 +61,6 @@ class ModelDesc(object):
         """
         return self.build_placeholders()
 
-    @deprecated("Use get_reused_placehdrs() instead.", "2017-04-11")
-    def get_input_vars(self):
-        # this wasn't a public API anyway
-        return self.get_reused_placehdrs()
-
     def build_placeholders(self, prefix=''):
         """
         For each InputDesc, create new placeholders with optional prefix and
@@ -76,12 +69,12 @@ class ModelDesc(object):
         Returns:
             list[tf.Tensor]: the list of built placeholders.
         """
-        input_vars = self._get_inputs()
-        for v in input_vars:
+        inputs = self._get_inputs()
+        for v in inputs:
             tf.add_to_collection(INPUTS_KEY, v.dumps())
         ret = []
         with tf.name_scope(None):   # clear any name scope it might get called in
-            for v in input_vars:
+            for v in inputs:
                 placehdr_f = tf.placeholder if not v.sparse else tf.sparse_placeholder
                 ret.append(placehdr_f(
                     v.type, shape=v.shape,
@@ -95,15 +88,11 @@ class ModelDesc(object):
         """
         return self._get_inputs()
 
-    def _get_inputs(self):  # this is a better name than _get_input_vars
+    @abstractmethod
+    def _get_inputs(self):
         """
         :returns: a list of InputDesc
         """
-        log_deprecated("", "_get_input_vars() was renamed to _get_inputs().", "2017-04-11")
-        return self._get_input_vars()
-
-    def _get_input_vars(self):  # keep backward compatibility
-        raise NotImplementedError()
 
     def build_graph(self, model_inputs):
         """
@@ -142,8 +131,8 @@ class ModelDesc(object):
     def get_optimizer(self):
         """
         Return the optimizer used in the task.
-        Used by some of the tensorpack :class:`Trainer` which only uses a single optimizer.
-        You can ignore this method if you use your own trainer with more than one optimizers.
+        Used by some of the tensorpack :class:`Trainer` which assume single optimizer.
+        You can (and should) ignore this method if you use a custom trainer with more than one optimizers.
 
         Users of :class:`ModelDesc` will need to implement `_get_optimizer()`,
         which will only be called once per each model.
@@ -157,6 +146,9 @@ class ModelDesc(object):
         raise NotImplementedError()
 
     def get_gradient_processor(self):
+        return self._get_gradient_processor()
+
+    def _get_gradient_processor(self):
         return []
 
 

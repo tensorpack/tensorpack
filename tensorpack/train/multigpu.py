@@ -167,7 +167,7 @@ class SyncMultiGPUTrainerParameterServer(MultiGPUTrainerBase, SingleCostFeedfree
         grads = SyncMultiGPUTrainerParameterServer._average_grads(grad_list)
         # grads = grad_list[0]
 
-        self.train_op = self.config.optimizer.apply_gradients(grads, name='min_op')
+        self.train_op = self.model.get_optimizer().apply_gradients(grads, name='min_op')
 
 
 def SyncMultiGPUTrainer(config):
@@ -217,7 +217,8 @@ class AsyncMultiGPUTrainer(MultiGPUTrainerBase,
             grad_list = [gradproc.process(gv) for gv in grad_list]
 
         # use grad from the first tower for iteration in main thread
-        self.train_op = self.config.optimizer.apply_gradients(grad_list[0], name='min_op')
+        self._opt = self.model.get_optimizer()
+        self.train_op = self._opt.apply_gradients(grad_list[0], name='min_op')
 
         self._start_async_threads(grad_list)
 
@@ -227,7 +228,7 @@ class AsyncMultiGPUTrainer(MultiGPUTrainerBase,
         self.async_step_counter = itertools.count()
         self.training_threads = []
         for k in range(1, self.config.nr_tower):
-            train_op = self.config.optimizer.apply_gradients(grad_list[k])
+            train_op = self._opt.apply_gradients(grad_list[k])
 
             def f(op=train_op):  # avoid late-binding
                 self.sess.run([op])         # TODO this won't work with StageInput

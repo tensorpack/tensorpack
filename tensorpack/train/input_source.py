@@ -364,8 +364,8 @@ class StagingInputWrapper(FeedfreeInput):
             devices: list of devices to be used for each training tower
             nr_stage: number of elements to prefetch
         """
+        assert isinstance(input, FeedfreeInput), input
         self._input = input
-        assert isinstance(input, FeedfreeInput)
         self._devices = devices
         self._nr_stage = nr_stage
         self._areas = []

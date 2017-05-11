@@ -18,7 +18,7 @@ Reproduce the following GAN-related methods:
 
 + BEGAN ([BEGAN: Boundary Equilibrium Generative Adversarial Networks](https://arxiv.org/abs/1703.10717))
 
-Please see the __docstring__ in each script for detailed usage and pretrained models.
+Please see the __docstring__ in each script for detailed usage and pretrained models. MultiGPU training is supported.
 
 ## DCGAN.py
 

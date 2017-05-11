@@ -4,7 +4,9 @@ flake8 .
 cd examples
 GIT_ARG="--git-dir ../.git --work-tree .."
 
-# find out modified python files
+# find out modified python files, so that we ignored unstaged files
 MOD=$(git $GIT_ARG status -s | grep -E '\.py$'  | grep -E '^ *M|^ *A ' | cut -c 4-)
 # git $GIT_ARG status -s | grep -E '\.py$'
-flake8 $MOD
+if [[ -n $MOD ]]; then
+	flake8 $MOD
+fi

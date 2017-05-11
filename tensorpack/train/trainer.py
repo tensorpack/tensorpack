@@ -42,5 +42,5 @@ class SimpleTrainer(Trainer):
             model.build_graph(self.inputs)
             cost_var = model.get_cost()
 
-        opt = self.config.optimizer
+        opt = self.model.get_optimizer()
         self.train_op = opt.minimize(cost_var, name='min_op')
