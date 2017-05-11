@@ -126,7 +126,7 @@ class MinSaver(Callback):
 
         newname = os.path.join(logger.LOG_DIR,
                                self.filename or
-                               ('max-' if self.reverse else 'min-' + self.monitor_stat))
+                               ('max-' + self.monitor_stat if self.reverse else 'min-' + self.monitor_stat))
         files_to_copy = glob.glob(path + '*')
         for file_to_copy in files_to_copy:
             shutil.copy(file_to_copy, file_to_copy.replace(path, newname))
