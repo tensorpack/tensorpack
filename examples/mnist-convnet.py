@@ -116,6 +116,7 @@ def get_config():
         dataflow=dataset_train,  # the DataFlow instance for training
         callbacks=[
             ModelSaver(),   # save the model after every epoch
+            MaxSaver('validation_accuracy'),  # save the model with highest accuracy (prefix 'validation_')
             InferenceRunner(    # run inference(for validation) after every epoch
                 dataset_test,   # the DataFlow instance used for validation
                 # Calculate both the cost and the error for this DataFlow
