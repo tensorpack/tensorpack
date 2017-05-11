@@ -11,7 +11,35 @@ from .imgaug import AugmentorList
 from ..utils import logger
 from ..utils.argtools import shape2d
 
-__all__ = ['ImageFromFile', 'AugmentImageComponent', 'AugmentImageComponents']
+__all__ = ['ImageFromFile', 'AugmentImageComponent', 'AugmentImageComponents',
+           'ImageEncode', 'ImageDecode']
+
+
+class ImageEncode(MapDataComponent):
+    """ Encode image as a string. """
+    def __init__(self, ds, mode='.png', index=0):
+        """
+        Args:
+            ds (DataFlow): input DataFlow.
+            mode (str): image format for compression ('.png' or '.jpg')
+            index (int): the index of the component to be encoded.
+        """
+        def func(img):
+            return np.asarray(bytearray(cv2.imencode(mode, img)[1].tostring()), dtype=np.uint8)
+        super(ImageEncode, self).__init__(ds, func, index=index)
+
+
+class ImageDecode(MapDataComponent):
+    """ Decode image as a string. """
+    def __init__(self, ds, index=0):
+        """
+        Args:
+            ds (DataFlow): input DataFlow.
+            index (int): the index of the component to be decoded.
+        """
+        def func(im_data):
+            return cv2.imdecode(np.asarray(bytearray(im_data), dtype=np.uint8), cv2.IMREAD_COLOR)
+        super(ImageDecode, self).__init__(ds, func, index=index)
 
 
 class ImageFromFile(RNGDataFlow):

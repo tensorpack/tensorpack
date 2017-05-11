@@ -81,12 +81,19 @@ class MinSaver(Callback):
                 Defaults to ``min-{monitor_stat}.tfmodel``.
 
         Example:
-            Save the model with minimum validation error to
-            "min-val-error.tfmodel":
+            Given a summary named 'error' in your graph you can
+            save the model with minimum validation error to
+            "min-validation_error.tfmodel":
 
             .. code-block:: python
 
-                MinSaver('val-error')
+                MinSaver('validation_error')
+
+        Remarks:
+            All statistics from the validation phase in the inference runner
+            have a prefix 'validation_' to their counterpart in the training.
+            So you might use the ``validation_error`` statistic instead of the
+            ``error`` statistic.
 
         Note:
             It assumes that :class:`ModelSaver` is used with

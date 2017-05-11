@@ -123,14 +123,25 @@ ds1 = PrefetchDataZMQ(ds0, nr_proc=1)
 dftools.dump_dataflow_to_lmdb(ds1, '/path/to/ILSVRC-train.lmdb')
 ```
 The above script builds a DataFlow which produces jpeg-encoded ImageNet data.
-We store the jpeg string as a numpy array because the function `cv2.imdecode` expect it later.
+We store the jpeg string as a numpy array to save disk space compared an uncompressed collection of images (like CaffeLMDB) and to save memory bandwidth during reading them later.
 We use 1 prefetch process to speed up. If `nr_proc>1`, `ds1` will take data
-from several forks of `ds0` and will not be identical to `ds0` any more.
+from several forks of `ds0` and will not be identical to `ds0` any more. It will generate a database file of 140G and takes roughly 25 minutes on a modern system with an SSD.
 
-It will generate a database file of 140G. We build a DataFlow to read the LMDB file sequentially:
+You can serialize your custom dataflow into such a LMDB file by
+
+```python
+ds0 = dataset.ILSVRC12('/path/to/ILSVRC', 'train', shuffle=False)  # or some custom streams
+ds0 = ImageEncode(ds0, mode='.jpg', index=0)
+ds1 = PrefetchDataZMQ(ds0, nr_proc=1)
+dftools.dump_dataflow_to_lmdb(ds1, '/path/to/ILSVRC-train.lmdb')
 ```
+
+While this offers more flexibility, it is much slower during writing (980 it/s vs. 67 it/s) because OpenCV has to decode (`dataset.ILSVRC12`) first and later encode (`ImageEncode`) the image. But in some cases, like a pre-processed validation set or randomly extracted frames from a large collection of videos, it is convenient to compress extracted images by `ImageEncode`.
+
+We build a DataFlow to read the LMDB file sequentially:
+```python
 from tensorpack import *
-ds = LMDBData('/path/to/ILSVRC-train.lmdb', shuffle=False)
+ds = LMDBDataPoint('/path/to/ILSVRC-train.lmdb', shuffle=False)
 ds = BatchData(ds, 256, use_list=True)
 TestDataSpeed(ds).start_test()
 ```
@@ -157,19 +168,19 @@ Then we add necessary transformations:
 .. code-block:: python
     :emphasize-lines: 3-5
 
-    ds = LMDBData(db, shuffle=False)
+    ds = LMDBData(db, shuffle=False) # produces key-value pairs
     ds = LocallyShuffleData(ds, 50000)
-    ds = LMDBDataPoint(ds)
-    ds = MapDataComponent(ds, lambda x: cv2.imdecode(x, cv2.IMREAD_COLOR), 0)
+    ds = LMDBDataPoint(ds)  # converts 'ds' to  pairs (encoded_image, label)
+    ds = ImageDecode(ds, mode='.jpg', index=0)
     ds = AugmentImageComponent(ds, lots_of_augmentors)
     ds = BatchData(ds, 256)
 ```
 
 1. `LMDBDataPoint` deserialize the datapoints (from string to [jpeg_string, label])
-2. Use OpenCV to decode the first component into ndarray
+2. Use `ImageDecode` to decode the first component into ndarray
 3. Apply augmentations to the ndarray
 
-Both imdecode and the augmentors can be quite slow. We can parallelize them like this:
+Both `ImageDecode` and the augmentors can be quite slow. We can parallelize them like this:
 ```eval_rst
 .. code-block:: python
     :emphasize-lines: 3,7
@@ -178,7 +189,7 @@ Both imdecode and the augmentors can be quite slow. We can parallelize them like
     ds = LocallyShuffleData(ds, 50000)
     ds = PrefetchData(ds, 5000, 1)
     ds = LMDBDataPoint(ds)
-    ds = MapDataComponent(ds, lambda x: cv2.imdecode(x, cv2.IMREAD_COLOR), 0)
+    ds = ImageDecode(ds, mode='.jpg', index=0)
     ds = AugmentImageComponent(ds, lots_of_augmentors)
     ds = PrefetchDataZMQ(ds, 25)
     ds = BatchData(ds, 256)
