@@ -90,7 +90,7 @@ class ReplayMemory(object):
         return (state, reward[-2], action[-2], isOver[-2])
 
     def _slice(self, arr, start, end):
-        s1 = arr[start:]
+        s1 = arr[start:self._curr_size]
         s2 = arr[:end]
         return np.concatenate((s1, s2), axis=0)
 
