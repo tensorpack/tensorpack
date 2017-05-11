@@ -393,6 +393,8 @@ class StagingInputWrapper(FeedfreeInput):
                 self._stage_ops.append(stage.put(inputs))
                 self._areas.append(stage)
                 outputs = stage.get()
+                if isinstance(outputs, tf.Tensor):  # when size=1, TF doesn't return a list
+                    outputs = [outputs]
                 for vin, vout in zip(inputs, outputs):
                     vout.set_shape(vin.get_shape())
                 self._unstage_ops.append(outputs)

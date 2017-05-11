@@ -64,7 +64,7 @@ class SingleCostFeedfreeTrainer(FeedfreeTrainerBase):
         """ get the cost and gradient"""
         self.build_train_tower()
         cost = self.model.get_cost()    # assume single cost
-        opt = self.config.optimizer
+        opt = self.config.optimizer     # TODO XXX
         # GATE_NONE faster?
         grads = opt.compute_gradients(
             cost,

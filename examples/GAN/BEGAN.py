@@ -12,7 +12,7 @@ from tensorpack.utils.globvars import globalns as G
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
 import tensorflow as tf
 
-from GAN import GANModelDesc, GANTrainer
+from GAN import GANModelDesc, GANTrainer, MultiGPUGANTrainer
 
 """
 Boundary Equilibrium GAN.
@@ -161,4 +161,9 @@ if __name__ == '__main__':
         config = get_config()
         if args.load:
             config.session_init = SaverRestore(args.load)
-        GANTrainer(config).train()
+        nr_gpu = get_nr_gpu()
+        config.nr_tower = max(get_nr_gpu(), 1)
+        if config.nr_tower == 1:
+            GANTrainer(config).train()
+        else:
+            MultiGPUGANTrainer(config).train()
