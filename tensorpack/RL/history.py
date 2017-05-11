@@ -71,4 +71,4 @@ class HistoryFramePlayer(ProxyPlayer):
     def restart_episode(self):
         super(HistoryFramePlayer, self).restart_episode()
         self.history.clear()
-        self.history.append(self.player.current_state())
+        self.history.push(self.player.current_state())
