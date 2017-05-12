@@ -17,28 +17,32 @@ __all__ = ['ImageFromFile', 'AugmentImageComponent', 'AugmentImageComponents',
 
 class ImageEncode(MapDataComponent):
     """ Encode image as a string. """
-    def __init__(self, ds, mode='.png', index=0):
+    def __init__(self, ds, encoding='png', index=0):
         """
         Args:
             ds (DataFlow): input DataFlow.
-            mode (str): image format for compression ('.png' or '.jpg')
+            encoding (str): image format for compression ('png' or 'jpg')
             index (int): the index of the component to be encoded.
         """
+
+        assert encoding in ['png', 'jpg']
+        encoding = '.%s' % encoding
+
         def func(img):
-            return np.asarray(bytearray(cv2.imencode(mode, img)[1].tostring()), dtype=np.uint8)
+            return np.asarray(bytearray(cv2.imencode(encoding, img)[1].tostring()), dtype=np.uint8)
         super(ImageEncode, self).__init__(ds, func, index=index)
 
 
 class ImageDecode(MapDataComponent):
     """ Decode image as a string. """
-    def __init__(self, ds, index=0):
+    def __init__(self, ds, index=0, mode=cv2.IMREAD_COLOR):
         """
         Args:
             ds (DataFlow): input DataFlow.
             index (int): the index of the component to be decoded.
         """
         def func(im_data):
-            return cv2.imdecode(np.asarray(bytearray(im_data), dtype=np.uint8), cv2.IMREAD_COLOR)
+            return cv2.imdecode(np.asarray(bytearray(im_data), dtype=np.uint8), mode)
         super(ImageDecode, self).__init__(ds, func, index=index)
 
 
