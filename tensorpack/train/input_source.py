@@ -155,6 +155,7 @@ class QueueInput(FeedfreeInput):
 
     # TODO use input data mapping. not all placeholders are needed
     def setup(self, model):
+        logger.info("Setting up the queue for CPU prefetching ...")
         self.input_placehdrs = model.get_reused_placehdrs()
         assert len(self.input_placehdrs) > 0, \
             "QueueInput has to be used with input placeholders!"
@@ -200,6 +201,7 @@ class BatchQueueInput(FeedfreeInput):
         return self.ds.size() // self.batch_size
 
     def setup(self, model):
+        logger.info("Setting up the queue for CPU prefetching ...")
         self.input_placehdrs = model.get_reused_placehdrs()
         assert len(self.input_placehdrs) > 0, \
             "BatchQueueInput has to be used with input placeholders!"
@@ -385,6 +387,7 @@ class StagingInputWrapper(FeedfreeInput):
                 self.get_stage_op(), self.get_unstage_op(), self._nr_stage))
 
     def setup_staging_areas(self):
+        logger.info("Setting up the StageAreas for GPU prefetching ...")
         for idx, device in enumerate(self._devices):
             with tf.device(device):
                 inputs = self._input.get_input_tensors()

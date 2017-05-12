@@ -223,7 +223,7 @@ def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5,
                 x, moving_mean, moving_var, beta, gamma, epsilon)
 
     # maintain EMA only on one GPU.
-    if ctx.is_main_training_tower:
+    if ctx.is_main_training_tower or ctx.has_own_variables:
         ret = update_bn_ema(xn, batch_mean, batch_var, moving_mean, moving_var, decay)
     else:
         ret = tf.identity(xn, name='output')

@@ -38,10 +38,6 @@ class RunOp(Callback):
     def _setup_graph(self):
         self._op = self.setup_func()
 
-    def _before_run(self, _):
-        if self.run_step:
-            return [self._op]
-
     def _before_train(self):
         if self.run_before:
             self._op.run()
@@ -49,6 +45,10 @@ class RunOp(Callback):
     def _trigger(self):
         if self.run_as_trigger:
             self._op.run()
+
+    def _before_run(self, _):
+        if self.run_step:
+            return [self._op]
 
 
 class RunUpdateOps(RunOp):

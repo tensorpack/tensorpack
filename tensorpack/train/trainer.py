@@ -2,6 +2,9 @@
 # File: trainer.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
+
+from six.moves import zip
+
 from .base import Trainer
 
 from ..utils import logger

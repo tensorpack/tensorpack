@@ -66,8 +66,14 @@ class SingleCostFeedfreeTrainer(FeedfreeTrainerBase):
         cost = self.model.get_cost()    # assume single cost
         opt = self.model.get_optimizer()
         # GATE_NONE faster?
+        varlist = tf.trainable_variables()
+        ctx = get_current_tower_context()
+        if ctx is not None and ctx.has_own_variables:
+            # only optimize w.r.t vars in this tower
+            varlist = [v for v in varlist if v.op.name.startswith(ctx.name + '/')]
         grads = opt.compute_gradients(
             cost,
+            var_list=varlist,
             gate_gradients=tf.train.Optimizer.GATE_NONE,
             colocate_gradients_with_ops=True)
         return cost, grads
