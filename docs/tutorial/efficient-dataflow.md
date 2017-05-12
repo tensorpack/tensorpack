@@ -131,7 +131,7 @@ You can serialize your custom dataflow into such a LMDB file by
 
 ```python
 ds0 = dataset.ILSVRC12('/path/to/ILSVRC', 'train', shuffle=False)  # or some custom streams
-ds0 = ImageEncode(ds0, mode='.jpg', index=0)
+ds0 = ImageEncode(ds0, encoding='jpg', index=0)
 ds1 = PrefetchDataZMQ(ds0, nr_proc=1)
 dftools.dump_dataflow_to_lmdb(ds1, '/path/to/ILSVRC-train.lmdb')
 ```
@@ -171,7 +171,7 @@ Then we add necessary transformations:
     ds = LMDBData(db, shuffle=False) # produces key-value pairs
     ds = LocallyShuffleData(ds, 50000)
     ds = LMDBDataPoint(ds)  # converts 'ds' to  pairs (encoded_image, label)
-    ds = ImageDecode(ds, mode='.jpg', index=0)
+    ds = ImageDecode(ds, index=0)
     ds = AugmentImageComponent(ds, lots_of_augmentors)
     ds = BatchData(ds, 256)
 ```
@@ -189,7 +189,7 @@ Both `ImageDecode` and the augmentors can be quite slow. We can parallelize them
     ds = LocallyShuffleData(ds, 50000)
     ds = PrefetchData(ds, 5000, 1)
     ds = LMDBDataPoint(ds)
-    ds = ImageDecode(ds, mode='.jpg', index=0)
+    ds = ImageDecode(ds, index=0)
     ds = AugmentImageComponent(ds, lots_of_augmentors)
     ds = PrefetchDataZMQ(ds, 25)
     ds = BatchData(ds, 256)
