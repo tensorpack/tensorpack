@@ -9,7 +9,7 @@ from ...utils.argtools import shape2d
 from six.moves import range
 import numpy as np
 
-__all__ = ['RandomCrop', 'CenterCrop', 'FixedCrop',
+__all__ = ['RandomCrop', 'CenterCrop',
            'perturb_BB', 'RandomCropAroundBox', 'RandomCropRandomShape']
 
 
@@ -59,24 +59,6 @@ class CenterCrop(ImageAugmentor):
         h0 = int((orig_shape[0] - self.crop_shape[0]) * 0.5)
         w0 = int((orig_shape[1] - self.crop_shape[1]) * 0.5)
         return img[h0:h0 + self.crop_shape[0], w0:w0 + self.crop_shape[1]]
-
-    def _fprop_coord(self, coord, param):
-        raise NotImplementedError()
-
-
-class FixedCrop(ImageAugmentor):
-    """ Crop a rectangle at a given location"""
-
-    def __init__(self, rect):
-        """
-        Args:
-            rect(Rect): min included, max excluded.
-        """
-        self._init(locals())
-
-    def _augment(self, img, _):
-        return img[self.rect.y0: self.rect.y1 + 1,
-                   self.rect.x0: self.rect.x1 + 1]
 
     def _fprop_coord(self, coord, param):
         raise NotImplementedError()
