@@ -2,17 +2,17 @@
 # -*- coding: utf-8 -*-
 # File: steering-filter.py
 
+import argparse
 import numpy as np
 import tensorflow as tf
 import cv2
-from tensorpack import *
-from tensorpack.utils.viz import *
-from tensorpack.utils import logger
-import tensorflow.contrib.slim as slim
 from scipy.signal import convolve2d
-import argparse
-from tensorpack.utils.argtools import shape2d, shape4d
 import multiprocessing
+
+from tensorpack import *
+from tensorpack.utils import logger
+from tensorpack.utils.viz import *
+from tensorpack.utils.argtools import shape2d, shape4d
 
 BATCH = 32
 SHAPE = 64
@@ -248,7 +248,7 @@ def get_data():
     ds = MapData(ds, lambda dp: [np.dot(dp[0], [0.299, 0.587, 0.114])[:, :]])
     ds = AugmentImageComponent(ds, [imgaug.RandomCrop((SHAPE, SHAPE))])
     ds = ThetaImages(ds)
-    ds = RepeatedData(ds, 3)
+    ds = RepeatedData(ds, 50)  # just pretend this dataset is bigger
     # this pre-computation is pretty heavy
     ds = PrefetchDataZMQ(ds, min(20, multiprocessing.cpu_count()))
     ds = BatchData(ds, BATCH)
@@ -266,7 +266,7 @@ def get_config():
             OnlineTensorboardExport()
         ],
         model=Model(),
-        steps_per_epoch=dataset_train.size() * 10,  # just pretend this dataset is bigger
+        steps_per_epoch=dataset_train.size(),
         max_epoch=100,
     )
 
