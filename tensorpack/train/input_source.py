@@ -5,7 +5,7 @@
 
 import tensorflow as tf
 try:
-    from tensorflow.contrib.staging import StagingArea
+    from tensorflow.python.ops.data_flow_ops import StagingArea
 except ImportError:
     pass
 
