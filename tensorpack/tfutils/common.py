@@ -9,7 +9,6 @@ from six.moves import map
 from ..utils.naming import (
     GLOBAL_STEP_VAR_NAME,
     GLOBAL_STEP_OP_NAME)
-from ..utils.argtools import memoized
 
 __all__ = ['get_default_sess_config',
 
@@ -52,7 +51,6 @@ def get_default_sess_config(mem_fraction=0.99):
     return conf
 
 
-@memoized
 def get_global_step_var():
     """
     Returns:

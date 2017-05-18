@@ -35,7 +35,7 @@ def map_arg(**maps):
 
 
 memoized = functools.lru_cache(maxsize=None)
-""" Equivalent to :func:`functools.lru_cache` """
+""" Alias to :func:`functools.lru_cache` """
 
 
 _MEMOIZED_NOARGS = {}
