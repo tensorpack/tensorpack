@@ -12,7 +12,7 @@ __all__ = ['ColorSpace', 'Grayscale', 'ToUint8', 'ToFloat32']
 
 class ColorSpace(ImageAugmentor):
     """ Convert into another colorspace.  """
-    def __init__(self, mode=cv2.COLOR_BGR2GRAY, keepdims=True):
+    def __init__(self, mode, keepdims=True):
         """
         Args:
             mode: opencv colorspace conversion code (e.g., `cv2.COLOR_BGR2HSV`)

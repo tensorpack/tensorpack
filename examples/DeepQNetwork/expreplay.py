@@ -113,7 +113,7 @@ class ExpReplay(DataFlow, Callback):
     This implementation provides the interface as a :class:`DataFlow`.
     This DataFlow is __not__ fork-safe (thus doesn't support multiprocess prefetching).
 
-    This implementation only works with Q-learning. It assumes that state is
+    This implementation assumes that state is
     batch-able, and the network takes batched inputs.
     """
 
@@ -171,6 +171,18 @@ class ExpReplay(DataFlow, Callback):
                 pbar.update()
         self._init_memory_flag.set()
 
+    # quickly fill the memory for debug
+    def _fake_init_memory(self):
+        from copy import deepcopy
+        with get_tqdm(total=self.init_memory_size) as pbar:
+            while len(self.mem) < 5:
+                self._populate_exp()
+                pbar.update()
+            while len(self.mem) < self.init_memory_size:
+                self.mem.append(deepcopy(self.mem._hist[0]))
+                pbar.update()
+        self._init_memory_flag.set()
+
     def _populate_exp(self):
         """ populate a transition by epsilon-greedy"""
         old_s = self.player.current_state()
@@ -188,7 +200,7 @@ class ExpReplay(DataFlow, Callback):
         reward, isOver = self.player.action(act)
         self.mem.append(Experience(old_s, act, reward, isOver))
 
-    def debug_sample(self, sample):
+    def _debug_sample(self, sample):
         import cv2
 
         def view_state(comb_state):

@@ -32,7 +32,6 @@ IMAGE_SIZE = (84, 84)
 FRAME_HISTORY = 4
 ACTION_REPEAT = 4
 
-CHANNEL = FRAME_HISTORY
 GAMMA = 0.99
 
 INIT_EXPLORATION = 1
@@ -54,8 +53,11 @@ def get_player(viz=False, train=False):
     pl = AtariPlayer(ROM_FILE, frame_skip=ACTION_REPEAT,
                      image_shape=IMAGE_SIZE[::-1], viz=viz, live_lost_as_eoe=train)
     if not train:
+        # create a new axis to stack history on
         pl = MapPlayerState(pl, lambda im: im[:, :, np.newaxis])
+        # in training, history is taken care of in expreplay buffer
         pl = HistoryFramePlayer(pl, FRAME_HISTORY)
+
         pl = PreventStuckPlayer(pl, 30, 1)
     pl = LimitLengthPlayer(pl, 30000)
     return pl
@@ -63,7 +65,7 @@ def get_player(viz=False, train=False):
 
 class Model(DQNModel):
     def __init__(self):
-        super(Model, self).__init__(IMAGE_SIZE, CHANNEL, METHOD, NUM_ACTIONS, GAMMA)
+        super(Model, self).__init__(IMAGE_SIZE, FRAME_HISTORY, METHOD, NUM_ACTIONS, GAMMA)
 
     def _get_DQN_prediction(self, image):
         """ image: [0,255]"""

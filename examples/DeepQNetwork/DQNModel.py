@@ -21,8 +21,8 @@ class Model(ModelDesc):
         self.gamma = gamma
 
     def _get_inputs(self):
-        # use a combined state, where the first channels are the current state,
-        # and the last 4 channels are the next state
+        # Use a combined state for efficiency.
+        # The first h channels are the current state, and the last h channels are the next state.
         return [InputDesc(tf.uint8,
                           (None,) + self.image_shape + (self.channel + 1,),
                           'comb_state'),
@@ -37,13 +37,13 @@ class Model(ModelDesc):
     def _build_graph(self, inputs):
         comb_state, action, reward, isOver = inputs
         comb_state = tf.cast(comb_state, tf.float32)
-        state = tf.slice(comb_state, [0, 0, 0, 0], [-1, -1, -1, 4], name='state')
+        state = tf.slice(comb_state, [0, 0, 0, 0], [-1, -1, -1, self.channel], name='state')
         self.predict_value = self._get_DQN_prediction(state)
         if not get_current_tower_context().is_training:
             return
 
         reward = tf.clip_by_value(reward, -1, 1)
-        next_state = tf.slice(comb_state, [0, 0, 0, 1], [-1, -1, -1, 4], name='next_state')
+        next_state = tf.slice(comb_state, [0, 0, 0, 1], [-1, -1, -1, self.channel], name='next_state')
         action_onehot = tf.one_hot(action, self.num_actions, 1.0, 0.0)
 
         pred_action_value = tf.reduce_sum(self.predict_value * action_onehot, 1)  # N,
