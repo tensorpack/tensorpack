@@ -140,8 +140,14 @@ def dump_dataflow_to_tfrecord(df, path):
     """
     df.reset_state()
     with tf.python_io.TFRecordWriter(path) as writer:
-        for dp in df.get_data():
-            writer.write(dumps(dp))
+        try:
+            sz = df.size()
+        except NotImplementedError:
+            sz = 0
+        with get_tqdm(total=sz) as pbar:
+            for dp in df.get_data():
+                writer.write(dumps(dp))
+                pbar.update()
 
 
 from ..utils.develop import create_dummy_func  # noqa

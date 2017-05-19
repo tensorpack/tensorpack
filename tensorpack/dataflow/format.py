@@ -244,8 +244,14 @@ class TFRecordData(DataFlow):
     This class works with :func:`dftools.dump_dataflow_to_tfrecord`.
     """
     def __init__(self, path, size=None):
+        """
+        Args:
+            path (str): path to the tfrecord file
+            size (int): total number of records, because this metadata is not
+                stored in the tfrecord file.
+        """
         self._gen = tf.python_io.tf_record_iterator(path)
-        self._size = size
+        self._size = int(size)
 
     def size(self):
         if self._size:

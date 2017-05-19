@@ -203,7 +203,7 @@ So DataFlow will not be a serious bottleneck if configured properly.
 
 ## More Efficient DataFlow
 
-To work with larger datasets (or smaller networks, or more GPUs) you could be severely bounded by CPU or disk speed of a single machine.
+To work with larger datasets (or smaller networks, or more/better GPUs) you could be severely bounded by CPU or disk speed of a single machine.
 One way is to optimize the preprocessing routine (e.g. write something in C++ or use TF reading operators).
 Another way to scale is to run DataFlow in a distributed fashion and collect them on the
 training machine. E.g.:

@@ -1,7 +1,7 @@
 
 # DataFlow
 
-DataFlow is a library to help you build Python iterators to load data.
+DataFlow is a library to easily build Python iterators for efficient data loading.
 
 A DataFlow has a `get_data()` generator method,
 which yields `datapoints`.
@@ -61,3 +61,12 @@ generator = df.get_data()
 for dp in generator:
 	# dp is now a list. do whatever
 ```
+
+### Efficiency
+
+DataFlow is purely Python -- a convenient and slow language (w.r.t C++). But faster data loading doesn't always mean faster
+training: we only need data to be __fast enough__.
+
+DataFlow is fast enough for problems up to the scale of multi-GPU ImageNet training.
+See [efficient dataflow tutorial](http://tensorpack.readthedocs.io/en/latest/tutorial/efficient-dataflow.html)
+for details.
