@@ -52,7 +52,7 @@ class HyperParam(object):
 
 
 class GraphVarParam(HyperParam):
-    """ A variable in the graph (e.g. learning_rate) can be a hyperparam"""
+    """ A variable in the graph (e.g. learning_rate) can be a hyperparam."""
 
     def __init__(self, name, shape=[]):
         """
@@ -91,7 +91,7 @@ class ObjAttrParam(HyperParam):
         Args:
             obj: the object
             attrname (str): the attribute
-            readable_name(str): The name to display. Defaults to be ``attrname``.
+            readable_name(str): The name to display and set with. Defaults to be ``attrname``.
         """
         self.obj = obj
         self.attrname = attrname
@@ -179,10 +179,9 @@ class HumanHyperParamSetter(HyperParamSetter):
         """
         Args:
             param: same as in :class:`HyperParamSetter`.
-            file_name(str): a file containing the value of the variable.
-                Each line in the file is a k:v pair, where k is
-                param.readable_name, and v is the value. If the pair is not found,
-                the param will not be changed.
+            file_name(str): a file containing the new value of the parameter.
+                Each line in the file is a ``k:v`` pair, for example, ``learning_rate:1e-4``.
+                If the pair is not found, the param will not be changed.
         """
         super(HumanHyperParamSetter, self).__init__(param)
         self.file_name = os.path.join(logger.LOG_DIR, file_name)

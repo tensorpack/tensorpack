@@ -79,7 +79,7 @@ def set_logger_dir(dirname, action=None):
 
     Args:
         dirname(str): log directory
-        action(str): an action of ("k","b","d","n") to be performed. Will ask user by default.
+        action(str): an action of ("k","b","d","n","q") to be performed. Will ask user by default.
     """
     global LOG_DIR, _FILE_HANDLER
     if _FILE_HANDLER:
@@ -89,10 +89,10 @@ def set_logger_dir(dirname, action=None):
     if os.path.isdir(dirname):
         if not action:
             _logger.warn("""\
-Directory {} exists! Please either backup/delete it, or use a new directory.""".format(dirname))
+Log directory {} exists! Please either backup/delete it, or use a new directory.""".format(dirname))
             _logger.warn("""\
 If you're resuming from a previous run you can choose to keep it.""")
-            _logger.info("Select Action: k (keep) / b (backup) / d (delete) / n (new):")
+            _logger.info("Select Action: k (keep) / b (backup) / d (delete) / n (new) / q (quit):")
         while not action:
             action = input().lower().strip()
         act = action
@@ -107,6 +107,8 @@ If you're resuming from a previous run you can choose to keep it.""")
             info("Use a new log directory {}".format(dirname))  # noqa: F821
         elif act == 'k':
             pass
+        elif act == 'q':
+            sys.exit()
         else:
             raise ValueError("Unknown action: {}".format(act))
     LOG_DIR = dirname
