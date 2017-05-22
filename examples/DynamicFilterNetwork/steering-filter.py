@@ -118,11 +118,11 @@ class Model(ModelDesc):
             learned filter as [B, k, k]
         """
         with argscope(LeakyReLU, alpha=0.2), \
-                argscope(Conv2D, kernel_shape=1, nl=LeakyReLU):
-            net = Conv2D('conv1', theta, 64)
-            net = Conv2D('conv2', net, 128)
+                argscope(FullyConnected, nl=LeakyReLU):
+            net = FullyConnected('fc1', theta, 64)
+            net = FullyConnected('fc2', net, 128)
 
-        pred_filter = Conv2D('conv3', net, kernel_shape ** 2, 1, nl=tf.identity)
+        pred_filter = FullyConnected('conv3', net, kernel_shape ** 2, nl=tf.identity)
         pred_filter = tf.reshape(pred_filter, [BATCH, kernel_shape, kernel_shape, 1], name="pred_filter")
         logger.info('parameter net output: {}'.format(pred_filter.get_shape().as_list()))
         return pred_filter
@@ -131,8 +131,8 @@ class Model(ModelDesc):
         kernel_size = 9
         theta, image, gt_image, used_filter = input_vars
 
-        image = image / 128.0 - 1
-        gt_image = gt_image / 128.0 - 1
+        image = image
+        gt_image = gt_image
 
         theta = tf.reshape(theta, [BATCH, 1, 1, 1]) - np.pi
         image = tf.reshape(image, [BATCH, SHAPE, SHAPE, 1])
@@ -151,7 +151,7 @@ class Model(ModelDesc):
             used_filter = tf.reshape(n(used_filter), [BATCH, kernel_size, kernel_size, 1])
 
             filters = tf.concat([pred_filter, used_filter], axis=2, name="filters")
-            images = tf.concat([128.0 * (1.0 + pred_image), 128.0 * (1.0 + gt_image)], axis=2, name="images")
+            images = tf.concat([pred_image, gt_image], axis=2, name="images")
         tf.summary.image('pred_gt_filters', filters, max_outputs=20)
         tf.summary.image('pred_gt_images', images, max_outputs=20)
 
@@ -159,7 +159,7 @@ class Model(ModelDesc):
         summary.add_moving_summary(self.cost)
 
     def _get_optimizer(self):
-        lr = symbolic_functions.get_scalar_var('learning_rate', 1e-4, summary=True)
+        lr = symbolic_functions.get_scalar_var('learning_rate', 1e-3, summary=True)
         return tf.train.AdamOptimizer(lr)
 
 
@@ -246,7 +246,7 @@ def get_data():
     ds = dataset.BSDS500('train', shuffle=True)
     # rgb2gray
     ds = MapData(ds, lambda dp: [np.dot(dp[0], [0.299, 0.587, 0.114])[:, :]])
-    ds = AugmentImageComponent(ds, [imgaug.RandomCrop((SHAPE, SHAPE))])
+    ds = AugmentImageComponent(ds, [imgaug.Resize((SHAPE, SHAPE))])
     ds = ThetaImages(ds)
     ds = RepeatedData(ds, 50)  # just pretend this dataset is bigger
     # this pre-computation is pretty heavy
@@ -267,7 +267,7 @@ def get_config():
         ],
         model=Model(),
         steps_per_epoch=dataset_train.size(),
-        max_epoch=100,
+        max_epoch=50,
     )
 
 
