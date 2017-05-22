@@ -4,10 +4,10 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import tensorflow as tf
-from tensorpack.utils.argtools import memoized
+from tensorpack.utils.argtools import graph_memoized
 
 
-@memoized
+@graph_memoized
 def get_dorefa(bitW, bitA, bitG):
     """
     return the three quantization functions fw, fa, fg, for weights, activations and gradients respectively

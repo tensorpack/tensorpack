@@ -6,14 +6,14 @@ import tensorflow as tf
 import re
 
 from ..utils import logger
-from ..utils.argtools import memoized
+from ..utils.argtools import graph_memoized
 from ..tfutils.tower import get_current_tower_context
 from .common import layer_register
 
 __all__ = ['regularize_cost', 'l2_regularizer', 'l1_regularizer', 'Dropout']
 
 
-@memoized
+@graph_memoized
 def _log_regularizer(name):
     logger.info("Apply regularizer for {}".format(name))
 

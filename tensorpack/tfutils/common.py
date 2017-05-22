@@ -5,17 +5,14 @@
 
 import tensorflow as tf
 from six.moves import map
+from ..utils.argtools import graph_memoized
 
-from ..utils.naming import (
-    GLOBAL_STEP_VAR_NAME,
-    GLOBAL_STEP_OP_NAME)
+from ..utils.naming import GLOBAL_STEP_OP_NAME
 
 __all__ = ['get_default_sess_config',
 
            'get_global_step_value',
            'get_global_step_var',
-           #'get_local_step_var',
-
            'get_op_tensor_name',
            'get_tensors_by_names',
            'get_op_or_tensor_by_name',
@@ -51,24 +48,22 @@ def get_default_sess_config(mem_fraction=0.99):
     return conf
 
 
+@graph_memoized
 def get_global_step_var():
     """
     Returns:
         tf.Tensor: the global_step variable in the current graph. create if
         doesn't exist.
     """
-    try:
-        return tf.get_default_graph().get_tensor_by_name(GLOBAL_STEP_VAR_NAME)
-    except KeyError:
-        scope = tf.get_variable_scope()
-        assert scope.name == '', \
-            "The global_step variable should be created under the root variable scope!"
-        with tf.variable_scope(scope, reuse=False), \
-                tf.name_scope(None):
-            var = tf.get_variable(GLOBAL_STEP_OP_NAME,
-                                  initializer=tf.constant(0, dtype=tf.int64),
-                                  trainable=False, dtype=tf.int64)
-        return var
+    scope = tf.get_variable_scope()
+    assert scope.name == '', \
+        "The global_step variable should be created under the root variable scope!"
+    with tf.variable_scope(scope, reuse=False), \
+            tf.name_scope(None):
+        var = tf.get_variable(GLOBAL_STEP_OP_NAME,
+                              initializer=tf.constant(0, dtype=tf.int64),
+                              trainable=False, dtype=tf.int64)
+    return var
 
 
 def get_global_step_value():

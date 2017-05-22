@@ -38,6 +38,26 @@ memoized = functools.lru_cache(maxsize=None)
 """ Alias to :func:`functools.lru_cache` """
 
 
+def graph_memoized(func):
+    """
+    Like memoized, but keep one cache per default graph.
+    """
+    import tensorflow as tf
+    GRAPH_ARG_NAME = '__IMPOSSIBLE_NAME_FOR_YOU__'
+
+    @memoized
+    def func_with_graph_arg(*args, **kwargs):
+        kwargs.pop(GRAPH_ARG_NAME)
+        return func(*args, **kwargs)
+
+    def wrapper(*args, **kwargs):
+        assert GRAPH_ARG_NAME not in kwargs, "No Way!!"
+        graph = tf.get_default_graph()
+        kwargs[GRAPH_ARG_NAME] = graph
+        return func_with_graph_arg(*args, **kwargs)
+    return wrapper
+
+
 _MEMOIZED_NOARGS = {}
 
 
