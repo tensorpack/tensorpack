@@ -18,6 +18,9 @@ Reproduce the following GAN-related methods:
 
 + BEGAN ([BEGAN: Boundary Equilibrium Generative Adversarial Networks](https://arxiv.org/abs/1703.10717))
 
++ CycleGAN ([Unpaired Image-to-Image Translation using Cycle-Consistent Adversarial Networks](https://arxiv.org/abs/1703.10593))
+
+
 Please see the __docstring__ in each script for detailed usage and pretrained models. MultiGPU training is supported.
 
 ## DCGAN.py
@@ -65,6 +68,8 @@ Some BEGAN samples:
 
 ![began-sample](demo/BEGAN-CelebA-samples.jpg)
 
-## DiscoGAN-CelebA.py
+## CycleGAN.py, DiscoGAN-CelebA.py
 
-Reproduce DiscoGAN on CelebA.
+Reproduce CycleGAN with the original datasets, and DiscoGAN on CelebA. They are pretty much the same idea with different architecture.
+
+![cyclegan-sample](demo/CycleGAN-horse2zebra.jpg)

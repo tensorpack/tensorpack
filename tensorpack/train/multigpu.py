@@ -29,7 +29,7 @@ __all__ = ['MultiGPUTrainerBase', 'SyncMultiGPUTrainer',
 
 def _check_tf_version():
     ver = float('.'.join(tf.VERSION.split('.')[:2]))
-    assert ver >= 1.1, "TF version {} is too old to run multi GPU training!".format(ver)
+    assert ver >= 1.1, "TF version {} is too old to run multi GPU training!".format(tf.VERSION)
 
 
 def apply_prefetch_policy(config, use_stage=True):

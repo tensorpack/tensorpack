@@ -109,6 +109,9 @@ class SeparateGANTrainer(FeedfreeTrainerBase):
 
 
 class MultiGPUGANTrainer(MultiGPUTrainerBase, FeedfreeTrainerBase):
+    """
+    A replacement of GANTrainer (optimize d and g one by one) with multi-gpu support.
+    """
     def __init__(self, config):
         super(MultiGPUGANTrainer, self).__init__(config)
         self._nr_gpu = config.nr_tower

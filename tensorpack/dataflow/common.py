@@ -578,7 +578,7 @@ class CacheData(ProxyDataFlow):
 
 class PrintData(ProxyDataFlow):
     """
-    Behave like an identity mapping but print shapes of produced datapoints once during construction.
+    Behave like an identity mapping but print shape and range of the first datapoint once during construction.
 
     Attributes:
         label (str): label to identify the data when using this debugging on multiple places.
