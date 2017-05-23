@@ -107,8 +107,9 @@ class TowerContext(object):
                 self._ctxs.append(tf.variable_scope(self._name))
             else:
                 # use existing variable scope
+                reuse = self.index > 0 or (not self.is_training)
                 self._ctxs.append(tf.variable_scope(
-                    tf.get_variable_scope(), reuse=self.index > 0))
+                    tf.get_variable_scope(), reuse=reuse))
                 self._ctxs.append(tf.name_scope(self._name))
         self._ctxs.append(tf.device(self._device))
         for c in self._ctxs:

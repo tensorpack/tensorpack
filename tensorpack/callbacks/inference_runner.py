@@ -109,10 +109,9 @@ class InferenceRunnerBase(Callback):
         in_tensors = self._find_input_tensors()
         assert isinstance(in_tensors, list), in_tensors
 
-        with tf.variable_scope(tf.get_variable_scope(), reuse=True):
-            def fn(_):
-                self.trainer.model.build_graph(in_tensors)
-            PredictorTowerBuilder(fn, self._prefix).build(self._predict_tower_id)
+        def fn(_):
+            self.trainer.model.build_graph(in_tensors)
+        PredictorTowerBuilder(fn, self._prefix).build(self._predict_tower_id)
 
         self._feed_tensors = self._find_feed_tensors()
         self._hooks = [self._build_hook(inf) for inf in self.infs]
