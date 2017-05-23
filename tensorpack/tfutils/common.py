@@ -10,7 +10,6 @@ from ..utils.argtools import graph_memoized
 from ..utils.naming import GLOBAL_STEP_OP_NAME
 
 __all__ = ['get_default_sess_config',
-
            'get_global_step_value',
            'get_global_step_var',
            'get_op_tensor_name',

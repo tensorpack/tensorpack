@@ -3,7 +3,6 @@
 # File: predict.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import tensorflow as tf
 from ..predict import (OnlinePredictor,
                        PredictorTowerBuilder)
 
@@ -34,9 +33,8 @@ class PredictorFactory(object):
             an online predictor (which has to be used under a default session)
         """
         tower = self.towers[tower]
-        with tf.variable_scope(tf.get_variable_scope(), reuse=True):
-            # just ensure the tower exists. won't rebuild
-            self._tower_builder.build(tower)
+        # just ensure the tower exists. won't rebuild (memoized)
+        self._tower_builder.build(tower)
 
         placeholder_names = set([k.name for k in self.model.get_inputs_desc()])
         get_tensor_fn = PredictorTowerBuilder.get_tensors_maybe_in_tower

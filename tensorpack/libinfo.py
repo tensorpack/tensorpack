@@ -10,4 +10,4 @@ os.environ['TF_ENABLE_WINOGRAD_NONFUSED'] = '1'  # issue#9339
 os.environ['TF_AUTOTUNE_THRESHOLD'] = '3'   # use more warm-up
 os.environ['TF_AVGPOOL_USE_CUDNN'] = '1'   # issue#8566
 
-__version__ = '0.1.9'
+__version__ = '0.2.0'

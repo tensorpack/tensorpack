@@ -27,6 +27,11 @@ __all__ = ['MultiGPUTrainerBase', 'SyncMultiGPUTrainer',
            'SyncMultiGPUTrainerParameterServer']
 
 
+def _check_tf_version():
+    ver = float('.'.join(tf.VERSION.split('.')[:2]))
+    assert ver >= 1.1, "TF version {} is too old to run multi GPU training!".format(ver)
+
+
 def apply_prefetch_policy(config, use_stage=True):
     if config.data is None and config.dataflow is not None:
         config.data = QueueInput(config.dataflow)
@@ -55,6 +60,8 @@ class MultiGPUTrainerBase(Trainer):
             List of outputs of ``func``, evaluated on each tower.
         """
         logger.info("Training a model of {} tower".format(len(towers)))
+        if len(towers) > 1:
+            _check_tf_version()
 
         ret = []
         if devices is not None:
