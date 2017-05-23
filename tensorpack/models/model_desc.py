@@ -169,8 +169,8 @@ class ModelFromMetaGraph(ModelDesc):
         all_coll = tf.get_default_graph().get_all_collection_keys()
         for k in [INPUTS_KEY, tf.GraphKeys.TRAINABLE_VARIABLES,
                   tf.GraphKeys.GLOBAL_VARIABLES]:
-            assert k in all_coll, \
-                "Collection {} not found in metagraph!".format(k)
+            if k not in all_coll:
+                logger.warn("Collection {} not found in metagraph!".format(k))
 
     def _get_inputs(self):
         col = tf.get_collection(INPUTS_KEY)
