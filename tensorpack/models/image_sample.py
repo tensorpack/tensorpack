@@ -77,14 +77,14 @@ def ImageSample(inputs, borderMode='repeat'):
     diff = mapping - lcoor
     neg_diff = 1.0 - diff  # bxh2xw2x2
 
-    lcoory, lcoorx = tf.split(lcoor, 2, 3)
-    ucoory, ucoorx = tf.split(ucoor, 2, 3)
+    lcoory, lcoorx = tf.split(3, 2, lcoor)
+    ucoory, ucoorx = tf.split(3, 2, ucoor)
 
-    lyux = tf.concat([lcoory, ucoorx], 3)
-    uylx = tf.concat([ucoory, lcoorx], 3)
+    lyux = tf.concat(3, [lcoory, ucoorx])
+    uylx = tf.concat(3, [ucoory, lcoorx])
 
-    diffy, diffx = tf.split(diff, 2, 3)
-    neg_diffy, neg_diffx = tf.split(neg_diff, 2, 3)
+    diffy, diffx = tf.split(3, 2, diff)
+    neg_diffy, neg_diffx = tf.split(3, 2, neg_diff)
 
     # prod = tf.reduce_prod(diff, 3, keep_dims=True)
     # diff = tf.Print(diff, [tf.is_finite(tf.reduce_sum(diff)), tf.shape(prod),
