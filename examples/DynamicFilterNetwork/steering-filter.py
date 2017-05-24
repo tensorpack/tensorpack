@@ -69,7 +69,7 @@ class OnlineTensorboardExport(Callback):
     """
     def __init__(self):
         # generate 32 filters (8 different, 4 times repeated)
-        self.theta = np.array(range(8) * 4) / 8. * 2 * np.pi
+        self.theta = np.array([i for _ in range(4) for i in range(8)]) / 8. * 2 * np.pi
         self.filters = np.array([ThetaImages.get_filter(t) for t in self.theta])
         self.cc = 0
 
@@ -122,7 +122,7 @@ class Model(ModelDesc):
             net = FullyConnected('fc1', theta, 64)
             net = FullyConnected('fc2', net, 128)
 
-        pred_filter = FullyConnected('conv3', net, kernel_shape ** 2, nl=tf.identity)
+        pred_filter = FullyConnected('fc3', net, kernel_shape ** 2, nl=tf.identity)
         pred_filter = tf.reshape(pred_filter, [BATCH, kernel_shape, kernel_shape, 1], name="pred_filter")
         logger.info('parameter net output: {}'.format(pred_filter.get_shape().as_list()))
         return pred_filter
@@ -142,13 +142,9 @@ class Model(ModelDesc):
         pred_image = dynamic_conv_filter('dfn', image, pred_filter, 1, kernel_size)
 
         with tf.name_scope('visualization'):
-            def n(x):
-                x = x - tf.reduce_min(x)
-                x = x / tf.reduce_max(x)
-                return x
 
-            pred_filter = tf.reshape(n(pred_filter), [BATCH, kernel_size, kernel_size, 1])
-            used_filter = tf.reshape(n(used_filter), [BATCH, kernel_size, kernel_size, 1])
+            pred_filter = tf.reshape(pred_filter, [BATCH, kernel_size, kernel_size, 1])
+            used_filter = tf.reshape(used_filter, [BATCH, kernel_size, kernel_size, 1])
 
             filters = tf.concat([pred_filter, used_filter], axis=2, name="filters")
             images = tf.concat([pred_image, gt_image], axis=2, name="images")
@@ -244,9 +240,8 @@ class ThetaImages(ProxyDataFlow, RNGDataFlow):
 def get_data():
     # probably not the best dataset
     ds = dataset.BSDS500('train', shuffle=True)
-    # rgb2gray
-    ds = MapData(ds, lambda dp: [np.dot(dp[0], [0.299, 0.587, 0.114])[:, :]])
-    ds = AugmentImageComponent(ds, [imgaug.Resize((SHAPE, SHAPE))])
+    ds = AugmentImageComponent(ds, [imgaug.Grayscale(keepdims=False),
+                                    imgaug.Resize((SHAPE, SHAPE))])
     ds = ThetaImages(ds)
     ds = RepeatedData(ds, 50)  # just pretend this dataset is bigger
     # this pre-computation is pretty heavy
