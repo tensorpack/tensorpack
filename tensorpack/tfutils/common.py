@@ -15,6 +15,7 @@ __all__ = ['get_default_sess_config',
            'get_op_tensor_name',
            'get_tensors_by_names',
            'get_op_or_tensor_by_name',
+           'get_tf_version_number',
            ]
 
 
@@ -134,3 +135,10 @@ def get_op_or_tensor_by_name(name):
         return f(name)
     else:
         return list(map(f, name))
+
+
+def get_tf_version_number():
+    """
+    Return a float (for comparison), indicating tensorflow version.
+    """
+    return float('.'.join(tf.VERSION.split('.')[:2]))

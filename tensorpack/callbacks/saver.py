@@ -9,6 +9,7 @@ import glob
 
 from .base import Callback
 from ..utils import logger
+from ..tfutils.common import get_tf_version_number
 
 __all__ = ['ModelSaver', 'MinSaver', 'MaxSaver']
 
@@ -43,11 +44,19 @@ class ModelSaver(Callback):
         for key in self.var_collections:
             vars.extend(tf.get_collection(key))
         self.path = os.path.join(self.checkpoint_dir, 'model')
-        self.saver = tf.train.Saver(
-            var_list=vars,
-            max_to_keep=self.keep_recent,
-            keep_checkpoint_every_n_hours=self.keep_freq,
-            write_version=tf.train.SaverDef.V2)
+        if get_tf_version_number() <= 1.1:
+            self.saver = tf.train.Saver(
+                var_list=vars,
+                max_to_keep=self.keep_recent,
+                keep_checkpoint_every_n_hours=self.keep_freq,
+                write_version=tf.train.SaverDef.V2)
+        else:
+            self.saver = tf.train.Saver(
+                var_list=vars,
+                max_to_keep=self.keep_recent,
+                keep_checkpoint_every_n_hours=self.keep_freq,
+                write_version=tf.train.SaverDef.V2,
+                save_relative_paths=True)
         self.meta_graph_written = False
 
     def _trigger(self):

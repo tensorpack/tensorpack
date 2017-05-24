@@ -11,7 +11,7 @@ If you have such a mapping function `f` already, you can simply use `imgaug.MapI
 augmentor, or use `MapDataComponent(df, f, index)` as the DataFlow.
 In other words, for simple mapping you do not need to write an augmentor.
 
-An augmentor does something more than applying the mapping. The interface you will need to implement
+An augmentor may do something more than applying a mapping. The interface you will need to implement
 is:
 
 ```python
@@ -28,8 +28,8 @@ It does the following extra things for you:
 
 1. `self.rng` is a `np.random.RandomState` object,
 	guaranteed to have different seeds when you use multiprocess prefetch.
-	In multiprocess settings, you will always need it to generate random numbers.
+	In multiprocess settings, you have to use it to generate random numbers.
 
-2. Random parameters and the actual augmentation is separated. This allows you to apply the
-	same random transformation to several images (with `AugmentImageComponents`),
+2. Random parameter generation and the actual augmentation is separated. This allows you to apply the
+	same transformation to several images together (with `AugmentImageComponents`),
 	which is essential to tasks such as segmentation.

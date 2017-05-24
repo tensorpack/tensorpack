@@ -41,7 +41,7 @@ It's Yet Another TF wrapper, but different in:
 	+ Data-Parallel Multi-GPU training is off-the-shelf to use. It is as fast as Google's [benchmark code](https://github.com/tensorflow/benchmarks).
 
 3. Focus on large datasets.
-	+ __DataFlow__ allows you to process large datasets such as ImageNet in pure Python without blocking the training.
+	+ It's painful to read/preprocess data from TF. Use __DataFlow__ to process large datasets such as ImageNet in pure Python.
 	+ DataFlow has a unified interface, so you can compose and reuse them to perform complex preprocessing.
 
 4. Interface of extensible __Callbacks__.

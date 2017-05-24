@@ -14,13 +14,13 @@ a numpy array of shape (64, 28, 28), and an array of shape (64,).
 ### Composition of DataFlow
 One good thing about having a standard interface is to be able to provide
 the greatest code reusability.
-There are a lot of existing modules in tensorpack which you can use to compose
-complex DataFlow instances with a long pre-processing pipeline. A whole pipeline usually
+There are a lot of existing modules in tensorpack, which you can use to compose
+complex DataFlow with a long pre-processing pipeline. A whole pipeline usually
 would __read from disk (or other sources), apply augmentations, group into batches,
 prefetch data__, etc. A simple example is as the following:
 
 ````python
-# a DataFlow you implement to produce [image,label] pairs from whatever sources:
+# a DataFlow you implement to produce [tensor1, tensor2, ..] lists from whatever sources:
 df = MyDataFlow(shuffle=True)
 # resize the image component of each datapoint
 df = AugmentImageComponent(df, [imgaug.Resize((225, 225))])
@@ -35,8 +35,6 @@ with all the data preprocessing.
 All these modules are written in Python,
 so you can easily implement whatever operations/transformations you need,
 without worrying about adding operators to TensorFlow.
-In the meantime, thanks to the prefetching, it can still run fast enough for
-tasks as large as ImageNet training.
 
 Unless you are working with standard data types (image folders, LMDB, etc),
 you would usually want to write your own DataFlow.
@@ -70,3 +68,4 @@ training: we only need data to be __fast enough__.
 DataFlow is fast enough for problems up to the scale of multi-GPU ImageNet training.
 See [efficient dataflow tutorial](http://tensorpack.readthedocs.io/en/latest/tutorial/efficient-dataflow.html)
 for details.
+Therefore, for most usecases, writing format conversion/preprocessing code with TensorFlow operators doesn't help you at all.

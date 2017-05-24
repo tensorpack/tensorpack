@@ -18,7 +18,7 @@ class MyModel(ModelDesc):
 
 Basically, `_get_inputs` should define the metainfo of all the possible placeholders your graph may need.
 `_build_graph` should add tensors/operations to the graph, where
-the argument `input_tensors` is the list of input tensors matching `_get_inputs`.
+the argument `inputs` is the list of input tensors matching `_get_inputs`.
 
 You can use any symbolic functions in `_build_graph`, including TensorFlow core library
 functions and other symbolic libraries (see below).

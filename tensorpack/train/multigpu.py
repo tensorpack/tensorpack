@@ -12,6 +12,7 @@ from six.moves import zip, range
 from ..utils import logger
 from ..utils.naming import TOWER_FREEZE_KEYS
 from ..utils.concurrency import LoopThread
+from ..tfutils.common import get_tf_version_number
 from ..tfutils.tower import TowerContext
 from ..tfutils.collection import backup_collection, restore_collection
 from ..tfutils.gradproc import FilterNoneGrad, ScaleGradient
@@ -28,8 +29,8 @@ __all__ = ['MultiGPUTrainerBase', 'SyncMultiGPUTrainer',
 
 
 def _check_tf_version():
-    ver = float('.'.join(tf.VERSION.split('.')[:2]))
-    assert ver >= 1.1, "TF version {} is too old to run multi GPU training!".format(tf.VERSION)
+    assert get_tf_version_number() >= 1.1, \
+        "TF version {} is too old to run multi GPU training!".format(tf.VERSION)
 
 
 def apply_prefetch_policy(config, use_stage=True):

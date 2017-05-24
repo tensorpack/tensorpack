@@ -2,9 +2,9 @@
 ## Implement a layer
 
 Symbolic functions should be nothing new to you.
-Using symbolic functions is not special in tensorpack: you can use any symbolic functions you have
-made or seen elsewhere with tensorpack layers.
-You can use symbolic functions from slim/tflearn/tensorlayer, and even Keras ([with some tricks](../../examples/mnist-keras.py)).
+Using symbolic functions in tensorpack is same as in TensorFlow: you can use any symbolic functions you have
+made or seen elsewhere together with tensorpack layers.
+You can use symbolic functions from slim/tflearn/tensorlayer, and even Keras/sonnet ([with some tricks](../../examples/mnist-keras.py)).
 So you never **have to** implement a tensorpack layer.
 
 If you would like, you can make a symbolic function become a "layer" by following some simple rules, and then gain benefits from the framework.
@@ -19,7 +19,7 @@ def Conv2D(x, out_channel, kernel_shape,
            nl=tf.nn.relu, split=1, use_bias=True):
 ```
 
-Basically, a layer is a symbolic function with the following rules:
+Basically, a tensorpack layer is just a symbolic function, but with the following rules:
 
 + It is decorated by `@layer_register`.
 + The first argument is its "input". It must be a **tensor or a list of tensors**.
@@ -31,7 +31,7 @@ By making a symbolic function a "layer", the following things will happen:
 	Everything happening in this function will be under the variable scope 'conv0'.
 	You can register the layer with `use_scope=False` to disable this feature.
 + Static shapes of input/output will be printed to screen.
-+ `argscope` will then work for all its arguments except the input tensor(s).
++ `argscope` will work for all its arguments except the input tensor(s).
 + It will work with `LinearWrap`: you can use it if the output of one layer matches the input of the next layer.
 
 There are also some (non-layer) symbolic functions in the `tfutils.symbolic_functions` module.
