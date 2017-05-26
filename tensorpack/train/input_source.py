@@ -25,7 +25,8 @@ from ..utils.concurrency import ShareSessionThread
 from ..callbacks.concurrency import StartProcOrThread
 from ..callbacks.base import Callback
 
-__all__ = ['InputSource', 'FeedfreeInput', 'DataParallelFeedInput',
+__all__ = ['InputSource', 'FeedfreeInput',
+           'FeedInput', 'DataParallelFeedInput',
            'QueueInput', 'BatchQueueInput',
            'ZMQInput',
            'DummyConstantInput', 'TensorInput', 'StagingInputWrapper']
@@ -54,12 +55,13 @@ class InputSource(object):
     def reset_state(self):
         pass
 
+    @abstractmethod
     def next_feed(self):
         """
         Returns:
             a feed_dict of {Tensor: data}, to be used to run the steps
         """
-        return {}
+        pass
 
 
 class FeedInput(InputSource):
@@ -128,6 +130,7 @@ class DataParallelFeedInput(FeedInput):
                 # input_names to be used for this specific tower
                 self._feed_placehdrs_per_tower.append(
                     get_placeholders_by_names(phdrs, input_names))
+                print(self._feed_placehdrs_per_tower[-1])
         self.reset_state()
 
     def get_input_tensors(self):
@@ -158,10 +161,13 @@ class FeedfreeInput(InputSource):
         # TODO cannot reset
         pass
 
+    def next_feed(self):
+        return {}
+
 
 # TODO enqueu_many? https://github.com/tensorflow/tensorflow/issues/7817#issuecomment-282053155
 class EnqueueThread(ShareSessionThread):
-    def __init__(self, queue, ds, input_placehdrs):
+    def __init__(self, queue, ds, placehdrs):
         super(EnqueueThread, self).__init__()
         self.name = 'EnqueueThread'
         self.daemon = True
@@ -169,7 +175,7 @@ class EnqueueThread(ShareSessionThread):
         self.dataflow = ds
         self.queue = queue
 
-        self.placehdrs = input_placehdrs
+        self.placehdrs = placehdrs
 
         self.op = self.queue.enqueue(self.placehdrs)
         self.close_op = self.queue.close(cancel_pending_enqueues=True)

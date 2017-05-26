@@ -56,13 +56,11 @@ def summary_inferencer(trainer, infs):
 @six.add_metaclass(ABCMeta)
 class InferenceRunnerBase(Callback):
     """ Base methods for inference runner"""
-    def __init__(self, input, infs, input_names=None, prefix='', extra_hooks=None):
+    def __init__(self, input, infs, prefix='', extra_hooks=None):
         """
         Args:
             input (InputSource): the input to use. Must have ``size()``.
             infs (list[Inferencer]): list of :class:`Inferencer` to run.
-            input_names (list[str]): list of names to match ``input``, must be a subset of the names in
-                InputDesc of the model. Defaults to be all the inputs of the model.
             prefix(str): an prefix used to build the tower. Must be set
                 differently if more than one :class:`InferenceRunner` are used.
             extra_hooks (list[SessionRunHook]): extra :class:`SessionRunHook` to run with the evaluation.
@@ -74,9 +72,6 @@ class InferenceRunnerBase(Callback):
             self.infs = infs
         for v in self.infs:
             assert isinstance(v, Inferencer), v
-        if input_names is not None:
-            assert isinstance(input_names, list)
-        self.input_names = input_names
 
         try:
             self._size = input.size()
@@ -95,7 +90,7 @@ class InferenceRunnerBase(Callback):
 
         def fn(_):
             in_tensors = self._find_input_tensors()
-            assert isinstance(in_tensors, list), in_tensors
+            assert isinstance(in_tensors, (list, tuple)), in_tensors
             self.trainer.model.build_graph(in_tensors)
         PredictorTowerBuilder(fn, self._prefix).build(self._predict_tower_id)
 
@@ -140,12 +135,13 @@ class InferenceRunner(InferenceRunnerBase):
         Args:
             ds (DataFlow): the DataFlow to run inferencer on.
             infs (list): a list of `Inferencer` instances.
-            input_names (list[str]): same as in :class:`InferenceRunnerBase`.
+            input_names (list[str]): list of names to match ``input``, must be a subset of the names in
+                InputDesc of the model. Defaults to be all the inputs of the model.
         """
         assert isinstance(ds, DataFlow), ds
         input = FeedInput(ds, input_names)
         super(InferenceRunner, self).__init__(
-            input, infs, input_names, prefix='', extra_hooks=extra_hooks)
+            input, infs, prefix='', extra_hooks=extra_hooks)
 
     def _find_input_tensors(self):
         return self._input_source.get_input_tensors()
@@ -173,7 +169,10 @@ class FeedfreeInferenceRunner(InferenceRunnerBase):
         """
         assert isinstance(input, TensorInput), input
         super(FeedfreeInferenceRunner, self).__init__(
-            input, infs, input_names, prefix=prefix, extra_hooks=extra_hooks)
+            input, infs, prefix=prefix, extra_hooks=extra_hooks)
+        if input_names is not None:
+            assert isinstance(input_names, list)
+        self.input_names = input_names
 
     def _find_input_tensors(self):
         # TODO move mapping to InputSource
@@ -203,8 +202,7 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
                              for k in range(len(gpus))]
         input = DataParallelFeedInput(
             ds, self._tower_names, input_names=input_names)
-        super(DataParallelInferenceRunner, self).__init__(
-            input, infs, input_names)
+        super(DataParallelInferenceRunner, self).__init__(input, infs)
         self._gpus = gpus
 
     def _setup_graph(self):
