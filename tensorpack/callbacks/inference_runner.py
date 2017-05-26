@@ -16,8 +16,7 @@ from ..utils import logger, get_tqdm_kwargs
 from ..dataflow import DataFlow
 from ..tfutils.common import get_tensors_by_names
 from ..tfutils.tower import TowerContext
-from ..train.input_source import TensorInput, FeedInput, DataParallelFeedInput
-from ..train.utils import get_tensors_inputs
+from ..train.input_source import FeedInput, DataParallelFeedInput, FeedfreeInput
 from ..predict import PredictorTowerBuilder
 
 from .base import Callback
@@ -89,8 +88,7 @@ class InferenceRunnerBase(Callback):
         self._predict_tower_id = self.trainer.config.predict_tower[0]
 
         def fn(_):
-            in_tensors = self._find_input_tensors()
-            assert isinstance(in_tensors, (list, tuple)), in_tensors
+            in_tensors = self._input_source.get_input_tensors()
             self.trainer.model.build_graph(in_tensors)
         PredictorTowerBuilder(fn, self._prefix).build(self._predict_tower_id)
 
@@ -104,9 +102,6 @@ class InferenceRunnerBase(Callback):
         placeholder_names = set([k.name for k in self.trainer.model.get_inputs_desc()])
         get_tensor_fn = PredictorTowerBuilder.get_tensors_maybe_in_tower
         return get_tensor_fn(placeholder_names, names, self._predict_tower_id, prefix=self._prefix)
-
-    def _find_input_tensors(self):
-        pass
 
     @abstractmethod
     def _build_hook(self, inf):
@@ -143,9 +138,6 @@ class InferenceRunner(InferenceRunnerBase):
         super(InferenceRunner, self).__init__(
             input, infs, prefix='', extra_hooks=extra_hooks)
 
-    def _find_input_tensors(self):
-        return self._input_source.get_input_tensors()
-
     def _build_hook(self, inf):
         out_names = inf.get_output_tensors()
         fetches = self._get_tensors_maybe_in_tower(out_names)
@@ -154,34 +146,22 @@ class InferenceRunner(InferenceRunnerBase):
 
 class FeedfreeInferenceRunner(InferenceRunnerBase):
     """ A callback that runs a list of :class:`Inferencer` on some
-    :class:`TensorInput`, such as some tensor from a TensorFlow data reading
+    :class:`FeedfreeInput`, such as some tensor from a TensorFlow data reading
     pipeline.
     """
 
-    def __init__(self, input, infs, input_names=None, prefix='', extra_hooks=None):
+    def __init__(self, input, infs, prefix='', extra_hooks=None):
         """
         Args:
-            input (TensorInput): the input to use. Must have ``size()``.
+            input (FeedfreeInput): the input to use. Must have ``size()``.
             infs (list): list of :class:`Inferencer` to run.
             input_names (list[str]): same as in :class:`InferenceRunnerBase`.
             prefix(str): an prefix used to build the tower. Must be set
                 differently if more than one :class:`FeedfreeInferenceRunner` are used.
         """
-        assert isinstance(input, TensorInput), input
+        assert isinstance(input, FeedfreeInput), input
         super(FeedfreeInferenceRunner, self).__init__(
             input, infs, prefix=prefix, extra_hooks=extra_hooks)
-        if input_names is not None:
-            assert isinstance(input_names, list)
-        self.input_names = input_names
-
-    def _find_input_tensors(self):
-        # TODO move mapping to InputSource
-        tensors = self._input_source.get_input_tensors()
-        placeholders = self.trainer.model.get_reused_placehdrs()
-        if self.input_names is None:
-            return tensors
-        else:
-            return get_tensors_inputs(placeholders, tensors, self.input_names)
 
     def _build_hook(self, inf):
         out_names = inf.get_output_tensors()    # all is tensorname

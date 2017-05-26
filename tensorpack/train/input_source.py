@@ -14,7 +14,7 @@ from abc import ABCMeta, abstractmethod
 import six
 from six.moves import range, zip
 
-from .utils import get_placeholders_by_names
+from .utils import get_placeholders_by_names, get_tensors_inputs
 from ..dataflow import DataFlow, RepeatedData
 from ..tfutils.summary import add_moving_summary
 from ..tfutils import get_op_tensor_name
@@ -25,11 +25,12 @@ from ..utils.concurrency import ShareSessionThread
 from ..callbacks.concurrency import StartProcOrThread
 from ..callbacks.base import Callback
 
-__all__ = ['InputSource', 'FeedfreeInput',
+__all__ = ['InputSource',
            'FeedInput', 'DataParallelFeedInput',
+           'FeedfreeInput',
            'QueueInput', 'BatchQueueInput',
-           'ZMQInput',
-           'DummyConstantInput', 'TensorInput', 'StagingInputWrapper']
+           'ZMQInput', 'DummyConstantInput', 'TensorInput',
+           'StagingInputWrapper', 'ReorderInputSource']
 
 
 @six.add_metaclass(ABCMeta)
@@ -73,6 +74,8 @@ class FeedInput(InputSource):
             input_names (list[str]): input names this DataFlow maps to
         """
         assert isinstance(ds, DataFlow), ds
+        if input_names is not None:
+            assert isinstance(input_names, (list, tuple)), input_names
         self.ds = ds
         self._input_names = input_names
 
@@ -213,7 +216,9 @@ class QueueInput(FeedfreeInput):
         """
         Args:
             ds(DataFlow): the input DataFlow.
-            queue (tf.QueueBase): Defaults to a FIFO queue of size 50.
+            queue (tf.QueueBase): A :class:`tf.QueueBase` whose type
+                should match the corresponding InputDesc of the model.
+                Defaults to a FIFO queue of size 50.
         """
         assert isinstance(ds, DataFlow), ds
         self.queue = queue
@@ -227,7 +232,7 @@ class QueueInput(FeedfreeInput):
         logger.info("Setting up the queue for CPU prefetching ...")
         self.input_placehdrs = model.get_reused_placehdrs()
         assert len(self.input_placehdrs) > 0, \
-            "QueueInput has to be used with input placeholders!"
+            "QueueInput has to be used with some InputDesc!"
         if self.queue is None:
             self.queue = tf.FIFOQueue(
                 50, [x.dtype for x in self.input_placehdrs],
@@ -259,7 +264,9 @@ class BatchQueueInput(FeedfreeInput):
         Args:
             ds(DataFlow): the input DataFlow.
             batch_size(int): the batch size.
-            queue (tf.QueueBase): Defaults to a FIFO queue of size 3000.
+            queue (tf.QueueBase): A :class:`tf.QueueBase` whose type
+                should match the corresponding InputDesc of the model.
+                Defaults to a FIFO queue of size 3000.
         """
         assert isinstance(ds, DataFlow), ds
         self.queue = queue
@@ -273,7 +280,7 @@ class BatchQueueInput(FeedfreeInput):
         logger.info("Setting up the queue for CPU prefetching ...")
         self.input_placehdrs = model.get_reused_placehdrs()
         assert len(self.input_placehdrs) > 0, \
-            "BatchQueueInput has to be used with input placeholders!"
+            "BatchQueueInput has to be used with some InputDesc!"
 
         # prepare placeholders without the first dimension
         placehdrs_nobatch = []
@@ -366,6 +373,8 @@ class TensorInput(FeedfreeInput):
             get_tensor_fn: a function which returns a list of input tensors
                 when called. It will be called under a TowerContext.
             size(int): size of this input. Use None to leave it undefined.
+            input_names (list[str]): input names the tensors maps to. Defaults
+                to be all the inputs of the model.
         """
         self.get_tensor_fn = get_tensor_fn
         if size is not None:
@@ -491,3 +500,40 @@ class StagingInputWrapper(FeedfreeInput):
     def get_unstage_op(self):
         all_outputs = list(chain.from_iterable(self._unstage_ops))
         return tf.group(*all_outputs)
+
+
+class ReorderInputSource(FeedfreeInput):
+    """
+    When an InputSource only maps to a subset of the InputDesc of the model,
+    wrap it with :class:`ReorderInputSource`.
+    """
+    def __init__(self, input, names):
+        """
+        Args:
+            input(TensorInput): a TensorInput, whose tensors will get mapped.
+            names(list[str]): list of input names corresponding to the tensors
+                produced by ``input``.
+        """
+        assert isinstance(input, TensorInput), input
+        self._input = input
+        assert isinstance(names, (list, tuple)), names
+        self._names = names
+
+    def size(self):
+        return self._input.size()
+
+    def setup(self, model):
+        self._all_placehdrs = model.get_reused_placehdrs()
+        self._input.setup(model)
+
+    def setup_training(self, trainer):
+        self._all_placehdrs = trainer.model.get_reused_placehdrs()
+        self._input.setup_training(trainer)
+
+    def reset_state(self):
+        self._input.reset_state()
+
+    def get_input_tensors(self):
+        ret = self._input.get_input_tensors()
+        return get_tensors_inputs(
+            self._all_placehdrs, ret, self._names)
