@@ -260,4 +260,5 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
                 feed = self._input_source.next_feed(cnt=1)
                 self._hooked_sess.run(fetches=[], feed_dict=feed)
                 pbar.update(1)
+                total -= 1
         summary_inferencer(self.trainer, self.infs)
