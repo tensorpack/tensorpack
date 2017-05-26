@@ -59,6 +59,16 @@ class TowerContext(object):
     def name(self):
         return self._name
 
+    # variable_scope name
+    @property
+    def vs_name(self):
+        if self.has_own_variables:
+            # do not open new variable scope for the main tower,
+            # just use '', so that Saver & PredictTower know what to do
+            if self.index > 0:
+                return self._name
+        return ""
+
     @property
     def index(self):
         if self._name == '':
@@ -103,8 +113,8 @@ class TowerContext(object):
         self._ctxs = []
         if len(self._name):
             if self.has_own_variables:
-                # open new variable scopes
-                self._ctxs.append(tf.variable_scope(self._name))
+                if self.vs_name:
+                    self._ctxs.append(tf.variable_scope(self.vs_name))
             else:
                 # use existing variable scope
                 reuse = self.index > 0 or (not self.is_training)

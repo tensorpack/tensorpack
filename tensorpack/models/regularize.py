@@ -46,13 +46,13 @@ def regularize_cost(regex, func, name='regularize_cost'):
     for p in params:
         para_name = p.name
         # in replicated mode, only regularize variables inside this tower
-        if ctx.has_own_variables and (not para_name.startswith(ctx.name)):
+        if ctx.has_own_variables and (not para_name.startswith(ctx.vs_name)):
             continue
         if re.search(regex, para_name):
             costs.append(func(p))
             _log_regularizer(para_name)
     if not costs:
-        return 0
+        return tf.constant(0, dtype=tf.float32, name='empty_regularize_cost')
     return tf.add_n(costs, name=name)
 
 

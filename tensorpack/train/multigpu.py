@@ -244,7 +244,6 @@ class SyncMultiGPUTrainerReplicated(MultiGPUTrainerBase, SingleCostFeedfreeTrain
         super(SyncMultiGPUTrainerReplicated, self)._setup()
         raw_devices = ['/gpu:{}'.format(k) for k in self.config.tower]
 
-        opt = self.model.get_optimizer()    # XXX call before build tower to avoid opt under tower scopes.
         grad_list = MultiGPUTrainerBase.build_on_multi_tower(
             self.config.tower,
             lambda: self._get_cost_and_grad()[1],
@@ -252,6 +251,7 @@ class SyncMultiGPUTrainerReplicated(MultiGPUTrainerBase, SingleCostFeedfreeTrain
         grads = self._allreduce_grads(grad_list)
 
         train_ops = []
+        opt = self.model.get_optimizer()
         for idx in range(self.config.nr_tower):
             with tf.device(raw_devices[idx]):
                 grad_and_vars = [x[idx] for x in grads]
@@ -272,9 +272,10 @@ class SyncMultiGPUTrainerReplicated(MultiGPUTrainerBase, SingleCostFeedfreeTrain
         post_init_ops = []
         for v in global_vars:
             split_name = v.name.split('/')
-            if split_name[0] == 'tower0' or not v.name.startswith('tower'):
+            if not v.name.startswith('tower'):
                 continue
-            split_name[0] = 'tower0'
+            # the master name doesn't have the towerx/ prefix
+            split_name = split_name[1:]
             copy_from = var_by_name['/'.join(split_name)]
             post_init_ops.append(v.assign(copy_from.read_value()))
         return tf.group(*post_init_ops, name='init_sync_vars')

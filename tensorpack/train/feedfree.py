@@ -68,9 +68,9 @@ class SingleCostFeedfreeTrainer(FeedfreeTrainerBase):
         # GATE_NONE faster?
         varlist = tf.trainable_variables()
         ctx = get_current_tower_context()
-        if ctx is not None and ctx.has_own_variables:
+        if ctx is not None and ctx.has_own_variables and ctx.vs_name:
             # only optimize w.r.t vars in this tower
-            varlist = [v for v in varlist if v.op.name.startswith(ctx.name + '/')]
+            varlist = [v for v in varlist if v.op.name.startswith(ctx.vs_name + '/')]
         grads = opt.compute_gradients(
             cost,
             var_list=varlist,
