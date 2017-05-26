@@ -3,8 +3,6 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 
-from six.moves import zip
-
 from .base import Trainer
 
 from ..utils import logger
@@ -33,8 +31,7 @@ class SimpleTrainer(Trainer):
 
     def run_step(self):
         """ Feed data into the graph and run the updates. """
-        dp = self._input_source.next_feed()
-        feed = dict(zip(self.inputs, dp))
+        feed = self._input_source.next_feed()
         self.hooked_sess.run(self.train_op, feed_dict=feed)
 
     def _setup(self):
