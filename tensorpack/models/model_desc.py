@@ -118,7 +118,7 @@ class ModelDesc(object):
         ``self.cost``. You can override :meth:`_get_cost()` if needed.
 
         This function also applies the collection
-        ``tf.GraphKeys.REGULARIZATION_LOSSES``to the cost automatically.
+        ``tf.GraphKeys.REGULARIZATION_LOSSES`` to the cost automatically.
         Because slim users would expect the regularizer being automatically applied once used in slim layers.
         """
         cost = self._get_cost()

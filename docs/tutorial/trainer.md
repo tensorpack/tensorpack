@@ -28,7 +28,7 @@ config = TrainConfig(
            callbacks=[...]
          )
 
-# start training (with a slow trainer. See 'tutorials - Input Sources' for details):
+# start training (with a slow trainer. See 'tutorials - Input Pipeline' for details):
 # SimpleTrainer(config).train()
 
 # start training with queue prefetch:

@@ -88,8 +88,7 @@ class SimpleFeedfreeTrainer(SingleCostFeedfreeTrainer):
     def __init__(self, config):
         """
         Args:
-            config (TrainConfig): ``config.data`` must exist and is a
-                :class:`FeedfreeInput`.
+            config (TrainConfig): ``config.data`` must exist and is a :class:`FeedfreeInput`.
         """
         self._input_source = config.data
         assert isinstance(self._input_source, FeedfreeInput), self._input_source

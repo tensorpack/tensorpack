@@ -26,7 +26,7 @@ tensorpack.tfutils.gradproc module
     :show-inheritance:
 
 tensorpack.tfutils.model_utils module
-------------------------------------
+--------------------------------------
 
 .. automodule:: tensorpack.tfutils.model_utils
     :members:
@@ -34,7 +34,7 @@ tensorpack.tfutils.model_utils module
     :show-inheritance:
 
 tensorpack.tfutils.scope_utils module
-------------------------------------
+--------------------------------------
 
 .. automodule:: tensorpack.tfutils.scope_utils
     :members:

@@ -59,13 +59,3 @@ generator = df.get_data()
 for dp in generator:
 	# dp is now a list. do whatever
 ```
-
-### Efficiency
-
-DataFlow is purely Python -- a convenient and slow language (w.r.t C++). But faster data loading doesn't always mean faster
-training: we only need data to be __fast enough__.
-
-DataFlow is fast enough for problems up to the scale of multi-GPU ImageNet training.
-See [efficient dataflow tutorial](http://tensorpack.readthedocs.io/en/latest/tutorial/efficient-dataflow.html)
-for details.
-Therefore, for most usecases, writing format conversion/preprocessing code with TensorFlow operators doesn't help you at all.

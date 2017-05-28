@@ -227,6 +227,8 @@ html_show_copyright = True
 # This is the file name suffix for HTML files (e.g. ".xhtml").
 #html_file_suffix = None
 
+# avoid li fonts being larger
+# TODO but li indices fonts are still larger
 html_compact_lists = False
 
 # Language to be used for generating the HTML full-text search index.
