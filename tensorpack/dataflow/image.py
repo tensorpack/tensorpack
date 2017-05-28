@@ -109,7 +109,10 @@ class AugmentImageComponents(MapData):
                 to keep the original images not modified.
                 Turn it off to save time when you know it's OK.
         """
-        self.augs = AugmentorList(augmentors)
+        if isinstance(augmentors, AugmentorList):
+            self.augs = augmentors
+        else:
+            self.augs = AugmentorList(augmentors)
         self.ds = ds
         self._nr_error = 0
 

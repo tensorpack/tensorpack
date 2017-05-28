@@ -38,6 +38,14 @@ class RandomApplyAug(ImageAugmentor):
         else:
             return (False, None)
 
+    def _augment_return_params(self, img):
+        p = self.rng.rand()
+        if p < self.prob:
+            img, prms = self.aug._augment_return_params(img)
+            return img, (True, prms)
+        else:
+            return img, (False, None)
+
     def reset_state(self):
         super(RandomApplyAug, self).reset_state()
         self.aug.reset_state()

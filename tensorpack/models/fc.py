@@ -31,7 +31,7 @@ def FullyConnected(x, out_dim,
 
     Variable Names:
 
-    * ``W``: weights
+    * ``W``: weights of shape [in_dim, out_dim]
     * ``b``: bias
     """
     x = symbf.batch_flatten(x)

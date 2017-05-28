@@ -80,12 +80,12 @@ class MySimulatorWorker(SimulatorProcess):
 class Model(ModelDesc):
     def _get_inputs(self):
         assert NUM_ACTIONS is not None
-        return [InputDesc(tf.float32, (None,) + IMAGE_SHAPE3, 'state'),
+        return [InputDesc(tf.uint8, (None,) + IMAGE_SHAPE3, 'state'),
                 InputDesc(tf.int64, (None,), 'action'),
                 InputDesc(tf.float32, (None,), 'futurereward')]
 
     def _get_NN_prediction(self, image):
-        image = image / 255.0
+        image = tf.cast(image, tf.float32) / 255.0
         with argscope(Conv2D, nl=tf.nn.relu):
             l = Conv2D('conv0', image, out_channel=32, kernel_shape=5)
             l = MaxPooling('pool0', l, 2)
@@ -220,7 +220,7 @@ def get_config():
         dataflow=dataflow,
         callbacks=[
             ModelSaver(),
-            ScheduledHyperParamSetter('learning_rate', [(80, 0.0003), (120, 0.0001)]),
+            ScheduledHyperParamSetter('learning_rate', [(20, 0.0003), (120, 0.0001)]),
             ScheduledHyperParamSetter('entropy_beta', [(80, 0.005)]),
             ScheduledHyperParamSetter('explore_factor',
                                       [(80, 2), (100, 3), (120, 4), (140, 5)]),
@@ -230,7 +230,7 @@ def get_config():
             StartProcOrThread(master),
             PeriodicTrigger(Evaluator(
                 EVAL_EPISODE, ['state'], ['policy'], get_player),
-                every_k_epochs=2),
+                every_k_epochs=3),
         ],
         session_creator=sesscreate.NewSessionCreator(
             config=get_default_sess_config(0.5)),
@@ -264,7 +264,7 @@ if __name__ == '__main__':
     if args.task != 'train':
         cfg = PredictConfig(
             model=Model(),
-            session_init=SaverRestore(args.load),
+            session_init=get_model_loader(args.load),
             input_names=['state'],
             output_names=['policy'])
         if args.task == 'play':
@@ -296,7 +296,7 @@ if __name__ == '__main__':
             trainer = QueueInputTrainer
         config = get_config()
         if args.load:
-            config.session_init = SaverRestore(args.load)
+            config.session_init = get_model_loader(args.load)
         config.tower = train_tower
         config.predict_tower = predict_tower
         trainer(config).train()

@@ -99,9 +99,9 @@ class PredictorWorkerThread(StoppableThread, ShareSessionThread):
                 #         self.id, len(futures), self.queue.qsize())
                 #  debug, for speed testing
                 # if not hasattr(self, 'xxx'):
-                #     self.xxx = outputs = self.func(batched)
+                    # self.xxx = outputs = self.func(batched)
                 # else:
-                #     outputs = [[self.xxx[0][0]] * len(batched[0]), [self.xxx[1][0]] * len(batched[0])]
+                    # outputs = [[self.xxx[0][0]] * len(batched[0]), [self.xxx[1][0]] * len(batched[0])]
 
                 for idx, f in enumerate(futures):
                     f.set_result([k[idx] for k in outputs])
