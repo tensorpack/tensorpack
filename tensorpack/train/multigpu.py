@@ -235,6 +235,7 @@ class SyncMultiGPUTrainerReplicated(MultiGPUTrainerBase, SingleCostFeedfreeTrain
 
                 grads_for_a_var = []
                 for (_, v), g in zip(grad_and_vars, summed):
+                    g = tf.multiply(g, 1.0 / nr_tower)
                     grads_for_a_var.append((g, v))
                 new_tower_grads.append(grads_for_a_var)
         # NVar * NGPU * 2
