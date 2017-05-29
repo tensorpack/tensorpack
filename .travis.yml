@@ -20,10 +20,10 @@ matrix:
   include:
   - os: linux
     python: 2.7
-    env: TF_VERSION=1.1.0 TF_TYPE=release
+    env: TF_VERSION=1.2.0rc1 TF_TYPE=release
   - os: linux
     python: 3.5
-    env: TF_VERSION=1.1.0 TF_TYPE=release
+    env: TF_VERSION=1.2.0rc1 TF_TYPE=release
   - os: linux
     python: 2.7
     env: TF_VERSION=1.head TF_TYPE=nightly

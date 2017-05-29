@@ -123,8 +123,9 @@ class Model(ModelDesc):
             [('conv0.*', 0.1), ('group[0-2].*', 0.1)])]
         return optimizer.apply_grad_processors(opt, gradprocs)
 
-# completely copied from imagenet-resnet.py example
+
 def get_data(train_or_test):
+    # completely copied from imagenet-resnet.py example
     isTrain = train_or_test == 'train'
 
     datadir = args.data
@@ -224,7 +225,7 @@ def viz_cam(model_file, data_dir):
             if wrongs[i]:
                 continue
             weight = W[:, [labels[i]]].T    # 512x1
-            convmap = convmaps[i,:,:,:] # 512xhxw
+            convmap = convmaps[i, :, :, :]  # 512xhxw
             mergedmap = np.matmul(weight, convmap.reshape((512, -1))).reshape(14, 14)
             mergedmap = cv2.resize(mergedmap, (224, 224))
             heatmap = viz.intensity_to_rgb(mergedmap, normalize=True)
@@ -236,6 +237,7 @@ def viz_cam(model_file, data_dir):
             cnt += 1
             if cnt == 500:
                 return
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
