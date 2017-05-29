@@ -67,7 +67,7 @@ class GlobalNormClip(GradientProcessor):
         Args:
             global_norm(float): the threshold to clip with.
         """
-        self._norm = global_norm
+        self._norm = float(global_norm)
 
     def _process(self, grads):
         g = [k[0] for k in grads]
@@ -176,6 +176,7 @@ class ScaleGradient(MapGradient):
         if not isinstance(multipliers, list):
             multipliers = [multipliers]
         self.multipliers = multipliers
+        assert log in [True, False], log
         self._log = log
         super(ScaleGradient, self).__init__(self._mapper)
 

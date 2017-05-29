@@ -16,6 +16,7 @@ class ProxyOptimizer(tf.train.Optimizer):
     A transparent proxy which delegates all methods of :class:`tf.train.Optimizer`
     """
     def __init__(self, opt, name='ProxyOptimizer'):
+        assert isinstance(opt, tf.train.Optimizer), opt
         super(ProxyOptimizer, self).__init__(False, name)
         self._opt = opt
 
@@ -44,6 +45,7 @@ def apply_grad_processors(opt, gradprocs):
         a :class:`tf.train.Optimizer` instance which runs the gradient
         processors before updating the variables.
     """
+    assert isinstance(gradprocs, (list, tuple)), gradprocs
 
     class _ApplyGradientProcessor(ProxyOptimizer):
         def __init__(self, opt, gradprocs):

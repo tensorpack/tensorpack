@@ -82,7 +82,7 @@ class MultiGPUTrainerBase(Trainer):
                 if idx == t:
                     logger.info("Building graph for training tower {}...".format(idx))
                 else:
-                    logger.info("Building graph for training tower {} on device {}...".format(idx, t))
+                    logger.info("Building graph for training tower {} on device {}...".format(idx, device))
 
                 ret.append(func())
 
@@ -264,7 +264,7 @@ class SyncMultiGPUTrainerReplicated(MultiGPUTrainerBase, SingleCostFeedfreeTrain
             run_before=True, run_as_trigger=True))
 
 
-# Copied from https://github.com/tensorflow/benchmarks/blob/master/scripts/tf_cnn_benchmarks/variable_mgr.py
+# Adopt from https://github.com/tensorflow/benchmarks/blob/master/scripts/tf_cnn_benchmarks/variable_mgr.py
     @staticmethod
     def get_post_init_ops():
         # Copy initialized values for variables on GPU 0 to other GPUs.
