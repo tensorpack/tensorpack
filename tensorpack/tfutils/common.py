@@ -59,7 +59,13 @@ def get_global_step_var():
         "The global_step variable should be created under the root variable scope!"
     assert not scope.reuse, \
         "The global_step variable shouldn't be called under a reuse variable scope!"
-    var = training_util.get_or_create_global_step()
+    if get_tf_version_number() <= 1.0:
+        var = tf.get_variable('global_step',
+                              initializer=tf.constant(0, dtype=tf.int64),
+                              trainable=False, dtype=tf.int64)
+        tf.add_to_collection(tf.GraphKeys.GLOBAL_STEP, var)
+    else:
+        var = training_util.get_or_create_global_step()
     return var
 
 
