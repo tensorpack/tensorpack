@@ -3,9 +3,6 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
-# this is also the name used by tf.train.get_global_step
-GLOBAL_STEP_OP_NAME = 'global_step'
-GLOBAL_STEP_VAR_NAME = 'global_step:0'
 
 GLOBAL_STEP_INCR_OP_NAME = 'global_step_incr'
 GLOBAL_STEP_INCR_VAR_NAME = 'global_step_incr:0'

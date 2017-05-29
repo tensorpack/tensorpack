@@ -4,10 +4,9 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
+from tensorflow.python.training import training_util
 from six.moves import map
 from ..utils.argtools import graph_memoized
-
-from ..utils.naming import GLOBAL_STEP_OP_NAME
 
 __all__ = ['get_default_sess_config',
            'get_global_step_value',
@@ -58,11 +57,9 @@ def get_global_step_var():
     scope = tf.get_variable_scope()
     assert scope.name == '', \
         "The global_step variable should be created under the root variable scope!"
-    with tf.variable_scope(scope, reuse=False), \
-            tf.name_scope(None):
-        var = tf.get_variable(GLOBAL_STEP_OP_NAME,
-                              initializer=tf.constant(0, dtype=tf.int64),
-                              trainable=False, dtype=tf.int64)
+    assert not scope.reuse, \
+        "The global_step variable shouldn't be called under a reuse variable scope!"
+    var = training_util.get_or_create_global_step()
     return var
 
 
