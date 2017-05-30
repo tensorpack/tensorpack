@@ -123,7 +123,7 @@ class ExpReplay(DataFlow, Callback):
                  state_shape,
                  batch_size,
                  memory_size, init_memory_size,
-                 exploration, end_exploration, exploration_epoch_anneal,
+                 init_exploration,
                  update_frequency, history_len):
         """
         Args:
@@ -140,6 +140,7 @@ class ExpReplay(DataFlow, Callback):
         for k, v in locals().items():
             if k != 'self':
                 setattr(self, k, v)
+        self.exploration = init_exploration
         self.num_actions = player.get_action_space().num_actions()
         logger.info("Number of Legal actions: {}".format(self.num_actions))
 
@@ -245,9 +246,6 @@ class ExpReplay(DataFlow, Callback):
         self._simulator_th.start()
 
     def _trigger_epoch(self):
-        if self.exploration > self.end_exploration:
-            self.exploration -= self.exploration_epoch_anneal
-            logger.info("Exploration changed to {}".format(self.exploration))
         # log player statistics
         stats = self.player.stats
         for k, v in six.iteritems(stats):
