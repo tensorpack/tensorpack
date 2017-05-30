@@ -90,6 +90,7 @@ class DistributedReplicatedTrainer(SingleCostFeedfreeTrainer):
             logger.info("Running ps {}".format(self.task_index))
             self.server.join()
             return
+        opt = self.model.get_optimizer()    # in global scope, not local
         with tf.variable_scope(
                 tf.get_variable_scope(),
                 custom_getter=OverrideToLocalVariableIfNotPsVar()):
@@ -126,25 +127,28 @@ class DistributedReplicatedTrainer(SingleCostFeedfreeTrainer):
                 new_tower_grads.append((grad, new_v))
 
         # apply gradients TODO do this for each variable separately?
-        opt = self.model.get_optimizer()
-        apply_gradient_op = opt.apply_gradients(new_tower_grads)
-        barrier = self.add_sync_queues_and_barrier('replicate_variable', [apply_gradient_op])
         var_update_ops = []
-        with tf.control_dependencies([barrier]), \
-                tf.device(self.cpu_device):
-            for idx, (grad, v) in enumerate(new_tower_grads):
-                updated_value = v.read_value()
-                for towerid in range(self.nr_gpu):
-                    logger.info("Step update {} -> {}".format(v.name, grad_list[towerid][idx][1].name))
-                    var_update_ops.append(
-                        grad_list[towerid][idx][1].assign(updated_value))
+        with tf.device(self.param_server_device):
+            for vid, (g, v) in enumerate(new_tower_grads):
+                apply_gradient_op = opt.apply_gradients([(g, v)])
+                barrier = self.add_sync_queues_and_barrier(
+                    'param_update_barrier_{}'.format(vid), [apply_gradient_op])
+                with tf.control_dependencies([barrier]), \
+                        tf.device(self.cpu_device):
+                    updated_value = v.read_value()
+                    for towerid in range(self.nr_gpu):
+                        logger.info("Step update {} -> {}".format(v.name, grad_list[towerid][vid][1].name))
+                        var_update_ops.append(
+                            grad_list[towerid][vid][1].assign(updated_value))
         self.main_fetch = tf.group(*var_update_ops, name='main_fetches')
-        self.train_op = self.add_sync_queues_and_barrier('sync_queues_step_end', [self.main_fetch])
+        self.train_op = self.main_fetch
+        #self.train_op = self.add_sync_queues_and_barrier('sync_queues_step_end', [self.main_fetch])
         self.post_init_op = self.get_post_init_ops()
 
     def setup(self):
         with tf.device(self.param_server_device):
             gs = get_global_step_var()
+            opt = self.model.get_optimizer()    # in global scope, not local
         assert isinstance(self._input_source, FeedfreeInput), type(self._input_source)
         self._input_source.setup_training(self)
 
@@ -153,16 +157,9 @@ class DistributedReplicatedTrainer(SingleCostFeedfreeTrainer):
         self.monitors = Monitors(self.monitors)
         self.register_callback(self.monitors)
         describe_model()
-        # some final operations that might modify the graph
         logger.info("Setup callbacks graph ...")
-
-        #if not self.is_chief:
-            #self._callbacks = [ProgressBar()]
         self._callbacks = Callbacks(self._callbacks)
         self._callbacks.setup_graph(weakref.proxy(self))
-
-        #local_init_op = tf.local_variables_initializer()
-        global_init_op = tf.global_variables_initializer()
 
         logger.info("Finalize the graph, create the session ...")
 

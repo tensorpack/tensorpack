@@ -72,7 +72,7 @@ class GraphVarParam(HyperParam):
                 self.var = v
                 break
         else:
-            raise ValueError("{} is not a VARIABLE in the graph!".format(self.var_name))
+            raise ValueError("{} is not a GLOBAL_VARIABLE in the graph!".format(self.var_name))
 
     def set_value(self, v):
         """ Assign the variable a new value. """
