@@ -81,6 +81,8 @@ class MaintainStepCounter(Callback):
 class ProgressBar(Callback):
     """ A progress bar based on tqdm. Enabled by default. """
 
+    _chief_only = False
+
     def __init__(self, names=[]):
         """
         Args:

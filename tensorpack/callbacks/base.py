@@ -36,6 +36,8 @@ class Callback(object):
     .. automethod:: _after_train
     """
 
+    _chief_only = True
+
     def setup_graph(self, trainer):
         self._steps_per_epoch = trainer.config.steps_per_epoch
         self.trainer = trainer
@@ -161,6 +163,15 @@ class Callback(object):
     @property
     def local_step(self):
         return self.trainer.local_step
+
+    @property
+    def chief_only(self):
+        """
+        Only run this callback on chief training process.
+
+        Returns: bool
+        """
+        return self._chief_only
 
     def __str__(self):
         return type(self).__name__

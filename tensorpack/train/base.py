@@ -47,6 +47,8 @@ class Trainer(object):
         global_step (int): the number of steps that have finished.
     """
 
+    is_chief = True
+
     def __init__(self, config):
         """
         Args:
@@ -79,14 +81,20 @@ class Trainer(object):
         assert isinstance(cb, Callback), cb
         assert not isinstance(self._callbacks, Callbacks), \
             "Cannot register more callbacks after trainer was setup!"
-        self._callbacks.append(cb)
+        if not self.is_chief and cb.chief_only:
+            logger.warn("Callback {} is chief-only, skipped.".format(str(cb)))
+        else:
+            self._callbacks.append(cb)
 
     def register_monitor(self, mon):
         assert isinstance(mon, TrainingMonitor), mon
         assert not isinstance(self.monitors, Monitors), \
             "Cannot register more monitors after trainer was setup!"
-        self.monitors.append(mon)
-        self.register_callback(mon)
+        if not self.is_chief and mon.chief_only:
+            logger.warn("Callback {} is chief-only, skipped.".format(str(mon)))
+        else:
+            self.monitors.append(mon)
+            self.register_callback(mon)
 
     def train(self):
         """ Start training """

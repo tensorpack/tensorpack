@@ -55,6 +55,7 @@ class DistributedReplicatedTrainer(SingleCostFeedfreeTrainer):
         self.task_index = task_index
         self.cluster = cluster
         self._input_source = config.data
+        self.is_chief = (self.task_index == 0 and self.job_name == 'worker')
         super(DistributedReplicatedTrainer, self).__init__(config)
 
         worker_prefix = '/job:worker/task:%s' % self.task_index
@@ -144,7 +145,6 @@ class DistributedReplicatedTrainer(SingleCostFeedfreeTrainer):
     def setup(self):
         with tf.device(self.param_server_device):
             gs = get_global_step_var()
-        self.is_chief = (self.task_index == 0 and self.job_name == 'worker')
         assert isinstance(self._input_source, FeedfreeInput), type(self._input_source)
         self._input_source.setup_training(self)
 

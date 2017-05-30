@@ -55,6 +55,9 @@ class RunUpdateOps(RunOp):
     """
     Run ops from the collection UPDATE_OPS every step
     """
+
+    _chief_only = False
+
     def __init__(self, collection=tf.GraphKeys.UPDATE_OPS):
         def f():
             ops = tf.get_collection(collection)
