@@ -173,8 +173,6 @@ class DistributedReplicatedTrainer(SingleCostFeedfreeTrainer):
             global_step=gs,
             summary_op=None,
             save_model_secs=0,
-            #local_init_op=local_init_op,
-            #ready_for_local_init_op=None,
             summary_writer=None)
         conf = get_default_sess_config()
         sess = self.sv.prepare_or_wait_for_session(
@@ -183,20 +181,6 @@ class DistributedReplicatedTrainer(SingleCostFeedfreeTrainer):
             start_standard_services=False)
 
         self.sess = sess
-        if self.is_chief:
-            print([k.name for k in tf.global_variables()])
-            sess.run(global_init_op)
-            logger.info("Global variables initialized.")
-        #sess.run(local_init_op)
-        #if self.is_chief:
-            #self.config.session_init.init(self.sess)
-        #self.sess.graph.finalize()
-    #else:
-        #logger.info("Worker {} waiting for chief".format(self.task_index))
-        #self.sess = tf.train.WorkerSessionCreator(master=self.server.target).create_session()
-        #logger.info("Worker wait finished")
-        #self.sess.run(local_init_op)
-        #logger.info("local init op runned")
         logger.info("Running post init op...")
         sess.run(self.post_init_op)
         logger.info("Post init op finished.")
