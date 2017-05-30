@@ -1,9 +1,15 @@
-## Visualize Saliency Maps
+## Visualize Saliency Maps & Class Activation Maps
 
 Implement the Guided-ReLU visualization used in the paper:
 
 * [Striving for Simplicity: The All Convolutional Net](https://arxiv.org/abs/1412.6806)
 
+And the class activation mapping (CAM) visualization proposed in the paper:
+
+* [Learning Deep Features for Discriminative Localization](http://cnnlocalization.csail.mit.edu/)
+
+
+## Saliency Maps
 `saliency-maps.py` takes an image, and produce its saliency map by running a ResNet-50 and backprop its maximum
 activations back to the input image space.
 Similar techinques can be used to visualize the concept learned by each filter in the network.
@@ -23,3 +29,21 @@ Left to right:
 + the magnitude blended with the original image
 + positive correlated pixels (keep original color)
 + negative correlated pixels (keep original color)
+
+## CAM
+`CAM-resnet.py` fine-tune a variant of ResNet to have 2x larger last-layer feature maps, then produce CAM visualizations.
+
+Usage:
+1. Fine tune or retrain the ResNet:
+```bash
+./CAM-resnet.py --data /path/to/imagenet [--load ImageNet-ResNet18.npy] [--gpu 0,1,2,3]
+```
+Pretrained and fine-tuned ResNet can be downloaded
+[here](https://drive.google.com/open?id=0B9IPQTvr2BBkTXBlZmh1cmlnQ0k) and [here](https://drive.google.com/open?id=0B9IPQTvr2BBkQk9qcmtGSERlNUk).
+
+2. Generate CAM on ImageNet validation set:
+```bash
+./CAM-resnet.py --data /path/to/imagenet --load ImageNet-ResNet18-2xGAP.npy --cam
+```
+
+<p align="center"> <img src="./CAM-demo.jpg" width="900"> </p>
