@@ -87,8 +87,6 @@ class Model(DQNModel):
 
 
 def get_config():
-    logger.auto_set_dir()
-
     M = Model()
     expreplay = ExpReplay(
         predictor_io_names=(['state'], ['Qvalue']),
@@ -164,6 +162,9 @@ if __name__ == '__main__':
         elif args.task == 'eval':
             eval_model_multithread(cfg, EVAL_EPISODE, get_player)
     else:
+        logger.set_logger_dir(
+            'train_log/DQN-{}'.format(
+                os.path.basename(ROM_FILE).split('.')[0]))
         config = get_config()
         if args.load:
             config.session_init = SaverRestore(args.load)
