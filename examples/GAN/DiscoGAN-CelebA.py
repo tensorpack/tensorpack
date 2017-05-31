@@ -140,7 +140,7 @@ class Model(GANModelDesc):
 
         global_step = get_global_step_var()
         rate = tf.train.piecewise_constant(global_step, [np.int64(10000)], [0.01, 0.5])
-        rate = tf.identity(rate, name='rate')   # mitigate a TF bug
+        rate = tf.identity(rate, name='rate')   # TF issue#8594
         g_loss = tf.add_n([
             ((G_loss_A + G_loss_B) * 0.1 +
              (fm_loss_A + fm_loss_B) * 0.9) * (1 - rate),
@@ -207,7 +207,7 @@ if __name__ == '__main__':
         '--data', required=True,
         help='the img_align_celeba directory. should also contain list_attr_celeba.txt')
     parser.add_argument('--style-A', help='style of A', default='Male')
-    parser.add_argument('--style-B', help='style of B')
+    parser.add_argument('--style-B', help='style of B, default to "not A"')
     parser.add_argument('--load', help='load model')
     args = parser.parse_args()
 

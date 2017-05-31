@@ -160,11 +160,12 @@ class ScaleGradient(MapGradient):
     Scale certain gradient by a multiplier.
     """
 
-    def __init__(self, multipliers, log=True):
+    def __init__(self, multipliers, verbose=True, log=None):
         """
         Args:
             multipliers (tuple or list): tuple of (regex, float), or list of tuples.
-            log (bool): whether to do logging or not
+            verbose (bool): whether to print logs or not
+            log: deprecated
 
         Example:
             Use double learning rate for all the bias (as in caffe):
@@ -176,8 +177,11 @@ class ScaleGradient(MapGradient):
         if not isinstance(multipliers, list):
             multipliers = [multipliers]
         self.multipliers = multipliers
-        assert log in [True, False], log
-        self._log = log
+        if log is not None:
+            logger.warn("'log' in ScaleGradient(..) is renamed to 'verbose'.")
+            verbose = log
+        assert verbose in [True, False], verbose
+        self._verbose = verbose
         super(ScaleGradient, self).__init__(self._mapper)
 
     def _mapper(self, grad, var):
@@ -188,7 +192,7 @@ class ScaleGradient(MapGradient):
                 regex = regex + '$'
 
             if re.match(regex, varname):
-                if self._log:
+                if self._verbose:
                     logger.info("Apply lr multiplier {} for {}".format(val, varname))
                 if val != 0:    # skip zero to speed up
                     return grad * val

@@ -23,7 +23,6 @@ import DCGAN
 G.BATCH = 64
 
 
-# a hacky way to change loss & optimizer of another script
 class Model(DCGAN.Model):
     # def generator(self, z):
     # you can override generator to remove BatchNorm, it will still work in WGAN
@@ -65,6 +64,6 @@ if __name__ == '__main__':
         if args.load:
             config.session_init = SaverRestore(args.load)
         """
-        The original code uses a different schedule.
+        The original code uses a different schedule, but this seems to work well.
         """
         SeparateGANTrainer(config, d_period=3).train()

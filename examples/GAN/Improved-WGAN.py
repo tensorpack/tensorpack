@@ -70,6 +70,7 @@ class Model(DCGAN.Model):
         self.d_loss = tf.reduce_mean(vecneg - vecpos, name='d_loss')
         self.g_loss = tf.negative(tf.reduce_mean(vecneg), name='g_loss')
 
+        # the gradient penalty loss
         gradients = tf.gradients(vec_interp, [interp])[0]
         gradients = tf.sqrt(tf.reduce_sum(tf.square(gradients), [1, 2, 3]))
         gradients_rms = symbolic_functions.rms(gradients, 'gradient_rms')

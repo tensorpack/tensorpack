@@ -64,17 +64,14 @@ class Model(GANModelDesc):
                  .Conv2D('conv1.3', NF * 2)
                  .AvgPooling('pool1', 2)
                  # 32
-
                  .Conv2D('conv2.1', NF * 2)
                  .Conv2D('conv2.2', NF * 3)
                  .AvgPooling('pool2', 2)
                  # 16
-
                  .Conv2D('conv3.1', NF * 3)
                  .Conv2D('conv3.2', NF * 4)
                  .AvgPooling('pool3', 2)
                  # 8
-
                  .Conv2D('conv4.1', NF * 4)
                  .Conv2D('conv4.2', NF * 4)
 
@@ -91,7 +88,7 @@ class Model(GANModelDesc):
         def summary_image(name, x):
             x = (x + 1.0) * 128.0
             x = tf.clip_by_value(x, 0, 255)
-            tf.summary.image(name, x, max_outputs=30)
+            tf.summary.image(name, tf.cast(x, tf.uint8), max_outputs=30)
 
         with argscope([Conv2D, FullyConnected],
                       W_init=tf.truncated_normal_initializer(stddev=0.02)):
