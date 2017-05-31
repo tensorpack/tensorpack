@@ -30,14 +30,15 @@ from expreplay import ExpReplay
 BATCH_SIZE = 64
 IMAGE_SIZE = (84, 84)
 FRAME_HISTORY = 4
-ACTION_REPEAT = 4
+ACTION_REPEAT = 4   # aka FRAME_SKIP
+UPDATE_FREQ = 4
 
 GAMMA = 0.99
 
 MEMORY_SIZE = 1e6
 # NOTE: will consume at least 1e6 * 84 * 84 bytes == 6.6G memory.
 INIT_MEMORY_SIZE = 5e4
-STEPS_PER_EPOCH = 10000
+STEPS_PER_EPOCH = 10000 // UPDATE_FREQ * 10  # each epoch is 100k played frames
 EVAL_EPISODE = 50
 
 NUM_ACTIONS = None
@@ -97,7 +98,7 @@ def get_config():
         memory_size=MEMORY_SIZE,
         init_memory_size=INIT_MEMORY_SIZE,
         init_exploration=1.0,
-        update_frequency=4,
+        update_frequency=UPDATE_FREQ,
         history_len=FRAME_HISTORY
     )
 
@@ -106,21 +107,24 @@ def get_config():
         callbacks=[
             ModelSaver(),
             ScheduledHyperParamSetter('learning_rate',
-                                      [(150, 4e-4), (250, 1e-4), (350, 5e-5)]),
+                                      [(60, 4e-4), (100, 2e-4)]),
             ScheduledHyperParamSetter(
                 ObjAttrParam(expreplay, 'exploration'),
-                [(0, 1), (100, 0.1), (200, 0.01)],
+                [(0, 1), (10, 0.1), (240, 0.01)],
                 interp='linear'),
-            RunOp(DQNModel.update_target_param),
+            PeriodicTrigger(
+                RunOp(DQNModel.update_target_param),
+                every_k_steps=10000 // UPDATE_FREQ),
             expreplay,
             PeriodicTrigger(Evaluator(
                 EVAL_EPISODE, ['state'], ['Qvalue'], get_player),
-                every_k_epochs=5),
-            # HumanHyperParamSetter('learning_rate', 'hyper.txt'),
+                every_k_epochs=10),
+            HumanHyperParamSetter('learning_rate'),
             # HumanHyperParamSetter(ObjAttrParam(expreplay, 'exploration'), 'hyper.txt'),
         ],
         model=M,
         steps_per_epoch=STEPS_PER_EPOCH,
+        max_epoch=3000,
         # run the simulator on a separate GPU if available
         predict_tower=[1] if get_nr_gpu() > 1 else [0],
     )

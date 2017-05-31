@@ -147,7 +147,6 @@ class ExpReplay(DataFlow, Callback):
         self.rng = get_rng(self)
         self._init_memory_flag = threading.Event()  # tell if memory has been initialized
 
-        # TODO just use a semaphore?
         # a queue to receive notifications to populate memory
         self._populate_job_queue = queue.Queue(maxsize=5)
 
@@ -246,15 +245,15 @@ class ExpReplay(DataFlow, Callback):
         self._simulator_th.start()
 
     def _trigger_epoch(self):
-        # log player statistics
+        # log player statistics in training
         stats = self.player.stats
         for k, v in six.iteritems(stats):
             try:
                 mean, max = np.mean(v), np.max(v)
-                self.trainer.add_scalar_summary('expreplay/mean_' + k, mean)
-                self.trainer.add_scalar_summary('expreplay/max_' + k, max)
+                self.trainer.monitors.put_scalar('expreplay/mean_' + k, mean)
+                self.trainer.monitors.put_scalar('expreplay/max_' + k, max)
             except:
-                pass
+                logger.exception("Cannot log training scores.")
         self.player.reset_stat()
 
 
