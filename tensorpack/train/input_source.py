@@ -367,6 +367,7 @@ class DummyConstantInput(TensorInput):
         def fn():
             tlist = []
             ctx = get_current_tower_context()
+            assert ctx is not None
             assert len(self.shapes) == len(self.input_placehdrs)
             for idx, p in enumerate(self.input_placehdrs):
                 tlist.append(tf.get_variable(

@@ -177,6 +177,7 @@ class Trainer(object):
                     # trigger epoch outside the timing region.
                     self._trigger_epoch()
                     self._callbacks.trigger_epoch()
+                logger.info("Training has finished!")
             except (StopTraining, tf.errors.OutOfRangeError):
                 logger.info("Training was stopped.")
             except KeyboardInterrupt:
