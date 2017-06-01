@@ -55,13 +55,14 @@ class MaintainStepCounter(Callback):
         # ensure it exists
         gs_var = get_global_step_var()
         with tf.name_scope(None):
-            self.gs_incr_var = tf.assign_add(
-                gs_var, 1,
-                name=GLOBAL_STEP_INCR_OP_NAME)
+            with tf.device(gs_var.device):
+                self.gs_incr_op = tf.assign_add(
+                    gs_var, 1,
+                    name=GLOBAL_STEP_INCR_OP_NAME).op
             # tf.mod(
             #     self.gs_incr_var, self.trainer.config.steps_per_epoch,
             #     name=LOCAL_STEP_OP_NAME)
-        self._fetches = tf.train.SessionRunArgs(self.gs_incr_var)
+        self._fetches = tf.train.SessionRunArgs(self.gs_incr_op)
 
     def _before_train(self):
         gs_val = get_global_step_value()
