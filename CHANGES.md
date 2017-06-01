@@ -14,8 +14,7 @@ TensorFlow itself also changed APIs before 1.0 and those are not listed here.
 + [2017/04/09](https://github.com/ppwwyyxx/tensorpack/commit/5beab907895aec36bdcaed62e25b976aad7979b8).
 	`ParamRestore` was renamed to `DictRestore`.
 + [2017/03/16](https://github.com/ppwwyyxx/tensorpack/commit/ccae46f4a3ca89dc3df901a338eef8447d19a730).
-	`session_config` option in `TrainConfig` and `PredictConfig` is deprecated.
-	Use `session_creator` to define how to create session instead.
+	`session_config` option in `PredictConfig` is deprecated. Use `session_creator` to define how to create session instead.
 + 2017/02/20. The interface of step callbacks are changed to be the same as `tf.train.SessionRunHook`.
 	If you haven't written any custom step callbacks, there is nothing to do. Otherwise please refer
 	to the [existing callbacks](https://github.com/ppwwyyxx/tensorpack/blob/master/tensorpack/callbacks/steps.py).

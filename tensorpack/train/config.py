@@ -45,12 +45,10 @@ class TrainConfig(object):
                 callbacks that will be used in the end are ``callbacks + extra_callbacks``.
             monitors (list): a list of :class:`TrainingMonitor`.
                 Defaults to ``[TFSummaryWriter(), JSONWriter(), ScalarPrinter()]``.
-            session_creator (tf.train.SessionCreator): how to create the
-                session. Defaults to :class:`sesscreate.NewSessionCreator()`
-                with the config returned by
-                :func:`tfutils.get_default_sess_config()`.
-            session_init (SessionInit): how to initialize variables of a
-                session. Defaults to do nothing.
+            session_creator (tf.train.SessionCreator): Defaults to :class:`sesscreate.NewSessionCreator()`
+                with the config returned by :func:`tfutils.get_default_sess_config()`.
+            session_config (tf.ConfigProto): when session_creator is None, use this to create the session.
+            session_init (SessionInit): how to initialize variables of a session. Defaults to do nothing.
             starting_epoch (int): The index of the first epoch.
             steps_per_epoch (int): the number of steps (defined by :meth:`Trainer.run_step`) to run in each epoch.
                 Defaults to the input data size.
@@ -111,14 +109,13 @@ class TrainConfig(object):
 
         if session_creator is None:
             if session_config is not None:
-                log_deprecated(
-                    "TrainConfig(session_config=)",
-                    "Use session_creator=NewSessionCreator(config=) instead!", "2017-05-20")
                 self.session_creator = NewSessionCreator(config=session_config)
             else:
                 self.session_creator = NewSessionCreator(config=get_default_sess_config())
         else:
             self.session_creator = session_creator
+            assert session_config is None, "Cannot set both session_creator and session_config!"
+        self.session_config = session_config
 
         if steps_per_epoch is None:
             steps_per_epoch = kwargs.pop('step_per_epoch', None)
