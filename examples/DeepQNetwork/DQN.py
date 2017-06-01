@@ -75,6 +75,14 @@ class Model(DQNModel):
                  .Conv2D('conv1', out_channel=64, kernel_shape=4, stride=2)
                  .Conv2D('conv2', out_channel=64, kernel_shape=3)
 
+                 # .Conv2D('conv0', out_channel=32, kernel_shape=5)
+                 # .MaxPooling('pool0', 2)
+                 # .Conv2D('conv1', out_channel=32, kernel_shape=5)
+                 # .MaxPooling('pool1', 2)
+                 # .Conv2D('conv2', out_channel=64, kernel_shape=4)
+                 # .MaxPooling('pool2', 2)
+                 # .Conv2D('conv3', out_channel=64, kernel_shape=3)
+
                  .FullyConnected('fc0', 512, nl=LeakyReLU)())
         if self.method != 'Dueling':
             Q = FullyConnected('fct', l, self.num_actions, nl=tf.identity)
@@ -108,7 +116,7 @@ def get_config():
                                       [(60, 4e-4), (100, 2e-4)]),
             ScheduledHyperParamSetter(
                 ObjAttrParam(expreplay, 'exploration'),
-                [(0, 1), (10, 0.1), (240, 0.01)],
+                [(0, 1), (10, 0.1), (320, 0.01)],
                 interp='linear'),
             PeriodicTrigger(
                 RunOp(DQNModel.update_target_param),
