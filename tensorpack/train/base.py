@@ -118,17 +118,17 @@ class Trainer(object):
         self._callbacks.setup_graph(weakref.proxy(self))
 
         # create session
-        logger.info("Finalize the graph, create the session ...")
+        logger.info("Creating the session ...")
         self.sess = self.config.session_creator.create_session()
         self._monitored_sess = tf.train.MonitoredSession(
             session_creator=ReuseSessionCreator(self.sess), hooks=None)
 
+        logger.info("Initializing the session ...")
         # init session
-        init_op = tf.global_variables_initializer()
-        self.sess.run(init_op)
-        logger.info("Graph variables initialized.")
         self.config.session_init.init(self.sess)
+
         self.sess.graph.finalize()
+        logger.info("Graph Finalized.")
 
         hooks = self._callbacks.get_hooks()
         self.hooked_sess = HookedSession(self.sess, hooks)
