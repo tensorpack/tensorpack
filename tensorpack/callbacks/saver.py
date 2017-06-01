@@ -73,8 +73,9 @@ class ModelSaver(Callback):
                 global_step=tf.train.get_global_step(),
                 write_meta_graph=False)
             logger.info("Model saved to %s." % tf.train.get_checkpoint_state(self.checkpoint_dir).model_checkpoint_path)
-        except (OSError, IOError):   # disk error sometimes.. just ignore it
-            logger.exception("Exception in ModelSaver.trigger_epoch!")
+        except (OSError, IOError, tf.errors.PermissionDeniedError,
+                tf.errors.ResourceExhaustedError):   # disk error sometimes.. just ignore it
+            logger.exception("Exception in ModelSaver!")
 
 
 class MinSaver(Callback):
