@@ -165,8 +165,10 @@ class DistributedReplicatedTrainer(SingleCostFeedfreeTrainer):
         main_fetch = tf.group(*var_update_ops, name='main_fetches')
         self.train_op = self.add_sync_queues_and_barrier(
             'post_copy_barrier', [main_fetch])
-        self.register_callback(RunOp(
-            self.get_post_init_ops, run_before=True, run_as_trigger=False))
+        cb = RunOp(self.get_post_init_ops,
+                   run_before=True, run_as_trigger=False, verbose=True)
+        cb.chief_only = False
+        self.register_callback(cb)
 
         self._set_session_creator()
 
@@ -251,4 +253,4 @@ class DistributedReplicatedTrainer(SingleCostFeedfreeTrainer):
                         post_init_ops.append(copy_to.assign(v.read_value()))
                     else:
                         logger.warn("Global varable {} doesn't match a corresponding local var".format(v.name))
-        return tf.group(*post_init_ops, name='post_init_ops')
+        return tf.group(*post_init_ops, name='sync_variables_from_ps')

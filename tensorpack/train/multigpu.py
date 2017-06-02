@@ -70,7 +70,7 @@ class MultiGPUTrainerBase(Trainer):
 
         keys_to_freeze = TOWER_FREEZE_KEYS[:]
         if var_strategy == 'replicated':        # TODO ugly
-            logger.info("UPDATE_OPS from all GPUs will be kept in the collection.")
+            logger.info("In replicated mode, UPDATE_OPS from all GPUs will be run.")
             keys_to_freeze.remove(tf.GraphKeys.UPDATE_OPS)
 
         for idx, t in enumerate(towers):
@@ -261,7 +261,7 @@ class SyncMultiGPUTrainerReplicated(MultiGPUTrainerBase, SingleCostFeedfreeTrain
         self.train_op = tf.group(*train_ops, name='train_op')
         self.register_callback(RunOp(
             SyncMultiGPUTrainerReplicated.get_post_init_ops,
-            run_before=True, run_as_trigger=True))
+            run_before=True, run_as_trigger=True, verbose=True))
 
 
 # Adopt from https://github.com/tensorflow/benchmarks/blob/master/scripts/tf_cnn_benchmarks/variable_mgr.py
@@ -279,7 +279,7 @@ class SyncMultiGPUTrainerReplicated(MultiGPUTrainerBase, SingleCostFeedfreeTrain
             split_name = split_name[1:]
             copy_from = var_by_name['/'.join(split_name)]
             post_init_ops.append(v.assign(copy_from.read_value()))
-        return tf.group(*post_init_ops, name='init_sync_vars')
+        return tf.group(*post_init_ops, name='sync_variables_from_tower0')
 
 
 class AsyncMultiGPUTrainer(MultiGPUTrainerBase,

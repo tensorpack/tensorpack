@@ -9,8 +9,6 @@ import six
 from six.moves import range
 
 import tensorflow as tf
-from tensorflow.python.training.monitored_session \
-    import _HookedSession as HookedSession
 
 from .predict import PredictorFactory
 from .config import TrainConfig
@@ -118,6 +116,7 @@ class Trainer(object):
         self.monitors = Monitors(self.monitors)
         self.register_callback(self.monitors)
 
+        # TODO cache per graph, avoid describing all towers
         describe_model()
 
         # some final operations that might modify the graph
@@ -125,21 +124,24 @@ class Trainer(object):
         self._callbacks = Callbacks(self._callbacks)
         self._callbacks.setup_graph(weakref.proxy(self))
 
-        # create session
         logger.info("Creating the session ...")
-        self.sess = self.config.session_creator.create_session()
-        self._monitored_sess = tf.train.MonitoredSession(
-            session_creator=ReuseSessionCreator(self.sess), hooks=None)
+        self._create_session()
 
         logger.info("Initializing the session ...")
-        # init session
         self.config.session_init.init(self.sess)
 
         self.sess.graph.finalize()
         logger.info("Graph Finalized.")
 
+    def _create_session(self):
+        """
+        Setup self.sess (the raw tf.Session)
+        and self.hooked_sess (the session with hooks and coordinator)
+        """
         hooks = self._callbacks.get_hooks()
-        self.hooked_sess = HookedSession(self.sess, hooks)
+        self.sess = self.config.session_creator.create_session()
+        self.hooked_sess = tf.train.MonitoredSession(
+            session_creator=ReuseSessionCreator(self.sess), hooks=hooks)
 
     @abstractmethod
     def _setup(self):
@@ -167,7 +169,7 @@ class Trainer(object):
                     logger.info("Start Epoch {} ...".format(self.epoch_num))
                     start_time = time.time()
                     for self.local_step in range(self.config.steps_per_epoch):
-                        if self._monitored_sess.should_stop():
+                        if self.hooked_sess.should_stop():
                             return
                         self.run_step()  # implemented by subclass
                         self._callbacks.trigger_step()
@@ -186,7 +188,7 @@ class Trainer(object):
                 raise
             finally:
                 self._callbacks.after_train()
-                self._monitored_sess.close()
+                self.hooked_sess.close()
 
     # Predictor related methods:    TODO
     def get_predictor(self, input_names, output_names, tower=0):

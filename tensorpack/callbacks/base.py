@@ -173,6 +173,10 @@ class Callback(object):
         """
         return self._chief_only
 
+    @chief_only.setter
+    def chief_only(self, v):
+        self._chief_only = v
+
     def __str__(self):
         return type(self).__name__
 

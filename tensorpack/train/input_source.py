@@ -242,7 +242,7 @@ class QueueInput(FeedfreeInput):
     def setup_training(self, trainer):
         super(QueueInput, self).setup_training(trainer)
         cb = StartProcOrThread(self.thread)
-        cb._chief_only = False
+        cb.chief_only = False
         trainer.register_callback(cb)
 
     def get_input_tensors(self):
