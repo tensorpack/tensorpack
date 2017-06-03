@@ -30,18 +30,15 @@ from expreplay import ExpReplay
 BATCH_SIZE = 64
 IMAGE_SIZE = (84, 84)
 FRAME_HISTORY = 4
-ACTION_REPEAT = 4
+ACTION_REPEAT = 4   # aka FRAME_SKIP
+UPDATE_FREQ = 4
 
 GAMMA = 0.99
 
-INIT_EXPLORATION = 1
-EXPLORATION_EPOCH_ANNEAL = 0.01
-END_EXPLORATION = 0.1
-
 MEMORY_SIZE = 1e6
-# NOTE: will consume at least 1e6 * 84 * 84 bytes == 6.6G memory.
+# will consume at least 1e6 * 84 * 84 bytes == 6.6G memory.
 INIT_MEMORY_SIZE = 5e4
-STEPS_PER_EPOCH = 10000
+STEPS_PER_EPOCH = 10000 // UPDATE_FREQ * 10  # each epoch is 100k played frames
 EVAL_EPISODE = 50
 
 NUM_ACTIONS = None
@@ -73,18 +70,19 @@ class Model(DQNModel):
         with argscope(Conv2D, nl=PReLU.symbolic_function, use_bias=True), \
                 argscope(LeakyReLU, alpha=0.01):
             l = (LinearWrap(image)
-                 .Conv2D('conv0', out_channel=32, kernel_shape=5)
-                 .MaxPooling('pool0', 2)
-                 .Conv2D('conv1', out_channel=32, kernel_shape=5)
-                 .MaxPooling('pool1', 2)
-                 .Conv2D('conv2', out_channel=64, kernel_shape=4)
-                 .MaxPooling('pool2', 2)
-                 .Conv2D('conv3', out_channel=64, kernel_shape=3)
+                 # Nature architecture
+                 .Conv2D('conv0', out_channel=32, kernel_shape=8, stride=4)
+                 .Conv2D('conv1', out_channel=64, kernel_shape=4, stride=2)
+                 .Conv2D('conv2', out_channel=64, kernel_shape=3)
 
-                 # the original arch is 2x faster
-                 # .Conv2D('conv0', out_channel=32, kernel_shape=8, stride=4)
-                 # .Conv2D('conv1', out_channel=64, kernel_shape=4, stride=2)
-                 # .Conv2D('conv2', out_channel=64, kernel_shape=3)
+                 # architecture used for the figure in the README, slower but takes fewer iterations to converge
+                 # .Conv2D('conv0', out_channel=32, kernel_shape=5)
+                 # .MaxPooling('pool0', 2)
+                 # .Conv2D('conv1', out_channel=32, kernel_shape=5)
+                 # .MaxPooling('pool1', 2)
+                 # .Conv2D('conv2', out_channel=64, kernel_shape=4)
+                 # .MaxPooling('pool2', 2)
+                 # .Conv2D('conv3', out_channel=64, kernel_shape=3)
 
                  .FullyConnected('fc0', 512, nl=LeakyReLU)())
         if self.method != 'Dueling':
@@ -98,8 +96,6 @@ class Model(DQNModel):
 
 
 def get_config():
-    logger.auto_set_dir()
-
     M = Model()
     expreplay = ExpReplay(
         predictor_io_names=(['state'], ['Qvalue']),
@@ -108,10 +104,8 @@ def get_config():
         batch_size=BATCH_SIZE,
         memory_size=MEMORY_SIZE,
         init_memory_size=INIT_MEMORY_SIZE,
-        exploration=INIT_EXPLORATION,
-        end_exploration=END_EXPLORATION,
-        exploration_epoch_anneal=EXPLORATION_EPOCH_ANNEAL,
-        update_frequency=4,
+        init_exploration=1.0,
+        update_frequency=UPDATE_FREQ,
         history_len=FRAME_HISTORY
     )
 
@@ -119,18 +113,24 @@ def get_config():
         dataflow=expreplay,
         callbacks=[
             ModelSaver(),
-            ScheduledHyperParamSetter('learning_rate',
-                                      [(150, 4e-4), (250, 1e-4), (350, 5e-5)]),
-            RunOp(DQNModel.update_target_param),
+            PeriodicTrigger(
+                RunOp(DQNModel.update_target_param),
+                every_k_steps=10000 // UPDATE_FREQ),    # update target network every 10k steps
             expreplay,
+            ScheduledHyperParamSetter('learning_rate',
+                                      [(60, 4e-4), (100, 2e-4)]),
+            ScheduledHyperParamSetter(
+                ObjAttrParam(expreplay, 'exploration'),
+                [(0, 1), (10, 0.1), (320, 0.01)],   # 1->0.1 in the first million steps
+                interp='linear'),
             PeriodicTrigger(Evaluator(
                 EVAL_EPISODE, ['state'], ['Qvalue'], get_player),
-                every_k_epochs=5),
-            # HumanHyperParamSetter('learning_rate', 'hyper.txt'),
-            # HumanHyperParamSetter(ObjAttrParam(expreplay, 'exploration'), 'hyper.txt'),
+                every_k_epochs=10),
+            HumanHyperParamSetter('learning_rate'),
         ],
         model=M,
         steps_per_epoch=STEPS_PER_EPOCH,
+        max_epoch=1000,
         # run the simulator on a separate GPU if available
         predict_tower=[1] if get_nr_gpu() > 1 else [0],
     )
@@ -170,6 +170,9 @@ if __name__ == '__main__':
         elif args.task == 'eval':
             eval_model_multithread(cfg, EVAL_EPISODE, get_player)
     else:
+        logger.set_logger_dir(
+            'train_log/DQN-{}'.format(
+                os.path.basename(ROM_FILE).split('.')[0]))
         config = get_config()
         if args.load:
             config.session_init = SaverRestore(args.load)

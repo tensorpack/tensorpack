@@ -27,7 +27,7 @@ class RunOp(Callback):
 
         Examples:
             The `DQN Example
-            <https://github.com/ppwwyyxx/tensorpack/blob/master/examples/Atari2600/DQN.py#L182>`_
+            <https://github.com/ppwwyyxx/tensorpack/blob/master/examples/DeepQNetwork/>`_
             uses this callback to update target network.
         """
         self.setup_func = setup_func
