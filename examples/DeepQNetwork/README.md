@@ -19,13 +19,10 @@ Claimed performance in the paper can be reproduced, on several games I've tested
 
 ![DQN](curve-breakout.png)
 
-DQN typically took 1 day of training to reach a score of 400 on breakout game (same as the paper).
-My Batch-A3C implementation only took <2 hours.
-Both were trained on one GPU with an extra GPU for simulation.
+On one TitanX, Double-DQN took 1 day of training to reach a score of 400 on breakout game.
+Batch-A3C implementation only took <2 hours. (Both are trained with a larger network noted in the code).
 
-Double-DQN runs at 18 batches/s (1152 frames/s) on TitanX.
-Note that I wasn't using the network architecture in the paper.
-If switched to the network in the paper it could run 2x faster.
+Double-DQN runs at 60 batches (3840 trained frames, 240 seen frames, 960 game frames) per second on TitanX.
 
 ## How to use
 

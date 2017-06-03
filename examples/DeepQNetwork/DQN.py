@@ -36,7 +36,7 @@ UPDATE_FREQ = 4
 GAMMA = 0.99
 
 MEMORY_SIZE = 1e6
-# NOTE: will consume at least 1e6 * 84 * 84 bytes == 6.6G memory.
+# will consume at least 1e6 * 84 * 84 bytes == 6.6G memory.
 INIT_MEMORY_SIZE = 5e4
 STEPS_PER_EPOCH = 10000 // UPDATE_FREQ * 10  # each epoch is 100k played frames
 EVAL_EPISODE = 50
@@ -70,11 +70,12 @@ class Model(DQNModel):
         with argscope(Conv2D, nl=PReLU.symbolic_function, use_bias=True), \
                 argscope(LeakyReLU, alpha=0.01):
             l = (LinearWrap(image)
-                 # the original arch is 2x faster
+                 # Nature architecture
                  .Conv2D('conv0', out_channel=32, kernel_shape=8, stride=4)
                  .Conv2D('conv1', out_channel=64, kernel_shape=4, stride=2)
                  .Conv2D('conv2', out_channel=64, kernel_shape=3)
 
+                 # architecture used for the figure in the README, slower but takes fewer iterations to converge
                  # .Conv2D('conv0', out_channel=32, kernel_shape=5)
                  # .MaxPooling('pool0', 2)
                  # .Conv2D('conv1', out_channel=32, kernel_shape=5)
@@ -112,25 +113,24 @@ def get_config():
         dataflow=expreplay,
         callbacks=[
             ModelSaver(),
+            PeriodicTrigger(
+                RunOp(DQNModel.update_target_param),
+                every_k_steps=10000 // UPDATE_FREQ),    # update target network every 10k steps
+            expreplay,
             ScheduledHyperParamSetter('learning_rate',
                                       [(60, 4e-4), (100, 2e-4)]),
             ScheduledHyperParamSetter(
                 ObjAttrParam(expreplay, 'exploration'),
-                [(0, 1), (10, 0.1), (320, 0.01)],
+                [(0, 1), (10, 0.1), (320, 0.01)],   # 1->0.1 in the first million steps
                 interp='linear'),
-            PeriodicTrigger(
-                RunOp(DQNModel.update_target_param),
-                every_k_steps=10000 // UPDATE_FREQ),
-            expreplay,
             PeriodicTrigger(Evaluator(
                 EVAL_EPISODE, ['state'], ['Qvalue'], get_player),
                 every_k_epochs=10),
             HumanHyperParamSetter('learning_rate'),
-            # HumanHyperParamSetter(ObjAttrParam(expreplay, 'exploration'), 'hyper.txt'),
         ],
         model=M,
         steps_per_epoch=STEPS_PER_EPOCH,
-        max_epoch=3000,
+        max_epoch=1000,
         # run the simulator on a separate GPU if available
         predict_tower=[1] if get_nr_gpu() > 1 else [0],
     )
