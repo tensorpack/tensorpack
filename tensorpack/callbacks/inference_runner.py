@@ -90,7 +90,8 @@ class InferenceRunnerBase(Callback):
         def fn(_):
             in_tensors = self._input_source.get_input_tensors()
             self.trainer.model.build_graph(in_tensors)
-        PredictorTowerBuilder(fn, self._prefix).build(self._predict_tower_id)
+        with tf.variable_scope(self.trainer.vs_name_for_predictor, reuse=True):
+            PredictorTowerBuilder(fn, self._prefix).build(self._predict_tower_id)
 
         self._hooks = [self._build_hook(inf) for inf in self.infs]
 

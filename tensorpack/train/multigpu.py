@@ -49,13 +49,17 @@ def apply_prefetch_policy(config, use_stage=True):
 class MultiGPUTrainerBase(Trainer):
     """ Base class for multi-gpu training"""
     @staticmethod
-    def build_on_multi_tower(towers, func, devices=None, var_strategy='shared'):
+    def build_on_multi_tower(
+            towers, func,
+            devices=None, var_strategy='shared',
+            vs_names=None):
         """
         Args:
             towers: list of gpu relative ids
             func: a lambda to be called inside each tower
             devices: a list of devices to be used. By default will use GPUs in towers.
-            var_strategy (str):
+            var_strategy (str): 'shared' or 'replicated'
+            vs_names (list[str]): list of variable scope names to use.
 
         Returns:
             List of outputs of ``func``, evaluated on each tower.
@@ -72,13 +76,18 @@ class MultiGPUTrainerBase(Trainer):
         if var_strategy == 'replicated':        # TODO ugly
             logger.info("In replicated mode, UPDATE_OPS from all GPUs will be run.")
             keys_to_freeze.remove(tf.GraphKeys.UPDATE_OPS)
+        else:
+            assert vs_names is None
+        if vs_names is None:
+            vs_names = [None] * len(towers)
 
         for idx, t in enumerate(towers):
             device = devices[idx] if devices is not None else '/gpu:{}'.format(t)
             with TowerContext(
                     'tower{}'.format(idx),
                     device=device, is_training=True,
-                    var_strategy=var_strategy):
+                    var_strategy=var_strategy,
+                    vs_name=vs_names[idx]):
                 if idx == t:
                     logger.info("Building graph for training tower {}...".format(idx))
                 else:
@@ -248,7 +257,9 @@ class SyncMultiGPUTrainerReplicated(MultiGPUTrainerBase, SingleCostFeedfreeTrain
         grad_list = MultiGPUTrainerBase.build_on_multi_tower(
             self.config.tower,
             lambda: self._get_cost_and_grad()[1],
-            var_strategy='replicated')
+            var_strategy='replicated',
+            # use no variable scope for the first tower
+            vs_names=[''] + [None] * self.config.nr_tower - 1)
         grads = self._allreduce_grads(grad_list)
 
         train_ops = []

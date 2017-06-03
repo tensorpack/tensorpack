@@ -19,6 +19,7 @@ from ..callbacks.monitor import Monitors, TrainingMonitor
 from ..tfutils import get_global_step_value
 from ..tfutils.model_utils import describe_model
 from ..tfutils.sesscreate import ReuseSessionCreator
+from ..tfutils.sessinit import JustCurrentSession
 
 __all__ = ['Trainer', 'StopTraining']
 
@@ -44,6 +45,7 @@ class Trainer(object):
         local_step (int): the number of steps that have finished in the current epoch.
         global_step (int): the number of steps that have finished.
     """
+    # step attr only available after before_train?
 
     is_chief = True
 
@@ -124,11 +126,19 @@ class Trainer(object):
         self._callbacks = Callbacks(self._callbacks)
         self._callbacks.setup_graph(weakref.proxy(self))
 
+        if self.is_chief:
+            self.config.session_init._setup_graph()
+
+        # This might finalize the graph (in distributed)
         logger.info("Creating the session ...")
         self._create_session()
 
-        logger.info("Initializing the session ...")
-        self.config.session_init.init(self.sess)
+        if self.is_chief:
+            logger.info("Initializing the session ...")
+            self.config.session_init._run_init(self.sess)
+        else:
+            assert isinstance(self.config.session_init, JustCurrentSession), \
+                "session_init is only valid for chief worker session!"
 
         self.sess.graph.finalize()
         logger.info("Graph Finalized.")
@@ -164,6 +174,8 @@ class Trainer(object):
             self._starting_step = get_global_step_value()
             try:
                 self._callbacks.before_train()
+                # refresh global step (might have changed by callbacks) TODO ugly
+                self._starting_step = get_global_step_value()
                 for self.epoch_num in range(
                         self.config.starting_epoch, self.config.max_epoch + 1):
                     logger.info("Start Epoch {} ...".format(self.epoch_num))
@@ -189,6 +201,13 @@ class Trainer(object):
             finally:
                 self._callbacks.after_train()
                 self.hooked_sess.close()
+
+    @property
+    def vs_name_for_predictor(self):
+        """
+        The variable scope name a predictor should be built in.
+        """
+        return ""
 
     # Predictor related methods:    TODO
     def get_predictor(self, input_names, output_names, tower=0):

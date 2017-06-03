@@ -14,18 +14,15 @@ from ..tfutils.common import get_global_step_var, get_op_tensor_name
 
 __all__ = ['DistributedReplicatedTrainer']
 
-# Note that only trainable vars are shadowed
-PS_SHADOW_VAR_PREFIX = 'ps_var'
+# TODO only trainable model vars are saved
 
 
-class OverrideToLocalVariableIfNotPsVar(object):
+class OverrideToLocalVariable(object):
     """
     Ensures the created variable
     is in LOCAL_VARIABLES and not GLOBAL_VARIBLES collection.
     """
     def __call__(self, getter, name, *args, **kwargs):
-        if name.startswith(PS_SHADOW_VAR_PREFIX):
-            return getter(*args, **kwargs)
         if 'collections' in kwargs:
             collections = kwargs['collections']
         if not collections:
@@ -103,7 +100,8 @@ class DistributedReplicatedTrainer(SingleCostFeedfreeTrainer):
         """
         ps_var_grads = []
         for grad, var in avg_grads:
-            my_name = PS_SHADOW_VAR_PREFIX + '/' + var.name
+            assert var.name.startswith('tower'), var.name
+            my_name = '/'.join(var.name.split('/')[1:])
             my_name = get_op_tensor_name(my_name)[0]
             new_v = tf.get_variable(my_name, dtype=var.dtype.base_dtype,
                                     initializer=var.initial_value,
@@ -141,26 +139,29 @@ class DistributedReplicatedTrainer(SingleCostFeedfreeTrainer):
             logger.info("Running ps {}".format(self.task_index))
             self.server.join()
             return  # TODO exit and skip mainloop how?
-
-        super(DistributedReplicatedTrainer, self)._setup()
         with tf.device(self.param_server_device):
-            get_global_step_var()
+            gs = get_global_step_var()
+            assert gs.device, gs.device
             self.model.get_optimizer()    # TODO in global scope, not local
+        # do this before super.setup because input_source my need global step
+        super(DistributedReplicatedTrainer, self)._setup()
 
         with tf.variable_scope(
                 tf.get_variable_scope(),
-                custom_getter=OverrideToLocalVariableIfNotPsVar()):
+                custom_getter=OverrideToLocalVariable()):
             # Ngpu * Nvar * 2
             grad_list = MultiGPUTrainerBase.build_on_multi_tower(
                 self.config.tower,
                 lambda: self._get_cost_and_grad()[1],
                 devices=self.raw_devices,
-                var_strategy='replicated')
+                var_strategy='replicated',
+                vs_names=None)  # use the default vs names
 
         avg_grads = DistributedReplicatedTrainer._average_grads(grad_list, self.raw_devices)
         with tf.device(self.param_server_device):
             ps_var_grads = DistributedReplicatedTrainer._apply_shadow_vars(avg_grads)
             var_update_ops = self._apply_gradients_and_copy(grad_list, ps_var_grads)
+        self._shadow_vars = [v for (_, v) in ps_var_grads]
 
         main_fetch = tf.group(*var_update_ops, name='main_fetches')
         self.train_op = self.add_sync_queues_and_barrier(
@@ -180,7 +181,7 @@ class DistributedReplicatedTrainer(SingleCostFeedfreeTrainer):
                 "Cannot set session_creator or session_config for distributed training! "
                 "To use a custom session config, pass it to the tf.train.Server constructor.")
 
-        # TODO use scaffold
+        # TODO use scaffold + monitored session
         class SupervisedSessionCreator(tf.train.SessionCreator):
             def __init__(self, is_chief, target):
                 self.is_chief = is_chief
@@ -239,18 +240,17 @@ class DistributedReplicatedTrainer(SingleCostFeedfreeTrainer):
         local_vars = tf.local_variables()
         local_var_by_name = dict([(strip_port(v.name), v) for v in local_vars])
         post_init_ops = []
-        for v in tf.global_variables():
-            if v.name.startswith(PS_SHADOW_VAR_PREFIX + '/'):
-                prefix = strip_port(
-                    v.name[len(PS_SHADOW_VAR_PREFIX + '/'):])
-                for i in range(self.nr_gpu):
-                    if i == 0:
-                        name = prefix   # no prefix for tower0
-                    else:
-                        name = 'tower%s/%s' % (i, prefix)
-                    if name in local_var_by_name:
-                        copy_to = local_var_by_name[name]
-                        post_init_ops.append(copy_to.assign(v.read_value()))
-                    else:
-                        logger.warn("Global varable {} doesn't match a corresponding local var".format(v.name))
+        for v in self._shadow_vars:
+            vname = strip_port(v.name)
+            for i in range(self.nr_gpu):
+                name = 'tower%s/%s' % (i, vname)
+                if name in local_var_by_name:
+                    copy_to = local_var_by_name[name]
+                    post_init_ops.append(copy_to.assign(v.read_value()))
+                else:
+                    logger.warn("Global variable {} doesn't match a corresponding local var".format(v.name))
         return tf.group(*post_init_ops, name='sync_variables_from_ps')
+
+    @property
+    def vs_name_for_predictor(self):
+        return "tower0"

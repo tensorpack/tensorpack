@@ -47,7 +47,7 @@ def regularize_cost(regex, func, name='regularize_cost'):
     for p in params:
         para_name = p.name
         # in replicated mode, only regularize variables inside this tower
-        if ctx.has_own_variables and (not para_name.startswith(ctx.vs_name)):
+        if ctx.has_own_variables and ctx.vs_name and (not para_name.startswith(ctx.vs_name)):
             continue
         if re.search(regex, para_name):
             costs.append(func(p))
