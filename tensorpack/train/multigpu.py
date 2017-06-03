@@ -259,7 +259,7 @@ class SyncMultiGPUTrainerReplicated(MultiGPUTrainerBase, SingleCostFeedfreeTrain
             lambda: self._get_cost_and_grad()[1],
             var_strategy='replicated',
             # use no variable scope for the first tower
-            vs_names=[''] + [None] * self.config.nr_tower - 1)
+            vs_names=[''] + [None] * (self.config.nr_tower - 1))
         grads = self._allreduce_grads(grad_list)
 
         train_ops = []

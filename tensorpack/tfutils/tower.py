@@ -43,6 +43,8 @@ class TowerContext(object):
             assert self._name
             if vs_name is None:
                 self._vs_name = self._name
+            else:
+                self._vs_name = vs_name
         else:
             assert vs_name is None, "vs_name is only valid in 'replicated' mode!"
             self._vs_name = ''

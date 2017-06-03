@@ -43,6 +43,7 @@ class ModelSaver(Callback):
         vars = []
         for key in self.var_collections:
             vars.extend(tf.get_collection(key))
+        vars = list(set(vars))
         self.path = os.path.join(self.checkpoint_dir, 'model')
         if get_tf_version_number() <= 1.1:
             self.saver = tf.train.Saver(
