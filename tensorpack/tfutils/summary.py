@@ -154,7 +154,8 @@ def add_moving_summary(v, *args, **kwargs):
     for x in v:
         assert isinstance(x, tf.Tensor), x
         assert x.get_shape().ndims == 0, x.get_shape()
-    # TODO will produce tower0/xxx?
+    # TODO will produce variable tower0/xxx?
+    # TODO not saved under distributed
     # TODO use zero_debias
     gs = get_global_step_var()
     with tf.name_scope(None), tf.device(gs.device):

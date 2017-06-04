@@ -136,7 +136,7 @@ def layer_register(
                         # log shape info and add activation
                         logger.info("{} output: {}".format(
                             scope.name, get_shape_str(outputs)))
-                        _LAYER_LOGGED.add(scope.name)
+                        _LAYER_LOGGED.add(scope_name)
             else:
                 # run the actual function
                 outputs = func(*args, **actual_args)
