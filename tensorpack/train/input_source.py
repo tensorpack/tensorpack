@@ -241,7 +241,9 @@ class QueueInput(FeedfreeInput):
 
     def setup_training(self, trainer):
         super(QueueInput, self).setup_training(trainer)
-        trainer.register_callback(StartProcOrThread(self.thread))
+        cb = StartProcOrThread(self.thread)
+        cb.chief_only = False
+        trainer.register_callback(cb)
 
     def get_input_tensors(self):
         with tf.device('/cpu:0'):
@@ -365,6 +367,7 @@ class DummyConstantInput(TensorInput):
         def fn():
             tlist = []
             ctx = get_current_tower_context()
+            assert ctx is not None
             assert len(self.shapes) == len(self.input_placehdrs)
             for idx, p in enumerate(self.input_placehdrs):
                 tlist.append(tf.get_variable(

@@ -17,13 +17,16 @@ class TowerContext(object):
 
     def __init__(self, tower_name,
                  device=None, is_training=None,
-                 var_strategy='shared'):
+                 var_strategy='shared',
+                 vs_name=None):
         """
         Args:
             tower_name (str): 'tower0', 'towerp0', or ''
             device (str or device function): the device to use. Defaults to either cpu0 or gpu0.
             is_training (bool): if None, automatically determine from tower_name.
             var_strategy (str): either 'shared' or 'replicated'.
+            vs_name (str): the variable scope name to open. Only valid in
+                'replicated' mode. Defaults to be tower_name.
         """
         self._name = tower_name
         if device is None:
@@ -38,6 +41,13 @@ class TowerContext(object):
         self._var_strategy = var_strategy
         if self._var_strategy == 'replicated':
             assert self._name
+            if vs_name is None:
+                self._vs_name = self._name
+            else:
+                self._vs_name = vs_name
+        else:
+            assert vs_name is None, "vs_name is only valid in 'replicated' mode!"
+            self._vs_name = ''
 
     @property
     def is_main_training_tower(self):
@@ -62,12 +72,7 @@ class TowerContext(object):
     # variable_scope name
     @property
     def vs_name(self):
-        if self.has_own_variables:
-            # do not open new variable scope for the main tower,
-            # just use '', so that Saver & PredictTower know what to do
-            if self.index > 0:
-                return self._name
-        return ""
+        return self._vs_name
 
     @property
     def index(self):
@@ -113,13 +118,16 @@ class TowerContext(object):
         self._ctxs = []
         if len(self._name):
             if self.has_own_variables:
-                if self.vs_name:
+                if len(self.vs_name):
                     self._ctxs.append(tf.variable_scope(self.vs_name))
             else:
-                # use existing variable scope
-                reuse = self.index > 0 or (not self.is_training)
-                self._ctxs.append(tf.variable_scope(
-                    tf.get_variable_scope(), reuse=reuse))
+                if self.is_training:
+                    reuse = self.index > 0
+                    if reuse is True:
+                        self._ctxs.append(tf.name_scope(None))
+                        self._ctxs.append(tf.variable_scope(
+                            tf.get_variable_scope(), reuse=True))
+                # if not training, should handle vs outside (TODO not good)
                 self._ctxs.append(tf.name_scope(self._name))
         self._ctxs.append(tf.device(self._device))
         for c in self._ctxs:

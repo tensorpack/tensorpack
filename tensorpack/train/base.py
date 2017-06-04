@@ -9,8 +9,6 @@ import six
 from six.moves import range
 
 import tensorflow as tf
-from tensorflow.python.training.monitored_session \
-    import _HookedSession as HookedSession
 
 from .predict import PredictorFactory
 from .config import TrainConfig
@@ -21,6 +19,7 @@ from ..callbacks.monitor import Monitors, TrainingMonitor
 from ..tfutils import get_global_step_value
 from ..tfutils.model_utils import describe_model
 from ..tfutils.sesscreate import ReuseSessionCreator
+from ..tfutils.sessinit import JustCurrentSession
 
 __all__ = ['Trainer', 'StopTraining']
 
@@ -46,6 +45,9 @@ class Trainer(object):
         local_step (int): the number of steps that have finished in the current epoch.
         global_step (int): the number of steps that have finished.
     """
+    # step attr only available after before_train?
+
+    is_chief = True
 
     def __init__(self, config):
         """
@@ -79,14 +81,20 @@ class Trainer(object):
         assert isinstance(cb, Callback), cb
         assert not isinstance(self._callbacks, Callbacks), \
             "Cannot register more callbacks after trainer was setup!"
-        self._callbacks.append(cb)
+        if not self.is_chief and cb.chief_only:
+            logger.warn("Callback {} is chief-only, skipped.".format(str(cb)))
+        else:
+            self._callbacks.append(cb)
 
     def register_monitor(self, mon):
         assert isinstance(mon, TrainingMonitor), mon
         assert not isinstance(self.monitors, Monitors), \
             "Cannot register more monitors after trainer was setup!"
-        self.monitors.append(mon)
-        self.register_callback(mon)
+        if not self.is_chief and mon.chief_only:
+            logger.warn("Callback {} is chief-only, skipped.".format(str(mon)))
+        else:
+            self.monitors.append(mon)
+            self.register_callback(mon)
 
     def train(self):
         """ Start training """
@@ -110,6 +118,7 @@ class Trainer(object):
         self.monitors = Monitors(self.monitors)
         self.register_callback(self.monitors)
 
+        # TODO cache per graph, avoid describing all towers
         describe_model()
 
         # some final operations that might modify the graph
@@ -117,21 +126,28 @@ class Trainer(object):
         self._callbacks = Callbacks(self._callbacks)
         self._callbacks.setup_graph(weakref.proxy(self))
 
-        # create session
         logger.info("Creating the session ...")
-        self.sess = self.config.session_creator.create_session()
-        self._monitored_sess = tf.train.MonitoredSession(
-            session_creator=ReuseSessionCreator(self.sess), hooks=None)
+        self._create_session()
 
-        logger.info("Initializing the session ...")
-        # init session
-        self.config.session_init.init(self.sess)
+        if self.is_chief:
+            logger.info("Initializing the session ...")
+            self.config.session_init.init(self.sess)
+        else:
+            assert isinstance(self.config.session_init, JustCurrentSession), \
+                "session_init is only valid for chief worker session!"
 
         self.sess.graph.finalize()
         logger.info("Graph Finalized.")
 
+    def _create_session(self):
+        """
+        Setup self.sess (the raw tf.Session)
+        and self.hooked_sess (the session with hooks and coordinator)
+        """
         hooks = self._callbacks.get_hooks()
-        self.hooked_sess = HookedSession(self.sess, hooks)
+        self.sess = self.config.session_creator.create_session()
+        self.hooked_sess = tf.train.MonitoredSession(
+            session_creator=ReuseSessionCreator(self.sess), hooks=hooks)
 
     @abstractmethod
     def _setup(self):
@@ -154,12 +170,14 @@ class Trainer(object):
             self._starting_step = get_global_step_value()
             try:
                 self._callbacks.before_train()
+                # refresh global step (might have changed by callbacks) TODO ugly
+                self._starting_step = get_global_step_value()
                 for self.epoch_num in range(
                         self.config.starting_epoch, self.config.max_epoch + 1):
                     logger.info("Start Epoch {} ...".format(self.epoch_num))
                     start_time = time.time()
                     for self.local_step in range(self.config.steps_per_epoch):
-                        if self._monitored_sess.should_stop():
+                        if self.hooked_sess.should_stop():
                             return
                         self.run_step()  # implemented by subclass
                         self._callbacks.trigger_step()
@@ -169,6 +187,7 @@ class Trainer(object):
                     # trigger epoch outside the timing region.
                     self._trigger_epoch()
                     self._callbacks.trigger_epoch()
+                logger.info("Training has finished!")
             except (StopTraining, tf.errors.OutOfRangeError):
                 logger.info("Training was stopped.")
             except KeyboardInterrupt:
@@ -177,7 +196,14 @@ class Trainer(object):
                 raise
             finally:
                 self._callbacks.after_train()
-                self._monitored_sess.close()
+                self.hooked_sess.close()
+
+    @property
+    def vs_name_for_predictor(self):
+        """
+        The variable scope name a predictor should be built in.
+        """
+        return ""
 
     # Predictor related methods:    TODO
     def get_predictor(self, input_names, output_names, tower=0):

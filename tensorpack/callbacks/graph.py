@@ -17,13 +17,15 @@ class RunOp(Callback):
     """ Run an Op. """
 
     def __init__(self, setup_func,
-                 run_before=True, run_as_trigger=True, run_step=False):
+                 run_before=True, run_as_trigger=True,
+                 run_step=False, verbose=False):
         """
         Args:
             setup_func: a function that returns the Op in the graph
             run_before (bool): run the Op before training
             run_as_trigger (bool): run the Op on every trigger
             run_step (bool): run the Op every step (along with training)
+            verbose (bool): pring logs when the op is run.
 
         Examples:
             The `DQN Example
@@ -34,27 +36,38 @@ class RunOp(Callback):
         self.run_before = run_before
         self.run_as_trigger = run_as_trigger
         self.run_step = run_step
+        self.verbose = verbose
 
     def _setup_graph(self):
         self._op = self.setup_func()
 
     def _before_train(self):
         if self.run_before:
+            self._print()
             self._op.run()
 
     def _trigger(self):
         if self.run_as_trigger:
+            self._print()
             self._op.run()
 
     def _before_run(self, _):
         if self.run_step:
+            self._print()
             return [self._op]
+
+    def _print(self):
+        if self.verbose:
+            logger.info("Running Op {} ...".format(self._op.name))
 
 
 class RunUpdateOps(RunOp):
     """
     Run ops from the collection UPDATE_OPS every step
     """
+
+    _chief_only = False
+
     def __init__(self, collection=tf.GraphKeys.UPDATE_OPS):
         def f():
             ops = tf.get_collection(collection)

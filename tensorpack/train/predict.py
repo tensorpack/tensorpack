@@ -3,6 +3,7 @@
 # File: predict.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
+import tensorflow as tf
 from ..predict import (OnlinePredictor,
                        PredictorTowerBuilder)
 
@@ -19,6 +20,7 @@ class PredictorFactory(object):
         """
         self.model = trainer.model
         self.towers = trainer.config.predict_tower
+        self.vs_name = trainer.vs_name_for_predictor
 
         def fn(_):
             self.model.build_graph(self.model.get_reused_placehdrs())
@@ -34,7 +36,8 @@ class PredictorFactory(object):
         """
         tower = self.towers[tower]
         # just ensure the tower exists. won't rebuild (memoized)
-        self._tower_builder.build(tower)
+        with tf.variable_scope(self.vs_name, reuse=True):
+            self._tower_builder.build(tower)
 
         placeholder_names = set([k.name for k in self.model.get_inputs_desc()])
         get_tensor_fn = PredictorTowerBuilder.get_tensors_maybe_in_tower
