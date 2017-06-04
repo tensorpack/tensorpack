@@ -39,8 +39,8 @@ def get_default_sess_config(mem_fraction=0.99):
     conf.inter_op_parallelism_threads = 0
 
     conf.gpu_options.per_process_gpu_memory_fraction = mem_fraction
-    # TODO check version
-    conf.gpu_options.force_gpu_compatible = True
+    if get_tf_version_number() >= 1.2:
+        conf.gpu_options.force_gpu_compatible = True
 
     conf.gpu_options.allocator_type = 'BFC'
     conf.gpu_options.allow_growth = True

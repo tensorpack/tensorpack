@@ -4,6 +4,7 @@
 
 import tensorflow as tf
 import re
+import os
 from six.moves import range
 
 from ..utils import logger
@@ -14,8 +15,6 @@ from ..tfutils.sesscreate import NewSessionCreator
 from ..tfutils.common import get_global_step_var, get_op_tensor_name
 
 __all__ = ['DistributedReplicatedTrainer']
-
-# TODO only trainable model vars are saved
 
 
 class OverrideToLocalVariable(object):
@@ -37,7 +36,24 @@ class OverrideToLocalVariable(object):
 
 
 class DistributedReplicatedTrainer(SingleCostFeedfreeTrainer):
+    """
+    Distributed replicated training.
+    Each worker process builds the same model on one or more GPUs.
+    Gradients across GPUs are averaged within the worker,
+    and get synchronously applied to the global copy of variables located on PS.
+    Then each worker copy the latest variables from PS back to local.
+
+
+    Note:
+        Gradients are not averaged across workers.
+    """
     def __init__(self, config, server):
+        """
+        Args:
+            config (TrainConfig): the train config.
+            server (tf.train.Server): the server object with ps and workers
+        """
+
         self.server = server
         server_def = server.server_def
         self.cluster = tf.train.ClusterSpec(server_def.cluster)
@@ -60,8 +76,7 @@ class DistributedReplicatedTrainer(SingleCostFeedfreeTrainer):
         self.cpu_device = '%s/cpu:0' % worker_prefix
         self.raw_devices = ['%s/%s:%i' % (worker_prefix, 'gpu', i) for i in range(self.nr_gpu)]
 
-        # This device on which the queues for managing synchronization between
-        # servers should be stored.
+        # Device for queues for managing synchronization between servers
         self.sync_queue_devices = ['/job:ps/task:%s/cpu:0' % i for i in range(self.num_ps)]
         self.sync_queue_counter = 0
 
@@ -145,12 +160,12 @@ class DistributedReplicatedTrainer(SingleCostFeedfreeTrainer):
         Returns:
             list of copy ops
         """
-        # TODO do this for each variable separately?
+        # TODO do this for variables together?
         opt = self.model.get_optimizer()
         var_update_ops = []
         for vid, (g, v) in enumerate(ps_var_grads):
             apply_gradient_op = opt.apply_gradients([(g, v)])
-            barrier = self.add_sync_queues_and_barrier(
+            barrier = self._add_sync_queues_and_barrier(
                 'param_update_barrier_{}'.format(vid), [apply_gradient_op])
             with tf.control_dependencies([barrier]), \
                     tf.device(self.cpu_device):
@@ -163,8 +178,9 @@ class DistributedReplicatedTrainer(SingleCostFeedfreeTrainer):
     def _setup(self):
         if self.job_name == 'ps':
             logger.info("Running ps {}".format(self.task_index))
-            self.server.join()
-            return  # TODO exit and skip mainloop how?
+            logger.info("Kill me with 'kill {}'".format(os.getpid()))
+            self.server.join()  # this will never return #4713
+            return
         with tf.device(self.param_server_device):
             gs = get_global_step_var()
             assert gs.device, gs.device
@@ -189,19 +205,20 @@ class DistributedReplicatedTrainer(SingleCostFeedfreeTrainer):
             self._shadow_vars = [v for (_, v) in ps_var_grads]
             self._shadow_model_vars = DistributedReplicatedTrainer._shadow_model_variables(self._shadow_vars)
 
+        # TODO add options to synchronize less
         main_fetch = tf.group(*var_update_ops, name='main_fetches')
-        self.train_op = self.add_sync_queues_and_barrier(
+        self.train_op = self._add_sync_queues_and_barrier(
             'post_copy_barrier', [main_fetch])
 
         # initial local_vars syncing
-        cb = RunOp(self.get_initial_sync_op,
+        cb = RunOp(self._get_initial_sync_op,
                    run_before=True, run_as_trigger=False, verbose=True)
         cb.chief_only = False
         self.register_callback(cb)
 
         # model_variables syncing
         if len(self._shadow_model_vars) and self.is_chief:
-            cb = RunOp(self.get_sync_model_vars_op,
+            cb = RunOp(self._get_sync_model_vars_op,
                        run_before=False, run_as_trigger=True, verbose=True)
             logger.warn("For efficiency, local MODEL_VARIABLES are only synced to PS once "
                         "every epoch. Be careful if you save the model more frequenctly.")
@@ -236,12 +253,12 @@ class DistributedReplicatedTrainer(SingleCostFeedfreeTrainer):
 
         self.config.session_creator = _Creator()
 
-    def add_sync_queues_and_barrier(self, name_prefix, enqueue_after_list):
+    def _add_sync_queues_and_barrier(self, name, dependencies):
         """Adds ops to enqueue on all worker queues.
 
         Args:
-            name_prefix: prefixed for the shared_name of ops.
-            enqueue_after_list: control dependency from ops.
+            name: prefixed for the shared_name of ops.
+            dependencies: control dependency from ops.
 
         Returns:
             an op that should be used as control dependency before starting next step.
@@ -250,12 +267,12 @@ class DistributedReplicatedTrainer(SingleCostFeedfreeTrainer):
         with tf.device(self.sync_queue_devices[self.sync_queue_counter % len(self.sync_queue_devices)]):
             sync_queues = [
                 tf.FIFOQueue(self.num_worker, [tf.bool], shapes=[[]],
-                             shared_name='%s%s' % (name_prefix, i))
+                             shared_name='%s%s' % (name, i))
                 for i in range(self.num_worker)]
             queue_ops = []
             # For each other worker, add an entry in a queue, signaling that it can finish this step.
             token = tf.constant(False)
-            with tf.control_dependencies(enqueue_after_list):
+            with tf.control_dependencies(dependencies):
                 for i, q in enumerate(sync_queues):
                     if i != self.task_index:
                         queue_ops.append(q.enqueue(token))
@@ -264,9 +281,9 @@ class DistributedReplicatedTrainer(SingleCostFeedfreeTrainer):
             queue_ops.append(
                 sync_queues[self.task_index].dequeue_many(len(sync_queues) - 1))
 
-            return tf.group(*queue_ops)
+            return tf.group(*queue_ops, name=name)
 
-    def get_initial_sync_op(self):
+    def _get_initial_sync_op(self):
         """
         Get the op to copy-initialized all local variables from PS.
         """
@@ -289,7 +306,7 @@ class DistributedReplicatedTrainer(SingleCostFeedfreeTrainer):
                 ops.append(copy_to.assign(v.read_value()))
         return tf.group(*ops, name='sync_{}_variables_from_ps'.format(nr_shadow_vars))
 
-    def get_sync_model_vars_op(self):
+    def _get_sync_model_vars_op(self):
         """
         Get the op to sync local model_variables to PS.
         """
