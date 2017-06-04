@@ -14,19 +14,34 @@ __all__ = ['describe_model', 'get_shape_str', 'apply_slim_collections']
 
 
 def describe_model():
-    """ Print a description of the current model parameters """
+    """
+    Print a description of the current model parameters.
+    Skip variables starting with "tower".
+    """
     train_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
     if len(train_vars) == 0:
-        logger.info("No trainable variables in the graph!")
+        logger.warn("No trainable variables in the graph!")
         return
     total = 0
     data = []
+    devices = set()
     for v in train_vars:
+        if v.name.startswith('tower'):
+            continue
         shape = v.get_shape()
         ele = shape.num_elements()
         total += ele
-        data.append([v.name, shape.as_list(), ele])
-    table = tabulate(data, headers=['name', 'shape', 'dim'])
+        devices.add(v.device)
+        data.append([v.name, shape.as_list(), ele, v.device])
+
+    if len(devices) == 1:
+        # don't log the device if all vars on the same device
+        for d in data:
+            d.pop()
+        table = tabulate(data, headers=['name', 'shape', 'dim'])
+    else:
+        table = tabulate(data, headers=['name', 'shape', 'dim', 'device'])
+
     size_mb = total * 4 / 1024.0**2
     summary_msg = colored(
         "\nTotal #vars={}, #param={} ({:.02f} MB assuming all float32)".format(

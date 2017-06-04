@@ -5,6 +5,7 @@
 import tensorflow as tf
 from functools import wraps
 import six
+import re
 import copy
 
 from ..tfutils.argscope import get_arg_scope
@@ -123,7 +124,8 @@ def layer_register(
 
             if name is not None:        # use scope
                 with tf.variable_scope(name) as scope:
-                    do_log_shape = log_shape and scope.name not in _LAYER_LOGGED
+                    scope_name = re.sub('tower[0-9]+/', '', scope.name)
+                    do_log_shape = log_shape and scope_name not in _LAYER_LOGGED
                     if do_log_shape:
                         logger.info("{} input: {}".format(scope.name, get_shape_str(inputs)))
 
