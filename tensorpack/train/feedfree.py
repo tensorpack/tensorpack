@@ -4,6 +4,7 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import tensorflow as tf
+from six.moves import zip
 
 from ..tfutils.tower import TowerContext, get_current_tower_context
 from .input_source import QueueInput, FeedfreeInput
@@ -64,20 +65,18 @@ class SingleCostFeedfreeTrainer(FeedfreeTrainerBase):
         """ get the cost and gradient"""
         self.build_train_tower()
         cost = self.model.get_cost()    # assume single cost
-        # opt may be created under first-tower variable scope (which is '')
-        opt = self.model.get_optimizer()
-        # GATE_NONE faster?
         varlist = tf.trainable_variables()
         ctx = get_current_tower_context()
         if ctx is not None and ctx.has_own_variables and ctx.vs_name:
             # only optimize w.r.t vars in this tower
             # TODO use ctx.vars?
             varlist = [v for v in varlist if v.op.name.startswith(ctx.vs_name + '/')]
-        grads = opt.compute_gradients(
+        grads = tf.gradients(
             cost,
-            var_list=varlist,
-            gate_gradients=tf.train.Optimizer.GATE_NONE,
+            varlist,
+            gate_gradients=False,
             colocate_gradients_with_ops=True)
+        grads = list(zip(grads, varlist))
         return cost, grads
 
 

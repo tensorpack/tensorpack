@@ -160,7 +160,7 @@ def get_checkpoint_path(model_path):
         new_path = model_path.split('.index')[0]
     if new_path != model_path:
         logger.warn(
-            "[SaverRestore] {} is corrected to {} when restoring the model.".format(model_path, new_path))
+            "Checkpoint path {} is auto-corrected to {}.".format(model_path, new_path))
         model_path = new_path
     assert os.path.isfile(model_path) or os.path.isfile(model_path + '.index'), model_path
     return model_path
@@ -183,7 +183,8 @@ def dump_chkpt_vars(model_path):
 
 def is_training_name(name):
     """
-    This is a hack temporarily used to improve logging. Do not use this function.
+    Guess if a name belongs to a training-only variables.
+    Only used internally to avoid too many logging. Do not use it.
 
     Returns:
         bool: Guess whether this tensor is something only used in training.
