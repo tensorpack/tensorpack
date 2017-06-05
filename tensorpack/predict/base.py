@@ -106,7 +106,7 @@ class OnlinePredictor(PredictorBase):
             output_tensors (list): list of names.
             return_input (bool): same as :attr:`PredictorBase.return_input`.
             sess (tf.Session): the session this predictor runs in. If None,
-                will use the default session.
+                will use the default session at the first call.
         """
         self.return_input = return_input
         self.input_tensors = input_tensors
@@ -118,10 +118,8 @@ class OnlinePredictor(PredictorBase):
             "{} != {}".format(len(dp), len(self.input_tensors))
         feed = dict(zip(self.input_tensors, dp))
         if self.sess is None:
-            sess = tf.get_default_session()
-        else:
-            sess = self.sess
-        output = sess.run(self.output_tensors, feed_dict=feed)
+            self.sess = tf.get_default_session()
+        output = self.sess.run(self.output_tensors, feed_dict=feed)
         return output
 
 

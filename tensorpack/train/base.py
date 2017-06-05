@@ -62,13 +62,7 @@ class Trainer(object):
         self.local_step = -1
 
         self._callbacks = []
-        self.register_callback(MaintainStepCounter())
-        for cb in config.callbacks:
-            self.register_callback(cb)
-
         self.monitors = []
-        for m in config.monitors:
-            self.register_monitor(m)
 
     def register_callback(self, cb):
         """
@@ -91,7 +85,7 @@ class Trainer(object):
         assert not isinstance(self.monitors, Monitors), \
             "Cannot register more monitors after trainer was setup!"
         if not self.is_chief and mon.chief_only:
-            logger.warn("Callback {} is chief-only, skipped.".format(str(mon)))
+            logger.warn("Monitor {} is chief-only, skipped.".format(str(mon)))
         else:
             self.monitors.append(mon)
             self.register_callback(mon)
@@ -115,10 +109,14 @@ class Trainer(object):
         """
         self._setup()   # subclass will setup the graph
 
+        self.register_callback(MaintainStepCounter())
+        for cb in self.config.callbacks:
+            self.register_callback(cb)
+        for m in self.config.monitors:
+            self.register_monitor(m)
         self.monitors = Monitors(self.monitors)
         self.register_callback(self.monitors)
 
-        # TODO cache per graph, avoid describing all towers
         describe_model()
 
         # some final operations that might modify the graph

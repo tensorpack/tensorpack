@@ -114,7 +114,7 @@ def get_config():
         callbacks=[
             ModelSaver(),
             PeriodicTrigger(
-                RunOp(DQNModel.update_target_param),
+                RunOp(DQNModel.update_target_param, verbose=True),
                 every_k_steps=10000 // UPDATE_FREQ),    # update target network every 10k steps
             expreplay,
             ScheduledHyperParamSetter('learning_rate',

@@ -4,7 +4,7 @@
 Apart from the actual training iterations that minimize the cost,
 you almost surely would like to do something else during training.
 Callbacks are such an interface to describe what to do besides the
-training iterations defined by the trainers.
+training iterations.
 
 There are several places where you might want to do something else:
 
@@ -14,9 +14,13 @@ There are several places where you might want to do something else:
 * Between epochs (e.g. save the model, run some validation)
 * After the training (e.g. send the model somewhere, send a message to your phone)
 
-By writing callbacks to implement these tasks, you can reuse the code as long as
-you are using tensorpack trainers. For example, these are the callbacks I used when training
-a ResNet:
+We found people traditionally tend to write the training loop together with these extra features.
+This makes the loop lengthy, and the code for the same feature probably get separated.
+By writing callbacks to implement what you want to do at each place, tensorpack trainers
+will call them at the proper time.
+Therefore the code can be reused with one single line, as long as you are using tensorpack trainers.
+
+For example, these are the callbacks I used when training a ResNet:
 
 ```python
 TrainConfig(
@@ -24,8 +28,8 @@ TrainConfig(
   callbacks=[
     # save the model every epoch
     ModelSaver(),
-		# backup the model with best validation error
-		MinSaver('val-error-top1'),
+    # backup the model with best validation error
+    MinSaver('val-error-top1'),
     # run inference on another Dataflow every epoch, compute top1/top5 classification error and save them in log
     InferenceRunner(dataset_val, [
         ClassificationError('wrong-top1', 'val-error-top1'),
@@ -48,8 +52,8 @@ TrainConfig(
     ProgressBar(),
     # run `tf.summary.merge_all` every epoch and send results to monitors
     MergeAllSummaries(),
-		# run ops in GraphKeys.UPDATE_OPS collection along with training, if any
-		RunUpdateOps(),
+    # run ops in GraphKeys.UPDATE_OPS collection along with training, if any
+    RunUpdateOps(),
   ],
   monitors=[        # monitors are a special kind of callbacks. these are also enabled by default
     # write all monitor data to tensorboard
