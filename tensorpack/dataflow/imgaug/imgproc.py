@@ -7,7 +7,7 @@ import numpy as np
 import cv2
 
 __all__ = ['Hue', 'Brightness', 'Contrast', 'MeanVarianceNormalize',
-           'GaussianBlur', 'Gamma', 'Clip', 'Saturation', 'Lighting']
+           'GaussianBlur', 'Gamma', 'Clip', 'Saturation', 'Lighting', 'MinMaxNormalize']
 
 
 class Hue(ImageAugmentor):
@@ -98,7 +98,7 @@ class MeanVarianceNormalize(ImageAugmentor):
         Args:
             all_channel (bool): if True, normalize all channels together. else separately.
         """
-        self.all_channel = all_channel
+        self._init(locals())
 
     def _augment(self, img, _):
         img = img.astype('float32')
@@ -232,3 +232,30 @@ class Lighting(ImageAugmentor):
         if old_dtype == np.uint8:
             img = np.clip(img, 0, 255)
         return img.astype(old_dtype)
+
+
+class MinMaxNormalize(ImageAugmentor):
+    """
+    Linearly scales the image to the range [min, max].
+
+    This augmentor always returns float32 images.
+    """
+    def __init__(self, min=0, max=255, all_channel=True):
+        """
+        Args:
+            max (float): The new maximum value
+            min (float): The new minimum value
+            all_channel (bool): if True, normalize all channels together. else separately.
+        """
+        self._init(locals())
+
+    def _augment(self, img, _):
+        img = img.astype('float32')
+        if self.all_channel:
+            minimum = np.min(img)
+            maximum = np.max(img)
+        else:
+            minimum = np.min(img, axis=(0, 1), keepdims=True)
+            maximum = np.max(img, axis=(0, 1), keepdims=True)
+        img = (self.max - self.min) * (img - minimum) / (maximum - minimum) + self.min
+        return img

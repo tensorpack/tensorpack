@@ -8,7 +8,7 @@ from ...utils.argtools import shape2d
 import numpy as np
 import cv2
 
-__all__ = ['Flip', 'Resize', 'RandomResize', 'ResizeShortestEdge']
+__all__ = ['Flip', 'Resize', 'RandomResize', 'ResizeShortestEdge', 'Transpose']
 
 
 class Flip(ImageAugmentor):
@@ -140,3 +140,31 @@ class RandomResize(ImageAugmentor):
         if img.ndim == 3 and ret.ndim == 2:
             ret = ret[:, :, np.newaxis]
         return ret
+
+
+class Transpose(ImageAugmentor):
+    """
+    Random transpose the image
+    """
+    def __init__(self, prob=0.5):
+        """
+        Args:
+            prob (float): probability of transpose.
+        """
+        super(Transpose, self).__init__()
+        self.prob = prob
+        self._init()
+
+    def _get_augment_params(self, img):
+        return self._rand_range() < self.prob
+
+    def _augment(self, img, do):
+        ret = img
+        if do:
+            ret = cv2.transpose(img)
+            if img.ndim == 3 and ret.ndim == 2:
+                ret = ret[:, :, np.newaxis]
+        return ret
+
+    def _fprop_coord(self, coord, param):
+        raise NotImplementedError()
