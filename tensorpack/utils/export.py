@@ -9,7 +9,8 @@ This simplifies the process of exporting a model for TensorFlow serving.
 
 import tensorflow as tf
 from tensorpack.utils import logger
-from tensorpack import TowerContext, ModelDesc
+from tensorpack.tfutils import TowerContext
+from tensorpack.models import ModelDesc
 from tensorpack.tfutils import sessinit
 from tensorflow.python.saved_model import builder as saved_model_builder
 from tensorflow.python.saved_model import signature_constants, signature_def_utils, tag_constants, utils
