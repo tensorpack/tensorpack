@@ -9,13 +9,14 @@ This simplifies the process of exporting a model for TensorFlow serving.
 
 import tensorflow as tf
 from tensorpack.utils import logger
-from tensorpack import *
+from tensorpack import TowerContext, ModelDesc
 from tensorpack.tfutils import sessinit
 from tensorflow.python.saved_model import builder as saved_model_builder
 from tensorflow.python.saved_model import signature_constants, signature_def_utils, tag_constants, utils
 
 
 __all__ = ['ModelExport']
+
 
 class ModelExport(object):
     """Wrapper for tf.saved_model"""
@@ -25,7 +26,7 @@ class ModelExport(object):
         Example:
 
             .. code-block:: python
-                from mnist_simple import Model
+                from mnist_superresolution import Model
                 from exporter import ModelExport
 
                 e = ModelExport(Model, ['lowres'], ['prediction'])
