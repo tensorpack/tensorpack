@@ -167,6 +167,7 @@ class LMDBDataPoint(MapData):
         Args:
             args, kwargs: Same as in :class:`LMDBData`.
         """
+        ds = LMDBData(*args, **kwargs)
         def f(dp):
             return loads(dp[1])
         super(LMDBDataPoint, self).__init__(ds, f)
