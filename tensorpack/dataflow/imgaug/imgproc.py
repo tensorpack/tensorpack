@@ -259,4 +259,3 @@ class MinMaxNormalize(ImageAugmentor):
             maximum = np.max(img, axis=(0, 1), keepdims=True)
         img = (self.max - self.min) * (img - minimum) / (maximum - minimum) + self.min
         return img
-
