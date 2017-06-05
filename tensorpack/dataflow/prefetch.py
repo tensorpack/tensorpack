@@ -127,6 +127,8 @@ class PrefetchDataZMQ(ProxyDataFlow):
             self._size = -1
         self.nr_proc = nr_proc
 
+        logger.info('Use %i processes for prefetching.' % nr_proc)
+
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.PULL)
 
