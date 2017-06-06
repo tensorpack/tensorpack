@@ -9,11 +9,8 @@ This simplifies the process of exporting a model for TensorFlow serving.
 
 import tensorflow as tf
 from tensorpack.utils import logger
-from tensorpack.tfutils import TowerContext
 from tensorpack.models import ModelDesc
-from tensorpack.tfutils import sessinit
-from tensorflow.python.saved_model import builder as saved_model_builder
-from tensorflow.python.saved_model import signature_constants, signature_def_utils, tag_constants, utils
+from tensorpack.tfutils import TowerContext, sessinit
 
 
 __all__ = ['ModelExport']
@@ -69,7 +66,7 @@ class ModelExport(object):
         self.output_names = output_names
         self.input_names = input_names
 
-    def build(self, checkpoint, export_path, version=1, tags=[tag_constants.SERVING],
+    def build(self, checkpoint, export_path, version=1, tags=[tf.saved_model.tag_constants.SERVING],
               signature_name='prediction_pipeline'):
         """Use SavedModelBuilder to export a trained model without TensorPack depency.
 
@@ -112,24 +109,24 @@ class ModelExport(object):
                 self.outputs.append(tensor)
 
             logger.info('[export] exporting trained model to %s' % export_path)
-            builder = saved_model_builder.SavedModelBuilder(export_path)
+            builder = tf.saved_model.builder.SavedModelBuilder(export_path)
 
             logger.info('[export] build signatures')
             # build inputs
             inputs_signature = dict()
             for n, v in zip(self.input_names, self.inputs):
                 logger.info('[export] add input signature: %s' % v)
-                inputs_signature[n] = utils.build_tensor_info(v)
+                inputs_signature[n] = tf.saved_model.utils.build_tensor_info(v)
 
             outputs_signature = dict()
             for n, v in zip(self.output_names, self.outputs):
                 logger.info('[export] add output signature: %s' % v)
-                outputs_signature[n] = utils.build_tensor_info(v)
+                outputs_signature[n] = tf.saved_model.utils.build_tensor_info(v)
 
-            prediction_signature = signature_def_utils.build_signature_def(
+            prediction_signature = tf.saved_model.signature_def_utils.build_signature_def(
                 inputs=inputs_signature,
                 outputs=outputs_signature,
-                method_name=signature_constants.PREDICT_METHOD_NAME)
+                method_name=tf.saved_model.signature_constants.PREDICT_METHOD_NAME)
 
             # legacy_init_op = tf.group(tf.tables_initializer(), name='legacy_init_op')
 
