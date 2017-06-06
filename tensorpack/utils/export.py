@@ -28,8 +28,7 @@ class ModelExport(object):
                 from tensorpack.utils import export
 
                 e = ModelExport(Model(), ['lowres'], ['prediction'])
-                e.build('train_log/mnist_superresolution/checkpoint', 'export/first_export')
-                e.export()
+                e.export('train_log/mnist_superresolution/checkpoint', 'export/first_export')
 
             Will generate a model for TensorFlow serving with input 'lowres' and
             output 'prediction'. The model is in the directory 'export' and can be
@@ -66,8 +65,8 @@ class ModelExport(object):
         self.output_names = output_names
         self.input_names = input_names
 
-    def build(self, checkpoint, export_path, version=1, tags=[tf.saved_model.tag_constants.SERVING],
-              signature_name='prediction_pipeline'):
+    def export(self, checkpoint, export_path, version=1, tags=[tf.saved_model.tag_constants.SERVING],
+               signature_name='prediction_pipeline'):
         """Use SavedModelBuilder to export a trained model without TensorPack depency.
 
         Remarks:
