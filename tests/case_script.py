@@ -52,7 +52,7 @@ class PythonScript(threading.Thread):
         else:
             # something unexpected happend here, this script was supposed to survive at leat the timeout
             if len(self.err) is not 0:
-                stderr = "\n" * 5 + self.err
+                stderr = "\n\n\n\n\n %s" % self.err
                 raise AssertionError(stderr)
 
 
