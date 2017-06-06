@@ -4,7 +4,6 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
-from tensorflow.python.training import training_util
 from six.moves import map
 from ..utils.argtools import graph_memoized
 
@@ -67,7 +66,7 @@ def get_global_step_var():
                               trainable=False, dtype=tf.int64)
         tf.add_to_collection(tf.GraphKeys.GLOBAL_STEP, var)
     else:
-        var = training_util.get_or_create_global_step()
+        var = tf.train.get_or_create_global_step()
     return var
 
 

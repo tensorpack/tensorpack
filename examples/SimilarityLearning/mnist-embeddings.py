@@ -11,7 +11,6 @@ import tensorpack.tfutils.symbolic_functions as symbf
 from tensorpack.tfutils.summary import add_moving_summary
 
 import tensorflow as tf
-from tensorflow.python.platform import flags
 import tensorflow.contrib.slim as slim
 
 from embedding_data import get_test_data, MnistPairs, MnistTriplets
@@ -26,11 +25,11 @@ except ImportError:
     MATPLOTLIB_AVAIBLABLE = False
 
 
-FLAGS = flags.FLAGS
-tf.app.flags.DEFINE_string('load', "", 'load model')
-tf.app.flags.DEFINE_integer('gpu', 0, 'used gpu')
-tf.app.flags.DEFINE_string('algorithm', "siamese", 'algorithm')
-tf.app.flags.DEFINE_boolean('visualize', False, 'show embedding')
+FLAGS = tf.flags.FLAGS
+tf.flags.DEFINE_string('load', "", 'load model')
+tf.flags.DEFINE_integer('gpu', 0, 'used gpu')
+tf.flags.DEFINE_string('algorithm', "siamese", 'algorithm')
+tf.flags.DEFINE_boolean('visualize', False, 'show embedding')
 
 
 class EmbeddingModel(ModelDesc):
