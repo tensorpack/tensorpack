@@ -1,4 +1,5 @@
 numpy
+opencv-python
 six
 termcolor>=1.1
 tabulate>=0.7.7
