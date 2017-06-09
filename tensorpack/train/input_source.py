@@ -161,7 +161,7 @@ class FeedfreeInput(InputSource):
     e.g. by queue or other operations. """
 
     def reset_state(self):
-        # TODO cannot reset
+        # TODO no state to reset
         pass
 
     def next_feed(self):
@@ -212,17 +212,19 @@ class QueueInput(FeedfreeInput):
         And the model receives dequeued tensors.
     """
 
-    def __init__(self, ds, queue=None):
+    def __init__(self, ds, queue=None, names=None):
         """
         Args:
             ds(DataFlow): the input DataFlow.
             queue (tf.QueueBase): A :class:`tf.QueueBase` whose type
                 should match the corresponding InputDesc of the model.
                 Defaults to a FIFO queue of size 50.
+            names(list[str]): list of input names corresponding to the dataflow.
         """
         assert isinstance(ds, DataFlow), ds
         self.queue = queue
         self.ds = ds
+        self._names = names
 
     def size(self):
         return self.ds.size()
@@ -231,13 +233,17 @@ class QueueInput(FeedfreeInput):
     def setup(self, model):
         logger.info("Setting up the queue for CPU prefetching ...")
         self.input_placehdrs = model.get_reused_placehdrs()
-        assert len(self.input_placehdrs) > 0, \
-            "QueueInput has to be used with some InputDesc!"
+        if self._names is None:
+            self._queue_feedpoint = self.input_placehdrs
+        else:
+            self._queue_feedpoint = get_placeholders_by_names(self.input_placehdrs, self._names)
+        assert len(self._queue_feedpoint) > 0, \
+            "QueueInput has to be used with some inputs!"
         if self.queue is None:
             self.queue = tf.FIFOQueue(
-                50, [x.dtype for x in self.input_placehdrs],
+                50, [x.dtype for x in self._queue_feedpoint],
                 name='input_queue')
-        self.thread = EnqueueThread(self.queue, self.ds, self.input_placehdrs)
+        self.thread = EnqueueThread(self.queue, self.ds, self._queue_feedpoint)
 
     def setup_training(self, trainer):
         super(QueueInput, self).setup_training(trainer)
@@ -250,10 +256,13 @@ class QueueInput(FeedfreeInput):
             ret = self.queue.dequeue(name='input_deque')
             if isinstance(ret, tf.Tensor):  # only one input
                 ret = [ret]
-            assert len(ret) == len(self.input_placehdrs)
-            for qv, v in zip(ret, self.input_placehdrs):
+            assert len(ret) == len(self._queue_feedpoint)
+            for qv, v in zip(ret, self._queue_feedpoint):
                 qv.set_shape(v.get_shape())
-            return ret
+            if self._names is None:
+                return ret
+            else:
+                return get_tensors_inputs(self.input_placehdrs, ret, self._names)
 
 
 class BatchQueueInput(FeedfreeInput):

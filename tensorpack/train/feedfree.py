@@ -119,10 +119,10 @@ def QueueInputTrainer(config, input_queue=None):
         input_queue (tf.QueueBase): an input queue. Defaults to the
             :class:`QueueInput` default.
     """
-    if config.dataflow is not None:
-        config.data = QueueInput(config.dataflow, input_queue)
-    else:
+    if config.data is not None:
         assert isinstance(config.data, QueueInput), config.data
+    else:
+        config.data = QueueInput(config.dataflow, input_queue)
 
     # debug
     # from tensorpack.train.input_source import StagingInputWrapper, DummyConstantInput

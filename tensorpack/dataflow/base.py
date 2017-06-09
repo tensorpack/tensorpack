@@ -71,3 +71,6 @@ class ProxyDataFlow(DataFlow):
 
     def size(self):
         return self.ds.size()
+
+    def get_data(self):
+        return self.ds.get_data()

@@ -5,6 +5,7 @@
 from __future__ import division
 import numpy as np
 from copy import copy
+import itertools
 from termcolor import colored
 from collections import deque, defaultdict
 from six.moves import range, map
@@ -623,7 +624,6 @@ class PrintData(ProxyDataFlow):
         super(PrintData, self).__init__(ds)
         self.num = num
         self.label = label
-        self.print_info()
 
     def _analyze_input_data(self, el, k, depth=1):
         """
@@ -670,30 +670,8 @@ class PrintData(ProxyDataFlow):
         """
         Dump gathered debugging information to stdout.
         """
-        def cutoff(gen, num=1):
-            """
-            Stop a generator after n iterations.
-
-            Args:
-                gen (PyGenObject): arbitrary generator
-                num (int, optional): number of maximal iterations
-
-            Yields:
-                element from generator object
-            """
-
-            c = 0
-            for el in gen:
-                yield el
-                c += 1
-                if c == num:
-                    break
-
-        ds = self.ds
-        ds.reset_state()
-
         msg = [""]
-        for i, dummy in enumerate(cutoff(ds.get_data(), self.num)):
+        for i, dummy in enumerate(itertools.islice(self.ds.get_data(), self.num)):
             if isinstance(dummy, list):
                 msg.append("datapoint %i<%i with %i components consists of" % (i, self.num, len(dummy)))
                 for k, entry in enumerate(dummy):
@@ -701,7 +679,9 @@ class PrintData(ProxyDataFlow):
         label = "" if self.label is "" else " (" + self.label + ")"
         logger.info(colored("DataFlow Info%s:" % label, 'cyan') + '\n'.join(msg))
 
+        # reset again after print
         self.ds.reset_state()
 
-    def get_data(self):
-        return self.ds.get_data()
+    def reset_state(self):
+        super(PrintData, self).reset_state()
+        self.print_info()
