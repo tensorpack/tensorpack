@@ -7,9 +7,13 @@ import numpy as np
 import os
 import sys
 import io
-import cv2
 from .fs import mkdir_p
 from .argtools import shape2d
+
+try:
+    import cv2
+except ImportError:
+    pass
 
 
 __all__ = ['pyplot2img', 'interactive_imshow',

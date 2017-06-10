@@ -3,11 +3,9 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import numpy as np
-import cv2
 import copy as copy_mod
 from .base import RNGDataFlow
 from .common import MapDataComponent, MapData
-from .imgaug import AugmentorList
 from ..utils import logger
 from ..utils.argtools import shape2d
 
@@ -139,3 +137,13 @@ class AugmentImageComponents(MapData):
     def reset_state(self):
         self.ds.reset_state()
         self.augs.reset_state()
+
+
+try:
+    import cv2
+    from .imgaug import AugmentorList
+except ImportError:
+    from ..utils.develop import create_dummy_class
+    ImageFromFile = create_dummy_class('ImageFromFile', 'cv2')  # noqa
+    AugmentImageComponent = create_dummy_class('AugmentImageComponent', 'cv2')  # noqa
+    AugmentImageComponents = create_dummy_class('AugmentImageComponents', 'cv2')  # noqa

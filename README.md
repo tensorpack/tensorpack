@@ -59,7 +59,7 @@ Dependencies:
 
 + Python 2 or 3
 + TensorFlow >= 1.0.0 (>=1.1.0 for Multi-GPU)
-+ Python bindings for OpenCV
++ Python bindings for OpenCV (Optional, but required by a lot of features)
 ```
 pip install -U git+https://github.com/ppwwyyxx/tensorpack.git
 # or add `--user` to avoid system-wide installation.

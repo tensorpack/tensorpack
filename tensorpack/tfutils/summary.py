@@ -4,7 +4,6 @@
 
 import six
 import tensorflow as tf
-import cv2
 import re
 from six.moves import range
 
@@ -169,3 +168,10 @@ def add_moving_summary(v, *args, **kwargs):
             tf.summary.scalar(name + '-summary', averager.average(c))
 
     tf.add_to_collection(coll, avg_maintain_op)
+
+
+try:
+    import cv2
+except ImportError:
+    from ..utils.develop import create_dummy_func
+    create_image_summary = create_dummy_func('create_image_summary', 'cv2')  # noqa

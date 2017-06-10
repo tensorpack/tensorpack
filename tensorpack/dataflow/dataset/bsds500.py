@@ -5,7 +5,6 @@
 
 import os
 import glob
-import cv2
 import numpy as np
 
 from ...utils.fs import download, get_dataset_path
@@ -90,9 +89,10 @@ class BSDS500(RNGDataFlow):
 
 try:
     from scipy.io import loadmat
+    import cv2
 except ImportError:
     from ...utils.develop import create_dummy_class
-    BSDS500 = create_dummy_class('BSDS500', 'scipy.io')  # noqa
+    BSDS500 = create_dummy_class('BSDS500', ['scipy.io', 'cv2'])  # noqa
 
 if __name__ == '__main__':
     a = BSDS500('val')

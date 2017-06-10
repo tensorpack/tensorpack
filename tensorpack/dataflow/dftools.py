@@ -5,7 +5,6 @@
 import sys
 import os
 import multiprocessing as mp
-import cv2
 from six.moves import range
 
 from .base import DataFlow
@@ -161,3 +160,9 @@ try:
 except ImportError:
     dump_dataflow_to_tfrecord = create_dummy_func(  # noqa
         'dump_dataflow_to_tfrecord', 'tensorflow')
+
+try:
+    import cv2
+except ImportError:
+    dump_dataflow_images = create_dummy_func(  # noqa
+        'dump_dataflow_images', 'cv2')

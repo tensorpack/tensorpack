@@ -77,7 +77,6 @@ def get_feature(f):
 
 
 class RawTIMIT(DataFlow):
-
     def __init__(self, dirname, label='phoneme'):
         self.dirname = dirname
         assert os.path.isdir(dirname), dirname
@@ -103,6 +102,7 @@ class RawTIMIT(DataFlow):
 
 def compute_mean_std(db, fname):
     ds = LMDBDataPoint(db, shuffle=False)
+    ds.reset_state()
     o = OnlineMoments()
     with get_tqdm(total=ds.size()) as bar:
         for dp in ds.get_data():

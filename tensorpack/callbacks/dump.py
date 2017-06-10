@@ -3,7 +3,6 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import os
-import cv2
 import numpy as np
 
 from .base import Callback
@@ -65,3 +64,10 @@ class DumpParamAsImage(Callback):
         res = im * self.scale
         res = np.clip(res, 0, 255)
         cv2.imwrite(fname, res.astype('uint8'))
+
+
+try:
+    import cv2
+except ImportError:
+    from ..utils.develop import create_dummy_class
+    DumpParamAsImage = create_dummy_class('DumpParamAsImage', 'cv2')  # noqa

@@ -4,7 +4,6 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 import os
 import tarfile
-import cv2
 import six
 import numpy as np
 import xml.etree.ElementTree as ET
@@ -226,6 +225,12 @@ class ILSVRC12(RNGDataFlow):
             logger.info("{}/{} images have bounding box.".format(cnt, len(imglist)))
         return ret
 
+
+try:
+    import cv2
+except ImportError:
+    from ...utils.develop import create_dummy_class
+    ILSVRC12 = create_dummy_class('ILSVRC12', 'cv2')  # noqa
 
 if __name__ == '__main__':
     meta = ILSVRCMeta()

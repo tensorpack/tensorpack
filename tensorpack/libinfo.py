@@ -1,6 +1,9 @@
 
-# issue#1924 may happen on old systems
-import cv2  # noqa
+try:
+    # issue#1924 may happen on old systems
+    import cv2  # noqa
+except ImportError:
+    pass
 import os
 
 # issue#7378 may happen with custom opencv. It doesn't hurt to disable opencl

@@ -36,11 +36,14 @@ def create_dummy_func(func, dependency):
 
     Args:
         func (str): name of the function.
-        dependency (str): name of the dependency.
+        dependency (str or list[str]): name(s) of the dependency.
 
     Returns:
         function: a function object
     """
+    if isinstance(dependency, (list, str)):
+        dependency = ','.join(dependency)
+
     def _dummy(*args, **kwargs):
         raise ImportError("Cannot import '{}', therefore '{}' is not available".format(dependency, func))
     return _dummy
