@@ -353,7 +353,7 @@ def intensity_to_rgb(intensity, cmap='cubehelix', normalize=False):
 from ..utils.develop import create_dummy_func   # noqa
 try:
     import matplotlib.pyplot as plt
-except ImportError:
+except (ImportError, RuntimeError):
     pyplot2img = create_dummy_func('pyplot2img', 'matplotlib')    # noqa
     intensity_to_rgb = create_dummy_func('intensity_to_rgb', 'matplotlib')    # noqa
 

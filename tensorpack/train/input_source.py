@@ -379,9 +379,10 @@ class DummyConstantInput(TensorInput):
             assert ctx is not None
             assert len(self.shapes) == len(self.input_placehdrs)
             for idx, p in enumerate(self.input_placehdrs):
-                tlist.append(tf.get_variable(
-                    'dummy-{}-{}'.format(p.op.name, ctx.index), shape=self.shapes[idx],
-                    dtype=p.dtype, trainable=False))
+                tlist.append(tf.constant(
+                    0, dtype=p.dtype,
+                    name='dummy-{}-{}'.format(p.op.name, ctx.index),
+                    shape=self.shapes[idx]))
             return tlist
         super(DummyConstantInput, self).__init__(fn)
 

@@ -40,6 +40,8 @@ class RunOp(Callback):
 
     def _setup_graph(self):
         self._op = self.setup_func()
+        if self.run_step:
+            self._fetch = tf.train.SessionRunArgs(fetches=self._op)
 
     def _before_train(self):
         if self.run_before:
@@ -54,7 +56,7 @@ class RunOp(Callback):
     def _before_run(self, _):
         if self.run_step:
             self._print()
-            return [self._op]
+            return self._fetch  # faster than return [self._op]
 
     def _print(self):
         if self.verbose:
