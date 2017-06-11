@@ -17,7 +17,7 @@ from ..callbacks.graph import RunOp
 
 from .base import Trainer
 from .feedfree import SingleCostFeedfreeTrainer
-from .input_source import QueueInput, StagingInputWrapper
+from .input_source import QueueInput, StagingInputWrapper, DummyConstantInput
 
 __all__ = ['MultiGPUTrainerBase', 'SyncMultiGPUTrainer',
            'AsyncMultiGPUTrainer', 'LeastLoadedDeviceSetter',
@@ -38,7 +38,7 @@ def apply_prefetch_policy(config, use_stage=True):
         assert tf.test.is_gpu_available()
 
         # seem to only improve on >1 GPUs
-        if not isinstance(config.data, StagingInputWrapper):
+        if not isinstance(config.data, (StagingInputWrapper, DummyConstantInput)):
             devices = ['/gpu:{}'.format(k) for k in config.tower]
             config.data = StagingInputWrapper(config.data, devices)
 
@@ -241,8 +241,9 @@ class SyncMultiGPUTrainerReplicated(MultiGPUTrainerBase, SingleCostFeedfreeTrain
 
                 grads_for_a_var = []
                 for (_, v), g in zip(grad_and_vars, summed):
-                    g = tf.multiply(g, 1.0 / nr_tower)
-                    grads_for_a_var.append((g, v))
+                    with tf.device(g.device):
+                        g = tf.multiply(g, 1.0 / nr_tower)
+                        grads_for_a_var.append((g, v))
                 new_tower_grads.append(grads_for_a_var)
         # NVar * NGPU * 2
         return new_tower_grads

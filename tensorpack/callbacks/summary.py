@@ -5,6 +5,7 @@
 
 import tensorflow as tf
 
+from ..utils import logger
 from ..utils.naming import MOVING_SUMMARY_OPS_KEY
 from .base import Callback
 
@@ -26,10 +27,12 @@ class MovingAverageSummary(Callback):
 
     def _setup_graph(self):
         ops = tf.get_collection(self._collection)
+        logger.info("Maintain moving averages of {} ops.".format(len(ops)))
         self.ema_op = tf.group(*ops, name='summary_moving_averages')
+        self._fetch = tf.train.SessionRunArgs(fetches=self.ema_op)
 
     def _before_run(self, _):
-        return [self.ema_op]
+        return self._fetch
 
 
 class MergeAllSummaries_RunAlone(Callback):
