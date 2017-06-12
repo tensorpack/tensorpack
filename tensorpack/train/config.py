@@ -78,13 +78,9 @@ class TrainConfig(object):
 
         if callbacks is None:
             callbacks = []
-        if isinstance(callbacks, Callbacks):
-            # keep quiet now because I haven't determined the final API yet.
-            log_deprecated(
-                "TrainConfig(callbacks=Callbacks([...]))",
-                "Change the argument 'callbacks=' to a *list* of callbacks without StatPrinter().")
-
-            callbacks = callbacks.cbs[:-1]  # the last one is StatPrinter()
+        assert not isinstance(callbacks, Callbacks), \
+            "TrainConfig(callbacks=Callbacks([...]))" \
+            "Change the argument 'callbacks=' to a *list* of callbacks without StatPrinter()."
         assert_type(callbacks, list)
         if extra_callbacks is None:
             extra_callbacks = [

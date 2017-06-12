@@ -6,16 +6,8 @@ import os
 
 from .base import Callback
 from ..utils import logger
-from ..utils.develop import log_deprecated
 
-__all__ = ['StatPrinter', 'SendStat']
-
-
-class StatPrinter(Callback):
-    def __init__(self, print_tag=None):
-        log_deprecated("StatPrinter",
-                       "No need to add StatPrinter to callbacks anymore!",
-                       "2017-05-26")
+__all__ = ['SendStat']
 
 
 class SendStat(Callback):

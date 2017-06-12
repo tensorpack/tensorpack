@@ -8,7 +8,6 @@ import time
 import traceback
 
 from .base import Callback
-from .stats import StatPrinter
 from .hooks import CallbackToHook
 from ..utils import logger
 
@@ -57,18 +56,6 @@ class Callbacks(Callback):
         # check type
         for cb in cbs:
             assert isinstance(cb, Callback), cb.__class__
-        # move "StatPrinter" to the last
-        # TODO don't need to manually move in the future.
-        for idx, cb in enumerate(cbs):
-            if isinstance(cb, StatPrinter):
-                sp = cb
-                cbs.remove(sp)
-                cbs.append(sp)
-                if idx != len(cbs) - 1:
-                    logger.warn("StatPrinter should appear as the last element of callbacks! "
-                                "This is now fixed automatically, but may not work in the future.")
-                break
-
         self.cbs = cbs
 
     def _setup_graph(self):
