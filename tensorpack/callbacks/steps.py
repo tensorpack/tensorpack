@@ -106,14 +106,16 @@ class ProgressBar(Callback):
             self._fetches = tf.train.SessionRunArgs(self._fetches)
             self._tqdm_args['bar_format'] = self._tqdm_args['bar_format'] + "{postfix} "
 
+    def _before_epoch(self):
+        self._bar = tqdm.trange(self._total, **self._tqdm_args)
+
+    def _after_epoch(self):
+        self._bar.close()
+
     def _before_run(self, _):
         # update progress bar when local step changed (one step is finished)
         if self.local_step != self._last_updated:
             self._last_updated = self.local_step
-
-            if self.local_step == 0:
-                self._bar = tqdm.trange(self._total, **self._tqdm_args)
-
             return self._fetches
         else:
             return None
@@ -125,8 +127,6 @@ class ProgressBar(Callback):
 
     def _trigger_step(self):
         self._bar.update()
-        if self.local_step == self._total - 1:
-            self._bar.close()
 
     def _after_train(self):
         if self._bar:       # training may get killed before the first step

@@ -104,6 +104,14 @@ class Callbacks(Callback):
                 cb.trigger_epoch()
         tm.log()
 
+    def _before_epoch(self):
+        for cb in self.cbs:
+            cb.before_epoch()
+
+    def _after_epoch(self):
+        for cb in self.cbs:
+            cb.after_epoch()
+
     def append(self, cb):
         assert isinstance(cb, Callback)
         self.cbs.append(cb)

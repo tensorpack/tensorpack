@@ -174,11 +174,13 @@ class Trainer(object):
                         self.config.starting_epoch, self.config.max_epoch + 1):
                     logger.info("Start Epoch {} ...".format(self.epoch_num))
                     start_time = time.time()
+                    self._callbacks.before_epoch()
                     for self.local_step in range(self.config.steps_per_epoch):
                         if self.hooked_sess.should_stop():
                             return
                         self.run_step()  # implemented by subclass
                         self._callbacks.trigger_step()
+                    self._callbacks.after_epoch()
                     logger.info("Epoch {} (global_step {}) finished, time:{:.2f} sec.".format(
                         self.epoch_num, self.global_step, time.time() - start_time))
 

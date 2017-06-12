@@ -59,12 +59,33 @@ class Callback(object):
     def _before_train(self):
         """
         Called right before the first iteration. The main difference to
-        `setup_graph` is that at this point the graph is finalized and a
-        default session is initialized.
+        `setup_graph` is that at this point the graph is finalized and a default session is initialized.
         Override this method to, e.g. run some operations under the session.
 
         This is similar to ``tf.train.SessionRunHook.after_create_session()``, but different:
         it is called after the session is initialized by :class:`tfutils.SessionInit`.
+        """
+        pass
+
+    def before_epoch(self):
+        self._before_epoch()
+
+    def _before_epoch(self):
+        """
+        Called right before each epoch.
+        Usually you should use the :meth:`trigger` callback to run something between epochs.
+        Use this method only when something really needs to be run **immediately** before each epoch.
+        """
+        pass
+
+    def after_epoch(self):
+        self._after_epoch()
+
+    def _after_epoch(self):
+        """
+        Called right after each epoch.
+        Usually you should use the :meth:`trigger` callback to run something between epochs.
+        Use this method only when something really needs to be run **immediately** after each epoch.
         """
         pass
 
@@ -92,9 +113,6 @@ class Callback(object):
         registers some extra op/tensors to run in the next call.
         This method is the same as ``tf.train.SessionRunHook.before_run``.
         Refer to TensorFlow docs for more details.
-
-        An extra feature is that you can also simply return a list of names,
-        instead of a ``tf.train.SessionRunArgs``.
         """
         return None
 
@@ -212,6 +230,12 @@ class ProxyCallback(Callback):
 
     def _after_train(self):
         self.cb.after_train()
+
+    def _before_epoch(self):
+        self.cb.before_epoch()
+
+    def _after_epoch(self):
+        self.cb.after_epoch()
 
     def _before_run(self, ctx):
         self.cb._before_run(ctx)

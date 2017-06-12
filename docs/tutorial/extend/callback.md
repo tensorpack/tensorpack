@@ -11,9 +11,11 @@ def main_loop():
   # start training:
   callbacks.before_train()
   for epoch in range(epoch_start, epoch_end):
+		callbacks.before_epoch()
     for step in range(steps_per_epoch):
       run_step()  # callbacks.{before,after}_run are hooked with session
       callbacks.trigger_step()
+		callbacks.after_epoch()
     callbacks.trigger_epoch()
   callbacks.after_train()
 ```
