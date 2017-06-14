@@ -3,11 +3,13 @@
 # File: loadcaffe.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
+import sys
 import numpy as np
 import os
 
 from .utils import change_env
 from .fs import download, get_dataset_path
+from .concurrency import subproc_call
 from . import logger
 
 __all__ = ['load_caffe', 'get_caffe_pb']
@@ -123,6 +125,20 @@ def get_caffe_pb():
     if not os.path.isfile(caffe_pb_file):
         download(CAFFE_PROTO_URL, dir)
         assert os.path.isfile(os.path.join(dir, 'caffe.proto'))
+
+        if sys.version_info.major == 3:
+            cmd = "protoc --version"
+            version, ret = subproc_call(cmd, timeout=3)
+            if ret != 0:
+                sys.exit(1)
+            try:
+                version = version.decode('utf-8')
+                version = float('.'.join(version.split(' ')[1].split('.')[:2]))
+                assert version >= 2.7, "Require protoc>=2.7 for Python3"
+            except:
+                logger.exception("protoc --version gives: " + str(version))
+                raise
+
         cmd = 'cd {} && protoc caffe.proto --python_out .'.format(dir)
         ret = os.system(cmd)
         assert ret == 0, \

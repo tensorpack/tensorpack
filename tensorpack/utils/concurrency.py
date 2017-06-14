@@ -193,21 +193,27 @@ def start_proc_mask_signal(proc):
 def subproc_call(cmd, timeout=None):
     """
     Execute a command with timeout, and return both STDOUT/STDERR.
+
     Args:
         cmd(str): the command to execute.
         timeout(float): timeout in seconds.
+
+    Returns:
+        output(str), retcode(int). If timeout, retcode is -1.
     """
     try:
         output = subprocess.check_output(
             cmd, stderr=subprocess.STDOUT,
             shell=True, timeout=timeout)
-        return output
+        return output, 0
     except subprocess.TimeoutExpired as e:
         logger.warn("Command timeout!")
         logger.warn(e.output)
+        return e.output, -1
     except subprocess.CalledProcessError as e:
         logger.warn("Commnad failed: {}".format(e.returncode))
         logger.warn(e.output)
+        return e.output, e.returncode
 
 
 class OrderedContainer(object):
