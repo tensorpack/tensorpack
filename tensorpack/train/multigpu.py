@@ -325,9 +325,10 @@ class AsyncMultiGPUTrainer(MultiGPUTrainerBase, SingleCostFeedfreeTrainer):
 
         train_ops = []
         opt = self.model.get_optimizer()
-        for i in range(self.config.nr_tower):
-            with tf.device(raw_devices[i]):
-                grad_and_vars = grad_list[i]
+        for i, grad_and_vars in enumerate(zip(*grad_list)):
+            # Ngpu x 2
+            v = grad_and_vars[0][1]
+            with tf.device(v.device):
                 train_ops.append(opt.apply_gradients(
                     grad_and_vars, name='apply_grad_{}'.format(i)))
         self.train_op = tf.group(*train_ops, name='train_op')
