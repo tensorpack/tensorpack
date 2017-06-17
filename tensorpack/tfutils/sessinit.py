@@ -82,15 +82,17 @@ class SaverRestore(SessionInit):
     """
     Restore a tensorflow checkpoint saved by :class:`tf.train.Saver` or :class:`ModelSaver`.
     """
-    def __init__(self, model_path, prefix=None):
+    def __init__(self, model_path, prefix=None, ignore=[]):
         """
         Args:
             model_path (str): a model name (model-xxxx) or a ``checkpoint`` file.
             prefix (str): during restore, add a ``prefix/`` for every variable in this checkpoint
+            ignore (list[str]): list of tensor names that should be ignored during loading, e.g. learning-rate
         """
         model_path = get_checkpoint_path(model_path)
         self.path = model_path
         self.prefix = prefix
+        self.ignore = [i if i.endswith(':0') else i + ':0' for i in ignore]
 
     def _setup_graph(self):
         dic = self._get_restore_dict()
@@ -114,13 +116,16 @@ class SaverRestore(SessionInit):
         chkpt_vars_used = set()
         for v in graph_vars:
             name = get_savename_from_varname(v.name, varname_prefix=self.prefix)
-            if reader.has_tensor(name):
-                func(reader, name, v)
-                chkpt_vars_used.add(name)
+            if name in self.ignore and reader.has_tensor(name):
+                logger.info("Variable {} in the graph will be not loaded from the checkpoint!".format(name))
             else:
-                vname = v.op.name
-                if not is_training_name(vname):
-                    logger.warn("Variable {} in the graph not found in checkpoint!".format(vname))
+                if reader.has_tensor(name):
+                    func(reader, name, v)
+                    chkpt_vars_used.add(name)
+                else:
+                    vname = v.op.name
+                    if not is_training_name(vname):
+                        logger.warn("Variable {} in the graph not found in checkpoint!".format(vname))
         if len(chkpt_vars_used) < len(chkpt_vars):
             unused = chkpt_vars - chkpt_vars_used
             for name in sorted(unused):
