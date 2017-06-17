@@ -156,7 +156,7 @@ def get_config(model, algorithm_name):
     )
 
 
-def visualize(model_path, model):
+def visualize(model_path, model, algo_name):
     if not MATPLOTLIB_AVAIBLABLE:
         logger.error("visualize requires matplotlib package ...")
         return
@@ -203,7 +203,6 @@ def visualize(model_path, model):
 
     plt.axis([ax_min[0], ax_max[0], ax_min[1], ax_max[1]])
     plt.xticks([]), plt.yticks([])
-    algo_name = FLAGS.algorithm
     plt.title('Embedding using %s-loss' % algo_name)
     plt.savefig('%s.jpg' % algo_name)
 
@@ -226,7 +225,7 @@ if __name__ == '__main__':
 
     with change_gpu(args.gpu):
         if args.visualize:
-            visualize(args.load, ALGO_CONFIGS[args.algorithm])
+            visualize(args.load, ALGO_CONFIGS[args.algorithm], args.algorithm)
         else:
             config = get_config(ALGO_CONFIGS[args.algorithm], args.algorithm)
             if args.load:
