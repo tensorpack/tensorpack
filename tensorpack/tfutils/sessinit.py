@@ -87,7 +87,7 @@ class SaverRestore(SessionInit):
         Args:
             model_path (str): a model name (model-xxxx) or a ``checkpoint`` file.
             prefix (str): during restore, add a ``prefix/`` for every variable in this checkpoint
-            ignore (list): list of tensors that should be ignored during loading, e.g. hiding learning-rate
+            ignore (list[str]): list of tensor names that should be ignored during loading, e.g. learning-rate
         """
         model_path = get_checkpoint_path(model_path)
         self.path = model_path
