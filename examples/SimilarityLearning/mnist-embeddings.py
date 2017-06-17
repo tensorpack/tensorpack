@@ -213,7 +213,7 @@ if __name__ == '__main__':
     parser.add_argument('--load', help='load model')
     parser.add_argument('-a', '--algorithm', help='used algorithm', type=str,
                         choices=["siamese", "cosine", "triplet", "softtriplet"])
-    parser.add_argument('--visualized', help='export embeddings into an image', action='store_true')
+    parser.add_argument('--visualize', help='export embeddings into an image', action='store_true')
     args = parser.parse_args()
 
     ALGO_CONFIGS = {"siamese": SiameseModel,
