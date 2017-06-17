@@ -44,6 +44,8 @@ _RNG_SEED = None
 
 def fix_rng_seed(seed):
     """
+    Call this function at the beginning of program to fix rng seed within tensorpack.
+
     Args:
         seed (int):
 

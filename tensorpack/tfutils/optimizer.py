@@ -41,6 +41,7 @@ def apply_grad_processors(opt, gradprocs):
         opt (tf.train.Optimizer):
         gradprocs (list[GradientProcessor]): gradient processors to add to the
             optimizer.
+
     Returns:
         a :class:`tf.train.Optimizer` instance which runs the gradient
         processors before updating the variables.
