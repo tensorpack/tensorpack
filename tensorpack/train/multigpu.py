@@ -208,7 +208,8 @@ class SyncMultiGPUTrainerParameterServer(MultiGPUTrainerBase, SingleCostFeedfree
 def SyncMultiGPUTrainer(config):
     """
     Alias for ``SyncMultiGPUTrainerParameterServer(config, ps_device='gpu')``,
-    as this is the most commonly used synchronous multigpu trainer.
+    as this is the most commonly used synchronous multigpu trainer (but may
+    not be more efficient than the other).
     """
     return SyncMultiGPUTrainerParameterServer(config, ps_device='gpu')
 

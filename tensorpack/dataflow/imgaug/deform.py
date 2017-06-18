@@ -61,8 +61,9 @@ def np_sample(img, coords):
 
 class GaussianDeform(ImageAugmentor):
     """
-    Some kind of slow deformation.
+    Some kind of slow deformation I made up. Don't count on it.
     """
+
     # TODO input/output with different shape
 
     def __init__(self, anchors, shape, sigma=0.5, randrange=None):

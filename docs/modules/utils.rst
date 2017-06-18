@@ -18,14 +18,6 @@ tensorpack.utils.concurrency module
     :show-inheritance:
 
 
-tensorpack.utils.discretize module
-----------------------------------
-
-.. automodule:: tensorpack.utils.discretize
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 tensorpack.utils.fs module
 --------------------------
 
@@ -54,14 +46,6 @@ tensorpack.utils.logger module
 ------------------------------
 
 .. automodule:: tensorpack.utils.logger
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-tensorpack.utils.lut module
----------------------------
-
-.. automodule:: tensorpack.utils.lut
     :members:
     :undoc-members:
     :show-inheritance:

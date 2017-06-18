@@ -50,10 +50,11 @@ class PythonScript(threading.Thread):
             self.p.kill()  # kill -9
             self.join()
         else:
-            # something unexpected happend here, this script was supposed to survive at leat the timeout
+            # something unexpected happend here, this script was supposed to survive at least the timeout
             if len(self.err) is not 0:
-                stderr = u"\n\n\n\n\n" + self.err.decode('utf-8')
-                raise AssertionError(stderr)
+                output = u"STDOUT: \n\n\n" + self.out.decode('utf-8')
+                output += u"\n\n\n STDERR: \n\n\n" + self.err.decode('utf-8')
+                raise AssertionError(output)
 
 
 class TestPythonScript(unittest.TestCase):

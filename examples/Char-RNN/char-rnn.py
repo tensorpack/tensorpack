@@ -14,7 +14,6 @@ from six.moves import map, range
 
 from tensorpack import *
 from tensorpack.tfutils.gradproc import GlobalNormClip
-from tensorpack.utils.lut import LookUpTable
 from tensorpack.utils.globvars import globalns as param
 
 import tensorflow as tf
@@ -50,16 +49,16 @@ class CharRNNData(RNGDataFlow):
         print(sorted(self.chars))
         self.vocab_size = len(self.chars)
         param.vocab_size = self.vocab_size
-        self.lut = LookUpTable(self.chars)
-        self.whole_seq = np.array(list(map(self.lut.get_idx, data)), dtype='int32')
+        char2idx = {c: i for i, c in enumerate(self.chars)}
+        self.whole_seq = np.array([char2idx[c] for c in data], dtype='int32')
         logger.info("Corpus loaded. Vocab size: {}".format(self.vocab_size))
 
     def size(self):
         return self._size
 
     def get_data(self):
-        random_starts = self.rng.randint(0,
-                                         self.whole_seq.shape[0] - self.seq_length - 1, (self._size,))
+        random_starts = self.rng.randint(
+            0, self.whole_seq.shape[0] - self.seq_length - 1, (self._size,))
         for st in random_starts:
             seq = self.whole_seq[st:st + self.seq_length + 1]
             yield [seq[:-1], seq[1:]]

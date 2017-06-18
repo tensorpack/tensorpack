@@ -4,6 +4,7 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import six
+from .develop import log_deprecated
 
 __all__ = ['LookUpTable']
 
@@ -18,6 +19,7 @@ class LookUpTable(object):
         """
         self.idx2obj = dict(enumerate(objlist))
         self.obj2idx = {v: k for k, v in six.iteritems(self.idx2obj)}
+        log_deprecated("LookUpTable", "It's not related to the library and I'd be surprised if you're using it..")
 
     def size(self):
         return len(self.idx2obj)

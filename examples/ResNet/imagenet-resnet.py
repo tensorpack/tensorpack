@@ -131,9 +131,7 @@ class Model(ModelDesc):
         return tf.train.MomentumOptimizer(lr, 0.9, use_nesterov=True)
 
 
-def get_data(train_or_test, fake=False):
-    if fake:
-        return FakeData([[64, 224, 224, 3], [64]], 1000, random=False, dtype='uint8')
+def get_data(train_or_test):
     isTrain = train_or_test == 'train'
 
     datadir = args.data
@@ -197,8 +195,12 @@ def get_data(train_or_test, fake=False):
 
 
 def get_config(fake=False, data_format='NCHW'):
-    dataset_train = get_data('train', fake=fake)
-    dataset_val = get_data('val', fake=fake)
+    if fake:
+        dataset_train = dataset_val = FakeData(
+            [[64, 224, 224, 3], [64]], 1000, random=False, dtype='uint8')
+    else:
+        dataset_train = get_data('train')
+        dataset_val = get_data('val')
 
     return TrainConfig(
         model=Model(data_format=data_format),
@@ -259,9 +261,11 @@ if __name__ == '__main__':
     NR_GPU = len(args.gpu.split(','))
     BATCH_SIZE = TOTAL_BATCH_SIZE // NR_GPU
 
-    logger.auto_set_dir()
+    logger.set_logger_dir(
+        os.path.join('train_log', 'imagenet-resnet-d' + str(DEPTH)))
+    logger.info("Batch size per GPU: " + str(BATCH_SIZE))
     config = get_config(fake=args.fake, data_format=args.data_format)
     if args.load:
         config.session_init = SaverRestore(args.load)
     config.nr_tower = NR_GPU
-    SyncMultiGPUTrainer(config).train()
+    SyncMultiGPUTrainerParameterServer(config).train()
