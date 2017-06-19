@@ -15,12 +15,13 @@ class Shift(ImageAugmentor):
     """ Random horizontal and vertical shifts """
 
     def __init__(self, horiz_frac=0, vert_frac=0,
-                 border=cv2.BORDER_REPLICATE):
+                 border=cv2.BORDER_REPLICATE, border_value=0):
         """
         Args:
             horiz_frac (float): max abs fraction for horizontal shift
             vert_frac (float): max abs fraction for horizontal shift
             border: cv2 border method
+            border_value: cv2 border value for border=cv2.BORDER_CONSTANT
         """
         assert horiz_frac < 1.0 and vert_frac < 1.0
         super(Shift, self).__init__()
@@ -36,7 +37,7 @@ class Shift(ImageAugmentor):
 
     def _augment(self, img, shift_m):
         ret = cv2.warpAffine(img, shift_m, img.shape[1::-1],
-                             borderMode=self.border)
+                             borderMode=self.border, borderValue=self.border_value)
         if img.ndim == 3 and ret.ndim == 2:
             ret = ret[:, :, np.newaxis]
         return ret
@@ -47,7 +48,7 @@ class Rotation(ImageAugmentor):
 
     def __init__(self, max_deg, center_range=(0, 1),
                  interp=cv2.INTER_LINEAR,
-                 border=cv2.BORDER_REPLICATE, step_deg=None):
+                 border=cv2.BORDER_REPLICATE, step_deg=None, border_value=0):
         """
         Args:
             max_deg (float): max abs value of the rotation angle (in degree).
@@ -57,6 +58,7 @@ class Rotation(ImageAugmentor):
             step_deg (float): if not None, the stepping of the rotation
                 angle. The rotation angle will be a multiple of step_deg. This
                 option requires ``max_deg==180`` and step_deg has to be a divisor of 180)
+            border_value: cv2 border value for border=cv2.BORDER_CONSTANT
         """
         assert step_deg is None or (max_deg == 180 and max_deg % step_deg == 0)
         super(Rotation, self).__init__()
@@ -72,7 +74,7 @@ class Rotation(ImageAugmentor):
 
     def _augment(self, img, rot_m):
         ret = cv2.warpAffine(img, rot_m, img.shape[1::-1],
-                             flags=self.interp, borderMode=self.border)
+                             flags=self.interp, borderMode=self.border, borderValue=self.border_value)
         if img.ndim == 3 and ret.ndim == 2:
             ret = ret[:, :, np.newaxis]
         return ret
