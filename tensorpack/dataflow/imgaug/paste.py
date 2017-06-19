@@ -45,7 +45,7 @@ class ConstantBackgroundFiller(BackgroundFiller):
     def _fill(self, background_shape, img):
         assert img.ndim in [3, 2]
         if img.ndim == 3:
-            return_shape = background_shape + (3,)
+            return_shape = background_shape + (img.shape[2],)
         else:
             return_shape = background_shape
         return np.zeros(return_shape) + self.value
