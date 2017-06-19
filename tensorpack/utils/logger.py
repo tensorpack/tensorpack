@@ -123,13 +123,13 @@ def disable_logger():
         globals()[func] = lambda x: None
 
 
-def auto_set_dir(action=None):
+def auto_set_dir(action=None, name=None):
     """
-    Set log directory to a subdir inside "train_log", with the name being
-    the main python file currently running"""
+    Use :func:`logger.set_logger_dir` to set log directory to
+    "./train_log/{scriptname}:{name}". "scriptname" is the name of the main python file currently running"""
     mod = sys.modules['__main__']
     basename = os.path.basename(mod.__file__)
-    set_logger_dir(
-        os.path.join('train_log',
-                     basename[:basename.rfind('.')]),
-        action=action)
+    auto_dirname = os.path.join('train_log', basename[:basename.rfind('.')])
+    if name:
+        auto_dirname += ':%s' % name
+    set_logger_dir(auto_dirname, action=action)
