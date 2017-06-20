@@ -112,8 +112,6 @@ def get_data(train_or_test, cifar_classnum):
 
 
 def get_config(cifar_classnum):
-    logger.auto_set_dir()
-
     # prepare dataset
     dataset_train = get_data('train', cifar_classnum)
     dataset_test = get_data('test', cifar_classnum)
@@ -145,10 +143,9 @@ if __name__ == '__main__':
 
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
-    else:
-        os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
     with tf.Graph().as_default():
+        logger.set_logger_dir(os.path.join('train_log', 'cifar' + str(args.classnum)))
         config = get_config(args.classnum)
         if args.load:
             config.session_init = SaverRestore(args.load)
@@ -156,7 +153,7 @@ if __name__ == '__main__':
         if args.gpu:
             config.nr_tower = len(args.gpu.split(','))
         nr_gpu = get_nr_gpu()
-        if nr_gpu == 1:
+        if nr_gpu <= 1:
             QueueInputTrainer(config).train()
         else:
             SyncMultiGPUTrainer(config).train()

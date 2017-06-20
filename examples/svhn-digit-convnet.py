@@ -94,7 +94,6 @@ def get_data():
 
 
 def get_config():
-    logger.auto_set_dir()
     data_train, data_test = get_data()
 
     return TrainConfig(
@@ -120,6 +119,7 @@ if __name__ == '__main__':
     else:
         os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
+    logger.auto_set_dir()
     with tf.Graph().as_default():
         config = get_config()
         if args.load:

@@ -60,10 +60,6 @@ ENV_NAME = None
 def get_player(viz=False, train=False, dumpdir=None):
     pl = GymEnv(ENV_NAME, viz=viz, dumpdir=dumpdir)
     pl = MapPlayerState(pl, lambda img: cv2.resize(img, IMAGE_SIZE[::-1]))
-
-    global NUM_ACTIONS
-    NUM_ACTIONS = pl.get_action_space().num_actions()
-
     pl = HistoryFramePlayer(pl, FRAME_HISTORY)
     if not train:
         pl = PreventStuckPlayer(pl, 30, 1)
@@ -201,8 +197,6 @@ class MySimulatorMaster(SimulatorMaster, Callback):
 
 
 def get_config():
-    dirname = os.path.join('train_log', 'train-atari-{}'.format(ENV_NAME))
-    logger.set_logger_dir(dirname)
     M = Model()
 
     name_base = str(uuid.uuid1())[:6]
@@ -251,17 +245,15 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     ENV_NAME = args.env
-    assert ENV_NAME
     logger.info("Environment Name: {}".format(ENV_NAME))
-    p = get_player()
-    del p    # set NUM_ACTIONS
+    NUM_ACTIONS = get_player().get_action_space().num_actions()
+    logger.info("Number of actions: {}".format(NUM_ACTIONS))
 
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
-    if args.task != 'train':
-        assert args.load is not None
 
     if args.task != 'train':
+        assert args.load is not None
         cfg = PredictConfig(
             model=Model(),
             session_init=get_model_loader(args.load),
@@ -277,7 +269,11 @@ if __name__ == '__main__':
                 OfflinePredictor(cfg), args.episode)
             # gym.upload(output, api_key='xxx')
     else:
+        dirname = os.path.join('train_log', 'train-atari-{}'.format(ENV_NAME))
+        logger.set_logger_dir(dirname)
+
         nr_gpu = get_nr_gpu()
+        trainer = QueueInputTrainer
         if nr_gpu > 0:
             if nr_gpu > 1:
                 predict_tower = list(range(nr_gpu))[-nr_gpu // 2:]
@@ -285,12 +281,12 @@ if __name__ == '__main__':
                 predict_tower = [0]
             PREDICTOR_THREAD = len(predict_tower) * PREDICTOR_THREAD_PER_GPU
             train_tower = list(range(nr_gpu))[:-nr_gpu // 2] or [0]
-            logger.info("[BA3C] Train on gpu {} and infer on gpu {}".format(
+            logger.info("[Batch-A3C] Train on gpu {} and infer on gpu {}".format(
                 ','.join(map(str, train_tower)), ','.join(map(str, predict_tower))))
-            trainer = AsyncMultiGPUTrainer
+            if len(train_tower) > 1:
+                trainer = AsyncMultiGPUTrainer
         else:
             logger.warn("Without GPU this model will never learn! CPU is only useful for debug.")
-            nr_gpu = 0
             PREDICTOR_THREAD = 1
             predict_tower, train_tower = [0], [0]
             trainer = QueueInputTrainer
