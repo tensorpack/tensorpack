@@ -44,7 +44,6 @@ class GradientProcessor(object):
             with tf.name_scope(self._name_scope):
                 return self._process(grads)
 
-
     @abstractmethod
     def _process(self, grads):
         pass
