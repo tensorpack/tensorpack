@@ -42,6 +42,11 @@ class StatCounter(object):
         assert len(self._values)
         return max(self._values)
 
+    @property
+    def min(self):
+        assert len(self._values)
+        return min(self._values)
+
 
 class RatioCounter(object):
     """ A counter to count ratio of something. """

@@ -199,7 +199,7 @@ def subproc_call(cmd, timeout=None):
         timeout(float): timeout in seconds.
 
     Returns:
-        output(str), retcode(int). If timeout, retcode is -1.
+        output(bytes), retcode(int). If timeout, retcode is -1.
     """
     try:
         output = subprocess.check_output(
@@ -211,9 +211,12 @@ def subproc_call(cmd, timeout=None):
         logger.warn(e.output)
         return e.output, -1
     except subprocess.CalledProcessError as e:
-        logger.warn("Commnad failed: {}".format(e.returncode))
+        logger.warn("Command failed: {}".format(e.returncode))
         logger.warn(e.output)
         return e.output, e.returncode
+    except Exception:
+        logger.warn("Command failed to run: {}".format(cmd))
+        return "", -2
 
 
 class OrderedContainer(object):
