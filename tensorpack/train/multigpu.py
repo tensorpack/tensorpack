@@ -330,6 +330,7 @@ class AsyncMultiGPUTrainer(MultiGPUTrainerBase, SingleCostFeedfreeTrainer):
             # Ngpu x 2
             v = grad_and_vars[0][1]
             with tf.device(v.device):
+                # will call apply_gradients (therefore gradproc) multiple times
                 train_ops.append(opt.apply_gradients(
                     grad_and_vars, name='apply_grad_{}'.format(i)))
         self.train_op = tf.group(*train_ops, name='train_op')

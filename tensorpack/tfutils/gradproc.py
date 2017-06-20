@@ -23,6 +23,8 @@ class GradientProcessor(object):
 
     Subclass should override the ``_process()`` method.
     """
+    _name_scope = None
+
     def process(self, grads):
         """
         Process the symbolic gradients.
@@ -32,8 +34,16 @@ class GradientProcessor(object):
         Returns:
             list: processed gradients, with the same type as input.
         """
-        with tf.name_scope(type(self).__name__):
-            return self._process(grads)
+
+        # reuse the old name_scope, if process() is called multiple times
+        if self._name_scope is None:
+            with tf.name_scope(type(self).__name__) as scope:
+                self._name_scope = scope
+                return self._process(grads)
+        else:
+            with tf.name_scope(self._name_scope):
+                return self._process(grads)
+
 
     @abstractmethod
     def _process(self, grads):
@@ -67,6 +77,7 @@ class GlobalNormClip(GradientProcessor):
         Args:
             global_norm(float): the threshold to clip with.
         """
+        super(GlobalNormClip, self).__init__()
         self._norm = float(global_norm)
 
     def _process(self, grads):
@@ -101,6 +112,7 @@ class MapGradient(GradientProcessor):
         if not regex.endswith('$'):
             regex = regex + '$'
         self.regex = regex
+        super(MapGradient, self).__init__()
 
     def _process(self, grads):
         ret = []
