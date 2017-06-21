@@ -72,6 +72,13 @@ with TowerContext('', is_training=True):
 	# call any tensorpack layer
 ```
 
+Some layers (in particular ``BatchNorm``) has different train/test time behavior which is controlled
+by ``TowerContext``. If you need to use the tensorpack version of them in test time, you'll need to create the ops for them under another context.
+```python
+with tf.variable_scope(tf.get_variable_scope(), reuse=True), TowerContext('predict', is_training=False):
+	# build the graph again
+```
+
 ### Use Other Symbolic Libraries within Tensorpack
 
 When defining the model you can construct the graph using whatever library you feel comfortable with.
