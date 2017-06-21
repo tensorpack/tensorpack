@@ -464,7 +464,7 @@ class StagingInputWrapper(FeedfreeInput):
                 self.get_stage_op(), self.get_unstage_op(), self._nr_stage))
 
     def setup_staging_areas(self):
-        logger.info("Setting up the StageAreas for GPU prefetching ...")
+        logger.info("Setting up StagingArea for GPU prefetching ...")
         for idx, device in enumerate(self._devices):
             with tf.device(device):
                 inputs = self._input.get_input_tensors()
