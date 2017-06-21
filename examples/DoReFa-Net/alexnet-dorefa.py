@@ -8,7 +8,6 @@ import tensorflow as tf
 import argparse
 import numpy as np
 import multiprocessing
-import msgpack
 import os
 import sys
 

@@ -90,19 +90,17 @@ class LMDBData(RNGDataFlow):
             with timed_operation("Loading LMDB keys ...", log_start=True), \
                     get_tqdm(total=size) as pbar:
                 for k in self._txn.cursor():
-                    assert k[0] != '__keys__'
+                    assert k[0] != b'__keys__'
                     keys.append(k[0])
                     pbar.update()
             return keys
 
-        try:
-            self.keys = loads(self._txn.get('__keys__'))
-        except:
-            self.keys = None
-        else:
+        self.keys = self._txn.get(b'__keys__')
+        if self.keys is not None:
+            self.keys = loads(self.keys)
             self._size -= 1     # delete this item
 
-        if self._shuffle:
+        if self._shuffle:   # keys are necessary when shuffle is True
             if keys is None:
                 if self.keys is None:
                     self.keys = find_keys(self._txn, self._size)
@@ -133,7 +131,7 @@ class LMDBData(RNGDataFlow):
             c = self._txn.cursor()
             while c.next():
                 k, v = c.item()
-                if k != '__keys__':
+                if k != b'__keys__':
                     yield [k, v]
         else:
             self.rng.shuffle(self.keys)

@@ -179,7 +179,7 @@ class BatchDataByShape(BatchData):
 
 class FixedSizeData(ProxyDataFlow):
     """ Generate data from another DataFlow, but with a fixed size.
-        The state of the underlying DataFlow won't be reset when it's exhausted.
+        The iterator of the underlying DataFlow will be kept if not exhausted.
     """
     def __init__(self, ds, size):
         """
