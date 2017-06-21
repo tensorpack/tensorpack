@@ -52,7 +52,7 @@ def eval_with_funcs(predictors, nr_eval, get_player_fn):
                 while not self.stopped():
                     try:
                         score = play_one_episode(player, self.func)
-                        # print "Score, ", score
+                        # print("Score, ", score)
                     except RuntimeError:
                         return
                     self.queue_put_stoppable(self.q, score)
