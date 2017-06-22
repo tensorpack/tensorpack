@@ -21,7 +21,7 @@ Basically, `_get_inputs` should define the metainfo of all the possible placehol
 the argument `inputs` is the list of input tensors matching `_get_inputs`.
 
 You can use any symbolic functions in `_build_graph`, including TensorFlow core library
-functions and other symbolic libraries (see below).
+functions and other symbolic libraries.
 
 tensorpack also contains a small collection of common model primitives,
 such as conv/deconv, fc, batch normalization, pooling layers, and some custom loss functions.

@@ -39,7 +39,7 @@ without worrying about adding operators to TensorFlow.
 Unless you are working with standard data types (image folders, LMDB, etc),
 you would usually want to write your own DataFlow.
 See [another tutorial](http://tensorpack.readthedocs.io/en/latest/tutorial/extend/dataflow.html)
-for details.
+for details on handling your own data format.
 
 <!--
    - TODO mention RL, distributed data, and zmq operator in the future.

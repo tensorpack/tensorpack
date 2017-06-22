@@ -11,11 +11,11 @@ def main_loop():
   # start training:
   callbacks.before_train()
   for epoch in range(epoch_start, epoch_end):
-		callbacks.before_epoch()
+    callbacks.before_epoch()
     for step in range(steps_per_epoch):
       run_step()  # callbacks.{before,after}_run are hooked with session
       callbacks.trigger_step()
-		callbacks.after_epoch()
+    callbacks.after_epoch()
     callbacks.trigger_epoch()
   callbacks.after_train()
 ```
@@ -33,10 +33,14 @@ TODO how to access the tensors already defined.
 
 Can be used to run some manual initialization of variables, or start some services for the whole training.
 
-* `_trigger_step(self)`
+* `_after_train(self)`
 
-Do something (including running ops) after each step has finished.
-Be careful to only do light work here because it could affect training speed.
+Do some finalization work.
+
+* `_before_epoch(self)`, `_after_epoch(self)`
+
+Use it only when you really need something to happen __immediately__ before/after an epoch.
+Usually `_trigger_epoch` should be enough.
 
 * `_before_run(self, ctx)`, `_after_run(self, ctx, values)`
 
@@ -56,6 +60,11 @@ The training loops would become `sess.run([training_op, my_op])`.
 This is different from `sess.run(training_op); sess.run(my_op);`,
 which is what you would get if you run the op in `_trigger_step`.
 
+* `_trigger_step(self)`
+
+Do something (including running ops) after each step has finished.
+Be careful to only do light work here because it could affect training speed.
+
 * `_trigger_epoch(self)`
 
 Do something after each epoch has finished. Will call `self.trigger()` by default.
@@ -63,9 +72,5 @@ Do something after each epoch has finished. Will call `self.trigger()` by defaul
 * `_trigger(self)`
 
 By default will get called by `_trigger_epoch`,
-but you can then customize the scheduling of this callback by
+but you can customize the scheduling of this callback by
 `PeriodicTrigger`, to let this method run every k steps or every k epochs.
-
-* `_after_train(self)`
-
-Do some finalization work.

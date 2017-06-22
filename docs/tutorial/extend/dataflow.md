@@ -25,7 +25,7 @@ Optionally, DataFlow can implement the following two methods:
 	A typical situation is when your DataFlow uses random number generator (RNG). Then you would need to reset the RNG here.
 	Otherwise, child processes will have the same random seed. The `RNGDataFlow` base class does this for you.
 
-With a "low-level" DataFlow defined, you can then compose it with existing modules (e.g. batching, prefetching, ...).
+With a "low-level" DataFlow defined like above, you can then compose it with existing modules (e.g. batching, prefetching, ...).
 
 DataFlow implementations for several well-known datasets are provided in the
 [dataflow.dataset](http://tensorpack.readthedocs.io/en/latest/modules/tensorpack.dataflow.dataset.html)

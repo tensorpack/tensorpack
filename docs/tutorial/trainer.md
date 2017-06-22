@@ -2,8 +2,8 @@
 # Trainer
 
 Training is **running something again and again**.
-Tensorpack base trainer implements the logic of *running the iteration*,
-and other trainers implement *what the iteration is*.
+Tensorpack base trainer implements the logic of __running the iteration__,
+and derived trainers implement __what the iteration is__.
 
 Most neural network training tasks are single-cost optimization.
 Tensorpack provides some trainer implementations for such tasks.
@@ -17,7 +17,7 @@ which will run significantly faster than a naive `sess.run(..., feed_dict={...})
 There are also Multi-GPU trainers which include the logic of data-parallel Multi-GPU training.
 You can enable them by just changing one line, and all the necessary logic to achieve the best
 performance was baked into the trainers already.
-For example, SyncMultiGPUTrainer can train ResNet50 as fast as the [official benchmark](https://github.com/tensorflow/benchmarks).
+For example, SyncMultiGPUTrainer can train ResNet50 as fast as the [official tensorflow benchmark](https://github.com/tensorflow/benchmarks).
 
 To use trainers, pass a `TrainConfig` to configure them:
 
@@ -38,7 +38,7 @@ QueueInputTrainer(config).train()
 # SyncMultiGPUTrainer(config).train()
 ```
 
-Trainers just run some iterations, so there is no limit to where the data come from
+Trainers just run __some__ iterations, so there is no limit in where the data come from
 or what to do in an iteration.
 For example, [GAN trainer](../examples/GAN/GAN.py) minimizes
 two cost functions alternatively.

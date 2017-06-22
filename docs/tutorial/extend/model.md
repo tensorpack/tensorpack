@@ -1,11 +1,10 @@
 
-## Implement a layer
+## Write a layer
 
-Symbolic functions should be nothing new to you.
-Using symbolic functions in tensorpack is same as in TensorFlow: you can use any symbolic functions you have
-made or seen elsewhere together with tensorpack layers.
+The first thing to note: __you never have to write a layer__.
+Tensorpack layers are nothing but wrappers of symbolic functions.
+You can use any symbolic functions you have written or seen elsewhere with or without tensorpack layers.
 You can use symbolic functions from slim/tflearn/tensorlayer, and even Keras/sonnet ([with some tricks](../../examples/mnist-keras.py)).
-So you never **have to** implement a tensorpack layer.
 
 If you would like, you can make a symbolic function become a "layer" by following some simple rules, and then gain benefits from the framework.
 

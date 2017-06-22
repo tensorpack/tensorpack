@@ -51,7 +51,7 @@ See the [Efficient DataFlow](http://tensorpack.readthedocs.io/en/latest/tutorial
 When you use Python to load/preprocess data, TF `QueueBase` can help hide the "Copy to TF" latency,
 and TF `StagingArea` can help hide the "Copy to GPU" latency.
 They are used by most examples in tensorpack,
-however most other TensorFlow wrappers are `feed_dict` based -- no latency hiding at all.
+however most other TensorFlow wrappers are designed to be `feed_dict` based -- no latency hiding at all.
 This is the major reason why tensorpack is [faster](https://gist.github.com/ppwwyyxx/8d95da79f8d97036a7d67c2416c851b6).
 
 ## InputSource

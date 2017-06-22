@@ -12,7 +12,7 @@ for more details.
 
 If you think:
 1. The framework has limitation in its interface so your XYZ cannot be supported, OR
-2. Your XYZ is very common / very well-defined, so it would be nice to include it.
+2. Your XYZ is super common / very well-defined / very useful, so it would be nice to include it.
 
 Then it is a good time to open an issue.
 
@@ -40,7 +40,7 @@ decide which one to use from a file name.)
 
 Doing transfer learning is straightforward. Variable restoring is completely based on name match between
 the current graph and the `SessionInit` initializer.
-Therefore, if you want to load some model, just use the same name.
+Therefore, if you want to load some model, just use the same variable name.
 If you want to re-train some layer, just rename it.
 Unmatched variables on both sides will be printed as a warning.
 
