@@ -95,20 +95,26 @@ class GPUUtilizationTracker(Callback):
 class GraphProfiler(Callback):
     """
     Enable profiling by installing session hooks,
-    and write tracing files to ``logger.LOG_DIR``.
+    and write metadata or tracing files to ``logger.LOG_DIR``.
+
     The tracing files can be loaded from ``chrome://tracing``.
+    The metadata files can be processed by
+    `tfprof command line utils
+    <https://github.com/tensorflow/tensorflow/blob/master/tensorflow/tools/tfprof/g3doc/command_line.md>`_.
 
     Note that the profiling is enabled for every step.
     You probably want to schedule it less frequently by
     :class:`PeriodicRunHooks`.
     """
-    def __init__(self, show_memory=False):
+    def __init__(self, dump_metadata=False, dump_tracing=True):
         """
         Args:
-            show_memory(bool): show tensor allocation in the tracing.
+            dump_metadata(bool): Dump :class:`tf.RunMetadata` to be used with tfprof.
+            dump_tracing(bool): Dump chrome tracing files.
         """
         self._dir = logger.LOG_DIR
-        self._show_memory = bool(show_memory)
+        self._dump_meta = bool(dump_metadata)
+        self._dump_tracing = bool(dump_tracing)
         assert os.path.isdir(self._dir)
 
     def _before_run(self, _):
@@ -118,12 +124,21 @@ class GraphProfiler(Callback):
 
     def _after_run(self, _, run_values):
         meta = run_values.run_metadata
-        self._write_chrome_trace(meta)
+        if self._dump_meta:
+            self._write_meta(meta)
+        if self._dump_tracing:
+            self._write_tracing(meta)
 
-    def _write_chrome_trace(self, metadata):
+    def _write_meta(self, metadata):
+        fname = os.path.join(
+            self._dir, 'runmetadata-{}.pb'.format(self.global_step))
+        with open(fname, 'wb') as f:
+            f.write(metadata.SerializeToString())
+
+    def _write_tracing(self, metadata):
         tl = timeline.Timeline(step_stats=metadata.step_stats)
         fname = os.path.join(
             self._dir, 'chrome-trace-{}.json'.format(self.global_step))
         with open(fname, 'w') as f:
             f.write(tl.generate_chrome_trace_format(
-                show_dataflow=True, show_memory=self._show_memory))
+                show_dataflow=True, show_memory=True))
