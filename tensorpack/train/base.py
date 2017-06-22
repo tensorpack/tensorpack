@@ -43,7 +43,7 @@ class Trainer(object):
 
         epoch_num (int): the number of epochs that have finished.
         local_step (int): the number of steps that have finished in the current epoch.
-        global_step (int): the number of steps that have finished.
+        global_step (int): the number of steps that have finished or is currently running.
     """
     # step attr only available after before_train?
 
