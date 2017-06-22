@@ -251,19 +251,20 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     DEPTH = args.depth
-    os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
+    if args.gpu:
+        os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
     if args.eval:
         BATCH_SIZE = 128    # something that can run on one gpu
         eval_on_ILSVRC12(args.load, args.data)
         sys.exit()
 
-    NR_GPU = len(args.gpu.split(','))
+    NR_GPU = get_nr_gpu()
     BATCH_SIZE = TOTAL_BATCH_SIZE // NR_GPU
 
     logger.set_logger_dir(
         os.path.join('train_log', 'imagenet-resnet-d' + str(DEPTH)))
-    logger.info("Batch size per GPU: " + str(BATCH_SIZE))
+    logger.info("Running on {} GPUs. Batch size per GPU: {}".format(NR_GPU, BATCH_SIZE))
     config = get_config(fake=args.fake, data_format=args.data_format)
     if args.load:
         config.session_init = SaverRestore(args.load)

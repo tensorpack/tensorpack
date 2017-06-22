@@ -58,11 +58,19 @@ class Trainer(object):
         self.config = config
         self.model = config.model
 
-        self.epoch_num = self.config.starting_epoch - 1
         self.local_step = -1
 
         self._callbacks = []
         self.monitors = []
+        self._epoch_num = None
+
+    @property
+    def epoch_num(self):
+        if self._epoch_num is not None:
+            # has started training
+            return self._epoch_num
+        else:
+            return self.config.starting_epoch - 1
 
     def register_callback(self, cb):
         """
@@ -170,9 +178,9 @@ class Trainer(object):
                 self._callbacks.before_train()
                 # refresh global step (might have changed by callbacks) TODO ugly
                 self._starting_step = get_global_step_value()
-                for self.epoch_num in range(
+                for self._epoch_num in range(
                         self.config.starting_epoch, self.config.max_epoch + 1):
-                    logger.info("Start Epoch {} ...".format(self.epoch_num))
+                    logger.info("Start Epoch {} ...".format(self._epoch_num))
                     start_time = time.time()
                     self._callbacks.before_epoch()
                     for self.local_step in range(self.config.steps_per_epoch):
@@ -182,7 +190,7 @@ class Trainer(object):
                         self._callbacks.trigger_step()
                     self._callbacks.after_epoch()
                     logger.info("Epoch {} (global_step {}) finished, time:{:.2f} sec.".format(
-                        self.epoch_num, self.global_step, time.time() - start_time))
+                        self._epoch_num, self.global_step, time.time() - start_time))
 
                     # trigger epoch outside the timing region.
                     self._trigger_epoch()
