@@ -27,8 +27,8 @@ class PeriodicTrigger(ProxyCallback):
         super(PeriodicTrigger, self).__init__(triggerable)
         assert (every_k_epochs is not None) or (every_k_steps is not None), \
             "every_k_steps and every_k_epochs cannot be both None!"
-        self._step_k = int(every_k_steps)
-        self._epoch_k = int(every_k_epochs)
+        self._step_k = every_k_steps
+        self._epoch_k = every_k_epochs
 
     def _trigger_step(self):
         if self._step_k is None:
