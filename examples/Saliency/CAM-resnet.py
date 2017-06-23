@@ -256,12 +256,12 @@ if __name__ == '__main__':
         viz_cam(args.load, args.data)
         sys.exit()
 
-    NR_GPU = len(args.gpu.split(','))
-    BATCH_SIZE = TOTAL_BATCH_SIZE // NR_GPU
+    nr_gpu = get_nr_gpu()
+    BATCH_SIZE = TOTAL_BATCH_SIZE // nr_gpu
 
     logger.auto_set_dir()
     config = get_config()
     if args.load:
         config.session_init = get_model_loader(args.load)
-    config.nr_tower = NR_GPU
+    config.nr_tower = nr_gpu
     SyncMultiGPUTrainer(config).train()

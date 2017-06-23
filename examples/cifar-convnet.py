@@ -150,10 +150,8 @@ if __name__ == '__main__':
         if args.load:
             config.session_init = SaverRestore(args.load)
 
-        if args.gpu:
-            config.nr_tower = len(args.gpu.split(','))
-        nr_gpu = get_nr_gpu()
-        if nr_gpu <= 1:
+        config.nr_tower = get_nr_gpu()
+        if config.nr_tower <= 1:
             QueueInputTrainer(config).train()
         else:
             SyncMultiGPUTrainer(config).train()

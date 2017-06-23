@@ -311,13 +311,12 @@ if __name__ == '__main__':
         sys.exit()
 
     assert args.gpu is not None, "Need to specify a list of gpu for training!"
-    NR_GPU = len(args.gpu.split(','))
-    BATCH_SIZE = TOTAL_BATCH_SIZE // NR_GPU
+    nr_tower = max(get_nr_gpu(), 1)
+    BATCH_SIZE = TOTAL_BATCH_SIZE // nr_tower
     logger.info("Batch per tower: {}".format(BATCH_SIZE))
 
     config = get_config()
     if args.load:
         config.session_init = SaverRestore(args.load)
-    if args.gpu:
-        config.nr_tower = len(args.gpu.split(','))
+    config.nr_tower = nr_tower
     SyncMultiGPUTrainer(config).train()

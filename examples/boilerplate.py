@@ -63,16 +63,17 @@ def get_config():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.', required=True)
+    parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
     parser.add_argument('--load', help='load model')
     args = parser.parse_args()
 
-    NR_GPU = len(args.gpu.split(','))
-    with change_gpu(args.gpu):
-        config = get_config()
-        config.nr_tower = NR_GPU
+    if args.gpu:
+        os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
-        if args.load:
-            config.session_init = SaverRestore(args.load)
+    config = get_config()
+    config.nr_tower = get_nr_gpu()
 
-        SyncMultiGPUTrainer(config).train()
+    if args.load:
+        config.session_init = SaverRestore(args.load)
+
+    SyncMultiGPUTrainer(config).train()

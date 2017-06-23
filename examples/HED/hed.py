@@ -226,6 +226,5 @@ if __name__ == '__main__':
         config = get_config()
         if args.load:
             config.session_init = get_model_loader(args.load)
-        if args.gpu:
-            config.nr_tower = len(args.gpu.split(','))
+        config.nr_tower = max(get_nr_gpu(), 1)
         SyncMultiGPUTrainer(config).train()
