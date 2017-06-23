@@ -179,7 +179,7 @@ class DistributedReplicatedTrainer(SingleCostFeedfreeTrainer):
         if self.job_name == 'ps':
             logger.info("Running ps {}".format(self.task_index))
             logger.info("Kill me with 'kill {}'".format(os.getpid()))
-            self.server.join()  # this will never return #4713
+            self.server.join()  # this will never return tensorflow#4713
             return
         with tf.device(self.param_server_device):
             gs = get_global_step_var()

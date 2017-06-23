@@ -72,11 +72,15 @@ class TowerContext(object):
     def vs_name(self):
         return self._vs_name
 
+    # TODO pass index into the constructor
     @property
     def index(self):
         if self._name == '':
             return 0
-        return int(self._name[-1])
+        idx = re.findall('[0-9]+$', self._name)
+        if len(idx) == 0:
+            return 0
+        return int(idx[0])
 
     @property
     def device(self):
