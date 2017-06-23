@@ -5,6 +5,7 @@
 import six
 import tensorflow as tf
 import re
+import io
 from six.moves import range
 
 from ..utils import logger
@@ -20,6 +21,9 @@ __all__ = ['create_scalar_summary', 'add_param_summary', 'add_activation_summary
 
 def create_scalar_summary(name, v):
     """
+    Args:
+        name (str):
+        v (float): scalar value
     Returns:
         tf.Summary: a tf.Summary object with name and simple scalar value v.
     """
@@ -35,25 +39,28 @@ def create_image_summary(name, val):
     Args:
         name(str):
         val(np.ndarray): 4D tensor of NHWC. assume RGB if C==3.
+            Can be either float or uint8. Range has to be [0,255].
 
     Returns:
         tf.Summary:
     """
     assert isinstance(name, six.string_types), type(name)
     n, h, w, c = val.shape
+    val = val.astype('uint8')
     s = tf.Summary()
     for k in range(n):
         tag = name if n == 1 else '{}/{}'.format(name, k)
-        # imencode assumes BGR
-        ret, buf = cv2.imencode('.png', val[k, :, :, ::-1])
-        assert ret, "imencode failed!"
+
+        buf = io.BytesIO()
+        # scipy assumes RGB
+        scipy.misc.toimage(val[k]).save(buf, format='png')
 
         img = tf.Summary.Image()
         img.height = h
         img.width = w
         # 1 - grayscale 3 - RGB 4 - RGBA
         img.colorspace = c
-        img.encoded_image_string = buf.tostring()
+        img.encoded_image_string = buf.getvalue()
         s.value.add(tag=tag, image=img)
     return s
 
@@ -171,7 +178,7 @@ def add_moving_summary(v, *args, **kwargs):
 
 
 try:
-    import cv2
+    import scipy.misc
 except ImportError:
     from ..utils.develop import create_dummy_func
-    create_image_summary = create_dummy_func('create_image_summary', 'cv2')  # noqa
+    create_image_summary = create_dummy_func('create_image_summary', 'scipy.misc')  # noqa

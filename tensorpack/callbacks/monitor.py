@@ -70,7 +70,7 @@ class TrainingMonitor(Callback):
     def put_image(self, name, val):
         """
         Args:
-            val (np.ndarray): 4D (NHWC) numpy array of images.
+            val (np.ndarray): 4D (NHWC) numpy array of images in range [0,255].
                 If channel is 3, assumed to be RGB.
         """
         pass
@@ -135,8 +135,8 @@ class Monitors(TrainingMonitor):
         """
         Args:
             name (str):
-            val (np.ndarray): 2D, 3D (HWC) or 4D (NHWC) numpy array of images.
-                If channel is 3, assumed to be RGB.
+            val (np.ndarray): 2D, 3D (HWC) or 4D (NHWC) numpy array of images
+                in range [0,255].  If channel is 3, assumed to be RGB.
         """
         assert isinstance(val, np.ndarray)
         arr = image_to_nhwc(val)
