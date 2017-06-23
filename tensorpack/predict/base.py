@@ -176,6 +176,7 @@ class PredictorTowerBuilder(object):
             tower (int): the tower will be built on device '/gpu:{tower}', or
                 '/cpu:0' if tower is -1.
         """
+        toweridx = max(tower, 0)  # if CPU, named the tower as 0
         towername = TowerContext.get_predict_tower_name(tower, self._prefix)
         if self._prefix:
             msg = "Building predictor graph {} on gpu={} with prefix='{}' ...".format(
@@ -187,7 +188,8 @@ class PredictorTowerBuilder(object):
         device = '/gpu:{}'.format(tower) if tower >= 0 else '/cpu:0'
         with tf.name_scope(None),   \
                 freeze_collection(TOWER_FREEZE_KEYS), \
-                TowerContext(towername, device=device, is_training=False):
+                tf.device(device), \
+                TowerContext(towername, is_training=False, index=toweridx):
             self._fn(tower)
 
     # useful only when the placeholders don't have tower prefix

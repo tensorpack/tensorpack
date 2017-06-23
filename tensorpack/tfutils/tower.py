@@ -4,7 +4,6 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import tensorflow as tf
-import re
 from ..utils.naming import PREDICT_TOWER
 
 __all__ = ['get_current_tower_context', 'TowerContext']
@@ -16,24 +15,27 @@ class TowerContext(object):
     """ A context where the current model is being built in. """
 
     def __init__(self, tower_name,
-                 device=None, is_training=None,
+                 is_training=None,
+                 index=0,
                  var_strategy='shared',
                  vs_name=None):
         """
         Args:
-            tower_name (str): 'tower0', 'towerp0', or ''
-            device (str or device function): the device to use. Defaults to either cpu0 or gpu0.
+            tower_name (str): The name scope of the tower. Currently used
+                values are like: 'tower0', 'towerp0', or ''
             is_training (bool): if None, automatically determine from tower_name.
+            index (int): index of this tower
             var_strategy (str): either 'shared' or 'replicated'.
             vs_name (str): the variable scope name to open. Only valid in
                 'replicated' mode. Defaults to be tower_name.
         """
         self._name = tower_name
-        self._device = device
 
         if is_training is None:
             is_training = not self._name.startswith(PREDICT_TOWER)
-        self._is_training = is_training
+        self._is_training = bool(is_training)
+
+        self._index = index
 
         assert var_strategy in ['replicated', 'shared'], var_strategy
         self._var_strategy = var_strategy
@@ -49,11 +51,11 @@ class TowerContext(object):
 
     @property
     def is_main_training_tower(self):
-        return self.is_training and (self._name == '' or self._name == 'tower0')
+        return self.is_training and self._index == 0
 
     @property
     def is_main_tower(self):
-        return self._name == '' or self._name == 'tower0'
+        return self._index == 0
 
     @property
     def is_training(self):
@@ -67,37 +69,17 @@ class TowerContext(object):
     def name(self):
         return self._name
 
+    # TODO remove this and add something like `tower.variables`
     # variable_scope name
     @property
     def vs_name(self):
         return self._vs_name
 
-    # TODO pass index into the constructor
     @property
     def index(self):
-        if self._name == '':
-            return 0
-        idx = re.findall('[0-9]+$', self._name)
-        if len(idx) == 0:
-            return 0
-        return int(idx[0])
+        return self._index
 
-    @property
-    def device(self):
-        return self._device
-
-    def find_tensor_in_main_tower(self, graph, name):
-        if self.is_main_tower:
-            return graph.get_tensor_by_name(name)
-        if name.startswith(PREDICT_TOWER):
-            predict_tower_prefix = '{}[0-9]+/'.format(PREDICT_TOWER)
-            newname = re.sub(predict_tower_prefix, '', name)
-            try:
-                return graph.get_tensor_by_name(newname)
-            except KeyError:
-                newname = re.sub(predict_tower_prefix, 'tower0/', name)
-                return graph.get_tensor_by_name(newname)
-
+    # TODO something similar for training
     @staticmethod
     def get_predict_tower_name(towerid=0, prefix=''):
         """
@@ -124,15 +106,14 @@ class TowerContext(object):
                     self._ctxs.append(tf.variable_scope(self.vs_name))
             else:
                 if self.is_training:
-                    reuse = self.index > 0
+                    reuse = self._index > 0
                     if reuse is True:
+                        # clear old name_scope and re-enter the current variable_scope
                         self._ctxs.append(tf.name_scope(None))
                         self._ctxs.append(tf.variable_scope(
                             tf.get_variable_scope(), reuse=True))
                 # if not training, should handle vs outside (TODO not good)
                 self._ctxs.append(tf.name_scope(self._name))
-        if self._device is not None:
-            self._ctxs.append(tf.device(self._device))
         for c in self._ctxs:
             c.__enter__()
 

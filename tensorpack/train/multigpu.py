@@ -81,9 +81,10 @@ class MultiGPUTrainerBase(Trainer):
 
         for idx, t in enumerate(towers):
             device = devices[idx] if devices is not None else '/gpu:{}'.format(t)
-            with TowerContext(
+            with tf.device(device), TowerContext(
                     'tower{}'.format(idx),
-                    device=device, is_training=True,
+                    is_training=True,
+                    index=idx,
                     var_strategy=var_strategy,
                     vs_name=vs_names[idx]):
                 if idx == t:
