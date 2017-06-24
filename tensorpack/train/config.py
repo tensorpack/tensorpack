@@ -5,7 +5,7 @@
 from ..callbacks import (
     Callbacks, MovingAverageSummary,
     ProgressBar, MergeAllSummaries,
-    TFSummaryWriter, JSONWriter, ScalarPrinter, RunUpdateOps)
+    TFEventWriter, JSONWriter, ScalarPrinter, RunUpdateOps)
 from ..dataflow.base import DataFlow
 from ..models import ModelDesc
 from ..utils import logger
@@ -44,7 +44,7 @@ class TrainConfig(object):
                 ``[MovingAverageSummary(), ProgressBar(), MergeAllSummaries(), RunUpdateOps()]``. The list of
                 callbacks that will be used in the end are ``callbacks + extra_callbacks``.
             monitors (list): a list of :class:`TrainingMonitor`.
-                Defaults to ``[TFSummaryWriter(), JSONWriter(), ScalarPrinter()]``.
+                Defaults to ``[TFEventWriter(), JSONWriter(), ScalarPrinter()]``.
             session_creator (tf.train.SessionCreator): Defaults to :class:`sesscreate.NewSessionCreator()`
                 with the config returned by :func:`tfutils.get_default_sess_config()`.
             session_config (tf.ConfigProto): when session_creator is None, use this to create the session.
@@ -92,7 +92,7 @@ class TrainConfig(object):
         assert_type(self._callbacks, list)
 
         if monitors is None:
-            monitors = [TFSummaryWriter(), JSONWriter(), ScalarPrinter()]
+            monitors = [TFEventWriter(), JSONWriter(), ScalarPrinter()]
         self.monitors = monitors
 
         self.model = model

@@ -18,7 +18,7 @@ from ..tfutils.summary import create_scalar_summary, create_image_summary
 from .base import Callback
 
 __all__ = ['TrainingMonitor', 'Monitors',
-           'TFSummaryWriter', 'JSONWriter', 'ScalarPrinter', 'SendMonitorData']
+           'TFSummaryWriter', 'TFEventWriter', 'JSONWriter', 'ScalarPrinter', 'SendMonitorData']
 
 
 def image_to_nhwc(arr):
@@ -75,6 +75,13 @@ class TrainingMonitor(Callback):
         """
         pass
 
+    def put_event(self, evt):
+        """
+        Args:
+            evt (tf.Event): the most basic format, could include Summary,
+                RunMetadata, LogMessage, and more.
+        """
+        pass
     # TODO put other types
 
 
@@ -93,17 +100,9 @@ class Monitors(TrainingMonitor):
     def _setup_graph(self):
         self._scalar_history.setup_graph(self.trainer)
 
-    def _dispatch_put_summary(self, summary):
+    def _dispatch(self, func):
         for m in self._monitors:
-            m.put_summary(summary)
-
-    def _dispatch_put_scalar(self, name, val):
-        for m in self._monitors:
-            m.put_scalar(name, val)
-
-    def _dispatch_put_image(self, name, val):
-        for m in self._monitors:
-            m.put_image(name, val)
+            func(m)
 
     def put_summary(self, summary):
         if isinstance(summary, six.binary_type):
@@ -111,7 +110,7 @@ class Monitors(TrainingMonitor):
         assert isinstance(summary, tf.Summary), type(summary)
 
         # TODO remove -summary suffix for summary
-        self._dispatch_put_summary(summary)
+        self._dispatch(lambda m: m.put_summary(summary))
 
         # TODO other types
         for val in summary.value:
@@ -120,16 +119,12 @@ class Monitors(TrainingMonitor):
                 suffix = '-summary'  # issue#6150
                 if val.tag.endswith(suffix):
                     val.tag = val.tag[:-len(suffix)]
-                self._dispatch_put_scalar(val.tag, val.simple_value)
-
-    def put(self, name, val):
-        val = float(val)    # TODO only support scalar for now
-        self.put_scalar(name, val)
+                self._dispatch(lambda m: m.put_scalar(val.tag, val.simple_value))
 
     def put_scalar(self, name, val):
-        self._dispatch_put_scalar(name, val)
+        self._dispatch(lambda m: m.put_scalar(name, val))
         s = create_scalar_summary(name, val)
-        self._dispatch_put_summary(s)
+        self._dispatch(lambda m: m.put_summary(s))
 
     def put_image(self, name, val):
         """
@@ -140,9 +135,18 @@ class Monitors(TrainingMonitor):
         """
         assert isinstance(val, np.ndarray)
         arr = image_to_nhwc(val)
-        self._dispatch_put_image(name, arr)
+        self._dispatch(lambda m: m.put_image(name, arr))
         s = create_image_summary(name, arr)
-        self._dispatch_put_summary(s)
+        self._dispatch(lambda m: m.put_summary(s))
+
+    def put_event(self, evt):
+        """
+        Simply call :meth:`put_event` on each monitor.
+
+        Args:
+            evt (tf.Event):
+        """
+        self._dispatch(lambda m: m.put_event(evt))
 
     def get_latest(self, name):
         """
@@ -157,15 +161,15 @@ class Monitors(TrainingMonitor):
         return self._scalar_history.get_history(name)
 
 
-class TFSummaryWriter(TrainingMonitor):
+class TFEventWriter(TrainingMonitor):
     """
     Write summaries to TensorFlow event file.
     """
     def __new__(cls):
         if logger.LOG_DIR:
-            return super(TFSummaryWriter, cls).__new__(cls)
+            return super(TFEventWriter, cls).__new__(cls)
         else:
-            logger.warn("logger directory was not set. Ignore TFSummaryWriter.")
+            logger.warn("logger directory was not set. Ignore TFEventWriter.")
             return NoOpMonitor()
 
     def _setup_graph(self):
@@ -174,11 +178,19 @@ class TFSummaryWriter(TrainingMonitor):
     def put_summary(self, summary):
         self._writer.add_summary(summary, self.global_step)
 
+    def put_event(self, evt):
+        self._writer.add_event(evt)
+
     def _trigger(self):     # flush every epoch
         self._writer.flush()
 
     def _after_train(self):
         self._writer.close()
+
+
+def TFSummaryWriter(*args, **kwargs):
+    logger.warn("TFSummaryWriter was renamed to TFEventWriter!")
+    return TFEventWriter(*args, **kwargs)
 
 
 class JSONWriter(TrainingMonitor):

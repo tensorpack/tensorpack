@@ -56,8 +56,8 @@ TrainConfig(
     RunUpdateOps(),
   ],
   monitors=[        # monitors are a special kind of callbacks. these are also enabled by default
-    # write all monitor data to tensorboard
-    TFSummaryWriter(),
+    # write everything to tensorboard
+    TFEventWriter(),
     # write all scalar data to a json file, for easy parsing
     JSONWriter(),
     # print all scalar data every epoch (can be configured differently)

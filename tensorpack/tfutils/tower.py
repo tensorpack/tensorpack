@@ -35,7 +35,7 @@ class TowerContext(object):
             is_training = not self._name.startswith(PREDICT_TOWER)
         self._is_training = bool(is_training)
 
-        self._index = index
+        self._index = int(index)
 
         assert var_strategy in ['replicated', 'shared'], var_strategy
         self._var_strategy = var_strategy

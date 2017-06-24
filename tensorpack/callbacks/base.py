@@ -28,12 +28,14 @@ class Callback(object):
     .. document private functions
     .. automethod:: _setup_graph
     .. automethod:: _before_train
+    .. automethod:: _after_train
     .. automethod:: _before_run
     .. automethod:: _after_run
+    .. automethod:: _before_epoch
+    .. automethod:: _after_epoch
     .. automethod:: _trigger_step
     .. automethod:: _trigger_epoch
     .. automethod:: _trigger
-    .. automethod:: _after_train
     """
 
     _chief_only = True
