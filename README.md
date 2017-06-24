@@ -38,7 +38,9 @@ It's Yet Another TF wrapper, but different in:
 	+	Tensorpack trainer is almost always faster than `feed_dict` based wrappers.
 	  Even on a tiny CNN example, the training runs [2x faster](https://gist.github.com/ppwwyyxx/8d95da79f8d97036a7d67c2416c851b6) than the equivalent Keras code.
 
-	+ Data-Parallel Multi-GPU training is off-the-shelf to use. It is as fast as Google's [benchmark code](https://github.com/tensorflow/benchmarks).
+	+ Data-parallel multi-GPU training is off-the-shelf to use. It is as fast as Google's [benchmark code](https://github.com/tensorflow/benchmarks).
+
+	+ Data-parallel distributed training is off-the-shelf to use. It is as slow as Google's [benchmark code](https://github.com/tensorflow/benchmarks).
 
 3. Focus on large datasets.
 	+ It's painful to read/preprocess data from TF. Use __DataFlow__ to efficiently process large datasets such as ImageNet in __pure Python__.

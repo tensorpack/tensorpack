@@ -1,7 +1,7 @@
 
 ## Write a callback
 
-The places where each callback gets called is demonstrated in this snippet:
+The places where each method gets called is demonstrated in this snippet:
 
 ```python
 def main_loop():
@@ -20,27 +20,33 @@ def main_loop():
   callbacks.after_train()
 ```
 
+## Explain the callback methods
+
 You can overwrite any of the following methods to define a new callback:
 
 * `_setup_graph(self)`
 
-To separate between "define" and "run", and also to avoid the common mistake to create ops inside
-loops, all changes to the graph should be made in this method. No session has been created at this time.
+Setup the ops / tensors in the graph which you might need to use in the callback. You can use
+[`graph.get_tensor_by_name`](https://www.tensorflow.org/api_docs/python/tf/Graph#get_tensor_by_name)
+to access those already defined in the training tower. Or use
+[`self.trainer.get_predictor(..)`](http://tensorpack.readthedocs.io/en/latest/modules/train.html?highlight=get_predictor#tensorpack.train.Trainer.get_predictor)
+to create a callable evaluation function in the predict tower.
 
-TODO how to access the tensors already defined.
+This method is to separate between "define" and "run", and also to avoid the common mistake to create ops inside
+loops, all changes to the graph should be made in this method.
 
 * `_before_train(self)`
 
-Can be used to run some manual initialization of variables, or start some services for the whole training.
+Can be used to run some manual initialization of variables, or start some services for the training.
 
 * `_after_train(self)`
 
-Do some finalization work.
+Usually some finalization work.
 
 * `_before_epoch(self)`, `_after_epoch(self)`
 
-Use it only when you really need something to happen __immediately__ before/after an epoch.
-Usually `_trigger_epoch` should be enough.
+Use them only when you really need something to happen __immediately__ before/after an epoch.
+Otherwise, `_trigger_epoch` should be enough.
 
 * `_before_run(self, ctx)`, `_after_run(self, ctx, values)`
 
@@ -74,3 +80,12 @@ Do something after each epoch has finished. Will call `self.trigger()` by defaul
 By default will get called by `_trigger_epoch`,
 but you can customize the scheduling of this callback by
 `PeriodicTrigger`, to let this method run every k steps or every k epochs.
+
+## What you can do in the callback
+
+* Access tensors / ops in either training / inference mode (need to create them in `_setup_graph`).
+* Write stuff to the monitor backend, by `self.trainer.monitors.put_xxx`.
+	The monitors might direct your events to TensorFlow events file, JSON file, stdout, etc.
+	You can get history monitor data as well. See the docs for [Monitors](http://tensorpack.readthedocs.io/en/latest/modules/callbacks.html#tensorpack.callbacks.Monitors)
+* Access the current status of training, such as `epoch_num`, `global_step`. See [here](http://tensorpack.readthedocs.io/en/latest/modules/callbacks.html#tensorpack.callbacks.Callback)
+* Anything else that can be done with plain python.
