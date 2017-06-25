@@ -6,6 +6,7 @@
 import os
 import numpy as np
 import shutil
+import time
 import operator
 from collections import defaultdict
 import six
@@ -142,10 +143,13 @@ class Monitors(TrainingMonitor):
     def put_event(self, evt):
         """
         Simply call :meth:`put_event` on each monitor.
+        `step` and `wall_time` fields of this proto will be filled automatically.
 
         Args:
             evt (tf.Event):
         """
+        evt.step = self.global_step
+        evt.wall_time = time.time()
         self._dispatch(lambda m: m.put_event(evt))
 
     def get_latest(self, name):
