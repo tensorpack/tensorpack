@@ -8,7 +8,7 @@ import argparse
 import tensorflow as tf
 import imp
 
-from tensorpack import TowerContext, logger, ModelFromMetaGraph
+from tensorpack import TowerContext, logger
 from tensorpack.tfutils import sessinit, varmanip
 
 parser = argparse.ArgumentParser()
@@ -28,7 +28,7 @@ with tf.Graph().as_default() as G:
         with TowerContext('', is_training=False):
             M.build_graph(M.get_reused_placehdrs())
     else:
-        M = ModelFromMetaGraph(args.meta)
+        tf.train.import_meta_graph(args.meta)
 
     # loading...
     if args.model.endswith('.npy'):
