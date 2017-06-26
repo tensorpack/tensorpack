@@ -11,9 +11,9 @@ import six
 from ..utils import logger
 from ..utils.naming import INPUTS_KEY
 from ..utils.argtools import memoized
-from ..tfutils.model_utils import apply_slim_collections
+from .regularize import regularize_cost_from_collection
 
-__all__ = ['InputDesc', 'InputVar', 'ModelDesc', 'ModelFromMetaGraph']
+__all__ = ['InputDesc', 'InputVar', 'ModelDesc']
 
 
 class InputDesc(object):
@@ -119,10 +119,10 @@ class ModelDesc(object):
 
         This function also applies the collection
         ``tf.GraphKeys.REGULARIZATION_LOSSES`` to the cost automatically.
-        Because slim users would expect the regularizer being automatically applied once used in slim layers.
         """
         cost = self._get_cost()
-        return apply_slim_collections(cost)
+        return tf.add(cost, regularize_cost_from_collection(),
+                      name='cost_with_regularizer')
 
     def _get_cost(self, *args):
         return self.cost
@@ -158,7 +158,7 @@ class ModelFromMetaGraph(ModelDesc):
     Only useful for inference.
     """
 
-    # TODO this class may not be functional anymore.
+    # TODO this class may not be functional anymore. don't use
 
     def __init__(self, filename):
         """

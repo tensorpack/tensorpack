@@ -53,8 +53,27 @@ def regularize_cost(regex, func, name='regularize_cost'):
             costs.append(func(p))
             _log_regularizer(para_name)
     if not costs:
-        return tf.constant(0, dtype=tf.float32, name='empty_regularize_cost')
+        return tf.constant(0, dtype=tf.float32, name='empty_' + name)
     return tf.add_n(costs, name=name)
+
+
+def regularize_cost_from_collection(name='regularize_cost'):
+    """
+    Get the cost from the regularizers in ``tf.GraphKeys.REGULARIZATION_LOSSES``.
+
+    Returns:
+        a scalar tensor, the regularization loss.
+    """
+    regulization_losses = set(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES))
+    ctx = get_current_tower_context()
+    if len(regulization_losses) > 0:
+        # TODO only regularize variables in this tower?
+        assert not ctx.has_own_variables, "REGULARIZATION_LOSSES collection doesn't work in replicated mode!"
+        logger.info("Apply REGULARIZATION_LOSSES on the total cost.")
+        reg_loss = tf.add_n(list(regulization_losses), name=name)
+        return reg_loss
+    else:
+        return tf.constant(0, dtype=tf.float32, name='empty_' + name)
 
 
 @layer_register(log_shape=False, use_scope=False)

@@ -6,11 +6,9 @@ import tensorflow as tf
 from termcolor import colored
 from tabulate import tabulate
 
-from ..tfutils.tower import get_current_tower_context
 from ..utils import logger
-from .summary import add_moving_summary
 
-__all__ = ['describe_model', 'get_shape_str', 'apply_slim_collections']
+__all__ = ['describe_model', 'get_shape_str']
 
 
 def describe_model():
@@ -65,24 +63,3 @@ def get_shape_str(tensors):
         assert isinstance(tensors, (tf.Tensor, tf.Variable)), "Not a tensor: {}".format(type(tensors))
         shape_str = str(tensors.get_shape().as_list())
     return shape_str
-
-
-def apply_slim_collections(cost):
-    """
-    Add the cost with the regularizers in ``tf.GraphKeys.REGULARIZATION_LOSSES``.
-
-    Args:
-        cost: a scalar tensor
-
-    Return:
-        a scalar tensor, the cost after applying the collections.
-    """
-    regulization_losses = set(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES))
-    ctx = get_current_tower_context()
-    if len(regulization_losses) > 0:
-        assert not ctx.has_own_variables, "REGULARIZATION_LOSSES collection doesn't work in replicated mode!"
-        logger.info("Applying REGULARIZATION_LOSSES on cost.")
-        reg_loss = tf.add_n(list(regulization_losses), name="regularize_loss")
-        cost = tf.add(reg_loss, cost, name='total_cost')
-        add_moving_summary(reg_loss, cost)
-    return cost
