@@ -12,7 +12,7 @@ from ..utils.naming import TOWER_FREEZE_KEYS
 from ..tfutils.common import get_tf_version_number
 from ..tfutils.tower import TowerContext
 from ..tfutils.collection import backup_collection, restore_collection
-from ..tfutils.gradproc import FilterNoneGrad, ScaleGradient
+from ..tfutils.gradproc import ScaleGradient
 from ..callbacks.graph import RunOp
 
 from .base import Trainer
@@ -101,16 +101,13 @@ class MultiGPUTrainerBase(Trainer):
         return ret
 
     @staticmethod
-    def check_none_grads(name, grads):
-        # grads: list of N grads
-        nones = list(set(grads))
-        if None in nones:
-            if len(nones) != 1:
-                raise RuntimeError("Gradient w.r.t {} is None in some but not all towers!".format(name))
-            else:
-                logger.warn("No Gradient w.r.t {}".format(name))
-                return False
-        return True
+    def _check_grad_list(grad_list):
+        """
+        Args:
+            grad_list: list of list of tuples, shape is Ngpu x Nvar x 2
+        """
+        nvars = [len(k) for k in grad_list]
+        assert len(set(nvars)) == 1, "Number of gradients from each tower is different! " + str(nvars)
 
 
 # Copied from https://github.com/tensorflow/benchmarks/blob/master/scripts/tf_cnn_benchmarks/variable_mgr.py
@@ -175,8 +172,6 @@ class SyncMultiGPUTrainerParameterServer(MultiGPUTrainerBase, SingleCostFeedfree
                 v = grad_and_vars[0][1]
                 all_grads = [g for (g, _) in grad_and_vars]
 
-                if not MultiGPUTrainerBase.check_none_grads(v.op.name, all_grads):
-                    continue
                 with tf.device(v.device):       # colocate summed grad with var
                     grad = tf.multiply(
                         tf.add_n(all_grads), 1.0 / nr_tower)
@@ -195,6 +190,7 @@ class SyncMultiGPUTrainerParameterServer(MultiGPUTrainerBase, SingleCostFeedfree
 
         grad_list = MultiGPUTrainerBase.build_on_multi_tower(
             self.config.tower, lambda: self._get_cost_and_grad()[1], devices)
+        MultiGPUTrainerBase._check_grad_list(grad_list)
 
         # debug tower performance (without update):
         # ops = [k[0] for k in grad_list[1]] + [k[0] for k in grad_list[0]]
@@ -243,8 +239,6 @@ class SyncMultiGPUTrainerReplicated(MultiGPUTrainerBase, SingleCostFeedfreeTrain
             for grad_and_vars in zip(*tower_grads):
                 v = grad_and_vars[0][1]
                 grads = [g for g, _ in grad_and_vars]
-                if not MultiGPUTrainerBase.check_none_grads(v.op.name, grads):
-                    continue
                 summed = nccl.all_sum(grads)
 
                 grads_for_a_var = []
@@ -322,8 +316,8 @@ class AsyncMultiGPUTrainer(MultiGPUTrainerBase, SingleCostFeedfreeTrainer):
         devices = [LeastLoadedDeviceSetter(d, raw_devices) for d in raw_devices]
         grad_list = MultiGPUTrainerBase.build_on_multi_tower(
             self.config.tower, lambda: self._get_cost_and_grad()[1], devices)
+        MultiGPUTrainerBase._check_grad_list(grad_list)
 
-        grad_list = [FilterNoneGrad().process(gv) for gv in grad_list]
         if self._scale_gradient and self.config.nr_tower > 1:
             # pretend to average the grads, in order to make async and
             # sync have consistent effective learning rate

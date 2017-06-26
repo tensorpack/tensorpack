@@ -54,11 +54,20 @@ class FilterNoneGrad(GradientProcessor):
     Skip the update and print a warning (instead of crashing),
     when the gradient of certain variable is None.
     """
+    def __init__(self, verbose=True):
+        """
+        Args:
+            verbose (bool): whether to print warning about None gradients.
+        """
+        super(FilterNoneGrad, self).__init__()
+        self._verbose = verbose
+
     def _process(self, grads):
         g = []
         for grad, var in grads:
             if grad is None:
-                logger.warn("No Gradient w.r.t {}".format(var.op.name))
+                if self._verbose:
+                    logger.warn("No Gradient w.r.t {}".format(var.op.name))
             else:
                 g.append((grad, var))
         return g

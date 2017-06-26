@@ -6,6 +6,7 @@
 import tensorflow as tf
 from six.moves import zip
 
+from ..tfutils.gradproc import FilterNoneGrad
 from ..tfutils.tower import TowerContext, get_current_tower_context
 from .input_source import QueueInput, FeedfreeInput
 
@@ -41,22 +42,6 @@ class FeedfreeTrainerBase(Trainer):
     def run_step(self):
         """ Simply run ``self.train_op``."""
         self.hooked_sess.run(self.train_op)
-        # if not hasattr(self, 'cnt'):
-        #     self.cnt = 0
-        # else:
-        #     self.cnt += 1
-        #     if self.cnt % 10 == 0:
-        #     # debug-benchmark code:
-        #         run_metadata = tf.RunMetadata()
-        #         self.sess.run([self.train_op],
-        #                 options=tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE),
-        #                 run_metadata=run_metadata
-        #                 )
-        #         from tensorflow.python.client import timeline
-        #         trace = timeline.Timeline(step_stats=run_metadata.step_stats)
-        #         trace_file = open('timeline.ctf.json', 'w')
-        #         trace_file.write(trace.generate_chrome_trace_format())
-        #         import sys; sys.exit()
 
 
 class SingleCostFeedfreeTrainer(FeedfreeTrainerBase):
@@ -77,6 +62,7 @@ class SingleCostFeedfreeTrainer(FeedfreeTrainerBase):
             gate_gradients=False,
             colocate_gradients_with_ops=True)
         grads = list(zip(grads, varlist))
+        grads = FilterNoneGrad().process(grads)
         return cost, grads
 
 

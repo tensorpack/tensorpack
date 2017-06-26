@@ -50,7 +50,7 @@ def apply_grad_processors(opt, gradprocs):
 
     class _ApplyGradientProcessor(ProxyOptimizer):
         def __init__(self, opt, gradprocs):
-            self._gradprocs = [FilterNoneGrad()] + gradprocs
+            self._gradprocs = gradprocs[:]
             super(_ApplyGradientProcessor, self).__init__(opt)
 
         def apply_gradients(self, grads_and_vars,

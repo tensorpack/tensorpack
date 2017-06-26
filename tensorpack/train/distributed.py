@@ -102,8 +102,6 @@ class DistributedReplicatedTrainer(SingleCostFeedfreeTrainer):
                     v = grad_and_vars[0][1]
                     # average gradient
                     all_grads = [g for (g, _) in grad_and_vars]
-                    if not MultiGPUTrainerBase.check_none_grads(v.op.name, all_grads):
-                        continue
                     grad = tf.multiply(
                         tf.add_n(all_grads), 1.0 / nr_device)
                     new_tower_grads.append((grad, v))
@@ -197,6 +195,7 @@ class DistributedReplicatedTrainer(SingleCostFeedfreeTrainer):
                 devices=self.raw_devices,
                 var_strategy='replicated',
                 vs_names=None)  # use the default vs names
+            MultiGPUTrainerBase._check_grad_list(grad_list)
 
         avg_grads = DistributedReplicatedTrainer._average_grads(grad_list, self.raw_devices)
         with tf.device(self.param_server_device):
