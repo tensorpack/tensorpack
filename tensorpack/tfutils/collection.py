@@ -10,7 +10,6 @@ from contextlib import contextmanager
 
 __all__ = ['backup_collection',
            'restore_collection',
-           'clear_collection',
            'freeze_collection']
 
 
@@ -38,17 +37,6 @@ def restore_collection(backup):
     for k, v in six.iteritems(backup):
         del tf.get_collection_ref(k)[:]
         tf.get_collection_ref(k).extend(v)
-
-
-def clear_collection(keys):
-    """
-    Clear some collections.
-
-    Args:
-        keys(list): list of collection keys.
-    """
-    for k in keys:
-        del tf.get_collection_ref(k)[:]
 
 
 @contextmanager
