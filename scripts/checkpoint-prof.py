@@ -31,7 +31,7 @@ if __name__ == '__main__':
         for inp in args.input:
             inp = inp.split('=')
             name = get_op_tensor_name(inp[0].strip())[1]
-            shape = map(int, inp[1].strip().split(','))
+            shape = list(map(int, inp[1].strip().split(',')))
             tensor = G.get_tensor_by_name(name)
             logger.info("Feeding shape ({}) to tensor {}".format(','.join(map(str, shape)), name))
             feed[tensor] = np.random.rand(*shape)
