@@ -6,6 +6,7 @@
 import tensorflow as tf
 from .common import layer_register, VariableHolder
 from ..utils.argtools import shape2d, shape4d
+from .shape_utils import StaticDynamicAxis
 
 __all__ = ['Conv2D', 'Deconv2D']
 
@@ -78,19 +79,6 @@ def Conv2D(x, out_channel, kernel_shape,
     return ret
 
 
-class StaticDynamicShape(object):
-    def __init__(self, static, dynamic):
-        self.static = static
-        self.dynamic = dynamic
-
-    def apply(self, f):
-        try:
-            st = f(self.static)
-            return StaticDynamicShape(st, st)
-        except:
-            return StaticDynamicShape(None, f(self.dynamic))
-
-
 @layer_register()
 def Deconv2D(x, out_shape, kernel_shape,
              stride, padding='SAME',
@@ -134,13 +122,13 @@ def Deconv2D(x, out_shape, kernel_shape,
     if isinstance(out_shape, int):
         out_channel = out_shape
         if data_format == 'NHWC':
-            shp3_0 = StaticDynamicShape(in_shape[1], in_shape_dyn[1]).apply(lambda x: stride2d[0] * x)
-            shp3_1 = StaticDynamicShape(in_shape[2], in_shape_dyn[2]).apply(lambda x: stride2d[1] * x)
+            shp3_0 = StaticDynamicAxis(in_shape[1], in_shape_dyn[1]).apply(lambda x: stride2d[0] * x)
+            shp3_1 = StaticDynamicAxis(in_shape[2], in_shape_dyn[2]).apply(lambda x: stride2d[1] * x)
             shp3_dyn = [shp3_0.dynamic, shp3_1.dynamic, out_channel]
             shp3_static = [shp3_0.static, shp3_1.static, out_channel]
         else:
-            shp3_0 = StaticDynamicShape(in_shape[2], in_shape_dyn[2]).apply(lambda x: stride2d[0] * x)
-            shp3_1 = StaticDynamicShape(in_shape[3], in_shape_dyn[3]).apply(lambda x: stride2d[1] * x)
+            shp3_0 = StaticDynamicAxis(in_shape[2], in_shape_dyn[2]).apply(lambda x: stride2d[0] * x)
+            shp3_1 = StaticDynamicAxis(in_shape[3], in_shape_dyn[3]).apply(lambda x: stride2d[1] * x)
             shp3_dyn = [out_channel, shp3_0.dynamic, shp3_1.dynamic]
             shp3_static = [out_channel, shp3_0.static, shp3_1.static]
     else:
