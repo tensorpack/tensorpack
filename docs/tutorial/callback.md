@@ -2,13 +2,13 @@
 # Callbacks
 
 Apart from the actual training iterations that minimize the cost,
-you almost surely would like to do something else during training.
+you almost surely would like to do something else.
 Callbacks are such an interface to describe what to do besides the
 training iterations.
 
 There are several places where you might want to do something else:
 
-* Before the training has started (e.g. initialize the saver)
+* Before the training has started (e.g. initialize the saver, dump the graph)
 * Along with each training iteration (e.g. run some other operations in the graph)
 * Between training iterations (e.g. update the progress bar, update hyperparameters)
 * Between epochs (e.g. save the model, run some validation)
@@ -16,8 +16,8 @@ There are several places where you might want to do something else:
 
 We found people traditionally tend to write the training loop together with these extra features.
 This makes the loop lengthy, and the code for the same feature probably get separated.
-By writing callbacks to implement what you want to do at each place, tensorpack trainers
-will call them at the proper time.
+By writing callbacks to implement what to do at each place, tensorpack trainers
+will call the callbacks at the proper time.
 Therefore the code can be reused with one single line, as long as you are using tensorpack trainers.
 
 For example, these are the callbacks I used when training a ResNet:
@@ -69,3 +69,6 @@ TrainConfig(
 Notice that callbacks cover every detail of training, ranging from graph operations to the progress bar.
 This means you can customize every part of the training to your preference, e.g. display something
 different in the progress bar, evaluating part of the summaries at a different frequency, etc.
+
+See [Write a callback](http://tensorpack.readthedocs.io/en/latest/tutorial/extend/callback.html)
+on how to implement a callback.
