@@ -13,7 +13,8 @@ A High Level Glance
   processing.
 
 * You can use any TF-based symbolic function library to define a model in tensorpack.
-  :doc:`model` introduces where and how you define the model for tensorpack trainers to use,
+  And ``ModelDesc`` is an interface to connect symbolic graph to tensorpack trainers.
+  :doc:`model` introduces where and how you define the graph for tensorpack trainers to use,
   and how you can benefit from the small symbolic function library in tensorpack.
 
 Both DataFlow and models can be used outside tensorpack, as just a data processing library and a symbolic

@@ -1,28 +1,28 @@
 
 ## Write a callback
 
-The places where each method gets called is demonstrated in this snippet:
+The places where each callback method gets called is demonstrated in this snippet:
 
 ```python
 def main_loop():
-  # create graph for the model
+  # ... create graph for the model ...
   callbacks.setup_graph()
-  # create session, initialize session, finalize graph ...
+  # ... create session, initialize session, finalize graph ...
   # start training:
   callbacks.before_train()
   for epoch in range(epoch_start, epoch_end):
     callbacks.before_epoch()
     for step in range(steps_per_epoch):
-      run_step()  # callbacks.{before,after}_run are hooked with session
+      run_one_step()  # callbacks.{before,after}_run are hooked with session
       callbacks.trigger_step()
     callbacks.after_epoch()
     callbacks.trigger_epoch()
   callbacks.after_train()
 ```
 
-## Explain the callback methods
+### Explain the callback methods
 
-You can overwrite any of the following methods to define a new callback:
+You can override any of the following methods to define a new callback:
 
 * `_setup_graph(self)`
 
@@ -33,7 +33,7 @@ to access those already defined in the training tower. Or use
 to create a callable evaluation function in the predict tower.
 
 This method is to separate between "define" and "run", and also to avoid the common mistake to create ops inside
-loops, all changes to the graph should be made in this method.
+loops. All changes to the graph should be made in this method.
 
 * `_before_train(self)`
 
@@ -52,7 +52,7 @@ Otherwise, `_trigger_epoch` should be enough.
 
 This two are the equivlent of [tf.train.SessionRunHook](https://www.tensorflow.org/api_docs/python/tf/train/SessionRunHook).
 Please refer to TensorFlow documentation for detailed API.
-They are used to run extra ops / eval extra tensors / feed extra values __along with__ the actual training iteration.
+They are used to run extra ops / eval extra tensors / feed extra values __along with__ the actual training iterations.
 
 Note the difference between running __along with__ an iteration and running after an iteration.
 When you write
@@ -68,7 +68,7 @@ which is what you would get if you run the op in `_trigger_step`.
 
 * `_trigger_step(self)`
 
-Do something (including running ops) after each step has finished.
+Do something (e.g. running ops, print stuff) after each step has finished.
 Be careful to only do light work here because it could affect training speed.
 
 * `_trigger_epoch(self)`
@@ -81,7 +81,7 @@ By default will get called by `_trigger_epoch`,
 but you can customize the scheduling of this callback by
 `PeriodicTrigger`, to let this method run every k steps or every k epochs.
 
-## What you can do in the callback
+### What you can do in the callback
 
 * Access tensors / ops in either training / inference mode (need to create them in `_setup_graph`).
 * Write stuff to the monitor backend, by `self.trainer.monitors.put_xxx`.

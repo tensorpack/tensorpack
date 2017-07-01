@@ -188,15 +188,20 @@ class EnqueueThread(ShareSessionThread):
 
     def run(self):
         with self.default_sess():
+            sess = tf.get_default_session()
+            opt = tf.RunOptions()
+            opt.timeout_in_ms = 10000
             try:
                 self.dataflow.reset_state()
                 while True:
                     for dp in self.dataflow.get_data():
                         feed = dict(zip(self.placehdrs, dp))
                         # print 'qsize:', self.sess.run([self.op, self.size_op], feed_dict=feed)[1]
-                        self.op.run(feed_dict=feed)
+                        sess.run(self.op, feed_dict=feed, options=opt)
             except (tf.errors.CancelledError, tf.errors.OutOfRangeError):
                 pass
+            except tf.errors.DeadlineExceededError:
+                logger.exception("Deadline exceeded while waiting for data from the queue!")
             except Exception:
                 logger.exception("Exception in EnqueueThread:")
             finally:
