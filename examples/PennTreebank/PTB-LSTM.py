@@ -54,10 +54,13 @@ class Model(ModelDesc):
         input, nextinput = inputs
         initializer = tf.random_uniform_initializer(-0.05, 0.05)
 
-        cell = rnn.BasicLSTMCell(num_units=HIDDEN_SIZE, forget_bias=0.0)
-        if is_training:
-            cell = rnn.DropoutWrapper(cell, output_keep_prob=DROPOUT)
-        cell = rnn.MultiRNNCell([cell] * NUM_LAYER)
+        def get_basic_cell():
+            cell = rnn.BasicLSTMCell(num_units=HIDDEN_SIZE, forget_bias=0.0, reuse=tf.get_variable_scope().reuse)
+            if is_training:
+                cell = rnn.DropoutWrapper(cell, output_keep_prob=DROPOUT)
+            return cell
+
+        cell = rnn.MultiRNNCell([get_basic_cell() for _ in range(NUM_LAYER)])
 
         def get_v(n):
             return tf.get_variable(n, [BATCH, HIDDEN_SIZE],
