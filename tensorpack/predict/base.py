@@ -8,7 +8,6 @@ import tensorflow as tf
 import six
 
 from ..utils import logger
-from ..utils.develop import deprecated
 from ..utils.argtools import memoized
 from ..utils.naming import TOWER_FREEZE_KEYS
 from ..tfutils import get_tensors_by_names, TowerContext, get_op_tensor_name
@@ -16,7 +15,6 @@ from ..tfutils.collection import freeze_collection
 
 __all__ = ['PredictorBase', 'AsyncPredictorBase',
            'OnlinePredictor', 'OfflinePredictor',
-           'get_predict_func',
            'PredictorTowerBuilder',
            'build_prediction_graph',
            ]
@@ -145,14 +143,6 @@ class OfflinePredictor(OnlinePredictor):
             config.session_init.init(sess)
             super(OfflinePredictor, self).__init__(
                 input_tensors, output_tensors, config.return_input, sess)
-
-
-@deprecated("Use OfflinePredictor instead!", "2017-05-20")
-def get_predict_func(config):
-    """
-    Equivalent to ``OfflinePredictor(config)``.
-    """
-    return OfflinePredictor(config)
 
 
 class PredictorTowerBuilder(object):

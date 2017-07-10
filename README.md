@@ -43,7 +43,7 @@ It's Yet Another TF wrapper, but different in:
 	+ Data-parallel distributed training is off-the-shelf to use. It is as slow as Google's [benchmark code](https://github.com/tensorflow/benchmarks).
 
 3. Focus on large datasets.
-	+ It's painful to read/preprocess data from TF. Use __DataFlow__ to efficiently process large datasets such as ImageNet in __pure Python__.
+	+ It's painful to read/preprocess data from TF. Use __DataFlow__ to load large datasets (e.g. ImageNet) in __pure Python__ with multi-process prefetch.
 	+ DataFlow has a unified interface, so you can compose and reuse them to perform complex preprocessing.
 
 4. Interface of extensible __Callbacks__.

@@ -13,7 +13,6 @@ import tensorflow as tf
 from .predict import PredictorFactory
 from .config import TrainConfig
 from ..utils import logger
-from ..utils.develop import deprecated
 from ..callbacks import Callback, Callbacks, MaintainStepCounter
 from ..callbacks.monitor import Monitors, TrainingMonitor
 from ..tfutils import get_global_step_value
@@ -206,6 +205,7 @@ class Trainer(object):
                 self._callbacks.after_train()
                 self.hooked_sess.close()
 
+    # Predictor related methods:    TODO
     @property
     def vs_name_for_predictor(self):
         """
@@ -213,7 +213,6 @@ class Trainer(object):
         """
         return ""
 
-    # Predictor related methods:    TODO
     def get_predictor(self, input_names, output_names, tower=0):
         """
         Args:
@@ -236,11 +235,3 @@ class Trainer(object):
     def get_predictors(self, input_names, output_names, n):
         """ Return n predictors. """
         return [self.get_predictor(input_names, output_names, k) for k in range(n)]
-
-    @deprecated("Use get_predictor instead!", "2017-05-20")
-    def get_predict_func(self, input_names, output_names, tower=0):
-        return self.get_predictor(input_names, output_names, tower)
-
-    @deprecated("Use get_predictors instead!", "2017-05-20")
-    def get_predict_funcs(self, input_names, output_names, n):
-        return self.get_predictors(input_names, output_names, n)
