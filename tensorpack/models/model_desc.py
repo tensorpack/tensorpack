@@ -24,7 +24,7 @@ class InputDesc(
 
     _cached_placeholder = None
 
-    def __init__(self, type, shape, name):
+    def __new__(cls, type, shape, name):
         """
         Args:
             type (tf.DType):
@@ -32,7 +32,8 @@ class InputDesc(
             name (str):
         """
         shape = tuple(shape)    # has to be tuple for self to be hashable
-        super(InputDesc, self).__init__(type, shape, name)
+        self = super(InputDesc, cls).__new__(cls, type, shape, name)
+        return self
 
     # TODO in serialization, skip _cached_placeholder
     # def dumps(self):
