@@ -83,7 +83,7 @@ class InferenceRunnerBase(Callback):
         self._extra_hooks = extra_hooks
 
     def _setup_graph(self):
-        self._input_source.setup(self.trainer.model)
+        self._input_source.setup(self.trainer.model.get_inputs_desc())
         # Use predict_tower in train config. either gpuid or -1
         self._predict_tower_id = self.trainer.config.predict_tower[0]
 
@@ -188,7 +188,7 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
 
     def _setup_graph(self):
         model = self.trainer.model
-        self._input_source.setup(model)
+        self._input_source.setup(model.get_inputs_desc())
 
         # build graph
         def build_tower(k):
