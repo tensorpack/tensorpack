@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-# File: trainer.py
+# File: simple.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 
@@ -37,7 +37,7 @@ class SimpleTrainer(Trainer):
     def _setup(self):
         self._input_source.setup_training(self)
         model = self.model
-        self.inputs = model.get_reused_placehdrs()
+        self.inputs = self._input_source.get_input_tensors()
         with TowerContext('', is_training=True):
             model.build_graph(self.inputs)
             cost_var = model.get_cost()

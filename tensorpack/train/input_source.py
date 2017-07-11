@@ -83,7 +83,8 @@ class FeedInput(InputSource):
         return self.ds.size()
 
     def setup(self, model):
-        self._all_placehdrs = model.get_reused_placehdrs()
+        inputs = model.get_inputs_desc()
+        self._all_placehdrs = [v.build_placeholder_reuse() for v in inputs]
         if self._input_names is None:
             self._placehdrs_to_feed = self._all_placehdrs
         else:
@@ -115,13 +116,13 @@ class DataParallelFeedInput(FeedInput):
         self._nr_tower = len(tower_names)
 
     def setup(self, model):
+        inputs = model.get_inputs_desc()
         self._placehdrs_per_tower = []
         self._feed_placehdrs_per_tower = []
         for tname in self._tower_names:
             # build a list of placeholders for each tower
             self._placehdrs_per_tower.append(
-                model.build_placeholders(
-                    prefix=tname + '/'))
+                [v.build_placeholder(prefix=tname + '/') for v in inputs])
 
         # apply input mapping and store results in feed_placehdrs_per_tower
         if self._input_names is None:
@@ -232,7 +233,8 @@ class QueueInput(FeedfreeInput):
     # TODO use input data mapping. not all placeholders are needed
     def setup(self, model):
         logger.info("Setting up the queue for CPU prefetching ...")
-        self.input_placehdrs = model.get_reused_placehdrs()
+        inputs = model.get_inputs_desc()
+        self.input_placehdrs = [v.build_placeholder_reuse() for v in inputs]
         if self._names is None:
             self._queue_feedpoint = self.input_placehdrs
         else:
@@ -289,7 +291,8 @@ class BatchQueueInput(FeedfreeInput):
 
     def setup(self, model):
         logger.info("Setting up the queue for CPU prefetching ...")
-        self.input_placehdrs = model.get_reused_placehdrs()
+        inputs = model.get_inputs_desc()
+        self.input_placehdrs = [v.build_placeholder_reuse() for v in inputs]
         assert len(self.input_placehdrs) > 0, \
             "BatchQueueInput has to be used with some InputDesc!"
 
@@ -377,39 +380,42 @@ class DummyConstantInput(TensorInput):
             tlist = []
             ctx = get_current_tower_context()
             assert ctx is not None
-            assert len(self.shapes) == len(self.input_placehdrs)
-            for idx, p in enumerate(self.input_placehdrs):
+            assert len(self.shapes) == len(self.inputs_desc)
+            for idx, p in enumerate(self.inputs_desc):
                 tlist.append(tf.constant(
-                    0, dtype=p.dtype,
-                    name='dummy-{}-{}'.format(p.op.name, ctx.index),
+                    0, dtype=p.type,
+                    name='dummy-{}-{}'.format(p.name, ctx.index),
                     shape=self.shapes[idx]))
             return tlist
         super(DummyConstantInput, self).__init__(fn)
 
     def setup(self, model):
-        self.input_placehdrs = model.get_reused_placehdrs()
+        self.inputs_desc = model.get_inputs_desc()
 
 
 # TODO doesn't support remapping
 class ZMQInput(TensorInput):
+    """
+    Not well implemented yet. Don't use.
+    """
     def __init__(self, endpoint):
         self._endpoint = endpoint
 
         from tensorpack.user_ops import zmq_recv
 
         def fn():
-            ret = zmq_recv(self._endpoint, [x.dtype for x in self.input_placehdrs])
+            ret = zmq_recv(self._endpoint, [x.dtype for x in self.inputs_desc])
             if isinstance(ret, tf.Tensor):
                 ret = [ret]
-            assert len(ret) == len(self.input_placehdrs)
-            for qv, v in zip(ret, self.input_placehdrs):
-                qv.set_shape(v.get_shape())
+            assert len(ret) == len(self.inputs_desc)
+            for qv, v in zip(ret, self.inputs_desc):
+                qv.set_shape(v.shape)
             return ret
         super(ZMQInput, self).__init__(fn)
 
     def setup(self, model):
-        self.input_placehdrs = model.get_reused_placehdrs()
-        assert len(self.input_placehdrs) > 0, \
+        self.inputs_desc = model.get_inputs_desc()
+        assert len(self.inputs_desc) > 0, \
             "ZMQInput has to be used with InputDesc!"
 
 
@@ -522,11 +528,13 @@ class ReorderInputSource(FeedfreeInput):
         return self._input.size()
 
     def setup(self, model):
-        self._all_placehdrs = model.get_reused_placehdrs()
+        inputs = model.get_inputs_desc()
+        self._all_placehdrs = [v.build_placeholder_reuse() for v in inputs]
         self._input.setup(model)
 
     def setup_training(self, trainer):
-        self._all_placehdrs = trainer.model.get_reused_placehdrs()
+        inputs = trainer.model.get_inputs_desc()
+        self._all_placehdrs = [v.build_placeholder_reuse() for v in inputs]
         self._input.setup_training(trainer)
 
     def reset_state(self):

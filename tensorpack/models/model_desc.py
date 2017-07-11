@@ -6,14 +6,12 @@
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
 import tensorflow as tf
-import pickle
 import six
 
-from ..utils import logger
 from ..utils.argtools import memoized
 from .regularize import regularize_cost_from_collection
 
-__all__ = ['InputDesc', 'InputVar', 'ModelDesc']
+__all__ = ['InputDesc', 'ModelDesc']
 
 
 class InputDesc(
@@ -24,23 +22,36 @@ class InputDesc(
     input source.
     """
 
-    def dumps(self):
-        """
-        Returns:
-            str: serialized string
-        """
-        return pickle.dumps(self)
+    _cached_placeholder = None
 
-    @staticmethod
-    def loads(buf):
+    def __init__(self, type, shape, name):
         """
         Args:
-            buf (str): serialized string
-
-        Returns:
-            InputDesc:
+            type (tf.DType):
+            shape (tuple):
+            name (str):
         """
-        return pickle.loads(buf)
+        shape = tuple(shape)    # has to be tuple for self to be hashable
+        super(InputDesc, self).__init__(type, shape, name)
+
+    # TODO in serialization, skip _cached_placeholder
+    # def dumps(self):
+    #     """
+    #     Returns:
+    #         str: serialized string
+    #     """
+    #     return pickle.dumps(self)
+
+    # @staticmethod
+    # def loads(buf):
+    #     """
+    #     Args:
+    #         buf (str): serialized string
+
+    #     Returns:
+    #         InputDesc:
+    #     """
+    #     return pickle.loads(buf)
 
     def build_placeholder(self, prefix=''):
         """
@@ -53,11 +64,13 @@ class InputDesc(
             tf.Tensor:
         """
         with tf.name_scope(None):   # clear any name scope it might get called in
-            return tf.placeholder(
+            ret = tf.placeholder(
                 self.type, shape=self.shape,
                 name=prefix + self.name)
+        if prefix == '' and self._cached_placeholder is None:
+            self._cached_placeholder = ret
+        return ret
 
-    # TODO cache results from build_placeholder, and skip it in serialization
     @memoized
     def build_placeholder_reuse(self):
         """
@@ -66,13 +79,9 @@ class InputDesc(
         Returns:
             tf.Tensor:
         """
+        if self._cached_placeholder is not None:
+            return self._cached_placeholder
         return self.build_placeholder()
-
-
-class InputVar(InputDesc):
-    def __init__(self, *args, **kwargs):
-        logger.warn("[Deprecated] InputVar was renamed to InputDesc!")
-        super(InputVar, self).__init__(*args, **kwargs)
 
 
 @six.add_metaclass(ABCMeta)
@@ -81,6 +90,7 @@ class ModelDesc(object):
     """
 
 # inputs:
+# TODO remove this method?
     @memoized
     def get_reused_placehdrs(self):
         """
@@ -89,7 +99,7 @@ class ModelDesc(object):
         Returns:
             list[tf.Tensor]: the list of input placeholders in the graph.
         """
-        return self.build_placeholders()
+        return [v.build_placeholder_reuse() for v in self.get_inputs_desc()]
 
     def build_placeholders(self, prefix=''):
         """
@@ -99,7 +109,7 @@ class ModelDesc(object):
         Returns:
             list[tf.Tensor]: the list of built placeholders.
         """
-        inputs = self._get_inputs()
+        inputs = self.get_inputs_desc()
         ret = []
         for v in inputs:
             ret.append(v.build_placeholder(prefix))
