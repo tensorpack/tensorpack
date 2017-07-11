@@ -53,8 +53,12 @@ class InputSource(object):
         """
         pass
 
-    def setup_training(self, trainer):
-        self.setup(trainer.model.get_inputs_desc())
+    def get_callbacks(self):
+        """
+        Returns:
+            list[Callback]: extra callbacks required by this InputSource.
+        """
+        return []
 
     @abstractmethod
     def reset_state(self):
@@ -248,11 +252,10 @@ class QueueInput(FeedfreeInput):
                 name='input_queue')
         self.thread = EnqueueThread(self.queue, self.ds, self._queue_feedpoint)
 
-    def setup_training(self, trainer):
-        super(QueueInput, self).setup_training(trainer)
+    def get_callbacks(self):
         cb = StartProcOrThread(self.thread)
         cb.chief_only = False
-        trainer.register_callback(cb)
+        return [cb]
 
     def get_input_tensors(self):
         with tf.device('/cpu:0'):
@@ -321,9 +324,10 @@ class BatchQueueInput(FeedfreeInput):
 
         self.thread = EnqueueThread(self.queue, self.ds, placehdrs_nobatch)
 
-    def setup_training(self, trainer):
-        super(BatchQueueInput, self).setup_training(trainer)
-        trainer.register_callback(StartProcOrThread(self.thread))
+    def get_callbacks(self):
+        cb = StartProcOrThread(self.thread)
+        cb.chief_only = False
+        return [cb]
 
     def get_input_tensors(self):
         with tf.device('/cpu:0'):
@@ -461,13 +465,13 @@ class StagingInputWrapper(FeedfreeInput):
         self._input.setup(inputs)
         self.setup_staging_areas()
 
-    def setup_training(self, trainer):
-        self._input.setup_training(trainer)
-        self.setup_staging_areas()
+    def get_callbacks(self):
+        cbs = self._input.get_callbacks()
 
-        trainer.register_callback(
+        cbs.append(
             StagingInputWrapper.StagingCallback(
                 self.get_stage_op(), self.get_unstage_op(), self._nr_stage))
+        return cbs
 
     def setup_staging_areas(self):
         logger.info("Setting up StagingArea for GPU prefetching ...")
@@ -531,10 +535,8 @@ class ReorderInputSource(FeedfreeInput):
         self._all_placehdrs = [v.build_placeholder_reuse() for v in inputs]
         self._input.setup(inputs)
 
-    def setup_training(self, trainer):
-        inputs = trainer.model.get_inputs_desc()
-        self._all_placehdrs = [v.build_placeholder_reuse() for v in inputs]
-        self._input.setup_training(trainer)
+    def get_callbacks(self):
+        return self._input.get_callbacks()
 
     def reset_state(self):
         self._input.reset_state()

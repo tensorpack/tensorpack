@@ -35,8 +35,10 @@ class SimpleTrainer(Trainer):
         self.hooked_sess.run(self.train_op, feed_dict=feed)
 
     def _setup(self):
-        self._input_source.setup_training(self)
         model = self.model
+        self._input_source.setup(model.get_inputs_desc())
+        cbs = self._input_source.get_callbacks()
+        assert len(cbs) == 0, "Feedinput has no callbacks!"
         self.inputs = self._input_source.get_input_tensors()
         with TowerContext('', is_training=True):
             model.build_graph(self.inputs)

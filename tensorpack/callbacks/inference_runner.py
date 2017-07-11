@@ -84,6 +84,8 @@ class InferenceRunnerBase(Callback):
 
     def _setup_graph(self):
         self._input_source.setup(self.trainer.model.get_inputs_desc())
+        assert len(self._input_source.get_callbacks()) == 0, \
+            "InferenceRunner doesn't support any InputSource which requires callbacks!"
         # Use predict_tower in train config. either gpuid or -1
         self._predict_tower_id = self.trainer.config.predict_tower[0]
 
@@ -189,6 +191,8 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
     def _setup_graph(self):
         model = self.trainer.model
         self._input_source.setup(model.get_inputs_desc())
+        assert len(self._input_source.get_callbacks()) == 0, \
+            "InferenceRunner doesn't support any InputSource which requires callbacks!"
 
         # build graph
         def build_tower(k):
