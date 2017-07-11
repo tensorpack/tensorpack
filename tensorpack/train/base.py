@@ -38,6 +38,7 @@ class Trainer(object):
         config (TrainConfig): the config used in this trainer.
         model (ModelDesc)
         sess (tf.Session): the current session in use.
+        hooked_sess (tf.MonitoredSession): the session with hooks.
         monitors (Monitors): the monitors. Callbacks can use it for logging.
 
         epoch_num (int): the number of epochs that have finished.
@@ -106,9 +107,6 @@ class Trainer(object):
     def run_step(self):
         """ Abstract method: run one iteration. Subclass should define what is "iteration".
         """
-
-    def _trigger_epoch(self):
-        pass
 
     def setup(self):
         """
@@ -192,7 +190,6 @@ class Trainer(object):
                         self._epoch_num, self.global_step, time.time() - start_time))
 
                     # trigger epoch outside the timing region.
-                    self._trigger_epoch()
                     self._callbacks.trigger_epoch()
                 logger.info("Training has finished!")
             except (StopTraining, tf.errors.OutOfRangeError):
