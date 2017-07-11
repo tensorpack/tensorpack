@@ -65,7 +65,7 @@ class TrainConfig(object):
         # process data
         if 'dataset' in kwargs:
             dataflow = kwargs.pop('dataset')
-            log_deprecated("TrainConfig.dataset", "Use TrainConfig.dataflow instead.")
+            log_deprecated("TrainConfig.dataset", "Use TrainConfig.dataflow instead.", "2017-09-11")
         if dataflow is not None:
             assert data is None, "dataflow and data cannot be both presented in TrainConfig!"
             self.dataflow = dataflow
@@ -113,10 +113,6 @@ class TrainConfig(object):
             assert session_config is None, "Cannot set both session_creator and session_config!"
         self.session_config = session_config
 
-        if steps_per_epoch is None:
-            steps_per_epoch = kwargs.pop('step_per_epoch', None)
-            if steps_per_epoch is not None:
-                log_deprecated("step_per_epoch", "Use steps_per_epoch instead!", "2017-03-27")
         if steps_per_epoch is None:
             try:
                 if dataflow is not None:

@@ -72,6 +72,13 @@ class InputSource(object):
         """
         pass
 
+    def size(self):
+        """
+        Returns:
+            int: epoch size of the InputSource
+        """
+        return NotImplementedError()
+
 
 class FeedInput(InputSource):
     """ Input by iterating over a DataFlow and feed datapoints. """
@@ -271,7 +278,7 @@ class QueueInput(FeedfreeInput):
                 return get_tensors_inputs(self.input_placehdrs, ret, self._names)
 
 
-class BatchQueueInput(FeedfreeInput):
+class BatchQueueInput(QueueInput):
     """ Enqueue datapoints from a DataFlow to a TF queue.
         And the model receives batches formed by concatenating
         dequeued tensors.
@@ -285,9 +292,7 @@ class BatchQueueInput(FeedfreeInput):
                 should match the corresponding InputDesc of the model.
                 Defaults to a FIFO queue of size 3000.
         """
-        assert isinstance(ds, DataFlow), ds
-        self.queue = queue
-        self.ds = ds
+        super(BatchQueueInput, self).__init__(ds, queue)
         self.batch_size = int(batch_size)
 
     def size(self):
@@ -323,11 +328,6 @@ class BatchQueueInput(FeedfreeInput):
             assert shp.is_fully_defined(), shape_err
 
         self.thread = EnqueueThread(self.queue, self.ds, placehdrs_nobatch)
-
-    def get_callbacks(self):
-        cb = StartProcOrThread(self.thread)
-        cb.chief_only = False
-        return [cb]
 
     def get_input_tensors(self):
         with tf.device('/cpu:0'):

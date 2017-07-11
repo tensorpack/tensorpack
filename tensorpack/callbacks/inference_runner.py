@@ -116,7 +116,7 @@ class InferenceRunnerBase(Callback):
 
         # iterate over the data, and run the hooked session
         self._input_source.reset_state()
-        for _ in tqdm.trange(self._input_source.size(), **get_tqdm_kwargs()):
+        for _ in tqdm.trange(self._size, **get_tqdm_kwargs()):
             feed = self._input_source.next_feed()
             self._hooked_sess.run(fetches=[], feed_dict=feed)
         summary_inferencer(self.trainer, self.infs)
@@ -252,7 +252,7 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
             inf.before_inference()
 
         self._input_source.reset_state()
-        total = self._input_source.size()
+        total = self._size
         nr_tower = len(self._gpus)
         with tqdm.tqdm(total=total, **get_tqdm_kwargs()) as pbar:
             while total >= nr_tower:
