@@ -31,14 +31,14 @@ class SimpleTrainer(Trainer):
 
     def run_step(self):
         """ Feed data into the graph and run the updates. """
-        feed = self._input_source.next_feed()
-        self.hooked_sess.run(self.train_op, feed_dict=feed)
+        self.hooked_sess.run(self.train_op)
 
     def _setup(self):
         model = self.model
         self._input_source.setup(model.get_inputs_desc())
         cbs = self._input_source.get_callbacks()
-        assert len(cbs) == 0, "Feedinput has no callbacks!"
+        for cb in cbs:
+            self.register_callback(cb)
         self.inputs = self._input_source.get_input_tensors()
         with TowerContext('', is_training=True):
             model.build_graph(self.inputs)

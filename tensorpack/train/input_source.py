@@ -80,17 +80,6 @@ class InputSource(object):
     def _reset_state(self):
         pass
 
-    def next_feed(self):
-        """
-        Returns:
-            a feed_dict of {Tensor: data}, to be used to run the steps
-        """
-        return self._next_feed()
-
-    @abstractmethod
-    def _next_feed(self):
-        pass
-
     def size(self):
         """
         Returns:
@@ -122,15 +111,28 @@ class ProxyInputSource(InputSource):
     def _size(self):
         return self._input.size()
 
-    def _next_feed(self):
-        return self._input.next_feed()
-
     def _reset_state(self):
         self._input.reset_state()
 
 
 class FeedInput(InputSource):
     """ Input by iterating over a DataFlow and feed datapoints. """
+
+    class _FeedCallback(Callback):
+        def __init__(self, ds, placeholders):
+            self._ds = ds
+            self._itr = self._ds.get_data()
+            self._placeholders = placeholders
+
+        def _before_run(self, _):
+            dp = next(self._itr)
+            assert len(dp) == len(self._placeholders), "[FeedInput] datapoints and inputs are of different length!"
+            feed = dict(zip(self._placeholders, dp))
+            return tf.train.SessionRunArgs(fetches=[], feed_dict=feed)
+
+        def _reset(self):
+            self._ds.reset_state()
+
     def __init__(self, ds):
         """
         Args:
@@ -138,28 +140,27 @@ class FeedInput(InputSource):
         """
         assert isinstance(ds, DataFlow), ds
         self.ds = ds
+        self._repeat_ds = RepeatedData(self.ds, -1)
 
     def _size(self):
         return self.ds.size()
 
     def _setup(self, inputs):
         self._all_placehdrs = [v.build_placeholder_reuse() for v in inputs]
+        self._cb = self._FeedCallback(self._repeat_ds, self._all_placehdrs)
         self.reset_state()
 
     def _reset_state(self):
-        rds = RepeatedData(self.ds, -1)
-        rds.reset_state()
-        self.data_producer = rds.get_data()
+        self._cb._reset()
 
     def _get_input_tensors(self):
         return self._all_placehdrs
 
-    def _next_feed(self):
-        dp = next(self.data_producer)
-        assert len(dp) == len(self._all_placehdrs), "[FeedInput] datapoints and inputs are of different length!"
-        return dict(zip(self._all_placehdrs, dp))
+    def _get_callbacks(self):
+        return [self._cb]
 
 
+# TODO completely broken now!
 class DataParallelFeedInput(FeedInput):
     """
     Input by feeding k datapoints to k copies of placeholders located on k towers.
@@ -182,7 +183,7 @@ class DataParallelFeedInput(FeedInput):
         ctx = get_current_tower_context()
         return self._placehdrs_per_tower[ctx.index]
 
-    def _next_feed(self, cnt=None):
+    def next_feed(self, cnt=None):
         """
         Args:
             cnt: how many towers to feed to. Defaults to the total number of towers
@@ -203,9 +204,6 @@ class FeedfreeInput(InputSource):
 
     def _reset_state(self):
         pass
-
-    def _next_feed(self):
-        return {}
 
 
 # TODO enqueu_many? https://github.com/tensorflow/tensorflow/issues/7817#issuecomment-282053155

@@ -22,6 +22,7 @@ from ..predict import PredictorTowerBuilder
 
 from .base import Callback
 from .inference import Inferencer
+from .hooks import CallbackToHook
 
 __all__ = ['InferenceRunner', 'FeedfreeInferenceRunner',
            'DataParallelInferenceRunner']
@@ -85,8 +86,6 @@ class InferenceRunnerBase(Callback):
 
     def _setup_graph(self):
         self._input_source.setup(self.trainer.model.get_inputs_desc())
-        assert len(self._input_source.get_callbacks()) == 0, \
-            "InferenceRunner doesn't support any InputSource which requires callbacks!"
         # Use predict_tower in train config. either gpuid or -1
         self._predict_tower_id = self.trainer.config.predict_tower[0]
 
@@ -97,6 +96,8 @@ class InferenceRunnerBase(Callback):
             PredictorTowerBuilder(fn, self._prefix).build(self._predict_tower_id)
 
         self._hooks = [self._build_hook(inf) for inf in self.infs]
+        cbs = self._input_source.get_callbacks()
+        self._hooks.extend([CallbackToHook(cb) for cb in cbs])
 
     def _before_train(self):
         self._hooks.extend(self._extra_hooks)
@@ -118,8 +119,7 @@ class InferenceRunnerBase(Callback):
         # iterate over the data, and run the hooked session
         self._input_source.reset_state()
         for _ in tqdm.trange(self._size, **get_tqdm_kwargs()):
-            feed = self._input_source.next_feed()
-            self._hooked_sess.run(fetches=[], feed_dict=feed)
+            self._hooked_sess.run(fetches=[])
         summary_inferencer(self.trainer, self.infs)
 
 
@@ -170,19 +170,17 @@ class FeedfreeInferenceRunner(InferenceRunnerBase):
         placeholder_names = [k.name + ':0' for k in self.trainer.model.get_inputs_desc()]
         ret = []
         for name in out_names:
-            if name not in placeholder_names:
-                ret.append(self._get_tensors_maybe_in_tower([name])[0])
-            else:       # requesting an input
-                idx = placeholder_names.index(name)
-                ret.append(self._input_tensors[idx])
+            assert name not in placeholder_names, "Currently inferencer don't support fetching placeholders!"
+            ret.append(self._get_tensors_maybe_in_tower([name])[0])
         return InferencerToHook(inf, ret)
 
 
+# TODO completely broken now!
+# TODO some scripts to test
 class DataParallelInferenceRunner(InferenceRunnerBase):
     """
-    Not tested. Don't use.
+    Broken. Don't use.
     """
-    # TODO some scripts to test
     def __init__(self, input, infs, gpus):
         """
         Args:
@@ -200,7 +198,7 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
         model = self.trainer.model
         self._input_source.setup(model.get_inputs_desc())
         assert len(self._input_source.get_callbacks()) == 0, \
-            "InferenceRunner doesn't support any InputSource which requires callbacks!"
+            "DataParallelInferenceRunner doesn't support any InputSource which requires callbacks!"
 
         # build graph
         def build_tower(k):

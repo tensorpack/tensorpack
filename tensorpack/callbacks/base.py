@@ -44,7 +44,9 @@ class Callback(object):
         self._steps_per_epoch = trainer.config.steps_per_epoch
         self.trainer = trainer
         self.graph = tf.get_default_graph()
-        with tf.name_scope(type(self).__name__):
+        scope_name = type(self).__name__
+        scope_name = scope_name.replace('_', '')
+        with tf.name_scope(scope_name):
             self._setup_graph()
 
     def _setup_graph(self):
