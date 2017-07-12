@@ -16,7 +16,8 @@ from ..utils import logger, get_tqdm_kwargs
 from ..dataflow import DataFlow
 from ..tfutils.common import get_tensors_by_names
 from ..tfutils.tower import TowerContext
-from ..train.input_source import FeedInput, DataParallelFeedInput, FeedfreeInput
+from ..train.input_source import (
+    FeedInput, DataParallelFeedInput, FeedfreeInput, InputSource)
 from ..predict import PredictorTowerBuilder
 
 from .base import Callback
@@ -128,16 +129,15 @@ class InferenceRunner(InferenceRunnerBase):
     :class:`DataFlow`.
     """
 
-    def __init__(self, ds, infs, input_names=None, extra_hooks=None):
+    def __init__(self, input, infs, extra_hooks=None):
         """
         Args:
-            ds (DataFlow): the DataFlow to run inferencer on.
+            input (FeedInput or DataFlow): the FeedInput, or the DataFlow to run inferencer on.
             infs (list): a list of `Inferencer` instances.
-            input_names (list[str]): list of names to match ``input``, must be a subset of the names in
-                InputDesc of the model. Defaults to be all the inputs of the model.
         """
-        assert isinstance(ds, DataFlow), ds
-        input = FeedInput(ds, input_names)
+        if isinstance(input, DataFlow):
+            input = FeedInput(input)
+        assert isinstance(input, FeedInput), input
         super(InferenceRunner, self).__init__(
             input, infs, prefix='', extra_hooks=extra_hooks)
 
@@ -158,7 +158,6 @@ class FeedfreeInferenceRunner(InferenceRunnerBase):
         Args:
             input (FeedfreeInput): the input to use. Must have ``size()``.
             infs (list): list of :class:`Inferencer` to run.
-            input_names (list[str]): same as in :class:`InferenceRunnerBase`.
             prefix(str): an prefix used to build the tower. Must be set
                 differently if more than one :class:`FeedfreeInferenceRunner` are used.
         """
@@ -180,11 +179,20 @@ class FeedfreeInferenceRunner(InferenceRunnerBase):
 
 
 class DataParallelInferenceRunner(InferenceRunnerBase):
-    def __init__(self, ds, infs, gpus, input_names=None):
-        self._tower_names = [TowerContext.get_predict_tower_name(k)
-                             for k in range(len(gpus))]
-        input = DataParallelFeedInput(
-            ds, self._tower_names, input_names=input_names)
+    """
+    Not tested. Don't use.
+    """
+    # TODO some scripts to test
+    def __init__(self, input, infs, gpus):
+        """
+        Args:
+            input (DataParallelFeedInput or DataFlow)
+        """
+        if isinstance(input, DataFlow):
+            tower_names = [TowerContext.get_predict_tower_name(k) for k in range(len(gpus))]
+            input = DataParallelFeedInput(input, tower_names)
+        assert isinstance(input, InputSource), input
+
         super(DataParallelInferenceRunner, self).__init__(input, infs)
         self._gpus = gpus
 

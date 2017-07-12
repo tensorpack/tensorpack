@@ -8,14 +8,11 @@ from six.moves import zip
 from ..tfutils.common import get_op_tensor_name
 from ..utils import logger
 
-__all__ = ['get_tensors_inputs', 'get_placeholders_by_names']
+__all__ = ['get_tensors_inputs', 'get_sublist_by_names']
 
 
 def get_tensors_inputs(placeholders, tensors, names):
     """
-    Quite often we want to `build_graph()` with normal tensors
-    (rather than placeholders).
-
     Args:
         placeholders (list[Tensor]):
         tensors (list[Tensor]): list of tf.Tensor
@@ -41,19 +38,22 @@ def get_tensors_inputs(placeholders, tensors, names):
     return ret
 
 
-def get_placeholders_by_names(placeholders, names):
+def get_sublist_by_names(lst, names):
     """
+    Args:
+        lst (list): list of objects with "name" property.
+
     Returns:
-        list[Tensor]: a sublist of placeholders, matching names
+        list: a sublist of objects, matching names
     """
-    placeholder_names = [p.name for p in placeholders]
+    orig_names = [p.name for p in lst]
     ret = []
     for name in names:
-        tensorname = get_op_tensor_name(name)[1]
         try:
-            idx = placeholder_names.index(tensorname)
+            idx = orig_names.index(name)
         except ValueError:
-            logger.error("Name {} is not a model input!".format(tensorname))
+            logger.error("Name {} doesn't appear in lst {}!".format(
+                name, str(orig_names)))
             raise
-        ret.append(placeholders[idx])
+        ret.append(lst[idx])
     return ret
