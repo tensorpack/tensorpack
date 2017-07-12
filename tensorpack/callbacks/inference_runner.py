@@ -270,7 +270,8 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
                 total -= nr_tower
             # take care of the rest
             while total > 0:
-                feed = self._input_source.next_feed(cnt=1)
+                # TODO XXX doesn't support remap
+                feed = self._input_source._next_feed(cnt=1)
                 self._hooked_sess.run(fetches=[], feed_dict=feed)
                 pbar.update(1)
                 total -= 1
