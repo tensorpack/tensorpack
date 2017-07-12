@@ -132,6 +132,7 @@ class FeedInput(InputSource):
 
         def _reset(self):
             self._ds.reset_state()
+            self._itr = self._ds.get_data()
 
     def __init__(self, ds):
         """
@@ -160,11 +161,31 @@ class FeedInput(InputSource):
         return [self._cb]
 
 
-# TODO completely broken now!
 class DataParallelFeedInput(FeedInput):
     """
     Input by feeding k datapoints to k copies of placeholders located on k towers.
     """
+
+    class _DataParallelFeedCallback(Callback):
+        def __init__(self, ds, placeholders_per_tower):
+            self._ds = ds
+            self._itr = self._ds.get_data()
+            self._placehdrs_per_tower = placeholders_per_tower
+            self._nr_tower = len(self._placehdrs_per_tower)
+
+        def _reset(self):
+            self._ds.reset_state()
+            self._itr = self._ds.get_data()
+
+        def _before_run(self, _):
+            cnt = self._nr_tower
+            feed = {}
+            for t in range(cnt):
+                dp = next(self._itr)
+                f = dict(zip(self._placehdrs_per_tower[t], dp))
+                feed.update(f)
+            return tf.train.SessionRunArgs(fetches=[], feed_dict=feed)
+
     def __init__(self, ds, tower_names):
         super(DataParallelFeedInput, self).__init__(ds)
         self._tower_names = tower_names
@@ -176,6 +197,7 @@ class DataParallelFeedInput(FeedInput):
             # build a list of placeholders for each tower
             self._placehdrs_per_tower.append(
                 [v.build_placeholder(prefix=tname + '/') for v in inputs])
+        self._cb = self._DataParallelFeedCallback(self._repeat_ds, self._placehdrs_per_tower)
         self.reset_state()
 
     def _get_input_tensors(self):
@@ -183,16 +205,16 @@ class DataParallelFeedInput(FeedInput):
         ctx = get_current_tower_context()
         return self._placehdrs_per_tower[ctx.index]
 
-    def next_feed(self, cnt=None):
+    def next_feed(self, cnt=1):
         """
         Args:
-            cnt: how many towers to feed to. Defaults to the total number of towers
+            cnt: how many towers to feed to.
         """
-        if cnt is None:
-            cnt = self._nr_tower
+        cnt = int(cnt)
+        assert cnt < self._nr_tower
         feed = {}
         for t in range(cnt):
-            dp = next(self.data_producer)
+            dp = next(self._cb._itr)
             f = dict(zip(self._placehdrs_per_tower[t], dp))
             feed.update(f)
         return feed

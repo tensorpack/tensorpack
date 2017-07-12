@@ -175,16 +175,18 @@ class FeedfreeInferenceRunner(InferenceRunnerBase):
         return InferencerToHook(inf, ret)
 
 
-# TODO completely broken now!
 # TODO some scripts to test
 class DataParallelInferenceRunner(InferenceRunnerBase):
     """
-    Broken. Don't use.
+    Inference by feeding datapoints in a data-parallel way to multiple GPUs.
+
+    Doesn't support remapped InputSource for now.
     """
     def __init__(self, input, infs, gpus):
         """
         Args:
             input (DataParallelFeedInput or DataFlow)
+            gpus (list[int]): list of GPU id
         """
         if isinstance(input, DataFlow):
             tower_names = [TowerContext.get_predict_tower_name(k) for k in range(len(gpus))]
@@ -197,8 +199,6 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
     def _setup_graph(self):
         model = self.trainer.model
         self._input_source.setup(model.get_inputs_desc())
-        assert len(self._input_source.get_callbacks()) == 0, \
-            "DataParallelInferenceRunner doesn't support any InputSource which requires callbacks!"
 
         # build graph
         def build_tower(k):
@@ -214,6 +214,8 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
         # setup feeds and hooks
         self._hooks_parallel = [self._build_hook_parallel(inf) for inf in self.infs]
         self._hooks = [self._build_hook(inf) for inf in self.infs]
+        cbs = self._input_source.get_callbacks()
+        self._hooks_parallel.extend([CallbackToHook(cb) for cb in cbs])
 
     def _duplicate_names_across_towers(self, names):
         ret = []
@@ -262,15 +264,19 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
         nr_tower = len(self._gpus)
         with tqdm.tqdm(total=total, **get_tqdm_kwargs()) as pbar:
             while total >= nr_tower:
-                feed = self._input_source.next_feed()
-                self._parallel_hooked_sess.run(fetches=[], feed_dict=feed)
+                self._parallel_hooked_sess.run(fetches=[])
                 pbar.update(nr_tower)
                 total -= nr_tower
             # take care of the rest
-            while total > 0:
-                # TODO XXX doesn't support remap
-                feed = self._input_source._next_feed(cnt=1)
-                self._hooked_sess.run(fetches=[], feed_dict=feed)
-                pbar.update(1)
-                total -= 1
+            try:
+                while total > 0:
+                    # TODO XXX doesn't support remap
+                    feed = self._input_source.next_feed(cnt=1)
+                    self._hooked_sess.run(fetches=[], feed_dict=feed)
+                    pbar.update(1)
+                    total -= 1
+            except AttributeError:
+                logger.error(
+                    "[DataParallelInferenceRunner] doesn't support InputSource wrappers very well!")
+                logger.error("[DataParallelInferenceRunner] Skipping the rest of the datapoints ...")
         summary_inferencer(self.trainer, self.infs)
