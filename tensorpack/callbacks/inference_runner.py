@@ -90,8 +90,7 @@ class InferenceRunnerBase(Callback):
         self._predict_tower_id = self.trainer.config.predict_tower[0]
 
         def fn(_):
-            in_tensors = self._input_source.get_input_tensors()
-            self.trainer.model.build_graph(in_tensors)
+            self.trainer.model.build_graph(self._input_source)
         with tf.variable_scope(self.trainer.vs_name_for_predictor, reuse=True):
             PredictorTowerBuilder(fn, self._prefix).build(self._predict_tower_id)
 
@@ -203,8 +202,7 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
         # build graph
         def build_tower(k):
             # inputs (placeholders) for this tower only
-            input_tensors = self._input_source.get_input_tensors()
-            model.build_graph(input_tensors)
+            model.build_graph(self._input_source)
 
         builder = PredictorTowerBuilder(build_tower, prefix=self._prefix)
         with tf.variable_scope(tf.get_variable_scope(), reuse=True):

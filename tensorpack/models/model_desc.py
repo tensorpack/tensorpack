@@ -9,6 +9,8 @@ import tensorflow as tf
 import six
 
 from ..utils.argtools import memoized
+# TODO sort out import issues
+# from ..train.input_source import InputSource
 from .regularize import regularize_cost_from_collection
 
 __all__ = ['InputDesc', 'ModelDesc']
@@ -130,15 +132,21 @@ class ModelDesc(object):
         :returns: a list of InputDesc
         """
 
-    def build_graph(self, model_inputs):
+    # TODO only use InputSource in the future? Now mainly used in predict/
+    def build_graph(self, inputs):
         """
         Build the whole symbolic graph.
 
         Args:
-            model_inputs (list[tf.Tensor]): a list of inputs, corresponding to
-                InputDesc of this model.
+            inputs (list[tf.Tensor] or InputSource): a list of tensors, or an :class:`InputSource`,
+                that match the list of :class:`InputDesc` defined by ``_get_inputs``.
         """
-        self._build_graph(model_inputs)
+        if not isinstance(inputs, (list, tuple)):
+            inputs = inputs.get_input_tensors()
+        assert len(inputs) == len(self.get_inputs_desc()), \
+            "Number of inputs passed to the graph != number of inputs defined " \
+            "in ModelDesc! ({} != {})".format(len(inputs), len(self.get_inputs_desc()))
+        self._build_graph(inputs)
 
     @abstractmethod
     def _build_graph(self, inputs):

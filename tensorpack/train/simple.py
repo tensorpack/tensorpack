@@ -34,15 +34,11 @@ class SimpleTrainer(Trainer):
         self.hooked_sess.run(self.train_op)
 
     def _setup(self):
-        model = self.model
-        self._input_source.setup(model.get_inputs_desc())
-        cbs = self._input_source.get_callbacks()
-        for cb in cbs:
-            self.register_callback(cb)
-        self.inputs = self._input_source.get_input_tensors()
+        self._setup_input_source(self._input_source)
+
         with TowerContext('', is_training=True):
-            model.build_graph(self.inputs)
-            cost_var = model.get_cost()
+            self.model.build_graph(self._input_source)
+            cost_var = self.model.get_cost()
 
         opt = self.model.get_optimizer()
         self.train_op = opt.minimize(cost_var, name='min_op')

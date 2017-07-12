@@ -108,6 +108,15 @@ class Trainer(object):
         """ Abstract method: run one iteration. Subclass should define what is "iteration".
         """
 
+    def _setup_input_source(self, input_source):
+        """
+        Setup InputSource on this trainer.
+        """
+        input_source.setup(self.model.get_inputs_desc())
+        cbs = input_source.get_callbacks()
+        for cb in cbs:
+            self.register_callback(cb)
+
     def setup(self):
         """
         Setup the trainer and be ready for the main loop.

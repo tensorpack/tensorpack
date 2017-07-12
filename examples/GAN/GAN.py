@@ -8,7 +8,8 @@ import numpy as np
 import time
 from tensorpack import (FeedfreeTrainerBase, QueueInput,
                         ModelDesc, DataFlow, StagingInputWrapper,
-                        MultiGPUTrainerBase, LeastLoadedDeviceSetter)
+                        MultiGPUTrainerBase, LeastLoadedDeviceSetter,
+                        TowerContext)
 from tensorpack.tfutils.summary import add_moving_summary
 
 
@@ -65,7 +66,8 @@ class GANTrainer(FeedfreeTrainerBase):
 
     def _setup(self):
         super(GANTrainer, self)._setup()
-        self.build_train_tower()
+        with TowerContext('', is_training=True):
+            self.model.build_graph(self._input_source)
         opt = self.model.get_optimizer()
 
         # by default, run one d_min after one g_min
@@ -91,7 +93,8 @@ class SeparateGANTrainer(FeedfreeTrainerBase):
 
     def _setup(self):
         super(SeparateGANTrainer, self)._setup()
-        self.build_train_tower()
+        with TowerContext('', is_training=True):
+            self.model.build_graph(self._input_source)
 
         opt = self.model.get_optimizer()
         self.d_min = opt.minimize(
@@ -123,8 +126,9 @@ class MultiGPUGANTrainer(MultiGPUTrainerBase, FeedfreeTrainerBase):
         super(MultiGPUGANTrainer, self)._setup()
         devices = [LeastLoadedDeviceSetter(d, self._raw_devices) for d in self._raw_devices]
 
+        # NOTE trainer internal APIs subject to change in the future
         def get_cost():
-            self.build_train_tower()
+            self.model.build_graph(self._input_source)
             return [self.model.d_loss, self.model.g_loss]
         cost_list = MultiGPUTrainerBase.build_on_multi_tower(
             self.config.tower, get_cost, devices)

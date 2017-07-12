@@ -20,27 +20,10 @@ class FeedfreeTrainerBase(Trainer):
     """ A base trainer which runs iteration without feed_dict (therefore faster)
         Expect ``self.data`` to be a :class:`FeedfreeInput`.
     """
-    def build_train_tower(self):
-        """
-        Get input tensors from `self.input_source` and build the forward graph.
-        """
-        def f():
-            self._input_tensors = self._input_source.get_input_tensors()
-            self.model.build_graph(self._input_tensors)
-        ctx = get_current_tower_context()
-        if ctx is None:     # call without a context, use a default one
-            with TowerContext('', is_training=True):
-                f()
-        else:
-            assert ctx.is_training, ctx
-            f()
 
     def _setup(self):
         assert isinstance(self._input_source, FeedfreeInput), type(self._input_source)
-        self._input_source.setup(self.model.get_inputs_desc())
-        input_callbacks = self._input_source.get_callbacks()
-        for cb in input_callbacks:
-            self.register_callback(cb)
+        self._setup_input_source(self._input_source)
 
     def run_step(self):
         """ Simply run ``self.train_op``."""
@@ -51,10 +34,14 @@ class SingleCostFeedfreeTrainer(FeedfreeTrainerBase):
     """ A feedfree Trainer which assumes a single cost. """
     def _get_cost_and_grad(self):
         """ get the cost and gradient"""
-        self.build_train_tower()
-        cost = self.model.get_cost()    # assume single cost
-        varlist = tf.trainable_variables()
         ctx = get_current_tower_context()
+        assert ctx.is_training, ctx
+
+        self.model.build_graph(self._input_source)
+        cost = self.model.get_cost()    # assume single cost
+
+        # produce gradients
+        varlist = tf.trainable_variables()
         if ctx is not None and ctx.has_own_variables and ctx.vs_name:
             # only optimize w.r.t vars in this tower
             # TODO use ctx.vars?
@@ -93,8 +80,6 @@ class SimpleFeedfreeTrainer(SingleCostFeedfreeTrainer):
             cost, grads = self._get_cost_and_grad()
         opt = self.model.get_optimizer()
         self.train_op = opt.apply_gradients(grads, name='min_op')
-        # skip training
-        # self.train_op = tf.group(*self._input_tensors)
 
 
 def QueueInputTrainer(config, input_queue=None):
