@@ -44,5 +44,14 @@ Therefore, if you want to load some model, just use the same variable name.
 If you want to re-train some layer, just rename it.
 Unmatched variables on both sides will be printed as a warning.
 
-To freeze some variables, there are [different ways](https://github.com/ppwwyyxx/tensorpack/issues/87#issuecomment-270545291)
-with pros and cons.
+## How to freeze some variables in training
+
+1. You can simply use `tf.stop_gradient` in your model code in some situations (e.g. to freeze first several layers).
+
+2. [varreplace.freeze_variables](http://tensorpack.readthedocs.io/en/latest/modules/tfutils.html#tensorpack.tfutils.varreplace.freeze_variables) can wrap some variables with `tf.stop_gradient`. 
+
+3. [ScaleGradient](http://tensorpack.readthedocs.io/en/latest/modules/tfutils.html#tensorpack.tfutils.gradproc.ScaleGradient) can be used to set the gradients of some variables to 0.
+
+Note that the above methods only prevent variables being updated by SGD.
+Some variables may be updated by other means, 
+e.g., BatchNorm statistics are updated through the `UPDATE_OPS` collection and the [RunUpdateOps](http://tensorpack.readthedocs.io/en/latest/modules/callbacks.html#tensorpack.callbacks.RunUpdateOps) callback.
