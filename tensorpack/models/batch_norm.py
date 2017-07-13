@@ -43,7 +43,7 @@ def update_bn_ema(xn, batch_mean, batch_var, moving_mean, moving_var, decay):
     update_op2 = moving_averages.assign_moving_average(
         moving_var, batch_var, decay, zero_debias=False,
         name='var_ema_op')
-    # Only add model var when we update them
+    # Only add to model var when we update them
     add_model_variable(moving_mean)
     add_model_variable(moving_var)
 
@@ -143,7 +143,8 @@ def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5,
             xn = tf.nn.batch_normalization(
                 x, moving_mean, moving_var, beta, gamma, epsilon)
 
-    # maintain EMA only on one GPU is OK.
+    # maintain EMA only on one GPU is OK, even in replicated mode.
+    # because training time doesn't use EMA
     if ctx.is_main_training_tower:
         ret = update_bn_ema(xn, batch_mean, batch_var, moving_mean, moving_var, decay)
     else:
@@ -231,8 +232,9 @@ def BatchRenorm(x, rmax, dmax, decay=0.9, epsilon=1e-5,
             xn = tf.nn.batch_normalization(
                 x, moving_mean, moving_var, beta, gamma, epsilon)
 
-    # training also needs EMA, so ideally we should maintain it on every tower
-    if ctx.is_main_training_tower or ctx.has_own_variables:
+    # training also needs EMA, so we should maintain it as long as there are
+    # corresponding EMA variables.
+    if ctx.has_own_variables:
         ret = update_bn_ema(xn, batch_mean, batch_var, moving_mean, moving_var, decay)
     else:
         ret = tf.identity(xn, name='output')

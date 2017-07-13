@@ -40,15 +40,15 @@ def regularize_cost(regex, func, name='regularize_cost'):
             cost = cost + regularize_cost("fc.*/W", l2_regularizer(1e-5))
     """
     ctx = get_current_tower_context()
-    G = tf.get_default_graph()
-    params = G.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
+    params = tf.trainable_variables()
+
+    # If vars are shared, use all of them
+    # If vars are replicated, only regularize those in the current tower
+    params = ctx.filter_vars_by_vs_name(params)
 
     costs = []
     for p in params:
         para_name = p.name
-        # in replicated mode, only regularize variables inside this tower
-        if ctx.has_own_variables and ctx.vs_name and (not para_name.startswith(ctx.vs_name)):
-            continue
         if re.search(regex, para_name):
             costs.append(func(p))
             _log_regularizer(para_name)

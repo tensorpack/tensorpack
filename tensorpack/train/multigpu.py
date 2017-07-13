@@ -286,7 +286,8 @@ class SyncMultiGPUTrainerReplicated(MultiGPUTrainerBase, SingleCostFeedfreeTrain
     @staticmethod
     def get_post_init_ops():
         # Copy initialized values for variables on GPU 0 to other GPUs.
-        all_vars = tf.trainable_variables()    # TODO model_variables?
+        all_vars = tf.trainable_variables()
+        all_vars.extend(tf.model_variables())
         var_by_name = dict([(v.name, v) for v in all_vars])
         post_init_ops = []
         for v in all_vars:

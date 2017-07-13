@@ -49,11 +49,7 @@ class SingleCostFeedfreeTrainer(FeedfreeTrainerBase):
         cost = self.model.get_cost()    # assume single cost
 
         # produce gradients
-        varlist = tf.trainable_variables()
-        if ctx is not None and ctx.has_own_variables and ctx.vs_name:
-            # only optimize w.r.t vars in this tower
-            # TODO use ctx.vars?
-            varlist = [v for v in varlist if v.op.name.startswith(ctx.vs_name + '/')]
+        varlist = ctx.filter_vars_by_vs_name(tf.trainable_variables())
         grads = tf.gradients(
             cost,
             varlist,
