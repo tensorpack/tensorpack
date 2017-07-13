@@ -8,7 +8,6 @@ import os
 from six.moves import range
 
 from ..utils import logger
-from .feedfree import SingleCostFeedfreeTrainer
 from .multigpu import MultiGPUTrainerBase
 from ..callbacks import RunOp
 from ..tfutils.sesscreate import NewSessionCreator
@@ -35,7 +34,7 @@ class OverrideToLocalVariable(object):
         return getter(name, *args, **kwargs)
 
 
-class DistributedReplicatedTrainer(SingleCostFeedfreeTrainer):
+class DistributedReplicatedTrainer(MultiGPUTrainerBase):
     """
     Distributed replicated training.
     Each worker process builds the same model on one or more GPUs.
@@ -191,7 +190,8 @@ class DistributedReplicatedTrainer(SingleCostFeedfreeTrainer):
             # Ngpu * Nvar * 2
             grad_list = MultiGPUTrainerBase.build_on_multi_tower(
                 self.config.tower,
-                lambda: self._get_cost_and_grad()[1],
+                lambda: MultiGPUTrainerBase._build_graph_get_grads(
+                    self.model, self._input_source),
                 devices=self.raw_devices,
                 var_strategy='replicated',
                 vs_names=None)  # use the default vs names

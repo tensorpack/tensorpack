@@ -20,10 +20,8 @@ class FeedfreeTrainerBase(Trainer):
         Expect ``self.data`` to be a :class:`FeedfreeInput`.
     """
 
-    # TODO deprecated
+    @deprecated("Please build the graph yourself, e.g. by self.model.build_graph(self._input_source)")
     def build_train_tower(self):
-        logger.warn("build_train_tower() was deprecated! Please build the graph "
-                    "yourself, e.g. by self.model.build_graph(self._input_source)")
         with TowerContext('', is_training=True):
             self.model.build_graph(self._input_source)
 
@@ -36,16 +34,20 @@ class FeedfreeTrainerBase(Trainer):
         self.hooked_sess.run(self.train_op)
 
 
-# TODO Kept for now for back-compat
+# deprecated
 class SingleCostFeedfreeTrainer(FeedfreeTrainerBase):
     """ A feedfree Trainer which assumes a single cost. """
+    def __init__(self, *args, **kwargs):
+        super(SingleCostFeedfreeTrainer, self).__init__(*args, **kwargs)
+        logger.warn("SingleCostFeedfreeTrainer was deprecated!")
+
     def _get_cost_and_grad(self):
         """ get the cost and gradient"""
         self.model.build_graph(self._input_source)
         return self.model.get_cost_and_grad()
 
 
-@deprecated("Use SimpleTrainer with config.data instead!")
+@deprecated("Use SimpleTrainer with config.data is the same!", "2017-09-13")
 def SimpleFeedfreeTrainer(config):
     assert isinstance(config.data, FeedfreeInput), config.data
     return SimpleTrainer(config)
@@ -53,9 +55,8 @@ def SimpleFeedfreeTrainer(config):
 
 def QueueInputTrainer(config, input_queue=None):
     """
-    A wrapper trainer which automatically wraps ``config.dataflow`` by a
-    :class:`QueueInput`.
-    It is an equivalent of ``SimpleFeedfreeTrainer(config)`` with ``config.data = QueueInput(dataflow)``.
+    A wrapper trainer which automatically wraps ``config.dataflow`` by a :class:`QueueInput`.
+    It is an equivalent of ``SimpleTrainer(config)`` with ``config.data = QueueInput(dataflow)``.
 
     Args:
         config (TrainConfig): a `TrainConfig` instance. config.dataflow must exist.

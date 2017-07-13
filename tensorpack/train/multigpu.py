@@ -15,9 +15,8 @@ from ..tfutils.collection import backup_collection, restore_collection
 from ..tfutils.gradproc import ScaleGradient
 from ..callbacks.graph import RunOp
 
-from .base import Trainer
-from .feedfree import SingleCostFeedfreeTrainer
 from ..graph_builder.input_source import QueueInput, StagingInputWrapper, DummyConstantInput
+from .feedfree import FeedfreeTrainerBase
 
 __all__ = ['MultiGPUTrainerBase', 'SyncMultiGPUTrainer',
            'AsyncMultiGPUTrainer', 'LeastLoadedDeviceSetter',
@@ -44,7 +43,7 @@ def apply_prefetch_policy(config, gpu_prefetch=True):
             config.data = StagingInputWrapper(config.data, devices)
 
 
-class MultiGPUTrainerBase(Trainer):
+class MultiGPUTrainerBase(FeedfreeTrainerBase):
     """ Base class for multi-gpu training"""
     @staticmethod
     def build_on_multi_tower(
@@ -116,6 +115,11 @@ class MultiGPUTrainerBase(Trainer):
         nvars = [len(k) for k in grad_list]
         assert len(set(nvars)) == 1, "Number of gradients from each tower is different! " + str(nvars)
 
+    @staticmethod
+    def _build_graph_get_grads(model, input):
+        model.build_graph(input)
+        return model.get_cost_and_grad()[1]
+
 
 # Copied from https://github.com/tensorflow/benchmarks/blob/master/scripts/tf_cnn_benchmarks/variable_mgr.py
 class LeastLoadedDeviceSetter(object):
@@ -148,7 +152,7 @@ class LeastLoadedDeviceSetter(object):
         return sanitize_name(device_name)
 
 
-class SyncMultiGPUTrainerParameterServer(MultiGPUTrainerBase, SingleCostFeedfreeTrainer):
+class SyncMultiGPUTrainerParameterServer(MultiGPUTrainerBase):
     """
     A data-parallel Multi-GPU trainer which synchronoizes the gradients computed
     from each tower, averages them and update to variables stored across all
@@ -199,7 +203,9 @@ class SyncMultiGPUTrainerParameterServer(MultiGPUTrainerBase, SingleCostFeedfree
                 worker_device=d, ps_device='/cpu:0', ps_tasks=1) for d in raw_devices]
 
         grad_list = MultiGPUTrainerBase.build_on_multi_tower(
-            self.config.tower, lambda: self._get_cost_and_grad()[1], devices)
+            self.config.tower,
+            lambda: MultiGPUTrainerBase._build_graph_get_grads(
+                self.model, self._input_source), devices)
         MultiGPUTrainerBase._check_grad_list(grad_list)
 
         # debug tower performance (without update):
@@ -223,7 +229,7 @@ def SyncMultiGPUTrainer(config):
     return SyncMultiGPUTrainerParameterServer(config, ps_device='gpu')
 
 
-class SyncMultiGPUTrainerReplicated(MultiGPUTrainerBase, SingleCostFeedfreeTrainer):
+class SyncMultiGPUTrainerReplicated(MultiGPUTrainerBase):
     """
     Data-parallel Multi-GPU trainer where each GPU contains a replicate of the
     whole model. Each gradient update is broadcast and synced.
@@ -266,7 +272,8 @@ class SyncMultiGPUTrainerReplicated(MultiGPUTrainerBase, SingleCostFeedfreeTrain
 
         grad_list = MultiGPUTrainerBase.build_on_multi_tower(
             self.config.tower,
-            lambda: self._get_cost_and_grad()[1],
+            lambda: MultiGPUTrainerBase._build_graph_get_grads(
+                self.model, self._input_source),
             var_strategy='replicated',
             # use no variable scope for the first tower
             vs_names=[''] + [None] * (self.config.nr_tower - 1))
@@ -308,7 +315,7 @@ class SyncMultiGPUTrainerReplicated(MultiGPUTrainerBase, SingleCostFeedfreeTrain
         return tf.group(*post_init_ops, name='sync_variables_from_tower0')
 
 
-class AsyncMultiGPUTrainer(MultiGPUTrainerBase, SingleCostFeedfreeTrainer):
+class AsyncMultiGPUTrainer(MultiGPUTrainerBase):
     """
     A multi-tower multi-GPU trainer where each tower independently
     asynchronously updates the model without averaging the gradient.
@@ -330,7 +337,9 @@ class AsyncMultiGPUTrainer(MultiGPUTrainerBase, SingleCostFeedfreeTrainer):
         raw_devices = ['/gpu:{}'.format(k) for k in self.config.tower]
         devices = [LeastLoadedDeviceSetter(d, raw_devices) for d in raw_devices]
         grad_list = MultiGPUTrainerBase.build_on_multi_tower(
-            self.config.tower, lambda: self._get_cost_and_grad()[1], devices)
+            self.config.tower,
+            lambda: MultiGPUTrainerBase._build_graph_get_grads(
+                self.model, self._input_source), devices)
         MultiGPUTrainerBase._check_grad_list(grad_list)
 
         if self._scale_gradient and self.config.nr_tower > 1:
