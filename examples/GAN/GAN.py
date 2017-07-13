@@ -119,7 +119,7 @@ class MultiGPUGANTrainer(MultiGPUTrainerBase, FeedfreeTrainerBase):
         super(MultiGPUGANTrainer, self).__init__(config)
         self._nr_gpu = config.nr_tower
         assert self._nr_gpu > 1
-        self._raw_devices = ['/gpu:{}'.format(k) for k in self.config.tower]
+        self._raw_devices = ['/device:GPU:{}'.format(k) for k in self.config.tower]
         self._input_source = StagingInputWrapper(QueueInput(config.dataflow), self._raw_devices)
 
     def _setup(self):
