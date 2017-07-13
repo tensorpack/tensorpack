@@ -126,7 +126,6 @@ class MultiGPUGANTrainer(MultiGPUTrainerBase, FeedfreeTrainerBase):
         super(MultiGPUGANTrainer, self)._setup()
         devices = [LeastLoadedDeviceSetter(d, self._raw_devices) for d in self._raw_devices]
 
-        # NOTE trainer internal APIs subject to change in the future
         def get_cost():
             self.model.build_graph(self._input_source)
             return [self.model.d_loss, self.model.g_loss]

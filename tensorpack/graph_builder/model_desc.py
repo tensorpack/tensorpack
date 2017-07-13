@@ -9,10 +9,13 @@ import tensorflow as tf
 import six
 
 from ..utils.argtools import memoized
+from ..tfutils.tower import get_current_tower_context
+from ..tfutils.gradproc import FilterNoneGrad
 from .input_source_base import InputSource
 from ..models.regularize import regularize_cost_from_collection
 
-__all__ = ['InputDesc', 'ModelDesc', 'ModelDescBase']
+__all__ = ['InputDesc', 'ModelDesc']
+# don't expose ModelDescBase for use right now. API wasn't final.
 
 
 class InputDesc(
@@ -88,7 +91,8 @@ class InputDesc(
 
 @six.add_metaclass(ABCMeta)
 class ModelDescBase(object):
-    """ Base class for a model description.  """
+    """ Base class for a model description.
+    """
 
     # TODO remove this method? Now mainly used in predict/
     @memoized
@@ -152,7 +156,7 @@ class ModelDescBase(object):
 
 class ModelDesc(ModelDescBase):
     """
-    A ModelDesc with single cost and single optimizers.
+    A ModelDesc with single cost and single optimizer.
     """
 
     def get_cost(self):
@@ -192,3 +196,28 @@ class ModelDesc(ModelDescBase):
 
     def _get_optimizer(self):
         raise NotImplementedError()
+
+    def get_cost_and_grad(self):
+        """
+        Compute gradients with ``self.get_optimizer()`` on ``self.get_cost()``.
+
+        Returns:
+            cost (tf.Tensor): the cost tensor returned by ``self.get_cost()``.
+            grads (list[tuple]): list of (grad, variable) tuple.
+        """
+        return self._get_cost_and_grad()
+
+    def _get_cost_and_grad(self):
+        ctx = get_current_tower_context()
+        assert ctx is not None and ctx.is_training, ctx
+
+        cost = self.get_cost()    # assume single cost
+
+        # produce gradients
+        varlist = ctx.filter_vars_by_vs_name(tf.trainable_variables())
+        opt = self.get_optimizer()
+        grads = opt.compute_gradients(
+            cost, var_list=varlist,
+            gate_gradients=False, colocate_gradients_with_ops=True)
+        grads = FilterNoneGrad().process(grads)
+        return cost, grads

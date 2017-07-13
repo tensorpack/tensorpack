@@ -3,12 +3,8 @@
 # File: feedfree.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import tensorflow as tf
-from six.moves import zip
-
 from ..utils import logger
-from ..tfutils.gradproc import FilterNoneGrad
-from ..tfutils.tower import TowerContext, get_current_tower_context
+from ..tfutils.tower import TowerContext
 from ..graph_builder.input_source import QueueInput, FeedfreeInput
 
 from .base import Trainer
@@ -42,22 +38,8 @@ class SingleCostFeedfreeTrainer(FeedfreeTrainerBase):
     """ A feedfree Trainer which assumes a single cost. """
     def _get_cost_and_grad(self):
         """ get the cost and gradient"""
-        ctx = get_current_tower_context()
-        assert ctx.is_training, ctx
-
         self.model.build_graph(self._input_source)
-        cost = self.model.get_cost()    # assume single cost
-
-        # produce gradients
-        varlist = ctx.filter_vars_by_vs_name(tf.trainable_variables())
-        grads = tf.gradients(
-            cost,
-            varlist,
-            gate_gradients=False,
-            colocate_gradients_with_ops=True)
-        grads = list(zip(grads, varlist))
-        grads = FilterNoneGrad().process(grads)
-        return cost, grads
+        return self.model.get_cost_and_grad()
 
 
 class SimpleFeedfreeTrainer(SingleCostFeedfreeTrainer):
