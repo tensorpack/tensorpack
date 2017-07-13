@@ -5,6 +5,8 @@
 
 import tensorflow as tf
 import six
+from .common import get_tf_version_number
+from ..utils.develop import deprecated
 if six.PY2:
     import functools32 as functools
 else:
@@ -13,16 +15,20 @@ else:
 __all__ = ['get_name_scope_name', 'auto_reuse_variable_scope']
 
 
+@deprecated("Use tf.get_name_scope() (available since 1.2.1).")
 def get_name_scope_name():
     """
     Returns:
         str: the name of the current name scope, without the ending '/'.
     """
-    g = tf.get_default_graph()
-    s = "RANDOM_STR_ABCDEFG"
-    unique = g.unique_name(s)
-    scope = unique[:-len(s)].rstrip('/')
-    return scope
+    if get_tf_version_number() > 1.2:
+        return tf.get_name_scope().name
+    else:
+        g = tf.get_default_graph()
+        s = "RANDOM_STR_ABCDEFG"
+        unique = g.unique_name(s)
+        scope = unique[:-len(s)].rstrip('/')
+        return scope
 
 
 def auto_reuse_variable_scope(func):

@@ -1,7 +1,8 @@
 import tensorflow as tf
 from functools import wraps
 import numpy as np
-from .scope_utils import get_name_scope_name
+
+from .common import get_tf_version_number
 
 __all__ = ['Distribution',
            'CategoricalDistribution', 'GaussianDistribution',
@@ -17,6 +18,16 @@ def class_scope(func):
     This is just syntactic sugar to prevent writing: with
     ``tf.name_scope(...)`` in each method.
     """
+
+    def get_name_scope_name():
+        if get_tf_version_number() > 1.2:
+            return tf.get_name_scope().name
+        else:
+            g = tf.get_default_graph()
+            s = "RANDOM_STR_ABCDEFG"
+            unique = g.unique_name(s)
+            scope = unique[:-len(s)].rstrip('/')
+            return scope
 
     @wraps(func)
     def _impl(self, *args, **kwargs):
