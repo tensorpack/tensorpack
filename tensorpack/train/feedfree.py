@@ -6,6 +6,7 @@
 import tensorflow as tf
 from six.moves import zip
 
+from ..utils import logger
 from ..tfutils.gradproc import FilterNoneGrad
 from ..tfutils.tower import TowerContext, get_current_tower_context
 from .input_source import QueueInput, FeedfreeInput
@@ -20,6 +21,13 @@ class FeedfreeTrainerBase(Trainer):
     """ A base trainer which runs iteration without feed_dict (therefore faster)
         Expect ``self.data`` to be a :class:`FeedfreeInput`.
     """
+
+    # TODO deprecated
+    def build_train_tower(self):
+        logger.warn("build_train_tower() was deprecated! Please build the graph "
+                    "yourself, e.g. by self.model.build_graph(self._input_source)")
+        with TowerContext('', is_training=True):
+            self.model.build_graph(self._input_source)
 
     def _setup(self):
         assert isinstance(self._input_source, FeedfreeInput), type(self._input_source)
