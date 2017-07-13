@@ -52,14 +52,14 @@ def remap_variables(fn):
 def freeze_variables():
     """
     Return a context, where all variables (reused or not) returned by
-    ``get_variable`` will have no gradients (they  will be followed by ``tf.stop_gradient``).
+    ``get_variable`` will have no gradients (they will be wrapped by ``tf.stop_gradient``).
     But they will still be in ``TRAINABLE_VARIABLES`` collections so they will get
     saved correctly. This is useful to fix certain variables for fine-tuning.
 
     Example:
         .. code-block:: python
 
-            with varreplace.freeze_get_variable():
+            with varreplace.freeze_variable():
                 x = FullyConnected('fc', x, 1000)   # fc/* will not be trained
     """
     return remap_variables(lambda v: tf.stop_gradient(v))
