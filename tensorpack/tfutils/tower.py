@@ -14,20 +14,15 @@ _CurrentTowerContext = None
 class TowerContext(object):
     """ A context where the current model is being built in. """
 
-    def __init__(self, tower_name,
-                 is_training=None,
-                 index=0,
-                 var_strategy='shared',
-                 vs_name=None):
+    def __init__(self, tower_name, is_training=None,
+                 index=0, vs_name=''):
         """
         Args:
             tower_name (str): The name scope of the tower. Currently used
                 values are like: 'tower0', 'towerp0', or ''
             is_training (bool): if None, automatically determine from tower_name.
             index (int): index of this tower
-            var_strategy (str): either 'shared' or 'replicated'.
-            vs_name (str): the variable scope name to open. Only valid in
-                'replicated' mode. Defaults to be tower_name.
+            vs_name (str): Open a variable scope with this name, if given.
         """
         self._name = tower_name
 
@@ -37,17 +32,7 @@ class TowerContext(object):
 
         self._index = int(index)
 
-        assert var_strategy in ['replicated', 'shared'], var_strategy
-        self._var_strategy = var_strategy
-        if self._var_strategy == 'replicated':
-            assert self._name
-            if vs_name is None:
-                self._vs_name = self._name
-            else:
-                self._vs_name = vs_name
-        else:
-            assert vs_name is None, "vs_name is only valid in 'replicated' mode!"
-            self._vs_name = ''
+        self._vs_name = vs_name
 
     @property
     def is_main_training_tower(self):
@@ -63,7 +48,7 @@ class TowerContext(object):
 
     @property
     def has_own_variables(self):
-        return self._var_strategy == 'replicated'
+        return len(self._vs_name) > 0
 
     @property
     def name(self):
