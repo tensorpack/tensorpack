@@ -4,9 +4,11 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from ..utils import logger
+from ..utils.develop import deprecated
 from ..tfutils.tower import TowerContext
 from ..graph_builder.input_source import QueueInput, FeedfreeInput
 
+from .simple import SimpleTrainer
 from .base import Trainer
 
 __all__ = ['FeedfreeTrainerBase', 'SingleCostFeedfreeTrainer',
@@ -34,6 +36,7 @@ class FeedfreeTrainerBase(Trainer):
         self.hooked_sess.run(self.train_op)
 
 
+# TODO Kept for now for back-compat
 class SingleCostFeedfreeTrainer(FeedfreeTrainerBase):
     """ A feedfree Trainer which assumes a single cost. """
     def _get_cost_and_grad(self):
@@ -42,30 +45,10 @@ class SingleCostFeedfreeTrainer(FeedfreeTrainerBase):
         return self.model.get_cost_and_grad()
 
 
-class SimpleFeedfreeTrainer(SingleCostFeedfreeTrainer):
-    """
-    A trainer with single cost, single training tower, any number of
-    prediction tower, and feed-free input.
-    """
-
-    def __init__(self, config):
-        """
-        Args:
-            config (TrainConfig): ``config.data`` must exist and is a :class:`FeedfreeInput`.
-        """
-        self._input_source = config.data
-        assert isinstance(self._input_source, FeedfreeInput), self._input_source
-        super(SimpleFeedfreeTrainer, self).__init__(config)
-        assert len(self.config.tower) == 1, \
-            "Got nr_tower={}, but doesn't support multigpu!" \
-            " Use Sync/AsyncMultiGPUTrainer instead.".format(len(self.config.tower))
-
-    def _setup(self):
-        super(SimpleFeedfreeTrainer, self)._setup()
-        with TowerContext('', is_training=True):
-            cost, grads = self._get_cost_and_grad()
-        opt = self.model.get_optimizer()
-        self.train_op = opt.apply_gradients(grads, name='min_op')
+@deprecated("Use SimpleTrainer with config.data instead!")
+def SimpleFeedfreeTrainer(config):
+    assert isinstance(config.data, FeedfreeInput), config.data
+    return SimpleTrainer(config)
 
 
 def QueueInputTrainer(config, input_queue=None):
@@ -76,16 +59,16 @@ def QueueInputTrainer(config, input_queue=None):
 
     Args:
         config (TrainConfig): a `TrainConfig` instance. config.dataflow must exist.
-        input_queue (tf.QueueBase): an input queue. Defaults to the
-            :class:`QueueInput` default.
+        input_queue (tf.QueueBase): an input queue. Defaults to the :class:`QueueInput` default.
     """
     if config.data is not None:
         assert isinstance(config.data, QueueInput), config.data
     else:
         config.data = QueueInput(config.dataflow, input_queue)
+    config.dataflow = None
 
     # debug
     # from tensorpack.train.input_source import StagingInputWrapper, DummyConstantInput
     # config.data = StagingInputWrapper(config.data, ['/gpu:0'])
     # config.data = DummyConstantInput([[128,224,224,3], [128]])
-    return SimpleFeedfreeTrainer(config)
+    return SimpleTrainer(config)

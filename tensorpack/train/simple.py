@@ -13,8 +13,10 @@ __all__ = ['SimpleTrainer']
 
 
 class SimpleTrainer(Trainer):
-    """ A naive demo trainer which iterates over a DataFlow and feed into the
-    graph. It's not efficient compared to QueueInputTrainer or others."""
+    """ A naive single-tower single-cost demo trainer.
+        Support both InputSource and DataFlow.
+        When DataFlow is given, the InputSource to be used will be ``FeedInput(df)``.
+    """
 
     def __init__(self, config):
         """
@@ -22,23 +24,25 @@ class SimpleTrainer(Trainer):
             config (TrainConfig): the training config.
         """
         super(SimpleTrainer, self).__init__(config)
+
+        assert len(self.config.tower) == 1, \
+            "Got nr_tower={}, but doesn't support multigpu!" \
+            " Use Sync/AsyncMultiGPUTrainer instead.".format(len(self.config.tower))
+
         if config.dataflow is None:
             self._input_source = config.data
-            assert isinstance(self._input_source, FeedInput), type(self._input_source)
         else:
             self._input_source = FeedInput(config.dataflow)
-        logger.warn("SimpleTrainer is slow! Do you really want to use it?")
+            logger.warn("FeedInput is slow (and this is the default of SimpleTrainer). "
+                        "Consider QueueInput or other InputSource instead.")
 
     def run_step(self):
-        """ Feed data into the graph and run the updates. """
         self.hooked_sess.run(self.train_op)
 
     def _setup(self):
         self._setup_input_source(self._input_source)
-
         with TowerContext('', is_training=True):
             self.model.build_graph(self._input_source)
-            cost_var = self.model.get_cost()
-
+            cost, grads = self.model.get_cost_and_grad()
         opt = self.model.get_optimizer()
-        self.train_op = opt.minimize(cost_var, name='min_op')
+        self.train_op = opt.apply_gradients(grads, name='min_op')
