@@ -17,7 +17,7 @@ from ..callbacks.graph import RunOp
 
 from .base import Trainer
 from .feedfree import SingleCostFeedfreeTrainer
-from .input_source import QueueInput, StagingInputWrapper, DummyConstantInput
+from ..graph_builder.input_source import QueueInput, StagingInputWrapper, DummyConstantInput
 
 __all__ = ['MultiGPUTrainerBase', 'SyncMultiGPUTrainer',
            'AsyncMultiGPUTrainer', 'LeastLoadedDeviceSetter',

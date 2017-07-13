@@ -31,8 +31,10 @@ class TowerContext(object):
         self._is_training = bool(is_training)
 
         self._index = int(index)
+        self._vs_name = str(vs_name)
 
-        self._vs_name = vs_name
+        if self.has_own_variables:
+            assert not tf.get_variable_scope().reuse, "reuse=True in tower {}!".format(tower_name)
 
     @property
     def is_main_training_tower(self):
@@ -48,14 +50,15 @@ class TowerContext(object):
 
     @property
     def has_own_variables(self):
+        """
+        Whether this tower is supposed to have its own variables.
+        """
         return self.is_main_training_tower or len(self._vs_name) > 0
 
     @property
     def name(self):
         return self._name
 
-    # TODO remove this and add something like `tower.variables`
-    # variable_scope name
     @property
     def vs_name(self):
         return self._vs_name

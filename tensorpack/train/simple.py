@@ -7,7 +7,7 @@ from .base import Trainer
 
 from ..utils import logger
 from ..tfutils import TowerContext
-from .input_source import FeedInput
+from ..graph_builder.input_source import FeedInput
 
 __all__ = ['SimpleTrainer']
 

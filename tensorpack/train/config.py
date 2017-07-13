@@ -7,13 +7,13 @@ from ..callbacks import (
     ProgressBar, MergeAllSummaries,
     TFEventWriter, JSONWriter, ScalarPrinter, RunUpdateOps)
 from ..dataflow.base import DataFlow
-from ..models import ModelDesc
+from ..graph_builder.model_desc import ModelDesc
 from ..utils import logger
 from ..utils.develop import log_deprecated
 from ..tfutils import (JustCurrentSession,
                        get_default_sess_config, SessionInit)
 from ..tfutils.sesscreate import NewSessionCreator
-from .input_source import InputSource
+from ..graph_builder.input_source_base import InputSource
 
 __all__ = ['TrainConfig']
 

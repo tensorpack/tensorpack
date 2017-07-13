@@ -9,7 +9,7 @@ from six.moves import zip
 from ..utils import logger
 from ..tfutils.gradproc import FilterNoneGrad
 from ..tfutils.tower import TowerContext, get_current_tower_context
-from .input_source import QueueInput, FeedfreeInput
+from ..graph_builder.input_source import QueueInput, FeedfreeInput
 
 from .base import Trainer
 

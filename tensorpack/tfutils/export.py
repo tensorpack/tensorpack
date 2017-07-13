@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-# File: exporter.py
+# File: export.py
 # Author: Patrick Wieschollek <mail@patwie.com>
 
 """
@@ -8,9 +8,9 @@ This simplifies the process of exporting a model for TensorFlow serving.
 """
 
 import tensorflow as tf
-from tensorpack.utils import logger
-from tensorpack.models import ModelDesc
-from tensorpack.tfutils import TowerContext, sessinit
+from ..utils import logger
+from ..graph_builder.model_desc import ModelDesc
+from ..tfutils import TowerContext, sessinit
 
 
 __all__ = ['ModelExport']
@@ -49,7 +49,7 @@ class ModelExport(object):
                     prediction = sess.run(prediction, {lowres: ...})[0]
 
         Args:
-            model (ModelDescr): the model description which should be exported
+            model (ModelDesc): the model description which should be exported
             input_names (list(str)): names of input tensors
             output_names (list(str)): names of output tensors
         """

@@ -9,9 +9,8 @@ import tensorflow as tf
 import six
 
 from ..utils.argtools import memoized
-# TODO sort out import issues
-# from ..train.input_source import InputSource
-from .regularize import regularize_cost_from_collection
+from .input_source_base import InputSource
+from ..models.regularize import regularize_cost_from_collection
 
 __all__ = ['InputDesc', 'ModelDesc']
 
@@ -141,7 +140,7 @@ class ModelDesc(object):
             inputs (list[tf.Tensor] or InputSource): a list of tensors, or an :class:`InputSource`,
                 that match the list of :class:`InputDesc` defined by ``_get_inputs``.
         """
-        if not isinstance(inputs, (list, tuple)):
+        if isinstance(inputs, InputSource):
             inputs = inputs.get_input_tensors()
         assert len(inputs) == len(self.get_inputs_desc()), \
             "Number of inputs passed to the graph != number of inputs defined " \

@@ -16,8 +16,8 @@ from ..utils import logger, get_tqdm_kwargs
 from ..dataflow import DataFlow
 from ..tfutils.common import get_tensors_by_names
 from ..tfutils.tower import TowerContext
-from ..train.input_source import (
-    FeedInput, DataParallelFeedInput, FeedfreeInput, InputSource)
+from ..graph_builder.input_source import (
+    FeedInput, DataParallelFeedInput, FeedfreeInput)
 from ..predict import PredictorTowerBuilder
 
 from .base import Callback
@@ -190,7 +190,7 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
         if isinstance(input, DataFlow):
             tower_names = [TowerContext.get_predict_tower_name(k) for k in range(len(gpus))]
             input = DataParallelFeedInput(input, tower_names)
-        assert isinstance(input, InputSource), input
+        assert isinstance(input, DataParallelFeedInput), input
 
         super(DataParallelInferenceRunner, self).__init__(input, infs)
         self._gpus = gpus
