@@ -49,11 +49,14 @@ def create_image_summary(name, val):
     val = val.astype('uint8')
     s = tf.Summary()
     for k in range(n):
+        arr = val[k]
+        if arr.shape[2] == 1:   # scipy doesn't accept (h,w,1)
+            arr = arr[:, :, 0]
         tag = name if n == 1 else '{}/{}'.format(name, k)
 
         buf = io.BytesIO()
         # scipy assumes RGB
-        scipy.misc.toimage(val[k]).save(buf, format='png')
+        scipy.misc.toimage(arr).save(buf, format='png')
 
         img = tf.Summary.Image()
         img.height = h

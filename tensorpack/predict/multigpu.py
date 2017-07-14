@@ -47,7 +47,7 @@ class MultiTowerOfflinePredictor(OnlinePredictor):
     def get_predictor(self, n):
         """
         Returns:
-            PredictorBase: the nth predictor on the nth tower.
+            OnlinePredictor: the nth predictor on the nth tower.
         """
         l = len(self.predictors)
         if n >= l:
@@ -57,7 +57,7 @@ class MultiTowerOfflinePredictor(OnlinePredictor):
     def get_predictors(self):
         """
         Returns:
-            list[PredictorBase]: a list of predictor
+            list[OnlinePredictor]: a list of predictor
         """
         return self.predictors
 

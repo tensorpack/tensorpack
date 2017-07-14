@@ -10,7 +10,8 @@ import six
 from ..utils import logger
 from ..utils.argtools import memoized
 from ..utils.naming import TOWER_FREEZE_KEYS
-from ..tfutils import get_tensors_by_names, TowerContext, get_op_tensor_name
+from ..tfutils.common import get_tensors_by_names, get_op_tensor_name
+from ..tfutils.tower import TowerContext
 from ..tfutils.collection import freeze_collection
 
 __all__ = ['PredictorBase', 'AsyncPredictorBase',
