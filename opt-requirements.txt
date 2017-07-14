@@ -1,7 +1,6 @@
 pillow
 scipy
 h5py
-tornado; python_version < '3.0'
 lmdb>=0.92
 matplotlib
 scikit-learn

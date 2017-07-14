@@ -4,6 +4,7 @@ assert version > 30, "tensorpack installation requires setuptools > 30"
 from setuptools import setup
 import os
 import shutil
+import sys
 
 # setup metainfo
 CURRENT_DIR = os.path.dirname(__file__)
@@ -22,6 +23,8 @@ reqfile = os.path.join(CURRENT_DIR, 'requirements.txt')
 req = [x.strip() for x in open(reqfile).readlines()]
 reqfile = os.path.join(CURRENT_DIR, 'opt-requirements.txt')
 extra_req = [x.strip() for x in open(reqfile).readlines()]
+if sys.version_info.major < 3:
+    extra_req.append('tornado')
 
 # parse scripts
 scripts = ['scripts/plot-point.py', 'scripts/dump-model-params.py']
