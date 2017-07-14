@@ -14,21 +14,25 @@ _CurrentTowerContext = None
 class TowerContext(object):
     """ A context where the current model is being built in. """
 
-    def __init__(self, tower_name, is_training=None,
-                 index=0, vs_name=''):
+    def __init__(self, tower_name, is_training=None, index=0, vs_name=''):
         """
         Args:
             tower_name (str): The name scope of the tower. Currently used
                 values are like: 'tower0', 'towerp0', or ''
             is_training (bool): if None, automatically determine from tower_name.
-            index (int): index of this tower
+            index (int): index of this tower.
             vs_name (str): Open a variable scope with this name, if given.
         """
         self._name = tower_name
 
         if is_training is None:
+            # TODO remove this
             is_training = not self._name.startswith(PREDICT_TOWER)
         self._is_training = bool(is_training)
+
+        if not self._is_training:
+            # TODO ugly
+            assert index == 0 and vs_name == '', "vs_name and index are meaningless in prediction!"
 
         self._index = int(index)
         self._vs_name = str(vs_name)
@@ -39,10 +43,6 @@ class TowerContext(object):
     @property
     def is_main_training_tower(self):
         return self.is_training and self._index == 0
-
-    @property
-    def is_main_tower(self):
-        return self._index == 0
 
     @property
     def is_training(self):
@@ -113,11 +113,15 @@ class TowerContext(object):
                 if self.is_training:
                     reuse = self._index > 0
                     if reuse is True:
-                        # clear old name_scope and re-enter the current variable_scope
+                        # clear old name_scope (due to the existing variable_scope)
+                        # and re-enter the current variable_scope
                         self._ctxs.append(tf.name_scope(None))
                         self._ctxs.append(tf.variable_scope(
                             tf.get_variable_scope(), reuse=True))
-                # if not training, should handle vs outside (TODO not good)
+                else:
+                    # if not training, should handle reuse outside
+                    # but still good to clear name_scope first
+                    self._ctxs.append(tf.name_scope(None))
                 self._ctxs.append(tf.name_scope(self._name))
         for c in self._ctxs:
             c.__enter__()

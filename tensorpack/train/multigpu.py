@@ -54,7 +54,7 @@ class MultiGPUTrainerBase(FeedfreeTrainerBase):
         Args:
             towers: list of gpu relative ids
             func: a lambda to be called inside each tower
-            devices: a list of devices to be used. By default will use GPUs in towers.
+            devices: a list of devices to be used. By default will use GPUs in ``towers``.
             var_strategy (str): 'shared' or 'replicated'
             vs_names (list[str]): list of variable scope names to use.
 

@@ -17,7 +17,7 @@ __all__ = ['FeedfreeTrainerBase', 'SingleCostFeedfreeTrainer',
 
 class FeedfreeTrainerBase(Trainer):
     """ A base trainer which runs iteration without feed_dict (therefore faster)
-        Expect ``self.data`` to be a :class:`FeedfreeInput`.
+        Expect ``config.data`` to be a :class:`FeedfreeInput`.
     """
 
     @deprecated("Please build the graph yourself, e.g. by self.model.build_graph(self._input_source)")

@@ -10,7 +10,7 @@ from six.moves import range
 
 import tensorflow as tf
 
-from .predict import PredictorFactory
+from ..graph_builder.predictor_factory import PredictorFactory
 from .config import TrainConfig
 from ..utils import logger
 from ..callbacks import Callback, Callbacks, MaintainStepCounter
@@ -217,6 +217,7 @@ class Trainer(object):
         """
         The variable scope name a predictor should be built in.
         """
+        # TODO graphbuilder knows it
         return ""
 
     def get_predictor(self, input_names, output_names, tower=0):
@@ -229,7 +230,8 @@ class Trainer(object):
             an :class:`OnlinePredictor`.
         """
         if not hasattr(self, '_predictor_factory'):
-            self._predictor_factory = PredictorFactory(self)
+            self._predictor_factory = PredictorFactory(
+                self.model, self.config.predict_tower, self.vs_name_for_predictor)
         nr_tower = len(self.config.predict_tower)
         if nr_tower < tower:
             logger.warn(

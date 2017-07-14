@@ -1,26 +1,40 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File: predict.py
-# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+# File: predictor_factory.py
 
 import tensorflow as tf
+# from ..tfutils.tower import TowerContext
 from ..predict import (OnlinePredictor,
                        PredictorTowerBuilder)
 
 __all__ = ['PredictorFactory']
 
 
-class PredictorFactory(object):
-    """ Make predictors from a trainer."""
+# class PredictorTowerBuilder(object):
+#     def __init__(self, model):
+#         self._model = model
+#         self._towers = []
+#
+#     def build(self, tower_name, device, input=None):
+#         with tf.device(device), TowerContext(tower_name, is_training=False):
+#             if input is None:
+#                 input = self._model.get_reused_placehdrs()
+#             self._model.build_graph(input)
+#
+#
 
-    def __init__(self, trainer):
+# SMART
+class PredictorFactory(object):
+    """ Make predictors from :class:`ModelDesc` and cache them."""
+
+    def __init__(self, model, towers, vs_name):
         """
         Args:
-            towers (list[int]): list of gpu id
+            towers (list[int]): list of available gpu id
         """
-        self.model = trainer.model
-        self.towers = trainer.config.predict_tower
-        self.vs_name = trainer.vs_name_for_predictor
+        self.model = model
+        self.towers = towers
+        self.vs_name = vs_name
 
         def fn(_):
             self.model.build_graph(self.model.get_reused_placehdrs())
