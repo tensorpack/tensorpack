@@ -14,16 +14,22 @@ __all__ = ['PredictorFactory']
 
 
 class PredictorTowerHandle(object):
-    def __init__(self, tower_name, input_tensors):
+    def __init__(self, tower_name, input_desc_names, input_tensors=None):
         self._tower_name = tower_name
-        self._input_tensors = input_tensors
-        self._input_names = [get_op_tensor_name(k.name)[1] for k in input_tensors]
+        self._input_desc_names = [get_op_tensor_name(k)[1] for k in input_desc_names]
+        if input_tensors is not None:
+            self._input_names = [get_op_tensor_name(k.name)[1] for k in input_tensors]
+        else:
+            self._input_names = self._input_desc_names
 
     def get_tensors(self, names):
         def maybe_inside_tower(name):
             name = get_op_tensor_name(name)[1]
             if name in self._input_names:
                 return name
+            elif name in self._input_desc_names:
+                idx = self._input_desc_names.index(name)
+                return self._input_names[idx]
             else:
                 # if the name is not a placeholder, use it's name in each tower
                 return self._tower_name + '/' + name
@@ -62,7 +68,10 @@ class PredictorFactory(object):
                 input = input.get_input_tensors()
             assert isinstance(input, (list, tuple)), input
             self._model.build_graph(input)
-        self._names_built[tower_name] = PredictorTowerHandle(tower_name, input)
+
+        desc_names = [k.name for k in self._model.get_inputs_desc()]
+        self._names_built[tower_name] = PredictorTowerHandle(
+            tower_name, desc_names, input)
         return self._names_built[tower_name]
 
     def has_built(self, tower_name):

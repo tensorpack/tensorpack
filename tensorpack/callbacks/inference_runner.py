@@ -13,11 +13,14 @@ import six
 from six.moves import range
 
 from ..utils import logger, get_tqdm_kwargs
+from ..utils.develop import deprecated
 from ..dataflow import DataFlow
 from ..tfutils.common import get_tensors_by_names
 from ..tfutils.tower import TowerContext
+
+from ..graph_builder.input_source_base import InputSource
 from ..graph_builder.input_source import (
-    FeedInput, DataParallelFeedInput, FeedfreeInput)
+    FeedInput, DataParallelFeedInput, FeedfreeInput, TensorInput)
 from ..predict import PredictorTowerBuilder
 
 from .base import Callback
@@ -118,21 +121,23 @@ class InferenceRunnerBase(Callback):
 
 class InferenceRunner(InferenceRunnerBase):
     """
-    A callback that runs a list of :class:`Inferencer` on some
-    :class:`DataFlow`.
+    A callback that runs a list of :class:`Inferencer` on some :class:`InputSource`.
     """
 
-    def __init__(self, input, infs, extra_hooks=None):
+    def __init__(self, input, infs, prefix='', extra_hooks=None):
         """
         Args:
-            input (FeedInput or DataFlow): the FeedInput, or the DataFlow to run inferencer on.
-            infs (list): a list of `Inferencer` instances.
+            input (InputSource or DataFlow): The :class:`InputSource` to run
+                inference on.  If given a DataFlow, will use :class:`FeedInput`.
+            infs (list): a list of :class:`Inferencer` instances.
         """
         if isinstance(input, DataFlow):
             input = FeedInput(input)
-        assert isinstance(input, FeedInput), input
+        assert isinstance(input, InputSource), input
+        if isinstance(input, FeedfreeInput):    # TODO support other input
+            assert isinstance(input, TensorInput), "InferenceRunner only accepts TensorInput or FeedInput!"
         super(InferenceRunner, self).__init__(
-            input, infs, prefix='', extra_hooks=extra_hooks)
+            input, infs, prefix=prefix, extra_hooks=extra_hooks)
 
     def _build_hook(self, inf):
         out_names = inf.get_output_tensors()
@@ -140,32 +145,9 @@ class InferenceRunner(InferenceRunnerBase):
         return InferencerToHook(inf, fetches)
 
 
-class FeedfreeInferenceRunner(InferenceRunnerBase):
-    """ A callback that runs a list of :class:`Inferencer` on some
-    :class:`FeedfreeInput`, such as some tensor from a TensorFlow data reading
-    pipeline.
-    """
-
-    def __init__(self, input, infs, prefix='', extra_hooks=None):
-        """
-        Args:
-            input (FeedfreeInput): the input to use. Must have ``size()``.
-            infs (list): list of :class:`Inferencer` to run.
-            prefix(str): an prefix used to build the tower. Must be set
-                differently if more than one :class:`FeedfreeInferenceRunner` are used.
-        """
-        assert isinstance(input, FeedfreeInput), input
-        super(FeedfreeInferenceRunner, self).__init__(
-            input, infs, prefix=prefix, extra_hooks=extra_hooks)
-
-    def _build_hook(self, inf):
-        out_names = inf.get_output_tensors()    # all is tensorname
-        placeholder_names = [k.name + ':0' for k in self.trainer.model.get_inputs_desc()]
-        ret = []
-        for name in out_names:
-            assert name not in placeholder_names, "Currently inferencer don't support fetching placeholders!"
-            ret.append(self._tower_handle.get_tensors([name])[0])
-        return InferencerToHook(inf, ret)
+@deprecated("Just use InferenceRunner since it now accepts TensorInput!")
+def FeedfreeInferenceRunner(*args, **kwargs):
+    return InferenceRunner(*args, **kwargs)
 
 
 # TODO some scripts to test

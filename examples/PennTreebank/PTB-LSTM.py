@@ -142,9 +142,9 @@ def get_config():
                 'learning_rate',
                 lambda e, x: x * 0.80 if e > 6 else x),
             RunOp(lambda: M.reset_lstm_state()),
-            FeedfreeInferenceRunner(val_data, [ScalarStats(['cost'])]),
+            InferenceRunner(val_data, [ScalarStats(['cost'])]),
             RunOp(lambda: M.reset_lstm_state()),
-            FeedfreeInferenceRunner(
+            InferenceRunner(
                 test_data,
                 [ScalarStats(['cost'], prefix='test')], prefix='test'),
             RunOp(lambda: M.reset_lstm_state()),
