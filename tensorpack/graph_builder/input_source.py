@@ -78,7 +78,7 @@ class FeedInput(InputSource):
         return self.ds.size()
 
     def _setup(self, inputs):
-        self._all_placehdrs = [v.build_placeholder(prefix=self._prefix) for v in inputs]
+        self._all_placehdrs = [v.build_placeholder(prefix='') for v in inputs]
         self._cb = self._FeedCallback(self._repeat_ds, self._all_placehdrs)
         self.reset_state()
 
