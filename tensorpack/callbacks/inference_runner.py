@@ -87,12 +87,11 @@ class InferenceRunnerBase(Callback):
     def _setup_graph(self):
         self._input_source.setup(self.trainer.model.get_inputs_desc())
         # Use predict_tower in train config. either gpuid or -1
-        self._predict_tower_id = self.trainer.config.predict_tower[0]
-
-        def fn(_):
-            self.trainer.model.build_graph(self._input_source)
-        with tf.variable_scope(self.trainer.vs_name_for_predictor, reuse=True):
-            PredictorTowerBuilder(fn, self._prefix).build(self._predict_tower_id)
+        tower_id = self.trainer.config.predict_tower[0]
+        device = '/gpu:{}'.format(tower_id) if tower_id >= 0 else '/cpu:0'
+        tower_name = TowerContext.get_predict_tower_name(tower_id, prefix=self._prefix)
+        with tf.variable_scope(tf.get_variable_scope(), reuse=True):
+            self._tower_handle = self.trainer.predictor_factory.build(tower_name, device, self._input_source)
 
         self._hooks = [self._build_hook(inf) for inf in self.infs]
         cbs = self._input_source.get_callbacks()
@@ -101,11 +100,6 @@ class InferenceRunnerBase(Callback):
     def _before_train(self):
         self._hooks.extend(self._extra_hooks)
         self._hooked_sess = HookedSession(self.trainer.sess, self._hooks)
-
-    def _get_tensors_maybe_in_tower(self, names):
-        placeholder_names = set([k.name for k in self.trainer.model.get_inputs_desc()])
-        get_tensor_fn = PredictorTowerBuilder.get_tensors_maybe_in_tower
-        return get_tensor_fn(placeholder_names, names, self._predict_tower_id, prefix=self._prefix)
 
     @abstractmethod
     def _build_hook(self, inf):
@@ -142,7 +136,7 @@ class InferenceRunner(InferenceRunnerBase):
 
     def _build_hook(self, inf):
         out_names = inf.get_output_tensors()
-        fetches = self._get_tensors_maybe_in_tower(out_names)
+        fetches = self._tower_handle.get_tensors(out_names)
         return InferencerToHook(inf, fetches)
 
 
@@ -170,7 +164,7 @@ class FeedfreeInferenceRunner(InferenceRunnerBase):
         ret = []
         for name in out_names:
             assert name not in placeholder_names, "Currently inferencer don't support fetching placeholders!"
-            ret.append(self._get_tensors_maybe_in_tower([name])[0])
+            ret.append(self._tower_handle.get_tensors([name])[0])
         return InferencerToHook(inf, ret)
 
 

@@ -211,7 +211,7 @@ class Trainer(object):
                 self._callbacks.after_train()
                 self.hooked_sess.close()
 
-    # Predictor related methods:    TODO
+    # Predictor related methods:
     @property
     def vs_name_for_predictor(self):
         """
@@ -229,16 +229,21 @@ class Trainer(object):
         Returns:
             an :class:`OnlinePredictor`.
         """
-        if not hasattr(self, '_predictor_factory'):
-            self._predictor_factory = PredictorFactory(
-                self.model, self.config.predict_tower, self.vs_name_for_predictor)
+        # TODO move the logic to factory?
         nr_tower = len(self.config.predict_tower)
         if nr_tower < tower:
             logger.warn(
                 "Requested the {}th predictor but only have {} predict towers! "
                 "Predictors will be assigned to GPUs in round-robin.".format(tower, nr_tower))
         tower = tower % nr_tower
-        return self._predictor_factory.get_predictor(input_names, output_names, tower)
+        return self.predictor_factory.get_predictor(input_names, output_names, tower)
+
+    @property
+    def predictor_factory(self):
+        if not hasattr(self, '_predictor_factory'):
+            self._predictor_factory = PredictorFactory(
+                self.model, self.config.predict_tower, self.vs_name_for_predictor)
+        return self._predictor_factory
 
     def get_predictors(self, input_names, output_names, n):
         """ Return n predictors. """

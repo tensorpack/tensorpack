@@ -33,7 +33,7 @@ class PredictorTowerHandle(object):
 
 
 class PredictorFactory(object):
-    """ Make predictors from :class:`ModelDesc` and cache them."""
+    """ Make predictors from :class:`ModelDesc`."""
 
     def __init__(self, model, towers, vs_name):
         """
