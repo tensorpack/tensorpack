@@ -54,7 +54,6 @@ class InputSource(object):
         # TODO
         self._reset_state()
 
-    @abstractmethod
     def _reset_state(self):
         pass
 

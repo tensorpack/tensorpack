@@ -21,11 +21,29 @@ from ..utils import logger
 from ..utils.concurrency import ShareSessionThread
 from ..callbacks.base import Callback
 
-__all__ = ['FeedInput', 'DataParallelFeedInput',
+__all__ = ['PlaceholderInput', 'FeedInput', 'DataParallelFeedInput',
            'FeedfreeInput',
            'QueueInput', 'BatchQueueInput',
            'ZMQInput', 'DummyConstantInput', 'TensorInput',
            'StagingInputWrapper']
+
+
+class PlaceholderInput(InputSource):
+    """
+    Just produce placeholders as input tensors.
+    """
+    def __init__(self, prefix=''):
+        """
+        Args:
+            prefix(str): an optional prefix to add to the placeholder.
+        """
+        self._prefix = prefix
+
+    def _setup(self, inputs):
+        self._all_placehdrs = [v.build_placeholder(prefix=self._prefix) for v in inputs]
+
+    def _get_input_tensors(self):
+        return self._all_placehdrs
 
 
 class FeedInput(InputSource):
@@ -60,15 +78,15 @@ class FeedInput(InputSource):
         return self.ds.size()
 
     def _setup(self, inputs):
-        self._all_placehdrs = [v.build_placeholder_reuse() for v in inputs]
+        self._all_placehdrs = [v.build_placeholder(prefix=self._prefix) for v in inputs]
         self._cb = self._FeedCallback(self._repeat_ds, self._all_placehdrs)
         self.reset_state()
 
-    def _reset_state(self):
-        self._cb._reset()
-
     def _get_input_tensors(self):
         return self._all_placehdrs
+
+    def _reset_state(self):
+        self._cb._reset()
 
     def _get_callbacks(self):
         return [self._cb]

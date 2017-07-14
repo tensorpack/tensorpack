@@ -7,7 +7,6 @@ from ..utils import logger
 from ..tfutils.common import get_op_tensor_name, get_tensors_by_names
 from ..tfutils.tower import TowerContext
 from ..tfutils.collection import freeze_collection
-from ..predict import OnlinePredictor
 from ..utils.naming import TOWER_FREEZE_KEYS
 
 __all__ = ['PredictorFactory']
@@ -41,7 +40,7 @@ class PredictorTowerHandle(object):
 class PredictorFactory(object):
     """ Make predictors from :class:`ModelDesc`."""
 
-    def __init__(self, model, towers, vs_name):
+    def __init__(self, model, towers, vs_name=''):
         """
         Args:
             model (ModelDesc):
@@ -97,4 +96,5 @@ class PredictorFactory(object):
 
         in_tensors = handle.get_tensors(input_names)
         out_tensors = handle.get_tensors(output_names)
+        from ..predict import OnlinePredictor   # noqa TODO
         return OnlinePredictor(in_tensors, out_tensors)

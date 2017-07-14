@@ -3,9 +3,12 @@
 # File: multigpu.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
+import tensorflow as tf
 from ..utils import logger
-from ..tfutils import get_tensors_by_names, TowerContext
-from .base import OnlinePredictor, build_prediction_graph, PredictorTowerBuilder
+from ..tfutils import TowerContext
+from ..graph_builder.predictor_factory import PredictorFactory
+from ..graph_builder.input_source import PlaceholderInput
+from .base import OnlinePredictor
 
 __all__ = ['MultiTowerOfflinePredictor',
            'DataParallelOfflinePredictor']
@@ -23,20 +26,24 @@ class MultiTowerOfflinePredictor(OnlinePredictor):
         assert len(towers) > 0
         self.graph = config._maybe_create_graph()
         self.predictors = []
+        self.return_input = config.return_input
         with self.graph.as_default():
-            placeholder_names = set([k.name for k in config.model.get_inputs_desc()])
+            handles = []
+            factory = PredictorFactory(config.model, towers)
+            for idx, t in enumerate(towers):
+                tower_name = TowerContext.get_predict_tower_name(t)
+                device = '/gpu:' + str(t)
 
-            def fn(_):
-                config.model.build_graph(config.model.get_reused_placehdrs())
-            build_prediction_graph(fn, towers)
+                # TODO smarter TowerContext?
+                with tf.variable_scope(tf.get_variable_scope(), reuse=idx > 0):
+                    handles.append(factory.build(tower_name, device))
 
             self.sess = config.session_creator.create_session()
             config.session_init.init(self.sess)
 
-            get_tensor_fn = PredictorTowerBuilder.get_tensors_maybe_in_tower
-            for k in towers:
-                input_tensors = get_tensor_fn(placeholder_names, config.input_names, k)
-                output_tensors = get_tensor_fn(placeholder_names, config.output_names, k)
+            for h in handles:
+                input_tensors = h.get_tensors(config.input_names)
+                output_tensors = h.get_tensors(config.output_names)
                 self.predictors.append(OnlinePredictor(
                     input_tensors, output_tensors, config.return_input, self.sess))
 
@@ -79,23 +86,20 @@ class DataParallelOfflinePredictor(OnlinePredictor):
         """
         self.graph = config._maybe_create_graph()
         with self.graph.as_default():
-            input_names = []
+            input_tensors = []
             output_tensors = []
 
-            def build_tower(k):
-                towername = TowerContext.get_predict_tower_name(k)
-                # inputs (placeholders) for this tower only
-                input_tensors = config.model.build_placeholders(prefix=towername + '/')
-                config.model.build_graph(input_tensors)
+            factory = PredictorFactory(config.model, towers)
+            for idx, t in enumerate(towers):
+                tower_name = TowerContext.get_predict_tower_name(t)
+                device = '/gpu:' + str(t)
+                input = PlaceholderInput(tower_name + '/')
+                input.setup(config.model.get_inputs_desc())
 
-                input_names.extend([t.name for t in input_tensors])
-                output_tensors.extend(get_tensors_by_names(
-                    [towername + '/' + n
-                     for n in config.output_names]))
-
-            build_prediction_graph(build_tower, towers)
-
-            input_tensors = get_tensors_by_names(input_names)
+                with tf.variable_scope(tf.get_variable_scope(), reuse=idx > 0):
+                    h = factory.build(tower_name, device, )
+                    input_tensors.extend(h.get_tensors(config.input_names))
+                    output_tensors.extend(h.get_tensors(config.output_names))
 
             sess = config.session_creator.create_session()
             config.session_init.init(sess)
