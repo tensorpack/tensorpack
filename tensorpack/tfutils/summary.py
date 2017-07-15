@@ -166,8 +166,10 @@ def add_moving_summary(v, *args, **kwargs):
     # TODO will produce variable tower0/xxx?
     # TODO not saved under distributed
     # TODO use zero_debias
+    # TODO create EMA for each variable separately, so that the maintain ops
+    # have a decent name (rather than EMA)
     gs = get_global_step_var()
-    with tf.name_scope(None), tf.device(gs.device):
+    with tf.device(gs.device):
         averager = tf.train.ExponentialMovingAverage(
             decay, num_updates=gs, name='EMA')
         avg_maintain_op = averager.apply(v)

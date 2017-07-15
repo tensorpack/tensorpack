@@ -27,7 +27,8 @@ class MovingAverageSummary(Callback):
 
     def _setup_graph(self):
         ops = tf.get_collection(self._collection)
-        logger.info("Maintain moving averages of {} tensors.".format(len(ops)))
+        logger.info("Maintain moving average summary of {} tensors.".format(len(ops)))
+
         self.ema_op = tf.group(*ops, name='summary_moving_averages')
         self._fetch = tf.train.SessionRunArgs(fetches=self.ema_op)
 
