@@ -106,7 +106,8 @@ class TowerContext(object):
         for c in self._ctxs:
             c.__enter__()
 
-        if get_tf_version_number() >= 1.2:
+        # currently only check for predictor towers
+        if not self.is_training and get_tf_version_number() >= 1.2:
             ns = tf.get_default_graph().get_name_scope()
             assert ns == self._name, \
                 "Name conflict: name_scope inside tower '{}' becomes '{}'!".format(self._name, ns) \
