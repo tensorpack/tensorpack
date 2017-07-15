@@ -4,6 +4,7 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import tensorflow as tf
+from .common import get_tf_version_number
 
 __all__ = ['get_current_tower_context', 'TowerContext']
 
@@ -16,8 +17,7 @@ class TowerContext(object):
     def __init__(self, tower_name, is_training=None, index=0, vs_name=''):
         """
         Args:
-            tower_name (str): The name scope of the tower. Currently used
-                values are like: 'tower0', 'towerp0', or ''
+            tower_name (str): The name scope of the tower.
             is_training (bool): if None, automatically determine from tower_name.
             index (int): index of this tower.
             vs_name (str): Open a variable scope with this name, if given.
@@ -105,6 +105,12 @@ class TowerContext(object):
                 self._ctxs.append(tf.name_scope(self._name))
         for c in self._ctxs:
             c.__enter__()
+
+        if get_tf_version_number() >= 1.2:
+            ns = tf.get_default_graph().get_name_scope()
+            assert ns == self._name, \
+                "Name conflict: name_scope inside tower '{}' becomes '{}'!".format(self._name, ns) \
+                + " You may need a different name for the tower!"
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         global _CurrentTowerContext

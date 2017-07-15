@@ -21,7 +21,7 @@ def class_scope(func):
 
     def get_name_scope_name():
         if get_tf_version_number() > 1.2:
-            return tf.get_name_scope().name
+            return tf.get_default_graph().get_name_scope()
         else:
             g = tf.get_default_graph()
             s = "RANDOM_STR_ABCDEFG"

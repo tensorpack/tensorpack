@@ -58,12 +58,12 @@ def summary_inferencer(trainer, infs):
 @six.add_metaclass(ABCMeta)
 class InferenceRunnerBase(Callback):
     """ Base methods for inference runner"""
-    def __init__(self, input, infs, prefix='', extra_hooks=None):
+    def __init__(self, input, infs, tower_name='InferenceTower', extra_hooks=None, prefix=None):
         """
         Args:
             input (InputSource): the input to use. Must have ``size()``.
             infs (list[Inferencer]): list of :class:`Inferencer` to run.
-            prefix(str): an prefix used to build the tower. Must be set
+            tower_name(str): name scope to build the tower. Must be set
                 differently if more than one :class:`InferenceRunner` are used.
             extra_hooks (list[SessionRunHook]): extra :class:`SessionRunHook` to run with the evaluation.
         """
@@ -79,7 +79,9 @@ class InferenceRunnerBase(Callback):
             self._size = input.size()
         except NotImplementedError:
             raise ValueError("Input used in InferenceRunner must have a size!")
-        self._prefix = prefix
+        self._tower_name = tower_name
+        if prefix is not None:
+            self._tower_name = 'InferenceTower' + prefix
 
         if extra_hooks is None:
             extra_hooks = []
@@ -90,14 +92,9 @@ class InferenceRunnerBase(Callback):
         tower_id = self.trainer.config.predict_tower[0]
         device = '/gpu:{}'.format(tower_id) if tower_id >= 0 else '/cpu:0'
 
-        # TODO this cannot be InferenceRunner? fix it. check name
-        tower_name = 'InferenceRunnerTower'
-        if self._prefix:
-            tower_name += '_' + self._prefix
-
         self._input_source.setup(self.trainer.model.get_inputs_desc())
         with tf.variable_scope(tf.get_variable_scope(), reuse=True):
-            self._tower_handle = self.trainer.predictor_factory.build(tower_name, device, self._input_source)
+            self._tower_handle = self.trainer.predictor_factory.build(self._tower_name, device, self._input_source)
 
         self._hooks = [self._build_hook(inf) for inf in self.infs]
         cbs = self._input_source.get_callbacks()
@@ -127,7 +124,7 @@ class InferenceRunner(InferenceRunnerBase):
     A callback that runs a list of :class:`Inferencer` on some :class:`InputSource`.
     """
 
-    def __init__(self, input, infs, prefix='', extra_hooks=None):
+    def __init__(self, input, infs, tower_name='InferenceTower', extra_hooks=None):
         """
         Args:
             input (InputSource or DataFlow): The :class:`InputSource` to run
@@ -140,7 +137,7 @@ class InferenceRunner(InferenceRunnerBase):
         if isinstance(input, FeedfreeInput):    # TODO support other input
             assert isinstance(input, TensorInput), "InferenceRunner only accepts TensorInput or FeedInput!"
         super(InferenceRunner, self).__init__(
-            input, infs, prefix=prefix, extra_hooks=extra_hooks)
+            input, infs, tower_name=tower_name, extra_hooks=extra_hooks)
 
     def _build_hook(self, inf):
         out_names = inf.get_output_tensors()
@@ -153,7 +150,6 @@ def FeedfreeInferenceRunner(*args, **kwargs):
     return InferenceRunner(*args, **kwargs)
 
 
-# TODO some scripts to test
 class DataParallelInferenceRunner(InferenceRunnerBase):
     """
     Inference by feeding datapoints in a data-parallel way to multiple GPUs.
@@ -166,7 +162,7 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
             input (DataParallelFeedInput or DataFlow)
             gpus (list[int]): list of GPU id
         """
-        self._tower_names = ['InferenceRunner{}'.format(k) for k in range(len(gpus))]
+        self._tower_names = ['InferenceTower{}'.format(k) for k in range(len(gpus))]
         if isinstance(input, DataFlow):
             input = DataParallelFeedInput(input, self._tower_names)
         assert isinstance(input, DataParallelFeedInput), input

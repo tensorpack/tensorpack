@@ -146,7 +146,7 @@ def get_config():
             RunOp(lambda: M.reset_lstm_state()),
             InferenceRunner(
                 test_data,
-                [ScalarStats(['cost'], prefix='test')], prefix='test'),
+                [ScalarStats(['cost'], prefix='test')], tower_name='InferenceTowerTest'),
             RunOp(lambda: M.reset_lstm_state()),
             CallbackFactory(
                 trigger_epoch=lambda self:

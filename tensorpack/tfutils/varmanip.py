@@ -9,7 +9,6 @@ import tensorflow as tf
 from collections import defaultdict
 import numpy as np
 from ..utils import logger
-from ..utils.naming import PREDICT_TOWER
 from .common import get_op_tensor_name
 
 __all__ = ['SessionUpdate', 'dump_session_params', 'dump_chkpt_vars',
@@ -29,11 +28,6 @@ def get_savename_from_varname(
         str: the name used to save the variable
     """
     name = varname
-    # TODO PREDICT_TOWER is not used anymore
-    if PREDICT_TOWER in name:
-        logger.error("No variable under '{}' name scope should be saved!".format(PREDICT_TOWER))
-        # don't overwrite anything in the current prediction graph
-        return None
     if varname_prefix is not None \
             and name.startswith(varname_prefix):
         name = name[len(varname_prefix) + 1:]

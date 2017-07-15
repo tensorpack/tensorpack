@@ -15,14 +15,14 @@ else:
 __all__ = ['get_name_scope_name', 'auto_reuse_variable_scope']
 
 
-@deprecated("Use tf.get_name_scope() (available since 1.2.1).")
+@deprecated("Use tf.get_default_graph().get_name_scope() (available since 1.2.1).")
 def get_name_scope_name():
     """
     Returns:
         str: the name of the current name scope, without the ending '/'.
     """
     if get_tf_version_number() > 1.2:
-        return tf.get_name_scope().name
+        return tf.get_default_graph().get_name_scope()
     else:
         g = tf.get_default_graph()
         s = "RANDOM_STR_ABCDEFG"
