@@ -90,7 +90,8 @@ class InferenceRunnerBase(Callback):
         tower_id = self.trainer.config.predict_tower[0]
         device = '/gpu:{}'.format(tower_id) if tower_id >= 0 else '/cpu:0'
 
-        tower_name = 'InferenceRunner'
+        # TODO this cannot be InferenceRunner? fix it. check name
+        tower_name = 'InferenceRunnerTower'
         if self._prefix:
             tower_name += '_' + self._prefix
 
