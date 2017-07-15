@@ -5,7 +5,6 @@
 
 import tensorflow as tf
 from ..utils import logger
-from ..tfutils import TowerContext
 from ..graph_builder.predictor_factory import PredictorFactory
 from ..graph_builder.input_source import PlaceholderInput
 from .base import OnlinePredictor
@@ -31,10 +30,9 @@ class MultiTowerOfflinePredictor(OnlinePredictor):
             handles = []
             factory = PredictorFactory(config.model, towers)
             for idx, t in enumerate(towers):
-                tower_name = TowerContext.get_predict_tower_name(t)
+                tower_name = 'tower' + str(t)
                 device = '/gpu:' + str(t)
 
-                # TODO smarter TowerContext?
                 with tf.variable_scope(tf.get_variable_scope(), reuse=idx > 0):
                     handles.append(factory.build(tower_name, device))
 
@@ -91,7 +89,7 @@ class DataParallelOfflinePredictor(OnlinePredictor):
 
             factory = PredictorFactory(config.model, towers)
             for idx, t in enumerate(towers):
-                tower_name = TowerContext.get_predict_tower_name(t)
+                tower_name = 'tower' + str(t)
                 device = '/gpu:' + str(t)
                 input = PlaceholderInput(tower_name + '/')
                 input.setup(config.model.get_inputs_desc())

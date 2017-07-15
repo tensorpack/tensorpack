@@ -55,7 +55,7 @@ class PredictorFactory(object):
         self._names_built = {}
 
     def build(self, tower_name, device, input=None):
-        logger.info("Building predictor graph {} on device {} ...".format(tower_name, device))
+        logger.info("Building predictor tower '{}' on device {} ...".format(tower_name, device))
         assert tower_name not in self._names_built
 
         with tf.device(device), \
@@ -83,12 +83,12 @@ class PredictorFactory(object):
         Returns:
             an online predictor (which has to be used under the default session)
         """
+        tower_name = 'towerp{}'.format(tower)
         tower = self._towers[tower]
         device = '/gpu:{}'.format(tower) if tower >= 0 else '/cpu:0'
-        tower_name = TowerContext.get_predict_tower_name(max(tower, 0))  # XXX
         # use a previously-built tower
         # TODO conflict with inference runner??
-        if not self.has_built(tower_name):
+        if tower_name not in self._names_built:
             with tf.variable_scope(self._vs_name, reuse=True):
                 handle = self.build(tower_name, device)
         else:

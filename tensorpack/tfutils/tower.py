@@ -4,7 +4,6 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import tensorflow as tf
-from ..utils.naming import PREDICT_TOWER
 
 __all__ = ['get_current_tower_context', 'TowerContext']
 
@@ -24,10 +23,6 @@ class TowerContext(object):
             vs_name (str): Open a variable scope with this name, if given.
         """
         self._name = tower_name
-
-        if is_training is None:
-            # TODO remove this
-            is_training = not self._name.startswith(PREDICT_TOWER)
         self._is_training = bool(is_training)
 
         if not self._is_training:
@@ -83,21 +78,6 @@ class TowerContext(object):
     @property
     def index(self):
         return self._index
-
-    # TODO something similar for training
-    @staticmethod
-    def get_predict_tower_name(towerid=0, prefix=''):
-        """
-        Args:
-            towerid(int): an integer, the id of this predict tower, usually
-                used to choose the GPU id.
-            prefix(str): an alphanumeric prefix.
-        Returns:
-            str: the final tower name used to create a predict tower.
-                Currently it is ``PREDICT_TOWER + prefix + towerid``.
-        """
-        assert prefix == '' or prefix.isalnum()
-        return PREDICT_TOWER + prefix + str(towerid)
 
     def __enter__(self):
         global _CurrentTowerContext

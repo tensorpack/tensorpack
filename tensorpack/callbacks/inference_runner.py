@@ -16,7 +16,6 @@ from six.moves import range
 from ..utils import logger, get_tqdm_kwargs
 from ..utils.develop import deprecated
 from ..dataflow import DataFlow
-from ..tfutils.tower import TowerContext
 
 from ..graph_builder.input_source_base import InputSource
 from ..graph_builder.input_source import (
@@ -90,7 +89,10 @@ class InferenceRunnerBase(Callback):
         # Use predict_tower in train config. either gpuid or -1
         tower_id = self.trainer.config.predict_tower[0]
         device = '/gpu:{}'.format(tower_id) if tower_id >= 0 else '/cpu:0'
-        tower_name = TowerContext.get_predict_tower_name(tower_id, prefix=self._prefix)
+
+        tower_name = 'InferenceRunner'
+        if self._prefix:
+            tower_name += '_' + self._prefix
 
         self._input_source.setup(self.trainer.model.get_inputs_desc())
         with tf.variable_scope(tf.get_variable_scope(), reuse=True):
@@ -163,9 +165,9 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
             input (DataParallelFeedInput or DataFlow)
             gpus (list[int]): list of GPU id
         """
+        self._tower_names = ['InferenceRunner{}'.format(k) for k in range(len(gpus))]
         if isinstance(input, DataFlow):
-            tower_names = [TowerContext.get_predict_tower_name(k) for k in range(len(gpus))]
-            input = DataParallelFeedInput(input, tower_names)
+            input = DataParallelFeedInput(input, self._tower_names)
         assert isinstance(input, DataParallelFeedInput), input
 
         super(DataParallelInferenceRunner, self).__init__(input, infs)
@@ -175,8 +177,8 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
         self._input_source.setup(self.trainer.model.get_inputs_desc())
         self._handles = []
         with tf.variable_scope(tf.get_variable_scope(), reuse=True):
-            for t in self._gpus:
-                tower_name = TowerContext.get_predict_tower_name(t, prefix=self._prefix)
+            for idx, t in enumerate(self._gpus):
+                tower_name = self._tower_names[idx]
                 device = '/gpu:{}'.format(t)
                 self._handles.append(
                     self.trainer.predictor_factory.build(

@@ -29,6 +29,7 @@ def get_savename_from_varname(
         str: the name used to save the variable
     """
     name = varname
+    # TODO PREDICT_TOWER is not used anymore
     if PREDICT_TOWER in name:
         logger.error("No variable under '{}' name scope should be saved!".format(PREDICT_TOWER))
         # don't overwrite anything in the current prediction graph
