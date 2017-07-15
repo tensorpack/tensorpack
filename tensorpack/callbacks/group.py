@@ -98,7 +98,3 @@ class Callbacks(Callback):
     def _after_epoch(self):
         for cb in self.cbs:
             cb.after_epoch()
-
-    def append(self, cb):
-        assert isinstance(cb, Callback)
-        self.cbs.append(cb)

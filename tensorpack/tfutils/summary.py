@@ -163,13 +163,14 @@ def add_moving_summary(v, *args, **kwargs):
     for x in v:
         assert isinstance(x, tf.Tensor), x
         assert x.get_shape().ndims == 0, x.get_shape()
+    gs = get_global_step_var()
     # TODO will produce variable tower0/xxx?
     # TODO not saved under distributed
     # TODO use zero_debias
     # TODO create EMA for each variable separately, so that the maintain ops
     # have a decent name (rather than EMA)
-    gs = get_global_step_var()
-    with tf.device(gs.device):
+    # clear namescope, otherwise the variable names will have duplicated name scope
+    with tf.name_scope(None), tf.device(gs.device):
         averager = tf.train.ExponentialMovingAverage(
             decay, num_updates=gs, name='EMA')
         avg_maintain_op = averager.apply(v)
