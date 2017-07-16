@@ -29,28 +29,38 @@ class SendStat(Callback):
             logger.error("Command {} failed with ret={}!".format(cmd, ret))
 
 
-# TODO other types of shell?
 class InjectShell(Callback):
     """
-    When triggered, opens an IPython shell if a file exists.
+    When triggered, opens an IPython/pdb shell if a file exists.
     Useful for interactive debug during training.
 
     Using this callback requires ipython to be installed.
     """
 
-    def __init__(self, file='INJECT_SHELL.tmp'):
+    def __init__(self, file='INJECT_SHELL.tmp', shell='ipython'):
         """
         Args:
            file (str): if this file exists, will open a shell.
+           shell (str): one of 'ipython', 'pdb'
         """
         self._file = file
-        logger.info("Create a file '{}' to open debug shell.".format(file))
+        assert shell in ['ipython', 'pdb']
+        self._shell = shell
+        logger.info("Create a file '{}' to open {} shell.".format(file, shell))
 
     def _trigger(self):
         if os.path.isfile(self._file):
             logger.info("File {} exists, entering shell.".format(self._file))
-            trainer = self.trainer   # noqa
-            import IPython as IP; IP.embed()    # noqa
+            self._inject()
+
+    def _inject(self):
+        trainer = self.trainer   # noqa
+        if self._shell == 'ipython':
+            import IPython as IP    # noqa
+            IP.embed()
+        elif self._shell == 'pdb':
+            import pdb   # noqa
+            pdb.set_trace()
 
     def _after_train(self):
         if os.path.isfile(self._file):
