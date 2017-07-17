@@ -62,8 +62,8 @@ class Augmentor(object):
 
 
 class ImageAugmentor(Augmentor):
-    def _fprop_coord(self, coord, param):
-        return coord
+    def _augment_coords(self, coords, param):
+        return coords
 
 
 class AugmentorList(ImageAugmentor):

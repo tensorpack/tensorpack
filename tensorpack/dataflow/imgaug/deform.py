@@ -100,5 +100,5 @@ class GaussianDeform(ImageAugmentor):
         grid = self.grid + np.dot(self.gws, v)
         return np_sample(img, grid)
 
-    def _fprop_coord(self, coord, param):
+    def _augment_coords(self, coords, param):
         raise NotImplementedError()

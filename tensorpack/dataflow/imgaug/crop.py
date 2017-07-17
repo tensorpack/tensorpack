@@ -39,7 +39,7 @@ class RandomCrop(ImageAugmentor):
         h0, w0 = param
         return img[h0:h0 + self.crop_shape[0], w0:w0 + self.crop_shape[1]]
 
-    def _fprop_coord(self, coord, param):
+    def _augment_coords(self, coords, param):
         raise NotImplementedError()
 
 
@@ -60,7 +60,7 @@ class CenterCrop(ImageAugmentor):
         w0 = int((orig_shape[1] - self.crop_shape[1]) * 0.5)
         return img[h0:h0 + self.crop_shape[0], w0:w0 + self.crop_shape[1]]
 
-    def _fprop_coord(self, coord, param):
+    def _augment_coords(self, coords, param):
         raise NotImplementedError()
 
 
@@ -127,7 +127,7 @@ class RandomCropAroundBox(ImageAugmentor):
     def _augment(self, img, newbox):
         return newbox.roi(img)
 
-    def _fprop_coord(self, coord, param):
+    def _augment_coords(self, coords, param):
         raise NotImplementedError()
 
 

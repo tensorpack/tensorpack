@@ -46,7 +46,7 @@ class Flip(ImageAugmentor):
             ret = img
         return ret
 
-    def _fprop_coord(self, coord, param):
+    def _augment_coords(self, coords, param):
         raise NotImplementedError()
 
 
@@ -166,5 +166,5 @@ class Transpose(ImageAugmentor):
                 ret = ret[:, :, np.newaxis]
         return ret
 
-    def _fprop_coord(self, coord, param):
+    def _augment_coords(self, coords, param):
         raise NotImplementedError()
