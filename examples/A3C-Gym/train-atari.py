@@ -64,7 +64,7 @@ def get_player(viz=False, train=False, dumpdir=None):
     if not train:
         pl = PreventStuckPlayer(pl, 30, 1)
     else:
-        pl = LimitLengthPlayer(pl, 40000)
+        pl = LimitLengthPlayer(pl, 60000)
     return pl
 
 
@@ -78,7 +78,9 @@ class Model(ModelDesc):
         assert NUM_ACTIONS is not None
         return [InputDesc(tf.uint8, (None,) + IMAGE_SHAPE3, 'state'),
                 InputDesc(tf.int64, (None,), 'action'),
-                InputDesc(tf.float32, (None,), 'futurereward')]
+                InputDesc(tf.float32, (None,), 'futurereward'),
+                InputDesc(tf.float32, (None,), 'action_prob'),
+                ]
 
     def _get_NN_prediction(self, image):
         image = tf.cast(image, tf.float32) / 255.0
@@ -98,14 +100,10 @@ class Model(ModelDesc):
         return logits, value
 
     def _build_graph(self, inputs):
-        state, action, futurereward = inputs
+        state, action, futurereward, action_prob = inputs
         logits, self.value = self._get_NN_prediction(state)
         self.value = tf.squeeze(self.value, [1], name='pred_value')  # (B,)
         self.policy = tf.nn.softmax(logits, name='policy')
-
-        expf = tf.get_variable('explore_factor', shape=[],
-                               initializer=tf.constant_initializer(1), trainable=False)
-        policy_explore = tf.nn.softmax(logits * expf, name='policy_explore')
         is_training = get_current_tower_context().is_training
         if not is_training:
             return
@@ -114,7 +112,11 @@ class Model(ModelDesc):
         log_pi_a_given_s = tf.reduce_sum(
             log_probs * tf.one_hot(action, NUM_ACTIONS), 1)
         advantage = tf.subtract(tf.stop_gradient(self.value), futurereward, name='advantage')
-        policy_loss = tf.reduce_sum(log_pi_a_given_s * advantage, name='policy_loss')
+
+        pi_a_given_s = tf.reduce_sum(self.policy * tf.one_hot(action, NUM_ACTIONS), 1)  # (B,)
+        importance = tf.stop_gradient(tf.clip_by_value(pi_a_given_s / (action_prob + 1e-8), 0, 10))
+
+        policy_loss = tf.reduce_sum(log_pi_a_given_s * advantage * importance, name='policy_loss')
         xentropy_loss = tf.reduce_sum(
             self.policy * log_probs, name='xentropy_loss')
         value_loss = tf.nn.l2_loss(self.value - futurereward, name='value_loss')
@@ -128,7 +130,8 @@ class Model(ModelDesc):
                                tf.cast(tf.shape(futurereward)[0], tf.float32),
                                name='cost')
         summary.add_moving_summary(policy_loss, xentropy_loss,
-                                   value_loss, pred_reward, advantage, self.cost)
+                                   value_loss, pred_reward, advantage,
+                                   self.cost, tf.reduce_mean(importance, name='importance'))
 
     def _get_optimizer(self):
         lr = symbf.get_scalar_var('learning_rate', 0.001, summary=True)
@@ -148,7 +151,7 @@ class MySimulatorMaster(SimulatorMaster, Callback):
 
     def _setup_graph(self):
         self.async_predictor = MultiThreadAsyncPredictor(
-            self.trainer.get_predictors(['state'], ['policy_explore', 'pred_value'],
+            self.trainer.get_predictors(['state'], ['policy', 'pred_value'],
                                         PREDICTOR_THREAD), batch_size=PREDICT_BATCH_SIZE)
 
     def _before_train(self):
@@ -164,7 +167,8 @@ class MySimulatorMaster(SimulatorMaster, Callback):
             assert np.all(np.isfinite(distrib)), distrib
             action = np.random.choice(len(distrib), p=distrib)
             client = self.clients[ident]
-            client.memory.append(TransitionExperience(state, action, None, value=value))
+            client.memory.append(TransitionExperience(
+                state, action, reward=None, value=value, prob=distrib[action]))
             self.send_queue.put([ident, dumps(action)])
         self.async_predictor.put_task([state], cb)
 
@@ -188,7 +192,7 @@ class MySimulatorMaster(SimulatorMaster, Callback):
         R = float(init_r)
         for idx, k in enumerate(mem):
             R = np.clip(k.reward, -1, 1) + GAMMA * R
-            self.queue.put([k.state, k.action, R])
+            self.queue.put([k.state, k.action, R, k.prob])
 
         if not isOver:
             client.memory = [last]
@@ -216,8 +220,6 @@ def get_config():
             ModelSaver(),
             ScheduledHyperParamSetter('learning_rate', [(20, 0.0003), (120, 0.0001)]),
             ScheduledHyperParamSetter('entropy_beta', [(80, 0.005)]),
-            ScheduledHyperParamSetter('explore_factor',
-                                      [(80, 2), (100, 3), (120, 4), (140, 5)]),
             HumanHyperParamSetter('learning_rate'),
             HumanHyperParamSetter('entropy_beta'),
             master,
