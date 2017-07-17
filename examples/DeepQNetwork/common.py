@@ -120,4 +120,4 @@ def play_n_episodes(player, predfunc, nr):
         if k != 0:
             player.restart_episode()
         score = play_one_episode(player, predfunc)
-        print("{}/{}, score=", k, nr, score)
+        print("{}/{}, score={}".format(k, nr, score))
