@@ -93,32 +93,6 @@ class InputDesc(
 class ModelDescBase(object):
     """ Base class for a model description.
     """
-
-    # TODO remove this method? Now mainly used in predict/
-    @memoized
-    def get_reused_placehdrs(self):
-        """
-        Create or return (if already created) raw input TF placeholders in the graph.
-
-        Returns:
-            list[tf.Tensor]: the list of input placeholders in the graph.
-        """
-        return [v.build_placeholder_reuse() for v in self.get_inputs_desc()]
-
-    def build_placeholders(self, prefix=''):
-        """
-        For each InputDesc, create new placeholders with optional prefix and
-        return them. Useful when building new towers.
-
-        Returns:
-            list[tf.Tensor]: the list of built placeholders.
-        """
-        inputs = self.get_inputs_desc()
-        ret = []
-        for v in inputs:
-            ret.append(v.build_placeholder(prefix))
-        return ret
-
     @memoized
     def get_inputs_desc(self):
         """

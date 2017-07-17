@@ -8,6 +8,7 @@ from ..tfutils.common import get_op_tensor_name, get_tensors_by_names
 from ..tfutils.tower import TowerContext
 from ..tfutils.collection import freeze_collection
 from ..utils.naming import TOWER_FREEZE_KEYS
+from .input_source import PlaceholderInput
 
 __all__ = ['PredictorFactory']
 
@@ -62,9 +63,9 @@ class PredictorFactory(object):
                 TowerContext(tower_name, is_training=False), \
                 freeze_collection(TOWER_FREEZE_KEYS):
             if input is None:
-                input = self._model.get_reused_placehdrs()
-            else:
-                input = input.get_input_tensors()
+                input = PlaceholderInput()
+                input.setup(self._model.get_inputs_desc())
+            input = input.get_input_tensors()
             assert isinstance(input, (list, tuple)), input
             self._model.build_graph(input)
 

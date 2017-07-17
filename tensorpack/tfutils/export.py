@@ -10,6 +10,7 @@ This simplifies the process of exporting a model for TensorFlow serving.
 import tensorflow as tf
 from ..utils import logger
 from ..graph_builder.model_desc import ModelDesc
+from ..graph_builder.input_source import PlaceholderInput
 from ..tfutils import TowerContext, sessinit
 
 
@@ -61,7 +62,8 @@ class ModelExport(object):
         logger.info('[export] prepare new model export')
         super(ModelExport, self).__init__()
         self.model = model
-        self.placehdrs = self.model.get_reused_placehdrs()
+        self.input = PlaceholderInput()
+        self.input.setup(self.model.get_inputs_desc())
         self.output_names = output_names
         self.input_names = input_names
 
@@ -87,7 +89,7 @@ class ModelExport(object):
         """
         logger.info('[export] build model for %s' % checkpoint)
         with TowerContext('', is_training=False):
-            self.model._build_graph(self.placehdrs)
+            self.model._build_graph(self.input)
 
             self.sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
             # load values from latest checkpoint

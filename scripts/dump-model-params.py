@@ -10,6 +10,7 @@ import imp
 
 from tensorpack import TowerContext, logger
 from tensorpack.tfutils import sessinit, varmanip
+from tensorpack.graph_builder.input_source import PlaceholderInput
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--config', help='config file')
@@ -26,7 +27,9 @@ with tf.Graph().as_default() as G:
         MODEL = imp.load_source('config_script', args.config).Model
         M = MODEL()
         with TowerContext('', is_training=False):
-            M.build_graph(M.get_reused_placehdrs())
+            input = PlaceholderInput()
+            input.setup(M.get_inputs_desc())
+            M.build_graph(input)
     else:
         tf.train.import_meta_graph(args.meta)
 

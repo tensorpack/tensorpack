@@ -9,6 +9,7 @@ import six
 
 from ..tfutils.common import get_tensors_by_names
 from ..tfutils.tower import TowerContext
+from ..graph_builder.input_source import PlaceholderInput
 
 __all__ = ['PredictorBase', 'AsyncPredictorBase',
            'OnlinePredictor', 'OfflinePredictor',
@@ -127,9 +128,10 @@ class OfflinePredictor(OnlinePredictor):
         """
         self.graph = config._maybe_create_graph()
         with self.graph.as_default():
-            input_placehdrs = config.model.get_reused_placehdrs()
+            input = PlaceholderInput()
+            input.setup(config.model.get_inputs_desc())
             with TowerContext('', is_training=False):
-                config.model.build_graph(input_placehdrs)
+                config.model.build_graph(input)
 
             input_tensors = get_tensors_by_names(config.input_names)
             output_tensors = get_tensors_by_names(config.output_names)
