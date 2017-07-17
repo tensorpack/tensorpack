@@ -161,6 +161,7 @@ def get_data(datadir, isTrain=True):
         augs = [
             imgaug.Resize(int(SHAPE * 1.12)),
             imgaug.RandomCrop(SHAPE),
+            imgaug.Flip(horiz=True),
         ]
     else:
         augs = [imgaug.Resize(SHAPE)]
