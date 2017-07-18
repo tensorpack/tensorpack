@@ -40,7 +40,10 @@ class RandomCrop(ImageAugmentor):
         return img[h0:h0 + self.crop_shape[0], w0:w0 + self.crop_shape[1]]
 
     def _augment_coords(self, coords, param):
-        raise NotImplementedError()
+        h0, w0 = param
+        coords[:, 0] = coords[:, 0] - w0
+        coords[:, 1] = coords[:, 1] - h0
+        return coords
 
 
 class CenterCrop(ImageAugmentor):
@@ -54,14 +57,21 @@ class CenterCrop(ImageAugmentor):
         crop_shape = shape2d(crop_shape)
         self._init(locals())
 
-    def _augment(self, img, _):
+    def _get_augment_params(self, img):
         orig_shape = img.shape
         h0 = int((orig_shape[0] - self.crop_shape[0]) * 0.5)
         w0 = int((orig_shape[1] - self.crop_shape[1]) * 0.5)
+        return (h0, w0)
+
+    def _augment(self, img, param):
+        h0, w0 = param
         return img[h0:h0 + self.crop_shape[0], w0:w0 + self.crop_shape[1]]
 
     def _augment_coords(self, coords, param):
-        raise NotImplementedError()
+        h0, w0 = param
+        coords[:, 0] = coords[:, 0] - w0
+        coords[:, 1] = coords[:, 1] - h0
+        return coords
 
 
 def perturb_BB(image_shape, bb, max_perturb_pixel,
@@ -127,8 +137,10 @@ class RandomCropAroundBox(ImageAugmentor):
     def _augment(self, img, newbox):
         return newbox.roi(img)
 
-    def _augment_coords(self, coords, param):
-        raise NotImplementedError()
+    def _augment_coords(self, coords, newbox):
+        coords[:, 0] = coords[:, 0] - newbox.x0
+        coords[:, 1] = coords[:, 1] - newbox.y0
+        return coords
 
 
 class RandomCropRandomShape(ImageAugmentor):
@@ -164,6 +176,12 @@ class RandomCropRandomShape(ImageAugmentor):
     def _augment(self, img, param):
         y0, x0, h, w = param
         return img[y0:y0 + h, x0:x0 + w]
+
+    def _augment_coords(self, coords, param):
+        y0, x0, _, _ = param
+        coords[:, 0] = coords[:, 0] - x0
+        coords[:, 1] = coords[:, 1] - y0
+        return coords
 
 
 if __name__ == '__main__':

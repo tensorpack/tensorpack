@@ -9,7 +9,7 @@ from .common import MapDataComponent, MapData
 from ..utils import logger
 from ..utils.argtools import shape2d
 
-__all__ = ['ImageFromFile', 'AugmentImageComponent', 'AugmentImageComponents']
+__all__ = ['ImageFromFile', 'AugmentImageComponent', 'AugmentImageCoordinates', 'AugmentImageComponents']
 
 
 class ImageFromFile(RNGDataFlow):
@@ -91,6 +91,53 @@ class AugmentImageComponent(MapDataComponent):
         self.augs.reset_state()
 
 
+class AugmentImageCoordinates(MapData):
+    """
+    Apply image augmentors on an image and set of coordinates.
+    """
+    def __init__(self, ds, augmentors, img_index=0, coords_index=1, copy=True):
+        """
+        Args:
+            ds (DataFlow): input DataFlow.
+            augmentors (AugmentorList): a list of :class:`imgaug.ImageAugmentor` to be applied in order.
+            img_index (int): the index of the image component to be augmented.
+            coords_index (int): the index of the coordinate component to be augmented.
+            copy (bool): Some augmentors modify the input images. When copy is
+                True, a copy will be made before any augmentors are applied,
+                to keep the original images not modified.
+                Turn it off to save time when you know it's OK.
+        """
+        if isinstance(augmentors, AugmentorList):
+            self.augs = augmentors
+        else:
+            self.augs = AugmentorList(augmentors)
+        self._nr_error = 0
+
+        def func(dp):
+            try:
+                img, coords = dp[img_index], dp[coords_index]
+                if copy:
+                    img, coords = copy_mod.deepcopy((img, coords))
+                img, prms = self.augs._augment_return_params(img)
+                dp[img_index] = img
+                coords = self.augs._augment_coords(coords, prms)
+                dp[coords_index] = coords
+                return dp
+            except KeyboardInterrupt:
+                raise
+            except Exception:
+                self._nr_error += 1
+                if self._nr_error % 1000 == 0 or self._nr_error < 10:
+                    logger.exception("Got {} augmentation errors.".format(self._nr_error))
+                return None
+
+        super(AugmentImageCoordinates, self).__init__(ds, func)
+
+    def reset_state(self):
+        self.ds.reset_state()
+        self.augs.reset_state()
+
+
 class AugmentImageComponents(MapData):
     """
     Apply image augmentors on several components, with shared augmentation parameters.
@@ -146,4 +193,5 @@ except ImportError:
     from ..utils.develop import create_dummy_class
     ImageFromFile = create_dummy_class('ImageFromFile', 'cv2')  # noqa
     AugmentImageComponent = create_dummy_class('AugmentImageComponent', 'cv2')  # noqa
+    AugmentImageCoordinates = create_dummy_class('AugmentImageCoordinates', 'cv2') # noqa
     AugmentImageComponents = create_dummy_class('AugmentImageComponents', 'cv2')  # noqa

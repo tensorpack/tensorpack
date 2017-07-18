@@ -35,9 +35,12 @@ class Flip(ImageAugmentor):
         self._init()
 
     def _get_augment_params(self, img):
-        return self._rand_range() < self.prob
+        h, w = img.shape[:2]
+        do = self._rand_range() < self.prob
+        return (do, h, w)
 
-    def _augment(self, img, do):
+    def _augment(self, img, param):
+        do, _, _ = param
         if do:
             ret = cv2.flip(img, self.code)
             if img.ndim == 3 and ret.ndim == 2:
@@ -47,7 +50,13 @@ class Flip(ImageAugmentor):
         return ret
 
     def _augment_coords(self, coords, param):
-        raise NotImplementedError()
+        do, h, w = param
+        if do:
+            if self.code == 0:
+                coords[:, 1] = h - coords[:, 1]
+            elif self.code == 1:
+                coords[:, 0] = w - coords[:, 0]
+        return coords
 
 
 class Resize(ImageAugmentor):
@@ -62,6 +71,10 @@ class Resize(ImageAugmentor):
         shape = tuple(shape2d(shape))
         self._init(locals())
 
+    def _get_augment_params(self, img):
+        h, w = img.shape[:2]
+        return (h, w)
+
     def _augment(self, img, _):
         ret = cv2.resize(
             img, self.shape[::-1],
@@ -69,6 +82,12 @@ class Resize(ImageAugmentor):
         if img.ndim == 3 and ret.ndim == 2:
             ret = ret[:, :, np.newaxis]
         return ret
+
+    def _augment_coords(self, coords, param):
+        h, w = param
+        coords[:, 0] = coords[:, 0] * self.shape[1] * 1.0 / w
+        coords[:, 1] = coords[:, 1] * self.shape[0] * 1.0 / h
+        return coords
 
 
 class ResizeShortestEdge(ImageAugmentor):
@@ -85,14 +104,24 @@ class ResizeShortestEdge(ImageAugmentor):
         size = size * 1.0
         self._init(locals())
 
-    def _augment(self, img, _):
+    def _get_augment_params(self, img):
         h, w = img.shape[:2]
         scale = self.size / min(h, w)
-        desSize = map(int, [scale * w, scale * h])
-        ret = cv2.resize(img, tuple(desSize), interpolation=self.interp)
+        newh, neww = map(int, [scale * h, scale * w])
+        return (h, w, newh, neww)
+
+    def _augment(self, img, param):
+        _, _, newh, neww = param
+        ret = cv2.resize(img, (neww, newh), interpolation=self.interp)
         if img.ndim == 3 and ret.ndim == 2:
             ret = ret[:, :, np.newaxis]
         return ret
+
+    def _augment_coords(self, coords, param):
+        h, w, newh, neww = param
+        coords[:, 0] = coords[:, 0] * neww * 1.0 / w
+        coords[:, 1] = coords[:, 1] * newh * 1.0 / h
+        return coords
 
 
 class RandomResize(ImageAugmentor):
@@ -117,29 +146,37 @@ class RandomResize(ImageAugmentor):
 
     def _get_augment_params(self, img):
         cnt = 0
+        h, w = img.shape[:2]
         while True:
             sx = self._rand_range(*self.xrange)
             if self.aspect_ratio_thres == 0:
                 sy = sx
             else:
                 sy = self._rand_range(*self.yrange)
-            destX = max(sx * img.shape[1], self.minimum[0])
-            destY = max(sy * img.shape[0], self.minimum[1])
-            oldr = img.shape[1] * 1.0 / img.shape[0]
+            destX = max(sx * w, self.minimum[0])
+            destY = max(sy * h, self.minimum[1])
+            oldr = w * 1.0 / h
             newr = destX * 1.0 / destY
             diff = abs(newr - oldr) / oldr
             if diff <= self.aspect_ratio_thres + 1e-5:
-                return (int(destX), int(destY))
+                return (h, w, int(destY), int(destX))
             cnt += 1
             if cnt > 50:
                 logger.warn("RandomResize failed to augment an image")
-                return img.shape[1], img.shape[0]
+                return (h, w, h, w)
 
-    def _augment(self, img, dsize):
-        ret = cv2.resize(img, dsize, interpolation=self.interp)
+    def _augment(self, img, param):
+        _, _, newh, neww = param
+        ret = cv2.resize(img, (neww, newh), interpolation=self.interp)
         if img.ndim == 3 and ret.ndim == 2:
             ret = ret[:, :, np.newaxis]
         return ret
+
+    def _augment_coords(self, coords, param):
+        h, w, newh, neww = param
+        coords[:, 0] = coords[:, 0] * neww * 1.0 / w
+        coords[:, 1] = coords[:, 1] * newh * 1.0 / h
+        return coords
 
 
 class Transpose(ImageAugmentor):
@@ -166,5 +203,7 @@ class Transpose(ImageAugmentor):
                 ret = ret[:, :, np.newaxis]
         return ret
 
-    def _augment_coords(self, coords, param):
-        raise NotImplementedError()
+    def _augment_coords(self, coords, do):
+        if do:
+            coords = coords[:, ::-1]
+        return coords

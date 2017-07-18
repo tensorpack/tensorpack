@@ -56,6 +56,12 @@ class RandomApplyAug(ImageAugmentor):
         else:
             return self.aug._augment(img, prm[1])
 
+    def _augment_coords(self, coords, prm):
+        if not prm[0]:
+            return coords
+        else:
+            return self.aug._augment_coords(coords, prm[1])
+
 
 class RandomChooseAug(ImageAugmentor):
     """ Randomly choose one from a list of augmentors """
@@ -69,7 +75,7 @@ class RandomChooseAug(ImageAugmentor):
             aug_lists = [k[0] for k in aug_lists]
             self._init(locals())
         else:
-            prob = 1.0 / len(aug_lists)
+            prob = [1.0 / len(aug_lists)] * len(aug_lists)
             self._init(locals())
         super(RandomChooseAug, self).__init__()
 
@@ -86,6 +92,10 @@ class RandomChooseAug(ImageAugmentor):
     def _augment(self, img, prm):
         idx, prm = prm
         return self.aug_lists[idx]._augment(img, prm)
+
+    def _augment_coords(self, coords, prm):
+        idx, prm = prm
+        return self.aug_lists[idx]._augment_coords(coords, prm)
 
 
 class RandomOrderAug(ImageAugmentor):
@@ -121,18 +131,30 @@ class RandomOrderAug(ImageAugmentor):
             img = self.aug_lists[k]._augment(img, prms[k])
         return img
 
+    def _augment_coords(self, coords, prm):
+        idxs, prms = prm
+        for k in idxs:
+            img = self.aug_lists[k]._augment_coords(coords, prms[k])
+        return img
+
 
 class MapImage(ImageAugmentor):
     """
     Map the image array by a function.
     """
 
-    def __init__(self, func):
+    def __init__(self, func, coord_func=None):
         """
         Args:
             func: a function which takes an image array and return an augmented one
         """
         self.func = func
+        self.coord_func = coord_func
 
     def _augment(self, img, _):
         return self.func(img)
+
+    def _augment_coords(self, coords, _):
+        if self.coord_func is None:
+            raise NotImplementedError
+        return self.coord_func(coords)

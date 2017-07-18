@@ -98,6 +98,11 @@ class AugmentorList(ImageAugmentor):
             img = aug._augment(img, prm)
         return img
 
+    def _augment_coords(self, coords, param):
+        for aug, prm in zip(self.augs, param):
+            coords = aug._augment_coords(coords, prm)
+        return coords
+
     def reset_state(self):
         """ Will reset state of each augmentor """
         for a in self.augs:
