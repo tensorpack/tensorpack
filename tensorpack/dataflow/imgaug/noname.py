@@ -85,7 +85,6 @@ class Resize(ImageAugmentor):
 
     def _augment_coords(self, coords, param):
         h, w = param
-        #TODO Can self.interp value change these computation?
         coords[:, 0] = coords[:, 0] * self.shape[1] * 1.0 / w
         coords[:, 1] = coords[:, 1] * self.shape[0] * 1.0 / h
         return coords
@@ -120,7 +119,6 @@ class ResizeShortestEdge(ImageAugmentor):
 
     def _augment_coords(self, coords, param):
         h, w, newh, neww = param
-        #TODO Can self.interp value change these computations?
         coords[:, 0] = coords[:, 0] * neww * 1.0 / w
         coords[:, 1] = coords[:, 1] * newh * 1.0 / h
         return coords
@@ -176,7 +174,6 @@ class RandomResize(ImageAugmentor):
 
     def _augment_coords(self, coords, param):
         h, w, newh, neww = param
-        #TODO Can self.interp value change these computations?
         coords[:, 0] = coords[:, 0] * neww * 1.0 / w
         coords[:, 1] = coords[:, 1] * newh * 1.0 / h
         return coords
