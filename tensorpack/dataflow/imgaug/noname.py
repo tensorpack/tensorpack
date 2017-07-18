@@ -58,6 +58,7 @@ class Flip(ImageAugmentor):
                 coords[:, 0] = w - coords[:, 0]
         return coords
 
+
 class Resize(ImageAugmentor):
     """ Resize image to a target size"""
 
@@ -81,13 +82,14 @@ class Resize(ImageAugmentor):
         if img.ndim == 3 and ret.ndim == 2:
             ret = ret[:, :, np.newaxis]
         return ret
-    
+ 
     def _augment_coords(self, coords, param):
         h, w = param
         #TODO Can self.interp value change these computation?
         coords[:, 0] = coords[:, 0] * self.shape[1] * 1.0 / w
         coords[:, 1] = coords[:, 1] * self.shape[0] * 1.0 / h
         return coords
+
 
 class ResizeShortestEdge(ImageAugmentor):
     """
@@ -122,6 +124,7 @@ class ResizeShortestEdge(ImageAugmentor):
         coords[:, 0] = coords[:, 0] * neww * 1.0 / w
         coords[:, 1] = coords[:, 1] * newh * 1.0 / h
         return coords
+
 
 class RandomResize(ImageAugmentor):
     """ Randomly rescale w and h of the image"""
@@ -170,13 +173,14 @@ class RandomResize(ImageAugmentor):
         if img.ndim == 3 and ret.ndim == 2:
             ret = ret[:, :, np.newaxis]
         return ret
-    
+ 
     def _augment_coords(self, coords, param):
         h, w, newh, neww = param
         #TODO Can self.interp value change these computations?
         coords[:, 0] = coords[:, 0] * neww * 1.0 / w
         coords[:, 1] = coords[:, 1] * newh * 1.0 / h
         return coords
+
 
 class Transpose(ImageAugmentor):
     """

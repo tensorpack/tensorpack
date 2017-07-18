@@ -142,6 +142,7 @@ class RandomCropAroundBox(ImageAugmentor):
         coords[:, 1] = coords[:, 1] - newbox.y0
         return coords
 
+
 class RandomCropRandomShape(ImageAugmentor):
     """ Random crop with a random shape"""
 

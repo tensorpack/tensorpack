@@ -138,13 +138,12 @@ class RandomOrderAug(ImageAugmentor):
         return img
 
 
-
 class MapImage(ImageAugmentor):
     """
     Map the image array by a function.
     """
 
-    def __init__(self, func, coord_func = None):
+    def __init__(self, func, coord_func=None):
         """
         Args:
             func: a function which takes an image array and return an augmented one
@@ -154,7 +153,7 @@ class MapImage(ImageAugmentor):
 
     def _augment(self, img, _):
         return self.func(img)
-    
+
     def _augment_coords(self, coords, _):
         if self.coord_func is None:
             raise NotImplementedError
