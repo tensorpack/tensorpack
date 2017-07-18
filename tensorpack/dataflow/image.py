@@ -95,7 +95,7 @@ class AugmentImageCoordinates(MapData):
     """
     Apply image augmentors on an image and set of coordinates.
     """
-    def __init__(self, ds, augmentors, img_index=0, coords_index = 1, copy=True):
+    def __init__(self, ds, augmentors, img_index=0, coords_index=1, copy=True):
         """
         Args:
             ds (DataFlow): input DataFlow.
@@ -194,5 +194,5 @@ except ImportError:
     from ..utils.develop import create_dummy_class
     ImageFromFile = create_dummy_class('ImageFromFile', 'cv2')  # noqa
     AugmentImageComponent = create_dummy_class('AugmentImageComponent', 'cv2')  # noqa
-    AugmentImageCoordinates = create_dummy_class('AugmentImageCoordinates', 'cv2') #noqa
+    AugmentImageCoordinates = create_dummy_class('AugmentImageCoordinates', 'cv2') # noqa
     AugmentImageComponents = create_dummy_class('AugmentImageComponents', 'cv2')  # noqa
