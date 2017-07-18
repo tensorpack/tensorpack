@@ -82,7 +82,7 @@ class Resize(ImageAugmentor):
         if img.ndim == 3 and ret.ndim == 2:
             ret = ret[:, :, np.newaxis]
         return ret
- 
+
     def _augment_coords(self, coords, param):
         h, w = param
         #TODO Can self.interp value change these computation?
@@ -173,7 +173,7 @@ class RandomResize(ImageAugmentor):
         if img.ndim == 3 and ret.ndim == 2:
             ret = ret[:, :, np.newaxis]
         return ret
- 
+
     def _augment_coords(self, coords, param):
         h, w, newh, neww = param
         #TODO Can self.interp value change these computations?
