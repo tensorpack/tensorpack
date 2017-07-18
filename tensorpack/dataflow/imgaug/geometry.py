@@ -42,6 +42,9 @@ class Shift(ImageAugmentor):
             ret = ret[:, :, np.newaxis]
         return ret
 
+    def _augment_coords(self, coords, param):
+        raise NotImplementedError()
+
 
 class Rotation(ImageAugmentor):
     """ Random rotate the image w.r.t a random center"""
@@ -79,6 +82,9 @@ class Rotation(ImageAugmentor):
             ret = ret[:, :, np.newaxis]
         return ret
 
+    def _augment_coords(self, coords, param):
+        raise NotImplementedError()
+
 
 class RotationAndCropValid(ImageAugmentor):
     """ Random rotate and then crop the largest possible rectangle.
@@ -114,6 +120,9 @@ class RotationAndCropValid(ImageAugmentor):
         newy = int(center[1] - newh * 0.5)
         # print(ret.shape, deg, newx, newy, neww, newh)
         return ret[newy:newy + newh, newx:newx + neww]
+
+    def _augment_coords(self, coords, param):
+        raise NotImplementedError()
 
     @staticmethod
     def largest_rotated_rect(w, h, angle):
