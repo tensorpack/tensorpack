@@ -114,8 +114,7 @@ class Trainer(object):
         """
         input_source.setup(self.model.get_inputs_desc())
         cbs = input_source.get_callbacks()
-        for cb in cbs:
-            self.register_callback(cb)
+        self.config.callbacks.extend(cbs)
 
     def setup(self):
         """

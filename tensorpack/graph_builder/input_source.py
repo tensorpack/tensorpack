@@ -411,6 +411,7 @@ class StagingInputWrapper(FeedfreeInput):
 
         def _before_train(self):
             # pre-fill the staging area
+            logger.info("Pre-fillilng staging area ...")
             for k in range(self.nr_stage):
                 self.stage_op.run()
 
