@@ -121,7 +121,6 @@ class AugmentImageCoordinates(MapData):
                 img, prms = self.augs._augment_return_params(img)
                 dp[img_index] = img
                 coords = self.augs._augment_coords(coords, prms)
-                #from IPython import embed;embed()
                 dp[coords_index] = coords
                 return dp
             except KeyboardInterrupt:
