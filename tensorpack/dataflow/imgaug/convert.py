@@ -45,10 +45,10 @@ class Grayscale(ColorSpace):
 class ToUint8(MapImage):
     """ Convert image to uint8. Useful to reduce communication overhead. """
     def __init__(self):
-        super(ToUint8, self).__init__(lambda x: np.clip(x, 0, 255).astype(np.uint8))
+        super(ToUint8, self).__init__(lambda x: np.clip(x, 0, 255).astype(np.uint8), lambda x: x)
 
 
 class ToFloat32(MapImage):
     """ Convert image to float32, may increase quality of the augmentor. """
     def __init__(self):
-        super(ToFloat32, self).__init__(lambda x: x.astype(np.float32))
+        super(ToFloat32, self).__init__(lambda x: x.astype(np.float32), lambda x: x)
