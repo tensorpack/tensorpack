@@ -131,9 +131,9 @@ class RandomResize(ImageAugmentor):
                  interp=cv2.INTER_LINEAR):
         """
         Args:
-            xrange (tuple): (min, max) range of scaling ratio for w
+            xrange (tuple): (min, max) range of scaling ratio for w, e.g. (0.9, 1.2)
             yrange (tuple): (min, max) range of scaling ratio for h
-            minimum (tuple): (xmin, ymin). avoid scaling down too much.
+            minimum (tuple): (xmin, ymin) in pixels. To avoid scaling down too much.
             aspect_ratio_thres (float): discard samples which change aspect ratio
                 larger than this threshold. Set to 0 to keep aspect ratio.
             interp: cv2 interpolation method
