@@ -284,7 +284,6 @@ class SyncMultiGPUTrainerReplicated(MultiGPUTrainerBase):
         for idx in range(self.config.nr_tower):
             with tf.device(raw_devices[idx]):
                 grad_and_vars = [x[idx] for x in grads]
-                print(grad_and_vars)
                 train_ops.append(opt.apply_gradients(
                     grad_and_vars, name='apply_grad_{}'.format(idx)))
         self.train_op = tf.group(*train_ops, name='train_op')
