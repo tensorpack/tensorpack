@@ -71,10 +71,12 @@ class RunUpdateOps(RunOp):
     _chief_only = False
 
     def __init__(self, collection=tf.GraphKeys.UPDATE_OPS):
+        name = 'UPDATE_OPS' if collection == tf.GraphKeys.UPDATE_OPS else collection
+
         def f():
             ops = tf.get_collection(collection)
             if ops:
-                logger.info("Applying UPDATE_OPS collection of {} ops.".format(len(ops)))
+                logger.info("Applying collection {} of {} ops.".format(name, len(ops)))
                 return tf.group(*ops, name='update_ops')
             else:
                 return tf.no_op(name='empty_update_ops')
