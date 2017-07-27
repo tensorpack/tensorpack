@@ -153,7 +153,7 @@ def eval_on_ILSVRC12(model, model_file, dataflow):
 
 def image_preprocess(image, bgr=True):
     if image.dtype.base_dtype != tf.float32:
-        image = tf.case(image, tf.float32)
+        image = tf.cast(image, tf.float32)
     image = image * (1.0 / 255)
 
     mean = [0.485, 0.456, 0.406]    # rgb
