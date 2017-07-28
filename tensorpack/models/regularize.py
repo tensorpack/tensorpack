@@ -46,14 +46,15 @@ def regularize_cost(regex, func, name='regularize_cost'):
     # If vars are replicated, only regularize those in the current tower
     params = ctx.filter_vars_by_vs_name(params)
 
-    costs = []
-    for p in params:
-        para_name = p.name
-        if re.search(regex, para_name):
-            costs.append(func(p))
-            _log_regularizer(para_name)
-    if not costs:
-        return tf.constant(0, dtype=tf.float32, name='empty_' + name)
+    with tf.name_scope('regularize_cost'):
+        costs = []
+        for p in params:
+            para_name = p.name
+            if re.search(regex, para_name):
+                costs.append(func(p))
+                _log_regularizer(para_name)
+        if not costs:
+            return tf.constant(0, dtype=tf.float32, name='empty_' + name)
     return tf.add_n(costs, name=name)
 
 

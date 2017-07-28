@@ -157,19 +157,20 @@ def eval_on_ILSVRC12(model, model_file, dataflow):
 
 
 def image_preprocess(image, bgr=True):
-    if image.dtype.base_dtype != tf.float32:
-        image = tf.cast(image, tf.float32)
-    image = image * (1.0 / 255)
+    with tf.name_scope('image_preprocess'):
+        if image.dtype.base_dtype != tf.float32:
+            image = tf.cast(image, tf.float32)
+        image = image * (1.0 / 255)
 
-    mean = [0.485, 0.456, 0.406]    # rgb
-    std = [0.229, 0.224, 0.225]
-    if bgr:
-        mean = mean[::-1]
-        std = std[::-1]
-    image_mean = tf.constant(mean, dtype=tf.float32)
-    image_std = tf.constant(std, dtype=tf.float32)
-    image = (image - image_mean) / image_std
-    return image
+        mean = [0.485, 0.456, 0.406]    # rgb
+        std = [0.229, 0.224, 0.225]
+        if bgr:
+            mean = mean[::-1]
+            std = std[::-1]
+        image_mean = tf.constant(mean, dtype=tf.float32)
+        image_std = tf.constant(std, dtype=tf.float32)
+        image = (image - image_mean) / image_std
+        return image
 
 
 def compute_loss_and_error(logits, label):
@@ -177,8 +178,9 @@ def compute_loss_and_error(logits, label):
     loss = tf.reduce_mean(loss, name='xentropy-loss')
 
     def prediction_incorrect(logits, label, topk=1, name='incorrect_vector'):
-        return tf.cast(tf.logical_not(tf.nn.in_top_k(logits, label, topk)),
-                       tf.float32, name=name)
+        with tf.name_scope('prediction_incorrect'):
+            x = tf.logical_not(tf.nn.in_top_k(logits, label, topk))
+        return tf.cast(x, tf.float32, name=name)
 
     wrong = prediction_incorrect(logits, label, 1, name='wrong-top1')
     add_moving_summary(tf.reduce_mean(wrong, name='train-error-top1'))
