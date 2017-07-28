@@ -179,11 +179,13 @@ def add_moving_summary(v, *args, **kwargs):
                 ema_var = tf.get_variable(name, shape=c.shape, dtype=c.dtype,
                                           initializer=tf.constant_initializer(), trainable=False)
                 ns = vs.original_name_scope
-            with tf.name_scope(ns):
+            # first clear NS to avoid duplicated name in variables
+            with tf.name_scope(None), tf.name_scope(ns):
                 ema_op = moving_averages.assign_moving_average(
                     ema_var, c, decay,
                     zero_debias=True, name=name + '_EMA_apply')
-            tf.summary.scalar(name + '-summary', ema_op)
+            with tf.name_scope(None):
+                tf.summary.scalar(name + '-summary', ema_op)
             tf.add_to_collection(coll, ema_op)
             # TODO a new collection to summary every step?
 
