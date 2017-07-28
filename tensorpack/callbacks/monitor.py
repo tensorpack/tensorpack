@@ -110,17 +110,16 @@ class Monitors(TrainingMonitor):
             summary = tf.Summary.FromString(summary)
         assert isinstance(summary, tf.Summary), type(summary)
 
-        # TODO remove -summary suffix for summary
-        self._dispatch(lambda m: m.put_summary(summary))
-
         # TODO other types
         for val in summary.value:
             if val.WhichOneof('value') == 'simple_value':
-                val.tag = re.sub('tower[p0-9]+/', '', val.tag)   # TODO move to subclasses
+                val.tag = re.sub('tower[0-9]+/', '', val.tag)   # TODO move to subclasses
                 suffix = '-summary'  # tensorflow#6150, tensorboard#59
                 if val.tag.endswith(suffix):
                     val.tag = val.tag[:-len(suffix)]
                 self._dispatch(lambda m: m.put_scalar(val.tag, val.simple_value))
+
+        self._dispatch(lambda m: m.put_summary(summary))
 
     def put_scalar(self, name, val):
         self._dispatch(lambda m: m.put_scalar(name, val))

@@ -8,12 +8,13 @@ import re
 import io
 from six.moves import range
 
+from tensorflow.python.training import moving_averages
+
 from ..utils import logger
 from ..utils.develop import log_deprecated
 from ..utils.naming import MOVING_SUMMARY_OPS_KEY
 from .tower import get_current_tower_context
 from .symbolic_functions import rms
-from .common import get_global_step_var
 
 __all__ = ['create_scalar_summary', 'add_param_summary', 'add_activation_summary',
            'add_moving_summary']
@@ -141,10 +142,14 @@ def add_param_summary(*summary_lists):
 
 def add_moving_summary(v, *args, **kwargs):
     """
+    Enable moving average summary for some tensors.
+    It's only effective in the main training tower, otherwise calling this
+    function is a no-op.
+
     Args:
         v (tf.Tensor or list): tensor or list of tensors to summary. Must have
             scalar type.
-        args: tensors to summary (support positional arguments)
+        args: tensors to summary (to support positional arguments)
         decay (float): the decay rate. Defaults to 0.95.
         collection (str): the name of the collection to add EMA-maintaining ops.
             The default will work together with the default
@@ -163,24 +168,24 @@ def add_moving_summary(v, *args, **kwargs):
     for x in v:
         assert isinstance(x, tf.Tensor), x
         assert x.get_shape().ndims == 0, x.get_shape()
-    gs = get_global_step_var()
-    # TODO will produce variable tower0/xxx?
-    # TODO not saved under distributed
-    # TODO use zero_debias
-    # TODO create EMA for each variable separately, so that the maintain ops
-    # have a decent name (rather than EMA)
-    # clear namescope, otherwise the variable names will have duplicated name scope
-    with tf.name_scope(None), tf.device(gs.device):
-        averager = tf.train.ExponentialMovingAverage(
-            decay, num_updates=gs, name='EMA')
-        avg_maintain_op = averager.apply(v)
+    G = tf.get_default_graph()
+    # TODO variable not saved under distributed
 
-        for c in v:
-            # TODO do this in the EMA callback?
-            name = re.sub('tower[p0-9]+/', '', c.op.name)
-            tf.summary.scalar(name + '-summary', averager.average(c))
-
-    tf.add_to_collection(coll, avg_maintain_op)
+    for c in v:
+        name = re.sub('tower[0-9]+/', '', c.op.name)
+        with G.colocate_with(c):
+            with tf.variable_scope('EMA') as vs:
+                # will actually create ns EMA_1, EMA_2, etc. tensorflow#6007
+                ema_var = tf.get_variable(name, shape=c.shape, dtype=c.dtype,
+                                          initializer=tf.constant_initializer(), trainable=False)
+                ns = vs.original_name_scope
+            with tf.name_scope(ns):
+                ema_op = moving_averages.assign_moving_average(
+                    ema_var, c, decay,
+                    zero_debias=True, name=name + '_EMA_apply')
+            tf.summary.scalar(name + '-summary', ema_op)
+            tf.add_to_collection(coll, ema_op)
+            # TODO a new collection to summary every step?
 
 
 try:
