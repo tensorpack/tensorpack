@@ -58,14 +58,15 @@ class Model(ModelDesc):
                 sampled2 = get_stn(image)
 
         # For visualization in tensorboard
-        padded1 = tf.pad(sampled1, [[0, 0], [HALF_DIFF, HALF_DIFF], [HALF_DIFF, HALF_DIFF], [0, 0]])
-        padded2 = tf.pad(sampled2, [[0, 0], [HALF_DIFF, HALF_DIFF], [HALF_DIFF, HALF_DIFF], [0, 0]])
-        img_orig = tf.concat([image[:, :, :, 0], image[:, :, :, 1]], 1)  # b x 2h  x w
-        transform1 = tf.concat([padded1[:, :, :, 0], padded1[:, :, :, 1]], 1)
-        transform2 = tf.concat([padded2[:, :, :, 0], padded2[:, :, :, 1]], 1)
-        stacked = tf.concat([img_orig, transform1, transform2], 2, 'viz')
-        tf.summary.image('visualize',
-                         tf.expand_dims(stacked, -1), max_outputs=30)
+        with tf.name_scope('visualization'):
+            padded1 = tf.pad(sampled1, [[0, 0], [HALF_DIFF, HALF_DIFF], [HALF_DIFF, HALF_DIFF], [0, 0]])
+            padded2 = tf.pad(sampled2, [[0, 0], [HALF_DIFF, HALF_DIFF], [HALF_DIFF, HALF_DIFF], [0, 0]])
+            img_orig = tf.concat([image[:, :, :, 0], image[:, :, :, 1]], 1)  # b x 2h  x w
+            transform1 = tf.concat([padded1[:, :, :, 0], padded1[:, :, :, 1]], 1)
+            transform2 = tf.concat([padded2[:, :, :, 0], padded2[:, :, :, 1]], 1)
+            stacked = tf.concat([img_orig, transform1, transform2], 2, 'viz')
+            tf.summary.image('visualize',
+                             tf.expand_dims(stacked, -1), max_outputs=30)
 
         sampled = tf.concat([sampled1, sampled2], 3, 'sampled_concat')
         logits = (LinearWrap(sampled)
@@ -118,7 +119,7 @@ def view_warp(modelpath):
         session_init=get_model_loader(modelpath),
         model=Model(),
         input_names=['input'],
-        output_names=['viz', 'STN1/affine', 'STN2/affine']))
+        output_names=['visualization/viz', 'STN1/affine', 'STN2/affine']))
 
     xys = np.array([[0, 0, 1],
                     [WARP_TARGET_SIZE, 0, 1],
