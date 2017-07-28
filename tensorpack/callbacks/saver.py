@@ -67,16 +67,16 @@ class ModelSaver(Callback):
                 keep_checkpoint_every_n_hours=self._keep_every_n_hours,
                 write_version=tf.train.SaverDef.V2,
                 save_relative_paths=True)
-        self.meta_graph_written = False
+
+    def _before_train(self):
+        # graph is finalized, OK to write it now.
+        self.saver.export_meta_graph(
+            os.path.join(self.checkpoint_dir,
+                         'graph-{}.meta'.format(logger.get_time_str())),
+            collection_list=self.graph.get_all_collection_keys())
 
     def _trigger(self):
         try:
-            if not self.meta_graph_written:
-                self.saver.export_meta_graph(
-                    os.path.join(self.checkpoint_dir,
-                                 'graph-{}.meta'.format(logger.get_time_str())),
-                    collection_list=self.graph.get_all_collection_keys())
-                self.meta_graph_written = True
             self.saver.save(
                 tf.get_default_session(),
                 self.path,
