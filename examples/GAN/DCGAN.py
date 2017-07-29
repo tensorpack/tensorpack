@@ -13,7 +13,6 @@ from tensorpack.utils.viz import *
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
 from tensorpack.utils.globvars import globalns as opt
-from tensorpack.utils.globvars import use_global_argument
 import tensorflow as tf
 
 from GAN import GANTrainer, RandomZData, GANModelDesc
@@ -153,7 +152,7 @@ def get_args():
     parser.add_argument('--load-size', help='size to load the original images', type=int)
     parser.add_argument('--crop-size', help='crop the original images', type=int)
     args = parser.parse_args()
-    use_global_argument(args)
+    opt.use_argument(args)
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
     return args

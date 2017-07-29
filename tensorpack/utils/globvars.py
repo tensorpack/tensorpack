@@ -6,7 +6,7 @@
 import six
 import argparse
 
-__all__ = ['globalns', 'use_global_argument']
+__all__ = ['globalns']
 
 if six.PY2:
     class NS:
@@ -15,16 +15,18 @@ else:
     import types
     NS = types.SimpleNamespace
 
-globalns = NS()
+
+class MyNS(NS):
+    def use_argument(self, args):
+        """
+        Add the content of :class:`argparse.Namespace` to this ns.
+
+        Args:
+            args (argparse.Namespace): arguments
+        """
+        assert isinstance(args, argparse.Namespace), type(args)
+        for k, v in six.iteritems(vars(args)):
+            setattr(self, k, v)
 
 
-def use_global_argument(args):
-    """
-    Add the content of :class:`argparse.Namespace` to globalns.
-
-    Args:
-        args (argparse.Namespace): arguments
-    """
-    assert isinstance(args, argparse.Namespace), type(args)
-    for k, v in six.iteritems(vars(args)):
-        setattr(globalns, k, v)
+globalns = MyNS()
