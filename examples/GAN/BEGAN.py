@@ -131,35 +131,27 @@ class Model(GANModelDesc):
         return opt
 
 
-DCGAN.Model = Model
-
-
-def get_config():
-    return TrainConfig(
-        model=Model(),
-        dataflow=DCGAN.get_data(G.data),
-        callbacks=[
-            ModelSaver(),
-            StatMonitorParamSetter(
-                'learning_rate', 'measure', lambda x: x * 0.5, 0, 10)
-        ],
-        steps_per_epoch=500,
-        max_epoch=400,
-    )
-
-
 if __name__ == '__main__':
     args = DCGAN.get_args()
     if args.sample:
-        DCGAN.sample(args.load, 'gen/conv4.3/output')
+        DCGAN.sample(Model(), args.load, 'gen/conv4.3/output')
     else:
         assert args.data
         logger.auto_set_dir()
-        config = get_config()
-        if args.load:
-            config.session_init = SaverRestore(args.load)
-        nr_gpu = get_nr_gpu()
-        config.nr_tower = max(get_nr_gpu(), 1)
+
+        config = TrainConfig(
+            model=Model(),
+            dataflow=DCGAN.get_data(args.data),
+            callbacks=[
+                ModelSaver(),
+                StatMonitorParamSetter(
+                    'learning_rate', 'measure', lambda x: x * 0.5, 0, 10)
+            ],
+            steps_per_epoch=500,
+            max_epoch=400,
+            session_init=SaverRestore(args.load) if args.load else None,
+            nr_tower=max(get_nr_gpu(), 1)
+        )
         if config.nr_tower == 1:
             GANTrainer(config).train()
         else:

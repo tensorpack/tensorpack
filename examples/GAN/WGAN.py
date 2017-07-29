@@ -54,7 +54,7 @@ if __name__ == '__main__':
     args = DCGAN.get_args()
 
     if args.sample:
-        DCGAN.sample(args.load)
+        DCGAN.sample(Model(), args.load)
     else:
         assert args.data
         logger.auto_set_dir()

@@ -115,7 +115,7 @@ def get_data(datadir):
     ds = ImageFromFile(imgs, channel=3, shuffle=True)
     ds = AugmentImageComponent(ds, get_augmentors())
     ds = BatchData(ds, opt.BATCH)
-    ds = PrefetchDataZMQ(ds, 1)
+    ds = PrefetchDataZMQ(ds, 5)
     return ds
 
 
@@ -129,10 +129,10 @@ def get_config():
     )
 
 
-def sample(model_path, output_name='gen/gen'):
+def sample(model, model_path, output_name='gen/gen'):
     pred = PredictConfig(
         session_init=get_model_loader(model_path),
-        model=Model(),
+        model=model,
         input_names=['z'],
         output_names=[output_name, 'z'])
     pred = SimpleDatasetPredictor(pred, RandomZData((100, opt.Z_DIM)))
@@ -162,7 +162,7 @@ def get_args():
 if __name__ == '__main__':
     args = get_args()
     if args.sample:
-        sample(args.load)
+        sample(Model(), args.load)
     else:
         assert args.data
         logger.auto_set_dir()
