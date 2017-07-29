@@ -118,16 +118,6 @@ def get_data(datadir):
     return ds
 
 
-def get_config():
-    return TrainConfig(
-        model=Model(),
-        dataflow=get_data(opt.data),
-        callbacks=[ModelSaver()],
-        steps_per_epoch=300,
-        max_epoch=200,
-    )
-
-
 def sample(model, model_path, output_name='gen/gen'):
     pred = PredictConfig(
         session_init=get_model_loader(model_path),
@@ -165,7 +155,12 @@ if __name__ == '__main__':
     else:
         assert args.data
         logger.auto_set_dir()
-        config = get_config()
-        if args.load:
-            config.session_init = SaverRestore(args.load)
+        config = TrainConfig(
+            model=Model(),
+            dataflow=get_data(args.data),
+            callbacks=[ModelSaver()],
+            steps_per_epoch=300,
+            max_epoch=200,
+            session_init=SaverRestore(args.load) if args.load else None
+        )
         GANTrainer(config).train()

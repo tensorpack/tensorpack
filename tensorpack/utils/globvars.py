@@ -5,6 +5,7 @@
 
 import six
 import argparse
+from . import logger
 
 __all__ = ['globalns']
 
@@ -26,6 +27,8 @@ class MyNS(NS):
         """
         assert isinstance(args, argparse.Namespace), type(args)
         for k, v in six.iteritems(vars(args)):
+            if hasattr(self, k):
+                logger.warn("Attribute {} in globalns will be overwritten!")
             setattr(self, k, v)
 
 

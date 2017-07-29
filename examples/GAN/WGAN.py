@@ -47,9 +47,6 @@ class Model(DCGAN.Model):
         return optimizer.VariableAssignmentOptimizer(opt, clip)
 
 
-DCGAN.Model = Model
-
-
 if __name__ == '__main__':
     args = DCGAN.get_args()
 
@@ -58,11 +55,14 @@ if __name__ == '__main__':
     else:
         assert args.data
         logger.auto_set_dir()
-        config = DCGAN.get_config()
-        config.steps_per_epoch = 500
-
-        if args.load:
-            config.session_init = SaverRestore(args.load)
+        config = TrainConfig(
+            model=Model(),
+            dataflow=DCGAN.get_data(args.data),
+            callbacks=[ModelSaver()],
+            steps_per_epoch=500,
+            max_epoch=200,
+            session_init=SaverRestore(args.load) if args.load else None
+        )
         """
         The original code uses a different schedule, but this seems to work well.
         """
