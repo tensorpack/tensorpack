@@ -72,7 +72,7 @@ def get_data(train_or_test):
 
     datadir = args.data
     ds = dataset.ILSVRC12(datadir, train_or_test,
-                          shuffle=True if isTrain else False, dir_structure='original')
+                          shuffle=isTrain, dir_structure='original')
     augmentors = fbresnet_augmentor(isTrain)
     augmentors.append(imgaug.ToUint8())
 
@@ -128,7 +128,7 @@ if __name__ == '__main__':
     if args.eval:
         BATCH_SIZE = 128    # something that can run on one gpu
         ds = get_data('val')
-        eval_on_ILSVRC12(Model(), model_file, ds)
+        eval_on_ILSVRC12(Model(), args.load, ds)
         sys.exit()
 
     NR_GPU = get_nr_gpu()

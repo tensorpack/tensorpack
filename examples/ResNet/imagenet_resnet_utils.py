@@ -10,7 +10,8 @@ from tensorflow.contrib.layers import variance_scaling_initializer
 
 import tensorpack as tp
 from tensorpack import imgaug
-from tensorpack.tfutils import argscope
+from tensorpack.utils.stats import RatioCounter
+from tensorpack.tfutils.argscope import argscope, get_arg_scope
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.models import (
     Conv2D, MaxPooling, GlobalAvgPooling, BatchNorm, BNReLU,
@@ -74,42 +75,45 @@ def fbresnet_augmentor(isTrain):
     return augmentors
 
 
-def resnet_shortcut(l, n_in, n_out, stride):
-    if n_in != n_out:
+def resnet_shortcut(l, n_out, stride):
+    data_format = get_arg_scope()['Conv2D']['data_format']
+    n_in = l.get_shape().as_list()[1 if data_format == 'NCHW' else 3]
+    if n_in != n_out:   # change dimension when channel is not the same
         return Conv2D('convshortcut', l, n_out, 1, stride=stride)
     else:
         return l
 
 
-def resnet_basicblock(l, ch_out, stride, preact):
-    ch_in = l.get_shape().as_list()[1]
+def apply_preactivation(l, preact):
+    """
+    'no_preact' for the first resblock only, because the input is activated already.
+    'both_preact' for the first block in each group, due to the projection shotcut.
+    'default' for all the non-first blocks, where identity mapping is preserved on shortcut path.
+    """
     if preact == 'both_preact':
         l = BNReLU('preact', l)
-        input = l
+        shortcut = l
     elif preact == 'default':
-        input = l
+        shortcut = l
         l = BNReLU('preact', l)
     else:
-        input = l
+        shortcut = l
+    return l, shortcut
+
+
+def resnet_basicblock(l, ch_out, stride, preact):
+    l, shortcut = apply_preactivation(l, preact)
     l = Conv2D('conv1', l, ch_out, 3, stride=stride, nl=BNReLU)
     l = Conv2D('conv2', l, ch_out, 3)
-    return l + resnet_shortcut(input, ch_in, ch_out, stride)
+    return l + resnet_shortcut(shortcut, ch_out, stride)
 
 
 def resnet_bottleneck(l, ch_out, stride, preact):
-    ch_in = l.get_shape().as_list()[1]
-    if preact == 'both_preact':
-        l = BNReLU('preact', l)
-        input = l
-    elif preact == 'default':
-        input = l
-        l = BNReLU('preact', l)
-    else:
-        input = l
+    l, shortcut = apply_preactivation(l, preact)
     l = Conv2D('conv1', l, ch_out, 1, nl=BNReLU)
     l = Conv2D('conv2', l, ch_out, 3, stride=stride, nl=BNReLU)
     l = Conv2D('conv3', l, ch_out * 4, 1)
-    return l + resnet_shortcut(input, ch_in, ch_out * 4, stride)
+    return l + resnet_shortcut(shortcut, ch_out * 4, stride)
 
 
 def resnet_group(l, name, block_func, features, count, stride, first=False):
@@ -147,7 +151,7 @@ def eval_on_ILSVRC12(model, model_file, dataflow):
         output_names=['wrong-top1', 'wrong-top5']
     )
     pred = SimpleDatasetPredictor(pred_config, dataflow)
-    acc1, acc5 = tp.RatioCounter(), tp.RatioCounter()
+    acc1, acc5 = RatioCounter(), RatioCounter()
     for o in pred.get_result():
         batch_size = o[0].shape[0]
         acc1.feed(o[0].sum(), batch_size)
