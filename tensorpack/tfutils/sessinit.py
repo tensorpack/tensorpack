@@ -196,15 +196,14 @@ class DictRestore(SessionInit):
         self.prms = {get_op_tensor_name(n)[1]: v for n, v in six.iteritems(param_dict)}
 
     def _run_init(self, sess):
-        variables = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)  # TODO
+        variables = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)
 
         variable_names = set([k.name for k in variables])
         param_names = set(six.iterkeys(self.prms))
 
         intersect = variable_names & param_names
 
-        logger.info("Params to restore: {}".format(
-            ', '.join(map(str, intersect))))
+        logger.info("Params to restore: {}".format(', '.join(map(str, intersect))))
 
         mismatch = MismatchLogger('graph', 'dict')
         for k in sorted(variable_names - param_names):

@@ -2,7 +2,6 @@
 # File: dftools.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
-import sys
 import os
 import multiprocessing as mp
 from six.moves import range
@@ -11,33 +10,9 @@ from .base import DataFlow
 from ..utils import get_tqdm, logger
 from ..utils.concurrency import DIE
 from ..utils.serialize import dumps
-from ..utils.fs import mkdir_p
 
-__all__ = ['dump_dataflow_images', 'dump_dataflow_to_process_queue',
+__all__ = ['dump_dataflow_to_process_queue',
            'dump_dataflow_to_lmdb', 'dump_dataflow_to_tfrecord']
-
-
-def dump_dataflow_images(df, dirname, max_count=None, index=0):
-    """ Dump images from a DataFlow to a directory.
-
-    Args:
-        df (DataFlow): the DataFlow to dump.
-        dirname (str): name of the directory.
-        max_count (int): limit max number of images to dump. Defaults to unlimited.
-        index (int): the index of the image component in the data point.
-    """
-    # TODO pass a name_func to write label as filename?
-    mkdir_p(dirname)
-    if max_count is None:
-        max_count = sys.maxint
-    df.reset_state()
-    for i, dp in enumerate(df.get_data()):
-        if i % 100 == 0:
-            print(i)
-        if i > max_count:
-            return
-        img = dp[index]
-        cv2.imwrite(os.path.join(dirname, "{}.jpg".format(i)), img)
 
 
 def dump_dataflow_to_process_queue(df, size, nr_consumer):
@@ -160,9 +135,3 @@ try:
 except ImportError:
     dump_dataflow_to_tfrecord = create_dummy_func(  # noqa
         'dump_dataflow_to_tfrecord', 'tensorflow')
-
-try:
-    import cv2
-except ImportError:
-    dump_dataflow_images = create_dummy_func(  # noqa
-        'dump_dataflow_images', 'cv2')

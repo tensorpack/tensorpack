@@ -73,8 +73,8 @@ class Model(GANModelDesc):
                  .FullyConnected('fct', 1, nl=tf.identity)())
         return l
 
-    def _build_graph(self, input_vars):
-        image_pos, y = input_vars
+    def _build_graph(self, inputs):
+        image_pos, y = inputs
         image_pos = tf.expand_dims(image_pos * 2.0 - 1, -1)
         y = tf.one_hot(y, 10, name='label_onehot')
 

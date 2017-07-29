@@ -67,6 +67,8 @@ class PredictorFactory(object):
                 input.setup(self._model.get_inputs_desc())
             input = input.get_input_tensors()
             assert isinstance(input, (list, tuple)), input
+            # TODO still using tensors here instead of inputsource
+            # can be fixed after having towertensorhandle inside modeldesc
             self._model.build_graph(input)
 
         desc_names = [k.name for k in self._model.get_inputs_desc()]
@@ -88,7 +90,7 @@ class PredictorFactory(object):
         tower = self._towers[tower]
         device = '/gpu:{}'.format(tower) if tower >= 0 else '/cpu:0'
         # use a previously-built tower
-        # TODO conflict with inference runner??
+        # TODO check conflict with inference runner??
         if tower_name not in self._names_built:
             with tf.variable_scope(self._vs_name, reuse=True):
                 handle = self.build(tower_name, device)

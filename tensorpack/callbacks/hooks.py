@@ -45,7 +45,7 @@ class HookToCallback(Callback):
 
     def _before_train(self):
         sess = tf.get_default_session()
-        # TODO fix coord?
+        # coord is set to None when converting
         self._hook.after_create_session(sess, None)
 
     def _before_run(self, ctx):

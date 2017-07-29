@@ -107,7 +107,7 @@ class ModelDescBase(object):
         :returns: a list of InputDesc
         """
 
-    # TODO only use InputSource in the future? Now mainly used in predict/
+    # TODO only use InputSource in the future? Now only used in predictor_factory
     def build_graph(self, inputs):
         """
         Build the whole symbolic graph.

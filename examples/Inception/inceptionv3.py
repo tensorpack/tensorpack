@@ -138,7 +138,7 @@ class Model(ModelDesc):
                 br1 = AvgPooling('avgpool', l, 5, 3, padding='VALID')
                 br1 = Conv2D('conv11', br1, 128, 1)
                 shape = br1.get_shape().as_list()
-                br1 = Conv2D('convout', br1, 768, shape[1:3], padding='VALID')  # TODO gauss, stddev=0.01
+                br1 = Conv2D('convout', br1, 768, shape[1:3], padding='VALID')
                 br1 = FullyConnected('fc', br1, 1000, nl=tf.identity)
 
             with tf.variable_scope('incep-17-1280a'):
