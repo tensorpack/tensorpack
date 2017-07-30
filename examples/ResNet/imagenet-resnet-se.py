@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-# File: imagenet-resnet.py
+# File: imagenet-resnet-se.py
 
 import sys
 import argparse
@@ -15,7 +15,7 @@ from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
 
 from imagenet_resnet_utils import (
-    fbresnet_augmentor, resnet_basicblock, resnet_bottleneck, resnet_backbone,
+    fbresnet_augmentor, apply_preactivation, resnet_shortcut, resnet_backbone,
     eval_on_ILSVRC12, image_preprocess, compute_loss_and_error)
 
 TOTAL_BATCH_SIZE = 256
@@ -23,41 +23,38 @@ INPUT_SHAPE = 224
 DEPTH = None
 
 RESNET_CONFIG = {
-    18: ([2, 2, 2, 2], resnet_basicblock),
-    34: ([3, 4, 6, 3], resnet_basicblock),
-    50: ([3, 4, 6, 3], resnet_bottleneck),
-    101: ([3, 4, 23, 3], resnet_bottleneck)
+    50: [3, 4, 6, 3],
+    101: [3, 4, 23, 3],
 }
 
 
 class Model(ModelDesc):
-    def __init__(self, data_format='NCHW'):
-        if data_format == 'NCHW':
-            assert tf.test.is_gpu_available()
-        self.data_format = data_format
-
     def _get_inputs(self):
-        # uint8 instead of float32 is used as input type to reduce copy overhead.
-        # It might hurt the performance a liiiitle bit.
-        # The pretrained models were trained with float32.
-        return [InputDesc(tf.uint8, [None, INPUT_SHAPE, INPUT_SHAPE, 3], 'input'),
+        return [InputDesc(tf.float32, [None, INPUT_SHAPE, INPUT_SHAPE, 3], 'input'),
                 InputDesc(tf.int32, [None], 'label')]
 
     def _build_graph(self, inputs):
         image, label = inputs
-        # It should actually use bgr=True here, but for compatibility with
-        # pretrained models, we keep the wrong version.
-        image = image_preprocess(image, bgr=False)
+        image = image_preprocess(image, bgr=True)
+        image = tf.transpose(image, [0, 3, 1, 2])
 
-        if self.data_format == 'NCHW':
-            image = tf.transpose(image, [0, 3, 1, 2])
-        defs, block_func = RESNET_CONFIG[DEPTH]
+        def bottleneck_se(l, ch_out, stride, preact):
+            l, shortcut = apply_preactivation(l, preact)
+            l = Conv2D('conv1', l, ch_out, 1, nl=BNReLU)
+            l = Conv2D('conv2', l, ch_out, 3, stride=stride, nl=BNReLU)
+            l = Conv2D('conv3', l, ch_out * 4, 1)
 
-        with argscope([Conv2D, MaxPooling, GlobalAvgPooling, BatchNorm], data_format=self.data_format):
-            logits = resnet_backbone(image, defs, block_func)
+            squeeze = GlobalAvgPooling('gap', l)
+            squeeze = FullyConnected('fc1', squeeze, ch_out // 4, nl=tf.identity)
+            squeeze = FullyConnected('fc2', squeeze, ch_out * 4, nl=tf.nn.sigmoid)
+            l = l * tf.reshape(squeeze, [-1, ch_out * 4, 1, 1])
+            return l + resnet_shortcut(shortcut, ch_out * 4, stride)
+        defs = RESNET_CONFIG[DEPTH]
+
+        with argscope([Conv2D, MaxPooling, GlobalAvgPooling, BatchNorm], data_format='NCHW'):
+            logits = resnet_backbone(image, defs, bottleneck_se)
 
         loss = compute_loss_and_error(logits, label)
-
         wd_loss = regularize_cost('.*/W', l2_regularizer(1e-4), name='l2_regularize_loss')
         add_moving_summary(loss, wd_loss)
         self.cost = tf.add_n([loss, wd_loss], name='cost')
@@ -72,31 +69,27 @@ def get_data(train_or_test):
 
     datadir = args.data
     ds = dataset.ILSVRC12(datadir, train_or_test,
-                          shuffle=isTrain, dir_structure='original')
+                          shuffle=isTrain, dir_structure='train')
     augmentors = fbresnet_augmentor(isTrain)
-    augmentors.append(imgaug.ToUint8())
 
     ds = AugmentImageComponent(ds, augmentors, copy=False)
     if isTrain:
-        ds = PrefetchDataZMQ(ds, min(20, multiprocessing.cpu_count()))
+        ds = PrefetchDataZMQ(ds, min(25, multiprocessing.cpu_count()))
     ds = BatchData(ds, BATCH_SIZE, remainder=not isTrain)
     return ds
 
 
-def get_config(fake=False, data_format='NCHW'):
+def get_config():
+    assert tf.test.is_gpu_available()
     nr_gpu = get_nr_gpu()
     BATCH_SIZE = TOTAL_BATCH_SIZE // nr_gpu
     logger.info("Running on {} GPUs. Batch size per GPU: {}".format(nr_gpu, BATCH_SIZE))
 
-    if fake:
-        dataset_train = dataset_val = FakeData(
-            [[64, 224, 224, 3], [64]], 1000, random=False, dtype='uint8')
-    else:
-        dataset_train = get_data('train')
-        dataset_val = get_data('val')
+    dataset_train = get_data('train')
+    dataset_val = get_data('val')
 
     return TrainConfig(
-        model=Model(data_format=data_format),
+        model=Model(),
         dataflow=dataset_train,
         callbacks=[
             ModelSaver(),
@@ -105,7 +98,6 @@ def get_config(fake=False, data_format='NCHW'):
                 ClassificationError('wrong-top5', 'val-error-top5')]),
             ScheduledHyperParamSetter('learning_rate',
                                       [(30, 1e-2), (60, 1e-3), (85, 1e-4), (95, 1e-5)]),
-            HumanHyperParamSetter('learning_rate'),
         ],
         steps_per_epoch=5000,
         max_epoch=110,
@@ -118,9 +110,6 @@ if __name__ == '__main__':
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
     parser.add_argument('--data', help='ILSVRC dataset dir')
     parser.add_argument('--load', help='load model')
-    parser.add_argument('--fake', help='use fakedata to test or benchmark this model', action='store_true')
-    parser.add_argument('--data_format', help='specify NCHW or NHWC',
-                        type=str, default='NCHW')
     parser.add_argument('-d', '--depth', help='resnet depth',
                         type=int, default=18, choices=[18, 34, 50, 101])
     parser.add_argument('--eval', action='store_true')
@@ -131,14 +120,15 @@ if __name__ == '__main__':
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
     if args.eval:
-        BATCH_SIZE = 128    # something that can run on one gpu
+        BATCH_SIZE = 64  # something that can run on one gpu
         ds = get_data('val')
         eval_on_ILSVRC12(Model(), args.load, ds)
         sys.exit()
 
     logger.set_logger_dir(
-        os.path.join('train_log', 'imagenet-resnet-d' + str(DEPTH)))
-    config = get_config(fake=args.fake, data_format=args.data_format)
+        os.path.join('train_log', 'imagenet-resnet-se-d' + str(DEPTH)))
+
+    config = get_config()
     if args.load:
         config.session_init = SaverRestore(args.load)
     SyncMultiGPUTrainerParameterServer(config).train()

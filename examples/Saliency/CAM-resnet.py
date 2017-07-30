@@ -78,8 +78,7 @@ def get_data(train_or_test):
 
     datadir = args.data
     ds = dataset.ILSVRC12(datadir, train_or_test,
-                          shuffle=True if isTrain else False,
-                          dir_structure='original')
+                          shuffle=isTrain, dir_structure='original')
     augmentors = fbresnet_augmentor(isTrain)
     augmentors.append(imgaug.ToUint8())
 
@@ -91,6 +90,9 @@ def get_data(train_or_test):
 
 
 def get_config():
+    nr_gpu = get_nr_gpu()
+    BATCH_SIZE = TOTAL_BATCH_SIZE // nr_gpu
+
     dataset_train = get_data('train')
     dataset_val = get_data('val')
 
@@ -107,6 +109,7 @@ def get_config():
         ],
         steps_per_epoch=5000,
         max_epoch=110,
+        nr_tower=nr_gpu
     )
 
 
@@ -162,12 +165,8 @@ if __name__ == '__main__':
         viz_cam(args.load, args.data)
         sys.exit()
 
-    nr_gpu = get_nr_gpu()
-    BATCH_SIZE = TOTAL_BATCH_SIZE // nr_gpu
-
     logger.auto_set_dir()
     config = get_config()
     if args.load:
         config.session_init = get_model_loader(args.load)
-    config.nr_tower = nr_gpu
     SyncMultiGPUTrainer(config).train()

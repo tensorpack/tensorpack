@@ -5,6 +5,7 @@
 
 import six
 import os
+import pprint
 import tensorflow as tf
 from collections import defaultdict
 import numpy as np
@@ -127,7 +128,8 @@ def dump_session_params(path):
     for v in var:
         result[v.name] = v.eval()
     logger.info("Variables to save to {}:".format(path))
-    logger.info(str(result.keys()))
+    keys = sorted(list(result.keys()))
+    logger.info(pprint.pformat(keys))
     np.save(path, result)
 
 
