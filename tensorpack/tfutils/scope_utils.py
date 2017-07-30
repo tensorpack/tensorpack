@@ -12,7 +12,7 @@ if six.PY2:
 else:
     import functools
 
-__all__ = ['get_name_scope_name', 'auto_reuse_variable_scope']
+__all__ = ['auto_reuse_variable_scope']
 
 
 @deprecated("Use tf.get_default_graph().get_name_scope() (available since 1.2.1).")

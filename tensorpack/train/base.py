@@ -16,7 +16,7 @@ from ..utils import logger
 from ..callbacks import Callback, Callbacks, MaintainStepCounter
 from ..callbacks.monitor import Monitors, TrainingMonitor
 from ..tfutils import get_global_step_value
-from ..tfutils.model_utils import describe_model
+from ..tfutils.model_utils import describe_trainable_vars
 from ..tfutils.sesscreate import ReuseSessionCreator
 from ..tfutils.sessinit import JustCurrentSession
 
@@ -127,7 +127,7 @@ class Trainer(object):
         self.monitors = Monitors(self.monitors)
         self.register_callback(self.monitors)
 
-        describe_model()
+        describe_trainable_vars()
 
         # some final operations that might modify the graph
         logger.info("Setup callbacks graph ...")

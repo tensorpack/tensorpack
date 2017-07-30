@@ -10,7 +10,7 @@ import tensorflow as tf
 
 from ..utils import logger
 from ..utils.concurrency import DIE, StoppableThread, ShareSessionThread
-from ..tfutils.model_utils import describe_model
+from ..tfutils.model_utils import describe_trainable_vars
 from .base import OnlinePredictor, OfflinePredictor, AsyncPredictorBase
 
 __all__ = ['MultiProcessPredictWorker', 'MultiProcessQueuePredictWorker',
@@ -41,7 +41,7 @@ class MultiProcessPredictWorker(multiprocessing.Process):
         self.predictor = OfflinePredictor(self.config)
         if self.idx == 0:
             with self.predictor.graph.as_default():
-                describe_model()
+                describe_trainable_vars()
 
 
 class MultiProcessQueuePredictWorker(MultiProcessPredictWorker):

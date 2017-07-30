@@ -7,7 +7,7 @@ import numpy as np
 
 from .base import Callback
 from ..utils import logger
-from ..tfutils import get_op_tensor_name
+from ..tfutils.common import get_op_tensor_name
 
 __all__ = ['SendStat', 'DumpParamAsImage', 'InjectShell']
 

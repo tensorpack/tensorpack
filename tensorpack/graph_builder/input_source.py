@@ -15,7 +15,7 @@ from six.moves import range, zip
 from .input_source_base import InputSource
 from ..dataflow import DataFlow, RepeatedData
 from ..tfutils.summary import add_moving_summary
-from ..tfutils import get_op_tensor_name
+from ..tfutils.common import get_op_tensor_name
 from ..tfutils.tower import get_current_tower_context
 from ..utils import logger
 from ..utils.concurrency import ShareSessionThread

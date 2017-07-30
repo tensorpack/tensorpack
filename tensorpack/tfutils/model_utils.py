@@ -8,10 +8,10 @@ from tabulate import tabulate
 
 from ..utils import logger
 
-__all__ = ['describe_model', 'get_shape_str']
+__all__ = []
 
 
-def describe_model():
+def describe_trainable_vars():
     """
     Print a description of the current model parameters.
     Skip variables starting with "tower".

@@ -16,8 +16,8 @@ from ..utils.naming import MOVING_SUMMARY_OPS_KEY
 from .tower import get_current_tower_context
 from .symbolic_functions import rms
 
-__all__ = ['create_scalar_summary', 'add_param_summary', 'add_activation_summary',
-           'add_moving_summary']
+__all__ = ['create_scalar_summary', 'add_param_summary',
+           'add_activation_summary', 'add_moving_summary']
 
 
 def create_scalar_summary(name, v):

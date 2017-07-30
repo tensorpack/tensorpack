@@ -10,10 +10,10 @@ from ..utils.argtools import graph_memoized
 __all__ = ['get_default_sess_config',
            'get_global_step_value',
            'get_global_step_var',
-           'get_op_tensor_name',
-           'get_tensors_by_names',
-           'get_op_or_tensor_by_name',
-           'get_tf_version_number',
+           # 'get_op_tensor_name',
+           # 'get_tensors_by_names',
+           # 'get_op_or_tensor_by_name',
+           # 'get_tf_version_number',
            ]
 
 

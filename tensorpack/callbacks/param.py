@@ -11,7 +11,7 @@ import os
 
 from .base import Callback
 from ..utils import logger
-from ..tfutils import get_op_tensor_name
+from ..tfutils.common import get_op_tensor_name
 
 __all__ = ['HyperParam', 'GraphVarParam', 'ObjAttrParam',
            'HyperParamSetter', 'HumanHyperParamSetter',

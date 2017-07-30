@@ -8,7 +8,7 @@ import six
 from six.moves import zip
 
 from ..utils.stats import RatioCounter, BinaryStatistics
-from ..tfutils import get_op_tensor_name
+from ..tfutils.common import get_op_tensor_name
 
 __all__ = ['ScalarStats', 'Inferencer',
            'ClassificationError', 'BinaryClassificationStats']
