@@ -64,7 +64,7 @@ class Trainer(object):
         self.monitors = []
         self._epoch_num = None
 
-        self._setup()   # subclass will setup the graph
+        self._setup()   # subclass will setup the graph and InputSource
 
     @property
     def epoch_num(self):

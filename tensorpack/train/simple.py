@@ -23,11 +23,9 @@ class SimpleTrainer(Trainer):
         Args:
             config (TrainConfig): the training config.
         """
-        super(SimpleTrainer, self).__init__(config)
-
-        assert len(self.config.tower) == 1, \
+        assert len(config.tower) == 1, \
             "Got nr_tower={}, but doesn't support multigpu!" \
-            " Use Sync/AsyncMultiGPUTrainer instead.".format(len(self.config.tower))
+            " Use Sync/AsyncMultiGPUTrainer instead.".format(len(config.tower))
 
         if config.dataflow is None:
             self._input_source = config.data
@@ -35,6 +33,7 @@ class SimpleTrainer(Trainer):
             self._input_source = FeedInput(config.dataflow)
             logger.warn("FeedInput is slow (and this is the default of SimpleTrainer). "
                         "Consider QueueInput or other InputSource instead.")
+        super(SimpleTrainer, self).__init__(config)
 
     def run_step(self):
         self.hooked_sess.run(self.train_op)

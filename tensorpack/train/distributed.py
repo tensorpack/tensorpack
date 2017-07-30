@@ -63,7 +63,6 @@ class DistributedReplicatedTrainer(MultiGPUTrainerBase):
 
         self._input_source = config.data
         self.is_chief = (self.task_index == 0 and self.job_name == 'worker')
-        super(DistributedReplicatedTrainer, self).__init__(config)
 
         worker_prefix = '/job:worker/task:%s' % self.task_index
         self.param_server_device = tf.train.replica_device_setter(
@@ -78,6 +77,8 @@ class DistributedReplicatedTrainer(MultiGPUTrainerBase):
         # Device for queues for managing synchronization between servers
         self.sync_queue_devices = ['/job:ps/task:%s/cpu:0' % i for i in range(self.num_ps)]
         self.sync_queue_counter = 0
+
+        super(DistributedReplicatedTrainer, self).__init__(config)
 
     @staticmethod
     def _average_grads(tower_grads, devices):

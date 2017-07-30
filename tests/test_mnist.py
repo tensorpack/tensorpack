@@ -8,4 +8,4 @@ class MnistTest(TestPythonScript):
         return '../examples/mnist-convnet.py'
 
     def test(self):
-        self.assertSurvive(self.script, args=None, timeout=10)
+        self.assertSurvive(self.script, args=None)
