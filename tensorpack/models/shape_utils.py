@@ -4,7 +4,7 @@
 
 import tensorflow as tf
 
-__all__ = ['StaticDynamicAxis', 'StaticDynamicShape']
+__all__ = []
 
 
 class StaticDynamicAxis(object):

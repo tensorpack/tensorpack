@@ -7,7 +7,7 @@ import six
 import argparse
 from . import logger
 
-__all__ = ['globalns']
+__all__ = ['globalns', 'GlobalNS']
 
 if six.PY2:
     class NS:
@@ -17,7 +17,12 @@ else:
     NS = types.SimpleNamespace
 
 
-class MyNS(NS):
+# TODO make it singleton
+
+class GlobalNS(NS):
+    """
+    The class of the globalns instance.
+    """
     def use_argument(self, args):
         """
         Add the content of :class:`argparse.Namespace` to this ns.
@@ -32,4 +37,17 @@ class MyNS(NS):
             setattr(self, k, v)
 
 
-globalns = MyNS()
+globalns = GlobalNS()
+"""
+A namespace to store global variables.
+
+Examples:
+
+.. code-block:: none
+
+    import tensorpack.utils.globalns as G
+
+    G.depth = 18
+    G.batch_size = 1
+    G.use_argument(parser.parse_args())
+"""

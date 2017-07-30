@@ -51,14 +51,6 @@ tensorpack.utils.logger module
     :show-inheritance:
 
 
-tensorpack.utils.rect module
-----------------------------
-
-.. automodule:: tensorpack.utils.rect
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 tensorpack.utils.serialize module
 ---------------------------------
 
