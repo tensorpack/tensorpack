@@ -8,7 +8,8 @@ import tensorflow as tf
 from six.moves import zip
 import tqdm
 
-from ..utils import logger, get_tqdm_kwargs
+from ..utils import logger
+from ..utils.utils import get_tqdm_kwargs
 from ..utils.naming import GLOBAL_STEP_INCR_OP_NAME
 from ..tfutils.common import (
     get_op_tensor_name, get_global_step_var,

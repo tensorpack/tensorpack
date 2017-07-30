@@ -7,7 +7,8 @@ import six
 from six.moves import range
 import os
 
-from ..utils import logger, get_tqdm
+from ..utils import logger
+from ..utils.utils import get_tqdm
 from ..utils.timer import timed_operation
 from ..utils.loadcaffe import get_caffe_pb
 from ..utils.serialize import loads

@@ -10,7 +10,8 @@ from termcolor import colored
 from collections import deque, defaultdict
 from six.moves import range, map
 from .base import DataFlow, ProxyDataFlow, RNGDataFlow
-from ..utils import logger, get_tqdm, get_rng
+from ..utils import logger, get_rng
+from ..utils.utils import get_tqdm
 from ..utils.develop import log_deprecated
 
 __all__ = ['TestDataSpeed', 'PrintData', 'BatchData', 'BatchDataByShape', 'FixedSizeData', 'MapData',

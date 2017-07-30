@@ -7,7 +7,8 @@ import multiprocessing as mp
 from six.moves import range
 
 from .base import DataFlow
-from ..utils import get_tqdm, logger
+from ..utils import logger
+from ..utils.utils import get_tqdm
 from ..utils.concurrency import DIE
 from ..utils.serialize import dumps
 

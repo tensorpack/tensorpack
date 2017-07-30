@@ -13,7 +13,8 @@ import tqdm
 import six
 from six.moves import range
 
-from ..utils import logger, get_tqdm_kwargs
+from ..utils import logger
+from ..utils.utils import get_tqdm_kwargs
 from ..utils.develop import deprecated
 from ..dataflow import DataFlow
 
