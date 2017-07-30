@@ -8,7 +8,7 @@ import numpy as np
 import os
 
 from tensorpack import *
-from tensorpack.tfutils.symbolic_functions import *
+from tensorpack.tfutils.symbolic_functions import prediction_incorrect
 from tensorpack.tfutils.summary import *
 import tensorflow as tf
 

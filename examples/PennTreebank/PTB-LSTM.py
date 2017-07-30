@@ -9,6 +9,7 @@ import argparse
 
 from tensorpack import *
 from tensorpack.tfutils.gradproc import *
+from tensorpack.tfutils import optimizer, summary
 from tensorpack.utils import logger
 from tensorpack.utils.fs import download, get_dataset_path
 from tensorpack.utils.argtools import memoized_ignoreargs

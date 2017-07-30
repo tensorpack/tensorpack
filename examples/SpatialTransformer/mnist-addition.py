@@ -11,6 +11,7 @@ import sys
 import argparse
 
 from tensorpack import *
+from tensorpack.tfutils import sesscreate, optimizer, summary
 import tensorpack.tfutils.symbolic_functions as symbf
 
 IMAGE_SIZE = 42
@@ -78,7 +79,7 @@ class Model(ModelDesc):
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
 
-        wrong = symbolic_functions.prediction_incorrect(logits, label)
+        wrong = symbf.prediction_incorrect(logits, label)
         summary.add_moving_summary(tf.reduce_mean(wrong, name='train_error'))
 
         wd_cost = tf.multiply(1e-5, regularize_cost('fc.*/W', tf.nn.l2_loss),

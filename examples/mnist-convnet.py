@@ -13,6 +13,7 @@ about 0.6% validation error after 30 epochs.
 
 # Just import everything into current namespace
 from tensorpack import *
+from tensorpack.tfutils import summary
 import tensorflow as tf
 import tensorpack.tfutils.symbolic_functions as symbf
 

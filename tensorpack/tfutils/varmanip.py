@@ -7,7 +7,6 @@ import six
 import os
 import pprint
 import tensorflow as tf
-from collections import defaultdict
 import numpy as np
 from ..utils import logger
 from .common import get_op_tensor_name
@@ -47,9 +46,7 @@ class SessionUpdate(object):
             vars_to_update: a collection of variables to update
         """
         self.sess = sess
-        self.name_map = defaultdict(list)
-        for v in vars_to_update:
-            self.name_map[v.name].append(v)
+        self.name_map = {v.name: v for v in vars_to_update}
 
     @staticmethod
     def load_value_to_var(var, val, strict=False):
@@ -108,8 +105,8 @@ class SessionUpdate(object):
         with self.sess.as_default():
             for name, value in six.iteritems(prms):
                 assert name in self.name_map
-                for v in self.name_map[name]:
-                    SessionUpdate.load_value_to_var(v, value)
+                v = self.name_map[name]
+                SessionUpdate.load_value_to_var(v, value)
 
 
 def dump_session_params(path):
@@ -168,6 +165,9 @@ def dump_chkpt_vars(model_path):
 
     Args:
         model_path(str): path to a checkpoint.
+
+    Returns:
+        dict: a name:value dict
     """
     model_path = get_checkpoint_path(model_path)
     reader = tf.train.NewCheckpointReader(model_path)
@@ -199,6 +199,6 @@ def is_training_name(name):
         return True
     if name.endswith('/Adagrad'):
         return True
-    if 'EMA_summary/' in name:
+    if name.startswith('/EMA'):
         return True
     return False

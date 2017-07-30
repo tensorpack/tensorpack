@@ -7,6 +7,7 @@ import os
 import argparse
 
 from tensorpack import *
+from tensorpack.tfutils import optimizer
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.utils.globvars import globalns as G
 import tensorflow as tf

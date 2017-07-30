@@ -6,7 +6,7 @@ import tensorflow as tf
 from contextlib import contextmanager
 import numpy as np
 
-__all__ = []
+# __all__ = ['get_scalar_var']
 
 
 # this function exists for backwards-compatibilty
