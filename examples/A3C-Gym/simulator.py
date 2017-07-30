@@ -15,7 +15,6 @@ import six
 from six.moves import queue
 import zmq
 
-from tensorpack.models.common import disable_layer_logging
 from tensorpack.callbacks import Callback
 from tensorpack.tfutils.varmanip import SessionUpdate
 from tensorpack.predict import OfflinePredictor

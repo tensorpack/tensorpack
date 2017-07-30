@@ -12,5 +12,4 @@ API Documentation
   predict
   tfutils
   utils
-  RL
 

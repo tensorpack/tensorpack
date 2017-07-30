@@ -13,6 +13,7 @@ import six
 from six.moves import map, range
 
 from tensorpack import *
+from tensorpack.tfutils import symbolic_functions, summary, optimizer
 from tensorpack.tfutils.gradproc import GlobalNormClip
 from tensorpack.utils.globvars import globalns as param
 
