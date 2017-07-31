@@ -71,10 +71,10 @@ class GANTrainer(FeedfreeTrainerBase):
         opt = self.model.get_optimizer()
 
         # by default, run one d_min after one g_min
-        self.g_min = opt.minimize(self.model.g_loss, var_list=self.model.g_vars, name='g_op')
-        with tf.control_dependencies([self.g_min]):
-            self.d_min = opt.minimize(self.model.d_loss, var_list=self.model.d_vars, name='d_op')
-        self.train_op = self.d_min
+        g_min = opt.minimize(self.model.g_loss, var_list=self.model.g_vars, name='g_op')
+        with tf.control_dependencies([g_min]):
+            d_min = opt.minimize(self.model.d_loss, var_list=self.model.d_vars, name='d_op')
+        self.train_op = d_min
 
 
 class SeparateGANTrainer(FeedfreeTrainerBase):
@@ -137,12 +137,12 @@ class MultiGPUGANTrainer(MultiGPUTrainerBase, FeedfreeTrainerBase):
 
         opt = self.model.get_optimizer()
         # run one d_min after one g_min
-        self.g_min = opt.minimize(g_loss, var_list=self.model.g_vars,
-                                  colocate_gradients_with_ops=True, name='g_op')
-        with tf.control_dependencies([self.g_min]):
-            self.d_min = opt.minimize(d_loss, var_list=self.model.d_vars,
-                                      colocate_gradients_with_ops=True, name='d_op')
-        self.train_op = self.d_min
+        g_min = opt.minimize(g_loss, var_list=self.model.g_vars,
+                             colocate_gradients_with_ops=True, name='g_op')
+        with tf.control_dependencies([g_min]):
+            d_min = opt.minimize(d_loss, var_list=self.model.d_vars,
+                                 colocate_gradients_with_ops=True, name='d_op')
+        self.train_op = d_min
 
 
 class RandomZData(DataFlow):

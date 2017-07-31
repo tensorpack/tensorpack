@@ -2,10 +2,8 @@
 # File: base.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-from abc import ABCMeta, abstractmethod
 import time
 import weakref
-import six
 from six.moves import range
 
 import tensorflow as tf
@@ -30,7 +28,6 @@ class StopTraining(BaseException):
     pass
 
 
-@six.add_metaclass(ABCMeta)
 class Trainer(object):
     """ Base class for a trainer.
 
@@ -102,10 +99,18 @@ class Trainer(object):
         self.setup()
         self.main_loop()
 
-    @abstractmethod
     def run_step(self):
-        """ Abstract method: run one iteration. Subclass should define what is "iteration".
         """
+        Defines what to do in one iteration, by default is:
+        ``self.hooked_sess.run(self.train_op)``.
+
+        The behavior can be changed by either defining what is ``train_op``,
+        or overriding this method.
+        """
+        assert hasattr(self, 'train_op'), \
+            "Please either set `Trainer.train_op` or provide an implementation " \
+            "of Trainer.run_step()!"
+        self.hooked_sess.run(self.train_op)
 
     def _setup_input_source(self, input_source):
         """

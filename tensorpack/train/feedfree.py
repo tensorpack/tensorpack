@@ -29,10 +29,6 @@ class FeedfreeTrainerBase(Trainer):
         assert isinstance(self._input_source, FeedfreeInput), type(self._input_source)
         self._setup_input_source(self._input_source)
 
-    def run_step(self):
-        """ Simply run ``self.train_op``."""
-        self.hooked_sess.run(self.train_op)
-
 
 # deprecated
 class SingleCostFeedfreeTrainer(FeedfreeTrainerBase):

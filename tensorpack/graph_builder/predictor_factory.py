@@ -84,7 +84,7 @@ class PredictorFactory(object):
         Args:
             tower (int): need the kth tower (not the gpu id, but the id in TrainConfig.predict_tower)
         Returns:
-            an online predictor (which has to be used under the default session)
+            an online predictor (which has to be used under a default session)
         """
         tower_name = 'towerp{}'.format(tower)
         tower = self._towers[tower]

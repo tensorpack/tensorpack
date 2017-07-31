@@ -95,7 +95,8 @@ class InferenceRunnerBase(Callback):
 
         self._input_source.setup(self.trainer.model.get_inputs_desc())
         with tf.variable_scope(tf.get_variable_scope(), reuse=True):
-            self._tower_handle = self.trainer.predictor_factory.build(self._tower_name, device, self._input_source)
+            self._tower_handle = self.trainer.predictor_factory.build(
+                self._tower_name, device, self._input_source)
 
         self._hooks = [self._build_hook(inf) for inf in self.infs]
         cbs = self._input_source.get_callbacks()

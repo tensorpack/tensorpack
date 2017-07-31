@@ -15,7 +15,7 @@ __all__ = ['SimpleTrainer']
 class SimpleTrainer(Trainer):
     """ A naive single-tower single-cost demo trainer.
         Support both InputSource and DataFlow.
-        When DataFlow is given, the InputSource to be used will be ``FeedInput(df)``.
+        When DataFlow is given instead of InputSource, the InputSource to be used will be ``FeedInput(df)``.
     """
 
     def __init__(self, config):
@@ -35,13 +35,28 @@ class SimpleTrainer(Trainer):
                         "Consider QueueInput or other InputSource instead.")
         super(SimpleTrainer, self).__init__(config)
 
-    def run_step(self):
-        self.hooked_sess.run(self.train_op)
+    @staticmethod
+    def setup_graph(self, model, input):
+        """
+        Setup graph for simple trainer.
+
+        Args:
+            model (ModelDesc):
+            input (InputSource):
+
+        Returns:
+            tf.Operation: the training op
+            [Callback]: the callbacks to be added
+        """
+        input.setup(model.get_inputs_desc())
+        cbs = input.get_callbacks()
+        with TowerContext('', is_training=True):
+            model.build_graph(input)
+            _, grads = model.get_cost_and_grad()
+        opt = model.get_optimizer()
+        train_op = opt.apply_gradients(grads, name='min_op')
+        return train_op, cbs
 
     def _setup(self):
-        self._setup_input_source(self._input_source)
-        with TowerContext('', is_training=True):
-            self.model.build_graph(self._input_source)
-            cost, grads = self.model.get_cost_and_grad()
-        opt = self.model.get_optimizer()
-        self.train_op = opt.apply_gradients(grads, name='min_op')
+        self.train_op, callbacks = SimpleTrainer.setup_graph(self.model, self._input_source)
+        self.config.callbacks.extend(callbacks)
