@@ -14,23 +14,26 @@ _CurrentTowerContext = None
 class TowerContext(object):
     """ A context where the current model is being built in. """
 
-    def __init__(self, tower_name, is_training=None, index=0, vs_name=''):
+    def __init__(self, tower_name, is_training=None, index=0, use_vs=False):
         """
         Args:
             tower_name (str): The name scope of the tower.
             is_training (bool): if None, automatically determine from tower_name.
             index (int): index of this tower, only used in training.
-            vs_name (str): Open a variable scope with this name, if given.
+            use_vs (bool): Open a variable scope with this name.
         """
         self._name = tower_name
         self._is_training = bool(is_training)
 
         if not self._is_training:
-            assert index == 0 and vs_name == '', \
-                "vs_name and index are only used in prediction!"
+            assert index == 0 and not use_vs, \
+                "use_vs and index are only used in training!"
 
         self._index = int(index)
-        self._vs_name = str(vs_name)
+        if use_vs:
+            self._vs_name = self._name
+        else:
+            self._vs_name = ''
 
         if self.has_own_variables:
             assert not tf.get_variable_scope().reuse, "reuse=True in tower {}!".format(tower_name)
@@ -96,8 +99,8 @@ class TowerContext(object):
                 self._ctxs.append(tf.name_scope(self._name))
             else:
                 if self.has_own_variables:
-                    if len(self.vs_name):
-                        self._ctxs.append(tf.variable_scope(self.vs_name))
+                    if len(self._vs_name):
+                        self._ctxs.append(tf.variable_scope(self._vs_name))
                     else:
                         self._ctxs.append(tf.name_scope(self._name))
                 else:

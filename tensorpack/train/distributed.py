@@ -195,7 +195,7 @@ class DistributedReplicatedTrainer(MultiGPUTrainerBase):
                     self.model, self._input_source),
                 devices=self.raw_devices,
                 var_strategy='replicated',
-                vs_names=None)  # use the default vs names
+                vs_names=[True] * self.config.nr_tower)  # open vs at each tower
             MultiGPUTrainerBase._check_grad_list(grad_list)
 
         avg_grads = DistributedReplicatedTrainer._average_grads(grad_list, self.raw_devices)
