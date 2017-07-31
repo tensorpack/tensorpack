@@ -85,6 +85,7 @@ def get_data(train_or_test):
 
 def get_config(fake=False, data_format='NCHW'):
     nr_tower = max(get_nr_gpu(), 1)
+    global BATCH_SIZE
     BATCH_SIZE = TOTAL_BATCH_SIZE // nr_tower
     logger.info("Running on {} towers. Batch size per tower: {}".format(nr_tower, BATCH_SIZE))
 

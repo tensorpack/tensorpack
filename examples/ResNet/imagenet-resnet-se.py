@@ -82,6 +82,7 @@ def get_data(train_or_test):
 def get_config():
     assert tf.test.is_gpu_available()
     nr_gpu = get_nr_gpu()
+    global BATCH_SIZE
     BATCH_SIZE = TOTAL_BATCH_SIZE // nr_gpu
     logger.info("Running on {} GPUs. Batch size per GPU: {}".format(nr_gpu, BATCH_SIZE))
 
