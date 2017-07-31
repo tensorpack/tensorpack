@@ -33,7 +33,7 @@ ds1 = BatchData(ds0, 256, use_list=True)
 TestDataSpeed(ds1).start()
 ```
 
-Here `ds0` simply reads original images from the filesystem. It is implemented simply by:
+Here `ds0` reads original images from the filesystem. It is implemented simply by:
 ```python
 for filename, label in filelist:
   yield [cv2.imread(filename), label]

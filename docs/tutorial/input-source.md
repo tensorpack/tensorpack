@@ -1,16 +1,12 @@
 
 # Input Pipeline
 
-This tutorial covers some general basics of the possible methods to send data from external sources to TensorFlow graph,
+This tutorial covers some general basics of the possible methods to send data from external sources to a TensorFlow graph,
 and how tensorpack support these methods.
 You don't have to read it because these are details under the tensorpack interface,
 but knowing it could help understand the efficiency and choose the best input pipeline for your task.
 
 ## Prepare Data in Parallel
-
-<!--
-   -![prefetch](input-source.png)
-	 -->
 
 ![prefetch](https://cloud.githubusercontent.com/assets/1381301/26525192/36e5de48-4304-11e7-88ab-3b790bd0e028.png)
 
@@ -19,9 +15,9 @@ Start to prepare the next (batch of) data while you're training!
 
 The reasons are:
 1. Data preparation often consumes non-trivial time (depend on the actual problem).
-2. Data preparation often uses completely different resources from training --
+2. Data preparation often uses completely different resources from training (see figure above) --
 	doing them together doesn't slow you down. In fact you can further parallelize different stages in
-	the preparation, because they also use different resources (as shown in the figure).
+	the preparation, because they also use different resources.
 3. Data preparation often doesn't depend on the result of the previous training step.
 
 Let's do some simple math: according to [tensorflow/benchmarks](https://www.tensorflow.org/performance/benchmarks),
@@ -30,29 +26,33 @@ Assuming you have 5GB/s `memcpy` bandwidth, simply copying the data once would t
 down your training by 10%. Think about how many more copies are made during your preprocessing.
 
 Failure to hide the data preparation latency is the major reason why people
-cannot see good GPU utilization. Always choose a framework that allows latency hiding.
+cannot see good GPU utilization. __Always choose a framework that allows latency hiding.__
+However most other TensorFlow wrappers are designed to be `feed_dict` based -- no latency hiding at all.
+This is the major reason why tensorpack is [faster](https://gist.github.com/ppwwyyxx/8d95da79f8d97036a7d67c2416c851b6).
 
 ## Python or C++ ?
 
 The above discussion is valid regardless of what you use to load/preprocess, Python code or TensorFlow operators (written in C++).
 
-The benefit of using TensorFlow ops is:
+The benefits of using TensorFlow ops are:
 * Faster preprocessing.
+
+	* Potentially true, but not necessarily. With Python code you can call a variety of other fast libraries (e.g. lmdb), which
+		you have no access to in TF ops.
+	* Python may be just fast enough.
+
+		As long as data preparation runs faster than training, it makes no difference at all.
+		And for most types of problems, up to the scale of multi-GPU ImageNet training,
+		Python can offer enough speed if you use a fast library (e.g. `tensorpack.dataflow`).
+		See the [Efficient DataFlow](http://tensorpack.readthedocs.io/en/latest/tutorial/efficient-dataflow.html) tutorial.
+
 * No "Copy to TF" (i.e. `feed_dict`) stage.
 
-While Python is much easier to write, and has much more libraries to use.
+	* True. But as mentioned above, the latency can usually be hidden.
 
-Though C++ ops are potentially faster, they're usually __not necessary__.
-As long as data preparation runs faster than training, it makes no difference at all.
-And for most types of problems, up to the scale of multi-GPU ImageNet training,
-Python can offer enough speed if written properly (e.g. use `tensorpack.dataflow`).
-See the [Efficient DataFlow](http://tensorpack.readthedocs.io/en/latest/tutorial/efficient-dataflow.html) tutorial.
-
-When you use Python to load/preprocess data, TF `QueueBase` can help hide the "Copy to TF" latency,
-and TF `StagingArea` can help hide the "Copy to GPU" latency.
-They are used by most examples in tensorpack,
-however most other TensorFlow wrappers are designed to be `feed_dict` based -- no latency hiding at all.
-This is the major reason why tensorpack is [faster](https://gist.github.com/ppwwyyxx/8d95da79f8d97036a7d67c2416c851b6).
+		In tensorpack, TF queues are used to hide the "Copy to TF" latency,
+		and TF `StagingArea` can help hide the "Copy to GPU" latency.
+		They are used by most examples in tensorpack.
 
 ## InputSource
 
@@ -65,10 +65,9 @@ For example,
 4. Come from some TF native reading pipeline.
 5. Come from some ZMQ pipe, where the load/preprocessing may happen on a different machine.
 
-You can use `TrainConfig(data=)` option to use a customized `InputSource`.
-Usually you don't need this API, and only have to specify `TrainConfig(dataflow=)`, because
-tensorpack trainers automatically adds proper prefetching for you.
-In cases you want to use TF ops rather than DataFlow, you can use `TensorInput` as the `InputSource`
+When you set `TrainConfig(dataflow=)`, tensorpack trainers automatically adds proper prefetching for you.
+You can also use `TrainConfig(data=)` option to use a customized `InputSource`.
+In cases you want to use TF ops rather than a DataFlow, you can use `TensorInput` as the `InputSource`
 (See the [PTB example](https://github.com/ppwwyyxx/tensorpack/tree/master/examples/PennTreebank)).
 
 ## Figure out the Bottleneck
