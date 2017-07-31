@@ -11,7 +11,7 @@ import copy
 from ..tfutils.argscope import get_arg_scope
 from ..tfutils.model_utils import get_shape_str
 from ..utils import logger
-from ..utils.develop import building_rtfd
+# from ..utils.develop import building_rtfd
 
 # make sure each layer is only logged once
 _LAYER_LOGGED = set()
@@ -147,9 +147,9 @@ def layer_register(
         _register(func.__name__, wrapped_func)
         return wrapped_func
 
-    if building_rtfd():
-        # preserve argspec
-        from decorator import decorator
-        wrapper = decorator(wrapper)
+    # if building_rtfd():
+        # # preserve argspec
+        # from decorator import decorator
+        # wrapper = decorator(wrapper)
 
     return wrapper

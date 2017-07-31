@@ -331,12 +331,17 @@ texinfo_documents = [
 
 suppress_warnings = ['image.nonlocal_uri']
 
+#autodoc_member_order = 'bysource'
+
 def process_signature(app, what, name, obj, options, signature,
             return_annotation):
     if signature:
         # replace Mock function names
         signature = re.sub('<Mock name=\'([^\']+)\'.*>', '\g<1>', signature)
         signature = re.sub('tensorflow', 'tf', signature)
+        if hasattr(obj, 'use_scope') and hasattr(obj, 'symbolic_function'):
+            if obj.use_scope:
+                signature = signature[0] + 'name, ' + signature[1:]
     # signature: arg list
     return signature, return_annotation
 
