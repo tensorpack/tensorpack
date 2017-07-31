@@ -27,6 +27,7 @@ class SimpleTrainer(Trainer):
             "Got nr_tower={}, but doesn't support multigpu!" \
             " Use Sync/AsyncMultiGPUTrainer instead.".format(len(config.tower))
 
+        assert (config.data is not None or config.dataflow is not None) and config.model is not None
         if config.dataflow is None:
             self._input_source = config.data
         else:

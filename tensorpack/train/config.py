@@ -95,8 +95,9 @@ class TrainConfig(object):
             monitors = [TFEventWriter(), JSONWriter(), ScalarPrinter()]
         self.monitors = monitors
 
+        if model is not None:
+            assert_type(model, ModelDesc)
         self.model = model
-        assert_type(self.model, ModelDesc)
 
         if session_init is None:
             session_init = JustCurrentSession()

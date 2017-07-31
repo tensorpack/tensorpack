@@ -10,13 +10,14 @@ class MyModel(ModelDesc):
 		return [InputDesc(...), InputDesc(...)]
 
 	def _build_graph(self, inputs):
+    tensorA, tensorB = inputs
 		# build the graph
 
 	def _get_optimizer(self):
 	  return tf.train.GradientDescentOptimizer(0.1)
 ```
 
-Basically, `_get_inputs` should define the metainfo of all the possible placeholders your graph may need.
+`_get_inputs` should define the metainfo of all the inputs your graph may need.
 `_build_graph` should add tensors/operations to the graph, where
 the argument `inputs` is the list of input tensors matching `_get_inputs`.
 

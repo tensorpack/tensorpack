@@ -58,6 +58,7 @@ def QueueInputTrainer(config, input_queue=None):
         config (TrainConfig): a `TrainConfig` instance. config.dataflow must exist.
         input_queue (tf.QueueBase): an input queue. Defaults to the :class:`QueueInput` default.
     """
+    assert (config.data is not None or config.dataflow is not None) and config.model is not None
     if config.data is not None:
         assert isinstance(config.data, QueueInput), config.data
     else:

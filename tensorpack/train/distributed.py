@@ -52,7 +52,7 @@ class DistributedReplicatedTrainer(MultiGPUTrainerBase):
             config (TrainConfig): the train config.
             server (tf.train.Server): the server object with ps and workers
         """
-
+        assert config.data is not None and config.model is not None
         self.server = server
         server_def = server.server_def
         self.cluster = tf.train.ClusterSpec(server_def.cluster)
@@ -83,7 +83,8 @@ class DistributedReplicatedTrainer(MultiGPUTrainerBase):
     @staticmethod
     def _average_grads(tower_grads, devices):
         """
-        Average grad with round-robin device selection.
+        Average grads from towers.
+        The device where the average happens is chosen with round-robin.
 
         Args:
             tower_grads: Ngpu x Nvar x 2
@@ -111,6 +112,9 @@ class DistributedReplicatedTrainer(MultiGPUTrainerBase):
     def _apply_shadow_vars(avg_grads):
         """
         Replace variables in avg_grads by shadow variables.
+
+        Args:
+            avg_grads: list of (grad, var) tuples
         """
         ps_var_grads = []
         for grad, var in avg_grads:

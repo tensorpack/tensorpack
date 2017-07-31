@@ -30,6 +30,7 @@ def _check_tf_version():
 
 
 def apply_prefetch_policy(config, gpu_prefetch=True):
+    assert (config.data is not None or config.dataflow is not None) and config.model is not None
     if config.data is None and config.dataflow is not None:
         # always use Queue prefetch
         config.data = QueueInput(config.dataflow)
