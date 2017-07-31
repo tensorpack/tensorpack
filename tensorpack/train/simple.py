@@ -36,7 +36,7 @@ class SimpleTrainer(Trainer):
         super(SimpleTrainer, self).__init__(config)
 
     @staticmethod
-    def setup_graph(self, model, input):
+    def setup_graph(model, input):
         """
         Setup graph for simple trainer.
 
