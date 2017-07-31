@@ -6,11 +6,12 @@ from __future__ import print_function
 import multiprocessing as mp
 import itertools
 from six.moves import range, zip, queue
+import errno
 import uuid
 import os
 import zmq
 
-from .base import ProxyDataFlow
+from .base import ProxyDataFlow, DataFlowTerminated
 from .common import RepeatedData
 from ..utils.concurrency import (ensure_proc_terminate,
                                  mask_sigint, start_proc_mask_signal,
@@ -154,8 +155,14 @@ class PrefetchDataZMQ(ProxyDataFlow):
                 dp = loads(self.socket.recv(copy=False).bytes)
                 yield dp
         except zmq.ContextTerminated:
-            logger.info("ContextTerminated in Master Prefetch Process")
-            return
+            logger.info("[Prefetch Master] Context terminated.")
+            raise DataFlowTerminated()
+        except zmq.ZMQError as e:
+            if e.errno == errno.ENOTSOCK:       # socket closed
+                logger.info("[Prefetch Master] Socket closed.")
+                raise DataFlowTerminated()
+            else:
+                raise
         except:
             raise
 

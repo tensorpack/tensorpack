@@ -19,15 +19,15 @@ class TowerContext(object):
         Args:
             tower_name (str): The name scope of the tower.
             is_training (bool): if None, automatically determine from tower_name.
-            index (int): index of this tower.
+            index (int): index of this tower, only used in training.
             vs_name (str): Open a variable scope with this name, if given.
         """
         self._name = tower_name
         self._is_training = bool(is_training)
 
         if not self._is_training:
-            # TODO ugly
-            assert index == 0 and vs_name == '', "vs_name and index are meaningless in prediction!"
+            assert index == 0 and vs_name == '', \
+                "vs_name and index are only used in prediction!"
 
         self._index = int(index)
         self._vs_name = str(vs_name)
@@ -85,29 +85,32 @@ class TowerContext(object):
             "Nesting TowerContext!"
         _CurrentTowerContext = self
         self._ctxs = []
+        curr_vs = tf.get_variable_scope()
+        assert curr_vs.name == '', "Nesting TowerContext with an existing variable scope!"
+        # assert empty name scope as well (>1.2.1?)
         if len(self._name):
-            if self.has_own_variables:
-                if len(self.vs_name):
-                    self._ctxs.append(tf.variable_scope(self.vs_name))
+            if not self.is_training:
+                # if not training, should handle reuse outside
+                # but still good to clear name_scope first
+                self._ctxs.append(tf.name_scope(None))
+                self._ctxs.append(tf.name_scope(self._name))
             else:
-                if self.is_training:
+                if self.has_own_variables:
+                    if len(self.vs_name):
+                        self._ctxs.append(tf.variable_scope(self.vs_name))
+                    else:
+                        self._ctxs.append(tf.name_scope(self._name))
+                else:
                     reuse = self._index > 0
-                    if reuse is True:
-                        # clear old name_scope (due to the existing variable_scope)
-                        # and re-enter the current variable_scope
-                        self._ctxs.append(tf.name_scope(None))
+                    if reuse:
                         self._ctxs.append(tf.variable_scope(
                             tf.get_variable_scope(), reuse=True))
-                else:
-                    # if not training, should handle reuse outside
-                    # but still good to clear name_scope first
-                    self._ctxs.append(tf.name_scope(None))
-                self._ctxs.append(tf.name_scope(self._name))
+                    self._ctxs.append(tf.name_scope(self._name))
         for c in self._ctxs:
             c.__enter__()
 
         # currently only check for predictor towers
-        if not self.is_training and get_tf_version_number() >= 1.2:
+        if get_tf_version_number() >= 1.2:
             ns = tf.get_default_graph().get_name_scope()
             assert ns == self._name, \
                 "Name conflict: name_scope inside tower '{}' becomes '{}'!".format(self._name, ns) \

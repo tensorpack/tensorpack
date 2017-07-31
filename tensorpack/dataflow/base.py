@@ -8,7 +8,11 @@ from abc import abstractmethod, ABCMeta
 import six
 from ..utils import get_rng
 
-__all__ = ['DataFlow', 'ProxyDataFlow', 'RNGDataFlow']
+__all__ = ['DataFlow', 'ProxyDataFlow', 'RNGDataFlow', 'DataFlowTerminated']
+
+
+class DataFlowTerminated(BaseException):
+    pass
 
 
 @six.add_metaclass(ABCMeta)

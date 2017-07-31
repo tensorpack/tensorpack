@@ -13,7 +13,7 @@ from itertools import chain
 from six.moves import range, zip
 
 from .input_source_base import InputSource
-from ..dataflow import DataFlow, RepeatedData
+from ..dataflow import DataFlow, RepeatedData, DataFlowTerminated
 from ..tfutils.summary import add_moving_summary
 from ..tfutils.common import get_op_tensor_name
 from ..tfutils.tower import get_current_tower_context
@@ -186,7 +186,7 @@ class EnqueueThread(ShareSessionThread):
                         feed = dict(zip(self.placehdrs, dp))
                         # print 'qsize:', self.sess.run([self.op, self.size_op], feed_dict=feed)[1]
                         self.op.run(feed_dict=feed)
-            except (tf.errors.CancelledError, tf.errors.OutOfRangeError):
+            except (tf.errors.CancelledError, tf.errors.OutOfRangeError, DataFlowTerminated):
                 pass
             except Exception:
                 logger.exception("Exception in EnqueueThread:")
