@@ -112,7 +112,6 @@ class TowerContext(object):
         for c in self._ctxs:
             c.__enter__()
 
-        # currently only check for predictor towers
         if get_tf_version_number() >= 1.2:
             ns = tf.get_default_graph().get_name_scope()
             assert ns == self._name, \

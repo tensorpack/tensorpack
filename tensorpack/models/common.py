@@ -147,8 +147,8 @@ def layer_register(
         _register(func.__name__, wrapped_func)
         return wrapped_func
 
-    # need some special handling for sphinx to work with the arguments
     if building_rtfd():
+        # preserve argspec
         from decorator import decorator
         wrapper = decorator(wrapper)
 
