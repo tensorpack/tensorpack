@@ -18,7 +18,7 @@ try:
                 print("OpenCV is built with CUDA support. "
                       "This may cause slow initialization or sometimes segfault with TensorFlow.")
             break
-except ImportError, TypeError:
+except (ImportError, TypeError):
     pass
 
 os.environ['TF_ENABLE_WINOGRAD_NONFUSED'] = '1'  # issue#9339
