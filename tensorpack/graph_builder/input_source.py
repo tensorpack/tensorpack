@@ -72,6 +72,7 @@ class FeedInput(InputSource):
         """
         assert isinstance(ds, DataFlow), ds
         self.ds = ds
+        # TODO avoid infinite repeat, to allow accurate size handling
         self._repeat_ds = RepeatedData(self.ds, -1)
 
     def _size(self):

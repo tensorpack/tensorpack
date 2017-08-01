@@ -49,9 +49,8 @@ class InputSource(object):
 
     def reset_state(self):
         """
-        Semantics of this method has not been well defined.
+        Reinitialize this InputSource.
         """
-        # TODO
         self._reset_state()
 
     def _reset_state(self):

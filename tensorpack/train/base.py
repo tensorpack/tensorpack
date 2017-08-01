@@ -33,14 +33,13 @@ class Trainer(object):
 
     Attributes:
         config (TrainConfig): the config used in this trainer.
-        model (ModelDesc)
+        model (ModelDesc):
         sess (tf.Session): the current session in use.
         hooked_sess (tf.MonitoredSession): the session with hooks.
         monitors (Monitors): the monitors. Callbacks can use it for logging.
 
         epoch_num (int): the number of epochs that have finished.
         local_step (int): the number of steps that have finished in the current epoch.
-        global_step (int): the number of steps that have finished or is currently running.
     """
     # step attr only available after before_train?
 
@@ -174,6 +173,9 @@ class Trainer(object):
 
     @property
     def global_step(self):
+        """
+        The number of steps that have finished or is currently running.
+        """
         try:
             return self._starting_step + \
                 self.config.steps_per_epoch * (self.epoch_num - 1) + \

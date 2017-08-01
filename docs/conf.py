@@ -350,7 +350,7 @@ def process_signature(app, what, name, obj, options, signature,
     return signature, return_annotation
 
 def autodoc_skip_member(app, what, name, obj, skip, options):
-    for deprecate in [
+    if name in [
         'DistributedReplicatedTrainer',
         'SingleCostFeedfreeTrainer',
         'SimpleFeedfreeTrainer',
@@ -360,8 +360,7 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
         'remap_get_variable',
         'freeze_get_variable',
         'ParamRestore']:
-        if deprecate in name:
-            return True
+        return True
     if name in ['get_data', 'size', 'reset_state']:
         # skip these methods with empty docstring
         if not obj.__doc__ and inspect.isfunction(obj):
