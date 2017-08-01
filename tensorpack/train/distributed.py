@@ -13,7 +13,7 @@ from ..callbacks import RunOp
 from ..tfutils.sesscreate import NewSessionCreator
 from ..tfutils.common import get_global_step_var, get_op_tensor_name
 
-__all__ = ['DistributedReplicatedTrainer']
+__all__ = ['DistributedReplicatedTrainer', 'DistributedTrainerReplicated']
 
 
 class OverrideToLocalVariable(object):
@@ -34,7 +34,7 @@ class OverrideToLocalVariable(object):
         return getter(name, *args, **kwargs)
 
 
-class DistributedReplicatedTrainer(MultiGPUTrainerBase):
+class DistributedTrainerReplicated(MultiGPUTrainerBase):
     """
     Distributed replicated training.
     Each worker process builds the same model on one or more GPUs.
@@ -323,3 +323,8 @@ class DistributedReplicatedTrainer(MultiGPUTrainerBase):
     @property
     def vs_name_for_predictor(self):
         return "tower0"
+
+
+def DistributedReplicatedTrainer(*args, **kwargs):
+    logger.warn("DistributedReplicatedTrainer was renamed to DistributedTrainerReplicated!")
+    return DistributedTrainerReplicated(*args, **kwargs)

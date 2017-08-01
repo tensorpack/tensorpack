@@ -6,7 +6,7 @@ Tensorpack base trainer implements the logic of __running the iteration__.
 Users or derived trainers should implement __what the iteration is__.
 
 Most neural network training tasks are single-cost optimization.
-Tensorpack provides some trainer implementations for such tasks:
+Tensorpack provides some trainer implementations for such tasks.
 These trainers will build the graph based on the given `ModelDesc`, and minimizes `ModelDesc.cost`.
 
 Existing trainers were implemented with certain prefetch mechanism,

@@ -32,6 +32,7 @@ MOCK_MODULES = ['scipy', 'tabulate',
                 'gym', 'functools32']
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock(name=mod_name)
+sys.modules['cv2'].__version__ = '3.2.1'    # fake version
 
 import tensorpack
 
@@ -349,6 +350,18 @@ def process_signature(app, what, name, obj, options, signature,
     return signature, return_annotation
 
 def autodoc_skip_member(app, what, name, obj, skip, options):
+    for deprecate in [
+        'DistributedReplicatedTrainer',
+        'SingleCostFeedfreeTrainer',
+        'SimpleFeedfreeTrainer',
+        'FeedfreeTrainerBase',
+        'FeedfreeInferenceRunner',
+        'replace_get_variable',
+        'remap_get_variable',
+        'freeze_get_variable',
+        'ParamRestore']:
+        if deprecate in name:
+            return True
     if name in ['get_data', 'size', 'reset_state']:
         # skip these methods with empty docstring
         if not obj.__doc__ and inspect.isfunction(obj):
