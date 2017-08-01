@@ -118,11 +118,13 @@ class TrainConfig(object):
         if steps_per_epoch is None:
             try:
                 if dataflow is not None:
-                    steps_per_epoch = self.dataflow.size()
+                    steps_per_epoch = dataflow.size()
+                elif data is not None:
+                    steps_per_epoch = data.size()
                 else:
-                    steps_per_epoch = self.data.size()
+                    raise NotImplementedError()
             except NotImplementedError:
-                logger.exception("You must set `steps_per_epoch` if dataset.size() is not implemented.")
+                logger.exception("You must set `TrainConfig(steps_per_epoch)` if data.size() is not available.")
         else:
             steps_per_epoch = int(steps_per_epoch)
         self.steps_per_epoch = steps_per_epoch
@@ -131,6 +133,7 @@ class TrainConfig(object):
         self.max_epoch = int(max_epoch)
         assert self.steps_per_epoch > 0 and self.max_epoch > 0
 
+        nr_tower = max(nr_tower, 1)
         self.nr_tower = nr_tower
         if tower is not None:
             assert self.nr_tower == 1, "Cannot set both nr_tower and tower in TrainConfig!"

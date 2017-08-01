@@ -40,7 +40,8 @@ class SVHNDigit(RNGDataFlow):
         filename = os.path.join(data_dir, name + '_32x32.mat')
         if not os.path.isfile(filename):
             url = SVHN_URL + os.path.basename(filename)
-            logger.info("File {} not found! Downloading from {}.".format(filename, url))
+            logger.info("File {} not found!".format(filename))
+            logger.info("Downloading from {}.".format(url))
             download(url, os.path.dirname(filename))
         logger.info("Loading {} ...".format(filename))
         data = scipy.io.loadmat(filename)
