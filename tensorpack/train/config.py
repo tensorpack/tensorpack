@@ -7,7 +7,7 @@ from ..callbacks import (
     ProgressBar, MergeAllSummaries,
     TFEventWriter, JSONWriter, ScalarPrinter, RunUpdateOps)
 from ..dataflow.base import DataFlow
-from ..graph_builder.model_desc import ModelDesc
+from ..graph_builder.model_desc import ModelDescBase
 from ..utils import logger
 from ..utils.develop import log_deprecated
 from ..tfutils import (JustCurrentSession,
@@ -39,7 +39,7 @@ class TrainConfig(object):
         Args:
             dataflow (DataFlow):
             data (InputSource):
-            model (ModelDesc):
+            model (ModelDescBase):
 
             callbacks (list): a list of :class:`Callback` to perform during training.
             extra_callbacks (list): the same as ``callbacks``. This argument
@@ -82,7 +82,7 @@ class TrainConfig(object):
             assert_type(self.data, InputSource)
             self.dataflow = None
         if model is not None:
-            assert_type(model, ModelDesc)
+            assert_type(model, ModelDescBase)
         self.model = model
 
         if callbacks is None:

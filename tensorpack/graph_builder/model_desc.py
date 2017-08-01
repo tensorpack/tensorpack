@@ -14,8 +14,7 @@ from ..tfutils.gradproc import FilterNoneGrad
 from .input_source_base import InputSource
 from ..models.regularize import regularize_cost_from_collection
 
-__all__ = ['InputDesc', 'ModelDesc']
-# don't expose ModelDescBase for use right now. API wasn't final.
+__all__ = ['InputDesc', 'ModelDesc', 'ModelDescBase']
 
 
 class InputDesc(

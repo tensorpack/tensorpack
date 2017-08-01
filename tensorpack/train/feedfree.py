@@ -15,6 +15,7 @@ __all__ = ['FeedfreeTrainerBase', 'SingleCostFeedfreeTrainer',
            'SimpleFeedfreeTrainer', 'QueueInputTrainer']
 
 
+# TODO deprecate it some time
 class FeedfreeTrainerBase(Trainer):
     """ A base trainer which runs iteration without feed_dict (therefore faster)
         Expect ``config.data`` to be a :class:`FeedfreeInput`.

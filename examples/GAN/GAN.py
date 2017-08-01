@@ -6,14 +6,15 @@
 import tensorflow as tf
 import numpy as np
 import time
-from tensorpack import (FeedfreeTrainerBase, QueueInput,
-                        ModelDesc, DataFlow, StagingInputWrapper,
+from tensorpack import (Trainer, QueueInput,
+                        ModelDescBase, DataFlow, StagingInputWrapper,
                         MultiGPUTrainerBase, LeastLoadedDeviceSetter,
                         TowerContext)
 from tensorpack.tfutils.summary import add_moving_summary
+from tensorpack.utils.argtools import memoized
 
 
-class GANModelDesc(ModelDesc):
+class GANModelDesc(ModelDescBase):
     def collect_variables(self, g_scope='gen', d_scope='discrim'):
         """
         Assign self.g_vars to the parameters under scope `g_scope`,
@@ -58,14 +59,18 @@ class GANModelDesc(ModelDesc):
 
             add_moving_summary(self.g_loss, self.d_loss, d_accuracy, g_accuracy)
 
+    @memoized
+    def get_optimizer(self):
+        return self._get_optimizer()
 
-class GANTrainer(FeedfreeTrainerBase):
+
+class GANTrainer(Trainer):
     def __init__(self, config):
         self._input_source = QueueInput(config.dataflow)
         super(GANTrainer, self).__init__(config)
 
     def _setup(self):
-        super(GANTrainer, self)._setup()
+        self._setup_input_source(self._input_source)
         with TowerContext('', is_training=True):
             self.model.build_graph(self._input_source)
         opt = self.model.get_optimizer()
@@ -77,7 +82,7 @@ class GANTrainer(FeedfreeTrainerBase):
         self.train_op = d_min
 
 
-class SeparateGANTrainer(FeedfreeTrainerBase):
+class SeparateGANTrainer(Trainer):
     """ A GAN trainer which runs two optimization ops with a certain ratio, one in each step. """
     def __init__(self, config, d_period=1, g_period=1):
         """
@@ -92,7 +97,7 @@ class SeparateGANTrainer(FeedfreeTrainerBase):
         super(SeparateGANTrainer, self).__init__(config)
 
     def _setup(self):
-        super(SeparateGANTrainer, self)._setup()
+        self._setup_input_source(self._input_source)
         with TowerContext('', is_training=True):
             self.model.build_graph(self._input_source)
 
@@ -111,19 +116,19 @@ class SeparateGANTrainer(FeedfreeTrainerBase):
         self._cnt += 1
 
 
-class MultiGPUGANTrainer(MultiGPUTrainerBase, FeedfreeTrainerBase):
+class MultiGPUGANTrainer(Trainer):
     """
     A replacement of GANTrainer (optimize d and g one by one) with multi-gpu support.
     """
     def __init__(self, config):
-        super(MultiGPUGANTrainer, self).__init__(config)
         self._nr_gpu = config.nr_tower
         assert self._nr_gpu > 1
-        self._raw_devices = ['/gpu:{}'.format(k) for k in self.config.tower]
+        self._raw_devices = ['/gpu:{}'.format(k) for k in config.tower]
         self._input_source = StagingInputWrapper(QueueInput(config.dataflow), self._raw_devices)
+        super(MultiGPUGANTrainer, self).__init__(config)
 
     def _setup(self):
-        super(MultiGPUGANTrainer, self)._setup()
+        self._setup_input_source(self._input_source)
         devices = [LeastLoadedDeviceSetter(d, self._raw_devices) for d in self._raw_devices]
 
         def get_cost():

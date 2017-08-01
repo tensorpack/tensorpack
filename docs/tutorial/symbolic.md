@@ -1,33 +1,14 @@
 
-# Model
+# Symbolic Layers
 
-To define a model (i.e. the computation graph) that will be used for training,
-you'll need to subclass `ModelDesc` and implement several methods:
-
-```python
-class MyModel(ModelDesc):
-	def _get_inputs(self):
-		return [InputDesc(...), InputDesc(...)]
-
-	def _build_graph(self, inputs):
-    tensorA, tensorB = inputs
-		# build the graph
-
-	def _get_optimizer(self):
-	  return tf.train.GradientDescentOptimizer(0.1)
-```
-
-`_get_inputs` should define the metainfo of all the inputs your graph may need.
-`_build_graph` should add tensors/operations to the graph, where
-the argument `inputs` is the list of input tensors matching `_get_inputs`.
-
-You can use any symbolic functions in `_build_graph`, including TensorFlow core library
-functions and other symbolic libraries.
-
+While you can use other symbolic libraries,
 tensorpack also contains a small collection of common model primitives,
 such as conv/deconv, fc, batch normalization, pooling layers, and some custom loss functions.
 Using the tensorpack implementations, you can also benefit from `argscope` and `LinearWrap` to
 simplify the code.
+
+Note that the layers are written because there are no other alternatives back at that time.
+In the future we may shift to `tf.layers` because they will be better maintained.
 
 ### argscope and LinearWrap
 `argscope` gives you a context with default arguments.
@@ -63,9 +44,7 @@ l = FullyConnected('fc1', l, 10, nl=tf.identity)
 
 ### Use Models outside Tensorpack
 
-You can use tensorpack models alone as a simple symbolic function library, and write your own
-training code instead of using tensorpack trainers.
-
+You can use tensorpack models alone as a simple symbolic function library.
 To do this, just enter a [TowerContext](http://tensorpack.readthedocs.io/en/latest/modules/tfutils.html#tensorpack.tfutils.TowerContext)
 when you define your model:
 ```python
@@ -85,8 +64,10 @@ with tf.variable_scope(tf.get_variable_scope(), reuse=True), TowerContext('predi
 When defining the model you can construct the graph using whatever library you feel comfortable with.
 
 Usually, slim/tflearn/tensorlayer are just symbolic functions, calling them is nothing different
-from calling `tf.add`. However it is a bit different to use sonnet/Keras.
+from calling `tf.add`. You may need to be careful how regularizations/BN updates are supposed
+to be handled in those libraries, though.
 
+It is a bit different to use sonnet/Keras.
 sonnet/Keras manages the variable scope by their own model classes, and calling their symbolic functions
-always creates new variable scope. See the [Keras example](../examples/mnist-keras.py) for how to
-use them within tensorpack.
+always creates new variable scope. See the [Keras example](../examples/mnist-keras.py) for how to use it within tensorpack.
+The support is only preliminary for now.
