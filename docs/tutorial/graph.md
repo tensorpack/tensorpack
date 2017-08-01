@@ -3,7 +3,7 @@
 
 ### ModelDesc
 
-`ModelDesc` is an abstraction over the most common type of models people train:
+`ModelDesc` is an abstraction over the most common type of models people train.
 It assumes:
 
 1. Training is a single-cost optimized by a single `tf.train.Optimizer`.
@@ -18,8 +18,9 @@ class MyModel(ModelDesc):
 		return [InputDesc(...), InputDesc(...)]
 
 	def _build_graph(self, inputs):
-    tensorA, tensorB = inputs
+		tensorA, tensorB = inputs
 		# build the graph
+		self.cost = xxx	 # define the cost tensor
 
 	def _get_optimizer(self):
 	  return tf.train.GradientDescentOptimizer(0.1)

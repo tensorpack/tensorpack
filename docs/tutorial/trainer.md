@@ -2,21 +2,18 @@
 # Trainer
 
 Training is **running something again and again**.
-Tensorpack base trainer implements the logic of __running the iteration__,
-and derived trainers implement __what the iteration is__.
+Tensorpack base trainer implements the logic of __running the iteration__.
+Users or derived trainers should implement __what the iteration is__.
 
 Most neural network training tasks are single-cost optimization.
-Tensorpack provides some trainer implementations for such tasks.
-These trainers will by default minimizes `ModelDesc.cost`.
-Therefore, you can use these trainers as long as you set `self.cost` in `ModelDesc._build_graph()`,
-as most examples did.
+Tensorpack provides some trainer implementations for such tasks:
+These trainers will build the graph based on the given `ModelDesc`, and minimizes `ModelDesc.cost`.
 
 Existing trainers were implemented with certain prefetch mechanism,
 which will run significantly faster than a naive `sess.run(..., feed_dict={...})`.
 
 There are also Multi-GPU trainers which include the logic of data-parallel Multi-GPU training.
-You can enable them by just changing one line, and all the necessary logic to achieve the best
-performance was baked into the trainers already.
+You can enable them by just one line, and all the necessary logic to achieve the best performance was baked into the trainers already.
 For example, SyncMultiGPUTrainer can train ResNet50 as fast as the [official tensorflow benchmark](https://github.com/tensorflow/benchmarks).
 
 To use trainers, pass a `TrainConfig` to configure them:

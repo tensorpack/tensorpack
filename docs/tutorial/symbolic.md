@@ -7,7 +7,7 @@ such as conv/deconv, fc, batch normalization, pooling layers, and some custom lo
 Using the tensorpack implementations, you can also benefit from `argscope` and `LinearWrap` to
 simplify the code.
 
-Note that the layers are written because there are no other alternatives back at that time.
+Note that the layers were written because there are no other alternatives back at that time.
 In the future we may shift to `tf.layers` because they will be better maintained.
 
 ### argscope and LinearWrap
