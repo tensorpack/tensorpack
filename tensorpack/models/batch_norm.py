@@ -87,8 +87,7 @@ def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5,
     Variable Names:
 
     * ``beta``: the bias term. Will be zero-inited by default.
-    * ``gamma``: the scale term. Will be one-inited by default.
-        Input will be transformed by ``x * gamma + beta``.
+    * ``gamma``: the scale term. Will be one-inited by default. Input will be transformed by ``x * gamma + beta``.
     * ``mean/EMA``: the moving average of mean.
     * ``variance/EMA``: the moving average of variance.
 

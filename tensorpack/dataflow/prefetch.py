@@ -108,7 +108,7 @@ class PrefetchDataZMQ(ProxyDataFlow):
     communication.
 
     A local directory is needed to put the ZMQ pipes.
-    You can set this with env var $TENSORPACK_PIPEDIR if you're running on non-local FS such as NFS or GlusterFS.
+    You can set this with env var ``$TENSORPACK_PIPEDIR`` if you're running on non-local FS such as NFS or GlusterFS.
 
     Note that this dataflow is not fork-safe. You cannot nest this dataflow
     into another PrefetchDataZMQ or PrefetchData.

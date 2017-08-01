@@ -14,6 +14,7 @@
 
 import sys, os, re
 import mock
+import inspect
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -339,15 +340,29 @@ def process_signature(app, what, name, obj, options, signature,
         # replace Mock function names
         signature = re.sub('<Mock name=\'([^\']+)\'.*>', '\g<1>', signature)
         signature = re.sub('tensorflow', 'tf', signature)
+
+        # add scope name to layer signatures:
         if hasattr(obj, 'use_scope') and hasattr(obj, 'symbolic_function'):
             if obj.use_scope:
                 signature = signature[0] + 'name, ' + signature[1:]
     # signature: arg list
     return signature, return_annotation
 
+def autodoc_skip_member(app, what, name, obj, skip, options):
+    if name in ['get_data', 'size', 'reset_state']:
+        # skip these methods with empty docstring
+        if not obj.__doc__ and inspect.isfunction(obj):
+            # https://stackoverflow.com/questions/3589311/get-defining-class-of-unbound-method-object-in-python-3
+            cls = getattr(inspect.getmodule(obj),
+                          obj.__qualname__.split('.<locals>', 1)[0].rsplit('.', 1)[0])
+            if issubclass(cls, tensorpack.DataFlow):
+                return True
+    return None
+
 def setup(app):
     from recommonmark.transform import AutoStructify
     app.connect('autodoc-process-signature', process_signature)
+    app.connect('autodoc-skip-member', autodoc_skip_member)
     app.add_config_value(
         'recommonmark_config',
         {'url_resolver': lambda url: \
