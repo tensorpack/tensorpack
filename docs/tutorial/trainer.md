@@ -38,7 +38,7 @@ Existing multi-GPU trainers include the logic of data-parallel training.
 You can enable them by just one line, and all the necessary logic to achieve the best performance was baked into the trainers already.
 The trainers can reach the same performance as the [official tensorflow benchmark](https://github.com/tensorflow/benchmarks).
 
-Please note that, in data-parallel training, all towers (all replicates of the model) will take 
+Please note that in data-parallel training, in each iteration all towers (all replicates of the model) will take 
 tensors from the InputSource (instead of taking one for all and split). So the total batch size
 would be multiplied by the number of GPUs.
 
