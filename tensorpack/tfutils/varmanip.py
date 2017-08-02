@@ -183,9 +183,11 @@ def load_chkpt_vars(model_path):
         result[n] = reader.get_tensor(n)
     return result
 
+
 def dump_chkpt_vars(model_path):
     logger.warn("dump_chkpt_vars was renamed to load_chkpt_vars!")
     return load_chkpt_vars(model_path)
+
 
 def is_training_name(name):
     """

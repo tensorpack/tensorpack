@@ -3,13 +3,12 @@
 # File: dump-model-params.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
-import numpy as np
 import argparse
 import tensorflow as tf
 import imp
 
 from tensorpack import TowerContext, logger
-from tensorpack.tfutils import sessinit, varmanip, get_model_loader
+from tensorpack.tfutils import varmanip, get_model_loader
 from tensorpack.graph_builder.input_source import PlaceholderInput
 
 parser = argparse.ArgumentParser()
