@@ -15,14 +15,15 @@ Reproduce the following reinforcement learning methods:
 + A3C in [Asynchronous Methods for Deep Reinforcement Learning](http://arxiv.org/abs/1602.01783). (I
 used a modified version where each batch contains transitions from different simulators, which I called "Batch-A3C".)
 
+## Performance & Speed
 Claimed performance in the paper can be reproduced, on several games I've tested with.
 
 ![DQN](curve-breakout.png)
 
 On one TitanX, Double-DQN took 1 day of training to reach a score of 400 on breakout game.
-Batch-A3C implementation only took <2 hours. (Both are trained with a larger network noted in the code).
+Batch-A3C implementation only took <2 hours.
 
-Double-DQN runs at 60 batches (3840 trained frames, 240 seen frames, 960 game frames) per second on TitanX.
+Double-DQN runs at 60 batches (3840 trained frames, 240 seen frames, 960 game frames) per second on (Maxwell) TitanX.
 
 ## How to use
 

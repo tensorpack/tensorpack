@@ -98,7 +98,7 @@ def get_config():
                 ClassificationError('wrong-top1', 'val-error-top1'),
                 ClassificationError('wrong-top5', 'val-error-top5')]),
             ScheduledHyperParamSetter('learning_rate',
-                                      [(30, 1e-2), (60, 1e-3), (85, 1e-4), (95, 1e-5)]),
+                                      [(30, 1e-2), (60, 1e-3), (85, 1e-4), (95, 1e-5), (105, 1e-6)]),
         ],
         steps_per_epoch=5000,
         max_epoch=110,
@@ -112,7 +112,7 @@ if __name__ == '__main__':
     parser.add_argument('--data', help='ILSVRC dataset dir')
     parser.add_argument('--load', help='load model')
     parser.add_argument('-d', '--depth', help='resnet depth',
-                        type=int, default=18, choices=[18, 34, 50, 101])
+                        type=int, default=50, choices=[50, 101])
     parser.add_argument('--eval', action='store_true')
     args = parser.parse_args()
 
@@ -121,7 +121,7 @@ if __name__ == '__main__':
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
     if args.eval:
-        BATCH_SIZE = 64  # something that can run on one gpu
+        BATCH_SIZE = 128  # something that can run on one gpu
         ds = get_data('val')
         eval_on_ILSVRC12(Model(), args.load, ds)
         sys.exit()
