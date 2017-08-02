@@ -8,14 +8,15 @@ Models can be [downloaded here](https://goo.gl/6XjK9V).
 
 | Model              | Top 5 Error | Top 1 Error |
 |:-------------------|-------------|------------:|
-| ResNet 18          |      10.67% |      29.50% |
-| ResNet 34          |      8.66%  |      26.45% |
-| ResNet 50          |      7.13%  |      24.12% |
-| ResNet 101         |      6.54%  |      22.89% |
+| ResNet18           |     10.55%  |      29.73% |
+| ResNet34           |     8.51%   |      26.50% |
+| ResNet50           |     7.24%   |      23.91% |
+| ResNet50-SE        |     6.42%   |      22.94% |
+| ResNet101          |     6.26%   |      22.53% |
 
 To train, just run:
 ```bash
-./imagenet-resnet.py --data /path/to/original/ILSVRC --gpu 0,1,2,3 -d 18
+./imagenet-resnet.py --data /path/to/original/ILSVRC --gpu 0,1,2,3 -d 50
 ```
 You should be able to see good GPU utilization (around 95%), if your data is fast enough.
 See the [tutorial](http://tensorpack.readthedocs.io/en/latest/tutorial/efficient-dataflow.html) on how to speed up your data.

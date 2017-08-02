@@ -45,9 +45,7 @@ class Model(ModelDesc):
 
     def _build_graph(self, inputs):
         image, label = inputs
-        # It should actually use bgr=True here, but for compatibility with
-        # pretrained models, we keep the wrong version.
-        image = image_preprocess(image, bgr=False)
+        image = image_preprocess(image, bgr=True)
 
         if self.data_format == 'NCHW':
             image = tf.transpose(image, [0, 3, 1, 2])

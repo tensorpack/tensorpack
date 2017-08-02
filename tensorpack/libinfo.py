@@ -25,4 +25,7 @@ os.environ['TF_ENABLE_WINOGRAD_NONFUSED'] = '1'  # issue#9339
 os.environ['TF_AUTOTUNE_THRESHOLD'] = '3'   # use more warm-up
 os.environ['TF_AVGPOOL_USE_CUDNN'] = '1'   # issue#8566
 
+import tensorflow as tf  # noqa
+assert int(tf.__version__.split('.')[0]) >= 1, "TF>=1.0 is required!"
+
 __version__ = '0.3.0'
