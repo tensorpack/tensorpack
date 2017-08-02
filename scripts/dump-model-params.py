@@ -9,7 +9,7 @@ import tensorflow as tf
 import imp
 
 from tensorpack import TowerContext, logger
-from tensorpack.tfutils import sessinit, varmanip
+from tensorpack.tfutils import sessinit, varmanip, get_model_loader
 from tensorpack.graph_builder.input_source import PlaceholderInput
 
 parser = argparse.ArgumentParser()
@@ -34,17 +34,14 @@ with tf.Graph().as_default() as G:
         tf.train.import_meta_graph(args.meta)
 
     # loading...
-    if args.model.endswith('.npy'):
-        init = sessinit.DictRestore(np.load(args.model).item())
-    else:
-        init = sessinit.SaverRestore(args.model)
+    init = get_model_loader(args.model)
     sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
     sess.run(tf.global_variables_initializer())
     init.init(sess)
 
     # dump ...
     with sess.as_default():
-        if args.output.endswith('npy'):
+        if args.output.endswith('npy') or args.output.endswith('npz'):
             varmanip.dump_session_params(args.output)
         else:
             var = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)

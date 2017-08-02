@@ -12,6 +12,7 @@ from ..utils import logger
 from .common import get_op_tensor_name
 
 __all__ = ['SessionUpdate', 'dump_session_params', 'dump_chkpt_vars',
+           'load_chkpt_vars',
            # 'get_savename_from_varname', 'is_training_name',
            'get_checkpoint_path']
 
@@ -112,10 +113,10 @@ class SessionUpdate(object):
 def dump_session_params(path):
     """
     Dump value of all TRAINABLE + MODEL variables to a dict, and save as
-    npy format (loadable by :class:`DictRestore`).
+    npy/npz format (loadable by :class:`DictRestore`).
 
     Args:
-        path(str): the path to save the parameters.
+        path(str): the file name to save the parameters. Must ends with npy or npz.
     """
     var = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
     var.extend(tf.get_collection(tf.GraphKeys.MODEL_VARIABLES))
@@ -127,7 +128,12 @@ def dump_session_params(path):
     logger.info("Variables to save to {}:".format(path))
     keys = sorted(list(result.keys()))
     logger.info(pprint.pformat(keys))
-    np.save(path, result)
+    if path.endswith('.npy'):
+        np.save(path, result)
+    elif path.endswith('.npz'):
+        np.savez_compressed(path, **result)
+    else:
+        raise ValueError("Don't know which format to use for {}".format(path))
 
 
 def get_checkpoint_path(model_path):
@@ -160,7 +166,7 @@ def get_checkpoint_path(model_path):
     return model_path
 
 
-def dump_chkpt_vars(model_path):
+def load_chkpt_vars(model_path):
     """ Dump all variables from a checkpoint to a dict.
 
     Args:
@@ -177,6 +183,9 @@ def dump_chkpt_vars(model_path):
         result[n] = reader.get_tensor(n)
     return result
 
+def dump_chkpt_vars(model_path):
+    logger.warn("dump_chkpt_vars was renamed to load_chkpt_vars!")
+    return load_chkpt_vars(model_path)
 
 def is_training_name(name):
     """

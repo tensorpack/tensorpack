@@ -19,6 +19,8 @@ if __name__ == '__main__':
 
     if args.model.endswith('.npy'):
         params = np.load(args.model).item()
+    elif args.model.endswith('.npz'):
+        params = dict(np.load(args.model))
     else:
         params = dump_chkpt_vars(args.model)
     logger.info("Variables in the model:")

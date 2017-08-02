@@ -360,6 +360,7 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
         'remap_get_variable',
         'freeze_get_variable',
         'Triggerable',
+        'dump_chkpt_vars',
         'ParamRestore']:
         return True
     if name in ['get_data', 'size', 'reset_state']:

@@ -26,7 +26,7 @@ To inspect a checkpoint, the easiest tool is `tf.train.NewCheckpointReader`. Ple
 expects a model path without the extension.
 
 You can dump a cleaner version of the model (without unnecessary variables), using
-`scripts/dump-model-params.py`, as a simple `var-name: value` dict saved in npy format.
+`scripts/dump-model-params.py`, as a simple `var-name: value` dict saved in npy/npz format.
 The script expects a metagraph file which is also saved by `ModelSaver`.
 
 
@@ -48,10 +48,10 @@ Unmatched variables on both sides will be printed as a warning.
 
 1. You can simply use `tf.stop_gradient` in your model code in some situations (e.g. to freeze first several layers).
 
-2. [varreplace.freeze_variables](http://tensorpack.readthedocs.io/en/latest/modules/tfutils.html#tensorpack.tfutils.varreplace.freeze_variables) can wrap some variables with `tf.stop_gradient`. 
+2. [varreplace.freeze_variables](http://tensorpack.readthedocs.io/en/latest/modules/tfutils.html#tensorpack.tfutils.varreplace.freeze_variables) can wrap some variables with `tf.stop_gradient`.
 
 3. [ScaleGradient](http://tensorpack.readthedocs.io/en/latest/modules/tfutils.html#tensorpack.tfutils.gradproc.ScaleGradient) can be used to set the gradients of some variables to 0.
 
 Note that the above methods only prevent variables being updated by SGD.
-Some variables may be updated by other means, 
+Some variables may be updated by other means,
 e.g., BatchNorm statistics are updated through the `UPDATE_OPS` collection and the [RunUpdateOps](http://tensorpack.readthedocs.io/en/latest/modules/callbacks.html#tensorpack.callbacks.RunUpdateOps) callback.

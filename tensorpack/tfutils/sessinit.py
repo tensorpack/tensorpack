@@ -256,12 +256,16 @@ def get_model_loader(filename):
     Get a corresponding model loader by looking at the file name.
 
     Returns:
-        SessInit: either a :class:`DictRestore` (if name ends with 'npy') or
+        SessInit: either a :class:`DictRestore` (if name ends with 'npy/npz') or
         :class:`SaverRestore` (otherwise).
     """
     if filename.endswith('.npy'):
         assert os.path.isfile(filename), filename
         return DictRestore(np.load(filename, encoding='latin1').item())
+    elif filename.endswith('.npz'):
+        assert os.path.isfile(filename), filename
+        obj = np.load(filename)
+        return DictRestore(dict(obj))
     else:
         return SaverRestore(filename)
 
