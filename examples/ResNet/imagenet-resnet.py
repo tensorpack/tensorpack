@@ -87,12 +87,13 @@ def get_config(fake=False, data_format='NCHW'):
     nr_tower = max(get_nr_gpu(), 1)
     global BATCH_SIZE
     BATCH_SIZE = TOTAL_BATCH_SIZE // nr_tower
-    logger.info("Running on {} towers. Batch size per tower: {}".format(nr_tower, BATCH_SIZE))
 
     if fake:
+        logger.info("For benchmark, batch size is fixed to 64 per tower.")
         dataset_train = dataset_val = FakeData(
             [[64, 224, 224, 3], [64]], 1000, random=False, dtype='uint8')
     else:
+        logger.info("Running on {} towers. Batch size per tower: {}".format(nr_tower, BATCH_SIZE))
         dataset_train = get_data('train')
         dataset_val = get_data('val')
 

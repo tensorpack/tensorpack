@@ -45,6 +45,7 @@ class ModelSaver(Callback):
         self.var_collections = var_collections
         if checkpoint_dir is None:
             checkpoint_dir = logger.LOG_DIR
+        assert checkpoint_dir is not None
         assert tf.gfile.IsDirectory(checkpoint_dir), checkpoint_dir
         self.checkpoint_dir = checkpoint_dir
 
@@ -150,7 +151,6 @@ class MinSaver(Callback):
         files_to_copy = glob.glob(path + '*')
         for file_to_copy in files_to_copy:
             shutil.copy(file_to_copy, file_to_copy.replace(path, newname))
-        #shutil.copy(path, newname)
         logger.info("Model with {} '{}' saved.".format(
             'maximum' if self.reverse else 'minimum', self.monitor_stat))
 
