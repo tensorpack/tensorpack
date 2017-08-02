@@ -1,5 +1,5 @@
 
-## Write a callback
+## Write a Callback
 
 The places where each callback method gets called is demonstrated in this snippet:
 
@@ -20,7 +20,7 @@ def main_loop():
   callbacks.after_train()
 ```
 
-### Explain the callback methods
+### Explain the Callback Methods
 
 You can override any of the following methods to define a new callback:
 

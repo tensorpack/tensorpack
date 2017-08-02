@@ -18,10 +18,11 @@ from ..callbacks.graph import RunOp
 from ..graph_builder.input_source import QueueInput, StagingInputWrapper, DummyConstantInput
 from .feedfree import FeedfreeTrainerBase
 
-__all__ = ['MultiGPUTrainerBase', 'SyncMultiGPUTrainer',
-           'AsyncMultiGPUTrainer', 'LeastLoadedDeviceSetter',
+__all__ = ['MultiGPUTrainerBase', 'LeastLoadedDeviceSetter',
            'SyncMultiGPUTrainerReplicated',
-           'SyncMultiGPUTrainerParameterServer']
+           'SyncMultiGPUTrainerParameterServer',
+           'AsyncMultiGPUTrainer',
+           'SyncMultiGPUTrainer']
 
 
 def _check_tf_version():

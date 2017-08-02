@@ -37,8 +37,6 @@ class Trainer(object):
         sess (tf.Session): the current session in use.
         hooked_sess (tf.MonitoredSession): the session with hooks.
         monitors (Monitors): the monitors. Callbacks can use it for logging.
-
-        epoch_num (int): the number of epochs that have finished.
         local_step (int): the number of steps that have finished in the current epoch.
     """
     # step attr only available after before_train?
@@ -64,6 +62,9 @@ class Trainer(object):
 
     @property
     def epoch_num(self):
+        """
+        The number of epochs that have finished.
+        """
         if self._epoch_num is not None:
             # has started training
             return self._epoch_num

@@ -13,7 +13,10 @@ __all__ = ['Callback', 'ProxyCallback', 'CallbackFactory', 'Triggerable']
 
 @six.add_metaclass(ABCMeta)
 class Callback(object):
-    """ Base class for all callbacks.
+    """ Base class for all callbacks. See
+    `Write a Callback
+    <http://tensorpack.readthedocs.io/en/latest/tutorial/extend/callback.html>`_
+    for more detailed explanation of the callback methods.
 
     Attributes:
         epoch_num(int): the number of the current epoch.
@@ -261,7 +264,8 @@ class CallbackFactory(Callback):
         """
         Each lambda takes ``self`` as the only argument.
 
-        trigger_epoch was deprecated.
+        Note:
+            trigger_epoch was deprecated.
         """
 
         self._cb_setup_graph = setup_graph

@@ -359,6 +359,7 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
         'replace_get_variable',
         'remap_get_variable',
         'freeze_get_variable',
+        'Triggerable',
         'ParamRestore']:
         return True
     if name in ['get_data', 'size', 'reset_state']:
