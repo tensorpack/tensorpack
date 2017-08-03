@@ -27,7 +27,7 @@ To start training:
 ```bash
 ./hed.py --load vgg16.npy
 ```
-It takes about 100k steps (~10 hour on a TitanX) to reach a reasonable performance.
+It takes about 100k steps (~10 hours on a TitanX) to reach a reasonable performance.
 
 To inference (produce a heatmap at each level at out*.png):
 ```bash
@@ -41,3 +41,4 @@ cat train_log/hed/stat.json | jq '.[] |
 "\(.xentropy1)\t\(.xentropy2)\t\(.xentropy3)\t\(.xentropy4)\t\(.xentropy5)\t\(.xentropy6)"' -r | \
 				tpk-plot-point --legend 1,2,3,4,5,final --decay 0.8
 ```
+Or just open tensorboard.

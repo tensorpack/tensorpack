@@ -51,7 +51,6 @@ PREDICT_BATCH_SIZE = 15     # batch for efficient forward
 SIMULATOR_PROC = 50
 PREDICTOR_THREAD_PER_GPU = 3
 PREDICTOR_THREAD = None
-EVALUATE_PROC = min(multiprocessing.cpu_count() // 2, 20)
 
 NUM_ACTIONS = None
 ENV_NAME = None

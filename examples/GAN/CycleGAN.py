@@ -20,7 +20,10 @@ from GAN import GANTrainer, GANModelDesc
 """
 1. Download the dataset following the original project: https://github.com/junyanz/CycleGAN#train
 2. ./CycleGAN.py --data /path/to/datasets/horse2zebra
-Training and testing visuliazations will be in tensorboard.
+Training and testing visualizations will be in tensorboard.
+
+This implementation doesn't use fake sample buffer.
+It's not hard to add but I didn't observe any difference with it.
 """
 
 SHAPE = 256

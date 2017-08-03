@@ -37,7 +37,7 @@ Reproduce DCGAN following the setup in [dcgan.torch](https://github.com/soumith/
 
 ## Image2Image.py
 
-Image-to-Image following the setup in [pix2pix](https://github.com/phillipi/pix2pix).
+Image-to-Image translation following the setup in [pix2pix](https://github.com/phillipi/pix2pix).
 
 For example, with the cityscapes dataset, it learns to generate semantic segmentation map of urban scene:
 
@@ -71,5 +71,6 @@ Some BEGAN samples:
 ## CycleGAN.py, DiscoGAN-CelebA.py
 
 Reproduce CycleGAN with the original datasets, and DiscoGAN on CelebA. They are pretty much the same idea with different architecture.
+CycleGAN horse-to-zebra in tensorboard:
 
 ![cyclegan-sample](demo/CycleGAN-horse2zebra.jpg)
