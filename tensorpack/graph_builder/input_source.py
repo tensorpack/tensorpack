@@ -361,17 +361,14 @@ class DummyConstantInput(TensorInput):
             tlist = []
             ctx = get_current_tower_context()
             assert ctx is not None
-            assert len(self.shapes) == len(self.inputs_desc)
-            for idx, p in enumerate(self.inputs_desc):
+            assert len(self.shapes) == len(self._desc)
+            for idx, p in enumerate(self._desc):
                 tlist.append(tf.constant(
                     0, dtype=p.type,
                     name='dummy-{}-{}'.format(p.name, ctx.index),
                     shape=self.shapes[idx]))
             return tlist
         super(DummyConstantInput, self).__init__(fn)
-
-    def _setup(self, inputs):
-        self.inputs_desc = inputs
 
 
 class ZMQInput(TensorInput):
