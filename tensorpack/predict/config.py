@@ -5,7 +5,7 @@
 import tensorflow as tf
 import six
 
-from ..graph_builder import ModelDesc
+from ..graph_builder import ModelDescBase
 from ..tfutils import get_default_sess_config
 from ..tfutils.sessinit import SessionInit, JustCurrentSession
 from ..tfutils.sesscreate import NewSessionCreator
@@ -24,7 +24,7 @@ class PredictConfig(object):
                  ):
         """
         Args:
-            model (ModelDesc): the model to use.
+            model (ModelDescBase): the model to use.
             session_creator (tf.train.SessionCreator): how to create the
                 session. Defaults to :class:`sesscreate.NewSessionCreator()`.
             session_init (SessionInit): how to initialize variables of the session.
@@ -40,7 +40,7 @@ class PredictConfig(object):
         def assert_type(v, tp):
             assert isinstance(v, tp), v.__class__
         self.model = model
-        assert_type(self.model, ModelDesc)
+        assert_type(self.model, ModelDescBase)
 
         if session_init is None:
             session_init = JustCurrentSession()

@@ -191,11 +191,8 @@ def dump_chkpt_vars(model_path):
 
 def is_training_name(name):
     """
-    Guess if a name belongs to a training-only variables.
+    **Guess** if this variable is only used in training.
     Only used internally to avoid too many logging. Do not use it.
-
-    Returns:
-        bool: Guess whether this tensor is something only used in training.
     """
     # TODO: maybe simply check against TRAINABLE_VARIABLES and MODEL_VARIABLES?
     # TODO or use get_slot_names()
@@ -210,6 +207,6 @@ def is_training_name(name):
         return True
     if name.endswith('/Adagrad'):
         return True
-    if name.startswith('/EMA'):
+    if name.startswith('EMA/'):  # all the moving average summaries
         return True
     return False
