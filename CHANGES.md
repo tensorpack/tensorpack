@@ -8,6 +8,8 @@ so you won't need to look at here very often.
 Here are a list of things that were changed, starting from an early version.
 TensorFlow itself also changed APIs before 1.0 and those are not listed here.
 
++ [2017/08/02](https://github.com/ppwwyyxx/tensorpack/commit/875f4d7dbb5675f54eae5675fa3a0948309a8465).
+	`Trainer.get_predictor` now takes GPU id. And `Trainer.get_predictors` was deprecated.
 + 2017/06/07. Now the library explicitly depends on msgpack-numpy>=0.3.9. The serialization protocol
 	becomes incompatible if you've been using <0.3.9.
 + [2017/05/06](https://github.com/ppwwyyxx/tensorpack/commit/0774ec66e66075486f6a36aba63cc2a151b9fec8).

@@ -208,6 +208,7 @@ class MySimulatorMaster(SimulatorMaster, Callback):
 
 def get_config():
     nr_gpu = get_nr_gpu()
+    global PREDICTOR_THREAD
     if nr_gpu > 0:
         if nr_gpu > 1:
             # use half gpus for inference
