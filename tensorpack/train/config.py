@@ -43,11 +43,12 @@ class TrainConfig(object):
 
             callbacks (list): a list of :class:`Callback` to perform during training.
             extra_callbacks (list): the same as ``callbacks``. This argument
-                is only used to provide the defaults. The defaults are
-                ``[MovingAverageSummary(), ProgressBar(), MergeAllSummaries(), RunUpdateOps()]``. The list of
-                callbacks that will be used in the end are ``callbacks + extra_callbacks``.
+                is only used to provide the defaults in addition to ``callbacks``. The defaults are
+                ``MovingAverageSummary()``, ``ProgressBar()``,
+                ``MergeAllSummaries()``, ``RunUpdateOps()``. The list of
+                callbacks that will be used in the end is ``callbacks + extra_callbacks``.
             monitors (list): a list of :class:`TrainingMonitor`.
-                Defaults to ``[TFEventWriter(), JSONWriter(), ScalarPrinter()]``.
+                Defaults to ``TFEventWriter()``, ``JSONWriter()``, ``ScalarPrinter()``.
 
             session_creator (tf.train.SessionCreator): Defaults to :class:`sesscreate.NewSessionCreator()`
                 with the config returned by :func:`tfutils.get_default_sess_config()`.
@@ -59,8 +60,8 @@ class TrainConfig(object):
                 Defaults to the input data size.
             max_epoch (int): maximum number of epoch to run training.
 
-            nr_tower (int): number of training towers.
-            tower (list of int): list of training towers in relative id.
+            nr_tower (int): number of training towers, used by multigpu trainers.
+            tower (list of int): list of training towers in relative GPU id.
             predict_tower (list of int): list of prediction towers in their relative gpu id. Use -1 for cpu.
         """
 

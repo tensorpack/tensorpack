@@ -360,6 +360,9 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
         'remap_get_variable',
         'freeze_get_variable',
         'Triggerable',
+        'predictor_factory',
+        'get_predictors',
+        'vs_name_for_predictor',
         'dump_chkpt_vars',
         'ParamRestore']:
         return True

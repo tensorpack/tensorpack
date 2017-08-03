@@ -144,15 +144,21 @@ class Model(ModelDesc):
 
 
 class MySimulatorMaster(SimulatorMaster, Callback):
-    def __init__(self, pipe_c2s, pipe_s2c, model):
+    def __init__(self, pipe_c2s, pipe_s2c, model, gpus):
         super(MySimulatorMaster, self).__init__(pipe_c2s, pipe_s2c)
         self.M = model
         self.queue = queue.Queue(maxsize=BATCH_SIZE * 8 * 2)
+        self._gpus = gpus
 
     def _setup_graph(self):
+        # create predictors on the available predictor GPUs.
+        nr_gpu = len(self._gpus)
+        predictors = [self.trainer.get_predictor(
+            ['state'], ['policy', 'pred_value'],
+            self._gpus[k % nr_gpu])
+            for k in range(PREDICTOR_THREAD)]
         self.async_predictor = MultiThreadAsyncPredictor(
-            self.trainer.get_predictors(['state'], ['policy', 'pred_value'],
-                                        PREDICTOR_THREAD), batch_size=PREDICT_BATCH_SIZE)
+            predictors, batch_size=PREDICT_BATCH_SIZE)
 
     def _before_train(self):
         self.async_predictor.start()
@@ -201,8 +207,23 @@ class MySimulatorMaster(SimulatorMaster, Callback):
 
 
 def get_config():
-    M = Model()
+    nr_gpu = get_nr_gpu()
+    if nr_gpu > 0:
+        if nr_gpu > 1:
+            # use half gpus for inference
+            predict_tower = list(range(nr_gpu))[-nr_gpu // 2:]
+        else:
+            predict_tower = [0]
+        PREDICTOR_THREAD = len(predict_tower) * PREDICTOR_THREAD_PER_GPU
+        train_tower = list(range(nr_gpu))[:-nr_gpu // 2] or [0]
+        logger.info("[Batch-A3C] Train on gpu {} and infer on gpu {}".format(
+            ','.join(map(str, train_tower)), ','.join(map(str, predict_tower))))
+    else:
+        logger.warn("Without GPU this model will never learn! CPU is only useful for debug.")
+        PREDICTOR_THREAD = 1
+        predict_tower, train_tower = [0], [0]
 
+    # setup simulator processes
     name_base = str(uuid.uuid1())[:6]
     PIPE_DIR = os.environ.get('TENSORPACK_PIPEDIR', '.').rstrip('/')
     namec2s = 'ipc://{}/sim-c2s-{}'.format(PIPE_DIR, name_base)
@@ -211,7 +232,8 @@ def get_config():
     ensure_proc_terminate(procs)
     start_proc_mask_signal(procs)
 
-    master = MySimulatorMaster(namec2s, names2c, M)
+    M = Model()
+    master = MySimulatorMaster(namec2s, names2c, M, predict_tower)
     dataflow = BatchData(DataFromQueue(master.queue), BATCH_SIZE)
     return TrainConfig(
         model=M,
@@ -232,6 +254,7 @@ def get_config():
             config=get_default_sess_config(0.5)),
         steps_per_epoch=STEPS_PER_EPOCH,
         max_epoch=1000,
+        tower=train_tower
     )
 
 
@@ -274,27 +297,8 @@ if __name__ == '__main__':
         dirname = os.path.join('train_log', 'train-atari-{}'.format(ENV_NAME))
         logger.set_logger_dir(dirname)
 
-        nr_gpu = get_nr_gpu()
-        trainer = QueueInputTrainer
-        if nr_gpu > 0:
-            if nr_gpu > 1:
-                predict_tower = list(range(nr_gpu))[-nr_gpu // 2:]
-            else:
-                predict_tower = [0]
-            PREDICTOR_THREAD = len(predict_tower) * PREDICTOR_THREAD_PER_GPU
-            train_tower = list(range(nr_gpu))[:-nr_gpu // 2] or [0]
-            logger.info("[Batch-A3C] Train on gpu {} and infer on gpu {}".format(
-                ','.join(map(str, train_tower)), ','.join(map(str, predict_tower))))
-            if len(train_tower) > 1:
-                trainer = AsyncMultiGPUTrainer
-        else:
-            logger.warn("Without GPU this model will never learn! CPU is only useful for debug.")
-            PREDICTOR_THREAD = 1
-            predict_tower, train_tower = [0], [0]
-            trainer = QueueInputTrainer
         config = get_config()
         if args.load:
             config.session_init = get_model_loader(args.load)
-        config.tower = train_tower
-        config.predict_tower = predict_tower
+        trainer = QueueInputTrainer if config.nr_tower == 1 else AsyncMultiGPUTrainer
         trainer(config).train()

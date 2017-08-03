@@ -41,16 +41,13 @@ class PredictorTowerHandle(object):
 class PredictorFactory(object):
     """ Make predictors from :class:`ModelDesc`."""
 
-    def __init__(self, model, towers, vs_name=''):
+    def __init__(self, model, vs_name=''):
         """
         Args:
             model (ModelDesc):
-            towers (list[int]): list of available gpu id
             vs_name (str):
         """
-        assert isinstance(towers, list), towers
         self._model = model
-        self._towers = towers
         self._vs_name = vs_name
 
         self._names_built = {}
@@ -82,12 +79,11 @@ class PredictorFactory(object):
     def get_predictor(self, input_names, output_names, tower):
         """
         Args:
-            tower (int): need the kth tower (not the gpu id, but the id in TrainConfig.predict_tower)
+            tower (int): use device '/gpu:{tower}' or use -1 for '/cpu:0'.
         Returns:
             an online predictor (which has to be used under a default session)
         """
         tower_name = 'towerp{}'.format(tower)
-        tower = self._towers[tower]
         device = '/gpu:{}'.format(tower) if tower >= 0 else '/cpu:0'
         # use a previously-built tower
         # TODO check conflict with inference runner??

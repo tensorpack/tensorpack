@@ -28,7 +28,8 @@ You can override any of the following methods to define a new callback:
 
 Setup the ops / tensors in the graph which you might need to use in the callback. You can use
 [`graph.get_tensor_by_name`](https://www.tensorflow.org/api_docs/python/tf/Graph#get_tensor_by_name)
-to access those already defined in the training tower. Or use
+to access those already defined in the training tower.
+Or use
 [`self.trainer.get_predictor(..)`](http://tensorpack.readthedocs.io/en/latest/modules/train.html?highlight=get_predictor#tensorpack.train.Trainer.get_predictor)
 to create a callable evaluation function in the predict tower.
 

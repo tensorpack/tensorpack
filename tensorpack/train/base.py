@@ -11,6 +11,7 @@ import tensorflow as tf
 from ..graph_builder.predictor_factory import PredictorFactory
 from .config import TrainConfig
 from ..utils import logger
+from ..utils.develop import deprecated
 from ..callbacks import Callback, Callbacks, MaintainStepCounter
 from ..callbacks.monitor import Monitors, TrainingMonitor
 from ..tfutils import get_global_step_value
@@ -234,27 +235,22 @@ class Trainer(object):
         """
         Args:
             input_names (list), output_names(list): list of names
-            tower (int): return the predictor on the kth tower, defined by ``config.predict_tower``.
+            tower (int): build the predictor on device '/gpu:{tower}' or use -1 for '/cpu:0'.
 
         Returns:
             an :class:`OnlinePredictor`.
         """
         # TODO move the logic to factory?
-        nr_tower = len(self.config.predict_tower)
-        if nr_tower < tower:
-            logger.warn(
-                "Requested the {}th predictor but only have {} predict towers! "
-                "Predictors will be assigned to GPUs in round-robin.".format(tower, nr_tower))
-        tower = tower % nr_tower
         return self.predictor_factory.get_predictor(input_names, output_names, tower)
 
     @property
     def predictor_factory(self):
         if not hasattr(self, '_predictor_factory'):
             self._predictor_factory = PredictorFactory(
-                self.model, self.config.predict_tower, self.vs_name_for_predictor)
+                self.model, self.vs_name_for_predictor)
         return self._predictor_factory
 
+    @deprecated("Please call `Trainer.get_predictor` to create them manually.")
     def get_predictors(self, input_names, output_names, n):
         """ Return n predictors. """
         return [self.get_predictor(input_names, output_names, k) for k in range(n)]
