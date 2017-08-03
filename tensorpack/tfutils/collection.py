@@ -22,6 +22,7 @@ def backup_collection(keys):
         dict: the backup
     """
     ret = {}
+    assert isinstance(keys, (list, tuple))
     for k in keys:
         ret[k] = copy(tf.get_collection(k))
     return ret
