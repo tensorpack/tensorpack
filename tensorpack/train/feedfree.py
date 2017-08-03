@@ -56,7 +56,7 @@ def QueueInputTrainer(config, input_queue=None):
     It is an equivalent of ``SimpleTrainer(config)`` with ``config.data = QueueInput(dataflow)``.
 
     Args:
-        config (TrainConfig): a `TrainConfig` instance. config.dataflow must exist.
+        config (TrainConfig): Must contain 'model' and 'dataflow'.
         input_queue (tf.QueueBase): an input queue. Defaults to the :class:`QueueInput` default.
     """
     assert (config.data is not None or config.dataflow is not None) and config.model is not None

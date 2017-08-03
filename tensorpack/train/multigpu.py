@@ -150,15 +150,15 @@ class LeastLoadedDeviceSetter(object):
 
 class SyncMultiGPUTrainerParameterServer(MultiGPUTrainerBase):
     """
-    A data-parallel Multi-GPU trainer which synchronoizes the gradients computed
-    from each tower, averages them and update to variables stored across all
-    GPUs or on CPU.
+    A data-parallel multi-GPU trainer. It builds one tower on each GPU with
+    shared variable scope. It synchronoizes the gradients computed
+    from each tower, averages them and applies to the shared variables.
     """
 
     def __init__(self, config, ps_device='gpu', gpu_prefetch=True):
         """
         Args:
-            config(TrainConfig):
+            config(TrainConfig): Must contain 'model' and either one of 'data' or 'dataflow'.
             ps_device: either 'gpu' or 'cpu', where variables are stored.
             gpu_prefetch(bool): whether to prefetch the data to each GPU. Usually improve performance.
         """
@@ -199,6 +199,7 @@ class SyncMultiGPUTrainerParameterServer(MultiGPUTrainerBase):
 
         Returns:
             tf.Operation: the training op
+
             [Callback]: the callbacks to be added
         """
         input.setup(model.get_inputs_desc())
@@ -244,8 +245,9 @@ def SyncMultiGPUTrainer(config):
 
 class SyncMultiGPUTrainerReplicated(MultiGPUTrainerBase):
     """
-    Data-parallel Multi-GPU trainer where each GPU contains a replicate of the
-    whole model. Each gradient update is broadcast and synced.
+    Data-parallel multi-GPU trainer where each GPU contains a replicate of the whole model.
+    It will build one tower on each GPU under its own variable scope.
+    Each gradient update is averaged across or GPUs through NCCL.
     """
     def __init__(self, config, gpu_prefetch=True):
         """
@@ -289,6 +291,7 @@ class SyncMultiGPUTrainerReplicated(MultiGPUTrainerBase):
 
         Returns:
             tf.Operation: the training op
+
             [Callback]: the callbacks to be added
         """
         input.setup(model.get_inputs_desc())
@@ -346,14 +349,15 @@ class SyncMultiGPUTrainerReplicated(MultiGPUTrainerBase):
 
 class AsyncMultiGPUTrainer(MultiGPUTrainerBase):
     """
-    A multi-tower multi-GPU trainer where each tower independently
-    asynchronously updates the model without averaging the gradient.
+    A data-parallel multi-GPU trainer. It builds one tower on each GPU with shared variable scope.
+    Every tower computes the gradients and independently applies them to the
+    variables, without synchronizing and averaging across towers.
     """
 
     def __init__(self, config, scale_gradient=True):
         """
         Args:
-            config(TrainConfig):
+            config(TrainConfig): Must contain 'model' and either one of 'data' or 'dataflow'.
             scale_gradient (bool): if True, will scale each gradient by ``1.0/nr_gpu``.
         """
         apply_prefetch_policy(config)
@@ -372,6 +376,7 @@ class AsyncMultiGPUTrainer(MultiGPUTrainerBase):
 
         Returns:
             tf.Operation: the training op
+
             [Callback]: the callbacks to be added
         """
         input.setup(model.get_inputs_desc())

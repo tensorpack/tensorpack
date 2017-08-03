@@ -14,14 +14,17 @@ __all__ = ['SimpleTrainer']
 
 class SimpleTrainer(Trainer):
     """ A naive single-tower single-cost demo trainer.
-        Support both InputSource and DataFlow.
-        When DataFlow is given instead of InputSource, the InputSource to be used will be ``FeedInput(df)``.
+        It simply builds one tower and minimize `model.cost`.
+        It supports both InputSource and DataFlow.
+
+        When DataFlow is given instead of InputSource, the InputSource to be
+        used will be ``FeedInput(df)`` (no prefetch).
     """
 
     def __init__(self, config):
         """
         Args:
-            config (TrainConfig): the training config.
+            config (TrainConfig): Must contain 'model' and either one of 'data' or 'dataflow'.
         """
         assert len(config.tower) == 1, \
             "Got nr_tower={}, but doesn't support multigpu!" \
@@ -39,7 +42,7 @@ class SimpleTrainer(Trainer):
     @staticmethod
     def setup_graph(model, input):
         """
-        Setup graph for simple trainer.
+        Setup graph for SimpleTrainer. It simply build one tower and optimize `model.cost`.
 
         Args:
             model (ModelDesc):
@@ -47,6 +50,7 @@ class SimpleTrainer(Trainer):
 
         Returns:
             tf.Operation: the training op
+
             [Callback]: the callbacks to be added
         """
         input.setup(model.get_inputs_desc())

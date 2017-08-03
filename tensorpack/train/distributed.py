@@ -49,7 +49,7 @@ class DistributedTrainerReplicated(MultiGPUTrainerBase):
     def __init__(self, config, server):
         """
         Args:
-            config (TrainConfig): the train config.
+            config(TrainConfig): Must contain 'model' and 'data'.
             server (tf.train.Server): the server object with ps and workers
         """
         assert config.data is not None and config.model is not None
