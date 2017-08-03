@@ -5,7 +5,7 @@
 
 #include <string>
 #include <iostream>
-#include <tensorflow/core/framework/tensor.pb.h>
+#include <tensorflow/core/framework/tensor_shape.h>
 #include <tensorflow/core/lib/gtl/inlined_vector.h>
 #include "zmq.hpp"
 
@@ -21,11 +21,10 @@ struct RecvTensorList {
   zmq::message_t message;
 
   struct TensorConstructor {
-    // TODO make it allocated on stack
-    // only contains shape and type
-    tensorflow::TensorProto meta;
+    tensorflow::DataType dtype;
+    tensorflow::TensorShape shape;
+    int size; // TODO bufsize
     char* buf;
-    int size;
   };
 
   tensorflow::gtl::InlinedVector<TensorConstructor, 4> tensors;
@@ -53,11 +52,15 @@ class ZMQConnection {
     CHECK_LE(num, 15);  // probably a format error
 
     for (int i = 0; i < num; ++i) {
+      int dt = read_int32(&pos);
+      tensors[i].dtype = tensorflow::DataType(dt);
+      int ndim = read_int32(&pos);
+      CHECK_LE(ndim, 8);  // probably an error.
+      for (int k = 0; k < ndim; ++k) {
+        int shp = read_int32(&pos);
+        tensors[i].shape.AddDim(shp);
+      }
       int sz = read_int32(&pos);
-      CHECK(tensors[i].meta.ParseFromArray(pos, sz));
-      pos += sz;
-
-      sz = read_int32(&pos);
       tensors[i].buf = pos;
       tensors[i].size = sz;
       pos += sz;

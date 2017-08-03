@@ -51,7 +51,7 @@ class ZMQRecvOp: public OpKernel {
     for (int i = start; i < stop; ++i) {
       Tensor* output = nullptr;
       int j = i - start;
-      auto recv_dtype = tensors[j].meta.dtype();
+      auto recv_dtype = tensors[j].dtype;
       OP_REQUIRES(
           ctx, component_types_[j] == recv_dtype,
           errors::InvalidArgument("Type mismatch between parsed tensor (",
@@ -59,7 +59,7 @@ class ZMQRecvOp: public OpKernel {
                                   DataTypeString(component_types_[j]), ")"));
 
 
-      TensorShape shape{tensors[j].meta.tensor_shape()};
+      TensorShape& shape = tensors[j].shape;
       OP_REQUIRES_OK(ctx, ctx->allocate_output(i, shape, &output));
       auto ptr = output->bit_casted_shaped<char, 1>({shape.num_elements()});
       memcpy(ptr.data(), tensors[j].buf, tensors[j].size);

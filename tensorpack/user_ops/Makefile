@@ -1,5 +1,5 @@
 # $File: Makefile
-# $Date: Wed Jun 17 20:52:38 2015 +0800
+# $Date: Thu Aug 03 16:14:29 2017 -0700
 
 OBJ_DIR = obj
 
@@ -16,7 +16,7 @@ OPTFLAGS ?= -O3 -march=native
 #OPTFLAGS ?= -g3 -fsanitize=leak -O2 -lubsan
 
 # extra packages from pkg-config
-LIBS = protobuf libzmq
+LIBS = libzmq
 INCLUDE_DIR += $(shell pkg-config --cflags $(LIBS))
 LDFLAGS += $(shell pkg-config $(LIBS) --libs)
 
@@ -24,7 +24,7 @@ CXXFLAGS += $(INCLUDE_DIR)
 CXXFLAGS += -Wall -Wextra
 CXXFLAGS += $(DEFINES) -std=c++11 $(OPTFLAGS) -fPIC
 
-# https://github.com/tensorflow/tensorflow/issues/1569
+# TODO https://github.com/tensorflow/tensorflow/issues/1569
 # You may need to disable this flag if you compile tensorflow yourself with gcc>=5
 CXXFLAGS += -D_GLIBCXX_USE_CXX11_ABI=0
 

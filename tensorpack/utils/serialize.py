@@ -81,17 +81,24 @@ def dump_tensor_protos(protos):
         The format is:
 
         [#tensors(int32)]
-        (tensor1)[size of meta proto][serialized meta proto][size of buffer][buffer]
-        (tensor2)...
+        [tensor1][tensor2]...
+
+        Where each tensor is:
+
+        [dtype(int32)][ndims(int32)][shape[0](int32)]...[shape[n](int32)]
+        [len(buffer)(int32)][buffer]
     """
+    # TODO use int64
 
     s = struct.pack('=i', len(protos))
     for p in protos:
         tensor_content = p.tensor_content
-        p.tensor_content = b'xxx'   # clear content
-        buf = p.SerializeToString()
-        s += struct.pack('=i', len(buf))
-        s += buf
+
+        s += struct.pack('=i', int(p.dtype))
+        dims = p.tensor_shape.dim
+        s += struct.pack('=i', len(dims))
+        for k in dims:
+            s += struct.pack('=i', k.size)
         s += struct.pack('=i', len(tensor_content))    # won't send stuff over 2G
         s += tensor_content
     return s

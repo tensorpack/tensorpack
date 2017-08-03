@@ -16,6 +16,7 @@ print("Compiling user ops ...")
 ret = os.system(compile_cmd)
 if ret != 0:
     print("Failed to compile user ops!")
+    zmq_recv = None
 else:
     recv_mod = tf.load_op_library(os.path.join(file_dir, 'zmq_recv_op.so'))
     # TODO trigger recompile when load fails
