@@ -1,9 +1,23 @@
 
 # Trainer
 
-Training is **running something again and again**.
+In research we do training of various kind.
+The only assumption tensorpack `Trainer` class makes about your training, is that your training
+follows this pattern:
+```python
+for epoch_num in range(starting_epoch, max_epochs):
+	for local_step in range(steps_per_epoch):
+		run_step()
+```
+
+1. Training is **running some iteration**.
 Tensorpack base trainer implements the logic of __running the iteration__.
 Users or derived trainers should implement __what the iteration is__.
+
+2. Trainer assumes the existence of "epoch", i.e. that the iterations run in double for loops.
+But it doesn't need to be a full pass of your dataset, ``steps_per_epoch`` can be any number you set
+and it only affects the [schedule of callbacks](http://tensorpack.readthedocs.io/en/latest/tutorial/extend/callback.html).
+In other words, an "epoch" is the __default period__ to run callbacks (validation, summary, checkpoint, etc.).
 
 
 ### Common Trainers
@@ -36,25 +50,14 @@ You can set the InputSource instead, to customize this behavior.
 
 Existing multi-GPU trainers include the logic of data-parallel training.
 You can enable them by just one line, and all the necessary logic to achieve the best performance was baked into the trainers already.
-The trainers can reach the same performance as the [official tensorflow benchmark](https://github.com/tensorflow/benchmarks).
+The trainers can reach the same performance as the [official tensorflow benchmark](https://www.tensorflow.org/performance/benchmarks).
 
-Please note that in data-parallel training, in each iteration all towers (all replicates of the model) will take 
+Please note that in data-parallel training, in each iteration all towers (all replicates of the model) will take
 tensors from the InputSource (instead of taking one for all and split). So the total batch size
-would be multiplied by the number of GPUs.
+would be ``(batch size of InputSource/DataFlow) * #GPU``.
 
 ### Custom Trainers
 
-Trainers just run __some__ iterations, so there is no limit in where the data come from or what to do in an iteration.
-The existing trainers implement the default logic, but you can implement them yourself by using the base `Trainer` class. 
+You can easily write a trainer for other types of training.
+See [Write a Trainer](http://tensorpack.readthedocs.io/en/latest/tutorial/extend/trainer.html).
 
-* Two ways to customize the graph:
-
-  1. Create the graph, add any tensors and ops before creating the trainer. 
-	2. Subclass `Trainer` and override the `_setup()` method which will be called in `Trainer.__init__`.
-
-* Two ways to customize the iteration:
-
-	1. Set `Trainer.train_op`. This op will be run by default.
-	2. Subclass `Trainer` and override the `run_step()` method.
-
-There are several different [GAN trainers](../examples/GAN/GAN.py) for reference.
