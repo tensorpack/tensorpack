@@ -117,8 +117,7 @@ class Trainer(object):
         """
         Setup InputSource on this trainer.
         """
-        input_source.setup(self.model.get_inputs_desc())
-        cbs = input_source.get_callbacks()
+        cbs = input_source.setup(self.model.get_inputs_desc())
         self.config.callbacks.extend(cbs)
 
     def setup(self):

@@ -53,6 +53,12 @@ class PredictorFactory(object):
         self._names_built = {}
 
     def build(self, tower_name, device, input=None):
+        """
+        Args:
+            tower_name (str):
+            device(str):
+            input (InputSource): must be setup already. If None, will use InputDesc from the model.
+        """
         logger.info("Building predictor tower '{}' on device {} ...".format(tower_name, device))
         assert tower_name not in self._names_built
 

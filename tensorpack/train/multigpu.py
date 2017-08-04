@@ -202,7 +202,7 @@ class SyncMultiGPUTrainerParameterServer(MultiGPUTrainerBase):
 
             [Callback]: the callbacks to be added
         """
-        input.setup(model.get_inputs_desc())
+        callbacks = input.setup(model.get_inputs_desc())
 
         raw_devices = ['/gpu:{}'.format(k) for k in tower]
         if ps_device == 'gpu':
@@ -226,7 +226,7 @@ class SyncMultiGPUTrainerParameterServer(MultiGPUTrainerBase):
         # grads = grad_list[0]
 
         train_op = model.get_optimizer().apply_gradients(grads, name='train_op')
-        return train_op, input.get_callbacks()
+        return train_op, callbacks
 
     def _setup(self):
         self.train_op, cbs = SyncMultiGPUTrainerParameterServer.setup_graph(
@@ -294,7 +294,7 @@ class SyncMultiGPUTrainerReplicated(MultiGPUTrainerBase):
 
             [Callback]: the callbacks to be added
         """
-        input.setup(model.get_inputs_desc())
+        callbacks = input.setup(model.get_inputs_desc())
 
         raw_devices = ['/gpu:{}'.format(k) for k in tower]
 
@@ -317,7 +317,7 @@ class SyncMultiGPUTrainerReplicated(MultiGPUTrainerBase):
         cb = RunOp(
             SyncMultiGPUTrainerReplicated.get_post_init_ops,
             run_before=True, run_as_trigger=True, verbose=True)
-        return train_op, input.get_callbacks() + [cb]
+        return train_op, callbacks + [cb]
 
     def _setup(self):
         self.train_op, cbs = SyncMultiGPUTrainerReplicated.setup_graph(
@@ -379,7 +379,7 @@ class AsyncMultiGPUTrainer(MultiGPUTrainerBase):
 
             [Callback]: the callbacks to be added
         """
-        input.setup(model.get_inputs_desc())
+        callbacks = input.setup(model.get_inputs_desc())
 
         raw_devices = ['/gpu:{}'.format(k) for k in tower]
         devices = [LeastLoadedDeviceSetter(d, raw_devices) for d in raw_devices]
@@ -404,7 +404,7 @@ class AsyncMultiGPUTrainer(MultiGPUTrainerBase):
                 # will call apply_gradients (therefore gradproc) multiple times
                 train_ops.append(opt.apply_gradients(
                     grad_and_vars, name='apply_grad_{}'.format(i)))
-        return tf.group(*train_ops, name='train_op'), input.get_callbacks()
+        return tf.group(*train_ops, name='train_op'), callbacks
 
     def _setup(self):
         self.train_op, cbs = AsyncMultiGPUTrainer.setup_graph(

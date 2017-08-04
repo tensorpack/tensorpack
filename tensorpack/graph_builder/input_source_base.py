@@ -5,6 +5,7 @@
 from abc import ABCMeta, abstractmethod
 import six
 
+from ..utils.argtools import memoized
 from ._utils import get_sublist_by_names, get_tensors_inputs
 
 __all__ = ['InputSource', 'remap_input_source']
@@ -31,16 +32,25 @@ class InputSource(object):
         """
         Args:
             inputs_desc (list[InputDesc]): list of input desc
+
+        Returns:
+            list[Callback]: extra callbacks needed by this InputSource.
         """
         self._setup(inputs_desc)
+        return self.get_callbacks()
 
     def _setup(self, inputs_desc):
         pass
 
+    @memoized
     def get_callbacks(self):
         """
+        An InputSource might need some extra maintainance during training,
+        which is done also through the Callback interface.
+        This method returns the Callbacks and the return value will be memoized.
+
         Returns:
-            list[Callback]: extra callbacks required by this InputSource.
+            list[Callback]: extra callbacks needed by this InputSource.
         """
         return self._get_callbacks()
 

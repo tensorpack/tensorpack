@@ -53,8 +53,7 @@ class SimpleTrainer(Trainer):
 
             [Callback]: the callbacks to be added
         """
-        input.setup(model.get_inputs_desc())
-        cbs = input.get_callbacks()
+        cbs = input.setup(model.get_inputs_desc())
         with TowerContext('', is_training=True):
             model.build_graph(input)
             _, grads = model.get_cost_and_grad()

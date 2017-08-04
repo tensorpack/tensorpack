@@ -93,13 +93,12 @@ class InferenceRunnerBase(Callback):
         tower_id = self.trainer.config.predict_tower[0]
         device = '/gpu:{}'.format(tower_id) if tower_id >= 0 else '/cpu:0'
 
-        self._input_source.setup(self.trainer.model.get_inputs_desc())
+        cbs = self._input_source.setup(self.trainer.model.get_inputs_desc())
         with tf.variable_scope(tf.get_variable_scope(), reuse=True):
             self._tower_handle = self.trainer.predictor_factory.build(
                 self._tower_name, device, self._input_source)
 
         self._hooks = [self._build_hook(inf) for inf in self.infs]
-        cbs = self._input_source.get_callbacks()
         self._hooks.extend([CallbackToHook(cb) for cb in cbs])
 
     def _before_train(self):
@@ -173,7 +172,7 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
         self._gpus = gpus
 
     def _setup_graph(self):
-        self._input_source.setup(self.trainer.model.get_inputs_desc())
+        cbs = self._input_source.setup(self.trainer.model.get_inputs_desc())
         self._handles = []
         with tf.variable_scope(tf.get_variable_scope(), reuse=True):
             for idx, t in enumerate(self._gpus):
@@ -186,7 +185,6 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
         # setup feeds and hooks
         self._hooks_parallel = [self._build_hook_parallel(inf) for inf in self.infs]
         self._hooks = [self._build_hook(inf) for inf in self.infs]
-        cbs = self._input_source.get_callbacks()
         self._hooks_parallel.extend([CallbackToHook(cb) for cb in cbs])
 
     class InferencerToHookDataParallel(InferencerToHook):
