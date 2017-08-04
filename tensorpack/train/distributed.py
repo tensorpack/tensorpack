@@ -42,6 +42,7 @@ class DistributedTrainerReplicated(MultiGPUTrainerBase):
     and get synchronously applied to the global copy of variables located on PS.
     Then each worker copy the latest variables from PS back to local.
 
+    See https://www.tensorflow.org/performance/benchmarks for details.
 
     Note:
         Gradients are not averaged across workers.

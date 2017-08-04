@@ -96,7 +96,6 @@ class Model(DQNModel):
 
 
 def get_config():
-    M = Model()
     expreplay = ExpReplay(
         predictor_io_names=(['state'], ['Qvalue']),
         player=get_player(train=True),
@@ -111,6 +110,7 @@ def get_config():
 
     return TrainConfig(
         dataflow=expreplay,
+        model=Model(),
         callbacks=[
             ModelSaver(),
             PeriodicTrigger(
@@ -128,11 +128,8 @@ def get_config():
                 every_k_epochs=10),
             HumanHyperParamSetter('learning_rate'),
         ],
-        model=M,
         steps_per_epoch=STEPS_PER_EPOCH,
         max_epoch=1000,
-        # run the simulator on a separate GPU if available
-        predict_tower=[1] if get_nr_gpu() > 1 else [0],
     )
 
 
@@ -172,5 +169,5 @@ if __name__ == '__main__':
                 os.path.basename(ROM_FILE).split('.')[0])))
         config = get_config()
         if args.load:
-            config.session_init = SaverRestore(args.load)
+            config.session_init = get_model_loader(args.load)
         QueueInputTrainer(config).train()
