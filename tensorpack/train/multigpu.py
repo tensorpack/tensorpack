@@ -50,14 +50,13 @@ class MultiGPUTrainerBase(FeedfreeTrainerBase):
     @staticmethod
     def build_on_multi_tower(
             towers, func,
-            devices=None, var_strategy='shared',
+            devices=None,
             use_vs=None):
         """
         Args:
             towers: list of gpu relative ids
             func: a lambda to be called inside each tower
             devices: a list of devices to be used. By default will use GPUs in ``towers``.
-            var_strategy (str): 'shared' or 'replicated'
             use_vs (list[bool]): list of use_vs to passed to TowerContext
 
         Returns:
@@ -73,11 +72,6 @@ class MultiGPUTrainerBase(FeedfreeTrainerBase):
 
         tower_names = ['tower{}'.format(idx) for idx in range(len(towers))]
         keys_to_freeze = TOWER_FREEZE_KEYS[:]
-        if var_strategy == 'replicated':        # TODO ugly
-            logger.info("In replicated mode, UPDATE_OPS from all GPUs will be run.")
-            keys_to_freeze.remove(tf.GraphKeys.UPDATE_OPS)
-        else:
-            assert use_vs is None
         if use_vs is None:
             use_vs = [False] * len(towers)
         assert len(use_vs) == len(towers)
@@ -308,7 +302,6 @@ class SyncMultiGPUTrainerReplicated(MultiGPUTrainerBase):
         grad_list = MultiGPUTrainerBase.build_on_multi_tower(
             tower,
             lambda: MultiGPUTrainerBase._build_graph_get_grads(model, input),
-            var_strategy='replicated',
             # use no variable scope for the first tower
             use_vs=[False] + [True] * (len(tower) - 1))
         grads = SyncMultiGPUTrainerReplicated._allreduce_grads(grad_list)

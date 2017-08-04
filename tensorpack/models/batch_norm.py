@@ -213,11 +213,13 @@ def BatchRenorm(x, rmax, dmax, decay=0.9, epsilon=1e-5,
     xn = layer.apply(x, training=ctx.is_training, scope=tf.get_variable_scope())
 
     if ctx.has_own_variables:
-        # only apply update in this case
+        # Only apply update in this case.
+        # Add these EMA to model_variables so that they will be synced
+        # properly by replicated trainers.
         for v in layer.non_trainable_variables:
             add_model_variable(v)
     else:
-        # don't need update if we are sharing variables from an old tower
+        # Don't need update if we are sharing variables from an existing tower
         restore_collection(coll_bk)
 
     if ndims == 2:

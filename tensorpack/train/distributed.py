@@ -199,7 +199,6 @@ class DistributedTrainerReplicated(MultiGPUTrainerBase):
                 lambda: MultiGPUTrainerBase._build_graph_get_grads(
                     self.model, self._input_source),
                 devices=self.raw_devices,
-                var_strategy='replicated',
                 vs_names=[True] * self.config.nr_tower)  # open vs at each tower
             MultiGPUTrainerBase._check_grad_list(grad_list)
 
