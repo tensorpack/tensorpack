@@ -9,6 +9,7 @@ import os
 
 from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import prediction_incorrect
+from tensorpack.dataflow import dataset
 from tensorpack.tfutils.summary import *
 import tensorflow as tf
 

@@ -13,6 +13,7 @@ import tensorflow as tf
 from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
+from tensorpack.dataflow import dataset
 
 from imagenet_resnet_utils import (
     fbresnet_augmentor, resnet_basicblock, resnet_bottleneck, resnet_backbone,

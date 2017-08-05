@@ -19,7 +19,7 @@ from tensorpack.utils import logger
 from tensorpack.utils.stats import RatioCounter
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
-from tensorpack.dataflow.dataset import ILSVRCMeta
+from tensorpack.dataflow.dataset import ILSVRCMeta, ILSVRC12
 
 MODEL_DEPTH = None
 
@@ -134,7 +134,7 @@ def run_test(params, input):
 
 
 def eval_on_ILSVRC12(params, data_dir):
-    ds = dataset.ILSVRC12(data_dir, 'val', shuffle=False, dir_structure='train')
+    ds = ILSVRC12(data_dir, 'val', shuffle=False, dir_structure='train')
     ds = AugmentImageComponent(ds, get_inference_augmentor())
     ds = BatchData(ds, 128, remainder=True)
     pred_config = PredictConfig(

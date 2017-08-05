@@ -10,6 +10,7 @@ import os
 
 import tensorpack.tfutils.symbolic_functions as symbf
 from tensorpack.tfutils.summary import *
+from tensorpack.dataflow import dataset
 from tensorpack.utils.gpu import get_nr_gpu
 
 """

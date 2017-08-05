@@ -36,14 +36,14 @@ Left to right:
 Usage:
 1. Fine tune or retrain the ResNet:
 ```bash
-./CAM-resnet.py --data /path/to/imagenet [--load ImageNet-ResNet18.npy] [--gpu 0,1,2,3]
+./CAM-resnet.py --data /path/to/imagenet [--load ImageNet-ResNet18.npz] [--gpu 0,1,2,3]
 ```
 Pretrained and fine-tuned ResNet can be downloaded
 [here](https://drive.google.com/open?id=0B9IPQTvr2BBkTXBlZmh1cmlnQ0k) and [here](https://drive.google.com/open?id=0B9IPQTvr2BBkQk9qcmtGSERlNUk).
 
 2. Generate CAM on ImageNet validation set:
 ```bash
-./CAM-resnet.py --data /path/to/imagenet --load ImageNet-ResNet18-2xGAP.npy --cam
+./CAM-resnet.py --data /path/to/imagenet --load ImageNet-ResNet18-2xGAP.npz --cam
 ```
 
 <p align="center"> <img src="./CAM-demo.jpg" width="900"> </p>

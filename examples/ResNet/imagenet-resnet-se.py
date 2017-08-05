@@ -11,6 +11,7 @@ import multiprocessing
 import tensorflow as tf
 
 from tensorpack import *
+from tensorpack.dataflow import dataset
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
 

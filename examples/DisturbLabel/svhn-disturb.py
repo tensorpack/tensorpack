@@ -9,9 +9,7 @@ import os
 import imp
 
 from tensorpack import *
-from tensorpack.tfutils.symbolic_functions import *
-from tensorpack.tfutils.summary import *
-import tensorflow as tf
+from tensorpack.dataflow import dataset
 
 from disturb import DisturbLabel
 

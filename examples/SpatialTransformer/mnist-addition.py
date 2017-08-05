@@ -11,6 +11,7 @@ import sys
 import argparse
 
 from tensorpack import *
+from tensorpack.dataflow import dataset
 from tensorpack.tfutils import sesscreate, optimizer, summary
 import tensorpack.tfutils.symbolic_functions as symbf
 

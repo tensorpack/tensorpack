@@ -12,6 +12,7 @@ MNIST ConvNet example with weights/activations visualization.
 """
 
 from tensorpack import *
+from tensorpack.dataflow import dataset
 import tensorflow as tf
 import tensorpack.tfutils.symbolic_functions as symbf
 

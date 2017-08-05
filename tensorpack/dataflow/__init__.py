@@ -6,10 +6,7 @@ from pkgutil import iter_modules
 import os
 import os.path
 
-from . import dataset
-from . import imgaug
-
-__all__ = ['dataset', 'imgaug', 'dftools']
+__all__ = []
 
 
 def _global_import(name):
@@ -21,9 +18,22 @@ def _global_import(name):
         __all__.append(k)
 
 
-__SKIP = ['dftools', 'dataset', 'imgaug']
+__SKIP = set(['dftools', 'dataset', 'imgaug'])
 for _, module_name, __ in iter_modules(
         [os.path.dirname(__file__)]):
     if not module_name.startswith('_') and \
             module_name not in __SKIP:
         _global_import(module_name)
+
+
+class _LazyModule(object):
+    def __init__(self, modname):
+        self._modname = modname
+
+    def __getattr__(self, name):
+        dataset = __import__(self._modname, globals(), locals(), [name], 1)
+        return getattr(dataset, name)
+
+
+dataset = _LazyModule('dataset')
+__all__.extend(['imgaug', 'dftools', 'dataset'])

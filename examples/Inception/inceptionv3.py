@@ -13,6 +13,7 @@ import multiprocessing
 from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
+from tensorpack.dataflow import dataset
 
 """
 InceptionV3 on ILSVRC12.

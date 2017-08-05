@@ -6,6 +6,7 @@ import numpy as np
 import os
 import sys
 import argparse
+import tensorflow as tf
 """
 MNIST ConvNet example.
 about 0.6% validation error after 30 epochs.
@@ -14,7 +15,7 @@ about 0.6% validation error after 30 epochs.
 # Just import everything into current namespace
 from tensorpack import *
 from tensorpack.tfutils import summary
-import tensorflow as tf
+from tensorpack.dataflow import dataset
 import tensorpack.tfutils.symbolic_functions as symbf
 
 IMAGE_SIZE = 28

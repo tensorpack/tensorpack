@@ -15,6 +15,7 @@ the only differences are:
 """
 
 from tensorpack import *
+from tensorpack.dataflow import dataset
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 

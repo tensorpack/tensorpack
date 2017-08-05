@@ -21,6 +21,7 @@ This way you can define models in Keras-style, and benefit from the more efficei
 """
 
 from tensorpack import *
+from tensorpack.dataflow import dataset
 from tensorpack.utils.argtools import memoized
 
 IMAGE_SIZE = 28

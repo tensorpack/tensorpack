@@ -15,6 +15,7 @@ from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
 from tensorpack.tfutils.varreplace import remap_variables
+from tensorpack.dataflow import dataset
 from dorefa import get_dorefa
 
 """

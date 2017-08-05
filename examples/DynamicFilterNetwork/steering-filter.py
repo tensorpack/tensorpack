@@ -14,6 +14,7 @@ from tensorpack import *
 from tensorpack.utils import logger
 from tensorpack.utils.viz import *
 from tensorpack.utils.argtools import shape2d, shape4d
+from tensorpack.dataflow import dataset
 
 BATCH = 32
 SHAPE = 64

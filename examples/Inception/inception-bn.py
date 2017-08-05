@@ -12,6 +12,7 @@ import tensorflow as tf
 from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
+from tensorpack.dataflow import dataset
 
 
 TOTAL_BATCH_SIZE = 64 * 6

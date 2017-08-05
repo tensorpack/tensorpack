@@ -10,6 +10,7 @@ import os
 from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
+from tensorpack.dataflow import dataset
 from tensorpack.tfutils.varreplace import remap_variables
 import tensorflow as tf
 

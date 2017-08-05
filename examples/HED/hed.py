@@ -13,6 +13,7 @@ import sys
 
 from tensorpack import *
 import tensorpack.tfutils.symbolic_functions as symbf
+from tensorpack.dataflow import dataset
 from tensorpack.tfutils import optimizer
 from tensorpack.tfutils.summary import *
 

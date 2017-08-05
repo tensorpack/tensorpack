@@ -9,6 +9,7 @@ import sys
 import argparse
 
 from tensorpack import *
+from tensorpack.dataflow import dataset
 import tensorflow as tf
 from disturb import DisturbLabel
 

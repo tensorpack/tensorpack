@@ -14,6 +14,7 @@ from tensorpack import *
 from tensorpack.utils.viz import *
 import tensorpack.tfutils.symbolic_functions as symbf
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
+from tensorpack.dataflow import dataset
 from GAN import GANTrainer, RandomZData, GANModelDesc
 
 """
