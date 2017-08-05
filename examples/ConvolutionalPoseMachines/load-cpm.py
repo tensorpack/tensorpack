@@ -9,6 +9,7 @@ import numpy as np
 import argparse
 
 from tensorpack import *
+from tensorpack.utils import viz
 from tensorpack.utils.argtools import memoized
 
 """
