@@ -37,5 +37,4 @@ for _, module_name, _ in iter_modules(
         continue
     if module_name in _TO_IMPORT:
         _global_import(module_name)
-    else:
-        __all__.append(module_name)
+__all__.extend(['logger'])

@@ -235,6 +235,7 @@ class SVMLightData(RNGDataFlow):
             filename (str): input file
             shuffle (bool): shuffle the data
         """
+        import sklearn.datasets  # noqa
         self.X, self.y = sklearn.datasets.load_svmlight_file(filename)
         self.X = np.asarray(self.X.todense())
         self.shuffle = shuffle
@@ -286,11 +287,6 @@ try:
 except ImportError:
     for klass in ['LMDBData', 'LMDBDataDecoder', 'LMDBDataPoint', 'CaffeLMDB']:
         globals()[klass] = create_dummy_class(klass, 'lmdb')
-
-try:
-    import sklearn.datasets
-except ImportError:
-    SVMLightData = create_dummy_class('SVMLightData', 'sklearn')   # noqa
 
 try:
     import tensorflow as tf

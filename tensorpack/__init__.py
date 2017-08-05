@@ -5,9 +5,9 @@
 
 from tensorpack.libinfo import __version__
 
+from tensorpack.utils import *
 from tensorpack.models import *
 from tensorpack.dataflow import *
-from tensorpack.utils import *
 
 from tensorpack.callbacks import *
 from tensorpack.tfutils import *
