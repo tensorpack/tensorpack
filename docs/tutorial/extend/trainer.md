@@ -9,7 +9,7 @@ For certain tasks, you do need a new trainer.
 
 Trainers just run __some__ iterations, so there is no limit in where the data come from or what to do in an iteration.
 The existing common trainers all do two things:
-1. Setup the graph and input pipeline, from `TrainConfig`.
+1. Setup the graph and input pipeline, using the given `TrainConfig`.
 2. Minimize `model.cost` in each iteration.
 
 But you can customize it by using the base `Trainer` class.

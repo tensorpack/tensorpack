@@ -10,7 +10,6 @@ from tensorflow.python.layers.normalization import BatchNorm as TF_BatchNorm
 
 from ..tfutils.tower import get_current_tower_context
 from ..tfutils.collection import backup_collection, restore_collection
-from ..utils import logger
 from .common import layer_register, VariableHolder
 
 __all__ = ['BatchNorm', 'BatchRenorm']
@@ -116,10 +115,7 @@ def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5,
     ctx = get_current_tower_context()
     if use_local_stat is None:
         use_local_stat = ctx.is_training
-    elif use_local_stat != ctx.is_training:
-        # we allow the use of local_stat in testing (only print warnings)
-        # because it is useful to certain applications.
-        logger.warn("[BatchNorm] use_local_stat != is_training")
+    use_local_stat = bool(use_local_stat)
 
     if use_local_stat:
         if ndims == 2:
