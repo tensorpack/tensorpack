@@ -7,6 +7,8 @@ from abc import ABCMeta, abstractmethod
 import six
 from six.moves import zip
 
+from .base import Callback
+from ..utils import logger
 from ..utils.stats import RatioCounter, BinaryStatistics
 from ..tfutils.common import get_op_tensor_name
 
@@ -17,16 +19,16 @@ __all__ = ['ScalarStats', 'Inferencer',
 
 
 @six.add_metaclass(ABCMeta)
-class Inferencer(object):
+class Inferencer(Callback):
     """ Base class of Inferencer. To be used with :class:`InferenceRunner`. """
 
-    def before_inference(self):
-        """
-        Called before a new round of inference starts.
-        """
+    def _before_epoch(self):
         self._before_inference()
 
     def _before_inference(self):
+        """
+        Called before a new round of inference starts.
+        """
         pass
 
     def datapoint(self, output):
@@ -43,14 +45,24 @@ class Inferencer(object):
     def _datapoint(self, output):
         pass
 
-    def after_inference(self):
+    def _trigger_epoch(self):
+        ret = self._after_inference()
+        if ret is None:
+            return
+        for k, v in six.iteritems(ret):
+            try:
+                v = float(v)
+            except:
+                logger.warn("{} returns a non-scalar statistics!".format(type(self).__name__))
+                continue
+            else:
+                self.trainer.monitors.put_scalar(k, v)
+
+    def _after_inference(self):
         """
         Called after a round of inference ends.
         Returns a dict of scalar statistics which will be logged to monitors.
         """
-        return self._after_inference()
-
-    def _after_inference(self):
         pass
 
     def get_output_tensors(self):
