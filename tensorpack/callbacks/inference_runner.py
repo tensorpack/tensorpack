@@ -115,8 +115,14 @@ class InferenceRunnerBase(Callback):
 
         # iterate over the data, and run the hooked session
         self._input_source.reset_state()
-        for _ in tqdm.trange(self._size, **get_tqdm_kwargs()):
-            self._hooked_sess.run(fetches=[])
+        msg = "You might need to check your input implementation."
+        try:
+            for _ in tqdm.trange(self._size, **get_tqdm_kwargs()):
+                self._hooked_sess.run(fetches=[])
+        except StopIteration:
+            raise RuntimeError(
+                "[InferenceRunner] input stopped before reaching its size()! " + msg)
+
         summary_inferencer(self.trainer, self.infs)
 
 
@@ -133,7 +139,7 @@ class InferenceRunner(InferenceRunnerBase):
             infs (list): a list of :class:`Inferencer` instances.
         """
         if isinstance(input, DataFlow):
-            input = FeedInput(input)
+            input = FeedInput(input, infinite=False)
         assert isinstance(input, InputSource), input
         if isinstance(input, FeedfreeInput):    # TODO support other input
             assert isinstance(input, TensorInput), "InferenceRunner only accepts TensorInput or FeedInput!"

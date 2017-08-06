@@ -65,22 +65,26 @@ class FeedInput(InputSource):
             self._ds.reset_state()
             self._itr = self._ds.get_data()
 
-    def __init__(self, ds):
+    def __init__(self, ds, infinite=True):
         """
         Args:
             ds (DataFlow): the input DataFlow.
+            infinite (bool): When set to False, will raise StopIteration when
+                ds is exhausted.
         """
         assert isinstance(ds, DataFlow), ds
         self.ds = ds
-        # TODO avoid infinite repeat, to allow accurate size handling
-        self._repeat_ds = RepeatedData(self.ds, -1)
+        if infinite:
+            self._iter_ds = RepeatedData(self.ds, -1)
+        else:
+            self._iter_ds = self.ds
 
     def _size(self):
         return self.ds.size()
 
     def _setup(self, inputs):
         self._all_placehdrs = [v.build_placeholder(prefix='') for v in inputs]
-        self._cb = self._FeedCallback(self._repeat_ds, self._all_placehdrs)
+        self._cb = self._FeedCallback(self._iter_ds, self._all_placehdrs)
         self.reset_state()
 
     def _get_input_tensors(self):
