@@ -228,8 +228,7 @@ class QueueInput(FeedfreeInput):
         self._input_placehdrs = [v.build_placeholder_reuse() for v in inputs]
         assert len(self._input_placehdrs) > 0, \
             "QueueInput has to be used with some inputs!"
-        with tf.name_scope('QueueInput') as ns:
-            self._name_scope = ns
+        with self.cached_name_scope():
             if self.queue is None:
                 self.queue = tf.FIFOQueue(
                     50, [x.dtype for x in self._input_placehdrs],
@@ -243,7 +242,7 @@ class QueueInput(FeedfreeInput):
         return [cb]
 
     def _get_input_tensors(self):
-        with tf.device('/cpu:0'), tf.name_scope(self._name_scope):
+        with tf.device('/cpu:0'), self.cached_name_scope():
             ret = self.queue.dequeue(name='input_deque')
             if isinstance(ret, tf.Tensor):  # only one input
                 ret = [ret]
@@ -294,8 +293,7 @@ class BatchQueueInput(QueueInput):
             assert p.get_shape().is_fully_defined(), shape_err
             shapes.append(p.get_shape())
 
-        with tf.name_scope('BatchQueueInput') as ns:
-            self._name_scope = ns
+        with self.cached_name_scope():
             if self.queue is None:
                 self.queue = tf.FIFOQueue(
                     3000, [x.dtype for x in self.input_placehdrs],
@@ -307,7 +305,7 @@ class BatchQueueInput(QueueInput):
             self.thread = EnqueueThread(self.queue, self.ds, placehdrs_nobatch)
 
     def _get_input_tensors(self):
-        with tf.device('/cpu:0'), tf.name_scope(self._name_scope):
+        with tf.device('/cpu:0'), self.cached_name_scope():
             ret = self.queue.dequeue_many(self.batch_size, name='input_deque')
             if isinstance(ret, tf.Tensor):  # only one input
                 ret = [ret]
@@ -345,7 +343,8 @@ class TensorInput(FeedfreeInput):
         return self._fixed_size
 
     def _get_input_tensors(self):
-        ret = self.get_tensor_fn()
+        with self.cached_name_scope():
+            ret = self.get_tensor_fn()
         assert len(ret) == len(self._desc), "{} != {}".format(len(ret), len(self._desc))
         return ret
 
@@ -452,8 +451,7 @@ class StagingInputWrapper(FeedfreeInput):
 
     def _setup_staging_areas(self):
         logger.info("Setting up StagingArea for GPU prefetching ...")
-        with tf.name_scope('StagingInputWrapper') as ns:
-            self._name_scope = ns
+        with self.cached_name_scope():
             for idx, device in enumerate(self._devices):
                 with tf.device(device):
                     inputs = self._input.get_input_tensors()
@@ -477,10 +475,10 @@ class StagingInputWrapper(FeedfreeInput):
         return ret
 
     def _get_stage_op(self):
-        with tf.name_scope(self._name_scope):
+        with self.cached_name_scope():
             return tf.group(*self._stage_ops)
 
     def _get_unstage_op(self):
-        with tf.name_scope(self._name_scope):
+        with self.cached_name_scope():
             all_outputs = list(chain.from_iterable(self._unstage_ops))
             return tf.group(*all_outputs)

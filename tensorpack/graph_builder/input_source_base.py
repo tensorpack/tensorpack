@@ -4,6 +4,8 @@
 
 from abc import ABCMeta, abstractmethod
 import six
+from contextlib import contextmanager
+import tensorflow as tf
 
 from ..utils.argtools import memoized
 from ._utils import get_sublist_by_names, get_tensors_inputs
@@ -14,6 +16,8 @@ __all__ = ['InputSource', 'remap_input_source']
 @six.add_metaclass(ABCMeta)
 class InputSource(object):
     """ Base class for the abstract InputSource. """
+
+    _name_scope = None
 
     def get_input_tensors(self):
         """
@@ -75,6 +79,21 @@ class InputSource(object):
 
     def _size(self):
         raise NotImplementedError()
+
+    @contextmanager
+    def cached_name_scope(self):
+        """
+        Yield a context under a cached name scope, whose name is the name of
+        this InputSource class.
+        """
+        if self._name_scope:
+            with tf.name_scope(self._name_scope):
+                yield self._name_scope
+        else:
+            name = type(self).__name__
+            with tf.name_scope(name) as ns:
+                self._name_scope = ns
+                yield ns
 
 
 class ProxyInputSource(InputSource):

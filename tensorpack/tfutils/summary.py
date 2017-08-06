@@ -156,16 +156,14 @@ def _enter_vs_reuse_ns(name):
             yield vs
 
 
-def add_moving_summary(v, *args, **kwargs):
+def add_moving_summary(*args, **kwargs):
     """
     Enable moving average summary for some tensors.
     It's only effective in the main training tower, otherwise calling this
     function is a no-op.
 
     Args:
-        v (tf.Tensor or list): tensor or list of tensors to summary. Must have
-            scalar type.
-        args: tensors to summary (to support positional arguments)
+        args: tensors to summary
         decay (float): the decay rate. Defaults to 0.95.
         collection (str): the name of the collection to add EMA-maintaining ops.
             The default will work together with the default
@@ -178,9 +176,12 @@ def add_moving_summary(v, *args, **kwargs):
     ctx = get_current_tower_context()
     if ctx is not None and not ctx.is_main_training_tower:
         return
-    if not isinstance(v, list):
-        v = [v]
-    v.extend(args)
+
+    if not isinstance(args[0], list):
+        v = args
+    else:
+        log_deprecated("Call add_moving_summary with positional args instead of a list!")
+        v = args[0]
     for x in v:
         assert isinstance(x, tf.Tensor), x
         assert x.get_shape().ndims == 0, x.get_shape()
@@ -195,8 +196,7 @@ def add_moving_summary(v, *args, **kwargs):
                 ema_var = tf.get_variable(name, shape=c.shape, dtype=c.dtype,
                                           initializer=tf.constant_initializer(), trainable=False)
                 ns = vs.original_name_scope
-            # first clear NS to avoid duplicated name in variables
-            with tf.name_scope(ns):
+            with tf.name_scope(ns):     # reuse VS&NS so that no EMA_1 will appear
                 ema_op = moving_averages.assign_moving_average(
                     ema_var, c, decay,
                     zero_debias=True, name=name + '_EMA_apply')
