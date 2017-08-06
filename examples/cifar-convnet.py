@@ -155,4 +155,4 @@ if __name__ == '__main__':
         if config.nr_tower <= 1:
             QueueInputTrainer(config).train()
         else:
-            SyncMultiGPUTrainer(config).train()
+            AsyncMultiGPUTrainer(config).train()

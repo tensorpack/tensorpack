@@ -104,22 +104,25 @@ class Model(GANModelDesc):
                 with tf.variable_scope('dec'):
                     recon_pos = self.decoder(hidden_pos)
                     recon_neg = self.decoder(hidden_neg)
+
+        with tf.name_scope('viz'):
             summary_image('generated-samples', image_gen)
             summary_image('reconstruct-real', recon_pos)
             summary_image('reconstruct-fake', recon_neg)
 
+        with tf.name_scope('losses'):
             L_pos = tf.reduce_mean(tf.abs(recon_pos - image_pos), name='loss_pos')
             L_neg = tf.reduce_mean(tf.abs(recon_neg - image_gen), name='loss_neg')
 
-        eq = tf.subtract(GAMMA * L_pos, L_neg, name='equilibrium')
-        measure = tf.add(L_pos, tf.abs(eq), name='measure')
+            eq = tf.subtract(GAMMA * L_pos, L_neg, name='equilibrium')
+            measure = tf.add(L_pos, tf.abs(eq), name='measure')
 
-        kt = tf.get_variable('kt', dtype=tf.float32, initializer=0.0)
+            kt = tf.get_variable('kt', dtype=tf.float32, initializer=0.0)
 
-        update_kt = kt.assign_add(1e-3 * eq)
-        with tf.control_dependencies([update_kt]):
-            self.d_loss = tf.subtract(L_pos, kt * L_neg, name='loss_D')
-            self.g_loss = L_neg
+            update_kt = kt.assign_add(1e-3 * eq)
+            with tf.control_dependencies([update_kt]):
+                self.d_loss = tf.subtract(L_pos, kt * L_neg, name='loss_D')
+                self.g_loss = L_neg
 
         add_moving_summary(L_pos, L_neg, eq, measure, self.d_loss)
         tf.summary.scalar('kt-summary', kt)

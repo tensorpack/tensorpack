@@ -77,9 +77,10 @@ class GANTrainer(Trainer):
         opt = model.get_optimizer()
 
         # by default, run one d_min after one g_min
-        g_min = opt.minimize(model.g_loss, var_list=model.g_vars, name='g_op')
-        with tf.control_dependencies([g_min]):
-            d_min = opt.minimize(model.d_loss, var_list=model.d_vars, name='d_op')
+        with tf.name_scope('optimize'):
+            g_min = opt.minimize(model.g_loss, var_list=model.g_vars, name='g_op')
+            with tf.control_dependencies([g_min]):
+                d_min = opt.minimize(model.d_loss, var_list=model.d_vars, name='d_op')
         self.train_op = d_min
 
         super(GANTrainer, self).__init__(config)
@@ -106,10 +107,11 @@ class SeparateGANTrainer(Trainer):
             model.build_graph(input)
 
         opt = model.get_optimizer()
-        self.d_min = opt.minimize(
-            model.d_loss, var_list=model.d_vars, name='d_min')
-        self.g_min = opt.minimize(
-            model.g_loss, var_list=model.g_vars, name='g_min')
+        with tf.name_scope('optimize'):
+            self.d_min = opt.minimize(
+                model.d_loss, var_list=model.d_vars, name='d_min')
+            self.g_min = opt.minimize(
+                model.g_loss, var_list=model.g_vars, name='g_min')
 
         super(SeparateGANTrainer, self).__init__(config)
 
@@ -142,16 +144,17 @@ class MultiGPUGANTrainer(Trainer):
         cost_list = MultiGPUTrainerBase.build_on_multi_tower(
             config.tower, get_cost, devices)
         # simply average the cost. It might get faster to average the gradients
-        d_loss = tf.add_n([x[0] for x in cost_list]) * (1.0 / nr_gpu)
-        g_loss = tf.add_n([x[1] for x in cost_list]) * (1.0 / nr_gpu)
+        with tf.name_scope('optimize'):
+            d_loss = tf.add_n([x[0] for x in cost_list]) * (1.0 / nr_gpu)
+            g_loss = tf.add_n([x[1] for x in cost_list]) * (1.0 / nr_gpu)
 
-        opt = model.get_optimizer()
-        # run one d_min after one g_min
-        g_min = opt.minimize(g_loss, var_list=model.g_vars,
-                             colocate_gradients_with_ops=True, name='g_op')
-        with tf.control_dependencies([g_min]):
-            d_min = opt.minimize(d_loss, var_list=model.d_vars,
-                                 colocate_gradients_with_ops=True, name='d_op')
+            opt = model.get_optimizer()
+            # run one d_min after one g_min
+            g_min = opt.minimize(g_loss, var_list=model.g_vars,
+                                 colocate_gradients_with_ops=True, name='g_op')
+            with tf.control_dependencies([g_min]):
+                d_min = opt.minimize(d_loss, var_list=model.d_vars,
+                                     colocate_gradients_with_ops=True, name='d_op')
         self.train_op = d_min
         super(MultiGPUGANTrainer, self).__init__(config)
 

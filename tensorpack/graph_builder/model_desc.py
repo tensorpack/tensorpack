@@ -146,8 +146,11 @@ class ModelDesc(ModelDescBase):
         ``tf.GraphKeys.REGULARIZATION_LOSSES`` to the cost automatically.
         """
         cost = self._get_cost()
-        return tf.add(cost, regularize_cost_from_collection(),
-                      name='cost_with_regularizer')
+        reg_cost = regularize_cost_from_collection()
+        if reg_cost:
+            return tf.add(cost, reg_cost, name='cost_with_regularizer')
+        else:
+            return cost
 
     def _get_cost(self, *args):
         return self.cost

@@ -174,24 +174,25 @@ class AccumGradOptimizer(ProxyOptimizer):
                 counter = tf.Variable(
                     0, name="counter", trainable=False, dtype=tf.int32)
 
-        ops = []
-        for s, gv in zip(slots, grads_and_vars):
-            g, v = gv
-            ops.append(s.assign_add(g))
-        update_counter = tf.assign_add(counter, 1, name='update_counter')
-        update_slot_op = tf.group(update_counter, *ops, name='update_slot')
+        with tf.name_scope('AccumGradOptimizer'):
+            ops = []
+            for s, gv in zip(slots, grads_and_vars):
+                g, v = gv
+                ops.append(s.assign_add(g))
+            update_counter = tf.assign_add(counter, 1, name='update_counter')
+            update_slot_op = tf.group(update_counter, *ops, name='update_slot')
 
-        def update_grad():
-            update_op = self._opt.apply_gradients(slots_and_vars)
-            with tf.control_dependencies([update_op]):
-                clear_ops = [tf.assign(s, tf.zeros_like(s)) for s in slots]
-            return tf.group(*clear_ops, name='update_grad')
+            def update_grad():
+                update_op = self._opt.apply_gradients(slots_and_vars)
+                with tf.control_dependencies([update_op]):
+                    clear_ops = [tf.assign(s, tf.zeros_like(s)) for s in slots]
+                return tf.group(*clear_ops, name='update_grad')
 
-        pred = tf.equal(tf.mod(counter, self._niter), 0)
-        with tf.control_dependencies([update_slot_op]):
-            if name is None:
-                name = 'cond_update_grad'
-            op = tf.cond(pred, update_grad, tf.no_op, name=name).op
+            pred = tf.equal(tf.mod(counter, self._niter), 0)
+            with tf.control_dependencies([update_slot_op]):
+                if name is None:
+                    name = 'cond_update_grad'
+                op = tf.cond(pred, update_grad, tf.no_op, name=name).op
         return op
 
 
@@ -201,7 +202,7 @@ if __name__ == '__main__':
     x = tf.get_variable('x', shape=[6])
     cost = tf.reduce_sum(tf.abs(x), name='cost')
     opt = tf.train.GradientDescentOptimizer(0.01)
-    # opt = AccumGradOptimizer(opt, 5)
+    opt = AccumGradOptimizer(opt, 5)
     min_op = opt.minimize(cost)
 
     sess = tf.Session()

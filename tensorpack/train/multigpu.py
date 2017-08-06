@@ -403,14 +403,15 @@ class AsyncMultiGPUTrainer(MultiGPUTrainerBase):
 
         train_ops = []
         opt = model.get_optimizer()
-        for i, grad_and_vars in enumerate(zip(*grad_list)):
-            # Ngpu x 2
-            v = grad_and_vars[0][1]
-            with tf.device(v.device):
-                # will call apply_gradients (therefore gradproc) multiple times
-                train_ops.append(opt.apply_gradients(
-                    grad_and_vars, name='apply_grad_{}'.format(i)))
-        return tf.group(*train_ops, name='train_op'), callbacks
+        with tf.name_scope('async_apply_gradients'):
+            for i, grad_and_vars in enumerate(zip(*grad_list)):
+                # Ngpu x 2
+                v = grad_and_vars[0][1]
+                with tf.device(v.device):
+                    # will call apply_gradients (therefore gradproc) multiple times
+                    train_ops.append(opt.apply_gradients(
+                        grad_and_vars, name='apply_grad_{}'.format(i)))
+            return tf.group(*train_ops, name='train_op'), callbacks
 
     def _setup(self):
         self.train_op, cbs = AsyncMultiGPUTrainer.setup_graph(

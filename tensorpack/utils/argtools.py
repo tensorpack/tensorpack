@@ -11,7 +11,7 @@ if six.PY2:
 else:
     import functools
 
-__all__ = ['map_arg', 'memoized', 'shape2d', 'shape4d',
+__all__ = ['map_arg', 'memoized', 'graph_memoized', 'shape2d', 'shape4d',
            'memoized_ignoreargs', 'log_once']
 
 

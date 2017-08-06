@@ -7,11 +7,13 @@ import tensorflow as tf
 import re
 import io
 from six.moves import range
+from contextlib import contextmanager
 
 from tensorflow.python.training import moving_averages
 
 from ..utils import logger
 from ..utils.develop import log_deprecated
+from ..utils.argtools import graph_memoized
 from ..utils.naming import MOVING_SUMMARY_OPS_KEY
 from .tower import get_current_tower_context
 from .symbolic_functions import rms
@@ -140,6 +142,20 @@ def add_param_summary(*summary_lists):
                         perform(p, act)
 
 
+@graph_memoized
+def _get_cached_vs(name):
+    with tf.variable_scope(name) as scope:
+        return scope
+
+
+@contextmanager
+def _enter_vs_reuse_ns(name):
+    vs = _get_cached_vs(name)
+    with tf.variable_scope(vs):
+        with tf.name_scope(vs.original_name_scope):
+            yield vs
+
+
 def add_moving_summary(v, *args, **kwargs):
     """
     Enable moving average summary for some tensors.
@@ -173,19 +189,18 @@ def add_moving_summary(v, *args, **kwargs):
 
     for c in v:
         name = re.sub('tower[0-9]+/', '', c.op.name)
-        with G.colocate_with(c):
-            with tf.variable_scope('EMA') as vs:
+        with G.colocate_with(c), tf.name_scope(None):
+            with _enter_vs_reuse_ns('EMA') as vs:
                 # will actually create ns EMA_1, EMA_2, etc. tensorflow#6007
                 ema_var = tf.get_variable(name, shape=c.shape, dtype=c.dtype,
                                           initializer=tf.constant_initializer(), trainable=False)
                 ns = vs.original_name_scope
             # first clear NS to avoid duplicated name in variables
-            with tf.name_scope(None), tf.name_scope(ns):
+            with tf.name_scope(ns):
                 ema_op = moving_averages.assign_moving_average(
                     ema_var, c, decay,
                     zero_debias=True, name=name + '_EMA_apply')
-            with tf.name_scope(None):
-                tf.summary.scalar(name + '-summary', ema_op)
+            tf.summary.scalar(name + '-summary', ema_op)
             tf.add_to_collection(coll, ema_op)
             # TODO a new collection to summary every step?
 

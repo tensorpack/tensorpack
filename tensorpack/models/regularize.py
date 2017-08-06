@@ -64,7 +64,7 @@ def regularize_cost_from_collection(name='regularize_cost'):
     In replicated mode, will only regularize variables within the current tower.
 
     Returns:
-        a scalar tensor, the regularization loss.
+        a scalar tensor, the regularization loss, or 0
     """
     regularization_losses = set(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES))
     ctx = get_current_tower_context()
@@ -73,12 +73,11 @@ def regularize_cost_from_collection(name='regularize_cost'):
         # It is only added with variables that are newly created.
         if ctx.has_own_variables:   # be careful of the first tower (name='')
             regularization_losses = ctx.filter_vars_by_vs_name(regularization_losses)
-        print([k.name for k in regularization_losses])
         logger.info("Add REGULARIZATION_LOSSES of {} tensors on the total cost.".format(len(regularization_losses)))
         reg_loss = tf.add_n(list(regularization_losses), name=name)
         return reg_loss
     else:
-        return tf.constant(0, dtype=tf.float32, name='empty_' + name)
+        return 0
 
 
 @layer_register(log_shape=False, use_scope=False)
