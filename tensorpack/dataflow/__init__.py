@@ -5,6 +5,7 @@
 from pkgutil import iter_modules
 import os
 import os.path
+from ..utils.develop import LazyLoader
 
 __all__ = []
 
@@ -30,14 +31,9 @@ for _, module_name, __ in iter_modules(
         _global_import(module_name)
 
 
-class _LazyModule(object):
-    def __init__(self, modname):
-        self._modname = modname
+dataset = LazyLoader('dataset', globals(), 'tensorpack.dataflow.dataset')
+imgaug = LazyLoader('imgaug', globals(), 'tensorpack.dataflow.imgaug')
 
-    def __getattr__(self, name):
-        dataset = __import__(self._modname, globals(), locals(), [name], 1)
-        return getattr(dataset, name)
+del LazyLoader
 
-
-dataset = _LazyModule('dataset')
 __all__.extend(['imgaug', 'dftools', 'dataset'])
