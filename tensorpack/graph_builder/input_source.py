@@ -20,6 +20,7 @@ from ..tfutils.tower import get_current_tower_context
 from ..utils import logger
 from ..utils.concurrency import ShareSessionThread
 from ..callbacks.base import Callback
+from ..callbacks.graph import RunOp
 
 __all__ = ['PlaceholderInput', 'FeedInput', 'DataParallelFeedInput',
            'FeedfreeInput',
@@ -178,9 +179,6 @@ class EnqueueThread(ShareSessionThread):
 
         self.op = self.queue.enqueue(self.placehdrs)
         self.close_op = self.queue.close(cancel_pending_enqueues=True)
-        self.size_op = self.queue.size()
-        add_moving_summary(tf.cast(
-            self.size_op, tf.float32, name='queue_size'))
 
     def run(self):
         with self.default_sess():
@@ -235,11 +233,22 @@ class QueueInput(FeedfreeInput):
                     name='input_queue')
             self.thread = EnqueueThread(self.queue, self.ds, self._input_placehdrs)
 
+    def _create_ema_callback(self):
+        with self.cached_name_scope():
+            # in TF there is no API to get queue capacity, so we can only summary the size
+            size = tf.cast(self.queue.size(), tf.float32, name='queue_size')
+        size_ema_op = add_moving_summary(size, collection=None)[0].op
+        return RunOp(
+            lambda: size_ema_op,
+            run_before=False,
+            run_as_trigger=False,
+            run_step=True)
+
     def _get_callbacks(self):
         from ..callbacks.concurrency import StartProcOrThread
         cb = StartProcOrThread(self.thread)
         cb.chief_only = False
-        return [cb]
+        return [cb, self._create_ema_callback()]
 
     def _get_input_tensors(self):
         with tf.device('/cpu:0'), self.cached_name_scope():

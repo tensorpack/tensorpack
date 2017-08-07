@@ -16,7 +16,7 @@ from six.moves import range
 from ..utils import logger
 from ..utils.utils import get_tqdm_kwargs
 from ..utils.develop import deprecated
-from ..dataflow import DataFlow
+from ..dataflow.base import DataFlow, DataFlowTerminated
 
 from ..graph_builder.input_source_base import InputSource
 from ..graph_builder.input_source import (
@@ -79,13 +79,13 @@ class InferenceRunnerBase(Callback):
         tower_id = self.trainer.config.predict_tower[0]
         device = '/gpu:{}'.format(tower_id) if tower_id >= 0 else '/cpu:0'
 
-        cbs = self._input_source.setup(self.trainer.model.get_inputs_desc())
+        self._input_callbacks = self._input_source.setup(self.trainer.model.get_inputs_desc())
         with tf.variable_scope(tf.get_variable_scope(), reuse=True):
             self._tower_handle = self.trainer.predictor_factory.build(
                 self._tower_name, device, self._input_source)
 
         self._hooks = [self._build_hook(inf) for inf in self.infs]
-        self._hooks.extend([CallbackToHook(cb) for cb in cbs])
+        self._hooks.extend([CallbackToHook(cb) for cb in self._input_callbacks])
 
         for inf in self.infs:
             inf.setup_graph(self.trainer)
@@ -108,8 +108,8 @@ class InferenceRunnerBase(Callback):
         try:
             for _ in tqdm.trange(self._size, **get_tqdm_kwargs()):
                 self._hooked_sess.run(fetches=[])
-        except StopIteration:
-            raise RuntimeError(
+        except (StopIteration, DataFlowTerminated):
+            logger.exception(
                 "[InferenceRunner] input stopped before reaching its size()! " + msg)
         for inf in self.infs:
             inf.trigger_epoch()

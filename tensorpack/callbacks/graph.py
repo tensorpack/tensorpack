@@ -56,7 +56,7 @@ class RunOp(Callback):
     def _before_run(self, _):
         if self.run_step:
             self._print()
-            return self._fetch  # faster than return [self._op]
+            return self._fetch
 
     def _print(self):
         if self.verbose:

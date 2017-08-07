@@ -165,15 +165,20 @@ def add_moving_summary(*args, **kwargs):
     Args:
         args: tensors to summary
         decay (float): the decay rate. Defaults to 0.95.
-        collection (str): the name of the collection to add EMA-maintaining ops.
+        collection (str or None): the name of the collection to add EMA-maintaining ops.
             The default will work together with the default
             :class:`MovingAverageSummary` callback.
+
+    Returns:
+        [tf.Tensor]: list of tensors returned by assign_moving_average,
+            which can be used to maintain the EMA.
     """
     decay = kwargs.pop('decay', 0.95)
     coll = kwargs.pop('collection', MOVING_SUMMARY_OPS_KEY)
     assert len(kwargs) == 0, "Unknown arguments: " + str(kwargs)
 
     ctx = get_current_tower_context()
+    # allow ctx to be none
     if ctx is not None and not ctx.is_main_training_tower:
         return
 
@@ -188,21 +193,26 @@ def add_moving_summary(*args, **kwargs):
     G = tf.get_default_graph()
     # TODO variable not saved under distributed
 
+    ema_ops = []
     for c in v:
         name = re.sub('tower[0-9]+/', '', c.op.name)
         with G.colocate_with(c), tf.name_scope(None):
+            # assign_moving_average creates variables with op names, therefore clear ns first.
             with _enter_vs_reuse_ns('EMA') as vs:
-                # will actually create ns EMA_1, EMA_2, etc. tensorflow#6007
                 ema_var = tf.get_variable(name, shape=c.shape, dtype=c.dtype,
                                           initializer=tf.constant_initializer(), trainable=False)
                 ns = vs.original_name_scope
-            with tf.name_scope(ns):     # reuse VS&NS so that no EMA_1 will appear
+            with tf.name_scope(ns):     # reuse VS&NS so that EMA_1 won't appear
                 ema_op = moving_averages.assign_moving_average(
                     ema_var, c, decay,
                     zero_debias=True, name=name + '_EMA_apply')
-            tf.summary.scalar(name + '-summary', ema_op)
-            tf.add_to_collection(coll, ema_op)
+            tf.summary.scalar(name + '-summary', ema_op)    # write the EMA value as a summary
+            ema_ops.append(ema_op)
+    if coll is not None:
+        for op in ema_ops:
             # TODO a new collection to summary every step?
+            tf.add_to_collection(coll, op)
+    return ema_ops
 
 
 try:

@@ -141,7 +141,8 @@ class MapGradient(GradientProcessor):
 _summaried_gradient = set()
 
 
-# TODO let the maintain op depend on grad directly ?
+# TODO has dependency problems: sess.run may not depend on grad
+# maybe group maintain op and grad ?
 class SummaryGradient(MapGradient):
     """
     Summary histogram and RMS for each gradient variable.

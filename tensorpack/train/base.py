@@ -34,7 +34,7 @@ class StopTraining(BaseException):
 class MaintainStepCounter(Callback):
     """
     It maintains the global step in the graph, making sure it's increased by one.
-    This callback is always enabled by the trainer, and you wouldn't need to use it.
+    This callback is always enabled by the trainer, you don't need to worry about it.
     """
     def _setup_graph(self):
         # ensure it exists
@@ -64,10 +64,10 @@ class Trainer(object):
 
     Attributes:
         config (TrainConfig): the config used in this trainer.
-        model (ModelDesc):
+        model (ModelDesc): alias for ``config.model``.
         sess (tf.Session): the current session in use.
         hooked_sess (tf.MonitoredSession): the session with hooks.
-        monitors (Monitors): the monitors. Callbacks can use it for logging.
+        monitors (Monitors): the monitors. Other callbacks can use it for logging.
         local_step (int): the number of (tensorpack) steps that have finished in the current epoch.
     """
     # step attr only available after before_train?

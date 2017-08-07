@@ -18,9 +18,9 @@ __all__ = ['StepTensorPrinter', 'ProgressBar']
 
 
 class StepTensorPrinter(Callback):
-    """ It prints the value of some tensors in each step.
-    It's just a demo of how trigger_step works but you should in general use
-    :func:`symbolic_functions.print_stat` or :func:`tf.Print` instead. """
+    """ Prints the value of some tensors in each step.
+        It's an example of how ``before_run/after_run`` works.
+    """
 
     def __init__(self, names):
         """
@@ -31,7 +31,7 @@ class StepTensorPrinter(Callback):
         logger.warn("Using print_stat or tf.Print in the graph is much faster than StepTensorPrinter!")
         self._names = names
 
-    def _before_train(self):
+    def _setup_graph(self):
         self._fetches = get_op_or_tensor_by_name(self._names)
 
     def _before_run(self, _):
