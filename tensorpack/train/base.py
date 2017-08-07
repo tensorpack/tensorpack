@@ -179,7 +179,7 @@ class Trainer(object):
         """
         try:
             return self._starting_step + \
-                self.config.steps_per_epoch * (self.epoch_num - 1) + \
+                self.config.steps_per_epoch * (self.epoch_num - self.config.starting_epoch) + \
                 self.local_step + 1  # +1: the ongoing step
         except AttributeError:
             return get_global_step_value()
