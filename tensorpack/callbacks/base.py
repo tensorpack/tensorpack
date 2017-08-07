@@ -19,9 +19,9 @@ class Callback(object):
     for more detailed explanation of the callback methods.
 
     Attributes:
-        epoch_num(int): the number of the current epoch.
-        global_step(int): the number of global steps that have finished or is currently running.
-        local_step(int): the local steps within the current epoch.
+        epoch_num(int): trainer.epoch_num
+        global_step(int): trainer.global_step
+        local_step(int): trainer.local_step
         trainer(Trainer): the trainer.
         graph(tf.Graph): the graph.
 

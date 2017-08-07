@@ -28,7 +28,8 @@ class FeedfreeTrainerBase(Trainer):
 
     def _setup(self):
         assert isinstance(self._input_source, FeedfreeInput), type(self._input_source)
-        self._setup_input_source(self._input_source)
+        cbs = self._setup_input_source.setup(self.model.get_inputs_desc())
+        self.config.callbacks.extend(cbs)
 
 
 # deprecated

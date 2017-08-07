@@ -83,7 +83,6 @@ if __name__ == '__main__':
             max_epoch=200,
             session_init=SaverRestore(args.load) if args.load else None
         )
-        """
-        The original code uses a different schedule, but this seems to work well.
-        """
+        # The original code uses a different schedule, but this seems to work well.
+        # Train 1 D after 2 G
         SeparateGANTrainer(config, d_period=3).train()

@@ -10,14 +10,11 @@ import tqdm
 
 from ..utils import logger
 from ..utils.utils import get_tqdm_kwargs
-from ..utils.naming import GLOBAL_STEP_INCR_OP_NAME
 from ..tfutils.common import (
-    get_op_tensor_name, get_global_step_var,
-    get_global_step_value, get_op_or_tensor_by_name)
+    get_op_tensor_name, get_op_or_tensor_by_name)
 from .base import Callback
 
-__all__ = ['StepTensorPrinter', 'MaintainStepCounter',
-           'ProgressBar']
+__all__ = ['StepTensorPrinter', 'ProgressBar']
 
 
 class StepTensorPrinter(Callback):
@@ -45,39 +42,6 @@ class StepTensorPrinter(Callback):
         assert len(args) == len(self._names), len(args)
         for n, v in zip(self._names, args):
             logger.info("{}: {}".format(n, v))
-
-
-class MaintainStepCounter(Callback):
-    """
-    It maintains the global step in the graph, making sure it's increased by one in every `run_step` call.
-    This callback is always enabled by the trainer, and you wouldn't need to use it.
-    """
-    def _setup_graph(self):
-        # ensure it exists
-        gs_var = get_global_step_var()
-        with tf.name_scope(None):
-            with tf.device(gs_var.device):
-                self.gs_incr_op = tf.assign_add(
-                    gs_var, 1,
-                    name=GLOBAL_STEP_INCR_OP_NAME).op
-            # tf.mod(
-            #     self.gs_incr_var, self.trainer.config.steps_per_epoch,
-            #     name=LOCAL_STEP_OP_NAME)
-        self._fetches = tf.train.SessionRunArgs(self.gs_incr_op)
-
-    def _before_train(self):
-        gs_val = get_global_step_value()
-        if gs_val != 0:
-            logger.info("Start training with global_step={}".format(gs_val))
-        self._last_updated = self.local_step
-
-    def _before_run(self, _):
-        # increase global_step, when trainer.local_step changed
-        if self.local_step != self._last_updated:
-            self._last_updated = self.local_step
-            return self._fetches
-        else:
-            return None
 
 
 class ProgressBar(Callback):
