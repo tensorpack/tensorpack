@@ -105,8 +105,8 @@ class Trainer(object):
 
     def register_callback(self, cb):
         """
-        Use this method before :meth:`Trainer._setup` finishes,
-        to register a callback to the trainer.
+        Register a callback to the trainer.
+        It can only be called before :meth:`Trainer.train` gets called.
         """
         assert isinstance(cb, Callback), cb
         assert not isinstance(self._callbacks, Callbacks), \
@@ -117,6 +117,10 @@ class Trainer(object):
             self._callbacks.append(cb)
 
     def register_monitor(self, mon):
+        """
+        Register a monitor to the trainer.
+        It can only be called before :meth:`Trainer.train` gets called.
+        """
         assert isinstance(mon, TrainingMonitor), mon
         assert not isinstance(self.monitors, Monitors), \
             "Cannot register more monitors after trainer was setup!"
@@ -200,12 +204,12 @@ class Trainer(object):
     @property
     def global_step(self):
         """
-        The tensorflow global_step, i.e. how many times `hooked_sess.run` has been called.
+        The tensorflow global_step, i.e. how many times ``hooked_sess.run`` has been called.
 
         Note:
-            1. global_step is incremented **after** each `hooked_sess.run` returns from TF runtime.
-            2. If you make zero or more than one calls to `hooked_sess.run` in one
-               `run_step`, local_step and global_step may increment at different speed.
+            1. global_step is incremented **after** each ``hooked_sess.run`` returns from TF runtime.
+            2. If you make zero or more than one calls to ``hooked_sess.run`` in one
+               :meth:`run_step`, local_step and global_step may increment at different speed.
         """
         return self._global_step
 

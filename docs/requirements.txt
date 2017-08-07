@@ -1,7 +1,6 @@
 termcolor
 numpy
 tqdm
-decorator
 tensorflow
 Sphinx>=1.6
 recommonmark==0.4.0

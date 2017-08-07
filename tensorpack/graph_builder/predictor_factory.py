@@ -10,7 +10,7 @@ from ..tfutils.collection import freeze_collection
 from ..utils.naming import TOWER_FREEZE_KEYS
 from .input_source import PlaceholderInput
 
-__all__ = ['PredictorFactory']
+__all__ = []
 
 
 class PredictorTowerHandle(object):

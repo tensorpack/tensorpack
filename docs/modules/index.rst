@@ -5,9 +5,10 @@ API Documentation
   :maxdepth: 1
 
 
-  models
   dataflow
+  models
   callbacks
+  graph_builder
   train
   predict
   tfutils
