@@ -3,7 +3,7 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import numpy as np
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
 import six
 from six.moves import zip
 
@@ -15,12 +15,11 @@ from ..tfutils.common import get_op_tensor_name
 __all__ = ['ScalarStats', 'Inferencer',
            'ClassificationError', 'BinaryClassificationStats']
 
-# TODO rename get_output_tensors to get_output_names
-
 
 @six.add_metaclass(ABCMeta)
 class Inferencer(Callback):
-    """ Base class of Inferencer. To be used with :class:`InferenceRunner`. """
+    """ Base class of Inferencer.
+    Inferencer is a special kind of callback that should be called by :class:`InferenceRunner`. """
 
     def _before_epoch(self):
         self._before_inference()
@@ -29,20 +28,6 @@ class Inferencer(Callback):
         """
         Called before a new round of inference starts.
         """
-        pass
-
-    def datapoint(self, output):
-        """
-        Called after each new datapoint finished the forward inference.
-
-        Args:
-            output(list): list of output this inferencer needs. Has the same
-                length as ``self.get_output_tensors()``.
-        """
-        self._datapoint(output)
-
-    @abstractmethod
-    def _datapoint(self, output):
         pass
 
     def _trigger_epoch(self):
@@ -65,16 +50,43 @@ class Inferencer(Callback):
         """
         pass
 
-    def get_output_tensors(self):
+    def get_fetches(self):
         """
         Return a list of tensor names (guaranteed not op name) this inferencer needs.
         """
-        ret = self._get_output_tensors()
+        try:
+            ret = self._get_fetches()
+        except NotImplementedError:
+            logger.warn("Inferencer._get_output_tensors was renamed to _get_fetches")
+            ret = self._get_output_tensors()
+
         return [get_op_tensor_name(n)[1] for n in ret]
 
-    @abstractmethod
     def _get_output_tensors(self):
         pass
+
+    def _get_fetches(self):
+        raise NotImplementedError()
+
+    def on_fetches(self, results):
+        """
+        Called after each new datapoint finished the forward inference.
+
+        Args:
+            results(list): list of results this inferencer fetched. Has the same
+                length as ``self._get_fetches()``.
+        """
+        try:
+            self._on_fetches(results)
+        except NotImplementedError:
+            logger.warn("Inferencer._datapoint was renamed to _on_fetches")
+            self._datapoint(results)
+
+    def _datapoint(self, results):
+        pass
+
+    def _on_fetches(self, results):
+        raise NotImplementedError()
 
 
 class ScalarStats(Inferencer):
@@ -96,13 +108,13 @@ class ScalarStats(Inferencer):
             self.names = names
         self.prefix = prefix
 
-    def _get_output_tensors(self):
-        return self.names
-
     def _before_inference(self):
         self.stats = []
 
-    def _datapoint(self, output):
+    def _get_fetches(self):
+        return self.names
+
+    def _on_fetches(self, output):
         self.stats.append(output)
 
     def _after_inference(self):
@@ -142,13 +154,13 @@ class ClassificationError(Inferencer):
         self.wrong_tensor_name = wrong_tensor_name
         self.summary_name = summary_name
 
-    def _get_output_tensors(self):
-        return [self.wrong_tensor_name]
-
     def _before_inference(self):
         self.err_stat = RatioCounter()
 
-    def _datapoint(self, outputs):
+    def _get_fetches(self):
+        return [self.wrong_tensor_name]
+
+    def _on_fetches(self, outputs):
         vec = outputs[0]
         # TODO put shape assertion into inference-runner
         assert vec.ndim == 1, "{} is not a vector!".format(self.wrong_tensor_name)
@@ -176,13 +188,13 @@ class BinaryClassificationStats(Inferencer):
         self.label_tensor_name = label_tensor_name
         self.prefix = prefix
 
-    def _get_output_tensors(self):
-        return [self.pred_tensor_name, self.label_tensor_name]
-
     def _before_inference(self):
         self.stat = BinaryStatistics()
 
-    def _datapoint(self, outputs):
+    def _get_fetches(self):
+        return [self.pred_tensor_name, self.label_tensor_name]
+
+    def _on_fetches(self, outputs):
         pred, label = outputs
         self.stat.feed(pred, label)
 

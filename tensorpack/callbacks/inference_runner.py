@@ -39,7 +39,7 @@ class InferencerToHook(tf.train.SessionRunHook):
         return tf.train.SessionRunArgs(fetches=self._fetches)
 
     def after_run(self, _, run_values):
-        self._inf.datapoint(run_values.results)
+        self._inf.on_fetches(run_values.results)
 
 
 @six.add_metaclass(ABCMeta)
@@ -136,7 +136,7 @@ class InferenceRunner(InferenceRunnerBase):
             input, infs, tower_name=tower_name, extra_hooks=extra_hooks)
 
     def _build_hook(self, inf):
-        out_names = inf.get_output_tensors()
+        out_names = inf.get_fetches()
         fetches = self._tower_handle.get_tensors(out_names)
         return InferencerToHook(inf, fetches)
 
@@ -199,16 +199,16 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
             res = run_values.results
             for i in range(0, len(res), self._sz):
                 vals = res[i:i + self._sz]
-                self._inf.datapoint(vals)
+                self._inf.on_fetches(vals)
 
     def _build_hook_parallel(self, inf):
-        out_names = inf.get_output_tensors()
+        out_names = inf.get_fetches()
         sz = len(out_names)
         fetches = list(itertools.chain(*[t.get_tensors(out_names) for t in self._handles]))
         return self.InferencerToHookDataParallel(inf, fetches, sz)
 
     def _build_hook(self, inf):
-        out_names = inf.get_output_tensors()
+        out_names = inf.get_fetches()
         fetches = self._handles[0].get_tensors(out_names)
         return InferencerToHook(inf, fetches)
 
