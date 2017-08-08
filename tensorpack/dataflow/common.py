@@ -364,7 +364,8 @@ class RandomChooseData(RNGDataFlow):
 
 class RandomMixData(RNGDataFlow):
     """
-    Perfectly mix datapoints from several DataFlow. Will stop when all DataFlow exhausted.
+    Perfectly mix datapoints from several DataFlow using their :meth:`size()`.
+    Will stop when all DataFlow exhausted.
     """
 
     def __init__(self, df_lists):
@@ -395,6 +396,7 @@ class RandomMixData(RNGDataFlow):
         assert idxs.max() == len(itrs) - 1, "{}!={}".format(idxs.max(), len(itrs) - 1)
         for k in idxs:
             yield next(itrs[k])
+        # TODO run till exception
 
 
 class ConcatData(DataFlow):

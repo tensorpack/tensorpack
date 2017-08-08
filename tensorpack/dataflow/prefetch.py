@@ -12,7 +12,6 @@ import os
 import zmq
 
 from .base import ProxyDataFlow, DataFlowTerminated
-from .common import RepeatedData
 from ..utils.concurrency import (ensure_proc_terminate,
                                  mask_sigint, start_proc_mask_signal,
                                  StoppableThread)
@@ -231,19 +230,30 @@ class ThreadedMapData(ProxyDataFlow):
     This is useful when the mapping function is the bottleneck, but you don't
     want to start processes for the entire dataflow pipeline.
 
-    With threads, there are tiny communication overhead, but due to GIL, you
-    should avoid starting the threads in your main process.
-    Note that the threads will only start in the process which calls
-    :meth:`reset_state()`.
-    So you can use ``PrefetchDataZMQ(ThreadedMapData(...), 1)`` to avoid GIL.
+    Notes:
+        1. There is tiny communication overhead with threads, but you
+        should avoid starting many threads in your main process to avoid GIL.
+
+        The threads will only start in the process which calls :meth:`reset_state()`.
+        Therefore you can use ``PrefetchDataZMQ(ThreadedMapData(...), 1)`` to avoid GIL.
+
+        2. Threads run in parallel and can take different time to run the
+           mapping function. Therefore the order of datapoints won't be
+           preserved, and datapoints from one pass of `df.get_data()` might get
+           mixed with datapoints from the next pass.
+
+           You can use **strict mode**, where `ThreadedMapData.get_data()`
+           is guranteed to produce the exact set which `df.get_data()`
+           produces. Although the order of data still isn't preserved.
     """
     class _WorkerThread(StoppableThread):
-        def __init__(self, inq, outq, map_func):
+        def __init__(self, inq, outq, map_func, strict):
             super(ThreadedMapData._WorkerThread, self).__init__()
             self.inq = inq
             self.outq = outq
             self.func = map_func
             self.daemon = True
+            self._strict = strict
 
         def run(self):
             while not self.stopped():
@@ -251,18 +261,23 @@ class ThreadedMapData(ProxyDataFlow):
                 dp = self.func(dp)
                 if dp is not None:
                     self.queue_put_stoppable(self.outq, dp)
+                else:
+                    assert not self._strict, \
+                        "[ThreadedMapData] Map function cannot return None when strict mode is used."
 
-    def __init__(self, ds, nr_thread, map_func, buffer_size=200):
+    def __init__(self, ds, nr_thread, map_func, buffer_size=200, strict=False):
         """
         Args:
             ds (DataFlow): the dataflow to map
             nr_thread (int): number of threads to use
             map_func (callable): datapoint -> datapoint | None
             buffer_size (int): number of datapoints in the buffer
+            strict (bool): use "strict mode", see notes above.
         """
         super(ThreadedMapData, self).__init__(ds)
 
-        self._iter_ds = RepeatedData(ds, -1)
+        self._iter_ds = ds
+        self._strict = strict
         self.nr_thread = nr_thread
         self.buffer_size = buffer_size
         self.map_func = map_func
@@ -276,29 +291,42 @@ class ThreadedMapData(ProxyDataFlow):
         self._in_queue = queue.Queue()
         self._out_queue = queue.Queue()
         self._threads = [ThreadedMapData._WorkerThread(
-            self._in_queue, self._out_queue, self.map_func)
+            self._in_queue, self._out_queue, self.map_func, self._strict)
             for _ in range(self.nr_thread)]
         for t in self._threads:
             t.start()
 
-        # fill the buffer
-        self._itr = self._iter_ds.get_data()
+        self._iter = self._iter_ds.get_data()
+
+        # only call once, to ensure inq+outq has a total of buffer_size elements
         self._fill_buffer()
 
     def _fill_buffer(self):
         n = self.buffer_size - self._in_queue.qsize() - self._out_queue.qsize()
-        if n <= 0:
+        assert n >= 0, n
+        if n == 0:
             return
         try:
             for _ in range(n):
-                self._in_queue.put(next(self._itr))
+                self._in_queue.put(next(self._iter))
         except StopIteration:
             logger.error("[ThreadedMapData] buffer_size cannot be larger than the size of the DataFlow!")
             raise
 
     def get_data(self):
-        self._fill_buffer()
-        sz = self.size()
-        for _ in range(sz):
-            self._in_queue.put(next(self._itr))
+        for dp in self._iter:
+            self._in_queue.put(dp)
             yield self._out_queue.get()
+
+        self._iter = self._iter_ds.get_data()
+        if self._strict:
+            # first call get() to clear the queues, then fill
+            for k in range(self.buffer_size):
+                dp = self._out_queue.get()
+                if k == self.buffer_size - 1:
+                    self._fill_buffer()
+                yield dp
+        else:
+            for _ in range(self.buffer_size):
+                self._in_queue.put(next(self._iter))
+                yield self._out_queue.get()
