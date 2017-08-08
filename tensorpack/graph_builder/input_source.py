@@ -134,7 +134,7 @@ class DataParallelFeedInput(FeedInput):
             # build a list of placeholders for each tower
             self._placehdrs_per_tower.append(
                 [v.build_placeholder(prefix=tname + '/') for v in inputs])
-        self._cb = self._DataParallelFeedCallback(self._repeat_ds, self._placehdrs_per_tower)
+        self._cb = self._DataParallelFeedCallback(self._iter_ds, self._placehdrs_per_tower)
         self.reset_state()
 
     def _get_input_tensors(self):
