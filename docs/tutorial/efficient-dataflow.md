@@ -126,7 +126,7 @@ If you identify this as a bottleneck, you can also use:
 
 Let's summarize what the above dataflow does:
 1. One thread iterates over a shuffled list of (filename, label) pairs, and put them into a queue of size 1000.
-2. 25 worker threads takes pairs and make them into (preprocessed image, label) pairs.
+2. 25 worker threads take pairs and make them into (preprocessed image, label) pairs.
 3. Both 1 and 2 happen in one separate process, and the results are sent back to main process through ZeroMQ.
 4. Main process makes batches, and other tensorpack modules will then take care of how they should go into the graph.
 

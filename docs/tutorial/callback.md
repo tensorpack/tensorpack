@@ -37,13 +37,17 @@ TrainConfig(
     # schedule the learning rate based on epoch number
     ScheduledHyperParamSetter('learning_rate',
                               [(30, 1e-2), (60, 1e-3), (85, 1e-4), (95, 1e-5)]),
-    # allow manually setting the learning rate during training
+    # can manually set the learning rate during training
     HumanHyperParamSetter('learning_rate'),
     # send validation error to my phone through pushbullet
     SendStat('curl -u your_id_xxx: https://api.pushbullet.com/v2/pushes \\
                -d type=note -d title="validation error" \\
                -d body={val-error-top1} > /dev/null 2>&1',
-               'val-error-top1')
+               'val-error-top1'),
+		# record GPU utilizations during training
+		GPUUtilizationTracker(),
+		# can pause the training and start a debug shell, to observe what's going on
+		InjectShell(shell='ipython')
   ],
   extra_callbacks=[    # these callbacks are enabled by default already
     # maintain and summarize moving average of some tensors defined in the model (e.g. training loss, training error)
@@ -69,6 +73,8 @@ TrainConfig(
 Notice that callbacks cover every detail of training, ranging from graph operations to the progress bar.
 This means you can customize every part of the training to your preference, e.g. display something
 different in the progress bar, evaluating part of the summaries at a different frequency, etc.
+These features may not be always useful, but think about how messy the main loop would look like if you
+were to write the logic together with the loops.
 
 See [Write a callback](http://tensorpack.readthedocs.io/en/latest/tutorial/extend/callback.html)
 on how to implement a callback.

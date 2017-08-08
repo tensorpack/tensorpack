@@ -32,15 +32,17 @@ The script expects a metagraph file which is also saved by `ModelSaver`.
 
 ## How to load a model / do transfer learning
 
-All model loading (in either training or testing) is through the `session_init` option
+All model loading (in either training or testing) is through the `session_init` initializer
 in `TrainConfig` or `PredictConfig`.
-It accepts a `SessionInit` instance, where the common options are `SaverRestore` which restores
+The common choices for this option are `SaverRestore` which restores a
 TF checkpoint, or `DictRestore` which restores a dict. (`get_model_loader` is a small helper to
 decide which one to use from a file name.)
 
-Doing transfer learning is straightforward. Variable restoring is completely based on name match between
+Doing transfer learning is trivial.
+Variable restoring is completely based on name match between
 the current graph and the `SessionInit` initializer.
-Therefore, if you want to load some model, just use the same variable name.
+Therefore, if you want to load some model, just use the same variable name
+so the old value will be loaded into the variable.
 If you want to re-train some layer, just rename it.
 Unmatched variables on both sides will be printed as a warning.
 

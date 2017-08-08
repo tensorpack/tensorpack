@@ -31,10 +31,10 @@ class SendStat(Callback):
 
 class InjectShell(Callback):
     """
-    When triggered, opens an IPython/pdb shell if a file exists.
-    Useful for interactive debug during training.
-
-    Using this callback requires ipython to be installed.
+    Allow users to create a specific file as a signal to pause
+    and iteratively debug the training.
+    When triggered, it detects whether the file exists, and opens an
+    IPython/pdb shell if yes.
     """
 
     def __init__(self, file='INJECT_SHELL.tmp', shell='ipython'):
