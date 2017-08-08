@@ -1,7 +1,8 @@
 
 # Input Pipeline
 
-This tutorial covers some general basics of the possible methods to send data from external sources to a TensorFlow graph,
+This tutorial contains some general discussions on the topic of
+"how to read data efficiently to work with TensorFlow",
 and how tensorpack support these methods.
 You don't have to read it because these are details under the tensorpack interface,
 but knowing it could help understand the efficiency and choose the best input pipeline for your task.
@@ -11,13 +12,15 @@ but knowing it could help understand the efficiency and choose the best input pi
 ![prefetch](https://cloud.githubusercontent.com/assets/1381301/26525192/36e5de48-4304-11e7-88ab-3b790bd0e028.png)
 
 A common sense no matter what framework you use:
-Start to prepare the next (batch of) data while you're training!
+<center>
+Prepare data in parallel with the training!
+</center>
 
 The reasons are:
 1. Data preparation often consumes non-trivial time (depend on the actual problem).
 2. Data preparation often uses completely different resources from training (see figure above) --
 	doing them together doesn't slow you down. In fact you can further parallelize different stages in
-	the preparation, because they also use different resources.
+	the preparation since they also use different resources.
 3. Data preparation often doesn't depend on the result of the previous training step.
 
 Let's do some simple math: according to [tensorflow/benchmarks](https://www.tensorflow.org/performance/benchmarks),
@@ -27,24 +30,27 @@ down your training by 10%. Think about how many more copies are made during your
 
 Failure to hide the data preparation latency is the major reason why people
 cannot see good GPU utilization. __Always choose a framework that allows latency hiding.__
-However most other TensorFlow wrappers are designed to be `feed_dict` based -- no latency hiding at all.
+However most other TensorFlow wrappers are designed to be `feed_dict` based.
 This is the major reason why tensorpack is [faster](https://gist.github.com/ppwwyyxx/8d95da79f8d97036a7d67c2416c851b6).
 
-## Python or C++ ?
+## Python Reader or TF Reader ?
 
-The above discussion is valid regardless of what you use to load/preprocess, Python code or TensorFlow operators (written in C++).
+The above discussion is valid regardless of what you use to load/preprocess data,
+either Python code or TensorFlow operators (written in C++).
 
 The benefits of using TensorFlow ops are:
-* Faster preprocessing.
+* Faster read/preprocessing.
 
 	* Potentially true, but not necessarily. With Python code you can call a variety of other fast libraries (e.g. lmdb), which
-		you have no access to in TF ops.
+		you have no access to in TF ops. For example, LMDB could be faster than TFRecords.
 	* Python may be just fast enough.
 
-		As long as data preparation runs faster than training, it makes no difference at all.
-		And for most types of problems, up to the scale of multi-GPU ImageNet training,
+		As long as data preparation runs faster than training, and the latency of all four blocks in the
+		above figure is hidden, it makes no difference at all.
+		For most types of problems, up to the scale of multi-GPU ImageNet training,
 		Python can offer enough speed if you use a fast library (e.g. `tensorpack.dataflow`).
-		See the [Efficient DataFlow](http://tensorpack.readthedocs.io/en/latest/tutorial/efficient-dataflow.html) tutorial.
+		See the [Efficient DataFlow](http://tensorpack.readthedocs.io/en/latest/tutorial/efficient-dataflow.html) tutorial
+		on how to build a fast Python reader with DataFlow.
 
 * No "Copy to TF" (i.e. `feed_dict`) stage.
 
@@ -53,6 +59,10 @@ The benefits of using TensorFlow ops are:
 		In tensorpack, TF queues are used to hide the "Copy to TF" latency,
 		and TF `StagingArea` can help hide the "Copy to GPU" latency.
 		They are used by most examples in tensorpack.
+
+The benefits of using Python reader is obvious:
+it's much much easier to write Python to read different data format,
+handle corner cases in noisy data, preprocess, etc.
 
 ## InputSource
 
@@ -67,7 +77,7 @@ For example,
 
 When you set `TrainConfig(dataflow=)`, tensorpack trainers automatically adds proper prefetching for you.
 You can also use `TrainConfig(data=)` option to use a customized `InputSource`.
-In cases you want to use TF ops rather than a DataFlow, you can use `TensorInput` as the `InputSource`
+In case you want to use TF ops rather than a DataFlow, you can use `TensorInput` as the `InputSource`
 (See the [PTB example](https://github.com/ppwwyyxx/tensorpack/tree/master/examples/PennTreebank)).
 
 ## Figure out the Bottleneck

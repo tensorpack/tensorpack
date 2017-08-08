@@ -246,10 +246,11 @@ class ThreadedMapData(ProxyDataFlow):
 
     Note:
         1. There is tiny communication overhead with threads, but you
-           should avoid starting many threads in your main process to avoid GIL.
+           should avoid starting many threads in your main process to reduce GIL contention.
 
            The threads will only start in the process which calls :meth:`reset_state()`.
-           Therefore you can use ``PrefetchDataZMQ(ThreadedMapData(...), 1)`` to avoid GIL.
+           Therefore you can use ``PrefetchDataZMQ(ThreadedMapData(...), 1)``
+           to reduce GIL contention.
 
         2. Threads run in parallel and can take different time to run the
            mapping function. Therefore the order of datapoints won't be

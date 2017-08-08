@@ -9,7 +9,7 @@ A DataFlow has a `get_data()` generator method,
 which yields `datapoints`.
 A datapoint is a **list** of Python objects which is called the `components` of a datapoint.
 
-For example, to train on MNIST dataset, you can build a DataFlow with a `get_data()` method
+For example, to train on MNIST dataset, you can write a DataFlow with a `get_data()` method
 that yields datapoints (lists) of two components:
 a numpy array of shape (64, 28, 28), and an array of shape (64,).
 
@@ -28,7 +28,7 @@ df = MyDataFlow(dir='/my/data', shuffle=True)
 df = AugmentImageComponent(df, [imgaug.Resize((225, 225))])
 # group data into batches of size 128
 df = BatchData(df, 128)
-# start 3 processes to run the dataflow in parallel, and communicate with ZeroMQ
+# start 3 processes to run the dataflow in parallel
 df = PrefetchDataZMQ(df, 3)
 ````
 You can find more complicated DataFlow in the [ResNet training script](../examples/ResNet/imagenet-resnet.py)
