@@ -158,8 +158,9 @@ class LMDBDataDecoder(MapData):
 class LMDBDataPoint(MapData):
     """
     Read a LMDB file and produce deserialized datapoints.
-    It reads the database produced by
-    :func:`tensorpack.dataflow.dftools.dump_dataflow_to_lmdb`.
+    It only accepts the database produced by
+    :func:`tensorpack.dataflow.dftools.dump_dataflow_to_lmdb`,
+    which uses :func:`tensorpack.utils.serialize.dumps` for serialization.
 
     Example:
         .. code-block:: python
