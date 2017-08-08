@@ -210,10 +210,6 @@ class ILSVRC12(RNGDataFlow):
 
             box = root.find('object').find('bndbox').getchildren()
             box = map(lambda x: float(x.text), box)
-            # box[0] /= size[0]
-            # box[1] /= size[1]
-            # box[2] /= size[0]
-            # box[3] /= size[1]
             return np.asarray(box, dtype='float32')
 
         with timed_operation('Loading Bounding Boxes ...'):
