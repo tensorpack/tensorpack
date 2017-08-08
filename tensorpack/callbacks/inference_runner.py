@@ -16,7 +16,7 @@ from six.moves import range
 from ..utils import logger
 from ..utils.utils import get_tqdm_kwargs
 from ..utils.develop import deprecated
-from ..dataflow.base import DataFlow, DataFlowTerminated
+from ..dataflow.base import DataFlow
 
 from ..graph_builder.input_source_base import InputSource
 from ..graph_builder.input_source import (
@@ -118,8 +118,8 @@ class InferenceRunnerBase(Callback):
         try:
             for _ in tqdm.trange(self._size, **get_tqdm_kwargs()):
                 self._hooked_sess.run(fetches=[])
-        except (StopIteration, DataFlowTerminated,
-                tf.errors.CancelledError, tf.errors.OutOfRangeError):
+        except (StopIteration, tf.errors.CancelledError,
+                tf.errors.OutOfRangeError):
             logger.error(
                 "[InferenceRunner] input stopped before reaching its size()! " + msg)
             raise

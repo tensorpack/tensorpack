@@ -12,6 +12,11 @@ __all__ = ['DataFlow', 'ProxyDataFlow', 'RNGDataFlow', 'DataFlowTerminated']
 
 
 class DataFlowTerminated(BaseException):
+    """
+    An exception indicating that the DataFlow is unable to produce any more data:
+    calling :meth:`get_data` will not give a valid iterator any more.
+    In most DataFlow this will not be raised.
+    """
     pass
 
 
