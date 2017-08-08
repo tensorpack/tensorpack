@@ -46,18 +46,20 @@ class PrefetchProcess(mp.Process):
 class PrefetchData(ProxyDataFlow):
     """
     Prefetch data from a DataFlow using Python multiprocessing utilities.
+    It will fork the process calling :meth:`__init__`, , collect datapoints from `ds` in each
+    process by a Python :class:`multiprocessing.Queue`.
 
     Note:
-        1. This is significantly slower than :class:`PrefetchDataZMQ` when data is large.
-        2. When nesting like this: ``PrefetchDataZMQ(PrefetchData(df, nr_proc=a), nr_proc=b)``.
-           A total of ``a`` instances of ``df`` worker processes will be created.
-           This is different from the behavior of :class`PrefetchDataZMQ`
-        3. The underlying dataflow worker will be forked multiple times When ``nr_proc>1``.
+        1. The underlying dataflow worker will be forked multiple times When ``nr_proc>1``.
            As a result, unless the underlying dataflow is fully shuffled, the data distribution
            produced by this dataflow will be wrong.
            (e.g. you are likely to see duplicated datapoints at the beginning)
+        2. This is significantly slower than :class:`PrefetchDataZMQ` when data is large.
+        3. When nesting like this: ``PrefetchDataZMQ(PrefetchData(df, nr_proc=a), nr_proc=b)``.
+           A total of ``a`` instances of ``df`` worker processes will be created.
+           This is different from the behavior of :class:`PrefetchDataZMQ`
     """
-    def __init__(self, ds, nr_prefetch, nr_proc=1):
+    def __init__(self, ds, nr_prefetch, nr_proc):
         """
         Args:
             ds (DataFlow): input DataFlow.
@@ -113,21 +115,26 @@ class PrefetchProcessZMQ(mp.Process):
 
 class PrefetchDataZMQ(ProxyDataFlow):
     """
-    Prefetch data from a DataFlow using multiple processes, with ZMQ for
+    Prefetch data from a DataFlow using multiple processes, with ZeroMQ for
     communication.
-
-    A local directory is needed to put the ZMQ pipes.
-    You can set this with env var ``$TENSORPACK_PIPEDIR`` if you're running on non-local FS such as NFS or GlusterFS.
+    It will fork the process calling :meth:`reset_state()`,
+    collect datapoints from `ds` in each process by ZeroMQ IPC pipe.
 
     Note:
-        1. Once :meth:`reset_state` is called, this dataflow becomes not fork-safe.
-        2. When nesting like this: ``PrefetchDataZMQ(PrefetchDataZMQ(df, nr_proc=a), nr_proc=b)``.
-           A total of ``a * b`` instances of ``df`` worker processes will be created.
-           Also in this case some zmq pipes cannot be cleaned at exit.
-        3. The underlying dataflow worker will be forked multiple times When ``nr_proc>1``.
+        1. The underlying dataflow worker will be forked multiple times When ``nr_proc>1``.
            As a result, unless the underlying dataflow is fully shuffled, the data distribution
            produced by this dataflow will be wrong.
            (e.g. you are likely to see duplicated datapoints at the beginning)
+        2. Once :meth:`reset_state` is called, this dataflow becomes not fork-safe.
+           i.e., if you fork an already reset instance of this dataflow,
+           it won't be usable in the forked process.
+        3. When nesting like this: ``PrefetchDataZMQ(PrefetchDataZMQ(df, nr_proc=a), nr_proc=b)``.
+           A total of ``a * b`` instances of ``df`` worker processes will be created.
+           Also in this case, some zmq pipes cannot be cleaned at exit.
+        4. A local directory is needed to put the ZMQ pipes.
+           You can set this with env var ``$TENSORPACK_PIPEDIR`` if you're
+           running on certain non-local FS that may not support pipes, such as NFS or GlusterFS.
+
     """
     def __init__(self, ds, nr_proc=1, hwm=50):
         """
@@ -186,12 +193,12 @@ class PrefetchDataZMQ(ProxyDataFlow):
 
         self.procs = [PrefetchProcessZMQ(self.ds, self.pipename, self._hwm)
                       for _ in range(self.nr_proc)]
-        self.start_processes()
+        self._start_processes()
         # __del__ not guranteed to get called at exit
         import atexit
         atexit.register(lambda x: x.__del__(), self)
 
-    def start_processes(self):
+    def _start_processes(self):
         start_proc_mask_signal(self.procs)
 
     def __del__(self):
@@ -224,7 +231,7 @@ class PrefetchOnGPUs(PrefetchDataZMQ):
         self.gpus = gpus
         super(PrefetchOnGPUs, self).__init__(ds, len(gpus))
 
-    def start_processes(self):
+    def _start_processes(self):
         with mask_sigint():
             for gpu, proc in zip(self.gpus, self.procs):
                 with change_gpu(gpu):

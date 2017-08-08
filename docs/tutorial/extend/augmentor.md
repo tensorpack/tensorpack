@@ -34,3 +34,5 @@ It does the following extra things for you:
 2. Random parameter generation and the actual augmentation is separated. This allows you to apply the
 	same transformation to several images together (with `AugmentImageComponents`),
 	which is essential to tasks such as segmentation.
+	Or apply the same transformations to images plus coordinate labels (with `AugmentImageCoordinates`),
+	which is essential to tasks such as detection and localization.

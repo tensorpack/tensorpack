@@ -93,7 +93,7 @@ class AugmentImageComponent(MapDataComponent):
 
 class AugmentImageCoordinates(MapData):
     """
-    Apply image augmentors on an image and set of coordinates.
+    Apply image augmentors on an image and a list of coordinates.
     """
     def __init__(self, ds, augmentors, img_index=0, coords_index=1, copy=True):
         """
