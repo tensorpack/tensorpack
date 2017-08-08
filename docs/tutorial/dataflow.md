@@ -37,14 +37,16 @@ with all the data preprocessing.
 Unless you are working with standard data types (image folders, LMDB, etc),
 you would usually want to write the base DataFlow (`MyDataFlow` in the above example) for your data format.
 See [another tutorial](http://tensorpack.readthedocs.io/en/latest/tutorial/extend/dataflow.html)
-for details on writing a DataFlow.
+for simple instructions on writing a DataFlow.
 
 ### Why DataFlow
 
 1. It's easy: write everything in pure Python, and reuse existing utilities. On the contrary,
 	 writing data loaders in TF operators is painful.
-2. It's fast (enough): see [Input Pipeline tutorial](http://tensorpack.readthedocs.io/en/latest/tutorial/input-source.html)
-	 on how tensorpack handles data loading.
+2. It's fast (enough): see [Efficient DataFlow](http://tensorpack.readthedocs.io/en/latest/tutorial/efficient-dataflow.html)
+	on how to build a fast DataFlow.
+	Also see [Input Pipeline tutorial](http://tensorpack.readthedocs.io/en/latest/tutorial/input-source.html)
+	on how tensorpack further accelerates data loading in the graph.
 
 Nevertheless, tensorpack support data loading with native TF operators as well.
 
