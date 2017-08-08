@@ -20,9 +20,10 @@ from ..dataflow.base import DataFlow, DataFlowTerminated
 
 from ..graph_builder.input_source_base import InputSource
 from ..graph_builder.input_source import (
-    FeedInput, DataParallelFeedInput, FeedfreeInput, TensorInput)
+    FeedInput, DataParallelFeedInput)
 
 from .base import Callback
+from .group import Callbacks
 from .inference import Inferencer
 from .hooks import CallbackToHook
 
@@ -79,20 +80,29 @@ class InferenceRunnerBase(Callback):
         tower_id = self.trainer.config.predict_tower[0]
         device = '/gpu:{}'.format(tower_id) if tower_id >= 0 else '/cpu:0'
 
-        self._input_callbacks = self._input_source.setup(self.trainer.model.get_inputs_desc())
+        input_callbacks = self._input_source.setup(self.trainer.model.get_inputs_desc())
+
         with tf.variable_scope(tf.get_variable_scope(), reuse=True):
             self._tower_handle = self.trainer.predictor_factory.build(
                 self._tower_name, device, self._input_source)
 
         self._hooks = [self._build_hook(inf) for inf in self.infs]
-        self._hooks.extend([CallbackToHook(cb) for cb in self._input_callbacks])
+        # trigger_{step,epoch}, {before,after}_epoch is ignored.
+        # We assume that InputSource callbacks won't use these methods
+        self._input_callbacks = Callbacks(input_callbacks)
+        self._hooks.extend(self._input_callbacks.get_hooks())
 
         for inf in self.infs:
             inf.setup_graph(self.trainer)
+        self._input_callbacks.setup_graph(self.trainer)
 
     def _before_train(self):
         self._hooks.extend(self._extra_hooks)
         self._hooked_sess = HookedSession(self.trainer.sess, self._hooks)
+        self._input_callbacks.before_train()
+
+    def _after_train(self):
+        self._input_callbacks.after_train()
 
     @abstractmethod
     def _build_hook(self, inf):
@@ -108,9 +118,11 @@ class InferenceRunnerBase(Callback):
         try:
             for _ in tqdm.trange(self._size, **get_tqdm_kwargs()):
                 self._hooked_sess.run(fetches=[])
-        except (StopIteration, DataFlowTerminated):
-            logger.exception(
+        except (StopIteration, DataFlowTerminated,
+                tf.errors.CancelledError, tf.errors.OutOfRangeError):
+            logger.error(
                 "[InferenceRunner] input stopped before reaching its size()! " + msg)
+            raise
         for inf in self.infs:
             inf.trigger_epoch()
 
@@ -130,8 +142,6 @@ class InferenceRunner(InferenceRunnerBase):
         if isinstance(input, DataFlow):
             input = FeedInput(input, infinite=False)
         assert isinstance(input, InputSource), input
-        if isinstance(input, FeedfreeInput):    # TODO support other input
-            assert isinstance(input, TensorInput), "InferenceRunner only accepts TensorInput or FeedInput!"
         super(InferenceRunner, self).__init__(
             input, infs, tower_name=tower_name, extra_hooks=extra_hooks)
 

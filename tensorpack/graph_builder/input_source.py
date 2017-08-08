@@ -169,7 +169,7 @@ class FeedfreeInput(InputSource):
 class EnqueueThread(ShareSessionThread):
     def __init__(self, queue, ds, placehdrs):
         super(EnqueueThread, self).__init__()
-        self.name = 'EnqueueThread'
+        self.name = 'EnqueueThread ' + queue.name
         self.daemon = True
 
         self.dataflow = ds
@@ -222,7 +222,6 @@ class QueueInput(FeedfreeInput):
         return self.ds.size()
 
     def _setup(self, inputs):
-        logger.info("Setting up the queue for CPU prefetching ...")
         self._input_placehdrs = [v.build_placeholder_reuse() for v in inputs]
         assert len(self._input_placehdrs) > 0, \
             "QueueInput has to be used with some inputs!"
@@ -231,6 +230,7 @@ class QueueInput(FeedfreeInput):
                 self.queue = tf.FIFOQueue(
                     50, [x.dtype for x in self._input_placehdrs],
                     name='input_queue')
+            logger.info("Setting up the queue '{}' for CPU prefetching ...".format(self.queue.name))
             self.thread = EnqueueThread(self.queue, self.ds, self._input_placehdrs)
 
     def _create_ema_callback(self):
