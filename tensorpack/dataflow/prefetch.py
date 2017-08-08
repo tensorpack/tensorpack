@@ -49,8 +49,9 @@ class PrefetchData(ProxyDataFlow):
     Prefetch data from a DataFlow using Python multiprocessing utilities.
 
     Note:
-        This is significantly slower than :class:`PrefetchDataZMQ` when data
-        is large.
+        1. This is significantly slower than :class:`PrefetchDataZMQ` when data is large.
+        2. When nesting like this: ``PrefetchDataZMQ(PrefetchData(df, a), b)``.
+           A total of ``a`` instances of ``df`` worker processes will be created.
     """
     def __init__(self, ds, nr_prefetch, nr_proc=1):
         """
@@ -110,8 +111,10 @@ class PrefetchDataZMQ(ProxyDataFlow):
     A local directory is needed to put the ZMQ pipes.
     You can set this with env var ``$TENSORPACK_PIPEDIR`` if you're running on non-local FS such as NFS or GlusterFS.
 
-    Note that this dataflow is not fork-safe. You cannot nest this dataflow
-    into another PrefetchDataZMQ or PrefetchData.
+    Note:
+        1. Once :meth:`reset_state` is called, this dataflow becomes not fork-safe.
+        2. When nesting like this: ``PrefetchDataZMQ(PrefetchDataZMQ(df, a), b)``.
+           A total of ``a * b`` instances of ``df`` worker processes will be created.
     """
     def __init__(self, ds, nr_proc=1, hwm=50):
         """
@@ -222,7 +225,8 @@ class ThreadedMapData(ProxyDataFlow):
     With threads, there are tiny communication overhead, but due to GIL, you
     should avoid starting the threads in your main process.
     Note that the threads will only start in the process which calls
-    `reset_state()`.
+    :meth:`reset_state()`.
+    So you can use ``PrefetchDataZMQ(ThreadedMapData(...), 1)`` to avoid GIL.
     """
     class _WorkerThread(StoppableThread):
         def __init__(self, inq, outq, map_func):

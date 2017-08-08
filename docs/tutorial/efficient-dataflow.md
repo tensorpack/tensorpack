@@ -188,10 +188,10 @@ Both imdecode and the augmentors can be quite slow. We can parallelize them like
 ```
 
 Since we are reading the database sequentially, having multiple identical instances of the
-underlying DataFlow will result in biased data distribution. Therefore we use `PrefetchData` to
-launch the underlying DataFlow in one independent process, and only parallelize the transformations.
-(`PrefetchDataZMQ` is faster but not fork-safe, so the first prefetch has to be `PrefetchData`. This
-is supposed to get fixed in the future).
+base LMDB reader will result in biased data distribution. Therefore we use `PrefetchData` to
+launch the base DataFlow in one independent process, and only parallelize the transformations.
+(`PrefetchDataZMQ` will however create 25 readers instead, so the first prefetch has to be `PrefetchData`.
+These differences are explained in the documentation in more details.)
 
 Let me summarize what the above DataFlow does:
 
