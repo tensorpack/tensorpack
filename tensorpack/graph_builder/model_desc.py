@@ -147,7 +147,7 @@ class ModelDesc(ModelDescBase):
         """
         cost = self._get_cost()
         reg_cost = regularize_cost_from_collection()
-        if reg_cost:
+        if reg_cost is not None:
             return tf.add(cost, reg_cost, name='cost_with_regularizer')
         else:
             return cost

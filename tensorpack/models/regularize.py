@@ -64,7 +64,7 @@ def regularize_cost_from_collection(name='regularize_cost'):
     In replicated mode, will only regularize variables within the current tower.
 
     Returns:
-        a scalar tensor, the regularization loss, or 0
+        a scalar tensor, the regularization loss, or None
     """
     regularization_losses = set(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES))
     ctx = get_current_tower_context()
@@ -77,7 +77,7 @@ def regularize_cost_from_collection(name='regularize_cost'):
         reg_loss = tf.add_n(list(regularization_losses), name=name)
         return reg_loss
     else:
-        return 0
+        return None
 
 
 @layer_register(log_shape=False, use_scope=False)
