@@ -165,22 +165,38 @@ def ensure_proc_terminate(proc):
     atexit.register(stop_proc_by_weak_ref, weakref.ref(proc))
 
 
+def is_main_thread():
+    if six.PY2:
+        return isinstance(threading.current_thread(), threading._MainThread)
+    else:
+        # a nicer solution with py3
+        return threading.current_thread() == threading.main_thread()
+
+
 @contextmanager
 def mask_sigint():
     """
     Returns:
-        a context where ``SIGINT`` is ignored.
+        If called in main thread, returns a context where ``SIGINT`` is ignored, and yield True.
+        Otherwise yield False.
     """
-    sigint_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
-    yield
-    signal.signal(signal.SIGINT, sigint_handler)
+    if is_main_thread():
+        sigint_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
+        yield True
+        signal.signal(signal.SIGINT, sigint_handler)
+    else:
+        yield False
 
 
 def start_proc_mask_signal(proc):
-    """ Start process(es) with SIGINT ignored.
+    """
+    Start process(es) with SIGINT ignored.
 
     Args:
         proc: (multiprocessing.Process or list)
+
+    Note:
+        The signal mask is only applied when called from main thread.
     """
     if not isinstance(proc, list):
         proc = [proc]

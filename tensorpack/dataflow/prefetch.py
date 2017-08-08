@@ -102,9 +102,13 @@ class PrefetchProcessZMQ(mp.Process):
         self.socket = self.context.socket(zmq.PUSH)
         self.socket.set_hwm(self.hwm)
         self.socket.connect(self.conn_name)
-        while True:
-            for dp in self.ds.get_data():
-                self.socket.send(dumps(dp), copy=False)
+        try:
+            while True:
+                for dp in self.ds.get_data():
+                    self.socket.send(dumps(dp), copy=False)
+        # sigint could still propagate here, e.g. when nested
+        except KeyboardInterrupt:
+            pass
 
 
 class PrefetchDataZMQ(ProxyDataFlow):
@@ -117,7 +121,9 @@ class PrefetchDataZMQ(ProxyDataFlow):
 
     Note:
         1. Once :meth:`reset_state` is called, this dataflow becomes not fork-safe.
-        2. This dataflow is not fork-safe. You cannot nest it.
+        2. When nesting like this: ``PrefetchDataZMQ(PrefetchDataZMQ(df, nr_proc=a), nr_proc=b)``.
+           A total of ``a * b`` instances of ``df`` worker processes will be created.
+           Also in this case some zmq pipes cannot be cleaned at exit.
         3. The underlying dataflow worker will be forked multiple times When ``nr_proc>1``.
            As a result, unless the underlying dataflow is fully shuffled, the data distribution
            produced by this dataflow will be wrong.
@@ -139,21 +145,7 @@ class PrefetchDataZMQ(ProxyDataFlow):
         self.nr_proc = nr_proc
         self._hwm = hwm
 
-        self.context = zmq.Context()
-        self.socket = self.context.socket(zmq.PULL)
-
-        pipedir = os.environ.get('TENSORPACK_PIPEDIR', '.')
-        assert os.path.isdir(pipedir), pipedir
-        self.pipename = "ipc://{}/dataflow-pipe-".format(pipedir.rstrip('/')) + str(uuid.uuid1())[:6]
-        self.socket.set_hwm(self._hwm)
-        self.socket.bind(self.pipename)
-
-        self.procs = [PrefetchProcessZMQ(self.ds, self.pipename, self._hwm)
-                      for _ in range(self.nr_proc)]
-        self.start_processes()
-        # __del__ not guranteed to get called at exit
-        import atexit
-        atexit.register(lambda x: x.__del__(), self)
+        self._setup_done = False
 
     def get_data(self):
         try:
@@ -179,13 +171,32 @@ class PrefetchDataZMQ(ProxyDataFlow):
         All forked dataflows are reset **once and only once** in spawned processes.
         Nothing more can be done when calling this method.
         """
-        pass
+        if self._setup_done:
+            return
+        self._setup_done = True
+
+        self.context = zmq.Context()
+        self.socket = self.context.socket(zmq.PULL)
+
+        pipedir = os.environ.get('TENSORPACK_PIPEDIR', '.')
+        assert os.path.isdir(pipedir), pipedir
+        self.pipename = "ipc://{}/dataflow-pipe-".format(pipedir.rstrip('/')) + str(uuid.uuid1())[:6]
+        self.socket.set_hwm(self._hwm)
+        self.socket.bind(self.pipename)
+
+        self.procs = [PrefetchProcessZMQ(self.ds, self.pipename, self._hwm)
+                      for _ in range(self.nr_proc)]
+        self.start_processes()
+        # __del__ not guranteed to get called at exit
+        import atexit
+        atexit.register(lambda x: x.__del__(), self)
 
     def start_processes(self):
         start_proc_mask_signal(self.procs)
 
     def __del__(self):
-        # on exit, logger may not be functional anymore
+        if not self._setup_done:
+            return
         if not self.context.closed:
             self.context.destroy(0)
         for x in self.procs:
@@ -226,12 +237,12 @@ class ThreadedMapData(ProxyDataFlow):
     This is useful when the mapping function is the bottleneck, but you don't
     want to start processes for the entire dataflow pipeline.
 
-    Notes:
+    Note:
         1. There is tiny communication overhead with threads, but you
-        should avoid starting many threads in your main process to avoid GIL.
+           should avoid starting many threads in your main process to avoid GIL.
 
-        The threads will only start in the process which calls :meth:`reset_state()`.
-        Therefore you can use ``PrefetchDataZMQ(ThreadedMapData(...), 1)`` to avoid GIL.
+           The threads will only start in the process which calls :meth:`reset_state()`.
+           Therefore you can use ``PrefetchDataZMQ(ThreadedMapData(...), 1)`` to avoid GIL.
 
         2. Threads run in parallel and can take different time to run the
            mapping function. Therefore the order of datapoints won't be
