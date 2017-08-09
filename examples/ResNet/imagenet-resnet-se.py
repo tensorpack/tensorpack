@@ -14,6 +14,7 @@ from tensorpack import *
 from tensorpack.dataflow import dataset
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
+from tensorpack.utils.gpu import get_nr_gpu
 
 from imagenet_resnet_utils import (
     fbresnet_augmentor, apply_preactivation, resnet_shortcut, resnet_backbone,

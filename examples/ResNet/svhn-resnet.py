@@ -11,6 +11,7 @@ from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
 from tensorpack.dataflow import dataset
+from tensorpack.utils.gpu import get_nr_gpu
 import tensorflow as tf
 
 """

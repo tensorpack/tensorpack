@@ -6,12 +6,15 @@
 import numpy as np
 import os
 
-from tensorpack import *
-import tensorpack.tfutils.symbolic_functions as symbf
-from tensorpack.tfutils.summary import add_moving_summary
 import argparse
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
+
+
+from tensorpack import *
+import tensorpack.tfutils.symbolic_functions as symbf
+from tensorpack.tfutils.summary import add_moving_summary
+from tensorpack.utils.gpu import change_gpu
 
 from embedding_data import get_test_data, MnistPairs, MnistTriplets
 
@@ -211,7 +214,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
     parser.add_argument('--load', help='load model')
-    parser.add_argument('-a', '--algorithm', help='used algorithm', type=str,
+    parser.add_argument('-a', '--algorithm', help='used algorithm', required=True,
                         choices=["siamese", "cosine", "triplet", "softtriplet"])
     parser.add_argument('--visualize', help='export embeddings into an image', action='store_true')
     args = parser.parse_args()

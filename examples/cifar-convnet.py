@@ -11,7 +11,6 @@ import os
 import tensorpack.tfutils.symbolic_functions as symbf
 from tensorpack.tfutils.summary import *
 from tensorpack.dataflow import dataset
-from tensorpack.utils.gpu import get_nr_gpu
 
 """
 A small convnet model for Cifar10 or Cifar100 dataset.
@@ -151,7 +150,7 @@ if __name__ == '__main__':
         if args.load:
             config.session_init = SaverRestore(args.load)
 
-        config.nr_tower = max(get_nr_gpu(), 1)
+        config.nr_tower = max(len(args.gpu.split(',')), 1)
         if config.nr_tower <= 1:
             QueueInputTrainer(config).train()
         else:

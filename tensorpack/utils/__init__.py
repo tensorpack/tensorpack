@@ -24,8 +24,25 @@ def _global_import(name):
 _TO_IMPORT = set([
     'naming',
     'utils',
-    'gpu'   # TODO don't export it
 ])
+
+
+# this two functions for back-compat only
+def get_nr_gpu():
+    from .gpu import get_nr_gpu
+    logger.warn(    # noqa
+        "get_nr_gpu will not be automatically imported any more! "
+        "Please do `from tensorpack.utils.gpu import get_nr_gpu`")
+    return get_nr_gpu()
+
+
+def change_gpu(val):
+    from .gpu import change_gpu as cg
+    logger.warn(    # noqa
+        "change_gpu will not be automatically imported any more! "
+        "Please do `from tensorpack.utils.gpu import change_gpu`")
+    return cg(val)
+
 
 _CURR_DIR = os.path.dirname(__file__)
 for _, module_name, _ in iter_modules(
@@ -37,4 +54,6 @@ for _, module_name, _ in iter_modules(
         continue
     if module_name in _TO_IMPORT:
         _global_import(module_name)
-__all__.extend(['logger'])
+__all__.extend([
+    'logger',
+    'get_nr_gpu', 'change_gpu'])

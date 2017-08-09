@@ -8,6 +8,7 @@ import argparse
 
 from tensorpack import *
 from tensorpack.tfutils.summary import add_moving_summary
+from tensorpack.utils.gpu import get_nr_gpu
 from tensorpack.utils.globvars import globalns as G
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
 import tensorflow as tf

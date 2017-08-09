@@ -191,5 +191,4 @@ if __name__ == '__main__':
     config = get_config()
     if args.load:
         config.session_init = SaverRestore(args.load)
-    config.nr_tower = max(get_nr_gpu(), 1)
     QueueInputTrainer(config).train()

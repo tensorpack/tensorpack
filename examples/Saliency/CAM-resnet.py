@@ -16,6 +16,7 @@ from tensorpack.dataflow import dataset
 from tensorpack.tfutils import optimizer
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
+from tensorpack.utils.gpu import get_nr_gpu
 from tensorpack.utils import viz
 
 from imagenet_resnet_utils import (

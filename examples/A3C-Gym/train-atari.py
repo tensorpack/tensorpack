@@ -24,6 +24,8 @@ from tensorpack.utils.serialize import *
 from tensorpack.utils.stats import *
 from tensorpack.tfutils import symbolic_functions as symbf
 from tensorpack.tfutils.gradproc import MapGradient, SummaryGradient
+from tensorpack.utils.gpu import get_nr_gpu
+
 
 from tensorpack.RL import *
 from simulator import *

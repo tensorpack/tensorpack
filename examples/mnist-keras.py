@@ -132,7 +132,7 @@ if __name__ == '__main__':
     if args.load:
         config.session_init = SaverRestore(args.load)
     if args.gpu:
-        config.nr_tower = get_nr_gpu()
+        config.nr_tower = len(args.gpu.split(','))
     if config.nr_tower > 1:
         SyncMultiGPUTrainer(config).train()
     else:

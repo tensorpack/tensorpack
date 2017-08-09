@@ -10,6 +10,7 @@ import os
 from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
+from tensorpack.utils.gpu import get_nr_gpu
 from tensorpack.dataflow import dataset
 
 import tensorflow as tf

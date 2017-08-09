@@ -16,6 +16,8 @@ from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
 from tensorpack.tfutils.varreplace import remap_variables
 from tensorpack.dataflow import dataset
+from tensorpack.utils.gpu import get_nr_gpu
+
 from dorefa import get_dorefa
 
 """

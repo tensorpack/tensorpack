@@ -5,6 +5,7 @@
 import os
 import argparse
 from tensorpack import *
+from tensorpack.utils.gpu import get_nr_gpu
 import tensorflow as tf
 
 """
@@ -71,8 +72,9 @@ if __name__ == '__main__':
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
     config = get_config()
-    config.nr_tower = get_nr_gpu()
 
+    if args.gpu:
+        config.nr_tower = len(args.gpu.split(','))
     if args.load:
         config.session_init = SaverRestore(args.load)
 
