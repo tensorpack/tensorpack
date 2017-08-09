@@ -12,6 +12,7 @@ import argparse
 from tensorpack import *
 from tensorpack.utils.argtools import memoized
 from tensorpack.utils.stats import OnlineMoments
+from tensorpack.utils.utils import get_tqdm
 import bob.ap
 
 CHARSET = set(string.ascii_lowercase + ' ')

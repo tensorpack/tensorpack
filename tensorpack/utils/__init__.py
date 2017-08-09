@@ -13,26 +13,13 @@ These utils should be irrelevant to tensorflow.
 __all__ = []
 
 
-def _global_import(name):
-    p = __import__(name, globals(), None, level=1)
-    lst = p.__all__ if '__all__' in dir(p) else dir(p)
-    for k in lst:
-        globals()[k] = p.__dict__[k]
-        __all__.append(k)
-
-
-_TO_IMPORT = set([
-    'utils',
-])
-
-
 # this two functions for back-compat only
 def get_nr_gpu():
-    from .gpu import get_nr_gpu
+    from .gpu import get_nr_gpu as gg
     logger.warn(    # noqa
         "get_nr_gpu will not be automatically imported any more! "
         "Please do `from tensorpack.utils.gpu import get_nr_gpu`")
-    return get_nr_gpu()
+    return gg()
 
 
 def change_gpu(val):
@@ -43,6 +30,14 @@ def change_gpu(val):
     return cg(val)
 
 
+def get_rng(obj=None):
+    from .utils import get_rng as gr
+    logger.warn(    # noqa
+        "get_rng will not be automatically imported any more! "
+        "Please do `from tensorpack.utils.utils import get_rng`")
+    return gr(obj)
+
+
 _CURR_DIR = os.path.dirname(__file__)
 for _, module_name, _ in iter_modules(
         [_CURR_DIR]):
@@ -51,8 +46,6 @@ for _, module_name, _ in iter_modules(
         continue
     if module_name.startswith('_'):
         continue
-    if module_name in _TO_IMPORT:
-        _global_import(module_name)
 __all__.extend([
     'logger',
-    'get_nr_gpu', 'change_gpu'])
+    'get_nr_gpu', 'change_gpu', 'get_rng'])

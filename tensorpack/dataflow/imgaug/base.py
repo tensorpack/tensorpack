@@ -3,7 +3,7 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 from abc import abstractmethod, ABCMeta
-from ...utils import get_rng
+from ...utils.utils import get_rng
 import six
 from six.moves import zip
 

@@ -35,7 +35,6 @@ class CharRNNData(RNGDataFlow):
     def __init__(self, input_file, size):
         self.seq_length = param.seq_len
         self._size = size
-        self.rng = get_rng(self)
 
         logger.info("Loading corpus...")
         # preprocess data

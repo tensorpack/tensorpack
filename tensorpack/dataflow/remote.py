@@ -6,7 +6,8 @@
 import time
 from collections import deque
 from .base import DataFlow
-from ..utils import logger, get_tqdm
+from ..utils import logger
+from ..utils.utils import get_tqdm
 from ..utils.serialize import dumps, loads, dumps_for_tfop
 try:
     import zmq

@@ -14,7 +14,6 @@ import numpy as np
 __all__ = ['change_env',
            'get_rng',
            'fix_rng_seed',
-           # 'get_tqdm_kwargs',
            'get_tqdm',
            'execute_only_once',
            ]

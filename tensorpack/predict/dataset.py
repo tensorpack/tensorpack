@@ -12,7 +12,8 @@ import six
 from ..dataflow import DataFlow
 from ..dataflow.dftools import dump_dataflow_to_process_queue
 from ..utils.concurrency import ensure_proc_terminate, OrderedResultGatherProc, DIE
-from ..utils import logger, get_tqdm
+from ..utils import logger
+from ..utils.utils import get_tqdm
 from ..utils.gpu import change_gpu
 
 from .concurrency import MultiProcessQueuePredictWorker

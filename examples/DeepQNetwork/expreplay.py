@@ -11,7 +11,8 @@ import six
 from six.moves import queue, range
 
 from tensorpack.dataflow import DataFlow
-from tensorpack.utils import logger, get_tqdm, get_rng
+from tensorpack.utils import logger
+from tensorpack.utils.utils import get_tqdm, get_rng
 from tensorpack.utils.concurrency import LoopThread, ShareSessionThread
 from tensorpack.callbacks.base import Callback
 
