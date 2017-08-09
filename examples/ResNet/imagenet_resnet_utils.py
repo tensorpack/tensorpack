@@ -4,12 +4,16 @@
 
 import numpy as np
 import cv2
+import multiprocessing
 import tensorflow as tf
 from tensorflow.contrib.layers import variance_scaling_initializer
 
 
 import tensorpack as tp
-from tensorpack import imgaug
+from tensorpack import imgaug, dataset
+from tensorpack.dataflow import (
+    AugmentImageComponent, PrefetchDataZMQ,
+    BatchData, ThreadedMapData)
 from tensorpack.utils.stats import RatioCounter
 from tensorpack.tfutils.argscope import argscope, get_arg_scope
 from tensorpack.tfutils.summary import add_moving_summary
@@ -73,6 +77,37 @@ def fbresnet_augmentor(isTrain):
             imgaug.CenterCrop((224, 224)),
         ]
     return augmentors
+
+
+def get_imagenet_dataflow(
+        datadir, name, batch_size,
+        augmentors, dir_structure='original'):
+    """
+    See explanations in the tutorial:
+    http://tensorpack.readthedocs.io/en/latest/tutorial/efficient-dataflow.html
+    """
+    assert name in ['train', 'val', 'test']
+    isTrain = name == 'train'
+    cpu = min(30, multiprocessing.cpu_count())
+    if isTrain:
+        ds = dataset.ILSVRC12(datadir, name, shuffle=True)
+        ds = AugmentImageComponent(ds, augmentors, copy=False)
+        ds = PrefetchDataZMQ(ds, cpu)
+        ds = BatchData(ds, batch_size, remainder=False)
+    else:
+        ds = dataset.ILSVRC12Files(datadir, name,
+                                   shuffle=False, dir_structure=dir_structure)
+        aug = imgaug.AugmentorList(augmentors)
+
+        def mapf(dp):
+            fname, cls = dp
+            im = cv2.imread(fname, cv2.IMREAD_COLOR)
+            im = aug.augment(im)
+            return im, cls
+        ds = ThreadedMapData(ds, cpu, mapf, buffer_size=2000, strict=True)
+        ds = BatchData(ds, batch_size, remainder=True)
+        ds = PrefetchDataZMQ(ds, 1)
+    return ds
 
 
 def resnet_shortcut(l, n_out, stride):

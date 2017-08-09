@@ -6,19 +6,23 @@ import sys
 import argparse
 import numpy as np
 import os
-import multiprocessing
 
 import tensorflow as tf
 
-from tensorpack import *
-from tensorpack.tfutils.symbolic_functions import *
-from tensorpack.tfutils.summary import *
-from tensorpack.dataflow import dataset
+from tensorpack import InputDesc, ModelDesc, logger
+from tensorpack.models import *
+from tensorpack.callbacks import *
+from tensorpack.train import TrainConfig, SyncMultiGPUTrainerParameterServer
+from tensorpack.dataflow import imgaug, FakeData
+import tensorpack.tfutils.symbolic_functions as symbf
+from tensorpack.tfutils.summary import add_moving_summary
+from tensorpack.tfutils import argscope, SaverRestore
 from tensorpack.utils.gpu import get_nr_gpu
 
 from imagenet_resnet_utils import (
     fbresnet_augmentor, resnet_basicblock, resnet_bottleneck, resnet_backbone,
-    eval_on_ILSVRC12, image_preprocess, compute_loss_and_error)
+    eval_on_ILSVRC12, image_preprocess, compute_loss_and_error,
+    get_imagenet_dataflow)
 
 TOTAL_BATCH_SIZE = 256
 INPUT_SHAPE = 224
@@ -63,24 +67,17 @@ class Model(ModelDesc):
         self.cost = tf.add_n([loss, wd_loss], name='cost')
 
     def _get_optimizer(self):
-        lr = get_scalar_var('learning_rate', 0.1, summary=True)
+        lr = symbf.get_scalar_var('learning_rate', 0.1, summary=True)
         return tf.train.MomentumOptimizer(lr, 0.9, use_nesterov=True)
 
 
-def get_data(train_or_test):
-    isTrain = train_or_test == 'train'
-
-    datadir = args.data
-    ds = dataset.ILSVRC12(datadir, train_or_test,
-                          shuffle=isTrain, dir_structure='original')
+def get_data(name):
+    isTrain = name == 'train'
     augmentors = fbresnet_augmentor(isTrain)
     augmentors.append(imgaug.ToUint8())
-
-    ds = AugmentImageComponent(ds, augmentors, copy=False)
-    if isTrain:
-        ds = PrefetchDataZMQ(ds, min(20, multiprocessing.cpu_count()))
-    ds = BatchData(ds, BATCH_SIZE, remainder=not isTrain)
-    return ds
+    datadir = args.data
+    return get_imagenet_dataflow(
+        datadir, name, BATCH_SIZE, augmentors, dir_structure='original')
 
 
 def get_config(fake=False, data_format='NCHW'):

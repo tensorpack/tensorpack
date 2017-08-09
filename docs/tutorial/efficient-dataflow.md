@@ -66,7 +66,7 @@ We will now add the cheapest pre-processing now to get an ndarray in the end ins
 		ds = AugmentImageComponent(ds, [imgaug.Resize(224)])
 		ds = BatchData(ds, 256)
 ```
-You'll start to observe slow down after adding more pre-processing (such as those in the [ResNet example](../examples/ResNet/imagenet-resnet.py)).
+You'll start to observe slow down after adding more pre-processing (such as those in the [ResNet example](../examples/ResNet/imagenet_resnet_utils.py)).
 Now it's time to add threads or processes:
 ```eval_rst
 .. code-block:: python

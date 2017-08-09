@@ -18,7 +18,8 @@ from tensorpack.utils.gpu import get_nr_gpu
 
 from imagenet_resnet_utils import (
     fbresnet_augmentor, apply_preactivation, resnet_shortcut, resnet_backbone,
-    eval_on_ILSVRC12, image_preprocess, compute_loss_and_error)
+    eval_on_ILSVRC12, image_preprocess, compute_loss_and_error,
+    get_imagenet_dataflow)
 
 TOTAL_BATCH_SIZE = 256
 INPUT_SHAPE = 224
@@ -66,19 +67,12 @@ class Model(ModelDesc):
         return tf.train.MomentumOptimizer(lr, 0.9, use_nesterov=True)
 
 
-def get_data(train_or_test):
-    isTrain = train_or_test == 'train'
-
+def get_data(name):
+    isTrain = name == 'train'
     datadir = args.data
-    ds = dataset.ILSVRC12(datadir, train_or_test,
-                          shuffle=isTrain, dir_structure='train')
     augmentors = fbresnet_augmentor(isTrain)
-
-    ds = AugmentImageComponent(ds, augmentors, copy=False)
-    if isTrain:
-        ds = PrefetchDataZMQ(ds, min(25, multiprocessing.cpu_count()))
-    ds = BatchData(ds, BATCH_SIZE, remainder=not isTrain)
-    return ds
+    return get_imagenet_dataflow(
+        datadir, name, BATCH_SIZE, augmentors, dir_structure='original')
 
 
 def get_config():
