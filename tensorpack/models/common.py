@@ -16,7 +16,7 @@ from ..utils import logger
 _LAYER_LOGGED = set()
 _LAYER_REGISTERED = {}
 
-__all__ = ['layer_register', 'VariableHolder']
+__all__ = ['layer_register']
 
 
 class VariableHolder(object):

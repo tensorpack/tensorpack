@@ -80,15 +80,6 @@ def get_global_step_value():
         get_global_step_var())
 
 
-# @memoized
-# def get_local_step_var():
-#     try:
-#         return tf.get_default_graph().get_tensor_by_name(LOCAL_STEP_VAR_NAME)
-#     except KeyError:
-#         logger.warn("get_local_step_var() is only available to use in callbacks!")
-#         raise
-
-
 def get_op_tensor_name(name):
     """
     Will automatically determine if ``name`` is a tensor name (ends with ':x')

@@ -22,7 +22,6 @@ def _global_import(name):
 
 
 _TO_IMPORT = set([
-    'naming',
     'utils',
 ])
 
