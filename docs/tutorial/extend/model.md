@@ -1,5 +1,5 @@
 
-## Write a layer
+## Write a Layer
 
 The first thing to note: __you never have to write a layer__.
 Tensorpack layers are nothing but wrappers of symbolic functions.

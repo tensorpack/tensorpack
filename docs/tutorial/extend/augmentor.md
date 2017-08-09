@@ -1,5 +1,5 @@
 
-### Write an image augmentor
+### Write an Image Augmentor
 
 The first thing to note: __you never have to write an augmentor__.
 An augmentor is a part of the DataFlow, so you can always
