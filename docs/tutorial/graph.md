@@ -32,19 +32,20 @@ the argument `inputs` is the list of input tensors matching `_get_inputs`.
 You can use any symbolic functions in `_build_graph`, including TensorFlow core library
 functions and other symbolic libraries.
 
-### How is it Used:
+### How it is Used:
 
 Most tensorpack trainers expect a `ModelDesc`, and use it as a __description
-of the TF graph__ (except for the input pipeline).
+of the TF graph to be built__.
 These trainers will use `_get_inputs` to connect the given `InputSource` to the graph.
 They'll then use `_build_graph` to create the backbone model, and then `_get_optimizer` to create the minimization op, and run it.
 
 Note that data-parallel multi-GPU trainers will call `_build_graph` __multiple times__ on each GPU.
 A trainer may also make __extra calls__ to `_build_graph` for inference, if used by some callbacks.
-`_build_graph` will always be called under some `TowerContext` which contains these information
+`_build_graph` will always be called under some `TowerContext` which contains these context information
 (e.g. training or inference, reuse or not, scope name) for your access.
 
-Also, to respect variable reuse among multiple calls, use `tf.get_variable()` instead of `tf.Variable`.
+Also, to respect variable reuse among multiple calls, use `tf.get_variable()` instead of `tf.Variable` in `_build_graph`,
+if you need to create and variables.
 
 ### Build It Manually
 

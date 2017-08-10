@@ -9,8 +9,7 @@ from ...utils.argtools import shape2d
 from six.moves import range
 import numpy as np
 
-__all__ = ['RandomCrop', 'CenterCrop',
-           'perturb_BB', 'RandomCropAroundBox', 'RandomCropRandomShape']
+__all__ = ['RandomCrop', 'CenterCrop', 'RandomCropAroundBox', 'RandomCropRandomShape']
 
 
 class RandomCrop(ImageAugmentor):
@@ -111,9 +110,10 @@ def perturb_BB(image_shape, bb, max_perturb_pixel,
     return bb
 
 
+# TODO shouldn't include strange augmentors like this.
 class RandomCropAroundBox(ImageAugmentor):
     """
-    Crop a box around a bounding box by some random perturbation
+    Crop a box around a bounding box by some random perturbation.
     """
 
     def __init__(self, perturb_ratio, max_aspect_ratio_diff=0.3):
