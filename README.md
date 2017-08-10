@@ -7,7 +7,7 @@ Neural Network Toolbox on TensorFlow.
 See some [examples](examples) to learn about the framework:
 
 ### Vision:
-+ [Train ResNet on ImageNet / Cifar10 / SVHN](examples/ResNet)
++ [Multi-GPU training of ResNet on ImageNet](examples/ResNet)
 + [Generative Adversarial Network(GAN) variants](examples/GAN), including DCGAN, InfoGAN, Conditional GAN, WGAN, BEGAN, DiscoGAN, Image to Image, CycleGAN.
 + [DoReFa-Net: train binary / low-bitwidth CNN on ImageNet](examples/DoReFa-Net)
 + [Fully-convolutional Network for Holistically-Nested Edge Detection(HED)](examples/HED)
@@ -43,7 +43,7 @@ It's Yet Another TF wrapper, but different in:
 	+ Data-parallel distributed training is off-the-shelf to use. It is as slow as Google's official benchmark.
 
 3. Focus on large datasets.
-	+ It's painful to read/preprocess data through TF. Use __DataFlow__ to load large datasets (e.g. ImageNet) in __pure Python__ with multi-process prefetch.
+	+ It's painful to read/preprocess data through TF. Use __DataFlow__ to load large datasets (e.g. ImageNet) in __pure Python__ with autoparallelization.
 	+ DataFlow has a unified interface, so you can compose and reuse them to perform complex preprocessing.
 
 4. Interface of extensible __Callbacks__.
