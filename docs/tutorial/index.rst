@@ -5,7 +5,7 @@ Tutorials
 A High Level Glance
 ====================
 
-.. image:: https://user-images.githubusercontent.com/1381301/29099965-58ad3c00-7c5d-11e7-9c42-bf6f20ca694f.png
+.. image:: https://user-images.githubusercontent.com/1381301/29187907-2caaa740-7dc6-11e7-8220-e20ca52c3ca6.png
 
 
 * DataFlow is a library to load data efficiently in Python.

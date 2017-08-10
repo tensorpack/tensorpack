@@ -28,4 +28,4 @@ os.environ['TF_AVGPOOL_USE_CUDNN'] = '1'   # issue#8566
 import tensorflow as tf  # noqa
 assert int(tf.__version__.split('.')[0]) >= 1, "TF>=1.0 is required!"
 
-__version__ = '0.3.0'
+__version__ = '0.4.0'
