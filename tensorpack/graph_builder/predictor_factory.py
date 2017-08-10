@@ -60,7 +60,8 @@ class PredictorFactory(object):
             input (InputSource): must be setup already. If None, will use InputDesc from the model.
         """
         logger.info("Building predictor tower '{}' on device {} ...".format(tower_name, device))
-        assert tower_name not in self._names_built
+        assert tower_name not in self._names_built, \
+            "Prediction tower with name '{}' already exists!".format(tower_name)
 
         with tf.device(device), \
                 TowerContext(tower_name, is_training=False), \

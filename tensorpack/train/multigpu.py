@@ -62,8 +62,8 @@ class MultiGPUTrainerBase(FeedfreeTrainerBase):
         Returns:
             List of outputs of ``func``, evaluated on each tower.
         """
-        logger.info("Training a model of {} tower".format(len(towers)))
         if len(towers) > 1:
+            logger.info("Training a model of {} towers".format(len(towers)))
             _check_tf_version()
 
         ret = []

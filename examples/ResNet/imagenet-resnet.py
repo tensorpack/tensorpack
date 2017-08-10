@@ -74,7 +74,6 @@ class Model(ModelDesc):
 def get_data(name):
     isTrain = name == 'train'
     augmentors = fbresnet_augmentor(isTrain)
-    augmentors.append(imgaug.ToUint8())
     datadir = args.data
     return get_imagenet_dataflow(
         datadir, name, BATCH_SIZE, augmentors, dir_structure='original')

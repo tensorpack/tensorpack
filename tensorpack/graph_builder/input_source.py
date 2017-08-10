@@ -192,13 +192,13 @@ class EnqueueThread(ShareSessionThread):
             except (tf.errors.CancelledError, tf.errors.OutOfRangeError, DataFlowTerminated):
                 pass
             except Exception:
-                logger.exception("Exception in EnqueueThread:")
+                logger.exception("Exception in {}:".format(self.name))
             finally:
                 try:
                     self.close_op.run()
                 except Exception:
                     pass
-                logger.info("EnqueueThread Exited.")
+                logger.info("{} Exited.".format(self.name))
 
 
 class QueueInput(FeedfreeInput):
@@ -234,6 +234,10 @@ class QueueInput(FeedfreeInput):
             self.thread = EnqueueThread(self.queue, self.ds, self._input_placehdrs)
 
     def _create_ema_callback(self):
+        """
+        Create a hook-only callback which maintain EMA of the queue size.
+        Also tf.summary.scalar the EMA.
+        """
         with self.cached_name_scope():
             # in TF there is no API to get queue capacity, so we can only summary the size
             size = tf.cast(self.queue.size(), tf.float32, name='queue_size')

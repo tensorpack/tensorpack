@@ -5,6 +5,7 @@
 
 from ..base import DataFlow
 from ...utils.timer import timed_operation
+from ...utils import logger
 from six.moves import zip, map
 from collections import Counter
 import json
@@ -26,6 +27,7 @@ class VisualQA(DataFlow):
     """
 
     def __init__(self, question_file, annotation_file):
+        logger.warn("dataset.VisualQA is deprecated!")
         with timed_operation('Reading VQA JSON file'):
             qobj, aobj = list(map(read_json, [question_file, annotation_file]))
             self.task_type = qobj['task_type']

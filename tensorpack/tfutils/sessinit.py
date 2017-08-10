@@ -104,6 +104,9 @@ class SaverRestore(SessionInit):
             prefix (str): during restore, add a ``prefix/`` for every variable in this checkpoint
             ignore (list[str]): list of tensor names that should be ignored during loading, e.g. learning-rate
         """
+        if model_path.endswith('.npy') or model_path.endswith('.npz'):
+            logger.warn("SaverRestore expect a TF checkpoint, but got a model path '{}'.".format(model_path) +
+                        " To load from a dict, use 'DictRestore'.")
         model_path = get_checkpoint_path(model_path)
         self.path = model_path
         self.prefix = prefix
@@ -192,6 +195,7 @@ class DictRestore(SessionInit):
         Args:
             param_dict (dict): a dict of {name: value}
         """
+        assert isinstance(param_dict, dict), type(param_dict)
         # use varname (with :0) for consistency
         self.prms = {get_op_tensor_name(n)[1]: v for n, v in six.iteritems(param_dict)}
 
@@ -220,7 +224,7 @@ class DictRestore(SessionInit):
         upd.update({name: value for name, value in six.iteritems(self.prms) if name in intersect})
 
 
-@deprecated("Use `DictRestore` instead!", "2017-06-01")
+@deprecated("Use `DictRestore` instead!", "2017-09-01")
 def ParamRestore(d):
     return DictRestore(d)
 

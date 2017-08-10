@@ -275,7 +275,7 @@ class ThreadedMapData(ProxyDataFlow):
                 dp = self.queue_get_stoppable(self.inq)
                 dp = self.func(dp)
                 if dp is not None:
-                    self.queue_put_stoppable(self.outq, dp)
+                    self.outq.put(dp)
                 else:
                     assert not self._strict, \
                         "[ThreadedMapData] Map function cannot return None when strict mode is used."
@@ -345,3 +345,8 @@ class ThreadedMapData(ProxyDataFlow):
             for _ in range(self.buffer_size):
                 self._in_queue.put(next(self._iter))
                 yield self._out_queue.get()
+
+    def __del__(self):
+        for p in self._threads:
+            p.stop()
+            p.join()

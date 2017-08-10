@@ -364,6 +364,7 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
         'get_predictors',
         'vs_name_for_predictor',
         'dump_chkpt_vars',
+        'VisualQA',
         'ParamRestore']:
         return True
     if name in ['get_data', 'size', 'reset_state']:

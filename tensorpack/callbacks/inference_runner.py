@@ -20,12 +20,11 @@ from ..dataflow.base import DataFlow
 
 from ..graph_builder.input_source_base import InputSource
 from ..graph_builder.input_source import (
-    FeedInput, DataParallelFeedInput)
+    FeedInput, QueueInput)
 
 from .base import Callback
 from .group import Callbacks
 from .inference import Inferencer
-from .hooks import CallbackToHook
 
 __all__ = ['InferenceRunner', 'FeedfreeInferenceRunner',
            'DataParallelInferenceRunner']
@@ -151,7 +150,7 @@ class InferenceRunner(InferenceRunnerBase):
         return InferencerToHook(inf, fetches)
 
 
-@deprecated("Just use InferenceRunner since it now accepts TensorInput!")
+@deprecated("Just use InferenceRunner since it now accepts TensorInput!", "2017-11-11")
 def FeedfreeInferenceRunner(*args, **kwargs):
     return InferenceRunner(*args, **kwargs)
 
@@ -170,9 +169,7 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
         """
         self._tower_names = ['InferenceTower{}'.format(k) for k in range(len(gpus))]
         if isinstance(input, DataFlow):
-            input = DataParallelFeedInput(input, self._tower_names)
-        assert isinstance(input, DataParallelFeedInput), input
-
+            input = QueueInput(input)
         super(DataParallelInferenceRunner, self).__init__(input, infs)
         self._gpus = gpus
 
@@ -187,13 +184,15 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
                     self.trainer.predictor_factory.build(
                         tower_name, device, self._input_source))
 
-        # setup feeds and hooks
-        self._hooks_parallel = [self._build_hook_parallel(inf) for inf in self.infs]
+        # setup callbacksand hooks
+        self._input_callbacks = Callbacks(cbs)
         self._hooks = [self._build_hook(inf) for inf in self.infs]
-        self._hooks_parallel.extend([CallbackToHook(cb) for cb in cbs])
+        self._hooks_parallel = [self._build_hook_parallel(inf) for inf in self.infs]
+        self._hooks_parallel.extend(self._input_callbacks.get_hooks())
 
         for inf in self.infs:
             inf.setup_graph(self.trainer)
+        self._input_callbacks.setup_graph(self.trainer)
 
     class InferencerToHookDataParallel(InferencerToHook):
         def __init__(self, inf, fetches, size):
@@ -223,7 +222,7 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
         return InferencerToHook(inf, fetches)
 
     def _before_train(self):
-        self._hooked_sess = HookedSession(self.trainer.sess, self._hooks)
+        super(DataParallelInferenceRunner, self)._before_train()
         self._parallel_hooked_sess = HookedSession(self.trainer.sess, self._hooks_parallel)
 
     def _trigger(self):
@@ -239,16 +238,9 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
                 pbar.update(nr_tower)
                 total -= nr_tower
             # take care of the rest
-            try:
-                while total > 0:
-                    # TODO XXX doesn't support remap
-                    feed = self._input_source.next_feed(cnt=1)
-                    self._hooked_sess.run(fetches=[], feed_dict=feed)
-                    pbar.update(1)
-                    total -= 1
-            except AttributeError:
-                logger.error(
-                    "[DataParallelInferenceRunner] doesn't support InputSource wrappers very well!")
-                logger.error("[DataParallelInferenceRunner] Skipping the rest of the datapoints ...")
+            while total > 0:
+                self._hooked_sess.run(fetches=[])
+                pbar.update(1)
+                total -= 1
         for inf in self.infs:
             inf.trigger_epoch()

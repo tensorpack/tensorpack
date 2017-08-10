@@ -185,7 +185,7 @@ class HumanHyperParamSetter(HyperParamSetter):
         """
         super(HumanHyperParamSetter, self).__init__(param)
         self.file_name = os.path.join(logger.LOG_DIR, file_name)
-        logger.info("Use {} to control hyperparam {}.".format(
+        logger.info("Use {} to set hyperparam: '{}'.".format(
             self.file_name, self.param.readable_name))
 
     def _get_value_to_set(self):

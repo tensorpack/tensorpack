@@ -87,6 +87,7 @@ def get_imagenet_dataflow(
     http://tensorpack.readthedocs.io/en/latest/tutorial/efficient-dataflow.html
     """
     assert name in ['train', 'val', 'test']
+    assert datadir is not None
     isTrain = name == 'train'
     cpu = min(30, multiprocessing.cpu_count())
     if isTrain:
