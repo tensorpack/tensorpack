@@ -119,7 +119,7 @@ if __name__ == '__main__':
     if args.eval:
         BATCH_SIZE = 128  # something that can run on one gpu
         ds = get_data('val')
-        eval_on_ILSVRC12(Model(), args.load, ds)
+        eval_on_ILSVRC12(Model(), get_model_loader(args.load), ds)
         sys.exit()
 
     logger.set_logger_dir(

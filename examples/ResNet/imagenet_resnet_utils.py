@@ -179,10 +179,10 @@ def resnet_backbone(image, num_blocks, block_func):
     return logits
 
 
-def eval_on_ILSVRC12(model, model_file, dataflow):
+def eval_on_ILSVRC12(model, sessinit, dataflow):
     pred_config = PredictConfig(
         model=model,
-        session_init=tp.get_model_loader(model_file),
+        session_init=sessinit,
         input_names=['input', 'label'],
         output_names=['wrong-top1', 'wrong-top5']
     )

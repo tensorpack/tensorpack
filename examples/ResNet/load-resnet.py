@@ -21,6 +21,8 @@ from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
 from tensorpack.dataflow.dataset import ILSVRCMeta, ILSVRC12
 
+from imagenet_resnet_utils import eval_on_ILSVRC12
+
 MODEL_DEPTH = None
 
 
@@ -133,26 +135,6 @@ def run_test(params, input):
     print([meta[k] for k in ret])
 
 
-def eval_on_ILSVRC12(params, data_dir):
-    ds = ILSVRC12(data_dir, 'val', shuffle=False, dir_structure='train')
-    ds = AugmentImageComponent(ds, get_inference_augmentor())
-    ds = BatchData(ds, 128, remainder=True)
-    pred_config = PredictConfig(
-        model=Model(),
-        session_init=DictRestore(params),
-        input_names=['input', 'label'],
-        output_names=['wrong-top1', 'wrong-top5']
-    )
-    pred = SimpleDatasetPredictor(pred_config, ds)
-    acc1, acc5 = RatioCounter(), RatioCounter()
-    for o in pred.get_result():
-        batch_size = o[0].shape[0]
-        acc1.feed(o[0].sum(), batch_size)
-        acc5.feed(o[1].sum(), batch_size)
-    print("Top1 Error: {}".format(acc1.ratio))
-    print("Top5 Error: {}".format(acc5.ratio))
-
-
 def name_conversion(caffe_layer_name):
     """ Convert a caffe parameter name to a tensorflow parameter name as
         defined in the above model """
@@ -221,6 +203,10 @@ if __name__ == '__main__':
         resnet_param[newname] = v
 
     if args.eval:
-        eval_on_ILSVRC12(resnet_param, args.eval)
+        ds = ILSVRC12(args.eval, 'val', shuffle=False, dir_structure='train')
+        ds = AugmentImageComponent(ds, get_inference_augmentor())
+        ds = BatchData(ds, 128, remainder=True)
+        ds = PrefetchDataZMQ(ds, 1)
+        eval_on_ILSVRC12(Model(), DictRestore(resnet_param), ds)
     else:
         run_test(resnet_param, args.input)

@@ -127,6 +127,9 @@ class ILSVRC12Files(RNGDataFlow):
         meta = ILSVRCMeta(meta_dir)
         self.imglist = meta.get_image_list(name, dir_structure)
 
+        for fname, _ in self.imglist[:10]:
+            assert os.path.isfile(fname), fname
+
     def size(self):
         return len(self.imglist)
 

@@ -9,14 +9,14 @@ import os
 
 import tensorflow as tf
 
-from tensorpack import InputDesc, ModelDesc, logger
+from tensorpack import InputDesc, ModelDesc, logger, QueueInput
 from tensorpack.models import *
 from tensorpack.callbacks import *
 from tensorpack.train import TrainConfig, SyncMultiGPUTrainerParameterServer
 from tensorpack.dataflow import imgaug, FakeData
 import tensorpack.tfutils.symbolic_functions as symbf
 from tensorpack.tfutils.summary import add_moving_summary
-from tensorpack.tfutils import argscope, SaverRestore
+from tensorpack.tfutils import argscope, get_model_loader
 from tensorpack.utils.gpu import get_nr_gpu
 
 from imagenet_resnet_utils import (
@@ -137,12 +137,12 @@ if __name__ == '__main__':
     if args.eval:
         BATCH_SIZE = 128    # something that can run on one gpu
         ds = get_data('val')
-        eval_on_ILSVRC12(Model(), args.load, ds)
+        eval_on_ILSVRC12(Model(), get_model_loader(args.load), ds)
         sys.exit()
 
     logger.set_logger_dir(
         os.path.join('train_log', 'imagenet-resnet-d' + str(DEPTH)))
     config = get_config(fake=args.fake, data_format=args.data_format)
     if args.load:
-        config.session_init = SaverRestore(args.load)
+        config.session_init = get_model_loader(args.load)
     SyncMultiGPUTrainerParameterServer(config).train()
