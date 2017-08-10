@@ -16,7 +16,7 @@ from ..tfutils.gradproc import ScaleGradient
 from ..callbacks.graph import RunOp
 
 from ..graph_builder.input_source import QueueInput, StagingInputWrapper, DummyConstantInput
-from .feedfree import FeedfreeTrainerBase
+from .base import Trainer
 
 __all__ = ['MultiGPUTrainerBase', 'LeastLoadedDeviceSetter',
            'SyncMultiGPUTrainerReplicated',
@@ -45,7 +45,7 @@ def apply_prefetch_policy(config, gpu_prefetch=True):
             config.data = StagingInputWrapper(config.data, devices)
 
 
-class MultiGPUTrainerBase(FeedfreeTrainerBase):
+class MultiGPUTrainerBase(Trainer):
     """ Base class for multi-gpu training"""
     @staticmethod
     def build_on_multi_tower(
