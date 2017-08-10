@@ -86,25 +86,31 @@ def get_config(fake=False, data_format='NCHW'):
 
     if fake:
         logger.info("For benchmark, batch size is fixed to 64 per tower.")
-        dataset_train = dataset_val = FakeData(
+        dataset_train = FakeData(
             [[64, 224, 224, 3], [64]], 1000, random=False, dtype='uint8')
+        callbacks = []
     else:
         logger.info("Running on {} towers. Batch size per tower: {}".format(nr_tower, BATCH_SIZE))
         dataset_train = get_data('train')
         dataset_val = get_data('val')
+        callbacks = [
+            ModelSaver(),
+            ScheduledHyperParamSetter('learning_rate',
+                                      [(30, 1e-2), (60, 1e-3), (85, 1e-4), (95, 1e-5), (105, 1e-6)]),
+            HumanHyperParamSetter('learning_rate'),
+        ]
+        infs = [ClassificationError('wrong-top1', 'val-error-top1'),
+                ClassificationError('wrong-top5', 'val-error-top5')]
+        if nr_tower == 1:
+            callbacks.append(InferenceRunner(QueueInput(dataset_val), infs))
+        else:
+            callbacks.append(DataParallelInferenceRunner(
+                dataset_val, infs, list(range(nr_tower))))
 
     return TrainConfig(
         model=Model(data_format=data_format),
         dataflow=dataset_train,
-        callbacks=[
-            ModelSaver(),
-            InferenceRunner(dataset_val, [
-                ClassificationError('wrong-top1', 'val-error-top1'),
-                ClassificationError('wrong-top5', 'val-error-top5')]),
-            ScheduledHyperParamSetter('learning_rate',
-                                      [(30, 1e-2), (60, 1e-3), (85, 1e-4), (95, 1e-5), (105, 1e-6)]),
-            HumanHyperParamSetter('learning_rate'),
-        ],
+        callbacks=callbacks,
         steps_per_epoch=5000,
         max_epoch=110,
         nr_tower=nr_tower

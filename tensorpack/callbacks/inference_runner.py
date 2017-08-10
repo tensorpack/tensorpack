@@ -78,6 +78,7 @@ class InferenceRunnerBase(Callback):
             self._size = input.size()
         except NotImplementedError:
             raise ValueError("Input used in InferenceRunner must have a size!")
+        logger.info("InferenceRunner will eval on an InputSource of size {}".format(self._size))
 
         if extra_hooks is None:
             extra_hooks = []

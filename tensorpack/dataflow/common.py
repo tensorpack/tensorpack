@@ -137,8 +137,11 @@ class BatchData(ProxyDataFlow):
                     raise
                 except:
                     logger.exception("Cannot batch data. Perhaps they are of inconsistent shape?")
-                    import IPython as IP
-                    IP.embed(config=IP.terminal.ipapp.load_default_config())
+                    try:
+                        # open an ipython shell if possible
+                        import IPython as IP; IP.embed()    # noqa
+                    except:
+                        pass
         return result
 
 
@@ -679,14 +682,14 @@ class PrintData(ProxyDataFlow):
         """
         Dump gathered debugging information to stdout.
         """
-        msg = [""]
+        label = "" if self.name is None else " (" + self.label + ")"
+        logger.info(colored("DataFlow Info%s:" % label, 'cyan'))
         for i, dummy in enumerate(itertools.islice(self.ds.get_data(), self.num)):
             if isinstance(dummy, list):
-                msg.append("datapoint %i<%i with %i components consists of" % (i, self.num, len(dummy)))
+                msg = "datapoint %i<%i with %i components consists of\n" % (i, self.num, len(dummy))
                 for k, entry in enumerate(dummy):
-                    msg.append(self._analyze_input_data(entry, k))
-        label = "" if self.name is None else " (" + self.label + ")"
-        logger.info(colored("DataFlow Info%s:" % label, 'cyan') + '\n'.join(msg))
+                    msg += self._analyze_input_data(entry, k) + '\n'
+                print(msg)
 
         # reset again after print
         self.ds.reset_state()
