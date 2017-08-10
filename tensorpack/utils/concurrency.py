@@ -32,9 +32,15 @@ class StoppableThread(threading.Thread):
     A thread that has a 'stop' event.
     """
 
-    def __init__(self):
+    def __init__(self, evt=None):
+        """
+        Args:
+            evt(threading.Event): if None, will create one.
+        """
         super(StoppableThread, self).__init__()
-        self._stop_evt = threading.Event()
+        if evt is None:
+            evt = threading.Event()
+        self._stop_evt = evt
 
     def stop(self):
         """ Stop the thread"""
