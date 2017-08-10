@@ -11,7 +11,7 @@ import uuid
 import os
 import zmq
 
-from .base import ProxyDataFlow, DataFlowTerminated
+from .base import ProxyDataFlow, DataFlowTerminated, DataFlowReentrantGuard
 from ..utils.concurrency import (ensure_proc_terminate,
                                  mask_sigint, start_proc_mask_signal,
                                  StoppableThread)
@@ -74,6 +74,8 @@ class PrefetchData(ProxyDataFlow):
             self._size = -1
         self.nr_proc = nr_proc
         self.nr_prefetch = nr_prefetch
+        self._guard = DataFlowReentrantGuard()
+
         self.queue = mp.Queue(self.nr_prefetch)
         self.procs = [PrefetchProcess(self.ds, self.queue)
                       for _ in range(self.nr_proc)]
@@ -81,11 +83,12 @@ class PrefetchData(ProxyDataFlow):
         start_proc_mask_signal(self.procs)
 
     def get_data(self):
-        for k in itertools.count():
-            if self._size > 0 and k >= self._size:
-                break
-            dp = self.queue.get()
-            yield dp
+        with self._guard:
+            for k in itertools.count():
+                if self._size > 0 and k >= self._size:
+                    break
+                dp = self.queue.get()
+                yield dp
 
     def reset_state(self):
         # do nothing. all ds are reset once and only once in spawned processes
@@ -155,26 +158,28 @@ class PrefetchDataZMQ(ProxyDataFlow):
         self.nr_proc = nr_proc
         self._hwm = hwm
 
+        self._guard = DataFlowReentrantGuard()
         self._setup_done = False
 
     def get_data(self):
-        try:
-            for k in itertools.count():
-                if self._size > 0 and k >= self._size:
-                    break
-                dp = loads(self.socket.recv(copy=False).bytes)
-                yield dp
-        except zmq.ContextTerminated:
-            logger.info("[Prefetch Master] Context terminated.")
-            raise DataFlowTerminated()
-        except zmq.ZMQError as e:
-            if e.errno == errno.ENOTSOCK:       # socket closed
-                logger.info("[Prefetch Master] Socket closed.")
+        with self._guard:
+            try:
+                for k in itertools.count():
+                    if self._size > 0 and k >= self._size:
+                        break
+                    dp = loads(self.socket.recv(copy=False).bytes)
+                    yield dp
+            except zmq.ContextTerminated:
+                logger.info("[Prefetch Master] Context terminated.")
                 raise DataFlowTerminated()
-            else:
+            except zmq.ZMQError as e:
+                if e.errno == errno.ENOTSOCK:       # socket closed
+                    logger.info("[Prefetch Master] Socket closed.")
+                    raise DataFlowTerminated()
+                else:
+                    raise
+            except:
                 raise
-        except:
-            raise
 
     def reset_state(self):
         """
@@ -315,6 +320,7 @@ class ThreadedMapData(ProxyDataFlow):
             t.start()
 
         self._iter = self._iter_ds.get_data()
+        self._guard = DataFlowReentrantGuard()
 
         # only call once, to ensure inq+outq has a total of buffer_size elements
         self._fill_buffer()
@@ -332,22 +338,23 @@ class ThreadedMapData(ProxyDataFlow):
             raise
 
     def get_data(self):
-        for dp in self._iter:
-            self._in_queue.put(dp)
-            yield self._out_queue.get()
-
-        self._iter = self._iter_ds.get_data()
-        if self._strict:
-            # first call get() to clear the queues, then fill
-            for k in range(self.buffer_size):
-                dp = self._out_queue.get()
-                if k == self.buffer_size - 1:
-                    self._fill_buffer()
-                yield dp
-        else:
-            for _ in range(self.buffer_size):
-                self._in_queue.put(next(self._iter))
+        with self._guard:
+            for dp in self._iter:
+                self._in_queue.put(dp)
                 yield self._out_queue.get()
+
+            self._iter = self._iter_ds.get_data()
+            if self._strict:
+                # first call get() to clear the queues, then fill
+                for k in range(self.buffer_size):
+                    dp = self._out_queue.get()
+                    if k == self.buffer_size - 1:
+                        self._fill_buffer()
+                    yield dp
+            else:
+                for _ in range(self.buffer_size):
+                    self._in_queue.put(next(self._iter))
+                    yield self._out_queue.get()
 
     def __del__(self):
         for p in self._threads:

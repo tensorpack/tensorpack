@@ -128,6 +128,7 @@ class ILSVRC12Files(RNGDataFlow):
         self.imglist = meta.get_image_list(name, dir_structure)
 
         for fname, _ in self.imglist[:10]:
+            fname = os.path.join(self.full_dir, fname)
             assert os.path.isfile(fname), fname
 
     def size(self):

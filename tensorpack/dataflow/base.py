@@ -3,7 +3,7 @@
 # File: base.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
-
+import threading
 from abc import abstractmethod, ABCMeta
 import six
 from ..utils.utils import get_rng
@@ -18,6 +18,23 @@ class DataFlowTerminated(BaseException):
     In most DataFlow this will not be raised.
     """
     pass
+
+
+class DataFlowReentrantGuard(object):
+    """
+    A tool to enforce thread-level non-reentrancy on DataFlow.
+    """
+    def __init__(self):
+        self._lock = threading.Lock()
+
+    def __enter__(self):
+        self._succ = self._lock.acquire(blocking=False)
+        if not self._succ:
+            raise threading.ThreadError("This DataFlow cannot be reused under different threads!")
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._lock.release()
+        return False
 
 
 @six.add_metaclass(ABCMeta)
