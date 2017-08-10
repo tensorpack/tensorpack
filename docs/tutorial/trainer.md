@@ -5,16 +5,16 @@ In research we do training of various kind.
 The only assumption tensorpack `Trainer` class makes about your training, is that your training
 follows this pattern:
 ```python
-for epoch_num in range(starting_epoch, max_epochs):
+for epoch_num in range(starting_epoch, max_epoch):
 	for local_step in range(steps_per_epoch):
 		run_step()
 ```
 
-1. Training is **running some iteration**.
+1. Training is **running some iterations**.
 Tensorpack base trainer implements the logic of __running the iteration__.
 Users or derived trainers should implement __what the iteration is__.
 
-2. Trainer assumes the existence of "epoch", i.e. that the iterations run in double for loops.
+2. Trainer assumes the existence of __"epoch"__, i.e. that the iterations run in double for-loops.
 But it doesn't need to be a full pass of your dataset, ``steps_per_epoch`` can be any number you set
 and it only affects the [schedule of callbacks](http://tensorpack.readthedocs.io/en/latest/tutorial/extend/callback.html).
 In other words, an "epoch" is the __default period__ to run callbacks (validation, summary, checkpoint, etc.).

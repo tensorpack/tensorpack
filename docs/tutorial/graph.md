@@ -32,16 +32,24 @@ the argument `inputs` is the list of input tensors matching `_get_inputs`.
 You can use any symbolic functions in `_build_graph`, including TensorFlow core library
 functions and other symbolic libraries.
 
-**How does it work**: Most tensorpack trainers expect a `ModelDesc`.
-The trainers will use `_get_inputs` to connect `InputSource` to the graph,
-use `_build_graph` to create the backbone model and minimization op, and so on.
+### How is it Used:
+
+Most tensorpack trainers expect a `ModelDesc`, and use it as a __description
+of the TF graph__ (except for the input pipeline).
+These trainers will use `_get_inputs` to connect the given `InputSource` to the graph.
+They'll then use `_build_graph` to create the backbone model, and then `_get_optimizer` to create the minimization op, and run it.
+
 Note that data-parallel multi-GPU trainers will call `_build_graph` __multiple times__ on each GPU.
 A trainer may also make __extra calls__ to `_build_graph` for inference, if used by some callbacks.
+`_build_graph` will always be called under some `TowerContext` which contains these information
+(e.g. training or inference, reuse or not, scope name) for your access.
+
+Also, to respect variable reuse among multiple calls, use `tf.get_variable()` instead of `tf.Variable`.
 
 ### Build It Manually
 
 When you need to deal with complicated graph, it may be easier to build the graph manually.
 You are free to do so as long as you tell the trainer what to do in each step.
 
-Check out [Write a Trainer](http://localhost:8000/tutorial/extend/trainer.html)
+Check out [Write a Trainer](http://tensorpack.readthedocs.io/en/latest/tutorial/extend/trainer.html)
 for using a custom graph with trainer.
