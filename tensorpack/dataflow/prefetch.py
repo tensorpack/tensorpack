@@ -52,12 +52,13 @@ class PrefetchData(ProxyDataFlow):
     Note:
         1. The underlying dataflow worker will be forked multiple times When ``nr_proc>1``.
            As a result, unless the underlying dataflow is fully shuffled, the data distribution
-           produced by this dataflow will be wrong.
+           produced by this dataflow will be different.
            (e.g. you are likely to see duplicated datapoints at the beginning)
         2. This is significantly slower than :class:`PrefetchDataZMQ` when data is large.
         3. When nesting like this: ``PrefetchDataZMQ(PrefetchData(df, nr_proc=a), nr_proc=b)``.
            A total of ``a`` instances of ``df`` worker processes will be created.
            This is different from the behavior of :class:`PrefetchDataZMQ`
+        4. `reset_state()` is a no-op. The worker processes won't get called.
     """
     def __init__(self, ds, nr_prefetch, nr_proc):
         """
@@ -123,7 +124,7 @@ class PrefetchDataZMQ(ProxyDataFlow):
     Note:
         1. The underlying dataflow worker will be forked multiple times When ``nr_proc>1``.
            As a result, unless the underlying dataflow is fully shuffled, the data distribution
-           produced by this dataflow will be wrong.
+           produced by this dataflow will be different.
            (e.g. you are likely to see duplicated datapoints at the beginning)
         2. Once :meth:`reset_state` is called, this dataflow becomes not fork-safe.
            i.e., if you fork an already reset instance of this dataflow,
@@ -133,8 +134,10 @@ class PrefetchDataZMQ(ProxyDataFlow):
            Also in this case, some zmq pipes cannot be cleaned at exit.
         4. A local directory is needed to put the ZMQ pipes.
            You can set this with env var ``$TENSORPACK_PIPEDIR`` if you're
-           running on certain non-local FS that may not support pipes, such as NFS or GlusterFS.
-
+           running on non-local FS that doesn't support pipes very well, such as NFS or GlusterFS.
+           Please note that some non-local FS may appear to support pipes and code
+           may appear to run but crash with bizarre error.
+        5. Calling `reset_state()` more than once is a no-op, i.e. the worker processes won't get called.
     """
     def __init__(self, ds, nr_proc=1, hwm=50):
         """
