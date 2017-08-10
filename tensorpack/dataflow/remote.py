@@ -5,7 +5,7 @@
 
 import time
 from collections import deque
-from .base import DataFlow
+from .base import DataFlow, DataFlowReentrantGuard
 from ..utils import logger
 from ..utils.utils import get_tqdm
 from ..utils.serialize import dumps, loads, dumps_for_tfop
@@ -72,47 +72,49 @@ class RemoteDataZMQ(DataFlow):
         assert addr1
         self._addr1 = addr1
         self._addr2 = addr2
+        self._guard = DataFlowReentrantGuard()
 
     def reset_state(self):
         self.cnt1 = 0
         self.cnt2 = 0
 
     def get_data(self):
-        try:
-            ctx = zmq.Context()
-            if self._addr2 is None:
-                socket = ctx.socket(zmq.PULL)
-                socket.set_hwm(50)
-                socket.bind(self._addr1)
+        with self._guard:
+            try:
+                ctx = zmq.Context()
+                if self._addr2 is None:
+                    socket = ctx.socket(zmq.PULL)
+                    socket.set_hwm(50)
+                    socket.bind(self._addr1)
 
-                while True:
-                    dp = loads(socket.recv(copy=False).bytes)
-                    yield dp
-                    self.cnt1 += 1
-            else:
-                socket1 = ctx.socket(zmq.PULL)
-                socket1.set_hwm(50)
-                socket1.bind(self._addr1)
-
-                socket2 = ctx.socket(zmq.PULL)
-                socket2.set_hwm(50)
-                socket2.bind(self._addr2)
-
-                poller = zmq.Poller()
-                poller.register(socket1, zmq.POLLIN)
-                poller.register(socket2, zmq.POLLIN)
-
-                while True:
-                    evts = poller.poll()
-                    for sock, evt in evts:
-                        dp = loads(sock.recv(copy=False).bytes)
+                    while True:
+                        dp = loads(socket.recv(copy=False).bytes)
                         yield dp
-                        if sock == socket1:
-                            self.cnt1 += 1
-                        else:
-                            self.cnt2 += 1
-        finally:
-            ctx.destroy(linger=0)
+                        self.cnt1 += 1
+                else:
+                    socket1 = ctx.socket(zmq.PULL)
+                    socket1.set_hwm(50)
+                    socket1.bind(self._addr1)
+
+                    socket2 = ctx.socket(zmq.PULL)
+                    socket2.set_hwm(50)
+                    socket2.bind(self._addr2)
+
+                    poller = zmq.Poller()
+                    poller.register(socket1, zmq.POLLIN)
+                    poller.register(socket2, zmq.POLLIN)
+
+                    while True:
+                        evts = poller.poll()
+                        for sock, evt in evts:
+                            dp = loads(sock.recv(copy=False).bytes)
+                            yield dp
+                            if sock == socket1:
+                                self.cnt1 += 1
+                            else:
+                                self.cnt2 += 1
+            finally:
+                ctx.destroy(linger=0)
 
 
 if __name__ == '__main__':

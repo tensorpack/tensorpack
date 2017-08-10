@@ -13,7 +13,7 @@ from ..utils.timer import timed_operation
 from ..utils.loadcaffe import get_caffe_pb
 from ..utils.serialize import loads
 from ..utils.argtools import log_once
-from .base import RNGDataFlow, DataFlow
+from .base import RNGDataFlow, DataFlow, DataFlowReentrantGuard
 from .common import MapData
 
 __all__ = ['HDF5Data', 'LMDBData', 'LMDBDataDecoder', 'LMDBDataPoint',
@@ -83,6 +83,7 @@ class LMDBData(RNGDataFlow):
         self._size = self._txn.stat()['entries']
         self._set_keys(keys)
         logger.info("Found {} entries in {}".format(self._size, self._lmdb_path))
+        self._guard = DataFlowReentrantGuard()
 
     def _set_keys(self, keys=None):
         def find_keys(txn, size):
@@ -128,17 +129,18 @@ class LMDBData(RNGDataFlow):
         return self._size
 
     def get_data(self):
-        if not self._shuffle:
-            c = self._txn.cursor()
-            while c.next():
-                k, v = c.item()
-                if k != b'__keys__':
+        with self._guard:
+            if not self._shuffle:
+                c = self._txn.cursor()
+                while c.next():
+                    k, v = c.item()
+                    if k != b'__keys__':
+                        yield [k, v]
+            else:
+                self.rng.shuffle(self.keys)
+                for k in self.keys:
+                    v = self._txn.get(k)
                     yield [k, v]
-        else:
-            self.rng.shuffle(self.keys)
-            for k in self.keys:
-                v = self._txn.get(k)
-                yield [k, v]
 
 
 class LMDBDataDecoder(MapData):
@@ -265,7 +267,7 @@ class TFRecordData(DataFlow):
             size (int): total number of records, because this metadata is not
                 stored in the tfrecord file.
         """
-        self._gen = tf.python_io.tf_record_iterator(path)
+        self._path = path
         self._size = int(size)
 
     def size(self):
@@ -274,7 +276,8 @@ class TFRecordData(DataFlow):
         return super(TFRecordData, self).size()
 
     def get_data(self):
-        for dp in self._gen:
+        gen = tf.python_io.tf_record_iterator(self._path)
+        for dp in gen:
             yield loads(dp)
 
 from ..utils.develop import create_dummy_class   # noqa

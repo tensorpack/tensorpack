@@ -9,7 +9,7 @@ from termcolor import colored
 from collections import deque, defaultdict
 from six.moves import range, map
 
-from .base import DataFlow, ProxyDataFlow, RNGDataFlow
+from .base import DataFlow, ProxyDataFlow, RNGDataFlow, DataFlowReentrantGuard
 from ..utils import logger
 from ..utils.utils import get_tqdm, get_rng
 from ..utils.develop import log_deprecated
@@ -166,19 +166,21 @@ class BatchDataByShape(BatchData):
         """
         super(BatchDataByShape, self).__init__(ds, batch_size, remainder=False)
         self.idx = idx
+        self._guard = DataFlowReentrantGuard()
 
     def reset_state(self):
         super(BatchDataByShape, self).reset_state()
         self.holder = defaultdict(list)
 
     def get_data(self):
-        for dp in self.ds.get_data():
-            shp = dp[self.idx].shape
-            holder = self.holder[shp]
-            holder.append(dp)
-            if len(holder) == self.batch_size:
-                yield BatchData._aggregate_batch(holder)
-                del holder[:]
+        with self._guard:
+            for dp in self.ds.get_data():
+                shp = dp[self.idx].shape
+                holder = self.holder[shp]
+                holder.append(dp)
+                if len(holder) == self.batch_size:
+                    yield BatchData._aggregate_batch(holder)
+                    del holder[:]
 
 
 class FixedSizeData(ProxyDataFlow):
@@ -194,25 +196,27 @@ class FixedSizeData(ProxyDataFlow):
         super(FixedSizeData, self).__init__(ds)
         self._size = int(size)
         self.itr = None
+        self._guard = DataFlowReentrantGuard()
 
     def size(self):
         return self._size
 
     def get_data(self):
-        if self.itr is None:
-            self.itr = self.ds.get_data()
-        cnt = 0
-        while True:
-            try:
-                dp = next(self.itr)
-            except StopIteration:
+        with self._guard:
+            if self.itr is None:
                 self.itr = self.ds.get_data()
-                dp = next(self.itr)
+            cnt = 0
+            while True:
+                try:
+                    dp = next(self.itr)
+                except StopIteration:
+                    self.itr = self.ds.get_data()
+                    dp = next(self.itr)
 
-            cnt += 1
-            yield dp
-            if cnt == self._size:
-                return
+                cnt += 1
+                yield dp
+                if cnt == self._size:
+                    return
 
 
 class MapData(ProxyDataFlow):
@@ -522,6 +526,7 @@ class LocallyShuffleData(ProxyDataFlow, RNGDataFlow):
             shuffle_interval = int(buffer_size // 3)
         self.shuffle_interval = shuffle_interval
         self.nr_reuse = nr_reuse
+        self._guard = DataFlowReentrantGuard()
 
     def reset_state(self):
         ProxyDataFlow.reset_state(self)
@@ -535,22 +540,23 @@ class LocallyShuffleData(ProxyDataFlow, RNGDataFlow):
             self.q.append(dp)
 
     def get_data(self):
-        # fill queue
-        while self.q.maxlen > len(self.q):
-            self._add_data()
-
-        sz = self.size()
-        cnt = 0
-        while True:
-            self.rng.shuffle(self.q)
-            for _ in range(self.shuffle_interval):
-                # the inner loop maintains the queue size (almost) unchanged
-                for _ in range(self.nr_reuse):
-                    yield self.q.popleft()
-                cnt += self.nr_reuse
-                if cnt >= sz:
-                    return
+        with self._guard:
+            # fill queue
+            while self.q.maxlen > len(self.q):
                 self._add_data()
+
+            sz = self.size()
+            cnt = 0
+            while True:
+                self.rng.shuffle(self.q)
+                for _ in range(self.shuffle_interval):
+                    # the inner loop maintains the queue size (almost) unchanged
+                    for _ in range(self.nr_reuse):
+                        yield self.q.popleft()
+                    cnt += self.nr_reuse
+                    if cnt >= sz:
+                        return
+                    self._add_data()
 
 
 class CacheData(ProxyDataFlow):
@@ -564,6 +570,7 @@ class CacheData(ProxyDataFlow):
             shuffle (bool): whether to shuffle the datapoints before producing them.
         """
         self.shuffle = shuffle
+        self._guard = DataFlowReentrantGuard()
         super(CacheData, self).__init__(ds)
 
     def reset_state(self):
@@ -573,15 +580,16 @@ class CacheData(ProxyDataFlow):
         self.buffer = []
 
     def get_data(self):
-        if len(self.buffer):
-            if self.shuffle:
-                self.rng.shuffle(self.buffer)
-            for dp in self.buffer:
-                yield dp
-        else:
-            for dp in self.ds.get_data():
-                yield dp
-                self.buffer.append(dp)
+        with self._guard:
+            if len(self.buffer):
+                if self.shuffle:
+                    self.rng.shuffle(self.buffer)
+                for dp in self.buffer:
+                    yield dp
+            else:
+                for dp in self.ds.get_data():
+                    yield dp
+                    self.buffer.append(dp)
 
 
 class PrintData(ProxyDataFlow):
