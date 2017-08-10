@@ -28,7 +28,7 @@ class DataFlowReentrantGuard(object):
         self._lock = threading.Lock()
 
     def __enter__(self):
-        self._succ = self._lock.acquire(blocking=False)
+        self._succ = self._lock.acquire(False)
         if not self._succ:
             raise threading.ThreadError("This DataFlow cannot be reused under different threads!")
 
