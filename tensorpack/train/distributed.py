@@ -62,7 +62,7 @@ class DistributedTrainerReplicated(MultiGPUTrainerBase):
                 config=get_default_sess_config())
             DistributedTrainerReplicated(config, server).train()
 
-        .. code-block::
+        .. code-block:: none
 
             # start your jobs:
             (host1)$ train.py --job worker --task 0
@@ -74,7 +74,7 @@ class DistributedTrainerReplicated(MultiGPUTrainerBase):
         """
         Args:
             config(TrainConfig): Must contain 'model' and 'data'.
-            server (tf.train.Server): the server object with ps and workers
+            server(tf.train.Server): the server object with ps and workers
         """
         assert config.data is not None and config.model is not None
         self.server = server
