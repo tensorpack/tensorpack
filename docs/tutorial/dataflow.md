@@ -41,11 +41,11 @@ for simple instructions on writing a DataFlow.
 
 ### Why DataFlow
 
-1. It's easy: write everything in pure Python, and reuse existing utilities. On the contrary,
-	 writing data loaders in TF operators is painful.
-2. It's fast (enough): see [Efficient DataFlow](http://tensorpack.readthedocs.io/en/latest/tutorial/efficient-dataflow.html)
-	on how to build a fast DataFlow.
-	Also see [Input Pipeline tutorial](http://tensorpack.readthedocs.io/en/latest/tutorial/input-source.html)
+1. It's easy: write everything in pure Python, and reuse existing utilities.
+	 On the contrary, writing data loaders in TF operators or other frameworks is usually painful.
+2. It's fast: see [Efficient DataFlow](http://tensorpack.readthedocs.io/en/latest/tutorial/efficient-dataflow.html)
+	on how to build a fast DataFlow with parallel prefetching.
+	If you're using DataFlow with tensorpack, also see [Input Pipeline tutorial](http://tensorpack.readthedocs.io/en/latest/tutorial/input-source.html)
 	on how tensorpack further accelerates data loading in the graph.
 
 Nevertheless, tensorpack support data loading with native TF operators as well.
