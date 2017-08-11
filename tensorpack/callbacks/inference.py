@@ -9,6 +9,7 @@ from six.moves import zip
 
 from .base import Callback
 from ..utils import logger
+from ..utils.utils import execute_only_once
 from ..utils.stats import RatioCounter, BinaryStatistics
 from ..tfutils.common import get_op_tensor_name
 
@@ -57,7 +58,7 @@ class Inferencer(Callback):
         try:
             ret = self._get_fetches()
         except NotImplementedError:
-            logger.warn("Inferencer._get_output_tensors was renamed to _get_fetches")
+            logger.warn("Inferencer._get_output_tensors was deprecated and renamed to _get_fetches")
             ret = self._get_output_tensors()
 
         return [get_op_tensor_name(n)[1] for n in ret]
@@ -79,7 +80,8 @@ class Inferencer(Callback):
         try:
             self._on_fetches(results)
         except NotImplementedError:
-            logger.warn("Inferencer._datapoint was renamed to _on_fetches")
+            if execute_only_once():
+                logger.warn("Inferencer._datapoint was deprecated and renamed to _on_fetches.")
             self._datapoint(results)
 
     def _datapoint(self, results):
