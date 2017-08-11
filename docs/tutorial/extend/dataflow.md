@@ -28,6 +28,6 @@ Optionally, DataFlow can implement the following two methods:
 With a "low-level" DataFlow defined like above, you can then compose it with existing modules (e.g. batching, prefetching, ...).
 
 DataFlow implementations for several well-known datasets are provided in the
-[dataflow.dataset](http://tensorpack.readthedocs.io/en/latest/modules/tensorpack.dataflow.dataset.html)
+[dataflow.dataset](http://tensorpack.readthedocs.io/en/latest/modules/dataflow.dataset.html)
 module, you can take them as a reference.
 
