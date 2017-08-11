@@ -8,6 +8,7 @@ from tensorflow.contrib.framework import add_model_variable
 from tensorflow.python.training import moving_averages
 from tensorflow.python.layers.normalization import BatchNorm as TF_BatchNorm
 
+from ..utils import logger
 from ..tfutils.tower import get_current_tower_context
 from ..tfutils.collection import backup_collection, restore_collection
 from .common import layer_register, VariableHolder
@@ -129,7 +130,8 @@ def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5,
         if ndims == 2:
             xn = tf.squeeze(xn, [1, 2])
     else:
-        assert not ctx.is_training, "In training, local statistics has to be used!"
+        if ctx.is_training:
+            logger.warn("[BatchNorm] Using moving_mean/moving_variance in training.")
         # non-fused op is faster for inference
         if ndims == 4 and data_format == 'NCHW':
             [g, b, mm, mv] = [reshape_for_bn(_, ndims, n_out, data_format)
@@ -142,7 +144,7 @@ def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5,
 
     # maintain EMA only on one GPU is OK, even in replicated mode.
     # because training time doesn't use EMA
-    if ctx.is_main_training_tower:
+    if ctx.is_main_training_tower and use_local_stat:
         ret = update_bn_ema(xn, batch_mean, batch_var, moving_mean, moving_var, decay)
     else:
         ret = tf.identity(xn, name='output')

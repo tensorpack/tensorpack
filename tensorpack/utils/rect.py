@@ -33,7 +33,7 @@ class BoxBase(object):
         return self.w * self.h
 
     def is_box(self):
-        return self.area() > 0
+        return self.w > 0 and self.h > 0
 
 
 class IntBox(BoxBase):
@@ -68,6 +68,18 @@ class IntBox(BoxBase):
         if self.y2 >= shape[0]:
             return False
         return True
+
+    def clip_by_shape(self, shape):
+        """
+        Clip xs and ys to be valid coordinates inside shape
+
+        Args:
+            shape: int [h, w] or None.
+        """
+        self.x1 = np.clip(self.x1, 0, shape[1] - 1)
+        self.x2 = np.clip(self.x2, 0, shape[1] - 1)
+        self.y1 = np.clip(self.y1, 0, shape[0] - 1)
+        self.y2 = np.clip(self.y2, 0, shape[0] - 1)
 
     def roi(self, img):
         assert self.validate(img.shape[:2]), "{} vs {}".format(self, img.shape[:2])
