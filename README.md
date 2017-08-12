@@ -68,3 +68,4 @@ Dependencies:
 pip install -U git+https://github.com/ppwwyyxx/tensorpack.git
 # or add `--user` to avoid system-wide installation.
 ```
+Besides, if you only want to use `tensorpack.dataflow` alone, TensorFlow is also optional.

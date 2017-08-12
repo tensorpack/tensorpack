@@ -52,6 +52,7 @@ Nevertheless, tensorpack support data loading with native TF operators as well.
 
 ### Use DataFlow outside Tensorpack
 DataFlow is __independent__ of both tensorpack and TensorFlow.
+To `import tensorpack.dataflow`, you don't have to install TensorFlow.
 You can simply use it as a data processing pipeline and plug it into any other frameworks.
 
 To use a DataFlow independently, you will need to call `reset_state()` first to initialize it,
