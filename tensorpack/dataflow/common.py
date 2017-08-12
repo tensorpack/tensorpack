@@ -5,6 +5,7 @@
 from __future__ import division
 import numpy as np
 from copy import copy
+import pprint
 from termcolor import colored
 from collections import deque, defaultdict
 from six.moves import range, map
@@ -136,8 +137,11 @@ class BatchData(ProxyDataFlow):
                         np.asarray([x[k] for x in data_holder], dtype=tp))
                 except KeyboardInterrupt:
                     raise
-                except:
+                except Exception as e:  # noqa
                     logger.exception("Cannot batch data. Perhaps they are of inconsistent shape?")
+                    if isinstance(dt, np.ndarray):
+                        s = pprint.pformat([x[k].shape for x in data_holder])
+                        logger.error("Shape of all arrays to be batched: " + s)
                     try:
                         # open an ipython shell if possible
                         import IPython as IP; IP.embed()    # noqa

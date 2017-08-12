@@ -101,13 +101,16 @@ class ResizeShortestEdge(ImageAugmentor):
         Args:
             size (int): the size to resize the shortest edge to.
         """
-        size = size * 1.0
+        size = int(size)
         self._init(locals())
 
     def _get_augment_params(self, img):
         h, w = img.shape[:2]
-        scale = self.size / min(h, w)
-        newh, neww = map(int, [scale * h, scale * w])
+        scale = self.size * 1.0 / min(h, w)
+        if h < w:
+            newh, neww = self.size, int(scale * w)
+        else:
+            newh, neww = int(scale * h), self.size
         return (h, w, newh, neww)
 
     def _augment(self, img, param):
