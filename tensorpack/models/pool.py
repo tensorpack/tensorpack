@@ -29,7 +29,7 @@ def _Pooling(func, x, shape, stride, padding, data_format):
                 name='output')
 
 
-@layer_register()
+@layer_register(log_shape=True)
 def MaxPooling(x, shape, stride=None, padding='VALID', data_format='NHWC'):
     """
     Max Pooling on 4D tensors.
@@ -47,7 +47,7 @@ def MaxPooling(x, shape, stride=None, padding='VALID', data_format='NHWC'):
                     data_format=data_format)
 
 
-@layer_register()
+@layer_register(log_shape=True)
 def AvgPooling(x, shape, stride=None, padding='VALID', data_format='NHWC'):
     """
     Average Pooling on 4D tensors.
@@ -65,7 +65,7 @@ def AvgPooling(x, shape, stride=None, padding='VALID', data_format='NHWC'):
                     data_format=data_format)
 
 
-@layer_register()
+@layer_register(log_shape=True)
 def GlobalAvgPooling(x, data_format='NHWC'):
     """
     Global average pooling as in the paper `Network In Network
@@ -97,7 +97,7 @@ def UnPooling2x2ZeroFilled(x):
         return ret
 
 
-@layer_register()
+@layer_register(log_shape=True)
 def FixedUnPooling(x, shape, unpool_mat=None, data_format='NHWC'):
     """
     Unpool the input with a fixed matrix to perform kronecker product with.
@@ -149,7 +149,7 @@ def FixedUnPooling(x, shape, unpool_mat=None, data_format='NHWC'):
     return ret
 
 
-@layer_register()
+@layer_register(log_shape=True)
 def BilinearUpSample(x, shape):
     """
     Deterministic bilinearly-upsample the input images.

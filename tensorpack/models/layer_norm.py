@@ -9,7 +9,7 @@ from .common import layer_register
 __all__ = ['LayerNorm', 'InstanceNorm']
 
 
-@layer_register(log_shape=False)
+@layer_register()
 def LayerNorm(x, epsilon=1e-5, use_bias=True, use_scale=True, data_format='NHWC'):
     """
     Layer Normalization layer, as described in the paper:
@@ -49,7 +49,7 @@ def LayerNorm(x, epsilon=1e-5, use_bias=True, use_scale=True, data_format='NHWC'
     return tf.nn.batch_normalization(x, mean, var, beta, gamma, epsilon, name='output')
 
 
-@layer_register(log_shape=False)
+@layer_register()
 def InstanceNorm(x, epsilon=1e-5, data_format='NHWC', use_affine=True):
     """
     Instance Normalization, as in the paper:

@@ -11,7 +11,7 @@ from .batch_norm import BatchNorm
 __all__ = ['Maxout', 'PReLU', 'LeakyReLU', 'BNReLU']
 
 
-@layer_register(use_scope=False)
+@layer_register(use_scope=None)
 def Maxout(x, num_unit):
     """
     Maxout as in the paper `Maxout Networks <http://arxiv.org/abs/1302.4389>`_.
@@ -35,7 +35,7 @@ def Maxout(x, num_unit):
     return tf.reduce_max(x, ndim, name='output')
 
 
-@layer_register(log_shape=False)
+@layer_register()
 def PReLU(x, init=0.001, name='output'):
     """
     Parameterized ReLU as in the paper `Delving Deep into Rectifiers: Surpassing
@@ -60,7 +60,7 @@ def PReLU(x, init=0.001, name='output'):
     return ret
 
 
-@layer_register(use_scope=False, log_shape=False)
+@layer_register(use_scope=None)
 def LeakyReLU(x, alpha, name='output'):
     """
     Leaky ReLU as in paper `Rectifier Nonlinearities Improve Neural Network Acoustic
@@ -74,7 +74,7 @@ def LeakyReLU(x, alpha, name='output'):
     return tf.maximum(x, alpha * x, name=name)
 
 
-@layer_register(log_shape=False, use_scope=False)
+@layer_register(use_scope=None)
 def BNReLU(x, name=None):
     """
     A shorthand of BatchNormalization + ReLU.

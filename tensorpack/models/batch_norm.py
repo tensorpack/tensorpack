@@ -65,7 +65,7 @@ def reshape_for_bn(param, ndims, chan, data_format):
     return tf.reshape(param, shape)
 
 
-@layer_register(log_shape=False)
+@layer_register()
 def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5,
               use_scale=True, use_bias=True,
               gamma_init=tf.constant_initializer(1.0), data_format='NHWC'):
@@ -157,7 +157,7 @@ def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5,
     return ret
 
 
-@layer_register(log_shape=False)
+@layer_register()
 def BatchRenorm(x, rmax, dmax, decay=0.9, epsilon=1e-5,
                 use_scale=True, use_bias=True, data_format='NHWC'):
     """

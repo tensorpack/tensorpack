@@ -11,7 +11,7 @@ from .shape_utils import StaticDynamicAxis
 __all__ = ['Conv2D', 'Deconv2D']
 
 
-@layer_register()
+@layer_register(log_shape=True)
 def Conv2D(x, out_channel, kernel_shape,
            padding='SAME', stride=1,
            W_init=None, b_init=None,
@@ -79,7 +79,7 @@ def Conv2D(x, out_channel, kernel_shape,
     return ret
 
 
-@layer_register()
+@layer_register(log_shape=True)
 def Deconv2D(x, out_shape, kernel_shape,
              stride, padding='SAME',
              W_init=None, b_init=None,

@@ -11,7 +11,7 @@ from ..tfutils import symbolic_functions as symbf
 __all__ = ['FullyConnected']
 
 
-@layer_register()
+@layer_register(log_shape=True)
 def FullyConnected(x, out_dim,
                    W_init=None, b_init=None,
                    nl=tf.identity, use_bias=True):

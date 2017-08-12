@@ -83,16 +83,19 @@ def disable_layer_logging():
 
 
 def layer_register(
-        log_shape=True,
+        log_shape=False,
         use_scope=True):
     """
     Register a layer.
 
     Args:
         log_shape (bool): log input/output shape of this layer
-        use_scope (bool): whether to call this layer with an extra first argument as scope.
-            If set to False, will try to figure out whether the first argument
-            is scope name or not.
+        use_scope (bool or None):
+            Whether to call this layer with an extra first argument as scope.
+            When set to None, it can be called either with or without
+            the scope name argument.
+            It will try to figure out by checking if the first argument
+            is string or not.
     """
 
     def wrapper(func):
@@ -103,7 +106,12 @@ def layer_register(
                 name, inputs = args[0], args[1]
                 args = args[1:]  # actual positional args used to call func
                 assert isinstance(name, six.string_types), name
-            else:
+            elif use_scope is False:
+                assert not log_shape
+                inputs = args[0]
+                name = None
+                assert not isinstance(args[0], six.string_types), name
+            else:   # use_scope is None
                 assert not log_shape
                 if isinstance(args[0], six.string_types):
                     name, inputs = args[0], args[1]
