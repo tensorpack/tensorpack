@@ -5,9 +5,13 @@ $(function (){
   var createList = function(selected) {
     var ul = $('<ul>');
 
-    selected.clone().each(function(i,e) {
+    selected.each(function(i,e) {
 
-      var n = $(e).children('.descname');
+      var fullname = e.id;
+      var n = $(e).children('.descname').clone();
+      if (fullname.startsWith('tensorpack.'))
+        fullname = fullname.substr(11);
+      n[0].innerText = fullname;
       var l = $(e).children('.headerlink');
 
       var a = $('<a>');
@@ -26,12 +30,7 @@ $(function (){
   var customIndex = $('.custom-index');
   customIndex.empty();
 
-  var mod_content = $('#module-contents');
-  if (mod_content.length == 0)
-    return;
-  var mc_container = mod_content[0].parentNode;
-  var selected = $(mc_container).find('>dl>dt');
-
+  var selected = $('div.section>dl>dt');
   if (selected.length === 0)
     return;
 

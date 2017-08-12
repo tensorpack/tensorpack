@@ -8,7 +8,7 @@ import os.path
 # this line is necessary for _TFModuleFunc to work
 import tensorflow as tf  # noqa: F401
 
-__all__ = ['LinearWrap']
+__all__ = []
 
 
 def _global_import(name):
