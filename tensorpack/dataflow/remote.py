@@ -8,7 +8,7 @@ from collections import deque
 from .base import DataFlow, DataFlowReentrantGuard
 from ..utils import logger
 from ..utils.utils import get_tqdm
-from ..utils.serialize import dumps, loads, dumps_for_tfop
+from ..utils.serialize import dumps, loads
 try:
     import zmq
 except ImportError:
@@ -30,7 +30,8 @@ def send_dataflow_zmq(df, addr, hwm=50, print_interval=100, format=None):
     """
     # format (str): The serialization format. ZMQ Op is still not publicly usable now
     #     Default format would use :mod:`tensorpack.utils.serialize`.
-    dump_fn = dumps if format is None else dumps_for_tfop
+    # dump_fn = dumps if format is None else dumps_for_tfop
+    dump_fn = dumps
     ctx = zmq.Context()
     socket = ctx.socket(zmq.PUSH)
     socket.set_hwm(hwm)

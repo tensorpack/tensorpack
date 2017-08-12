@@ -38,8 +38,10 @@ install:
 - pip install flake8 scikit-image opencv-python pypandoc
   # here we use opencv-python, but users are in general not recommended to use this package,
   # because it brings issues working with tensorflow on gpu
-- ./tests/install-tensorflow.sh
 - pip install .
+  # check that dataflow can be imported alone
+- python -c "import tensorpack.dataflow"
+- ./tests/install-tensorflow.sh
 
 before_script:
 - flake8 --version

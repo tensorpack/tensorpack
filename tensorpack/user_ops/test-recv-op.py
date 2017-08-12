@@ -10,8 +10,8 @@ import multiprocessing as mp
 import numpy as np
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf # noqa
-from tensorpack.utils.serialize import dump_tensor_protos, to_tensor_proto  # noqa
-from tensorpack.user_ops import zmq_recv    # noqa
+from tensorpack.user_ops.zmq_recv import (  # noqa
+    zmq_recv, dump_tensor_protos, to_tensor_proto)
 
 try:
     num = int(sys.argv[1])
