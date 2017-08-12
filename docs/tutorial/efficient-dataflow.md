@@ -130,6 +130,9 @@ Let's summarize what the above dataflow does:
 3. Both 1 and 2 happen in one separate process, and the results are sent back to main process through ZeroMQ.
 4. Main process makes batches, and other tensorpack modules will then take care of how they should go into the graph.
 
+Note that in an actual training setup, I used the above multiprocess version for training set since
+it's faster to run heavy preprocessing in processes, and use this multithread version only for validation set.
+
 ## Sequential Read
 
 Random read may not be a good idea when the data is not on an SSD.
@@ -212,9 +215,10 @@ Both imdecode and the augmentors can be quite slow. We can parallelize them like
 Since we are reading the database sequentially, having multiple forked instances of the
 base LMDB reader will result in biased data distribution. Therefore we use `PrefetchData` to
 launch the base DataFlow in only **one process**, and only parallelize the transformations
-with another `PrefetchDataZMQ`.
+with another `PrefetchDataZMQ`
 (Nesting two `PrefetchDataZMQ`, however, will result in a different behavior.
-These differences are explained in the API documentation in more details.)
+These differences are explained in the API documentation in more details.).
+Similar to what we did above, you can use `ThreadedMapData` to parallelize as well.
 
 Let me summarize what the above DataFlow does:
 
@@ -223,8 +227,8 @@ Let me summarize what the above DataFlow does:
 	 send them through ZMQ IPC pipe.
 3. The main process takes data from the pipe, makes batches.
 
-The above DataFlow can run at a speed of 1k ~ 2k images per second if you have good CPUs, RAM, disks and augmentors.
-As a reference, tensorpack can train ResNet-18 (a shallow ResNet) at 4.5 batches (1.2k images) per second on 4 old TitanX.
+The DataFlow mentioned above (both random read and sequential read) can run at a speed of 1k ~ 2k images per second if you have good CPUs, RAM, disks.
+As a reference, tensorpack can train ResNet-18 at 1.2k images/s on 4 old TitanX.
 A DGX-1 (8 P100) can train ResNet-50 at 1.7k images/s according to the [official benchmark](https://www.tensorflow.org/performance/benchmarks).
 So DataFlow will not be a serious bottleneck if configured properly.
 
