@@ -5,7 +5,7 @@ tensorpack.models package
 
     .. raw:: html
 
-        <script type="text/javascript" src='/_static/pymunk.js'></script>
+        <script type="text/javascript" src='../_static/pymunk.js'></script>
 
 
 .. automodule:: tensorpack.models

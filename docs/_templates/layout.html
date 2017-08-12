@@ -1,5 +1,7 @@
 {% extends "!layout.html" %}
 
 {%- block extrahead %}
-    <script type="text/javascript" src='/_static/jquery-3.2.1.min.js'></script>
+    <script type="text/javascript"
+						src={{ pathto('_static/jquery-3.2.1.min.js', 1) }}>
+		</script>
 {% endblock %}

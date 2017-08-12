@@ -12,7 +12,7 @@ Table of Contents
 
     .. raw:: html
 
-        <script type="text/javascript" src='/_static/pymunk.js'></script>
+        <script type="text/javascript" src='../_static/pymunk.js'></script>
 
 
 DataFlow
