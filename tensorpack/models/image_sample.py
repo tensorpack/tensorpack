@@ -45,7 +45,7 @@ def sample(img, coords):
     return sampled
 
 
-@layer_register()
+@layer_register(log_shape=True)
 def ImageSample(inputs, borderMode='repeat'):
     """
     Sample the template image using the given coordinate, by bilinear interpolation.

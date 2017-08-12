@@ -80,7 +80,7 @@ def regularize_cost_from_collection(name='regularize_cost'):
         return None
 
 
-@layer_register(log_shape=False, use_scope=False)
+@layer_register(use_scope=None)
 def Dropout(x, keep_prob=0.5, is_training=None, noise_shape=None):
     """
     Dropout layer as in the paper `Dropout: a Simple Way to Prevent

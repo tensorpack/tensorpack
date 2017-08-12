@@ -106,14 +106,14 @@ def layer_register(
                 name, inputs = args[0], args[1]
                 args = args[1:]  # actual positional args used to call func
                 assert isinstance(name, six.string_types), name
-            elif use_scope is False:
-                assert not log_shape
-                inputs = args[0]
-                name = None
-                assert not isinstance(args[0], six.string_types), name
-            else:   # use_scope is None
+            else:
                 assert not log_shape
                 if isinstance(args[0], six.string_types):
+                    if use_scope is False:
+                        logger.warn(
+                            "Please call layer {} without the first scope name argument, "
+                            "or register the layer with use_scope=None to allow "
+                            "two calling methods.".format(func.__name__))
                     name, inputs = args[0], args[1]
                     args = args[1:]  # actual positional args used to call func
                 else:

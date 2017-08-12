@@ -9,7 +9,7 @@ from .common import layer_register
 __all__ = ['ConcatWith']
 
 
-@layer_register(use_scope=False, log_shape=False)
+@layer_register(use_scope=None)
 def ConcatWith(x, tensor, dim):
     """
     A wrapper around ``tf.concat`` to cooperate with :class:`LinearWrap`.
