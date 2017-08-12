@@ -29,9 +29,9 @@ class HDF5Data(RNGDataFlow):
     Zip data from different paths in an HDF5 file.
 
     Warning:
-        The current implementation will load all data into memory.
+        The current implementation will load all data into memory. (TODO)
     """
-    # TODO lazy load
+# TODO
 
     def __init__(self, filename, data_paths, shuffle=True):
         """
@@ -61,7 +61,8 @@ class HDF5Data(RNGDataFlow):
 
 
 class LMDBData(RNGDataFlow):
-    """ Read a LMDB database and produce (k,v) pairs """
+    """ Read a LMDB database and produce (k,v) raw string pairs.
+    """
     def __init__(self, lmdb_path, shuffle=True, keys=None):
         """
         Args:
@@ -79,7 +80,7 @@ class LMDBData(RNGDataFlow):
         self._lmdb_path = lmdb_path
         self._shuffle = shuffle
 
-        self.open_lmdb()
+        self._open_lmdb()
         self._size = self._txn.stat()['entries']
         self._set_keys(keys)
         logger.info("Found {} entries in {}".format(self._size, self._lmdb_path))
@@ -113,7 +114,7 @@ class LMDBData(RNGDataFlow):
                 else:
                     self.keys = keys
 
-    def open_lmdb(self):
+    def _open_lmdb(self):
         self._lmdb = lmdb.open(self._lmdb_path,
                                subdir=os.path.isdir(self._lmdb_path),
                                readonly=True, lock=False, readahead=True,
@@ -123,7 +124,7 @@ class LMDBData(RNGDataFlow):
     def reset_state(self):
         self._lmdb.close()
         super(LMDBData, self).reset_state()
-        self.open_lmdb()
+        self._open_lmdb()
 
     def size(self):
         return self._size

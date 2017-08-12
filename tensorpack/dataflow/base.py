@@ -13,9 +13,10 @@ __all__ = ['DataFlow', 'ProxyDataFlow', 'RNGDataFlow', 'DataFlowTerminated']
 
 class DataFlowTerminated(BaseException):
     """
-    An exception indicating that the DataFlow is unable to produce any more data:
-    calling :meth:`get_data` will not give a valid iterator any more.
-    In most DataFlow this will not be raised.
+    An exception indicating that the DataFlow is unable to produce any more
+    data, i.e. something wrong happened so that calling :meth:`get_data`
+    cannot give a valid iterator any more.
+    In most DataFlow this will never be raised.
     """
     pass
 
@@ -80,7 +81,9 @@ class RNGDataFlow(DataFlow):
 
 
 class ProxyDataFlow(DataFlow):
-    """ Base class for DataFlow that proxies another"""
+    """ Base class for DataFlow that proxies another.
+        Every method is proxied to ``self.ds`` unless override by subclass.
+    """
 
     def __init__(self, ds):
         """
@@ -90,9 +93,6 @@ class ProxyDataFlow(DataFlow):
         self.ds = ds
 
     def reset_state(self):
-        """
-        Reset state of the proxied DataFlow.
-        """
         self.ds.reset_state()
 
     def size(self):

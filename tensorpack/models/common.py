@@ -131,6 +131,7 @@ def layer_register(
 
             if name is not None:        # use scope
                 with tf.variable_scope(name) as scope:
+                    # this name is only used to surpress logging, doesn't hurt to do some heuristics
                     scope_name = re.sub('tower[0-9]+/', '', scope.name)
                     do_log_shape = log_shape and scope_name not in _LAYER_LOGGED
                     if do_log_shape:
