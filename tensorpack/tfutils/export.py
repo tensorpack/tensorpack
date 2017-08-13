@@ -9,7 +9,7 @@ This simplifies the process of exporting a model for TensorFlow serving.
 
 import tensorflow as tf
 from ..utils import logger
-from ..graph_builder.model_desc import ModelDesc
+from ..graph_builder.model_desc import ModelDescBase
 from ..graph_builder.input_source import PlaceholderInput
 from ..tfutils import TowerContext, sessinit
 
@@ -50,14 +50,14 @@ class ModelExport(object):
                     prediction = sess.run(prediction, {lowres: ...})[0]
 
         Args:
-            model (ModelDesc): the model description which should be exported
+            model (ModelDescBase): the model description which should be exported
             input_names (list(str)): names of input tensors
             output_names (list(str)): names of output tensors
         """
 
         assert isinstance(input_names, list)
         assert isinstance(output_names, list)
-        assert isinstance(model, ModelDesc)
+        assert isinstance(model, ModelDescBase)
 
         logger.info('[export] prepare new model export')
         super(ModelExport, self).__init__()
