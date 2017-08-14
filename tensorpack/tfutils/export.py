@@ -89,7 +89,7 @@ class ModelExport(object):
         """
         logger.info('[export] build model for %s' % checkpoint)
         with TowerContext('', is_training=False):
-            self.model._build_graph(self.input)
+            self.model.build_graph(self.input)
 
             self.sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
             # load values from latest checkpoint

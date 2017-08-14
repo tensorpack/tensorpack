@@ -21,7 +21,7 @@ class PeriodicTrigger(ProxyCallback):
             every_k_epochs (int): trigger when ``epoch_num % k == 0``. Set to
                 None to disable.
 
-        every_k_steps and every_k_epochs can be both set, but cannot be both NOne.
+        every_k_steps and every_k_epochs can be both set, but cannot be both None.
         """
         assert isinstance(triggerable, Callback), type(triggerable)
         super(PeriodicTrigger, self).__init__(triggerable)
@@ -55,7 +55,8 @@ class PeriodicRunHooks(ProxyCallback):
         """
         Args:
             callback (Callback):
-            every_k_steps(int):
+            every_k_steps(int): call ``{before,after}_run`` when
+                ``global_step % k == 0``.
         """
         self._every_k_steps = int(every_k_steps)
         super(PeriodicRunHooks, self).__init__(callback)
@@ -67,3 +68,6 @@ class PeriodicRunHooks(ProxyCallback):
     def _after_run(self, ctx, rv):
         if self.global_step % self._every_k_steps == 0:
             self.cb._after_run(ctx, rv)
+
+    def __str__(self):
+        return "PeriodicRunHooks-" + str(self.cb)
