@@ -44,10 +44,10 @@ TrainConfig(
                -d type=note -d title="validation error" \\
                -d body={val-error-top1} > /dev/null 2>&1',
                'val-error-top1'),
-		# record GPU utilizations during training
-		GPUUtilizationTracker(),
-		# can pause the training and start a debug shell, to observe what's going on
-		InjectShell(shell='ipython')
+    # record GPU utilizations during training
+    GPUUtilizationTracker(),
+    # can pause the training and start a debug shell, to observe what's going on
+    InjectShell(shell='ipython')
   ],
   extra_callbacks=[    # these callbacks are enabled by default already
     # maintain and summarize moving average of some tensors defined in the model (e.g. training loss, training error)

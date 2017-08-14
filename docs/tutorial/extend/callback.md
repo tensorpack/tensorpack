@@ -46,7 +46,7 @@ Usually some finalization work.
 
 * `_before_epoch(self)`, `_after_epoch(self)`
 
-Use them only when you really need something to happen __immediately__ before/after an epoch.
+Use them __only__ when you really need something to happen __immediately__ before/after an epoch.
 Otherwise, `_trigger_epoch` should be enough.
 
 * `_before_run(self, ctx)`, `_after_run(self, ctx, values)`
@@ -78,9 +78,11 @@ Do something after each epoch has finished. Will call `self.trigger()` by defaul
 
 * `_trigger(self)`
 
-By default will get called by `_trigger_epoch`,
-but you can customize the scheduling of this callback by
-`PeriodicTrigger`, to let this method run every k steps or every k epochs.
+Define something to do here without knowing how often it will get called.
+By default it will get called by `_trigger_epoch`,
+but you can customize the scheduling of this method by
+[`PeriodicTrigger`](http://tensorpack.readthedocs.io/en/latest/modules/callbacks.html#tensorpack.callbacks.PeriodicTrigger),
+to let this method run every k steps or every k epochs.
 
 ### What you can do in the callback
 

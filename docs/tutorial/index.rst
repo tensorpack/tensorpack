@@ -45,5 +45,5 @@ Extend Tensorpack
   extend/dataflow
   extend/augmentor
   extend/model
-  extend/trainer
   extend/callback
+  extend/trainer

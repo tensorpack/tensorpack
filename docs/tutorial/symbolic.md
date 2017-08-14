@@ -12,22 +12,21 @@ In the future we may shift to `tf.layers` because they will be better maintained
 
 ### argscope and LinearWrap
 `argscope` gives you a context with default arguments.
-`LinearWrap` allows you to simplify "linear structure" models by
-adding the layers one by one.
+`LinearWrap` is a syntax sugar to simplify building "linear structure" models.
 
 The following code:
 ```python
 with argscope(Conv2D, out_channel=32, kernel_shape=3, nl=tf.nn.relu):
-	l = (LinearWrap(image)  # the starting brace is only for line-breaking
-			 .Conv2D('conv0')
-			 .MaxPooling('pool0', 2)
-			 .Conv2D('conv1', padding='SAME')
-			 .Conv2D('conv2', kernel_shape=5)
-			 .FullyConnected('fc0', 512, nl=tf.nn.relu)
-			 .Dropout('dropout', 0.5)
-			 .tf.multiply(0.5)
-			 .apply(func, *args, **kwargs)
-			 .FullyConnected('fc1', out_dim=10, nl=tf.identity)())
+  l = (LinearWrap(image)  # the starting brace is only for line-breaking
+       .Conv2D('conv0')
+       .MaxPooling('pool0', 2)
+       .Conv2D('conv1', padding='SAME')
+       .Conv2D('conv2', kernel_shape=5)
+       .FullyConnected('fc0', 512, nl=tf.nn.relu)
+       .Dropout('dropout', 0.5)
+       .tf.multiply(0.5)
+       .apply(func, *args, **kwargs)
+       .FullyConnected('fc1', out_dim=10, nl=tf.identity)())
 ```
 is equivalent to:
 ```
@@ -49,14 +48,14 @@ To do this, just enter a [TowerContext](http://tensorpack.readthedocs.io/en/late
 when you define your model:
 ```python
 with TowerContext('', is_training=True):
-	# call any tensorpack layer
+  # call any tensorpack layer
 ```
 
 Some layers (in particular ``BatchNorm``) has different train/test time behavior which is controlled
 by ``TowerContext``. If you need to use the tensorpack version of them in test time, you'll need to create the ops for them under another context.
 ```python
 with tf.variable_scope(tf.get_variable_scope(), reuse=True), TowerContext('predict', is_training=False):
-	# build the graph again
+  # build the graph again
 ```
 
 ### Use Other Symbolic Libraries within Tensorpack

@@ -15,7 +15,7 @@ class MyDataFlow(DataFlow):
       yield [digit, label]
 ```
 
-Optionally, DataFlow can implement the following two methods:
+Optionally, you can implement the following two methods:
 
 + `size()`. Return the number of elements the generator can produce. Certain tensorpack features might require this.
 
