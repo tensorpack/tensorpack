@@ -9,6 +9,7 @@ import sys
 import io
 from .fs import mkdir_p
 from .argtools import shape2d
+from .rect import BoxBase
 
 try:
     import cv2
@@ -350,6 +351,42 @@ def intensity_to_rgb(intensity, cmap='cubehelix', normalize=False):
     intensity = cmap(intensity)[..., :3]
     return intensity.astype('float32') * 255.0
 
+
+def draw_boxes(im, boxes, labels=None, color=(218, 218, 218)):
+    """
+    Args:
+        im (np.ndarray): will not be modified
+        boxes (np.ndarray or list[BoxBase]):
+        labels: (list[str] or None)
+
+    Returns:
+        np.ndarray
+    """
+    if isinstance(boxes, list):
+        arr = np.zeros((len(boxes), 4), dtype='int32')
+        for idx, b in enumerate(boxes):
+            assert isinstance(b, BoxBase), b
+            arr[idx, :] = [int(b.x1), int(b.y1), int(b.x2), int(b.y2)]
+        boxes = arr
+    else:
+        boxes = boxes.astype('int32')
+    if labels is not None:
+        assert len(labels) == len(boxes), "{} != {}".format(len(labels), len(boxes))
+    areas = (boxes[:, 2] - boxes[:, 0] + 1) * (boxes[:, 3] - boxes[:, 1] + 1)
+    sorted_inds = np.argsort(-areas)
+
+    im = im.copy()
+    for i in sorted_inds:
+        box = boxes[i, :]
+        cv2.rectangle(im, (box[0], box[1]), (box[2], box[3]), color, thickness=1)
+
+        if labels is not None:
+            label = labels[i]
+            cv2.putText(im, label, (box[0], box[1] - 3),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, lineType=cv2.LINE_AA)
+    return im
+
+
 from ..utils.develop import create_dummy_func   # noqa
 try:
     import matplotlib.pyplot as plt
@@ -367,8 +404,17 @@ if __name__ == '__main__':
                 imglist, max_width=500, max_height=200)):
             of = "patch{:02d}.png".format(idx)
             cv2.imwrite(of, patch)
-    else:
+    if False:
         imglist = []
         img = cv2.imread('out.png')
         img2 = cv2.resize(img, (300, 300))
         viz = stack_patches([img, img2], 1, 2, pad=True, viz=True)
+
+    if True:
+        img = cv2.imread('cat.jpg')
+        boxes = np.asarray([
+            [10, 30, 200, 100],
+            [20, 80, 250, 250]
+        ])
+        img = draw_boxes(img, boxes, ['asdfasdf', '11111111111111'])
+        interactive_imshow(img)
