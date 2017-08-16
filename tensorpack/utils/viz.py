@@ -9,7 +9,8 @@ import sys
 import io
 from .fs import mkdir_p
 from .argtools import shape2d
-from .rect import BoxBase
+from .rect import BoxBase, IntBox
+from .palette import PALETTE_RGB
 
 try:
     import cv2
@@ -352,7 +353,7 @@ def intensity_to_rgb(intensity, cmap='cubehelix', normalize=False):
     return intensity.astype('float32') * 255.0
 
 
-def draw_boxes(im, boxes, labels=None, color=(218, 218, 218)):
+def draw_boxes(im, boxes, labels=None):
     """
     Args:
         im (np.ndarray): will not be modified
@@ -362,6 +363,8 @@ def draw_boxes(im, boxes, labels=None, color=(218, 218, 218)):
     Returns:
         np.ndarray
     """
+    FONT = cv2.FONT_HERSHEY_SIMPLEX
+    FONT_SCALE = 0.4
     if isinstance(boxes, list):
         arr = np.zeros((len(boxes), 4), dtype='int32')
         for idx, b in enumerate(boxes):
@@ -376,14 +379,38 @@ def draw_boxes(im, boxes, labels=None, color=(218, 218, 218)):
     sorted_inds = np.argsort(-areas)
 
     im = im.copy()
+    COLOR = (218, 218, 218)
+    COLOR_DIFF_WEIGHT = np.asarray((2, 4, 3), dtype='int32')    # https://www.wikiwand.com/en/Color_difference
+    COLOR_CANDIDATES = PALETTE_RGB[[0, 1, 2, 3, 18, 113], :]
+    if im.ndim == 2 or (im.ndim == 3 and im.shape[2] == 1):
+        im = cv2.cvtColor(im, cv2.COLOR_GRAY2BGR)
     for i in sorted_inds:
         box = boxes[i, :]
-        cv2.rectangle(im, (box[0], box[1]), (box[2], box[3]), color, thickness=1)
 
+        best_color = COLOR
         if labels is not None:
             label = labels[i]
-            cv2.putText(im, label, (box[0], box[1] - 3),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, lineType=cv2.LINE_AA)
+
+            # find the best placement for the text
+            ((linew, lineh), _) = cv2.getTextSize(label, FONT, FONT_SCALE, 1)
+            bottom_left = [box[0] + 1, box[1] - 0.3 * lineh]
+            top_left = [box[0] + 1, box[1] - 1.3 * lineh]
+            if top_left[1] < 0:     # out of image
+                top_left[1] = box[3] - 1.3 * lineh
+                bottom_left[1] = box[3] - 0.3 * lineh
+            textbox = IntBox(int(top_left[0]), int(top_left[1]),
+                             int(top_left[0] + linew), int(top_left[1] + lineh))
+            textbox.clip_by_shape(im.shape[:2])
+            # find the best color
+            mean_color = textbox.roi(im).mean(axis=(0, 1))
+            best_color_ind = (np.square(COLOR_CANDIDATES - mean_color) *
+                              COLOR_DIFF_WEIGHT).sum(axis=1).argmax()
+            best_color = COLOR_CANDIDATES[best_color_ind]
+
+            cv2.putText(im, label, (textbox.x1, textbox.y2),
+                        FONT, FONT_SCALE, color=best_color.tolist(), lineType=cv2.LINE_AA)
+        cv2.rectangle(im, (box[0], box[1]), (box[2], box[3]),
+                      color=best_color.tolist(), thickness=1)
     return im
 
 

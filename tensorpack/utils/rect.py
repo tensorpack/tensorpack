@@ -82,7 +82,7 @@ class IntBox(BoxBase):
         self.y2 = np.clip(self.y2, 0, shape[0] - 1)
 
     def roi(self, img):
-        assert self.validate(img.shape[:2]), "{} vs {}".format(self, img.shape[:2])
+        assert self.is_valid_box(img.shape[:2]), "{} vs {}".format(self, img.shape[:2])
         return img[self.y1:self.y2 + 1, self.x1:self.x2 + 1]
 
     # def expand(self, frac):
