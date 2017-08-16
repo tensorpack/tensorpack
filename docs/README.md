@@ -1,11 +1,14 @@
 
 ## Build the docs:
 
-Building the doc requires python3.
+### Dependencies:
+1. python3
+2. `pip install -r requirements.txt`
 
-```
-pip install -r requirements.txt
-make html
-```
+### Build HTML docs:
+`make html`
+will build the docs in `build/html`.
 
-See the docs in `_build/html`.
+### Build Dash/Zeal docset
+
+`make docset` produces `tensorpack.docset`.
