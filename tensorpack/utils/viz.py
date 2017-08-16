@@ -353,12 +353,13 @@ def intensity_to_rgb(intensity, cmap='cubehelix', normalize=False):
     return intensity.astype('float32') * 255.0
 
 
-def draw_boxes(im, boxes, labels=None):
+def draw_boxes(im, boxes, labels=None, color=None):
     """
     Args:
-        im (np.ndarray): will not be modified
+        im (np.ndarray): a BGR image. will not be modified
         boxes (np.ndarray or list[BoxBase]):
         labels: (list[str] or None)
+        color: a 3-tuple (in range [0, 255]). By default will choose automatically.
 
     Returns:
         np.ndarray
@@ -379,8 +380,8 @@ def draw_boxes(im, boxes, labels=None):
     sorted_inds = np.argsort(-areas)
 
     im = im.copy()
-    COLOR = (218, 218, 218)
-    COLOR_DIFF_WEIGHT = np.asarray((2, 4, 3), dtype='int32')    # https://www.wikiwand.com/en/Color_difference
+    COLOR = (218, 218, 218) if color is None else color
+    COLOR_DIFF_WEIGHT = np.asarray((3, 4, 2), dtype='int32')    # https://www.wikiwand.com/en/Color_difference
     COLOR_CANDIDATES = PALETTE_RGB[[0, 1, 2, 3, 18, 113], :]
     if im.ndim == 2 or (im.ndim == 3 and im.shape[2] == 1):
         im = cv2.cvtColor(im, cv2.COLOR_GRAY2BGR)
@@ -401,16 +402,17 @@ def draw_boxes(im, boxes, labels=None):
             textbox = IntBox(int(top_left[0]), int(top_left[1]),
                              int(top_left[0] + linew), int(top_left[1] + lineh))
             textbox.clip_by_shape(im.shape[:2])
-            # find the best color
-            mean_color = textbox.roi(im).mean(axis=(0, 1))
-            best_color_ind = (np.square(COLOR_CANDIDATES - mean_color) *
-                              COLOR_DIFF_WEIGHT).sum(axis=1).argmax()
-            best_color = COLOR_CANDIDATES[best_color_ind]
+            if color is None:
+                # find the best color
+                mean_color = textbox.roi(im).mean(axis=(0, 1))
+                best_color_ind = (np.square(COLOR_CANDIDATES - mean_color) *
+                                  COLOR_DIFF_WEIGHT).sum(axis=1).argmax()
+                best_color = COLOR_CANDIDATES[best_color_ind].tolist()
 
             cv2.putText(im, label, (textbox.x1, textbox.y2),
-                        FONT, FONT_SCALE, color=best_color.tolist(), lineType=cv2.LINE_AA)
+                        FONT, FONT_SCALE, color=best_color, lineType=cv2.LINE_AA)
         cv2.rectangle(im, (box[0], box[1]), (box[2], box[3]),
-                      color=best_color.tolist(), thickness=1)
+                      color=best_color, thickness=1)
     return im
 
 
