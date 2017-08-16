@@ -20,7 +20,8 @@ except ImportError:
 
 __all__ = ['pyplot2img', 'interactive_imshow',
            'stack_patches', 'gen_stack_patches',
-           'dump_dataflow_images', 'intensity_to_rgb']
+           'dump_dataflow_images', 'intensity_to_rgb',
+           'draw_boxes']
 
 
 def pyplot2img(plt):
@@ -356,13 +357,14 @@ def intensity_to_rgb(intensity, cmap='cubehelix', normalize=False):
 def draw_boxes(im, boxes, labels=None, color=None):
     """
     Args:
-        im (np.ndarray): a BGR image. will not be modified
-        boxes (np.ndarray or list[BoxBase]):
+        im (np.ndarray): a BGR image. It will not be modified.
+        boxes (np.ndarray or list[BoxBase]): If an ndarray,
+            must be of shape Nx4 where the second dimension is [x1, y1, x2, y2].
         labels: (list[str] or None)
         color: a 3-tuple (in range [0, 255]). By default will choose automatically.
 
     Returns:
-        np.ndarray
+        np.ndarray: a new image.
     """
     FONT = cv2.FONT_HERSHEY_SIMPLEX
     FONT_SCALE = 0.4

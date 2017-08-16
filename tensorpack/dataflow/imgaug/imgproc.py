@@ -7,7 +7,7 @@ from ...utils import logger
 import numpy as np
 import cv2
 
-__all__ = ['Hue', 'Brightness', 'Contrast', 'MeanVarianceNormalize',
+__all__ = ['Hue', 'Brightness', 'BrightnessScale', 'Contrast', 'MeanVarianceNormalize',
            'GaussianBlur', 'Gamma', 'Clip', 'Saturation', 'Lighting', 'MinMaxNormalize']
 
 
@@ -44,17 +44,19 @@ class Hue(ImageAugmentor):
 
 class Brightness(ImageAugmentor):
     """
-    Randomly adjust brightness.
+    Adjust brightness by adding a random number.
     """
     def __init__(self, delta, clip=True):
         """
-        Randomly add a value within [-delta,delta], and clip in [0,255] if clip is True.
+        Args:
+            delta (float): Randomly add a value within [-delta,delta]
+            clip (bool): clip results to [0,255].
         """
         super(Brightness, self).__init__()
         assert delta > 0
         self._init(locals())
 
-    def _get_augment_params(self, img):
+    def _get_augment_params(self, _):
         v = self._rand_range(-self.delta, self.delta)
         return v
 
@@ -62,6 +64,32 @@ class Brightness(ImageAugmentor):
         old_dtype = img.dtype
         img = img.astype('float32')
         img += v
+        if self.clip or old_dtype == np.uint8:
+            img = np.clip(img, 0, 255)
+        return img.astype(old_dtype)
+
+
+class BrightnessScale(ImageAugmentor):
+    """
+    Adjust brightness by scaling by a random factor.
+    """
+    def __init__(self, range, clip=True):
+        """
+        Args:
+            range (tuple): Randomly scale the image by a factor in (range[0], range[1])
+            clip (bool): clip results to [0,255].
+        """
+        super(BrightnessScale, self).__init__()
+        self._init(locals())
+
+    def _get_augment_params(self, _):
+        v = self._rand_range(*self.range)
+        return v
+
+    def _augment(self, img, v):
+        old_dtype = img.dtype
+        img = img.astype('float32')
+        img *= v
         if self.clip or old_dtype == np.uint8:
             img = np.clip(img, 0, 255)
         return img.astype(old_dtype)
