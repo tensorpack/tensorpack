@@ -3,6 +3,7 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import tensorflow as tf
+from datetime import datetime
 import os
 import shutil
 import glob
@@ -71,9 +72,10 @@ class ModelSaver(Callback):
 
     def _before_train(self):
         # graph is finalized, OK to write it now.
+        time = datetime.now().strftime('%m%d-%H%M%S')
         self.saver.export_meta_graph(
             os.path.join(self.checkpoint_dir,
-                         'graph-{}.meta'.format(logger.get_time_str())),
+                         'graph-{}.meta'.format(time)),
             collection_list=self.graph.get_all_collection_keys())
 
     def _trigger(self):
