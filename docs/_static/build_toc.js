@@ -6,17 +6,16 @@ $(function (){
     var ul = $('<ul>');
 
     selected.each(function(i,e) {
-
       var fullname = e.id;
-      var n = $(e).children('.descname').clone();
       if (fullname.startsWith('tensorpack.'))
         fullname = fullname.substr(11);
+
+      var n = $(e).children('.descname').clone();
       n[0].innerText = fullname;
       var l = $(e).children('.headerlink');
 
       var a = $('<a>');
       a.attr('href',l.attr('href')).attr('title', 'Link to this definition');
-
       a.append(n);
 
       var entry = $('<li>').append(a);

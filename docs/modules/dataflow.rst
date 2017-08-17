@@ -1,11 +1,6 @@
 tensorpack.dataflow package
 ===========================
 
-.. toctree::
-
-    dataflow.dataset
-    dataflow.imgaug
-
 .. container:: custom-index
 
     .. raw:: html

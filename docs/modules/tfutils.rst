@@ -1,14 +1,6 @@
 tensorpack.tfutils package
 ==========================
 
-Module contents
----------------
-
-.. automodule:: tensorpack.tfutils
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 tensorpack.tfutils.collection module
 ------------------------------------
 
@@ -96,3 +88,12 @@ tensorpack.tfutils.varreplace module
     :members:
     :undoc-members:
     :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: tensorpack.tfutils
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
