@@ -20,12 +20,17 @@ def map_arg(**maps):
     Apply a mapping on certains argument before calling the original function.
 
     Args:
-        maps (dict): {key: map_func}
+        maps (dict): {argument_name: map_func}
     """
     def deco(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            argmap = inspect.getcallargs(func, *args, **kwargs)
+            if six.PY2:
+                argmap = inspect.getcallargs(func, *args, **kwargs)
+            else:
+                # getcallargs was deprecated since 3.5
+                sig = inspect.signature(func)
+                argmap = sig.bind_partial(*args, **kwargs).arguments
             for k, map_func in six.iteritems(maps):
                 if k in argmap:
                     argmap[k] = map_func(argmap[k])
