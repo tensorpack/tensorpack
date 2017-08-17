@@ -8,9 +8,6 @@ tensorpack.dataflow package
         <script type="text/javascript" src='../_static/build_toc_group.js'></script>
 
 
-DataFlow
----------------
-
 .. automodule:: tensorpack.dataflow
     :members:
     :undoc-members:

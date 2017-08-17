@@ -83,8 +83,8 @@ class Distribution(object):
 
     @class_scope
     def entropy(self, x, theta):
-        r""" Entropy of this distribution parameterized by theta,
-            estimated from a batch of samples.
+        r"""
+        Entropy of this distribution parameterized by theta, estimated from a batch of samples.
 
         .. math::
 

@@ -30,7 +30,7 @@ $(function (){
       if(groupName in obj) {
         obj[groupName].append(entry);
       } else {
-        var ul = $('<ul>');
+        var ul = $('<ul style="margin-bottom: 12px;">');
         ul.append(entry);
         obj[groupName] = ul;
       }
@@ -50,9 +50,9 @@ $(function (){
     return;
 
   var obj = createList(selected);
-  var block = $('<div style="min-width: 300px;">');
+  var block = $('<div style="min-width: 300px; margin-bottom: 2em;">');
   for(var key in obj) {
-    var a = $('<h5>');
+    var a = $('<h6 style="margin-bottom: 0;">');
     a.html(key + ':');
     block.append(a);
     block.append(obj[key]);

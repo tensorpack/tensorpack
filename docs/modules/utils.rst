@@ -82,12 +82,3 @@ tensorpack.utils.viz module
     :members:
     :undoc-members:
     :show-inheritance:
-
-
-Module contents
----------------
-
-.. automodule:: tensorpack.utils
-    :members:
-    :undoc-members:
-    :show-inheritance:

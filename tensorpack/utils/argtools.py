@@ -50,6 +50,7 @@ def graph_memoized(func):
         kwargs.pop(GRAPH_ARG_NAME)
         return func(*args, **kwargs)
 
+    @functools.wraps(func)
     def wrapper(*args, **kwargs):
         assert GRAPH_ARG_NAME not in kwargs, "No Way!!"
         graph = tf.get_default_graph()

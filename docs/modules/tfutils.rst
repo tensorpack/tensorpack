@@ -1,6 +1,12 @@
 tensorpack.tfutils package
 ==========================
 
+.. container:: custom-index
+
+    .. raw:: html
+
+        <script type="text/javascript" src='../_static/build_toc_group.js'></script>
+
 tensorpack.tfutils.collection module
 ------------------------------------
 
@@ -21,14 +27,6 @@ tensorpack.tfutils.gradproc module
 ------------------------------------
 
 .. automodule:: tensorpack.tfutils.gradproc
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-tensorpack.tfutils.model_utils module
---------------------------------------
-
-.. automodule:: tensorpack.tfutils.model_utils
     :members:
     :undoc-members:
     :show-inheritance:
