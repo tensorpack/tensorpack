@@ -198,8 +198,10 @@ def TFSummaryWriter(*args, **kwargs):
 
 class JSONWriter(TrainingMonitor):
     """
-    Write all scalar data to a json, grouped by their global step.
+    Write all scalar data to a json file under ``logger.LOG_DIR``, grouped by their global step.
+    It also tries to recover the epoch number during setup, if an existing json file is found at the same place.
     """
+
     FILENAME = 'stat.json'
 
     def __new__(cls):

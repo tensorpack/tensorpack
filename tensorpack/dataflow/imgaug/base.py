@@ -63,6 +63,11 @@ class Augmentor(object):
 
 class ImageAugmentor(Augmentor):
     def _augment_coords(self, coords, param):
+        """
+        By default, keeps coordinates unchanged.
+        If a subclass changes coordinates but couldn't implement this method,
+        it should ``raise NotImplementedError()``.
+        """
         return coords
 
 
