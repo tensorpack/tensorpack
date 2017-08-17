@@ -197,6 +197,8 @@ def add_moving_summary(*args, **kwargs):
     for c in v:
         name = re.sub('tower[0-9]+/', '', c.op.name)
         with G.colocate_with(c), tf.name_scope(None):
+            if not c.dtype.is_floating:
+                c = tf.cast(c, tf.float32)
             # assign_moving_average creates variables with op names, therefore clear ns first.
             with _enter_vs_reuse_ns('EMA') as vs:
                 ema_var = tf.get_variable(name, shape=c.shape, dtype=c.dtype,

@@ -30,7 +30,7 @@ class Flip(ImageAugmentor):
         elif vert:
             self.code = 0
         else:
-            raise ValueError("Are you kidding?")
+            raise ValueError("At least one of horiz or vert has to be True!")
         self.prob = prob
         self._init()
 

@@ -94,6 +94,7 @@ class AugmentImageComponent(MapDataComponent):
 class AugmentImageCoordinates(MapData):
     """
     Apply image augmentors on an image and a list of coordinates.
+    Coordinates must be a Nx2 floating point array, each row is (x, y).
     """
     def __init__(self, ds, augmentors, img_index=0, coords_index=1, copy=True):
         """
@@ -116,6 +117,9 @@ class AugmentImageCoordinates(MapData):
         def func(dp):
             try:
                 img, coords = dp[img_index], dp[coords_index]
+                assert coords.ndim == 2, coords.ndim
+                assert coords.shape[1] == 2, coords.shape
+                assert np.issubdtype(coords.dtype, np.float), coords.dtype
                 if copy:
                     img, coords = copy_mod.deepcopy((img, coords))
                 img, prms = self.augs._augment_return_params(img)
