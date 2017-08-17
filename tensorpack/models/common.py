@@ -129,14 +129,12 @@ def layer_register(
             actual_args = copy.copy(get_arg_scope()[func.__name__])
             # explicit kwargs overwrite argscope
             actual_args.update(kwargs)
-            # explicit positional args also override argscope
-            if six.PY2:
-                posargmap = inspect.getcallargs(func, *args)
-            else:
+            if six.PY3:
+                # explicit positional args also override argscope. only work in PY3
                 posargmap = inspect.signature(func).bind_partial(*args).arguments
-            for k in six.iterkeys(posargmap):
-                if k in actual_args:
-                    del actual_args[k]
+                for k in six.iterkeys(posargmap):
+                    if k in actual_args:
+                        del actual_args[k]
 
             if name is not None:        # use scope
                 with tf.variable_scope(name) as scope:
