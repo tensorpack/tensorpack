@@ -1,8 +1,6 @@
 tensorpack.dataflow package
 ===========================
 
-Table of Contents
------------------
 .. toctree::
 
     dataflow.dataset
@@ -12,7 +10,7 @@ Table of Contents
 
     .. raw:: html
 
-        <script type="text/javascript" src='../_static/pymunk.js'></script>
+        <script type="text/javascript" src='../_static/build_toc_group.js'></script>
 
 
 DataFlow

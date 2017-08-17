@@ -5,7 +5,7 @@ tensorpack.train package
 
     .. raw:: html
 
-        <script type="text/javascript" src='../_static/pymunk.js'></script>
+        <script type="text/javascript" src='../_static/build_toc.js'></script>
 
 .. automodule:: tensorpack.train
     :members:
