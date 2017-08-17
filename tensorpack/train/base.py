@@ -261,6 +261,9 @@ class Trainer(object):
 
     def get_predictor(self, input_names, output_names, tower=0):
         """
+        Returns a callable predictor built under ``is_training=False`` tower context.
+        Note that this method is only valid when this trainer has a ``ModelDesc``.
+
         Args:
             input_names (list), output_names(list): list of names
             tower (int): build the predictor on device '/gpu:{tower}' or use -1 for '/cpu:0'.
@@ -273,6 +276,8 @@ class Trainer(object):
 
     @property
     def predictor_factory(self):
+        assert self.model is not None, \
+            "Predictor can only be built one Trainer has ModelDesc!"
         if not hasattr(self, '_predictor_factory'):
             self._predictor_factory = PredictorFactory(
                 self.model, self.vs_name_for_predictor)

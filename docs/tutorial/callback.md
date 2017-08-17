@@ -77,4 +77,4 @@ These features may not be always useful, but think about how messy the main loop
 were to write the logic together with the loops.
 
 See [Write a callback](http://tensorpack.readthedocs.io/en/latest/tutorial/extend/callback.html)
-on how to implement a callback.
+for details on how callbacks work, what they can do, and how to write them.

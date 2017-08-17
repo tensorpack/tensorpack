@@ -1,11 +1,13 @@
 
 ## Write a Callback
 
-The places where each callback method gets called is demonstrated in this snippet:
+In the main loop of the trainer,
+the callbacks will be called in the order they are given in `TrainConfig`.
+The time where each callback method gets called is demonstrated in this snippet:
 
 ```python
-def main_loop():
-  # ... create graph for the model ...
+def train(self):
+  # ... a predefined trainer may create graph for the model here ...
   callbacks.setup_graph()
   # ... create session, initialize session, finalize graph ...
   # start training:
@@ -13,7 +15,7 @@ def main_loop():
   for epoch in range(epoch_start, epoch_end):
     callbacks.before_epoch()
     for step in range(steps_per_epoch):
-      run_one_step()  # callbacks.{before,after}_run are hooked with session
+      self.run_step()  # callbacks.{before,after}_run are hooked with session
       callbacks.trigger_step()
     callbacks.after_epoch()
     callbacks.trigger_epoch()
@@ -87,6 +89,7 @@ to let this method run every k steps or every k epochs.
 ### What you can do in the callback
 
 * Access tensors / ops in either training / inference mode (need to create them in `_setup_graph`).
+	To create a callable function under inference mode, use `self.trainer.get_predictor`.
 * Write stuff to the monitor backend, by `self.trainer.monitors.put_xxx`.
 	The monitors might direct your events to TensorFlow events file, JSON file, stdout, etc.
 	You can get history monitor data as well. See the docs for [Monitors](http://tensorpack.readthedocs.io/en/latest/modules/callbacks.html#tensorpack.callbacks.Monitors)
