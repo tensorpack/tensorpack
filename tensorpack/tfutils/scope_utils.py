@@ -26,10 +26,8 @@ def auto_reuse_variable_scope(func):
         h = hash((tf.get_default_graph(), scope.name))
         # print("Entering " + scope.name + " reuse: " + str(h in used_scope))
         if h in used_scope:
-            ns = scope.original_name_scope
             with tf.variable_scope(scope, reuse=True):
-                with tf.name_scope(ns):
-                    return func(*args, **kwargs)
+                return func(*args, **kwargs)
         else:
             used_scope.add(h)
             return func(*args, **kwargs)

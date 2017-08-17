@@ -13,6 +13,7 @@ from six.moves import queue
 from tensorpack import *
 from tensorpack.utils.concurrency import *
 from tensorpack.utils.stats import *
+from tensorpack.utils.utils import get_tqdm_kwargs
 
 
 def play_one_episode(player, func, verbose=False):
