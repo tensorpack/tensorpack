@@ -44,16 +44,20 @@ class Augmentor(object):
     @abstractmethod
     def _augment(self, d, param):
         """
-        augment with the given param and return the new image
+        Augment with the given param and return the new data.
+        The augmentor is allowed to modify data in-place.
         """
 
     def _get_augment_params(self, d):
         """
-        get the augmentor parameters
+        Get the augmentor parameters.
         """
         return None
 
     def _rand_range(self, low=1.0, high=None, size=None):
+        """
+        Uniform float random number between low and high.
+        """
         if high is None:
             low, high = 0, low
         if size is None:
@@ -64,9 +68,15 @@ class Augmentor(object):
 class ImageAugmentor(Augmentor):
     def _augment_coords(self, coords, param):
         """
+        Augment the coordinates given the param.
         By default, keeps coordinates unchanged.
         If a subclass changes coordinates but couldn't implement this method,
         it should ``raise NotImplementedError()``.
+
+        Args:
+            coords: Nx2 floating point nparray where each row is (x, y)
+        Returns:
+            new coords
         """
         return coords
 
@@ -86,7 +96,7 @@ class AugmentorList(ImageAugmentor):
 
     def _get_augment_params(self, img):
         # the next augmentor requires the previous one to finish
-        raise RuntimeError("Cannot simply get parameters of a AugmentorList!")
+        raise RuntimeError("Cannot simply get all parameters of a AugmentorList without running the augmentation!")
 
     def _augment_return_params(self, img):
         assert img.ndim in [2, 3], img.ndim
