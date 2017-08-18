@@ -272,9 +272,8 @@ class ScalarPrinter(TrainingMonitor):
     """
     Print scalar data into terminal.
     """
-    def __init__(
-        self, enable_step=False, enable_epoch=True,
-        whitelist=None, blacklist=None):
+    def __init__(self, enable_step=False, enable_epoch=True,
+                 whitelist=None, blacklist=None):
         """
         Args:
             enable_step, enable_epoch (bool): whether to print the
