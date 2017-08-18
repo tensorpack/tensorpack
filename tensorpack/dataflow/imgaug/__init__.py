@@ -23,7 +23,11 @@ except ImportError:
     from ...utils import logger
     logger.warn("Cannot import 'cv2', therefore image augmentation is not available.")
 else:
+    _CURR_DIR = os.path.dirname(__file__)
     for _, module_name, _ in iter_modules(
             [os.path.dirname(__file__)]):
+        srcpath = os.path.join(_CURR_DIR, module_name + '.py')
+        if not os.path.isfile(srcpath):
+            continue
         if not module_name.startswith('_'):
             global_import(module_name)

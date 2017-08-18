@@ -10,7 +10,7 @@ from six.moves import zip, map
 from collections import Counter
 import json
 
-__all__ = ['VisualQA']
+__all__ = []
 
 
 def read_json(fname):

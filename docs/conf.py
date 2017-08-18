@@ -366,6 +366,7 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
         'get_predictors',
         'vs_name_for_predictor',
         'RandomCropAroundBox',
+        'GaussianDeform',
         'dump_chkpt_vars',
         'VisualQA',
         'ParamRestore']:
