@@ -19,8 +19,7 @@ from .tower import get_current_tower_context
 from .symbolic_functions import rms
 from .scope_utils import cached_name_scope
 
-__all__ = ['create_scalar_summary', 'create_image_summary',
-           'add_tensor_summary', 'add_param_summary',
+__all__ = ['add_tensor_summary', 'add_param_summary',
            'add_activation_summary', 'add_moving_summary']
 
 
@@ -97,9 +96,9 @@ def add_tensor_summary(x, types, name=None, collections=None,
         x (tf.Tensor): a tensor to summarize
         types (list[str]): can be scalar/histogram/sparsity/mean/rms
         name (str): summary name. Defaults to be the op name.
-        collections (str): same as in `tf.summary.scalar`.
-        main_tower_only (bool): Only run under main training tower. When
-            setting to True, calling this function under other TowerContext
+        collections (list[str]): collections of the summary ops.
+        main_tower_only (bool): Only run under main training tower. If
+            set to True, calling this function under other TowerContext
             has no effect.
 
     Examples:
@@ -141,6 +140,7 @@ def add_activation_summary(x, name=None, collections=None):
     Args:
         x (tf.Tensor): the tensor to summary.
         name (str): if is None, use x.name.
+        collections (list[str]): collections of the summary ops.
     """
     ctx = get_current_tower_context()
     if ctx is not None and not ctx.is_main_training_tower:
@@ -164,7 +164,7 @@ def add_param_summary(*summary_lists, **kwargs):
     Args:
         summary_lists (list): each is (regex, [list of summary type]).
             Summary type is defined in :func:`add_tensor_summary`.
-        kwargs: only ``collections`` is allowed.
+        collections (list[str]): collections of the summary ops.
 
     Examples:
 
@@ -195,8 +195,7 @@ def add_param_summary(*summary_lists, **kwargs):
 def add_moving_summary(*args, **kwargs):
     """
     Enable moving average summary for some tensors.
-    It's only effective in the main training tower, otherwise calling this
-    function is a no-op.
+    This function is a no-op if not calling from main training tower.
 
     Args:
         args: tensors to summary

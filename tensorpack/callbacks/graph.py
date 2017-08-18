@@ -71,6 +71,10 @@ class RunUpdateOps(RunOp):
     _chief_only = False
 
     def __init__(self, collection=tf.GraphKeys.UPDATE_OPS):
+        """
+        Args:
+            collection (str): collection of ops to run. Defaults to ``tf.GraphKeys.UPDATE_OPS``
+        """
         name = 'UPDATE_OPS' if collection == tf.GraphKeys.UPDATE_OPS else collection
 
         def f():
