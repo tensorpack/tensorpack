@@ -9,12 +9,12 @@ import re
 import six
 import inspect
 from ..utils import logger
-from .symbolic_functions import rms
+from .symbolic_functions import rms, print_stat
 from .summary import add_moving_summary
 
 __all__ = ['GradientProcessor',
            'FilterNoneGrad', 'GlobalNormClip', 'MapGradient', 'SummaryGradient',
-           'CheckGradient', 'ScaleGradient']
+           'PrintGradient', 'CheckGradient', 'ScaleGradient']
 
 
 @six.add_metaclass(ABCMeta)
@@ -138,25 +138,52 @@ class MapGradient(GradientProcessor):
         return ret
 
 
-_summaried_gradient = set()
-
-
 # TODO has dependency problems: sess.run may not depend on grad
 # maybe group maintain op and grad ?
 class SummaryGradient(MapGradient):
     """
-    Summary histogram and RMS for each gradient variable.
+    For each gradient tensor, summary its histogram and add it to moving
+    summaries.
     """
+    # avoid duplicate summaries from towers
+    # TODO this is global. not good.
+    _summaried_gradient = set()
 
-    def __init__(self):
-        super(SummaryGradient, self).__init__(self._mapper)
+    def __init__(self, regex='.*'):
+        """
+        Args:
+            regex(str): same as in :class:`MapGradient`.
+        """
+        super(SummaryGradient, self).__init__(self._mapper, regex)
 
     def _mapper(self, grad, var):
         name = var.op.name
-        if name not in _summaried_gradient:
-            _summaried_gradient.add(name)
+        if name not in SummaryGradient._summaried_gradient:
+            SummaryGradient._summaried_gradient.add(name)
             tf.summary.histogram(name + '-grad', grad)
             add_moving_summary(rms(grad, name=name + '/rms'))
+        return grad
+
+
+class PrintGradient(MapGradient):
+    """
+    Print the gradients every step with :func:`symbolic_functions.print_stat`.
+    """
+    _printed = set()
+    # TODO this is global. not good.
+
+    def __init__(self, regex='.*'):
+        """
+        Args:
+            regex(str): same as in :class:`MapGradient`.
+        """
+        super(PrintGradient, self).__init__(self._mapper, regex)
+
+    def _mapper(self, grad, var):
+        name = var.op.name
+        if name not in PrintGradient._printed:
+            PrintGradient._printed.add(name)
+            grad = print_stat(grad, message=name + '-grad')
         return grad
 
 

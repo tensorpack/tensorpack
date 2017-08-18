@@ -191,8 +191,11 @@ class EnqueueThread(ShareSessionThread):
                         self.op.run(feed_dict=feed)
             except (tf.errors.CancelledError, tf.errors.OutOfRangeError, DataFlowTerminated):
                 pass
-            except Exception:
-                logger.exception("Exception in {}:".format(self.name))
+            except Exception as e:
+                if isinstance(e, RuntimeError) and 'closed Session' in str(e):
+                    pass
+                else:
+                    logger.exception("Exception in {}:".format(self.name))
             finally:
                 try:
                     self.close_op.run()

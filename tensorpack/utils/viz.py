@@ -379,7 +379,12 @@ def draw_boxes(im, boxes, labels=None, color=None):
     if labels is not None:
         assert len(labels) == len(boxes), "{} != {}".format(len(labels), len(boxes))
     areas = (boxes[:, 2] - boxes[:, 0] + 1) * (boxes[:, 3] - boxes[:, 1] + 1)
-    sorted_inds = np.argsort(-areas)
+    sorted_inds = np.argsort(-areas)    # draw large ones first
+    assert areas.min() > 0, areas.min()
+    # allow equal, because we are not very strict about rounding error here
+    assert boxes[:, 0].min() >= 0 and boxes[:, 1].min() >= 0 \
+        and boxes[:, 2].max() <= im.shape[1] and boxes[:, 3].max() <= im.shape[0], \
+        "Image shape: {}\n Boxes:\n{}".format(str(im.shape), str(boxes))
 
     im = im.copy()
     COLOR = (218, 218, 218) if color is None else color
