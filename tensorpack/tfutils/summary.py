@@ -19,7 +19,8 @@ from .tower import get_current_tower_context
 from .symbolic_functions import rms
 
 __all__ = ['create_scalar_summary', 'create_image_summary',
-           'add_param_summary', 'add_activation_summary', 'add_moving_summary']
+           'add_tensor_summary', 'add_param_summary',
+           'add_activation_summary', 'add_moving_summary']
 
 
 def create_scalar_summary(name, v):
@@ -71,10 +72,54 @@ def create_image_summary(name, val):
     return s
 
 
+def add_tensor_summary(x, types, name=None, collections=None,
+                       main_tower_only=True):
+    """
+    Summarize a tensor by different methods.
+
+    Args:
+        x (tf.Tensor): a tensor to summarize
+        types (list[str]): can be scalar/histogram/sparsity/mean/rms
+        name (str): summary name. Defaults to be the op name.
+        collections (str): same as in `tf.summary.scalar`.
+        main_tower_only (bool): Only run under main training tower. When
+            setting to True, calling this function under other TowerContext
+            has no effect.
+
+    Examples:
+
+    .. code-block:: python
+
+        add_tensor_summary(
+            tensor, ['histogram', 'rms', 'sparsity'], name='mytensor')
+    """
+    types = set(types)
+    if name is None:
+        name = x.op.name
+    ctx = get_current_tower_context()
+    if ctx is not None and not ctx.is_main_training_tower:
+        return
+
+    SUMMARY_TYPES_DIC = {
+        'scalar': lambda: tf.summary.scalar(name, x, collections=collections),
+        'histogram': lambda: tf.summary.histogram(name, x, collections=collections),
+        'sparsity': lambda: tf.summary.scalar(
+            name + '-sparsity', tf.nn.zero_fraction(x),
+            collections=collections),
+        'mean': lambda: tf.summary.scalar(
+            name + '-mean', tf.reduce_mean(x),
+            collections=collections),
+        'rms': lambda: tf.summary.scalar(
+            name + '-rms', rms(x), collections=collections)
+    }
+    for typ in types:
+        SUMMARY_TYPES_DIC[typ]()
+
+
 def add_activation_summary(x, name=None, collections=None):
     """
-    Add summary for an activation tensor x, including
-    its sparsity, rms, and histogram.
+    Add summary for an activation tensor x, including its sparsity, rms, and histogram.
+    This function is a no-op if not calling from main training tower.
 
     Args:
         x (tf.Tensor): the tensor to summary.
@@ -90,64 +135,44 @@ def add_activation_summary(x, name=None, collections=None):
     if name is None:
         name = x.name
     with tf.name_scope('activation-summary'):
-        tf.summary.histogram(name, x, collections=collections)
-        tf.summary.scalar(
-            name + '-sparsity', tf.nn.zero_fraction(x),
-            collections=collections)
-        tf.summary.scalar(name + '-rms', rms(x), collections=collections)
+        add_tensor_summary(x, ['sparsity', 'rms', 'histogram'],
+                           name=name, collections=collections)
 
 
-def add_param_summary(*summary_lists, collections=None):
+def add_param_summary(*summary_lists, **kwargs):
     """
     Add summary Ops for all trainable variables matching the regex.
+    This function is a no-op if not calling from main training tower.
 
     Args:
         summary_lists (list): each is (regex, [list of summary type to perform]).
-        Summary type can be 'mean', 'scalar', 'histogram', 'sparsity', 'rms'
+            Summary type can be 'mean', 'scalar', 'histogram', 'sparsity', 'rms'
+        kwargs: only ``collections`` is allowed.
+
+    Examples:
+
+    .. code-block:: python
+
+        add_param_summary(
+            ('.*/W', ['histogram', 'rms']),
+            ('.*/gamma', ['scalar']),
+        )
     """
+    collections = kwargs.pop('collections', None)
+    assert len(kwargs) == 0, "Unknown kwargs: " + str(kwargs)
     ctx = get_current_tower_context()
     if ctx is not None and not ctx.is_main_training_tower:
         return
-    if len(summary_lists) == 1 and isinstance(summary_lists[0], list):
-        log_deprecated(text="Use positional args to call add_param_summary() instead of a list.")
-        summary_lists = summary_lists[0]
-
-    def perform(var, action):
-        ndim = var.get_shape().ndims
-        name = var.name.replace(':0', '')
-        if action == 'scalar':
-            assert ndim == 0, "Scalar summary on high-dimension data. Maybe you want 'mean'?"
-            tf.summary.scalar(name, var, collections=collections)
-            return
-        assert ndim > 0, "Cannot perform {} summary on scalar data".format(action)
-        if action == 'histogram':
-            tf.summary.histogram(name, var, collections=collections)
-            return
-        if action == 'sparsity':
-            tf.summary.scalar(
-                name + '-sparsity', tf.nn.zero_fraction(var),
-                collections=collections)
-            return
-        if action == 'mean':
-            tf.summary.scalar(
-                name + '-mean', tf.reduce_mean(var),
-                collections=collections)
-            return
-        if action == 'rms':
-            tf.summary.scalar(name + '-rms', rms(var), collections=collections)
-            return
-        raise RuntimeError("Unknown summary type: {}".format(action))
 
     params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
     with tf.name_scope('param-summary'):
         for p in params:
-            name = p.name
+            name = p.op.name
             for rgx, actions in summary_lists:
                 if not rgx.endswith('$'):
-                    rgx = rgx + '(:0)?$'
+                    rgx = rgx + '$'
                 if re.match(rgx, name):
-                    for act in actions:
-                        perform(p, act)
+                    add_tensor_summary(p, actions, name=name, collections=collections)
 
 
 @graph_memoized
