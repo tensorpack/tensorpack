@@ -19,7 +19,8 @@ from ..tfutils.summary import create_scalar_summary, create_image_summary
 from .base import Callback
 
 __all__ = ['TrainingMonitor', 'Monitors',
-           'TFSummaryWriter', 'TFEventWriter', 'JSONWriter', 'ScalarPrinter', 'SendMonitorData']
+           'TFSummaryWriter', 'TFEventWriter', 'JSONWriter',
+           'ScalarPrinter', 'SendMonitorData']
 
 
 def image_to_nhwc(arr):
@@ -271,14 +272,29 @@ class ScalarPrinter(TrainingMonitor):
     """
     Print scalar data into terminal.
     """
-    def __init__(self, enable_step=False, enable_epoch=True):
+    def __init__(
+        self, enable_step=False, enable_epoch=True,
+        whitelist=None, blacklist=None):
         """
         Args:
             enable_step, enable_epoch (bool): whether to print the
                 monitor data (if any) between steps or between epochs.
+            whitelist (list[str] or None): A list of regex. Only names
+                matching some regex will be allowed for printing.
+                Defaults to match all names.
+            blacklist (list[str] or None): A list of regex. Names matching
+                any regex will not be printed. Defaults to match no names.
         """
-        self._whitelist = None
-        self._blacklist = set([])
+        def compile_regex(rs):
+            if rs is None:
+                return None
+            rs = set([r if isinstance(r, re.RegexObject) else re.compile(r) for r in rs])
+            return rs
+
+        self._whitelist = compile_regex(whitelist)
+        if blacklist is None:
+            blacklist = []
+        self._blacklist = compile_regex(blacklist)
 
         self._enable_step = enable_step
         self._enable_epoch = enable_epoch
@@ -305,9 +321,16 @@ class ScalarPrinter(TrainingMonitor):
         self._dic[name] = float(val)
 
     def _print_stat(self):
+        def match_regex_list(regexs, name):
+            for r in regexs:
+                if r.search(name) is not None:
+                    return True
+            return False
+
         for k, v in sorted(self._dic.items(), key=operator.itemgetter(0)):
-            if self._whitelist is None or k in self._whitelist:
-                if k not in self._blacklist:
+            if self._whitelist is None or \
+                    match_regex_list(self._whitelist, k):
+                if not match_regex_list(self._blacklist, k):
                     logger.info('{}: {:.5g}'.format(k, v))
         self._dic = {}
 
