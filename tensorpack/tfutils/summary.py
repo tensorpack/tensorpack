@@ -17,10 +17,26 @@ from ..utils.argtools import graph_memoized
 from ..utils.naming import MOVING_SUMMARY_OPS_KEY
 from .tower import get_current_tower_context
 from .symbolic_functions import rms
+from .scope_utils import cached_name_scope
 
 __all__ = ['create_scalar_summary', 'create_image_summary',
            'add_tensor_summary', 'add_param_summary',
            'add_activation_summary', 'add_moving_summary']
+
+
+# some scope stuff to use internally...
+@graph_memoized
+def _get_cached_vs(name):
+    with tf.variable_scope(name) as scope:
+        return scope
+
+
+@contextmanager
+def _enter_vs_reuse_ns(name):
+    vs = _get_cached_vs(name)
+    with tf.variable_scope(vs):
+        with tf.name_scope(vs.original_name_scope):
+            yield vs
 
 
 def create_scalar_summary(name, v):
@@ -90,8 +106,9 @@ def add_tensor_summary(x, types, name=None, collections=None,
 
     .. code-block:: python
 
-        add_tensor_summary(
-            tensor, ['histogram', 'rms', 'sparsity'], name='mytensor')
+        with tf.name_scope('mysummaries'):  # to not mess up tensorboard
+            add_tensor_summary(
+                tensor, ['histogram', 'rms', 'sparsity'], name='mytensor')
     """
     types = set(types)
     if name is None:
@@ -134,7 +151,7 @@ def add_activation_summary(x, name=None, collections=None):
         return
     if name is None:
         name = x.name
-    with tf.name_scope('activation-summary'):
+    with cached_name_scope('activation-summary'):
         add_tensor_summary(x, ['sparsity', 'rms', 'histogram'],
                            name=name, collections=collections)
 
@@ -145,8 +162,8 @@ def add_param_summary(*summary_lists, **kwargs):
     This function is a no-op if not calling from main training tower.
 
     Args:
-        summary_lists (list): each is (regex, [list of summary type to perform]).
-            Summary type can be 'mean', 'scalar', 'histogram', 'sparsity', 'rms'
+        summary_lists (list): each is (regex, [list of summary type]).
+            Summary type is defined in :func:`add_tensor_summary`.
         kwargs: only ``collections`` is allowed.
 
     Examples:
@@ -165,7 +182,7 @@ def add_param_summary(*summary_lists, **kwargs):
         return
 
     params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
-    with tf.name_scope('param-summary'):
+    with cached_name_scope('param-summary'):
         for p in params:
             name = p.op.name
             for rgx, actions in summary_lists:
@@ -173,20 +190,6 @@ def add_param_summary(*summary_lists, **kwargs):
                     rgx = rgx + '$'
                 if re.match(rgx, name):
                     add_tensor_summary(p, actions, name=name, collections=collections)
-
-
-@graph_memoized
-def _get_cached_vs(name):
-    with tf.variable_scope(name) as scope:
-        return scope
-
-
-@contextmanager
-def _enter_vs_reuse_ns(name):
-    vs = _get_cached_vs(name)
-    with tf.variable_scope(vs):
-        with tf.name_scope(vs.original_name_scope):
-            yield vs
 
 
 def add_moving_summary(*args, **kwargs):

@@ -4,13 +4,12 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import tensorflow as tf
-import six
-if six.PY2:
-    import functools32 as functools
-else:
-    import functools
+import functools
+from contextlib import contextmanager
 
-__all__ = ['auto_reuse_variable_scope']
+from ..utils.argtools import graph_memoized
+
+__all__ = ['auto_reuse_variable_scope', 'cached_name_scope']
 
 
 def auto_reuse_variable_scope(func):
@@ -33,3 +32,25 @@ def auto_reuse_variable_scope(func):
             return func(*args, **kwargs)
 
     return wrapper
+
+
+@graph_memoized
+def _get_cached_ns(name):
+    with tf.name_scope(None):
+        with tf.name_scope(name) as scope:
+            return scope
+
+
+@contextmanager
+def cached_name_scope(name):
+    """
+    Return a context which either opens and caches a new top-level name scope,
+    or reenter an existing one.
+
+    Note:
+        The name scope will always be top-level. It will not be nested under
+        any existing name scope of the caller.
+    """
+    ns = _get_cached_ns(name)
+    with tf.name_scope(ns):
+        yield ns
