@@ -5,7 +5,7 @@ $(function (){
   var createList = function(selected) {
     var ul = $('<ul>');
 
-    selected.each(function(i,e) {
+    selected.each(function(_, e) {
       var fullname = e.id;
       if (fullname.startsWith('tensorpack.'))
         fullname = fullname.substr(11);
