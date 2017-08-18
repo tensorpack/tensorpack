@@ -24,4 +24,4 @@ But you can customize it by using the base `Trainer` class.
 	2. Subclass `Trainer` and override the `run_step()` method. This way you can do something more than running an op.
 
 There are several different [GAN trainers](../../examples/GAN/GAN.py) for reference.
-The implementation of [SimpleTrainer](https://github.com/ppwwyyxx/tensorpack/blob/master/tensorpack/train/simple.py) may also be helpful.
+The implementation of [SimpleTrainer](../../tensorpack/train/simple.py) may also be helpful.

@@ -49,7 +49,7 @@ The benefits of using TensorFlow ops are:
 		above figure is hidden, it makes no difference at all.
 		For most types of problems, up to the scale of multi-GPU ImageNet training,
 		Python can offer enough speed if you use a fast library (e.g. `tensorpack.dataflow`).
-		See the [Efficient DataFlow](http://tensorpack.readthedocs.io/en/latest/tutorial/efficient-dataflow.html) tutorial
+		See the [Efficient DataFlow](efficient-dataflow.html) tutorial
 		on how to build a fast Python reader with DataFlow.
 
 * No "Copy to TF" (i.e. `feed_dict`) stage.
@@ -78,7 +78,7 @@ For example,
 When you set `TrainConfig(dataflow=)`, tensorpack trainers automatically adds proper prefetching for you.
 You can also use `TrainConfig(data=)` option to use a customized `InputSource`.
 In case you want to use TF ops rather than a DataFlow, you can use `TensorInput` as the `InputSource`
-(See the [PTB example](https://github.com/ppwwyyxx/tensorpack/tree/master/examples/PennTreebank)).
+(See the [PTB example](../../tensorpack/tree/master/examples/PennTreebank)).
 
 ## Figure out the Bottleneck
 

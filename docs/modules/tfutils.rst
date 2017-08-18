@@ -15,14 +15,6 @@ tensorpack.tfutils.collection module
     :undoc-members:
     :show-inheritance:
 
-tensorpack.tfutils.distributions module
----------------------------------------
-
-.. automodule:: tensorpack.tfutils.distributions
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 tensorpack.tfutils.gradproc module
 ------------------------------------
 

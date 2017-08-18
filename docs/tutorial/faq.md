@@ -7,7 +7,7 @@ The library tries to __support__ everything, but it could not really __include__
 
 The interface tries to be flexible enough so you can put any XYZ on it.
 You can either implement them under the interface or simply wrap some existing Python code.
-See [Extend Tensorpack](http://tensorpack.readthedocs.io/en/latest/tutorial/index.html#extend-tensorpack)
+See [Extend Tensorpack](index.html#extend-tensorpack)
 for more details.
 
 If you think:
@@ -50,10 +50,10 @@ Unmatched variables on both sides will be printed as a warning.
 
 1. You can simply use `tf.stop_gradient` in your model code in some situations (e.g. to freeze first several layers).
 
-2. [varreplace.freeze_variables](http://tensorpack.readthedocs.io/en/latest/modules/tfutils.html#tensorpack.tfutils.varreplace.freeze_variables) can wrap some variables with `tf.stop_gradient`.
+2. [varreplace.freeze_variables](../modules/tfutils.html#tensorpack.tfutils.varreplace.freeze_variables) can wrap some variables with `tf.stop_gradient`.
 
-3. [ScaleGradient](http://tensorpack.readthedocs.io/en/latest/modules/tfutils.html#tensorpack.tfutils.gradproc.ScaleGradient) can be used to set the gradients of some variables to 0.
+3. [ScaleGradient](../modules/tfutils.html#tensorpack.tfutils.gradproc.ScaleGradient) can be used to set the gradients of some variables to 0.
 
 Note that the above methods only prevent variables being updated by SGD.
 Some variables may be updated by other means,
-e.g., BatchNorm statistics are updated through the `UPDATE_OPS` collection and the [RunUpdateOps](http://tensorpack.readthedocs.io/en/latest/modules/callbacks.html#tensorpack.callbacks.RunUpdateOps) callback.
+e.g., BatchNorm statistics are updated through the `UPDATE_OPS` collection and the [RunUpdateOps](../modules/callbacks.html#tensorpack.callbacks.RunUpdateOps) callback.

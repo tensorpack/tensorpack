@@ -3,7 +3,7 @@
 
 The first thing to note: __you never have to write an augmentor__.
 An augmentor is a part of the DataFlow, so you can always
-[write a DataFlow](http://tensorpack.readthedocs.io/en/latest/tutorial/extend/dataflow.html)
+[write a DataFlow](dataflow.html)
 to do whatever operations to your data, rather than writing an augmentor.
 Augmentors just sometimes make things easier.
 

@@ -83,7 +83,7 @@ Do something after each epoch has finished. Will call `self.trigger()` by defaul
 Define something to do here without knowing how often it will get called.
 By default it will get called by `_trigger_epoch`,
 but you can customize the scheduling of this method by
-[`PeriodicTrigger`](http://tensorpack.readthedocs.io/en/latest/modules/callbacks.html#tensorpack.callbacks.PeriodicTrigger),
+[`PeriodicTrigger`](../../modules/callbacks.html#tensorpack.callbacks.PeriodicTrigger),
 to let this method run every k steps or every k epochs.
 
 ### What you can do in the callback
@@ -92,6 +92,6 @@ to let this method run every k steps or every k epochs.
 	To create a callable function under inference mode, use `self.trainer.get_predictor`.
 * Write stuff to the monitor backend, by `self.trainer.monitors.put_xxx`.
 	The monitors might direct your events to TensorFlow events file, JSON file, stdout, etc.
-	You can get history monitor data as well. See the docs for [Monitors](http://tensorpack.readthedocs.io/en/latest/modules/callbacks.html#tensorpack.callbacks.Monitors)
-* Access the current status of training, such as `epoch_num`, `global_step`. See [here](http://tensorpack.readthedocs.io/en/latest/modules/callbacks.html#tensorpack.callbacks.Callback)
+	You can get history monitor data as well. See the docs for [Monitors](../../modules/callbacks.html#tensorpack.callbacks.Monitors)
+* Access the current status of training, such as `epoch_num`, `global_step`. See [here](../../modules/callbacks.html#tensorpack.callbacks.Callback)
 * Anything else that can be done with plain python.

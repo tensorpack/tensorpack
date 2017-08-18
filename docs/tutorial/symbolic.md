@@ -3,12 +3,12 @@
 
 While you can use other symbolic libraries,
 tensorpack also contains a small collection of common model primitives,
-such as conv/deconv, fc, batch normalization, pooling layers, and some custom loss functions.
+such as conv/deconv, fc, bn, pooling layers.
 Using the tensorpack implementations, you can also benefit from `argscope` and `LinearWrap` to
 simplify the code.
 
-Note that the layers were written because there are no other alternatives back at that time.
-In the future we may shift to `tf.layers` because they will be better maintained.
+Note that these layers were written because there are no other alternatives back at that time.
+In the future we may shift the implementation to `tf.layers` because they will be better maintained.
 
 ### argscope and LinearWrap
 `argscope` gives you a context with default arguments.
@@ -44,7 +44,7 @@ l = FullyConnected('fc1', l, 10, nl=tf.identity)
 ### Use Models outside Tensorpack
 
 You can use tensorpack models alone as a simple symbolic function library.
-To do this, just enter a [TowerContext](http://tensorpack.readthedocs.io/en/latest/modules/tfutils.html#tensorpack.tfutils.TowerContext)
+To do this, just enter a [TowerContext](../modules/tfutils.html#tensorpack.tfutils.TowerContext)
 when you define your model:
 ```python
 with TowerContext('', is_training=True):

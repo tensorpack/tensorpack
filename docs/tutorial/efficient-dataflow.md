@@ -18,7 +18,7 @@ We will need to reach a speed of, roughly 1k ~ 2k images per second, to keep GPU
 Some things to know before reading:
 1. Having a fast Python generator **alone** may or may not improve your overall training speed.
 	 You need mechanisms to hide the latency of **all** preprocessing stages, as mentioned in the
-	 [previous tutorial](http://tensorpack.readthedocs.io/en/latest/tutorial/input-source.html).
+	 [previous tutorial](input-source.html).
 2. Reading training set and validation set are different.
 	 In training it's OK to reorder, regroup, or even duplicate some datapoints, as long as the
 	 data distribution roughly stays the same.

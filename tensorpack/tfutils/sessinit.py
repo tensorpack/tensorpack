@@ -13,8 +13,9 @@ from .common import get_op_tensor_name
 from .varmanip import (SessionUpdate, get_savename_from_varname,
                        is_training_name, get_checkpoint_path)
 
-__all__ = ['SessionInit', 'SaverRestore', 'SaverRestoreRelaxed',
-           'ParamRestore', 'DictRestore', 'ChainInit',
+__all__ = ['SessionInit', 'ChainInit',
+           'SaverRestore', 'SaverRestoreRelaxed',
+           'ParamRestore', 'DictRestore',
            'JustCurrentSession', 'get_model_loader', 'TryResumeTraining']
 
 
@@ -276,7 +277,7 @@ def get_model_loader(filename):
 
 def TryResumeTraining():
     """
-    Load latest checkpoint from LOG_DIR, if there is one.
+    Try loading latest checkpoint from ``logger.LOG_DIR``, only if there is one.
 
     Returns:
         SessInit: either a :class:`JustCurrentSession`, or a :class:`SaverRestore`.

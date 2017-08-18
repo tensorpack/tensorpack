@@ -129,7 +129,7 @@ add_function_parentheses = True
 # If true, the current module name will be prepended to all description
 # unit titles (such as .. function::).
 add_module_names = True
-# TODO use module name, but remove `tensorpack.` ?
+# 'tensorpack.' prefix was removed by js
 
 # If true, sectionauthor and moduleauthor directives will be shown in the
 # output. They are ignored by default.
@@ -380,14 +380,19 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
                 return True
     return None
 
+def url_resolver(url):
+    if '.html' not in url:
+        return "https://github.com/ppwwyyxx/tensorpack/blob/master/" + url
+    else:
+        return "http://tensorpack.readthedocs.io/en/latest/" + url
+
 def setup(app):
     from recommonmark.transform import AutoStructify
     app.connect('autodoc-process-signature', process_signature)
     app.connect('autodoc-skip-member', autodoc_skip_member)
     app.add_config_value(
         'recommonmark_config',
-        {'url_resolver': lambda url: \
-         "https://github.com/ppwwyyxx/tensorpack/blob/master/" + url,
+        {'url_resolver': url_resolver,
          'auto_toc_tree_section': 'Contents',
          'enable_math': True,
          'enable_inline_math': True,

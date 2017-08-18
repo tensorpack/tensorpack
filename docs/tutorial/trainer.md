@@ -16,7 +16,7 @@ Users or derived trainers should implement __what the iteration is__.
 
 2. Trainer assumes the existence of __"epoch"__, i.e. that the iterations run in double for-loops.
 But it doesn't need to be a full pass of your dataset, ``steps_per_epoch`` can be any number you set
-and it only affects the [schedule of callbacks](http://tensorpack.readthedocs.io/en/latest/tutorial/extend/callback.html).
+and it only affects the [schedule of callbacks](extend/callback.html).
 In other words, an "epoch" is the __default period__ to run callbacks (validation, summary, checkpoint, etc.).
 
 
@@ -39,13 +39,13 @@ config = TrainConfig(
 # start training:
 SomeTrainer(config, other_arguments).train()
 
-# start multi-GPU training with a synchronous update:
+# start multi-GPU training with synchronous update:
 # SyncMultiGPUTrainerParameterServer(config).train()
 ```
 
 When you set the DataFlow (rather than the InputSource) in the config,
-tensorpack trainers automatically pick up certain prefetch mechanism,
-which will run faster than a naive `sess.run(..., feed_dict={...})`.
+tensorpack trainers automatically adopt certain prefetch mechanism, as mentioned
+in the [Input Pipeline](input-source.html) tutorial.
 You can set the InputSource instead, to customize this behavior.
 
 Existing multi-GPU trainers include the logic of data-parallel training.
@@ -59,5 +59,5 @@ would be ``(batch size of InputSource/DataFlow) * #GPU``.
 ### Custom Trainers
 
 You can easily write a trainer for other types of training.
-See [Write a Trainer](http://tensorpack.readthedocs.io/en/latest/tutorial/extend/trainer.html).
+See [Write a Trainer](extend/trainer.html).
 

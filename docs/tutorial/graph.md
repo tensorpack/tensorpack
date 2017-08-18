@@ -52,5 +52,5 @@ if you need to create and variables.
 When you need to deal with complicated graph, it may be easier to build the graph manually.
 You are free to do so as long as you tell the trainer what to do in each step.
 
-Check out [Write a Trainer](http://tensorpack.readthedocs.io/en/latest/tutorial/extend/trainer.html)
+Check out [Write a Trainer](extend/trainer.html)
 for using a custom graph with trainer.
