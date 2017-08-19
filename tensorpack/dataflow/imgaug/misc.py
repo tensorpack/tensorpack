@@ -2,11 +2,13 @@
 # File: misc.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
+import numpy as np
+import cv2
+
 from .base import ImageAugmentor
 from ...utils import logger
 from ...utils.argtools import shape2d
-import numpy as np
-import cv2
+from .transform import ResizeTransform, TransformAugmentorBase
 
 __all__ = ['Flip', 'Resize', 'RandomResize', 'ResizeShortestEdge', 'Transpose']
 
@@ -59,7 +61,7 @@ class Flip(ImageAugmentor):
         return coords
 
 
-class Resize(ImageAugmentor):
+class Resize(TransformAugmentorBase):
     """ Resize image to a target size"""
 
     def __init__(self, shape, interp=cv2.INTER_LINEAR):
@@ -72,25 +74,12 @@ class Resize(ImageAugmentor):
         self._init(locals())
 
     def _get_augment_params(self, img):
-        h, w = img.shape[:2]
-        return (h, w)
-
-    def _augment(self, img, _):
-        ret = cv2.resize(
-            img, self.shape[::-1],
-            interpolation=self.interp)
-        if img.ndim == 3 and ret.ndim == 2:
-            ret = ret[:, :, np.newaxis]
-        return ret
-
-    def _augment_coords(self, coords, param):
-        h, w = param
-        coords[:, 0] = coords[:, 0] * (self.shape[1] * 1.0 / w)
-        coords[:, 1] = coords[:, 1] * (self.shape[0] * 1.0 / h)
-        return coords
+        return ResizeTransform(
+            img.shape[0], img.shape[1],
+            self.shape[0], self.shape[1], self.interp)
 
 
-class ResizeShortestEdge(ImageAugmentor):
+class ResizeShortestEdge(TransformAugmentorBase):
     """
     Resize the shortest edge to a certain number while
     keeping the aspect ratio.
@@ -111,23 +100,11 @@ class ResizeShortestEdge(ImageAugmentor):
             newh, neww = self.size, int(scale * w)
         else:
             newh, neww = int(scale * h), self.size
-        return (h, w, newh, neww)
-
-    def _augment(self, img, param):
-        _, _, newh, neww = param
-        ret = cv2.resize(img, (neww, newh), interpolation=self.interp)
-        if img.ndim == 3 and ret.ndim == 2:
-            ret = ret[:, :, np.newaxis]
-        return ret
-
-    def _augment_coords(self, coords, param):
-        h, w, newh, neww = param
-        coords[:, 0] = coords[:, 0] * (neww * 1.0 / w)
-        coords[:, 1] = coords[:, 1] * (newh * 1.0 / h)
-        return coords
+        return ResizeTransform(
+            h, w, newh, neww, self.interp)
 
 
-class RandomResize(ImageAugmentor):
+class RandomResize(TransformAugmentorBase):
     """ Randomly rescale width and height of the image."""
 
     def __init__(self, xrange, yrange, minimum=(0, 0), aspect_ratio_thres=0.15,
@@ -187,22 +164,9 @@ class RandomResize(ImageAugmentor):
                     cnt += 1
                     if cnt > 50:
                         logger.warn("RandomResize failed to augment an image")
-                        return (h, w, h, w)
+                        return ResizeTransform(h, w, h, w, self.interp)
                     continue
-            return (h, w, int(destY), int(destX))
-
-    def _augment(self, img, param):
-        _, _, newh, neww = param
-        ret = cv2.resize(img, (neww, newh), interpolation=self.interp)
-        if img.ndim == 3 and ret.ndim == 2:
-            ret = ret[:, :, np.newaxis]
-        return ret
-
-    def _augment_coords(self, coords, param):
-        h, w, newh, neww = param
-        coords[:, 0] = coords[:, 0] * (neww * 1.0 / w)
-        coords[:, 1] = coords[:, 1] * (newh * 1.0 / h)
-        return coords
+            return ResizeTransform(h, w, int(destY), int(destX), self.interp)
 
 
 class Transpose(ImageAugmentor):
