@@ -1,6 +1,6 @@
 # Generative Adversarial Networks
 
-Reproduce the following GAN-related methods:
+Reproduce the following GAN-related methods, 100~200 lines each:
 
 + DCGAN ([Unsupervised Representation Learning with DCGAN](https://arxiv.org/abs/1511.06434))
 
