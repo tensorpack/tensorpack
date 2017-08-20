@@ -13,23 +13,23 @@ The average resolution is about 400x350 <sup>[[1]]</sup>.
 Following the [ResNet example](../examples/ResNet), we need images in their original resolution,
 so we will read the original dataset (instead of a down-sampled version), and
 then apply complicated preprocessing to it.
-We will need to reach a speed of, roughly 1k ~ 2k images per second, to keep GPUs busy.
+We will need to reach a speed of, roughly **1k ~ 2k images per second**, to keep GPUs busy.
 
 Some things to know before reading:
-1. Having a fast Python generator **alone** may or may not improve your overall training speed.
+1. For smaller datasets (e.g. several GBs of images with lightweight preprocessing), a simple reader plus some prefetch should usually work well enough.
+	 Therefore you don't have to understand this tutorial in depth unless you really find your data being the bottleneck.
+	 This tutorial could be a bit complicated for people new to system architectures, but you do need these to be able to run fast enough on ImageNet-sized dataset.
+2. Having a fast Python generator **alone** may or may not improve your overall training speed.
 	 You need mechanisms to hide the latency of **all** preprocessing stages, as mentioned in the
 	 [previous tutorial](input-source.html).
-2. Reading training set and validation set are different.
+3. Reading training set and validation set are different.
 	 In training it's OK to reorder, regroup, or even duplicate some datapoints, as long as the
 	 data distribution roughly stays the same.
 	 But in validation we often need the exact set of data, to be able to compute a correct and comparable score.
 	 This will affect how we build the DataFlow.
-3. The actual performance would depend on not only the disk, but also memory (for caching) and CPU (for data processing).
+4. The actual performance would depend on not only the disk, but also memory (for caching) and CPU (for data processing).
 	 You may need to tune the parameters (#processes, #threads, size of buffer, etc.)
 	 or change the pipeline for new tasks and new machines to achieve the best performance.
-4. This tutorial could be a bit complicated for people new to system architectures, but you do need these to be able to run fast enough on ImageNet-sized dataset.
-	 However, for smaller datasets (e.g. several GBs of images with lightweight preprocessing), a simple reader plus some prefetch should work well enough.
-	 Figure out the bottleneck first, before trying to optimize any piece in the whole system.
 
 ## Random Read
 

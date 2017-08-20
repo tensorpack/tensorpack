@@ -45,7 +45,7 @@ A trainer may also make __extra calls__ to `_build_graph` for inference, if used
 (e.g. training or inference, reuse or not, scope name) for your access.
 
 Also, to respect variable reuse among multiple calls, use `tf.get_variable()` instead of `tf.Variable` in `_build_graph`,
-if you need to create and variables.
+if you need to create any variables.
 
 ### Build It Manually
 

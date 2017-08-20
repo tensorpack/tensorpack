@@ -35,6 +35,8 @@ class InjectShell(Callback):
     and iteratively debug the training.
     When triggered, it detects whether the file exists, and opens an
     IPython/pdb shell if yes.
+    In the shell, `self` is this callback, `self.trainer` is the trainer, and
+    from that you can access everything else.
     """
 
     def __init__(self, file='INJECT_SHELL.tmp', shell='ipython'):

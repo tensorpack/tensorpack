@@ -5,11 +5,11 @@
 
 DataFlow is a library to build Python iterators for efficient data loading.
 
-A DataFlow has a `get_data()` generator method,
+**Definition**: A DataFlow is something that has a `get_data()` generator method,
 which yields `datapoints`.
 A datapoint is a **list** of Python objects which is called the `components` of a datapoint.
 
-For example, to train on MNIST dataset, you can write a DataFlow with a `get_data()` method
+**Example**: to train on MNIST dataset, you may need a DataFlow with a `get_data()` method
 that yields datapoints (lists) of two components:
 a numpy array of shape (64, 28, 28), and an array of shape (64,).
 
@@ -17,7 +17,7 @@ a numpy array of shape (64, 28, 28), and an array of shape (64,).
 One good thing about having a standard interface is to be able to provide
 the greatest code reusability.
 There are a lot of existing DataFlow utilities in tensorpack, which you can use to compose
-complex DataFlow with a long pre-processing pipeline. A common pipeline usually
+complex DataFlow with a long data pipeline. A common pipeline usually
 would __read from disk (or other sources), apply augmentations, group into batches,
 prefetch data__, etc. A simple example is as the following:
 
@@ -36,8 +36,10 @@ with all the data preprocessing.
 
 Unless you are working with standard data types (image folders, LMDB, etc),
 you would usually want to write the base DataFlow (`MyDataFlow` in the above example) for your data format.
-See [another tutorial](http://tensorpack.readthedocs.io/en/latest/tutorial/extend/dataflow.html)
+See [another tutorial](extend/dataflow.html)
 for simple instructions on writing a DataFlow.
+Once you have the base reader, all the [existing DataFlows](../modules/dataflow.html) are ready for you to complete
+the rest of the data pipeline.
 
 ### Why DataFlow
 
@@ -52,7 +54,7 @@ Nevertheless, tensorpack support data loading with native TF operators as well.
 
 ### Use DataFlow outside Tensorpack
 DataFlow is __independent__ of both tensorpack and TensorFlow.
-To `import tensorpack.dataflow`, you don't have to install TensorFlow.
+To `import tensorpack.dataflow`, you don't even have to install TensorFlow.
 You can simply use it as a data processing pipeline and plug it into any other frameworks.
 
 To use a DataFlow independently, you will need to call `reset_state()` first to initialize it,

@@ -74,7 +74,8 @@ Notice that callbacks cover every detail of training, ranging from graph operati
 This means you can customize every part of the training to your preference, e.g. display something
 different in the progress bar, evaluating part of the summaries at a different frequency, etc.
 These features may not be always useful, but think about how messy the main loop would look like if you
-were to write the logic together with the loops.
+were to write the logic together with the loops, and how easy your life will be if you could enable
+these features with one line when you need them.
 
 See [Write a callback](http://tensorpack.readthedocs.io/en/latest/tutorial/extend/callback.html)
 for details on how callbacks work, what they can do, and how to write them.

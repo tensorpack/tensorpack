@@ -41,7 +41,7 @@ either Python code or TensorFlow operators (written in C++).
 The benefits of using TensorFlow ops are:
 * Faster read/preprocessing.
 
-	* Potentially true, but not necessarily. With Python code you can call a variety of other fast libraries (e.g. lmdb), which
+	* Potentially true, but not necessarily. With Python code you can call a variety of other fast libraries, which
 		you have no access to in TF ops. For example, LMDB could be faster than TFRecords.
 	* Python may be just fast enough.
 

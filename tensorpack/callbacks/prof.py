@@ -19,7 +19,12 @@ __all__ = ['GPUUtilizationTracker', 'GraphProfiler']
 
 
 class GPUUtilizationTracker(Callback):
-    """ Summarize the average GPU utilization within an epoch"""
+    """ Summarize the average GPU utilization within an epoch.
+
+    It will start a process to run `nvidia-smi` every second
+    within the epoch (the trigger_epoch time was not included),
+    and write average utilization to monitors.
+    """
 
     def __init__(self, devices=None):
         """
