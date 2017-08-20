@@ -85,3 +85,22 @@ class CropTransform(ImageTransform):
         coords[:, 0] -= self.w0
         coords[:, 1] -= self.h0
         return coords
+
+
+class WarpAffineTransform(ImageTransform):
+    def __init__(self, mat, dsize, interp=cv2.INTER_LINEAR,
+                 borderMode=cv2.BORDER_CONSTANT, borderValue=0):
+        self._init(locals())
+
+    def apply_image(self, img):
+        ret = cv2.warpAffine(img, self.mat, self.dsize,
+                             flags=self.interp,
+                             borderMode=self.borderMode,
+                             borderValue=self.borderValue)
+        if img.ndim == 3 and ret.ndim == 2:
+            ret = ret[:, :, np.newaxis]
+        return ret
+
+    def apply_coords(self, coords):
+        # TODO
+        raise NotImplementedError()

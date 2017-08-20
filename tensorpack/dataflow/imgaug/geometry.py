@@ -3,15 +3,17 @@
 # File: geometry.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-from .base import ImageAugmentor
 import math
 import cv2
 import numpy as np
 
+from .base import ImageAugmentor
+from .transform import TransformAugmentorBase, WarpAffineTransform
+
 __all__ = ['Shift', 'Rotation', 'RotationAndCropValid', 'Affine']
 
 
-class Shift(ImageAugmentor):
+class Shift(TransformAugmentorBase):
     """ Random horizontal and vertical shifts """
 
     def __init__(self, horiz_frac=0, vert_frac=0,
@@ -32,21 +34,12 @@ class Shift(ImageAugmentor):
         max_dy = self.vert_frac * img.shape[0]
         dx = np.round(self._rand_range(-max_dx, max_dx))
         dy = np.round(self._rand_range(-max_dy, max_dy))
-        return np.float32(
-            [[1, 0, dx], [0, 1, dy]])
 
-    def _augment(self, img, shift_m):
-        ret = cv2.warpAffine(img, shift_m, img.shape[1::-1],
-                             borderMode=self.border, borderValue=self.border_value)
-        if img.ndim == 3 and ret.ndim == 2:
-            ret = ret[:, :, np.newaxis]
-        return ret
-
-    def _augment_coords(self, coords, param):
-        raise NotImplementedError()
+        mat = np.array([[1, 0, dx], [0, 1, dy]], dtype='float32')
+        return WarpAffineTransform(mat, img.shape[1::-1], self.border, self.border_value)
 
 
-class Rotation(ImageAugmentor):
+class Rotation(TransformAugmentorBase):
     """ Random rotate the image w.r.t a random center"""
 
     def __init__(self, max_deg, center_range=(0, 1),
@@ -73,17 +66,21 @@ class Rotation(ImageAugmentor):
         deg = self._rand_range(-self.max_deg, self.max_deg)
         if self.step_deg:
             deg = deg // self.step_deg * self.step_deg
-        return cv2.getRotationMatrix2D(tuple(center - 0.5), deg, 1)
+        """
+        The correct center is shape*0.5-0.5 This can be verified by:
 
-    def _augment(self, img, rot_m):
-        ret = cv2.warpAffine(img, rot_m, img.shape[1::-1],
-                             flags=self.interp, borderMode=self.border, borderValue=self.border_value)
-        if img.ndim == 3 and ret.ndim == 2:
-            ret = ret[:, :, np.newaxis]
-        return ret
-
-    def _augment_coords(self, coords, param):
-        raise NotImplementedError()
+        SHAPE = 7
+        arr = np.random.rand(SHAPE, SHAPE)
+        orig = arr
+        c = SHAPE * 0.5 - 0.5
+        c = (c, c)
+        for k in range(4):
+            mat = cv2.getRotationMatrix2D(c, 90, 1)
+            arr = cv2.warpAffine(arr, mat, arr.shape)
+        assert np.all(arr == orig)
+        """
+        mat = cv2.getRotationMatrix2D(tuple(center - 0.5), deg, 1)
+        return WarpAffineTransform(mat, img.shape[1::-1], self.border, self.border_value)
 
 
 class RotationAndCropValid(ImageAugmentor):
@@ -152,7 +149,7 @@ class RotationAndCropValid(ImageAugmentor):
         return int(np.round(wr)), int(np.round(hr))
 
 
-class Affine(ImageAugmentor):
+class Affine(TransformAugmentorBase):
     """
     Random affine transform of the image w.r.t to the image center.
     Transformations involve:
@@ -237,14 +234,5 @@ class Affine(ImageAugmentor):
         # Apply shift :
         transform_matrix[0, 2] += dx
         transform_matrix[1, 2] += dy
-        return transform_matrix
-
-    def _augment(self, img, transform_matrix):
-        ret = cv2.warpAffine(img, transform_matrix, img.shape[1::-1],
-                             flags=self.interp, borderMode=self.border, borderValue=self.border_value)
-        if img.ndim == 3 and ret.ndim == 2:
-            ret = ret[:, :, np.newaxis]
-        return ret
-
-    def _augment_coords(self, coords, param):
-        raise NotImplementedError()
+        return WarpAffineTransform(transform_matrix, img.shape[1::-1],
+                                   self.interp, self.border, self.border_value)
