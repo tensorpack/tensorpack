@@ -14,8 +14,22 @@ __all__ = ['auto_reuse_variable_scope', 'cached_name_scope']
 
 def auto_reuse_variable_scope(func):
     """
-    A decorator which automatically reuse the current variable scope if the
+    A decorator which automatically reuses the current variable scope if the
     function has been called with the same variable scope before.
+
+    Examples:
+
+    .. code-block:: python
+
+        @auto_reuse_variable_scope
+        def myfunc(x):
+            return tf.layers.conv2d(x, 128, 3)
+
+        myfunc(x1)  # will inherit parent scope reuse
+        myfunc(x2)  # will reuse
+        with tf.variable_scope('newscope'):
+            myfunc(x3)  # will inherit parent scope reuse
+            myfunc(x4)  # will reuse
     """
     used_scope = set()
 
@@ -32,6 +46,35 @@ def auto_reuse_variable_scope(func):
             return func(*args, **kwargs)
 
     return wrapper
+
+
+def under_name_scope():
+    """
+    Returns:
+        A decorator which makes the function happen under a name scope,
+        which is named by the function itself.
+
+    Examples:
+
+    .. code-block:: python
+
+        @under_name_scope()
+        def rms(x):
+            return tf.sqrt(  # will be under name scope 'rms'
+                tf.reduce_mean(tf.square(x)))
+
+    Todo:
+        Add a reuse option.
+    """
+
+    def _impl(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            name = func.__name__
+            with tf.name_scope(name):
+                return func(*args, **kwargs)
+        return wrapper
+    return _impl
 
 
 @graph_memoized

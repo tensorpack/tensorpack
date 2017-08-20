@@ -44,7 +44,8 @@ class GoogleNetResize(imgaug.ImageAugmentor):
                 out = img[y1:y1 + hh, x1:x1 + ww]
                 out = cv2.resize(out, (224, 224), interpolation=cv2.INTER_CUBIC)
                 return out
-        out = cv2.resize(img, (224, 224), interpolation=cv2.INTER_CUBIC)
+        out = imgaug.ResizeShortestEdge(224, interp=cv2.INTER_CUBIC).augment(img)
+        out = imgaug.CenterCrop(224).augment(out)
         return out
 
 
@@ -73,7 +74,7 @@ def fbresnet_augmentor(isTrain):
         ]
     else:
         augmentors = [
-            imgaug.ResizeShortestEdge(256),
+            imgaug.ResizeShortestEdge(256, cv2.INTER_CUBIC),
             imgaug.CenterCrop((224, 224)),
         ]
     return augmentors

@@ -87,8 +87,6 @@ def layer_register(
         log_shape=False,
         use_scope=True):
     """
-    Register a layer.
-
     Args:
         log_shape (bool): log input/output shape of this layer
         use_scope (bool or None):
@@ -97,6 +95,17 @@ def layer_register(
             the scope name argument.
             It will try to figure out by checking if the first argument
             is string or not.
+
+    Returns:
+        A decorator used to register a layer.
+
+    Examples:
+
+    .. code-block:: python
+
+        @layer_register(use_scope=True)
+        def add10(x):
+            return x + tf.get_variable('W', shape=[10])
     """
 
     def wrapper(func):
