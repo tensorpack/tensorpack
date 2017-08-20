@@ -153,7 +153,8 @@ class RotationAndCropValid(ImageAugmentor):
 
 
 class Affine(ImageAugmentor):
-    """Affine random transform the image w.r.t to the image center
+    """
+    Random affine transform of the image w.r.t to the image center.
     Transformations involve:
         - Translation ("move" image on the x-/y-axis)
         - Rotation
@@ -166,11 +167,13 @@ class Affine(ImageAugmentor):
         """
         Args:
             scale (tuple of 2 floats): scaling factor interval, e.g (a, b), then scale is
-                randomly sampled from the range a <= scale <= b
+                randomly sampled from the range a <= scale <= b. Will keep
+                original scale by default.
             translate_frac (tuple of 2 floats): tuple of max abs fraction for horizontal
-                and vertical shifts. For example translate_frac=(a, b), then horizontal shift
+                and vertical translation. For example translate_frac=(a, b), then horizontal shift
                 is randomly sampled in the range 0 < dx < img_width * a and vertical shift is
-                randomly sampled in the range 0 < dx < img_height * b
+                randomly sampled in the range 0 < dy < img_height * b. Will
+                not translate by default.
             shear (float): max abs shear value in degrees between 0 to 180
             interp: cv2 interpolation method
             border: cv2 border method
@@ -190,7 +193,6 @@ class Affine(ImageAugmentor):
         self._init(locals())
 
     def _get_augment_params(self, img):
-
         if self.scale is not None:
             scale = self._rand_range(self.scale[0], self.scale[1])
         else:
@@ -226,6 +228,7 @@ class Affine(ImageAugmentor):
             m11 = transform_matrix[1, 1]
             transform_matrix[0, 1] = m01 * cos_shear + m00 * sin_shear
             transform_matrix[1, 1] = m11 * cos_shear + m10 * sin_shear
+            # Add correction term to keep the center unchanged
             tx = center[0] * (1.0 - m00) - center[1] * transform_matrix[0, 1]
             ty = -center[0] * m10 + center[1] * (1.0 - transform_matrix[1, 1])
             transform_matrix[0, 2] = tx
