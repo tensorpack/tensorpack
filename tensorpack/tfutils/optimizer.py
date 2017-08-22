@@ -8,7 +8,8 @@ from contextlib import contextmanager
 from .gradproc import FilterNoneGrad
 
 __all__ = ['apply_grad_processors', 'ProxyOptimizer',
-           'PostProcessOptimizer', 'VariableAssignmentOptimizer']
+           'PostProcessOptimizer', 'VariableAssignmentOptimizer',
+           'AccumGradOptimizer']
 
 
 class ProxyOptimizer(tf.train.Optimizer):
