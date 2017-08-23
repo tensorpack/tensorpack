@@ -8,30 +8,15 @@ import os
 from six.moves import range
 
 from ..utils import logger
-from .multigpu import MultiGPUTrainerBase
 from ..callbacks import RunOp
 from ..tfutils.sesscreate import NewSessionCreator
 from ..tfutils.common import get_global_step_var, get_op_tensor_name
 
+from .multigpu import MultiGPUTrainerBase
+from .utility import override_to_local_variable
+
+
 __all__ = ['DistributedReplicatedTrainer', 'DistributedTrainerReplicated']
-
-
-class OverrideToLocalVariable(object):
-    """
-    Ensures the created variable
-    is in LOCAL_VARIABLES and not GLOBAL_VARIBLES collection.
-    """
-    def __call__(self, getter, name, *args, **kwargs):
-        if 'collections' in kwargs:
-            collections = kwargs['collections']
-        if not collections:
-            collections = set([tf.GraphKeys.GLOBAL_VARIABLES])
-        else:
-            collections = set(collections.copy())
-        collections.remove(tf.GraphKeys.GLOBAL_VARIABLES)
-        collections.add(tf.GraphKeys.LOCAL_VARIABLES)
-        kwargs['collections'] = list(collections)
-        return getter(name, *args, **kwargs)
 
 
 class DistributedTrainerReplicated(MultiGPUTrainerBase):
@@ -220,9 +205,7 @@ class DistributedTrainerReplicated(MultiGPUTrainerBase):
         cbs = self._input_source.setup(self.model.get_inputs_desc())
         self.config.callbacks.extend(cbs)
 
-        with tf.variable_scope(
-                tf.get_variable_scope(),
-                custom_getter=OverrideToLocalVariable()):
+        with override_to_local_variable():
             # Ngpu * Nvar * 2
             grad_list = MultiGPUTrainerBase.build_on_multi_tower(
                 self.config.tower,

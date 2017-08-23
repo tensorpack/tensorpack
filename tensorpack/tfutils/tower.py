@@ -20,7 +20,7 @@ class TowerContext(object):
             tower_name (str): The name scope of the tower.
             is_training (bool): if None, automatically determine from tower_name.
             index (int): index of this tower, only used in training.
-            use_vs (bool): Open a variable scope with this name.
+            use_vs (bool): Open a new variable scope with this name.
         """
         self._name = tower_name
         self._is_training = bool(is_training)

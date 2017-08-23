@@ -31,6 +31,7 @@ class NewSessionCreator(tf.train.SessionCreator):
     def create_session(self):
         sess = tf.Session(target=self.target, graph=self.graph, config=self.config)
         sess.run(tf.global_variables_initializer())
+        sess.run(tf.local_variables_initializer())
         logger.info("Global variables initialized.")
         return sess
 

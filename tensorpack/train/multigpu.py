@@ -4,7 +4,6 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import tensorflow as tf
-import operator
 from six.moves import zip, range
 
 from ..utils import logger
@@ -17,6 +16,7 @@ from ..callbacks.graph import RunOp
 
 from ..graph_builder.input_source import QueueInput, StagingInputWrapper, DummyConstantInput
 from .base import Trainer
+from .utility import LeastLoadedDeviceSetter, override_to_local_variable
 
 __all__ = ['MultiGPUTrainerBase', 'LeastLoadedDeviceSetter',
            'SyncMultiGPUTrainerReplicated',
@@ -69,26 +69,29 @@ class MultiGPUTrainerBase(Trainer):
         ret = []
         if devices is not None:
             assert len(devices) == len(towers)
+        if use_vs is not None:
+            assert len(use_vs) == len(towers)
 
         tower_names = ['tower{}'.format(idx) for idx in range(len(towers))]
         keys_to_freeze = TOWER_FREEZE_KEYS[:]
-        if use_vs is None:
-            use_vs = [False] * len(towers)
-        assert len(use_vs) == len(towers)
 
         for idx, t in enumerate(towers):
             device = devices[idx] if devices is not None else '/gpu:{}'.format(t)
+            usevs = use_vs[idx] if use_vs is not None else False
             with tf.device(device), TowerContext(
                     tower_names[idx],
                     is_training=True,
                     index=idx,
-                    use_vs=use_vs[idx]):
+                    use_vs=usevs):
                 if idx == t:
                     logger.info("Building graph for training tower {}...".format(idx))
                 else:
                     logger.info("Building graph for training tower {} on device {}...".format(idx, device))
 
-                ret.append(func())
+                # When use_vs is True, use LOCAL_VARIABLES,
+                # so these duplicated variables won't be saved by default.
+                with override_to_local_variable(enable=usevs):
+                    ret.append(func())
 
                 if idx == 0:
                     # avoid duplicated summary & update_ops from each device
@@ -109,37 +112,6 @@ class MultiGPUTrainerBase(Trainer):
     def _build_graph_get_grads(model, input):
         model.build_graph(input)
         return model.get_cost_and_grad()[1]
-
-
-# Copied from https://github.com/tensorflow/benchmarks/blob/master/scripts/tf_cnn_benchmarks/variable_mgr.py
-class LeastLoadedDeviceSetter(object):
-    """ Helper class to assign variables on the least loaded ps-device."""
-    def __init__(self, worker_device, ps_devices):
-        """
-        Args:
-            worker_device: the device to use for compute ops.
-            ps_devices: a list of device to use for Variable ops.
-        """
-        self.ps_devices = ps_devices
-        self.worker_device = worker_device
-        self.ps_sizes = [0] * len(self.ps_devices)
-
-    def __call__(self, op):
-        def sanitize_name(name):    # tensorflow/tensorflow#11484
-            return tf.DeviceSpec.from_string(name).to_string()
-
-        if op.device:
-            return op.device
-        if op.type not in ['Variable', 'VariableV2']:
-            return sanitize_name(self.worker_device)
-
-        device_index, _ = min(enumerate(
-            self.ps_sizes), key=operator.itemgetter(1))
-        device_name = self.ps_devices[device_index]
-        var_size = op.outputs[0].get_shape().num_elements()
-        self.ps_sizes[device_index] += var_size
-
-        return sanitize_name(device_name)
 
 
 class SyncMultiGPUTrainerParameterServer(MultiGPUTrainerBase):
@@ -308,8 +280,10 @@ class SyncMultiGPUTrainerReplicated(MultiGPUTrainerBase):
         for idx in range(len(tower)):
             with tf.device(raw_devices[idx]):
                 grad_and_vars = [x[idx] for x in grads]
-                train_ops.append(opt.apply_gradients(
-                    grad_and_vars, name='apply_grad_{}'.format(idx)))
+                # apply_gradients may create variables. Make them LOCAL_VARIABLES
+                with override_to_local_variable(enable=idx > 0):
+                    train_ops.append(opt.apply_gradients(
+                        grad_and_vars, name='apply_grad_{}'.format(idx)))
         train_op = tf.group(*train_ops, name='train_op')
         cb = RunOp(
             SyncMultiGPUTrainerReplicated.get_post_init_ops,
