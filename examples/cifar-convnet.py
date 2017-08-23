@@ -15,7 +15,7 @@ from tensorpack.dataflow import dataset
 """
 A small convnet model for Cifar10 or Cifar100 dataset.
 
-Cifar10:
+Cifar10 trained on 1 GPU:
     91% accuracy after 50k step.
     41 step/s on TitanX
 

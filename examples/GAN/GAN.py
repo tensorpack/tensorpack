@@ -66,6 +66,10 @@ class GANModelDesc(ModelDescBase):
 
 class GANTrainer(Trainer):
     def __init__(self, config):
+        """
+        GANTrainer expects a ModelDesc in config which sets the following attribute
+        after :meth:`_build_graph`: g_loss, d_loss, g_vars, d_vars.
+        """
         input = QueueInput(config.dataflow)
         model = config.model
 

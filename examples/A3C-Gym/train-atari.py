@@ -102,27 +102,26 @@ class Model(ModelDesc):
 
     def _build_graph(self, inputs):
         state, action, futurereward, action_prob = inputs
-        logits, self.value = self._get_NN_prediction(state)
-        self.value = tf.squeeze(self.value, [1], name='pred_value')  # (B,)
-        self.policy = tf.nn.softmax(logits, name='policy')
+        logits, value = self._get_NN_prediction(state)
+        value = tf.squeeze(value, [1], name='pred_value')  # (B,)
+        policy = tf.nn.softmax(logits, name='policy')
         is_training = get_current_tower_context().is_training
         if not is_training:
             return
-        log_probs = tf.log(self.policy + 1e-6)
+        log_probs = tf.log(policy + 1e-6)
 
         log_pi_a_given_s = tf.reduce_sum(
             log_probs * tf.one_hot(action, NUM_ACTIONS), 1)
-        advantage = tf.subtract(tf.stop_gradient(self.value), futurereward, name='advantage')
+        advantage = tf.subtract(tf.stop_gradient(value), futurereward, name='advantage')
 
-        pi_a_given_s = tf.reduce_sum(self.policy * tf.one_hot(action, NUM_ACTIONS), 1)  # (B,)
+        pi_a_given_s = tf.reduce_sum(policy * tf.one_hot(action, NUM_ACTIONS), 1)  # (B,)
         importance = tf.stop_gradient(tf.clip_by_value(pi_a_given_s / (action_prob + 1e-8), 0, 10))
 
         policy_loss = tf.reduce_sum(log_pi_a_given_s * advantage * importance, name='policy_loss')
-        xentropy_loss = tf.reduce_sum(
-            self.policy * log_probs, name='xentropy_loss')
-        value_loss = tf.nn.l2_loss(self.value - futurereward, name='value_loss')
+        xentropy_loss = tf.reduce_sum(policy * log_probs, name='xentropy_loss')
+        value_loss = tf.nn.l2_loss(value - futurereward, name='value_loss')
 
-        pred_reward = tf.reduce_mean(self.value, name='predict_reward')
+        pred_reward = tf.reduce_mean(value, name='predict_reward')
         advantage = symbf.rms(advantage, name='rms_advantage')
         entropy_beta = tf.get_variable('entropy_beta', shape=[],
                                        initializer=tf.constant_initializer(0.01), trainable=False)
