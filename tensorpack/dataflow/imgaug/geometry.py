@@ -36,7 +36,9 @@ class Shift(TransformAugmentorBase):
         dy = np.round(self._rand_range(-max_dy, max_dy))
 
         mat = np.array([[1, 0, dx], [0, 1, dy]], dtype='float32')
-        return WarpAffineTransform(mat, img.shape[1::-1], self.border, self.border_value)
+        return WarpAffineTransform(
+            mat, img.shape[1::-1],
+            borderMode=self.border, borderValue=self.border_value)
 
 
 class Rotation(TransformAugmentorBase):
@@ -80,7 +82,9 @@ class Rotation(TransformAugmentorBase):
         assert np.all(arr == orig)
         """
         mat = cv2.getRotationMatrix2D(tuple(center - 0.5), deg, 1)
-        return WarpAffineTransform(mat, img.shape[1::-1], self.border, self.border_value)
+        return WarpAffineTransform(
+            mat, img.shape[1::-1], interp=self.interp,
+            borderMode=self.border, borderValue=self.border_value)
 
 
 class RotationAndCropValid(ImageAugmentor):
