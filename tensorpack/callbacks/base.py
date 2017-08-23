@@ -228,10 +228,14 @@ class ProxyCallback(Callback):
         self.cb.before_train()
 
     def _setup_graph(self):
-        self.cb.setup_graph(self.trainer)
+        with tf.name_scope(None):
+            self.cb.setup_graph(self.trainer)
 
     def _trigger_epoch(self):
         self.cb.trigger_epoch()
+
+    def _trigger(self):
+        self.cb.trigger()
 
     def _trigger_step(self):
         self.cb.trigger_step()

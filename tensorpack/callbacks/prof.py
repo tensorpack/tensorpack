@@ -106,6 +106,7 @@ class GraphProfiler(Callback):
     The metadata files can be processed by
     `tfprof command line utils
     <https://github.com/tensorflow/tensorflow/blob/master/tensorflow/tools/tfprof/g3doc/command_line.md>`_.
+    The event is viewable from tensorboard.
 
     Note that the profiling is enabled for every step.
     You probably want to schedule it less frequently by

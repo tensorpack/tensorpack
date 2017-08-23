@@ -3,13 +3,15 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import os
+import tensorflow as tf
 import numpy as np
+from six.moves import zip
 
 from .base import Callback
 from ..utils import logger
-from ..tfutils.common import get_op_tensor_name
+from ..tfutils.common import get_op_tensor_name, get_tensors_by_names
 
-__all__ = ['SendStat', 'DumpParamAsImage', 'InjectShell']
+__all__ = ['SendStat', 'DumpParamAsImage', 'InjectShell', 'DumpTensor']
 
 
 class SendStat(Callback):
@@ -119,6 +121,38 @@ class DumpParamAsImage(Callback):
         res = im * self.scale
         res = np.clip(res, 0, 255)
         cv2.imwrite(fname, res.astype('uint8'))
+
+
+class DumpTensor(Callback):
+    """
+    Dump some tensors to a file.
+    Every step this callback fetches tensors and write them to a npz file under ``logger.LOG_DIR``.
+    The dump can be loaded by ``dict(np.load(filename).items())``.
+    """
+    # TODO run as trigger
+    def __init__(self, names):
+        """
+        Args:
+            names (list[str]): names of tensors
+        """
+        self._names = names
+        self._dir = logger.LOG_DIR
+
+    def _setup_graph(self):
+        tensors = get_tensors_by_names(self._names)
+        self._fetch = tf.train.SessionRunArgs(fetches=tensors)
+
+    def _before_run(self, _):
+        return self._fetch
+
+    def _after_run(self, _, rv):
+        results = rv.results
+        dic = {}
+        for name, val in zip(self._names, results):
+            dic[name] = val
+        fname = os.path.join(
+            self._dir, 'DumpTensor-{}.npz'.format(self.global_step))
+        np.savez(fname, **dic)
 
 
 try:
