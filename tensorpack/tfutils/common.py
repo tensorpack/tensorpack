@@ -44,7 +44,7 @@ def get_default_sess_config(mem_fraction=0.99):
     conf.gpu_options.allocator_type = 'BFC'
     conf.gpu_options.allow_growth = True
 
-    # Hurt performance in 8xP100 training
+    # May hurt performance
     # conf.graph_options.optimizer_options.global_jit_level = tf.OptimizerOptions.ON_1
     return conf
 
