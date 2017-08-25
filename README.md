@@ -24,7 +24,7 @@ See some [examples](examples) to learn about the framework:
 + [char-rnn for fun](examples/Char-RNN)
 + [LSTM language model on PennTreebank](examples/PennTreebank)
 
-The examples are not only for demonstration of the framework -- you can train them and reproduce the results in papers.
+Examples are not only for demonstration of the framework -- you can train them and reproduce the results in papers.
 
 ## Features:
 

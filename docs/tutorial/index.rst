@@ -15,10 +15,11 @@ A High Level Glance
 * You can use any TF-based symbolic function library to define a model, including
   a small set of models within tensorpack. ``ModelDesc`` is an interface to connect symbolic graph to tensorpack trainers.
 
-* tensorpack trainers manage the training loops for you. At the same time, you own the power of customization
-  through callbacks. They also include data parallel logic for multi-GPU or distributed training.
+* tensorpack trainers manage the training loops for you.
+  They also include data parallel logic for multi-GPU or distributed training.
+  At the same time, you have the power of customization through callbacks.
 
-* Callbacks are like ``tf.train.SessionRunHook``, or plugins, or extensions. During training,
+* Callbacks are like ``tf.train.SessionRunHook``, or plugins. During training,
   everything you want to do other than the main iterations can be defined through callbacks and easily reused.
 
 User Tutorials

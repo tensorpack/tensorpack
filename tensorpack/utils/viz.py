@@ -133,8 +133,8 @@ class Canvas(object):
                                self.channel), dtype='uint8')
 
     def draw_patches(self, plist):
-        assert self.nr_row * self.nr_col == len(plist), \
-            "{}*{} != {}".format(self.nr_row, self.nr_col, len(plist))
+        assert self.nr_row * self.nr_col >= len(plist), \
+            "{}*{} < {}".format(self.nr_row, self.nr_col, len(plist))
         if self.channel == 3 and plist.shape[3] == 1:
             plist = np.repeat(plist, 3, axis=3)
         cur_row, cur_col = 0, 0
