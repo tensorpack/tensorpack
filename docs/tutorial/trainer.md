@@ -15,9 +15,9 @@ Tensorpack base trainer implements the logic of __running the iteration__.
 Users or derived trainers should implement __what the iteration is__.
 
 2. Trainer assumes the existence of __"epoch"__, i.e. that the iterations run in double for-loops.
-But it doesn't need to be a full pass of your dataset, ``steps_per_epoch`` can be any number you set
+But an epoch doesn't need to be a full pass of your dataset, the size of an epoch can be any number you set
 and it only affects the [schedule of callbacks](extend/callback.html).
-In other words, an "epoch" is the __default period__ to run callbacks (validation, summary, checkpoint, etc.).
+In other words, an "epoch" in tensorpack is the __default period to run callbacks__ (validation, summary, checkpoint, etc.).
 
 
 ### Common Trainers

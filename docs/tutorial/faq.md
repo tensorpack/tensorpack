@@ -5,7 +5,7 @@
 
 The library tries to __support__ everything, but it could not really __include__ everything.
 
-The interface tries to be flexible enough so you can put any XYZ on it.
+The interface attempts to be flexible enough so you can put any XYZ on it.
 You can either implement them under the interface or simply wrap some existing Python code.
 See [Extend Tensorpack](index.html#extend-tensorpack)
 for more details.

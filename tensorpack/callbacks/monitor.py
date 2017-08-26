@@ -54,22 +54,26 @@ class TrainingMonitor(Callback):
         """ Override this method to setup the monitor."""
         pass
 
-    def put_summary(self, summary):
+    def process_summary(self, summary):
         """
         Process a tf.Summary.
         """
         pass
 
-    def put(self, name, val):
+    def process(self, name, val):
         """
         Process a key-value pair.
         """
         pass
 
-    def put_scalar(self, name, val):
+    def process_scalar(self, name, val):
+        """
+        Args:
+            val: a scalar
+        """
         pass
 
-    def put_image(self, name, val):
+    def process_image(self, name, val):
         """
         Args:
             val (np.ndarray): 4D (NHWC) numpy array of images in range [0,255].
@@ -77,27 +81,34 @@ class TrainingMonitor(Callback):
         """
         pass
 
-    def put_event(self, evt):
+    def process_event(self, evt):
         """
         Args:
-            evt (tf.Event): the most basic format, could include Summary,
-                RunMetadata, LogMessage, and more.
+            evt (tf.Event): the most basic format acceptable by tensorboard.
+                It could include Summary, RunMetadata, LogMessage, and more.
         """
         pass
-    # TODO put other types
+    # TODO process other types
 
 
 class NoOpMonitor(TrainingMonitor):
     pass
 
 
-class Monitors(TrainingMonitor):
+class Monitors(Callback):
     """
     Merge monitors together for trainer to use.
+
+    In training, each trainer will create a :class:`Monitors` instance,
+    and you can access it through `trainer.monitors`.
+    You should use `trainer.monitors` for logging and it will dispatch your
+    logs to each sub-monitor.
     """
     def __init__(self, monitors):
         self._scalar_history = ScalarHistory()
         self._monitors = monitors + [self._scalar_history]
+        for m in self._monitors:
+            assert isinstance(m, TrainingMonitor), m
 
     def _setup_graph(self):
         self._scalar_history.setup_graph(self.trainer)
@@ -107,6 +118,9 @@ class Monitors(TrainingMonitor):
             func(m)
 
     def put_summary(self, summary):
+        """
+        Put a `tf.Summary`.
+        """
         if isinstance(summary, six.binary_type):
             summary = tf.Summary.FromString(summary)
         assert isinstance(summary, tf.Summary), type(summary)
@@ -120,15 +134,19 @@ class Monitors(TrainingMonitor):
                     val.tag = val.tag[:-len(suffix)]
                 self._dispatch(lambda m: m.put_scalar(val.tag, val.simple_value))
 
-        self._dispatch(lambda m: m.put_summary(summary))
+        self._dispatch(lambda m: m.process_summary(summary))
 
     def put_scalar(self, name, val):
-        self._dispatch(lambda m: m.put_scalar(name, val))
+        """
+        Put a scalar.
+        """
+        self._dispatch(lambda m: m.process_scalar(name, val))
         s = create_scalar_summary(name, val)
-        self._dispatch(lambda m: m.put_summary(s))
+        self._dispatch(lambda m: m.process_summary(s))
 
     def put_image(self, name, val):
         """
+        Put an image.
         Args:
             name (str):
             val (np.ndarray): 2D, 3D (HWC) or 4D (NHWC) numpy array of images
@@ -136,21 +154,21 @@ class Monitors(TrainingMonitor):
         """
         assert isinstance(val, np.ndarray)
         arr = image_to_nhwc(val)
-        self._dispatch(lambda m: m.put_image(name, arr))
+        self._dispatch(lambda m: m.process_image(name, arr))
         s = create_image_summary(name, arr)
-        self._dispatch(lambda m: m.put_summary(s))
+        self._dispatch(lambda m: m.process_summary(s))
 
     def put_event(self, evt):
         """
-        Simply call :meth:`put_event` on each monitor.
-        `step` and `wall_time` fields of this proto will be filled automatically.
+        Put an tf.Event.
+        `step` and `wall_time` fields of :class:`tf.Event` will be filled automatically.
 
         Args:
             evt (tf.Event):
         """
         evt.step = self.global_step
         evt.wall_time = time.time()
-        self._dispatch(lambda m: m.put_event(evt))
+        self._dispatch(lambda m: m.process_event(evt))
 
     def get_latest(self, name):
         """
@@ -179,10 +197,10 @@ class TFEventWriter(TrainingMonitor):
     def _setup_graph(self):
         self._writer = tf.summary.FileWriter(logger.LOG_DIR, graph=tf.get_default_graph())
 
-    def put_summary(self, summary):
+    def process_summary(self, summary):
         self._writer.add_summary(summary, self.global_step)
 
-    def put_event(self, evt):
+    def process_event(self, evt):
         self._writer.add_event(evt)
 
     def _trigger(self):     # flush every epoch
@@ -200,10 +218,14 @@ def TFSummaryWriter(*args, **kwargs):
 class JSONWriter(TrainingMonitor):
     """
     Write all scalar data to a json file under ``logger.LOG_DIR``, grouped by their global step.
-    It also tries to recover the epoch number during setup, if an existing json file is found at the same place.
+    This monitor also attemps to recover the epoch number during setup,
+    if an existing json file is found at the same place.
     """
 
     FILENAME = 'stat.json'
+    """
+    The name of the json file.
+    """
 
     def __new__(cls):
         if logger.LOG_DIR:
@@ -245,8 +267,8 @@ class JSONWriter(TrainingMonitor):
     def _trigger_epoch(self):
         self._push()
 
-    def put_scalar(self, name, val):
-        self._stat_now[name] = float(val)   # TODO will fail for non-numeric
+    def process_scalar(self, name, val):
+        self._stat_now[name] = val
 
     def _push(self):
         """ Note that this method is idempotent"""
@@ -316,7 +338,7 @@ class ScalarPrinter(TrainingMonitor):
         if self._enable_epoch:
             self._print_stat()
 
-    def put_scalar(self, name, val):
+    def process_scalar(self, name, val):
         self._dic[name] = float(val)
 
     def _print_stat(self):
@@ -341,7 +363,7 @@ class ScalarHistory(TrainingMonitor):
     def _setup_graph(self):
         self._dic = defaultdict(list)
 
-    def put_scalar(self, name, val):
+    def process_scalar(self, name, val):
         self._dic[name].append(float(val))
 
     def get_latest(self, name):
@@ -385,7 +407,7 @@ class SendMonitorData(TrainingMonitor):
         self.names = names
         self.dic = {}
 
-    def put_scalar(self, name, val):
+    def process_scalar(self, name, val):
         if name in self.names:
             self.dic[name] = val
 
@@ -403,5 +425,5 @@ class SendMonitorData(TrainingMonitor):
         cmd = self.command.format(**v)
         ret = os.system(cmd)
         if ret != 0:
-            logger.error("Command {} failed with ret={}!".format(cmd, ret))
+            logger.error("Command '{}' failed with ret={}!".format(cmd, ret))
         self.dic = {}

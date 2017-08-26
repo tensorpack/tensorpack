@@ -1,6 +1,8 @@
 
 # Build the Graph
 
+This tutorial explains how a graph is built in tensorpack.
+
 ### ModelDesc
 
 `ModelDesc` is an abstraction over the most common type of models people train.

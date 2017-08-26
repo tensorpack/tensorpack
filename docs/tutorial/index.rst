@@ -35,6 +35,7 @@ User Tutorials
   symbolic
   trainer
   callback
+  summary
   faq
 
 Extend Tensorpack
