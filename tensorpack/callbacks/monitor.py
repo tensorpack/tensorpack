@@ -132,7 +132,7 @@ class Monitors(Callback):
                 suffix = '-summary'  # tensorflow#6150, tensorboard#59
                 if val.tag.endswith(suffix):
                     val.tag = val.tag[:-len(suffix)]
-                self._dispatch(lambda m: m.put_scalar(val.tag, val.simple_value))
+                self._dispatch(lambda m: m.process_scalar(val.tag, val.simple_value))
 
         self._dispatch(lambda m: m.process_summary(summary))
 
