@@ -48,7 +48,7 @@ class Model(ModelDesc):
             l = Conv2D('conv3', l, ch_out * 4, 1)
 
             squeeze = GlobalAvgPooling('gap', l)
-            squeeze = FullyConnected('fc1', squeeze, ch_out // 4, nl=tf.identity)
+            squeeze = FullyConnected('fc1', squeeze, ch_out // 4, nl=tf.nn.relu)
             squeeze = FullyConnected('fc2', squeeze, ch_out * 4, nl=tf.nn.sigmoid)
             l = l * tf.reshape(squeeze, [-1, ch_out * 4, 1, 1])
             return l + resnet_shortcut(shortcut, ch_out * 4, stride)

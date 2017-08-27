@@ -118,7 +118,7 @@ class Canvas(object):
         self.nr_col = nr_col
 
         if border is None:
-            border = int(0.1 * min(ph, pw))
+            border = int(0.05 * min(ph, pw))
         self.border = border
 
         if isinstance(bgcolor, int):
@@ -169,9 +169,9 @@ def stack_patches(
     Args:
         patch_list(list[ndarray] or ndarray): NHW or NHWC images in [0,255].
         nr_row(int), nr_col(int): rows and cols of the grid.
-            ``nr_col * nr_row`` must be equal to ``len(patch_list)``.
+            ``nr_col * nr_row`` must be no less than ``len(patch_list)``.
         border(int): border length between images.
-            Defaults to ``0.1 * min(patch_width, patch_height)``.
+            Defaults to ``0.05 * min(patch_width, patch_height)``.
         pad (boolean): when `patch_list` is a list, pad all patches to the maximum height and width.
             This option allows stacking patches of different shapes together.
         bgcolor(int or 3-tuple): background color in [0, 255]. Either an int
@@ -235,7 +235,7 @@ def gen_stack_patches(patch_list,
     ph, pw = patch_list.shape[1:3]
 
     if border is None:
-        border = int(0.1 * min(ph, pw))
+        border = int(0.05 * min(ph, pw))
     if nr_row is None:
         nr_row = int(max_height / (ph + border))
     if nr_col is None:

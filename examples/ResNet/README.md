@@ -11,7 +11,7 @@ Models can be [downloaded here](https://goo.gl/6XjK9V).
 | ResNet18           |     10.55%  |      29.73% |
 | ResNet34           |     8.51%   |      26.50% |
 | ResNet50           |     7.24%   |      23.91% |
-| ResNet50-SE        |     6.42%   |      22.94% |
+| ResNet50-SE        |  TRAINING   |  TRAINING   |
 | ResNet101          |     6.26%   |      22.53% |
 
 To train, just run:

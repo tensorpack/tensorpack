@@ -47,3 +47,5 @@ are likely to have too much variance. You can:
 Besides TensorFlow summaries,
 a callback is free to log any other types of data to the monitor backend,
 anytime after the training has started.
+As long as the type of data is supported, it will be logged by each monitor.
+In other words, tensorboard can show not only summaries in the graph, but also your custom data.
