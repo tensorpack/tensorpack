@@ -51,25 +51,25 @@ class GoogleNetResize(imgaug.ImageAugmentor):
 
 def fbresnet_augmentor(isTrain):
     """
-    Augmentor used in fb.resnet.torch, for BGR images.
+    Augmentor used in fb.resnet.torch, for BGR images in range [0,255].
     """
     if isTrain:
         augmentors = [
             GoogleNetResize(),
             imgaug.RandomOrderAug(
-                [imgaug.Brightness(30, clip=False),
-                 imgaug.Contrast((0.8, 1.2), clip=False),
+                [imgaug.BrightnessScale((0.6, 1.4), clip=False),
+                 imgaug.Contrast((0.6, 1.4), clip=False),
                  imgaug.Saturation(0.4, rgb=False),
                  # rgb-bgr conversion
                  imgaug.Lighting(0.1,
-                                 eigval=[0.2175, 0.0188, 0.0045][::-1],
+                                 eigval=np.asarray(
+                                     [0.2175, 0.0188, 0.0045][::-1]) * 255.0,
                                  eigvec=np.array(
                                      [[-0.5675, 0.7192, 0.4009],
                                       [-0.5808, -0.0045, -0.8140],
                                       [-0.5836, -0.6948, 0.4203]],
                                      dtype='float32')[::-1, ::-1]
                                  )]),
-            imgaug.Clip(),
             imgaug.Flip(horiz=True),
         ]
     else:

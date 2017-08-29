@@ -8,9 +8,9 @@ Models can be [downloaded here](https://goo.gl/6XjK9V).
 
 | Model              | Top 5 Error | Top 1 Error |
 |:-------------------|-------------|------------:|
-| ResNet18           |     10.55%  |      29.73% |
+| ResNet18           |     10.47%  |      29.56% |
 | ResNet34           |     8.51%   |      26.50% |
-| ResNet50           |     7.24%   |      23.91% |
+| ResNet50           |     7.16%   |      23.72% |
 | ResNet50-SE        |  TRAINING   |  TRAINING   |
 | ResNet101          |     6.26%   |      22.53% |
 

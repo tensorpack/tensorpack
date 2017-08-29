@@ -68,7 +68,7 @@ class InputSource(object):
         Initialize/reinitialize this InputSource.
 
         For training, it will get called by the trainer in `before_train` callbacks.
-        For inference, the :class:`InferenceRunner` will call it each time it does is triggered.
+        For inference, the :class:`InferenceRunner` will call this method each time it is triggered.
         """
         self._reset_state()
 
