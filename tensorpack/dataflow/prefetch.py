@@ -317,6 +317,7 @@ class ThreadedMapData(ProxyDataFlow):
         self.buffer_size = buffer_size
         self.map_func = map_func
         self._threads = []
+        self._evt = None
 
     def reset_state(self):
         super(ThreadedMapData, self).reset_state()
@@ -372,6 +373,7 @@ class ThreadedMapData(ProxyDataFlow):
                     yield self._out_queue.get()
 
     def __del__(self):
-        self._evt.set()
+        if self._evt is not None:
+            self._evt.set()
         for p in self._threads:
             p.join()

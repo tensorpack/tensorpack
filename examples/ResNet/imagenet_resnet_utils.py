@@ -112,25 +112,21 @@ def get_imagenet_dataflow(
     return ds
 
 
-def resnet_shortcut(l, n_out, stride):
+def resnet_shortcut(l, n_out, stride, nl=tf.identity):
     data_format = get_arg_scope()['Conv2D']['data_format']
     n_in = l.get_shape().as_list()[1 if data_format == 'NCHW' else 3]
     if n_in != n_out:   # change dimension when channel is not the same
-        return Conv2D('convshortcut', l, n_out, 1, stride=stride)
+        return Conv2D('convshortcut', l, n_out, 1, stride=stride, nl=nl)
     else:
         return l
 
 
 def apply_preactivation(l, preact):
     """
-    'no_preact' for the first resblock only, because the input is activated already.
-    'both_preact' for the first block in each group, due to the projection shotcut.
+    'no_preact' for the first resblock in each group only, because the input is activated already.
     'default' for all the non-first blocks, where identity mapping is preserved on shortcut path.
     """
-    if preact == 'both_preact':
-        l = BNReLU('preact', l)
-        shortcut = l
-    elif preact == 'default':
+    if preact == 'default':
         shortcut = l
         l = BNReLU('preact', l)
     else:
@@ -153,15 +149,17 @@ def resnet_bottleneck(l, ch_out, stride, preact):
     return l + resnet_shortcut(shortcut, ch_out * 4, stride)
 
 
-def resnet_group(l, name, block_func, features, count, stride, first=False):
+def preresnet_group(l, name, block_func, features, count, stride):
     with tf.variable_scope(name):
-        with tf.variable_scope('block0'):
-            l = block_func(l, features, stride,
-                           'no_preact' if first else 'both_preact')
-        for i in range(1, count):
+        for i in range(0, count):
             with tf.variable_scope('block{}'.format(i)):
-                l = block_func(l, features, 1, 'default')
-        return l
+                # first block doesn't need activation
+                l = block_func(l, features,
+                               stride if i == 0 else 1,
+                               'no_preact' if i == 0 else 'default')
+        # end of each group need an extra activation
+        l = BNReLU('bnlast', l)
+    return l
 
 
 def resnet_backbone(image, num_blocks, block_func):
@@ -170,11 +168,10 @@ def resnet_backbone(image, num_blocks, block_func):
         logits = (LinearWrap(image)
                   .Conv2D('conv0', 64, 7, stride=2, nl=BNReLU)
                   .MaxPooling('pool0', shape=3, stride=2, padding='SAME')
-                  .apply(resnet_group, 'group0', block_func, 64, num_blocks[0], 1, first=True)
-                  .apply(resnet_group, 'group1', block_func, 128, num_blocks[1], 2)
-                  .apply(resnet_group, 'group2', block_func, 256, num_blocks[2], 2)
-                  .apply(resnet_group, 'group3', block_func, 512, num_blocks[3], 2)
-                  .BNReLU('bnlast')
+                  .apply(preresnet_group, 'group0', block_func, 64, num_blocks[0], 1)
+                  .apply(preresnet_group, 'group1', block_func, 128, num_blocks[1], 2)
+                  .apply(preresnet_group, 'group2', block_func, 256, num_blocks[2], 2)
+                  .apply(preresnet_group, 'group3', block_func, 512, num_blocks[3], 2)
                   .GlobalAvgPooling('gap')
                   .FullyConnected('linear', 1000, nl=tf.identity)())
     return logits

@@ -20,7 +20,7 @@ from tensorpack.utils.gpu import get_nr_gpu
 from tensorpack.utils import viz
 
 from imagenet_resnet_utils import (
-    fbresnet_augmentor, resnet_basicblock, resnet_bottleneck, resnet_group,
+    fbresnet_augmentor, resnet_basicblock, preresnet_group,
     image_preprocess, compute_loss_and_error)
 
 
@@ -42,8 +42,6 @@ class Model(ModelDesc):
         cfg = {
             18: ([2, 2, 2, 2], resnet_basicblock),
             34: ([3, 4, 6, 3], resnet_basicblock),
-            50: ([3, 4, 6, 3], resnet_bottleneck),
-            101: ([3, 4, 23, 3], resnet_bottleneck)
         }
         defs, block_func = cfg[DEPTH]
 
@@ -53,11 +51,10 @@ class Model(ModelDesc):
             convmaps = (LinearWrap(image)
                         .Conv2D('conv0', 64, 7, stride=2, nl=BNReLU)
                         .MaxPooling('pool0', shape=3, stride=2, padding='SAME')
-                        .apply(resnet_group, 'group0', block_func, 64, defs[0], 1, first=True)
-                        .apply(resnet_group, 'group1', block_func, 128, defs[1], 2)
-                        .apply(resnet_group, 'group2', block_func, 256, defs[2], 2)
-                        .apply(resnet_group, 'group3new', block_func, 512, defs[3], 1)
-                        .BNReLU('bnlast')())
+                        .apply(preresnet_group, 'group0', block_func, 64, defs[0], 1)
+                        .apply(preresnet_group, 'group1', block_func, 128, defs[1], 2)
+                        .apply(preresnet_group, 'group2', block_func, 256, defs[2], 2)
+                        .apply(preresnet_group, 'group3new', block_func, 512, defs[3], 1)())
             print(convmaps)
             logits = (LinearWrap(convmaps)
                       .GlobalAvgPooling('gap')
@@ -125,7 +122,7 @@ def viz_cam(model_file, data_dir):
         model=Model(),
         session_init=get_model_loader(model_file),
         input_names=['input', 'label'],
-        output_names=['wrong-top1', 'bnlast/Relu', 'linearnew/W'],
+        output_names=['wrong-top1', 'group3new/bnlast/Relu', 'linearnew/W'],
         return_input=True
     )
     meta = dataset.ILSVRCMeta().get_synset_words_1000()
