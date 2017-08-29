@@ -26,6 +26,7 @@ __all__ = ['PlaceholderInput', 'FeedInput', 'DataParallelFeedInput',
            'FeedfreeInput',
            'QueueInput', 'BatchQueueInput',
            'ZMQInput', 'DummyConstantInput', 'TensorInput',
+           'TFDatasetInput',
            'StagingInputWrapper']
 
 
@@ -86,7 +87,6 @@ class FeedInput(InputSource):
     def _setup(self, inputs):
         self._all_placehdrs = [v.build_placeholder(prefix='') for v in inputs]
         self._cb = self._FeedCallback(self._iter_ds, self._all_placehdrs)
-        self.reset_state()
 
     def _get_input_tensors(self):
         return self._all_placehdrs
@@ -135,7 +135,6 @@ class DataParallelFeedInput(FeedInput):
             self._placehdrs_per_tower.append(
                 [v.build_placeholder(prefix=tname + '/') for v in inputs])
         self._cb = self._DataParallelFeedCallback(self._iter_ds, self._placehdrs_per_tower)
-        self.reset_state()
 
     def _get_input_tensors(self):
         # return placeholders for each tower
@@ -413,6 +412,47 @@ class ZMQInput(TensorInput):
         self.inputs_desc = inputs_desc
         assert len(self.inputs_desc) > 0, \
             "ZMQInput has to be used with InputDesc!"
+
+
+class TFDatasetInput(FeedfreeInput):
+    """
+    Use a :class:`tf.contrib.data.Dataset` instance as input.
+
+    Note:
+        In training, the dataset should be infinite (use :func:`repeat()`).
+    """
+    def __init__(self, dataset):
+        """
+        Args:
+            dataset (tf.contrib.data.Dataset):
+        """
+        self._dataset = dataset
+
+    def _setup(self, inputs_desc):
+        self._desc = inputs_desc
+        types = self._dataset.output_types
+        desc_types = tuple([k.type for k in inputs_desc])
+        assert len(types) == len(desc_types), \
+            "Dataset and InputDesc has different length! {} != {}".format(
+                len(types), len(desc_types))
+        assert types == desc_types, \
+            "Types of dataset and InputDesc don't match! {} != {}".format(
+                str(types), str(desc_types))
+        shapes = self._dataset.output_shapes
+        desc_shapes = [k.shape for k in inputs_desc]
+        for idx, (s1, s2) in enumerate(zip(shapes, desc_shapes)):
+            s2 = tf.TensorShape(s2)
+            assert s2.is_compatible_with(s1), \
+                "InputDesc '{}' has incompatible shape with dataset! {} vs {}".format(
+                    inputs_desc[idx].name, s2, s1)
+        self._iterator = self._dataset.make_initializable_iterator()
+        self._init_op = self._iterator.initializer
+
+    def _reset_state(self):
+        self._init_op.run()
+
+    def _get_input_tensors(self):
+        return self._iterator.get_next()
 
 
 class StagingInputWrapper(FeedfreeInput):

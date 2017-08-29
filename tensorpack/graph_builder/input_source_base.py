@@ -9,6 +9,7 @@ import tensorflow as tf
 
 from ..utils.argtools import memoized
 from ._utils import get_sublist_by_names, get_tensors_inputs
+from ..callbacks.base import CallbackFactory
 
 __all__ = ['InputSource', 'remap_input_source']
 
@@ -56,14 +57,18 @@ class InputSource(object):
         Returns:
             list[Callback]: extra callbacks needed by this InputSource.
         """
-        return self._get_callbacks()
+        return [CallbackFactory(
+            before_train=lambda _: self.reset_state())] + self._get_callbacks()
 
     def _get_callbacks(self):
         return []
 
     def reset_state(self):
         """
-        Reinitialize this InputSource.
+        Initialize/reinitialize this InputSource.
+
+        For training, it will get called by the trainer in `before_train` callbacks.
+        For inference, the :class:`InferenceRunner` will call it each time it does is triggered.
         """
         self._reset_state()
 

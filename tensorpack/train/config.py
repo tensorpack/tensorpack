@@ -125,7 +125,8 @@ class TrainConfig(object):
                 else:
                     raise NotImplementedError()
             except NotImplementedError:
-                logger.exception("You must set `TrainConfig(steps_per_epoch)` if data.size() is not available.")
+                logger.error("You must set `TrainConfig(steps_per_epoch)` if data.size() is not available.")
+                raise
         else:
             steps_per_epoch = int(steps_per_epoch)
         self.steps_per_epoch = steps_per_epoch
