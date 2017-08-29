@@ -269,8 +269,9 @@ class MapDataComponent(MapData):
             func (TYPE -> TYPE|None): takes ``dp[index]``, returns a new value for ``dp[index]``.
                 return None to discard this datapoint.
             index (int): index of the component.
-
         """
+        index = int(index)
+
         def f(dp):
             r = func(dp[index])
             if r is None:

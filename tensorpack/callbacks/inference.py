@@ -145,7 +145,7 @@ class ClassificationError(Inferencer):
     Therefore the result can be different from averaging the error rate of each batch.
     """
 
-    def __init__(self, wrong_tensor_name='incorrect_vector', summary_name='val_error'):
+    def __init__(self, wrong_tensor_name='incorrect_vector', summary_name='validation_error'):
         """
         Args:
             wrong_tensor_name(str): name of the ``wrong`` tensor.
