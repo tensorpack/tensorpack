@@ -18,7 +18,7 @@ from tensorpack.utils.gpu import get_nr_gpu
 
 from imagenet_resnet_utils import (
     fbresnet_augmentor, apply_preactivation, resnet_shortcut, resnet_backbone,
-    eval_on_ILSVRC12, image_preprocess, compute_loss_and_error,
+    preresnet_group, eval_on_ILSVRC12, image_preprocess, compute_loss_and_error,
     get_imagenet_dataflow)
 
 TOTAL_BATCH_SIZE = 256
@@ -55,7 +55,7 @@ class Model(ModelDesc):
         defs = RESNET_CONFIG[DEPTH]
 
         with argscope([Conv2D, MaxPooling, GlobalAvgPooling, BatchNorm], data_format='NCHW'):
-            logits = resnet_backbone(image, defs, bottleneck_se)
+            logits = resnet_backbone(image, defs, preresnet_group, bottleneck_se)
 
         loss = compute_loss_and_error(logits, label)
         wd_loss = regularize_cost('.*/W', l2_regularizer(1e-4), name='l2_regularize_loss')

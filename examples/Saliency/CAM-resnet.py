@@ -20,7 +20,7 @@ from tensorpack.utils.gpu import get_nr_gpu
 from tensorpack.utils import viz
 
 from imagenet_resnet_utils import (
-    fbresnet_augmentor, resnet_basicblock, preresnet_group,
+    fbresnet_augmentor, preresnet_basicblock, preresnet_group,
     image_preprocess, compute_loss_and_error)
 
 
@@ -40,8 +40,8 @@ class Model(ModelDesc):
         image = tf.transpose(image, [0, 3, 1, 2])
 
         cfg = {
-            18: ([2, 2, 2, 2], resnet_basicblock),
-            34: ([3, 4, 6, 3], resnet_basicblock),
+            18: ([2, 2, 2, 2], preresnet_basicblock),
+            34: ([3, 4, 6, 3], preresnet_basicblock),
         }
         defs, block_func = cfg[DEPTH]
 

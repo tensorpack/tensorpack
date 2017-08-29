@@ -20,7 +20,8 @@ from tensorpack.tfutils import argscope, get_model_loader
 from tensorpack.utils.gpu import get_nr_gpu
 
 from imagenet_resnet_utils import (
-    fbresnet_augmentor, resnet_basicblock, resnet_bottleneck, resnet_backbone,
+    fbresnet_augmentor, preresnet_group,
+    preresnet_basicblock, preresnet_bottleneck, resnet_backbone,
     eval_on_ILSVRC12, image_preprocess, compute_loss_and_error,
     get_imagenet_dataflow)
 
@@ -29,10 +30,10 @@ INPUT_SHAPE = 224
 DEPTH = None
 
 RESNET_CONFIG = {
-    18: ([2, 2, 2, 2], resnet_basicblock),
-    34: ([3, 4, 6, 3], resnet_basicblock),
-    50: ([3, 4, 6, 3], resnet_bottleneck),
-    101: ([3, 4, 23, 3], resnet_bottleneck)
+    18: ([2, 2, 2, 2], preresnet_basicblock),
+    34: ([3, 4, 6, 3], preresnet_basicblock),
+    50: ([3, 4, 6, 3], preresnet_bottleneck),
+    101: ([3, 4, 23, 3], preresnet_bottleneck)
 }
 
 
@@ -58,7 +59,7 @@ class Model(ModelDesc):
         defs, block_func = RESNET_CONFIG[DEPTH]
 
         with argscope([Conv2D, MaxPooling, GlobalAvgPooling, BatchNorm], data_format=self.data_format):
-            logits = resnet_backbone(image, defs, block_func)
+            logits = resnet_backbone(image, defs, preresnet_group, block_func)
 
         loss = compute_loss_and_error(logits, label)
 
