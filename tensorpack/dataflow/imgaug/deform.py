@@ -90,6 +90,7 @@ class GaussianDeform(ImageAugmentor):
             self.randrange = self.shape[0] / 8
         else:
             self.randrange = randrange
+        self.sigma = sigma
 
     def _get_augment_params(self, img):
         v = self.rng.rand(self.K, 2).astype('float32') - 0.5

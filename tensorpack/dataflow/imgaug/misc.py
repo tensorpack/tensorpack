@@ -33,8 +33,7 @@ class Flip(ImageAugmentor):
             self.code = 0
         else:
             raise ValueError("At least one of horiz or vert has to be True!")
-        self.prob = prob
-        self._init()
+        self._init(locals())
 
     def _get_augment_params(self, img):
         h, w = img.shape[:2]
