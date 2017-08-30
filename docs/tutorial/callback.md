@@ -15,10 +15,12 @@ There are several places where you might want to do something else:
 * After the training (e.g. send the model somewhere, send a message to your phone)
 
 We found people traditionally tend to write the training loop together with these extra features.
-This makes the loop lengthy, and the code for the same feature probably get separated.
+This makes the loop lengthy, and the code for the same feature probably get separated (imagine a
+feature which needs initialization in the beginning and then some actual work between iterations).
+
 By writing callbacks to implement what to do at each place, tensorpack trainers
 will call the callbacks at the proper time.
-Therefore the code can be reused with one single line, as long as you are using tensorpack trainers.
+Therefore these features can be reused with one single line, as long as you are using tensorpack trainers.
 
 For example, these are the callbacks I used when training a ResNet:
 
@@ -30,7 +32,7 @@ TrainConfig(
     ModelSaver(),
     # backup the model with best validation error
     MinSaver('val-error-top1'),
-    # run inference on another Dataflow every epoch, compute top1/top5 classification error and save them in log
+    # run inference on another Dataflow every epoch, compute classification error and log to monitors
     InferenceRunner(dataset_val, [
         ClassificationError('wrong-top1', 'val-error-top1'),
         ClassificationError('wrong-top5', 'val-error-top5')]),
@@ -50,11 +52,11 @@ TrainConfig(
     InjectShell(shell='ipython')
   ],
   extra_callbacks=[    # these callbacks are enabled by default already
-    # maintain and summarize moving average of some tensors defined in the model (e.g. training loss, training error)
+    # maintain those moving average summaries already defined in the model (e.g. training loss, training error)
     MovingAverageSummary(),
     # draw a nice progress bar
     ProgressBar(),
-    # run `tf.summary.merge_all` every epoch and send results to monitors
+    # run `tf.summary.merge_all` every epoch and log to monitors
     MergeAllSummaries(),
     # run ops in GraphKeys.UPDATE_OPS collection along with training, if any
     RunUpdateOps(),

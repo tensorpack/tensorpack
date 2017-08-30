@@ -25,8 +25,6 @@ class InputDesc(
     input source.
     """
 
-    _cached_placeholder = None
-
     def __new__(cls, type, shape, name):
         """
         Args:
@@ -36,6 +34,7 @@ class InputDesc(
         """
         shape = tuple(shape)    # has to be tuple for self to be hashable
         self = super(InputDesc, cls).__new__(cls, type, shape, name)
+        self._cached_placeholder = None
         return self
 
     # TODO in serialization, skip _cached_placeholder
@@ -72,10 +71,10 @@ class InputDesc(
                 self.type, shape=self.shape,
                 name=prefix + self.name)
         if prefix == '' and self._cached_placeholder is None:
-            self._cached_placeholder = ret
+            self._cached_placeholder = ret  # cached_placeholder only caches the prefix='' case
         return ret
 
-    @memoized
+    # cannot memoize here, because InputDesc is hashed by its fields.
     def build_placeholder_reuse(self):
         """
         Build a tf.placeholder from the metadata, or return an old one.
