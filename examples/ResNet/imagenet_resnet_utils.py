@@ -124,14 +124,11 @@ def resnet_shortcut(l, n_out, stride, nl=tf.identity):
 def apply_preactivation(l, preact):
     """
     'no_preact' for the first resblock in each group only, because the input is activated already.
-    'bnrelu/relu' for all the non-first blocks, where identity mapping is preserved on shortcut path.
+    'bnrelu' for all the non-first blocks, where identity mapping is preserved on shortcut path.
     """
     if preact == 'bnrelu':
-        shortcut = l
+        shortcut = l    # preserve identity mapping
         l = BNReLU('preact', l)
-    elif preact == 'relu':
-        shortcut = l
-        l = tf.nn.relu(l)
     else:
         shortcut = l
     return l, shortcut
@@ -152,6 +149,7 @@ def preresnet_basicblock(l, ch_out, stride, preact):
 
 
 def preresnet_bottleneck(l, ch_out, stride, preact):
+    # stride is applied on the second conv, following fb.resnet.torch
     l, shortcut = apply_preactivation(l, preact)
     l = Conv2D('conv1', l, ch_out, 1, nl=BNReLU)
     l = Conv2D('conv2', l, ch_out, 3, stride=stride, nl=BNReLU)
@@ -172,6 +170,13 @@ def preresnet_group(l, name, block_func, features, count, stride):
     return l
 
 
+def resnet_basicblock(l, ch_out, stride, preact):
+    l, shortcut = apply_preactivation(l, preact)
+    l = Conv2D('conv1', l, ch_out, 3, stride=stride, nl=BNReLU)
+    l = Conv2D('conv2', l, ch_out, 3, nl=get_bn(zero_init=True))
+    return l + resnet_shortcut(shortcut, ch_out, stride, nl=get_bn(zero_init=False))
+
+
 def resnet_bottleneck(l, ch_out, stride, preact):
     l, shortcut = apply_preactivation(l, preact)
     l = Conv2D('conv1', l, ch_out, 1, nl=BNReLU)
@@ -184,12 +189,11 @@ def resnet_group(l, name, block_func, features, count, stride):
     with tf.variable_scope(name):
         for i in range(0, count):
             with tf.variable_scope('block{}'.format(i)):
-                # first block doesn't need activation
                 l = block_func(l, features,
                                stride if i == 0 else 1,
-                               'no_preact' if i == 0 else 'relu')
-        # end of each group need an extra activation
-        l = tf.nn.relu(l)
+                               'no_preact')
+                # end of each block need an activation
+                l = tf.nn.relu(l)
     return l
 
 
