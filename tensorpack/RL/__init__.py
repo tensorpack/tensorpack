@@ -9,6 +9,11 @@ import os.path
 __all__ = []
 
 
+"""
+This module should be removed in the future.
+"""
+
+
 def _global_import(name):
     p = __import__(name, globals(), locals(), level=1)
     lst = p.__all__ if '__all__' in dir(p) else dir(p)

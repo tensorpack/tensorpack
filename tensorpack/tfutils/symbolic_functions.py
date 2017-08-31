@@ -6,6 +6,8 @@ import tensorflow as tf
 from contextlib import contextmanager
 import numpy as np
 
+from ..utils.develop import deprecated
+
 # __all__ = ['get_scalar_var']
 
 
@@ -124,6 +126,7 @@ def rms(x, name=None):
     return tf.sqrt(tf.reduce_mean(tf.square(x)), name=name)
 
 
+@deprecated("Please use tf.losses.huber_loss instead!")
 def huber_loss(x, delta=1, name='huber_loss'):
     r"""
     Huber loss of x.

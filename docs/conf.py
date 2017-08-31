@@ -369,7 +369,9 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
         'GaussianDeform',
         'dump_chkpt_vars',
         'VisualQA',
-        'ParamRestore']:
+        'ParamRestore',
+        'huber_loss'
+        ]:
         return True
     if name in ['get_data', 'size', 'reset_state']:
         # skip these methods with empty docstring
