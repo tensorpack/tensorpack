@@ -47,11 +47,11 @@ class PrefetchProcess(mp.Process):
 class PrefetchData(ProxyDataFlow):
     """
     Prefetch data from a DataFlow using Python multiprocessing utilities.
-    It will fork the process calling :meth:`__init__`, , collect datapoints from `ds` in each
+    It will fork the process calling :meth:`__init__`, collect datapoints from `ds` in each
     process by a Python :class:`multiprocessing.Queue`.
 
     Note:
-        1. The underlying dataflow worker will be forked multiple times When ``nr_proc>1``.
+        1. The underlying dataflow worker will be forked multiple times when ``nr_proc>1``.
            As a result, unless the underlying dataflow is fully shuffled, the data distribution
            produced by this dataflow will be different.
            (e.g. you are likely to see duplicated datapoints at the beginning)
