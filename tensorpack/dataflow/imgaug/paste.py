@@ -69,7 +69,7 @@ class CenterPaste(ImageAugmentor):
 
     def _augment(self, img, _):
         img_shape = img.shape[:2]
-        assert self.background_shape[0] > img_shape[0] and self.background_shape[1] > img_shape[1]
+        assert self.background_shape[0] >= img_shape[0] and self.background_shape[1] >= img_shape[1]
 
         background = self.background_filler.fill(
             self.background_shape, img)
