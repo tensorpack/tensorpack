@@ -49,7 +49,7 @@ class ConstantBackgroundFiller(BackgroundFiller):
             return_shape = background_shape + (img.shape[2],)
         else:
             return_shape = background_shape
-        return np.zeros(return_shape) + self.value
+        return np.zeros(return_shape, dtype=img.dtype) + self.value
 
 
 class CenterPaste(ImageAugmentor):
