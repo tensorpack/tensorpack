@@ -20,11 +20,12 @@ class BackgroundFiller(object):
         Return a proper background image of background_shape, given img.
 
         Args:
-            background_shape: a shape of [h, w]
+            background_shape (tuple): a shape (h, w)
             img: an image
         Returns:
             a background image
         """
+        background_shape = tuple(background_shape)
         return self._fill(background_shape, img)
 
     @abstractmethod
