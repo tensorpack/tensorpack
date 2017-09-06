@@ -22,6 +22,7 @@ def send_dataflow_zmq(df, addr, hwm=50, print_interval=100, format=None):
     """
     Run DataFlow and send data to a ZMQ socket addr.
     It will dump and send each datapoint to this addr with a PUSH socket.
+    This function never returns unless an error is encountered.
 
     Args:
         df (DataFlow): Will infinitely loop over the DataFlow.
@@ -59,6 +60,7 @@ def send_dataflow_zmq(df, addr, hwm=50, print_interval=100, format=None):
 class RemoteDataZMQ(DataFlow):
     """
     Produce data from ZMQ PULL socket(s).
+    See http://tensorpack.readthedocs.io/en/latest/tutorial/efficient-dataflow.html#distributed-dataflow
 
     Attributes:
         cnt1, cnt2 (int): number of data points received from addr1 and addr2

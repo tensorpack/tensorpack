@@ -39,9 +39,11 @@ A DataFlow could be blocked by CPU/hard disk/network/IPC bandwidth. Only by benc
 know the reason and improve it accordingly, e.g.:
 
 1. Use single-file database to avoid random read on hard disk.
-2. Write faster pre-processing, or use distributed data preprocessing to reduce CPU burden.
-3. Compress your data (e.g. use uint8 images, or JPEG-compressed images) before sending them through
+2. Write faster pre-processing with whatever tools you have.
+3. Move certain pre-processing (e.g. mean/std normalization) to the graph, if TF has fast implementation of it.
+4. Compress your data (e.g. use uint8 images, or JPEG-compressed images) before sending them through
 	 anything (network, ZMQ pipe, Python-TF copy etc.)
+5. Use distributed data preprocessing, with `send_dataflow_zmq` and `RemoteDataZMQ`.
 
 ## Improve TensorFlow
 

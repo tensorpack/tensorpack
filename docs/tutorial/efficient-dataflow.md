@@ -218,30 +218,23 @@ launch the base DataFlow in only **one process**, and only parallelize the trans
 with another `PrefetchDataZMQ`
 (Nesting two `PrefetchDataZMQ`, however, will result in a different behavior.
 These differences are explained in the API documentation in more details.).
-Similar to what we did above, you can use `ThreadedMapData` to parallelize as well.
+Similar to what we did earlier, you can use `ThreadedMapData` to parallelize as well.
 
-Let me summarize what the above DataFlow does:
+Let me summarize what this DataFlow does:
 
 1. One process reads LMDB file, shuffle them in a buffer and put them into a `multiprocessing.Queue` (used by `PrefetchData`).
 2. 25 processes take items from the queue, decode and process them into [image, label] pairs, and
 	 send them through ZMQ IPC pipe.
 3. The main process takes data from the pipe, makes batches.
 
-The DataFlow mentioned above (both random read and sequential read) can run at a speed of 1k ~ 2k images per second if you have good CPUs, RAM, disks.
+The two DataFlow mentioned in this tutorial (both random read and sequential read) can run at a speed of 1k ~ 2k images per second if you have good CPUs, RAM, disks.
 As a reference, tensorpack can train ResNet-18 at 1.2k images/s on 4 old TitanX.
 A DGX-1 (8 P100) can train ResNet-50 at 1.7k images/s according to the [official benchmark](https://www.tensorflow.org/performance/benchmarks).
 So DataFlow will not be a serious bottleneck if configured properly.
 
-## More Efficient DataFlow
+## Distributed DataFlow
 
-To work with larger datasets (or smaller networks, or more/better GPUs) you could be severely bounded by CPU or disk speed of a single machine.
-One way is to optimize the preprocessing routine, for example:
-
-1. Write some preprocessing steps in C++ or use better libraries
-2. Move certain preprocessing steps (e.g. mean/std normalization) to TF operators which may be faster
-3. Transfer less data, e.g. use uint8 images rather than float32.
-
-Another way to scale is to run DataFlow in a distributed fashion and collect them on the
+To further scale your DataFlow, you can run it on multiple machines and collect them on the
 training machine. E.g.:
 ```python
 # Data Machine #1, process 1-20:
