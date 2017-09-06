@@ -37,6 +37,7 @@ User Tutorials
   callback
   summary
   faq
+  performance-tuning
 
 Extend Tensorpack
 =================

@@ -79,18 +79,3 @@ When you set `TrainConfig(dataflow=)`, tensorpack trainers automatically adds pr
 You can also use `TrainConfig(data=)` option to use a customized `InputSource`.
 In case you want to use TF ops rather than a DataFlow, you can use `TensorInput` as the `InputSource`
 (See the [PTB example](../../tensorpack/tree/master/examples/PennTreebank)).
-
-## Figure out the Bottleneck
-
-Training and data preparation run in parallel and the faster one will block to wait for the slower one.
-So the overall throughput will be dominated by the slower one.
-
-There is no way to accurately benchmark two threads waiting on queues,
-without introducing overhead. However, there are ways to understand which one is the bottleneck:
-
-1. Use the average occupancy (size) of the queue. This information is summarized in tensorpack by default.
-	If the queue is nearly empty (default size is 50), then the input source is the bottleneck.
-
-2. Benchmark them separately. Use `TestDataSpeed` to benchmark a DataFlow.
-	 Use `FakeData(..., random=False)` as a fast DataFlow, to benchmark the training iterations plus the copies.
-	 Or use `DummyConstantInput` as a fast InputSource, to benchmark the training iterations only.

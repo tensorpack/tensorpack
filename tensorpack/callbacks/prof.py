@@ -117,7 +117,8 @@ class GraphProfiler(Callback):
         Args:
             dump_metadata(bool): Dump :class:`tf.RunMetadata` to be used with tfprof.
             dump_tracing(bool): Dump chrome tracing files.
-            dump_event(bool): Dump to an event processed by FileWriter.
+            dump_event(bool): Dump to an event processed by FileWriter and
+                will be shown in TensorBoard.
         """
         self._dir = logger.LOG_DIR
         self._dump_meta = bool(dump_metadata)
