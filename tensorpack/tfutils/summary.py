@@ -94,7 +94,7 @@ def add_tensor_summary(x, types, name=None, collections=None,
 
     Args:
         x (tf.Tensor): a tensor to summarize
-        types (list[str]): can be scalar/histogram/sparsity/mean/rms
+        types (list[str]): summary types, can be scalar/histogram/sparsity/mean/rms
         name (str): summary name. Defaults to be the op name.
         collections (list[str]): collections of the summary ops.
         main_tower_only (bool): Only run under main training tower. If
@@ -132,33 +132,31 @@ def add_tensor_summary(x, types, name=None, collections=None,
         SUMMARY_TYPES_DIC[typ]()
 
 
-def add_activation_summary(x, name=None, collections=None):
+def add_activation_summary(x, types=None, name=None, collections=None):
     """
-    Add summary for an activation tensor x, including its sparsity, rms, and histogram.
+    Call :func:`add_tensor_summary` under a reused 'activation-summary' name scope.
     This function is a no-op if not calling from main training tower.
 
     Args:
         x (tf.Tensor): the tensor to summary.
+        types (list[str]): summary types, defaults to ``['sparsity', 'rms', 'histogram']``.
         name (str): if is None, use x.name.
         collections (list[str]): collections of the summary ops.
     """
-    ctx = get_current_tower_context()
-    if ctx is not None and not ctx.is_main_training_tower:
-        return
     ndim = x.get_shape().ndims
     if ndim < 2:
         logger.warn("Cannot summarize scalar activation {}".format(x.name))
         return
-    if name is None:
-        name = x.name
+    if types is None:
+        types = ['sparsity', 'rms', 'histogram']
     with cached_name_scope('activation-summary'):
-        add_tensor_summary(x, ['sparsity', 'rms', 'histogram'],
-                           name=name, collections=collections)
+        add_tensor_summary(x, types, name=name, collections=collections)
 
 
 def add_param_summary(*summary_lists, **kwargs):
     """
-    Add summary Ops for all trainable variables matching the regex.
+    Add summary ops for all trainable variables matching the regex, under a
+    reused 'param-summary' name scope.
     This function is a no-op if not calling from main training tower.
 
     Args:
