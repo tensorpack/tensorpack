@@ -193,6 +193,7 @@ class VisualizeTestSet(Callback):
     def _before_train(self):
         global args
         self.val_ds = get_data(args.data, isTrain=False)
+        self.val_ds.reset_state()
 
     def _trigger(self):
         idx = 0
