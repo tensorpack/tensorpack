@@ -135,6 +135,7 @@ class DumpTensor(Callback):
         Args:
             names (list[str]): names of tensors
         """
+        assert isinstance(names, (list, tuple)), names
         self._names = names
         self._dir = logger.LOG_DIR
 

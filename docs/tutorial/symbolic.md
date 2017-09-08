@@ -41,6 +41,17 @@ l = func(l, *args, **kwargs)
 l = FullyConnected('fc1', l, 10, nl=tf.identity)
 ```
 
+### Access Internal Variables:
+
+Access the variables like this:
+```python
+l = Conv2D('conv1', l, 32, 3)
+print(l.variables.W)
+print(l.variables.b)
+```
+The names are documented in API documentation.
+Note that this method doesn't work with LinearWrap, and cannot access the variables created by an activation function.
+
 ### Use Models outside Tensorpack
 
 You can use tensorpack models alone as a simple symbolic function library.
