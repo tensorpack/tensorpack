@@ -1,18 +1,22 @@
 
 ## imagenet-resnet.py, imagenet-resnet-se.py
 
-__Training__ code of ResNet on ImageNet, with pre-activation and squeeze-and-excitation.
-The pre-act ResNet follows the setup in [fb.resnet.torch](https://github.com/facebook/fb.resnet.torch) (except for the weight decay)
+__Training__ code of three variants of ResNet on ImageNet:
+
+* imagenet-resnet.py: [Original ResNet](https://arxiv.org/abs/1512.03385) and [Pre-activation ResNet](https://arxiv.org/abs/1603.05027).
+* imagenet-resnet-se.py: [Squeeze-and-Excitation ResNet](https://arxiv.org/abs/1709.01507)
+
+The training mostly follows the setup in [fb.resnet.torch](https://github.com/facebook/fb.resnet.torch)
 and gets similar performance (with much fewer lines of code).
 Models can be [downloaded here](https://goo.gl/6XjK9V).
 
 | Model              | Top 5 Error | Top 1 Error |
 |:-------------------|-------------|------------:|
-| ResNet18           |     10.47%  |      29.56% |
-| ResNet34           |     8.51%   |      26.50% |
-| ResNet50           |     7.16%   |      23.72% |
-| ResNet50-SE        |  TRAINING   |  TRAINING   |
-| ResNet101          |     6.26%   |      22.53% |
+| ResNet18           |     10.50%  |      29.66% |
+| ResNet34					 |     8.56%   |      26.17% |
+| ResNet50           |     6.85%   |      23.61% |
+| ResNet50-SE				 |  TRAINING   |  TRAINING   |
+| ResNet101      		 |     6.04%   |      21.95% |
 
 To train, just run:
 ```bash

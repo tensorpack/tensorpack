@@ -20,28 +20,31 @@ from tensorpack.tfutils import argscope, get_model_loader
 from tensorpack.utils.gpu import get_nr_gpu
 
 from imagenet_resnet_utils import (
-    fbresnet_augmentor, preresnet_group,
-    preresnet_basicblock, preresnet_bottleneck, resnet_backbone,
-    eval_on_ILSVRC12, image_preprocess, compute_loss_and_error,
-    get_imagenet_dataflow)
+    fbresnet_augmentor, get_imagenet_dataflow,
+    preresnet_group, preresnet_basicblock, preresnet_bottleneck,
+    resnet_group, resnet_basicblock, resnet_bottleneck,
+    resnet_backbone,
+    eval_on_ILSVRC12, image_preprocess, compute_loss_and_error)
 
 TOTAL_BATCH_SIZE = 256
 INPUT_SHAPE = 224
-DEPTH = None
-
-RESNET_CONFIG = {
-    18: ([2, 2, 2, 2], preresnet_basicblock),
-    34: ([3, 4, 6, 3], preresnet_basicblock),
-    50: ([3, 4, 6, 3], preresnet_bottleneck),
-    101: ([3, 4, 23, 3], preresnet_bottleneck)
-}
 
 
 class Model(ModelDesc):
-    def __init__(self, data_format='NCHW'):
+    def __init__(self, depth, data_format='NCHW', preact=False):
         if data_format == 'NCHW':
             assert tf.test.is_gpu_available()
         self.data_format = data_format
+        self.preact = preact
+
+        basicblock = preresnet_basicblock if preact else resnet_basicblock
+        bottleneck = preresnet_bottleneck if preact else resnet_bottleneck
+        self.num_blocks, self.block_func = {
+            18: ([2, 2, 2, 2], basicblock),
+            34: ([3, 4, 6, 3], basicblock),
+            50: ([3, 4, 6, 3], bottleneck),
+            101: ([3, 4, 23, 3], bottleneck)
+        }[depth]
 
     def _get_inputs(self):
         # uint8 instead of float32 is used as input type to reduce copy overhead.
@@ -56,10 +59,11 @@ class Model(ModelDesc):
 
         if self.data_format == 'NCHW':
             image = tf.transpose(image, [0, 3, 1, 2])
-        defs, block_func = RESNET_CONFIG[DEPTH]
 
         with argscope([Conv2D, MaxPooling, GlobalAvgPooling, BatchNorm], data_format=self.data_format):
-            logits = resnet_backbone(image, defs, preresnet_group, block_func)
+            logits = resnet_backbone(
+                image, self.num_blocks,
+                preresnet_group if self.preact else resnet_group, self.block_func)
 
         loss = compute_loss_and_error(logits, label)
 
@@ -72,18 +76,17 @@ class Model(ModelDesc):
         return tf.train.MomentumOptimizer(lr, 0.9, use_nesterov=True)
 
 
-def get_data(name):
+def get_data(name, batch):
     isTrain = name == 'train'
     augmentors = fbresnet_augmentor(isTrain)
     datadir = args.data
     return get_imagenet_dataflow(
-        datadir, name, BATCH_SIZE, augmentors, dir_structure='original')
+        datadir, name, batch, augmentors, dir_structure='original')
 
 
-def get_config(fake=False, data_format='NCHW'):
+def get_config(model, fake=False):
     nr_tower = max(get_nr_gpu(), 1)
-    global BATCH_SIZE
-    BATCH_SIZE = TOTAL_BATCH_SIZE // nr_tower
+    batch = TOTAL_BATCH_SIZE // nr_tower
 
     if fake:
         logger.info("For benchmark, batch size is fixed to 64 per tower.")
@@ -91,9 +94,9 @@ def get_config(fake=False, data_format='NCHW'):
             [[64, 224, 224, 3], [64]], 1000, random=False, dtype='uint8')
         callbacks = []
     else:
-        logger.info("Running on {} towers. Batch size per tower: {}".format(nr_tower, BATCH_SIZE))
-        dataset_train = get_data('train')
-        dataset_val = get_data('val')
+        logger.info("Running on {} towers. Batch size per tower: {}".format(nr_tower, batch))
+        dataset_train = get_data('train', batch)
+        dataset_val = get_data('val', batch)
         callbacks = [
             ModelSaver(),
             ScheduledHyperParamSetter('learning_rate',
@@ -109,7 +112,7 @@ def get_config(fake=False, data_format='NCHW'):
                 dataset_val, infs, list(range(nr_tower))))
 
     return TrainConfig(
-        model=Model(data_format=data_format),
+        model=model,
         dataflow=dataset_train,
         callbacks=callbacks,
         steps_per_epoch=5000,
@@ -129,21 +132,22 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--depth', help='resnet depth',
                         type=int, default=18, choices=[18, 34, 50, 101])
     parser.add_argument('--eval', action='store_true')
+    parser.add_argument('--preact', action='store_true', help='Use pre-activation resnet')
     args = parser.parse_args()
 
-    DEPTH = args.depth
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
+    model = Model(args.depth, args.data_format, args.preact)
     if args.eval:
-        BATCH_SIZE = 128    # something that can run on one gpu
-        ds = get_data('val')
-        eval_on_ILSVRC12(Model(), get_model_loader(args.load), ds)
-        sys.exit()
+        batch = 128    # something that can run on one gpu
+        ds = get_data('val', batch)
+        eval_on_ILSVRC12(model, get_model_loader(args.load), ds)
+    else:
+        logger.set_logger_dir(
+            os.path.join('train_log', 'imagenet-resnet-d' + str(args.depth)))
 
-    logger.set_logger_dir(
-        os.path.join('train_log', 'imagenet-resnet-d' + str(DEPTH)))
-    config = get_config(fake=args.fake, data_format=args.data_format)
-    if args.load:
-        config.session_init = get_model_loader(args.load)
-    SyncMultiGPUTrainerParameterServer(config).train()
+        config = get_config(model, fake=args.fake)
+        if args.load:
+            config.session_init = get_model_loader(args.load)
+        SyncMultiGPUTrainerParameterServer(config).train()
