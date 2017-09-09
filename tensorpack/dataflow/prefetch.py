@@ -198,7 +198,13 @@ class PrefetchDataZMQ(ProxyDataFlow):
         assert os.path.isdir(pipedir), pipedir
         self.pipename = "ipc://{}/dataflow-pipe-".format(pipedir.rstrip('/')) + str(uuid.uuid1())[:6]
         self.socket.set_hwm(self._hwm)
-        self.socket.bind(self.pipename)
+        try:
+            self.socket.bind(self.pipename)
+        except zmq.ZMQError:
+            logger.error(
+                "ZMQError in socket.bind(). Perhaps you're \
+                using pipes on a non-local file system. See documentation of PrefetchDataZMQ for more information.")
+            raise
 
         self.procs = [PrefetchProcessZMQ(self.ds, self.pipename, self._hwm)
                       for _ in range(self.nr_proc)]
