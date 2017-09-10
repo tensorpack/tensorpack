@@ -136,11 +136,16 @@ class PrefetchDataZMQ(ProxyDataFlow):
         3. When nesting like this: ``PrefetchDataZMQ(PrefetchDataZMQ(df, nr_proc=a), nr_proc=b)``.
            A total of ``a * b`` instances of ``df`` worker processes will be created.
            Also in this case, some zmq pipes cannot be cleaned at exit.
-        4. A local directory is needed to put the ZMQ pipes.
-           You can set this with env var ``$TENSORPACK_PIPEDIR`` if you're
-           running on non-local FS that doesn't support pipes very well, such as NFS or GlusterFS.
-           Please note that some non-local FS may appear to support pipes and code
+        4. By default, a UNIX named pipe will be created in the current directory.
+           However, certain non-local filesystem such as NFS/GlusterFS/AFS doesn't always support pipes.
+           You can change the directory by ``export TENSORPACK_PIPEDIR=/other/dir``.
+           In particular, you can use somewhere under '/tmp' which is usually local.
+
+           Note that some non-local FS may appear to support pipes and code
            may appear to run but crash with bizarre error.
+           Also note that ZMQ limits the maximum length of pipe path.
+           If you hit the limit, you can set the directory to a softlink
+           which points to a local directory.
         5. Calling `reset_state()` more than once is a no-op, i.e. the worker processes won't get called.
     """
     def __init__(self, ds, nr_proc=1, hwm=50):
