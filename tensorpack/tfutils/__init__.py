@@ -12,8 +12,9 @@ def _global_import(name):
     p = __import__(name, globals(), None, level=1)
     lst = p.__all__ if '__all__' in dir(p) else dir(p)
     for k in lst:
-        globals()[k] = p.__dict__[k]
-        __all__.append(k)
+        if not k.startswith('__'):
+            globals()[k] = p.__dict__[k]
+            __all__.append(k)
 
 
 _TO_IMPORT = set([
