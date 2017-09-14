@@ -42,6 +42,12 @@ def remap_variables(fn):
 
     Returns:
         a context where all the variables will be mapped by fn.
+
+    Example:
+        .. code-block:: python
+
+            with varreplace.remap_variables(lambda var: quantize(var)):
+                x = FullyConnected('fc', x, 1000)   # fc/{W,b} will be quantized
     """
     def custom_getter(getter, *args, **kwargs):
         v = getter(*args, **kwargs)

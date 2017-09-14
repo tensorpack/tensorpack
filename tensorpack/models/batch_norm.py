@@ -6,7 +6,6 @@
 import tensorflow as tf
 from tensorflow.contrib.framework import add_model_variable
 from tensorflow.python.training import moving_averages
-from tensorflow.python.layers.normalization import BatchNorm as TF_BatchNorm
 
 from ..utils import logger
 from ..tfutils.tower import get_current_tower_context
@@ -177,6 +176,7 @@ def BatchRenorm(x, rmax, dmax, decay=0.9, epsilon=1e-5,
     Batch Renormalization layer, as described in the paper:
     `Batch Renormalization: Towards Reducing Minibatch Dependence in Batch-Normalized Models
     <https://arxiv.org/abs/1702.03275>`_.
+    This implementation is a wrapper around `tf.layers.batch_normalization`.
 
     Args:
         x (tf.Tensor): a NHWC or NC tensor.
@@ -210,7 +210,7 @@ def BatchRenorm(x, rmax, dmax, decay=0.9, epsilon=1e-5,
 
     ctx = get_current_tower_context()
     coll_bk = backup_collection([tf.GraphKeys.UPDATE_OPS])
-    layer = TF_BatchNorm(
+    layer = tf.layers.BatchNormalization(
         axis=1 if data_format == 'NCHW' else 3,
         momentum=decay, epsilon=epsilon,
         center=use_bias, scale=use_scale,
