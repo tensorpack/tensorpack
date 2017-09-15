@@ -140,8 +140,10 @@ class Monitors(Callback):
         """
         Put a scalar.
         """
-        if isinstance(val, (np.float32, np.float64)):
+        if isinstance(val, np.floating):
             val = float(val)
+        if isinstance(val, np.integer):
+            val = int(val)
         self._dispatch(lambda m: m.process_scalar(name, val))
         s = create_scalar_summary(name, val)
         self._dispatch(lambda m: m.process_summary(s))

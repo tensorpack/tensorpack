@@ -7,26 +7,12 @@ import numpy as np
 
 from .shape_utils import StaticDynamicShape
 from .common import layer_register
-from ..utils.argtools import shape2d, shape4d
+from ..utils.argtools import shape2d
 from ._test import TestModel
 
 
 __all__ = ['MaxPooling', 'FixedUnPooling', 'AvgPooling', 'GlobalAvgPooling',
            'BilinearUpSample']
-
-
-def _Pooling(func, x, shape, stride, padding, data_format):
-    padding = padding.upper()
-    shape = shape4d(shape, data_format=data_format)
-    if stride is None:
-        stride = shape
-    else:
-        stride = shape4d(stride, data_format=data_format)
-
-    return func(x, ksize=shape,
-                strides=stride, padding=padding,
-                data_format=data_format,
-                name='output')
 
 
 @layer_register(log_shape=True)
@@ -43,8 +29,9 @@ def MaxPooling(x, shape, stride=None, padding='VALID', data_format='NHWC'):
     Returns:
         tf.Tensor named ``output``.
     """
-    return _Pooling(tf.nn.max_pool, x, shape, stride, padding,
-                    data_format=data_format)
+    ret = tf.layers.max_pooling2d(x, shape, stride, padding,
+                                  'channels_last' if data_format == 'NHWC' else 'channels_first')
+    return tf.identity(ret, name='output')
 
 
 @layer_register(log_shape=True)
@@ -61,8 +48,9 @@ def AvgPooling(x, shape, stride=None, padding='VALID', data_format='NHWC'):
     Returns:
         tf.Tensor named ``output``.
     """
-    return _Pooling(tf.nn.avg_pool, x, shape, stride, padding,
-                    data_format=data_format)
+    ret = tf.layers.average_pooling2d(x, shape, stride, padding,
+                                      'channels_last' if data_format == 'NHWC' else 'channels_first')
+    return tf.identity(ret, name='output')
 
 
 @layer_register(log_shape=True)

@@ -73,7 +73,7 @@ class SessionUpdate(object):
                 name, val.shape, varshape))
             val = val.reshape(varshape)
 
-        # fix some common type incompatibility problem, but is certainly not enough
+        # fix some common type incompatibility problems, but not all
         def upcast(vartype, valtype):
             # allow up-casting
             if vartype == tf.float64 and valtype == np.float32:
