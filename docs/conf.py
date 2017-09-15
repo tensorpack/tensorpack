@@ -353,7 +353,6 @@ def process_signature(app, what, name, obj, options, signature,
 
 def autodoc_skip_member(app, what, name, obj, skip, options):
     if name in [
-        'DistributedReplicatedTrainer',
         'SingleCostFeedfreeTrainer',
         'SimpleFeedfreeTrainer',
         'FeedfreeTrainerBase',
@@ -369,7 +368,6 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
         'GaussianDeform',
         'dump_chkpt_vars',
         'VisualQA',
-        'ParamRestore',
         'huber_loss'
         ]:
         return True

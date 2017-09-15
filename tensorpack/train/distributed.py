@@ -16,7 +16,7 @@ from .multigpu import MultiGPUTrainerBase
 from .utility import override_to_local_variable
 
 
-__all__ = ['DistributedReplicatedTrainer', 'DistributedTrainerReplicated']
+__all__ = ['DistributedTrainerReplicated']
 
 
 class DistributedTrainerReplicated(MultiGPUTrainerBase):
@@ -336,8 +336,3 @@ class DistributedTrainerReplicated(MultiGPUTrainerBase):
     @property
     def vs_name_for_predictor(self):
         return "tower0"
-
-
-def DistributedReplicatedTrainer(*args, **kwargs):
-    logger.warn("DistributedReplicatedTrainer was renamed to DistributedTrainerReplicated!")
-    return DistributedTrainerReplicated(*args, **kwargs)
