@@ -96,9 +96,9 @@ class ResizeShortestEdge(TransformAugmentorBase):
         h, w = img.shape[:2]
         scale = self.size * 1.0 / min(h, w)
         if h < w:
-            newh, neww = self.size, int(scale * w)
+            newh, neww = self.size, int(scale * w + 0.5)
         else:
-            newh, neww = int(scale * h), self.size
+            newh, neww = int(scale * h + 0.5), self.size
         return ResizeTransform(
             h, w, newh, neww, self.interp)
 
@@ -144,14 +144,14 @@ class RandomResize(TransformAugmentorBase):
                 destX = max(sx * w, self.minimum[0])
                 destY = max(sy * h, self.minimum[1])
             else:
-                sx = int(self._rand_range(*self.xrange))
+                sx = self._rand_range(*self.xrange)
                 if self.aspect_ratio_thres == 0:
                     sy = sx * 1.0 / w * h
                 else:
                     sy = self._rand_range(*self.yrange)
                 destX = max(sx, self.minimum[0])
                 destY = max(sy, self.minimum[1])
-            return (destX, destY)
+            return (int(destX + 0.5), int(destY + 0.5))
 
         while True:
             destX, destY = get_dest_size()
@@ -165,7 +165,7 @@ class RandomResize(TransformAugmentorBase):
                         logger.warn("RandomResize failed to augment an image")
                         return ResizeTransform(h, w, h, w, self.interp)
                     continue
-            return ResizeTransform(h, w, int(destY), int(destX), self.interp)
+            return ResizeTransform(h, w, destY, destX, self.interp)
 
 
 class Transpose(ImageAugmentor):
