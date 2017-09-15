@@ -50,7 +50,7 @@ the rest of the data pipeline.
 	If you're using DataFlow with tensorpack, also see [Input Pipeline tutorial](input-source.html)
 	on how tensorpack further accelerates data loading in the graph.
 
-Nevertheless, tensorpack support data loading with native TF operators as well.
+Nevertheless, tensorpack support data loading with native TF operators / TF datasets as well.
 
 ### Use DataFlow outside Tensorpack
 DataFlow is __independent__ of both tensorpack and TensorFlow.

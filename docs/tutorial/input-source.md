@@ -72,8 +72,9 @@ For example,
 1. Come from a DataFlow and been fed to the graph.
 2. Come from a DataFlow and been prefetched on CPU by a TF queue.
 3. Come from a DataFlow, prefetched on CPU by a TF queue, then prefetched on GPU by a TF StagingArea.
-4. Come from some TF native reading pipeline.
-5. Come from some ZMQ pipe, where the load/preprocessing may happen on a different machine.
+4. Come from a DataFlow, and further processed by `tf.data.Dataset`.
+5. Come from some TF native reading pipeline.
+6. Come from some ZMQ pipe, where the load/preprocessing may happen on a different machine.
 
 When you set `TrainConfig(dataflow=)`, tensorpack trainers automatically adds proper prefetching for you.
 You can also use `TrainConfig(data=)` option to use a customized `InputSource`.

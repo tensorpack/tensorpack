@@ -60,10 +60,10 @@ class TestDataSpeed(ProxyDataFlow):
 
 class BatchData(ProxyDataFlow):
     """
-    Concat datapoints into batches.
+    Stack datapoints into batches.
     It produces datapoints of the same number of components as ``ds``, but
     each component has one new extra dimension of size ``batch_size``.
-    A batch can be either a list of original components, or (by default)
+    The batch can be either a list of original components, or (by default)
     a numpy array of original components.
     """
 
@@ -71,15 +71,14 @@ class BatchData(ProxyDataFlow):
         """
         Args:
             ds (DataFlow): When ``use_list=False``, the components of ``ds``
-                must be either scalars or :class:`np.ndarray`, and
-                components has to have consistent shape across ``ds``.
+                must be either scalars or :class:`np.ndarray`, and have to be consistent in shapes.
             batch_size(int): batch size
             remainder (bool): When the remaining datapoints in ``ds`` is not
                 enough to form a batch, whether or not to also produce the remaining
                 data as a smaller batch.
-                If set to False, all generated datapoints are guranteed to have the same batch size.
+                If set to False, all produced datapoints are guranteed to have the same batch size.
             use_list (bool): if True, each component will contain a list
-                of datapoints instead of an numpy array of datapoints. This also avoids an extra copy.
+                of datapoints instead of an numpy array of an extra dimension.
         """
         super(BatchData, self).__init__(ds)
         if not remainder:

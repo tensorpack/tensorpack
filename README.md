@@ -44,7 +44,9 @@ It's Yet Another TF wrapper, but different in:
 	+ Data-parallel distributed training is off-the-shelf to use. It is as slow as Google's official benchmark.
 
 3. Focus on __large datasets__.
-	+ It's painful to read/preprocess data through TF. tensorpack helps you load large datasets (e.g. ImageNet) in __pure Python__ with autoparallelization.
+	+ It's painful to read/preprocess data through TF.
+		tensorpack helps you load large datasets (e.g. ImageNet) in __pure Python__ with autoparallelization.
+		It also naturally works with TF Queues or tf.data.
 
 4. Interface of extensible __Callbacks__.
 	Write a callback to implement everything you want to do apart from the training iterations, and
