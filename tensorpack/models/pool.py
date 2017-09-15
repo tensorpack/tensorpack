@@ -29,6 +29,8 @@ def MaxPooling(x, shape, stride=None, padding='VALID', data_format='NHWC'):
     Returns:
         tf.Tensor named ``output``.
     """
+    if stride is None:
+        stride = shape
     ret = tf.layers.max_pooling2d(x, shape, stride, padding,
                                   'channels_last' if data_format == 'NHWC' else 'channels_first')
     return tf.identity(ret, name='output')
@@ -48,6 +50,8 @@ def AvgPooling(x, shape, stride=None, padding='VALID', data_format='NHWC'):
     Returns:
         tf.Tensor named ``output``.
     """
+    if stride is None:
+        stride = shape
     ret = tf.layers.average_pooling2d(x, shape, stride, padding,
                                       'channels_last' if data_format == 'NHWC' else 'channels_first')
     return tf.identity(ret, name='output')
