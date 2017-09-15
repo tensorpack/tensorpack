@@ -95,5 +95,5 @@ def Dropout(x, keep_prob=0.5, is_training=None, noise_shape=None):
     """
     if is_training is None:
         is_training = get_current_tower_context().is_training
-    keep_prob = tf.constant(keep_prob if is_training else 1.0)
-    return tf.nn.dropout(x, keep_prob, noise_shape=noise_shape)
+    return tf.layers.dropout(
+        x, rate=1 - keep_prob, noise_shape=noise_shape, training=is_training)
