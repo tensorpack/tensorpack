@@ -128,8 +128,7 @@ class MapGradient(GradientProcessor):
         for grad, var in grads:
             if re.match(self.regex, var.op.name):
                 matched = True
-                with tf.device(grad.device):
-                    grad = self.func(grad, var)
+                grad = self.func(grad, var)
                 if grad is not None:
                     ret.append((grad, var))
             else:
