@@ -94,7 +94,7 @@ class EnableCallbackIf(ProxyCallback):
 
     def _before_run(self, ctx):
         if self._pred(self):
-            super(EnableCallbackIf, self)._before_run(ctx)
+            return super(EnableCallbackIf, self)._before_run(ctx)
 
     def _after_run(self, ctx, rv):
         if self._pred(self):

@@ -66,7 +66,7 @@ class Trainer(object):
         config (TrainConfig): the config used in this trainer.
         model (ModelDesc): alias for ``config.model``.
         sess (tf.Session): the current session in use.
-        hooked_sess (tf.MonitoredSession): the session with hooks.
+        hooked_sess (tf.train.MonitoredSession): the session with hooks.
         monitors (Monitors): the monitors. Other callbacks can use it for logging.
         local_step (int): the number of (tensorpack) steps that have finished in the current epoch.
     """
