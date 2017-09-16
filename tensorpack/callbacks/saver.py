@@ -5,8 +5,6 @@
 import tensorflow as tf
 from datetime import datetime
 import os
-import shutil
-import glob
 
 from .base import Callback
 from ..utils import logger
@@ -47,7 +45,8 @@ class ModelSaver(Callback):
         if checkpoint_dir is None:
             checkpoint_dir = logger.LOG_DIR
         assert checkpoint_dir is not None
-        assert tf.gfile.IsDirectory(checkpoint_dir), checkpoint_dir
+        if not tf.gfile.IsDirectory(checkpoint_dir):
+            tf.gfile.MakeDirs(checkpoint_dir)
         self.checkpoint_dir = checkpoint_dir
 
     def _setup_graph(self):
@@ -153,9 +152,9 @@ class MinSaver(Callback):
         newname = os.path.join(logger.LOG_DIR,
                                self.filename or
                                ('max-' + self.monitor_stat if self.reverse else 'min-' + self.monitor_stat))
-        files_to_copy = glob.glob(path + '*')
+        files_to_copy = tf.gfile.Glob(path + '*')
         for file_to_copy in files_to_copy:
-            shutil.copy(file_to_copy, file_to_copy.replace(path, newname))
+            tf.gfile.Copy(file_to_copy, file_to_copy.replace(path, newname), overwrite=True)
         logger.info("Model with {} '{}' saved.".format(
             'maximum' if self.reverse else 'minimum', self.monitor_stat))
 

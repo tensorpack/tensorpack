@@ -258,10 +258,10 @@ def get_model_loader(filename):
         :class:`SaverRestore` (otherwise).
     """
     if filename.endswith('.npy'):
-        assert os.path.isfile(filename), filename
+        assert tf.gfile.Exists(filename), filename
         return DictRestore(np.load(filename, encoding='latin1').item())
     elif filename.endswith('.npz'):
-        assert os.path.isfile(filename), filename
+        assert tf.gfile.Exists(filename), filename
         obj = np.load(filename)
         return DictRestore(dict(obj))
     else:
@@ -278,6 +278,6 @@ def TryResumeTraining():
     if not logger.LOG_DIR:
         return JustCurrentSession()
     path = os.path.join(logger.LOG_DIR, 'checkpoint')
-    if not os.path.isfile(path):
+    if not tf.gfile.Exists(path):
         return JustCurrentSession()
     return SaverRestore(path)
