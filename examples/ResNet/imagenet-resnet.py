@@ -79,9 +79,8 @@ class Model(ModelDesc):
 def get_data(name, batch):
     isTrain = name == 'train'
     augmentors = fbresnet_augmentor(isTrain)
-    datadir = args.data
     return get_imagenet_dataflow(
-        datadir, name, batch, augmentors, dir_structure='original')
+        args.data, name, batch, augmentors, dir_structure='original')
 
 
 def get_config(model, fake=False):
@@ -106,8 +105,10 @@ def get_config(model, fake=False):
         infs = [ClassificationError('wrong-top1', 'val-error-top1'),
                 ClassificationError('wrong-top5', 'val-error-top5')]
         if nr_tower == 1:
+            # single-GPU inference with queue prefetch
             callbacks.append(InferenceRunner(QueueInput(dataset_val), infs))
         else:
+            # multi-GPU inference (with mandatory queue prefetch)
             callbacks.append(DataParallelInferenceRunner(
                 dataset_val, infs, list(range(nr_tower))))
 

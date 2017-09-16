@@ -250,7 +250,7 @@ class ProxyCallback(Callback):
         self.cb.after_epoch()
 
     def _before_run(self, ctx):
-        self.cb._before_run(ctx)
+        return self.cb._before_run(ctx)
 
     def _after_run(self, ctx, run_values):
         self.cb._after_run(ctx, run_values)

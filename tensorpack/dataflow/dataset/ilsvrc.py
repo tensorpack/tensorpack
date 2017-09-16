@@ -146,8 +146,7 @@ class ILSVRC12Files(RNGDataFlow):
 
 class ILSVRC12(ILSVRC12Files):
     """
-    Produces uint8 ILSVRC12 images of shape [h, w, 3(BGR)], and a label between [0, 999],
-    and optionally a bounding box of [xmin, ymin, xmax, ymax].
+    Produces uint8 ILSVRC12 images of shape [h, w, 3(BGR)], and a label between [0, 999].
     """
     def __init__(self, dir, name, meta_dir=None,
                  shuffle=None, dir_structure='original'):

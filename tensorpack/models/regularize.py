@@ -24,8 +24,9 @@ l1_regularizer = tf.contrib.layers.l1_regularizer
 
 def regularize_cost(regex, func, name='regularize_cost'):
     """
-    Apply a regularizer on trainable variables matching the regex.
-    In replicated mode, will only regularize variables within the current tower.
+    Apply a regularizer on trainable variables matching the regex, and print
+    the matched variables (only print once in multi-tower training).
+    In replicated mode, it will only regularize variables within the current tower.
 
     Args:
         regex (str): a regex to match variable names, e.g. "conv.*/W"
