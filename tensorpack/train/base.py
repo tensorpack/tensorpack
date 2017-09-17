@@ -40,7 +40,7 @@ class MaintainStepCounter(Callback):
         # ensure it exists
         gs_var = get_global_step_var()
         with tf.name_scope(None):
-            with tf.device(gs_var.device):
+            with self.graph.colocate_with(gs_var):
                 self.gs_incr_op = tf.assign_add(
                     gs_var, 1,
                     name=GLOBAL_STEP_INCR_OP_NAME).op

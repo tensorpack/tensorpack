@@ -10,7 +10,7 @@ Here's a list of things you can do when your training is slow:
 2. If you use queue-based input + dataflow, you can look for the queue size statistics in
 	 training log. Ideally the queue should be near-full (default size is 50).
  	 If the size is near-zero, data is the bottleneck.
-3. If the GPU utilization is low, data is likely to be the bottleneck. Also make sure GPUs are not locked in P8 state.
+3. If the GPU utilization is low, it may be because of slow data, or some ops are on CPU. Also make sure GPUs are not locked in P8 state.
 
 ## Benchmark the components
 1. Use `data=DummyConstantInput(shapes)` in `TrainConfig`,
@@ -48,11 +48,13 @@ know the reason and improve it accordingly, e.g.:
 ## Improve TensorFlow
 
 You can add a `GraphProfiler` callback when benchmarking the graph. It will
-dump TF tracing information (to either TensorBoard or chrome) to help diagnose the issue.
+dump runtime tracing information (to either TensorBoard or chrome) to help diagnose the issue.
 
 Usually there isn't much you can do if a TF op is slow, except to optimize the kernels.
 But there may be something cheap you can try:
-1. Device placement of ops can affect speed,
-	 sometimes it helps to change device placement to avoid some copy.
+1. You can visualize copies across devices in chrome.
+	 It may help to change device placement to avoid copies.
+	 It may help to replace some CPU-only ops with equivalent GPU ops to avoid copies.
+
 2. Sometimes there are several mathematically equivalent ways of writing the same model
 	 with different speed.
