@@ -59,13 +59,10 @@ class Model(mnist_example.Model):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
-    parser.add_argument('--load', help='load model')
     parser.add_argument('--prob', help='disturb prob', type=float, required=True)
     args = parser.parse_args()
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
     config = get_config()
-    if args.load:
-        config.session_init = SaverRestore(args.load)
     QueueInputTrainer(config).train()

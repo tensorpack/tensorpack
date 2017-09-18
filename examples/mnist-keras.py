@@ -123,14 +123,11 @@ def get_config():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
-    parser.add_argument('--load', help='load model')
     args = parser.parse_args()
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
     config = get_config()
-    if args.load:
-        config.session_init = SaverRestore(args.load)
     if args.gpu:
         config.nr_tower = len(args.gpu.split(','))
     if config.nr_tower > 1:

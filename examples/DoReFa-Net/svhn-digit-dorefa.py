@@ -176,19 +176,11 @@ def get_config():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gpu', help='the GPU to use')
-    parser.add_argument('--load', help='load a checkpoint')
     parser.add_argument('--dorefa',
                         help='number of bits for W,A,G, separated by comma. Defaults to \'1,2,4\'',
                         default='1,2,4')
     args = parser.parse_args()
 
     BITW, BITA, BITG = map(int, args.dorefa.split(','))
-
-    if args.gpu:
-        os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
-
     config = get_config()
-    if args.load:
-        config.session_init = SaverRestore(args.load)
     QueueInputTrainer(config).train()

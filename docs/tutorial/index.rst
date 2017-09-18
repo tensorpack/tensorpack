@@ -37,7 +37,6 @@ User Tutorials
   callback
   summary
   faq
-  performance-tuning
 
 Extend Tensorpack
 =================
@@ -50,3 +49,10 @@ Extend Tensorpack
   extend/model
   extend/callback
   extend/trainer
+
+Notes
+======
+.. toctree::
+  :maxdepth: 1
+
+  performance-tuning

@@ -62,7 +62,6 @@ class TrainConfig(object):
 
             nr_tower (int): number of training towers, used by multigpu trainers.
             tower ([int]): list of training towers in relative GPU id.
-            predict_tower ([int]): list of prediction towers in their relative gpu id. Use -1 for cpu.
         """
 
         # TODO type checker decorator
