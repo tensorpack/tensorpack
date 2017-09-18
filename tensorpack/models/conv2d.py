@@ -130,7 +130,7 @@ def Deconv2D(x, out_channel, kernel_shape,
         b_init = tf.constant_initializer()
 
     with rename_get_variable({'kernel': 'W', 'bias': 'b'}):
-        layer = tf.layers.Deconv2D(
+        layer = tf.layers.Conv2DTranspose(
             out_channel, kernel_shape,
             strides=stride, padding=padding,
             data_format='channels_last' if data_format == 'NHWC' else 'channels_first',
