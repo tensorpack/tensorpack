@@ -203,7 +203,7 @@ if __name__ == '__main__':
         resnet_param[newname] = v
 
     if args.eval:
-        ds = ILSVRC12(args.eval, 'val', shuffle=False, dir_structure='train')
+        ds = ILSVRC12(args.eval, 'val', shuffle=False)
         ds = AugmentImageComponent(ds, get_inference_augmentor())
         ds = BatchData(ds, 128, remainder=True)
         ds = PrefetchDataZMQ(ds, 1)

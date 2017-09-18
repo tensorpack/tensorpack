@@ -72,7 +72,7 @@ def get_data(name):
     datadir = args.data
     augmentors = fbresnet_augmentor(isTrain)
     return get_imagenet_dataflow(
-        datadir, name, BATCH_SIZE, augmentors, dir_structure='original')
+        datadir, name, BATCH_SIZE, augmentors)
 
 
 def get_config():

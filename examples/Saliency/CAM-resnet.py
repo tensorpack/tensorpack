@@ -78,8 +78,7 @@ def get_data(train_or_test):
     isTrain = train_or_test == 'train'
 
     datadir = args.data
-    ds = dataset.ILSVRC12(datadir, train_or_test,
-                          shuffle=isTrain, dir_structure='original')
+    ds = dataset.ILSVRC12(datadir, train_or_test, shuffle=isTrain)
     augmentors = fbresnet_augmentor(isTrain)
     augmentors.append(imgaug.ToUint8())
 

@@ -105,6 +105,20 @@ class ILSVRCMeta(object):
         return arr
 
 
+def _guess_dir_structure(dir):
+    subdir = os.listdir(dir)[0]
+    # find a subdir starting with 'n'
+    if subdir.startswith('n') and \
+            os.path.isdir(os.path.join(dir, subdir)):
+        dir_structure = 'train'
+    else:
+        dir_structure = 'original'
+    logger.info(
+        "Assuming directory {} has {} structure.".format(
+            dir, dir_structure))
+    return dir_structure
+
+
 class ILSVRC12Files(RNGDataFlow):
     """
     Same as :class:`ILSVRC12`, but produces filenames of the images instead of nparrays.
@@ -112,7 +126,7 @@ class ILSVRC12Files(RNGDataFlow):
     decode it in smarter ways (e.g. in parallel).
     """
     def __init__(self, dir, name, meta_dir=None,
-                 shuffle=None, dir_structure='original'):
+                 shuffle=None, dir_structure=None):
         """
         Same as in :class:`ILSVRC12`.
         """
@@ -124,6 +138,12 @@ class ILSVRC12Files(RNGDataFlow):
         if shuffle is None:
             shuffle = name == 'train'
         self.shuffle = shuffle
+
+        if name == 'train':
+            dir_structure = 'train'
+        if dir_structure is None:
+            dir_structure = _guess_dir_structure(self.full_dir)
+
         meta = ILSVRCMeta(meta_dir)
         self.imglist = meta.get_image_list(name, dir_structure)
 
@@ -149,7 +169,7 @@ class ILSVRC12(ILSVRC12Files):
     Produces uint8 ILSVRC12 images of shape [h, w, 3(BGR)], and a label between [0, 999].
     """
     def __init__(self, dir, name, meta_dir=None,
-                 shuffle=None, dir_structure='original'):
+                 shuffle=None, dir_structure=None):
         """
         Args:
             dir (str): A directory containing a subdir named ``name``, where the
@@ -162,6 +182,7 @@ class ILSVRC12(ILSVRC12Files):
                 directory, which only has list of image files (as below).
                 If set to 'train', it expects the same two-level
                 directory structure simlar to 'train/'.
+                By default, it tries to automatically detect the structure.
 
         Examples:
 

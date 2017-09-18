@@ -202,7 +202,7 @@ def get_data(train_or_test):
     isTrain = train_or_test == 'train'
 
     ds = dataset.ILSVRC12(args.data, train_or_test,
-                          shuffle=True if isTrain else False, dir_structure='train')
+                          shuffle=True if isTrain else False)
     meta = dataset.ILSVRCMeta()
     pp_mean = meta.get_per_pixel_mean()
     pp_mean_299 = cv2.resize(pp_mean, (299, 299))

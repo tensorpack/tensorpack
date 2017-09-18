@@ -80,7 +80,7 @@ def get_data(name, batch):
     isTrain = name == 'train'
     augmentors = fbresnet_augmentor(isTrain)
     return get_imagenet_dataflow(
-        args.data, name, batch, augmentors, dir_structure='original')
+        args.data, name, batch, augmentors)
 
 
 def get_config(model, fake=False):

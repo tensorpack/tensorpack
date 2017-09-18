@@ -82,7 +82,7 @@ def fbresnet_augmentor(isTrain):
 
 def get_imagenet_dataflow(
         datadir, name, batch_size,
-        augmentors, dir_structure='original'):
+        augmentors):
     """
     See explanations in the tutorial:
     http://tensorpack.readthedocs.io/en/latest/tutorial/efficient-dataflow.html
@@ -97,8 +97,7 @@ def get_imagenet_dataflow(
         ds = PrefetchDataZMQ(ds, cpu)
         ds = BatchData(ds, batch_size, remainder=False)
     else:
-        ds = dataset.ILSVRC12Files(datadir, name,
-                                   shuffle=False, dir_structure=dir_structure)
+        ds = dataset.ILSVRC12Files(datadir, name, shuffle=False)
         aug = imgaug.AugmentorList(augmentors)
 
         def mapf(dp):
