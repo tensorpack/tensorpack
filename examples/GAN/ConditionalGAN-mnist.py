@@ -42,10 +42,10 @@ class Model(GANModelDesc):
 
         y = tf.reshape(y, [-1, 1, 1, 10])
         l = tf.concat([l, tf.tile(y, [1, 7, 7, 1])], 3)
-        l = Deconv2D('deconv1', l, [14, 14, 64 * 2], 5, 2, nl=BNReLU)
+        l = Deconv2D('deconv1', l, 64 * 2, 5, 2, nl=BNReLU)
 
         l = tf.concat([l, tf.tile(y, [1, 14, 14, 1])], 3)
-        l = Deconv2D('deconv2', l, [28, 28, 1], 5, 2, nl=tf.identity)
+        l = Deconv2D('deconv2', l, 1, 5, 2, nl=tf.identity)
         l = tf.nn.tanh(l, name='gen')
         return l
 

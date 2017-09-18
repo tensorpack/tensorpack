@@ -52,8 +52,8 @@ class Model(GANModelDesc):
         l = FullyConnected('fc0', z, 1024, nl=BNReLU)
         l = FullyConnected('fc1', l, 128 * 7 * 7, nl=BNReLU)
         l = tf.reshape(l, [-1, 7, 7, 128])
-        l = Deconv2D('deconv1', l, [14, 14, 64], 4, 2, nl=BNReLU)
-        l = Deconv2D('deconv2', l, [28, 28, 1], 4, 2, nl=tf.identity)
+        l = Deconv2D('deconv1', l, 64, 4, 2, nl=BNReLU)
+        l = Deconv2D('deconv2', l, 1, 4, 2, nl=tf.identity)
         l = tf.sigmoid(l, name='gen')
         return l
 

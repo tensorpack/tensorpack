@@ -51,10 +51,10 @@ class Model(GANModelDesc):
         l = tf.reshape(l, [-1, 4, 4, nf * 8])
         l = BNReLU(l)
         with argscope(Deconv2D, nl=BNReLU, kernel_shape=4, stride=2):
-            l = Deconv2D('deconv1', l, [8, 8, nf * 4])
-            l = Deconv2D('deconv2', l, [16, 16, nf * 2])
-            l = Deconv2D('deconv3', l, [32, 32, nf])
-            l = Deconv2D('deconv4', l, [64, 64, 3], nl=tf.identity)
+            l = Deconv2D('deconv1', l, nf * 4)
+            l = Deconv2D('deconv2', l, nf * 2)
+            l = Deconv2D('deconv3', l, nf)
+            l = Deconv2D('deconv4', l, 3, nl=tf.identity)
             l = tf.tanh(l, name='gen')
         return l
 

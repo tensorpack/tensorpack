@@ -66,5 +66,8 @@ def monkeypatch_tf_layers():
             from tensorflow.python.layers.normalization import BatchNormalization
             tf.layers.BatchNormalization = BatchNormalization
 
+            from tensorflow.python.layers.convolutional import Deconv2D
+            tf.layers.Deconv2D = Deconv2D
+
 
 monkeypatch_tf_layers()
