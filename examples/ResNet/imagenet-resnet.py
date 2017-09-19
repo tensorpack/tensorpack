@@ -43,7 +43,8 @@ class Model(ModelDesc):
             18: ([2, 2, 2, 2], basicblock),
             34: ([3, 4, 6, 3], basicblock),
             50: ([3, 4, 6, 3], bottleneck),
-            101: ([3, 4, 23, 3], bottleneck)
+            101: ([3, 4, 23, 3], bottleneck),
+            152: ([3, 8, 36, 3], bottleneck)
         }[depth]
 
     def _get_inputs(self):
@@ -131,7 +132,7 @@ if __name__ == '__main__':
     parser.add_argument('--data_format', help='specify NCHW or NHWC',
                         type=str, default='NCHW')
     parser.add_argument('-d', '--depth', help='resnet depth',
-                        type=int, default=18, choices=[18, 34, 50, 101])
+                        type=int, default=18, choices=[18, 34, 50, 101, 152])
     parser.add_argument('--eval', action='store_true')
     parser.add_argument('--preact', action='store_true', help='Use pre-activation resnet')
     args = parser.parse_args()
