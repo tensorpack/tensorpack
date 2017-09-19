@@ -230,11 +230,11 @@ def subproc_call(cmd, timeout=None):
         return output, 0
     except subprocess.TimeoutExpired as e:
         logger.warn("Command timeout!")
-        logger.warn(e.output)
+        logger.warn(e.output.decode('utf-8'))
         return e.output, -1
     except subprocess.CalledProcessError as e:
         logger.warn("Command failed: {}".format(e.returncode))
-        logger.warn(e.output)
+        logger.warn(e.output.decode('utf-8'))
         return e.output, e.returncode
     except Exception:
         logger.warn("Command failed to run: {}".format(cmd))
