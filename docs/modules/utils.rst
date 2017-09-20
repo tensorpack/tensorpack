@@ -82,3 +82,11 @@ tensorpack.utils.viz module
     :members:
     :undoc-members:
     :show-inheritance:
+
+tensorpack.utils.gpu module
+---------------------------
+
+.. automodule:: tensorpack.utils.gpu
+    :members:
+    :undoc-members:
+    :show-inheritance:
