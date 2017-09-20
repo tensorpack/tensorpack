@@ -89,9 +89,10 @@ to let this method run every k steps or every k epochs.
 ### What you can do in the callback
 
 * Access tensors / ops in either training / inference mode (need to create them in `_setup_graph`).
-	To create a callable function under inference mode, use `self.trainer.get_predictor`.
+	`self.trainer.get_predictor` is a helper function to create a callable under inference mode.
 * Write stuff to the monitor backend, by `self.trainer.monitors.put_xxx`.
 	The monitors might direct your events to TensorFlow events file, JSON file, stdout, etc.
 	You can get history monitor data as well. See the docs for [Monitors](../../modules/callbacks.html#tensorpack.callbacks.Monitors)
 * Access the current status of training, such as `epoch_num`, `global_step`. See [here](../../modules/callbacks.html#tensorpack.callbacks.Callback)
+* Stop training by `raise StopTraining()` (with `from tensorpack.train import StopTraining`).
 * Anything else that can be done with plain python.

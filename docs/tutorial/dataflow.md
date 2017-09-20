@@ -44,7 +44,7 @@ the rest of the data pipeline.
 ### Why DataFlow
 
 1. It's easy: write everything in pure Python, and reuse existing utilities.
-	 On the contrary, writing data loaders in TF operators or other frameworks is usually painful.
+	 On the contrary, writing data loaders in TF operators is usually painful, and performance is hard to tune.
 2. It's fast: see [Efficient DataFlow](efficient-dataflow.html)
 	on how to build a fast DataFlow with parallel prefetching.
 	If you're using DataFlow with tensorpack, also see [Input Pipeline tutorial](input-source.html)

@@ -1,6 +1,8 @@
-### Code and models for Atari games in gym
+### A3C code and models for Atari games in gym
 
-Implemented Multi-GPU version of the A3C algorithm in [Asynchronous Methods for Deep Reinforcement Learning](http://arxiv.org/abs/1602.01783).
+Multi-GPU version of the A3C algorithm in
+[Asynchronous Methods for Deep Reinforcement Learning](http://arxiv.org/abs/1602.01783),
+with <500 lines of code.
 
 Results of the same code trained on 47 different Atari games were uploaded on OpenAI Gym.
 You can see them in [my gym page](https://gym.openai.com/users/ppwwyyxx).
@@ -15,7 +17,7 @@ The speed is about 6~10 iterations/s on 1 GPU plus 12+ CPU cores.
 With 2 TitanX + 20+ CPU cores, by setting `SIMULATOR_PROC=240, PREDICT_BATCH_SIZE=30, PREDICTOR_THREAD_PER_GPU=6`, it can improve to 16 it/s (2K images/s).
 Note that the network architecture is larger than what's used in the original paper.
 
-The pre-trained models are all trained with 4 GPUs for about 2 days.
+The uploaded models are all trained with 4 GPUs for about 2 days.
 But on simple games like Breakout, you can get good performance within several hours.
 Also note that multi-GPU doesn't give you obvious speedup here,
 because the bottleneck in this implementation is not computation but data.
@@ -25,7 +27,7 @@ Some practicical notes:
 1. Prefer Python 3.
 2. Occasionally, processes may not get terminated completely. It is suggested to use `systemd-run` to run any
 multiprocess Python program to get a cgroup dedicated for the task.
-3. Training with a significant slower speed (e.g. on CPU) will result in very bad score, probably because of async issues.
+3. Training with a significant slower speed (e.g. on CPU) will result in very bad score, probably because of the slightly off-policy implementation.
 
 ### To test a model:
 
