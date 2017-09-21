@@ -95,7 +95,11 @@ class Trainer(object):
     @property
     def epoch_num(self):
         """
-        The number of epochs that have finished.
+        The number of the currently ongoing epoch.
+
+        An epoch is defined to cover the moment before calling `before_epoch` until after calling `trigger_epoch`.
+        i.e., in the `trigger_epoch` of epoch 3, `self.epoch_num` is 3.
+        If you need use `self.epoch_num` in your callback, you'll need to know this.
         """
         if self._epoch_num is not None:
             # has started training

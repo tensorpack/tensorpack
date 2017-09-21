@@ -140,8 +140,8 @@ class HyperParamSetter(Callback):
         """
         ret = self._get_value_to_set()
         if ret is not None and ret != self.last_value:
-            logger.info("{} at epoch {} will change to {:.8f}".format(
-                self.param.readable_name, self.epoch_num + 1, ret))
+            logger.info("After epoch {}, {} will change to {:.8f}".format(
+                self.epoch_num, self.param.readable_name, ret))
         self.last_value = ret
         return ret
 
