@@ -9,7 +9,6 @@ import tensorflow as tf
 from tensorflow.contrib.layers import variance_scaling_initializer
 
 
-import tensorpack as tp
 from tensorpack import imgaug, dataset
 from tensorpack.dataflow import (
     AugmentImageComponent, PrefetchDataZMQ,
@@ -134,6 +133,9 @@ def apply_preactivation(l, preact):
 
 
 def get_bn(zero_init=False):
+    """
+    Zero init gamma is good for resnet. See https://arxiv.org/abs/1706.02677.
+    """
     if zero_init:
         return lambda x, name: BatchNorm('bn', x, gamma_init=tf.zeros_initializer())
     else:
@@ -220,10 +222,10 @@ def eval_on_ILSVRC12(model, sessinit, dataflow):
     )
     pred = SimpleDatasetPredictor(pred_config, dataflow)
     acc1, acc5 = RatioCounter(), RatioCounter()
-    for o in pred.get_result():
-        batch_size = o[0].shape[0]
-        acc1.feed(o[0].sum(), batch_size)
-        acc5.feed(o[1].sum(), batch_size)
+    for top1, top5 in pred.get_result():
+        batch_size = top1.shape[0]
+        acc1.feed(top1.sum(), batch_size)
+        acc5.feed(top5.sum(), batch_size)
     print("Top1 Error: {}".format(acc1.ratio))
     print("Top5 Error: {}".format(acc5.ratio))
 

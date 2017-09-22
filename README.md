@@ -30,13 +30,13 @@ Examples are not only for demonstration of the framework -- you can train them a
 ## Features:
 
 It's Yet Another TF wrapper, but different in:
-1. Not focus on models.
+1. It's not a model wrapper.
 	+ There are already too many symbolic function wrappers.
 		Tensorpack includes only a few common models,
-	  but you can use any other wrappers within tensorpack, such as sonnet/Keras/slim/tflearn/tensorlayer/....
+	  but you can use any other model wrappers within tensorpack, such as sonnet/Keras/slim/tflearn/tensorlayer/....
 
 2. Focus on __training speed__.
-	+	Speed comes for free with tensorpack -- it uses TensorFlow in the correct way.
+	+	Speed comes for free with tensorpack -- it uses TensorFlow in the __correct way__.
 	  Even on a tiny CNN example, the training runs [1.6x faster](https://gist.github.com/ppwwyyxx/8d95da79f8d97036a7d67c2416c851b6) than the equivalent Keras code.
 
 	+ Data-parallel multi-GPU training is off-the-shelf to use. It is as fast as Google's [official benchmark](https://www.tensorflow.org/performance/benchmarks).

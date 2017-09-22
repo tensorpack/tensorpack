@@ -78,9 +78,10 @@ class Model(ModelDesc):
         return tf.train.AdamOptimizer(lr)
 
 
-# Keras needs an extra input if learning_phase is needed
+# Keras needs an extra input if learning_phase is used by the model
 class KerasCallback(Callback):
     def __init__(self, isTrain):
+        assert isinstance(isTrain, bool), isTrain
         self._isTrain = isTrain
         self._learning_phase = KB.learning_phase()
 

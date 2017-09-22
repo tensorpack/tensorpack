@@ -11,8 +11,7 @@ from ..graph_builder.input_source import QueueInput, FeedfreeInput
 from .simple import SimpleTrainer
 from .base import Trainer
 
-__all__ = ['FeedfreeTrainerBase', 'SingleCostFeedfreeTrainer',
-           'SimpleFeedfreeTrainer', 'QueueInputTrainer']
+__all__ = ['FeedfreeTrainerBase', 'SingleCostFeedfreeTrainer', 'QueueInputTrainer']
 
 
 # TODO deprecate it some time
@@ -32,9 +31,9 @@ class FeedfreeTrainerBase(Trainer):
         self.config.callbacks.extend(cbs)
 
 
-# deprecated
 class SingleCostFeedfreeTrainer(FeedfreeTrainerBase):
     """ A feedfree Trainer which assumes a single cost. """
+    @deprecated("", "2017-11-21")
     def __init__(self, *args, **kwargs):
         super(SingleCostFeedfreeTrainer, self).__init__(*args, **kwargs)
         logger.warn("SingleCostFeedfreeTrainer was deprecated!")
@@ -43,12 +42,6 @@ class SingleCostFeedfreeTrainer(FeedfreeTrainerBase):
         """ get the cost and gradient"""
         self.model.build_graph(self._input_source)
         return self.model.get_cost_and_grad()
-
-
-@deprecated("Use SimpleTrainer with config.data is the same!", "2017-09-13")
-def SimpleFeedfreeTrainer(config):
-    assert isinstance(config.data, FeedfreeInput), config.data
-    return SimpleTrainer(config)
 
 
 def QueueInputTrainer(config, input_queue=None):
