@@ -111,10 +111,21 @@ def get_tqdm_kwargs(**kwargs):
         ascii=True,
         bar_format='{l_bar}{bar}|{n_fmt}/{total_fmt}[{elapsed}<{remaining},{rate_noinv_fmt}]'
     )
+
     f = kwargs.get('file', sys.stderr)
-    if f.isatty():
+    # os.isatty and f.isatty give different result under jupyter notebook.
+    # We use os.isatty when stdout/stderr is used, so that jupyter notebook will be recognized as tty.
+    if f == sys.stderr:
+        isatty = os.isatty(2)
+    elif f == sys.stdout:
+        isatty = os.isatty(1)
+    else:
+        isatty = f.isatty()
+
+    if isatty:
         default['mininterval'] = 0.5
     else:
+        # If not a tty, don't refresh progress bar that often
         default['mininterval'] = 300
     default.update(kwargs)
     return default
