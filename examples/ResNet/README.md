@@ -17,6 +17,7 @@ Models can be [downloaded here](https://goo.gl/6XjK9V).
 | ResNet50           |     6.85%   |      23.61% |
 | ResNet50-SE				 |     6.24%   |      22.64% |
 | ResNet101      		 |     6.04%   |      21.95% |
+| ResNet152      		 |     5.78%   |      21.51% |
 
 To train, just run:
 ```bash
