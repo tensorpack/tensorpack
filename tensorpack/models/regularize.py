@@ -48,6 +48,8 @@ def regularize_cost(regex, func, name='regularize_cost'):
     params = ctx.filter_vars_by_vs_name(params)
 
     G = tf.get_default_graph()
+
+    to_regularize = []
     with tf.name_scope('regularize_cost'):
         costs = []
         for p in params:
@@ -55,9 +57,23 @@ def regularize_cost(regex, func, name='regularize_cost'):
             if re.search(regex, para_name):
                 with G.colocate_with(p):
                     costs.append(func(p))
-                _log_regularizer(para_name)
+                to_regularize.append(para_name)
         if not costs:
             return tf.constant(0, dtype=tf.float32, name='empty_' + name)
+
+    # remove tower prefix from names, and print
+    if len(ctx.vs_name):
+        prefix = ctx.vs_name + '/'
+        prefixlen = len(prefix)
+
+        def f(name):
+            if name.startswith(prefix):
+                return name[prefixlen:]
+            return name
+        to_regularize = list(map(f, to_regularize))
+    to_print = ', '.join(to_regularize)
+    _log_regularizer(to_print)
+
     return tf.add_n(costs, name=name)
 
 

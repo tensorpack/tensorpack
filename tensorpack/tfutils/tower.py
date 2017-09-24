@@ -14,11 +14,11 @@ _CurrentTowerContext = None
 class TowerContext(object):
     """ A context where the current model is being built in. """
 
-    def __init__(self, tower_name, is_training=None, index=0, use_vs=False):
+    def __init__(self, tower_name, is_training, index=0, use_vs=False):
         """
         Args:
             tower_name (str): The name scope of the tower.
-            is_training (bool): if None, automatically determine from tower_name.
+            is_training (bool):
             index (int): index of this tower, only used in training.
             use_vs (bool): Open a new variable scope with this name.
         """
