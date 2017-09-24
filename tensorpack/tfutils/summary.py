@@ -242,8 +242,9 @@ def add_moving_summary(*args, **kwargs):
                     ema_var, c, decay,
                     zero_debias=True, name=name + '_EMA_apply')
             ema_ops.append(ema_op)
-        # cannot add it into colocate group -- will force everything to cpus
-        tf.summary.scalar(name + '-summary', ema_op)    # write the EMA value as a summary
+        with tf.name_scope(None):
+            # cannot add it into colocate group -- will force everything to cpus
+            tf.summary.scalar(name + '-summary', ema_op)    # write the EMA value as a summary
     if coll is not None:
         for op in ema_ops:
             # TODO a new collection to summary every step?
