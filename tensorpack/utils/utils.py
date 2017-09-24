@@ -113,14 +113,15 @@ def get_tqdm_kwargs(**kwargs):
     )
 
     f = kwargs.get('file', sys.stderr)
-    # os.isatty and f.isatty give different result under jupyter notebook.
-    # We use os.isatty when stdout/stderr is used, so that jupyter notebook will be recognized as tty.
-    if f == sys.stderr:
-        isatty = os.isatty(2)
-    elif f == sys.stdout:
-        isatty = os.isatty(1)
-    else:
-        isatty = f.isatty()
+    isatty = f.isatty()
+    # Jupyter notebook should be recognized as tty.
+    # Wait for https://github.com/ipython/ipykernel/issues/268
+    try:
+        from ipykernel import iostream
+        if isinstance(f, iostream.OutStream):
+            isatty = True
+    except ImportError:
+        pass
 
     if isatty:
         default['mininterval'] = 0.5
