@@ -64,12 +64,15 @@ class FilterNoneGrad(GradientProcessor):
 
     def _process(self, grads):
         g = []
+        to_print = []
         for grad, var in grads:
             if grad is None:
-                if self._verbose:
-                    logger.warn("No Gradient w.r.t {}".format(var.op.name))
+                to_print.append(var.op.name)
             else:
                 g.append((grad, var))
+        if self._verbose:
+            message = ', '.join(to_print)
+            logger.warn("No gradient w.r.t these trainable variables: {}".format(message))
         return g
 
 
