@@ -33,8 +33,8 @@ class GoogleNetResize(imgaug.ImageAugmentor):
         for _ in range(10):
             targetArea = self.rng.uniform(0.08, 1.0) * area
             aspectR = self.rng.uniform(0.75, 1.333)
-            ww = int(np.sqrt(targetArea * aspectR))
-            hh = int(np.sqrt(targetArea / aspectR))
+            ww = int(np.sqrt(targetArea * aspectR) + 0.5)
+            hh = int(np.sqrt(targetArea / aspectR) + 0.5)
             if self.rng.uniform() < 0.5:
                 ww, hh = hh, ww
             if hh <= h and ww <= w:
