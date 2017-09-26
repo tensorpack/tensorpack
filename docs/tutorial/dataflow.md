@@ -31,7 +31,7 @@ df = BatchData(df, 128)
 # start 3 processes to run the dataflow in parallel
 df = PrefetchDataZMQ(df, 3)
 ````
-You can find more complicated DataFlow in the [ResNet training script](../examples/ResNet/imagenet_resnet_utils.py)
+You can find more complicated DataFlow in the [ResNet training script](../examples/ResNet/imagenet_utils.py)
 with all the data preprocessing.
 
 Unless you are working with standard data types (image folders, LMDB, etc),

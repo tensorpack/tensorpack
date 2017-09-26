@@ -17,12 +17,13 @@ from tensorpack.dataflow import imgaug, FakeData
 from tensorpack.tfutils import argscope, get_model_loader
 from tensorpack.utils.gpu import get_nr_gpu
 
-from imagenet_resnet_utils import (
-    fbresnet_augmentor, get_imagenet_dataflow,
+from imagenet_utils import (
+    fbresnet_augmentor, get_imagenet_dataflow, ImageNetModel,
+    eval_on_ILSVRC12)
+from resnet_model import (
     preresnet_group, preresnet_basicblock, preresnet_bottleneck,
     resnet_group, resnet_basicblock, resnet_bottleneck, se_resnet_bottleneck,
-    resnet_backbone, ImageNetModel,
-    eval_on_ILSVRC12)
+    resnet_backbone)
 
 TOTAL_BATCH_SIZE = 256
 
