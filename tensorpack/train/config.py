@@ -72,15 +72,14 @@ class TrainConfig(object):
         if 'dataset' in kwargs:
             dataflow = kwargs.pop('dataset')
             log_deprecated("TrainConfig.dataset", "Use TrainConfig.dataflow instead.", "2017-09-11")
+        assert data is None or dataflow is None, "dataflow and data cannot be both presented in TrainConfig!"
         if dataflow is not None:
-            assert data is None, "dataflow and data cannot be both presented in TrainConfig!"
-            self.dataflow = dataflow
-            assert_type(self.dataflow, DataFlow)
-            self.data = None
+            assert_type(dataflow, DataFlow)
         if data is not None:
-            self.data = data
-            assert_type(self.data, InputSource)
-            self.dataflow = None
+            assert_type(data, InputSource)
+        self.dataflow = dataflow
+        self.data = data
+
         if model is not None:
             assert_type(model, ModelDescBase)
         self.model = model
