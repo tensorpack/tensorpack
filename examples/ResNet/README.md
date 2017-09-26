@@ -1,10 +1,11 @@
 
-## imagenet-resnet.py, imagenet-resnet-se.py
+## imagenet-resnet.py
 
 __Training__ code of three variants of ResNet on ImageNet:
 
-* imagenet-resnet.py: [Original ResNet](https://arxiv.org/abs/1512.03385) and [Pre-activation ResNet](https://arxiv.org/abs/1603.05027).
-* imagenet-resnet-se.py: [Squeeze-and-Excitation ResNet](https://arxiv.org/abs/1709.01507)
+* [Original ResNet](https://arxiv.org/abs/1512.03385)
+* [Pre-activation ResNet](https://arxiv.org/abs/1603.05027).
+* [Squeeze-and-Excitation ResNet](https://arxiv.org/abs/1709.01507)
 
 The training mostly follows the setup in [fb.resnet.torch](https://github.com/facebook/fb.resnet.torch)
 and gets similar performance (with much fewer lines of code).
@@ -21,7 +22,7 @@ Models can be [downloaded here](https://goo.gl/6XjK9V).
 
 To train, just run:
 ```bash
-./imagenet-resnet.py --data /path/to/original/ILSVRC --gpu 0,1,2,3 -d 50
+./imagenet-resnet.py --data /path/to/original/ILSVRC --gpu 0,1,2,3 -d 50 [--mode resnet/preact/se]
 ```
 You should be able to see good GPU utilization (around 95%), if your data is fast enough.
 See the [tutorial](http://tensorpack.readthedocs.io/en/latest/tutorial/efficient-dataflow.html) on how to speed up your data.
