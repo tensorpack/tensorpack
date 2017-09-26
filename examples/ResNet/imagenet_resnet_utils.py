@@ -5,11 +5,12 @@
 import numpy as np
 import cv2
 import multiprocessing
+from abc import abstractmethod
 import tensorflow as tf
 from tensorflow.contrib.layers import variance_scaling_initializer
 
 
-from tensorpack import imgaug, dataset
+from tensorpack import imgaug, dataset, ModelDesc, InputDesc
 from tensorpack.dataflow import (
     AugmentImageComponent, PrefetchDataZMQ,
     BatchData, ThreadedMapData)
@@ -17,8 +18,8 @@ from tensorpack.utils.stats import RatioCounter
 from tensorpack.tfutils.argscope import argscope, get_arg_scope
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.models import (
-    Conv2D, MaxPooling, GlobalAvgPooling, BatchNorm, BNReLU,
-    LinearWrap)
+    Conv2D, MaxPooling, GlobalAvgPooling, BatchNorm, BNReLU, FullyConnected,
+    LinearWrap, regularize_cost)
 from tensorpack.predict import PredictConfig, SimpleDatasetPredictor
 
 
@@ -120,11 +121,8 @@ def resnet_shortcut(l, n_out, stride, nl=tf.identity):
 
 
 def apply_preactivation(l, preact):
-    """
-    'no_preact' for the first resblock in each group only, because the input is activated already.
-    'bnrelu' for all the non-first blocks, where identity mapping is preserved on shortcut path.
-    """
     if preact == 'bnrelu':
+        # this is used only for preact-resnet
         shortcut = l    # preserve identity mapping
         l = BNReLU('preact', l)
     else:
@@ -186,13 +184,25 @@ def resnet_bottleneck(l, ch_out, stride, preact):
     return l + resnet_shortcut(shortcut, ch_out * 4, stride, nl=get_bn(zero_init=False))
 
 
+def se_resnet_bottleneck(l, ch_out, stride, preact):
+    l, shortcut = apply_preactivation(l, preact)
+    l = Conv2D('conv1', l, ch_out, 1, nl=BNReLU)
+    l = Conv2D('conv2', l, ch_out, 3, stride=stride, nl=BNReLU)
+    l = Conv2D('conv3', l, ch_out * 4, 1, nl=get_bn(zero_init=True))
+
+    squeeze = GlobalAvgPooling('gap', l)
+    squeeze = FullyConnected('fc1', squeeze, ch_out // 4, nl=tf.nn.relu)
+    squeeze = FullyConnected('fc2', squeeze, ch_out * 4, nl=tf.nn.sigmoid)
+    l = l * tf.reshape(squeeze, [-1, ch_out * 4, 1, 1])
+    return l + resnet_shortcut(shortcut, ch_out * 4, stride, nl=get_bn(zero_init=False))
+
+
 def resnet_group(l, name, block_func, features, count, stride):
     with tf.variable_scope(name):
         for i in range(0, count):
             with tf.variable_scope('block{}'.format(i)):
                 l = block_func(l, features,
-                               stride if i == 0 else 1,
-                               'no_preact')
+                               stride if i == 0 else 1, 'no_preact')
                 # end of each block need an activation
                 l = tf.nn.relu(l)
     return l
@@ -262,3 +272,46 @@ def compute_loss_and_error(logits, label):
     wrong = prediction_incorrect(logits, label, 5, name='wrong-top5')
     add_moving_summary(tf.reduce_mean(wrong, name='train-error-top5'))
     return loss
+
+
+class ImageNetModel(ModelDesc):
+    def __init__(self, data_format='NCHW', image_dtype=tf.uint8):
+        if data_format == 'NCHW':
+            assert tf.test.is_gpu_available()
+        self.data_format = data_format
+
+        # uint8 instead of float32 is used as input type to reduce copy overhead.
+        # It might hurt the performance a liiiitle bit.
+        # The pretrained models were trained with float32.
+        self.image_dtype = image_dtype
+
+    def _get_inputs(self):
+        return [InputDesc(self.image_dtype, [None, 224, 224, 3], 'input'),
+                InputDesc(tf.int32, [None], 'label')]
+
+    def _build_graph(self, inputs):
+        image, label = inputs
+        image = image_preprocess(image, bgr=True)
+        if self.data_format == 'NCHW':
+            image = tf.transpose(image, [0, 3, 1, 2])
+
+        logits = self.get_logits(image)
+        loss = compute_loss_and_error(logits, label)
+        wd_loss = regularize_cost('.*/W', tf.contrib.layers.l2_regularizer(1e-4), name='l2_regularize_loss')
+        add_moving_summary(loss, wd_loss)
+        self.cost = tf.add_n([loss, wd_loss], name='cost')
+
+    @abstractmethod
+    def get_logits(self, image):
+        """
+        Args:
+            image: 4D tensor of 224x224 in ``self.data_format``
+
+        Returns:
+            Bx1000 logits
+        """
+
+    def _get_optimizer(self):
+        lr = tf.get_variable('learning_rate', initializer=0.1, trainable=False)
+        tf.summary.scalar('learning_rate-summary', lr)
+        return tf.train.MomentumOptimizer(lr, 0.9, use_nesterov=True)

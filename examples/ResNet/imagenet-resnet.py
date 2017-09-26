@@ -9,36 +9,34 @@ import os
 
 import tensorflow as tf
 
-from tensorpack import InputDesc, ModelDesc, logger, QueueInput
+from tensorpack import logger, QueueInput
 from tensorpack.models import *
 from tensorpack.callbacks import *
 from tensorpack.train import TrainConfig, SyncMultiGPUTrainerParameterServer
 from tensorpack.dataflow import imgaug, FakeData
-import tensorpack.tfutils.symbolic_functions as symbf
-from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.tfutils import argscope, get_model_loader
 from tensorpack.utils.gpu import get_nr_gpu
 
 from imagenet_resnet_utils import (
     fbresnet_augmentor, get_imagenet_dataflow,
     preresnet_group, preresnet_basicblock, preresnet_bottleneck,
-    resnet_group, resnet_basicblock, resnet_bottleneck,
-    resnet_backbone,
-    eval_on_ILSVRC12, image_preprocess, compute_loss_and_error)
+    resnet_group, resnet_basicblock, resnet_bottleneck, se_resnet_bottleneck,
+    resnet_backbone, ImageNetModel,
+    eval_on_ILSVRC12)
 
 TOTAL_BATCH_SIZE = 256
-INPUT_SHAPE = 224
 
 
-class Model(ModelDesc):
-    def __init__(self, depth, data_format='NCHW', preact=False):
-        if data_format == 'NCHW':
-            assert tf.test.is_gpu_available()
-        self.data_format = data_format
-        self.preact = preact
+class Model(ImageNetModel):
+    def __init__(self, depth, data_format='NCHW', mode='resnet'):
+        super(Model, self).__init__(data_format)
 
-        basicblock = preresnet_basicblock if preact else resnet_basicblock
-        bottleneck = preresnet_bottleneck if preact else resnet_bottleneck
+        self.mode = mode
+        basicblock = preresnet_basicblock if mode == 'preact' else resnet_basicblock
+        bottleneck = {
+            'resnet': resnet_bottleneck,
+            'preact': preresnet_bottleneck,
+            'se': se_resnet_bottleneck}[mode]
         self.num_blocks, self.block_func = {
             18: ([2, 2, 2, 2], basicblock),
             34: ([3, 4, 6, 3], basicblock),
@@ -47,34 +45,11 @@ class Model(ModelDesc):
             152: ([3, 8, 36, 3], bottleneck)
         }[depth]
 
-    def _get_inputs(self):
-        # uint8 instead of float32 is used as input type to reduce copy overhead.
-        # It might hurt the performance a liiiitle bit.
-        # The pretrained models were trained with float32.
-        return [InputDesc(tf.uint8, [None, INPUT_SHAPE, INPUT_SHAPE, 3], 'input'),
-                InputDesc(tf.int32, [None], 'label')]
-
-    def _build_graph(self, inputs):
-        image, label = inputs
-        image = image_preprocess(image, bgr=True)
-
-        if self.data_format == 'NCHW':
-            image = tf.transpose(image, [0, 3, 1, 2])
-
+    def get_logits(self, image):
         with argscope([Conv2D, MaxPooling, GlobalAvgPooling, BatchNorm], data_format=self.data_format):
-            logits = resnet_backbone(
+            return resnet_backbone(
                 image, self.num_blocks,
-                preresnet_group if self.preact else resnet_group, self.block_func)
-
-        loss = compute_loss_and_error(logits, label)
-
-        wd_loss = regularize_cost('.*/W', l2_regularizer(1e-4), name='l2_regularize_loss')
-        add_moving_summary(loss, wd_loss)
-        self.cost = tf.add_n([loss, wd_loss], name='cost')
-
-    def _get_optimizer(self):
-        lr = symbf.get_scalar_var('learning_rate', 0.1, summary=True)
-        return tf.train.MomentumOptimizer(lr, 0.9, use_nesterov=True)
+                preresnet_group if self.mode == 'preact' else resnet_group, self.block_func)
 
 
 def get_data(name, batch):
@@ -134,13 +109,17 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--depth', help='resnet depth',
                         type=int, default=18, choices=[18, 34, 50, 101, 152])
     parser.add_argument('--eval', action='store_true')
-    parser.add_argument('--preact', action='store_true', help='Use pre-activation resnet')
+    parser.add_argument('--mode', choices=['resnet', 'preact', 'se'],
+                        help='variants of resnet to use', default='resnet')
     args = parser.parse_args()
 
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
-    model = Model(args.depth, args.data_format, args.preact)
+    if args.mode == 'se':
+        assert args.depth >= 50
+
+    model = Model(args.depth, args.data_format, args.mode)
     if args.eval:
         batch = 128    # something that can run on one gpu
         ds = get_data('val', batch)
