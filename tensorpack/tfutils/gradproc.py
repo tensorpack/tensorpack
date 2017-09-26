@@ -70,7 +70,7 @@ class FilterNoneGrad(GradientProcessor):
                 to_print.append(var.op.name)
             else:
                 g.append((grad, var))
-        if self._verbose:
+        if self._verbose and len(to_print):
             message = ', '.join(to_print)
             logger.warn("No gradient w.r.t these trainable variables: {}".format(message))
         return g
