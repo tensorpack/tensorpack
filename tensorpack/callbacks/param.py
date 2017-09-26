@@ -66,7 +66,7 @@ class GraphVarParam(HyperParam):
 
     def setup_graph(self):
         """ Will setup the assign operator for that variable. """
-        all_vars = tf.global_variables()
+        all_vars = tf.all_variables()
         for v in all_vars:
             if v.name == self.var_name:
                 self.var = v

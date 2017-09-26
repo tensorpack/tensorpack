@@ -204,6 +204,8 @@ class DistributedTrainerReplicated(MultiGPUTrainerBase):
         cbs = self._input_source.setup(self.model.get_inputs_desc())
         self.config.callbacks.extend(cbs)
 
+        # build the optimizer first, before entering any tower
+        self.model.get_optimizer()
         # Ngpu * Nvar * 2
         grad_list = MultiGPUTrainerBase.build_on_multi_tower(
             self.config.tower,
