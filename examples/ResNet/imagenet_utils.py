@@ -18,6 +18,7 @@ from tensorpack.utils.stats import RatioCounter
 from tensorpack.models import regularize_cost
 from tensorpack.tfutils.summary import add_moving_summary
 
+
 class GoogleNetResize(imgaug.ImageAugmentor):
     """
     crop 8%~100% of the original image

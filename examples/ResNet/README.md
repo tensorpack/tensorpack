@@ -4,7 +4,7 @@
 __Training__ code of three variants of ResNet on ImageNet:
 
 * [Original ResNet](https://arxiv.org/abs/1512.03385)
-* [Pre-activation ResNet](https://arxiv.org/abs/1603.05027).
+* [Pre-activation ResNet](https://arxiv.org/abs/1603.05027)
 * [Squeeze-and-Excitation ResNet](https://arxiv.org/abs/1709.01507)
 
 The training mostly follows the setup in [fb.resnet.torch](https://github.com/facebook/fb.resnet.torch)
