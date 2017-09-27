@@ -32,6 +32,7 @@ class TowerContext(object):
         self._index = int(index)
         if use_vs:
             self._vs_name = self._name
+            assert len(self._name)
         else:
             self._vs_name = ''
 
