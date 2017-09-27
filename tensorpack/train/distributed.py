@@ -206,11 +206,16 @@ class DistributedTrainerReplicated(MultiGPUTrainerBase):
 
         with override_to_local_variable():
             # input source may create variable (queue size summary)
+            # TODO This is not good because we don't know from here
+            # whether something should be global or local. We now assume
+            # they should be local.
             cbs = self._input_source.setup(self.model.get_inputs_desc())
         self.config.callbacks.extend(cbs)
 
-        # build the optimizer first, before entering any tower
+        # Build the optimizer first, before entering any tower.
+        # This makes sure that learning_rate is a global variable (what we expect)
         self.model.get_optimizer()
+
         # Ngpu * Nvar * 2
         grad_list = MultiGPUTrainerBase.build_on_multi_tower(
             self.config.tower,
