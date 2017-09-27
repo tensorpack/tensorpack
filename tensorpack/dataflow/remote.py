@@ -27,7 +27,7 @@ def send_dataflow_zmq(df, addr, hwm=50, print_interval=100, format=None):
     Args:
         df (DataFlow): Will infinitely loop over the DataFlow.
         addr: a ZMQ socket addr.
-        hwm (int): high water mark
+        hwm (int): ZMQ high-water mark (buffer size)
     """
     # format (str): The serialization format. ZMQ Op is still not publicly usable now
     #     Default format would use :mod:`tensorpack.utils.serialize`.
@@ -65,16 +65,18 @@ class RemoteDataZMQ(DataFlow):
     Attributes:
         cnt1, cnt2 (int): number of data points received from addr1 and addr2
     """
-    def __init__(self, addr1, addr2=None):
+    def __init__(self, addr1, addr2=None, hwm=50):
         """
         Args:
             addr1,addr2 (str): addr of the socket to connect to.
                 Use both if you need two protocols (e.g. both IPC and TCP).
                 I don't think you'll ever need 3.
+            hwm (int): ZMQ high-water mark (buffer size)
         """
         assert addr1
         self._addr1 = addr1
         self._addr2 = addr2
+        self._hwm = int(hwm)
         self._guard = DataFlowReentrantGuard()
 
     def reset_state(self):
@@ -87,7 +89,7 @@ class RemoteDataZMQ(DataFlow):
                 ctx = zmq.Context()
                 if self._addr2 is None:
                     socket = ctx.socket(zmq.PULL)
-                    socket.set_hwm(50)
+                    socket.set_hwm(self._hwm)
                     socket.bind(self._addr1)
 
                     while True:
@@ -96,11 +98,11 @@ class RemoteDataZMQ(DataFlow):
                         self.cnt1 += 1
                 else:
                     socket1 = ctx.socket(zmq.PULL)
-                    socket1.set_hwm(50)
+                    socket1.set_hwm(self._hwm)
                     socket1.bind(self._addr1)
 
                     socket2 = ctx.socket(zmq.PULL)
-                    socket2.set_hwm(50)
+                    socket2.set_hwm(self._hwm)
                     socket2.bind(self._addr2)
 
                     poller = zmq.Poller()

@@ -153,7 +153,7 @@ class PrefetchDataZMQ(ProxyDataFlow):
         Args:
             ds (DataFlow): input DataFlow.
             nr_proc (int): number of processes to use.
-            hwm (int): the zmq "high-water mark" for both sender and receiver.
+            hwm (int): the zmq "high-water mark" (queue size) for both sender and receiver.
         """
         assert os.name != 'nt', "PrefetchDataZMQ doesn't support windows!  PrefetchData might work sometimes."
         super(PrefetchDataZMQ, self).__init__(ds)
