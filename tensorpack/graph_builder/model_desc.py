@@ -134,7 +134,7 @@ class ModelDesc(ModelDescBase):
     def get_cost(self):
         """
         Return the cost tensor in the graph.
-        Used by some of the tensorpack :class:`Trainer` which assumes single-cost models.
+        It will be called by :func:`get_cost_and_grad` by default.
         You can ignore this method (or just use :class:`ModelDescBase`)
         if you use your own trainer with more than one cost.
 
@@ -175,6 +175,7 @@ class ModelDesc(ModelDescBase):
     def get_cost_and_grad(self):
         """
         Compute gradients with ``self.get_optimizer()`` on ``self.get_cost()``.
+        This method will be used by all the existing tensorpack trainers.
 
         Returns:
             cost (tf.Tensor): the cost tensor returned by ``self.get_cost()``.
