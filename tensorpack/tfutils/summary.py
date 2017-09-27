@@ -33,6 +33,8 @@ def _get_cached_vs(name):
 @contextmanager
 def _enter_vs_reuse_ns(name):
     vs = _get_cached_vs(name)
+    # XXX Not good to enter the cached vs directly, because this will clean-up custom getter
+    # with tf.variable_scope(name, reuse=tf.AUTO_REUSE):    # available in 1.4 only
     with tf.variable_scope(vs):
         with tf.name_scope(vs.original_name_scope):
             yield vs
