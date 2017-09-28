@@ -11,7 +11,6 @@ import tensorflow as tf
 from .config import TrainConfig
 from ..utils import logger
 from ..utils.naming import GLOBAL_STEP_INCR_OP_NAME
-from ..utils.develop import deprecated
 from ..callbacks import Callback, Callbacks
 from ..callbacks.monitor import Monitors, TrainingMonitor
 from ..tfutils import get_global_step_value, get_global_step_var
@@ -257,9 +256,8 @@ class Trainer(object):
     # Predictor related methods. They actually should not be part of a trainer:
     @property
     def vs_name_for_predictor(self):
-        """
-        The variable scope name a predictor should be built in.
-        """
+        # The variable scope name a predictor should be built in.
+        # Expected to be changed. Don't use it.
         # TODO graphbuilder knows it
         return ""
 
@@ -286,8 +284,3 @@ class Trainer(object):
             self._predictor_factory = PredictorFactory(
                 self.model, self.vs_name_for_predictor)
         return self._predictor_factory
-
-    @deprecated("Please call `Trainer.get_predictor` to create them manually.")
-    def get_predictors(self, input_names, output_names, n):
-        """ Return n predictors. """
-        return [self.get_predictor(input_names, output_names, k) for k in range(n)]

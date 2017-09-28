@@ -231,7 +231,6 @@ class SyncMultiGPUTrainerReplicated(MultiGPUTrainerBase):
         """
         apply_prefetch_policy(config, gpu_prefetch)
         self._input_source = config.data
-        logger.warn("Note that SyncMultiGPUTrainerReplicated doesn't support inference.")
         super(SyncMultiGPUTrainerReplicated, self).__init__(config)
 
     @staticmethod
