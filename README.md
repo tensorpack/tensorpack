@@ -8,7 +8,6 @@ A neural net training interface based on TensorFlow.
 See some [examples](examples) to learn about the framework:
 
 ### Vision:
-+ (Coming soon) Multi-GPU Faster-RCNN training on COCO.
 + [Multi-GPU training of ResNet on ImageNet](examples/ResNet)
 + [Generative Adversarial Network(GAN) variants](examples/GAN), including DCGAN, InfoGAN, Conditional GAN, WGAN, BEGAN, DiscoGAN, Image to Image, CycleGAN.
 + [DoReFa-Net: train binary / low-bitwidth CNN on ImageNet](examples/DoReFa-Net)
