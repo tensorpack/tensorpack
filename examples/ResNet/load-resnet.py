@@ -21,7 +21,8 @@ from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
 from tensorpack.dataflow.dataset import ILSVRCMeta, ILSVRC12
 
-from imagenet_resnet_utils import eval_on_ILSVRC12
+from imagenet_utils import eval_on_ILSVRC12, get_imagenet_dataflow
+from resnet_model import resnet_group, apply_preactivation, resnet_shortcut, get_bn
 
 MODEL_DEPTH = None
 
@@ -31,41 +32,15 @@ class Model(ModelDesc):
         return [InputDesc(tf.float32, [None, 224, 224, 3], 'input'),
                 InputDesc(tf.int32, [None], 'label')]
 
-    def _build_graph(self, input_vars):
-        image, label = input_vars
-
-        def shortcut(l, n_in, n_out, stride):
-            if n_in != n_out:
-                l = Conv2D('convshortcut', l, n_out, 1, stride=stride)
-                return BatchNorm('bnshortcut', l)
-            else:
-                return l
+    def _build_graph(self, inputs):
+        image, label = inputs
 
         def bottleneck(l, ch_out, stride, preact):
-            ch_in = l.get_shape().as_list()[-1]
-            input = l
-            if preact == 'both_preact':
-                l = tf.nn.relu(l, name='preact-relu')
-                input = l
-            l = Conv2D('conv1', l, ch_out, 1, stride=stride)
-            l = BatchNorm('bn1', l)
-            l = tf.nn.relu(l)
-            l = Conv2D('conv2', l, ch_out, 3)
-            l = BatchNorm('bn2', l)
-            l = tf.nn.relu(l)
-            l = Conv2D('conv3', l, ch_out * 4, 1)
-            l = BatchNorm('bn3', l)  # put bn at the bottom
-            return l + shortcut(input, ch_in, ch_out * 4, stride)
-
-        def layer(l, layername, features, count, stride, first=False):
-            with tf.variable_scope(layername):
-                with tf.variable_scope('block0'):
-                    l = bottleneck(l, features, stride,
-                                   'no_preact' if first else 'both_preact')
-                for i in range(1, count):
-                    with tf.variable_scope('block{}'.format(i)):
-                        l = bottleneck(l, features, 1, 'both_preact')
-                return l
+            l, shortcut = apply_preactivation(l, preact)
+            l = Conv2D('conv1', l, ch_out, 1, stride=stride, nl=BNReLU)
+            l = Conv2D('conv2', l, ch_out, 3, nl=BNReLU)
+            l = Conv2D('conv3', l, ch_out * 4, 1, nl=get_bn())
+            return l + resnet_shortcut(shortcut, ch_out * 4, stride, nl=get_bn())
 
         cfg = {
             50: ([3, 4, 6, 3]),
@@ -74,24 +49,26 @@ class Model(ModelDesc):
         }
         defs = cfg[MODEL_DEPTH]
 
-        with argscope(Conv2D, nl=tf.identity, use_bias=False,
-                      W_init=variance_scaling_initializer(mode='FAN_OUT')):
-            # tensorflow with padding=SAME will by default pad [2,3] here.
-            # but caffe conv with stride will pad [3,3]
-            image = tf.pad(image, [[0, 0], [3, 3], [3, 3], [0, 0]])
-            fc1000 = (LinearWrap(image)
+        # tensorflow with padding=SAME will by default pad [2,3] here.
+        # but caffe conv with stride will pad [3,3]
+        image = tf.pad(image, [[0, 0], [3, 3], [3, 3], [0, 0]])
+        image = tf.transpose(image, [0, 3, 1, 2])
+        with argscope([Conv2D, MaxPooling, GlobalAvgPooling, BatchNorm],
+                      data_format='NCHW'), \
+                argscope(Conv2D, nl=tf.identity, use_bias=False,
+                         W_init=variance_scaling_initializer(mode='FAN_OUT')):
+            logits = (LinearWrap(image)
                       .Conv2D('conv0', 64, 7, stride=2, nl=BNReLU, padding='VALID')
                       .MaxPooling('pool0', shape=3, stride=2, padding='SAME')
-                      .apply(layer, 'group0', 64, defs[0], 1, first=True)
-                      .apply(layer, 'group1', 128, defs[1], 2)
-                      .apply(layer, 'group2', 256, defs[2], 2)
-                      .apply(layer, 'group3', 512, defs[3], 2)
-                      .tf.nn.relu()
+                      .apply(resnet_group, 'group0', bottleneck, 64, defs[0], 1)
+                      .apply(resnet_group, 'group1', bottleneck, 128, defs[1], 2)
+                      .apply(resnet_group, 'group2', bottleneck, 256, defs[2], 2)
+                      .apply(resnet_group, 'group3', bottleneck, 512, defs[3], 2)
                       .GlobalAvgPooling('gap')
-                      .FullyConnected('fc1000', 1000, nl=tf.identity)())
-        prob = tf.nn.softmax(fc1000, name='prob')
-        nr_wrong = prediction_incorrect(fc1000, label, name='wrong-top1')
-        nr_wrong = prediction_incorrect(fc1000, label, 5, name='wrong-top5')
+                      .FullyConnected('linear', 1000, nl=tf.identity)())
+        prob = tf.nn.softmax(logits, name='prob')
+        prediction_incorrect(logits, label, name='wrong-top1')
+        prediction_incorrect(logits, label, 5, name='wrong-top5')
 
 
 def get_inference_augmentor():
@@ -105,11 +82,11 @@ def get_inference_augmentor():
     pp_mean = meta.get_per_pixel_mean()
     pp_mean_224 = pp_mean[16:-16, 16:-16, :]
 
-    transformers = imgaug.AugmentorList([
+    transformers = [
         imgaug.ResizeShortestEdge(256),
         imgaug.CenterCrop((224, 224)),
         imgaug.MapImage(lambda x: x - pp_mean_224),
-    ])
+    ]
     return transformers
 
 
@@ -144,7 +121,7 @@ def name_conversion(caffe_layer_name):
                 'bn_conv1/mean/EMA': 'conv0/bn/mean/EMA',
                 'bn_conv1/variance/EMA': 'conv0/bn/variance/EMA',
                 'conv1/W': 'conv0/W', 'conv1/b': 'conv0/b',
-                'fc1000/W': 'fc1000/W', 'fc1000/b': 'fc1000/b'}
+                'fc1000/W': 'linear/W', 'fc1000/b': 'linear/b'}
     if caffe_layer_name in NAME_MAP:
         return NAME_MAP[caffe_layer_name]
 
@@ -169,8 +146,10 @@ def name_conversion(caffe_layer_name):
     TYPE_DICT = {'res': 'conv', 'bn': 'bn'}
 
     tf_name = caffe_layer_name[caffe_layer_name.index('/'):]
-    layer_type = TYPE_DICT[layer_type] + \
-        (str(layer_id) if layer_branch == 2 else 'shortcut')
+    if layer_type == 'res':
+        layer_type = 'conv{}'.format(layer_id if layer_branch == 2 else 'shortcut')
+    else:
+        layer_type = 'conv{}/bn'.format(layer_id if layer_branch == 2 else 'shortcut')
     tf_name = 'group{}/block{}/{}'.format(
         int(layer_group) - 2, layer_block, layer_type) + tf_name
     return tf_name
@@ -178,7 +157,6 @@ def name_conversion(caffe_layer_name):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
     parser.add_argument('--load', required=True,
                         help='.npy model file generated by tensorpack.utils.loadcaffe')
     parser.add_argument('-d', '--depth', help='resnet depth', required=True, type=int, choices=[50, 101, 152])
@@ -187,8 +165,6 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     assert args.input or args.eval, "Choose either input or eval!"
-    if args.gpu:
-        os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
     MODEL_DEPTH = args.depth
 
     param = np.load(args.load, encoding='latin1').item()
@@ -203,10 +179,7 @@ if __name__ == '__main__':
         resnet_param[newname] = v
 
     if args.eval:
-        ds = ILSVRC12(args.eval, 'val', shuffle=False)
-        ds = AugmentImageComponent(ds, get_inference_augmentor())
-        ds = BatchData(ds, 128, remainder=True)
-        ds = PrefetchDataZMQ(ds, 1)
+        ds = get_imagenet_dataflow(args.eval, 'val', 128, get_inference_augmentor())
         eval_on_ILSVRC12(Model(), DictRestore(resnet_param), ds)
     else:
         run_test(resnet_param, args.input)

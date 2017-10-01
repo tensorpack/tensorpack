@@ -86,7 +86,7 @@ class BatchData(ProxyDataFlow):
                 assert batch_size <= ds.size()
             except NotImplementedError:
                 pass
-        self.batch_size = batch_size
+        self.batch_size = int(batch_size)
         self.remainder = remainder
         self.use_list = use_list
 

@@ -31,7 +31,7 @@ See the [tutorial](http://tensorpack.readthedocs.io/en/latest/tutorial/efficient
 
 ## load-resnet.py
 
-This script only converts and runs ImageNet-ResNet{50,101,152} Caffe models [released by Kaiming](https://github.com/KaimingHe/deep-residual-networks).
+This script only converts and runs ImageNet-ResNet{50,101,152} Caffe models [released by MSRA](https://github.com/KaimingHe/deep-residual-networks).
 Note that the architecture is different from the `imagenet-resnet.py` script and the models are not compatible.
 
 Usage:
@@ -47,9 +47,9 @@ The per-pixel mean used here is slightly different from the original.
 
 | Model              | Top 5 Error | Top 1 Error |
 |:-------------------|-------------|------------:|
-| ResNet 50          |      7.89%  |      25.03% |
-| ResNet 101         |      7.16%  |      23.74% |
-| ResNet 152         |      6.81%  |      23.28% |
+| ResNet 50          |      7.78%  |      24.77% |
+| ResNet 101         |      7.11%  |      23.54% |
+| ResNet 152         |      6.71%  |      23.21% |
 
 ## cifar10-resnet.py
 

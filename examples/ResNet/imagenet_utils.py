@@ -85,6 +85,7 @@ def get_imagenet_dataflow(
     """
     assert name in ['train', 'val', 'test']
     assert datadir is not None
+    assert isinstance(augmentors, list)
     isTrain = name == 'train'
     cpu = min(30, multiprocessing.cpu_count())
     if isTrain:

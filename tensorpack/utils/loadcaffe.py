@@ -110,7 +110,7 @@ def load_caffe(model_desc, model_file):
         net = caffe.Net(model_desc, model_file, caffe.TEST)
     param_dict = CaffeLayerProcessor(net).process()
     logger.info("Model loaded from caffe. Params: " +
-                " ".join(sorted(param_dict.keys())))
+                ", ".join(sorted(param_dict.keys())))
     return param_dict
 
 
