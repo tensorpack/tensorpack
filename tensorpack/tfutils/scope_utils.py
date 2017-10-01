@@ -9,7 +9,7 @@ from contextlib import contextmanager
 
 from ..utils.argtools import graph_memoized
 
-__all__ = ['auto_reuse_variable_scope', 'cached_name_scope']
+__all__ = ['auto_reuse_variable_scope', 'cached_name_scope', 'under_name_scope']
 
 
 def auto_reuse_variable_scope(func):

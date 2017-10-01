@@ -100,7 +100,7 @@ class GPUUtilizationTracker(Callback):
 
 
 # Can add more features from tfprof
-# https://github.com/tensorflow/tensorflow/blob/master/tensorflow/tools/tfprof/g3doc/python_api.md
+# https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/profiler/README.md
 
 class GraphProfiler(Callback):
     """
@@ -110,7 +110,7 @@ class GraphProfiler(Callback):
     The tracing files can be loaded from ``chrome://tracing``.
     The metadata files can be processed by
     `tfprof command line utils
-    <https://github.com/tensorflow/tensorflow/blob/master/tensorflow/tools/tfprof/g3doc/command_line.md>`_.
+    <https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/profiler/README.md>`_.
     The event is viewable from tensorboard.
 
     Note that the profiling is enabled for every step.
