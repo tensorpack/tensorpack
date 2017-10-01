@@ -77,10 +77,13 @@ def resnet_basicblock(l, ch_out, stride, preact):
     return l + resnet_shortcut(shortcut, ch_out, stride, nl=get_bn(zero_init=False))
 
 
-def resnet_bottleneck(l, ch_out, stride, preact):
+def resnet_bottleneck(l, ch_out, stride, preact, stride_first=False):
+    """
+    stride_first: original resnet put stride on first conv. fb.resnet.torch put stride on second conv.
+    """
     l, shortcut = apply_preactivation(l, preact)
-    l = Conv2D('conv1', l, ch_out, 1, nl=BNReLU)
-    l = Conv2D('conv2', l, ch_out, 3, stride=stride, nl=BNReLU)
+    l = Conv2D('conv1', l, ch_out, 1, stride=stride if stride_first else 1, nl=BNReLU)
+    l = Conv2D('conv2', l, ch_out, 3, stride=1 if stride_first else stride, nl=BNReLU)
     l = Conv2D('conv3', l, ch_out * 4, 1, nl=get_bn(zero_init=True))
     return l + resnet_shortcut(shortcut, ch_out * 4, stride, nl=get_bn(zero_init=False))
 

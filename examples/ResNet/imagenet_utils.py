@@ -193,7 +193,7 @@ class ImageNetModel(ModelDesc):
             image: 4D tensor of 224x224 in ``self.data_format``
 
         Returns:
-            Bx1000 logits
+            Nx1000 logits
         """
 
     def _get_optimizer(self):
