@@ -94,7 +94,7 @@ def run_test(params, input):
     )
     predict_func = OfflinePredictor(pred_config)
 
-    prepro = get_inference_augmentor()
+    prepro = imgaug.AugmentorList(get_inference_augmentor())
     im = cv2.imread(input).astype('float32')
     im = prepro.augment(im)
     im = np.reshape(im, (1, 224, 224, 3))
