@@ -72,9 +72,9 @@ class CaffeLayerProcessor(object):
                 name + '/b': param[1].data}
 
     def proc_bn(self, idx, name, param):
-        assert param[2].data[0] == 1.0
-        return {name + '/mean/EMA': param[0].data,
-                name + '/variance/EMA': param[1].data}
+        scale_factor = param[2].data[0]
+        return {name + '/mean/EMA': param[0].data / scale_factor,
+                name + '/variance/EMA': param[1].data / scale_factor}
 
     def proc_scale(self, idx, name, param):
         bottom_name = self.net.bottom_names[name][0]
