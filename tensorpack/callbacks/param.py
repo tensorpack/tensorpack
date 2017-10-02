@@ -297,12 +297,15 @@ class StatMonitorParamSetter(HyperParamSetter):
             last_k (int): last k epochs.
             reverse (bool): monitor increasing instead of decreasing.
 
-        This callback will change param by ``new_value = value_func(old_value)``, when:
+        This callback will change ``param`` by ``new_value = value_func(old_value)``, when:
         ``min(stats) >= stats[0] - threshold``, where
-        ``stats = [stat_name in last k epochs]``
+        ``stats = [the values of stat_name in last k epochs]``
+
+        If ``reverse`` is True, it will change the ``param`` when:
+        ``max(stats) <= stats[0] + threshold``.
 
         Example:
-            If validation error wasn't decreasing for 5 epochs, anneal the learning rate:
+            If validation error wasn't decreasing for 5 epochs, anneal the learning rate by 0.2:
 
             .. code-block:: python
 
@@ -334,6 +337,7 @@ class StatMonitorParamSetter(HyperParamSetter):
             if hist_max > hist_first + self.threshold:  # large enough
                 return None
         self.last_changed_epoch = self.epoch_num
-        logger.info("[StatMonitorParamSetter] Triggered, history: " +
-                    ','.join(map(str, hist)))
+        logger.info(
+            "[StatMonitorParamSetter] Triggered, history of {}: ".format(
+                self.stat_name) + ','.join(map(str, hist)))
         return self.value_func(self.get_current_value())
