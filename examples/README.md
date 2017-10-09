@@ -10,7 +10,7 @@ Training examples with __reproducible__ and meaningful performance.
 
 ## Vision:
 + [A tiny SVHN ConvNet with 97.8% accuracy](svhn-digit-convnet.py)
-+ [Multi-GPU training of ResNet on ImageNet](ResNet)
++ Multi-GPU training of [ResNet](ResNet) and [ShuffleNet](ShuffleNet) on ImageNet
 + [DoReFa-Net: training binary / low-bitwidth CNN on ImageNet](DoReFa-Net)
 + [Generative Adversarial Network(GAN) variants](GAN), including DCGAN, InfoGAN, Conditional GAN, WGAN, BEGAN, DiscoGAN, Image to Image, CycleGAN.
 + [Inception-BN and InceptionV3](Inception)
