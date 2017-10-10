@@ -155,6 +155,8 @@ The above script builds a DataFlow which produces jpeg-encoded ImageNet data.
 We store the jpeg string as a numpy array because the function `cv2.imdecode` later expect this format.
 Please note we can only use 1 prefetch process to speed up. If `nr_proc>1`, `ds1` will take data
 from several forks of `ds0`, then neither the content nor the order of `ds1` will be the same as `ds0`.
+See [documentation](http://localhost:8000/modules/dataflow.html#tensorpack.dataflow.PrefetchDataZMQ)
+about caveats of `PrefetchDataZMQ`.
 
 It will generate a database file of 140G. We build a DataFlow to read this LMDB file sequentially:
 ```

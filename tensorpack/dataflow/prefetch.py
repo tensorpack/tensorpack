@@ -126,10 +126,15 @@ class PrefetchDataZMQ(ProxyDataFlow):
     collect datapoints from `ds` in each process by ZeroMQ IPC pipe.
 
     Note:
-        1. The underlying dataflow worker will be forked multiple times When ``nr_proc>1``.
-           As a result, unless the underlying dataflow is fully shuffled, the data distribution
-           produced by this dataflow will be different.
-           (e.g. you are likely to see duplicated datapoints at the beginning)
+        1. An iterator cannot run faster automatically -- the underlying dataflow worker
+           will be forked ``nr_proc`` times. As a result, we have the following
+           guarantee on the dataflow correctness:
+
+           a. When ``nr_proc=1``, the dataflow produces the same data as ``ds`` in the same order.
+           b. When ``nr_proc>1``, the dataflow produces the same distribution
+              of data as ``ds`` if each sample from ``ds`` is i.i.d. (e.g. fully shuffled).
+              You probably only want to use it for training.
+
         2. Once :meth:`reset_state` is called, this dataflow becomes not fork-safe.
            i.e., if you fork an already reset instance of this dataflow,
            it won't be usable in the forked process.

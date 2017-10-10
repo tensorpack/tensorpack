@@ -151,10 +151,11 @@ class Monitors(Callback):
     def put_image(self, name, val):
         """
         Put an image.
+
         Args:
             name (str):
             val (np.ndarray): 2D, 3D (HWC) or 4D (NHWC) numpy array of images
-                in range [0,255].  If channel is 3, assumed to be RGB.
+                in range [0,255]. If channel is 3, assumed to be RGB.
         """
         assert isinstance(val, np.ndarray)
         arr = image_to_nhwc(val)
