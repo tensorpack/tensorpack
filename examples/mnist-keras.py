@@ -101,7 +101,7 @@ def get_config():
     dataset_train, dataset_test = get_data()
 
     return TrainConfig(
-        model=KerasModel(get_keras_model()),
+        model=Model(),
         dataflow=dataset_train,
         callbacks=[
             KerasCallback(True),   # for Keras training
