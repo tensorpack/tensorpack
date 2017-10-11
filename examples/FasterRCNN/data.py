@@ -248,7 +248,7 @@ def get_train_dataflow():
 
 def get_eval_dataflow():
     imgs = COCODetection.load_many(config.BASEDIR, config.VAL_DATASET, add_gt=False)
-# no filter for training
+    # no filter for training
     ds = DataFromListOfDict(imgs, ['file_name', 'id'])
 
     def f(fname):

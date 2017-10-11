@@ -46,6 +46,8 @@ def get_default_sess_config(mem_fraction=0.99):
 
     # May hurt performance
     # conf.graph_options.optimizer_options.global_jit_level = tf.OptimizerOptions.ON_1
+    # TODO test this
+    # conf.graph_options.place_pruned_graph = True
     return conf
 
 

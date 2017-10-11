@@ -1,5 +1,5 @@
 # Faster-RCNN on COCO
-This example aimes to provide a minimal Multi-GPU implementation (<1000 lines) of ResNet50-Faster-RCNN on COCO.
+This example aimes to provide a minimal (<1000 lines) Multi-GPU implementation of ResNet50-Faster-RCNN on COCO.
 
 ## Dependencies
 + TensorFlow nightly.
@@ -44,13 +44,13 @@ To predict on an image (and show output in a window):
 The hyperparameters are not carefully tuned. You can probably get better performance by e.g.  training longer.
 
 ## Files
-This is an minimal implementation that simply contains these files:
+This is a minimal implementation that simply contains these files:
 + coco.py: load COCO data
 + data.py: prepare data for training
-+ common.py: some common data preparation utilities
++ common.py: common data preparation utilities
 + basemodel.py: implement resnet
-+ model.py: implement faster-rcnn
-+ viz.py: visualization utilities
-+ utils/: third-party helper functions
++ model.py: implement rpn/faster-rcnn
 + train.py: main training script
-+ eval.py: utilities for evaluation
++ utils/: third-party helper functions
++ eval.py: evaluation utilities
++ viz.py: visualization utilities
