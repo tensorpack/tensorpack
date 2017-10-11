@@ -69,7 +69,7 @@ class Rotation(TransformAugmentorBase):
         if self.step_deg:
             deg = deg // self.step_deg * self.step_deg
         """
-        The correct center is shape*0.5-0.5 This can be verified by:
+        The correct center is shape*0.5-0.5. This can be verified by:
 
         SHAPE = 7
         arr = np.random.rand(SHAPE, SHAPE)
