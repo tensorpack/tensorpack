@@ -77,7 +77,7 @@ class Model(ModelDesc):
         rpn_label_loss, rpn_box_loss = rpn_losses(
             anchor_labels, anchor_boxes_encoded, rpn_label_logits, rpn_box_logits)
 
-        decoded_boxes = decode_bbox_target(rpn_box_logits, fm_anchors) # (fHxfWxNA)x4, floatbox
+        decoded_boxes = decode_bbox_target(rpn_box_logits, fm_anchors)  # (fHxfWxNA)x4, floatbox
         proposal_boxes, proposal_scores = generate_rpn_proposals(
             decoded_boxes,
             tf.reshape(rpn_label_logits, [-1]),
@@ -88,15 +88,15 @@ class Model(ModelDesc):
                 proposal_boxes, gt_boxes, gt_labels)
             boxes_on_featuremap = rcnn_sampled_boxes * (1.0 / config.ANCHOR_STRIDE)
             roi_resized = roi_align(featuremap, boxes_on_featuremap, 14)
-            feature_fastrcnn = resnet_conv5(roi_resized)    #nxc
+            feature_fastrcnn = resnet_conv5(roi_resized)    # nxc
             fastrcnn_label_logits, fastrcnn_box_logits = fastrcnn_head(feature_fastrcnn, config.NUM_CLASS)
 
             fastrcnn_label_loss, fastrcnn_box_loss = fastrcnn_losses(
                 rcnn_labels, rcnn_encoded_boxes, fastrcnn_label_logits, fastrcnn_box_logits)
 
             wd_cost = regularize_cost(
-                    '(?:group1|group2|group3|rpn|fastrcnn)/.*W',
-                    l2_regularizer(1e-4), name='wd_cost')
+                '(?:group1|group2|group3|rpn|fastrcnn)/.*W',
+                l2_regularizer(1e-4), name='wd_cost')
 
             self.cost = tf.add_n([
                 rpn_label_loss, rpn_box_loss,
@@ -107,18 +107,17 @@ class Model(ModelDesc):
                 add_moving_summary(k)
         else:
             roi_resized = roi_align(featuremap, proposal_boxes * (1.0 / config.ANCHOR_STRIDE), 14)
-            feature_fastrcnn = resnet_conv5(roi_resized)    #nxc
+            feature_fastrcnn = resnet_conv5(roi_resized)    # nxc
             label_logits, fastrcnn_box_logits = fastrcnn_head(feature_fastrcnn, config.NUM_CLASS)
-            label_probs = tf.nn.softmax(label_logits, name='fastrcnn_all_probs') # NP,
+            label_probs = tf.nn.softmax(label_logits, name='fastrcnn_all_probs')  # NP,
             labels = tf.argmax(label_logits, axis=1)
             fg_ind, fg_box_logits = fastrcnn_predict_boxes(labels, fastrcnn_box_logits)
             fg_label_probs = tf.gather(label_probs, fg_ind, name='fastrcnn_fg_probs')
             fg_boxes = tf.gather(proposal_boxes, fg_ind)
 
             fg_box_logits = fg_box_logits / tf.constant(config.FASTRCNN_BBOX_REG_WEIGHTS)
-            decoded_boxes = decode_bbox_target(fg_box_logits, fg_boxes) # Nfx4, floatbox
+            decoded_boxes = decode_bbox_target(fg_box_logits, fg_boxes)  # Nfx4, floatbox
             decoded_boxes = tf.identity(decoded_boxes, name='fastrcnn_fg_boxes')
-
 
     def _get_optimizer(self):
         lr = symbf.get_scalar_var('learning_rate', 0.003, summary=True)
@@ -261,7 +260,6 @@ if __name__ == '__main__':
         predict(args.load, args.predict)
         sys.exit()
 
-
     logger.set_logger_dir(args.logdir, 'd')
     stepnum = 300
     warmup_epoch = max(math.ceil(500.0 / stepnum), 5)
@@ -271,17 +269,19 @@ if __name__ == '__main__':
         callbacks=[
             PeriodicTrigger(ModelSaver(), every_k_epochs=5),
             # linear warmup
-            ScheduledHyperParamSetter('learning_rate',
+            ScheduledHyperParamSetter(
+                'learning_rate',
                 [(0, 0.003), (warmup_epoch, 0.01)], interp='linear'),
             # step decay
-            ScheduledHyperParamSetter('learning_rate',
-                [(warmup_epoch, 0.01), ((120000//stepnum) + warmup_epoch, 1e-3), (180000//stepnum, 1e-4)]),
+            ScheduledHyperParamSetter(
+                'learning_rate',
+                [(warmup_epoch, 0.01), (120000 // stepnum, 1e-3), (180000 // stepnum, 1e-4)]),
             HumanHyperParamSetter('learning_rate'),
             EvalCallback(),
             GPUUtilizationTracker(),
         ],
         steps_per_epoch=stepnum,
-        max_epoch=205000//stepnum,
+        max_epoch=205000 // stepnum,
         session_init=get_model_loader(args.load),
         nr_tower=nr_gpu
     )

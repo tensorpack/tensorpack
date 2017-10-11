@@ -23,8 +23,10 @@ from common import (
     box_to_point8, point8_to_box)
 import config
 
+
 class MalformedData(BaseException):
     pass
+
 
 @memoized
 def get_all_anchors():
@@ -61,7 +63,7 @@ def get_all_anchors():
     # FSxFSxAx4
     assert np.all(field_of_anchors == field_of_anchors.astype('int32'))
     field_of_anchors = field_of_anchors.astype('float32')
-    field_of_anchors[:,:,:,[2,3]] += 1
+    field_of_anchors[:, :, :, [2, 3]] += 1
     return field_of_anchors
 
 
@@ -91,10 +93,10 @@ def get_anchor_labels(anchors, gt_boxes, crowd_boxes):
     bbox_iou_float = get_iou_callable()
     NA, NB = len(anchors), len(gt_boxes)
     assert NB > 0  # empty images should have been filtered already
-    box_ious = bbox_iou_float(anchors, gt_boxes) # NA x NB
-    ious_argmax_per_anchor = box_ious.argmax(axis=1) # NA,
+    box_ious = bbox_iou_float(anchors, gt_boxes)  # NA x NB
+    ious_argmax_per_anchor = box_ious.argmax(axis=1)  # NA,
     ious_max_per_anchor = box_ious.max(axis=1)
-    ious_max_per_gt = np.amax(box_ious, axis=0, keepdims=True) # 1xNB
+    ious_max_per_gt = np.amax(box_ious, axis=0, keepdims=True)  # 1xNB
     # for each gt, find all those anchors (including ties) that has the max ious with it
     anchors_with_max_iou_per_gt = np.where(box_ious == ious_max_per_gt)[0]
 
@@ -131,9 +133,10 @@ def get_anchor_labels(anchors, gt_boxes, crowd_boxes):
 
     # Set anchor boxes: the best gt_box for each fg anchor
     anchor_boxes = np.zeros((NA, 4), dtype='float32')
-    fg_boxes = gt_boxes[ious_argmax_per_anchor[fg_inds],:]
+    fg_boxes = gt_boxes[ious_argmax_per_anchor[fg_inds], :]
     anchor_boxes[fg_inds, :] = fg_boxes
     return anchor_labels, anchor_boxes
+
 
 def get_rpn_anchor_input(im, boxes, klass, is_crowd):
     """
@@ -157,21 +160,21 @@ def get_rpn_anchor_input(im, boxes, klass, is_crowd):
     def filter_box_inside(im, boxes):
         h, w = im.shape[:2]
         indices = np.where(
-            (boxes[:,0] >= 0) &
-            (boxes[:,1] >= 0) &
-            (boxes[:,2] <= w) &
-            (boxes[:,3] <= h))[0]
+            (boxes[:, 0] >= 0) &
+            (boxes[:, 1] >= 0) &
+            (boxes[:, 2] <= w) &
+            (boxes[:, 3] <= h))[0]
         return indices
 
     crowd_boxes = boxes[is_crowd == 1]
     non_crowd_boxes = boxes[is_crowd == 0]
 
     # fHxfWxAx4
-    featuremap_anchors = ALL_ANCHORS[:featureH,:featureW,:,:]
+    featuremap_anchors = ALL_ANCHORS[:featureH, :featureW, :, :]
     featuremap_anchors_flatten = featuremap_anchors.reshape((-1, 4))
     # only use anchors inside the image
     inside_ind = filter_box_inside(im, featuremap_anchors_flatten)
-    inside_anchors = featuremap_anchors_flatten[inside_ind,:]
+    inside_anchors = featuremap_anchors_flatten[inside_ind, :]
 
     anchor_labels, anchor_boxes = get_anchor_labels(inside_anchors, non_crowd_boxes, crowd_boxes)
 
@@ -203,6 +206,7 @@ def read_and_augment_images(ds):
     augs = [CustomResize(config.SHORT_EDGE_SIZE, config.MAX_SIZE),
             imgaug.Flip(horiz=True)]
     ds = AugmentImageComponents(ds, augs, index=(0,), coords_index=(1,))
+
     def unmapf(points):
         boxes = point8_to_box(points)
         return boxes
@@ -241,10 +245,12 @@ def get_train_dataflow():
     ds = MapData(ds, add_anchor_to_dp)
     return ds
 
+
 def get_eval_dataflow():
     imgs = COCODetection.load_many(config.BASEDIR, config.VAL_DATASET, add_gt=False)
 # no filter for training
     ds = DataFromListOfDict(imgs, ['file_name', 'id'])
+
     def f(fname):
         im = cv2.imread(fname, cv2.IMREAD_COLOR)
         assert im is not None, fname
@@ -252,8 +258,8 @@ def get_eval_dataflow():
     ds = MapDataComponent(ds, f, 0)
     return ds
 
+
 if __name__ == '__main__':
-    #logger.setLevel(logging.DEBUG)
     from tensorpack.dataflow import PrintData
     ds = get_train_dataflow('/datasets01/COCO/060817')
     ds = PrintData(ds, 100)
@@ -261,6 +267,3 @@ if __name__ == '__main__':
     ds.reset_state()
     for k in ds.get_data():
         pass
-        #import IPython as IP; IP.embed()
-
-

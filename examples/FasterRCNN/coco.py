@@ -18,6 +18,7 @@ __all__ = ['COCODetection', 'COCOMeta']
 
 COCO_NUM_CATEGORY = 80
 
+
 class _COCOMeta(object):
     INSTANCE_TO_BASEDIR = {
         'train2014': 'train2014',
@@ -46,7 +47,9 @@ class _COCOMeta(object):
         self.class_id_to_category_id = {
             v: k for k, v in self.category_id_to_class_id.items()}
 
+
 COCOMeta = _COCOMeta()
+
 
 class COCODetection(object):
     def __init__(self, basedir, name):
@@ -126,7 +129,7 @@ class COCODetection(object):
                 valid_objs.append(obj)
 
         # all geometrically-valid boxes are returned
-        boxes = np.asarray([obj['bbox'] for obj in valid_objs], dtype='float32') # (n, 4)
+        boxes = np.asarray([obj['bbox'] for obj in valid_objs], dtype='float32')  # (n, 4)
         cls = np.asarray([
             COCOMeta.category_id_to_class_id[obj['category_id']]
             for obj in valid_objs], dtype='int32')  # (n,)
@@ -172,4 +175,4 @@ if __name__ == '__main__':
     c = COCODetection('train')
     gt_boxes = c.load()
     print("#Images:", len(gt_boxes))
-    c.print_class_histogram(bb)
+    c.print_class_histogram(gt_boxes)

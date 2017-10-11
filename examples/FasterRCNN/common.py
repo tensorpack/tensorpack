@@ -10,6 +10,7 @@ from tensorpack.utils import logger
 
 import config
 
+
 class DataFromListOfDict(RNGDataFlow):
     def __init__(self, lst, keys, shuffle=False):
         self._lst = lst
@@ -66,9 +67,10 @@ def box_to_point8(boxes):
     Returns:
         (nx4)x2
     """
-    b = boxes[:,[0,1,2,3,0,3,2,1]]
+    b = boxes[:, [0, 1, 2, 3, 0, 3, 2, 1]]
     b = b.reshape((-1, 2))
     return b
+
 
 def point8_to_box(points):
     """
@@ -78,8 +80,8 @@ def point8_to_box(points):
         nx4 boxes (x1y1x2y2)
     """
     p = points.reshape((-1, 4, 2))
-    minxy = p.min(axis=1)   #nx2
-    maxxy = p.max(axis=1)   #nx2
+    minxy = p.min(axis=1)   # nx2
+    maxxy = p.max(axis=1)   # nx2
     return np.concatenate((minxy, maxxy), axis=1)
 
 
@@ -90,9 +92,9 @@ def clip_boxes(boxes, shape):
         shape: h, w
     """
     h, w = shape
-    boxes[:,[0,1]] = np.maximum(boxes[:,[0,1]], 0)
-    boxes[:,2] = np.minimum(boxes[:,2], w)
-    boxes[:,3] = np.minimum(boxes[:,3], h)
+    boxes[:, [0, 1]] = np.maximum(boxes[:, [0, 1]], 0)
+    boxes[:, 2] = np.minimum(boxes[:, 2], w)
+    boxes[:, 3] = np.minimum(boxes[:, 3], h)
     return boxes
 
 

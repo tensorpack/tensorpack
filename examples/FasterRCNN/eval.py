@@ -25,6 +25,7 @@ DetectionResult = namedtuple(
     'DetectionResult',
     ['class_id', 'boxes', 'scores'])
 
+
 @memoized
 def get_tf_nms():
     """
@@ -59,8 +60,8 @@ def nms_fastrcnn_results(boxes, probs):
         if ids.size == 0:
             continue
         probs_k = probs[ids, klass].flatten()
-        boxes_k = boxes[ids,:]
-        selected_ids = nms_func(boxes_k[:,[1,0,3,2]], probs_k)
+        boxes_k = boxes[ids, :]
+        selected_ids = nms_func(boxes_k[:, [1, 0, 3, 2]], probs_k)
         selected_boxes = boxes_k[selected_ids, :].copy()
         ret.append(DetectionResult(klass, selected_boxes, probs_k[selected_ids]))
 
@@ -73,7 +74,7 @@ def nms_fastrcnn_results(boxes, probs):
                 keep_ids = np.where(scores >= score_thresh)[0]
                 if len(keep_ids):
                     newret.append(DetectionResult(
-                        klass, boxes[keep_ids,:], scores[keep_ids]))
+                        klass, boxes[keep_ids, :], scores[keep_ids]))
             ret = newret
     return ret
 
@@ -115,8 +116,8 @@ def eval_on_dataflow(df, detect_func):
             results = detect_func(img)
             for classid, boxes, scores in results:
                 cat_id = COCOMeta.class_id_to_category_id[classid]
-                boxes[:,2] -= boxes[:,0]
-                boxes[:,3] -= boxes[:,1]
+                boxes[:, 2] -= boxes[:, 0]
+                boxes[:, 3] -= boxes[:, 1]
                 for box, score in zip(boxes, scores):
                     all_results.append({
                         'image_id': img_id,
@@ -138,13 +139,7 @@ def print_evaluation_scores(json_file):
     cocoDt = coco.loadRes(json_file)
     imgIds = sorted(coco.getImgIds())
     cocoEval = COCOeval(coco, cocoDt, 'bbox')
-    cocoEval.params.imgIds  = imgIds
+    cocoEval.params.imgIds = imgIds
     cocoEval.evaluate()
     cocoEval.accumulate()
     cocoEval.summarize()
-
-
-if __name__ == '__main__':
-    ds = get_eval_dataflow('/home/yuxinwu/data/COCO/')
-    print("Size: ", ds.size())
-    TestDataSpeed(ds, 1000).start()

@@ -10,6 +10,7 @@ from tensorpack.utils import viz
 from coco import COCOMeta
 from utils.box_ops import get_iou_callable
 
+
 def draw_annotation(img, boxes, klass, is_crowd=None):
     labels = []
     assert len(boxes) == len(klass)
@@ -36,12 +37,12 @@ def draw_proposal_recall(img, proposals, proposal_scores, gt_boxes):
         gt_boxes: NG
     """
     bbox_iou_float = get_iou_callable()
-    box_ious = bbox_iou_float(gt_boxes, proposals)    #ng x np
+    box_ious = bbox_iou_float(gt_boxes, proposals)    # ng x np
     box_ious_argsort = np.argsort(-box_ious, axis=1)
-    good_proposals_ind = box_ious_argsort[:,:3]   # for each gt, find 3 best proposals
+    good_proposals_ind = box_ious_argsort[:, :3]   # for each gt, find 3 best proposals
     good_proposals_ind = np.unique(good_proposals_ind.ravel())
 
-    proposals = proposals[good_proposals_ind,:]
+    proposals = proposals[good_proposals_ind, :]
     tags = list(map(str, proposal_scores[good_proposals_ind]))
     img = viz.draw_boxes(img, proposals, tags)
     return img, good_proposals_ind

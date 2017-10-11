@@ -13,6 +13,7 @@ from tensorpack.models import Conv2D, FullyConnected
 from utils.box_ops import pairwise_iou
 import config
 
+
 def rpn_head(featuremap):
     with tf.variable_scope('rpn'), \
             argscope(Conv2D, data_format='NCHW',
@@ -23,12 +24,12 @@ def rpn_head(featuremap):
         box_logits = Conv2D('box', hidden, 4 * config.NR_ANCHOR, 1)
         # 1, NA(*4), im/16, im/16 (NCHW)
 
-        label_logits = tf.transpose(label_logits, [0, 2, 3, 1]) # 1xfHxfWxNA
+        label_logits = tf.transpose(label_logits, [0, 2, 3, 1])  # 1xfHxfWxNA
         label_logits = tf.squeeze(label_logits, 0)  # fHxfWxNA
 
         shp = tf.shape(box_logits)  # 1x(NAx4)xfHxfW
-        box_logits = tf.transpose(box_logits, [0, 2, 3, 1]) # 1xfHxfWx(NAx4)
-        box_logits = tf.reshape(box_logits, tf.stack([shp[2], shp[3], config.NR_ANCHOR, 4])) # fHxfWxNAx4
+        box_logits = tf.transpose(box_logits, [0, 2, 3, 1])  # 1xfHxfWx(NAx4)
+        box_logits = tf.reshape(box_logits, tf.stack([shp[2], shp[3], config.NR_ANCHOR, 4]))  # fHxfWxNAx4
     return label_logits, box_logits
 
 
@@ -61,14 +62,14 @@ def rpn_losses(anchor_labels, anchor_boxes, label_logits, box_logits):
                 valid_prediction = tf.cast(valid_label_prob > th, tf.int32)
                 prediction_corr = tf.count_nonzero(tf.equal(valid_prediction, valid_anchor_labels))
                 pos_prediction_corr = tf.count_nonzero(tf.logical_and(
-                       valid_label_prob > th,
-                       tf.equal(valid_prediction, valid_anchor_labels)))
+                    valid_label_prob > th,
+                    tf.equal(valid_prediction, valid_anchor_labels)))
                 summaries.append(tf.truediv(
-                        pos_prediction_corr,
-                        nr_pos, name='recall_th{}'.format(th)))
+                    pos_prediction_corr,
+                    nr_pos, name='recall_th{}'.format(th)))
                 summaries.append(tf.truediv(
-                        prediction_corr,
-                        nr_valid, name='accuracy_th{}'.format(th)))
+                    prediction_corr,
+                    nr_valid, name='accuracy_th{}'.format(th)))
 
     label_loss = tf.nn.sigmoid_cross_entropy_with_logits(
         labels=tf.to_float(valid_anchor_labels), logits=valid_label_logits)
@@ -115,6 +116,7 @@ def decode_bbox_target(box_predictions, anchors):
     x2y2 = xbyb + wbhb * 0.5
     out = tf.squeeze(tf.concat([x1y1, x2y2], axis=2), axis=1, name='output')
     return out
+
 
 @under_name_scope()
 def encode_bbox_target(boxes, anchors):
@@ -179,10 +181,9 @@ def generate_rpn_proposals(boxes, scores, img_shape):
     topk_boxes_x1y1, topk_boxes_x2y2 = tf.split(topk_boxes_x1y1x2y2, 2, axis=1)
     # nx1x2 each
     wbhb = tf.squeeze(topk_boxes_x2y2 - topk_boxes_x1y1, axis=1)
-    valid = tf.reduce_all(wbhb > config.RPN_MIN_SIZE, axis=1) #n,
+    valid = tf.reduce_all(wbhb > config.RPN_MIN_SIZE, axis=1)  # n,
     topk_valid_boxes_x1y1x2y2 = tf.boolean_mask(topk_boxes_x1y1x2y2, valid)
     topk_valid_scores = tf.boolean_mask(topk_scores, valid)
-
 
     topk_valid_boxes_y1x1y2x2 = tf.reshape(
         tf.reverse(topk_valid_boxes_x1y1x2y2, axis=[2]),
@@ -228,7 +229,7 @@ def sample_fast_rcnn_targets(boxes, gt_boxes, gt_labels):
         # find best gt box for each roi box
         best_iou_ind = tf.argmax(iou, axis=1)   # n, each in 1~m
         best_iou = tf.reduce_max(iou, axis=1)   # n,
-        best_gt_boxes = tf.gather(gt_boxes, best_iou_ind)   #nx4
+        best_gt_boxes = tf.gather(gt_boxes, best_iou_ind)   # nx4
         best_gt_labels = tf.gather(gt_labels, best_iou_ind)     # n, each in 1~C
 
         fg_mask = best_iou >= config.FASTRCNN_FG_THRESH
@@ -255,17 +256,16 @@ def sample_fast_rcnn_targets(boxes, gt_boxes, gt_labels):
 
     # don't have to add gt for training, but add it anyway
     fg_inds = tf.reshape(tf.where(fg_mask), [-1])
-    fg_inds = tf.concat([fg_inds,
-        tf.cast(
-            tf.range(tf.size(gt_labels)) + tf.shape(boxes)[0],
-            tf.int64)], 0)
+    fg_inds = tf.concat([fg_inds, tf.cast(
+        tf.range(tf.size(gt_labels)) + tf.shape(boxes)[0],
+        tf.int64)], 0)
     num_fg = tf.size(fg_inds)
     num_fg = tf.minimum(int(
         config.FASTRCNN_BATCH_PER_IM * config.FASTRCNN_FG_RATIO[1]),
         num_fg, name='num_fg')
     fg_inds = tf.slice(tf.random_shuffle(fg_inds), [0], [num_fg])
 
-    bg_inds = tf.where(tf.logical_not(fg_mask))[:,0]
+    bg_inds = tf.where(tf.logical_not(fg_mask))[:, 0]
     num_bg = tf.size(bg_inds)
     num_bg = tf.minimum(config.FASTRCNN_BATCH_PER_IM - num_fg, num_bg)
     num_bg = tf.minimum(
@@ -335,10 +335,10 @@ def roi_align(featuremap, boxes, output_shape):
         return tf.concat([ny0, nx0, ny0 + nh, nx0 + nw], axis=1)
 
     image_shape = tf.shape(featuremap)[2:]
-    featuremap = tf.transpose(featuremap, [0, 2, 3, 1]) # to nhwc
+    featuremap = tf.transpose(featuremap, [0, 2, 3, 1])  # to nhwc
     # sample 4 locations per roi bin
     boxes = transform_fpcoor_for_tf(boxes, image_shape, [output_shape * 2, output_shape * 2])
-    boxes = tf.stop_gradient(boxes) # TODO
+    boxes = tf.stop_gradient(boxes)  # TODO
     ret = tf.image.crop_and_resize(
         featuremap, boxes, tf.zeros([tf.shape(boxes)[0]], dtype=tf.int32),
         crop_size=[output_shape * 2, output_shape * 2])
@@ -387,6 +387,7 @@ def fastrcnn_predict_boxes(labels, box_logits):
     fg_box_logits = tf.gather_nd(box_logits, tf.stop_gradient(ind_2d))
     return fg_ind, fg_box_logits
 
+
 @under_name_scope()
 def fastrcnn_losses(labels, boxes, label_logits, box_logits):
     """
@@ -405,7 +406,7 @@ def fastrcnn_losses(labels, boxes, label_logits, box_logits):
 
     # n x c-1 x 4 -> nfg x 4
     fg_ind, fg_box_logits = fastrcnn_predict_boxes(labels, box_logits)
-    fg_boxes = tf.gather(boxes, fg_ind) # nfgx4
+    fg_boxes = tf.gather(boxes, fg_ind)  # nfgx4
 
     fg_label_pred = tf.argmax(tf.gather(label_logits, fg_ind), axis=1)
     num_zero = tf.reduce_sum(tf.cast(tf.equal(fg_label_pred, 0), tf.int32), name='num_zero')
