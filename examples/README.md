@@ -18,6 +18,7 @@ Training examples with __reproducible__ and meaningful performance.
 + [Spatial Transformer Networks on MNIST addition](SpatialTransformer)
 + [Visualize CNN saliency maps](Saliency)
 + [Similarity learning on MNIST](SimilarityLearning)
++ Learn steering filters with [Dynamic Filter Networks](DynamicFilterNetwork)
 + Load a pre-trained [AlexNet](load-alexnet.py) or [VGG16](load-vgg16.py) model.
 + Load a pre-trained [Convolutional Pose Machines](ConvolutionalPoseMachines/).
 

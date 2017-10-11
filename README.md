@@ -37,11 +37,11 @@ It's Yet Another TF wrapper, but different in:
 
 2. Focus on __training speed__.
 	+	Speed comes for free with tensorpack -- it uses TensorFlow in the __correct way__.
-	  Even on a tiny CNN example, the training runs [1.6x faster](https://gist.github.com/ppwwyyxx/8d95da79f8d97036a7d67c2416c851b6) than the equivalent Keras code.
+	  On various CNNs, it runs 1.5~1.7x faster than the equivalent Keras code.
 
-	+ Data-parallel multi-GPU training is off-the-shelf to use. It is as fast as Google's [official benchmark](https://www.tensorflow.org/performance/benchmarks).
+	+ Data-parallel multi-GPU/distributed training is off-the-shelf to use. It is as fast as Google's [official benchmark](https://www.tensorflow.org/performance/benchmarks).
 
-	+ Data-parallel distributed training is off-the-shelf to use. It is as slow as Google's official benchmark.
+	+ See [tensorpack/benchmarks](https://github.com/tensorpack/benchmarks) for some benchmark scripts.
 
 3. Focus on __large datasets__.
 	+ It's painful to read/preprocess data through TF.
@@ -69,4 +69,4 @@ Dependencies:
 pip install -U git+https://github.com/ppwwyyxx/tensorpack.git
 # or add `--user` to avoid system-wide installation.
 ```
-Besides, if you only want to use `tensorpack.dataflow` alone as a data processing library, TensorFlow is also optional.
+If you only want to use `tensorpack.dataflow` alone as a data processing library, TensorFlow is also optional.
