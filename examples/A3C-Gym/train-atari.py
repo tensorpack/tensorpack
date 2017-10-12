@@ -27,11 +27,12 @@ from tensorpack.tfutils.gradproc import MapGradient, SummaryGradient
 from tensorpack.utils.gpu import get_nr_gpu
 
 
-from tensorpack.RL import *
+import gym
 from simulator import *
 import common
-from common import (play_model, Evaluator, eval_model_multithread,
-                    play_one_episode, play_n_episodes)
+from common import (Evaluator, eval_model_multithread,
+                    play_one_episode, play_n_episodes,
+                    WarpFrame, FrameStack, FireResetEnv, LimitLength)
 
 if six.PY3:
     from concurrent import futures
@@ -58,15 +59,16 @@ NUM_ACTIONS = None
 ENV_NAME = None
 
 
-def get_player(viz=False, train=False, dumpdir=None):
-    pl = GymEnv(ENV_NAME, viz=viz, dumpdir=dumpdir)
-    pl = MapPlayerState(pl, lambda img: cv2.resize(img, IMAGE_SIZE[::-1]))
-    pl = HistoryFramePlayer(pl, FRAME_HISTORY)
-    if not train:
-        pl = PreventStuckPlayer(pl, 30, 1)
-    else:
-        pl = LimitLengthPlayer(pl, 60000)
-    return pl
+def get_player(train=False, dumpdir=None):
+    env = gym.make(ENV_NAME)
+    if dumpdir:
+        env = gym.wrappers.Monitor(env, dumpdir)
+    env = FireResetEnv(env)
+    env = WarpFrame(env, IMAGE_SIZE)
+    env = FrameStack(env, 4)
+    if train:
+        env = LimitLength(env, 60000)
+    return env
 
 
 class MySimulatorWorker(SimulatorProcess):
@@ -272,7 +274,7 @@ if __name__ == '__main__':
 
     ENV_NAME = args.env
     logger.info("Environment Name: {}".format(ENV_NAME))
-    NUM_ACTIONS = get_player().get_action_space().num_actions()
+    NUM_ACTIONS = get_player().action_space.n
     logger.info("Number of actions: {}".format(NUM_ACTIONS))
 
     if args.gpu:
@@ -280,20 +282,21 @@ if __name__ == '__main__':
 
     if args.task != 'train':
         assert args.load is not None
-        cfg = PredictConfig(
+        pred = OfflinePredictor(PredictConfig(
             model=Model(),
             session_init=get_model_loader(args.load),
             input_names=['state'],
-            output_names=['policy'])
+            output_names=['policy']))
         if args.task == 'play':
-            play_model(cfg, get_player(viz=0.01))
+            play_n_episodes(get_player(train=False), pred,
+                            args.episode, render=True)
         elif args.task == 'eval':
-            eval_model_multithread(cfg, args.episode, get_player)
+            eval_model_multithread(pred, args.episode, get_player)
         elif args.task == 'gen_submit':
             play_n_episodes(
                 get_player(train=False, dumpdir=args.output),
-                OfflinePredictor(cfg), args.episode)
-            # gym.upload(output, api_key='xxx')
+                pred, args.episode)
+            # gym.upload(args.output, api_key='xxx')
     else:
         dirname = os.path.join('train_log', 'train-atari-{}'.format(ENV_NAME))
         logger.set_logger_dir(dirname)

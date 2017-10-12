@@ -3,6 +3,7 @@
 #  Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 from pkgutil import iter_modules
+from ..utils.develop import log_deprecated
 import os
 import os.path
 
@@ -12,6 +13,8 @@ __all__ = []
 """
 This module should be removed in the future.
 """
+
+log_deprecated("tensorpack.RL", "Please use gym or other APIs instead!", "2017-12-31")
 
 
 def _global_import(name):
