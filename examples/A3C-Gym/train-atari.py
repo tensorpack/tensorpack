@@ -29,10 +29,9 @@ from tensorpack.utils.gpu import get_nr_gpu
 
 import gym
 from simulator import *
-import common
 from common import (Evaluator, eval_model_multithread,
-                    play_one_episode, play_n_episodes,
-                    WarpFrame, FrameStack, FireResetEnv, LimitLength)
+                    play_one_episode, play_n_episodes)
+from atari_wrapper import WarpFrame, FrameStack, FireResetEnv, LimitLength
 
 if six.PY3:
     from concurrent import futures

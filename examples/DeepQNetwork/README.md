@@ -27,6 +27,8 @@ Double-DQN runs at 60 batches (3840 trained frames, 240 seen frames, 960 game fr
 
 ## How to use
 
+Install [ALE](https://github.com/mgbellemare/Arcade-Learning-Environment) and gym.
+
 Download an [atari rom](https://github.com/openai/atari-py/tree/master/atari_py/atari_roms) to
 `$TENSORPACK_DATASET/atari_rom/` (defaults to ~/tensorpack_data/atari_rom/), e.g.:
 ```
@@ -42,7 +44,7 @@ Start Training:
 
 Watch the agent play:
 ```
-./DQN.py --rom breakout.bin --task play --load trained.model
+./DQN.py --rom breakout.bin --task play --load path/to/model
 ```
 A pretrained model on breakout can be downloaded [here](https://drive.google.com/open?id=0B9IPQTvr2BBkN1Jrei1xWW0yR28).
 

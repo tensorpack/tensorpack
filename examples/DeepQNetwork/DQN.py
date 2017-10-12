@@ -21,9 +21,8 @@ from tensorpack.utils.concurrency import *
 import tensorflow as tf
 
 from DQNModel import Model as DQNModel
-import common
 from common import Evaluator, eval_model_multithread, play_n_episodes
-from common import FrameStack, WarpFrame, FireResetEnv
+from atari_wrapper import FrameStack, WarpFrame, FireResetEnv
 from expreplay import ExpReplay
 from atari import AtariPlayer
 
