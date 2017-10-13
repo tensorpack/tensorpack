@@ -10,17 +10,18 @@ Training examples with __reproducible__ and meaningful performance.
 
 ## Vision:
 + [A tiny SVHN ConvNet with 97.8% accuracy](svhn-digit-convnet.py)
-+ Multi-GPU training of [ResNet](ResNet) and [ShuffleNet](ShuffleNet) on ImageNet
++ Train [ResNet](ResNet) and [ShuffleNet](ShuffleNet) on ImageNet
++ [Train ResNet50-Faster-RCNN on COCO](FasterRCNN)
 + [DoReFa-Net: training binary / low-bitwidth CNN on ImageNet](DoReFa-Net)
-+ [Generative Adversarial Network(GAN) variants](GAN), including DCGAN, InfoGAN, Conditional GAN, WGAN, BEGAN, DiscoGAN, Image to Image, CycleGAN.
++ [Generative Adversarial Network(GAN) variants](GAN), including DCGAN, InfoGAN, Conditional GAN, WGAN, BEGAN, DiscoGAN, Image to Image, CycleGAN
 + [Inception-BN and InceptionV3](Inception)
 + [Fully-convolutional Network for Holistically-Nested Edge Detection(HED)](HED)
 + [Spatial Transformer Networks on MNIST addition](SpatialTransformer)
 + [Visualize CNN saliency maps](Saliency)
 + [Similarity learning on MNIST](SimilarityLearning)
 + Learn steering filters with [Dynamic Filter Networks](DynamicFilterNetwork)
-+ Load a pre-trained [AlexNet](load-alexnet.py) or [VGG16](load-vgg16.py) model.
-+ Load a pre-trained [Convolutional Pose Machines](ConvolutionalPoseMachines/).
++ Load a pre-trained [AlexNet](load-alexnet.py) or [VGG16](load-vgg16.py) model
++ Load a pre-trained [Convolutional Pose Machines](ConvolutionalPoseMachines/)
 
 ## Reinforcement Learning:
 + [Deep Q-Network(DQN) variants on Atari games](DeepQNetwork), including DQN, DoubleDQN, DuelingDQN.

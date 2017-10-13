@@ -252,6 +252,7 @@ if __name__ == '__main__':
     if args.evaluate is not None:
         assert args.evaluate.endswith('.json')
         assert args.load
+        os.environ['TF_CUDNN_USE_AUTOTUNE'] = '0'
         offline_evaluate(args.load, args.evaluate)
         sys.exit()
     if args.predict is not None:

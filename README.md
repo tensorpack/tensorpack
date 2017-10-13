@@ -5,10 +5,11 @@ A neural net training interface based on TensorFlow.
 [![ReadTheDoc](https://readthedocs.org/projects/tensorpack/badge/?version=latest)](http://tensorpack.readthedocs.io/en/latest/index.html)
 [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/tensorpack/users)
 
-See some [examples](examples) to learn about the framework:
+See some [examples](examples) to learn about the framework. Everything runs on multiple GPUs, because why not?
 
 ### Vision:
-+ [Multi-GPU training of ResNet on ImageNet](examples/ResNet)
++ [Train ResNet/SE-ResNet on ImageNet](examples/ResNet)
++ [Train Faster-RCNN on COCO object detection](examples/FasterRCNN)
 + [Generative Adversarial Network(GAN) variants](examples/GAN), including DCGAN, InfoGAN, Conditional GAN, WGAN, BEGAN, DiscoGAN, Image to Image, CycleGAN.
 + [DoReFa-Net: train binary / low-bitwidth CNN on ImageNet](examples/DoReFa-Net)
 + [Fully-convolutional Network for Holistically-Nested Edge Detection(HED)](examples/HED)
