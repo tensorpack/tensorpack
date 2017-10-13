@@ -65,7 +65,9 @@ class PredictorFactory(object):
 
         with tf.device(device), \
                 TowerContext(tower_name, is_training=False), \
-                freeze_collection(TOWER_FREEZE_KEYS):
+                freeze_collection(TOWER_FREEZE_KEYS + [tf.GraphKeys.UPDATE_OPS]):
+                # also freeze UPDATE_OPS in inference, because they should never be used
+                # TODO a better way to log and warn about collection change during build_graph.
             if input is None:
                 input = PlaceholderInput()
                 input.setup(self._model.get_inputs_desc())
