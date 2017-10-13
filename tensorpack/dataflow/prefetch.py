@@ -126,9 +126,9 @@ class PrefetchDataZMQ(ProxyDataFlow):
     collect datapoints from `ds` in each process by ZeroMQ IPC pipe.
 
     Note:
-        1. An iterator cannot run faster automatically -- the underlying dataflow worker
-           will be forked ``nr_proc`` times. As a result, we have the following
-           guarantee on the dataflow correctness:
+        1. An iterator cannot run faster automatically -- what's happenning is
+           that the underlying dataflow will be forked ``nr_proc`` times.
+           As a result, we have the following guarantee on the dataflow correctness:
 
            a. When ``nr_proc=1``, the dataflow produces the same data as ``ds`` in the same order.
            b. When ``nr_proc>1``, the dataflow produces the same distribution
