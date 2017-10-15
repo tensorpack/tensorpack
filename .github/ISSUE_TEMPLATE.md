@@ -8,7 +8,7 @@ Feature Requests:
 2. Add a new feature. Please note that, you can implement a lot of features by extending tensorpack
 	(See http://tensorpack.readthedocs.io/en/latest/tutorial/index.html#extend-tensorpack).
 	It may not have to be added to tensorpack unless you have a good reason.
-3. Note that we don't take "example requests".
+3. Note that we don't implement papers at other's requests.
 
 Usage Questions:
 Usage questions are like "How do I do [this specific thing] in tensorpack?".
