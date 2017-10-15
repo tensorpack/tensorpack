@@ -40,7 +40,7 @@ FASTRCNN_BATCH_PER_IM = 64
 FASTRCNN_BBOX_REG_WEIGHTS = np.array([10, 10, 5, 5], dtype='float32')
 FASTRCNN_FG_THRESH = 0.5
 # keep fg ratio in a batch in this range
-FASTRCNN_FG_RATIO = (0.1, 0.25)
+FASTRCNN_FG_RATIO = 0.25
 
 # testing -----------------------
 TEST_PRE_NMS_TOPK = 6000

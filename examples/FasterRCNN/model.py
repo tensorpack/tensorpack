@@ -261,16 +261,13 @@ def sample_fast_rcnn_targets(boxes, gt_boxes, gt_labels):
         tf.int64)], 0)
     num_fg = tf.size(fg_inds)
     num_fg = tf.minimum(int(
-        config.FASTRCNN_BATCH_PER_IM * config.FASTRCNN_FG_RATIO[1]),
+        config.FASTRCNN_BATCH_PER_IM * config.FASTRCNN_FG_RATIO),
         num_fg, name='num_fg')
     fg_inds = tf.slice(tf.random_shuffle(fg_inds), [0], [num_fg])
 
     bg_inds = tf.where(tf.logical_not(fg_mask))[:, 0]
     num_bg = tf.size(bg_inds)
-    num_bg = tf.minimum(config.FASTRCNN_BATCH_PER_IM - num_fg, num_bg)
-    num_bg = tf.minimum(
-        num_bg,
-        num_fg * int(1.0 / config.FASTRCNN_FG_RATIO[0]), name='num_bg')    # don't include too many bg
+    num_bg = tf.minimum(config.FASTRCNN_BATCH_PER_IM - num_fg, num_bg, name='num_bg')
     bg_inds = tf.slice(tf.random_shuffle(bg_inds), [0], [num_bg])
 
     add_moving_summary(num_fg, num_bg)
