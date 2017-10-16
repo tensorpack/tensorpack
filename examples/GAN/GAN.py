@@ -8,8 +8,9 @@ import numpy as np
 import time
 from tensorpack import (Trainer, QueueInput,
                         ModelDescBase, DataFlow, StagingInputWrapper,
-                        MultiGPUTrainerBase, LeastLoadedDeviceSetter,
+                        MultiGPUTrainerBase,
                         TowerContext)
+from tensorpack.train.utility import LeastLoadedDeviceSetter
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.utils.argtools import memoized
 

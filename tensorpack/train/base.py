@@ -284,3 +284,51 @@ class Trainer(object):
             self._predictor_factory = PredictorFactory(
                 self.model, self.vs_name_for_predictor)
         return self._predictor_factory
+
+
+def launch_train(
+        run_step, callbacks=None, extra_callbacks=None, monitors=None,
+        session_creator=None, session_config=None, session_init=None,
+        starting_epoch=1, steps_per_epoch=None, max_epoch=99999):
+    """
+    This is a simpler interface to start training after the graph has been built already.
+    You can build the graph however you like
+    (with or without tensorpack), and invoke this function to start training.
+    This provides the flexibility to define the training config after graph has been buit.
+    One typical use is that callbacks often depend on names that are uknown
+    only after the graph has been built.
+
+    Args:
+        run_step (tf.Tensor or function): Define what the training iteration is.
+            If given a Tensor/Operation, will eval it every step.
+            If given a function, will invoke this function under the default session in every step.
+        Other arguments are the same as in :class:`TrainConfig`.
+
+    Examples:
+
+    .. code-block:: python
+
+        model = MyModelDesc()
+        train_op, cbs = SimpleTrainer.setup_graph(model, QueueInput(mydataflow))
+        launch_train(train_op, callbacks=[...] + cbs, steps_per_epoch=mydataflow.size())
+        # the above is equivalent to:
+        config = TrainConfig(model=MyModelDesc(), data=QueueInput(mydataflow) callbacks=[...])
+        SimpleTrainer(config).train()
+    """
+    assert steps_per_epoch is not None, steps_per_epoch
+    trainer = Trainer(TrainConfig(
+        callbacks=callbacks,
+        extra_callbacks=extra_callbacks,
+        monitors=monitors,
+        session_creator=session_creator,
+        session_config=session_config,
+        session_init=session_init,
+        starting_epoch=starting_epoch,
+        steps_per_epoch=steps_per_epoch,
+        max_epoch=max_epoch))
+    if isinstance(run_step, (tf.Tensor, tf.Operation)):
+        trainer.train_op = run_step
+    else:
+        assert callable(run_step), run_step
+        trainer.run_step = lambda self: run_step()
+    trainer.train()

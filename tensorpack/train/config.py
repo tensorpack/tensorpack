@@ -9,7 +9,6 @@ from ..callbacks import (
 from ..dataflow.base import DataFlow
 from ..graph_builder.model_desc import ModelDescBase
 from ..utils import logger
-from ..utils.develop import log_deprecated
 from ..tfutils import (JustCurrentSession,
                        get_default_sess_config, SessionInit)
 from ..tfutils.sesscreate import NewSessionCreator
@@ -69,9 +68,6 @@ class TrainConfig(object):
             assert isinstance(v, tp), v.__class__
 
         # process data & model
-        if 'dataset' in kwargs:
-            dataflow = kwargs.pop('dataset')
-            log_deprecated("TrainConfig.dataset", "Use TrainConfig.dataflow instead.", "2017-09-11")
         assert data is None or dataflow is None, "dataflow and data cannot be both presented in TrainConfig!"
         if dataflow is not None:
             assert_type(dataflow, DataFlow)

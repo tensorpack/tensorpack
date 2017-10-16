@@ -32,29 +32,10 @@ class InputDesc(
             shape (tuple):
             name (str):
         """
-        shape = tuple(shape)    # has to be tuple for self to be hashable
+        shape = tuple(shape)    # has to be tuple for "self" to be hashable
         self = super(InputDesc, cls).__new__(cls, type, shape, name)
         self._cached_placeholder = None
         return self
-
-    # TODO in serialization, skip _cached_placeholder
-    # def dumps(self):
-    #     """
-    #     Returns:
-    #         str: serialized string
-    #     """
-    #     return pickle.dumps(self)
-
-    # @staticmethod
-    # def loads(buf):
-    #     """
-    #     Args:
-    #         buf (str): serialized string
-
-    #     Returns:
-    #         InputDesc:
-    #     """
-    #     return pickle.loads(buf)
 
     def build_placeholder(self, prefix=''):
         """
