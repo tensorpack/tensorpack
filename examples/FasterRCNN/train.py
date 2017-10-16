@@ -43,6 +43,12 @@ from eval import (
 import config
 
 
+def get_batch_factor():
+    nr_gpu = get_nr_gpu()
+    assert nr_gpu in [1, 2, 4, 8], nr_gpu
+    return 8 // nr_gpu
+
+
 class Model(ModelDesc):
     def _get_inputs(self):
         return [
@@ -121,7 +127,15 @@ class Model(ModelDesc):
 
     def _get_optimizer(self):
         lr = symbf.get_scalar_var('learning_rate', 0.003, summary=True)
-        opt = tf.train.MomentumOptimizer(lr, 0.9)
+
+        factor = get_batch_factor()
+        if factor != 1:
+            lr = lr / float(factor)
+            opt = tf.train.MomentumOptimizer(lr, 0.9)
+            opt = optimizer.AccumGradOptimizer(opt, factor)
+        else:
+            opt = tf.train.MomentumOptimizer(lr, 0.9)
+        return opt
         return optimizer.apply_grad_processors(
             opt, [gradproc.ScaleGradient(('.*/b', 2))])
 
@@ -243,48 +257,48 @@ if __name__ == '__main__':
 
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
-    nr_gpu = get_nr_gpu()
 
     if args.visualize:
         assert args.load
         visualize(args.load)
-        sys.exit()
-    if args.evaluate is not None:
+    elif args.evaluate is not None:
         assert args.evaluate.endswith('.json')
         assert args.load
         # autotune is too slow for inference
         os.environ['TF_CUDNN_USE_AUTOTUNE'] = '0'
         offline_evaluate(args.load, args.evaluate)
-        sys.exit()
-    if args.predict is not None:
+    elif args.predict is not None:
         COCODetection(config.BASEDIR, 'train2014')   # to load the class names
         assert args.load
         predict(args.load, args.predict)
-        sys.exit()
+    else:
+        logger.set_logger_dir(args.logdir)
+        stepnum = 300
+        warmup_epoch = max(math.ceil(500.0 / stepnum), 5)
+        factor = get_batch_factor()
 
-    logger.set_logger_dir(args.logdir, 'd')
-    stepnum = 300
-    warmup_epoch = max(math.ceil(500.0 / stepnum), 5)
-    cfg = TrainConfig(
-        model=Model(),
-        dataflow=get_train_dataflow(),
-        callbacks=[
-            PeriodicTrigger(ModelSaver(), every_k_epochs=5),
-            # linear warmup
-            ScheduledHyperParamSetter(
-                'learning_rate',
-                [(0, 0.003), (warmup_epoch, 0.01)], interp='linear'),
-            # step decay
-            ScheduledHyperParamSetter(
-                'learning_rate',
-                [(warmup_epoch, 0.01), (120000 // stepnum, 1e-3), (180000 // stepnum, 1e-4)]),
-            HumanHyperParamSetter('learning_rate'),
-            EvalCallback(),
-            GPUUtilizationTracker(),
-        ],
-        steps_per_epoch=stepnum,
-        max_epoch=205000 // stepnum,
-        session_init=get_model_loader(args.load) if args.load else None,
-        nr_tower=nr_gpu
-    )
-    SyncMultiGPUTrainerReplicated(cfg, gpu_prefetch=False).train()
+        cfg = TrainConfig(
+            model=Model(),
+            dataflow=get_train_dataflow(),
+            callbacks=[
+                PeriodicTrigger(ModelSaver(), every_k_epochs=5),
+                # linear warmup
+                ScheduledHyperParamSetter(
+                    'learning_rate',
+                    [(0, 0.003), (warmup_epoch * factor, 0.01)], interp='linear'),
+                # step decay
+                ScheduledHyperParamSetter(
+                    'learning_rate',
+                    [(warmup_epoch * factor, 0.01),
+                     (120000 * factor // stepnum, 1e-3),
+                     (180000 * factor // stepnum, 1e-4)]),
+                HumanHyperParamSetter('learning_rate'),
+                EvalCallback(),
+                GPUUtilizationTracker(),
+            ],
+            steps_per_epoch=stepnum,
+            max_epoch=205000 * factor // stepnum,
+            session_init=get_model_loader(args.load) if args.load else None,
+            nr_tower=get_nr_gpu()
+        )
+        SyncMultiGPUTrainerReplicated(cfg, gpu_prefetch=False).train()
