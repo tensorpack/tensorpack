@@ -64,7 +64,7 @@ def _set_file(path):
     if os.path.isfile(path):
         backup_name = path + '.' + _get_time_str()
         shutil.move(path, backup_name)
-        info("Log file '{}' backuped to '{}'".format(path, backup_name))  # noqa: F821
+        _logger.info("Existing log file '{}' backuped to '{}'".format(path, backup_name))  # noqa: F821
     hdl = logging.FileHandler(
         filename=path, encoding='utf-8', mode='w')
     hdl.setFormatter(_MyFormatter(datefmt='%m%d %H:%M:%S'))

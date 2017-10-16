@@ -20,7 +20,7 @@ from ..tfutils.sessinit import JustCurrentSession
 
 from ..graph_builder.predictor_factory import PredictorFactory
 
-__all__ = ['Trainer', 'StopTraining']
+__all__ = ['Trainer', 'StopTraining', 'launch_train']
 
 
 class StopTraining(BaseException):
@@ -287,21 +287,25 @@ class Trainer(object):
 
 
 def launch_train(
-        run_step, callbacks=None, extra_callbacks=None, monitors=None,
+        run_step, model=None, callbacks=None, extra_callbacks=None, monitors=None,
         session_creator=None, session_config=None, session_init=None,
         starting_epoch=1, steps_per_epoch=None, max_epoch=99999):
     """
-    This is a simpler interface to start training after the graph has been built already.
+    This is another trainer interface, to start training **after** the graph has been built already.
     You can build the graph however you like
-    (with or without tensorpack), and invoke this function to start training.
+    (with or without tensorpack), and invoke this function to start training with callbacks & monitors.
     This provides the flexibility to define the training config after graph has been buit.
-    One typical use is that callbacks often depend on names that are uknown
-    only after the graph has been built.
+    One typical use is that callbacks often depend on names that are not known
+    only until the graph has been built.
 
     Args:
         run_step (tf.Tensor or function): Define what the training iteration is.
             If given a Tensor/Operation, will eval it every step.
             If given a function, will invoke this function under the default session in every step.
+        model (None or ModelDesc): Certain callbacks (e.g. InferenceRunner) depends on
+            the existence of :class:`ModelDesc`. If you use a :class:`ModelDesc` to
+            build the graph, add it here to to allow those callbacks to work.
+            If you didn't use :class:`ModelDesc`, leave it empty.
         Other arguments are the same as in :class:`TrainConfig`.
 
     Examples:
@@ -310,13 +314,14 @@ def launch_train(
 
         model = MyModelDesc()
         train_op, cbs = SimpleTrainer.setup_graph(model, QueueInput(mydataflow))
-        launch_train(train_op, callbacks=[...] + cbs, steps_per_epoch=mydataflow.size())
+        launch_train(train_op, model=model, callbacks=[...] + cbs, steps_per_epoch=mydataflow.size())
         # the above is equivalent to:
         config = TrainConfig(model=MyModelDesc(), data=QueueInput(mydataflow) callbacks=[...])
         SimpleTrainer(config).train()
     """
     assert steps_per_epoch is not None, steps_per_epoch
     trainer = Trainer(TrainConfig(
+        model=model,
         callbacks=callbacks,
         extra_callbacks=extra_callbacks,
         monitors=monitors,

@@ -58,6 +58,8 @@ class InferenceRunnerBase(Callback):
     """ Base class for inference runner.
         Please note that InferenceRunner will use `input.size()` to determine
         how much iterations to run, so you want it to be accurate.
+
+        Also, InferenceRunner assumes that `trainer.model` exists.
     """
     def __init__(self, input, infs, extra_hooks=None):
         """
@@ -120,6 +122,7 @@ class InferenceRunner(InferenceRunnerBase):
         return InferencerToHook(inf, fetches)
 
     def _setup_graph(self):
+        assert self.trainer.model is not None
         # Use predict_tower in train config. either gpuid or -1
         tower_id = self.trainer.config.predict_tower[0]
         device = '/gpu:{}'.format(tower_id) if tower_id >= 0 else '/cpu:0'
@@ -178,6 +181,7 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
         self._gpus = gpus
 
     def _setup_graph(self):
+        assert self.trainer.model is not None
         cbs = self._input_source.setup(self.trainer.model.get_inputs_desc())
         # build each predict tower
         self._handles = []
