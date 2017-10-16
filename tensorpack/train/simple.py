@@ -6,7 +6,7 @@
 from .base import Trainer
 
 from ..utils import logger
-from ..graph_builder.input_source import FeedInput
+from ..graph_builder.input_source import FeedInput, QueueInput
 from ..graph_builder.training import SimpleGraphBuilder
 
 __all__ = ['SimpleTrainer']
@@ -39,29 +39,35 @@ class SimpleTrainer(Trainer):
                         "Consider QueueInput or other InputSource instead.")
         super(SimpleTrainer, self).__init__(config)
 
-    @staticmethod
-    def setup_graph(model, input):
-        """
-        Setup graph for SimpleTrainer. It simply build one tower and optimize `model.cost`.
-
-        Args:
-            model (ModelDesc):
-            input (InputSource):
-
-        Returns:
-            tf.Operation: the training op
-
-            [Callback]: the callbacks to be added
-        """
-        cbs = input.setup(model.get_inputs_desc())
+    def _setup(self):
+        cbs = self._input_source.setup(self.model.get_inputs_desc())
 
         def get_cost(*inputs):
-            model.build_graph(inputs)
-            return model.get_cost()
+            self.model.build_graph(inputs)
+            return self.model.get_cost()
 
-        train_op = SimpleGraphBuilder().build(input, get_cost, model.get_optimizer)
-        return train_op, cbs
+        self.train_op = SimpleGraphBuilder().build(self._input_source, get_cost, self.model.get_optimizer)
+        self.config.callbacks.extend(cbs)
 
-    def _setup(self):
-        self.train_op, callbacks = SimpleTrainer.setup_graph(self.model, self._input_source)
-        self.config.callbacks.extend(callbacks)
+
+def QueueInputTrainer(config, input_queue=None):
+    """
+    A wrapper trainer which automatically wraps ``config.dataflow`` by a :class:`QueueInput`.
+    It is an equivalent of ``SimpleTrainer(config)`` with ``config.data = QueueInput(dataflow)``.
+
+    Args:
+        config (TrainConfig): Must contain 'model' and 'dataflow'.
+        input_queue (tf.QueueBase): an input queue. Defaults to the :class:`QueueInput` default.
+    """
+    assert (config.data is not None or config.dataflow is not None) and config.model is not None
+    if config.data is not None:
+        assert isinstance(config.data, QueueInput), config.data
+    else:
+        config.data = QueueInput(config.dataflow, input_queue)
+    config.dataflow = None
+
+    # debug
+    # from tensorpack.train.input_source import StagingInputWrapper, DummyConstantInput
+    # config.data = StagingInputWrapper(config.data, ['/gpu:0'])
+    # config.data = DummyConstantInput([[128,224,224,3], [128]])
+    return SimpleTrainer(config)
