@@ -6,11 +6,15 @@
 """ Graph related callbacks"""
 
 import tensorflow as tf
+import os
+import numpy as np
 
 from ..utils import logger
 from .base import Callback
+from ..tfutils.common import get_tensors_by_names
+from six.moves import zip
 
-__all__ = ['RunOp', 'RunUpdateOps']
+__all__ = ['RunOp', 'RunUpdateOps', 'ProcessTensors', 'DumpTensors', 'DumpTensor']
 
 
 class RunOp(Callback):
@@ -87,3 +91,65 @@ class RunUpdateOps(RunOp):
 
         super(RunUpdateOps, self).__init__(
             f, run_before=False, run_as_trigger=False, run_step=True)
+
+
+class ProcessTensors(Callback):
+    """
+    Fetch extra tensors **along with** each training step,
+    and call some function over the values.
+    You can use it to print tensors, save tensors to file, etc.
+
+    Examples:
+
+    .. code-block:: python
+
+        ProcessTensors(['mycost1', 'mycost2'], lambda c1, c2: print(c1, c2, c1 + c2))
+    """
+    def __init__(self, names, fn):
+        """
+        Args:
+            names (list[str]): names of tensors
+            fn: a function taking all requested tensors as input
+        """
+        assert isinstance(names, (list, tuple)), names
+        self._names = names
+        self._fn = fn
+
+    def _setup_graph(self):
+        tensors = get_tensors_by_names(self._names)
+        self._fetch = tf.train.SessionRunArgs(fetches=tensors)
+
+    def _before_run(self, _):
+        return self._fetch
+
+    def _after_run(self, _, rv):
+        results = rv.results
+        self._fn(*results)
+
+
+class DumpTensors(ProcessTensors):
+    """
+    Dump some tensors to a file.
+    Every step this callback fetches tensors and write them to a npz file under ``logger.LOG_DIR``.
+    The dump can be loaded by ``dict(np.load(filename).items())``.
+    """
+    def __init__(self, names):
+        """
+        Args:
+            names (list[str]): names of tensors
+        """
+        assert isinstance(names, (list, tuple)), names
+        self._names = names
+        dir = logger.LOG_DIR
+
+        def fn(*args):
+            dic = {}
+            for name, val in zip(self._names, args):
+                dic[name] = val
+            fname = os.path.join(
+                dir, 'DumpTensor-{}.npz'.format(self.global_step))
+            np.savez(fname, **dic)
+        super(DumpTensors, self).__init__(names, fn)
+
+
+DumpTensor = DumpTensors

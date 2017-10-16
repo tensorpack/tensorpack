@@ -16,7 +16,6 @@ about 0.6% validation error after 30 epochs.
 from tensorpack import *
 from tensorpack.tfutils import summary
 from tensorpack.dataflow import dataset
-import tensorpack.tfutils.symbolic_functions as symbf
 
 IMAGE_SIZE = 28
 
@@ -63,15 +62,15 @@ class Model(ModelDesc):
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')  # the average cross-entropy loss
 
-        # compute the "incorrect vector", for the callback ClassificationError to use at validation time
-        wrong = symbf.prediction_incorrect(logits, label, name='incorrect')
-        accuracy = symbf.accuracy(logits, label, name='accuracy')
+        # compute the "correct vector", for the callback ClassificationError to use at validation time
+        correct = tf.cast(tf.nn.in_top_k(logits, label, 1), tf.float32, name='correct')
+        accuracy = tf.reduce_mean(correct, name='accuracy')
 
         # This will monitor training error (in a moving_average fashion):
         # 1. write the value to tensosrboard
         # 2. write the value to stat.json
         # 3. print the value after each epoch
-        train_error = tf.reduce_mean(wrong, name='train_error')
+        train_error = tf.reduce_mean(1 - correct, name='train_error')
         summary.add_moving_summary(train_error, accuracy)
 
         # Use a regex to find parameters to apply weight decay.
@@ -118,9 +117,9 @@ def get_config():
             MaxSaver('validation_accuracy'),  # save the model with highest accuracy (prefix 'validation_')
             InferenceRunner(    # run inference(for validation) after every epoch
                 dataset_test,   # the DataFlow instance used for validation
-                # Calculate both the cost and the error for this DataFlow
-                [ScalarStats('cross_entropy_loss'), ScalarStats('accuracy'),
-                 ClassificationError('incorrect')]),
+                # Calculate both the cost and the accuracy for this DataFlow
+                [ScalarStats('cross_entropy_loss'),
+                 ClassificationError('correct', 'validation_accuracy')]),
         ],
         steps_per_epoch=steps_per_epoch,
         max_epoch=100,

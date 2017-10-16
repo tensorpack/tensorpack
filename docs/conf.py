@@ -368,7 +368,8 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
         'GaussianDeform',
         'dump_chkpt_vars',
         'VisualQA',
-        'huber_loss'
+        'huber_loss',
+        'DumpTensor'
         ]:
         return True
     if name in ['get_data', 'size', 'reset_state']:

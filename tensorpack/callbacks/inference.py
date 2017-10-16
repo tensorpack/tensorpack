@@ -143,6 +143,9 @@ class ClassificationError(Inferencer):
     taking account of the fact that batches might not have the same size in
     testing (because the size of test set might not be a multiple of batch size).
     Therefore the result can be different from averaging the error rate of each batch.
+
+    You can also use the "correct prediction" tensor, so this inferencer will
+    give you "classification accuracy" instead of error.
     """
 
     def __init__(self, wrong_tensor_name='incorrect_vector', summary_name='validation_error'):
