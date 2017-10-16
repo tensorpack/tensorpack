@@ -118,6 +118,7 @@ class TowerContext(object):
             assert ns == self._name, \
                 "Name conflict: name_scope inside tower '{}' becomes '{}'!".format(self._name, ns) \
                 + " You may need a different name for the tower!"
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         global _CurrentTowerContext

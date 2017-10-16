@@ -6,8 +6,8 @@
 from .base import Trainer
 
 from ..utils import logger
-from ..tfutils import TowerContext
 from ..graph_builder.input_source import FeedInput
+from ..graph_builder.training import SimpleGraphBuilder
 
 __all__ = ['SimpleTrainer']
 
@@ -54,11 +54,12 @@ class SimpleTrainer(Trainer):
             [Callback]: the callbacks to be added
         """
         cbs = input.setup(model.get_inputs_desc())
-        with TowerContext('', is_training=True):
-            model.build_graph(input)
-            _, grads = model.get_cost_and_grad()
-        opt = model.get_optimizer()
-        train_op = opt.apply_gradients(grads, name='min_op')
+
+        def get_cost(*inputs):
+            model.build_graph(inputs)
+            return model.get_cost()
+
+        train_op = SimpleGraphBuilder().build(input, get_cost, model.get_optimizer)
         return train_op, cbs
 
     def _setup(self):
