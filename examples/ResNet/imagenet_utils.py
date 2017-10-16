@@ -12,7 +12,7 @@ from abc import abstractmethod
 from tensorpack import imgaug, dataset, ModelDesc, InputDesc
 from tensorpack.dataflow import (
     AugmentImageComponent, PrefetchDataZMQ,
-    BatchData, ThreadedMapData)
+    BatchData, MultiThreadMapData)
 from tensorpack.predict import PredictConfig, SimpleDatasetPredictor
 from tensorpack.utils.stats import RatioCounter
 from tensorpack.models import regularize_cost
@@ -106,7 +106,7 @@ def get_imagenet_dataflow(
             im = cv2.imread(fname, cv2.IMREAD_COLOR)
             im = aug.augment(im)
             return im, cls
-        ds = ThreadedMapData(ds, cpu, mapf, buffer_size=2000, strict=True)
+        ds = MultiThreadMapData(ds, cpu, mapf, buffer_size=2000, strict=True)
         ds = BatchData(ds, batch_size, remainder=True)
         ds = PrefetchDataZMQ(ds, 1)
     return ds

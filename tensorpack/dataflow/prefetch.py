@@ -121,10 +121,14 @@ class PrefetchData(ProxyDataFlow):
     process by a Python :class:`multiprocessing.Queue`.
 
     Note:
-        1. The underlying dataflow worker will be forked multiple times when ``nr_proc>1``.
-           As a result, unless the underlying dataflow is fully shuffled, the data distribution
-           produced by this dataflow will be different.
-           (e.g. you are likely to see duplicated datapoints at the beginning)
+        1. An iterator cannot run faster automatically -- what's happenning is
+           that the underlying dataflow will be forked ``nr_proc`` times.
+           As a result, we have the following guarantee on the dataflow correctness:
+
+           a. When ``nr_proc=1``, the dataflow produces the same data as ``ds`` in the same order.
+           b. When ``nr_proc>1``, the dataflow produces the same distribution
+              of data as ``ds`` if each sample from ``ds`` is i.i.d. (e.g. fully shuffled).
+              You probably only want to use it for training.
         2. This is significantly slower than :class:`PrefetchDataZMQ` when data is large.
         3. When nesting like this: ``PrefetchDataZMQ(PrefetchData(df, nr_proc=a), nr_proc=b)``.
            A total of ``a`` instances of ``df`` worker processes will be created.
@@ -160,6 +164,10 @@ class PrefetchData(ProxyDataFlow):
         self.nr_proc = nr_proc
         self.nr_prefetch = nr_prefetch
         self._guard = DataFlowReentrantGuard()
+
+        if nr_proc > 1:
+            logger.info("[PrefetchData] Will fork a dataflow more than one times. "
+                        "This assumes the datapoints are i.i.d.")
 
         self.queue = mp.Queue(self.nr_prefetch)
         self.procs = [PrefetchData._Worker(self.ds, self.queue)
@@ -251,6 +259,9 @@ class PrefetchDataZMQ(_MultiProcessZMQDataFlow):
 
         self._guard = DataFlowReentrantGuard()
         self._reset_done = False
+        if nr_proc > 1:
+            logger.info("[PrefetchDataZMQ] Will fork a dataflow more than one times. "
+                        "This assumes the datapoints are i.i.d.")
 
     def _recv(self):
         return loads(self.socket.recv(copy=False).bytes)

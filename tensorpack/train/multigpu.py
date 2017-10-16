@@ -18,7 +18,7 @@ from ..graph_builder.input_source import QueueInput, StagingInputWrapper, DummyC
 from .base import Trainer
 from .utility import LeastLoadedDeviceSetter, override_to_local_variable
 
-__all__ = ['MultiGPUTrainerBase', 'LeastLoadedDeviceSetter',
+__all__ = ['MultiGPUTrainerBase',
            'SyncMultiGPUTrainerReplicated',
            'SyncMultiGPUTrainerParameterServer',
            'AsyncMultiGPUTrainer',

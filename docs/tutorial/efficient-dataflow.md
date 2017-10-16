@@ -90,13 +90,13 @@ Alternatively, you can use multi-threaded preprocessing like this:
 
 		ds0 = dataset.ILSVRC12('/path/to/ILSVRC12', 'train', shuffle=True)
 		augmentor = AugmentorList(lots_of_augmentors)
-		ds1 = ThreadedMapData(
+		ds1 = MultiThreadMapData(
 				ds0, nr_thread=25,
 				map_func=lambda dp: [augmentor.augment(dp[0]), dp[1]], buffer_size=1000)
 		# ds1 = PrefetchDataZMQ(ds1, nr_proc=1)
 		ds = BatchData(ds1, 256)
 ```
-`ThreadedMapData` launches a thread pool to fetch data and apply the mapping function on **a single
+`MultiThreadMapData` launches a thread pool to fetch data and apply the mapping function on **a single
 instance of** `ds0`. This is done by an intermediate buffer of size 1000 to hide the mapping latency.
 To reduce the effect of GIL to your main training thread, you want to uncomment the line so that everything above it (including all the
 threads) happen in an independent process.
@@ -115,7 +115,7 @@ If you identify this as a bottleneck, you can also use:
 
 		ds0 = dataset.ILSVRC12Files('/path/to/ILSVRC12', 'train', shuffle=True)
 		augmentor = AugmentorList(lots_of_augmentors)
-		ds1 = ThreadedMapData(
+		ds1 = MultiThreadMapData(
 				ds0, nr_thread=25,
 				map_func=lambda dp:
 					[augmentor.augment(cv2.imread(dp[0], cv2.IMREAD_COLOR)), dp[1]],
@@ -220,7 +220,7 @@ launch the base DataFlow in only **one process**, and only parallelize the trans
 with another `PrefetchDataZMQ`
 (Nesting two `PrefetchDataZMQ`, however, will result in a different behavior.
 These differences are explained in the API documentation in more details.).
-Similar to what we did earlier, you can use `ThreadedMapData` to parallelize as well.
+Similar to what we did earlier, you can use `MultiThreadMapData` to parallelize as well.
 
 Let me summarize what this DataFlow does:
 
