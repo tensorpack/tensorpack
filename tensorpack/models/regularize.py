@@ -42,6 +42,11 @@ def regularize_cost(regex, func, name='regularize_cost'):
             cost = cost + regularize_cost("fc.*/W", l2_regularizer(1e-5))
     """
     ctx = get_current_tower_context()
+    if not ctx.is_training:
+        # Currently cannot build the wd_cost correctly at inference,
+        # because ths vs_name used in inference can be '', therefore the
+        # variable filter will fail
+        return tf.constant(0, dtype=tf.float32, name='empty_' + name)
     params = tf.trainable_variables()
 
     # If vars are shared, use all of them
@@ -89,6 +94,12 @@ def regularize_cost_from_collection(name='regularize_cost'):
     """
     regularization_losses = set(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES))
     ctx = get_current_tower_context()
+    if not ctx.is_training:
+        # Currently cannot build the wd_cost correctly at inference,
+        # because ths vs_name used in inference can be '', therefore the
+        # variable filter will fail
+        return None
+
     if len(regularization_losses) > 0:
         # NOTE: this collection doesn't grow with towers.
         # It is only added with variables that are newly created.

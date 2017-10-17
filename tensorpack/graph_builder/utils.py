@@ -123,3 +123,6 @@ class LeastLoadedDeviceSetter(object):
         self.ps_sizes[device_index] += var_size
 
         return sanitize_name(device_name)
+
+    def __str__(self):
+        return "LeastLoadedDeviceSetter-{}".format(self.worker_device)
