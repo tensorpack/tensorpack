@@ -35,6 +35,12 @@ class MaintainStepCounter(Callback):
     It maintains the global step in the graph, making sure it's increased by one.
     This callback is always enabled by the trainer, you don't need to worry about it.
     """
+
+    chief_only = False
+    """
+    In distributed training, we let each worker maintain its local global_step.
+    """
+
     def _setup_graph(self):
         # ensure it exists
         gs_var = get_global_step_var()

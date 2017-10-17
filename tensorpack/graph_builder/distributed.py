@@ -7,9 +7,10 @@ import re
 from six.moves import zip, range
 
 from ..utils.argtools import memoized
-from ..tfutils.common import get_global_step_var, get_op_tensor_name
+from ..tfutils.common import get_op_tensor_name, get_global_step_var
 
 from .training import DataParallelBuilder
+from .utils import override_to_local_variable
 
 __all__ = ['DistributedReplicatedBuilder']
 
@@ -178,10 +179,8 @@ class DistributedReplicatedBuilder(DataParallelBuilder):
             tf.Operation: the op which sync all the local `MODEL_VARIABLES` from PS.
                 You can choose how often to run it by yourself.
         """
-        # do this before everything, because they my need global step
-        with tf.device(self.param_server_device):
-            gs = get_global_step_var()
-            assert gs.device, gs.device
+        with override_to_local_variable():
+            get_global_step_var()
 
         get_opt_fn = memoized(get_opt_fn)
         # Build the optimizer first, before entering any tower.

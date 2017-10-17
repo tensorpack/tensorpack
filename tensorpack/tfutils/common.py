@@ -55,21 +55,18 @@ def get_default_sess_config(mem_fraction=0.99):
 def get_global_step_var():
     """
     Returns:
-        tf.Tensor: the global_step variable in the current graph. create if
-        doesn't exist.
+        tf.Tensor: the global_step variable in the current graph. Create if
+            doesn't exist.
     """
-    scope = tf.get_variable_scope()
-    assert scope.name == '', \
-        "The global_step variable should be created under the root variable scope!"
-    assert not scope.reuse, \
-        "The global_step variable shouldn't be called under a reuse variable scope!"
-    if get_tf_version_number() <= 1.0:
-        var = tf.get_variable('global_step',
-                              initializer=tf.constant(0, dtype=tf.int64),
-                              trainable=False, dtype=tf.int64)
-        tf.add_to_collection(tf.GraphKeys.GLOBAL_STEP, var)
-    else:
-        var = tf.train.get_or_create_global_step()
+    scope = tf.VariableScope(reuse=False, name='')  # the root vs
+    with tf.variable_scope(scope):
+        if get_tf_version_number() <= 1.0:
+            var = tf.get_variable('global_step',
+                                  initializer=tf.constant(0, dtype=tf.int64),
+                                  trainable=False, dtype=tf.int64)
+            tf.add_to_collection(tf.GraphKeys.GLOBAL_STEP, var)
+        else:
+            var = tf.train.get_or_create_global_step()
     return var
 
 

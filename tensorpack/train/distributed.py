@@ -8,7 +8,7 @@ import os
 from ..utils import logger
 from ..callbacks import RunOp
 from ..tfutils.sesscreate import NewSessionCreator
-from ..tfutils.common import get_global_step_var
+from ..tfutils import get_global_step_var
 
 from ..graph_builder.distributed import DistributedReplicatedBuilder
 from ..graph_builder.utils import override_to_local_variable
@@ -75,18 +75,14 @@ class DistributedTrainerReplicated(Trainer):
 
     def _setup(self):
         if self.job_name == 'ps':
-            logger.info("Running ps {}".format(self._builder.task_index))
+            logger.info("Running ps {}".format(self.server.server_def.task_index))
             logger.info("Kill me with 'kill {}'".format(os.getpid()))
             self.server.join()  # this will never return tensorflow#4713
             return
 
-        # always do this before inputsource.setup because input_source my need global step
-        # TODO Can we just do this in get_global_step_var
-        with tf.device(self._builder.param_server_device):
-            gs = get_global_step_var()
-            assert gs.device, gs.device
-
         with override_to_local_variable():
+            get_global_step_var()  # gs should be local
+
             # input source may create variable (queue size summary)
             # TODO This is not good because we don't know from here
             # whether something should be global or local. We now assume
