@@ -7,9 +7,9 @@ from .base import Trainer
 
 from ..utils import logger
 from ..graph_builder.input_source import FeedInput, QueueInput
-from ..graph_builder.training import SimpleGraphBuilder
+from ..graph_builder.training import SimpleBuilder
 
-__all__ = ['SimpleTrainer']
+__all__ = ['SimpleTrainer', 'QueueInputTrainer']
 
 
 class SimpleTrainer(Trainer):
@@ -46,7 +46,7 @@ class SimpleTrainer(Trainer):
             self.model.build_graph(inputs)
             return self.model.get_cost()
 
-        self.train_op = SimpleGraphBuilder().build(self._input_source, get_cost, self.model.get_optimizer)
+        self.train_op = SimpleBuilder().build(self._input_source, get_cost, self.model.get_optimizer)
         self.config.callbacks.extend(cbs)
 
 
