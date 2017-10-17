@@ -67,7 +67,7 @@ class ProgressBar(Callback):
     def _before_train(self):
         self._last_updated = self.local_step
 
-        self._total = self.trainer.config.steps_per_epoch
+        self._total = self.trainer.steps_per_epoch
         self._tqdm_args = get_tqdm_kwargs(leave=True)
 
         self._fetches = get_op_or_tensor_by_name(self._names) or None
@@ -133,4 +133,4 @@ class MaintainStepCounter(Callback):
 
     def _after_run(self, _, __):
         # Keep python-side global_step in agreement with TF-side
-        self.trainer._global_step += 1
+        self.trainer.loop._global_step += 1

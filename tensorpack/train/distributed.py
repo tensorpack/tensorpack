@@ -88,7 +88,7 @@ class DistributedTrainerReplicated(Trainer):
             # whether something should be global or local. We now assume
             # they should be local.
             cbs = self._input_source.setup(self.model.get_inputs_desc())
-        self.config.callbacks.extend(cbs)
+        self._config.callbacks.extend(cbs)
 
         self.train_op, initial_sync_op, model_sync_op = self._builder.build(
             self._input_source, self.model.build_graph_get_cost, self.model.get_optimizer)
@@ -110,14 +110,14 @@ class DistributedTrainerReplicated(Trainer):
         self._set_session_creator()
 
     def _set_session_creator(self):
-        old_sess_creator = self.config.session_creator
+        old_sess_creator = self._config.session_creator
         if not isinstance(old_sess_creator, NewSessionCreator) \
-                or self.config.session_config is not None:
+                or self._config.session_config is not None:
             raise ValueError(
                 "Cannot set session_creator or session_config for distributed training! "
                 "To use a custom session config, pass it with tf.train.Server.")
 
-        self.config.session_creator = get_distributed_session_creator(self.server)
+        self._config.session_creator = get_distributed_session_creator(self.server)
 
     @property
     def vs_name_for_predictor(self):

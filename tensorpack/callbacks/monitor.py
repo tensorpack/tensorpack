@@ -256,13 +256,13 @@ class JSONWriter(TrainingMonitor):
                 pass
             else:
                 logger.info("Found training history from JSON, now starting from epoch number {}.".format(epoch))
-                self.trainer.config.starting_epoch = epoch
+                self.trainer.starting_epoch = epoch
         else:
             self._stats = []
         self._stat_now = {}
 
         self._last_gs = -1
-        self._total = self.trainer.config.steps_per_epoch
+        self._total = self.trainer.steps_per_epoch
 
     def _trigger_step(self):
         # will do this in trigger_epoch
@@ -327,7 +327,7 @@ class ScalarPrinter(TrainingMonitor):
 
     def _setup_graph(self):
         self._dic = {}
-        self._total = self.trainer.config.steps_per_epoch
+        self._total = self.trainer.steps_per_epoch
 
     def _trigger_step(self):
         if self._enable_step:

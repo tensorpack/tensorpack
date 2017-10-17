@@ -71,10 +71,10 @@ class SyncMultiGPUTrainerParameterServer(Trainer):
         callbacks = self._input_source.setup(self.model.get_inputs_desc())
 
         self.train_op = SyncMultiGPUParameterServerBuilder(
-            self.config.tower, self._ps_device).build(
+            self._config.tower, self._ps_device).build(
             self._input_source, self.model.build_graph_get_cost, self.model.get_optimizer)
 
-        self.config.callbacks.extend(callbacks)
+        self._config.callbacks.extend(callbacks)
 
 
 def SyncMultiGPUTrainer(config):
@@ -102,13 +102,13 @@ class SyncMultiGPUTrainerReplicated(Trainer):
     def _setup(self):
         callbacks = self._input_source.setup(self.model.get_inputs_desc())
 
-        self.train_op, post_init_op = SyncMultiGPUReplicatedBuilder(self.config.tower).build(
+        self.train_op, post_init_op = SyncMultiGPUReplicatedBuilder(self._config.tower).build(
             self._input_source, self.model.build_graph_get_cost, self.model.get_optimizer)
 
         cb = RunOp(
             lambda: post_init_op,
             run_before=True, run_as_trigger=True, verbose=True)
-        self.config.callbacks.extend(callbacks + [cb])
+        self._config.callbacks.extend(callbacks + [cb])
 
 
 class AsyncMultiGPUTrainer(Trainer):
@@ -130,7 +130,7 @@ class AsyncMultiGPUTrainer(Trainer):
         callbacks = self._input_source.setup(self.model.get_inputs_desc())
 
         self.train_op = AsyncMultiGPUBuilder(
-            self.config.tower, self._scale_gradient).build(
+            self._config.tower, self._scale_gradient).build(
             self._input_source, self.model.build_graph_get_cost, self.model.get_optimizer)
 
-        self.config.callbacks.extend(callbacks)
+        self._config.callbacks.extend(callbacks)

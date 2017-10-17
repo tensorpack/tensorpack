@@ -124,7 +124,7 @@ class InferenceRunner(InferenceRunnerBase):
     def _setup_graph(self):
         assert self.trainer.model is not None
         # Use predict_tower in train config. either gpuid or -1
-        tower_id = self.trainer.config.predict_tower[0]
+        tower_id = self.trainer._config.predict_tower[0]
         device = '/gpu:{}'.format(tower_id) if tower_id >= 0 else '/cpu:0'
 
         input_callbacks = self._input_source.setup(self.trainer.model.get_inputs_desc())

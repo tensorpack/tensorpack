@@ -30,6 +30,63 @@ class StopTraining(BaseException):
     pass
 
 
+class TrainLoop(object):
+    """
+    Manage the double for loop.
+    """
+    def __init__(self):
+        self._epoch_num = 0
+        self._global_step = 0
+        self._local_step = -1
+
+    def config(self, steps_per_epoch, starting_epoch, max_epoch):
+        """
+        Configure the loop given the settings.
+        """
+        self.starting_epoch = starting_epoch
+        self.max_epoch = max_epoch
+        self.steps_per_epoch = steps_per_epoch
+
+        self._epoch_num = starting_epoch - 1
+
+    def update_global_step(self):
+        """
+        Update the Python-side global_step from TF.
+        This must be called under initialized default session.
+        """
+        self._global_step = get_global_step_value()
+
+    @property
+    def epoch_num(self):
+        """
+        The number of the currently ongoing epoch.
+
+        An epoch is defined to cover the moment before calling `before_epoch` until after calling `trigger_epoch`.
+        i.e., in the `trigger_epoch` of epoch 3, `self.epoch_num` is 3.
+        If you need use `self.epoch_num` in your callback, you'll need to know this.
+        """
+        return self._epoch_num
+
+    @property
+    def global_step(self):
+        """
+        The tensorflow global_step, i.e. how many times ``hooked_sess.run`` has been called.
+
+        Note:
+            1. global_step is incremented **after** each ``hooked_sess.run`` returns from TF runtime.
+            2. If you make zero or more than one calls to ``hooked_sess.run`` in one
+               :meth:`run_step`, local_step and global_step may increment at different speed.
+        """
+        return self._global_step
+
+    @property
+    def local_step(self):
+        """
+        The number of (tensorpack) steps that have finished in the current epoch.
+        """
+        return self._local_step
+
+
 class Trainer(object):
     """ Base class for a trainer.
 
@@ -39,7 +96,6 @@ class Trainer(object):
         sess (tf.Session): the current session in use.
         hooked_sess (tf.train.MonitoredSession): the session with hooks.
         monitors (Monitors): the monitors. Other callbacks can use it for logging.
-        local_step (int): the number of (tensorpack) steps that have finished in the current epoch.
     """
     # step attr only available after before_train?
 
@@ -51,32 +107,15 @@ class Trainer(object):
             config (TrainConfig): the train config.
         """
         assert isinstance(config, TrainConfig), type(config)
-        self.config = config
+        self._config = config
         self.model = config.model
-
-        self.local_step = -1
 
         self._callbacks = []
         self.monitors = []
-        self._epoch_num = None
-        self._global_step = 0
+        self.loop = TrainLoop()
+        self.loop.config(config.steps_per_epoch, config.starting_epoch, config.max_epoch)
 
         self._setup()   # subclass will setup the graph and InputSource
-
-    @property
-    def epoch_num(self):
-        """
-        The number of the currently ongoing epoch.
-
-        An epoch is defined to cover the moment before calling `before_epoch` until after calling `trigger_epoch`.
-        i.e., in the `trigger_epoch` of epoch 3, `self.epoch_num` is 3.
-        If you need use `self.epoch_num` in your callback, you'll need to know this.
-        """
-        if self._epoch_num is not None:
-            # has started training
-            return self._epoch_num
-        else:
-            return self.config.starting_epoch - 1
 
     def register_callback(self, cb):
         """
@@ -129,9 +168,9 @@ class Trainer(object):
         Setup the trainer and be ready for the main loop.
         """
         self.register_callback(MaintainStepCounter())
-        for cb in self.config.callbacks:
+        for cb in self._config.callbacks:
             self.register_callback(cb)
-        for m in self.config.monitors:
+        for m in self._config.monitors:
             self.register_monitor(m)
         self.monitors = Monitors(self.monitors)
         self.register_callback(self.monitors)
@@ -148,9 +187,9 @@ class Trainer(object):
 
         if self.is_chief:
             logger.info("Initializing the session ...")
-            self.config.session_init.init(self.sess)
+            self._config.session_init.init(self.sess)
         else:
-            assert isinstance(self.config.session_init, JustCurrentSession), \
+            assert isinstance(self._config.session_init, JustCurrentSession), \
                 "session_init is only valid for chief worker session!"
 
         self.sess.graph.finalize()
@@ -162,7 +201,7 @@ class Trainer(object):
         and self.hooked_sess (the session with hooks and coordinator)
         """
         hooks = self._callbacks.get_hooks()
-        self.sess = self.config.session_creator.create_session()
+        self.sess = self._config.session_creator.create_session()
         self.hooked_sess = tf.train.MonitoredSession(
             session_creator=ReuseSessionCreator(self.sess), hooks=hooks)
 
@@ -176,41 +215,29 @@ class Trainer(object):
         """
         pass
 
-    @property
-    def global_step(self):
-        """
-        The tensorflow global_step, i.e. how many times ``hooked_sess.run`` has been called.
-
-        Note:
-            1. global_step is incremented **after** each ``hooked_sess.run`` returns from TF runtime.
-            2. If you make zero or more than one calls to ``hooked_sess.run`` in one
-               :meth:`run_step`, local_step and global_step may increment at different speed.
-        """
-        return self._global_step
-
     def main_loop(self):
         """
         Run the main training loop.
         """
         with self.sess.as_default():
-            self._global_step = get_global_step_value()
+            self.loop.update_global_step()
             try:
                 self._callbacks.before_train()
                 # refresh global step (might have changed by callbacks) TODO ugly
-                self._global_step = get_global_step_value()
-                for self._epoch_num in range(
-                        self.config.starting_epoch, self.config.max_epoch + 1):
-                    logger.info("Start Epoch {} ...".format(self._epoch_num))
+                self.loop.update_global_step()
+                for self.loop._epoch_num in range(
+                        self.loop.starting_epoch, self.loop.max_epoch + 1):
+                    logger.info("Start Epoch {} ...".format(self.loop.epoch_num))
                     start_time = time.time()
                     self._callbacks.before_epoch()
-                    for self.local_step in range(self.config.steps_per_epoch):
+                    for self.loop._local_step in range(self.loop.steps_per_epoch):
                         if self.hooked_sess.should_stop():
                             return
                         self.run_step()  # implemented by subclass
                         self._callbacks.trigger_step()
                     self._callbacks.after_epoch()
                     logger.info("Epoch {} (global_step {}) finished, time:{:.2f} sec.".format(
-                        self._epoch_num, self.global_step, time.time() - start_time))
+                        self.loop.epoch_num, self.loop.global_step, time.time() - start_time))
 
                     # trigger epoch outside the timing region.
                     self._callbacks.trigger_epoch()
@@ -254,6 +281,19 @@ class Trainer(object):
         # The vs name a predictor should be built under.
         # for internal use only. Should let graphbuilder return it.
         return ""
+
+
+def _delegate_attr(name):
+    """
+    Delegate property to self.loop
+    """
+    setattr(Trainer, name, property(
+        lambda self: getattr(self.loop, name)))
+
+
+for name in ['global_step', 'local_step', 'steps_per_epoch',
+             'epoch_num', 'starting_epoch', 'max_epoch']:
+    _delegate_attr(name)
 
 
 def launch_train(

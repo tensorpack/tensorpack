@@ -223,9 +223,9 @@ class EvalCallback(Callback):
         self.df = PrefetchDataZMQ(get_eval_dataflow(), 1)
 
         EVAL_TIMES = 5  # eval 5 times during training
-        interval = self.trainer.config.max_epoch // (EVAL_TIMES + 1)
+        interval = self.trainer.max_epoch // (EVAL_TIMES + 1)
         self.epochs_to_eval = set([interval * k for k in range(1, EVAL_TIMES)])
-        self.epochs_to_eval.add(self.trainer.config.max_epoch)
+        self.epochs_to_eval.add(self.trainer.max_epoch)
         get_tf_nms()    # just to make sure the nms part of graph is created
 
     def _eval(self):

@@ -44,7 +44,7 @@ class SimpleTrainer(Trainer):
 
         self.train_op = SimpleBuilder().build(
             self._input_source, self.model.build_graph_get_cost, self.model.get_optimizer)
-        self.config.callbacks.extend(cbs)
+        self._config.callbacks.extend(cbs)
 
 
 def QueueInputTrainer(config, input_queue=None):
