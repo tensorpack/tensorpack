@@ -20,7 +20,7 @@ from ..tfutils.sessinit import JustCurrentSession
 
 from ..graph_builder.predictor_factory import PredictorFactory
 
-__all__ = ['Trainer', 'StopTraining', 'launch_train']
+__all__ = ['Trainer', 'StopTraining']
 
 
 class StopTraining(BaseException):
@@ -295,6 +295,8 @@ def launch_train(
         session_creator=None, session_config=None, session_init=None,
         starting_epoch=1, steps_per_epoch=None, max_epoch=99999):
     """
+    ** Work In Progress! Don't use**
+
     This is another trainer interface, to start training **after** the graph has been built already.
     You can build the graph however you like
     (with or without tensorpack), and invoke this function to start training with callbacks & monitors.

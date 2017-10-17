@@ -45,6 +45,7 @@ class SimpleBuilder(GraphBuilder):
         Returns:
             tf.Operation: the training op
         """
+        assert input.setup_done()
         with TowerContext('', is_training=True) as ctx:
             cost = get_cost_fn(*input.get_input_tensors())
 
@@ -132,6 +133,7 @@ class DataParallelBuilder(GraphBuilder):
     @staticmethod
     def _make_fn(input, get_cost_fn, get_opt_fn):
         # internal use only
+        assert input.setup_done()
         get_opt_fn = memoized(get_opt_fn)
 
         def get_grad_fn():

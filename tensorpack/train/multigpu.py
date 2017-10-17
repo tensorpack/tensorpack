@@ -6,6 +6,7 @@
 import tensorflow as tf
 
 from ..callbacks.graph import RunOp
+from ..utils.develop import log_deprecated
 
 from ..graph_builder.input_source import QueueInput, StagingInputWrapper, DummyConstantInput
 from ..graph_builder.training import (
@@ -27,6 +28,8 @@ class MultiGPUTrainerBase(Trainer):
     For backward compatibility only
     """
     def build_on_multi_tower(towers, func, devices=None, use_vs=None):
+        log_deprecated("MultiGPUTrainerBase.build_on_multitower",
+                       "Please use DataParallelBuilder.build_on_towers", "2018-01-31")
         return DataParallelBuilder.build_on_towers(towers, func, devices, use_vs)
 
 

@@ -19,6 +19,7 @@ class InputSource(object):
     """ Base class for the abstract InputSource. """
 
     _name_scope = None
+    _setup_done = False
 
     def get_input_tensors(self):
         """
@@ -42,10 +43,14 @@ class InputSource(object):
             list[Callback]: extra callbacks needed by this InputSource.
         """
         self._setup(inputs_desc)
+        self._setup_done = True
         return self.get_callbacks()
 
     def _setup(self, inputs_desc):
         pass
+
+    def setup_done(self):
+        return self._setup_done
 
     @memoized
     def get_callbacks(self):
