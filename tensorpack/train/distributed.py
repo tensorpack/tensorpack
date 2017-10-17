@@ -94,12 +94,8 @@ class DistributedTrainerReplicated(Trainer):
             cbs = self._input_source.setup(self.model.get_inputs_desc())
         self.config.callbacks.extend(cbs)
 
-        def get_cost(*inputs):
-            self.model.build_graph(inputs)
-            return self.model.get_cost()
-
         self.train_op, initial_sync_op, model_sync_op = self._builder.build(
-            self._input_source, get_cost, self.model.get_optimizer)
+            self._input_source, self.model.build_graph_get_cost, self.model.get_optimizer)
 
         # initial local_vars syncing
         cb = RunOp(lambda: initial_sync_op,
@@ -148,3 +144,7 @@ class DistributedTrainerReplicated(Trainer):
                 return _create_session()
 
         self.config.session_creator = _Creator()
+
+    @property
+    def vs_name_for_predictor(self):
+        return "tower0"

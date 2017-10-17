@@ -277,6 +277,12 @@ class Trainer(object):
                 self.model, self.vs_name_for_predictor)
         return self._predictor_factory
 
+    @property
+    def vs_name_for_predictor(self):
+        # The vs name a predictor should be built under.
+        # for internal use only. Should let graphbuilder return it.
+        return ""
+
 
 def launch_train(
         run_step, model=None, callbacks=None, extra_callbacks=None, monitors=None,

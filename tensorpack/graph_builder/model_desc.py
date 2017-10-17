@@ -9,8 +9,6 @@ import tensorflow as tf
 import six
 
 from ..utils.argtools import memoized
-from ..tfutils.tower import get_current_tower_context
-from ..tfutils.gradproc import FilterNoneGrad
 from .input_source_base import InputSource
 from ..models.regularize import regularize_cost_from_collection
 
@@ -115,9 +113,6 @@ class ModelDesc(ModelDescBase):
     def get_cost(self):
         """
         Return the cost tensor in the graph.
-        It will be called by :func:`get_cost_and_grad` by default.
-        You can ignore this method (or just use :class:`ModelDescBase`)
-        if you use your own trainer with more than one cost.
 
         It calls :meth:`ModelDesc._get_cost()` which by default returns
         ``self.cost``. You can override :meth:`_get_cost()` if needed.
@@ -138,9 +133,7 @@ class ModelDesc(ModelDescBase):
     @memoized
     def get_optimizer(self):
         """
-        Return the optimizer used in the task.
-        Used by some of the tensorpack :class:`Trainer` which assume single optimizer.
-        You should use :class:`ModelDescBase` if you use a custom trainer with more than one optimizers.
+        Return the memoized optimizer returned by `_get_optimizer`.
 
         Users of :class:`ModelDesc` will need to implement `_get_optimizer()`,
         which will only be called once per each model.
@@ -153,28 +146,11 @@ class ModelDesc(ModelDescBase):
     def _get_optimizer(self):
         raise NotImplementedError()
 
-    def get_cost_and_grad(self):
+    def build_graph_get_cost(self, *inputs):
         """
-        Compute gradients with ``self.get_optimizer()`` on ``self.get_cost()``.
-        This method will be used by all the existing tensorpack trainers.
-
-        Returns:
-            cost (tf.Tensor): the cost tensor returned by ``self.get_cost()``.
-            grads (list[tuple]): list of (grad, variable) tuple.
+        Build the graph from inputs and return the cost tensor.
+        This is useful for most of the :class:`GraphBuilder` which expects
+        such a function.
         """
-        return self._get_cost_and_grad()
-
-    def _get_cost_and_grad(self):
-        ctx = get_current_tower_context()
-        assert ctx is not None and ctx.is_training, ctx
-
-        cost = self.get_cost()    # assume single cost
-
-        # produce gradients
-        varlist = ctx.filter_vars_by_vs_name(tf.trainable_variables())
-        opt = self.get_optimizer()
-        grads = opt.compute_gradients(
-            cost, var_list=varlist,
-            gate_gradients=False, colocate_gradients_with_ops=True)
-        grads = FilterNoneGrad().process(grads)
-        return cost, grads
+        self.build_graph(inputs)
+        return self.get_cost()

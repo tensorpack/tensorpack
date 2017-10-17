@@ -42,11 +42,8 @@ class SimpleTrainer(Trainer):
     def _setup(self):
         cbs = self._input_source.setup(self.model.get_inputs_desc())
 
-        def get_cost(*inputs):
-            self.model.build_graph(inputs)
-            return self.model.get_cost()
-
-        self.train_op = SimpleBuilder().build(self._input_source, get_cost, self.model.get_optimizer)
+        self.train_op = SimpleBuilder().build(
+            self._input_source, self.model.build_graph_get_cost, self.model.get_optimizer)
         self.config.callbacks.extend(cbs)
 
 
