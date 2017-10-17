@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 # File: distributed.py
 
-import tensorflow as tf
 import os
 
 from ..utils import logger
 from ..callbacks import RunOp
 from ..tfutils.sesscreate import NewSessionCreator
 from ..tfutils import get_global_step_var
+from ..tfutils.distributed import get_distributed_session_creator
 
 from ..graph_builder.distributed import DistributedReplicatedBuilder
 from ..graph_builder.utils import override_to_local_variable
@@ -63,9 +63,6 @@ class DistributedTrainerReplicated(Trainer):
         if self.job_name == 'worker':
             # ps doesn't build any graph
             self._builder = DistributedReplicatedBuilder(config.tower, server)
-            self.is_chief = self._builder.is_chief
-        else:
-            self.is_chief = False
         logger.info("Distributed training on cluster:\n" + str(server.server_def.cluster))
 
         self._input_source = config.data
@@ -117,29 +114,7 @@ class DistributedTrainerReplicated(Trainer):
                 "Cannot set session_creator or session_config for distributed training! "
                 "To use a custom session config, pass it with tf.train.Server.")
 
-        init_op = tf.global_variables_initializer()
-        local_init_op = tf.local_variables_initializer()
-        ready_op = tf.report_uninitialized_variables()
-        sm = tf.train.SessionManager(
-            local_init_op=local_init_op,
-            ready_op=ready_op, graph=tf.get_default_graph())
-
-        # to debug wrong variable collection
-        # print("GLOBAL:")
-        # print(tf.global_variables())
-        # print("LOCAL:")
-        # print(tf.local_variables())
-        def _create_session():
-            if self.is_chief:
-                return sm.prepare_session(master=self.server.target, init_op=init_op)
-            else:
-                return sm.wait_for_session(master=self.server.target)
-
-        class _Creator(tf.train.SessionCreator):
-            def create_session(self):
-                return _create_session()
-
-        self.config.session_creator = _Creator()
+        self.config.session_creator = get_distributed_session_creator(self.server)
 
     @property
     def vs_name_for_predictor(self):

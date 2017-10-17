@@ -35,4 +35,5 @@ for _, module_name, _ in iter_modules(
     if module_name in _TO_IMPORT:
         _global_import(module_name)  # import the content to tfutils.*
 __all__.extend(['sessinit', 'summary', 'optimizer',
-                'sesscreate', 'gradproc', 'varreplace', 'symbolic_functions'])
+                'sesscreate', 'gradproc', 'varreplace', 'symbolic_functions',
+                'distributed'])

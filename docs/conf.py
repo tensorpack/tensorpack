@@ -366,7 +366,8 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
         'dump_chkpt_vars',
         'VisualQA',
         'huber_loss',
-        'DumpTensor'
+        'DumpTensor',
+        'StepTensorPrinter'
         ]:
         return True
     if name in ['get_data', 'size', 'reset_state']:

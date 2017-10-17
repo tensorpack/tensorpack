@@ -10,15 +10,15 @@ import tensorflow as tf
 
 from .config import TrainConfig
 from ..utils import logger
-from ..utils.naming import GLOBAL_STEP_INCR_OP_NAME
 from ..callbacks import Callback, Callbacks
 from ..callbacks.monitor import Monitors, TrainingMonitor
-from ..tfutils import get_global_step_value, get_global_step_var
+from ..tfutils import get_global_step_value
 from ..tfutils.model_utils import describe_trainable_vars
 from ..tfutils.sesscreate import ReuseSessionCreator
 from ..tfutils.sessinit import JustCurrentSession
 
 from ..graph_builder.predictor_factory import PredictorFactory
+from ..callbacks.steps import MaintainStepCounter
 
 __all__ = ['Trainer', 'StopTraining']
 
@@ -28,40 +28,6 @@ class StopTraining(BaseException):
     An exception thrown to stop training.
     """
     pass
-
-
-class MaintainStepCounter(Callback):
-    """
-    It maintains the global step in the graph, making sure it's increased by one.
-    This callback is always enabled by the trainer, you don't need to worry about it.
-    """
-
-    chief_only = False
-    """
-    In distributed training, we let each worker maintain its local global_step.
-    """
-
-    def _setup_graph(self):
-        # ensure it exists
-        gs_var = get_global_step_var()
-        with tf.name_scope(None):
-            with self.graph.colocate_with(gs_var):
-                self.gs_incr_op = tf.assign_add(
-                    gs_var, 1,
-                    name=GLOBAL_STEP_INCR_OP_NAME).op
-        self._fetches = tf.train.SessionRunArgs(self.gs_incr_op)
-
-    def _before_train(self):
-        if self.global_step != 0:
-            logger.info("Start training with global_step={}".format(self.global_step))
-
-    def _before_run(self, _):
-        # always increase global_step when hooked_sess.run is called
-        return self._fetches
-
-    def _after_run(self, _, __):
-        # Keep python-side global_step in agreement with TF-side
-        self.trainer._global_step += 1
 
 
 class Trainer(object):
