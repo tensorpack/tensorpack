@@ -63,6 +63,9 @@ class DistributedTrainerReplicated(Trainer):
         if self.job_name == 'worker':
             # ps doesn't build any graph
             self._builder = DistributedReplicatedBuilder(config.tower, server)
+            self.is_chief = self._builder.is_chief
+        else:
+            self.is_chief = False
         logger.info("Distributed training on cluster:\n" + str(server.server_def.cluster))
 
         self._input_source = config.data
