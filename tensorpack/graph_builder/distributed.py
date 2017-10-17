@@ -7,9 +7,7 @@ import re
 from six.moves import zip, range
 
 from ..utils.argtools import memoized
-from ..tfutils.gradproc import FilterNoneGrad
 from ..tfutils.common import get_global_step_var, get_op_tensor_name
-from ..tfutils.tower import get_current_tower_context
 
 from .training import DataParallelBuilder
 
@@ -17,8 +15,28 @@ __all__ = ['DistributedReplicatedBuilder']
 
 
 class DistributedReplicatedBuilder(DataParallelBuilder):
+    """
+    Graph builder for distributed replicated training.
+    Each worker process builds the same model on one or more GPUs.
+    Gradients across GPUs are averaged within the worker,
+    and get synchronously applied to the global copy of variables located on PS.
+    Then each worker copy the latest variables from PS back to local.
+
+    See https://www.tensorflow.org/performance/benchmarks for details.
+
+    Note:
+        Gradients are not averaged across workers, but applied to PS variables
+        directly (either with or without locking depending on the optimizer).
+    """
 
     def __init__(self, towers, server):
+        """
+        Args:
+            towers (list[int]): list of GPU ids.
+            server (tf.train.Server): the server with ps and workers.
+                The job_name must be 'worker' because 'ps' job doesn't need to
+                build any graph.
+        """
         super(DistributedReplicatedBuilder, self).__init__(towers)
         self.server = server
         server_def = server.server_def
@@ -146,6 +164,20 @@ class DistributedReplicatedBuilder(DataParallelBuilder):
             return tf.group(*queue_ops, name=name)
 
     def build(self, input, get_cost_fn, get_opt_fn):
+        """
+        Args:
+            input (InputSource): the input. Should have been setup.
+            get_cost_fn ([tf.Tensor] -> tf.Tensor): callable which takes a list of input tensor
+                and returns a cost tensor
+            get_opt_fn (-> tf.train.Optimizer): callable which returns an optimizer
+
+        Returns:
+            tf.Operation: the training op
+            tf.Operation: the op which sync all the local variables from PS.
+                This op sholud be run before training.
+            tf.Operation: the op which sync all the local `MODEL_VARIABLES` from PS.
+                You can choose how often to run it by yourself.
+        """
         # do this before everything, because they my need global step
         with tf.device(self.param_server_device):
             gs = get_global_step_var()
@@ -156,21 +188,11 @@ class DistributedReplicatedBuilder(DataParallelBuilder):
         # This makes sure that learning_rate is a global variable (what we expect)
         get_opt_fn()
 
-        def get_grads():
-            ctx = get_current_tower_context()
-            cost = get_cost_fn(*input.get_input_tensors())
-
-            varlist = ctx.filter_vars_by_vs_name(tf.trainable_variables())
-            opt = get_opt_fn()
-            grads = opt.compute_gradients(
-                cost, var_list=varlist,
-                gate_gradients=False, colocate_gradients_with_ops=True)
-            grads = FilterNoneGrad().process(grads)
-            return grads
+        get_grad_fn, _ = DataParallelBuilder._make_fn(input, get_cost_fn, get_opt_fn)
 
         # Ngpu * Nvar * 2
         grad_list = DataParallelBuilder.build_on_towers(
-            self.towers, get_grads,
+            self.towers, get_grad_fn,
             devices=self.raw_devices,
             use_vs=[True] * len(self.towers))  # open vs at each tower
         DataParallelBuilder._check_grad_list(grad_list)
@@ -180,7 +202,7 @@ class DistributedReplicatedBuilder(DataParallelBuilder):
             ps_var_grads = DistributedReplicatedBuilder._apply_shadow_vars(avg_grads)
             var_update_ops = self._apply_gradients_and_copy(
                 get_opt_fn(), grad_list, ps_var_grads)
-            self._shadow_vars = [v for (_, v) in ps_var_grads]
+            self._shadow_vars = [v for (__, v) in ps_var_grads]
             self._shadow_model_vars = DistributedReplicatedBuilder._shadow_model_variables(self._shadow_vars)
 
         # TODO add options to synchronize less

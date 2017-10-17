@@ -20,13 +20,7 @@ __all__ = ['DistributedTrainerReplicated']
 
 class DistributedTrainerReplicated(Trainer):
     """
-    Distributed replicated training.
-    Each worker process builds the same model on one or more GPUs.
-    Gradients across GPUs are averaged within the worker,
-    and get synchronously applied to the global copy of variables located on PS.
-    Then each worker copy the latest variables from PS back to local.
-
-    See https://www.tensorflow.org/performance/benchmarks for details.
+    Build the graph with :class:`DistributedReplicatedBuilder` and train it.
 
     Note:
         Gradients are not averaged across workers, but applied to PS variables
@@ -154,7 +148,3 @@ class DistributedTrainerReplicated(Trainer):
                 return _create_session()
 
         self.config.session_creator = _Creator()
-
-    @property
-    def vs_name_for_predictor(self):
-        return "tower0"

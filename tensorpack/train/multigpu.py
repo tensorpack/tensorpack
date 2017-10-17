@@ -47,11 +47,7 @@ def apply_prefetch_policy(config, gpu_prefetch=True):
 
 class SyncMultiGPUTrainerParameterServer(Trainer):
     """
-    A data-parallel multi-GPU trainer. It builds one tower on each GPU with
-    shared variable scope. It synchronoizes the gradients computed
-    from each tower, averages them and applies to the shared variables.
-
-    See https://www.tensorflow.org/performance/benchmarks for details.
+    Build graph with :class:`SyncMultiGPUParameterServerBuilder` and train it.
     """
 
     def __init__(self, config, ps_device='gpu', gpu_prefetch=True):
@@ -93,11 +89,7 @@ def SyncMultiGPUTrainer(config):
 
 class SyncMultiGPUTrainerReplicated(Trainer):
     """
-    Data-parallel multi-GPU trainer where each GPU contains a replicate of the whole model.
-    It will build one tower on each GPU under its own variable scope.
-    Each gradient update is averaged across or GPUs through NCCL.
-
-    See https://www.tensorflow.org/performance/benchmarks for details.
+    Build graph with :class:`SyncMultiGPUReplicatedBuilder` and train it.
     """
     def __init__(self, config, gpu_prefetch=True):
         """
@@ -126,11 +118,8 @@ class SyncMultiGPUTrainerReplicated(Trainer):
 
 class AsyncMultiGPUTrainer(Trainer):
     """
-    A data-parallel multi-GPU trainer. It builds one tower on each GPU with shared variable scope.
-    Every tower computes the gradients and independently applies them to the
-    variables, without synchronizing and averaging across towers.
+    Build graph with :class:`AsyncMultiGPUBuilder` and train it.
     """
-
     def __init__(self, config, scale_gradient=True):
         """
         Args:

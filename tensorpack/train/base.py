@@ -253,14 +253,6 @@ class Trainer(object):
                 self._callbacks.after_train()
                 self.hooked_sess.close()
 
-    # Predictor related methods. They actually should not be part of a trainer:
-    @property
-    def vs_name_for_predictor(self):
-        # The variable scope name a predictor should be built in.
-        # Expected to be changed. Don't use it.
-        # TODO graphbuilder knows it
-        return ""
-
     def get_predictor(self, input_names, output_names, tower=0):
         """
         Returns a callable predictor built under ``is_training=False`` tower context.
