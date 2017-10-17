@@ -8,9 +8,8 @@ import numpy as np
 import time
 from tensorpack import (Trainer, QueueInput,
                         ModelDescBase, DataFlow, StagingInputWrapper,
-                        MultiGPUTrainerBase,
                         TowerContext)
-from tensorpack.train.utility import LeastLoadedDeviceSetter
+from tensorpack.graph_builder import DataParallelBuilder, LeastLoadedDeviceSetter
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.utils.argtools import memoized
 
@@ -146,8 +145,7 @@ class MultiGPUGANTrainer(Trainer):
             model.build_graph(input)
             return [model.d_loss, model.g_loss]
         devices = [LeastLoadedDeviceSetter(d, raw_devices) for d in raw_devices]
-        cost_list = MultiGPUTrainerBase.build_on_multi_tower(
-            config.tower, get_cost, devices)
+        cost_list = DataParallelBuilder.build_on_towers(config.tower, get_cost, devices)
         # simply average the cost. It might get faster to average the gradients
         with tf.name_scope('optimize'):
             d_loss = tf.add_n([x[0] for x in cost_list]) * (1.0 / nr_gpu)

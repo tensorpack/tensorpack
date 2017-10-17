@@ -15,7 +15,7 @@ from ..tfutils.common import get_tf_version_number
 from ..tfutils.collection import backup_collection, restore_collection
 from ..tfutils.gradproc import ScaleGradient
 from ..utils.naming import TOWER_FREEZE_KEYS
-from ._utils import LeastLoadedDeviceSetter, override_to_local_variable
+from .utils import LeastLoadedDeviceSetter, override_to_local_variable
 
 
 __all__ = ['GraphBuilder', 'SimpleBuilder',

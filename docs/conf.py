@@ -353,9 +353,7 @@ def process_signature(app, what, name, obj, options, signature,
 
 def autodoc_skip_member(app, what, name, obj, skip, options):
     if name in [
-        'SingleCostFeedfreeTrainer',
-        'SimpleFeedfreeTrainer',
-        'FeedfreeTrainerBase',
+        'MultiGPUTrainerBase',
         'FeedfreeInferenceRunner',
         'replace_get_variable',
         'remap_get_variable',

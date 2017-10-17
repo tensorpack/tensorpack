@@ -6,7 +6,6 @@ import tensorflow as tf
 import re
 from six.moves import zip, range
 
-from ..utils import logger
 from ..utils.argtools import memoized
 from ..tfutils.gradproc import FilterNoneGrad
 from ..tfutils.common import get_global_step_var, get_op_tensor_name
@@ -24,14 +23,9 @@ class DistributedReplicatedBuilder(DataParallelBuilder):
         self.server = server
         server_def = server.server_def
         self.cluster = tf.train.ClusterSpec(server_def.cluster)
-        self.job_name = server_def.job_name
         self.task_index = server_def.task_index
-        # TODO XXX ps does't need to build!
-        assert self.job_name in ['ps', 'worker'], self.job_name
-        logger.info("Distributed training on cluster:\n" + str(server_def.cluster))
-        logger.info("My role in the cluster: job={}, task={}".format(self.job_name, self.task_index))
 
-        self.is_chief = (self.task_index == 0 and self.job_name == 'worker')
+        self.is_chief = (self.task_index == 0)
 
         worker_prefix = '/job:worker/task:%s' % self.task_index
         self.param_server_device = tf.train.replica_device_setter(
@@ -152,10 +146,10 @@ class DistributedReplicatedBuilder(DataParallelBuilder):
             return tf.group(*queue_ops, name=name)
 
     def build(self, input, get_cost_fn, get_opt_fn):
+        # do this before everything, because they my need global step
         with tf.device(self.param_server_device):
             gs = get_global_step_var()
             assert gs.device, gs.device
-        # do this before inputsource.setup because input_source my need global step
 
         get_opt_fn = memoized(get_opt_fn)
         # Build the optimizer first, before entering any tower.

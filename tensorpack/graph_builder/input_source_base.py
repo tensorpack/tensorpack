@@ -8,7 +8,7 @@ from contextlib import contextmanager
 import tensorflow as tf
 
 from ..utils.argtools import memoized
-from ._utils import get_sublist_by_names, get_tensors_inputs
+from .utils import get_sublist_by_names, get_tensors_inputs
 from ..callbacks.base import CallbackFactory
 
 __all__ = ['InputSource', 'remap_input_source']
