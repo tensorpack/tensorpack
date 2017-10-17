@@ -28,7 +28,6 @@ class DistributedReplicatedBuilder(DataParallelBuilder):
         self.task_index = server_def.task_index
         # TODO XXX ps does't need to build!
         assert self.job_name in ['ps', 'worker'], self.job_name
-        assert tf.test.is_gpu_available()
         logger.info("Distributed training on cluster:\n" + str(server_def.cluster))
         logger.info("My role in the cluster: job={}, task={}".format(self.job_name, self.task_index))
 
@@ -176,8 +175,8 @@ class DistributedReplicatedBuilder(DataParallelBuilder):
             return grads
 
         # Ngpu * Nvar * 2
-        grad_list = self.build_on_multi_tower(
-            get_grads,
+        grad_list = DataParallelBuilder.build_on_towers(
+            self.towers, get_grads,
             devices=self.raw_devices,
             use_vs=[True] * len(self.towers))  # open vs at each tower
         DataParallelBuilder._check_grad_list(grad_list)

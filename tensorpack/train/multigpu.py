@@ -11,13 +11,23 @@ from ..graph_builder.input_source import QueueInput, StagingInputWrapper, DummyC
 from ..graph_builder.training import (
     SyncMultiGPUParameterServerBuilder,
     SyncMultiGPUReplicatedBuilder,
-    AsyncMultiGPUBuilder)
+    AsyncMultiGPUBuilder,
+    DataParallelBuilder)
 from .base import Trainer
 
-__all__ = ['SyncMultiGPUTrainerReplicated',
+__all__ = ['MultiGPUTrainerBase',
+           'SyncMultiGPUTrainerReplicated',
            'SyncMultiGPUTrainerParameterServer',
            'AsyncMultiGPUTrainer',
            'SyncMultiGPUTrainer']
+
+
+class MultiGPUTrainerBase(Trainer):
+    """
+    For backward compatibility only
+    """
+    def build_on_multi_tower(towers, func, devices=None, use_vs=None):
+        DataParallelBuilder.build_on_towers(towers, func, devices, use_vs)
 
 
 def apply_prefetch_policy(config, gpu_prefetch=True):

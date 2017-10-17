@@ -63,7 +63,7 @@ class DistributedTrainerReplicated(Trainer):
         assert config.data is not None and config.model is not None
 
         self.server = server
-        self._builder = DistributedReplicatedBuilder(self.config.tower, server)
+        self._builder = DistributedReplicatedBuilder(config.tower, server)
 
         self._input_source = config.data
 

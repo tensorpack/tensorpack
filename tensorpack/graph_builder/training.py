@@ -71,7 +71,7 @@ class DataParallelBuilder(GraphBuilder):
         self.towers = towers
 
     @staticmethod
-    def _check_tf_version(self):
+    def _check_tf_version():
         assert get_tf_version_number() >= 1.1, \
             "TF version {} is too old to run multi GPU training!".format(tf.VERSION)
 
@@ -84,9 +84,12 @@ class DataParallelBuilder(GraphBuilder):
         nvars = [len(k) for k in grad_list]
         assert len(set(nvars)) == 1, "Number of gradients from each tower is different! " + str(nvars)
 
-    def build_on_multi_tower(
-            self, func, devices=None, use_vs=None):
+    @staticmethod
+    def build_on_towers(
+            towers, func, devices=None, use_vs=None):
         """
+        Run `func` on all towers.
+
         Args:
             func: a lambda to be called inside each tower
             devices: a list of devices to be used. By default will use GPUs in ``towers``.
@@ -98,13 +101,13 @@ class DataParallelBuilder(GraphBuilder):
 
         ret = []
         if devices is not None:
-            assert len(devices) == len(self.towers)
+            assert len(devices) == len(towers)
         if use_vs is not None:
-            assert len(use_vs) == len(self.towers)
+            assert len(use_vs) == len(towers)
 
-        tower_names = ['tower{}'.format(idx) for idx in range(len(self.towers))]
+        tower_names = ['tower{}'.format(idx) for idx in range(len(towers))]
 
-        for idx, t in enumerate(self.towers):
+        for idx, t in enumerate(towers):
             device = devices[idx] if devices is not None else '/gpu:{}'.format(t)
             usevs = use_vs[idx] if use_vs is not None else False
             with tf.device(device), TowerContext(
@@ -177,7 +180,7 @@ class SyncMultiGPUParameterServerBuilder(DataParallelBuilder):
             grads = FilterNoneGrad().process(grads)
             return grads
 
-        grad_list = self.build_on_multi_tower(get_grads, devices)
+        grad_list = DataParallelBuilder.build_on_towers(self.towers, get_grads, devices)
         DataParallelBuilder._check_grad_list(grad_list)
 
         # debug tower performance (without update):
@@ -237,7 +240,8 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
             grads = FilterNoneGrad().process(grads)
             return grads
 
-        grad_list = self.build_on_multi_tower(
+        grad_list = DataParallelBuilder.build_on_towers(
+            self.towers,
             get_grads,  # use no variable scope for the first tower
             use_vs=[False] + [True] * (len(self.towers) - 1))
         grads = SyncMultiGPUReplicatedBuilder._allreduce_grads(grad_list)
@@ -316,10 +320,10 @@ class AsyncMultiGPUBuilder(DataParallelBuilder):
             grads = FilterNoneGrad().process(grads)
             return grads
 
-        grad_list = self.build_on_multi_tower(get_grads, devices)
+        grad_list = DataParallelBuilder.build_on_towers(self.towers, get_grads, devices)
         DataParallelBuilder._check_grad_list(grad_list)
 
-        if self.scale_gradient and len(self.towers) > 1:
+        if self._scale_gradient and len(self.towers) > 1:
             # pretend to average the grads, in order to make async and
             # sync have consistent effective learning rate
             gradproc = ScaleGradient(('.*', 1.0 / len(self.towers)), verbose=False)
