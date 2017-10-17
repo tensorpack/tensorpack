@@ -150,7 +150,7 @@ def get_config():
                 [ScalarStats(['cost'], prefix='test')], tower_name='InferenceTowerTest'),
             RunOp(lambda: M.reset_lstm_state()),
             CallbackFactory(
-                trigger_epoch=lambda self:
+                trigger=lambda self:
                 [self.trainer.monitors.put_scalar(
                     'validation_perplexity',
                     np.exp(self.trainer.monitors.get_latest('validation_cost') / SEQ_LEN)),
