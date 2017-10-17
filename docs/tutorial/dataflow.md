@@ -7,7 +7,7 @@ DataFlow is a library to build Python iterators for efficient data loading.
 
 **Definition**: A DataFlow is something that has a `get_data()` generator method,
 which yields `datapoints`.
-A datapoint is a **list** of Python objects which is called the `components` of a datapoint.
+A datapoint is a **list** of Python objects which are called the `components` of a datapoint.
 
 **Example**: to train on MNIST dataset, you may need a DataFlow with a `get_data()` method
 that yields datapoints (lists) of two components:
@@ -46,7 +46,7 @@ the rest of the data pipeline.
 1. It's easy: write everything in pure Python, and reuse existing utilities.
 	 On the contrary, writing data loaders in TF operators is usually painful, and performance is hard to tune.
 2. It's fast: see [Efficient DataFlow](efficient-dataflow.html)
-	on how to build a fast DataFlow with parallel prefetching.
+	on how to build a fast DataFlow with parallelism.
 	If you're using DataFlow with tensorpack, also see [Input Pipeline tutorial](input-source.html)
 	on how tensorpack further accelerates data loading in the graph.
 
@@ -55,7 +55,7 @@ Nevertheless, tensorpack support data loading with native TF operators / TF data
 ### Use DataFlow (outside Tensorpack)
 Existing tensorpack trainers work with DataFlow out-of-the-box.
 If you use DataFlow in some custom code, call `reset_state()` first to initialize it,
-and then use the generator however you want:
+and then use the generator however you like:
 ```python
 df = SomeDataFlow()
 

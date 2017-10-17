@@ -3,7 +3,7 @@
 
 This tutorial contains some general discussions on the topic of
 "how to read data efficiently to work with TensorFlow",
-and how tensorpack support these methods.
+and how tensorpack supports these methods.
 You don't have to read it because these are details under the tensorpack interface,
 but knowing it could help understand the efficiency and choose the best input pipeline for your task.
 
@@ -31,7 +31,7 @@ down your training by 10%. Think about how many more copies are made during your
 Failure to hide the data preparation latency is the major reason why people
 cannot see good GPU utilization. __Always choose a framework that allows latency hiding.__
 However most other TensorFlow wrappers are designed to be `feed_dict` based.
-This is the major reason why tensorpack is [faster](https://gist.github.com/ppwwyyxx/8d95da79f8d97036a7d67c2416c851b6).
+This is the major reason why tensorpack is [faster](https://github.com/tensorpack/benchmarks).
 
 ## Python Reader or TF Reader ?
 
@@ -66,7 +66,7 @@ handle corner cases in noisy data, preprocess, etc.
 
 ## InputSource
 
-`InputSource` is an abstract interface in tensorpack, to describe where the input come from and how they enter the graph.
+`InputSource` is an abstract interface in tensorpack, to describe where the inputs come from and how they enter the graph.
 For example,
 
 1. Come from a DataFlow and been fed to the graph.

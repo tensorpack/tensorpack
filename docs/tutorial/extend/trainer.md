@@ -1,6 +1,8 @@
 
 ## Write a Trainer
 
+**These contents are subject to change in later versions soon**.
+
 The existing trainers should be enough for single-cost optimization tasks.
 If you want to do something different during training, first consider writing it as a callback,
 or write an issue to see if there is a better solution than creating new trainers.
