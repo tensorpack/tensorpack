@@ -253,26 +253,26 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if args.datadir:
         config.BASEDIR = args.datadir
-    print_config()
 
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
-    if args.visualize:
+    if args.visualize or args.evaluate or args.predict:
         assert args.load
-        visualize(args.load)
-    elif args.evaluate is not None:
-        assert args.evaluate.endswith('.json')
-        assert args.load
-        # autotune is too slow for inference
-        os.environ['TF_CUDNN_USE_AUTOTUNE'] = '0'
-        offline_evaluate(args.load, args.evaluate)
-    elif args.predict is not None:
-        COCODetection(config.BASEDIR, 'train2014')   # to load the class names
-        assert args.load
-        predict(args.load, args.predict)
+        print_config()
+        if args.visualize:
+            visualize(args.load)
+        elif args.evaluate:
+            assert args.evaluate.endswith('.json')
+            # autotune is too slow for inference
+            os.environ['TF_CUDNN_USE_AUTOTUNE'] = '0'
+            offline_evaluate(args.load, args.evaluate)
+        elif args.predict:
+            COCODetection(config.BASEDIR, 'train2014')   # to load the class names into caches
+            predict(args.load, args.predict)
     else:
         logger.set_logger_dir(args.logdir)
+        print_config()
         stepnum = 300
         warmup_epoch = max(math.ceil(500.0 / stepnum), 5)
         factor = get_batch_factor()
