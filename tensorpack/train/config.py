@@ -83,17 +83,10 @@ class TrainConfig(object):
         if callbacks is None:
             callbacks = []
         assert_type(callbacks, list)
-        if extra_callbacks is None:
-            extra_callbacks = [
-                MovingAverageSummary(),
-                ProgressBar(),
-                MergeAllSummaries(),
-                RunUpdateOps()]
-        self._callbacks = callbacks + extra_callbacks
+        self._callbacks = callbacks + \
+            (extra_callbacks or TrainConfig.DEFAULT_EXTRA_CALLBACKS())
 
-        if monitors is None:
-            monitors = [TFEventWriter(), JSONWriter(), ScalarPrinter()]
-        self.monitors = monitors
+        self.monitors = monitors or TrainConfig.DEFAULT_MONITORS()
 
         if session_init is None:
             session_init = JustCurrentSession()
@@ -155,3 +148,15 @@ class TrainConfig(object):
     @property
     def callbacks(self):        # disable setter
         return self._callbacks
+
+    @staticmethod
+    def DEFAULT_EXTRA_CALLBACKS():
+        return [
+            MovingAverageSummary(),
+            ProgressBar(),
+            MergeAllSummaries(),
+            RunUpdateOps()]
+
+    @staticmethod
+    def DEFAULT_MONITORS():
+        return [TFEventWriter(), JSONWriter(), ScalarPrinter()]
