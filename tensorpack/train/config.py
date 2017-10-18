@@ -12,7 +12,7 @@ from ..utils import logger
 from ..tfutils import (JustCurrentSession,
                        get_default_sess_config, SessionInit)
 from ..tfutils.sesscreate import NewSessionCreator
-from ..graph_builder.input_source_base import InputSource
+from ..input_source import InputSource
 
 __all__ = ['TrainConfig']
 

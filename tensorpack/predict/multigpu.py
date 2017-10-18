@@ -6,7 +6,7 @@
 import tensorflow as tf
 from ..utils import logger
 from ..graph_builder.predictor_factory import PredictorFactory
-from ..graph_builder.input_source import PlaceholderInput
+from ..input_source import PlaceholderInput
 from .base import OnlinePredictor
 
 __all__ = ['MultiTowerOfflinePredictor',

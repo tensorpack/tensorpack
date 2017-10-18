@@ -8,6 +8,7 @@ API Documentation
   dataflow
   dataflow.dataset
   dataflow.imgaug
+  input_source
   models
   callbacks
   graph_builder

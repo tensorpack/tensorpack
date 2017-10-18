@@ -9,7 +9,7 @@ import tensorflow as tf
 import six
 
 from ..utils.argtools import memoized
-from .input_source_base import InputSource
+from ..input_source import InputSource
 from ..models.regularize import regularize_cost_from_collection
 
 __all__ = ['InputDesc', 'ModelDesc', 'ModelDescBase']

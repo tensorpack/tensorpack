@@ -8,7 +8,7 @@ import tensorflow as tf
 from ..callbacks.graph import RunOp
 from ..utils.develop import log_deprecated
 
-from ..graph_builder.input_source import QueueInput, StagingInputWrapper, DummyConstantInput
+from ..input_source import QueueInput, StagingInputWrapper, DummyConstantInput
 from ..graph_builder.training import (
     SyncMultiGPUParameterServerBuilder,
     SyncMultiGPUReplicatedBuilder,

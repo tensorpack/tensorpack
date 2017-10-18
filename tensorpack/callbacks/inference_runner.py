@@ -17,9 +17,8 @@ from ..utils.utils import get_tqdm_kwargs
 from ..utils.develop import deprecated
 from ..dataflow.base import DataFlow
 
-from ..graph_builder.input_source_base import InputSource
-from ..graph_builder.input_source import (
-    FeedInput, QueueInput)
+from ..input_source import (
+    InputSource, FeedInput, QueueInput)
 
 from .base import Callback
 from .group import Callbacks

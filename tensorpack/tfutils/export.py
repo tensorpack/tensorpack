@@ -10,7 +10,7 @@ This simplifies the process of exporting a model for TensorFlow serving.
 import tensorflow as tf
 from ..utils import logger
 from ..graph_builder.model_desc import ModelDescBase
-from ..graph_builder.input_source import PlaceholderInput
+from ..input_source import PlaceholderInput
 from ..tfutils import TowerContext, sessinit
 
 

@@ -8,7 +8,7 @@ from ..tfutils.common import get_op_tensor_name, get_tensors_by_names
 from ..tfutils.tower import TowerContext
 from ..tfutils.collection import freeze_collection
 from ..utils.naming import TOWER_FREEZE_KEYS
-from .input_source import PlaceholderInput
+from ..input_source import PlaceholderInput
 
 __all__ = []
 

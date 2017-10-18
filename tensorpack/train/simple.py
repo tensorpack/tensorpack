@@ -6,7 +6,7 @@
 from .base import Trainer
 
 from ..utils import logger
-from ..graph_builder.input_source import FeedInput, QueueInput
+from ..input_source import FeedInput, QueueInput
 from ..graph_builder.training import SimpleBuilder
 
 __all__ = ['SimpleTrainer', 'QueueInputTrainer']

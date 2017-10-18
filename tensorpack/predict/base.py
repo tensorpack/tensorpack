@@ -9,7 +9,7 @@ import six
 
 from ..tfutils.common import get_tensors_by_names
 from ..tfutils.tower import TowerContext
-from ..graph_builder.input_source import PlaceholderInput
+from ..input_source import PlaceholderInput
 
 __all__ = ['PredictorBase', 'AsyncPredictorBase',
            'OnlinePredictor', 'OfflinePredictor',
