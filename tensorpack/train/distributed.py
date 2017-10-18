@@ -19,35 +19,9 @@ __all__ = ['DistributedTrainerReplicated']
 
 
 class DistributedTrainerReplicated(Trainer):
-    """
-    Build the graph with :class:`DistributedReplicatedBuilder` and train it.
 
-    Note:
-        Gradients are not averaged across workers, but applied to PS variables
-        directly (either with or without locking depending on the optimizer).
+    __doc__ = DistributedReplicatedBuilder.__doc__
 
-    Example:
-
-        .. code-block:: python
-
-            hosts = ['host1.com', 'host2.com']
-            cluster_spec = tf.train.ClusterSpec({
-                'ps': [h + ':2222' for h in hosts],
-                'worker': [h + ':2223' for h in hosts]
-            })
-            server = tf.train.Server(
-                cluster_spec, job_name=args.job, task_index=args.task,
-                config=get_default_sess_config())
-            DistributedTrainerReplicated(config, server).train()
-
-        .. code-block:: none
-
-            # start your jobs:
-            (host1)$ train.py --job worker --task 0
-            (host1)$ train.py --job ps --task 0
-            (host2)$ train.py --job worker --task 1
-            (host2)$ train.py --job ps --task 1
-    """
     def __init__(self, config, server):
         """
         Args:
@@ -114,7 +88,7 @@ class DistributedTrainerReplicated(Trainer):
                 or self._config.session_config is not None:
             raise ValueError(
                 "Cannot set session_creator or session_config for distributed training! "
-                "To use a custom session config, pass it with tf.train.Server.")
+                "To use a custom session config, pass it to tf.train.Server.")
 
         self._config.session_creator = get_distributed_session_creator(self.server)
 

@@ -15,6 +15,8 @@ from ..tfutils.common import get_tf_version_number
 from ..tfutils.collection import backup_collection, restore_collection
 from ..tfutils.gradproc import ScaleGradient
 from ..utils.naming import TOWER_FREEZE_KEYS
+from ..input_source import FeedfreeInput
+
 from .utils import LeastLoadedDeviceSetter, override_to_local_variable
 
 
@@ -32,7 +34,7 @@ class GraphBuilder(object):
 
 class SimpleBuilder(GraphBuilder):
     """
-    Build the graph for single-cost single-optimizer single-tower training.
+    Single-cost single-optimizer single-tower training.
     """
     def build(self, input, get_cost_fn, get_opt_fn):
         """
@@ -133,7 +135,8 @@ class DataParallelBuilder(GraphBuilder):
     @staticmethod
     def _make_fn(input, get_cost_fn, get_opt_fn):
         # internal use only
-        assert input.setup_done()
+        assert input.setup_done(), "InputSource must have been setup before calling GraphBuilder!"
+        assert isinstance(input, FeedfreeInput), input
         get_opt_fn = memoized(get_opt_fn)
 
         def get_grad_fn():
@@ -153,7 +156,7 @@ class DataParallelBuilder(GraphBuilder):
 
 class SyncMultiGPUParameterServerBuilder(DataParallelBuilder):
     """
-    Graph builder for data-parallel training in 'ParameterServer' mode.
+    Data-parallel training in 'ParameterServer' mode.
     It builds one tower on each GPU with
     shared variable scope. It synchronoizes the gradients computed
     from each tower, averages them and applies to the shared variables.
@@ -234,7 +237,7 @@ class SyncMultiGPUParameterServerBuilder(DataParallelBuilder):
 
 class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
     """
-    Graph builder for data-parallel training in "replicated" mode,
+    Data-parallel training in "replicated" mode,
     where each GPU contains a replicate of the whole model.
     It will build one tower on each GPU under its own variable scope.
     Each gradient update is averaged across or GPUs through NCCL.
@@ -338,7 +341,7 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
 
 class AsyncMultiGPUBuilder(DataParallelBuilder):
     """
-    Graph builder for data-parallel training with async update.
+    Data-parallel training with async update.
     It builds one tower on each GPU with shared variable scope.
     Every tower computes the gradients and independently applies them to the
     variables, without synchronizing and averaging across towers.

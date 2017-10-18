@@ -17,7 +17,7 @@ __all__ = ['DistributedReplicatedBuilder']
 
 class DistributedReplicatedBuilder(DataParallelBuilder):
     """
-    Graph builder for distributed replicated training.
+    Distributed replicated training.
     Each worker process builds the same model on one or more GPUs.
     Gradients across GPUs are averaged within the worker,
     and get synchronously applied to the global copy of variables located on PS.
@@ -28,6 +28,28 @@ class DistributedReplicatedBuilder(DataParallelBuilder):
     Note:
         Gradients are not averaged across workers, but applied to PS variables
         directly (either with or without locking depending on the optimizer).
+
+    Example:
+
+        .. code-block:: python
+
+            # Create the server object like this:
+            hosts = ['host1.com', 'host2.com']
+            cluster_spec = tf.train.ClusterSpec({
+                'ps': [h + ':2222' for h in hosts],
+                'worker': [h + ':2223' for h in hosts]
+            })
+            server = tf.train.Server(
+                cluster_spec, job_name=args.job, task_index=args.task,
+                config=get_default_sess_config())
+
+        .. code-block:: none
+
+            # Start training like this:
+            (host1)$ train.py --job worker --task 0
+            (host1)$ train.py --job ps --task 0
+            (host2)$ train.py --job worker --task 1
+            (host2)$ train.py --job ps --task 1
     """
 
     def __init__(self, towers, server):

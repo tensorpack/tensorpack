@@ -48,9 +48,8 @@ def apply_prefetch_policy(config, gpu_prefetch=True):
 
 
 class SyncMultiGPUTrainerParameterServer(Trainer):
-    """
-    Build graph with :class:`SyncMultiGPUParameterServerBuilder` and train it.
-    """
+
+    __doc__ = SyncMultiGPUParameterServerBuilder.__doc__
 
     def __init__(self, config, ps_device='gpu', gpu_prefetch=True):
         """
@@ -86,9 +85,9 @@ def SyncMultiGPUTrainer(config):
 
 
 class SyncMultiGPUTrainerReplicated(Trainer):
-    """
-    Build graph with :class:`SyncMultiGPUReplicatedBuilder` and train it.
-    """
+
+    __doc__ = SyncMultiGPUReplicatedBuilder.__doc__
+
     def __init__(self, config, gpu_prefetch=True):
         """
         Args:
@@ -111,9 +110,9 @@ class SyncMultiGPUTrainerReplicated(Trainer):
 
 
 class AsyncMultiGPUTrainer(Trainer):
-    """
-    Build graph with :class:`AsyncMultiGPUBuilder` and train it.
-    """
+
+    __doc__ = AsyncMultiGPUBuilder.__doc__
+
     def __init__(self, config, scale_gradient=True):
         """
         Args:
