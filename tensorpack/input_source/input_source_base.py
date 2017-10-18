@@ -9,7 +9,7 @@ from six.moves import zip
 from contextlib import contextmanager
 import tensorflow as tf
 
-from ..utils.argtools import memoized
+from ..utils.argtools import memoized, call_only_once
 from ..callbacks.base import CallbackFactory
 from ..tfutils.common import get_op_tensor_name
 from ..utils import logger
@@ -85,6 +85,7 @@ class InputSource(object):
     def _get_input_tensors(self):
         pass
 
+    @call_only_once
     def setup(self, inputs_desc):
         """
         Args:

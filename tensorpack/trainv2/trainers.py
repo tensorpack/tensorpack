@@ -6,17 +6,19 @@ import os
 
 from ..callbacks.graph import RunOp
 from ..tfutils.sesscreate import NewSessionCreator
-from ..graph_builder.training import (
-    SimpleBuilder,
-    SyncMultiGPUParameterServerBuilder,
-    SyncMultiGPUReplicatedBuilder,
-    AsyncMultiGPUBuilder,
-    DistributedReplicatedBuilder)
-from ..graph_builder.utils import override_to_local_variable
+
 from ..utils import logger
 from ..tfutils import get_global_step_var
 from ..tfutils.distributed import get_distributed_session_creator
 from ..input_source import QueueInput
+
+from ..graph_builder.training import (
+    SimpleBuilder,
+    SyncMultiGPUParameterServerBuilder,
+    SyncMultiGPUReplicatedBuilder,
+    AsyncMultiGPUBuilder)
+from ..graph_builder.distributed import DistributedReplicatedBuilder
+from ..graph_builder.utils import override_to_local_variable
 
 from .base import SingleCostTrainer
 

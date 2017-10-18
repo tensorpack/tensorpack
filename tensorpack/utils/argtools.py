@@ -12,7 +12,7 @@ else:
     import functools
 
 __all__ = ['map_arg', 'memoized', 'graph_memoized', 'shape2d', 'shape4d',
-           'memoized_ignoreargs', 'log_once']
+           'memoized_ignoreargs', 'log_once', 'call_only_once']
 
 
 def map_arg(**maps):
@@ -140,3 +140,42 @@ def log_once(message, func):
         func(str): the name of the logger method. e.g. "info", "warn", "error".
     """
     getattr(logger, func)(message)
+
+
+_FUNC_CALLED = set()
+
+
+def call_only_once(func):
+    """
+    Decorate a method of a class, so that this method can only
+    be called once for every instance.
+    Calling it more than once will result in exception.
+    """
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        self = args[0]
+        assert hasattr(self, func.__name__), "call_only_once can only be used on method!"
+
+        key = (self, func)
+        assert key not in _FUNC_CALLED, \
+            "Method {}.{} can only be called once per object!".format(
+                type(self).__name__, func.__name__)
+        _FUNC_CALLED.add(key)
+
+        func(*args, **kwargs)
+
+    return wrapper
+
+
+if __name__ == '__main__':
+    class A():
+        @call_only_once
+        def f(self, x):
+            print(x)
+
+    a = A()
+    a.f(1)
+
+    b = A()
+    b.f(2)
+    b.f(1)

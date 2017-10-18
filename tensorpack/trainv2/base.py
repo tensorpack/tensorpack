@@ -10,6 +10,7 @@ import six
 from abc import abstractmethod, ABCMeta
 
 from ..utils import logger
+from ..utils.argtools import call_only_once
 from ..callbacks import Callback, Callbacks
 from ..callbacks.monitor import Monitors, TrainingMonitor
 from ..tfutils.model_utils import describe_trainable_vars
@@ -73,6 +74,7 @@ class Trainer(object):
                 "of Trainer.run_step()!")
         self.hooked_sess.run(self.train_op)
 
+    @call_only_once
     def setup_callbacks(self, callbacks, monitors):
         """
         Setup callbacks and monitors. Must be called after the main graph is built.
@@ -92,6 +94,7 @@ class Trainer(object):
         self._callbacks = Callbacks(self._callbacks)
         self._callbacks.setup_graph(weakref.proxy(self))
 
+    @call_only_once
     def initialize(self, session_creator, session_init):
         """
         Initialize self.sess and self.hooked_sess.
@@ -120,6 +123,7 @@ class Trainer(object):
         and self.hooked_sess (the session with hooks and coordinator)
         """
 
+    @call_only_once
     def main_loop(self, steps_per_epoch, starting_epoch=1, max_epoch=99999):
         """
         Run the main training loop.
@@ -213,6 +217,10 @@ class SingleCostTrainer(Trainer):
               callbacks, monitors,
               session_creator, session_init,
               steps_per_epoch, starting_epoch, max_epoch):
+        """
+        Same as :meth:`Trainer.train()`, except that the callbacks this
+        trainer needs are automatically added.
+        """
         callbacks = callbacks + self._internal_callbacks
         Trainer.train(
             self,
@@ -220,6 +228,7 @@ class SingleCostTrainer(Trainer):
             session_creator, session_init,
             steps_per_epoch, starting_epoch, max_epoch)
 
+    @call_only_once
     def setup_graph(self, inputs_desc, input, get_cost_fn, get_opt_fn):
         """
         Build the main training graph. Defaults to do nothing.
