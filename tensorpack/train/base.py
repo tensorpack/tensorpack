@@ -11,6 +11,7 @@ import tensorflow as tf
 
 from .config import TrainConfig
 from ..utils import logger
+from ..utils.develop import log_deprecated
 from ..callbacks import Callback, Callbacks
 from ..callbacks.monitor import Monitors, TrainingMonitor
 from ..tfutils import get_global_step_value
@@ -116,7 +117,7 @@ class Trainer(object):
         self.model = config.model
 
         self._callbacks = []
-        self.monitors = []
+        self._monitors = []
         self.loop = TrainLoop()
         self.loop.config(config.steps_per_epoch, config.starting_epoch, config.max_epoch)
 
@@ -141,13 +142,18 @@ class Trainer(object):
         It can only be called before :meth:`Trainer.train` gets called.
         """
         assert isinstance(mon, TrainingMonitor), mon
-        assert not isinstance(self.monitors, Monitors), \
+        assert not isinstance(self._monitors, Monitors), \
             "Cannot register more monitors after trainer was setup!"
         if not self.is_chief and mon.chief_only:
             logger.warn("Monitor {} is chief-only, skipped.".format(str(mon)))
         else:
-            self.monitors.append(mon)
+            self._monitors.append(mon)
             self.register_callback(mon)
+
+    @property
+    def monitors(self):
+        assert isinstance(self._monitors, Monitors), "Monitors haven't been setup!"
+        return self._monitors
 
     def train(self):
         """ Start training """
@@ -177,8 +183,8 @@ class Trainer(object):
             self.register_callback(cb)
         for m in self._config.monitors:
             self.register_monitor(m)
-        self.monitors = Monitors(self.monitors)
-        self.register_callback(self.monitors)
+        self._monitors = Monitors(self._monitors)
+        self.register_callback(self._monitors)
 
         describe_trainable_vars()
 
@@ -286,6 +292,14 @@ class Trainer(object):
         # The vs name a predictor should be built under.
         # for internal use only. Should let graphbuilder return it.
         return ""
+
+    @property
+    def config(self):
+        log_deprecated(
+            "Trainer.config",
+            "It is supposed to be private! Most of its attributes can be accessed by other means.",
+            "2017-12-31")
+        return self._config
 
 
 def _get_property(name):
