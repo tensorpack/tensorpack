@@ -62,9 +62,4 @@ def QueueInputTrainer(config, input_queue=None):
     else:
         config.data = QueueInput(config.dataflow, input_queue)
     config.dataflow = None
-
-    # debug
-    # from tensorpack.train.input_source import StagingInputWrapper, DummyConstantInput
-    # config.data = StagingInputWrapper(config.data, ['/gpu:0'])
-    # config.data = DummyConstantInput([[128,224,224,3], [128]])
     return SimpleTrainer(config)

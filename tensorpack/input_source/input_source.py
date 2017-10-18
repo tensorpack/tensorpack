@@ -19,6 +19,7 @@ from ..tfutils.common import get_op_tensor_name
 from ..tfutils.tower import get_current_tower_context
 from ..utils import logger
 from ..utils.concurrency import ShareSessionThread
+from ..utils.develop import log_deprecated
 from ..callbacks.base import Callback
 from ..callbacks.graph import RunOp
 
@@ -457,7 +458,8 @@ class TFDatasetInput(FeedfreeInput):
 
 class StagingInputWrapper(FeedfreeInput):
     """
-    A wrapper around a feedfree input, to prefetch it in StagingArea (usually on GPUs).
+    A wrapper around a feedfree input,
+    to prefetch the input in StagingArea (on GPUs).
     """
     class StagingCallback(Callback):
         """
@@ -478,16 +480,22 @@ class StagingInputWrapper(FeedfreeInput):
         def _before_run(self, ctx):
             return self.fetches
 
-    def __init__(self, input, devices, nr_stage=5):
+    def __init__(self, input, towers, nr_stage=5):
         """
         Args:
-            input: a :class:`FeedfreeInput`
-            devices: list of devices to be used for each training tower
-            nr_stage: number of elements to prefetch
+            input (FeedfreeInput):
+            towers ([int]): list of GPU ids to prefetch on.
+            nr_stage: number of elements to prefetch on each GPU.
         """
         assert isinstance(input, FeedfreeInput), input
         self._input = input
-        self._devices = devices
+        if not isinstance(towers[0], int):
+            # API changed
+            log_deprecated("StagingInputWrapper(devices=)", "Use (towers=) instead!", "2018-01-31")
+            self._devices = towers
+        else:
+            self._devices = ['/gpu:{}'.format(k) for k in towers]
+
         self._nr_stage = nr_stage
         self._areas = []
         self._stage_ops = []

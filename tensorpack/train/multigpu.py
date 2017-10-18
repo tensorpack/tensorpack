@@ -44,8 +44,7 @@ def apply_prefetch_policy(config, gpu_prefetch=True):
 
         # seem to only improve on >1 GPUs
         if not isinstance(config.data, (StagingInputWrapper, DummyConstantInput)):
-            devices = ['/gpu:{}'.format(k) for k in config.tower]
-            config.data = StagingInputWrapper(config.data, devices)
+            config.data = StagingInputWrapper(config.data, config.tower)
 
 
 class SyncMultiGPUTrainerParameterServer(Trainer):

@@ -136,7 +136,7 @@ class MultiGPUGANTrainer(Trainer):
         raw_devices = ['/gpu:{}'.format(k) for k in config.tower]
 
         # setup input
-        input = StagingInputWrapper(QueueInput(config.dataflow), raw_devices)
+        input = StagingInputWrapper(QueueInput(config.dataflow), config.tower)
         model = config.model
         cbs = input.setup(model.get_inputs_desc())
         config.callbacks.extend(cbs)
