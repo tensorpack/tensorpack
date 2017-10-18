@@ -162,7 +162,7 @@ def call_only_once(func):
                 type(self).__name__, func.__name__)
         _FUNC_CALLED.add(key)
 
-        func(*args, **kwargs)
+        return func(*args, **kwargs)
 
     return wrapper
 
