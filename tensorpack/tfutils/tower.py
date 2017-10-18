@@ -4,9 +4,12 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import tensorflow as tf
-from .common import get_tf_version_number
+from six.moves import zip
 
-__all__ = ['get_current_tower_context', 'TowerContext']
+from ..utils import logger
+from .common import get_tf_version_number, get_op_or_tensor_by_name, get_op_tensor_name
+
+__all__ = ['get_current_tower_context', 'TowerContext', 'TowerFuncWrapper']
 
 _CurrentTowerContext = None
 
@@ -54,6 +57,9 @@ class TowerContext(object):
         """
         return self.is_main_training_tower or len(self._vs_name) > 0
 
+    # TODO clarify the interface on name/vs_name/ns_name.
+    # TODO in inference, vs_name may need to be different from ns_name.i
+    # How to deal with this?
     @property
     def name(self):
         return self._name
@@ -61,6 +67,10 @@ class TowerContext(object):
     @property
     def vs_name(self):
         return self._vs_name
+
+    @property
+    def ns_name(self):
+        return self._name
 
     def filter_vars_by_vs_name(self, varlist):
         """
@@ -85,13 +95,12 @@ class TowerContext(object):
 
     def __enter__(self):
         global _CurrentTowerContext
-        assert _CurrentTowerContext is None, \
-            "Nesting TowerContext!"
+        assert _CurrentTowerContext is None, "Cannot nest TowerContext!"
         _CurrentTowerContext = self
         self._ctxs = []
         curr_vs = tf.get_variable_scope()
-        assert curr_vs.name == '', "Nesting TowerContext with an existing variable scope!"
-        # assert empty name scope as well (>1.2.1?)
+        assert curr_vs.name == '', "Cannot nest TowerContext with an existing variable scope!"
+
         if len(self._name):
             if not self.is_training:
                 # if not training, should handle reuse outside
@@ -114,6 +123,7 @@ class TowerContext(object):
             c.__enter__()
 
         if get_tf_version_number() >= 1.2:
+            # check that ns_name is always the same as _name
             ns = tf.get_default_graph().get_name_scope()
             assert ns == self._name, \
                 "Name conflict: name_scope inside tower '{}' becomes '{}'!".format(self._name, ns) \
@@ -135,3 +145,126 @@ class TowerContext(object):
 def get_current_tower_context():
     global _CurrentTowerContext
     return _CurrentTowerContext
+
+
+class TowerFuncWrapper(object):
+    """
+    A wrapper around a function which builds one tower (one replicate of the model).
+    It keeps track of the name scope, variable scope and input/output tensors
+    each time the function is called.
+    """
+
+    def __init__(self, tower_fn, inputs_desc=None):
+        """
+        Args:
+            tower_func: a function which builds one tower in the graph.
+                It takes several input tensors and could return anything.
+            inputs_desc ([InputDesc]): use this to figure out the right name for the input tensors.
+        """
+        self._tower_fn = tower_fn
+        self._inputs_desc = inputs_desc
+
+        self._towers = []
+
+    def __call__(self, *args):
+        ctx = get_current_tower_context()
+        assert ctx is not None, "Function must be called under TowerContext!"
+        output = self._tower_fn(*args)
+        handle = TowerTensorHandle(ctx, args, output, self._inputs_desc)
+        self._towers.append(handle)
+        return output
+
+    @property
+    def towers(self):
+        # TODO another wrapper around towerhandlelist
+        return self._towers
+
+
+class TowerTensorHandle(object):
+    """
+    When a function is called multiple times under each tower,
+    it becomes hard to keep track of the scope and access those tensors
+    in each tower.
+    This class provides easy access to the tensors as well as the
+    inputs/outputs created in each tower.
+    """
+
+    # TODO hide it from doc
+    def __init__(self, ctx, input, output, inputs_desc=None):
+        """
+        Don't use it because you never need to create the handle by yourself.
+        """
+        self._ctx = ctx
+
+        self._extra_tensor_names = {}
+        if inputs_desc is not None:
+            assert len(inputs_desc) == len(input)
+            self._extra_tensor_names = {
+                get_op_tensor_name(x.name)[1]: y for x, y in zip(inputs_desc, input)}
+        self._input = input
+        self._output = output
+
+    @property
+    def vs_name(self):
+        return self._ctx.vs_name
+
+    @property
+    def ns_name(self):
+        return self._ctx.ns_name
+
+    def get_tensor(self, name):
+        """
+        Get a tensor in this tower. The name can be:
+        1. The name of the tensor without any tower prefix.
+        2. The name of an :class:`InputDesc`, if it is used when building the tower.
+        """
+        name = get_op_tensor_name(name)[1]
+        if len(self.ns_name):
+            name_with_ns = self.ns_name + "/" + name
+        else:
+            name_with_ns = name
+
+        try:
+            ret = get_op_or_tensor_by_name(name_with_ns)
+        except KeyError:
+            if name in self._extra_tensor_names:
+                return self._extra_tensor_names[name]
+            raise
+        else:
+            if name in self._extra_tensor_names:
+                logger.warn(
+                    "'{}' may refer to both the tensor '{}' or the input '{}'.".format(
+                        name, ret.name, self._extra_tensor_names[name].name) +
+                    "Assuming it is the tensor '{}'.".format(ret.name))
+            return ret
+
+    def get_tensors(self, names):
+        return [self.get_tensor(name) for name in names]
+
+    def __getitem__(self, name):
+        return self.get_tensor(name)
+
+    def get_variable(self, name):
+        """
+        Get a variable used in this tower.
+        """
+        name = get_op_tensor_name(name)[1]
+        if len(self.vs_name):
+            name_with_vs = self.vs_name + "/" + name
+        else:
+            name_with_vs = name
+        return get_op_or_tensor_by_name(name_with_vs)
+
+    @property
+    def input(self):
+        """
+        The list of input tensors used to build the tower.
+        """
+        return self._input
+
+    @property
+    def output(self):
+        """
+        The output returned by the tower function.
+        """
+        return self._output

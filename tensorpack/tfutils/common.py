@@ -117,6 +117,9 @@ def get_op_or_tensor_by_name(name):
 
     Args:
         name (list[str] or str): names of operations or tensors.
+
+    Raises:
+        KeyError, if the name doesn't exist
     """
     G = tf.get_default_graph()
 
