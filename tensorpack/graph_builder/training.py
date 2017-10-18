@@ -272,8 +272,11 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
             get_opt_fn (-> tf.train.Optimizer): callable which returns an optimizer
 
         Returns:
-            tf.Operation: the training op.
-            tf.Operation: the op which sync variables from GPU 0 to other GPUs.
+            (tf.Operation, tf.Operation)
+
+            1. the training op.
+
+            2. the op which sync variables from GPU 0 to other GPUs.
                 It has to be run before the training has started.
                 And you can optionally run it later to sync non-trainable variables.
         """

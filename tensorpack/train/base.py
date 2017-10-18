@@ -34,6 +34,7 @@ class TrainLoop(object):
     """
     Manage the double for loop.
     """
+
     def __init__(self):
         self._epoch_num = 0
         self._global_step = 0
@@ -82,7 +83,7 @@ class TrainLoop(object):
     @property
     def local_step(self):
         """
-        The number of (tensorpack) steps that have finished in the current epoch.
+        The number of steps that have finished in the current epoch.
         """
         return self._local_step
 
@@ -97,9 +98,12 @@ class Trainer(object):
         hooked_sess (tf.train.MonitoredSession): the session with hooks.
         monitors (Monitors): the monitors. Other callbacks can use it for logging.
     """
-    # step attr only available after before_train?
 
     is_chief = True
+    """
+    Whether this process is the chief worker in distributed training.
+    Only chief worker will run some callbacks.
+    """
 
     def __init__(self, config):
         """
@@ -283,17 +287,22 @@ class Trainer(object):
         return ""
 
 
-def _delegate_attr(name):
+def _get_property(name):
     """
     Delegate property to self.loop
     """
-    setattr(Trainer, name, property(
-        lambda self: getattr(self.loop, name)))
+    ret = property(
+        lambda self: getattr(self.loop, name))
+    try:
+        ret.__doc__ = getattr(TrainLoop, name).__doc__
+    except AttributeError:
+        pass
+    return ret
 
 
 for name in ['global_step', 'local_step', 'steps_per_epoch',
              'epoch_num', 'starting_epoch', 'max_epoch']:
-    _delegate_attr(name)
+    setattr(Trainer, name, _get_property(name))
 
 
 def launch_train(

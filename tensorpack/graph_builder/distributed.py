@@ -173,11 +173,15 @@ class DistributedReplicatedBuilder(DataParallelBuilder):
             get_opt_fn (-> tf.train.Optimizer): callable which returns an optimizer
 
         Returns:
-            tf.Operation: the training op
-            tf.Operation: the op which sync all the local variables from PS.
-                This op sholud be run before training.
-            tf.Operation: the op which sync all the local `MODEL_VARIABLES` from PS.
-                You can choose how often to run it by yourself.
+            (tf.Operation, tf.Operation, tf.Operation):
+
+            1. the training op.
+
+            2. the op which sync all the local variables from PS.
+            This op sholud be run before training.
+
+            3. the op which sync all the local `MODEL_VARIABLES` from PS.
+            You can choose how often to run it by yourself.
         """
         with override_to_local_variable():
             get_global_step_var()

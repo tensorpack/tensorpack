@@ -8,7 +8,7 @@ SPHINXPROJ    = tensorpack
 SOURCEDIR     = .
 BUILDDIR      = build
 
-.PHONY: help Makefile docset
+.PHONY: help Makefile docset clean
 
 all: html
 
@@ -24,3 +24,6 @@ docset: html
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 html: Makefile
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+
+clean:
+	rm -rf build

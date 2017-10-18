@@ -169,7 +169,7 @@ class GraphProfiler(Callback):
 class PeakMemoryTracker(Callback):
     """
     Track peak memory in each session run, by
-    :module:`tf.contrib.memory_stats`.
+    :mod:`tf.contrib.memory_stats`.
     It can only be used for GPUs.
     """
     def __init__(self, devices=['/gpu:0']):

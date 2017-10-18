@@ -101,6 +101,10 @@ class InputSource(object):
         pass
 
     def setup_done(self):
+        """
+        Returns:
+            bool: whether :meth:`setup()` has been called.
+        """
         return self._setup_done
 
     @memoized
@@ -108,11 +112,12 @@ class InputSource(object):
         """
         An InputSource might need some extra maintainance during training,
         which is done also through the Callback interface.
-        This method returns the Callbacks and the return value will be memoized.
+        This method returns the callbacks and the return value will be memoized.
 
         Returns:
             list[Callback]: extra callbacks needed by this InputSource.
         """
+        assert self.setup_done()
         return [CallbackFactory(
             before_train=lambda _: self.reset_state())] + self._get_callbacks()
 
