@@ -108,6 +108,7 @@ class TrainConfig(object):
         else:
             self.session_creator = session_creator
             assert session_config is None, "Cannot set both session_creator and session_config!"
+        # only used by DistributedTrainer for assertion!
         self.session_config = session_config
 
         if steps_per_epoch is None:

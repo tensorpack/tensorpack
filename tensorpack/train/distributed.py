@@ -69,7 +69,6 @@ class DistributedTrainerReplicated(Trainer):
         logger.info("Distributed training on cluster:\n" + str(server.server_def.cluster))
 
         self._input_source = config.data
-        self.nr_gpu = config.nr_tower
 
         super(DistributedTrainerReplicated, self).__init__(config)
 

@@ -239,12 +239,11 @@ class JSONWriter(TrainingMonitor):
             logger.warn("logger directory was not set. Ignore JSONWriter.")
             return NoOpMonitor()
 
-    def _setup_graph(self):
+    def _before_train(self):
         self._dir = logger.LOG_DIR
         self._fname = os.path.join(self._dir, self.FILENAME)
 
         if os.path.isfile(self._fname):
-            # TODO make a backup first?
             logger.info("Found existing JSON at {}, will append to it.".format(self._fname))
             with open(self._fname) as f:
                 self._stats = json.load(f)
@@ -255,18 +254,18 @@ class JSONWriter(TrainingMonitor):
             except Exception:
                 pass
             else:
+                # TODO is this a good idea?
                 logger.info("Found training history from JSON, now starting from epoch number {}.".format(epoch))
-                self.trainer.starting_epoch = epoch
+                self.trainer.loop.starting_epoch = epoch
         else:
             self._stats = []
         self._stat_now = {}
 
         self._last_gs = -1
-        self._total = self.trainer.steps_per_epoch
 
     def _trigger_step(self):
         # will do this in trigger_epoch
-        if self.local_step != self._total - 1:
+        if self.local_step != self.trainer.steps_per_epoch - 1:
             self._push()
 
     def _trigger_epoch(self):
@@ -327,11 +326,10 @@ class ScalarPrinter(TrainingMonitor):
 
     def _setup_graph(self):
         self._dic = {}
-        self._total = self.trainer.steps_per_epoch
 
     def _trigger_step(self):
         if self._enable_step:
-            if self.local_step != self._total - 1:
+            if self.local_step != self.trainer.steps_per_epoch - 1:
                 # not the last step
                 self._print_stat()
             else:

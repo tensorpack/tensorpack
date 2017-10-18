@@ -70,10 +70,9 @@ class MergeAllSummaries_RunWithOp(Callback):
             self._fetches = tf.train.SessionRunArgs(self.summary_op)
         else:
             self._fetches = None
-        self._total = self.trainer.steps_per_epoch
 
     def _need_run(self):
-        if self.local_step == self._total - 1:
+        if self.local_step == self.trainer.steps_per_epoch - 1:
             return True
         if self._period > 0 and (self.local_step + 1) % self._period == 0:
             return True

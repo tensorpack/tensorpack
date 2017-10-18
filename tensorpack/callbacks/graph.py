@@ -38,8 +38,9 @@ class RunOp(Callback):
             uses this callback to update target network.
         """
         if not callable(op):
-            op = lambda: op  # noqa
-        self.setup_func = op
+            self.setup_func = lambda: op  # noqa
+        else:
+            self.setup_func = op
         self.run_before = run_before
         self.run_as_trigger = run_as_trigger
         self.run_step = run_step

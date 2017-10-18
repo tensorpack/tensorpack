@@ -45,7 +45,6 @@ class Callback(object):
     _chief_only = True
 
     def setup_graph(self, trainer):
-        self._steps_per_epoch = trainer.steps_per_epoch
         self.trainer = trainer
         self.graph = tf.get_default_graph()
         scope_name = type(self).__name__
