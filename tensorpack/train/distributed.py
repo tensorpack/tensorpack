@@ -85,7 +85,7 @@ class DistributedTrainerReplicated(Trainer):
     def _set_session_creator(self):
         old_sess_creator = self._config.session_creator
         if not isinstance(old_sess_creator, NewSessionCreator) \
-                or self._config.session_config is not None:
+                or old_sess_creator.user_provided_config:
             raise ValueError(
                 "Cannot set session_creator or session_config for distributed training! "
                 "To use a custom session config, pass it to tf.train.Server.")

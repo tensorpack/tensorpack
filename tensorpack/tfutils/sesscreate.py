@@ -24,7 +24,13 @@ class NewSessionCreator(tf.train.SessionCreator):
         """
         self.target = target
         if config is None:
+            # distributd trainer doesn't support user-provided config
+            # we set this attribute so that they can check
+            self.user_provided_config = False
             config = get_default_sess_config()
+        else:
+            self.user_provided_config = True
+
         self.config = config
         self.graph = graph
 

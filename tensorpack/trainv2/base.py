@@ -231,8 +231,7 @@ class SingleCostTrainer(Trainer):
                 These callbacks will be automatically added when you call `train()`.
                 So you can usually ignore the return value.
         """
-        assert not input.setup_done()
-        input_callbacks = input.setup(inputs_desc)
+        input_callbacks = self._setup_input(inputs_desc, input)
         train_callbacks = self._setup_graph(input, get_cost_fn, get_opt_fn)
         self._internal_callbacks = input_callbacks + train_callbacks
         return self._internal_callbacks
@@ -240,3 +239,7 @@ class SingleCostTrainer(Trainer):
     @abstractmethod
     def _setup_graph(self, input, get_cost_fn, get_opt_fn):
         pass
+
+    def _setup_input(self, inputs_desc, input):
+        assert not input.setup_done()
+        return input.setup(inputs_desc)
