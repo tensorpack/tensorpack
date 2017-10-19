@@ -101,7 +101,7 @@ class InferenceRunner(InferenceRunnerBase):
     A callback that runs a list of :class:`Inferencer` on some :class:`InputSource`.
     """
 
-    def __init__(self, input, infs, tower_name='InferenceTower', extra_hooks=None):
+    def __init__(self, input, infs, tower_name='InferenceTower', device=0, extra_hooks=None):
         """
         Args:
             input (InputSource or DataFlow): The :class:`InputSource` to run
@@ -109,11 +109,13 @@ class InferenceRunner(InferenceRunnerBase):
             infs (list): a list of :class:`Inferencer` instances.
             tower_name (str): the name scope of the tower to build. Need to set a
                 different one if multiple InferenceRunner are used.
+            gpu (int): the device to use
         """
         if isinstance(input, DataFlow):
             input = FeedInput(input, infinite=False)
         assert isinstance(input, InputSource), input
         self._tower_name = tower_name
+        self._device = device
         super(InferenceRunner, self).__init__(
             input, infs, extra_hooks=extra_hooks)
 
@@ -127,8 +129,11 @@ class InferenceRunner(InferenceRunnerBase):
             # old Trainer API
             assert self.trainer.model is not None
             # Use predict_tower in train config. either gpuid or -1
-            tower_id = self.trainer._config.predict_tower[0]
-            device = '/gpu:{}'.format(tower_id) if tower_id >= 0 else '/cpu:0'
+            if self.trainer._config.predict_tower is not None:
+                device = self.trainer._config.predict_tower[0]
+            else:
+                device = self._device
+            device = '/gpu:{}'.format(device) if device >= 0 else '/cpu:0'
 
             input_callbacks = self._input_source.setup(self.trainer.model.get_inputs_desc())
 

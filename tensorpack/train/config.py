@@ -13,6 +13,7 @@ from ..tfutils import (JustCurrentSession,
                        get_default_sess_config, SessionInit)
 from ..tfutils.sesscreate import NewSessionCreator
 from ..input_source import InputSource
+from ..utils.develop import log_deprecated
 
 __all__ = ['TrainConfig']
 
@@ -128,8 +129,9 @@ class TrainConfig(object):
             self.tower = tower
 
         predict_tower = kwargs.pop('predict_tower', None)
-        if predict_tower is None:
-            predict_tower = [0]
+        if predict_tower is not None:
+            log_deprecated("TrainConfig(predict_tower=)",
+                           "InferenceRunner now accepts a 'device' argument.", "2017-12-31")
         self.predict_tower = predict_tower
         if isinstance(self.predict_tower, int):
             self.predict_tower = [self.predict_tower]
