@@ -27,7 +27,7 @@ class ModelSaver(Callback):
         """
         Args:
             max_to_keep, keep_checkpoint_every_n_hours(int): the same as in ``tf.train.Saver``.
-            checkpoint_dir (str): Defaults to ``logger.LOG_DIR``.
+            checkpoint_dir (str): Defaults to ``logger.get_logger_dir()``.
             var_collections (str or list of str): collection of the variables (or list of collections) to save.
         """
         self._max_to_keep = max_to_keep
@@ -43,7 +43,7 @@ class ModelSaver(Callback):
             var_collections = [var_collections]
         self.var_collections = var_collections
         if checkpoint_dir is None:
-            checkpoint_dir = logger.LOG_DIR
+            checkpoint_dir = logger.get_logger_dir()
         assert checkpoint_dir is not None
         if not tf.gfile.IsDirectory(checkpoint_dir):
             tf.gfile.MakeDirs(checkpoint_dir)
@@ -115,7 +115,7 @@ class MinSaver(Callback):
 
         Note:
             It assumes that :class:`ModelSaver` is used with
-            ``checkpoint_dir=logger.LOG_DIR`` (the default). And it will save
+            ``checkpoint_dir=logger.get_logger_dir()`` (the default). And it will save
             the model to that directory as well.
         """
         self.monitor_stat = monitor_stat
@@ -143,13 +143,13 @@ class MinSaver(Callback):
                 self._save()
 
     def _save(self):
-        ckpt = tf.train.get_checkpoint_state(logger.LOG_DIR)
+        ckpt = tf.train.get_checkpoint_state(logger.get_logger_dir())
         if ckpt is None:
             raise RuntimeError(
                 "Cannot find a checkpoint state. Do you forget to use ModelSaver?")
         path = ckpt.model_checkpoint_path
 
-        newname = os.path.join(logger.LOG_DIR,
+        newname = os.path.join(logger.get_logger_dir(),
                                self.filename or
                                ('max-' + self.monitor_stat if self.reverse else 'min-' + self.monitor_stat))
         files_to_copy = tf.gfile.Glob(path + '*')

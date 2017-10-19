@@ -193,14 +193,14 @@ class TFEventWriter(TrainingMonitor):
     Write summaries to TensorFlow event file.
     """
     def __new__(cls):
-        if logger.LOG_DIR:
+        if logger.get_logger_dir():
             return super(TFEventWriter, cls).__new__(cls)
         else:
             logger.warn("logger directory was not set. Ignore TFEventWriter.")
             return NoOpMonitor()
 
     def _setup_graph(self):
-        self._writer = tf.summary.FileWriter(logger.LOG_DIR, graph=tf.get_default_graph())
+        self._writer = tf.summary.FileWriter(logger.get_logger_dir(), graph=tf.get_default_graph())
 
     def process_summary(self, summary):
         self._writer.add_summary(summary, self.global_step)
@@ -222,7 +222,7 @@ def TFSummaryWriter(*args, **kwargs):
 
 class JSONWriter(TrainingMonitor):
     """
-    Write all scalar data to a json file under ``logger.LOG_DIR``, grouped by their global step.
+    Write all scalar data to a json file under ``logger.get_logger_dir()``, grouped by their global step.
     This monitor also attemps to recover the epoch number during setup,
     if an existing json file is found at the same place.
     """
@@ -233,14 +233,14 @@ class JSONWriter(TrainingMonitor):
     """
 
     def __new__(cls):
-        if logger.LOG_DIR:
+        if logger.get_logger_dir():
             return super(JSONWriter, cls).__new__(cls)
         else:
             logger.warn("logger directory was not set. Ignore JSONWriter.")
             return NoOpMonitor()
 
     def _before_train(self):
-        self._dir = logger.LOG_DIR
+        self._dir = logger.get_logger_dir()
         self._fname = os.path.join(self._dir, self.FILENAME)
 
         if os.path.isfile(self._fname):

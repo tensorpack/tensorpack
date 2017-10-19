@@ -71,7 +71,7 @@ class InjectShell(Callback):
 
 class DumpParamAsImage(Callback):
     """
-    Dump a tensor to image(s) to ``logger.LOG_DIR`` after every epoch.
+    Dump a tensor to image(s) to ``logger.get_logger_dir()`` after every epoch.
 
     Note that it requires the tensor is directly evaluable, i.e. either inputs
     are not its dependency (e.g. the weights of the model), or the inputs are
@@ -93,7 +93,7 @@ class DumpParamAsImage(Callback):
             self.prefix = op_name
         else:
             self.prefix = prefix
-        self.log_dir = logger.LOG_DIR
+        self.log_dir = logger.get_logger_dir()
         self.scale = scale
 
     def _before_train(self):

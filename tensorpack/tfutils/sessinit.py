@@ -270,14 +270,14 @@ def get_model_loader(filename):
 
 def TryResumeTraining():
     """
-    Try loading latest checkpoint from ``logger.LOG_DIR``, only if there is one.
+    Try loading latest checkpoint from ``logger.get_logger_dir()``, only if there is one.
 
     Returns:
         SessInit: either a :class:`JustCurrentSession`, or a :class:`SaverRestore`.
     """
-    if not logger.LOG_DIR:
+    if not logger.get_logger_dir():
         return JustCurrentSession()
-    path = os.path.join(logger.LOG_DIR, 'checkpoint')
+    path = os.path.join(logger.get_logger_dir(), 'checkpoint')
     if not tf.gfile.Exists(path):
         return JustCurrentSession()
     return SaverRestore(path)

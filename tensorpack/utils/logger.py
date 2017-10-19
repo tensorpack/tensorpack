@@ -11,7 +11,7 @@ from datetime import datetime
 from six.moves import input
 import sys
 
-__all__ = ['set_logger_dir', 'auto_set_dir']
+__all__ = ['set_logger_dir', 'auto_set_dir', 'get_logger_dir']
 
 
 class _MyFormatter(logging.Formatter):
@@ -80,7 +80,8 @@ def set_logger_dir(dirname, action=None):
 
     Args:
         dirname(str): log directory
-        action(str): an action of ("k","b","d","n","q") to be performed. Will ask user by default.
+        action(str): an action of ("k","b","d","n","q") to be performed
+            when the directory exists. Will ask user by default.
     """
     global LOG_DIR, _FILE_HANDLER
     if _FILE_HANDLER:
@@ -128,3 +129,12 @@ def auto_set_dir(action=None, name=None):
     if name:
         auto_dirname += ':%s' % name
     set_logger_dir(auto_dirname, action=action)
+
+
+def get_logger_dir():
+    """
+    Returns:
+        The logger directory, or None if not set.
+        The directory is used for general logging, tensorboard events, checkpoints, etc.
+    """
+    return LOG_DIR

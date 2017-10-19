@@ -105,7 +105,7 @@ class GPUUtilizationTracker(Callback):
 class GraphProfiler(Callback):
     """
     Enable profiling by installing session hooks,
-    and write metadata or tracing files to ``logger.LOG_DIR``.
+    and write metadata or tracing files to ``logger.get_logger_dir()``.
 
     The tracing files can be loaded from ``chrome://tracing``.
     The metadata files can be processed by
@@ -125,7 +125,7 @@ class GraphProfiler(Callback):
             dump_event(bool): Dump to an event processed by FileWriter and
                 will be shown in TensorBoard.
         """
-        self._dir = logger.LOG_DIR
+        self._dir = logger.get_logger_dir()
         self._dump_meta = bool(dump_metadata)
         self._dump_tracing = bool(dump_tracing)
         self._dump_event = bool(dump_event)

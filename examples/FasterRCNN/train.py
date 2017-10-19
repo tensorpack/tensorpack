@@ -231,7 +231,7 @@ class EvalCallback(Callback):
     def _eval(self):
         all_results = eval_on_dataflow(self.df, lambda img: detect_one_image(img, self.pred))
         output_file = os.path.join(
-            logger.LOG_DIR, 'outputs{}.json'.format(self.global_step))
+            logger.get_logger_dir(), 'outputs{}.json'.format(self.global_step))
         with open(output_file, 'w') as f:
             json.dump(all_results, f)
         print_evaluation_scores(output_file)

@@ -184,7 +184,7 @@ class HumanHyperParamSetter(HyperParamSetter):
                 If the pair is not found, the param will not be changed.
         """
         super(HumanHyperParamSetter, self).__init__(param)
-        self.file_name = os.path.join(logger.LOG_DIR, file_name)
+        self.file_name = os.path.join(logger.get_logger_dir(), file_name)
         logger.info("Use {} to set hyperparam: '{}'.".format(
             self.file_name, self.param.readable_name))
 

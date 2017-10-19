@@ -134,7 +134,8 @@ class ProcessTensors(Callback):
 class DumpTensors(ProcessTensors):
     """
     Dump some tensors to a file.
-    Every step this callback fetches tensors and write them to a npz file under ``logger.LOG_DIR``.
+    Every step this callback fetches tensors and write them to a npz file
+    under ``logger.get_logger_dir``.
     The dump can be loaded by ``dict(np.load(filename).items())``.
     """
     def __init__(self, names):
@@ -144,7 +145,7 @@ class DumpTensors(ProcessTensors):
         """
         assert isinstance(names, (list, tuple)), names
         self._names = names
-        dir = logger.LOG_DIR
+        dir = logger.get_logger_dir()
 
         def fn(*args):
             dic = {}
