@@ -16,6 +16,7 @@ from ..callbacks.monitor import Monitors, TrainingMonitor
 from ..tfutils.model_utils import describe_trainable_vars
 from ..tfutils.sessinit import JustCurrentSession
 from ..tfutils.sesscreate import ReuseSessionCreator
+from ..tfutils.tower import TowerFuncWrapper
 from ..callbacks.steps import MaintainStepCounter
 
 from ..train.base import StopTraining, TrainLoop
@@ -240,9 +241,13 @@ class SingleCostTrainer(Trainer):
                 These callbacks will be automatically added when you call `train()`.
                 So you can usually ignore the return value.
         """
+        get_cost_fn = TowerFuncWrapper(get_cost_fn, inputs_desc)
         input_callbacks = self._setup_input(inputs_desc, input)
         train_callbacks = self._setup_graph(input, get_cost_fn, get_opt_fn)
         self._internal_callbacks = input_callbacks + train_callbacks
+
+        self.inputs_desc = inputs_desc
+        self.get_cost_fn = get_cost_fn
         return self._internal_callbacks
 
     @abstractmethod

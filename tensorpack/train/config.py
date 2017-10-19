@@ -27,7 +27,7 @@ class TrainConfig(object):
                  callbacks=None, extra_callbacks=None, monitors=None,
                  session_creator=None, session_config=None, session_init=None,
                  starting_epoch=1, steps_per_epoch=None, max_epoch=99999,
-                 nr_tower=1, tower=None, predict_tower=None,
+                 nr_tower=1, tower=None,
                  **kwargs):
         """
         Note:
@@ -127,6 +127,7 @@ class TrainConfig(object):
             assert self.nr_tower == 1, "Cannot set both nr_tower and tower in TrainConfig!"
             self.tower = tower
 
+        predict_tower = kwargs.pop('predict_tower', None)
         if predict_tower is None:
             predict_tower = [0]
         self.predict_tower = predict_tower

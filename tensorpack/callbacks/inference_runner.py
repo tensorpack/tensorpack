@@ -19,6 +19,8 @@ from ..dataflow.base import DataFlow
 
 from ..input_source import (
     InputSource, FeedInput, QueueInput)
+from ..graph_builder.predictor_factory import SimplePredictBuilder
+# from ..trainv2 import SingleCostTrainer
 
 from .base import Callback
 from .group import Callbacks
@@ -121,16 +123,30 @@ class InferenceRunner(InferenceRunnerBase):
         return InferencerToHook(inf, fetches)
 
     def _setup_graph(self):
-        assert self.trainer.model is not None
-        # Use predict_tower in train config. either gpuid or -1
-        tower_id = self.trainer._config.predict_tower[0]
-        device = '/gpu:{}'.format(tower_id) if tower_id >= 0 else '/cpu:0'
+        if hasattr(self.trainer, 'model'):
+            # old Trainer API
+            assert self.trainer.model is not None
+            # Use predict_tower in train config. either gpuid or -1
+            tower_id = self.trainer._config.predict_tower[0]
+            device = '/gpu:{}'.format(tower_id) if tower_id >= 0 else '/cpu:0'
 
-        input_callbacks = self._input_source.setup(self.trainer.model.get_inputs_desc())
+            input_callbacks = self._input_source.setup(self.trainer.model.get_inputs_desc())
 
-        with tf.variable_scope(tf.get_variable_scope(), reuse=True):
-            self._tower_handle = self.trainer.predictor_factory.build(
-                self._tower_name, device, self._input_source)
+            with tf.variable_scope(tf.get_variable_scope(), reuse=True):
+                self._tower_handle = self.trainer.predictor_factory.build(
+                    self._tower_name, device, self._input_source)
+        else:
+            # new Trainer API
+            # only works for singlecost trainer
+            # assert isinstance(self.trainer, SingleCostTrainer), self.trainer
+            input_callbacks = self._input_source.setup(self.trainer.inputs_desc)
+
+            with tf.variable_scope(tf.get_variable_scope(), reuse=True):
+                SimplePredictBuilder(
+                    ns_name=self._tower_name,
+                    vs_name='', device=0).build(    # TODO fix vs_name and maybe device
+                        self._input_source, self.trainer.get_cost_fn)
+                self._tower_handle = self.trainer.get_cost_fn.towers[-1]
 
         self._hooks = [self._build_hook(inf) for inf in self.infs]
         # trigger_{step,epoch}, {before,after}_epoch is ignored.
@@ -180,20 +196,32 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
         self._gpus = gpus
 
     def _setup_graph(self):
-        assert self.trainer.model is not None
-        cbs = self._input_source.setup(self.trainer.model.get_inputs_desc())
-        # build each predict tower
         self._handles = []
-        with tf.variable_scope(tf.get_variable_scope(), reuse=True):
-            for idx, t in enumerate(self._gpus):
-                tower_name = self._tower_names[idx]
-                device = '/gpu:{}'.format(t)
-                self._handles.append(
-                    self.trainer.predictor_factory.build(
-                        tower_name, device, self._input_source))
+        if hasattr(self.trainer, 'model'):
+            # old Trainer API
+            input_callbacks = self._input_source.setup(self.trainer.model.get_inputs_desc())
+            # build each predict tower
+            with tf.variable_scope(tf.get_variable_scope(), reuse=True):
+                for idx, t in enumerate(self._gpus):
+                    tower_name = self._tower_names[idx]
+                    device = '/gpu:{}'.format(t)
+                    self._handles.append(
+                        self.trainer.predictor_factory.build(
+                            tower_name, device, self._input_source))
+        else:
+            # new Trainer API
+            input_callbacks = self._input_source.setup(self.trainer.inputs_desc)
+            with tf.variable_scope(tf.get_variable_scope(), reuse=True):
+                for idx, t in enumerate(self._gpus):
+                    tower_name = self._tower_names[idx]
+                    SimplePredictBuilder(
+                        ns_name=tower_name,
+                        vs_name='', device=t).build(    # TODO fix vs_name and maybe device
+                            self._input_source, self.trainer.get_cost_fn)
+                    self._handles.append(self.trainer.get_cost_fn.towers[-1])
 
         # setup callbacks and hooks
-        self._input_callbacks = Callbacks(cbs)
+        self._input_callbacks = Callbacks(input_callbacks)
 
         # InputSource might have hooks which break us.
         # e.g. hooks from StagingInputWrapper will force the consumption
