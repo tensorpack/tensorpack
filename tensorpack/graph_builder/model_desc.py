@@ -9,6 +9,8 @@ import tensorflow as tf
 import six
 
 from ..utils.argtools import memoized
+from ..tfutils.gradproc import FilterNoneGrad
+from ..tfutils.tower import get_current_tower_context
 from ..input_source import InputSource
 from ..models.regularize import regularize_cost_from_collection
 
@@ -149,8 +151,25 @@ class ModelDesc(ModelDescBase):
     def build_graph_get_cost(self, *inputs):
         """
         Build the graph from inputs and return the cost tensor.
-        This is useful for most of the :class:`GraphBuilder` which expects
-        such a function.
         """
         self.build_graph(inputs)
         return self.get_cost()
+
+    def build_graph_get_grads(self, *inputs):
+        """
+        Build the graph from inputs and return the grads.
+        This is useful for most of the :class:`GraphBuilder` which expects such a function.
+
+        Returns:
+            [(grad, var)]
+        """
+        ctx = get_current_tower_context()
+        cost = self.build_graph_get_cost(*inputs)
+
+        varlist = ctx.filter_vars_by_vs_name(tf.trainable_variables())
+        opt = self.get_optimizer()
+        grads = opt.compute_gradients(
+            cost, var_list=varlist,
+            gate_gradients=False, colocate_gradients_with_ops=True)
+        grads = FilterNoneGrad().process(grads)
+        return grads

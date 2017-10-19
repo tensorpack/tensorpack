@@ -10,13 +10,15 @@ import six
 from abc import abstractmethod, ABCMeta
 
 from ..utils import logger
-from ..utils.argtools import call_only_once
+from ..utils.argtools import call_only_once, memoized
+from ..input_source import FeedfreeInput
 from ..callbacks import Callback, Callbacks
 from ..callbacks.monitor import Monitors, TrainingMonitor
 from ..tfutils.model_utils import describe_trainable_vars
 from ..tfutils.sessinit import JustCurrentSession
 from ..tfutils.sesscreate import ReuseSessionCreator
-from ..tfutils.tower import TowerFuncWrapper
+from ..tfutils.tower import TowerFuncWrapper, get_current_tower_context
+from ..tfutils.gradproc import FilterNoneGrad
 from ..callbacks.steps import MaintainStepCounter
 
 from ..train.base import StopTraining, TrainLoop
@@ -232,9 +234,13 @@ class SingleCostTrainer(Trainer):
     @call_only_once
     def setup_graph(self, inputs_desc, input, get_cost_fn, get_opt_fn):
         """
-        Build the main training graph. Defaults to do nothing.
-        You can either override it in subclasses, or build the graph outside
-        the trainer.
+        Responsible for building the main training graph.
+
+        Args:
+            inputs_desc ([InputDesc]):
+            input (InputSource):
+            get_cost_fn ([tf.Tensor] -> tf.Tensor): callable, takes some input tenosrs and return a cost tensor
+            get_opt_fn (-> tf.train.Optimizer): callable which returns an optimizer
 
         Returns:
             [Callback]: a (possibly empty) list of callbacks needed for training.
@@ -242,10 +248,11 @@ class SingleCostTrainer(Trainer):
                 So you can usually ignore the return value.
         """
         get_cost_fn = TowerFuncWrapper(get_cost_fn, inputs_desc)
+        get_opt_fn = memoized(get_opt_fn)
         input_callbacks = self._setup_input(inputs_desc, input)
         train_callbacks = self._setup_graph(input, get_cost_fn, get_opt_fn)
-        self._internal_callbacks = input_callbacks + train_callbacks
 
+        self._internal_callbacks = input_callbacks + train_callbacks
         self.inputs_desc = inputs_desc
         self.get_cost_fn = get_cost_fn
         return self._internal_callbacks
@@ -257,3 +264,26 @@ class SingleCostTrainer(Trainer):
     def _setup_input(self, inputs_desc, input):
         assert not input.setup_done()
         return input.setup(inputs_desc)
+
+    def _make_get_grad_fn(self, input, get_cost_fn, get_opt_fn):
+        """
+        Returns:
+            a get_grad_fn for GraphBuilder to use.
+        """
+        # internal use only
+        assert input.setup_done()
+        assert isinstance(input, FeedfreeInput), input
+
+        def get_grad_fn():
+            ctx = get_current_tower_context()
+            cost = get_cost_fn(*input.get_input_tensors())
+
+            varlist = ctx.filter_vars_by_vs_name(tf.trainable_variables())
+            opt = get_opt_fn()
+            grads = opt.compute_gradients(
+                cost, var_list=varlist,
+                gate_gradients=False, colocate_gradients_with_ops=True)
+            grads = FilterNoneGrad().process(grads)
+            return grads
+
+        return get_grad_fn

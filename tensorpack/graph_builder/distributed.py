@@ -186,12 +186,10 @@ class DistributedReplicatedBuilder(DataParallelBuilder):
 
             return tf.group(*queue_ops, name=name)
 
-    def build(self, input, get_cost_fn, get_opt_fn):
+    def build(self, get_grad_fn, get_opt_fn):
         """
         Args:
-            input (InputSource): the input. Should have been setup.
-            get_cost_fn ([tf.Tensor] -> tf.Tensor): callable which takes a list of input tensor
-                and returns a cost tensor
+            get_grad_fn (-> [(grad, var)]):
             get_opt_fn (-> tf.train.Optimizer): callable which returns an optimizer
 
         Returns:
@@ -211,9 +209,7 @@ class DistributedReplicatedBuilder(DataParallelBuilder):
         get_opt_fn = memoized(get_opt_fn)
         # Build the optimizer first, before entering any tower.
         # This makes sure that learning_rate is a global variable (what we expect)
-        get_opt_fn()
-
-        get_grad_fn, _ = DataParallelBuilder._make_fn(input, get_cost_fn, get_opt_fn)
+        get_opt_fn()    # TODO get_opt_fn called before main graph was built
 
         # Ngpu * Nvar * 2
         grad_list = DataParallelBuilder.build_on_towers(

@@ -8,19 +8,16 @@ import six
 from six.moves import zip, range
 
 from ..utils import logger
-from ..utils.argtools import memoized
-from ..tfutils.gradproc import FilterNoneGrad
-from ..tfutils.tower import TowerContext, get_current_tower_context
+from ..tfutils.tower import TowerContext
 from ..tfutils.common import get_tf_version_number
 from ..tfutils.collection import backup_collection, restore_collection
 from ..tfutils.gradproc import ScaleGradient
 from ..utils.naming import TOWER_FREEZE_KEYS
-from ..input_source import FeedfreeInput
 
 from .utils import LeastLoadedDeviceSetter, override_to_local_variable
 
 
-__all__ = ['GraphBuilder', 'SimpleBuilder',
+__all__ = ['GraphBuilder',
            'SyncMultiGPUParameterServerBuilder', 'DataParallelBuilder',
            'SyncMultiGPUReplicatedBuilder', 'AsyncMultiGPUBuilder']
 
@@ -30,35 +27,6 @@ class GraphBuilder(object):
     @abstractmethod
     def build(*args, **kwargs):
         pass
-
-
-class SimpleBuilder(GraphBuilder):
-    """
-    Single-cost single-optimizer single-tower training.
-    """
-    def build(self, input, get_cost_fn, get_opt_fn):
-        """
-        Args:
-            input (InputSource): the input. Should have been setup.
-            get_cost_fn ([tf.Tensor] -> tf.Tensor): callable which takes a list of input tensor
-                and returns a cost tensor
-            get_opt_fn (-> tf.train.Optimizer): callable which returns an optimizer
-
-        Returns:
-            tf.Operation: the training op
-        """
-        assert input.setup_done()
-        with TowerContext('', is_training=True) as ctx:
-            cost = get_cost_fn(*input.get_input_tensors())
-
-            varlist = ctx.filter_vars_by_vs_name(tf.trainable_variables())
-            opt = get_opt_fn()
-            grads = opt.compute_gradients(
-                cost, var_list=varlist,
-                gate_gradients=False, colocate_gradients_with_ops=True)
-            grads = FilterNoneGrad().process(grads)
-            train_op = opt.apply_gradients(grads, name='min_op')
-            return train_op
 
 
 class DataParallelBuilder(GraphBuilder):
@@ -132,27 +100,6 @@ class DataParallelBuilder(GraphBuilder):
         restore_collection(backup)
         return ret
 
-    @staticmethod
-    def _make_fn(input, get_cost_fn, get_opt_fn):
-        # internal use only
-        assert input.setup_done(), "InputSource must have been setup before calling GraphBuilder!"
-        assert isinstance(input, FeedfreeInput), input
-        get_opt_fn = memoized(get_opt_fn)
-
-        def get_grad_fn():
-            ctx = get_current_tower_context()
-            cost = get_cost_fn(*input.get_input_tensors())
-
-            varlist = ctx.filter_vars_by_vs_name(tf.trainable_variables())
-            opt = get_opt_fn()
-            grads = opt.compute_gradients(
-                cost, var_list=varlist,
-                gate_gradients=False, colocate_gradients_with_ops=True)
-            grads = FilterNoneGrad().process(grads)
-            return grads
-
-        return get_grad_fn, get_opt_fn
-
 
 class SyncMultiGPUParameterServerBuilder(DataParallelBuilder):
     """
@@ -195,12 +142,10 @@ class SyncMultiGPUParameterServerBuilder(DataParallelBuilder):
                     new_tower_grads.append((grad, v))
         return new_tower_grads
 
-    def build(self, input, get_cost_fn, get_opt_fn):
+    def build(self, get_grad_fn, get_opt_fn):
         """
         Args:
-            input (InputSource):
-            get_cost_fn ([tf.Tensor] -> tf.Tensor): callable which takes a list of input tensor
-                and returns a cost tensor
+            get_grad_fn (-> [(grad, var)]):
             get_opt_fn (-> tf.train.Optimizer): callable which returns an optimizer
 
         Returns:
@@ -212,8 +157,6 @@ class SyncMultiGPUParameterServerBuilder(DataParallelBuilder):
         else:
             devices = [tf.train.replica_device_setter(
                 worker_device=d, ps_device='/cpu:0', ps_tasks=1) for d in raw_devices]
-
-        get_grad_fn, get_opt_fn = DataParallelBuilder._make_fn(input, get_cost_fn, get_opt_fn)
 
         grad_list = DataParallelBuilder.build_on_towers(self.towers, get_grad_fn, devices)
         DataParallelBuilder._check_grad_list(grad_list)
@@ -266,12 +209,10 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
         # NVar * NGPU * 2
         return new_tower_grads
 
-    def build(self, input, get_cost_fn, get_opt_fn):
+    def build(self, get_grad_fn, get_opt_fn):
         """
         Args:
-            input (InputSource): the input. Should have been setup.
-            get_cost_fn ([tf.Tensor] -> tf.Tensor): callable which takes a list of input tensor
-                and returns a cost tensor
+            get_grad_fn (-> [(grad, var)]):
             get_opt_fn (-> tf.train.Optimizer): callable which returns an optimizer
 
         Returns:
@@ -284,8 +225,6 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
                 And you can optionally run it later to sync non-trainable variables.
         """
         raw_devices = ['/gpu:{}'.format(k) for k in self.towers]
-
-        get_grad_fn, get_opt_fn = DataParallelBuilder._make_fn(input, get_cost_fn, get_opt_fn)
 
         grad_list = DataParallelBuilder.build_on_towers(
             self.towers,
@@ -356,12 +295,10 @@ class AsyncMultiGPUBuilder(DataParallelBuilder):
         super(AsyncMultiGPUBuilder, self).__init__(towers)
         self._scale_gradient = scale_gradient
 
-    def build(self, input, get_cost_fn, get_opt_fn):
+    def build(self, get_grad_fn, get_opt_fn):
         """
         Args:
-            input (InputSource): the input. Should have been setup.
-            get_cost_fn ([tf.Tensor] -> tf.Tensor): callable which takes a list of input tensor
-                and returns a cost tensor
+            get_grad_fn (-> [(grad, var)]):
             get_opt_fn (-> tf.train.Optimizer): callable which returns an optimizer
 
         Returns:
@@ -375,8 +312,6 @@ class AsyncMultiGPUBuilder(DataParallelBuilder):
         else:
             devices = [tf.train.replica_device_setter(
                 worker_device=d, ps_device='/cpu:0', ps_tasks=1) for d in raw_devices]
-
-        get_grad_fn, get_opt_fn = DataParallelBuilder._make_fn(input, get_cost_fn, get_opt_fn)
 
         grad_list = DataParallelBuilder.build_on_towers(self.towers, get_grad_fn, devices)
         DataParallelBuilder._check_grad_list(grad_list)

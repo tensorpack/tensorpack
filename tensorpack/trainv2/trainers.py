@@ -10,10 +10,10 @@ from ..tfutils.sesscreate import NewSessionCreator
 from ..utils import logger
 from ..tfutils import get_global_step_var
 from ..tfutils.distributed import get_distributed_session_creator
+from ..tfutils.tower import TowerContext
 from ..input_source import QueueInput
 
 from ..graph_builder.training import (
-    SimpleBuilder,
     SyncMultiGPUParameterServerBuilder,
     SyncMultiGPUReplicatedBuilder,
     AsyncMultiGPUBuilder)
@@ -35,7 +35,10 @@ class SimpleTrainer(SingleCostTrainer):
     Single-GPU single-cost single-tower trainer.
     """
     def _setup_graph(self, input, get_cost_fn, get_opt_fn):
-        self.train_op = SimpleBuilder().build(input, get_cost_fn, get_opt_fn)
+        with TowerContext('', is_training=True):
+            grads = self._make_get_grad_fn(input, get_cost_fn, get_opt_fn)()
+            opt = get_opt_fn()
+            self.train_op = opt.apply_gradients(grads, name='min_op')
         return []
 
 
@@ -60,7 +63,8 @@ class SyncMultiGPUTrainerParameterServer(SingleCostTrainer):
         super(SyncMultiGPUTrainerParameterServer, self).__init__()
 
     def _setup_graph(self, input, get_cost_fn, get_opt_fn):
-        self.train_op = self._builder.build(input, get_cost_fn, get_opt_fn)
+        self.train_op = self._builder.build(
+            self._make_get_grad_fn(input, get_cost_fn, get_opt_fn), get_opt_fn)
         return []
 
 
@@ -78,7 +82,8 @@ class AsyncMultiGPUTrainer(SingleCostTrainer):
         super(AsyncMultiGPUTrainer, self).__init__()
 
     def _setup_graph(self, input, get_cost_fn, get_opt_fn):
-        self.train_op = self._builder.build(input, get_cost_fn, get_opt_fn)
+        self.train_op = self._builder.build(
+            self._make_get_grad_fn(input, get_cost_fn, get_opt_fn), get_opt_fn)
         return []
 
 
@@ -96,7 +101,7 @@ class SyncMultiGPUTrainerReplicated(SingleCostTrainer):
 
     def _setup_graph(self, input, get_cost_fn, get_opt_fn):
         self.train_op, post_init_op = self._builder.build(
-            input, get_cost_fn, get_opt_fn)
+            self._make_get_grad_fn(input, get_cost_fn, get_opt_fn), get_opt_fn)
 
         cb = RunOp(
             post_init_op,
@@ -147,7 +152,7 @@ class DistributedTrainerReplicated(SingleCostTrainer):
 
     def _setup_graph(self, input, get_cost_fn, get_opt_fn):
         self.train_op, initial_sync_op, model_sync_op = self._builder.build(
-            input, get_cost_fn, get_opt_fn)
+            self._make_get_grad_fn(input, get_cost_fn, get_opt_fn), get_opt_fn)
 
         callbacks = []
         # initial local_vars syncing
