@@ -14,7 +14,9 @@ from ..tfutils.collection import backup_collection, restore_collection
 from ..tfutils.gradproc import ScaleGradient
 from ..utils.naming import TOWER_FREEZE_KEYS
 
-from .utils import LeastLoadedDeviceSetter, override_to_local_variable
+from .utils import (
+    LeastLoadedDeviceSetter, override_to_local_variable,
+    allreduce_grads, average_grads)
 
 
 __all__ = ['GraphBuilder',
@@ -123,25 +125,6 @@ class SyncMultiGPUParameterServerBuilder(DataParallelBuilder):
         assert ps_device in ['cpu', 'gpu']
         self.ps_device = ps_device
 
-    @staticmethod
-    def _average_grads(tower_grads):
-        # tower_grads: Ngpu x Nvar x 2
-        nr_tower = len(tower_grads)
-        if nr_tower == 1:
-            return tower_grads[0]
-        new_tower_grads = []
-        with tf.name_scope('AvgGrad'):
-            for grad_and_vars in zip(*tower_grads):
-                # Ngpu * 2
-                v = grad_and_vars[0][1]
-                all_grads = [g for (g, _) in grad_and_vars]
-
-                with tf.device(v.device):       # colocate summed grad with var
-                    grad = tf.multiply(
-                        tf.add_n(all_grads), 1.0 / nr_tower)
-                    new_tower_grads.append((grad, v))
-        return new_tower_grads
-
     def build(self, get_grad_fn, get_opt_fn):
         """
         Args:
@@ -166,7 +149,7 @@ class SyncMultiGPUParameterServerBuilder(DataParallelBuilder):
         # self.train_op = tf.group(*ops)
         # return
 
-        grads = SyncMultiGPUParameterServerBuilder._average_grads(grad_list)
+        grads = average_grads(grad_list)
         # grads = grad_list[0]
 
         opt = get_opt_fn()
@@ -187,27 +170,6 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
 
     See https://www.tensorflow.org/performance/benchmarks for details.
     """
-    @staticmethod
-    def _allreduce_grads(tower_grads):
-        from tensorflow.contrib import nccl
-        nr_tower = len(tower_grads)
-        if nr_tower == 1:
-            return [[x] for x in tower_grads[0]]
-        new_tower_grads = []
-        with tf.name_scope('AvgGrad'):
-            for grad_and_vars in zip(*tower_grads):
-                v = grad_and_vars[0][1]
-                grads = [g for g, _ in grad_and_vars]
-                summed = nccl.all_sum(grads)
-
-                grads_for_a_var = []
-                for (_, v), g in zip(grad_and_vars, summed):
-                    with tf.device(g.device):
-                        g = tf.multiply(g, 1.0 / nr_tower)
-                        grads_for_a_var.append((g, v))
-                new_tower_grads.append(grads_for_a_var)
-        # NVar * NGPU * 2
-        return new_tower_grads
 
     def build(self, get_grad_fn, get_opt_fn):
         """
@@ -231,13 +193,14 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
             get_grad_fn,
             # use no variable scope for the first tower
             use_vs=[False] + [True] * (len(self.towers) - 1))
-        grads = SyncMultiGPUReplicatedBuilder._allreduce_grads(grad_list)
+
+        DataParallelBuilder._check_grad_list(grad_list)
+        grads = allreduce_grads(grad_list)
 
         train_ops = []
         opt = get_opt_fn()
-        for idx in range(len(self.towers)):
+        for idx, grad_and_vars in enumerate(grads):
             with tf.device(raw_devices[idx]):
-                grad_and_vars = [x[idx] for x in grads]
                 # apply_gradients may create variables. Make them LOCAL_VARIABLES
                 with override_to_local_variable(enable=idx > 0):
                     train_ops.append(opt.apply_gradients(

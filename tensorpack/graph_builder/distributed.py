@@ -100,11 +100,9 @@ class DistributedReplicatedBuilder(DataParallelBuilder):
         new_tower_grads = []
         with tf.name_scope('AvgGrad'):
             for i, grad_and_vars in enumerate(zip(*tower_grads)):
-                # Ngpu * 2
+                v = grad_and_vars[0][1]  # Ngpu * 2
+                all_grads = [g for (g, _) in grad_and_vars]
                 with tf.device(devices[i % nr_device]):
-                    v = grad_and_vars[0][1]
-                    # average gradient
-                    all_grads = [g for (g, _) in grad_and_vars]
                     grad = tf.multiply(
                         tf.add_n(all_grads), 1.0 / nr_device)
                     new_tower_grads.append((grad, v))
