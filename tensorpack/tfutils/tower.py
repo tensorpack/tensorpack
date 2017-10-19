@@ -161,10 +161,19 @@ class TowerFuncWrapper(object):
                 It takes several input tensors and could return anything.
             inputs_desc ([InputDesc]): use this to figure out the right name for the input tensors.
         """
-        self._tower_fn = tower_fn
-        self._inputs_desc = inputs_desc
+        assert callable(tower_fn), tower_fn
+        if not isinstance(tower_fn, TowerFuncWrapper):
+            self._tower_fn = tower_fn
+            self._inputs_desc = inputs_desc
 
-        self._towers = []
+            self._towers = []
+
+    def __new__(cls, tower_fn, inputs_desc=None):
+        # to avoid double-wrapping a function
+        if isinstance(tower_fn, TowerFuncWrapper):
+            return tower_fn
+        else:
+            return super(TowerFuncWrapper, cls).__new__(cls)
 
     def __call__(self, *args):
         ctx = get_current_tower_context()
