@@ -140,7 +140,7 @@ def view_warp(modelpath):
     ds.reset_state()
     for k in ds.get_data():
         img, label = k
-        outputs, affine1, affine2 = pred([img])
+        outputs, affine1, affine2 = pred(img)
         for idx, viz in enumerate(outputs):
             viz = cv2.cvtColor(viz, cv2.COLOR_GRAY2BGR)
             # Here we assume the second branch focuses on the first digit

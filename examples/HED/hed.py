@@ -198,8 +198,10 @@ def run(model_path, image_path, output):
     predictor = OfflinePredictor(pred_config)
     im = cv2.imread(image_path)
     assert im is not None
-    im = cv2.resize(im, (im.shape[1] // 16 * 16, im.shape[0] // 16 * 16))
-    outputs = predictor([[im.astype('float32')]])
+    im = cv2.resize(
+        im, (im.shape[1] // 16 * 16, im.shape[0] // 16 * 16)
+    )[None, :, :, :].astype('float32')
+    outputs = predictor(im)
     if output is None:
         for k in range(6):
             pred = outputs[k][0]

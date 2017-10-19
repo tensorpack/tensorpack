@@ -284,7 +284,7 @@ def run_image(model, sess_init, inputs):
         assert img is not None
 
         img = transformers.augment(img)[np.newaxis, :, :, :]
-        outputs = predictor([img])[0]
+        outputs = predictor(img)[0]
         prob = outputs[0]
         ret = prob.argsort()[-10:][::-1]
 

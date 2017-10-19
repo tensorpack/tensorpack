@@ -277,3 +277,8 @@ class TowerTensorHandle(object):
         The output returned by the tower function.
         """
         return self._output
+
+    # def make_callable(self, input_names, output_names):
+    #     input_tensors = self.get_tensors(input_names)
+    #     output_tensors = self.get_tensors(output_names)
+    #     pass

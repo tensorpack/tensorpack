@@ -98,7 +98,7 @@ def run_test(params, input):
     im = cv2.imread(input).astype('float32')
     im = prepro.augment(im)
     im = np.reshape(im, (1, 224, 224, 3))
-    outputs = predict_func([im])
+    outputs = predict_func(im)
     prob = outputs[0]
 
     ret = prob[0].argsort()[-10:][::-1]

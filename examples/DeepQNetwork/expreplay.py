@@ -199,7 +199,7 @@ class ExpReplay(DataFlow, Callback):
             history = np.stack(history, axis=2)
 
             # assume batched network
-            q_values = self.predictor([[history]])[0][0]  # this is the bottleneck
+            q_values = self.predictor(history[None, :, :, :])[0][0]  # this is the bottleneck
             act = np.argmax(q_values)
         self._current_ob, reward, isOver, info = self.player.step(act)
         if isOver:

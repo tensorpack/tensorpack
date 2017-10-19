@@ -65,7 +65,7 @@ def run_test(path, input):
     assert im is not None, input
     im = cv2.resize(im, (227, 227))[:, :, ::-1].reshape(
         (1, 227, 227, 3)).astype('float32') - 110
-    outputs = predictor([im])[0]
+    outputs = predictor(im)[0]
     prob = outputs[0]
     ret = prob.argsort()[-10:][::-1]
     print("Top10 predictions:", ret)

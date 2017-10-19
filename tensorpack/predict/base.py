@@ -10,6 +10,7 @@ import six
 from ..tfutils.common import get_tensors_by_names
 from ..tfutils.tower import TowerContext
 from ..input_source import PlaceholderInput
+from ..utils.develop import log_deprecated
 
 __all__ = ['PredictorBase', 'AsyncPredictorBase',
            'OnlinePredictor', 'OfflinePredictor',
@@ -30,22 +31,21 @@ class PredictorBase(object):
         """
         Call the predictor on some inputs.
 
-        If ``len(args) == 1``, assume ``args[0]`` is a datapoint (a list).
-        otherwise, assume ``args`` is a datapoinnt
-
         Examples:
-            When you have a predictor which takes a datapoint [e1, e2], you
-            can call it in two ways:
+            When you have a predictor defined with two inputs, call it with:
 
             .. code-block:: python
 
                 predictor(e1, e2)
-                predictor([e1, e2])
         """
-        if len(args) != 1:
-            dp = args
+        if len(args) == 1 and isinstance(args[0], (list, tuple)):
+            dp = args[0]    # backward-compatibility
+            log_deprecated(
+                "Calling a predictor with one datapoint",
+                "Call it with positional arguments instead!",
+                "2018-3-1")
         else:
-            dp = args[0]
+            dp = args
         output = self._do_call(dp)
         if self.return_input:
             return (dp, output)

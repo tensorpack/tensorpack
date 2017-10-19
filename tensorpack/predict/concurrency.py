@@ -3,6 +3,7 @@
 # File: concurrency.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
+import numpy as np
 import multiprocessing
 import six
 from six.moves import queue, range
@@ -71,7 +72,7 @@ class MultiProcessQueuePredictWorker(MultiProcessPredictWorker):
                 self.outqueue.put((DIE, None))
                 return
             else:
-                self.outqueue.put((tid, self.predictor(dp)))
+                self.outqueue.put((tid, self.predictor(*dp)))
 
 
 class PredictorWorkerThread(StoppableThread, ShareSessionThread):
@@ -89,7 +90,7 @@ class PredictorWorkerThread(StoppableThread, ShareSessionThread):
             while not self.stopped():
                 batched, futures = self.fetch_batch()
                 try:
-                    outputs = self.func(batched)
+                    outputs = self.func(*batched)
                 except tf.errors.CancelledError:
                     for f in futures:
                         f.cancel()
@@ -122,6 +123,9 @@ class PredictorWorkerThread(StoppableThread, ShareSessionThread):
                 futures.append(f)
             except queue.Empty:
                 break   # do not wait
+
+        for k in range(nr_input_var):
+            batched[k] = np.asarray(batched[k])
         return batched, futures
 
 

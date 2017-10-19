@@ -116,7 +116,7 @@ def run_test(model_path, img_file):
 
     im = cv2.imread(img_file, cv2.IMREAD_COLOR).astype('float32')
     im = cv2.resize(im, (368, 368))
-    out = predict_func([[im]])[0][0]
+    out = predict_func(im[None, :, :, :])[0][0]
     hm = out[:, :, :14].sum(axis=2)
     viz = colorize(im, hm)
     cv2.imwrite("output.jpg", viz)

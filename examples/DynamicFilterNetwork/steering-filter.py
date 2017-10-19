@@ -78,7 +78,7 @@ class OnlineTensorboardExport(Callback):
             x /= x.max()
             return x
 
-        o = self.pred([self.theta])
+        o = self.pred(self.theta)
 
         gt_filters = np.concatenate([self.filters[i, :, :] for i in range(8)], axis=0)
         pred_filters = np.concatenate([o[0][i, :, :, 0] for i in range(8)], axis=0)

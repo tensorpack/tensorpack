@@ -94,7 +94,7 @@ def detect_one_image(img, model_func):
     resizer = CustomResize(config.SHORT_EDGE_SIZE, config.MAX_SIZE)
     resized_img = resizer.augment(img)
     scale = (resized_img.shape[0] * 1.0 / img.shape[0] + resized_img.shape[1] * 1.0 / img.shape[1]) / 2
-    fg_probs, fg_boxes = model_func([resized_img])
+    fg_probs, fg_boxes = model_func(resized_img)
     fg_boxes = fg_boxes / scale
     fg_boxes = clip_boxes(fg_boxes, img.shape[:2])
     return nms_fastrcnn_results(fg_boxes, fg_probs)

@@ -387,7 +387,7 @@ def visualize(model_path, model, algo_name):
 
     for offset, dp in enumerate(ds.get_data()):
         digit, label = dp
-        prediction = pred([digit])[0]
+        prediction = pred(digit)[0]
         embed[offset * BATCH_SIZE:offset * BATCH_SIZE + BATCH_SIZE, ...] = prediction
         images[offset * BATCH_SIZE:offset * BATCH_SIZE + BATCH_SIZE, ...] = digit
         offset += 1

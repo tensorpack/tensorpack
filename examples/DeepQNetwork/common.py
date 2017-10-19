@@ -20,7 +20,7 @@ def play_one_episode(env, func, render=False):
         """
         Map from observation to action, with 0.001 greedy.
         """
-        act = func([[s]])[0][0].argmax()
+        act = func(s[None, :, :, :])[0][0].argmax()
         if random.random() < 0.001:
             spc = env.action_space
             act = spc.sample()
