@@ -110,6 +110,7 @@ class ModelDescBase(object):
 class ModelDesc(ModelDescBase):
     """
     A ModelDesc with single cost and single optimizer.
+    It contains information about InputDesc, how to get cost, and how to get optimizer.
     """
 
     def get_cost(self):

@@ -21,6 +21,7 @@ from ..tfutils.tower import TowerFuncWrapper, get_current_tower_context
 from ..tfutils.gradproc import FilterNoneGrad
 from ..callbacks.steps import MaintainStepCounter
 
+import tensorpack.train as old_train    # noqa
 from ..train.base import StopTraining, TrainLoop
 
 __all__ = ['Trainer', 'SingleCostTrainer']
@@ -184,6 +185,15 @@ class Trainer(object):
         self.setup_callbacks(callbacks, monitors)
         self.initialize(session_creator, session_init)
         self.main_loop(steps_per_epoch, starting_epoch, max_epoch)
+
+    # create the old trainer when called with TrainConfig
+    def __new__(cls, *args, **kwargs):
+        if isinstance(args[0], old_train.TrainConfig) or 'config' in kwargs:
+            name = cls.__name__
+            old_trainer = getattr(old_train, name)
+            return old_trainer(*args, **kwargs)
+        else:
+            return super(Trainer, cls).__new__(cls)
 
 
 def _get_property(name):
