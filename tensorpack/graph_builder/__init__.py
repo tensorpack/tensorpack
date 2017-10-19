@@ -20,7 +20,7 @@ def global_import(name):
 
 
 _CURR_DIR = os.path.dirname(__file__)
-_SKIP = ['utils']
+_SKIP = []
 for _, module_name, _ in iter_modules(
         [_CURR_DIR]):
     srcpath = os.path.join(_CURR_DIR, module_name + '.py')

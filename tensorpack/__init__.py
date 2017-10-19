@@ -21,6 +21,6 @@ if _HAS_TF:
         from tensorpack.trainv2 import *
     else:
         from tensorpack.train import *
-    from tensorpack.graph_builder import *
+    from tensorpack.graph_builder import InputDesc, ModelDesc, ModelDescBase
     from tensorpack.input_source import *
     from tensorpack.predict import *
