@@ -239,8 +239,10 @@ class SingleCostTrainer(Trainer):
         Args:
             inputs_desc ([InputDesc]):
             input (InputSource):
-            get_cost_fn ([tf.Tensor] -> tf.Tensor): callable, takes some input tenosrs and return a cost tensor
-            get_opt_fn (-> tf.train.Optimizer): callable which returns an optimizer
+            get_cost_fn ([tf.Tensor] -> tf.Tensor): callable, takes some input tenosrs and return a cost tensor.
+                Might get called multiple times for data-parallel training or inference.
+            get_opt_fn (-> tf.train.Optimizer): callable which returns an
+                optimizer. Will only be called once.
 
         Returns:
             [Callback]: a (possibly empty) list of callbacks needed for training.
