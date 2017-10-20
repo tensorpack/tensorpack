@@ -278,7 +278,6 @@ class Trainer(object):
         Returns:
             an :class:`OnlinePredictor`.
         """
-        # TODO move the logic to factory?
         return self.predictor_factory.get_predictor(input_names, output_names, tower)
 
     @property

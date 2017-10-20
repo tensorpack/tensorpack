@@ -9,8 +9,7 @@ from ..callbacks import (
 from ..dataflow.base import DataFlow
 from ..graph_builder.model_desc import ModelDescBase
 from ..utils import logger
-from ..tfutils import (JustCurrentSession,
-                       get_default_sess_config, SessionInit)
+from ..tfutils import (JustCurrentSession, SessionInit)
 from ..tfutils.sesscreate import NewSessionCreator
 from ..input_source import InputSource
 from ..utils.develop import log_deprecated
@@ -98,7 +97,7 @@ class TrainConfig(object):
             if session_config is not None:
                 self.session_creator = NewSessionCreator(config=session_config)
             else:
-                self.session_creator = NewSessionCreator(config=get_default_sess_config())
+                self.session_creator = NewSessionCreator(config=None)
         else:
             self.session_creator = session_creator
             assert session_config is None, "Cannot set both session_creator and session_config!"

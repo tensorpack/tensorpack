@@ -86,13 +86,12 @@ class ModelDescBase(object):
         :returns: a list of InputDesc
         """
 
-    # TODO only use InputSource in the future? Now only used in predictor_factory
     def build_graph(self, inputs):
         """
         Build the whole symbolic graph.
 
         Args:
-            inputs (list[tf.Tensor] or InputSource): a list of tensors, or an :class:`InputSource`,
+            inputs (list[tf.Tensor]): a list of tensors,
                 that match the list of :class:`InputDesc` defined by ``_get_inputs``.
         """
         if isinstance(inputs, InputSource):
