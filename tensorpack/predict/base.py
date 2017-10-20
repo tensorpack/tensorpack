@@ -115,9 +115,10 @@ class OnlinePredictor(PredictorBase):
                     fetches=output_tensors,
                     feed_list=input_tensors)
             else:
-                log_once(
-                    "TF>=1.2 is recommended for better performance of predictor!", 'warn')
                 self._callable = None
+        else:
+            log_once(
+                "TF>=1.2 is recommended for better performance of predictor!", 'warn')
 
     def _do_call_old(self, dp):
         feed = dict(zip(self.input_tensors, dp))

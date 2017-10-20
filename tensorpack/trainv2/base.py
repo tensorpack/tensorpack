@@ -11,7 +11,6 @@ from abc import abstractmethod, ABCMeta
 
 from ..utils import logger
 from ..utils.argtools import call_only_once, memoized
-from ..input_source import FeedfreeInput
 from ..callbacks import Callback, Callbacks
 from ..callbacks.monitor import Monitors, TrainingMonitor
 from ..tfutils.model_utils import describe_trainable_vars
@@ -21,10 +20,14 @@ from ..tfutils.tower import TowerFuncWrapper, get_current_tower_context
 from ..tfutils.gradproc import FilterNoneGrad
 from ..callbacks.steps import MaintainStepCounter
 
+from ..graph_builder.predictor_factory import SimplePredictBuilder
+from ..input_source import FeedfreeInput, PlaceholderInput
+from ..predict.base import OnlinePredictor
+
 import tensorpack.train as old_train    # noqa
 from ..train.base import StopTraining, TrainLoop
 
-__all__ = ['Trainer', 'SingleCostTrainer']
+__all__ = ['Trainer', 'SingleCostTrainer', 'TowerTrainer']
 
 
 class Trainer(object):
@@ -190,7 +193,8 @@ class Trainer(object):
 
     # create the old trainer when called with TrainConfig
     def __new__(cls, *args, **kwargs):
-        if isinstance(args[0], old_train.TrainConfig) or 'config' in kwargs:
+        if (len(args) > 0 and isinstance(args[0], old_train.TrainConfig)) \
+                or 'config' in kwargs:
             name = cls.__name__
             old_trainer = getattr(old_train, name)
             return old_trainer(*args, **kwargs)
@@ -237,6 +241,7 @@ class TowerTrainer(Trainer):
         Args:
             tower_func (TowerFuncWrapper)
         """
+        assert isinstance(tower_func, TowerFuncWrapper), tower_func
         self.tower_func = tower_func
 
     @property
@@ -246,6 +251,34 @@ class TowerTrainer(Trainer):
             list[InputDesc]: metainfo about the inputs to the tower.
         """
         return self.tower_func.inputs_desc
+
+    def get_predictor(self, input_names, output_names, device=0):
+        """
+        Returns a callable predictor built under ``TowerContext(is_training=False)``.
+
+        Args:
+            input_names (list), output_names(list): list of names
+            device (int): build the predictor on device '/gpu:{device}' or use -1 for '/cpu:0'.
+
+        Returns:
+            an :class:`OnlinePredictor`.
+        """
+        assert self.tower_func is not None, "Must set tower_func on the trainer to use get_predictor()!"
+        tower_name = 'tower-pred-{}'.format(device) if device >= 0 else 'tower-pred-cpu'
+
+        try:
+            tower = self.tower_func.towers[tower_name]
+        except KeyError:
+            input = PlaceholderInput()
+            input.setup(self.inputs_desc)
+
+            SimplePredictBuilder(
+                ns_name=tower_name, vs_name='',
+                device=device).build(input, self.tower_func)
+            tower = self.tower_func.towers[tower_name]
+        input_tensors = tower.get_tensors(input_names)
+        output_tensors = tower.get_tensors(output_names)
+        return OnlinePredictor(input_tensors, output_tensors)
 
 
 @six.add_metaclass(ABCMeta)

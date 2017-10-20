@@ -42,6 +42,14 @@ class SimplePredictBuilder(GraphBuilder):
             yield
 
     def build(self, input, tower_fn):
+        """
+        Args:
+            input (InputSource): must have been setup
+            tower_fn ( [tf.Tensors] ->): callable that takes input tensors.
+
+        Returns:
+            The return value of tower_fn called under the proper context.
+        """
         assert input.setup_done()
         logger.info("Building predictor tower '{}' on device {} ...".format(
             self._ns_name, self._device))

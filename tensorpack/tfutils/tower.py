@@ -166,7 +166,7 @@ class TowerFuncWrapper(object):
             self._tower_fn = tower_fn
             self._inputs_desc = inputs_desc
 
-            self._towers = []
+            self._handles = []
 
     def __new__(cls, tower_fn, inputs_desc):
         # to avoid double-wrapping a function
@@ -180,17 +180,31 @@ class TowerFuncWrapper(object):
         assert ctx is not None, "Function must be called under TowerContext!"
         output = self._tower_fn(*args)
         handle = TowerTensorHandle(ctx, args, output, self._inputs_desc)
-        self._towers.append(handle)
+        self._handles.append(handle)
         return output
 
     @property
     def towers(self):
-        # TODO another wrapper around towerhandlelist
-        return self._towers
+        return TowerTensorHandles(self._handles)
 
     @property
     def inputs_desc(self):
         return self._inputs_desc
+
+
+class TowerTensorHandles(object):
+    """
+    Wrap a list of :class:`TowerTensorHandle`,
+    to support access to them by index or names.
+    """
+    def __init__(self, handles):
+        self._handles = handles
+        self._name_to_handle = {k.ns_name: k for k in handles}
+
+    def __getitem__(self, name_or_index):
+        if isinstance(name_or_index, int):
+            return self._handles[name_or_index]
+        return self._name_to_handle[name_or_index]
 
 
 class TowerTensorHandle(object):
@@ -281,14 +295,3 @@ class TowerTensorHandle(object):
         The output returned by the tower function.
         """
         return self._output
-
-    # should move to somewhere else.
-    # def get_predictor(self, input_names, output_names):
-    #     """
-    #     Get a predictor with tensors inside this tower.
-    #     """
-    #     input_tensors = self.get_tensors(input_names)
-    #     output_tensors = self.get_tensors(output_names)
-    #     # TODO sort out the import order
-    #     from ..predict.base import OnlinePredictor  # noqa
-    #     return OnlinePredictor(input_tensors, output_tensors)

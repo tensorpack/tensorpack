@@ -143,6 +143,7 @@ class InferenceRunner(InferenceRunnerBase):
             # new Trainer API
             from ..trainv2 import TowerTrainer
             assert isinstance(self.trainer, TowerTrainer), self.trainer
+            assert self.trainer.tower_func is not None, "You must set tower_func of the trainer to use InferenceRunner!"
             input_callbacks = self._input_source.setup(self.trainer.inputs_desc)
 
             with tf.variable_scope(tf.get_variable_scope(), reuse=True):
@@ -214,6 +215,9 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
                             tower_name, device, self._input_source))
         else:
             # new Trainer API
+            from ..trainv2 import TowerTrainer
+            assert isinstance(self.trainer, TowerTrainer), self.trainer
+            assert self.trainer.tower_func is not None, "You must set tower_func of the trainer to use InferenceRunner!"
             input_callbacks = self._input_source.setup(self.trainer.inputs_desc)
             with tf.variable_scope(tf.get_variable_scope(), reuse=True):
                 for idx, t in enumerate(self._gpus):
