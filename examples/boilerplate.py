@@ -4,9 +4,8 @@
 
 import os
 import argparse
-from tensorpack import *
-from tensorpack.utils.gpu import get_nr_gpu
 import tensorflow as tf
+from tensorpack import *
 
 """
 This is a boiler-plate template.

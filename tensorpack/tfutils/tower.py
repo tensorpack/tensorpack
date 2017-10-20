@@ -278,7 +278,13 @@ class TowerTensorHandle(object):
         """
         return self._output
 
-    # def make_callable(self, input_names, output_names):
+    # should move to somewhere else.
+    # def get_predictor(self, input_names, output_names):
+    #     """
+    #     Get a predictor with tensors inside this tower.
+    #     """
     #     input_tensors = self.get_tensors(input_names)
     #     output_tensors = self.get_tensors(output_names)
-    #     pass
+    #     # TODO sort out the import order
+    #     from ..predict.base import OnlinePredictor  # noqa
+    #     return OnlinePredictor(input_tensors, output_tensors)

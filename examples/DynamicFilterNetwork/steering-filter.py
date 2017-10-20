@@ -12,7 +12,6 @@ import multiprocessing
 
 from tensorpack import *
 from tensorpack.utils import logger
-from tensorpack.utils.gpu import get_nr_gpu
 from tensorpack.utils.viz import *
 from tensorpack.utils.argtools import shape2d, shape4d
 from tensorpack.dataflow import dataset
