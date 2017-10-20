@@ -135,7 +135,7 @@ class Model(ModelDesc):
                                    self.cost, tf.reduce_mean(importance, name='importance'))
 
     def _get_optimizer(self):
-        lr = symbf.get_scalar_var('learning_rate', 0.001, summary=True)
+        lr = tf.get_variable('learning_rate', initializer=0.001, trainable=False)
         opt = tf.train.AdamOptimizer(lr, epsilon=1e-3)
 
         gradprocs = [MapGradient(lambda grad: tf.clip_by_average_norm(grad, 0.1)),

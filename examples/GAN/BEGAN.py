@@ -126,7 +126,7 @@ class Model(GANModelDesc):
                 self.g_loss = L_neg
 
         add_moving_summary(L_pos, L_neg, eq, measure, self.d_loss)
-        tf.summary.scalar('kt-summary', kt)
+        tf.summary.scalar('kt', kt)
 
         self.collect_variables()
 

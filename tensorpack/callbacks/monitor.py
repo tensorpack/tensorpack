@@ -129,9 +129,12 @@ class Monitors(Callback):
         for val in summary.value:
             if val.WhichOneof('value') == 'simple_value':
                 val.tag = re.sub('tower[0-9]+/', '', val.tag)   # TODO move to subclasses
+
+                # TODO This hack not needed any more, can remove this in the future
                 suffix = '-summary'  # tensorflow#6150, tensorboard#59
                 if val.tag.endswith(suffix):
                     val.tag = val.tag[:-len(suffix)]
+
                 self._dispatch(lambda m: m.process_scalar(val.tag, val.simple_value))
 
         self._dispatch(lambda m: m.process_summary(summary))

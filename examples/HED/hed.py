@@ -96,7 +96,7 @@ class Model(ModelDesc):
             add_moving_summary(costs + [wrong, self.cost])
 
     def _get_optimizer(self):
-        lr = symbf.get_scalar_var('learning_rate', 3e-5, summary=True)
+        lr = tf.get_variable('learning_rate', initializer=3e-5, trainable=False)
         opt = tf.train.AdamOptimizer(lr, epsilon=1e-3)
         return optimizer.apply_grad_processors(
             opt, [gradproc.ScaleGradient(

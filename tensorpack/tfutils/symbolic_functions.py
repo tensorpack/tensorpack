@@ -154,9 +154,11 @@ def huber_loss(x, delta=1, name='huber_loss'):
     return tf.where(cond, l2, l1, name=name)
 
 
+# TODO remove this in the future
 def get_scalar_var(name, init_value, summary=False, trainable=False):
     """
-    Get a scalar float variable with certain initial value
+    Get a scalar float variable with certain initial value.
+    You can just call `tf.get_variable(name, initializer=init_value, trainable=False)` instead.
 
     Args:
         name (str): name of the variable.
@@ -170,7 +172,7 @@ def get_scalar_var(name, init_value, summary=False, trainable=False):
                           trainable=trainable)
     if summary:
         # this is recognized in callbacks.StatHolder
-        tf.summary.scalar(name + '-summary', ret)
+        tf.summary.scalar(name, ret)
     return ret
 
 

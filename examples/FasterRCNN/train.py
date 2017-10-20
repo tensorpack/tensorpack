@@ -126,7 +126,8 @@ class Model(ModelDesc):
             decoded_boxes = tf.identity(decoded_boxes, name='fastrcnn_fg_boxes')
 
     def _get_optimizer(self):
-        lr = symbf.get_scalar_var('learning_rate', 0.003, summary=True)
+        lr = tf.get_variable('learning_rate', initializer=0.003, trainable=False)
+        tf.summary.scalar('learning_rate', lr)
 
         factor = get_batch_factor()
         if factor != 1:

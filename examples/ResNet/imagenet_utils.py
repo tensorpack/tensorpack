@@ -207,5 +207,5 @@ class ImageNetModel(ModelDesc):
 
     def _get_optimizer(self):
         lr = tf.get_variable('learning_rate', initializer=0.1, trainable=False)
-        tf.summary.scalar('learning_rate-summary', lr)
+        tf.summary.scalar('learning_rate', lr)
         return tf.train.MomentumOptimizer(lr, 0.9, use_nesterov=True)
