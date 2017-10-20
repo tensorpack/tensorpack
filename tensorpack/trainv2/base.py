@@ -109,6 +109,8 @@ class Trainer(object):
         Initialize self.sess and self.hooked_sess.
         Must be called after callbacks are setup.
         """
+        session_init._setup_graph()
+
         logger.info("Creating the session ...")
 
         hooks = self._callbacks.get_hooks()
@@ -118,19 +120,13 @@ class Trainer(object):
 
         if self.is_chief:
             logger.info("Initializing the session ...")
-            session_init.init(self.sess)
+            session_init._run_init(self.sess)
         else:
-            assert isinstance(session_init, JustCurrentSession), \
-                "session_init is only valid for chief worker session!"
+            if not isinstance(self._config.session_init, JustCurrentSession):
+                logger.warn("This is not a chief worker, 'session_init' was ignored!")
 
         self.sess.graph.finalize()
         logger.info("Graph Finalized.")
-
-    def _create_session(self):
-        """
-        Setup self.sess (the raw tf.Session)
-        and self.hooked_sess (the session with hooks and coordinator)
-        """
 
     @call_only_once
     def main_loop(self, steps_per_epoch, starting_epoch=1, max_epoch=99999):
@@ -301,8 +297,7 @@ class SingleCostTrainer(TowerTrainer):
         trainer needs are automatically added.
         """
         callbacks = callbacks + self._internal_callbacks
-        Trainer.train(
-            self,
+        super(SingleCostTrainer, self).train(
             callbacks, monitors,
             session_creator, session_init,
             steps_per_epoch, starting_epoch, max_epoch)
@@ -310,7 +305,7 @@ class SingleCostTrainer(TowerTrainer):
     @call_only_once
     def setup_graph(self, inputs_desc, input, get_cost_fn, get_opt_fn):
         """
-        Responsible for building the main training graph.
+        Responsible for building the main training graph for single-cost training.
 
         Args:
             inputs_desc ([InputDesc]):

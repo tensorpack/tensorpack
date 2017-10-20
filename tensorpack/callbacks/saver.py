@@ -68,8 +68,7 @@ class ModelSaver(Callback):
                 keep_checkpoint_every_n_hours=self._keep_every_n_hours,
                 write_version=tf.train.SaverDef.V2,
                 save_relative_paths=True)
-        # Don't know how it can be useful,
-        # but since there is a predefined key, why not use it?
+        # Scaffold will call saver.build from this collection
         tf.add_to_collection(tf.GraphKeys.SAVERS, self.saver)
 
     def _before_train(self):

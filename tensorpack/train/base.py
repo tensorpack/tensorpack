@@ -194,16 +194,17 @@ class Trainer(object):
         logger.info("Setup callbacks graph ...")
         self._callbacks = Callbacks(self._callbacks)
         self._callbacks.setup_graph(weakref.proxy(self))
+        self._config.session_init._setup_graph()
 
         logger.info("Creating the session ...")
         self._create_session()
 
         if self.is_chief:
             logger.info("Initializing the session ...")
-            self._config.session_init.init(self.sess)
+            self._config.session_init._run_init(self.sess)
         else:
-            assert isinstance(self._config.session_init, JustCurrentSession), \
-                "session_init is only valid for chief worker session!"
+            if not isinstance(self._config.session_init, JustCurrentSession):
+                logger.warn("This is not a chief worker, 'session_init' was ignored!")
 
         self.sess.graph.finalize()
         logger.info("Graph Finalized.")

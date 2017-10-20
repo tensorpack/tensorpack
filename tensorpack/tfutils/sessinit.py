@@ -18,7 +18,7 @@ __all__ = ['SessionInit', 'ChainInit',
 
 
 class SessionInit(object):
-    """ Base class for utilities to initialize a (existing) session. """
+    """ Base class for utilities to load variables to a (existing) session. """
     def init(self, sess):
         """
         Initialize a session
@@ -26,9 +26,6 @@ class SessionInit(object):
         Args:
             sess (tf.Session): the session
         """
-        self._init(sess)
-
-    def _init(self, sess):
         self._setup_graph()
         self._run_init(sess)
 
@@ -235,10 +232,6 @@ class ChainInit(SessionInit):
             sess_inits (list[SessionInit]): list of :class:`SessionInit` instances.
         """
         self.inits = sess_inits
-
-    def _init(self, sess):
-        for i in self.inits:
-            i.init(sess)
 
     def _setup_graph(self):
         for i in self.inits:
