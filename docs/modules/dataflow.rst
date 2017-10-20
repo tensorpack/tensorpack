@@ -1,16 +1,12 @@
 tensorpack.dataflow package
 ===========================
 
-Subpackages
------------
+.. container:: custom-index
 
-.. toctree::
+    .. raw:: html
 
-    dataflow.dataset
-    dataflow.imgaug
+        <script type="text/javascript" src='../_static/build_toc_group.js'></script>
 
-Module contents
----------------
 
 .. automodule:: tensorpack.dataflow
     :members:

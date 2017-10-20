@@ -1,25 +1,23 @@
 
-## Implement a layer
+## Write a Layer
 
-Symbolic functions should be nothing new to you.
-Using symbolic functions is not special in tensorpack: you can use any symbolic functions you have
-made or seen elsewhere with tensorpack layers.
-You can use symbolic functions from slim/tflearn/tensorlayer, and even Keras ([with some tricks](../../examples/mnist-keras.py)).
-So you never **have to** implement a tensorpack layer.
+The first thing to note: __you never have to write a layer__.
+Tensorpack layers are nothing but wrappers of symbolic functions.
+You can use any symbolic functions you have written or seen elsewhere with or without tensorpack layers.
 
 If you would like, you can make a symbolic function become a "layer" by following some simple rules, and then gain benefits from the framework.
 
 Take a look at the [Convolutional Layer](../../tensorpack/models/conv2d.py#L14) implementation for an example of how to define a layer:
 
 ```python
-@layer_register()
+@layer_register(log_shape=True)
 def Conv2D(x, out_channel, kernel_shape,
            padding='SAME', stride=1,
            W_init=None, b_init=None,
            nl=tf.nn.relu, split=1, use_bias=True):
 ```
 
-Basically, a layer is a symbolic function with the following rules:
+Basically, a tensorpack layer is just a symbolic function, but with the following rules:
 
 + It is decorated by `@layer_register`.
 + The first argument is its "input". It must be a **tensor or a list of tensors**.
@@ -28,10 +26,10 @@ Basically, a layer is a symbolic function with the following rules:
 
 By making a symbolic function a "layer", the following things will happen:
 + You will need to call the function with a scope name as the first argument, e.g. `Conv2D('conv0', x, 32, 3)`.
-	Everything happening in this function will be under the variable scope 'conv0'.
+	Everything happening in this function will be under the variable scope `conv0`.
 	You can register the layer with `use_scope=False` to disable this feature.
-+ Static shapes of input/output will be printed to screen.
-+ `argscope` will then work for all its arguments except the input tensor(s).
++ Static shapes of input/output will be printed to screen (if you register with `log_shape=True`).
++ `argscope` will work for all its arguments except the input tensor(s).
 + It will work with `LinearWrap`: you can use it if the output of one layer matches the input of the next layer.
 
 There are also some (non-layer) symbolic functions in the `tfutils.symbolic_functions` module.

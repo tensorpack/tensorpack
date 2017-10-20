@@ -1,6 +1,6 @@
 # Generative Adversarial Networks
 
-Reproduce the following GAN-related methods:
+Reproduce the following GAN-related methods, 100~200 lines each:
 
 + DCGAN ([Unsupervised Representation Learning with DCGAN](https://arxiv.org/abs/1511.06434))
 
@@ -18,6 +18,9 @@ Reproduce the following GAN-related methods:
 
 + BEGAN ([BEGAN: Boundary Equilibrium Generative Adversarial Networks](https://arxiv.org/abs/1703.10717))
 
++ CycleGAN ([Unpaired Image-to-Image Translation using Cycle-Consistent Adversarial Networks](https://arxiv.org/abs/1703.10593))
+
+
 Please see the __docstring__ in each script for detailed usage and pretrained models. MultiGPU training is supported.
 
 ## DCGAN.py
@@ -34,7 +37,7 @@ Reproduce DCGAN following the setup in [dcgan.torch](https://github.com/soumith/
 
 ## Image2Image.py
 
-Image-to-Image following the setup in [pix2pix](https://github.com/phillipi/pix2pix).
+Image-to-Image translation following the setup in [pix2pix](https://github.com/phillipi/pix2pix).
 
 For example, with the cityscapes dataset, it learns to generate semantic segmentation map of urban scene:
 
@@ -65,6 +68,9 @@ Some BEGAN samples:
 
 ![began-sample](demo/BEGAN-CelebA-samples.jpg)
 
-## DiscoGAN-CelebA.py
+## CycleGAN.py, DiscoGAN-CelebA.py
 
-Reproduce DiscoGAN on CelebA.
+Reproduce CycleGAN with the original datasets, and DiscoGAN on CelebA. They are pretty much the same idea with different architecture.
+CycleGAN horse-to-zebra in tensorboard:
+
+![cyclegan-sample](demo/CycleGAN-horse2zebra.jpg)

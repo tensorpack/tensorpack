@@ -10,6 +10,8 @@ import os
 from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
+from tensorpack.dataflow import dataset
+from tensorpack.utils.gpu import get_nr_gpu
 import tensorflow as tf
 
 """
@@ -58,29 +60,6 @@ def get_data(train_or_test):
     return ds
 
 
-def get_config():
-    logger.auto_set_dir()
-
-    # prepare dataset
-    dataset_train = get_data('train')
-    steps_per_epoch = dataset_train.size()
-    dataset_test = get_data('test')
-
-    return TrainConfig(
-        dataflow=dataset_train,
-        callbacks=[
-            ModelSaver(),
-            InferenceRunner(dataset_test,
-                            [ScalarStats('cost'), ClassificationError()]),
-            ScheduledHyperParamSetter('learning_rate',
-                                      [(1, 0.1), (20, 0.01), (28, 0.001), (50, 0.0001)])
-        ],
-        model=Model(n=18),
-        steps_per_epoch=steps_per_epoch,
-        max_epoch=500,
-    )
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
@@ -90,9 +69,22 @@ if __name__ == '__main__':
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
-    config = get_config()
-    if args.load:
-        config.session_init = SaverRestore(args.load)
-    if args.gpu:
-        config.nr_tower = len(args.gpu.split(','))
-    SyncMultiGPUTrainer(config).train()
+    logger.auto_set_dir()
+    dataset_train = get_data('train')
+    dataset_test = get_data('test')
+
+    config = TrainConfig(
+        model=Model(n=18),
+        dataflow=dataset_train,
+        callbacks=[
+            ModelSaver(),
+            InferenceRunner(dataset_test,
+                            [ScalarStats('cost'), ClassificationError()]),
+            ScheduledHyperParamSetter('learning_rate',
+                                      [(1, 0.1), (20, 0.01), (28, 0.001), (50, 0.0001)])
+        ],
+        nr_tower=max(get_nr_gpu(), 1),
+        session_init=SaverRestore(args.load) if args.load else None,
+        max_epoch=500,
+    )
+    SyncMultiGPUTrainerParameterServer(config).train()

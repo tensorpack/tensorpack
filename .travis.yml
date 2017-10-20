@@ -20,10 +20,10 @@ matrix:
   include:
   - os: linux
     python: 2.7
-    env: TF_VERSION=1.1.0 TF_TYPE=release
+    env: TF_VERSION=1.4.0rc0 TF_TYPE=release
   - os: linux
     python: 3.5
-    env: TF_VERSION=1.1.0 TF_TYPE=release
+    env: TF_VERSION=1.4.0rc0 TF_TYPE=release
   - os: linux
     python: 2.7
     env: TF_VERSION=1.head TF_TYPE=nightly
@@ -38,8 +38,10 @@ install:
 - pip install flake8 scikit-image opencv-python pypandoc
   # here we use opencv-python, but users are in general not recommended to use this package,
   # because it brings issues working with tensorflow on gpu
-- ./tests/install-tensorflow.sh
 - pip install .
+  # check that dataflow can be imported alone
+- python -c "import tensorpack.dataflow"
+- ./tests/install-tensorflow.sh
 
 before_script:
 - flake8 --version
@@ -53,6 +55,7 @@ script:
 - mkdir -p $HOME/tensorpack_data
 - export TENSORPACK_DATASET=$HOME/tensorpack_data
 - $TRAVIS_BUILD_DIR/tests/run-tests.sh
+- cd $TRAVIS_BUILD_DIR  # go back to root so that deploy may work
 
 notifications:
   email:
@@ -67,6 +70,8 @@ notifications:
     on_failure: always  # options: [always|never|change] default: always
     on_start: never     # options: [always|never|change] default: always
 
+
+# see https://docs.travis-ci.com/user/deployment/pypi/
 deploy:
 - provider: pypi
   user: ppwwyyxx

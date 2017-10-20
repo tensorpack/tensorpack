@@ -5,7 +5,7 @@
 
 import six
 from types import ModuleType
-from .common import get_registered_layer
+from .registry import get_registered_layer
 
 __all__ = ['LinearWrap']
 

@@ -8,14 +8,23 @@ so you won't need to look at here very often.
 Here are a list of things that were changed, starting from an early version.
 TensorFlow itself also changed APIs before 1.0 and those are not listed here.
 
++ [2017/10/18]
+	`TrainConfig(predict_tower)` was deprecated. You can set the inference device directly when creating the `InferenceRunner` callback.
++ [2017/10/12](https://github.com/ppwwyyxx/tensorpack/commit/7e963996f615b85f7459455596b4ee9bbd0bce8e).
+	`tensorpack.RL` was deprecated. The RL examples are written with OpenAI gym interface instead.
++ [2017/10/10](https://github.com/ppwwyyxx/tensorpack/commit/7d40e049691d92018f50dc7d45bba5e8b140becc).
+	`tfutils.distributions` was deprecated in favor of `tf.distributions` introduced in TF 1.3.
++ [2017/08/02](https://github.com/ppwwyyxx/tensorpack/commit/875f4d7dbb5675f54eae5675fa3a0948309a8465).
+	`Trainer.get_predictor` now takes GPU id. And `Trainer.get_predictors` was deprecated.
++ 2017/06/07. Now the library explicitly depends on msgpack-numpy>=0.3.9. The serialization protocol
+	becomes incompatible if you've been using <0.3.9.
 + [2017/05/06](https://github.com/ppwwyyxx/tensorpack/commit/0774ec66e66075486f6a36aba63cc2a151b9fec8).
 	`replace_get_variable` was deprecated in favor of the official `custom_getter` interface.
 	`{freeze,remap}_get_variable` was renamed to `{freeze,remap}_variables`.
 + [2017/04/09](https://github.com/ppwwyyxx/tensorpack/commit/5beab907895aec36bdcaed62e25b976aad7979b8).
 	`ParamRestore` was renamed to `DictRestore`.
 + [2017/03/16](https://github.com/ppwwyyxx/tensorpack/commit/ccae46f4a3ca89dc3df901a338eef8447d19a730).
-	`session_config` option in `TrainConfig` and `PredictConfig` is deprecated.
-	Use `session_creator` to define how to create session instead.
+	`session_config` option in `PredictConfig` is deprecated. Use `session_creator` to define how to create session instead.
 + 2017/02/20. The interface of step callbacks are changed to be the same as `tf.train.SessionRunHook`.
 	If you haven't written any custom step callbacks, there is nothing to do. Otherwise please refer
 	to the [existing callbacks](https://github.com/ppwwyyxx/tensorpack/blob/master/tensorpack/callbacks/steps.py).

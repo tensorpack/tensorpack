@@ -8,7 +8,6 @@ import time
 import traceback
 
 from .base import Callback
-from .stats import StatPrinter
 from .hooks import CallbackToHook
 from ..utils import logger
 
@@ -45,8 +44,8 @@ class CallbackTimeLogger(object):
 
 class Callbacks(Callback):
     """
-    A container to hold all callbacks, and execute them in the right order
-    (e.g. :class:`StatPrinter` will be executed at last).
+    A container to hold all callbacks, and trigger them iteratively.
+    Note that it does nothing to before_run/after_run.
     """
 
     def __init__(self, cbs):
@@ -57,18 +56,6 @@ class Callbacks(Callback):
         # check type
         for cb in cbs:
             assert isinstance(cb, Callback), cb.__class__
-        # move "StatPrinter" to the last
-        # TODO don't need to manually move in the future.
-        for idx, cb in enumerate(cbs):
-            if isinstance(cb, StatPrinter):
-                sp = cb
-                cbs.remove(sp)
-                cbs.append(sp)
-                if idx != len(cbs) - 1:
-                    logger.warn("StatPrinter should appear as the last element of callbacks! "
-                                "This is now fixed automatically, but may not work in the future.")
-                break
-
         self.cbs = cbs
 
     def _setup_graph(self):
@@ -104,6 +91,10 @@ class Callbacks(Callback):
                 cb.trigger_epoch()
         tm.log()
 
-    def append(self, cb):
-        assert isinstance(cb, Callback)
-        self.cbs.append(cb)
+    def _before_epoch(self):
+        for cb in self.cbs:
+            cb.before_epoch()
+
+    def _after_epoch(self):
+        for cb in self.cbs:
+            cb.after_epoch()

@@ -9,20 +9,28 @@ from tensorpack.tfutils.varmanip import dump_chkpt_vars
 from tensorpack.utils import logger
 import argparse
 
-parser = argparse.ArgumentParser()
-parser.add_argument('checkpoint')
-parser.add_argument('--dump', help='dump to an npy file')
-parser.add_argument('--shell', action='store_true', help='start a shell with the params')
-args = parser.parse_args()
 
-if args.checkpoint.endswith('.npy'):
-    params = np.load(args.checkpoint).item()
-else:
-    params = dump_chkpt_vars(args.checkpoint)
-logger.info("Variables in the checkpoint:")
-logger.info(str(params.keys()))
-if args.dump:
-    np.save(args.dump, params)
-if args.shell:
-    import IPython as IP
-    IP.embed(config=IP.terminal.ipapp.load_default_config())
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('model')
+    parser.add_argument('--dump', help='dump to an npy file')
+    parser.add_argument('--shell', action='store_true', help='start a shell with the params')
+    args = parser.parse_args()
+
+    if args.model.endswith('.npy'):
+        params = np.load(args.model).item()
+    elif args.model.endswith('.npz'):
+        params = dict(np.load(args.model))
+    else:
+        params = dump_chkpt_vars(args.model)
+    logger.info("Variables in the model:")
+    logger.info(str(params.keys()))
+
+    if args.dump:
+        assert args.dump.endswith('.npy'), args.dump
+        np.save(args.dump, params)
+
+    if args.shell:
+        # params is a dict. play with it
+        import IPython as IP
+        IP.embed(config=IP.terminal.ipapp.load_default_config())

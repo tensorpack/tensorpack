@@ -12,8 +12,9 @@ def _global_import(name):
     p = __import__(name, globals(), None, level=1)
     lst = p.__all__ if '__all__' in dir(p) else dir(p)
     for k in lst:
-        globals()[k] = p.__dict__[k]
-        __all__.append(k)
+        if not k.startswith('__'):
+            globals()[k] = p.__dict__[k]
+            __all__.append(k)
 
 
 _TO_IMPORT = set([
@@ -33,6 +34,6 @@ for _, module_name, _ in iter_modules(
         continue
     if module_name in _TO_IMPORT:
         _global_import(module_name)  # import the content to tfutils.*
-    else:
-        __all__.append(module_name)  # import the module separately
-__all__.extend(['sessinit', 'gradproc'])
+__all__.extend(['sessinit', 'summary', 'optimizer',
+                'sesscreate', 'gradproc', 'varreplace', 'symbolic_functions',
+                'distributed'])

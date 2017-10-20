@@ -4,37 +4,52 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 import random
 import time
-import threading
 import multiprocessing
-import numpy as np
 from tqdm import tqdm
 from six.moves import queue
 
-from tensorpack import *
-from tensorpack.utils.concurrency import *
-from tensorpack.utils.stats import *
+from tensorpack.utils.concurrency import StoppableThread, ShareSessionThread
+from tensorpack.callbacks import Triggerable
+from tensorpack.utils import logger
+from tensorpack.utils.stats import StatCounter
+from tensorpack.utils.utils import get_tqdm_kwargs
 
 
-def play_one_episode(player, func, verbose=False):
-    def f(s):
-        spc = player.get_action_space()
-        act = func([[s]])[0][0].argmax()
+def play_one_episode(env, func, render=False):
+    def predict(s):
+        """
+        Map from observation to action, with 0.001 greedy.
+        """
+        act = func(s[None, :, :, :])[0][0].argmax()
         if random.random() < 0.001:
+            spc = env.action_space
             act = spc.sample()
-        if verbose:
-            print(act)
         return act
-    return np.mean(player.play_one_episode(f))
 
-
-def play_model(cfg, player):
-    predfunc = OfflinePredictor(cfg)
+    ob = env.reset()
+    sum_r = 0
     while True:
-        score = play_one_episode(player, predfunc)
-        print("Total:", score)
+        act = predict(ob)
+        ob, r, isOver, info = env.step(act)
+        if render:
+            env.render()
+        sum_r += r
+        if isOver:
+            return sum_r
+
+
+def play_n_episodes(player, predfunc, nr, render=False):
+    logger.info("Start Playing ... ")
+    for k in range(nr):
+        score = play_one_episode(player, predfunc, render=render)
+        print("{}/{}, score={}".format(k, nr, score))
 
 
 def eval_with_funcs(predictors, nr_eval, get_player_fn):
+    """
+    Args:
+        predictors ([PredictorBase])
+    """
     class Worker(StoppableThread, ShareSessionThread):
         def __init__(self, func, queue):
             super(Worker, self).__init__()
@@ -52,7 +67,7 @@ def eval_with_funcs(predictors, nr_eval, get_player_fn):
                 while not self.stopped():
                     try:
                         score = play_one_episode(player, self.func)
-                        # print "Score, ", score
+                        # print("Score, ", score)
                     except RuntimeError:
                         return
                     self.queue_put_stoppable(self.q, score)
@@ -84,10 +99,14 @@ def eval_with_funcs(predictors, nr_eval, get_player_fn):
         return (0, 0)
 
 
-def eval_model_multithread(cfg, nr_eval, get_player_fn):
-    func = OfflinePredictor(cfg)
+def eval_model_multithread(pred, nr_eval, get_player_fn):
+    """
+    Args:
+        pred (OfflinePredictor): state -> Qvalue
+    """
     NR_PROC = min(multiprocessing.cpu_count() // 2, 8)
-    mean, max = eval_with_funcs([func] * NR_PROC, nr_eval, get_player_fn)
+    with pred.sess.as_default():
+        mean, max = eval_with_funcs([pred] * NR_PROC, nr_eval, get_player_fn)
     logger.info("Average Score: {}; Max Score: {}".format(mean, max))
 
 
@@ -110,14 +129,5 @@ class Evaluator(Triggerable):
         t = time.time() - t
         if t > 10 * 60:  # eval takes too long
             self.eval_episode = int(self.eval_episode * 0.94)
-        self.trainer.monitors.put('mean_score', mean)
-        self.trainer.monitors.put('max_score', max)
-
-
-def play_n_episodes(player, predfunc, nr):
-    logger.info("Start evaluation: ")
-    for k in range(nr):
-        if k != 0:
-            player.restart_episode()
-        score = play_one_episode(player, predfunc)
-        print("Score:", score)
+        self.trainer.monitors.put_scalar('mean_score', mean)
+        self.trainer.monitors.put_scalar('max_score', max)

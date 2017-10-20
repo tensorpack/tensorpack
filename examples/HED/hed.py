@@ -12,7 +12,10 @@ import os
 import sys
 
 from tensorpack import *
-from tensorpack.tfutils.symbolic_functions import *
+import tensorpack.tfutils.symbolic_functions as symbf
+from tensorpack.dataflow import dataset
+from tensorpack.utils.gpu import get_nr_gpu
+from tensorpack.tfutils import optimizer
 from tensorpack.tfutils.summary import *
 
 
@@ -72,7 +75,7 @@ class Model(ModelDesc):
         costs = []
         for idx, b in enumerate([b1, b2, b3, b4, b5, final_map]):
             output = tf.nn.sigmoid(b, name='output{}'.format(idx + 1))
-            xentropy = class_balanced_sigmoid_cross_entropy(
+            xentropy = symbf.class_balanced_sigmoid_cross_entropy(
                 b, edgemap,
                 name='xentropy{}'.format(idx + 1))
             costs.append(xentropy)
@@ -93,7 +96,7 @@ class Model(ModelDesc):
             add_moving_summary(costs + [wrong, self.cost])
 
     def _get_optimizer(self):
-        lr = get_scalar_var('learning_rate', 3e-5, summary=True)
+        lr = tf.get_variable('learning_rate', initializer=3e-5, trainable=False)
         opt = tf.train.AdamOptimizer(lr, epsilon=1e-3)
         return optimizer.apply_grad_processors(
             opt, [gradproc.ScaleGradient(
@@ -195,8 +198,10 @@ def run(model_path, image_path, output):
     predictor = OfflinePredictor(pred_config)
     im = cv2.imread(image_path)
     assert im is not None
-    im = cv2.resize(im, (im.shape[1] // 16 * 16, im.shape[0] // 16 * 16))
-    outputs = predictor([[im.astype('float32')]])
+    im = cv2.resize(
+        im, (im.shape[1] // 16 * 16, im.shape[0] // 16 * 16)
+    )[None, :, :, :].astype('float32')
+    outputs = predictor(im)
     if output is None:
         for k in range(6):
             pred = outputs[k][0]
@@ -226,6 +231,5 @@ if __name__ == '__main__':
         config = get_config()
         if args.load:
             config.session_init = get_model_loader(args.load)
-        if args.gpu:
-            config.nr_tower = len(args.gpu.split(','))
+        config.nr_tower = max(get_nr_gpu(), 1)
         SyncMultiGPUTrainer(config).train()

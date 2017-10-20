@@ -5,6 +5,7 @@
 
 import tensorflow as tf
 
+from ..utils import logger
 from ..utils.naming import MOVING_SUMMARY_OPS_KEY
 from .base import Callback
 
@@ -12,24 +13,31 @@ __all__ = ['MovingAverageSummary', 'MergeAllSummaries']
 
 
 class MovingAverageSummary(Callback):
-    """ Maintain the moving average of the tensors
-        in every step, and summarize them. Enabled by default.
+    """
+    This callback is enabled by default.
+    Maintain the moving average of summarized tensors in every step,
+    by ops added to the collection.
+    Note that it only maintains the EMAs, the actual summary should be done in other callbacks.
     """
     def __init__(self, collection=MOVING_SUMMARY_OPS_KEY):
         """
         Args:
             collection(str): the collection of EMA-maintaining ops.
-                The default would work with :func:`add_moving_summary()`,
-                but you can use some others.
+                The default value would work with
+                the tensors you added by :func:`tfutils.summary.add_moving_summary()`,
+                but you can use other collections as well.
         """
         self._collection = collection
 
     def _setup_graph(self):
         ops = tf.get_collection(self._collection)
-        self.ema_op = tf.group(*ops, name='summary_moving_averages')
+        logger.info("Maintain moving average summary of {} tensors.".format(len(ops)))
+
+        self.ema_op = tf.group(*ops, name='maintain_moving_average_summary')
+        self._fetch = tf.train.SessionRunArgs(fetches=self.ema_op)
 
     def _before_run(self, _):
-        return [self.ema_op]
+        return self._fetch
 
 
 class MergeAllSummaries_RunAlone(Callback):
@@ -62,10 +70,9 @@ class MergeAllSummaries_RunWithOp(Callback):
             self._fetches = tf.train.SessionRunArgs(self.summary_op)
         else:
             self._fetches = None
-        self._total = self.trainer.config.steps_per_epoch
 
     def _need_run(self):
-        if self.local_step == self._total - 1:
+        if self.local_step == self.trainer.steps_per_epoch - 1:
             return True
         if self._period > 0 and (self.local_step + 1) % self._period == 0:
             return True
@@ -85,6 +92,7 @@ class MergeAllSummaries_RunWithOp(Callback):
 
 def MergeAllSummaries(period=0, run_alone=False, key=tf.GraphKeys.SUMMARIES):
     """
+    This callback is enabled by default.
     Evaluate all summaries by `tf.summary.merge_all`, and write to logs.
 
     Args:
@@ -97,6 +105,7 @@ def MergeAllSummaries(period=0, run_alone=False, key=tf.GraphKeys.SUMMARIES):
             For :class:`SimpleTrainer`, it needs to be False because summary may
             depend on inputs.
         key (str): the collection of summary tensors. Same as in `tf.summary.merge_all`.
+            Default is ``tf.GraphKeys.SUMMARIES``
 
     Returns:
         a Callback.

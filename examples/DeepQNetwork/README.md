@@ -15,19 +15,19 @@ Reproduce the following reinforcement learning methods:
 + A3C in [Asynchronous Methods for Deep Reinforcement Learning](http://arxiv.org/abs/1602.01783). (I
 used a modified version where each batch contains transitions from different simulators, which I called "Batch-A3C".)
 
+## Performance & Speed
 Claimed performance in the paper can be reproduced, on several games I've tested with.
 
 ![DQN](curve-breakout.png)
 
-DQN typically took 1 day of training to reach a score of 400 on breakout game (same as the paper).
-My Batch-A3C implementation only took <2 hours.
-Both were trained on one GPU with an extra GPU for simulation.
+On one TitanX, Double-DQN took 1 day of training to reach a score of 400 on breakout game.
+Batch-A3C implementation only took <2 hours.
 
-Double-DQN runs at 18 batches/s (1152 frames/s) on TitanX.
-Note that I wasn't using the network architecture in the paper.
-If switched to the network in the paper it could run 2x faster.
+Double-DQN runs at 60 batches (3840 trained frames, 240 seen frames, 960 game frames) per second on (Maxwell) TitanX.
 
 ## How to use
+
+Install [ALE](https://github.com/mgbellemare/Arcade-Learning-Environment) and gym.
 
 Download an [atari rom](https://github.com/openai/atari-py/tree/master/atari_py/atari_roms) to
 `$TENSORPACK_DATASET/atari_rom/` (defaults to ~/tensorpack_data/atari_rom/), e.g.:
@@ -44,7 +44,7 @@ Start Training:
 
 Watch the agent play:
 ```
-./DQN.py --rom breakout.bin --task play --load trained.model
+./DQN.py --rom breakout.bin --task play --load path/to/model
 ```
 A pretrained model on breakout can be downloaded [here](https://drive.google.com/open?id=0B9IPQTvr2BBkN1Jrei1xWW0yR28).
 

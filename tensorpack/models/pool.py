@@ -5,8 +5,9 @@
 import tensorflow as tf
 import numpy as np
 
+from .shape_utils import StaticDynamicShape
 from .common import layer_register
-from ..utils.argtools import shape2d, shape4d
+from ..utils.argtools import shape2d
 from ._test import TestModel
 
 
@@ -14,21 +15,7 @@ __all__ = ['MaxPooling', 'FixedUnPooling', 'AvgPooling', 'GlobalAvgPooling',
            'BilinearUpSample']
 
 
-def _Pooling(func, x, shape, stride, padding, data_format):
-    padding = padding.upper()
-    shape = shape4d(shape, data_format=data_format)
-    if stride is None:
-        stride = shape
-    else:
-        stride = shape4d(stride, data_format=data_format)
-
-    return func(x, ksize=shape,
-                strides=stride, padding=padding,
-                data_format=data_format,
-                name='output')
-
-
-@layer_register()
+@layer_register(log_shape=True)
 def MaxPooling(x, shape, stride=None, padding='VALID', data_format='NHWC'):
     """
     Max Pooling on 4D tensors.
@@ -42,11 +29,14 @@ def MaxPooling(x, shape, stride=None, padding='VALID', data_format='NHWC'):
     Returns:
         tf.Tensor named ``output``.
     """
-    return _Pooling(tf.nn.max_pool, x, shape, stride, padding,
-                    data_format=data_format)
+    if stride is None:
+        stride = shape
+    ret = tf.layers.max_pooling2d(x, shape, stride, padding,
+                                  'channels_last' if data_format == 'NHWC' else 'channels_first')
+    return tf.identity(ret, name='output')
 
 
-@layer_register()
+@layer_register(log_shape=True)
 def AvgPooling(x, shape, stride=None, padding='VALID', data_format='NHWC'):
     """
     Average Pooling on 4D tensors.
@@ -60,11 +50,14 @@ def AvgPooling(x, shape, stride=None, padding='VALID', data_format='NHWC'):
     Returns:
         tf.Tensor named ``output``.
     """
-    return _Pooling(tf.nn.avg_pool, x, shape, stride, padding,
-                    data_format=data_format)
+    if stride is None:
+        stride = shape
+    ret = tf.layers.average_pooling2d(x, shape, stride, padding,
+                                      'channels_last' if data_format == 'NHWC' else 'channels_first')
+    return tf.identity(ret, name='output')
 
 
-@layer_register()
+@layer_register(log_shape=True)
 def GlobalAvgPooling(x, data_format='NHWC'):
     """
     Global average pooling as in the paper `Network In Network
@@ -75,7 +68,7 @@ def GlobalAvgPooling(x, data_format='NHWC'):
     Returns:
         tf.Tensor: a NC tensor named ``output``.
     """
-    assert x.get_shape().ndims == 4
+    assert x.shape.ndims == 4
     assert data_format in ['NHWC', 'NCHW']
     axis = [1, 2] if data_format == 'NHWC' else [2, 3]
     return tf.reduce_mean(x, axis, name='output')
@@ -93,53 +86,62 @@ def UnPooling2x2ZeroFilled(x):
     else:
         shv = tf.shape(x)
         ret = tf.reshape(out, tf.stack([-1, shv[1] * 2, shv[2] * 2, sh[3]]))
-        ret.set_shape([None, None, None, sh[3]])
         return ret
 
 
-@layer_register()
-def FixedUnPooling(x, shape, unpool_mat=None):
+@layer_register(log_shape=True)
+def FixedUnPooling(x, shape, unpool_mat=None, data_format='NHWC'):
     """
     Unpool the input with a fixed matrix to perform kronecker product with.
 
     Args:
-        x (tf.Tensor): a NHWC tensor
+        x (tf.Tensor): a 4D image tensor
         shape: int or (h, w) tuple
         unpool_mat: a tf.Tensor or np.ndarray 2D matrix with size=shape.
             If is None, will use a matrix with 1 at top-left corner.
 
     Returns:
-        tf.Tensor: a NHWC tensor.
+        tf.Tensor: a 4D image tensor.
     """
     shape = shape2d(shape)
 
+    output_shape = StaticDynamicShape(x)
+    output_shape.apply(1 if data_format == 'NHWC' else 2, lambda x: x * shape[0])
+    output_shape.apply(2 if data_format == 'NHWC' else 3, lambda x: x * shape[1])
+
     # a faster implementation for this special case
-    if shape[0] == 2 and shape[1] == 2 and unpool_mat is None:
-        return UnPooling2x2ZeroFilled(x)
+    if shape[0] == 2 and shape[1] == 2 and unpool_mat is None and data_format == 'NHWC':
+        ret = UnPooling2x2ZeroFilled(x)
+    else:
+        # check unpool_mat
+        if unpool_mat is None:
+            mat = np.zeros(shape, dtype='float32')
+            mat[0][0] = 1
+            unpool_mat = tf.constant(mat, name='unpool_mat')
+        elif isinstance(unpool_mat, np.ndarray):
+            unpool_mat = tf.constant(unpool_mat, name='unpool_mat')
+        assert unpool_mat.shape.as_list() == list(shape)
 
-    input_shape = tf.shape(x)
-    if unpool_mat is None:
-        mat = np.zeros(shape, dtype='float32')
-        mat[0][0] = 1
-        unpool_mat = tf.constant(mat, name='unpool_mat')
-    elif isinstance(unpool_mat, np.ndarray):
-        unpool_mat = tf.constant(unpool_mat, name='unpool_mat')
-    assert unpool_mat.get_shape().as_list() == list(shape)
+        if data_format == 'NHWC':
+            x = tf.transpose(x, [0, 3, 1, 2])
+        # perform a tensor-matrix kronecker product
+        x = tf.expand_dims(x, -1)       # bchwx1
+        mat = tf.expand_dims(unpool_mat, 0)  # 1xshxsw
+        ret = tf.tensordot(x, mat, axes=1)  # bxcxhxwxshxsw
 
-    # perform a tensor-matrix kronecker product
-    fx = tf.reshape(tf.transpose(x, [0, 3, 1, 2]), [-1])
-    fx = tf.expand_dims(fx, -1)       # (bchw)x1
-    mat = tf.expand_dims(tf.reshape(unpool_mat, [-1]), 0)  # 1x(shxsw)
-    prod = tf.matmul(fx, mat)  # (bchw) x(shxsw)
-    prod = tf.reshape(prod, tf.stack(
-        [-1, input_shape[3], input_shape[1], input_shape[2], shape[0], shape[1]]))
-    prod = tf.transpose(prod, [0, 2, 4, 3, 5, 1])
-    prod = tf.reshape(prod, tf.stack(
-        [-1, input_shape[1] * shape[0], input_shape[2] * shape[1], input_shape[3]]))
-    return prod
+        if data_format == 'NHWC':
+            ret = tf.transpose(ret, [0, 2, 4, 3, 5, 1])
+        else:
+            ret = tf.transpose(ret, [0, 1, 2, 4, 3, 5])
+
+        shape3_dyn = [output_shape.get_dynamic(k) for k in range(1, 4)]
+        ret = tf.reshape(ret, tf.stack([-1] + shape3_dyn))
+
+    ret.set_shape(tf.TensorShape(output_shape.get_static()))
+    return ret
 
 
-@layer_register()
+@layer_register(log_shape=True)
 def BilinearUpSample(x, shape):
     """
     Deterministic bilinearly-upsample the input images.
@@ -151,7 +153,7 @@ def BilinearUpSample(x, shape):
     Returns:
         tf.Tensor: a NHWC tensor.
     """
-    inp_shape = x.get_shape().as_list()
+    inp_shape = x.shape.as_list()
     ch = inp_shape[3]
     assert ch is not None
 
@@ -194,18 +196,19 @@ def BilinearUpSample(x, shape):
 class TestPool(TestModel):
     def test_FixedUnPooling(self):
         h, w = 3, 4
+        scale = 2
         mat = np.random.rand(h, w, 3).astype('float32')
         inp = self.make_variable(mat)
         inp = tf.reshape(inp, [1, h, w, 3])
-        output = FixedUnPooling('unpool', inp, 2)
+        output = FixedUnPooling('unpool', inp, scale)
         res = self.run_variable(output)
-        self.assertEqual(res.shape, (1, 2 * h, 2 * w, 3))
+        self.assertEqual(res.shape, (1, scale * h, scale * w, 3))
 
         # mat is on cornser
-        ele = res[0, ::2, ::2, 0]
+        ele = res[0, ::scale, ::scale, 0]
         self.assertTrue((ele == mat[:, :, 0]).all())
         # the rest are zeros
-        res[0, ::2, ::2, :] = 0
+        res[0, ::scale, ::scale, :] = 0
         self.assertTrue((res == 0).all())
 
     def test_BilinearUpSample(self):

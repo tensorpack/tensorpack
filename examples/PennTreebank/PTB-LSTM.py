@@ -9,6 +9,7 @@ import argparse
 
 from tensorpack import *
 from tensorpack.tfutils.gradproc import *
+from tensorpack.tfutils import optimizer, summary
 from tensorpack.utils import logger
 from tensorpack.utils.fs import download, get_dataset_path
 from tensorpack.utils.argtools import memoized_ignoreargs
@@ -54,10 +55,13 @@ class Model(ModelDesc):
         input, nextinput = inputs
         initializer = tf.random_uniform_initializer(-0.05, 0.05)
 
-        cell = rnn.BasicLSTMCell(num_units=HIDDEN_SIZE, forget_bias=0.0)
-        if is_training:
-            cell = rnn.DropoutWrapper(cell, output_keep_prob=DROPOUT)
-        cell = rnn.MultiRNNCell([cell] * NUM_LAYER)
+        def get_basic_cell():
+            cell = rnn.BasicLSTMCell(num_units=HIDDEN_SIZE, forget_bias=0.0, reuse=tf.get_variable_scope().reuse)
+            if is_training:
+                cell = rnn.DropoutWrapper(cell, output_keep_prob=DROPOUT)
+            return cell
+
+        cell = rnn.MultiRNNCell([get_basic_cell() for _ in range(NUM_LAYER)])
 
         def get_v(n):
             return tf.get_variable(n, [BATCH, HIDDEN_SIZE],
@@ -139,18 +143,18 @@ def get_config():
                 'learning_rate',
                 lambda e, x: x * 0.80 if e > 6 else x),
             RunOp(lambda: M.reset_lstm_state()),
-            FeedfreeInferenceRunner(val_data, [ScalarStats(['cost'])]),
+            InferenceRunner(val_data, [ScalarStats(['cost'])]),
             RunOp(lambda: M.reset_lstm_state()),
-            FeedfreeInferenceRunner(
+            InferenceRunner(
                 test_data,
-                [ScalarStats(['cost'], prefix='test')], prefix='test'),
+                [ScalarStats(['cost'], prefix='test')], tower_name='InferenceTowerTest'),
             RunOp(lambda: M.reset_lstm_state()),
             CallbackFactory(
-                trigger_epoch=lambda self:
-                [self.trainer.monitors.put(
+                trigger=lambda self:
+                [self.trainer.monitors.put_scalar(
                     'validation_perplexity',
                     np.exp(self.trainer.monitors.get_latest('validation_cost') / SEQ_LEN)),
-                 self.trainer.monitors.put(
+                 self.trainer.monitors.put_scalar(
                      'test_perplexity',
                      np.exp(self.trainer.monitors.get_latest('test_cost') / SEQ_LEN))]
             ),
@@ -170,4 +174,4 @@ if __name__ == '__main__':
     config = get_config()
     if args.load:
         config.session_init = SaverRestore(args.load)
-    SimpleFeedfreeTrainer(config).train()
+    SimpleTrainer(config).train()

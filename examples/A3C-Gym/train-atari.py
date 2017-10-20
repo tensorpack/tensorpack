@@ -24,12 +24,14 @@ from tensorpack.utils.serialize import *
 from tensorpack.utils.stats import *
 from tensorpack.tfutils import symbolic_functions as symbf
 from tensorpack.tfutils.gradproc import MapGradient, SummaryGradient
+from tensorpack.utils.gpu import get_nr_gpu
 
-from tensorpack.RL import *
+
+import gym
 from simulator import *
-import common
-from common import (play_model, Evaluator, eval_model_multithread,
+from common import (Evaluator, eval_model_multithread,
                     play_one_episode, play_n_episodes)
+from atari_wrapper import WarpFrame, FrameStack, FireResetEnv, LimitLength
 
 if six.PY3:
     from concurrent import futures
@@ -51,25 +53,21 @@ PREDICT_BATCH_SIZE = 15     # batch for efficient forward
 SIMULATOR_PROC = 50
 PREDICTOR_THREAD_PER_GPU = 3
 PREDICTOR_THREAD = None
-EVALUATE_PROC = min(multiprocessing.cpu_count() // 2, 20)
 
 NUM_ACTIONS = None
 ENV_NAME = None
 
 
-def get_player(viz=False, train=False, dumpdir=None):
-    pl = GymEnv(ENV_NAME, viz=viz, dumpdir=dumpdir)
-    pl = MapPlayerState(pl, lambda img: cv2.resize(img, IMAGE_SIZE[::-1]))
-
-    global NUM_ACTIONS
-    NUM_ACTIONS = pl.get_action_space().num_actions()
-
-    pl = HistoryFramePlayer(pl, FRAME_HISTORY)
-    if not train:
-        pl = PreventStuckPlayer(pl, 30, 1)
-    else:
-        pl = LimitLengthPlayer(pl, 40000)
-    return pl
+def get_player(train=False, dumpdir=None):
+    env = gym.make(ENV_NAME)
+    if dumpdir:
+        env = gym.wrappers.Monitor(env, dumpdir)
+    env = FireResetEnv(env)
+    env = WarpFrame(env, IMAGE_SIZE)
+    env = FrameStack(env, 4)
+    if train:
+        env = LimitLength(env, 60000)
+    return env
 
 
 class MySimulatorWorker(SimulatorProcess):
@@ -80,12 +78,14 @@ class MySimulatorWorker(SimulatorProcess):
 class Model(ModelDesc):
     def _get_inputs(self):
         assert NUM_ACTIONS is not None
-        return [InputDesc(tf.float32, (None,) + IMAGE_SHAPE3, 'state'),
+        return [InputDesc(tf.uint8, (None,) + IMAGE_SHAPE3, 'state'),
                 InputDesc(tf.int64, (None,), 'action'),
-                InputDesc(tf.float32, (None,), 'futurereward')]
+                InputDesc(tf.float32, (None,), 'futurereward'),
+                InputDesc(tf.float32, (None,), 'action_prob'),
+                ]
 
     def _get_NN_prediction(self, image):
-        image = image / 255.0
+        image = tf.cast(image, tf.float32) / 255.0
         with argscope(Conv2D, nl=tf.nn.relu):
             l = Conv2D('conv0', image, out_channel=32, kernel_shape=5)
             l = MaxPooling('pool0', l, 2)
@@ -102,28 +102,27 @@ class Model(ModelDesc):
         return logits, value
 
     def _build_graph(self, inputs):
-        state, action, futurereward = inputs
-        logits, self.value = self._get_NN_prediction(state)
-        self.value = tf.squeeze(self.value, [1], name='pred_value')  # (B,)
-        self.policy = tf.nn.softmax(logits, name='policy')
-
-        expf = tf.get_variable('explore_factor', shape=[],
-                               initializer=tf.constant_initializer(1), trainable=False)
-        policy_explore = tf.nn.softmax(logits * expf, name='policy_explore')
+        state, action, futurereward, action_prob = inputs
+        logits, value = self._get_NN_prediction(state)
+        value = tf.squeeze(value, [1], name='pred_value')  # (B,)
+        policy = tf.nn.softmax(logits, name='policy')
         is_training = get_current_tower_context().is_training
         if not is_training:
             return
-        log_probs = tf.log(self.policy + 1e-6)
+        log_probs = tf.log(policy + 1e-6)
 
         log_pi_a_given_s = tf.reduce_sum(
             log_probs * tf.one_hot(action, NUM_ACTIONS), 1)
-        advantage = tf.subtract(tf.stop_gradient(self.value), futurereward, name='advantage')
-        policy_loss = tf.reduce_sum(log_pi_a_given_s * advantage, name='policy_loss')
-        xentropy_loss = tf.reduce_sum(
-            self.policy * log_probs, name='xentropy_loss')
-        value_loss = tf.nn.l2_loss(self.value - futurereward, name='value_loss')
+        advantage = tf.subtract(tf.stop_gradient(value), futurereward, name='advantage')
 
-        pred_reward = tf.reduce_mean(self.value, name='predict_reward')
+        pi_a_given_s = tf.reduce_sum(policy * tf.one_hot(action, NUM_ACTIONS), 1)  # (B,)
+        importance = tf.stop_gradient(tf.clip_by_value(pi_a_given_s / (action_prob + 1e-8), 0, 10))
+
+        policy_loss = tf.reduce_sum(log_pi_a_given_s * advantage * importance, name='policy_loss')
+        xentropy_loss = tf.reduce_sum(policy * log_probs, name='xentropy_loss')
+        value_loss = tf.nn.l2_loss(value - futurereward, name='value_loss')
+
+        pred_reward = tf.reduce_mean(value, name='predict_reward')
         advantage = symbf.rms(advantage, name='rms_advantage')
         entropy_beta = tf.get_variable('entropy_beta', shape=[],
                                        initializer=tf.constant_initializer(0.01), trainable=False)
@@ -132,10 +131,11 @@ class Model(ModelDesc):
                                tf.cast(tf.shape(futurereward)[0], tf.float32),
                                name='cost')
         summary.add_moving_summary(policy_loss, xentropy_loss,
-                                   value_loss, pred_reward, advantage, self.cost)
+                                   value_loss, pred_reward, advantage,
+                                   self.cost, tf.reduce_mean(importance, name='importance'))
 
     def _get_optimizer(self):
-        lr = symbf.get_scalar_var('learning_rate', 0.001, summary=True)
+        lr = tf.get_variable('learning_rate', initializer=0.001, trainable=False)
         opt = tf.train.AdamOptimizer(lr, epsilon=1e-3)
 
         gradprocs = [MapGradient(lambda grad: tf.clip_by_average_norm(grad, 0.1)),
@@ -145,15 +145,21 @@ class Model(ModelDesc):
 
 
 class MySimulatorMaster(SimulatorMaster, Callback):
-    def __init__(self, pipe_c2s, pipe_s2c, model):
+    def __init__(self, pipe_c2s, pipe_s2c, model, gpus):
         super(MySimulatorMaster, self).__init__(pipe_c2s, pipe_s2c)
         self.M = model
         self.queue = queue.Queue(maxsize=BATCH_SIZE * 8 * 2)
+        self._gpus = gpus
 
     def _setup_graph(self):
+        # create predictors on the available predictor GPUs.
+        nr_gpu = len(self._gpus)
+        predictors = [self.trainer.get_predictor(
+            ['state'], ['policy', 'pred_value'],
+            self._gpus[k % nr_gpu])
+            for k in range(PREDICTOR_THREAD)]
         self.async_predictor = MultiThreadAsyncPredictor(
-            self.trainer.get_predictors(['state'], ['policy_explore', 'pred_value'],
-                                        PREDICTOR_THREAD), batch_size=PREDICT_BATCH_SIZE)
+            predictors, batch_size=PREDICT_BATCH_SIZE)
 
     def _before_train(self):
         self.async_predictor.start()
@@ -168,7 +174,8 @@ class MySimulatorMaster(SimulatorMaster, Callback):
             assert np.all(np.isfinite(distrib)), distrib
             action = np.random.choice(len(distrib), p=distrib)
             client = self.clients[ident]
-            client.memory.append(TransitionExperience(state, action, None, value=value))
+            client.memory.append(TransitionExperience(
+                state, action, reward=None, value=value, prob=distrib[action]))
             self.send_queue.put([ident, dumps(action)])
         self.async_predictor.put_task([state], cb)
 
@@ -192,7 +199,7 @@ class MySimulatorMaster(SimulatorMaster, Callback):
         R = float(init_r)
         for idx, k in enumerate(mem):
             R = np.clip(k.reward, -1, 1) + GAMMA * R
-            self.queue.put([k.state, k.action, R])
+            self.queue.put([k.state, k.action, R, k.prob])
 
         if not isOver:
             client.memory = [last]
@@ -201,10 +208,24 @@ class MySimulatorMaster(SimulatorMaster, Callback):
 
 
 def get_config():
-    dirname = os.path.join('train_log', 'train-atari-{}'.format(ENV_NAME))
-    logger.set_logger_dir(dirname)
-    M = Model()
+    nr_gpu = get_nr_gpu()
+    global PREDICTOR_THREAD
+    if nr_gpu > 0:
+        if nr_gpu > 1:
+            # use half gpus for inference
+            predict_tower = list(range(nr_gpu))[-nr_gpu // 2:]
+        else:
+            predict_tower = [0]
+        PREDICTOR_THREAD = len(predict_tower) * PREDICTOR_THREAD_PER_GPU
+        train_tower = list(range(nr_gpu))[:-nr_gpu // 2] or [0]
+        logger.info("[Batch-A3C] Train on gpu {} and infer on gpu {}".format(
+            ','.join(map(str, train_tower)), ','.join(map(str, predict_tower))))
+    else:
+        logger.warn("Without GPU this model will never learn! CPU is only useful for debug.")
+        PREDICTOR_THREAD = 1
+        predict_tower, train_tower = [0], [0]
 
+    # setup simulator processes
     name_base = str(uuid.uuid1())[:6]
     PIPE_DIR = os.environ.get('TENSORPACK_PIPEDIR', '.').rstrip('/')
     namec2s = 'ipc://{}/sim-c2s-{}'.format(PIPE_DIR, name_base)
@@ -213,29 +234,29 @@ def get_config():
     ensure_proc_terminate(procs)
     start_proc_mask_signal(procs)
 
-    master = MySimulatorMaster(namec2s, names2c, M)
+    M = Model()
+    master = MySimulatorMaster(namec2s, names2c, M, predict_tower)
     dataflow = BatchData(DataFromQueue(master.queue), BATCH_SIZE)
     return TrainConfig(
         model=M,
         dataflow=dataflow,
         callbacks=[
             ModelSaver(),
-            ScheduledHyperParamSetter('learning_rate', [(80, 0.0003), (120, 0.0001)]),
+            ScheduledHyperParamSetter('learning_rate', [(20, 0.0003), (120, 0.0001)]),
             ScheduledHyperParamSetter('entropy_beta', [(80, 0.005)]),
-            ScheduledHyperParamSetter('explore_factor',
-                                      [(80, 2), (100, 3), (120, 4), (140, 5)]),
             HumanHyperParamSetter('learning_rate'),
             HumanHyperParamSetter('entropy_beta'),
             master,
             StartProcOrThread(master),
             PeriodicTrigger(Evaluator(
                 EVAL_EPISODE, ['state'], ['policy'], get_player),
-                every_k_epochs=2),
+                every_k_epochs=3),
         ],
         session_creator=sesscreate.NewSessionCreator(
             config=get_default_sess_config(0.5)),
         steps_per_epoch=STEPS_PER_EPOCH,
         max_epoch=1000,
+        tower=train_tower
     )
 
 
@@ -251,52 +272,36 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     ENV_NAME = args.env
-    assert ENV_NAME
     logger.info("Environment Name: {}".format(ENV_NAME))
-    p = get_player()
-    del p    # set NUM_ACTIONS
+    NUM_ACTIONS = get_player().action_space.n
+    logger.info("Number of actions: {}".format(NUM_ACTIONS))
 
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
-    if args.task != 'train':
-        assert args.load is not None
 
     if args.task != 'train':
-        cfg = PredictConfig(
+        assert args.load is not None
+        pred = OfflinePredictor(PredictConfig(
             model=Model(),
-            session_init=SaverRestore(args.load),
+            session_init=get_model_loader(args.load),
             input_names=['state'],
-            output_names=['policy'])
+            output_names=['policy']))
         if args.task == 'play':
-            play_model(cfg, get_player(viz=0.01))
+            play_n_episodes(get_player(train=False), pred,
+                            args.episode, render=True)
         elif args.task == 'eval':
-            eval_model_multithread(cfg, args.episode, get_player)
+            eval_model_multithread(pred, args.episode, get_player)
         elif args.task == 'gen_submit':
             play_n_episodes(
                 get_player(train=False, dumpdir=args.output),
-                OfflinePredictor(cfg), args.episode)
-            # gym.upload(output, api_key='xxx')
+                pred, args.episode)
+            # gym.upload(args.output, api_key='xxx')
     else:
-        nr_gpu = get_nr_gpu()
-        if nr_gpu > 0:
-            if nr_gpu > 1:
-                predict_tower = list(range(nr_gpu))[-nr_gpu // 2:]
-            else:
-                predict_tower = [0]
-            PREDICTOR_THREAD = len(predict_tower) * PREDICTOR_THREAD_PER_GPU
-            train_tower = list(range(nr_gpu))[:-nr_gpu // 2] or [0]
-            logger.info("[BA3C] Train on gpu {} and infer on gpu {}".format(
-                ','.join(map(str, train_tower)), ','.join(map(str, predict_tower))))
-            trainer = AsyncMultiGPUTrainer
-        else:
-            logger.warn("Without GPU this model will never learn! CPU is only useful for debug.")
-            nr_gpu = 0
-            PREDICTOR_THREAD = 1
-            predict_tower, train_tower = [0], [0]
-            trainer = QueueInputTrainer
+        dirname = os.path.join('train_log', 'train-atari-{}'.format(ENV_NAME))
+        logger.set_logger_dir(dirname)
+
         config = get_config()
         if args.load:
-            config.session_init = SaverRestore(args.load)
-        config.tower = train_tower
-        config.predict_tower = predict_tower
+            config.session_init = get_model_loader(args.load)
+        trainer = QueueInputTrainer if config.nr_tower == 1 else AsyncMultiGPUTrainer
         trainer(config).train()

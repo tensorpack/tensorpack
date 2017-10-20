@@ -15,7 +15,6 @@ import six
 from six.moves import queue
 import zmq
 
-from tensorpack.models.common import disable_layer_logging
 from tensorpack.callbacks import Callback
 from tensorpack.tfutils.varmanip import SessionUpdate
 from tensorpack.predict import OfflinePredictor
@@ -61,7 +60,9 @@ class SimulatorProcessStateExchange(SimulatorProcessBase):
 
     def __init__(self, idx, pipe_c2s, pipe_s2c):
         """
-        :param idx: idx of this process
+        Args:
+            idx: idx of this process
+            pipe_c2s, pipe_s2c (str): name of the pipe
         """
         super(SimulatorProcessStateExchange, self).__init__(idx)
         self.c2s = pipe_c2s
@@ -77,18 +78,21 @@ class SimulatorProcessStateExchange(SimulatorProcessBase):
 
         s2c_socket = context.socket(zmq.DEALER)
         s2c_socket.setsockopt(zmq.IDENTITY, self.identity)
-        # s2c_socket.set_hwm(5)
         s2c_socket.connect(self.s2c)
 
-        state = player.current_state()
+        state = player.reset()
         reward, isOver = 0, False
         while True:
+            # after taking the last action, get to this state and get this reward/isOver.
+            # If isOver, get to the next-episode state immediately.
+            # This tuple is not the same as the one put into the memory buffer
             c2s_socket.send(dumps(
                 (self.identity, state, reward, isOver)),
                 copy=False)
             action = loads(s2c_socket.recv(copy=False).bytes)
-            reward, isOver = player.action(action)
-            state = player.current_state()
+            state, reward, isOver, _ = player.step(action)
+            if isOver:
+                state = player.reset()
 
 
 # compatibility
@@ -177,124 +181,18 @@ class SimulatorMaster(threading.Thread):
         self.context.destroy(linger=0)
 
 
-# ------------------- the following code are not used at all. Just experimental
-class SimulatorProcessDF(SimulatorProcessBase):
-    """ A simulator which contains a forward model itself, allowing
-    it to produce data points directly """
-
-    def __init__(self, idx, pipe_c2s):
-        super(SimulatorProcessDF, self).__init__(idx)
-        self.pipe_c2s = pipe_c2s
-
-    def run(self):
-        self.player = self._build_player()
-
-        self.ctx = zmq.Context()
-        self.c2s_socket = self.ctx.socket(zmq.PUSH)
-        self.c2s_socket.setsockopt(zmq.IDENTITY, self.identity)
-        self.c2s_socket.set_hwm(5)
-        self.c2s_socket.connect(self.pipe_c2s)
-
-        self._prepare()
-        for dp in self.get_data():
-            self.c2s_socket.send(dumps(dp), copy=False)
-
-    @abstractmethod
-    def _prepare(self):
-        pass
-
-    @abstractmethod
-    def get_data(self):
-        pass
-
-
-class SimulatorProcessSharedWeight(SimulatorProcessDF):
-    """ A simulator process with an extra thread waiting for event,
-    and take shared weight from shm.
-
-    Start me under some CUDA_VISIBLE_DEVICES set!
-    """
-
-    def __init__(self, idx, pipe_c2s, condvar, shared_dic, pred_config):
-        super(SimulatorProcessSharedWeight, self).__init__(idx, pipe_c2s)
-        self.condvar = condvar
-        self.shared_dic = shared_dic
-        self.pred_config = pred_config
-
-    def _prepare(self):
-        disable_layer_logging()
-        self.predictor = OfflinePredictor(self.pred_config)
-        with self.predictor.graph.as_default():
-            vars_to_update = self._params_to_update()
-            self.sess_updater = SessionUpdate(
-                self.predictor.session, vars_to_update)
-        # TODO setup callback for explore?
-        self.predictor.graph.finalize()
-
-        self.weight_lock = threading.Lock()
-
-        # start a thread to wait for notification
-        def func():
-            self.condvar.acquire()
-            while True:
-                self.condvar.wait()
-                self._trigger_evt()
-        self.evt_th = threading.Thread(target=func)
-        self.evt_th.daemon = True
-        self.evt_th.start()
-
-    def _trigger_evt(self):
-        with self.weight_lock:
-            self.sess_updater.update(self.shared_dic['params'])
-            logger.info("Updated.")
-
-    def _params_to_update(self):
-        # can be overwritten to update more params
-        return tf.trainable_variables()
-
-
-class WeightSync(Callback):
-    """ Sync weight from main process to shared_dic and notify"""
-
-    def __init__(self, condvar, shared_dic):
-        self.condvar = condvar
-        self.shared_dic = shared_dic
-
-    def _setup_graph(self):
-        self.vars = self._params_to_update()
-
-    def _params_to_update(self):
-        # can be overwritten to update more params
-        return tf.trainable_variables()
-
-    def _before_train(self):
-        self._sync()
-
-    def _trigger_epoch(self):
-        self._sync()
-
-    def _sync(self):
-        logger.info("Updating weights ...")
-        dic = {v.name: v.eval() for v in self.vars}
-        self.shared_dic['params'] = dic
-        self.condvar.acquire()
-        self.condvar.notify_all()
-        self.condvar.release()
-
-
 if __name__ == '__main__':
     import random
-    from tensorpack.RL import NaiveRLEnvironment
+    import gym
 
     class NaiveSimulator(SimulatorProcess):
-
         def _build_player(self):
-            return NaiveRLEnvironment()
+            return gym.make('Breakout-v0')
 
     class NaiveActioner(SimulatorMaster):
         def _get_action(self, state):
             time.sleep(1)
-            return random.randint(1, 12)
+            return random.randint(1, 3)
 
         def _on_episode_over(self, client):
             # print("Over: ", client.memory)

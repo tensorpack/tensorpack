@@ -4,10 +4,8 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 import os
 import tarfile
-import cv2
-import six
 import numpy as np
-import xml.etree.ElementTree as ET
+import tqdm
 
 from ...utils import logger
 from ...utils.loadcaffe import get_caffe_pb
@@ -15,7 +13,7 @@ from ...utils.fs import mkdir_p, download, get_dataset_path
 from ...utils.timer import timed_operation
 from ..base import RNGDataFlow
 
-__all__ = ['ILSVRCMeta', 'ILSVRC12']
+__all__ = ['ILSVRCMeta', 'ILSVRC12', 'ILSVRC12Files']
 
 CAFFE_ILSVRC12_URL = "http://dl.caffe.berkeleyvision.org/caffe_ilsvrc12.tar.gz"
 
@@ -59,22 +57,33 @@ class ILSVRCMeta(object):
         fpath = download(CAFFE_ILSVRC12_URL, self.dir)
         tarfile.open(fpath, 'r:gz').extractall(self.dir)
 
-    def get_image_list(self, name):
+    def get_image_list(self, name, dir_structure='original'):
         """
         Args:
             name (str): 'train' or 'val' or 'test'
+            dir_structure (str): same as in :meth:`ILSVRC12.__init__()`.
         Returns:
             list: list of (image filename, label)
         """
         assert name in ['train', 'val', 'test']
+        assert dir_structure in ['original', 'train']
+        add_label_to_fname = (name != 'train' and dir_structure != 'original')
+        if add_label_to_fname:
+            synset = self.get_synset_1000()
+
         fname = os.path.join(self.dir, name + '.txt')
-        assert os.path.isfile(fname)
+        assert os.path.isfile(fname), fname
         with open(fname) as f:
             ret = []
             for line in f.readlines():
                 name, cls = line.strip().split()
-                ret.append((name, int(cls)))
-        assert len(ret)
+                cls = int(cls)
+
+                if add_label_to_fname:
+                    name = os.path.join(synset[cls], name)
+
+                ret.append((name.strip(), cls))
+        assert len(ret), fname
         return ret
 
     def get_per_pixel_mean(self, size=None):
@@ -96,13 +105,71 @@ class ILSVRCMeta(object):
         return arr
 
 
-class ILSVRC12(RNGDataFlow):
+def _guess_dir_structure(dir):
+    subdir = os.listdir(dir)[0]
+    # find a subdir starting with 'n'
+    if subdir.startswith('n') and \
+            os.path.isdir(os.path.join(dir, subdir)):
+        dir_structure = 'train'
+    else:
+        dir_structure = 'original'
+    logger.info(
+        "Assuming directory {} has {} structure.".format(
+            dir, dir_structure))
+    return dir_structure
+
+
+class ILSVRC12Files(RNGDataFlow):
     """
-    Produces uint8 ILSVRC12 images of shape [h, w, 3(BGR)], and a label between [0, 999],
-    and optionally a bounding box of [xmin, ymin, xmax, ymax].
+    Same as :class:`ILSVRC12`, but produces filenames of the images instead of nparrays.
+    This could be useful when ``cv2.imread`` is a bottleneck and you want to
+    decode it in smarter ways (e.g. in parallel).
     """
-    def __init__(self, dir, name, meta_dir=None, shuffle=None,
-                 dir_structure='original', include_bb=False):
+    def __init__(self, dir, name, meta_dir=None,
+                 shuffle=None, dir_structure=None):
+        """
+        Same as in :class:`ILSVRC12`.
+        """
+        assert name in ['train', 'test', 'val'], name
+        assert os.path.isdir(dir), dir
+        self.full_dir = os.path.join(dir, name)
+        self.name = name
+        assert os.path.isdir(self.full_dir), self.full_dir
+        if shuffle is None:
+            shuffle = name == 'train'
+        self.shuffle = shuffle
+
+        if name == 'train':
+            dir_structure = 'train'
+        if dir_structure is None:
+            dir_structure = _guess_dir_structure(self.full_dir)
+
+        meta = ILSVRCMeta(meta_dir)
+        self.imglist = meta.get_image_list(name, dir_structure)
+
+        for fname, _ in self.imglist[:10]:
+            fname = os.path.join(self.full_dir, fname)
+            assert os.path.isfile(fname), fname
+
+    def size(self):
+        return len(self.imglist)
+
+    def get_data(self):
+        idxs = np.arange(len(self.imglist))
+        if self.shuffle:
+            self.rng.shuffle(idxs)
+        for k in idxs:
+            fname, label = self.imglist[k]
+            fname = os.path.join(self.full_dir, fname)
+            yield [fname, label]
+
+
+class ILSVRC12(ILSVRC12Files):
+    """
+    Produces uint8 ILSVRC12 images of shape [h, w, 3(BGR)], and a label between [0, 999].
+    """
+    def __init__(self, dir, name, meta_dir=None,
+                 shuffle=None, dir_structure=None):
         """
         Args:
             dir (str): A directory containing a subdir named ``name``, where the
@@ -110,12 +177,12 @@ class ILSVRC12(RNGDataFlow):
             name (str): 'train' or 'val' or 'test'.
             shuffle (bool): shuffle the dataset.
                 Defaults to True if name=='train'.
-            dir_structure (str): The dir structure of 'val' and 'test' directory.
-                If is 'original', it expects the original decompressed
+            dir_structure (str): The directory structure of 'val' and 'test' directory.
+                'original' means the original decompressed
                 directory, which only has list of image files (as below).
                 If set to 'train', it expects the same two-level
                 directory structure simlar to 'train/'.
-            include_bb (bool): Include the bounding box. Maybe useful in training.
+                By default, it tries to automatically detect the structure.
 
         Examples:
 
@@ -136,7 +203,7 @@ class ILSVRC12(RNGDataFlow):
                 ILSVRC2012_test_00000001.JPEG
                 ...
 
-        With ILSVRC12_img_*.tar, you can use the following
+        With the downloaded ILSVRC12_img_*.tar, you can use the following
         command to build the above structure:
 
         .. code-block:: none
@@ -146,54 +213,18 @@ class ILSVRC12(RNGDataFlow):
             mkdir train && tar xvf ILSVRC12_img_train.tar -C train && cd train
             find -type f -name '*.tar' | parallel -P 10 'echo {} && mkdir -p {/.} && tar xf {} -C {/.}'
         """
-        assert name in ['train', 'test', 'val'], name
-        assert os.path.isdir(dir), dir
-        self.full_dir = os.path.join(dir, name)
-        self.name = name
-        assert os.path.isdir(self.full_dir), self.full_dir
-        if shuffle is None:
-            shuffle = name == 'train'
-        self.shuffle = shuffle
-        meta = ILSVRCMeta(meta_dir)
-        self.imglist = meta.get_image_list(name)
-        self.dir_structure = dir_structure
-        self.synset = meta.get_synset_1000()
-
-        if include_bb:
-            bbdir = os.path.join(dir, 'bbox') if not \
-                isinstance(include_bb, six.string_types) else include_bb
-            assert name == 'train', 'Bounding box only available for training'
-            self.bblist = ILSVRC12.get_training_bbox(bbdir, self.imglist)
-        self.include_bb = include_bb
-
-    def size(self):
-        return len(self.imglist)
+        super(ILSVRC12, self).__init__(
+            dir, name, meta_dir, shuffle, dir_structure)
 
     def get_data(self):
-        idxs = np.arange(len(self.imglist))
-        add_label_to_fname = (self.name != 'train' and self.dir_structure != 'original')
-        if self.shuffle:
-            self.rng.shuffle(idxs)
-        for k in idxs:
-            fname, label = self.imglist[k]
-            if add_label_to_fname:
-                fname = os.path.join(self.full_dir, self.synset[label], fname)
-            else:
-                fname = os.path.join(self.full_dir, fname)
-            im = cv2.imread(fname.strip(), cv2.IMREAD_COLOR)
+        for fname, label in super(ILSVRC12, self).get_data():
+            im = cv2.imread(fname, cv2.IMREAD_COLOR)
             assert im is not None, fname
-            if im.ndim == 2:
-                im = np.expand_dims(im, 2).repeat(3, 2)
-            if self.include_bb:
-                bb = self.bblist[k]
-                if bb is None:
-                    bb = [0, 0, im.shape[1] - 1, im.shape[0] - 1]
-                yield [im, label, bb]
-            else:
-                yield [im, label]
+            yield [im, label]
 
     @staticmethod
     def get_training_bbox(bbox_dir, imglist):
+        import xml.etree.ElementTree as ET
         ret = []
 
         def parse_bbox(fname):
@@ -203,15 +234,10 @@ class ILSVRC12(RNGDataFlow):
 
             box = root.find('object').find('bndbox').getchildren()
             box = map(lambda x: float(x.text), box)
-            # box[0] /= size[0]
-            # box[1] /= size[1]
-            # box[2] /= size[0]
-            # box[3] /= size[1]
             return np.asarray(box, dtype='float32')
 
         with timed_operation('Loading Bounding Boxes ...'):
             cnt = 0
-            import tqdm
             for k in tqdm.trange(len(imglist)):
                 fname = imglist[k][0]
                 fname = fname[:-4] + 'xml'
@@ -227,12 +253,17 @@ class ILSVRC12(RNGDataFlow):
         return ret
 
 
+try:
+    import cv2
+except ImportError:
+    from ...utils.develop import create_dummy_class
+    ILSVRC12 = create_dummy_class('ILSVRC12', 'cv2')  # noqa
+
 if __name__ == '__main__':
     meta = ILSVRCMeta()
     # print(meta.get_synset_words_1000())
 
-    ds = ILSVRC12('/home/wyx/data/fake_ilsvrc/', 'train', include_bb=True,
-                  shuffle=False)
+    ds = ILSVRC12('/home/wyx/data/fake_ilsvrc/', 'train', shuffle=False)
     ds.reset_state()
 
     for k in ds.get_data():

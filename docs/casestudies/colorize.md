@@ -18,14 +18,14 @@ As creating a neural network for digit classification seems to be a bit outdated
 - Callbacks
     + write your own callback to export predicted images after each epoch
 
-## DataFlow
+### DataFlow
 
 The basic idea is to gather a huge amount of images, resizing them to the same size and extract
 the luminance channel after converting from RGB to Lab. For demonstration purposes, we will split
 the dataflow definition into separate steps, though it might more efficient to combine some steps.
 
 
-### Reading data
+#### Reading data
 The first node in the dataflow is the image reader. You can implement the reader however you want, but there are some existing ones we can use, e.g.:
 
 - use the lmdb files you probably already have for the Caffe framework
@@ -62,7 +62,7 @@ for dp in ds.get_data():
 This kind of iteration is used behind the scenes to feed data for training.
 
 
-### Manipulate incoming data
+#### Manipulate incoming data
 Now, training a ConvNet which is not fully convolutional requires images of known shape, but our
 directory may contain images of different sizes. Let us add this to the dataflow:
 
@@ -141,7 +141,7 @@ datapoint 1<2 with 2 components consists of
 Well, this is probably not the most efficient way to encode this process. But it clearly demonstrates how much flexibility the `dataflow` gives.
 You can easily insert you own functions, and utilize the pre-defined modules at the same time.
 
-## Network
+### Network
 
 If you are surprised how far we already are, you will enjoy how easy it is to define a network model. The most simple model is probably:
 
@@ -159,7 +159,7 @@ The framework expects:
 - a computation graph containing the actual network layers in `_build_graph`
 - In single-cost optimization problem, a member `self.cost` representing the loss function we would like to minimize.
 
-### Define inputs
+#### Define inputs
 Our dataflow produces data which looks like `[(32, 256, 256), (32, 256, 256, 3)]`.
 The first entry is the luminance channel as input and the latter is the original RGB image with all three channels. So we will write
 
@@ -188,7 +188,7 @@ class Model(ModelDesc):
 ```
 
 
-### Define Architecture
+#### Define Architecture
 So all we need to do is to define a network layout
 ```math
 f\colon \mathbb{R}^{b \times 256 \times 256} \to \mathbb{R}^{b \times 256 \times 256 \times 3}
@@ -260,7 +260,7 @@ The remaining part is a boring L2-loss function given by:
 self.cost = tf.nn.l2_loss(prediction - rgb, name="L2 loss")
 ```
 
-### Pimp the TensorBoard output
+#### Pimp the TensorBoard output
 
 It is a good idea to track the progress of your training session using TensorBoard.
 TensorPack provides several functions to simplify the output of summaries and visualization of intermediate states.
@@ -275,7 +275,7 @@ tf.summary.image('colorized', prediction, max_outputs=10)
 add a plot of the moving average of the cost tensor, and add some intermediate results to the tab of "images" inside TensorBoard. The summary is written after each epoch.
 Note that you can certainly use `tf.summary.scalar(self.cost)`, but then you'll only see a single cost value (rather than moving average) which is much less informative.
 
-## Training
+### Training
 
 Let's summarize: we have a model and data.
 The missing piece which stitches these parts together is the training protocol.
@@ -314,7 +314,7 @@ If you have 42 images in your directory, then this value would be 42.
 Satisfied with this answer, the alert reader went out of the room.
 But he will miss the most interesting part: the callback section. We will cover this in the next section.
 
-## Callbacks
+### Callbacks
 
 Until this point, we spoke about all necessary parts of deep learning pipelines which are common for GANs, image-recognition and embedding learning.
 But sometimes you want to add your own code to do something extra. We will now add a functionality which will export some entries of the tensor `prediction`.

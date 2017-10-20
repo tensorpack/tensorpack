@@ -2,43 +2,18 @@
 # File: dftools.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
-import sys
 import os
 import multiprocessing as mp
-import cv2
 from six.moves import range
 
 from .base import DataFlow
-from ..utils import get_tqdm, logger
+from ..utils import logger
+from ..utils.utils import get_tqdm
 from ..utils.concurrency import DIE
 from ..utils.serialize import dumps
-from ..utils.fs import mkdir_p
 
-__all__ = ['dump_dataflow_images', 'dump_dataflow_to_process_queue',
+__all__ = ['dump_dataflow_to_process_queue',
            'dump_dataflow_to_lmdb', 'dump_dataflow_to_tfrecord']
-
-
-def dump_dataflow_images(df, dirname, max_count=None, index=0):
-    """ Dump images from a DataFlow to a directory.
-
-    Args:
-        df (DataFlow): the DataFlow to dump.
-        dirname (str): name of the directory.
-        max_count (int): limit max number of images to dump. Defaults to unlimited.
-        index (int): the index of the image component in the data point.
-    """
-    # TODO pass a name_func to write label as filename?
-    mkdir_p(dirname)
-    if max_count is None:
-        max_count = sys.maxint
-    df.reset_state()
-    for i, dp in enumerate(df.get_data()):
-        if i % 100 == 0:
-            print(i)
-        if i > max_count:
-            return
-        img = dp[index]
-        cv2.imwrite(os.path.join(dirname, "{}.jpg".format(i)), img)
 
 
 def dump_dataflow_to_process_queue(df, size, nr_consumer):
@@ -140,8 +115,14 @@ def dump_dataflow_to_tfrecord(df, path):
     """
     df.reset_state()
     with tf.python_io.TFRecordWriter(path) as writer:
-        for dp in df.get_data():
-            writer.write(dumps(dp))
+        try:
+            sz = df.size()
+        except NotImplementedError:
+            sz = 0
+        with get_tqdm(total=sz) as pbar:
+            for dp in df.get_data():
+                writer.write(dumps(dp))
+                pbar.update()
 
 
 from ..utils.develop import create_dummy_func  # noqa

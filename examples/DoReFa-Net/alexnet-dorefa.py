@@ -8,7 +8,6 @@ import tensorflow as tf
 import argparse
 import numpy as np
 import multiprocessing
-import msgpack
 import os
 import sys
 
@@ -16,6 +15,9 @@ from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
 from tensorpack.tfutils.varreplace import remap_variables
+from tensorpack.dataflow import dataset
+from tensorpack.utils.gpu import get_nr_gpu
+
 from dorefa import get_dorefa
 
 """
@@ -282,7 +284,7 @@ def run_image(model, sess_init, inputs):
         assert img is not None
 
         img = transformers.augment(img)[np.newaxis, :, :, :]
-        outputs = predictor([img])[0]
+        outputs = predictor(img)[0]
         prob = outputs[0]
         ret = prob.argsort()[-10:][::-1]
 
@@ -312,13 +314,12 @@ if __name__ == '__main__':
         sys.exit()
 
     assert args.gpu is not None, "Need to specify a list of gpu for training!"
-    NR_GPU = len(args.gpu.split(','))
-    BATCH_SIZE = TOTAL_BATCH_SIZE // NR_GPU
+    nr_tower = max(get_nr_gpu(), 1)
+    BATCH_SIZE = TOTAL_BATCH_SIZE // nr_tower
     logger.info("Batch per tower: {}".format(BATCH_SIZE))
 
     config = get_config()
     if args.load:
         config.session_init = SaverRestore(args.load)
-    if args.gpu:
-        config.nr_tower = len(args.gpu.split(','))
+    config.nr_tower = nr_tower
     SyncMultiGPUTrainer(config).train()

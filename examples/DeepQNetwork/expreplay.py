@@ -11,7 +11,9 @@ import six
 from six.moves import queue, range
 
 from tensorpack.dataflow import DataFlow
-from tensorpack.utils import logger, get_tqdm, get_rng
+from tensorpack.utils import logger
+from tensorpack.utils.utils import get_tqdm, get_rng
+from tensorpack.utils.stats import StatCounter
 from tensorpack.utils.concurrency import LoopThread, ShareSessionThread
 from tensorpack.callbacks.base import Callback
 
@@ -113,7 +115,7 @@ class ExpReplay(DataFlow, Callback):
     This implementation provides the interface as a :class:`DataFlow`.
     This DataFlow is __not__ fork-safe (thus doesn't support multiprocess prefetching).
 
-    This implementation only works with Q-learning. It assumes that state is
+    This implementation assumes that state is
     batch-able, and the network takes batched inputs.
     """
 
@@ -123,7 +125,7 @@ class ExpReplay(DataFlow, Callback):
                  state_shape,
                  batch_size,
                  memory_size, init_memory_size,
-                 exploration, end_exploration, exploration_epoch_anneal,
+                 init_exploration,
                  update_frequency, history_len):
         """
         Args:
@@ -140,17 +142,19 @@ class ExpReplay(DataFlow, Callback):
         for k, v in locals().items():
             if k != 'self':
                 setattr(self, k, v)
-        self.num_actions = player.get_action_space().num_actions()
+        self.exploration = init_exploration
+        self.num_actions = player.action_space.n
         logger.info("Number of Legal actions: {}".format(self.num_actions))
 
         self.rng = get_rng(self)
         self._init_memory_flag = threading.Event()  # tell if memory has been initialized
 
-        # TODO just use a semaphore?
         # a queue to receive notifications to populate memory
         self._populate_job_queue = queue.Queue(maxsize=5)
 
         self.mem = ReplayMemory(memory_size, state_shape, history_len)
+        self._current_ob = self.player.reset()
+        self._player_scores = StatCounter()
 
     def get_simulator_thread(self):
         # spawn a separate thread to run policy
@@ -171,9 +175,21 @@ class ExpReplay(DataFlow, Callback):
                 pbar.update()
         self._init_memory_flag.set()
 
+    # quickly fill the memory for debug
+    def _fake_init_memory(self):
+        from copy import deepcopy
+        with get_tqdm(total=self.init_memory_size) as pbar:
+            while len(self.mem) < 5:
+                self._populate_exp()
+                pbar.update()
+            while len(self.mem) < self.init_memory_size:
+                self.mem.append(deepcopy(self.mem._hist[0]))
+                pbar.update()
+        self._init_memory_flag.set()
+
     def _populate_exp(self):
         """ populate a transition by epsilon-greedy"""
-        old_s = self.player.current_state()
+        old_s = self._current_ob
         if self.rng.rand() <= self.exploration or (len(self.mem) <= self.history_len):
             act = self.rng.choice(range(self.num_actions))
         else:
@@ -183,12 +199,16 @@ class ExpReplay(DataFlow, Callback):
             history = np.stack(history, axis=2)
 
             # assume batched network
-            q_values = self.predictor([[history]])[0][0]  # this is the bottleneck
+            q_values = self.predictor(history[None, :, :, :])[0][0]  # this is the bottleneck
             act = np.argmax(q_values)
-        reward, isOver = self.player.action(act)
+        self._current_ob, reward, isOver, info = self.player.step(act)
+        if isOver:
+            if info['gameOver']:  # only record score when a whole game is over (not when an episode is over)
+                self._player_scores.feed(info['score'])
+            self.player.reset()
         self.mem.append(Experience(old_s, act, reward, isOver))
 
-    def debug_sample(self, sample):
+    def _debug_sample(self, sample):
         import cv2
 
         def view_state(comb_state):
@@ -232,20 +252,15 @@ class ExpReplay(DataFlow, Callback):
         self._simulator_th = self.get_simulator_thread()
         self._simulator_th.start()
 
-    def _trigger_epoch(self):
-        if self.exploration > self.end_exploration:
-            self.exploration -= self.exploration_epoch_anneal
-            logger.info("Exploration changed to {}".format(self.exploration))
-        # log player statistics
-        stats = self.player.stats
-        for k, v in six.iteritems(stats):
-            try:
-                mean, max = np.mean(v), np.max(v)
-                self.trainer.add_scalar_summary('expreplay/mean_' + k, mean)
-                self.trainer.add_scalar_summary('expreplay/max_' + k, max)
-            except:
-                pass
-        self.player.reset_stat()
+    def _trigger(self):
+        v = self._player_scores
+        try:
+            mean, max = v.average, v.max
+            self.trainer.monitors.put_scalar('expreplay/mean_score', mean)
+            self.trainer.monitors.put_scalar('expreplay/max_score', max)
+        except:
+            logger.exception("Cannot log training scores.")
+        v.reset()
 
 
 if __name__ == '__main__':

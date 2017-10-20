@@ -9,12 +9,12 @@ import re
 import six
 import inspect
 from ..utils import logger
-from .symbolic_functions import rms
+from .symbolic_functions import rms, print_stat
 from .summary import add_moving_summary
 
 __all__ = ['GradientProcessor',
            'FilterNoneGrad', 'GlobalNormClip', 'MapGradient', 'SummaryGradient',
-           'CheckGradient', 'ScaleGradient']
+           'PrintGradient', 'CheckGradient', 'ScaleGradient']
 
 
 @six.add_metaclass(ABCMeta)
@@ -23,6 +23,8 @@ class GradientProcessor(object):
 
     Subclass should override the ``_process()`` method.
     """
+    _name_scope = None
+
     def process(self, grads):
         """
         Process the symbolic gradients.
@@ -32,8 +34,15 @@ class GradientProcessor(object):
         Returns:
             list: processed gradients, with the same type as input.
         """
-        with tf.name_scope(type(self).__name__):
-            return self._process(grads)
+
+        # reuse the old name_scope, if process() is called multiple times
+        if self._name_scope is None:
+            with tf.name_scope(type(self).__name__) as scope:
+                self._name_scope = scope
+                return self._process(grads)
+        else:
+            with tf.name_scope(self._name_scope):
+                return self._process(grads)
 
     @abstractmethod
     def _process(self, grads):
@@ -45,13 +54,25 @@ class FilterNoneGrad(GradientProcessor):
     Skip the update and print a warning (instead of crashing),
     when the gradient of certain variable is None.
     """
+    def __init__(self, verbose=True):
+        """
+        Args:
+            verbose (bool): whether to print warning about None gradients.
+        """
+        super(FilterNoneGrad, self).__init__()
+        self._verbose = verbose
+
     def _process(self, grads):
         g = []
+        to_print = []
         for grad, var in grads:
             if grad is None:
-                logger.warn("No Gradient w.r.t {}".format(var.op.name))
+                to_print.append(var.op.name)
             else:
                 g.append((grad, var))
+        if self._verbose and len(to_print):
+            message = ', '.join(to_print)
+            logger.warn("No gradient w.r.t these trainable variables: {}".format(message))
         return g
 
 
@@ -67,7 +88,8 @@ class GlobalNormClip(GradientProcessor):
         Args:
             global_norm(float): the threshold to clip with.
         """
-        self._norm = global_norm
+        super(GlobalNormClip, self).__init__()
+        self._norm = float(global_norm)
 
     def _process(self, grads):
         g = [k[0] for k in grads]
@@ -101,6 +123,7 @@ class MapGradient(GradientProcessor):
         if not regex.endswith('$'):
             regex = regex + '$'
         self.regex = regex
+        super(MapGradient, self).__init__()
 
     def _process(self, grads):
         ret = []
@@ -118,24 +141,52 @@ class MapGradient(GradientProcessor):
         return ret
 
 
-_summaried_gradient = set()
-
-
-# TODO let the maintain op depend on grad directly ?
+# TODO has dependency problems: sess.run may not depend on grad
+# maybe group maintain op and grad ?
 class SummaryGradient(MapGradient):
     """
-    Summary histogram and RMS for each gradient variable.
+    For each gradient tensor, summary its histogram and add it to moving
+    summaries.
     """
+    # avoid duplicate summaries from towers
+    # TODO this is global. not good.
+    _summaried_gradient = set()
 
-    def __init__(self):
-        super(SummaryGradient, self).__init__(self._mapper)
+    def __init__(self, regex='.*'):
+        """
+        Args:
+            regex(str): same as in :class:`MapGradient`.
+        """
+        super(SummaryGradient, self).__init__(self._mapper, regex)
 
     def _mapper(self, grad, var):
         name = var.op.name
-        if name not in _summaried_gradient:
-            _summaried_gradient.add(name)
+        if name not in SummaryGradient._summaried_gradient:
+            SummaryGradient._summaried_gradient.add(name)
             tf.summary.histogram(name + '-grad', grad)
             add_moving_summary(rms(grad, name=name + '/rms'))
+        return grad
+
+
+class PrintGradient(MapGradient):
+    """
+    Print the gradients every step with :func:`symbolic_functions.print_stat`.
+    """
+    _printed = set()
+    # TODO this is global. not good.
+
+    def __init__(self, regex='.*'):
+        """
+        Args:
+            regex(str): same as in :class:`MapGradient`.
+        """
+        super(PrintGradient, self).__init__(self._mapper, regex)
+
+    def _mapper(self, grad, var):
+        name = var.op.name
+        if name not in PrintGradient._printed:
+            PrintGradient._printed.add(name)
+            grad = print_stat(grad, message=name + '-grad')
         return grad
 
 
@@ -151,7 +202,7 @@ class CheckGradient(MapGradient):
     def _mapper(self, grad, var):
         # this is very slow.... see #3649
         # op = tf.Assert(tf.reduce_all(tf.is_finite(var)), [var], summarize=100)
-        grad = tf.check_numerics(grad, 'CheckGradient-' + var.op.name)
+        grad = tf.check_numerics(grad, 'CheckGradient/' + var.op.name)
         return grad
 
 
@@ -160,11 +211,12 @@ class ScaleGradient(MapGradient):
     Scale certain gradient by a multiplier.
     """
 
-    def __init__(self, multipliers, log=True):
+    def __init__(self, multipliers, verbose=True, log=None):
         """
         Args:
             multipliers (tuple or list): tuple of (regex, float), or list of tuples.
-            log (bool): whether to do logging or not
+            verbose (bool): whether to print logs or not
+            log: deprecated
 
         Example:
             Use double learning rate for all the bias (as in caffe):
@@ -176,7 +228,11 @@ class ScaleGradient(MapGradient):
         if not isinstance(multipliers, list):
             multipliers = [multipliers]
         self.multipliers = multipliers
-        self._log = log
+        if log is not None:
+            logger.warn("'log' in ScaleGradient(..) is renamed to 'verbose'.")
+            verbose = log
+        assert verbose in [True, False], verbose
+        self._verbose = verbose
         super(ScaleGradient, self).__init__(self._mapper)
 
     def _mapper(self, grad, var):
@@ -187,7 +243,7 @@ class ScaleGradient(MapGradient):
                 regex = regex + '$'
 
             if re.match(regex, varname):
-                if self._log:
+                if self._verbose:
                     logger.info("Apply lr multiplier {} for {}".format(val, varname))
                 if val != 0:    # skip zero to speed up
                     return grad * val

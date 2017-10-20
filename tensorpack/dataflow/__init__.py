@@ -5,11 +5,9 @@
 from pkgutil import iter_modules
 import os
 import os.path
+from ..utils.develop import LazyLoader
 
-from . import dataset
-from . import imgaug
-
-__all__ = ['dataset', 'imgaug', 'dftools']
+__all__ = []
 
 
 def _global_import(name):
@@ -17,13 +15,26 @@ def _global_import(name):
     lst = p.__all__ if '__all__' in dir(p) else dir(p)
     del globals()[name]
     for k in lst:
-        globals()[k] = p.__dict__[k]
-        __all__.append(k)
+        if not k.startswith('__'):
+            globals()[k] = p.__dict__[k]
+            __all__.append(k)
 
 
-__SKIP = ['dftools', 'dataset', 'imgaug']
+__SKIP = set(['dftools', 'dataset', 'imgaug'])
+_CURR_DIR = os.path.dirname(__file__)
 for _, module_name, __ in iter_modules(
         [os.path.dirname(__file__)]):
+    srcpath = os.path.join(_CURR_DIR, module_name + '.py')
+    if not os.path.isfile(srcpath):
+        continue
     if not module_name.startswith('_') and \
             module_name not in __SKIP:
         _global_import(module_name)
+
+
+dataset = LazyLoader('dataset', globals(), 'tensorpack.dataflow.dataset')
+imgaug = LazyLoader('imgaug', globals(), 'tensorpack.dataflow.imgaug')
+
+del LazyLoader
+
+__all__.extend(['imgaug', 'dftools', 'dataset'])

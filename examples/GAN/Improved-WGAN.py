@@ -70,6 +70,7 @@ class Model(DCGAN.Model):
         self.d_loss = tf.reduce_mean(vecneg - vecpos, name='d_loss')
         self.g_loss = tf.negative(tf.reduce_mean(vecneg), name='g_loss')
 
+        # the gradient penalty loss
         gradients = tf.gradients(vec_interp, [interp])[0]
         gradients = tf.sqrt(tf.reduce_sum(tf.square(gradients), [1, 2, 3]))
         gradients_rms = symbolic_functions.rms(gradients, 'gradient_rms')
@@ -86,17 +87,19 @@ class Model(DCGAN.Model):
         return opt
 
 
-DCGAN.Model = Model
-
-
 if __name__ == '__main__':
     args = DCGAN.get_args()
     if args.sample:
-        DCGAN.sample(args.load)
+        DCGAN.sample(Model(), args.load)
     else:
         assert args.data
         logger.auto_set_dir()
-        config = DCGAN.get_config()
-        if args.load:
-            config.session_init = SaverRestore(args.load)
+        config = TrainConfig(
+            model=Model(),
+            dataflow=DCGAN.get_data(args.data),
+            callbacks=[ModelSaver()],
+            steps_per_epoch=300,
+            max_epoch=200,
+            session_init=SaverRestore(args.load) if args.load else None
+        )
         SeparateGANTrainer(config, g_period=6).train()

@@ -2,8 +2,10 @@
 # File: base.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
+import inspect
+import pprint
 from abc import abstractmethod, ABCMeta
-from ...utils import get_rng
+from ...utils.utils import get_rng
 import six
 from six.moves import zip
 
@@ -44,26 +46,66 @@ class Augmentor(object):
     @abstractmethod
     def _augment(self, d, param):
         """
-        augment with the given param and return the new image
+        Augment with the given param and return the new data.
+        The augmentor is allowed to modify data in-place.
         """
 
     def _get_augment_params(self, d):
         """
-        get the augmentor parameters
+        Get the augmentor parameters.
         """
         return None
 
     def _rand_range(self, low=1.0, high=None, size=None):
+        """
+        Uniform float random number between low and high.
+        """
         if high is None:
             low, high = 0, low
         if size is None:
             size = []
         return self.rng.uniform(low, high, size)
 
+    def __repr__(self):
+        """
+        Produce something like:
+        "imgaug.MyAugmentor(field1={self.field1}, field2={self.field2})"
+        """
+        argspec = inspect.getargspec(self.__init__)
+        assert argspec.varargs is None, "The default __repr__ doesn't work for vaargs!"
+        assert argspec.keywords is None, "The default __repr__ doesn't work for kwargs!"
+        fields = argspec.args[1:]
+        index_field_has_default = len(fields) - (0 if argspec.defaults is None else len(argspec.defaults))
+
+        classname = type(self).__name__
+        argstr = []
+        for idx, f in enumerate(fields):
+            assert hasattr(self, f), \
+                "Attribute {} not found! The default __repr__ only works if attributes match the constructor.".format(f)
+            attr = getattr(self, f)
+            if idx >= index_field_has_default:
+                if attr is argspec.defaults[idx - index_field_has_default]:
+                    continue
+            argstr.append("{}={}".format(f, pprint.pformat(attr)))
+        return "imgaug.{}({})".format(classname, ', '.join(argstr))
+
+    __str__ = __repr__
+
 
 class ImageAugmentor(Augmentor):
-    def _fprop_coord(self, coord, param):
-        return coord
+    def _augment_coords(self, coords, param):
+        """
+        Augment the coordinates given the param.
+        By default, keeps coordinates unchanged.
+        If a subclass changes coordinates but couldn't implement this method,
+        it should ``raise NotImplementedError()``.
+
+        Args:
+            coords: Nx2 floating point nparray where each row is (x, y)
+        Returns:
+            new coords
+        """
+        return coords
 
 
 class AugmentorList(ImageAugmentor):
@@ -81,7 +123,7 @@ class AugmentorList(ImageAugmentor):
 
     def _get_augment_params(self, img):
         # the next augmentor requires the previous one to finish
-        raise RuntimeError("Cannot simply get parameters of a AugmentorList!")
+        raise RuntimeError("Cannot simply get all parameters of a AugmentorList without running the augmentation!")
 
     def _augment_return_params(self, img):
         assert img.ndim in [2, 3], img.ndim
@@ -97,6 +139,11 @@ class AugmentorList(ImageAugmentor):
         for aug, prm in zip(self.augs, param):
             img = aug._augment(img, prm)
         return img
+
+    def _augment_coords(self, coords, param):
+        for aug, prm in zip(self.augs, param):
+            coords = aug._augment_coords(coords, prm)
+        return coords
 
     def reset_state(self):
         """ Will reset state of each augmentor """

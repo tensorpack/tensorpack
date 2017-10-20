@@ -11,6 +11,8 @@ import sys
 import argparse
 
 from tensorpack import *
+from tensorpack.dataflow import dataset
+from tensorpack.tfutils import sesscreate, optimizer, summary
 import tensorpack.tfutils.symbolic_functions as symbf
 
 IMAGE_SIZE = 42
@@ -58,14 +60,15 @@ class Model(ModelDesc):
                 sampled2 = get_stn(image)
 
         # For visualization in tensorboard
-        padded1 = tf.pad(sampled1, [[0, 0], [HALF_DIFF, HALF_DIFF], [HALF_DIFF, HALF_DIFF], [0, 0]])
-        padded2 = tf.pad(sampled2, [[0, 0], [HALF_DIFF, HALF_DIFF], [HALF_DIFF, HALF_DIFF], [0, 0]])
-        img_orig = tf.concat([image[:, :, :, 0], image[:, :, :, 1]], 1)  # b x 2h  x w
-        transform1 = tf.concat([padded1[:, :, :, 0], padded1[:, :, :, 1]], 1)
-        transform2 = tf.concat([padded2[:, :, :, 0], padded2[:, :, :, 1]], 1)
-        stacked = tf.concat([img_orig, transform1, transform2], 2, 'viz')
-        tf.summary.image('visualize',
-                         tf.expand_dims(stacked, -1), max_outputs=30)
+        with tf.name_scope('visualization'):
+            padded1 = tf.pad(sampled1, [[0, 0], [HALF_DIFF, HALF_DIFF], [HALF_DIFF, HALF_DIFF], [0, 0]])
+            padded2 = tf.pad(sampled2, [[0, 0], [HALF_DIFF, HALF_DIFF], [HALF_DIFF, HALF_DIFF], [0, 0]])
+            img_orig = tf.concat([image[:, :, :, 0], image[:, :, :, 1]], 1)  # b x 2h  x w
+            transform1 = tf.concat([padded1[:, :, :, 0], padded1[:, :, :, 1]], 1)
+            transform2 = tf.concat([padded2[:, :, :, 0], padded2[:, :, :, 1]], 1)
+            stacked = tf.concat([img_orig, transform1, transform2], 2, 'viz')
+            tf.summary.image('visualize',
+                             tf.expand_dims(stacked, -1), max_outputs=30)
 
         sampled = tf.concat([sampled1, sampled2], 3, 'sampled_concat')
         logits = (LinearWrap(sampled)
@@ -77,7 +80,7 @@ class Model(ModelDesc):
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
 
-        wrong = symbolic_functions.prediction_incorrect(logits, label)
+        wrong = symbf.prediction_incorrect(logits, label)
         summary.add_moving_summary(tf.reduce_mean(wrong, name='train_error'))
 
         wd_cost = tf.multiply(1e-5, regularize_cost('fc.*/W', tf.nn.l2_loss),
@@ -118,7 +121,7 @@ def view_warp(modelpath):
         session_init=get_model_loader(modelpath),
         model=Model(),
         input_names=['input'],
-        output_names=['viz', 'STN1/affine', 'STN2/affine']))
+        output_names=['visualization/viz', 'STN1/affine', 'STN2/affine']))
 
     xys = np.array([[0, 0, 1],
                     [WARP_TARGET_SIZE, 0, 1],
@@ -137,7 +140,7 @@ def view_warp(modelpath):
     ds.reset_state()
     for k in ds.get_data():
         img, label = k
-        outputs, affine1, affine2 = pred([img])
+        outputs, affine1, affine2 = pred(img)
         for idx, viz in enumerate(outputs):
             viz = cv2.cvtColor(viz, cv2.COLOR_GRAY2BGR)
             # Here we assume the second branch focuses on the first digit

@@ -36,10 +36,17 @@ class HistoryBuffer(object):
     def __len__(self):
         return len(self.buf)
 
+    @property
+    def maxlen(self):
+        return self.buf.maxlen
+
 
 class HistoryFramePlayer(ProxyPlayer):
     """ Include history frames in state, or use black images.
         It assumes the underlying player will do auto-restart.
+
+        Map the original frames into (H, W, HIST x channels).
+        Oldest frames first.
     """
 
     def __init__(self, player, hist_len):

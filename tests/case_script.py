@@ -21,12 +21,12 @@ class PythonScript(threading.Thread):
         p: process handle
         timeout (int): timeout in seconds
     """
-    def __init__(self, cmd, timeout=10):
+    def __init__(self, cmd, timeout):
         """Prepare a python script
 
         Args:
-            cmd (TYPE): command to execute the example with all flags (including python)
-            timeout (int, optional): time in seconds the script has to survive
+            cmd (str): command to execute the example with all flags (including python)
+            timeout (int): time in seconds the script has to survive
         """
         threading.Thread.__init__(self)
         self.cmd = cmd
@@ -50,10 +50,11 @@ class PythonScript(threading.Thread):
             self.p.kill()  # kill -9
             self.join()
         else:
-            # something unexpected happend here, this script was supposed to survive at leat the timeout
-            if len(self.err) is not 0:
-                stderr = "\n" * 5 + self.err
-                raise AssertionError(stderr)
+            # something unexpected happend here, this script was supposed to survive at least the timeout
+            if len(self.err) > 0:
+                output = u"STDOUT: \n\n\n" + self.out.decode('utf-8')
+                output += u"\n\n\n STDERR: \n\n\n" + self.err.decode('utf-8')
+                raise AssertionError(output)
 
 
 class TestPythonScript(unittest.TestCase):
@@ -69,7 +70,7 @@ class TestPythonScript(unittest.TestCase):
         if os.path.isdir(os.path.join("train_log", script)):
             shutil.rmtree(os.path.join("train_log", script))
 
-    def assertSurvive(self, script, args=None, timeout=10):  # noqa
+    def assertSurvive(self, script, args=None, timeout=20):  # noqa
         cmd = "python{} {}".format(sys.version_info.major, script)
         if args:
             cmd += " " + " ".join(args)

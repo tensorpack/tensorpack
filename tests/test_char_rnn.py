@@ -20,7 +20,7 @@ class CharRNNTest(TestPythonScript):
             f.write(random_content())
 
     def test(self):
-        self.assertSurvive(self.script, args=['--gpu 0', 'train'], timeout=10)
+        self.assertSurvive(self.script, args=['train'])
 
     def tearDown(self):
         super(CharRNNTest, self).tearDown()

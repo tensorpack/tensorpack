@@ -8,7 +8,7 @@ from .common import layer_register
 __all__ = ['SoftMax']
 
 
-@layer_register()
+@layer_register(use_scope=None)
 def SoftMax(x, use_temperature=False, temperature_init=1.0):
     """
     A SoftMax layer (w/o linear projection) with optional temperature, as

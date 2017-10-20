@@ -11,8 +11,8 @@ if six.PY2:
 else:
     import functools
 
-__all__ = ['map_arg', 'memoized', 'shape2d', 'shape4d',
-           'memoized_ignoreargs', 'log_once']
+__all__ = ['map_arg', 'memoized', 'graph_memoized', 'shape2d', 'shape4d',
+           'memoized_ignoreargs', 'log_once', 'call_only_once']
 
 
 def map_arg(**maps):
@@ -20,12 +20,17 @@ def map_arg(**maps):
     Apply a mapping on certains argument before calling the original function.
 
     Args:
-        maps (dict): {key: map_func}
+        maps (dict): {argument_name: map_func}
     """
     def deco(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            argmap = inspect.getcallargs(func, *args, **kwargs)
+            if six.PY2:
+                argmap = inspect.getcallargs(func, *args, **kwargs)
+            else:
+                # getcallargs was deprecated since 3.5
+                sig = inspect.signature(func)
+                argmap = sig.bind_partial(*args, **kwargs).arguments
             for k, map_func in six.iteritems(maps):
                 if k in argmap:
                     argmap[k] = map_func(argmap[k])
@@ -35,7 +40,28 @@ def map_arg(**maps):
 
 
 memoized = functools.lru_cache(maxsize=None)
-""" Equivalent to :func:`functools.lru_cache` """
+""" Alias to :func:`functools.lru_cache` """
+
+
+def graph_memoized(func):
+    """
+    Like memoized, but keep one cache per default graph.
+    """
+    import tensorflow as tf
+    GRAPH_ARG_NAME = '__IMPOSSIBLE_NAME_FOR_YOU__'
+
+    @memoized
+    def func_with_graph_arg(*args, **kwargs):
+        kwargs.pop(GRAPH_ARG_NAME)
+        return func(*args, **kwargs)
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        assert GRAPH_ARG_NAME not in kwargs, "No Way!!"
+        graph = tf.get_default_graph()
+        kwargs[GRAPH_ARG_NAME] = graph
+        return func_with_graph_arg(*args, **kwargs)
+    return wrapper
 
 
 _MEMOIZED_NOARGS = {}
@@ -114,3 +140,42 @@ def log_once(message, func):
         func(str): the name of the logger method. e.g. "info", "warn", "error".
     """
     getattr(logger, func)(message)
+
+
+_FUNC_CALLED = set()
+
+
+def call_only_once(func):
+    """
+    Decorate a method of a class, so that this method can only
+    be called once for every instance.
+    Calling it more than once will result in exception.
+    """
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        self = args[0]
+        assert hasattr(self, func.__name__), "call_only_once can only be used on method!"
+
+        key = (self, func)
+        assert key not in _FUNC_CALLED, \
+            "Method {}.{} can only be called once per object!".format(
+                type(self).__name__, func.__name__)
+        _FUNC_CALLED.add(key)
+
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
+if __name__ == '__main__':
+    class A():
+        @call_only_once
+        def f(self, x):
+            print(x)
+
+    a = A()
+    a.f(1)
+
+    b = A()
+    b.f(2)
+    b.f(1)

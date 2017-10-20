@@ -14,6 +14,7 @@
 
 import sys, os, re
 import mock
+import inspect
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -31,6 +32,7 @@ MOCK_MODULES = ['scipy', 'tabulate',
                 'gym', 'functools32']
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock(name=mod_name)
+sys.modules['cv2'].__version__ = '3.2.1'    # fake version
 
 import tensorpack
 
@@ -115,7 +117,7 @@ language = None
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['_build']
+exclude_patterns = ['build', 'README.md']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -127,7 +129,7 @@ add_function_parentheses = True
 # If true, the current module name will be prepended to all description
 # unit titles (such as .. function::).
 add_module_names = True
-# TODO use module name, but remove `tensorpack.` ?
+# 'tensorpack.' prefix was removed by js
 
 # If true, sectionauthor and moduleauthor directives will be shown in the
 # output. They are ignored by default.
@@ -227,6 +229,8 @@ html_show_copyright = True
 # This is the file name suffix for HTML files (e.g. ".xhtml").
 #html_file_suffix = None
 
+# avoid li fonts being larger
+# TODO but li indices fonts are still larger
 html_compact_lists = False
 
 # Language to be used for generating the HTML full-text search index.
@@ -329,22 +333,66 @@ texinfo_documents = [
 
 suppress_warnings = ['image.nonlocal_uri']
 
+#autodoc_member_order = 'bysource'
+
 def process_signature(app, what, name, obj, options, signature,
             return_annotation):
     if signature:
         # replace Mock function names
         signature = re.sub('<Mock name=\'([^\']+)\'.*>', '\g<1>', signature)
         signature = re.sub('tensorflow', 'tf', signature)
+
+        # add scope name to layer signatures:
+        if hasattr(obj, 'use_scope') and hasattr(obj, 'symbolic_function'):
+            if obj.use_scope:
+                signature = signature[0] + 'scope_name, ' + signature[1:]
+            elif obj.use_scope is None:
+                signature = signature[0] + '[scope_name,] ' + signature[1:]
     # signature: arg list
     return signature, return_annotation
+
+def autodoc_skip_member(app, what, name, obj, skip, options):
+    if name in [
+        'MultiGPUTrainerBase',
+        'FeedfreeInferenceRunner',
+        'replace_get_variable',
+        'remap_get_variable',
+        'freeze_get_variable',
+        'Triggerable',
+        'predictor_factory',
+        'get_predictors',
+        'RandomCropAroundBox',
+        'GaussianDeform',
+        'dump_chkpt_vars',
+        'VisualQA',
+        'huber_loss',
+        'DumpTensor',
+        'StepTensorPrinter'
+        ]:
+        return True
+    if name in ['get_data', 'size', 'reset_state']:
+        # skip these methods with empty docstring
+        if not obj.__doc__ and inspect.isfunction(obj):
+            # https://stackoverflow.com/questions/3589311/get-defining-class-of-unbound-method-object-in-python-3
+            cls = getattr(inspect.getmodule(obj),
+                          obj.__qualname__.split('.<locals>', 1)[0].rsplit('.', 1)[0])
+            if issubclass(cls, tensorpack.DataFlow):
+                return True
+    return None
+
+def url_resolver(url):
+    if '.html' not in url:
+        return "https://github.com/ppwwyyxx/tensorpack/blob/master/" + url
+    else:
+        return "http://tensorpack.readthedocs.io/en/latest/" + url
 
 def setup(app):
     from recommonmark.transform import AutoStructify
     app.connect('autodoc-process-signature', process_signature)
+    app.connect('autodoc-skip-member', autodoc_skip_member)
     app.add_config_value(
         'recommonmark_config',
-        {'url_resolver': lambda url: \
-         "https://github.com/ppwwyyxx/tensorpack/blob/master/" + url,
+        {'url_resolver': url_resolver,
          'auto_toc_tree_section': 'Contents',
          'enable_math': True,
          'enable_inline_math': True,

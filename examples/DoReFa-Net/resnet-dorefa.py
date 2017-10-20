@@ -10,8 +10,8 @@ import os
 import sys
 
 from tensorpack import *
+from tensorpack.dataflow import dataset
 from tensorpack.tfutils.symbolic_functions import *
-from tensorpack.tfutils.summary import *
 from tensorpack.utils.stats import RatioCounter
 from tensorpack.tfutils.varreplace import remap_variables
 from dorefa import get_dorefa
@@ -139,7 +139,7 @@ def run_image(model, sess_init, inputs):
         assert img is not None
 
         img = transformers.augment(img)[np.newaxis, :, :, :]
-        o = predict_func([img])
+        o = predict_func(img)
         prob = o[0][0]
         ret = prob.argsort()[-10:][::-1]
 

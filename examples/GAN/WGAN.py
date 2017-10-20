@@ -7,6 +7,7 @@ import os
 import argparse
 
 from tensorpack import *
+from tensorpack.tfutils import optimizer
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.utils.globvars import globalns as G
 import tensorflow as tf
@@ -23,7 +24,6 @@ import DCGAN
 G.BATCH = 64
 
 
-# a hacky way to change loss & optimizer of another script
 class Model(DCGAN.Model):
     # def generator(self, z):
     # you can override generator to remove BatchNorm, it will still work in WGAN
@@ -37,34 +37,52 @@ class Model(DCGAN.Model):
     def _get_optimizer(self):
         lr = symbolic_functions.get_scalar_var('learning_rate', 1e-4, summary=True)
         opt = tf.train.RMSPropOptimizer(lr)
+        return opt
 
-        # add clipping to D optimizer
-        def clip(p):
-            n = p.op.name
+        # An alternative way to implement the clipping:
+        """
+        def clip(v):
+            n = v.op.name
             if not n.startswith('discrim/'):
                 return None
             logger.info("Clip {}".format(n))
-            return tf.clip_by_value(p, -0.01, 0.01)
+            return tf.clip_by_value(v, -0.01, 0.01)
         return optimizer.VariableAssignmentOptimizer(opt, clip)
+        """
 
 
-DCGAN.Model = Model
+class ClipCallback(Callback):
+    def _setup_graph(self):
+        vars = tf.trainable_variables()
+        ops = []
+        for v in vars:
+            n = v.op.name
+            if not n.startswith('discrim/'):
+                continue
+            logger.info("Clip {}".format(n))
+            ops.append(tf.assign(v, tf.clip_by_value(v, -0.01, 0.01)))
+        self._op = tf.group(*ops, name='clip')
+
+    def _trigger_step(self):
+        self._op.run()
 
 
 if __name__ == '__main__':
     args = DCGAN.get_args()
 
     if args.sample:
-        DCGAN.sample(args.load)
+        DCGAN.sample(Model(), args.load)
     else:
         assert args.data
         logger.auto_set_dir()
-        config = DCGAN.get_config()
-        config.steps_per_epoch = 500
-
-        if args.load:
-            config.session_init = SaverRestore(args.load)
-        """
-        The original code uses a different schedule.
-        """
+        config = TrainConfig(
+            model=Model(),
+            dataflow=DCGAN.get_data(args.data),
+            callbacks=[ModelSaver(), ClipCallback()],
+            steps_per_epoch=500,
+            max_epoch=200,
+            session_init=SaverRestore(args.load) if args.load else None
+        )
+        # The original code uses a different schedule, but this seems to work well.
+        # Train 1 D after 2 G
         SeparateGANTrainer(config, d_period=3).train()

@@ -20,11 +20,12 @@ class BackgroundFiller(object):
         Return a proper background image of background_shape, given img.
 
         Args:
-            background_shape: a shape of [h, w]
+            background_shape (tuple): a shape (h, w)
             img: an image
         Returns:
             a background image
         """
+        background_shape = tuple(background_shape)
         return self._fill(background_shape, img)
 
     @abstractmethod
@@ -45,10 +46,10 @@ class ConstantBackgroundFiller(BackgroundFiller):
     def _fill(self, background_shape, img):
         assert img.ndim in [3, 2]
         if img.ndim == 3:
-            return_shape = background_shape + (3,)
+            return_shape = background_shape + (img.shape[2],)
         else:
             return_shape = background_shape
-        return np.zeros(return_shape) + self.value
+        return np.zeros(return_shape, dtype=img.dtype) + self.value
 
 
 class CenterPaste(ImageAugmentor):
@@ -69,7 +70,7 @@ class CenterPaste(ImageAugmentor):
 
     def _augment(self, img, _):
         img_shape = img.shape[:2]
-        assert self.background_shape[0] > img_shape[0] and self.background_shape[1] > img_shape[1]
+        assert self.background_shape[0] >= img_shape[0] and self.background_shape[1] >= img_shape[1]
 
         background = self.background_filler.fill(
             self.background_shape, img)
@@ -78,7 +79,7 @@ class CenterPaste(ImageAugmentor):
         background[y0:y0 + img_shape[0], x0:x0 + img_shape[1]] = img
         return background
 
-    def _fprop_coord(self, coord, param):
+    def _augment_coords(self, coords, param):
         raise NotImplementedError()
 
 

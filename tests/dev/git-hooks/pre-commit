@@ -5,8 +5,9 @@ cd examples
 GIT_ARG="--git-dir ../.git --work-tree .."
 
 # find out modified python files, so that we ignored unstaged files
-MOD=$(git $GIT_ARG status -s | grep -E '\.py$'  | grep -E '^ *M|^ *A ' | cut -c 4-)
-# git $GIT_ARG status -s | grep -E '\.py$'
+# exclude ../docs
+MOD=$(git $GIT_ARG status -s | grep -E '\.py$'  \
+	| grep -E '^\b+M\b+' | cut -c 4- | grep -v '../docs')
 if [[ -n $MOD ]]; then
 	flake8 $MOD
 fi

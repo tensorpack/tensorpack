@@ -5,8 +5,14 @@
 
 import tensorflow as tf
 from .common import get_default_sess_config
+from ..utils import logger
 
 __all__ = ['NewSessionCreator', 'ReuseSessionCreator', 'SessionCreatorAdapter']
+
+"""
+SessionCreator should return a session that is ready to use
+(i.e. variables are initialized)
+"""
 
 
 class NewSessionCreator(tf.train.SessionCreator):
@@ -18,12 +24,22 @@ class NewSessionCreator(tf.train.SessionCreator):
         """
         self.target = target
         if config is None:
+            # distributd trainer doesn't support user-provided config
+            # we set this attribute so that they can check
+            self.user_provided_config = False
             config = get_default_sess_config()
+        else:
+            self.user_provided_config = True
+
         self.config = config
         self.graph = graph
 
     def create_session(self):
-        return tf.Session(target=self.target, graph=self.graph, config=self.config)
+        sess = tf.Session(target=self.target, graph=self.graph, config=self.config)
+        sess.run(tf.global_variables_initializer())
+        sess.run(tf.local_variables_initializer())
+        logger.info("Global and local variables initialized.")
+        return sess
 
 
 class ReuseSessionCreator(tf.train.SessionCreator):

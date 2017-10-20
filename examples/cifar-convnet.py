@@ -10,12 +10,12 @@ import os
 
 import tensorpack.tfutils.symbolic_functions as symbf
 from tensorpack.tfutils.summary import *
-from tensorpack.utils.gpu import get_nr_gpu
+from tensorpack.dataflow import dataset
 
 """
 A small convnet model for Cifar10 or Cifar100 dataset.
 
-Cifar10:
+Cifar10 trained on 1 GPU:
     91% accuracy after 50k step.
     41 step/s on TitanX
 
@@ -29,8 +29,8 @@ class Model(ModelDesc):
         self.cifar_classnum = cifar_classnum
 
     def _get_inputs(self):
-        return [InputDesc(tf.float32, [None, 30, 30, 3], 'input'),
-                InputDesc(tf.int32, [None], 'label')
+        return [InputDesc(tf.float32, (None, 30, 30, 3), 'input'),
+                InputDesc(tf.int32, (None,), 'label')
                 ]
 
     def _build_graph(self, inputs):
@@ -78,7 +78,8 @@ class Model(ModelDesc):
         self.cost = tf.add_n([cost, wd_cost], name='cost')
 
     def _get_optimizer(self):
-        lr = symbf.get_scalar_var('learning_rate', 1e-2, summary=True)
+        lr = tf.get_variable('learning_rate', initializer=1e-2, trainable=False)
+        tf.summary.scalar('lr', lr)
         return tf.train.AdamOptimizer(lr, epsilon=1e-3)
 
 
@@ -112,8 +113,6 @@ def get_data(train_or_test, cifar_classnum):
 
 
 def get_config(cifar_classnum):
-    logger.auto_set_dir()
-
     # prepare dataset
     dataset_train = get_data('train', cifar_classnum)
     dataset_test = get_data('test', cifar_classnum)
@@ -137,7 +136,7 @@ def get_config(cifar_classnum):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
+    parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.', required=True)
     parser.add_argument('--load', help='load model')
     parser.add_argument('--classnum', help='10 for cifar10 or 100 for cifar100',
                         type=int, default=10)
@@ -145,18 +144,15 @@ if __name__ == '__main__':
 
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
-    else:
-        os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
     with tf.Graph().as_default():
+        logger.set_logger_dir(os.path.join('train_log', 'cifar' + str(args.classnum)))
         config = get_config(args.classnum)
         if args.load:
             config.session_init = SaverRestore(args.load)
 
-        if args.gpu:
-            config.nr_tower = len(args.gpu.split(','))
-        nr_gpu = get_nr_gpu()
-        if nr_gpu == 1:
+        config.nr_tower = max(len(args.gpu.split(',')), 1)
+        if config.nr_tower <= 1:
             QueueInputTrainer(config).train()
         else:
-            SyncMultiGPUTrainer(config).train()
+            SyncMultiGPUTrainerParameterServer(config).train()

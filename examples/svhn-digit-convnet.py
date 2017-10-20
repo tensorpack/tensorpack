@@ -8,7 +8,8 @@ import numpy as np
 import os
 
 from tensorpack import *
-from tensorpack.tfutils.symbolic_functions import *
+from tensorpack.tfutils.symbolic_functions import prediction_incorrect
+from tensorpack.dataflow import dataset
 from tensorpack.tfutils.summary import *
 import tensorflow as tf
 
@@ -94,7 +95,6 @@ def get_data():
 
 
 def get_config():
-    logger.auto_set_dir()
     data_train, data_test = get_data()
 
     return TrainConfig(
@@ -120,6 +120,7 @@ if __name__ == '__main__':
     else:
         os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
+    logger.auto_set_dir()
     with tf.Graph().as_default():
         config = get_config()
         if args.load:

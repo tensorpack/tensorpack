@@ -13,6 +13,7 @@ import multiprocessing
 from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
+from tensorpack.dataflow import dataset
 
 """
 InceptionV3 on ILSVRC12.
@@ -138,7 +139,7 @@ class Model(ModelDesc):
                 br1 = AvgPooling('avgpool', l, 5, 3, padding='VALID')
                 br1 = Conv2D('conv11', br1, 128, 1)
                 shape = br1.get_shape().as_list()
-                br1 = Conv2D('convout', br1, 768, shape[1:3], padding='VALID')  # TODO gauss, stddev=0.01
+                br1 = Conv2D('convout', br1, 768, shape[1:3], padding='VALID')
                 br1 = FullyConnected('fc', br1, 1000, nl=tf.identity)
 
             with tf.variable_scope('incep-17-1280a'):
@@ -201,7 +202,7 @@ def get_data(train_or_test):
     isTrain = train_or_test == 'train'
 
     ds = dataset.ILSVRC12(args.data, train_or_test,
-                          shuffle=True if isTrain else False, dir_structure='train')
+                          shuffle=True if isTrain else False)
     meta = dataset.ILSVRCMeta()
     pp_mean = meta.get_per_pixel_mean()
     pp_mean_299 = cv2.resize(pp_mean, (299, 299))

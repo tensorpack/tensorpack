@@ -18,14 +18,6 @@ tensorpack.utils.concurrency module
     :show-inheritance:
 
 
-tensorpack.utils.discretize module
-----------------------------------
-
-.. automodule:: tensorpack.utils.discretize
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 tensorpack.utils.fs module
 --------------------------
 
@@ -58,22 +50,6 @@ tensorpack.utils.logger module
     :undoc-members:
     :show-inheritance:
 
-tensorpack.utils.lut module
----------------------------
-
-.. automodule:: tensorpack.utils.lut
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
-tensorpack.utils.rect module
-----------------------------
-
-.. automodule:: tensorpack.utils.rect
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
 tensorpack.utils.serialize module
 ---------------------------------
@@ -107,11 +83,10 @@ tensorpack.utils.viz module
     :undoc-members:
     :show-inheritance:
 
+tensorpack.utils.gpu module
+---------------------------
 
-Module contents
----------------
-
-.. automodule:: tensorpack.utils
+.. automodule:: tensorpack.utils.gpu
     :members:
     :undoc-members:
     :show-inheritance:

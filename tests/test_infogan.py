@@ -8,4 +8,4 @@ class InfoGANTest(TestPythonScript):
         return '../examples/GAN/InfoGAN-mnist.py'
 
     def test(self):
-        self.assertSurvive(self.script, args=None, timeout=10)
+        self.assertSurvive(self.script, args=None)

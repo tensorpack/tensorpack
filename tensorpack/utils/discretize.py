@@ -3,11 +3,13 @@
 # File: discretize.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-from .argtools import log_once
 from abc import abstractmethod, ABCMeta
 import numpy as np
 import six
 from six.moves import range
+
+from .argtools import log_once
+from .develop import log_deprecated
 
 __all__ = ['UniformDiscretizer1D', 'UniformDiscretizerND']
 
@@ -40,6 +42,7 @@ class UniformDiscretizer1D(Discretizer1D):
         self.maxv = float(maxv)
         self.spacing = float(spacing)
         self.nr_bin = int(np.ceil((self.maxv - self.minv) / self.spacing))
+        log_deprecated("Discretizer", "It's not related to the library and I'd be surprised if you're using it..")
 
     def get_nr_bin(self):
         """

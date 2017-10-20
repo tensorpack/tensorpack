@@ -151,11 +151,13 @@ class Cifar100(CifarBase):
 
 if __name__ == '__main__':
     ds = Cifar10('train')
-    from tensorpack.dataflow.dftools import dump_dataflow_images
     mean = ds.get_per_channel_mean()
     print(mean)
-    dump_dataflow_images(ds, '/tmp/cifar', 100)
 
-    # for (img, label) in ds.get_data():
-    #     from IPython import embed; embed()
-    #     break
+    import cv2
+    ds.reset_state()
+    for i, dp in enumerate(ds.get_data()):
+        if i == 100:
+            break
+        img = dp[0]
+        cv2.imwrite("{:04d}.jpg".format(i), img)

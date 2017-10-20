@@ -270,7 +270,7 @@ def main():
     else:
         column = args.column.strip().split(',')
     for k in column:
-        assert k[0] in ['x', 'y']
+        assert k[0] in ['x', 'y', 'n']
     assert nr_column == len(column), "Column and data doesn't have same length. {}!={}".format(nr_column, len(column))
     args.y_column = [v for v in column if v[0] == 'y']
     args.y_column_idx = [idx for idx, v in enumerate(column) if v[0] == 'y']

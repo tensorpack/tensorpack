@@ -18,27 +18,14 @@ Alternative link to this page: [http://dorefa.net](http://dorefa.net)
 
 ## Preparation:
 
-To use the script. You'll need:
-
-+ TensorFlow >= 1.0.0 (>=1.1 for MultiGPU)
-
-+ OpenCV bindings for Python
-
-+ [tensorpack](https://github.com/ppwwyyxx/tensorpack):
-
-```
-git clone https://github.com/ppwwyyxx/tensorpack
-pip install --user -r tensorpack/requirements.txt
-pip install --user scipy
-export PYTHONPATH=$PYTHONPATH:`readlink -f tensorpack`
-```
++ Install [tensorpack](https://github.com/ppwwyyxx/tensorpack) and scipy.
 
 + Look at the docstring in `*-dorefa.py` to see detailed usage and performance.
 
 ## Support
 
 Please use [github issues](https://github.com/ppwwyyxx/tensorpack/issues) for any issues related to the code itself.
-Send email to the authors for general questions related to the paper.
+Please send email to the authors for general questions related to the paper.
 
 ## Citation
 

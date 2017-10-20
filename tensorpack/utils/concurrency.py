@@ -32,9 +32,15 @@ class StoppableThread(threading.Thread):
     A thread that has a 'stop' event.
     """
 
-    def __init__(self):
+    def __init__(self, evt=None):
+        """
+        Args:
+            evt(threading.Event): if None, will create one.
+        """
         super(StoppableThread, self).__init__()
-        self._stop_evt = threading.Event()
+        if evt is None:
+            evt = threading.Event()
+        self._stop_evt = evt
 
     def stop(self):
         """ Stop the thread"""
@@ -165,22 +171,38 @@ def ensure_proc_terminate(proc):
     atexit.register(stop_proc_by_weak_ref, weakref.ref(proc))
 
 
+def is_main_thread():
+    if six.PY2:
+        return isinstance(threading.current_thread(), threading._MainThread)
+    else:
+        # a nicer solution with py3
+        return threading.current_thread() == threading.main_thread()
+
+
 @contextmanager
 def mask_sigint():
     """
     Returns:
-        a context where ``SIGINT`` is ignored.
+        If called in main thread, returns a context where ``SIGINT`` is ignored, and yield True.
+        Otherwise yield False.
     """
-    sigint_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
-    yield
-    signal.signal(signal.SIGINT, sigint_handler)
+    if is_main_thread():
+        sigint_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
+        yield True
+        signal.signal(signal.SIGINT, sigint_handler)
+    else:
+        yield False
 
 
 def start_proc_mask_signal(proc):
-    """ Start process(es) with SIGINT ignored.
+    """
+    Start process(es) with SIGINT ignored.
 
     Args:
         proc: (multiprocessing.Process or list)
+
+    Note:
+        The signal mask is only applied when called from main thread.
     """
     if not isinstance(proc, list):
         proc = [proc]
@@ -193,21 +215,30 @@ def start_proc_mask_signal(proc):
 def subproc_call(cmd, timeout=None):
     """
     Execute a command with timeout, and return both STDOUT/STDERR.
+
     Args:
         cmd(str): the command to execute.
         timeout(float): timeout in seconds.
+
+    Returns:
+        output(bytes), retcode(int). If timeout, retcode is -1.
     """
     try:
         output = subprocess.check_output(
             cmd, stderr=subprocess.STDOUT,
             shell=True, timeout=timeout)
-        return output
+        return output, 0
     except subprocess.TimeoutExpired as e:
         logger.warn("Command timeout!")
-        logger.warn(e.output)
+        logger.warn(e.output.decode('utf-8'))
+        return e.output, -1
     except subprocess.CalledProcessError as e:
-        logger.warn("Commnad failed: {}".format(e.returncode))
-        logger.warn(e.output)
+        logger.warn("Command failed: {}".format(e.returncode))
+        logger.warn(e.output.decode('utf-8'))
+        return e.output, e.returncode
+    except Exception:
+        logger.warn("Command failed to run: {}".format(cmd))
+        return "", -2
 
 
 class OrderedContainer(object):

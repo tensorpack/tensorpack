@@ -11,7 +11,7 @@ import os
 
 from .base import Callback
 from ..utils import logger
-from ..tfutils import get_op_tensor_name
+from ..tfutils.common import get_op_tensor_name
 
 __all__ = ['HyperParam', 'GraphVarParam', 'ObjAttrParam',
            'HyperParamSetter', 'HumanHyperParamSetter',
@@ -52,7 +52,7 @@ class HyperParam(object):
 
 
 class GraphVarParam(HyperParam):
-    """ A variable in the graph (e.g. learning_rate) can be a hyperparam"""
+    """ A variable in the graph (e.g. learning_rate) can be a hyperparam."""
 
     def __init__(self, name, shape=[]):
         """
@@ -66,13 +66,13 @@ class GraphVarParam(HyperParam):
 
     def setup_graph(self):
         """ Will setup the assign operator for that variable. """
-        all_vars = tf.global_variables()
+        all_vars = tf.global_variables() + tf.local_variables()
         for v in all_vars:
             if v.name == self.var_name:
                 self.var = v
                 break
         else:
-            raise ValueError("{} is not a VARIABLE in the graph!".format(self.var_name))
+            raise ValueError("{} is not a variable in the graph!".format(self.var_name))
 
     def set_value(self, v):
         """ Assign the variable a new value. """
@@ -91,7 +91,7 @@ class ObjAttrParam(HyperParam):
         Args:
             obj: the object
             attrname (str): the attribute
-            readable_name(str): The name to display. Defaults to be ``attrname``.
+            readable_name(str): The name to display and set with. Defaults to be ``attrname``.
         """
         self.obj = obj
         self.attrname = attrname
@@ -140,8 +140,8 @@ class HyperParamSetter(Callback):
         """
         ret = self._get_value_to_set()
         if ret is not None and ret != self.last_value:
-            logger.info("{} at epoch {} will change to {:.8f}".format(
-                self.param.readable_name, self.epoch_num + 1, ret))
+            logger.info("After epoch {}, {} will change to {:.8f}".format(
+                self.epoch_num, self.param.readable_name, ret))
         self.last_value = ret
         return ret
 
@@ -179,14 +179,13 @@ class HumanHyperParamSetter(HyperParamSetter):
         """
         Args:
             param: same as in :class:`HyperParamSetter`.
-            file_name(str): a file containing the value of the variable.
-                Each line in the file is a k:v pair, where k is
-                param.readable_name, and v is the value. If the pair is not found,
-                the param will not be changed.
+            file_name(str): a file containing the new value of the parameter.
+                Each line in the file is a ``k:v`` pair, for example, ``learning_rate:1e-4``.
+                If the pair is not found, the param will not be changed.
         """
         super(HumanHyperParamSetter, self).__init__(param)
-        self.file_name = os.path.join(logger.LOG_DIR, file_name)
-        logger.info("Use {} to control hyperparam {}.".format(
+        self.file_name = os.path.join(logger.get_logger_dir(), file_name)
+        logger.info("Use {} to set hyperparam: '{}'.".format(
             self.file_name, self.param.readable_name))
 
     def _get_value_to_set(self):
@@ -218,8 +217,9 @@ class ScheduledHyperParamSetter(HyperParamSetter):
             param: same as in :class:`HyperParamSetter`.
             schedule (list): with the format ``[(epoch1, val1), (epoch2, val2), (epoch3, val3)]``.
                 Each ``(ep, val)`` pair means to set the param
-                to "val" __after__ the completion of `ep` th epoch.
-                If ep == 0, the value will be set before the first epoch.
+                to "val" __after__ the completion of epoch `ep`.
+                If ep == 0, the value will be set before the first epoch
+                (by default the first is epoch 1).
             interp: None: no interpolation. 'linear': linear interpolation
 
         Example:
@@ -297,12 +297,15 @@ class StatMonitorParamSetter(HyperParamSetter):
             last_k (int): last k epochs.
             reverse (bool): monitor increasing instead of decreasing.
 
-        This callback will change param by ``new_value = value_func(old_value)``, when:
+        This callback will change ``param`` by ``new_value = value_func(old_value)``, when:
         ``min(stats) >= stats[0] - threshold``, where
-        ``stats = [stat_name in last k epochs]``
+        ``stats = [the values of stat_name in last k epochs]``
+
+        If ``reverse`` is True, it will change the ``param`` when:
+        ``max(stats) <= stats[0] + threshold``.
 
         Example:
-            If validation error wasn't decreasing for 5 epochs, anneal the learning rate:
+            If validation error wasn't decreasing for 5 epochs, anneal the learning rate by 0.2:
 
             .. code-block:: python
 
@@ -334,6 +337,7 @@ class StatMonitorParamSetter(HyperParamSetter):
             if hist_max > hist_first + self.threshold:  # large enough
                 return None
         self.last_changed_epoch = self.epoch_num
-        logger.info("[StatMonitorParamSetter] Triggered, history: " +
-                    ','.join(map(str, hist)))
+        logger.info(
+            "[StatMonitorParamSetter] Triggered, history of {}: ".format(
+                self.stat_name) + ','.join(map(str, hist)))
         return self.value_func(self.get_current_value())
