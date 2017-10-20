@@ -31,6 +31,8 @@ class Trainer(object):
     """ Base class for a trainer.
     """
 
+    _API_VERSION = 2
+
     is_chief = True
 
     def __init__(self):
@@ -215,8 +217,39 @@ for name in ['global_step', 'local_step', 'steps_per_epoch',
     setattr(Trainer, name, _get_property(name))
 
 
+class TowerTrainer(Trainer):
+    """
+    Base trainers for models that can be built by calling a tower function under a :class:`TowerContext`.
+
+    This is required by some features that replicates the model
+    automatically, e.g. creating a predictor.
+    """
+
+    tower_func = None
+    """
+    A :class:`TowerFuncWrapper` instance.
+    A callable which takes some input tensors and builds one replicate of the model.
+    """
+
+    @call_only_once
+    def set_tower_func(self, tower_func):
+        """
+        Args:
+            tower_func (TowerFuncWrapper)
+        """
+        self.tower_func = tower_func
+
+    @property
+    def inputs_desc(self):
+        """
+        Returns:
+            list[InputDesc]: metainfo about the inputs to the tower.
+        """
+        return self.tower_func.inputs_desc
+
+
 @six.add_metaclass(ABCMeta)
-class SingleCostTrainer(Trainer):
+class SingleCostTrainer(TowerTrainer):
     """
     Base class for single-cost trainer.
 
@@ -261,12 +294,11 @@ class SingleCostTrainer(Trainer):
         """
         get_cost_fn = TowerFuncWrapper(get_cost_fn, inputs_desc)
         get_opt_fn = memoized(get_opt_fn)
+        self.set_tower_func(get_cost_fn)
+
         input_callbacks = self._setup_input(inputs_desc, input)
         train_callbacks = self._setup_graph(input, get_cost_fn, get_opt_fn)
-
         self._internal_callbacks = input_callbacks + train_callbacks
-        self.inputs_desc = inputs_desc
-        self.get_cost_fn = get_cost_fn
         return self._internal_callbacks
 
     @abstractmethod

@@ -20,7 +20,6 @@ from ..dataflow.base import DataFlow
 from ..input_source import (
     InputSource, FeedInput, QueueInput)
 from ..graph_builder.predictor_factory import SimplePredictBuilder
-# from ..trainv2 import SingleCostTrainer
 
 from .base import Callback
 from .group import Callbacks
@@ -125,7 +124,7 @@ class InferenceRunner(InferenceRunnerBase):
         return InferencerToHook(inf, fetches)
 
     def _setup_graph(self):
-        if hasattr(self.trainer, 'model'):
+        if self.trainer._API_VERSION == 1:
             # old Trainer API
             assert self.trainer.model is not None
             # Use predict_tower in train config. either gpuid or -1
@@ -142,16 +141,16 @@ class InferenceRunner(InferenceRunnerBase):
                     self._tower_name, device, self._input_source)
         else:
             # new Trainer API
-            # only works for singlecost trainer
-            # assert isinstance(self.trainer, SingleCostTrainer), self.trainer
+            from ..trainv2 import TowerTrainer
+            assert isinstance(self.trainer, TowerTrainer), self.trainer
             input_callbacks = self._input_source.setup(self.trainer.inputs_desc)
 
             with tf.variable_scope(tf.get_variable_scope(), reuse=True):
                 SimplePredictBuilder(
                     ns_name=self._tower_name,
                     vs_name='', device=0).build(    # TODO fix vs_name and maybe device
-                        self._input_source, self.trainer.get_cost_fn)
-                self._tower_handle = self.trainer.get_cost_fn.towers[-1]
+                        self._input_source, self.trainer.tower_func)
+                self._tower_handle = self.trainer.tower_func.towers[-1]
 
         self._hooks = [self._build_hook(inf) for inf in self.infs]
         # trigger_{step,epoch}, {before,after}_epoch is ignored.
@@ -202,7 +201,7 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
 
     def _setup_graph(self):
         self._handles = []
-        if hasattr(self.trainer, 'model'):
+        if self.trainer._API_VERSION == 1:
             # old Trainer API
             input_callbacks = self._input_source.setup(self.trainer.model.get_inputs_desc())
             # build each predict tower
@@ -222,8 +221,8 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
                     SimplePredictBuilder(
                         ns_name=tower_name,
                         vs_name='', device=t).build(    # TODO fix vs_name and maybe device
-                            self._input_source, self.trainer.get_cost_fn)
-                    self._handles.append(self.trainer.get_cost_fn.towers[-1])
+                            self._input_source, self.trainer.tower_func)
+                    self._handles.append(self.trainer.tower_func.towers[-1])
 
         # setup callbacks and hooks
         self._input_callbacks = Callbacks(input_callbacks)

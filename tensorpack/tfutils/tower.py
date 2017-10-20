@@ -154,7 +154,7 @@ class TowerFuncWrapper(object):
     each time the function is called.
     """
 
-    def __init__(self, tower_fn, inputs_desc=None):
+    def __init__(self, tower_fn, inputs_desc):
         """
         Args:
             tower_func: a function which builds one tower in the graph.
@@ -168,7 +168,7 @@ class TowerFuncWrapper(object):
 
             self._towers = []
 
-    def __new__(cls, tower_fn, inputs_desc=None):
+    def __new__(cls, tower_fn, inputs_desc):
         # to avoid double-wrapping a function
         if isinstance(tower_fn, TowerFuncWrapper):
             return tower_fn
@@ -187,6 +187,10 @@ class TowerFuncWrapper(object):
     def towers(self):
         # TODO another wrapper around towerhandlelist
         return self._towers
+
+    @property
+    def inputs_desc(self):
+        return self._inputs_desc
 
 
 class TowerTensorHandle(object):
