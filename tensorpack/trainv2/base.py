@@ -38,10 +38,40 @@ class Trainer(object):
 
     is_chief = True
 
-    def __init__(self):
+    def __init__(self, config=None):
+        """
+        config is only for compatibility reasons in case you're
+        using custom trainers with old-style API.
+        You should never use config.
+        """
         self._callbacks = []
         self.loop = TrainLoop()
         self._monitors = []  # Clarify the type. Don't change from list to monitors.
+
+        # Hacks!
+        if config is not None:
+            logger.warn("You're initializing new trainer with old trainer API!")
+            logger.warn("This could happen if you wrote a custom trainer before.")
+            logger.warn("It may work now through some hacks, but please switch to the new API!")
+            self._config = config
+            self.inputs_desc = config.model.get_inputs_desc()
+            self.tower_func = TowerFuncWrapper(
+                lambda *inputs: config.model.build_graph(inputs),
+                self.inputs_desc)
+            self._main_tower_vs_name = ""
+
+            def gp(input_names, output_names, tower=0):
+                return TowerTrainer.get_predictor(self, input_names, output_names, device=tower)
+            self.get_predictor = gp
+
+            old_train = self.train
+
+            def train():
+                return old_train(
+                    config.callbacks, config.monitors,
+                    config.session_creator, config.session_init,
+                    config.steps_per_epoch, config.starting_epoch, config.max_epoch)
+            self.train = train
 
     def _register_callback(self, cb):
         """
@@ -192,8 +222,17 @@ class Trainer(object):
         if (len(args) > 0 and isinstance(args[0], old_train.TrainConfig)) \
                 or 'config' in kwargs:
             name = cls.__name__
-            old_trainer = getattr(old_train, name)
-            return old_trainer(*args, **kwargs)
+            try:
+                old_trainer = getattr(old_train, name)
+            except AttributeError:
+                # custom trainer. has to live with it
+                return super(Trainer, cls).__new__(cls)
+            else:
+                logger.warn("You're creating trainers with old trainer API!")
+                logger.warn("Now it returns the old trainer for you, please switch to the new API!")
+                logger.warn("'SomeTrainer(config, ...).train()' should be equivalent to "
+                            "'launch_train_with_config(config, SomeTrainer(...))' in the new API.")
+                return old_trainer(*args, **kwargs)
         else:
             return super(Trainer, cls).__new__(cls)
 

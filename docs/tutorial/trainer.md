@@ -26,27 +26,30 @@ Most neural network training tasks are single-cost optimization.
 Tensorpack provides some trainer implementations for such tasks.
 These trainers will build the graph based on the given `ModelDesc`, and minimizes `ModelDesc.cost`.
 
-To use trainers, pass a `TrainConfig` to configure them:
-
-```python
-config = TrainConfig(
-           model=MyModel()
-           dataflow=my_dataflow,
-           # data=my_inputsource, # alternatively, use a customized InputSource
-           callbacks=[...]
-         )
-
-# start training:
-SomeTrainer(config, other_arguments).train()
-
-# start multi-GPU training with synchronous update:
-# SyncMultiGPUTrainerParameterServer(config).train()
-```
-
-When you set the DataFlow (rather than the InputSource) in the config,
-tensorpack trainers automatically adopt certain prefetch mechanism, as mentioned
-in the [Input Pipeline](input-source.html) tutorial.
-You can set the InputSource instead, to customize this behavior.
+<!--
+   -To use trainers, pass a `TrainConfig` to configure them:
+   -
+   -```python
+   -config = TrainConfig(
+   -           model=MyModel()
+   -           dataflow=my_dataflow,
+   -           # data=my_inputsource, # alternatively, use a customized InputSource
+   -           callbacks=[...]
+   -         )
+   -
+   -# start training:
+   -SomeTrainer(config, other_arguments).train()
+   -
+   -# start multi-GPU training with synchronous update:
+   -# SyncMultiGPUTrainerParameterServer(config).train()
+   -```
+   -
+   -When you set the DataFlow (rather than the InputSource) in the config,
+   -tensorpack trainers automatically adopt certain prefetch mechanism, as mentioned
+   -in the [Input Pipeline](input-source.html) tutorial.
+   -You can set the InputSource instead, to customize this behavior.
+	 -->
+Trainers are being redesigned, so the recommended API will likely be changed soon.
 
 Existing multi-GPU trainers include the logic of data-parallel training.
 You can enable them by just one line, and all the necessary logic to achieve the best performance was baked into the trainers already.
