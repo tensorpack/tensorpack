@@ -22,9 +22,11 @@ In other words, an "epoch" in tensorpack is the __default period to run callback
 
 ### Common Trainers
 
-Most neural network training tasks are single-cost optimization.
-Tensorpack provides some trainer implementations for such tasks.
-These trainers will build the graph based on the given `ModelDesc`, and minimizes `ModelDesc.cost`.
+<!--
+   -Most neural network training tasks are single-cost optimization.
+   -Tensorpack provides some trainer implementations for such tasks.
+   -These trainers will build the graph based on the given `ModelDesc`, and minimizes `ModelDesc.cost`.
+	 -->
 
 <!--
    -To use trainers, pass a `TrainConfig` to configure them:
@@ -49,7 +51,7 @@ These trainers will build the graph based on the given `ModelDesc`, and minimize
    -in the [Input Pipeline](input-source.html) tutorial.
    -You can set the InputSource instead, to customize this behavior.
 	 -->
-Trainers are being redesigned, so the recommended API will likely be changed soon.
+Trainers are being redesigned, this page will be updated soon.
 
 Existing multi-GPU trainers include the logic of data-parallel training.
 You can enable them by just one line, and all the necessary logic to achieve the best performance was baked into the trainers already.
