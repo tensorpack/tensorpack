@@ -178,3 +178,7 @@ class DistributedTrainerReplicated(SingleCostTrainer):
                 "To use a custom session config, pass it to tf.train.Server.")
         super(DistributedTrainerReplicated, self).initialize(
             get_distributed_session_creator(), session_init)
+
+    @property
+    def _main_tower_vs_name(self):
+        return "tower0"
