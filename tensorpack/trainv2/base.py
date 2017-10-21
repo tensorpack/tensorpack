@@ -268,9 +268,10 @@ class TowerTrainer(Trainer):
             input = PlaceholderInput()
             input.setup(self.inputs_desc)
 
-            SimplePredictBuilder(
-                ns_name=tower_name, vs_name=self._main_tower_vs_name,
-                device=device).build(input, self.tower_func)
+            with tf.variable_scope(tf.get_variable_scope(), reuse=True):
+                SimplePredictBuilder(
+                    ns_name=tower_name, vs_name=self._main_tower_vs_name,
+                    device=device).build(input, self.tower_func)
             tower = self.tower_func.towers[tower_name]
         input_tensors = tower.get_tensors(input_names)
         output_tensors = tower.get_tensors(output_names)

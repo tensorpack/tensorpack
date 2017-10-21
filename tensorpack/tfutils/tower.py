@@ -60,9 +60,6 @@ class TowerContext(object):
             (self.is_training and len(self._vs_name) > 0) or \
             (not self.is_training and len(self._vs_name) > 0 and not self._initial_vs_reuse)
 
-    # TODO clarify the interface on name/vs_name/ns_name.
-    # TODO in inference, vs_name may need to be different from ns_name.i
-    # How to deal with this?
     @property
     def name(self):
         return self._name
@@ -151,7 +148,6 @@ class TowerContext(object):
 
 
 def get_current_tower_context():
-    global _CurrentTowerContext
     return _CurrentTowerContext
 
 

@@ -18,8 +18,11 @@ from ..tfutils import get_global_step_value
 from ..tfutils.model_utils import describe_trainable_vars
 from ..tfutils.sesscreate import ReuseSessionCreator
 from ..tfutils.sessinit import JustCurrentSession
+from ..tfutils.tower import TowerFuncWrapper
 
-from ..graph_builder.predictor_factory import PredictorFactory
+from ..input_source import PlaceholderInput
+from ..graph_builder.predictor_factory import SimplePredictBuilder
+from ..predict.base import OnlinePredictor
 from ..callbacks.steps import MaintainStepCounter
 
 __all__ = ['Trainer', 'StopTraining']
@@ -117,6 +120,16 @@ class Trainer(object):
         assert isinstance(config, TrainConfig), type(config)
         self._config = config
         self.model = config.model
+        if self.model is not None:
+
+            def f(*inputs):
+                self.model.build_graph(inputs)
+
+            """
+            Only to mimic new trainer interafce on inference.
+            """
+            self.inputs_desc = self.model.get_inputs_desc()
+            self.tower_func = TowerFuncWrapper(f, self.inputs_desc)
 
         self._callbacks = []
         self._monitors = []
@@ -268,8 +281,7 @@ class Trainer(object):
 
     def get_predictor(self, input_names, output_names, tower=0):
         """
-        Returns a callable predictor built under ``is_training=False`` tower context.
-        Note that this method is only valid when this trainer has a ``ModelDesc``.
+        Returns a callable predictor built under ``TowerContext(is_training=False)``.
 
         Args:
             input_names (list), output_names(list): list of names
@@ -278,19 +290,27 @@ class Trainer(object):
         Returns:
             an :class:`OnlinePredictor`.
         """
-        return self.predictor_factory.get_predictor(input_names, output_names, tower)
+        device = tower
+        assert self.tower_func is not None, "Must set tower_func on the trainer to use get_predictor()!"
+        tower_name = 'tower-pred-{}'.format(device) if device >= 0 else 'tower-pred-cpu'
+
+        try:
+            tower = self.tower_func.towers[tower_name]
+        except KeyError:
+            input = PlaceholderInput()
+            input.setup(self.inputs_desc)
+
+            with tf.variable_scope(tf.get_variable_scope(), reuse=True):
+                SimplePredictBuilder(
+                    ns_name=tower_name, vs_name=self._main_tower_vs_name,
+                    device=device).build(input, self.tower_func)
+            tower = self.tower_func.towers[tower_name]
+        input_tensors = tower.get_tensors(input_names)
+        output_tensors = tower.get_tensors(output_names)
+        return OnlinePredictor(input_tensors, output_tensors)
 
     @property
-    def predictor_factory(self):
-        assert self.model is not None, \
-            "Predictor can only be built one Trainer has ModelDesc!"
-        if not hasattr(self, '_predictor_factory'):
-            self._predictor_factory = PredictorFactory(
-                self.model, self.vs_name_for_predictor)
-        return self._predictor_factory
-
-    @property
-    def vs_name_for_predictor(self):
+    def _main_tower_vs_name(self):
         # The vs name a predictor should be built under.
         # for internal use only. Should let graphbuilder return it.
         return ""

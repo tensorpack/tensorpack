@@ -95,5 +95,5 @@ class DistributedTrainerReplicated(Trainer):
         self._config.session_creator = get_distributed_session_creator(self.server)
 
     @property
-    def vs_name_for_predictor(self):
+    def _main_tower_vs_name(self):
         return "tower0"

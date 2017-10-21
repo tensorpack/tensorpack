@@ -108,7 +108,7 @@ class InferenceRunner(InferenceRunnerBase):
             infs (list): a list of :class:`Inferencer` instances.
             tower_name (str): the name scope of the tower to build. Need to set a
                 different one if multiple InferenceRunner are used.
-            gpu (int): the device to use
+            device (int): the device to use
         """
         if isinstance(input, DataFlow):
             input = FeedInput(input, infinite=False)
@@ -124,34 +124,19 @@ class InferenceRunner(InferenceRunnerBase):
         return InferencerToHook(inf, fetches)
 
     def _setup_graph(self):
-        if self.trainer._API_VERSION == 1:
-            # old Trainer API
-            assert self.trainer.model is not None
-            # Use predict_tower in train config. either gpuid or -1
-            if self.trainer._config.predict_tower is not None:
-                device = self.trainer._config.predict_tower[0]
-            else:
-                device = self._device
-            device = '/gpu:{}'.format(device) if device >= 0 else '/cpu:0'
-
-            input_callbacks = self._input_source.setup(self.trainer.model.get_inputs_desc())
-
-            with tf.variable_scope(tf.get_variable_scope(), reuse=True):
-                self._tower_handle = self.trainer.predictor_factory.build(
-                    self._tower_name, device, self._input_source)
+        if self.trainer._API_VERSION == 1 and self.trainer._config.predict_tower is not None:
+            device = self.trainer._config.predict_tower[0]
         else:
-            # new Trainer API
-            from ..trainv2 import TowerTrainer
-            assert isinstance(self.trainer, TowerTrainer), self.trainer
-            assert self.trainer.tower_func is not None, "You must set tower_func of the trainer to use InferenceRunner!"
-            input_callbacks = self._input_source.setup(self.trainer.inputs_desc)
+            device = self._device
+        assert self.trainer.tower_func is not None, "You must set tower_func of the trainer to use InferenceRunner!"
+        input_callbacks = self._input_source.setup(self.trainer.inputs_desc)
 
-            with tf.variable_scope(tf.get_variable_scope(), reuse=True):
-                SimplePredictBuilder(
-                    ns_name=self._tower_name,
-                    vs_name=self.trainer._main_tower_vs_name, device=0).build(
-                        self._input_source, self.trainer.tower_func)
-                self._tower_handle = self.trainer.tower_func.towers[-1]
+        with tf.variable_scope(tf.get_variable_scope(), reuse=True):
+            SimplePredictBuilder(
+                ns_name=self._tower_name,
+                vs_name=self.trainer._main_tower_vs_name, device=device).build(
+                    self._input_source, self.trainer.tower_func)
+            self._tower_handle = self.trainer.tower_func.towers[-1]
 
         self._hooks = [self._build_hook(inf) for inf in self.infs]
         # trigger_{step,epoch}, {before,after}_epoch is ignored.
@@ -202,31 +187,17 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
 
     def _setup_graph(self):
         self._handles = []
-        if self.trainer._API_VERSION == 1:
-            # old Trainer API
-            input_callbacks = self._input_source.setup(self.trainer.model.get_inputs_desc())
-            # build each predict tower
-            with tf.variable_scope(tf.get_variable_scope(), reuse=True):
-                for idx, t in enumerate(self._gpus):
-                    tower_name = self._tower_names[idx]
-                    device = '/gpu:{}'.format(t)
-                    self._handles.append(
-                        self.trainer.predictor_factory.build(
-                            tower_name, device, self._input_source))
-        else:
-            # new Trainer API
-            from ..trainv2 import TowerTrainer
-            assert isinstance(self.trainer, TowerTrainer), self.trainer
-            assert self.trainer.tower_func is not None, "You must set tower_func of the trainer to use InferenceRunner!"
-            input_callbacks = self._input_source.setup(self.trainer.inputs_desc)
-            with tf.variable_scope(tf.get_variable_scope(), reuse=True):
-                for idx, t in enumerate(self._gpus):
-                    tower_name = self._tower_names[idx]
-                    SimplePredictBuilder(
-                        ns_name=tower_name,
-                        vs_name=self.trainer._main_tower_vs_name, device=t).build(
-                            self._input_source, self.trainer.tower_func)
-                    self._handles.append(self.trainer.tower_func.towers[-1])
+
+        assert self.trainer.tower_func is not None, "You must set tower_func of the trainer to use InferenceRunner!"
+        input_callbacks = self._input_source.setup(self.trainer.inputs_desc)
+        with tf.variable_scope(tf.get_variable_scope(), reuse=True):
+            for idx, t in enumerate(self._gpus):
+                tower_name = self._tower_names[idx]
+                SimplePredictBuilder(
+                    ns_name=tower_name,
+                    vs_name=self.trainer._main_tower_vs_name, device=t).build(
+                        self._input_source, self.trainer.tower_func)
+                self._handles.append(self.trainer.tower_func.towers[-1])
 
         # setup callbacks and hooks
         self._input_callbacks = Callbacks(input_callbacks)
