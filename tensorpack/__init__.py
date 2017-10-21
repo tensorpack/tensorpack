@@ -18,9 +18,9 @@ if _HAS_TF:
 
     # In development. Default to v1
     if _os.environ.get('TENSORPACK_TRAIN_API', 'v1') == 'v2':
-        from tensorpack.trainv2 import *
-    else:
         from tensorpack.train import *
+    else:
+        from tensorpack.trainv1 import *
     from tensorpack.graph_builder import InputDesc, ModelDesc, ModelDescBase
     from tensorpack.input_source import *
     from tensorpack.predict import *

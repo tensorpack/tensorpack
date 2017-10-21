@@ -12,6 +12,7 @@ MNIST ConvNet example.
 about 0.6% validation error after 30 epochs.
 """
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 # Just import everything into current namespace
 from tensorpack import *
 from tensorpack.tfutils import summary
@@ -142,4 +143,4 @@ if __name__ == '__main__':
         config.session_init = SaverRestore(args.load)
     # SimpleTrainer is slow, this is just a demo.
     # You can use QueueInputTrainer instead
-    SimpleTrainer(config).train()
+    launch_train_with_config(config, SimpleTrainer())

@@ -24,6 +24,7 @@ from .base import SingleCostTrainer
 
 __all__ = ['SimpleTrainer',
            'QueueInputTrainer',
+           'SyncMultiGPUTrainer',
            'SyncMultiGPUTrainerReplicated',
            'SyncMultiGPUTrainerParameterServer',
            'AsyncMultiGPUTrainer',
@@ -66,6 +67,17 @@ class SyncMultiGPUTrainerParameterServer(SingleCostTrainer):
         self.train_op = self._builder.build(
             self._make_get_grad_fn(input, get_cost_fn, get_opt_fn), get_opt_fn)
         return []
+
+
+def SyncMultiGPUTrainer(towers):
+    """
+    Return a default multi-GPU trainer, if you don't care about the details.
+    It may not be the most efficient one for your task.
+
+    Args:
+        towers (list[int]): list of GPU ids.
+    """
+    return SyncMultiGPUTrainerParameterServer(towers, ps_device='gpu')
 
 
 class AsyncMultiGPUTrainer(SingleCostTrainer):

@@ -7,11 +7,11 @@ import tensorflow as tf
 from ..input_source import (
     InputSource, FeedInput, QueueInput, StagingInputWrapper, DummyConstantInput)
 
-from ..train.config import TrainConfig
+from ..trainv1.config import TrainConfig
 from .base import SingleCostTrainer
 from .trainers import SimpleTrainer, DistributedTrainerReplicated
 
-__all__ = ['launch_train_with_config', 'TrainConfig', 'apply_default_prefetch']
+__all__ = ['launch_train_with_config', 'apply_default_prefetch']
 
 
 def apply_default_prefetch(input_source_or_dataflow, trainer, towers):
