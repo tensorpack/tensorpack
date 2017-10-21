@@ -269,12 +269,20 @@ class TowerTrainer(Trainer):
             input.setup(self.inputs_desc)
 
             SimplePredictBuilder(
-                ns_name=tower_name, vs_name='',
+                ns_name=tower_name, vs_name=self._main_tower_vs_name,
                 device=device).build(input, self.tower_func)
             tower = self.tower_func.towers[tower_name]
         input_tensors = tower.get_tensors(input_names)
         output_tensors = tower.get_tensors(output_names)
         return OnlinePredictor(input_tensors, output_tensors)
+
+    @property
+    def _main_tower_vs_name(self):
+        """
+        The vs name for the "main" copy of the model,
+        to be used to build predictors.
+        """
+        return ""
 
 
 @six.add_metaclass(ABCMeta)

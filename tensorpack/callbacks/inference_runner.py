@@ -149,7 +149,7 @@ class InferenceRunner(InferenceRunnerBase):
             with tf.variable_scope(tf.get_variable_scope(), reuse=True):
                 SimplePredictBuilder(
                     ns_name=self._tower_name,
-                    vs_name='', device=0).build(    # TODO fix vs_name and maybe device
+                    vs_name=self.trainer._main_tower_vs_name, device=0).build(
                         self._input_source, self.trainer.tower_func)
                 self._tower_handle = self.trainer.tower_func.towers[-1]
 
@@ -224,7 +224,7 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
                     tower_name = self._tower_names[idx]
                     SimplePredictBuilder(
                         ns_name=tower_name,
-                        vs_name='', device=t).build(    # TODO fix vs_name and maybe device
+                        vs_name=self.trainer._main_tower_vs_name, device=t).build(
                             self._input_source, self.trainer.tower_func)
                     self._handles.append(self.trainer.tower_func.towers[-1])
 

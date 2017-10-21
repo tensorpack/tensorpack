@@ -7,6 +7,7 @@ import tensorflow as tf
 from six.moves import zip
 
 from ..utils import logger
+from ..utils.argtools import call_only_once
 from .common import get_tf_version_number, get_op_or_tensor_by_name, get_op_tensor_name
 
 __all__ = ['get_current_tower_context', 'TowerContext', 'TowerFuncWrapper']
@@ -17,30 +18,30 @@ _CurrentTowerContext = None
 class TowerContext(object):
     """ A context where the current model is being built in. """
 
-    def __init__(self, tower_name, is_training, index=0, use_vs=False):
+    def __init__(self, tower_name, is_training, index=0, vs_name=''):
         """
         Args:
             tower_name (str): The name scope of the tower.
             is_training (bool):
             index (int): index of this tower, only used in training.
-            use_vs (bool): Open a new variable scope with this name.
+            vs_name (str): Open a new variable scope with this name.
         """
         self._name = tower_name
         self._is_training = bool(is_training)
 
         if not self._is_training:
-            assert index == 0 and not use_vs, \
-                "use_vs and index are only used in training!"
+            assert index == 0, \
+                "TowerContext(index) is only valid in training!"
 
         self._index = int(index)
-        if use_vs:
-            self._vs_name = self._name
-            assert len(self._name)
-        else:
-            self._vs_name = ''
+        self._vs_name = vs_name
+        if len(vs_name):
+            assert len(tower_name), "TowerContext(vs_name) cannot be used with an empty tower_name!"
 
+        self._initial_vs_reuse = tf.get_variable_scope().reuse
         if self.has_own_variables:
-            assert not tf.get_variable_scope().reuse, "reuse=True in tower {}!".format(tower_name)
+            assert not self._initial_vs_reuse, \
+                "Cannot create tower {} with reuse=True!".format(tower_name)
 
     @property
     def is_main_training_tower(self):
@@ -55,7 +56,9 @@ class TowerContext(object):
         """
         Whether this tower is supposed to have its own variables.
         """
-        return self.is_main_training_tower or len(self._vs_name) > 0
+        return self.is_main_training_tower or \
+            (self.is_training and len(self._vs_name) > 0) or \
+            (not self.is_training and len(self._vs_name) > 0 and not self._initial_vs_reuse)
 
     # TODO clarify the interface on name/vs_name/ns_name.
     # TODO in inference, vs_name may need to be different from ns_name.i
@@ -72,6 +75,7 @@ class TowerContext(object):
     def ns_name(self):
         return self._name
 
+    # TODO another method to filter by ns_name
     def filter_vars_by_vs_name(self, varlist):
         """
         Filter the list and only keep those under the current variable scope.
@@ -93,32 +97,36 @@ class TowerContext(object):
     def index(self):
         return self._index
 
+    @call_only_once
+    def _get_scopes(self):
+        if not len(self._name):
+            return []
+        ret = []
+
+        # either the Tower was originally created with reuse,
+        # or a training tower without vs has to use reuse.
+        reuse = (self.is_training and self._index > 0 and not
+                 self.has_own_variables) or self._initial_vs_reuse
+
+        if len(self._vs_name):
+            ret.append(tf.variable_scope(self._vs_name, reuse=reuse))
+        else:
+            if reuse:
+                ret.append(tf.variable_scope(
+                    tf.get_variable_scope(), reuse=True))
+        # always clear existing ns  # TODO check existing ns
+        if len(self._name) and self._name != self._vs_name:
+            ret.append(tf.name_scope(self._name + '/'))
+        return ret
+
     def __enter__(self):
         global _CurrentTowerContext
         assert _CurrentTowerContext is None, "Cannot nest TowerContext!"
         _CurrentTowerContext = self
-        self._ctxs = []
         curr_vs = tf.get_variable_scope()
         assert curr_vs.name == '', "Cannot nest TowerContext with an existing variable scope!"
 
-        if len(self._name):
-            if not self.is_training:
-                # if not training, should handle reuse outside
-                # but still good to clear name_scope first
-                self._ctxs.append(tf.name_scope(None))
-                self._ctxs.append(tf.name_scope(self._name))
-            else:
-                if self.has_own_variables:
-                    if len(self._vs_name):
-                        self._ctxs.append(tf.variable_scope(self._vs_name))
-                    else:
-                        self._ctxs.append(tf.name_scope(self._name))
-                else:
-                    reuse = self._index > 0
-                    if reuse:
-                        self._ctxs.append(tf.variable_scope(
-                            tf.get_variable_scope(), reuse=True))
-                    self._ctxs.append(tf.name_scope(self._name))
+        self._ctxs = self._get_scopes()
         for c in self._ctxs:
             c.__enter__()
 

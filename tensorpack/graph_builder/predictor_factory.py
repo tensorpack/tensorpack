@@ -26,7 +26,6 @@ class SimplePredictBuilder(GraphBuilder):
             vs_name (str):
             device (int):
         """
-        # TODO does vs_name work properly here when different from ns_name?
         self._ns_name = ns_name
         self._vs_name = vs_name
 
@@ -56,7 +55,8 @@ class SimplePredictBuilder(GraphBuilder):
 
         with tf.device(self._device), \
                 self._maybe_open_vs(), \
-                TowerContext(self._ns_name, is_training=False), \
+                TowerContext(
+                    self._ns_name, is_training=False, vs_name=self._vs_name), \
                 freeze_collection(TOWER_FREEZE_KEYS + [tf.GraphKeys.UPDATE_OPS]):
                 # also freeze UPDATE_OPS in inference, because they should never be used
                 # TODO a better way to log and warn about collection change during build_graph.

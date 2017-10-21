@@ -88,7 +88,7 @@ class DataParallelBuilder(GraphBuilder):
                     tower_names[idx],
                     is_training=True,
                     index=idx,
-                    use_vs=usevs):
+                    vs_name=tower_names[idx] if usevs else ''):
                 logger.info("Building graph for training tower {} on device {}...".format(idx, device))
 
                 # When use_vs is True, use LOCAL_VARIABLES,
