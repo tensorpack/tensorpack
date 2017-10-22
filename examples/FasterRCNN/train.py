@@ -286,19 +286,19 @@ if __name__ == '__main__':
                 # linear warmup
                 ScheduledHyperParamSetter(
                     'learning_rate',
-                    [(0, 0.003), (warmup_epoch * factor, 0.01)], interp='linear'),
+                    [(0, 3e-3), (warmup_epoch * factor, 1e-2)], interp='linear'),
                 # step decay
                 ScheduledHyperParamSetter(
                     'learning_rate',
-                    [(warmup_epoch * factor, 0.01),
-                     (120000 * factor // stepnum, 1e-3),
-                     (180000 * factor // stepnum, 1e-4)]),
+                    [(warmup_epoch * factor, 1e-2),
+                     (150000 * factor // stepnum, 1e-3),
+                     (210000 * factor // stepnum, 1e-4)]),
                 HumanHyperParamSetter('learning_rate'),
                 EvalCallback(),
                 GPUUtilizationTracker(),
             ],
             steps_per_epoch=stepnum,
-            max_epoch=205000 * factor // stepnum,
+            max_epoch=230000 * factor // stepnum,
             session_init=get_model_loader(args.load) if args.load else None,
             nr_tower=get_nr_gpu()
         )

@@ -39,8 +39,8 @@ To predict on an image (and show output in a window):
 
 ## Results
 
-+ trainval35k/minival, FASTRCNN_BATCH=256: 32.9
-+ trainval35k/minival, FASTRCNN_BATCH=64: 31.6. Takes less than one day on 8 Maxwell TitanX.
++ trainval35k/minival, FASTRCNN_BATCH=256: 33.4. Takes 49h on 8 TitanX.
++ trainval35k/minival, FASTRCNN_BATCH=64: 32.2. Takes 31h on 8 TitanX.
 
 The hyperparameters are not carefully tuned. You can probably get better performance by e.g.  training longer.
 
