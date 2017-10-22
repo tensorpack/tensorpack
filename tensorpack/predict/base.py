@@ -163,7 +163,8 @@ class OfflinePredictor(OnlinePredictor):
             input_tensors = get_tensors_by_names(config.input_names)
             output_tensors = get_tensors_by_names(config.output_names)
 
+            config.session_init._setup_graph()
             sess = config.session_creator.create_session()
-            config.session_init.init(sess)
+            config.session_init._run_init(sess)
             super(OfflinePredictor, self).__init__(
                 input_tensors, output_tensors, config.return_input, sess)
