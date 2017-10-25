@@ -302,5 +302,5 @@ if __name__ == '__main__':
             max_epoch=205000 * factor // stepnum,
             session_init=get_model_loader(args.load) if args.load else None,
         )
-        trainer = SyncMultiGPUTrainerReplicated(range(len(get_nr_gpu())))
+        trainer = SyncMultiGPUTrainerReplicated(get_nr_gpu())
         launch_train_with_config(cfg, trainer)

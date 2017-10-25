@@ -234,4 +234,4 @@ if __name__ == '__main__':
             config.session_init = get_model_loader(args.load)
         launch_train_with_config(
             config,
-            SyncMultiGPUTrainer(range(max(get_nr_gpu(), 1))))
+            SyncMultiGPUTrainer(max(get_nr_gpu(), 1)))

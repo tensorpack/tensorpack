@@ -322,5 +322,4 @@ if __name__ == '__main__':
     config = get_config()
     if args.load:
         config.session_init = SaverRestore(args.load)
-    config.nr_tower = nr_tower
-    launch_train_with_config(configi, SyncMultiGPUTrainer(list(range(nr_tower))))
+    launch_train_with_config(config, SyncMultiGPUTrainer(nr_tower))

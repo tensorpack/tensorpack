@@ -264,4 +264,4 @@ if __name__ == '__main__':
         config = get_config()
         if args.load:
             config.session_init = SaverRestore(args.load)
-        launch_train_with_config(config, SyncMultiGPUTrainer(list(range(NR_GPU))))
+        launch_train_with_config(config, SyncMultiGPUTrainer(NR_GPU))
