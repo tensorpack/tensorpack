@@ -9,10 +9,12 @@ import os
 
 import tensorflow as tf
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import logger, QueueInput
 from tensorpack.models import *
 from tensorpack.callbacks import *
-from tensorpack.train import TrainConfig, SyncMultiGPUTrainerParameterServer
+from tensorpack.train import (
+    TrainConfig, SyncMultiGPUTrainerParameterServer, launch_train_with_config)
 from tensorpack.dataflow import imgaug, FakeData
 from tensorpack.tfutils import argscope, get_model_loader
 from tensorpack.utils.gpu import get_nr_gpu
@@ -132,4 +134,5 @@ if __name__ == '__main__':
         config = get_config(model, fake=args.fake)
         if args.load:
             config.session_init = get_model_loader(args.load)
-        SyncMultiGPUTrainerParameterServer(config).train()
+        trainer = SyncMultiGPUTrainerParameterServer(max(get_nr_gpu(), 1))
+        launch_train_with_config(config, trainer)

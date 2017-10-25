@@ -227,7 +227,7 @@ def get_data(dataset_name):
     ds = AugmentImageComponent(ds, augmentors, copy=False)
     ds = BatchData(ds, BATCH_SIZE, remainder=not isTrain)
     if isTrain:
-        ds = PrefetchDataZMQ(ds, min(12, multiprocessing.cpu_count()))
+        ds = PrefetchDataZMQ(ds, min(25, multiprocessing.cpu_count()))
     return ds
 
 
