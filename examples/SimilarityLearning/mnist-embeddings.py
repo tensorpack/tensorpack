@@ -9,7 +9,7 @@ import argparse
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 
-
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 import tensorpack.tfutils.symbolic_functions as symbf
 from tensorpack.tfutils.summary import add_moving_summary
@@ -442,4 +442,4 @@ if __name__ == '__main__':
             if args.load:
                 config.session_init = SaverRestore(args.load)
             else:
-                SimpleTrainer(config).train()
+                launch_train_with_config(config, SimpleTrainer())

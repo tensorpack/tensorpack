@@ -10,6 +10,7 @@ import os
 import tensorflow as tf
 import multiprocessing
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
@@ -298,5 +299,4 @@ if __name__ == '__main__':
     config = get_config()
     if args.load:
         config.session_init = SaverRestore(args.load)
-    config.nr_tower = NR_GPU
-    SyncMultiGPUTrainer(config).train()
+    launch_train_with_config(config, SyncMultiGPUTrainer(NR_GPU))

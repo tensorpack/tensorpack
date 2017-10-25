@@ -7,6 +7,7 @@ import numpy as np
 import argparse
 import os
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
@@ -171,7 +172,7 @@ if __name__ == '__main__':
                                       [(1, 0.1), (82, 0.01), (123, 0.001), (300, 0.0002)])
         ],
         max_epoch=400,
-        nr_tower=max(get_nr_gpu(), 1),
         session_init=SaverRestore(args.load) if args.load else None
     )
-    SyncMultiGPUTrainerParameterServer(config).train()
+    nr_gpu = max(get_nr_gpu(), 1)
+    launch_train_with_config(config, SyncMultiGPUTrainerParameterServer(nr_gpu))

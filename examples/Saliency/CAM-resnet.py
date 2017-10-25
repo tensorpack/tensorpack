@@ -9,6 +9,7 @@ import numpy as np
 import os
 import multiprocessing
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 import tensorflow as tf
 from tensorflow.contrib.layers import variance_scaling_initializer
 from tensorpack import *
@@ -19,9 +20,10 @@ from tensorpack.tfutils.summary import *
 from tensorpack.utils.gpu import get_nr_gpu
 from tensorpack.utils import viz
 
-from imagenet_resnet_utils import (
-    fbresnet_augmentor, preresnet_basicblock, preresnet_group,
-    image_preprocess, compute_loss_and_error)
+from imagenet_utils import (
+    fbresnet_augmentor, image_preprocess, compute_loss_and_error)
+from resnet_model import (
+    preresnet_basicblock, preresnet_group)
 
 
 TOTAL_BATCH_SIZE = 256
@@ -90,10 +92,6 @@ def get_data(train_or_test):
 
 
 def get_config():
-    nr_gpu = get_nr_gpu()
-    global BATCH_SIZE
-    BATCH_SIZE = TOTAL_BATCH_SIZE // nr_gpu
-
     dataset_train = get_data('train')
     dataset_val = get_data('val')
 
@@ -111,7 +109,6 @@ def get_config():
         ],
         steps_per_epoch=5000,
         max_epoch=105,
-        nr_tower=nr_gpu
     )
 
 
@@ -163,6 +160,9 @@ if __name__ == '__main__':
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
+    nr_gpu = get_nr_gpu()
+    BATCH_SIZE = TOTAL_BATCH_SIZE // nr_gpu
+
     if args.cam:
         BATCH_SIZE = 128    # something that can run on one gpu
         viz_cam(args.load, args.data)
@@ -172,4 +172,4 @@ if __name__ == '__main__':
     config = get_config()
     if args.load:
         config.session_init = get_model_loader(args.load)
-    SyncMultiGPUTrainerParameterServer(config).train()
+    launch_train_with_config(config, SyncMultiGPUTrainerParameterServer(nr_gpu))

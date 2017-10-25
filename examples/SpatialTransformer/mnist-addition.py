@@ -10,6 +10,7 @@ import os
 import sys
 import argparse
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.dataflow import dataset
 from tensorpack.tfutils import sesscreate, optimizer, summary
@@ -186,4 +187,4 @@ if __name__ == '__main__':
         config = get_config()
         if args.load:
             config.session_init = SaverRestore(args.load)
-        SimpleTrainer(config).train()
+        launch_train_with_config(config, SimpleTrainer())

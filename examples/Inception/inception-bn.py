@@ -9,6 +9,7 @@ import numpy as np
 import os
 import tensorflow as tf
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
@@ -192,6 +193,6 @@ if __name__ == '__main__':
     if args.load:
         config.session_init = SaverRestore(args.load)
     if args.gpu:
-        config.nr_tower = len(args.gpu.split(','))
-        assert config.nr_tower == NR_GPU
-    SyncMultiGPUTrainer(config).train()
+        nr_tower = len(args.gpu.split(','))
+        assert nr_tower == NR_GPU
+    launch_train_with_config(config, SyncMultiGPUTrainer(NR_GPU))
