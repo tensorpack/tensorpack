@@ -96,11 +96,11 @@ if __name__ == '__main__':
         assert args.data
         logger.auto_set_dir()
         config = TrainConfig(
-            model=Model(),
-            dataflow=DCGAN.get_data(args.data),
             callbacks=[ModelSaver()],
             steps_per_epoch=300,
             max_epoch=200,
             session_init=SaverRestore(args.load) if args.load else None
         )
-        SeparateGANTrainer(config, g_period=6).train()
+        SeparateGANTrainer(
+            QueueInput(DCGAN.get_data(args.data)),
+            Model(), g_period=6).train_with_config(config)

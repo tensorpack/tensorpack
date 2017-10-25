@@ -70,9 +70,10 @@ class GANTrainer(TowerTrainer):
         assert isinstance(model, GANModelDesc), model
         cbs = input.setup(model.get_inputs_desc())
 
-        tower_func = TowerFuncWrapper(model.build_graph, model.get_inputs_desc())
+        tower_func = TowerFuncWrapper(
+            model.build_graph, model.get_inputs_desc())
         with TowerContext('', is_training=True):
-            tower_func(input)
+            tower_func(*input.get_input_tensors())
         opt = model.get_optimizer()
 
         # by default, run one d_min after one g_min
@@ -103,7 +104,7 @@ class SeparateGANTrainer(TowerTrainer):
         cbs = input.setup(model.get_inputs_desc())
         tower_func = TowerFuncWrapper(model.build_graph, model.get_inputs_desc())
         with TowerContext('', is_training=True):
-            tower_func(input)
+            tower_func(*input.get_input_tensors())
 
         opt = model.get_optimizer()
         with tf.name_scope('optimize'):

@@ -70,7 +70,7 @@ class SyncMultiGPUTrainerParameterServer(Trainer):
 
         self.train_op = SyncMultiGPUParameterServerBuilder(
             self._config.tower, self._ps_device).build(
-                lambda: self.model.build_graph_get_grads(
+                lambda: self.model._build_graph_get_grads(
                     *self._input_source.get_input_tensors()),
                 self.model.get_optimizer)
 
@@ -104,7 +104,7 @@ class SyncMultiGPUTrainerReplicated(Trainer):
 
         self.train_op, post_init_op = SyncMultiGPUReplicatedBuilder(
             self._config.tower).build(
-                lambda: self.model.build_graph_get_grads(
+                lambda: self.model._build_graph_get_grads(
                     *self._input_source.get_input_tensors()),
                 self.model.get_optimizer)
 
@@ -134,7 +134,7 @@ class AsyncMultiGPUTrainer(Trainer):
 
         self.train_op = AsyncMultiGPUBuilder(
             self._config.tower, self._scale_gradient).build(
-                lambda: self.model.build_graph_get_grads(
+                lambda: self.model._build_graph_get_grads(
                     *self._input_source.get_input_tensors()),
                 self.model.get_optimizer)
 

@@ -64,7 +64,7 @@ class DistributedTrainerReplicated(Trainer):
         self._config.callbacks.extend(cbs)
 
         self.train_op, initial_sync_op, model_sync_op = self._builder.build(
-            lambda: self.model.build_graph_get_grads(
+            lambda: self.model._build_graph_get_grads(
                 *self._input_source.get_input_tensors()),
             self.model.get_optimizer)
 

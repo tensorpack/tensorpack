@@ -78,7 +78,7 @@ def launch_train_with_config(config, trainer):
 
     trainer.setup_graph(
         inputs_desc, input,
-        model.build_graph_get_cost, model.get_optimizer)
+        model._build_graph_get_cost, model.get_optimizer)
     trainer.train(
         config.callbacks, config.monitors,
         config.session_creator, config.session_init,

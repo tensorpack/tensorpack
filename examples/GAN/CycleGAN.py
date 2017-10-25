@@ -219,8 +219,6 @@ if __name__ == '__main__':
     data = PrintData(data)
 
     config = TrainConfig(
-        model=Model(),
-        dataflow=data,
         callbacks=[
             ModelSaver(),
             ScheduledHyperParamSetter(
@@ -229,7 +227,8 @@ if __name__ == '__main__':
             PeriodicTrigger(VisualizeTestSet(), every_k_epochs=3),
         ],
         max_epoch=195,
+        steps_per_epoch=data.size(),
         session_init=SaverRestore(args.load) if args.load else None
     )
 
-    GANTrainer(config).train()
+    GANTrainer(QueueInput(data), Model()).train_with_config(config)
