@@ -8,6 +8,7 @@ import numpy as np
 import os, sys
 import argparse
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.utils.viz import *
 from tensorpack.tfutils.summary import add_moving_summary
@@ -156,11 +157,11 @@ if __name__ == '__main__':
         assert args.data
         logger.auto_set_dir()
         config = TrainConfig(
-            model=Model(),
-            dataflow=get_data(args.data),
             callbacks=[ModelSaver()],
             steps_per_epoch=300,
             max_epoch=200,
             session_init=SaverRestore(args.load) if args.load else None
         )
-        GANTrainer(config).train()
+        GANTrainer(
+            input=QueueInput(get_data(args.data)),
+            model=Model()).train_with_config(config)

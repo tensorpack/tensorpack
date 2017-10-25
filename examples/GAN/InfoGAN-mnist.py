@@ -10,6 +10,7 @@ import os
 import sys
 import argparse
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.utils import viz
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope, under_name_scope

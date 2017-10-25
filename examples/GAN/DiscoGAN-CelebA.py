@@ -8,6 +8,7 @@ import argparse
 from six.moves import map, zip
 import numpy as np
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.utils.viz import *
 import tensorpack.tfutils.symbolic_functions as symbf

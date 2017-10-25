@@ -218,6 +218,28 @@ class Trainer(object):
         self.initialize(session_creator, session_init)
         self.main_loop(steps_per_epoch, starting_epoch, max_epoch)
 
+    def train_with_config(self, config):
+        """
+        An alias to simplify the use of `TrainConfig`.
+        It is equivalent to the following:
+
+        .. code-block:: python
+
+            self.train(
+                config.callbacks, config.monitors,
+                config.session_creator, config.session_init,
+                config.steps_per_epoch, config.starting_epoch, config.max_epoch)
+        """
+        if config.data or config.dataflow or config.model:
+            logger.warn(
+                "data/dataflow/model in TrainConfig will not be used "
+                "in `Trainer.train_with_config`")
+            logger.warn("To build the graph from config, use `launch_train_with_config`!")
+        self.train(
+            config.callbacks, config.monitors,
+            config.session_creator, config.session_init,
+            config.steps_per_epoch, config.starting_epoch, config.max_epoch)
+
     # create the old trainer when called with TrainConfig
     def __new__(cls, *args, **kwargs):
         if (len(args) > 0 and isinstance(args[0], TrainConfig)) \
@@ -337,20 +359,6 @@ class SingleCostTrainer(TowerTrainer):
     To use a SingleCostTrainer object, call `trainer.setup_graph(...); trainer.train(...)`.
     """
 
-    def train(self,
-              callbacks, monitors,
-              session_creator, session_init,
-              steps_per_epoch, starting_epoch, max_epoch):
-        """
-        Same as :meth:`Trainer.train()`, except that the callbacks this
-        trainer needs are automatically added.
-        """
-        callbacks = callbacks + self._internal_callbacks
-        super(SingleCostTrainer, self).train(
-            callbacks, monitors,
-            session_creator, session_init,
-            steps_per_epoch, starting_epoch, max_epoch)
-
     @call_only_once
     def setup_graph(self, inputs_desc, input, get_cost_fn, get_opt_fn):
         """
@@ -375,8 +383,10 @@ class SingleCostTrainer(TowerTrainer):
 
         input_callbacks = self._setup_input(inputs_desc, input)
         train_callbacks = self._setup_graph(input, get_cost_fn, get_opt_fn)
-        self._internal_callbacks = input_callbacks + train_callbacks
-        return self._internal_callbacks
+        internal_callbacks = input_callbacks + train_callbacks
+        for cb in internal_callbacks:
+            self._register_callback(cb)
+        return internal_callbacks
 
     @abstractmethod
     def _setup_graph(self, input, get_cost_fn, get_opt_fn):
