@@ -136,12 +136,15 @@ class MultiGPUGANTrainer(TowerTrainer):
         input = StagingInput(input, list(range(nr_gpu)))
         cbs = input.setup(model.get_inputs_desc())
 
-        def get_cost():
-            model.build_graph(input.get_input_tensors())
+        def get_cost(*inputs):
+            model.build_graph(inputs)
             return [model.d_loss, model.g_loss]
         tower_func = TowerFuncWrapper(get_cost, model.get_inputs_desc())
         devices = [LeastLoadedDeviceSetter(d, raw_devices) for d in raw_devices]
-        cost_list = DataParallelBuilder.build_on_towers(list(range(nr_gpu)), tower_func, devices)
+        cost_list = DataParallelBuilder.build_on_towers(
+            list(range(nr_gpu)),
+            lambda: tower_func(*input.get_input_tensors()),
+            devices)
         # simply average the cost. It might get faster to average the gradients
         with tf.name_scope('optimize'):
             d_loss = tf.add_n([x[0] for x in cost_list]) * (1.0 / nr_gpu)
