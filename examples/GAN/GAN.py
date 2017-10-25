@@ -68,10 +68,11 @@ class GANTrainer(TowerTrainer):
     def __init__(self, input, model):
         super(GANTrainer, self).__init__()
         assert isinstance(model, GANModelDesc), model
-        cbs = input.setup(model.get_inputs_desc())
+        inputs_desc = model.get_inputs_desc()
+        cbs = input.setup(inputs_desc)
 
         tower_func = TowerFuncWrapper(
-            model.build_graph, model.get_inputs_desc())
+            model.build_graph, inputs_desc)
         with TowerContext('', is_training=True):
             tower_func(*input.get_input_tensors())
         opt = model.get_optimizer()
