@@ -152,7 +152,7 @@ def convert_param_name(param):
     for k, v in six.iteritems(param):
         try:
             newname = name_conversion(k)
-        except:
+        except Exception:
             logger.error("Exception when processing caffe layer {}".format(k))
             raise
         logger.info("Name Transform: " + k + ' --> ' + newname)

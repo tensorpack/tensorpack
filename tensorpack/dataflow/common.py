@@ -129,7 +129,7 @@ class BatchData(ProxyDataFlow):
                 else:
                     try:
                         tp = dt.dtype
-                    except:
+                    except AttributeError:
                         raise TypeError("Unsupported type to batch: {}".format(type(dt)))
                 try:
                     result.append(
@@ -144,7 +144,7 @@ class BatchData(ProxyDataFlow):
                     try:
                         # open an ipython shell if possible
                         import IPython as IP; IP.embed()    # noqa
-                    except:
+                    except ImportError:
                         pass
         return result
 

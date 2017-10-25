@@ -247,7 +247,7 @@ class ILSVRC12(ILSVRC12Files):
                     cnt += 1
                 except KeyboardInterrupt:
                     raise
-                except:
+                except Exception:
                     ret.append(None)
             logger.info("{}/{} images have bounding box.".format(cnt, len(imglist)))
         return ret

@@ -193,7 +193,7 @@ class Trainer(object):
                 logger.info("Training was stopped.")
             except KeyboardInterrupt:
                 logger.info("Detected Ctrl-C and exiting main loop.")
-            except:
+            except Exception:
                 raise
             finally:
                 self._callbacks.after_train()

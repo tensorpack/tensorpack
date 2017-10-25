@@ -38,7 +38,7 @@ class Inferencer(Callback):
         for k, v in six.iteritems(ret):
             try:
                 v = float(v)
-            except:
+            except ValueError:
                 logger.warn("{} returns a non-scalar statistics!".format(type(self).__name__))
                 continue
             else:

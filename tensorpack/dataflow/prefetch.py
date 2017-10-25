@@ -61,7 +61,7 @@ def _zmq_catch_error(name):
             raise DataFlowTerminated()
         else:
             raise
-    except:
+    except Exception:
         raise
 
 
@@ -110,7 +110,7 @@ class _MultiProcessZMQDataFlow(DataFlow):
             x.terminate()
         try:
             print("{} successfully cleaned-up.".format(type(self).__name__))
-        except:
+        except Exception:
             pass
 
 
@@ -347,7 +347,7 @@ class MultiThreadMapData(ProxyDataFlow):
                         return
                     # cannot ignore None here. will lead to unsynced send/recv
                     self.outq.put(self.func(dp))
-            except:
+            except Exception:
                 if self.stopped():
                     pass        # skip duplicated error messages
                 else:
