@@ -12,6 +12,7 @@ import operator
 import six
 from six.moves import map, range
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.tfutils import symbolic_functions, summary, optimizer
 from tensorpack.tfutils.gradproc import GlobalNormClip
@@ -116,7 +117,7 @@ def get_config():
     ds = BatchData(ds, param.batch_size)
 
     return TrainConfig(
-        dataflow=ds,
+        data=QueueInput(ds),
         callbacks=[
             ModelSaver(),
             ScheduledHyperParamSetter('learning_rate', [(25, 2e-4)])
@@ -190,4 +191,4 @@ if __name__ == '__main__':
         config = get_config()
         if args.load:
             config.session_init = SaverRestore(args.load)
-        QueueInputTrainer(config).train()
+        launch_train_with_config(config, SimpleTrainer())

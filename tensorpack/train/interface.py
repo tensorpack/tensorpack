@@ -43,12 +43,12 @@ def apply_default_prefetch(input_source_or_dataflow, trainer, towers):
 
 def launch_train_with_config(config, trainer):
     """
-    Train with a :class:`TrainConfig` and a new version of :class:`Trainer`, to
+    Train with a :class:`TrainConfig` and a :class:`Trainer`, to
     mimic the old training interface.
 
     Args:
         config (TrainConfig):
-        trainer (Trainer): an instance of the new trainer
+        trainer (Trainer): an instance of a SingleCostTrainer
 
     Examples:
 

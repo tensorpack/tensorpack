@@ -13,6 +13,7 @@ import numpy as np
 import json
 import tensorflow as tf
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 import tensorpack.tfutils.symbolic_functions as symbf
 from tensorpack.tfutils.summary import add_moving_summary
@@ -300,6 +301,6 @@ if __name__ == '__main__':
             steps_per_epoch=stepnum,
             max_epoch=205000 * factor // stepnum,
             session_init=get_model_loader(args.load) if args.load else None,
-            nr_tower=get_nr_gpu()
         )
-        SyncMultiGPUTrainerReplicated(cfg, gpu_prefetch=False).train()
+        trainer = SyncMultiGPUTrainerReplicated(range(len(get_nr_gpu())))
+        launch_train_with_config(cfg, trainer)

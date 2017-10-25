@@ -12,6 +12,7 @@ import operator
 import six
 from six.moves import map, range
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.tfutils.gradproc import SummaryGradient, GlobalNormClip
 from tensorpack.utils.globvars import globalns as param
@@ -94,7 +95,7 @@ def get_data(path, isTrain, stat_file):
 
 def get_config(ds_train, ds_test):
     return TrainConfig(
-        dataflow=ds_train,
+        data=QueueInput(ds_train),
         callbacks=[
             ModelSaver(),
             StatMonitorParamSetter('learning_rate', 'error',
@@ -128,4 +129,4 @@ if __name__ == '__main__':
     config = get_config(ds_train, ds_test)
     if args.load:
         config.session_init = SaverRestore(args.load)
-    QueueInputTrainer(config).train()
+    launch_train_with_config(config, SimpleTrainer())

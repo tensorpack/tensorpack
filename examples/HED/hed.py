@@ -11,6 +11,7 @@ from six.moves import zip
 import os
 import sys
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 import tensorpack.tfutils.symbolic_functions as symbf
 from tensorpack.dataflow import dataset
@@ -231,5 +232,6 @@ if __name__ == '__main__':
         config = get_config()
         if args.load:
             config.session_init = get_model_loader(args.load)
-        config.nr_tower = max(get_nr_gpu(), 1)
-        SyncMultiGPUTrainer(config).train()
+        launch_train_with_config(
+            config,
+            SyncMultiGPUTrainer(range(max(get_nr_gpu(), 1))))

@@ -11,6 +11,7 @@ import multiprocessing
 import os
 import sys
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
@@ -322,4 +323,4 @@ if __name__ == '__main__':
     if args.load:
         config.session_init = SaverRestore(args.load)
     config.nr_tower = nr_tower
-    SyncMultiGPUTrainer(config).train()
+    launch_train_with_config(configi, SyncMultiGPUTrainer(list(range(nr_tower))))

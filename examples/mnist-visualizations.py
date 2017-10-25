@@ -11,6 +11,7 @@ import argparse
 MNIST ConvNet example with weights/activations visualization.
 """
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.dataflow import dataset
 import tensorflow as tf
@@ -161,4 +162,4 @@ if __name__ == '__main__':
     config = get_config()
     if args.load:
         config.session_init = SaverRestore(args.load)
-    SimpleTrainer(config).train()
+    launch_train_with_config(config, SimpleTrainer())

@@ -14,6 +14,7 @@ the only differences are:
     2. use slim names to summarize weights
 """
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.dataflow import dataset
 import tensorflow as tf
@@ -101,4 +102,4 @@ if __name__ == '__main__':
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
     config = get_config()
-    SimpleTrainer(config).train()
+    launch_train_with_config(config, SimpleTrainer())

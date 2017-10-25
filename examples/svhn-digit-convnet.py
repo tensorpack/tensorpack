@@ -7,6 +7,7 @@ import argparse
 import numpy as np
 import os
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import prediction_incorrect
 from tensorpack.dataflow import dataset
@@ -99,7 +100,7 @@ def get_config():
 
     return TrainConfig(
         model=Model(),
-        dataflow=data_train,
+        data=QueueInput(data_train),
         callbacks=[
             ModelSaver(),
             InferenceRunner(data_test,
@@ -125,4 +126,4 @@ if __name__ == '__main__':
         config = get_config()
         if args.load:
             config.session_init = SaverRestore(args.load)
-        QueueInputTrainer(config).train()
+        launch_train_with_config(config, SimpleTrainer())
