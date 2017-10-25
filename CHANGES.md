@@ -10,10 +10,10 @@ TensorFlow itself also changed APIs before 1.0 and those are not listed here.
 
 + [2017/10/21]
 	tensorpack is gradually switching to a new Trainer API.
-	Compatibility is kept in most ways but not guaranteed.
+	The old API will keep working for a while.
 	To switch to new API, the easiest way is to:
 
-	1. `export TENSORPACK_TRAIN_API=v2`	(will be default in the future).
+	1. `export TENSORPACK_TRAIN_API=v2`	(will be default soon in the future).
 	2. Replace `SomeTrainer(config, ...).train()` with `launch_train_with_config(config, SomeTrainer(...))`.
 
 + [2017/10/18]

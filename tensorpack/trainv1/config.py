@@ -19,7 +19,7 @@ __all__ = ['TrainConfig']
 
 class TrainConfig(object):
     """
-    Config for trainer.
+    A collection of options to be used for trainers.
     """
 
     def __init__(self,

@@ -1,14 +1,15 @@
 Bug Reports/Feature Requests/Usage Questions Only:
 
-Bug Reports:
+Bug Reports (including performance bug):
 Some part of code (either the library or examples) doesn't work as expected.
+Always include what you did, what you observed, what you expected.
 
 Feature Requests:
 1. Improve an existing feature.
 2. Add a new feature. Please note that, you can implement a lot of features by extending tensorpack
 	(See http://tensorpack.readthedocs.io/en/latest/tutorial/index.html#extend-tensorpack).
 	It may not have to be added to tensorpack unless you have a good reason.
-3. Note that we don't implement papers at other's requests.
+3. Note that we don't implement papers at others' requests.
 
 Usage Questions, e.g.:
 "How do I do [this specific thing] in tensorpack?"

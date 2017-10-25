@@ -5,7 +5,7 @@
 import tensorflow as tf
 
 from ..input_source import (
-    InputSource, FeedInput, QueueInput, StagingInputWrapper, DummyConstantInput)
+    InputSource, FeedInput, QueueInput, StagingInput, DummyConstantInput)
 
 from ..trainv1.config import TrainConfig
 from .base import SingleCostTrainer
@@ -36,8 +36,8 @@ def apply_default_prefetch(input_source_or_dataflow, trainer, towers):
         assert not isinstance(trainer, SimpleTrainer)
         assert tf.test.is_gpu_available()
 
-        if not isinstance(input, (StagingInputWrapper, DummyConstantInput)):
-            input = StagingInputWrapper(input, towers)
+        if not isinstance(input, (StagingInput, DummyConstantInput)):
+            input = StagingInput(input, towers)
     return input
 
 

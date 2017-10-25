@@ -28,7 +28,8 @@ __all__ = ['PlaceholderInput', 'FeedInput',
            'QueueInput', 'BatchQueueInput',
            'DummyConstantInput', 'TensorInput',
            'TFDatasetInput',
-           'StagingInputWrapper']
+           'StagingInputWrapper',
+           'StagingInput']
 
 
 class PlaceholderInput(InputSource):
@@ -398,7 +399,7 @@ class TFDatasetInput(FeedfreeInput):
         return self._iterator.get_next()
 
 
-class StagingInputWrapper(FeedfreeInput):
+class StagingInput(FeedfreeInput):
     """
     A wrapper around a feedfree input,
     to prefetch the input in StagingArea (on GPUs).
@@ -433,7 +434,7 @@ class StagingInputWrapper(FeedfreeInput):
         self._input = input
         if not isinstance(towers[0], int):
             # API changed
-            log_deprecated("StagingInputWrapper(devices=)", "Use (towers=) instead!", "2018-01-31")
+            log_deprecated("StagingInput(devices=)", "Use (towers=) instead!", "2018-01-31")
             self._devices = towers
         else:
             self._devices = ['/gpu:{}'.format(k) for k in towers]
@@ -451,7 +452,7 @@ class StagingInputWrapper(FeedfreeInput):
         cbs = self._input.get_callbacks()
 
         cbs.append(
-            StagingInputWrapper.StagingCallback(
+            StagingInput.StagingCallback(
                 self._get_stage_op(), self._get_unstage_op(), self._nr_stage))
         return cbs
 
@@ -488,3 +489,6 @@ class StagingInputWrapper(FeedfreeInput):
         with self.cached_name_scope():
             all_outputs = list(chain.from_iterable(self._unstage_ops))
             return tf.group(*all_outputs)
+
+
+StagingInputWrapper = StagingInput

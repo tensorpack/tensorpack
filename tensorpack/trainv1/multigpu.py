@@ -8,7 +8,7 @@ import tensorflow as tf
 from ..callbacks.graph import RunOp
 from ..utils.develop import log_deprecated
 
-from ..input_source import QueueInput, StagingInputWrapper, DummyConstantInput
+from ..input_source import QueueInput, StagingInput, DummyConstantInput
 from ..graph_builder.training import (
     SyncMultiGPUParameterServerBuilder,
     SyncMultiGPUReplicatedBuilder,
@@ -43,8 +43,8 @@ def apply_prefetch_policy(config, gpu_prefetch=True):
         assert tf.test.is_gpu_available()
 
         # seem to only improve on >1 GPUs
-        if not isinstance(config.data, (StagingInputWrapper, DummyConstantInput)):
-            config.data = StagingInputWrapper(config.data, config.tower)
+        if not isinstance(config.data, (StagingInput, DummyConstantInput)):
+            config.data = StagingInput(config.data, config.tower)
 
 
 class SyncMultiGPUTrainerParameterServer(Trainer):

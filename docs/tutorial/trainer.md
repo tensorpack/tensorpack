@@ -22,36 +22,31 @@ In other words, an "epoch" in tensorpack is the __default period to run callback
 
 ### Common Trainers
 
-<!--
-   -Most neural network training tasks are single-cost optimization.
-   -Tensorpack provides some trainer implementations for such tasks.
-   -These trainers will build the graph based on the given `ModelDesc`, and minimizes `ModelDesc.cost`.
-	 -->
+Most neural network training tasks are single-cost optimization.
+Tensorpack provides some trainer implementations for such tasks.
+These trainers will build the graph based on inputs and functions which build the cost from inputs.
 
-<!--
-   -To use trainers, pass a `TrainConfig` to configure them:
-   -
-   -```python
-   -config = TrainConfig(
-   -           model=MyModel()
-   -           dataflow=my_dataflow,
-   -           # data=my_inputsource, # alternatively, use a customized InputSource
-   -           callbacks=[...]
-   -         )
-   -
-   -# start training:
-   -SomeTrainer(config, other_arguments).train()
-   -
-   -# start multi-GPU training with synchronous update:
-   -# SyncMultiGPUTrainerParameterServer(config).train()
-   -```
-   -
-   -When you set the DataFlow (rather than the InputSource) in the config,
-   -tensorpack trainers automatically adopt certain prefetch mechanism, as mentioned
-   -in the [Input Pipeline](input-source.html) tutorial.
-   -You can set the InputSource instead, to customize this behavior.
-	 -->
-Trainers are being redesigned, this page will be updated soon.
+The simplest way to use trainers, is to pass a
+`TrainConfig` to the `launch_train_with_config` high-level wrapper.
+
+```python
+config = TrainConfig(
+	 model=MyModel()
+	 dataflow=my_dataflow,
+	 # data=my_inputsource, # alternatively, use a customized InputSource
+	 callbacks=[...]
+)
+
+trainer = SomeTrainer()
+# multi-GPU training with synchronous update:
+# trainer = SyncMultiGPUTrainerParameterServer([0, 1, 2])
+launch_train_with_config(config, trainer)
+```
+
+When you set the DataFlow (rather than the InputSource) in the config,
+`launch_train_with_config` automatically adopt certain prefetch mechanism, as mentioned
+in the [Input Pipeline](input-source.html) tutorial.
+You can set the InputSource instead, to customize this behavior.
 
 Existing multi-GPU trainers include the logic of data-parallel training.
 You can enable them by just one line, and all the necessary logic to achieve the best performance was baked into the trainers already.

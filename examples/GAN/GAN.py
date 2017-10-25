@@ -7,7 +7,7 @@ import tensorflow as tf
 import numpy as np
 import time
 from tensorpack import (Trainer, QueueInput,
-                        ModelDescBase, DataFlow, StagingInputWrapper,
+                        ModelDescBase, DataFlow, StagingInput,
                         TowerContext)
 from tensorpack.graph_builder import DataParallelBuilder, LeastLoadedDeviceSetter
 from tensorpack.tfutils.summary import add_moving_summary
@@ -136,7 +136,7 @@ class MultiGPUGANTrainer(Trainer):
         raw_devices = ['/gpu:{}'.format(k) for k in config.tower]
 
         # setup input
-        input = StagingInputWrapper(QueueInput(config.dataflow), config.tower)
+        input = StagingInput(QueueInput(config.dataflow), config.tower)
         model = config.model
         cbs = input.setup(model.get_inputs_desc())
         config.callbacks.extend(cbs)
