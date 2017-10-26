@@ -154,5 +154,5 @@ if __name__ == '__main__':
 
         nr_gpu = len(args.gpu.split(','))
         trainer = QueueInputTrainer() if nr_gpu <= 1 \
-            else SyncMultiGPUTrainerParameterServer(list(range(nr_gpu)))
+            else SyncMultiGPUTrainerParameterServer(nr_gpu)
         launch_train_with_config(config, trainer)

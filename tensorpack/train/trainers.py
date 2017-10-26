@@ -36,6 +36,7 @@ def _int_to_range(x):
     if isinstance(x, int):
         assert x > 0, x
         return list(range(x))
+    return x
 
 
 class SimpleTrainer(SingleCostTrainer):
