@@ -8,7 +8,7 @@ from ..input_source import (
     InputSource, FeedInput, QueueInput, StagingInput, DummyConstantInput)
 
 from ..trainv1.config import TrainConfig
-from .base import SingleCostTrainer
+from .tower import SingleCostTrainer
 from .trainers import SimpleTrainer, DistributedTrainerReplicated
 
 __all__ = ['launch_train_with_config', 'apply_default_prefetch']

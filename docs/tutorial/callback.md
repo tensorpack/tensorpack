@@ -25,58 +25,54 @@ Therefore these features can be reused with one single line, as long as you are 
 For example, these are the callbacks I used when training a ResNet:
 
 ```python
-TrainConfig(
-  # ...
-  callbacks=[
-    # save the model every epoch
-    ModelSaver(),
-    # backup the model with best validation error
-    MinSaver('val-error-top1'),
-    # run inference on another Dataflow every epoch, compute classification error and log to monitors
-    InferenceRunner(dataset_val, [
-        ClassificationError('wrong-top1', 'val-error-top1'),
-        ClassificationError('wrong-top5', 'val-error-top5')]),
-    # schedule the learning rate based on epoch number
-    ScheduledHyperParamSetter('learning_rate',
-                              [(30, 1e-2), (60, 1e-3), (85, 1e-4), (95, 1e-5)]),
-    # can manually set the learning rate during training
-    HumanHyperParamSetter('learning_rate'),
-    # send validation error to my phone through pushbullet
-    SendStat('curl -u your_id_xxx: https://api.pushbullet.com/v2/pushes \\
-               -d type=note -d title="validation error" \\
-               -d body={val-error-top1} > /dev/null 2>&1',
-               'val-error-top1'),
-    # record GPU utilizations during training
-    GPUUtilizationTracker(),
-    # can pause the training and start a debug shell, to observe what's going on
-    InjectShell(shell='ipython')
-  ],
-  extra_callbacks=[    # these callbacks are enabled by default already
-    # maintain those moving average summaries already defined in the model (e.g. training loss, training error)
-    MovingAverageSummary(),
-    # draw a nice progress bar
-    ProgressBar(),
-    # run `tf.summary.merge_all` every epoch and log to monitors
-    MergeAllSummaries(),
-    # run ops in GraphKeys.UPDATE_OPS collection along with training, if any
-    RunUpdateOps(),
-  ],
-  monitors=[        # monitors are a special kind of callbacks. these are also enabled by default
-    # write everything to tensorboard
-    TFEventWriter(),
-    # write all scalar data to a json file, for easy parsing
-    JSONWriter(),
-    # print all scalar data every epoch (can be configured differently)
-    ScalarPrinter(),
-  ]
-)
+callbacks=[
+	# save the model every epoch
+	ModelSaver(),
+	# backup the model with best validation error
+	MinSaver('val-error-top1'),
+	# run inference on another Dataflow every epoch, compute classification error and log to monitors
+	InferenceRunner(dataset_val, [
+			ClassificationError('wrong-top1', 'val-error-top1'),
+			ClassificationError('wrong-top5', 'val-error-top5')]),
+	# schedule the learning rate based on epoch number
+	ScheduledHyperParamSetter('learning_rate',
+														[(30, 1e-2), (60, 1e-3), (85, 1e-4), (95, 1e-5)]),
+	# can manually change the learning rate through a file during training
+	HumanHyperParamSetter('learning_rate'),
+	# send validation error to my phone through pushbullet
+	SendStat('curl -u your_id_xxx: https://api.pushbullet.com/v2/pushes \\
+						 -d type=note -d title="validation error" \\
+						 -d body={val-error-top1} > /dev/null 2>&1',
+						 'val-error-top1'),
+	# record GPU utilizations during training
+	GPUUtilizationTracker(),
+	# can pause the training and start a debug shell, to observe what's going on
+	InjectShell(shell='ipython')
+] + [    # these callbacks are enabled by default already, though you can customize them
+	# maintain those moving average summaries already defined in the model (e.g. training loss, training error)
+	MovingAverageSummary(),
+	# draw a nice progress bar
+	ProgressBar(),
+	# run `tf.summary.merge_all` every epoch and log to monitors
+	MergeAllSummaries(),
+	# run ops in GraphKeys.UPDATE_OPS collection along with training, if any
+	RunUpdateOps(),
+],
+monitors=[        # monitors are a special kind of callbacks. these are also enabled by default
+	# write everything to tensorboard
+	TFEventWriter(),
+	# write all scalar data to a json file, for easy parsing
+	JSONWriter(),
+	# print all scalar data every epoch (can be configured differently)
+	ScalarPrinter(),
+]
 ```
 
 Notice that callbacks cover every detail of training, ranging from graph operations to the progress bar.
 This means you can customize every part of the training to your preference, e.g. display something
 different in the progress bar, evaluating part of the summaries at a different frequency, etc.
 These features may not be always useful, but think about how messy the main loop would look like if you
-were to write the logic together with the loops, and how easy your life will be if you could enable
+were to write these logic together with the loops, and how easy your life will be if you could enable
 these features with one line when you need them.
 
 See [Write a callback](http://tensorpack.readthedocs.io/en/latest/tutorial/extend/callback.html)
