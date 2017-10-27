@@ -90,7 +90,7 @@ class GANTrainer(TowerTrainer):
 
 
 class SeparateGANTrainer(TowerTrainer):
-    """ A GAN trainer which runs two optimization ops with a certain ratio, one in each step. """
+    """ A GAN trainer which runs two optimization ops with a certain ratio."""
     def __init__(self, input, model, d_period=1, g_period=1):
         """
         Args:

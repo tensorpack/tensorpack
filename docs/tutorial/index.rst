@@ -39,9 +39,9 @@ User Tutorials
   dataflow
   input-source
   efficient-dataflow
-  graph
   symbolic
   trainer
+  training-interface
   callback
   summary
   faq

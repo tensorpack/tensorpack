@@ -44,7 +44,14 @@ def apply_default_prefetch(input_source_or_dataflow, trainer, towers):
 def launch_train_with_config(config, trainer):
     """
     Train with a :class:`TrainConfig` and a :class:`Trainer`, to
-    mimic the old training interface.
+    mimic the old training interface. It basically does the following
+    3 things (and you can easily do them by yourself):
+
+    1. Setup the :class:`InputSource` with automatic prefetching,
+       for `config.data` or `config.dataflow`.
+    2. Call `trainer.setup_graph` with the :class:`InputSource`,
+       as well as `config.model`.
+    3. Call `trainer.train` with rest of the attributes of config.
 
     Args:
         config (TrainConfig):
@@ -79,7 +86,4 @@ def launch_train_with_config(config, trainer):
     trainer.setup_graph(
         inputs_desc, input,
         model._build_graph_get_cost, model.get_optimizer)
-    trainer.train(
-        config.callbacks, config.monitors,
-        config.session_creator, config.session_init,
-        config.steps_per_epoch, config.starting_epoch, config.max_epoch)
+    trainer.train_with_config(config)

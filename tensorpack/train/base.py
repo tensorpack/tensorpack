@@ -356,7 +356,7 @@ class SingleCostTrainer(TowerTrainer):
     Single-cost trainer has a :meth:`setup_graph` method which takes
     (inputs_desc, input, get_cost_fn, get_opt_fn), and build the training operations from them.
 
-    To use a SingleCostTrainer object, call `trainer.setup_graph(...); trainer.train(...)`.
+    To use a :class:`SingleCostTrainer` object, call `trainer.setup_graph(...); trainer.train(...)`.
     """
 
     @call_only_once
@@ -368,14 +368,16 @@ class SingleCostTrainer(TowerTrainer):
             inputs_desc ([InputDesc]):
             input (InputSource):
             get_cost_fn ([tf.Tensor] -> tf.Tensor): callable, takes some input tenosrs and return a cost tensor.
-                Might get called multiple times for data-parallel training or inference.
             get_opt_fn (-> tf.train.Optimizer): callable which returns an
                 optimizer. Will only be called once.
 
-        Returns:
-            [Callback]: a (possibly empty) list of callbacks needed for training.
-                These callbacks will be automatically added when you call `train()`.
-                So you can usually ignore the return value.
+        Note:
+            1. `get_cost_fn` will always be called under a :class:`TowerContext`.
+               which will contain information abouut reuse,
+               training/inference, scope name, etc.
+            2. `get_cost_fn` might get called multiple times for data-parallel training or inference.
+            3. To respect variable reuse, use `tf.get_variable` instead of
+               `tf.Variable` in `get_cost_fn`.
         """
         get_cost_fn = TowerFuncWrapper(get_cost_fn, inputs_desc)
         get_opt_fn = memoized(get_opt_fn)
@@ -386,11 +388,17 @@ class SingleCostTrainer(TowerTrainer):
         internal_callbacks = input_callbacks + train_callbacks
         for cb in internal_callbacks:
             self._register_callback(cb)
-        return internal_callbacks
 
+    # TODO register directly instead of return?
     @abstractmethod
     def _setup_graph(self, input, get_cost_fn, get_opt_fn):
-        pass
+        """
+        Implement the logic to build the graph, with an :class:`InputSource`
+        that's been setup already.
+
+        Returns:
+            [Callback]: list of callbacks needed
+        """
 
     def _setup_input(self, inputs_desc, input):
         assert not input.setup_done()
