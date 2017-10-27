@@ -17,6 +17,18 @@ from ..utils.develop import log_deprecated
 __all__ = ['TrainConfig']
 
 
+def DEFAULT_CALLBACKS():
+    return [
+        MovingAverageSummary(),
+        ProgressBar(),
+        MergeAllSummaries(),
+        RunUpdateOps()]
+
+
+def DEFAULT_MONITORS():
+    return [TFEventWriter(), JSONWriter(), ScalarPrinter()]
+
+
 class TrainConfig(object):
     """
     A collection of options to be used for trainers.
@@ -84,9 +96,9 @@ class TrainConfig(object):
             callbacks = []
         assert_type(callbacks, list)
         self._callbacks = callbacks + \
-            (extra_callbacks or TrainConfig.DEFAULT_EXTRA_CALLBACKS())
+            (extra_callbacks or DEFAULT_CALLBACKS())
 
-        self.monitors = monitors or TrainConfig.DEFAULT_MONITORS()
+        self.monitors = monitors or DEFAULT_MONITORS()
 
         if session_init is None:
             session_init = JustCurrentSession()
@@ -148,15 +160,3 @@ class TrainConfig(object):
     @property
     def callbacks(self):        # disable setter
         return self._callbacks
-
-    @staticmethod
-    def DEFAULT_EXTRA_CALLBACKS():
-        return [
-            MovingAverageSummary(),
-            ProgressBar(),
-            MergeAllSummaries(),
-            RunUpdateOps()]
-
-    @staticmethod
-    def DEFAULT_MONITORS():
-        return [TFEventWriter(), JSONWriter(), ScalarPrinter()]

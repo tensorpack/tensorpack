@@ -245,11 +245,10 @@ if __name__ == '__main__':
         sample(args.load)
     else:
         logger.auto_set_dir()
-        cfg = TrainConfig(
+        GANTrainer(QueueInput(get_data()),
+                   Model()).train_with_defaults(
             callbacks=[ModelSaver(keep_freq=0.1)],
             steps_per_epoch=500,
             max_epoch=100,
             session_init=SaverRestore(args.load) if args.load else None
         )
-        GANTrainer(QueueInput(get_data()),
-                   Model()).train_with_config(cfg)

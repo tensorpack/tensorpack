@@ -156,12 +156,11 @@ if __name__ == '__main__':
     else:
         assert args.data
         logger.auto_set_dir()
-        config = TrainConfig(
+        GANTrainer(
+            input=QueueInput(get_data(args.data)),
+            model=Model()).train_with_defaults(
             callbacks=[ModelSaver()],
             steps_per_epoch=300,
             max_epoch=200,
             session_init=SaverRestore(args.load) if args.load else None
         )
-        GANTrainer(
-            input=QueueInput(get_data(args.data)),
-            model=Model()).train_with_config(config)

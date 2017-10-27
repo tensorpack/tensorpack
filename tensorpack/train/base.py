@@ -9,13 +9,16 @@ from six.moves import range
 import six
 from abc import abstractmethod, ABCMeta
 
+from ..callbacks import (
+    Callback, Callbacks, Monitors, TrainingMonitor,
+    MovingAverageSummary,
+    ProgressBar, MergeAllSummaries,
+    TFEventWriter, JSONWriter, ScalarPrinter, RunUpdateOps)
 from ..utils import logger
 from ..utils.argtools import call_only_once, memoized
-from ..callbacks import Callback, Callbacks
-from ..callbacks.monitor import Monitors, TrainingMonitor
 from ..tfutils.model_utils import describe_trainable_vars
 from ..tfutils.sessinit import JustCurrentSession
-from ..tfutils.sesscreate import ReuseSessionCreator
+from ..tfutils.sesscreate import ReuseSessionCreator, NewSessionCreator
 from ..tfutils.tower import TowerFuncWrapper, get_current_tower_context
 from ..tfutils.gradproc import FilterNoneGrad
 from ..callbacks.steps import MaintainStepCounter
@@ -29,6 +32,18 @@ from ..trainv1.base import StopTraining, TrainLoop
 from ..trainv1.config import TrainConfig
 
 __all__ = ['TrainConfig', 'Trainer', 'SingleCostTrainer', 'TowerTrainer']
+
+
+def DEFAULT_CALLBACKS():
+    return [
+        MovingAverageSummary(),
+        ProgressBar(),
+        MergeAllSummaries(),
+        RunUpdateOps()]
+
+
+def DEFAULT_MONITORS():
+    return [TFEventWriter(), JSONWriter(), ScalarPrinter()]
 
 
 class Trainer(object):
@@ -220,8 +235,8 @@ class Trainer(object):
 
     def train_with_config(self, config):
         """
-        An alias to simplify the use of `TrainConfig`.
-        It is equivalent to the following:
+        An alias to simplify the use of `TrainConfig` with `Trainer`.
+        This method is literally the following:
 
         .. code-block:: python
 
@@ -239,6 +254,28 @@ class Trainer(object):
             config.callbacks, config.monitors,
             config.session_creator, config.session_init,
             config.steps_per_epoch, config.starting_epoch, config.max_epoch)
+
+    def train_with_defaults(
+            self, callbacks=None, monitors=None,
+            session_creator=None, session_init=None,
+            steps_per_epoch=None, starting_epoch=1, max_epoch=9999):
+        """
+        Same as :meth:`train()`, but will:
+
+        1. Append `DEFAULT_CALLBACKS()` to callbacks.
+        2. Append `DEFAULT_MONITORS()` to monitors.
+        3. Provide default values for every option except `steps_per_epoch`.
+        """
+        callbacks = (callbacks or []) + DEFAULT_CALLBACKS()
+        monitors = (monitors or []) + DEFAULT_MONITORS()
+
+        assert steps_per_epoch is not None
+        session_creator = session_creator or NewSessionCreator()
+        session_init = session_init or JustCurrentSession()
+
+        self.train(callbacks, monitors,
+                   session_creator, session_init,
+                   steps_per_epoch, starting_epoch, max_epoch)
 
     # create the old trainer when called with TrainConfig
     def __new__(cls, *args, **kwargs):

@@ -134,11 +134,9 @@ if __name__ == '__main__':
         sample(args.load)
     else:
         logger.auto_set_dir()
-        config = TrainConfig(
+        GANTrainer(QueueInput(get_data()), Model()).train_with_defaults(
             callbacks=[ModelSaver()],
             steps_per_epoch=500,
             max_epoch=100,
+            session_init=SaverRestore(args.load) if args.load else None
         )
-        if args.load:
-            config.session_init = SaverRestore(args.load)
-        GANTrainer(QueueInput(get_data()), Model()).train_with_config(config)

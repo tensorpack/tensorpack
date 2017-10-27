@@ -218,7 +218,7 @@ if __name__ == '__main__':
     data = get_data(args.data)
     data = PrintData(data)
 
-    config = TrainConfig(
+    GANTrainer(QueueInput(data), Model()).train_with_defaults(
         callbacks=[
             ModelSaver(),
             ScheduledHyperParamSetter(
@@ -230,5 +230,3 @@ if __name__ == '__main__':
         steps_per_epoch=data.size(),
         session_init=SaverRestore(args.load) if args.load else None
     )
-
-    GANTrainer(QueueInput(data), Model()).train_with_config(config)

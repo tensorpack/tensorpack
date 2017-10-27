@@ -210,15 +210,13 @@ if __name__ == '__main__':
         logger.auto_set_dir()
 
         data = QueueInput(get_data())
-        config = TrainConfig(
+
+        GANTrainer(data, Model()).train_with_defaults(
             callbacks=[
                 PeriodicTrigger(ModelSaver(), every_k_epochs=3),
                 ScheduledHyperParamSetter('learning_rate', [(200, 1e-4)])
             ],
             steps_per_epoch=data.size(),
             max_epoch=300,
+            session_init=SaverRestore(args.load) if args.load else None
         )
-        if args.load:
-            config.session_init = SaverRestore(args.load)
-
-        GANTrainer(data, Model()).train_with_config(config)
