@@ -289,7 +289,7 @@ class Trainer(object):
                 return super(Trainer, cls).__new__(cls)
             else:
                 logger.warn("You're calling new trainers with old trainer API!")
-                logger.warn("Now it returns the old trainer for you, please switch to use new trainers correctly!")
+                logger.warn("Now it returns the old trainer for you, please switch to use new trainers soon!")
                 logger.warn("'SomeTrainer(config, ...).train()' should be equivalent to "
                             "'launch_train_with_config(config, SomeTrainer(...))' in the new API.")
                 return old_trainer(*args, **kwargs)

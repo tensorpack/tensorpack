@@ -170,7 +170,7 @@ class ModelDesc(ModelDescBase):
             [(grad, var)]
         """
         ctx = get_current_tower_context()
-        cost = self.build_graph_get_cost(*inputs)
+        cost = self._build_graph_get_cost(*inputs)
 
         varlist = ctx.filter_vars_by_vs_name(tf.trainable_variables())
         opt = self.get_optimizer()
