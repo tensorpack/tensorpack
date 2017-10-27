@@ -21,7 +21,7 @@ from ..graph_builder.training import (
 from ..graph_builder.distributed import DistributedReplicatedBuilder
 from ..graph_builder.utils import override_to_local_variable
 
-from .base import SingleCostTrainer
+from .tower import SingleCostTrainer
 
 __all__ = ['SimpleTrainer',
            'QueueInputTrainer',

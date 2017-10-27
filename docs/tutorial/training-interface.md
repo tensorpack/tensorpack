@@ -1,15 +1,15 @@
 
 # Training Interface
 
-Tensorpack trainers provide low-level API which requires a number of options to setup.
-There are high-level interfaces built on top of trainer to simplify the use,
+Tensorpack trainers have an interface for maximum flexibility.
+There are also interfaces built on top of trainers to simplify the use,
 when you don't want to customize too much.
 
 ### With ModelDesc and TrainConfig
 
 [SingleCost trainers](trainer.html#single-cost-trainers)
-expects `InputDesc`, `InputSource`, get_cost function, and optimizer.
-`ModelDesc` describes a model by packing three of them together into one object:
+expects 4 arguments to build the graph: `InputDesc`, `InputSource`, get_cost function, and optimizer.
+`ModelDesc` describes a model by packing 3 of them together into one object:
 
 ```python
 class MyModel(ModelDesc):
@@ -25,9 +25,9 @@ class MyModel(ModelDesc):
 	  return tf.train.GradientDescentOptimizer(0.1)
 ```
 
-`_get_inputs` should define the metainfo of all the inputs your graph may need.
-`_build_graph` should add tensors/operations to the graph, where
-the argument `inputs` is a list of tensors which will match `_get_inputs`.
+`_get_inputs` should define the metainfo of all the inputs your graph will take to build.
+
+`_build_graph` takes a list of `inputs` tensors which will match `_get_inputs`.
 
 You can use any symbolic functions in `_build_graph`, including TensorFlow core library
 functions and other symbolic libraries.

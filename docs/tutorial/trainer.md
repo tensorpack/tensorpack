@@ -1,12 +1,13 @@
 
 # Trainer
 
-Tensorpack trainers prepares and runs the training, which consists of the following steps:
+Tensorpack follows the "define-and-run" paradigm. A training has two steps:
 
-1. __Build graph__ for the model.
+1. Build graph for the model.
 	Users can call whatever tensorflow functions to setup the graph.
 	Users may or may not use tensorpack `InputSource`, `ModelDesc` to build the graph.
 	This step defines "what to run" in every training step.
+	It can happen either inside or outside the trainer.
 
 2. Train the model (the [Trainer.train() method](http://tensorpack.readthedocs.io/en/latest/modules/train.html#tensorpack.train.Trainer.train)):
 
