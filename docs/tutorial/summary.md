@@ -10,12 +10,12 @@ This is how TensorFlow summaries eventually get logged/saved/printed:
 
 1. __What to Log__: When you call `tf.summary.xxx` in your graph code, TensorFlow adds an op to
 	`tf.GraphKeys.SUMMARIES` collection (by default).
-2. __When to Log__: A [MergeAllSummaries](../modules/callbacks.html#tensorpack.callbacks.MergeAllSummaries)
-	callback is enabled by default in `TrainConfig`.
+2. __When to Log__: [MergeAllSummaries](../modules/callbacks.html#tensorpack.callbacks.MergeAllSummaries)
+	callback is in the [default callbacks](http://tensorpack.readthedocs.io/en/latest/modules/train.html#tensorpack.train.DEFAULT_CALLBACKS).
 	It runs ops in the `SUMMARIES` collection (by default) every epoch (by default),
 	and writes results to the monitors.
 3. __Where to Log__:
-	Several monitor instances are enabled by default in [TrainConfig](../modules/train.html#tensorpack.train.TrainConfig):
+	Several monitors are [default monitors](http://tensorpack.readthedocs.io/en/latest/modules/train.html#tensorpack.train.DEFAULT_MONITORS).
 	* A [TFEventWriter](../modules/callbacks.html#tensorpack.callbacks.TFEventWriter)
 		writes things to an event file used by tensorboard.
 	* A [ScalarPrinter](../modules/callbacks.html#tensorpack.callbacks.ScalarPrinter)
@@ -23,7 +23,7 @@ This is how TensorFlow summaries eventually get logged/saved/printed:
 	* A [JSONWriter](../modules/callbacks.html#tensorpack.callbacks.JSONWriter)
 		saves scalars to a JSON file.
 
-All the "what, when, where" can be customized in either the graph or the `TrainConfig`.
+All the "what, when, where" can be customized in either the graph or with the callbacks/monitors setting.
 
 Since TF summaries are evaluated every epoch by default, if the content is data-dependent, the results
 are likely to have too much variance. To address this issue, you can:

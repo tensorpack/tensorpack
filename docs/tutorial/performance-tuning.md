@@ -13,7 +13,7 @@ Here's a list of things you can do when your training is slow:
 3. If the GPU utilization is low, it may be because of slow data, or some ops are on CPU. Also make sure GPUs are not locked in P8 state.
 
 ## Benchmark the components
-1. Use `data=DummyConstantInput(shapes)` in `TrainConfig`,
+1. Use `DummyConstantInput(shapes)` as the `InputSource`.
 	so that the iterations doesn't take any data from Python side but train on a constant tensor.
 	This will help find out the slow operations you're using in the graph.
 2. Use `dataflow=FakeData(shapes, random=False)` to replace your original DataFlow by a constant DataFlow.

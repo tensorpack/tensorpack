@@ -30,7 +30,9 @@ __all__ = ['TrainConfig', 'Trainer', 'DEFAULT_MONITORS', 'DEFAULT_CALLBACKS']
 
 def DEFAULT_CALLBACKS():
     """
-    Return the default callbacks. They are:
+    Return the default callbacks,
+    which will be used in :class:`TrainConfig` and :meth:`Trainer.train_with_defaults`.
+    They are:
 
     1. MovingAverageSummary()
     2. ProgressBar()
@@ -46,7 +48,9 @@ def DEFAULT_CALLBACKS():
 
 def DEFAULT_MONITORS():
     """
-    Return the default monitors. They are:
+    Return the default monitors,
+    which will be used in :class:`TrainConfig` and :meth:`Trainer.train_with_defaults`.
+    They are:
 
     1. TFEventWriter()
     2. JSONWriter()

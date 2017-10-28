@@ -69,14 +69,14 @@ handle corner cases in noisy data, preprocess, etc.
 `InputSource` is an abstract interface in tensorpack, to describe where the inputs come from and how they enter the graph.
 For example,
 
-1. Come from a DataFlow and been fed to the graph.
-2. Come from a DataFlow and been prefetched on CPU by a TF queue.
-3. Come from a DataFlow, prefetched on CPU by a TF queue, then prefetched on GPU by a TF StagingArea.
+1. [FeedInput](http://tensorpack.readthedocs.io/en/latest/modules/input_source.html#tensorpack.input_source.FeedInput):
+	Come from a DataFlow and been fed to the graph.
+2. [QueueInput](http://tensorpack.readthedocs.io/en/latest/modules/input_source.html#tensorpack.input_source.QueueInput):
+  Come from a DataFlow and been prefetched on CPU by a TF queue.
+3. [StagingInput](http://tensorpack.readthedocs.io/en/latest/modules/input_source.html#tensorpack.input_source.StagingInput):
+	Come from some `InputSource`, then prefetched on GPU by a TF StagingArea.
 4. Come from a DataFlow, and further processed by `tf.data.Dataset`.
-5. Come from some TF native reading pipeline.
+5. [TensorInput](http://tensorpack.readthedocs.io/en/latest/modules/input_source.html#tensorpack.input_source.TensorInput):
+	Come from some TF reading ops. (See the [PTB example](../../tensorpack/tree/master/examples/PennTreebank))
 6. Come from some ZMQ pipe, where the load/preprocessing may happen on a different machine.
 
-When you set `TrainConfig(dataflow=)`, tensorpack trainers automatically adds proper prefetching for you.
-You can also use `TrainConfig(data=)` option to use a customized `InputSource`.
-In case you want to use TF ops rather than a DataFlow, you can use `TensorInput` as the `InputSource`
-(See the [PTB example](../../tensorpack/tree/master/examples/PennTreebank)).

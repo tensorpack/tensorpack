@@ -10,7 +10,8 @@ from ..utils import logger
 from ..utils.argtools import call_only_once
 from .common import get_tf_version_number, get_op_or_tensor_by_name, get_op_tensor_name
 
-__all__ = ['get_current_tower_context', 'TowerContext', 'TowerFuncWrapper']
+__all__ = ['get_current_tower_context', 'TowerContext', 'TowerFuncWrapper',
+           'TowerTensorHandle', 'TowerTensorHandles']
 
 _CurrentTowerContext = None
 
@@ -156,6 +157,9 @@ class TowerFuncWrapper(object):
     A wrapper around a function which builds one tower (one replicate of the model).
     It keeps track of the name scope, variable scope and input/output tensors
     each time the function is called.
+
+    :class:`TowerTrainer` needs this option to be set, so that
+    it knows how to build a predictor.
     """
 
     def __init__(self, tower_fn, inputs_desc):
@@ -189,6 +193,11 @@ class TowerFuncWrapper(object):
 
     @property
     def towers(self):
+        """
+        Returns:
+            a :class:`TowerTensorHandles` object, that can
+            access the tower handles by either indices or names.
+        """
         return TowerTensorHandles(self._handles)
 
     @property
@@ -206,6 +215,13 @@ class TowerTensorHandles(object):
         self._name_to_handle = {k.ns_name: k for k in handles}
 
     def __getitem__(self, name_or_index):
+        """
+        Args:
+            name_or_index (str or int):
+
+        Returns:
+            a :class:`TowerTensorHandle`.
+        """
         if isinstance(name_or_index, int):
             return self._handles[name_or_index]
         return self._name_to_handle[name_or_index]

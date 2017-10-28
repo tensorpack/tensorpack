@@ -1,10 +1,7 @@
 
 ## Write a Callback
 
-In the main loop of the trainer,
-the callbacks will be called in the order they are given in `TrainConfig`.
-The time where each callback method gets called is demonstrated in this snippet:
-
+The time where each callback method gets called is demonstrated in this snippet.
 ```python
 def train(self):
   # ... a predefined trainer may create graph for the model here ...
@@ -21,6 +18,7 @@ def train(self):
     callbacks.trigger_epoch()
   callbacks.after_train()
 ```
+Note that at each place, each callback will be called in the order they are given to the trainer.
 
 ### Explain the Callback Methods
 
