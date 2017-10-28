@@ -358,17 +358,18 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
         'replace_get_variable',
         'remap_get_variable',
         'freeze_get_variable',
-        'Triggerable',
         'predictor_factory',
         'get_predictors',
         'RandomCropAroundBox',
         'GaussianDeform',
         'dump_chkpt_vars',
         'VisualQA',
-        'huber_loss',
         'DumpTensor',
         'StagingInputWrapper',
-        'StepTensorPrinter'
+        'StepTensorPrinter',
+
+        'guided_relu', 'saliency_map', 'get_scalar_var',
+        'prediction_incorrect', 'huber_loss',
         ]:
         return True
     if name in ['get_data', 'size', 'reset_state']:

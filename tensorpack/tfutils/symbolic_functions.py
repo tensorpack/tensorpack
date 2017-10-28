@@ -13,15 +13,6 @@ from ..utils.develop import deprecated
 
 # this function exists for backwards-compatibilty
 def prediction_incorrect(logits, label, topk=1, name='incorrect_vector'):
-    """
-    Args:
-        logits: shape [B,C].
-        label: shape [B].
-        topk(int): topk
-    Returns:
-        a float32 vector of length N with 0/1 values. 1 means incorrect
-        prediction.
-    """
     return tf.cast(tf.logical_not(tf.nn.in_top_k(logits, label, topk)),
                    tf.float32, name=name)
 

@@ -8,7 +8,7 @@ import six
 from ..utils.develop import log_deprecated
 from ..tfutils.common import get_op_or_tensor_by_name
 
-__all__ = ['Callback', 'ProxyCallback', 'CallbackFactory', 'Triggerable']
+__all__ = ['Callback', 'ProxyCallback', 'CallbackFactory']
 
 
 @six.add_metaclass(ABCMeta)
@@ -204,10 +204,6 @@ class Callback(object):
 
     def __str__(self):
         return type(self).__name__
-
-
-# back-compat. in case someone write something in triggerable
-Triggerable = Callback
 
 
 class ProxyCallback(Callback):

@@ -22,10 +22,13 @@ def _global_import(name):
 
 
 _CURR_DIR = os.path.dirname(__file__)
+_SKIP = ['utils', 'registry']
 for _, module_name, _ in iter_modules(
         [_CURR_DIR]):
     srcpath = os.path.join(_CURR_DIR, module_name + '.py')
     if not os.path.isfile(srcpath):
         continue
-    if not module_name.startswith('_'):
+    if module_name.startswith('_'):
+        continue
+    if module_name not in _SKIP:
         _global_import(module_name)

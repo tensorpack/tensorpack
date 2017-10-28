@@ -8,7 +8,7 @@ from contextlib import contextmanager
 
 from ..utils.develop import deprecated
 
-__all__ = ['custom_getter_scope', 'replace_get_variable',
+__all__ = ['replace_get_variable',
            'freeze_variables', 'freeze_get_variable', 'remap_get_variable',
            'remap_variables']
 

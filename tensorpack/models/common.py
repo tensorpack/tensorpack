@@ -4,3 +4,5 @@
 
 from .registry import layer_register    # noqa
 from .utils import VariableHolder, rename_get_variable  # noqa
+
+__all__ = ['layer_register', 'VariableHolder']
