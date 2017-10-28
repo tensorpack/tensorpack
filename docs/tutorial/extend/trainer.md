@@ -18,7 +18,7 @@ You will need to define two things for a new Trainer:
 1. What is the graph.
 	Add any tensors and ops you like, either before creating the trainer or inside `Trainer.__init__`.
 
-* What is the iteration. There are 2 ways to define an iteration:
+2. What is the iteration. There are 2 ways to define an iteration:
 	1. Set `Trainer.train_op`. This op will be run by default.
 	2. Subclass `Trainer` and override the `run_step()` method. This way you can do something more than running an op.
 

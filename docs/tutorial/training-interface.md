@@ -2,22 +2,26 @@
 # Training Interface
 
 Tensorpack trainers have an interface for maximum flexibility.
-There are also interfaces built on top of trainers to simplify the use,
+Then, there are interfaces built on top of trainers to simplify the use,
 when you don't want to customize too much.
 
 ### Raw Trainer Interface
 
-For general trainer, build the graph by yourself.
+__Define__: For general trainer, build the graph by yourself.
 For single-cost trainer, build the graph by
 [SingleCostTrainer.setup_graph](http://tensorpack.readthedocs.io/en/latest/modules/train.html#tensorpack.train.SingleCostTrainer.setup_graph).
 
-Then, call
+__Run__: Then, call
 [Trainer.train()](http://tensorpack.readthedocs.io/en/latest/modules/train.html#tensorpack.train.Trainer.train)
 or
 [Trainer.train_with_defaults()](http://tensorpack.readthedocs.io/en/latest/modules/train.html#tensorpack.train.Trainer.train_with_defaults)
 which applies some defaults options for normal use cases.
 
 ### With ModelDesc and TrainConfig
+
+This is an interface that's most familiar to old tensorpack users,
+and is now mainly useful for single-cost tasks.
+A lot of examples are written in this interface.
 
 [SingleCost trainers](trainer.html#single-cost-trainers)
 expects 4 arguments in `setup_graph`: `InputDesc`, `InputSource`, get_cost function, and an optimizer.
@@ -55,7 +59,9 @@ config = TrainConfig(
    model=MyModel()
    dataflow=my_dataflow,
    # data=my_inputsource, # alternatively, use a customized InputSource
-   callbacks=[...]
+   callbacks=[...],		# some default callbacks are automatically applied
+	 # some default monitors are automatically applied
+	 steps_per_epoch=300,	 # default to the size of your InputSource/DataFlow
 )
 
 trainer = SomeTrainer()
@@ -63,5 +69,7 @@ trainer = SomeTrainer()
 launch_train_with_config(config, trainer)
 ```
 See the docs of
+[TrainConfig](http://tensorpack.readthedocs.io/en/latest/modules/train.html#tensorpack.train.TrainConfig)
+and
 [launch_train_with_config](http://tensorpack.readthedocs.io/en/latest/modules/train.html#tensorpack.train.launch_train_with_config)
-for its usage and detailed functionalities.
+for usage and detailed functionalities.

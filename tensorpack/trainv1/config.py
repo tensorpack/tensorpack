@@ -42,11 +42,6 @@ class TrainConfig(object):
                  nr_tower=1, tower=None,
                  **kwargs):
         """
-        Note:
-            It depends on the specific trainer what fields are necessary.
-            Most existing trainers in tensorpack requires one of `dataflow` or `data`,
-            and `model` to be present in the config.
-
         Args:
             dataflow (DataFlow):
             data (InputSource):

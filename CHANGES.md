@@ -10,12 +10,8 @@ TensorFlow itself also changed APIs before 1.0 and those are not listed here.
 
 + [2017/10/21]
 	tensorpack is gradually switching to a new Trainer API.
-	The old API will keep working for a while.
-	To switch to new API, the easiest way is to:
-
-	1. `export TENSORPACK_TRAIN_API=v2`	(will be default soon in the future).
-	2. Replace `SomeTrainer(config, ...).train()` with `launch_train_with_config(config, SomeTrainer(...))`.
-
+	The old API will keep working for a while. See [issue](https://github.com/ppwwyyxx/tensorpack/issues/458)
+	for details.
 + [2017/10/18]
 	`TrainConfig(predict_tower)` was deprecated. You can set the inference device directly when creating the `InferenceRunner` callback.
 + [2017/10/12](https://github.com/ppwwyyxx/tensorpack/commit/7e963996f615b85f7459455596b4ee9bbd0bce8e).
