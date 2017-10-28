@@ -86,5 +86,7 @@ def launch_train_with_config(config, trainer):
     trainer.setup_graph(
         inputs_desc, input,
         model._build_graph_get_cost, model.get_optimizer)
-    config.data = config.dataflow = config.model = None
-    trainer.train_with_config(config)
+    trainer.train(
+        config.callbacks, config.monitors,
+        config.session_creator, config.session_init,
+        config.steps_per_epoch, config.starting_epoch, config.max_epoch)

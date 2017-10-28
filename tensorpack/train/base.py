@@ -25,7 +25,7 @@ import tensorpack.trainv1 as old_train    # noqa
 from ..trainv1.base import StopTraining, TrainLoop
 from ..trainv1.config import TrainConfig
 
-__all__ = ['TrainConfig', 'Trainer']
+__all__ = ['TrainConfig', 'Trainer', 'DEFAULT_MONITORS', 'DEFAULT_CALLBACKS']
 
 
 def DEFAULT_CALLBACKS():
@@ -242,28 +242,6 @@ class Trainer(object):
         self.setup_callbacks(callbacks, monitors)
         self.initialize(session_creator, session_init)
         self.main_loop(steps_per_epoch, starting_epoch, max_epoch)
-
-    def train_with_config(self, config):
-        """
-        An alias to simplify the use of `TrainConfig` with `Trainer`.
-        This method is literally the following:
-
-        .. code-block:: python
-
-            self.train(
-                config.callbacks, config.monitors,
-                config.session_creator, config.session_init,
-                config.steps_per_epoch, config.starting_epoch, config.max_epoch)
-        """
-        if config.data or config.dataflow or config.model:
-            logger.warn(
-                "data/dataflow/model in TrainConfig will not be used "
-                "in `Trainer.train_with_config`")
-            logger.warn("To build the graph from config, use `launch_train_with_config`!")
-        self.train(
-            config.callbacks, config.monitors,
-            config.session_creator, config.session_init,
-            config.steps_per_epoch, config.starting_epoch, config.max_epoch)
 
     def train_with_defaults(
             self, callbacks=None, monitors=None,

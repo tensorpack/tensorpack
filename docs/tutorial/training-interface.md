@@ -5,10 +5,22 @@ Tensorpack trainers have an interface for maximum flexibility.
 There are also interfaces built on top of trainers to simplify the use,
 when you don't want to customize too much.
 
+### Raw Trainer Interface
+
+For general trainer, build the graph by yourself.
+For single-cost trainer, build the graph by
+[SingleCostTrainer.setup_graph](http://tensorpack.readthedocs.io/en/latest/modules/train.html#tensorpack.train.SingleCostTrainer.setup_graph).
+
+Then, call
+[Trainer.train()](http://tensorpack.readthedocs.io/en/latest/modules/train.html#tensorpack.train.Trainer.train)
+or
+[Trainer.train_with_defaults()](http://tensorpack.readthedocs.io/en/latest/modules/train.html#tensorpack.train.Trainer.train_with_defaults)
+which applies some defaults options for normal use cases.
+
 ### With ModelDesc and TrainConfig
 
 [SingleCost trainers](trainer.html#single-cost-trainers)
-expects 4 arguments to build the graph: `InputDesc`, `InputSource`, get_cost function, and optimizer.
+expects 4 arguments in `setup_graph`: `InputDesc`, `InputSource`, get_cost function, and an optimizer.
 `ModelDesc` describes a model by packing 3 of them together into one object:
 
 ```python

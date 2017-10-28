@@ -50,7 +50,7 @@ These trainers will build the graph by itself, with the following arguments:
 3. A function which takes input tensors and returns the cost.
 4. A function which returns an optimizer.
 
-See [SingleCostTrainer.setup_graph](http://localhost:8000/modules/train.html#tensorpack.train.SingleCostTrainer.setup_graph)
+See [SingleCostTrainer.setup_graph](http://tensorpack.readthedocs.io/en/latest/modules/train.html#tensorpack.train.SingleCostTrainer.setup_graph)
 for details.
 
 Existing multi-GPU trainers include the logic of data-parallel training.
