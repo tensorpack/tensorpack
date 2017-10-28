@@ -13,6 +13,7 @@ import numpy as np
 import json
 import tensorflow as tf
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 import tensorpack.tfutils.symbolic_functions as symbf
 from tensorpack.tfutils.summary import add_moving_summary
@@ -222,12 +223,13 @@ class EvalCallback(Callback):
     def _setup_graph(self):
         self.pred = self.trainer.get_predictor(['image'], ['fastrcnn_fg_probs', 'fastrcnn_fg_boxes'])
         self.df = PrefetchDataZMQ(get_eval_dataflow(), 1)
+        get_tf_nms()    # just to make sure the nms part of graph is created
 
+    def _before_train(self):
         EVAL_TIMES = 5  # eval 5 times during training
         interval = self.trainer.max_epoch // (EVAL_TIMES + 1)
         self.epochs_to_eval = set([interval * k for k in range(1, EVAL_TIMES)])
         self.epochs_to_eval.add(self.trainer.max_epoch)
-        get_tf_nms()    # just to make sure the nms part of graph is created
 
     def _eval(self):
         all_results = eval_on_dataflow(self.df, lambda img: detect_one_image(img, self.pred))
@@ -300,6 +302,6 @@ if __name__ == '__main__':
             steps_per_epoch=stepnum,
             max_epoch=230000 * factor // stepnum,
             session_init=get_model_loader(args.load) if args.load else None,
-            nr_tower=get_nr_gpu()
         )
-        SyncMultiGPUTrainerReplicated(cfg, gpu_prefetch=False).train()
+        trainer = SyncMultiGPUTrainerReplicated(get_nr_gpu())
+        launch_train_with_config(cfg, trainer)

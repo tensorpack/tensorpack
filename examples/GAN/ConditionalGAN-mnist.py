@@ -10,6 +10,7 @@ import sys
 import cv2
 import argparse
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.utils.viz import *
 import tensorpack.tfutils.symbolic_functions as symbf
@@ -104,18 +105,6 @@ def get_data():
     return BatchData(ds, BATCH)
 
 
-def get_config():
-    logger.auto_set_dir()
-    dataset = get_data()
-    return TrainConfig(
-        dataflow=dataset,
-        callbacks=[ModelSaver()],
-        model=Model(),
-        steps_per_epoch=500,
-        max_epoch=100,
-    )
-
-
 def sample(model_path):
     pred = PredictConfig(
         session_init=get_model_loader(model_path),
@@ -144,7 +133,10 @@ if __name__ == '__main__':
     if args.sample:
         sample(args.load)
     else:
-        config = get_config()
-        if args.load:
-            config.session_init = SaverRestore(args.load)
-        GANTrainer(config).train()
+        logger.auto_set_dir()
+        GANTrainer(QueueInput(get_data()), Model()).train_with_defaults(
+            callbacks=[ModelSaver()],
+            steps_per_epoch=500,
+            max_epoch=100,
+            session_init=SaverRestore(args.load) if args.load else None
+        )

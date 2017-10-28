@@ -5,6 +5,7 @@
 import os
 import argparse
 import tensorflow as tf
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 
 """
@@ -51,7 +52,7 @@ def get_config():
 
     return TrainConfig(
         model=Model(),
-        dataflow=ds_train,
+        data=QueueInput(ds_train),
         callbacks=[
             ModelSaver(),
             InferenceRunner(ds_test, [ScalarStats('total_costs')]),
@@ -77,4 +78,4 @@ if __name__ == '__main__':
     if args.load:
         config.session_init = SaverRestore(args.load)
 
-    SyncMultiGPUTrainer(config).train()
+    launch_train_with_config(config, SimpleTrainer())

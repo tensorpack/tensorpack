@@ -6,6 +6,7 @@
 import os
 import argparse
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.tfutils import optimizer
 from tensorpack.tfutils.summary import add_moving_summary
@@ -75,14 +76,15 @@ if __name__ == '__main__':
     else:
         assert args.data
         logger.auto_set_dir()
-        config = TrainConfig(
+
+        # The original code uses a different schedule, but this seems to work well.
+        # Train 1 D after 2 G
+        SeparateGANTrainer(
+            input=QueueInput(DCGAN.get_data(args.data)),
             model=Model(),
-            dataflow=DCGAN.get_data(args.data),
+            d_period=3).train_with_defaults(
             callbacks=[ModelSaver(), ClipCallback()],
             steps_per_epoch=500,
             max_epoch=200,
             session_init=SaverRestore(args.load) if args.load else None
         )
-        # The original code uses a different schedule, but this seems to work well.
-        # Train 1 D after 2 G
-        SeparateGANTrainer(config, d_period=3).train()

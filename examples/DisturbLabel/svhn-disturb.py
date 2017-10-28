@@ -8,6 +8,7 @@ import numpy as np
 import os
 import imp
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.dataflow import dataset
 
@@ -56,4 +57,4 @@ if __name__ == '__main__':
         os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
     config = get_config(args.prob)
-    QueueInputTrainer(config).train()
+    launch_train_with_config(config, SimpleTrainer())

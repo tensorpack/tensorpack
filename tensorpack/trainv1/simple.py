@@ -43,7 +43,7 @@ class SimpleTrainer(Trainer):
         cbs = self._input_source.setup(self.model.get_inputs_desc())
 
         with TowerContext('', is_training=True):
-            grads = self.model.build_graph_get_grads(
+            grads = self.model._build_graph_get_grads(
                 *self._input_source.get_input_tensors())
             opt = self.model.get_optimizer()
             self.train_op = opt.apply_gradients(grads, name='min_op')

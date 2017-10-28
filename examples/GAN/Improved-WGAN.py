@@ -6,6 +6,7 @@
 import os
 import argparse
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.utils.globvars import globalns as G
@@ -94,12 +95,11 @@ if __name__ == '__main__':
     else:
         assert args.data
         logger.auto_set_dir()
-        config = TrainConfig(
-            model=Model(),
-            dataflow=DCGAN.get_data(args.data),
+        SeparateGANTrainer(
+            QueueInput(DCGAN.get_data(args.data)),
+            Model(), g_period=6).train_with_defaults(
             callbacks=[ModelSaver()],
             steps_per_epoch=300,
             max_epoch=200,
             session_init=SaverRestore(args.load) if args.load else None
         )
-        SeparateGANTrainer(config, g_period=6).train()

@@ -11,6 +11,7 @@ import multiprocessing
 import os
 import sys
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
@@ -226,7 +227,7 @@ def get_data(dataset_name):
     ds = AugmentImageComponent(ds, augmentors, copy=False)
     ds = BatchData(ds, BATCH_SIZE, remainder=not isTrain)
     if isTrain:
-        ds = PrefetchDataZMQ(ds, min(12, multiprocessing.cpu_count()))
+        ds = PrefetchDataZMQ(ds, min(25, multiprocessing.cpu_count()))
     return ds
 
 
@@ -321,5 +322,4 @@ if __name__ == '__main__':
     config = get_config()
     if args.load:
         config.session_init = SaverRestore(args.load)
-    config.nr_tower = nr_tower
-    SyncMultiGPUTrainer(config).train()
+    launch_train_with_config(config, SyncMultiGPUTrainer(nr_tower))

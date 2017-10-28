@@ -8,6 +8,7 @@ import argparse
 from six.moves import map, zip
 import numpy as np
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.utils.viz import *
 import tensorpack.tfutils.symbolic_functions as symbf
@@ -216,14 +217,11 @@ if __name__ == '__main__':
 
     data = get_celebA_data(args.data, args.style_A, args.style_B)
 
-    config = TrainConfig(
-        model=Model(),
-        dataflow=data,
+    # train 1 D after 2 G
+    SeparateGANTrainer(
+        QueueInput(data), Model(), d_period=3).train_with_defaults(
         callbacks=[ModelSaver()],
         steps_per_epoch=300,
         max_epoch=250,
         session_init=SaverRestore(args.load) if args.load else None
     )
-
-    # train 1 D after 2 G
-    SeparateGANTrainer(config, d_period=3).train()

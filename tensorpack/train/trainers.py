@@ -8,6 +8,7 @@ from ..callbacks.graph import RunOp
 from ..tfutils.sesscreate import NewSessionCreator
 
 from ..utils import logger
+from ..utils.argtools import map_arg
 from ..tfutils import get_global_step_var
 from ..tfutils.distributed import get_distributed_session_creator
 from ..tfutils.tower import TowerContext
@@ -20,14 +21,22 @@ from ..graph_builder.training import (
 from ..graph_builder.distributed import DistributedReplicatedBuilder
 from ..graph_builder.utils import override_to_local_variable
 
-from .base import SingleCostTrainer
+from .tower import SingleCostTrainer
 
 __all__ = ['SimpleTrainer',
            'QueueInputTrainer',
+           'SyncMultiGPUTrainer',
            'SyncMultiGPUTrainerReplicated',
            'SyncMultiGPUTrainerParameterServer',
            'AsyncMultiGPUTrainer',
            'DistributedTrainerReplicated']
+
+
+def _int_to_range(x):
+    if isinstance(x, int):
+        assert x > 0, x
+        return list(range(x))
+    return x
 
 
 class SimpleTrainer(SingleCostTrainer):
@@ -53,13 +62,14 @@ class SyncMultiGPUTrainerParameterServer(SingleCostTrainer):
 
     __doc__ = SyncMultiGPUParameterServerBuilder.__doc__
 
-    def __init__(self, towers, ps_device='gpu'):
+    @map_arg(gpus=_int_to_range)
+    def __init__(self, gpus, ps_device='gpu'):
         """
         Args:
-            towers ([int]): list of GPU ids.
+            gpus ([int]): list of GPU ids.
             ps_device: either 'gpu' or 'cpu', where variables are stored.  Setting to 'cpu' might help when #gpu>=4
         """
-        self._builder = SyncMultiGPUParameterServerBuilder(towers, ps_device)
+        self._builder = SyncMultiGPUParameterServerBuilder(gpus, ps_device)
         super(SyncMultiGPUTrainerParameterServer, self).__init__()
 
     def _setup_graph(self, input, get_cost_fn, get_opt_fn):
@@ -68,17 +78,29 @@ class SyncMultiGPUTrainerParameterServer(SingleCostTrainer):
         return []
 
 
+def SyncMultiGPUTrainer(gpus):
+    """
+    Return a default multi-GPU trainer, if you don't care about the details.
+    It may not be the most efficient one for your task.
+
+    Args:
+        gpus (list[int]): list of GPU ids.
+    """
+    return SyncMultiGPUTrainerParameterServer(gpus, ps_device='gpu')
+
+
 class AsyncMultiGPUTrainer(SingleCostTrainer):
 
     __doc__ = AsyncMultiGPUBuilder.__doc__
 
-    def __init__(self, towers, scale_gradient=True):
+    @map_arg(gpus=_int_to_range)
+    def __init__(self, gpus, scale_gradient=True):
         """
         Args:
-            towers ([int]): list of GPU ids.
+            gpus ([int]): list of GPU ids.
             scale_gradient (bool): if True, will scale each gradient by ``1.0/nr_gpu``.
         """
-        self._builder = AsyncMultiGPUBuilder(towers, scale_gradient)
+        self._builder = AsyncMultiGPUBuilder(gpus, scale_gradient)
         super(AsyncMultiGPUTrainer, self).__init__()
 
     def _setup_graph(self, input, get_cost_fn, get_opt_fn):
@@ -91,12 +113,13 @@ class SyncMultiGPUTrainerReplicated(SingleCostTrainer):
 
     __doc__ = SyncMultiGPUReplicatedBuilder.__doc__
 
-    def __init__(self, towers):
+    @map_arg(gpus=_int_to_range)
+    def __init__(self, gpus):
         """
         Args:
-            towers ([int]): list of GPU ids.
+            gpus ([int]): list of GPU ids.
         """
-        self._builder = SyncMultiGPUReplicatedBuilder(towers)
+        self._builder = SyncMultiGPUReplicatedBuilder(gpus)
         super(SyncMultiGPUTrainerReplicated, self).__init__()
 
     def _setup_graph(self, input, get_cost_fn, get_opt_fn):
@@ -113,10 +136,11 @@ class DistributedTrainerReplicated(SingleCostTrainer):
 
     __doc__ = DistributedReplicatedBuilder.__doc__
 
-    def __init__(self, towers, server):
+    @map_arg(gpus=_int_to_range)
+    def __init__(self, gpus, server):
         """
         Args:
-            towers (list[int]): list of GPU ids.
+            gpus (list[int]): list of GPU ids.
             server (tf.train.Server): the server with ps and workers.
                 The job_name must be 'worker' because 'ps' job doesn't need to
                 build any graph.
@@ -127,7 +151,7 @@ class DistributedTrainerReplicated(SingleCostTrainer):
 
         if self.job_name == 'worker':
             # ps doesn't build any graph
-            self._builder = DistributedReplicatedBuilder(towers, server)
+            self._builder = DistributedReplicatedBuilder(gpus, server)
             self.is_chief = self._builder.is_chief
         else:
             self.is_chief = False

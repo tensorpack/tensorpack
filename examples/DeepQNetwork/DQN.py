@@ -16,6 +16,7 @@ import multiprocessing
 import threading
 from collections import deque
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.utils.concurrency import *
 import tensorflow as tf
@@ -105,7 +106,7 @@ def get_config():
     )
 
     return TrainConfig(
-        dataflow=expreplay,
+        data=QueueInput(expreplay),
         model=Model(),
         callbacks=[
             ModelSaver(),
@@ -166,4 +167,4 @@ if __name__ == '__main__':
         config = get_config()
         if args.load:
             config.session_init = get_model_loader(args.load)
-        QueueInputTrainer(config).train()
+        launch_train_with_config(config, SimpleTrainer())

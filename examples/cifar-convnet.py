@@ -2,12 +2,13 @@
 # -*- coding: UTF-8 -*-
 # File: cifar-convnet.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
-from tensorpack import *
 import tensorflow as tf
 import argparse
 import numpy as np
 import os
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
+from tensorpack import *
 import tensorpack.tfutils.symbolic_functions as symbf
 from tensorpack.tfutils.summary import *
 from tensorpack.dataflow import dataset
@@ -151,8 +152,7 @@ if __name__ == '__main__':
         if args.load:
             config.session_init = SaverRestore(args.load)
 
-        config.nr_tower = max(len(args.gpu.split(',')), 1)
-        if config.nr_tower <= 1:
-            QueueInputTrainer(config).train()
-        else:
-            SyncMultiGPUTrainerParameterServer(config).train()
+        nr_gpu = len(args.gpu.split(','))
+        trainer = QueueInputTrainer() if nr_gpu <= 1 \
+            else SyncMultiGPUTrainerParameterServer(nr_gpu)
+        launch_train_with_config(config, trainer)

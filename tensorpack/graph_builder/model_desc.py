@@ -86,16 +86,25 @@ class ModelDescBase(object):
         :returns: a list of InputDesc
         """
 
-    def build_graph(self, inputs):
+    def build_graph(self, *args):
         """
         Build the whole symbolic graph.
 
         Args:
-            inputs (list[tf.Tensor]): a list of tensors,
+            args (list[tf.Tensor]): a list of tensors,
                 that match the list of :class:`InputDesc` defined by ``_get_inputs``.
         """
-        if isinstance(inputs, InputSource):
-            inputs = inputs.get_input_tensors()
+        if len(args) == 1:
+            arg = args[0]
+            if isinstance(arg, InputSource):
+                inputs = arg.get_input_tensors()  # remove in the future?
+            if isinstance(arg, (list, tuple)):
+                inputs = arg
+            else:
+                inputs = [arg]
+        else:
+            inputs = args
+
         assert len(inputs) == len(self.get_inputs_desc()), \
             "Number of inputs passed to the graph != number of inputs defined " \
             "in ModelDesc! ({} != {})".format(len(inputs), len(self.get_inputs_desc()))
@@ -148,14 +157,11 @@ class ModelDesc(ModelDescBase):
     def _get_optimizer(self):
         raise NotImplementedError()
 
-    def build_graph_get_cost(self, *inputs):
-        """
-        Build the graph from inputs and return the cost tensor.
-        """
+    def _build_graph_get_cost(self, *inputs):
         self.build_graph(inputs)
         return self.get_cost()
 
-    def build_graph_get_grads(self, *inputs):
+    def _build_graph_get_grads(self, *inputs):
         """
         Build the graph from inputs and return the grads.
         This is useful for most of the :class:`GraphBuilder` which expects such a function.
@@ -164,7 +170,7 @@ class ModelDesc(ModelDescBase):
             [(grad, var)]
         """
         ctx = get_current_tower_context()
-        cost = self.build_graph_get_cost(*inputs)
+        cost = self._build_graph_get_cost(*inputs)
 
         varlist = ctx.filter_vars_by_vs_name(tf.trainable_variables())
         opt = self.get_optimizer()

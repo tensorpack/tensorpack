@@ -9,6 +9,7 @@ import glob
 from six.moves import map, zip, range
 import numpy as np
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.utils.viz import *
 import tensorpack.tfutils.symbolic_functions as symbf
@@ -217,9 +218,7 @@ if __name__ == '__main__':
     data = get_data(args.data)
     data = PrintData(data)
 
-    config = TrainConfig(
-        model=Model(),
-        dataflow=data,
+    GANTrainer(QueueInput(data), Model()).train_with_defaults(
         callbacks=[
             ModelSaver(),
             ScheduledHyperParamSetter(
@@ -228,7 +227,6 @@ if __name__ == '__main__':
             PeriodicTrigger(VisualizeTestSet(), every_k_epochs=3),
         ],
         max_epoch=195,
+        steps_per_epoch=data.size(),
         session_init=SaverRestore(args.load) if args.load else None
     )
-
-    GANTrainer(config).train()

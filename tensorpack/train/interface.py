@@ -5,13 +5,13 @@
 import tensorflow as tf
 
 from ..input_source import (
-    InputSource, FeedInput, QueueInput, StagingInputWrapper, DummyConstantInput)
+    InputSource, FeedInput, QueueInput, StagingInput, DummyConstantInput)
 
-from ..train.config import TrainConfig
-from .base import SingleCostTrainer
+from ..trainv1.config import TrainConfig
+from .tower import SingleCostTrainer
 from .trainers import SimpleTrainer, DistributedTrainerReplicated
 
-__all__ = ['launch_train_with_config', 'TrainConfig', 'apply_default_prefetch']
+__all__ = ['launch_train_with_config', 'apply_default_prefetch']
 
 
 def apply_default_prefetch(input_source_or_dataflow, trainer, towers):
@@ -36,19 +36,26 @@ def apply_default_prefetch(input_source_or_dataflow, trainer, towers):
         assert not isinstance(trainer, SimpleTrainer)
         assert tf.test.is_gpu_available()
 
-        if not isinstance(input, (StagingInputWrapper, DummyConstantInput)):
-            input = StagingInputWrapper(input, towers)
+        if not isinstance(input, (StagingInput, DummyConstantInput)):
+            input = StagingInput(input, towers)
     return input
 
 
 def launch_train_with_config(config, trainer):
     """
-    Train with a :class:`TrainConfig` and a new version of :class:`Trainer`, to
-    mimic the old training interface.
+    Train with a :class:`TrainConfig` and a :class:`Trainer`, to
+    mimic the old training interface. It basically does the following
+    3 things (and you can easily do them by yourself):
+
+    1. Setup the :class:`InputSource` with automatic prefetching,
+       for `config.data` or `config.dataflow`.
+    2. Call `trainer.setup_graph` with the :class:`InputSource`,
+       as well as `config.model`.
+    3. Call `trainer.train` with rest of the attributes of config.
 
     Args:
         config (TrainConfig):
-        trainer (Trainer): an instance of the new trainer
+        trainer (Trainer): an instance of a SingleCostTrainer
 
     Examples:
 
@@ -78,7 +85,7 @@ def launch_train_with_config(config, trainer):
 
     trainer.setup_graph(
         inputs_desc, input,
-        model.build_graph_get_cost, model.get_optimizer)
+        model._build_graph_get_cost, model.get_optimizer)
     trainer.train(
         config.callbacks, config.monitors,
         config.session_creator, config.session_init,

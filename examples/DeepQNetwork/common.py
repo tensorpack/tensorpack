@@ -79,24 +79,22 @@ def eval_with_funcs(predictors, nr_eval, get_player_fn):
         k.start()
         time.sleep(0.1)  # avoid simulator bugs
     stat = StatCounter()
-    try:
-        for _ in tqdm(range(nr_eval), **get_tqdm_kwargs()):
-            r = q.get()
-            stat.feed(r)
-        logger.info("Waiting for all the workers to finish the last run...")
-        for k in threads:
-            k.stop()
-        for k in threads:
-            k.join()
-        while q.qsize():
-            r = q.get()
-            stat.feed(r)
-    except:
-        logger.exception("Eval")
-    finally:
-        if stat.count > 0:
-            return (stat.average, stat.max)
-        return (0, 0)
+
+    for _ in tqdm(range(nr_eval), **get_tqdm_kwargs()):
+        r = q.get()
+        stat.feed(r)
+    logger.info("Waiting for all the workers to finish the last run...")
+    for k in threads:
+        k.stop()
+    for k in threads:
+        k.join()
+    while q.qsize():
+        r = q.get()
+        stat.feed(r)
+
+    if stat.count > 0:
+        return (stat.average, stat.max)
+    return (0, 0)
 
 
 def eval_model_multithread(pred, nr_eval, get_player_fn):

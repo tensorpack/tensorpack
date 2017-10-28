@@ -203,7 +203,7 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
         self._input_callbacks = Callbacks(input_callbacks)
 
         # InputSource might have hooks which break us.
-        # e.g. hooks from StagingInputWrapper will force the consumption
+        # e.g. hooks from StagingInput will force the consumption
         # of nr_tower datapoints in every run.
         input_hooks = self._input_callbacks.get_hooks()
         self._hooks = [self._build_hook(inf) for inf in self.infs] + input_hooks

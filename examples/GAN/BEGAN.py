@@ -6,6 +6,7 @@
 import os
 import argparse
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.utils.gpu import get_nr_gpu
@@ -145,8 +146,6 @@ if __name__ == '__main__':
         logger.auto_set_dir()
 
         config = TrainConfig(
-            model=Model(),
-            dataflow=DCGAN.get_data(args.data),
             callbacks=[
                 ModelSaver(),
                 StatMonitorParamSetter(
@@ -155,9 +154,12 @@ if __name__ == '__main__':
             steps_per_epoch=500,
             max_epoch=400,
             session_init=SaverRestore(args.load) if args.load else None,
-            nr_tower=max(get_nr_gpu(), 1)
         )
-        if config.nr_tower == 1:
-            GANTrainer(config).train()
+        input = QueueInput(DCGAN.get_data(args.data))
+        model = Model()
+        nr_tower = max(get_nr_gpu(), 1)
+        if nr_tower == 1:
+            trainer = GANTrainer(input, model)
         else:
-            MultiGPUGANTrainer(config).train()
+            trainer = MultiGPUGANTrainer(nr_tower, input, model)
+        trainer.train_with_config(config)

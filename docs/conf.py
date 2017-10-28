@@ -367,6 +367,7 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
         'VisualQA',
         'huber_loss',
         'DumpTensor',
+        'StagingInputWrapper',
         'StepTensorPrinter'
         ]:
         return True
