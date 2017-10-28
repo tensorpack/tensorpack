@@ -47,14 +47,27 @@ know the reason and improve it accordingly, e.g.:
 
 ## Improve TensorFlow
 
+When you're sure that data is not a bottleneck (e.g. when queue is always full), you can start to
+worry about the model.
+
 You can add a `GraphProfiler` callback when benchmarking the graph. It will
 dump runtime tracing information (to either TensorBoard or chrome) to help diagnose the issue.
 
-Usually there isn't much you can do if a TF op is slow, except to optimize the kernels.
+### Slow with single-GPU
+This is literally saying TF ops are slow. Usually there isn't much you can do, except to optimize the kernels.
 But there may be something cheap you can try:
+
 1. You can visualize copies across devices in chrome.
-	 It may help to change device placement to avoid copies.
+	 It may help to change device placement to avoid some CPU-GPU copies.
 	 It may help to replace some CPU-only ops with equivalent GPU ops to avoid copies.
 
 2. Sometimes there are several mathematically equivalent ways of writing the same model
-	 with different speed.
+	 with different ops and therefore different speed.
+
+### Cannot scale to multi-GPU
+If you're unable to scale to multiple GPUs almost linearly:
+1. First make sure that the ResNet example can scale. Run it with `--fake` to use fake data.
+2. Then note that your model may have a different communication-computation pattern.
+	 Changing different multi-GPU trainers may affect the speed significantly sometimes.
+
+Note that scalibility measurement always trains with the same "batch size per GPU", not the same total equivalent batch size.

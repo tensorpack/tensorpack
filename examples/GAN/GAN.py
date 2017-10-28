@@ -7,8 +7,8 @@ import tensorflow as tf
 import numpy as np
 import time
 from tensorpack import (TowerTrainer, QueueInput,
-                        ModelDescBase, DataFlow, StagingInput,
-                        TowerContext, TowerFuncWrapper)
+                        ModelDescBase, DataFlow, StagingInput)
+from tensorpack.tfutils.tower import TowerContext, TowerFuncWrapper
 from tensorpack.graph_builder import DataParallelBuilder, LeastLoadedDeviceSetter
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.utils.argtools import memoized
