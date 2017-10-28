@@ -41,6 +41,7 @@ def regularize_cost(regex, func, name='regularize_cost'):
 
             cost = cost + regularize_cost("fc.*/W", l2_regularizer(1e-5))
     """
+    assert len(regex)
     ctx = get_current_tower_context()
     if not ctx.is_training:
         # Currently cannot build the wd_cost correctly at inference,

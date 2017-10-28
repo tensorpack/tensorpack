@@ -119,8 +119,8 @@ def add_tensor_summary(x, types, name=None, collections=None,
         return
 
     SUMMARY_TYPES_DIC = {
-        'scalar': lambda: tf.summary.scalar(name, x, collections=collections),
-        'histogram': lambda: tf.summary.histogram(name, x, collections=collections),
+        'scalar': lambda: tf.summary.scalar(name + '-summary', x, collections=collections),
+        'histogram': lambda: tf.summary.histogram(name + '-histogram', x, collections=collections),
         'sparsity': lambda: tf.summary.scalar(
             name + '-sparsity', tf.nn.zero_fraction(x),
             collections=collections),
@@ -246,7 +246,7 @@ def add_moving_summary(*args, **kwargs):
             ema_ops.append(ema_op)
         with tf.name_scope(None):
             # cannot add it into colocate group -- will force everything to cpus
-            tf.summary.scalar(name, ema_op)    # write the EMA value as a summary
+            tf.summary.scalar(name + '-summary', ema_op)    # write the EMA value as a summary
     if coll is not None:
         for op in ema_ops:
             # TODO a new collection to summary every step?
