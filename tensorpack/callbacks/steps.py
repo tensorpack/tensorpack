@@ -12,7 +12,7 @@ from ..utils import logger
 from ..utils.utils import get_tqdm_kwargs
 from ..utils.naming import GLOBAL_STEP_INCR_OP_NAME
 from ..tfutils.common import (
-    get_op_tensor_name, get_op_or_tensor_by_name, get_global_step_var)
+    get_op_tensor_name, get_global_step_var)
 from .base import Callback
 
 __all__ = ['TensorPrinter', 'StepTensorPrinter', 'ProgressBar']
@@ -33,7 +33,7 @@ class TensorPrinter(Callback):
         self._names = names
 
     def _setup_graph(self):
-        self._fetches = get_op_or_tensor_by_name(self._names)
+        self._fetches = self.get_tensors_maybe_in_tower(self._names)
 
     def _before_run(self, _):
         return self._fetches
@@ -70,7 +70,7 @@ class ProgressBar(Callback):
         self._total = self.trainer.steps_per_epoch
         self._tqdm_args = get_tqdm_kwargs(leave=True)
 
-        self._fetches = get_op_or_tensor_by_name(self._names) or None
+        self._fetches = self.get_tensors_maybe_in_tower(self._names) or None
         if self._fetches:
             self._fetches = tf.train.SessionRunArgs(self._fetches)
             self._tqdm_args['bar_format'] = self._tqdm_args['bar_format'] + "{postfix} "

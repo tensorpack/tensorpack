@@ -7,6 +7,7 @@ from abc import ABCMeta
 import six
 from ..utils.develop import log_deprecated
 from ..tfutils.common import get_op_or_tensor_by_name
+from ..train.tower import TowerTrainer
 
 __all__ = ['Callback', 'ProxyCallback', 'CallbackFactory']
 
@@ -204,6 +205,26 @@ class Callback(object):
 
     def __str__(self):
         return type(self).__name__
+
+    def get_tensors_maybe_in_tower(self, names):
+        """
+        Get tensors in the graph.
+        Will automatically check for the __first training tower__
+        if no tensor with the given name exists.
+        """
+        def get_tensor(name):
+            msg = "Tensor {} not found in the graph!".format(name)
+            try:
+                return get_op_or_tensor_by_name(name)
+            except KeyError:
+                pass
+            assert isinstance(self.trainer, TowerTrainer), msg
+            towers = self.trainer.tower_func.towers
+            try:
+                return towers.training()[name]
+            except KeyError:
+                raise KeyError(msg)
+        return [get_tensor(name) for name in names]
 
 
 class ProxyCallback(Callback):

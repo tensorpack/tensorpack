@@ -226,6 +226,14 @@ class TowerTensorHandles(object):
             return self._handles[name_or_index]
         return self._name_to_handle[name_or_index]
 
+    def training(self):
+        """
+        Returns:
+            Still a :class:`TowerTensorHandles`, containing only the training towers.
+        """
+        handles = [h for h in self._handles if h.is_training]
+        return TowerTensorHandles(handles)
+
 
 class TowerTensorHandle(object):
     """
@@ -315,3 +323,7 @@ class TowerTensorHandle(object):
         The output returned by the tower function.
         """
         return self._output
+
+    @property
+    def is_training(self):
+        return self._ctx.is_training
