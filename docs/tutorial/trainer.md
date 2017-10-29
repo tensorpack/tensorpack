@@ -9,7 +9,7 @@ Tensorpack follows the "define-and-run" paradigm. A training has two steps:
 	This goal of this step is to define "what to run" in later training steps,
 	and it can happen either inside or outside tensorpack trainer.
 
-2. __Run__: Train the model (the [Trainer.train() method](http://tensorpack.readthedocs.io/en/latest/modules/train.html#tensorpack.train.Trainer.train)):
+2. __Run__: Train the model (the [Trainer.train() method](../modules/train.html#tensorpack.train.Trainer.train)):
 
 	1. Setup callbacks/monitors.
 	2. Finalize graph, initialize session.
@@ -50,7 +50,7 @@ These trainers will take care of step 1, by building the graph by itself, with t
 3. A function which takes input tensors and returns the cost.
 4. A function which returns an optimizer.
 
-These are documented better in [SingleCostTrainer.setup_graph](http://tensorpack.readthedocs.io/en/latest/modules/train.html#tensorpack.train.SingleCostTrainer.setup_graph).
+These are documented better in [SingleCostTrainer.setup_graph](../modules/train.html#tensorpack.train.SingleCostTrainer.setup_graph).
 Often you'll not use this method directly, but use [high-level interface](training-interface.html#with-modeldesc-and-trainconfig)
 instead.
 

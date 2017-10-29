@@ -69,14 +69,14 @@ handle corner cases in noisy data, preprocess, etc.
 `InputSource` is an abstract interface in tensorpack, to describe where the inputs come from and how they enter the graph.
 For example,
 
-1. [FeedInput](http://tensorpack.readthedocs.io/en/latest/modules/input_source.html#tensorpack.input_source.FeedInput):
+1. [FeedInput](../modules/input_source.html#tensorpack.input_source.FeedInput):
 	Come from a DataFlow and been fed to the graph.
-2. [QueueInput](http://tensorpack.readthedocs.io/en/latest/modules/input_source.html#tensorpack.input_source.QueueInput):
+2. [QueueInput](../modules/input_source.html#tensorpack.input_source.QueueInput):
   Come from a DataFlow and been prefetched on CPU by a TF queue.
-3. [StagingInput](http://tensorpack.readthedocs.io/en/latest/modules/input_source.html#tensorpack.input_source.StagingInput):
+3. [StagingInput](../modules/input_source.html#tensorpack.input_source.StagingInput):
 	Come from some `InputSource`, then prefetched on GPU by a TF StagingArea.
 4. Come from a DataFlow, and further processed by `tf.data.Dataset`.
-5. [TensorInput](http://tensorpack.readthedocs.io/en/latest/modules/input_source.html#tensorpack.input_source.TensorInput):
-	Come from some TF reading ops. (See the [PTB example](../../tensorpack/tree/master/examples/PennTreebank))
+5. [TensorInput](../modules/input_source.html#tensorpack.input_source.TensorInput):
+	Come from some TF reading ops. (See the [PTB example](../examples/PennTreebank))
 6. Come from some ZMQ pipe, where the load/preprocessing may happen on a different machine.
 

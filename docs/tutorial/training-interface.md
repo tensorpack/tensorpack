@@ -9,12 +9,12 @@ when you don't want to customize too much.
 
 __Define__: For general trainer, build the graph by yourself.
 For single-cost trainer, build the graph by
-[SingleCostTrainer.setup_graph](http://tensorpack.readthedocs.io/en/latest/modules/train.html#tensorpack.train.SingleCostTrainer.setup_graph).
+[SingleCostTrainer.setup_graph](../modules/train.html#tensorpack.train.SingleCostTrainer.setup_graph).
 
 __Run__: Then, call
-[Trainer.train()](http://tensorpack.readthedocs.io/en/latest/modules/train.html#tensorpack.train.Trainer.train)
+[Trainer.train()](../modules/train.html#tensorpack.train.Trainer.train)
 or
-[Trainer.train_with_defaults()](http://tensorpack.readthedocs.io/en/latest/modules/train.html#tensorpack.train.Trainer.train_with_defaults)
+[Trainer.train_with_defaults()](../modules/train.html#tensorpack.train.Trainer.train_with_defaults)
 which applies some defaults options for normal use cases.
 
 ### With ModelDesc and TrainConfig
@@ -48,7 +48,7 @@ class MyModel(ModelDesc):
 You can use any symbolic functions in `_build_graph`, including TensorFlow core library
 functions and other symbolic libraries.
 But you need to follow the requirement of
-[get_cost_fn](http://tensorpack.readthedocs.io/en/latest/modules/train.html#tensorpack.train.SingleCostTrainer.setup_graph),
+[get_cost_fn](../modules/train.html#tensorpack.train.SingleCostTrainer.setup_graph),
 because this function will be used as part of `get_cost_fn`.
 At last you need to set `self.cost`.
 
@@ -69,7 +69,7 @@ trainer = SomeTrainer()
 launch_train_with_config(config, trainer)
 ```
 See the docs of
-[TrainConfig](http://tensorpack.readthedocs.io/en/latest/modules/train.html#tensorpack.train.TrainConfig)
+[TrainConfig](../modules/train.html#tensorpack.train.TrainConfig)
 and
-[launch_train_with_config](http://tensorpack.readthedocs.io/en/latest/modules/train.html#tensorpack.train.launch_train_with_config)
+[launch_train_with_config](../modules/train.html#tensorpack.train.launch_train_with_config)
 for usage and detailed functionalities.

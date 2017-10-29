@@ -25,7 +25,8 @@ import tensorpack.trainv1 as old_train    # noqa
 from ..trainv1.base import StopTraining, TrainLoop
 from ..trainv1.config import TrainConfig
 
-__all__ = ['TrainConfig', 'Trainer', 'DEFAULT_MONITORS', 'DEFAULT_CALLBACKS']
+__all__ = ['StopTraining', 'TrainConfig',
+           'Trainer', 'DEFAULT_MONITORS', 'DEFAULT_CALLBACKS']
 
 
 def DEFAULT_CALLBACKS():

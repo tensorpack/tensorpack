@@ -11,11 +11,11 @@ This is how TensorFlow summaries eventually get logged/saved/printed:
 1. __What to Log__: When you call `tf.summary.xxx` in your graph code, TensorFlow adds an op to
 	`tf.GraphKeys.SUMMARIES` collection (by default).
 2. __When to Log__: [MergeAllSummaries](../modules/callbacks.html#tensorpack.callbacks.MergeAllSummaries)
-	callback is in the [default callbacks](http://tensorpack.readthedocs.io/en/latest/modules/train.html#tensorpack.train.DEFAULT_CALLBACKS).
+	callback is in the [default callbacks](../modules/train.html#tensorpack.train.DEFAULT_CALLBACKS).
 	It runs ops in the `SUMMARIES` collection (by default) every epoch (by default),
 	and writes results to the monitors.
 3. __Where to Log__:
-	Several monitors are [default monitors](http://tensorpack.readthedocs.io/en/latest/modules/train.html#tensorpack.train.DEFAULT_MONITORS).
+	Several monitors are [default monitors](../modules/train.html#tensorpack.train.DEFAULT_MONITORS).
 	* A [TFEventWriter](../modules/callbacks.html#tensorpack.callbacks.TFEventWriter)
 		writes things to an event file used by tensorboard.
 	* A [ScalarPrinter](../modules/callbacks.html#tensorpack.callbacks.ScalarPrinter)
