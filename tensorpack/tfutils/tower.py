@@ -80,24 +80,6 @@ class TowerContext(object):
     def ns_name(self):
         return self._name
 
-    # TODO another method to filter by ns_name
-    def filter_vars_by_vs_name(self, varlist):
-        """
-        Filter the list and only keep those under the current variable scope.
-        If this tower doesn't contain its own variable scope, return the list as-is.
-
-        Args:
-            varlist (list[tf.Variable] or list[tf.Tensor]):
-        """
-        if not self.has_own_variables:
-            return varlist
-        if len(self._vs_name) == 0:
-            # main_training_tower with no name. assume no other towers has
-            # been built yet, then varlist contains vars only in the first tower.
-            return varlist
-        prefix = self._vs_name + '/'
-        return [v for v in varlist if v.op.name.startswith(prefix)]
-
     def get_collection_in_tower(self, key):
         """
         Get items from this collection that are added in the current tower.

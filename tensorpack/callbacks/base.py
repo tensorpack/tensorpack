@@ -207,9 +207,12 @@ class Callback(object):
 
     def get_tensors_maybe_in_tower(self, names):
         """
-        Get tensors in the graph.
-        Will automatically check for the __first training tower__
-        if no tensor with the given name exists.
+        Get tensors in the graph with the given names.
+        Will automatically check for the *first training tower*
+        if no existing tensor is found with the name.
+
+        Returns:
+            [tf.Tensor]
         """
         from ..train.tower import TowerTrainer  # noqa
 

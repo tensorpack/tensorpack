@@ -87,7 +87,16 @@ to let this method run every k steps or every k epochs.
 ### What you can do in the callback
 
 * Access tensors / ops in either training / inference mode (need to create them in `_setup_graph`).
-	`self.trainer.get_predictor` is a helper function to create a callable under inference mode.
+	* Use TF methods such as `self.graph.get_tensor_by_name`, to access tensors.
+
+	If you're using a `TowerTrainer` instance, more tools are available:
+	* Use `self.trainer.tower_func.towers` to access the
+		[tower handles](http://tensorpack.readthedocs.io/en/latest/modules/tfutils.html#tensorpack.tfutils.tower.TowerTensorHandles),
+		and therefore the tensors in each tower.
+	* [self.get_tensors_maybe_in_tower()](http://tensorpack.readthedocs.io/en/latest/modules/callbacks.html#tensorpack.callbacks.Callback.get_tensors_maybe_in_tower)
+		is a helper function to access tensors in the first training tower.
+	* [self.trainer.get_predictor()](http://tensorpack.readthedocs.io/en/latest/modules/train.html#tensorpack.train.TowerTrainer.get_predictor)
+		is a helper function to create a callable under inference mode.
 * Write stuff to the monitor backend, by `self.trainer.monitors.put_xxx`.
 	The monitors might direct your events to TensorFlow events file, JSON file, stdout, etc.
 	You can get history monitor data as well. See the docs for [Monitors](../../modules/callbacks.html#tensorpack.callbacks.Monitors)
