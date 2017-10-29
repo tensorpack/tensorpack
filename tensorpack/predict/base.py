@@ -158,7 +158,7 @@ class OfflinePredictor(OnlinePredictor):
             input = PlaceholderInput()
             input.setup(config.model.get_inputs_desc())
             with TowerContext('', is_training=False):
-                config.model.build_graph(input)
+                config.model.build_graph(input.get_input_tensors())
 
             input_tensors = get_tensors_by_names(config.input_names)
             output_tensors = get_tensors_by_names(config.output_names)
