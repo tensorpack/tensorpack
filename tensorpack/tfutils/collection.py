@@ -155,6 +155,7 @@ class CollectionGuard(object):
         """
         Get items from this collection that are added in the current tower.
         """
-        new = set(tf.get_collection(key))
+        new = tf.get_collection(key)
         old = set(self.original.get(key, []))
-        return list(new - old)
+        # presist the order in new
+        return [x for x in new if x not in old]
