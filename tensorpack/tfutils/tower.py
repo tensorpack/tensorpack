@@ -8,6 +8,8 @@ from six.moves import zip
 
 from ..utils import logger
 from ..utils.argtools import call_only_once
+from ..utils.naming import TRAIN_TOWER_FREEZE_KEYS, PREDICT_TOWER_FREEZE_KEYS
+from .collection import CollectionGuard
 from .common import get_tf_version_number, get_op_or_tensor_by_name, get_op_tensor_name
 
 __all__ = ['get_current_tower_context', 'TowerContext', 'TowerFuncWrapper',
@@ -43,6 +45,11 @@ class TowerContext(object):
         if self.has_own_variables:
             assert not self._initial_vs_reuse, \
                 "Cannot create tower {} with reuse=True!".format(tower_name)
+
+        self._collection_guard = CollectionGuard(
+            self._name,
+            check_diff=not self.is_main_training_tower,
+            freeze_keys=self._keys_to_freeze())
 
     @property
     def is_main_training_tower(self):
@@ -91,6 +98,12 @@ class TowerContext(object):
         prefix = self._vs_name + '/'
         return [v for v in varlist if v.op.name.startswith(prefix)]
 
+    def get_collection_in_tower(self, key):
+        """
+        Get items from this collection that are added in the current tower.
+        """
+        return self._collection_guard.get_collection_in_tower(key)
+
     @property
     def index(self):
         return self._index
@@ -117,6 +130,13 @@ class TowerContext(object):
             ret.append(tf.name_scope(self._name + '/'))
         return ret
 
+    def _keys_to_freeze(self):
+        if self.is_main_training_tower:
+            return []
+        if self.is_training:
+            return TRAIN_TOWER_FREEZE_KEYS
+        return PREDICT_TOWER_FREEZE_KEYS
+
     def __enter__(self):
         global _CurrentTowerContext
         assert _CurrentTowerContext is None, "Cannot nest TowerContext!"
@@ -125,6 +145,7 @@ class TowerContext(object):
         assert curr_vs.name == '', "Cannot nest TowerContext with an existing variable scope!"
 
         self._ctxs = self._get_scopes()
+        self._ctxs.append(self._collection_guard)
         for c in self._ctxs:
             c.__enter__()
 
@@ -139,6 +160,12 @@ class TowerContext(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         global _CurrentTowerContext
         _CurrentTowerContext = None
+
+        if not self.has_own_variables:
+            diff_trainable_vars = self._collection_guard.get_collection_in_tower(tf.GraphKeys.TRAINABLE_VARIABLES)
+            assert len(diff_trainable_vars) == 0,  \
+                "New TRAINABLE_VARIABLES shouldn't be created in {}: ".format(
+                    self._name) + ', '.join([k.name for k in diff_trainable_vars])
         for c in self._ctxs[::-1]:
             c.__exit__(exc_type, exc_val, exc_tb)
         return False

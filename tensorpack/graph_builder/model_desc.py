@@ -172,7 +172,10 @@ class ModelDesc(ModelDescBase):
         ctx = get_current_tower_context()
         cost = self._build_graph_get_cost(*inputs)
 
-        varlist = ctx.filter_vars_by_vs_name(tf.trainable_variables())
+        if ctx.has_own_variables:
+            varlist = ctx.get_collection_in_tower(tf.GraphKeys.TRAINABLE_VARIABLES)
+        else:
+            varlist = tf.trainable_variables()
         opt = self.get_optimizer()
         grads = opt.compute_gradients(
             cost, var_list=varlist,

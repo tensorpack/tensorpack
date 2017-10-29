@@ -156,7 +156,10 @@ class SingleCostTrainer(TowerTrainer):
             ctx = get_current_tower_context()
             cost = get_cost_fn(*input.get_input_tensors())
 
-            varlist = ctx.filter_vars_by_vs_name(tf.trainable_variables())
+            if ctx.has_own_variables:
+                varlist = ctx.get_collection_in_tower(tf.GraphKeys.TRAINABLE_VARIABLES)
+            else:
+                varlist = tf.trainable_variables()
             opt = get_opt_fn()
             grads = opt.compute_gradients(
                 cost, var_list=varlist,

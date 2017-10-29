@@ -10,9 +10,7 @@ from six.moves import zip, range
 from ..utils import logger
 from ..tfutils.tower import TowerContext
 from ..tfutils.common import get_tf_version_number
-from ..tfutils.collection import backup_collection, restore_collection
 from ..tfutils.gradproc import ScaleGradient
-from ..utils.naming import TOWER_FREEZE_KEYS
 
 from .utils import (
     LeastLoadedDeviceSetter, override_to_local_variable,
@@ -95,11 +93,6 @@ class DataParallelBuilder(GraphBuilder):
                 # so these duplicated variables won't be saved by default.
                 with override_to_local_variable(enable=usevs):
                     ret.append(func())
-
-                if idx == 0:
-                    # avoid duplicated summary & update_ops from each device
-                    backup = backup_collection(TOWER_FREEZE_KEYS)
-        restore_collection(backup)
         return ret
 
 

@@ -7,8 +7,6 @@ from contextlib import contextmanager
 
 from ..utils import logger
 from ..tfutils.tower import TowerContext, TowerFuncWrapper
-from ..tfutils.collection import freeze_collection
-from ..utils.naming import TOWER_FREEZE_KEYS
 from ..input_source import PlaceholderInput
 from .training import GraphBuilder
 
@@ -56,11 +54,7 @@ class SimplePredictBuilder(GraphBuilder):
         with tf.device(self._device), \
                 self._maybe_open_vs(), \
                 TowerContext(
-                    self._ns_name, is_training=False, vs_name=self._vs_name), \
-                freeze_collection(TOWER_FREEZE_KEYS + [tf.GraphKeys.UPDATE_OPS]):
-                # also freeze UPDATE_OPS in inference, because they should never be used
-                # TODO a better way to log and warn about collection change during build_graph.
-
+                    self._ns_name, is_training=False, vs_name=self._vs_name):
             inputs = input.get_input_tensors()
             assert isinstance(inputs, (list, tuple)), inputs
             return tower_fn(*inputs)
@@ -92,10 +86,7 @@ class PredictorFactory(object):
             "Prediction tower with name '{}' already exists!".format(tower_name)
 
         with tf.device(device), \
-                TowerContext(tower_name, is_training=False), \
-                freeze_collection(TOWER_FREEZE_KEYS + [tf.GraphKeys.UPDATE_OPS]):
-                # also freeze UPDATE_OPS in inference, because they should never be used
-                # TODO a better way to log and warn about collection change during build_graph.
+                TowerContext(tower_name, is_training=False):
             inputs_desc = self._model.get_inputs_desc()
             if input is None:
                 input = PlaceholderInput()

@@ -27,7 +27,10 @@ os.environ['TF_AVGPOOL_USE_CUDNN'] = '1'   # issue#8566
 
 try:
     import tensorflow as tf  # noqa
-    assert int(tf.__version__.split('.')[0]) >= 1, "TF>=1.0 is required!"
+    _version = tf.__version__.split('.')
+    assert int(_version[0]) >= 1, "TF>=1.0 is required!"
+    if int(_version[1]) < 2:
+        print("TF<1.2 support will be removed in the future!")
     _HAS_TF = True
 except ImportError:
     _HAS_TF = False
