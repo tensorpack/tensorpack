@@ -98,7 +98,7 @@ class ModelDescBase(object):
             arg = args[0]
             if isinstance(arg, InputSource):
                 inputs = arg.get_input_tensors()  # remove in the future?
-            if isinstance(arg, (list, tuple)):
+            elif isinstance(arg, (list, tuple)):
                 inputs = arg
             else:
                 inputs = [arg]
