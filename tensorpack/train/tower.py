@@ -123,13 +123,13 @@ class SingleCostTrainer(TowerTrainer):
         get_opt_fn = memoized(get_opt_fn)
         self.set_tower_func(get_cost_fn)
 
+        # TODO setup may want to register monitor as well??
         input_callbacks = self._setup_input(inputs_desc, input)
         train_callbacks = self._setup_graph(input, get_cost_fn, get_opt_fn)
         internal_callbacks = input_callbacks + train_callbacks
         for cb in internal_callbacks:
             self._register_callback(cb)
 
-    # TODO register directly instead of return?
     @abstractmethod
     def _setup_graph(self, input, get_cost_fn, get_opt_fn):
         """
