@@ -89,7 +89,7 @@ class ModelExport(object):
         """
         logger.info('[export] build model for %s' % checkpoint)
         with TowerContext('', is_training=False):
-            self.model.build_graph(self.input)
+            self.model.build_graph(*self.input.get_input_tensors())
 
             self.sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
             # load values from latest checkpoint
@@ -128,8 +128,6 @@ class ModelExport(object):
                 inputs=inputs_signature,
                 outputs=outputs_signature,
                 method_name=tf.saved_model.signature_constants.PREDICT_METHOD_NAME)
-
-            # legacy_init_op = tf.group(tf.tables_initializer(), name='legacy_init_op')
 
             builder.add_meta_graph_and_variables(
                 self.sess, tags,

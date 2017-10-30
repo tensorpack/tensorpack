@@ -123,7 +123,7 @@ class Trainer(object):
         if self.model is not None:
 
             def f(*inputs):
-                self.model.build_graph(inputs)
+                self.model.build_graph(*inputs)
 
             """
             Only to mimic new trainer interafce on inference.

@@ -86,7 +86,7 @@ class Trainer(object):
             self._config = config
             self.inputs_desc = config.model.get_inputs_desc()
             self.tower_func = TowerFuncWrapper(
-                lambda *inputs: config.model.build_graph(inputs),
+                lambda *inputs: config.model.build_graph(*inputs),
                 self.inputs_desc)
             self._main_tower_vs_name = ""
 

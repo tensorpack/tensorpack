@@ -9,6 +9,7 @@ import tensorflow as tf
 import six
 
 from ..utils.argtools import memoized
+from ..utils.develop import log_deprecated
 from ..tfutils.gradproc import FilterNoneGrad
 from ..tfutils.tower import get_current_tower_context
 from ..input_source import InputSource
@@ -96,15 +97,17 @@ class ModelDescBase(object):
         Build the whole symbolic graph.
 
         Args:
-            args (list[tf.Tensor]): a list of tensors,
-                that match the list of :class:`InputDesc` defined by ``_get_inputs``.
+            args ([tf.Tensor]): a list of tensors,
+                that matches the list of :class:`InputDesc` defined by ``_get_inputs``.
         """
         if len(args) == 1:
             arg = args[0]
             if isinstance(arg, InputSource):
                 inputs = arg.get_input_tensors()  # remove in the future?
+                log_deprecated("build_graph(InputSource)", "Call with tensors in positional args instead.")
             elif isinstance(arg, (list, tuple)):
                 inputs = arg
+                log_deprecated("build_graph([Tensor])", "Call with positional args instead.")
             else:
                 inputs = [arg]
         else:
@@ -163,7 +166,7 @@ class ModelDesc(ModelDescBase):
         raise NotImplementedError()
 
     def _build_graph_get_cost(self, *inputs):
-        self.build_graph(inputs)
+        self.build_graph(*inputs)
         return self.get_cost()
 
     def _build_graph_get_grads(self, *inputs):
