@@ -36,4 +36,4 @@ except ImportError:
     _HAS_TF = False
 
 
-__version__ = '0.6.1'
+__version__ = '0.7.0'
