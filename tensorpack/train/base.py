@@ -174,7 +174,7 @@ class Trainer(object):
             logger.info("Initializing the session ...")
             session_init._run_init(self.sess)
         else:
-            if not isinstance(self._config.session_init, JustCurrentSession):
+            if not isinstance(session_init, JustCurrentSession):
                 logger.warn("This is not a chief worker, 'session_init' was ignored!")
 
         self.sess.graph.finalize()
