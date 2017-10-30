@@ -66,7 +66,7 @@ class TowerContext(object):
         """
         return self.is_main_training_tower or \
             (self.is_training and len(self._vs_name) > 0) or \
-            (not self.is_training and len(self._vs_name) > 0 and not self._initial_vs_reuse)
+            (not self.is_training and not self._initial_vs_reuse)
 
     @property
     def name(self):

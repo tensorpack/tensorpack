@@ -138,8 +138,6 @@ class Model(ModelDesc):
         else:
             opt = tf.train.MomentumOptimizer(lr, 0.9)
         return opt
-        return optimizer.apply_grad_processors(
-            opt, [gradproc.ScaleGradient(('.*/b', 2))])
 
 
 def visualize(model_path, nr_visualize=50, output_dir='output'):
