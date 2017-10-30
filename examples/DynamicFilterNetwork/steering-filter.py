@@ -149,8 +149,7 @@ class Model(ModelDesc):
         summary.add_moving_summary(self.cost)
 
     def _get_optimizer(self):
-        lr = symbolic_functions.get_scalar_var('learning_rate', 1e-3, summary=True)
-        return tf.train.AdamOptimizer(lr)
+        return tf.train.AdamOptimizer(1e-3)
 
 
 class ThetaImages(ProxyDataFlow, RNGDataFlow):

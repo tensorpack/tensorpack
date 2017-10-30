@@ -229,7 +229,7 @@ class EmbeddingModel(ModelDesc):
         return embeddings
 
     def _get_optimizer(self):
-        lr = symbf.get_scalar_var('learning_rate', 1e-4, summary=True)
+        lr = tf.get_variable('learning_rate', initializer=1e-4, trainable=False)
         return tf.train.GradientDescentOptimizer(lr)
 
 

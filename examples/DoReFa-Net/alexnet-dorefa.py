@@ -167,7 +167,7 @@ class Model(ModelDesc):
         add_moving_summary(cost, wd_cost, self.cost)
 
     def _get_optimizer(self):
-        lr = get_scalar_var('learning_rate', 1e-4, summary=True)
+        lr = tf.get_variable('learning_rate', initializer=1e-4, trainable=False)
         return tf.train.AdamOptimizer(lr, epsilon=1e-5)
 
 

@@ -132,7 +132,7 @@ class Model(GANModelDesc):
         self.collect_variables()
 
     def _get_optimizer(self):
-        lr = symbolic_functions.get_scalar_var('learning_rate', 1e-4, summary=True)
+        lr = tf.get_variable('learning_rate', initializer=1e-4, trainable=False)
         opt = tf.train.AdamOptimizer(lr, beta1=0.5, beta2=0.9)
         return opt
 

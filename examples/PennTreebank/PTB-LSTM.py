@@ -109,7 +109,7 @@ class Model(ModelDesc):
                         s[1].h.assign(z), name='reset_lstm_state')
 
     def _get_optimizer(self):
-        lr = symbolic_functions.get_scalar_var('learning_rate', 1, summary=True)
+        lr = tf.get_variable('learning_rate', initializer=1.0, trainable=False)
         opt = tf.train.GradientDescentOptimizer(lr)
         return optimizer.apply_grad_processors(
             opt, [gradproc.GlobalNormClip(5)])

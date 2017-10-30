@@ -145,7 +145,8 @@ def huber_loss(x, delta=1, name='huber_loss'):
     return tf.where(cond, l2, l1, name=name)
 
 
-# TODO remove this in the future
+# TODO deprecate this in the future
+# doesn't hurt to keep it here for now
 def get_scalar_var(name, init_value, summary=False, trainable=False):
     """
     Get a scalar float variable with certain initial value.

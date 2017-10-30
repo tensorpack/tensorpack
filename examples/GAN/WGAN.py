@@ -36,8 +36,7 @@ class Model(DCGAN.Model):
         add_moving_summary(self.d_loss, self.g_loss)
 
     def _get_optimizer(self):
-        lr = symbolic_functions.get_scalar_var('learning_rate', 1e-4, summary=True)
-        opt = tf.train.RMSPropOptimizer(lr)
+        opt = tf.train.RMSPropOptimizer(1e-4)
         return opt
 
         # An alternative way to implement the clipping:

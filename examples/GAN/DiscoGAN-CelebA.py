@@ -159,8 +159,7 @@ class Model(GANModelDesc):
         add_moving_summary(recon_loss_A, recon_loss_B, rate, g_loss, d_loss, wd_g, wd_d)
 
     def _get_optimizer(self):
-        lr = symbolic_functions.get_scalar_var('learning_rate', 2e-4, summary=True)
-        return tf.train.AdamOptimizer(lr, beta1=0.5, epsilon=1e-3)
+        return tf.train.AdamOptimizer(2e-4, beta1=0.5, epsilon=1e-3)
 
 
 def get_celebA_data(datadir, styleA, styleB=None):

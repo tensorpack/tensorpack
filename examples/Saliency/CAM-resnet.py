@@ -68,7 +68,7 @@ class Model(ModelDesc):
         self.cost = tf.add_n([loss, wd_cost], name='cost')
 
     def _get_optimizer(self):
-        lr = get_scalar_var('learning_rate', 0.1, summary=True)
+        lr = tf.get_variable('learning_rate', initializer=0.1, trainable=False)
         opt = tf.train.MomentumOptimizer(lr, 0.9, use_nesterov=True)
         gradprocs = [gradproc.ScaleGradient(
             [('conv0.*', 0.1), ('group[0-2].*', 0.1)])]

@@ -90,7 +90,7 @@ class Model(ModelDesc):
         self.cost = tf.add_n([wd_cost, cost], name='cost')
 
     def _get_optimizer(self):
-        lr = symbf.get_scalar_var('learning_rate', 5e-4, summary=True)
+        lr = tf.get_variable('learning_rate', initializer=5e-4, trainable=False)
         opt = tf.train.AdamOptimizer(lr, epsilon=1e-3)
         return optimizer.apply_grad_processors(
             opt, [

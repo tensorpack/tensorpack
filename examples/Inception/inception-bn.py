@@ -123,7 +123,7 @@ class Model(ModelDesc):
         add_moving_summary(wd_cost, self.cost)
 
     def _get_optimizer(self):
-        lr = get_scalar_var('learning_rate', 0.045, summary=True)
+        lr = tf.get_variable('learning_rate', initializer=0.045, trainable=False)
         return tf.train.MomentumOptimizer(lr, 0.9)
 
 

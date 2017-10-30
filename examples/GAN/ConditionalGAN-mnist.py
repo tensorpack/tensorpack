@@ -96,8 +96,7 @@ class Model(GANModelDesc):
         self.collect_variables()
 
     def _get_optimizer(self):
-        lr = symbf.get_scalar_var('learning_rate', 2e-4, summary=True)
-        return tf.train.AdamOptimizer(lr, beta1=0.5, epsilon=1e-3)
+        return tf.train.AdamOptimizer(2e-4, beta1=0.5, epsilon=1e-3)
 
 
 def get_data():
