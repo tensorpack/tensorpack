@@ -5,12 +5,7 @@
 
 import numpy as np
 import tensorflow as tf
-import tensorflow.contrib.slim as slim
-import os
-import sys
-import argparse
 
-import keras
 from keras.models import Sequential
 import keras.layers as KL
 from keras import regularizers
@@ -18,7 +13,7 @@ from keras import regularizers
 
 from tensorpack.train import SimpleTrainer
 from tensorpack.input_source import QueueInput
-from tensorpack.callbacks import *
+from tensorpack.callbacks import ModelSaver, InferenceRunner, ScalarStats
 from tensorpack.dataflow import dataset, BatchData, MapData
 from tensorpack.utils import logger
 from tensorpack.contrib.keras import setup_keras_trainer
