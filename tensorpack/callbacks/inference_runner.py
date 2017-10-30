@@ -61,12 +61,11 @@ class InferenceRunnerBase(Callback):
 
         Also, InferenceRunner assumes that `trainer.model` exists.
     """
-    def __init__(self, input, infs, extra_hooks=None):
+    def __init__(self, input, infs):
         """
         Args:
             input (InputSource): the input to use. Must have ``size()``.
             infs (list[Inferencer]): list of :class:`Inferencer` to run.
-            extra_hooks (list[SessionRunHook]): extra :class:`SessionRunHook` to run with the evaluation.
         """
         self._input_source = input
         if not isinstance(infs, list):
@@ -82,12 +81,16 @@ class InferenceRunnerBase(Callback):
             raise ValueError("Input used in InferenceRunner must have a size!")
         logger.info("InferenceRunner will eval on an InputSource of size {}".format(self._size))
 
-        if extra_hooks is None:
-            extra_hooks = []
-        self._extra_hooks = extra_hooks
+        self._hooks = []
+
+    def register_hook(self, hook):
+        """
+        Args:
+            hook (tf.train.SessionRunHook):
+        """
+        self._hooks.append(hook)
 
     def _before_train(self):
-        self._hooks.extend(self._extra_hooks)
         self._hooked_sess = HookedSession(self.trainer.sess, self._hooks)
         self._input_callbacks.before_train()
 
@@ -100,7 +103,7 @@ class InferenceRunner(InferenceRunnerBase):
     A callback that runs a list of :class:`Inferencer` on some :class:`InputSource`.
     """
 
-    def __init__(self, input, infs, tower_name='InferenceTower', device=0, extra_hooks=None):
+    def __init__(self, input, infs, tower_name='InferenceTower', device=0):
         """
         Args:
             input (InputSource or DataFlow): The :class:`InputSource` to run
@@ -115,8 +118,7 @@ class InferenceRunner(InferenceRunnerBase):
         assert isinstance(input, InputSource), input
         self._tower_name = tower_name
         self._device = device
-        super(InferenceRunner, self).__init__(
-            input, infs, extra_hooks=extra_hooks)
+        super(InferenceRunner, self).__init__(input, infs)
 
     def _build_hook(self, inf):
         out_names = inf.get_fetches()
@@ -138,11 +140,13 @@ class InferenceRunner(InferenceRunnerBase):
                     self._input_source, self.trainer.tower_func)
             self._tower_handle = self.trainer.tower_func.towers[-1]
 
-        self._hooks = [self._build_hook(inf) for inf in self.infs]
+        for h in [self._build_hook(inf) for inf in self.infs]:
+            self.register_hook(h)
         # trigger_{step,epoch}, {before,after}_epoch is ignored.
         # We assume that InputSource callbacks won't use these methods
         self._input_callbacks = Callbacks(input_callbacks)
-        self._hooks.extend(self._input_callbacks.get_hooks())
+        for h in self._input_callbacks.get_hooks():
+            self.register_hook(h)
 
         for inf in self.infs:
             inf.setup_graph(self.trainer)
@@ -202,7 +206,7 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
         # setup callbacks and hooks
         self._input_callbacks = Callbacks(input_callbacks)
 
-        # InputSource might have hooks which break us.
+        # TODO InputSource might have hooks which break us.
         # e.g. hooks from StagingInput will force the consumption
         # of nr_tower datapoints in every run.
         input_hooks = self._input_callbacks.get_hooks()
@@ -212,6 +216,9 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
         for inf in self.infs:
             inf.setup_graph(self.trainer)
         self._input_callbacks.setup_graph(self.trainer)
+
+    def register_hook(self, h):
+        raise NotImplementedError("DataParallelInferenceRunner doesn't accept extra hooks!")
 
     class InferencerToHookDataParallel(InferencerToHook):
         def __init__(self, inf, fetches, size):

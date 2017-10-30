@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File: mnist-keras.py
+# File: mnist-keras-functional.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
@@ -12,18 +12,18 @@ import argparse
 
 import keras
 import keras.layers as KL
-import keras.backend as KB
 from keras.models import Sequential
 from keras import regularizers
 
 """
-This is an mnist example demonstrating how to use Keras models inside tensorpack.
+This is an mnist example demonstrating how to use Keras symbolic function inside tensorpack.
 This way you can define models in Keras-style, and benefit from the more efficeint trainers in tensorpack.
 """
 
 from tensorpack import *
 from tensorpack.dataflow import dataset
 from tensorpack.utils.argtools import memoized
+from tensorpack.contrib.keras import KerasPhaseCallback
 
 IMAGE_SIZE = 28
 
@@ -78,18 +78,6 @@ class Model(ModelDesc):
         return tf.train.AdamOptimizer(lr)
 
 
-# Keras needs an extra input if learning_phase is used by the model
-class KerasCallback(Callback):
-    def __init__(self, isTrain):
-        assert isinstance(isTrain, bool), isTrain
-        self._isTrain = isTrain
-        self._learning_phase = KB.learning_phase()
-
-    def _before_run(self, ctx):
-        return tf.train.SessionRunArgs(
-            fetches=[], feed_dict={self._learning_phase: int(self._isTrain)})
-
-
 def get_data():
     train = BatchData(dataset.Mnist('train'), 128)
     test = BatchData(dataset.Mnist('test'), 256, remainder=True)
@@ -104,12 +92,11 @@ def get_config():
         model=Model(),
         dataflow=dataset_train,
         callbacks=[
-            KerasCallback(True),   # for Keras training
+            KerasPhaseCallback(True),   # for Keras training
             ModelSaver(),
             InferenceRunner(
                 dataset_test,
-                [ScalarStats('cross_entropy_loss'), ClassificationError('incorrect')],
-                extra_hooks=[CallbackToHook(KerasCallback(False))]),    # for keras inference
+                [ScalarStats('cross_entropy_loss'), ClassificationError('incorrect')]),
         ],
         max_epoch=100,
     )
