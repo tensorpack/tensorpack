@@ -146,7 +146,7 @@ class OnlinePredictor(PredictorBase):
 
 class OfflinePredictor(OnlinePredictor):
     """ A predictor built from a given config.
-        A sinlge-tower model will be built without any prefix. """
+        A single-tower model will be built without any prefix. """
 
     def __init__(self, config):
         """
@@ -156,9 +156,9 @@ class OfflinePredictor(OnlinePredictor):
         self.graph = config._maybe_create_graph()
         with self.graph.as_default():
             input = PlaceholderInput()
-            input.setup(config.model.get_inputs_desc())
+            input.setup(config.inputs_desc)
             with TowerContext('', is_training=False):
-                config.model.build_graph(input.get_input_tensors())
+                config.tower_func(*input.get_input_tensors())
 
             input_tensors = get_tensors_by_names(config.input_names)
             output_tensors = get_tensors_by_names(config.output_names)
