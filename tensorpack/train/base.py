@@ -107,7 +107,7 @@ class Trainer(object):
     def _register_callback(self, cb):
         """
         Register a callback to the trainer.
-        It can only be called before :meth:`Trainer.train` gets called.
+        It can only be called before :meth:`Trainer.train()`.
         """
         assert isinstance(cb, Callback), cb
         assert not isinstance(self._callbacks, Callbacks), \
@@ -116,6 +116,8 @@ class Trainer(object):
             logger.warn("Callback {} is chief-only, skipped.".format(str(cb)))
         else:
             self._callbacks.append(cb)
+
+    register_callback = _register_callback
 
     def run_step(self):
         """
@@ -138,15 +140,15 @@ class Trainer(object):
         """
         describe_trainable_vars()   # TODO weird
 
-        self._register_callback(MaintainStepCounter())
+        self.register_callback(MaintainStepCounter())
         for cb in callbacks:
-            self._register_callback(cb)
+            self.register_callback(cb)
         for cb in self._callbacks:
             assert not isinstance(cb, TrainingMonitor), "Monitor cannot be pre-registered for now!"
         for m in monitors:
-            self._register_callback(m)
+            self.register_callback(m)
         self.monitors = Monitors(monitors)
-        self._register_callback(self.monitors)   # monitors is also a callback
+        self.register_callback(self.monitors)   # monitors is also a callback
 
         # some final operations that might modify the graph
         logger.info("Setup callbacks graph ...")

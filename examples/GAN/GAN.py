@@ -86,7 +86,7 @@ class GANTrainer(TowerTrainer):
         self.set_tower_func(tower_func)
 
         for cb in cbs:
-            self._register_callback(cb)
+            self.register_callback(cb)
 
 
 class SeparateGANTrainer(TowerTrainer):
@@ -116,7 +116,7 @@ class SeparateGANTrainer(TowerTrainer):
 
         self.set_tower_func(tower_func)
         for cb in cbs:
-            self._register_callback(cb)
+            self.register_callback(cb)
 
     def run_step(self):
         if self.global_step % (self._d_period) == 0:
@@ -162,7 +162,7 @@ class MultiGPUGANTrainer(TowerTrainer):
         self.train_op = d_min
         self.set_tower_func(tower_func)
         for cb in cbs:
-            self._register_callback(cb)
+            self.register_callback(cb)
 
 
 class RandomZData(DataFlow):
