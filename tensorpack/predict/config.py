@@ -27,7 +27,7 @@ class PredictConfig(object):
                  ):
         """
         Args:
-            model (ModelDescBase): the model to be used to obtain inputs_desc and tower_func.
+            model (ModelDescBase): to be used to obtain inputs_desc and tower_func.
             inputs_desc ([InputDesc]):
             tower_func: a callable which takes input tensors
 
@@ -35,8 +35,7 @@ class PredictConfig(object):
                 session. Defaults to :class:`tf.train.ChiefSessionCreator()`.
             session_init (SessionInit): how to initialize variables of the session.
                 Defaults to do nothing.
-            input_names (list): a list of input tensor names. Defaults to all
-                inputs of the model.
+            input_names (list): a list of input tensor names. Defaults to match inputs_desc.
             output_names (list): a list of names of the output tensors to predict, the
                 tensors can be any computable tensor in the graph.
             return_input (bool): same as in :attr:`PredictorBase.return_input`.
@@ -70,8 +69,7 @@ class PredictConfig(object):
         # inputs & outputs
         self.input_names = input_names
         if self.input_names is None:
-            raw_tensors = self.model.get_inputs_desc()
-            self.input_names = [k.name for k in raw_tensors]
+            self.input_names = [k.name for k in self.inputs_desc]
         self.output_names = output_names
         assert_type(self.output_names, list)
         assert_type(self.input_names, list)
