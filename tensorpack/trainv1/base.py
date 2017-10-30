@@ -21,7 +21,7 @@ from ..tfutils.sessinit import JustCurrentSession
 from ..tfutils.tower import TowerFuncWrapper
 
 from ..input_source import PlaceholderInput
-from ..graph_builder.predictor_factory import SimplePredictBuilder
+from ..graph_builder.predict import SimplePredictBuilder
 from ..predict.base import OnlinePredictor
 from ..callbacks.steps import MaintainStepCounter
 

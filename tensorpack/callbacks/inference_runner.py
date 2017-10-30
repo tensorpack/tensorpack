@@ -19,7 +19,7 @@ from ..dataflow.base import DataFlow
 
 from ..input_source import (
     InputSource, FeedInput, QueueInput)
-from ..graph_builder.predictor_factory import SimplePredictBuilder
+from ..graph_builder.predict import SimplePredictBuilder
 
 from .base import Callback
 from .group import Callbacks

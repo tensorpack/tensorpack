@@ -7,7 +7,7 @@ import six
 from abc import abstractmethod, ABCMeta
 
 from ..utils.argtools import call_only_once, memoized
-from ..graph_builder.predictor_factory import SimplePredictBuilder
+from ..graph_builder.predict import SimplePredictBuilder
 from ..input_source import PlaceholderInput
 from ..predict.base import OnlinePredictor
 

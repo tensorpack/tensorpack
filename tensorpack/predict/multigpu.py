@@ -5,7 +5,7 @@
 
 import tensorflow as tf
 from ..utils import logger
-from ..graph_builder.predictor_factory import SimplePredictBuilder
+from ..graph_builder.predict import SimplePredictBuilder
 from ..input_source import PlaceholderInput
 from .base import OnlinePredictor
 
