@@ -34,6 +34,7 @@ class NewSessionCreator(tf.train.ChiefSessionCreator):
         else:
             self.user_provided_config = True
 
+        self.config = config
         super(NewSessionCreator, self).__init__(master=target, config=config)
 
 

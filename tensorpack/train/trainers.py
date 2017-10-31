@@ -211,15 +211,16 @@ class DistributedTrainerReplicated(SingleCostTrainer):
 
 
 class HorovodTrainer(SingleCostTrainer):
+    """
+    Horovod trainer, currently support multi-GPU training.
+
+    It will use the first k GPUs in CUDA_VISIBLE_DEVICES.
+    """
     def __init__(self):
         hvd.init()
         self.is_chief = hvd.rank() == 0
-        local_rank = hvd.local_rank()
-        devices = os.environ['CUDA_VISIBLE_DEVICES']
-        devices = list(map(int, devices.split(',')))
-        assert len(devices) >= local_rank
-        self._device = devices[local_rank]
-        logger.info("Horovod local rank={}, device={}".format(local_rank, self._device))
+        self._local_rank = hvd.local_rank()
+        logger.info("Horovod local rank={}".format(self._local_rank))
         super(HorovodTrainer, self).__init__()
 
     def _setup_graph(self, input, get_cost_fn, get_opt_fn):
@@ -239,7 +240,7 @@ class HorovodTrainer(SingleCostTrainer):
         if not isinstance(session_creator, NewSessionCreator):
             raise ValueError(
                 "Cannot set session_creator for horovod training! ")
-        session_creator._config.gpu_options.visible_device_list = str(self._device)
+        session_creator.config.gpu_options.visible_device_list = str(self._local_rank)
         super(HorovodTrainer, self).initialize(
             session_creator, session_init)
 
