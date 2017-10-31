@@ -164,7 +164,7 @@ def get_scalar_var(name, init_value, summary=False, trainable=False):
                           trainable=trainable)
     if summary:
         # this is recognized in callbacks.StatHolder
-        tf.summary.scalar(name, ret)
+        tf.summary.scalar(name + '-summary', ret)
     return ret
 
 

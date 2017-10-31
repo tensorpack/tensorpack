@@ -248,5 +248,5 @@ class HorovodTrainer(SingleCostTrainer):
 from ..utils.develop import create_dummy_class   # noqa
 try:
     import horovod.tensorflow as hvd
-except ImportError:
+except Exception:   # could be other than ImportError, e.g. NCCL not found
     HorovodTrainer = create_dummy_class('HovorodTrainer', 'horovod')    # noqa
