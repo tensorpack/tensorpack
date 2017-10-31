@@ -139,8 +139,9 @@ class ClassificationError(Inferencer):
     whether each sample in the batch is *incorrectly* classified.
     You can use ``tf.nn.in_top_k`` to produce this vector.
 
-    This Inferencer produces the "true" error,
-    taking account of the fact that batches might not have the same size in
+    This Inferencer produces the "true" error, which could be different from
+    `ScalarStats('error_rate')`.
+    It takes account of the fact that batches might not have the same size in
     testing (because the size of test set might not be a multiple of batch size).
     Therefore the result can be different from averaging the error rate of each batch.
 
@@ -152,8 +153,6 @@ class ClassificationError(Inferencer):
         """
         Args:
             wrong_tensor_name(str): name of the ``wrong`` tensor.
-                The default is the same as the default output name of
-                :meth:`prediction_incorrect`.
             summary_name(str): the name to log the error with.
         """
         self.wrong_tensor_name = wrong_tensor_name

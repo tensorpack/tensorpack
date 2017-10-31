@@ -67,9 +67,9 @@ class Model(ModelDesc):
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
 
-        wrong = symbf.prediction_incorrect(logits, label)
+        correct = tf.to_float(tf.nn.in_top_k(logits, label, 1), name='correct')
         # monitor training error
-        add_moving_summary(tf.reduce_mean(wrong, name='train_error'))
+        add_moving_summary(tf.reduce_mean(correct, name='accuracy'))
 
         # weight decay on all W of fc layers
         wd_cost = regularize_cost('fc.*/W', l2_regularizer(4e-4), name='regularize_loss')
@@ -127,7 +127,8 @@ def get_config(cifar_classnum):
         dataflow=dataset_train,
         callbacks=[
             ModelSaver(),
-            InferenceRunner(dataset_test, ClassificationError()),
+            InferenceRunner(dataset_test,
+                            ScalarStats(['accuracy', 'cost'])),
             StatMonitorParamSetter('learning_rate', 'val_error', lr_func,
                                    threshold=0.001, last_k=10),
         ],

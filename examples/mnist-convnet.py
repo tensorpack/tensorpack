@@ -63,7 +63,6 @@ class Model(ModelDesc):
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')  # the average cross-entropy loss
 
-        # compute the "correct vector", for the callback ClassificationError to use at validation time
         correct = tf.cast(tf.nn.in_top_k(logits, label, 1), tf.float32, name='correct')
         accuracy = tf.reduce_mean(correct, name='accuracy')
 
@@ -118,9 +117,7 @@ def get_config():
             MaxSaver('validation_accuracy'),  # save the model with highest accuracy (prefix 'validation_')
             InferenceRunner(    # run inference(for validation) after every epoch
                 dataset_test,   # the DataFlow instance used for validation
-                # Calculate both the cost and the accuracy for this DataFlow
-                [ScalarStats('cross_entropy_loss'),
-                 ClassificationError('correct', 'validation_accuracy')]),
+                ScalarStats(['cross_entropy_loss', 'accuracy'])),
         ],
         steps_per_epoch=steps_per_epoch,
         max_epoch=100,

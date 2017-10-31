@@ -61,9 +61,9 @@ class Model(ModelDesc):
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')  # the average cross-entropy loss
 
         # for tensorpack validation
-        wrong = symbolic_functions.prediction_incorrect(logits, label, name='incorrect')
-        train_error = tf.reduce_mean(wrong, name='train_error')
-        summary.add_moving_summary(train_error)
+        acc = tf.to_float(tf.nn.in_top_k(logits, label, 1))
+        acc = tf.reduce_mean(acc, name='accuracy')
+        summary.add_moving_summary(acc)
 
         wd_cost = tf.add_n(M.losses, name='regularize_loss')    # this is how Keras manage regularizers
         self.cost = tf.add_n([wd_cost, cost], name='total_cost')
@@ -97,7 +97,7 @@ if __name__ == '__main__':
             ModelSaver(),
             InferenceRunner(
                 dataset_test,
-                [ScalarStats('cross_entropy_loss'), ClassificationError('incorrect')]),
+                ScalarStats(['cross_entropy_loss', 'accuracy'])),
         ],
         max_epoch=100,
     )

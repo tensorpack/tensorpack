@@ -10,7 +10,7 @@ Here's a list of things you can do when your training is slow:
 2. If you use queue-based input + dataflow, you can look for the queue size statistics in
 	 training log. Ideally the queue should be near-full (default size is 50).
  	 If the size is near-zero, data is the bottleneck.
-3. If the GPU utilization is low, it may be because of slow data, or some ops are on CPU. Also make sure GPUs are not locked in P8 state.
+3. If the GPU utilization is low, it may be because of slow data, or some ops are inefficient. Also make sure GPUs are not locked in P8 state.
 
 ## Benchmark the components
 1. Use `DummyConstantInput(shapes)` as the `InputSource`.
@@ -67,7 +67,10 @@ But there may be something cheap you can try:
 ### Cannot scale to multi-GPU
 If you're unable to scale to multiple GPUs almost linearly:
 1. First make sure that the ResNet example can scale. Run it with `--fake` to use fake data.
-2. Then note that your model may have a different communication-computation pattern.
+	If not, it's a bug or an environment setup problem.
+2. Then note that your model may have a different communication-computation pattern or other
+	 characteristics that affects efficiency.
+	 There isn't a simple answer to this.
 	 Changing different multi-GPU trainers may affect the speed significantly sometimes.
 
 Note that scalibility measurement always trains with the same "batch size per GPU", not the same total equivalent batch size.
