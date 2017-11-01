@@ -60,9 +60,18 @@ The benefits of using TensorFlow ops are:
 		and TF `StagingArea` can help hide the "Copy to GPU" latency.
 		They are used by most examples in tensorpack.
 
-The benefits of using Python reader is obvious:
-it's much much easier to write Python to read different data format,
-handle corner cases in noisy data, preprocess, etc.
+The benefits of using Python reader is obvious: it's __much much easier__.
+Reading data is a much more complicated and much less structured job than training a model.
+You need to handle different data format, handle corner cases in noisy data,
+which all require logical operations, condition operations, loops, etc. These operations
+are __naturally not suitable__ for a graph computation framework.
+
+It only makes sense to use TF to read data, if your data is originally very clean and well-formated.
+You may want to write a script to clean your data, then you're almost writing a Python loader already!
+Think about it: it's a waste of time to write a Python script to transform from raw data to TFRecords,
+then a TF script to transform from TFRecords to tensors.
+The intermediate step (TFRecords) doesn't have to exist.
+
 
 ## InputSource
 
