@@ -9,7 +9,7 @@ from tqdm import tqdm
 from six.moves import queue
 
 from tensorpack.utils.concurrency import StoppableThread, ShareSessionThread
-from tensorpack.callbacks import Triggerable
+from tensorpack.callbacks import Callback
 from tensorpack.utils import logger
 from tensorpack.utils.stats import StatCounter
 from tensorpack.utils.utils import get_tqdm_kwargs
@@ -108,7 +108,7 @@ def eval_model_multithread(pred, nr_eval, get_player_fn):
     logger.info("Average Score: {}; Max Score: {}".format(mean, max))
 
 
-class Evaluator(Triggerable):
+class Evaluator(Callback):
     def __init__(self, nr_eval, input_names, output_names, get_player_fn):
         self.eval_episode = nr_eval
         self.input_names = input_names
