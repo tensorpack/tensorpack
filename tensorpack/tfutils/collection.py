@@ -150,6 +150,7 @@ class CollectionGuard(object):
                     self._name, ', '.join(
                         map(lambda t: "({}: {}->{})".format(*t),
                             size_change))))
+        restore_collection(self._freeze_backup)
 
     def get_collection_in_tower(self, key):
         """

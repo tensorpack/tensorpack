@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File: predictor_factory.py
+# File: predict.py
 
 import tensorflow as tf
 from contextlib import contextmanager

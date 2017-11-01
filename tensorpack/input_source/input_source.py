@@ -87,7 +87,8 @@ class FeedInput(InputSource):
         return self.ds.size()
 
     def _setup(self, inputs):
-        self._all_placehdrs = [v.build_placeholder(prefix='') for v in inputs]
+        # placeholders as input are always safe to reuse.
+        self._all_placehdrs = [v.build_placeholder_reuse() for v in inputs]
         self._cb = self._FeedCallback(self._iter_ds, self._all_placehdrs)
 
     def _get_input_tensors(self):
