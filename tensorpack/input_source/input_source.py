@@ -414,13 +414,18 @@ class StagingInput(FeedfreeInput):
             self.stage_op = stage_op
             self.fetches = tf.train.SessionRunArgs(
                 fetches=[stage_op, unstage_op])
+            self._initialized = False
 
-        def _before_train(self):
+        def _prefill(self):
             logger.info("Pre-filling staging area ...")
             for k in range(self.nr_stage):
                 self.stage_op.run()
 
         def _before_run(self, ctx):
+            # This has to happen once, right before the first iteration.
+            if not self._initialized:
+                self._initialized = True
+                self._prefill()
             return self.fetches
 
     def __init__(self, input, towers, nr_stage=5):
