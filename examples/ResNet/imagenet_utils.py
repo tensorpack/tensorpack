@@ -25,7 +25,8 @@ class GoogleNetResize(imgaug.ImageAugmentor):
     See `Going Deeper with Convolutions` by Google.
     """
     def __init__(self, crop_area_fraction=0.08,
-                 aspect_ratio_low=0.75, aspect_ratio_high=1.333):
+                 aspect_ratio_low=0.75, aspect_ratio_high=1.333,
+                 target_shape=224):
         self._init(locals())
 
     def _augment(self, img, _):
@@ -42,10 +43,10 @@ class GoogleNetResize(imgaug.ImageAugmentor):
                 x1 = 0 if w == ww else self.rng.randint(0, w - ww)
                 y1 = 0 if h == hh else self.rng.randint(0, h - hh)
                 out = img[y1:y1 + hh, x1:x1 + ww]
-                out = cv2.resize(out, (224, 224), interpolation=cv2.INTER_CUBIC)
+                out = cv2.resize(out, (self.target_shape, self.target_shape), interpolation=cv2.INTER_CUBIC)
                 return out
-        out = imgaug.ResizeShortestEdge(224, interp=cv2.INTER_CUBIC).augment(img)
-        out = imgaug.CenterCrop(224).augment(out)
+        out = imgaug.ResizeShortestEdge(self.target_shape, interp=cv2.INTER_CUBIC).augment(img)
+        out = imgaug.CenterCrop(self.target_shape).augment(out)
         return out
 
 

@@ -19,6 +19,7 @@ from tensorpack.tfutils.varreplace import remap_variables
 from tensorpack.dataflow import dataset
 from tensorpack.utils.gpu import get_nr_gpu
 
+from imagenet_utils import get_imagenet_dataflow, fbresnet_augmentor
 from dorefa import get_dorefa
 
 """
@@ -30,23 +31,23 @@ The original experiements are performed on a proprietary framework.
 This is our attempt to reproduce it on tensorpack & TensorFlow.
 
 Accuracy:
-    Trained with 4 GPUs and (W,A,G)=(1,2,6), it can reach top-1 single-crop validation error of 51%,
-    after 70 epochs. This number is a bit better than what's in the paper
-    probably due to more sophisticated augmentors.
+    Trained with 4 GPUs and (W,A,G)=(1,2,6), it can reach top-1 single-crop validation error of 47.6%,
+    after 70 epochs. This number is better than what's in the paper
+    due to more sophisticated augmentors.
 
     Note that the effective batch size in SyncMultiGPUTrainer is actually
     BATCH_SIZE * NUM_GPU. With a different number of GPUs in use, things might
     be a bit different, especially for learning rate.
 
-    With (W,A,G)=(32,32,32) -- full precision baseline, 43% error.
-    With (W,A,G)=(1,32,32) -- BWN, 46% error.
-    With (W,A,G)=(1,2,6), 51% error.
-    With (W,A,G)=(1,2,4), 63% error.
+    With (W,A,G)=(32,32,32) -- full precision baseline
+    With (W,A,G)=(1,32,32) -- BWN
+    With (W,A,G)=(1,2,6), 47.6% error
+    With (W,A,G)=(1,2,4)
 
 Speed:
-    About 2.2 iteration/s on 1 TitanX. (Each epoch is set to 10000 iterations)
+    About 11 iteration/s on 4 P100s. (Each epoch is set to 10000 iterations)
     Note that this code was written early without using NCHW format. You
-    should expect a 30% speed up after switching to NCHW format.
+    should expect a speed up after switching to NCHW format.
 
 To Train, for example:
     ./alexnet-dorefa.py --dorefa 1,2,6 --data PATH --gpu 0,1
@@ -64,7 +65,7 @@ To Train, for example:
 
     And you'll need the following to be able to fetch data efficiently
         Fast disk random access (Not necessarily SSD. I used a RAID of HDD, but not sure if plain HDD is enough)
-        More than 12 CPU cores (for data processing)
+        More than 20 CPU cores (for data processing)
         More than 10G of free memory
 
 To Run Pretrained Model:
@@ -173,62 +174,9 @@ class Model(ModelDesc):
 
 def get_data(dataset_name):
     isTrain = dataset_name == 'train'
-    ds = dataset.ILSVRC12(args.data, dataset_name, shuffle=isTrain)
-
-    meta = dataset.ILSVRCMeta()
-    pp_mean = meta.get_per_pixel_mean()
-    pp_mean_224 = pp_mean[16:-16, 16:-16, :]
-
-    if isTrain:
-        class Resize(imgaug.ImageAugmentor):
-            def __init__(self):
-                self._init(locals())
-
-            def _augment(self, img, _):
-                h, w = img.shape[:2]
-                size = 224
-                scale = self.rng.randint(size, 308) * 1.0 / min(h, w)
-                scaleX = scale * self.rng.uniform(0.85, 1.15)
-                scaleY = scale * self.rng.uniform(0.85, 1.15)
-                desSize = map(int, (max(size, min(w, scaleX * w)),
-                                    max(size, min(h, scaleY * h))))
-                dst = cv2.resize(img, tuple(desSize),
-                                 interpolation=cv2.INTER_CUBIC)
-                return dst
-
-        augmentors = [
-            Resize(),
-            imgaug.Rotation(max_deg=10),
-            imgaug.RandomApplyAug(imgaug.GaussianBlur(3), 0.5),
-            imgaug.Brightness(30, True),
-            imgaug.Gamma(),
-            imgaug.Contrast((0.8, 1.2), True),
-            imgaug.RandomCrop((224, 224)),
-            imgaug.RandomApplyAug(imgaug.JpegNoise(), 0.8),
-            imgaug.RandomApplyAug(imgaug.GaussianDeform(
-                [(0.2, 0.2), (0.2, 0.8), (0.8, 0.8), (0.8, 0.2)],
-                (224, 224), 0.2, 3), 0.1),
-            imgaug.Flip(horiz=True),
-            imgaug.MapImage(lambda x: x - pp_mean_224),
-        ]
-    else:
-        def resize_func(im):
-            h, w = im.shape[:2]
-            scale = 256.0 / min(h, w)
-            desSize = map(int, (max(224, min(w, scale * w)),
-                                max(224, min(h, scale * h))))
-            im = cv2.resize(im, tuple(desSize), interpolation=cv2.INTER_CUBIC)
-            return im
-        augmentors = [
-            imgaug.MapImage(resize_func),
-            imgaug.CenterCrop((224, 224)),
-            imgaug.MapImage(lambda x: x - pp_mean_224),
-        ]
-    ds = AugmentImageComponent(ds, augmentors, copy=False)
-    ds = BatchData(ds, BATCH_SIZE, remainder=not isTrain)
-    if isTrain:
-        ds = PrefetchDataZMQ(ds, min(25, multiprocessing.cpu_count()))
-    return ds
+    augmentors = fbresnet_augmentor(isTrain)
+    return get_imagenet_dataflow(
+        args.data, dataset_name, BATCH_SIZE, augmentors)
 
 
 def get_config():
@@ -314,7 +262,6 @@ if __name__ == '__main__':
         run_image(Model(), DictRestore(np.load(args.load, encoding='latin1').item()), args.run)
         sys.exit()
 
-    assert args.gpu is not None, "Need to specify a list of gpu for training!"
     nr_tower = max(get_nr_gpu(), 1)
     BATCH_SIZE = TOTAL_BATCH_SIZE // nr_tower
     logger.info("Batch per tower: {}".format(BATCH_SIZE))
