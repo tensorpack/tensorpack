@@ -7,7 +7,6 @@ import weakref
 import time
 from six.moves import range
 import six
-import sys
 
 from ..callbacks import (
     Callback, Callbacks, Monitors, TrainingMonitor,
@@ -235,7 +234,7 @@ class Trainer(object):
     def train(self,
               callbacks, monitors,
               session_creator, session_init,
-              steps_per_epoch, starting_epoch=1, max_epoch=sys.maxint - 1):
+              steps_per_epoch, starting_epoch=1, max_epoch=9999999):
         """
         Implemented by:
 
@@ -254,7 +253,7 @@ class Trainer(object):
     def train_with_defaults(
             self, callbacks=None, monitors=None,
             session_creator=None, session_init=None,
-            steps_per_epoch=None, starting_epoch=1, max_epoch=sys.maxint - 1):
+            steps_per_epoch=None, starting_epoch=1, max_epoch=9999999):
         """
         Same as :meth:`train()`, but will:
 
