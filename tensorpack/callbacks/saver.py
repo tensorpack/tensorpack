@@ -26,7 +26,8 @@ class ModelSaver(Callback):
                  keep_recent=None, keep_freq=None):
         """
         Args:
-            max_to_keep, keep_checkpoint_every_n_hours(int): the same as in ``tf.train.Saver``.
+            max_to_keep (int): the same as in ``tf.train.Saver``.
+            keep_checkpoint_every_n_hours (int): the same as in ``tf.train.Saver``.
             checkpoint_dir (str): Defaults to ``logger.get_logger_dir()``.
             var_collections (str or list of str): collection of the variables (or list of collections) to save.
         """
