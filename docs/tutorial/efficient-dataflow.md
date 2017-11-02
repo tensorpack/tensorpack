@@ -18,7 +18,7 @@ We will need to reach a speed of, roughly **1k ~ 2k images per second**, to keep
 Some things to know before reading:
 1. For smaller datasets (e.g. several GBs of images with lightweight preprocessing), a simple reader plus some prefetch should usually work well enough.
 	 Therefore you don't have to understand this tutorial in depth unless you really find your data being the bottleneck.
-	 This tutorial could be a bit complicated for people new to system architectures, but you do need these to be able to run fast enough on ImageNet-sized dataset.
+	 This tutorial could be a bit complicated for people new to system architectures, but you do need these to be able to run fast enough on ImageNet-scale dataset.
 2. Having a fast Python generator **alone** may or may not improve your overall training speed.
 	 You need mechanisms to hide the latency of **all** preprocessing stages, as mentioned in the
 	 [previous tutorial](input-source.html).

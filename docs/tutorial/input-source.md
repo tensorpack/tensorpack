@@ -25,7 +25,7 @@ The reasons are:
 
 Let's do some simple math: according to [tensorflow/benchmarks](https://www.tensorflow.org/performance/benchmarks),
 4 P100 GPUs can train ResNet50 at 852 images/sec, and the size of those images are 852\*224\*224\*3\*4bytes = 489MB.
-Assuming you have 5GB/s `memcpy` bandwidth, simply copying the data once would take 0.1s -- slowing
+Assuming you have 5GB/s `memcpy` bandwidth (roughly like this if you run single-thread copy), simply copying the data once would take 0.1s -- slowing
 down your training by 10%. Think about how many more copies are made during your preprocessing.
 
 Failure to hide the data preparation latency is the major reason why people
@@ -74,6 +74,7 @@ Let's take a look at what users are asking for:
 * [Handle dataset that's not a multiple of batch size](https://github.com/tensorflow/tensorflow/issues/13745)
 * [Take variable-length np array](https://github.com/tensorflow/tensorflow/issues/13018)
 * [Different levels of determinism](https://github.com/tensorflow/tensorflow/issues/13932)
+
 To support these features which could've been done with 3 lines of code in Python, you need either a new TF
 API, or ask [Dataset.from_generator](https://www.tensorflow.org/versions/r1.4/api_docs/python/tf/contrib/data/Dataset#from_generator)
 (i.e. Python again) to the rescue.

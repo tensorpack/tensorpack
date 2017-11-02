@@ -20,30 +20,31 @@ def train(self):
 ```
 Note that at each place, each callback will be called in the order they are given to the trainer.
 
+
 ### Explain the Callback Methods
 
-You can override any of the following methods to define a new callback:
+To write a callback, subclass `Callback` and implement the corresponding underscore-prefixed methods.
+You can overwrite any of the following methods to define a new callback:
 
 * `_setup_graph(self)`
 
-Setup the ops / tensors in the graph which you might need to use in the callback.
-You can use TF methods such as
-[`graph.get_tensor_by_name`](https://www.tensorflow.org/api_docs/python/tf/Graph#get_tensor_by_name)
-to access those already defined in the training tower.
-
-If you're using a `TowerTrainer` instance, more tools are available:
-
-	* Use `self.trainer.tower_func.towers` to access the
-		[tower handles](../modules/tfutils.html#tensorpack.tfutils.tower.TowerTensorHandles),
-		and therefore the tensors in each tower.
-	* [self.get_tensors_maybe_in_tower()](../modules/callbacks.html#tensorpack.callbacks.Callback.get_tensors_maybe_in_tower)
-		is a helper function to access tensors in the first training tower.
-	* [self.trainer.get_predictor()](../modules/train.html#tensorpack.train.TowerTrainer.get_predictor)
-		is a helper function to create a callable under inference mode.
-
+Create any ops / tensors in the graph which you might need to use in the callback.
 This method is to separate between "define" and "run", and also to
 avoid the common mistake to create ops inside
 loops. All changes to the graph should be made in this method.
+
+To access ops which are already defined,
+you can use TF methods such as
+[`graph.get_tensor_by_name`](https://www.tensorflow.org/api_docs/python/tf/Graph#get_tensor_by_name).
+If you're using a `TowerTrainer` instance, more tools are available:
+
+* Use `self.trainer.tower_func.towers` to access the
+	[tower handles](../modules/tfutils.html#tensorpack.tfutils.tower.TowerTensorHandles),
+	and therefore the tensors in each tower.
+* [self.get_tensors_maybe_in_tower()](../modules/callbacks.html#tensorpack.callbacks.Callback.get_tensors_maybe_in_tower)
+	is a helper function to access tensors in the first training tower.
+* [self.trainer.get_predictor()](../modules/train.html#tensorpack.train.TowerTrainer.get_predictor)
+	is a helper function to create a callable under inference mode.
 
 * `_before_train(self)`
 
@@ -60,7 +61,7 @@ Otherwise, `_trigger_epoch` should be enough.
 
 * `_before_run(self, ctx)`, `_after_run(self, ctx, values)`
 
-This two are the equivlent of [tf.train.SessionRunHook](https://www.tensorflow.org/api_docs/python/tf/train/SessionRunHook).
+These are the equivalence of [tf.train.SessionRunHook](https://www.tensorflow.org/api_docs/python/tf/train/SessionRunHook).
 Please refer to TensorFlow documentation for detailed API.
 They are used to run extra ops / eval extra tensors / feed extra values __along with__ the actual training iterations.
 

@@ -29,16 +29,16 @@ expects 4 arguments in `setup_graph`: `InputDesc`, `InputSource`, get_cost funct
 
 ```python
 class MyModel(ModelDesc):
-	def _get_inputs(self):
-		return [InputDesc(...), InputDesc(...)]
+  def _get_inputs(self):
+    return [InputDesc(...), InputDesc(...)]
 
-	def _build_graph(self, inputs):
-		tensorA, tensorB = inputs
-		# build the graph
-		self.cost = xxx	 # define the cost tensor
+  def _build_graph(self, inputs):
+    tensorA, tensorB = inputs
+    # build the graph
+    self.cost = xxx   # define the cost tensor
 
-	def _get_optimizer(self):
-	  return tf.train.GradientDescentOptimizer(0.1)
+  def _get_optimizer(self):
+    return tf.train.GradientDescentOptimizer(0.1)
 ```
 
 `_get_inputs` should define the metainfo of all the inputs your graph will take to build.
@@ -59,9 +59,9 @@ config = TrainConfig(
    model=MyModel()
    dataflow=my_dataflow,
    # data=my_inputsource, # alternatively, use a customized InputSource
-   callbacks=[...],		# some default callbacks are automatically applied
-	 # some default monitors are automatically applied
-	 steps_per_epoch=300,	 # default to the size of your InputSource/DataFlow
+   callbacks=[...],    # some default callbacks are automatically applied
+   # some default monitors are automatically applied
+   steps_per_epoch=300,   # default to the size of your InputSource/DataFlow
 )
 
 trainer = SomeTrainer()

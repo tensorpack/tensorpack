@@ -6,7 +6,7 @@ Tensorpack follows the "define-and-run" paradigm. A training has two steps:
 1. __Define__: Build graph for the model.
 	Users can call whatever tensorflow functions to setup the graph.
 	Users may or may not use tensorpack `InputSource`, `ModelDesc` or other utilities to build the graph.
-	This goal of this step is to define "what to run" in later training steps,
+	The goal of this step is to define "what to run" in later training steps,
 	and it can happen either inside or outside tensorpack trainer.
 
 2. __Run__: Train the model (the [Trainer.train() method](../modules/train.html#tensorpack.train.Trainer.train)):
@@ -58,7 +58,7 @@ Existing multi-GPU trainers include the logic of single-cost data-parallel train
 You can enable them by just one line, and all the necessary logic to achieve the best performance was baked into the trainers already.
 The trainers can reach the same performance as the [official tensorflow benchmark](https://www.tensorflow.org/performance/benchmarks).
 
-Please note that in data-parallel training, in each iteration all towers (all replicates of the model) will take
+Please note that in data-parallel training, in each iteration all GPUs (all replicates of the model) will take
 tensors from the `InputSource` (instead of taking one for all and split). So the total batch size
 would be ``(batch size of InputSource/DataFlow) * #GPU``.
 

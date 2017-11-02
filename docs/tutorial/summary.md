@@ -15,7 +15,7 @@ This is how TensorFlow summaries eventually get logged/saved/printed:
 	It runs ops in the `SUMMARIES` collection (by default) every epoch (by default),
 	and writes results to the monitors.
 3. __Where to Log__:
-	Several monitors are [default monitors](../modules/train.html#tensorpack.train.DEFAULT_MONITORS).
+	Several monitors are [enabled by default](../modules/train.html#tensorpack.train.DEFAULT_MONITORS).
 	* A [TFEventWriter](../modules/callbacks.html#tensorpack.callbacks.TFEventWriter)
 		writes things to an event file used by tensorboard.
 	* A [ScalarPrinter](../modules/callbacks.html#tensorpack.callbacks.ScalarPrinter)
@@ -36,7 +36,7 @@ are likely to have too much variance. To address this issue, you can:
 	 [MovingAverageSummary](../modules/callbacks.html#tensorpack.callbacks.MovingAverageSummary)
 	 callback (enabled by default).
 
-### Other Data
+### Other Logging Data
 
 Besides TensorFlow summaries,
 a callback can also write other data to the monitor backend anytime once the training has started.
