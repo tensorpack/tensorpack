@@ -7,6 +7,7 @@ import weakref
 import time
 from six.moves import range
 import six
+import sys
 
 from ..callbacks import (
     Callback, Callbacks, Monitors, TrainingMonitor,
@@ -137,6 +138,10 @@ class Trainer(object):
     def setup_callbacks(self, callbacks, monitors):
         """
         Setup callbacks and monitors. Must be called after the main graph is built.
+
+        Args:
+            callbacks ([Callback]):
+            monitors ([TrainingMonitor]):
         """
         describe_trainable_vars()   # TODO weird
 
@@ -160,6 +165,10 @@ class Trainer(object):
         """
         Initialize self.sess and self.hooked_sess.
         Must be called after callbacks are setup.
+
+        Args:
+            session_creator (tf.train.SessionCreator):
+            session_init (sessinit.SessionInit):
         """
         session_init._setup_graph()
 
@@ -181,9 +190,12 @@ class Trainer(object):
         logger.info("Graph Finalized.")
 
     @call_only_once
-    def main_loop(self, steps_per_epoch, starting_epoch=1, max_epoch=99999):
+    def main_loop(self, steps_per_epoch, starting_epoch, max_epoch):
         """
         Run the main training loop.
+
+        Args:
+            steps_per_epoch, starting_epoch, max_epoch (int):
         """
         with self.sess.as_default():
             self.loop.config(steps_per_epoch, starting_epoch, max_epoch)
@@ -223,7 +235,7 @@ class Trainer(object):
     def train(self,
               callbacks, monitors,
               session_creator, session_init,
-              steps_per_epoch, starting_epoch, max_epoch):
+              steps_per_epoch, starting_epoch=1, max_epoch=sys.maxint - 1):
         """
         Implemented by:
 
@@ -242,7 +254,7 @@ class Trainer(object):
     def train_with_defaults(
             self, callbacks=None, monitors=None,
             session_creator=None, session_init=None,
-            steps_per_epoch=None, starting_epoch=1, max_epoch=9999):
+            steps_per_epoch=None, starting_epoch=1, max_epoch=sys.maxint - 1):
         """
         Same as :meth:`train()`, but will:
 

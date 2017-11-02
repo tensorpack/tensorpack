@@ -200,7 +200,7 @@ class DistributedTrainerReplicated(SingleCostTrainer):
         if not isinstance(session_creator, NewSessionCreator) or \
                 session_creator.user_provided_config:
             raise ValueError(
-                "Cannot set session_creator or session_config for distributed training! "
+                "You are not allowed to set session_creator or session_config for distributed training! "
                 "To use a custom session config, pass it to tf.train.Server.")
         super(DistributedTrainerReplicated, self).initialize(
             get_distributed_session_creator(), session_init)
@@ -239,7 +239,7 @@ class HorovodTrainer(SingleCostTrainer):
     def initialize(self, session_creator, session_init):
         if not isinstance(session_creator, NewSessionCreator):
             raise ValueError(
-                "Cannot set session_creator for horovod training! ")
+                "session_creator has to be `NewSessionCreator` for horovod training! ")
         session_creator.config.gpu_options.visible_device_list = str(self._local_rank)
         super(HorovodTrainer, self).initialize(
             session_creator, session_init)

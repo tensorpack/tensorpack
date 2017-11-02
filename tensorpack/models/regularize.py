@@ -60,7 +60,7 @@ def regularize_cost(regex, func, name='regularize_cost'):
 
     to_regularize = []
 
-    with tf.name_scope('regularize_cost'):
+    with tf.name_scope(name + '_internals'):
         costs = []
         for p in params:
             para_name = p.op.name
