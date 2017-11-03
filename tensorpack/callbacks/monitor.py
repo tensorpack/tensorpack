@@ -261,6 +261,7 @@ class JSONWriter(TrainingMonitor):
                 # TODO is this a good idea?
                 logger.info("Found training history from JSON, now starting from epoch number {}.".format(epoch))
                 self.trainer.loop.starting_epoch = epoch
+                self.trainer.loop._epoch_num = epoch - 1
         else:
             self._stats = []
         self._stat_now = {}
