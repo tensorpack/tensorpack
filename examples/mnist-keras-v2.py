@@ -16,7 +16,7 @@ from tensorpack.input_source import QueueInput
 from tensorpack.callbacks import ModelSaver, InferenceRunner, ScalarStats
 from tensorpack.dataflow import dataset, BatchData, MapData
 from tensorpack.utils import logger
-from tensorpack.contrib.keras import setup_keras_trainer
+from tensorpack.contrib.keras import KerasModel
 
 IMAGE_SIZE = 28
 
@@ -35,8 +35,6 @@ def get_data():
 
 if __name__ == '__main__':
     logger.auto_set_dir()
-    dataset_train, dataset_test = get_data()
-
     M = Sequential()
     M.add(KL.Conv2D(32, 3, activation='relu', input_shape=[IMAGE_SIZE, IMAGE_SIZE, 1], padding='same'))
     M.add(KL.MaxPooling2D())
@@ -50,17 +48,15 @@ if __name__ == '__main__':
     M.add(KL.Dense(10, activation=None, kernel_regularizer=regularizers.l2(1e-5)))
     M.add(KL.Activation('softmax'))
 
-    trainer = SimpleTrainer()
+    dataset_train, dataset_test = get_data()
 
-    setup_keras_trainer(
-        trainer,
-        model=M,
-        input=QueueInput(dataset_train),
+    M = KerasModel(M, QueueInput(dataset_train))
+    M.compile(
         optimizer=tf.train.AdamOptimizer(1e-3),
         loss='categorical_crossentropy',
         metrics=['accuracy']
     )
-    trainer.train_with_defaults(
+    M.fit(
         callbacks=[
             ModelSaver(),
             InferenceRunner(

@@ -11,6 +11,11 @@ from ..tfutils.tower import get_current_tower_context
 from ..tfutils.collection import freeze_collection
 from ..callbacks import Callback, InferenceRunner, CallbackToHook
 from ..tfutils.summary import add_moving_summary
+from ..utils.gpu import get_nr_gpu
+from ..train import Trainer, SimpleTrainer, SyncMultiGPUTrainerParameterServer
+
+
+__all__ = ['KerasPhaseCallback', 'setup_keras_trainer', 'KerasModel']
 
 
 # Keras needs an extra input if learning_phase is used by the model
@@ -95,3 +100,38 @@ def setup_keras_trainer(
         lambda: optimizer)
     if model.uses_learning_phase:
         trainer.register_callback(KerasPhaseCallback(True))
+
+
+class KerasModel(object):
+    def __init__(self, model, input, trainer=None):
+        """
+        Args:
+            model (keras.model.Model):
+        """
+        self.model = model
+        if trainer is None:
+            nr_gpu = get_nr_gpu()
+            if nr_gpu <= 1:
+                trainer = SimpleTrainer()
+            else:
+                trainer = SyncMultiGPUTrainerParameterServer(nr_gpu)
+        assert isinstance(trainer, Trainer), trainer
+
+        self.trainer = trainer
+        self.input = input
+
+    def compile(self, optimizer, loss, metrics):
+        setup_keras_trainer(
+            self.trainer, model=self.model,
+            input=self.input,
+            optimizer=optimizer,
+            loss=loss,
+            metrics=metrics)
+
+    def fit(self, **kwargs):
+        callbacks = kwargs.pop('callbacks', [])
+        callbacks.extend(self.get_default_callbacks())
+        self.trainer.train_with_defaults(**kwargs)
+
+    def get_default_callbacks(self):
+        return []
