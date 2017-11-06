@@ -33,21 +33,17 @@ This is our attempt to reproduce it on tensorpack & TensorFlow.
 Accuracy:
     Trained with 4 GPUs and (W,A,G)=(1,2,6), it can reach top-1 single-crop validation error of 47.6%,
     after 70 epochs. This number is better than what's in the paper
-    due to more sophisticated augmentors.
+    due to more sophisticated augmentations.
 
-    Note that the effective batch size in SyncMultiGPUTrainer is actually
-    BATCH_SIZE * NUM_GPU. With a different number of GPUs in use, things might
-    be a bit different, especially for learning rate.
-
-    With (W,A,G)=(32,32,32) -- full precision baseline
+    With (W,A,G)=(32,32,32) -- full precision baseline, 41.4% error.
     With (W,A,G)=(1,32,32) -- BWN
     With (W,A,G)=(1,2,6), 47.6% error
-    With (W,A,G)=(1,2,4)
+    With (W,A,G)=(1,2,4), 58.4% error
 
 Speed:
     About 11 iteration/s on 4 P100s. (Each epoch is set to 10000 iterations)
     Note that this code was written early without using NCHW format. You
-    should expect a speed up after switching to NCHW format.
+    should expect a speed up if the code is ported to NCHW format.
 
 To Train, for example:
     ./alexnet-dorefa.py --dorefa 1,2,6 --data PATH --gpu 0,1
