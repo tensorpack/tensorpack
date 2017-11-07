@@ -7,9 +7,8 @@ import argparse
 import tensorflow as tf
 import imp
 
-from tensorpack import TowerContext, logger
+from tensorpack import TowerContext, logger, PlaceholderInput
 from tensorpack.tfutils import varmanip, get_model_loader
-from tensorpack.graph_builder.input_source import PlaceholderInput
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--config', help='config file')
