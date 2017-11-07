@@ -247,7 +247,7 @@ if __name__ == '__main__':
         logger.auto_set_dir()
         GANTrainer(QueueInput(get_data()),
                    Model()).train_with_defaults(
-            callbacks=[ModelSaver(keep_freq=0.1)],
+            callbacks=[ModelSaver(keep_checkpoint_every_n_hours=0.1)],
             steps_per_epoch=500,
             max_epoch=100,
             session_init=SaverRestore(args.load) if args.load else None
