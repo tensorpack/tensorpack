@@ -1,5 +1,6 @@
 # tensorpack
-A neural net training interface based on TensorFlow.
+
+Tensorpack is a __zero-overhead__ training interface based on TensorFlow.
 
 [![Build Status](https://travis-ci.org/ppwwyyxx/tensorpack.svg?branch=master)](https://travis-ci.org/ppwwyyxx/tensorpack)
 [![ReadTheDoc](https://readthedocs.org/projects/tensorpack/badge/?version=latest)](http://tensorpack.readthedocs.io/en/latest/index.html)
@@ -37,7 +38,7 @@ It's Yet Another TF wrapper, but different in:
 	  but you can use any other model wrappers within tensorpack, such as sonnet/Keras/slim/tflearn/tensorlayer/....
 
 2. Focus on __training speed__.
-	+	Speed comes for free with tensorpack -- it uses TensorFlow in the __correct way__.
+	+	Speed comes for free with tensorpack -- it uses TensorFlow in the __correct way__, therefore doesn't introduce overhead on its side.
 	  On various CNNs, it runs 1.5~1.7x faster than the equivalent Keras code.
 
 	+ Data-parallel multi-GPU/distributed training is off-the-shelf to use. It is as fast as Google's [official benchmark](https://www.tensorflow.org/performance/benchmarks).
@@ -46,7 +47,7 @@ It's Yet Another TF wrapper, but different in:
 
 3. Focus on __large datasets__.
 	+ It's painful to read/preprocess data through TF.
-		tensorpack helps you load large datasets (e.g. ImageNet) in __pure Python__ with autoparallelization.
+		Tensorpack helps you load large datasets (e.g. ImageNet) in __pure Python__ with autoparallelization.
 		It also naturally works with TF Queues or tf.data.
 
 4. Interface of extensible __Callbacks__.
