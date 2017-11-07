@@ -36,6 +36,9 @@ def get_distributed_session_creator(server):
             if is_chief:
                 return sm.prepare_session(master=server.target, init_op=init_op)
             else:
-                return sm.wait_for_session(master=server.target)
+                tf.logging.set_verbosity(tf.logging.INFO)   # print message about uninitialized vars
+                ret = sm.wait_for_session(master=server.target)
+                tf.logging.set_verbosity(tf.logging.WARN)
+                return ret
 
     return _Creator()

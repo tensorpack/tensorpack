@@ -47,10 +47,8 @@ class Model(ModelDesc):
                       .FullyConnected('linear', out_dim=10, nl=tf.identity)())
         prob = tf.nn.softmax(logits, name='output')
 
-        # compute the number of failed samples, for ClassificationError to use at test time
-        wrong = prediction_incorrect(logits, label)
-        # monitor training error
-        add_moving_summary(tf.reduce_mean(wrong, name='train_error'))
+        acc = tf.to_float(tf.nn.in_top_k(logits, label, 1))
+        add_moving_summary(tf.reduce_mean(accuracy, name='accuracy'))
 
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
@@ -95,21 +93,6 @@ def get_data():
     return data_train, data_test
 
 
-def get_config():
-    data_train, data_test = get_data()
-
-    return TrainConfig(
-        model=Model(),
-        data=QueueInput(data_train),
-        callbacks=[
-            ModelSaver(),
-            InferenceRunner(data_test,
-                            [ScalarStats('cost'), ClassificationError()])
-        ],
-        max_epoch=350,
-    )
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
@@ -118,12 +101,19 @@ if __name__ == '__main__':
 
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
-    else:
-        os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
     logger.auto_set_dir()
-    with tf.Graph().as_default():
-        config = get_config()
-        if args.load:
-            config.session_init = SaverRestore(args.load)
-        launch_train_with_config(config, SimpleTrainer())
+    data_train, data_test = get_data()
+
+    config = TrainConfig(
+        model=Model(),
+        data=QueueInput(data_train),
+        callbacks=[
+            ModelSaver(),
+            InferenceRunner(data_test,
+                            ScalarStats(['cost', 'accuracy']))
+        ],
+        max_epoch=350,
+        session_init=SaverRestore(args.load) if args.load else None
+    )
+    launch_train_with_config(config, SimpleTrainer())

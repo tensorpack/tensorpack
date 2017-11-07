@@ -18,11 +18,10 @@ from tensorflow.contrib.layers import variance_scaling_initializer
 from tensorpack import *
 from tensorpack.utils import logger
 from tensorpack.utils.stats import RatioCounter
-from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
 from tensorpack.dataflow.dataset import ILSVRCMeta, ILSVRC12
 
-from imagenet_utils import eval_on_ILSVRC12, get_imagenet_dataflow
+from imagenet_utils import eval_on_ILSVRC12, get_imagenet_dataflow, ImageNetModel
 from resnet_model import resnet_group, resnet_bottleneck
 
 DEPTH = None
@@ -62,8 +61,7 @@ class Model(ModelDesc):
                       .GlobalAvgPooling('gap')
                       .FullyConnected('linear', 1000, nl=tf.identity)())
         prob = tf.nn.softmax(logits, name='prob')
-        prediction_incorrect(logits, label, name='wrong-top1')
-        prediction_incorrect(logits, label, 5, name='wrong-top5')
+        ImageNetModel.compute_loss_and_error(logits, label)
 
 
 def get_inference_augmentor():

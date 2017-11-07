@@ -50,6 +50,15 @@ class TowerTrainer(Trainer):
         """
         return self.tower_func.inputs_desc
 
+    @property
+    def towers(self):
+        """
+        Returns:
+            a :class:`TowerTensorHandles` object, to
+            access the tower handles by either indices or names.
+        """
+        return self.tower_func.towers
+
     def get_predictor(self, input_names, output_names, device=0):
         """
         Returns a callable predictor built under ``TowerContext(is_training=False)``.

@@ -157,7 +157,7 @@ class ImageNetModel(ModelDesc):
             image = tf.transpose(image, [0, 3, 1, 2])
 
         logits = self.get_logits(image)
-        loss = self.compute_loss_and_error(logits, label)
+        loss = ImageNetModel.compute_loss_and_error(logits, label)
         wd_loss = regularize_cost('.*/W', tf.contrib.layers.l2_regularizer(self.weight_decay),
                                   name='l2_regularize_loss')
         add_moving_summary(loss, wd_loss)
@@ -194,7 +194,8 @@ class ImageNetModel(ModelDesc):
             image = (image - image_mean) / image_std
             return image
 
-    def compute_loss_and_error(self, logits, label):
+    @staticmethod
+    def compute_loss_and_error(logits, label):
         loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         loss = tf.reduce_mean(loss, name='xentropy-loss')
 

@@ -238,9 +238,17 @@ class TowerTensorHandles(object):
     def training(self):
         """
         Returns:
-            Still a :class:`TowerTensorHandles`, containing only the training towers.
+            A :class:`TowerTensorHandles`, containing only the training towers.
         """
         handles = [h for h in self._handles if h.is_training]
+        return TowerTensorHandles(handles)
+
+    def inference(self):
+        """
+        Returns:
+            A :class:`TowerTensorHandles`, containing only the inference towers.
+        """
+        handles = [h for h in self._handles if not h.is_training]
         return TowerTensorHandles(handles)
 
 
