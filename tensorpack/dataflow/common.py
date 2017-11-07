@@ -219,6 +219,10 @@ class FixedSizeData(ProxyDataFlow):
     def size(self):
         return self._size
 
+    def reset_state(self):
+        super(FixedSizeData, self).reset_state()
+        self.itr = self.ds.get_data()
+
     def get_data(self):
         with self._guard:
             if self.itr is None:

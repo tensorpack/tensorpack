@@ -9,7 +9,9 @@ import keras
 from ..graph_builder import InputDesc
 from ..tfutils.tower import get_current_tower_context
 from ..tfutils.collection import freeze_collection
-from ..callbacks import Callback, InferenceRunner, CallbackToHook
+from ..callbacks import (
+    Callback, InferenceRunner, CallbackToHook,
+    ScalarStats, ModelSaver)
 from ..tfutils.summary import add_moving_summary
 from ..utils.gpu import get_nr_gpu
 from ..train import Trainer, SimpleTrainer, SyncMultiGPUTrainerParameterServer
@@ -107,6 +109,9 @@ class KerasModel(object):
         """
         Args:
             model (keras.model.Model):
+            input (InputSource):
+            trainer (Trainer): the default will check the number of available
+                GPUs and use them all.
         """
         self.model = model
         if trainer is None:
@@ -117,10 +122,16 @@ class KerasModel(object):
                 trainer = SyncMultiGPUTrainerParameterServer(nr_gpu)
         assert isinstance(trainer, Trainer), trainer
 
-        self.trainer = trainer
         self.input = input
+        self.trainer = trainer
 
     def compile(self, optimizer, loss, metrics):
+        """
+        Args:
+            optimizer (tf.train.Optimizer):
+            loss, metrics: same as in `keras.model.Model.compile()`.
+        """
+        self._metrics = metrics
         setup_keras_trainer(
             self.trainer, model=self.model,
             input=self.input,
@@ -128,10 +139,21 @@ class KerasModel(object):
             loss=loss,
             metrics=metrics)
 
-    def fit(self, **kwargs):
+    def fit(self, validation_data=None, **kwargs):
+        """
+        Args:
+            validation_data (DataFlow or InputSource): to be used for inference.
+            kwargs: same as `self.trainer.train_with_defaults`.
+        """
         callbacks = kwargs.pop('callbacks', [])
         callbacks.extend(self.get_default_callbacks())
-        self.trainer.train_with_defaults(**kwargs)
+        if validation_data is not None:
+            callbacks.append(
+                InferenceRunner(
+                    validation_data, ScalarStats(self._metrics + ['total_loss'])))
+        self.trainer.train_with_defaults(callbacks=callbacks, **kwargs)
 
     def get_default_callbacks(self):
-        return []
+        return [
+            ModelSaver(keep_checkpoint_every_n_hours=0.2)
+        ]

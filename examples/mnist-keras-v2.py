@@ -57,11 +57,6 @@ if __name__ == '__main__':
         metrics=['accuracy']
     )
     M.fit(
-        callbacks=[
-            ModelSaver(),
-            InferenceRunner(
-                dataset_test,
-                [ScalarStats(['total_loss', 'accuracy'])]),
-        ],
+        validation_data=dataset_test,
         steps_per_epoch=dataset_train.size(),
     )

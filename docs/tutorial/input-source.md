@@ -72,8 +72,9 @@ Let's take a look at what users are asking for:
 * [Different ways to pad your data](https://github.com/tensorflow/tensorflow/issues/13969)
 * [Handle none values in data](https://github.com/tensorflow/tensorflow/issues/13865)
 * [Handle dataset that's not a multiple of batch size](https://github.com/tensorflow/tensorflow/issues/13745)
-* [Take variable-length np array](https://github.com/tensorflow/tensorflow/issues/13018)
 * [Different levels of determinism](https://github.com/tensorflow/tensorflow/issues/13932)
+* [Sort/skip some data](https://github.com/tensorflow/tensorflow/issues/14250)
+* [Take variable-length np array](https://github.com/tensorflow/tensorflow/issues/13018)
 
 To support these features which could've been done with 3 lines of code in Python, you need either a new TF
 API, or ask [Dataset.from_generator](https://www.tensorflow.org/versions/r1.4/api_docs/python/tf/contrib/data/Dataset#from_generator)
@@ -82,8 +83,8 @@ API, or ask [Dataset.from_generator](https://www.tensorflow.org/versions/r1.4/ap
 It only makes sense to use TF to read data, if your data is originally very clean and well-formated.
 If not, you may feel like writing a script to clean your data, but then you're almost writing a Python loader already!
 
-Think about it: it's a waste of time to write a Python script to transform from raw data to TFRecords,
-then a TF script to transform from TFRecords to tensors.
+Think about it: it's a waste of time to write a Python script to transform from raw data to clean format (e.g. TFRecords),
+then a TF script to transform from this format to tensors.
 The intermediate step (TFRecords) doesn't have to exist.
 You just need the right interface to connect Python to the graph directly, efficiently.
 `tensorpack.InputSource` is such an interface.
