@@ -17,6 +17,7 @@ def prediction_incorrect(logits, label, topk=1, name='incorrect_vector'):
                    tf.float32, name=name)
 
 
+@deprecated("Please implement it by yourself.", "2018-02-28")
 def accuracy(logits, label, topk=1, name='accuracy'):
     """
     Args:
@@ -46,6 +47,7 @@ def batch_flatten(x):
     return tf.reshape(x, tf.stack([tf.shape(x)[0], -1]))
 
 
+@deprecated("Please implement it by yourself.", "2018-02-28")
 def class_balanced_cross_entropy(pred, label, name='cross_entropy_loss'):
     """
     The class-balanced cross entropy loss,
@@ -73,6 +75,7 @@ def class_balanced_cross_entropy(pred, label, name='cross_entropy_loss'):
     return cost
 
 
+@deprecated("Please implement it by yourself.", "2018-02-28")
 def class_balanced_sigmoid_cross_entropy(logits, label, name='cross_entropy_loss'):
     """
     This function accepts logits rather than predictions, and is more numerically stable than
@@ -203,6 +206,7 @@ def psnr(prediction, ground_truth, maxp=None, name='psnr'):
 
 
 @contextmanager
+@deprecated("Please implement it by yourself.", "2018-02-28")
 def guided_relu():
     """
     Returns:

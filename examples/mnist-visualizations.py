@@ -15,7 +15,6 @@ os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.dataflow import dataset
 import tensorflow as tf
-import tensorpack.tfutils.symbolic_functions as symbf
 
 IMAGE_SIZE = 28
 
@@ -106,8 +105,7 @@ class Model(ModelDesc):
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
 
-        wrong = symbf.prediction_incorrect(logits, label, name='incorrect')
-        accuracy = symbf.accuracy(logits, label)
+        accuracy = tf.reduce_mean(tf.to_float(tf.nn.in_top_k(logits, label, 1)), name='accuracy')
 
         wd_cost = tf.multiply(1e-5,
                               regularize_cost('fc.*/W', tf.nn.l2_loss),
@@ -144,7 +142,7 @@ def get_config():
         callbacks=[
             ModelSaver(),
             InferenceRunner(
-                dataset_test, [ScalarStats('cross_entropy_loss'), ClassificationError('incorrect')]),
+                dataset_test, ScalarStats(['cross_entropy_loss', 'accuracy'])),
         ],
         steps_per_epoch=dataset_train.size(),
         max_epoch=100,
