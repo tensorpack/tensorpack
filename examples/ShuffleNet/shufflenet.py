@@ -21,7 +21,8 @@ from tensorpack.tfutils.scope_utils import under_name_scope
 from tensorpack.utils.gpu import get_nr_gpu
 
 from imagenet_utils import (
-    fbresnet_augmentor, get_imagenet_dataflow, ImageNetModel, GoogleNetResize)
+    fbresnet_augmentor, get_imagenet_dataflow,
+    ImageNetModel, GoogleNetResize, eval_on_ILSVRC12)
 
 TOTAL_BATCH_SIZE = 256
 
@@ -178,6 +179,7 @@ if __name__ == '__main__':
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
     parser.add_argument('--data', help='ILSVRC dataset dir')
     parser.add_argument('--load', help='load model')
+    parser.add_argument('--eval', action='store_true')
     parser.add_argument('--flops', action='store_true', help='print flops and exit')
     args = parser.parse_args()
 
@@ -186,7 +188,11 @@ if __name__ == '__main__':
 
     model = Model()
 
-    if args.flops:
+    if args.eval:
+        batch = 128    # something that can run on one gpu
+        ds = get_data('val', batch)
+        eval_on_ILSVRC12(model, get_model_loader(args.load), ds)
+    elif args.flops:
         # manually build the graph with batch=1
         input_desc = [
             InputDesc(tf.float32, [1, 224, 224, 3], 'input'),
