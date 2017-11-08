@@ -7,6 +7,7 @@ import numpy as np
 import os
 import argparse
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.tfutils.gradproc import *
 from tensorpack.tfutils import optimizer, summary
@@ -108,7 +109,7 @@ class Model(ModelDesc):
                         s[1].h.assign(z), name='reset_lstm_state')
 
     def _get_optimizer(self):
-        lr = symbolic_functions.get_scalar_var('learning_rate', 1, summary=True)
+        lr = tf.get_variable('learning_rate', initializer=1.0, trainable=False)
         opt = tf.train.GradientDescentOptimizer(lr)
         return optimizer.apply_grad_processors(
             opt, [gradproc.GlobalNormClip(5)])
@@ -174,4 +175,4 @@ if __name__ == '__main__':
     config = get_config()
     if args.load:
         config.session_init = SaverRestore(args.load)
-    SimpleTrainer(config).train()
+    launch_train_with_config(config, SimpleTrainer())

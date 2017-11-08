@@ -13,19 +13,11 @@ from ..utils.develop import deprecated
 
 # this function exists for backwards-compatibilty
 def prediction_incorrect(logits, label, topk=1, name='incorrect_vector'):
-    """
-    Args:
-        logits: shape [B,C].
-        label: shape [B].
-        topk(int): topk
-    Returns:
-        a float32 vector of length N with 0/1 values. 1 means incorrect
-        prediction.
-    """
     return tf.cast(tf.logical_not(tf.nn.in_top_k(logits, label, topk)),
                    tf.float32, name=name)
 
 
+@deprecated("Please implement it by yourself.", "2018-02-28")
 def accuracy(logits, label, topk=1, name='accuracy'):
     """
     Args:
@@ -55,6 +47,7 @@ def batch_flatten(x):
     return tf.reshape(x, tf.stack([tf.shape(x)[0], -1]))
 
 
+@deprecated("Please implement it by yourself.", "2018-02-28")
 def class_balanced_cross_entropy(pred, label, name='cross_entropy_loss'):
     """
     The class-balanced cross entropy loss,
@@ -82,6 +75,7 @@ def class_balanced_cross_entropy(pred, label, name='cross_entropy_loss'):
     return cost
 
 
+@deprecated("Please implement it by yourself.", "2018-02-28")
 def class_balanced_sigmoid_cross_entropy(logits, label, name='cross_entropy_loss'):
     """
     This function accepts logits rather than predictions, and is more numerically stable than
@@ -154,7 +148,8 @@ def huber_loss(x, delta=1, name='huber_loss'):
     return tf.where(cond, l2, l1, name=name)
 
 
-# TODO remove this in the future
+# TODO deprecate this in the future
+# doesn't hurt to keep it here for now
 def get_scalar_var(name, init_value, summary=False, trainable=False):
     """
     Get a scalar float variable with certain initial value.
@@ -172,7 +167,7 @@ def get_scalar_var(name, init_value, summary=False, trainable=False):
                           trainable=trainable)
     if summary:
         # this is recognized in callbacks.StatHolder
-        tf.summary.scalar(name, ret)
+        tf.summary.scalar(name + '-summary', ret)
     return ret
 
 
@@ -211,6 +206,7 @@ def psnr(prediction, ground_truth, maxp=None, name='psnr'):
 
 
 @contextmanager
+@deprecated("Please implement it by yourself.", "2018-02-28")
 def guided_relu():
     """
     Returns:

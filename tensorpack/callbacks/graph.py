@@ -11,7 +11,6 @@ import numpy as np
 
 from ..utils import logger
 from .base import Callback
-from ..tfutils.common import get_tensors_by_names
 from six.moves import zip
 
 __all__ = ['RunOp', 'RunUpdateOps', 'ProcessTensors', 'DumpTensors', 'DumpTensor']
@@ -120,7 +119,7 @@ class ProcessTensors(Callback):
         self._fn = fn
 
     def _setup_graph(self):
-        tensors = get_tensors_by_names(self._names)
+        tensors = self.get_tensors_maybe_in_tower(self._names)
         self._fetch = tf.train.SessionRunArgs(fetches=tensors)
 
     def _before_run(self, _):

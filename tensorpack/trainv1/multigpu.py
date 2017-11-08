@@ -8,7 +8,7 @@ import tensorflow as tf
 from ..callbacks.graph import RunOp
 from ..utils.develop import log_deprecated
 
-from ..input_source import QueueInput, StagingInputWrapper, DummyConstantInput
+from ..input_source import QueueInput, StagingInput, DummyConstantInput
 from ..graph_builder.training import (
     SyncMultiGPUParameterServerBuilder,
     SyncMultiGPUReplicatedBuilder,
@@ -43,8 +43,8 @@ def apply_prefetch_policy(config, gpu_prefetch=True):
         assert tf.test.is_gpu_available()
 
         # seem to only improve on >1 GPUs
-        if not isinstance(config.data, (StagingInputWrapper, DummyConstantInput)):
-            config.data = StagingInputWrapper(config.data, config.tower)
+        if not isinstance(config.data, (StagingInput, DummyConstantInput)):
+            config.data = StagingInput(config.data, config.tower)
 
 
 class SyncMultiGPUTrainerParameterServer(Trainer):
@@ -70,7 +70,7 @@ class SyncMultiGPUTrainerParameterServer(Trainer):
 
         self.train_op = SyncMultiGPUParameterServerBuilder(
             self._config.tower, self._ps_device).build(
-                lambda: self.model.build_graph_get_grads(
+                lambda: self.model._build_graph_get_grads(
                     *self._input_source.get_input_tensors()),
                 self.model.get_optimizer)
 
@@ -104,7 +104,7 @@ class SyncMultiGPUTrainerReplicated(Trainer):
 
         self.train_op, post_init_op = SyncMultiGPUReplicatedBuilder(
             self._config.tower).build(
-                lambda: self.model.build_graph_get_grads(
+                lambda: self.model._build_graph_get_grads(
                     *self._input_source.get_input_tensors()),
                 self.model.get_optimizer)
 
@@ -134,7 +134,7 @@ class AsyncMultiGPUTrainer(Trainer):
 
         self.train_op = AsyncMultiGPUBuilder(
             self._config.tower, self._scale_gradient).build(
-                lambda: self.model.build_graph_get_grads(
+                lambda: self.model._build_graph_get_grads(
                     *self._input_source.get_input_tensors()),
                 self.model.get_optimizer)
 

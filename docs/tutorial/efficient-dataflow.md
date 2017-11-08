@@ -18,7 +18,7 @@ We will need to reach a speed of, roughly **1k ~ 2k images per second**, to keep
 Some things to know before reading:
 1. For smaller datasets (e.g. several GBs of images with lightweight preprocessing), a simple reader plus some prefetch should usually work well enough.
 	 Therefore you don't have to understand this tutorial in depth unless you really find your data being the bottleneck.
-	 This tutorial could be a bit complicated for people new to system architectures, but you do need these to be able to run fast enough on ImageNet-sized dataset.
+	 This tutorial could be a bit complicated for people new to system architectures, but you do need these to be able to run fast enough on ImageNet-scale dataset.
 2. Having a fast Python generator **alone** may or may not improve your overall training speed.
 	 You need mechanisms to hide the latency of **all** preprocessing stages, as mentioned in the
 	 [previous tutorial](input-source.html).
@@ -155,7 +155,7 @@ The above script builds a DataFlow which produces jpeg-encoded ImageNet data.
 We store the jpeg string as a numpy array because the function `cv2.imdecode` later expect this format.
 Please note we can only use 1 prefetch process to speed up. If `nr_proc>1`, `ds1` will take data
 from several forks of `ds0`, then neither the content nor the order of `ds1` will be the same as `ds0`.
-See [documentation](http://tensorpack.readthedocs.io/en/latest/modules/dataflow.html#tensorpack.dataflow.PrefetchDataZMQ)
+See [documentation](../modules/dataflow.html#tensorpack.dataflow.PrefetchDataZMQ)
 about caveats of `PrefetchDataZMQ`.
 
 It will generate a database file of 140G. We build a DataFlow to read this LMDB file sequentially:

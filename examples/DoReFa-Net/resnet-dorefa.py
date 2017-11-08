@@ -14,6 +14,8 @@ from tensorpack.dataflow import dataset
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.utils.stats import RatioCounter
 from tensorpack.tfutils.varreplace import remap_variables
+
+from imagenet_utils import ImageNetModel, eval_on_ILSVRC12, fbresnet_augmentor
 from dorefa import get_dorefa
 
 """
@@ -110,15 +112,11 @@ class Model(ModelDesc):
                       .tf.multiply(49)  # this is due to a bug in our model design
                       .FullyConnected('fct', 1000)())
         prob = tf.nn.softmax(logits, name='output')
-        wrong = prediction_incorrect(logits, label, 1, name='wrong-top1')
-        wrong = prediction_incorrect(logits, label, 5, name='wrong-top5')
+        ImageNetModel.compute_loss_and_error(logits, label)
 
 
 def get_inference_augmentor():
-    return imgaug.AugmentorList([
-        imgaug.ResizeShortestEdge(256),
-        imgaug.CenterCrop(224),
-    ])
+    return fbresnet_augmentor(False)
 
 
 def run_image(model, sess_init, inputs):
@@ -148,26 +146,6 @@ def run_image(model, sess_init, inputs):
         print(list(zip(names, prob[ret])))
 
 
-def eval_on_ILSVRC12(model_path, data_dir):
-    ds = dataset.ILSVRC12(data_dir, 'val', shuffle=False)
-    ds = AugmentImageComponent(ds, get_inference_augmentor())
-    ds = BatchData(ds, 192, remainder=True)
-    pred_config = PredictConfig(
-        model=Model(),
-        session_init=get_model_loader(model_path),
-        input_names=['input', 'label'],
-        output_names=['wrong-top1', 'wrong-top5']
-    )
-    pred = SimpleDatasetPredictor(pred_config, ds)
-    acc1, acc5 = RatioCounter(), RatioCounter()
-    for o in pred.get_result():
-        batch_size = o[0].shape[0]
-        acc1.feed(o[0].sum(), batch_size)
-        acc5.feed(o[1].sum(), batch_size)
-    print("Top1 Error: {}".format(acc1.ratio))
-    print("Top5 Error: {}".format(acc5.ratio))
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='the physical ids of GPUs to use')
@@ -187,7 +165,10 @@ if __name__ == '__main__':
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
     if args.eval:
-        eval_on_ILSVRC12(args.load, args.data)
+        ds = dataset.ILSVRC12(args.data, 'val', shuffle=False)
+        ds = AugmentImageComponent(ds, get_inference_augmentor())
+        ds = BatchData(ds, 192, remainder=True)
+        eval_on_ILSVRC12(Model(), get_model_loader(args.load), ds)
     elif args.run:
         assert args.load.endswith('.npy')
         run_image(Model(), DictRestore(

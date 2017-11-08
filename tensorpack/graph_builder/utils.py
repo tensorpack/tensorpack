@@ -94,7 +94,7 @@ def allreduce_grads(all_grads):
     from tensorflow.contrib import nccl
     nr_tower = len(all_grads)
     if nr_tower == 1:
-        return [[x] for x in all_grads[0]]
+        return all_grads
     new_all_grads = []  # NVar * NGPU * 2
     with tf.name_scope('AvgGrad'):
         for grad_and_vars in zip(*all_grads):
@@ -134,10 +134,10 @@ def average_grads(all_grads):
         for grad_and_vars in zip(*all_grads):
             # Ngpu * 2
             v = grad_and_vars[0][1]
-            all_grads = [g for (g, _) in grad_and_vars]
+            grads = [g for (g, _) in grad_and_vars]
 
             with tf.device(v.device):       # colocate summed grad with var
                 grad = tf.multiply(
-                    tf.add_n(all_grads), 1.0 / nr_tower)
+                    tf.add_n(grads), 1.0 / nr_tower)
                 ret.append((grad, v))
     return ret

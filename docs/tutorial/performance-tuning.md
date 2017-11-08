@@ -10,10 +10,10 @@ Here's a list of things you can do when your training is slow:
 2. If you use queue-based input + dataflow, you can look for the queue size statistics in
 	 training log. Ideally the queue should be near-full (default size is 50).
  	 If the size is near-zero, data is the bottleneck.
-3. If the GPU utilization is low, it may be because of slow data, or some ops are on CPU. Also make sure GPUs are not locked in P8 state.
+3. If the GPU utilization is low, it may be because of slow data, or some ops are inefficient. Also make sure GPUs are not locked in P8 state.
 
 ## Benchmark the components
-1. Use `data=DummyConstantInput(shapes)` in `TrainConfig`,
+1. Use `DummyConstantInput(shapes)` as the `InputSource`.
 	so that the iterations doesn't take any data from Python side but train on a constant tensor.
 	This will help find out the slow operations you're using in the graph.
 2. Use `dataflow=FakeData(shapes, random=False)` to replace your original DataFlow by a constant DataFlow.
@@ -47,14 +47,30 @@ know the reason and improve it accordingly, e.g.:
 
 ## Improve TensorFlow
 
+When you're sure that data is not a bottleneck (e.g. when queue is always full), you can start to
+worry about the model.
+
 You can add a `GraphProfiler` callback when benchmarking the graph. It will
 dump runtime tracing information (to either TensorBoard or chrome) to help diagnose the issue.
 
-Usually there isn't much you can do if a TF op is slow, except to optimize the kernels.
+### Slow with single-GPU
+This is literally saying TF ops are slow. Usually there isn't much you can do, except to optimize the kernels.
 But there may be something cheap you can try:
+
 1. You can visualize copies across devices in chrome.
-	 It may help to change device placement to avoid copies.
+	 It may help to change device placement to avoid some CPU-GPU copies.
 	 It may help to replace some CPU-only ops with equivalent GPU ops to avoid copies.
 
 2. Sometimes there are several mathematically equivalent ways of writing the same model
-	 with different speed.
+	 with different ops and therefore different speed.
+
+### Cannot scale to multi-GPU
+If you're unable to scale to multiple GPUs almost linearly:
+1. First make sure that the ResNet example can scale. Run it with `--fake` to use fake data.
+	If not, it's a bug or an environment setup problem.
+2. Then note that your model may have a different communication-computation pattern or other
+	 characteristics that affects efficiency.
+	 There isn't a simple answer to this.
+	 You may try a different multi-GPU trainer; the speed can vary a lot sometimes.
+
+Note that scalibility measurement always trains with the same "batch size per GPU", not the same total equivalent batch size.

@@ -9,6 +9,7 @@ import tensorflow as tf
 import six
 
 from ..utils.argtools import memoized
+from ..utils.develop import log_deprecated
 from ..tfutils.gradproc import FilterNoneGrad
 from ..tfutils.tower import get_current_tower_context
 from ..input_source import InputSource
@@ -67,6 +68,11 @@ class InputDesc(
             return self._cached_placeholder
         return self.build_placeholder()
 
+    @staticmethod
+    def from_tensor(t):
+        return InputDesc(
+            t.dtype, t.shape.as_list(), t.name[:-2])
+
 
 @six.add_metaclass(ABCMeta)
 class ModelDescBase(object):
@@ -86,17 +92,27 @@ class ModelDescBase(object):
         :returns: a list of InputDesc
         """
 
-    # TODO only use InputSource in the future? Now only used in predictor_factory
-    def build_graph(self, inputs):
+    def build_graph(self, *args):
         """
         Build the whole symbolic graph.
 
         Args:
-            inputs (list[tf.Tensor] or InputSource): a list of tensors, or an :class:`InputSource`,
-                that match the list of :class:`InputDesc` defined by ``_get_inputs``.
+            args ([tf.Tensor]): a list of tensors,
+                that matches the list of :class:`InputDesc` defined by ``_get_inputs``.
         """
-        if isinstance(inputs, InputSource):
-            inputs = inputs.get_input_tensors()
+        if len(args) == 1:
+            arg = args[0]
+            if isinstance(arg, InputSource):
+                inputs = arg.get_input_tensors()  # remove in the future?
+                log_deprecated("build_graph(InputSource)", "Call with tensors in positional args instead.")
+            elif isinstance(arg, (list, tuple)):
+                inputs = arg
+                log_deprecated("build_graph([Tensor])", "Call with positional args instead.")
+            else:
+                inputs = [arg]
+        else:
+            inputs = args
+
         assert len(inputs) == len(self.get_inputs_desc()), \
             "Number of inputs passed to the graph != number of inputs defined " \
             "in ModelDesc! ({} != {})".format(len(inputs), len(self.get_inputs_desc()))
@@ -149,14 +165,11 @@ class ModelDesc(ModelDescBase):
     def _get_optimizer(self):
         raise NotImplementedError()
 
-    def build_graph_get_cost(self, *inputs):
-        """
-        Build the graph from inputs and return the cost tensor.
-        """
-        self.build_graph(inputs)
+    def _build_graph_get_cost(self, *inputs):
+        self.build_graph(*inputs)
         return self.get_cost()
 
-    def build_graph_get_grads(self, *inputs):
+    def _build_graph_get_grads(self, *inputs):
         """
         Build the graph from inputs and return the grads.
         This is useful for most of the :class:`GraphBuilder` which expects such a function.
@@ -165,9 +178,12 @@ class ModelDesc(ModelDescBase):
             [(grad, var)]
         """
         ctx = get_current_tower_context()
-        cost = self.build_graph_get_cost(*inputs)
+        cost = self._build_graph_get_cost(*inputs)
 
-        varlist = ctx.filter_vars_by_vs_name(tf.trainable_variables())
+        if ctx.has_own_variables:
+            varlist = ctx.get_collection_in_tower(tf.GraphKeys.TRAINABLE_VARIABLES)
+        else:
+            varlist = tf.trainable_variables()
         opt = self.get_optimizer()
         grads = opt.compute_gradients(
             cost, var_list=varlist,

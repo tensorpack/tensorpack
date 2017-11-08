@@ -10,10 +10,10 @@ import os
 import sys
 import argparse
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.dataflow import dataset
 from tensorpack.tfutils import sesscreate, optimizer, summary
-import tensorpack.tfutils.symbolic_functions as symbf
 
 IMAGE_SIZE = 42
 WARP_TARGET_SIZE = 28
@@ -80,7 +80,7 @@ class Model(ModelDesc):
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
 
-        wrong = symbf.prediction_incorrect(logits, label)
+        wrong = tf.to_float(tf.logical_not(tf.nn.in_top_k(logits, label, 1)), name='incorrect_vector')
         summary.add_moving_summary(tf.reduce_mean(wrong, name='train_error'))
 
         wd_cost = tf.multiply(1e-5, regularize_cost('fc.*/W', tf.nn.l2_loss),
@@ -89,7 +89,7 @@ class Model(ModelDesc):
         self.cost = tf.add_n([wd_cost, cost], name='cost')
 
     def _get_optimizer(self):
-        lr = symbf.get_scalar_var('learning_rate', 5e-4, summary=True)
+        lr = tf.get_variable('learning_rate', initializer=5e-4, trainable=False)
         opt = tf.train.AdamOptimizer(lr, epsilon=1e-3)
         return optimizer.apply_grad_processors(
             opt, [
@@ -186,4 +186,4 @@ if __name__ == '__main__':
         config = get_config()
         if args.load:
             config.session_init = SaverRestore(args.load)
-        SimpleTrainer(config).train()
+        launch_train_with_config(config, SimpleTrainer())

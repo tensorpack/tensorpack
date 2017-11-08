@@ -6,10 +6,12 @@ import argparse
 import numpy as np
 import tensorflow as tf
 import cv2
+import os
 from scipy.signal import convolve2d
 from six.moves import range, zip
 import multiprocessing
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.utils import logger
 from tensorpack.utils.viz import *
@@ -147,8 +149,7 @@ class Model(ModelDesc):
         summary.add_moving_summary(self.cost)
 
     def _get_optimizer(self):
-        lr = symbolic_functions.get_scalar_var('learning_rate', 1e-3, summary=True)
-        return tf.train.AdamOptimizer(lr)
+        return tf.train.AdamOptimizer(1e-3)
 
 
 class ThetaImages(ProxyDataFlow, RNGDataFlow):
@@ -262,5 +263,4 @@ if __name__ == '__main__':
         config = get_config()
         if args.load:
             config.session_init = SaverRestore(args.load)
-        config.nr_tower = NR_GPU
-        SyncMultiGPUTrainer(config).train()
+        launch_train_with_config(config, SyncMultiGPUTrainer(NR_GPU))

@@ -191,9 +191,9 @@ def get_rpn_anchor_input(im, boxes, klass, is_crowd):
 def read_and_augment_images(ds):
     def mapf(dp):
         fname = dp[0]
-        im = cv2.imread(fname, cv2.IMREAD_COLOR).astype('float32')
-        assert im is not None, dp[0]
-        dp[0] = im
+        im = cv2.imread(fname, cv2.IMREAD_COLOR)
+        assert im is not None, fname
+        dp[0] = im.astype('float32')
 
         # assume floatbox as input
         assert dp[1].dtype == np.float32

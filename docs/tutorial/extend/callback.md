@@ -1,10 +1,7 @@
 
 ## Write a Callback
 
-In the main loop of the trainer,
-the callbacks will be called in the order they are given in `TrainConfig`.
-The time where each callback method gets called is demonstrated in this snippet:
-
+The time where each callback method gets called is demonstrated in this snippet.
 ```python
 def train(self):
   # ... a predefined trainer may create graph for the model here ...
@@ -21,22 +18,33 @@ def train(self):
     callbacks.trigger_epoch()
   callbacks.after_train()
 ```
+Note that at each place, each callback will be called in the order they are given to the trainer.
+
 
 ### Explain the Callback Methods
 
-You can override any of the following methods to define a new callback:
+To write a callback, subclass `Callback` and implement the corresponding underscore-prefixed methods.
+You can overwrite any of the following methods to define a new callback:
 
 * `_setup_graph(self)`
 
-Setup the ops / tensors in the graph which you might need to use in the callback. You can use
-[`graph.get_tensor_by_name`](https://www.tensorflow.org/api_docs/python/tf/Graph#get_tensor_by_name)
-to access those already defined in the training tower.
-Or use
-[`self.trainer.get_predictor(..)`](http://tensorpack.readthedocs.io/en/latest/modules/train.html?highlight=get_predictor#tensorpack.train.Trainer.get_predictor)
-to create a callable evaluation function in the predict tower.
-
-This method is to separate between "define" and "run", and also to avoid the common mistake to create ops inside
+Create any ops / tensors in the graph which you might need to use in the callback.
+This method is to separate between "define" and "run", and also to
+avoid the common mistake to create ops inside
 loops. All changes to the graph should be made in this method.
+
+To access ops which are already defined,
+you can use TF methods such as
+[`graph.get_tensor_by_name`](https://www.tensorflow.org/api_docs/python/tf/Graph#get_tensor_by_name).
+If you're using a `TowerTrainer` instance, more tools are available:
+
+* Use `self.trainer.tower_func.towers` to access the
+	[tower handles](../modules/tfutils.html#tensorpack.tfutils.tower.TowerTensorHandles),
+	and therefore the tensors in each tower.
+* [self.get_tensors_maybe_in_tower()](../modules/callbacks.html#tensorpack.callbacks.Callback.get_tensors_maybe_in_tower)
+	is a helper function to access tensors in the first training tower.
+* [self.trainer.get_predictor()](../modules/train.html#tensorpack.train.TowerTrainer.get_predictor)
+	is a helper function to create a callable under inference mode.
 
 * `_before_train(self)`
 
@@ -53,7 +61,7 @@ Otherwise, `_trigger_epoch` should be enough.
 
 * `_before_run(self, ctx)`, `_after_run(self, ctx, values)`
 
-This two are the equivlent of [tf.train.SessionRunHook](https://www.tensorflow.org/api_docs/python/tf/train/SessionRunHook).
+These are the equivalence of [tf.train.SessionRunHook](https://www.tensorflow.org/api_docs/python/tf/train/SessionRunHook).
 Please refer to TensorFlow documentation for detailed API.
 They are used to run extra ops / eval extra tensors / feed extra values __along with__ the actual training iterations.
 
@@ -89,7 +97,6 @@ to let this method run every k steps or every k epochs.
 ### What you can do in the callback
 
 * Access tensors / ops in either training / inference mode (need to create them in `_setup_graph`).
-	`self.trainer.get_predictor` is a helper function to create a callable under inference mode.
 * Write stuff to the monitor backend, by `self.trainer.monitors.put_xxx`.
 	The monitors might direct your events to TensorFlow events file, JSON file, stdout, etc.
 	You can get history monitor data as well. See the docs for [Monitors](../../modules/callbacks.html#tensorpack.callbacks.Monitors)

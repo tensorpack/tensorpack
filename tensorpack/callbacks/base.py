@@ -8,7 +8,7 @@ import six
 from ..utils.develop import log_deprecated
 from ..tfutils.common import get_op_or_tensor_by_name
 
-__all__ = ['Callback', 'ProxyCallback', 'CallbackFactory', 'Triggerable']
+__all__ = ['Callback', 'ProxyCallback', 'CallbackFactory']
 
 
 @six.add_metaclass(ABCMeta)
@@ -205,9 +205,30 @@ class Callback(object):
     def __str__(self):
         return type(self).__name__
 
+    def get_tensors_maybe_in_tower(self, names):
+        """
+        Get tensors in the graph with the given names.
+        Will automatically check for the *first training tower*
+        if no existing tensor is found with the name.
 
-# back-compat. in case someone write something in triggerable
-Triggerable = Callback
+        Returns:
+            [tf.Tensor]
+        """
+        from ..train.tower import TowerTrainer  # noqa
+
+        def get_tensor(name):
+            msg = "Tensor {} not found in the graph!".format(name)
+            try:
+                return get_op_or_tensor_by_name(name)
+            except KeyError:
+                pass
+            assert isinstance(self.trainer, TowerTrainer), msg
+            towers = self.trainer.tower_func.towers
+            try:
+                return towers.training()[0][name]
+            except KeyError:
+                raise KeyError(msg)
+        return [get_tensor(name) for name in names]
 
 
 class ProxyCallback(Callback):

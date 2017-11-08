@@ -15,7 +15,7 @@ from tensorpack.user_ops.zmq_recv import (  # noqa
 
 try:
     num = int(sys.argv[1])
-except:
+except ValueError:
     num = 2
 
 ENDPOINT = 'ipc://test-pipe'

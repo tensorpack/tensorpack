@@ -25,7 +25,8 @@ class GoogleNetResize(imgaug.ImageAugmentor):
     See `Going Deeper with Convolutions` by Google.
     """
     def __init__(self, crop_area_fraction=0.08,
-                 aspect_ratio_low=0.75, aspect_ratio_high=1.333):
+                 aspect_ratio_low=0.75, aspect_ratio_high=1.333,
+                 target_shape=224):
         self._init(locals())
 
     def _augment(self, img, _):
@@ -42,10 +43,10 @@ class GoogleNetResize(imgaug.ImageAugmentor):
                 x1 = 0 if w == ww else self.rng.randint(0, w - ww)
                 y1 = 0 if h == hh else self.rng.randint(0, h - hh)
                 out = img[y1:y1 + hh, x1:x1 + ww]
-                out = cv2.resize(out, (224, 224), interpolation=cv2.INTER_CUBIC)
+                out = cv2.resize(out, (self.target_shape, self.target_shape), interpolation=cv2.INTER_CUBIC)
                 return out
-        out = imgaug.ResizeShortestEdge(224, interp=cv2.INTER_CUBIC).augment(img)
-        out = imgaug.CenterCrop(224).augment(out)
+        out = imgaug.ResizeShortestEdge(self.target_shape, interp=cv2.INTER_CUBIC).augment(img)
+        out = imgaug.CenterCrop(self.target_shape).augment(out)
         return out
 
 
@@ -129,42 +130,9 @@ def eval_on_ILSVRC12(model, sessinit, dataflow):
     print("Top5 Error: {}".format(acc5.ratio))
 
 
-def image_preprocess(image, bgr=True):
-    with tf.name_scope('image_preprocess'):
-        if image.dtype.base_dtype != tf.float32:
-            image = tf.cast(image, tf.float32)
-        image = image * (1.0 / 255)
-
-        mean = [0.485, 0.456, 0.406]    # rgb
-        std = [0.229, 0.224, 0.225]
-        if bgr:
-            mean = mean[::-1]
-            std = std[::-1]
-        image_mean = tf.constant(mean, dtype=tf.float32)
-        image_std = tf.constant(std, dtype=tf.float32)
-        image = (image - image_mean) / image_std
-        return image
-
-
-def compute_loss_and_error(logits, label):
-    loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
-    loss = tf.reduce_mean(loss, name='xentropy-loss')
-
-    def prediction_incorrect(logits, label, topk=1, name='incorrect_vector'):
-        with tf.name_scope('prediction_incorrect'):
-            x = tf.logical_not(tf.nn.in_top_k(logits, label, topk))
-        return tf.cast(x, tf.float32, name=name)
-
-    wrong = prediction_incorrect(logits, label, 1, name='wrong-top1')
-    add_moving_summary(tf.reduce_mean(wrong, name='train-error-top1'))
-
-    wrong = prediction_incorrect(logits, label, 5, name='wrong-top5')
-    add_moving_summary(tf.reduce_mean(wrong, name='train-error-top5'))
-    return loss
-
-
 class ImageNetModel(ModelDesc):
     weight_decay = 1e-4
+    image_shape = 224
 
     """
     uint8 instead of float32 is used as input type to reduce copy overhead.
@@ -179,17 +147,17 @@ class ImageNetModel(ModelDesc):
         self.data_format = data_format
 
     def _get_inputs(self):
-        return [InputDesc(self.image_dtype, [None, 224, 224, 3], 'input'),
+        return [InputDesc(self.image_dtype, [None, self.image_shape, self.image_shape, 3], 'input'),
                 InputDesc(tf.int32, [None], 'label')]
 
     def _build_graph(self, inputs):
         image, label = inputs
-        image = image_preprocess(image, bgr=True)
+        image = self.image_preprocess(image, bgr=True)
         if self.data_format == 'NCHW':
             image = tf.transpose(image, [0, 3, 1, 2])
 
         logits = self.get_logits(image)
-        loss = compute_loss_and_error(logits, label)
+        loss = ImageNetModel.compute_loss_and_error(logits, label)
         wd_loss = regularize_cost('.*/W', tf.contrib.layers.l2_regularizer(self.weight_decay),
                                   name='l2_regularize_loss')
         add_moving_summary(loss, wd_loss)
@@ -209,3 +177,36 @@ class ImageNetModel(ModelDesc):
         lr = tf.get_variable('learning_rate', initializer=0.1, trainable=False)
         tf.summary.scalar('learning_rate', lr)
         return tf.train.MomentumOptimizer(lr, 0.9, use_nesterov=True)
+
+    def image_preprocess(self, image, bgr=True):
+        with tf.name_scope('image_preprocess'):
+            if image.dtype.base_dtype != tf.float32:
+                image = tf.cast(image, tf.float32)
+            image = image * (1.0 / 255)
+
+            mean = [0.485, 0.456, 0.406]    # rgb
+            std = [0.229, 0.224, 0.225]
+            if bgr:
+                mean = mean[::-1]
+                std = std[::-1]
+            image_mean = tf.constant(mean, dtype=tf.float32)
+            image_std = tf.constant(std, dtype=tf.float32)
+            image = (image - image_mean) / image_std
+            return image
+
+    @staticmethod
+    def compute_loss_and_error(logits, label):
+        loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
+        loss = tf.reduce_mean(loss, name='xentropy-loss')
+
+        def prediction_incorrect(logits, label, topk=1, name='incorrect_vector'):
+            with tf.name_scope('prediction_incorrect'):
+                x = tf.logical_not(tf.nn.in_top_k(logits, label, topk))
+            return tf.cast(x, tf.float32, name=name)
+
+        wrong = prediction_incorrect(logits, label, 1, name='wrong-top1')
+        add_moving_summary(tf.reduce_mean(wrong, name='train-error-top1'))
+
+        wrong = prediction_incorrect(logits, label, 5, name='wrong-top5')
+        add_moving_summary(tf.reduce_mean(wrong, name='train-error-top5'))
+        return loss

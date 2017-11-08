@@ -2,12 +2,13 @@
 # -*- coding: UTF-8 -*-
 # File: cifar-convnet.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
-from tensorpack import *
 import tensorflow as tf
 import argparse
 import numpy as np
 import os
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
+from tensorpack import *
 import tensorpack.tfutils.symbolic_functions as symbf
 from tensorpack.tfutils.summary import *
 from tensorpack.dataflow import dataset
@@ -66,9 +67,9 @@ class Model(ModelDesc):
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
 
-        wrong = symbf.prediction_incorrect(logits, label)
+        correct = tf.to_float(tf.nn.in_top_k(logits, label, 1), name='correct')
         # monitor training error
-        add_moving_summary(tf.reduce_mean(wrong, name='train_error'))
+        add_moving_summary(tf.reduce_mean(correct, name='accuracy'))
 
         # weight decay on all W of fc layers
         wd_cost = regularize_cost('fc.*/W', l2_regularizer(4e-4), name='regularize_loss')
@@ -126,7 +127,8 @@ def get_config(cifar_classnum):
         dataflow=dataset_train,
         callbacks=[
             ModelSaver(),
-            InferenceRunner(dataset_test, ClassificationError()),
+            InferenceRunner(dataset_test,
+                            ScalarStats(['accuracy', 'cost'])),
             StatMonitorParamSetter('learning_rate', 'val_error', lr_func,
                                    threshold=0.001, last_k=10),
         ],
@@ -151,8 +153,7 @@ if __name__ == '__main__':
         if args.load:
             config.session_init = SaverRestore(args.load)
 
-        config.nr_tower = max(len(args.gpu.split(',')), 1)
-        if config.nr_tower <= 1:
-            QueueInputTrainer(config).train()
-        else:
-            SyncMultiGPUTrainerParameterServer(config).train()
+        nr_gpu = len(args.gpu.split(','))
+        trainer = QueueInputTrainer() if nr_gpu <= 1 \
+            else SyncMultiGPUTrainerParameterServer(nr_gpu)
+        launch_train_with_config(config, trainer)

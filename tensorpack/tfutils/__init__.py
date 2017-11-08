@@ -5,7 +5,9 @@
 from pkgutil import iter_modules
 import os
 
-__all__ = []
+from .tower import get_current_tower_context, TowerContext
+# don't want to include everything from .tower
+__all__ = ['get_current_tower_context', 'TowerContext']
 
 
 def _global_import(name):
@@ -21,7 +23,6 @@ _TO_IMPORT = set([
     'common',
     'sessinit',
     'argscope',
-    'tower',
 ])
 
 _CURR_DIR = os.path.dirname(__file__)
@@ -36,4 +37,4 @@ for _, module_name, _ in iter_modules(
         _global_import(module_name)  # import the content to tfutils.*
 __all__.extend(['sessinit', 'summary', 'optimizer',
                 'sesscreate', 'gradproc', 'varreplace', 'symbolic_functions',
-                'distributed'])
+                'distributed', 'tower'])

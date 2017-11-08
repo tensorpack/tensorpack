@@ -10,6 +10,7 @@ import os
 import tensorflow as tf
 import multiprocessing
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
@@ -194,7 +195,7 @@ class Model(ModelDesc):
         add_moving_summary(loss1, loss2, wd_cost, self.cost)
 
     def _get_optimizer(self):
-        lr = get_scalar_var('learning_rate', 0.045, summary=True)
+        lr = tf.get_variable('learning_rate', initializer=0.045, trainable=False)
         return tf.train.AdamOptimizer(lr, epsilon=1e-3)
 
 
@@ -298,5 +299,4 @@ if __name__ == '__main__':
     config = get_config()
     if args.load:
         config.session_init = SaverRestore(args.load)
-    config.nr_tower = NR_GPU
-    SyncMultiGPUTrainer(config).train()
+    launch_train_with_config(config, SyncMultiGPUTrainer(NR_GPU))

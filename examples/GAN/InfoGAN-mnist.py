@@ -10,6 +10,7 @@ import os
 import sys
 import argparse
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.utils import viz
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope, under_name_scope
@@ -189,17 +190,6 @@ def get_data():
     return ds
 
 
-def get_config():
-    logger.auto_set_dir('d')
-    return TrainConfig(
-        dataflow=get_data(),
-        callbacks=[ModelSaver(keep_freq=0.1)],
-        model=Model(),
-        steps_per_epoch=500,
-        max_epoch=100,
-    )
-
-
 def sample(model_path):
     pred = OfflinePredictor(PredictConfig(
         session_init=get_model_loader(model_path),
@@ -254,7 +244,11 @@ if __name__ == '__main__':
         BATCH = 100
         sample(args.load)
     else:
-        config = get_config()
-        if args.load:
-            config.session_init = SaverRestore(args.load)
-        GANTrainer(config).train()
+        logger.auto_set_dir()
+        GANTrainer(QueueInput(get_data()),
+                   Model()).train_with_defaults(
+            callbacks=[ModelSaver(keep_checkpoint_every_n_hours=0.1)],
+            steps_per_epoch=500,
+            max_epoch=100,
+            session_init=SaverRestore(args.load) if args.load else None
+        )

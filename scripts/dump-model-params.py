@@ -7,9 +7,8 @@ import argparse
 import tensorflow as tf
 import imp
 
-from tensorpack import TowerContext, logger
+from tensorpack import TowerContext, logger, PlaceholderInput
 from tensorpack.tfutils import varmanip, get_model_loader
-from tensorpack.graph_builder.input_source import PlaceholderInput
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--config', help='config file')
@@ -36,6 +35,7 @@ with tf.Graph().as_default() as G:
     init = get_model_loader(args.model)
     sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
     sess.run(tf.global_variables_initializer())
+    sess.run(tf.local_variables_initializer())
     init.init(sess)
 
     # dump ...
@@ -45,6 +45,8 @@ with tf.Graph().as_default() as G:
         else:
             var = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
             var.extend(tf.get_collection(tf.GraphKeys.MODEL_VARIABLES))
+            gvars = set([k.name for k in tf.global_variables()])
+            var = [v for v in var if v.name in gvars]
             var_dict = {}
             for v in var:
                 name = varmanip.get_savename_from_varname(v.name)

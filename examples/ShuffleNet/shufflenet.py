@@ -10,10 +10,11 @@ import cv2
 
 import tensorflow as tf
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import logger, QueueInput, InputDesc, PlaceholderInput, TowerContext
 from tensorpack.models import *
 from tensorpack.callbacks import *
-from tensorpack.train import TrainConfig, SyncMultiGPUTrainerParameterServer
+from tensorpack.train import *
 from tensorpack.dataflow import imgaug
 from tensorpack.tfutils import argscope, get_model_loader
 from tensorpack.tfutils.scope_utils import under_name_scope
@@ -141,8 +142,7 @@ def get_data(name, batch):
         args.data, name, batch, augmentors)
 
 
-def get_config(model):
-    nr_tower = max(get_nr_gpu(), 1)
+def get_config(model, nr_tower):
     batch = TOTAL_BATCH_SIZE // nr_tower
 
     logger.info("Running on {} towers. Batch size per tower: {}".format(nr_tower, batch))
@@ -170,7 +170,6 @@ def get_config(model):
         callbacks=callbacks,
         steps_per_epoch=5000,
         max_epoch=100,
-        nr_tower=nr_tower
     )
 
 
@@ -206,7 +205,8 @@ if __name__ == '__main__':
         logger.set_logger_dir(
             os.path.join('train_log', 'shufflenet'))
 
-        config = get_config(model)
+        nr_tower = max(get_nr_gpu(), 1)
+        config = get_config(model, nr_tower)
         if args.load:
             config.session_init = get_model_loader(args.load)
-        SyncMultiGPUTrainerParameterServer(config).train()
+        launch_train_with_config(config, SyncMultiGPUTrainerParameterServer(nr_tower))

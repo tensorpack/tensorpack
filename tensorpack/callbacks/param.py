@@ -199,7 +199,7 @@ class HumanHyperParamSetter(HyperParamSetter):
             dic = {str(k): float(v) for k, v in lines}
             ret = dic[self.param.readable_name]
             return ret
-        except:
+        except Exception:
             logger.warn(
                 "Cannot find {} in {}".format(
                     self.param.readable_name, self.file_name))

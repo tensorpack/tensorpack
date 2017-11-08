@@ -9,8 +9,7 @@ from ..callbacks import (
 from ..dataflow.base import DataFlow
 from ..graph_builder.model_desc import ModelDescBase
 from ..utils import logger
-from ..tfutils import (JustCurrentSession,
-                       get_default_sess_config, SessionInit)
+from ..tfutils import (JustCurrentSession, SessionInit)
 from ..tfutils.sesscreate import NewSessionCreator
 from ..input_source import InputSource
 from ..utils.develop import log_deprecated
@@ -18,9 +17,21 @@ from ..utils.develop import log_deprecated
 __all__ = ['TrainConfig']
 
 
+def DEFAULT_CALLBACKS():
+    return [
+        MovingAverageSummary(),
+        ProgressBar(),
+        MergeAllSummaries(),
+        RunUpdateOps()]
+
+
+def DEFAULT_MONITORS():
+    return [TFEventWriter(), JSONWriter(), ScalarPrinter()]
+
+
 class TrainConfig(object):
     """
-    Config for trainer.
+    A collection of options to be used for trainers.
     """
 
     def __init__(self,
@@ -31,11 +42,6 @@ class TrainConfig(object):
                  nr_tower=1, tower=None,
                  **kwargs):
         """
-        Note:
-            It depends on the specific trainer what fields are necessary.
-            Most existing trainers in tensorpack requires one of `dataflow` or `data`,
-            and `model` to be present in the config.
-
         Args:
             dataflow (DataFlow):
             data (InputSource):
@@ -85,9 +91,9 @@ class TrainConfig(object):
             callbacks = []
         assert_type(callbacks, list)
         self._callbacks = callbacks + \
-            (extra_callbacks or TrainConfig.DEFAULT_EXTRA_CALLBACKS())
+            (extra_callbacks or DEFAULT_CALLBACKS())
 
-        self.monitors = monitors or TrainConfig.DEFAULT_MONITORS()
+        self.monitors = monitors or DEFAULT_MONITORS()
 
         if session_init is None:
             session_init = JustCurrentSession()
@@ -98,7 +104,7 @@ class TrainConfig(object):
             if session_config is not None:
                 self.session_creator = NewSessionCreator(config=session_config)
             else:
-                self.session_creator = NewSessionCreator(config=get_default_sess_config())
+                self.session_creator = NewSessionCreator(config=None)
         else:
             self.session_creator = session_creator
             assert session_config is None, "Cannot set both session_creator and session_config!"
@@ -149,15 +155,3 @@ class TrainConfig(object):
     @property
     def callbacks(self):        # disable setter
         return self._callbacks
-
-    @staticmethod
-    def DEFAULT_EXTRA_CALLBACKS():
-        return [
-            MovingAverageSummary(),
-            ProgressBar(),
-            MergeAllSummaries(),
-            RunUpdateOps()]
-
-    @staticmethod
-    def DEFAULT_MONITORS():
-        return [TFEventWriter(), JSONWriter(), ScalarPrinter()]

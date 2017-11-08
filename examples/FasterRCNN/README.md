@@ -29,8 +29,8 @@ To train:
 ```
 ./train.py --load /path/to/ImageNet-ResNet50.npz
 ```
-The code is written for training with __8 GPUs__.
-To run on fewer GPUs, you probably need different hyperparameters for the same performance.
+The code is only for training with 1, 2, 4 or 8 GPUs.
+Otherwise, you probably need different hyperparameters for the same performance.
 
 To predict on an image (and show output in a window):
 ```
@@ -39,8 +39,10 @@ To predict on an image (and show output in a window):
 
 ## Results
 
-+ trainval35k/minival, FASTRCNN_BATCH=256: 32.9
-+ trainval35k/minival, FASTRCNN_BATCH=64: 31.6. Takes less than one day on 8 Maxwell TitanX.
+Mean Average Precision @IoU=0.50:0.95:
+
++ trainval35k/minival, FASTRCNN_BATCH=256: 33.4. Takes 49h on 8 TitanX.
++ trainval35k/minival, FASTRCNN_BATCH=64: 32.2. Takes 31h on 8 TitanX.
 
 The hyperparameters are not carefully tuned. You can probably get better performance by e.g.  training longer.
 

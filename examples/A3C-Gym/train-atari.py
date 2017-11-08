@@ -18,6 +18,7 @@ import tensorflow as tf
 import six
 from six.moves import queue
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.utils.concurrency import *
 from tensorpack.utils.serialize import *
@@ -303,5 +304,5 @@ if __name__ == '__main__':
         config = get_config()
         if args.load:
             config.session_init = get_model_loader(args.load)
-        trainer = QueueInputTrainer if config.nr_tower == 1 else AsyncMultiGPUTrainer
-        trainer(config).train()
+        trainer = SimpleTrainer() if config.nr_tower == 1 else AsyncMultiGPUTrainer(config.tower)
+        launch_train_with_config(config, trainer)

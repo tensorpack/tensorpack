@@ -13,11 +13,12 @@ __all__ = []
 def _global_import(name):
     p = __import__(name, globals(), locals(), level=1)
     lst = p.__all__ if '__all__' in dir(p) else dir(p)
-    del globals()[name]
-    for k in lst:
-        if not k.startswith('__'):
-            globals()[k] = p.__dict__[k]
-            __all__.append(k)
+    if lst:
+        del globals()[name]
+        for k in lst:
+            if not k.startswith('__'):
+                globals()[k] = p.__dict__[k]
+                __all__.append(k)
 
 
 __SKIP = set(['dftools', 'dataset', 'imgaug'])

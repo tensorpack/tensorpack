@@ -12,6 +12,7 @@ import operator
 import six
 from six.moves import map, range
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.tfutils import symbolic_functions, summary, optimizer
 from tensorpack.tfutils.gradproc import GlobalNormClip
@@ -104,7 +105,7 @@ class Model(ModelDesc):
         summary.add_moving_summary(self.cost)
 
     def _get_optimizer(self):
-        lr = symbolic_functions.get_scalar_var('learning_rate', 2e-3, summary=True)
+        lr = tf.get_variable('learning_rate', initializer=2e-3, trainable=False)
         opt = tf.train.AdamOptimizer(lr)
         return optimizer.apply_grad_processors(opt, [GlobalNormClip(5)])
 
@@ -116,7 +117,7 @@ def get_config():
     ds = BatchData(ds, param.batch_size)
 
     return TrainConfig(
-        dataflow=ds,
+        data=QueueInput(ds),
         callbacks=[
             ModelSaver(),
             ScheduledHyperParamSetter('learning_rate', [(25, 2e-4)])
@@ -190,4 +191,4 @@ if __name__ == '__main__':
         config = get_config()
         if args.load:
             config.session_init = SaverRestore(args.load)
-        QueueInputTrainer(config).train()
+        launch_train_with_config(config, SimpleTrainer())

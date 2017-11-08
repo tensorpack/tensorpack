@@ -258,7 +258,7 @@ class ExpReplay(DataFlow, Callback):
             mean, max = v.average, v.max
             self.trainer.monitors.put_scalar('expreplay/mean_score', mean)
             self.trainer.monitors.put_scalar('expreplay/max_score', max)
-        except:
+        except Exception:
             logger.exception("Cannot log training scores.")
         v.reset()
 

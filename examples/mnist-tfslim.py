@@ -14,6 +14,7 @@ the only differences are:
     2. use slim names to summarize weights
 """
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.dataflow import dataset
 import tensorflow as tf
@@ -52,10 +53,10 @@ class Model(ModelDesc):
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
 
-        wrong = symbolic_functions.prediction_incorrect(logits, label, name='incorrect')
+        acc = tf.to_float(tf.nn.in_top_k(logits, label, 1))
 
-        train_error = tf.reduce_mean(wrong, name='train_error')
-        summary.add_moving_summary(train_error)
+        acc = tf.reduce_mean(acc, name='accuracy')
+        summary.add_moving_summary(acc)
 
         self.cost = cost
         summary.add_moving_summary(cost)
@@ -87,7 +88,7 @@ def get_config():
             ModelSaver(),
             InferenceRunner(
                 dataset_test,
-                [ScalarStats('cross_entropy_loss'), ClassificationError('incorrect')]),
+                ScalarStats(['cross_entropy_loss', 'accuracy'])),
         ],
         max_epoch=100,
     )
@@ -101,4 +102,4 @@ if __name__ == '__main__':
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
     config = get_config()
-    SimpleTrainer(config).train()
+    launch_train_with_config(config, SimpleTrainer())

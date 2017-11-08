@@ -12,18 +12,19 @@ import argparse
 
 import keras
 import keras.layers as KL
-import keras.backend as KB
 from keras.models import Sequential
 from keras import regularizers
 
 """
-This is an mnist example demonstrating how to use Keras models inside tensorpack.
+This is an mnist example demonstrating how to use Keras symbolic function inside tensorpack.
 This way you can define models in Keras-style, and benefit from the more efficeint trainers in tensorpack.
 """
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.dataflow import dataset
 from tensorpack.utils.argtools import memoized
+from tensorpack.contrib.keras import KerasPhaseCallback
 
 IMAGE_SIZE = 28
 
@@ -60,9 +61,9 @@ class Model(ModelDesc):
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')  # the average cross-entropy loss
 
         # for tensorpack validation
-        wrong = symbolic_functions.prediction_incorrect(logits, label, name='incorrect')
-        train_error = tf.reduce_mean(wrong, name='train_error')
-        summary.add_moving_summary(train_error)
+        acc = tf.to_float(tf.nn.in_top_k(logits, label, 1))
+        acc = tf.reduce_mean(acc, name='accuracy')
+        summary.add_moving_summary(acc)
 
         wd_cost = tf.add_n(M.losses, name='regularize_loss')    # this is how Keras manage regularizers
         self.cost = tf.add_n([wd_cost, cost], name='total_cost')
@@ -78,46 +79,27 @@ class Model(ModelDesc):
         return tf.train.AdamOptimizer(lr)
 
 
-# Keras needs an extra input if learning_phase is used by the model
-class KerasCallback(Callback):
-    def __init__(self, isTrain):
-        assert isinstance(isTrain, bool), isTrain
-        self._isTrain = isTrain
-        self._learning_phase = KB.learning_phase()
-
-    def _before_run(self, ctx):
-        return tf.train.SessionRunArgs(
-            fetches=[], feed_dict={self._learning_phase: int(self._isTrain)})
-
-
 def get_data():
     train = BatchData(dataset.Mnist('train'), 128)
     test = BatchData(dataset.Mnist('test'), 256, remainder=True)
     return train, test
 
 
-def get_config():
+if __name__ == '__main__':
     logger.auto_set_dir()
     dataset_train, dataset_test = get_data()
 
-    return TrainConfig(
+    cfg = TrainConfig(
         model=Model(),
         dataflow=dataset_train,
         callbacks=[
-            KerasCallback(True),   # for Keras training
+            KerasPhaseCallback(True),   # for Keras training
             ModelSaver(),
             InferenceRunner(
                 dataset_test,
-                [ScalarStats('cross_entropy_loss'), ClassificationError('incorrect')],
-                extra_hooks=[CallbackToHook(KerasCallback(False))]),    # for keras inference
+                ScalarStats(['cross_entropy_loss', 'accuracy'])),
         ],
         max_epoch=100,
     )
 
-
-if __name__ == '__main__':
-    config = get_config()
-    QueueInputTrainer(config).train()
-    # for multigpu training:
-    # config.nr_tower = 2
-    # SyncMultiGPUTrainer(config).train()
+    launch_train_with_config(cfg, QueueInputTrainer())

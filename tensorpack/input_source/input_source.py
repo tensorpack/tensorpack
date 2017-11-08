@@ -28,7 +28,8 @@ __all__ = ['PlaceholderInput', 'FeedInput',
            'QueueInput', 'BatchQueueInput',
            'DummyConstantInput', 'TensorInput',
            'TFDatasetInput',
-           'StagingInputWrapper']
+           'StagingInputWrapper',
+           'StagingInput']
 
 
 class PlaceholderInput(InputSource):
@@ -86,7 +87,8 @@ class FeedInput(InputSource):
         return self.ds.size()
 
     def _setup(self, inputs):
-        self._all_placehdrs = [v.build_placeholder(prefix='') for v in inputs]
+        # placeholders as input are always safe to reuse.
+        self._all_placehdrs = [v.build_placeholder_reuse() for v in inputs]
         self._cb = self._FeedCallback(self._iter_ds, self._all_placehdrs)
 
     def _get_input_tensors(self):
@@ -398,7 +400,7 @@ class TFDatasetInput(FeedfreeInput):
         return self._iterator.get_next()
 
 
-class StagingInputWrapper(FeedfreeInput):
+class StagingInput(FeedfreeInput):
     """
     A wrapper around a feedfree input,
     to prefetch the input in StagingArea (on GPUs).
@@ -413,13 +415,18 @@ class StagingInputWrapper(FeedfreeInput):
             self.stage_op = stage_op
             self.fetches = tf.train.SessionRunArgs(
                 fetches=[stage_op, unstage_op])
+            self._initialized = False
 
-        def _before_train(self):
+        def _prefill(self):
             logger.info("Pre-filling staging area ...")
             for k in range(self.nr_stage):
                 self.stage_op.run()
 
         def _before_run(self, ctx):
+            # This has to happen once, right before the first iteration.
+            if not self._initialized:
+                self._initialized = True
+                self._prefill()
             return self.fetches
 
     def __init__(self, input, towers, nr_stage=5):
@@ -433,7 +440,7 @@ class StagingInputWrapper(FeedfreeInput):
         self._input = input
         if not isinstance(towers[0], int):
             # API changed
-            log_deprecated("StagingInputWrapper(devices=)", "Use (towers=) instead!", "2018-01-31")
+            log_deprecated("StagingInput(devices=)", "Use (towers=) instead!", "2018-01-31")
             self._devices = towers
         else:
             self._devices = ['/gpu:{}'.format(k) for k in towers]
@@ -451,7 +458,7 @@ class StagingInputWrapper(FeedfreeInput):
         cbs = self._input.get_callbacks()
 
         cbs.append(
-            StagingInputWrapper.StagingCallback(
+            StagingInput.StagingCallback(
                 self._get_stage_op(), self._get_unstage_op(), self._nr_stage))
         return cbs
 
@@ -488,3 +495,6 @@ class StagingInputWrapper(FeedfreeInput):
         with self.cached_name_scope():
             all_outputs = list(chain.from_iterable(self._unstage_ops))
             return tf.group(*all_outputs)
+
+
+StagingInputWrapper = StagingInput

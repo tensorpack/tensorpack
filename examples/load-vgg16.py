@@ -23,49 +23,45 @@ Usage:
 """
 
 
-class Model(ModelDesc):
-    def _get_inputs(self):
-        return [InputDesc(tf.float32, (None, 224, 224, 3), 'input')]
-
-    def _build_graph(self, inputs):
-        image = inputs[0]
-        with argscope(Conv2D, kernel_shape=3, nl=tf.nn.relu):
-            logits = (LinearWrap(image)
-                      .Conv2D('conv1_1', 64)
-                      .Conv2D('conv1_2', 64)
-                      .MaxPooling('pool1', 2)
-                      # 112
-                      .Conv2D('conv2_1', 128)
-                      .Conv2D('conv2_2', 128)
-                      .MaxPooling('pool2', 2)
-                      # 56
-                      .Conv2D('conv3_1', 256)
-                      .Conv2D('conv3_2', 256)
-                      .Conv2D('conv3_3', 256)
-                      .MaxPooling('pool3', 2)
-                      # 28
-                      .Conv2D('conv4_1', 512)
-                      .Conv2D('conv4_2', 512)
-                      .Conv2D('conv4_3', 512)
-                      .MaxPooling('pool4', 2)
-                      # 14
-                      .Conv2D('conv5_1', 512)
-                      .Conv2D('conv5_2', 512)
-                      .Conv2D('conv5_3', 512)
-                      .MaxPooling('pool5', 2)
-                      # 7
-                      .FullyConnected('fc6', 4096, nl=tf.nn.relu)
-                      .Dropout('drop0', 0.5)
-                      .FullyConnected('fc7', 4096, nl=tf.nn.relu)
-                      .Dropout('drop1', 0.5)
-                      .FullyConnected('fc8', out_dim=1000, nl=tf.identity)())
-        prob = tf.nn.softmax(logits, name='prob')
+def tower_func(image):
+    with argscope(Conv2D, kernel_shape=3, nl=tf.nn.relu):
+        logits = (LinearWrap(image)
+                  .Conv2D('conv1_1', 64)
+                  .Conv2D('conv1_2', 64)
+                  .MaxPooling('pool1', 2)
+                  # 112
+                  .Conv2D('conv2_1', 128)
+                  .Conv2D('conv2_2', 128)
+                  .MaxPooling('pool2', 2)
+                  # 56
+                  .Conv2D('conv3_1', 256)
+                  .Conv2D('conv3_2', 256)
+                  .Conv2D('conv3_3', 256)
+                  .MaxPooling('pool3', 2)
+                  # 28
+                  .Conv2D('conv4_1', 512)
+                  .Conv2D('conv4_2', 512)
+                  .Conv2D('conv4_3', 512)
+                  .MaxPooling('pool4', 2)
+                  # 14
+                  .Conv2D('conv5_1', 512)
+                  .Conv2D('conv5_2', 512)
+                  .Conv2D('conv5_3', 512)
+                  .MaxPooling('pool5', 2)
+                  # 7
+                  .FullyConnected('fc6', 4096, nl=tf.nn.relu)
+                  .Dropout('drop0', 0.5)
+                  .FullyConnected('fc7', 4096, nl=tf.nn.relu)
+                  .Dropout('drop1', 0.5)
+                  .FullyConnected('fc8', out_dim=1000, nl=tf.identity)())
+    prob = tf.nn.softmax(logits, name='prob')
 
 
 def run_test(path, input):
     param_dict = np.load(path, encoding='latin1').item()
     predict_func = OfflinePredictor(PredictConfig(
-        model=Model(),
+        inputs_desc=[InputDesc(tf.float32, (None, 224, 224, 3), 'input')],
+        tower_func=tower_func,
         session_init=DictRestore(param_dict),
         input_names=['input'],
         output_names=['prob']   # prob:0 is the probability distribution

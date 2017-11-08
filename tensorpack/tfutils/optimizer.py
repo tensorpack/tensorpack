@@ -134,6 +134,9 @@ class AccumGradOptimizer(ProxyOptimizer):
     and apply them together in every :math:`k`th :meth:`minimize` call.
     This is equivalent to using a :math:`k` times larger batch size plus a
     :math:`k` times larger learning rate, but uses much less memory.
+
+    Note that this implementation may not support all models.
+    E.g., it doesn't support sparse gradient update.
     """
 
     def __init__(self, opt, niter):

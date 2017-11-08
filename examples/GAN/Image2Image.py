@@ -12,6 +12,7 @@ import os
 import sys
 import argparse
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.utils.viz import *
 from tensorpack.tfutils.summary import add_moving_summary
@@ -133,7 +134,7 @@ class Model(GANModelDesc):
         self.collect_variables()
 
     def _get_optimizer(self):
-        lr = symbolic_functions.get_scalar_var('learning_rate', 2e-4, summary=True)
+        lr = tf.get_variable('learning_rate', initializer=2e-4, trainable=False)
         return tf.train.AdamOptimizer(lr, beta1=0.5, epsilon=1e-3)
 
 
@@ -166,21 +167,6 @@ def get_data():
     ds = BatchData(ds, BATCH)
     ds = PrefetchData(ds, 100, 1)
     return ds
-
-
-def get_config():
-    logger.auto_set_dir()
-    dataset = get_data()
-    return TrainConfig(
-        dataflow=dataset,
-        callbacks=[
-            PeriodicTrigger(ModelSaver(), every_k_epochs=3),
-            ScheduledHyperParamSetter('learning_rate', [(200, 1e-4)])
-        ],
-        model=Model(),
-        steps_per_epoch=dataset.size(),
-        max_epoch=300,
-    )
 
 
 def sample(datadir, model_path):
@@ -218,9 +204,19 @@ if __name__ == '__main__':
     BATCH = args.batch
 
     if args.sample:
+        assert args.load
         sample(args.data, args.load)
     else:
-        config = get_config()
-        if args.load:
-            config.session_init = SaverRestore(args.load)
-        GANTrainer(config).train()
+        logger.auto_set_dir()
+
+        data = QueueInput(get_data())
+
+        GANTrainer(data, Model()).train_with_defaults(
+            callbacks=[
+                PeriodicTrigger(ModelSaver(), every_k_epochs=3),
+                ScheduledHyperParamSetter('learning_rate', [(200, 1e-4)])
+            ],
+            steps_per_epoch=data.size(),
+            max_epoch=300,
+            session_init=SaverRestore(args.load) if args.load else None
+        )

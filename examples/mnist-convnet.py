@@ -12,6 +12,7 @@ MNIST ConvNet example.
 about 0.6% validation error after 30 epochs.
 """
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 # Just import everything into current namespace
 from tensorpack import *
 from tensorpack.tfutils import summary
@@ -62,7 +63,6 @@ class Model(ModelDesc):
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')  # the average cross-entropy loss
 
-        # compute the "correct vector", for the callback ClassificationError to use at validation time
         correct = tf.cast(tf.nn.in_top_k(logits, label, 1), tf.float32, name='correct')
         accuracy = tf.reduce_mean(correct, name='accuracy')
 
@@ -117,9 +117,7 @@ def get_config():
             MaxSaver('validation_accuracy'),  # save the model with highest accuracy (prefix 'validation_')
             InferenceRunner(    # run inference(for validation) after every epoch
                 dataset_test,   # the DataFlow instance used for validation
-                # Calculate both the cost and the accuracy for this DataFlow
-                [ScalarStats('cross_entropy_loss'),
-                 ClassificationError('correct', 'validation_accuracy')]),
+                ScalarStats(['cross_entropy_loss', 'accuracy'])),
         ],
         steps_per_epoch=steps_per_epoch,
         max_epoch=100,
@@ -142,4 +140,4 @@ if __name__ == '__main__':
         config.session_init = SaverRestore(args.load)
     # SimpleTrainer is slow, this is just a demo.
     # You can use QueueInputTrainer instead
-    SimpleTrainer(config).train()
+    launch_train_with_config(config, SimpleTrainer())

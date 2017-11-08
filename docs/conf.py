@@ -21,6 +21,7 @@ import inspect
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('../'))
 os.environ['TENSORPACK_DOC_BUILDING'] = '1'
+ON_RTD = (os.environ.get('READTHEDOCS') == 'True')
 
 
 MOCK_MODULES = ['scipy', 'tabulate',
@@ -62,7 +63,7 @@ napoleon_include_special_with_doc = True
 napoleon_numpy_docstring = False
 napoleon_use_rtype = False
 
-if os.environ.get('READTHEDOCS') == 'True':
+if ON_RTD:
     intersphinx_timeout = 10
 else:
     # skip this when building locally
@@ -358,16 +359,18 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
         'replace_get_variable',
         'remap_get_variable',
         'freeze_get_variable',
-        'Triggerable',
         'predictor_factory',
         'get_predictors',
         'RandomCropAroundBox',
         'GaussianDeform',
         'dump_chkpt_vars',
         'VisualQA',
-        'huber_loss',
         'DumpTensor',
-        'StepTensorPrinter'
+        'StagingInputWrapper',
+        'StepTensorPrinter',
+
+        'guided_relu', 'saliency_map', 'get_scalar_var',
+        'prediction_incorrect', 'huber_loss',
         ]:
         return True
     if name in ['get_data', 'size', 'reset_state']:
@@ -384,7 +387,10 @@ def url_resolver(url):
     if '.html' not in url:
         return "https://github.com/ppwwyyxx/tensorpack/blob/master/" + url
     else:
-        return "http://tensorpack.readthedocs.io/en/latest/" + url
+        if ON_RTD:
+            return "http://tensorpack.readthedocs.io/en/latest/" + url
+        else:
+            return '/' + url
 
 def setup(app):
     from recommonmark.transform import AutoStructify

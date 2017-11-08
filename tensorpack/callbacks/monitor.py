@@ -130,7 +130,8 @@ class Monitors(Callback):
             if val.WhichOneof('value') == 'simple_value':
                 val.tag = re.sub('tower[0-9]+/', '', val.tag)   # TODO move to subclasses
 
-                # TODO This hack not needed any more, can remove this in the future
+                # TODO This hack is still needed, seem to disappear only when
+                # compiled from source.
                 suffix = '-summary'  # tensorflow#6150, tensorboard#59
                 if val.tag.endswith(suffix):
                     val.tag = val.tag[:-len(suffix)]
@@ -260,6 +261,7 @@ class JSONWriter(TrainingMonitor):
                 # TODO is this a good idea?
                 logger.info("Found training history from JSON, now starting from epoch number {}.".format(epoch))
                 self.trainer.loop.starting_epoch = epoch
+                self.trainer.loop._epoch_num = epoch - 1
         else:
             self._stats = []
         self._stat_now = {}

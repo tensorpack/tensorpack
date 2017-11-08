@@ -18,7 +18,7 @@ One good thing about having a standard interface is to be able to provide
 the greatest code reusability.
 There are a lot of existing DataFlow utilities in tensorpack, which you can use to compose
 complex DataFlow with a long data pipeline. A common pipeline usually
-would __read from disk (or other sources), apply augmentations, group into batches,
+would __read from disk (or other sources), apply transformations, group into batches,
 prefetch data__, etc. A simple example is as the following:
 
 ````python
@@ -35,16 +35,17 @@ You can find more complicated DataFlow in the [ResNet training script](../exampl
 with all the data preprocessing.
 
 Unless you are working with standard data types (image folders, LMDB, etc),
-you would usually want to write the base DataFlow (`MyDataFlow` in the above example) for your data format.
+you would usually want to write the source DataFlow (`MyDataFlow` in the above example) for your data format.
 See [another tutorial](extend/dataflow.html)
 for simple instructions on writing a DataFlow.
-Once you have the base reader, all the [existing DataFlows](../modules/dataflow.html) are ready for you to complete
+Once you have the source reader, all the [existing DataFlows](../modules/dataflow.html) are ready for you to complete
 the rest of the data pipeline.
 
 ### Why DataFlow
 
 1. It's easy: write everything in pure Python, and reuse existing utilities.
 	 On the contrary, writing data loaders in TF operators is usually painful, and performance is hard to tune.
+	 See more discussions in [Python Reader or TF Reader](input-source.html#python-reader-or-tf-reader).
 2. It's fast: see [Efficient DataFlow](efficient-dataflow.html)
 	on how to build a fast DataFlow with parallelism.
 	If you're using DataFlow with tensorpack, also see [Input Pipeline tutorial](input-source.html)
@@ -53,7 +54,7 @@ the rest of the data pipeline.
 Nevertheless, tensorpack support data loading with native TF operators / TF datasets as well.
 
 ### Use DataFlow (outside Tensorpack)
-Existing tensorpack trainers work with DataFlow out-of-the-box.
+tensorpack `InputSource` interface works with DataFlow out-of-the-box.
 If you use DataFlow in some custom code, call `reset_state()` first to initialize it,
 and then use the generator however you like:
 ```python

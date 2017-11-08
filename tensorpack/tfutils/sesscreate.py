@@ -5,24 +5,27 @@
 
 import tensorflow as tf
 from .common import get_default_sess_config
-from ..utils import logger
 
 __all__ = ['NewSessionCreator', 'ReuseSessionCreator', 'SessionCreatorAdapter']
 
 """
-SessionCreator should return a session that is ready to use
-(i.e. variables are initialized)
+A SessionCreator should:
+    (optionally) finalize the graph
+    create the session
+    initialize all variables
+    return a session that is ready to use
 """
 
 
-class NewSessionCreator(tf.train.SessionCreator):
+class NewSessionCreator(tf.train.ChiefSessionCreator):
     def __init__(self, target='', graph=None, config=None):
         """
         Args:
             target, graph, config: same as :meth:`Session.__init__()`.
             config: defaults to :func:`tfutils.get_default_sess_config()`
         """
-        self.target = target
+        assert graph is None
+
         if config is None:
             # distributd trainer doesn't support user-provided config
             # we set this attribute so that they can check
@@ -32,14 +35,7 @@ class NewSessionCreator(tf.train.SessionCreator):
             self.user_provided_config = True
 
         self.config = config
-        self.graph = graph
-
-    def create_session(self):
-        sess = tf.Session(target=self.target, graph=self.graph, config=self.config)
-        sess.run(tf.global_variables_initializer())
-        sess.run(tf.local_variables_initializer())
-        logger.info("Global and local variables initialized.")
-        return sess
+        super(NewSessionCreator, self).__init__(master=target, config=config)
 
 
 class ReuseSessionCreator(tf.train.SessionCreator):

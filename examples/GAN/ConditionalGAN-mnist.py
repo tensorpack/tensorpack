@@ -10,6 +10,7 @@ import sys
 import cv2
 import argparse
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.utils.viz import *
 import tensorpack.tfutils.symbolic_functions as symbf
@@ -95,25 +96,12 @@ class Model(GANModelDesc):
         self.collect_variables()
 
     def _get_optimizer(self):
-        lr = symbf.get_scalar_var('learning_rate', 2e-4, summary=True)
-        return tf.train.AdamOptimizer(lr, beta1=0.5, epsilon=1e-3)
+        return tf.train.AdamOptimizer(2e-4, beta1=0.5, epsilon=1e-3)
 
 
 def get_data():
     ds = ConcatData([dataset.Mnist('train'), dataset.Mnist('test')])
     return BatchData(ds, BATCH)
-
-
-def get_config():
-    logger.auto_set_dir()
-    dataset = get_data()
-    return TrainConfig(
-        dataflow=dataset,
-        callbacks=[ModelSaver()],
-        model=Model(),
-        steps_per_epoch=500,
-        max_epoch=100,
-    )
 
 
 def sample(model_path):
@@ -144,7 +132,10 @@ if __name__ == '__main__':
     if args.sample:
         sample(args.load)
     else:
-        config = get_config()
-        if args.load:
-            config.session_init = SaverRestore(args.load)
-        GANTrainer(config).train()
+        logger.auto_set_dir()
+        GANTrainer(QueueInput(get_data()), Model()).train_with_defaults(
+            callbacks=[ModelSaver()],
+            steps_per_epoch=500,
+            max_epoch=100,
+            session_init=SaverRestore(args.load) if args.load else None
+        )

@@ -25,7 +25,7 @@ The reasons are:
 
 Let's do some simple math: according to [tensorflow/benchmarks](https://www.tensorflow.org/performance/benchmarks),
 4 P100 GPUs can train ResNet50 at 852 images/sec, and the size of those images are 852\*224\*224\*3\*4bytes = 489MB.
-Assuming you have 5GB/s `memcpy` bandwidth, simply copying the data once would take 0.1s -- slowing
+Assuming you have 5GB/s `memcpy` bandwidth (roughly like this if you run single-thread copy), simply copying the data once would take 0.1s -- slowing
 down your training by 10%. Think about how many more copies are made during your preprocessing.
 
 Failure to hide the data preparation latency is the major reason why people
@@ -36,21 +36,21 @@ This is the major reason why tensorpack is [faster](https://github.com/tensorpac
 ## Python Reader or TF Reader ?
 
 The above discussion is valid regardless of what you use to load/preprocess data,
-either Python code or TensorFlow operators (written in C++).
+either Python code or TensorFlow operators.
+Both are supported in tensorpack, while we recommend using Python.
 
-The benefits of using TensorFlow ops are:
+### TensorFlow Reader: Pros
 * Faster read/preprocessing.
 
-	* Potentially true, but not necessarily. With Python code you can call a variety of other fast libraries, which
-		you have no access to in TF ops. For example, LMDB could be faster than TFRecords.
+	* Potentially true, but not necessarily. With Python you can call a variety of other fast libraries, which
+		you might not have a good support in TF. For example, LMDB could be faster than TFRecords.
 	* Python may be just fast enough.
 
 		As long as data preparation runs faster than training, and the latency of all four blocks in the
 		above figure is hidden, it makes no difference at all.
 		For most types of problems, up to the scale of multi-GPU ImageNet training,
 		Python can offer enough speed if you use a fast library (e.g. `tensorpack.dataflow`).
-		See the [Efficient DataFlow](efficient-dataflow.html) tutorial
-		on how to build a fast Python reader with DataFlow.
+		See the [Efficient DataFlow](efficient-dataflow.html) tutorial on how to build a fast Python reader with DataFlow.
 
 * No "Copy to TF" (i.e. `feed_dict`) stage.
 
@@ -60,23 +60,48 @@ The benefits of using TensorFlow ops are:
 		and TF `StagingArea` can help hide the "Copy to GPU" latency.
 		They are used by most examples in tensorpack.
 
-The benefits of using Python reader is obvious:
-it's much much easier to write Python to read different data format,
-handle corner cases in noisy data, preprocess, etc.
+### TensorFlow Reader: Cons
+The disadvantage of TF reader is obvious and it's huge: it's __too complicated__.
+
+Reading data is a more complicated and less structured job than running the model.
+You need to handle different data format, handle corner cases in noisy data,
+which all require logical operations, condition operations, loops, etc. These operations
+are __naturally not suitable__ for a graph computation framework.
+
+Let's take a look at what users are asking for:
+* [Different ways to pad your data](https://github.com/tensorflow/tensorflow/issues/13969)
+* [Handle none values in data](https://github.com/tensorflow/tensorflow/issues/13865)
+* [Handle dataset that's not a multiple of batch size](https://github.com/tensorflow/tensorflow/issues/13745)
+* [Different levels of determinism](https://github.com/tensorflow/tensorflow/issues/13932)
+* [Sort/skip some data](https://github.com/tensorflow/tensorflow/issues/14250)
+* [Take variable-length np array](https://github.com/tensorflow/tensorflow/issues/13018)
+
+To support these features which could've been done with 3 lines of code in Python, you need either a new TF
+API, or ask [Dataset.from_generator](https://www.tensorflow.org/versions/r1.4/api_docs/python/tf/contrib/data/Dataset#from_generator)
+(i.e. Python again) to the rescue.
+
+It only makes sense to use TF to read data, if your data is originally very clean and well-formated.
+If not, you may feel like writing a script to clean your data, but then you're almost writing a Python loader already!
+
+Think about it: it's a waste of time to write a Python script to transform from raw data to clean format (e.g. TFRecords),
+then a TF script to transform from this format to tensors.
+The intermediate step (TFRecords) doesn't have to exist.
+You just need the right interface to connect Python to the graph directly, efficiently.
+`tensorpack.InputSource` is such an interface.
 
 ## InputSource
 
 `InputSource` is an abstract interface in tensorpack, to describe where the inputs come from and how they enter the graph.
 For example,
 
-1. Come from a DataFlow and been fed to the graph.
-2. Come from a DataFlow and been prefetched on CPU by a TF queue.
-3. Come from a DataFlow, prefetched on CPU by a TF queue, then prefetched on GPU by a TF StagingArea.
+1. [FeedInput](../modules/input_source.html#tensorpack.input_source.FeedInput):
+	Come from a DataFlow and been fed to the graph.
+2. [QueueInput](../modules/input_source.html#tensorpack.input_source.QueueInput):
+  Come from a DataFlow and been prefetched on CPU by a TF queue.
+3. [StagingInput](../modules/input_source.html#tensorpack.input_source.StagingInput):
+	Come from some `InputSource`, then prefetched on GPU by a TF StagingArea.
 4. Come from a DataFlow, and further processed by `tf.data.Dataset`.
-5. Come from some TF native reading pipeline.
+5. [TensorInput](../modules/input_source.html#tensorpack.input_source.TensorInput):
+	Come from some TF reading ops. (See the [PTB example](../examples/PennTreebank))
 6. Come from some ZMQ pipe, where the load/preprocessing may happen on a different machine.
 
-When you set `TrainConfig(dataflow=)`, tensorpack trainers automatically adds proper prefetching for you.
-You can also use `TrainConfig(data=)` option to use a customized `InputSource`.
-In case you want to use TF ops rather than a DataFlow, you can use `TensorInput` as the `InputSource`
-(See the [PTB example](../../tensorpack/tree/master/examples/PennTreebank)).

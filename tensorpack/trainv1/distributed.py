@@ -64,7 +64,7 @@ class DistributedTrainerReplicated(Trainer):
         self._config.callbacks.extend(cbs)
 
         self.train_op, initial_sync_op, model_sync_op = self._builder.build(
-            lambda: self.model.build_graph_get_grads(
+            lambda: self.model._build_graph_get_grads(
                 *self._input_source.get_input_tensors()),
             self.model.get_optimizer)
 
@@ -95,5 +95,5 @@ class DistributedTrainerReplicated(Trainer):
         self._config.session_creator = get_distributed_session_creator(self.server)
 
     @property
-    def vs_name_for_predictor(self):
+    def _main_tower_vs_name(self):
         return "tower0"

@@ -7,6 +7,7 @@ import argparse
 import numpy as np
 import os
 
+os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
@@ -163,7 +164,7 @@ def get_config():
     data_test = BatchData(data_test, 128, remainder=True)
 
     return TrainConfig(
-        dataflow=data_train,
+        data=QueueInput(data_train),
         callbacks=[
             ModelSaver(),
             InferenceRunner(data_test,
@@ -183,4 +184,4 @@ if __name__ == '__main__':
 
     BITW, BITA, BITG = map(int, args.dorefa.split(','))
     config = get_config()
-    QueueInputTrainer(config).train()
+    launch_train_with_config(config, SimpleTrainer())

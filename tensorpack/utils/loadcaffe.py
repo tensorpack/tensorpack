@@ -135,7 +135,7 @@ def get_caffe_pb():
                 version = version.decode('utf-8')
                 version = float('.'.join(version.split(' ')[1].split('.')[:2]))
                 assert version >= 2.7, "Require protoc>=2.7 for Python3"
-            except:
+            except Exception:
                 logger.exception("protoc --version gives: " + str(version))
                 raise
 
