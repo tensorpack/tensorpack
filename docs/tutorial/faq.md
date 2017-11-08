@@ -16,35 +16,16 @@ If you think:
 
 Then it is a good time to open an issue.
 
-## How to dump/inspect a model
+## How to print/dump intermediate results in training
 
-When you enable `ModelSaver` as a callback,
-trained models will be stored in TensorFlow checkpoint format, which typically includes a
-`.data-xxxxx` file and a `.index` file. Both are necessary.
+1. Learn `tf.Print`.
 
-To inspect a checkpoint, the easiest tool is `tf.train.NewCheckpointReader`. Please note that it
-expects a model path without the extension.
+2. Know [DumpTensors](http://tensorpack.readthedocs.io/en/latest/modules/callbacks.html#tensorpack.callbacks.DumpTensors[]),
+	[ProcessTensors](http://tensorpack.readthedocs.io/en/latest/modules/callbacks.html#tensorpack.callbacks.ProcessTensors) callbacks.
+	And it's also easy to write your own version of them.
 
-You can dump a cleaner version of the model (without unnecessary variables), using
-`scripts/dump-model-params.py`, as a simple `var-name: value` dict saved in npy/npz format.
-The script expects a metagraph file which is also saved by `ModelSaver`.
-
-
-## How to load a model / do transfer learning
-
-All model loading (in either training or testing) is through the `session_init` initializer
-in `TrainConfig` or `PredictConfig`.
-The common choices for this option are `SaverRestore` which restores a
-TF checkpoint, or `DictRestore` which restores a dict. (`get_model_loader` is a small helper to
-decide which one to use from a file name.)
-
-Doing transfer learning is trivial.
-Variable restoring is completely based on name match between
-the current graph and the `SessionInit` initializer.
-Therefore, if you want to load some model, just use the same variable name
-so the old value will be loaded into the variable.
-If you want to re-train some layer, just rename it.
-Unmatched variables on both sides will be printed as a warning.
+3. The [ProgressBar](http://tensorpack.readthedocs.io/en/latest/modules/callbacks.html#tensorpack.callbacks.ProgressBar)
+	 callback can print some scalar statistics, though not enabled by default.
 
 ## How to freeze some variables in training
 
