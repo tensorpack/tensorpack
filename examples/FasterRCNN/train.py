@@ -75,17 +75,17 @@ class Model(ModelDesc):
             all_anchors = tf.constant(get_all_anchors(), name='all_anchors', dtype=tf.float32)
             fm_anchors = tf.slice(
                 all_anchors, [0, 0, 0, 0], tf.stack([
+                    tf.shape(image)[0] // config.ANCHOR_STRIDE,
                     tf.shape(image)[1] // config.ANCHOR_STRIDE,
-                    tf.shape(image)[2] // config.ANCHOR_STRIDE,
                     -1, -1]), name='fm_anchors')
             return fm_anchors
 
     def _build_graph(self, inputs):
         is_training = get_current_tower_context().is_training
         image, anchor_labels, anchor_boxes, gt_boxes, gt_labels = inputs
+        fm_anchors = self._get_anchors(image)
         image = self._preprocess(image)
 
-        fm_anchors = self._get_anchors(image)
         anchor_boxes_encoded = encode_bbox_target(anchor_boxes, fm_anchors)
         featuremap = pretrained_resnet_conv4(image, config.RESNET_NUM_BLOCK[:3])
         rpn_label_logits, rpn_box_logits = rpn_head(featuremap, 1024, config.NR_ANCHOR)
