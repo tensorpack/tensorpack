@@ -15,7 +15,7 @@ from ..utils import logger
 from ..utils.utils import get_tqdm, get_rng
 from ..utils.develop import log_deprecated
 
-__all__ = ['TestDataSpeed', 'PrintData', 'BatchData', 'BatchDataByShape', 'FixedSizeData', 'MapData',
+__all__ = ['TestDataSpeed', 'PrintData', 'BatchData', 'BatchDataByShape', 'BatchDataByMixup', 'FixedSizeData', 'MapData',
            'MapDataComponent', 'RepeatedData', 'RepeatedDataPoint', 'RandomChooseData',
            'RandomMixData', 'JoinData', 'ConcatData', 'SelectComponent',
            'LocallyShuffleData', 'CacheData']
@@ -148,6 +148,60 @@ class BatchData(ProxyDataFlow):
                         pass
         return result
 
+
+class BatchDataByMixup(BatchData):
+    """
+    implement the mixup: https://arxiv.org/abs/1710.09412
+    """
+    def __init__(self, ds, batch_size, class_num, is_train, alpha):
+        """
+        Args:
+            ds (DataFlow): input DataFlow. ``dp[idx]`` has to be an :class:`np.ndarray`.
+            batch_size (int): batch size, double batch size.
+            class_num: class number.
+            alpha: mixup beta distribution parameter
+        """
+        if is_train:
+            super(BatchDataByMixup, self).__init__(ds, 2*batch_size, remainder=False)
+        else:
+            super(BatchDataByMixup, self).__init__(ds, batch_size, remainder=True)
+        self.real_batch_size = batch_size
+        self.class_num = class_num
+        self.is_train = is_train
+        self.alpha = alpha
+
+
+
+    def mixup(self, input):
+        images = input[0]
+        labels = input[1]
+        one_hot_labels = np.eye(self.class_num)[labels] #one hot coding
+        if not self.is_train:
+            return [images, one_hot_labels]
+        weight = np.random.beta(self.alpha, self.alpha, self.real_batch_size)
+        x_weight = weight.reshape(self.real_batch_size, 1, 1, 1)
+        y_weight = weight.reshape(self.real_batch_size, 1)
+        x1 = images[:self.real_batch_size]
+        x2 = images[self.real_batch_size:]
+        x = x1 * x_weight + x2 * (1 - x_weight)
+        y1 = one_hot_labels[:self.real_batch_size]
+        y2 = one_hot_labels[self.real_batch_size:]
+        y = y1 * y_weight + y2 * (1 - y_weight)
+        return [x,y]
+
+    def get_data(self):
+        """
+        Yields:
+            Batched data by stacking each component on an extra 0th dimension.
+        """
+        holder = []
+        for data in self.ds.get_data():
+            holder.append(data)
+            if len(holder) == self.batch_size:
+                yield self.mixup(BatchData._aggregate_batch(holder, self.use_list))
+                del holder[:]
+        if self.remainder and len(holder) > 0:
+            yield self.mixup(BatchData._aggregate_batch(holder, self.use_list))
 
 class BatchDataByShape(BatchData):
     """
