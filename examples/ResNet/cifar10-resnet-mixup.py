@@ -34,6 +34,7 @@ To train:
 """
 
 BATCH_SIZE = 128
+CLASS_NUM = 10
 NUM_UNITS = None
 
 
@@ -46,7 +47,7 @@ class Model(ModelDesc):
 
     def _get_inputs(self):
         return [InputDesc(tf.float32, [None, 32, 32, 3], 'input'),
-                InputDesc(tf.float32, [None,10], 'label')]
+                InputDesc(tf.float32, [None,CLASS_NUM], 'label')]
 
     def _build_graph(self, inputs):
         image, label = inputs
@@ -97,7 +98,7 @@ class Model(ModelDesc):
             # 8,c=64
             l = GlobalAvgPooling('gap', l)
 
-        logits = FullyConnected('linear', l, out_dim=10, nl=tf.identity)
+        logits = FullyConnected('linear', l, out_dim=CLASS_NUM, nl=tf.identity)
         prob = tf.nn.softmax(logits, name='output')
 
         cost = tf.losses.softmax_cross_entropy(onehot_labels=label, logits=logits)
@@ -123,7 +124,7 @@ class Model(ModelDesc):
         return opt
 
 
-def get_data(train_or_test):
+def get_data(train_or_test, alpha, class_num):
     isTrain = train_or_test == 'train'
     ds = dataset.Cifar10(train_or_test)
     pp_mean = ds.get_per_pixel_mean()
@@ -140,7 +141,28 @@ def get_data(train_or_test):
         ]
     ds = AugmentImageComponent(ds, augmentors)
 
-    ds = BatchDataByMixup(ds, BATCH_SIZE, 10, is_train = isTrain, alpha = 0.2)
+    def mixup(ds):
+        images = ds[0]
+        labels = ds[1]
+        real_batch_size = BATCH_SIZE
+        one_hot_labels = np.eye(class_num)[labels]  # one hot coding
+        if not isTrain:
+            return [images, one_hot_labels]
+
+        weight = np.random.beta(alpha, alpha, real_batch_size)
+        x_weight = weight.reshape(real_batch_size, 1, 1, 1)
+        y_weight = weight.reshape(real_batch_size, 1)
+        x1 = images[:real_batch_size]
+        x2 = images[real_batch_size:]
+        x = x1 * x_weight + x2 * (1 - x_weight)
+        y1 = one_hot_labels[:real_batch_size]
+        y2 = one_hot_labels[real_batch_size:]
+        y = y1 * y_weight + y2 * (1 - y_weight)
+        return [x, y]
+        return ds
+
+    ds = BatchData(ds, 2*BATCH_SIZE, remainder=not isTrain)
+    ds = MapData(ds, mixup)
 
     if isTrain:
         ds = PrefetchData(ds, 3, 2)
@@ -154,7 +176,7 @@ if __name__ == '__main__':
                         help='number of units in each stage',
                         type=int, default=18)
     parser.add_argument('--load', help='load model')
-    parser.add_argument('--alpha', help='alpha in mixup')
+    parser.add_argument('--alpha', default=0.2, type=float, help='alpha in mixup')
     args = parser.parse_args()
     NUM_UNITS = args.num_units
 
@@ -163,8 +185,8 @@ if __name__ == '__main__':
 
     logger.auto_set_dir()
 
-    dataset_train = get_data('train')
-    dataset_test = get_data('test')
+    dataset_train = get_data('train', args.alpha, CLASS_NUM)
+    dataset_test = get_data('test', args.alpha, CLASS_NUM)
 
     config = TrainConfig(
         model=Model(n=NUM_UNITS),
