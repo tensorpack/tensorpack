@@ -36,7 +36,7 @@ Accuracy:
     due to more sophisticated augmentations.
 
     With (W,A,G)=(32,32,32) -- full precision baseline, 41.4% error.
-    With (W,A,G)=(1,32,32) -- BWN
+    With (W,A,G)=(1,32,32) -- BWN, 44.3% error
     With (W,A,G)=(1,2,6), 47.6% error
     With (W,A,G)=(1,2,4), 58.4% error
 
