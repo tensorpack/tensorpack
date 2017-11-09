@@ -84,6 +84,11 @@ def setup_keras_trainer(
                 target_tensors=target_tensors,
                 metrics=metrics)
 
+        # BN updates
+        if ctx.is_training:
+            for u in M.updates:
+                tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, u)
+
         add_moving_summary(tf.identity(M.total_loss, name='total_loss'))
 
         assert len(M.metrics) == len(M.metrics_tensors)
