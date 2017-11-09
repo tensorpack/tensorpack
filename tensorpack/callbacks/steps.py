@@ -72,6 +72,8 @@ class ProgressBar(Callback):
 
         self._fetches = self.get_tensors_maybe_in_tower(self._names) or None
         if self._fetches:
+            for t in self._fetches:
+                assert t.shape.ndims == 0, "ProgressBar can only print scalars, not {}".format(t)
             self._fetches = tf.train.SessionRunArgs(self._fetches)
             self._tqdm_args['bar_format'] = self._tqdm_args['bar_format'] + "{postfix} "
 

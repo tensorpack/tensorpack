@@ -20,3 +20,5 @@ Usage Questions, e.g.:
 "Why certain examples need to be written in this way?"
 We don't answer general machine learning questions like:
 "I want to do [this machine learning task]. What specific things do I need to do?"
+
+You can also use gitter (https://gitter.im/tensorpack/users) for more casual discussions.
