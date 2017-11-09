@@ -80,7 +80,7 @@ class Model(ModelDesc):
 
         # resnet50
         featuremap = pretrained_resnet_conv4(image, [3, 4, 6])
-        rpn_label_logits, rpn_box_logits = rpn_head(featuremap)
+        rpn_label_logits, rpn_box_logits = rpn_head(featuremap, 1024, config.NR_ANCHOR)
         rpn_label_loss, rpn_box_loss = rpn_losses(
             anchor_labels, anchor_boxes_encoded, rpn_label_logits, rpn_box_logits)
 
