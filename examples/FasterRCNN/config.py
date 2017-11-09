@@ -10,6 +10,9 @@ TRAIN_DATASET = ['train2014', 'valminusminival2014']
 VAL_DATASET = 'minival2014'   # only support evaluation on one dataset
 NUM_CLASS = 81
 
+# basemodel ----------------------
+RESNET_NUM_BLOCK = [3, 4, 6, 3]     # resnet50
+
 # preprocessing --------------------
 SHORT_EDGE_SIZE = 600
 MAX_SIZE = 1024
