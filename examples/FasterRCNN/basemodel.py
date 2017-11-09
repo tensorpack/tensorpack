@@ -39,7 +39,7 @@ def resnet_shortcut(l, n_out, stride, nl=tf.identity):
     data_format = get_arg_scope()['Conv2D']['data_format']
     n_in = l.get_shape().as_list()[1 if data_format == 'NCHW' else 3]
     if n_in != n_out:   # change dimension when channel is not the same
-        if stride == 2 and 'group3' not in tf.get_variable_scope().name:
+        if stride == 2:
             l = l[:, :, :-1, :-1]
             return Conv2D('convshortcut', l, n_out, 1,
                           stride=stride, padding='VALID', nl=nl)
@@ -53,7 +53,7 @@ def resnet_shortcut(l, n_out, stride, nl=tf.identity):
 def resnet_bottleneck(l, ch_out, stride):
     l, shortcut = l, l
     l = Conv2D('conv1', l, ch_out, 1, nl=BNReLU)
-    if stride == 2 and 'group3' not in tf.get_variable_scope().name:
+    if stride == 2:
         l = tf.pad(l, [[0, 0], [0, 0], [0, 1], [0, 1]])
         l = Conv2D('conv2', l, ch_out, 3, stride=2, nl=BNReLU, padding='VALID')
     else:

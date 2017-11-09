@@ -60,11 +60,16 @@ class Model(ModelDesc):
             InputDesc(tf.int64, (None,), 'gt_labels'),
         ]
 
-    def _build_graph(self, inputs):
-        is_training = get_current_tower_context().is_training
-        image, anchor_labels, anchor_boxes, gt_boxes, gt_labels = inputs
+    def _preprocess(self, image):
         image = tf.expand_dims(image, 0)
+        image = image_preprocess(image, bgr=True)
+        return tf.transpose(image, [0, 3, 1, 2])
 
+    def _get_anchors(self, image):
+        """
+        Returns:
+            FSxFSxNAx4 anchors,
+        """
         # FSxFSxNAx4 (FS=MAX_SIZE//ANCHOR_STRIDE)
         with tf.name_scope('anchors'):
             all_anchors = tf.constant(get_all_anchors(), name='all_anchors', dtype=tf.float32)
@@ -73,11 +78,15 @@ class Model(ModelDesc):
                     tf.shape(image)[1] // config.ANCHOR_STRIDE,
                     tf.shape(image)[2] // config.ANCHOR_STRIDE,
                     -1, -1]), name='fm_anchors')
-            anchor_boxes_encoded = encode_bbox_target(anchor_boxes, fm_anchors)
+            return fm_anchors
 
-        image = image_preprocess(image, bgr=True)
-        image = tf.transpose(image, [0, 3, 1, 2])
+    def _build_graph(self, inputs):
+        is_training = get_current_tower_context().is_training
+        image, anchor_labels, anchor_boxes, gt_boxes, gt_labels = inputs
+        image = self._preprocess(image)
 
+        fm_anchors = self._get_anchors(image)
+        anchor_boxes_encoded = encode_bbox_target(anchor_boxes, fm_anchors)
         # resnet50
         featuremap = pretrained_resnet_conv4(image, [3, 4, 6])
         rpn_label_logits, rpn_box_logits = rpn_head(featuremap, 1024, config.NR_ANCHOR)
