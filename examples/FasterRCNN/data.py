@@ -29,25 +29,29 @@ class MalformedData(BaseException):
 
 
 @memoized
-def get_all_anchors():
+def get_all_anchors(
+        stride=config.ANCHOR_STRIDE,
+        sizes=config.ANCHOR_SIZES):
     """
     Get all anchors in the largest possible image, shifted, floatbox
 
     Returns:
-        anchors: SxSxNR_ANCHORx4, where S == MAX_SIZE//STRIDE, floatbox
+        anchors: SxSxNUM_ANCHORx4, where S == MAX_SIZE//STRIDE, floatbox
+        The layout in the NUM_ANCHOR dim is NUM_RATIO x NUM_SCALE.
+
     """
     # Generates a NAx4 matrix of anchor boxes in (x1, y1, x2, y2) format. Anchors
     # are centered on stride / 2, have (approximate) sqrt areas of the specified
     # sizes, and aspect ratios as given.
     cell_anchors = generate_anchors(
-        config.ANCHOR_STRIDE,
-        scales=np.array(config.ANCHOR_SIZES, dtype=np.float) / config.ANCHOR_STRIDE,
+        stride,
+        scales=np.array(sizes, dtype=np.float) / stride,
         ratios=np.array(config.ANCHOR_RATIOS, dtype=np.float))
     # anchors are intbox here.
     # anchors at featuremap [0,0] are centered at fpcoor (8,8) (half of stride)
 
-    field_size = config.MAX_SIZE // config.ANCHOR_STRIDE
-    shifts = np.arange(0, field_size) * config.ANCHOR_STRIDE
+    field_size = config.MAX_SIZE // stride
+    shifts = np.arange(0, field_size) * stride
     shift_x, shift_y = np.meshgrid(shifts, shifts)
     shift_x = shift_x.flatten()
     shift_y = shift_y.flatten()
@@ -179,12 +183,12 @@ def get_rpn_anchor_input(im, boxes, klass, is_crowd):
     anchor_labels, anchor_boxes = get_anchor_labels(inside_anchors, non_crowd_boxes, crowd_boxes)
 
     # Fill them back to original size: fHxfWx1, fHxfWx4
-    featuremap_labels = -np.ones((featureH * featureW * config.NR_ANCHOR, ), dtype='int32')
+    featuremap_labels = -np.ones((featureH * featureW * config.NUM_ANCHOR, ), dtype='int32')
     featuremap_labels[inside_ind] = anchor_labels
-    featuremap_labels = featuremap_labels.reshape((featureH, featureW, config.NR_ANCHOR))
-    featuremap_boxes = np.zeros((featureH * featureW * config.NR_ANCHOR, 4), dtype='float32')
+    featuremap_labels = featuremap_labels.reshape((featureH, featureW, config.NUM_ANCHOR))
+    featuremap_boxes = np.zeros((featureH * featureW * config.NUM_ANCHOR, 4), dtype='float32')
     featuremap_boxes[inside_ind, :] = anchor_boxes
-    featuremap_boxes = featuremap_boxes.reshape((featureH, featureW, config.NR_ANCHOR, 4))
+    featuremap_boxes = featuremap_boxes.reshape((featureH, featureW, config.NUM_ANCHOR, 4))
     return featuremap_labels, featuremap_boxes
 
 

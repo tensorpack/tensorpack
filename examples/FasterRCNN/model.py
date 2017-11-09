@@ -96,11 +96,12 @@ def rpn_losses(anchor_labels, anchor_boxes, label_logits, box_logits):
 
 
 @under_name_scope()
-def decode_bbox_target(box_predictions, anchors):
+def decode_bbox_target(box_predictions, anchors, stride):
     """
     Args:
         box_predictions: fHxfWxNAx4, logits
         anchors: fHxfWxNAx4, floatbox
+        stride (int): the stride of the anchors
 
     Returns:
         box_decoded: (fHxfWxNA)x4, float32
@@ -115,7 +116,7 @@ def decode_bbox_target(box_predictions, anchors):
     xaya = tf.to_float(anchors_x2y2 + anchors_x1y1) * 0.5
 
     wbhb = tf.exp(tf.minimum(
-        box_pred_twth, np.log(config.MAX_SIZE * 1.0 / config.ANCHOR_STRIDE))) * waha
+        box_pred_twth, np.log(config.MAX_SIZE * 1.0 / stride))) * waha
     xbyb = box_pred_txty * waha + xaya
     x1y1 = xbyb - wbhb * 0.5
     x2y2 = xbyb + wbhb * 0.5
