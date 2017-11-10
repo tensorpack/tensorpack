@@ -1,11 +1,10 @@
 
 # Callbacks
 
+Callback is an interface to do __everything else__ besides the training iterations.
+
 Apart from the actual training iterations that minimize the cost,
 you almost surely would like to do something else.
-Callbacks are such an interface to describe what to do besides the
-training iterations.
-
 There are several places where you might want to do something else:
 
 * Before the training has started (e.g. initialize the saver, dump the graph)
