@@ -12,7 +12,11 @@ from tensorpack.dataflow import DataFromList
 from tensorpack.utils import logger
 from tensorpack.utils.rect import FloatBox
 from tensorpack.utils.timer import timed_operation
+from tensorpack.utils.argtools import log_once
+
 from pycocotools.coco import COCO
+import pycocotools.mask as cocomask
+
 
 __all__ = ['COCODetection', 'COCOMeta']
 
@@ -73,15 +77,18 @@ class COCODetection(object):
 
         logger.info("Instances loaded from {}.".format(annotation_file))
 
-    def load(self, add_gt=True):
+    def load(self, add_gt=True, add_mask=False):
         """
         Args:
-            add_gt: whether to add ground truth annotations to the dicts
+            add_gt: whether to add ground truth bounding box annotations to the dicts
+            add_mask: whether to also add ground truth mask
         Returns:
             a list of dict, each has keys including:
                 height, width, id, file_name,
                 and (if add_gt is True) boxes, class, is_crowd
         """
+        if add_mask:
+            assert add_gt
         with timed_operation('Load Groundtruth Boxes for {}'.format(self.name)):
             img_ids = self.coco.getImgIds()
             img_ids.sort()
@@ -91,7 +98,7 @@ class COCODetection(object):
             for img in imgs:
                 self._use_absolute_file_name(img)
                 if add_gt:
-                    self._add_detection_gt(img)
+                    self._add_detection_gt(img, add_mask)
             return imgs
 
     def _use_absolute_file_name(self, img):
@@ -102,7 +109,7 @@ class COCODetection(object):
             self._imgdir, img['file_name'])
         assert os.path.isfile(img['file_name']), img['file_name']
 
-    def _add_detection_gt(self, img):
+    def _add_detection_gt(self, img, add_mask):
         """
         Add 'boxes', 'class', 'is_crowd' of this image to the dict, used by detection.
         """
@@ -118,15 +125,29 @@ class COCODetection(object):
                 continue
             x1, y1, w, h = obj['bbox']
             # bbox is originally in float
-            # NOTE: assume in data that x1/y1 means upper-left corner and w/h means true w/h
-            # assume that (0.0, 0.0) is upper-left corner of the first pixel
+            # x1/y1 means upper-left corner and w/h means true w/h. This can be verified by segmentation pixels.
+            # But we do assume that (0.0, 0.0) is upper-left corner of the first pixel
             box = FloatBox(float(x1), float(y1),
                            float(x1 + w), float(y1 + h))
             box.clip_by_shape([height, width])
             # Require non-zero seg area and more than 1x1 box size
-            if obj['area'] > 0 and box.is_box() and box.area() >= 4:
+            if obj['area'] > 1 and box.is_box() and box.area() >= 4:
                 obj['bbox'] = [box.x1, box.y1, box.x2, box.y2]
                 valid_objs.append(obj)
+
+                if add_mask:
+                    segs = obj['segmentation']
+                    if not isinstance(segs, list):
+                        # TODO
+                        assert obj['iscrowd'] == 1
+                    else:
+                        valid_segs = [p for p in segs if len(p) >= 6]
+                        if len(valid_segs) < len(segs):
+                            log_once("Image {} has invalid polygons!".format(img['file_name']), 'warn')
+
+                        obj['segmentation'] = valid_segs
+                    rle = segmentation_to_rle(obj['segmentation'], height, width)
+                    obj['mask_rle'] = rle
 
         # all geometrically-valid boxes are returned
         boxes = np.asarray([obj['bbox'] for obj in valid_objs], dtype='float32')  # (n, 4)
@@ -139,6 +160,11 @@ class COCODetection(object):
         img['boxes'] = boxes        # nx4
         img['class'] = cls          # n, always >0
         img['is_crowd'] = is_crowd  # n,
+        if add_mask:
+            mask_rles = [obj.pop('mask_rle') for obj in valid_objs]
+            img['mask_rles'] = mask_rles    # list, each is an RLE with full-image coordinate
+
+        del objs
 
     def print_class_histogram(self, imgs):
         nr_class = len(COCOMeta.class_names)
@@ -171,8 +197,26 @@ class COCODetection(object):
         return ret
 
 
+def segmentation_to_rle(segm, height, width):
+    if isinstance(segm, list):
+        # polygon -- a single object might consist of multiple parts
+        # we merge all parts into one mask rle code
+        rles = cocomask.frPyObjects(segm, height, width)
+        rle = cocomask.merge(rles)
+    elif isinstance(segm['counts'], list):
+        # uncompressed RLE
+        rle = cocomask.frPyObjects(segm, height, width)
+    else:
+        print("WTF?")
+        import IPython as IP
+        IP.embed()
+    return rle
+
+
 if __name__ == '__main__':
-    c = COCODetection('train')
-    gt_boxes = c.load()
+    c = COCODetection('/home/wyx/data/coco', 'train2014')
+    gt_boxes = c.load(add_gt=True, add_mask=True)
+    import IPython as IP
+    IP.embed()
     print("#Images:", len(gt_boxes))
     c.print_class_histogram(gt_boxes)
