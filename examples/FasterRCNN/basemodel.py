@@ -39,7 +39,7 @@ def resnet_shortcut(l, n_out, stride, nl=tf.identity):
     data_format = get_arg_scope()['Conv2D']['data_format']
     n_in = l.get_shape().as_list()[1 if data_format == 'NCHW' else 3]
     if n_in != n_out:   # change dimension when channel is not the same
-        if stride == 2 and 'group3' not in tf.get_variable_scope().name:
+        if stride == 2:
             l = l[:, :, :-1, :-1]
             return Conv2D('convshortcut', l, n_out, 1,
                           stride=stride, padding='VALID', nl=nl)
@@ -53,7 +53,7 @@ def resnet_shortcut(l, n_out, stride, nl=tf.identity):
 def resnet_bottleneck(l, ch_out, stride):
     l, shortcut = l, l
     l = Conv2D('conv1', l, ch_out, 1, nl=BNReLU)
-    if stride == 2 and 'group3' not in tf.get_variable_scope().name:
+    if stride == 2:
         l = tf.pad(l, [[0, 0], [0, 0], [0, 1], [0, 1]])
         l = Conv2D('conv2', l, ch_out, 3, stride=2, nl=BNReLU, padding='VALID')
     else:
@@ -91,11 +91,11 @@ def pretrained_resnet_conv4(image, num_blocks):
     return l
 
 
-def resnet_conv5(image):
+def resnet_conv5_gap(image, num_block):
     with argscope([Conv2D, GlobalAvgPooling, BatchNorm], data_format='NCHW'), \
             argscope(Conv2D, nl=tf.identity, use_bias=False), \
             argscope(BatchNorm, use_local_stat=False):
         # 14x14:
-        l = resnet_group(image, 'group3', resnet_bottleneck, 512, 3, stride=2)
+        l = resnet_group(image, 'group3', resnet_bottleneck, 512, num_block, stride=2)
         l = GlobalAvgPooling('gap', l)
         return l

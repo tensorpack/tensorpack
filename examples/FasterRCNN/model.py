@@ -14,14 +14,19 @@ from utils.box_ops import pairwise_iou
 import config
 
 
-def rpn_head(featuremap):
+def rpn_head(featuremap, channel, num_anchors):
+    """
+    Returns:
+        label_logits: fHxfWxNA
+        box_logits: fHxfWxNAx4
+    """
     with tf.variable_scope('rpn'), \
             argscope(Conv2D, data_format='NCHW',
                      W_init=tf.random_normal_initializer(stddev=0.01)):
-        hidden = Conv2D('conv0', featuremap, 1024, 3, nl=tf.nn.relu)
+        hidden = Conv2D('conv0', featuremap, channel, 3, nl=tf.nn.relu)
 
-        label_logits = Conv2D('class', hidden, config.NR_ANCHOR, 1)
-        box_logits = Conv2D('box', hidden, 4 * config.NR_ANCHOR, 1)
+        label_logits = Conv2D('class', hidden, num_anchors, 1)
+        box_logits = Conv2D('box', hidden, 4 * num_anchors, 1)
         # 1, NA(*4), im/16, im/16 (NCHW)
 
         label_logits = tf.transpose(label_logits, [0, 2, 3, 1])  # 1xfHxfWxNA
@@ -29,7 +34,7 @@ def rpn_head(featuremap):
 
         shp = tf.shape(box_logits)  # 1x(NAx4)xfHxfW
         box_logits = tf.transpose(box_logits, [0, 2, 3, 1])  # 1xfHxfWx(NAx4)
-        box_logits = tf.reshape(box_logits, tf.stack([shp[2], shp[3], config.NR_ANCHOR, 4]))  # fHxfWxNAx4
+        box_logits = tf.reshape(box_logits, tf.stack([shp[2], shp[3], num_anchors, 4]))  # fHxfWxNAx4
     return label_logits, box_logits
 
 
@@ -91,11 +96,12 @@ def rpn_losses(anchor_labels, anchor_boxes, label_logits, box_logits):
 
 
 @under_name_scope()
-def decode_bbox_target(box_predictions, anchors):
+def decode_bbox_target(box_predictions, anchors, stride):
     """
     Args:
         box_predictions: fHxfWxNAx4, logits
         anchors: fHxfWxNAx4, floatbox
+        stride (int): the stride of the anchors
 
     Returns:
         box_decoded: (fHxfWxNA)x4, float32
@@ -110,7 +116,7 @@ def decode_bbox_target(box_predictions, anchors):
     xaya = tf.to_float(anchors_x2y2 + anchors_x1y1) * 0.5
 
     wbhb = tf.exp(tf.minimum(
-        box_pred_twth, np.log(config.MAX_SIZE * 1.0 / config.ANCHOR_STRIDE))) * waha
+        box_pred_twth, np.log(config.MAX_SIZE * 1.0 / stride))) * waha
     xbyb = box_pred_txty * waha + xaya
     x1y1 = xbyb - wbhb * 0.5
     x2y2 = xbyb + wbhb * 0.5

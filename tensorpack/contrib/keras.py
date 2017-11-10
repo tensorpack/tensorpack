@@ -4,7 +4,7 @@
 
 import tensorflow as tf
 from six.moves import zip
-import keras
+from tensorflow import keras
 
 from ..graph_builder import InputDesc
 from ..tfutils.tower import get_current_tower_context

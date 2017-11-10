@@ -160,8 +160,8 @@ def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5,
     if ctx.is_main_training_tower:
         add_model_variable(moving_mean)
         add_model_variable(moving_var)
-        if use_local_stat:
-            ret = update_bn_ema(xn, batch_mean, batch_var, moving_mean, moving_var, decay)
+    if ctx.is_main_training_tower and use_local_stat:
+        ret = update_bn_ema(xn, batch_mean, batch_var, moving_mean, moving_var, decay)
     else:
         ret = tf.identity(xn, name='output')
 

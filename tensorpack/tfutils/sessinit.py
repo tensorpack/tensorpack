@@ -273,4 +273,5 @@ def TryResumeTraining():
     path = os.path.join(logger.get_logger_dir(), 'checkpoint')
     if not tf.gfile.Exists(path):
         return JustCurrentSession()
+    logger.info("Found checkpoint at {}.".format(path))
     return SaverRestore(path)

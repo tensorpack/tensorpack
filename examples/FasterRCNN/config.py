@@ -10,6 +10,9 @@ TRAIN_DATASET = ['train2014', 'valminusminival2014']
 VAL_DATASET = 'minival2014'   # only support evaluation on one dataset
 NUM_CLASS = 81
 
+# basemodel ----------------------
+RESNET_NUM_BLOCK = [3, 4, 6, 3]     # resnet50
+
 # preprocessing --------------------
 SHORT_EDGE_SIZE = 600
 MAX_SIZE = 1024
@@ -19,7 +22,7 @@ ANCHOR_STRIDE = 16
 # sqrtarea of the anchor box
 ANCHOR_SIZES = (32, 64, 128, 256, 512)
 ANCHOR_RATIOS = (0.5, 1., 2.)
-NR_ANCHOR = len(ANCHOR_SIZES) * len(ANCHOR_RATIOS)
+NUM_ANCHOR = len(ANCHOR_SIZES) * len(ANCHOR_RATIOS)
 POSITIVE_ANCHOR_THRES = 0.7
 NEGATIVE_ANCHOR_THRES = 0.3
 
