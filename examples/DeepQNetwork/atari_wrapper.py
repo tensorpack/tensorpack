@@ -16,18 +16,13 @@ https://github.com/openai/baselines/blob/master/baselines/common/atari_wrappers.
 """
 
 
-class WarpFrame(gym.ObservationWrapper):
-    def __init__(self, env, shape):
+class MapState(gym.ObservationWrapper):
+    def __init__(self, env, map_func):
         gym.ObservationWrapper.__init__(self, env)
-        self.shape = shape
-        obs = env.observation_space
-        assert isinstance(obs, spaces.Box)
-        chan = 1 if len(obs.shape) == 2 else obs.shape[2]
-        shape3d = shape if chan == 1 else shape + (chan,)
-        self.observation_space = spaces.Box(low=0, high=255, shape=shape3d)
+        self._func = map_func
 
     def _observation(self, obs):
-        return cv2.resize(obs, self.shape)
+        return self._func(obs)
 
 
 class FrameStack(gym.Wrapper):

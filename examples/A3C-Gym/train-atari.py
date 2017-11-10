@@ -32,7 +32,7 @@ import gym
 from simulator import *
 from common import (Evaluator, eval_model_multithread,
                     play_one_episode, play_n_episodes)
-from atari_wrapper import WarpFrame, FrameStack, FireResetEnv, LimitLength
+from atari_wrapper import MapState, FrameStack, FireResetEnv, LimitLength
 
 if six.PY3:
     from concurrent import futures
@@ -64,7 +64,7 @@ def get_player(train=False, dumpdir=None):
     if dumpdir:
         env = gym.wrappers.Monitor(env, dumpdir)
     env = FireResetEnv(env)
-    env = WarpFrame(env, IMAGE_SIZE)
+    env = MapState(env, lambda im: cv2.resize(im, IMAGE_SIZE))
     env = FrameStack(env, 4)
     if train:
         env = LimitLength(env, 60000)
