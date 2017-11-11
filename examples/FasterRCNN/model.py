@@ -296,25 +296,28 @@ def sample_fast_rcnn_targets(boxes, gt_boxes, gt_labels):
 
 
 @under_name_scope()
-def roi_align(featuremap, boxes, output_shape):
+def crop_and_resize(image, boxes, size):
     """
+    Better-aligned version of tf.image.crop_and_resize,
+    following our definition of floating point boxes.
+
     Args:
-        featuremap: 1xCxHxW
-        boxes: Nx4 floatbox
-        output_shape: int
+        image: 1CHW
+        boxes: nx4, x1y1x2y2
+        size (int):
 
     Returns:
-        NxCxoHxoW
+        n,C,size,size
     """
     @under_name_scope()
     def transform_fpcoor_for_tf(boxes, image_shape, crop_shape):
         """
-        The way crop_and_resize works (with normalized box):
+        The way tf.image.crop_and_resize works (with normalized box):
         Initial point (the value of output[0]): x0_box * (W_img - 1)
         Spacing: w_box * (W_img - 1) / (W_crop - 1)
         Use the above grid to bilinear sample.
 
-        However, what I want is (with fpcoor box):
+        However, what we want is (with fpcoor box):
         Spacing: w_box / W_crop
         Initial point: x0_box + spacing/2 - 0.5
         (-0.5 because bilinear sample assumes floating point coordinate (0.0, 0.0) is the same as pixel value (0, 0))
@@ -337,15 +340,34 @@ def roi_align(featuremap, boxes, output_shape):
 
         return tf.concat([ny0, nx0, ny0 + nh, nx0 + nw], axis=1)
 
-    image_shape = tf.shape(featuremap)[2:]
-    featuremap = tf.transpose(featuremap, [0, 2, 3, 1])  # to nhwc
-    # sample 4 locations per roi bin
-    boxes = transform_fpcoor_for_tf(boxes, image_shape, [output_shape * 2, output_shape * 2])
-    boxes = tf.stop_gradient(boxes)  # TODO
+    image_shape = tf.shape(image)[2:]
+    boxes = transform_fpcoor_for_tf(boxes, image_shape, [size, size])
+    image = tf.transpose(image, [0, 2, 3, 1])   # 1hwc
     ret = tf.image.crop_and_resize(
-        featuremap, boxes, tf.zeros([tf.shape(boxes)[0]], dtype=tf.int32),
-        crop_size=[output_shape * 2, output_shape * 2])
-    ret = tf.transpose(ret, [0, 3, 1, 2])
+        image, boxes,
+        tf.zeros([tf.shape(boxes)[0]], dtype=tf.int32),
+        crop_size=[size, size])
+    ret = tf.transpose(ret, [0, 3, 1, 2])   # ncss
+    return ret
+
+
+@under_name_scope()
+def roi_align(featuremap, boxes, output_shape):
+    """
+    Args:
+        featuremap: 1xCxHxW
+        boxes: Nx4 floatbox
+        output_shape: int
+
+    Returns:
+        NxCxoHxoW
+    """
+
+    image_shape = tf.shape(featuremap)[2:]
+
+    boxes = tf.stop_gradient(boxes)  # TODO
+    # sample 4 locations per roi bin
+    ret = crop_and_resize(featuremap, boxes, output_shape * 2)
     ret = tf.nn.avg_pool(ret, [1, 1, 2, 2], [1, 1, 2, 2], padding='SAME', data_format='NCHW')
     return ret
 
