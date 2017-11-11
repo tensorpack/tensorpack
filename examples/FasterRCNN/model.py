@@ -8,7 +8,7 @@ from tensorpack.tfutils import get_current_tower_context
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.tfutils.argscope import argscope
 from tensorpack.tfutils.scope_utils import under_name_scope
-from tensorpack.models import Conv2D, FullyConnected
+from tensorpack.models import Conv2D, FullyConnected, GlobalAvgPooling
 
 from utils.box_ops import pairwise_iou
 import config
@@ -375,12 +375,13 @@ def roi_align(featuremap, boxes, output_shape):
 def fastrcnn_head(feature, num_classes):
     """
     Args:
-        feature (NxCx1x1):
+        feature (NxCx7x7):
         num_classes(int): num_category + 1
 
     Returns:
         cls_logits (Nxnum_class), reg_logits (Nx num_class-1 x 4)
     """
+    feature = GlobalAvgPooling('gap', feature, data_format='NCHW')
     with tf.variable_scope('fastrcnn'):
         classification = FullyConnected(
             'class', feature, num_classes,

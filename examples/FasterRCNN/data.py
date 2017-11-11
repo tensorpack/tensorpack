@@ -244,10 +244,10 @@ def get_train_dataflow(add_mask=False):
 
             # one image-sized binary mask per box
             masks = []
-            for box, polys in zip(boxes, segmentation):
+            for polys in segmentation:
                 polys = [aug.augment_coords(p, params) for p in polys]
                 masks.append(segmentation_to_mask(polys, im.shape[0], im.shape[1]))
-            masks = np.asarray(masks, dtype='uint8')
+            masks = np.asarray(masks, dtype='uint8')    # values in {0, 1}
             ret.append(masks)
 
             # from viz import draw_annotation, draw_mask
