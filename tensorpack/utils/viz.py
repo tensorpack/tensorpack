@@ -357,7 +357,7 @@ def intensity_to_rgb(intensity, cmap='cubehelix', normalize=False):
 def draw_boxes(im, boxes, labels=None, color=None):
     """
     Args:
-        im (np.ndarray): a BGR image. It will not be modified.
+        im (np.ndarray): a BGR image in range [0,255]. It will not be modified.
         boxes (np.ndarray or list[BoxBase]): If an ndarray,
             must be of shape Nx4 where the second dimension is [x1, y1, x2, y2].
         labels: (list[str] or None)
@@ -389,7 +389,7 @@ def draw_boxes(im, boxes, labels=None, color=None):
     im = im.copy()
     COLOR = (218, 218, 218) if color is None else color
     COLOR_DIFF_WEIGHT = np.asarray((3, 4, 2), dtype='int32')    # https://www.wikiwand.com/en/Color_difference
-    COLOR_CANDIDATES = PALETTE_RGB[[0, 1, 2, 3, 18, 113], :]
+    COLOR_CANDIDATES = PALETTE_RGB[:, ::-1]
     if im.ndim == 2 or (im.ndim == 3 and im.shape[2] == 1):
         im = cv2.cvtColor(im, cv2.COLOR_GRAY2BGR)
     for i in sorted_inds:
@@ -446,7 +446,7 @@ if __name__ == '__main__':
         img2 = cv2.resize(img, (300, 300))
         viz = stack_patches([img, img2], 1, 2, pad=True, viz=True)
 
-    if True:
+    if False:
         img = cv2.imread('cat.jpg')
         boxes = np.asarray([
             [10, 30, 200, 100],

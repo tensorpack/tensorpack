@@ -36,6 +36,14 @@ class Augmentor(object):
         d, params = self._augment_return_params(d)
         return d
 
+    def augment_return_params(self, d):
+        """
+
+            augmented data
+            augmentaion params
+        """
+        return self._augment_return_params(d)
+
     def _augment_return_params(self, d):
         """
         Augment the image and return both image and params
@@ -93,6 +101,9 @@ class Augmentor(object):
 
 
 class ImageAugmentor(Augmentor):
+    def augment_coords(self, coords, param):
+        return self._augment_coords(coords, param)
+
     def _augment_coords(self, coords, param):
         """
         Augment the coordinates given the param.

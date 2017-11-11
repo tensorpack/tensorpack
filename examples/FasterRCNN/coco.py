@@ -138,16 +138,16 @@ class COCODetection(object):
                 if add_mask:
                     segs = obj['segmentation']
                     if not isinstance(segs, list):
-                        # TODO
                         assert obj['iscrowd'] == 1
+                        obj['segmentation'] = None
                     else:
-                        valid_segs = [p for p in segs if len(p) >= 6]
+                        valid_segs = [np.asarray(p).reshape(-1, 2) for p in segs if len(p) >= 6]
                         if len(valid_segs) < len(segs):
                             log_once("Image {} has invalid polygons!".format(img['file_name']), 'warn')
 
                         obj['segmentation'] = valid_segs
-                    rle = segmentation_to_rle(obj['segmentation'], height, width)
-                    obj['mask_rle'] = rle
+                    # rle = segmentation_to_rle(obj['segmentation'], height, width)
+                    # obj['mask_rle'] = rle
 
         # all geometrically-valid boxes are returned
         boxes = np.asarray([obj['bbox'] for obj in valid_objs], dtype='float32')  # (n, 4)
@@ -161,8 +161,9 @@ class COCODetection(object):
         img['class'] = cls          # n, always >0
         img['is_crowd'] = is_crowd  # n,
         if add_mask:
-            mask_rles = [obj.pop('mask_rle') for obj in valid_objs]
-            img['mask_rles'] = mask_rles    # list, each is an RLE with full-image coordinate
+            # mask_rles = [obj.pop('mask_rle') for obj in valid_objs]
+            # img['mask_rle'] = mask_rles    # list, each is an RLE with full-image coordinate
+            img['segmentation'] = [obj['segmentation'] for obj in valid_segs]
 
         del objs
 
@@ -184,7 +185,7 @@ class COCODetection(object):
         logger.info("Ground-Truth Boxes:\n" + colored(table, 'cyan'))
 
     @staticmethod
-    def load_many(basedir, names, add_gt=True):
+    def load_many(basedir, names, add_gt=True, add_mask=False):
         """
         Load and merges several instance files together.
         """
@@ -193,7 +194,7 @@ class COCODetection(object):
         ret = []
         for n in names:
             coco = COCODetection(basedir, n)
-            ret.extend(coco.load(add_gt))
+            ret.extend(coco.load(add_gt, add_mask=add_mask))
         return ret
 
 
