@@ -92,7 +92,7 @@ class Model(ModelDesc):
         rpn_label_loss, rpn_box_loss = rpn_losses(
             anchor_labels, anchor_boxes_encoded, rpn_label_logits, rpn_box_logits)
 
-        decoded_boxes = decode_bbox_target(rpn_box_logits, fm_anchors, config.ANCHOR_STRIDE)  # (fHxfWxNA)x4, floatbox
+        decoded_boxes = decode_bbox_target(rpn_box_logits, fm_anchors)  # (fHxfWxNA)x4, floatbox
         proposal_boxes, proposal_scores = generate_rpn_proposals(
             decoded_boxes,
             tf.reshape(rpn_label_logits, [-1]),
@@ -131,7 +131,7 @@ class Model(ModelDesc):
             fg_boxes = tf.gather(proposal_boxes, fg_ind)
 
             fg_box_logits = fg_box_logits / tf.constant(config.FASTRCNN_BBOX_REG_WEIGHTS)
-            decoded_boxes = decode_bbox_target(fg_box_logits, fg_boxes, config.ANCHOR_STRIDE)  # Nfx4, floatbox
+            decoded_boxes = decode_bbox_target(fg_box_logits, fg_boxes)  # Nfx4, floatbox
             decoded_boxes = tf.identity(decoded_boxes, name='fastrcnn_fg_boxes')
 
     def _get_optimizer(self):

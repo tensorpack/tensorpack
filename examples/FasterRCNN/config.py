@@ -25,6 +25,8 @@ ANCHOR_RATIOS = (0.5, 1., 2.)
 NUM_ANCHOR = len(ANCHOR_SIZES) * len(ANCHOR_RATIOS)
 POSITIVE_ANCHOR_THRES = 0.7
 NEGATIVE_ANCHOR_THRES = 0.3
+# just to avoid too large numbers.
+BBOX_DECODE_CLIP = np.log(MAX_SIZE / 16.0)
 
 # rpn training -------------------------
 # keep fg ratio in a batch in this range
