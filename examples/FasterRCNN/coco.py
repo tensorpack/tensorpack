@@ -15,7 +15,6 @@ from tensorpack.utils.timer import timed_operation
 from tensorpack.utils.argtools import log_once
 
 from pycocotools.coco import COCO
-import pycocotools.mask as cocomask
 
 
 __all__ = ['COCODetection', 'COCOMeta']
@@ -146,8 +145,6 @@ class COCODetection(object):
                             log_once("Image {} has invalid polygons!".format(img['file_name']), 'warn')
 
                         obj['segmentation'] = valid_segs
-                    # rle = segmentation_to_rle(obj['segmentation'], height, width)
-                    # obj['mask_rle'] = rle
 
         # all geometrically-valid boxes are returned
         boxes = np.asarray([obj['bbox'] for obj in valid_objs], dtype='float32')  # (n, 4)
@@ -161,9 +158,7 @@ class COCODetection(object):
         img['class'] = cls          # n, always >0
         img['is_crowd'] = is_crowd  # n,
         if add_mask:
-            # mask_rles = [obj.pop('mask_rle') for obj in valid_objs]
-            # img['mask_rle'] = mask_rles    # list, each is an RLE with full-image coordinate
-            img['segmentation'] = [obj['segmentation'] for obj in valid_segs]
+            img['segmentation'] = [obj['segmentation'] for obj in valid_objs]
 
         del objs
 
@@ -196,22 +191,6 @@ class COCODetection(object):
             coco = COCODetection(basedir, n)
             ret.extend(coco.load(add_gt, add_mask=add_mask))
         return ret
-
-
-def segmentation_to_rle(segm, height, width):
-    if isinstance(segm, list):
-        # polygon -- a single object might consist of multiple parts
-        # we merge all parts into one mask rle code
-        rles = cocomask.frPyObjects(segm, height, width)
-        rle = cocomask.merge(rles)
-    elif isinstance(segm['counts'], list):
-        # uncompressed RLE
-        rle = cocomask.frPyObjects(segm, height, width)
-    else:
-        print("WTF?")
-        import IPython as IP
-        IP.embed()
-    return rle
 
 
 if __name__ == '__main__':

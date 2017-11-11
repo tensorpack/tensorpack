@@ -34,7 +34,7 @@ Otherwise, you probably need different hyperparameters for the same performance.
 
 To predict on an image (and show output in a window):
 ```
-./train.py --predict input.jpg
+./train.py --predict input.jpg --load /path/to/model
 ```
 
 To evaluate the performance (pretrained models can be downloaded in [model zoo](https://drive.google.com/open?id=1J0xuDAuyOWiuJRm2LfGoz5PUv9_dKuxq):

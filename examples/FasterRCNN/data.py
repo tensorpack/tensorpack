@@ -10,8 +10,8 @@ import logging
 from tensorpack.utils import logger
 from tensorpack.utils.argtools import memoized, log_once
 from tensorpack.dataflow import (
-    ProxyDataFlow, MapData, imgaug, TestDataSpeed,
-    MapDataComponent)
+    MapData, imgaug, TestDataSpeed,
+    MapDataComponent, DataFromList)
 import tensorpack.utils.viz as tpviz
 from tensorpack.utils.viz import interactive_imshow
 
@@ -198,17 +198,14 @@ def get_train_dataflow():
     # But this filter shall not be applied for testing.
     imgs = list(filter(lambda img: len(img['boxes']) > 0, imgs))    # log invalid training
 
-    ds = DataFromListOfDict(
-        imgs,
-        ['file_name', 'boxes', 'class', 'is_crowd'],  # we need this four keys only
-        shuffle=True)
+    ds = DataFromList(imgs, shuffle=True)
 
     aug = imgaug.AugmentorList(
         [CustomResize(config.SHORT_EDGE_SIZE, config.MAX_SIZE),
          imgaug.Flip(horiz=True)])
 
-    def preprocess(dp):
-        fname, boxes, klass, is_crowd = dp
+    def preprocess(img):
+        fname, boxes, klass, is_crowd = img['file_name'], img['boxes'], img['class'], img['is_crowd']
         im = cv2.imread(fname, cv2.IMREAD_COLOR)
         assert im is not None, fname
         im = im.astype('float32')
@@ -252,6 +249,8 @@ def get_eval_dataflow():
 
 
 if __name__ == '__main__':
+    config.BASEDIR = '/home/wyx/data/coco'
+    config.TRAIN_DATASET = ['train2014']
     from tensorpack.dataflow import PrintData
     ds = get_train_dataflow()
     ds = PrintData(ds, 100)
