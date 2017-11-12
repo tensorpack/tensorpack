@@ -128,6 +128,7 @@ class InputSource(object):
     def reset_state(self):
         """
         Initialize/reinitialize this InputSource.
+        Must be called under a default session.
 
         For training, it will get called by the trainer in `before_train` callbacks.
         For inference, the :class:`InferenceRunner` will call this method each time it is triggered.

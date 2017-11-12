@@ -157,10 +157,11 @@ class Affine(TransformAugmentorBase):
     """
     Random affine transform of the image w.r.t to the image center.
     Transformations involve:
-        - Translation ("move" image on the x-/y-axis)
-        - Rotation
-        - Scaling ("zoom" in/out)
-        - Shear (move one side of the image, turning a square into a trapezoid)
+
+    - Translation ("move" image on the x-/y-axis)
+    - Rotation
+    - Scaling ("zoom" in/out)
+    - Shear (move one side of the image, turning a square into a trapezoid)
     """
 
     def __init__(self, scale=None, translate_frac=None, rotate_max_deg=0.0, shear=0.0,
