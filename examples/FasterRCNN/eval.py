@@ -62,7 +62,7 @@ def nms_fastrcnn_results(boxes, probs):
             continue
         probs_k = probs[ids, klass].flatten()
         boxes_k = boxes[ids, :]
-        selected_ids = nms_func(boxes_k[:, [1, 0, 3, 2]], probs_k)
+        selected_ids = nms_func(boxes_k, probs_k)
         selected_boxes = boxes_k[selected_ids, :].copy()
         ret.append(DetectionResult(klass, selected_boxes, probs_k[selected_ids]))
 
