@@ -27,17 +27,18 @@ DetectionResult = namedtuple(
 
 
 @memoized
-def get_tf_nms():
+def get_tf_nms(num_output, thresh):
     """
     Get a NMS callable.
     """
-    boxes = tf.placeholder(tf.float32, shape=[None, 4])
-    scores = tf.placeholder(tf.float32, shape=[None])
-    indices = tf.image.non_max_suppression(
-        boxes, scores,
-        config.RESULTS_PER_IM, config.FASTRCNN_NMS_THRESH)
-    sess = tf.Session(config=get_default_sess_config())
-    return sess.make_callable(indices, [boxes, scores])
+    # create a new graph for it
+    with tf.Graph().as_default(), tf.device('/cpu:0'):
+        boxes = tf.placeholder(tf.float32, shape=[None, 4])
+        scores = tf.placeholder(tf.float32, shape=[None])
+        indices = tf.image.non_max_suppression(
+            boxes, scores, num_output, thresh)
+        sess = tf.Session(config=get_default_sess_config())
+        return sess.make_callable(indices, [boxes, scores])
 
 
 def nms_fastrcnn_results(boxes, probs):
@@ -53,7 +54,7 @@ def nms_fastrcnn_results(boxes, probs):
     boxes = boxes.copy()
 
     boxes_per_class = {}
-    nms_func = get_tf_nms()
+    nms_func = get_tf_nms(config.RESULTS_PER_IM, config.FASTRCNN_NMS_THRESH)
     ret = []
     for klass in range(1, C):
         ids = np.where(probs[:, klass] > config.RESULT_SCORE_THRESH)[0]

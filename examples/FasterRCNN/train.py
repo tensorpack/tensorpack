@@ -232,7 +232,6 @@ class EvalCallback(Callback):
     def _setup_graph(self):
         self.pred = self.trainer.get_predictor(['image'], ['fastrcnn_fg_probs', 'fastrcnn_fg_boxes'])
         self.df = PrefetchDataZMQ(get_eval_dataflow(), 1)
-        get_tf_nms()    # just to make sure the nms part of graph is created
 
     def _before_train(self):
         EVAL_TIMES = 5  # eval 5 times during training
