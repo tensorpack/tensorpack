@@ -13,7 +13,7 @@ A High Level Glance
   They will eventually be wrapped under the same ``InputSource`` interface and go through prefetching.
 
 * You can use any TF-based symbolic function library to define a model, including
-  a small set of models within tensorpack. ``ModelDesc`` is an interface to connect the graph with the
+  a small set of functions within tensorpack. ``ModelDesc`` is an interface to connect the graph with the
   ``InputSource`` interface.
 
 * tensorpack trainers manage the training loops for you.
@@ -38,7 +38,6 @@ User Tutorials
 
   dataflow
   input-source
-  efficient-dataflow
   symbolic
   trainer
   training-interface
@@ -47,8 +46,19 @@ User Tutorials
   summary
   faq
 
+
+Performance
+============
+
+.. toctree::
+  :maxdepth: 1
+
+  efficient-dataflow
+  performance-tuning
+
+
 Extend Tensorpack
-=================
+==================
 
 .. toctree::
   :maxdepth: 1
@@ -58,10 +68,3 @@ Extend Tensorpack
   extend/model
   extend/callback
   extend/trainer
-
-Notes
-======
-.. toctree::
-  :maxdepth: 1
-
-  performance-tuning

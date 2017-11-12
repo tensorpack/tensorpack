@@ -1,21 +1,9 @@
 
 # Training Interface
 
-Tensorpack trainers have an interface for maximum flexibility.
+Tensorpack trainers have a verbose interface for maximum flexibility.
 Then, there are interfaces built on top of trainers to simplify the use,
 when you don't want to customize too much.
-
-### Raw Trainer Interface
-
-__Define__: For general trainer, build the graph by yourself.
-For single-cost trainer, build the graph by
-[SingleCostTrainer.setup_graph](../modules/train.html#tensorpack.train.SingleCostTrainer.setup_graph).
-
-__Run__: Then, call
-[Trainer.train()](../modules/train.html#tensorpack.train.Trainer.train)
-or
-[Trainer.train_with_defaults()](../modules/train.html#tensorpack.train.Trainer.train_with_defaults)
-which applies some defaults options for normal use cases.
 
 ### With ModelDesc and TrainConfig
 
@@ -23,8 +11,8 @@ This is an interface that's most familiar to old tensorpack users,
 and is now mainly useful for single-cost tasks.
 A lot of examples are written in this interface.
 
-[SingleCost trainers](trainer.html#single-cost-trainers)
-expects 4 arguments in `setup_graph`: `InputDesc`, `InputSource`, get_cost function, and an optimizer.
+[SingleCost trainers](../modules/train.html#tensorpack.train.SingleCostTrainer)
+expects 4 arguments to setup the graph: `InputDesc`, `InputSource`, get_cost function, and an optimizer.
 `ModelDesc` describes a model by packing 3 of them together into one object:
 
 ```python
@@ -65,7 +53,7 @@ config = TrainConfig(
 )
 
 trainer = SomeTrainer()
-# trainer = SyncMultiGPUTrainerParameterServer([0, 1, 2])
+# trainer = SyncMultiGPUTrainerParameterServer(8)
 launch_train_with_config(config, trainer)
 ```
 See the docs of
@@ -73,3 +61,19 @@ See the docs of
 and
 [launch_train_with_config](../modules/train.html#tensorpack.train.launch_train_with_config)
 for usage and detailed functionalities.
+
+### Raw Trainer Interface
+
+You can also access methods of trainer directly, to get a finer control:
+
+__Build__ the graph: For general trainer, build the graph by yourself.
+For single-cost trainer, build the graph by
+[SingleCostTrainer.setup_graph](../modules/train.html#tensorpack.train.SingleCostTrainer.setup_graph).
+
+__Run__ the iterations: Call
+[Trainer.train()](../modules/train.html#tensorpack.train.Trainer.train),
+or
+[Trainer.train_with_defaults()](../modules/train.html#tensorpack.train.Trainer.train_with_defaults)
+which applies some defaults options for normal use cases.
+
+Read the API documentation for detail usage.

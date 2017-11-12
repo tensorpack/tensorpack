@@ -102,6 +102,6 @@ For example,
 	Come from some `InputSource`, then prefetched on GPU by a TF StagingArea.
 4. Come from a DataFlow, and further processed by `tf.data.Dataset`.
 5. [TensorInput](../modules/input_source.html#tensorpack.input_source.TensorInput):
-	Come from some TF reading ops. (See the [PTB example](../examples/PennTreebank))
+	Come from some TF reading ops.
 6. Come from some ZMQ pipe, where the load/preprocessing may happen on a different machine.
 

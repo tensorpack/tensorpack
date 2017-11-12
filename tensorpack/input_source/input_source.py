@@ -316,7 +316,9 @@ class BatchQueueInput(QueueInput):
 
 # TODO tensor inputs can be drained? look at the new dataset API.
 class TensorInput(FeedfreeInput):
-    """ Input from a list of tensors, e.g. a TF data reading pipeline. """
+    """ Input from a list of tensors, e.g. a TF data reading pipeline.
+        The PTB training example shows how to use it.
+    """
 
     def __init__(self, get_tensor_fn, size=None):
         """

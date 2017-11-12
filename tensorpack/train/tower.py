@@ -122,7 +122,7 @@ class SingleCostTrainer(TowerTrainer):
 
         Note:
             1. `get_cost_fn` will always be called under a :class:`TowerContext`.
-               which will contain information abouut reuse,
+               which will contain information about reuse,
                training/inference, scope name, etc.
             2. `get_cost_fn` might get called multiple times for data-parallel training or inference.
             3. To respect variable reuse, use `tf.get_variable` instead of
