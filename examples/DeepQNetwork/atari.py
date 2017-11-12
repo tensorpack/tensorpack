@@ -97,8 +97,6 @@ class AtariPlayer(gym.Env):
         self.frame_skip = frame_skip
         self.nullop_start = nullop_start
 
-        self.current_episode_score = StatCounter()
-
         self.action_space = spaces.Discrete(len(self.actions))
         self.observation_space = spaces.Box(
             low=0, high=255, shape=(self.height, self.width))
@@ -131,7 +129,6 @@ class AtariPlayer(gym.Env):
         return ret.astype('uint8')  # to save some memory
 
     def _restart_episode(self):
-        self.current_episode_score.reset()
         with _ALE_LOCK:
             self.ale.reset_game()
 
@@ -160,12 +157,11 @@ class AtariPlayer(gym.Env):
                     (self.live_lost_as_eoe and newlives < oldlives):
                 break
 
-        self.current_episode_score.feed(r)
         trueIsOver = isOver = self.ale.game_over()
         if self.live_lost_as_eoe:
             isOver = isOver or newlives < oldlives
 
-        info = {'score': self.current_episode_score.sum, 'gameOver': trueIsOver}
+        info = {'ale.lives': newlives}
         return self._current_state(), r, isOver, info
 
 
