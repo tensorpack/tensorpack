@@ -8,21 +8,22 @@ from tensorpack.tfutils import get_current_tower_context
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.tfutils.argscope import argscope
 from tensorpack.tfutils.scope_utils import under_name_scope
-from tensorpack.models import Conv2D, FullyConnected, GlobalAvgPooling
+from tensorpack.models import (
+    Conv2D, FullyConnected, GlobalAvgPooling, layer_register)
 
 from utils.box_ops import pairwise_iou
 import config
 
 
+@layer_register(log_shape=True)
 def rpn_head(featuremap, channel, num_anchors):
     """
     Returns:
         label_logits: fHxfWxNA
         box_logits: fHxfWxNAx4
     """
-    with tf.variable_scope('rpn'), \
-            argscope(Conv2D, data_format='NCHW',
-                     W_init=tf.random_normal_initializer(stddev=0.01)):
+    with argscope(Conv2D, data_format='NCHW',
+                  W_init=tf.random_normal_initializer(stddev=0.01)):
         hidden = Conv2D('conv0', featuremap, channel, 3, nl=tf.nn.relu)
 
         label_logits = Conv2D('class', hidden, num_anchors, 1)
@@ -371,6 +372,7 @@ def roi_align(featuremap, boxes, output_shape):
     return ret
 
 
+@layer_register(log_shape=True)
 def fastrcnn_head(feature, num_classes):
     """
     Args:
@@ -381,15 +383,14 @@ def fastrcnn_head(feature, num_classes):
         cls_logits (Nxnum_class), reg_logits (Nx num_class-1 x 4)
     """
     feature = GlobalAvgPooling('gap', feature, data_format='NCHW')
-    with tf.variable_scope('fastrcnn'):
-        classification = FullyConnected(
-            'class', feature, num_classes,
-            W_init=tf.random_normal_initializer(stddev=0.01))
-        box_regression = FullyConnected(
-            'box', feature, (num_classes - 1) * 4,
-            W_init=tf.random_normal_initializer(stddev=0.001))
-        box_regression = tf.reshape(box_regression, (-1, num_classes - 1, 4))
-        return classification, box_regression
+    classification = FullyConnected(
+        'class', feature, num_classes,
+        W_init=tf.random_normal_initializer(stddev=0.01))
+    box_regression = FullyConnected(
+        'box', feature, (num_classes - 1) * 4,
+        W_init=tf.random_normal_initializer(stddev=0.001))
+    box_regression = tf.reshape(box_regression, (-1, num_classes - 1, 4))
+    return classification, box_regression
 
 
 @under_name_scope()

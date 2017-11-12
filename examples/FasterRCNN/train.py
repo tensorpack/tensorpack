@@ -88,7 +88,7 @@ class Model(ModelDesc):
 
         anchor_boxes_encoded = encode_bbox_target(anchor_boxes, fm_anchors)
         featuremap = pretrained_resnet_conv4(image, config.RESNET_NUM_BLOCK[:3])
-        rpn_label_logits, rpn_box_logits = rpn_head(featuremap, 1024, config.NUM_ANCHOR)
+        rpn_label_logits, rpn_box_logits = rpn_head('rpn', featuremap, 1024, config.NUM_ANCHOR)
         rpn_label_loss, rpn_box_loss = rpn_losses(
             anchor_labels, anchor_boxes_encoded, rpn_label_logits, rpn_box_logits)
 
@@ -99,13 +99,19 @@ class Model(ModelDesc):
             tf.shape(image)[2:])
 
         if is_training:
+            # sample proposal boxes in training
             rcnn_sampled_boxes, rcnn_encoded_boxes, rcnn_labels = sample_fast_rcnn_targets(
                 proposal_boxes, gt_boxes, gt_labels)
             boxes_on_featuremap = rcnn_sampled_boxes * (1.0 / config.ANCHOR_STRIDE)
-            roi_resized = roi_align(featuremap, boxes_on_featuremap, 14)
-            feature_fastrcnn = resnet_conv5(roi_resized, config.RESNET_NUM_BLOCK[-1])    # nxc
-            fastrcnn_label_logits, fastrcnn_box_logits = fastrcnn_head(feature_fastrcnn, config.NUM_CLASS)
+        else:
+            # use all proposal boxes in inference
+            boxes_on_featuremap = proposal_boxes * (1.0 / config.ANCHOR_STRIDE)
 
+        roi_resized = roi_align(featuremap, boxes_on_featuremap, 14)
+        feature_fastrcnn = resnet_conv5(roi_resized, config.RESNET_NUM_BLOCK[-1])    # nxc
+        fastrcnn_label_logits, fastrcnn_box_logits = fastrcnn_head('fastrcnn', feature_fastrcnn, config.NUM_CLASS)
+
+        if is_training:
             fastrcnn_label_loss, fastrcnn_box_loss = fastrcnn_losses(
                 rcnn_labels, rcnn_encoded_boxes, fastrcnn_label_logits, fastrcnn_box_logits)
 
@@ -121,11 +127,8 @@ class Model(ModelDesc):
             for k in self.cost, wd_cost:
                 add_moving_summary(k)
         else:
-            roi_resized = roi_align(featuremap, proposal_boxes * (1.0 / config.ANCHOR_STRIDE), 14)
-            feature_fastrcnn = resnet_conv5(roi_resized, config.RESNET_NUM_BLOCK[-1])    # nxc
-            label_logits, fastrcnn_box_logits = fastrcnn_head(feature_fastrcnn, config.NUM_CLASS)
-            label_probs = tf.nn.softmax(label_logits, name='fastrcnn_all_probs')  # NP,
-            labels = tf.argmax(label_logits, axis=1)
+            label_probs = tf.nn.softmax(fastrcnn_label_logits, name='fastrcnn_all_probs')  # NP,
+            labels = tf.argmax(fastrcnn_label_logits, axis=1)
             fg_ind, fg_box_logits = fastrcnn_predict_boxes(labels, fastrcnn_box_logits)
             fg_label_probs = tf.gather(label_probs, fg_ind, name='fastrcnn_fg_probs')
             fg_boxes = tf.gather(proposal_boxes, fg_ind)

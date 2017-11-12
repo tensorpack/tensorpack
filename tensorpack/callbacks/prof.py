@@ -39,7 +39,10 @@ class GPUUtilizationTracker(Callback):
                             "Will monitor all visible GPUs!")
                 self._devices = list(map(str, range(get_nr_gpu())))
             else:
-                self._devices = env.split(',')
+                if len(env):
+                    self._devices = env.split(',')
+                else:
+                    self._devices = []
         else:
             self._devices = list(map(str, devices))
         assert len(self._devices), "[GPUUtilizationTracker] No GPU device given!"
