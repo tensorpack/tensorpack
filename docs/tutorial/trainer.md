@@ -14,8 +14,10 @@ You'll only need to __select__ what trainer to use.
 
 Following the terminology in TensorFlow,
 a "tower" function is something that takes input tensors and adds __one replicate__ of the model to the graph.
+
 Most types of neural-network training could fall into this category.
-This concept is used mainly to support:
+All non-base trainers in tensorpack is a subclass of [TowerTrainer](../modules/train.html#tensorpack.train.TowerTrainer).
+The concept of tower is used mainly to support:
 
 1. Data-parallel multi-GPU training, where a replicate is built on each GPU.
 2. Automatically building the graph for inference, where a replicate is built under inference mode.
@@ -24,8 +26,10 @@ This concept is used mainly to support:
 ### MultiGPU Trainers
 
 For data-parallel multi-GPU training, different [multi-GPU trainers](http://tensorpack.readthedocs.io/en/latest/modules/train.html)
-implement different parallel logic, all reaching the same performance as the
-[official TF benchmark](https://www.tensorflow.org/performance/benchmarks).
+implement different parallel logic.
+They take care of device placement, gradient averaging and synchronoization
+in the efficient way and all reach the same performance as the
+[official TF benchmarks](https://www.tensorflow.org/performance/benchmarks).
 It takes only one line of code change to use them.
 
 Note some common problems when using these trainers:
