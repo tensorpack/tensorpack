@@ -71,8 +71,9 @@ def interactive_imshow(img, lclick_cb=None, rclick_cb=None, **kwargs):
         cv2.imwrite('out.png', img)
 
 
-def _preproecss_patch_list(plist):
+def _preprocess_patch_list(plist):
     plist = np.asarray(plist)
+    assert plist.dtype != np.object
     if plist.ndim == 3:
         plist = plist[:, :, :, np.newaxis]
     assert plist.ndim == 4 and plist.shape[3] in [1, 3], plist.shape
@@ -102,8 +103,8 @@ def _pad_patch_list(plist, bgcolor):
     ret[:, :, :] = bgcolor
     for idx, p in enumerate(plist):
         s = p.shape
-        sh = (ph - s[0]) / 2
-        sw = (pw - s[1]) / 2
+        sh = (ph - s[0]) // 2
+        sw = (pw - s[1]) // 2
         ret[idx, sh:sh + s[0], sw:sw + s[1], :] = p
     return ret
 
@@ -184,8 +185,8 @@ def stack_patches(
         np.ndarray: the stacked image.
     """
     if pad:
-        patch_list = _pad_patch_list(patch_list)
-    patch_list = _preproecss_patch_list(patch_list)
+        patch_list = _pad_patch_list(patch_list, bgcolor)
+    patch_list = _preprocess_patch_list(patch_list)
 
     if lclick_cb is not None:
         viz = True
@@ -229,7 +230,7 @@ def gen_stack_patches(patch_list,
         np.ndarray: the stacked image.
     """
     # setup parameters
-    patch_list = _preproecss_patch_list(patch_list)
+    patch_list = _preprocess_patch_list(patch_list)
     if lclick_cb is not None:
         viz = True
     ph, pw = patch_list.shape[1:3]
