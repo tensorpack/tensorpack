@@ -130,11 +130,11 @@ class Model(GANModelDesc):
                     B_dis_fake = self.discriminator(AB)
 
         def LSGAN_losses(real, fake):
-            d_real = tf.reduce_mean(tf.squared_difference(real, 0.9), name='d_real')
+            d_real = tf.reduce_mean(tf.squared_difference(real, 1), name='d_real')
             d_fake = tf.reduce_mean(tf.square(fake), name='d_fake')
             d_loss = tf.multiply(d_real + d_fake, 0.5, name='d_loss')
 
-            g_loss = tf.reduce_mean(tf.squared_difference(fake, 0.9), name='g_loss')
+            g_loss = tf.reduce_mean(tf.squared_difference(fake, 1), name='g_loss')
             add_moving_summary(g_loss, d_loss)
             return g_loss, d_loss
 
