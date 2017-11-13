@@ -57,7 +57,7 @@ class Model(ModelDesc):
             InputDesc(tf.int32, (None, None, config.NUM_ANCHOR), 'anchor_labels'),
             InputDesc(tf.float32, (None, None, config.NUM_ANCHOR, 4), 'anchor_boxes'),
             InputDesc(tf.float32, (None, 4), 'gt_boxes'),
-            InputDesc(tf.int64, (None,), 'gt_labels'),
+            InputDesc(tf.int64, (None,), 'gt_labels'),  # all > 0
         ]
 
     def _preprocess(self, image):
@@ -100,7 +100,7 @@ class Model(ModelDesc):
 
         if is_training:
             # sample proposal boxes in training
-            rcnn_sampled_boxes, rcnn_encoded_boxes, rcnn_labels = sample_fast_rcnn_targets(
+            rcnn_sampled_boxes, rcnn_labels, fg_inds_wrt_gt = sample_fast_rcnn_targets(
                 proposal_boxes, gt_boxes, gt_labels)
             boxes_on_featuremap = rcnn_sampled_boxes * (1.0 / config.ANCHOR_STRIDE)
         else:
@@ -112,8 +112,17 @@ class Model(ModelDesc):
         fastrcnn_label_logits, fastrcnn_box_logits = fastrcnn_head('fastrcnn', feature_fastrcnn, config.NUM_CLASS)
 
         if is_training:
+            fg_inds_wrt_sample = tf.where(rcnn_labels > 0)[:, 0]   # fg inds w.r.t all samples
+            fg_sampled_boxes = tf.gather(rcnn_sampled_boxes, fg_inds_wrt_sample)
+
+            matched_gt_boxes = tf.gather(gt_boxes, fg_inds_wrt_gt)
+            encoded_boxes = encode_bbox_target(
+                matched_gt_boxes,
+                fg_sampled_boxes) * tf.constant(config.FASTRCNN_BBOX_REG_WEIGHTS)
             fastrcnn_label_loss, fastrcnn_box_loss = fastrcnn_losses(
-                rcnn_labels, rcnn_encoded_boxes, fastrcnn_label_logits, fastrcnn_box_logits)
+                rcnn_labels, fastrcnn_label_logits,
+                encoded_boxes,
+                tf.gather(fastrcnn_box_logits, fg_inds_wrt_sample))
 
             wd_cost = regularize_cost(
                 '(?:group1|group2|group3|rpn|fastrcnn)/.*W',
