@@ -1,7 +1,11 @@
 
 # tensorpack examples
 
-Training examples with __reproducible__ and meaningful performance.
+Training examples with __reproducible__ performance.
+
+__Reproducible performance is important__. Usually deep learning code is easy to write,
+but hard to know the correctness -- wrong code will usually still converge.
+Without a setting and performance comparable to someone else, you don't know if an implementation is correct or not.
 
 ## Getting Started:
 + [An illustrative mnist example with explanation of the framework](mnist-convnet.py)
@@ -13,7 +17,7 @@ Training examples with __reproducible__ and meaningful performance.
 | Name | Performance |
 | ---  | --- |
 |	Train [ResNet](ResNet) and [ShuffleNet](ShuffleNet) on ImageNet		| reproduce paper	|
-|	[Train ResNet50-Faster-RCNN on COCO](FasterRCNN)				|	reproduce paper		|
+|	[Train Faster-RCNN on COCO](FasterRCNN)				|	reproduce paper		|
 | [DoReFa-Net: training binary / low-bitwidth CNN on ImageNet](DoReFa-Net) | reproduce paper |
 | [Generative Adversarial Network(GAN) variants](GAN), including DCGAN, InfoGAN, <br/> Conditional GAN, WGAN, BEGAN, DiscoGAN, Image to Image, CycleGAN | visually reproduce |
 | [Inception-BN and InceptionV3](Inception) | reproduce reference code |
@@ -44,7 +48,3 @@ Training examples with __reproducible__ and meaningful performance.
 Example needs to satisfy one of the following:
 + Reproduce performance of a published or well-known paper.
 + Illustrate a new way of using the library that is currently not covered.
-
-__Performance is important__. Usually deep learning code is easy to write,
-but hard to know the correctness -- thanks to SGD things will usually still converge when you've made mistakes.
-Without a setting and performance comparable to someone else, you don't know if an implementation is correct or not.

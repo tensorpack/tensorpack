@@ -103,7 +103,7 @@ class Model(ModelDesc):
             boxes_on_featuremap = proposal_boxes * (1.0 / config.ANCHOR_STRIDE)
 
         roi_resized = roi_align(featuremap, boxes_on_featuremap, 14)
-        feature_fastrcnn = resnet_conv5(roi_resized, config.RESNET_NUM_BLOCK[-1])    # nxc
+        feature_fastrcnn = resnet_conv5(roi_resized, config.RESNET_NUM_BLOCK[-1])    # nxcx7x7
         fastrcnn_label_logits, fastrcnn_box_logits = fastrcnn_head('fastrcnn', feature_fastrcnn, config.NUM_CLASS)
 
         if is_training:
@@ -133,8 +133,7 @@ class Model(ModelDesc):
                 fastrcnn_label_loss, fastrcnn_box_loss,
                 wd_cost], 'total_cost')
 
-            for k in self.cost, wd_cost:
-                add_moving_summary(k)
+            add_moving_summary(self.cost, wd_cost)
         else:
             label_probs = tf.nn.softmax(fastrcnn_label_logits, name='fastrcnn_all_probs')  # #proposal x #Class
             anchors = tf.tile(tf.expand_dims(proposal_boxes, 1), [1, config.NUM_CLASS - 1, 1])   # #proposal x #Cat x 4
