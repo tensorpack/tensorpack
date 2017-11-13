@@ -254,13 +254,13 @@ def sample_fast_rcnn_targets(boxes, gt_boxes, gt_labels):
     def sample_fg_bg(iou):
         fg_mask = tf.reduce_max(iou, axis=1) >= config.FASTRCNN_FG_THRESH
 
-        fg_inds = tf.where(fg_mask)[:, 0]
+        fg_inds = tf.reshape(tf.where(fg_mask), [-1])
         num_fg = tf.minimum(int(
             config.FASTRCNN_BATCH_PER_IM * config.FASTRCNN_FG_RATIO),
             tf.size(fg_inds), name='num_fg')
         fg_inds = tf.random_shuffle(fg_inds)[:num_fg]
 
-        bg_inds = tf.where(tf.logical_not(fg_mask))[:, 0]
+        bg_inds = tf.reshape(tf.where(tf.logical_not(fg_mask)), [-1])
         num_bg = tf.minimum(
             config.FASTRCNN_BATCH_PER_IM - num_fg,
             tf.size(bg_inds), name='num_bg')
@@ -384,27 +384,6 @@ def fastrcnn_head(feature, num_classes):
 
 
 @under_name_scope()
-def fastrcnn_predict_boxes(labels, box_logits):
-    """
-    Args:
-        labels: n,
-        box_logits: nx(C-1)x4
-
-    Returns:
-        fg_ind: fg, indices into n
-        fg_box_logits: fgx4
-
-    """
-    fg_ind = tf.reshape(tf.where(labels > 0), [-1])  # nfg,
-    fg_labels = tf.gather(labels, fg_ind)   # nfg,
-
-    ind_2d = tf.stack([fg_ind, fg_labels - 1], axis=1)  # nfgx2
-    # n x c-1 x 4 -> nfgx4
-    fg_box_logits = tf.gather_nd(box_logits, tf.stop_gradient(ind_2d))
-    return fg_ind, fg_box_logits
-
-
-@under_name_scope()
 def fastrcnn_losses(labels, label_logits, fg_boxes, fg_box_logits):
     """
     Args:
@@ -442,3 +421,63 @@ def fastrcnn_losses(labels, label_logits, fg_boxes, fg_box_logits):
     for k in [label_loss, box_loss, accuracy, fg_accuracy, false_negative]:
         add_moving_summary(k)
     return label_loss, box_loss
+
+
+@under_name_scope()
+def fastrcnn_predictions(boxes, probs):
+    """
+    Generate final results from predictions of all proposals.
+
+    Args:
+        boxes: n#catx4 floatbox in float32
+        probs: nx#class
+    """
+    assert boxes.shape[1] == config.NUM_CLASS - 1
+    assert probs.shape[1] == config.NUM_CLASS
+    N = tf.shape(boxes)[0]
+    boxes = tf.transpose(boxes, [1, 0, 2])  # #catxnx4
+    probs = tf.transpose(probs[:, 1:], [1, 0])  # #catxn
+
+    def f(X):
+        """
+        prob: n probabilities
+        box: nx4 boxes
+
+        Returns: n boolean, the selection
+        """
+        prob, box = X
+        output_shape = tf.shape(prob)
+        # filter by score threshold
+        ids = tf.reshape(tf.where(prob > config.RESULT_SCORE_THRESH), [-1])
+        prob = tf.gather(prob, ids)
+        box = tf.gather(box, ids)
+        # NMS within each class
+        selection = tf.image.non_max_suppression(
+            box, prob, config.RESULTS_PER_IM, config.FASTRCNN_NMS_THRESH)
+        selection = tf.to_int32(tf.gather(ids, selection))
+        # sort available in TF>1.4.0
+        # selection = tf.contrib.framework.sort(selection, direction='ASCENDING')
+        sorted_selection, _ = tf.nn.top_k(-selection, k=tf.size(selection))
+        mask = tf.sparse_to_dense(
+            sparse_indices=-sorted_selection,
+            output_shape=output_shape,
+            sparse_values=True,
+            default_value=False)
+        return mask
+
+    masks = tf.map_fn(f, (probs, boxes), dtype=tf.bool,
+                      parallel_iterations=10)     # #cat x N
+    selected_indices = tf.where(masks)  # #selection x 2, each is (cat_id, box_id)
+    boxes = tf.boolean_mask(boxes, masks)   # #selection x 4
+    probs = tf.boolean_mask(probs, masks)
+    labels = selected_indices[:, 0] + 1
+
+    # filter again by sorting scores
+    topk_probs, topk_indices = tf.nn.top_k(
+        probs,
+        tf.minimum(config.RESULTS_PER_IM, tf.size(probs)),
+        sorted=False)
+    topk_probs = tf.identity(topk_probs, name='probs')
+    topk_boxes = tf.gather(boxes, topk_indices, name='boxes')
+    topk_labels = tf.gather(labels, topk_indices, name='labels')
+    return topk_boxes, topk_probs, topk_labels

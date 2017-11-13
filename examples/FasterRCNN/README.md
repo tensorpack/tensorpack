@@ -2,7 +2,7 @@
 This example aims to provide a minimal (<1000 lines) multi-GPU implementation of ResNet50-Faster-RCNN on COCO.
 
 ## Dependencies
-+ TensorFlow >= 1.4.0rc0
++ TensorFlow > 1.4.0 (use tf-nightly-gpu for now)
 + Install [pycocotools](https://github.com/pdollar/coco/tree/master/PythonAPI/pycocotools), OpenCV.
 + Pre-trained [ResNet50 model](https://goo.gl/6XjK9V) from tensorpack model zoo.
 + COCO data. It assumes the following directory structure:
@@ -46,10 +46,10 @@ To evaluate the performance (pretrained models can be downloaded in [model zoo](
 
 Mean Average Precision @IoU=0.50:0.95:
 
-+ trainval35k/minival, FASTRCNN_BATCH=256: 33.7. Takes 49h on 8 TitanX.
-+ trainval35k/minival, FASTRCNN_BATCH=64: 32.2. Takes 31h on 8 TitanX.
++ trainval35k/minival, FASTRCNN_BATCH=256: 34.2. Takes 49h on 8 TitanX.
++ trainval35k/minival, FASTRCNN_BATCH=64: 32.7. Takes 31h on 8 TitanX.
 
-The hyperparameters are not carefully tuned. You can probably get better performance by e.g.  training longer.
+The hyperparameters are not carefully tuned. You can probably get better performance by e.g. training longer.
 
 ## Notes
 

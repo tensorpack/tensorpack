@@ -5,13 +5,13 @@
 import numpy as np
 import tqdm
 import cv2
+import six
 import os
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 
 import tensorflow as tf
 from tensorpack.dataflow import MapDataComponent, TestDataSpeed
 from tensorpack.tfutils import get_default_sess_config
-from tensorpack.utils.argtools import memoized
 from tensorpack.utils.utils import get_tqdm_kwargs
 
 from pycocotools.coco import COCO
@@ -26,59 +26,6 @@ DetectionResult = namedtuple(
     ['class_id', 'boxes', 'scores'])
 
 
-@memoized
-def get_tf_nms(num_output, thresh):
-    """
-    Get a NMS callable.
-    """
-    # create a new graph for it
-    with tf.Graph().as_default(), tf.device('/cpu:0'):
-        boxes = tf.placeholder(tf.float32, shape=[None, 4])
-        scores = tf.placeholder(tf.float32, shape=[None])
-        indices = tf.image.non_max_suppression(
-            boxes, scores, num_output, thresh)
-        sess = tf.Session(config=get_default_sess_config())
-        return sess.make_callable(indices, [boxes, scores])
-
-
-def nms_fastrcnn_results(boxes, probs):
-    """
-    Args:
-        boxes: nx#catx4 floatbox in float32
-        probs: nx#class
-
-    Returns:
-        [DetectionResult]
-    """
-    C = probs.shape[1]
-    boxes = boxes.copy()
-
-    nms_func = get_tf_nms(config.RESULTS_PER_IM, config.FASTRCNN_NMS_THRESH)
-    ret = []
-    for klass in range(1, C):
-        ids = np.where(probs[:, klass] > config.RESULT_SCORE_THRESH)[0]
-        if ids.size == 0:
-            continue
-        probs_k = probs[ids, klass].flatten()
-        boxes_k = boxes[ids, klass - 1, :]
-        selected_ids = nms_func(boxes_k, probs_k)
-        selected_boxes = boxes_k[selected_ids, :].copy()
-        ret.append(DetectionResult(klass, selected_boxes, probs_k[selected_ids]))
-
-    if len(ret):
-        newret = []
-        all_scores = np.hstack([x.scores for x in ret])
-        if len(all_scores) > config.RESULTS_PER_IM:
-            score_thresh = np.sort(all_scores)[-config.RESULTS_PER_IM]
-            for klass, boxes, scores in ret:
-                keep_ids = np.where(scores >= score_thresh)[0]
-                if len(keep_ids):
-                    newret.append(DetectionResult(
-                        klass, boxes[keep_ids, :], scores[keep_ids]))
-            ret = newret
-    return ret
-
-
 def detect_one_image(img, model_func):
     """
     Run detection on one image, using the TF callable.
@@ -91,20 +38,33 @@ def detect_one_image(img, model_func):
     Returns:
         [DetectionResult]
     """
+
+    def group_results_by_class(boxes, probs, labels):
+        dic = defaultdict(list)
+        for box, prob, lab in zip(boxes, probs, labels):
+            dic[lab].append((box, prob))
+
+        def mapf(lab, values):
+            boxes = np.asarray([k[0] for k in values])
+            probs = np.asarray([k[1] for k in values])
+            return DetectionResult(lab, boxes, probs)
+
+        return [mapf(k, v) for k, v in six.iteritems(dic)]
+
     resizer = CustomResize(config.SHORT_EDGE_SIZE, config.MAX_SIZE)
     resized_img = resizer.augment(img)
     scale = (resized_img.shape[0] * 1.0 / img.shape[0] + resized_img.shape[1] * 1.0 / img.shape[1]) / 2
-    fg_probs, fg_boxes = model_func(resized_img)
-    fg_boxes = fg_boxes / scale
-    fg_boxes = clip_boxes(fg_boxes, img.shape[:2])
-    return nms_fastrcnn_results(fg_boxes, fg_probs)
+    boxes, probs, labels = model_func(resized_img)
+    boxes = boxes / scale
+    boxes = clip_boxes(boxes, img.shape[:2])
+    return group_results_by_class(boxes, probs, labels)
 
 
 def eval_on_dataflow(df, detect_func):
     """
     Args:
         df: a DataFlow which produces (image, image_id)
-        detect_func: a callable, takes [image] and returns a dict
+        detect_func: a callable, takes [image] and returns [DetectionResult]
 
     Returns:
         list of dict, to be dumped to COCO json format

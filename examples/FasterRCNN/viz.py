@@ -63,21 +63,19 @@ def draw_predictions(img, boxes, scores):
     return viz.draw_boxes(img, boxes, tags)
 
 
-def draw_final_outputs(img, results):
+def draw_final_outputs(img, final_boxes, final_probs, final_labels):
     """
     Args:
         results: [DetectionResult]
     """
-    all_boxes = []
-    all_tags = []
-    for class_id, boxes, scores in results:
-        all_boxes.extend(boxes)
-        all_tags.extend(
-            ["{},{:.2f}".format(COCOMeta.class_names[class_id], sc) for sc in scores])
-    all_boxes = np.asarray(all_boxes)
-    if all_boxes.shape[0] == 0:
+    if final_boxes.shape[0] == 0:
         return img
-    return viz.draw_boxes(img, all_boxes, all_tags)
+
+    tags = []
+    for prob, label in zip(final_probs, final_labels):
+        tags.append(
+            "{},{:.2f}".format(COCOMeta.class_names[label], prob))
+    return viz.draw_boxes(img, final_boxes, tags)
 
 
 def draw_mask(im, mask, alpha=0.5, color=None):
