@@ -468,16 +468,13 @@ def fastrcnn_predictions(boxes, probs):
     masks = tf.map_fn(f, (probs, boxes), dtype=tf.bool,
                       parallel_iterations=10)     # #cat x N
     selected_indices = tf.where(masks)  # #selection x 2, each is (cat_id, box_id)
-    boxes = tf.boolean_mask(boxes, masks)   # #selection x 4
     probs = tf.boolean_mask(probs, masks)
-    labels = selected_indices[:, 0] + 1
 
     # filter again by sorting scores
     topk_probs, topk_indices = tf.nn.top_k(
         probs,
         tf.minimum(config.RESULTS_PER_IM, tf.size(probs)),
         sorted=False)
-    topk_probs = tf.identity(topk_probs, name='probs')
-    topk_boxes = tf.gather(boxes, topk_indices, name='boxes')
-    topk_labels = tf.gather(labels, topk_indices, name='labels')
-    return topk_boxes, topk_probs, topk_labels
+    filtered_selection = tf.gather(selected_indices, topk_indices)
+    filtered_selection = tf.reverse(filtered_selection, axis=[1], name='filtered_indices')
+    return filtered_selection, topk_probs
