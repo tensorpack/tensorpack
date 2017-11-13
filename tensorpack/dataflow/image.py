@@ -17,6 +17,17 @@ def _valid_coords(coords):
     assert coords.shape[1] == 2, coords.shape
     assert np.issubdtype(coords.dtype, np.float), coords.dtype
 
+class ExceptionHandler:
+    def __init__(self, allow_exceptions=False):
+        self._nr_error = 0
+        self.allow_exceptions = allow_exceptions
+
+    def catch(self):
+        self._nr_error += 1
+        if self._nr_error % 1000 == 0 or self._nr_error < 10:
+            logger.exception("Got {} augmentation errors.".format(self._nr_error))
+        if not self.allow_exceptions:
+            raise
 
 class ImageFromFile(RNGDataFlow):
     """ Produce images read from a list of files. """
@@ -57,7 +68,7 @@ class AugmentImageComponent(MapDataComponent):
     """
     Apply image augmentors on 1 image component.
     """
-    def __init__(self, ds, augmentors, index=0, copy=True):
+    def __init__(self, ds, augmentors, index=0, copy=True, allow_exceptions=False):
         """
         Args:
             ds (DataFlow): input DataFlow.
@@ -73,21 +84,17 @@ class AugmentImageComponent(MapDataComponent):
         else:
             self.augs = AugmentorList(augmentors)
 
-        self._nr_error = 0
+        self.exception_handler = ExceptionHandler(allow_exceptions)
 
         def func(x):
             try:
                 if copy:
                     x = copy_mod.deepcopy(x)
-                ret = self.augs.augment(x)
+                return self.augs.augment(x)
             except KeyboardInterrupt:
                 raise
             except Exception:
-                self._nr_error += 1
-                if self._nr_error % 1000 == 0 or self._nr_error < 10:
-                    logger.exception("Got {} augmentation errors.".format(self._nr_error))
-                return None
-            return ret
+                self.exception_handler.catch()
 
         super(AugmentImageComponent, self).__init__(
             ds, func, index)
@@ -102,7 +109,7 @@ class AugmentImageCoordinates(MapData):
     Apply image augmentors on an image and a list of coordinates.
     Coordinates must be a Nx2 floating point array, each row is (x, y).
     """
-    def __init__(self, ds, augmentors, img_index=0, coords_index=1, copy=True):
+    def __init__(self, ds, augmentors, img_index=0, coords_index=1, copy=True, allow_exceptions=False):
         """
         Args:
             ds (DataFlow): input DataFlow.
@@ -118,7 +125,8 @@ class AugmentImageCoordinates(MapData):
             self.augs = augmentors
         else:
             self.augs = AugmentorList(augmentors)
-        self._nr_error = 0
+
+        self.exception_handler = ExceptionHandler(allow_exceptions)
 
         def func(dp):
             try:
@@ -134,10 +142,7 @@ class AugmentImageCoordinates(MapData):
             except KeyboardInterrupt:
                 raise
             except Exception:
-                self._nr_error += 1
-                if self._nr_error % 1000 == 0 or self._nr_error < 10:
-                    logger.exception("Got {} augmentation errors.".format(self._nr_error))
-                return None
+                self.exception_handler.catch()
 
         super(AugmentImageCoordinates, self).__init__(ds, func)
 
@@ -161,7 +166,7 @@ class AugmentImageComponents(MapData):
 
     """
 
-    def __init__(self, ds, augmentors, index=(0, 1), coords_index=(), copy=True):
+    def __init__(self, ds, augmentors, index=(0, 1), coords_index=(), copy=True, allow_exceptions=False):
         """
         Args:
             ds (DataFlow): input DataFlow.
@@ -178,7 +183,8 @@ class AugmentImageComponents(MapData):
         else:
             self.augs = AugmentorList(augmentors)
         self.ds = ds
-        self._nr_error = 0
+
+        self.exception_handler = ExceptionHandler(allow_exceptions)
 
         def func(dp):
             dp = copy_mod.copy(dp)  # always do a shallow copy, make sure the list is intact
@@ -198,10 +204,7 @@ class AugmentImageComponents(MapData):
             except KeyboardInterrupt:
                 raise
             except Exception:
-                self._nr_error += 1
-                if self._nr_error % 1000 == 0 or self._nr_error < 10:
-                    logger.exception("Got {} augmentation errors.".format(self._nr_error))
-                return None
+                self.exception_handler.catch()
 
         super(AugmentImageComponents, self).__init__(ds, func)
 
