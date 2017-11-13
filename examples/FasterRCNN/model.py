@@ -91,8 +91,7 @@ def rpn_losses(anchor_labels, anchor_boxes, label_logits, box_logits):
         box_loss,
         tf.cast(nr_valid, tf.float32), name='box_loss')
 
-    for k in [label_loss, box_loss, nr_valid, nr_pos] + summaries:
-        add_moving_summary(k)
+    add_moving_summary(*([label_loss, box_loss, nr_valid, nr_pos] + summaries))
     return label_loss, box_loss
 
 
@@ -165,6 +164,7 @@ def generate_rpn_proposals(boxes, scores, img_shape):
         boxes: kx4 float
         scores: k logits
     """
+    assert boxes.shape.ndims == 2, boxes.shape
     if get_current_tower_context().is_training:
         PRE_NMS_TOPK = config.TRAIN_PRE_NMS_TOPK
         POST_NMS_TOPK = config.TRAIN_POST_NMS_TOPK
@@ -213,6 +213,8 @@ def generate_rpn_proposals(boxes, scores, img_shape):
 @under_name_scope()
 def proposal_metrics(iou):
     """
+    Add summaries for RPN proposals.
+
     Args:
         iou: nxm, #proposal x #gt
     """
@@ -233,6 +235,8 @@ def proposal_metrics(iou):
 @under_name_scope()
 def sample_fast_rcnn_targets(boxes, gt_boxes, gt_labels):
     """
+    Sample some ROIs from all proposals for training.
+
     Args:
         boxes: nx4 region proposals, floatbox
         gt_boxes: mx4, floatbox
@@ -240,8 +244,9 @@ def sample_fast_rcnn_targets(boxes, gt_boxes, gt_labels):
 
     Returns:
         sampled_boxes: tx4 floatbox, the rois
-        target_boxes: tx4 encoded box, the regression target
-        labels: t labels
+        sampled_labels: t labels, in [0, #class-1]. Positive means foreground.
+        fg_inds_wrt_gt: #fg indices, each in range [0, m-1].
+            It contains the matching GT of each foreground roi.
     """
     iou = pairwise_iou(boxes, gt_boxes)     # nxm
     proposal_metrics(iou)
@@ -287,8 +292,8 @@ def sample_fast_rcnn_targets(boxes, gt_boxes, gt_labels):
 @under_name_scope()
 def crop_and_resize(image, boxes, box_ind, crop_size):
     """
-    Better-aligned version of tf.image.crop_and_resize,
-    following our definition of floating point boxes.
+    Better-aligned version of tf.image.crop_and_resize, following our definition of floating point boxes.
+
     Args:
         image: NCHW
         boxes: nx4, x1y1x2y2
@@ -349,9 +354,6 @@ def roi_align(featuremap, boxes, output_shape):
     Returns:
         NxCxoHxoW
     """
-
-    image_shape = tf.shape(featuremap)[2:]
-
     boxes = tf.stop_gradient(boxes)  # TODO
     # sample 4 locations per roi bin
     ret = crop_and_resize(
@@ -407,6 +409,7 @@ def fastrcnn_losses(labels, label_logits, fg_boxes, fg_box_logits):
          tf.to_int32(fg_labels) - 1], axis=1)  # #fgx2
     fg_box_logits = tf.gather_nd(fg_box_logits, indices)
 
+    # some metrics to summarize
     fg_label_pred = tf.argmax(tf.gather(label_logits, fg_inds), axis=1)
     num_zero = tf.reduce_sum(tf.to_int32(tf.equal(fg_label_pred, 0)), name='num_zero')
     false_negative = tf.truediv(num_zero, num_fg, name='false_negative')
@@ -418,8 +421,7 @@ def fastrcnn_losses(labels, label_logits, fg_boxes, fg_box_logits):
     box_loss = tf.truediv(
         box_loss, tf.to_float(tf.shape(labels)[0]), name='box_loss')
 
-    for k in [label_loss, box_loss, accuracy, fg_accuracy, false_negative]:
-        add_moving_summary(k)
+    add_moving_summary(label_loss, box_loss, accuracy, fg_accuracy, false_negative)
     return label_loss, box_loss
 
 
@@ -456,10 +458,10 @@ def fastrcnn_predictions(boxes, probs):
             box, prob, config.RESULTS_PER_IM, config.FASTRCNN_NMS_THRESH)
         selection = tf.to_int32(tf.gather(ids, selection))
         # sort available in TF>1.4.0
-        # selection = tf.contrib.framework.sort(selection, direction='ASCENDING')
-        sorted_selection, _ = tf.nn.top_k(-selection, k=tf.size(selection))
+        # sorted_selection = tf.contrib.framework.sort(selection, direction='ASCENDING')
+        sorted_selection = -tf.nn.top_k(-selection, k=tf.size(selection))[0]
         mask = tf.sparse_to_dense(
-            sparse_indices=-sorted_selection,
+            sparse_indices=sorted_selection,
             output_shape=output_shape,
             sparse_values=True,
             default_value=False)

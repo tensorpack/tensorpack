@@ -11,7 +11,7 @@ from tensorpack.utils import logger
 from tensorpack.utils.argtools import memoized, log_once
 from tensorpack.dataflow import (
     MapData, imgaug, TestDataSpeed,
-    MapDataComponent, DataFromList)
+    MapDataComponent, DataFromList, PrefetchDataZMQ)
 import tensorpack.utils.viz as tpviz
 from tensorpack.utils.viz import interactive_imshow
 
@@ -258,6 +258,7 @@ def get_train_dataflow(add_mask=False):
         return ret
 
     ds = MapData(ds, preprocess)
+    ds = PrefetchDataZMQ(ds, 1)
     return ds
 
 
@@ -271,6 +272,7 @@ def get_eval_dataflow():
         assert im is not None, fname
         return im
     ds = MapDataComponent(ds, f, 0)
+    ds = PrefetchDataZMQ(ds, 1)
     return ds
 
 

@@ -15,11 +15,9 @@ import tensorflow as tf
 
 os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
-import tensorpack.tfutils.symbolic_functions as symbf
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.tfutils import optimizer, gradproc
 import tensorpack.utils.viz as tpviz
-from tensorpack.utils.concurrency import subproc_call
 from tensorpack.utils.gpu import get_nr_gpu
 
 
@@ -88,8 +86,6 @@ class Model(ModelDesc):
         anchor_boxes_encoded = encode_bbox_target(anchor_boxes, fm_anchors)
         featuremap = pretrained_resnet_conv4(image, config.RESNET_NUM_BLOCK[:3])
         rpn_label_logits, rpn_box_logits = rpn_head('rpn', featuremap, 1024, config.NUM_ANCHOR)
-        rpn_label_loss, rpn_box_loss = rpn_losses(
-            anchor_labels, anchor_boxes_encoded, rpn_label_logits, rpn_box_logits)
 
         decoded_boxes = decode_bbox_target(rpn_box_logits, fm_anchors)  # fHxfWxNAx4, floatbox
         proposal_boxes, proposal_scores = generate_rpn_proposals(
@@ -111,6 +107,11 @@ class Model(ModelDesc):
         fastrcnn_label_logits, fastrcnn_box_logits = fastrcnn_head('fastrcnn', feature_fastrcnn, config.NUM_CLASS)
 
         if is_training:
+            # rpn loss
+            rpn_label_loss, rpn_box_loss = rpn_losses(
+                anchor_labels, anchor_boxes_encoded, rpn_label_logits, rpn_box_logits)
+
+            # fastrcnn loss
             fg_inds_wrt_sample = tf.reshape(tf.where(rcnn_labels > 0), [-1])   # fg inds w.r.t all samples
             fg_sampled_boxes = tf.gather(rcnn_sampled_boxes, fg_inds_wrt_sample)
 
@@ -142,7 +143,7 @@ class Model(ModelDesc):
                 tf.constant(config.FASTRCNN_BBOX_REG_WEIGHTS), anchors)
             decoded_boxes = tf.identity(decoded_boxes, name='fastrcnn_all_boxes')
 
-            # Nx2. Each index into (#proposal, #category)
+            # indices: Nx2. Each index into (#proposal, #category)
             pred_indices, final_probs = fastrcnn_predictions(decoded_boxes, label_probs)
             final_probs = tf.identity(final_probs, 'final_probs')
             final_boxes = tf.gather_nd(decoded_boxes, pred_indices, name='final_boxes')
@@ -208,36 +209,18 @@ def visualize(model_path, nr_visualize=50, output_dir='output'):
             pbar.update()
 
 
-def offline_evaluate(model_path, output_file):
-    pred = OfflinePredictor(PredictConfig(
-        model=Model(),
-        session_init=get_model_loader(model_path),
-        input_names=['image'],
-        output_names=[
-            'final_boxes',
-            'final_probs',
-            'final_labels',
-        ]))
+def offline_evaluate(pred_func, output_file):
     df = get_eval_dataflow()
-    df = PrefetchDataZMQ(df, 1)
-    all_results = eval_on_dataflow(df, lambda img: detect_one_image(img, pred))
+    all_results = eval_on_dataflow(
+        df, lambda img: detect_one_image(img, pred_func))
     with open(output_file, 'w') as f:
         json.dump(all_results, f)
     print_evaluation_scores(output_file)
 
 
-def predict(model_path, input_file):
-    pred = OfflinePredictor(PredictConfig(
-        model=Model(),
-        session_init=get_model_loader(model_path),
-        input_names=['image'],
-        output_names=[
-            'final_boxes',
-            'final_probs',
-            'final_labels',
-        ]))
+def predict(pred_func, input_file):
     img = cv2.imread(input_file, cv2.IMREAD_COLOR)
-    results = detect_one_image(img, pred)
+    results = detect_one_image(img, pred_func)
     final = draw_final_outputs(img, results)
     viz = np.concatenate((img, final), axis=1)
     tpviz.interactive_imshow(viz)
@@ -247,10 +230,8 @@ class EvalCallback(Callback):
     def _setup_graph(self):
         self.pred = self.trainer.get_predictor(
             ['image'],
-            ['final_boxes',
-             'final_probs',
-             'final_labels'])
-        self.df = PrefetchDataZMQ(get_eval_dataflow(), 1)
+            ['final_boxes', 'final_probs', 'final_labels'])
+        self.df = get_eval_dataflow()
 
     def _before_train(self):
         EVAL_TIMES = 5  # eval 5 times during training
@@ -288,18 +269,29 @@ if __name__ == '__main__':
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
     if args.visualize or args.evaluate or args.predict:
+        # autotune is too slow for inference
+        os.environ['TF_CUDNN_USE_AUTOTUNE'] = '0'
+
         assert args.load
         print_config()
         if args.visualize:
             visualize(args.load)
-        elif args.evaluate:
-            assert args.evaluate.endswith('.json')
-            # autotune is too slow for inference
-            os.environ['TF_CUDNN_USE_AUTOTUNE'] = '0'
-            offline_evaluate(args.load, args.evaluate)
-        elif args.predict:
-            COCODetection(config.BASEDIR, 'train2014')   # to load the class names into caches
-            predict(args.load, args.predict)
+        else:
+            pred = OfflinePredictor(PredictConfig(
+                model=Model(),
+                session_init=get_model_loader(args.load),
+                input_names=['image'],
+                output_names=[
+                    'final_boxes',
+                    'final_probs',
+                    'final_labels',
+                ]))
+            if args.evaluate:
+                assert args.evaluate.endswith('.json')
+                offline_evaluate(pred, args.evaluate)
+            elif args.predict:
+                COCODetection(config.BASEDIR, 'train2014')   # to load the class names into caches
+                predict(pred, args.predict)
     else:
         logger.set_logger_dir(args.logdir)
         print_config()
@@ -322,7 +314,6 @@ if __name__ == '__main__':
                     [(warmup_epoch * factor, 1e-2),
                      (150000 * factor // stepnum, 1e-3),
                      (210000 * factor // stepnum, 1e-4)]),
-                HumanHyperParamSetter('learning_rate'),
                 EvalCallback(),
                 GPUUtilizationTracker(),
             ],
