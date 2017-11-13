@@ -1,8 +1,8 @@
 # Faster-RCNN on COCO
-This example aims to provide a minimal (<1000 lines) multi-GPU implementation of ResNet50-Faster-RCNN on COCO.
+This example aims to provide a minimal (1.2k lines) multi-GPU implementation of ResNet50-Faster-RCNN on COCO.
 
 ## Dependencies
-+ TensorFlow > 1.4.0 (use tf-nightly-gpu for now)
++ TensorFlow >= 1.4.0
 + Install [pycocotools](https://github.com/pdollar/coco/tree/master/PythonAPI/pycocotools), OpenCV.
 + Pre-trained [ResNet50 model](https://goo.gl/6XjK9V) from tensorpack model zoo.
 + COCO data. It assumes the following directory structure:
