@@ -107,14 +107,16 @@ def segmentation_to_mask(polys, height, width):
 def clip_boxes(boxes, shape):
     """
     Args:
-        boxes: nx4, float
+        boxes: (...)x4, float
         shape: h, w
     """
+    orig_shape = boxes.shape
+    boxes = boxes.reshape([-1, 4])
     h, w = shape
     boxes[:, [0, 1]] = np.maximum(boxes[:, [0, 1]], 0)
     boxes[:, 2] = np.minimum(boxes[:, 2], w)
     boxes[:, 3] = np.minimum(boxes[:, 3], h)
-    return boxes
+    return boxes.reshape(orig_shape)
 
 
 def print_config():
