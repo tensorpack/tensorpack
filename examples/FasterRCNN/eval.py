@@ -44,8 +44,8 @@ def get_tf_nms(num_output, thresh):
 def nms_fastrcnn_results(boxes, probs):
     """
     Args:
-        boxes: nx4 floatbox in float32
-        probs: nxC
+        boxes: nx#catx4 floatbox in float32
+        probs: nx#class
 
     Returns:
         [DetectionResult]
@@ -60,7 +60,7 @@ def nms_fastrcnn_results(boxes, probs):
         if ids.size == 0:
             continue
         probs_k = probs[ids, klass].flatten()
-        boxes_k = boxes[ids, :]
+        boxes_k = boxes[ids, klass - 1, :]
         selected_ids = nms_func(boxes_k, probs_k)
         selected_boxes = boxes_k[selected_ids, :].copy()
         ret.append(DetectionResult(klass, selected_boxes, probs_k[selected_ids]))

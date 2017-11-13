@@ -137,14 +137,11 @@ class Model(ModelDesc):
                 add_moving_summary(k)
         else:
             label_probs = tf.nn.softmax(fastrcnn_label_logits, name='fastrcnn_all_probs')  # #proposal x #Class
-            labels = tf.argmax(fastrcnn_label_logits, axis=1)
-            fg_ind, fg_box_logits = fastrcnn_predict_boxes(labels, fastrcnn_box_logits)
-            fg_label_probs = tf.gather(label_probs, fg_ind, name='fastrcnn_fg_probs')
-            fg_boxes = tf.gather(proposal_boxes, fg_ind)
-
-            fg_box_logits = fg_box_logits / tf.constant(config.FASTRCNN_BBOX_REG_WEIGHTS)
-            decoded_boxes = decode_bbox_target(fg_box_logits, fg_boxes)  # #fgx4, floatbox
-            decoded_boxes = tf.identity(decoded_boxes, name='fastrcnn_fg_boxes')
+            anchors = tf.tile(tf.expand_dims(proposal_boxes, 1), [1, config.NUM_CLASS - 1, 1])   # #proposal x #Cat x 4
+            decoded_boxes = decode_bbox_target(
+                fastrcnn_box_logits /
+                tf.constant(config.FASTRCNN_BBOX_REG_WEIGHTS), anchors)
+            decoded_boxes = tf.identity(decoded_boxes, name='fastrcnn_all_boxes')
 
     def _get_optimizer(self):
         lr = tf.get_variable('learning_rate', initializer=0.003, trainable=False)
@@ -210,8 +207,8 @@ def offline_evaluate(model_path, output_file):
         session_init=get_model_loader(model_path),
         input_names=['image'],
         output_names=[
-            'fastrcnn_fg_probs',
-            'fastrcnn_fg_boxes',
+            'fastrcnn_all_probs',
+            'fastrcnn_all_boxes',
         ]))
     df = get_eval_dataflow()
     df = PrefetchDataZMQ(df, 1)
@@ -227,8 +224,8 @@ def predict(model_path, input_file):
         session_init=get_model_loader(model_path),
         input_names=['image'],
         output_names=[
-            'fastrcnn_fg_probs',
-            'fastrcnn_fg_boxes',
+            'fastrcnn_all_probs',
+            'fastrcnn_all_boxes',
         ]))
     img = cv2.imread(input_file, cv2.IMREAD_COLOR)
     results = detect_one_image(img, pred)
@@ -239,7 +236,8 @@ def predict(model_path, input_file):
 
 class EvalCallback(Callback):
     def _setup_graph(self):
-        self.pred = self.trainer.get_predictor(['image'], ['fastrcnn_fg_probs', 'fastrcnn_fg_boxes'])
+        self.pred = self.trainer.get_predictor(
+            ['image'], ['fastrcnn_all_probs', 'fastrcnn_all_boxes'])
         self.df = PrefetchDataZMQ(get_eval_dataflow(), 1)
 
     def _before_train(self):

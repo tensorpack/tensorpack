@@ -43,7 +43,6 @@ Training examples with __reproducible__ and meaningful performance.
 
 Example needs to satisfy one of the following:
 + Reproduce performance of a published or well-known paper.
-+ Get state-of-the-art performance on some task.
 + Illustrate a new way of using the library that is currently not covered.
 
 __Performance is important__. Usually deep learning code is easy to write,
