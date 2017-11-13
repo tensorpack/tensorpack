@@ -15,11 +15,13 @@ from tensorpack.utils.timer import timed_operation
 from tensorpack.utils.argtools import log_once
 
 from pycocotools.coco import COCO
+import config
 
 
 __all__ = ['COCODetection', 'COCOMeta']
 
 COCO_NUM_CATEGORY = 80
+config.NUM_CLASS = COCO_NUM_CATEGORY + 1
 
 
 class _COCOMeta(object):
@@ -49,6 +51,7 @@ class _COCOMeta(object):
             v: i + 1 for i, v in enumerate(cat_ids)}
         self.class_id_to_category_id = {
             v: k for k, v in self.category_id_to_class_id.items()}
+        config.CLASS_NAMES = self.class_names
 
 
 COCOMeta = _COCOMeta()
