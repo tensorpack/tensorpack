@@ -13,22 +13,32 @@ This is a minimal implementation that simply contains these files:
 
 ### Implementation Notes
 
-1. You can easily add more augmentations such as rotation, but be careful how a box should be
+Data:
+
+1. It's easy to train on your own data. Just replace `COCODetection.load_many` in `data.py` by your own loader.
+
+2. You can easily add more augmentations such as rotation, but be careful how a box should be
 	 augmented. The code now will always use the minimal axis-aligned bounding box of the 4 corners,
 	 which is probably not the optimal way.
+	 A TODO is to generate bounding box from segmentation, so more augmentations can be naturally supported.
 
-2. Floating-point boxes are defined like this:
+Model:
+
+1. Floating-point boxes are defined like this:
 
 <p align="center"> <img src="https://user-images.githubusercontent.com/1381301/31527740-2f1b38ce-af84-11e7-8de1-628e90089826.png"> </p>
 
-3. We use ROIAlign, and because of (3), `tf.image.crop_and_resize` is NOT ROIAlign.
+2. We use ROIAlign, and because of (1), `tf.image.crop_and_resize` is __NOT__ ROIAlign.
 
-4. Inference is not quite fast, because either you disable convolution autotune and end up with
+3. We only support single image per GPU for now.
+
+4. Because of (3), BatchNorm statistics are not supposed to be updated during fine-tuning.
+	 This specific kind of BatchNorm will need [my kernel](https://github.com/tensorflow/tensorflow/pull/12580)
+	 which is included since TF 1.4. If using an earlier version of TF, it will be either slow or wrong.
+
+Speed:
+
+1. Inference is not quite fast, because either you disable convolution autotune and end up with
 	 a slow convolution algorithm, or you spend more time on autotune.
 	 This is a general problem of TensorFlow when running against variable-sized input.
 
-5. We only support single image per GPU for now.
-
-6. Because of (4), BatchNorm statistics are not supposed to be updated during fine-tuning.
-	 This specific kind of BatchNorm will need [my kernel](https://github.com/tensorflow/tensorflow/pull/12580)
-	 which is included since TF 1.4. If using an earlier version of TF, it will be either slow or wrong.
