@@ -53,7 +53,6 @@ def nms_fastrcnn_results(boxes, probs):
     C = probs.shape[1]
     boxes = boxes.copy()
 
-    boxes_per_class = {}
     nms_func = get_tf_nms(config.RESULTS_PER_IM, config.FASTRCNN_NMS_THRESH)
     ret = []
     for klass in range(1, C):

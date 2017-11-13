@@ -41,7 +41,7 @@ TRAIN_POST_NMS_TOPK = 2000
 CROWD_OVERLAP_THRES = 0.7
 
 # fastrcnn training ---------------------
-FASTRCNN_BATCH_PER_IM = 64
+FASTRCNN_BATCH_PER_IM = 256
 FASTRCNN_BBOX_REG_WEIGHTS = np.array([10, 10, 5, 5], dtype='float32')
 FASTRCNN_FG_THRESH = 0.5
 # keep fg ratio in a batch in this range
