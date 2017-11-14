@@ -82,6 +82,7 @@ class Model(ModelDesc):
         image, anchor_labels, anchor_boxes, gt_boxes, gt_labels = inputs
         fm_anchors = self._get_anchors(image)
         image = self._preprocess(image)
+        image_shape2d = tf.shape(image)[2:]
 
         anchor_boxes_encoded = encode_bbox_target(anchor_boxes, fm_anchors)
         featuremap = pretrained_resnet_conv4(image, config.RESNET_NUM_BLOCK[:3])
@@ -91,7 +92,7 @@ class Model(ModelDesc):
         proposal_boxes, proposal_scores = generate_rpn_proposals(
             tf.reshape(decoded_boxes, [-1, 4]),
             tf.reshape(rpn_label_logits, [-1]),
-            tf.shape(image)[2:])
+            image_shape2d)
 
         if is_training:
             # sample proposal boxes in training
@@ -140,7 +141,7 @@ class Model(ModelDesc):
             decoded_boxes = decode_bbox_target(
                 fastrcnn_box_logits /
                 tf.constant(config.FASTRCNN_BBOX_REG_WEIGHTS), anchors)
-            decoded_boxes = clip_boxes(decoded_boxes, tf.shape(image)[:2], name='fastrcnn_all_boxes')
+            decoded_boxes = clip_boxes(decoded_boxes, image_shape2d, name='fastrcnn_all_boxes')
 
             # indices: Nx2. Each index into (#proposal, #category)
             pred_indices, final_probs = fastrcnn_predictions(decoded_boxes, label_probs)
