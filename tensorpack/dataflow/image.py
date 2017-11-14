@@ -18,6 +18,7 @@ def _valid_coords(coords):
     assert coords.shape[1] == 2, coords.shape
     assert np.issubdtype(coords.dtype, np.float), coords.dtype
 
+
 class ExceptionHandler:
     def __init__(self, catch_exceptions=False):
         self._nr_error = 0
@@ -31,10 +32,12 @@ class ExceptionHandler:
             raise
         except Exception:
             self._nr_error += 1
-            if self._nr_error % 1000 == 0 or self._nr_error < 10:
-                logger.exception("Got {} augmentation errors.".format(self._nr_error))
             if not self.catch_exceptions:
                 raise
+            else:
+                if self._nr_error % 100 == 0 or self._nr_error < 10:
+                    logger.exception("Got {} augmentation errors.".format(self._nr_error))
+
 
 class ImageFromFile(RNGDataFlow):
     """ Produce images read from a list of files. """
@@ -86,16 +89,19 @@ class AugmentImageComponent(MapDataComponent):
                 True, a copy will be made before any augmentors are applied,
                 to keep the original images not modified.
                 Turn it off to save time when you know it's OK.
+            catch_exceptions (bool): when set to True, will catch
+                all exceptions and only warn you when there are too many (>100).
+                Can be used to ignore occasion errors in data.
         """
         if isinstance(augmentors, AugmentorList):
             self.augs = augmentors
         else:
             self.augs = AugmentorList(augmentors)
 
-        self.exception_handler = ExceptionHandler(catch_exceptions)
+        exception_handler = ExceptionHandler(catch_exceptions)
 
         def func(x):
-            with self.exception_handler.catch():
+            with exception_handler.catch():
                 if copy:
                     x = copy_mod.deepcopy(x)
                 return self.augs.augment(x)
@@ -122,20 +128,17 @@ class AugmentImageCoordinates(MapData):
             augmentors (AugmentorList): a list of :class:`imgaug.ImageAugmentor` to be applied in order.
             img_index (int): the index of the image component to be augmented.
             coords_index (int): the index of the coordinate component to be augmented.
-            copy (bool): Some augmentors modify the input images. When copy is
-                True, a copy will be made before any augmentors are applied,
-                to keep the original images not modified.
-                Turn it off to save time when you know it's OK.
+            copy, catch_exceptions: same as in :class:`AugmentImageComponent`
         """
         if isinstance(augmentors, AugmentorList):
             self.augs = augmentors
         else:
             self.augs = AugmentorList(augmentors)
 
-        self.exception_handler = ExceptionHandler(catch_exceptions)
+        exception_handler = ExceptionHandler(catch_exceptions)
 
         def func(dp):
-            with self.exception_handler.catch():
+            with exception_handler.catch():
                 img, coords = dp[img_index], dp[coords_index]
                 _valid_coords(coords)
                 if copy:
@@ -175,10 +178,7 @@ class AugmentImageComponents(MapData):
             augmentors (AugmentorList): a list of :class:`imgaug.ImageAugmentor` instance to be applied in order.
             index: tuple of indices of the image components.
             coords_index: tuple of indices of the coordinates components.
-            copy (bool): Some augmentors modify the input images. When copy is
-                True, a copy will be made before any augmentors are applied,
-                to keep the original images not modified.
-                Turn it off to save time when you know it's OK.
+            copy, catch_exceptions: same as in :class:`AugmentImageComponent`
         """
         if isinstance(augmentors, AugmentorList):
             self.augs = augmentors
@@ -186,12 +186,12 @@ class AugmentImageComponents(MapData):
             self.augs = AugmentorList(augmentors)
         self.ds = ds
 
-        self.exception_handler = ExceptionHandler(catch_exceptions)
+        exception_handler = ExceptionHandler(catch_exceptions)
 
         def func(dp):
             dp = copy_mod.copy(dp)  # always do a shallow copy, make sure the list is intact
             copy_func = copy_mod.deepcopy if copy else lambda x: x  # noqa
-            with self.exception_handler.catch():
+            with exception_handler.catch():
                 major_image = index[0]  # image to be used to get params. TODO better design?
                 im = copy_func(dp[major_image])
                 im, prms = self.augs._augment_return_params(im)
