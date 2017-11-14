@@ -63,20 +63,19 @@ Both are supported in tensorpack, while we recommend using Python.
 ### TensorFlow Reader: Cons
 The disadvantage of TF reader is obvious and it's huge: it's __too complicated__.
 
-Reading data is a more complicated and less structured job than running the model.
+Reading data is a complicated and badly-structured job than running the model.
 You need to handle different data format, handle corner cases in noisy data,
-which all require logical operations, condition operations, loops, etc. These operations
-are __naturally not suitable__ for a graph computation framework.
+which all require condition operations, loops, sometimes even exception handling. These operations
+are __naturally not suitable__ for a symbolic graph.
 
 Let's take a look at what users are asking for:
-* [Different ways to pad your data](https://github.com/tensorflow/tensorflow/issues/13969)
+* Different ways to [pad data](https://github.com/tensorflow/tensorflow/issues/13969), [shuffle data](https://github.com/tensorflow/tensorflow/issues/14518)
 * [Handle none values in data](https://github.com/tensorflow/tensorflow/issues/13865)
 * [Handle dataset that's not a multiple of batch size](https://github.com/tensorflow/tensorflow/issues/13745)
 * [Different levels of determinism](https://github.com/tensorflow/tensorflow/issues/13932)
 * [Sort/skip some data](https://github.com/tensorflow/tensorflow/issues/14250)
-* [Take variable-length np array](https://github.com/tensorflow/tensorflow/issues/13018)
 
-To support these features which could've been done with 3 lines of code in Python, you need either a new TF
+To support all these features which could've been done with 3 lines of code in Python, you need either a new TF
 API, or ask [Dataset.from_generator](https://www.tensorflow.org/versions/r1.4/api_docs/python/tf/contrib/data/Dataset#from_generator)
 (i.e. Python again) to the rescue.
 
