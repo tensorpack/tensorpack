@@ -7,17 +7,14 @@ import cv2
 import numpy as np
 import tensorflow as tf
 import glob
-import pickle
 import os
-import sys
 import argparse
 
 os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
-from tensorpack.utils.viz import *
+from tensorpack.utils.viz import stack_patches
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
-import tensorpack.tfutils.symbolic_functions as symbf
 from GAN import GANTrainer, GANModelDesc
 
 """

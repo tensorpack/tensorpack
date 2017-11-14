@@ -3,16 +3,14 @@
 # File: inception-bn.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import cv2
 import argparse
-import numpy as np
 import os
 import tensorflow as tf
 
 os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
-from tensorpack.tfutils.symbolic_functions import *
-from tensorpack.tfutils.summary import *
+from tensorpack.tfutils.symbolic_functions import prediction_incorrect
+from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.dataflow import dataset
 from tensorpack.utils.gpu import get_nr_gpu
 
@@ -42,7 +40,7 @@ class Model(ModelDesc):
 
         def inception(name, x, nr1x1, nr3x3r, nr3x3, nr233r, nr233, nrpool, pooltype):
             stride = 2 if nr1x1 == 0 else 1
-            with tf.variable_scope(name) as scope:
+            with tf.variable_scope(name):
                 outs = []
                 if nr1x1 != 0:
                     outs.append(Conv2D('conv1x1', x, nr1x1, 1))
@@ -101,7 +99,7 @@ class Model(ModelDesc):
             l = GlobalAvgPooling('gap', l)
 
             logits = FullyConnected('linear', l, out_dim=1000, nl=tf.identity)
-        prob = tf.nn.softmax(logits, name='output')
+        tf.nn.softmax(logits, name='output')
         loss3 = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         loss3 = tf.reduce_mean(loss3, name='loss3')
 
@@ -119,7 +117,6 @@ class Model(ModelDesc):
                                           80000, 0.7, True)
         wd_cost = tf.multiply(wd_w, regularize_cost('.*/W', tf.nn.l2_loss), name='l2_regularize_loss')
 
-        add_param_summary(('.*/W', ['histogram']))   # monitor W
         self.cost = tf.add_n([cost, wd_cost], name='cost')
         add_moving_summary(wd_cost, self.cost)
 

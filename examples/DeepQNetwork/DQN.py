@@ -3,24 +3,13 @@
 # File: DQN.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import numpy as np
-
 import os
-import sys
-import re
-import time
-import random
 import argparse
-import subprocess
-import multiprocessing
-import threading
-from collections import deque
 import cv2
+import tensorflow as tf
 
 os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
-from tensorpack.utils.concurrency import *
-import tensorflow as tf
 
 from DQNModel import Model as DQNModel
 from common import Evaluator, eval_model_multithread, play_n_episodes

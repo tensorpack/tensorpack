@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # File: model.py
 
-import numpy as np
 import tensorflow as tf
 from tensorpack.tfutils import get_current_tower_context
 from tensorpack.tfutils.summary import add_moving_summary
@@ -206,7 +205,6 @@ def generate_rpn_proposals(boxes, scores, img_shape):
         topk_valid_boxes,
         nms_indices, name='boxes')
     final_scores = tf.gather(topk_valid_scores, nms_indices, name='scores')
-    final_probs = tf.gather(topk_valid_scores, nms_indices, name='probs')
     return final_boxes, final_scores
 
 
@@ -436,7 +434,6 @@ def fastrcnn_predictions(boxes, probs):
     """
     assert boxes.shape[1] == config.NUM_CLASS - 1
     assert probs.shape[1] == config.NUM_CLASS
-    N = tf.shape(boxes)[0]
     boxes = tf.transpose(boxes, [1, 0, 2])  # #catxnx4
     probs = tf.transpose(probs[:, 1:], [1, 0])  # #catxn
 

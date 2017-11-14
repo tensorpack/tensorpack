@@ -7,7 +7,6 @@ import numpy as np
 import copy
 from collections import deque, namedtuple
 import threading
-import six
 from six.moves import queue, range
 
 from tensorpack.dataflow import DataFlow

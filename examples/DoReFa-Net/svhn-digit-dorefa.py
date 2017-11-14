@@ -4,13 +4,12 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import argparse
-import numpy as np
 import os
 
 os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
-from tensorpack.tfutils.symbolic_functions import *
-from tensorpack.tfutils.summary import *
+from tensorpack.tfutils.symbolic_functions import prediction_incorrect
+from tensorpack.tfutils.summary import add_moving_summary, add_param_summary
 from tensorpack.dataflow import dataset
 from tensorpack.tfutils.varreplace import remap_variables
 import tensorflow as tf
@@ -55,8 +54,6 @@ class Model(ModelDesc):
         is_training = get_current_tower_context().is_training
 
         fw, fa, fg = get_dorefa(BITW, BITA, BITG)
-
-        old_get_variable = tf.get_variable
 
         # monkey-patch tf.get_variable to apply fw
         def binarize_weight(v):
@@ -112,7 +109,7 @@ class Model(ModelDesc):
                       .apply(fg).BatchNorm('bn6')
                       .apply(cabs)
                       .FullyConnected('fc1', 10, nl=tf.identity)())
-        prob = tf.nn.softmax(logits, name='output')
+        tf.nn.softmax(logits, name='output')
 
         # compute the number of failed samples
         wrong = prediction_incorrect(logits, label)

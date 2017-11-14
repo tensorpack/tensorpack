@@ -4,11 +4,9 @@
 
 import numpy as np
 import os
-import six
 from termcolor import colored
 from tabulate import tabulate
 
-from tensorpack.dataflow import DataFromList
 from tensorpack.utils import logger
 from tensorpack.utils.rect import FloatBox
 from tensorpack.utils.timer import timed_operation

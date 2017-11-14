@@ -1,5 +1,5 @@
 # Faster-RCNN on COCO
-This example aims to provide a minimal (1.2k lines) multi-GPU implementation of ResNet50-Faster-RCNN on COCO.
+This example aims to provide a minimal (1.2k lines) multi-GPU implementation of ResNet-Faster-RCNN on COCO.
 
 ## Dependencies
 + TensorFlow >= 1.4.0

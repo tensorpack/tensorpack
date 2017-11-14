@@ -7,7 +7,6 @@ import cv2
 import numpy as np
 import tensorflow as tf
 import os
-import sys
 import argparse
 
 os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
@@ -16,7 +15,6 @@ from tensorpack.utils import viz
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope, under_name_scope
 from tensorpack.tfutils import optimizer, summary
 import tensorpack.tfutils.symbolic_functions as symbf
-from tensorpack.tfutils.gradproc import ScaleGradient
 from tensorpack.dataflow import dataset
 from GAN import GANTrainer, GANModelDesc
 
@@ -149,8 +147,6 @@ class Model(GANModelDesc):
         of P, and whose parameters are predicted by the discriminator network.
         """
         with tf.name_scope("mutual_information"):
-            batch_prior = tf.tile(tf.expand_dims(DIST_PRIOR_PARAM, 0), [BATCH, 1], name='batch_prior')
-
             with tf.name_scope('prior_entropy'):
                 cat, uni = get_distributions(DIST_PRIOR_PARAM[:NUM_CLASS], DIST_PRIOR_PARAM[NUM_CLASS:])
                 ents = [cat.entropy(name='cat_entropy'), tf.reduce_sum(uni.entropy(), name='uni_entropy')]

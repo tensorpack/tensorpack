@@ -8,7 +8,7 @@ from tensorflow.contrib.layers import variance_scaling_initializer
 
 from tensorpack.tfutils.argscope import argscope, get_arg_scope
 from tensorpack.models import (
-    Conv2D, MaxPooling, GlobalAvgPooling, BatchNorm, BNReLU, FullyConnected,
+    Conv2D, GlobalAvgPooling, BatchNorm, BNReLU, FullyConnected,
     LinearWrap)
 
 

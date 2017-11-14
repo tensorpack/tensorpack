@@ -2,9 +2,7 @@
 # -*- coding: utf-8 -*-
 # File: mnist-tfslim.py
 
-import numpy as np
 import os
-import sys
 import argparse
 """
 MNIST ConvNet example using TensorFlow-slim.
@@ -48,7 +46,7 @@ class Model(ModelDesc):
             l = slim.layers.dropout(l, is_training=is_training)
             logits = slim.layers.fully_connected(l, 10, activation_fn=None, scope='fc1')
 
-        prob = tf.nn.softmax(logits, name='prob')
+        tf.nn.softmax(logits, name='prob')
 
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')

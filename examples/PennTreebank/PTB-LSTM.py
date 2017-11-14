@@ -9,8 +9,7 @@ import argparse
 
 os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
-from tensorpack.tfutils.gradproc import *
-from tensorpack.tfutils import optimizer, summary
+from tensorpack.tfutils import optimizer, summary, gradproc
 from tensorpack.utils import logger
 from tensorpack.utils.fs import download, get_dataset_path
 from tensorpack.utils.argtools import memoized_ignoreargs

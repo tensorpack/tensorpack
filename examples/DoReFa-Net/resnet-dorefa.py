@@ -7,12 +7,9 @@ import tensorflow as tf
 import argparse
 import numpy as np
 import os
-import sys
 
 from tensorpack import *
 from tensorpack.dataflow import dataset
-from tensorpack.tfutils.symbolic_functions import *
-from tensorpack.utils.stats import RatioCounter
 from tensorpack.tfutils.varreplace import remap_variables
 
 from imagenet_utils import ImageNetModel, eval_on_ILSVRC12, fbresnet_augmentor
@@ -44,7 +41,6 @@ class Model(ModelDesc):
         image = image / 256.0
 
         fw, fa, fg = get_dorefa(BITW, BITA, BITG)
-        old_get_variable = tf.get_variable
 
         def new_get_variable(v):
             name = v.op.name
@@ -111,7 +107,7 @@ class Model(ModelDesc):
                       .GlobalAvgPooling('gap')
                       .tf.multiply(49)  # this is due to a bug in our model design
                       .FullyConnected('fct', 1000)())
-        prob = tf.nn.softmax(logits, name='output')
+        tf.nn.softmax(logits, name='output')
         ImageNetModel.compute_loss_and_error(logits, label)
 
 

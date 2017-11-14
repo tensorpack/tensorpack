@@ -3,7 +3,6 @@
 
 import cv2
 import sys
-import os
 
 from contextlib import contextmanager
 import numpy as np

@@ -4,12 +4,10 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 import tensorflow as tf
 import argparse
-import numpy as np
 import os
 
 os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
-import tensorpack.tfutils.symbolic_functions as symbf
 from tensorpack.tfutils.summary import *
 from tensorpack.dataflow import dataset
 

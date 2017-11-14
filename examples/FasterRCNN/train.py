@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # File: train.py
 
-import sys, os
+import os
 import argparse
 import cv2
 import shutil
@@ -16,7 +16,7 @@ import tensorflow as tf
 os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.tfutils.summary import add_moving_summary
-from tensorpack.tfutils import optimizer, gradproc
+from tensorpack.tfutils import optimizer
 import tensorpack.utils.viz as tpviz
 from tensorpack.utils.gpu import get_nr_gpu
 
@@ -35,7 +35,7 @@ from data import (
 from viz import (
     draw_annotation, draw_proposal_recall,
     draw_predictions, draw_final_outputs)
-from common import clip_boxes, CustomResize, print_config
+from common import print_config
 from eval import (
     eval_on_dataflow, detect_one_image, print_evaluation_scores)
 import config
@@ -145,8 +145,8 @@ class Model(ModelDesc):
             # indices: Nx2. Each index into (#proposal, #category)
             pred_indices, final_probs = fastrcnn_predictions(decoded_boxes, label_probs)
             final_probs = tf.identity(final_probs, 'final_probs')
-            final_boxes = tf.gather_nd(decoded_boxes, pred_indices, name='final_boxes')
-            final_labels = tf.add(pred_indices[:, 1], 1, name='final_labels')
+            tf.gather_nd(decoded_boxes, pred_indices, name='final_boxes')
+            tf.add(pred_indices[:, 1], 1, name='final_labels')
 
     def _get_optimizer(self):
         lr = tf.get_variable('learning_rate', initializer=0.003, trainable=False)

@@ -2,7 +2,6 @@
 # -*- coding: UTF-8 -*-
 # File: shufflenet.py
 
-import sys
 import argparse
 import numpy as np
 import os
@@ -21,7 +20,7 @@ from tensorpack.tfutils.scope_utils import under_name_scope
 from tensorpack.utils.gpu import get_nr_gpu
 
 from imagenet_utils import (
-    fbresnet_augmentor, get_imagenet_dataflow,
+    get_imagenet_dataflow,
     ImageNetModel, GoogleNetResize, eval_on_ILSVRC12)
 
 TOTAL_BATCH_SIZE = 256

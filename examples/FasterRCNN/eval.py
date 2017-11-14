@@ -2,23 +2,17 @@
 # -*- coding: utf-8 -*-
 # File: eval.py
 
-import numpy as np
 import tqdm
-import cv2
-import six
 import os
-from collections import namedtuple, defaultdict
+from collections import namedtuple
 
-import tensorflow as tf
-from tensorpack.dataflow import MapDataComponent, TestDataSpeed
-from tensorpack.tfutils import get_default_sess_config
 from tensorpack.utils.utils import get_tqdm_kwargs
 
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 
-from coco import COCODetection, COCOMeta
-from common import clip_boxes, DataFromListOfDict, CustomResize
+from coco import COCOMeta
+from common import clip_boxes, CustomResize
 import config
 
 DetectionResult = namedtuple(

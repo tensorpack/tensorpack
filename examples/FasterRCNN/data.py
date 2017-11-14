@@ -3,17 +3,13 @@
 # File: data.py
 
 import cv2
-import os
 import numpy as np
-import logging
 
-from tensorpack.utils import logger
 from tensorpack.utils.argtools import memoized, log_once
 from tensorpack.dataflow import (
     MapData, imgaug, TestDataSpeed,
     MapDataComponent, DataFromList, PrefetchDataZMQ)
-import tensorpack.utils.viz as tpviz
-from tensorpack.utils.viz import interactive_imshow
+# import tensorpack.utils.viz as tpviz
 
 from coco import COCODetection
 from utils.generate_anchors import generate_anchors
@@ -121,7 +117,6 @@ def get_anchor_labels(anchors, gt_boxes, crowd_boxes):
         anchor_labels[overlap_with_crowd] = -1
 
     # Filter fg labels: ignore some fg if fg is too many
-    old_num_fg = np.sum(anchor_labels == 1)
     target_num_fg = int(config.RPN_BATCH_PER_IM * config.RPN_FG_RATIO)
     fg_inds = filter_box_label(anchor_labels, 1, target_num_fg)
     # Note that fg could be fewer than the target ratio
@@ -133,7 +128,7 @@ def get_anchor_labels(anchors, gt_boxes, crowd_boxes):
         # This can happen if, e.g. the image has large crowd.
         raise MalformedData("No valid foreground/background for RPN!")
     target_num_bg = config.RPN_BATCH_PER_IM - len(fg_inds)
-    bg_inds = filter_box_label(anchor_labels, 0, target_num_bg)
+    filter_box_label(anchor_labels, 0, target_num_bg)   # ignore return values
 
     # Set anchor boxes: the best gt_box for each fg anchor
     anchor_boxes = np.zeros((NA, 4), dtype='float32')

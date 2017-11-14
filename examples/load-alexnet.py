@@ -42,7 +42,7 @@ def tower_func(image):
         l = FullyConnected('fc6', l, 4096)
         l = FullyConnected('fc7', l, out_dim=4096)
     logits = FullyConnected('fc8', l, out_dim=1000, nl=tf.identity)
-    prob = tf.nn.softmax(logits, name='prob')
+    tf.nn.softmax(logits, name='prob')
 
 
 def run_test(path, input):

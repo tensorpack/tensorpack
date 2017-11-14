@@ -3,12 +3,9 @@
 # File: basemodel.py
 
 import tensorflow as tf
-from tensorflow.contrib.layers import variance_scaling_initializer
-import tensorpack.tfutils.symbolic_functions as symbf
-from tensorpack.tfutils.summary import add_moving_summary, add_activation_summary
 from tensorpack.tfutils.argscope import argscope, get_arg_scope
 from tensorpack.models import (
-    Conv2D, MaxPooling, BatchNorm, BNReLU, GlobalAvgPooling, FullyConnected)
+    Conv2D, MaxPooling, BatchNorm, BNReLU)
 
 
 def image_preprocess(image, bgr=True):

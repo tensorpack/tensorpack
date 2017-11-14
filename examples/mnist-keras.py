@@ -3,12 +3,8 @@
 # File: mnist-keras.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import numpy as np
 import tensorflow as tf
-import tensorflow.contrib.slim as slim
 import os
-import sys
-import argparse
 
 from tensorflow import keras
 KL = keras.layers

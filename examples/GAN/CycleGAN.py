@@ -3,16 +3,13 @@
 # File: CycleGAN.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import os, sys
+import os
 import argparse
 import glob
-from six.moves import map, zip, range
-import numpy as np
+from six.moves import range
 
 os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
-from tensorpack.utils.viz import *
-import tensorpack.tfutils.symbolic_functions as symbf
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
 import tensorflow as tf

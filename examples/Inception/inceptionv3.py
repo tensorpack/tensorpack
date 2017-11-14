@@ -5,15 +5,14 @@
 
 import cv2
 import argparse
-import numpy as np
 import os
 import tensorflow as tf
 import multiprocessing
 
 os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
-from tensorpack.tfutils.symbolic_functions import *
-from tensorpack.tfutils.summary import *
+from tensorpack.tfutils.symbolic_functions import prediction_incorrect
+from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.dataflow import dataset
 
 """
@@ -150,7 +149,7 @@ class Model(ModelDesc):
                     MaxPooling('maxpool', l, 3, 2)
                 ], 3, name='concat')
             for x in ['a', 'b']:
-                with tf.variable_scope('incep-8-2048{}'.format(x)) as scope:
+                with tf.variable_scope('incep-8-2048{}'.format(x)):
                     br11 = Conv2D('conv11', l, 320, 1)
                     br33 = Conv2D('conv133r', l, 384, 1)
                     br33 = tf.concat([

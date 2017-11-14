@@ -5,8 +5,7 @@
 
 import tensorflow as tf
 import numpy as np
-import time
-from tensorpack import (TowerTrainer, QueueInput,
+from tensorpack import (TowerTrainer,
                         ModelDescBase, DataFlow, StagingInput)
 from tensorpack.tfutils.tower import TowerContext, TowerFuncWrapper
 from tensorpack.graph_builder import DataParallelBuilder, LeastLoadedDeviceSetter
