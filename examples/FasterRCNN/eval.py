@@ -12,7 +12,7 @@ from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 
 from coco import COCOMeta
-from common import clip_boxes, CustomResize
+from common import CustomResize
 import config
 
 DetectionResult = namedtuple(
@@ -43,7 +43,6 @@ def detect_one_image(img, model_func):
     scale = (resized_img.shape[0] * 1.0 / img.shape[0] + resized_img.shape[1] * 1.0 / img.shape[1]) / 2
     boxes, probs, labels = model_func(resized_img)
     boxes = boxes / scale
-    boxes = clip_boxes(boxes, img.shape[:2])
 
     results = [DetectionResult(*args) for args in zip(labels, boxes, probs)]
     return results

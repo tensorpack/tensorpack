@@ -14,6 +14,19 @@ from utils.box_ops import pairwise_iou
 import config
 
 
+@under_name_scope()
+def clip_boxes(boxes, window, name=None):
+    """
+    Args:
+        boxes: nx4, xyxy
+        window: [h, w]
+    """
+    boxes = tf.maximum(boxes, 0.0)
+    m = tf.tile(tf.reverse(window, [0]), [2])    # (4,)
+    boxes = tf.minimum(boxes, tf.to_float(m), name=name)
+    return boxes
+
+
 @layer_register(log_shape=True)
 def rpn_head(featuremap, channel, num_anchors):
     """
@@ -170,13 +183,6 @@ def generate_rpn_proposals(boxes, scores, img_shape):
     else:
         PRE_NMS_TOPK = config.TEST_PRE_NMS_TOPK
         POST_NMS_TOPK = config.TEST_POST_NMS_TOPK
-
-    @under_name_scope()
-    def clip_boxes(boxes, window):
-        boxes = tf.maximum(boxes, 0.0)
-        m = tf.tile(tf.reverse(window, [0]), [2])    # (4,)
-        boxes = tf.minimum(boxes, tf.to_float(m))
-        return boxes
 
     topk = tf.minimum(PRE_NMS_TOPK, tf.size(scores))
     topk_scores, topk_indices = tf.nn.top_k(scores, k=topk, sorted=False)

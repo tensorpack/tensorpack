@@ -25,10 +25,10 @@ from coco import COCODetection
 from basemodel import (
     image_preprocess, pretrained_resnet_conv4, resnet_conv5)
 from model import (
-    decode_bbox_target, encode_bbox_target,
+    clip_boxes, decode_bbox_target, encode_bbox_target,
     rpn_head, rpn_losses,
-    generate_rpn_proposals, sample_fast_rcnn_targets,
-    roi_align, fastrcnn_head, fastrcnn_losses, fastrcnn_predictions)
+    generate_rpn_proposals, sample_fast_rcnn_targets, roi_align,
+    fastrcnn_head, fastrcnn_losses, fastrcnn_predictions)
 from data import (
     get_train_dataflow, get_eval_dataflow,
     get_all_anchors)
@@ -140,7 +140,7 @@ class Model(ModelDesc):
             decoded_boxes = decode_bbox_target(
                 fastrcnn_box_logits /
                 tf.constant(config.FASTRCNN_BBOX_REG_WEIGHTS), anchors)
-            decoded_boxes = tf.identity(decoded_boxes, name='fastrcnn_all_boxes')
+            decoded_boxes = clip_boxes(decoded_boxes, tf.shape(image)[:2], name='fastrcnn_all_boxes')
 
             # indices: Nx2. Each index into (#proposal, #category)
             pred_indices, final_probs = fastrcnn_predictions(decoded_boxes, label_probs)
