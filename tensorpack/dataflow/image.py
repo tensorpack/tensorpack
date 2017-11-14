@@ -75,6 +75,7 @@ class AugmentImageComponent(MapDataComponent):
     """
     Apply image augmentors on 1 image component.
     """
+
     def __init__(self, ds, augmentors, index=0, copy=True, catch_exceptions=False):
         """
         Args:
@@ -112,7 +113,9 @@ class AugmentImageCoordinates(MapData):
     Apply image augmentors on an image and a list of coordinates.
     Coordinates must be a Nx2 floating point array, each row is (x, y).
     """
+
     def __init__(self, ds, augmentors, img_index=0, coords_index=1, copy=True, catch_exceptions=False):
+
         """
         Args:
             ds (DataFlow): input DataFlow.
