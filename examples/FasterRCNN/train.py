@@ -119,7 +119,7 @@ class Model(ModelDesc):
             with tf.name_scope('fg_sample_patch_viz'):
                 fg_sampled_patches = crop_and_resize(
                     image, fg_sampled_boxes,
-                    tf.zeros_like(fg_inds_wrt_sample, dtype=tf.int32), [300, 300])
+                    tf.zeros_like(fg_inds_wrt_sample, dtype=tf.int32), 300)
                 fg_sampled_patches = tf.transpose(fg_sampled_patches, [0, 2, 3, 1])
                 tf.summary.image('viz', fg_sampled_patches, max_outputs=30)
 
@@ -308,7 +308,7 @@ if __name__ == '__main__':
 
         cfg = TrainConfig(
             model=Model(),
-            dataflow=get_train_dataflow(),
+            data=QueueInput(get_train_dataflow()),
             callbacks=[
                 PeriodicTrigger(ModelSaver(), every_k_epochs=5),
                 # linear warmup
