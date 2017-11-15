@@ -307,6 +307,7 @@ def crop_and_resize(image, boxes, box_ind, crop_size):
         n,C,size,size
     """
     assert isinstance(crop_size, int), crop_size
+
     @under_name_scope()
     def transform_fpcoor_for_tf(boxes, image_shape, crop_shape):
         """
