@@ -38,7 +38,7 @@ METHOD = None
 
 def get_player(viz=False, train=False):
     env = AtariPlayer(ROM_FILE, frame_skip=ACTION_REPEAT, viz=viz,
-                      live_lost_as_eoe=train, max_num_frames=30000)
+                      live_lost_as_eoe=train, max_num_frames=60000)
     env = FireResetEnv(env)
     env = MapState(env, lambda im: cv2.resize(im, IMAGE_SIZE))
     if not train:
