@@ -64,7 +64,7 @@ See [tutorials](http://tensorpack.readthedocs.io/en/latest/tutorial/index.html) 
 
 Dependencies:
 
-+ Python 2 or 3
++ Python 2.7 or 3
 + TensorFlow >= 1.0.0 (>=1.1.0 for Multi-GPU)
 + Python bindings for OpenCV (Optional, but required by a lot of features)
 ```

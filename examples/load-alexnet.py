@@ -17,6 +17,10 @@ import tensorflow as tf
 
 """
 Usage:
+    Download caffe models at https://github.com/BVLC/caffe/tree/master/models/bvlc_alexnet
+
+    Install caffe python bindings.
+
     python -m tensorpack.utils.loadcaffe PATH/TO/CAFFE/{deploy.prototxt,bvlc_alexnet.caffemodel} alexnet.npy
     ./load-alexnet.py --load alexnet.npy --input cat.png
 """
