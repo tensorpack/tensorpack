@@ -320,12 +320,12 @@ if __name__ == '__main__':
                     'learning_rate',
                     [(warmup_epoch * factor, 1e-2),
                      (150000 * factor // stepnum, 1e-3),
-                     (210000 * factor // stepnum, 1e-4)]),
+                     (230000 * factor // stepnum, 1e-4)]),
                 EvalCallback(),
                 GPUUtilizationTracker(),
             ],
             steps_per_epoch=stepnum,
-            max_epoch=230000 * factor // stepnum,
+            max_epoch=280000 * factor // stepnum,
             session_init=get_model_loader(args.load) if args.load else None,
         )
         trainer = SyncMultiGPUTrainerReplicated(get_nr_gpu())
