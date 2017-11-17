@@ -78,16 +78,16 @@ def rpn_losses(anchor_labels, anchor_boxes, label_logits, box_logits):
         with tf.device('/cpu:0'):
             for th in [0.5, 0.2, 0.1]:
                 valid_prediction = tf.cast(valid_label_prob > th, tf.int32)
-                nr_pos_prediction = tf.count_nonzero(valid_prediction, name='num_pos_prediction')
+                nr_pos_prediction = tf.reduce_sum(valid_prediction, name='num_pos_prediction')
                 pos_prediction_corr = tf.count_nonzero(tf.logical_and(
                     valid_label_prob > th,
                     tf.equal(valid_prediction, valid_anchor_labels)))
                 summaries.append(tf.truediv(
                     pos_prediction_corr,
                     nr_pos, name='recall_th{}'.format(th)))
-                summaries.append(tf.truediv(
-                    pos_prediction_corr,
-                    nr_pos_prediction, name='precision_th{}'.format(th)))
+                precision = tf.truediv(pos_prediction_corr, nr_pos_prediction)
+                precision = tf.where(tf.equal(nr_pos_prediction, 0), 0, precision, name='precision_th{}'.format(th))
+                summaries.append(precision)
 
     label_loss = tf.nn.sigmoid_cross_entropy_with_logits(
         labels=tf.to_float(valid_anchor_labels), logits=valid_label_logits)

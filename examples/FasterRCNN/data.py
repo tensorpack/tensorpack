@@ -226,7 +226,7 @@ def get_train_dataflow(add_mask=False):
             if not len(boxes):
                 raise MalformedData("No valid gt_boxes!")
         except MalformedData as e:
-            log_once("Input {} is invalid for training: {}".format(fname, str(e)), 'warn')
+            log_once("Input {} is filtered for training: {}".format(fname, str(e)), 'warn')
             return None
 
         ret = [im, fm_labels, fm_boxes, boxes, klass]

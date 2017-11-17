@@ -75,10 +75,12 @@ def get_iou_callable():
     """
     Get a pairwise box iou callable.
     """
-    os.environ['CUDA_VISIBLE_DEVICES'] = ''
+    os.environ['CUDA_VISIBLE_DEVICES'] = ''  # we don't want the dataflow process to touch CUDA
     with tf.Graph().as_default(), tf.device('/cpu:0'):
         A = tf.placeholder(tf.float32, shape=[None, 4])
         B = tf.placeholder(tf.float32, shape=[None, 4])
         iou = pairwise_iou(A, B)
+        tf.logging.set_verbosity(tf.logging.FATAL)  # TF will warn about GPU not found
         sess = tf.Session(config=get_default_sess_config())
+        tf.logging.set_verbosity(tf.logging.INFO)
         return sess.make_callable(iou, [A, B])
