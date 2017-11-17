@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # File: box_ops.py
 
+import os
 import tensorflow as tf
 from tensorpack.tfutils.scope_utils import under_name_scope
 from tensorpack.tfutils import get_default_sess_config
@@ -74,6 +75,7 @@ def get_iou_callable():
     """
     Get a pairwise box iou callable.
     """
+    os.environ['CUDA_VISIBLE_DEVICES'] = ''
     with tf.Graph().as_default(), tf.device('/cpu:0'):
         A = tf.placeholder(tf.float32, shape=[None, 4])
         B = tf.placeholder(tf.float32, shape=[None, 4])
