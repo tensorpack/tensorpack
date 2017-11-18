@@ -157,7 +157,7 @@ def get_config():
 
     return TrainConfig(
         model=Model(),
-        dataflow=dataset_train,
+        data=QueueInput(dataset_train),
         callbacks=[
             ModelSaver(),
             InferenceRunner(dataset_test,
