@@ -30,7 +30,7 @@ example:
 
 
 class Place2Reader(RNGDataFlow):
-    """Read images directly from tar file without unpacking
+    """Read images directly from tar file without unpacking.
     """
     def __init__(self, tar, labels):
         super(Place2Reader, self).__init__()
@@ -69,12 +69,9 @@ class Place2Reader(RNGDataFlow):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--tar', help='path to tar file',
-                        default='/graphics/projects/scratch/datasets/places2/untouched/val_large.tar')
-    parser.add_argument('--labels', help='path to label txt file',
-                        default='/graphics/projects/scratch/datasets/places2/untouched/places365_val.txt')
-    parser.add_argument('--lmdb', help='path to database (to be written)',
-                        default='/graphics/projects/scratch/datasets/places2/val_large.lmdb')
+    parser.add_argument('--tar', help='path to tar file')
+    parser.add_argument('--labels', help='path to label txt file')
+    parser.add_argument('--lmdb', help='path to database (to be written)')
     parser.add_argument('--debug', action='store_true',
                         help='just show the images')
     args = parser.parse_args()

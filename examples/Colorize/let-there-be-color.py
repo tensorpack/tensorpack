@@ -226,11 +226,11 @@ class RejectTooSmallImages(MapDataComponent):
 
         super(RejectTooSmallImages, self).__init__(ds, func, index=index)
 
+
 class RejectGrayscaleImages(MapDataComponent):
     def __init__(self, ds, thresh=224, index=0):
         def func(img):
             h, w, c = img.shape
-            tmp = img.copy().astype(np.float32)
             if c == 1:
                 return None
             if np.max((img[:, :, 0] - img[:, :, 1])**2) < 1:

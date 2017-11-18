@@ -87,9 +87,9 @@ def under_variable_scope():
 
     .. code-block:: python
 
-        @under_name_scope()
+        @under_variable_scope()
         def rms(x):
-            return tf.sqrt(  # will be under name scope 'rms'
+            return tf.sqrt(  # will be under variable scope 'rms'
                 tf.reduce_mean(tf.square(x)))
 
     Todo:
