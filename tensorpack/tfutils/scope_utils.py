@@ -77,6 +77,35 @@ def under_name_scope():
     return _impl
 
 
+def under_variable_scope():
+    """
+    Returns:
+        A decorator which makes the function happen under a variable scope,
+        which is named by the function itself.
+
+    Examples:
+
+    .. code-block:: python
+
+        @under_name_scope()
+        def rms(x):
+            return tf.sqrt(  # will be under name scope 'rms'
+                tf.reduce_mean(tf.square(x)))
+
+    Todo:
+        Add a reuse option.
+    """
+
+    def _impl(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            name = func.__name__
+            with tf.variable_scope(name):
+                return func(*args, **kwargs)
+        return wrapper
+    return _impl
+
+
 @graph_memoized
 def _get_cached_ns(name):
     with tf.name_scope(None):
