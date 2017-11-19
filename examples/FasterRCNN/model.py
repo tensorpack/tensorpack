@@ -134,7 +134,7 @@ def decode_bbox_target(box_predictions, anchors):
     xbyb = box_pred_txty * waha + xaya
     x1y1 = xbyb - wbhb * 0.5
     x2y2 = xbyb + wbhb * 0.5    # (...)x1x2
-    out = tf.concat([x1y1, x2y2], axis=1)
+    out = tf.concat([x1y1, x2y2], axis=-2)
     return tf.reshape(out, orig_shape)
 
 
