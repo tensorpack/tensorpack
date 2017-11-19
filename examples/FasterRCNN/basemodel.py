@@ -3,12 +3,9 @@
 # File: basemodel.py
 
 import tensorflow as tf
-from tensorflow.contrib.layers import variance_scaling_initializer
-import tensorpack.tfutils.symbolic_functions as symbf
-from tensorpack.tfutils.summary import add_moving_summary, add_activation_summary
 from tensorpack.tfutils.argscope import argscope, get_arg_scope
 from tensorpack.models import (
-    Conv2D, MaxPooling, BatchNorm, BNReLU, GlobalAvgPooling, FullyConnected)
+    Conv2D, MaxPooling, BatchNorm, BNReLU)
 
 
 def image_preprocess(image, bgr=True):
@@ -91,11 +88,10 @@ def pretrained_resnet_conv4(image, num_blocks):
     return l
 
 
-def resnet_conv5_gap(image, num_block):
-    with argscope([Conv2D, GlobalAvgPooling, BatchNorm], data_format='NCHW'), \
+def resnet_conv5(image, num_block):
+    with argscope([Conv2D, BatchNorm], data_format='NCHW'), \
             argscope(Conv2D, nl=tf.identity, use_bias=False), \
             argscope(BatchNorm, use_local_stat=False):
         # 14x14:
         l = resnet_group(image, 'group3', resnet_bottleneck, 512, num_block, stride=2)
-        l = GlobalAvgPooling('gap', l)
         return l

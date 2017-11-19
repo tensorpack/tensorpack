@@ -32,31 +32,23 @@ Examples are not only for demonstration of the framework -- you can train them a
 ## Features:
 
 It's Yet Another TF wrapper, but different in:
-1. It's not a model wrapper.
-	+ There are already too many symbolic function wrappers.
-		Tensorpack includes only a few common models,
-	  but you can use any other model wrappers within tensorpack, such as sonnet/Keras/slim/tflearn/tensorlayer/....
 
-2. Focus on __training speed__.
-	+	Speed comes for free with tensorpack -- it uses TensorFlow in the __correct way__, therefore doesn't introduce overhead on its side.
+1. Focus on __training speed__.
+	+	Speed comes for free with tensorpack -- it uses TensorFlow in the __correct way__ with no extra overhead.
 	  On various CNNs, it runs 1.5~1.7x faster than the equivalent Keras code.
 
 	+ Data-parallel multi-GPU/distributed training is off-the-shelf to use. It is as fast as Google's [official benchmark](https://www.tensorflow.org/performance/benchmarks).
 
 	+ See [tensorpack/benchmarks](https://github.com/tensorpack/benchmarks) for some benchmark scripts.
 
-3. Focus on __large datasets__.
+2. Focus on __large datasets__.
 	+ It's painful to read/preprocess data through TF.
 		Tensorpack helps you load large datasets (e.g. ImageNet) in __pure Python__ with autoparallelization.
-		It also naturally works with TF Queues or tf.data.
 
-4. Interface of extensible __Callbacks__.
-	Write a callback to implement everything you want to do apart from the training iterations, and
-	enable it with one line of code. Common examples include:
-	+ Change hyperparameters during training
-	+ Print some tensors of interest
-	+ Monitor GPU utilization
-	+ Send error rate to your phone
+3. It's not a model wrapper.
+	+ There are already too many symbolic function wrappers.
+		Tensorpack includes only a few common models,
+	  but you can use any other wrappers within tensorpack, including sonnet/Keras/slim/tflearn/tensorlayer/....
 
 See [tutorials](http://tensorpack.readthedocs.io/en/latest/tutorial/index.html) to know more about these features.
 
@@ -64,7 +56,7 @@ See [tutorials](http://tensorpack.readthedocs.io/en/latest/tutorial/index.html) 
 
 Dependencies:
 
-+ Python 2 or 3
++ Python 2.7 or 3
 + TensorFlow >= 1.0.0 (>=1.1.0 for Multi-GPU)
 + Python bindings for OpenCV (Optional, but required by a lot of features)
 ```

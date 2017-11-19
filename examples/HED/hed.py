@@ -6,17 +6,15 @@
 import cv2
 import tensorflow as tf
 import argparse
-import numpy as np
 from six.moves import zip
 import os
-import sys
 
 os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.dataflow import dataset
 from tensorpack.utils.gpu import get_nr_gpu
 from tensorpack.tfutils import optimizer
-from tensorpack.tfutils.summary import *
+from tensorpack.tfutils.summary import add_moving_summary, add_param_summary
 
 
 def class_balanced_sigmoid_cross_entropy(logits, label, name='cross_entropy_loss'):
@@ -56,7 +54,7 @@ class Model(ModelDesc):
         edgemap = tf.expand_dims(edgemap, 3, name='edgemap4d')
 
         def branch(name, l, up):
-            with tf.variable_scope(name) as scope:
+            with tf.variable_scope(name):
                 l = Conv2D('convfc', l, 1, kernel_shape=1, nl=tf.identity,
                            use_bias=True,
                            W_init=tf.constant_initializer(),

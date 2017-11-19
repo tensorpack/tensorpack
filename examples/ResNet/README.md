@@ -24,8 +24,9 @@ To train, just run:
 ```bash
 ./imagenet-resnet.py --data /path/to/original/ILSVRC --gpu 0,1,2,3 -d 50 [--mode resnet/preact/se]
 ```
-You should be able to see good GPU utilization (around 95%), if your data is fast enough.
-See the [tutorial](http://tensorpack.readthedocs.io/en/latest/tutorial/efficient-dataflow.html) on how to speed up your data.
+You should be able to see good GPU utilization (95%~99%), if your data is fast enough.
+The default data pipeline is probably OK for most systems.
+See the [tutorial](http://tensorpack.readthedocs.io/en/latest/tutorial/efficient-dataflow.html) on other options to speed up your data.
 
 ![imagenet](imagenet-resnet.png)
 

@@ -27,7 +27,7 @@ with tf.Graph().as_default() as G:
         with TowerContext('', is_training=False):
             input = PlaceholderInput()
             input.setup(M.get_inputs_desc())
-            M.build_graph(input)
+            M.build_graph(*input.get_input_tensors())
     else:
         tf.train.import_meta_graph(args.meta)
 

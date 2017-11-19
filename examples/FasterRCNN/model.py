@@ -2,27 +2,40 @@
 # -*- coding: utf-8 -*-
 # File: model.py
 
-import numpy as np
 import tensorflow as tf
 from tensorpack.tfutils import get_current_tower_context
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.tfutils.argscope import argscope
 from tensorpack.tfutils.scope_utils import under_name_scope
-from tensorpack.models import Conv2D, FullyConnected
+from tensorpack.models import (
+    Conv2D, FullyConnected, GlobalAvgPooling, layer_register)
 
 from utils.box_ops import pairwise_iou
 import config
 
 
+@under_name_scope()
+def clip_boxes(boxes, window, name=None):
+    """
+    Args:
+        boxes: nx4, xyxy
+        window: [h, w]
+    """
+    boxes = tf.maximum(boxes, 0.0)
+    m = tf.tile(tf.reverse(window, [0]), [2])    # (4,)
+    boxes = tf.minimum(boxes, tf.to_float(m), name=name)
+    return boxes
+
+
+@layer_register(log_shape=True)
 def rpn_head(featuremap, channel, num_anchors):
     """
     Returns:
         label_logits: fHxfWxNA
         box_logits: fHxfWxNAx4
     """
-    with tf.variable_scope('rpn'), \
-            argscope(Conv2D, data_format='NCHW',
-                     W_init=tf.random_normal_initializer(stddev=0.01)):
+    with argscope(Conv2D, data_format='NCHW',
+                  W_init=tf.random_normal_initializer(stddev=0.01)):
         hidden = Conv2D('conv0', featuremap, channel, 3, nl=tf.nn.relu)
 
         label_logits = Conv2D('class', hidden, num_anchors, 1)
@@ -53,8 +66,8 @@ def rpn_losses(anchor_labels, anchor_boxes, label_logits, box_logits):
     with tf.device('/cpu:0'):
         valid_mask = tf.stop_gradient(tf.not_equal(anchor_labels, -1))
         pos_mask = tf.stop_gradient(tf.equal(anchor_labels, 1))
-        nr_valid = tf.stop_gradient(tf.count_nonzero(valid_mask), name='num_valid_anchor')
-        nr_pos = tf.count_nonzero(pos_mask, name='num_pos_anchor')
+        nr_valid = tf.stop_gradient(tf.count_nonzero(valid_mask, dtype=tf.int32), name='num_valid_anchor')
+        nr_pos = tf.count_nonzero(pos_mask, dtype=tf.int32, name='num_pos_anchor')
 
         valid_anchor_labels = tf.boolean_mask(anchor_labels, valid_mask)
     valid_label_logits = tf.boolean_mask(label_logits, valid_mask)
@@ -65,16 +78,18 @@ def rpn_losses(anchor_labels, anchor_boxes, label_logits, box_logits):
         with tf.device('/cpu:0'):
             for th in [0.5, 0.2, 0.1]:
                 valid_prediction = tf.cast(valid_label_prob > th, tf.int32)
-                prediction_corr = tf.count_nonzero(tf.equal(valid_prediction, valid_anchor_labels))
-                pos_prediction_corr = tf.count_nonzero(tf.logical_and(
-                    valid_label_prob > th,
-                    tf.equal(valid_prediction, valid_anchor_labels)))
+                nr_pos_prediction = tf.reduce_sum(valid_prediction, name='num_pos_prediction')
+                pos_prediction_corr = tf.count_nonzero(
+                    tf.logical_and(
+                        valid_label_prob > th,
+                        tf.equal(valid_prediction, valid_anchor_labels)),
+                    dtype=tf.int32)
                 summaries.append(tf.truediv(
                     pos_prediction_corr,
                     nr_pos, name='recall_th{}'.format(th)))
-                summaries.append(tf.truediv(
-                    prediction_corr,
-                    nr_valid, name='accuracy_th{}'.format(th)))
+                precision = tf.to_float(tf.truediv(pos_prediction_corr, nr_pos_prediction))
+                precision = tf.where(tf.equal(nr_pos_prediction, 0), 0.0, precision, name='precision_th{}'.format(th))
+                summaries.append(precision)
 
     label_loss = tf.nn.sigmoid_cross_entropy_with_logits(
         labels=tf.to_float(valid_anchor_labels), logits=valid_label_logits)
@@ -90,25 +105,24 @@ def rpn_losses(anchor_labels, anchor_boxes, label_logits, box_logits):
         box_loss,
         tf.cast(nr_valid, tf.float32), name='box_loss')
 
-    for k in [label_loss, box_loss, nr_valid, nr_pos] + summaries:
-        add_moving_summary(k)
+    add_moving_summary(*([label_loss, box_loss, nr_valid, nr_pos] + summaries))
     return label_loss, box_loss
 
 
 @under_name_scope()
-def decode_bbox_target(box_predictions, anchors, stride):
+def decode_bbox_target(box_predictions, anchors):
     """
     Args:
-        box_predictions: fHxfWxNAx4, logits
-        anchors: fHxfWxNAx4, floatbox
-        stride (int): the stride of the anchors
+        box_predictions: (..., 4), logits
+        anchors: (..., 4), floatbox. Must have the same shape
 
     Returns:
-        box_decoded: (fHxfWxNA)x4, float32
+        box_decoded: (..., 4), float32. With the same shape.
     """
+    orig_shape = tf.shape(anchors)
     box_pred_txtytwth = tf.reshape(box_predictions, (-1, 2, 2))
     box_pred_txty, box_pred_twth = tf.split(box_pred_txtytwth, 2, axis=1)
-    # each is (fHxfWxNA)x1x2
+    # each is (...)x1x2
     anchors_x1y1x2y2 = tf.reshape(anchors, (-1, 2, 2))
     anchors_x1y1, anchors_x2y2 = tf.split(anchors_x1y1x2y2, 2, axis=1)
 
@@ -116,23 +130,23 @@ def decode_bbox_target(box_predictions, anchors, stride):
     xaya = tf.to_float(anchors_x2y2 + anchors_x1y1) * 0.5
 
     wbhb = tf.exp(tf.minimum(
-        box_pred_twth, np.log(config.MAX_SIZE * 1.0 / stride))) * waha
+        box_pred_twth, config.BBOX_DECODE_CLIP)) * waha
     xbyb = box_pred_txty * waha + xaya
     x1y1 = xbyb - wbhb * 0.5
-    x2y2 = xbyb + wbhb * 0.5
-    out = tf.squeeze(tf.concat([x1y1, x2y2], axis=2), axis=1, name='output')
-    return out
+    x2y2 = xbyb + wbhb * 0.5    # (...)x1x2
+    out = tf.concat([x1y1, x2y2], axis=1)
+    return tf.reshape(out, orig_shape)
 
 
 @under_name_scope()
 def encode_bbox_target(boxes, anchors):
     """
     Args:
-        boxes: fHxfWxNAx4, float32
-        anchors: fHxfWxNAx4, float32
+        boxes: (..., 4), float32
+        anchors: (..., 4), float32
 
     Returns:
-        box_encoded: fHxfWxNAx4
+        box_encoded: (..., 4), float32 with the same shape.
     """
     anchors_x1y1x2y2 = tf.reshape(anchors, (-1, 2, 2))
     anchors_x1y1, anchors_x2y2 = tf.split(anchors_x1y1x2y2, 2, axis=1)
@@ -164,19 +178,13 @@ def generate_rpn_proposals(boxes, scores, img_shape):
         boxes: kx4 float
         scores: k logits
     """
+    assert boxes.shape.ndims == 2, boxes.shape
     if get_current_tower_context().is_training:
         PRE_NMS_TOPK = config.TRAIN_PRE_NMS_TOPK
         POST_NMS_TOPK = config.TRAIN_POST_NMS_TOPK
     else:
         PRE_NMS_TOPK = config.TEST_PRE_NMS_TOPK
         POST_NMS_TOPK = config.TEST_POST_NMS_TOPK
-
-    @under_name_scope()
-    def clip_boxes(boxes, window):
-        boxes = tf.maximum(boxes, 0.0)
-        m = tf.tile(tf.reverse(window, [0]), [2])    # (4,)
-        boxes = tf.minimum(boxes, tf.to_float(m))
-        return boxes
 
     topk = tf.minimum(PRE_NMS_TOPK, tf.size(scores))
     topk_scores, topk_indices = tf.nn.top_k(scores, k=topk, sorted=False)
@@ -205,13 +213,36 @@ def generate_rpn_proposals(boxes, scores, img_shape):
         topk_valid_boxes,
         nms_indices, name='boxes')
     final_scores = tf.gather(topk_valid_scores, nms_indices, name='scores')
-    final_probs = tf.gather(topk_valid_scores, nms_indices, name='probs')
     return final_boxes, final_scores
+
+
+@under_name_scope()
+def proposal_metrics(iou):
+    """
+    Add summaries for RPN proposals.
+
+    Args:
+        iou: nxm, #proposal x #gt
+    """
+    # find best roi for each gt, for summary only
+    best_iou = tf.reduce_max(iou, axis=0)
+    mean_best_iou = tf.reduce_mean(best_iou, name='best_iou_per_gt')
+    summaries = [mean_best_iou]
+    with tf.device('/cpu:0'):
+        for th in [0.3, 0.5]:
+            recall = tf.truediv(
+                tf.count_nonzero(best_iou >= th),
+                tf.size(best_iou, out_type=tf.int64),
+                name='recall_iou{}'.format(th))
+            summaries.append(recall)
+    add_moving_summary(*summaries)
 
 
 @under_name_scope()
 def sample_fast_rcnn_targets(boxes, gt_boxes, gt_labels):
     """
+    Sample some ROIs from all proposals for training.
+
     Args:
         boxes: nx4 region proposals, floatbox
         gt_boxes: mx4, floatbox
@@ -219,102 +250,75 @@ def sample_fast_rcnn_targets(boxes, gt_boxes, gt_labels):
 
     Returns:
         sampled_boxes: tx4 floatbox, the rois
-        target_boxes: tx4 encoded box, the regression target
-        labels: t labels
+        sampled_labels: t labels, in [0, #class-1]. Positive means foreground.
+        fg_inds_wrt_gt: #fg indices, each in range [0, m-1].
+            It contains the matching GT of each foreground roi.
     """
-    @under_name_scope()
-    def assign_class_to_roi(iou, gt_boxes, gt_labels):
-        """
-        Args:
-            iou: nxm (nr_proposal x nr_gt)
-        Returns:
-            fg_mask: n boolean, whether each roibox is fg
-            roi_labels: n int32, best label for each roi box
-            best_gt_boxes: nx4
-        """
-        # find best gt box for each roi box
-        best_iou_ind = tf.argmax(iou, axis=1)   # n, each in 1~m
-        best_iou = tf.reduce_max(iou, axis=1)   # n,
-        best_gt_boxes = tf.gather(gt_boxes, best_iou_ind)   # nx4
-        best_gt_labels = tf.gather(gt_labels, best_iou_ind)     # n, each in 1~C
-
-        fg_mask = best_iou >= config.FASTRCNN_FG_THRESH
-        return fg_mask, best_gt_labels, best_gt_boxes
-
     iou = pairwise_iou(boxes, gt_boxes)     # nxm
+    proposal_metrics(iou)
 
-    with tf.name_scope('proposal_metrics'):
-        # find best roi for each gt, for summary only
-        best_iou = tf.reduce_max(iou, axis=0)
-        mean_best_iou = tf.reduce_mean(best_iou, name='best_iou_per_gt')
-        summaries = [mean_best_iou]
-        with tf.device('/cpu:0'):
-            for th in [0.3, 0.5]:
-                recall = tf.truediv(
-                    tf.count_nonzero(best_iou >= th),
-                    tf.size(best_iou, out_type=tf.int64),
-                    name='recall_iou{}'.format(th))
-                summaries.append(recall)
-        add_moving_summary(*summaries)
+    # add ground truth as proposals as well
+    boxes = tf.concat([boxes, gt_boxes], axis=0)    # (n+m) x 4
+    iou = tf.concat([iou, tf.eye(tf.shape(gt_boxes)[0])], axis=0)   # (n+m) x m
+    # #proposal=n+m from now on
 
-    # n, n, nx4
-    fg_mask, roi_labels, best_gt_boxes = assign_class_to_roi(iou, gt_boxes, gt_labels)
+    def sample_fg_bg(iou):
+        fg_mask = tf.reduce_max(iou, axis=1) >= config.FASTRCNN_FG_THRESH
 
-    # don't have to add gt for training, but add it anyway
-    fg_inds = tf.reshape(tf.where(fg_mask), [-1])
-    fg_inds = tf.concat([fg_inds, tf.cast(
-        tf.range(tf.size(gt_labels)) + tf.shape(boxes)[0],
-        tf.int64)], 0)
-    num_fg = tf.size(fg_inds)
-    num_fg = tf.minimum(int(
-        config.FASTRCNN_BATCH_PER_IM * config.FASTRCNN_FG_RATIO),
-        num_fg, name='num_fg')
-    fg_inds = tf.slice(tf.random_shuffle(fg_inds), [0], [num_fg])
+        fg_inds = tf.reshape(tf.where(fg_mask), [-1])
+        num_fg = tf.minimum(int(
+            config.FASTRCNN_BATCH_PER_IM * config.FASTRCNN_FG_RATIO),
+            tf.size(fg_inds), name='num_fg')
+        fg_inds = tf.random_shuffle(fg_inds)[:num_fg]
 
-    bg_inds = tf.where(tf.logical_not(fg_mask))[:, 0]
-    num_bg = tf.size(bg_inds)
-    num_bg = tf.minimum(config.FASTRCNN_BATCH_PER_IM - num_fg, num_bg, name='num_bg')
-    bg_inds = tf.slice(tf.random_shuffle(bg_inds), [0], [num_bg])
+        bg_inds = tf.reshape(tf.where(tf.logical_not(fg_mask)), [-1])
+        num_bg = tf.minimum(
+            config.FASTRCNN_BATCH_PER_IM - num_fg,
+            tf.size(bg_inds), name='num_bg')
+        bg_inds = tf.random_shuffle(bg_inds)[:num_bg]
 
-    add_moving_summary(num_fg, num_bg)
+        add_moving_summary(num_fg, num_bg)
+        return fg_inds, bg_inds
 
-    all_boxes = tf.concat([boxes, gt_boxes], axis=0)
-    all_matched_gt_boxes = tf.concat([best_gt_boxes, gt_boxes], axis=0)
-    all_labels = tf.concat([roi_labels, gt_labels], axis=0)
+    fg_inds, bg_inds = sample_fg_bg(iou)
+    # fg,bg indices w.r.t proposals
 
-    ind_in_all = tf.concat([fg_inds, bg_inds], axis=0)   # ind in all n+m boxes
-    ret_boxes = tf.gather(all_boxes, ind_in_all, name='sampled_boxes')
-    ret_matched_gt_boxes = tf.gather(all_matched_gt_boxes, ind_in_all)
-    ret_encoded_boxes = encode_bbox_target(ret_matched_gt_boxes, ret_boxes)
-    ret_encoded_boxes = ret_encoded_boxes * tf.constant(config.FASTRCNN_BBOX_REG_WEIGHTS)
-    # bg boxes will not be trained on
+    best_iou_ind = tf.argmax(iou, axis=1)   # #proposal, each in 0~m-1
+    fg_inds_wrt_gt = tf.gather(best_iou_ind, fg_inds)   # num_fg
+
+    all_indices = tf.concat([fg_inds, bg_inds], axis=0)   # indices w.r.t all n+m proposal boxes
+    ret_boxes = tf.gather(boxes, all_indices, name='sampled_proposal_boxes')
 
     ret_labels = tf.concat(
-        [tf.gather(all_labels, fg_inds),
+        [tf.gather(gt_labels, fg_inds_wrt_gt),
          tf.zeros_like(bg_inds, dtype=tf.int64)], axis=0, name='sampled_labels')
-    return ret_boxes, tf.stop_gradient(ret_encoded_boxes), tf.stop_gradient(ret_labels)
+    return ret_boxes, tf.stop_gradient(ret_labels), fg_inds_wrt_gt
 
 
 @under_name_scope()
-def roi_align(featuremap, boxes, output_shape):
+def crop_and_resize(image, boxes, box_ind, crop_size):
     """
-    Args:
-        featuremap: 1xCxHxW
-        boxes: Nx4 floatbox
-        output_shape: int
+    Better-aligned version of tf.image.crop_and_resize, following our definition of floating point boxes.
 
+    Args:
+        image: NCHW
+        boxes: nx4, x1y1x2y2
+        box_ind: (n,)
+        crop_size (int):
     Returns:
-        NxCxoHxoW
+        n,C,size,size
     """
+    assert isinstance(crop_size, int), crop_size
+
     @under_name_scope()
     def transform_fpcoor_for_tf(boxes, image_shape, crop_shape):
         """
-        The way crop_and_resize works (with normalized box):
+        The way tf.image.crop_and_resize works (with normalized box):
         Initial point (the value of output[0]): x0_box * (W_img - 1)
         Spacing: w_box * (W_img - 1) / (W_crop - 1)
         Use the above grid to bilinear sample.
 
-        However, what I want is (with fpcoor box):
+        However, what we want is (with fpcoor box):
         Spacing: w_box / W_crop
         Initial point: x0_box + spacing/2 - 0.5
         (-0.5 because bilinear sample assumes floating point coordinate (0.0, 0.0) is the same as pixel value (0, 0))
@@ -337,91 +341,149 @@ def roi_align(featuremap, boxes, output_shape):
 
         return tf.concat([ny0, nx0, ny0 + nh, nx0 + nw], axis=1)
 
-    image_shape = tf.shape(featuremap)[2:]
-    featuremap = tf.transpose(featuremap, [0, 2, 3, 1])  # to nhwc
-    # sample 4 locations per roi bin
-    boxes = transform_fpcoor_for_tf(boxes, image_shape, [output_shape * 2, output_shape * 2])
-    boxes = tf.stop_gradient(boxes)  # TODO
+    image_shape = tf.shape(image)[2:]
+    boxes = transform_fpcoor_for_tf(boxes, image_shape, [crop_size, crop_size])
+    image = tf.transpose(image, [0, 2, 3, 1])   # 1hwc
     ret = tf.image.crop_and_resize(
-        featuremap, boxes, tf.zeros([tf.shape(boxes)[0]], dtype=tf.int32),
-        crop_size=[output_shape * 2, output_shape * 2])
-    ret = tf.transpose(ret, [0, 3, 1, 2])
+        image, boxes, box_ind,
+        crop_size=[crop_size, crop_size])
+    ret = tf.transpose(ret, [0, 3, 1, 2])   # ncss
+    return ret
+
+
+@under_name_scope()
+def roi_align(featuremap, boxes, output_shape):
+    """
+    Args:
+        featuremap: 1xCxHxW
+        boxes: Nx4 floatbox
+        output_shape: int
+
+    Returns:
+        NxCxoHxoW
+    """
+    boxes = tf.stop_gradient(boxes)  # TODO
+    # sample 4 locations per roi bin
+    ret = crop_and_resize(
+        featuremap, boxes,
+        tf.zeros([tf.shape(boxes)[0]], dtype=tf.int32),
+        output_shape * 2)
     ret = tf.nn.avg_pool(ret, [1, 1, 2, 2], [1, 1, 2, 2], padding='SAME', data_format='NCHW')
     return ret
 
 
+@layer_register(log_shape=True)
 def fastrcnn_head(feature, num_classes):
     """
     Args:
-        feature (NxCx1x1):
+        feature (NxCx7x7):
         num_classes(int): num_category + 1
 
     Returns:
         cls_logits (Nxnum_class), reg_logits (Nx num_class-1 x 4)
     """
-    with tf.variable_scope('fastrcnn'):
-        classification = FullyConnected(
-            'class', feature, num_classes,
-            W_init=tf.random_normal_initializer(stddev=0.01))
-        box_regression = FullyConnected(
-            'box', feature, (num_classes - 1) * 4,
-            W_init=tf.random_normal_initializer(stddev=0.001))
-        box_regression = tf.reshape(box_regression, (-1, num_classes - 1, 4))
-        return classification, box_regression
+    feature = GlobalAvgPooling('gap', feature, data_format='NCHW')
+    classification = FullyConnected(
+        'class', feature, num_classes,
+        W_init=tf.random_normal_initializer(stddev=0.01))
+    box_regression = FullyConnected(
+        'box', feature, (num_classes - 1) * 4,
+        W_init=tf.random_normal_initializer(stddev=0.001))
+    box_regression = tf.reshape(box_regression, (-1, num_classes - 1, 4))
+    return classification, box_regression
 
 
 @under_name_scope()
-def fastrcnn_predict_boxes(labels, box_logits):
+def fastrcnn_losses(labels, label_logits, fg_boxes, fg_box_logits):
     """
     Args:
         labels: n,
-        box_logits: nx(C-1)x4
-
-    Returns:
-        fg_ind: fg, indices into n
-        fg_box_logits: fgx4
-
-    """
-    fg_ind = tf.reshape(tf.where(labels > 0), [-1])  # nfg,
-    fg_labels = tf.gather(labels, fg_ind)   # nfg,
-
-    ind_2d = tf.stack([fg_ind, fg_labels - 1], axis=1)  # nfgx2
-    # n x c-1 x 4 -> nfgx4
-    fg_box_logits = tf.gather_nd(box_logits, tf.stop_gradient(ind_2d))
-    return fg_ind, fg_box_logits
-
-
-@under_name_scope()
-def fastrcnn_losses(labels, boxes, label_logits, box_logits):
-    """
-    Args:
-        labels: n,
-        boxes: nx4, encoded
         label_logits: nxC
-        box_logits: nx(C-1)x4
+        fg_boxes: nfgx4, encoded
+        fg_box_logits: nfgx(C-1)x4
     """
     label_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
         labels=labels, logits=label_logits)
     label_loss = tf.reduce_mean(label_loss, name='label_loss')
-    prediction = tf.argmax(label_logits, axis=1, name='label_prediction')
-    correct = tf.to_float(tf.equal(prediction, labels))  # boolean/integer gather is unavailable on GPU
-    accuracy = tf.reduce_mean(correct, name='accuracy')
 
-    # n x c-1 x 4 -> nfg x 4
-    fg_ind, fg_box_logits = fastrcnn_predict_boxes(labels, box_logits)
-    fg_boxes = tf.gather(boxes, fg_ind)  # nfgx4
+    fg_inds = tf.where(labels > 0)[:, 0]
+    fg_labels = tf.gather(labels, fg_inds)
+    num_fg = tf.size(fg_inds)
+    indices = tf.stack(
+        [tf.range(num_fg),
+         tf.to_int32(fg_labels) - 1], axis=1)  # #fgx2
+    fg_box_logits = tf.gather_nd(fg_box_logits, indices)
 
-    fg_label_pred = tf.argmax(tf.gather(label_logits, fg_ind), axis=1)
-    num_zero = tf.reduce_sum(tf.cast(tf.equal(fg_label_pred, 0), tf.int32), name='num_zero')
-    false_negative = tf.truediv(num_zero, tf.size(fg_ind), name='false_negative')
-    fg_correct = tf.gather(correct, fg_ind)
-    fg_accuracy = tf.reduce_mean(fg_correct, name='fg_accuracy')
+    with tf.name_scope('label_metrics'), tf.device('/cpu:0'):
+        prediction = tf.argmax(label_logits, axis=1, name='label_prediction')
+        correct = tf.to_float(tf.equal(prediction, labels))  # boolean/integer gather is unavailable on GPU
+        accuracy = tf.reduce_mean(correct, name='accuracy')
+        fg_label_pred = tf.argmax(tf.gather(label_logits, fg_inds), axis=1)
+        num_zero = tf.reduce_sum(tf.to_int32(tf.equal(fg_label_pred, 0)), name='num_zero')
+        false_negative = tf.truediv(num_zero, num_fg, name='false_negative')
+        fg_accuracy = tf.reduce_mean(
+            tf.gather(correct, fg_inds), name='fg_accuracy')
 
     box_loss = tf.losses.huber_loss(
         fg_boxes, fg_box_logits, reduction=tf.losses.Reduction.SUM)
     box_loss = tf.truediv(
         box_loss, tf.to_float(tf.shape(labels)[0]), name='box_loss')
 
-    for k in [label_loss, box_loss, accuracy, fg_accuracy, false_negative]:
-        add_moving_summary(k)
+    add_moving_summary(label_loss, box_loss, accuracy, fg_accuracy, false_negative)
     return label_loss, box_loss
+
+
+@under_name_scope()
+def fastrcnn_predictions(boxes, probs):
+    """
+    Generate final results from predictions of all proposals.
+
+    Args:
+        boxes: n#catx4 floatbox in float32
+        probs: nx#class
+    """
+    assert boxes.shape[1] == config.NUM_CLASS - 1
+    assert probs.shape[1] == config.NUM_CLASS
+    boxes = tf.transpose(boxes, [1, 0, 2])  # #catxnx4
+    probs = tf.transpose(probs[:, 1:], [1, 0])  # #catxn
+
+    def f(X):
+        """
+        prob: n probabilities
+        box: nx4 boxes
+
+        Returns: n boolean, the selection
+        """
+        prob, box = X
+        output_shape = tf.shape(prob)
+        # filter by score threshold
+        ids = tf.reshape(tf.where(prob > config.RESULT_SCORE_THRESH), [-1])
+        prob = tf.gather(prob, ids)
+        box = tf.gather(box, ids)
+        # NMS within each class
+        selection = tf.image.non_max_suppression(
+            box, prob, config.RESULTS_PER_IM, config.FASTRCNN_NMS_THRESH)
+        selection = tf.to_int32(tf.gather(ids, selection))
+        # sort available in TF>1.4.0
+        # sorted_selection = tf.contrib.framework.sort(selection, direction='ASCENDING')
+        sorted_selection = -tf.nn.top_k(-selection, k=tf.size(selection))[0]
+        mask = tf.sparse_to_dense(
+            sparse_indices=sorted_selection,
+            output_shape=output_shape,
+            sparse_values=True,
+            default_value=False)
+        return mask
+
+    masks = tf.map_fn(f, (probs, boxes), dtype=tf.bool,
+                      parallel_iterations=10)     # #cat x N
+    selected_indices = tf.where(masks)  # #selection x 2, each is (cat_id, box_id)
+    probs = tf.boolean_mask(probs, masks)
+
+    # filter again by sorting scores
+    topk_probs, topk_indices = tf.nn.top_k(
+        probs,
+        tf.minimum(config.RESULTS_PER_IM, tf.size(probs)),
+        sorted=False)
+    filtered_selection = tf.gather(selected_indices, topk_indices)
+    filtered_selection = tf.reverse(filtered_selection, axis=[1], name='filtered_indices')
+    return filtered_selection, topk_probs

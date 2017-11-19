@@ -7,14 +7,13 @@ import cv2
 import tensorflow as tf
 import argparse
 import numpy as np
-import multiprocessing
 import os
 import sys
 
 os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
-from tensorpack.tfutils.symbolic_functions import *
-from tensorpack.tfutils.summary import *
+from tensorpack.tfutils.symbolic_functions import prediction_incorrect
+from tensorpack.tfutils.summary import add_moving_summary, add_param_summary
 from tensorpack.tfutils.varreplace import remap_variables
 from tensorpack.dataflow import dataset
 from tensorpack.utils.gpu import get_nr_gpu
@@ -86,8 +85,6 @@ class Model(ModelDesc):
 
         fw, fa, fg = get_dorefa(BITW, BITA, BITG)
 
-        old_get_variable = tf.get_variable
-
         # monkey-patch tf.get_variable to apply fw
         def new_get_variable(v):
             name = v.op.name
@@ -146,7 +143,7 @@ class Model(ModelDesc):
                       .apply(nonlin)
                       .FullyConnected('fct', 1000, use_bias=True)())
 
-        prob = tf.nn.softmax(logits, name='output')
+        tf.nn.softmax(logits, name='output')
 
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')

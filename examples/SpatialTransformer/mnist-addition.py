@@ -7,7 +7,6 @@ import cv2
 import numpy as np
 import tensorflow as tf
 import os
-import sys
 import argparse
 
 os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
@@ -75,7 +74,7 @@ class Model(ModelDesc):
                   .FullyConnected('fc1', out_dim=256, nl=tf.nn.relu)
                   .FullyConnected('fc2', out_dim=128, nl=tf.nn.relu)
                   .FullyConnected('fct', out_dim=19, nl=tf.identity)())
-        prob = tf.nn.softmax(logits, name='prob')
+        tf.nn.softmax(logits, name='prob')
 
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
@@ -158,7 +157,7 @@ def get_config():
 
     return TrainConfig(
         model=Model(),
-        dataflow=dataset_train,
+        data=QueueInput(dataset_train),
         callbacks=[
             ModelSaver(),
             InferenceRunner(dataset_test,

@@ -4,9 +4,12 @@
 
 import numpy as np
 import cv2
+
 from tensorpack.dataflow import RNGDataFlow
 from tensorpack.dataflow.imgaug import transform
 from tensorpack.utils import logger
+
+import pycocotools.mask as cocomask
 
 import config
 
@@ -85,17 +88,35 @@ def point8_to_box(points):
     return np.concatenate((minxy, maxxy), axis=1)
 
 
+def segmentation_to_mask(polys, height, width):
+    """
+    Convert polygons to binary masks.
+
+    Args:
+        polys: a list of nx2 float array
+
+    Returns:
+        a binary matrix of (height, width)
+    """
+    polys = [p.flatten().tolist() for p in polys]
+    rles = cocomask.frPyObjects(polys, height, width)
+    rle = cocomask.merge(rles)
+    return cocomask.decode(rle)
+
+
 def clip_boxes(boxes, shape):
     """
     Args:
-        boxes: nx4, float
+        boxes: (...)x4, float
         shape: h, w
     """
+    orig_shape = boxes.shape
+    boxes = boxes.reshape([-1, 4])
     h, w = shape
     boxes[:, [0, 1]] = np.maximum(boxes[:, [0, 1]], 0)
     boxes[:, 2] = np.minimum(boxes[:, 2], w)
     boxes[:, 3] = np.minimum(boxes[:, 3], h)
-    return boxes
+    return boxes.reshape(orig_shape)
 
 
 def print_config():

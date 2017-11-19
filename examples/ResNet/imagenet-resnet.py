@@ -2,12 +2,8 @@
 # -*- coding: UTF-8 -*-
 # File: imagenet-resnet.py
 
-import sys
 import argparse
-import numpy as np
 import os
-
-import tensorflow as tf
 
 os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import logger, QueueInput
@@ -15,7 +11,7 @@ from tensorpack.models import *
 from tensorpack.callbacks import *
 from tensorpack.train import (
     TrainConfig, SyncMultiGPUTrainerParameterServer, launch_train_with_config)
-from tensorpack.dataflow import imgaug, FakeData
+from tensorpack.dataflow import FakeData
 from tensorpack.tfutils import argscope, get_model_loader
 from tensorpack.utils.gpu import get_nr_gpu
 

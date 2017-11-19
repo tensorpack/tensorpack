@@ -17,6 +17,11 @@ from tensorpack.dataflow.dataset import ILSVRCMeta
 
 """
 Usage:
+    Download original caffe models at:
+    https://gist.github.com/ksimonyan/211839e770f7b538e2d8
+
+    Install caffe python bindings.
+
     python -m tensorpack.utils.loadcaffe \
             PATH/TO/VGG/{VGG_ILSVRC_16_layers_deploy.prototxt,VGG_ILSVRC_16_layers.caffemodel} vgg16.npy
     ./load-vgg16.py --load vgg16.npy --input cat.png
@@ -54,7 +59,7 @@ def tower_func(image):
                   .FullyConnected('fc7', 4096, nl=tf.nn.relu)
                   .Dropout('drop1', 0.5)
                   .FullyConnected('fc8', out_dim=1000, nl=tf.identity)())
-    prob = tf.nn.softmax(logits, name='prob')
+    tf.nn.softmax(logits, name='prob')
 
 
 def run_test(path, input):

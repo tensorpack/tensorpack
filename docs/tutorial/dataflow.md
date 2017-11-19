@@ -51,10 +51,10 @@ the rest of the data pipeline.
 	If you're using DataFlow with tensorpack, also see [Input Pipeline tutorial](input-source.html)
 	on how tensorpack further accelerates data loading in the graph.
 
-Nevertheless, tensorpack support data loading with native TF operators / TF datasets as well.
+Nevertheless, tensorpack supports data loading with native TF operators / TF datasets as well.
 
 ### Use DataFlow (outside Tensorpack)
-tensorpack `InputSource` interface works with DataFlow out-of-the-box.
+Normally, tensorpack `InputSource` interface links DataFlow to the graph for training.
 If you use DataFlow in some custom code, call `reset_state()` first to initialize it,
 and then use the generator however you like:
 ```python

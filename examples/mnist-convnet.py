@@ -2,9 +2,7 @@
 # -*- coding: utf-8 -*-
 # File: mnist-convnet.py
 
-import numpy as np
 import os
-import sys
 import argparse
 import tensorflow as tf
 """
@@ -57,7 +55,7 @@ class Model(ModelDesc):
                       .Dropout('dropout', 0.5)
                       .FullyConnected('fc1', out_dim=10, nl=tf.identity)())
 
-        prob = tf.nn.softmax(logits, name='prob')   # a Bx10 with probabilities
+        tf.nn.softmax(logits, name='prob')   # a Bx10 with probabilities
 
         # a vector of length B with loss of each sample
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)

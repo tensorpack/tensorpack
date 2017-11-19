@@ -4,7 +4,6 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import argparse
-import numpy as np
 import os
 import imp
 

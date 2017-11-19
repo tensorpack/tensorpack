@@ -204,14 +204,18 @@ class PrefetchDataZMQ(_MultiProcessZMQDataFlow):
            b. When ``nr_proc>1``, the dataflow produces the same distribution
               of data as ``ds`` if each sample from ``ds`` is i.i.d. (e.g. fully shuffled).
               You probably only want to use it for training.
-
-        2. Once :meth:`reset_state` is called, this dataflow becomes not fork-safe.
+        2. The fork of proesses happened in the `reset_state()` method.
+           Please note that forking a TensorFlow GPU session may be unsafe.
+           If you're managing this dataflow on your own,
+           it's better to fork before creating the session.
+        3. After the fork has happened, this dataflow becomes not fork-safe.
            i.e., if you fork an already reset instance of this dataflow,
            it won't be usable in the forked process.
-        3. When nesting like this: ``PrefetchDataZMQ(PrefetchDataZMQ(df, nr_proc=a), nr_proc=b)``.
+        4. Calling `reset_state()` more than once is a no-op, i.e. the worker processes won't get called.
+        5. When nesting like this: ``PrefetchDataZMQ(PrefetchDataZMQ(df, nr_proc=a), nr_proc=b)``.
            A total of ``a * b`` instances of ``df`` worker processes will be created.
            Also in this case, some zmq pipes cannot be cleaned at exit.
-        4. By default, a UNIX named pipe will be created in the current directory.
+        6. By default, a UNIX named pipe will be created in the current directory.
            However, certain non-local filesystem such as NFS/GlusterFS/AFS doesn't always support pipes.
            You can change the directory by ``export TENSORPACK_PIPEDIR=/other/dir``.
            In particular, you can use somewhere under '/tmp' which is usually local.
@@ -221,7 +225,6 @@ class PrefetchDataZMQ(_MultiProcessZMQDataFlow):
            Also note that ZMQ limits the maximum length of pipe path.
            If you hit the limit, you can set the directory to a softlink
            which points to a local directory.
-        5. Calling `reset_state()` more than once is a no-op, i.e. the worker processes won't get called.
     """
 
     class _Worker(mp.Process):
@@ -258,7 +261,6 @@ class PrefetchDataZMQ(_MultiProcessZMQDataFlow):
         self._hwm = hwm
 
         self._guard = DataFlowReentrantGuard()
-        self._reset_done = False
         if nr_proc > 1:
             logger.info("[PrefetchDataZMQ] Will fork a dataflow more than one times. "
                         "This assumes the datapoints are i.i.d.")

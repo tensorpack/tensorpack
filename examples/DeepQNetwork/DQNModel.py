@@ -9,8 +9,7 @@ import tensorpack
 from tensorpack import ModelDesc, InputDesc
 from tensorpack.utils import logger
 from tensorpack.tfutils import (
-    collection, summary, get_current_tower_context, optimizer, gradproc)
-from tensorpack.tfutils import symbolic_functions as symbf
+    summary, get_current_tower_context, optimizer, gradproc)
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
 assert tensorpack.tfutils.common.get_tf_version_number() >= 1.2
 

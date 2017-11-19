@@ -33,7 +33,6 @@ def colorize(img, heatmap):
 
 @memoized
 def get_gaussian_map():
-    sigma = 21
     gaussian_map = np.zeros((368, 368), dtype='float32')
     for x_p in range(368):
         for y_p in range(368):
@@ -93,9 +92,8 @@ def CPM(image):
         out3 = add_stage(3, out2)
         out4 = add_stage(4, out3)
         out5 = add_stage(5, out4)
-        out6 = add_stage(6, out4)
-        resized_map = tf.image.resize_bilinear(out6,
-                                               [368, 368], name='resized_map')
+        out6 = add_stage(6, out5)
+        tf.image.resize_bilinear(out6, [368, 368], name='resized_map')
 
 
 def run_test(model_path, img_file):

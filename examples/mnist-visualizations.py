@@ -2,9 +2,7 @@
 # -*- coding: utf-8 -*-
 # File: mnist-visualizations.py
 
-import numpy as np
 import os
-import sys
 import argparse
 
 """

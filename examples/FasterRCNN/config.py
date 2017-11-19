@@ -9,6 +9,7 @@ BASEDIR = '/path/to/your/COCO/DIR'
 TRAIN_DATASET = ['train2014', 'valminusminival2014']
 VAL_DATASET = 'minival2014'   # only support evaluation on one dataset
 NUM_CLASS = 81
+CLASS_NAMES = []  # NUM_CLASS strings
 
 # basemodel ----------------------
 RESNET_NUM_BLOCK = [3, 4, 6, 3]     # resnet50
@@ -25,6 +26,8 @@ ANCHOR_RATIOS = (0.5, 1., 2.)
 NUM_ANCHOR = len(ANCHOR_SIZES) * len(ANCHOR_RATIOS)
 POSITIVE_ANCHOR_THRES = 0.7
 NEGATIVE_ANCHOR_THRES = 0.3
+# just to avoid too large numbers.
+BBOX_DECODE_CLIP = np.log(MAX_SIZE / 16.0)
 
 # rpn training -------------------------
 # keep fg ratio in a batch in this range
@@ -39,7 +42,7 @@ TRAIN_POST_NMS_TOPK = 2000
 CROWD_OVERLAP_THRES = 0.7
 
 # fastrcnn training ---------------------
-FASTRCNN_BATCH_PER_IM = 64
+FASTRCNN_BATCH_PER_IM = 256
 FASTRCNN_BBOX_REG_WEIGHTS = np.array([10, 10, 5, 5], dtype='float32')
 FASTRCNN_FG_THRESH = 0.5
 # keep fg ratio in a batch in this range

@@ -4,7 +4,6 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import argparse
-import numpy as np
 import os
 
 os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
@@ -44,9 +43,9 @@ class Model(ModelDesc):
                       .FullyConnected('fc0', 512,
                                       b_init=tf.constant_initializer(0.1), nl=tf.nn.relu)
                       .FullyConnected('linear', out_dim=10, nl=tf.identity)())
-        prob = tf.nn.softmax(logits, name='output')
+        tf.nn.softmax(logits, name='output')
 
-        acc = tf.to_float(tf.nn.in_top_k(logits, label, 1))
+        accuracy = tf.to_float(tf.nn.in_top_k(logits, label, 1))
         add_moving_summary(tf.reduce_mean(accuracy, name='accuracy'))
 
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)

@@ -3,7 +3,6 @@
 # File: atari_wrapper.py
 
 import numpy as np
-import cv2
 from collections import deque
 
 import gym
@@ -16,18 +15,13 @@ https://github.com/openai/baselines/blob/master/baselines/common/atari_wrappers.
 """
 
 
-class WarpFrame(gym.ObservationWrapper):
-    def __init__(self, env, shape):
+class MapState(gym.ObservationWrapper):
+    def __init__(self, env, map_func):
         gym.ObservationWrapper.__init__(self, env)
-        self.shape = shape
-        obs = env.observation_space
-        assert isinstance(obs, spaces.Box)
-        chan = 1 if len(obs.shape) == 2 else obs.shape[2]
-        shape3d = shape if chan == 1 else shape + (chan,)
-        self.observation_space = spaces.Box(low=0, high=255, shape=shape3d)
+        self._func = map_func
 
     def _observation(self, obs):
-        return cv2.resize(obs, self.shape)
+        return self._func(obs)
 
 
 class FrameStack(gym.Wrapper):
@@ -38,7 +32,6 @@ class FrameStack(gym.Wrapper):
         self.frames = deque([], maxlen=k)
         shp = env.observation_space.shape
         chan = 1 if len(shp) == 2 else shp[2]
-        self._base_dim = len(shp)
         self.observation_space = spaces.Box(low=0, high=255, shape=(shp[0], shp[1], chan * k))
 
     def _reset(self):
@@ -56,7 +49,7 @@ class FrameStack(gym.Wrapper):
 
     def _observation(self):
         assert len(self.frames) == self.k
-        if self._base_dim == 2:
+        if self.frames[-1].ndim == 2:
             return np.stack(self.frames, axis=-1)
         else:
             return np.concatenate(self.frames, axis=2)

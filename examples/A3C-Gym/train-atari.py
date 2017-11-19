@@ -5,13 +5,8 @@
 
 import numpy as np
 import os
-import sys
-import time
-import random
 import uuid
 import argparse
-import multiprocessing
-import threading
 
 import cv2
 import tensorflow as tf
@@ -20,19 +15,17 @@ from six.moves import queue
 
 os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
-from tensorpack.utils.concurrency import *
-from tensorpack.utils.serialize import *
-from tensorpack.utils.stats import *
+from tensorpack.utils.concurrency import ensure_proc_terminate, start_proc_mask_signal
+from tensorpack.utils.serialize import dumps
 from tensorpack.tfutils import symbolic_functions as symbf
 from tensorpack.tfutils.gradproc import MapGradient, SummaryGradient
 from tensorpack.utils.gpu import get_nr_gpu
 
 
 import gym
-from simulator import *
-from common import (Evaluator, eval_model_multithread,
-                    play_one_episode, play_n_episodes)
-from atari_wrapper import WarpFrame, FrameStack, FireResetEnv, LimitLength
+from simulator import SimulatorProcess, SimulatorMaster, TransitionExperience
+from common import Evaluator, eval_model_multithread, play_n_episodes
+from atari_wrapper import MapState, FrameStack, FireResetEnv, LimitLength
 
 if six.PY3:
     from concurrent import futures
@@ -64,7 +57,7 @@ def get_player(train=False, dumpdir=None):
     if dumpdir:
         env = gym.wrappers.Monitor(env, dumpdir)
     env = FireResetEnv(env)
-    env = WarpFrame(env, IMAGE_SIZE)
+    env = MapState(env, lambda im: cv2.resize(im, IMAGE_SIZE))
     env = FrameStack(env, 4)
     if train:
         env = LimitLength(env, 60000)

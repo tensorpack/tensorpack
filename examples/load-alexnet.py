@@ -17,6 +17,10 @@ import tensorflow as tf
 
 """
 Usage:
+    Download caffe models at https://github.com/BVLC/caffe/tree/master/models/bvlc_alexnet
+
+    Install caffe python bindings.
+
     python -m tensorpack.utils.loadcaffe PATH/TO/CAFFE/{deploy.prototxt,bvlc_alexnet.caffemodel} alexnet.npy
     ./load-alexnet.py --load alexnet.npy --input cat.png
 """
@@ -42,7 +46,7 @@ def tower_func(image):
         l = FullyConnected('fc6', l, 4096)
         l = FullyConnected('fc7', l, out_dim=4096)
     logits = FullyConnected('fc8', l, out_dim=1000, nl=tf.identity)
-    prob = tf.nn.softmax(logits, name='prob')
+    tf.nn.softmax(logits, name='prob')
 
 
 def run_test(path, input):

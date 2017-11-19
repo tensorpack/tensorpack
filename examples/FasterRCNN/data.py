@@ -3,24 +3,20 @@
 # File: data.py
 
 import cv2
-import os
 import numpy as np
-import logging
 
-from tensorpack.utils import logger
 from tensorpack.utils.argtools import memoized, log_once
 from tensorpack.dataflow import (
-    ProxyDataFlow, MapData, imgaug, TestDataSpeed,
-    AugmentImageComponents, MapDataComponent)
-import tensorpack.utils.viz as tpviz
-from tensorpack.utils.viz import interactive_imshow
+    MapData, imgaug, TestDataSpeed,
+    MapDataComponent, DataFromList, PrefetchDataZMQ)
+# import tensorpack.utils.viz as tpviz
 
 from coco import COCODetection
 from utils.generate_anchors import generate_anchors
 from utils.box_ops import get_iou_callable
 from common import (
     DataFromListOfDict, CustomResize,
-    box_to_point8, point8_to_box)
+    box_to_point8, point8_to_box, segmentation_to_mask)
 import config
 
 
@@ -121,7 +117,6 @@ def get_anchor_labels(anchors, gt_boxes, crowd_boxes):
         anchor_labels[overlap_with_crowd] = -1
 
     # Filter fg labels: ignore some fg if fg is too many
-    old_num_fg = np.sum(anchor_labels == 1)
     target_num_fg = int(config.RPN_BATCH_PER_IM * config.RPN_FG_RATIO)
     fg_inds = filter_box_label(anchor_labels, 1, target_num_fg)
     # Note that fg could be fewer than the target ratio
@@ -133,7 +128,7 @@ def get_anchor_labels(anchors, gt_boxes, crowd_boxes):
         # This can happen if, e.g. the image has large crowd.
         raise MalformedData("No valid foreground/background for RPN!")
     target_num_bg = config.RPN_BATCH_PER_IM - len(fg_inds)
-    bg_inds = filter_box_label(anchor_labels, 0, target_num_bg)
+    filter_box_label(anchor_labels, 0, target_num_bg)   # ignore return values
 
     # Set anchor boxes: the best gt_box for each fg anchor
     anchor_boxes = np.zeros((NA, 4), dtype='float32')
@@ -192,61 +187,73 @@ def get_rpn_anchor_input(im, boxes, klass, is_crowd):
     return featuremap_labels, featuremap_boxes
 
 
-def read_and_augment_images(ds):
-    def mapf(dp):
-        fname = dp[0]
-        im = cv2.imread(fname, cv2.IMREAD_COLOR)
-        assert im is not None, fname
-        dp[0] = im.astype('float32')
-
-        # assume floatbox as input
-        assert dp[1].dtype == np.float32
-        dp[1] = box_to_point8(dp[1])
-
-        dp.append(fname)
-        return dp
-    ds = MapData(ds, mapf)
-
-    augs = [CustomResize(config.SHORT_EDGE_SIZE, config.MAX_SIZE),
-            imgaug.Flip(horiz=True)]
-    ds = AugmentImageComponents(ds, augs, index=(0,), coords_index=(1,))
-
-    def unmapf(points):
-        boxes = point8_to_box(points)
-        return boxes
-    ds = MapDataComponent(ds, unmapf, 1)
-    return ds
-
-
-def get_train_dataflow():
-    imgs = COCODetection.load_many(config.BASEDIR, config.TRAIN_DATASET)
+def get_train_dataflow(add_mask=False):
+    """
+    Return a training dataflow. Each datapoint is:
+    image, fm_labels, fm_boxes, gt_boxes, gt_class [, masks]
+    """
+    imgs = COCODetection.load_many(
+        config.BASEDIR, config.TRAIN_DATASET, add_gt=True, add_mask=add_mask)
     # Valid training images should have at least one fg box.
     # But this filter shall not be applied for testing.
     imgs = list(filter(lambda img: len(img['boxes']) > 0, imgs))    # log invalid training
 
-    ds = DataFromListOfDict(
-        imgs,
-        ['file_name', 'boxes', 'class', 'is_crowd'],  # we need this four keys only
-        shuffle=True)
-    ds = read_and_augment_images(ds)
+    ds = DataFromList(imgs, shuffle=True)
 
-    def add_anchor_to_dp(dp):
-        im, boxes, klass, is_crowd, fname = dp
+    aug = imgaug.AugmentorList(
+        [CustomResize(config.SHORT_EDGE_SIZE, config.MAX_SIZE),
+         imgaug.Flip(horiz=True)])
+
+    def preprocess(img):
+        fname, boxes, klass, is_crowd = img['file_name'], img['boxes'], img['class'], img['is_crowd']
+        im = cv2.imread(fname, cv2.IMREAD_COLOR)
+        assert im is not None, fname
+        im = im.astype('float32')
+        # assume floatbox as input
+        assert boxes.dtype == np.float32
+
+        # augmentation:
+        im, params = aug.augment_return_params(im)
+        points = box_to_point8(boxes)
+        points = aug.augment_coords(points, params)
+        boxes = point8_to_box(points)
+
+        # rpn anchor:
         try:
             fm_labels, fm_boxes = get_rpn_anchor_input(im, boxes, klass, is_crowd)
-
             boxes = boxes[is_crowd == 0]    # skip crowd boxes in training target
             klass = klass[is_crowd == 0]
-
             if not len(boxes):
                 raise MalformedData("No valid gt_boxes!")
         except MalformedData as e:
-            log_once("Input {} is invalid for training: {}".format(fname, str(e)), 'warn')
+            log_once("Input {} is filtered for training: {}".format(fname, str(e)), 'warn')
             return None
 
-        return [im, fm_labels, fm_boxes, boxes, klass]
+        ret = [im, fm_labels, fm_boxes, boxes, klass]
 
-    ds = MapData(ds, add_anchor_to_dp)
+        # masks
+        segmentation = img.get('segmentation', None)
+        if segmentation is not None:
+            segmentation = [segmentation[k] for k in range(len(segmentation)) if not is_crowd[k]]
+            assert len(segmentation) == len(boxes)
+
+            # one image-sized binary mask per box
+            masks = []
+            for polys in segmentation:
+                polys = [aug.augment_coords(p, params) for p in polys]
+                masks.append(segmentation_to_mask(polys, im.shape[0], im.shape[1]))
+            masks = np.asarray(masks, dtype='uint8')    # values in {0, 1}
+            ret.append(masks)
+
+            # from viz import draw_annotation, draw_mask
+            # viz = draw_annotation(im, boxes, klass)
+            # for mask in masks:
+            #     viz = draw_mask(viz, mask)
+            # tpviz.interactive_imshow(viz)
+        return ret
+
+    ds = MapData(ds, preprocess)
+    ds = PrefetchDataZMQ(ds, 1)
     return ds
 
 
@@ -260,12 +267,15 @@ def get_eval_dataflow():
         assert im is not None, fname
         return im
     ds = MapDataComponent(ds, f, 0)
+    # ds = PrefetchDataZMQ(ds, 1)
     return ds
 
 
 if __name__ == '__main__':
+    config.BASEDIR = '/home/wyx/data/coco'
+    config.TRAIN_DATASET = ['train2014']
     from tensorpack.dataflow import PrintData
-    ds = get_train_dataflow('/datasets01/COCO/060817')
+    ds = get_train_dataflow()
     ds = PrintData(ds, 100)
     TestDataSpeed(ds, 50000).start()
     ds.reset_state()

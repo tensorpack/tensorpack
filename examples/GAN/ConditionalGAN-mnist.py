@@ -6,13 +6,12 @@
 import numpy as np
 import tensorflow as tf
 import os
-import sys
 import cv2
 import argparse
 
 os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
-from tensorpack.utils.viz import *
+from tensorpack.utils.viz import interactive_imshow, stack_patches
 import tensorpack.tfutils.symbolic_functions as symbf
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
 from tensorpack.dataflow import dataset

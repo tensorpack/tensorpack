@@ -12,6 +12,7 @@ This file is modified from
 https://github.com/tensorflow/models/blob/master/object_detection/core/box_list_ops.py
 """
 
+
 @under_name_scope()
 def area(boxes):
     """
@@ -73,7 +74,10 @@ def get_iou_callable():
     """
     Get a pairwise box iou callable.
     """
-    with tf.device('/cpu:0'):
+    # We don't want the dataflow process to touch CUDA
+    # Data needs tensorflow. As a result, the training cannot run on GPUs with
+    # EXCLUSIVE_PROCESS mode, unless you disable multiprocessing prefetch.
+    with tf.Graph().as_default(), tf.device('/cpu:0'):
         A = tf.placeholder(tf.float32, shape=[None, 4])
         B = tf.placeholder(tf.float32, shape=[None, 4])
         iou = pairwise_iou(A, B)

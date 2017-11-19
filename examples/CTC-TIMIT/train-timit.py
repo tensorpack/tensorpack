@@ -3,20 +3,13 @@
 # File: train-timit.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import numpy as np
 import os
-import sys
 import argparse
-from collections import Counter
-import operator
-import six
-from six.moves import map, range
+from six.moves import range
 
 os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
 from tensorpack.tfutils.gradproc import SummaryGradient, GlobalNormClip
-from tensorpack.utils.globvars import globalns as param
-import tensorpack.tfutils.symbolic_functions as symbf
 import tensorflow as tf
 
 from timitdata import TIMITBatch

@@ -5,13 +5,12 @@
 
 import glob
 import numpy as np
-import os, sys
+import os
 import argparse
 
 os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
-from tensorpack.utils.viz import *
-from tensorpack.tfutils.summary import add_moving_summary
+from tensorpack.utils.viz import stack_patches
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
 from tensorpack.utils.globvars import globalns as opt
 import tensorflow as tf
@@ -127,11 +126,11 @@ def sample(model, model_path, output_name='gen/gen'):
         output_names=[output_name, 'z'])
     pred = SimpleDatasetPredictor(pred, RandomZData((100, opt.Z_DIM)))
     for o in pred.get_result():
-        o, zs = o[0] + 1, o[1]
+        o = o[0] + 1
         o = o * 128.0
         o = np.clip(o, 0, 255)
         o = o[:, :, :, ::-1]
-        viz = stack_patches(o, nr_row=10, nr_col=10, viz=True)
+        stack_patches(o, nr_row=10, nr_col=10, viz=True)
 
 
 def get_args():

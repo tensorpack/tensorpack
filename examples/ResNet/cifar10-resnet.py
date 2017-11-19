@@ -3,14 +3,12 @@
 # File: cifar10-resnet.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import numpy as np
 import argparse
 import os
 
 os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
-from tensorpack.tfutils.symbolic_functions import *
-from tensorpack.tfutils.summary import *
+from tensorpack.tfutils.summary import add_moving_summary, add_param_summary
 from tensorpack.utils.gpu import get_nr_gpu
 from tensorpack.dataflow import dataset
 
@@ -64,7 +62,7 @@ class Model(ModelDesc):
                 out_channel = in_channel
                 stride1 = 1
 
-            with tf.variable_scope(name) as scope:
+            with tf.variable_scope(name):
                 b1 = l if first else BNReLU(l)
                 c1 = Conv2D('conv1', b1, out_channel, stride=stride1, nl=BNReLU)
                 c2 = Conv2D('conv2', c1, out_channel)
@@ -97,7 +95,7 @@ class Model(ModelDesc):
             l = GlobalAvgPooling('gap', l)
 
         logits = FullyConnected('linear', l, out_dim=10, nl=tf.identity)
-        prob = tf.nn.softmax(logits, name='output')
+        tf.nn.softmax(logits, name='output')
 
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')

@@ -3,9 +3,7 @@
 # File: mnist-disturb.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import numpy as np
 import os
-import sys
 import argparse
 
 os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
@@ -43,7 +41,7 @@ class Model(mnist_example.Model):
                       .MaxPooling('pool1', 2)
                       .FullyConnected('fc0', 512, nl=tf.nn.relu)
                       .FullyConnected('fc1', out_dim=10, nl=tf.identity)())
-        prob = tf.nn.softmax(logits, name='prob')
+        tf.nn.softmax(logits, name='prob')
 
         wrong = symbolic_functions.prediction_incorrect(logits, label)
         add_moving_summary(tf.reduce_mean(wrong, name='train_error'))

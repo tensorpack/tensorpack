@@ -10,9 +10,7 @@ from tensorflow import keras
 KL = keras.layers
 
 
-from tensorpack.train import SimpleTrainer
 from tensorpack.input_source import QueueInput
-from tensorpack.callbacks import ModelSaver, InferenceRunner, ScalarStats
 from tensorpack.dataflow import dataset, BatchData, MapData
 from tensorpack.utils import logger
 from tensorpack.contrib.keras import KerasModel

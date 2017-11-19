@@ -10,7 +10,7 @@ import argparse
 from collections import Counter
 import operator
 import six
-from six.moves import map, range
+from six.moves import range
 
 os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
@@ -96,7 +96,7 @@ class Model(ModelDesc):
         # seqlen x (Bxrnnsize)
         output = tf.reshape(tf.concat(outputs, 1), [-1, param.rnn_size])  # (Bxseqlen) x rnnsize
         logits = FullyConnected('fc', output, param.vocab_size, nl=tf.identity)
-        prob = tf.nn.softmax(logits / param.softmax_temprature, name='prob')
+        tf.nn.softmax(logits / param.softmax_temprature, name='prob')
 
         xent_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
             logits=logits, labels=tf.reshape(nextinput, [-1]))

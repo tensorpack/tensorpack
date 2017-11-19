@@ -4,11 +4,9 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import os
-import argparse
 
 os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
-from tensorpack.tfutils import optimizer
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.utils.globvars import globalns as G
 import tensorflow as tf
@@ -41,6 +39,7 @@ class Model(DCGAN.Model):
 
         # An alternative way to implement the clipping:
         """
+        from tensorpack.tfutils import optimizer
         def clip(v):
             n = v.op.name
             if not n.startswith('discrim/'):

@@ -3,27 +3,17 @@
 # File: DQN.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import numpy as np
-
 import os
-import sys
-import re
-import time
-import random
 import argparse
-import subprocess
-import multiprocessing
-import threading
-from collections import deque
+import cv2
+import tensorflow as tf
 
 os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
-from tensorpack.utils.concurrency import *
-import tensorflow as tf
 
 from DQNModel import Model as DQNModel
 from common import Evaluator, eval_model_multithread, play_n_episodes
-from atari_wrapper import FrameStack, WarpFrame, FireResetEnv
+from atari_wrapper import FrameStack, MapState, FireResetEnv
 from expreplay import ExpReplay
 from atari import AtariPlayer
 
@@ -48,9 +38,9 @@ METHOD = None
 
 def get_player(viz=False, train=False):
     env = AtariPlayer(ROM_FILE, frame_skip=ACTION_REPEAT, viz=viz,
-                      live_lost_as_eoe=train, max_num_frames=30000)
+                      live_lost_as_eoe=train, max_num_frames=60000)
     env = FireResetEnv(env)
-    env = WarpFrame(env, IMAGE_SIZE)
+    env = MapState(env, lambda im: cv2.resize(im, IMAGE_SIZE))
     if not train:
         # in training, history is taken care of in expreplay buffer
         env = FrameStack(env, FRAME_HISTORY)

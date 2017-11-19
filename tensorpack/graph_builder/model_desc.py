@@ -95,10 +95,13 @@ class ModelDescBase(object):
     def build_graph(self, *args):
         """
         Build the whole symbolic graph.
+        This is supposed to be the "tower function" when used with :class:`TowerTrainer`.
+        By default it will call :meth:`_build_graph`
+        with a list of input tensors.
 
         Args:
-            args ([tf.Tensor]): a list of tensors,
-                that matches the list of :class:`InputDesc` defined by ``_get_inputs``.
+            args ([tf.Tensor]): tensors that matches the list of
+                :class:`InputDesc` defined by ``_get_inputs``.
         """
         if len(args) == 1:
             arg = args[0]
@@ -118,8 +121,10 @@ class ModelDescBase(object):
             "in ModelDesc! ({} != {})".format(len(inputs), len(self.get_inputs_desc()))
         self._build_graph(inputs)
 
-    @abstractmethod
     def _build_graph(self, inputs):
+        """
+        This is an old interface which takes a list of tensors, instead of positional arguments.
+        """
         pass
 
 

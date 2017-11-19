@@ -6,9 +6,10 @@ from six.moves import zip
 import numpy as np
 
 from tensorpack.utils import viz
+from tensorpack.utils.palette import PALETTE_RGB
 
-from coco import COCOMeta
 from utils.box_ops import get_iou_callable
+import config
 
 
 def draw_annotation(img, boxes, klass, is_crowd=None):
@@ -17,13 +18,13 @@ def draw_annotation(img, boxes, klass, is_crowd=None):
     if is_crowd is not None:
         assert len(boxes) == len(is_crowd)
         for cls, crd in zip(klass, is_crowd):
-            clsname = COCOMeta.class_names[cls]
+            clsname = config.CLASS_NAMES[cls]
             if crd == 1:
                 clsname += ';Crowd'
             labels.append(clsname)
     else:
         for cls in klass:
-            labels.append(COCOMeta.class_names[cls])
+            labels.append(config.CLASS_NAMES[cls])
     img = viz.draw_boxes(img, boxes, labels)
     return img
 
@@ -58,7 +59,7 @@ def draw_predictions(img, boxes, scores):
         return img
     labels = scores.argmax(axis=1)
     scores = scores.max(axis=1)
-    tags = ["{},{:.2f}".format(COCOMeta.class_names[lb], score) for lb, score in zip(labels, scores)]
+    tags = ["{},{:.2f}".format(config.CLASS_NAMES[lb], score) for lb, score in zip(labels, scores)]
     return viz.draw_boxes(img, boxes, tags)
 
 
@@ -67,13 +68,29 @@ def draw_final_outputs(img, results):
     Args:
         results: [DetectionResult]
     """
-    all_boxes = []
-    all_tags = []
-    for class_id, boxes, scores in results:
-        all_boxes.extend(boxes)
-        all_tags.extend(
-            ["{},{:.2f}".format(COCOMeta.class_names[class_id], sc) for sc in scores])
-    all_boxes = np.asarray(all_boxes)
-    if all_boxes.shape[0] == 0:
+    if len(results) == 0:
         return img
-    return viz.draw_boxes(img, all_boxes, all_tags)
+
+    tags = []
+    for label, _, score in results:
+        tags.append(
+            "{},{:.2f}".format(config.CLASS_NAMES[label], score))
+    boxes = np.asarray([x.box for x in results])
+    return viz.draw_boxes(img, boxes, tags)
+
+
+def draw_mask(im, mask, alpha=0.5, color=None):
+    """
+    Overlay a mask on top of the image.
+
+    Args:
+        im: a 3-channel uint8 image in BGR
+        mask: a binary 1-channel image of the same size
+        color: if None, will choose automatically
+    """
+    if color is None:
+        color = PALETTE_RGB[np.random.choice(len(PALETTE_RGB))][::-1]
+    im = np.where(np.repeat((mask > 0)[:, :, None], 3, axis=2),
+                  im * (1 - alpha) + color * alpha, im)
+    im = im.astype('uint8')
+    return im

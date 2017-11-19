@@ -11,7 +11,6 @@ import tensorflow.contrib.slim as slim
 
 os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
 from tensorpack import *
-import tensorpack.tfutils.symbolic_functions as symbf
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.utils.gpu import change_gpu
 
@@ -19,7 +18,6 @@ from embedding_data import get_test_data, MnistPairs, MnistTriplets
 
 MATPLOTLIB_AVAIBLABLE = False
 try:
-    import matplotlib
     from matplotlib import offsetbox
     import matplotlib.pyplot as plt
     MATPLOTLIB_AVAIBLABLE = True

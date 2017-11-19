@@ -5,8 +5,7 @@
 
 import tensorflow as tf
 import numpy as np
-import time
-from tensorpack import (TowerTrainer, QueueInput,
+from tensorpack import (TowerTrainer,
                         ModelDescBase, DataFlow, StagingInput)
 from tensorpack.tfutils.tower import TowerContext, TowerFuncWrapper
 from tensorpack.graph_builder import DataParallelBuilder, LeastLoadedDeviceSetter
@@ -71,8 +70,9 @@ class GANTrainer(TowerTrainer):
         inputs_desc = model.get_inputs_desc()
         cbs = input.setup(inputs_desc)
 
-        tower_func = TowerFuncWrapper(
-            model.build_graph, inputs_desc)
+        # we need to set towerfunc because it's a TowerTrainer,
+        # and only TowerTrainer supports automatic graph creation for inference during training.
+        tower_func = TowerFuncWrapper(model.build_graph, inputs_desc)
         with TowerContext('', is_training=True):
             tower_func(*input.get_input_tensors())
         opt = model.get_optimizer()
@@ -138,8 +138,9 @@ class MultiGPUGANTrainer(TowerTrainer):
         input = StagingInput(input, list(range(nr_gpu)))
         cbs = input.setup(model.get_inputs_desc())
 
+        # build the graph
         def get_cost(*inputs):
-            model.build_graph(inputs)
+            model.build_graph(*inputs)
             return [model.d_loss, model.g_loss]
         tower_func = TowerFuncWrapper(get_cost, model.get_inputs_desc())
         devices = [LeastLoadedDeviceSetter(d, raw_devices) for d in raw_devices]

@@ -7,7 +7,6 @@ import numpy as np
 import copy
 from collections import deque, namedtuple
 import threading
-import six
 from six.moves import queue, range
 
 from tensorpack.dataflow import DataFlow
@@ -155,6 +154,7 @@ class ExpReplay(DataFlow, Callback):
         self.mem = ReplayMemory(memory_size, state_shape, history_len)
         self._current_ob = self.player.reset()
         self._player_scores = StatCounter()
+        self._current_game_score = StatCounter()
 
     def get_simulator_thread(self):
         # spawn a separate thread to run policy
@@ -202,9 +202,11 @@ class ExpReplay(DataFlow, Callback):
             q_values = self.predictor(history[None, :, :, :])[0][0]  # this is the bottleneck
             act = np.argmax(q_values)
         self._current_ob, reward, isOver, info = self.player.step(act)
+        self._current_game_score.feed(reward)
         if isOver:
-            if info['gameOver']:  # only record score when a whole game is over (not when an episode is over)
-                self._player_scores.feed(info['score'])
+            if info['ale.lives'] == 0:  # only record score when a whole game is over (not when an episode is over)
+                self._player_scores.feed(self._current_game_score.sum)
+                self._current_game_score.reset()
             self.player.reset()
         self.mem.append(Experience(old_s, act, reward, isOver))
 

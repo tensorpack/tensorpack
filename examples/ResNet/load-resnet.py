@@ -8,18 +8,14 @@ import cv2
 import functools
 import tensorflow as tf
 import argparse
-import os
 import re
 import numpy as np
 import six
-from six.moves import zip
 from tensorflow.contrib.layers import variance_scaling_initializer
 
 from tensorpack import *
 from tensorpack.utils import logger
-from tensorpack.utils.stats import RatioCounter
-from tensorpack.tfutils.summary import *
-from tensorpack.dataflow.dataset import ILSVRCMeta, ILSVRC12
+from tensorpack.dataflow.dataset import ILSVRCMeta
 
 from imagenet_utils import eval_on_ILSVRC12, get_imagenet_dataflow, ImageNetModel
 from resnet_model import resnet_group, resnet_bottleneck
@@ -60,7 +56,7 @@ class Model(ModelDesc):
                       .apply(resnet_group, 'group3', bottleneck, 512, blocks[3], 2)
                       .GlobalAvgPooling('gap')
                       .FullyConnected('linear', 1000, nl=tf.identity)())
-        prob = tf.nn.softmax(logits, name='prob')
+        tf.nn.softmax(logits, name='prob')
         ImageNetModel.compute_loss_and_error(logits, label)
 
 

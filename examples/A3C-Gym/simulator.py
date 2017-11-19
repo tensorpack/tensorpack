@@ -3,7 +3,6 @@
 # File: simulator.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import tensorflow as tf
 import multiprocessing as mp
 import time
 import os
@@ -15,9 +14,6 @@ import six
 from six.moves import queue
 import zmq
 
-from tensorpack.callbacks import Callback
-from tensorpack.tfutils.varmanip import SessionUpdate
-from tensorpack.predict import OfflinePredictor
 from tensorpack.utils import logger
 from tensorpack.utils.serialize import loads, dumps
 from tensorpack.utils.concurrency import LoopThread, ensure_proc_terminate

@@ -12,6 +12,7 @@ from ..tfutils.tower import TowerContext
 from ..input_source import PlaceholderInput
 from ..utils.develop import log_deprecated
 from ..utils.argtools import log_once
+from ..utils.utils import execute_only_once
 
 __all__ = ['PredictorBase', 'AsyncPredictorBase',
            'OnlinePredictor', 'OfflinePredictor',
@@ -41,10 +42,11 @@ class PredictorBase(object):
         """
         if len(args) == 1 and isinstance(args[0], (list, tuple)):
             dp = args[0]    # backward-compatibility
-            log_deprecated(
-                "Calling a predictor with one datapoint",
-                "Call it with positional arguments instead!",
-                "2018-3-1")
+            if execute_only_once():
+                log_deprecated(
+                    "Calling a predictor with one datapoint",
+                    "Call it with positional arguments instead!",
+                    "2018-3-1")
         else:
             dp = args
         output = self._do_call(dp)
