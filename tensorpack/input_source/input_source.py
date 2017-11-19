@@ -71,7 +71,6 @@ class FeedInput(InputSource):
             return tf.train.SessionRunArgs(fetches=[], feed_dict=feed)
 
         def _reset(self):
-            self._ds.reset_state()
             self._itr = self._ds.get_data()
 
     def __init__(self, ds, infinite=True):
@@ -132,7 +131,7 @@ class EnqueueThread(ShareSessionThread):
     def run(self):
         with self.default_sess():
             try:
-                self._itr = self.dataflow.get_data()
+                self.reinitialize_dataflow()
                 while True:
                     # pausable loop
                     self._lock.acquire()
@@ -155,8 +154,7 @@ class EnqueueThread(ShareSessionThread):
                     pass
                 logger.info("{} Exited.".format(self.name))
 
-    def reset_dataflow(self):
-        self.dataflow.reset_state()
+    def reinitialize_dataflow(self):
         self._itr = self.dataflow.get_data()
 
     def pause(self):
@@ -217,7 +215,7 @@ class QueueInput(FeedfreeInput):
             pass
 
         # reset dataflow, start thread
-        self.thread.reset_dataflow()
+        self.thread.reinitialize_dataflow()
         self.thread.resume()
 
     def _create_ema_callback(self):
