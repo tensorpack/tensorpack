@@ -92,7 +92,7 @@ def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5,
 
     Note:
         1. About multi-GPU training: moving averages across GPUs are not aggregated.
-           Batch statistics are computed indepdently.  This is consistent with most frameworks.
+           Batch statistics are computed independently.  This is consistent with most frameworks.
         2. Combinations of ``use_local_stat`` and ``ctx.is_training``:
             * ``use_local_stat == is_training``: standard BN, EMA are
                 maintained during training and used during inference.

@@ -18,36 +18,35 @@ import tensorflow as tf
 from tensorflow.contrib.layers import variance_scaling_initializer
 
 """
-CIFAR10 ResNet example. See:
-Deep Residual Learning for Image Recognition, arxiv:1512.03385
-This implementation uses the variants proposed in:
-Identity Mappings in Deep Residual Networks, arxiv:1603.05027
+This implementation uses different architecture of PreAct in:
+https://github.com/kuangliu/pytorch-cifar
 
-I can reproduce the results on 2 TitanX for
-n=5, about 7.1% val error after 67k steps (20.4 step/s)
-n=18, about 5.95% val error after 80k steps (5.6 step/s, not converged)
-n=30: a 182-layer network, about 5.6% val error after 51k steps (3.4 step/s)
+I can reproduce the results on one TitanX for
+about 5.08% val error after 156k steps
 This model uses the whole training set instead of a train-val split.
 
 To train:
-    ./cifar10-resnet.py --gpu 0,1
+    ./cifar10-preact18.py --gpu 0
 """
 
 BATCH_SIZE = 128
 CLASS_NUM = 10
-NUM_UNITS = None
 
 
 
 class Model(ModelDesc):
 
-    def __init__(self, n):
+    def __init__(self):
         super(Model, self).__init__()
-        self.n = n
+        self.num_blocks = [2,2,2,2]
+        self.num_classes = CLASS_NUM
+        self.in_planes = 64
 
     def _get_inputs(self):
         return [InputDesc(tf.float32, [None, 32, 32, 3], 'input'),
                 InputDesc(tf.float32, [None,CLASS_NUM], 'label')]
+
+
 
     def _build_graph(self, inputs):
         image, label = inputs
@@ -55,47 +54,38 @@ class Model(ModelDesc):
         assert tf.test.is_gpu_available()
         image = tf.transpose(image, [0, 3, 1, 2])
 
-        def residual(name, l, increase_dim=False, first=False):
-            shape = l.get_shape().as_list()
-            in_channel = shape[1]
-
-            if increase_dim:
-                out_channel = in_channel * 2
-                stride1 = 2
-            else:
-                out_channel = in_channel
-                stride1 = 1
-
+        def preactblock(input, name, in_planes, planes, stride=1):
             with tf.variable_scope(name) as scope:
-                b1 = l if first else BNReLU(l)
-                c1 = Conv2D('conv1', b1, out_channel, stride=stride1, nl=BNReLU)
-                c2 = Conv2D('conv2', c1, out_channel)
-                if increase_dim:
-                    l = AvgPooling('pool', l, 2)
-                    l = tf.pad(l, [[0, 0], [in_channel // 2, in_channel // 2], [0, 0], [0, 0]])
+                input2 = BNReLU(input)
+                if stride != 1 or in_planes != planes:
+                    shortcut = Conv2D('conv1', input2, planes, kernel_shape=1, stride=stride, use_bias=False, nl=tf.identity)
+                else:
+                    shortcut = input
+                input2 = Conv2D('conv2', input2, planes, kernel_shape=3, stride=stride, use_bias=False,  nl=BNReLU)
+                input2 = Conv2D('conv3', input2, planes, kernel_shape=3, stride=1, use_bias=False)
 
-                l = c2 + l
-                return l
+                input2 += shortcut
+            return input2
+
+        def _make_layer(input, planes, num_blocks, current_plane, stride, name):
+            strides = [stride] + [1] * (num_blocks - 1) # first block stride = stride, the latter block stride = 1
+            for index, stride in enumerate(strides):
+                input = preactblock(input, "{}.{}".format(name, index), current_plane, planes, stride)
+                current_plane = planes
+            return input, current_plane
+
 
         with argscope([Conv2D, AvgPooling, BatchNorm, GlobalAvgPooling], data_format='NCHW'), \
                 argscope(Conv2D, nl=tf.identity, use_bias=False, kernel_shape=3,
                          W_init=variance_scaling_initializer(mode='FAN_OUT')):
-            l = Conv2D('conv0', image, 16, nl=BNReLU)
-            l = residual('res1.0', l, first=True)
-            for k in range(1, self.n):
-                l = residual('res1.{}'.format(k), l)
-            # 32,c=16
 
-            l = residual('res2.0', l, increase_dim=True)
-            for k in range(1, self.n):
-                l = residual('res2.{}'.format(k), l)
-            # 16,c=32
+            l = Conv2D('conv0', image, 64, kernel_shape=3, stride=1, use_bias=False)
 
-            l = residual('res3.0', l, increase_dim=True)
-            for k in range(1, self.n):
-                l = residual('res3.' + str(k), l)
-            l = BNReLU('bnlast', l)
-            # 8,c=64
+            current_plane = self.in_planes
+            l, current_plane = _make_layer( l, 64, self.num_blocks[0], current_plane, stride=1,  name="res1")
+            l, current_plane = _make_layer( l, 128, self.num_blocks[1], current_plane, stride=2, name="res2")
+            l, current_plane = _make_layer( l, 256, self.num_blocks[2], current_plane, stride=2, name="res3")
+            l, current_plane = _make_layer( l, 512, self.num_blocks[3], current_plane, stride=2, name="res4")
             l = GlobalAvgPooling('gap', l)
 
         logits = FullyConnected('linear', l, out_dim=CLASS_NUM, nl=tf.identity)
@@ -124,7 +114,7 @@ class Model(ModelDesc):
         return opt
 
 
-def get_data(train_or_test, alpha, class_num):
+def get_data(train_or_test):
     isTrain = train_or_test == 'train'
     ds = dataset.Cifar10(train_or_test)
     pp_mean = ds.get_per_pixel_mean()
@@ -144,24 +134,12 @@ def get_data(train_or_test, alpha, class_num):
     def mixup(ds):
         images = ds[0]
         labels = ds[1]
-        real_batch_size = BATCH_SIZE
-        one_hot_labels = np.eye(class_num)[labels]  # one hot coding
+        one_hot_labels = np.eye(CLASS_NUM)[labels]  # one hot coding
         if not isTrain:
             return [images, one_hot_labels]
+        return [images, one_hot_labels]
 
-        weight = np.random.beta(alpha, alpha, real_batch_size)
-        x_weight = weight.reshape(real_batch_size, 1, 1, 1)
-        y_weight = weight.reshape(real_batch_size, 1)
-        x1 = images[:real_batch_size]
-        x2 = images[real_batch_size:]
-        x = x1 * x_weight + x2 * (1 - x_weight)
-        y1 = one_hot_labels[:real_batch_size]
-        y2 = one_hot_labels[real_batch_size:]
-        y = y1 * y_weight + y2 * (1 - y_weight)
-        return [x, y]
-        return ds
-
-    ds = BatchData(ds, 2*BATCH_SIZE, remainder=not isTrain)
+    ds = BatchData(ds, BATCH_SIZE, remainder=not isTrain)
     ds = MapData(ds, mixup)
 
     if isTrain:
@@ -172,33 +150,29 @@ def get_data(train_or_test, alpha, class_num):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
-    parser.add_argument('-n', '--num_units',
-                        help='number of units in each stage',
-                        type=int, default=18)
     parser.add_argument('--load', help='load model')
-    parser.add_argument('--alpha', default=0.2, type=float, help='alpha in mixup')
     args = parser.parse_args()
-    NUM_UNITS = args.num_units
+
 
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
     logger.auto_set_dir()
 
-    dataset_train = get_data('train', args.alpha, CLASS_NUM)
-    dataset_test = get_data('test', args.alpha, CLASS_NUM)
+    dataset_train = get_data('train')
+    dataset_test = get_data('test')
 
     config = TrainConfig(
-        model=Model(n=NUM_UNITS),
+        model=Model(),
         dataflow=dataset_train,
         callbacks=[
             ModelSaver(),
             InferenceRunner(dataset_test,
                             [ScalarStats('cost'), ClassificationError('wrong_vector')]),
             ScheduledHyperParamSetter('learning_rate',
-                                      [(1, 0.1), (164, 0.01), (246, 0.001), (600, 0.0002)])
+                                      [(1, 0.1), (200, 0.01), (300, 0.001)])
         ],
-        max_epoch=800,
+        max_epoch=400,
         session_init=SaverRestore(args.load) if args.load else None
     )
     nr_gpu = max(get_nr_gpu(), 1)
