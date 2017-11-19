@@ -15,8 +15,8 @@ from tensorpack.dataflow import dataset
 A small convnet model for Cifar10 or Cifar100 dataset.
 
 Cifar10 trained on 1 GPU:
-    91% accuracy after 50k step.
-    41 step/s on TitanX
+    91% accuracy after 50k iterations.
+    70 itr/s on P100
 
 Not a good model for Cifar100, just for demonstration.
 """
@@ -94,9 +94,6 @@ def get_data(train_or_test, cifar_classnum):
             imgaug.Flip(horiz=True),
             imgaug.Brightness(63),
             imgaug.Contrast((0.2, 1.8)),
-            imgaug.GaussianDeform(
-                [(0.2, 0.2), (0.2, 0.8), (0.8, 0.8), (0.8, 0.2)],
-                (30, 30), 0.2, 3),
             imgaug.MeanVarianceNormalize(all_channel=True)
         ]
     else:
