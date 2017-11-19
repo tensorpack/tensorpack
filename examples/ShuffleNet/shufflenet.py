@@ -200,7 +200,7 @@ if __name__ == '__main__':
         input = PlaceholderInput()
         input.setup(input_desc)
         with TowerContext('', is_training=True):
-            model.build_graph(input)
+            model.build_graph(*input.get_input_tensors())
 
         tf.profiler.profile(
             tf.get_default_graph(),

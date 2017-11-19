@@ -140,7 +140,7 @@ class MultiGPUGANTrainer(TowerTrainer):
 
         # build the graph
         def get_cost(*inputs):
-            model.build_graph(inputs)
+            model.build_graph(*inputs)
             return [model.d_loss, model.g_loss]
         tower_func = TowerFuncWrapper(get_cost, model.get_inputs_desc())
         devices = [LeastLoadedDeviceSetter(d, raw_devices) for d in raw_devices]
