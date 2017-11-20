@@ -7,7 +7,7 @@ import cv2
 import argparse
 import numpy as np
 from tensorpack import *
-from tensorpack.tfutils.scope_utils import under_variable_scope
+from tensorpack.tfutils.scope_utils import under_variable_scope, auto_reuse_variable_scope
 import tensorflow as tf
 
 """
@@ -17,7 +17,6 @@ for Automatic Image Colorization with Simultaneous Classification
 """
 
 BATCH_SIZE = 32
-SHAPE = 224
 ALPHA = 1. / 300
 
 
@@ -104,13 +103,22 @@ def lab2rgb(lab):
     return rgb
 
 
+SHAPE = 224
+
+
 class Model(ModelDesc):
 
+    def __init__(self, H=224, W=224):
+        super(Model, self).__init__()
+        self.HSHAPE = H
+        self.WSHAPE = W
+
     def _get_inputs(self):
-        return [InputDesc(tf.float32, (None, SHAPE, SHAPE, 3), 'rgb'),
+        return [InputDesc(tf.float32, (None, self.HSHAPE, self.WSHAPE, 3), 'rgb'),
                 InputDesc(tf.int32, (None, ), 'labels')]
 
     def _build_graph(self, inputs):
+        ctx = get_current_tower_context()
         given_rgb, labels = inputs
         labels = tf.squeeze(labels)
 
@@ -118,6 +126,7 @@ class Model(ModelDesc):
         given_l = tf.expand_dims(given_lab[:, :, :, 0], axis=-1)
         given_ab = given_lab[:, :, :, 1:]
 
+        @auto_reuse_variable_scope
         @under_variable_scope()
         def low_level(x):
             with argscope(Conv2D, kernel_shape=3, nl=BNReLU):
@@ -172,9 +181,17 @@ class Model(ModelDesc):
             x = FullyConnected('fc2', x, out_dim=365, nl=tf.identity)
             return x
 
-        low_level_features = low_level(given_l / 50. - 1)
-        mid_level_features = mid_level(low_level_features)
-        global_features = global_features(low_level_features)
+        with argscope(BatchNorm, use_local_stat=True):
+            low_level_features = low_level(given_l / 50. - 1)
+            mid_level_features = mid_level(low_level_features)
+            if ctx.is_training:
+                global_features = global_features(low_level_features)
+            else:
+                resized_given_rgb = tf.image.resize_images(given_rgb, [224, 224])
+                resized_given_lab = rgb2lab(resized_given_rgb)
+                resized_given_l = tf.expand_dims(resized_given_lab[:, :, :, 0], axis=-1)
+                tmp = low_level(resized_given_l / 50. - 1)
+                global_features = global_features(tmp)
 
         estimated_ab = colorization_network(
             mid_level_features, global_features) * 100.
@@ -187,7 +204,7 @@ class Model(ModelDesc):
 
         self.cost = tf.add(color_costs, ALPHA * cls_costs, name='total_costs')
         summary.add_moving_summary(self.cost, cls_costs, color_costs)
-
+        tf.identity(lab2rgb(tf.concat([given_l, estimated_ab], axis=3)), name='prediction')
         with tf.name_scope('visualization'):
             estimated_rgb = lab2rgb(tf.concat([given_l, estimated_ab], axis=3))
             estimated_ab = lab2rgb(tf.concat([given_l * 0 + 50, estimated_ab], axis=3))
@@ -290,10 +307,35 @@ def get_config(args):
     )
 
 
+def apply(args):
+    im = cv2.imread(args.apply)
+    im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+    im = np.stack([im, im, im], axis=-1)
+    assert im is not None
+    H, W, C = im.shape
+    H = H // 8 * 8
+    W = W // 8 * 8
+    im = cv2.resize(im, (W, H))
+
+    pred_config = PredictConfig(
+        model=Model(H, W),
+        session_init=get_model_loader(args.load),
+        input_names=['rgb'],
+        output_names=['prediction'])
+    predictor = OfflinePredictor(pred_config)
+
+    im = im[None, :, :, :].astype('float32')
+    outputs = predictor(im)
+    outputs = outputs[0][0, :, :, ::-1]
+    cv2.imwrite(args.apply + '_input.jpg', im[0])
+    cv2.imwrite(args.apply + '_output.jpg', outputs)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
     parser.add_argument('--load', help='load model')
+    parser.add_argument('--apply', help='run model on given image', default='')
     parser.add_argument('--train_lmdb', help='load model',
                         default='/scratch_shared/datasets/PLACE2/train_large_places365standard.lmdb')
     parser.add_argument('--val_lmdb', help='load model',
@@ -303,11 +345,14 @@ if __name__ == '__main__':
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
-    config = get_config(args)
+    if args.apply is not '':
+        apply(args)
+    else:
+        config = get_config(args)
 
-    if args.gpu:
-        config.nr_tower = len(args.gpu.split(','))
-    if args.load:
-        config.session_init = SaverRestore(args.load)
+        if args.gpu:
+            config.nr_tower = len(args.gpu.split(','))
+        if args.load:
+            config.session_init = SaverRestore(args.load)
 
-    SyncMultiGPUTrainer(config).train()
+        SyncMultiGPUTrainer(config).train()
