@@ -61,14 +61,15 @@ class Model(ModelDesc):
             with tf.variable_scope(name) as scope:
                 input2 = BNReLU(input)
                 if stride != 1 or in_planes != planes:
-                    shortcut = Conv2D('conv1', input2, planes, kernel_shape=1, stride=stride, use_bias=False, nl=tf.identity)
+                    shortcut = Conv2D('shortcut', input2, planes, kernel_shape=1, stride=stride, use_bias=False, nl=tf.identity)
                 else:
                     shortcut = input
-                input2 = Conv2D('conv2', input2, planes, kernel_shape=3, stride=stride, use_bias=False,  nl=BNReLU)
-                input2 = Conv2D('conv3', input2, planes, kernel_shape=3, stride=1, use_bias=False)
-
+                input2 = Conv2D('conv1', input2, planes, kernel_shape=3, stride=1, use_bias=False, nl=BNReLU)
+                input2 = Conv2D('conv2', input2, planes, kernel_shape=3, stride=stride, use_bias=False, nl=BNReLU)
+                input2 = Conv2D('conv3', input2, planes, kernel_shape=3, stride=1, use_bias=False, nl=tf.identity)
                 input2 += shortcut
             return input2
+
 
         def _make_layer(input, planes, num_blocks, current_plane, stride, name):
             strides = [stride] + [1] * (num_blocks - 1) # first block stride = stride, the latter block stride = 1
