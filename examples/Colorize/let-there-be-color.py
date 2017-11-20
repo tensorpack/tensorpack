@@ -103,9 +103,6 @@ def lab2rgb(lab):
     return rgb
 
 
-SHAPE = 224
-
-
 class Model(ModelDesc):
 
     def __init__(self, H=224, W=224):
