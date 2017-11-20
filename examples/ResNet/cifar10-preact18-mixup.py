@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-# File: cifar10-resnet-mixup.py
+# File: cifar10-preact18-mixup.py
 # Author: Tao Hu <taohu620@gmail.com>
 
 import numpy as np
@@ -36,20 +36,16 @@ BATCH_SIZE = 128
 CLASS_NUM = 10
 
 
-
 class Model(ModelDesc):
-
     def __init__(self):
         super(Model, self).__init__()
-        self.num_blocks = [2,2,2,2]
+        self.num_blocks = [2, 2, 2, 2]
         self.num_classes = CLASS_NUM
         self.in_planes = 64
 
     def _get_inputs(self):
         return [InputDesc(tf.float32, [None, 32, 32, 3], 'input'),
-                InputDesc(tf.float32, [None,CLASS_NUM], 'label')]
-
-
+                InputDesc(tf.float32, [None, CLASS_NUM], 'label')]
 
     def _build_graph(self, inputs):
         image, label = inputs
@@ -58,10 +54,11 @@ class Model(ModelDesc):
         image = tf.transpose(image, [0, 3, 1, 2])
 
         def preactblock(input, name, in_planes, planes, stride=1):
-            with tf.variable_scope(name) as scope:
+            with tf.variable_scope(name):
                 input2 = BNReLU(input)
                 if stride != 1 or in_planes != planes:
-                    shortcut = Conv2D('shortcut', input2, planes, kernel_shape=1, stride=stride, use_bias=False, nl=tf.identity)
+                    shortcut = Conv2D('shortcut', input2, planes, kernel_shape=1, stride=stride, use_bias=False,
+                                      nl=tf.identity)
                 else:
                     shortcut = input
                 input2 = Conv2D('conv1', input2, planes, kernel_shape=3, stride=1, use_bias=False, nl=BNReLU)
@@ -72,12 +69,11 @@ class Model(ModelDesc):
 
 
         def _make_layer(input, planes, num_blocks, current_plane, stride, name):
-            strides = [stride] + [1] * (num_blocks - 1) # first block stride = stride, the latter block stride = 1
+            strides = [stride] + [1] * (num_blocks - 1)  # first block stride = stride, the latter block stride = 1
             for index, stride in enumerate(strides):
                 input = preactblock(input, "{}.{}".format(name, index), current_plane, planes, stride)
                 current_plane = planes
             return input, current_plane
-
 
         with argscope([Conv2D, AvgPooling, BatchNorm, GlobalAvgPooling], data_format='NCHW'), \
                 argscope(Conv2D, nl=tf.identity, use_bias=False, kernel_shape=3,
@@ -86,14 +82,13 @@ class Model(ModelDesc):
             l = Conv2D('conv0', image, 64, kernel_shape=3, stride=1, use_bias=False)
 
             current_plane = self.in_planes
-            l, current_plane = _make_layer( l, 64, self.num_blocks[0], current_plane, stride=1,  name="res1")
-            l, current_plane = _make_layer( l, 128, self.num_blocks[1], current_plane, stride=2, name="res2")
-            l, current_plane = _make_layer( l, 256, self.num_blocks[2], current_plane, stride=2, name="res3")
-            l, current_plane = _make_layer( l, 512, self.num_blocks[3], current_plane, stride=2, name="res4")
+            l, current_plane = _make_layer(l, 64, self.num_blocks[0], current_plane, stride=1, name="res1")
+            l, current_plane = _make_layer(l, 128, self.num_blocks[1], current_plane, stride=2, name="res2")
+            l, current_plane = _make_layer(l, 256, self.num_blocks[2], current_plane, stride=2, name="res3")
+            l, current_plane = _make_layer(l, 512, self.num_blocks[3], current_plane, stride=2, name="res4")
             l = GlobalAvgPooling('gap', l)
 
         logits = FullyConnected('linear', l, out_dim=CLASS_NUM, nl=tf.identity)
-        prob = tf.nn.softmax(logits, name='output')
 
         cost = tf.losses.softmax_cross_entropy(onehot_labels=label, logits=logits)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
@@ -155,9 +150,9 @@ def get_data(train_or_test, isMixup, alpha):
             return [x, y]
             return ds
 
-        ds = BatchData(ds, 2*BATCH_SIZE, remainder=not isTrain)
+        ds = BatchData(ds, 2 * BATCH_SIZE, remainder=not isTrain)
     else:
-        def mixup(ds):#if is original preact, we only process one hot coding
+        def mixup(ds):  # if is original preact, we only process one hot coding
             images = ds[0]
             labels = ds[1]
             one_hot_labels = np.eye(CLASS_NUM)[labels]  # one hot coding
@@ -178,10 +173,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
     parser.add_argument('--load', help='load model')
-    parser.add_argument('--mixup', default=1, type=int, help='open mixup')
-    parser.add_argument('--alpha', default= 1, type=float, help='alpha in mixup')
+    parser.add_argument('--mixup', help='enable mixup', action='store_true')
+    parser.add_argument('--alpha', default=1, type=float, help='alpha in mixup')
     args = parser.parse_args()
-
 
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu

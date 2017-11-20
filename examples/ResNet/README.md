@@ -66,18 +66,10 @@ Also see a [DenseNet implementation](https://github.com/YixuanLi/densenet-tensor
 Reproduce Mixup pre-activation ResNet18 on CIFAR10.
 please notice that the preact18 architecture is [Preact18](https://github.com/kuangliu/pytorch-cifar/blob/master/models/preact_resnet.py) as the [MixUp Paper](https://arxiv.org/abs/1710.09412) said.
 
-### for preact18
-
 Usage:
 ```bash
-./cifar10-preact18.py --gpu 0
-```
-
-### for preact18-mixup
-
-Usage:
-```bash
-./cifar10-preact18-mixup.py --gpu 0
+./cifar10-preact18-mixup.py  # train without mixup
+./cifar10-preact18-mixup.py --mixup	 # with mixup
 ```
 the final result is:
 
@@ -85,8 +77,3 @@ the final result is:
 |:-------------------|-------------|
 | PreAct18           |     5.1%  |
 | PreAct18-MixUp(alpha=1)					 |     3.7%   |
-
-the curve is as follows:
-![cifar10_preact18_mixup](cifar10_preact18_mixup.png)
-
-
