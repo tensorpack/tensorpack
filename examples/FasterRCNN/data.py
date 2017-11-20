@@ -137,12 +137,11 @@ def get_anchor_labels(anchors, gt_boxes, crowd_boxes):
     return anchor_labels, anchor_boxes
 
 
-def get_rpn_anchor_input(im, boxes, klass, is_crowd):
+def get_rpn_anchor_input(im, boxes, is_crowd):
     """
     Args:
         im: an image
         boxes: nx4, floatbox, gt. shoudn't be changed
-        klass: n,
         is_crowd: n,
 
     Returns:
@@ -220,7 +219,7 @@ def get_train_dataflow(add_mask=False):
 
         # rpn anchor:
         try:
-            fm_labels, fm_boxes = get_rpn_anchor_input(im, boxes, klass, is_crowd)
+            fm_labels, fm_boxes = get_rpn_anchor_input(im, boxes, is_crowd)
             boxes = boxes[is_crowd == 0]    # skip crowd boxes in training target
             klass = klass[is_crowd == 0]
             if not len(boxes):
