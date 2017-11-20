@@ -2,11 +2,11 @@ Bug Reports/Feature Requests/Usage Questions Only:
 
 Bug Reports (including performance bug):
 Some part of code (either the library or examples) doesn't work as expected.
-Always include the following:
+PLEASE always include the following:
 1. What you did. (command you run if using examples; post or describe your code if not)
-2. What you observed. (training logs)
-3. What you expected, if not obvious
-4. Your environment (TF version, GPUs), if it matters.
+2. What you observed, e.g. logs.
+3. What you expected, if not obvious.
+4. Your environment (TF version, cudnn version, GPU model), if it matters.
 
 Feature Requests:
 1. Improve an existing feature.

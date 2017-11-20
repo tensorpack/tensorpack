@@ -38,7 +38,10 @@ Model:
 
 Speed:
 
-1. Inference is not quite fast, because either you disable convolution autotune and end up with
+1. The training will start very slow due to convolution warmup, until about 3k steps to reach a maximum speed.
+	 Then the training speed will slowly decrease due to more accurate proposals.
+
+2. Inference is not quite fast, because either you disable convolution autotune and end up with
 	 a slow convolution algorithm, or you spend more time on autotune.
 	 This is a general problem of TensorFlow when running against variable-sized input.
 
