@@ -21,12 +21,15 @@ from tensorflow.contrib.layers import variance_scaling_initializer
 This implementation uses different architecture of PreAct in:
 https://github.com/kuangliu/pytorch-cifar
 
-I can reproduce the results on one TitanX for
-about 3.7% val error after 156k steps
+I can reproduce the results on one TitanX Pascal for
+    5.08% val error in preact18
+    3.7% val error in preact18_mixup
 This model uses the whole training set instead of a train-val split.
 
-To train:
-    ./cifar10-preact18-mixup.py --gpu 0
+To train preact18:
+    ./cifar10-preact18-mixup.py --gpu 0 --mixup 0
+to train preact18_mixup
+    ./cifar10-preact18-mixup.py --gpu 0 --mixup 1
 """
 
 BATCH_SIZE = 128
@@ -114,7 +117,7 @@ class Model(ModelDesc):
         return opt
 
 
-def get_data(train_or_test, alpha):
+def get_data(train_or_test, isMixup, alpha):
     isTrain = train_or_test == 'train'
     ds = dataset.Cifar10(train_or_test)
     pp_mean = ds.get_per_pixel_mean()
@@ -131,26 +134,38 @@ def get_data(train_or_test, alpha):
         ]
     ds = AugmentImageComponent(ds, augmentors)
 
-    def mixup(ds):
-        images = ds[0]
-        labels = ds[1]
-        one_hot_labels = np.eye(CLASS_NUM)[labels]  # one hot coding
-        if not isTrain:
+    if isMixup:
+        def mixup(ds):
+            images = ds[0]
+            labels = ds[1]
+            one_hot_labels = np.eye(CLASS_NUM)[labels]  # one hot coding
+            if not isTrain:
+                return [images, one_hot_labels]
+
+            weight = np.random.beta(alpha, alpha, BATCH_SIZE)
+            x_weight = weight.reshape(BATCH_SIZE, 1, 1, 1)
+            y_weight = weight.reshape(BATCH_SIZE, 1)
+            x1 = images[:BATCH_SIZE]
+            x2 = images[BATCH_SIZE:]
+            x = x1 * x_weight + x2 * (1 - x_weight)
+            y1 = one_hot_labels[:BATCH_SIZE]
+            y2 = one_hot_labels[BATCH_SIZE:]
+            y = y1 * y_weight + y2 * (1 - y_weight)
+            return [x, y]
+            return ds
+
+        ds = BatchData(ds, 2*BATCH_SIZE, remainder=not isTrain)
+    else:
+        def mixup(ds):#if is original preact, we only process one hot coding
+            images = ds[0]
+            labels = ds[1]
+            one_hot_labels = np.eye(CLASS_NUM)[labels]  # one hot coding
+            if not isTrain:
+                return [images, one_hot_labels]
             return [images, one_hot_labels]
 
-        weight = np.random.beta(alpha, alpha, BATCH_SIZE)
-        x_weight = weight.reshape(BATCH_SIZE, 1, 1, 1)
-        y_weight = weight.reshape(BATCH_SIZE, 1)
-        x1 = images[:BATCH_SIZE]
-        x2 = images[BATCH_SIZE:]
-        x = x1 * x_weight + x2 * (1 - x_weight)
-        y1 = one_hot_labels[:BATCH_SIZE]
-        y2 = one_hot_labels[BATCH_SIZE:]
-        y = y1 * y_weight + y2 * (1 - y_weight)
-        return [x, y]
-        return ds
+        ds = BatchData(ds, BATCH_SIZE, remainder=not isTrain)
 
-    ds = BatchData(ds, 2*BATCH_SIZE, remainder=not isTrain)
     ds = MapData(ds, mixup)
 
     if isTrain:
@@ -162,6 +177,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
     parser.add_argument('--load', help='load model')
+    parser.add_argument('--mixup', default=1, type=int, help='open mixup')
     parser.add_argument('--alpha', default= 1, type=float, help='alpha in mixup')
     args = parser.parse_args()
 
@@ -171,21 +187,37 @@ if __name__ == '__main__':
 
     logger.auto_set_dir()
 
-    dataset_train = get_data('train', args.alpha)
-    dataset_test = get_data('test', args.alpha)
+    dataset_train = get_data('train', args.mixup, args.alpha)
+    dataset_test = get_data('test', args.mixup, args.alpha)
 
-    config = TrainConfig(
-        model=Model(),
-        dataflow=dataset_train,
-        callbacks=[
-            ModelSaver(),
-            InferenceRunner(dataset_test,
-                            [ScalarStats('cost'), ClassificationError('wrong_vector')]),
-            ScheduledHyperParamSetter('learning_rate',
-                                      [(1, 0.1), (400, 0.01), (600, 0.001)])
-        ],
-        max_epoch=800,
-        session_init=SaverRestore(args.load) if args.load else None
-    )
+    if not args.mixup:
+        config = TrainConfig(
+            model=Model(),
+            dataflow=dataset_train,
+            callbacks=[
+                ModelSaver(),
+                InferenceRunner(dataset_test,
+                                [ScalarStats('cost'), ClassificationError('wrong_vector')]),
+                ScheduledHyperParamSetter('learning_rate',
+                                          [(1, 0.1), (200, 0.01), (300, 0.001)])
+            ],
+            max_epoch=400,
+            session_init=SaverRestore(args.load) if args.load else None
+        )
+    else:
+        # because mixup utilize two data to generate one data, so the learning rate schedule are doubled.
+        config = TrainConfig(
+            model=Model(),
+            dataflow=dataset_train,
+            callbacks=[
+                ModelSaver(),
+                InferenceRunner(dataset_test,
+                                [ScalarStats('cost'), ClassificationError('wrong_vector')]),
+                ScheduledHyperParamSetter('learning_rate',
+                                          [(1, 0.1), (400, 0.01), (600, 0.001)])
+            ],
+            max_epoch=800,
+            session_init=SaverRestore(args.load) if args.load else None
+        )
     nr_gpu = max(get_nr_gpu(), 1)
     launch_train_with_config(config, SyncMultiGPUTrainerParameterServer(nr_gpu))
