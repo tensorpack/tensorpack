@@ -67,7 +67,6 @@ class Model(ModelDesc):
                 input2 += shortcut
             return input2
 
-
         def _make_layer(input, planes, num_blocks, current_plane, stride, name):
             strides = [stride] + [1] * (num_blocks - 1)  # first block stride = stride, the latter block stride = 1
             for index, stride in enumerate(strides):
