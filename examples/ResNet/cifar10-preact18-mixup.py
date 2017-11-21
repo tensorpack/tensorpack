@@ -22,14 +22,13 @@ This implementation uses different architecture of PreAct in:
 https://github.com/kuangliu/pytorch-cifar
 
 I can reproduce the results on one TitanX Pascal for
-    5.08% val error in preact18
-    3.7% val error in preact18_mixup
+    4.7% val error in preact18
+    3.2% val error in preact18_mixup
 This model uses the whole training set instead of a train-val split.
 
-To train preact18:
-    ./cifar10-preact18-mixup.py --gpu 0 --mixup 0
-to train preact18_mixup
-    ./cifar10-preact18-mixup.py --gpu 0 --mixup 1
+./cifar10-preact18-mixup.py  # train without mixup
+./cifar10-preact18-mixup.py --mixup	 # with mixup
+
 """
 
 BATCH_SIZE = 128

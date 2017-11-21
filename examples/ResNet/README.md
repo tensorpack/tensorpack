@@ -71,9 +71,12 @@ Usage:
 ./cifar10-preact18-mixup.py  # train without mixup
 ./cifar10-preact18-mixup.py --mixup	 # with mixup
 ```
+
+![cifar10-preact18-mixup](cifar10-preact18-mixup.png)
+
 the final result is:
 
 | Model              | Top 1 Error |
 |:-------------------|-------------|
-| PreAct18           |     5.1%  |
-| PreAct18-MixUp(alpha=1)					 |     3.7%   |
+| PreAct18           |     4.7%  |
+| PreAct18-MixUp(alpha=1)					 |     3.2%   |
