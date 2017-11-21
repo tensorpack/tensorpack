@@ -245,8 +245,6 @@ class ILSVRC12(ILSVRC12Files):
                 try:
                     ret.append(parse_bbox(fname))
                     cnt += 1
-                except KeyboardInterrupt:
-                    raise
                 except Exception:
                     ret.append(None)
             logger.info("{}/{} images have bounding box.".format(cnt, len(imglist)))

@@ -47,7 +47,7 @@ To evaluate the performance (pretrained models can be downloaded in [model zoo](
 Mean Average Precision @IoU=0.50:0.95:
 
 + trainval35k/minival, FASTRCNN_BATCH=256: 34.2. Takes 49h on 8 TitanX.
-+ trainval35k/minival, FASTRCNN_BATCH=64: 32.7. Takes 31h on 8 TitanX.
++ trainval35k/minival, FASTRCNN_BATCH=64: 33.0. Takes 22h on 8 P100.
 
 The hyperparameters are not carefully tuned. You can probably get better performance by e.g. training longer.
 

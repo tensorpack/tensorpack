@@ -24,6 +24,8 @@ Usage:
 
     python -m tensorpack.utils.loadcaffe \
             PATH/TO/VGG/{VGG_ILSVRC_16_layers_deploy.prototxt,VGG_ILSVRC_16_layers.caffemodel} vgg16.npy
+
+    Or download a converted caffe model from http://models.tensorpack.com/caffe/
     ./load-vgg16.py --load vgg16.npy --input cat.png
 """
 

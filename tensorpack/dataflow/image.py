@@ -28,8 +28,6 @@ class ExceptionHandler:
     def catch(self):
         try:
             yield
-        except KeyboardInterrupt:
-            raise
         except Exception:
             self._nr_error += 1
             if not self.catch_exceptions:

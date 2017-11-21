@@ -134,8 +134,6 @@ class BatchData(ProxyDataFlow):
                 try:
                     result.append(
                         np.asarray([x[k] for x in data_holder], dtype=tp))
-                except KeyboardInterrupt:
-                    raise
                 except Exception as e:  # noqa
                     logger.exception("Cannot batch data. Perhaps they are of inconsistent shape?")
                     if isinstance(dt, np.ndarray):

@@ -6,7 +6,7 @@ PLEASE always include the following:
 1. What you did. (command you run if using examples; post or describe your code if not)
 2. What you observed, e.g. logs.
 3. What you expected, if not obvious.
-4. Your environment (TF version, cudnn version, GPU model), if it matters.
+4. Your environment (TF version, cudnn version, number & type of GPUs), if it matters.
 
 Feature Requests:
 1. Improve an existing feature.
