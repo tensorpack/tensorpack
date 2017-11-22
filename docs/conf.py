@@ -30,7 +30,7 @@ MOCK_MODULES = ['scipy', 'tabulate',
                 'cv2', 'scipy.io', 'dill', 'zmq', 'subprocess32', 'lmdb',
                 'tornado.concurrent', 'tornado',
                 'msgpack', 'msgpack_numpy',
-                'gym', 'functools32']
+                'gym', 'functools32', 'horovod.tensorflow']
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock(name=mod_name)
 sys.modules['cv2'].__version__ = '3.2.1'    # fake version
@@ -353,6 +353,11 @@ def process_signature(app, what, name, obj, options, signature,
     return signature, return_annotation
 
 def autodoc_skip_member(app, what, name, obj, skip, options):
+    if name == '__init__':
+        if obj.__doc__ and skip:
+            # include_init_with_doc doesn't work well for decorated init
+            # https://github.com/sphinx-doc/sphinx/issues/4258
+            return False
     if name in [
         'MultiGPUTrainerBase',
         'FeedfreeInferenceRunner',
