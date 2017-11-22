@@ -24,6 +24,7 @@ Usage:
     ./load-vgg19.py --load vgg19.npy --input cat.png
 """
 
+
 def tower_func(image):
     with argscope(Conv2D, kernel_shape=3, nl=tf.nn.relu):
         logits = (LinearWrap(image)

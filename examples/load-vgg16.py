@@ -78,7 +78,13 @@ def run_test(path, input):
     assert im is not None, input
     im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
     im = cv2.resize(im, (224, 224)).reshape((1, 224, 224, 3)).astype('float32')
-    im = im - 110
+
+    # VGG16 requires channelwise mean substraction
+    VGG_MEAN = [103.939, 116.779, 123.68]
+    im[:, :, 0] -= VGG_MEAN[2]
+    im[:, :, 1] -= VGG_MEAN[1]
+    im[:, :, 2] -= VGG_MEAN[0]
+
     outputs = predict_func(im)[0]
     prob = outputs[0]
     ret = prob.argsort()[-10:][::-1]
