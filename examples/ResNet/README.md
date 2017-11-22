@@ -63,8 +63,10 @@ Also see a [DenseNet implementation](https://github.com/YixuanLi/densenet-tensor
 
 ## cifar10-preact18-mixup.py
 
-Reproduce Mixup pre-activation ResNet18 on CIFAR10.
-please notice that the preact18 architecture is [Preact18](https://github.com/kuangliu/pytorch-cifar/blob/master/models/preact_resnet.py) as the [MixUp Paper](https://arxiv.org/abs/1710.09412) said.
+Reproduce mixup pre-activation ResNet18 on CIFAR10.
+Please notice that this preact18 architecture is
+[different](https://github.com/kuangliu/pytorch-cifar/blob/master/models/preact_resnet.py)
+as the [mixup paper](https://arxiv.org/abs/1710.09412) said.
 
 Usage:
 ```bash
@@ -72,11 +74,6 @@ Usage:
 ./cifar10-preact18-mixup.py --mixup	 # with mixup
 ```
 
-![cifar10-preact18-mixup](cifar10-preact18-mixup.png)
+Validation error with the original LR schedule (100-150-200): __5.0%__ without mixup, __3.8%__ with mixup.
 
-the final result is:
-
-| Model              | Top 1 Error |
-|:-------------------|-------------|
-| PreAct18           |     4.7%  |
-| PreAct18-MixUp(alpha=1)					 |     3.2%   |
+With 2x LR schedule: 4.7% without mixup, and 3.2% with mixup.

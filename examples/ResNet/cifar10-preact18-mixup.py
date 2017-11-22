@@ -18,17 +18,19 @@ import tensorflow as tf
 from tensorflow.contrib.layers import variance_scaling_initializer
 
 """
-This implementation uses different architecture of PreAct in:
+This implementation uses the architecture of PreAct in:
 https://github.com/kuangliu/pytorch-cifar
+This is different from the one in cifar10-resnet.py
 
-I can reproduce the results on one TitanX Pascal for
-    4.7% val error in preact18
-    3.2% val error in preact18_mixup
-This model uses the whole training set instead of a train-val split.
+Results:
+Validation error with the original 100-150-200 schedule:
+no mixup - 5.0%; mixup(alpha=1) - 3.8%
 
+Using 2x learning schedule, it can further improve to 4.7% and 3.2%.
+
+Usage:
 ./cifar10-preact18-mixup.py  # train without mixup
 ./cifar10-preact18-mixup.py --mixup	 # with mixup
-
 """
 
 BATCH_SIZE = 128
@@ -36,11 +38,6 @@ CLASS_NUM = 10
 
 
 class Model(ModelDesc):
-    def __init__(self):
-        super(Model, self).__init__()
-        self.num_blocks = [2, 2, 2, 2]
-        self.num_classes = CLASS_NUM
-
     def _get_inputs(self):
         return [InputDesc(tf.float32, [None, 32, 32, 3], 'input'),
                 InputDesc(tf.float32, [None, CLASS_NUM], 'label')]
@@ -79,10 +76,10 @@ class Model(ModelDesc):
             l = Conv2D('conv0', image, 64, kernel_shape=3, stride=1, use_bias=False)
 
             current_plane = 64
-            l, current_plane = _make_layer(l, 64, self.num_blocks[0], current_plane, stride=1, name="res1")
-            l, current_plane = _make_layer(l, 128, self.num_blocks[1], current_plane, stride=2, name="res2")
-            l, current_plane = _make_layer(l, 256, self.num_blocks[2], current_plane, stride=2, name="res3")
-            l, current_plane = _make_layer(l, 512, self.num_blocks[3], current_plane, stride=2, name="res4")
+            l, current_plane = _make_layer(l, 64, 2, current_plane, stride=1, name="res1")
+            l, current_plane = _make_layer(l, 128, 2, current_plane, stride=2, name="res2")
+            l, current_plane = _make_layer(l, 256, 2, current_plane, stride=2, name="res3")
+            l, current_plane = _make_layer(l, 512, 2, current_plane, stride=2, name="res4")
             l = GlobalAvgPooling('gap', l)
 
         logits = FullyConnected('linear', l, out_dim=CLASS_NUM, nl=tf.identity)
@@ -186,9 +183,9 @@ if __name__ == '__main__':
             InferenceRunner(dataset_test,
                             [ScalarStats('cost'), ClassificationError('wrong_vector')]),
             ScheduledHyperParamSetter('learning_rate',
-                                      [(1, 0.1), (200, 0.01), (300, 0.001)])
+                                      [(1, 0.1), (100, 0.01), (150, 0.001)])
         ],
-        max_epoch=400,
+        max_epoch=200,
         steps_per_epoch=steps_per_epoch,
         session_init=SaverRestore(args.load) if args.load else None
     )
