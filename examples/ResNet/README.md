@@ -59,3 +59,21 @@ Reproduce pre-activation ResNet on CIFAR10.
 ![cifar10](cifar10-resnet.png)
 
 Also see a [DenseNet implementation](https://github.com/YixuanLi/densenet-tensorflow) of the paper [Densely Connected Convolutional Networks](https://arxiv.org/abs/1608.06993).
+
+
+## cifar10-preact18-mixup.py
+
+Reproduce mixup pre-activation ResNet18 on CIFAR10.
+Please notice that this preact18 architecture is
+[different](https://github.com/kuangliu/pytorch-cifar/blob/master/models/preact_resnet.py)
+as the [mixup paper](https://arxiv.org/abs/1710.09412) said.
+
+Usage:
+```bash
+./cifar10-preact18-mixup.py  # train without mixup
+./cifar10-preact18-mixup.py --mixup	 # with mixup
+```
+
+Validation error with the original LR schedule (100-150-200): __5.0%__ without mixup, __3.8%__ with mixup.
+
+With 2x LR schedule: 4.7% without mixup, and 3.2% with mixup.
