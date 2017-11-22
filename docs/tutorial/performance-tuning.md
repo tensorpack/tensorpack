@@ -1,7 +1,8 @@
 
 # Performance Tuning
 
-Here's a list of things you can do when your training is slow:
+Here's a list of things you can do when your training is slow.
+And if you're going to open an issue about slow training, PLEASE do them and include your findings.
 
 ## Figure out the bottleneck
 

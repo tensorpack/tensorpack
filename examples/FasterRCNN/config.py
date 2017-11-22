@@ -17,6 +17,7 @@ RESNET_NUM_BLOCK = [3, 4, 6, 3]     # resnet50
 # preprocessing --------------------
 SHORT_EDGE_SIZE = 600
 MAX_SIZE = 1024
+# alternative (better) setting: 800, 1333
 
 # anchors -------------------------
 ANCHOR_STRIDE = 16

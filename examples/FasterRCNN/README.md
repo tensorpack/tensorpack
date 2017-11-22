@@ -44,10 +44,13 @@ To evaluate the performance (pretrained models can be downloaded in [model zoo](
 
 ## Results
 
-Mean Average Precision @IoU=0.50:0.95:
+Trained on trainval35k and evaluated on minival, got the following results:
+mAP@IoU=0.50:0.95:
 
-+ trainval35k/minival, FASTRCNN_BATCH=256: 34.2. Takes 49h on 8 TitanX.
-+ trainval35k/minival, FASTRCNN_BATCH=64: 33.0. Takes 22h on 8 P100.
+|Backbone | `FASTRCNN_BATCH` | mAP | Time |
+| - | - | - | - |
+| Res50 | 256 | 34.4 | 49h on 8 TitanX |
+| Res50 | 64 | 33.0 | 22h on 8 P100 |
 
 The hyperparameters are not carefully tuned. You can probably get better performance by e.g. training longer.
 
