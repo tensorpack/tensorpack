@@ -19,6 +19,9 @@ Usage:
     python -m tensorpack.utils.loadcaffe \
             PATH/TO/VGG/{VGG_ILSVRC_19_layers_deploy.prototxt,VGG_ILSVRC_16_layers.caffemodel} vgg19.npy
     ./load-vgg19.py --load vgg19.npy --input cat.png
+
+    Or download a converted caffe model from http://models.tensorpack.com/caffe/
+    ./load-vgg19.py --load vgg19.npy --input cat.png
 """
 
 def tower_func(image):
