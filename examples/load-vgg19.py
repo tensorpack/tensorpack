@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-# File: load-vgg16.py
-# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+# File: load-vgg19.py
 
 from __future__ import print_function
 import cv2
@@ -17,16 +16,12 @@ from tensorpack.dataflow.dataset import ILSVRCMeta
 
 """
 Usage:
-    Download original caffe models at:
-    https://gist.github.com/ksimonyan/211839e770f7b538e2d8
-
-    Install caffe python bindings.
-
     python -m tensorpack.utils.loadcaffe \
-            PATH/TO/VGG/{VGG_ILSVRC_16_layers_deploy.prototxt,VGG_ILSVRC_16_layers.caffemodel} vgg16.npy
+            PATH/TO/VGG/{VGG_ILSVRC_19_layers_deploy.prototxt,VGG_ILSVRC_16_layers.caffemodel} vgg19.npy
+    ./load-vgg19.py --load vgg19.npy --input cat.png
 
     Or download a converted caffe model from http://models.tensorpack.com/caffe/
-    ./load-vgg16.py --load vgg16.npy --input cat.png
+    ./load-vgg19.py --load vgg19.npy --input cat.png
 """
 
 
@@ -44,16 +39,19 @@ def tower_func(image):
                   .Conv2D('conv3_1', 256)
                   .Conv2D('conv3_2', 256)
                   .Conv2D('conv3_3', 256)
+                  .Conv2D('conv3_4', 256)
                   .MaxPooling('pool3', 2)
                   # 28
                   .Conv2D('conv4_1', 512)
                   .Conv2D('conv4_2', 512)
                   .Conv2D('conv4_3', 512)
+                  .Conv2D('conv4_4', 512)
                   .MaxPooling('pool4', 2)
                   # 14
                   .Conv2D('conv5_1', 512)
                   .Conv2D('conv5_2', 512)
                   .Conv2D('conv5_3', 512)
+                  .Conv2D('conv5_4', 512)
                   .MaxPooling('pool5', 2)
                   # 7
                   .FullyConnected('fc6', 4096, nl=tf.nn.relu)
@@ -79,12 +77,11 @@ def run_test(path, input):
     im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
     im = cv2.resize(im, (224, 224)).reshape((1, 224, 224, 3)).astype('float32')
 
-    # VGG16 requires channelwise mean substraction
+    # VGG19 requires channelwise mean substraction
     VGG_MEAN = [103.939, 116.779, 123.68]
     im[:, :, 0] -= VGG_MEAN[2]
     im[:, :, 1] -= VGG_MEAN[1]
     im[:, :, 2] -= VGG_MEAN[0]
-
     outputs = predict_func(im)[0]
     prob = outputs[0]
     ret = prob.argsort()[-10:][::-1]
