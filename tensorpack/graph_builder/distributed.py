@@ -42,6 +42,7 @@ class DistributedReplicatedBuilder(DataParallelBuilder):
             server = tf.train.Server(
                 cluster_spec, job_name=args.job, task_index=args.task,
                 config=get_default_sess_config())
+            # initialize trainer with this server object
 
         .. code-block:: none
 

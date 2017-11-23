@@ -9,6 +9,7 @@ from six.moves import zip
 from ..utils import logger
 from ..utils.argtools import call_only_once
 from ..utils.naming import TRAIN_TOWER_FREEZE_KEYS, PREDICT_TOWER_FREEZE_KEYS
+from ..utils.develop import HIDE_DOC
 from .collection import CollectionGuard
 from .common import get_tf_version_number, get_op_or_tensor_by_name, get_op_tensor_name
 
@@ -261,11 +262,8 @@ class TowerTensorHandle(object):
     inputs/outputs created in each tower.
     """
 
-    # TODO hide it from doc
+    @HIDE_DOC
     def __init__(self, ctx, input, output, inputs_desc=None):
-        """
-        Don't use it because you never need to create the handle by yourself.
-        """
         self._ctx = ctx
 
         self._extra_tensor_names = {}

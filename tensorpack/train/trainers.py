@@ -10,6 +10,7 @@ from ..tfutils.sesscreate import NewSessionCreator
 
 from ..utils import logger
 from ..utils.argtools import map_arg
+from ..utils.develop import HIDE_DOC
 from ..tfutils import get_global_step_var
 from ..tfutils.distributed import get_distributed_session_creator
 from ..tfutils.tower import TowerContext
@@ -144,8 +145,6 @@ class DistributedTrainerReplicated(SingleCostTrainer):
         Args:
             gpus (list[int]): list of GPU ids.
             server (tf.train.Server): the server with ps and workers.
-                The job_name must be 'worker' because 'ps' job doesn't need to
-                build any graph.
         """
         self.server = server
         self.job_name = server.server_def.job_name
@@ -196,6 +195,7 @@ class DistributedTrainerReplicated(SingleCostTrainer):
             callbacks.append(cb)
         return callbacks
 
+    @HIDE_DOC
     def initialize(self, session_creator, session_init):
         if not isinstance(session_creator, NewSessionCreator) or \
                 session_creator.user_provided_config:

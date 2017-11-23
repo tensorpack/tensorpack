@@ -122,6 +122,11 @@ def deprecated(text="", eos=""):
     return deprecated_inner
 
 
+def HIDE_DOC(func):
+    func.__HIDE_SPHINX_DOC__ = True
+    return func
+
+
 # Copied from https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/util/lazy_loader.py
 class LazyLoader(types.ModuleType):
     def __init__(self, local_name, parent_module_globals, name):

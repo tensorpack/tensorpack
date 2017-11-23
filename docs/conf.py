@@ -353,11 +353,15 @@ def process_signature(app, what, name, obj, options, signature,
     return signature, return_annotation
 
 def autodoc_skip_member(app, what, name, obj, skip, options):
+    # we hide something deliberately
+    if getattr(obj, '__HIDE_SPHINX_DOC__', False):
+        return True
     if name == '__init__':
         if obj.__doc__ and skip:
             # include_init_with_doc doesn't work well for decorated init
             # https://github.com/sphinx-doc/sphinx/issues/4258
             return False
+    # hide deprecated stuff
     if name in [
         'MultiGPUTrainerBase',
         'FeedfreeInferenceRunner',
