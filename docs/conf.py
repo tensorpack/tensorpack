@@ -30,7 +30,7 @@ MOCK_MODULES = ['scipy', 'tabulate',
                 'cv2', 'scipy.io', 'dill', 'zmq', 'subprocess32', 'lmdb',
                 'tornado.concurrent', 'tornado',
                 'msgpack', 'msgpack_numpy',
-                'gym', 'functools32', 'horovod.tensorflow']
+                'gym', 'functools32', 'horovod', 'horovod.tensorflow']
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock(name=mod_name)
 sys.modules['cv2'].__version__ = '3.2.1'    # fake version
