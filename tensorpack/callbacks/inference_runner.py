@@ -14,7 +14,6 @@ from six.moves import range
 
 from ..utils import logger
 from ..utils.utils import get_tqdm_kwargs
-from ..utils.develop import deprecated
 from ..dataflow.base import DataFlow
 
 from ..input_source import (
@@ -25,7 +24,7 @@ from .base import Callback
 from .group import Callbacks
 from .inference import Inferencer
 
-__all__ = ['InferenceRunner', 'FeedfreeInferenceRunner',
+__all__ = ['InferenceRunner',
            'DataParallelInferenceRunner']
 
 
@@ -163,11 +162,6 @@ class InferenceRunner(InferenceRunnerBase):
                 self._hooked_sess.run(fetches=[])
         for inf in self.infs:
             inf.trigger_epoch()
-
-
-@deprecated("Just use InferenceRunner since it now accepts TensorInput!", "2017-11-11")
-def FeedfreeInferenceRunner(*args, **kwargs):
-    return InferenceRunner(*args, **kwargs)
 
 
 class DataParallelInferenceRunner(InferenceRunnerBase):

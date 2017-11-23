@@ -256,6 +256,7 @@ class HorovodTrainer(SingleCostTrainer):
         cb.chief_only = False
         return [cb]
 
+    @HIDE_DOC
     def initialize(self, session_creator, session_init):
         if not isinstance(session_creator, NewSessionCreator):
             raise ValueError(

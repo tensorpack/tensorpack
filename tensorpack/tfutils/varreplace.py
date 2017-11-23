@@ -6,11 +6,7 @@
 import tensorflow as tf
 from contextlib import contextmanager
 
-from ..utils.develop import deprecated
-
-__all__ = ['replace_get_variable',
-           'freeze_variables', 'freeze_get_variable', 'remap_get_variable',
-           'remap_variables']
+__all__ = ['freeze_variables', 'remap_variables']
 
 
 @contextmanager
@@ -18,19 +14,6 @@ def custom_getter_scope(custom_getter):
     scope = tf.get_variable_scope()
     with tf.variable_scope(scope, custom_getter=custom_getter):
         yield
-
-
-@deprecated("Use custom_getter_scope instead.", "2017-11-06")
-def replace_get_variable(fn):
-    """
-    Args:
-        fn: a function compatible with ``tf.get_variable``.
-    Returns:
-        a context with a custom getter
-    """
-    def getter(_, *args, **kwargs):
-        return fn(*args, **kwargs)
-    return custom_getter_scope(getter)
 
 
 def remap_variables(fn):
@@ -74,13 +57,3 @@ def freeze_variables():
             v = tf.stop_gradient(v)
         return v
     return custom_getter_scope(custom_getter)
-
-
-@deprecated("Renamed to remap_variables", "2017-11-06")
-def remap_get_variable():
-    return remap_variables()
-
-
-@deprecated("Renamed to freeze_variables", "2017-11-06")
-def freeze_get_variable():
-    return freeze_variables()
