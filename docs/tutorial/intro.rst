@@ -15,7 +15,7 @@ which as a result makes people think TensorFlow is slow.
 
 Tensorpack uses TensorFlow efficiently, and hides these details under its APIs.
 You no longer need to learn about
-multi-GPU model replication, variables synchronization, queues, tf.data -- anything that's unrelated to the model itself.
+multi-GPU model replication, device placement, variables synchronization, queues -- anything that's unrelated to the model itself.
 You still need to learn to write models with TF, but everything else is taken care of by tensorpack, in the efficient way.
 
 A High Level Glance

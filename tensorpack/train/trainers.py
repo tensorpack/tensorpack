@@ -212,9 +212,28 @@ class DistributedTrainerReplicated(SingleCostTrainer):
 
 class HorovodTrainer(SingleCostTrainer):
     """
-    Horovod trainer, currently support multi-GPU training.
+    Horovod trainer, support multi-GPU and distributed training.
 
-    It will use the first k GPUs in CUDA_VISIBLE_DEVICES.
+    To use for multi-GPU training:
+
+        CUDA_VISIBLE_DEVICES=0,1,2,3 mpirun -np 4 --output-filename mylog python train.py
+
+    To use for distributed training:
+
+        /path/to/mpirun -np 8 -H server1:4,server2:4  \
+            -bind-to none -map-by slot \
+            --output-filename mylog  -x LD_LIBRARY_PATH -x CUDA_VISIBLE_DEVICES=0,1,2,3 \
+            python train.py
+
+    Note:
+        1. If using all GPUs, you can always skip the `CUDA_VISIBLE_DEVICES` option.
+
+        2. About performance, horovod is expected to be slightly
+           slower than native tensorflow on multi-GPU training, but faster in distributed training.
+
+        3. Due to the use of MPI, training is less informative (no progress bar).
+           It's recommended to use other multi-GPU trainers for single-node
+           experiments, and scale to multi nodes by horovod.
     """
     def __init__(self):
         hvd.init()
