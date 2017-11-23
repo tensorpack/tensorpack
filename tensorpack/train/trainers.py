@@ -229,9 +229,10 @@ class HorovodTrainer(SingleCostTrainer):
             opt = get_opt_fn()
             opt = hvd.DistributedOptimizer(opt)
             self.train_op = opt.apply_gradients(grads, name='min_op')
+        with tf.name_scope('horovod_broadcast'):
+            op = hvd.broadcast_global_variables(0)
         cb = RunOp(
-            tf.identity(hvd.broadcast_global_variables(0), name='horovod_broadcast_global_variables'),
-            run_before=True,
+            op, run_before=True,
             run_as_trigger=False, verbose=True)
         cb.chief_only = False
         return [cb]

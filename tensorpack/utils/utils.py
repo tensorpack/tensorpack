@@ -114,6 +114,7 @@ def get_tqdm_kwargs(**kwargs):
 
     f = kwargs.get('file', sys.stderr)
     isatty = f.isatty()
+    # TODO when run under mpirun, isatty is always False
     # Jupyter notebook should be recognized as tty.
     # Wait for https://github.com/ipython/ipykernel/issues/268
     try:
