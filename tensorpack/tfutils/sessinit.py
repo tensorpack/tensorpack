@@ -186,7 +186,7 @@ class DictRestore(SessionInit):
     Restore variables from a dictionary.
     """
 
-    def __init__(self, variable_dict):
+    def __init__(self, variable_dict, prefix=None):
         """
         Args:
             variable_dict (dict): a dict of {name: value}
@@ -194,12 +194,13 @@ class DictRestore(SessionInit):
         assert isinstance(variable_dict, dict), type(variable_dict)
         # use varname (with :0) for consistency
         self._prms = {get_op_tensor_name(n)[1]: v for n, v in six.iteritems(variable_dict)}
+        self.prefix = "" if prefix is None else prefix
 
     def _run_init(self, sess):
         variables = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)
 
         variable_names = set([k.name for k in variables])
-        param_names = set(six.iterkeys(self._prms))
+        param_names = set([self.prefix + k for k in six.iterkeys(self._prms)])
 
         intersect = variable_names & param_names
 
@@ -217,7 +218,7 @@ class DictRestore(SessionInit):
 
         upd = SessionUpdate(sess, [v for v in variables if v.name in intersect])
         logger.info("Restoring from dict ...")
-        upd.update({name: value for name, value in six.iteritems(self._prms) if name in intersect})
+        upd.update({self.prefix + name: value for name, value in six.iteritems(self._prms) if name in intersect})
 
 
 class ChainInit(SessionInit):
