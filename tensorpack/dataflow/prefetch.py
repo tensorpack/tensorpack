@@ -22,7 +22,8 @@ from ..utils import logger
 from ..utils.gpu import change_gpu
 
 __all__ = ['PrefetchData', 'PrefetchDataZMQ', 'PrefetchOnGPUs',
-           'ThreadedMapData', 'MultiThreadMapData', 'MultiProcessMapData']
+           'ThreadedMapData', 'MultiThreadMapData',
+           'MultiProcessMapData', 'MultiProcessMapDataZMQ']
 
 
 def _repeat_iter(get_itr):
