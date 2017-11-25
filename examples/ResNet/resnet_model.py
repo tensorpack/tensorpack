@@ -100,7 +100,7 @@ def se_resnet_bottleneck(l, ch_out, stride):
     ch_ax = 1 if data_format == 'NCHW' else 3
     shape = [-1, 1, 1, 1]
     shape[ch_ax] = ch_out * 4
-    l = l * tf.reshape(squeeze, shape)    
+    l = l * tf.reshape(squeeze, shape)
     return l + resnet_shortcut(shortcut, ch_out * 4, stride, nl=get_bn(zero_init=False))
 
 
