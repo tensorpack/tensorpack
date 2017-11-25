@@ -96,7 +96,6 @@ def se_resnet_bottleneck(l, ch_out, stride):
     squeeze = GlobalAvgPooling('gap', l)
     squeeze = FullyConnected('fc1', squeeze, ch_out // 4, nl=tf.nn.relu)
     squeeze = FullyConnected('fc2', squeeze, ch_out * 4, nl=tf.nn.sigmoid)
-    l = l * tf.reshape(squeeze, [-1, ch_out * 4, 1, 1])
     data_format = get_arg_scope()['Conv2D']['data_format']
     ch_ax = 1 if data_format == 'NCHW' else 3
     shape = [-1, 1, 1, 1]
