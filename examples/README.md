@@ -17,7 +17,7 @@ Without a setting and performance comparable to someone else, you don't know if 
 | Name | Performance |
 | ---  | --- |
 |	Train [ResNet](ResNet) and [ShuffleNet](ShuffleNet) on ImageNet		| reproduce paper	|
-|	[Train Faster-RCNN on COCO](FasterRCNN)				|	reproduce paper		|
+|	[Train Faster-RCNN / Mask-RCNN on COCO](FasterRCNN)				|	reproduce paper		|
 | [DoReFa-Net: training binary / low-bitwidth CNN on ImageNet](DoReFa-Net) | reproduce paper |
 | [Generative Adversarial Network(GAN) variants](GAN), including DCGAN, InfoGAN, <br/> Conditional GAN, WGAN, BEGAN, DiscoGAN, Image to Image, CycleGAN | visually reproduce |
 | [Inception-BN and InceptionV3](Inception) | reproduce reference code |

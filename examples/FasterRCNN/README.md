@@ -1,10 +1,11 @@
-# Faster-RCNN on COCO
-This example aims to provide a minimal (1.2k lines) multi-GPU implementation of ResNet-Faster-RCNN on COCO.
+# Faster-RCNN / Mask-RCNN on COCO
+This example aims to provide a minimal (1.3k lines) multi-GPU implementation of
+Faster-RCNN / Mask-RCNN (without FPN) on COCO.
 
 ## Dependencies
-+ TensorFlow >= 1.4.0
++ Python 3; TensorFlow >= 1.4.0
 + Install [pycocotools](https://github.com/pdollar/coco/tree/master/PythonAPI/pycocotools), OpenCV.
-+ Pre-trained [ResNet50 model](https://goo.gl/6XjK9V) from tensorpack model zoo.
++ Pre-trained [ResNet model](https://goo.gl/6XjK9V) from tensorpack model zoo.
 + COCO data. It assumes the following directory structure:
 ```
 DIR/
@@ -23,36 +24,41 @@ DIR/
 
 
 ## Usage
-Change `BASEDIR` in `config.py` to `/path/to/DIR` as described above.
+Change config:
+1. Set `BASEDIR` in `config.py` to `/path/to/DIR` as described above.
+2. Set `MODE_MASK` to switch Faster-RCNN or Mask-RCNN.
 
-To train:
+Train:
 ```
 ./train.py --load /path/to/ImageNet-ResNet50.npz
 ```
 The code is only for training with 1, 2, 4 or 8 GPUs.
 Otherwise, you probably need different hyperparameters for the same performance.
 
-To predict on an image (and show output in a window):
+Predict on an image (and show output in a window):
 ```
 ./train.py --predict input.jpg --load /path/to/model
 ```
 
-To evaluate the performance (pretrained models can be downloaded in [model zoo](http://models.tensorpack.com/FasterRCNN):
+Evaluate the performance of a model and save to json.
+(A pretrained model can be downloaded in [model zoo](http://models.tensorpack.com/FasterRCNN):
 ```
 ./train.py --evaluate output.json --load /path/to/model
 ```
 
 ## Results
 
-Trained on trainval35k and evaluated on minival, got the following results:
-mAP@IoU=0.50:0.95:
+Models are trained on trainval35k and evaluated on minival using mAP@IoU=0.50:0.95.
+MaskRCNN results contain both bbox and segm mAP.
 
-|Backbone | `FASTRCNN_BATCH` | mAP | Time |
-| - | - | - | - |
-| Res50 | 256 | 34.4 | 49h on 8 TitanX |
-| Res50 | 64 | 33.0 | 22h on 8 P100 |
+|Backbone | `FASTRCNN_BATCH` | resolution | mAP (bbox/segm) | Time |
+| - | - | - | - | - |
+| Res50 | 64 | (600, 1024) | 33.0 | 22h on 8 P100 |
+| Res50 | 256 | (600, 1024) | 34.4 | 49h on 8 TitanX |
+| Res50 | 512 | (800, 1333) | 35.6 | 55h on 8 P100|
+| Res50 | 512 | (800, 1333) | 36.9/32.3 | 59h on 8 P100|
 
-The hyperparameters are not carefully tuned. You can probably get better performance by e.g. training longer.
+Note that these models are trained with a longer learning schedule than the paper.
 
 ## Notes
 

@@ -4,6 +4,7 @@
 
 import tensorflow as tf
 from tensorpack.tfutils.argscope import argscope, get_arg_scope
+from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
 from tensorpack.models import (
     Conv2D, MaxPooling, BatchNorm, BNReLU)
 
@@ -88,6 +89,7 @@ def pretrained_resnet_conv4(image, num_blocks):
     return l
 
 
+@auto_reuse_variable_scope
 def resnet_conv5(image, num_block):
     with argscope([Conv2D, BatchNorm], data_format='NCHW'), \
             argscope(Conv2D, nl=tf.identity, use_bias=False), \

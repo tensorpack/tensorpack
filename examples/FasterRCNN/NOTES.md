@@ -30,7 +30,7 @@ Model:
 
 2. We use ROIAlign, and because of (1), `tf.image.crop_and_resize` is __NOT__ ROIAlign.
 
-3. We only support single image per GPU for now.
+3. We only support single image per GPU.
 
 4. Because of (3), BatchNorm statistics are not supposed to be updated during fine-tuning.
 	 This specific kind of BatchNorm will need [my kernel](https://github.com/tensorflow/tensorflow/pull/12580)
@@ -44,4 +44,6 @@ Speed:
 2. Inference is not quite fast, because either you disable convolution autotune and end up with
 	 a slow convolution algorithm, or you spend more time on autotune.
 	 This is a general problem of TensorFlow when running against variable-sized input.
+
+3. With a large roi batch size (e.g. >= 256), GPU utilitization should stay around 90%.
 

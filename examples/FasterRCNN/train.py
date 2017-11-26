@@ -28,7 +28,8 @@ from model import (
     clip_boxes, decode_bbox_target, encode_bbox_target, crop_and_resize,
     rpn_head, rpn_losses,
     generate_rpn_proposals, sample_fast_rcnn_targets, roi_align,
-    fastrcnn_head, fastrcnn_losses, fastrcnn_predictions)
+    fastrcnn_head, fastrcnn_losses, fastrcnn_predictions,
+    maskrcnn_head, maskrcnn_loss)
 from data import (
     get_train_dataflow, get_eval_dataflow,
     get_all_anchors)
@@ -47,15 +48,26 @@ def get_batch_factor():
     return 8 // nr_gpu
 
 
+def get_model_output_names():
+    ret = ['final_boxes', 'final_probs', 'final_labels']
+    if config.MODE_MASK:
+        ret.append('final_masks')
+    return ret
+
+
 class Model(ModelDesc):
     def _get_inputs(self):
-        return [
+        ret = [
             InputDesc(tf.float32, (None, None, 3), 'image'),
             InputDesc(tf.int32, (None, None, config.NUM_ANCHOR), 'anchor_labels'),
             InputDesc(tf.float32, (None, None, config.NUM_ANCHOR, 4), 'anchor_boxes'),
             InputDesc(tf.float32, (None, 4), 'gt_boxes'),
-            InputDesc(tf.int64, (None,), 'gt_labels'),  # all > 0
-        ]
+            InputDesc(tf.int64, (None,), 'gt_labels')]  # all > 0
+        if config.MODE_MASK:
+            ret.append(
+                InputDesc(tf.uint8, (None, None, None), 'gt_masks')
+            )   # NR_GT x height x width
+        return ret
 
     def _preprocess(self, image):
         image = tf.expand_dims(image, 0)
@@ -79,7 +91,10 @@ class Model(ModelDesc):
 
     def _build_graph(self, inputs):
         is_training = get_current_tower_context().is_training
-        image, anchor_labels, anchor_boxes, gt_boxes, gt_labels = inputs
+        if config.MODE_MASK:
+            image, anchor_labels, anchor_boxes, gt_boxes, gt_labels, gt_masks = inputs
+        else:
+            image, anchor_labels, anchor_boxes, gt_boxes, gt_labels = inputs
         fm_anchors = self._get_anchors(image)
         image = self._preprocess(image)     # 1CHW
         image_shape2d = tf.shape(image)[2:]
@@ -104,8 +119,19 @@ class Model(ModelDesc):
             boxes_on_featuremap = proposal_boxes * (1.0 / config.ANCHOR_STRIDE)
 
         roi_resized = roi_align(featuremap, boxes_on_featuremap, 14)
-        feature_fastrcnn = resnet_conv5(roi_resized, config.RESNET_NUM_BLOCK[-1])    # nxcx7x7
-        fastrcnn_label_logits, fastrcnn_box_logits = fastrcnn_head('fastrcnn', feature_fastrcnn, config.NUM_CLASS)
+
+        # HACK to work around https://github.com/tensorflow/tensorflow/issues/14657
+        def ff_true():
+            feature_fastrcnn = resnet_conv5(roi_resized, config.RESNET_NUM_BLOCK[-1])    # nxcx7x7
+            fastrcnn_label_logits, fastrcnn_box_logits = fastrcnn_head('fastrcnn', feature_fastrcnn, config.NUM_CLASS)
+            return feature_fastrcnn, fastrcnn_label_logits, fastrcnn_box_logits
+
+        def ff_false():
+            ncls = config.NUM_CLASS
+            return tf.zeros([0, 2048, 7, 7]), tf.zeros([0, ncls]), tf.zeros([0, ncls - 1, 4])
+
+        feature_fastrcnn, fastrcnn_label_logits, fastrcnn_box_logits = tf.cond(
+            tf.size(boxes_on_featuremap) > 0, ff_true, ff_false)
 
         if is_training:
             # rpn loss
@@ -116,6 +142,7 @@ class Model(ModelDesc):
             fg_inds_wrt_sample = tf.reshape(tf.where(rcnn_labels > 0), [-1])   # fg inds w.r.t all samples
             fg_sampled_boxes = tf.gather(rcnn_sampled_boxes, fg_inds_wrt_sample)
 
+            # TODO move to models
             with tf.name_scope('fg_sample_patch_viz'):
                 fg_sampled_patches = crop_and_resize(
                     image, fg_sampled_boxes,
@@ -132,13 +159,30 @@ class Model(ModelDesc):
                 encoded_boxes,
                 tf.gather(fastrcnn_box_logits, fg_inds_wrt_sample))
 
+            if config.MODE_MASK:
+                # maskrcnn loss
+                fg_labels = tf.gather(rcnn_labels, fg_inds_wrt_sample)
+                fg_feature = tf.gather(feature_fastrcnn, fg_inds_wrt_sample)
+                mask_logits = maskrcnn_head('maskrcnn', fg_feature, config.NUM_CLASS)   # #fg x #cat x 14x14
+
+                gt_masks_for_fg = tf.gather(gt_masks, fg_inds_wrt_gt)  # nfg x H x W
+                target_masks_for_fg = crop_and_resize(
+                    tf.expand_dims(gt_masks_for_fg, 1),
+                    fg_sampled_boxes,
+                    tf.range(tf.size(fg_inds_wrt_gt)), 14)  # nfg x 1x14x14
+                target_masks_for_fg = tf.squeeze(target_masks_for_fg, 1, 'sampled_fg_mask_targets')
+                mrcnn_loss = maskrcnn_loss(mask_logits, fg_labels, target_masks_for_fg)
+            else:
+                mrcnn_loss = 0.0
+
             wd_cost = regularize_cost(
-                '(?:group1|group2|group3|rpn|fastrcnn)/.*W',
+                '(?:group1|group2|group3|rpn|fastrcnn|maskrcnn)/.*W',
                 l2_regularizer(1e-4), name='wd_cost')
 
             self.cost = tf.add_n([
                 rpn_label_loss, rpn_box_loss,
                 fastrcnn_label_loss, fastrcnn_box_loss,
+                mrcnn_loss,
                 wd_cost], 'total_cost')
 
             add_moving_summary(self.cost, wd_cost)
@@ -153,8 +197,22 @@ class Model(ModelDesc):
             # indices: Nx2. Each index into (#proposal, #category)
             pred_indices, final_probs = fastrcnn_predictions(decoded_boxes, label_probs)
             final_probs = tf.identity(final_probs, 'final_probs')
-            tf.gather_nd(decoded_boxes, pred_indices, name='final_boxes')
-            tf.add(pred_indices[:, 1], 1, name='final_labels')
+            final_boxes = tf.gather_nd(decoded_boxes, pred_indices, name='final_boxes')
+            final_labels = tf.add(pred_indices[:, 1], 1, name='final_labels')
+
+            if config.MODE_MASK:
+                # HACK to work around https://github.com/tensorflow/tensorflow/issues/14657
+                def f1():
+                    roi_resized = roi_align(featuremap, final_boxes * (1.0 / config.ANCHOR_STRIDE), 14)
+                    feature_maskrcnn = resnet_conv5(roi_resized, config.RESNET_NUM_BLOCK[-1])
+                    mask_logits = maskrcnn_head(
+                        'maskrcnn', feature_maskrcnn, config.NUM_CLASS)   # #result x #cat x 14x14
+                    indices = tf.stack([tf.range(tf.size(final_labels)), tf.to_int32(final_labels) - 1], axis=1)
+                    final_mask_logits = tf.gather_nd(mask_logits, indices)   # #resultx14x14
+                    return tf.sigmoid(final_mask_logits)
+
+                final_masks = tf.cond(tf.size(final_probs) > 0, f1, lambda: tf.zeros([0, 14, 14]))
+                tf.identity(final_masks, name='final_masks')
 
     def _get_optimizer(self):
         lr = tf.get_variable('learning_rate', initializer=0.003, trainable=False)
@@ -171,6 +229,9 @@ class Model(ModelDesc):
 
 
 def visualize(model_path, nr_visualize=50, output_dir='output'):
+    df = get_train_dataflow()   # we don't visualize mask stuff
+    df.reset_state()
+
     pred = OfflinePredictor(PredictConfig(
         model=Model(),
         session_init=get_model_loader(model_path),
@@ -183,8 +244,6 @@ def visualize(model_path, nr_visualize=50, output_dir='output'):
             'final_probs',
             'final_labels',
         ]))
-    df = get_train_dataflow()
-    df.reset_state()
 
     if os.path.isdir(output_dir):
         shutil.rmtree(output_dir)
@@ -237,7 +296,7 @@ class EvalCallback(Callback):
     def _setup_graph(self):
         self.pred = self.trainer.get_predictor(
             ['image'],
-            ['final_boxes', 'final_probs', 'final_labels'])
+            get_model_output_names())
         self.df = get_eval_dataflow()
 
     def _before_train(self):
@@ -288,11 +347,7 @@ if __name__ == '__main__':
                 model=Model(),
                 session_init=get_model_loader(args.load),
                 input_names=['image'],
-                output_names=[
-                    'final_boxes',
-                    'final_probs',
-                    'final_labels',
-                ]))
+                output_names=get_model_output_names()))
             if args.evaluate:
                 assert args.evaluate.endswith('.json')
                 offline_evaluate(pred, args.evaluate)
@@ -308,7 +363,7 @@ if __name__ == '__main__':
 
         cfg = TrainConfig(
             model=Model(),
-            data=QueueInput(get_train_dataflow()),
+            data=QueueInput(get_train_dataflow(add_mask=config.MODE_MASK)),
             callbacks=[
                 PeriodicTrigger(ModelSaver(), every_k_epochs=5),
                 # linear warmup

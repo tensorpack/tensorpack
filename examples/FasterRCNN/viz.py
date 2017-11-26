@@ -72,11 +72,16 @@ def draw_final_outputs(img, results):
         return img
 
     tags = []
-    for label, _, score in results:
+    for r in results:
         tags.append(
-            "{},{:.2f}".format(config.CLASS_NAMES[label], score))
-    boxes = np.asarray([x.box for x in results])
-    return viz.draw_boxes(img, boxes, tags)
+            "{},{:.2f}".format(config.CLASS_NAMES[r.class_id], r.score))
+    boxes = np.asarray([r.box for r in results])
+    ret = viz.draw_boxes(img, boxes, tags)
+
+    for r in results:
+        if r.mask is not None:
+            ret = draw_mask(ret, r.mask)
+    return ret
 
 
 def draw_mask(im, mask, alpha=0.5, color=None):
