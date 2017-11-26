@@ -7,7 +7,7 @@ We're not planning to release our C++ runtime for bit-operations.
 In this repo, bit operations are performed through `tf.float32`.
 
 Pretrained model for (1,4,32)-ResNet18 and (1,2,6)-AlexNet are available at
-[google drive](https://drive.google.com/a/megvii.com/folderview?id=0B308TeQzmFDLa0xOeVQwcXg1ZjQ).
+[tensorpack model zoo](http://models.tensorpack.com/DoReFa-Net/).
 They're provided in the format of numpy dictionary, so it should be very easy to port into other applications.
 The __binary-weight 4-bit-activation ResNet-18__ model has 59.2% top-1 validation accuracy.
 

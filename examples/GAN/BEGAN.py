@@ -19,8 +19,7 @@ from GAN import GANModelDesc, GANTrainer, MultiGPUGANTrainer
 Boundary Equilibrium GAN.
 See the docstring in DCGAN.py for usage.
 
-A pretrained model on CelebA is at
-https://drive.google.com/open?id=0B5uDfUQ1JTglUmgyZV8zQmNOTVU
+A pretrained model on CelebA is at http://models.tensorpack.com/GAN/
 """
 
 

@@ -16,7 +16,7 @@ wget https://github.com/shihenw/convolutional-pose-machines-release/raw/master/m
 python -m tensorpack.utils.loadcaffe pose_deploy_resize.prototxt pose_iter_320000.caffemodel CPM-original.npy
 ```
 
-Or you can download the converted model from [model zoo](https://drive.google.com/open?id=0B9IPQTvr2BBkRU8zM2w2ZGh3eU0).
+Or you can download the converted model from [model zoo](http://models.tensorpack.com/caffe/).
 
 Run it on an image, and produce `output.jpg`:
 ```

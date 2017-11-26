@@ -39,7 +39,7 @@ Usage:
 ./CAM-resnet.py --data /path/to/imagenet [--load ImageNet-ResNet18-Preact.npz] [--gpu 0,1,2,3]
 ```
 Pretrained and fine-tuned ResNet can be downloaded
-[here](https://drive.google.com/open?id=0B9IPQTvr2BBkTXBlZmh1cmlnQ0k) and [here](https://drive.google.com/open?id=0B9IPQTvr2BBkQk9qcmtGSERlNUk).
+[here](https://goo.gl/6XjK9V) and [here](http://models.tensorpack.com/Visualization/).
 
 2. Generate CAM on ImageNet validation set:
 ```bash

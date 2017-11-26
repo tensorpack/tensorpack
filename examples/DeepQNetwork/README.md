@@ -46,6 +46,6 @@ Watch the agent play:
 ```
 ./DQN.py --rom breakout.bin --task play --load path/to/model
 ```
-A pretrained model on breakout can be downloaded [here](https://drive.google.com/open?id=0B9IPQTvr2BBkN1Jrei1xWW0yR28).
+A pretrained model on breakout can be downloaded [here](http://models.tensorpack.com/DeepQNetwork/).
 
 A3C code and models for Atari games in OpenAI Gym are released in [examples/A3C-Gym](../A3C-Gym)

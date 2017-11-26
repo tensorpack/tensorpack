@@ -33,7 +33,7 @@ To inference (produce a heatmap at each level at out*.png):
 ```bash
 ./hed.py --load pretrained.model --run a.jpg
 ```
-Models I trained can be downloaded [here](https://drive.google.com/drive/folders/0B5uDfUQ1JTgldzVLaDBERG9zQmc?usp=sharing).
+Models I trained can be downloaded [here](http://models.tensorpack.com/HED/).
 
 To view the loss curve:
 ```bash

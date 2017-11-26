@@ -22,7 +22,7 @@ Train (takes 24 hours on 8 Maxwell TitanX):
 ./shufflenet.py --data /path/to/ilsvrc/
 ```
 
-Eval the [pretrained model](https://drive.google.com/open?id=1Q1C2BCkbOK2HfhUB0Yfn_W_F68bqnA6y):
+Eval the [pretrained model](http://models.tensorpack.com/ShuffleNet/):
 ```
 ./shufflenet.py --eval --data /path/to/ilsvrc --load /path/to/model
 ```
