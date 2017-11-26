@@ -51,7 +51,7 @@ before_script:
 
 script:
 - flake8 .
-- cd examples && flake8 .
+- if [[ $TRAVIS_PYTHON_VERSION == '3.5' ]]; then cd examples && flake8 .; fi  # some examples are py3 only
 - mkdir -p $HOME/tensorpack_data
 - export TENSORPACK_DATASET=$HOME/tensorpack_data
 - $TRAVIS_BUILD_DIR/tests/run-tests.sh
