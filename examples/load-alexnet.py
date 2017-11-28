@@ -22,6 +22,10 @@ Usage:
     Install caffe python bindings.
 
     python -m tensorpack.utils.loadcaffe PATH/TO/CAFFE/{deploy.prototxt,bvlc_alexnet.caffemodel} alexnet.npy
+
+    Or download a converted caffe model from http://models.tensorpack.com/caffe/
+
+    Then, run it:
     ./load-alexnet.py --load alexnet.npy --input cat.png
 """
 
