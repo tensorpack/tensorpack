@@ -41,7 +41,7 @@ Predict on an image (and show output in a window):
 ```
 
 Evaluate the performance of a model and save to json.
-(A pretrained model can be downloaded in [model zoo](http://models.tensorpack.com/FasterRCNN):
+(Pretrained models can be downloaded in [model zoo](http://models.tensorpack.com/FasterRCNN):
 ```
 ./train.py --evaluate output.json --load /path/to/model
 ```
@@ -57,8 +57,10 @@ MaskRCNN results contain both bbox and segm mAP.
 | Res50 | 256 | (600, 1024) | 34.4 | 49h on 8 TitanX |
 | Res50 | 512 | (800, 1333) | 35.6 | 55h on 8 P100|
 | Res50 | 512 | (800, 1333) | 36.9/32.3 | 59h on 8 P100|
+| Res101 | 512 | (800, 1333) | 40.1/34.4 | 70h on 8 P100|
 
-Note that these models are trained with a longer learning schedule than the paper.
+Note that these models are trained with a longer learning schedule than the paper,
+and get about 1mAP better performance.
 
 ## Notes
 

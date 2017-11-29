@@ -5,22 +5,23 @@
 import numpy as np
 
 # mode flags ---------------------
-MODE_MASK = False
+MODE_MASK = True
 
 # dataset -----------------------
 BASEDIR = '/path/to/your/COCO/DIR'
 TRAIN_DATASET = ['train2014', 'valminusminival2014']
-VAL_DATASET = 'minival2014'   # only support evaluation on one dataset
+VAL_DATASET = 'minival2014'   # only support evaluation on single dataset
 NUM_CLASS = 81
 CLASS_NAMES = []  # NUM_CLASS strings
 
 # basemodel ----------------------
 RESNET_NUM_BLOCK = [3, 4, 6, 3]     # resnet50
+# RESNET_NUM_BLOCK = [3, 4, 23, 3]     # resnet101
 
 # preprocessing --------------------
-SHORT_EDGE_SIZE = 600
-MAX_SIZE = 1024
-# alternative (better) setting: 800, 1333
+SHORT_EDGE_SIZE = 800
+MAX_SIZE = 1333
+# alternative (worse & faster) setting: 600, 1024
 
 # anchors -------------------------
 ANCHOR_STRIDE = 16
