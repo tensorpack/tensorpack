@@ -9,7 +9,7 @@ import argparse
 MNIST ConvNet example with weights/activations visualization.
 """
 
-os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
+
 from tensorpack import *
 from tensorpack.dataflow import dataset
 import tensorflow as tf

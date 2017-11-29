@@ -7,7 +7,7 @@ import numpy as np
 import argparse
 import os
 
-os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
+
 from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *

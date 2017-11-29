@@ -5,7 +5,7 @@
 import os
 import argparse
 import tensorflow as tf
-os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
+
 from tensorpack import *
 
 """

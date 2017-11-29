@@ -6,12 +6,11 @@ import argparse
 import numpy as np
 import tensorflow as tf
 import cv2
-import os
 from scipy.signal import convolve2d
 from six.moves import range, zip
 import multiprocessing
 
-os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
+
 from tensorpack import *
 from tensorpack.utils import logger
 from tensorpack.utils.viz import *

@@ -5,7 +5,7 @@
 import argparse
 import os
 
-os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
+
 from tensorpack import logger, QueueInput
 from tensorpack.models import *
 from tensorpack.callbacks import *

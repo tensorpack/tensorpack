@@ -8,7 +8,7 @@ import argparse
 from six.moves import map, zip
 import numpy as np
 
-os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
+
 from tensorpack import *
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope

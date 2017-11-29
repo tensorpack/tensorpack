@@ -9,7 +9,7 @@ import numpy as np
 import os
 import multiprocessing
 
-os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
+
 import tensorflow as tf
 from tensorflow.contrib.layers import variance_scaling_initializer
 from tensorpack import *

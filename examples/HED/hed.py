@@ -9,7 +9,7 @@ import argparse
 from six.moves import zip
 import os
 
-os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
+
 from tensorpack import *
 from tensorpack.dataflow import dataset
 from tensorpack.utils.gpu import get_nr_gpu

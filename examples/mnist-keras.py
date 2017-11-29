@@ -4,8 +4,6 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import tensorflow as tf
-import os
-
 from tensorflow import keras
 KL = keras.layers
 
@@ -14,7 +12,7 @@ This is an mnist example demonstrating how to use Keras symbolic function inside
 This way you can define models in Keras-style, and benefit from the more efficeint trainers in tensorpack.
 """
 
-os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
+
 from tensorpack import *
 from tensorpack.dataflow import dataset
 from tensorpack.utils.argtools import memoized

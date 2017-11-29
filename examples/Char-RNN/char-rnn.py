@@ -12,7 +12,7 @@ import operator
 import six
 from six.moves import range
 
-os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
+
 from tensorpack import *
 from tensorpack.tfutils import symbolic_functions, summary, optimizer
 from tensorpack.tfutils.gradproc import GlobalNormClip

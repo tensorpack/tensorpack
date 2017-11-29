@@ -7,7 +7,7 @@ import os
 import argparse
 from six.moves import range
 
-os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
+
 from tensorpack import *
 from tensorpack.tfutils.gradproc import SummaryGradient, GlobalNormClip
 import tensorflow as tf

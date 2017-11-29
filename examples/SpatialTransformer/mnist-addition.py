@@ -9,7 +9,7 @@ import tensorflow as tf
 import os
 import argparse
 
-os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
+
 from tensorpack import *
 from tensorpack.dataflow import dataset
 from tensorpack.tfutils import sesscreate, optimizer, summary

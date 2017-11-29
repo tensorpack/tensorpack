@@ -7,7 +7,7 @@ import argparse
 import os
 import tensorflow as tf
 
-os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
+
 from tensorpack import *
 from tensorpack.tfutils.symbolic_functions import prediction_incorrect
 from tensorpack.tfutils.summary import add_moving_summary

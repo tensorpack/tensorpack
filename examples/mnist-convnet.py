@@ -10,7 +10,7 @@ MNIST ConvNet example.
 about 0.6% validation error after 30 epochs.
 """
 
-os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
+
 # Just import everything into current namespace
 from tensorpack import *
 from tensorpack.tfutils import summary

@@ -9,7 +9,7 @@ import os
 import cv2
 import argparse
 
-os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
+
 from tensorpack import *
 from tensorpack.utils.viz import interactive_imshow, stack_patches
 import tensorpack.tfutils.symbolic_functions as symbf

@@ -8,7 +8,7 @@ import numpy as np
 import os
 import argparse
 
-os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
+
 from tensorpack import *
 from tensorpack.utils.viz import stack_patches
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope

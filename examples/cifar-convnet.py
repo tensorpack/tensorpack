@@ -6,7 +6,7 @@ import tensorflow as tf
 import argparse
 import os
 
-os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
+
 from tensorpack import *
 from tensorpack.tfutils.summary import *
 from tensorpack.dataflow import dataset

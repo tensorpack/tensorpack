@@ -8,7 +8,7 @@ import argparse
 import cv2
 import tensorflow as tf
 
-os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
+
 from tensorpack import *
 
 from DQNModel import Model as DQNModel

@@ -16,8 +16,8 @@ if _HAS_TF:
     from tensorpack.callbacks import *
     from tensorpack.tfutils import *
 
-    # In development. Default to v1
-    if _os.environ.get('TENSORPACK_TRAIN_API', 'v1') == 'v2':
+    # Default to v2
+    if _os.environ.get('TENSORPACK_TRAIN_API', 'v2') == 'v2':
         from tensorpack.train import *
     else:
         from tensorpack.trainv1 import *

@@ -7,7 +7,7 @@ import argparse
 import os
 import imp
 
-os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
+
 from tensorpack import *
 from tensorpack.dataflow import dataset
 

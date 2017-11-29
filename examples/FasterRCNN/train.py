@@ -13,7 +13,7 @@ import numpy as np
 import json
 import tensorflow as tf
 
-os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
+
 from tensorpack import *
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.tfutils import optimizer

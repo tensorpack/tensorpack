@@ -13,7 +13,7 @@ import tensorflow as tf
 import six
 from six.moves import queue
 
-os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
+
 from tensorpack import *
 from tensorpack.utils.concurrency import ensure_proc_terminate, start_proc_mask_signal
 from tensorpack.utils.serialize import dumps
