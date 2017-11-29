@@ -33,7 +33,7 @@ class ImageDataFromZIPFile(RNGDataFlow):
                 if img_name.endswith('.jpg'):
                     self.archivefiles.append((archive, img_name))
         except zipfile.BadZipfile:
-            print "Couldn't read " + zipFile
+            print("Couldn't read " + zipFile)
         if self.max is None:
             self.max = self.size()
 
@@ -96,7 +96,7 @@ class CenterSquareResize(MapDataComponent):
 
                 img = cv2.resize(img, (256, 256))
                 return img
-            except:
+            except Exception:
                 return None
         super(CenterSquareResize, self).__init__(ds, func, index=index)
 
