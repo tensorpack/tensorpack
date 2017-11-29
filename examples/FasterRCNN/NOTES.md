@@ -5,7 +5,7 @@ This is a minimal implementation that simply contains these files:
 + data.py: prepare data for training
 + common.py: common data preparation utilities
 + basemodel.py: implement resnet
-+ model.py: implement rpn/faster-rcnn
++ model.py: implement rpn/faster-rcnn/mask-rcnn
 + train.py: main training script
 + utils/: third-party helper functions
 + eval.py: evaluation utilities
@@ -45,5 +45,5 @@ Speed:
 	 a slow convolution algorithm, or you spend more time on autotune.
 	 This is a general problem of TensorFlow when running against variable-sized input.
 
-3. With a large roi batch size (e.g. >= 256), GPU utilitization should stay around 90%.
+3. With a large roi batch size (e.g. >= 256), GPU utilitization should stay above 90%.
 

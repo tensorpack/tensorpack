@@ -169,7 +169,7 @@ def get_checkpoint_path(model_path):
 
 
 def load_chkpt_vars(model_path):
-    """ Dump all variables from a checkpoint to a dict.
+    """ Load all variables from a checkpoint to a dict.
 
     Args:
         model_path(str): path to a checkpoint.

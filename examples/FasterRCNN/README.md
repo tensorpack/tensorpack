@@ -24,8 +24,8 @@ DIR/
 
 
 ## Usage
-Change config:
-1. Set `BASEDIR` in `config.py` to `/path/to/DIR` as described above.
+Change config in `config.py`:
+1. Set `BASEDIR` to `/path/to/DIR` as described above.
 2. Set `MODE_MASK` to switch Faster-RCNN or Mask-RCNN.
 
 Train:

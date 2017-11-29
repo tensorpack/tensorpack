@@ -147,7 +147,7 @@ class Model(ModelDesc):
                     image, fg_sampled_boxes,
                     tf.zeros_like(fg_inds_wrt_sample, dtype=tf.int32), 300)
                 fg_sampled_patches = tf.transpose(fg_sampled_patches, [0, 2, 3, 1])
-                fg_sampled_patches = tf.reverse(fg_sampled_patches, axis=-1)  # BGR->RGB
+                fg_sampled_patches = tf.reverse(fg_sampled_patches, axis=[-1])  # BGR->RGB
                 tf.summary.image('viz', fg_sampled_patches, max_outputs=30)
 
             matched_gt_boxes = tf.gather(gt_boxes, fg_inds_wrt_gt)
