@@ -142,12 +142,12 @@ class Model(ModelDesc):
             fg_inds_wrt_sample = tf.reshape(tf.where(rcnn_labels > 0), [-1])   # fg inds w.r.t all samples
             fg_sampled_boxes = tf.gather(rcnn_sampled_boxes, fg_inds_wrt_sample)
 
-            # TODO move to models
             with tf.name_scope('fg_sample_patch_viz'):
                 fg_sampled_patches = crop_and_resize(
                     image, fg_sampled_boxes,
                     tf.zeros_like(fg_inds_wrt_sample, dtype=tf.int32), 300)
                 fg_sampled_patches = tf.transpose(fg_sampled_patches, [0, 2, 3, 1])
+                fg_sampled_patches = tf.reverse(fg_sampled_patches, axis=-1)  # BGR->RGB
                 tf.summary.image('viz', fg_sampled_patches, max_outputs=30)
 
             matched_gt_boxes = tf.gather(gt_boxes, fg_inds_wrt_gt)
