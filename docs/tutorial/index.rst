@@ -21,6 +21,7 @@ User Tutorials
   callback
   save-load
   summary
+  inference
   faq
 
 
