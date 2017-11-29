@@ -5,7 +5,4 @@
 
 __all__ = ['launch_train_with_config']
 
-
-def launch_train_with_config(config, trainer):
-    from ..train.interface import launch_train_with_config as old_launch
-    old_launch(config, trainer)
+from ..train.interface import launch_train_with_config

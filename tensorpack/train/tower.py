@@ -121,12 +121,10 @@ class SingleCostTrainer(TowerTrainer):
                 optimizer. Will only be called once.
 
         Note:
-            1. `get_cost_fn` will always be called under a :class:`TowerContext`.
-               which will contain information about reuse,
-               training/inference, scope name, etc.
-            2. `get_cost_fn` might get called multiple times for data-parallel training or inference.
-            3. To respect variable reuse, use `tf.get_variable` instead of
-               `tf.Variable` in `get_cost_fn`.
+            `get_cost_fn` will be the tower function.
+            It must follows the
+            `rules of tower function.
+            <http://tensorpack.readthedocs.io/en/latest/tutorial/trainer.html#tower-trainer>`_.
         """
         get_cost_fn = TowerFuncWrapper(get_cost_fn, inputs_desc)
         get_opt_fn = memoized(get_opt_fn)

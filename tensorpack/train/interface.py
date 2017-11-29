@@ -7,7 +7,7 @@ import tensorflow as tf
 from ..input_source import (
     InputSource, FeedInput, QueueInput, StagingInput, DummyConstantInput)
 
-from ..trainv1.config import TrainConfig
+from .config import TrainConfig
 from .tower import SingleCostTrainer
 from .trainers import SimpleTrainer, DistributedTrainerReplicated
 

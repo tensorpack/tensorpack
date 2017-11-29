@@ -8,7 +8,7 @@ when you don't want to customize too much.
 ### With ModelDesc and TrainConfig
 
 This is an interface that's most familiar to old tensorpack users,
-and is now mainly useful for single-cost tasks.
+and is used for single-cost tasks only.
 A lot of examples are written in this interface.
 
 [SingleCost trainers](../modules/train.html#tensorpack.train.SingleCostTrainer)
@@ -35,10 +35,9 @@ class MyModel(ModelDesc):
 
 You can use any symbolic functions in `_build_graph`, including TensorFlow core library
 functions and other symbolic libraries.
-But you need to follow the requirement of
-[get_cost_fn](../modules/train.html#tensorpack.train.SingleCostTrainer.setup_graph),
-because this function will be used as part of `get_cost_fn`.
-At last you need to set `self.cost`.
+`_build_graph` will be the tower function,
+so you need to follow [some rules](trainer.md#tower-trainer).
+You also need to set `self.cost` in this function.
 
 After defining such a model, use it with `TrainConfig` and `launch_train_with_config`:
 
@@ -60,11 +59,11 @@ See the docs of
 [TrainConfig](../modules/train.html#tensorpack.train.TrainConfig)
 and
 [launch_train_with_config](../modules/train.html#tensorpack.train.launch_train_with_config)
-for usage and detailed functionalities.
+for detailed functionalities.
 
 ### Raw Trainer Interface
 
-You can also access methods of trainer directly, to get a finer control:
+To get a lower-level control, you can also access methods of trainer directly:
 
 __Build__ the graph: For general trainer, build the graph by yourself.
 For single-cost trainer, build the graph by

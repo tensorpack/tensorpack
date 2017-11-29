@@ -9,55 +9,84 @@ from six.moves import range
 import six
 
 from ..callbacks import (
-    Callback, Callbacks, Monitors, TrainingMonitor,
-    MovingAverageSummary,
-    ProgressBar, MergeAllSummaries,
-    TFEventWriter, JSONWriter, ScalarPrinter, RunUpdateOps)
+    Callback, Callbacks, Monitors, TrainingMonitor)
 from ..utils import logger
 from ..utils.argtools import call_only_once
+from ..tfutils import get_global_step_value
 from ..tfutils.tower import TowerFuncWrapper
 from ..tfutils.model_utils import describe_trainable_vars
 from ..tfutils.sessinit import JustCurrentSession
 from ..tfutils.sesscreate import ReuseSessionCreator, NewSessionCreator
 from ..callbacks.steps import MaintainStepCounter
 
-import tensorpack.trainv1 as old_train    # noqa
-from ..trainv1.base import StopTraining, TrainLoop
-from ..trainv1.config import TrainConfig
+from .config import TrainConfig, DEFAULT_MONITORS, DEFAULT_CALLBACKS
 
-__all__ = ['StopTraining', 'TrainConfig',
-           'Trainer', 'DEFAULT_MONITORS', 'DEFAULT_CALLBACKS']
+__all__ = ['StopTraining', 'TrainConfig', 'Trainer']
 
 
-def DEFAULT_CALLBACKS():
+class StopTraining(BaseException):
     """
-    Return the default callbacks,
-    which will be used in :class:`TrainConfig` and :meth:`Trainer.train_with_defaults`.
-    They are:
-
-    1. MovingAverageSummary()
-    2. ProgressBar()
-    3. MergeAllSummaries()
-    4. RunUpdateOps()
+    An exception thrown to stop training.
     """
-    return [
-        MovingAverageSummary(),
-        ProgressBar(),
-        MergeAllSummaries(),
-        RunUpdateOps()]
+    pass
 
 
-def DEFAULT_MONITORS():
+class TrainLoop(object):
     """
-    Return the default monitors,
-    which will be used in :class:`TrainConfig` and :meth:`Trainer.train_with_defaults`.
-    They are:
-
-    1. TFEventWriter()
-    2. JSONWriter()
-    3. ScalarPrinter()
+    Manage the double for loop.
     """
-    return [TFEventWriter(), JSONWriter(), ScalarPrinter()]
+
+    def __init__(self):
+        self._epoch_num = 0
+        self._global_step = 0
+        self._local_step = -1
+
+    def config(self, steps_per_epoch, starting_epoch, max_epoch):
+        """
+        Configure the loop given the settings.
+        """
+        self.starting_epoch = starting_epoch
+        self.max_epoch = max_epoch
+        self.steps_per_epoch = steps_per_epoch
+
+        self._epoch_num = starting_epoch - 1
+
+    def update_global_step(self):
+        """
+        Update the Python-side global_step from TF.
+        This must be called under initialized default session.
+        """
+        self._global_step = get_global_step_value()
+
+    @property
+    def epoch_num(self):
+        """
+        The number of the currently ongoing epoch.
+
+        An epoch is defined to cover the moment before calling `before_epoch` until after calling `trigger_epoch`.
+        i.e., in the `trigger_epoch` of epoch 3, `self.epoch_num` is 3.
+        If you need use `self.epoch_num` in your callback, you'll need to know this.
+        """
+        return self._epoch_num
+
+    @property
+    def global_step(self):
+        """
+        The tensorflow global_step, i.e. how many times ``hooked_sess.run`` has been called.
+
+        Note:
+            1. global_step is incremented **after** each ``hooked_sess.run`` returns from TF runtime.
+            2. If you make zero or more than one calls to ``hooked_sess.run`` in one
+               :meth:`run_step`, local_step and global_step may increment at different speed.
+        """
+        return self._global_step
+
+    @property
+    def local_step(self):
+        """
+        The number of steps that have finished in the current epoch.
+        """
+        return self._local_step
 
 
 class Trainer(object):
@@ -277,7 +306,8 @@ class Trainer(object):
                 or 'config' in kwargs:
             name = cls.__name__
             try:
-                old_trainer = getattr(old_train, name)
+                import tensorpack.trainv1 as old_train_mod    # noqa
+                old_trainer = getattr(old_train_mod, name)
             except AttributeError:
                 # custom trainer. has to live with it
                 return super(Trainer, cls).__new__(cls)
