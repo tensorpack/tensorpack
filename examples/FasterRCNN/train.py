@@ -365,7 +365,7 @@ if __name__ == '__main__':
             model=Model(),
             data=QueueInput(get_train_dataflow(add_mask=config.MODE_MASK)),
             callbacks=[
-                PeriodicTrigger(ModelSaver(), every_k_epochs=5),
+                ModelSaver(max_to_keep=10, keep_checkpoint_every_n_hours=1),
                 # linear warmup
                 ScheduledHyperParamSetter(
                     'learning_rate',
