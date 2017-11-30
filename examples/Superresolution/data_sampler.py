@@ -32,7 +32,7 @@ class ImageDataFromZIPFile(RNGDataFlow):
                 if img_name.endswith('.jpg'):
                     self.archivefiles.append((archive, img_name))
         except zipfile.BadZipfile:
-            print "Couldn't read " + zipFile
+            print("Couldn't read " + zipFile)
         if self.max is None:
             self.max = self.size()
 
