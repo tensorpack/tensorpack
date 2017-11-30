@@ -66,7 +66,8 @@ with TowerContext('', is_training=True):
 Some layers (in particular ``BatchNorm``) has different train/test time behavior which is controlled
 by ``TowerContext``. If you need to use the tensorpack version of them in test time, you'll need to create the ops for them under another context.
 ```python
-with tf.variable_scope(tf.get_variable_scope(), reuse=True), TowerContext('predict', is_training=False):
+# Open a `reuse=True` variable scope here if you're sharing variables, then:
+with TowerContext('some_name_or_empty_string', is_training=False):
   # build the graph again
 ```
 

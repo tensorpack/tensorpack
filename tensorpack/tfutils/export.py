@@ -58,25 +58,22 @@ class ModelExport(object):
         assert isinstance(input_names, list)
         assert isinstance(output_names, list)
         assert isinstance(model, ModelDescBase)
-
-        logger.info('[export] prepare new model export')
-        super(ModelExport, self).__init__()
         self.model = model
-        self.input = PlaceholderInput()
-        self.input.setup(self.model.get_inputs_desc())
         self.output_names = output_names
         self.input_names = input_names
 
-    def export(self, checkpoint, export_path, version=1, tags=[tf.saved_model.tag_constants.SERVING],
+    def export(self, checkpoint, export_path,
+               tags=[tf.saved_model.tag_constants.SERVING],
                signature_name='prediction_pipeline'):
-        """Use SavedModelBuilder to export a trained model without TensorPack depency.
+        """
+        Use SavedModelBuilder to export a trained model without tensorpack depency.
 
         Remarks:
             This produces
                 variables/       # output from the vanilla Saver
                     variables.data-?????-of-?????
                     variables.index
-                saved_model.pb   # saved model in protcol buffer format
+                saved_model.pb   # a `SavedModel` protobuf
 
             Currently, we only support a single signature, which is the general PredictSignatureDef:
             https://github.com/tensorflow/serving/blob/master/tensorflow_serving/g3doc/signature_defs.md
@@ -89,47 +86,49 @@ class ModelExport(object):
         """
         logger.info('[export] build model for %s' % checkpoint)
         with TowerContext('', is_training=False):
-            self.model.build_graph(*self.input.get_input_tensors())
+            input = PlaceholderInput()
+            input.setup(self.model.get_inputs_desc())
+            self.model.build_graph(*input.get_input_tensors())
 
-            self.sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
-            # load values from latest checkpoint
-            init = sessinit.SaverRestore(checkpoint)
-            self.sess.run(tf.global_variables_initializer())
-            init.init(self.sess)
+        self.sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
+        # load values from latest checkpoint
+        init = sessinit.SaverRestore(checkpoint)
+        self.sess.run(tf.global_variables_initializer())
+        init.init(self.sess)
 
-            self.inputs = []
-            for n in self.input_names:
-                tensor = tf.get_default_graph().get_tensor_by_name('%s:0' % n)
-                logger.info('[export] add input-tensor "%s"' % tensor.name)
-                self.inputs.append(tensor)
+        self.inputs = []
+        for n in self.input_names:
+            tensor = tf.get_default_graph().get_tensor_by_name('%s:0' % n)
+            logger.info('[export] add input-tensor "%s"' % tensor.name)
+            self.inputs.append(tensor)
 
-            self.outputs = []
-            for n in self.output_names:
-                tensor = tf.get_default_graph().get_tensor_by_name('%s:0' % n)
-                logger.info('[export] add output-tensor "%s"' % tensor.name)
-                self.outputs.append(tensor)
+        self.outputs = []
+        for n in self.output_names:
+            tensor = tf.get_default_graph().get_tensor_by_name('%s:0' % n)
+            logger.info('[export] add output-tensor "%s"' % tensor.name)
+            self.outputs.append(tensor)
 
-            logger.info('[export] exporting trained model to %s' % export_path)
-            builder = tf.saved_model.builder.SavedModelBuilder(export_path)
+        logger.info('[export] exporting trained model to %s' % export_path)
+        builder = tf.saved_model.builder.SavedModelBuilder(export_path)
 
-            logger.info('[export] build signatures')
-            # build inputs
-            inputs_signature = dict()
-            for n, v in zip(self.input_names, self.inputs):
-                logger.info('[export] add input signature: %s' % v)
-                inputs_signature[n] = tf.saved_model.utils.build_tensor_info(v)
+        logger.info('[export] build signatures')
+        # build inputs
+        inputs_signature = dict()
+        for n, v in zip(self.input_names, self.inputs):
+            logger.info('[export] add input signature: %s' % v)
+            inputs_signature[n] = tf.saved_model.utils.build_tensor_info(v)
 
-            outputs_signature = dict()
-            for n, v in zip(self.output_names, self.outputs):
-                logger.info('[export] add output signature: %s' % v)
-                outputs_signature[n] = tf.saved_model.utils.build_tensor_info(v)
+        outputs_signature = dict()
+        for n, v in zip(self.output_names, self.outputs):
+            logger.info('[export] add output signature: %s' % v)
+            outputs_signature[n] = tf.saved_model.utils.build_tensor_info(v)
 
-            prediction_signature = tf.saved_model.signature_def_utils.build_signature_def(
-                inputs=inputs_signature,
-                outputs=outputs_signature,
-                method_name=tf.saved_model.signature_constants.PREDICT_METHOD_NAME)
+        prediction_signature = tf.saved_model.signature_def_utils.build_signature_def(
+            inputs=inputs_signature,
+            outputs=outputs_signature,
+            method_name=tf.saved_model.signature_constants.PREDICT_METHOD_NAME)
 
-            builder.add_meta_graph_and_variables(
-                self.sess, tags,
-                signature_def_map={signature_name: prediction_signature})
-            builder.save()
+        builder.add_meta_graph_and_variables(
+            self.sess, tags,
+            signature_def_map={signature_name: prediction_signature})
+        builder.save()
