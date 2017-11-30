@@ -2,7 +2,7 @@
 import os
 
 # issue#7378 may happen with custom opencv. It doesn't hurt to disable opencl
-os.environ['OPENCV_OPENCL_RUNTIME'] = ''
+os.environ['OPENCV_OPENCL_RUNTIME'] = 'disabled'     # https://github.com/opencv/opencv/pull/10155
 try:
     # issue#1924 may happen on old systems
     import cv2  # noqa
