@@ -145,9 +145,7 @@ class SingleCostTrainer(TowerTrainer):
         # TODO setup may want to register monitor as well??
         input_callbacks = self._setup_input(inputs_desc, input)
         train_callbacks = self._setup_graph(input, get_cost_fn, get_opt_fn)
-        internal_callbacks = input_callbacks + train_callbacks
-        for cb in internal_callbacks:
-            self.register_callback(cb)
+        self.register_callback(input_callbacks + train_callbacks)
 
     @abstractmethod
     def _setup_graph(self, input, get_cost_fn, get_opt_fn):

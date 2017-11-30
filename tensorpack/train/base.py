@@ -135,9 +135,16 @@ class Trainer(object):
 
     def _register_callback(self, cb):
         """
-        Register a callback to the trainer.
+        Register callbacks to the trainer.
         It can only be called before :meth:`Trainer.train()`.
+
+        Args:
+            cb (Callback or [Callback]): a callback or a list of callbacks
         """
+        if isinstance(cb, (list, tuple)):
+            for x in cb:
+                self._register_callback(x)
+            return
         assert isinstance(cb, Callback), cb
         assert not isinstance(self._callbacks, Callbacks), \
             "Cannot register more callbacks after trainer was setup!"
