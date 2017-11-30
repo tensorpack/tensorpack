@@ -35,7 +35,7 @@ NEGATIVE_ANCHOR_THRES = 0.3
 BBOX_DECODE_CLIP = np.log(MAX_SIZE / 16.0)
 
 # rpn training -------------------------
-# keep fg ratio in a batch in this range
+# fg ratio among selected RPN anchors
 RPN_FG_RATIO = 0.5
 RPN_BATCH_PER_IM = 256
 RPN_MIN_SIZE = 0
@@ -49,7 +49,7 @@ CROWD_OVERLAP_THRES = 0.7
 FASTRCNN_BATCH_PER_IM = 256
 FASTRCNN_BBOX_REG_WEIGHTS = np.array([10, 10, 5, 5], dtype='float32')
 FASTRCNN_FG_THRESH = 0.5
-# keep fg ratio in a batch in this range
+# fg ratio in a ROI batch
 FASTRCNN_FG_RATIO = 0.25
 
 # testing -----------------------

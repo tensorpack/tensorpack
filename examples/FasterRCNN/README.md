@@ -54,12 +54,12 @@ MaskRCNN results contain both bbox and segm mAP.
 |Backbone | `FASTRCNN_BATCH` | resolution | mAP (bbox/segm) | Time |
 | - | - | - | - | - |
 | Res50 | 64 | (600, 1024) | 33.0 | 22h on 8 P100 |
-| Res50 | 256 | (600, 1024) | 34.4 | 49h on 8 TitanX |
+| Res50 | 256 | (600, 1024) | 34.4 | 49h on 8 M40 |
 | Res50 | 512 | (800, 1333) | 35.6 | 55h on 8 P100|
 | Res50 | 512 | (800, 1333) | 36.9/32.3 | 59h on 8 P100|
 | Res101 | 512 | (800, 1333) | 40.1/34.4 | 70h on 8 P100|
 
-Note that these models are trained with a longer learning schedule than the paper,
+Note that these models are trained with a larger ROI batch size than the paper,
 and get about 1mAP better performance.
 
 ## Notes
