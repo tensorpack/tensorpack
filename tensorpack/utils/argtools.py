@@ -147,19 +147,25 @@ _FUNC_CALLED = set()
 
 def call_only_once(func):
     """
-    Decorate a method of a class, so that this method can only
+    Decorate a method or property of a class, so that this method can only
     be called once for every instance.
     Calling it more than once will result in exception.
     """
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         self = args[0]
-        assert hasattr(self, func.__name__), "call_only_once can only be used on method!"
+        # cannot use hasattr here, because hasattr tries to getattr, which
+        # fails if func is a property
+        assert func.__name__ in dir(self), "call_only_once can only be used on method or property!"
 
+        cls = type(self)
+        # cannot use ismethod(), because decorated method becomes a function
+        is_method = inspect.isfunction(getattr(cls, func.__name__))
         key = (self, func)
         assert key not in _FUNC_CALLED, \
-            "Method {}.{} can only be called once per object!".format(
-                type(self).__name__, func.__name__)
+            "{} {}.{} can only be called once per object!".format(
+                'Method' if is_method else 'Property',
+                cls.__name__, func.__name__)
         _FUNC_CALLED.add(key)
 
         return func(*args, **kwargs)
@@ -169,9 +175,21 @@ def call_only_once(func):
 
 if __name__ == '__main__':
     class A():
+        def __init__(self):
+            self._p = 0
+
         @call_only_once
         def f(self, x):
             print(x)
+
+        @property
+        def p(self):
+            return self._p
+
+        @p.setter
+        @call_only_once
+        def p(self, val):
+            self._p = val
 
     a = A()
     a.f(1)
@@ -179,3 +197,10 @@ if __name__ == '__main__':
     b = A()
     b.f(2)
     b.f(1)
+
+    print(b.p)
+    print(b.p)
+    b.p = 2
+    print(b.p)
+    b.p = 3
+    print(b.p)

@@ -7,6 +7,7 @@ import six
 from abc import abstractmethod, ABCMeta
 
 from ..utils.argtools import call_only_once, memoized
+from ..utils.develop import deprecated
 from ..graph_builder.predict import SimplePredictBuilder
 from ..input_source import PlaceholderInput
 from ..predict.base import OnlinePredictor
@@ -25,22 +26,33 @@ class TowerTrainer(Trainer):
 
     This is required by some features that replicates the model
     automatically, e.g. creating a predictor.
+
+    To use features of :class:`TowerTrainer`, set `tower_func` and use it to build the graph.
+    Note that `tower_func` can only be set once per instance.
     """
 
-    tower_func = None
-    """
-    A :class:`TowerFuncWrapper` instance.
-    A callable which takes some input tensors and builds one replicate of the model.
-    """
+    _tower_func = None
 
     @call_only_once
-    def set_tower_func(self, tower_func):
-        """
-        Args:
-            tower_func (TowerFuncWrapper)
-        """
+    def _set_tower_func(self, tower_func):
         assert isinstance(tower_func, TowerFuncWrapper), tower_func
-        self.tower_func = tower_func
+        self._tower_func = tower_func
+
+    @deprecated("Just use tower_func = xxx instead!")
+    def set_tower_func(self, tower_func):
+        self._set_tower_func(tower_func)
+
+    @property
+    def tower_func(self):
+        """
+        A :class:`TowerFuncWrapper` instance.
+        A callable which takes some input tensors and builds one replicate of the model.
+        """
+        return self._tower_func
+
+    @tower_func.setter
+    def tower_func(self, val):
+        self._set_tower_func(val)
 
     @property
     def inputs_desc(self):
@@ -128,7 +140,7 @@ class SingleCostTrainer(TowerTrainer):
         """
         get_cost_fn = TowerFuncWrapper(get_cost_fn, inputs_desc)
         get_opt_fn = memoized(get_opt_fn)
-        self.set_tower_func(get_cost_fn)
+        self.tower_func = get_cost_fn
 
         # TODO setup may want to register monitor as well??
         input_callbacks = self._setup_input(inputs_desc, input)
