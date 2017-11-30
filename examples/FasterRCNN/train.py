@@ -262,7 +262,9 @@ def visualize(model_path, nr_visualize=50, output_dir='output'):
             # draw the scores for the above proposals
             score_viz = draw_predictions(img, rpn_boxes[good_proposals_ind], all_probs[good_proposals_ind])
 
-            results = [DetectionResult(*args) for args in zip(final_labels, final_boxes, final_probs)]
+            results = [DetectionResult(*args) for args in
+                       zip(final_boxes, final_probs, final_labels,
+                           [None] * len(final_labels))]
             final_viz = draw_final_outputs(img, results)
 
             viz = tpviz.stack_patches([

@@ -54,7 +54,7 @@ FASTRCNN_FG_RATIO = 0.25
 
 # testing -----------------------
 TEST_PRE_NMS_TOPK = 6000
-TEST_POST_NMS_TOPK = 1000
+TEST_POST_NMS_TOPK = 1000   # if you encounter OOM in inference, set this to a smaller number
 FASTRCNN_NMS_THRESH = 0.5
 RESULT_SCORE_THRESH = 0.05
 RESULTS_PER_IM = 100
