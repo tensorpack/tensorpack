@@ -38,7 +38,7 @@ from viz import (
     draw_predictions, draw_final_outputs)
 from common import print_config
 from eval import (
-    eval_on_dataflow, detect_one_image, print_evaluation_scores)
+    eval_on_dataflow, detect_one_image, print_evaluation_scores, DetectionResult)
 import config
 
 
