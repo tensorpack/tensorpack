@@ -288,6 +288,7 @@ def get_data(lmdb):
     ds = BatchData(ds, BATCH_SIZE)
     return ds
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')

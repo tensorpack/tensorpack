@@ -25,7 +25,6 @@ class ImageDataFromZIPFile(RNGDataFlow):
         self.shuffle = shuffle
         self.max = maxFiles
         self.archivefiles = []
-        # print zipFile
         try:
             archive = zipfile.ZipFile(zipFile)
             imagesInArchive = archive.namelist()
@@ -43,10 +42,8 @@ class ImageDataFromZIPFile(RNGDataFlow):
     def get_data(self):
         if self.shuffle:
             self.rng.shuffle(self.archivefiles)
-        # return <self.max> shuffled images  from zip
         self.archivefiles = random.sample(self.archivefiles, self.max)
         for archive in self.archivefiles:
-            # print archive
             im_data = archive[0].read(archive[1])
             yield [im_data]
 
@@ -96,7 +93,7 @@ class CenterSquareResize(MapDataComponent):
 
                 img = cv2.resize(img, (256, 256))
                 return img
-            except:
+            except Exception:
                 return None
         super(CenterSquareResize, self).__init__(ds, func, index=index)
 
