@@ -9,6 +9,9 @@ import numpy as np
 from tensorpack import *
 from tensorpack.tfutils.scope_utils import under_variable_scope, auto_reuse_variable_scope
 import tensorflow as tf
+import tensorpatch
+
+tensorpatch.patch()
 
 """
 Let there be Color!: Joint End-to-end Learning of Global and Local Image Priors
@@ -174,8 +177,8 @@ class Model(ModelDesc):
 
         @under_variable_scope()
         def classification_network(x, labels):
-            x = FullyConnected('fc1', x, out_dim=365, nl=BNReLU)
-            x = FullyConnected('fc2', x, out_dim=365, nl=tf.identity)
+            x = FullyConnected('fc1', x, out_dim=205, nl=BNReLU)
+            x = FullyConnected('fc2', x, out_dim=205, nl=tf.identity)
             return x
 
         with argscope(BatchNorm, use_local_stat=True):
@@ -199,6 +202,8 @@ class Model(ModelDesc):
         cls_costs = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(
             logits=cls_logits, labels=labels), name='cls_costs')
 
+        tf.identity(estimated_ab, name='estimated_ab')
+
         self.cost = tf.add(color_costs, ALPHA * cls_costs, name='total_costs')
         summary.add_moving_summary(self.cost, cls_costs, color_costs)
         tf.identity(lab2rgb(tf.concat([given_l, estimated_ab], axis=3)), name='prediction')
@@ -218,7 +223,7 @@ class Model(ModelDesc):
 
 
 class ImageDecode(MapDataComponent):
-    """Decode JPEG buffer to uint8 image array
+    """Decode JPEG buffer to uint8 image array (rgb)
     """
 
     def __init__(self, ds, mode='.jpg', dtype=np.uint8, index=0):
@@ -269,7 +274,6 @@ def get_data(train_lmdb, val_lmdb):
     ds_train = PrefetchDataZMQ(ds_train, nr_proc=12)
 
     augmentors = [imgaug.CenterCrop(224)]
-
     ds_val = LMDBDataPoint(val_lmdb, shuffle=False)
     ds_val = PrefetchData(ds_val, 100, 1)
     ds_val = ImageDecode(ds_val, index=0)
@@ -305,27 +309,35 @@ def get_config(args):
 
 
 def apply(args):
+    # see authors comment (although this is fully convolutional, the input should be resized)
     im = cv2.imread(args.apply)
-    im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
-    im = np.stack([im, im, im], axis=-1)
-    assert im is not None
     H, W, C = im.shape
-    H = H // 8 * 8
-    W = W // 8 * 8
-    im = cv2.resize(im, (W, H))
+    im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY).astype(np.float32)
+    im = np.stack([im, im, im], axis=-1)
+    img = cv2.resize(im, (224, 224))
 
     pred_config = PredictConfig(
-        model=Model(H, W),
+        model=Model(),
         session_init=get_model_loader(args.load),
         input_names=['rgb'],
-        output_names=['prediction'])
+        output_names=['estimated_ab'])
     predictor = OfflinePredictor(pred_config)
 
-    im = im[None, :, :, :].astype('float32')
-    outputs = predictor(im)
-    outputs = outputs[0][0, :, :, ::-1]
-    cv2.imwrite(args.apply + '_input.jpg', im[0])
-    cv2.imwrite(args.apply + '_output.jpg', outputs)
+    img = img[None, :, :, :].astype('float32')
+    ab = predictor(img)[0]
+
+    with tf.Session() as sess:
+        im_pldhr = tf.placeholder(tf.float32)
+        rgb_op = lab2rgb(im_pldhr)
+
+        ab = cv2.resize(ab[0], (W, H))
+        im = np.expand_dims(im[:, :, 0], axis=-1)
+
+        img = np.concatenate([im / 255. * 100., ab], axis=2)
+        rgb = sess.run(rgb_op, {im_pldhr: img[None, ...]})[0]
+
+    cv2.imwrite(args.apply + '_input.jpg', im)
+    cv2.imwrite(args.apply + '_output.jpg', rgb[:, :, ::-1])
 
 
 if __name__ == '__main__':
@@ -333,10 +345,11 @@ if __name__ == '__main__':
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
     parser.add_argument('--load', help='load model')
     parser.add_argument('--apply', help='run model on given image', default='')
+    parser.add_argument('--scale', help='run model on given image', default=1.)
     parser.add_argument('--train_lmdb', help='load model',
-                        default='/scratch_shared/datasets/PLACE2/train_large_places365standard.lmdb')
+                        default='/scratch_shared/datasets/PLACE/imagesPlaces205_resize_train.lmdb')
     parser.add_argument('--val_lmdb', help='load model',
-                        default='/scratch_shared/datasets/PLACE2/val_large.lmdb')
+                        default='/scratch_shared/datasets/PLACE/imagesPlaces205_resize_val.lmdb')
     args = parser.parse_args()
 
     if args.gpu:

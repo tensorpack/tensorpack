@@ -11,33 +11,36 @@ import numpy as np
 from tensorpack import *
 
 """
-Just convert Place2-dataset (http://places2.csail.mit.edu) to an LMDB file for
+Just convert Place-dataset (http://places.csail.mit.edu) to an LMDB file for
 more efficient reading.
+
+gunzip imagesPlaces205_resize.tar.gz
 
 
 example:
 
-    python place2_lmdb_generator.py --tar train_large_places365standard.tar \
-                                    --lmdb /data/train_large_places365standard.lmdb \
-                                    --labels places365_train_standard.txt
+    python place_lmdb_generator.py --tar imagesPlaces205_resize.tar \
+                                   --lmdb /data/train_places205.lmdb \
+                                   --labels trainvalsplit_places205/train_places205.csv
 
     or
 
-    python place2_lmdb_generator.py --tar val_large.tar' \
-                                    --lmdb /data/val_large.lmdb \
-                                    --labels places365_val.txt
+    python place_lmdb_generator.py --tar val_large.tar' \
+                                   --lmdb /data/val_large.lmdb \
+                                   --labels places365_val.txt
 """
 
 
-class Place2Reader(RNGDataFlow):
+class PlaceReader(RNGDataFlow):
     """Read images directly from tar file without unpacking.
     """
     def __init__(self, tar, labels):
-        super(Place2Reader, self).__init__()
+        super(PlaceReader, self).__init__()
         assert os.path.isfile(tar)
         assert os.path.isfile(labels)
         self.tar = tarfile.open(tar)
         self.tar_name = tar
+        self.labels_name = labels
         self.labels = dict()
         with open(labels, 'r') as f:
             for line in f.readlines():
@@ -46,38 +49,51 @@ class Place2Reader(RNGDataFlow):
                 self.labels[path] = clazz
 
     def get_data(self):
-        if 'train' in self.tar_name:
-            for member in self.tar:
-                cur_name = member.name.replace('data_large', '')
-                f = self.tar.extractfile(member)
-                jpeg = np.asarray(bytearray(f.read()), dtype=np.uint8)
-                f.close()
-                yield [jpeg, self.labels[cur_name]]
-        else:
-            imglist = self.tar.getnames()
-            for member in imglist:
-                cur_name = member.replace('val_large/', '')
-                if '.jpg' in member:
-                    try:
-                        f = self.tar.extractfile(member)
-                        jpeg = np.asarray(bytearray(f.read()), dtype=np.uint8)
-                        f.close()
-                        yield [jpeg, self.labels[cur_name]]
-                    except Exception:
-                        print("skip %s" % cur_name)
+        for member in self.tar:
+            f = self.tar.extractfile(member)
+            lut = member.name.replace('data/vision/torralba/deeplearning/images256/', '')
+            jpeg = np.asarray(bytearray(f.read()), dtype=np.uint8)
+            f.close()
+            try:
+                yield [jpeg, self.labels[lut]]
+            except:
+                pass  # not in training set
+
+
+class ImageDecode(MapDataComponent):
+    """Decode JPEG buffer to uint8 image array
+    """
+
+    def __init__(self, ds, mode='.jpg', dtype=np.uint8, index=0):
+        def func(im_data):
+            img = cv2.imdecode(np.asarray(
+                bytearray(im_data), dtype=dtype), cv2.IMREAD_COLOR)
+            return img[:, :, ::-1]
+        super(ImageDecode, self).__init__(ds, func, index=index)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--tar', help='path to tar file')
-    parser.add_argument('--labels', help='path to label txt file')
-    parser.add_argument('--lmdb', help='path to database (to be written)')
-    parser.add_argument('--debug', action='store_true',
-                        help='just show the images')
+    parser.add_argument('--tar', help='path to tar file',
+                        default='/graphics/projects/scratch/datasets/MIT_places/imagesPlaces205_resize.tar')
+    parser.add_argument('--labels', help='path to label txt file',
+                        default='/graphics/projects/scratch/datasets/MIT_places/trainvalsplit_places205/val_places205.csv')
+    parser.add_argument('--lmdb', help='path to database (to be written)',
+                        default='/graphics/projects/scratch/datasets/MIT_places/imagesPlaces205_resize_val.lmdb')
+    parser.add_argument('--debugtar', action='store_true', help='just show the images from tar')
+    parser.add_argument('--debuglmdb', action='store_true', help='just show the images from lmdb')
     args = parser.parse_args()
 
-    if args.debug:
-        ds = Place2Reader(args.tar, args.labels)
+    if args.debugtar:
+        ds = PlaceReader(args.tar, args.labels)
+        ds.reset_state()
+        for jpeg, label in ds.get_data():
+            rgb = cv2.imdecode(np.asarray(jpeg), cv2.IMREAD_COLOR)
+            cv2.imshow("RGB image from Place2-dataset", rgb)
+            print("label %i" % label)
+            cv2.waitKey(0)
+    elif args.debuglmdb:
+        ds = LMDBDataPoint(args.lmdb, shuffle=True)
         ds.reset_state()
         for jpeg, label in ds.get_data():
             rgb = cv2.imdecode(np.asarray(jpeg), cv2.IMREAD_COLOR)
@@ -85,6 +101,6 @@ if __name__ == '__main__':
             print("label %i" % label)
             cv2.waitKey(0)
     else:
-        ds = Place2Reader(args.tar, args.labels)
+        ds = PlaceReader(args.tar, args.labels)
         ds.reset_state()
         dftools.dump_dataflow_to_lmdb(ds, args.lmdb)
