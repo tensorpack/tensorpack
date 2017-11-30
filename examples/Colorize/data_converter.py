@@ -56,7 +56,7 @@ class PlaceReader(RNGDataFlow):
             f.close()
             try:
                 yield [jpeg, self.labels[lut]]
-            except:
+            except Exception:
                 pass  # not in training set
 
 
@@ -75,11 +75,11 @@ class ImageDecode(MapDataComponent):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--tar', help='path to tar file',
-                        default='/graphics/projects/scratch/datasets/MIT_places/imagesPlaces205_resize.tar')
+                        default='/dataset/MIT_places/imagesPlaces205_resize.tar')
     parser.add_argument('--labels', help='path to label txt file',
-                        default='/graphics/projects/scratch/datasets/MIT_places/trainvalsplit_places205/val_places205.csv')
+                        default='/dataset/MIT_places/trainvalsplit_places205/val_places205.csv')
     parser.add_argument('--lmdb', help='path to database (to be written)',
-                        default='/graphics/projects/scratch/datasets/MIT_places/imagesPlaces205_resize_val.lmdb')
+                        default='/dataset/MIT_places/imagesPlaces205_resize_val.lmdb')
     parser.add_argument('--debugtar', action='store_true', help='just show the images from tar')
     parser.add_argument('--debuglmdb', action='store_true', help='just show the images from lmdb')
     args = parser.parse_args()
