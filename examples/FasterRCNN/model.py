@@ -213,6 +213,7 @@ def generate_rpn_proposals(boxes, scores, img_shape):
         topk_valid_boxes,
         nms_indices, name='boxes')
     final_scores = tf.gather(topk_valid_scores, nms_indices, name='scores')
+    tf.sigmoid(final_scores, name='probs')  # for visualization
     return final_boxes, final_scores
 
 
