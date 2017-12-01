@@ -9,17 +9,18 @@ import tensorflow as tf
 from tensorpack import logger
 from tensorpack.tfutils import varmanip, get_model_loader
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--meta', help='metagraph file', required=True)
-parser.add_argument(dest='model')
-parser.add_argument(dest='output')
-args = parser.parse_args()
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        description='Keep only TRAINABLE and MODEL variables in a checkpoint.')
+    parser.add_argument('--meta', help='metagraph file', required=True)
+    parser.add_argument(dest='input', help='input model file, has to be a TF checkpoint')
+    parser.add_argument(dest='output', help='output model file, can be npy/npz or TF checkpoint')
+    args = parser.parse_args()
 
-with tf.Graph().as_default() as G:
     tf.train.import_meta_graph(args.meta)
 
     # loading...
-    init = get_model_loader(args.model)
+    init = get_model_loader(args.input)
     sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
     sess.run(tf.global_variables_initializer())
     sess.run(tf.local_variables_initializer())
