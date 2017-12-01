@@ -74,6 +74,7 @@ Let's take a look at what users are asking for:
 * [Handle dataset that's not a multiple of batch size](https://github.com/tensorflow/tensorflow/issues/13745)
 * [Different levels of determinism](https://github.com/tensorflow/tensorflow/issues/13932)
 * [Sort/skip some data](https://github.com/tensorflow/tensorflow/issues/14250)
+* [Write data to files](https://github.com/tensorflow/tensorflow/issues/15014)
 
 To support all these features which could've been done with 3 lines of code in Python, you need either a new TF
 API, or ask [Dataset.from_generator](https://www.tensorflow.org/versions/r1.4/api_docs/python/tf/contrib/data/Dataset#from_generator)
@@ -94,9 +95,9 @@ You just need the right interface to connect Python to the graph directly, effic
 For example,
 
 1. [FeedInput](../modules/input_source.html#tensorpack.input_source.FeedInput):
-	Come from a DataFlow and been fed to the graph.
+	Come from a DataFlow and get fed to the graph.
 2. [QueueInput](../modules/input_source.html#tensorpack.input_source.QueueInput):
-  Come from a DataFlow and been prefetched on CPU by a TF queue.
+  Come from a DataFlow and get prefetched on CPU by a TF queue.
 3. [StagingInput](../modules/input_source.html#tensorpack.input_source.StagingInput):
 	Come from some `InputSource`, then prefetched on GPU by a TF StagingArea.
 4. Come from a DataFlow, and further processed by `tf.data.Dataset`.
