@@ -36,7 +36,7 @@ callbacks=[
   # schedule the learning rate based on epoch number
   ScheduledHyperParamSetter('learning_rate',
                             [(30, 1e-2), (60, 1e-3), (85, 1e-4), (95, 1e-5)]),
-  # can manually change the learning rate through a file during training
+  # can manually change the learning rate through a file, without interrupting training
   HumanHyperParamSetter('learning_rate'),
   # send validation error to my phone through pushbullet
   SendStat('curl -u your_id_xxx: https://api.pushbullet.com/v2/pushes \\
@@ -45,12 +45,12 @@ callbacks=[
              'val-error-top1'),
   # record GPU utilizations during training
   GPUUtilizationTracker(),
-  # can pause the training and start a debug shell, to observe what's going on
+  # Touch a file to pause the training and start a debug shell, to observe what's going on
   InjectShell(shell='ipython')
 ] + [    # these callbacks are enabled by default already, though you can customize them
-  # maintain those moving average summaries already defined in the model (e.g. training loss, training error)
+  # maintain those moving average summaries defined in the model (e.g. training loss, training error)
   MovingAverageSummary(),
-  # draw a nice progress bar
+  # draw a progress bar
   ProgressBar(),
   # run `tf.summary.merge_all` every epoch and log to monitors
   MergeAllSummaries(),
@@ -69,7 +69,7 @@ monitors=[        # monitors are a special kind of callbacks. these are also ena
 
 Notice that callbacks cover every detail of training, ranging from graph operations to the progress bar.
 This means you can customize every part of the training to your preference, e.g. display something
-different in the progress bar, evaluating part of the summaries at a different frequency, etc.
+different in the progress bar, evaluate part of the summaries at a different frequency, etc.
 
 These features may not be always useful, but think about how messy the main loop would look like if you
 were to write these logic together with the loops, and how easy your life will be if you could enable

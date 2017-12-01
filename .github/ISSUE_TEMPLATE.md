@@ -5,7 +5,7 @@ Bug Reports: PLEASE always include
 2. What you observed, e.g. logs.
 3. What you expected, if not obvious.
 4. Your environment (TF version, cudnn version, number & type of GPUs), if it matters.
-5. About low performance, PLEASE first read http://tensorpack.readthedocs.io/en/latest/tutorial/performance-tuning.html
+5. About efficiency, PLEASE first read http://tensorpack.readthedocs.io/en/latest/tutorial/performance-tuning.html
 
 Feature Requests:
 1. Improve an existing feature.

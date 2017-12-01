@@ -30,7 +30,7 @@ try:
     _version = tf.__version__.split('.')
     assert int(_version[0]) >= 1, "TF>=1.0 is required!"
     if int(_version[1]) < 2:
-        print("TF<1.2 support will be removed in the future!")
+        print("TF<1.2 support will be removed after 2018-02-28!")
     _HAS_TF = True
 except ImportError:
     _HAS_TF = False

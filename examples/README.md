@@ -1,16 +1,17 @@
 
 # tensorpack examples
 
-Training examples with __reproducible__ performance.
+Training examples with __reproducible performance__.
 
-__Reproducible performance is important__. Usually deep learning code is easy to write,
-but hard to know the correctness -- wrong code will usually still converge.
-Without a setting and performance comparable to someone else, you don't know if an implementation is correct or not.
+Reproducing a method is usually easy, but you don't know whether you've made mistakes, because wrong code will often appear to work.
+Reproducible performance results are what really matters.
+See [Unawareness of Deep Learning Mistakes](https://medium.com/@ppwwyyxx/unawareness-of-deep-learning-mistakes-d5b5774da0ba).
+
 
 ## Getting Started:
 + [An illustrative mnist example with explanation of the framework](mnist-convnet.py)
 + The same mnist example using [tf-slim](mnist-tfslim.py), [Keras layers](mnist-keras.py), [Higher-level Keras](mnist-keras-v2.py) and [with weights visualizations](mnist-visualizations.py)
-+ [A tiny SVHN ConvNet with 97.8% accuracy](svhn-digit-convnet.py)
++ A tiny [Cifar ConvNet](cifar-convnet.py) and [SVHN ConvNet](svhn-digit-convnet.py)
 + [A boilerplate file to start with, for your own tasks](boilerplate.py)
 
 ## Vision:
@@ -26,14 +27,13 @@ Without a setting and performance comparable to someone else, you don't know if 
 | [Visualize CNN saliency maps](Saliency) | visually reproduce |
 | [Similarity learning on MNIST](SimilarityLearning) | |
 | Learn steering filters with [Dynamic Filter Networks](DynamicFilterNetwork) | visually reproduce |
-| Load a pre-trained [AlexNet](load-alexnet.py) or [VGG16](load-vgg16.py) model | |
-| Load a pre-trained [Convolutional Pose Machines](ConvolutionalPoseMachines/) | |
+| Load a pre-trained [AlexNet](load-alexnet.py), [VGG16](load-vgg16.py), or [Convolutional Pose Machines](ConvolutionalPoseMachines/) | |
 
 ## Reinforcement Learning:
 | Name | Performance |
 | ---  | --- |
-| [Deep Q-Network(DQN) variants on Atari games](DeepQNetwork), including DQN, DoubleDQN, DuelingDQN.  | reproduce paper |
-| [Asynchronous Advantage Actor-Critic(A3C) with demos on OpenAI Gym](A3C-Gym) | reproduce paper |
+| [Deep Q-Network(DQN) variants on Atari games](DeepQNetwork), including <br/> DQN, DoubleDQN, DuelingDQN.  | reproduce paper |
+| [Asynchronous Advantage Actor-Critic(A3C) on Atari games](A3C-Gym) | reproduce paper |
 
 ## Speech / NLP:
 | Name | Performance |
@@ -41,10 +41,3 @@ Without a setting and performance comparable to someone else, you don't know if 
 | [LSTM-CTC for speech recognition](CTC-TIMIT) | reproduce paper |
 | [char-rnn for fun](Char-RNN) | fun |
 | [LSTM language model on PennTreebank](PennTreebank) | reproduce reference code |
-
-
-#### Note to contributors:
-
-Example needs to satisfy one of the following:
-+ Reproduce performance of a published or well-known paper.
-+ Illustrate a new way of using the library that is currently not covered.
