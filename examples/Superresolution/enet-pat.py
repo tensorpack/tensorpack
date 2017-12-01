@@ -54,7 +54,7 @@ def gram_matrix(v):
     dim = v.get_shape().as_list()
     v = normalize(v)
     v = tf.reshape(v, [dim[0], dim[1] * dim[2], dim[3]])
-    return tf.matmul(v, v, transpose_b=True)
+    return tf.matmul(v, v, transpose_a=True)
 
 
 def mse(x, y, name=None):
