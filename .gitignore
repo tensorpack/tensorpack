@@ -1,28 +1,30 @@
 # tensorpack-specific stuff
 train_log
 tensorpack/user_ops/obj
-
 *.npy
-*.bin
+*.npz
+*.caffemodel
 *.tfmodel
 *.meta
 *.log*
-model-*
-.gitignore
-*.caffemodel
+*.bin
 *.png
 *.jpg
 checkpoint
 *.json
 *.prototxt
 *.txt
+*.tgz
+*.gz
 
 # my personal stuff
 snippet
 examples/private
+examples-old
 TODO.md
+.gitignore
+.vimrc.local
 
-*.gz
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

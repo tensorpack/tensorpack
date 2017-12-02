@@ -12,7 +12,7 @@ Reproduce the following GAN-related methods, 100~200 lines each:
 
 + [Wasserstein GAN](https://arxiv.org/abs/1701.07875)
 
-+ Improved Wasserstein GAN ([Improved Training of Wasserstein GANs](https://arxiv.org/abs/1704.00028))
++ Improved Wasserstein GAN, i.e. WGAN-GP ([Improved Training of Wasserstein GANs](https://arxiv.org/abs/1704.00028))
 
 + DiscoGAN ([Learning to Discover Cross-Domain Relations with Generative Adversarial Networks](https://arxiv.org/abs/1703.05192))
 
@@ -23,7 +23,7 @@ Reproduce the following GAN-related methods, 100~200 lines each:
 
 Please see the __docstring__ in each script for detailed usage and pretrained models. MultiGPU training is supported.
 
-## DCGAN.py
+## [DCGAN.py](DCGAN.py)
 
 Reproduce DCGAN following the setup in [dcgan.torch](https://github.com/soumith/dcgan.torch).
 
@@ -35,7 +35,7 @@ Reproduce DCGAN following the setup in [dcgan.torch](https://github.com/soumith/
 
 ![vec](demo/DCGAN-CelebA-vec.jpg)
 
-## Image2Image.py
+## [Image2Image.py](Image2Image.py)
 
 Image-to-Image translation following the setup in [pix2pix](https://github.com/phillipi/pix2pix).
 
@@ -45,7 +45,7 @@ For example, with the cityscapes dataset, it learns to generate semantic segment
 
 This is a visualization from tensorboard. Left to right: original, ground truth, model output.
 
-## InfoGAN-mnist.py
+## [InfoGAN-mnist.py](InfoGAN-mnist.py)
 
 Reproduce the mnist experiement in InfoGAN.
 It assumes 10 latent variables corresponding to a categorical distribution, 2 latent variables corresponding to a uniform distribution.
@@ -57,18 +57,18 @@ It then maximizes mutual information between these latent variables and the imag
 * Middle: 1 continuous latent variable controlled the rotation.
 * Right: another continuous latent variable controlled the thickness.
 
-## ConditionalGAN-mnist.py
+## [ConditionalGAN-mnist.py](ConditionalGAN-mnist.py)
 
 Train a simple GAN on mnist, conditioned on the class labels.
 
-## WGAN.py, Improved-WGAN.py, BEGAN.py
+## [WGAN.py](WGAN.py), [Improved-WGAN.py](Improved-WGAN.py), [BEGAN.py](BEGAN.py)
 
 These variants are implemented by some small modifications on top of DCGAN.py.
 Some BEGAN samples:
 
 ![began-sample](demo/BEGAN-CelebA-samples.jpg)
 
-## CycleGAN.py, DiscoGAN-CelebA.py
+## [CycleGAN.py](CycleGAN.py), [DiscoGAN-CelebA.py](DiscoGAN-CelebA.py)
 
 Reproduce CycleGAN with the original datasets, and DiscoGAN on CelebA. They are pretty much the same idea with different architecture.
 CycleGAN horse-to-zebra in tensorboard:

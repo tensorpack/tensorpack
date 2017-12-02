@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 # File: load-resnet.py
-# Author: Eric Yujia Huang yujiah1@andrew.cmu.edu
+# Author: Eric Yujia Huang <yujiah1@andrew.cmu.edu>
 #         Yuxin Wu <ppwwyyxx@gmail.com>
 
 import cv2
@@ -11,7 +11,6 @@ import argparse
 import re
 import numpy as np
 import six
-from tensorflow.contrib.layers import variance_scaling_initializer
 
 from tensorpack import *
 from tensorpack.utils import logger
@@ -45,8 +44,7 @@ class Model(ModelDesc):
         image = tf.transpose(image, [0, 3, 1, 2])
         with argscope([Conv2D, MaxPooling, GlobalAvgPooling, BatchNorm],
                       data_format='NCHW'), \
-                argscope(Conv2D, nl=tf.identity, use_bias=False,
-                         W_init=variance_scaling_initializer(mode='FAN_OUT')):
+                argscope(Conv2D, nl=tf.identity, use_bias=False):
             logits = (LinearWrap(image)
                       .Conv2D('conv0', 64, 7, stride=2, nl=BNReLU, padding='VALID')
                       .MaxPooling('pool0', shape=3, stride=2, padding='SAME')

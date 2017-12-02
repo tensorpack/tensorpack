@@ -1,5 +1,5 @@
 
-## imagenet-resnet.py
+## [imagenet-resnet.py](imagenet-resnet.py)
 
 __Training__ code of three variants of ResNet on ImageNet:
 
@@ -30,7 +30,7 @@ See the [tutorial](http://tensorpack.readthedocs.io/en/latest/tutorial/efficient
 
 ![imagenet](imagenet-resnet.png)
 
-## load-resnet.py
+## [load-resnet.py](load-resnet.py)
 
 This script only converts and runs ImageNet-ResNet{50,101,152} Caffe models [released by MSRA](https://github.com/KaimingHe/deep-residual-networks).
 Note that the architecture is different from the `imagenet-resnet.py` script and the models are not compatible.
@@ -52,7 +52,7 @@ The per-pixel mean used here is slightly different from the original.
 | ResNet 101         |      7.11%  |      23.54% |
 | ResNet 152         |      6.71%  |      23.21% |
 
-## cifar10-resnet.py
+## [cifar10-resnet.py](cifar10-resnet.py)
 
 Reproduce pre-activation ResNet on CIFAR10.
 
@@ -61,12 +61,15 @@ Reproduce pre-activation ResNet on CIFAR10.
 Also see a [DenseNet implementation](https://github.com/YixuanLi/densenet-tensorflow) of the paper [Densely Connected Convolutional Networks](https://arxiv.org/abs/1608.06993).
 
 
-## cifar10-preact18-mixup.py
+## [cifar10-preact18-mixup.py](cifar10-preact18-mixup.py)
 
-Reproduce mixup pre-activation ResNet18 on CIFAR10.
-Please notice that this preact18 architecture is
+Reproduce the mixup pre-act ResNet-18 CIFAR10 experiment, in the paper:
+
+* [mixup: Beyond Empirical Risk Minimization](https://arxiv.org/abs/1710.09412).
+
+Please note that this preact18 architecture is
 [different](https://github.com/kuangliu/pytorch-cifar/blob/master/models/preact_resnet.py)
-as the [mixup paper](https://arxiv.org/abs/1710.09412) said.
+from `cifar10-resnet18.py`.
 
 Usage:
 ```bash
@@ -75,5 +78,6 @@ Usage:
 ```
 
 Validation error with the original LR schedule (100-150-200): __5.0%__ without mixup, __3.8%__ with mixup.
+This matches the number in the paper.
 
 With 2x LR schedule: 4.7% without mixup, and 3.2% with mixup.
