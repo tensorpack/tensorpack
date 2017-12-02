@@ -1,7 +1,7 @@
 Bug Reports/Feature Requests/Usage Questions Only:
 
 Bug Reports: PLEASE always include
-1. What you did. (command you run if using examples; post or describe your code if not)
+1. What you did. (command you run and changes you made if using examples; post or describe your code if not)
 2. What you observed, e.g. logs.
 3. What you expected, if not obvious.
 4. Your environment (TF version, cudnn version, number & type of GPUs), if it matters.
