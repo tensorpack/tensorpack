@@ -19,7 +19,7 @@ from data_sampler import ImageDecode
 """
 Re-implementation:
 EnhanceNet: Single Image Super-Resolution Through Automated Texture Synthesis
-Sajjadi et al. <https://arxiv.org/abs/1612.07919>, ICCV 2017
+Sajjadi et al. <https://arxiv.org/abs/1612.07919>, (ICCV 2017)
 
 
 train:
@@ -28,9 +28,9 @@ train:
     python data_sampler.py --lmdb train2017.lmdb --input train2017.zip --create
     python enet-pat.py --vgg19 /path/to/vgg19.npy --gpu 0,1 --lmdb train2017.lmdb
 
-eval:
+apply:
 
-    python enet-pat.py --apply --load /checkpoints/checkpoint --lowres "eagle.png" --output "eagle" --gpu 1
+    python enet-pat.py --apply --load /checkpoints/enet-pat.npy --lowres "eagle.png" --output "eagle" --gpu 1
 """
 
 BATCH_SIZE = 6
@@ -58,11 +58,10 @@ def gram_matrix(v):
 
 class Model(GANModelDesc):
 
-    def __init__(self, height=SHAPE_LR, width=SHAPE_LR, inference=False):
+    def __init__(self, height=SHAPE_LR, width=SHAPE_LR):
         super(Model, self).__init__()
         self.height = height
         self.width = width
-        self.inference = inference
 
     def _get_inputs(self):
         return [InputDesc(tf.float32, (None, self.height * 1, self.width * 1, CHANNELS), 'Ilr'),
@@ -135,28 +134,29 @@ class Model(GANModelDesc):
                 x = tf.concat([a, b], axis=0)
                 x = tf.reshape(x, [2 * BATCH_SIZE, 128, 128, 3])
                 # VGG 19
-                with argscope(Conv2D, kernel_shape=3, nl=tf.nn.relu):
-                    conv1_1 = Conv2D('conv1_1', x, 64)
-                    conv1_2 = Conv2D('conv1_2', conv1_1, 64)
-                    pool1 = MaxPooling('pool1', conv1_2, 2)  # 64
-                    conv2_1 = Conv2D('conv2_1', pool1, 128)
-                    conv2_2 = Conv2D('conv2_2', conv2_1, 128)
-                    pool2 = MaxPooling('pool2', conv2_2, 2)  # 32
-                    conv3_1 = Conv2D('conv3_1', pool2, 256)
-                    conv3_2 = Conv2D('conv3_2', conv3_1, 256)
-                    conv3_3 = Conv2D('conv3_3', conv3_2, 256)
-                    conv3_4 = Conv2D('conv3_4', conv3_3, 256)
-                    pool3 = MaxPooling('pool3', conv3_4, 2)  # 16
-                    conv4_1 = Conv2D('conv4_1', pool3, 512)
-                    conv4_2 = Conv2D('conv4_2', conv4_1, 512)
-                    conv4_3 = Conv2D('conv4_3', conv4_2, 512)
-                    conv4_4 = Conv2D('conv4_4', conv4_3, 512)
-                    pool4 = MaxPooling('pool4', conv4_4, 2)  # 8
-                    conv5_1 = Conv2D('conv5_1', pool4, 512)
-                    conv5_2 = Conv2D('conv5_2', conv5_1, 512)
-                    conv5_3 = Conv2D('conv5_3', conv5_2, 512)
-                    conv5_4 = Conv2D('conv5_4', conv5_3, 512)
-                    pool5 = MaxPooling('pool5', conv5_4, 2)  # 4
+                with varreplace.freeze_variables():
+                    with argscope(Conv2D, kernel_shape=3, nl=tf.nn.relu):
+                        conv1_1 = Conv2D('conv1_1', x, 64)
+                        conv1_2 = Conv2D('conv1_2', conv1_1, 64)
+                        pool1 = MaxPooling('pool1', conv1_2, 2)  # 64
+                        conv2_1 = Conv2D('conv2_1', pool1, 128)
+                        conv2_2 = Conv2D('conv2_2', conv2_1, 128)
+                        pool2 = MaxPooling('pool2', conv2_2, 2)  # 32
+                        conv3_1 = Conv2D('conv3_1', pool2, 256)
+                        conv3_2 = Conv2D('conv3_2', conv3_1, 256)
+                        conv3_3 = Conv2D('conv3_3', conv3_2, 256)
+                        conv3_4 = Conv2D('conv3_4', conv3_3, 256)
+                        pool3 = MaxPooling('pool3', conv3_4, 2)  # 16
+                        conv4_1 = Conv2D('conv4_1', pool3, 512)
+                        conv4_2 = Conv2D('conv4_2', conv4_1, 512)
+                        conv4_3 = Conv2D('conv4_3', conv4_2, 512)
+                        conv4_4 = Conv2D('conv4_4', conv4_3, 512)
+                        pool4 = MaxPooling('pool4', conv4_4, 2)  # 8
+                        conv5_1 = Conv2D('conv5_1', pool4, 512)
+                        conv5_2 = Conv2D('conv5_2', conv5_1, 512)
+                        conv5_3 = Conv2D('conv5_3', conv5_2, 512)
+                        conv5_4 = Conv2D('conv5_4', conv5_3, 512)
+                        pool5 = MaxPooling('pool5', conv5_4, 2)  # 4
 
             # perceptual loss
             with tf.name_scope('perceptual_loss'):
@@ -176,8 +176,8 @@ class Model(GANModelDesc):
                     rsl = []
                     logger.info('create texture loss for layer {} with shape {}'.format(
                         x.name, x.get_shape()))
-                    for i in range(0, h - p, p - 1):
-                        for j in range(0, w - p, p - 1):
+                    for i in range(0, h, p):
+                        for j in range(0, w, p):
                             current_patch_a = x[
                                 0:BATCH_SIZE, i:i + p, j:j + p, :]
                             current_patch_b = x[
@@ -203,39 +203,36 @@ class Model(GANModelDesc):
 
         tf.identity(add_VGGMeans(fake_hr), name='prediction')
 
-        if not self.inference:
+        if ctx.is_training:
             with tf.variable_scope('discrim'):
                 real_score = discriminator(real_hr)
                 fake_score = discriminator(fake_hr)
 
             self.build_losses(real_score, fake_score)
 
-            if ctx.is_training:
-                additional_losses = additional_losses(fake_hr, real_hr)
+            additional_losses = additional_losses(fake_hr, real_hr)
+            with tf.name_scope('additional_losses'):
+                # see table 2 from appendix
+                loss = []
+                loss.append(tf.multiply(1., self.g_loss, name="loss_LA"))
+                loss.append(tf.multiply(2e-1, additional_losses[0], name="loss_LP1"))
+                loss.append(tf.multiply(2e-2, additional_losses[1], name="loss_LP2"))
+                loss.append(tf.multiply(3e-7, additional_losses[2], name="loss_LT1"))
+                loss.append(tf.multiply(1e-6, additional_losses[3], name="loss_LT2"))
+                loss.append(tf.multiply(1e-6, additional_losses[4], name="loss_LT3"))
 
-                with tf.name_scope('additional_losses'):
-                    # see table 2 from appendix
-                    loss = []
-                    loss.append(tf.multiply(1., self.g_loss, name="loss_LA"))
-                    loss.append(tf.multiply(2e-1, additional_losses[0], name="loss_LP1"))
-                    loss.append(tf.multiply(2e-2, additional_losses[1], name="loss_LP2"))
-                    loss.append(tf.multiply(3e-7, additional_losses[2], name="loss_LT1"))
-                    loss.append(tf.multiply(1e-6, additional_losses[3], name="loss_LT2"))
-                    loss.append(tf.multiply(1e-6, additional_losses[4], name="loss_LT3"))
-
-                self.g_loss = self.g_loss + tf.add_n(loss, name='total_g_loss')
-                add_moving_summary(self.g_loss, *loss)
+            self.g_loss = self.g_loss + tf.add_n(loss, name='total_g_loss')
+            add_moving_summary(self.g_loss, *loss)
 
             fake_hr = add_VGGMeans(fake_hr)
             real_hr = add_VGGMeans(real_hr)
             Ibicubic = add_VGGMeans(Ibicubic)
 
-            if ctx.is_training:
-                # visualization
-                viz = (tf.concat([Ibicubic, fake_hr, real_hr], 2)) * 255.
-                viz = tf.cast(tf.clip_by_value(viz, 0, 255), tf.uint8, name='viz')
-                tf.summary.image('input,fake,real', viz,
-                                 max_outputs=max(30, BATCH_SIZE))
+            # visualization
+            viz = (tf.concat([Ibicubic, fake_hr, real_hr], 2)) * 255.
+            viz = tf.cast(tf.clip_by_value(viz, 0, 255), tf.uint8, name='viz')
+            tf.summary.image('input,fake,real', viz,
+                             max_outputs=max(30, BATCH_SIZE))
 
             self.collect_variables()
 
@@ -258,7 +255,7 @@ def apply(model_path, lowres_path="", output_path=None):
     lr[:, :, 2] -= VGG_MEAN[2]
 
     predict_func = OfflinePredictor(PredictConfig(
-        model=Model(LR_SIZE_H, LR_SIZE_W, inference=True),
+        model=Model(LR_SIZE_H, LR_SIZE_W),
         session_init=get_model_loader(model_path),
         input_names=['Ilr'],
         output_names=['prediction']))

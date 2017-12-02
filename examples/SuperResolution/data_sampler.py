@@ -5,12 +5,6 @@ import zipfile
 import random
 from tensorpack import RNGDataFlow, MapDataComponent, dftools
 
-"""
-DBDIR=/graphics/projects/scratch/datasets/mscoco/
-python data_sampler.py --lmdb ${DBDIR}val2017.lmdb --input ${DBDIR}val2017.zip --create
-python data_sampler.py --lmdb ${DBDIR}train2017.lmdb --input ${DBDIR}train2017.zip --create
-"""
-
 
 class ImageDataFromZIPFile(RNGDataFlow):
     """ Produce images read from a list of zip files. """
@@ -105,8 +99,6 @@ if __name__ == '__main__':
     parser.add_argument('--debug', action='store_true', help='debug images')
     parser.add_argument('--input', type=str, help='path to lmdb', required=True)
     parser.add_argument('--lmdb', type=str, help='path to lmdb', required=True)
-    parser.add_argument('--size', type=int, help='number of images', default=1000)
-    parser.add_argument('--proc', type=int, help='number of processes', default=1)
     args = parser.parse_args()
 
     ds = ImageDataFromZIPFile(args.input)
