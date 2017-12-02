@@ -8,19 +8,18 @@ import cv2
 import six
 import numpy as np
 import tensorflow as tf
-os.environ['TENSORPACK_TRAIN_API'] = 'v2'   # will become default soon
-from tensorpack import *  # noqa
-from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope  # noqa
-from GAN import MultiGPUGANTrainer, GANModelDesc  # noqa
-from tensorpack.tfutils.summary import add_moving_summary  # noqa
-from tensorpack.utils import logger  # noqa
-from data_sampler import ImageDecode  # noqa
+from tensorpack import *
+from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
+from GAN import MultiGPUGANTrainer, GANModelDesc
+from tensorpack.tfutils.summary import add_moving_summary
+from tensorpack.utils import logger
+from data_sampler import ImageDecode
 
 
 """
 Re-implementation:
 EnhanceNet: Single Image Super-Resolution Through Automated Texture Synthesis
-Sajjadi et al. <https://arxiv.org/abs/1612.07919>
+Sajjadi et al. <https://arxiv.org/abs/1612.07919>, ICCV 2017
 
 
 train:
@@ -55,10 +54,6 @@ def gram_matrix(v):
     v = normalize(v)
     v = tf.reshape(v, [dim[0], dim[1] * dim[2], dim[3]])
     return tf.matmul(v, v, transpose_a=True)
-
-
-def mse(x, y, name=None):
-    return tf.reduce_mean(tf.squared_difference(x, y), name=name)
 
 
 class Model(GANModelDesc):
@@ -96,9 +91,9 @@ class Model(GANModelDesc):
         def add_VGGMeans(x):
             with tf.name_scope('add_vgg_means'):
                 r, g, b = tf.unstack(x, axis=3)
-                r += 123.68 / 255.
-                g += 116.779 / 255.
-                b += 103.939 / 255.
+                r += VGG_MEAN[0] / 255.
+                g += VGG_MEAN[1] / 255.
+                b += VGG_MEAN[2] / 255.
                 x = tf.stack([r, g, b], axis=3)
             return x
 
@@ -169,9 +164,9 @@ class Model(GANModelDesc):
                 phi_a_2, phi_b_2 = tf.split(pool5, 2, axis=0)
 
                 logger.info('create perceptual loss for layer {} with shape {}'.format(pool2.name, pool2.get_shape()))
-                pool2_loss = mse(phi_a_1, phi_b_1, name='perceptual_loss_pool2')
+                pool2_loss = tf.losses.mean_squared_error(phi_a_1, phi_b_1, reduction=Reduction.MEAN)
                 logger.info('create perceptual loss for layer {} with shape {}'.format(pool5.name, pool5.get_shape()))
-                pool5_loss = mse(phi_a_2, phi_b_2, name='perceptual_loss_pool5')
+                pool5_loss = tf.losses.mean_squared_error(phi_a_2, phi_b_2, reduction=Reduction.MEAN)
 
             # texture loss
             with tf.name_scope('texture_loss'):
@@ -191,7 +186,8 @@ class Model(GANModelDesc):
                             current_patch_a = gram_matrix(current_patch_a)
                             current_patch_b = gram_matrix(current_patch_b)
 
-                            rsl.append(mse(current_patch_a, current_patch_b))
+                            rsl.append(tf.losses.mean_squared_error(current_patch_a, current_patch_b,
+                                                                    reduction=Reduction.MEAN))
                     # rsl is list of [b, p, p, c]
                     return tf.add_n(rsl)
 
