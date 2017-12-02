@@ -52,8 +52,9 @@ def freeze_variables():
                 x = FullyConnected('fc', x, 1000)   # fc/* will not be trained
     """
     def custom_getter(getter, *args, **kwargs):
+        trainable = kwargs.get('trainable', True)
         v = getter(*args, **kwargs)
-        if kwargs.pop('trainable', True):
+        if trainable:
             v = tf.stop_gradient(v)
         return v
     return custom_getter_scope(custom_getter)
