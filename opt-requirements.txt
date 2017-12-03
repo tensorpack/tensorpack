@@ -1,6 +1,0 @@
-pillow
-scipy
-h5py
-lmdb>=0.92
-matplotlib
-scikit-learn

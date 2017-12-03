@@ -2,7 +2,7 @@
 # Performance Tuning
 
 __We do not know why your training is slow__.
-Performance is different on every machine. So you need to figure out most parts by your own.
+Performance is different across machines and tasks. So you need to figure out most parts by your own.
 Here's a list of things you can do when your training is slow.
 
 If you're going to open an issue about slow training, PLEASE do them and include your findings.
@@ -14,14 +14,14 @@ If you're going to open an issue about slow training, PLEASE do them and include
 2. If you use queue-based input + dataflow, you can look for the queue size statistics in
 	 training log. Ideally the queue should be near-full (default size is 50).
  	 If the size is near-zero, data is the bottleneck.
-3. If the GPU utilization is low, it may be because of slow data, or some ops are inefficient. Also make sure GPUs are not locked in P8 state.
+3. If GPU utilization is low, it may be because of slow data, or some ops are inefficient. Also make sure GPUs are not locked in P8 state.
 
 ## Benchmark the components
 1. Use `DummyConstantInput(shapes)` as the `InputSource`.
 	so that the iterations doesn't take any data from Python side but train on a constant tensor.
 	This will help find out the slow operations you're using in the graph.
 2. Use `dataflow=FakeData(shapes, random=False)` to replace your original DataFlow by a constant DataFlow.
-  This has similar effect to (1), i.e., it eliminates the overhead of data.
+  This is almost the same as (1), i.e., it eliminates the overhead of data.
 3. If you're using a TF-based input pipeline you wrote, you can simply run it in a loop and test its speed.
 4. Use `TestDataSpeed(mydf).start()` to benchmark your DataFlow.
 
@@ -31,7 +31,7 @@ A benchmark will give you more precise information about which part you should i
 
 Understand the [Efficient DataFlow](efficient-dataflow.html) tutorial, so you know what your DataFlow is doing.
 
-Benchmark your DataFlow with modifications and you'll understand why it runs slow. Some examples
+Benchmark your DataFlow with modifications and you'll understand which part is the bottleneck. Some examples
 include:
 
 1. Remove everything except for the raw reader (and perhaps add some prefetching).
