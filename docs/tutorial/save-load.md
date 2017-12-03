@@ -20,11 +20,15 @@ It can dump the model to a `var-name: value` dict saved in npy/npz format.
 
 Model loading (in either training or testing) is through the `session_init` interface.
 Currently there are two ways a session can be restored:
-`session_init=SaverRestore(...)` which restores a
-TF checkpoint, or `session_init=DictRestore(...)` which restores a dict.
-(`get_model_loader` is a small helper to decide which one to use from a file name.)
+[session_init=SaverRestore(...)](../modules/tfutils.html#tensorpack.tfutils.sessinit.SaverRestore)
+which restores a TF checkpoint,
+or [session_init=DictRestore(...)](../modules/tfutils.html#tensorpack.tfutils.sessinit.DictRestore) which restores a dict
+([get_model_loader](../modules/tfutils.html#tensorpack.tfutils.sessinit.get_model_loader)
+is a small helper to decide which one to use from a file name).
+To load multiple models, use [ChainInit](../modules/tfutils.html#tensorpack.tfutils.sessinit.ChainInit)
 
-Variable restoring is completely based on name match between
+
+Variable restoring is completely based on __name match__ between
 variables in the current graph and variables in the `session_init` initializer.
 Variables that appear in only one side will be printed as warning.
 

@@ -40,11 +40,11 @@ You can overwrite any of the following methods to define a new callback:
   If you're using a `TowerTrainer` instance, more tools are available:
 
   - Use `self.trainer.tower_func.towers` to access the
-  	[tower handles](../modules/tfutils.html#tensorpack.tfutils.tower.TowerTensorHandles),
+  	[tower handles](../../modules/tfutils.html#tensorpack.tfutils.tower.TowerTensorHandles),
   	and therefore the tensors in each tower.
-  - [self.get_tensors_maybe_in_tower()](../modules/callbacks.html#tensorpack.callbacks.Callback.get_tensors_maybe_in_tower)
+  - [self.get_tensors_maybe_in_tower()](../../modules/callbacks.html#tensorpack.callbacks.Callback.get_tensors_maybe_in_tower)
   	is a helper function to access tensors in the first training tower.
-  - [self.trainer.get_predictor()](../modules/train.html#tensorpack.train.TowerTrainer.get_predictor)
+  - [self.trainer.get_predictor()](../../modules/train.html#tensorpack.train.TowerTrainer.get_predictor)
   	is a helper function to create a callable under inference mode.
 
 * `_before_train(self)`

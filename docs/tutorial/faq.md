@@ -20,11 +20,11 @@ Then it is a good time to open an issue.
 
 1. Learn `tf.Print`.
 
-2. Know [DumpTensors](http://tensorpack.readthedocs.io/en/latest/modules/callbacks.html#tensorpack.callbacks.DumpTensors[]),
-	[ProcessTensors](http://tensorpack.readthedocs.io/en/latest/modules/callbacks.html#tensorpack.callbacks.ProcessTensors) callbacks.
+2. Know [DumpTensors](../modules/callbacks.html#tensorpack.callbacks.DumpTensors[]),
+	[ProcessTensors](../modules/callbacks.html#tensorpack.callbacks.ProcessTensors) callbacks.
 	And it's also easy to write your own version of them.
 
-3. The [ProgressBar](http://tensorpack.readthedocs.io/en/latest/modules/callbacks.html#tensorpack.callbacks.ProgressBar)
+3. The [ProgressBar](../modules/callbacks.html#tensorpack.callbacks.ProgressBar)
 	 callback can print some scalar statistics, though not enabled by default.
 
 ## How to freeze some variables in training

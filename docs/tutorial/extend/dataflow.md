@@ -2,7 +2,7 @@
 ### Write a DataFlow
 
 There are several existing DataFlow, e.g. [ImageFromFile](../../modules/dataflow.html#tensorpack.dataflow.ImageFromFile),
-[DataFromList](../../http://tensorpack.readthedocs.io/en/latest/modules/dataflow.html#tensorpack.dataflow.DataFromList),
+[DataFromList](../../modules/dataflow.html#tensorpack.dataflow.DataFromList),
 which you can use if your data format is simple.
 In general, you probably need to write a source DataFlow to produce data for your task,
 and then compose it with existing modules (e.g. mapping, batching, prefetching, ...).

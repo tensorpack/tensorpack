@@ -34,7 +34,7 @@ The function needs to follow some conventions:
 
 ### MultiGPU Trainers
 
-For data-parallel multi-GPU training, different [multi-GPU trainers](http://tensorpack.readthedocs.io/en/latest/modules/train.html)
+For data-parallel multi-GPU training, different [multi-GPU trainers](../modules/train.html)
 implement different parallel logic.
 They take care of device placement, gradient averaging and synchronoization
 in the efficient way and all reach the same performance as the

@@ -264,6 +264,7 @@ def get_model_loader(filename):
 def TryResumeTraining():
     """
     Try loading latest checkpoint from ``logger.get_logger_dir()``, only if there is one.
+    Actually not very useful... better to write your own one.
 
     Returns:
         SessInit: either a :class:`JustCurrentSession`, or a :class:`SaverRestore`.
