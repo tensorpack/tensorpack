@@ -1,4 +1,5 @@
 import cv2
+import os
 import argparse
 import numpy as np
 import zipfile
@@ -8,25 +9,20 @@ from tensorpack import RNGDataFlow, MapDataComponent, dftools
 
 class ImageDataFromZIPFile(RNGDataFlow):
     """ Produce images read from a list of zip files. """
-    def __init__(self, zipFile, shuffle=False, maxFiles=None):
+    def __init__(self, zip_file, shuffle=False, max_files=None):
         """
         Args:
-            zipFile (list): list of zip file paths.
-            channel (int): 1 or 3. Will convert grayscale to RGB images if channel==3.
-            resize (tuple): int or (h, w) tuple. If given, resize the image.
+            zip_file (list): list of zip file paths.
         """
-        assert len(zipFile), "No zip zipFile given to ImageFromFile!"
+        assert os.path.isfile(zip_file)
         self.shuffle = shuffle
-        self.max = maxFiles
+        self.max = max_files
         self.archivefiles = []
-        try:
-            archive = zipfile.ZipFile(zipFile)
-            imagesInArchive = archive.namelist()
-            for img_name in imagesInArchive:
-                if img_name.endswith('.jpg'):
-                    self.archivefiles.append((archive, img_name))
-        except zipfile.BadZipfile:
-            print("Couldn't read " + zipFile)
+        archive = zipfile.ZipFile(zip_file)
+        imagesInArchive = archive.namelist()
+        for img_name in imagesInArchive:
+            if img_name.endswith('.jpg'):
+                self.archivefiles.append((archive, img_name))
         if self.max is None:
             self.max = self.size()
 
@@ -97,8 +93,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--create', action='store_true', help='create lmdb')
     parser.add_argument('--debug', action='store_true', help='debug images')
-    parser.add_argument('--input', type=str, help='path to lmdb', required=True)
-    parser.add_argument('--lmdb', type=str, help='path to lmdb', required=True)
+    parser.add_argument('--input', type=str, help='path to coco zip', required=True)
+    parser.add_argument('--lmdb', type=str, help='path to output lmdb', required=True)
     args = parser.parse_args()
 
     ds = ImageDataFromZIPFile(args.input)

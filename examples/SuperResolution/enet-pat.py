@@ -16,23 +16,6 @@ from tensorpack.utils import logger
 from data_sampler import ImageDecode
 
 
-"""
-Re-implementation:
-EnhanceNet: Single Image Super-Resolution Through Automated Texture Synthesis
-Sajjadi et al. <https://arxiv.org/abs/1612.07919>, (ICCV 2017)
-
-
-train:
-
-    wget http://images.cocodataset.org/zips/train2017.zip
-    python data_sampler.py --lmdb train2017.lmdb --input train2017.zip --create
-    python enet-pat.py --vgg19 /path/to/vgg19.npy --gpu 0,1 --lmdb train2017.lmdb
-
-apply:
-
-    python enet-pat.py --apply --load /checkpoints/enet-pat.npy --lowres "eagle.png" --output "eagle" --gpu 1
-"""
-
 BATCH_SIZE = 6
 CHANNELS = 3
 SHAPE_LR = 32
@@ -244,9 +227,9 @@ class Model(GANModelDesc):
         return optimizer.apply_grad_processors(opt, gradprocs)
 
 
-def apply(model_path, lowres_path="", output_path=None):
+def apply(model_path, lowres_path="", output_path='.'):
     assert os.path.isfile(lowres_path)
-    assert output_path is not None
+    assert os.path.isdir(output_path)
     lr = cv2.imread(lowres_path).astype(np.float32)
     baseline = cv2.resize(lr, (0, 0), fx=4, fy=4, interpolation=cv2.INTER_CUBIC)
     LR_SIZE_H, LR_SIZE_W = lr.shape[:2]
@@ -263,8 +246,8 @@ def apply(model_path, lowres_path="", output_path=None):
     pred = predict_func(lr[None, ...])
     p = np.clip(pred[0][0, ...] * 255, 0, 255)
 
-    cv2.imwrite(output_path + "predition.png", p)
-    cv2.imwrite(output_path + "baseline.png", baseline)
+    cv2.imwrite(os.path.join(output_path, "predition.png"), p)
+    cv2.imwrite(os.path.join(output_path, "baseline.png"), baseline)
 
 
 def get_data(lmdb):
@@ -287,10 +270,10 @@ if __name__ == '__main__':
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
     parser.add_argument('--load', help='load model')
     parser.add_argument('--apply', action='store_true')
-    parser.add_argument('--lmdb', action='path to lmdb_file')
+    parser.add_argument('--lmdb', help='path to lmdb_file')
     parser.add_argument('--vgg19', help='load model', default="")
     parser.add_argument('--lowres', help='low resolution image as input', default="", type=str)
-    parser.add_argument('--output', help='path for saving predicted high-res image', default="", type=str)
+    parser.add_argument('--output', help='directory for saving predicted high-res image', default=".", type=str)
     args = parser.parse_args()
 
     if args.gpu:
