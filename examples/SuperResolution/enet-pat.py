@@ -47,17 +47,14 @@ class Model(GANModelDesc):
         self.width = width
 
     def _get_inputs(self):
+        # mean-subtracted images
         return [InputDesc(tf.float32, (None, self.height * 1, self.width * 1, CHANNELS), 'Ilr'),
                 InputDesc(tf.float32, (None, self.height * 4, self.width * 4, CHANNELS), 'Ihr')]
 
     def _build_graph(self, inputs):
         ctx = get_current_tower_context()
-        Ilr, Ihr = inputs
+        Ilr, Ihr = inputs[0] / 255.0, inputs[1] / 255.0
         Ibicubic = tf.image.resize_bicubic(Ilr, [4 * self.height, 4 * self.width])
-
-        Ilr = Ilr / 255.
-        Ihr = Ihr / 255.
-        Ibicubic = Ibicubic / 255.
 
         def resnet_block(x, name):
             with tf.variable_scope(name):
@@ -70,26 +67,17 @@ class Model(GANModelDesc):
             x = tf.image.resize_nearest_neighbor(x, [factor * h, factor * w])
             return x
 
-        def add_VGGMeans(x):
-            with tf.name_scope('add_vgg_means'):
-                r, g, b = tf.unstack(x, axis=3)
-                r += VGG_MEAN[0] / 255.
-                g += VGG_MEAN[1] / 255.
-                b += VGG_MEAN[2] / 255.
-                x = tf.stack([r, g, b], axis=3)
-            return x
-
         def generator(x, Ibicubic):
             with argscope(Conv2D, kernel_shape=3, stride=1, nl=tf.nn.relu):
-                x = Conv2D('conv1', x, NF, kernel_shape=3, nl=tf.nn.relu)
+                x = Conv2D('conv1', x, NF)
                 for i in range(10):
                     x = resnet_block(x, 'block_%i' % i)
                 x = upsample(x)
-                x = Conv2D('conv_post_1', x, NF, kernel_shape=3, nl=tf.nn.relu)
+                x = Conv2D('conv_post_1', x, NF)
                 x = upsample(x)
-                x = Conv2D('conv_post_2', x, NF, kernel_shape=3, nl=tf.nn.relu)
-                x = Conv2D('conv_post_3', x, NF, kernel_shape=3, nl=tf.nn.relu)
-                Ires = Conv2D('conv_post_4', x, 3, kernel_shape=3, nl=tf.identity)
+                x = Conv2D('conv_post_2', x, NF)
+                x = Conv2D('conv_post_3', x, NF)
+                Ires = Conv2D('conv_post_4', x, 3, nl=tf.identity)
                 Iest = tf.add(Ibicubic, Ires, name='Iest')
                 return Iest
 
@@ -184,7 +172,8 @@ class Model(GANModelDesc):
             fake_hr = generator(Ilr, Ibicubic)
             real_hr = Ihr
 
-        tf.identity(add_VGGMeans(fake_hr), name='prediction')
+        VGG_MEAN_TENSOR = tf.constant(VGG_MEAN / 255.0)
+        tf.add(fake_hr, VGG_MEAN_TENSOR, name='prediction')
 
         if ctx.is_training:
             with tf.variable_scope('discrim'):
@@ -207,12 +196,8 @@ class Model(GANModelDesc):
             self.g_loss = self.g_loss + tf.add_n(loss, name='total_g_loss')
             add_moving_summary(self.g_loss, *loss)
 
-            fake_hr = add_VGGMeans(fake_hr)
-            real_hr = add_VGGMeans(real_hr)
-            Ibicubic = add_VGGMeans(Ibicubic)
-
             # visualization
-            viz = (tf.concat([Ibicubic, fake_hr, real_hr], 2)) * 255.
+            viz = (tf.concat([Ibicubic, fake_hr, real_hr], 2)) * 255. + VGG_MEAN_TENSOR
             viz = tf.cast(tf.clip_by_value(viz, 0, 255), tf.uint8, name='viz')
             tf.summary.image('input,fake,real', viz,
                              max_outputs=max(30, BATCH_SIZE))
@@ -223,7 +208,7 @@ class Model(GANModelDesc):
         lr = tf.get_variable(
             'learning_rate', initializer=1e-4, trainable=False)
         opt = tf.train.AdamOptimizer(lr)
-        gradprocs = [gradproc.ScaleGradient([('VGG19/*', 0.)]), gradproc.ScaleGradient([('discrim/*', 0.3)])]
+        gradprocs = [gradproc.ScaleGradient([('discrim/*', 0.3)])]
         return optimizer.apply_grad_processors(opt, gradprocs)
 
 
@@ -233,9 +218,7 @@ def apply(model_path, lowres_path="", output_path='.'):
     lr = cv2.imread(lowres_path).astype(np.float32)
     baseline = cv2.resize(lr, (0, 0), fx=4, fy=4, interpolation=cv2.INTER_CUBIC)
     LR_SIZE_H, LR_SIZE_W = lr.shape[:2]
-    lr[:, :, 0] -= VGG_MEAN[0]
-    lr[:, :, 1] -= VGG_MEAN[1]
-    lr[:, :, 2] -= VGG_MEAN[2]
+    lr -= VGG_MEAN
 
     predict_func = OfflinePredictor(PredictConfig(
         model=Model(LR_SIZE_H, LR_SIZE_W),
@@ -256,9 +239,7 @@ def get_data(lmdb):
     augmentors = [imgaug.RandomCrop(128),
                   imgaug.Flip(horiz=True)]
     ds = AugmentImageComponent(ds, augmentors, index=0, copy=True)
-    ds = MapData(ds, lambda x: [np.stack([x[0][:, :, 0] - VGG_MEAN[0],
-                                          x[0][:, :, 1] - VGG_MEAN[1],
-                                          x[0][:, :, 2] - VGG_MEAN[2]], axis=-1)])
+    ds = MapData(ds, lambda x: x - VGG_MEAN)
     ds = MapData(ds, lambda x: [cv2.resize(x[0], (32, 32), interpolation=cv2.INTER_AREA), x[0]])
     ds = PrefetchDataZMQ(ds, 8)
     ds = BatchData(ds, BATCH_SIZE)
