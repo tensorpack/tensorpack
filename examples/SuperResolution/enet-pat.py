@@ -8,12 +8,14 @@ import cv2
 import six
 import numpy as np
 import tensorflow as tf
+
 from tensorpack import *
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
-from GAN import MultiGPUGANTrainer, GANModelDesc
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.utils import logger
 from data_sampler import ImageDecode
+from GAN import MultiGPUGANTrainer, GANModelDesc
+Reduction = tf.losses.Reduction
 
 
 BATCH_SIZE = 6
@@ -35,7 +37,7 @@ def gram_matrix(v):
     v.get_shape().assert_has_rank(4)
     dim = v.get_shape().as_list()
     v = normalize(v)
-    v = tf.reshape(v, [dim[0], dim[1] * dim[2], dim[3]])
+    v = tf.reshape(v, [-1, dim[1] * dim[2], dim[3]])
     return tf.matmul(v, v, transpose_a=True)
 
 
@@ -144,6 +146,7 @@ class Model(GANModelDesc):
                 def texture_loss(x, p=16):
                     x = normalize(x)
                     _, h, w, _ = x.get_shape().as_list()
+                    assert h % p == 0 and w % p == 0
                     rsl = []
                     logger.info('create texture loss for layer {} with shape {}'.format(
                         x.name, x.get_shape()))
@@ -172,7 +175,7 @@ class Model(GANModelDesc):
             fake_hr = generator(Ilr, Ibicubic)
             real_hr = Ihr
 
-        VGG_MEAN_TENSOR = tf.constant(VGG_MEAN / 255.0)
+        VGG_MEAN_TENSOR = tf.constant(VGG_MEAN / 255.0, dtype=tf.float32)
         tf.add(fake_hr, VGG_MEAN_TENSOR, name='prediction')
 
         if ctx.is_training:

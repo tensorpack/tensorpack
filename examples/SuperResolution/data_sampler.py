@@ -47,9 +47,9 @@ class ImageEncode(MapDataComponent):
 
 
 class ImageDecode(MapDataComponent):
-    def __init__(self, ds, mode='.jpg', dtype=np.uint8, index=0):
+    def __init__(self, ds, mode='.jpg', index=0):
         def func(im_data):
-            img = cv2.imdecode(np.asarray(bytearray(im_data), dtype=dtype), cv2.IMREAD_COLOR)
+            img = cv2.imdecode(im_data, cv2.IMREAD_COLOR)
             return img
         super(ImageDecode, self).__init__(ds, func, index=index)
 
