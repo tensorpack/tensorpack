@@ -13,23 +13,23 @@ The average resolution is about 400x350 <sup>[[1]]</sup>.
 Following the [ResNet example](../examples/ResNet), we need images in their original resolution,
 so we will read the original dataset (instead of a down-sampled version), and
 then apply complicated preprocessing to it.
-We will need to reach a speed of, roughly 1k ~ 2k images per second, to keep GPUs busy.
+We will need to reach a speed of, roughly **1k ~ 2k images per second**, to keep GPUs busy.
 
 Some things to know before reading:
-1. Having a fast Python generator **alone** may or may not improve your overall training speed.
+1. For smaller datasets (e.g. several GBs of images with lightweight preprocessing), a simple reader plus some prefetch should usually work well enough.
+	 Therefore you don't have to understand this tutorial in depth unless you really find your data being the bottleneck.
+	 This tutorial could be a bit complicated for people new to system architectures, but you do need these to be able to run fast enough on ImageNet-scale dataset.
+2. Having a fast Python generator **alone** may or may not improve your overall training speed.
 	 You need mechanisms to hide the latency of **all** preprocessing stages, as mentioned in the
-	 [previous tutorial](http://tensorpack.readthedocs.io/en/latest/tutorial/input-source.html).
-2. Reading training set and validation set are different.
+	 [previous tutorial](input-source.html).
+3. Reading training set and validation set are different.
 	 In training it's OK to reorder, regroup, or even duplicate some datapoints, as long as the
 	 data distribution roughly stays the same.
 	 But in validation we often need the exact set of data, to be able to compute a correct and comparable score.
 	 This will affect how we build the DataFlow.
-3. The actual performance would depend on not only the disk, but also memory (for caching) and CPU (for data processing).
+4. The actual performance would depend on not only the disk, but also memory (for caching) and CPU (for data processing).
 	 You may need to tune the parameters (#processes, #threads, size of buffer, etc.)
 	 or change the pipeline for new tasks and new machines to achieve the best performance.
-4. This tutorial could be a bit complicated for people new to system architectures, but you do need these to be able to run fast enough on ImageNet-sized dataset.
-	 However, for smaller datasets (e.g. several GBs of images with lightweight preprocessing), a simple reader plus some prefetch should work well enough.
-	 Figure out the bottleneck first, before trying to optimize any piece in the whole system.
 
 ## Random Read
 
@@ -66,7 +66,7 @@ We will now add the cheapest pre-processing now to get an ndarray in the end ins
 		ds = AugmentImageComponent(ds, [imgaug.Resize(224)])
 		ds = BatchData(ds, 256)
 ```
-You'll start to observe slow down after adding more pre-processing (such as those in the [ResNet example](../examples/ResNet/imagenet_resnet_utils.py)).
+You'll start to observe slow down after adding more pre-processing (such as those in the [ResNet example](../examples/ResNet/imagenet_utils.py)).
 Now it's time to add threads or processes:
 ```eval_rst
 .. code-block:: python
@@ -90,13 +90,13 @@ Alternatively, you can use multi-threaded preprocessing like this:
 
 		ds0 = dataset.ILSVRC12('/path/to/ILSVRC12', 'train', shuffle=True)
 		augmentor = AugmentorList(lots_of_augmentors)
-		ds1 = ThreadedMapData(
+		ds1 = MultiThreadMapData(
 				ds0, nr_thread=25,
 				map_func=lambda dp: [augmentor.augment(dp[0]), dp[1]], buffer_size=1000)
 		# ds1 = PrefetchDataZMQ(ds1, nr_proc=1)
 		ds = BatchData(ds1, 256)
 ```
-`ThreadedMapData` launches a thread pool to fetch data and apply the mapping function on **a single
+`MultiThreadMapData` launches a thread pool to fetch data and apply the mapping function on **a single
 instance of** `ds0`. This is done by an intermediate buffer of size 1000 to hide the mapping latency.
 To reduce the effect of GIL to your main training thread, you want to uncomment the line so that everything above it (including all the
 threads) happen in an independent process.
@@ -115,7 +115,7 @@ If you identify this as a bottleneck, you can also use:
 
 		ds0 = dataset.ILSVRC12Files('/path/to/ILSVRC12', 'train', shuffle=True)
 		augmentor = AugmentorList(lots_of_augmentors)
-		ds1 = ThreadedMapData(
+		ds1 = MultiThreadMapData(
 				ds0, nr_thread=25,
 				map_func=lambda dp:
 					[augmentor.augment(cv2.imread(dp[0], cv2.IMREAD_COLOR)), dp[1]],
@@ -140,7 +140,7 @@ We can also dump the dataset into one single LMDB file and read it sequentially.
 
 ```python
 from tensorpack.dataflow import *
-class BinaryILSVRC12(ILSVRCFiles):
+class BinaryILSVRC12(dataset.ILSVRCFiles):
     def get_data(self):
         for fname, label in super(BinaryILSVRC12, self).get_data():
             with open(fname, 'rb') as f:
@@ -155,6 +155,8 @@ The above script builds a DataFlow which produces jpeg-encoded ImageNet data.
 We store the jpeg string as a numpy array because the function `cv2.imdecode` later expect this format.
 Please note we can only use 1 prefetch process to speed up. If `nr_proc>1`, `ds1` will take data
 from several forks of `ds0`, then neither the content nor the order of `ds1` will be the same as `ds0`.
+See [documentation](../modules/dataflow.html#tensorpack.dataflow.PrefetchDataZMQ)
+about caveats of `PrefetchDataZMQ`.
 
 It will generate a database file of 140G. We build a DataFlow to read this LMDB file sequentially:
 ```
@@ -218,30 +220,23 @@ launch the base DataFlow in only **one process**, and only parallelize the trans
 with another `PrefetchDataZMQ`
 (Nesting two `PrefetchDataZMQ`, however, will result in a different behavior.
 These differences are explained in the API documentation in more details.).
-Similar to what we did above, you can use `ThreadedMapData` to parallelize as well.
+Similar to what we did earlier, you can use `MultiThreadMapData` to parallelize as well.
 
-Let me summarize what the above DataFlow does:
+Let me summarize what this DataFlow does:
 
 1. One process reads LMDB file, shuffle them in a buffer and put them into a `multiprocessing.Queue` (used by `PrefetchData`).
 2. 25 processes take items from the queue, decode and process them into [image, label] pairs, and
 	 send them through ZMQ IPC pipe.
 3. The main process takes data from the pipe, makes batches.
 
-The DataFlow mentioned above (both random read and sequential read) can run at a speed of 1k ~ 2k images per second if you have good CPUs, RAM, disks.
+The two DataFlow mentioned in this tutorial (both random read and sequential read) can run at a speed of 1k ~ 2k images per second if you have good CPUs, RAM, disks.
 As a reference, tensorpack can train ResNet-18 at 1.2k images/s on 4 old TitanX.
 A DGX-1 (8 P100) can train ResNet-50 at 1.7k images/s according to the [official benchmark](https://www.tensorflow.org/performance/benchmarks).
 So DataFlow will not be a serious bottleneck if configured properly.
 
-## More Efficient DataFlow
+## Distributed DataFlow
 
-To work with larger datasets (or smaller networks, or more/better GPUs) you could be severely bounded by CPU or disk speed of a single machine.
-One way is to optimize the preprocessing routine, for example:
-
-1. Write some preprocessing steps in C++ or use better libraries
-2. Move certain preprocessing steps (e.g. mean/std normalization) to TF operators which may be faster
-3. Transfer less data, e.g. use uint8 images rather than float32.
-
-Another way to scale is to run DataFlow in a distributed fashion and collect them on the
+To further scale your DataFlow, you can run it on multiple machines and collect them on the
 training machine. E.g.:
 ```python
 # Data Machine #1, process 1-20:

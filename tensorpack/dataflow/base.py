@@ -23,7 +23,9 @@ class DataFlowTerminated(BaseException):
 
 class DataFlowReentrantGuard(object):
     """
-    A tool to enforce thread-level non-reentrancy on DataFlow.
+    A tool to enforce non-reentrancy.
+    Mostly used on DataFlow whose :meth:`get_data` is stateful,
+    so that multiple instances of the iterator cannot co-exist.
     """
     def __init__(self):
         self._lock = threading.Lock()
@@ -31,7 +33,7 @@ class DataFlowReentrantGuard(object):
     def __enter__(self):
         self._succ = self._lock.acquire(False)
         if not self._succ:
-            raise threading.ThreadError("This DataFlow cannot be reused under different threads!")
+            raise threading.ThreadError("This DataFlow is not reentrant!")
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._lock.release()

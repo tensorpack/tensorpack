@@ -3,29 +3,19 @@
 # File: DQN.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import numpy as np
-
 import os
-import sys
-import re
-import time
-import random
 import argparse
-import subprocess
-import multiprocessing
-import threading
-from collections import deque
-
-from tensorpack import *
-from tensorpack.utils.concurrency import *
-from tensorpack.RL import *
+import cv2
 import tensorflow as tf
 
+
+from tensorpack import *
+
 from DQNModel import Model as DQNModel
-import common
-from common import play_model, Evaluator, eval_model_multithread
-from atari import AtariPlayer
+from common import Evaluator, eval_model_multithread, play_n_episodes
+from atari_wrapper import FrameStack, MapState, FireResetEnv
 from expreplay import ExpReplay
+from atari import AtariPlayer
 
 BATCH_SIZE = 64
 IMAGE_SIZE = (84, 84)
@@ -37,7 +27,7 @@ GAMMA = 0.99
 
 MEMORY_SIZE = 1e6
 # will consume at least 1e6 * 84 * 84 bytes == 6.6G memory.
-INIT_MEMORY_SIZE = 5e4
+INIT_MEMORY_SIZE = MEMORY_SIZE // 20
 STEPS_PER_EPOCH = 10000 // UPDATE_FREQ * 10  # each epoch is 100k played frames
 EVAL_EPISODE = 50
 
@@ -47,17 +37,14 @@ METHOD = None
 
 
 def get_player(viz=False, train=False):
-    pl = AtariPlayer(ROM_FILE, frame_skip=ACTION_REPEAT,
-                     image_shape=IMAGE_SIZE[::-1], viz=viz, live_lost_as_eoe=train)
+    env = AtariPlayer(ROM_FILE, frame_skip=ACTION_REPEAT, viz=viz,
+                      live_lost_as_eoe=train, max_num_frames=60000)
+    env = FireResetEnv(env)
+    env = MapState(env, lambda im: cv2.resize(im, IMAGE_SIZE))
     if not train:
-        # create a new axis to stack history on
-        pl = MapPlayerState(pl, lambda im: im[:, :, np.newaxis])
         # in training, history is taken care of in expreplay buffer
-        pl = HistoryFramePlayer(pl, FRAME_HISTORY)
-
-        pl = PreventStuckPlayer(pl, 30, 1)
-    pl = LimitLengthPlayer(pl, 30000)
-    return pl
+        env = FrameStack(env, FRAME_HISTORY)
+    return env
 
 
 class Model(DQNModel):
@@ -109,7 +96,7 @@ def get_config():
     )
 
     return TrainConfig(
-        dataflow=expreplay,
+        data=QueueInput(expreplay),
         model=Model(),
         callbacks=[
             ModelSaver(),
@@ -149,20 +136,20 @@ if __name__ == '__main__':
     ROM_FILE = args.rom
     METHOD = args.algo
     # set num_actions
-    NUM_ACTIONS = AtariPlayer(ROM_FILE).get_action_space().num_actions()
+    NUM_ACTIONS = AtariPlayer(ROM_FILE).action_space.n
     logger.info("ROM: {}, Num Actions: {}".format(ROM_FILE, NUM_ACTIONS))
 
     if args.task != 'train':
         assert args.load is not None
-        cfg = PredictConfig(
+        pred = OfflinePredictor(PredictConfig(
             model=Model(),
             session_init=get_model_loader(args.load),
             input_names=['state'],
-            output_names=['Qvalue'])
+            output_names=['Qvalue']))
         if args.task == 'play':
-            play_model(cfg, get_player(viz=0.01))
+            play_n_episodes(get_player(viz=0.01), pred, 100)
         elif args.task == 'eval':
-            eval_model_multithread(cfg, EVAL_EPISODE, get_player)
+            eval_model_multithread(pred, EVAL_EPISODE, get_player)
     else:
         logger.set_logger_dir(
             os.path.join('train_log', 'DQN-{}'.format(
@@ -170,4 +157,4 @@ if __name__ == '__main__':
         config = get_config()
         if args.load:
             config.session_init = get_model_loader(args.load)
-        QueueInputTrainer(config).train()
+        launch_train_with_config(config, SimpleTrainer())

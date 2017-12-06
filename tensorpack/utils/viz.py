@@ -71,8 +71,9 @@ def interactive_imshow(img, lclick_cb=None, rclick_cb=None, **kwargs):
         cv2.imwrite('out.png', img)
 
 
-def _preproecss_patch_list(plist):
+def _preprocess_patch_list(plist):
     plist = np.asarray(plist)
+    assert plist.dtype != np.object
     if plist.ndim == 3:
         plist = plist[:, :, :, np.newaxis]
     assert plist.ndim == 4 and plist.shape[3] in [1, 3], plist.shape
@@ -102,8 +103,8 @@ def _pad_patch_list(plist, bgcolor):
     ret[:, :, :] = bgcolor
     for idx, p in enumerate(plist):
         s = p.shape
-        sh = (ph - s[0]) / 2
-        sw = (pw - s[1]) / 2
+        sh = (ph - s[0]) // 2
+        sw = (pw - s[1]) // 2
         ret[idx, sh:sh + s[0], sw:sw + s[1], :] = p
     return ret
 
@@ -118,7 +119,7 @@ class Canvas(object):
         self.nr_col = nr_col
 
         if border is None:
-            border = int(0.1 * min(ph, pw))
+            border = int(0.05 * min(ph, pw))
         self.border = border
 
         if isinstance(bgcolor, int):
@@ -133,8 +134,8 @@ class Canvas(object):
                                self.channel), dtype='uint8')
 
     def draw_patches(self, plist):
-        assert self.nr_row * self.nr_col == len(plist), \
-            "{}*{} != {}".format(self.nr_row, self.nr_col, len(plist))
+        assert self.nr_row * self.nr_col >= len(plist), \
+            "{}*{} < {}".format(self.nr_row, self.nr_col, len(plist))
         if self.channel == 3 and plist.shape[3] == 1:
             plist = np.repeat(plist, 3, axis=3)
         cur_row, cur_col = 0, 0
@@ -169,9 +170,9 @@ def stack_patches(
     Args:
         patch_list(list[ndarray] or ndarray): NHW or NHWC images in [0,255].
         nr_row(int), nr_col(int): rows and cols of the grid.
-            ``nr_col * nr_row`` must be equal to ``len(patch_list)``.
+            ``nr_col * nr_row`` must be no less than ``len(patch_list)``.
         border(int): border length between images.
-            Defaults to ``0.1 * min(patch_width, patch_height)``.
+            Defaults to ``0.05 * min(patch_width, patch_height)``.
         pad (boolean): when `patch_list` is a list, pad all patches to the maximum height and width.
             This option allows stacking patches of different shapes together.
         bgcolor(int or 3-tuple): background color in [0, 255]. Either an int
@@ -184,8 +185,8 @@ def stack_patches(
         np.ndarray: the stacked image.
     """
     if pad:
-        patch_list = _pad_patch_list(patch_list)
-    patch_list = _preproecss_patch_list(patch_list)
+        patch_list = _pad_patch_list(patch_list, bgcolor)
+    patch_list = _preprocess_patch_list(patch_list)
 
     if lclick_cb is not None:
         viz = True
@@ -229,13 +230,13 @@ def gen_stack_patches(patch_list,
         np.ndarray: the stacked image.
     """
     # setup parameters
-    patch_list = _preproecss_patch_list(patch_list)
+    patch_list = _preprocess_patch_list(patch_list)
     if lclick_cb is not None:
         viz = True
     ph, pw = patch_list.shape[1:3]
 
     if border is None:
-        border = int(0.1 * min(ph, pw))
+        border = int(0.05 * min(ph, pw))
     if nr_row is None:
         nr_row = int(max_height / (ph + border))
     if nr_col is None:
@@ -357,7 +358,7 @@ def intensity_to_rgb(intensity, cmap='cubehelix', normalize=False):
 def draw_boxes(im, boxes, labels=None, color=None):
     """
     Args:
-        im (np.ndarray): a BGR image. It will not be modified.
+        im (np.ndarray): a BGR image in range [0,255]. It will not be modified.
         boxes (np.ndarray or list[BoxBase]): If an ndarray,
             must be of shape Nx4 where the second dimension is [x1, y1, x2, y2].
         labels: (list[str] or None)
@@ -379,12 +380,17 @@ def draw_boxes(im, boxes, labels=None, color=None):
     if labels is not None:
         assert len(labels) == len(boxes), "{} != {}".format(len(labels), len(boxes))
     areas = (boxes[:, 2] - boxes[:, 0] + 1) * (boxes[:, 3] - boxes[:, 1] + 1)
-    sorted_inds = np.argsort(-areas)
+    sorted_inds = np.argsort(-areas)    # draw large ones first
+    assert areas.min() > 0, areas.min()
+    # allow equal, because we are not very strict about rounding error here
+    assert boxes[:, 0].min() >= 0 and boxes[:, 1].min() >= 0 \
+        and boxes[:, 2].max() <= im.shape[1] and boxes[:, 3].max() <= im.shape[0], \
+        "Image shape: {}\n Boxes:\n{}".format(str(im.shape), str(boxes))
 
     im = im.copy()
     COLOR = (218, 218, 218) if color is None else color
     COLOR_DIFF_WEIGHT = np.asarray((3, 4, 2), dtype='int32')    # https://www.wikiwand.com/en/Color_difference
-    COLOR_CANDIDATES = PALETTE_RGB[[0, 1, 2, 3, 18, 113], :]
+    COLOR_CANDIDATES = PALETTE_RGB[:, ::-1]
     if im.ndim == 2 or (im.ndim == 3 and im.shape[2] == 1):
         im = cv2.cvtColor(im, cv2.COLOR_GRAY2BGR)
     for i in sorted_inds:
@@ -441,7 +447,7 @@ if __name__ == '__main__':
         img2 = cv2.resize(img, (300, 300))
         viz = stack_patches([img, img2], 1, 2, pad=True, viz=True)
 
-    if True:
+    if False:
         img = cv2.imread('cat.jpg')
         boxes = np.asarray([
             [10, 30, 200, 100],

@@ -3,14 +3,13 @@
 # File: DiscoGAN-CelebA.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import os, sys
+import os
 import argparse
 from six.moves import map, zip
 import numpy as np
 
+
 from tensorpack import *
-from tensorpack.utils.viz import *
-import tensorpack.tfutils.symbolic_functions as symbf
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
 import tensorflow as tf
@@ -158,8 +157,7 @@ class Model(GANModelDesc):
         add_moving_summary(recon_loss_A, recon_loss_B, rate, g_loss, d_loss, wd_g, wd_d)
 
     def _get_optimizer(self):
-        lr = symbolic_functions.get_scalar_var('learning_rate', 2e-4, summary=True)
-        return tf.train.AdamOptimizer(lr, beta1=0.5, epsilon=1e-3)
+        return tf.train.AdamOptimizer(2e-4, beta1=0.5, epsilon=1e-3)
 
 
 def get_celebA_data(datadir, styleA, styleB=None):
@@ -216,14 +214,11 @@ if __name__ == '__main__':
 
     data = get_celebA_data(args.data, args.style_A, args.style_B)
 
-    config = TrainConfig(
-        model=Model(),
-        dataflow=data,
+    # train 1 D after 2 G
+    SeparateGANTrainer(
+        QueueInput(data), Model(), d_period=3).train_with_defaults(
         callbacks=[ModelSaver()],
         steps_per_epoch=300,
         max_epoch=250,
         session_init=SaverRestore(args.load) if args.load else None
     )
-
-    # train 1 D after 2 G
-    SeparateGANTrainer(config, d_period=3).train()

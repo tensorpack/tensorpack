@@ -2,7 +2,7 @@
 import os
 
 # issue#7378 may happen with custom opencv. It doesn't hurt to disable opencl
-os.environ['OPENCV_OPENCL_RUNTIME'] = ''
+os.environ['OPENCV_OPENCL_RUNTIME'] = 'disabled'     # https://github.com/opencv/opencv/pull/10155
 try:
     # issue#1924 may happen on old systems
     import cv2  # noqa
@@ -27,10 +27,13 @@ os.environ['TF_AVGPOOL_USE_CUDNN'] = '1'   # issue#8566
 
 try:
     import tensorflow as tf  # noqa
-    assert int(tf.__version__.split('.')[0]) >= 1, "TF>=1.0 is required!"
+    _version = tf.__version__.split('.')
+    assert int(_version[0]) >= 1, "TF>=1.0 is required!"
+    if int(_version[1]) < 2:
+        print("TF<1.2 support will be removed after 2018-02-28!")
     _HAS_TF = True
 except ImportError:
     _HAS_TF = False
 
 
-__version__ = '0.4.0'
+__version__ = '0.8.0'

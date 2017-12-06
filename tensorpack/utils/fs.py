@@ -53,7 +53,7 @@ def download(url, dir, filename=None):
             fpath, _ = urllib.request.urlretrieve(url, fpath, reporthook=hook(t))
         statinfo = os.stat(fpath)
         size = statinfo.st_size
-    except:
+    except IOError:
         logger.error("Failed to download {}".format(url))
         raise
     assert size > 0, "Download an empty file!"

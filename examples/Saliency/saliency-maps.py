@@ -3,7 +3,8 @@
 
 import cv2
 import sys
-import os
+
+from contextlib import contextmanager
 import numpy as np
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
@@ -15,6 +16,28 @@ import tensorpack.utils.viz as viz
 IMAGE_SIZE = 224
 
 
+@contextmanager
+def guided_relu():
+    """
+    Returns:
+        A context where the gradient of :meth:`tf.nn.relu` is replaced by
+        guided back-propagation, as described in the paper:
+        `Striving for Simplicity: The All Convolutional Net
+        <https://arxiv.org/abs/1412.6806>`_
+    """
+    from tensorflow.python.ops import gen_nn_ops   # noqa
+
+    @tf.RegisterGradient("GuidedReLU")
+    def GuidedReluGrad(op, grad):
+        return tf.where(0. < grad,
+                        gen_nn_ops._relu_grad(grad, op.outputs[0]),
+                        tf.zeros(grad.get_shape()))
+
+    g = tf.get_default_graph()
+    with g.gradient_override_map({'Relu': 'GuidedReLU'}):
+        yield
+
+
 class Model(tp.ModelDesc):
     def _get_inputs(self):
         return [tp.InputDesc(tf.float32, (IMAGE_SIZE, IMAGE_SIZE, 3), 'image')]
@@ -22,7 +45,7 @@ class Model(tp.ModelDesc):
     def _build_graph(self, inputs):
         orig_image = inputs[0]
         mean = tf.get_variable('resnet_v1_50/mean_rgb', shape=[3])
-        with tp.symbolic_functions.guided_relu():
+        with guided_relu():
             with slim.arg_scope(resnet_v1.resnet_arg_scope(is_training=False)):
                 image = tf.expand_dims(orig_image - mean, 0)
                 logits, _ = resnet_v1.resnet_v1_50(image, 1000)
@@ -42,7 +65,7 @@ def run(model_path, image_path):
     im = cv2.resize(im, (IMAGE_SIZE, IMAGE_SIZE))
     im = im.astype(np.float32)[:, :, ::-1]
 
-    saliency_images = predictor([im])[0]
+    saliency_images = predictor(im)[0]
 
     abs_saliency = np.abs(saliency_images).max(axis=-1)
     pos_saliency = np.maximum(0, saliency_images)

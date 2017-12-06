@@ -2,6 +2,7 @@ import tensorflow as tf
 from functools import wraps
 import numpy as np
 
+from ..utils.develop import log_deprecated
 from .common import get_tf_version_number
 
 __all__ = ['Distribution',
@@ -59,6 +60,7 @@ class Distribution(object):
                 distribution.
         """
         self.name = name
+        log_deprecated("tfutils.distributions", "Please use tf.distributions instead!", "2017-12-10")
 
     @class_scope
     def loglikelihood(self, x, theta):
@@ -83,8 +85,8 @@ class Distribution(object):
 
     @class_scope
     def entropy(self, x, theta):
-        r""" Entropy of this distribution parameterized by theta,
-            estimated from a batch of samples.
+        r"""
+        Entropy of this distribution parameterized by theta, estimated from a batch of samples.
 
         .. math::
 

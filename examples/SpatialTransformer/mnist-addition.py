@@ -7,13 +7,12 @@ import cv2
 import numpy as np
 import tensorflow as tf
 import os
-import sys
 import argparse
+
 
 from tensorpack import *
 from tensorpack.dataflow import dataset
 from tensorpack.tfutils import sesscreate, optimizer, summary
-import tensorpack.tfutils.symbolic_functions as symbf
 
 IMAGE_SIZE = 42
 WARP_TARGET_SIZE = 28
@@ -75,12 +74,12 @@ class Model(ModelDesc):
                   .FullyConnected('fc1', out_dim=256, nl=tf.nn.relu)
                   .FullyConnected('fc2', out_dim=128, nl=tf.nn.relu)
                   .FullyConnected('fct', out_dim=19, nl=tf.identity)())
-        prob = tf.nn.softmax(logits, name='prob')
+        tf.nn.softmax(logits, name='prob')
 
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
 
-        wrong = symbf.prediction_incorrect(logits, label)
+        wrong = tf.to_float(tf.logical_not(tf.nn.in_top_k(logits, label, 1)), name='incorrect_vector')
         summary.add_moving_summary(tf.reduce_mean(wrong, name='train_error'))
 
         wd_cost = tf.multiply(1e-5, regularize_cost('fc.*/W', tf.nn.l2_loss),
@@ -89,7 +88,7 @@ class Model(ModelDesc):
         self.cost = tf.add_n([wd_cost, cost], name='cost')
 
     def _get_optimizer(self):
-        lr = symbf.get_scalar_var('learning_rate', 5e-4, summary=True)
+        lr = tf.get_variable('learning_rate', initializer=5e-4, trainable=False)
         opt = tf.train.AdamOptimizer(lr, epsilon=1e-3)
         return optimizer.apply_grad_processors(
             opt, [
@@ -140,7 +139,7 @@ def view_warp(modelpath):
     ds.reset_state()
     for k in ds.get_data():
         img, label = k
-        outputs, affine1, affine2 = pred([img])
+        outputs, affine1, affine2 = pred(img)
         for idx, viz in enumerate(outputs):
             viz = cv2.cvtColor(viz, cv2.COLOR_GRAY2BGR)
             # Here we assume the second branch focuses on the first digit
@@ -158,7 +157,7 @@ def get_config():
 
     return TrainConfig(
         model=Model(),
-        dataflow=dataset_train,
+        data=QueueInput(dataset_train),
         callbacks=[
             ModelSaver(),
             InferenceRunner(dataset_test,
@@ -186,4 +185,4 @@ if __name__ == '__main__':
         config = get_config()
         if args.load:
             config.session_init = SaverRestore(args.load)
-        SimpleTrainer(config).train()
+        launch_train_with_config(config, SimpleTrainer())

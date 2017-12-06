@@ -3,7 +3,6 @@
 # File: simulator.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import tensorflow as tf
 import multiprocessing as mp
 import time
 import os
@@ -15,9 +14,6 @@ import six
 from six.moves import queue
 import zmq
 
-from tensorpack.callbacks import Callback
-from tensorpack.tfutils.varmanip import SessionUpdate
-from tensorpack.predict import OfflinePredictor
 from tensorpack.utils import logger
 from tensorpack.utils.serialize import loads, dumps
 from tensorpack.utils.concurrency import LoopThread, ensure_proc_terminate
@@ -78,18 +74,21 @@ class SimulatorProcessStateExchange(SimulatorProcessBase):
 
         s2c_socket = context.socket(zmq.DEALER)
         s2c_socket.setsockopt(zmq.IDENTITY, self.identity)
-        # s2c_socket.set_hwm(5)
         s2c_socket.connect(self.s2c)
 
-        state = player.current_state()
+        state = player.reset()
         reward, isOver = 0, False
         while True:
+            # after taking the last action, get to this state and get this reward/isOver.
+            # If isOver, get to the next-episode state immediately.
+            # This tuple is not the same as the one put into the memory buffer
             c2s_socket.send(dumps(
                 (self.identity, state, reward, isOver)),
                 copy=False)
             action = loads(s2c_socket.recv(copy=False).bytes)
-            reward, isOver = player.action(action)
-            state = player.current_state()
+            state, reward, isOver, _ = player.step(action)
+            if isOver:
+                state = player.reset()
 
 
 # compatibility
@@ -180,17 +179,16 @@ class SimulatorMaster(threading.Thread):
 
 if __name__ == '__main__':
     import random
-    from tensorpack.RL import NaiveRLEnvironment
+    import gym
 
     class NaiveSimulator(SimulatorProcess):
-
         def _build_player(self):
-            return NaiveRLEnvironment()
+            return gym.make('Breakout-v0')
 
     class NaiveActioner(SimulatorMaster):
         def _get_action(self, state):
             time.sleep(1)
-            return random.randint(1, 12)
+            return random.randint(1, 3)
 
         def _on_episode_over(self, client):
             # print("Over: ", client.memory)

@@ -111,10 +111,23 @@ def get_tqdm_kwargs(**kwargs):
         ascii=True,
         bar_format='{l_bar}{bar}|{n_fmt}/{total_fmt}[{elapsed}<{remaining},{rate_noinv_fmt}]'
     )
+
     f = kwargs.get('file', sys.stderr)
-    if f.isatty():
+    isatty = f.isatty()
+    # TODO when run under mpirun, isatty is always False
+    # Jupyter notebook should be recognized as tty.
+    # Wait for https://github.com/ipython/ipykernel/issues/268
+    try:
+        from ipykernel import iostream
+        if isinstance(f, iostream.OutStream):
+            isatty = True
+    except ImportError:
+        pass
+
+    if isatty:
         default['mininterval'] = 0.5
     else:
+        # If not a tty, don't refresh progress bar that often
         default['mininterval'] = 300
     default.update(kwargs)
     return default

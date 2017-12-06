@@ -11,7 +11,7 @@ from datetime import datetime
 from six.moves import input
 import sys
 
-__all__ = ['set_logger_dir', 'disable_logger', 'auto_set_dir']
+__all__ = ['set_logger_dir', 'auto_set_dir', 'get_logger_dir']
 
 
 class _MyFormatter(logging.Formatter):
@@ -46,9 +46,10 @@ _LOGGING_METHOD = ['info', 'warning', 'error', 'critical', 'warn', 'exception', 
 # export logger functions
 for func in _LOGGING_METHOD:
     locals()[func] = getattr(_logger, func)
+    __all__.append(func)
 
 
-def get_time_str():
+def _get_time_str():
     return datetime.now().strftime('%m%d-%H%M%S')
 
 
@@ -61,9 +62,9 @@ _FILE_HANDLER = None
 def _set_file(path):
     global _FILE_HANDLER
     if os.path.isfile(path):
-        backup_name = path + '.' + get_time_str()
+        backup_name = path + '.' + _get_time_str()
         shutil.move(path, backup_name)
-        info("Log file '{}' backuped to '{}'".format(path, backup_name))  # noqa: F821
+        _logger.info("Existing log file '{}' backuped to '{}'".format(path, backup_name))  # noqa: F821
     hdl = logging.FileHandler(
         filename=path, encoding='utf-8', mode='w')
     hdl.setFormatter(_MyFormatter(datefmt='%m%d %H:%M:%S'))
@@ -79,7 +80,8 @@ def set_logger_dir(dirname, action=None):
 
     Args:
         dirname(str): log directory
-        action(str): an action of ("k","b","d","n","q") to be performed. Will ask user by default.
+        action(str): an action of ("k","b","d","n","q") to be performed
+            when the directory exists. Will ask user by default.
     """
     global LOG_DIR, _FILE_HANDLER
     if _FILE_HANDLER:
@@ -97,13 +99,13 @@ If you're resuming from a previous run you can choose to keep it.""")
             action = input().lower().strip()
         act = action
         if act == 'b':
-            backup_name = dirname + get_time_str()
+            backup_name = dirname + _get_time_str()
             shutil.move(dirname, backup_name)
             info("Directory '{}' backuped to '{}'".format(dirname, backup_name))  # noqa: F821
         elif act == 'd':
             shutil.rmtree(dirname)
         elif act == 'n':
-            dirname = dirname + get_time_str()
+            dirname = dirname + _get_time_str()
             info("Use a new log directory {}".format(dirname))  # noqa: F821
         elif act == 'k':
             pass
@@ -117,12 +119,6 @@ If you're resuming from a previous run you can choose to keep it.""")
     _set_file(os.path.join(dirname, 'log.log'))
 
 
-def disable_logger():
-    """ Disable all logging ability from this moment"""
-    for func in _LOGGING_METHOD:
-        globals()[func] = lambda x: None
-
-
 def auto_set_dir(action=None, name=None):
     """
     Use :func:`logger.set_logger_dir` to set log directory to
@@ -133,3 +129,12 @@ def auto_set_dir(action=None, name=None):
     if name:
         auto_dirname += ':%s' % name
     set_logger_dir(auto_dirname, action=action)
+
+
+def get_logger_dir():
+    """
+    Returns:
+        The logger directory, or None if not set.
+        The directory is used for general logging, tensorboard events, checkpoints, etc.
+    """
+    return LOG_DIR

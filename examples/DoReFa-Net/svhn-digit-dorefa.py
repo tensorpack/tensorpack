@@ -4,12 +4,10 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import argparse
-import numpy as np
-import os
 
 from tensorpack import *
-from tensorpack.tfutils.symbolic_functions import *
-from tensorpack.tfutils.summary import *
+from tensorpack.tfutils.symbolic_functions import prediction_incorrect
+from tensorpack.tfutils.summary import add_moving_summary, add_param_summary
 from tensorpack.dataflow import dataset
 from tensorpack.tfutils.varreplace import remap_variables
 import tensorflow as tf
@@ -54,8 +52,6 @@ class Model(ModelDesc):
         is_training = get_current_tower_context().is_training
 
         fw, fa, fg = get_dorefa(BITW, BITA, BITG)
-
-        old_get_variable = tf.get_variable
 
         # monkey-patch tf.get_variable to apply fw
         def binarize_weight(v):
@@ -111,7 +107,7 @@ class Model(ModelDesc):
                       .apply(fg).BatchNorm('bn6')
                       .apply(cabs)
                       .FullyConnected('fc1', 10, nl=tf.identity)())
-        prob = tf.nn.softmax(logits, name='output')
+        tf.nn.softmax(logits, name='output')
 
         # compute the number of failed samples
         wrong = prediction_incorrect(logits, label)
@@ -163,7 +159,7 @@ def get_config():
     data_test = BatchData(data_test, 128, remainder=True)
 
     return TrainConfig(
-        dataflow=data_train,
+        data=QueueInput(data_train),
         callbacks=[
             ModelSaver(),
             InferenceRunner(data_test,
@@ -176,19 +172,11 @@ def get_config():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gpu', help='the GPU to use')
-    parser.add_argument('--load', help='load a checkpoint')
     parser.add_argument('--dorefa',
                         help='number of bits for W,A,G, separated by comma. Defaults to \'1,2,4\'',
                         default='1,2,4')
     args = parser.parse_args()
 
     BITW, BITA, BITG = map(int, args.dorefa.split(','))
-
-    if args.gpu:
-        os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
-
     config = get_config()
-    if args.load:
-        config.session_init = SaverRestore(args.load)
-    QueueInputTrainer(config).train()
+    launch_train_with_config(config, SimpleTrainer())

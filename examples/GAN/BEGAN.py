@@ -3,9 +3,6 @@
 # File: BEGAN.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import os
-import argparse
-
 from tensorpack import *
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.utils.gpu import get_nr_gpu
@@ -19,8 +16,7 @@ from GAN import GANModelDesc, GANTrainer, MultiGPUGANTrainer
 Boundary Equilibrium GAN.
 See the docstring in DCGAN.py for usage.
 
-A pretrained model on CelebA is at
-https://drive.google.com/open?id=0B5uDfUQ1JTglUmgyZV8zQmNOTVU
+A pretrained model on CelebA is at http://models.tensorpack.com/GAN/
 """
 
 
@@ -126,12 +122,12 @@ class Model(GANModelDesc):
                 self.g_loss = L_neg
 
         add_moving_summary(L_pos, L_neg, eq, measure, self.d_loss)
-        tf.summary.scalar('kt-summary', kt)
+        tf.summary.scalar('kt', kt)
 
         self.collect_variables()
 
     def _get_optimizer(self):
-        lr = symbolic_functions.get_scalar_var('learning_rate', 1e-4, summary=True)
+        lr = tf.get_variable('learning_rate', initializer=1e-4, trainable=False)
         opt = tf.train.AdamOptimizer(lr, beta1=0.5, beta2=0.9)
         return opt
 
@@ -144,20 +140,19 @@ if __name__ == '__main__':
         assert args.data
         logger.auto_set_dir()
 
-        config = TrainConfig(
-            model=Model(),
-            dataflow=DCGAN.get_data(args.data),
+        input = QueueInput(DCGAN.get_data(args.data))
+        model = Model()
+        nr_tower = max(get_nr_gpu(), 1)
+        if nr_tower == 1:
+            trainer = GANTrainer(input, model)
+        else:
+            trainer = MultiGPUGANTrainer(nr_tower, input, model)
+
+        trainer.train_with_defaults(
             callbacks=[
                 ModelSaver(),
                 StatMonitorParamSetter(
                     'learning_rate', 'measure', lambda x: x * 0.5, 0, 10)
             ],
-            steps_per_epoch=500,
-            max_epoch=400,
             session_init=SaverRestore(args.load) if args.load else None,
-            nr_tower=max(get_nr_gpu(), 1)
-        )
-        if config.nr_tower == 1:
-            GANTrainer(config).train()
-        else:
-            MultiGPUGANTrainer(config).train()
+            steps_per_epoch=500, max_epoch=400)

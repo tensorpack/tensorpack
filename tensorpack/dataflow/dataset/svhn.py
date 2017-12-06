@@ -41,7 +41,7 @@ class SVHNDigit(RNGDataFlow):
         if not os.path.isfile(filename):
             url = SVHN_URL + os.path.basename(filename)
             logger.info("File {} not found!".format(filename))
-            logger.info("Downloading from {}.".format(url))
+            logger.info("Downloading from {} ...".format(url))
             download(url, os.path.dirname(filename))
         logger.info("Loading {} ...".format(filename))
         data = scipy.io.loadmat(filename)

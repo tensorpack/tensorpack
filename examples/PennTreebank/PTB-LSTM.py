@@ -7,9 +7,9 @@ import numpy as np
 import os
 import argparse
 
+
 from tensorpack import *
-from tensorpack.tfutils.gradproc import *
-from tensorpack.tfutils import optimizer, summary
+from tensorpack.tfutils import optimizer, summary, gradproc
 from tensorpack.utils import logger
 from tensorpack.utils.fs import download, get_dataset_path
 from tensorpack.utils.argtools import memoized_ignoreargs
@@ -108,7 +108,7 @@ class Model(ModelDesc):
                         s[1].h.assign(z), name='reset_lstm_state')
 
     def _get_optimizer(self):
-        lr = symbolic_functions.get_scalar_var('learning_rate', 1, summary=True)
+        lr = tf.get_variable('learning_rate', initializer=1.0, trainable=False)
         opt = tf.train.GradientDescentOptimizer(lr)
         return optimizer.apply_grad_processors(
             opt, [gradproc.GlobalNormClip(5)])
@@ -150,7 +150,7 @@ def get_config():
                 [ScalarStats(['cost'], prefix='test')], tower_name='InferenceTowerTest'),
             RunOp(lambda: M.reset_lstm_state()),
             CallbackFactory(
-                trigger_epoch=lambda self:
+                trigger=lambda self:
                 [self.trainer.monitors.put_scalar(
                     'validation_perplexity',
                     np.exp(self.trainer.monitors.get_latest('validation_cost') / SEQ_LEN)),
@@ -174,4 +174,4 @@ if __name__ == '__main__':
     config = get_config()
     if args.load:
         config.session_init = SaverRestore(args.load)
-    SimpleTrainer(config).train()
+    launch_train_with_config(config, SimpleTrainer())

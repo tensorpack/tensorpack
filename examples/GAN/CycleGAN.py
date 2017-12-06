@@ -3,15 +3,13 @@
 # File: CycleGAN.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import os, sys
+import os
 import argparse
 import glob
-from six.moves import map, zip, range
-import numpy as np
+from six.moves import range
+
 
 from tensorpack import *
-from tensorpack.utils.viz import *
-import tensorpack.tfutils.symbolic_functions as symbf
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
 import tensorflow as tf
@@ -129,11 +127,11 @@ class Model(GANModelDesc):
                     B_dis_fake = self.discriminator(AB)
 
         def LSGAN_losses(real, fake):
-            d_real = tf.reduce_mean(tf.squared_difference(real, 0.9), name='d_real')
+            d_real = tf.reduce_mean(tf.squared_difference(real, 1), name='d_real')
             d_fake = tf.reduce_mean(tf.square(fake), name='d_fake')
             d_loss = tf.multiply(d_real + d_fake, 0.5, name='d_loss')
 
-            g_loss = tf.reduce_mean(tf.squared_difference(fake, 0.9), name='g_loss')
+            g_loss = tf.reduce_mean(tf.squared_difference(fake, 1), name='g_loss')
             add_moving_summary(g_loss, d_loss)
             return g_loss, d_loss
 
@@ -157,7 +155,7 @@ class Model(GANModelDesc):
         add_moving_summary(recon_loss_A, recon_loss_B, self.g_loss, self.d_loss)
 
     def _get_optimizer(self):
-        lr = symbolic_functions.get_scalar_var('learning_rate', 2e-4, summary=True)
+        lr = tf.get_variable('learning_rate', initializer=2e-4, trainable=False)
         return tf.train.AdamOptimizer(lr, beta1=0.5, epsilon=1e-3)
 
 
@@ -193,6 +191,7 @@ class VisualizeTestSet(Callback):
     def _before_train(self):
         global args
         self.val_ds = get_data(args.data, isTrain=False)
+        self.val_ds.reset_state()
 
     def _trigger(self):
         idx = 0
@@ -216,9 +215,7 @@ if __name__ == '__main__':
     data = get_data(args.data)
     data = PrintData(data)
 
-    config = TrainConfig(
-        model=Model(),
-        dataflow=data,
+    GANTrainer(QueueInput(data), Model()).train_with_defaults(
         callbacks=[
             ModelSaver(),
             ScheduledHyperParamSetter(
@@ -227,7 +224,6 @@ if __name__ == '__main__':
             PeriodicTrigger(VisualizeTestSet(), every_k_epochs=3),
         ],
         max_epoch=195,
+        steps_per_epoch=data.size(),
         session_init=SaverRestore(args.load) if args.load else None
     )
-
-    GANTrainer(config).train()

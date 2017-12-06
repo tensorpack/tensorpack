@@ -9,6 +9,7 @@ import numpy as np
 import os
 import multiprocessing
 
+
 import tensorflow as tf
 from tensorflow.contrib.layers import variance_scaling_initializer
 from tensorpack import *
@@ -19,9 +20,10 @@ from tensorpack.tfutils.summary import *
 from tensorpack.utils.gpu import get_nr_gpu
 from tensorpack.utils import viz
 
-from imagenet_resnet_utils import (
-    fbresnet_augmentor, resnet_basicblock, resnet_bottleneck, resnet_group,
-    image_preprocess, compute_loss_and_error)
+from imagenet_utils import (
+    fbresnet_augmentor, image_preprocess, compute_loss_and_error)
+from resnet_model import (
+    preresnet_basicblock, preresnet_group)
 
 
 TOTAL_BATCH_SIZE = 256
@@ -40,10 +42,8 @@ class Model(ModelDesc):
         image = tf.transpose(image, [0, 3, 1, 2])
 
         cfg = {
-            18: ([2, 2, 2, 2], resnet_basicblock),
-            34: ([3, 4, 6, 3], resnet_basicblock),
-            50: ([3, 4, 6, 3], resnet_bottleneck),
-            101: ([3, 4, 23, 3], resnet_bottleneck)
+            18: ([2, 2, 2, 2], preresnet_basicblock),
+            34: ([3, 4, 6, 3], preresnet_basicblock),
         }
         defs, block_func = cfg[DEPTH]
 
@@ -53,11 +53,10 @@ class Model(ModelDesc):
             convmaps = (LinearWrap(image)
                         .Conv2D('conv0', 64, 7, stride=2, nl=BNReLU)
                         .MaxPooling('pool0', shape=3, stride=2, padding='SAME')
-                        .apply(resnet_group, 'group0', block_func, 64, defs[0], 1, first=True)
-                        .apply(resnet_group, 'group1', block_func, 128, defs[1], 2)
-                        .apply(resnet_group, 'group2', block_func, 256, defs[2], 2)
-                        .apply(resnet_group, 'group3new', block_func, 512, defs[3], 1)
-                        .BNReLU('bnlast')())
+                        .apply(preresnet_group, 'group0', block_func, 64, defs[0], 1)
+                        .apply(preresnet_group, 'group1', block_func, 128, defs[1], 2)
+                        .apply(preresnet_group, 'group2', block_func, 256, defs[2], 2)
+                        .apply(preresnet_group, 'group3new', block_func, 512, defs[3], 1)())
             print(convmaps)
             logits = (LinearWrap(convmaps)
                       .GlobalAvgPooling('gap')
@@ -69,7 +68,7 @@ class Model(ModelDesc):
         self.cost = tf.add_n([loss, wd_cost], name='cost')
 
     def _get_optimizer(self):
-        lr = get_scalar_var('learning_rate', 0.1, summary=True)
+        lr = tf.get_variable('learning_rate', initializer=0.1, trainable=False)
         opt = tf.train.MomentumOptimizer(lr, 0.9, use_nesterov=True)
         gradprocs = [gradproc.ScaleGradient(
             [('conv0.*', 0.1), ('group[0-2].*', 0.1)])]
@@ -81,8 +80,7 @@ def get_data(train_or_test):
     isTrain = train_or_test == 'train'
 
     datadir = args.data
-    ds = dataset.ILSVRC12(datadir, train_or_test,
-                          shuffle=isTrain, dir_structure='original')
+    ds = dataset.ILSVRC12(datadir, train_or_test, shuffle=isTrain)
     augmentors = fbresnet_augmentor(isTrain)
     augmentors.append(imgaug.ToUint8())
 
@@ -94,10 +92,6 @@ def get_data(train_or_test):
 
 
 def get_config():
-    nr_gpu = get_nr_gpu()
-    global BATCH_SIZE
-    BATCH_SIZE = TOTAL_BATCH_SIZE // nr_gpu
-
     dataset_train = get_data('train')
     dataset_val = get_data('val')
 
@@ -115,7 +109,6 @@ def get_config():
         ],
         steps_per_epoch=5000,
         max_epoch=105,
-        nr_tower=nr_gpu
     )
 
 
@@ -125,7 +118,7 @@ def viz_cam(model_file, data_dir):
         model=Model(),
         session_init=get_model_loader(model_file),
         input_names=['input', 'label'],
-        output_names=['wrong-top1', 'bnlast/Relu', 'linearnew/W'],
+        output_names=['wrong-top1', 'group3new/bnlast/Relu', 'linearnew/W'],
         return_input=True
     )
     meta = dataset.ILSVRCMeta().get_synset_words_1000()
@@ -167,6 +160,9 @@ if __name__ == '__main__':
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
+    nr_gpu = get_nr_gpu()
+    BATCH_SIZE = TOTAL_BATCH_SIZE // nr_gpu
+
     if args.cam:
         BATCH_SIZE = 128    # something that can run on one gpu
         viz_cam(args.load, args.data)
@@ -176,4 +172,4 @@ if __name__ == '__main__':
     config = get_config()
     if args.load:
         config.session_init = get_model_loader(args.load)
-    SyncMultiGPUTrainerParameterServer(config).train()
+    launch_train_with_config(config, SyncMultiGPUTrainerParameterServer(nr_gpu))

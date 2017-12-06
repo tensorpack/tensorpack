@@ -10,7 +10,8 @@ import argparse
 from collections import Counter
 import operator
 import six
-from six.moves import map, range
+from six.moves import range
+
 
 from tensorpack import *
 from tensorpack.tfutils import symbolic_functions, summary, optimizer
@@ -81,9 +82,8 @@ class Model(ModelDesc):
                                   initializer=tf.constant_initializer())
             ret = symbolic_functions.shapeless_placeholder(ret, 0, name=n)
             return ret
-        self.initial = initial = \
-            (rnn.LSTMStateTuple(get_v('c0'), get_v('h0')),
-             rnn.LSTMStateTuple(get_v('c1'), get_v('h1')))
+        initial = (rnn.LSTMStateTuple(get_v('c0'), get_v('h0')),
+                   rnn.LSTMStateTuple(get_v('c1'), get_v('h1')))
 
         embeddingW = tf.get_variable('embedding', [param.vocab_size, param.rnn_size])
         input_feature = tf.nn.embedding_lookup(embeddingW, input)  # B x seqlen x rnnsize
@@ -91,12 +91,12 @@ class Model(ModelDesc):
         input_list = tf.unstack(input_feature, axis=1)  # seqlen x (Bxrnnsize)
 
         outputs, last_state = rnn.static_rnn(cell, input_list, initial, scope='rnnlm')
-        self.last_state = tf.identity(last_state, 'last_state')
+        last_state = tf.identity(last_state, 'last_state')
 
         # seqlen x (Bxrnnsize)
         output = tf.reshape(tf.concat(outputs, 1), [-1, param.rnn_size])  # (Bxseqlen) x rnnsize
         logits = FullyConnected('fc', output, param.vocab_size, nl=tf.identity)
-        self.prob = tf.nn.softmax(logits / param.softmax_temprature, name='prob')
+        tf.nn.softmax(logits / param.softmax_temprature, name='prob')
 
         xent_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
             logits=logits, labels=tf.reshape(nextinput, [-1]))
@@ -105,7 +105,7 @@ class Model(ModelDesc):
         summary.add_moving_summary(self.cost)
 
     def _get_optimizer(self):
-        lr = symbolic_functions.get_scalar_var('learning_rate', 2e-3, summary=True)
+        lr = tf.get_variable('learning_rate', initializer=2e-3, trainable=False)
         opt = tf.train.AdamOptimizer(lr)
         return optimizer.apply_grad_processors(opt, [GlobalNormClip(5)])
 
@@ -117,7 +117,7 @@ def get_config():
     ds = BatchData(ds, param.batch_size)
 
     return TrainConfig(
-        dataflow=ds,
+        data=QueueInput(ds),
         callbacks=[
             ModelSaver(),
             ScheduledHyperParamSetter('learning_rate', [(25, 2e-4)])
@@ -191,4 +191,4 @@ if __name__ == '__main__':
         config = get_config()
         if args.load:
             config.session_init = SaverRestore(args.load)
-        QueueInputTrainer(config).train()
+        launch_train_with_config(config, SimpleTrainer())

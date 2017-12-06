@@ -10,9 +10,9 @@ from scipy.signal import convolve2d
 from six.moves import range, zip
 import multiprocessing
 
+
 from tensorpack import *
 from tensorpack.utils import logger
-from tensorpack.utils.gpu import get_nr_gpu
 from tensorpack.utils.viz import *
 from tensorpack.utils.argtools import shape2d, shape4d
 from tensorpack.dataflow import dataset
@@ -78,7 +78,7 @@ class OnlineTensorboardExport(Callback):
             x /= x.max()
             return x
 
-        o = self.pred([self.theta])
+        o = self.pred(self.theta)
 
         gt_filters = np.concatenate([self.filters[i, :, :] for i in range(8)], axis=0)
         pred_filters = np.concatenate([o[0][i, :, :, 0] for i in range(8)], axis=0)
@@ -148,8 +148,7 @@ class Model(ModelDesc):
         summary.add_moving_summary(self.cost)
 
     def _get_optimizer(self):
-        lr = symbolic_functions.get_scalar_var('learning_rate', 1e-3, summary=True)
-        return tf.train.AdamOptimizer(lr)
+        return tf.train.AdamOptimizer(1e-3)
 
 
 class ThetaImages(ProxyDataFlow, RNGDataFlow):
@@ -263,5 +262,4 @@ if __name__ == '__main__':
         config = get_config()
         if args.load:
             config.session_init = SaverRestore(args.load)
-        config.nr_tower = NR_GPU
-        SyncMultiGPUTrainer(config).train()
+        launch_train_with_config(config, SyncMultiGPUTrainer(NR_GPU))

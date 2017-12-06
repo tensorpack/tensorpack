@@ -20,7 +20,7 @@ To train (takes about 300 epochs to reach 8.8% error):
 ./mnist-addition.py
 ```
 
-To draw the above visualization with [pretrained model](https://drive.google.com/drive/folders/0B9IPQTvr2BBkUWM3X0hDZHJtTmc?usp=sharing):
+To draw the above visualization with [pretrained model](http://models.tensorpack.com/SpatialTransformer/):
 ```bash
 ./mnist-addition.py --load pretrained.npy --view
 ```

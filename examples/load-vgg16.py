@@ -17,55 +17,60 @@ from tensorpack.dataflow.dataset import ILSVRCMeta
 
 """
 Usage:
+    Download original caffe models at:
+    https://gist.github.com/ksimonyan/211839e770f7b538e2d8
+
+    Install caffe python bindings.
+
     python -m tensorpack.utils.loadcaffe \
             PATH/TO/VGG/{VGG_ILSVRC_16_layers_deploy.prototxt,VGG_ILSVRC_16_layers.caffemodel} vgg16.npy
+
+    Or download a converted caffe model from http://models.tensorpack.com/caffe/
+
+    Then, run it:
     ./load-vgg16.py --load vgg16.npy --input cat.png
 """
 
 
-class Model(ModelDesc):
-    def _get_inputs(self):
-        return [InputDesc(tf.float32, (None, 224, 224, 3), 'input')]
-
-    def _build_graph(self, inputs):
-        image = inputs[0]
-        with argscope(Conv2D, kernel_shape=3, nl=tf.nn.relu):
-            logits = (LinearWrap(image)
-                      .Conv2D('conv1_1', 64)
-                      .Conv2D('conv1_2', 64)
-                      .MaxPooling('pool1', 2)
-                      # 112
-                      .Conv2D('conv2_1', 128)
-                      .Conv2D('conv2_2', 128)
-                      .MaxPooling('pool2', 2)
-                      # 56
-                      .Conv2D('conv3_1', 256)
-                      .Conv2D('conv3_2', 256)
-                      .Conv2D('conv3_3', 256)
-                      .MaxPooling('pool3', 2)
-                      # 28
-                      .Conv2D('conv4_1', 512)
-                      .Conv2D('conv4_2', 512)
-                      .Conv2D('conv4_3', 512)
-                      .MaxPooling('pool4', 2)
-                      # 14
-                      .Conv2D('conv5_1', 512)
-                      .Conv2D('conv5_2', 512)
-                      .Conv2D('conv5_3', 512)
-                      .MaxPooling('pool5', 2)
-                      # 7
-                      .FullyConnected('fc6', 4096, nl=tf.nn.relu)
-                      .Dropout('drop0', 0.5)
-                      .FullyConnected('fc7', 4096, nl=tf.nn.relu)
-                      .Dropout('drop1', 0.5)
-                      .FullyConnected('fc8', out_dim=1000, nl=tf.identity)())
-        prob = tf.nn.softmax(logits, name='prob')
+def tower_func(image):
+    with argscope(Conv2D, kernel_shape=3, nl=tf.nn.relu):
+        logits = (LinearWrap(image)
+                  .Conv2D('conv1_1', 64)
+                  .Conv2D('conv1_2', 64)
+                  .MaxPooling('pool1', 2)
+                  # 112
+                  .Conv2D('conv2_1', 128)
+                  .Conv2D('conv2_2', 128)
+                  .MaxPooling('pool2', 2)
+                  # 56
+                  .Conv2D('conv3_1', 256)
+                  .Conv2D('conv3_2', 256)
+                  .Conv2D('conv3_3', 256)
+                  .MaxPooling('pool3', 2)
+                  # 28
+                  .Conv2D('conv4_1', 512)
+                  .Conv2D('conv4_2', 512)
+                  .Conv2D('conv4_3', 512)
+                  .MaxPooling('pool4', 2)
+                  # 14
+                  .Conv2D('conv5_1', 512)
+                  .Conv2D('conv5_2', 512)
+                  .Conv2D('conv5_3', 512)
+                  .MaxPooling('pool5', 2)
+                  # 7
+                  .FullyConnected('fc6', 4096, nl=tf.nn.relu)
+                  .Dropout('drop0', 0.5)
+                  .FullyConnected('fc7', 4096, nl=tf.nn.relu)
+                  .Dropout('drop1', 0.5)
+                  .FullyConnected('fc8', out_dim=1000, nl=tf.identity)())
+    tf.nn.softmax(logits, name='prob')
 
 
 def run_test(path, input):
     param_dict = np.load(path, encoding='latin1').item()
     predict_func = OfflinePredictor(PredictConfig(
-        model=Model(),
+        inputs_desc=[InputDesc(tf.float32, (None, 224, 224, 3), 'input')],
+        tower_func=tower_func,
         session_init=DictRestore(param_dict),
         input_names=['input'],
         output_names=['prob']   # prob:0 is the probability distribution
@@ -75,8 +80,14 @@ def run_test(path, input):
     assert im is not None, input
     im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
     im = cv2.resize(im, (224, 224)).reshape((1, 224, 224, 3)).astype('float32')
-    im = im - 110
-    outputs = predict_func([im])[0]
+
+    # VGG16 requires channelwise mean substraction
+    VGG_MEAN = [103.939, 116.779, 123.68]
+    im[:, :, :, 0] -= VGG_MEAN[2]
+    im[:, :, :, 1] -= VGG_MEAN[1]
+    im[:, :, :, 2] -= VGG_MEAN[0]
+
+    outputs = predict_func(im)[0]
     prob = outputs[0]
     ret = prob.argsort()[-10:][::-1]
     print("Top10 predictions:", ret)

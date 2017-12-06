@@ -17,45 +17,47 @@ import tensorflow as tf
 
 """
 Usage:
+    Download caffe models at https://github.com/BVLC/caffe/tree/master/models/bvlc_alexnet
+
+    Install caffe python bindings.
+
     python -m tensorpack.utils.loadcaffe PATH/TO/CAFFE/{deploy.prototxt,bvlc_alexnet.caffemodel} alexnet.npy
+
+    Or download a converted caffe model from http://models.tensorpack.com/caffe/
+
+    Then, run it:
     ./load-alexnet.py --load alexnet.npy --input cat.png
 """
 
 
-class Model(ModelDesc):
-    def _get_inputs(self):
-        return [InputDesc(tf.float32, (None, 227, 227, 3), 'input')]
+def tower_func(image):
+    # img: 227x227x3
+    with argscope([Conv2D, FullyConnected], nl=tf.nn.relu):
+        l = Conv2D('conv1', image, out_channel=96, kernel_shape=11, stride=4, padding='VALID')
+        l = tf.nn.lrn(l, 2, bias=1.0, alpha=2e-5, beta=0.75, name='norm1')
+        l = MaxPooling('pool1', l, 3, stride=2, padding='VALID')
 
-    def _build_graph(self, inputs):
-        # img: 227x227x3
-        image = inputs[0]
+        l = Conv2D('conv2', l, out_channel=256, kernel_shape=5, split=2)
+        l = tf.nn.lrn(l, 2, bias=1.0, alpha=2e-5, beta=0.75, name='norm2')
+        l = MaxPooling('pool2', l, 3, stride=2, padding='VALID')
 
-        with argscope([Conv2D, FullyConnected], nl=tf.nn.relu):
-            l = Conv2D('conv1', image, out_channel=96, kernel_shape=11, stride=4, padding='VALID')
-            l = tf.nn.lrn(l, 2, bias=1.0, alpha=2e-5, beta=0.75, name='norm1')
-            l = MaxPooling('pool1', l, 3, stride=2, padding='VALID')
+        l = Conv2D('conv3', l, out_channel=384, kernel_shape=3)
+        l = Conv2D('conv4', l, out_channel=384, kernel_shape=3, split=2)
+        l = Conv2D('conv5', l, out_channel=256, kernel_shape=3, split=2)
+        l = MaxPooling('pool3', l, 3, stride=2, padding='VALID')
 
-            l = Conv2D('conv2', l, out_channel=256, kernel_shape=5, split=2)
-            l = tf.nn.lrn(l, 2, bias=1.0, alpha=2e-5, beta=0.75, name='norm2')
-            l = MaxPooling('pool2', l, 3, stride=2, padding='VALID')
-
-            l = Conv2D('conv3', l, out_channel=384, kernel_shape=3)
-            l = Conv2D('conv4', l, out_channel=384, kernel_shape=3, split=2)
-            l = Conv2D('conv5', l, out_channel=256, kernel_shape=3, split=2)
-            l = MaxPooling('pool3', l, 3, stride=2, padding='VALID')
-
-            # This is just a script to load model, so we ignore the dropout layer
-            l = FullyConnected('fc6', l, 4096)
-            l = FullyConnected('fc7', l, out_dim=4096)
-        # fc will have activation summary by default. disable this for the output layer
-        logits = FullyConnected('fc8', l, out_dim=1000, nl=tf.identity)
-        prob = tf.nn.softmax(logits, name='prob')
+        # This is just a script to load model, so we ignore the dropout layer
+        l = FullyConnected('fc6', l, 4096)
+        l = FullyConnected('fc7', l, out_dim=4096)
+    logits = FullyConnected('fc8', l, out_dim=1000, nl=tf.identity)
+    tf.nn.softmax(logits, name='prob')
 
 
 def run_test(path, input):
     param_dict = np.load(path, encoding='latin1').item()
     predictor = OfflinePredictor(PredictConfig(
-        model=Model(),
+        inputs_desc=[InputDesc(tf.float32, (None, 227, 227, 3), 'input')],
+        tower_func=tower_func,
         session_init=DictRestore(param_dict),
         input_names=['input'],
         output_names=['prob']
@@ -63,9 +65,8 @@ def run_test(path, input):
 
     im = cv2.imread(input)
     assert im is not None, input
-    im = cv2.resize(im, (227, 227))[:, :, ::-1].reshape(
-        (1, 227, 227, 3)).astype('float32') - 110
-    outputs = predictor([im])[0]
+    im = cv2.resize(im, (227, 227))[None, :, :, ::-1].astype('float32') - 110
+    outputs = predictor(im)[0]
     prob = outputs[0]
     ret = prob.argsort()[-10:][::-1]
     print("Top10 predictions:", ret)

@@ -1,26 +1,16 @@
 tensorpack.tfutils package
 ==========================
 
-Module contents
----------------
+.. container:: custom-index
 
-.. automodule:: tensorpack.tfutils
-    :members:
-    :undoc-members:
-    :show-inheritance:
+    .. raw:: html
+
+        <script type="text/javascript" src='../_static/build_toc_group.js'></script>
 
 tensorpack.tfutils.collection module
 ------------------------------------
 
 .. automodule:: tensorpack.tfutils.collection
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-tensorpack.tfutils.distributions module
----------------------------------------
-
-.. automodule:: tensorpack.tfutils.distributions
     :members:
     :undoc-members:
     :show-inheritance:
@@ -33,10 +23,10 @@ tensorpack.tfutils.gradproc module
     :undoc-members:
     :show-inheritance:
 
-tensorpack.tfutils.model_utils module
---------------------------------------
+tensorpack.tfutils.tower module
+------------------------------------
 
-.. automodule:: tensorpack.tfutils.model_utils
+.. automodule:: tensorpack.tfutils.tower
     :members:
     :undoc-members:
     :show-inheritance:
@@ -61,6 +51,14 @@ tensorpack.tfutils.sesscreate module
 ------------------------------------
 
 .. automodule:: tensorpack.tfutils.sesscreate
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+tensorpack.tfutils.sessinit module
+------------------------------------
+
+.. automodule:: tensorpack.tfutils.sessinit
     :members:
     :undoc-members:
     :show-inheritance:
@@ -96,3 +94,12 @@ tensorpack.tfutils.varreplace module
     :members:
     :undoc-members:
     :show-inheritance:
+
+Other functions in tensorpack.tfutils module
+---------------------------------------------
+
+.. automethod:: tensorpack.tfutils.get_default_sess_config
+.. automethod:: tensorpack.tfutils.get_global_step_var
+.. automethod:: tensorpack.tfutils.get_global_step_value
+.. automethod:: tensorpack.tfutils.argscope
+.. automethod:: tensorpack.tfutils.get_arg_scope

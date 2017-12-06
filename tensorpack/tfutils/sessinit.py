@@ -8,18 +8,17 @@ import tensorflow as tf
 import six
 
 from ..utils import logger
-from ..utils.develop import deprecated
 from .common import get_op_tensor_name
 from .varmanip import (SessionUpdate, get_savename_from_varname,
                        is_training_name, get_checkpoint_path)
 
-__all__ = ['SessionInit', 'SaverRestore', 'SaverRestoreRelaxed',
-           'ParamRestore', 'DictRestore', 'ChainInit',
+__all__ = ['SessionInit', 'ChainInit',
+           'SaverRestore', 'SaverRestoreRelaxed', 'DictRestore',
            'JustCurrentSession', 'get_model_loader', 'TryResumeTraining']
 
 
 class SessionInit(object):
-    """ Base class for utilities to initialize a (existing) session. """
+    """ Base class for utilities to load variables to a (existing) session. """
     def init(self, sess):
         """
         Initialize a session
@@ -27,9 +26,6 @@ class SessionInit(object):
         Args:
             sess (tf.Session): the session
         """
-        self._init(sess)
-
-    def _init(self, sess):
         self._setup_graph()
         self._run_init(sess)
 
@@ -190,24 +186,24 @@ class DictRestore(SessionInit):
     Restore variables from a dictionary.
     """
 
-    def __init__(self, param_dict):
+    def __init__(self, variable_dict):
         """
         Args:
-            param_dict (dict): a dict of {name: value}
+            variable_dict (dict): a dict of {name: value}
         """
-        assert isinstance(param_dict, dict), type(param_dict)
+        assert isinstance(variable_dict, dict), type(variable_dict)
         # use varname (with :0) for consistency
-        self.prms = {get_op_tensor_name(n)[1]: v for n, v in six.iteritems(param_dict)}
+        self._prms = {get_op_tensor_name(n)[1]: v for n, v in six.iteritems(variable_dict)}
 
     def _run_init(self, sess):
         variables = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)
 
         variable_names = set([k.name for k in variables])
-        param_names = set(six.iterkeys(self.prms))
+        param_names = set(six.iterkeys(self._prms))
 
         intersect = variable_names & param_names
 
-        logger.info("Params to restore: {}".format(', '.join(map(str, intersect))))
+        logger.info("Variables to restore from dict: {}".format(', '.join(map(str, intersect))))
 
         mismatch = MismatchLogger('graph', 'dict')
         for k in sorted(variable_names - param_names):
@@ -221,12 +217,7 @@ class DictRestore(SessionInit):
 
         upd = SessionUpdate(sess, [v for v in variables if v.name in intersect])
         logger.info("Restoring from dict ...")
-        upd.update({name: value for name, value in six.iteritems(self.prms) if name in intersect})
-
-
-@deprecated("Use `DictRestore` instead!", "2017-09-01")
-def ParamRestore(d):
-    return DictRestore(d)
+        upd.update({name: value for name, value in six.iteritems(self._prms) if name in intersect})
 
 
 class ChainInit(SessionInit):
@@ -241,10 +232,6 @@ class ChainInit(SessionInit):
             sess_inits (list[SessionInit]): list of :class:`SessionInit` instances.
         """
         self.inits = sess_inits
-
-    def _init(self, sess):
-        for i in self.inits:
-            i.init(sess)
 
     def _setup_graph(self):
         for i in self.inits:
@@ -264,10 +251,10 @@ def get_model_loader(filename):
         :class:`SaverRestore` (otherwise).
     """
     if filename.endswith('.npy'):
-        assert os.path.isfile(filename), filename
+        assert tf.gfile.Exists(filename), filename
         return DictRestore(np.load(filename, encoding='latin1').item())
     elif filename.endswith('.npz'):
-        assert os.path.isfile(filename), filename
+        assert tf.gfile.Exists(filename), filename
         obj = np.load(filename)
         return DictRestore(dict(obj))
     else:
@@ -276,14 +263,16 @@ def get_model_loader(filename):
 
 def TryResumeTraining():
     """
-    Load latest checkpoint from LOG_DIR, if there is one.
+    Try loading latest checkpoint from ``logger.get_logger_dir()``, only if there is one.
+    Actually not very useful... better to write your own one.
 
     Returns:
         SessInit: either a :class:`JustCurrentSession`, or a :class:`SaverRestore`.
     """
-    if not logger.LOG_DIR:
+    if not logger.get_logger_dir():
         return JustCurrentSession()
-    path = os.path.join(logger.LOG_DIR, 'checkpoint')
-    if not os.path.isfile(path):
+    path = os.path.join(logger.get_logger_dir(), 'checkpoint')
+    if not tf.gfile.Exists(path):
         return JustCurrentSession()
+    logger.info("Found checkpoint at {}.".format(path))
     return SaverRestore(path)

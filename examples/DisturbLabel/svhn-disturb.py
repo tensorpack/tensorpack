@@ -4,9 +4,9 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import argparse
-import numpy as np
 import os
 import imp
+
 
 from tensorpack import *
 from tensorpack.dataflow import dataset
@@ -46,7 +46,6 @@ svhn_example.get_data = get_data
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='a gpu to use')
-    parser.add_argument('--load', help='load model')
     parser.add_argument('--prob', help='disturb prob',
                         type=float, required=True)
     args = parser.parse_args()
@@ -57,6 +56,4 @@ if __name__ == '__main__':
         os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
     config = get_config(args.prob)
-    if args.load:
-        config.session_init = SaverRestore(args.load)
-    QueueInputTrainer(config).train()
+    launch_train_with_config(config, SimpleTrainer())

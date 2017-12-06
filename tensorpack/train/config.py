@@ -1,6 +1,6 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # File: config.py
-# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 from ..callbacks import (
     MovingAverageSummary,
@@ -9,18 +9,48 @@ from ..callbacks import (
 from ..dataflow.base import DataFlow
 from ..graph_builder.model_desc import ModelDescBase
 from ..utils import logger
-from ..utils.develop import log_deprecated
-from ..tfutils import (JustCurrentSession,
-                       get_default_sess_config, SessionInit)
+from ..tfutils import (JustCurrentSession, SessionInit)
 from ..tfutils.sesscreate import NewSessionCreator
-from ..graph_builder.input_source_base import InputSource
+from ..input_source import InputSource
+from ..utils.develop import log_deprecated
 
-__all__ = ['TrainConfig']
+__all__ = ['TrainConfig', 'DEFAULT_CALLBACKS', 'DEFAULT_MONITORS']
+
+
+def DEFAULT_CALLBACKS():
+    """
+    Return the default callbacks,
+    which will be used in :class:`TrainConfig` and :meth:`Trainer.train_with_defaults`.
+    They are:
+
+    1. MovingAverageSummary()
+    2. ProgressBar()
+    3. MergeAllSummaries()
+    4. RunUpdateOps()
+    """
+    return [
+        MovingAverageSummary(),
+        ProgressBar(),
+        MergeAllSummaries(),
+        RunUpdateOps()]
+
+
+def DEFAULT_MONITORS():
+    """
+    Return the default monitors,
+    which will be used in :class:`TrainConfig` and :meth:`Trainer.train_with_defaults`.
+    They are:
+
+    1. TFEventWriter()
+    2. JSONWriter()
+    3. ScalarPrinter()
+    """
+    return [TFEventWriter(), JSONWriter(), ScalarPrinter()]
 
 
 class TrainConfig(object):
     """
-    Config for trainer.
+    A collection of options to be used for trainers.
     """
 
     def __init__(self,
@@ -28,14 +58,9 @@ class TrainConfig(object):
                  callbacks=None, extra_callbacks=None, monitors=None,
                  session_creator=None, session_config=None, session_init=None,
                  starting_epoch=1, steps_per_epoch=None, max_epoch=99999,
-                 nr_tower=1, tower=None, predict_tower=None,
+                 nr_tower=1, tower=None,
                  **kwargs):
         """
-        Note:
-            It depends on the specific trainer what fields are necessary.
-            Most existing trainers in tensorpack requires one of `dataflow` or `data`,
-            and `model` to be present in the config.
-
         Args:
             dataflow (DataFlow):
             data (InputSource):
@@ -62,7 +87,6 @@ class TrainConfig(object):
 
             nr_tower (int): number of training towers, used by multigpu trainers.
             tower ([int]): list of training towers in relative GPU id.
-            predict_tower ([int]): list of prediction towers in their relative gpu id. Use -1 for cpu.
         """
 
         # TODO type checker decorator
@@ -70,18 +94,14 @@ class TrainConfig(object):
             assert isinstance(v, tp), v.__class__
 
         # process data & model
-        if 'dataset' in kwargs:
-            dataflow = kwargs.pop('dataset')
-            log_deprecated("TrainConfig.dataset", "Use TrainConfig.dataflow instead.", "2017-09-11")
+        assert data is None or dataflow is None, "dataflow and data cannot be both presented in TrainConfig!"
         if dataflow is not None:
-            assert data is None, "dataflow and data cannot be both presented in TrainConfig!"
-            self.dataflow = dataflow
-            assert_type(self.dataflow, DataFlow)
-            self.data = None
+            assert_type(dataflow, DataFlow)
         if data is not None:
-            self.data = data
-            assert_type(self.data, InputSource)
-            self.dataflow = None
+            assert_type(data, InputSource)
+        self.dataflow = dataflow
+        self.data = data
+
         if model is not None:
             assert_type(model, ModelDescBase)
         self.model = model
@@ -89,17 +109,10 @@ class TrainConfig(object):
         if callbacks is None:
             callbacks = []
         assert_type(callbacks, list)
-        if extra_callbacks is None:
-            extra_callbacks = [
-                MovingAverageSummary(),
-                ProgressBar(),
-                MergeAllSummaries(),
-                RunUpdateOps()]
-        self._callbacks = callbacks + extra_callbacks
+        self._callbacks = callbacks + \
+            (extra_callbacks or DEFAULT_CALLBACKS())
 
-        if monitors is None:
-            monitors = [TFEventWriter(), JSONWriter(), ScalarPrinter()]
-        self.monitors = monitors
+        self.monitors = monitors or DEFAULT_MONITORS()
 
         if session_init is None:
             session_init = JustCurrentSession()
@@ -110,11 +123,10 @@ class TrainConfig(object):
             if session_config is not None:
                 self.session_creator = NewSessionCreator(config=session_config)
             else:
-                self.session_creator = NewSessionCreator(config=get_default_sess_config())
+                self.session_creator = NewSessionCreator(config=None)
         else:
             self.session_creator = session_creator
             assert session_config is None, "Cannot set both session_creator and session_config!"
-        self.session_config = session_config
 
         if steps_per_epoch is None:
             try:
@@ -125,7 +137,8 @@ class TrainConfig(object):
                 else:
                     raise NotImplementedError()
             except NotImplementedError:
-                logger.exception("You must set `TrainConfig(steps_per_epoch)` if data.size() is not available.")
+                logger.error("You must set `TrainConfig(steps_per_epoch)` if data.size() is not available.")
+                raise
         else:
             steps_per_epoch = int(steps_per_epoch)
         self.steps_per_epoch = steps_per_epoch
@@ -140,8 +153,10 @@ class TrainConfig(object):
             assert self.nr_tower == 1, "Cannot set both nr_tower and tower in TrainConfig!"
             self.tower = tower
 
-        if predict_tower is None:
-            predict_tower = [0]
+        predict_tower = kwargs.pop('predict_tower', None)
+        if predict_tower is not None:
+            log_deprecated("TrainConfig(predict_tower=)",
+                           "InferenceRunner now accepts a 'device' argument.", "2017-12-31")
         self.predict_tower = predict_tower
         if isinstance(self.predict_tower, int):
             self.predict_tower = [self.predict_tower]

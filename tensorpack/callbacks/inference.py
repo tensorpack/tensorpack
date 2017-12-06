@@ -38,7 +38,7 @@ class Inferencer(Callback):
         for k, v in six.iteritems(ret):
             try:
                 v = float(v)
-            except:
+            except ValueError:
                 logger.warn("{} returns a non-scalar statistics!".format(type(self).__name__))
                 continue
             else:
@@ -133,24 +133,26 @@ class ScalarStats(Inferencer):
 
 class ClassificationError(Inferencer):
     """
-    Compute classification error in batch mode, from a ``wrong`` tensor.
+    Compute __true__ classification error in batch mode, from a ``wrong`` tensor.
 
     The ``wrong`` tensor is supposed to be an binary vector containing
     whether each sample in the batch is *incorrectly* classified.
     You can use ``tf.nn.in_top_k`` to produce this vector.
 
-    This Inferencer produces the "true" error,
-    taking account of the fact that batches might not have the same size in
+    This Inferencer produces the "true" error, which could be different from
+    `ScalarStats('error_rate')`.
+    It takes account of the fact that batches might not have the same size in
     testing (because the size of test set might not be a multiple of batch size).
     Therefore the result can be different from averaging the error rate of each batch.
+
+    You can also use the "correct prediction" tensor, then this inferencer will
+    give you "classification accuracy" instead of error.
     """
 
-    def __init__(self, wrong_tensor_name='incorrect_vector', summary_name='val_error'):
+    def __init__(self, wrong_tensor_name='incorrect_vector', summary_name='validation_error'):
         """
         Args:
-            wrong_tensor_name(str): name of the ``wrong`` tensor.
-                The default is the same as the default output name of
-                :meth:`prediction_incorrect`.
+            wrong_tensor_name(str): name of the ``wrong`` binary vector tensor.
             summary_name(str): the name to log the error with.
         """
         self.wrong_tensor_name = wrong_tensor_name

@@ -10,14 +10,15 @@ import tqdm
 
 from ..utils import logger
 from ..utils.utils import get_tqdm_kwargs
+from ..utils.naming import GLOBAL_STEP_INCR_OP_NAME
 from ..tfutils.common import (
-    get_op_tensor_name, get_op_or_tensor_by_name)
+    get_op_tensor_name, get_global_step_var)
 from .base import Callback
 
-__all__ = ['StepTensorPrinter', 'ProgressBar']
+__all__ = ['TensorPrinter', 'StepTensorPrinter', 'ProgressBar']
 
 
-class StepTensorPrinter(Callback):
+class TensorPrinter(Callback):
     """ Prints the value of some tensors in each step.
         It's an example of how ``before_run/after_run`` works.
     """
@@ -32,7 +33,7 @@ class StepTensorPrinter(Callback):
         self._names = names
 
     def _setup_graph(self):
-        self._fetches = get_op_or_tensor_by_name(self._names)
+        self._fetches = self.get_tensors_maybe_in_tower(self._names)
 
     def _before_run(self, _):
         return self._fetches
@@ -42,6 +43,9 @@ class StepTensorPrinter(Callback):
         assert len(args) == len(self._names), len(args)
         for n, v in zip(self._names, args):
             logger.info("{}: {}".format(n, v))
+
+
+StepTensorPrinter = TensorPrinter
 
 
 class ProgressBar(Callback):
@@ -63,11 +67,13 @@ class ProgressBar(Callback):
     def _before_train(self):
         self._last_updated = self.local_step
 
-        self._total = self.trainer.config.steps_per_epoch
+        self._total = self.trainer.steps_per_epoch
         self._tqdm_args = get_tqdm_kwargs(leave=True)
 
-        self._fetches = get_op_or_tensor_by_name(self._names) or None
+        self._fetches = self.get_tensors_maybe_in_tower(self._names) or None
         if self._fetches:
+            for t in self._fetches:
+                assert t.shape.ndims == 0, "ProgressBar can only print scalars, not {}".format(t)
             self._fetches = tf.train.SessionRunArgs(self._fetches)
             self._tqdm_args['bar_format'] = self._tqdm_args['bar_format'] + "{postfix} "
 
@@ -96,3 +102,37 @@ class ProgressBar(Callback):
     def _after_train(self):
         if self._bar:       # training may get killed before the first step
             self._bar.close()
+
+
+class MaintainStepCounter(Callback):
+    """
+    It maintains the global step in the graph, making sure it's increased by one.
+    This callback is used by the trainer, you don't need to worry about it.
+    """
+
+    _chief_only = False
+    """
+    In distributed training, we let each worker maintain its local global_step.
+    """
+
+    def _setup_graph(self):
+        # ensure it exists
+        gs_var = get_global_step_var()
+        with tf.name_scope(None):
+            with self.graph.colocate_with(gs_var):
+                self.gs_incr_op = tf.assign_add(
+                    gs_var, 1,
+                    name=GLOBAL_STEP_INCR_OP_NAME).op
+        self._fetches = tf.train.SessionRunArgs(self.gs_incr_op)
+
+    def _before_train(self):
+        if self.global_step != 0:
+            logger.info("Start training with global_step={}".format(self.global_step))
+
+    def _before_run(self, _):
+        # always increase global_step when hooked_sess.run is called
+        return self._fetches
+
+    def _after_run(self, _, __):
+        # Keep python-side global_step in agreement with TF-side
+        self.trainer.loop._global_step += 1

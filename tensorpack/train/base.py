@@ -1,27 +1,27 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # File: base.py
-# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
-
-import time
-import weakref
-from six.moves import range
 
 import tensorflow as tf
+import weakref
+import time
+from six.moves import range
+import six
 
-from .config import TrainConfig
+from ..callbacks import (
+    Callback, Callbacks, Monitors, TrainingMonitor)
 from ..utils import logger
-from ..utils.naming import GLOBAL_STEP_INCR_OP_NAME
-from ..utils.develop import deprecated
-from ..callbacks import Callback, Callbacks
-from ..callbacks.monitor import Monitors, TrainingMonitor
-from ..tfutils import get_global_step_value, get_global_step_var
+from ..utils.argtools import call_only_once
+from ..tfutils import get_global_step_value
+from ..tfutils.tower import TowerFuncWrapper
 from ..tfutils.model_utils import describe_trainable_vars
-from ..tfutils.sesscreate import ReuseSessionCreator
 from ..tfutils.sessinit import JustCurrentSession
+from ..tfutils.sesscreate import ReuseSessionCreator, NewSessionCreator
+from ..callbacks.steps import MaintainStepCounter
 
-from ..graph_builder.predictor_factory import PredictorFactory
+from .config import TrainConfig, DEFAULT_MONITORS, DEFAULT_CALLBACKS
 
-__all__ = ['Trainer', 'StopTraining']
+__all__ = ['StopTraining', 'TrainConfig', 'Trainer']
 
 
 class StopTraining(BaseException):
@@ -31,83 +31,120 @@ class StopTraining(BaseException):
     pass
 
 
-class MaintainStepCounter(Callback):
+class TrainLoop(object):
     """
-    It maintains the global step in the graph, making sure it's increased by one.
-    This callback is always enabled by the trainer, you don't need to worry about it.
+    Manage the double for loop.
     """
-    def _setup_graph(self):
-        # ensure it exists
-        gs_var = get_global_step_var()
-        with tf.name_scope(None):
-            with tf.device(gs_var.device):
-                self.gs_incr_op = tf.assign_add(
-                    gs_var, 1,
-                    name=GLOBAL_STEP_INCR_OP_NAME).op
-        self._fetches = tf.train.SessionRunArgs(self.gs_incr_op)
 
-    def _before_train(self):
-        if self.global_step != 0:
-            logger.info("Start training with global_step={}".format(self.global_step))
-
-    def _before_run(self, _):
-        # always increase global_step when hooked_sess.run is called
-        return self._fetches
-
-    def _after_run(self, _, __):
-        # Keep python-side global_step in agreement with TF-side
-        self.trainer._global_step += 1
-
-
-class Trainer(object):
-    """ Base class for a trainer.
-
-    Attributes:
-        config (TrainConfig): the config used in this trainer.
-        model (ModelDesc): alias for ``config.model``.
-        sess (tf.Session): the current session in use.
-        hooked_sess (tf.MonitoredSession): the session with hooks.
-        monitors (Monitors): the monitors. Other callbacks can use it for logging.
-        local_step (int): the number of (tensorpack) steps that have finished in the current epoch.
-    """
-    # step attr only available after before_train?
-
-    is_chief = True
-
-    def __init__(self, config):
-        """
-        Args:
-            config (TrainConfig): the train config.
-        """
-        assert isinstance(config, TrainConfig), type(config)
-        self.config = config
-        self.model = config.model
-
-        self.local_step = -1
-
-        self._callbacks = []
-        self.monitors = []
-        self._epoch_num = None
+    def __init__(self):
+        self._epoch_num = 0
         self._global_step = 0
+        self._local_step = -1
 
-        self._setup()   # subclass will setup the graph and InputSource
+    def config(self, steps_per_epoch, starting_epoch, max_epoch):
+        """
+        Configure the loop given the settings.
+        """
+        self.starting_epoch = starting_epoch
+        self.max_epoch = max_epoch
+        self.steps_per_epoch = steps_per_epoch
+
+        self._epoch_num = starting_epoch - 1
+
+    def update_global_step(self):
+        """
+        Update the Python-side global_step from TF.
+        This must be called under initialized default session.
+        """
+        self._global_step = get_global_step_value()
 
     @property
     def epoch_num(self):
         """
-        The number of epochs that have finished.
-        """
-        if self._epoch_num is not None:
-            # has started training
-            return self._epoch_num
-        else:
-            return self.config.starting_epoch - 1
+        The number of the currently ongoing epoch.
 
-    def register_callback(self, cb):
+        An epoch is defined to cover the moment before calling `before_epoch` until after calling `trigger_epoch`.
+        i.e., in the `trigger_epoch` of epoch 3, `self.epoch_num` is 3.
+        If you need use `self.epoch_num` in your callback, you'll need to know this.
         """
-        Register a callback to the trainer.
-        It can only be called before :meth:`Trainer.train` gets called.
+        return self._epoch_num
+
+    @property
+    def global_step(self):
         """
+        The tensorflow global_step, i.e. how many times ``hooked_sess.run`` has been called.
+
+        Note:
+            1. global_step is incremented **after** each ``hooked_sess.run`` returns from TF runtime.
+            2. If you make zero or more than one calls to ``hooked_sess.run`` in one
+               :meth:`run_step`, local_step and global_step may increment at different speed.
+        """
+        return self._global_step
+
+    @property
+    def local_step(self):
+        """
+        The number of steps that have finished in the current epoch.
+        """
+        return self._local_step
+
+
+class Trainer(object):
+    """ Base class for a trainer.
+    """
+
+    _API_VERSION = 2
+
+    is_chief = True
+
+    def __init__(self, config=None):
+        """
+        config is only for compatibility reasons in case you're
+        using custom trainers with old-style API.
+        You should never use config.
+        """
+        self._callbacks = []
+        self.loop = TrainLoop()
+
+        # Hacks!
+        if config is not None:
+            logger.warn("You're initializing new trainer with old trainer API!")
+            logger.warn("This could happen if you wrote a custom trainer before.")
+            logger.warn("It may work now through some hacks, but please switch to the new API!")
+            logger.warn("See https://github.com/ppwwyyxx/tensorpack/issues/458 for more information.")
+            self._config = config
+            self.inputs_desc = config.model.get_inputs_desc()
+            self.tower_func = TowerFuncWrapper(
+                lambda *inputs: config.model.build_graph(*inputs),
+                self.inputs_desc)
+            self._main_tower_vs_name = ""
+
+            def gp(input_names, output_names, tower=0):
+                from .tower import TowerTrainer
+                return TowerTrainer.get_predictor(self, input_names, output_names, device=tower)
+            self.get_predictor = gp
+
+            old_train = self.train
+
+            def train():
+                return old_train(
+                    config.callbacks, config.monitors,
+                    config.session_creator, config.session_init,
+                    config.steps_per_epoch, config.starting_epoch, config.max_epoch)
+            self.train = train
+
+    def _register_callback(self, cb):
+        """
+        Register callbacks to the trainer.
+        It can only be called before :meth:`Trainer.train()`.
+
+        Args:
+            cb (Callback or [Callback]): a callback or a list of callbacks
+        """
+        if isinstance(cb, (list, tuple)):
+            for x in cb:
+                self._register_callback(x)
+            return
         assert isinstance(cb, Callback), cb
         assert not isinstance(self._callbacks, Callbacks), \
             "Cannot register more callbacks after trainer was setup!"
@@ -116,24 +153,7 @@ class Trainer(object):
         else:
             self._callbacks.append(cb)
 
-    def register_monitor(self, mon):
-        """
-        Register a monitor to the trainer.
-        It can only be called before :meth:`Trainer.train` gets called.
-        """
-        assert isinstance(mon, TrainingMonitor), mon
-        assert not isinstance(self.monitors, Monitors), \
-            "Cannot register more monitors after trainer was setup!"
-        if not self.is_chief and mon.chief_only:
-            logger.warn("Monitor {} is chief-only, skipped.".format(str(mon)))
-        else:
-            self.monitors.append(mon)
-            self.register_callback(mon)
-
-    def train(self):
-        """ Start training """
-        self.setup()
-        self.main_loop()
+    register_callback = _register_callback
 
     def run_step(self):
         """
@@ -149,93 +169,90 @@ class Trainer(object):
                 "of Trainer.run_step()!")
         self.hooked_sess.run(self.train_op)
 
-    def setup(self):
+    @call_only_once
+    def setup_callbacks(self, callbacks, monitors):
         """
-        Setup the trainer and be ready for the main loop.
-        """
-        self.register_callback(MaintainStepCounter())
-        for cb in self.config.callbacks:
-            self.register_callback(cb)
-        for m in self.config.monitors:
-            self.register_monitor(m)
-        self.monitors = Monitors(self.monitors)
-        self.register_callback(self.monitors)
+        Setup callbacks and monitors. Must be called after the main graph is built.
 
-        describe_trainable_vars()
+        Args:
+            callbacks ([Callback]):
+            monitors ([TrainingMonitor]):
+        """
+        describe_trainable_vars()   # TODO weird
+
+        self.register_callback(MaintainStepCounter())
+        for cb in callbacks:
+            self.register_callback(cb)
+        for cb in self._callbacks:
+            assert not isinstance(cb, TrainingMonitor), "Monitor cannot be pre-registered for now!"
+        for m in monitors:
+            self.register_callback(m)
+        self.monitors = Monitors(monitors)
+        self.register_callback(self.monitors)   # monitors is also a callback
 
         # some final operations that might modify the graph
         logger.info("Setup callbacks graph ...")
         self._callbacks = Callbacks(self._callbacks)
         self._callbacks.setup_graph(weakref.proxy(self))
 
+    @call_only_once
+    def initialize(self, session_creator, session_init):
+        """
+        Initialize self.sess and self.hooked_sess.
+        Must be called after callbacks are setup.
+
+        Args:
+            session_creator (tf.train.SessionCreator):
+            session_init (sessinit.SessionInit):
+        """
+        session_init._setup_graph()
+
         logger.info("Creating the session ...")
-        self._create_session()
+
+        hooks = self._callbacks.get_hooks()
+        self.sess = session_creator.create_session()
+        self.hooked_sess = tf.train.MonitoredSession(
+            session_creator=ReuseSessionCreator(self.sess), hooks=hooks)
 
         if self.is_chief:
             logger.info("Initializing the session ...")
-            self.config.session_init.init(self.sess)
+            session_init._run_init(self.sess)
         else:
-            assert isinstance(self.config.session_init, JustCurrentSession), \
-                "session_init is only valid for chief worker session!"
+            if not isinstance(session_init, JustCurrentSession):
+                logger.warn("This is not a chief worker, 'session_init' was ignored!")
 
         self.sess.graph.finalize()
         logger.info("Graph Finalized.")
 
-    def _create_session(self):
-        """
-        Setup self.sess (the raw tf.Session)
-        and self.hooked_sess (the session with hooks and coordinator)
-        """
-        hooks = self._callbacks.get_hooks()
-        self.sess = self.config.session_creator.create_session()
-        self.hooked_sess = tf.train.MonitoredSession(
-            session_creator=ReuseSessionCreator(self.sess), hooks=hooks)
-
-    def _setup(self):
-        """
-        Build the entire graph for training.
-        Responsible for setup InputSource as well (including registering InputSource callbacks)
-
-        Since this method will get called in constructor only,
-        you can simply leave it empty and build your graph outside the trainer.
-        """
-        pass
-
-    @property
-    def global_step(self):
-        """
-        The tensorflow global_step, i.e. how many times ``hooked_sess.run`` has been called.
-
-        Note:
-            1. global_step is incremented **after** each ``hooked_sess.run`` returns from TF runtime.
-            2. If you make zero or more than one calls to ``hooked_sess.run`` in one
-               :meth:`run_step`, local_step and global_step may increment at different speed.
-        """
-        return self._global_step
-
-    def main_loop(self):
+    @call_only_once
+    def main_loop(self, steps_per_epoch, starting_epoch, max_epoch):
         """
         Run the main training loop.
+
+        Args:
+            steps_per_epoch, starting_epoch, max_epoch (int):
         """
         with self.sess.as_default():
-            self._global_step = get_global_step_value()
+            self.loop.config(steps_per_epoch, starting_epoch, max_epoch)
+            self.loop.update_global_step()
             try:
                 self._callbacks.before_train()
                 # refresh global step (might have changed by callbacks) TODO ugly
-                self._global_step = get_global_step_value()
-                for self._epoch_num in range(
-                        self.config.starting_epoch, self.config.max_epoch + 1):
-                    logger.info("Start Epoch {} ...".format(self._epoch_num))
+                # what if gs is changed later?
+                self.loop.update_global_step()
+                for self.loop._epoch_num in range(
+                        self.loop.starting_epoch, self.loop.max_epoch + 1):
+                    logger.info("Start Epoch {} ...".format(self.loop.epoch_num))
                     start_time = time.time()
                     self._callbacks.before_epoch()
-                    for self.local_step in range(self.config.steps_per_epoch):
+                    for self.loop._local_step in range(self.loop.steps_per_epoch):
                         if self.hooked_sess.should_stop():
                             return
                         self.run_step()  # implemented by subclass
                         self._callbacks.trigger_step()
                     self._callbacks.after_epoch()
                     logger.info("Epoch {} (global_step {}) finished, time:{:.2f} sec.".format(
-                        self._epoch_num, self.global_step, time.time() - start_time))
+                        self.loop.epoch_num, self.loop.global_step, time.time() - start_time))
 
                     # trigger epoch outside the timing region.
                     self._callbacks.trigger_epoch()
@@ -244,46 +261,86 @@ class Trainer(object):
                 logger.info("Training was stopped.")
             except KeyboardInterrupt:
                 logger.info("Detected Ctrl-C and exiting main loop.")
-            except:
                 raise
             finally:
                 self._callbacks.after_train()
                 self.hooked_sess.close()
 
-    # Predictor related methods. They actually should not be part of a trainer:
-    @property
-    def vs_name_for_predictor(self):
+    def train(self,
+              callbacks, monitors,
+              session_creator, session_init,
+              steps_per_epoch, starting_epoch=1, max_epoch=9999999):
         """
-        The variable scope name a predictor should be built in.
+        Implemented by:
+
+        .. code-block:: python
+
+            self.setup_callbacks(callbacks, monitors)
+            self.initialize(session_creator, session_init)
+            self.main_loop(steps_per_epoch, starting_epoch, max_epoch)
+
+        You can call those methods by yourself to have better control on details if needed.
         """
-        # TODO graphbuilder knows it
-        return ""
+        self.setup_callbacks(callbacks, monitors)
+        self.initialize(session_creator, session_init)
+        self.main_loop(steps_per_epoch, starting_epoch, max_epoch)
 
-    def get_predictor(self, input_names, output_names, tower=0):
+    def train_with_defaults(
+            self, callbacks=None, monitors=None,
+            session_creator=None, session_init=None,
+            steps_per_epoch=None, starting_epoch=1, max_epoch=9999999):
         """
-        Returns a callable predictor built under ``is_training=False`` tower context.
-        Note that this method is only valid when this trainer has a ``ModelDesc``.
+        Same as :meth:`train()`, but will:
 
-        Args:
-            input_names (list), output_names(list): list of names
-            tower (int): build the predictor on device '/gpu:{tower}' or use -1 for '/cpu:0'.
-
-        Returns:
-            an :class:`OnlinePredictor`.
+        1. Append `DEFAULT_CALLBACKS()` to callbacks.
+        2. Append `DEFAULT_MONITORS()` to monitors.
+        3. Provide default values for every option except `steps_per_epoch`.
         """
-        # TODO move the logic to factory?
-        return self.predictor_factory.get_predictor(input_names, output_names, tower)
+        callbacks = (callbacks or []) + DEFAULT_CALLBACKS()
+        monitors = (monitors or []) + DEFAULT_MONITORS()
 
-    @property
-    def predictor_factory(self):
-        assert self.model is not None, \
-            "Predictor can only be built one Trainer has ModelDesc!"
-        if not hasattr(self, '_predictor_factory'):
-            self._predictor_factory = PredictorFactory(
-                self.model, self.vs_name_for_predictor)
-        return self._predictor_factory
+        assert steps_per_epoch is not None
+        session_creator = session_creator or NewSessionCreator()
+        session_init = session_init or JustCurrentSession()
 
-    @deprecated("Please call `Trainer.get_predictor` to create them manually.")
-    def get_predictors(self, input_names, output_names, n):
-        """ Return n predictors. """
-        return [self.get_predictor(input_names, output_names, k) for k in range(n)]
+        self.train(callbacks, monitors,
+                   session_creator, session_init,
+                   steps_per_epoch, starting_epoch, max_epoch)
+
+    # create the old trainer when called with TrainConfig
+    def __new__(cls, *args, **kwargs):
+        if (len(args) > 0 and isinstance(args[0], TrainConfig)) \
+                or 'config' in kwargs:
+            name = cls.__name__
+            try:
+                import tensorpack.trainv1 as old_train_mod    # noqa
+                old_trainer = getattr(old_train_mod, name)
+            except AttributeError:
+                # custom trainer. has to live with it
+                return super(Trainer, cls).__new__(cls)
+            else:
+                logger.warn("You're calling new trainers with old trainer API!")
+                logger.warn("Now it returns the old trainer for you, please switch to use new trainers soon!")
+                logger.warn("See https://github.com/ppwwyyxx/tensorpack/issues/458 for more information.")
+                return old_trainer(*args, **kwargs)
+        else:
+            return super(Trainer, cls).__new__(cls)
+
+
+def _get_property(name):
+    """
+    Delegate property to self.loop
+    """
+    ret = property(
+        lambda self: getattr(self.loop, name))
+    if six.PY3:     # __doc__ is readonly in Py2
+        try:
+            ret.__doc__ = getattr(TrainLoop, name).__doc__
+        except AttributeError:
+            pass
+    return ret
+
+
+for name in ['global_step', 'local_step', 'steps_per_epoch',
+             'epoch_num', 'starting_epoch', 'max_epoch']:
+    setattr(Trainer, name, _get_property(name))

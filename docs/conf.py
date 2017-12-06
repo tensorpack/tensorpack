@@ -21,15 +21,17 @@ import inspect
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('../'))
 os.environ['TENSORPACK_DOC_BUILDING'] = '1'
+ON_RTD = (os.environ.get('READTHEDOCS') == 'True')
 
 
-MOCK_MODULES = ['scipy', 'tabulate',
-                'sklearn.datasets', 'sklearn',
-                'scipy.misc', 'h5py', 'nltk',
-                'cv2', 'scipy.io', 'dill', 'zmq', 'subprocess32', 'lmdb',
-                'tornado.concurrent', 'tornado',
+MOCK_MODULES = ['tabulate', 'h5py',
+                'cv2', 'zmq', 'subprocess32', 'lmdb',
+                'sklearn', 'sklearn.datasets',
+                'scipy', 'scipy.misc', 'scipy.io',
+                'tornado', 'tornado.concurrent',
+                'horovod', 'horovod.tensorflow',
                 'msgpack', 'msgpack_numpy',
-                'gym', 'functools32']
+                'functools32']
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock(name=mod_name)
 sys.modules['cv2'].__version__ = '3.2.1'    # fake version
@@ -62,7 +64,7 @@ napoleon_include_special_with_doc = True
 napoleon_numpy_docstring = False
 napoleon_use_rtype = False
 
-if os.environ.get('READTHEDOCS') == 'True':
+if ON_RTD:
     intersphinx_timeout = 10
 else:
     # skip this when building locally
@@ -129,7 +131,7 @@ add_function_parentheses = True
 # If true, the current module name will be prepended to all description
 # unit titles (such as .. function::).
 add_module_names = True
-# TODO use module name, but remove `tensorpack.` ?
+# 'tensorpack.' prefix was removed by js
 
 # If true, sectionauthor and moduleauthor directives will be shown in the
 # output. They are ignored by default.
@@ -160,7 +162,7 @@ html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-html_theme_options = { }
+html_theme_options = {}
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
@@ -352,23 +354,30 @@ def process_signature(app, what, name, obj, options, signature,
     return signature, return_annotation
 
 def autodoc_skip_member(app, what, name, obj, skip, options):
+    # we hide something deliberately
+    if getattr(obj, '__HIDE_SPHINX_DOC__', False):
+        return True
+    if name == '__init__':
+        if obj.__doc__ and skip:
+            # include_init_with_doc doesn't work well for decorated init
+            # https://github.com/sphinx-doc/sphinx/issues/4258
+            return False
+    # hide deprecated stuff
     if name in [
-        'DistributedReplicatedTrainer',
-        'SingleCostFeedfreeTrainer',
-        'SimpleFeedfreeTrainer',
-        'FeedfreeTrainerBase',
-        'FeedfreeInferenceRunner',
-        'replace_get_variable',
-        'remap_get_variable',
-        'freeze_get_variable',
-        'Triggerable',
-        'predictor_factory',
+        'MultiGPUTrainerBase',
         'get_predictors',
-        'vs_name_for_predictor',
         'RandomCropAroundBox',
+        'GaussianDeform',
         'dump_chkpt_vars',
-        'VisualQA',
-        'ParamRestore']:
+        'DumpTensor',
+        'StagingInputWrapper',
+        'StepTensorPrinter',
+        'set_tower_func',
+        'TryResumeTraining',
+
+        'guided_relu', 'saliency_map', 'get_scalar_var',
+        'prediction_incorrect', 'huber_loss',
+        ]:
         return True
     if name in ['get_data', 'size', 'reset_state']:
         # skip these methods with empty docstring
@@ -380,14 +389,22 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
                 return True
     return None
 
+def url_resolver(url):
+    if '.html' not in url:
+        return "https://github.com/ppwwyyxx/tensorpack/blob/master/" + url
+    else:
+        if ON_RTD:
+            return "http://tensorpack.readthedocs.io/en/latest/" + url
+        else:
+            return '/' + url
+
 def setup(app):
     from recommonmark.transform import AutoStructify
     app.connect('autodoc-process-signature', process_signature)
     app.connect('autodoc-skip-member', autodoc_skip_member)
     app.add_config_value(
         'recommonmark_config',
-        {'url_resolver': lambda url: \
-         "https://github.com/ppwwyyxx/tensorpack/blob/master/" + url,
+        {'url_resolver': url_resolver,
          'auto_toc_tree_section': 'Contents',
          'enable_math': True,
          'enable_inline_math': True,

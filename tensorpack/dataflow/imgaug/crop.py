@@ -2,17 +2,20 @@
 # File: crop.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
-from .base import ImageAugmentor
-from ...utils.rect import IntBox
-from ...utils.argtools import shape2d
-
 from six.moves import range
 import numpy as np
+
+from .base import ImageAugmentor
+from ...utils.rect import IntBox
+from ...utils.develop import log_deprecated
+from ...utils.argtools import shape2d
+from .transform import TransformAugmentorBase, CropTransform
+
 
 __all__ = ['RandomCrop', 'CenterCrop', 'RandomCropAroundBox', 'RandomCropRandomShape']
 
 
-class RandomCrop(ImageAugmentor):
+class RandomCrop(TransformAugmentorBase):
     """ Randomly crop the image into a smaller one """
 
     def __init__(self, crop_shape):
@@ -32,20 +35,10 @@ class RandomCrop(ImageAugmentor):
         h0 = 0 if diffh == 0 else self.rng.randint(diffh)
         diffw = orig_shape[1] - self.crop_shape[1]
         w0 = 0 if diffw == 0 else self.rng.randint(diffw)
-        return (h0, w0)
-
-    def _augment(self, img, param):
-        h0, w0 = param
-        return img[h0:h0 + self.crop_shape[0], w0:w0 + self.crop_shape[1]]
-
-    def _augment_coords(self, coords, param):
-        h0, w0 = param
-        coords[:, 0] = coords[:, 0] - w0
-        coords[:, 1] = coords[:, 1] - h0
-        return coords
+        return CropTransform(h0, w0, self.crop_shape[0], self.crop_shape[1])
 
 
-class CenterCrop(ImageAugmentor):
+class CenterCrop(TransformAugmentorBase):
     """ Crop the image at the center"""
 
     def __init__(self, crop_shape):
@@ -60,17 +53,7 @@ class CenterCrop(ImageAugmentor):
         orig_shape = img.shape
         h0 = int((orig_shape[0] - self.crop_shape[0]) * 0.5)
         w0 = int((orig_shape[1] - self.crop_shape[1]) * 0.5)
-        return (h0, w0)
-
-    def _augment(self, img, param):
-        h0, w0 = param
-        return img[h0:h0 + self.crop_shape[0], w0:w0 + self.crop_shape[1]]
-
-    def _augment_coords(self, coords, param):
-        h0, w0 = param
-        coords[:, 0] = coords[:, 0] - w0
-        coords[:, 1] = coords[:, 1] - h0
-        return coords
+        return CropTransform(h0, w0, self.crop_shape[0], self.crop_shape[1])
 
 
 def perturb_BB(image_shape, bb, max_perturb_pixel,
@@ -108,7 +91,7 @@ def perturb_BB(image_shape, bb, max_perturb_pixel,
     return bb
 
 
-# TODO shouldn't include strange augmentors like this.
+# TODO deprecated. shouldn't include strange augmentors like this.
 class RandomCropAroundBox(ImageAugmentor):
     """
     Crop a box around a bounding box by some random perturbation.
@@ -122,6 +105,10 @@ class RandomCropAroundBox(ImageAugmentor):
             max_aspect_ratio_diff (float): keep aspect ratio difference within the range
         """
         super(RandomCropAroundBox, self).__init__()
+        log_deprecated(
+            "RandomCropAroundBox",
+            "It's neither common nor well-defined. Please implement something by yourself.",
+            "2017-11-30")
         self._init(locals())
 
     def _get_augment_params(self, img):
@@ -141,7 +128,7 @@ class RandomCropAroundBox(ImageAugmentor):
         return coords
 
 
-class RandomCropRandomShape(ImageAugmentor):
+class RandomCropRandomShape(TransformAugmentorBase):
     """ Random crop with a random shape"""
 
     def __init__(self, wmin, hmin,
@@ -169,17 +156,7 @@ class RandomCropRandomShape(ImageAugmentor):
         assert diffh >= 0 and diffw >= 0
         y0 = 0 if diffh == 0 else self.rng.randint(diffh)
         x0 = 0 if diffw == 0 else self.rng.randint(diffw)
-        return (y0, x0, h, w)
-
-    def _augment(self, img, param):
-        y0, x0, h, w = param
-        return img[y0:y0 + h, x0:x0 + w]
-
-    def _augment_coords(self, coords, param):
-        y0, x0, _, _ = param
-        coords[:, 0] = coords[:, 0] - x0
-        coords[:, 1] = coords[:, 1] - y0
-        return coords
+        return CropTransform(y0, x0, h, w)
 
 
 if __name__ == '__main__':

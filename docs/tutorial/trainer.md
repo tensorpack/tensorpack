@@ -1,63 +1,54 @@
 
-# Trainer
+# Trainers
 
-In research we do training of various kind.
-The only assumption tensorpack `Trainer` class makes about your training, is that your training
-follows this pattern:
-```python
-for epoch_num in range(starting_epoch, max_epoch):
-	for local_step in range(steps_per_epoch):
-		run_step()
-```
+Tensorpack trainers contain logic of:
 
-1. Training is **running some iterations**.
-Tensorpack base trainer implements the logic of __running the iteration__.
-Users or derived trainers should implement __what the iteration is__.
+1. Building the graph.
+2. Running the iterations (with callbacks).
 
-2. Trainer assumes the existence of __"epoch"__, i.e. that the iterations run in double for-loops.
-But it doesn't need to be a full pass of your dataset, ``steps_per_epoch`` can be any number you set
-and it only affects the [schedule of callbacks](http://tensorpack.readthedocs.io/en/latest/tutorial/extend/callback.html).
-In other words, an "epoch" is the __default period__ to run callbacks (validation, summary, checkpoint, etc.).
+Usually you won't touch these methods directly, but use
+[higher-level interface](training-interface.html) on trainers.
+You'll only need to __select__ what trainer to use.
+
+### Tower Trainer
+
+Following the terminology in TensorFlow,
+a __tower function__ is a callable that takes input tensors and adds __one replicate__ of the model to the graph.
+
+Most types of neural-network training could fall into this category.
+All non-base trainers in tensorpack is a subclass of [TowerTrainer](../modules/train.html#tensorpack.train.TowerTrainer).
+The concept of tower is used mainly to support:
+
+1. Data-parallel multi-GPU training, where a replicate is built on each GPU.
+2. Automatically building the graph for inference, where a replicate is built under inference mode.
+
+You'll specify a tower function when you use `TowerTrainer`.
+The function needs to follow some conventions:
+
+1. It will always be called under a :class:`TowerContext`.
+	 which will contain information about reuse, training/inference, scope name, etc.
+2. It might get called multiple times for data-parallel training or inference.
+3. To respect variable reuse, use `tf.get_variable` instead of
+	 `tf.Variable` in the function.
 
 
-### Common Trainers
+### MultiGPU Trainers
 
-Most neural network training tasks are single-cost optimization.
-Tensorpack provides some trainer implementations for such tasks.
-These trainers will build the graph based on the given `ModelDesc`, and minimizes `ModelDesc.cost`.
+For data-parallel multi-GPU training, different [multi-GPU trainers](../modules/train.html)
+implement different parallel logic.
+They take care of device placement, gradient averaging and synchronoization
+in the efficient way and all reach the same performance as the
+[official TF benchmarks](https://www.tensorflow.org/performance/benchmarks).
+It takes only one line of code change to use them.
 
-To use trainers, pass a `TrainConfig` to configure them:
+Note some common problems when using these trainers:
 
-```python
-config = TrainConfig(
-           model=MyModel()
-           dataflow=my_dataflow,
-           # data=my_inputsource, # alternatively, use a customized InputSource
-           callbacks=[...]
-         )
+1. In each iteration all GPUs (all replicates of the model) will take tensors from the `InputSource`,
+	instead of taking one for all and split.
+	So the total batch size would become ``(batch size of InputSource/DataFlow) * #GPU``.
 
-# start training:
-SomeTrainer(config, other_arguments).train()
+	Splitting a tensor to GPUs makes no sense at all, only to put unnecessary shape constraints on the data.
+	By letting each GPU train on its own input tensors, they can train on inputs of different shapes simultaneously.
 
-# start multi-GPU training with a synchronous update:
-# SyncMultiGPUTrainerParameterServer(config).train()
-```
-
-When you set the DataFlow (rather than the InputSource) in the config,
-tensorpack trainers automatically pick up certain prefetch mechanism,
-which will run faster than a naive `sess.run(..., feed_dict={...})`.
-You can set the InputSource instead, to customize this behavior.
-
-Existing multi-GPU trainers include the logic of data-parallel training.
-You can enable them by just one line, and all the necessary logic to achieve the best performance was baked into the trainers already.
-The trainers can reach the same performance as the [official tensorflow benchmark](https://www.tensorflow.org/performance/benchmarks).
-
-Please note that in data-parallel training, in each iteration all towers (all replicates of the model) will take
-tensors from the InputSource (instead of taking one for all and split). So the total batch size
-would be ``(batch size of InputSource/DataFlow) * #GPU``.
-
-### Custom Trainers
-
-You can easily write a trainer for other types of training.
-See [Write a Trainer](http://tensorpack.readthedocs.io/en/latest/tutorial/extend/trainer.html).
-
+2. The tower function (your model code) will get called multipile times.
+	You'll need to be very careful when modifying global states in those functions, e.g. adding ops to TF collections.

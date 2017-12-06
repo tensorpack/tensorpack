@@ -148,6 +148,7 @@ class MapImage(ImageAugmentor):
         Args:
             func: a function which takes an image array and return an augmented one
         """
+        super(MapImage, self).__init__()
         self.func = func
         self.coord_func = coord_func
 

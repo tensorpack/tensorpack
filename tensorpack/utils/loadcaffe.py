@@ -72,9 +72,9 @@ class CaffeLayerProcessor(object):
                 name + '/b': param[1].data}
 
     def proc_bn(self, idx, name, param):
-        assert param[2].data[0] == 1.0
-        return {name + '/mean/EMA': param[0].data,
-                name + '/variance/EMA': param[1].data}
+        scale_factor = param[2].data[0]
+        return {name + '/mean/EMA': param[0].data / scale_factor,
+                name + '/variance/EMA': param[1].data / scale_factor}
 
     def proc_scale(self, idx, name, param):
         bottom_name = self.net.bottom_names[name][0]
@@ -110,7 +110,7 @@ def load_caffe(model_desc, model_file):
         net = caffe.Net(model_desc, model_file, caffe.TEST)
     param_dict = CaffeLayerProcessor(net).process()
     logger.info("Model loaded from caffe. Params: " +
-                " ".join(sorted(param_dict.keys())))
+                ", ".join(sorted(param_dict.keys())))
     return param_dict
 
 
@@ -135,7 +135,7 @@ def get_caffe_pb():
                 version = version.decode('utf-8')
                 version = float('.'.join(version.split(' ')[1].split('.')[:2]))
                 assert version >= 2.7, "Require protoc>=2.7 for Python3"
-            except:
+            except Exception:
                 logger.exception("protoc --version gives: " + str(version))
                 raise
 

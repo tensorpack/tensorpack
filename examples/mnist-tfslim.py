@@ -2,9 +2,7 @@
 # -*- coding: utf-8 -*-
 # File: mnist-tfslim.py
 
-import numpy as np
 import os
-import sys
 import argparse
 """
 MNIST ConvNet example using TensorFlow-slim.
@@ -13,6 +11,7 @@ the only differences are:
     1. use slim.layers, slim.arg_scope, etc
     2. use slim names to summarize weights
 """
+
 
 from tensorpack import *
 from tensorpack.dataflow import dataset
@@ -47,15 +46,15 @@ class Model(ModelDesc):
             l = slim.layers.dropout(l, is_training=is_training)
             logits = slim.layers.fully_connected(l, 10, activation_fn=None, scope='fc1')
 
-        prob = tf.nn.softmax(logits, name='prob')
+        tf.nn.softmax(logits, name='prob')
 
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
 
-        wrong = symbolic_functions.prediction_incorrect(logits, label, name='incorrect')
+        acc = tf.to_float(tf.nn.in_top_k(logits, label, 1))
 
-        train_error = tf.reduce_mean(wrong, name='train_error')
-        summary.add_moving_summary(train_error)
+        acc = tf.reduce_mean(acc, name='accuracy')
+        summary.add_moving_summary(acc)
 
         self.cost = cost
         summary.add_moving_summary(cost)
@@ -87,7 +86,7 @@ def get_config():
             ModelSaver(),
             InferenceRunner(
                 dataset_test,
-                [ScalarStats('cross_entropy_loss'), ClassificationError('incorrect')]),
+                ScalarStats(['cross_entropy_loss', 'accuracy'])),
         ],
         max_epoch=100,
     )
@@ -96,12 +95,9 @@ def get_config():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
-    parser.add_argument('--load', help='load model')
     args = parser.parse_args()
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
     config = get_config()
-    if args.load:
-        config.session_init = SaverRestore(args.load)
-    SimpleTrainer(config).train()
+    launch_train_with_config(config, SimpleTrainer())

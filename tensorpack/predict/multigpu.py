@@ -5,8 +5,8 @@
 
 import tensorflow as tf
 from ..utils import logger
-from ..graph_builder.predictor_factory import PredictorFactory
-from ..graph_builder.input_source import PlaceholderInput
+from ..graph_builder.predict import SimplePredictBuilder
+from ..input_source import PlaceholderInput
 from .base import OnlinePredictor
 
 __all__ = ['MultiTowerOfflinePredictor',
@@ -28,13 +28,17 @@ class MultiTowerOfflinePredictor(OnlinePredictor):
         self.return_input = config.return_input
         with self.graph.as_default():
             handles = []
-            factory = PredictorFactory(config.model, towers)
+
+            input = PlaceholderInput()
+            input.setup(config.inputs_desc)
+
             for idx, t in enumerate(towers):
                 tower_name = 'tower' + str(t)
-                device = '/gpu:' + str(t)
 
                 with tf.variable_scope(tf.get_variable_scope(), reuse=idx > 0):
-                    handles.append(factory.build(tower_name, device))
+                    builder = SimplePredictBuilder(ns_name=tower_name, device=t)
+                    builder.build(input, config.tower_func)
+                    handles.append(config.tower_func.towers[-1])
 
             self.sess = config.session_creator.create_session()
             config.session_init.init(self.sess)
@@ -87,15 +91,15 @@ class DataParallelOfflinePredictor(OnlinePredictor):
             input_tensors = []
             output_tensors = []
 
-            factory = PredictorFactory(config.model, towers)
             for idx, t in enumerate(towers):
                 tower_name = 'tower' + str(t)
-                device = '/gpu:' + str(t)
                 input = PlaceholderInput(tower_name + '/')
-                input.setup(config.model.get_inputs_desc())
+                input.setup(config.inputs_desc)
 
                 with tf.variable_scope(tf.get_variable_scope(), reuse=idx > 0):
-                    h = factory.build(tower_name, device, )
+                    builder = SimplePredictBuilder(ns_name=tower_name, device=t)
+                    builder.build(input, config.tower_func)
+                    h = config.tower_func.towers[-1]
                     input_tensors.extend(h.get_tensors(config.input_names))
                     output_tensors.extend(h.get_tensors(config.output_names))
 

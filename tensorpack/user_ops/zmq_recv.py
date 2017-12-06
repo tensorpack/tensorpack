@@ -11,12 +11,13 @@ from tensorflow.core.framework.tensor_pb2 import TensorProto
 from tensorflow.core.framework import types_pb2 as DataType
 # have to import like this: https://github.com/tensorflow/tensorflow/commit/955f038afbeb81302cea43058078e68574000bce
 
-from .common import compile
+from .common import compile, get_ext_suffix
 
 __all__ = ['zmq_recv', 'dumps_for_tfop',
            'dump_tensor_protos', 'to_tensor_proto']
 
 
+# TODO '.so' for linux only
 def build():
     global zmq_recv
     ret = compile()
@@ -25,7 +26,7 @@ def build():
     else:
         file_dir = os.path.dirname(os.path.abspath(__file__))
         recv_mod = tf.load_op_library(
-            os.path.join(file_dir, 'zmq_recv_op.so'))
+            os.path.join(file_dir, 'zmq_recv_op.' + get_ext_suffix()))
         zmq_recv = recv_mod.zmq_recv
 
 

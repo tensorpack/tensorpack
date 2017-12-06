@@ -6,17 +6,41 @@
 import cv2
 import tensorflow as tf
 import argparse
-import numpy as np
 from six.moves import zip
 import os
-import sys
+
 
 from tensorpack import *
-import tensorpack.tfutils.symbolic_functions as symbf
 from tensorpack.dataflow import dataset
 from tensorpack.utils.gpu import get_nr_gpu
 from tensorpack.tfutils import optimizer
-from tensorpack.tfutils.summary import *
+from tensorpack.tfutils.summary import add_moving_summary, add_param_summary
+
+
+def class_balanced_sigmoid_cross_entropy(logits, label, name='cross_entropy_loss'):
+    """
+    The class-balanced cross entropy loss,
+    as in `Holistically-Nested Edge Detection
+    <http://arxiv.org/abs/1504.06375>`_.
+
+    Args:
+        logits: of shape (b, ...).
+        label: of the same shape. the ground truth in {0,1}.
+    Returns:
+        class-balanced cross entropy loss.
+    """
+    with tf.name_scope('class_balanced_sigmoid_cross_entropy'):
+        y = tf.cast(label, tf.float32)
+
+        count_neg = tf.reduce_sum(1. - y)
+        count_pos = tf.reduce_sum(y)
+        beta = count_neg / (count_neg + count_pos)
+
+        pos_weight = beta / (1 - beta)
+        cost = tf.nn.weighted_cross_entropy_with_logits(logits=logits, targets=y, pos_weight=pos_weight)
+        cost = tf.reduce_mean(cost * (1 - beta))
+        zero = tf.equal(count_pos, 0.0)
+    return tf.where(zero, 0.0, cost, name=name)
 
 
 class Model(ModelDesc):
@@ -30,7 +54,7 @@ class Model(ModelDesc):
         edgemap = tf.expand_dims(edgemap, 3, name='edgemap4d')
 
         def branch(name, l, up):
-            with tf.variable_scope(name) as scope:
+            with tf.variable_scope(name):
                 l = Conv2D('convfc', l, 1, kernel_shape=1, nl=tf.identity,
                            use_bias=True,
                            W_init=tf.constant_initializer(),
@@ -75,7 +99,7 @@ class Model(ModelDesc):
         costs = []
         for idx, b in enumerate([b1, b2, b3, b4, b5, final_map]):
             output = tf.nn.sigmoid(b, name='output{}'.format(idx + 1))
-            xentropy = symbf.class_balanced_sigmoid_cross_entropy(
+            xentropy = class_balanced_sigmoid_cross_entropy(
                 b, edgemap,
                 name='xentropy{}'.format(idx + 1))
             costs.append(xentropy)
@@ -96,7 +120,7 @@ class Model(ModelDesc):
             add_moving_summary(costs + [wrong, self.cost])
 
     def _get_optimizer(self):
-        lr = symbf.get_scalar_var('learning_rate', 3e-5, summary=True)
+        lr = tf.get_variable('learning_rate', initializer=3e-5, trainable=False)
         opt = tf.train.AdamOptimizer(lr, epsilon=1e-3)
         return optimizer.apply_grad_processors(
             opt, [gradproc.ScaleGradient(
@@ -198,8 +222,10 @@ def run(model_path, image_path, output):
     predictor = OfflinePredictor(pred_config)
     im = cv2.imread(image_path)
     assert im is not None
-    im = cv2.resize(im, (im.shape[1] // 16 * 16, im.shape[0] // 16 * 16))
-    outputs = predictor([[im.astype('float32')]])
+    im = cv2.resize(
+        im, (im.shape[1] // 16 * 16, im.shape[0] // 16 * 16)
+    )[None, :, :, :].astype('float32')
+    outputs = predictor(im)
     if output is None:
         for k in range(6):
             pred = outputs[k][0]
@@ -229,5 +255,6 @@ if __name__ == '__main__':
         config = get_config()
         if args.load:
             config.session_init = get_model_loader(args.load)
-        config.nr_tower = max(get_nr_gpu(), 1)
-        SyncMultiGPUTrainer(config).train()
+        launch_train_with_config(
+            config,
+            SyncMultiGPUTrainer(max(get_nr_gpu(), 1)))

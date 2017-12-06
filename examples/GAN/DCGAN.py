@@ -5,12 +5,12 @@
 
 import glob
 import numpy as np
-import os, sys
+import os
 import argparse
 
+
 from tensorpack import *
-from tensorpack.utils.viz import *
-from tensorpack.tfutils.summary import add_moving_summary
+from tensorpack.utils.viz import stack_patches
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
 from tensorpack.utils.globvars import globalns as opt
 import tensorflow as tf
@@ -31,7 +31,7 @@ from GAN import GANTrainer, RandomZData, GANModelDesc
 You can also train on other images (just use any directory of jpg files in
 `--data`). But you may need to change the preprocessing.
 
-A pretrained model on CelebA is at https://drive.google.com/open?id=0B9IPQTvr2BBkLUF2M0RXU1NYSkE
+A pretrained model on CelebA is at http://models.tensorpack.com/GAN/
 """
 
 # global vars
@@ -51,10 +51,10 @@ class Model(GANModelDesc):
         l = tf.reshape(l, [-1, 4, 4, nf * 8])
         l = BNReLU(l)
         with argscope(Deconv2D, nl=BNReLU, kernel_shape=4, stride=2):
-            l = Deconv2D('deconv1', l, [8, 8, nf * 4])
-            l = Deconv2D('deconv2', l, [16, 16, nf * 2])
-            l = Deconv2D('deconv3', l, [32, 32, nf])
-            l = Deconv2D('deconv4', l, [64, 64, 3], nl=tf.identity)
+            l = Deconv2D('deconv1', l, nf * 4)
+            l = Deconv2D('deconv2', l, nf * 2)
+            l = Deconv2D('deconv3', l, nf)
+            l = Deconv2D('deconv4', l, 3, nl=tf.identity)
             l = tf.tanh(l, name='gen')
         return l
 
@@ -95,7 +95,7 @@ class Model(GANModelDesc):
         self.collect_variables()
 
     def _get_optimizer(self):
-        lr = symbolic_functions.get_scalar_var('learning_rate', 2e-4, summary=True)
+        lr = tf.get_variable('learning_rate', initializer=2e-4, trainable=False)
         return tf.train.AdamOptimizer(lr, beta1=0.5, epsilon=1e-3)
 
 
@@ -126,11 +126,11 @@ def sample(model, model_path, output_name='gen/gen'):
         output_names=[output_name, 'z'])
     pred = SimpleDatasetPredictor(pred, RandomZData((100, opt.Z_DIM)))
     for o in pred.get_result():
-        o, zs = o[0] + 1, o[1]
+        o = o[0] + 1
         o = o * 128.0
         o = np.clip(o, 0, 255)
         o = o[:, :, :, ::-1]
-        viz = stack_patches(o, nr_row=10, nr_col=10, viz=True)
+        stack_patches(o, nr_row=10, nr_col=10, viz=True)
 
 
 def get_args():
@@ -155,12 +155,11 @@ if __name__ == '__main__':
     else:
         assert args.data
         logger.auto_set_dir()
-        config = TrainConfig(
-            model=Model(),
-            dataflow=get_data(args.data),
+        GANTrainer(
+            input=QueueInput(get_data(args.data)),
+            model=Model()).train_with_defaults(
             callbacks=[ModelSaver()],
             steps_per_epoch=300,
             max_epoch=200,
             session_init=SaverRestore(args.load) if args.load else None
         )
-        GANTrainer(config).train()

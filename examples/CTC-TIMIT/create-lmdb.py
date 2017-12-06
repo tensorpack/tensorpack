@@ -2,16 +2,16 @@
 # -*- coding: utf-8 -*-
 # File: create-lmdb.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
-import sys
 import os
 import scipy.io.wavfile as wavfile
 import string
 import numpy as np
 import argparse
 
-from tensorpack import *
+from tensorpack.dataflow import dftools, DataFlow, LMDBDataPoint
 from tensorpack.utils.argtools import memoized
 from tensorpack.utils.stats import OnlineMoments
+from tensorpack.utils import serialize, fs, logger
 from tensorpack.utils.utils import get_tqdm
 import bob.ap
 
@@ -34,6 +34,7 @@ def read_timit_txt(f):
     line = line.replace('.', '').lower()
     line = filter(lambda c: c in CHARSET, line)
     f.close()
+    ret = []
     for c in line:
         ret.append(WORD_DIC[c])
     return np.asarray(ret)

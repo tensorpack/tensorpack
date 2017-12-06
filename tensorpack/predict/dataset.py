@@ -73,7 +73,7 @@ class SimpleDatasetPredictor(DatasetPredictorBase):
             sz = 0
         with get_tqdm(total=sz, disable=(sz == 0)) as pbar:
             for dp in self.dataset.get_data():
-                res = self.predictor(dp)
+                res = self.predictor(*dp)
                 yield res
                 pbar.update()
 

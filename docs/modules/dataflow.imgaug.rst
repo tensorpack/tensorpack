@@ -5,7 +5,7 @@ tensorpack.dataflow.imgaug package
 
     .. raw:: html
 
-        <script type="text/javascript" src='../_static/pymunk.js'></script>
+        <script type="text/javascript" src='../_static/build_toc_group.js'></script>
 
 .. automodule:: tensorpack.dataflow.imgaug
     :members:

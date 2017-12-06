@@ -9,9 +9,10 @@ import tensorflow as tf
 import six
 
 from ..utils.argtools import memoized
-from ..tfutils.tower import get_current_tower_context
+from ..utils.develop import log_deprecated
 from ..tfutils.gradproc import FilterNoneGrad
-from .input_source_base import InputSource
+from ..tfutils.tower import get_current_tower_context
+from ..input_source import InputSource
 from ..models.regularize import regularize_cost_from_collection
 
 __all__ = ['InputDesc', 'ModelDesc', 'ModelDescBase']
@@ -25,8 +26,6 @@ class InputDesc(
     input source.
     """
 
-    _cached_placeholder = None
-
     def __new__(cls, type, shape, name):
         """
         Args:
@@ -34,28 +33,10 @@ class InputDesc(
             shape (tuple):
             name (str):
         """
-        shape = tuple(shape)    # has to be tuple for self to be hashable
+        shape = tuple(shape)    # has to be tuple for "self" to be hashable
         self = super(InputDesc, cls).__new__(cls, type, shape, name)
+        self._cached_placeholder = None
         return self
-
-    # TODO in serialization, skip _cached_placeholder
-    # def dumps(self):
-    #     """
-    #     Returns:
-    #         str: serialized string
-    #     """
-    #     return pickle.dumps(self)
-
-    # @staticmethod
-    # def loads(buf):
-    #     """
-    #     Args:
-    #         buf (str): serialized string
-
-    #     Returns:
-    #         InputDesc:
-    #     """
-    #     return pickle.loads(buf)
 
     def build_placeholder(self, prefix=''):
         """
@@ -72,10 +53,10 @@ class InputDesc(
                 self.type, shape=self.shape,
                 name=prefix + self.name)
         if prefix == '' and self._cached_placeholder is None:
-            self._cached_placeholder = ret
+            self._cached_placeholder = ret  # cached_placeholder only caches the prefix='' case
         return ret
 
-    @memoized
+    # cannot memoize here, because InputDesc is hashed by its fields.
     def build_placeholder_reuse(self):
         """
         Build a tf.placeholder from the metadata, or return an old one.
@@ -86,6 +67,11 @@ class InputDesc(
         if self._cached_placeholder is not None:
             return self._cached_placeholder
         return self.build_placeholder()
+
+    @staticmethod
+    def from_tensor(t):
+        return InputDesc(
+            t.dtype, t.shape.as_list(), t.name[:-2])
 
 
 @six.add_metaclass(ABCMeta)
@@ -106,38 +92,51 @@ class ModelDescBase(object):
         :returns: a list of InputDesc
         """
 
-    # TODO only use InputSource in the future? Now only used in predictor_factory
-    def build_graph(self, inputs):
+    def build_graph(self, *args):
         """
         Build the whole symbolic graph.
+        This is supposed to be the "tower function" when used with :class:`TowerTrainer`.
+        By default it will call :meth:`_build_graph`
+        with a list of input tensors.
 
         Args:
-            inputs (list[tf.Tensor] or InputSource): a list of tensors, or an :class:`InputSource`,
-                that match the list of :class:`InputDesc` defined by ``_get_inputs``.
+            args ([tf.Tensor]): tensors that matches the list of
+                :class:`InputDesc` defined by ``_get_inputs``.
         """
-        if isinstance(inputs, InputSource):
-            inputs = inputs.get_input_tensors()
+        if len(args) == 1:
+            arg = args[0]
+            if isinstance(arg, InputSource):
+                inputs = arg.get_input_tensors()  # remove in the future?
+                log_deprecated("build_graph(InputSource)", "Call with tensors in positional args instead.")
+            elif isinstance(arg, (list, tuple)):
+                inputs = arg
+                log_deprecated("build_graph([Tensor])", "Call with positional args instead.")
+            else:
+                inputs = [arg]
+        else:
+            inputs = args
+
         assert len(inputs) == len(self.get_inputs_desc()), \
             "Number of inputs passed to the graph != number of inputs defined " \
             "in ModelDesc! ({} != {})".format(len(inputs), len(self.get_inputs_desc()))
         self._build_graph(inputs)
 
-    @abstractmethod
     def _build_graph(self, inputs):
+        """
+        This is an old interface which takes a list of tensors, instead of positional arguments.
+        """
         pass
 
 
 class ModelDesc(ModelDescBase):
     """
     A ModelDesc with single cost and single optimizer.
+    It contains information about InputDesc, how to get cost, and how to get optimizer.
     """
 
     def get_cost(self):
         """
         Return the cost tensor in the graph.
-        Used by some of the tensorpack :class:`Trainer` which assumes single-cost models.
-        You can ignore this method (or just use :class:`ModelDescBase`)
-        if you use your own trainer with more than one cost.
 
         It calls :meth:`ModelDesc._get_cost()` which by default returns
         ``self.cost``. You can override :meth:`_get_cost()` if needed.
@@ -158,9 +157,7 @@ class ModelDesc(ModelDescBase):
     @memoized
     def get_optimizer(self):
         """
-        Return the optimizer used in the task.
-        Used by some of the tensorpack :class:`Trainer` which assume single optimizer.
-        You should use :class:`ModelDescBase` if you use a custom trainer with more than one optimizers.
+        Return the memoized optimizer returned by `_get_optimizer`.
 
         Users of :class:`ModelDesc` will need to implement `_get_optimizer()`,
         which will only be called once per each model.
@@ -173,27 +170,28 @@ class ModelDesc(ModelDescBase):
     def _get_optimizer(self):
         raise NotImplementedError()
 
-    def get_cost_and_grad(self):
+    def _build_graph_get_cost(self, *inputs):
+        self.build_graph(*inputs)
+        return self.get_cost()
+
+    def _build_graph_get_grads(self, *inputs):
         """
-        Compute gradients with ``self.get_optimizer()`` on ``self.get_cost()``.
+        Build the graph from inputs and return the grads.
+        This is useful for most of the :class:`GraphBuilder` which expects such a function.
 
         Returns:
-            cost (tf.Tensor): the cost tensor returned by ``self.get_cost()``.
-            grads (list[tuple]): list of (grad, variable) tuple.
+            [(grad, var)]
         """
-        return self._get_cost_and_grad()
-
-    def _get_cost_and_grad(self):
         ctx = get_current_tower_context()
-        assert ctx is not None and ctx.is_training, ctx
+        cost = self._build_graph_get_cost(*inputs)
 
-        cost = self.get_cost()    # assume single cost
-
-        # produce gradients
-        varlist = ctx.filter_vars_by_vs_name(tf.trainable_variables())
+        if ctx.has_own_variables:
+            varlist = ctx.get_collection_in_tower(tf.GraphKeys.TRAINABLE_VARIABLES)
+        else:
+            varlist = tf.trainable_variables()
         opt = self.get_optimizer()
         grads = opt.compute_gradients(
             cost, var_list=varlist,
             gate_gradients=False, colocate_gradients_with_ops=True)
         grads = FilterNoneGrad().process(grads)
-        return cost, grads
+        return grads

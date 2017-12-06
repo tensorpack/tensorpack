@@ -73,7 +73,7 @@ class SessionUpdate(object):
                 name, val.shape, varshape))
             val = val.reshape(varshape)
 
-        # fix some common type incompatibility problem, but is certainly not enough
+        # fix some common type incompatibility problems, but not all
         def upcast(vartype, valtype):
             # allow up-casting
             if vartype == tf.float64 and valtype == np.float32:
@@ -122,6 +122,8 @@ def dump_session_params(path):
     var.extend(tf.get_collection(tf.GraphKeys.MODEL_VARIABLES))
     # TODO dedup
     assert len(set(var)) == len(var), "TRAINABLE and MODEL variables have duplication!"
+    gvars = set([k.name for k in tf.global_variables()])
+    var = [v for v in var if v.name in gvars]
     result = {}
     for v in var:
         result[v.name] = v.eval()
@@ -148,7 +150,7 @@ def get_checkpoint_path(model_path):
     if os.path.basename(model_path) == model_path:
         model_path = os.path.join('.', model_path)  # avoid #4921 and #6142
     if os.path.basename(model_path) == 'checkpoint':
-        assert os.path.isfile(model_path), model_path
+        assert tf.gfile.Exists(model_path), model_path
         model_path = tf.train.latest_checkpoint(os.path.dirname(model_path))
         # to be consistent with either v1 or v2
 
@@ -162,12 +164,12 @@ def get_checkpoint_path(model_path):
         logger.warn(
             "Checkpoint path {} is auto-corrected to {}.".format(model_path, new_path))
         model_path = new_path
-    assert os.path.isfile(model_path) or os.path.isfile(model_path + '.index'), model_path
+    assert tf.gfile.Exists(model_path) or tf.gfile.Exists(model_path + '.index'), model_path
     return model_path
 
 
 def load_chkpt_vars(model_path):
-    """ Dump all variables from a checkpoint to a dict.
+    """ Load all variables from a checkpoint to a dict.
 
     Args:
         model_path(str): path to a checkpoint.

@@ -1,31 +1,38 @@
 
-## imagenet-resnet.py, imagenet-resnet-se.py
+## [imagenet-resnet.py](imagenet-resnet.py)
 
-__Training__ code of ResNet on ImageNet, with pre-activation and squeeze-and-excitation.
-The pre-act ResNet follows the setup in [fb.resnet.torch](https://github.com/facebook/fb.resnet.torch) (except for the weight decay)
+__Training__ code of three variants of ResNet on ImageNet:
+
+* [Original ResNet](https://arxiv.org/abs/1512.03385)
+* [Pre-activation ResNet](https://arxiv.org/abs/1603.05027)
+* [Squeeze-and-Excitation ResNet](https://arxiv.org/abs/1709.01507)
+
+The training mostly follows the setup in [fb.resnet.torch](https://github.com/facebook/fb.resnet.torch)
 and gets similar performance (with much fewer lines of code).
 Models can be [downloaded here](https://goo.gl/6XjK9V).
 
 | Model              | Top 5 Error | Top 1 Error |
 |:-------------------|-------------|------------:|
-| ResNet18           |     10.55%  |      29.73% |
-| ResNet34           |     8.51%   |      26.50% |
-| ResNet50           |     7.24%   |      23.91% |
-| ResNet50-SE        |     6.42%   |      22.94% |
-| ResNet101          |     6.26%   |      22.53% |
+| ResNet18           |     10.50%  |      29.66% |
+| ResNet34					 |     8.56%   |      26.17% |
+| ResNet50           |     6.85%   |      23.61% |
+| ResNet50-SE				 |     6.24%   |      22.64% |
+| ResNet101      		 |     6.04%   |      21.95% |
+| ResNet152      		 |     5.78%   |      21.51% |
 
 To train, just run:
 ```bash
-./imagenet-resnet.py --data /path/to/original/ILSVRC --gpu 0,1,2,3 -d 50
+./imagenet-resnet.py --data /path/to/original/ILSVRC --gpu 0,1,2,3 -d 50 [--mode resnet/preact/se]
 ```
-You should be able to see good GPU utilization (around 95%), if your data is fast enough.
-See the [tutorial](http://tensorpack.readthedocs.io/en/latest/tutorial/efficient-dataflow.html) on how to speed up your data.
+You should be able to see good GPU utilization (95%~99%), if your data is fast enough.
+The default data pipeline is probably OK for most systems.
+See the [tutorial](http://tensorpack.readthedocs.io/en/latest/tutorial/efficient-dataflow.html) on other options to speed up your data.
 
 ![imagenet](imagenet-resnet.png)
 
-## load-resnet.py
+## [load-resnet.py](load-resnet.py)
 
-This script only converts and runs ImageNet-ResNet{50,101,152} Caffe models [released by Kaiming](https://github.com/KaimingHe/deep-residual-networks).
+This script only converts and runs ImageNet-ResNet{50,101,152} Caffe models [released by MSRA](https://github.com/KaimingHe/deep-residual-networks).
 Note that the architecture is different from the `imagenet-resnet.py` script and the models are not compatible.
 
 Usage:
@@ -41,14 +48,36 @@ The per-pixel mean used here is slightly different from the original.
 
 | Model              | Top 5 Error | Top 1 Error |
 |:-------------------|-------------|------------:|
-| ResNet 50          |      7.89%  |      25.03% |
-| ResNet 101         |      7.16%  |      23.74% |
-| ResNet 152         |      6.81%  |      23.28% |
+| ResNet 50          |      7.78%  |      24.77% |
+| ResNet 101         |      7.11%  |      23.54% |
+| ResNet 152         |      6.71%  |      23.21% |
 
-## cifar10-resnet.py
+## [cifar10-resnet.py](cifar10-resnet.py)
 
 Reproduce pre-activation ResNet on CIFAR10.
 
 ![cifar10](cifar10-resnet.png)
 
 Also see a [DenseNet implementation](https://github.com/YixuanLi/densenet-tensorflow) of the paper [Densely Connected Convolutional Networks](https://arxiv.org/abs/1608.06993).
+
+
+## [cifar10-preact18-mixup.py](cifar10-preact18-mixup.py)
+
+Reproduce the mixup pre-act ResNet-18 CIFAR10 experiment, in the paper:
+
+* [mixup: Beyond Empirical Risk Minimization](https://arxiv.org/abs/1710.09412).
+
+Please note that this preact18 architecture is
+[different](https://github.com/kuangliu/pytorch-cifar/blob/master/models/preact_resnet.py)
+from `cifar10-resnet18.py`.
+
+Usage:
+```bash
+./cifar10-preact18-mixup.py  # train without mixup
+./cifar10-preact18-mixup.py --mixup	 # with mixup
+```
+
+Validation error with the original LR schedule (100-150-200): __5.0%__ without mixup, __3.8%__ with mixup.
+This matches the number in the paper.
+
+With 2x LR schedule: 4.7% without mixup, and 3.2% with mixup.

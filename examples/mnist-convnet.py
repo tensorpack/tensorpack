@@ -2,9 +2,7 @@
 # -*- coding: utf-8 -*-
 # File: mnist-convnet.py
 
-import numpy as np
 import os
-import sys
 import argparse
 import tensorflow as tf
 """
@@ -12,11 +10,11 @@ MNIST ConvNet example.
 about 0.6% validation error after 30 epochs.
 """
 
+
 # Just import everything into current namespace
 from tensorpack import *
 from tensorpack.tfutils import summary
 from tensorpack.dataflow import dataset
-import tensorpack.tfutils.symbolic_functions as symbf
 
 IMAGE_SIZE = 28
 
@@ -57,21 +55,20 @@ class Model(ModelDesc):
                       .Dropout('dropout', 0.5)
                       .FullyConnected('fc1', out_dim=10, nl=tf.identity)())
 
-        prob = tf.nn.softmax(logits, name='prob')   # a Bx10 with probabilities
+        tf.nn.softmax(logits, name='prob')   # a Bx10 with probabilities
 
         # a vector of length B with loss of each sample
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')  # the average cross-entropy loss
 
-        # compute the "incorrect vector", for the callback ClassificationError to use at validation time
-        wrong = symbf.prediction_incorrect(logits, label, name='incorrect')
-        accuracy = symbf.accuracy(logits, label, name='accuracy')
+        correct = tf.cast(tf.nn.in_top_k(logits, label, 1), tf.float32, name='correct')
+        accuracy = tf.reduce_mean(correct, name='accuracy')
 
         # This will monitor training error (in a moving_average fashion):
         # 1. write the value to tensosrboard
         # 2. write the value to stat.json
         # 3. print the value after each epoch
-        train_error = tf.reduce_mean(wrong, name='train_error')
+        train_error = tf.reduce_mean(1 - correct, name='train_error')
         summary.add_moving_summary(train_error, accuracy)
 
         # Use a regex to find parameters to apply weight decay.
@@ -118,9 +115,7 @@ def get_config():
             MaxSaver('validation_accuracy'),  # save the model with highest accuracy (prefix 'validation_')
             InferenceRunner(    # run inference(for validation) after every epoch
                 dataset_test,   # the DataFlow instance used for validation
-                # Calculate both the cost and the error for this DataFlow
-                [ScalarStats('cross_entropy_loss'), ScalarStats('accuracy'),
-                 ClassificationError('incorrect')]),
+                ScalarStats(['cross_entropy_loss', 'accuracy'])),
         ],
         steps_per_epoch=steps_per_epoch,
         max_epoch=100,
@@ -143,4 +138,4 @@ if __name__ == '__main__':
         config.session_init = SaverRestore(args.load)
     # SimpleTrainer is slow, this is just a demo.
     # You can use QueueInputTrainer instead
-    SimpleTrainer(config).train()
+    launch_train_with_config(config, SimpleTrainer())

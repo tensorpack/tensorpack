@@ -1,5 +1,5 @@
 # $File: Makefile
-# $Date: Thu Aug 03 16:14:29 2017 -0700
+# $Date: Tue Oct 31 11:44:27 2017 +0800
 
 OBJ_DIR = obj
 
@@ -40,6 +40,7 @@ ccSOURCES = $(shell find $(SRCDIRS) -name "*.cc" | sed 's/^\.\///g')
 OBJS = $(addprefix $(OBJ_DIR)/,$(ccSOURCES:.cc=.o))
 DEPFILES = $(OBJS:.o=.d)
 
+# TODO what about mac?
 SO = $(ccSOURCES:.cc=.so)
 
 .PHONY: all clean

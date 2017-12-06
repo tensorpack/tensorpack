@@ -5,33 +5,27 @@
 
 import numpy as np
 import os
-import sys
-import time
-import random
 import uuid
 import argparse
-import multiprocessing
-import threading
 
 import cv2
 import tensorflow as tf
 import six
 from six.moves import queue
 
+
 from tensorpack import *
-from tensorpack.utils.concurrency import *
-from tensorpack.utils.serialize import *
-from tensorpack.utils.stats import *
+from tensorpack.utils.concurrency import ensure_proc_terminate, start_proc_mask_signal
+from tensorpack.utils.serialize import dumps
 from tensorpack.tfutils import symbolic_functions as symbf
 from tensorpack.tfutils.gradproc import MapGradient, SummaryGradient
 from tensorpack.utils.gpu import get_nr_gpu
 
 
-from tensorpack.RL import *
-from simulator import *
-import common
-from common import (play_model, Evaluator, eval_model_multithread,
-                    play_one_episode, play_n_episodes)
+import gym
+from simulator import SimulatorProcess, SimulatorMaster, TransitionExperience
+from common import Evaluator, eval_model_multithread, play_n_episodes
+from atari_wrapper import MapState, FrameStack, FireResetEnv, LimitLength
 
 if six.PY3:
     from concurrent import futures
@@ -58,15 +52,16 @@ NUM_ACTIONS = None
 ENV_NAME = None
 
 
-def get_player(viz=False, train=False, dumpdir=None):
-    pl = GymEnv(ENV_NAME, viz=viz, dumpdir=dumpdir)
-    pl = MapPlayerState(pl, lambda img: cv2.resize(img, IMAGE_SIZE[::-1]))
-    pl = HistoryFramePlayer(pl, FRAME_HISTORY)
-    if not train:
-        pl = PreventStuckPlayer(pl, 30, 1)
-    else:
-        pl = LimitLengthPlayer(pl, 60000)
-    return pl
+def get_player(train=False, dumpdir=None):
+    env = gym.make(ENV_NAME)
+    if dumpdir:
+        env = gym.wrappers.Monitor(env, dumpdir)
+    env = FireResetEnv(env)
+    env = MapState(env, lambda im: cv2.resize(im, IMAGE_SIZE))
+    env = FrameStack(env, 4)
+    if train:
+        env = LimitLength(env, 60000)
+    return env
 
 
 class MySimulatorWorker(SimulatorProcess):
@@ -102,27 +97,26 @@ class Model(ModelDesc):
 
     def _build_graph(self, inputs):
         state, action, futurereward, action_prob = inputs
-        logits, self.value = self._get_NN_prediction(state)
-        self.value = tf.squeeze(self.value, [1], name='pred_value')  # (B,)
-        self.policy = tf.nn.softmax(logits, name='policy')
+        logits, value = self._get_NN_prediction(state)
+        value = tf.squeeze(value, [1], name='pred_value')  # (B,)
+        policy = tf.nn.softmax(logits, name='policy')
         is_training = get_current_tower_context().is_training
         if not is_training:
             return
-        log_probs = tf.log(self.policy + 1e-6)
+        log_probs = tf.log(policy + 1e-6)
 
         log_pi_a_given_s = tf.reduce_sum(
             log_probs * tf.one_hot(action, NUM_ACTIONS), 1)
-        advantage = tf.subtract(tf.stop_gradient(self.value), futurereward, name='advantage')
+        advantage = tf.subtract(tf.stop_gradient(value), futurereward, name='advantage')
 
-        pi_a_given_s = tf.reduce_sum(self.policy * tf.one_hot(action, NUM_ACTIONS), 1)  # (B,)
+        pi_a_given_s = tf.reduce_sum(policy * tf.one_hot(action, NUM_ACTIONS), 1)  # (B,)
         importance = tf.stop_gradient(tf.clip_by_value(pi_a_given_s / (action_prob + 1e-8), 0, 10))
 
         policy_loss = tf.reduce_sum(log_pi_a_given_s * advantage * importance, name='policy_loss')
-        xentropy_loss = tf.reduce_sum(
-            self.policy * log_probs, name='xentropy_loss')
-        value_loss = tf.nn.l2_loss(self.value - futurereward, name='value_loss')
+        xentropy_loss = tf.reduce_sum(policy * log_probs, name='xentropy_loss')
+        value_loss = tf.nn.l2_loss(value - futurereward, name='value_loss')
 
-        pred_reward = tf.reduce_mean(self.value, name='predict_reward')
+        pred_reward = tf.reduce_mean(value, name='predict_reward')
         advantage = symbf.rms(advantage, name='rms_advantage')
         entropy_beta = tf.get_variable('entropy_beta', shape=[],
                                        initializer=tf.constant_initializer(0.01), trainable=False)
@@ -135,7 +129,7 @@ class Model(ModelDesc):
                                    self.cost, tf.reduce_mean(importance, name='importance'))
 
     def _get_optimizer(self):
-        lr = symbf.get_scalar_var('learning_rate', 0.001, summary=True)
+        lr = tf.get_variable('learning_rate', initializer=0.001, trainable=False)
         opt = tf.train.AdamOptimizer(lr, epsilon=1e-3)
 
         gradprocs = [MapGradient(lambda grad: tf.clip_by_average_norm(grad, 0.1)),
@@ -273,7 +267,7 @@ if __name__ == '__main__':
 
     ENV_NAME = args.env
     logger.info("Environment Name: {}".format(ENV_NAME))
-    NUM_ACTIONS = get_player().get_action_space().num_actions()
+    NUM_ACTIONS = get_player().action_space.n
     logger.info("Number of actions: {}".format(NUM_ACTIONS))
 
     if args.gpu:
@@ -281,20 +275,21 @@ if __name__ == '__main__':
 
     if args.task != 'train':
         assert args.load is not None
-        cfg = PredictConfig(
+        pred = OfflinePredictor(PredictConfig(
             model=Model(),
             session_init=get_model_loader(args.load),
             input_names=['state'],
-            output_names=['policy'])
+            output_names=['policy']))
         if args.task == 'play':
-            play_model(cfg, get_player(viz=0.01))
+            play_n_episodes(get_player(train=False), pred,
+                            args.episode, render=True)
         elif args.task == 'eval':
-            eval_model_multithread(cfg, args.episode, get_player)
+            eval_model_multithread(pred, args.episode, get_player)
         elif args.task == 'gen_submit':
             play_n_episodes(
                 get_player(train=False, dumpdir=args.output),
-                OfflinePredictor(cfg), args.episode)
-            # gym.upload(output, api_key='xxx')
+                pred, args.episode)
+            # gym.upload(args.output, api_key='xxx')
     else:
         dirname = os.path.join('train_log', 'train-atari-{}'.format(ENV_NAME))
         logger.set_logger_dir(dirname)
@@ -302,5 +297,5 @@ if __name__ == '__main__':
         config = get_config()
         if args.load:
             config.session_init = get_model_loader(args.load)
-        trainer = QueueInputTrainer if config.nr_tower == 1 else AsyncMultiGPUTrainer
-        trainer(config).train()
+        trainer = SimpleTrainer() if config.nr_tower == 1 else AsyncMultiGPUTrainer(config.tower)
+        launch_train_with_config(config, trainer)

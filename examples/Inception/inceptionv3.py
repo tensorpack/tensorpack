@@ -5,14 +5,14 @@
 
 import cv2
 import argparse
-import numpy as np
 import os
 import tensorflow as tf
 import multiprocessing
 
+
 from tensorpack import *
-from tensorpack.tfutils.symbolic_functions import *
-from tensorpack.tfutils.summary import *
+from tensorpack.tfutils.symbolic_functions import prediction_incorrect
+from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.dataflow import dataset
 
 """
@@ -149,7 +149,7 @@ class Model(ModelDesc):
                     MaxPooling('maxpool', l, 3, 2)
                 ], 3, name='concat')
             for x in ['a', 'b']:
-                with tf.variable_scope('incep-8-2048{}'.format(x)) as scope:
+                with tf.variable_scope('incep-8-2048{}'.format(x)):
                     br11 = Conv2D('conv11', l, 320, 1)
                     br33 = Conv2D('conv133r', l, 384, 1)
                     br33 = tf.concat([
@@ -194,7 +194,7 @@ class Model(ModelDesc):
         add_moving_summary(loss1, loss2, wd_cost, self.cost)
 
     def _get_optimizer(self):
-        lr = get_scalar_var('learning_rate', 0.045, summary=True)
+        lr = tf.get_variable('learning_rate', initializer=0.045, trainable=False)
         return tf.train.AdamOptimizer(lr, epsilon=1e-3)
 
 
@@ -202,7 +202,7 @@ def get_data(train_or_test):
     isTrain = train_or_test == 'train'
 
     ds = dataset.ILSVRC12(args.data, train_or_test,
-                          shuffle=True if isTrain else False, dir_structure='train')
+                          shuffle=True if isTrain else False)
     meta = dataset.ILSVRCMeta()
     pp_mean = meta.get_per_pixel_mean()
     pp_mean_299 = cv2.resize(pp_mean, (299, 299))
@@ -298,5 +298,4 @@ if __name__ == '__main__':
     config = get_config()
     if args.load:
         config.session_init = SaverRestore(args.load)
-    config.nr_tower = NR_GPU
-    SyncMultiGPUTrainer(config).train()
+    launch_train_with_config(config, SyncMultiGPUTrainer(NR_GPU))

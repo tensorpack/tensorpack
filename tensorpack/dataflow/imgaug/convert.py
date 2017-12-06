@@ -12,6 +12,7 @@ __all__ = ['ColorSpace', 'Grayscale', 'ToUint8', 'ToFloat32']
 
 class ColorSpace(ImageAugmentor):
     """ Convert into another colorspace.  """
+
     def __init__(self, mode, keepdims=True):
         """
         Args:

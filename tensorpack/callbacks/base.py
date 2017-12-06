@@ -8,7 +8,7 @@ import six
 from ..utils.develop import log_deprecated
 from ..tfutils.common import get_op_or_tensor_by_name
 
-__all__ = ['Callback', 'ProxyCallback', 'CallbackFactory', 'Triggerable']
+__all__ = ['Callback', 'ProxyCallback', 'CallbackFactory']
 
 
 @six.add_metaclass(ABCMeta)
@@ -45,7 +45,6 @@ class Callback(object):
     _chief_only = True
 
     def setup_graph(self, trainer):
-        self._steps_per_epoch = trainer.config.steps_per_epoch
         self.trainer = trainer
         self.graph = tf.get_default_graph()
         scope_name = type(self).__name__
@@ -206,9 +205,30 @@ class Callback(object):
     def __str__(self):
         return type(self).__name__
 
+    def get_tensors_maybe_in_tower(self, names):
+        """
+        Get tensors in the graph with the given names.
+        Will automatically check for the *first training tower*
+        if no existing tensor is found with the name.
 
-# back-compat. in case someone write something in triggerable
-Triggerable = Callback
+        Returns:
+            [tf.Tensor]
+        """
+        from ..train.tower import TowerTrainer  # noqa
+
+        def get_tensor(name):
+            msg = "Tensor {} not found in the graph!".format(name)
+            try:
+                return get_op_or_tensor_by_name(name)
+            except KeyError:
+                pass
+            assert isinstance(self.trainer, TowerTrainer), msg
+            towers = self.trainer.tower_func.towers
+            try:
+                return towers.training()[0][name]
+            except KeyError:
+                raise KeyError(msg)
+        return [get_tensor(name) for name in names]
 
 
 class ProxyCallback(Callback):
@@ -228,10 +248,14 @@ class ProxyCallback(Callback):
         self.cb.before_train()
 
     def _setup_graph(self):
-        self.cb.setup_graph(self.trainer)
+        with tf.name_scope(None):
+            self.cb.setup_graph(self.trainer)
 
     def _trigger_epoch(self):
         self.cb.trigger_epoch()
+
+    def _trigger(self):
+        self.cb.trigger()
 
     def _trigger_step(self):
         self.cb.trigger_step()
@@ -246,7 +270,7 @@ class ProxyCallback(Callback):
         self.cb.after_epoch()
 
     def _before_run(self, ctx):
-        self.cb._before_run(ctx)
+        return self.cb._before_run(ctx)
 
     def _after_run(self, ctx, run_values):
         self.cb._after_run(ctx, run_values)

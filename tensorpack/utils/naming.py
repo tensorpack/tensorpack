@@ -12,4 +12,7 @@ MOVING_SUMMARY_OPS_KEY = 'MOVING_SUMMARY_OPS'
 
 SUMMARY_BACKUP_KEYS = [tf.GraphKeys.SUMMARIES, MOVING_SUMMARY_OPS_KEY]
 
-TOWER_FREEZE_KEYS = SUMMARY_BACKUP_KEYS
+TRAIN_TOWER_FREEZE_KEYS = SUMMARY_BACKUP_KEYS
+PREDICT_TOWER_FREEZE_KEYS = SUMMARY_BACKUP_KEYS + [tf.GraphKeys.UPDATE_OPS]
+# also freeze UPDATE_OPS in inference, because they should never be used
+# TODO a better way to log and warn about collection change during build_graph.

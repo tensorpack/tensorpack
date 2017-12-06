@@ -60,10 +60,10 @@ class TestDataSpeed(ProxyDataFlow):
 
 class BatchData(ProxyDataFlow):
     """
-    Concat datapoints into batches.
+    Stack datapoints into batches.
     It produces datapoints of the same number of components as ``ds``, but
     each component has one new extra dimension of size ``batch_size``.
-    A batch can be either a list of original components, or (by default)
+    The batch can be either a list of original components, or (by default)
     a numpy array of original components.
     """
 
@@ -71,15 +71,14 @@ class BatchData(ProxyDataFlow):
         """
         Args:
             ds (DataFlow): When ``use_list=False``, the components of ``ds``
-                must be either scalars or :class:`np.ndarray`, and
-                components has to have consistent shape across ``ds``.
+                must be either scalars or :class:`np.ndarray`, and have to be consistent in shapes.
             batch_size(int): batch size
             remainder (bool): When the remaining datapoints in ``ds`` is not
                 enough to form a batch, whether or not to also produce the remaining
                 data as a smaller batch.
-                If set to False, all generated datapoints are guranteed to have the same batch size.
+                If set to False, all produced datapoints are guranteed to have the same batch size.
             use_list (bool): if True, each component will contain a list
-                of datapoints instead of an numpy array of datapoints. This also avoids an extra copy.
+                of datapoints instead of an numpy array of an extra dimension.
         """
         super(BatchData, self).__init__(ds)
         if not remainder:
@@ -87,7 +86,7 @@ class BatchData(ProxyDataFlow):
                 assert batch_size <= ds.size()
             except NotImplementedError:
                 pass
-        self.batch_size = batch_size
+        self.batch_size = int(batch_size)
         self.remainder = remainder
         self.use_list = use_list
 
@@ -130,13 +129,11 @@ class BatchData(ProxyDataFlow):
                 else:
                     try:
                         tp = dt.dtype
-                    except:
+                    except AttributeError:
                         raise TypeError("Unsupported type to batch: {}".format(type(dt)))
                 try:
                     result.append(
                         np.asarray([x[k] for x in data_holder], dtype=tp))
-                except KeyboardInterrupt:
-                    raise
                 except Exception as e:  # noqa
                     logger.exception("Cannot batch data. Perhaps they are of inconsistent shape?")
                     if isinstance(dt, np.ndarray):
@@ -145,7 +142,7 @@ class BatchData(ProxyDataFlow):
                     try:
                         # open an ipython shell if possible
                         import IPython as IP; IP.embed()    # noqa
-                    except:
+                    except ImportError:
                         pass
         return result
 
@@ -191,21 +188,38 @@ class BatchDataByShape(BatchData):
 
 class FixedSizeData(ProxyDataFlow):
     """ Generate data from another DataFlow, but with a fixed total count.
-        The iterator state of the underlying DataFlow will be kept if not exhausted.
     """
-    def __init__(self, ds, size):
+    def __init__(self, ds, size, keep_state=True):
         """
         Args:
             ds (DataFlow): input dataflow
             size (int): size
+            keep_state (bool): keep the iterator state of ``ds``
+                between calls to :meth:`get_data()`, so that the
+                next call will continue the previous iteration over ``ds``,
+                instead of reinitializing an iterator.
+
+        Examples:
+
+        .. code-block:: none
+
+            ds produces: 1, 2, 3, 4, 5; 1, 2, 3, 4, 5; ...
+            FixedSizeData(ds, 3, True): 1, 2, 3; 4, 5, 1; 2, 3, 4; ...
+            FixedSizeData(ds, 3, False): 1, 2, 3; 1, 2, 3; ...
+            FixedSizeData(ds, 6, False): 1, 2, 3, 4, 5, 1; 1, 2, 3, 4, 5, 1;...
         """
         super(FixedSizeData, self).__init__(ds)
         self._size = int(size)
         self.itr = None
         self._guard = DataFlowReentrantGuard()
+        self._keep = keep_state
 
     def size(self):
         return self._size
+
+    def reset_state(self):
+        super(FixedSizeData, self).reset_state()
+        self.itr = self.ds.get_data()
 
     def get_data(self):
         with self._guard:
@@ -222,6 +236,8 @@ class FixedSizeData(ProxyDataFlow):
                 cnt += 1
                 yield dp
                 if cnt == self._size:
+                    if not self._keep:
+                        self.itr = None
                     return
 
 
@@ -269,8 +285,9 @@ class MapDataComponent(MapData):
             func (TYPE -> TYPE|None): takes ``dp[index]``, returns a new value for ``dp[index]``.
                 return None to discard this datapoint.
             index (int): index of the component.
-
         """
+        index = int(index)
+
         def f(dp):
             r = func(dp[index])
             if r is None:

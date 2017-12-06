@@ -3,9 +3,6 @@
 # File: Improved-WGAN.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import os
-import argparse
-
 from tensorpack import *
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.utils.globvars import globalns as G
@@ -82,8 +79,7 @@ class Model(DCGAN.Model):
         self.collect_variables()
 
     def _get_optimizer(self):
-        lr = symbolic_functions.get_scalar_var('learning_rate', 1e-4, summary=True)
-        opt = tf.train.AdamOptimizer(lr, beta1=0.5, beta2=0.9)
+        opt = tf.train.AdamOptimizer(1e-4, beta1=0.5, beta2=0.9)
         return opt
 
 
@@ -94,12 +90,11 @@ if __name__ == '__main__':
     else:
         assert args.data
         logger.auto_set_dir()
-        config = TrainConfig(
-            model=Model(),
-            dataflow=DCGAN.get_data(args.data),
+        SeparateGANTrainer(
+            QueueInput(DCGAN.get_data(args.data)),
+            Model(), g_period=6).train_with_defaults(
             callbacks=[ModelSaver()],
             steps_per_epoch=300,
             max_epoch=200,
             session_init=SaverRestore(args.load) if args.load else None
         )
-        SeparateGANTrainer(config, g_period=6).train()

@@ -21,24 +21,6 @@ except ImportError:
 # configure requirements
 reqfile = os.path.join(CURRENT_DIR, 'requirements.txt')
 req = [x.strip() for x in open(reqfile).readlines()]
-reqfile = os.path.join(CURRENT_DIR, 'opt-requirements.txt')
-extra_req = [x.strip() for x in open(reqfile).readlines()]
-if sys.version_info.major < 3:
-    extra_req.append('tornado')
-
-# parse scripts
-scripts = ['scripts/plot-point.py', 'scripts/dump-model-params.py']
-scripts_to_install = []
-for s in scripts:
-    dirname = os.path.dirname(s)
-    basename = os.path.basename(s)
-    if basename.endswith('.py'):
-        basename = basename[:-3]
-    newname = 'tpk-' + basename  # install scripts with a prefix to avoid name confusion
-    # setup.py could be executed the second time in the same dir
-    if not os.path.isfile(newname):
-        shutil.move(s, newname)
-    scripts_to_install.append(newname)
 
 setup(
     name='tensorpack',
@@ -48,7 +30,7 @@ setup(
     install_requires=req,
     tests_require=['flake8', 'scikit-image'],
     extras_require={
-        'all': extra_req
+        'all': ['pillow', 'scipy', 'h5py', 'lmdb>=0.92', 'matplotlib',
+                'scikit-learn', "tornado; python_version < '3.0'"]
     },
-    scripts=scripts_to_install,
 )

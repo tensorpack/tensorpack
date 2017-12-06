@@ -24,12 +24,14 @@ l1_regularizer = tf.contrib.layers.l1_regularizer
 
 def regularize_cost(regex, func, name='regularize_cost'):
     """
-    Apply a regularizer on trainable variables matching the regex.
-    In replicated mode, will only regularize variables within the current tower.
+    Apply a regularizer on trainable variables matching the regex, and print
+    the matched variables (only print once in multi-tower training).
+    In replicated mode, it will only regularize variables within the current tower.
 
     Args:
         regex (str): a regex to match variable names, e.g. "conv.*/W"
         func: the regularization function, which takes a tensor and returns a scalar tensor.
+            E.g., ``tf.contrib.layers.l2_regularizer``.
 
     Returns:
         tf.Tensor: the total regularization cost.
@@ -39,22 +41,49 @@ def regularize_cost(regex, func, name='regularize_cost'):
 
             cost = cost + regularize_cost("fc.*/W", l2_regularizer(1e-5))
     """
+    assert len(regex)
     ctx = get_current_tower_context()
-    params = tf.trainable_variables()
+    if not ctx.is_training:
+        # Currently cannot build the wd_cost correctly at inference,
+        # because ths vs_name used in inference can be '', therefore the
+        # variable filter will fail
+        return tf.constant(0, dtype=tf.float32, name='empty_' + name)
 
-    # If vars are shared, use all of them
+    # If vars are shared, regularize all of them
     # If vars are replicated, only regularize those in the current tower
-    params = ctx.filter_vars_by_vs_name(params)
+    if ctx.has_own_variables:
+        params = ctx.get_collection_in_tower(tf.GraphKeys.TRAINABLE_VARIABLES)
+    else:
+        params = tf.trainable_variables()
 
-    with tf.name_scope('regularize_cost'):
+    G = tf.get_default_graph()
+
+    to_regularize = []
+
+    with tf.name_scope(name + '_internals'):
         costs = []
         for p in params:
-            para_name = p.name
+            para_name = p.op.name
             if re.search(regex, para_name):
-                costs.append(func(p))
-                _log_regularizer(para_name)
+                with G.colocate_with(p):
+                    costs.append(func(p))
+                to_regularize.append(p.name)
         if not costs:
             return tf.constant(0, dtype=tf.float32, name='empty_' + name)
+
+    # remove tower prefix from names, and print
+    if len(ctx.vs_name):
+        prefix = ctx.vs_name + '/'
+        prefixlen = len(prefix)
+
+        def f(name):
+            if name.startswith(prefix):
+                return name[prefixlen:]
+            return name
+        to_regularize = list(map(f, to_regularize))
+    to_print = ', '.join(to_regularize)
+    _log_regularizer(to_print)
+
     return tf.add_n(costs, name=name)
 
 
@@ -66,15 +95,22 @@ def regularize_cost_from_collection(name='regularize_cost'):
     Returns:
         a scalar tensor, the regularization loss, or None
     """
-    regularization_losses = set(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES))
     ctx = get_current_tower_context()
-    if len(regularization_losses) > 0:
-        # NOTE: this collection doesn't grow with towers.
-        # It is only added with variables that are newly created.
-        if ctx.has_own_variables:   # be careful of the first tower (name='')
-            regularization_losses = ctx.filter_vars_by_vs_name(regularization_losses)
-        logger.info("Add REGULARIZATION_LOSSES of {} tensors on the total cost.".format(len(regularization_losses)))
-        reg_loss = tf.add_n(list(regularization_losses), name=name)
+    if not ctx.is_training:
+        # TODO Currently cannot build the wd_cost correctly at inference,
+        # because ths vs_name used in inference can be '', therefore the
+        # variable filter will fail
+        return None
+
+    # NOTE: this collection doesn't always grow with towers.
+    # It is only added with variables that are newly created.
+    if ctx.has_own_variables:   # be careful of the first tower (name='')
+        losses = ctx.get_collection_in_tower(tf.GraphKeys.REGULARIZATION_LOSSES)
+    else:
+        losses = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
+    if len(losses) > 0:
+        logger.info("Add REGULARIZATION_LOSSES of {} tensors on the total cost.".format(len(losses)))
+        reg_loss = tf.add_n(losses)
         return reg_loss
     else:
         return None
@@ -95,5 +131,5 @@ def Dropout(x, keep_prob=0.5, is_training=None, noise_shape=None):
     """
     if is_training is None:
         is_training = get_current_tower_context().is_training
-    keep_prob = tf.constant(keep_prob if is_training else 1.0)
-    return tf.nn.dropout(x, keep_prob, noise_shape=noise_shape)
+    return tf.layers.dropout(
+        x, rate=1 - keep_prob, noise_shape=noise_shape, training=is_training)

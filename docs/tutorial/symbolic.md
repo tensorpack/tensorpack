@@ -3,12 +3,13 @@
 
 While you can use other symbolic libraries,
 tensorpack also contains a small collection of common model primitives,
-such as conv/deconv, fc, batch normalization, pooling layers, and some custom loss functions.
+such as conv/deconv, fc, bn, pooling layers.
 Using the tensorpack implementations, you can also benefit from `argscope` and `LinearWrap` to
 simplify the code.
 
-Note that the layers were written because there are no other alternatives back at that time.
-In the future we may shift to `tf.layers` because they will be better maintained.
+Note that these layers were written because there were no other alternatives back at that time.
+In the future we may shift the implementation to `tf.layers` because they will be better maintained.
+You can start using `tf.layers` today as long as it fits your need.
 
 ### argscope and LinearWrap
 `argscope` gives you a context with default arguments.
@@ -41,10 +42,21 @@ l = func(l, *args, **kwargs)
 l = FullyConnected('fc1', l, 10, nl=tf.identity)
 ```
 
+### Access Internal Variables:
+
+Access the variables like this:
+```python
+l = Conv2D('conv1', l, 32, 3)
+print(l.variables.W)
+print(l.variables.b)
+```
+The names are documented in API documentation.
+Note that this method doesn't work with LinearWrap, and cannot access the variables created by an activation function.
+
 ### Use Models outside Tensorpack
 
 You can use tensorpack models alone as a simple symbolic function library.
-To do this, just enter a [TowerContext](http://tensorpack.readthedocs.io/en/latest/modules/tfutils.html#tensorpack.tfutils.TowerContext)
+To do this, just enter a [TowerContext](../modules/tfutils.html#tensorpack.tfutils.TowerContext)
 when you define your model:
 ```python
 with TowerContext('', is_training=True):
@@ -54,7 +66,8 @@ with TowerContext('', is_training=True):
 Some layers (in particular ``BatchNorm``) has different train/test time behavior which is controlled
 by ``TowerContext``. If you need to use the tensorpack version of them in test time, you'll need to create the ops for them under another context.
 ```python
-with tf.variable_scope(tf.get_variable_scope(), reuse=True), TowerContext('predict', is_training=False):
+# Open a `reuse=True` variable scope here if you're sharing variables, then:
+with TowerContext('some_name_or_empty_string', is_training=False):
   # build the graph again
 ```
 

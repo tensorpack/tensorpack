@@ -3,17 +3,18 @@
 # File: inception-bn.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import cv2
 import argparse
-import numpy as np
 import os
 import tensorflow as tf
 
-from tensorpack import *
-from tensorpack.tfutils.symbolic_functions import *
-from tensorpack.tfutils.summary import *
-from tensorpack.dataflow import dataset
 
+from tensorpack import *
+from tensorpack.tfutils.symbolic_functions import prediction_incorrect
+from tensorpack.tfutils.summary import add_moving_summary
+from tensorpack.dataflow import dataset
+from tensorpack.utils.gpu import get_nr_gpu
+
+from imagenet_utils import fbresnet_augmentor, get_imagenet_dataflow
 
 TOTAL_BATCH_SIZE = 64 * 6
 NR_GPU = 6
@@ -24,8 +25,7 @@ INPUT_SHAPE = 224
 Inception-BN model on ILSVRC12.
 See "Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift", arxiv:1502.03167
 
-This config reaches 71% single-crop validation accuracy after 150k steps with 6 TitanX.
-Learning rate may need a different schedule for different number of GPUs (because batch size will be different).
+This config reaches 73% single-crop validation accuracy after 300k steps with 6 GPUs.
 """
 
 
@@ -40,7 +40,7 @@ class Model(ModelDesc):
 
         def inception(name, x, nr1x1, nr3x3r, nr3x3, nr233r, nr233, nrpool, pooltype):
             stride = 2 if nr1x1 == 0 else 1
-            with tf.variable_scope(name) as scope:
+            with tf.variable_scope(name):
                 outs = []
                 if nr1x1 != 0:
                     outs.append(Conv2D('conv1x1', x, nr1x1, 1))
@@ -99,7 +99,7 @@ class Model(ModelDesc):
             l = GlobalAvgPooling('gap', l)
 
             logits = FullyConnected('linear', l, out_dim=1000, nl=tf.identity)
-        prob = tf.nn.softmax(logits, name='output')
+        tf.nn.softmax(logits, name='output')
         loss3 = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         loss3 = tf.reduce_mean(loss3, name='loss3')
 
@@ -117,41 +117,23 @@ class Model(ModelDesc):
                                           80000, 0.7, True)
         wd_cost = tf.multiply(wd_w, regularize_cost('.*/W', tf.nn.l2_loss), name='l2_regularize_loss')
 
-        add_param_summary(('.*/W', ['histogram']))   # monitor W
         self.cost = tf.add_n([cost, wd_cost], name='cost')
         add_moving_summary(wd_cost, self.cost)
 
     def _get_optimizer(self):
-        lr = get_scalar_var('learning_rate', 0.045, summary=True)
+        lr = tf.get_variable('learning_rate', initializer=0.045, trainable=False)
         return tf.train.MomentumOptimizer(lr, 0.9)
 
 
 def get_data(train_or_test):
     isTrain = train_or_test == 'train'
-    ds = dataset.ILSVRC12(args.data, train_or_test, shuffle=True if isTrain else False)
+    augs = fbresnet_augmentor(isTrain)
+
     meta = dataset.ILSVRCMeta()
     pp_mean = meta.get_per_pixel_mean()
+    augs.append(imgaug.MapImage(lambda x: x - pp_mean[16:-16, 16:-16]))
 
-    if isTrain:
-        # TODO use the augmentor in GoogleNet
-        augmentors = [
-            imgaug.Resize((256, 256)),
-            imgaug.Brightness(30, False),
-            imgaug.Contrast((0.8, 1.2), True),
-            imgaug.MapImage(lambda x: x - pp_mean),
-            imgaug.RandomCrop((224, 224)),
-            imgaug.Flip(horiz=True),
-        ]
-    else:
-        augmentors = [
-            imgaug.Resize((256, 256)),
-            imgaug.MapImage(lambda x: x - pp_mean),
-            imgaug.CenterCrop((224, 224)),
-        ]
-    ds = AugmentImageComponent(ds, augmentors, copy=False)
-    ds = BatchData(ds, BATCH_SIZE, remainder=not isTrain)
-    if isTrain:
-        ds = PrefetchDataZMQ(ds, 6)
+    ds = get_imagenet_dataflow(args.data, train_or_test, BATCH_SIZE, augs)
     return ds
 
 
@@ -191,7 +173,6 @@ if __name__ == '__main__':
     config = get_config()
     if args.load:
         config.session_init = SaverRestore(args.load)
-    if args.gpu:
-        config.nr_tower = len(args.gpu.split(','))
-        assert config.nr_tower == NR_GPU
-    SyncMultiGPUTrainer(config).train()
+    nr_tower = get_nr_gpu()
+    assert nr_tower == NR_GPU
+    launch_train_with_config(config, SyncMultiGPUTrainer(NR_GPU))
