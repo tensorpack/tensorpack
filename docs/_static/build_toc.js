@@ -3,31 +3,14 @@
 
 $(function (){
   var createList = function(selected) {
-    var obj = {};
     var ul = $('<ul>');
 
-<<<<<<< HEAD:docs/_static/pymunk.js
-    selected.each(function(i,e) {
-      
-      var className = e.getElementsByTagName('a')[0].href;
-      className = className.substr(className.lastIndexOf('/')+1);
-      className = className.substr(0,className.lastIndexOf(".html"));
-
-
-
-      var fullname = e.id;
-      if (fullname.startsWith('tensorpack.'))
-        fullname = fullname.substr(11);
-      var n = $(e).children('.descname').clone();
-      
-=======
     selected.each(function(_, e) {
       var fullname = e.id;
       if (fullname.startsWith('tensorpack.'))
         fullname = fullname.substr(11);
 
       var n = $(e).children('.descname').clone();
->>>>>>> 4e933ef99d922b9b0e2a44623de033214b0e1b54:docs/_static/build_toc.js
       n[0].innerText = fullname;
       var l = $(e).children('.headerlink');
 
@@ -36,19 +19,9 @@ $(function (){
       a.append(n);
 
       var entry = $('<li>').append(a);
-
-      if(className in obj) {
-        obj[className] = obj[className].append(entry);
-      } else {
-        var ul = $('<ul>');
-        ul.append(entry);
-        obj[className] = ul;
-      }
-      
+      ul.append(entry);
     });
-    
-    
-    return obj;
+    return ul;
   }
 
 
@@ -56,20 +29,15 @@ $(function (){
   var customIndex = $('.custom-index');
   customIndex.empty();
 
-  
   var selected = $('div.section>dl>dt');
   if (selected.length === 0)
     return;
 
-  var obj = createList(selected);
-  for(var key in obj) {
-    var c = $('<div style="min-width: 300px;">');
-    var a = $('<h4>');
-    a.html(key);
-    var u = c.clone().append(a);
-    var ul = c.clone().append(obj[key]);
-    customIndex.append(u);
-    customIndex.append(ul);
-  }
+  var l = createList(selected);
+
+  var c = $('<div style="min-width: 300px;">');
+  var ul = c.clone()
+    .append(l);
+  customIndex.append(ul);
 
 });
