@@ -8,7 +8,7 @@ $(function (){
 
     selected.each(function(i,e) {
 
-      var groupName = $(e).find('a.internal')[0].href;
+      var groupName = $(e).find('a')[0].href;
       groupName = groupName.substr(groupName.lastIndexOf('/')+1);
       groupName = groupName.substr(0,groupName.lastIndexOf(".html"));
 
