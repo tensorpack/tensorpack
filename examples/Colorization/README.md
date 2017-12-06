@@ -38,9 +38,11 @@ python let-there-be-color.py --train_lmdb /data/train_places205.lmdb --val_lmdb 
 Training will take a while (authors reports 21 days). Acceptable results should be obtained within 5 epochs.
 You can download and play with the pretrained model [here](http://models.tensorpack.com/Colorization/).
 
-During training, Tensorboard should output visualizations like
+During training, Tensorboard should output visualizations of the training-data like
 
 <p align="center"> <img src="siggraph16-tb.jpg" width="100%"> </p>
+
+Each pair is ground-truth (left) and prediction (right).
 
 3. Inference on an image and output in current directory:
 
