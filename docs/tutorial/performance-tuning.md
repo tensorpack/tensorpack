@@ -1,8 +1,8 @@
 
 # Performance Tuning
 
-__We do not know why your training is slow__.
-Performance is different across machines and tasks. So you need to figure out most parts by your own.
+__We do not know why your training is slow__ (and most of the times it's not a tensorpack problem).
+Performance is different on every machine. So you need to figure out most parts by your own.
 Here's a list of things you can do when your training is slow.
 
 If you're going to open an issue about slow training, PLEASE do them and include your findings.
@@ -34,8 +34,8 @@ Understand the [Efficient DataFlow](efficient-dataflow.html) tutorial, so you kn
 Benchmark your DataFlow with modifications and you'll understand which part is the bottleneck. Some examples
 include:
 
-1. Remove everything except for the raw reader (and perhaps add some prefetching).
-2. Remove some suspicious pre-processing.
+1. Benchmark only raw reader (and perhaps add some prefetching).
+2. Gradually add some pre-processing and see how the performance changes.
 3. Change the number of parallel processes or threads.
 
 A DataFlow could be blocked by CPU/hard disk/network/IPC bandwidth. Only by benchmarking will you
