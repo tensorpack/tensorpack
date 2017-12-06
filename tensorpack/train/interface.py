@@ -9,7 +9,7 @@ from ..input_source import (
 
 from .config import TrainConfig
 from .tower import SingleCostTrainer
-from .trainers import SimpleTrainer, DistributedTrainerReplicated
+from .trainers import SimpleTrainer
 
 __all__ = ['launch_train_with_config', 'apply_default_prefetch']
 
@@ -76,12 +76,6 @@ def launch_train_with_config(config, trainer):
     inputs_desc = model.get_inputs_desc()
     input = config.data or config.dataflow
     input = apply_default_prefetch(input, trainer, config.tower)
-
-    if isinstance(trainer, DistributedTrainerReplicated) and \
-            config.session_config is not None:
-        raise ValueError(
-            "Cannot set session_config for distributed training! "
-            "To use a custom session config, pass it to tf.train.Server.")
 
     trainer.setup_graph(
         inputs_desc, input,

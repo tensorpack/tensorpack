@@ -124,8 +124,9 @@ class TowerContext(object):
         global _CurrentTowerContext
         assert _CurrentTowerContext is None, "Cannot nest TowerContext!"
         _CurrentTowerContext = self
-        curr_vs = tf.get_variable_scope()
-        assert curr_vs.name == '', "Cannot nest TowerContext with an existing variable scope!"
+        if self.is_training:
+            curr_vs = tf.get_variable_scope()
+            assert curr_vs.name == '', "In training, cannot nest TowerContext with an existing variable scope!"
 
         self._ctxs = self._get_scopes()
         self._ctxs.append(self._collection_guard)

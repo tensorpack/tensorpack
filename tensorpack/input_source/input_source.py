@@ -34,7 +34,9 @@ __all__ = ['PlaceholderInput', 'FeedInput',
 
 
 def _get_reset_callback(df):
-    return CallbackFactory(setup_graph=lambda _: df.reset_state())
+    ret = CallbackFactory(setup_graph=lambda _: df.reset_state())
+    ret.chief_only = False
+    return ret
 
 
 class PlaceholderInput(InputSource):

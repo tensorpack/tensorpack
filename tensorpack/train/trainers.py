@@ -165,7 +165,7 @@ class DistributedTrainerReplicated(SingleCostTrainer):
             logger.info("Running ps {}".format(self.server.server_def.task_index))
             logger.info("Kill me with 'kill {}'".format(os.getpid()))
             self.server.join()  # this function will never return tensorflow#4713
-            raise RuntimeError("This is a bug in tensorpack. Server.join() for ps should never return!")
+            raise RuntimeError("This is a bug. Server.join() for ps should never return!")
 
         with override_to_local_variable():
             get_global_step_var()  # gs should be local
@@ -204,7 +204,7 @@ class DistributedTrainerReplicated(SingleCostTrainer):
                 "You are not allowed to set session_creator or session_config for distributed training! "
                 "To use a custom session config, pass it to tf.train.Server.")
         super(DistributedTrainerReplicated, self).initialize(
-            get_distributed_session_creator(), session_init)
+            get_distributed_session_creator(self.server), session_init)
 
     @property
     def _main_tower_vs_name(self):
