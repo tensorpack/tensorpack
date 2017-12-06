@@ -25,11 +25,14 @@ python data_sampler.py --lmdb train2017.lmdb --input train2017.zip --create
 wget http://models.tensorpack.com/caffe/vgg19.npy
 ```
 
-2. Train the model using:
+2. Train an EnhanceNet-PAT using:
 
 ```bash
 python enet-pat.py --vgg19 /path/to/vgg19.npy --lmdb train2017.lmdb
 ```
+
+Training is highly unstable and does not often give results as good as the pretrained model.
+You can download and play with the pretrained model [here](http://models.tensorpack.com/SuperResolution/).
 
 3. Inference on an image and output in current directory:
 

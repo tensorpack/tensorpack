@@ -136,34 +136,31 @@ class Model(GANModelDesc):
                 phi_a_1, phi_b_1 = tf.split(pool2, 2, axis=0)
                 phi_a_2, phi_b_2 = tf.split(pool5, 2, axis=0)
 
-                logger.info('create perceptual loss for layer {} with shape {}'.format(pool2.name, pool2.get_shape()))
+                logger.info('Create perceptual loss for layer {} with shape {}'.format(pool2.name, pool2.get_shape()))
                 pool2_loss = tf.losses.mean_squared_error(phi_a_1, phi_b_1, reduction=Reduction.MEAN)
-                logger.info('create perceptual loss for layer {} with shape {}'.format(pool5.name, pool5.get_shape()))
+                logger.info('Create perceptual loss for layer {} with shape {}'.format(pool5.name, pool5.get_shape()))
                 pool5_loss = tf.losses.mean_squared_error(phi_a_2, phi_b_2, reduction=Reduction.MEAN)
 
             # texture loss
             with tf.name_scope('texture_loss'):
                 def texture_loss(x, p=16):
                     x = normalize(x)
-                    _, h, w, _ = x.get_shape().as_list()
+                    _, h, w, c = x.get_shape().as_list()
                     assert h % p == 0 and w % p == 0
-                    rsl = []
-                    logger.info('create texture loss for layer {} with shape {}'.format(
-                        x.name, x.get_shape()))
-                    for i in range(0, h, p):
-                        for j in range(0, w, p):
-                            current_patch_a = x[
-                                0:BATCH_SIZE, i:i + p, j:j + p, :]
-                            current_patch_b = x[
-                                BATCH_SIZE:BATCH_SIZE * 2, i:i + p, j:j + p, :]
+                    logger.info('Create texture loss for layer {} with shape {}'.format(x.name, x.get_shape()))
 
-                            current_patch_a = gram_matrix(current_patch_a)
-                            current_patch_b = gram_matrix(current_patch_b)
+                    x = tf.space_to_batch_nd(x, [p, p], [[0, 0], [0, 0]])
+                    x = tf.reshape(x, [p, p, -1, h // p, w // p, c])
+                    x = tf.transpose(x, [2, 3, 4, 0, 1, 5])
+                    patches_a, patches_b = tf.split(x, 2)   # each is b,h/p,w/p,p,p,c
 
-                            rsl.append(tf.losses.mean_squared_error(current_patch_a, current_patch_b,
-                                                                    reduction=Reduction.MEAN))
-                    # rsl is list of [b, p, p, c]
-                    return tf.add_n(rsl)
+                    patches_a = tf.reshape(patches_a, [-1, p, p, c])
+                    patches_b = tf.reshape(patches_b, [-1, p, p, c])
+                    return tf.losses.mean_squared_error(
+                        gram_matrix(patches_a),
+                        gram_matrix(patches_b),
+                        reduction=Reduction.SUM
+                    ) * (1.0 / BATCH_SIZE)
 
                 texture_loss_conv1_1 = tf.identity(texture_loss(conv1_1), name='normalized_conv1_1')
                 texture_loss_conv2_1 = tf.identity(texture_loss(conv2_1), name='normalized_conv2_1')
@@ -175,8 +172,8 @@ class Model(GANModelDesc):
             fake_hr = generator(Ilr, Ibicubic)
             real_hr = Ihr
 
-        VGG_MEAN_TENSOR = tf.constant(VGG_MEAN / 255.0, dtype=tf.float32)
-        tf.add(fake_hr, VGG_MEAN_TENSOR, name='prediction')
+        VGG_MEAN_TENSOR = tf.constant(VGG_MEAN, dtype=tf.float32)
+        tf.add(fake_hr, VGG_MEAN_TENSOR / 255.0, name='prediction')
 
         if ctx.is_training:
             with tf.variable_scope('discrim'):
