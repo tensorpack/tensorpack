@@ -28,6 +28,7 @@ See [Unawareness of Deep Learning Mistakes](https://medium.com/@ppwwyyxx/unaware
 | [Similarity learning on MNIST](SimilarityLearning) | |
 | Learn steering filters with [Dynamic Filter Networks](DynamicFilterNetwork) | visually reproduce |
 | Load a pre-trained [AlexNet](load-alexnet.py), [VGG16](load-vgg16.py), or [Convolutional Pose Machines](ConvolutionalPoseMachines/) | |
+| Super-Resolution using [Enhance-Net](SuperResolution/enet-pat.py) for single image inputs  |visually reproduce |
 
 ## Reinforcement Learning:
 | Name | Performance |

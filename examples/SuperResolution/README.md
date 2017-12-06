@@ -11,7 +11,7 @@ produce a 4x resolution image using different loss functions.
 
 * Left: input image (upscaled with bi-cubic interpolation).
 * Middle: using the implementation of the author (**only** contains the generator)
-* Right: this implementation (with training code)
+* Right: this implementation (trained from scratch)
 
 
 ### Usage

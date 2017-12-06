@@ -17,6 +17,7 @@ See some [examples](examples) to learn about the framework. Everything runs on m
 + [Spatial Transformer Networks on MNIST addition](examples/SpatialTransformer)
 + [Visualize CNN saliency maps](examples/Saliency)
 + [Similarity learning on MNIST](examples/SimilarityLearning)
++ [Super-Resolution on single images](examples/SuperResolution)
 
 ### Reinforcement Learning:
 + [Deep Q-Network(DQN) variants on Atari games](examples/DeepQNetwork), including DQN, DoubleDQN, DuelingDQN.
