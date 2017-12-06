@@ -157,6 +157,7 @@ class DistributedTrainerReplicated(SingleCostTrainer):
         else:
             self.is_chief = False
         logger.info("Distributed training on cluster:\n" + str(server.server_def.cluster))
+        super(DistributedTrainerReplicated, self).__init__()
 
     def _setup_input(self, inputs_desc, input):
         if self.job_name == 'ps':
