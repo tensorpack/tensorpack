@@ -314,10 +314,16 @@ def apply(args):
     H, W, C = im.shape
     im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY).astype(np.float32)
     im = np.stack([im, im, im], axis=-1)
-    img = cv2.resize(im, (224, 224))
+
+    scale = int(args.scale)
+    if scale != 1:
+        img = cv2.resize(im, (scale, scale))
+    else:
+        img = im
+    scaleH, scaleW = img.shape[:2]
 
     pred_config = PredictConfig(
-        model=Model(),
+        model=Model(H=scaleH, W=scaleW),
         session_init=get_model_loader(args.load),
         input_names=['rgb'],
         output_names=['estimated_ab'])
@@ -330,7 +336,9 @@ def apply(args):
         im_pldhr = tf.placeholder(tf.float32)
         rgb_op = lab2rgb(im_pldhr)
 
-        ab = cv2.resize(ab[0], (W, H))
+        ab = ab[0]
+        if scale != 1:
+            ab = cv2.resize(ab, (W, H))
         im = np.expand_dims(im[:, :, 0], axis=-1)
 
         img = np.concatenate([im / 255. * 100., ab], axis=2)
@@ -345,7 +353,7 @@ if __name__ == '__main__':
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
     parser.add_argument('--load', help='load model')
     parser.add_argument('--apply', help='run model on given image', default='')
-    parser.add_argument('--scale', help='run model on given image', default=1.)
+    parser.add_argument('--scale', help='run model on given image', default=224)
     parser.add_argument('--train_lmdb', help='load model',
                         default='/scratch_shared/datasets/PLACE/imagesPlaces205_resize_train.lmdb')
     parser.add_argument('--val_lmdb', help='load model',
