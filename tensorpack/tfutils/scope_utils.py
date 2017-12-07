@@ -9,7 +9,8 @@ from contextlib import contextmanager
 
 from ..utils.argtools import graph_memoized
 
-__all__ = ['auto_reuse_variable_scope', 'cached_name_scope', 'under_name_scope']
+__all__ = ['auto_reuse_variable_scope', 'cached_name_scope', 'under_name_scope',
+           'under_variable_scope']
 
 
 def auto_reuse_variable_scope(func):
@@ -72,6 +73,35 @@ def under_name_scope():
         def wrapper(*args, **kwargs):
             name = func.__name__
             with tf.name_scope(name):
+                return func(*args, **kwargs)
+        return wrapper
+    return _impl
+
+
+def under_variable_scope():
+    """
+    Returns:
+        A decorator which makes the function happen under a variable scope,
+        which is named by the function itself.
+
+    Examples:
+
+    .. code-block:: python
+
+        @under_variable_scope()
+        def rms(x):
+            return tf.sqrt(  # will be under variable scope 'rms'
+                tf.reduce_mean(tf.square(x)))
+
+    Todo:
+        Add a reuse option.
+    """
+
+    def _impl(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            name = func.__name__
+            with tf.variable_scope(name):
                 return func(*args, **kwargs)
         return wrapper
     return _impl
