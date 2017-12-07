@@ -158,32 +158,42 @@ class MySimulatorMaster(SimulatorMaster, Callback):
     def _before_train(self):
         self.async_predictor.start()
 
-    def _on_state(self, state, ident):
+    def _on_state(self, state, client):
+        """
+        Launch forward prediction for the new state given by some client.
+        """
         def cb(outputs):
             try:
                 distrib, value = outputs.result()
             except CancelledError:
-                logger.info("Client {} cancelled.".format(ident))
+                logger.info("Client {} cancelled.".format(client.ident))
                 return
             assert np.all(np.isfinite(distrib)), distrib
             action = np.random.choice(len(distrib), p=distrib)
-            client = self.clients[ident]
             client.memory.append(TransitionExperience(
                 state, action, reward=None, value=value, prob=distrib[action]))
-            self.send_queue.put([ident, dumps(action)])
+            self.send_queue.put([client.ident, dumps(action)])
         self.async_predictor.put_task([state], cb)
 
-    def _on_episode_over(self, ident):
-        self._parse_memory(0, ident, True)
+    def _process_msg(self, client, state, reward, isOver):
+        """
+        Process a message sent from some client.
+        """
+        # in the first message, only state is valid,
+        # reward&isOver should be discarded
+        if len(client.memory) > 0:
+            client.memory[-1].reward = reward
+            if isOver:
+                # should clear client's memory and put to queue
+                self._parse_memory(0, client, True)
+            else:
+                if len(client.memory) == LOCAL_TIME_MAX + 1:
+                    R = client.memory[-1].value
+                    self._parse_memory(R, client, False)
+        # feed state and return action
+        self._on_state(state, client)
 
-    def _on_datapoint(self, ident):
-        client = self.clients[ident]
-        if len(client.memory) == LOCAL_TIME_MAX + 1:
-            R = client.memory[-1].value
-            self._parse_memory(R, ident, False)
-
-    def _parse_memory(self, init_r, ident, isOver):
-        client = self.clients[ident]
+    def _parse_memory(self, init_r, client, isOver):
         mem = client.memory
         if not isOver:
             last = mem[-1]

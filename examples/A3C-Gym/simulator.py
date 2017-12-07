@@ -103,6 +103,7 @@ class SimulatorMaster(threading.Thread):
     class ClientState(object):
         def __init__(self):
             self.memory = []    # list of Experience
+            self.ident = None
 
     def __init__(self, pipe_c2s, pipe_s2c):
         super(SimulatorMaster, self).__init__()
@@ -143,35 +144,13 @@ class SimulatorMaster(threading.Thread):
             while True:
                 msg = loads(self.c2s_socket.recv(copy=False).bytes)
                 ident, state, reward, isOver = msg
-                # TODO check history and warn about dead client
                 client = self.clients[ident]
-
-                # check if reward&isOver is valid
-                # in the first message, only state is valid
-                if len(client.memory) > 0:
-                    client.memory[-1].reward = reward
-                    if isOver:
-                        self._on_episode_over(ident)
-                    else:
-                        self._on_datapoint(ident)
-                # feed state and return action
-                self._on_state(state, ident)
+                if client.ident is None:
+                    client.ident = ident
+                # maybe check history and warn about dead client?
+                self._process_msg(client, state, reward, isOver)
         except zmq.ContextTerminated:
             logger.info("[Simulator] Context was terminated.")
-
-    @abstractmethod
-    def _on_state(self, state, ident):
-        """response to state sent by ident. Preferrably an async call"""
-
-    @abstractmethod
-    def _on_episode_over(self, client):
-        """ callback when the client just finished an episode.
-            You may want to clear the client's memory in this callback.
-        """
-
-    def _on_datapoint(self, client):
-        """ callback when the client just finished a transition
-        """
 
     def __del__(self):
         self.context.destroy(linger=0)
