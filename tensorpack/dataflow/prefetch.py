@@ -205,7 +205,7 @@ class PrefetchDataZMQ(_MultiProcessZMQDataFlow):
            b. When ``nr_proc>1``, the dataflow produces the same distribution
               of data as ``ds`` if each sample from ``ds`` is i.i.d. (e.g. fully shuffled).
               You probably only want to use it for training.
-        2. The fork of proesses happened in the `reset_state()` method.
+        2. The fork of processes happened in the `reset_state()` method.
            Please note that forking a TensorFlow GPU session may be unsafe.
            If you're managing this dataflow on your own,
            it's better to fork before creating the session.
