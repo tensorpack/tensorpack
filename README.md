@@ -1,6 +1,6 @@
 # tensorpack
 
-Tensorpack is a __zero-overhead__ training interface based on TensorFlow.
+Tensorpack is a training interface based on TensorFlow.
 
 [![Build Status](https://travis-ci.org/ppwwyyxx/tensorpack.svg?branch=master)](https://travis-ci.org/ppwwyyxx/tensorpack)
 [![ReadTheDoc](https://readthedocs.org/projects/tensorpack/badge/?version=latest)](http://tensorpack.readthedocs.io/en/latest/index.html)
