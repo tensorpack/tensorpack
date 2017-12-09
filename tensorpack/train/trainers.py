@@ -54,7 +54,7 @@ class SimpleTrainer(SingleCostTrainer):
         return []
 
 
-# Only works for type check
+# Only exists for type check & back-compatibility
 class QueueInputTrainer(SimpleTrainer):
     def _setup_graph(self, input, get_cost_fn, get_opt_fn):
         assert isinstance(input, QueueInput)
@@ -65,6 +65,11 @@ class SyncMultiGPUTrainerParameterServer(SingleCostTrainer):
 
     __doc__ = SyncMultiGPUParameterServerBuilder.__doc__
 
+    devices = None
+    """
+    List of GPU ids.
+    """
+
     @map_arg(gpus=_int_to_range)
     def __init__(self, gpus, ps_device='gpu'):
         """
@@ -72,6 +77,7 @@ class SyncMultiGPUTrainerParameterServer(SingleCostTrainer):
             gpus ([int]): list of GPU ids.
             ps_device: either 'gpu' or 'cpu', where variables are stored.  Setting to 'cpu' might help when #gpu>=4
         """
+        self.devices = gpus
         self._builder = SyncMultiGPUParameterServerBuilder(gpus, ps_device)
         super(SyncMultiGPUTrainerParameterServer, self).__init__()
 
@@ -96,6 +102,11 @@ class AsyncMultiGPUTrainer(SingleCostTrainer):
 
     __doc__ = AsyncMultiGPUBuilder.__doc__
 
+    devices = None
+    """
+    List of GPU ids.
+    """
+
     @map_arg(gpus=_int_to_range)
     def __init__(self, gpus, scale_gradient=True):
         """
@@ -103,6 +114,7 @@ class AsyncMultiGPUTrainer(SingleCostTrainer):
             gpus ([int]): list of GPU ids.
             scale_gradient (bool): if True, will scale each gradient by ``1.0/nr_gpu``.
         """
+        self.devices = gpus
         self._builder = AsyncMultiGPUBuilder(gpus, scale_gradient)
         super(AsyncMultiGPUTrainer, self).__init__()
 
@@ -116,12 +128,18 @@ class SyncMultiGPUTrainerReplicated(SingleCostTrainer):
 
     __doc__ = SyncMultiGPUReplicatedBuilder.__doc__
 
+    devices = None
+    """
+    List of GPU ids.
+    """
+
     @map_arg(gpus=_int_to_range)
     def __init__(self, gpus):
         """
         Args:
             gpus ([int]): list of GPU ids.
         """
+        self.devices = gpus
         self._builder = SyncMultiGPUReplicatedBuilder(gpus)
         super(SyncMultiGPUTrainerReplicated, self).__init__()
 
@@ -139,6 +157,11 @@ class DistributedTrainerReplicated(SingleCostTrainer):
 
     __doc__ = DistributedReplicatedBuilder.__doc__
 
+    devices = None
+    """
+    List of GPU ids.
+    """
+
     @map_arg(gpus=_int_to_range)
     def __init__(self, gpus, server):
         """
@@ -146,6 +169,7 @@ class DistributedTrainerReplicated(SingleCostTrainer):
             gpus (list[int]): list of GPU ids.
             server (tf.train.Server): the server with ps and workers.
         """
+        self.devices = gpus
         self.server = server
         self.job_name = server.server_def.job_name
         assert self.job_name in ['ps', 'worker'], self.job_name

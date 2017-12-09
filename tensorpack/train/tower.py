@@ -68,6 +68,8 @@ class TowerTrainer(Trainer):
         Returns:
             a :class:`TowerTensorHandles` object, to
             access the tower handles by either indices or names.
+
+        It is accessbile only after the graph is set up.
         """
         return self.tower_func.towers
 

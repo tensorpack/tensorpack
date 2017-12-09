@@ -139,9 +139,8 @@ class Model(ModelDesc):
 
 
 class MySimulatorMaster(SimulatorMaster, Callback):
-    def __init__(self, pipe_c2s, pipe_s2c, model, gpus):
+    def __init__(self, pipe_c2s, pipe_s2c, gpus):
         super(MySimulatorMaster, self).__init__(pipe_c2s, pipe_s2c)
-        self.M = model
         self.queue = queue.Queue(maxsize=BATCH_SIZE * 8 * 2)
         self._gpus = gpus
 
@@ -211,7 +210,11 @@ class MySimulatorMaster(SimulatorMaster, Callback):
             client.memory = []
 
 
-def get_config():
+def train():
+    dirname = os.path.join('train_log', 'train-atari-{}'.format(ENV_NAME))
+    logger.set_logger_dir(dirname)
+
+    # assign GPUs for training & inference
     nr_gpu = get_nr_gpu()
     global PREDICTOR_THREAD
     if nr_gpu > 0:
@@ -238,11 +241,10 @@ def get_config():
     ensure_proc_terminate(procs)
     start_proc_mask_signal(procs)
 
-    M = Model()
-    master = MySimulatorMaster(namec2s, names2c, M, predict_tower)
+    master = MySimulatorMaster(namec2s, names2c, predict_tower)
     dataflow = BatchData(DataFromQueue(master.queue), BATCH_SIZE)
-    return TrainConfig(
-        model=M,
+    config = TrainConfig(
+        model=Model(),
         dataflow=dataflow,
         callbacks=[
             ModelSaver(),
@@ -259,9 +261,11 @@ def get_config():
         session_creator=sesscreate.NewSessionCreator(
             config=get_default_sess_config(0.5)),
         steps_per_epoch=STEPS_PER_EPOCH,
+        session_init=get_model_loader(args.load) if args.load else None,
         max_epoch=1000,
-        tower=train_tower
     )
+    trainer = SimpleTrainer() if config.nr_tower == 1 else AsyncMultiGPUTrainer(train_tower)
+    launch_train_with_config(config, trainer)
 
 
 if __name__ == '__main__':
@@ -301,11 +305,4 @@ if __name__ == '__main__':
                 pred, args.episode)
             # gym.upload(args.output, api_key='xxx')
     else:
-        dirname = os.path.join('train_log', 'train-atari-{}'.format(ENV_NAME))
-        logger.set_logger_dir(dirname)
-
-        config = get_config()
-        if args.load:
-            config.session_init = get_model_loader(args.load)
-        trainer = SimpleTrainer() if config.nr_tower == 1 else AsyncMultiGPUTrainer(config.tower)
-        launch_train_with_config(config, trainer)
+        train()

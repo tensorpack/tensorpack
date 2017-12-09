@@ -84,9 +84,6 @@ class TrainConfig(object):
             steps_per_epoch (int): the number of steps (defined by :meth:`Trainer.run_step`) to run in each epoch.
                 Defaults to the input data size.
             max_epoch (int): maximum number of epoch to run training.
-
-            nr_tower (int): number of training towers, used by multigpu trainers.
-            tower ([int]): list of training towers in relative GPU id.
         """
 
         # TODO type checker decorator
@@ -147,6 +144,7 @@ class TrainConfig(object):
         self.max_epoch = int(max_epoch)
         assert self.steps_per_epoch > 0 and self.max_epoch > 0
 
+        # Tower stuff are for Trainer v1 only:
         nr_tower = max(nr_tower, 1)
         self.nr_tower = nr_tower
         if tower is not None:
@@ -160,6 +158,7 @@ class TrainConfig(object):
         self.predict_tower = predict_tower
         if isinstance(self.predict_tower, int):
             self.predict_tower = [self.predict_tower]
+        # --------------------------------------------------------------
 
         assert len(kwargs) == 0, 'Unknown arguments: {}'.format(str(kwargs.keys()))
 
