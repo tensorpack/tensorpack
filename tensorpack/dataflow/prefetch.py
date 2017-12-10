@@ -247,8 +247,9 @@ class PrefetchDataZMQ(_MultiProcessZMQDataFlow):
             nr_proc (int): number of processes to use.
             hwm (int): the zmq "high-water mark" (queue size) for both sender and receiver.
         """
-        super(PrefetchDataZMQ, self).__init__(ds)
+        super(PrefetchDataZMQ, self).__init__()
 
+        self.ds = ds
         self.nr_proc = nr_proc
         self._hwm = hwm
 
