@@ -1,6 +1,6 @@
 # Summary and Logging
 
-During training, everything other than the training iterations themselves are executed through callbacks, including all the logging.
+During training, everything other than the iterations are executed through callbacks.
 This tutorial will explain how summaries and logging are handled in callbacks and how can you customize them.
 The default logging behavior should be good enough for normal use cases, so you may skip this tutorial.
 

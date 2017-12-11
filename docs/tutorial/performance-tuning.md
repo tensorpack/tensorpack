@@ -2,10 +2,12 @@
 # Performance Tuning
 
 __We do not know why your training is slow__ (and most of the times it's not a tensorpack problem).
-Performance is different on every machine. So you need to figure out most parts by your own.
+Performance is different across machines and tasks.
+So you need to figure out most parts by your own.
 Here's a list of things you can do when your training is slow.
 
-If you're going to open an issue about slow training, PLEASE do them and include your findings.
+If you're going to open an issue about slow training,
+PLEASE do them and include your findings.
 
 ## Figure out the bottleneck
 
@@ -75,4 +77,4 @@ If you're unable to scale to multiple GPUs almost linearly:
 	 There isn't a simple answer to this.
 	 You may try a different multi-GPU trainer; the speed can vary a lot sometimes.
 
-Note that scalibility is always measured with the same "batch size per GPU", not the same total equivalent batch size.
+Note that scalibility is always measured by keeping "batch size per GPU" constant.

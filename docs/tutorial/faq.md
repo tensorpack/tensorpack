@@ -27,6 +27,8 @@ Then it is a good time to open an issue.
 3. The [ProgressBar](../modules/callbacks.html#tensorpack.callbacks.ProgressBar)
 	 callback can print some scalar statistics, though not enabled by default.
 
+4. Read [Summary and Loggin](summary.html) for more options on logging.
+
 ## How to freeze some variables in training
 
 1. You can simply use `tf.stop_gradient` in your model code in some situations (e.g. to freeze first several layers).

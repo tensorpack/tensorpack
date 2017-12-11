@@ -30,8 +30,8 @@ or you may need placeholders in the inference graph, or the training graph conta
 which you want to remove.
 In this case, you can always create a new graph with pure TensorFlow.
 
-The only thing tensorpack has for this purpose is `OfflinePredictor`,
-a simple function to build the graph and a callable for you.
-It is mainly for quick demo purpose.
+The only tool tensorpack has for after-training inference is `OfflinePredictor`,
+a simple function to build the graph and return a callable for you.
+It is mainly for quick demo purposes.
 It only runs inference on Python data, therefore may not be the most efficient way.
 Check out some examples for its usage.
