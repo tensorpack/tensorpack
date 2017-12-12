@@ -9,7 +9,7 @@ import copy
 from tensorpack.utils.argtools import memoized, log_once
 from tensorpack.dataflow import (
     MapData, imgaug, TestDataSpeed,
-    MapDataComponent, DataFromList, PrefetchDataZMQ)
+    MapDataComponent, DataFromList)
 # import tensorpack.utils.viz as tpviz
 
 from coco import COCODetection
@@ -254,7 +254,7 @@ def get_train_dataflow(add_mask=False):
         return ret
 
     ds = MapData(ds, preprocess)
-    ds = PrefetchDataZMQ(ds, 1)
+    # ds = PrefetchDataZMQ(ds, 1)
     return ds
 
 
@@ -268,7 +268,7 @@ def get_eval_dataflow():
         assert im is not None, fname
         return im
     ds = MapDataComponent(ds, f, 0)
-    ds = PrefetchDataZMQ(ds, 1)
+    # ds = PrefetchDataZMQ(ds, 1)
     return ds
 
 
