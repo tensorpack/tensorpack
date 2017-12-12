@@ -35,6 +35,7 @@ class ImageDataFromZIPFile(RNGDataFlow):
         self.archivefiles = random.sample(self.archivefiles, self.max)
         for archive in self.archivefiles:
             im_data = archive[0].read(archive[1])
+            im_data = np.asarray(bytearray(im_data), dtype='uint8')
             yield [im_data]
 
 
@@ -47,7 +48,7 @@ class ImageEncode(MapDataComponent):
 
 
 class ImageDecode(MapDataComponent):
-    def __init__(self, ds, mode='.jpg', index=0):
+    def __init__(self, ds, index=0):
         def func(im_data):
             img = cv2.imdecode(im_data, cv2.IMREAD_COLOR)
             return img
