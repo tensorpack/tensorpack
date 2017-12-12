@@ -40,7 +40,7 @@ class Hue(ImageAugmentor):
             hsv[..., 0] = (hsv[..., 0] + hue) % 180
         else:
             # OpenCV uses 0-360 for floating point images
-            hsv[..., 0] = (hsv[..., 0] + 2　*　hue) % 360
+            hsv[..., 0] = (hsv[..., 0] + 2 * hue) % 360
         m = cv2.COLOR_HSV2BGR if not self.rgb else cv2.COLOR_HSV2RGB
         img = cv2.cvtColor(hsv, m)
         return img
