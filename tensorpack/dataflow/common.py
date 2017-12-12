@@ -497,6 +497,9 @@ class JoinData(DataFlow):
             d.reset_state()
 
     def size(self):
+        """
+        Return the minimum size among all.
+        """
         return min([k.size() for k in self.df_lists])
 
     def get_data(self):

@@ -185,6 +185,7 @@ class QueueInput(FeedfreeInput):
         self.queue = queue
         self.ds = ds
         self._inf_ds = RepeatedData(ds, -1)
+        self._started = False
 
     def _size(self):
         return self.ds.size()
@@ -204,21 +205,24 @@ class QueueInput(FeedfreeInput):
             self._dequeue_op = self.queue.dequeue(name='dequeue_for_reset')
 
     def _reset_state(self):
-        self.thread.pause()     # pause enqueue
+        if self._started:   # do not try to clear the queue if there is nothing
+            self.thread.pause()     # pause enqueue
 
-        opt = tf.RunOptions()
-        opt.timeout_in_ms = 2000   # 2s
-        sess = tf.get_default_session()
-        # dequeue until empty
-        try:
-            while True:
-                sess.run(self._dequeue_op, options=opt)
-        except tf.errors.DeadlineExceededError:
-            pass
+            opt = tf.RunOptions()
+            opt.timeout_in_ms = 2000   # 2s
+            sess = tf.get_default_session()
+            # dequeue until empty
+            try:
+                while True:
+                    sess.run(self._dequeue_op, options=opt)
+            except tf.errors.DeadlineExceededError:
+                pass
 
-        # reset dataflow, start thread
-        self.thread.reinitialize_dataflow()
-        self.thread.resume()
+            # reset dataflow, start thread
+            self.thread.reinitialize_dataflow()
+            self.thread.resume()
+        else:
+            self._started = True
 
     def _create_ema_callback(self):
         """
