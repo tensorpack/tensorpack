@@ -34,6 +34,7 @@ class Hue(ImageAugmentor):
     def _augment(self, img, hue):
         m = cv2.COLOR_BGR2HSV if not self.rgb else cv2.COLOR_RGB2HSV
         hsv = cv2.cvtColor(img, m)
+        # https://docs.opencv.org/3.2.0/de/d25/imgproc_color_conversions.html#color_convert_rgb_hsv
         if hsv.dtype.itemsize == 1:
             # OpenCV uses 0-179 for 8-bit images
             hsv[..., 0] = (hsv[..., 0] + hue) % 180
