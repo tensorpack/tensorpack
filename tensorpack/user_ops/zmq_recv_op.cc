@@ -27,15 +27,17 @@ class ZMQConnectionHandleOp : public ResourceOpKernel<ZMQConnection> {
   private:
     Status CreateResource(ZMQConnection** ret) override EXCLUSIVE_LOCKS_REQUIRED(mu_) {
       const NodeDef& ndef = def();
-      string end_point;
-      int hwm;
-      TF_RETURN_IF_ERROR(GetNodeAttr(ndef, "end_point", &end_point));
-      TF_RETURN_IF_ERROR(GetNodeAttr(ndef, "hwm", &hwm));
-      *ret = new ZMQConnection(end_point, ZMQ_PULL, hwm);
+      ZMQSocketDef sockdef;
+      sockdef.socket_type = ZMQ_PULL;
+      TF_RETURN_IF_ERROR(GetNodeAttr(ndef, "bind", &sockdef.bind));
+      TF_RETURN_IF_ERROR(GetNodeAttr(ndef, "end_point", &sockdef.end_point));
+      TF_RETURN_IF_ERROR(GetNodeAttr(ndef, "hwm", &sockdef.hwm));
+      *ret = new ZMQConnection(sockdef);
       return Status::OK();
     }
 
-    // TODO verify
+    // Can verify, but probably not necessary because python is not going to eval this op twice with
+    // the same shared name
 };
 
 
@@ -46,7 +48,6 @@ class ZMQRecvOp: public AsyncOpKernel {
   }
 
   void ComputeAsync(OpKernelContext* ctx, DoneCallback done) override {
-    //GuardedTimer tm("Compute");
     ZMQConnection* conn = nullptr;
     OP_REQUIRES_OK_ASYNC(
         ctx, LookupResource(ctx, HandleFromInput(ctx, 0), &conn), done);
@@ -105,6 +106,7 @@ REGISTER_OP("ZMQConnection")
     .Output("handle: resource")
     .Attr("end_point: string")
     .Attr("hwm: int >= 1 = 10")
+    .Attr("bind: bool = true")
 
     .Attr("container: string = ''")
     .Attr("shared_name: string = ''")
@@ -115,8 +117,7 @@ REGISTER_OP("ZMQConnection")
 Opens a ZMQ PULL socket and returns a handle to it as a resource.
 end_point: the ZMQ end point.
 hwm: ZMQ high-water mark.
-container: If non-empty, this queue is placed in the given container.
-        Otherwise, a default container is used.
-shared_name: If non-empty, this queue will be shared under the given name
-  across multiple sessions.
+bind: If false, will connect to the endpoint rather than bind to it.
+container: required for a resource op kernel.
+shared_name: If non-empty, this connection will be shared under the given name across multiple sessions.
 )doc");

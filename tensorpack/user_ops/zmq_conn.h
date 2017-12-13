@@ -6,9 +6,11 @@
 #include <string>
 #include <iostream>
 #include <thread>
+
+#include <tensorflow/core/framework/resource_mgr.h>
 #include <tensorflow/core/framework/tensor_shape.h>
 #include <tensorflow/core/lib/gtl/inlined_vector.h>
-#include <tensorflow/core/framework/resource_mgr.h>
+#include <tensorflow/core/lib/strings/strcat.h>
 #include <tensorflow/core/platform/mutex.h>
 #include "zmq.hpp"
 
@@ -20,13 +22,24 @@ inline int read_int32(char** p) {
 }
 
 inline tensorflow::int64 read_int64(char** p) {
-  auto pi = reinterpret_cast<const long long*>(*p);
+  auto pi = reinterpret_cast<const tensorflow::int64*>(*p);
   *p += 8;
   return *pi;
 }
 }
 
 namespace tensorpack {
+
+struct ZMQSocketDef {
+  std::string end_point;
+  int socket_type,  // ZMQ_PULL
+      hwm;
+  bool bind;  // bind or connect
+
+  std::string DebugString() const {
+    return tensorflow::strings::StrCat("EndPoint=", end_point, ", hwm=", std::to_string(hwm));
+  }
+};
 
 struct RecvTensorList {
   zmq::message_t message;
@@ -43,13 +56,20 @@ struct RecvTensorList {
 
 class ZMQConnection : public tensorflow::ResourceBase {
  public:
-  ZMQConnection(std::string endpoint, int zmq_socket_type, int hwm):
-    ctx_(1), sock_(ctx_, zmq_socket_type) {
-      sock_.setsockopt(ZMQ_RCVHWM, &hwm, sizeof hwm);
-      sock_.bind(endpoint.c_str());
+  explicit ZMQConnection(const ZMQSocketDef& def):
+    def_{def}, ctx_{1}, sock_{ctx_, def.socket_type} {
+      int linger = 0;
+      sock_.setsockopt(ZMQ_LINGER, &linger , sizeof linger);
+
+      sock_.setsockopt(ZMQ_RCVHWM, &def.hwm , sizeof def.hwm);
+      if (def.bind) {
+        sock_.bind(def.end_point.c_str());
+      } else {
+        sock_.connect(def.end_point.c_str());
+      }
   }
 
-  std::string DebugString() override { return ""; }
+  std::string DebugString() override { return def_.DebugString(); }
 
   void recv_tensor_list(RecvTensorList* tlist) {
     {
@@ -86,7 +106,10 @@ class ZMQConnection : public tensorflow::ResourceBase {
     }
   }
 
+  const ZMQSocketDef& get_socket_def() const { return def_; }
+
  private:
+  ZMQSocketDef def_;
   tensorflow::mutex mu_;
   zmq::context_t ctx_;
   zmq::socket_t sock_;

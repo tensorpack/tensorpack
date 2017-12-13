@@ -21,18 +21,25 @@ else:
 def send_dataflow_zmq(df, addr, hwm=50, print_interval=100, format=None):
     """
     Run DataFlow and send data to a ZMQ socket addr.
-    It will dump and send each datapoint to this addr with a PUSH socket.
+    It will __connect__ to this addr,
+    serialize and send each datapoint to this addr with a PUSH socket.
     This function never returns unless an error is encountered.
 
     Args:
         df (DataFlow): Will infinitely loop over the DataFlow.
-        addr: a ZMQ socket addr.
+        addr: a ZMQ socket endpoint.
         hwm (int): ZMQ high-water mark (buffer size)
+        format (str): The serialization format.
+             Default format would use :mod:`tensorpack.utils.serialize` (i.e. msgpack).
+             An alternate format is 'zmq_op'.
     """
-    # format (str): The serialization format. ZMQ Op is still not publicly usable now
-    #     Default format would use :mod:`tensorpack.utils.serialize`.
-    # dump_fn = dumps if format is None else dumps_for_tfop
-    dump_fn = dumps
+    assert format in [None, 'zmq_op']
+    if format is None:
+        dump_fn = dumps
+    else:
+        from ..user_ops.zmq_recv import dumps_zmq_op
+        dump_fn = dumps_zmq_op
+
     ctx = zmq.Context()
     socket = ctx.socket(zmq.PUSH)
     socket.set_hwm(hwm)
