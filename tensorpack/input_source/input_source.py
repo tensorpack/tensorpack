@@ -539,7 +539,15 @@ class StagingInput(FeedfreeInput):
             for idx, device in enumerate(self._devices):
                 with tf.device(device):
                     inputs = self._input.get_input_tensors()
-                    dtypes = [x.dtype for x in inputs]
+
+                    # Putting variables to stagingarea will cause trouble
+                    dtypes = []
+                    for idx in range(len(inputs)):
+                        dtype = inputs[idx].dtype
+                        if dtype.base_dtype != dtype:     # is reference type
+                            inputs[idx] = tf.identity(inputs[idx])
+                        dtypes.append(dtype.base_dtype)
+
                     stage = StagingArea(dtypes, shapes=None)
                     self._stage_ops.append(stage.put(inputs))
                     self._areas.append(stage)

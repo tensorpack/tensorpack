@@ -87,7 +87,10 @@ class DataParallelBuilder(GraphBuilder):
                     is_training=True,
                     index=idx,
                     vs_name=tower_names[idx] if usevs else ''):
-                logger.info("Building graph for training tower {} on device {}...".format(idx, device))
+                if len(str(device)) < 10:   # a device function doesn't have good string description
+                    logger.info("Building graph for training tower {} on device {}...".format(idx, device))
+                else:
+                    logger.info("Building graph for training tower {} ...".format(idx))
 
                 # When use_vs is True, use LOCAL_VARIABLES,
                 # so these duplicated variables won't be saved by default.
