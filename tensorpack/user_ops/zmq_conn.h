@@ -16,6 +16,12 @@ inline int read_int32(char** p) {
   *p += 4;
   return *pi;
 }
+
+inline tensorflow::int64 read_int64(char** p) {
+  auto pi = reinterpret_cast<const long long*>(*p);
+  *p += 8;
+  return *pi;
+}
 }
 
 namespace tensorpack {
@@ -26,7 +32,7 @@ struct RecvTensorList {
   struct TensorConstructor {
     tensorflow::DataType dtype;
     tensorflow::TensorShape shape;
-    int size; // TODO bufsize
+    tensorflow::int64 buf_size;
     char* buf;
   };
 
@@ -46,8 +52,9 @@ class ZMQConnection {
       // https://www.tensorflow.org/extend/adding_an_op#multi-threaded_cpu_kernels
       // zmq socket is not thread safe
       tensorflow::mutex_lock lk(mu_);
-      bool succ = sock_.recv(&tlist->message);  // TODO this may throw
-      // possible error code: http://api.zeromq.org/3-3:zmq-msg-recv
+      bool succ = sock_.recv(&tlist->message);  // block until some data appears
+      // TODO this may throw, handle exception?
+      // Possible error code: http://api.zeromq.org/3-3:zmq-msg-recv
       // succ=false only if EAGAIN
       CHECK(succ);    // no EAGAIN, because we are blocking
     }
@@ -68,9 +75,9 @@ class ZMQConnection {
         int shp = read_int32(&pos);
         tensors[i].shape.AddDim(shp);
       }
-      int sz = read_int32(&pos);
+      tensorflow::int64 sz = read_int64(&pos);
       tensors[i].buf = pos;
-      tensors[i].size = sz;
+      tensors[i].buf_size = sz;
       pos += sz;
     }
   }

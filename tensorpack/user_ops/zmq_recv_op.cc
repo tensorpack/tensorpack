@@ -27,7 +27,6 @@ The serialization format is a tensorpack custom format, defined in 'zmq_recv.py'
 
 namespace tensorpack {
 
-
 class ZMQRecvOp: public AsyncOpKernel {
  public:
   explicit ZMQRecvOp(OpKernelConstruction* context) : AsyncOpKernel(context) {
@@ -39,6 +38,7 @@ class ZMQRecvOp: public AsyncOpKernel {
 
     int hwm;
     OP_REQUIRES_OK(context, context->GetAttr("hwm", &hwm));
+    // will get called only at the first sess.run call
     conn_.reset(new ZMQConnection(endpoint, ZMQ_PULL, hwm));
   }
 
@@ -61,15 +61,16 @@ class ZMQRecvOp: public AsyncOpKernel {
       auto recv_dtype = tensors[j].dtype;
       OP_REQUIRES_ASYNC(
           ctx, component_types_[j] == recv_dtype,
-          errors::InvalidArgument("Type mismatch between parsed tensor (",
-                                  DataTypeString(recv_dtype), ") and dtype (",
-                                  DataTypeString(component_types_[j]), ")"), done);
+          errors::InvalidArgument("Type mismatch at index ", std::to_string(j),
+                                  " between received tensor (", DataTypeString(recv_dtype),
+                                  ") and dtype (", DataTypeString(component_types_[j]), ")"),
+          done);
 
 
       TensorShape& shape = tensors[j].shape;
       OP_REQUIRES_OK_ASYNC(ctx, ctx->allocate_output(i, shape, &output), done);
-      auto ptr = output->bit_casted_shaped<char, 1>({shape.num_elements()});
-      memcpy(ptr.data(), tensors[j].buf, tensors[j].size);
+      auto ptr = output->bit_casted_shaped<char, 1>({shape.num_elements()}).data();
+      memcpy(ptr, tensors[j].buf, tensors[j].buf_size);
       outputs.set(j, *output);
     }
     done();

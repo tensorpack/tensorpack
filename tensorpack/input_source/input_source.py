@@ -384,13 +384,15 @@ class ZMQInput(TensorInput):
     """
     Not well implemented yet. Don't use.
     """
-    def __init__(self, endpoint):
+    def __init__(self, endpoint, hwm):
         self._endpoint = endpoint
 
         from tensorpack.user_ops import zmq_recv
 
         def fn():
-            ret = zmq_recv(self._endpoint, [x.dtype for x in self.inputs_desc])
+            ret = zmq_recv(
+                self._endpoint, [x.dtype for x in self.inputs_desc],
+                hwm=hwm)
             if isinstance(ret, tf.Tensor):
                 ret = [ret]
             assert len(ret) == len(self.inputs_desc)

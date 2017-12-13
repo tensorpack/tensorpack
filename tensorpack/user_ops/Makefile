@@ -1,5 +1,5 @@
 # $File: Makefile
-# $Date: Tue Dec 12 18:04:22 2017 -0800
+# $Date: Tue Dec 12 22:27:38 2017 -0800
 
 OBJ_DIR = obj
 PYTHON = python
@@ -45,8 +45,8 @@ ccSOURCES = $(shell find $(SRCDIRS) -name "*.cc" | sed 's/^\.\///g')
 OBJS = $(addprefix $(OBJ_DIR)/,$(ccSOURCES:.cc=.o))
 DEPFILES = $(OBJS:.o=.d)
 
-# TODO what about mac?
-SO = zmq_recv_op.so
+EXT_SUFFIX ?= $(shell $(PYTHON) -c 'import sysconfig; print(sysconfig.get_config_var("EXT_SUFFIX"))')
+SO = zmq_recv_op$(EXT_SUFFIX)
 
 .PHONY: all clean
 
@@ -56,7 +56,7 @@ ifneq ($(MAKECMDGOALS), clean)
 sinclude $(DEPFILES)
 endif
 
-%.so: $(OBJ_DIR)/%.o
+%$(EXT_SUFFIX): $(OBJ_DIR)/%.o
 	@echo "Linking $@ ..."
 	@$(CXX) $^ -o $@ $(LDFLAGS)
 	@echo "done."

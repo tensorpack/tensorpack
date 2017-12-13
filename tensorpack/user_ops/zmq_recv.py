@@ -17,17 +17,18 @@ __all__ = ['zmq_recv', 'dumps_zmq_op',
            'dump_tensor_protos', 'to_tensor_proto']
 
 
-# TODO '.so' for linux only
 def build():
     global zmq_recv
-    ret = compile()
-    if ret != 0:
-        zmq_recv = None
-    else:
-        file_dir = os.path.dirname(os.path.abspath(__file__))
-        recv_mod = tf.load_op_library(
-            os.path.join(file_dir, 'zmq_recv_op' + get_ext_suffix()))
-        zmq_recv = recv_mod.zmq_recv
+    file_dir = os.path.dirname(os.path.abspath(__file__))
+    basename = 'zmq_recv_op' + get_ext_suffix()
+    so_file = os.path.join(file_dir, basename)
+    if not os.path.isfile(so_file):
+        ret = compile()
+        if ret != 0:
+            raise RuntimeError("tensorpack user_ops compilation failed!")
+
+    recv_mod = tf.load_op_library(so_file)
+    zmq_recv = recv_mod.zmq_recv
 
 
 build()
@@ -43,7 +44,6 @@ _DTYPE_DICT = {
 _DTYPE_DICT = {np.dtype(k): v for k, v in _DTYPE_DICT.items()}
 
 
-# TODO support string tensor and scalar
 def to_tensor_proto(arr):
     """
     Convert a numpy array to TensorProto
@@ -51,8 +51,15 @@ def to_tensor_proto(arr):
     Args:
         arr: numpy.ndarray. only supports common numerical types
     """
+    if isinstance(arr, float):
+        arr = np.asarray(arr).astype('float32')
+    elif isinstance(arr, int):
+        arr = np.asarray(arr).astype('int32')
     assert isinstance(arr, np.ndarray), type(arr)
-    dtype = _DTYPE_DICT[arr.dtype]
+    try:
+        dtype = _DTYPE_DICT[arr.dtype]
+    except KeyError:
+        raise KeyError("Dtype {} is unsupported by current ZMQ Op!".format(arr.dtype))
 
     ret = TensorProto()
     shape = ret.tensor_shape
@@ -83,9 +90,8 @@ def dump_tensor_protos(protos):
         Where each tensor is:
 
         [dtype(int32)][ndims(int32)][shape[0](int32)]...[shape[n](int32)]
-        [len(buffer)(int32)][buffer]
+        [len(buffer)(int64)][buffer]
     """
-    # TODO use int64
 
     s = struct.pack('=i', len(protos))
     for p in protos:
@@ -96,7 +102,7 @@ def dump_tensor_protos(protos):
         s += struct.pack('=i', len(dims))
         for k in dims:
             s += struct.pack('=i', k.size)
-        s += struct.pack('=i', len(tensor_content))    # won't send stuff over 2G
+        s += struct.pack('=q', len(tensor_content))
         s += tensor_content
     return s
 
@@ -111,5 +117,6 @@ def dumps_zmq_op(dp):
     Returns:
         a binary string
     """
+    assert isinstance(dp, (list, tuple))
     protos = [to_tensor_proto(arr) for arr in dp]
     return dump_tensor_protos(protos)

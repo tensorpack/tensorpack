@@ -38,9 +38,16 @@ def random_array(num):
     ret = []
     for k in range(num):
         arr1 = np.random.rand(k + 10, k + 10).astype('float32')
+        # arr1 = 3.0
         arr2 = (np.random.rand((k + 10) * 2) * 10).astype('uint8')
         ret.append([arr1, arr2])
     return ret
+
+
+def constant_array(num):
+    arr = np.ones((30, 30)).astype('float32')
+    arr2 = np.ones((3, 3)).astype('uint8')
+    return [[arr, arr2]] * num
 
 
 def hash_dp(dp):
@@ -50,7 +57,7 @@ def hash_dp(dp):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--task', default='basic',
-                        choices=['basic', 'tworecv'])
+                        choices=['basic', 'tworecv', 'send'])
     parser.add_argument('-n', '--num', type=int, default=10)
     args = parser.parse_args()
 
@@ -68,10 +75,10 @@ if __name__ == '__main__':
             arr = sess.run(recv)
             assert (arr[0] == truth[0]).all()
             assert (arr[1] == truth[1]).all()
-
-        p.join()
-
-    if args.task == 'tworecv':
+    elif args.task == 'send':
+        DATA = random_array(args.num)
+        send(DATA)
+    elif args.task == 'tworecv':
         DATA = random_array(args.num)
         hashes = [hash_dp(dp) for dp in DATA]
         print(hashes)
