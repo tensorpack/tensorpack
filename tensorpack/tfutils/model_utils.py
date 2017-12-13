@@ -21,6 +21,7 @@ def describe_trainable_vars():
         logger.warn("No trainable variables in the graph!")
         return
     total = 0
+    total_bytes = 0
     data = []
     devices = set()
     for v in train_vars:
@@ -29,6 +30,7 @@ def describe_trainable_vars():
         shape = v.get_shape()
         ele = shape.num_elements()
         total += ele
+        total_bytes += ele * v.dtype.size
         devices.add(v.device)
         data.append([v.name, shape.as_list(), ele, v.device])
 
@@ -40,9 +42,9 @@ def describe_trainable_vars():
     else:
         table = tabulate(data, headers=['name', 'shape', 'dim', 'device'])
 
-    size_mb = total * 4 / 1024.0**2
+    size_mb = total_bytes / 1024.0**2
     summary_msg = colored(
-        "\nTotal #vars={}, #param={} ({:.02f} MB assuming all float32)".format(
+        "\nTotal #vars={}, #params={}, size={:.02f}MB".format(
             len(data), total, size_mb), 'cyan')
     logger.info(colored("Model Parameters: \n", 'cyan') + table + summary_msg)
 

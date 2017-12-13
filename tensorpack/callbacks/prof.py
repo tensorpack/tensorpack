@@ -196,4 +196,4 @@ class PeakMemoryTracker(Callback):
     def _after_run(self, _, rv):
         results = rv.results
         for mem, dev in zip(results, self._devices):
-            self.trainer.monitors.put_scalar('PeakMemory(MB)' + dev, mem / 1e6)
+            self.trainer.monitors.put_scalar('PeakMemory(MB) ' + dev, mem / 1e6)
