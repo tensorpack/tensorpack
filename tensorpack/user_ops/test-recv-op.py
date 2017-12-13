@@ -3,10 +3,11 @@
 # File: test-recv-op.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import sys
 import os
 import zmq
+import argparse
 import multiprocessing as mp
+import time
 import numpy as np
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf # noqa
@@ -19,27 +20,46 @@ from tensorpack.utils.concurrency import (  # noqa
 
 ENDPOINT = 'ipc://test-pipe'
 
-if __name__ == '__main__':
-    try:
-        num = int(sys.argv[1])
-    except (ValueError, IndexError):
-        num = 10
 
-    DATA = []
+def send(iterable, delay=0):
+    ctx = zmq.Context()
+    sok = ctx.socket(zmq.PUSH)
+    sok.bind(ENDPOINT)
+
+    for dp in iterable:
+        if delay > 0:
+            time.sleep(delay)
+            print("Sending data to socket..")
+        sok.send(dumps_zmq_op(dp))
+    time.sleep(999)
+
+
+def random_array(num):
+    ret = []
     for k in range(num):
         arr1 = np.random.rand(k + 10, k + 10).astype('float32')
         arr2 = (np.random.rand((k + 10) * 2) * 10).astype('uint8')
-        DATA.append([arr1, arr2])
+        ret.append([arr1, arr2])
+    return ret
 
-    def send():
-        ctx = zmq.Context()
-        sok = ctx.socket(zmq.PUSH)
-        sok.connect(ENDPOINT)
 
-        for dp in DATA:
-            sok.send(dumps_zmq_op(dp))
+def hash_dp(dp):
+    return sum([k.sum() for k in dp])
 
-    def recv():
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--task', default='basic',
+                        choices=['basic', 'tworecv'])
+    parser.add_argument('-n', '--num', type=int, default=10)
+    args = parser.parse_args()
+
+    if args.task == 'basic':
+        DATA = random_array(args.num)
+        p = mp.Process(target=send, args=(DATA,))
+        ensure_proc_terminate(p)
+        start_proc_mask_signal(p)
+
         sess = tf.Session()
         recv = zmq_recv(ENDPOINT, [tf.float32, tf.uint8])
         print(recv)
@@ -49,8 +69,23 @@ if __name__ == '__main__':
             assert (arr[0] == truth[0]).all()
             assert (arr[1] == truth[1]).all()
 
-    p = mp.Process(target=send)
-    ensure_proc_terminate(p)
-    start_proc_mask_signal(p)
-    recv()
-    p.join()
+        p.join()
+
+    if args.task == 'tworecv':
+        DATA = random_array(args.num)
+        hashes = [hash_dp(dp) for dp in DATA]
+        print(hashes)
+        p = mp.Process(target=send, args=(DATA, 0.00))
+        ensure_proc_terminate(p)
+        start_proc_mask_signal(p)
+
+        sess = tf.Session()
+        recv1 = zmq_recv(ENDPOINT, [tf.float32, tf.uint8], hwm=1)
+        recv2 = zmq_recv(ENDPOINT, [tf.float32, tf.uint8], hwm=1)
+        print(recv1, recv2)
+
+        for i in range(args.num // 2):
+            res1, res2 = sess.run([recv1, recv2])
+            h1, h2 = hash_dp(res1), hash_dp(res2)
+            print("Recv ", i, h1, h2)
+            assert h1 in hashes and h2 in hashes

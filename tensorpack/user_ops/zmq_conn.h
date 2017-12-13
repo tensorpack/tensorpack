@@ -7,6 +7,7 @@
 #include <iostream>
 #include <tensorflow/core/framework/tensor_shape.h>
 #include <tensorflow/core/lib/gtl/inlined_vector.h>
+#include <tensorflow/core/platform/mutex.h>
 #include "zmq.hpp"
 
 namespace {
@@ -16,6 +17,8 @@ inline int read_int32(char** p) {
   return *pi;
 }
 }
+
+namespace tensorpack {
 
 struct RecvTensorList {
   zmq::message_t message;
@@ -35,13 +38,19 @@ class ZMQConnection {
   ZMQConnection(std::string endpoint, int zmq_socket_type, int hwm):
     ctx_(1), sock_(ctx_, zmq_socket_type) {
       sock_.setsockopt(ZMQ_RCVHWM, &hwm, sizeof hwm);
-      sock_.bind(endpoint.c_str());
+      sock_.connect(endpoint.c_str());
   }
 
   void recv_tensor_list(RecvTensorList* tlist) {
-    // TODO critical section
-    bool succ = sock_.recv(&tlist->message);
-    CHECK(succ);    // no EAGAIN, because we are blocking
+    {
+      // https://www.tensorflow.org/extend/adding_an_op#multi-threaded_cpu_kernels
+      // zmq socket is not thread safe
+      tensorflow::mutex_lock lk(mu_);
+      bool succ = sock_.recv(&tlist->message);  // TODO this may throw
+      // possible error code: http://api.zeromq.org/3-3:zmq-msg-recv
+      // succ=false only if EAGAIN
+      CHECK(succ);    // no EAGAIN, because we are blocking
+    }
 
     char* pos = reinterpret_cast<char*>(tlist->message.data());
 
@@ -67,6 +76,10 @@ class ZMQConnection {
   }
 
  private:
+  tensorflow::mutex mu_;
   zmq::context_t ctx_;
   zmq::socket_t sock_;
 };
+
+} // namespace tensorpack
+
