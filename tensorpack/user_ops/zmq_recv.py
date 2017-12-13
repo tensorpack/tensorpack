@@ -13,7 +13,7 @@ from tensorflow.core.framework import types_pb2 as DataType
 
 from .common import compile, get_ext_suffix
 
-__all__ = ['zmq_recv', 'dumps_for_tfop',
+__all__ = ['zmq_recv', 'dumps_zmq_op',
            'dump_tensor_protos', 'to_tensor_proto']
 
 
@@ -26,7 +26,7 @@ def build():
     else:
         file_dir = os.path.dirname(os.path.abspath(__file__))
         recv_mod = tf.load_op_library(
-            os.path.join(file_dir, 'zmq_recv_op.' + get_ext_suffix()))
+            os.path.join(file_dir, 'zmq_recv_op' + get_ext_suffix()))
         zmq_recv = recv_mod.zmq_recv
 
 
@@ -51,6 +51,7 @@ def to_tensor_proto(arr):
     Args:
         arr: numpy.ndarray. only supports common numerical types
     """
+    assert isinstance(arr, np.ndarray), type(arr)
     dtype = _DTYPE_DICT[arr.dtype]
 
     ret = TensorProto()
@@ -100,9 +101,15 @@ def dump_tensor_protos(protos):
     return s
 
 
-def dumps_for_tfop(dp):
+def dumps_zmq_op(dp):
     """
     Dump a datapoint (list of nparray) into a format that the ZMQRecv op in tensorpack would accept.
+
+    Args:
+        dp: list of nparray
+
+    Returns:
+        a binary string
     """
     protos = [to_tensor_proto(arr) for arr in dp]
     return dump_tensor_protos(protos)

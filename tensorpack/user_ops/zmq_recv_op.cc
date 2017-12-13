@@ -16,11 +16,12 @@ REGISTER_OP("ZMQRecv")
     .Output("output: types")
     .Attr("end_point: string")
     .Attr("types: list(type) >= 1")
+    .Attr("hwm: int >= 1 = 100")
     .SetShapeFn(shape_inference::UnknownShape)
     .SetIsStateful()
     .Doc(R"doc(
-Receive a serialized list of Tensors from a ZMQ socket.
-The serialization format is a tensorpack custom format.
+Receive a list of Tensors from a ZMQ socket.
+The serialization format is a tensorpack custom format, defined in 'zmq_recv.py'.
 )doc");
 
 
@@ -32,7 +33,10 @@ class ZMQRecvOp: public OpKernel {
 
     string endpoint;
     OP_REQUIRES_OK(context, context->GetAttr("end_point", &endpoint));
-    conn_.reset(new ZMQConnection(endpoint, ZMQ_PULL));
+
+    int hwm;
+    OP_REQUIRES_OK(context, context->GetAttr("hwm", &hwm));
+    conn_.reset(new ZMQConnection(endpoint, ZMQ_PULL, hwm));
   }
 
   void Compute(OpKernelContext* ctx) override {

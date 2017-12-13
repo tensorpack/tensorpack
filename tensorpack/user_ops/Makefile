@@ -1,7 +1,8 @@
 # $File: Makefile
-# $Date: Tue Oct 31 11:44:27 2017 +0800
+# $Date: Tue Dec 12 18:04:22 2017 -0800
 
 OBJ_DIR = obj
+PYTHON = python
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
@@ -21,15 +22,19 @@ INCLUDE_DIR += $(shell pkg-config --cflags $(LIBS))
 LDFLAGS += $(shell pkg-config $(LIBS) --libs)
 
 CXXFLAGS += $(INCLUDE_DIR)
-CXXFLAGS += -Wall -Wextra
+CXXFLAGS += -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare
 CXXFLAGS += $(DEFINES) -std=c++11 $(OPTFLAGS) -fPIC
 
-# TODO https://github.com/tensorflow/tensorflow/issues/1569
-# You may need to disable this flag if you compile tensorflow yourself with gcc>=5
-CXXFLAGS += -D_GLIBCXX_USE_CXX11_ABI=0
+ifneq ($(MAKECMDGOALS), clean)
+TF_CXXFLAGS ?= $(shell $(PYTHON) -c 'import tensorflow as tf; print(" ".join(tf.sysconfig.get_compile_flags()))')
+TF_LDFLAGS ?= $(shell $(PYTHON) -c 'import tensorflow as tf; print(" ".join(tf.sysconfig.get_link_flags()))')
+endif
+
+CXXFLAGS += $(TF_CXXFLAGS)
 
 LDFLAGS += $(OPTFLAGS)
 LDFLAGS += -shared -fPIC
+LDFLAGS += $(TF_LDFLAGS)
 ifeq ($(UNAME_S),Darwin)
 	LDFLAGS += -Wl,-undefined -Wl,dynamic_lookup
 endif
@@ -41,7 +46,7 @@ OBJS = $(addprefix $(OBJ_DIR)/,$(ccSOURCES:.cc=.o))
 DEPFILES = $(OBJS:.o=.d)
 
 # TODO what about mac?
-SO = $(ccSOURCES:.cc=.so)
+SO = zmq_recv_op.so
 
 .PHONY: all clean
 

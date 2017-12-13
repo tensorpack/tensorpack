@@ -32,9 +32,8 @@ struct RecvTensorList {
 
 class ZMQConnection {
  public:
-  ZMQConnection(std::string endpoint, int zmq_socket_type):
+  ZMQConnection(std::string endpoint, int zmq_socket_type, int hwm):
     ctx_(1), sock_(ctx_, zmq_socket_type) {
-      int hwm = 100;  // TODO make it an option
       sock_.setsockopt(ZMQ_RCVHWM, &hwm, sizeof hwm);
       sock_.bind(endpoint.c_str());
   }

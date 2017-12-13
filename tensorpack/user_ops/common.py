@@ -9,10 +9,11 @@ import os
 
 
 def compile():
-    # TODO check modtime?
-    include_dir = tf.sysconfig.get_include()
+    cxxflags = ' '.join(tf.sysconfig.get_compile_flags())
+    ldflags = ' '.join(tf.sysconfig.get_link_flags())
     file_dir = os.path.dirname(os.path.abspath(__file__))
-    compile_cmd = 'INCLUDE_DIR="-isystem {}" make -C "{}"'.format(include_dir, file_dir)
+    compile_cmd = 'TF_CXXFLAGS="{}" TF_LDFLAGS="{}" make -C "{}"'.format(
+        cxxflags, ldflags, file_dir)
     ret = os.system(compile_cmd)
     return ret
 
@@ -20,6 +21,7 @@ def compile():
 # https://github.com/uber/horovod/blob/10835d25eccf4b198a23a0795edddf0896f6563d/horovod/tensorflow/mpi_ops.py#L30-L40
 def get_ext_suffix():
     """Determine library extension for various versions of Python."""
+    return '.so'    # TODO
     ext_suffix = sysconfig.get_config_var('EXT_SUFFIX')
     if ext_suffix:
         return ext_suffix
