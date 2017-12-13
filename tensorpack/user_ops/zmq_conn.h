@@ -5,8 +5,10 @@
 
 #include <string>
 #include <iostream>
+#include <thread>
 #include <tensorflow/core/framework/tensor_shape.h>
 #include <tensorflow/core/lib/gtl/inlined_vector.h>
+#include <tensorflow/core/framework/resource_mgr.h>
 #include <tensorflow/core/platform/mutex.h>
 #include "zmq.hpp"
 
@@ -39,13 +41,15 @@ struct RecvTensorList {
   tensorflow::gtl::InlinedVector<TensorConstructor, 4> tensors;
 };
 
-class ZMQConnection {
+class ZMQConnection : public tensorflow::ResourceBase {
  public:
   ZMQConnection(std::string endpoint, int zmq_socket_type, int hwm):
     ctx_(1), sock_(ctx_, zmq_socket_type) {
       sock_.setsockopt(ZMQ_RCVHWM, &hwm, sizeof hwm);
-      sock_.connect(endpoint.c_str());
+      sock_.bind(endpoint.c_str());
   }
+
+  std::string DebugString() override { return ""; }
 
   void recv_tensor_list(RecvTensorList* tlist) {
     {

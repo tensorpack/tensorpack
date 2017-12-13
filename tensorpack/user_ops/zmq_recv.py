@@ -13,12 +13,14 @@ from tensorflow.core.framework import types_pb2 as DataType
 
 from .common import compile, get_ext_suffix
 
-__all__ = ['zmq_recv', 'dumps_zmq_op',
+__all__ = ['dumps_zmq_op', 'ZMQRecv',
            'dump_tensor_protos', 'to_tensor_proto']
 
 
-def build():
-    global zmq_recv
+_zmq_recv_mod = None
+
+
+def try_build():
     file_dir = os.path.dirname(os.path.abspath(__file__))
     basename = 'zmq_recv_op' + get_ext_suffix()
     so_file = os.path.join(file_dir, basename)
@@ -27,11 +29,33 @@ def build():
         if ret != 0:
             raise RuntimeError("tensorpack user_ops compilation failed!")
 
-    recv_mod = tf.load_op_library(so_file)
-    zmq_recv = recv_mod.zmq_recv
+    global _zmq_recv_mod
+    _zmq_recv_mod = tf.load_op_library(so_file)
 
 
-build()
+try_build()
+
+
+class ZMQRecv(object):
+    def __init__(self, end_point, types, hwm=None, name=None):
+        self._types = types
+
+        if name is None:
+            self._name = (tf.get_default_graph()
+                          .unique_name(self.__class__.__name__))
+        else:
+            self._name = name
+
+        self._zmq_handle = _zmq_recv_mod.zmq_connection(
+            end_point, hwm, shared_name=self._name)
+
+    @property
+    def name(self):
+        return self._name
+
+    def recv(self):
+        return _zmq_recv_mod.zmq_recv(
+            self._zmq_handle, self._types)
 
 
 _DTYPE_DICT = {
