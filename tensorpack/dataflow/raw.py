@@ -10,7 +10,7 @@ from six.moves import range
 from .base import DataFlow, RNGDataFlow
 from ..utils.develop import log_deprecated
 
-__all__ = ['FakeData', 'DataFromQueue', 'DataFromList', 'DataFromGenerator']
+__all__ = ['FakeData', 'DataFromQueue', 'DataFromList', 'DataFromGenerator', 'DataFromIterable']
 
 
 class FakeData(RNGDataFlow):
@@ -70,7 +70,7 @@ class DataFromQueue(DataFlow):
 
 
 class DataFromList(RNGDataFlow):
-    """ Produce data from a list"""
+    """ Wrap a list of datapoitns to a DataFlow"""
 
     def __init__(self, lst, shuffle=True):
         """
@@ -115,4 +115,22 @@ class DataFromGenerator(DataFlow):
     def get_data(self):
         # yield from
         for dp in self._gen():
+            yield dp
+
+
+class DataFromIterable(DataFlow):
+    """ Wrap an iterable of datapoitns to a DataFlow"""
+    def __init__(self, iterable):
+        """
+        Args:
+            iterable: an iterable object with length
+        """
+        self._itr = self.iterable
+        self._len = len(iterable)
+
+    def size(self):
+        return self._len
+
+    def get_data(self):
+        for dp in self._itr:
             yield dp
