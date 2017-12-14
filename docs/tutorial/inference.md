@@ -28,7 +28,11 @@ But sometimes you need a different one for inference.
 For example, you may need a different data layout for CPU inference,
 or you may need placeholders in the inference graph, or the training graph contains multi-GPU replication
 which you want to remove.
-In this case, you can always create a new graph with pure TensorFlow.
+In this case, you can always construct a new graph by simply:
+```python
+a, b = tf.placeholder(...), tf.placeholder(...)
+# call symbolic functions on a, b
+```
 
 The only tool tensorpack has for after-training inference is `OfflinePredictor`,
 a simple function to build the graph and return a callable for you.
