@@ -341,12 +341,16 @@ class _ParallelMapData(ProxyDataFlow):
     def get_data_non_strict(self):
         for dp in self._iter:
             self._send(dp)
-            yield self._recv()
+            ret = self._recv()
+            if ret is not None:
+                yield ret
 
         self._iter = self.ds.get_data()   # refresh
         for _ in range(self._buffer_size):
             self._send(next(self._iter))
-            yield self._recv()
+            ret = self._recv()
+            if ret is not None:
+                yield ret
 
     def get_data_strict(self):
         for dp in self._iter:
