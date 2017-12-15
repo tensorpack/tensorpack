@@ -13,8 +13,7 @@ from tensorflow.core.framework import types_pb2 as DT
 
 from .common import compile, get_ext_suffix
 
-__all__ = ['dumps_zmq_op', 'ZMQRecv',
-           'dump_tensor_protos', 'to_tensor_proto']
+__all__ = ['dumps_zmq_op', 'ZMQSocket']
 
 
 _zmq_recv_mod = None
@@ -36,9 +35,10 @@ def try_build():
 try_build()
 
 
-class ZMQRecv(object):
-    def __init__(self, end_point, types, hwm=None, name=None):
+class ZMQSocket(object):
+    def __init__(self, end_point, types, hwm=None, bind=True, name=None):
         self._types = types
+        assert isinstance(bind, bool), bind
 
         if name is None:
             self._name = (tf.get_default_graph()
@@ -47,7 +47,7 @@ class ZMQRecv(object):
             self._name = name
 
         self._zmq_handle = _zmq_recv_mod.zmq_connection(
-            end_point, hwm, shared_name=self._name)
+            end_point, hwm, bind=bind, shared_name=self._name)
 
     @property
     def name(self):

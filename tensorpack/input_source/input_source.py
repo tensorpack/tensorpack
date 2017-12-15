@@ -24,13 +24,11 @@ from ..utils.develop import log_deprecated
 from ..callbacks.base import Callback, CallbackFactory
 from ..callbacks.graph import RunOp
 
-__all__ = ['PlaceholderInput', 'FeedInput',
-           'FeedfreeInput',
+__all__ = ['PlaceholderInput', 'FeedInput', 'FeedfreeInput',
            'QueueInput', 'BatchQueueInput',
            'DummyConstantInput', 'TensorInput',
-           'TFDatasetInput',
-           'StagingInputWrapper',
-           'StagingInput']
+           'ZMQInput', 'TFDatasetInput',
+           'StagingInputWrapper', 'StagingInput']
 
 
 def _get_reset_callback(df):
@@ -382,29 +380,36 @@ class DummyConstantInput(TensorInput):
 
 class ZMQInput(TensorInput):
     """
-    Not well implemented yet. Don't use.
+    Recv tensors from a ZMQ endpoint.
+    It works with :meth:`dataflow.remote.send_dataflow_zmq(format='zmq_op')`.
     """
-    def __init__(self, endpoint, hwm):
-        self._endpoint = endpoint
-
-        from tensorpack.user_ops import zmq_recv
+    def __init__(self, end_point, hwm):
+        """
+        Args:
+            end_point (str):
+            hwm (int):
+        """
+        self._end_point = end_point
+        self._hwm = int(hwm)
 
         def fn():
-            ret = zmq_recv(
-                self._endpoint, [x.dtype for x in self.inputs_desc],
-                hwm=hwm)
-            if isinstance(ret, tf.Tensor):
-                ret = [ret]
-            assert len(ret) == len(self.inputs_desc)
-            for qv, v in zip(ret, self.inputs_desc):
+            ret = self._zmq_recv_socket.recv()
+            assert len(ret) == len(self._desc)
+            for qv, v in zip(ret, self._desc):
                 qv.set_shape(v.shape)
             return ret
         super(ZMQInput, self).__init__(fn)
 
     def _setup(self, inputs_desc):
-        self.inputs_desc = inputs_desc
-        assert len(self.inputs_desc) > 0, \
+        assert len(inputs_desc) > 0, \
             "ZMQInput has to be used with InputDesc!"
+        self._desc = inputs_desc
+
+        from ..user_ops import zmq_recv
+        self._zmq_recv_socket = zmq_recv.ZMQSocket(
+            self._end_point,
+            [x.type for x in inputs_desc],
+            self._hwm)
 
 
 class TFDatasetInput(FeedfreeInput):

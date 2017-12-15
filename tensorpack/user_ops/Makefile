@@ -1,5 +1,5 @@
 # $File: Makefile
-# $Date: Tue Dec 12 22:27:38 2017 -0800
+# $Date: Thu Dec 14 18:03:41 2017 -0800
 
 OBJ_DIR = obj
 PYTHON = python
@@ -16,25 +16,24 @@ OPTFLAGS ?= -O3 -march=native
 #OPTFLAGS ?= -g3 -fsanitize=address,undefined -O2 -lasan
 #OPTFLAGS ?= -g3 -fsanitize=leak -O2 -lubsan
 
-# extra packages from pkg-config
-LIBS = libzmq
-INCLUDE_DIR += $(shell pkg-config --cflags $(LIBS))
-LDFLAGS += $(shell pkg-config $(LIBS) --libs)
-
-CXXFLAGS += $(INCLUDE_DIR)
-CXXFLAGS += -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare
-CXXFLAGS += $(DEFINES) -std=c++11 $(OPTFLAGS) -fPIC
-
+# libraries: TF preceeds others, so g++ looks for protobuf among TF headers
 ifneq ($(MAKECMDGOALS), clean)
 TF_CXXFLAGS ?= $(shell $(PYTHON) -c 'import tensorflow as tf; print(" ".join(tf.sysconfig.get_compile_flags()))')
 TF_LDFLAGS ?= $(shell $(PYTHON) -c 'import tensorflow as tf; print(" ".join(tf.sysconfig.get_link_flags()))')
 endif
-
 CXXFLAGS += $(TF_CXXFLAGS)
+LDFLAGS += $(TF_LDFLAGS)
+
+# extra packages from pkg-config
+LIBS = libzmq
+CXXFLAGS += $(shell pkg-config --cflags $(LIBS))
+LDFLAGS += $(shell pkg-config $(LIBS) --libs)
+
+CXXFLAGS += -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare
+CXXFLAGS += $(DEFINES) -std=c++11 $(OPTFLAGS) -fPIC
 
 LDFLAGS += $(OPTFLAGS)
 LDFLAGS += -shared -fPIC
-LDFLAGS += $(TF_LDFLAGS)
 ifeq ($(UNAME_S),Darwin)
 	LDFLAGS += -Wl,-undefined -Wl,dynamic_lookup
 endif

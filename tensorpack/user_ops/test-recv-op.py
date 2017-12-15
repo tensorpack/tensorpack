@@ -12,7 +12,7 @@ import numpy as np
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf # noqa
 from tensorpack.user_ops.zmq_recv import (  # noqa
-    ZMQRecv, dumps_zmq_op)
+    ZMQSocket, dumps_zmq_op)
 from tensorpack.utils.concurrency import (  # noqa
     start_proc_mask_signal,
     ensure_proc_terminate)
@@ -68,7 +68,7 @@ if __name__ == '__main__':
         start_proc_mask_signal(p)
 
         sess = tf.Session()
-        recv = ZMQRecv(ENDPOINT, [tf.float32, tf.uint8]).recv()
+        recv = ZMQSocket(ENDPOINT, [tf.float32, tf.uint8]).recv()
         print(recv)
 
         for truth in DATA:
@@ -87,7 +87,7 @@ if __name__ == '__main__':
         start_proc_mask_signal(p)
 
         sess = tf.Session()
-        zmqsock = ZMQRecv(ENDPOINT, [tf.float32, tf.uint8], hwm=1)
+        zmqsock = ZMQSocket(ENDPOINT, [tf.float32, tf.uint8], hwm=1)
         recv1 = zmqsock.recv()
         recv2 = zmqsock.recv()
         print(recv1, recv2)

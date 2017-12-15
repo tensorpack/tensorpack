@@ -34,6 +34,7 @@ class InputDesc(
             name (str):
         """
         shape = tuple(shape)    # has to be tuple for "self" to be hashable
+        assert isinstance(type, tf.DType), type
         self = super(InputDesc, cls).__new__(cls, type, shape, name)
         self._cached_placeholder = None
         return self

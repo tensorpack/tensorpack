@@ -86,3 +86,4 @@ target/
 *.dat
 
 .idea/
+*.diff
