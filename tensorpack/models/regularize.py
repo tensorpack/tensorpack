@@ -56,8 +56,6 @@ def regularize_cost(regex, func, name='regularize_cost'):
     else:
         params = tf.trainable_variables()
 
-    G = tf.get_default_graph()
-
     to_regularize = []
 
     with tf.name_scope(name + '_internals'):
@@ -65,8 +63,7 @@ def regularize_cost(regex, func, name='regularize_cost'):
         for p in params:
             para_name = p.op.name
             if re.search(regex, para_name):
-                with G.colocate_with(p):
-                    costs.append(func(p))
+                costs.append(func(p))
                 to_regularize.append(p.name)
         if not costs:
             return tf.constant(0, dtype=tf.float32, name='empty_' + name)
