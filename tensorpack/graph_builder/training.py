@@ -14,7 +14,7 @@ from ..tfutils.gradproc import ScaleGradient
 
 from .utils import (
     LeastLoadedDeviceSetter, override_to_local_variable,
-    allreduce_grads, average_grads_with_colocation)
+    allreduce_grads, average_grads)
 
 
 __all__ = ['GraphBuilder',
@@ -109,16 +109,13 @@ class SyncMultiGPUParameterServerBuilder(DataParallelBuilder):
     It is an equivalent of ``--variable_update=parameter_server`` in
     `tensorflow/benchmarks <https://github.com/tensorflow/benchmarks>`_.
     """
-    def __init__(self, towers, ps_device=None):
+    def __init__(self, towers, ps_device):
         """
         Args:
             towers(list[int]): list of GPU id
             ps_device (str): either 'gpu' or 'cpu', where variables are stored.
-                Setting to 'cpu' might help when #gpu>=4
         """
         super(SyncMultiGPUParameterServerBuilder, self).__init__(towers)
-        if ps_device is None:
-            ps_device = 'cpu' if len(towers) >= 4 else 'gpu'
         assert ps_device in ['cpu', 'gpu']
         self.ps_device = ps_device
 
@@ -146,7 +143,7 @@ class SyncMultiGPUParameterServerBuilder(DataParallelBuilder):
         # self.train_op = tf.group(*ops)
         # return
 
-        grads = average_grads_with_colocation(grad_list)
+        grads = average_grads(grad_list, colocate=True)
         # grads = grad_list[0]
 
         opt = get_opt_fn()
