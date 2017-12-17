@@ -23,7 +23,7 @@ class DistributedReplicatedBuilder(DataParallelBuilder):
     and get synchronously applied to the global copy of variables located on PS.
     Then each worker copy the latest variables from PS back to local.
 
-    It is an equivalent of `--variable_update=distributed_replicated` in
+    It is an equivalent of ``--variable_update=distributed_replicated`` in
     `tensorflow/benchmarks <https://github.com/tensorflow/benchmarks>`_.
 
     Note:

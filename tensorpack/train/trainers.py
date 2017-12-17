@@ -71,13 +71,16 @@ class SyncMultiGPUTrainerParameterServer(SingleCostTrainer):
     """
 
     @map_arg(gpus=_int_to_range)
-    def __init__(self, gpus, ps_device='gpu'):
+    def __init__(self, gpus, ps_device=None):
         """
         Args:
             gpus ([int]): list of GPU ids.
-            ps_device: either 'gpu' or 'cpu', where variables are stored.  Setting to 'cpu' might help when #gpu>=4
+            ps_device: either 'gpu' or 'cpu', where variables are stored.
+                The default value is subject to change.
         """
         self.devices = gpus
+        if ps_device is None:
+            ps_device = 'gpu' if len(gpus) <= 2 else 'cpu'
         self._builder = SyncMultiGPUParameterServerBuilder(gpus, ps_device)
         super(SyncMultiGPUTrainerParameterServer, self).__init__()
 
