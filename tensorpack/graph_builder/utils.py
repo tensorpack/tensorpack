@@ -47,7 +47,7 @@ class OverrideToLocalVariable(object):
         return getter(name, *args, **kwargs)
 
 
-# Copied from https://github.com/tensorflow/benchmarks/blob/master/scripts/tf_cnn_benchmarks/variable_mgr.py
+# https://github.com/tensorflow/benchmarks/blob/48cbef14a592e02a14beee8e9aef3ad22cadaed1/scripts/tf_cnn_benchmarks/variable_mgr_util.py#L192-L218
 class LeastLoadedDeviceSetter(object):
     """ Helper class to assign variables on the least loaded ps-device."""
     def __init__(self, worker_device, ps_devices):

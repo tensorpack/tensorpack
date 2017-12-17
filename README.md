@@ -37,7 +37,7 @@ It's Yet Another TF wrapper, but different in:
 	+	Speed comes for free with tensorpack -- it uses TensorFlow in the __correct way__ with no extra overhead.
 	  On various CNNs, it runs 1.5~1.7x faster than the equivalent Keras code.
 
-	+ Data-parallel multi-GPU/distributed training is off-the-shelf to use. It is as fast as Google's [official benchmark](https://www.tensorflow.org/performance/benchmarks).
+	+ Data-parallel multi-GPU training is off-the-shelf to use. It is as fast as Google's [official benchmark](https://www.tensorflow.org/performance/benchmarks).
 		You cannot beat its speed unless you're a TensorFlow expert.
 
 	+ See [tensorpack/benchmarks](https://github.com/tensorpack/benchmarks) for some benchmark scripts.
