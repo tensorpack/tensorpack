@@ -95,7 +95,7 @@ def SyncMultiGPUTrainer(gpus):
     Args:
         gpus (list[int]): list of GPU ids.
     """
-    return SyncMultiGPUTrainerParameterServer(gpus, ps_device='gpu')
+    return SyncMultiGPUTrainerParameterServer(gpus, ps_device='cpu')
 
 
 class AsyncMultiGPUTrainer(SingleCostTrainer):

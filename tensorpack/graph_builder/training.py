@@ -14,7 +14,7 @@ from ..tfutils.gradproc import ScaleGradient
 
 from .utils import (
     LeastLoadedDeviceSetter, override_to_local_variable,
-    allreduce_grads, average_grads)
+    allreduce_grads, average_grads_with_colocation)
 
 
 __all__ = ['GraphBuilder',
@@ -145,7 +145,7 @@ class SyncMultiGPUParameterServerBuilder(DataParallelBuilder):
         # self.train_op = tf.group(*ops)
         # return
 
-        grads = average_grads(grad_list)
+        grads = average_grads_with_colocation(grad_list)
         # grads = grad_list[0]
 
         opt = get_opt_fn()

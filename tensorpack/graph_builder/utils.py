@@ -9,7 +9,8 @@ import tensorflow as tf
 
 
 __all__ = ['LeastLoadedDeviceSetter', 'OverrideToLocalVariable',
-           'override_to_local_variable', 'allreduce_grads', 'average_grads']
+           'override_to_local_variable', 'allreduce_grads',
+           'average_grads_with_colocation']
 
 
 """
@@ -114,7 +115,7 @@ def allreduce_grads(all_grads):
     return ret
 
 
-def average_grads(all_grads):
+def average_grads_with_colocation(all_grads):
     """
     Average the gradients, on the device of each variable.
 
