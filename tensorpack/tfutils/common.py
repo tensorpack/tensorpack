@@ -32,21 +32,19 @@ def get_default_sess_config(mem_fraction=0.99):
     conf.allow_soft_placement = True
     # conf.log_device_placement = True
 
-    # https://github.com/tensorflow/tensorflow/issues/9322#issuecomment-295758107
-    # can speed up a bit
     conf.intra_op_parallelism_threads = 1
     conf.inter_op_parallelism_threads = 0
+    # TF benchmark use cpu_count() - gpu_thread_count(), e.g. 80 - 8 * 2
+    # Didn't see much difference.
 
     conf.gpu_options.per_process_gpu_memory_fraction = mem_fraction
     if get_tf_version_number() >= 1.2:
         conf.gpu_options.force_gpu_compatible = True
 
-    conf.gpu_options.allocator_type = 'BFC'
     conf.gpu_options.allow_growth = True
 
     # May hurt performance
     # conf.graph_options.optimizer_options.global_jit_level = tf.OptimizerOptions.ON_1
-    # TODO test this
     # conf.graph_options.place_pruned_graph = True
     return conf
 

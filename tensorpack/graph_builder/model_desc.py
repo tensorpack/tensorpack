@@ -175,10 +175,10 @@ class ModelDesc(ModelDescBase):
         self.build_graph(*inputs)
         return self.get_cost()
 
+    # TODO this is deprecated and only used for v1 trainers
     def _build_graph_get_grads(self, *inputs):
         """
         Build the graph from inputs and return the grads.
-        This is useful for most of the :class:`GraphBuilder` which expects such a function.
 
         Returns:
             [(grad, var)]

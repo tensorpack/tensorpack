@@ -106,7 +106,8 @@ class SyncMultiGPUParameterServerBuilder(DataParallelBuilder):
     shared variable scope. It synchronoizes the gradients computed
     from each tower, averages them and applies to the shared variables.
 
-    See https://www.tensorflow.org/performance/benchmarks for details.
+    It is an equivalent of `--variable_update=parameter_server` in
+    `tensorflow/benchmarks <https://github.com/tensorflow/benchmarks>`.
     """
     def __init__(self, towers, ps_device=None):
         """
@@ -164,7 +165,8 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
     It will build one tower on each GPU under its own variable scope.
     Each gradient update is averaged across or GPUs through NCCL.
 
-    See https://www.tensorflow.org/performance/benchmarks for details.
+    It is an equivalent of `--variable_update=replicated` in
+    `tensorflow/benchmarks <https://github.com/tensorflow/benchmarks>`.
     """
 
     def build(self, get_grad_fn, get_opt_fn):

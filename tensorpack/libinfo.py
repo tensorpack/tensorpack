@@ -22,8 +22,15 @@ except (ImportError, TypeError):
     pass
 
 os.environ['TF_ENABLE_WINOGRAD_NONFUSED'] = '1'  # issue#9339
-os.environ['TF_AUTOTUNE_THRESHOLD'] = '3'   # use more warm-up
+os.environ['TF_AUTOTUNE_THRESHOLD'] = '2'   # use more warm-up
+
+# Since 1.3, this is not needed
 os.environ['TF_AVGPOOL_USE_CUDNN'] = '1'   # issue#8566
+
+# TF1.5 features from tensorflow/benchmarks
+os.environ['TF_SYNC_ON_FINISH'] = '0'   # will become default
+os.environ['TF_GPU_THREAD_MODE'] = 'gpu_private'
+os.environ['TF_GPU_THREAD_COUNT'] = '2'
 
 try:
     import tensorflow as tf  # noqa
