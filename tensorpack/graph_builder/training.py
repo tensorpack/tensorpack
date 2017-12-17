@@ -143,7 +143,7 @@ class SyncMultiGPUParameterServerBuilder(DataParallelBuilder):
         # self.train_op = tf.group(*ops)
         # return
 
-        grads = average_grads(grad_list, colocate=True)
+        grads = average_grads(grad_list, colocation=True)
         # grads = grad_list[0]
 
         opt = get_opt_fn()

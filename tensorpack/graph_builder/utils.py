@@ -172,7 +172,7 @@ class OverrideCachingDevice(object):
         if size is None:
             # print(args, kwargs)
             return getter(*args, **kwargs)
-        if kwargs.get('trainable', True) == False:
+        if not kwargs.get('trainable', True):
             return getter(*args, **kwargs)
         if size < self.small_variable_size_threshold:
             device_name = self.device_for_small_variables
