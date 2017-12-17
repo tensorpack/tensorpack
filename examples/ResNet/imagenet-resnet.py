@@ -30,6 +30,9 @@ class Model(ImageNetModel):
     def __init__(self, depth, data_format='NCHW', mode='resnet'):
         super(Model, self).__init__(data_format)
 
+        if mode == 'se':
+            assert depth >= 50
+
         self.mode = mode
         basicblock = preresnet_basicblock if mode == 'preact' else resnet_basicblock
         bottleneck = {
@@ -114,9 +117,6 @@ if __name__ == '__main__':
 
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
-
-    if args.mode == 'se':
-        assert args.depth >= 50
 
     model = Model(args.depth, args.data_format, args.mode)
     if args.eval:

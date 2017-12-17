@@ -32,9 +32,7 @@ __all__ = ['PlaceholderInput', 'FeedInput', 'FeedfreeInput',
 
 
 def _get_reset_callback(df):
-    ret = CallbackFactory(setup_graph=lambda _: df.reset_state())
-    ret.chief_only = False
-    return ret
+    return CallbackFactory(setup_graph=lambda _: df.reset_state())
 
 
 class PlaceholderInput(InputSource):
@@ -240,7 +238,6 @@ class QueueInput(FeedfreeInput):
     def _get_callbacks(self):
         from ..callbacks.concurrency import StartProcOrThread
         cb = StartProcOrThread(self.thread)
-        cb.chief_only = False
         return [cb, self._create_ema_callback(), _get_reset_callback(self._inf_ds)]
 
     def _get_input_tensors(self):

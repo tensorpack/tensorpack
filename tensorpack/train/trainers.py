@@ -183,7 +183,6 @@ class DistributedTrainerReplicated(SingleCostTrainer):
         logger.info("Distributed training on cluster:\n" + str(server.server_def.cluster))
         super(DistributedTrainerReplicated, self).__init__()
 
-    def _setup_input(self, inputs_desc, input):
         if self.job_name == 'ps':
             # ps shouldn't setup input either
             logger.info("Running ps {}".format(self.server.server_def.task_index))
@@ -191,6 +190,7 @@ class DistributedTrainerReplicated(SingleCostTrainer):
             self.server.join()  # this function will never return tensorflow#4713
             raise RuntimeError("This is a bug. Server.join() for ps should never return!")
 
+    def _setup_input(self, inputs_desc, input):
         with override_to_local_variable():
             get_global_step_var()  # gs should be local
             # input source may create variable (queue size summary)
@@ -205,13 +205,13 @@ class DistributedTrainerReplicated(SingleCostTrainer):
             self._make_get_grad_fn(input, get_cost_fn, get_opt_fn), get_opt_fn)
 
         callbacks = []
-        # initial local_vars syncing
+        # Initial syncing vars from PS
         cb = RunOp(lambda: initial_sync_op,
                    run_before=True, run_as_trigger=False, verbose=True)
         cb.chief_only = False
         callbacks.append(cb)
 
-        # model_variables syncing
+        # Sync model_variables to PS, only chief needs to do this
         if model_sync_op:
             cb = RunOp(lambda: model_sync_op,
                        run_before=False, run_as_trigger=True, verbose=True)

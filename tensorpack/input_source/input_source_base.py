@@ -115,12 +115,19 @@ class InputSource(object):
         which is done also through the Callback interface.
         This method returns the callbacks and the return value will be memoized.
 
+        All callbacks will be automatically marked as `chief_only=False`,
+        so they will run on all nodes.
+
         Returns:
             list[Callback]: extra callbacks needed by this InputSource.
         """
         assert self.setup_done()
-        return [CallbackFactory(
+        ret = [CallbackFactory(
             before_train=lambda _: self.reset_state())] + self._get_callbacks()
+
+        for r in ret:
+            r.chief_only = False    # no input callbacks should be chief-only
+        return ret
 
     def _get_callbacks(self):
         return []
