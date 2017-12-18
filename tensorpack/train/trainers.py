@@ -20,7 +20,7 @@ from ..graph_builder.training import (
     SyncMultiGPUParameterServerBuilder,
     SyncMultiGPUReplicatedBuilder,
     AsyncMultiGPUBuilder)
-from ..graph_builder.distributed import DistributedReplicatedBuilder
+from ..graph_builder.distributed import DistributedReplicatedBuilder, DistributedParameterServerBuilder
 from ..graph_builder.utils import override_to_local_variable
 
 from .tower import SingleCostTrainer
@@ -31,6 +31,7 @@ __all__ = ['SimpleTrainer',
            'SyncMultiGPUTrainerReplicated',
            'SyncMultiGPUTrainerParameterServer',
            'AsyncMultiGPUTrainer',
+           'DistributedTrainerParameterServer',
            'DistributedTrainerReplicated',
            'HorovodTrainer']
 
@@ -154,6 +155,58 @@ class SyncMultiGPUTrainerReplicated(SingleCostTrainer):
             post_init_op,
             run_before=True, run_as_trigger=True, verbose=True)
         return [cb]
+
+
+class DistributedTrainerParameterServer(SingleCostTrainer):
+
+    __doc__ = DistributedParameterServerBuilder.__doc__
+
+    devices = None
+    """
+    List of GPU ids.
+    """
+
+    @map_arg(gpus=_int_to_range)
+    def __init__(self, gpus, server, caching_device='cpu'):
+        """
+        Args:
+            gpus ([int]): list of GPU ids.
+        """
+        self.devices = gpus
+        self.server = server
+        self.job_name = server.server_def.job_name
+        assert self.job_name in ['ps', 'worker'], self.job_name
+
+        if self.job_name == 'worker':
+            # ps doesn't build any graph
+            self._builder = DistributedParameterServerBuilder(gpus, server, caching_device)
+            self.is_chief = self._builder.is_chief
+        else:
+            self.is_chief = False
+        logger.info("Distributed training on cluster:\n" + str(server.server_def.cluster))
+        super(DistributedTrainerParameterServer, self).__init__()
+
+        if self.job_name == 'ps':
+            # ps shouldn't setup input either
+            logger.info("Running ps {}".format(self.server.server_def.task_index))
+            logger.info("Kill me with 'kill {}'".format(os.getpid()))
+            self.server.join()  # this function will never return tensorflow#4713
+            raise RuntimeError("This is a bug. Server.join() for ps should never return!")
+
+    def _setup_graph(self, input, get_cost_fn, get_opt_fn):
+        self.train_op = self._builder.build(
+            self._make_get_grad_fn(input, get_cost_fn, get_opt_fn), get_opt_fn)
+        return []
+
+    @HIDE_DOC
+    def initialize(self, session_creator, session_init):
+        if not isinstance(session_creator, NewSessionCreator) or \
+                session_creator.user_provided_config:
+            raise ValueError(
+                "You are not allowed to set session_creator or session_config for distributed training! "
+                "To use a custom session config, pass it to tf.train.Server.")
+        super(DistributedTrainerParameterServer, self).initialize(
+            get_distributed_session_creator(self.server), session_init)
 
 
 class DistributedTrainerReplicated(SingleCostTrainer):

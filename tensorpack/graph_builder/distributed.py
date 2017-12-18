@@ -9,13 +9,106 @@ from six.moves import zip, range
 from ..utils.argtools import memoized
 from ..tfutils.common import get_op_tensor_name, get_global_step_var
 
-from .training import DataParallelBuilder
-from .utils import override_to_local_variable
+from .training import GraphBuilder, DataParallelBuilder
+from .utils import (
+    override_to_local_variable, average_grads,
+    OverrideCachingDevice)
 
-__all__ = ['DistributedReplicatedBuilder']
+__all__ = ['DistributedParameterServerBuilder', 'DistributedReplicatedBuilder']
 
 
-class DistributedReplicatedBuilder(DataParallelBuilder):
+class DistributedBuilderBase(GraphBuilder):
+
+    _sync_queue_counter = 0
+
+    def __init__(self, server):
+        self.server = server
+        server_def = server.server_def
+        self.cluster = tf.train.ClusterSpec(server_def.cluster)
+        self.task_index = server_def.task_index
+
+        self.num_ps = self.cluster.num_tasks('ps')
+        self.num_worker = self.cluster.num_tasks('worker')
+
+    def _add_sync_queues_and_barrier(self, name, dependencies):
+        """Adds ops to enqueue on all worker queues.
+
+        Args:
+            name: prefixed for the shared_name of ops.
+            dependencies: control dependency from ops.
+
+        Returns:
+            an op that should be used as control dependency before starting next step.
+        """
+        self._sync_queue_counter += 1
+        with tf.device(self.sync_queue_devices[self._sync_queue_counter % len(self.sync_queue_devices)]):
+            sync_queues = [
+                tf.FIFOQueue(self.num_worker, [tf.bool], shapes=[[]],
+                             shared_name='%s%s' % (name, i))
+                for i in range(self.num_worker)]
+            queue_ops = []
+            # For each other worker, add an entry in a queue, signaling that it can finish this step.
+            token = tf.constant(False)
+            with tf.control_dependencies(dependencies):
+                for i, q in enumerate(sync_queues):
+                    if i != self.task_index:
+                        queue_ops.append(q.enqueue(token))
+
+            # Drain tokens off queue for this worker, one for each other worker.
+            queue_ops.append(
+                sync_queues[self.task_index].dequeue_many(len(sync_queues) - 1))
+
+            return tf.group(*queue_ops, name=name)
+
+
+class DistributedParameterServerBuilder(DataParallelBuilder, DistributedBuilderBase):
+
+    def __init__(self, towers, server, caching_device):
+        DataParallelBuilder.__init__(self, towers)
+        DistributedBuilderBase.__init__(self, server)
+
+        assert caching_device in ['cpu', 'gpu'], caching_device
+        self.caching_device = caching_device
+
+        self.is_chief = (self.task_index == 0)
+
+        worker_prefix = '/job:worker/task:%s' % self.task_index
+        self.param_server_device = tf.train.replica_device_setter(
+            worker_device=worker_prefix + '/cpu:0', cluster=self.cluster)
+        self.cpu_device = '%s/cpu:0' % worker_prefix
+        self.raw_devices = ['{}/gpu:{}'.format(worker_prefix, k) for k in self.towers]
+
+        self.sync_queue_devices = ['/job:ps/task:%s/cpu:0' % i for i in range(self.num_ps)]
+
+    def build(self, get_grad_fn, get_opt_fn):
+        ps_strategy = tf.contrib.training.GreedyLoadBalancingStrategy(
+            self.num_ps, tf.contrib.training.byte_size_load_fn)
+        devices = [
+            tf.train.replica_device_setter(
+                worker_device=d,
+                cluster=self.cluster,
+                ps_strategy=ps_strategy) for d in self.raw_devices]
+
+        if self.caching_device == 'gpu':
+            caching_devices = self.raw_devices
+        else:
+            caching_devices = [self.cpu_device]
+        custom_getter = OverrideCachingDevice(
+            caching_devices, self.cpu_device, 1024 * 64)
+
+        with tf.variable_scope(tf.get_variable_scope(), custom_getter=custom_getter):
+            grad_list = DataParallelBuilder.build_on_towers(self.towers, get_grad_fn, devices)
+        DataParallelBuilder._check_grad_list(grad_list)
+
+        with tf.device(self.param_server_device):
+            grads = average_grads(grad_list, colocation=False)
+            opt = get_opt_fn()
+            train_op = opt.apply_gradients(grads, name='train_op')
+        train_op = self._add_sync_queues_and_barrier('all_workers_sync_barrier', [train_op])
+        return train_op
+
+
+class DistributedReplicatedBuilder(DataParallelBuilder, DistributedBuilderBase):
     """
     Distributed replicated training.
     Each worker process builds the same model on one or more GPUs.
@@ -62,27 +155,21 @@ class DistributedReplicatedBuilder(DataParallelBuilder):
                 The job_name must be 'worker' because 'ps' job doesn't need to
                 build any graph.
         """
-        super(DistributedReplicatedBuilder, self).__init__(towers)
-        self.server = server
-        server_def = server.server_def
-        self.cluster = tf.train.ClusterSpec(server_def.cluster)
-        self.task_index = server_def.task_index
+        DataParallelBuilder.__init__(self, towers)
+        DistributedBuilderBase.__init__(self, server)
 
         self.is_chief = (self.task_index == 0)
 
         worker_prefix = '/job:worker/task:%s' % self.task_index
         self.param_server_device = tf.train.replica_device_setter(
             worker_device=worker_prefix + '/cpu:0', cluster=self.cluster)
-        self.num_ps = self.cluster.num_tasks('ps')
-        self.num_worker = self.cluster.num_tasks('worker')
 
         self.nr_gpu = len(self.towers)
         self.cpu_device = '%s/cpu:0' % worker_prefix
-        self.raw_devices = ['%s/%s:%i' % (worker_prefix, 'gpu', i) for i in range(self.nr_gpu)]
+        self.raw_devices = ['%s/gpu:%i' % (worker_prefix, i) for i in towers]
 
         # Device for queues for managing synchronization between servers
         self.sync_queue_devices = ['/job:ps/task:%s/cpu:0' % i for i in range(self.num_ps)]
-        self.sync_queue_counter = 0
 
     @staticmethod
     def _average_grads(tower_grads, devices):
@@ -155,36 +242,6 @@ class DistributedReplicatedBuilder(DataParallelBuilder):
             shadow_vars.append(new_v)
             shadow_model_vars.append((new_v, v))  # only need to sync model_var from one tower
         return shadow_model_vars
-
-    def _add_sync_queues_and_barrier(self, name, dependencies):
-        """Adds ops to enqueue on all worker queues.
-
-        Args:
-            name: prefixed for the shared_name of ops.
-            dependencies: control dependency from ops.
-
-        Returns:
-            an op that should be used as control dependency before starting next step.
-        """
-        self.sync_queue_counter += 1
-        with tf.device(self.sync_queue_devices[self.sync_queue_counter % len(self.sync_queue_devices)]):
-            sync_queues = [
-                tf.FIFOQueue(self.num_worker, [tf.bool], shapes=[[]],
-                             shared_name='%s%s' % (name, i))
-                for i in range(self.num_worker)]
-            queue_ops = []
-            # For each other worker, add an entry in a queue, signaling that it can finish this step.
-            token = tf.constant(False)
-            with tf.control_dependencies(dependencies):
-                for i, q in enumerate(sync_queues):
-                    if i != self.task_index:
-                        queue_ops.append(q.enqueue(token))
-
-            # Drain tokens off queue for this worker, one for each other worker.
-            queue_ops.append(
-                sync_queues[self.task_index].dequeue_many(len(sync_queues) - 1))
-
-            return tf.group(*queue_ops, name=name)
 
     def build(self, get_grad_fn, get_opt_fn):
         """

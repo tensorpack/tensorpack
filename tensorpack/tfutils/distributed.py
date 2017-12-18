@@ -21,15 +21,19 @@ def get_distributed_session_creator(server):
     init_op = tf.global_variables_initializer()
     local_init_op = tf.local_variables_initializer()
     ready_op = tf.report_uninitialized_variables()
+    ready_for_local_init_op = tf.report_uninitialized_variables(tf.global_variables())
     sm = tf.train.SessionManager(
         local_init_op=local_init_op,
-        ready_op=ready_op, graph=tf.get_default_graph())
+        ready_op=ready_op,
+        ready_for_local_init_op=ready_for_local_init_op,
+        graph=tf.get_default_graph())
 
     # to debug wrong variable collection
+    # from pprint import pprint
     # print("GLOBAL:")
-    # print(tf.global_variables())
+    # pprint([(k.name, k.device) for k in tf.global_variables()])
     # print("LOCAL:")
-    # print(tf.local_variables())
+    # pprint([(k.name, k.device) for k in tf.local_variables()])
 
     class _Creator(tf.train.SessionCreator):
         def create_session(self):

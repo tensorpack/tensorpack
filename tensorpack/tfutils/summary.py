@@ -231,6 +231,8 @@ def add_moving_summary(*args, **kwargs):
     ema_ops = []
     for c in v:
         name = re.sub('tower[0-9]+/', '', c.op.name)
+        # TODO colocate may affect distributed setting
+        # colocate variable with compute op implies that the variable should be local_vars
         with G.colocate_with(c), tf.name_scope(None):
             if not c.dtype.is_floating:
                 c = tf.cast(c, tf.float32)

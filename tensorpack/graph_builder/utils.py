@@ -169,11 +169,18 @@ class OverrideCachingDevice(object):
 
     def __call__(self, getter, *args, **kwargs):
         size = tf.TensorShape(kwargs['shape']).num_elements()
-        if size is None:
-            # print(args, kwargs)
+        if size is None or not kwargs.get('trainable', True):
+            # TODO
+            collections = kwargs['collections']
+            if not collections:
+                collections = set([tf.GraphKeys.GLOBAL_VARIABLES])
+            else:
+                collections = set(collections.copy())
+            collections.remove(tf.GraphKeys.GLOBAL_VARIABLES)
+            collections.add(tf.GraphKeys.LOCAL_VARIABLES)
+            kwargs['collections'] = list(collections)
             return getter(*args, **kwargs)
-        if not kwargs.get('trainable', True):
-            return getter(*args, **kwargs)
+
         if size < self.small_variable_size_threshold:
             device_name = self.device_for_small_variables
         else:
