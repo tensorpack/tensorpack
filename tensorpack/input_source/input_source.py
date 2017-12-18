@@ -483,12 +483,17 @@ class StagingInput(FeedfreeInput):
         A callback registered by this input source, to make sure stage/unstage
         is run at each step.
         """
-        def __init__(self, stage_op, unstage_op, nr_stage):
+        def __init__(self, stage_op_fn, unstage_op_fn, nr_stage):
             self.nr_stage = nr_stage
-            self.stage_op = stage_op
-            self.fetches = tf.train.SessionRunArgs(
-                fetches=[stage_op, unstage_op])
+            self.stage_op_fn = stage_op_fn
+            self.unstage_op_fn = unstage_op_fn
             self._initialized = False
+
+        def _setup_graph(self):
+            self.stage_op = self.stage_op_fn()
+            unstage_op = self.unstage_op_fn()
+            self.fetches = tf.train.SessionRunArgs(
+                fetches=[self.stage_op, unstage_op])
 
         def _prefill(self):
             logger.info("Pre-filling staging area ...")
@@ -502,21 +507,17 @@ class StagingInput(FeedfreeInput):
                 self._prefill()
             return self.fetches
 
-    def __init__(self, input, towers, nr_stage=5):
+    def __init__(self, input, towers=None, nr_stage=5):
         """
         Args:
             input (FeedfreeInput):
-            towers ([int]): list of GPU ids to prefetch on.
             nr_stage: number of elements to prefetch on each GPU.
+            towers: deprecated
         """
         assert isinstance(input, FeedfreeInput), input
         self._input = input
-        if not isinstance(towers[0], int):
-            # API changed
-            log_deprecated("StagingInput(devices=)", "Use (towers=) instead!", "2018-01-31")
-            self._devices = towers
-        else:
-            self._devices = ['/gpu:{}'.format(k) for k in towers]
+        if towers is not None:
+            log_deprecated("StagingInput(towers=) has no effect! Devices are handled automatically.")
 
         self._nr_stage = nr_stage
         self._areas = []
@@ -525,48 +526,41 @@ class StagingInput(FeedfreeInput):
 
     def _setup(self, inputs):
         self._input.setup(inputs)
-        self._setup_staging_areas()
 
     def _get_callbacks(self):
         cbs = self._input.get_callbacks()
 
+        # Pass a lambda to be called later, because stage ops have not been built
         cbs.append(
             StagingInput.StagingCallback(
-                self._get_stage_op(), self._get_unstage_op(), self._nr_stage))
+                lambda: self._get_stage_op(), lambda: self._get_unstage_op(), self._nr_stage))
         return cbs
-
-    def _setup_staging_areas(self):
-        logger.info("Setting up StagingArea for GPU prefetching ...")
-        with self.cached_name_scope():
-            for idx, device in enumerate(self._devices):
-                with tf.device(device):
-                    inputs = self._input.get_input_tensors()
-
-                    # Putting variables to stagingarea will cause trouble
-                    dtypes = []
-                    for idx in range(len(inputs)):
-                        dtype = inputs[idx].dtype
-                        if dtype.base_dtype != dtype:     # is reference type
-                            inputs[idx] = tf.identity(inputs[idx])
-                        dtypes.append(dtype.base_dtype)
-
-                    stage = StagingArea(dtypes, shapes=None)
-                    self._stage_ops.append(stage.put(inputs))
-                    self._areas.append(stage)
-                    outputs = stage.get()
-                    if isinstance(outputs, tf.Tensor):  # when size=1, TF doesn't return a list
-                        outputs = [outputs]
-                    for vin, vout in zip(inputs, outputs):
-                        vout.set_shape(vin.get_shape())
-                    self._unstage_ops.append(outputs)
 
     def _size(self):
         return self._input.size()
 
     def _get_input_tensors(self):
-        ctx = get_current_tower_context()
-        ret = self._unstage_ops[ctx.index]
-        return ret
+        with self.cached_name_scope():
+            inputs = self._input.get_input_tensors()
+
+            # Putting variables to stagingarea will cause trouble
+            dtypes = []
+            for idx in range(len(inputs)):
+                dtype = inputs[idx].dtype
+                if dtype.base_dtype != dtype:     # is reference type
+                    inputs[idx] = tf.identity(inputs[idx])
+                dtypes.append(dtype.base_dtype)
+
+            stage = StagingArea(dtypes, shapes=None)
+            self._stage_ops.append(stage.put(inputs))
+            self._areas.append(stage)
+            outputs = stage.get()
+            if isinstance(outputs, tf.Tensor):  # when size=1, TF doesn't return a list
+                outputs = [outputs]
+            for vin, vout in zip(inputs, outputs):
+                vout.set_shape(vin.get_shape())
+            self._unstage_ops.append(outputs)
+            return outputs
 
     def _get_stage_op(self):
         with self.cached_name_scope():

@@ -136,7 +136,7 @@ def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5,
             assert get_tf_version_number() >= 1.4, \
                 "Fine tuning a BatchNorm model with fixed statistics is only " \
                 "supported after https://github.com/tensorflow/tensorflow/pull/12580 "
-            if ctx.index == 0:  # only warn in first tower
+            if ctx.is_main_training_tower:  # only warn in first tower
                 logger.warn("[BatchNorm] Using moving_mean/moving_variance in training.")
             # Using moving_mean/moving_variance in training, which means we
             # loaded a pre-trained BN and only fine-tuning the affine part.

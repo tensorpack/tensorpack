@@ -141,7 +141,7 @@ class MultiGPUGANTrainer(TowerTrainer):
         raw_devices = ['/gpu:{}'.format(k) for k in range(nr_gpu)]
 
         # Setup input
-        input = StagingInput(input, list(range(nr_gpu)))
+        input = StagingInput(input)
         cbs = input.setup(model.get_inputs_desc())
         self.register_callback(cbs)
 

@@ -87,6 +87,7 @@ class TowerContext(object):
         """
         return self._collection_guard.get_collection_in_tower(key)
 
+    # TODO currently only used in StagingInput
     @property
     def index(self):
         return self._index

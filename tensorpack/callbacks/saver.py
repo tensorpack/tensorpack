@@ -21,7 +21,7 @@ class ModelSaver(Callback):
     def __init__(self, max_to_keep=10,
                  keep_checkpoint_every_n_hours=0.5,
                  checkpoint_dir=None,
-                 var_collections=tf.GraphKeys.GLOBAL_VARIABLES):
+                 var_collections=[tf.GraphKeys.GLOBAL_VARIABLES, tf.GraphKeys.MODEL_VARIABLES]):
         """
         Args:
             max_to_keep (int): the same as in ``tf.train.Saver``.

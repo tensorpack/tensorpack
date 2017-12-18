@@ -39,7 +39,7 @@ def apply_default_prefetch(input_source_or_dataflow, trainer):
             assert tf.test.is_gpu_available()
 
             if not isinstance(input, (StagingInput, DummyConstantInput)):
-                input = StagingInput(input, towers)
+                input = StagingInput(input)
     return input
 
 
