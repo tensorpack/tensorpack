@@ -62,8 +62,28 @@ class DistributedBuilderBase(GraphBuilder):
 
 
 class DistributedParameterServerBuilder(DataParallelBuilder, DistributedBuilderBase):
+    """
+    Distributed parameter server training.
+    A single copy of parameters are scattered around PS.
+    Gradients across GPUs are averaged within the worker, and applied to PS.
+    Each worker also caches the variables for reading.
+
+    It is an equivalent of ``--variable_update=parameter_server`` in
+    `tensorflow/benchmarks <https://github.com/tensorflow/benchmarks>`_.
+
+    Note:
+        1. Gradients are not averaged across workers, but applied to PS variables
+        directly (either with or without locking depending on the optimizer).
+    """
 
     def __init__(self, towers, server, caching_device):
+        """
+        Args:
+            towers (list[int]): list of GPU ids.
+            server (tf.train.Server): the server with ps and workers.
+                job_name must be 'worker'.
+            caching_device (str): either 'cpu' or 'gpu'
+        """
         DataParallelBuilder.__init__(self, towers)
         DistributedBuilderBase.__init__(self, server)
 
@@ -120,8 +140,12 @@ class DistributedReplicatedBuilder(DataParallelBuilder, DistributedBuilderBase):
     `tensorflow/benchmarks <https://github.com/tensorflow/benchmarks>`_.
 
     Note:
-        Gradients are not averaged across workers, but applied to PS variables
+        1. Gradients are not averaged across workers, but applied to PS variables
         directly (either with or without locking depending on the optimizer).
+
+        2. Some details about collections: all variables created inside tower
+           will become local variables,
+           and a clone will be made in global variables for all trainable/model variables.
 
     Example:
 
@@ -142,9 +166,9 @@ class DistributedReplicatedBuilder(DataParallelBuilder, DistributedBuilderBase):
 
             # Start training like this:
             (host1)$ train.py --job worker --task 0
-            (host1)$ train.py --job ps --task 0
+            (host1)$ CUDA_VISIBLE_DEVICES= train.py --job ps --task 0
             (host2)$ train.py --job worker --task 1
-            (host2)$ train.py --job ps --task 1
+            (host2)$ CUDA_VISIBLE_DEVICES= train.py --job ps --task 1
     """
 
     def __init__(self, towers, server):
@@ -152,8 +176,7 @@ class DistributedReplicatedBuilder(DataParallelBuilder, DistributedBuilderBase):
         Args:
             towers (list[int]): list of GPU ids.
             server (tf.train.Server): the server with ps and workers.
-                The job_name must be 'worker' because 'ps' job doesn't need to
-                build any graph.
+                job_name must be 'worker'.
         """
         DataParallelBuilder.__init__(self, towers)
         DistributedBuilderBase.__init__(self, server)

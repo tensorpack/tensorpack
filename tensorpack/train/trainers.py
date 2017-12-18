@@ -160,7 +160,6 @@ class SyncMultiGPUTrainerReplicated(SingleCostTrainer):
 class DistributedTrainerBase(SingleCostTrainer):
 
     devices = None
-    # TODO use full device name instead of id
 
     def __init__(self, gpus, server):
         super(DistributedTrainerBase, self).__init__()
@@ -195,6 +194,8 @@ class DistributedTrainerParameterServer(DistributedTrainerBase):
         """
         Args:
             gpus ([int]): list of GPU ids.
+            server (tf.train.Server): the server with ps and workers.
+            caching_device (str): either 'cpu' or 'gpu'. The device to cache variables copied from PS
         """
         super(DistributedTrainerParameterServer, self).__init__(gpus, server)
         assert self.job_name in ['ps', 'worker'], self.job_name
