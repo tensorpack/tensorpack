@@ -10,7 +10,7 @@ import tensorflow as tf
 
 __all__ = ['LeastLoadedDeviceSetter',
            'OverrideCachingDevice',
-           'OverrideToLocalVariable', 'override_to_local_variable',
+           'override_to_local_variable',
            'allreduce_grads',
            'average_grads']
 
@@ -20,33 +20,32 @@ Some utilities for building the graph.
 """
 
 
+def _replace_global_by_local(kwargs):
+    if 'collections' in kwargs:
+        collections = kwargs['collections']
+    if not collections:
+        collections = set([tf.GraphKeys.GLOBAL_VARIABLES])
+    else:
+        collections = set(collections.copy())
+    collections.remove(tf.GraphKeys.GLOBAL_VARIABLES)
+    collections.add(tf.GraphKeys.LOCAL_VARIABLES)
+    kwargs['collections'] = list(collections)
+
+
 @contextmanager
 def override_to_local_variable(enable=True):
     if enable:
+
+        def custom_getter(getter, name, *args, **kwargs):
+            _replace_global_by_local(kwargs)
+            return getter(name, *args, **kwargs)
+
         with tf.variable_scope(
                 tf.get_variable_scope(),
-                custom_getter=OverrideToLocalVariable()):
+                custom_getter=custom_getter):
             yield
     else:
         yield
-
-
-class OverrideToLocalVariable(object):
-    """
-    Ensures the created variable
-    is in LOCAL_VARIABLES and not GLOBAL_VARIBLES collection.
-    """
-    def __call__(self, getter, name, *args, **kwargs):
-        if 'collections' in kwargs:
-            collections = kwargs['collections']
-        if not collections:
-            collections = set([tf.GraphKeys.GLOBAL_VARIABLES])
-        else:
-            collections = set(collections.copy())
-        collections.remove(tf.GraphKeys.GLOBAL_VARIABLES)
-        collections.add(tf.GraphKeys.LOCAL_VARIABLES)
-        kwargs['collections'] = list(collections)
-        return getter(name, *args, **kwargs)
 
 
 # https://github.com/tensorflow/benchmarks/blob/48cbef14a592e02a14beee8e9aef3ad22cadaed1/scripts/tf_cnn_benchmarks/variable_mgr_util.py#L192-L218
@@ -170,15 +169,8 @@ class OverrideCachingDevice(object):
     def __call__(self, getter, *args, **kwargs):
         size = tf.TensorShape(kwargs['shape']).num_elements()
         if size is None or not kwargs.get('trainable', True):
-            # TODO
-            collections = kwargs['collections']
-            if not collections:
-                collections = set([tf.GraphKeys.GLOBAL_VARIABLES])
-            else:
-                collections = set(collections.copy())
-            collections.remove(tf.GraphKeys.GLOBAL_VARIABLES)
-            collections.add(tf.GraphKeys.LOCAL_VARIABLES)
-            kwargs['collections'] = list(collections)
+            # TODO a lot of vars won't be saved then
+            _replace_global_by_local(kwargs)
             return getter(*args, **kwargs)
 
         if size < self.small_variable_size_threshold:
