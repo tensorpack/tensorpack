@@ -1,1 +1,4 @@
 include requirements.txt
+include tensorpack/user_ops/Makefile
+include tensorpack/user_ops/*.cc
+include tensorpack/user_ops/*.h
