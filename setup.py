@@ -27,10 +27,15 @@ setup(
     version=__version__,
     description='Neural Network Toolbox on TensorFlow',
     long_description=long_description,
+
     install_requires=req,
     tests_require=['flake8', 'scikit-image'],
     extras_require={
         'all': ['pillow', 'scipy', 'h5py', 'lmdb>=0.92', 'matplotlib',
                 'scikit-learn', "tornado; python_version < '3.0'"]
     },
+
+    include_package_data=True,
+    package_data={'tensorpack': ['user_ops/Makefile', 'user_ops/*.cc', 'user_ops/*.h']},
+
 )
