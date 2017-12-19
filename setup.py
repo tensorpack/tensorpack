@@ -31,8 +31,8 @@ setup(
     install_requires=req,
     tests_require=['flake8', 'scikit-image'],
     extras_require={
-        'all': ['pillow', 'scipy', 'h5py', 'lmdb>=0.92', 'matplotlib',
-                'scikit-learn', "tornado; python_version < '3.0'"]
+        'all': ['pillow', 'scipy', 'h5py', 'lmdb>=0.92', 'matplotlib', 'scikit-learn'],
+        'all: python_version < "3.0"': ['tornado']
     },
 
     include_package_data=True,
