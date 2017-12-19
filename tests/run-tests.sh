@@ -13,4 +13,4 @@ python -m unittest discover -v
 # python -m tensorpack.models._test
 # segfault for no reason (https://travis-ci.org/ppwwyyxx/tensorpack/jobs/217702985)
 
-python ../tensorpack/user_ops/test-recv-op.py
+# python ../tensorpack/user_ops/test-recv-op.py
