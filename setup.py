@@ -37,5 +37,4 @@ setup(
 
     include_package_data=True,
     package_data={'tensorpack': ['user_ops/Makefile', 'user_ops/*.cc', 'user_ops/*.h']},
-
 )

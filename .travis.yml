@@ -14,7 +14,7 @@ addons:
     - pandoc
     - libprotobuf-dev
     - protobuf-compiler
-    - libzmqpp-dev
+    - libzmq-dev
 
 matrix:
   fast_finish: true
