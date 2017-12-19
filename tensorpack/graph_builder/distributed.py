@@ -165,10 +165,10 @@ class DistributedReplicatedBuilder(DataParallelBuilder, DistributedBuilderBase):
         .. code-block:: none
 
             # Start training like this:
-            (host1)$ train.py --job worker --task 0
-            (host1)$ CUDA_VISIBLE_DEVICES= train.py --job ps --task 0
-            (host2)$ train.py --job worker --task 1
-            (host2)$ CUDA_VISIBLE_DEVICES= train.py --job ps --task 1
+            (host1)$ ./train.py --job worker --task 0
+            (host1)$ CUDA_VISIBLE_DEVICES= ./train.py --job ps --task 0
+            (host2)$ ./train.py --job worker --task 1
+            (host2)$ CUDA_VISIBLE_DEVICES= ./train.py --job ps --task 1
     """
 
     def __init__(self, towers, server):

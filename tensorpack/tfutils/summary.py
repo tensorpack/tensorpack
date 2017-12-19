@@ -215,7 +215,7 @@ def add_moving_summary(*args, **kwargs):
     ctx = get_current_tower_context()
     # allow ctx to be none
     if ctx is not None and not ctx.is_main_training_tower:
-        return
+        return []
 
     if not isinstance(args[0], list):
         v = args

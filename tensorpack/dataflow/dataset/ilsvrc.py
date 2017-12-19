@@ -135,6 +135,7 @@ class ILSVRC12Files(RNGDataFlow):
         self.full_dir = os.path.join(dir, name)
         self.name = name
         assert os.path.isdir(self.full_dir), self.full_dir
+        assert meta_dir is None or os.path.isdir(meta_dir), meta_dir
         if shuffle is None:
             shuffle = name == 'train'
         self.shuffle = shuffle

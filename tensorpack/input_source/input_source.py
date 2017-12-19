@@ -483,15 +483,14 @@ class StagingInput(FeedfreeInput):
         A callback registered by this input source, to make sure stage/unstage
         is run at each step.
         """
-        def __init__(self, stage_op_fn, unstage_op_fn, nr_stage):
+        def __init__(self, input, nr_stage):
             self.nr_stage = nr_stage
-            self.stage_op_fn = stage_op_fn
-            self.unstage_op_fn = unstage_op_fn
+            self._input = input
             self._initialized = False
 
         def _setup_graph(self):
-            self.stage_op = self.stage_op_fn()
-            unstage_op = self.unstage_op_fn()
+            self.stage_op = self._input._get_stage_op()
+            unstage_op = self._input._get_unstage_op()
             self.fetches = tf.train.SessionRunArgs(
                 fetches=[self.stage_op, unstage_op])
 
@@ -523,6 +522,7 @@ class StagingInput(FeedfreeInput):
         self._areas = []
         self._stage_ops = []
         self._unstage_ops = []
+        # self._size_ops = []
 
     def _setup(self, inputs):
         self._input.setup(inputs)
@@ -530,10 +530,8 @@ class StagingInput(FeedfreeInput):
     def _get_callbacks(self):
         cbs = self._input.get_callbacks()
 
-        # Pass a lambda to be called later, because stage ops have not been built
         cbs.append(
-            StagingInput.StagingCallback(
-                lambda: self._get_stage_op(), lambda: self._get_unstage_op(), self._nr_stage))
+            StagingInput.StagingCallback(self, self._nr_stage))
         return cbs
 
     def _size(self):
@@ -560,6 +558,7 @@ class StagingInput(FeedfreeInput):
             for vin, vout in zip(inputs, outputs):
                 vout.set_shape(vin.get_shape())
             self._unstage_ops.append(outputs)
+            # self._size_ops.append(stage.size())
             return outputs
 
     def _get_stage_op(self):
@@ -570,6 +569,18 @@ class StagingInput(FeedfreeInput):
         with self.cached_name_scope():
             all_outputs = list(chain.from_iterable(self._unstage_ops))
             return tf.group(*all_outputs)
+
+    # for debugging only
+    def _create_ema_callback(self):
+        def create_ema_op():
+            with self.cached_name_scope():
+                avg_size = tf.truediv(tf.add_n(self._size_ops), len(self._size_ops), name='avg_stagingarea_size')
+                return add_moving_summary(avg_size, collection=None)[0].op
+        return RunOp(
+            create_ema_op,
+            run_before=False,
+            run_as_trigger=False,
+            run_step=True)
 
 
 StagingInputWrapper = StagingInput

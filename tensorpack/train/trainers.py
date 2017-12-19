@@ -283,12 +283,7 @@ class HorovodTrainer(SingleCostTrainer):
     Note:
         1. If using all GPUs, you can always skip the `CUDA_VISIBLE_DEVICES` option.
 
-        2. About performance, horovod is expected to be slightly
-           slower than native tensorflow on multi-GPU training, but faster in distributed training.
-
-        3. Due to the use of MPI, training is less informative (no progress bar).
-           It's recommended to use other multi-GPU trainers for single-node
-           experiments, and scale to multi nodes by horovod.
+        2. Due to the use of MPI, training is less informative (no progress bar).
     """
     def __init__(self):
         hvd.init()
