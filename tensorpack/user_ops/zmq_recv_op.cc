@@ -74,7 +74,6 @@ class ZMQRecvOp: public AsyncOpKernel {
       auto ptr = output->bit_casted_shaped<char, 1>(
           {shape.num_elements() * DataTypeSize(recv_dtype)}).data();
       memcpy(ptr, tensors[i].buf, tensors[i].buf_size);
-      ctx->set_output(i, *output);
     }
     done();
   }
