@@ -71,7 +71,8 @@ class ZMQRecvOp: public AsyncOpKernel {
       TensorShape& shape = tensors[i].shape;
       OP_REQUIRES_OK_ASYNC(ctx, ctx->allocate_output(i, shape, &output), done);
       // reinterpret cast and then memcpy
-      auto ptr = output->bit_casted_shaped<char, 1>({shape.num_elements()}).data();
+      auto ptr = output->bit_casted_shaped<char, 1>(
+          {shape.num_elements() * DataTypeSize(recv_dtype)}).data();
       memcpy(ptr, tensors[i].buf, tensors[i].buf_size);
       ctx->set_output(i, *output);
     }
