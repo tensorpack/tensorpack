@@ -82,7 +82,8 @@ def layer_register(
             if use_scope:
                 name, inputs = args[0], args[1]
                 args = args[1:]  # actual positional args used to call func
-                assert isinstance(name, six.string_types), name
+                assert isinstance(name, six.string_types), "First argument for \"{}\" should be a string. ".format(
+                    func.__name__) + "Did you forget to specify the name of the layer?"
             else:
                 assert not log_shape
                 if isinstance(args[0], six.string_types):
