@@ -120,8 +120,9 @@ class ScalarStats(Inferencer):
         self.stats.append(output)
 
     def _after_inference(self):
-        self.stats = np.mean(self.stats, axis=0)
-        assert len(self.stats) == len(self.names)
+        if len(self.stats):
+            self.stats = np.mean(self.stats, axis=0)
+            assert len(self.stats) == len(self.names)
 
         ret = {}
         for stat, name in zip(self.stats, self.names):

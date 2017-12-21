@@ -3,6 +3,7 @@
 # File: inference_runner.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
+import sys
 import tensorflow as tf
 from tensorflow.python.training.monitored_session \
     import _HookedSession as HookedSession
@@ -158,9 +159,12 @@ class InferenceRunner(InferenceRunnerBase):
 
         # iterate over the data, and run the hooked session
         self._input_source.reset_state()
-        with _inference_context():
-            for _ in tqdm.trange(self._size, **get_tqdm_kwargs()):
+        with _inference_context(), \
+                tqdm.tqdm(total=self._size, **get_tqdm_kwargs()) as pbar:
+            num_itr = self._size if self._size > 0 else sys.maxsize
+            for _ in range(num_itr):
                 self._hooked_sess.run(fetches=[])
+                pbar.update()
         for inf in self.infs:
             inf.trigger_epoch()
 
