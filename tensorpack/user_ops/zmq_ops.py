@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File: zmq_recv.py
+# File: zmq_pull.py
 
 import tensorflow as tf
 import struct
@@ -13,29 +13,29 @@ from tensorflow.core.framework import types_pb2 as DT
 
 from .common import compile, get_ext_suffix
 
-__all__ = ['dumps_zmq_op', 'ZMQSocket']
+__all__ = ['dumps_zmq_op', 'ZMQPullSocket']
 
 
-_zmq_recv_mod = None
+_zmq_mod = None
 
 
 def try_build():
     file_dir = os.path.dirname(os.path.abspath(__file__))
-    basename = 'zmq_recv_op' + get_ext_suffix()
+    basename = 'zmq_ops' + get_ext_suffix()
     so_file = os.path.join(file_dir, basename)
     if not os.path.isfile(so_file):
         ret = compile()
         if ret != 0:
             raise RuntimeError("tensorpack user_ops compilation failed!")
 
-    global _zmq_recv_mod
-    _zmq_recv_mod = tf.load_op_library(so_file)
+    global _zmq_mod
+    _zmq_mod = tf.load_op_library(so_file)
 
 
 try_build()
 
 
-class ZMQSocket(object):
+class ZMQPullSocket(object):
     def __init__(self, end_point, types, hwm=None, bind=True, name=None):
         self._types = types
         assert isinstance(bind, bool), bind
@@ -46,15 +46,15 @@ class ZMQSocket(object):
         else:
             self._name = name
 
-        self._zmq_handle = _zmq_recv_mod.zmq_connection(
+        self._zmq_handle = _zmq_mod.zmq_connection(
             end_point, hwm, bind=bind, shared_name=self._name)
 
     @property
     def name(self):
         return self._name
 
-    def recv(self):
-        return _zmq_recv_mod.zmq_recv(
+    def pull(self):
+        return _zmq_mod.zmq_pull(
             self._zmq_handle, self._types)
 
 
@@ -147,7 +147,7 @@ def dump_tensor_protos(protos):
 
 def dumps_zmq_op(dp):
     """
-    Dump a datapoint (list of nparray) into a format that the ZMQRecv op in tensorpack would accept.
+    Dump a datapoint (list of nparray) into a format that the ZMQPull op in tensorpack would accept.
 
     Args:
         dp: list of nparray

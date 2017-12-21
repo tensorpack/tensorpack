@@ -1,5 +1,5 @@
 # $File: Makefile
-# $Date: Thu Dec 14 18:03:41 2017 -0800
+# $Date: Thu Dec 21 14:12:30 2017 -0800
 
 OBJ_DIR = obj
 PYTHON = python
@@ -45,7 +45,7 @@ OBJS = $(addprefix $(OBJ_DIR)/,$(ccSOURCES:.cc=.o))
 DEPFILES = $(OBJS:.o=.d)
 
 EXT_SUFFIX ?= $(shell $(PYTHON) -c 'import sysconfig; print(sysconfig.get_config_var("EXT_SUFFIX"))')
-SO = zmq_recv_op$(EXT_SUFFIX)
+SO = zmq_ops$(EXT_SUFFIX)
 
 .PHONY: all clean
 

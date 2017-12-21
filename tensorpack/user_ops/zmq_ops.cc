@@ -1,4 +1,4 @@
-//File: zmq_recv_op.cc
+//File: zmq_ops.cc
 //Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 #include <string>
@@ -41,9 +41,9 @@ class ZMQConnectionHandleOp : public ResourceOpKernel<ZMQConnection> {
 };
 
 
-class ZMQRecvOp: public AsyncOpKernel {
+class ZMQPullOp: public AsyncOpKernel {
  public:
-  explicit ZMQRecvOp(OpKernelConstruction* context) : AsyncOpKernel(context) {
+  explicit ZMQPullOp(OpKernelConstruction* context) : AsyncOpKernel(context) {
     OP_REQUIRES_OK(context, context->GetAttr("types", &component_types_));
   }
 
@@ -71,8 +71,8 @@ class ZMQRecvOp: public AsyncOpKernel {
       TensorShape& shape = tensors[i].shape;
       OP_REQUIRES_OK_ASYNC(ctx, ctx->allocate_output(i, shape, &output), done);
       // reinterpret cast and then memcpy
-      auto ptr = output->bit_casted_shaped<char, 1>(
-          {shape.num_elements() * DataTypeSize(recv_dtype)}).data();
+      auto ptr = output->bit_casted_shaped<char, 1>({shape.num_elements()}).data();
+          // {shape.num_elements() * DataTypeSize(recv_dtype)}).data();
       memcpy(ptr, tensors[i].buf, tensors[i].buf_size);
     }
     done();
@@ -84,12 +84,12 @@ class ZMQRecvOp: public AsyncOpKernel {
 };
 
 
-REGISTER_KERNEL_BUILDER(Name("ZMQRecv").Device(DEVICE_CPU), ZMQRecvOp);
+REGISTER_KERNEL_BUILDER(Name("ZMQPull").Device(DEVICE_CPU), ZMQPullOp);
 REGISTER_KERNEL_BUILDER(Name("ZMQConnection").Device(DEVICE_CPU), ZMQConnectionHandleOp);
 
 }  // namespace tensorpack
 
-REGISTER_OP("ZMQRecv")
+REGISTER_OP("ZMQPull")
     .Input("handle: resource")
     .Output("output: types")
     .Attr("types: list(type) >= 1")

@@ -390,7 +390,7 @@ class ZMQInput(TensorInput):
         self._hwm = int(hwm)
 
         def fn():
-            ret = self._zmq_recv_socket.recv()
+            ret = self._zmq_pull_socket.pull()
             assert len(ret) == len(self._desc)
             for qv, v in zip(ret, self._desc):
                 qv.set_shape(v.shape)
@@ -402,8 +402,8 @@ class ZMQInput(TensorInput):
             "ZMQInput has to be used with InputDesc!"
         self._desc = inputs_desc
 
-        from ..user_ops import zmq_recv
-        self._zmq_recv_socket = zmq_recv.ZMQSocket(
+        from ..user_ops import zmq_ops
+        self._zmq_pull_socket = zmq_ops.ZMQPullSocket(
             self._end_point,
             [x.type for x in inputs_desc],
             self._hwm)

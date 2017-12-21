@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File: test-recv-op.py
+# File: test-pull-op.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import os
@@ -11,8 +11,8 @@ import time
 import numpy as np
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf # noqa
-from tensorpack.user_ops.zmq_recv import (  # noqa
-    ZMQSocket, dumps_zmq_op)
+from tensorpack.user_ops.zmq_ops import (  # noqa
+    ZMQPullSocket, dumps_zmq_op)
 from tensorpack.utils.concurrency import (  # noqa
     start_proc_mask_signal,
     ensure_proc_terminate)
@@ -68,7 +68,7 @@ if __name__ == '__main__':
         start_proc_mask_signal(p)
 
         sess = tf.Session()
-        recv = ZMQSocket(ENDPOINT, [tf.float32, tf.uint8]).recv()
+        recv = ZMQPullSocket(ENDPOINT, [tf.float32, tf.uint8]).pull()
         print(recv)
 
         for truth in DATA:
@@ -87,9 +87,9 @@ if __name__ == '__main__':
         start_proc_mask_signal(p)
 
         sess = tf.Session()
-        zmqsock = ZMQSocket(ENDPOINT, [tf.float32, tf.uint8], hwm=1)
-        recv1 = zmqsock.recv()
-        recv2 = zmqsock.recv()
+        zmqsock = ZMQPullSocket(ENDPOINT, [tf.float32, tf.uint8], hwm=1)
+        recv1 = zmqsock.pull()
+        recv2 = zmqsock.pull()
         print(recv1, recv2)
 
         for i in range(args.num // 2):
