@@ -84,6 +84,7 @@ class CollectionGuard(object):
                  diff_whitelist=[
                      tf.GraphKeys.TRAINABLE_VARIABLES,
                      tf.GraphKeys.GLOBAL_VARIABLES,
+                     tf.GraphKeys.QUEUE_RUNNERS,
                      tf.GraphKeys.LOCAL_VARIABLES]):
         """
         Args:
