@@ -80,11 +80,11 @@ class Model(ModelDesc):
             outputs, last_state = rnn.static_rnn(cell, input_list, state_var, scope='rnn')
 
         # update the hidden state after a rnn loop completes
-        update_state_ops = [
-            tf.assign(state_var[0].c, last_state[0].c),
-            tf.assign(state_var[0].h, last_state[0].h),
-            tf.assign(state_var[1].c, last_state[1].c),
-            tf.assign(state_var[1].h, last_state[1].h)]
+        update_state_ops = []
+        for k in range(NUM_LAYER):
+            update_state_ops.extend([
+                tf.assign(state_var[k].c, last_state[k].c),
+                tf.assign(state_var[k].h, last_state[k].h)])
 
         # seqlen x (Bxrnnsize)
         output = tf.reshape(tf.concat(outputs, 1), [-1, HIDDEN_SIZE])  # (Bxseqlen) x hidden
