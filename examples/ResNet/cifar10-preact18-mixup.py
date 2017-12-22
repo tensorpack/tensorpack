@@ -130,8 +130,8 @@ def get_data(train_or_test, isMixup, alpha):
         batch = BATCH_SIZE
     ds = BatchData(ds, batch, remainder=not isTrain)
 
-    def f(ds):
-        images, labels = ds
+    def f(dp):
+        images, labels = dp
         one_hot_labels = np.eye(CLASS_NUM)[labels]  # one hot coding
         if not isTrain or not isMixup:
             return [images, one_hot_labels]

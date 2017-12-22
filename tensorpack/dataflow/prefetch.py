@@ -97,6 +97,7 @@ class _MultiProcessZMQDataFlow(DataFlow):
         if not self._reset_done:
             return
         if not self.context.closed:
+            self.socket.close(0)
             self.context.destroy(0)
         for x in self._procs:
             x.terminate()
@@ -239,6 +240,9 @@ class PrefetchDataZMQ(_MultiProcessZMQDataFlow):
             # sigint could still propagate here, e.g. when nested
             except KeyboardInterrupt:
                 pass
+            finally:
+                socket.close(0)
+                context.destroy(0)
 
     def __init__(self, ds, nr_proc=1, hwm=50):
         """
