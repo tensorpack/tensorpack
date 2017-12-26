@@ -49,23 +49,15 @@ CLASS_NUM = 10
 LR_SCHEDULE = [(1, 0.1), (100, 0.01), (150, 0.001)]
 WEIGHT_DECAY = 0.0001
 
-RESNET_CONFIG = {
-    18: {'block_func': preactivation_block, 'modules': [2, 2, 2, 2]},
-    34: {'block_func': preactivation_block, 'modules': [3, 4, 6, 3]},
-    50: {'block_func': bottleneck_block, 'modules': [3, 4, 6, 3]},
-    101: {'block_func': bottleneck_block, 'modules': [3, 4, 23, 3]},
-    152: {'block_func': bottleneck_block, 'modules': [3, 8, 36, 3]},
-}
-
 FILTER_SIZES = [64, 128, 256, 512]
 
 
 def preactivation_block(input, num_filters, stride=1):
-    num_filters_in = net.get_shape().as_list()[1]
+    num_filters_in = input.get_shape().as_list()[1]
     # identity
-    shortcut = net
+    shortcut = input
     if stride != 1 or num_filters_in != num_filters:
-        shortcut = Conv2D('shortcut', net, num_filters, kernel_shape=1, stride=stride, use_bias=False,
+        shortcut = Conv2D('shortcut', input, num_filters, kernel_shape=1, stride=stride, use_bias=False,
                           nl=tf.identity)
     # residual
     residual = BNReLU(input)
@@ -91,13 +83,22 @@ def bottleneck_block(input, num_filters, stride=1):
     return shortcut + res
 
 
+RESNET_CONFIG = {
+    18: {'block_func': preactivation_block, 'modules': [2, 2, 2, 2]},
+    34: {'block_func': preactivation_block, 'modules': [3, 4, 6, 3]},
+    50: {'block_func': bottleneck_block, 'modules': [3, 4, 6, 3]},
+    101: {'block_func': bottleneck_block, 'modules': [3, 4, 23, 3]},
+    152: {'block_func': bottleneck_block, 'modules': [3, 8, 36, 3]},
+}
+
+
 class ResNet_Cifar(ModelDesc):
     # module configuration taken from reference implementation by kuangliu.github.com
     def __init__(self, depth=18):
         super(ResNet_Cifar, self).__init__()
 
-        if depth not in self.RESNET_CONFIG:
-            print('Could not find configuration for depth "%d". Try one of %s' % (depth, self.RESNET_CONFIG.keys()))
+        if depth not in RESNET_CONFIG:
+            print('Could not find configuration for depth "%d". Try one of %s' % (depth, RESNET_CONFIG.keys()))
 
         self.depth = depth
 
@@ -111,19 +112,19 @@ class ResNet_Cifar(ModelDesc):
         assert tf.test.is_gpu_available()
         image = tf.transpose(image, [0, 3, 1, 2])
 
-        config = self.RESNET_CONFIG[self.depth]
+        config = RESNET_CONFIG[self.depth]
         block_function = config['block_func']
         module_sizes = config['modules']
 
         with argscope([Conv2D, AvgPooling, BatchNorm, GlobalAvgPooling], data_format='NCHW'), \
                 argscope(Conv2D, nl=tf.identity, use_bias=False, kernel_shape=3,
                          W_init=variance_scaling_initializer(mode='FAN_OUT')):
-            net = Conv2D('conv0', image, self.FILTER_SIZES[0], kernel_shape=3, stride=1, use_bias=False)
+            net = Conv2D('conv0', image, FILTER_SIZES[0], kernel_shape=3, stride=1, use_bias=False)
             for i, blocks_in_module in enumerate(module_sizes):
                 for j in range(blocks_in_module):
                     stride = 2 if j == 0 and i > 0 else 1
                     with tf.variable_scope("res%d.%d" % (i, j)):
-                        net = block_function(net, self.FILTER_SIZES[i], stride)
+                        net = block_function(net, FILTER_SIZES[i], stride)
             net = GlobalAvgPooling('gap', net)
         logits = FullyConnected('linear', net, out_dim=CLASS_NUM, nl=tf.identity)
 
