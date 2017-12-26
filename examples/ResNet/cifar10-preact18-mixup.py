@@ -59,8 +59,8 @@ RESNET_CONFIG = {
 
 FILTER_SIZES = [64, 128, 256, 512]
 
+
 def preactivation_block(input, num_filters, stride=1):
-    net = BNReLU(input)
     num_filters_in = net.get_shape().as_list()[1]
     # identity
     shortcut = net
@@ -68,7 +68,8 @@ def preactivation_block(input, num_filters, stride=1):
         shortcut = Conv2D('shortcut', net, num_filters, kernel_shape=1, stride=stride, use_bias=False,
                           nl=tf.identity)
     # residual
-    residual = Conv2D('conv1', net, num_filters, kernel_shape=3, stride=stride, use_bias=False, nl=BNReLU)
+    residual = BNReLU(input)
+    residual = Conv2D('conv1', residual, num_filters, kernel_shape=3, stride=stride, use_bias=False, nl=BNReLU)
     residual = Conv2D('conv2', residual, num_filters, kernel_shape=3, stride=1, use_bias=False, nl=tf.identity)
     return shortcut + residual
 
@@ -76,15 +77,15 @@ def preactivation_block(input, num_filters, stride=1):
 def bottleneck_block(input, num_filters, stride=1):
     expansion = 4
 
-    net = BNReLU(input)
     num_filters_in = net.get_shape().as_list()[1]
     # identity
-    shortcut = net
+    shortcut = input
     if stride != 1 or num_filters_in != num_filters * expansion:
-        shortcut = Conv2D('shortcut', net, num_filters * expansion, kernel_shape=1, stride=stride, use_bias=False,
+        shortcut = Conv2D('shortcut', input, num_filters * expansion, kernel_shape=1, stride=stride, use_bias=False,
                           nl=tf.identity)
     # residual
-    res = Conv2D('conv1', net, num_filters, kernel_shape=1, stride=1, use_bias=False, nl=BNReLU)
+    res = BNReLU(input)
+    res = Conv2D('conv1', res, num_filters, kernel_shape=1, stride=1, use_bias=False, nl=BNReLU)
     res = Conv2D('conv2', res, num_filters, kernel_shape=3, stride=stride, use_bias=False, nl=BNReLU)
     res = Conv2D('conv3', res, num_filters * expansion, kernel_shape=1, stride=1, use_bias=False, nl=tf.identity)
     return shortcut + res
