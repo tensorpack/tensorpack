@@ -20,24 +20,86 @@ from tensorflow.contrib.layers import variance_scaling_initializer
 """
 This implementation uses the architecture of PreAct in:
 https://github.com/kuangliu/pytorch-cifar
-This is different from the one in cifar10-resnet.py
+
+The implementation as used by the "mixup: Beyond Empirical Risk Minimization" paper https://arxiv.org/pdf/1710.09412.pdf
 
 Results:
-Validation error with the original 100-150-200 schedule:
-no mixup - 5.0%; mixup(alpha=1) - 3.8%
+Test error with the original 100-150-200 schedule (validation set used as part of training set):
+no mixup - 5.7%; mixup(alpha=1) - 4.1% (mixup paper: 5.6%/3.8%)
 
-Using 2x learning schedule, it can further improve to 4.7% and 3.2%.
+Results:
+Validation error with the original 100-150-200 schedule on ResNet-18:
+wd=0.0005: 5.36%/4.45% (without/with mixup)
+wd=0.0001: 5,78%/4.16% (without/with mixup)
 
 Usage:
-./cifar10-preact18-mixup.py  # train without mixup
-./cifar10-preact18-mixup.py --mixup	 # with mixup
+./cifar10-preact18-mixup.py                     # train preactivation resnet18
+./cifar10-preact18-mixup.py --depth=50          # train preactivation resnet50 with bottleneck
+./cifar10-preact18-mixup.py --mixup             # apply mixup regularization
+./cifar10-preact18-mixup.py --mixup --alpha=0.7 # apply mixup regularization with custom alpha
 """
 
 BATCH_SIZE = 128
 CLASS_NUM = 10
 
 
-class Model(ModelDesc):
+# Reference network hyperparameters as implemented by K. Liu, 2017. URL https://github.com/kuangliu/pytorch-cifar.
+# which is
+
+LR_SCHEDULE = [(1, 0.1), (100, 0.01), (150, 0.001)]
+WEIGHT_DECAY = 0.0001
+
+RESNET_CONFIG = {
+    18: {'block_func': preactivation_block, 'modules': [2, 2, 2, 2]},
+    34: {'block_func': preactivation_block, 'modules': [3, 4, 6, 3]},
+    50: {'block_func': bottleneck_block, 'modules': [3, 4, 6, 3]},
+    101: {'block_func': bottleneck_block, 'modules': [3, 4, 23, 3]},
+    152: {'block_func': bottleneck_block, 'modules': [3, 8, 36, 3]},
+}
+
+FILTER_SIZES = [64, 128, 256, 512]
+
+def preactivation_block(input, num_filters, stride=1):
+    net = BNReLU(input)
+    num_filters_in = net.get_shape().as_list()[1]
+    # identity
+    shortcut = net
+    if stride != 1 or num_filters_in != num_filters:
+        shortcut = Conv2D('shortcut', net, num_filters, kernel_shape=1, stride=stride, use_bias=False,
+                          nl=tf.identity)
+    # residual
+    residual = Conv2D('conv1', net, num_filters, kernel_shape=3, stride=stride, use_bias=False, nl=BNReLU)
+    residual = Conv2D('conv2', residual, num_filters, kernel_shape=3, stride=1, use_bias=False, nl=tf.identity)
+    return shortcut + residual
+
+
+def bottleneck_block(input, num_filters, stride=1):
+    expansion = 4
+
+    net = BNReLU(input)
+    num_filters_in = net.get_shape().as_list()[1]
+    # identity
+    shortcut = net
+    if stride != 1 or num_filters_in != num_filters * expansion:
+        shortcut = Conv2D('shortcut', net, num_filters * expansion, kernel_shape=1, stride=stride, use_bias=False,
+                          nl=tf.identity)
+    # residual
+    res = Conv2D('conv1', net, num_filters, kernel_shape=1, stride=1, use_bias=False, nl=BNReLU)
+    res = Conv2D('conv2', res, num_filters, kernel_shape=3, stride=stride, use_bias=False, nl=BNReLU)
+    res = Conv2D('conv3', res, num_filters * expansion, kernel_shape=1, stride=1, use_bias=False, nl=tf.identity)
+    return shortcut + res
+
+
+class ResNet_Cifar(ModelDesc):
+    # module configuration taken from reference implementation by kuangliu.github.com
+    def __init__(self, depth=18):
+        super(ResNet_Cifar, self).__init__()
+
+        if depth not in self.RESNET_CONFIG:
+            print('Could not find configuration for depth "%d". Try one of %s' % (depth, self.RESNET_CONFIG.keys()))
+
+        self.depth = depth
+
     def _get_inputs(self):
         return [InputDesc(tf.float32, [None, 32, 32, 3], 'input'),
                 InputDesc(tf.float32, [None, CLASS_NUM], 'label')]
@@ -48,58 +110,35 @@ class Model(ModelDesc):
         assert tf.test.is_gpu_available()
         image = tf.transpose(image, [0, 3, 1, 2])
 
-        def preactblock(input, name, in_planes, planes, stride=1):
-            with tf.variable_scope(name):
-                input2 = BNReLU(input)
-                if stride != 1 or in_planes != planes:
-                    shortcut = Conv2D('shortcut', input2, planes, kernel_shape=1, stride=stride, use_bias=False,
-                                      nl=tf.identity)
-                else:
-                    shortcut = input
-                input2 = Conv2D('conv1', input2, planes, kernel_shape=3, stride=1, use_bias=False, nl=BNReLU)
-                input2 = Conv2D('conv2', input2, planes, kernel_shape=3, stride=stride, use_bias=False, nl=BNReLU)
-                input2 = Conv2D('conv3', input2, planes, kernel_shape=3, stride=1, use_bias=False, nl=tf.identity)
-                input2 += shortcut
-            return input2
-
-        def _make_layer(input, planes, num_blocks, current_plane, stride, name):
-            strides = [stride] + [1] * (num_blocks - 1)  # first block stride = stride, the latter block stride = 1
-            for index, stride in enumerate(strides):
-                input = preactblock(input, "{}.{}".format(name, index), current_plane, planes, stride)
-                current_plane = planes
-            return input, current_plane
+        config = self.RESNET_CONFIG[self.depth]
+        block_function = config['block_func']
+        module_sizes = config['modules']
 
         with argscope([Conv2D, AvgPooling, BatchNorm, GlobalAvgPooling], data_format='NCHW'), \
                 argscope(Conv2D, nl=tf.identity, use_bias=False, kernel_shape=3,
                          W_init=variance_scaling_initializer(mode='FAN_OUT')):
+            net = Conv2D('conv0', image, self.FILTER_SIZES[0], kernel_shape=3, stride=1, use_bias=False)
+            for i, blocks_in_module in enumerate(module_sizes):
+                for j in range(blocks_in_module):
+                    stride = 2 if j == 0 and i > 0 else 1
+                    with tf.variable_scope("res%d.%d" % (i, j)):
+                        net = block_function(net, self.FILTER_SIZES[i], stride)
+            net = GlobalAvgPooling('gap', net)
+        logits = FullyConnected('linear', net, out_dim=CLASS_NUM, nl=tf.identity)
 
-            l = Conv2D('conv0', image, 64, kernel_shape=3, stride=1, use_bias=False)
-
-            current_plane = 64
-            l, current_plane = _make_layer(l, 64, 2, current_plane, stride=1, name="res1")
-            l, current_plane = _make_layer(l, 128, 2, current_plane, stride=2, name="res2")
-            l, current_plane = _make_layer(l, 256, 2, current_plane, stride=2, name="res3")
-            l, current_plane = _make_layer(l, 512, 2, current_plane, stride=2, name="res4")
-            l = GlobalAvgPooling('gap', l)
-
-        logits = FullyConnected('linear', l, out_dim=CLASS_NUM, nl=tf.identity)
-
-        cost = tf.losses.softmax_cross_entropy(onehot_labels=label, logits=logits)
-        cost = tf.reduce_mean(cost, name='cross_entropy_loss')
+        ce_cost = tf.losses.softmax_cross_entropy(onehot_labels=label, logits=logits)
+        ce_cost = tf.reduce_mean(ce_cost, name='cross_entropy_loss')
 
         single_label = tf.to_int32(tf.argmax(label, axis=1))
         wrong = tf.to_float(tf.logical_not(tf.nn.in_top_k(logits, single_label, 1)), name='wrong_vector')
         # monitor training error
         add_moving_summary(tf.reduce_mean(wrong, name='train_error'))
 
-        # weight decay on all W of fc layers
-        wd_w = tf.train.exponential_decay(0.0002, get_global_step_var(),
-                                          480000, 0.2, True)
-        wd_cost = tf.multiply(wd_w, regularize_cost('.*/W', tf.nn.l2_loss), name='wd_cost')
-        add_moving_summary(cost, wd_cost)
-
+        # weight decay on all W matrixes. including convolutional layers
+        wd_cost = tf.multiply(WEIGHT_DECAY, regularize_cost('.*/W', tf.nn.l2_loss), name='wd_cost')
         add_param_summary(('.*/W', ['histogram']))   # monitor W
-        self.cost = tf.add_n([cost, wd_cost], name='cost')
+
+        self.cost = tf.add_n([ce_cost, wd_cost], name='cost')
 
     def _get_optimizer(self):
         lr = tf.get_variable('learning_rate', initializer=0.01, trainable=False)
@@ -157,6 +196,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
     parser.add_argument('--load', help='load model')
+    parser.add_argument('--depth', default=18, type=int, help='model depth. one of [18, 34, 50, 101, 152]')
     parser.add_argument('--mixup', help='enable mixup', action='store_true')
     parser.add_argument('--alpha', default=1, type=float, help='alpha in mixup')
     args = parser.parse_args()
@@ -164,8 +204,8 @@ if __name__ == '__main__':
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
-    logger.set_logger_dir(
-        os.path.join('train_log/cifar10-preact18-{}mixup'.format('' if args.mixup else 'no')))
+    log_foder = 'train_log/cifar10-preact%d%s' % (args.depth, '-mixup' if args.mixup else '')
+    logger.set_logger_dir(os.path.join(log_foder))
 
     dataset_train = get_data('train', args.mixup, args.alpha)
     dataset_test = get_data('test', args.mixup, args.alpha)
@@ -176,14 +216,13 @@ if __name__ == '__main__':
         steps_per_epoch *= 2
 
     config = TrainConfig(
-        model=Model(),
+        model=ResNet_Cifar(),
         dataflow=dataset_train,
         callbacks=[
             ModelSaver(),
             InferenceRunner(dataset_test,
                             [ScalarStats('cost'), ClassificationError('wrong_vector')]),
-            ScheduledHyperParamSetter('learning_rate',
-                                      [(1, 0.1), (100, 0.01), (150, 0.001)])
+            ScheduledHyperParamSetter('learning_rate', LR_SCHEDULE)
         ],
         max_epoch=200,
         steps_per_epoch=steps_per_epoch,
