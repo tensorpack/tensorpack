@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 # File: cifar10-preact18-mixup.py
-# Author: Tao Hu <taohu620@gmail.com>
+# Author: Tao Hu <taohu620@gmail.com>,  Yauheni Selivonchyk <y.selivonchyk@gmail.com>
 
 import numpy as np
 import argparse
@@ -47,39 +47,43 @@ CLASS_NUM = 10
 # which is
 
 LR_SCHEDULE = [(1, 0.1), (100, 0.01), (150, 0.001)]
-WEIGHT_DECAY = 0.0001
+WEIGHT_DECAY = 0.0005
 
 FILTER_SIZES = [64, 128, 256, 512]
 
 
 def preactivation_block(input, num_filters, stride=1):
     num_filters_in = input.get_shape().as_list()[1]
+
+    # residual
+    net = BNReLU(input)
+    residual = Conv2D('conv1', net, num_filters, kernel_shape=3, stride=stride, use_bias=False, nl=BNReLU)
+    residual = Conv2D('conv2', residual, num_filters, kernel_shape=3, stride=1, use_bias=False, nl=tf.identity)
+
     # identity
     shortcut = input
     if stride != 1 or num_filters_in != num_filters:
-        shortcut = Conv2D('shortcut', input, num_filters, kernel_shape=1, stride=stride, use_bias=False,
+        shortcut = Conv2D('shortcut', net, num_filters, kernel_shape=1, stride=stride, use_bias=False,
                           nl=tf.identity)
-    # residual
-    residual = BNReLU(input)
-    residual = Conv2D('conv1', residual, num_filters, kernel_shape=3, stride=stride, use_bias=False, nl=BNReLU)
-    residual = Conv2D('conv2', residual, num_filters, kernel_shape=3, stride=1, use_bias=False, nl=tf.identity)
+
     return shortcut + residual
 
 
 def bottleneck_block(input, num_filters, stride=1):
     expansion = 4
-
     num_filters_in = net.get_shape().as_list()[1]
+
+    # residual
+    net = BNReLU(input)
+    res = Conv2D('conv1', net, num_filters, kernel_shape=1, stride=1, use_bias=False, nl=BNReLU)
+    res = Conv2D('conv2', res, num_filters, kernel_shape=3, stride=stride, use_bias=False, nl=BNReLU)
+    res = Conv2D('conv3', res, num_filters * expansion, kernel_shape=1, stride=1, use_bias=False, nl=tf.identity)
+
     # identity
     shortcut = input
     if stride != 1 or num_filters_in != num_filters * expansion:
         shortcut = Conv2D('shortcut', input, num_filters * expansion, kernel_shape=1, stride=stride, use_bias=False,
                           nl=tf.identity)
-    # residual
-    res = BNReLU(input)
-    res = Conv2D('conv1', res, num_filters, kernel_shape=1, stride=1, use_bias=False, nl=BNReLU)
-    res = Conv2D('conv2', res, num_filters, kernel_shape=3, stride=stride, use_bias=False, nl=BNReLU)
-    res = Conv2D('conv3', res, num_filters * expansion, kernel_shape=1, stride=1, use_bias=False, nl=tf.identity)
     return shortcut + res
 
 
