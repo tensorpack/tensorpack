@@ -29,8 +29,8 @@ no mixup - 5.7%; mixup(alpha=1) - 4.1% (mixup paper: 5.6%/3.8%)
 
 Results:
 Validation error with the original 100-150-200 schedule on ResNet-18:
-wd=0.0005: 5.36%/4.45% (without/with mixup)
-wd=0.0001: 5,78%/4.16% (without/with mixup)
+wd=0.0001: 6,07%/4.26% (without/with mixup)
+(with BnRelu before every identity branch: wd=0.0001: 5,78%/4.16%)
 
 Usage:
 ./cifar10-preact18-mixup.py                     # train preactivation resnet18
