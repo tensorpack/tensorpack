@@ -74,10 +74,7 @@ from `cifar10-resnet18.py`.
 Usage:
 ```bash
 ./cifar10-preact18-mixup.py  # train without mixup
-./cifar10-preact18-mixup.py --mixup	 # with mixup
+./cifar10-preact18-mixup.py --depth=50 --mixup	 # with mixup
 ```
 
-Validation error with the original LR schedule (100-150-200): __5.0%__ without mixup, __3.8%__ with mixup.
-This matches the number in the paper.
-
-With 2x LR schedule: 4.7% without mixup, and 3.2% with mixup.
+Test error with the original LR schedule (100-150-200): __6.0%__ without mixup, __4.3%__ with mixup.
