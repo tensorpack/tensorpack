@@ -4,8 +4,6 @@
 
 import tensorflow as tf
 from tensorpack.tfutils.scope_utils import under_name_scope
-from tensorpack.tfutils import get_default_sess_config
-from tensorpack.utils.argtools import memoized
 
 """
 This file is modified from
@@ -67,19 +65,3 @@ def pairwise_iou(boxlist1, boxlist2):
     return tf.where(
         tf.equal(intersections, 0.0),
         tf.zeros_like(intersections), tf.truediv(intersections, unions))
-
-
-@memoized
-def get_iou_callable():
-    """
-    Get a pairwise box iou callable.
-    """
-    # We don't want the dataflow process to touch CUDA
-    # Data needs tensorflow. As a result, the training cannot run on GPUs with
-    # EXCLUSIVE_PROCESS mode, unless you disable multiprocessing prefetch.
-    with tf.Graph().as_default(), tf.device('/cpu:0'):
-        A = tf.placeholder(tf.float32, shape=[None, 4])
-        B = tf.placeholder(tf.float32, shape=[None, 4])
-        iou = pairwise_iou(A, B)
-        sess = tf.Session(config=get_default_sess_config())
-        return sess.make_callable(iou, [A, B])

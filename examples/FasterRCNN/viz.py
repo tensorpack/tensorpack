@@ -8,7 +8,7 @@ import numpy as np
 from tensorpack.utils import viz
 from tensorpack.utils.palette import PALETTE_RGB
 
-from utils.box_ops import get_iou_callable
+from utils.np_box_ops import iou as np_iou
 import config
 
 
@@ -37,8 +37,7 @@ def draw_proposal_recall(img, proposals, proposal_scores, gt_boxes):
         proposal_scores: NP
         gt_boxes: NG
     """
-    bbox_iou_float = get_iou_callable()
-    box_ious = bbox_iou_float(gt_boxes, proposals)    # ng x np
+    box_ious = np_iou(gt_boxes, proposals)    # ng x np
     box_ious_argsort = np.argsort(-box_ious, axis=1)
     good_proposals_ind = box_ious_argsort[:, :3]   # for each gt, find 3 best proposals
     good_proposals_ind = np.unique(good_proposals_ind.ravel())
