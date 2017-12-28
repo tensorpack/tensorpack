@@ -54,21 +54,22 @@ class Model(GANModelDesc):
         """ return a (b, 1) logits"""
         yv = y
         y = tf.reshape(y, [-1, 1, 1, 10])
-        with argscope(Conv2D, nl=tf.identity, kernel_shape=5, stride=2), \
-                argscope(LeakyReLU, alpha=0.2):
+        with argscope(Conv2D, nl=tf.identity, kernel_shape=5, stride=2):
             l = (LinearWrap(imgs)
                  .ConcatWith(tf.tile(y, [1, 28, 28, 1]), 3)
                  .Conv2D('conv0', 11)
-                 .LeakyReLU()
+                 .tf.nn.leaky_relu()
 
                  .ConcatWith(tf.tile(y, [1, 14, 14, 1]), 3)
                  .Conv2D('conv1', 74)
-                 .BatchNorm('bn1').LeakyReLU()
+                 .BatchNorm('bn1')
+                 .tf.nn.leaky_relu()
 
                  .apply(symbf.batch_flatten)
                  .ConcatWith(yv, 1)
                  .FullyConnected('fc1', 1024, nl=tf.identity)
-                 .BatchNorm('bn2').LeakyReLU()
+                 .BatchNorm('bn2')
+                 .tf.nn.leaky_relu()
 
                  .ConcatWith(yv, 1)
                  .FullyConnected('fct', 1, nl=tf.identity)())

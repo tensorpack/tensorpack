@@ -91,20 +91,22 @@ class Model(GANModelDesc):
 
     @auto_reuse_variable_scope
     def discriminator(self, imgs):
-        with argscope(Conv2D, nl=tf.identity, kernel_shape=4, stride=2), \
-                argscope(LeakyReLU, alpha=0.2):
+        with argscope(Conv2D, nl=tf.identity, kernel_shape=4, stride=2):
             l = (LinearWrap(imgs)
                  .Conv2D('conv0', 64)
-                 .LeakyReLU()
+                 .tf.nn.leaky_relu()
                  .Conv2D('conv1', 128)
-                 .BatchNorm('bn1').LeakyReLU()
+                 .BatchNorm('bn1')
+                 .tf.nn.leaky_relu()
                  .FullyConnected('fc1', 1024, nl=tf.identity)
-                 .BatchNorm('bn2').LeakyReLU()())
+                 .BatchNorm('bn2')
+                 .tf.nn.leaky_relu()())
 
             logits = FullyConnected('fct', l, 1, nl=tf.identity)
             encoder = (LinearWrap(l)
                        .FullyConnected('fce1', 128, nl=tf.identity)
-                       .BatchNorm('bne').LeakyReLU()
+                       .BatchNorm('bne')
+                       .tf.nn.leaky_relu()
                        .FullyConnected('fce-out', DIST_PARAM_DIM, nl=tf.identity)())
         return logits, encoder
 

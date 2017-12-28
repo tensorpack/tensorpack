@@ -23,10 +23,10 @@ The concept of tower is used mainly to support:
 2. Automatically building the graph for inference, where a replicate is built under inference mode.
 
 You'll specify a tower function when you use `TowerTrainer`.
-If you use `ModelDesc`, the `build_graph` method is the tower function.
+If you use `ModelDesc`, the `build_graph` method will be the tower function.
 The function needs to follow some conventions:
 
-1. It will always be called under a :class:`TowerContext`.
+1. It will always be called under a `TowerContext`.
 	 which will contain information about reuse, training/inference, scope name, etc.
 2. It might get called multiple times for data-parallel training or inference.
 3. To respect variable reuse, use `tf.get_variable` instead of

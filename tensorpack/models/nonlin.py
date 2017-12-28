@@ -7,8 +7,7 @@ import tensorflow as tf
 
 from .common import layer_register, VariableHolder
 from .batch_norm import BatchNorm
-from ..tfutils.common import get_tf_version_number
-from ..utils import logger
+from ..utils.develop import deprecated
 
 __all__ = ['Maxout', 'PReLU', 'LeakyReLU', 'BNReLU']
 
@@ -63,6 +62,7 @@ def PReLU(x, init=0.001, name='output'):
 
 
 @layer_register(use_scope=None)
+@deprecated("Use tf.nn.leaky_relu in TF 1.4 instead!", "2018-03-30")
 def LeakyReLU(x, alpha, name='output'):
     """
     Leaky ReLU as in paper `Rectifier Nonlinearities Improve Neural Network Acoustic
@@ -73,9 +73,6 @@ def LeakyReLU(x, alpha, name='output'):
         x (tf.Tensor): input
         alpha (float): the slope.
     """
-    # TODO
-    if get_tf_version_number() >= 1.4:
-        logger.warn("You are recommended to use tf.nn.leaky_relu available since TF 1.4 rather than models.LeakyReLU.")
     return tf.maximum(x, alpha * x, name=name)
 
 

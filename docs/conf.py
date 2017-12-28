@@ -374,6 +374,7 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
         'StepTensorPrinter',
         'set_tower_func',
         'TryResumeTraining',
+        'LeakyReLU',
 
         'guided_relu', 'saliency_map', 'get_scalar_var',
         'prediction_incorrect', 'huber_loss',

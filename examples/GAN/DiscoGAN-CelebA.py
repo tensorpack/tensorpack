@@ -37,7 +37,7 @@ NF = 64  # channel size
 
 def BNLReLU(x, name=None):
     x = BatchNorm('bn', x)
-    return LeakyReLU(x, name=name)
+    return tf.nn.leaky_relu(x, alpha=0.2, name=name)
 
 
 class Model(GANModelDesc):
@@ -52,7 +52,7 @@ class Model(GANModelDesc):
                       nl=BNLReLU, kernel_shape=4, stride=2), \
                 argscope(Deconv2D, nl=BNReLU):
             l = (LinearWrap(img)
-                 .Conv2D('conv0', NF, nl=LeakyReLU)
+                 .Conv2D('conv0', NF, nl=tf.nn.leaky_relu)
                  .Conv2D('conv1', NF * 2)
                  .Conv2D('conv2', NF * 4)
                  .Conv2D('conv3', NF * 8)
@@ -66,7 +66,7 @@ class Model(GANModelDesc):
     @auto_reuse_variable_scope
     def discriminator(self, img):
         with argscope(Conv2D, nl=BNLReLU, kernel_shape=4, stride=2):
-            l = Conv2D('conv0', img, NF, nl=LeakyReLU)
+            l = Conv2D('conv0', img, NF, nl=tf.nn.leaky_relu)
             relu1 = Conv2D('conv1', l, NF * 2)
             relu2 = Conv2D('conv2', relu1, NF * 4)
             relu3 = Conv2D('conv3', relu2, NF * 8)
@@ -95,8 +95,7 @@ class Model(GANModelDesc):
                       W_init=tf.contrib.layers.variance_scaling_initializer(factor=0.333, uniform=True),
                       use_bias=False), \
                 argscope(BatchNorm, gamma_init=tf.random_uniform_initializer()), \
-                argscope([Conv2D, Deconv2D, BatchNorm], data_format='NCHW'), \
-                argscope(LeakyReLU, alpha=0.2):
+                argscope([Conv2D, Deconv2D, BatchNorm], data_format='NCHW'):
             with tf.variable_scope('gen'):
                 with tf.variable_scope('B'):
                     AB = self.generator(A)

@@ -42,7 +42,7 @@ NF = 64  # number of filter
 
 def BNLReLU(x, name=None):
     x = BatchNorm('bn', x)
-    return LeakyReLU(x, name=name)
+    return tf.nn.leaky_relu(x, alpha=0.2, name=name)
 
 
 class Model(GANModelDesc):
@@ -58,7 +58,7 @@ class Model(GANModelDesc):
                 argscope(Dropout, is_training=True):
             # always use local stat for BN, and apply dropout even in testing
             with argscope(Conv2D, kernel_shape=4, stride=2, nl=BNLReLU):
-                e1 = Conv2D('conv1', imgs, NF, nl=LeakyReLU)
+                e1 = Conv2D('conv1', imgs, NF, nl=tf.nn.leaky_relu)
                 e2 = Conv2D('conv2', e1, NF * 2)
                 e3 = Conv2D('conv3', e2, NF * 4)
                 e4 = Conv2D('conv4', e3, NF * 8)
@@ -93,7 +93,7 @@ class Model(GANModelDesc):
         l = tf.concat([inputs, outputs], 3)
         with argscope(Conv2D, kernel_shape=4, stride=2, nl=BNLReLU):
             l = (LinearWrap(l)
-                 .Conv2D('conv0', NF, nl=LeakyReLU)
+                 .Conv2D('conv0', NF, nl=tf.nn.leaky_relu)
                  .Conv2D('conv1', NF * 2)
                  .Conv2D('conv2', NF * 4)
                  .Conv2D('conv3', NF * 8, stride=1, padding='VALID')
@@ -104,9 +104,7 @@ class Model(GANModelDesc):
         input, output = inputs
         input, output = input / 128.0 - 1, output / 128.0 - 1
 
-        with argscope([Conv2D, Deconv2D],
-                      W_init=tf.truncated_normal_initializer(stddev=0.02)), \
-                argscope(LeakyReLU, alpha=0.2):
+        with argscope([Conv2D, Deconv2D], W_init=tf.truncated_normal_initializer(stddev=0.02)):
             with tf.variable_scope('gen'):
                 fake_output = self.generator(input)
             with tf.variable_scope('discrim'):

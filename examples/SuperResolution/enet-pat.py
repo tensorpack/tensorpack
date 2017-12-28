@@ -85,21 +85,20 @@ class Model(GANModelDesc):
 
         @auto_reuse_variable_scope
         def discriminator(x):
-            with argscope(LeakyReLU, alpha=0.2):
-                with argscope(Conv2D, kernel_shape=3, stride=1, nl=LeakyReLU):
-                    x = Conv2D('conv0', x, 32)
-                    x = Conv2D('conv0b', x, 32, stride=2)
-                    x = Conv2D('conv1', x, 64)
-                    x = Conv2D('conv1b', x, 64, stride=2)
-                    x = Conv2D('conv2', x, 128)
-                    x = Conv2D('conv2b', x, 128, stride=2)
-                    x = Conv2D('conv3', x, 256)
-                    x = Conv2D('conv3b', x, 256, stride=2)
-                    x = Conv2D('conv4', x, 512)
-                    x = Conv2D('conv4b', x, 512, stride=2)
+            with argscope(Conv2D, kernel_shape=3, stride=1, nl=tf.nn.leaky_relu):
+                x = Conv2D('conv0', x, 32)
+                x = Conv2D('conv0b', x, 32, stride=2)
+                x = Conv2D('conv1', x, 64)
+                x = Conv2D('conv1b', x, 64, stride=2)
+                x = Conv2D('conv2', x, 128)
+                x = Conv2D('conv2b', x, 128, stride=2)
+                x = Conv2D('conv3', x, 256)
+                x = Conv2D('conv3b', x, 256, stride=2)
+                x = Conv2D('conv4', x, 512)
+                x = Conv2D('conv4b', x, 512, stride=2)
 
-                x = FullyConnected('fc0', x, 1024, nl=LeakyReLU)
-                x = FullyConnected('fc1', x, 1, nl=tf.identity)
+            x = FullyConnected('fc0', x, 1024, nl=tf.nn.leaky_relu)
+            x = FullyConnected('fc1', x, 1, nl=tf.identity)
             return x
 
         def additional_losses(a, b):

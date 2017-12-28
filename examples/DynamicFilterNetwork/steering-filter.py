@@ -111,8 +111,7 @@ class Model(ModelDesc):
         Returns:
             learned filter as [B, k, k, 1]
         """
-        with argscope(LeakyReLU, alpha=0.2), \
-                argscope(FullyConnected, nl=LeakyReLU):
+        with argscope(FullyConnected, nl=tf.nn.leaky_relu):
             net = FullyConnected('fc1', theta, 64)
             net = FullyConnected('fc2', net, 128)
 

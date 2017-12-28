@@ -54,8 +54,7 @@ class Model(DQNModel):
     def _get_DQN_prediction(self, image):
         """ image: [0,255]"""
         image = image / 255.0
-        with argscope(Conv2D, nl=PReLU.symbolic_function, use_bias=True), \
-                argscope(LeakyReLU, alpha=0.01):
+        with argscope(Conv2D, nl=PReLU.symbolic_function, use_bias=True):
             l = (LinearWrap(image)
                  # Nature architecture
                  .Conv2D('conv0', out_channel=32, kernel_shape=8, stride=4)
@@ -71,7 +70,8 @@ class Model(DQNModel):
                  # .MaxPooling('pool2', 2)
                  # .Conv2D('conv3', out_channel=64, kernel_shape=3)
 
-                 .FullyConnected('fc0', 512, nl=LeakyReLU)())
+                 .FullyConnected('fc0', 512)
+                 .tf.nn.leaky_relu(alpha=0.01)())
         if self.method != 'Dueling':
             Q = FullyConnected('fct', l, self.num_actions, nl=tf.identity)
         else:

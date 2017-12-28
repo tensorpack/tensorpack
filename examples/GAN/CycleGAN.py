@@ -37,7 +37,7 @@ def INReLU(x, name=None):
 
 def INLReLU(x, name=None):
     x = InstanceNorm('inorm', x)
-    return LeakyReLU(x, name=name)
+    return tf.nn.leaky_relu(x, alpha=0.2, name=name)
 
 
 class Model(GANModelDesc):
@@ -78,7 +78,7 @@ class Model(GANModelDesc):
     def discriminator(self, img):
         with argscope(Conv2D, nl=INLReLU, kernel_shape=4, stride=2):
             l = (LinearWrap(img)
-                 .Conv2D('conv0', NF, nl=LeakyReLU)
+                 .Conv2D('conv0', NF, nl=tf.nn.leaky_relu)
                  .Conv2D('conv1', NF * 2)
                  .Conv2D('conv2', NF * 4)
                  .Conv2D('conv3', NF * 8, stride=1)
@@ -103,8 +103,7 @@ class Model(GANModelDesc):
         # use the initializers from torch
         with argscope([Conv2D, Deconv2D], use_bias=False,
                       W_init=tf.random_normal_initializer(stddev=0.02)), \
-                argscope([Conv2D, Deconv2D, InstanceNorm], data_format='NCHW'), \
-                argscope(LeakyReLU, alpha=0.2):
+                argscope([Conv2D, Deconv2D, InstanceNorm], data_format='NCHW'):
             with tf.variable_scope('gen'):
                 with tf.variable_scope('B'):
                     AB = self.generator(A)

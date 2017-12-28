@@ -39,6 +39,8 @@ Accuracy:
     With (W,A,G)=(1,2,6), 47.6% error
     With (W,A,G)=(1,2,4), 58.4% error
 
+    Don't train with >4 GPUs because the batch size will be different.
+
 Speed:
     About 11 iteration/s on 4 P100s. (Each epoch is set to 10000 iterations)
     Note that this code was written early without using NCHW format. You
