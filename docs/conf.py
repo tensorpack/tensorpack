@@ -366,12 +366,10 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
     if name in [
         'MultiGPUTrainerBase',
         'get_predictors',
-        'RandomCropAroundBox',
         'GaussianDeform',
         'dump_chkpt_vars',
         'DumpTensor',
         'StagingInputWrapper',
-        'StepTensorPrinter',
         'set_tower_func',
         'TryResumeTraining',
         'LeakyReLU',

@@ -15,7 +15,7 @@ from ..tfutils.common import (
     get_op_tensor_name, get_global_step_var)
 from .base import Callback
 
-__all__ = ['TensorPrinter', 'StepTensorPrinter', 'ProgressBar']
+__all__ = ['TensorPrinter', 'ProgressBar']
 
 
 class TensorPrinter(Callback):
@@ -29,7 +29,7 @@ class TensorPrinter(Callback):
             names(list): list of string, the names of the tensors to print.
         """
         names = [get_op_tensor_name(n)[1] for n in names]
-        logger.warn("Using print_stat or tf.Print in the graph is much faster than StepTensorPrinter!")
+        logger.warn("Using tf.Print in the graph is much faster than TensorPrinter!")
         self._names = names
 
     def _setup_graph(self):
@@ -43,9 +43,6 @@ class TensorPrinter(Callback):
         assert len(args) == len(self._names), len(args)
         for n, v in zip(self._names, args):
             logger.info("{}: {}".format(n, v))
-
-
-StepTensorPrinter = TensorPrinter
 
 
 class ProgressBar(Callback):
