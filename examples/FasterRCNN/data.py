@@ -271,10 +271,10 @@ def get_eval_dataflow():
 
 
 if __name__ == '__main__':
-    config.BASEDIR = '/home/wyx/data/coco'
+    config.BASEDIR = '/private/home/yuxinwu/data/coco'
     config.TRAIN_DATASET = ['train2014']
     from tensorpack.dataflow import PrintData
-    ds = get_train_dataflow()
+    ds = get_train_dataflow(add_mask=config.MODE_MASK)
     ds = PrintData(ds, 100)
     TestDataSpeed(ds, 50000).start()
     ds.reset_state()

@@ -156,10 +156,15 @@ class ImageNetModel(ModelDesc):
 
         logits = self.get_logits(image)
         loss = ImageNetModel.compute_loss_and_error(logits, label)
-        wd_loss = regularize_cost('.*/W', tf.contrib.layers.l2_regularizer(self.weight_decay),
-                                  name='l2_regularize_loss')
-        add_moving_summary(loss, wd_loss)
-        self.cost = tf.add_n([loss, wd_loss], name='cost')
+
+        if self.weight_decay > 0:
+            wd_loss = regularize_cost('.*/W', tf.contrib.layers.l2_regularizer(self.weight_decay),
+                                      name='l2_regularize_loss')
+            add_moving_summary(loss, wd_loss)
+            self.cost = tf.add_n([loss, wd_loss], name='cost')
+        else:
+            self.cost = tf.identity(loss, name='cost')
+            add_moving_summary(self.cost)
 
     @abstractmethod
     def get_logits(self, image):
