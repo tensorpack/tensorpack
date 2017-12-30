@@ -14,15 +14,22 @@ from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.utils import logger
 from data_sampler import ImageDecode
-from GAN import MultiGPUGANTrainer, GANModelDesc
+from PIL import Image
+from GAN import MultiGPUGANTrainer, GANTrainer, GANModelDesc
 Reduction = tf.losses.Reduction
-
 
 BATCH_SIZE = 6
 CHANNELS = 3
 SHAPE_LR = 32
 NF = 64
 VGG_MEAN = np.array([123.68, 116.779, 103.939])  # RGB
+GAN_FACTOR_PARAMETER = 2.
+
+
+def resize(img, scale=4):
+    w, h = img.size
+    img = img.resize((int(w * scale), int(h * scale)), Image.ANTIALIAS)
+    return np.array(img)
 
 
 def normalize(v):
@@ -132,8 +139,8 @@ class Model(GANModelDesc):
 
             # perceptual loss
             with tf.name_scope('perceptual_loss'):
-                phi_a_1, phi_b_1 = tf.split(pool2, 2, axis=0)
-                phi_a_2, phi_b_2 = tf.split(pool5, 2, axis=0)
+                phi_a_1, phi_b_1 = tf.split(normalize(pool2), 2, axis=0)
+                phi_a_2, phi_b_2 = tf.split(normalize(pool5), 2, axis=0)
 
                 logger.info('Create perceptual loss for layer {} with shape {}'.format(pool2.name, pool2.get_shape()))
                 pool2_loss = tf.losses.mean_squared_error(phi_a_1, phi_b_1, reduction=Reduction.MEAN)
@@ -148,13 +155,13 @@ class Model(GANModelDesc):
                     assert h % p == 0 and w % p == 0
                     logger.info('Create texture loss for layer {} with shape {}'.format(x.name, x.get_shape()))
 
-                    x = tf.space_to_batch_nd(x, [p, p], [[0, 0], [0, 0]])
-                    x = tf.reshape(x, [p, p, -1, h // p, w // p, c])
-                    x = tf.transpose(x, [2, 3, 4, 0, 1, 5])
-                    patches_a, patches_b = tf.split(x, 2)   # each is b,h/p,w/p,p,p,c
+                    x = tf.space_to_batch_nd(x, [p, p], [[0, 0], [0, 0]])  # [b * ?, h/p, w/p, c]
+                    x = tf.reshape(x, [p, p, -1, h // p, w // p, c])       # [p, p, b, h/p, w/p, c]
+                    x = tf.transpose(x, [2, 3, 4, 0, 1, 5])                # [b * ?, p, p, c]
+                    patches_a, patches_b = tf.split(x, 2, axis=0)          # each is b,h/p,w/p,p,p,c
 
-                    patches_a = tf.reshape(patches_a, [-1, p, p, c])
-                    patches_b = tf.reshape(patches_b, [-1, p, p, c])
+                    patches_a = tf.reshape(patches_a, [-1, p, p, c])       # [b * ?, p, p, c]
+                    patches_b = tf.reshape(patches_b, [-1, p, p, c])       # [b * ?, p, p, c]
                     return tf.losses.mean_squared_error(
                         gram_matrix(patches_a),
                         gram_matrix(patches_b),
@@ -185,7 +192,7 @@ class Model(GANModelDesc):
             with tf.name_scope('additional_losses'):
                 # see table 2 from appendix
                 loss = []
-                loss.append(tf.multiply(1., self.g_loss, name="loss_LA"))
+                loss.append(tf.multiply(GAN_FACTOR_PARAMETER, self.g_loss, name="loss_LA"))
                 loss.append(tf.multiply(2e-1, additional_losses[0], name="loss_LP1"))
                 loss.append(tf.multiply(2e-2, additional_losses[1], name="loss_LP2"))
                 loss.append(tf.multiply(3e-7, additional_losses[2], name="loss_LT1"))
@@ -193,7 +200,8 @@ class Model(GANModelDesc):
                 loss.append(tf.multiply(1e-6, additional_losses[4], name="loss_LT3"))
 
             self.g_loss = self.g_loss + tf.add_n(loss, name='total_g_loss')
-            add_moving_summary(self.g_loss, *loss)
+            self.d_loss = self.d_loss * GAN_FACTOR_PARAMETER
+            add_moving_summary(self.g_loss, self.d_loss, *loss)
 
             # visualization
             viz = (tf.concat([Ibicubic, fake_hr, real_hr], 2)) * 255. + VGG_MEAN_TENSOR
@@ -215,7 +223,7 @@ def apply(model_path, lowres_path="", output_path='.'):
     assert os.path.isfile(lowres_path)
     assert os.path.isdir(output_path)
     lr = cv2.imread(lowres_path).astype(np.float32)
-    baseline = cv2.resize(lr, (0, 0), fx=4, fy=4, interpolation=cv2.INTER_CUBIC)
+    baseline = resize(Image.fromarray(lr.astype(np.uint8)), 4)
     LR_SIZE_H, LR_SIZE_W = lr.shape[:2]
     lr -= VGG_MEAN
 
@@ -238,8 +246,8 @@ def get_data(lmdb):
     augmentors = [imgaug.RandomCrop(128),
                   imgaug.Flip(horiz=True)]
     ds = AugmentImageComponent(ds, augmentors, index=0, copy=True)
-    ds = MapData(ds, lambda x: x - VGG_MEAN)
-    ds = MapData(ds, lambda x: [cv2.resize(x[0], (32, 32), interpolation=cv2.INTER_AREA), x[0]])
+    ds = MapData(ds, lambda x: [resize(Image.fromarray(x[0]), 1. / 4), x[0]])
+    ds = MapData(ds, lambda x: [x[0] - VGG_MEAN, x[1] - VGG_MEAN])
     ds = PrefetchDataZMQ(ds, 8)
     ds = BatchData(ds, BATCH_SIZE)
     return ds
