@@ -21,7 +21,7 @@ from ..callbacks.steps import MaintainStepCounter
 
 from .config import TrainConfig, DEFAULT_MONITORS, DEFAULT_CALLBACKS
 
-__all__ = ['StopTraining', 'TrainConfig', 'Trainer']
+__all__ = ['StopTraining', 'Trainer']
 
 
 class StopTraining(BaseException):

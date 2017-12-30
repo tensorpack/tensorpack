@@ -6,7 +6,6 @@
 import tensorflow as tf
 from .common import layer_register, VariableHolder, rename_get_variable
 from ..utils.argtools import shape2d, shape4d
-from ..utils.develop import log_deprecated
 
 __all__ = ['Conv2D', 'Deconv2D']
 
@@ -113,16 +112,7 @@ def Deconv2D(x, out_channel, kernel_shape,
     in_channel = in_shape[channel_axis]
     assert in_channel is not None, "[Deconv2D] Input cannot have unknown channel!"
 
-    out_shape = out_channel
-    if isinstance(out_shape, int):
-        out_channel = out_shape
-    else:
-        log_deprecated("Deconv2D(out_shape=[...])",
-                       "Use an integer 'out_channel' instead!", "2017-11-18")
-        for k in out_shape:
-            if not isinstance(k, int):
-                raise ValueError("[Deconv2D] out_shape {} is invalid!".format(k))
-        out_channel = out_shape[channel_axis - 1]   # out_shape doesn't have batch
+    assert isinstance(out_channel, int), out_channel
 
     if W_init is None:
         W_init = tf.contrib.layers.xavier_initializer_conv2d()
@@ -140,11 +130,6 @@ def Deconv2D(x, out_channel, kernel_shape,
             bias_initializer=b_init,
             trainable=True)
         ret = layer.apply(x, scope=tf.get_variable_scope())
-
-    # Check that we only supports out_shape = in_shape * stride
-    out_shape3 = ret.get_shape().as_list()[1:]
-    if not isinstance(out_shape, int):
-        assert list(out_shape) == out_shape3, "{} != {}".format(out_shape, out_shape3)
 
     ret.variables = VariableHolder(W=layer.kernel)
     if use_bias:

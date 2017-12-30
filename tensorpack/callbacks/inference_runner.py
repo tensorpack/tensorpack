@@ -127,10 +127,7 @@ class InferenceRunner(InferenceRunnerBase):
         return InferencerToHook(inf, fetches)
 
     def _setup_graph(self):
-        if self.trainer._API_VERSION == 1 and self.trainer._config.predict_tower is not None:
-            device = self.trainer._config.predict_tower[0]
-        else:
-            device = self._device
+        device = self._device
         assert self.trainer.tower_func is not None, "You must set tower_func of the trainer to use InferenceRunner!"
         input_callbacks = self._input_source.setup(self.trainer.inputs_desc)
 

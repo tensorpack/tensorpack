@@ -110,7 +110,7 @@ class DataFromGenerator(DataFlow):
         else:
             self._gen = gen
         if size is not None:
-            log_deprecated("DataFromGenerator(size=)", "It doesn't make much sense.")
+            log_deprecated("DataFromGenerator(size=)", "It doesn't make much sense.", "2018-03-31")
 
     def get_data(self):
         # yield from

@@ -516,7 +516,7 @@ class StagingInput(FeedfreeInput):
         assert isinstance(input, FeedfreeInput), input
         self._input = input
         if towers is not None:
-            log_deprecated("StagingInput(towers=) has no effect! Devices are handled automatically.")
+            log_deprecated("StagingInput(towers=)", "Devices are handled automatically.", "2018-03-31")
 
         self._nr_stage = nr_stage
         self._areas = []

@@ -5,7 +5,6 @@
 import tensorflow as tf
 from abc import ABCMeta
 import six
-from ..utils.develop import log_deprecated
 from ..tfutils.common import get_op_or_tensor_by_name
 
 __all__ = ['Callback', 'ProxyCallback', 'CallbackFactory']
@@ -284,22 +283,15 @@ class CallbackFactory(Callback):
     Create a callback with some lambdas.
     """
     def __init__(self, setup_graph=None, before_train=None, trigger=None,
-                 after_train=None, trigger_epoch=None):
+                 after_train=None):
         """
         Each lambda takes ``self`` as the only argument.
-
-        Note:
-            trigger_epoch was deprecated.
         """
 
         self._cb_setup_graph = setup_graph
         self._cb_before_train = before_train
         self._cb_trigger = trigger
         self._cb_after_train = after_train
-
-        if trigger_epoch:
-            self._cb_trigger = trigger_epoch
-            log_deprecated("CallbackFactory(trigger_epoch=)", "Use trigger instead.", "2017-11-15")
 
     def _setup_graph(self):
         if self._cb_setup_graph:

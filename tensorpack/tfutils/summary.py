@@ -220,7 +220,7 @@ def add_moving_summary(*args, **kwargs):
     if not isinstance(args[0], list):
         v = args
     else:
-        log_deprecated("Call add_moving_summary with positional args instead of a list!")
+        log_deprecated("Call add_moving_summary with positional args instead of a list!", eos="2018-02-28")
         v = args[0]
     for x in v:
         assert isinstance(x, tf.Tensor), x
