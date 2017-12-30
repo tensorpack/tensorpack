@@ -39,21 +39,17 @@ class InputDesc(
         self._cached_placeholder = None
         return self
 
-    def build_placeholder(self, prefix=''):
+    def build_placeholder(self):
         """
-        Build a tf.placeholder from the metadata, with an optional prefix.
-
-        Args:
-            prefix(str): the name of the placeholder will be ``prefix + self.name``
+        Build a tf.placeholder from the metadata.
 
         Returns:
             tf.Tensor:
         """
         with tf.name_scope(None):   # clear any name scope it might get called in
             ret = tf.placeholder(
-                self.type, shape=self.shape,
-                name=prefix + self.name)
-        if prefix == '' and self._cached_placeholder is None:
+                self.type, shape=self.shape, name=self.name)
+        if self._cached_placeholder is None:
             self._cached_placeholder = ret  # cached_placeholder only caches the prefix='' case
         return ret
 
@@ -97,8 +93,7 @@ class ModelDescBase(object):
         """
         Build the whole symbolic graph.
         This is supposed to be the "tower function" when used with :class:`TowerTrainer`.
-        By default it will call :meth:`_build_graph`
-        with a list of input tensors.
+        By default it will call :meth:`_build_graph` with a list of input tensors, for backward-compatibility.
 
         Args:
             args ([tf.Tensor]): tensors that matches the list of
@@ -108,10 +103,11 @@ class ModelDescBase(object):
             arg = args[0]
             if isinstance(arg, InputSource):
                 inputs = arg.get_input_tensors()  # remove in the future?
-                log_deprecated("build_graph(InputSource)", "Call with tensors in positional args instead.")
+                log_deprecated("build_graph(InputSource)",
+                               "Call with tensors in positional args instead.", "2018-03-31")
             elif isinstance(arg, (list, tuple)):
                 inputs = arg
-                log_deprecated("build_graph([Tensor])", "Call with positional args instead.")
+                log_deprecated("build_graph([Tensor])", "Call with positional args instead.", "2018-03-31")
             else:
                 inputs = [arg]
         else:

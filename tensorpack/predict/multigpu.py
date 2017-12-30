@@ -6,6 +6,7 @@
 import tensorflow as tf
 from ..utils import logger
 from ..graph_builder.predict import SimplePredictBuilder
+from ..graph_builder.model_desc import InputDesc
 from ..input_source import PlaceholderInput
 from .base import OnlinePredictor
 
@@ -93,8 +94,11 @@ class DataParallelOfflinePredictor(OnlinePredictor):
 
             for idx, t in enumerate(towers):
                 tower_name = 'tower' + str(t)
-                input = PlaceholderInput(tower_name + '/')
-                input.setup(config.inputs_desc)
+
+                inputs_desc = [InputDesc(desc.type, desc.shape, tower_name + '/' + desc.name)
+                               for desc in config.inputs_desc]
+                input = PlaceholderInput()
+                input.setup(inputs_desc)
 
                 with tf.variable_scope(tf.get_variable_scope(), reuse=idx > 0):
                     builder = SimplePredictBuilder(ns_name=tower_name, device=t)

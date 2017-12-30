@@ -40,8 +40,6 @@ class Trainer(object):
         monitors (Monitors): the monitors. Other callbacks can use it for logging.
     """
 
-    _API_VERSION = 1
-
     is_chief = True
     """
     Whether this process is the chief worker in distributed training.

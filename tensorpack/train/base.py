@@ -93,9 +93,11 @@ class Trainer(object):
     """ Base class for a trainer.
     """
 
-    _API_VERSION = 2
-
     is_chief = True
+    """
+    Whether this process is the chief worker in distributed training.
+    Certain callbacks will only be run by chief worker.
+    """
 
     def __init__(self, config=None):
         """
