@@ -3,6 +3,7 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 from __future__ import print_function
+import weakref
 import threading
 from contextlib import contextmanager
 import multiprocessing as mp
@@ -12,6 +13,7 @@ import errno
 import uuid
 import os
 import zmq
+import atexit
 
 from .base import DataFlow, ProxyDataFlow, DataFlowTerminated, DataFlowReentrantGuard
 from ..utils.concurrency import (ensure_proc_terminate,
@@ -49,6 +51,12 @@ def _get_pipe_name(name):
     return pipename
 
 
+def del_weakref(x):
+    o = x()
+    if o is not None:
+        o.__del__()
+
+
 @contextmanager
 def _zmq_catch_error(name):
     try:
@@ -82,8 +90,7 @@ class _MultiProcessZMQDataFlow(DataFlow):
         self._reset_done = True
 
         # __del__ not guranteed to get called at exit
-        import atexit
-        atexit.register(lambda x: x.__del__(), self)
+        atexit.register(del_weakref, weakref.ref(self))
 
         self._reset_once()  # build processes
 
