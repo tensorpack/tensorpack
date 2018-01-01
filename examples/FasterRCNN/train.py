@@ -8,7 +8,6 @@ import cv2
 import shutil
 import itertools
 import tqdm
-import math
 import numpy as np
 import json
 import tensorflow as tf
@@ -313,7 +312,9 @@ class EvalCallback(Callback):
             logger.get_logger_dir(), 'outputs{}.json'.format(self.global_step))
         with open(output_file, 'w') as f:
             json.dump(all_results, f)
-        print_evaluation_scores(output_file)
+        scores = print_evaluation_scores(output_file)
+        for k, v in scores.items():
+            self.trainer.monitors.put_scalar(k, v)
 
     def _trigger_epoch(self):
         if self.epoch_num in self.epochs_to_eval:
@@ -359,8 +360,8 @@ if __name__ == '__main__':
     else:
         logger.set_logger_dir(args.logdir)
         print_config()
-        stepnum = 300
-        warmup_epoch = max(math.ceil(500.0 / stepnum), 5)
+        stepnum = 500
+        warmup_epoch = 3
         factor = get_batch_factor()
 
         cfg = TrainConfig(

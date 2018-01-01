@@ -129,6 +129,7 @@ def eval_on_dataflow(df, detect_func):
 
 # https://github.com/pdollar/coco/blob/master/PythonAPI/pycocoEvalDemo.ipynb
 def print_evaluation_scores(json_file):
+    ret = {}
     assert config.BASEDIR and os.path.isdir(config.BASEDIR)
     annofile = os.path.join(
         config.BASEDIR, 'annotations',
@@ -139,9 +140,12 @@ def print_evaluation_scores(json_file):
     cocoEval.evaluate()
     cocoEval.accumulate()
     cocoEval.summarize()
+    ret['mAP(bbox)'] = cocoEval.stats[0]
 
     if config.MODE_MASK:
         cocoEval = COCOeval(coco, cocoDt, 'segm')
         cocoEval.evaluate()
         cocoEval.accumulate()
         cocoEval.summarize()
+        ret['mAP(segm)'] = cocoEval.stats[0]
+    return ret
