@@ -108,6 +108,7 @@ class _MultiProcessZMQDataFlow(DataFlow):
             self.context.destroy(0)
         for x in self._procs:
             x.terminate()
+            x.join(5)
         try:
             print("{} successfully cleaned-up.".format(type(self).__name__))
         except Exception:
