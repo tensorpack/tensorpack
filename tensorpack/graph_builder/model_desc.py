@@ -65,11 +65,6 @@ class InputDesc(
             return self._cached_placeholder
         return self.build_placeholder()
 
-    @staticmethod
-    def from_tensor(t):
-        return InputDesc(
-            t.dtype, t.shape.as_list(), t.name[:-2])
-
 
 @six.add_metaclass(ABCMeta)
 class ModelDescBase(object):

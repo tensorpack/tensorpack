@@ -14,6 +14,7 @@ from tensorpack.input_source import QueueInput
 from tensorpack.dataflow import dataset, BatchData, MapData
 from tensorpack.utils import logger
 from tensorpack.contrib.keras import KerasModel
+from tensorpack.callbacks import ModelSaver
 
 IMAGE_SIZE = 28
 
@@ -32,28 +33,41 @@ def get_data():
 
 if __name__ == '__main__':
     logger.auto_set_dir()
-    M = keras.models.Sequential()
-    M.add(KL.Conv2D(32, 3, activation='relu', input_shape=[IMAGE_SIZE, IMAGE_SIZE, 1], padding='same'))
-    M.add(KL.MaxPooling2D())
-    M.add(KL.Conv2D(32, 3, activation='relu', padding='same'))
-    M.add(KL.Conv2D(32, 3, activation='relu', padding='same'))
-    M.add(KL.MaxPooling2D())
-    M.add(KL.Conv2D(32, 3, padding='same', activation='relu'))
-    M.add(KL.Flatten())
-    M.add(KL.Dense(512, activation='relu', kernel_regularizer=keras.regularizers.l2(1e-5)))
-    M.add(KL.Dropout(0.5))
-    M.add(KL.Dense(10, activation=None, kernel_regularizer=keras.regularizers.l2(1e-5)))
-    M.add(KL.Activation('softmax'))
+
+    def model_func(input_tensors):
+        M = keras.models.Sequential()
+        M.add(KL.InputLayer(
+            input_shape=[IMAGE_SIZE, IMAGE_SIZE, 1],
+            input_tensor=input_tensors[0]))
+        M.add(KL.Conv2D(32, 3, activation='relu', padding='same'))
+        M.add(KL.MaxPooling2D())
+        M.add(KL.Conv2D(32, 3, activation='relu', padding='same'))
+        M.add(KL.Conv2D(32, 3, activation='relu', padding='same'))
+        M.add(KL.MaxPooling2D())
+        M.add(KL.Conv2D(32, 3, padding='same', activation='relu'))
+
+        M.add(KL.Flatten())
+        M.add(KL.Dense(512, activation='relu', kernel_regularizer=keras.regularizers.l2(1e-5)))
+        M.add(KL.Dropout(0.5))
+        M.add(KL.Dense(10, activation=None, kernel_regularizer=keras.regularizers.l2(1e-5)))
+        M.add(KL.Activation('softmax'))
+
+        return M
 
     dataset_train, dataset_test = get_data()
 
-    M = KerasModel(M, QueueInput(dataset_train))
+    # from tensorpack import *
+    # trainer = SyncMultiGPUTrainerReplicated(2)
+    M = KerasModel(model_func, QueueInput(dataset_train))
     M.compile(
         optimizer=tf.train.AdamOptimizer(1e-3),
         loss='categorical_crossentropy',
-        metrics=['accuracy']
+        metrics=['categorical_accuracy']
     )
     M.fit(
         validation_data=dataset_test,
         steps_per_epoch=dataset_train.size(),
+        callbacks=[
+            ModelSaver()
+        ]
     )
