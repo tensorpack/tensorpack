@@ -40,10 +40,13 @@ def override_to_local_variable(enable=True):
             _replace_global_by_local(kwargs)
             return getter(name, *args, **kwargs)
 
+        orig_vs = tf.get_variable_scope()
+        # TODO TF1.5 has https://github.com/tensorflow/tensorflow/pull/14390
         with tf.variable_scope(
                 tf.get_variable_scope(),
                 custom_getter=custom_getter):
-            yield
+            with tf.name_scope(orig_vs.original_name_scope):
+                yield
     else:
         yield
 

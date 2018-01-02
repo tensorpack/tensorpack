@@ -107,7 +107,7 @@ def regularize_cost_from_collection(name='regularize_cost'):
         losses = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
     if len(losses) > 0:
         logger.info("Add REGULARIZATION_LOSSES of {} tensors on the total cost.".format(len(losses)))
-        reg_loss = tf.add_n(losses)
+        reg_loss = tf.add_n(losses, name=name)
         return reg_loss
     else:
         return None
