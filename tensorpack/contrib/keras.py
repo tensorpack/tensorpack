@@ -8,8 +8,8 @@ from tensorflow import keras
 from tensorflow.python.keras import metrics as metrics_module
 
 from ..models.regularize import regularize_cost_from_collection
-from ..graph_builder import InputDesc
-from ..train import Trainer, SimpleTrainer, SyncMultiGPUTrainerParameterServer, DistributedTrainerBase
+from ..train import Trainer, SimpleTrainer, SyncMultiGPUTrainerParameterServer
+from ..train.trainers import DistributedTrainerBase
 from ..callbacks import (
     Callback, InferenceRunner, CallbackToHook,
     ScalarStats)
@@ -45,6 +45,10 @@ class KerasModelCaller(object):
         self.cached_model = None
 
     def __call__(self, input_tensors):
+        """
+        Returns:
+            output tensors of this tower, evaluated with the input tensors.
+        """
         reuse = tf.get_variable_scope().reuse
         if self.cached_model is None:
             assert not reuse
@@ -52,25 +56,12 @@ class KerasModelCaller(object):
             return self.cached_model.outputs
 
         if reuse:
+            # use the cached Keras model to mimic reuse
             return self.cached_model.call(input_tensors)
         else:
+            # create new Keras model if not reuse
             M = self.get_model(input_tensors)
             return M.outputs
-
-    def call_virtual(self):
-
-        class NoneTensorProxy(object):
-            def __getitem__(self, index):
-                return None
-
-            def __len__(self):
-                raise NotImplementedError(
-                    "Do not call `len(inputs)` because it's only a virtual object "
-                    "for the moment! Use `inputs[index]` directly!")
-
-        G_tmp = tf.Graph()  # we need a model instance to know metadata about inputs/outputs
-        with G_tmp.as_default():
-            return self.get_model(NoneTensorProxy())
 
 
 # Keras needs an extra input if learning_phase is used by the model
@@ -97,8 +88,9 @@ class KerasPhaseCallback(Callback):
 
 
 def setup_keras_trainer(
-        trainer, get_model, input,
-        optimizer, loss, metrics):
+        trainer, get_model,
+        inputs_desc, targets_desc,
+        input, optimizer, loss, metrics):
     """
     Args:
         trainer (SingleCostTrainer):
@@ -113,17 +105,11 @@ def setup_keras_trainer(
     assert isinstance(metrics, list), metrics
     model_caller = KerasModelCaller(get_model)
 
-    M_tmp = model_caller.call_virtual()
-
-    inputs_desc = [InputDesc(t.dtype, t.shape.as_list(), 'input{}'.format(i))
-                   for i, t in enumerate(M_tmp.inputs)]
-    outputs_desc = [InputDesc(t.dtype, t.shape.as_list(), 'output{}'.format(i))
-                    for i, t in enumerate(M_tmp.outputs)]
     nr_inputs = len(inputs_desc)
 
     def get_cost(*inputs):
-        assert len(inputs) == len(inputs_desc) + len(outputs_desc), \
-            "Input source size {} != {} + {}".format(len(inputs), len(inputs_desc), len(outputs_desc))
+        assert len(inputs) == len(inputs_desc) + len(targets_desc), \
+            "Input source size {} != {} + {}".format(len(inputs), len(inputs_desc), len(targets_desc))
         ctx = get_current_tower_context()
         input_tensors = list(inputs[:nr_inputs])
         target_tensors = list(inputs[nr_inputs:])
@@ -173,7 +159,7 @@ def setup_keras_trainer(
         return total_loss
 
     trainer.setup_graph(
-        inputs_desc + outputs_desc,
+        inputs_desc + targets_desc,
         input,
         get_cost,
         lambda: optimizer)
@@ -182,20 +168,26 @@ def setup_keras_trainer(
 
 
 class KerasModel(object):
-    def __init__(self, get_model, input, trainer=None):
+    def __init__(self, get_model, inputs_desc, targets_desc,
+                 input, trainer=None):
         """
         Args:
             get_model ( -> keras.model.Model):
+            inputs_desc ([InputDesc]):
+            targets_desc ([InputDesc]):
             input (InputSource):
             trainer (Trainer): the default will check the number of available
                 GPUs and use them all.
         """
         self.get_model = get_model
+        self.inputs_desc = inputs_desc
+        self.targets_desc = targets_desc
         if trainer is None:
             nr_gpu = get_nr_gpu()
             if nr_gpu <= 1:
                 trainer = SimpleTrainer()
             else:
+                # the default multigpu trainer
                 trainer = SyncMultiGPUTrainerParameterServer(nr_gpu)
         assert isinstance(trainer, Trainer), trainer
         assert not isinstance(trainer, DistributedTrainerBase)
@@ -219,6 +211,7 @@ class KerasModel(object):
         self._stats_to_inference = loss + metrics + [TOTAL_LOSS_NAME]
         setup_keras_trainer(
             self.trainer, get_model=self.get_model,
+            inputs_desc=self.inputs_desc, targets_desc=self.targets_desc,
             input=self.input,
             optimizer=optimizer,
             loss=loss,
