@@ -85,15 +85,18 @@ def _get_cached_ns(name):
 
 
 @contextmanager
-def cached_name_scope(name):
+def cached_name_scope(name, top_level=True):
     """
-    Return a context which either opens and caches a new top-level name scope,
+    Return a context which either opens and caches a new name scope,
     or reenter an existing one.
 
-    Note:
-        The name scope will always be top-level. It will not be nested under
-        any existing name scope of the caller.
+    Args:
+        top_level(bool): if True, the name scope will always be top-level.
+            It will not be nested under any existing name scope of the caller.
     """
+    if not top_level:
+        current_ns = tf.get_default_graph().get_name_scope()
+        name = current_ns + '/' + name
     ns = _get_cached_ns(name)
     with tf.name_scope(ns):
         yield ns
