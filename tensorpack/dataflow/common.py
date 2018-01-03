@@ -263,7 +263,7 @@ class MapData(ProxyDataFlow):
 
     def get_data(self):
         for dp in self.ds.get_data():
-            ret = self.func(dp)
+            ret = self.func(copy(dp))  # shallow copy the list
             if ret is not None:
                 yield ret
 
@@ -292,7 +292,7 @@ class MapDataComponent(MapData):
             r = func(dp[index])
             if r is None:
                 return None
-            dp = copy(dp)   # avoid modifying the list
+            dp = copy(dp)   # shallow copy to avoid modifying the list
             dp[index] = r
             return dp
         super(MapDataComponent, self).__init__(ds, f)

@@ -96,7 +96,8 @@ def cached_name_scope(name, top_level=True):
     """
     if not top_level:
         current_ns = tf.get_default_graph().get_name_scope()
-        name = current_ns + '/' + name
+        if current_ns:
+            name = current_ns + '/' + name
     ns = _get_cached_ns(name)
     with tf.name_scope(ns):
         yield ns

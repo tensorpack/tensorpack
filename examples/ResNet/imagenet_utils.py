@@ -92,7 +92,7 @@ def get_imagenet_dataflow(
     assert datadir is not None
     assert isinstance(augmentors, list)
     isTrain = name == 'train'
-    cpu = min(30, multiprocessing.cpu_count())
+    cpu = min(40, multiprocessing.cpu_count())
     if isTrain:
         ds = dataset.ILSVRC12(datadir, name, shuffle=True)
         ds = AugmentImageComponent(ds, augmentors, copy=False)
@@ -213,3 +213,21 @@ class ImageNetModel(ModelDesc):
         wrong = prediction_incorrect(logits, label, 5, name='wrong-top5')
         add_moving_summary(tf.reduce_mean(wrong, name='train-error-top5'))
         return loss
+
+
+if __name__ == '__main__':
+    import argparse
+    from tensorpack.dataflow import TestDataSpeed
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--data', required=True)
+    parser.add_argument('--batch', type=int, default=32)
+    args = parser.parse_args()
+
+    augs = fbresnet_augmentor(False)
+    augs = [imgaug.ResizeShortestEdge(256),
+            imgaug.CenterCrop(224)
+            ]
+    df = get_imagenet_dataflow(
+        args.data, 'train', args.batch, augs)
+
+    TestDataSpeed(df).start()

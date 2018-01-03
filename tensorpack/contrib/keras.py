@@ -17,7 +17,6 @@ from ..callbacks import (
 from ..tfutils.common import get_op_tensor_name
 from ..tfutils.tower import get_current_tower_context
 from ..tfutils.scope_utils import cached_name_scope
-# from ..tfutils.collection import freeze_collection    # TODO freeze UPDATE_OPS in replicated
 from ..tfutils.summary import add_moving_summary
 from ..utils.gpu import get_nr_gpu
 
@@ -108,8 +107,6 @@ def setup_keras_trainer(
     nr_inputs = len(inputs_desc)
 
     def get_cost(*inputs):
-        assert len(inputs) == len(inputs_desc) + len(targets_desc), \
-            "Input source size {} != {} + {}".format(len(inputs), len(inputs_desc), len(targets_desc))
         ctx = get_current_tower_context()
         input_tensors = list(inputs[:nr_inputs])
         target_tensors = list(inputs[nr_inputs:])
