@@ -67,14 +67,14 @@ Reproduce the mixup pre-act ResNet-18 CIFAR10 experiment, in the paper:
 
 * [mixup: Beyond Empirical Risk Minimization](https://arxiv.org/abs/1710.09412).
 
-Please note that this preact18 architecture is
-[different](https://github.com/kuangliu/pytorch-cifar/blob/master/models/preact_resnet.py)
-from `cifar10-resnet18.py`.
+This implementation follows exact settings from the [author's code](https://github.com/hongyi-zhang/mixup).
+Note that the architecture is different from the offcial preact-ResNet18.
 
 Usage:
 ```bash
 ./cifar10-preact18-mixup.py  # train without mixup
-./cifar10-preact18-mixup.py --depth=50 --mixup	 # with mixup
+./cifar10-preact18-mixup.py --mixup	 # with mixup
 ```
 
-Test error with the original LR schedule (100-150-200): __6.0%__ without mixup, __4.3%__ with mixup.
+Results of the reference code can be reproduced.
+In one run it gives me: 5.48% without mixup; __4.17%__ with mixup (alpha=1).
