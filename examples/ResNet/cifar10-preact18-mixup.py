@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-# File: new.py
+# File: cifar10-preact18-mixup.py
 # Author: Tao Hu <taohu620@gmail.com>,  Yauheni Selivonchyk <y.selivonchyk@gmail.com>
 
 import numpy as np
@@ -53,7 +53,7 @@ class ResNet_Cifar(ModelDesc):
         image = ((image / 255.0) - MEAN_IMAGE) / STD_IMAGE
         image = tf.transpose(image, [0, 3, 1, 2])
 
-        pytorch_default_init = tf.variance_scaling_initializer(scale=1.0/3, mode='fan_in', distribution='uniform')
+        pytorch_default_init = tf.variance_scaling_initializer(scale=1.0 / 3, mode='fan_in', distribution='uniform')
         with argscope([Conv2D, BatchNorm, GlobalAvgPooling], data_format='NCHW'), \
                 argscope(Conv2D, W_init=pytorch_default_init):
             net = Conv2D('conv0', image, 64, kernel_shape=3, stride=1, use_bias=False)
