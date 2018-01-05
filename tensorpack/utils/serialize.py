@@ -27,4 +27,4 @@ def loads(buf):
     Args:
         buf (str): serialized object.
     """
-    return msgpack.loads(buf)
+    return msgpack.loads(buf, encoding='utf-8')
