@@ -17,10 +17,9 @@ from tensorpack.utils.gpu import get_nr_gpu
 from tensorpack.utils.segmentation import  visualize_label, predict_scaler
 from tensorpack.utils.stats import MIoUStatistics
 from tensorpack.utils import logger
-from tensorpack.dataflow.imgaug.misc import RandomCropWithPadding
+from tensorpack.dataflow.imgaug.base import ImageAugmentor
 from tensorpack.tfutils import optimizer
 from tensorpack.tfutils.summary import add_moving_summary, add_param_summary
-import tensorpack.tfutils.symbolic_functions as symbf
 from tqdm import tqdm
 
 from resnet_model import (
@@ -31,6 +30,54 @@ from resnet_model import (
 CLASS_NUM = 21
 CROP_SIZE = 321
 IGNORE_LABEL = 255
+
+
+class RandomCropWithPadding(ImageAugmentor):
+    def __init__(self, crop_size, ignore_label=255):
+        super(RandomCropWithPadding, self).__init__()
+        self.crop_size = crop_size
+        if isinstance(crop_size, int):
+            self.crop_size = (crop_size, crop_size)
+
+        self.ignore_label = ignore_label
+        self._init()
+
+    def _get_augment_params(self, img, id=0):
+        self.h0 = img.shape[0]
+        self.w0 = img.shape[1]
+
+        if self.crop_size[0] > self.h0:
+            top = (self.crop_size[0] - self.h0) / 2
+            bottom = (self.crop_size[0] - self.h0) - top
+        else:
+            top = 0
+            bottom = 0
+
+        if self.crop_size[1] > self.w0:
+            left = (self.crop_size[1] - self.w0) / 2
+            right = (self.crop_size[1] - self.w0) - left
+        else:
+            left = 0
+            right = 0
+        new_shape = (top + bottom + self.h0, left + right + self.w0)
+        diffh = new_shape[0] - self.crop_size[0]
+        assert diffh >= 0
+        crop_start_h = 0 if diffh == 0 else self.rng.randint(diffh)
+        diffw = new_shape[1] - self.crop_size[1]
+        assert diffw >= 0
+        crop_start_w = 0 if diffw == 0 else self.rng.randint(diffw)
+        return (top, bottom, left, right, crop_start_h, crop_start_w)
+    def _augment(self, img, param, id=0):
+        top, bottom, left, right, crop_start_h, crop_start_w = param
+        if id <= 1:
+            il = self.ignore_label
+        else:
+            il = 0
+
+        img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=il)
+
+        assert crop_start_h + self.crop_size[0] <= img.shape[0], crop_start_w + self.crop_size[1] <= img.shape[1]
+        return img[crop_start_h:crop_start_h + self.crop_size[0], crop_start_w:crop_start_w + self.crop_size[1]]
 
 def softmax_cross_entropy_with_ignore_label(logits, label, class_num):
     with tf.name_scope('softmax_cross_entropy_with_ignore_label'):
@@ -117,11 +164,8 @@ def get_data(name, data_dir, meta_dir, batch_size):
     isTrain = name == 'train'
     ds = dataset.PascalVOC12(data_dir, meta_dir, name, shuffle=True)
 
-
     if isTrain:
-        shape_aug = [imgaug.RandomResize(xrange=(0.7, 1.5), yrange=(0.7, 1.5),
-                            aspect_ratio_thres=0.15),
-                     RandomCropWithPadding(CROP_SIZE,IGNORE_LABEL),
+        shape_aug = [RandomCropWithPadding(CROP_SIZE,IGNORE_LABEL),
                      imgaug.Flip(horiz=True),
                      ]
     else:

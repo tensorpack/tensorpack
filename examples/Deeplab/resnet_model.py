@@ -64,7 +64,6 @@ def AtrousConv2D(x, out_channel, kernel_shape,
     if use_bias:
         b = tf.get_variable('b', [out_channel], initializer=b_init)
 
-
     conv = tf.nn.atrous_conv2d(x, W, rate, padding)
 
     ret = nl(tf.nn.bias_add(conv, b, data_format=data_format) if use_bias else conv, name='output')
