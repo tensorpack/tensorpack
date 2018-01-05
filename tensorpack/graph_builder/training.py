@@ -4,7 +4,10 @@
 
 from abc import ABCMeta, abstractmethod
 import tensorflow as tf
+import copy
 import six
+import re
+import pprint
 from six.moves import zip, range
 
 from ..utils import logger
@@ -53,7 +56,19 @@ class DataParallelBuilder(GraphBuilder):
             grad_list: list of list of tuples, shape is Ngpu x Nvar x 2
         """
         nvars = [len(k) for k in grad_list]
-        assert len(set(nvars)) == 1, "Number of gradients from each tower is different! " + str(nvars)
+
+        def basename(x):
+            return re.sub('tower[0-9]+/', '', x.op.name)
+
+        if len(set(nvars)) != 1:
+            names_per_gpu = [set([basename(k[1]) for k in grad_and_vars]) for grad_and_vars in grad_list]
+            inters = copy.copy(names_per_gpu[0])
+            for s in names_per_gpu:
+                inters &= s
+            for s in names_per_gpu:
+                s -= inters
+            logger.error("Unique variables on towers: " + pprint.pformat(names_per_gpu))
+            raise ValueError("Number of gradients from each tower is different! " + str(nvars))
 
     @staticmethod
     def build_on_towers(

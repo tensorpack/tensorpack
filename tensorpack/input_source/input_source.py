@@ -499,11 +499,13 @@ class StagingInput(FeedfreeInput):
                 self._prefill()
             return self.fetches
 
-    def __init__(self, input, towers=None, nr_stage=5):
+    def __init__(self, input, towers=None, nr_stage=1):
         """
         Args:
             input (FeedfreeInput):
             nr_stage: number of elements to prefetch on each GPU.
+                Since enqueue and dequeue are synchronized, prefetching 1
+                    element should be sufficient.
             towers: deprecated
         """
         assert isinstance(input, FeedfreeInput), input
@@ -515,7 +517,6 @@ class StagingInput(FeedfreeInput):
         self._areas = []
         self._stage_ops = []
         self._unstage_ops = []
-        # self._size_ops = []
 
     def _setup(self, inputs):
         self._input.setup(inputs)
@@ -542,6 +543,8 @@ class StagingInput(FeedfreeInput):
                     inputs[idx] = tf.identity(inputs[idx])
                 dtypes.append(dtype.base_dtype)
 
+            # TODO tensorflow/benchmarks use static shapes here,
+            # though it doesn't seem to help. We can use it when it's known.
             stage = StagingArea(dtypes, shapes=None)
             self._stage_ops.append(stage.put(inputs))
             self._areas.append(stage)
