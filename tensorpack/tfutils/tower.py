@@ -95,7 +95,8 @@ class TowerContext(object):
     @call_only_once
     def _get_scopes(self):
         if not len(self._name):
-            return []
+            # work around https://github.com/tensorflow/tensorflow/issues/14703
+            return [tf.variable_scope(tf.get_variable_scope())]
         ret = []
 
         # either the Tower was originally created with reuse,
@@ -109,6 +110,9 @@ class TowerContext(object):
             if reuse:
                 ret.append(tf.variable_scope(
                     tf.get_variable_scope(), reuse=True))
+            else:
+                # work around https://github.com/tensorflow/tensorflow/issues/14703
+                ret.append(tf.variable_scope(tf.get_variable_scope()))
         # always clear existing ns  # TODO check existing ns
         if len(self._name) and self._name != self._vs_name:
             ret.append(tf.name_scope(self._name + '/'))
