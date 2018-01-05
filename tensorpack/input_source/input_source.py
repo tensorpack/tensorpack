@@ -344,7 +344,7 @@ class TensorInput(FeedfreeInput):
 
 
 class DummyConstantInput(TensorInput):
-    """ Input with some random tensor placed on GPU.
+    """ Input with a constant zero tensor placed on GPU.
         Useful for debugging performance issues """
     def __init__(self, shapes):
         """

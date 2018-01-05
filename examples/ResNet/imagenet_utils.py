@@ -221,13 +221,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--data', required=True)
     parser.add_argument('--batch', type=int, default=32)
+    parser.add_argument('--aug', choices=['train', 'val'], default='val')
     args = parser.parse_args()
 
-    augs = fbresnet_augmentor(False)
-    augs = [imgaug.ResizeShortestEdge(256),
-            imgaug.CenterCrop(224)
-            ]
+    if args.aug == 'val':
+        augs = fbresnet_augmentor(False)
+    elif args.aug == 'train':
+        augs = fbresnet_augmentor(True)
     df = get_imagenet_dataflow(
         args.data, 'train', args.batch, augs)
-
+    # For val augmentor, Should get >100 it/s (i.e. 3k im/s) here on a decent E5 server.
     TestDataSpeed(df).start()

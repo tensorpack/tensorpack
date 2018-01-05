@@ -190,7 +190,16 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
             use_vs=[False] + [True] * (len(self.towers) - 1))
 
         DataParallelBuilder._check_grad_list(grad_list)
-        grads = allreduce_grads(grad_list)
+
+        if True:
+            grads = allreduce_grads(grad_list)  # #gpu x #param x 2
+        else:
+            agg_grad_and_vars = average_grads(grad_list, colocation=False, devices=['/cpu:0'])    # #param x 2
+            grads = []  # #gpu x #param x 2
+            for grad_and_vars in grad_list:   # grad_and_vars: #paramx2
+                # take v from each tower, and g from average.
+                grads.append(
+                    [(g, v) for (_, v), (g, _) in zip(grad_and_vars, agg_grad_and_vars)])
 
         train_ops = []
         opt = get_opt_fn()
@@ -201,6 +210,7 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
                     train_ops.append(opt.apply_gradients(
                         grad_and_vars, name='apply_grad_{}'.format(idx)))
         train_op = tf.group(*train_ops, name='train_op')
+
         post_init_op = SyncMultiGPUReplicatedBuilder.get_post_init_ops()
         return train_op, post_init_op
 

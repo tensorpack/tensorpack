@@ -110,6 +110,7 @@ def allreduce_grads(all_grads):
             grads_for_a_var = []
             for (_, v), g in zip(grad_and_vars, summed):
                 with tf.device(g.device):
+                    # tensorflow/benchmarks didn't average gradients
                     g = tf.multiply(g, 1.0 / nr_tower)
                     grads_for_a_var.append((g, v))
             new_all_grads.append(grads_for_a_var)
@@ -119,25 +120,30 @@ def allreduce_grads(all_grads):
     return ret
 
 
-def average_grads(all_grads, colocation=True):
+def average_grads(all_grads, colocation=True, devices=None):
     """
-    Average the gradients, on the device of each variable.
+    Average the gradients.
 
     Args:
         all_grads (K x N x 2): A list of K lists. Each of the list is a list of N (grad, var) tuples.
             The variables have to be the same across the K lists.
-        colocation (bool): colocate gradient averaging with the variable
+        colocation (bool): colocate gradient averaging on the device of the variable.
+        devices (list[str]): assign the averaging to these device in
+            round-robin. Cannot be used together with ``colocation``.
 
     Returns:
         (N x 2): A list of N (grad, var) tuples, where grad is averaged over K.
     """
+    assert not (devices is not None and colocation)
+    if devices is not None:
+        assert isinstance(devices, list), devices
 
     nr_tower = len(all_grads)
     if nr_tower == 1:
         return all_grads[0]
     ret = []
     with tf.name_scope('AvgGrad'):
-        for grad_and_vars in zip(*all_grads):
+        for idx, grad_and_vars in enumerate(zip(*all_grads)):
             # Ngpu * 2
             v = grad_and_vars[0][1]
             grads = [g for (g, _) in grad_and_vars]
@@ -146,9 +152,14 @@ def average_grads(all_grads, colocation=True):
                 with tf.device(v.device):       # colocate summed grad with var
                     grad = tf.multiply(
                         tf.add_n(grads), 1.0 / nr_tower)
-            else:
+            elif devices is None:
                 grad = tf.multiply(
                     tf.add_n(grads), 1.0 / nr_tower)
+            else:
+                dev = devices[idx % len(devices)]
+                with tf.device(dev):
+                    grad = tf.multiply(
+                        tf.add_n(grads), 1.0 / nr_tower)
             ret.append((grad, v))
     return ret
 
