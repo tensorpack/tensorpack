@@ -32,6 +32,22 @@ CLASS_NUM = 21
 CROP_SIZE = 321
 IGNORE_LABEL = 255
 
+def softmax_cross_entropy_with_ignore_label(logits, label, class_num):
+    with tf.name_scope('softmax_cross_entropy_with_ignore_label'):
+        #tf.assert_equal(logits.shape[1], label.shape[1])  # shape assert
+        #TODO need assert here
+        raw_prediction = tf.reshape(logits, [-1, class_num])
+        label = tf.reshape(label,[-1,])
+        indices = tf.squeeze(tf.where(tf.less_equal(label, class_num - 1)), axis=1)
+
+        gt = tf.gather(label, indices)
+        prediction = tf.gather(raw_prediction, indices)
+
+        # Pixel-wise softmax loss.
+        loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=prediction, labels=gt)
+    return loss
+
+
 class Model(ModelDesc):
 
     def _get_inputs(self):
@@ -73,7 +89,7 @@ class Model(ModelDesc):
 
         label4d = tf.expand_dims(label, 3, name='label4d')
 
-        cost = symbf.softmax_cross_entropy_with_ignore_label(logits=predict, label=label4d,
+        cost = softmax_cross_entropy_with_ignore_label(logits=predict, label=label4d,
                                                              class_num=CLASS_NUM)
         prediction = tf.argmax(prob, axis=-1,name="prediction")
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')  # the average cross-entropy loss
@@ -207,8 +223,7 @@ class CalculateMIoU(Callback):
         for image, label in tqdm(self.val_ds.get_data()):
             label = np.squeeze(label)
             image = np.squeeze(image)
-            prediction = predict_scaler(image, self.pred, scales=[0.9, 1, 1.1], classes=CLASS_NUM, tile_size=CROP_SIZE,
-                           is_densecrf=False)
+            prediction = predict_scaler(image, self.pred, scales=[0.9, 1, 1.1], classes=CLASS_NUM, tile_size=CROP_SIZE)
             prediction = np.argmax(prediction, axis=2)
             self.stat.feed(prediction, label)
 
@@ -220,7 +235,7 @@ class CalculateMIoU(Callback):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gpu', default="3", help='comma separated list of GPU(s) to use.')
+    parser.add_argument('--gpu', default="5", help='comma separated list of GPU(s) to use.')
     parser.add_argument('--data_dir', default="/data1/dataset/pascalvoc2012/VOC2012trainval/VOCdevkit/VOC2012",
                         help='dataset dir')
     parser.add_argument('--meta_dir', default="metadata/pascalvoc12", help='meta dir')

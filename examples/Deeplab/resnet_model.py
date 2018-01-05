@@ -9,7 +9,69 @@ from tensorflow.contrib.layers import variance_scaling_initializer
 from tensorpack.tfutils.argscope import argscope, get_arg_scope
 from tensorpack.models import (
     Conv2D, GlobalAvgPooling, BatchNorm, BNReLU, FullyConnected,
-    LinearWrap, AtrousConv2D)
+    LinearWrap)
+
+from tensorpack.models.common import layer_register, VariableHolder, rename_get_variable
+from tensorpack.utils.argtools import shape2d, shape4d
+
+@layer_register(log_shape=True)
+def AtrousConv2D(x, out_channel, kernel_shape,
+           padding='SAME', rate=1,
+           W_init=None, b_init=None,
+           nl=tf.identity, use_bias=False,
+           data_format='NHWC'):
+    """
+    2D AtrousConvolution on 4D inputs.
+
+    Args:
+        x (tf.Tensor): a 4D tensor.
+            Must have known number of channels, but can have other unknown dimensions.
+        out_channel (int): number of output channel.
+        kernel_shape: (h, w) tuple or a int.
+        stride: (h, w) tuple or a int.
+        rate: A positive int32, In the literature, the same parameter is sometimes called input stride or dilation.
+        padding (str): 'valid' or 'same'. Case insensitive.
+        W_init: initializer for W. Defaults to `variance_scaling_initializer`.
+        b_init: initializer for b. Defaults to zero.
+        nl: a nonlinearity function.
+        use_bias (bool): whether to use bias.
+
+    Returns:
+        tf.Tensor named ``output`` with attribute `variables`.
+
+    Variable Names:
+
+    * ``W``: weights
+    * ``b``: bias
+    """
+    in_shape = x.get_shape().as_list()
+    channel_axis = 3 if data_format == 'NHWC' else 1
+    in_channel = in_shape[channel_axis]
+    assert in_channel is not None, "[AtrousConv2D] Input cannot have unknown channel!"
+
+
+    kernel_shape = shape2d(kernel_shape)
+    padding = padding.upper()
+    filter_shape = kernel_shape + [in_channel, out_channel]
+
+    if W_init is None:
+        W_init = tf.contrib.layers.variance_scaling_initializer()
+    if b_init is None:
+        b_init = tf.constant_initializer()
+
+    W = tf.get_variable('W', filter_shape, initializer=W_init)
+
+    if use_bias:
+        b = tf.get_variable('b', [out_channel], initializer=b_init)
+
+
+    conv = tf.nn.atrous_conv2d(x, W, rate, padding)
+
+    ret = nl(tf.nn.bias_add(conv, b, data_format=data_format) if use_bias else conv, name='output')
+    ret.variables = VariableHolder(W=W)
+    if use_bias:
+        ret.variables.b = b
+    return ret
 
 
 def resnet_shortcut(l, n_out, stride, nl=tf.identity):
@@ -82,10 +144,7 @@ def resnet_bottleneck_deeplab(l, ch_out, stride, dilation, stride_first=False):
     """
     shortcut = l
     l = Conv2D('conv1', l, ch_out, 1, stride=stride if stride_first else 1, nl=BNReLU)
-    if dilation == 1:
-        l = Conv2D('conv2', l, ch_out, 3, stride=1 if stride_first else stride, nl=BNReLU)
-    else:
-        l = AtrousConv2D('conv2', l, ch_out, kernel_shape=3, rate=dilation, nl=BNReLU)
+    l = AtrousConv2D('conv2', l, ch_out, kernel_shape=3, rate=dilation, nl=BNReLU)
     l = Conv2D('conv3', l, ch_out * 4, 1, nl=get_bn(zero_init=True))
     return l + resnet_shortcut(shortcut, ch_out * 4, stride, nl=get_bn(zero_init=False))
 

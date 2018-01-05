@@ -273,17 +273,3 @@ def shapeless_placeholder(x, axis, name):
     x = tf.placeholder_with_default(x, shape=shp, name=name)
     return x
 
-def softmax_cross_entropy_with_ignore_label(logits, label, class_num):
-    with tf.name_scope('softmax_cross_entropy_with_ignore_label'):
-        #tf.assert_equal(logits.shape[1], label.shape[1])  # shape assert
-        #TODO need assert here
-        raw_prediction = tf.reshape(logits, [-1, class_num])
-        label = tf.reshape(label,[-1,])
-        indices = tf.squeeze(tf.where(tf.less_equal(label, class_num - 1)), axis=1)
-
-        gt = tf.gather(label, indices)
-        prediction = tf.gather(raw_prediction, indices)
-
-        # Pixel-wise softmax loss.
-        loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=prediction, labels=gt)
-    return loss
