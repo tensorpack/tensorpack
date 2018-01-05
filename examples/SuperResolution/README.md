@@ -20,15 +20,17 @@ produce a 4x resolution image using different loss functions.
 
 ```bash
 wget http://images.cocodataset.org/zips/train2017.zip
-python data_sampler.py --lmdb train2017.lmdb --input train2017.zip --create
-
 wget http://models.tensorpack.com/caffe/vgg19.npy
 ```
 
 2. Train an EnhanceNet-PAT using:
 
 ```bash
-python enet-pat.py --vgg19 /path/to/vgg19.npy --lmdb train2017.lmdb
+python enet-pat.py --vgg19 /path/to/vgg19.npy --data train2017.zip
+
+# or: convert to an lmdb first and train with lmdb:
+python data_sampler.py --lmdb train2017.lmdb --input train2017.zip --create
+python enet-pat.py --vgg19 /path/to/vgg19.npy --data train2017.lmdb
 ```
 
 Training is highly unstable and does not often give results as good as the pretrained model.

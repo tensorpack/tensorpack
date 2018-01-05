@@ -26,6 +26,7 @@ See [Unawareness of Deep Learning Mistakes](https://medium.com/@ppwwyyxx/unaware
 | [Spatial Transformer Networks on MNIST addition](SpatialTransformer) | reproduce paper |
 | [Visualize CNN saliency maps](Saliency) | visually reproduce |
 | [Similarity learning on MNIST](SimilarityLearning) | |
+| Single-image super-resolution using [EnhanceNet](SuperResolution) | visually reproduce |
 | Learn steering filters with [Dynamic Filter Networks](DynamicFilterNetwork) | visually reproduce |
 | Load a pre-trained [AlexNet](load-alexnet.py), [VGG16](load-vgg16.py), or [Convolutional Pose Machines](ConvolutionalPoseMachines/) | |
 

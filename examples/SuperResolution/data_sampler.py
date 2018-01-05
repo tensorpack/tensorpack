@@ -3,28 +3,33 @@ import os
 import argparse
 import numpy as np
 import zipfile
-import random
 from tensorpack import RNGDataFlow, MapDataComponent, dftools
 
 
 class ImageDataFromZIPFile(RNGDataFlow):
     """ Produce images read from a list of zip files. """
-    def __init__(self, zip_file, shuffle=False, max_files=None):
+    def __init__(self, zip_file, shuffle=False):
         """
         Args:
             zip_file (list): list of zip file paths.
         """
         assert os.path.isfile(zip_file)
+        self._file = zip_file
         self.shuffle = shuffle
-        self.max = max_files
+        self.open()
+
+    def open(self):
         self.archivefiles = []
-        archive = zipfile.ZipFile(zip_file)
+        archive = zipfile.ZipFile(self._file)
         imagesInArchive = archive.namelist()
         for img_name in imagesInArchive:
             if img_name.endswith('.jpg'):
                 self.archivefiles.append((archive, img_name))
-        if self.max is None:
-            self.max = self.size()
+
+    def reset_state(self):
+        super(ImageDataFromZIPFile, self).reset_state()
+        # Seems necessary to reopen the zip file in forked processes.
+        self.open()
 
     def size(self):
         return len(self.archivefiles)
@@ -32,7 +37,6 @@ class ImageDataFromZIPFile(RNGDataFlow):
     def get_data(self):
         if self.shuffle:
             self.rng.shuffle(self.archivefiles)
-        self.archivefiles = random.sample(self.archivefiles, self.max)
         for archive in self.archivefiles:
             im_data = archive[0].read(archive[1])
             im_data = np.asarray(bytearray(im_data), dtype='uint8')
