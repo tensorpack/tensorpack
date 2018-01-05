@@ -107,6 +107,8 @@ if __name__ == '__main__':
     #print(a)
     #from IPython import embed; embed()
 
-    print(generate_anchors(
+    anchors = generate_anchors(
                 16, scales=np.asarray((2, 4, 8, 16, 32), 'float32'),
-                ratios=[0.5,1,2]))
+                ratios=[0.5,1,2])
+    print(anchors)
+    import IPython as IP; IP.embed()
