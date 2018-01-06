@@ -115,7 +115,7 @@ def resnet_group(l, name, block_func, features, count, stride):
 
 def resnet_backbone(image, num_blocks, group_func, block_func):
     with argscope(Conv2D, nl=tf.identity, use_bias=False,
-                  W_init=tf.variance_scaling_initializer(scale=2.0, mode='FAN_OUT')):
+                  W_init=tf.variance_scaling_initializer(scale=2.0, mode='fan_out')):
         logits = (LinearWrap(image)
                   .Conv2D('conv0', 64, 7, stride=2, nl=BNReLU)
                   .MaxPooling('pool0', shape=3, stride=2, padding='SAME')

@@ -47,7 +47,7 @@ class Model(ModelDesc):
         defs, block_func = cfg[DEPTH]
 
         with argscope(Conv2D, nl=tf.identity, use_bias=False,
-                      W_init=tf.variance_scaling_initializer(scale=2.0, mode='FAN_OUT')), \
+                      W_init=tf.variance_scaling_initializer(scale=2.0, mode='fan_out')), \
                 argscope([Conv2D, MaxPooling, GlobalAvgPooling, BatchNorm], data_format='NCHW'):
             convmaps = (LinearWrap(image)
                         .Conv2D('conv0', 64, 7, stride=2, nl=BNReLU)
