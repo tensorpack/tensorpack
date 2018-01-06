@@ -13,7 +13,6 @@ from tensorpack.utils.gpu import get_nr_gpu
 from tensorpack.dataflow import dataset
 
 import tensorflow as tf
-from tensorflow.contrib.layers import variance_scaling_initializer
 
 """
 CIFAR10 ResNet example. See:
@@ -75,7 +74,7 @@ class Model(ModelDesc):
 
         with argscope([Conv2D, AvgPooling, BatchNorm, GlobalAvgPooling], data_format='NCHW'), \
                 argscope(Conv2D, nl=tf.identity, use_bias=False, kernel_shape=3,
-                         W_init=variance_scaling_initializer(mode='FAN_OUT')):
+                         W_init=tf.variance_scaling_initializer(scale=2.0, mode='FAN_OUT')):
             l = Conv2D('conv0', image, 16, nl=BNReLU)
             l = residual('res1.0', l, first=True)
             for k in range(1, self.n):

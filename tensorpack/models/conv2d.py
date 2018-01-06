@@ -27,7 +27,7 @@ def Conv2D(x, out_channel, kernel_shape,
         stride: (h, w) tuple or a int.
         padding (str): 'valid' or 'same'. Case insensitive.
         split (int): Split channels as used in Alexnet. Defaults to 1 (no split).
-        W_init: initializer for W. Defaults to `variance_scaling_initializer`.
+        W_init: initializer for W. Defaults to `variance_scaling_initializer(2.0)`, i.e. kaiming-normal.
         b_init: initializer for b. Defaults to zero.
         nl: a nonlinearity function.
         use_bias (bool): whether to use bias.
@@ -53,7 +53,7 @@ def Conv2D(x, out_channel, kernel_shape,
     stride = shape4d(stride, data_format=data_format)
 
     if W_init is None:
-        W_init = tf.contrib.layers.variance_scaling_initializer()
+        W_init = tf.variance_scaling_initializer(scale=2.0)
     if b_init is None:
         b_init = tf.constant_initializer()
 
@@ -94,7 +94,7 @@ def Deconv2D(x, out_channel, kernel_shape,
         kernel_shape: (h, w) tuple or a int.
         stride: (h, w) tuple or a int.
         padding (str): 'valid' or 'same'. Case insensitive.
-        W_init: initializer for W. Defaults to `variance_scaling_initializer`.
+        W_init: initializer for W. Defaults to `tf.variance_scaling_initializer(2.0)`, i.e. kaiming-normal.
         b_init: initializer for b. Defaults to zero.
         nl: a nonlinearity function.
         use_bias (bool): whether to use bias.
@@ -115,7 +115,7 @@ def Deconv2D(x, out_channel, kernel_shape,
     assert isinstance(out_channel, int), out_channel
 
     if W_init is None:
-        W_init = tf.contrib.layers.xavier_initializer_conv2d()
+        W_init = tf.variance_scaling_initializer(scale=2.0)
     if b_init is None:
         b_init = tf.constant_initializer()
 

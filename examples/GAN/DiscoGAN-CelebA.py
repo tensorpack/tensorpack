@@ -90,9 +90,9 @@ class Model(GANModelDesc):
         A = tf.transpose(A / 255.0, [0, 3, 1, 2])
         B = tf.transpose(B / 255.0, [0, 3, 1, 2])
 
-        # use the initializers from torch
+        # use the torch initializers
         with argscope([Conv2D, Deconv2D, FullyConnected],
-                      W_init=tf.contrib.layers.variance_scaling_initializer(factor=0.333, uniform=True),
+                      W_init=tf.variance_scaling_initializer(scale=0.333, distribution='uniform'),
                       use_bias=False), \
                 argscope(BatchNorm, gamma_init=tf.random_uniform_initializer()), \
                 argscope([Conv2D, Deconv2D, BatchNorm], data_format='NCHW'):

@@ -11,7 +11,6 @@ import multiprocessing
 
 
 import tensorflow as tf
-from tensorflow.contrib.layers import variance_scaling_initializer
 from tensorpack import *
 from tensorpack.dataflow import dataset
 from tensorpack.tfutils import optimizer
@@ -48,7 +47,7 @@ class Model(ModelDesc):
         defs, block_func = cfg[DEPTH]
 
         with argscope(Conv2D, nl=tf.identity, use_bias=False,
-                      W_init=variance_scaling_initializer(mode='FAN_OUT')), \
+                      W_init=tf.variance_scaling_initializer(scale=2.0, mode='FAN_OUT')), \
                 argscope([Conv2D, MaxPooling, GlobalAvgPooling, BatchNorm], data_format='NCHW'):
             convmaps = (LinearWrap(image)
                         .Conv2D('conv0', 64, 7, stride=2, nl=BNReLU)

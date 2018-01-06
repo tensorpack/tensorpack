@@ -22,7 +22,7 @@ def FullyConnected(x, out_dim,
     Args:
         x (tf.Tensor): a tensor to be flattened except for the first dimension.
         out_dim (int): output dimension
-        W_init: initializer for W. Defaults to `variance_scaling_initializer`.
+        W_init: initializer for W. Defaults to `variance_scaling_initializer(2.0)`, i.e. kaiming-normal.
         b_init: initializer for b. Defaults to zero.
         nl: a nonlinearity function
         use_bias (bool): whether to use bias.
@@ -38,7 +38,7 @@ def FullyConnected(x, out_dim,
     x = symbf.batch_flatten(x)
 
     if W_init is None:
-        W_init = tf.contrib.layers.variance_scaling_initializer()
+        W_init = tf.variance_scaling_initializer(2.0)
     if b_init is None:
         b_init = tf.constant_initializer()
 

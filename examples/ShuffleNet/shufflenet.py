@@ -35,7 +35,7 @@ def DepthConv(x, out_channel, kernel_shape, padding='SAME', stride=1,
     channel_mult = out_channel // in_channel
 
     if W_init is None:
-        W_init = tf.contrib.layers.variance_scaling_initializer()
+        W_init = tf.variance_scaling_initializer(2.0)
     kernel_shape = [kernel_shape, kernel_shape]
     filter_shape = kernel_shape + [in_channel, channel_mult]
 
