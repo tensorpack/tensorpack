@@ -33,13 +33,13 @@ def send_dataflow_zmq(df, addr, hwm=50, format=None):
         hwm (int): ZMQ high-water mark (buffer size)
         format (str): The serialization format.
              Default format would use :mod:`tensorpack.utils.serialize` (i.e. msgpack).
-             An alternate format is 'zmq_op'.
+             An alternate format is 'zmq_op', used by https://github.com/tensorpack/zmq_ops.
     """
     assert format in [None, 'zmq_op']
     if format is None:
         dump_fn = dumps
     else:
-        from ..user_ops.zmq_recv import dumps_zmq_op
+        from zmq_ops import dumps_zmq_op
         dump_fn = dumps_zmq_op
 
     ctx = zmq.Context()

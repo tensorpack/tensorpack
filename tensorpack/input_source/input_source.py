@@ -370,7 +370,7 @@ class DummyConstantInput(TensorInput):
 
 class ZMQInput(TensorInput):
     """
-    Recv tensors from a ZMQ endpoint.
+    Recv tensors from a ZMQ endpoint, with ops from https://github.com/tensorpack/zmq_ops.
     It works with :meth:`dataflow.remote.send_dataflow_zmq(format='zmq_op')`.
     """
     def __init__(self, end_point, hwm):
@@ -395,7 +395,7 @@ class ZMQInput(TensorInput):
             "ZMQInput has to be used with InputDesc!"
         self._desc = inputs_desc
 
-        from ..user_ops import zmq_ops
+        import zmq_ops
         self._zmq_pull_socket = zmq_ops.ZMQPullSocket(
             self._end_point,
             [x.type for x in inputs_desc],
