@@ -39,8 +39,8 @@ def send_dataflow_zmq(df, addr, hwm=50, format=None):
     if format is None:
         dump_fn = dumps
     else:
-        from zmq_ops import dumps_zmq_op
-        dump_fn = dumps_zmq_op
+        from zmq_ops import dump_arrays
+        dump_fn = dump_arrays
 
     ctx = zmq.Context()
     socket = ctx.socket(zmq.PUSH)
