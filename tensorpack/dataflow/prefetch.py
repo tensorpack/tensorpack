@@ -194,28 +194,29 @@ class PrefetchDataZMQ(_MultiProcessZMQDataFlow):
     Prefetch data from a DataFlow using multiple processes, with ZeroMQ for
     communication.
     It will fork the calling process of :meth:`reset_state()`,
-    and collect datapoints from `ds` in each process by ZeroMQ IPC pipe.
+    and collect datapoints from the given dataflow in each process by ZeroMQ IPC pipe.
 
     Note:
         1. An iterator cannot run faster automatically -- what's happenning is
            that the underlying dataflow will be forked ``nr_proc`` times.
            As a result, we have the following guarantee on the dataflow correctness:
 
-           a. When ``nr_proc=1``, the dataflow produces the same data as ``ds`` in the same order.
-           b. When ``nr_proc>1``, the dataflow produces the same distribution
-              of data as ``ds`` if each sample from ``ds`` is i.i.d. (e.g. fully shuffled).
-              You probably only want to use it for training.
-        2. The fork of processes happened in the `reset_state()` method.
+           a. When ``nr_proc=1``, this dataflow produces the same data as the
+                given dataflow in the same order.
+           b. When ``nr_proc>1``, if each sample from the given dataflow is i.i.d. (e.g. fully shuffled),
+                then this dataflow produces the **same distribution** of data as the given dataflow.
+                This implies that there will be duplication, reordering, etc.
+                You probably only want to use it for training.
+                If the samples are not i.i.d., the behavior is undefined.
+        2. `reset_state()` of the given dataflow will be called **once and only once** in the worker processes.
+        3. The fork of processes happened in this dataflow's `reset_state()` method.
            Please note that forking a TensorFlow GPU session may be unsafe.
            If you're managing this dataflow on your own,
            it's better to fork before creating the session.
-        3. After the fork has happened, this dataflow becomes not fork-safe.
+        4. After the fork has happened, this dataflow becomes not fork-safe.
            i.e., if you fork an already reset instance of this dataflow,
            it won't be usable in the forked process.
-        4. Calling `reset_state()` more than once is a no-op, i.e. the worker processes won't get called.
-        5. When nesting like this: ``PrefetchDataZMQ(PrefetchDataZMQ(df, nr_proc=a), nr_proc=b)``.
-           A total of ``a * b`` instances of ``df`` worker processes will be created.
-           Also in this case, some zmq pipes cannot be cleaned at exit.
+        5. Do not nest two `PrefetchDataZMQ`.
         6. By default, a UNIX named pipe will be created in the current directory.
            However, certain non-local filesystem such as NFS/GlusterFS/AFS doesn't always support pipes.
            You can change the directory by ``export TENSORPACK_PIPEDIR=/other/dir``.

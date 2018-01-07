@@ -217,6 +217,10 @@ class ILSVRC12(ILSVRC12Files):
         super(ILSVRC12, self).__init__(
             dir, name, meta_dir, shuffle, dir_structure)
 
+    """
+    There are some CMYK / png images, but cv2 seems robust to them.
+    https://github.com/tensorflow/models/blob/c0cd713f59cfe44fa049b3120c417cc4079c17e3/research/inception/inception/data/build_imagenet_data.py#L264-L300
+    """
     def get_data(self):
         for fname, label in super(ILSVRC12, self).get_data():
             im = cv2.imread(fname, cv2.IMREAD_COLOR)

@@ -27,7 +27,7 @@ Then it is a good time to open an issue.
 3. The [ProgressBar](../modules/callbacks.html#tensorpack.callbacks.ProgressBar)
 	 callback can print some scalar statistics, though not enabled by default.
 
-4. Read [Summary and Loggin](summary.html) for more options on logging.
+4. Read [Summary and Logging](summary.html) for more options on logging.
 
 ## How to freeze some variables in training
 

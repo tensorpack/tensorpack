@@ -106,7 +106,8 @@ def get_data(train_or_test, isMixup, alpha):
         if not isTrain or not isMixup:
             return [images, one_hot_labels]
 
-        # mixup:
+        # mixup implementation:
+        # Note that for larger images, it's more efficient to do mixup on GPUs (i.e. in the graph)
         weight = np.random.beta(alpha, alpha, BATCH_SIZE)
         x_weight = weight.reshape(BATCH_SIZE, 1, 1, 1)
         y_weight = weight.reshape(BATCH_SIZE, 1)
