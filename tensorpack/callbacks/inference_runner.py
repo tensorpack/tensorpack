@@ -170,14 +170,16 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
     """
     Inference with data-parallel support on multiple GPUs.
     It will build one predict tower on each GPU, and run prediction
-    with a larger batch.
+    with a large total batch.
     """
     def __init__(self, input, infs, gpus):
         """
         Args:
             input (DataFlow or QueueInput)
-            gpus (list[int]): list of GPU id
+            gpus (int or list[int]): #gpus, or list of GPU id
         """
+        if isinstance(gpus, int):
+            gpus = list(range(gpus))
         self._tower_names = ['InferenceTower{}'.format(k) for k in range(len(gpus))]
         if isinstance(input, DataFlow):
             input = QueueInput(input)

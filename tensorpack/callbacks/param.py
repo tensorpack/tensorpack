@@ -217,9 +217,9 @@ class ScheduledHyperParamSetter(HyperParamSetter):
             param: same as in :class:`HyperParamSetter`.
             schedule (list): with the format ``[(epoch1, val1), (epoch2, val2), (epoch3, val3)]``.
                 Each ``(ep, val)`` pair means to set the param
-                to "val" __after__ the completion of epoch `ep`.
+                to "val" **after** the completion of epoch `ep`.
                 If ep == 0, the value will be set before the first epoch
-                (by default the first is epoch 1).
+                (because by default the first is epoch 1).
             interp: None: no interpolation. 'linear': linear interpolation
 
         Example:
