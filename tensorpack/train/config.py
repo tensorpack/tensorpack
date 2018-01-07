@@ -105,10 +105,12 @@ class TrainConfig(object):
         if callbacks is None:
             callbacks = []
         assert_type(callbacks, list)
-        self._callbacks = callbacks + \
-            (extra_callbacks or DEFAULT_CALLBACKS())
+        if extra_callbacks is not None:
+            self._callbacks = callbacks + extra_callbacks
+        else:
+            self._callbacks = callbacks + DEFAULT_CALLBACKS()
 
-        self.monitors = monitors or DEFAULT_MONITORS()
+        self.monitors = monitors if monitors is not None else DEFAULT_MONITORS()
 
         if session_init is None:
             session_init = JustCurrentSession()
