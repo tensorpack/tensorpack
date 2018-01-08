@@ -218,15 +218,17 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
 
         train_ops = []
         opt = get_opt_fn()
-        for idx, grad_and_vars in enumerate(grads):
-            with tf.device(raw_devices[idx]):
-                # apply_gradients may create variables. Make them LOCAL_VARIABLES
-                with override_to_local_variable(enable=idx > 0):
-                    train_ops.append(opt.apply_gradients(
-                        grad_and_vars, name='apply_grad_{}'.format(idx)))
+        with tf.name_scope('apply_gradients'):
+            for idx, grad_and_vars in enumerate(grads):
+                with tf.device(raw_devices[idx]):
+                    # apply_gradients may create variables. Make them LOCAL_VARIABLES
+                    with override_to_local_variable(enable=idx > 0):
+                        train_ops.append(opt.apply_gradients(
+                            grad_and_vars, name='apply_grad_{}'.format(idx)))
         train_op = tf.group(*train_ops, name='train_op')
 
-        post_init_op = SyncMultiGPUReplicatedBuilder.get_post_init_ops()
+        with tf.name_scope('sync_variables'):
+            post_init_op = SyncMultiGPUReplicatedBuilder.get_post_init_ops()
         return train_op, post_init_op
 
 # Adopt from https://github.com/tensorflow/benchmarks/blob/master/scripts/tf_cnn_benchmarks/variable_mgr.py

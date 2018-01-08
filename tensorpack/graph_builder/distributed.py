@@ -4,7 +4,7 @@
 
 import tensorflow as tf
 import re
-from six.moves import zip, range
+from six.moves import range
 
 from ..utils.argtools import memoized
 from ..tfutils.common import get_op_tensor_name, get_global_step_var
@@ -195,32 +195,6 @@ class DistributedReplicatedBuilder(DataParallelBuilder, DistributedBuilderBase):
         self.sync_queue_devices = ['/job:ps/task:%s/cpu:0' % i for i in range(self.num_ps)]
 
     @staticmethod
-    def _average_grads(tower_grads, devices):
-        """
-        Average grads from towers.
-        The device where the average happens is chosen with round-robin.
-
-        Args:
-            tower_grads: Ngpu x Nvar x 2
-
-        Returns:
-            Nvar x 2
-        """
-        nr_device = len(devices)
-        if nr_device == 1:
-            return tower_grads[0]
-        new_tower_grads = []
-        with tf.name_scope('AvgGrad'):
-            for i, grad_and_vars in enumerate(zip(*tower_grads)):
-                v = grad_and_vars[0][1]  # Ngpu * 2
-                all_grads = [g for (g, _) in grad_and_vars]
-                with tf.device(devices[i % nr_device]):
-                    grad = tf.multiply(
-                        tf.add_n(all_grads), 1.0 / nr_device)
-                    new_tower_grads.append((grad, v))
-        return new_tower_grads
-
-    @staticmethod
     def _apply_shadow_vars(avg_grads):
         """
         Create shadow variables on PS, and replace variables in avg_grads
@@ -298,7 +272,7 @@ class DistributedReplicatedBuilder(DataParallelBuilder, DistributedBuilderBase):
             use_vs=[True] * len(self.towers))  # open vs at each tower
         DataParallelBuilder._check_grad_list(grad_list)
 
-        avg_grads = DistributedReplicatedBuilder._average_grads(grad_list, self.raw_devices)
+        avg_grads = average_grads(grad_list, devices=self.raw_devices)
         with tf.device(self.param_server_device):
             ps_var_grads = DistributedReplicatedBuilder._apply_shadow_vars(avg_grads)
             var_update_ops = self._apply_gradients_and_copy(
@@ -312,9 +286,11 @@ class DistributedReplicatedBuilder(DataParallelBuilder, DistributedBuilderBase):
             'post_copy_barrier', [main_fetch])
 
         # initial local_vars syncing
-        initial_sync_op = self._get_initial_sync_op()
+        with tf.name_scope('initial_sync_variables'):
+            initial_sync_op = self._get_initial_sync_op()
         if len(self._shadow_model_vars) and self.is_chief:
-            model_sync_op = self._get_sync_model_vars_op()
+            with tf.name_scope('sync_model_variables'):
+                model_sync_op = self._get_sync_model_vars_op()
         else:
             model_sync_op = None
         return train_op, initial_sync_op, model_sync_op
@@ -332,19 +308,20 @@ class DistributedReplicatedBuilder(DataParallelBuilder, DistributedBuilderBase):
             list of copy ops
         """
         # TODO do this for variables together?
-        var_update_ops = []
-        for vid, (g, v) in enumerate(ps_var_grads):
-            # TODO do we put momentum variables into local or global?
-            apply_gradient_op = opt.apply_gradients([(g, v)])
-            barrier = self._add_sync_queues_and_barrier(
-                'param_update_barrier_{}'.format(vid), [apply_gradient_op])
-            with tf.control_dependencies([barrier]), \
-                    tf.device(self.cpu_device):
-                updated_value = v.read_value()
-                for towerid in range(self.nr_gpu):
-                    var_update_ops.append(
-                        raw_grad_list[towerid][vid][1].assign(updated_value))
-        return var_update_ops
+        with tf.name_scope('apply_gradients'):
+            var_update_ops = []
+            for vid, (g, v) in enumerate(ps_var_grads):
+                # TODO do we put momentum variables into local or global?
+                apply_gradient_op = opt.apply_gradients([(g, v)])
+                barrier = self._add_sync_queues_and_barrier(
+                    'param_update_barrier_{}'.format(vid), [apply_gradient_op])
+                with tf.control_dependencies([barrier]), \
+                        tf.device(self.cpu_device):
+                    updated_value = v.read_value()
+                    for towerid in range(self.nr_gpu):
+                        var_update_ops.append(
+                            raw_grad_list[towerid][vid][1].assign(updated_value))
+            return var_update_ops
 
     def _get_initial_sync_op(self):
         """
