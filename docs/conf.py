@@ -30,7 +30,7 @@ MOCK_MODULES = ['tabulate', 'h5py',
                 'scipy', 'scipy.misc', 'scipy.io',
                 'tornado', 'tornado.concurrent',
                 'horovod', 'horovod.tensorflow',
-                'msgpack', 'msgpack_numpy',
+                'pyarrow',
                 'functools32']
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock(name=mod_name)

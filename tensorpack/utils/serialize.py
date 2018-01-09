@@ -3,10 +3,7 @@
 # File: serialize.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import msgpack
-import msgpack_numpy
-
-msgpack_numpy.patch()
+import pyarrow as pa
 
 
 __all__ = ['loads', 'dumps']
@@ -17,14 +14,20 @@ def dumps(obj):
     Serialize an object.
 
     Returns:
-        str
+        Implementation-dependent bytes-like object
     """
-    return msgpack.dumps(obj, use_bin_type=True)
+    return pa.serialize(obj).to_buffer()
 
 
 def loads(buf):
     """
     Args:
-        buf (str): serialized object.
+        buf: the output of `dumps`.
     """
-    return msgpack.loads(buf, encoding='utf-8')
+    try:
+        return pa.deserialize(buf)
+    except pa.ArrowIOError:
+        # Handle data serialized by old version of tensorpack.
+        import msgpack
+        import msgpack_numpy as mn
+        return msgpack.unpackb(buf, object_hook=mn.decode, encoding='utf-8')
