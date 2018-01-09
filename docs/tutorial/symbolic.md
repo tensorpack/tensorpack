@@ -42,16 +42,21 @@ l = func(l, *args, **kwargs)
 l = FullyConnected('fc1', l, 10, nl=tf.identity)
 ```
 
-### Access Internal Variables:
+### Access Relevant Tensors
 
-Access the variables like this:
+The variables inside the layer will be named `name/W`, `name/b`, etc.
+See the API documentation of each layer for details.
+When building the graph, you can access the variables like this:
 ```python
 l = Conv2D('conv1', l, 32, 3)
 print(l.variables.W)
 print(l.variables.b)
 ```
-The names are documented in API documentation.
-Note that this method doesn't work with LinearWrap, and cannot access the variables created by an activation function.
+But note that this is a hacky way and may not work with future versions of TensorFlow.
+Also this method doesn't work with LinearWrap, and cannot access the variables created by an activation function.
+
+The output of a layer is usually named `name/output` unless documented differently in the API.
+You can always print a tensor to see its name.
 
 ### Use Models outside Tensorpack
 
