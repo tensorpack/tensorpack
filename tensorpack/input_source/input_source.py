@@ -520,6 +520,8 @@ class StagingInput(FeedfreeInput):
 
     def _setup(self, inputs):
         self._input.setup(inputs)
+        with self.cached_name_scope():
+            pass    # just to cache the correct ns to use
 
     def _get_callbacks(self):
         cbs = self._input.get_callbacks()

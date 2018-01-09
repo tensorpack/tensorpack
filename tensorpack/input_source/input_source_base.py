@@ -165,7 +165,7 @@ class InputSource(object):
             with tf.name_scope(self._name_scope):
                 yield self._name_scope
         else:
-            name = type(self).__name__ + '/'
+            name = type(self).__name__
             with tf.name_scope(name) as ns:
                 self._name_scope = ns
                 yield ns

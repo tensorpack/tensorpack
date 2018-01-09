@@ -3,7 +3,7 @@ six
 termcolor>=1.1
 tabulate>=0.7.7
 tqdm>4.11.1
-msgpack-python>0.4.0
+msgpack
 msgpack-numpy>=0.3.9
 pyzmq>=16
 subprocess32; python_version < '3.0'
