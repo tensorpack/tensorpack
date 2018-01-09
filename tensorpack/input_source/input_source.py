@@ -546,16 +546,18 @@ class StagingInput(FeedfreeInput):
             # TODO tensorflow/benchmarks use static shapes here,
             # though it doesn't seem to help. We can use it when it's known.
             stage = StagingArea(dtypes, shapes=None)
-            self._stage_ops.append(stage.put(inputs))
-            self._areas.append(stage)
-            outputs = stage.get()
-            if isinstance(outputs, tf.Tensor):  # when size=1, TF doesn't return a list
-                outputs = [outputs]
-            for vin, vout in zip(inputs, outputs):
-                vout.set_shape(vin.get_shape())
-            self._unstage_ops.append(outputs)
-            # self._size_ops.append(stage.size())
-            return outputs
+
+        # put & get automatically inherit the name scope from the area
+        self._stage_ops.append(stage.put(inputs))
+        self._areas.append(stage)
+        outputs = stage.get()
+        if isinstance(outputs, tf.Tensor):  # when size=1, TF doesn't return a list
+            outputs = [outputs]
+        for vin, vout in zip(inputs, outputs):
+            vout.set_shape(vin.get_shape())
+        self._unstage_ops.append(outputs)
+        # self._size_ops.append(stage.size())
+        return outputs
 
     def _get_stage_op(self):
         with self.cached_name_scope():
