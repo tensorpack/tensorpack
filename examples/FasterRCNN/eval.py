@@ -15,7 +15,7 @@ from pycocotools.cocoeval import COCOeval
 import pycocotools.mask as cocomask
 
 from coco import COCOMeta
-from common import CustomResize
+from common import CustomResize, clip_boxes
 import config
 
 DetectionResult = namedtuple(
@@ -75,6 +75,8 @@ def detect_one_image(img, model_func):
     scale = (resized_img.shape[0] * 1.0 / img.shape[0] + resized_img.shape[1] * 1.0 / img.shape[1]) / 2
     boxes, probs, labels, *masks = model_func(resized_img)
     boxes = boxes / scale
+    # boxes are already clipped inside the graph, but after the floating point scaling, this may not be true any more.
+    boxes = clip_boxes(boxes, orig_shape)
 
     if masks:
         # has mask
