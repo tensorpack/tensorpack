@@ -150,7 +150,7 @@ class ImageNetModel(ModelDesc):
 
     def _build_graph(self, inputs):
         image, label = inputs
-        image = self.image_preprocess(image, bgr=True)
+        image = ImageNetModel.image_preprocess(image, bgr=True)
         if self.data_format == 'NCHW':
             image = tf.transpose(image, [0, 3, 1, 2])
 
@@ -181,7 +181,8 @@ class ImageNetModel(ModelDesc):
         tf.summary.scalar('learning_rate', lr)
         return tf.train.MomentumOptimizer(lr, 0.9, use_nesterov=True)
 
-    def image_preprocess(self, image, bgr=True):
+    @staticmethod
+    def image_preprocess(image, bgr=True):
         with tf.name_scope('image_preprocess'):
             if image.dtype.base_dtype != tf.float32:
                 image = tf.cast(image, tf.float32)

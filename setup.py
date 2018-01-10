@@ -35,6 +35,6 @@ setup(
         'all: python_version < "3.0"': ['tornado']
     },
 
-    include_package_data=True,
-    package_data={'tensorpack': ['user_ops/Makefile', 'user_ops/*.cc', 'user_ops/*.h']},
+    #include_package_data=True,
+    #package_data={'tensorpack': []},
 )
