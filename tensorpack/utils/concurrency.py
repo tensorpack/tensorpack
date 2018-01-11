@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: concurrency.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
+
 # Credit belongs to Xinyu Zhou
 
 import threading

@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: inference.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
+
 
 import numpy as np
 from abc import ABCMeta

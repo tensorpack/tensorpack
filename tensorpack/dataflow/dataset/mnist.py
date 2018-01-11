@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 # File: mnist.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
+
 
 import os
 import gzip

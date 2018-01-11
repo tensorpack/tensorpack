@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 # File: _test.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
+
 
 import sys
 import cv2

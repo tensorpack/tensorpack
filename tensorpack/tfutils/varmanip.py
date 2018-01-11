@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # File: varmanip.py
-# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+
 
 import six
 import os

@@ -1,6 +1,5 @@
 # -*- coding: UTF-8 -*-
 # File: simple.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 
 from .base import Trainer

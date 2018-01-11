@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: regularize.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
+
 
 import tensorflow as tf
 import re

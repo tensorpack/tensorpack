@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 # File: base.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
+
 
 import threading
 from abc import abstractmethod, ABCMeta

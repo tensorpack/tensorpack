@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: group.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
+
 
 import tensorflow as tf
 from contextlib import contextmanager

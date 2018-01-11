@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # File: serialize.py
-# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+
 
 import msgpack
 import msgpack_numpy
@@ -16,7 +16,7 @@ except ImportError:
 __all__ = ['loads', 'dumps']
 
 
-def dumps(obj):
+def dumps_msgpack(obj):
     """
     Serialize an object.
     Returns:
@@ -25,7 +25,7 @@ def dumps(obj):
     return msgpack.dumps(obj, use_bin_type=True)
 
 
-def loads(buf):
+def loads_msgpack(buf):
     """
     Args:
         buf: the output of `dumps`.
@@ -49,3 +49,7 @@ def loads_pyarrow(buf):
         buf: the output of `dumps`.
     """
     return pa.deserialize(buf)
+
+
+loads = loads_msgpack
+dumps = dumps_msgpack

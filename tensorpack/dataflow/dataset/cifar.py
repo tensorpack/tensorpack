@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 # File: cifar.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
+
 #         Yukun Chen <cykustc@gmail.com>
 
 import os

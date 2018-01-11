@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # File: stats.py
-# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+
 
 import os
 import numpy as np

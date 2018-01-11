@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: dftools.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
+
 
 import os
 import multiprocessing as mp

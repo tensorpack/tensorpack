@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: config.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
+
 
 import tensorflow as tf
 import six

@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: stats.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
+
 import numpy as np
 
 __all__ = ['StatCounter', 'BinaryStatistics', 'RatioCounter', 'Accuracy',

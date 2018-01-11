@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # File: timer.py
-# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 
 from contextlib import contextmanager

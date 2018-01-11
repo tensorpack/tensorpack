@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 # File: model_desc.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
+
 
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple

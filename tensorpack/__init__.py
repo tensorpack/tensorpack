@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # File: __init__.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
+
 
 import os as _os
 

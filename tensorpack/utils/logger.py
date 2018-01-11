@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: logger.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
+
 
 import logging
 import os

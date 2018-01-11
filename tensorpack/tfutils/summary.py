@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: summary.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
+
 
 import six
 import tensorflow as tf

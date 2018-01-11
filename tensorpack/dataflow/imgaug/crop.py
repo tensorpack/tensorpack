@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: crop.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
+
 
 from ...utils.argtools import shape2d
 from .transform import TransformAugmentorBase, CropTransform

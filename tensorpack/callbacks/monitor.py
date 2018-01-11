@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # File: monitor.py
-# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+
 
 import os
 import numpy as np

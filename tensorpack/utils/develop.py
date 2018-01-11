@@ -58,7 +58,7 @@ def building_rtfd():
         bool: if tensorpack is being imported to generate docs now.
     """
     return os.environ.get('READTHEDOCS') == 'True' \
-        or os.environ.get('TENSORPACK_DOC_BUILDING')
+        or os.environ.get('DOC_BUILDING')
 
 
 def log_deprecated(name="", text="", eos=""):

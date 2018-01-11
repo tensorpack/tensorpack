@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: common.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
+
 
 from __future__ import division
 import numpy as np

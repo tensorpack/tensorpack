@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # File: dataset.py
-# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+
 
 from six.moves import range, zip
 from abc import ABCMeta, abstractmethod

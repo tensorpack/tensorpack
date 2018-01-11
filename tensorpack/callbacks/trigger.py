@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # File: trigger.py
-# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+
 
 from .base import ProxyCallback, Callback
 

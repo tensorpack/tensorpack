@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # File: remote.py
-# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+
 
 import time
 import tqdm

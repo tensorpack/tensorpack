@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: image.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
+
 
 import numpy as np
 import copy as copy_mod

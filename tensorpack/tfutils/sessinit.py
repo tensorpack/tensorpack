@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: sessinit.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
+
 
 import os
 import numpy as np

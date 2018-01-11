@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: utils.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
+
 
 import os
 import sys

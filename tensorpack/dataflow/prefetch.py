@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: prefetch.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
+
 
 from __future__ import print_function
 import weakref

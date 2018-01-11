@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # File: noise.py
-# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+
 
 from .base import ImageAugmentor
 import numpy as np

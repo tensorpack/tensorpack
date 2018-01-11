@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: misc.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
+
 
 import numpy as np
 import cv2

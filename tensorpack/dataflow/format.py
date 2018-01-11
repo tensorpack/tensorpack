@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # File: format.py
-# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+
 
 import numpy as np
 import six

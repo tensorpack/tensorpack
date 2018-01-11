@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # File: base.py
-# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+
 
 import time
 import weakref

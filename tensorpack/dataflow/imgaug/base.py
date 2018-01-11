@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: base.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
+
 
 import inspect
 import pprint

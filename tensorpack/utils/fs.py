@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # File: fs.py
-# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+
 
 import os
 from six.moves import urllib

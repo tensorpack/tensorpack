@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # File: linearwrap.py
-# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+
 
 import six
 from types import ModuleType

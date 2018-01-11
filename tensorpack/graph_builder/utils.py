@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # File: utils.py
-# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+
 
 from contextlib import contextmanager
 import operator

@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: imgproc.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
+
 
 from .base import ImageAugmentor
 from ...utils import logger
@@ -221,16 +221,13 @@ class Saturation(ImageAugmentor):
         <https://github.com/facebook/fb.resnet.torch/blob/master/datasets/transforms.lua#L218>`__.
     """
 
-    def __init__(self, alpha=0.4, rgb=None):
+    def __init__(self, alpha=0.4, rgb=True):
         """
         Args:
             alpha(float): maximum saturation change.
             rgb (bool): whether input is RGB or BGR.
         """
         super(Saturation, self).__init__()
-        if rgb is None:
-            logger.warn("Saturation() now assumes rgb=False, but will by default use rgb=True in the future!")
-            rgb = False
         rgb = bool(rgb)
         assert alpha < 1
         self._init(locals())

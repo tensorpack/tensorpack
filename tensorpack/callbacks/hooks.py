@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # File: hooks.py
-# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+
 
 """ Compatible layers between tf.train.SessionRunHook and Callback"""
 

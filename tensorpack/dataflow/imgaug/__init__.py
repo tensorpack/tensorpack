@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: __init__.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
+
 
 import os
 from pkgutil import iter_modules

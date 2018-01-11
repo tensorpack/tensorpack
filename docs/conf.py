@@ -20,7 +20,7 @@ import inspect
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('../'))
-os.environ['TENSORPACK_DOC_BUILDING'] = '1'
+os.environ['DOC_BUILDING'] = '1'
 ON_RTD = (os.environ.get('READTHEDOCS') == 'True')
 
 
@@ -373,6 +373,7 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
         'set_tower_func',
         'TryResumeTraining',
         'LeakyReLU',
+        'PrefetchOnGPUs',
 
         'guided_relu', 'saliency_map', 'get_scalar_var',
         'prediction_incorrect', 'huber_loss',

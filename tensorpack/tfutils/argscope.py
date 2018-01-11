@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # File: argscope.py
-# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+
 from contextlib import contextmanager
 from collections import defaultdict
 import inspect

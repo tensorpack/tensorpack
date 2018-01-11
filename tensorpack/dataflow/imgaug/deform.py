@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: deform.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
+
 
 from .base import ImageAugmentor
 from ...utils import logger
