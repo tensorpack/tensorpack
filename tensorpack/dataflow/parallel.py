@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-# File: prefetch.py
+# File: parallel.py
 
 
 from __future__ import print_function
@@ -130,11 +130,10 @@ class PrefetchData(ProxyDataFlow):
            b. When ``nr_proc>1``, the dataflow produces the same distribution
               of data as ``ds`` if each sample from ``ds`` is i.i.d. (e.g. fully shuffled).
               You probably only want to use it for training.
-        2. This is significantly slower than :class:`PrefetchDataZMQ` when data is large.
-        3. When nesting like this: ``PrefetchDataZMQ(PrefetchData(df, nr_proc=a), nr_proc=b)``.
+        2. This has more serialization overhead than :class:`PrefetchDataZMQ` when data is large.
+        3. You can nest like this: ``PrefetchDataZMQ(PrefetchData(df, nr_proc=a), nr_proc=b)``.
            A total of ``a`` instances of ``df`` worker processes will be created.
-           This is different from the behavior of :class:`PrefetchDataZMQ`
-        4. `reset_state()` is a no-op. The worker processes won't get called.
+        4. fork happens in `__init__`. `reset_state()` is a no-op. The worker processes won't get called.
     """
 
     class _Worker(mp.Process):
