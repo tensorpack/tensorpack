@@ -294,6 +294,8 @@ MultiProcessMapData = MultiProcessMapDataZMQ  # alias
 def _pool_map(data):
     global SHARED_ARR, WORKER_ID, MAP_FUNC
     res = MAP_FUNC(data)
+    if res is None:
+        return None
     shared = np.reshape(SHARED_ARR, res.shape)
     assert shared.dtype == res.dtype
     shared[:] = res
@@ -303,8 +305,8 @@ def _pool_map(data):
 class MultiProcessMapDataComponentSharedArray(DataFlow):
     """
     Similar to :class:`MapDataComponent`, but perform IPC by shared memory,
-    therefore more efficient. It requires `map_func` to always return
-    a numpy array of fixed shape and dtype, or None.
+    therefore more efficient when data (result of map_func) is large.
+    It requires `map_func` to always return a numpy array of fixed shape and dtype, or None.
     """
     def __init__(self, ds, nr_proc, map_func, output_shape, output_dtype, index=0):
         """
@@ -370,6 +372,8 @@ class MultiProcessMapDataComponentSharedArray(DataFlow):
                 res = self._pool.map_async(_pool_map, to_map)
 
                 for index in res.get():
+                    if index is None:
+                        continue
                     arr = np.reshape(self._shared_mem[index], self.output_shape)
                     dp = dps[index]
                     dp[self.index] = arr.copy()

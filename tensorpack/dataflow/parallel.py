@@ -21,8 +21,8 @@ from ..utils.serialize import loads, dumps
 from ..utils import logger
 from ..utils.gpu import change_gpu
 
-__all__ = ['PrefetchData', 'PrefetchDataZMQ', 'PrefetchOnGPUs',
-           'MultiThreadPrefetchData']
+__all__ = ['PrefetchData', 'MultiProcessPrefetchData',
+           'PrefetchDataZMQ', 'PrefetchOnGPUs', 'MultiThreadPrefetchData']
 
 
 def _repeat_iter(get_itr):
@@ -112,7 +112,7 @@ class _MultiProcessZMQDataFlow(DataFlow):
             pass
 
 
-class PrefetchData(ProxyDataFlow):
+class MultiProcessPrefetchData(ProxyDataFlow):
     """
     Prefetch data from a DataFlow using Python multiprocessing utilities.
     It will fork the process calling :meth:`__init__`, collect datapoints from `ds` in each
@@ -135,7 +135,7 @@ class PrefetchData(ProxyDataFlow):
 
     class _Worker(mp.Process):
         def __init__(self, ds, queue):
-            super(PrefetchData._Worker, self).__init__()
+            super(MultiProcessPrefetchData._Worker, self).__init__()
             self.ds = ds
             self.queue = queue
 
@@ -153,7 +153,7 @@ class PrefetchData(ProxyDataFlow):
             nr_prefetch (int): size of the queue to hold prefetched datapoints.
             nr_proc (int): number of processes to use.
         """
-        super(PrefetchData, self).__init__(ds)
+        super(MultiProcessPrefetchData, self).__init__(ds)
         try:
             self._size = ds.size()
         except NotImplementedError:
@@ -163,11 +163,11 @@ class PrefetchData(ProxyDataFlow):
         self._guard = DataFlowReentrantGuard()
 
         if nr_proc > 1:
-            logger.info("[PrefetchData] Will fork a dataflow more than one times. "
+            logger.info("[MultiProcessPrefetchData] Will fork a dataflow more than one times. "
                         "This assumes the datapoints are i.i.d.")
 
         self.queue = mp.Queue(self.nr_prefetch)
-        self.procs = [PrefetchData._Worker(self.ds, self.queue)
+        self.procs = [MultiProcessPrefetchData._Worker(self.ds, self.queue)
                       for _ in range(self.nr_proc)]
         ensure_proc_terminate(self.procs)
         start_proc_mask_signal(self.procs)
@@ -183,6 +183,9 @@ class PrefetchData(ProxyDataFlow):
     def reset_state(self):
         # do nothing. all ds are reset once and only once in spawned processes
         pass
+
+
+PrefetchData = MultiProcessPrefetchData
 
 
 class PrefetchDataZMQ(_MultiProcessZMQDataFlow):
@@ -329,6 +332,7 @@ class MultiThreadPrefetchData(DataFlow):
         def __init__(self, get_df, queue):
             super(MultiThreadPrefetchData._Worker, self).__init__()
             self.df = get_df()
+            assert isinstance(self.df, DataFlow), self.df
             self.queue = queue
             self.daemon = True
 
