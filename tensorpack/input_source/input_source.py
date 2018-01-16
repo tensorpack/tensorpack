@@ -121,7 +121,7 @@ class EnqueueThread(ShareSessionThread):
         # self._size = queue.size()
 
     def run(self):
-        with self.default_sess() as sess:
+        with self.default_sess():
             try:
                 self.reinitialize_dataflow()
                 while True:
