@@ -118,9 +118,10 @@ class EnqueueThread(ShareSessionThread):
         self.close_op = self.queue.close(cancel_pending_enqueues=True)
 
         self._lock = threading.Lock()
+        # self._size = queue.size()
 
     def run(self):
-        with self.default_sess():
+        with self.default_sess() as sess:
             try:
                 self.reinitialize_dataflow()
                 while True:
@@ -130,6 +131,7 @@ class EnqueueThread(ShareSessionThread):
 
                     dp = next(self._itr)
                     feed = dict(zip(self.placehdrs, dp))
+                    # _, sz = sess.run([self.op, self._sz], feed_dict=feed)
                     self.op.run(feed_dict=feed)
             except (tf.errors.CancelledError, tf.errors.OutOfRangeError, DataFlowTerminated):
                 pass

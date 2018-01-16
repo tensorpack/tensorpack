@@ -7,6 +7,8 @@ from contextlib import contextmanager
 import operator
 import tensorflow as tf
 
+from ..tfutils.common  import get_tf_version_number
+
 
 __all__ = ['LeastLoadedDeviceSetter',
            'OverrideCachingDevice',
@@ -41,12 +43,22 @@ def override_to_local_variable(enable=True):
             return getter(name, *args, **kwargs)
 
         orig_vs = tf.get_variable_scope()
-        # TODO TF1.5 has https://github.com/tensorflow/tensorflow/pull/14390
-        with tf.variable_scope(
+        if get_tf_version_number() >= 1.5:
+            with tf.variable_scope(
                 tf.get_variable_scope(),
-                custom_getter=custom_getter):
-            with tf.name_scope(orig_vs.original_name_scope):
+                custom_getter=custom_getter,
+                auxiliary_name_scope=False):
                 yield
+        else:
+            if get_tf_version_number() >= 1.2:
+                ns = tf.get_default_graph().get_name_scope()
+            else:
+                ns = tf.get_variable_scope().original_name_scope
+            with tf.variable_scope(
+                    tf.get_variable_scope(),
+                    custom_getter=custom_getter):
+                with tf.name_scope(ns + '/'):
+                    yield
     else:
         yield
 

@@ -20,8 +20,7 @@ from .parallel import (
 
 
 __all__ = ['ThreadedMapData', 'MultiThreadMapData',
-           'MultiProcessMapData', 'MultiProcessMapDataZMQ',
-           'MultiProcessMapDataComponentSharedArray']
+           'MultiProcessMapData', 'MultiProcessMapDataZMQ']
 
 
 class _ParallelMapData(ProxyDataFlow):
@@ -302,6 +301,7 @@ def _pool_map(data):
     return WORKER_ID
 
 
+# TODO shutdown pool, improve speed.
 class MultiProcessMapDataComponentSharedArray(DataFlow):
     """
     Similar to :class:`MapDataComponent`, but perform IPC by shared memory,
