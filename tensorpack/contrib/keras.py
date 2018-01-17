@@ -11,7 +11,7 @@ from ..models.regularize import regularize_cost_from_collection
 from ..train import Trainer, SimpleTrainer, SyncMultiGPUTrainerParameterServer
 from ..train.trainers import DistributedTrainerBase
 from ..callbacks import (
-    Callback, InferenceRunner, CallbackToHook,
+    Callback, InferenceRunnerBase, InferenceRunner, CallbackToHook,
     ScalarStats)
 
 from ..tfutils.common import get_op_tensor_name
@@ -19,6 +19,7 @@ from ..tfutils.tower import get_current_tower_context
 from ..tfutils.scope_utils import cached_name_scope
 from ..tfutils.summary import add_moving_summary
 from ..utils.gpu import get_nr_gpu
+from ..utils import logger
 
 
 __all__ = ['KerasPhaseCallback', 'setup_keras_trainer', 'KerasModel']
@@ -56,6 +57,8 @@ class KerasModelCaller(object):
 
         if reuse:
             # use the cached Keras model to mimic reuse
+            # NOTE: ctx.is_training won't be useful inside model,
+            # because inference will always use the cached Keras model
             return self.cached_model.call(input_tensors)
         else:
             # create new Keras model if not reuse
@@ -74,10 +77,12 @@ class KerasPhaseCallback(Callback):
         self._learning_phase = keras.backend.learning_phase()
 
     def _setup_graph(self):
+        logger.info("Using Keras leraning phase {} in the graph!".format(
+            self._learning_phase.name))
         cbs = self.trainer._callbacks.cbs
         for cb in cbs:
             # XXX HACK
-            if isinstance(cb, InferenceRunner):
+            if isinstance(cb, InferenceRunnerBase):
                 h = CallbackToHook(KerasPhaseCallback(False))
                 cb.register_hook(h)
 
