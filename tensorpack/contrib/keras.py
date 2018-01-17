@@ -10,6 +10,7 @@ from tensorflow.python.keras import metrics as metrics_module
 from ..models.regularize import regularize_cost_from_collection
 from ..train import Trainer, SimpleTrainer, SyncMultiGPUTrainerParameterServer
 from ..train.trainers import DistributedTrainerBase
+from ..train.interface import apply_default_prefetch
 from ..callbacks import (
     Callback, InferenceRunnerBase, InferenceRunner, CallbackToHook,
     ScalarStats)
@@ -177,7 +178,7 @@ class KerasModel(object):
             get_model ( -> keras.model.Model):
             inputs_desc ([InputDesc]):
             targets_desc ([InputDesc]):
-            input (InputSource):
+            input (InputSource | DataFlow):
             trainer (Trainer): the default will check the number of available
                 GPUs and use them all.
         """
@@ -194,7 +195,7 @@ class KerasModel(object):
         assert isinstance(trainer, Trainer), trainer
         assert not isinstance(trainer, DistributedTrainerBase)
 
-        self.input = input
+        self.input = apply_default_prefetch(input, trainer)
         self.trainer = trainer
 
     def compile(self, optimizer, loss, metrics=None):
