@@ -179,7 +179,7 @@ if __name__ == '__main__':
             [(0, 0.1), (3, BASE_LR)], interp='linear'),  # warmup
         ScheduledHyperParamSetter(
             'learning_rate',
-            [(30, BASE_LR * 0.1), (60, BASE_LR * 1e-2), (85, BASE_LR * 1e-3), (100, BASE_LR * 1e-4)]),
+            [(30, BASE_LR * 0.1), (60, BASE_LR * 1e-2), (85, BASE_LR * 1e-3)]),
         GPUUtilizationTracker()
     ]
     if not args.fake:
@@ -189,6 +189,6 @@ if __name__ == '__main__':
 
     M.fit(
         steps_per_epoch=100 if args.fake else 1281167 // TOTAL_BATCH_SIZE,
-        max_epoch=105,
+        max_epoch=100,
         callbacks=callbacks
     )
