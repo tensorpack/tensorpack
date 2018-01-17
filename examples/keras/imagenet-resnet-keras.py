@@ -7,7 +7,7 @@ import numpy as np
 import tensorflow as tf
 import argparse
 
-from tensorpack import InputDesc, QueueInput, StagingInput, SyncMultiGPUTrainerReplicated
+from tensorpack import InputDesc, SyncMultiGPUTrainerReplicated
 from tensorpack.dataflow import FakeData, MapDataComponent
 from tensorpack.utils import logger
 from tensorpack.utils.gpu import get_nr_gpu
