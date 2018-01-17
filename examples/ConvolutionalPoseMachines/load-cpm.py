@@ -97,7 +97,7 @@ def CPM(image):
 
 
 def run_test(model_path, img_file):
-    param_dict = np.load(model_path, encoding='latin1').item()
+    param_dict = dict(np.load(model_path))
     predict_func = OfflinePredictor(PredictConfig(
         inputs_desc=[InputDesc(tf.float32, (None, 368, 368, 3), 'input')],
         tower_func=CPM,
@@ -116,7 +116,7 @@ def run_test(model_path, img_file):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--load', required=True, help='.npy model file')
+    parser.add_argument('--load', required=True, help='.npz model file')
     parser.add_argument('--input', required=True, help='input image')
     args = parser.parse_args()
     run_test(args.load, args.input)

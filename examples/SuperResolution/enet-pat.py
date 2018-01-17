@@ -282,7 +282,7 @@ if __name__ == '__main__':
             session_init = SaverRestore(args.load)
         else:
             assert os.path.isfile(args.vgg19)
-            param_dict = np.load(args.vgg19, encoding='latin1').item()
+            param_dict = dict(np.load(args.vgg19))
             param_dict = {'VGG19/' + name: value for name, value in six.iteritems(param_dict)}
             session_init = DictRestore(param_dict)
 

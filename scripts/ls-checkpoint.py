@@ -17,6 +17,9 @@ if __name__ == '__main__':
     if fpath.endswith('.npy'):
         params = np.load(fpath, encoding='latin1').item()
         dic = {k: v.shape for k, v in six.iteritems(params)}
+    elif fpath.endswith('.npz'):
+        params = dict(np.load(fpath))
+        dic = {k: v.shape for k, v in six.iteritems(params)}
     else:
         path = get_checkpoint_path(sys.argv[1])
         reader = tf.train.NewCheckpointReader(path)

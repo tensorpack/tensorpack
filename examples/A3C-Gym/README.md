@@ -34,10 +34,10 @@ multiprocess Python program to get a cgroup dedicated for the task.
 Download models from [model zoo](https://goo.gl/9yIol2).
 
 Watch the agent play:
-`./train-atari.py --task play --env Breakout-v0 --load Breakout-v0.npy`
+`./train-atari.py --task play --env Breakout-v0 --load Breakout-v0.npz`
 
 Generate gym submissions:
-`./train-atari.py --task gen_submit --load Breakout-v0.npy --env Breakout-v0 --output output_dir`
+`./train-atari.py --task gen_submit --load Breakout-v0.npz --env Breakout-v0 --output output_dir`
 
 Models are available for the following atari environments (click to watch videos of my agent):
 

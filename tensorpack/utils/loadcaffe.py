@@ -153,8 +153,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('model', help='.prototxt file')
     parser.add_argument('weights', help='.caffemodel file')
-    parser.add_argument('output', help='output npy file')
+    parser.add_argument('output', help='output npz file')
     args = parser.parse_args()
     ret = load_caffe(args.model, args.weights)
 
-    np.save(args.output, ret)
+    if args.output.endswith('.npz'):
+        np.savez_compressed(args.output, **ret)
+    elif args.output.endswith('.npy'):
+        logger.warn("Please use npz format instead!")
+        np.save(args.output, ret)
+    else:
+        raise ValueError("Unknown format {}".format(args.output))

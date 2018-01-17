@@ -65,8 +65,8 @@ To Train, for example:
         More than 20 CPU cores (for data processing)
         More than 10G of free memory
 
-To Run Pretrained Model:
-    ./alexnet-dorefa.py --load alexnet-126.npy --run a.jpg --dorefa 1,2,6
+To run pretrained model:
+    ./alexnet-dorefa.py --load alexnet-126.npz --run a.jpg --dorefa 1,2,6
 """
 
 BITW = 1
@@ -240,7 +240,7 @@ def run_image(model, sess_init, inputs):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='the physical ids of GPUs to use')
-    parser.add_argument('--load', help='load a checkpoint, or a npy (given as the pretrained model)')
+    parser.add_argument('--load', help='load a checkpoint, or a npz (given as the pretrained model)')
     parser.add_argument('--data', help='ILSVRC dataset dir')
     parser.add_argument('--dorefa',
                         help='number of bits for W,A,G, separated by comma', required=True)
@@ -253,8 +253,8 @@ if __name__ == '__main__':
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
     if args.run:
-        assert args.load.endswith('.npy')
-        run_image(Model(), DictRestore(np.load(args.load, encoding='latin1').item()), args.run)
+        assert args.load.endswith('.npz')
+        run_image(Model(), DictRestore(dict(np.load(args.load))), args.run)
         sys.exit()
 
     nr_tower = max(get_nr_gpu(), 1)

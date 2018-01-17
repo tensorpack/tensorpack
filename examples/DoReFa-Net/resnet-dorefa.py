@@ -20,10 +20,10 @@ This script loads the pre-trained ResNet-18 model with (W,A,G) = (1,4,32)
 It has 59.2% top-1 and 81.5% top-5 validation error on ILSVRC12 validation set.
 
 To run on images:
-    ./resnet-dorefa.py --load pretrained.npy --run a.jpg b.jpg
+    ./resnet-dorefa.py --load ResNet-18-14f.npz --run a.jpg b.jpg
 
 To eval on ILSVRC validation set:
-    ./resnet-dorefa.py --load pretrained.npy --eval --data /path/to/ILSVRC
+    ./resnet-dorefa.py --load ResNet-18-14f.npz --eval --data /path/to/ILSVRC
 """
 
 BITW = 1
@@ -145,7 +145,7 @@ def run_image(model, sess_init, inputs):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='the physical ids of GPUs to use')
-    parser.add_argument('--load', help='load a npy pretrained model')
+    parser.add_argument('--load', help='load a npz pretrained model')
     parser.add_argument('--data', help='ILSVRC dataset dir')
     parser.add_argument('--dorefa',
                         help='number of bits for W,A,G, separated by comma. Defaults to \'1,4,32\'',
@@ -166,6 +166,5 @@ if __name__ == '__main__':
         ds = BatchData(ds, 192, remainder=True)
         eval_on_ILSVRC12(Model(), get_model_loader(args.load), ds)
     elif args.run:
-        assert args.load.endswith('.npy')
-        run_image(Model(), DictRestore(
-            np.load(args.load, encoding='latin1').item()), args.run)
+        assert args.load.endswith('.npz')
+        run_image(Model(), DictRestore(dict(np.load(args.load))), args.run)

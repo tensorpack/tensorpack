@@ -113,10 +113,10 @@ class SessionUpdate(object):
 def dump_session_params(path):
     """
     Dump value of all TRAINABLE + MODEL variables to a dict, and save as
-    npy/npz format (loadable by :class:`DictRestore`).
+    npz format (loadable by :class:`DictRestore`).
 
     Args:
-        path(str): the file name to save the parameters. Must ends with npy or npz.
+        path(str): the file name to save the parameters. Must ends with npz.
     """
     var = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
     var.extend(tf.get_collection(tf.GraphKeys.MODEL_VARIABLES))

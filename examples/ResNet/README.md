@@ -37,10 +37,10 @@ Note that the architecture is different from the `imagenet-resnet.py` script and
 
 Usage:
 ```bash
-# download and convert caffe model to npy format
-python -m tensorpack.utils.loadcaffe PATH/TO/{ResNet-101-deploy.prototxt,ResNet-101-model.caffemodel} ResNet101.npy
+# download and convert caffe model to npz format
+python -m tensorpack.utils.loadcaffe PATH/TO/{ResNet-101-deploy.prototxt,ResNet-101-model.caffemodel} ResNet101.npz
 # run on an image
-./load-resnet.py --load ResNet-101.npy --input cat.jpg --depth 101
+./load-resnet.py --load ResNet-101.npz --input cat.jpg --depth 101
 ```
 
 The converted models are verified on ILSVRC12 validation set.

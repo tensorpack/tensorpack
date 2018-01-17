@@ -13,12 +13,12 @@ import argparse
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('model')
-    parser.add_argument('--dump', help='dump to an npy file')
+    parser.add_argument('--dump', help='dump to an npz file')
     parser.add_argument('--shell', action='store_true', help='start a shell with the params')
     args = parser.parse_args()
 
     if args.model.endswith('.npy'):
-        params = np.load(args.model).item()
+        params = np.load(args.model, encoding='latin1').item()
     elif args.model.endswith('.npz'):
         params = dict(np.load(args.model))
     else:
@@ -27,8 +27,8 @@ if __name__ == '__main__':
     logger.info(str(params.keys()))
 
     if args.dump:
-        assert args.dump.endswith('.npy'), args.dump
-        np.save(args.dump, params)
+        assert args.dump.endswith('.npz'), args.dump
+        np.save(args.dump, **params)
 
     if args.shell:
         # params is a dict. play with it

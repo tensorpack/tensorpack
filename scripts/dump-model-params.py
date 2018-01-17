@@ -14,7 +14,7 @@ if __name__ == '__main__':
         description='Keep only TRAINABLE and MODEL variables in a checkpoint.')
     parser.add_argument('--meta', help='metagraph file', required=True)
     parser.add_argument(dest='input', help='input model file, has to be a TF checkpoint')
-    parser.add_argument(dest='output', help='output model file, can be npy/npz or TF checkpoint')
+    parser.add_argument(dest='output', help='output model file, can be npz or TF checkpoint')
     args = parser.parse_args()
 
     tf.train.import_meta_graph(args.meta)

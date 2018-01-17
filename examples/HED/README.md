@@ -25,7 +25,7 @@ To view augmented training images:
 
 To start training:
 ```bash
-./hed.py --load vgg16.npy
+./hed.py --load vgg16.npz
 ```
 It takes about 100k steps (~10 hours on a TitanX) to reach a reasonable performance.
 

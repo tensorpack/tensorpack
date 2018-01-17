@@ -22,5 +22,5 @@ To train (takes about 300 epochs to reach 8.8% error):
 
 To draw the above visualization with [pretrained model](http://models.tensorpack.com/SpatialTransformer/):
 ```bash
-./mnist-addition.py --load pretrained.npy --view
+./mnist-addition.py --load mnist-addition.npz --view
 ```

@@ -14,7 +14,7 @@ uses it to print all variables and their shapes in a checkpoint.
 
 [scripts/dump-model-params.py](../scripts/dump-model-params.py) can be used to remove unnecessary variables in a checkpoint.
 It takes a metagraph file (which is also saved by `ModelSaver`) and only saves variables that the model needs at inference time.
-It can dump the model to a `var-name: value` dict saved in npy/npz format.
+It can dump the model to a `var-name: value` dict saved in npz format.
 
 ## Load a Model
 
@@ -25,7 +25,7 @@ which restores a TF checkpoint,
 or [session_init=DictRestore(...)](../modules/tfutils.html#tensorpack.tfutils.sessinit.DictRestore) which restores a dict
 ([get_model_loader](../modules/tfutils.html#tensorpack.tfutils.sessinit.get_model_loader)
 is a small helper to decide which one to use from a file name).
-To load multiple models, use [ChainInit](../modules/tfutils.html#tensorpack.tfutils.sessinit.ChainInit)
+To load multiple models, use [ChainInit](../modules/tfutils.html#tensorpack.tfutils.sessinit.ChainInit).
 
 
 Variable restoring is completely based on __name match__ between
