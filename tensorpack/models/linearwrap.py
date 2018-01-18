@@ -44,18 +44,18 @@ class LinearWrap(object):
             # this is a registered tensorpack layer
             # parse arguments by tensorpack model convention
             if layer.use_scope:
-                def f(name, *args, **kwargs):
+                def layer_func(name, *args, **kwargs):
                     ret = layer(name, self._t, *args, **kwargs)
                     return LinearWrap(ret)
             else:
-                def f(*args, **kwargs):
+                def layer_func(*args, **kwargs):
                     if len(args) and isinstance(args[0], six.string_types):
                         name, args = args[0], args[1:]
                         ret = layer(name, self._t, *args, **kwargs)
                     else:
                         ret = layer(self._t, *args, **kwargs)
                     return LinearWrap(ret)
-            return f
+            return layer_func
         else:
             assert layer_name == 'tf', \
                 "Calling LinearWrap.{}:" \
