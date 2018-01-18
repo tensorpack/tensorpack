@@ -9,7 +9,7 @@ __Training__ code of three variants of ResNet on ImageNet:
 
 The training mostly follows the setup in [fb.resnet.torch](https://github.com/facebook/fb.resnet.torch)
 and gets similar performance (with much fewer lines of code).
-Models can be [downloaded here](https://goo.gl/6XjK9V).
+Models can be [downloaded here](http://models.tensorpack.com/ResNet/).
 
 | Model              | Top 5 Error | Top 1 Error |
 |:-------------------|-------------|------------:|

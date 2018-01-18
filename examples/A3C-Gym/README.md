@@ -31,7 +31,7 @@ multiprocess Python program to get a cgroup dedicated for the task.
 
 ### To test a model:
 
-Download models from [model zoo](https://goo.gl/9yIol2).
+Download models from [model zoo](http://models.tensorpack.com/OpenAIGym/).
 
 Watch the agent play:
 `./train-atari.py --task play --env Breakout-v0 --load Breakout-v0.npz`

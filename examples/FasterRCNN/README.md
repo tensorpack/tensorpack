@@ -5,7 +5,7 @@ Faster-RCNN / Mask-RCNN (without FPN) on COCO.
 ## Dependencies
 + Python 3; TensorFlow >= 1.4.0
 + [pycocotools](https://github.com/pdollar/coco/tree/master/PythonAPI/pycocotools), OpenCV.
-+ Pre-trained [ResNet model](https://goo.gl/6XjK9V) from tensorpack model zoo.
++ Pre-trained [ResNet model](http://models.tensorpack.com/ResNet/) from tensorpack model zoo.
 + COCO data. It assumes the following directory structure:
 ```
 DIR/
