@@ -10,9 +10,10 @@ See [Unawareness of Deep Learning Mistakes](https://medium.com/@ppwwyyxx/unaware
 
 ## Getting Started:
 + [An illustrative mnist example with explanation of the framework](mnist-convnet.py)
-+ The same mnist example using [tf-slim](mnist-tfslim.py), [Keras layers](mnist-keras.py), [Higher-level Keras](mnist-keras-v2.py) and [with weights visualizations](mnist-visualizations.py)
++ The same mnist example using [tf-slim](mnist-tfslim.py), and [with weights visualizations](mnist-visualizations.py)
 + A tiny [Cifar ConvNet](cifar-convnet.py) and [SVHN ConvNet](svhn-digit-convnet.py)
 + [A boilerplate file to start with, for your own tasks](boilerplate.py)
++ If you've used Keras, check out [Keras examples](keras).
 
 ## Vision:
 | Name | Performance |

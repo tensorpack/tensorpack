@@ -3,6 +3,12 @@
 
 Use Keras to define a model a train it with efficient tensorpack trainers.
 
+### Why?
+Keras alone has various overhead. In particular, it is not efficient when working on large models.
+The article [Towards Efficient Multi-GPU Training in Keras with TensorFlow](https://medium.com/rossum/towards-efficient-multi-gpu-training-in-keras-with-tensorflow-8a0091074fb2)
+has mentioned some of it.
+Tensorpack and [horovod](https://github.com/uber/horovod/blob/master/examples/keras_imagenet_resnet50.py)
+are the only two tools I know that can scale the training of a large Keras model.
 
 ### Simple Examples:
 
@@ -21,7 +27,3 @@ It has:
 	+ With 8 V100s, still has >90% GPU utilization and finished 100 epochs in 19.5 hours
 + Good accuracy (same as [tensorpack ResNet example](../ResNet))
 
-
-Keras alone is not efficient enough to work on large models like this.
-In addition to tensorpack, [horovod](https://github.com/uber/horovod/blob/master/examples/keras_imagenet_resnet50.py)
-can also help you to train large models with Keras.
