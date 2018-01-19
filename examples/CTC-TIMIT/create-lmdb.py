@@ -8,12 +8,12 @@ import string
 import numpy as np
 import argparse
 
+import bob.ap
 from tensorpack.dataflow import dftools, DataFlow, LMDBDataPoint
 from tensorpack.utils.argtools import memoized
 from tensorpack.utils.stats import OnlineMoments
 from tensorpack.utils import serialize, fs, logger
 from tensorpack.utils.utils import get_tqdm
-import bob.ap
 
 CHARSET = set(string.ascii_lowercase + ' ')
 PHONEME_LIST = [
@@ -85,7 +85,7 @@ class RawTIMIT(DataFlow):
         self.filelists = [k for k in fs.recursive_walk(self.dirname)
                           if k.endswith('.wav')]
         logger.info("Found {} wav files ...".format(len(self.filelists)))
-        assert len(self.filelists), self.filelists
+        assert len(self.filelists), "Found no '.wav' files!"
         assert label in ['phoneme', 'letter'], label
         self.label = label
 

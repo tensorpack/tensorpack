@@ -79,7 +79,7 @@ class Model(ModelDesc):
 
 def get_data(path, isTrain, stat_file):
     ds = LMDBDataPoint(path, shuffle=isTrain)
-    mean, std = serialize.loads(open(stat_file).read())
+    mean, std = serialize.loads(open(stat_file, 'rb').read())
     ds = MapDataComponent(ds, lambda x: (x - mean) / std)
     ds = TIMITBatch(ds, BATCH)
     if isTrain:
