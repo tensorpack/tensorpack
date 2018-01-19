@@ -10,6 +10,7 @@ from six.moves import range
 
 from tensorpack import *
 from tensorpack.tfutils.gradproc import SummaryGradient, GlobalNormClip
+from tensorpack.utils import serialize
 import tensorflow as tf
 
 from timitdata import TIMITBatch
@@ -26,9 +27,9 @@ FEATUREDIM = 39     # MFCC feature dimension
 class Model(ModelDesc):
     def _get_inputs(self):
         return [InputDesc(tf.float32, [None, None, FEATUREDIM], 'feat'),   # bxmaxseqx39
-                InputDesc(tf.int64, None, 'labelidx'),  # label is b x maxlen, sparse
-                InputDesc(tf.int32, None, 'labelvalue'),
-                InputDesc(tf.int64, None, 'labelshape'),
+                InputDesc(tf.int64, [None, None], 'labelidx'),  # label is b x maxlen, sparse
+                InputDesc(tf.int32, [None], 'labelvalue'),
+                InputDesc(tf.int64, [None], 'labelshape'),
                 InputDesc(tf.int32, [None], 'seqlen'),   # b
                 ]
 
