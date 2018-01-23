@@ -1,6 +1,6 @@
 # Faster-RCNN / Mask-RCNN on COCO
 This example aims to provide a minimal (1.3k lines) multi-GPU implementation of
-Faster-RCNN / Mask-RCNN (without FPN) on COCO.
+Faster-RCNN & Mask-RCNN (with ResNet backbones) on COCO.
 
 ## Dependencies
 + Python 3; TensorFlow >= 1.4.0
@@ -53,14 +53,14 @@ MaskRCNN results contain both bbox and segm mAP.
 
 |Backbone | `FASTRCNN_BATCH` | resolution | mAP (bbox/segm) | Time |
 | - | - | - | - | - |
-| Res50 | 64 | (600, 1024) | 33.0 | 22h on 8 P100 |
-| Res50 | 256 | (600, 1024) | 34.4 | 49h on 8 M40 |
-| Res50 | 512 | (800, 1333) | 35.6 | 55h on 8 P100|
-| Res50 | 256 | (800, 1333) | 36.9/32.3 | 39h on 8 P100|
-| Res101 | 512 | (800, 1333) | 40.1/34.4 | 70h on 8 P100|
+| R50 | 64 | (600, 1024) | 33.0 | 22h on 8 P100 |
+| R50 | 256 | (600, 1024) | 34.4 | 49h on 8 M40 |
+| R50 | 512 | (800, 1333) | 35.6 | 55h on 8 P100|
+| R50 | 256 | (800, 1333) | 36.9/32.3 | 39h on 8 P100|
+| R101 | 512 | (800, 1333) | 40.1/34.4 | 70h on 8 P100|
 
-Note that these models are trained with a larger ROI batch size than the paper,
-and get about 1mAP better performance.
+Note that these models are trained with different ROI batch size and LR schedule.
+The performance is slightly better than the paper.
 
 ## Notes
 

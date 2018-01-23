@@ -160,7 +160,6 @@ class MultiProcessPrefetchData(ProxyDataFlow):
             self._size = -1
         self.nr_proc = nr_proc
         self.nr_prefetch = nr_prefetch
-        self._guard = DataFlowReentrantGuard()
 
         if nr_proc > 1:
             logger.info("[MultiProcessPrefetchData] Will fork a dataflow more than one times. "
@@ -173,12 +172,11 @@ class MultiProcessPrefetchData(ProxyDataFlow):
         start_proc_mask_signal(self.procs)
 
     def get_data(self):
-        with self._guard:
-            for k in itertools.count():
-                if self._size > 0 and k >= self._size:
-                    break
-                dp = self.queue.get()
-                yield dp
+        for k in itertools.count():
+            if self._size > 0 and k >= self._size:
+                break
+            dp = self.queue.get()
+            yield dp
 
     def reset_state(self):
         # do nothing. all ds are reset once and only once in spawned processes
