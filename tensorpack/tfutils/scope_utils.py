@@ -77,6 +77,35 @@ def under_name_scope():
     return _impl
 
 
+def under_variable_scope():
+    """
+    Returns:
+        A decorator which makes the function happen under a variable scope,
+        which is named by the function itself.
+
+    Examples:
+
+    .. code-block:: python
+
+        @under_variable_scope()
+        def mid_level(x):
+            with argscope(Conv2D, kernel_shape=3, nl=BNReLU):
+                x = Conv2D('conv1', x, 512, stride=1)
+                x = Conv2D('conv2', x, 256, stride=1)
+            return x
+
+    """
+
+    def _impl(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            name = func.__name__
+            with tf.variable_scope(name):
+                return func(*args, **kwargs)
+        return wrapper
+    return _impl
+
+
 @graph_memoized
 def _get_cached_ns(name):
     with tf.name_scope(None):
