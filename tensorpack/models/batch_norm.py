@@ -181,7 +181,7 @@ def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5,
 
 @layer_register()
 def BatchRenorm(x, rmax, dmax, decay=0.9, epsilon=1e-5,
-                use_scale=True, use_bias=True, data_format='NHWC'):
+                use_scale=True, use_bias=True, gamma_init=None, data_format='NHWC'):
     """
     Batch Renormalization layer, as described in the paper:
     `Batch Renormalization: Towards Reducing Minibatch Dependence in Batch-Normalized Models
@@ -230,6 +230,7 @@ def BatchRenorm(x, rmax, dmax, decay=0.9, epsilon=1e-5,
             'rmax': rmax,
             'dmax': dmax},
         renorm_momentum=0.99,
+        gamma_initializer=gamma_init,
         fused=False)
     xn = layer.apply(x, training=ctx.is_training, scope=tf.get_variable_scope())
 

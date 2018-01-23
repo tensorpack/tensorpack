@@ -186,6 +186,7 @@ class MultiProcessPrefetchData(ProxyDataFlow):
 PrefetchData = MultiProcessPrefetchData
 
 
+# TODO renamed to MultiProcessDataFlow{,ZMQ} if separated to a new project
 class PrefetchDataZMQ(_MultiProcessZMQDataFlow):
     """
     Prefetch data from a DataFlow using multiple processes, with ZeroMQ for
@@ -379,3 +380,46 @@ class MultiThreadPrefetchData(DataFlow):
         for p in self.threads:
             p.stop()
             p.join()
+
+
+class PlasmaPutData(ProxyDataFlow):
+    """
+    Put each data point to plasma shared memory object store, and yield the object id instead.
+    """
+    def __init__(self, ds):
+        super(PlasmaPutData, self).__init__(ds)
+
+    def reset_state(self):
+        super(PlasmaPutData, self).reset_state()
+        self.client = plasma.connect("/tmp/plasma", "", 0)
+
+    def get_data(self):
+        for dp in self.ds.get_data():
+            oid = self.client.put(dp)
+            yield [oid.binary()]
+
+
+class PlasmaGetData(ProxyDataFlow):
+    """
+    Take plasma object id from a DataFlow, and retrieve it from plasma shared
+    memory object store.
+    """
+    def __init__(self, ds):
+        super(PlasmaGetData, self).__init__(ds)
+
+    def reset_state(self):
+        super(PlasmaGetData, self).reset_state()
+        self.client = plasma.connect("/tmp/plasma", "", 0)
+
+    def get_data(self):
+        for dp in self.ds.get_data():
+            oid = plasma.ObjectID(dp[0])
+            dp = self.client.get(oid)
+            yield dp
+
+
+try:
+    import pyarrow.plasma as plasma
+except ImportError:
+    PlasmaPutData = create_dummy_class('PlasmaPutData', 'pyarrow')   # noqa
+    PlasmaGetData = create_dummy_class('PlasmaGetData', 'pyarrow')   # noqa
