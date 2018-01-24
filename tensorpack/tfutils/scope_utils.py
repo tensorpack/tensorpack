@@ -12,10 +12,14 @@ from ..utils.argtools import graph_memoized
 __all__ = ['auto_reuse_variable_scope', 'cached_name_scope', 'under_name_scope']
 
 
-def auto_reuse_variable_scope(func):
+def auto_reuse_variable_scope(func, per_variable=False):
     """
     A decorator which automatically reuses the current variable scope if the
     function has been called with the same variable scope before.
+
+    Args:
+        per_variable: When true, the reuse decision is made for each
+                      variable individually using `tf.AUTO_REUSE`
 
     Examples:
 
@@ -31,12 +35,23 @@ def auto_reuse_variable_scope(func):
             myfunc(x3)  # will inherit parent scope reuse
             myfunc(x4)  # will reuse
     """
+    used_scope = set()
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         scope = tf.get_variable_scope()
-        with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
-            return func(*args, **kwargs)
+        if per_variable is True:
+            with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
+                return func(*args, **kwargs)
+        else:
+            h = hash((tf.get_default_graph(), scope.name))
+            # print("Entering " + scope.name + " reuse: " + str(h in used_scope))
+            if h in used_scope:
+                with tf.variable_scope(scope, reuse=True):
+                    return func(*args, **kwargs)
+            else:
+                used_scope.add(h)
+                return func(*args, **kwargs)
 
     return wrapper
 
