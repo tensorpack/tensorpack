@@ -1,4 +1,4 @@
-# tensorpack
+![Tensorpack](.github/tensorpack.png)
 
 Tensorpack is a training interface based on TensorFlow.
 
