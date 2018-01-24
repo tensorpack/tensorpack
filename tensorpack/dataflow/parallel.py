@@ -421,5 +421,6 @@ class PlasmaGetData(ProxyDataFlow):
 try:
     import pyarrow.plasma as plasma
 except ImportError:
+    from ..utils.develop import create_dummy_class
     PlasmaPutData = create_dummy_class('PlasmaPutData', 'pyarrow')   # noqa
     PlasmaGetData = create_dummy_class('PlasmaGetData', 'pyarrow')   # noqa

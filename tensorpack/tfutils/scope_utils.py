@@ -31,18 +31,11 @@ def auto_reuse_variable_scope(func):
             myfunc(x3)  # will inherit parent scope reuse
             myfunc(x4)  # will reuse
     """
-    used_scope = set()
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         scope = tf.get_variable_scope()
-        h = hash((tf.get_default_graph(), scope.name))
-        # print("Entering " + scope.name + " reuse: " + str(h in used_scope))
-        if h in used_scope:
-            with tf.variable_scope(scope, reuse=True):
-                return func(*args, **kwargs)
-        else:
-            used_scope.add(h)
+        with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
             return func(*args, **kwargs)
 
     return wrapper
