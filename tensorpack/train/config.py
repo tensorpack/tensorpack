@@ -67,12 +67,14 @@ class TrainConfig(object):
 
             callbacks (list): a list of :class:`Callback` to perform during training.
             extra_callbacks (list): the same as ``callbacks``. This argument
-                is only used to provide the defaults in addition to ``callbacks``. The defaults are
-                ``MovingAverageSummary()``, ``ProgressBar()``,
-                ``MergeAllSummaries()``, ``RunUpdateOps()``. The list of
-                callbacks that will be used in the end is ``callbacks + extra_callbacks``.
+                is only used to provide the defaults in addition to ``callbacks``.
+                The list of callbacks that will be used in the end is ``callbacks + extra_callbacks``.
+
+                It is usually left as None and the default value for this
+                option will be the return value of :meth:`train.DEFAULT_CALLBACKS()`.
+                You can override it when you don't like any of the default callbacks.
             monitors (list): a list of :class:`TrainingMonitor`.
-                Defaults to ``TFEventWriter()``, ``JSONWriter()``, ``ScalarPrinter()``.
+                Defaults to the return value of :meth:`train.DEFAULT_MONITORS()`.
 
             session_creator (tf.train.SessionCreator): Defaults to :class:`sesscreate.NewSessionCreator()`
                 with the config returned by :func:`tfutils.get_default_sess_config()`.

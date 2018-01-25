@@ -1,6 +1,6 @@
 Bug Reports/Feature Requests/Usage Questions Only:
 
-Any unexpected problems with code: PLEASE always include
+Any unexpected problems: PLEASE always include
 1. What you did. (command you run and changes you made if using examples; post or describe your code if not)
 2. What you observed, e.g. as much as logs possible.
 3. What you expected, if not obvious.

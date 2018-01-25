@@ -343,6 +343,10 @@ if __name__ == '__main__':
 
         assert args.load
         print_config()
+
+        if args.predict or args.visualize:
+            config.RESULT_SCORE_THRESH = config.RESULT_SCORE_THRESH_VIS
+
         if args.visualize:
             visualize(args.load)
         else:
@@ -355,7 +359,7 @@ if __name__ == '__main__':
                 assert args.evaluate.endswith('.json')
                 offline_evaluate(pred, args.evaluate)
             elif args.predict:
-                COCODetection(config.BASEDIR, 'train2014')   # to load the class names into caches
+                COCODetection(config.BASEDIR, 'val2014')   # Only to load the class names into caches
                 predict(pred, args.predict)
     else:
         logger.set_logger_dir(args.logdir)

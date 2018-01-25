@@ -294,8 +294,8 @@ class Trainer(object):
         """
         Same as :meth:`train()`, but will:
 
-        1. Append `DEFAULT_CALLBACKS()` to callbacks.
-        2. Append `DEFAULT_MONITORS()` to monitors.
+        1. Append :meth:`DEFAULT_CALLBACKS()` to callbacks.
+        2. Append :meth:`DEFAULT_MONITORS()` to monitors.
         3. Provide default values for every option except `steps_per_epoch`.
         """
         callbacks = (callbacks or []) + DEFAULT_CALLBACKS()
