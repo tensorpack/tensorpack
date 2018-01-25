@@ -325,7 +325,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
     parser.add_argument('--load', help='load model')
-    parser.add_argument('--logdir', help='logdir', default='train_log/fastrcnn')
+    parser.add_argument('--logdir', help='logdir', default='train_log/maskrcnn')
     parser.add_argument('--datadir', help='override config.BASEDIR')
     parser.add_argument('--visualize', action='store_true')
     parser.add_argument('--evaluate', help='path to the output json eval file')
@@ -360,30 +360,31 @@ if __name__ == '__main__':
     else:
         logger.set_logger_dir(args.logdir)
         print_config()
-        stepnum = 500
-        warmup_epoch = 3
         factor = get_batch_factor()
+        stepnum = config.STEPS_PER_EPOCH
+        warmup_epoch = max(1, config.WARMUP / stepnum)
+
+        warmup_schedule = [(0, config.BASE_LR / 3), (warmup_epoch * factor, config.BASE_LR)]
+        lr_schedule = [warmup_schedule[-1]]
+        for idx, steps in enumerate(config.LR_SCHEDULE[:-1]):
+            mult = 0.1 ** (idx + 1)
+            lr_schedule.append(
+                (steps * factor // stepnum, config.BASE_LR * mult))
 
         cfg = TrainConfig(
             model=Model(),
             data=QueueInput(get_train_dataflow(add_mask=config.MODE_MASK)),
             callbacks=[
                 ModelSaver(max_to_keep=10, keep_checkpoint_every_n_hours=1),
-                # linear warmup
+                # linear warmup # TODO step-wise linear warmup
                 ScheduledHyperParamSetter(
-                    'learning_rate',
-                    [(0, 3e-3), (warmup_epoch * factor, 1e-2)], interp='linear'),
-                # step decay
-                ScheduledHyperParamSetter(
-                    'learning_rate',
-                    [(warmup_epoch * factor, 1e-2),
-                     (150000 * factor // stepnum, 1e-3),
-                     (230000 * factor // stepnum, 1e-4)]),
+                    'learning_rate', warmup_schedule, interp='linear'),
+                ScheduledHyperParamSetter('learning_rate', lr_schedule),
                 EvalCallback(),
                 GPUUtilizationTracker(),
             ],
             steps_per_epoch=stepnum,
-            max_epoch=280000 * factor // stepnum,
+            max_epoch=config.LR_SCHEDULE[2] * factor // stepnum,
             session_init=get_model_loader(args.load) if args.load else None,
         )
         trainer = SyncMultiGPUTrainerReplicated(get_nr_gpu())

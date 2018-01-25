@@ -12,13 +12,21 @@ BASEDIR = '/path/to/your/COCO/DIR'
 TRAIN_DATASET = ['train2014', 'valminusminival2014']
 VAL_DATASET = 'minival2014'   # only support evaluation on single dataset
 NUM_CLASS = 81
-CLASS_NAMES = []  # NUM_CLASS strings
+CLASS_NAMES = []  # NUM_CLASS strings. Will be populated later by coco loader
 
 # basemodel ----------------------
-RESNET_NUM_BLOCK = [3, 4, 6, 3]     # resnet50
-# RESNET_NUM_BLOCK = [3, 4, 23, 3]     # resnet101
+RESNET_NUM_BLOCK = [3, 4, 6, 3]     # for resnet50
+# RESNET_NUM_BLOCK = [3, 4, 23, 3]     # for resnet101
 
-# preprocessing --------------------
+# schedule -----------------------
+BASE_LR = 1e-2
+WARMUP = 500
+STEPS_PER_EPOCH = 500
+LR_SCHEDULE = [150000, 230000, 280000]
+# LR_SCHEDULE = [120000, 160000, 180000]    # "1x" schedule in detectron
+# LR_SCHEDULE = [240000, 320000, 360000]    # "2x" schedule in detectron
+
+# image resolution --------------------
 SHORT_EDGE_SIZE = 800
 MAX_SIZE = 1333
 # alternative (worse & faster) setting: 600, 1024
