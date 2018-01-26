@@ -14,8 +14,8 @@ __all__ = ['regularize_cost', 'l2_regularizer', 'l1_regularizer', 'Dropout']
 
 
 @graph_memoized
-def _log_regularizer(name):
-    logger.info("Apply regularizer for {}".format(name))
+def _log_once(msg):
+    logger.info(msg)
 
 
 l2_regularizer = tf.contrib.layers.l2_regularizer
@@ -56,7 +56,7 @@ def regularize_cost(regex, func, name='regularize_cost'):
     else:
         params = tf.trainable_variables()
 
-    to_regularize = []
+    names = []
 
     with tf.name_scope(name + '_internals'):
         costs = []
@@ -64,7 +64,7 @@ def regularize_cost(regex, func, name='regularize_cost'):
             para_name = p.op.name
             if re.search(regex, para_name):
                 costs.append(func(p))
-                to_regularize.append(p.name)
+                names.append(p.name)
         if not costs:
             return tf.constant(0, dtype=tf.float32, name='empty_' + name)
 
@@ -77,9 +77,9 @@ def regularize_cost(regex, func, name='regularize_cost'):
             if name.startswith(prefix):
                 return name[prefixlen:]
             return name
-        to_regularize = list(map(f, to_regularize))
-    to_print = ', '.join(to_regularize)
-    _log_regularizer(to_print)
+        names = list(map(f, names))
+    logger.info("regularize_cost() found {} tensors.".format(len(names)))
+    _log_once("Applying regularizer for {}".format(', '.join(names)))
 
     return tf.add_n(costs, name=name)
 
@@ -106,7 +106,7 @@ def regularize_cost_from_collection(name='regularize_cost'):
     else:
         losses = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
     if len(losses) > 0:
-        logger.info("Add REGULARIZATION_LOSSES of {} tensors on the total cost.".format(len(losses)))
+        logger.info("regularize_cost_from_collection() found {} tensors in REGULARIZATION_LOSSES.".format(len(losses)))
         reg_loss = tf.add_n(losses, name=name)
         return reg_loss
     else:

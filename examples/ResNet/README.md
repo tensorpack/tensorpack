@@ -20,10 +20,11 @@ Models can be [downloaded here](http://models.tensorpack.com/ResNet/).
 | ResNet101      		 |     6.04%   |      21.95% |
 | ResNet152      		 |     5.78%   |      21.51% |
 
-To train, just run:
+To train, first decompress ImageNet data into [this structure](http://tensorpack.readthedocs.io/en/latest/modules/dataflow.dataset.html#tensorpack.dataflow.dataset.ILSVRC12), then:
 ```bash
 ./imagenet-resnet.py --data /path/to/original/ILSVRC --gpu 0,1,2,3 -d 50 [--mode resnet/preact/se]
 ```
+
 You should be able to see good GPU utilization (95%~99%), if your data is fast enough.
 The default data pipeline is probably OK for most systems.
 See the [tutorial](http://tensorpack.readthedocs.io/en/latest/tutorial/efficient-dataflow.html) on other options to speed up your data.
