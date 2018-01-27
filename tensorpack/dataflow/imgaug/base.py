@@ -38,7 +38,7 @@ class Augmentor(object):
 
     def augment_return_params(self, d):
         """
-
+        Returns:
             augmented data
             augmentaion params
         """

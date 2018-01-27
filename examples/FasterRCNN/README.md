@@ -51,16 +51,19 @@ Evaluate the performance of a model and save to json.
 Models are trained on trainval35k and evaluated on minival using mAP@IoU=0.50:0.95.
 MaskRCNN results contain both bbox and segm mAP.
 
-|Backbone | `FASTRCNN_BATCH` | resolution | mAP (bbox/segm) | Time |
-| - | - | - | - | - |
-| R50 | 64 | (600, 1024) | 33.0 | 22h on 8 P100 |
-| R50 | 256 | (600, 1024) | 34.4 | 49h on 8 M40 |
-| R50 | 512 | (800, 1333) | 35.6 | 55h on 8 P100|
-| R50 | 256 | (800, 1333) | 36.9/32.3 | 39h on 8 P100|
-| R101 | 512 | (800, 1333) | 40.1/34.4 | 70h on 8 P100|
+|Backbone|`FASTRCNN_BATCH`|resolution |schedule|mAP (bbox/segm)|Time         |
+|   -    |    -           |    -      |   -    |   -           |   -         |
+|R50     |64              |(600, 1024)|280k    |33.0           |22h on 8 P100|
+|R50     |512             |(800, 1333)|280k    |35.6           |55h on 8 P100|
+|R50*    |512             |(800, 1333)|360k    |36.7           |49h on 8 V100|
+|R50     |256             |(800, 1333)|280k    |36.9/32.3      |39h on 8 P100|
+|R101    |512             |(800, 1333)|280k    |40.1/34.4      |70h on 8 P100|
 
-Note that these models are trained with different ROI batch size and LR schedule.
-The performance is slightly better than the paper.
+These models are trained with different configurations.
+The starred (*) models have identical configurations with
+`R50-C4-2x` configuration in
+[Detectron Model Zoo](https://github.com/facebookresearch/Detectron/blob/master/MODEL_ZOO.md#end-to-end-faster--mask-r-cnn-baselines0)
+and get the same performance.
 
 ## Notes
 
