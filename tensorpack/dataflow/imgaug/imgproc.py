@@ -240,6 +240,8 @@ class Saturation(ImageAugmentor):
         m = cv2.COLOR_RGB2GRAY if self.rgb else cv2.COLOR_BGR2GRAY
         grey = cv2.cvtColor(img, m)
         ret = img * v + (grey * (1 - v))[:, :, np.newaxis]
+        if old_dtype == np.uint8:
+            ret = np.clip(ret, 0, 255)
         return ret.astype(old_dtype)
 
 
