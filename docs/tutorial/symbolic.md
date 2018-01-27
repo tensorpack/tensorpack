@@ -86,5 +86,5 @@ to be handled in those libraries, though.
 
 It is a bit different to use sonnet/Keras.
 sonnet/Keras manages the variable scope by their own model classes, and calling their symbolic functions
-always creates new variable scope. See the [Keras example](../examples/mnist-keras.py) for how to use it within tensorpack.
+always creates new variable scope. See the [Keras example](../examples/keras) for how to use it within tensorpack.
 The support is only preliminary for now.
