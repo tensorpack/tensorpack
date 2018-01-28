@@ -13,7 +13,13 @@ from ..utils.argtools import shape2d
 __all__ = ['ImageFromFile', 'AugmentImageComponent', 'AugmentImageCoordinates', 'AugmentImageComponents']
 
 
-def _valid_coords(coords):
+def check_dtype(img):
+    if isinstance(img.dtype, np.integer):
+        assert img.dtype == np.uint8, \
+            "[Augmentor] Got image of type {}, use uint8 or floating points instead!".format(img.dtype)
+
+
+def validate_coords(coords):
     assert coords.ndim == 2, coords.ndim
     assert coords.shape[1] == 2, coords.shape
     assert np.issubdtype(coords.dtype, np.float), coords.dtype
@@ -99,6 +105,7 @@ class AugmentImageComponent(MapDataComponent):
         exception_handler = ExceptionHandler(catch_exceptions)
 
         def func(x):
+            check_dtype(x)
             with exception_handler.catch():
                 if copy:
                     x = copy_mod.deepcopy(x)
@@ -138,7 +145,8 @@ class AugmentImageCoordinates(MapData):
         def func(dp):
             with exception_handler.catch():
                 img, coords = dp[img_index], dp[coords_index]
-                _valid_coords(coords)
+                check_dtype(img)
+                validate_coords(coords)
                 if copy:
                     img, coords = copy_mod.deepcopy((img, coords))
                 img, prms = self.augs._augment_return_params(img)
@@ -191,14 +199,16 @@ class AugmentImageComponents(MapData):
             copy_func = copy_mod.deepcopy if copy else lambda x: x  # noqa
             with exception_handler.catch():
                 major_image = index[0]  # image to be used to get params. TODO better design?
+                check_dtype(major_image)
                 im = copy_func(dp[major_image])
                 im, prms = self.augs._augment_return_params(im)
                 dp[major_image] = im
                 for idx in index[1:]:
+                    check_dtype(dp[idx])
                     dp[idx] = self.augs._augment(copy_func(dp[idx]), prms)
                 for idx in coords_index:
                     coords = copy_func(dp[idx])
-                    _valid_coords(coords)
+                    validate_coords(coords)
                     dp[idx] = self.augs._augment_coords(coords, prms)
                 return dp
 

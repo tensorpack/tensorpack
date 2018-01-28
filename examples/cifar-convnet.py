@@ -6,7 +6,6 @@ import tensorflow as tf
 import argparse
 import os
 
-
 from tensorpack import *
 from tensorpack.tfutils.summary import *
 from tensorpack.dataflow import dataset
