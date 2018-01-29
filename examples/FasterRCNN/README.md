@@ -1,6 +1,6 @@
 # Faster-RCNN / Mask-RCNN on COCO
-This example aims to provide a minimal (1.3k lines) multi-GPU implementation of
-Faster-RCNN & Mask-RCNN (with ResNet backbones) on COCO.
+This example aims to provide a minimal (1.3k lines) implementation of
+end-to-end Faster-RCNN & Mask-RCNN (with ResNet backbones) on COCO.
 
 ## Dependencies
 + Python 3; TensorFlow >= 1.4.0
@@ -62,7 +62,7 @@ MaskRCNN results contain both bbox and segm mAP.
 
 The two 360k models have identical configurations with
 `R50-C4-2x` configuration in
-[Detectron Model Zoo](https://github.com/facebookresearch/Detectron/blob/master/MODEL_ZOO.md#end-to-end-faster--mask-r-cnn-baselines0).
+[Detectron Model Zoo](https://github.com/facebookresearch/Detectron/blob/master/MODEL_ZOO.md#end-to-end-faster--mask-r-cnn-baselines).
 They get the __same performance__ with the official models, and are about 14% slower than the official implementation, due to the lack of specialized ops.
 
 ## Notes
