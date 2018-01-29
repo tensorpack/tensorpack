@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 # File: parallel.py
 
-
+import sys
 import weakref
 from contextlib import contextmanager
 import multiprocessing as mp
@@ -42,15 +42,22 @@ def _bind_guard(sock, name):
 
 
 def _get_pipe_name(name):
-    pipedir = os.environ.get('TENSORPACK_PIPEDIR', None)
-    if pipedir is not None:
-        logger.info("ZMQ uses TENSORPACK_PIPEDIR={}".format(pipedir))
+    if sys.platform.startswith('linux'):
+        # linux supports abstract sockets: http://api.zeromq.org/4-1:zmq-ipc
+        pipename = "ipc://@{}-pipe-{}".format(name, str(uuid.uuid1())[:8])
+        pipedir = os.environ.get('TENSORPACK_PIPEDIR', None)
+        if pipedir is not None:
+            logger.warn("TENSORPACK_PIPEDIR is not used on Linux any more! Abstract sockets will be used.")
     else:
-        pipedir = '.'
-    assert os.path.isdir(pipedir), pipedir
-    filename = '{}/{}-pipe-{}'.format(pipedir.rstrip('/'), name, str(uuid.uuid1())[:6])
-    assert not os.path.exists(filename), "Pipe {} exists! You may be unlucky.".format(filename)
-    pipename = "ipc://{}".format(filename)
+        pipedir = os.environ.get('TENSORPACK_PIPEDIR', None)
+        if pipedir is not None:
+            logger.info("ZMQ uses TENSORPACK_PIPEDIR={}".format(pipedir))
+        else:
+            pipedir = '.'
+        assert os.path.isdir(pipedir), pipedir
+        filename = '{}/{}-pipe-{}'.format(pipedir.rstrip('/'), name, str(uuid.uuid1())[:6])
+        assert not os.path.exists(filename), "Pipe {} exists! You may be unlucky.".format(filename)
+        pipename = "ipc://{}".format(filename)
     return pipename
 
 
