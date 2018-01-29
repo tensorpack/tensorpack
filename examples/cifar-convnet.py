@@ -123,8 +123,8 @@ def get_config(cifar_classnum):
             ModelSaver(),
             InferenceRunner(dataset_test,
                             ScalarStats(['accuracy', 'cost'])),
-            StatMonitorParamSetter('learning_rate', 'val_error', lr_func,
-                                   threshold=0.001, last_k=10),
+            StatMonitorParamSetter('learning_rate', 'validation_accuracy', lr_func,
+                                   threshold=0.001, last_k=10, reverse=True),
         ],
         max_epoch=150,
     )
