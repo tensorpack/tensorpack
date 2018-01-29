@@ -223,8 +223,9 @@ def add_moving_summary(*args, **kwargs):
         log_deprecated("Call add_moving_summary with positional args instead of a list!", eos="2018-02-28")
         v = args[0]
     for x in v:
-        assert isinstance(x, tf.Tensor), x
-        assert x.get_shape().ndims == 0, x.get_shape()
+        assert isinstance(x, (tf.Tensor, tf.Variable)), x
+        assert x.get_shape().ndims == 0, \
+            "add_moving_summary() only accepts scalar tensor! Got one with {}".format(x.get_shape())
     G = tf.get_default_graph()
     # TODO variable not saved under distributed
 
