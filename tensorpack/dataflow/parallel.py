@@ -42,9 +42,15 @@ def _bind_guard(sock, name):
 
 
 def _get_pipe_name(name):
-    pipedir = os.environ.get('TENSORPACK_PIPEDIR', '.')
+    pipedir = os.environ.get('TENSORPACK_PIPEDIR', None)
+    if pipedir is not None:
+        logger.info("ZMQ uses TENSORPACK_PIPEDIR={}".format(pipedir))
+    else:
+        pipedir = '.'
     assert os.path.isdir(pipedir), pipedir
-    pipename = "ipc://{}/{}-pipe-".format(pipedir.rstrip('/'), name) + str(uuid.uuid1())[:6]
+    filename = '{}/{}-pipe-{}'.format(pipedir.rstrip('/'), name, str(uuid.uuid1())[:6])
+    assert not os.path.exists(filename), "Pipe {} exists! You may be unlucky.".format(filename)
+    pipename = "ipc://{}".format(filename)
     return pipename
 
 
