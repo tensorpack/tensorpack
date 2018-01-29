@@ -22,7 +22,7 @@ See [Unawareness of Deep Learning Mistakes](https://medium.com/@ppwwyyxx/unaware
 |	[Train Faster-RCNN / Mask-RCNN on COCO](FasterRCNN)				|	reproduce paper		|
 | [DoReFa-Net: training binary / low-bitwidth CNN on ImageNet](DoReFa-Net) | reproduce paper |
 | [Generative Adversarial Network(GAN) variants](GAN), including DCGAN, InfoGAN, <br/> Conditional GAN, WGAN, BEGAN, DiscoGAN, Image to Image, CycleGAN | visually reproduce |
-| [Inception-BN and InceptionV3](Inception) | reproduce reference code |
+| [Inception-BN](Inception) | reproduce reference code |
 | [Fully-convolutional Network for Holistically-Nested Edge Detection(HED)](HED) | visually reproduce |
 | [Spatial Transformer Networks on MNIST addition](SpatialTransformer) | reproduce paper |
 | [Visualize CNN saliency maps](Saliency) | visually reproduce |

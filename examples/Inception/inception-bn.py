@@ -16,6 +16,7 @@ from tensorpack.utils.gpu import get_nr_gpu
 
 from imagenet_utils import fbresnet_augmentor, get_imagenet_dataflow
 
+# Change them if using different number of GPUs.
 TOTAL_BATCH_SIZE = 64 * 6
 NR_GPU = 6
 BATCH_SIZE = TOTAL_BATCH_SIZE // NR_GPU
