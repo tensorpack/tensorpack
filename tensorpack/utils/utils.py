@@ -50,6 +50,15 @@ def fix_rng_seed(seed):
 
     Note:
         See https://github.com/ppwwyyxx/tensorpack/issues/196.
+        
+    Examples:
+        Deterministic weight initialization:
+            import tensorpack.utils.utils as utils
+
+            seed = 32
+            utils.fix_rng_seed(seed)
+            tesnorflow.set_random_seed(seed)
+            # run trainer
     """
     global _RNG_SEED
     _RNG_SEED = int(seed)
