@@ -292,11 +292,26 @@ class HorovodTrainer(SingleCostTrainer):
         logger.info("Horovod local rank={}".format(self._local_rank))
         super(HorovodTrainer, self).__init__()
 
+    def allreduce(self, grads):
+        if hvd.size() == 1:
+            return grads
+        # copied from https://github.com/uber/horovod/blob/master/horovod/tensorflow/__init__.py
+        averaged_gradients = []
+        with tf.name_scope("HVDAllReduce"):
+            for grad, var in grads:
+                if grad is not None:
+                    avg_grad = hvd.allreduce(grad, average=True)
+                    averaged_gradients.append((avg_grad, var))
+                else:
+                    averaged_gradients.append((None, var))
+        return averaged_gradients
+
     def _setup_graph(self, input, get_cost_fn, get_opt_fn):
         with TowerContext('', is_training=True):
             grads = self._make_get_grad_fn(input, get_cost_fn, get_opt_fn)()
+            grads = self.allreduce(grads)
+
             opt = get_opt_fn()
-            opt = hvd.DistributedOptimizer(opt)
             self.train_op = opt.apply_gradients(grads, name='min_op')
         with tf.name_scope('horovod_broadcast'):
             op = hvd.broadcast_global_variables(0)
@@ -311,6 +326,8 @@ class HorovodTrainer(SingleCostTrainer):
         if not isinstance(session_creator, NewSessionCreator):
             raise ValueError(
                 "session_creator has to be `NewSessionCreator` for horovod training! ")
+        # NOTE It will fail if GPU was already detected before initializing the session
+        # https://github.com/tensorflow/tensorflow/issues/8136
         session_creator.config.gpu_options.visible_device_list = str(self._local_rank)
         super(HorovodTrainer, self).initialize(
             session_creator, session_init)

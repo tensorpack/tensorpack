@@ -8,9 +8,13 @@ import msgpack_numpy
 msgpack_numpy.patch()
 
 try:
+    import sys
+    sys.modules['torch'] = None
+    # https://github.com/apache/arrow/pull/1223#issuecomment-359895666
     import pyarrow as pa
+    del sys.modules['torch']
 except ImportError:
-    pass
+    pa = None
 
 
 __all__ = ['loads', 'dumps']
@@ -51,5 +55,9 @@ def loads_pyarrow(buf):
     return pa.deserialize(buf)
 
 
-loads = loads_msgpack
-dumps = dumps_msgpack
+if pa is None:
+    loads = loads_msgpack
+    dumps = dumps_msgpack
+else:
+    loads = loads_pyarrow
+    dumps = dumps_pyarrow
