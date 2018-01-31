@@ -20,7 +20,7 @@ else:
     __all__ = ['send_dataflow_zmq', 'RemoteDataZMQ']
 
 
-def send_dataflow_zmq(df, addr, hwm=50, format=None):
+def send_dataflow_zmq(df, addr, hwm=50, format=None, bind=False):
     """
     Run DataFlow and send data to a ZMQ socket addr.
     It will __connect__ to this addr,
@@ -34,6 +34,7 @@ def send_dataflow_zmq(df, addr, hwm=50, format=None):
         format (str): The serialization format.
              Default format would use :mod:`tensorpack.utils.serialize`.
              An alternate format is 'zmq_op', used by https://github.com/tensorpack/zmq_ops.
+        bind (bool): whether to bind or connect to the endpoint.
     """
     assert format in [None, 'zmq_op']
     if format is None:
@@ -45,7 +46,10 @@ def send_dataflow_zmq(df, addr, hwm=50, format=None):
     ctx = zmq.Context()
     socket = ctx.socket(zmq.PUSH)
     socket.set_hwm(hwm)
-    socket.connect(addr)
+    if bind:
+        socket.bind(addr)
+    else:
+        socket.connect(addr)
     try:
         df.reset_state()
         logger.info("Serving data to {} ...".format(addr))

@@ -199,8 +199,8 @@ class AugmentImageComponents(MapData):
             copy_func = copy_mod.deepcopy if copy else lambda x: x  # noqa
             with exception_handler.catch():
                 major_image = index[0]  # image to be used to get params. TODO better design?
-                check_dtype(major_image)
                 im = copy_func(dp[major_image])
+                check_dtype(im)
                 im, prms = self.augs._augment_return_params(im)
                 dp[major_image] = im
                 for idx in index[1:]:
