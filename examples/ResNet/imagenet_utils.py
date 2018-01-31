@@ -83,7 +83,7 @@ def fbresnet_augmentor(isTrain):
 
 def get_imagenet_dataflow(
         datadir, name, batch_size,
-        augmentors):
+        augmentors, parallel=None):
     """
     See explanations in the tutorial:
     http://tensorpack.readthedocs.io/en/latest/tutorial/efficient-dataflow.html
@@ -92,11 +92,12 @@ def get_imagenet_dataflow(
     assert datadir is not None
     assert isinstance(augmentors, list)
     isTrain = name == 'train'
-    cpu = min(40, multiprocessing.cpu_count())
+    if parallel is None:
+        parallel = min(40, multiprocessing.cpu_count())
     if isTrain:
         ds = dataset.ILSVRC12(datadir, name, shuffle=True)
         ds = AugmentImageComponent(ds, augmentors, copy=False)
-        ds = PrefetchDataZMQ(ds, cpu)
+        ds = PrefetchDataZMQ(ds, parallel)
         ds = BatchData(ds, batch_size, remainder=False)
     else:
         ds = dataset.ILSVRC12Files(datadir, name, shuffle=False)
@@ -107,7 +108,7 @@ def get_imagenet_dataflow(
             im = cv2.imread(fname, cv2.IMREAD_COLOR)
             im = aug.augment(im)
             return im, cls
-        ds = MultiThreadMapData(ds, cpu, mapf, buffer_size=2000, strict=True)
+        ds = MultiThreadMapData(ds, parallel, mapf, buffer_size=2000, strict=True)
         ds = BatchData(ds, batch_size, remainder=True)
         ds = PrefetchDataZMQ(ds, 1)
     return ds

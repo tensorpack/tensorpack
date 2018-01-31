@@ -101,7 +101,6 @@ def get_config(model, fake=False):
         callbacks=callbacks,
         steps_per_epoch=100 if args.fake else 1280000 // args.batch,
         max_epoch=110,
-        nr_tower=nr_tower
     )
 
 

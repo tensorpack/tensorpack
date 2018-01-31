@@ -280,10 +280,16 @@ class HorovodTrainer(SingleCostTrainer):
             --output-filename mylog  -x LD_LIBRARY_PATH -x CUDA_VISIBLE_DEVICES=0,1,2,3 \
             python train.py
 
-    Note:
-        1. If using all GPUs, you can always skip the `CUDA_VISIBLE_DEVICES` option.
+        (Add other environment variables you need by -x, e.g. PYTHONPATH, PATH)
 
-        2. Due to the use of MPI, training is less informative (no progress bar).
+    Note:
+        1. Gradients are averaged among all processes.
+
+        2. If using all GPUs, you can always skip the `CUDA_VISIBLE_DEVICES` option.
+
+        3. Due to the use of MPI, training is less informative (no progress bar).
+
+        4. MPI often fails to kill all processes. Be sure to check it.
     """
     def __init__(self):
         hvd.init()

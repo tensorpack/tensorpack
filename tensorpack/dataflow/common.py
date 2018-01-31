@@ -9,10 +9,11 @@ import pprint
 from termcolor import colored
 from collections import deque, defaultdict
 from six.moves import range, map
+import tqdm
 
 from .base import DataFlow, ProxyDataFlow, RNGDataFlow, DataFlowReentrantGuard
 from ..utils import logger
-from ..utils.utils import get_tqdm, get_rng
+from ..utils.utils import get_tqdm, get_rng, get_tqdm_kwargs
 from ..utils.develop import log_deprecated
 
 __all__ = ['TestDataSpeed', 'PrintData', 'BatchData', 'BatchDataByShape', 'FixedSizeData', 'MapData',
@@ -23,14 +24,16 @@ __all__ = ['TestDataSpeed', 'PrintData', 'BatchData', 'BatchDataByShape', 'Fixed
 
 class TestDataSpeed(ProxyDataFlow):
     """ Test the speed of some DataFlow """
-    def __init__(self, ds, size=5000):
+    def __init__(self, ds, size=5000, warmup=0):
         """
         Args:
             ds (DataFlow): the DataFlow to test.
             size (int): number of datapoints to fetch.
+            warmup (int): warmup iterations
         """
         super(TestDataSpeed, self).__init__(ds)
-        self.test_size = size
+        self.test_size = int(size)
+        self.warmup = int(warmup)
 
     def get_data(self):
         """ Will run testing at the beginning, then produce data normally. """
@@ -43,10 +46,14 @@ class TestDataSpeed(ProxyDataFlow):
         Start testing with a progress bar.
         """
         self.ds.reset_state()
+        itr = self.ds.get_data()
+        if self.warmup:
+            for d in tqdm.trange(self.warmup, **get_tqdm_kwargs()):
+                next(itr)
         # add smoothing for speed benchmark
         with get_tqdm(total=self.test_size,
                       leave=True, smoothing=0.2) as pbar:
-            for idx, dp in enumerate(self.ds.get_data()):
+            for idx, dp in enumerate(itr):
                 pbar.update()
                 if idx == self.test_size - 1:
                     break

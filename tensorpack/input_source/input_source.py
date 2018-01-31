@@ -375,7 +375,7 @@ class ZMQInput(TensorInput):
     Recv tensors from a ZMQ endpoint, with ops from https://github.com/tensorpack/zmq_ops.
     It works with :meth:`dataflow.remote.send_dataflow_zmq(format='zmq_op')`.
     """
-    def __init__(self, end_point, hwm):
+    def __init__(self, end_point, hwm, bind=True):
         """
         Args:
             end_point (str):
@@ -383,6 +383,7 @@ class ZMQInput(TensorInput):
         """
         self._end_point = end_point
         self._hwm = int(hwm)
+        self._bind = bind
 
         def fn():
             ret = self._zmq_pull_socket.pull()
@@ -401,7 +402,8 @@ class ZMQInput(TensorInput):
         self._zmq_pull_socket = zmq_ops.ZMQPullSocket(
             self._end_point,
             [x.type for x in inputs_desc],
-            self._hwm)
+            hwm=self._hwm,
+            bind=self._bind)
 
 
 class TFDatasetInput(FeedfreeInput):
