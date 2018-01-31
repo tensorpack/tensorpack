@@ -35,9 +35,9 @@ class GPUUtilizationTracker(Callback):
         if devices is None:
             env = os.environ.get('CUDA_VISIBLE_DEVICES')
             if env is None:
-                logger.warn("[GPUUtilizationTracker] Both devices and CUDA_VISIBLE_DEVICES are None! "
-                            "Will monitor all visible GPUs!")
                 self._devices = list(map(str, range(get_nr_gpu())))
+                logger.warn("[GPUUtilizationTracker] Both devices and CUDA_VISIBLE_DEVICES are None! "
+                            "Will monitor all {} visible GPUs!".format(len(self._devices)))
             else:
                 if len(env):
                     self._devices = env.split(',')

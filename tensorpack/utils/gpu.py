@@ -5,7 +5,7 @@
 
 import os
 from .utils import change_env
-from . import logger
+from .concurrency import subproc_call
 
 __all__ = ['change_gpu', 'get_nr_gpu']
 
@@ -29,8 +29,8 @@ def get_nr_gpu():
     env = os.environ.get('CUDA_VISIBLE_DEVICES', None)
     if env is not None:
         return len(env.split(','))
-    logger.info("Loading devices by TensorFlow ...")
-    from tensorflow.python.client import device_lib
-    device_protos = device_lib.list_local_devices()
-    gpus = [x.name for x in device_protos if x.device_type == 'GPU']
-    return len(gpus)
+    output, code = subproc_call("nvidia-smi -L", timeout=5)
+    if code != 0:
+        return 0
+    output = output.decode('utf-8')
+    return len(output.strip().split('\n'))
