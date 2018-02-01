@@ -112,6 +112,8 @@ class HyperParamSetter(Callback):
     An abstract base callback to set hyperparameters.
     """
 
+    _chief_only = False
+
     def __init__(self, param):
         """
         Args:

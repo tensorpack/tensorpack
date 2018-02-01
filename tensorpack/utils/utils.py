@@ -127,7 +127,7 @@ def get_tqdm_kwargs(**kwargs):
 
     f = kwargs.get('file', sys.stderr)
     isatty = f.isatty()
-    # TODO when run under mpirun, isatty is always False
+    # NOTE when run under mpirun/slurm, isatty is always False
     # Jupyter notebook should be recognized as tty.
     # Wait for https://github.com/ipython/ipykernel/issues/268
     try:
@@ -141,7 +141,7 @@ def get_tqdm_kwargs(**kwargs):
         default['mininterval'] = 0.5
     else:
         # If not a tty, don't refresh progress bar that often
-        default['mininterval'] = 300
+        default['mininterval'] = 180
     default.update(kwargs)
     return default
 

@@ -140,7 +140,7 @@ We can also dump the dataset into one single LMDB file and read it sequentially.
 
 ```python
 from tensorpack.dataflow import *
-class BinaryILSVRC12(dataset.ILSVRCFiles):
+class BinaryILSVRC12(dataset.ILSVRC12Files):
     def get_data(self):
         for fname, label in super(BinaryILSVRC12, self).get_data():
             with open(fname, 'rb') as f:
