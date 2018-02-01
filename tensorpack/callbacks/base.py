@@ -201,6 +201,13 @@ class Callback(object):
     def chief_only(self, v):
         self._chief_only = v
 
+    def set_chief_only(self, v=True):
+        """
+        Set chief_only property, and returns the callback itself.
+        """
+        self._chief_only = v
+        return self
+
     def __str__(self):
         return type(self).__name__
 
