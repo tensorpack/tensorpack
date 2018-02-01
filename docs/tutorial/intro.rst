@@ -38,7 +38,7 @@ A High Level Glance
   a small set of functions within tensorpack. ``ModelDesc`` is an interface to connect the model with the
   ``InputSource`` interface.
 
-* tensorpack trainers manage the training loops for you.
+* Tensorpack trainers manage the training loops for you.
   They also include data parallel logic for multi-GPU or distributed training.
   At the same time, you have the power of customization through callbacks.
 

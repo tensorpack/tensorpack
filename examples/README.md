@@ -1,5 +1,5 @@
 
-# tensorpack examples
+# Tensorpack Examples
 
 Training examples with __reproducible performance__.
 

@@ -39,7 +39,8 @@ are likely to have too much variance. To address this issue, you can:
 ### Other Logging Data
 
 Besides TensorFlow summaries,
-a callback can also write other data to the monitor backend anytime once the training has started.
+a callback can also write other data to the monitor backend anytime once the training has started,
+by `trainer.monitors.put_xxx`.
 As long as the type of data is supported, the data will be dispatched to and logged to the same place.
 
 As a result, tensorboard will show not only summaries in the graph, but also your custom data.
