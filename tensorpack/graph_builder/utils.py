@@ -96,13 +96,14 @@ class LeastLoadedDeviceSetter(object):
         return "LeastLoadedDeviceSetter-{}".format(self.worker_device)
 
 
-def allreduce_grads(all_grads):
+def allreduce_grads(all_grads, average):
     """
     All-reduce average the gradients among devices. Results are broadcasted to all devices.
 
     Args:
         all_grads (K x N x 2): A list of K lists. Each of the list is a list of N (grad, var) tuples.
             The variables have to be the same across the K lists.
+        average (bool): average gradients or not.
 
     Returns:
         (K x N x 2): same as input, but each grad is replaced by the average over K lists.
@@ -122,7 +123,8 @@ def allreduce_grads(all_grads):
             for (_, v), g in zip(grad_and_vars, summed):
                 with tf.device(g.device):
                     # tensorflow/benchmarks didn't average gradients
-                    g = tf.multiply(g, 1.0 / nr_tower)
+                    if average:
+                        g = tf.multiply(g, 1.0 / nr_tower)
                     grads_for_a_var.append((g, v))
             new_all_grads.append(grads_for_a_var)
 

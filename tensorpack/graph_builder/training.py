@@ -175,11 +175,15 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
     Data-parallel training in "replicated" mode,
     where each GPU contains a replicate of the whole model.
     It will build one tower on each GPU under its own variable scope.
-    Each gradient update is averaged across or GPUs through NCCL.
+    Each gradient update is averaged or summed across or GPUs through NCCL.
 
     It is an equivalent of ``--variable_update=replicated`` in
     `tensorflow/benchmarks <https://github.com/tensorflow/benchmarks>`_.
     """
+
+    def __init__(self, towers, average):
+        super(SyncMultiGPUReplicatedBuilder, self).__init__(towers)
+        self._average = average
 
     def build(self, get_grad_fn, get_opt_fn):
         """
@@ -207,7 +211,7 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
         DataParallelBuilder._check_grad_list(grad_list)
 
         if True:
-            grads = allreduce_grads(grad_list)  # #gpu x #param x 2
+            grads = allreduce_grads(grad_list, average=self._average)  # #gpu x #param x 2
         else:
             agg_grad_and_vars = average_grads(grad_list, colocation=False, devices=['/cpu:0'])    # #param x 2
             grads = []  # #gpu x #param x 2
