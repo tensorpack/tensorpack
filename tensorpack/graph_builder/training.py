@@ -256,8 +256,10 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
                 logger.error("[SyncMultiGPUReplicatedBuilder] variable "
                              "{} has its prefix {} appears multiple times in its name!".format(v.name, prefix))
             copy_from = var_by_name.get(realname)
-            assert copy_from is not None, var_by_name.keys()
-            post_init_ops.append(v.assign(copy_from.read_value()))
+            if copy_from is not None:
+                post_init_ops.append(v.assign(copy_from.read_value()))
+            else:
+                logger.warn("[ReplicatedTrainer] Cannot find {} in the graph!".format(realname))
         logger.info(
             "'sync_variables_from_main_tower' includes {} operations.".format(len(post_init_ops)))
         return tf.group(*post_init_ops, name='sync_variables_from_main_tower')

@@ -4,7 +4,7 @@
 
 
 import tensorflow as tf
-from .common import layer_register
+from .common import layer_register, VariableHolder
 
 __all__ = ['LayerNorm', 'InstanceNorm']
 
@@ -51,7 +51,14 @@ def LayerNorm(
     else:
         gamma = tf.ones([1] * ndims, name='gamma')
 
-    return tf.nn.batch_normalization(x, mean, var, beta, gamma, epsilon, name='output')
+    ret = tf.nn.batch_normalization(x, mean, var, beta, gamma, epsilon, name='output')
+
+    vh = ret.variables = VariableHolder()
+    if use_scale:
+        vh.gamma = gamma
+    if use_bias:
+        vh.beta = beta
+    return ret
 
 
 @layer_register()
@@ -90,4 +97,10 @@ def InstanceNorm(x, epsilon=1e-5, use_affine=True, gamma_init=None, data_format=
         gamma_init = tf.constant_initializer(1.0)
     gamma = tf.get_variable('gamma', [ch], initializer=gamma_init)
     gamma = tf.reshape(gamma, new_shape)
-    return tf.nn.batch_normalization(x, mean, var, beta, gamma, epsilon, name='output')
+    ret = tf.nn.batch_normalization(x, mean, var, beta, gamma, epsilon, name='output')
+
+    vh = ret.variables = VariableHolder()
+    if use_affine:
+        vh.gamma = gamma
+        vh.beta = beta
+    return ret
