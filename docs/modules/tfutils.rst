@@ -71,14 +71,6 @@ tensorpack.tfutils.summary module
     :undoc-members:
     :show-inheritance:
 
-tensorpack.tfutils.symbolic_functions module
---------------------------------------------
-
-.. automodule:: tensorpack.tfutils.symbolic_functions
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 tensorpack.tfutils.varmanip module
 ----------------------------------
 

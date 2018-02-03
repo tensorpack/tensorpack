@@ -12,7 +12,6 @@ import argparse
 
 from tensorpack import *
 from tensorpack.utils.viz import interactive_imshow, stack_patches
-import tensorpack.tfutils.symbolic_functions as symbf
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
 from tensorpack.dataflow import dataset
 from GAN import GANTrainer, RandomZData, GANModelDesc
@@ -28,6 +27,16 @@ A pretrained model is at http://models.tensorpack.com/GAN/
 """
 
 BATCH = 128
+
+
+def batch_flatten(x):
+    """
+    Flatten the tensor except the first dimension.
+    """
+    shape = x.get_shape().as_list()[1:]
+    if None not in shape:
+        return tf.reshape(x, [-1, int(np.prod(shape))])
+    return tf.reshape(x, tf.stack([tf.shape(x)[0], -1]))
 
 
 class Model(GANModelDesc):
@@ -65,7 +74,7 @@ class Model(GANModelDesc):
                  .BatchNorm('bn1')
                  .tf.nn.leaky_relu()
 
-                 .apply(symbf.batch_flatten)
+                 .apply(batch_flatten)
                  .ConcatWith(yv, 1)
                  .FullyConnected('fc1', 1024, nl=tf.identity)
                  .BatchNorm('bn2')
@@ -81,7 +90,7 @@ class Model(GANModelDesc):
         y = tf.one_hot(y, 10, name='label_onehot')
 
         z = tf.random_uniform([BATCH, 100], -1, 1, name='z_train')
-        z = symbf.shapeless_placeholder(z, [0], name='z')
+        z = tf.placeholder_with_default(z, [None, 100], name='z')   # clear the static shape
 
         with argscope([Conv2D, Deconv2D, FullyConnected],
                       W_init=tf.truncated_normal_initializer(stddev=0.02)):

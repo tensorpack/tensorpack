@@ -84,6 +84,7 @@ class BatchData(ProxyDataFlow):
                 enough to form a batch, whether or not to also produce the remaining
                 data as a smaller batch.
                 If set to False, all produced datapoints are guranteed to have the same batch size.
+                If set to True, `ds.size()` must be accurate.
             use_list (bool): if True, each component will contain a list
                 of datapoints instead of an numpy array of an extra dimension.
         """

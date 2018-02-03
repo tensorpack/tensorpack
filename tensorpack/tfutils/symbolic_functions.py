@@ -171,6 +171,7 @@ def get_scalar_var(name, init_value, summary=False, trainable=False):
     return ret
 
 
+@deprecated("Please implement it by yourself.", "2018-04-28")
 def psnr(prediction, ground_truth, maxp=None, name='psnr'):
     """`Peek Signal to Noise Ratio <https://en.wikipedia.org/wiki/Peak_signal-to-noise_ratio>`_.
 
@@ -228,6 +229,7 @@ def guided_relu():
         yield
 
 
+@deprecated("Please implement it by yourself.", "2018-04-28")
 def saliency_map(output, input, name="saliency_map"):
     """
     Produce a saliency map as described in the paper:
@@ -244,6 +246,7 @@ def saliency_map(output, input, name="saliency_map"):
     return saliency_op
 
 
+@deprecated("Please implement it by yourself.", "2018-04-28")
 def shapeless_placeholder(x, axis, name):
     """
     Make the static shape of a tensor less specific.

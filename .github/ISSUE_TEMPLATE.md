@@ -2,10 +2,11 @@ Bug Reports/Feature Requests/Usage Questions Only:
 
 Any unexpected problems: PLEASE always include
 1. What you did:
-	+ Are you using any examples?
-	+ If yes, post the command you run and changes you made (if any).
+	+ If you're using examples:
+		+ What's the command you run:
+		+ Have you made and changes to code? Post them if any:
 	+ If not, describe what you did that may be relevant.
-		But we may not be able to resolve it if there is no reproducible code.
+		But we may not be able to resolve it since there is no reproducible code.
 2. What you observed, e.g. as much as logs possible.
 3. What you expected, if not obvious.
 4. Your environment (TF version, tensorpack version, cudnn version, number & type of GPUs), if it matters.

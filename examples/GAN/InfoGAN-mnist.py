@@ -14,7 +14,6 @@ from tensorpack import *
 from tensorpack.utils import viz
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope, under_name_scope
 from tensorpack.tfutils import optimizer, summary
-import tensorpack.tfutils.symbolic_functions as symbf
 from tensorpack.dataflow import dataset
 from GAN import GANTrainer, GANModelDesc
 
@@ -36,6 +35,35 @@ DIST_PARAM_DIM = NUM_CLASS + NUM_UNIFORM
 NOISE_DIM = 62
 # prior: the assumption how the latent factors are presented in the dataset
 DIST_PRIOR_PARAM = [1.] * NUM_CLASS + [0.] * NUM_UNIFORM
+
+
+def shapeless_placeholder(x, axis, name):
+    """
+    Make the static shape of a tensor less specific.
+
+    If you want to feed to a tensor, the shape of the feed value must match
+    the tensor's static shape. This function creates a placeholder which
+    defaults to x if not fed, but has a less specific static shape than x.
+    See also `tensorflow#5680 <https://github.com/tensorflow/tensorflow/issues/5680>`_.
+
+    Args:
+        x: a tensor
+        axis(int or list of ints): these axes of ``x.get_shape()`` will become
+            None in the output.
+        name(str): name of the output tensor
+
+    Returns:
+        a tensor equal to x, but shape information is partially cleared.
+    """
+    shp = x.get_shape().as_list()
+    if not isinstance(axis, list):
+        axis = [axis]
+    for a in axis:
+        if shp[a] is None:
+            raise ValueError("Axis {} of shape {} is already unknown!".format(a, shp))
+        shp[a] = None
+    x = tf.placeholder_with_default(x, shape=shp, name=name)
+    return x
 
 
 def get_distributions(vec_cat, vec_uniform):
@@ -115,8 +143,8 @@ class Model(GANModelDesc):
         real_sample = tf.expand_dims(real_sample, -1)
 
         # sample the latent code:
-        zc = symbf.shapeless_placeholder(sample_prior(BATCH), 0, name='z_code')
-        z_noise = symbf.shapeless_placeholder(
+        zc = shapeless_placeholder(sample_prior(BATCH), 0, name='z_code')
+        z_noise = shapeless_placeholder(
             tf.random_uniform([BATCH, NOISE_DIM], -1, 1), 0, name='z_noise')
         z = tf.concat([zc, z_noise], 1, name='z')
 

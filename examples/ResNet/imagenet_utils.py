@@ -17,6 +17,7 @@ from tensorpack.predict import PredictConfig, SimpleDatasetPredictor
 from tensorpack.utils.stats import RatioCounter
 from tensorpack.models import regularize_cost
 from tensorpack.tfutils.summary import add_moving_summary
+from tensorpack.utils import logger
 
 
 class GoogleNetResize(imgaug.ImageAugmentor):
@@ -97,6 +98,8 @@ def get_imagenet_dataflow(
     if isTrain:
         ds = dataset.ILSVRC12(datadir, name, shuffle=True)
         ds = AugmentImageComponent(ds, augmentors, copy=False)
+        if parallel < 16:
+            logger.warn("DataFlow may become the bottleneck when too few processes are used.")
         ds = PrefetchDataZMQ(ds, parallel)
         ds = BatchData(ds, batch_size, remainder=False)
     else:

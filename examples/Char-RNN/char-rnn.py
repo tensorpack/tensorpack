@@ -14,7 +14,7 @@ from six.moves import range
 
 
 from tensorpack import *
-from tensorpack.tfutils import symbolic_functions, summary, optimizer
+from tensorpack.tfutils import summary, optimizer
 from tensorpack.tfutils.gradproc import GlobalNormClip
 from tensorpack.utils.globvars import globalns as param
 
@@ -80,7 +80,7 @@ class Model(ModelDesc):
             ret = tf.get_variable(n + '_unused', [param.batch_size, param.rnn_size],
                                   trainable=False,
                                   initializer=tf.constant_initializer())
-            ret = symbolic_functions.shapeless_placeholder(ret, 0, name=n)
+            ret = tf.placeholder_with_default(ret, shape=[None, param.rnn_size], name=n)
             return ret
         initial = (rnn.LSTMStateTuple(get_v('c0'), get_v('h0')),
                    rnn.LSTMStateTuple(get_v('c1'), get_v('h1')))

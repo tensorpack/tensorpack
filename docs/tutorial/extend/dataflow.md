@@ -1,6 +1,8 @@
 
 ### Write a DataFlow
 
+#### Write a Source DataFlow
+
 There are several existing DataFlow, e.g. [ImageFromFile](../../modules/dataflow.html#tensorpack.dataflow.ImageFromFile),
 [DataFromList](../../modules/dataflow.html#tensorpack.dataflow.DataFromList),
 which you can use if your data format is simple.
@@ -23,14 +25,27 @@ Optionally, you can implement the following two methods:
 
 + `reset_state()`. It is guaranteed that the actual process which runs a DataFlow will invoke this method before using it.
 	So if this DataFlow needs to do something after a `fork()`, you should put it here.
+	The convention is that, `reset_state()` must be called once and usually only once for each DataFlow instance.
 
 	A typical situation is when your DataFlow uses random number generator (RNG). Then you would need to reset the RNG here.
 	Otherwise, child processes will have the same random seed. The `RNGDataFlow` base class does this for you.
 	You can subclass `RNGDataFlow` to access `self.rng` whose seed has been taken care of.
 
-The convention is that, `reset_state()` must be called once and usually only once for each DataFlow instance.
-To reinitialize the dataflow (i.e. get a new iterator from the beginning), simply call `get_data()` again.
-
 DataFlow implementations for several well-known datasets are provided in the
 [dataflow.dataset](../../modules/dataflow.dataset.html)
 module, you can take them as a reference.
+
+#### More Data Processing
+
+You can put any data processing you need in the source DataFlow, or write a new DataFlow for data
+processing on top of the source DataFlow, e.g.:
+
+```python
+class ProcessingDataFlow(DataFlow):
+  def __init__(self, ds):
+	  self.ds = ds
+  def get_data(self):
+    for datapoint in self.ds.get_data():
+      # do something
+			yield new_datapoint
+```

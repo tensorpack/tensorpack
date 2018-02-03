@@ -375,7 +375,7 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
         'LeakyReLU',
         'PrefetchOnGPUs',
 
-        'guided_relu', 'saliency_map', 'get_scalar_var',
+        'guided_relu', 'saliency_map', 'get_scalar_var', 'psnr',
         'prediction_incorrect', 'huber_loss',
         ]:
         return True
