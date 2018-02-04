@@ -168,7 +168,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # tcp addr like "tcp://127.0.0.1:8877"
-    # ipc addr like "ipc:///tmp/ipc-test"
+    # ipc addr like "ipc://@ipc-test"
     if args.task == 'send':
         # use random=True to make it slow and cpu-consuming
         ds = FakeData([(128, 244, 244, 3)], 1000, random=True)

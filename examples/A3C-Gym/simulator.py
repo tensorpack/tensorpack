@@ -174,7 +174,7 @@ if __name__ == '__main__':
             client.memory = []
             client.state = 0
 
-    name = 'ipc://whatever'
+    name = 'ipc://@whatever'
     procs = [NaiveSimulator(k, name) for k in range(10)]
     [k.start() for k in procs]
 

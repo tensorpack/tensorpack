@@ -216,6 +216,9 @@ def add_moving_summary(*args, **kwargs):
     # allow ctx to be none
     if ctx is not None and not ctx.is_main_training_tower:
         return []
+    if tf.get_variable_scope().reuse is True:
+        logger.warn("add_moving_summary() called under reuse=True scope, ignored.")
+        return []
 
     if not isinstance(args[0], list):
         v = args

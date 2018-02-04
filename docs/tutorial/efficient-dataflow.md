@@ -251,11 +251,11 @@ send_dataflow_zmq(df, 'tcp://1.2.3.4:8877')
 ```python
 # Training Machine, process 1-10:
 df = MyLargeData()
-send_dataflow_zmq(df, 'ipc:///tmp/ipc-socket')
+send_dataflow_zmq(df, 'ipc://@my-socket')
 ```
 ```python
 # Training Machine, training process
-df = RemoteDataZMQ('ipc:///tmp/ipc-socket', 'tcp://0.0.0.0:8877')
+df = RemoteDataZMQ('ipc://@my-socket', 'tcp://0.0.0.0:8877')
 TestDataSpeed(df).start()
 ```
 

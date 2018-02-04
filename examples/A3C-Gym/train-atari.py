@@ -233,9 +233,8 @@ def train():
 
     # setup simulator processes
     name_base = str(uuid.uuid1())[:6]
-    PIPE_DIR = os.environ.get('TENSORPACK_PIPEDIR', '.').rstrip('/')
-    namec2s = 'ipc://{}/sim-c2s-{}'.format(PIPE_DIR, name_base)
-    names2c = 'ipc://{}/sim-s2c-{}'.format(PIPE_DIR, name_base)
+    namec2s = 'ipc://@sim-c2s-{}'.format(name_base)
+    names2c = 'ipc://@sim-s2c-{}'.format(name_base)
     procs = [MySimulatorWorker(k, namec2s, names2c) for k in range(SIMULATOR_PROC)]
     ensure_proc_terminate(procs)
     start_proc_mask_signal(procs)
