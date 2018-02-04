@@ -8,6 +8,10 @@ cache:
   directories:
     - $HOME/tensorpack_data
 
+env:
+  global:
+    - TF_VERSION=1.5.0
+
 addons:
   apt:
     packages:
@@ -20,10 +24,10 @@ matrix:
   include:
   - os: linux
     python: 2.7
-    env: TF_VERSION=1.4.1 TF_TYPE=release
+    env: TF_TYPE=release
   - os: linux
     python: 3.5
-    env: TF_VERSION=1.4.1 TF_TYPE=release
+    env: TF_TYPE=release
   - os: linux
     python: 2.7
     env: TF_VERSION=1.head TF_TYPE=nightly
