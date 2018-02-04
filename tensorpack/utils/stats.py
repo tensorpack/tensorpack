@@ -2,9 +2,10 @@
 # File: stats.py
 
 import numpy as np
+from segmentation import update_confusion_matrix
 
 __all__ = ['StatCounter', 'BinaryStatistics', 'RatioCounter', 'Accuracy',
-           'OnlineMoments']
+           'OnlineMoments', 'MIoUStatistics']
 
 
 class StatCounter(object):
@@ -178,3 +179,54 @@ class OnlineMoments(object):
     @property
     def std(self):
         return np.sqrt(self.variance)
+
+class MIoUStatistics(object):
+    """
+    Statistics for MIoUStatistics,
+    including MIoU, accuracy, mean accuracy
+    """
+
+    def __init__(self, nb_classes, ignore_label=255):
+        self.nb_classes = nb_classes
+        self.ignore_label = 255
+        self.reset()
+
+    def reset(self):
+        self._mIoU = 0
+        self._accuracy = 0
+        self._mean_accuracy = 0
+        self._confusion_matrix = np.zeros((self.nb_classes, self.nb_classes), dtype=np.uint64)
+
+    def feed(self, pred, label):
+        """
+        Args:
+            pred (np.ndarray): binary array.
+            label (np.ndarray): binary array of the same size.
+        """
+        assert pred.shape == label.shape, "{} != {}".format(pred.shape, label.shape)
+        self._confusion_matrix = update_confusion_matrix(pred, label, self._confusion_matrix, self.nb_classes,
+                                                         self.ignore_label)
+
+    @property
+    def confusion_matrix(self):
+        return self._confusion_matrix
+
+    @property
+    def mIoU(self):
+        I = np.diag(self._confusion_matrix)
+        U = np.sum(self._confusion_matrix, axis=0) + np.sum(self._confusion_matrix, axis=1) - I
+        assert np.min(U) > 0,"dataset class number doesn't equal {}".format(self.nb_classes)
+        IOU = I*1.0 / U
+        meanIOU = np.mean(IOU)
+        return meanIOU
+
+
+    @property
+    def accuracy(self):
+        return np.sum(np.diag(self._confusion_matrix))*1.0 / np.sum(self._confusion_matrix)
+
+    @property
+    def mean_accuracy(self):
+        assert np.min(np.sum(self._confusion_matrix, axis=1)) > 0, "dataset class number doesn't equal {}".format(self.nb_classes)
+        return np.mean(np.diag(self._confusion_matrix)*1.0 / np.sum(self._confusion_matrix, axis=1))
+

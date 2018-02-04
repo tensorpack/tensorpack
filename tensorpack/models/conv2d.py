@@ -143,3 +143,4 @@ def Deconv2D(x, out_channel, kernel_shape,
     if use_bias:
         ret.variables.b = layer.bias
     return ret
+

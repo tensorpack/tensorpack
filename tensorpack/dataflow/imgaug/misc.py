@@ -196,3 +196,4 @@ class Transpose(ImageAugmentor):
         if do:
             coords = coords[:, ::-1]
         return coords
+

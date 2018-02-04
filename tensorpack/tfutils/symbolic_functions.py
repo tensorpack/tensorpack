@@ -275,3 +275,4 @@ def shapeless_placeholder(x, axis, name):
         shp[a] = None
     x = tf.placeholder_with_default(x, shape=shp, name=name)
     return x
+
