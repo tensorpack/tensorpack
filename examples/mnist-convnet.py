@@ -51,9 +51,9 @@ class Model(ModelDesc):
                       .Conv2D('conv2')
                       .MaxPooling('pool1', 2)
                       .Conv2D('conv3')
-                      .FullyConnected('fc0', 512, nl=tf.nn.relu)
+                      .FullyConnected('fc0', 512, activation=tf.nn.relu)
                       .Dropout('dropout', 0.5)
-                      .FullyConnected('fc1', out_dim=10, nl=tf.identity)())
+                      .FullyConnected('fc1', 10, activation=tf.identity)())
 
         tf.nn.softmax(logits, name='prob')   # a Bx10 with probabilities
 

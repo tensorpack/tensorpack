@@ -9,6 +9,7 @@ from ..utils import logger
 from ..utils.argtools import graph_memoized
 from ..tfutils.tower import get_current_tower_context
 from .common import layer_register
+from .tflayer import parse_args
 
 __all__ = ['regularize_cost', 'l2_regularizer', 'l1_regularizer', 'Dropout']
 
@@ -114,19 +115,35 @@ def regularize_cost_from_collection(name='regularize_cost'):
 
 
 @layer_register(use_scope=None)
-def Dropout(x, keep_prob=0.5, is_training=None, noise_shape=None):
+def Dropout(x, *args, **kwargs):
     """
-    Dropout layer as in the paper `Dropout: a Simple Way to Prevent
-    Neural Networks from Overfitting <http://dl.acm.org/citation.cfm?id=2670313>`_.
+    A wrapper around `tf.layers.Dropout`.
 
     Args:
-        keep_prob (float): the probability that each element is kept. It is only used
-            when is_training=True.
         is_training (bool): If None, will use the current :class:`tensorpack.tfutils.TowerContext`
             to figure out.
-        noise_shape: same as `tf.nn.dropout`.
+        kwargs: same as in `tf.layers.Dropout`.
     """
-    if is_training is None:
-        is_training = get_current_tower_context().is_training
-    return tf.layers.dropout(
-        x, rate=1 - keep_prob, noise_shape=noise_shape, training=is_training)
+    tfargs = parse_args(
+        args=args, kwargs=kwargs,
+        args_names=['rate'],
+        name_mapping={
+            'is_training': 'training',
+        }
+    )
+    if len(args) > 0:
+        logger.warn(
+            "The first positional argument to tensorpack.Dropout is the probability to keep rather than to drop. "
+            "This is different from the rate argument in tf.layers.Dropout due to historical reasons. "
+            "To mimic tf.layers.Dropout, use keyword argument 'rate' instead")
+        rate = 1 - tfargs.pop('rate')
+    elif 'keep_prob' in tfargs:
+        assert 'rate' not in tfargs, "Cannot set both keep_prob and rate!"
+        rate = 1 - tfargs.pop('keep_prob')
+    elif rate not in tfargs:
+        rate = 0.5
+
+    if tfargs.get('training', None) is None:
+        tfargs['training'] = get_current_tower_context().is_training
+
+    return tf.layers.dropout(x, rate=rate, **tfargs)

@@ -9,6 +9,7 @@ from .shape_utils import StaticDynamicShape
 from .common import layer_register
 from ..utils.argtools import shape2d, get_data_format
 from ._test import TestModel
+from .tflayer import parse_args
 
 
 __all__ = ['MaxPooling', 'FixedUnPooling', 'AvgPooling', 'GlobalAvgPooling',
@@ -16,42 +17,40 @@ __all__ = ['MaxPooling', 'FixedUnPooling', 'AvgPooling', 'GlobalAvgPooling',
 
 
 @layer_register(log_shape=True)
-def MaxPooling(x, shape, stride=None, padding='VALID', data_format='channels_last'):
+def MaxPooling(x, *args, **kwargs):
     """
-    Max Pooling on 4D tensors.
-
-    Args:
-        x (tf.Tensor): a 4D tensor.
-        shape: int or (h, w) tuple
-        stride: int or (h, w) tuple. Defaults to be the same as shape.
-        padding (str): 'valid' or 'same'.
-
-    Returns:
-        tf.Tensor named ``output``.
+    A wrapper around `tf.layers.MaxPooling2D`.
     """
-    if stride is None:
-        stride = shape
-    ret = tf.layers.max_pooling2d(x, shape, stride, padding, data_format=data_format)
+    tfargs = parse_args(
+        args=args,
+        kwargs=kwargs,
+        args_names=['pool_size', 'strides'],
+        name_mapping={
+            'shape': 'pool_size',
+            'stride': 'strides'})
+    if tfargs.get('strides', None) is None:
+        tfargs['strides'] = tfargs['pool_size']
+    layer = tf.layers.MaxPooling2D(**tfargs)
+    ret = layer.apply(x, scope=tf.get_variable_scope())
     return tf.identity(ret, name='output')
 
 
 @layer_register(log_shape=True)
-def AvgPooling(x, shape, stride=None, padding='VALID', data_format='channels_last'):
+def AvgPooling(x, *args, **kwargs):
     """
-    Average Pooling on 4D tensors.
-
-    Args:
-        x (tf.Tensor): a 4D tensor.
-        shape: int or (h, w) tuple
-        stride: int or (h, w) tuple. Defaults to be the same as shape.
-        padding (str): 'valid' or 'same'.
-
-    Returns:
-        tf.Tensor named ``output``.
+    A wrapper around `tf.layers.AveragePooling2D`.
     """
-    if stride is None:
-        stride = shape
-    ret = tf.layers.average_pooling2d(x, shape, stride, padding, data_format=data_format)
+    tfargs = parse_args(
+        args=args,
+        kwargs=kwargs,
+        args_names=['pool_size', 'strides'],
+        name_mapping={
+            'shape': 'pool_size',
+            'stride': 'strides'})
+    if tfargs.get('strides', None) is None:
+        tfargs['strides'] = tfargs['pool_size']
+    layer = tf.layers.AveragePooling2D(**tfargs)
+    ret = layer.apply(x, scope=tf.get_variable_scope())
     return tf.identity(ret, name='output')
 
 
@@ -62,7 +61,8 @@ def GlobalAvgPooling(x, data_format='channels_last'):
     <http://arxiv.org/abs/1312.4400>`_.
 
     Args:
-        x (tf.Tensor): a NHWC tensor.
+        x (tf.Tensor): a 4D tensor.
+
     Returns:
         tf.Tensor: a NC tensor named ``output``.
     """

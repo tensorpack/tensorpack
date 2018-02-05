@@ -5,52 +5,41 @@
 
 import tensorflow as tf
 
-from .common import layer_register, rename_get_variable, VariableHolder
+from .common import layer_register, VariableHolder
+from .tflayer import parse_args, rename_get_variable
 from ..tfutils import symbolic_functions as symbf
 
 __all__ = ['FullyConnected']
 
 
 @layer_register(log_shape=True)
-def FullyConnected(x, out_dim,
-                   W_init=None, b_init=None,
-                   activation=tf.identity, use_bias=True):
+def FullyConnected(x, *args, **kwargs):
     """
-    Fully-Connected layer, takes a N>1D tensor and returns a 2D tensor.
-    It is an equivalent of `tf.layers.dense` except for naming conventions.
+    A wrapper around `tf.layers.Dense`.
 
-    Args:
-        x (tf.Tensor): a tensor to be flattened except for the first dimension.
-        out_dim (int): output dimension
-        W_init: initializer for W. Defaults to `variance_scaling_initializer(2.0)`, i.e. kaiming-normal.
-        b_init: initializer for b. Defaults to zero.
-        nl: a nonlinearity function
-        use_bias (bool): whether to use bias.
-
-    Returns:
-        tf.Tensor: a NC tensor named ``output`` with attribute `variables`.
+    Differences: Default weight initializer is variance_scaling_initializer(2.0).
 
     Variable Names:
 
     * ``W``: weights of shape [in_dim, out_dim]
     * ``b``: bias
     """
+    tfargs = parse_args(
+        args=args, kwargs=kwargs,
+        args_names=['units'],
+        name_mapping={
+            'out_dim': 'units'
+        })
+    tfargs.setdefault('kernel_initializer', tf.contrib.layers.variance_scaling_initializer(2.0))
+    tfargs.setdefault('bias_initializer', tf.constant_initializer())
+
     x = symbf.batch_flatten(x)
 
-    if W_init is None:
-        # W_init = tf.variance_scaling_initializer(2.0)
-        W_init = tf.contrib.layers.variance_scaling_initializer(2.0)
-    if b_init is None:
-        b_init = tf.constant_initializer()
-
     with rename_get_variable({'kernel': 'W', 'bias': 'b'}):
-        layer = tf.layers.Dense(
-            out_dim, activation=activation, use_bias=use_bias,
-            kernel_initializer=W_init, bias_initializer=b_init,
-            trainable=True)
+        layer = tf.layers.Dense(**tfargs)
         ret = layer.apply(x, scope=tf.get_variable_scope())
 
     ret.variables = VariableHolder(W=layer.kernel)
-    if use_bias:
+    if tfargs.get('use_bias', True):
         ret.variables.b = layer.bias
     return tf.identity(ret, name='output')
