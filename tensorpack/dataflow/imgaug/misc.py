@@ -121,14 +121,16 @@ class RandomResize(TransformAugmentorBase):
         """
         super(RandomResize, self).__init__()
         assert aspect_ratio_thres >= 0
-        if aspect_ratio_thres == 0:
-            assert xrange == yrange
         self._init(locals())
 
         def is_float(tp):
             return isinstance(tp[0], float) or isinstance(tp[1], float)
+
         assert is_float(xrange) == is_float(yrange), "xrange and yrange has different type!"
         self._is_scale = is_float(xrange)
+
+        if self._is_scale and aspect_ratio_thres == 0:
+            assert xrange == yrange
 
     def _get_augment_params(self, img):
         cnt = 0
