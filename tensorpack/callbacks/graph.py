@@ -19,6 +19,8 @@ __all__ = ['RunOp', 'RunUpdateOps', 'ProcessTensors', 'DumpTensors', 'DumpTensor
 class RunOp(Callback):
     """ Run an Op. """
 
+    _chief_only = False
+
     def __init__(self, op,
                  run_before=True, run_as_trigger=True,
                  run_step=False, verbose=False):
@@ -74,8 +76,6 @@ class RunUpdateOps(RunOp):
     """
     Run ops from the collection UPDATE_OPS every step
     """
-
-    _chief_only = False
 
     def __init__(self, collection=tf.GraphKeys.UPDATE_OPS):
         """

@@ -126,7 +126,7 @@ class InputSource(object):
             before_train=lambda _: self.reset_state())] + self._get_callbacks()
 
         for r in ret:
-            r.chief_only = False    # no input callbacks should be chief-only
+            r.set_chief_only(False)    # no input callbacks should be chief-only
         return ret
 
     def _get_callbacks(self):

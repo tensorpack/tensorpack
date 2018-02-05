@@ -57,7 +57,8 @@ def _inference_context():
 class InferenceRunnerBase(Callback):
     """ Base class for inference runner.
         Please note that InferenceRunner will use `input.size()` to determine
-        how much iterations to run, so you want it to be accurate.
+        how much iterations to run, so you're responsible to ensure that
+        `size()` is accurate.
 
         Also, InferenceRunner assumes that `trainer.model` exists.
     """
@@ -155,7 +156,6 @@ class InferenceRunner(InferenceRunnerBase):
             inf.before_epoch()
 
         # iterate over the data, and run the hooked session
-        self._input_source.reset_state()
         with _inference_context(), \
                 tqdm.tqdm(total=self._size, **get_tqdm_kwargs()) as pbar:
             num_itr = self._size if self._size > 0 else sys.maxsize
@@ -262,7 +262,6 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
         for inf in self.infs:
             inf.before_epoch()
 
-        self._input_source.reset_state()
         total = self._size
         nr_tower = len(self._gpus)
         with _inference_context():

@@ -327,7 +327,7 @@ class HorovodTrainer(SingleCostTrainer):
             op = hvd.broadcast_global_variables(0)
         cb = RunOp(
             op, run_before=True,
-            run_as_trigger=False, verbose=True).set_chief_only(False)
+            run_as_trigger=False, verbose=True)
         return [cb]
 
     @HIDE_DOC

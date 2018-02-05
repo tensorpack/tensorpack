@@ -12,6 +12,9 @@ class PeriodicTrigger(ProxyCallback):
     """
     Schedule to trigger a callback every k global steps or every k epochs by its ``trigger()`` method.
     """
+
+    _chief_only = False
+
     def __init__(self, triggerable, every_k_steps=None, every_k_epochs=None):
         """
         Args:
@@ -51,6 +54,9 @@ class PeriodicRunHooks(ProxyCallback):
     Schedule the ``{before,after}_run`` methods of a callback every k global steps.
     All other methods are untouched.
     """
+
+    _chief_only = False
+
     def __init__(self, callback, every_k_steps):
         """
         Args:
@@ -86,6 +92,9 @@ class EnableCallbackIf(ProxyCallback):
         If you use ``{before,after}_run``,
         ``pred`` will be evaluated only in ``before_run``.
     """
+
+    _chief_only = False
+
     def __init__(self, callback, pred):
         """
         Args:

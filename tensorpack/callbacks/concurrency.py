@@ -16,6 +16,8 @@ class StartProcOrThread(Callback):
     Start some threads or processes before training.
     """
 
+    _chief_only = False
+
     def __init__(self, startable, stop_at_last=True):
         """
         Args:

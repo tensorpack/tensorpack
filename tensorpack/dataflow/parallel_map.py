@@ -28,6 +28,7 @@ class _ParallelMapData(ProxyDataFlow):
         super(_ParallelMapData, self).__init__(ds)
         assert buffer_size > 0, buffer_size
         self._buffer_size = buffer_size
+        self._buffer_occupancy = 0  # actual #elements in buffer
 
     def _recv(self):
         pass
@@ -41,15 +42,18 @@ class _ParallelMapData(ProxyDataFlow):
             "[{}] Map function cannot return None when strict mode is used.".format(type(self).__name__)
         return ret
 
-    def _fill_buffer(self):
+    def _fill_buffer(self, cnt=None):
+        if cnt is None:
+            cnt = self._buffer_size - self._buffer_occupancy
         try:
-            for _ in range(self._buffer_size):
+            for _ in range(cnt):
                 dp = next(self._iter)
                 self._send(dp)
         except StopIteration:
             logger.error(
                 "[{}] buffer_size cannot be larger than the size of the DataFlow!".format(type(self).__name__))
             raise
+        self._buffer_occupancy += cnt
 
     def get_data_non_strict(self):
         for dp in self._iter:
@@ -66,6 +70,7 @@ class _ParallelMapData(ProxyDataFlow):
                 yield ret
 
     def get_data_strict(self):
+        self._fill_buffer()
         for dp in self._iter:
             self._send(dp)
             yield self._recv_filter_none()
@@ -74,6 +79,7 @@ class _ParallelMapData(ProxyDataFlow):
         # first clear the buffer, then fill
         for k in range(self._buffer_size):
             dp = self._recv_filter_none()
+            self._buffer_occupancy -= 1
             if k == self._buffer_size - 1:
                 self._fill_buffer()
             yield dp
@@ -162,7 +168,7 @@ class MultiThreadMapData(_ParallelMapData):
         self._iter = self.ds.get_data()
         self._guard = DataFlowReentrantGuard()
 
-        # only call once, to ensure inq+outq has a total of buffer_size elements
+        # Call once at the beginning, to ensure inq+outq has a total of buffer_size elements
         self._fill_buffer()
 
     def _recv(self):
@@ -261,7 +267,7 @@ class MultiProcessMapDataZMQ(_ParallelMapData, _MultiProcessZMQDataFlow):
         self._iter_worker = _repeat_iter(lambda: iter(self._proc_ids))
 
         self._start_processes()
-        self._fill_buffer()
+        self._fill_buffer()     # pre-fill the bufer
 
     def reset_state(self):
         _MultiProcessZMQDataFlow.reset_state(self)

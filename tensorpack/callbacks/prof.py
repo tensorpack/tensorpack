@@ -27,6 +27,8 @@ class GPUUtilizationTracker(Callback):
     and write average utilization to monitors.
     """
 
+    _chief_only = False
+
     def __init__(self, devices=None):
         """
         Args:
@@ -175,6 +177,9 @@ class PeakMemoryTracker(Callback):
     :mod:`tf.contrib.memory_stats`.
     It can only be used for GPUs.
     """
+
+    _chief_only = False
+
     def __init__(self, devices=['/gpu:0']):
         """
         Args:

@@ -17,6 +17,9 @@ class CallbackToHook(tf.train.SessionRunHook):
         before_run/after_run callbacks.
         You shouldn't need to use this.
     """
+
+    _chief_only = False
+
     def __init__(self, cb):
         self._cb = cb
 
@@ -32,6 +35,9 @@ class HookToCallback(Callback):
     Make a ``tf.train.SessionRunHook`` into a callback.
     Note that the `coord` argument in `after_create_session` will be None.
     """
+
+    _chief_only = False
+
     def __init__(self, hook):
         """
         Args:
