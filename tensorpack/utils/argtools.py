@@ -111,7 +111,18 @@ def shape2d(a):
     raise RuntimeError("Illegal shape: {}".format(a))
 
 
-def shape4d(a, data_format='NHWC'):
+def get_data_format(data_format, tfmode=True):
+    if tfmode:
+        dic = {'NCHW': 'channels_first', 'NHWC': 'channels_last'}
+    else:
+        dic = {'channels_first': 'NCHW', 'channels_last': 'NHWC'}
+    ret = dic.get(data_format, data_format)
+    if ret not in dic.values():
+        raise ValueError("Unknown data_format: {}".format(data_format))
+    return ret
+
+
+def shape4d(a, data_format='channels_last'):
     """
     Ensuer a 4D shape, to use with 4D symbolic functions.
 
@@ -123,7 +134,7 @@ def shape4d(a, data_format='NHWC'):
             or ``[1, 1, a, a]`` depending on data_format.
     """
     s2d = shape2d(a)
-    if data_format == 'NHWC':
+    if get_data_format(data_format) == 'channels_last':
         return [1] + s2d + [1]
     else:
         return [1, 1] + s2d

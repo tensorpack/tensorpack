@@ -14,7 +14,7 @@ __all__ = ['FullyConnected']
 @layer_register(log_shape=True)
 def FullyConnected(x, out_dim,
                    W_init=None, b_init=None,
-                   nl=tf.identity, use_bias=True):
+                   activation=tf.identity, use_bias=True):
     """
     Fully-Connected layer, takes a N>1D tensor and returns a 2D tensor.
     It is an equivalent of `tf.layers.dense` except for naming conventions.
@@ -44,7 +44,7 @@ def FullyConnected(x, out_dim,
 
     with rename_get_variable({'kernel': 'W', 'bias': 'b'}):
         layer = tf.layers.Dense(
-            out_dim, activation=lambda x: nl(x, name='output'), use_bias=use_bias,
+            out_dim, activation=activation, use_bias=use_bias,
             kernel_initializer=W_init, bias_initializer=b_init,
             trainable=True)
         ret = layer.apply(x, scope=tf.get_variable_scope())
@@ -52,4 +52,4 @@ def FullyConnected(x, out_dim,
     ret.variables = VariableHolder(W=layer.kernel)
     if use_bias:
         ret.variables.b = layer.bias
-    return ret
+    return tf.identity(ret, name='output')

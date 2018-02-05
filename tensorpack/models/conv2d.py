@@ -6,7 +6,7 @@
 import tensorflow as tf
 from .common import layer_register, VariableHolder, rename_get_variable
 from ..tfutils.common import get_tf_version_number
-from ..utils.argtools import shape2d, shape4d
+from ..utils.argtools import shape2d, shape4d, get_data_format
 
 __all__ = ['Conv2D', 'Deconv2D']
 
@@ -15,8 +15,8 @@ __all__ = ['Conv2D', 'Deconv2D']
 def Conv2D(x, out_channel, kernel_shape,
            padding='SAME', stride=1,
            W_init=None, b_init=None,
-           nl=tf.identity, split=1, use_bias=True,
-           data_format='NHWC', dilation_rate=1):
+           activation=tf.identity, split=1, use_bias=True,
+           data_format='channels_last', dilation_rate=1):
     """
     2D convolution on 4D inputs.
 
@@ -30,9 +30,7 @@ def Conv2D(x, out_channel, kernel_shape,
         split (int): Split channels as used in Alexnet. Defaults to 1 (no split).
         W_init: initializer for W. Defaults to `variance_scaling_initializer(2.0)`, i.e. kaiming-normal.
         b_init: initializer for b. Defaults to zero.
-        nl: a nonlinearity function.
         use_bias (bool): whether to use bias.
-        data_format (str): 'NHWC' or 'NCHW'.
         dilation_rate: (h, w) tuple or a int.
 
     Returns:
@@ -43,6 +41,7 @@ def Conv2D(x, out_channel, kernel_shape,
     * ``W``: weights
     * ``b``: bias
     """
+    data_format = get_data_format(data_format, tfmode=False)
     in_shape = x.get_shape().as_list()
     channel_axis = 3 if data_format == 'NHWC' else 1
     in_channel = in_shape[channel_axis]
@@ -79,7 +78,7 @@ def Conv2D(x, out_channel, kernel_shape,
                    for i, k in zip(inputs, kernels)]
         conv = tf.concat(outputs, channel_axis)
 
-    ret = nl(tf.nn.bias_add(conv, b, data_format=data_format) if use_bias else conv, name='output')
+    ret = activation(tf.nn.bias_add(conv, b, data_format=data_format) if use_bias else conv, name='output')
     ret.variables = VariableHolder(W=W)
     if use_bias:
         ret.variables.b = b
@@ -90,8 +89,8 @@ def Conv2D(x, out_channel, kernel_shape,
 def Deconv2D(x, out_channel, kernel_shape,
              stride, padding='SAME',
              W_init=None, b_init=None,
-             nl=tf.identity, use_bias=True,
-             data_format='NHWC'):
+             activation=tf.identity, use_bias=True,
+             data_format='channels_last'):
     """
     2D deconvolution on 4D inputs.
 
@@ -104,7 +103,6 @@ def Deconv2D(x, out_channel, kernel_shape,
         padding (str): 'valid' or 'same'. Case insensitive.
         W_init: initializer for W. Defaults to `tf.variance_scaling_initializer(2.0)`, i.e. kaiming-normal.
         b_init: initializer for b. Defaults to zero.
-        nl: a nonlinearity function.
         use_bias (bool): whether to use bias.
 
     Returns:
@@ -115,13 +113,6 @@ def Deconv2D(x, out_channel, kernel_shape,
     * ``W``: weights
     * ``b``: bias
     """
-    in_shape = x.get_shape().as_list()
-    channel_axis = 3 if data_format == 'NHWC' else 1
-    in_channel = in_shape[channel_axis]
-    assert in_channel is not None, "[Deconv2D] Input cannot have unknown channel!"
-
-    assert isinstance(out_channel, int), out_channel
-
     if W_init is None:
         W_init = tf.variance_scaling_initializer(scale=2.0)
     if b_init is None:
@@ -131,8 +122,8 @@ def Deconv2D(x, out_channel, kernel_shape,
         layer = tf.layers.Conv2DTranspose(
             out_channel, kernel_shape,
             strides=stride, padding=padding,
-            data_format='channels_last' if data_format == 'NHWC' else 'channels_first',
-            activation=lambda x: nl(x, name='output'),
+            data_format=data_format,
+            activation=activation,
             use_bias=use_bias,
             kernel_initializer=W_init,
             bias_initializer=b_init,
@@ -142,4 +133,4 @@ def Deconv2D(x, out_channel, kernel_shape,
     ret.variables = VariableHolder(W=layer.kernel)
     if use_bias:
         ret.variables.b = layer.bias
-    return ret
+    return tf.identity(ret, name='output')

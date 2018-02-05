@@ -8,6 +8,7 @@ from tensorflow.contrib.framework import add_model_variable
 from tensorflow.python.training import moving_averages
 
 from ..utils import logger
+from ..utils.argtools import get_data_format
 from ..tfutils.tower import get_current_tower_context
 from ..tfutils.common import get_tf_version_number
 from ..tfutils.collection import backup_collection, restore_collection
@@ -67,7 +68,8 @@ def reshape_for_bn(param, ndims, chan, data_format):
 @layer_register()
 def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5,
               use_scale=True, use_bias=True,
-              gamma_init=tf.constant_initializer(1.0), data_format='NHWC',
+              gamma_init=tf.constant_initializer(1.0),
+              data_format='channels_last',
               internal_update=False):
     """
     Batch Normalization layer, as described in the paper:
@@ -109,6 +111,7 @@ def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5,
                 don't want to fine tune the EMA. EMA will not be updated in
                 this case.
     """
+    data_format = get_data_format(data_format, tfmode=False)
     shape = x.get_shape().as_list()
     ndims = len(shape)
     assert ndims in [2, 4]
@@ -181,7 +184,8 @@ def BatchNorm(x, use_local_stat=None, decay=0.9, epsilon=1e-5,
 
 @layer_register()
 def BatchRenorm(x, rmax, dmax, decay=0.9, epsilon=1e-5,
-                use_scale=True, use_bias=True, gamma_init=None, data_format='NHWC'):
+                use_scale=True, use_bias=True, gamma_init=None,
+                data_format='channels_last'):
     """
     Batch Renormalization layer, as described in the paper:
     `Batch Renormalization: Towards Reducing Minibatch Dependence in Batch-Normalized Models
@@ -210,18 +214,13 @@ def BatchRenorm(x, rmax, dmax, decay=0.9, epsilon=1e-5,
     ndims = len(shape)
     assert ndims in [2, 4]
     if ndims == 2:
-        data_format = 'NHWC'    # error using NCHW? (see #190)
+        data_format = 'channels_last'    # error using NCHW? (see #190)
         x = tf.reshape(x, [-1, 1, 1, shape[1]])
-    if data_format == 'NCHW':
-        n_out = shape[1]
-    else:
-        n_out = shape[-1]  # channel
-    assert n_out is not None, "Input to BatchRenorm cannot have unknown channels!"
 
     ctx = get_current_tower_context()
     coll_bk = backup_collection([tf.GraphKeys.UPDATE_OPS])
     layer = tf.layers.BatchNormalization(
-        axis=1 if data_format == 'NCHW' else 3,
+        axis=1 if data_format == 'channels_first' else 3,
         momentum=decay, epsilon=epsilon,
         center=use_bias, scale=use_scale,
         renorm=True,

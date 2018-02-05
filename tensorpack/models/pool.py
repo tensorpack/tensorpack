@@ -7,7 +7,7 @@ import numpy as np
 
 from .shape_utils import StaticDynamicShape
 from .common import layer_register
-from ..utils.argtools import shape2d
+from ..utils.argtools import shape2d, get_data_format
 from ._test import TestModel
 
 
@@ -16,7 +16,7 @@ __all__ = ['MaxPooling', 'FixedUnPooling', 'AvgPooling', 'GlobalAvgPooling',
 
 
 @layer_register(log_shape=True)
-def MaxPooling(x, shape, stride=None, padding='VALID', data_format='NHWC'):
+def MaxPooling(x, shape, stride=None, padding='VALID', data_format='channels_last'):
     """
     Max Pooling on 4D tensors.
 
@@ -31,13 +31,12 @@ def MaxPooling(x, shape, stride=None, padding='VALID', data_format='NHWC'):
     """
     if stride is None:
         stride = shape
-    ret = tf.layers.max_pooling2d(x, shape, stride, padding,
-                                  'channels_last' if data_format == 'NHWC' else 'channels_first')
+    ret = tf.layers.max_pooling2d(x, shape, stride, padding, data_format=data_format)
     return tf.identity(ret, name='output')
 
 
 @layer_register(log_shape=True)
-def AvgPooling(x, shape, stride=None, padding='VALID', data_format='NHWC'):
+def AvgPooling(x, shape, stride=None, padding='VALID', data_format='channels_last'):
     """
     Average Pooling on 4D tensors.
 
@@ -52,13 +51,12 @@ def AvgPooling(x, shape, stride=None, padding='VALID', data_format='NHWC'):
     """
     if stride is None:
         stride = shape
-    ret = tf.layers.average_pooling2d(x, shape, stride, padding,
-                                      'channels_last' if data_format == 'NHWC' else 'channels_first')
+    ret = tf.layers.average_pooling2d(x, shape, stride, padding, data_format=data_format)
     return tf.identity(ret, name='output')
 
 
 @layer_register(log_shape=True)
-def GlobalAvgPooling(x, data_format='NHWC'):
+def GlobalAvgPooling(x, data_format='channels_last'):
     """
     Global average pooling as in the paper `Network In Network
     <http://arxiv.org/abs/1312.4400>`_.
@@ -69,8 +67,7 @@ def GlobalAvgPooling(x, data_format='NHWC'):
         tf.Tensor: a NC tensor named ``output``.
     """
     assert x.shape.ndims == 4
-    assert data_format in ['NHWC', 'NCHW']
-    axis = [1, 2] if data_format == 'NHWC' else [2, 3]
+    axis = [1, 2] if data_format == 'channels_last' else [2, 3]
     return tf.reduce_mean(x, axis, name='output')
 
 
@@ -90,7 +87,7 @@ def UnPooling2x2ZeroFilled(x):
 
 
 @layer_register(log_shape=True)
-def FixedUnPooling(x, shape, unpool_mat=None, data_format='NHWC'):
+def FixedUnPooling(x, shape, unpool_mat=None, data_format='channels_last'):
     """
     Unpool the input with a fixed matrix to perform kronecker product with.
 
@@ -103,6 +100,7 @@ def FixedUnPooling(x, shape, unpool_mat=None, data_format='NHWC'):
     Returns:
         tf.Tensor: a 4D image tensor.
     """
+    data_format = get_data_format(data_format, tfmode=False)
     shape = shape2d(shape)
 
     output_shape = StaticDynamicShape(x)
