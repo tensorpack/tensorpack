@@ -10,8 +10,10 @@ import itertools
 import tqdm
 import numpy as np
 import json
+import six
 import tensorflow as tf
 
+assert six.PY3, "FasterRCNN requires Python 3!"
 
 from tensorpack import *
 from tensorpack.tfutils.summary import add_moving_summary

@@ -106,14 +106,14 @@ class ResizeShortestEdge(TransformAugmentorBase):
 class RandomResize(TransformAugmentorBase):
     """ Randomly rescale width and height of the image."""
 
-    def __init__(self, xrange, yrange, minimum=(0, 0), aspect_ratio_thres=0.15,
+    def __init__(self, xrange, yrange=None, minimum=(0, 0), aspect_ratio_thres=0.15,
                  interp=cv2.INTER_LINEAR):
         """
         Args:
             xrange (tuple): a (min, max) tuple. If is floating point, the
                 tuple defines the range of scaling ratio of new width, e.g. (0.9, 1.2).
                 If is integer, the tuple defines the range of new width in pixels, e.g. (200, 350).
-            yrange (tuple): similar to xrange, but for height.
+            yrange (tuple): similar to xrange, but for height. Should be None when aspect_ratio_thres==0.
             minimum (tuple): (xmin, ymin) in pixels. To avoid scaling down too much.
             aspect_ratio_thres (float): discard samples which change aspect ratio
                 larger than this threshold. Set to 0 to keep aspect ratio.
@@ -126,11 +126,16 @@ class RandomResize(TransformAugmentorBase):
         def is_float(tp):
             return isinstance(tp[0], float) or isinstance(tp[1], float)
 
-        assert is_float(xrange) == is_float(yrange), "xrange and yrange has different type!"
+        if yrange is not None:
+            assert is_float(xrange) == is_float(yrange), "xrange and yrange has different type!"
         self._is_scale = is_float(xrange)
 
-        if self._is_scale and aspect_ratio_thres == 0:
-            assert xrange == yrange
+        if aspect_ratio_thres == 0:
+            if self._is_scale:
+                assert xrange == yrange or yrange is None
+            else:
+                if yrange is not None:
+                    logger.warn("aspect_ratio_thres==0, yrange is not used!")
 
     def _get_augment_params(self, img):
         cnt = 0
