@@ -191,8 +191,24 @@ def get_train_dataflow(add_mask=False):
     Return a training dataflow. Each datapoint is:
     image, fm_labels, fm_boxes, gt_boxes, gt_class [, masks]
     """
+
     imgs = COCODetection.load_many(
         config.BASEDIR, config.TRAIN_DATASET, add_gt=True, add_mask=add_mask)
+    """
+    To train on your own data, change this to your loader.
+    Produce "igms" as a list of dict, in the dict the following keys are needed for training:
+    height, width: integer
+    file_name: str
+    boxes: kx4 floats
+    class: k integers
+    is_crowd: k booleans. Use k False if you don't know what it means.
+    segmentation: k numpy arrays. Each array is a polygon of shape Nx2.
+        If your segmentation annotations are masks rather than polygons,
+        either convert it, or the augmentation code below will need to be
+        changed or skipped accordingly.
+    """
+
+
     # Valid training images should have at least one fg box.
     # But this filter shall not be applied for testing.
     imgs = list(filter(lambda img: len(img['boxes']) > 0, imgs))    # log invalid training
@@ -236,7 +252,8 @@ def get_train_dataflow(add_mask=False):
             segmentation = [segmentation[k] for k in range(len(segmentation)) if not is_crowd[k]]
             assert len(segmentation) == len(boxes)
 
-            # one image-sized binary mask per box
+            # Apply augmentation on polygon coordinates.
+            # And produce one image-sized binary mask per box.
             masks = []
             for polys in segmentation:
                 polys = [aug.augment_coords(p, params) for p in polys]

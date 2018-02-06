@@ -82,10 +82,12 @@ class COCODetection(object):
         Args:
             add_gt: whether to add ground truth bounding box annotations to the dicts
             add_mask: whether to also add ground truth mask
+
         Returns:
             a list of dict, each has keys including:
-                height, width, id, file_name,
-                and (if add_gt is True) boxes, class, is_crowd
+                'height', 'width', 'id', 'file_name',
+                and (if add_gt is True) 'boxes', 'class', 'is_crowd', and optionally
+                'segmentation'.
         """
         if add_mask:
             assert add_gt
@@ -112,6 +114,7 @@ class COCODetection(object):
     def _add_detection_gt(self, img, add_mask):
         """
         Add 'boxes', 'class', 'is_crowd' of this image to the dict, used by detection.
+        If add_mask is True, also add 'segmentation' in coco poly format.
         """
         ann_ids = self.coco.getAnnIds(imgIds=img['id'], iscrowd=None)
         objs = self.coco.loadAnns(ann_ids)
@@ -184,6 +187,8 @@ class COCODetection(object):
     def load_many(basedir, names, add_gt=True, add_mask=False):
         """
         Load and merges several instance files together.
+
+        Returns the same format as :meth:`COCODetection.load`.
         """
         if not isinstance(names, (list, tuple)):
             names = [names]
