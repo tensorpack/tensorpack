@@ -116,7 +116,7 @@ class InferenceRunner(InferenceRunnerBase):
             device (int): the device to use
         """
         if isinstance(input, DataFlow):
-            input = FeedInput(input, infinite=False)
+            input = FeedInput(input, infinite=True)     # TODO a better way to handle inference size
         assert isinstance(input, InputSource), input
         self._tower_name = tower_name
         self._device = device
