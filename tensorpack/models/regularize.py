@@ -117,12 +117,10 @@ def regularize_cost_from_collection(name='regularize_cost'):
 @layer_register(use_scope=None)
 def Dropout(x, *args, **kwargs):
     """
-    A wrapper around `tf.layers.Dropout`.
-
-    Args:
-        is_training (bool): If None, will use the current :class:`tensorpack.tfutils.TowerContext`
-            to figure out.
-        kwargs: same as in `tf.layers.Dropout`.
+    Same as `tf.layers.dropout`.
+    However, for historical reasons, the first positional argument is
+    interpreted as keep_prob rather than drop_prob.
+    Explicitly use `rate=` keyword arguments to ensure things are consistent.
     """
     tfargs = parse_args(
         args=args, kwargs=kwargs,
@@ -135,7 +133,7 @@ def Dropout(x, *args, **kwargs):
         logger.warn(
             "The first positional argument to tensorpack.Dropout is the probability to keep rather than to drop. "
             "This is different from the rate argument in tf.layers.Dropout due to historical reasons. "
-            "To mimic tf.layers.Dropout, use keyword argument 'rate' instead")
+            "To mimic tf.layers.Dropout, explicitly use keyword argument 'rate' instead")
         rate = 1 - tfargs.pop('rate')
     elif 'keep_prob' in tfargs:
         assert 'rate' not in tfargs, "Cannot set both keep_prob and rate!"

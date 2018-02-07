@@ -27,6 +27,8 @@ def Conv2D(x, *args, **kwargs):
         split (int): Group convolution. Defaults to 1 (no group).
             Note that this is not a fast implementation.
 
+        Other args the same as `tf.layers.Conv2D`.
+
     Variable Names:
 
     * ``W``: weights
@@ -110,6 +112,9 @@ def Deconv2D(x, *args, **kwargs):
 
     1. Default weight initializer is variance_scaling_initializer(2.0).
     2. Default padding is 'same'
+
+    Args:
+        The same as `tf.layers.Conv2DTranspose`.
 
     Variable Names:
 

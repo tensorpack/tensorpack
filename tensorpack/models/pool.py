@@ -19,7 +19,7 @@ __all__ = ['MaxPooling', 'FixedUnPooling', 'AvgPooling', 'GlobalAvgPooling',
 @layer_register(log_shape=True)
 def MaxPooling(x, *args, **kwargs):
     """
-    A wrapper around `tf.layers.MaxPooling2D`.
+    Same as `tf.layers.MaxPooling2D`.
     """
     tfargs = parse_args(
         args=args,
@@ -38,7 +38,7 @@ def MaxPooling(x, *args, **kwargs):
 @layer_register(log_shape=True)
 def AvgPooling(x, *args, **kwargs):
     """
-    A wrapper around `tf.layers.AveragePooling2D`.
+    Same as `tf.layers.AveragePooling2D`.
     """
     tfargs = parse_args(
         args=args,

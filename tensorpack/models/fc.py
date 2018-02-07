@@ -19,6 +19,9 @@ def FullyConnected(x, *args, **kwargs):
 
     Differences: Default weight initializer is variance_scaling_initializer(2.0).
 
+    Args:
+        The same as `tf.layers.Dense`.
+
     Variable Names:
 
     * ``W``: weights of shape [in_dim, out_dim]
