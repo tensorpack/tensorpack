@@ -141,8 +141,8 @@ def setup_keras_trainer(
             total_loss = tf.add_n(loss_tensors + [loss_reg], name=TOTAL_LOSS_NAME)
             add_moving_summary(loss_reg, total_loss, *loss_tensors)
         else:
-            add_moving_summary(*loss_tensors)
             total_loss = tf.add_n(loss_tensors, name=TOTAL_LOSS_NAME)
+            add_moving_summary(total_loss, *loss_tensors)
 
         if metrics and (ctx.is_main_training_tower or not ctx.is_training):
             # for list: one metric for each output
