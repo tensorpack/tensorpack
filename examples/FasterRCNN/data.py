@@ -208,7 +208,6 @@ def get_train_dataflow(add_mask=False):
         changed or skipped accordingly.
     """
 
-
     # Valid training images should have at least one fg box.
     # But this filter shall not be applied for testing.
     imgs = list(filter(lambda img: len(img['boxes']) > 0, imgs))    # log invalid training

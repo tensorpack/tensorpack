@@ -36,8 +36,8 @@ try:
     import tensorflow as tf  # noqa
     _version = tf.__version__.split('.')
     assert int(_version[0]) >= 1, "TF>=1.0 is required!"
-    if int(_version[1]) < 2:
-        print("TF<1.2 support will be removed after 2018-02-28!")
+    if int(_version[1]) < 3:
+        print("TF<1.3 support will be removed after 2018-03-15! Actually many examples already require TF>=1.3.")
     _HAS_TF = True
 except ImportError:
     _HAS_TF = False

@@ -60,7 +60,8 @@ def Conv2D(x, out_channel, kernel_shape,
         kw_args['dilations'] = shape4d(dilation_rate, data_format=data_format)
 
     if W_init is None:
-        W_init = tf.variance_scaling_initializer(scale=2.0)
+        # W_init = tf.variance_scaling_initializer(scale=2.0)
+        W_init = tf.contrib.layers.variance_scaling_initializer(2.0)
     if b_init is None:
         b_init = tf.constant_initializer()
 
@@ -114,7 +115,8 @@ def Deconv2D(x, out_channel, kernel_shape,
     * ``b``: bias
     """
     if W_init is None:
-        W_init = tf.variance_scaling_initializer(scale=2.0)
+        # W_init = tf.variance_scaling_initializer(scale=2.0)
+        W_init = tf.contrib.layers.variance_scaling_initializer(2.0)
     if b_init is None:
         b_init = tf.constant_initializer()
 
