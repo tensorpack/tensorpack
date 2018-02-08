@@ -13,88 +13,102 @@ __all__ = ['Conv2D', 'Deconv2D']
 
 
 @layer_register(log_shape=True)
-def Conv2D(x, *args, **kwargs):
+@parse_args(
+    args_names=['filters', 'kernel_size'],
+    name_mapping={
+        'out_channel': 'filters',
+        'kernel_shape': 'kernel_size',
+        'stride': 'strides',
+    })
+def Conv2D(
+        inputs,
+        filters,
+        kernel_size,
+        strides=(1, 1),
+        padding='same',
+        data_format='channels_last',
+        dilation_rate=(1, 1),
+        activation=None,
+        use_bias=True,
+        kernel_initializer=tf.contrib.layers.variance_scaling_initializer(2.0),
+        bias_initializer=tf.zeros_initializer(),
+        kernel_regularizer=None,
+        bias_regularizer=None,
+        activity_regularizer=None,
+        split=1):
     """
     A wrapper around `tf.layers.Conv2D`.
+    Some differences to maintain backward-compatibility:
 
-    Differences:
-
-    1. Default weight initializer is variance_scaling_initializer(2.0).
-    2. Default padding is 'same'
-    3. Support 'split' argument.
-
-    Args:
-        split (int): Group convolution. Defaults to 1 (no group).
-            Note that this is not a fast implementation.
-
-        Other args the same as `tf.layers.Conv2D`.
+    1. Default kernel initializer is variance_scaling_initializer(2.0).
+    2. Default padding is 'same'.
+    3. Support 'split' argument to do group conv.
 
     Variable Names:
 
     * ``W``: weights
     * ``b``: bias
     """
-    tfargs = parse_args(
-        args=args, kwargs=kwargs,
-        args_names=['filters', 'kernel_size'],
-        name_mapping={
-            'out_channel': 'filters',
-            'kernel_shape': 'kernel_size',
-            'stride': 'strides',
-        }
-    )
-    tfargs.setdefault('kernel_initializer', tf.contrib.layers.variance_scaling_initializer(2.0))
-    tfargs.setdefault('bias_initializer', tf.constant_initializer())
-    tfargs.setdefault('padding', 'same')
-    split = tfargs.pop('split', 1)
-
     if split == 1:
         with rename_get_variable({'kernel': 'W', 'bias': 'b'}):
-            layer = tf.layers.Conv2D(**tfargs)
-            ret = layer.apply(x, scope=tf.get_variable_scope())
+            layer = tf.layers.Conv2D(
+                filters,
+                kernel_size,
+                strides=strides,
+                padding=padding,
+                data_format=data_format,
+                dilation_rate=dilation_rate,
+                activation=activation,
+                use_bias=use_bias,
+                kernel_initializer=kernel_initializer,
+                bias_initializer=bias_initializer,
+                kernel_regularizer=kernel_regularizer,
+                bias_regularizer=bias_regularizer,
+                activity_regularizer=activity_regularizer)
+            ret = layer.apply(inputs, scope=tf.get_variable_scope())
             ret = tf.identity(ret, name='output')
 
         ret.variables = VariableHolder(W=layer.kernel)
-        if tfargs.get('use_bias', True):
+        if use_bias:
             ret.variables.b = layer.bias
 
     else:
         # group conv implementation
-        data_format = get_data_format(
-            tfargs.get('data_format', 'channels_last'), tfmode=False)
-        in_shape = x.get_shape().as_list()
+        data_format = get_data_format(data_format, tfmode=False)
+        in_shape = inputs.get_shape().as_list()
         channel_axis = 3 if data_format == 'NHWC' else 1
         in_channel = in_shape[channel_axis]
         assert in_channel is not None, "[Conv2D] Input cannot have unknown channel!"
         assert in_channel % split == 0
 
-        out_channel = tfargs.get('filters')
-        dilation_rate = tfargs.get('dilation_rate', 1)
+        assert kernel_regularizer is None and bias_regularizer is None and activity_regularizer is None, \
+            "Not supported by group conv now!"
+
+        out_channel = filters
         assert out_channel % split == 0
-        assert dilation_rate == 1 or get_tf_version_number() >= 1.5, 'TF>=1.5 required for group dilated conv'
+        assert dilation_rate == (1, 1) or get_tf_version_number() >= 1.5, 'TF>=1.5 required for group dilated conv'
 
-        kernel_shape = shape2d(tfargs.get('kernel_size'))
-        padding = tfargs.get('padding').upper()
+        kernel_shape = shape2d(kernel_size)
         filter_shape = kernel_shape + [in_channel / split, out_channel]
-        stride = shape4d(tfargs.get('strides', 1), data_format=data_format)
+        stride = shape4d(strides, data_format=data_format)
 
-        kw_args = dict(data_format=data_format)
+        kwargs = dict(data_format=data_format)
         if get_tf_version_number() >= 1.5:
-            kw_args['dilations'] = shape4d(dilation_rate, data_format=data_format)
+            kwargs['dilations'] = shape4d(dilation_rate, data_format=data_format)
 
         W = tf.get_variable(
-            'W', filter_shape, initializer=tfargs.get('kernel_initializer'))
+            'W', filter_shape, initializer=kernel_initializer)
 
-        use_bias = tfargs.get('use_bias', True)
         if use_bias:
-            b = tf.get_variable('b', [out_channel], initializer=tfargs.get('bias_initializer'))
+            b = tf.get_variable('b', [out_channel], initializer=bias_initializer)
 
-        inputs = tf.split(x, split, channel_axis)
+        inputs = tf.split(inputs, split, channel_axis)
         kernels = tf.split(W, split, 3)
-        outputs = [tf.nn.conv2d(i, k, stride, padding, **kw_args)
+        outputs = [tf.nn.conv2d(i, k, stride, padding.upper(), **kwargs)
                    for i, k in zip(inputs, kernels)]
         conv = tf.concat(outputs, channel_axis)
-        activation = tfargs.get('activation', tf.identity)
+        if activation is None:
+            activation = tf.identity
         ret = activation(tf.nn.bias_add(conv, b, data_format=data_format) if use_bias else conv, name='output')
 
         ret.variables = VariableHolder(W=W)
@@ -104,41 +118,57 @@ def Conv2D(x, *args, **kwargs):
 
 
 @layer_register(log_shape=True)
-def Deconv2D(x, *args, **kwargs):
+@parse_args(
+    args_names=['filters', 'kernel_size', 'strides'],
+    name_mapping={
+        'out_channel': 'filters',
+        'kernel_shape': 'kernel_size',
+        'stride': 'strides',
+    })
+def Deconv2D(
+        inputs,
+        filters,
+        kernel_size,
+        strides=(1, 1),
+        padding='same',
+        data_format='channels_last',
+        activation=None,
+        use_bias=True,
+        kernel_initializer=tf.contrib.layers.variance_scaling_initializer(2.0),
+        bias_initializer=tf.zeros_initializer(),
+        kernel_regularizer=None,
+        bias_regularizer=None,
+        activity_regularizer=None):
     """
     A wrapper around `tf.layers.Conv2DTranspose`.
+    Some differences to maintain backward-compatibility:
 
-    Differences:
-
-    1. Default weight initializer is variance_scaling_initializer(2.0).
+    1. Default kernel initializer is variance_scaling_initializer(2.0).
     2. Default padding is 'same'
-
-    Args:
-        The same as `tf.layers.Conv2DTranspose`.
 
     Variable Names:
 
     * ``W``: weights
     * ``b``: bias
     """
-    tfargs = parse_args(
-        args=args, kwargs=kwargs,
-        args_names=['filters', 'kernel_size', 'strides'],
-        name_mapping={
-            'out_channel': 'filters',
-            'kernel_shape': 'kernel_size',
-            'stride': 'strides'
-        }
-    )
-    tfargs.setdefault('kernel_initializer', tf.contrib.layers.variance_scaling_initializer(2.0))
-    tfargs.setdefault('bias_initializer', tf.constant_initializer())
-    tfargs.setdefault('padding', 'same')
 
     with rename_get_variable({'kernel': 'W', 'bias': 'b'}):
-        layer = tf.layers.Conv2DTranspose(**tfargs)
-        ret = layer.apply(x, scope=tf.get_variable_scope())
+        layer = tf.layers.Conv2DTranspose(
+            filters,
+            kernel_size,
+            strides=strides,
+            padding=padding,
+            data_format=data_format,
+            activation=activation,
+            use_bias=use_bias,
+            kernel_initializer=kernel_initializer,
+            bias_initializer=bias_initializer,
+            kernel_regularizer=kernel_regularizer,
+            bias_regularizer=bias_regularizer,
+            activity_regularizer=activity_regularizer)
+        ret = layer.apply(inputs, scope=tf.get_variable_scope())
 
     ret.variables = VariableHolder(W=layer.kernel)
-    if tfargs.get('use_bias', True):
+    if use_bias:
         ret.variables.b = layer.bias
     return tf.identity(ret, name='output')

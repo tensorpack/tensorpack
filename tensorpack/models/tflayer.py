@@ -4,6 +4,7 @@
 
 import tensorflow as tf
 import six
+import functools
 
 from ..utils.argtools import get_data_format
 from ..tfutils.common import get_tf_version_number
@@ -28,27 +29,44 @@ def map_common_tfargs(kwargs):
     return kwargs
 
 
-def parse_args(args, kwargs, args_names, name_mapping):
-    kwargs = map_common_tfargs(kwargs)
+def parse_args(args_names, name_mapping):
+    """
+    After applying this decorator:
+    1. data_format becomes tf.layers style
+    2. nl becomes activation
+    3. initializers are renamed
+    4. positional args are transformed to correspoding kwargs, according to args_names
+    5. kwargs are mapped to tf.layers names if needed, by name_mapping
+    """
 
-    posarg_dic = {}
-    assert len(args) <= len(args_names), \
-        "Please use kwargs instead of positional args to call this model, " \
-        "except for the following arguments: {}".format(', '.join(args_names))
-    for pos_arg, name in zip(args, args_names):
-        posarg_dic[name] = pos_arg
+    def decorator(func):
+        @functools.wraps(func)
+        def decorated_func(inputs, *args, **kwargs):
+            kwargs = map_common_tfargs(kwargs)
 
-    ret = {}
-    for name, arg in six.iteritems(kwargs):
-        newname = name_mapping.get(name, None)
-        if newname is not None:
-            assert newname not in kwargs, \
-                "Argument {} and {} conflicts!".format(name, newname)
-        else:
-            newname = name
-        ret[newname] = arg
-    ret.update(posarg_dic)  # Let pos arg overwrite kw arg, for argscope
-    return ret
+            posarg_dic = {}
+            assert len(args) <= len(args_names), \
+                "Please use kwargs instead of positional args to call this model, " \
+                "except for the following arguments: {}".format(', '.join(args_names))
+            for pos_arg, name in zip(args, args_names):
+                posarg_dic[name] = pos_arg
+
+            ret = {}
+            for name, arg in six.iteritems(kwargs):
+                newname = name_mapping.get(name, None)
+                if newname is not None:
+                    assert newname not in kwargs, \
+                        "Argument {} and {} conflicts!".format(name, newname)
+                else:
+                    newname = name
+                ret[newname] = arg
+            ret.update(posarg_dic)  # Let pos arg overwrite kw arg, for argscope to work
+
+            return func(inputs, **ret)
+
+        return decorated_func
+
+    return decorator
 
 
 def rename_get_variable(mapping):

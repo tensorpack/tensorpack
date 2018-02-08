@@ -17,40 +17,40 @@ __all__ = ['MaxPooling', 'FixedUnPooling', 'AvgPooling', 'GlobalAvgPooling',
 
 
 @layer_register(log_shape=True)
-def MaxPooling(x, *args, **kwargs):
+@parse_args(args_names=['pool_size', 'strides'],
+            name_mapping={'shape': 'pool_size', 'stride': 'strides'})
+def MaxPooling(
+        inputs,
+        pool_size,
+        strides=None,
+        padding='valid',
+        data_format='channels_last'):
     """
-    Same as `tf.layers.MaxPooling2D`.
+    Same as `tf.layers.MaxPooling2D`. Default strides is equal to pool_size.
     """
-    tfargs = parse_args(
-        args=args,
-        kwargs=kwargs,
-        args_names=['pool_size', 'strides'],
-        name_mapping={
-            'shape': 'pool_size',
-            'stride': 'strides'})
-    if tfargs.get('strides', None) is None:
-        tfargs['strides'] = tfargs['pool_size']
-    layer = tf.layers.MaxPooling2D(**tfargs)
-    ret = layer.apply(x, scope=tf.get_variable_scope())
+    if strides is None:
+        strides = pool_size
+    layer = tf.layers.MaxPooling2D(pool_size, strides, padding=padding, data_format=data_format)
+    ret = layer.apply(inputs, scope=tf.get_variable_scope())
     return tf.identity(ret, name='output')
 
 
 @layer_register(log_shape=True)
-def AvgPooling(x, *args, **kwargs):
+@parse_args(args_names=['pool_size', 'strides'],
+            name_mapping={'shape': 'pool_size', 'stride': 'strides'})
+def AvgPooling(
+        inputs,
+        pool_size,
+        strides=None,
+        padding='valid',
+        data_format='channels_last'):
     """
-    Same as `tf.layers.AveragePooling2D`.
+    Same as `tf.layers.AveragePooling2D`. Default strides is equal to pool_size.
     """
-    tfargs = parse_args(
-        args=args,
-        kwargs=kwargs,
-        args_names=['pool_size', 'strides'],
-        name_mapping={
-            'shape': 'pool_size',
-            'stride': 'strides'})
-    if tfargs.get('strides', None) is None:
-        tfargs['strides'] = tfargs['pool_size']
-    layer = tf.layers.AveragePooling2D(**tfargs)
-    ret = layer.apply(x, scope=tf.get_variable_scope())
+    if strides is None:
+        strides = pool_size
+    layer = tf.layers.AveragePooling2D(pool_size, strides, padding=padding, data_format=data_format)
+    ret = layer.apply(inputs, scope=tf.get_variable_scope())
     return tf.identity(ret, name='output')
 
 

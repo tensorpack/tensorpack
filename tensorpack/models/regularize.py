@@ -9,7 +9,6 @@ from ..utils import logger
 from ..utils.argtools import graph_memoized
 from ..tfutils.tower import get_current_tower_context
 from .common import layer_register
-from .tflayer import parse_args
 
 __all__ = ['regularize_cost', 'l2_regularizer', 'l1_regularizer', 'Dropout']
 
@@ -122,26 +121,23 @@ def Dropout(x, *args, **kwargs):
     interpreted as keep_prob rather than drop_prob.
     Explicitly use `rate=` keyword arguments to ensure things are consistent.
     """
-    tfargs = parse_args(
-        args=args, kwargs=kwargs,
-        args_names=['rate'],
-        name_mapping={
-            'is_training': 'training',
-        }
-    )
+    if 'is_training' in kwargs:
+        kwargs['training'] = kwargs.pop('is_training')
     if len(args) > 0:
         logger.warn(
             "The first positional argument to tensorpack.Dropout is the probability to keep rather than to drop. "
             "This is different from the rate argument in tf.layers.Dropout due to historical reasons. "
             "To mimic tf.layers.Dropout, explicitly use keyword argument 'rate' instead")
-        rate = 1 - tfargs.pop('rate')
-    elif 'keep_prob' in tfargs:
-        assert 'rate' not in tfargs, "Cannot set both keep_prob and rate!"
-        rate = 1 - tfargs.pop('keep_prob')
-    elif rate not in tfargs:
+        rate = 1 - args[0]
+    elif 'keep_prob' in kwargs:
+        assert 'rate' not in kwargs, "Cannot set both keep_prob and rate!"
+        rate = 1 - kwargs.pop('keep_prob')
+    elif 'rate' in kwargs:
+        rate = kwargs.pop('rate')
+    else:
         rate = 0.5
 
-    if tfargs.get('training', None) is None:
-        tfargs['training'] = get_current_tower_context().is_training
+    if kwargs.get('training', None) is None:
+        kwargs['training'] = get_current_tower_context().is_training
 
-    return tf.layers.dropout(x, rate=rate, **tfargs)
+    return tf.layers.dropout(x, rate=rate, **kwargs)

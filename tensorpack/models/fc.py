@@ -13,36 +13,44 @@ __all__ = ['FullyConnected']
 
 
 @layer_register(log_shape=True)
-def FullyConnected(x, *args, **kwargs):
+@parse_args(
+    args_names=['units'],
+    name_mapping={'out_dim': 'units'})
+def FullyConnected(
+        inputs,
+        units,
+        activation=None,
+        use_bias=True,
+        kernel_initializer=tf.contrib.layers.variance_scaling_initializer(2.0),
+        bias_initializer=tf.zeros_initializer(),
+        kernel_regularizer=None,
+        bias_regularizer=None,
+        activity_regularizer=None):
     """
     A wrapper around `tf.layers.Dense`.
-
-    Differences: Default weight initializer is variance_scaling_initializer(2.0).
-
-    Args:
-        The same as `tf.layers.Dense`.
+    One differences to maintain backward-compatibility:
+    Default weight initializer is variance_scaling_initializer(2.0).
 
     Variable Names:
 
     * ``W``: weights of shape [in_dim, out_dim]
     * ``b``: bias
     """
-    tfargs = parse_args(
-        args=args, kwargs=kwargs,
-        args_names=['units'],
-        name_mapping={
-            'out_dim': 'units'
-        })
-    tfargs.setdefault('kernel_initializer', tf.contrib.layers.variance_scaling_initializer(2.0))
-    tfargs.setdefault('bias_initializer', tf.constant_initializer())
 
-    x = symbf.batch_flatten(x)
-
+    inputs = symbf.batch_flatten(inputs)
     with rename_get_variable({'kernel': 'W', 'bias': 'b'}):
-        layer = tf.layers.Dense(**tfargs)
-        ret = layer.apply(x, scope=tf.get_variable_scope())
+        layer = tf.layers.Dense(
+            units=units,
+            activation=activation,
+            use_bias=use_bias,
+            kernel_initializer=kernel_initializer,
+            bias_initializer=bias_initializer,
+            kernel_regularizer=kernel_regularizer,
+            bias_regularizer=bias_regularizer,
+            activity_regularizer=activity_regularizer)
+        ret = layer.apply(inputs, scope=tf.get_variable_scope())
 
     ret.variables = VariableHolder(W=layer.kernel)
-    if tfargs.get('use_bias', True):
+    if use_bias:
         ret.variables.b = layer.bias
     return tf.identity(ret, name='output')
