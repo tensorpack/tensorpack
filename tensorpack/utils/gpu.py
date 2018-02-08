@@ -4,7 +4,8 @@
 
 
 import os
-from .utils import change_env, logger
+from .utils import change_env
+from . import logger
 from .concurrency import subproc_call
 
 
