@@ -30,7 +30,13 @@ def get_nr_gpu():
     if env is not None:
         return len(env.split(','))
     output, code = subproc_call("nvidia-smi -L", timeout=5)
-    if code != 0:
-        return 0
-    output = output.decode('utf-8')
-    return len(output.strip().split('\n'))
+    if code == 0:
+        output = output.decode('utf-8')
+        return len(output.strip().split('\n'))
+    else:
+        #Note this will initialize the GPUs as defined by active session.
+        #Default will allocate all memory.
+        #Might want to create a dummy session first.
+        from tensorflow.python.client import device_lib
+        local_device_protos = device_lib.list_local_devices()
+        return len([x.name for x in local_device_protos if x.device_type == 'GPU'])
