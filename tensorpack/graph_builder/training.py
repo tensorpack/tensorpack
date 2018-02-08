@@ -123,6 +123,9 @@ class SyncMultiGPUParameterServerBuilder(DataParallelBuilder):
 
     It is an equivalent of ``--variable_update=parameter_server`` in
     `tensorflow/benchmarks <https://github.com/tensorflow/benchmarks>`_.
+
+    Attribute:
+        grads: list of (g, v). Averaged gradients, available after build()
     """
     def __init__(self, towers, ps_device):
         """
@@ -158,15 +161,15 @@ class SyncMultiGPUParameterServerBuilder(DataParallelBuilder):
         # self.train_op = tf.group(*ops)
         # return
 
-        grads = average_grads(grad_list, colocation=True)
+        self.grads = average_grads(grad_list, colocation=True)
         # grads = grad_list[0]
 
         opt = get_opt_fn()
         if self.ps_device == 'cpu':
             with tf.device('/cpu:0'):
-                train_op = opt.apply_gradients(grads, name='train_op')
+                train_op = opt.apply_gradients(self.grads, name='train_op')
         else:
-            train_op = opt.apply_gradients(grads, name='train_op')
+            train_op = opt.apply_gradients(self.grads, name='train_op')
         return train_op
 
 
@@ -179,11 +182,16 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
 
     It is an equivalent of ``--variable_update=replicated`` in
     `tensorflow/benchmarks <https://github.com/tensorflow/benchmarks>`_.
+
+    Attribute:
+        grads: #GPU number of lists of (g, v). Synchronized gradients on each device, available after build()
+            Though on different deviecs, they should contain the same value.
     """
 
-    def __init__(self, towers, average):
+    def __init__(self, towers, average, use_nccl):
         super(SyncMultiGPUReplicatedBuilder, self).__init__(towers)
         self._average = average
+        self._use_nccl = use_nccl
 
     def build(self, get_grad_fn, get_opt_fn):
         """
@@ -210,20 +218,20 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
 
         DataParallelBuilder._check_grad_list(grad_list)
 
-        if True:
-            grads = allreduce_grads(grad_list, average=self._average)  # #gpu x #param x 2
+        if self._use_nccl:
+            self.grads = allreduce_grads(grad_list, average=self._average)  # #gpu x #param x 2
         else:
             agg_grad_and_vars = average_grads(grad_list, colocation=False, devices=['/cpu:0'])    # #param x 2
-            grads = []  # #gpu x #param x 2
+            self.grads = []  # #gpu x #param x 2
             for grad_and_vars in grad_list:   # grad_and_vars: #paramx2
                 # take v from each tower, and g from average.
-                grads.append(
+                self.grads.append(
                     [(g, v) for (_, v), (g, _) in zip(grad_and_vars, agg_grad_and_vars)])
 
         train_ops = []
         opt = get_opt_fn()
         with tf.name_scope('apply_gradients'):
-            for idx, grad_and_vars in enumerate(grads):
+            for idx, grad_and_vars in enumerate(self.grads):
                 with tf.device(raw_devices[idx]):
                     # apply_gradients may create variables. Make them LOCAL_VARIABLES
                     with override_to_local_variable(enable=idx > 0):

@@ -138,14 +138,14 @@ class SyncMultiGPUTrainerReplicated(SingleCostTrainer):
     """
 
     @map_arg(gpus=_int_to_range)
-    def __init__(self, gpus, average=True):
+    def __init__(self, gpus, average=True, use_nccl=True):
         """
         Args:
             gpus (int or [int]): list of GPU ids.
             average (bool): whether to average or sum gradients.
         """
         self.devices = gpus
-        self._builder = SyncMultiGPUReplicatedBuilder(gpus, average)
+        self._builder = SyncMultiGPUReplicatedBuilder(gpus, average, use_nccl)
         super(SyncMultiGPUTrainerReplicated, self).__init__()
 
     def _setup_graph(self, input, get_cost_fn, get_opt_fn):
