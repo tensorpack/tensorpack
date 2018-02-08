@@ -4,8 +4,9 @@
 
 
 import os
-from .utils import change_env
+from .utils import change_env, logger
 from .concurrency import subproc_call
+
 
 __all__ = ['change_gpu', 'get_nr_gpu']
 
