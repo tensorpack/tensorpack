@@ -58,13 +58,7 @@ def get_global_step_var():
     """
     scope = tf.VariableScope(reuse=False, name='')  # the root vs
     with tf.variable_scope(scope):
-        if get_tf_version_number() <= 1.0:
-            var = tf.get_variable('global_step',
-                                  initializer=tf.constant(0, dtype=tf.int64),
-                                  trainable=False, dtype=tf.int64)
-            tf.add_to_collection(tf.GraphKeys.GLOBAL_STEP, var)
-        else:
-            var = tf.train.get_or_create_global_step()
+        var = tf.train.get_or_create_global_step()
     return var
 
 

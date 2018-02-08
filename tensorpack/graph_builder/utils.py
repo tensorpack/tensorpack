@@ -133,7 +133,7 @@ def allreduce_grads(all_grads, average):
     return ret
 
 
-def average_grads(all_grads, colocation=True, devices=None):
+def average_grads(all_grads, colocation=True, devices=None, average=True):
     """
     Average the gradients.
 
@@ -143,6 +143,7 @@ def average_grads(all_grads, colocation=True, devices=None):
         colocation (bool): colocate gradient averaging on the device of the variable.
         devices (list[str]): assign the averaging to these device in
             round-robin. Cannot be used together with ``colocation``.
+        average (bool): do average or sum
 
     Returns:
         (N x 2): A list of N (grad, var) tuples, where grad is averaged over K.
@@ -154,6 +155,13 @@ def average_grads(all_grads, colocation=True, devices=None):
     nr_tower = len(all_grads)
     if nr_tower == 1:
         return all_grads[0]
+
+    def aggregate(grads):
+        if average:
+            return tf.multiply(tf.add_n(grads), 1.0 / nr_tower)
+        else:
+            return tf.add_n(grads)
+
     ret = []
     with tf.name_scope('AvgGrad'):
         for idx, grad_and_vars in enumerate(zip(*all_grads)):
@@ -163,16 +171,13 @@ def average_grads(all_grads, colocation=True, devices=None):
 
             if colocation:
                 with tf.device(v.device):       # colocate summed grad with var
-                    grad = tf.multiply(
-                        tf.add_n(grads), 1.0 / nr_tower)
+                    grad = aggregate(grads)
             elif devices is None:
-                grad = tf.multiply(
-                    tf.add_n(grads), 1.0 / nr_tower)
+                grad = aggregate(grads)
             else:
                 dev = devices[idx % len(devices)]
                 with tf.device(dev):
-                    grad = tf.multiply(
-                        tf.add_n(grads), 1.0 / nr_tower)
+                    grad = aggregate(grads)
             ret.append((grad, v))
     return ret
 

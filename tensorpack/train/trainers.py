@@ -143,6 +143,7 @@ class SyncMultiGPUTrainerReplicated(SingleCostTrainer):
         Args:
             gpus (int or [int]): list of GPU ids.
             average (bool): whether to average or sum gradients.
+            use_nccl (bool): use NCCL or TensorFlow copy to reduce.
         """
         self.devices = gpus
         self._builder = SyncMultiGPUReplicatedBuilder(gpus, average, use_nccl)

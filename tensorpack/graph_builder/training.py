@@ -221,7 +221,9 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
         if self._use_nccl:
             self.grads = allreduce_grads(grad_list, average=self._average)  # #gpu x #param x 2
         else:
-            agg_grad_and_vars = average_grads(grad_list, colocation=False, devices=['/cpu:0'])    # #param x 2
+            agg_grad_and_vars = average_grads(
+                grad_list, colocation=False,
+                devices=['/cpu:0'], average=self._average)    # #param x 2
             self.grads = []  # #gpu x #param x 2
             for grad_and_vars in grad_list:   # grad_and_vars: #paramx2
                 # take v from each tower, and g from average.

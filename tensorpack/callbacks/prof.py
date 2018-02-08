@@ -100,6 +100,9 @@ class GPUUtilizationTracker(Callback):
                     if stop_evt.is_set():   # or on exit
                         return
                     evt.clear()
+                    # Ignore the last datapoint. Usually is zero, makes us underestimate the util.
+                    stats -= data
+                    cnt -= 1
                     rst_queue.put(stats / cnt)
                     break
 
