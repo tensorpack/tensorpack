@@ -194,30 +194,30 @@ class NvidiaContext(object):
 
     Example:
 
-        nvidia = NvidiaContext()
-        nvidia.create_context()
+        with NvidiaContext() as ctx:
 
-        num_gpus = nvidia.NumCudaDevices()
+            num_gpus = ctx.NumCudaDevices()
 
-        for device in nvidia.Devices():
-            print(device.Name())
+            for device in ctx.Devices():
+                print(device.Name())
 
-            print(device.Memory())
-            print(device.Utilization())
+                print(device.Memory())
+                print(device.Utilization())
 
-        nvidia.destroy_context()
     """
 
     def __init__(self):
         super(NvidiaContext, self).__init__()
 
-    def create_context(self):
+    def __enter__(self):
         """Create a new context
         """
         _NVML.load()
         CheckNvmlReturn(_NVML.get_function("nvmlInit_v2")())
 
-    def destroy_context(self):
+        return self
+
+    def __exit__(self, type, value, tb):
         """Destroy current context
         """
         CheckNvmlReturn(_NVML.get_function("nvmlShutdown")())

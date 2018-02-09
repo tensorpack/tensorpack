@@ -38,11 +38,9 @@ def get_nr_gpu():
         try:
             # communicate via NVML to query device properties
             from .nvml import NvidiaContext
-            nvidia = NvidiaContext()
-            nvidia.create_context()
-            num = nvidia.NumCudaDevices()
-            nvidia.destroy_context()
-            return num
+            with NvidiaContext() as ctx:
+                num_gpus = ctx.NumCudaDevices()
+            return num_gpus
         except Exception:
             # Fallback
             # Note this will initialize all GPUs and therefore has side effect
