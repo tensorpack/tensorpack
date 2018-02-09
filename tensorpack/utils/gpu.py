@@ -5,7 +5,9 @@
 
 import os
 from .utils import change_env
-from ctypes import *
+from ctypes import (byref, c_uint, c_ulonglong,
+                    CDLL, create_string_buffer, NVML_ERROR_FUNCTION_NOT_FOUND,
+                    NVML_ERROR_LIBRARY_NOT_FOUND, POINTER, Structure)
 import threading
 
 
@@ -114,7 +116,7 @@ class NVML(object):
             try:
                 return getattr(nvmlLib, name)
             except AttributeError:
-                raise Exception(NVML_ERROR_FUNCTION_NOT_FOUND)
+                raise NvmlException(NVML_ERROR_FUNCTION_NOT_FOUND)
         finally:
             _lib_lock.release()
 
@@ -123,7 +125,8 @@ class NVML(object):
                              "nvmlDeviceGetUtilizationRates", "nvmlInit_v2", "nvmlShutdown",
                              "nvmlDeviceGetCount_v2", "nvmlDeviceGetHandleByIndex_v2"]
 
-        self.func_ptr = {n: self.function_pointer(n) for n in function_pointers}
+        self.func_ptr = {n: self.function_pointer(
+            n) for n in function_pointers}
 
     def get_function(self, name):
         if name in self.func_ptr.keys():
@@ -202,7 +205,8 @@ class NvidiaDevice(object):
             ]
 
         c_memory = GpuMemoryInfo()
-        CheckNvmlReturn(_NVML.get_function("nvmlDeviceGetMemoryInfo")(self.hnd, byref(c_memory)))
+        CheckNvmlReturn(_NVML.get_function(
+            "nvmlDeviceGetMemoryInfo")(self.hnd, byref(c_memory)))
         return {'total': c_memory.total, 'free': c_memory.free, 'used': c_memory.used}
 
     def Utilization(self):
@@ -226,7 +230,8 @@ class NvidiaDevice(object):
             ]
 
         c_util = GpuUtilizationInfo()
-        CheckNvmlReturn(_NVML.get_function("nvmlDeviceGetUtilizationRates")(self.hnd, byref(c_util)))
+        CheckNvmlReturn(_NVML.get_function(
+            "nvmlDeviceGetUtilizationRates")(self.hnd, byref(c_util)))
         return {'gpu': c_util.gpu, 'memory': c_util.memory}
 
 
@@ -288,7 +293,8 @@ class NvidiaContext(object):
             count CUDA devices
         """
         c_count = c_uint()
-        CheckNvmlReturn(_NVML.get_function("nvmlDeviceGetCount_v2")(byref(c_count)))
+        CheckNvmlReturn(_NVML.get_function(
+            "nvmlDeviceGetCount_v2")(byref(c_count)))
         return c_count.value
 
     def Devices(self):
@@ -311,5 +317,6 @@ class NvidiaContext(object):
         """
         c_index = c_uint(idx)
         device = c_nvmlDevice_t()
-        CheckNvmlReturn(_NVML.get_function("nvmlDeviceGetHandleByIndex_v2")(c_index, byref(device)))
+        CheckNvmlReturn(_NVML.get_function(
+            "nvmlDeviceGetHandleByIndex_v2")(c_index, byref(device)))
         return NvidiaDevice(device)
