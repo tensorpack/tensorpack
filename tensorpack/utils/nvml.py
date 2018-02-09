@@ -3,8 +3,8 @@
 # File: nvml.py
 
 from ctypes import (byref, c_uint, c_ulonglong,
-                    CDLL, create_string_buffer, NVML_ERROR_FUNCTION_NOT_FOUND,
-                    NVML_ERROR_LIBRARY_NOT_FOUND, POINTER, Structure)
+                    CDLL, create_string_buffer,
+                    POINTER, Structure)
 import threading
 
 
@@ -13,15 +13,14 @@ __all__ = ['NvidiaContext']
 
 _nvmlReturn_t = c_uint
 
-
+NVML_ERROR_LIBRARY_NOT_FOUND = 12
+NVML_ERROR_FUNCTION_NOT_FOUND = 13
 NVML_DEVICE_UUID_BUFFER_SIZE = 80
 NVML_DEVICE_NAME_BUFFER_SIZE = 64
 
 
 nvmlLib = None
 _lib_lock = threading.Lock()
-nvml_init_count = 0
-
 
 NvmlErrorCodes = {"0": "NVML_SUCCESS",
                   "1": "NVML_ERROR_UNINITIALIZED",
@@ -141,19 +140,6 @@ class NvidiaDevice(object):
         """
         return _NVML.call(self.hnd, NVML_DEVICE_NAME_BUFFER_SIZE, "nvmlDeviceGetName").value
 
-    def UUID(self):
-        """Return GPU UUID
-
-        Example:
-
-            >>> print(nvidia.Device(0).UUID())
-            GPU-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-
-        Returns:
-            UUID of GPU
-        """
-        return _NVML.call(self.hnd, NVML_DEVICE_UUID_BUFFER_SIZE, "nvmlDeviceGetUUID").value
-
     def Memory(self):
         """Memory information in bytes
 
@@ -215,7 +201,6 @@ class NvidiaContext(object):
 
         for device in nvidia.Devices():
             print(device.Name())
-            print(device.UUID())
 
             print(device.Memory())
             print(device.Utilization())
@@ -232,23 +217,10 @@ class NvidiaContext(object):
         _NVML.load()
         CheckNvmlReturn(_NVML.get_function("nvmlInit_v2")())
 
-        # Atomically update refcount
-        global nvml_init_count
-        _lib_lock.acquire()
-        nvml_init_count += 1
-        _lib_lock.release()
-
     def destroy_context(self):
         """Destroy current context
         """
         CheckNvmlReturn(_NVML.get_function("nvmlShutdown")())
-
-        # Atomically update refcount
-        global nvml_init_count
-        _lib_lock.acquire()
-        if (0 < nvml_init_count):
-            nvml_init_count -= 1
-        _lib_lock.release()
 
     def NumCudaDevices(self):
         """Get number of CUDA devices.
