@@ -196,12 +196,15 @@ class TFEventWriter(TrainingMonitor):
     """
     Write summaries to TensorFlow event file.
     """
-    def __init__(self, logdir, max_queue=10, flush_secs=120):
+    def __init__(self, logdir=None, max_queue=10, flush_secs=120):
         """
         Args:
             Same as in :class:`tf.summary.FileWriter`.
             logdir will be ``logger.get_logger_dir()`` by default.
         """
+        if logdir is None:
+            logdir = logger.get_logger_dir()
+        assert os.path.isdir(logdir), logdir
         self._logdir = logdir
         self._max_queue = max_queue
         self._flush_secs = flush_secs
@@ -211,7 +214,7 @@ class TFEventWriter(TrainingMonitor):
             logdir = logger.get_logger_dir()
 
         if logdir is not None:
-            return super(TFEventWriter, cls).__new__(cls, logdir, max_queue, flush_secs)
+            return super(TFEventWriter, cls).__new__(cls)
         else:
             logger.warn("logger directory was not set. Ignore TFEventWriter.")
             return NoOpMonitor()
