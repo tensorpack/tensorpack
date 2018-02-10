@@ -29,7 +29,7 @@ def map_common_tfargs(kwargs):
     return kwargs
 
 
-def parse_args(args_names, name_mapping):
+def convert_to_tflayer_args(args_names, name_mapping):
     """
     After applying this decorator:
     1. data_format becomes tf.layers style

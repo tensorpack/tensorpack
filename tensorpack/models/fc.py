@@ -6,14 +6,14 @@
 import tensorflow as tf
 
 from .common import layer_register, VariableHolder
-from .tflayer import parse_args, rename_get_variable
+from .tflayer import convert_to_tflayer_args, rename_get_variable
 from ..tfutils import symbolic_functions as symbf
 
 __all__ = ['FullyConnected']
 
 
 @layer_register(log_shape=True)
-@parse_args(
+@convert_to_tflayer_args(
     args_names=['units'],
     name_mapping={'out_dim': 'units'})
 def FullyConnected(

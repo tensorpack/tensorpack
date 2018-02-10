@@ -9,7 +9,7 @@ from .shape_utils import StaticDynamicShape
 from .common import layer_register
 from ..utils.argtools import shape2d, get_data_format
 from ._test import TestModel
-from .tflayer import parse_args
+from .tflayer import convert_to_tflayer_args
 
 
 __all__ = ['MaxPooling', 'FixedUnPooling', 'AvgPooling', 'GlobalAvgPooling',
@@ -17,8 +17,9 @@ __all__ = ['MaxPooling', 'FixedUnPooling', 'AvgPooling', 'GlobalAvgPooling',
 
 
 @layer_register(log_shape=True)
-@parse_args(args_names=['pool_size', 'strides'],
-            name_mapping={'shape': 'pool_size', 'stride': 'strides'})
+@convert_to_tflayer_args(
+    args_names=['pool_size', 'strides'],
+    name_mapping={'shape': 'pool_size', 'stride': 'strides'})
 def MaxPooling(
         inputs,
         pool_size,
@@ -36,8 +37,9 @@ def MaxPooling(
 
 
 @layer_register(log_shape=True)
-@parse_args(args_names=['pool_size', 'strides'],
-            name_mapping={'shape': 'pool_size', 'stride': 'strides'})
+@convert_to_tflayer_args(
+    args_names=['pool_size', 'strides'],
+    name_mapping={'shape': 'pool_size', 'stride': 'strides'})
 def AvgPooling(
         inputs,
         pool_size,

@@ -7,13 +7,13 @@ import tensorflow as tf
 from .common import layer_register, VariableHolder
 from ..tfutils.common import get_tf_version_number
 from ..utils.argtools import shape2d, shape4d, get_data_format
-from .tflayer import rename_get_variable, parse_args
+from .tflayer import rename_get_variable, convert_to_tflayer_args
 
 __all__ = ['Conv2D', 'Deconv2D']
 
 
 @layer_register(log_shape=True)
-@parse_args(
+@convert_to_tflayer_args(
     args_names=['filters', 'kernel_size'],
     name_mapping={
         'out_channel': 'filters',
@@ -118,7 +118,7 @@ def Conv2D(
 
 
 @layer_register(log_shape=True)
-@parse_args(
+@convert_to_tflayer_args(
     args_names=['filters', 'kernel_size', 'strides'],
     name_mapping={
         'out_channel': 'filters',
