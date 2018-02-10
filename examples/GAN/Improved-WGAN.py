@@ -5,7 +5,6 @@
 
 from tensorpack import *
 from tensorpack.tfutils.summary import add_moving_summary
-from tensorpack.utils.globvars import globalns as G
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
 import tensorflow as tf
 
@@ -17,10 +16,8 @@ See the docstring in DCGAN.py for usage.
 """
 
 # Don't want to mix two examples together, but want to reuse the code.
-# So here just import stuff from DCGAN, and change the batch size & model
+# So here just import stuff from DCGAN.
 import DCGAN
-G.BATCH = 64
-G.Z_DIM = 128
 
 
 class Model(DCGAN.Model):
@@ -47,8 +44,8 @@ class Model(DCGAN.Model):
         image_pos = inputs[0]
         image_pos = image_pos / 128.0 - 1
 
-        z = tf.random_normal([G.BATCH, G.Z_DIM], name='z_train')
-        z = tf.placeholder_with_default(z, [None, G.Z_DIM], name='z')
+        z = tf.random_normal([self.batch, self.zdim], name='z_train')
+        z = tf.placeholder_with_default(z, [None, self.zdim], name='z')
 
         with argscope([Conv2D, Deconv2D, FullyConnected],
                       W_init=tf.truncated_normal_initializer(stddev=0.02)):
@@ -56,7 +53,7 @@ class Model(DCGAN.Model):
                 image_gen = self.generator(z)
             tf.summary.image('generated-samples', image_gen, max_outputs=30)
 
-            alpha = tf.random_uniform(shape=[G.BATCH, 1, 1, 1],
+            alpha = tf.random_uniform(shape=[self.batch, 1, 1, 1],
                                       minval=0., maxval=1., name='alpha')
             interp = image_pos + alpha * (image_gen - image_pos)
 
@@ -86,15 +83,15 @@ class Model(DCGAN.Model):
 
 
 if __name__ == '__main__':
-    args = DCGAN.get_args()
+    args = DCGAN.get_args(default_batch=64, default_z_dim=128)
+    M = Model(shape=args.final_size, batch=args.batch, z_dim=args.z_dim)
     if args.sample:
-        DCGAN.sample(Model(), args.load)
+        DCGAN.sample(M, args.load)
     else:
-        assert args.data
         logger.auto_set_dir()
         SeparateGANTrainer(
-            QueueInput(DCGAN.get_data(args.data)),
-            Model(), g_period=6).train_with_defaults(
+            QueueInput(DCGAN.get_data()),
+            M, g_period=6).train_with_defaults(
             callbacks=[ModelSaver()],
             steps_per_epoch=300,
             max_epoch=200,

@@ -6,7 +6,6 @@
 from tensorpack import *
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.utils.gpu import get_nr_gpu
-from tensorpack.utils.globvars import globalns as G
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
 import tensorflow as tf
 
@@ -21,8 +20,6 @@ A pretrained model on CelebA is at http://models.tensorpack.com/GAN/
 
 
 import DCGAN
-G.BATCH = 32
-G.Z_DIM = 64
 NH = 64
 NF = 64
 GAMMA = 0.5
@@ -30,7 +27,7 @@ GAMMA = 0.5
 
 class Model(GANModelDesc):
     def _get_inputs(self):
-        return [InputDesc(tf.float32, (None, G.SHAPE, G.SHAPE, 3), 'input')]
+        return [InputDesc(tf.float32, (None, args.final_size, args.final_size, 3), 'input')]
 
     @auto_reuse_variable_scope
     def decoder(self, z):
@@ -80,8 +77,8 @@ class Model(GANModelDesc):
         image_pos = inputs[0]
         image_pos = image_pos / 128.0 - 1
 
-        z = tf.random_uniform([G.BATCH, G.Z_DIM], minval=-1, maxval=1, name='z_train')
-        z = tf.placeholder_with_default(z, [None, G.Z_DIM], name='z')
+        z = tf.random_uniform([args.batch, args.z_dim], minval=-1, maxval=1, name='z_train')
+        z = tf.placeholder_with_default(z, [None, args.z_dim], name='z')
 
         def summary_image(name, x):
             x = (x + 1.0) * 128.0
@@ -133,14 +130,13 @@ class Model(GANModelDesc):
 
 
 if __name__ == '__main__':
-    args = DCGAN.get_args()
+    args = DCGAN.get_args(default_batch=32, default_z_dim=64)
     if args.sample:
         DCGAN.sample(Model(), args.load, 'gen/conv4.3/output')
     else:
-        assert args.data
         logger.auto_set_dir()
 
-        input = QueueInput(DCGAN.get_data(args.data))
+        input = QueueInput(DCGAN.get_data())
         model = Model()
         nr_tower = max(get_nr_gpu(), 1)
         if nr_tower == 1:

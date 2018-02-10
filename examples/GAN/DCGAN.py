@@ -12,7 +12,6 @@ import argparse
 from tensorpack import *
 from tensorpack.utils.viz import stack_patches
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
-from tensorpack.utils.globvars import globalns as opt
 import tensorflow as tf
 
 from GAN import GANTrainer, RandomZData, GANModelDesc
@@ -34,15 +33,15 @@ You can also train on other images (just use any directory of jpg files in
 A pretrained model on CelebA is at http://models.tensorpack.com/GAN/
 """
 
-# global vars
-opt.SHAPE = 64
-opt.BATCH = 128
-opt.Z_DIM = 100
-
 
 class Model(GANModelDesc):
+    def __init__(self, shape, batch, z_dim):
+        self.shape = shape
+        self.batch = batch
+        self.zdim = z_dim
+
     def _get_inputs(self):
-        return [InputDesc(tf.float32, (None, opt.SHAPE, opt.SHAPE, 3), 'input')]
+        return [InputDesc(tf.float32, (None, self.shape, self.shape, 3), 'input')]
 
     def generator(self, z):
         """ return an image generated from z"""
@@ -81,8 +80,8 @@ class Model(GANModelDesc):
         image_pos = inputs[0]
         image_pos = image_pos / 128.0 - 1
 
-        z = tf.random_uniform([opt.BATCH, opt.Z_DIM], -1, 1, name='z_train')
-        z = tf.placeholder_with_default(z, [None, opt.Z_DIM], name='z')
+        z = tf.random_uniform([self.batch, self.zdim], -1, 1, name='z_train')
+        z = tf.placeholder_with_default(z, [None, self.zdim], name='z')
 
         with argscope([Conv2D, Deconv2D, FullyConnected],
                       W_init=tf.truncated_normal_initializer(stddev=0.02)):
@@ -103,19 +102,20 @@ class Model(GANModelDesc):
 
 def get_augmentors():
     augs = []
-    if opt.load_size:
-        augs.append(imgaug.Resize(opt.load_size))
-    if opt.crop_size:
-        augs.append(imgaug.CenterCrop(opt.crop_size))
-    augs.append(imgaug.Resize(opt.SHAPE))
+    if args.load_size:
+        augs.append(imgaug.Resize(args.load_size))
+    if args.crop_size:
+        augs.append(imgaug.CenterCrop(args.crop_size))
+    augs.append(imgaug.Resize(args.final_size))
     return augs
 
 
-def get_data(datadir):
-    imgs = glob.glob(datadir + '/*.jpg')
+def get_data():
+    assert args.data
+    imgs = glob.glob(args.data + '/*.jpg')
     ds = ImageFromFile(imgs, channel=3, shuffle=True)
     ds = AugmentImageComponent(ds, get_augmentors())
-    ds = BatchData(ds, opt.BATCH)
+    ds = BatchData(ds, args.batch)
     ds = PrefetchDataZMQ(ds, 5)
     return ds
 
@@ -126,7 +126,7 @@ def sample(model, model_path, output_name='gen/gen'):
         model=model,
         input_names=['z'],
         output_names=[output_name, 'z'])
-    pred = SimpleDatasetPredictor(pred, RandomZData((100, opt.Z_DIM)))
+    pred = SimpleDatasetPredictor(pred, RandomZData((100, args.z_dim)))
     for o in pred.get_result():
         o = o[0] + 1
         o = o * 128.0
@@ -135,7 +135,7 @@ def sample(model, model_path, output_name='gen/gen'):
         stack_patches(o, nr_row=10, nr_col=10, viz=True)
 
 
-def get_args():
+def get_args(default_batch=128, default_z_dim=100):
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
     parser.add_argument('--load', help='load model')
@@ -143,8 +143,13 @@ def get_args():
     parser.add_argument('--data', help='a jpeg directory')
     parser.add_argument('--load-size', help='size to load the original images', type=int)
     parser.add_argument('--crop-size', help='crop the original images', type=int)
+    parser.add_argument(
+        '--final-size', default=64, type=int,
+        help='resize to this shape as inputs to network')
+    parser.add_argument('--z-dim', help='hidden dimension', type=int, default=default_z_dim)
+    parser.add_argument('--batch', help='batch size', type=int, default=default_batch)
+    global args
     args = parser.parse_args()
-    opt.use_argument(args)
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
     return args
@@ -152,14 +157,14 @@ def get_args():
 
 if __name__ == '__main__':
     args = get_args()
+    M = Model(shape=args.final_size, batch=args.batch, z_dim=args.z_dim)
     if args.sample:
-        sample(Model(), args.load)
+        sample(M, args.load)
     else:
-        assert args.data
         logger.auto_set_dir()
         GANTrainer(
-            input=QueueInput(get_data(args.data)),
-            model=Model()).train_with_defaults(
+            input=QueueInput(get_data()),
+            model=M).train_with_defaults(
             callbacks=[ModelSaver()],
             steps_per_epoch=300,
             max_epoch=200,
