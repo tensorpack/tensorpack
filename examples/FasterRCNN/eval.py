@@ -91,7 +91,7 @@ def detect_one_image(img, model_func):
     return results
 
 
-def eval_on_dataflow(df, detect_func):
+def eval_coco(df, detect_func):
     """
     Args:
         df: a DataFlow which produces (image, image_id)

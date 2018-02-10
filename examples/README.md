@@ -3,12 +3,14 @@
 
 Training examples with __reproducible performance__.
 
+__"Reproduce" should always means reproduce performance__.
 Reproducing a method is usually easy, but you don't know whether you've made mistakes, because wrong code will often appear to work.
-Reproducible performance results are what really matters.
+Reproducing __performance__ results is what really matters, and is something that's hardly seen on github.
 See [Unawareness of Deep Learning Mistakes](https://medium.com/@ppwwyyxx/unawareness-of-deep-learning-mistakes-d5b5774da0ba).
 
 
 ## Getting Started:
+These examples don't have meaningful performance numbers. They are supposed to be just demos.
 + [An illustrative mnist example with explanation of the framework](mnist-convnet.py)
 + The same mnist example using [tf-slim](mnist-tfslim.py), and [with weights visualizations](mnist-visualizations.py)
 + A tiny [Cifar ConvNet](cifar-convnet.py) and [SVHN ConvNet](svhn-digit-convnet.py)

@@ -39,7 +39,7 @@ from viz import (
     draw_predictions, draw_final_outputs)
 from common import print_config
 from eval import (
-    eval_on_dataflow, detect_one_image, print_evaluation_scores, DetectionResult)
+    eval_coco, detect_one_image, print_evaluation_scores, DetectionResult)
 import config
 
 
@@ -280,7 +280,7 @@ def visualize(model_path, nr_visualize=50, output_dir='output'):
 
 def offline_evaluate(pred_func, output_file):
     df = get_eval_dataflow()
-    all_results = eval_on_dataflow(
+    all_results = eval_coco(
         df, lambda img: detect_one_image(img, pred_func))
     with open(output_file, 'w') as f:
         json.dump(all_results, f)
@@ -309,7 +309,7 @@ class EvalCallback(Callback):
         self.epochs_to_eval.add(self.trainer.max_epoch)
 
     def _eval(self):
-        all_results = eval_on_dataflow(self.df, lambda img: detect_one_image(img, self.pred))
+        all_results = eval_coco(self.df, lambda img: detect_one_image(img, self.pred))
         output_file = os.path.join(
             logger.get_logger_dir(), 'outputs{}.json'.format(self.global_step))
         with open(output_file, 'w') as f:

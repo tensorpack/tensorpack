@@ -223,7 +223,7 @@ class QueueInput(FeedfreeInput):
         with self.cached_name_scope():
             # in TF there is no API to get queue capacity, so we can only summary the size
             size = tf.cast(self.queue.size(), tf.float32, name='queue_size')
-        size_ema_op = add_moving_summary(size, collection=None)[0].op
+        size_ema_op = add_moving_summary(size, collection=None, decay=0.5)[0].op
         return RunOp(
             lambda: size_ema_op,
             run_before=False,

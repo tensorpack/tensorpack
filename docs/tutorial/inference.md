@@ -15,6 +15,8 @@ There are two ways to do inference during training.
 	This will further support prefetch & data-parallel inference.
 	More details to come.
 
+In both methods, your tower function will be called again, with `TowerContext.is_training==False`.
+You can build a different graph using this predicate.
 
 ## Inference After Training
 
