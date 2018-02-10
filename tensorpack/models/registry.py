@@ -3,7 +3,6 @@
 
 
 import tensorflow as tf
-import inspect
 from functools import wraps
 import six
 import re
@@ -11,7 +10,6 @@ import copy
 
 from ..tfutils.argscope import get_arg_scope
 from ..tfutils.model_utils import get_shape_str
-from ..utils.argtools import get_data_format
 from ..utils import logger
 
 # make sure each layer is only logged once
@@ -19,18 +17,6 @@ _LAYER_LOGGED = set()
 _LAYER_REGISTRY = {}
 
 __all__ = ['layer_register']
-
-
-def map_tfargs(kwargs):
-    df = kwargs.pop('data_format', None)
-    if df is not None:
-        df = get_data_format(df, tfmode=True)
-        kwargs['data_format'] = df
-
-    old_nl = kwargs.pop('nl', None)
-    if old_nl is not None:
-        kwargs['activation'] = lambda x, name=None: old_nl(x, name=name)
-    return kwargs
 
 
 def _register(name, func):
@@ -119,14 +105,13 @@ def layer_register(
             actual_args = copy.copy(get_arg_scope()[func.__name__])
             # explicit kwargs overwrite argscope
             actual_args.update(kwargs)
-            if six.PY3:
-                # explicit positional args also override argscope. only work in PY3
-                posargmap = inspect.signature(func).bind_partial(*args).arguments
-                for k in six.iterkeys(posargmap):
-                    if k in actual_args:
-                        del actual_args[k]
+            # if six.PY3:
+            #     # explicit positional args also override argscope. only work in PY3
+            #     posargmap = inspect.signature(func).bind_partial(*args).arguments
+            #     for k in six.iterkeys(posargmap):
+            #         if k in actual_args:
+            #             del actual_args[k]
 
-            actual_args = map_tfargs(actual_args)
             if name is not None:        # use scope
                 with tf.variable_scope(name) as scope:
                     # this name is only used to surpress logging, doesn't hurt to do some heuristics

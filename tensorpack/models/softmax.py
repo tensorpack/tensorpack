@@ -4,6 +4,7 @@
 
 import tensorflow as tf
 from .common import layer_register
+from ..utils.develop import log_deprecated
 
 __all__ = ['SoftMax']
 
@@ -28,6 +29,7 @@ def SoftMax(x, use_temperature=False, temperature_init=1.0):
 
     * ``invtemp``: 1.0/temperature.
     """
+    log_deprecated("models.SoftMax", "Please implement it by yourself!", "2018-05-01")
     if use_temperature:
         t = tf.get_variable('invtemp', [],
                             initializer=tf.constant_initializer(1.0 / float(temperature_init)))

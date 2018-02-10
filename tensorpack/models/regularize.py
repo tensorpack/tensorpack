@@ -114,19 +114,30 @@ def regularize_cost_from_collection(name='regularize_cost'):
 
 
 @layer_register(use_scope=None)
-def Dropout(x, keep_prob=0.5, is_training=None, noise_shape=None):
+def Dropout(x, *args, **kwargs):
     """
-    Dropout layer as in the paper `Dropout: a Simple Way to Prevent
-    Neural Networks from Overfitting <http://dl.acm.org/citation.cfm?id=2670313>`_.
+    Same as `tf.layers.dropout`.
+    However, for historical reasons, the first positional argument is
+    interpreted as keep_prob rather than drop_prob.
+    Explicitly use `rate=` keyword arguments to ensure things are consistent.
+    """
+    if 'is_training' in kwargs:
+        kwargs['training'] = kwargs.pop('is_training')
+    if len(args) > 0:
+        logger.warn(
+            "The first positional argument to tensorpack.Dropout is the probability to keep rather than to drop. "
+            "This is different from the rate argument in tf.layers.Dropout due to historical reasons. "
+            "To mimic tf.layers.Dropout, explicitly use keyword argument 'rate' instead")
+        rate = 1 - args[0]
+    elif 'keep_prob' in kwargs:
+        assert 'rate' not in kwargs, "Cannot set both keep_prob and rate!"
+        rate = 1 - kwargs.pop('keep_prob')
+    elif 'rate' in kwargs:
+        rate = kwargs.pop('rate')
+    else:
+        rate = 0.5
 
-    Args:
-        keep_prob (float): the probability that each element is kept. It is only used
-            when is_training=True.
-        is_training (bool): If None, will use the current :class:`tensorpack.tfutils.TowerContext`
-            to figure out.
-        noise_shape: same as `tf.nn.dropout`.
-    """
-    if is_training is None:
-        is_training = get_current_tower_context().is_training
-    return tf.layers.dropout(
-        x, rate=1 - keep_prob, noise_shape=noise_shape, training=is_training)
+    if kwargs.get('training', None) is None:
+        kwargs['training'] = get_current_tower_context().is_training
+
+    return tf.layers.dropout(x, rate=rate, **kwargs)
