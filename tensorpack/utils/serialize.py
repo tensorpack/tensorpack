@@ -34,7 +34,7 @@ def loads_msgpack(buf):
     Args:
         buf: the output of `dumps`.
     """
-    return msgpack.loads(buf, encoding='utf-8')
+    return msgpack.loads(buf, raw=False)
 
 
 def dumps_pyarrow(obj):
