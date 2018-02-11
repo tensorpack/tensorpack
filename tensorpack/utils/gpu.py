@@ -6,8 +6,8 @@
 import os
 from .utils import change_env
 from . import logger
+from .nvml import NVMLContext
 from .concurrency import subproc_call
-
 
 __all__ = ['change_gpu', 'get_nr_gpu']
 
@@ -36,9 +36,15 @@ def get_nr_gpu():
         output = output.decode('utf-8')
         return len(output.strip().split('\n'))
     else:
-        # Note this will initialize all GPUs and therefore has side effect
-        # https://github.com/tensorflow/tensorflow/issues/8136
-        logger.info("Loading local devices by TensorFlow ...")
-        from tensorflow.python.client import device_lib
-        local_device_protos = device_lib.list_local_devices()
-        return len([x.name for x in local_device_protos if x.device_type == 'GPU'])
+        try:
+            # Use NVML to query device properties
+            with NVMLContext() as ctx:
+                return ctx.num_devices()
+        except Exception:
+            # Fallback
+            # Note this will initialize all GPUs and therefore has side effect
+            # https://github.com/tensorflow/tensorflow/issues/8136
+            logger.info("Loading local devices by TensorFlow ...")
+            from tensorflow.python.client import device_lib
+            local_device_protos = device_lib.list_local_devices()
+            return len([x.name for x in local_device_protos if x.device_type == 'GPU'])
