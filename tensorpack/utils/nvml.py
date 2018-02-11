@@ -188,7 +188,6 @@ class NVMLContext(object):
         class GpuDevice(Structure):
             pass
 
-
         c_nvmlDevice_t = POINTER(GpuDevice)
 
         c_index = c_uint(idx)
