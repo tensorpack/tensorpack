@@ -3,24 +3,15 @@
 # File: nvml.py
 
 from ctypes import (byref, c_uint, c_ulonglong,
-                    CDLL, create_string_buffer,
-                    POINTER, Structure)
+                    CDLL, POINTER, Structure)
 import threading
 
 
-__all__ = ['NvidiaContext']
+__all__ = ['NVMLContext']
 
 
-_nvmlReturn_t = c_uint
-
-NVML_ERROR_LIBRARY_NOT_FOUND = 12
 NVML_ERROR_FUNCTION_NOT_FOUND = 13
-NVML_DEVICE_UUID_BUFFER_SIZE = 80
-NVML_DEVICE_NAME_BUFFER_SIZE = 64
 
-
-nvmlLib = None
-_lib_lock = threading.Lock()
 
 NvmlErrorCodes = {"0": "NVML_SUCCESS",
                   "1": "NVML_ERROR_UNINITIALIZED",
@@ -44,80 +35,52 @@ NvmlErrorCodes = {"0": "NVML_SUCCESS",
                   "999": "NVML_ERROR_UNKNOWN"}
 
 
-def NvmlCodeToString(i):
-    return NvmlErrorCodes[str(i)]
-
-
 class NvmlException(Exception):
     def __init__(self, error_code):
         super(NvmlException, self).__init__(error_code)
         self.error_code = error_code
 
     def __str__(self):
-        return NvmlCodeToString(self.error_code)
+        return NvmlErrorCodes[str(self.error_code)]
 
 
-def CheckNvmlReturn(ret):
+def _check_return(ret):
     if (ret != 0):
         raise NvmlException(ret)
     return ret
 
 
 class NVML(object):
+    """
+    Loader for libnvidia-ml.so
+    """
+
+    _nvmlLib = None
+    _lib_lock = threading.Lock()
 
     def load(self):
-        global nvmlLib
-        _lib_lock.acquire()
+        with self._lib_lock:
+            if self._nvmlLib is None:
+                self._nvmlLib = CDLL("libnvidia-ml.so.1")
+
+                function_pointers = ["nvmlDeviceGetName", "nvmlDeviceGetUUID", "nvmlDeviceGetMemoryInfo",
+                                     "nvmlDeviceGetUtilizationRates", "nvmlInit_v2", "nvmlShutdown",
+                                     "nvmlDeviceGetCount_v2", "nvmlDeviceGetHandleByIndex_v2"]
+
+                self.func_ptr = {n: self._function_pointer(n) for n in function_pointers}
+
+    def _function_pointer(self, name):
         try:
-            nvmlLib = CDLL("libnvidia-ml.so.1")
-        except OSError:
-            NvmlException(NVML_ERROR_LIBRARY_NOT_FOUND)
-        finally:
-            _lib_lock.release()
-
-        self.build_cache()
-
-    def function_pointer(self, name):
-        _lib_lock.acquire()
-        try:
-            try:
-                return getattr(nvmlLib, name)
-            except AttributeError:
-                raise NvmlException(NVML_ERROR_FUNCTION_NOT_FOUND)
-        finally:
-            _lib_lock.release()
-
-    def build_cache(self):
-        function_pointers = ["nvmlDeviceGetName", "nvmlDeviceGetUUID", "nvmlDeviceGetMemoryInfo",
-                             "nvmlDeviceGetUtilizationRates", "nvmlInit_v2", "nvmlShutdown",
-                             "nvmlDeviceGetCount_v2", "nvmlDeviceGetHandleByIndex_v2"]
-
-        self.func_ptr = {n: self.function_pointer(
-            n) for n in function_pointers}
+            return getattr(self._nvmlLib, name)
+        except AttributeError:
+            raise NvmlException(NVML_ERROR_FUNCTION_NOT_FOUND)
 
     def get_function(self, name):
         if name in self.func_ptr.keys():
             return self.func_ptr[name]
 
-    def call(self, hnd, buf_len, func_ptr):
-        c_name = create_string_buffer(buf_len)
-        # fn = function_pointer_cache[func_ptr]
-        fn = self.func_ptr[func_ptr]
-        ret = fn(hnd, c_name, c_uint(buf_len))
-        CheckNvmlReturn(ret)
-        return c_name
-
 
 _NVML = NVML()
-
-
-class GpuDevice(Structure):
-    """Represent GPU Information
-    """
-    pass
-
-
-c_nvmlDevice_t = POINTER(GpuDevice)
 
 
 class NvidiaDevice(object):
@@ -127,25 +90,12 @@ class NvidiaDevice(object):
         super(NvidiaDevice, self).__init__()
         self.hnd = hnd
 
-    def Name(self):
-        """Return GPU name
-
-        Example:
-
-            >>> print(nvidia.Device(0).Name())
-            GeForce GTX 970
-
-        Returns:
-            Name of GPU brand
-        """
-        return _NVML.call(self.hnd, NVML_DEVICE_NAME_BUFFER_SIZE, "nvmlDeviceGetName").value
-
-    def Memory(self):
+    def memory(self):
         """Memory information in bytes
 
         Example:
 
-            >>> print(nvidia.Device(0).Memory())
+            >>> print(ctx.device(0).memory())
             {'total': 4238016512L, 'used': 434831360L, 'free': 3803185152L}
 
         Returns:
@@ -159,11 +109,11 @@ class NvidiaDevice(object):
             ]
 
         c_memory = GpuMemoryInfo()
-        CheckNvmlReturn(_NVML.get_function(
+        _check_return(_NVML.get_function(
             "nvmlDeviceGetMemoryInfo")(self.hnd, byref(c_memory)))
         return {'total': c_memory.total, 'free': c_memory.free, 'used': c_memory.used}
 
-    def Utilization(self):
+    def utilization(self):
         """Percent of time over the past second was utilized.
 
         Details:
@@ -172,7 +122,7 @@ class NvidiaDevice(object):
 
         Example:
 
-            >>> print(nvidia.Device(0).Memory())
+            >>> print(ctx.device(0).utilization())
             {'gpu': 4L, 'memory': 6L}
 
         """
@@ -184,79 +134,75 @@ class NvidiaDevice(object):
             ]
 
         c_util = GpuUtilizationInfo()
-        CheckNvmlReturn(_NVML.get_function(
+        _check_return(_NVML.get_function(
             "nvmlDeviceGetUtilizationRates")(self.hnd, byref(c_util)))
         return {'gpu': c_util.gpu, 'memory': c_util.memory}
 
 
-class NvidiaContext(object):
+class NVMLContext(object):
     """Creates a context to query information
 
     Example:
 
-        with NvidiaContext() as ctx:
-
-            num_gpus = ctx.NumCudaDevices()
-
-            for device in ctx.Devices():
-                print(device.Name())
-
-                print(device.Memory())
-                print(device.Utilization())
+        with NVMLContext() as ctx:
+            num_gpus = ctx.num_devices()
+            for device in ctx.devices():
+                print(device.memory())
+                print(device.utilization())
 
     """
-
-    def __init__(self):
-        super(NvidiaContext, self).__init__()
-
     def __enter__(self):
-        """Create a new context
-        """
+        """Create a new context """
         _NVML.load()
-        CheckNvmlReturn(_NVML.get_function("nvmlInit_v2")())
-
+        _check_return(_NVML.get_function("nvmlInit_v2")())
         return self
 
     def __exit__(self, type, value, tb):
-        """Destroy current context
-        """
-        CheckNvmlReturn(_NVML.get_function("nvmlShutdown")())
+        """Destroy current context"""
+        _check_return(_NVML.get_function("nvmlShutdown")())
 
-    def NumCudaDevices(self):
-        """Get number of CUDA devices.
-
-        Example:
-            >>> num_gpus = nvidia.NumCudaDevices()
-            1
-
-        Returns:
-            count CUDA devices
-        """
+    def num_devices(self):
+        """Get number of devices """
         c_count = c_uint()
-        CheckNvmlReturn(_NVML.get_function(
+        _check_return(_NVML.get_function(
             "nvmlDeviceGetCount_v2")(byref(c_count)))
         return c_count.value
 
-    def Devices(self):
-        """Generator of devices in context
-
-        Yields:
-            NvidiaDevice: single CUDA device
+    def devices(self):
         """
-        for i in range(self.NumCudaDevices()):
-            yield self.Device(i)
+        Returns:
+            [NvidiaDevice]: a list of devices
+        """
+        return [self.device(i) for i in range(self.num_devices())]
 
-    def Device(self, idx):
-        """Get specific CUDA device
+    def device(self, idx):
+        """Get a specific GPU device
 
         Args:
             idx: index of device
 
         Returns:
-            NvidiaDevice: single CUDA device
+            NvidiaDevice: single GPU device
         """
+
+        class GpuDevice(Structure):
+            pass
+
+
+        c_nvmlDevice_t = POINTER(GpuDevice)
+
         c_index = c_uint(idx)
         device = c_nvmlDevice_t()
-        CheckNvmlReturn(_NVML.get_function(
+        _check_return(_NVML.get_function(
             "nvmlDeviceGetHandleByIndex_v2")(c_index, byref(device)))
         return NvidiaDevice(device)
+
+
+if __name__ == '__main__':
+    with NVMLContext() as ctx:
+        print(ctx.devices())
+        print(ctx.devices()[0].utilization())
+
+    with NVMLContext() as ctx:
+        print(ctx.devices())
+        print(ctx.devices()[0].utilization())

@@ -6,6 +6,7 @@
 import os
 from .utils import change_env
 from . import logger
+from .nvml import NVMLContext
 from .concurrency import subproc_call
 
 __all__ = ['change_gpu', 'get_nr_gpu']
@@ -36,11 +37,9 @@ def get_nr_gpu():
         return len(output.strip().split('\n'))
     else:
         try:
-            # communicate via NVML to query device properties
-            from .nvml import NvidiaContext
-            with NvidiaContext() as ctx:
-                num_gpus = ctx.NumCudaDevices()
-            return num_gpus
+            # Use NVML to query device properties
+            with NVMLContext() as ctx:
+                return ctx.num_devices()
         except Exception:
             # Fallback
             # Note this will initialize all GPUs and therefore has side effect
