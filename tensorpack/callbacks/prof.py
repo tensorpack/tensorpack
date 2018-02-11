@@ -68,7 +68,7 @@ class GPUUtilizationTracker(Callback):
         self._evt.set()
         stats = self._queue.get()
         for idx, dev in enumerate(self._devices):
-            self.trainer.monitors.put_scalar('GPUUtil/{:.2f}'.format(dev), stats[idx])
+            self.trainer.monitors.put_scalar('GPUUtil/{}'.format(dev), stats[idx])
 
     def _after_train(self):
         self._stop_evt.set()
