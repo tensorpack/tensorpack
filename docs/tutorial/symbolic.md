@@ -17,29 +17,29 @@ You can start using `tf.layers` today as long as it fits your need.
 
 The following code:
 ```python
-with argscope(Conv2D, out_channel=32, kernel_shape=3, nl=tf.nn.relu):
+with argscope(Conv2D, filters=32, kernel_size=3, activation=tf.nn.relu):
   l = (LinearWrap(image)  # the starting brace is only for line-breaking
        .Conv2D('conv0')
        .MaxPooling('pool0', 2)
        .Conv2D('conv1', padding='SAME')
-       .Conv2D('conv2', kernel_shape=5)
-       .FullyConnected('fc0', 512, nl=tf.nn.relu)
-       .Dropout('dropout', 0.5)
+       .Conv2D('conv2', kernel_size=5)
+       .FullyConnected('fc0', 512, activation=tf.nn.relu)
+       .Dropout('dropout', rate=0.5)
        .tf.multiply(0.5)
        .apply(func, *args, **kwargs)
-       .FullyConnected('fc1', out_dim=10, nl=tf.identity)())
+       .FullyConnected('fc1', units=10, activation=tf.identity)())
 ```
 is equivalent to:
 ```
-l = Conv2D('conv0', image, 32, 3, nl=tf.nn.relu)
+l = Conv2D('conv0', image, 32, 3, activation=tf.nn.relu)
 l = MaxPooling('pool0', l, 2)
-l = Conv2D('conv1', l, 32, 3, padding='SAME', nl=tf.nn.relu)
-l = Conv2D('conv2', l, 32, 5, nl=tf.nn.relu)
-l = FullyConnected('fc0', l, 512, nl=tf.nn.relu)
-l = Dropout('dropout', l, 0.5)
+l = Conv2D('conv1', l, 32, 3, padding='SAME', activation=tf.nn.relu)
+l = Conv2D('conv2', l, 32, 5, activation=tf.nn.relu)
+l = FullyConnected('fc0', l, 512, activation=tf.nn.relu)
+l = Dropout('dropout', l, rate=0.5)
 l = tf.multiply(l, 0.5)
 l = func(l, *args, **kwargs)
-l = FullyConnected('fc1', l, 10, nl=tf.identity)
+l = FullyConnected('fc1', l, 10, activation=tf.identity)
 ```
 
 ### Access Relevant Tensors

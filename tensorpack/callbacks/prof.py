@@ -13,8 +13,9 @@ from tensorflow.python.client import timeline
 
 from .base import Callback
 from ..utils import logger
-from ..utils.concurrency import ensure_proc_terminate, subproc_call, start_proc_mask_signal
+from ..utils.concurrency import ensure_proc_terminate, start_proc_mask_signal
 from ..utils.gpu import get_nr_gpu
+from ..utils.nvml import NVMLContext
 
 __all__ = ['GPUUtilizationTracker', 'GraphProfiler', 'PeakMemoryTracker']
 
@@ -37,22 +38,17 @@ class GPUUtilizationTracker(Callback):
         if devices is None:
             env = os.environ.get('CUDA_VISIBLE_DEVICES')
             if env is None:
-                self._devices = list(map(str, range(get_nr_gpu())))
+                self._devices = list(range(get_nr_gpu()))
                 logger.warn("[GPUUtilizationTracker] Both devices and CUDA_VISIBLE_DEVICES are None! "
                             "Will monitor all {} visible GPUs!".format(len(self._devices)))
             else:
                 if len(env):
-                    self._devices = env.split(',')
+                    self._devices = list(map(int, env.split(',')))
                 else:
                     self._devices = []
         else:
-            self._devices = list(map(str, devices))
+            self._devices = devices
         assert len(self._devices), "[GPUUtilizationTracker] No GPU device given!"
-
-        self._command = "nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits -i " + \
-            ','.join(self._devices)
-        _, ret = subproc_call(self._command)
-        assert ret == 0, "Cannot fetch GPU utilization!"
 
     def _before_train(self):
         self._evt = mp.Event()
@@ -72,7 +68,7 @@ class GPUUtilizationTracker(Callback):
         self._evt.set()
         stats = self._queue.get()
         for idx, dev in enumerate(self._devices):
-            self.trainer.monitors.put_scalar('GPUUtil/{}'.format(dev), stats[idx])
+            self.trainer.monitors.put_scalar('GPUUtil/{:.2f}'.format(dev), stats[idx])
 
     def _after_train(self):
         self._stop_evt.set()
@@ -88,23 +84,24 @@ class GPUUtilizationTracker(Callback):
 
             stats = np.zeros((len(self._devices),), dtype='f4')
             cnt = 0
-            while True:
-                time.sleep(1)
-                output, retv = subproc_call(self._command)
-                assert retv == 0, "Cannot fetch GPU Utilization!"
-                data = list(map(float, output.strip().split(b'\n')))
-                stats += data
-                cnt += 1
+            with NVMLContext() as ctx:
+                while True:
+                    time.sleep(1)
 
-                if evt.is_set():    # stop epoch
-                    if stop_evt.is_set():   # or on exit
-                        return
-                    evt.clear()
-                    # Ignore the last datapoint. Usually is zero, makes us underestimate the util.
-                    stats -= data
-                    cnt -= 1
-                    rst_queue.put(stats / cnt)
-                    break
+                    data = [ctx.device(i).utilization()['gpu'] for i in self._devices]
+                    data = list(map(float, data))
+                    stats += data
+                    cnt += 1
+
+                    if evt.is_set():    # stop epoch
+                        if stop_evt.is_set():   # or on exit
+                            return
+                        evt.clear()
+                        # Ignore the last datapoint. Usually is zero, makes us underestimate the util.
+                        stats -= data
+                        cnt -= 1
+                        rst_queue.put(stats / cnt)
+                        break
 
 
 # Can add more features from tfprof
