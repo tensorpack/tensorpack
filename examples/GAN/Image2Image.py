@@ -45,6 +45,23 @@ def BNLReLU(x, name=None):
     return tf.nn.leaky_relu(x, alpha=0.2, name=name)
 
 
+def visualize_tensors(name, imgs, scale_func=lambda x: (x + 1.) * 128., max_outputs=1):
+    """Generate tensor for TensorBoard (casting, clipping)
+
+    Args:
+        name: name for visualization operation
+        *imgs: multiple tensors as list
+        scale_func: scale input tensors to fit range [0, 255]
+
+    Example:
+        visualize_tensors('viz1', [img1])
+        visualize_tensors('viz2', [img1, img2, img3], max_outputs=max(30, BATCH))
+    """
+    xy = scale_func(tf.concat(imgs, axis=2))
+    xy = tf.cast(tf.clip_by_value(xy, 0, 255), tf.uint8, name='viz')
+    tf.summary.image(name, xy, max_outputs=30)
+
+
 class Model(GANModelDesc):
     def _get_inputs(self):
         SHAPE = 256
@@ -122,9 +139,8 @@ class Model(GANModelDesc):
         if OUT_CH == 1:
             output = tf.image.grayscale_to_rgb(output)
             fake_output = tf.image.grayscale_to_rgb(fake_output)
-        viz = (tf.concat([input, output, fake_output], 2) + 1.0) * 128.0
-        viz = tf.cast(tf.clip_by_value(viz, 0, 255), tf.uint8, name='viz')
-        tf.summary.image('input,output,fake', viz, max_outputs=max(30, BATCH))
+
+        visualize_tensors('input,output,fake', [input, output, fake_output], max_outputs=max(30, BATCH))
 
         self.collect_variables()
 
