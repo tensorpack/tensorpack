@@ -3,7 +3,7 @@
 
 Training examples with __reproducible performance__.
 
-__"Reproduce" should always means reproduce performance__.
+__The word "reproduce" should always means reproduce performance__.
 Reproducing a method is usually easy, but you don't know whether you've made mistakes, because wrong code will often appear to work.
 Reproducing __performance__ results is what really matters, and is something that's hardly seen on github.
 See [Unawareness of Deep Learning Mistakes](https://medium.com/@ppwwyyxx/unawareness-of-deep-learning-mistakes-d5b5774da0ba).
@@ -11,11 +11,11 @@ See [Unawareness of Deep Learning Mistakes](https://medium.com/@ppwwyyxx/unaware
 
 ## Getting Started:
 These examples don't have meaningful performance numbers. They are supposed to be just demos.
-+ [An illustrative mnist example with explanation of the framework](mnist-convnet.py)
-+ The same mnist example using [tf-slim](mnist-tfslim.py), and [with weights visualizations](mnist-visualizations.py)
-+ A tiny [Cifar ConvNet](cifar-convnet.py) and [SVHN ConvNet](svhn-digit-convnet.py)
++ [An illustrative MNIST example with explanation of the framework](Basics/mnist-convnet.py)
++ The same MNIST example written with [tf.layers](Basics/mnist-tflayers.py), [tf-slim](Basics/mnist-tfslim.py), and [with weights visualizations](Basics/mnist-visualizations.py)
++ A tiny [Cifar ConvNet](Basics/cifar-convnet.py) and [SVHN ConvNet](Basics/svhn-digit-convnet.py)
 + [A boilerplate file to start with, for your own tasks](boilerplate.py)
-+ If you've used Keras, check out [Keras examples](keras).
++ If you've used Keras, check out [Keras examples](keras)
 
 ## Vision:
 | Name | Performance |
