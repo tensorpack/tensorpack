@@ -11,11 +11,11 @@ See [Unawareness of Deep Learning Mistakes](https://medium.com/@ppwwyyxx/unaware
 
 ## Getting Started:
 These examples don't have meaningful performance numbers. They are supposed to be just demos.
-+ [An illustrative MNIST example with explanation of the framework](Basics/mnist-convnet.py)
-+ The same MNIST example written with [tf.layers](Basics/mnist-tflayers.py), [tf-slim](Basics/mnist-tfslim.py), and [with weights visualizations](Basics/mnist-visualizations.py)
-+ A tiny [Cifar ConvNet](Basics/cifar-convnet.py) and [SVHN ConvNet](Basics/svhn-digit-convnet.py)
-+ [A boilerplate file to start with, for your own tasks](boilerplate.py)
++ [An illustrative MNIST example with explanation of the framework](basics/mnist-convnet.py)
++ A tiny [Cifar ConvNet](basics/cifar-convnet.py) and [SVHN ConvNet](basics/svhn-digit-convnet.py)
++ Tensorpack supports any symbolic libraries. See the same MNIST example written with [tf.layers](basics/mnist-tflayers.py), [tf-slim](basics/mnist-tfslim.py), and [with weights visualizations](basics/mnist-visualizations.py)
 + If you've used Keras, check out [Keras examples](keras)
++ [A boilerplate file to start with, for your own tasks](boilerplate.py)
 
 ## Vision:
 | Name | Performance |
