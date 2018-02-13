@@ -100,6 +100,8 @@ class ProcessTensors(Callback):
     """
     Fetch extra tensors **along with** each training step,
     and call some function over the values.
+    It uses `_{before,after}_run` method to inject `tf.train.SessionRunHooks`
+    to the session.
     You can use it to print tensors, save tensors to file, etc.
 
     Examples:

@@ -11,6 +11,9 @@ __all__ = ['PeriodicTrigger', 'PeriodicRunHooks', 'EnableCallbackIf']
 class PeriodicTrigger(ProxyCallback):
     """
     Schedule to trigger a callback every k global steps or every k epochs by its ``trigger()`` method.
+
+    Note that it does not touch other methods (``before/after_run``,
+    ``trigger_step``, etc).
     """
 
     _chief_only = False
@@ -99,7 +102,7 @@ class EnableCallbackIf(ProxyCallback):
         """
         Args:
             callback (Callback):
-            pred (self -> bool): a callable predicate
+            pred (self -> bool): a callable predicate. Has to be a pure function.
         """
         self._pred = pred
         super(EnableCallbackIf, self).__init__(callback)
@@ -134,3 +137,6 @@ class EnableCallbackIf(ProxyCallback):
     def _trigger_step(self):
         if self._pred(self):
             super(EnableCallbackIf, self)._trigger_step()
+
+    def __str__(self):
+        return "EnableCallbackIf-" + str(self.cb)

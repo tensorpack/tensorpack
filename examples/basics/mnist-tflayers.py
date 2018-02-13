@@ -44,20 +44,17 @@ class Model(ModelDesc):
 
         image = image * 2 - 1   # center the pixels values at zero
 
-        # The context manager `argscope` sets the default option for all the layers under
-        # this context. Here we use 32 channel convolution with shape 3x3
-        with argscope(Conv2D, kernel_shape=3, nl=tf.nn.relu, out_channel=32):
-            l = tf.layers.conv2d(image, 32, 3, padding='same', activation=tf.nn.relu, name='conv0')
-            l = tf.layers.max_pooling2d(l, 2, 2, padding='valid')
-            l = tf.layers.conv2d(l, 32, 3, padding='same', activation=tf.nn.relu, name='conv1')
-            l = tf.layers.conv2d(l, 32, 3, padding='same', activation=tf.nn.relu, name='conv2')
-            l = tf.layers.max_pooling2d(l, 2, 2, padding='valid')
-            l = tf.layers.conv2d(l, 32, 3, padding='same', activation=tf.nn.relu, name='conv3')
-            l = tf.layers.flatten(l)
-            l = tf.layers.dense(l, 512, activation=tf.nn.relu, name='fc0')
-            l = tf.layers.dropout(l, rate=0.5,
-                                  training=get_current_tower_context().is_training)
-            logits = tf.layers.dense(l, 10, activation=tf.identity, name='fc1')
+        l = tf.layers.conv2d(image, 32, 3, padding='same', activation=tf.nn.relu, name='conv0')
+        l = tf.layers.max_pooling2d(l, 2, 2, padding='valid')
+        l = tf.layers.conv2d(l, 32, 3, padding='same', activation=tf.nn.relu, name='conv1')
+        l = tf.layers.conv2d(l, 32, 3, padding='same', activation=tf.nn.relu, name='conv2')
+        l = tf.layers.max_pooling2d(l, 2, 2, padding='valid')
+        l = tf.layers.conv2d(l, 32, 3, padding='same', activation=tf.nn.relu, name='conv3')
+        l = tf.layers.flatten(l)
+        l = tf.layers.dense(l, 512, activation=tf.nn.relu, name='fc0')
+        l = tf.layers.dropout(l, rate=0.5,
+                              training=get_current_tower_context().is_training)
+        logits = tf.layers.dense(l, 10, activation=tf.identity, name='fc1')
 
         tf.nn.softmax(logits, name='prob')   # a Bx10 with probabilities
 
