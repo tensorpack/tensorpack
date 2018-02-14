@@ -61,6 +61,7 @@ def get_data(name, batch):
 
 def get_config(model, fake=False):
     nr_tower = max(get_nr_gpu(), 1)
+    assert args.batch % nr_tower == 0
     batch = args.batch // nr_tower
 
     if fake:
@@ -73,14 +74,14 @@ def get_config(model, fake=False):
         dataset_train = get_data('train', batch)
         dataset_val = get_data('val', batch)
 
-        BASE_LR = 0.1 * (args.batch // 256)
+        BASE_LR = 0.1 * (args.batch / 256.0)
         callbacks = [
             ModelSaver(),
             ScheduledHyperParamSetter(
                 'learning_rate', [(30, BASE_LR * 1e-1), (60, BASE_LR * 1e-2),
                                   (85, BASE_LR * 1e-3), (95, BASE_LR * 1e-4), (105, BASE_LR * 1e-5)]),
         ]
-        if BASE_LR != 0.1:
+        if BASE_LR > 0.1:
             callbacks.append(
                 ScheduledHyperParamSetter(
                     'learning_rate', [(0, 0.1), (3, BASE_LR)], interp='linear'))
@@ -115,7 +116,7 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--depth', help='resnet depth',
                         type=int, default=18, choices=[18, 34, 50, 101, 152])
     parser.add_argument('--eval', action='store_true')
-    parser.add_argument('--batch', help='total batch size. need to be multiple of 256 to get similar accuracy.',
+    parser.add_argument('--batch', help='total batch size. 256 gives best accuracy.',
                         default=256, type=int)
     parser.add_argument('--mode', choices=['resnet', 'preact', 'se'],
                         help='variants of resnet to use', default='resnet')

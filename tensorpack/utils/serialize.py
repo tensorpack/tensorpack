@@ -8,11 +8,15 @@ import msgpack_numpy
 msgpack_numpy.patch()
 
 try:
-    import sys
-    sys.modules['torch'] = None
     # https://github.com/apache/arrow/pull/1223#issuecomment-359895666
+    import sys
+    old_mod = sys.modules.get('torch', None)
+    sys.modules['torch'] = None
     import pyarrow as pa
-    del sys.modules['torch']
+    if old_mod is not None:
+        sys.modules['torch'] = old_mod
+    else:
+        del sys.modules['torch']
 except ImportError:
     pa = None
 
