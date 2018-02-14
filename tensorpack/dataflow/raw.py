@@ -70,12 +70,12 @@ class DataFromQueue(DataFlow):
 
 
 class DataFromList(RNGDataFlow):
-    """ Wrap a list of datapoitns to a DataFlow"""
+    """ Wrap a list of datapoints to a DataFlow"""
 
     def __init__(self, lst, shuffle=True):
         """
         Args:
-            lst (list): input list.
+            lst (list): input list. Each element is a datapoint.
             shuffle (bool): shuffle data.
         """
         super(DataFromList, self).__init__()

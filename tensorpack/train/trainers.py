@@ -339,6 +339,8 @@ class HorovodTrainer(SingleCostTrainer):
         # NOTE It will fail if GPU was already detected before initializing the session
         # https://github.com/tensorflow/tensorflow/issues/8136
         session_creator.config.gpu_options.visible_device_list = str(self._local_rank)
+        # TODO split #CPUs
+        # session_creator.config.inter_op_parallelism_threads =
         super(HorovodTrainer, self).initialize(
             session_creator, session_init)
 

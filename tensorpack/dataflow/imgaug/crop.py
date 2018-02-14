@@ -45,6 +45,8 @@ class CenterCrop(TransformAugmentorBase):
 
     def _get_augment_params(self, img):
         orig_shape = img.shape
+        assert orig_shape[0] >= self.crop_shape[0] \
+            and orig_shape[1] >= self.crop_shape[1], orig_shape
         h0 = int((orig_shape[0] - self.crop_shape[0]) * 0.5)
         w0 = int((orig_shape[1] - self.crop_shape[1]) * 0.5)
         return CropTransform(h0, w0, self.crop_shape[0], self.crop_shape[1])

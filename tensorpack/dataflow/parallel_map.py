@@ -123,7 +123,8 @@ class MultiThreadMapData(_ParallelMapData):
                     if self.stopped():
                         return
                     # cannot ignore None here. will lead to unsynced send/recv
-                    self.outq.put(self.func(dp))
+                    obj = self.func(dp)
+                    self.queue_put_stoppable(self.outq, obj)
             except Exception:
                 if self.stopped():
                     pass        # skip duplicated error messages
@@ -190,7 +191,10 @@ class MultiThreadMapData(_ParallelMapData):
         if self._evt is not None:
             self._evt.set()
         for p in self._threads:
-            p.join()
+            p.stop()
+            p.join(timeout=5.0)
+            # if p.is_alive():
+            #     logger.warn("Cannot join thread {}.".format(p.name))
 
 
 # TODO deprecated

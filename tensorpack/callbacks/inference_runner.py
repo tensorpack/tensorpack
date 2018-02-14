@@ -18,7 +18,7 @@ from ..utils.utils import get_tqdm_kwargs
 from ..dataflow.base import DataFlow
 
 from ..input_source import (
-    InputSource, FeedInput, QueueInput)
+    InputSource, FeedInput, QueueInput, StagingInput)
 from ..graph_builder.predict import SimplePredictBuilder
 
 from .base import Callback
@@ -118,6 +118,7 @@ class InferenceRunner(InferenceRunnerBase):
         if isinstance(input, DataFlow):
             input = FeedInput(input, infinite=True)     # TODO a better way to handle inference size
         assert isinstance(input, InputSource), input
+        assert not isinstance(input, StagingInput), input
         self._tower_name = tower_name
         self._device = device
         super(InferenceRunner, self).__init__(input, infs)
