@@ -52,7 +52,7 @@ class Model(ModelDesc):
                       .MaxPooling('pool1', 2)
                       .Conv2D('conv3')
                       .FullyConnected('fc0', 512, activation=tf.nn.relu)
-                      .Dropout('dropout', 0.5)
+                      .Dropout('dropout', rate=0.5)
                       .FullyConnected('fc1', 10, activation=tf.identity)())
 
         tf.nn.softmax(logits, name='prob')   # a Bx10 with probabilities
@@ -97,6 +97,9 @@ class Model(ModelDesc):
 def get_data():
     train = BatchData(dataset.Mnist('train'), 128)
     test = BatchData(dataset.Mnist('test'), 256, remainder=True)
+
+    train = PrintData(train)
+
     return train, test
 
 
