@@ -668,7 +668,7 @@ class PrintData(ProxyDataFlow):
                0: float with value 5.88252075399
                1: ndarray:int32 of shape (64,) in range [0, 10]
                2: ndarray:float32 of shape (64, 64) with range [-0.9011, 0.8491]
-               3: dp 0: list of len 50
+               3: list of len 50
                   0: ndarray:int32 of shape (64, 64) in range [-70, 50]
                   1: ndarray:float32 of shape (64, 64) in range [0.7400, 0.3545]
                   ...
