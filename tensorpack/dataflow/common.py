@@ -6,6 +6,7 @@ from __future__ import division
 import numpy as np
 from copy import copy
 import pprint
+import itertools
 from termcolor import colored
 from collections import deque, defaultdict
 from six.moves import range, map
@@ -677,11 +678,11 @@ class PrintData(ProxyDataFlow):
     def __init__(self, ds, num=1, label=None, name=None, max_depth=3, max_list=3):
         """
         Args:
-            ds(DataFlow): input DataFlow.
-            num(int): number of dataflow points to print.
-            name(str, optional): name to identify this DataFlow.
-            max_depth (int, optional): stop output when to deep recursion in sub elements
-            max_list (int, optional): stop output when too sub elements
+            ds (DataFlow): input DataFlow.
+            num (int): number of dataflow points to print.
+            name (str, optional): name to identify this DataFlow.
+            max_depth (int, optional): stop output when too deep recursion in sub elements
+            max_list (int, optional): stop output when too many sub elements
         """
         super(PrintData, self).__init__(ds)
         self.num = num
@@ -703,20 +704,16 @@ class PrintData(ProxyDataFlow):
             entry: the datapoint component
             k (int): index of this compoennt in current datapoint
             depth (int, optional): recursion depth
-            max_depth (int, optional): stop output when to deep recursion in sub elements
-            max_list (int, optional): stop output when too sub elements
+            max_depth, max_list: same as in :meth:`__init__`.
 
         Returns:
             string: debug message
         """
 
         class _elementInfo(object):
-            """docstring for _elementInfo"""
             def __init__(self, el, pos, depth=0, max_list=3):
-                super(_elementInfo, self).__init__()
-
                 self.shape = ""
-                self.type = ""
+                self.type = type(el).__name__
                 self.dtype = ""
                 self.range = ""
 
@@ -724,28 +721,19 @@ class PrintData(ProxyDataFlow):
 
                 self.ident = " " * (depth * 2)
                 self.pos = pos
-                self.type = type(el).__name__
 
-                numpy_scalar_types = []
-                for t in np.sctypes:
-                    numpy_scalar_types += np.sctypes[t]
+                numpy_scalar_types = list(itertools.chain(*np.sctypes.values()))
 
                 if isinstance(el, (int, float, bool)):
-                    self.shape = ""
-                    self.dtype = ""
                     self.range = " with value {}".format(el)
                 elif type(el) is np.ndarray:
                     self.shape = " of shape {}".format(el.shape)
                     self.dtype = ":{}".format(str(el.dtype))
                     self.range = " in range [{}, {}]".format(el.min(), el.max())
                 elif type(el) in numpy_scalar_types:
-                    self.shape = ""
-                    self.dtype = ""
                     self.range = " with value {}".format(el)
                 elif isinstance(el, (list)):
                     self.shape = " of len {}".format(len(el))
-                    self.dtype = ""
-                    self.range = ""
 
                     if depth < max_depth:
                         for k, subel in enumerate(el):
@@ -776,7 +764,6 @@ class PrintData(ProxyDataFlow):
         return u'\n'.join(msg)
 
     def get_data(self):
-
         for dp in self.ds.get_data():
             # it is important to place this here! otherwise it mixes the output of multiple PrintData
             if self.cnt == 0:
