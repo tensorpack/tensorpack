@@ -5,13 +5,12 @@
 import tensorflow as tf
 from contextlib import contextmanager
 import time
-
 import traceback
 
 from .base import Callback
 from .hooks import CallbackToHook
 from ..utils import logger
-from ..utils.utils import human_time_delta
+from ..utils.utils import humanize_time_delta
 
 __all__ = ['Callbacks']
 
@@ -39,7 +38,7 @@ class CallbackTimeLogger(object):
         msgs = []
         for name, t in self.times:
             if t / self.tot > 0.3 and t > 1:
-                msgs.append(human_time_delta(t))
+                msgs.append(humanize_time_delta(t))
         logger.info(
             "Callbacks took {:.3f} sec in total. {}".format(
                 self.tot, '; '.join(msgs)))
