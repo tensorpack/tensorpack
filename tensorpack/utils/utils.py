@@ -21,14 +21,17 @@ __all__ = ['change_env',
 
 
 def human_time_delta(sec):
+    isec = int(sec)
     units = ['week', 'day', 'hour', 'minute', 'second']
     vals = [
-        sec / 60 / 60 / 24 / 7,
-        (sec / 60 / 60 / 24) % 7,
-        (sec / 60 / 60) % 24,
-        (sec / 60) % 60,
-        sec % 60
+        isec / 60 / 60 / 24 / 7,
+        (isec / 60 / 60 / 24) % 7,
+        (isec / 60 / 60) % 24,
+        (isec / 60) % 60,
+        isec % 60
     ]
+    if sec < 60:
+        vals[-1] = sec
 
     def _format(v, u):
         if v == 1:
