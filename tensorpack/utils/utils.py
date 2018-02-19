@@ -6,7 +6,7 @@ import os
 import sys
 from contextlib import contextmanager
 import inspect
-from datetime import datetime
+from datetime import datetime, timedelta
 from tqdm import tqdm
 import numpy as np
 
@@ -16,7 +16,52 @@ __all__ = ['change_env',
            'fix_rng_seed',
            'get_tqdm',
            'execute_only_once',
+           'humanize_time_delta'
            ]
+
+
+def humanize_time_delta(sec):
+    """Humanize timedelta given in seconds
+
+    Args:
+        sec (float): time difference in seconds.
+
+    Examples:
+
+        Several time differences as a human readable string
+
+    .. code-block:: python
+
+        print humanize_seconds(1)                                   # 1 second
+        print humanize_seconds(60 + 1)                              # 1 minute 1 second
+        print humanize_seconds(87.6)                                # 1 minute 27 seconds
+        print humanize_seconds(0.01)                                # 0.01 seconds
+        print humanize_seconds(60 * 60 + 1)                         # 1 hour 0 minutes 1 second
+        print humanize_seconds(60 * 60 * 24 + 1)                    # 1 day 0 hours 0 minutes 1 second
+        print humanize_seconds(60 * 60 * 24 + 60 * 2 + 60*60*9+ 3)  # 1 day 9 hours 2 minutes 3 seconds
+
+    Returns:
+        time difference as a readable string
+    """
+    time = datetime(2000, 1, 1) + timedelta(seconds=int(sec))
+    units = ['day', 'hour', 'minute', 'second']
+    vals = [time.day - 1, time.hour, time.minute, time.second]
+    if sec < 60:
+        vals[-1] = sec
+
+    def _format(v, u):
+        return "{} {}{}".format(v, u, "s" if v > 1 else "")
+
+    required = False
+    ans = []
+    for v, u in zip(vals, units):
+        if not required:
+            if v > 0:
+                required = True
+                ans.append(_format(v, u))
+        else:
+            ans.append(_format(v, u))
+    return " ".join(ans)
 
 
 @contextmanager
