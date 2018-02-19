@@ -6,7 +6,7 @@ import os
 import sys
 from contextlib import contextmanager
 import inspect
-from datetime import datetime
+from datetime import datetime, timedelta
 from tqdm import tqdm
 import numpy as np
 
@@ -24,7 +24,7 @@ def humanize_time_delta(sec):
     """Humanize timedelta given in seconds
 
     Args:
-        sec: time difference in seconds.
+        sec (float): time difference in seconds.
 
     Examples:
 
@@ -43,23 +43,14 @@ def humanize_time_delta(sec):
     Returns:
         time difference as a readable string
     """
-    isec = int(sec)
-    units = ['week', 'day', 'hour', 'minute', 'second']
-    vals = [
-        isec / 60 / 60 / 24 / 7,
-        (isec / 60 / 60 / 24) % 7,
-        (isec / 60 / 60) % 24,
-        (isec / 60) % 60,
-        isec % 60
-    ]
+    time = datetime(2000, 1, 1) + timedelta(seconds=int(sec))
+    units = ['day', 'hour', 'minute', 'second']
+    vals = [time.day - 1, time.hour, time.minute, time.second]
     if sec < 60:
         vals[-1] = sec
 
     def _format(v, u):
-        if v == 1:
-            return "{} {}".format(v, u)
-        else:
-            return "{} {}s".format(v, u)
+        return "{} {}{}".format(v, u, "s" if v > 1 else "")
 
     required = False
     ans = []
