@@ -116,7 +116,7 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--depth', help='resnet depth',
                         type=int, default=18, choices=[18, 34, 50, 101, 152])
     parser.add_argument('--eval', action='store_true')
-    parser.add_argument('--batch', help='total batch size. 256 gives best accuracy.',
+    parser.add_argument('--batch', help='total batch size. 32 per GPU gives best accuracy, higher values should be similarly good',
                         default=256, type=int)
     parser.add_argument('--mode', choices=['resnet', 'preact', 'se'],
                         help='variants of resnet to use', default='resnet')

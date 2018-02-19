@@ -111,15 +111,15 @@ class _MultiProcessZMQDataFlow(DataFlow):
         start_proc_mask_signal(self._procs)
 
     def __del__(self):
-        if not self._reset_done:
-            return
-        if not self.context.closed:
-            self.socket.close(0)
-            self.context.destroy(0)
-        for x in self._procs:
-            x.terminate()
-            x.join(5)
         try:
+            if not self._reset_done:
+                return
+            if not self.context.closed:
+                self.socket.close(0)
+                self.context.destroy(0)
+            for x in self._procs:
+                x.terminate()
+                x.join(5)
             print("{} successfully cleaned-up.".format(type(self).__name__))
         except Exception:
             pass

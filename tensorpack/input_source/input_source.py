@@ -496,7 +496,7 @@ class StagingInput(FeedfreeInput):
             logger.info("Pre-filling StagingArea ...")
             for k in range(self.nr_stage):
                 self.stage_op.run()
-            logger.info("Put {} element(s) to StagingArea.")
+            logger.info("Successfully put {} element(s) to StagingArea.".format(self.nr_stage))
 
         def _before_run(self, ctx):
             # This has to happen once, right before the first iteration.

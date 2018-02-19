@@ -40,7 +40,6 @@ class Model(ModelDesc):
         image = tf.expand_dims(image, 3)
 
         image = image * 2 - 1   # center the pixels values at zero
-
         # The context manager `argscope` sets the default option for all the layers under
         # this context. Here we use 32 channel convolution with shape 3x3
         with argscope(Conv2D, kernel_shape=3, nl=tf.nn.relu, out_channel=32):

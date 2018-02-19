@@ -173,18 +173,21 @@ class GraphProfiler(Callback):
 
 class PeakMemoryTracker(Callback):
     """
-    Track peak memory in each session run, by
-    :mod:`tf.contrib.memory_stats`.
-    It can only be used for GPUs.
+    Track peak memory used on each GPU device, by :mod:`tf.contrib.memory_stats`.
+    The peak memory comes from the `MaxBytesInUse` op, which might span
+    multiple session.run.
+    See https://github.com/tensorflow/tensorflow/pull/13107.
     """
 
     _chief_only = False
 
-    def __init__(self, devices=['/gpu:0']):
+    def __init__(self, devices=[0]):
         """
         Args:
-            devices([str]): list of devices to track memory on.
+            devices([int] or [str]): list of GPU devices to track memory on.
         """
+        assert isinstance(devices, (list, tuple)), devices
+        devices = ['/gpu:{}'.format(x) if isinstance(x, int) else x for x in devices]
         self._devices = devices
 
     def _setup_graph(self):
