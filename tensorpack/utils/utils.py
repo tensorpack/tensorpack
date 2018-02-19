@@ -9,7 +9,6 @@ import inspect
 from datetime import datetime
 from tqdm import tqdm
 import numpy as np
-from dateutil.relativedelta import relativedelta
 
 
 __all__ = ['change_env',
@@ -21,10 +20,32 @@ __all__ = ['change_env',
            ]
 
 
-def human_time_delta(seconds):
-    seconds = relativedelta(seconds=seconds)
-    attrs = ['years', 'months', 'days', 'hours', 'minutes', 'seconds']
-    return " ".join(["%d %s" % (getattr(seconds, attr), attr) for attr in attrs if getattr(seconds, attr) > 0])
+def human_time_delta(sec):
+    units = ['week', 'day', 'hour', 'minute', 'second']
+    vals = [
+        sec / 60 / 60 / 24 / 7,
+        (sec / 60 / 60 / 24) % 7,
+        (sec / 60 / 60) % 24,
+        (sec / 60) % 60,
+        sec % 60
+    ]
+
+    def _format(v, u):
+        if v == 1:
+            return "{} {}".format(v, u)
+        else:
+            return "{} {}s".format(v, u)
+
+    required = False
+    ans = []
+    for v, u in zip(vals, units):
+        if not required:
+            if v > 0:
+                required = True
+                ans.append(_format(v, u))
+        else:
+            ans.append(_format(v, u))
+    return " ".join(ans)
 
 
 @contextmanager
