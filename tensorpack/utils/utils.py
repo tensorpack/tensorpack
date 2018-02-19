@@ -21,6 +21,28 @@ __all__ = ['change_env',
 
 
 def human_time_delta(sec):
+    """Humanize timedelta given in seconds
+
+    Args:
+        sec: time difference in seconds.
+
+    Examples:
+
+        Several time differences as a human readable string
+
+    .. code-block:: python
+
+        print humanize_seconds(1)                                   # 1 second
+        print humanize_seconds(60 + 1)                              # 1 minute 1 second
+        print humanize_seconds(87.6)                                # 1 minute 27 seconds
+        print humanize_seconds(0.01)                                # 0.01 seconds
+        print humanize_seconds(60 * 60 + 1)                         # 1 hour 0 minutes 1 second
+        print humanize_seconds(60 * 60 * 24 + 1)                    # 1 day 0 hours 0 minutes 1 second
+        print humanize_seconds(60 * 60 * 24 + 60 * 2 + 60*60*9+ 3)  # 1 day 9 hours 2 minutes 3 seconds
+
+    Returns:
+        time difference as a readable string
+    """
     isec = int(sec)
     units = ['week', 'day', 'hour', 'minute', 'second']
     vals = [
