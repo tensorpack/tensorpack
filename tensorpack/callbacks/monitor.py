@@ -266,7 +266,7 @@ class JSONWriter(TrainingMonitor):
         self._fname = os.path.join(self._dir, self.FILENAME)
 
         if os.path.isfile(self._fname):
-            logger.info("Found existing JSON at {}, will append to it.".format(self._fname))
+            logger.info("Found JSON at {}, will append to it.".format(self._fname))
             with open(self._fname) as f:
                 self._stats = json.load(f)
                 assert isinstance(self._stats, list), type(self._stats)
@@ -277,7 +277,7 @@ class JSONWriter(TrainingMonitor):
                 pass
             else:
                 # TODO is this a good idea?
-                logger.info("Found training history from JSON, now starting from epoch number {}.".format(epoch))
+                logger.info("Found history statistics from JSON. Rename the first epoch of this training to epoch #{}.".format(epoch))
                 self.trainer.loop.starting_epoch = epoch
                 self.trainer.loop._epoch_num = epoch - 1
         else:
@@ -289,16 +289,19 @@ class JSONWriter(TrainingMonitor):
     def _trigger_step(self):
         # will do this in trigger_epoch
         if self.local_step != self.trainer.steps_per_epoch - 1:
-            self._push()
+            self._trigger()
 
     def _trigger_epoch(self):
-        self._push()
+        self._trigger()
 
     def process_scalar(self, name, val):
         self._stat_now[name] = val
 
-    def _push(self):
-        """ Note that this method is idempotent"""
+    def _trigger(self):
+        """
+        Add stats to json and dump to disk.
+        Note that this method is idempotent.
+        """
         if len(self._stat_now):
             self._stat_now['epoch_num'] = self.epoch_num
             self._stat_now['global_step'] = self.global_step
@@ -354,20 +357,21 @@ class ScalarPrinter(TrainingMonitor):
         if self._enable_step:
             if self.local_step != self.trainer.steps_per_epoch - 1:
                 # not the last step
-                self._print_stat()
+                self._trigger()
             else:
                 if not self._enable_epoch:
-                    self._print_stat()
+                    self._trigger()
                 # otherwise, will print them together
 
     def _trigger_epoch(self):
         if self._enable_epoch:
-            self._print_stat()
+            self._trigger()
 
     def process_scalar(self, name, val):
         self._dic[name] = float(val)
 
-    def _print_stat(self):
+    def _trigger(self):
+        # Print stats here
         def match_regex_list(regexs, name):
             for r in regexs:
                 if r.search(name) is not None:
@@ -438,12 +442,9 @@ class SendMonitorData(TrainingMonitor):
             self.dic[name] = val
 
     def _trigger_step(self):
-        self._try_send()
+        self._trigger()
 
-    def _trigger_epoch(self):
-        self._try_send()
-
-    def _try_send(self):
+    def _trigger(self):
         try:
             v = {k: self.dic[k] for k in self.names}
         except KeyError:

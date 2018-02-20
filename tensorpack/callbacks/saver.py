@@ -15,7 +15,7 @@ __all__ = ['ModelSaver', 'MinSaver', 'MaxSaver']
 
 class ModelSaver(Callback):
     """
-    Save the model every epoch.
+    Save the model once triggered.
     """
 
     def __init__(self, max_to_keep=10,

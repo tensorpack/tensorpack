@@ -33,7 +33,7 @@ class InjectShell(Callback):
     """
     Allow users to create a specific file as a signal to pause
     and iteratively debug the training.
-    When triggered, it detects whether the file exists, and opens an
+    Once triggered, it detects whether the file exists, and opens an
     IPython/pdb shell if yes.
     In the shell, `self` is this callback, `self.trainer` is the trainer, and
     from that you can access everything else.
@@ -71,7 +71,7 @@ class InjectShell(Callback):
 
 class DumpParamAsImage(Callback):
     """
-    Dump a tensor to image(s) to ``logger.get_logger_dir()`` after every epoch.
+    Dump a tensor to image(s) to ``logger.get_logger_dir()`` once triggered.
 
     Note that it requires the tensor is directly evaluable, i.e. either inputs
     are not its dependency (e.g. the weights of the model), or the inputs are
