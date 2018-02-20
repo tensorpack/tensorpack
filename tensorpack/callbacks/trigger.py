@@ -174,7 +174,6 @@ class PeriodicCallback(EnableCallbackIf):
         self._epoch_k = every_k_epochs
         super(PeriodicCallback, self).__init__(callback, PeriodicCallback.predicate)
 
-
     def predicate(self):
         if self._step_k is not None and self.global_step % self._step_k == 0:
             return True

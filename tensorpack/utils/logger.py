@@ -80,7 +80,7 @@ def set_logger_dir(dirname, action=None):
 
     Args:
         dirname(str): log directory
-        action(str): an action of ("k","b","d","n","q") to be performed
+        action(str): an action of ("k","d","q") to be performed
             when the directory exists. Will ask user by default.
     """
     global LOG_DIR, _FILE_HANDLER
@@ -88,13 +88,13 @@ def set_logger_dir(dirname, action=None):
         # unload and close the old file handler, so that we may safely delete the logger directory
         _logger.removeHandler(_FILE_HANDLER)
         del _FILE_HANDLER
-    if os.path.isdir(dirname):
+    if os.path.isdir(dirname) and len(os.listdir(dirname)):
         if not action:
             _logger.warn("""\
 Log directory {} exists! Please either backup/delete it, or use a new directory.""".format(dirname))
             _logger.warn("""\
 If you're resuming from a previous run you can choose to keep it.""")
-            _logger.info("Select Action: k (keep) / b (backup) / d (delete) / n (new) / q (quit):")
+            _logger.info("Select Action: k (keep) / d (delete) / q (quit):")
         while not action:
             action = input().lower().strip()
         act = action
@@ -110,7 +110,7 @@ If you're resuming from a previous run you can choose to keep it.""")
         elif act == 'k':
             pass
         elif act == 'q':
-            sys.exit()
+            raise OSError("Directory {} exits!".format(dirname))
         else:
             raise ValueError("Unknown action: {}".format(act))
     LOG_DIR = dirname

@@ -20,7 +20,7 @@ RESNET_NUM_BLOCK = [3, 4, 6, 3]     # for resnet50
 
 # schedule -----------------------
 BASE_LR = 1e-2
-WARMUP = 500
+WARMUP = 500    # in steps
 STEPS_PER_EPOCH = 500
 LR_SCHEDULE = [150000, 230000, 280000]
 # LR_SCHEDULE = [120000, 160000, 180000]    # "1x" schedule in detectron

@@ -368,10 +368,11 @@ if __name__ == '__main__':
         print_config()
         factor = get_batch_factor()
         stepnum = config.STEPS_PER_EPOCH
-        warmup_epoch = max(1, config.WARMUP / stepnum)
 
-        warmup_schedule = [(0, config.BASE_LR / 3), (warmup_epoch * factor, config.BASE_LR)]
-        lr_schedule = [warmup_schedule[-1]]
+        # warmup is step based, lr is epoch based
+        warmup_schedule = [(0, config.BASE_LR / 3), (config.WARMUP * factor, config.BASE_LR)]
+        warmup_end_epoch = config.WARMUP * factor * 1. / stepnum
+        lr_schedule = [(int(np.ceil(warmup_end_epoch)), warmup_schedule[-1][1])]
         for idx, steps in enumerate(config.LR_SCHEDULE[:-1]):
             mult = 0.1 ** (idx + 1)
             lr_schedule.append(
@@ -382,9 +383,9 @@ if __name__ == '__main__':
             data=QueueInput(get_train_dataflow(add_mask=config.MODE_MASK)),
             callbacks=[
                 ModelSaver(max_to_keep=10, keep_checkpoint_every_n_hours=1),
-                # linear warmup # TODO step-wise linear warmup
+                # linear warmup
                 ScheduledHyperParamSetter(
-                    'learning_rate', warmup_schedule, interp='linear'),
+                    'learning_rate', warmup_schedule, interp='linear', step_based=True),
                 ScheduledHyperParamSetter('learning_rate', lr_schedule),
                 EvalCallback(),
                 GPUUtilizationTracker(),

@@ -277,7 +277,8 @@ class JSONWriter(TrainingMonitor):
                 pass
             else:
                 # TODO is this a good idea?
-                logger.info("Found history statistics from JSON. Rename the first epoch of this training to epoch #{}.".format(epoch))
+                logger.info("Found history statistics from JSON. "
+                            "Rename the first epoch of this training to epoch #{}.".format(epoch))
                 self.trainer.loop.starting_epoch = epoch
                 self.trainer.loop._epoch_num = epoch - 1
         else:
