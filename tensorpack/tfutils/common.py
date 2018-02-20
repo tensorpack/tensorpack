@@ -19,8 +19,8 @@ __all__ = ['get_default_sess_config',
 
 def get_default_sess_config(mem_fraction=0.99):
     """
-    Return a better session config to use as default.
-    Tensorflow default session config consume too much resources.
+    Return a tf.ConfigProto to use as default session config.
+    You can modify the returned config to fit your needs.
 
     Args:
         mem_fraction(float): fraction of memory to use.
@@ -37,11 +37,16 @@ def get_default_sess_config(mem_fraction=0.99):
     # TF benchmark use cpu_count() - gpu_thread_count(), e.g. 80 - 8 * 2
     # Didn't see much difference.
 
-    conf.gpu_options.per_process_gpu_memory_fraction = mem_fraction
+    conf.gpu_options.per_process_gpu_memory_fraction = 0.99
     if get_tf_version_number() >= 1.2:
         conf.gpu_options.force_gpu_compatible = True
 
     conf.gpu_options.allow_growth = True
+
+    # from tensorflow.core.protobuf import rewriter_config_pb2 as rwc
+    # conf.graph_options.rewrite_options.memory_optimization = \
+    #     rwc.RewriterConfig.HEURISTICS
+
 
     # May hurt performance
     # conf.graph_options.optimizer_options.global_jit_level = tf.OptimizerOptions.ON_1

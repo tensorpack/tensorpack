@@ -515,6 +515,7 @@ class StagingInput(FeedfreeInput):
                     element should be sufficient.
             towers: deprecated
             device (str or None): if not None, place the StagingArea on a specific device. e.g., '/cpu:0'.
+                Otherwise, they are placed under where `get_inputs_tensors` gets called.
         """
         assert isinstance(input, FeedfreeInput), input
         self._input = input

@@ -29,12 +29,12 @@ You can overwrite any of the following methods to define a new callback:
 
 * `_setup_graph(self)`
 
-  Create any ops / tensors in the graph which you might need to use in the callback.
-  This method is to separate between "define" and "run", and also to
+  Create any tensors/ops in the graph which you might need to use in the callback.
+  This method exists to fully separate between "define" and "run", and also to
   avoid the common mistake to create ops inside
   loops. All changes to the graph should be made in this method.
 
-  To access ops which are already defined,
+  To access tensors/ops which are already defined,
   you can use TF methods such as
   [`graph.get_tensor_by_name`](https://www.tensorflow.org/api_docs/python/tf/Graph#get_tensor_by_name).
   If you're using a `TowerTrainer` instance, more tools are available:
@@ -66,7 +66,7 @@ You can overwrite any of the following methods to define a new callback:
   Please refer to TensorFlow documentation for detailed API.
   They are used to run extra ops / eval extra tensors / feed extra values __along with__ the actual training iterations.
 
-  Note the difference between running __along with__ an iteration and running after an iteration.
+  __IMPORTANT__ Note the difference between running __along with__ an iteration and running __after__ an iteration.
   When you write
 
   ```python
@@ -76,7 +76,8 @@ You can overwrite any of the following methods to define a new callback:
 
   The training loops would become `sess.run([training_op, my_op])`.
   This is different from `sess.run(training_op); sess.run(my_op);`,
-  which is what you would get if you run the op in `_trigger_step`.
+  which is what you would get if you run `my_op` in `_trigger_step`.
+	Sometimes the difference matters, please choose carefully.
 
 * `_trigger_step(self)`
 
@@ -93,15 +94,17 @@ You can overwrite any of the following methods to define a new callback:
   By default it will get called by `_trigger_epoch`,
   but you can customize the scheduling of this method by
   [`PeriodicTrigger`](../../modules/callbacks.html#tensorpack.callbacks.PeriodicTrigger),
-  to let this method run every k steps or every k epochs.
+  to let this method run every k steps (potentially more frequently) or every k epochs.
 
 ### What you can do in the callback
 
-* Access tensors / ops in either training / inference mode (need to create them in `_setup_graph`).
+* Access tensors / ops (details mentioned above):
+	* For existing tensors/ops created in the tower, access them through [self.trainer.towers](../../modules/train.html#tensorpack.train.TowerTrainer.towers).
+	* Extra tensors/ops have to be created in `_setup_graph` callback method.
 * Write stuff to the monitor backend, by `self.trainer.monitors.put_xxx`.
   The monitors might direct your events to TensorFlow events file, JSON file, stdout, etc.
-  You can get history monitor data as well. See the docs for [Monitors](../../modules/callbacks.html#tensorpack.callbacks.Monitors)
-* Access the current status of training, such as `epoch_num`, `global_step`. See [here](../../modules/callbacks.html#tensorpack.callbacks.Callback)
+  You can access history monitor data as well. See the docs for [Monitors](../../modules/callbacks.html#tensorpack.callbacks.Monitors)
+* Access the current status of training, such as `self.epoch_num`, `self.global_step`. See [here](../../modules/callbacks.html#tensorpack.callbacks.Callback)
 * Stop training by `raise StopTraining()` (with `from tensorpack.train import StopTraining`).
 * Anything else that can be done with plain python.
 
@@ -114,6 +117,6 @@ You can overwrite any of the following methods to define a new callback:
 * You can choose to only implement "what to do", and leave "when to do" to
   other wrappers such as
   [PeriodicTrigger](../../modules/callbacks.html#tensorpack.callbacks.PeriodicTrigger),
-  [PeriodicRunHooks](../../modules/callbacks.html#tensorpack.callbacks.PeriodicRunHooks),
+  [PeriodicCallback](../../modules/callbacks.html#tensorpack.callbacks.PeriodicCallback),
   or [EnableCallbackIf](../../modules/callbacks.html#tensorpack.callbacks.EnableCallbackIf).
 

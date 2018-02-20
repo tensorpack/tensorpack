@@ -228,8 +228,9 @@ class Callback(object):
                 return get_op_or_tensor_by_name(name)
             except KeyError:
                 pass
-            assert isinstance(self.trainer, TowerTrainer), msg
-            towers = self.trainer.tower_func.towers
+            if not isinstance(self.trainer, TowerTrainer):
+                raise KeyError(msg)
+            towers = self.trainer.towers
             try:
                 return towers.training()[0][name]
             except KeyError:

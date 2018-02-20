@@ -40,7 +40,6 @@ def apply_default_prefetch(input_source_or_dataflow, trainer):
         if len(towers) > 1:
             # seem to only improve on >1 GPUs
             assert not isinstance(trainer, SimpleTrainer)
-            assert tf.test.is_gpu_available()
 
             if not isinstance(input, (StagingInput, DummyConstantInput)):
                 logger.info("Automatically applying StagingInput on the DataFlow.")

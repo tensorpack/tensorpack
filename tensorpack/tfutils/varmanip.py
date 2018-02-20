@@ -8,6 +8,7 @@ import os
 import pprint
 import tensorflow as tf
 import numpy as np
+from ..utils.develop import deprecated
 from ..utils import logger
 from .common import get_op_tensor_name
 
@@ -186,8 +187,8 @@ def load_chkpt_vars(model_path):
     return result
 
 
+@deprecated("Renamed to 'load_chkpt_vars!'", "2018-04-20")
 def dump_chkpt_vars(model_path):
-    logger.warn("dump_chkpt_vars was renamed to load_chkpt_vars!")
     return load_chkpt_vars(model_path)
 
 
