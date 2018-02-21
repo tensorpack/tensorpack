@@ -82,6 +82,14 @@ def set_logger_dir(dirname, action=None):
         dirname(str): log directory
         action(str): an action of ("k","d","q") to be performed
             when the directory exists. Will ask user by default.
+            "d": delete the directory. Note that the deletion may fail when
+                the directory is used by tensorboard.
+            "k": keep the directory. This is useful when you resume from a
+                previous training and want the directory to look as if the
+                training was not interrupted.
+                Note that this option does not load old models or any other
+                old states for you. It simply does nothing.
+
     """
     global LOG_DIR, _FILE_HANDLER
     if _FILE_HANDLER:
@@ -91,12 +99,12 @@ def set_logger_dir(dirname, action=None):
     if os.path.isdir(dirname) and len(os.listdir(dirname)):
         if not action:
             _logger.warn("""\
-Log directory {} exists! Please either backup/delete it, or use a new directory.""".format(dirname))
+Log directory {} exists! Use 'd' to delete it. """.format(dirname))
             _logger.warn("""\
-If you're resuming from a previous run you can choose to keep it.""")
-            _logger.info("Select Action: k (keep) / d (delete) / q (quit):")
+If you're resuming from a previous run, you can choose to keep it.
+Press any other key to exit. """)
         while not action:
-            action = input().lower().strip()
+            action = input("Select Action: k (keep) / d (delete) / q (quit):").lower().strip()
         act = action
         if act == 'b':
             backup_name = dirname + _get_time_str()
@@ -109,10 +117,8 @@ If you're resuming from a previous run you can choose to keep it.""")
             info("Use a new log directory {}".format(dirname))  # noqa: F821
         elif act == 'k':
             pass
-        elif act == 'q':
-            raise OSError("Directory {} exits!".format(dirname))
         else:
-            raise ValueError("Unknown action: {}".format(act))
+            raise OSError("Directory {} exits!".format(dirname))
     LOG_DIR = dirname
     from .fs import mkdir_p
     mkdir_p(dirname)
