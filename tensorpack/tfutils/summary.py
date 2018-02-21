@@ -6,7 +6,6 @@ import cv2
 import six
 import tensorflow as tf
 import re
-import io
 from six.moves import range
 from contextlib import contextmanager
 
