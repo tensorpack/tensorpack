@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 # File: interface.py
 
-import tensorflow as tf
-
 from ..input_source import (
     InputSource, FeedInput, QueueInput, StagingInput, DummyConstantInput)
 from ..utils import logger

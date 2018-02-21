@@ -26,14 +26,6 @@ tensorpack.utils.fs module
     :undoc-members:
     :show-inheritance:
 
-tensorpack.utils.globvars module
---------------------------------
-
-.. automodule:: tensorpack.utils.globvars
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 tensorpack.utils.loadcaffe module
 ---------------------------------
 

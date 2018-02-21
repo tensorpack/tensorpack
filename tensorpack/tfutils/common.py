@@ -47,7 +47,6 @@ def get_default_sess_config(mem_fraction=0.99):
     # conf.graph_options.rewrite_options.memory_optimization = \
     #     rwc.RewriterConfig.HEURISTICS
 
-
     # May hurt performance
     # conf.graph_options.optimizer_options.global_jit_level = tf.OptimizerOptions.ON_1
     # conf.graph_options.place_pruned_graph = True

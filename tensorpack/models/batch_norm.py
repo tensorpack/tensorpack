@@ -54,7 +54,7 @@ def update_bn_ema(xn, batch_mean, batch_var,
     else:
         tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_op1)
         tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_op2)
-        return xn
+        return tf.identity(xn, name='output')
 
 
 def reshape_for_bn(param, ndims, chan, data_format):

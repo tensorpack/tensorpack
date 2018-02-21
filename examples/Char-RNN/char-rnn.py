@@ -16,10 +16,14 @@ from six.moves import range
 from tensorpack import *
 from tensorpack.tfutils import summary, optimizer
 from tensorpack.tfutils.gradproc import GlobalNormClip
-from tensorpack.utils.globvars import globalns as param
 
 import tensorflow as tf
 rnn = tf.contrib.rnn
+
+class _NS: pass  # noqa
+
+
+param = _NS()
 
 # some model hyperparams to set
 param.batch_size = 128
