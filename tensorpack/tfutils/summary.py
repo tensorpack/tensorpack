@@ -95,6 +95,7 @@ def create_image_summary(name, val):
         s.value.add(tag=tag, image=img)
     return s
 
+
 def add_tensor_summary(x, types, name=None, collections=None,
                        main_tower_only=True):
     """
@@ -264,4 +265,3 @@ def add_moving_summary(*args, **kwargs):
             # TODO a new collection to summary every step?
             tf.add_to_collection(coll, op)
     return ema_ops
-
