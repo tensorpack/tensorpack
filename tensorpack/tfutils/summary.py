@@ -81,7 +81,7 @@ def create_image_summary(name, val):
         tag = name if n == 1 else '{}/{}'.format(name, k)
 
         retval, img_str = cv2.imencode('.png', arr)
-        if retval != 0:
+        if not retval:
             # Encoding has failed.
             continue
         img_str = img_str.tostring()
@@ -264,3 +264,4 @@ def add_moving_summary(*args, **kwargs):
             # TODO a new collection to summary every step?
             tf.add_to_collection(coll, op)
     return ema_ops
+
