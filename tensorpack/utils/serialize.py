@@ -2,23 +2,22 @@
 # -*- coding: utf-8 -*-
 # File: serialize.py
 
-
+import sys
 import msgpack
 import msgpack_numpy
 msgpack_numpy.patch()
 
+# https://github.com/apache/arrow/pull/1223#issuecomment-359895666
+old_mod = sys.modules.get('torch', None)
+sys.modules['torch'] = None
 try:
-    # https://github.com/apache/arrow/pull/1223#issuecomment-359895666
-    import sys
-    old_mod = sys.modules.get('torch', None)
-    sys.modules['torch'] = None
     import pyarrow as pa
-    if old_mod is not None:
-        sys.modules['torch'] = old_mod
-    else:
-        del sys.modules['torch']
 except ImportError:
     pa = None
+if old_mod is not None:
+    sys.modules['torch'] = old_mod
+else:
+    del sys.modules['torch']
 
 
 __all__ = ['loads', 'dumps']
