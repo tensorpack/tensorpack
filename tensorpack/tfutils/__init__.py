@@ -31,11 +31,16 @@ _TO_IMPORT = frozenset([
 
 for module_name in _TO_IMPORT:
     _global_import(module_name)
+
 """
-Here the goal is to keep submodule names (sesscreate, varmanip, etc) out of __all__,
+TODO remove this line in the future.
+Better to keep submodule names (sesscreate, varmanip, etc) out of __all__,
 so that these names will be invisible under `tensorpack.` namespace.
 
 To use these utilities, users are expected to import them explicitly, e.g.:
 
 import tensorpack.tfutils.symbolic_functions as symbf
 """
+__all__.extend(['sessinit', 'summary', 'optimizer',
+                'sesscreate', 'gradproc', 'varreplace', 'symbolic_functions',
+                'distributed', 'tower'])

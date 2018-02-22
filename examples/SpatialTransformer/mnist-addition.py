@@ -12,7 +12,7 @@ import argparse
 
 from tensorpack import *
 from tensorpack.dataflow import dataset
-from tensorpack.tfutils import sesscreate, optimizer, summary
+from tensorpack.tfutils import sesscreate, optimizer, summary, gradproc
 
 IMAGE_SIZE = 42
 WARP_TARGET_SIZE = 28

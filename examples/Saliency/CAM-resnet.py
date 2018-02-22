@@ -13,7 +13,7 @@ import multiprocessing
 import tensorflow as tf
 from tensorpack import *
 from tensorpack.dataflow import dataset
-from tensorpack.tfutils import optimizer
+from tensorpack.tfutils import optimizer, gradproc
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
 from tensorpack.utils.gpu import get_nr_gpu

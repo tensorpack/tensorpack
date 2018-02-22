@@ -13,7 +13,7 @@ import os
 from tensorpack import *
 from tensorpack.dataflow import dataset
 from tensorpack.utils.gpu import get_nr_gpu
-from tensorpack.tfutils import optimizer
+from tensorpack.tfutils import optimizer, gradproc
 from tensorpack.tfutils.summary import add_moving_summary, add_param_summary
 
 
