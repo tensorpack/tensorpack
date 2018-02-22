@@ -1,6 +1,19 @@
 #  -*- coding: UTF-8 -*-
 #  File: __init__.py
 
+if False:
+    from .base import *
+    from .common import *
+    from .format import *
+    from .image import *
+    from .parallel_map import *
+    from .parallel import *
+    from .raw import *
+    from .remote import *
+    from . import imgaug
+    from . import dataset
+    from . import dftools
+
 
 from pkgutil import iter_modules
 import os
@@ -33,8 +46,8 @@ for _, module_name, __ in iter_modules(
         _global_import(module_name)
 
 
-dataset = LazyLoader('dataset', globals(), 'tensorpack.dataflow.dataset')
-imgaug = LazyLoader('imgaug', globals(), 'tensorpack.dataflow.imgaug')
+globals()['dataset'] = LazyLoader('dataset', globals(), 'tensorpack.dataflow.dataset')
+globals()['imgaug'] = LazyLoader('imgaug', globals(), 'tensorpack.dataflow.imgaug')
 
 del LazyLoader
 

@@ -1,6 +1,19 @@
 # -*- coding: UTF-8 -*-
 # File: __init__.py
 
+if False:
+    from .base import *
+    from .convert import *
+    from .crop import *
+    from .deform import *
+    from .geometry import *
+    from .imgproc import *
+    from .meta import *
+    from .misc import *
+    from .noise import *
+    from .paste import *
+    from .transform import *
+
 
 import os
 from pkgutil import iter_modules

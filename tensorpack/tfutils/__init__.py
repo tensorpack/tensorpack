@@ -2,10 +2,14 @@
 #  File: __init__.py
 
 
-from pkgutil import iter_modules
-import os
-
 from .tower import get_current_tower_context, TowerContext
+
+if False:
+    from .common import *
+    from .sessinit import *
+    from .argscope import *
+
+
 # don't want to include everything from .tower
 __all__ = ['get_current_tower_context', 'TowerContext']
 
@@ -19,22 +23,19 @@ def _global_import(name):
             __all__.append(k)
 
 
-_TO_IMPORT = set([
+_TO_IMPORT = frozenset([
     'common',
     'sessinit',
     'argscope',
 ])
 
-_CURR_DIR = os.path.dirname(__file__)
-for _, module_name, _ in iter_modules(
-        [_CURR_DIR]):
-    srcpath = os.path.join(_CURR_DIR, module_name + '.py')
-    if not os.path.isfile(srcpath):
-        continue
-    if module_name.startswith('_'):
-        continue
-    if module_name in _TO_IMPORT:
-        _global_import(module_name)  # import the content to tfutils.*
-__all__.extend(['sessinit', 'summary', 'optimizer',
-                'sesscreate', 'gradproc', 'varreplace', 'symbolic_functions',
-                'distributed', 'tower'])
+for module_name in _TO_IMPORT:
+    _global_import(module_name)
+"""
+Here the goal is to keep submodule names (sesscreate, varmanip, etc) out of __all__,
+so that these names will be invisible under `tensorpack.` namespace.
+
+To use these utilities, users are expected to import them explicitly, e.g.:
+
+import tensorpack.tfutils.symbolic_functions as symbf
+"""

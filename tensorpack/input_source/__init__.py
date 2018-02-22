@@ -1,6 +1,9 @@
 #  -*- coding: UTF-8 -*-
 #  File: __init__.py
 
+if False:
+    from .input_source_base import *
+    from .input_source import *
 
 from pkgutil import iter_modules
 import os

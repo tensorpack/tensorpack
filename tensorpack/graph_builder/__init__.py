@@ -1,13 +1,18 @@
 #  -*- coding: UTF-8 -*-
 #  File: __init__.py
 
+if False:
+    from .model_desc import *
+    from .training import *
+    from .distributed import *
+    from .predict import *
+    from .utils import *
 
 from pkgutil import iter_modules
 import os
 import os.path
 
 __all__ = []
-
 
 def global_import(name):
     p = __import__(name, globals(), locals(), level=1)

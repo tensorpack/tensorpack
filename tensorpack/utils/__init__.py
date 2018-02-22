@@ -37,15 +37,5 @@ def get_rng(obj=None):
         "Please do `from tensorpack.utils.utils import get_rng`")
     return gr(obj)
 
-
-_CURR_DIR = os.path.dirname(__file__)
-for _, module_name, _ in iter_modules(
-        [_CURR_DIR]):
-    srcpath = os.path.join(_CURR_DIR, module_name + '.py')
-    if not os.path.isfile(srcpath):
-        continue
-    if module_name.startswith('_'):
-        continue
-__all__.extend([
-    'logger',
-    'get_nr_gpu', 'change_gpu', 'get_rng'])
+# Import no submodules. they are supposed to be explicitly imported by users.
+__all__.extend(['logger', 'get_nr_gpu', 'change_gpu', 'get_rng'])

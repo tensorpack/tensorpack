@@ -2,6 +2,24 @@
 #  File: __init__.py
 
 
+if False:
+    from .base import *
+    from .concurrency import *
+    from .graph import *
+    from .group import *
+    from .hooks import *
+    from .inference import *
+    from .inference_runner import *
+    from .monitor import *
+    from .param import *
+    from .prof import *
+    from .saver import *
+    from .stats import *
+    from .steps import *
+    from .summary import *
+    from .trigger import *
+
+
 from pkgutil import iter_modules
 import os
 
@@ -22,7 +40,7 @@ def _global_import(name):
 
 _CURR_DIR = os.path.dirname(__file__)
 for _, module_name, _ in iter_modules(
-        [_CURR_DIR]):
+       [_CURR_DIR]):
     srcpath = os.path.join(_CURR_DIR, module_name + '.py')
     if not os.path.isfile(srcpath):
         continue

@@ -1,6 +1,18 @@
 #  -*- coding: UTF-8 -*-
 #  File: __init__.py
 
+if False:
+    from .batch_norm import *
+    from .common import *
+    from .conv2d import *
+    from .fc import *
+    from .image_sample import *
+    from .layer_norm import *
+    from .linearwrap import *
+    from .nonlin import *
+    from .pool import *
+    from .regularize import *
+
 
 from pkgutil import iter_modules
 import os
