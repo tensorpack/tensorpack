@@ -2,7 +2,6 @@
 # File: summary.py
 
 
-import cv2
 import six
 import tensorflow as tf
 import re
@@ -71,13 +70,11 @@ def create_image_summary(name, val):
     s = tf.Summary()
     for k in range(n):
         arr = val[k]
-        if arr.shape[2] == 1:   # scipy doesn't accept (h,w,1)
-            arr = arr[:, :, 0]
-        elif c == 3:
+        #CV2 will only write correctly in BGR chanel order
+        if c == 3:
             arr = cv2.cvtColor(arr, cv2.COLOR_RGB2BGR)
         elif c == 4:
             arr = cv2.cvtColor(arr, cv2.COLOR_RGBA2BGRA)
-        #CV2 will only write correctly in BGR chanel order
         tag = name if n == 1 else '{}/{}'.format(name, k)
 
         retval, img_str = cv2.imencode('.png', arr)
@@ -265,3 +262,10 @@ def add_moving_summary(*args, **kwargs):
             # TODO a new collection to summary every step?
             tf.add_to_collection(coll, op)
     return ema_ops
+
+
+try:
+    import cv2
+except ImportError:
+    from ..utils.develop import create_dummy_func
+    create_image_summary = create_dummy_func('create_image_summary', 'cv2')  # noqa
