@@ -80,11 +80,10 @@ with TowerContext('some_name_or_empty_string', is_training=False):
 
 When defining the model you can construct the graph using whatever library you feel comfortable with.
 
-Usually, slim/tflearn/tensorlayer are just symbolic functions, calling them is nothing different
+Usually, slim/tflearn/tensorlayer are just symbolic function wrappers, calling them is nothing different
 from calling `tf.add`. You may need to be careful how regularizations/BN updates are supposed
 to be handled in those libraries, though.
 
 It is a bit different to use sonnet/Keras.
 sonnet/Keras manages the variable scope by their own model classes, and calling their symbolic functions
 always creates new variable scope. See the [Keras example](../examples/keras) for how to use it within tensorpack.
-The support is only preliminary for now.

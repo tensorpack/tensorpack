@@ -34,7 +34,7 @@ Then it is a good time to open an issue.
 1. Learn `tf.stop_gradient`. You can simply use `tf.stop_gradient` in your model code in many situations (e.g. to freeze first several layers).
 
 2. [varreplace.freeze_variables](../modules/tfutils.html#tensorpack.tfutils.varreplace.freeze_variables) returns a context where variables are freezed.
-	Learn to use the `custom_getter` argument of `tf.variable_scope` to gain more control over what & how variables are freezed.
+	It is implemented by `custom_getter` argument of `tf.variable_scope` -- learn it to gain more control over what & how variables are freezed.
 
 3. [ScaleGradient](../modules/tfutils.html#tensorpack.tfutils.gradproc.ScaleGradient) can be used to set the gradients of some variables to 0.
 	But it may be slow, since variables still have gradients.

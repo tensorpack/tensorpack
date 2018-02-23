@@ -14,7 +14,7 @@ __all__ = []
 def describe_trainable_vars():
     """
     Print a description of the current model parameters.
-    Skip variables starting with "tower".
+    Skip variables starting with "tower", as they are just duplicates built by data-parallel logic.
     """
     train_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
     if len(train_vars) == 0:
@@ -51,6 +51,8 @@ def describe_trainable_vars():
 
 def get_shape_str(tensors):
     """
+    Internally used by layer registry, to print shapes of inputs/outputs of layers.
+
     Args:
         tensors (list or tf.Tensor): a tensor or a list of tensors
     Returns:

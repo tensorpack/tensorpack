@@ -198,11 +198,11 @@ def add_param_summary(*summary_lists, **kwargs):
 
 def add_moving_summary(*args, **kwargs):
     """
-    Add moving average summary for some tensors.
+    Summarize the moving average for scalar tensors.
     This function is a no-op if not calling from main training tower.
 
     Args:
-        args: tensors to summarize
+        args: scalar tensors to summarize
         decay (float): the decay rate. Defaults to 0.95.
         collection (str or None): the name of the collection to add EMA-maintaining ops.
             The default will work together with the default

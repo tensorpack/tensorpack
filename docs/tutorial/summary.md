@@ -25,8 +25,8 @@ This is how TensorFlow summaries eventually get logged/saved/printed:
 
 All the "what, when, where" can be customized in either the graph or with the callbacks/monitors setting.
 
-Since TF summaries are evaluated every epoch by default, if the content is data-dependent, the results
-are likely to have too much variance. To address this issue, you can:
+Since TF summaries are evaluated infrequently (every epoch) by default, if the content is data-dependent, the values
+could have high variance. To address this issue, you can:
 1. Change "When to Log": log more frequently, but note that certain summaries can be expensive to
 	 log. You may want to use a separate collection for frequent logging.
 2. Change "What to Log": you can call
@@ -40,7 +40,7 @@ are likely to have too much variance. To address this issue, you can:
 
 Besides TensorFlow summaries,
 a callback can also write other data to the monitor backend anytime once the training has started,
-by `trainer.monitors.put_xxx`.
+by `self.trainer.monitors.put_xxx`.
 As long as the type of data is supported, the data will be dispatched to and logged to the same place.
 
 As a result, tensorboard will show not only summaries in the graph, but also your custom data.

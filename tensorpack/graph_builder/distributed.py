@@ -70,6 +70,10 @@ class DistributedParameterServerBuilder(DataParallelBuilder, DistributedBuilderB
 
     It is an equivalent of ``--variable_update=parameter_server`` in
     `tensorflow/benchmarks <https://github.com/tensorflow/benchmarks>`_.
+    However this implementation hasn't been well tested.
+    It probably still has issues in model saving, etc.
+    Check `ResNet-Horovod <https://github.com/tensorpack/benchmarks/tree/master/ResNet-Horovod>`_
+    for fast and correct distributed examples.
 
     Note:
         1. Gradients are not averaged across workers, but applied to PS variables
@@ -138,6 +142,9 @@ class DistributedReplicatedBuilder(DataParallelBuilder, DistributedBuilderBase):
 
     It is an equivalent of ``--variable_update=distributed_replicated`` in
     `tensorflow/benchmarks <https://github.com/tensorflow/benchmarks>`_.
+    Note that the performance of this trianer is still not satisfactory.
+    Check `ResNet-Horovod <https://github.com/tensorpack/benchmarks/tree/master/ResNet-Horovod>`_
+    for fast and correct distributed examples.
 
     Note:
         1. Gradients are not averaged across workers, but applied to PS variables

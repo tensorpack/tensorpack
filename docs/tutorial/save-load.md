@@ -8,9 +8,11 @@ in TensorFlow checkpoint format.
 One checkpoint typically includes a `.data-xxxxx` file and a `.index` file.
 Both are necessary.
 
-To inspect a checkpoint, the easiest tool is `tf.train.NewCheckpointReader`.
-For example, [scripts/ls-checkpoint.py](../scripts/ls-checkpoint.py)
-uses it to print all variables and their shapes in a checkpoint.
+`tf.train.NewCheckpointReader` is the best tool to parse TensorFlow checkpoint.
+We have two example scripts to demo its usage, but read [TF docs](https://www.tensorflow.org/api_docs/python/tf/train/NewCheckpointReader) for details.
+
+[scripts/ls-checkpoint.py](../scripts/ls-checkpoint.py)
+demos how to print all variables and their shapes in a checkpoint.
 
 [scripts/dump-model-params.py](../scripts/dump-model-params.py) can be used to remove unnecessary variables in a checkpoint.
 It takes a metagraph file (which is also saved by `ModelSaver`) and only saves variables that the model needs at inference time.

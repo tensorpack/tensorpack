@@ -12,7 +12,7 @@ Tensorpack is a training interface based on TensorFlow.
 It's Yet Another TF wrapper, but different in:
 
 1. Focus on __training speed__.
-	+	Speed comes for free with tensorpack -- it uses TensorFlow in the __correct way__ with no extra overhead.
+	+	Speed comes for free with tensorpack -- it uses TensorFlow in the __efficient way__ with no extra overhead.
 	  On various CNNs, it runs 1.5~1.7x faster than the equivalent Keras code.
 
 	+ Data-parallel multi-GPU training is off-the-shelf to use. It runs as fast as Google's [official benchmark](https://www.tensorflow.org/performance/benchmarks).
@@ -67,4 +67,16 @@ Dependencies:
 # install git, then:
 pip install -U git+https://github.com/ppwwyyxx/tensorpack.git
 # or add `--user` to avoid system-wide installation.
+```
+
+## Citing Tensorpack:
+
+If you use Tensorpack in your research or wish to refer to the examples, please cite with:
+```
+@misc{wu2016tensorpack,
+  title={Tensorpack},
+  author={Wu, Yuxin and others},
+  howpublished={\url{https://github.com/tensorpack/}},
+  year={2016}
+}
 ```
