@@ -196,7 +196,7 @@ def get_train_dataflow(add_mask=False):
         config.BASEDIR, config.TRAIN_DATASET, add_gt=True, add_mask=add_mask)
     """
     To train on your own data, change this to your loader.
-    Produce "igms" as a list of dict, in the dict the following keys are needed for training:
+    Produce "imgs" as a list of dict, in the dict the following keys are needed for training:
     height, width: integer
     file_name: str
     boxes: kx4 floats
@@ -247,7 +247,7 @@ def get_train_dataflow(add_mask=False):
 
         if add_mask:
             # augmentation will modify the polys in-place
-            segmentation = copy.deepcopy(img.get('segmentation', None))
+            segmentation = copy.deepcopy(img['segmentation'])
             segmentation = [segmentation[k] for k in range(len(segmentation)) if not is_crowd[k]]
             assert len(segmentation) == len(boxes)
 

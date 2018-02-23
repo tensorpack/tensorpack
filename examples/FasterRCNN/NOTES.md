@@ -17,6 +17,7 @@ Data:
 
 1. It's easy to train on your own data. Just replace `COCODetection.load_many` in `data.py` by your own loader.
 	Also remember to change `config.NUM_CLASS` and `config.CLASS_NAMES`.
+	The current evaluation code is also COCO-specific, and you need to change it to use your data and metrics.
 
 2. You can easily add more augmentations such as rotation, but be careful how a box should be
 	 augmented. The code now will always use the minimal axis-aligned bounding box of the 4 corners,

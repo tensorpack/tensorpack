@@ -2,11 +2,20 @@
 # -*- coding: utf-8 -*-
 # File: basemodel.py
 
+from contextlib import contextmanager
 import tensorflow as tf
 from tensorpack.tfutils.argscope import argscope, get_arg_scope
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
 from tensorpack.models import (
     Conv2D, MaxPooling, BatchNorm, BNReLU)
+
+
+@contextmanager
+def resnet_argscope():
+    with argscope([Conv2D, MaxPooling, BatchNorm], data_format='NCHW'), \
+            argscope(Conv2D, use_bias=False), \
+            argscope(BatchNorm, use_local_stat=False):
+        yield
 
 
 def image_preprocess(image, bgr=True):
@@ -71,29 +80,25 @@ def resnet_group(l, name, block_func, features, count, stride):
     return l
 
 
-def pretrained_resnet_conv4(image, num_blocks):
+def pretrained_resnet_conv4(image, num_blocks, freeze_c2=True):
     assert len(num_blocks) == 3
-    with argscope([Conv2D, MaxPooling, BatchNorm], data_format='NCHW'), \
-            argscope(Conv2D, nl=tf.identity, use_bias=False), \
-            argscope(BatchNorm, use_local_stat=False):
+    with resnet_argscope():
         l = tf.pad(image, [[0, 0], [0, 0], [2, 3], [2, 3]])
         l = Conv2D('conv0', l, 64, 7, stride=2, nl=BNReLU, padding='VALID')
         l = tf.pad(l, [[0, 0], [0, 0], [0, 1], [0, 1]])
         l = MaxPooling('pool0', l, shape=3, stride=2, padding='VALID')
-        l = resnet_group(l, 'group0', resnet_bottleneck, 64, num_blocks[0], 1)
-        # TODO replace var by const to enable folding
-        l = tf.stop_gradient(l)
-        l = resnet_group(l, 'group1', resnet_bottleneck, 128, num_blocks[1], 2)
-        l = resnet_group(l, 'group2', resnet_bottleneck, 256, num_blocks[2], 2)
+        c2 = resnet_group(l, 'group0', resnet_bottleneck, 64, num_blocks[0], 1)
+        # TODO replace var by const to enable optimization
+        if freeze_c2:
+            c2 = tf.stop_gradient(c2)
+        c3 = resnet_group(c2, 'group1', resnet_bottleneck, 128, num_blocks[1], 2)
+        c4 = resnet_group(c3, 'group2', resnet_bottleneck, 256, num_blocks[2], 2)
     # 16x downsampling up to now
-    return l
+    return c4
 
 
 @auto_reuse_variable_scope
 def resnet_conv5(image, num_block):
-    with argscope([Conv2D, BatchNorm], data_format='NCHW'), \
-            argscope(Conv2D, nl=tf.identity, use_bias=False), \
-            argscope(BatchNorm, use_local_stat=False):
-        # 14x14:
-        l = resnet_group(image, 'group3', resnet_bottleneck, 512, num_block, stride=2)
+    with resnet_argscope():
+        l = resnet_group(image, 'group3', resnet_bottleneck, 512, num_block, 2)
         return l

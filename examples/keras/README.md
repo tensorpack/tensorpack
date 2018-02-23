@@ -22,8 +22,10 @@ are the only two tools I know that can scale the training of a large Keras model
 reproduce exactly the same setting of [tensorpack ResNet example](../ResNet) on ImageNet.
 It has:
 
-+ ResNet-50 model modified from [keras.applications](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/keras/_impl/keras/applications/resnet50.py)
++ ResNet-50 model modified from [keras.applications](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/keras/_impl/keras/applications/resnet50.py).
+	(We put stride on 3x3 conv in each bottleneck, which is different from some other implementations).
 + Multi-GPU data-parallel __training and validation__ which scales
-	+ With 8 V100s, still has >90% GPU utilization and finished 100 epochs in 19.5 hours
+	+ Finished 100 epochs in 19.5 hours on 8 V100s, with >90% GPU utilization.
+	+ Still slightly slower than native tensorpack examples.
 + Good accuracy (same as [tensorpack ResNet example](../ResNet))
 

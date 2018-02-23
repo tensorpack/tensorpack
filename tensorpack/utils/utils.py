@@ -50,7 +50,7 @@ def humanize_time_delta(sec):
         vals[-1] = sec
 
     def _format(v, u):
-        return "{} {}{}".format(v, u, "s" if v > 1 else "")
+        return "{:.3g} {}{}".format(v, u, "s" if v > 1 else "")
 
     required = False
     ans = []
