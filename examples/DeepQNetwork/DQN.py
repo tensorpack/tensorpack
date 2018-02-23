@@ -54,7 +54,7 @@ class Model(DQNModel):
     def _get_DQN_prediction(self, image):
         """ image: [0,255]"""
         image = image / 255.0
-        with argscope(Conv2D, nl=PReLU.symbolic_function, use_bias=True):
+        with argscope(Conv2D, activation=lambda x: PReLU('prelu', x), use_bias=True):
             l = (LinearWrap(image)
                  # Nature architecture
                  .Conv2D('conv0', out_channel=32, kernel_shape=8, stride=4)

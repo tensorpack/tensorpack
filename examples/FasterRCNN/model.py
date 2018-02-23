@@ -546,3 +546,35 @@ def maskrcnn_loss(mask_logits, fg_labels, fg_target_masks):
 
     add_moving_summary(loss, accuracy, fg_pixel_ratio, pos_accuracy)
     return loss
+
+
+if __name__ == '__main__':
+    """
+    Demonstrate what's wrong with tf.image.crop_and_resize:
+    """
+    import numpy as np
+    import tensorflow.contrib.eager as tfe
+    tfe.enable_eager_execution()
+
+    # want to crop 2x2 out of a 5x5 image, and resize to 4x4
+    image = np.arange(25).astype('float32').reshape(5, 5)
+    boxes = np.asarray([[1, 1, 3, 3]], dtype='float32')
+    target = 4
+
+    print(crop_and_resize(
+        image[None, None, :, :], boxes, [0], target)[0][0])
+    """
+    Expected values:
+    4.5 5 5.5 6
+    7 7.5 8 8.5
+    9.5 10 10.5 11
+    12 12.5 13 13.5
+    Our implementation is not perfect either. When boxes are on the border of
+    images, TF pads zeros instead of border values. But this rarely happens so it's fine.
+
+    You cannot easily get the above results with tf.image.crop_and_resize.
+    Try out yourself here:
+    """
+    print(tf.image.crop_and_resize(
+        image[None, :, :, None],
+        np.asarray([[1, 1, 2, 2]]) / 4.0, [0], [target, target])[0][:, :, 0])

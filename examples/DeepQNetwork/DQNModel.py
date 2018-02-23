@@ -15,6 +15,8 @@ assert tensorpack.tfutils.common.get_tf_version_number() >= 1.2
 
 
 class Model(ModelDesc):
+    learning_rate = 1e-3
+
     def __init__(self, image_shape, channel, method, num_actions, gamma):
         self.image_shape = image_shape
         self.channel = channel
@@ -80,7 +82,7 @@ class Model(ModelDesc):
         summary.add_moving_summary(self.cost)
 
     def _get_optimizer(self):
-        lr = tf.get_variable('learning_rate', initializer=1e-3, trainable=False)
+        lr = tf.get_variable('learning_rate', initializer=self.learning_rate, trainable=False)
         opt = tf.train.AdamOptimizer(lr, epsilon=1e-3)
         return optimizer.apply_grad_processors(
             opt, [gradproc.GlobalNormClip(10), gradproc.SummaryGradient()])

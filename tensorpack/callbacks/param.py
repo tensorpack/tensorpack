@@ -246,24 +246,21 @@ class ScheduledHyperParamSetter(HyperParamSetter):
 
     def _get_value_to_set(self):
         refnum = self.global_step if self._step else self.epoch_num
-        if self.interp is None:
-            for e, v in self.schedule:
-                if e == refnum:
-                    return v
+        laste, lastv = None, None
+        for e, v in self.schedule:
+            if e == refnum:
+                return v
+            if e > refnum:
+                break
+            laste, lastv = e, v
+        if laste is None or laste == e:
+            # hasn't reached the first scheduled point, or reached the end of all scheduled points
             return None
-        else:
-            laste, lastv = None, None
-            for e, v in self.schedule:
-                if e == refnum:
-                    return v
-                if e > refnum:
-                    break
-                laste, lastv = e, v
-            if laste is None or laste == e:
-                # hasn't reached the first scheduled point, or reached the end of all scheduled points
-                return None
+        if self.interp is not None:
             v = (refnum - laste) * 1. / (e - laste) * (v - lastv) + lastv
-            return v
+        else:
+            v = lastv
+        return v
 
     def _trigger_epoch(self):
         if not self._step:

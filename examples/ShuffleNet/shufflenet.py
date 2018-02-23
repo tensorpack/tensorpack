@@ -23,7 +23,7 @@ from imagenet_utils import (
     get_imagenet_dataflow,
     ImageNetModel, GoogleNetResize, eval_on_ILSVRC12)
 
-TOTAL_BATCH_SIZE = 256
+TOTAL_BATCH_SIZE = 1024
 
 
 @layer_register(log_shape=True)
@@ -48,6 +48,7 @@ def DepthConv(x, out_channel, kernel_shape, padding='SAME', stride=1,
 def channel_shuffle(l, group):
     in_shape = l.get_shape().as_list()
     in_channel = in_shape[1]
+    assert in_channel % group == 0, in_channel
     l = tf.reshape(l, [-1, group, in_channel // group] + in_shape[-2:])
     l = tf.transpose(l, [0, 2, 1, 3, 4])
     l = tf.reshape(l, [-1, in_channel] + in_shape[-2:])
@@ -69,7 +70,7 @@ class Model(ImageNetModel):
 
             # We do not apply group convolution on the first pointwise layer
             # because the number of input channels is relatively small.
-            first_split = group if in_channel != 16 else 1
+            first_split = group if in_channel != 12 else 1
             l = Conv2D('conv1', l, out_channel // 4, 1, split=first_split, nl=BNReLU)
             l = channel_shuffle(l, group)
             l = DepthConv('dconv', l, out_channel // 4, 3, nl=BN, stride=stride)
@@ -86,10 +87,10 @@ class Model(ImageNetModel):
 
         with argscope([Conv2D, MaxPooling, AvgPooling, GlobalAvgPooling, BatchNorm], data_format=self.data_format), \
                 argscope(Conv2D, use_bias=False):
-            group = 8
-            channels = [224, 416, 832]
+            group = 3
+            channels = [120, 240, 480]
 
-            l = Conv2D('conv1', image, 16, 3, stride=2, nl=BNReLU)
+            l = Conv2D('conv1', image, 12, 3, stride=2, nl=BNReLU)
             l = MaxPooling('pool1', l, 3, 2, padding='SAME')
 
             with tf.variable_scope('group1'):
@@ -98,7 +99,7 @@ class Model(ImageNetModel):
                         l = shufflenet_unit(l, channels[0], group, 2 if i == 0 else 1)
 
             with tf.variable_scope('group2'):
-                for i in range(6):
+                for i in range(8):
                     with tf.variable_scope('block{}'.format(i)):
                         l = shufflenet_unit(l, channels[1], group, 2 if i == 0 else 1)
 
@@ -148,11 +149,15 @@ def get_config(model, nr_tower):
     logger.info("Running on {} towers. Batch size per tower: {}".format(nr_tower, batch))
     dataset_train = get_data('train', batch)
     dataset_val = get_data('val', batch)
+
+    step_size = 1280000 // TOTAL_BATCH_SIZE
+    max_iter = 3 * 10**5
+    max_epoch = (max_iter // step_size) + 1
     callbacks = [
         ModelSaver(),
         ScheduledHyperParamSetter('learning_rate',
-                                  [(0, 3e-1), (30, 3e-2), (60, 3e-3), (90, 3e-4)]),
-        HumanHyperParamSetter('learning_rate'),
+                                  [(0, 0.5), (max_iter, 0)],
+                                  interp='linear', step_based=True),
     ]
     infs = [ClassificationError('wrong-top1', 'val-error-top1'),
             ClassificationError('wrong-top5', 'val-error-top5')]
@@ -168,8 +173,8 @@ def get_config(model, nr_tower):
         model=model,
         dataflow=dataset_train,
         callbacks=callbacks,
-        steps_per_epoch=5000,
-        max_epoch=100,
+        steps_per_epoch=step_size,
+        max_epoch=max_epoch,
     )
 
 
@@ -207,8 +212,7 @@ if __name__ == '__main__':
             cmd='op',
             options=tf.profiler.ProfileOptionBuilder.float_operation())
     else:
-        logger.set_logger_dir(
-            os.path.join('train_log', 'shufflenet'))
+        logger.set_logger_dir(os.path.join('train_log', 'shufflenet'))
 
         nr_tower = max(get_nr_gpu(), 1)
         config = get_config(model, nr_tower)
