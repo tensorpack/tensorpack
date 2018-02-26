@@ -147,7 +147,7 @@ class BinaryILSVRC12(dataset.ILSVRC12Files):
                 jpeg = f.read()
             jpeg = np.asarray(bytearray(jpeg), dtype='uint8')
             yield [jpeg, label]
-ds0 = BinaryILSVRC12()
+ds0 = BinaryILSVRC12('/path/to/ILSVRC/', 'train')
 ds1 = PrefetchDataZMQ(ds0, nr_proc=1)
 dftools.dump_dataflow_to_lmdb(ds1, '/path/to/ILSVRC-train.lmdb')
 ```

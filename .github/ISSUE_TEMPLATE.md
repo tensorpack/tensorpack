@@ -1,15 +1,20 @@
 Potential Bugs/Feature Requests/Usage Questions Only:
 
-Any unexpected problems: PLEASE always include
+Any unexpected problems: __PLEASE ALWAYS INCLUDE__:
 1. What you did:
 	+ If you're using examples:
 		+ What's the command you run:
-		+ Have you made any changes to code? Post them if any:
-	+ If not, describe what you did that may be relevant.
-		But we may not be able to resolve it since there is no reproducible code.
-2. What you observed, e.g. as much as logs possible.
+		+ Have you made any changes to code? Paste them if any:
+	+ If not, tell us what you did that may be relevant.
+		But we may not be able to resolve it if there is no reproducible code.
+	+ Better to paste what you did instead of describing them.
+2. What you observed, e.g. as much logs as possible.
+	+ Better to paste what you observed instead of describing them.
 3. What you expected, if not obvious.
-4. Your environment (TF version, tensorpack version, cudnn version, number & type of GPUs), if it matters.
+4. Your environment:
+	+ Python version.
+	+ TF version: `python -c 'import tensorflow as tf; print(tf.GIT_VERSION, tf.VERSION)'`.
+	+ Tensorpack version: `python3 -c 'import tensorpack; print(tensorpack.__version__)'`. You can install Tensorpack master by `pip install -U git+https://github.com/ppwwyyxx/tensorpack.git`.
 5. About efficiency, PLEASE first read http://tensorpack.readthedocs.io/en/latest/tutorial/performance-tuning.html
 
 Feature Requests:
