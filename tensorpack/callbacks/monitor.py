@@ -104,8 +104,11 @@ class Monitors(Callback):
     You should use `trainer.monitors` for logging and it will dispatch your
     logs to each sub-monitor.
     """
+
+    _chief_only = False
+
     def __init__(self, monitors):
-        self._scalar_history = ScalarHistory()
+        self._scalar_history = ScalarHistory().set_chief_only(False)
         self._monitors = monitors + [self._scalar_history]
         for m in self._monitors:
             assert isinstance(m, TrainingMonitor), m
@@ -325,6 +328,9 @@ class ScalarPrinter(TrainingMonitor):
     """
     Print scalar data into terminal.
     """
+
+    _chief_only = False
+
     def __init__(self, enable_step=False, enable_epoch=True,
                  whitelist=None, blacklist=None):
         """

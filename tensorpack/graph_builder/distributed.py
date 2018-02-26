@@ -6,6 +6,7 @@ import tensorflow as tf
 import re
 from six.moves import range
 
+from ..utils import logger
 from ..utils.argtools import memoized
 from ..tfutils.common import get_op_tensor_name, get_global_step_var
 
@@ -230,19 +231,26 @@ class DistributedReplicatedBuilder(DataParallelBuilder, DistributedBuilderBase):
         Returns:
             list of (shadow_model_var, local_model_var) used for syncing.
         """
+        G = tf.get_default_graph()
         curr_shadow_vars = set([v.name for v in shadow_vars])
         model_vars = tf.model_variables()
         shadow_model_vars = []
         for v in model_vars:
-            assert v.name.startswith('tower'), "Found some MODEL_VARIABLES created outside of the model!"
-            stripped_name = get_op_tensor_name(re.sub('tower[0-9]+/', '', v.name))[0]
-            if stripped_name in curr_shadow_vars:
+            assert v.name.startswith('tower'), "Found some MODEL_VARIABLES created outside of the tower function!"
+            stripped_op_name, stripped_var_name = get_op_tensor_name(re.sub('^tower[0-9]+/', '', v.name))
+            if stripped_op_name in curr_shadow_vars:
                 continue
-            new_v = tf.get_variable(stripped_name, dtype=v.dtype.base_dtype,
+            try:
+                G.get_tensor_by_name(stripped_var_name)
+                logger.warn("Model Variable {} also appears in other collections.".format(stripped_var_name))
+                continue
+            except KeyError:
+                pass
+            new_v = tf.get_variable(stripped_op_name, dtype=v.dtype.base_dtype,
                                     initializer=v.initial_value,
                                     trainable=False)
 
-            curr_shadow_vars.add(stripped_name)  # avoid duplicated shadow_model_vars
+            curr_shadow_vars.add(stripped_op_name)  # avoid duplicated shadow_model_vars
             shadow_vars.append(new_v)
             shadow_model_vars.append((new_v, v))  # only need to sync model_var from one tower
         return shadow_model_vars
@@ -279,7 +287,8 @@ class DistributedReplicatedBuilder(DataParallelBuilder, DistributedBuilderBase):
             use_vs=[True] * len(self.towers))  # open vs at each tower
         DataParallelBuilder._check_grad_list(grad_list)
 
-        avg_grads = average_grads(grad_list, devices=self.raw_devices)
+        avg_grads = average_grads(
+            grad_list, colocation=False, devices=self.raw_devices)
         with tf.device(self.param_server_device):
             ps_var_grads = DistributedReplicatedBuilder._apply_shadow_vars(avg_grads)
             var_update_ops = self._apply_gradients_and_copy(

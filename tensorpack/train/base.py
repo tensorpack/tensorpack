@@ -143,6 +143,9 @@ class Trainer(object):
 
         Args:
             cb (Callback or [Callback]): a callback or a list of callbacks
+
+        Returns:
+            succeed or not
         """
         if isinstance(cb, (list, tuple)):
             for x in cb:
@@ -153,8 +156,10 @@ class Trainer(object):
             "Cannot register more callbacks after trainer was setup!"
         if not self.is_chief and cb.chief_only:
             logger.warn("Callback {} is chief-only, skipped.".format(str(cb)))
+            return False
         else:
             self._callbacks.append(cb)
+            return True
 
     register_callback = _register_callback
 
@@ -188,9 +193,11 @@ class Trainer(object):
             self.register_callback(cb)
         for cb in self._callbacks:
             assert not isinstance(cb, TrainingMonitor), "Monitor cannot be pre-registered for now!"
+        registered_monitors = []
         for m in monitors:
-            self.register_callback(m)
-        self.monitors = Monitors(monitors)
+            if self.register_callback(m):
+                registered_monitors.append(m)
+        self.monitors = Monitors(registered_monitors)
         self.register_callback(self.monitors)   # monitors is also a callback
 
         # some final operations that might modify the graph

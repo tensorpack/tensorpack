@@ -214,7 +214,7 @@ class DistributedTrainerParameterServer(DistributedTrainerBase):
         return []
 
 
-class DistributedTrainerReplicated(SingleCostTrainer):
+class DistributedTrainerReplicated(DistributedTrainerBase):
 
     __doc__ = DistributedReplicatedBuilder.__doc__
 

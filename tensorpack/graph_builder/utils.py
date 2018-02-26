@@ -56,7 +56,7 @@ def override_to_local_variable(enable=True):
                 ns = orig_vs.original_name_scope
             with tf.variable_scope(
                     orig_vs, custom_getter=custom_getter):
-                with tf.name_scope(ns + '/'):
+                with tf.name_scope(ns + '/' if ns else ''):
                     yield
     else:
         yield
