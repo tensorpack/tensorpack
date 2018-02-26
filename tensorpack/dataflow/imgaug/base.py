@@ -135,7 +135,7 @@ class AugmentorList(ImageAugmentor):
         Args:
             augmentors (list): list of :class:`ImageAugmentor` instance to be applied.
         """
-        self.augs = augmentors
+        self.augmentors = augmentors
         super(AugmentorList, self).__init__()
 
     def _get_augment_params(self, img):
@@ -147,7 +147,7 @@ class AugmentorList(ImageAugmentor):
         assert img.ndim in [2, 3], img.ndim
 
         prms = []
-        for a in self.augs:
+        for a in self.augmentors:
             img, prm = a._augment_return_params(img)
             prms.append(prm)
         return img, prms
@@ -155,16 +155,16 @@ class AugmentorList(ImageAugmentor):
     def _augment(self, img, param):
         check_dtype(img)
         assert img.ndim in [2, 3], img.ndim
-        for aug, prm in zip(self.augs, param):
+        for aug, prm in zip(self.augmentors, param):
             img = aug._augment(img, prm)
         return img
 
     def _augment_coords(self, coords, param):
-        for aug, prm in zip(self.augs, param):
+        for aug, prm in zip(self.augmentors, param):
             coords = aug._augment_coords(coords, prm)
         return coords
 
     def reset_state(self):
         """ Will reset state of each augmentor """
-        for a in self.augs:
+        for a in self.augmentors:
             a.reset_state()
