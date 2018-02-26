@@ -130,12 +130,12 @@ class AugmentorList(ImageAugmentor):
     Augment by a list of augmentors
     """
 
-    def __init__(self, augmentors):
+    def __init__(self, augs):
         """
         Args:
-            augmentors (list): list of :class:`ImageAugmentor` instance to be applied.
+            augs (list): list of :class:`ImageAugmentor` instance to be applied.
         """
-        self.augs = augmentors
+        self.augs = augs
         super(AugmentorList, self).__init__()
 
     def _get_augment_params(self, img):
