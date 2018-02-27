@@ -57,6 +57,7 @@ def AvgPooling(
 
 
 @layer_register(log_shape=True)
+@convert_to_tflayer_args(args_names=[], name_mapping={})
 def GlobalAvgPooling(x, data_format='channels_last'):
     """
     Global average pooling as in the paper `Network In Network
