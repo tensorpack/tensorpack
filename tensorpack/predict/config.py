@@ -40,7 +40,7 @@ class PredictConfig(object):
                 tensors can be any computable tensor in the graph.
             return_input (bool): same as in :attr:`PredictorBase.return_input`.
             create_graph (bool): create a new graph, or use the default graph
-                when then predictor is first initialized.
+                when predictor is first initialized.
 
         You need to set either `model`, or `inputs_desc` plus `tower_func`.
         """

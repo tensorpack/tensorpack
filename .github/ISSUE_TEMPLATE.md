@@ -22,7 +22,7 @@ Feature Requests:
 + You can implement a lot of features by extending tensorpack
 	(See http://tensorpack.readthedocs.io/en/latest/tutorial/index.html#extend-tensorpack).
 	It does not have to be added to tensorpack unless you have a good reason.
-+ We don't take example requests.
++ We don't take feature requests for examples.
 
 Usage Questions:
 
