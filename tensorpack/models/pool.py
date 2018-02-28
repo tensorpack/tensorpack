@@ -57,7 +57,6 @@ def AvgPooling(
 
 
 @layer_register(log_shape=True)
-@convert_to_tflayer_args(args_names=[], name_mapping={})
 def GlobalAvgPooling(x, data_format='channels_last'):
     """
     Global average pooling as in the paper `Network In Network
@@ -70,6 +69,7 @@ def GlobalAvgPooling(x, data_format='channels_last'):
         tf.Tensor: a NC tensor named ``output``.
     """
     assert x.shape.ndims == 4
+    data_format = get_data_format(data_format)
     axis = [1, 2] if data_format == 'channels_last' else [2, 3]
     return tf.reduce_mean(x, axis, name='output')
 

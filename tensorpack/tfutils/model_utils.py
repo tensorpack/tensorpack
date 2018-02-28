@@ -46,7 +46,7 @@ def describe_trainable_vars():
     summary_msg = colored(
         "\nTotal #vars={}, #params={}, size={:.02f}MB".format(
             len(data), total, size_mb), 'cyan')
-    logger.info(colored("Model Parameters: \n", 'cyan') + table + summary_msg)
+    logger.info(colored("Trainable Variables: \n", 'cyan') + table + summary_msg)
 
 
 def get_shape_str(tensors):
