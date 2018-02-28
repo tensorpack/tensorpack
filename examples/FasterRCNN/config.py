@@ -17,6 +17,7 @@ CLASS_NAMES = []  # NUM_CLASS strings. Will be populated later by coco loader
 # basemodel ----------------------
 RESNET_NUM_BLOCK = [3, 4, 6, 3]     # for resnet50
 # RESNET_NUM_BLOCK = [3, 4, 23, 3]     # for resnet101
+FREEZE_AFFINE = False   # do not train affine parameters inside BN
 
 # schedule -----------------------
 BASE_LR = 1e-2

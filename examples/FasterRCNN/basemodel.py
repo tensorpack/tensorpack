@@ -9,12 +9,25 @@ from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
 from tensorpack.models import (
     Conv2D, MaxPooling, BatchNorm, BNReLU)
 
+import config
+
+
+def maybe_freeze_affine(getter, *args, **kwargs):
+    # custom getter to freeze affine params inside bn
+    name = args[0] if len(args) else kwargs.get('name')
+    if name.endswith('/gamma') or name.endswith('/beta'):
+        if config.FREEZE_AFFINE:
+            kwargs['trainable'] = False
+    return getter(*args, **kwargs)
+
 
 @contextmanager
 def resnet_argscope():
     with argscope([Conv2D, MaxPooling, BatchNorm], data_format='NCHW'), \
             argscope(Conv2D, use_bias=False), \
-            argscope(BatchNorm, use_local_stat=False):
+            argscope(BatchNorm, use_local_stat=False), \
+            tf.variable_scope(tf.get_variable_scope(),
+                              custom_getter=maybe_freeze_affine):
         yield
 
 

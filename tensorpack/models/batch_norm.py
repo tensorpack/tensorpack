@@ -201,7 +201,7 @@ def BatchNorm(x, use_local_stat=None, momentum=0.9, epsilon=1e-5,
         'decay': 'momentum'
     })
 def BatchRenorm(x, rmax, dmax, momentum=0.9, epsilon=1e-5,
-                scale=True, bias=True, gamma_initializer=None,
+                scale=True, center=True, gamma_initializer=None,
                 data_format='channels_last'):
     """
     Batch Renormalization layer, as described in the paper:
