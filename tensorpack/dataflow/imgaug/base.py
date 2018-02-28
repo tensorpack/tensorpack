@@ -9,6 +9,7 @@ import six
 from six.moves import zip
 
 from ...utils.utils import get_rng
+from ...utils.argtools import log_once
 from ..image import check_dtype
 
 __all__ = ['Augmentor', 'ImageAugmentor', 'AugmentorList']
@@ -81,23 +82,27 @@ class Augmentor(object):
         Produce something like:
         "imgaug.MyAugmentor(field1={self.field1}, field2={self.field2})"
         """
-        argspec = inspect.getargspec(self.__init__)
-        assert argspec.varargs is None, "The default __repr__ doesn't work for vaargs!"
-        assert argspec.keywords is None, "The default __repr__ doesn't work for kwargs!"
-        fields = argspec.args[1:]
-        index_field_has_default = len(fields) - (0 if argspec.defaults is None else len(argspec.defaults))
+        try:
+            argspec = inspect.getargspec(self.__init__)
+            assert argspec.varargs is None, "The default __repr__ doesn't work for vaargs!"
+            assert argspec.keywords is None, "The default __repr__ doesn't work for kwargs!"
+            fields = argspec.args[1:]
+            index_field_has_default = len(fields) - (0 if argspec.defaults is None else len(argspec.defaults))
 
-        classname = type(self).__name__
-        argstr = []
-        for idx, f in enumerate(fields):
-            assert hasattr(self, f), \
-                "Attribute {} not found! The default __repr__ only works if attributes match the constructor.".format(f)
-            attr = getattr(self, f)
-            if idx >= index_field_has_default:
-                if attr is argspec.defaults[idx - index_field_has_default]:
-                    continue
-            argstr.append("{}={}".format(f, pprint.pformat(attr)))
-        return "imgaug.{}({})".format(classname, ', '.join(argstr))
+            classname = type(self).__name__
+            argstr = []
+            for idx, f in enumerate(fields):
+                assert hasattr(self, f), \
+                    "Attribute {} not found! Default __repr__ only works if attributes match the constructor.".format(f)
+                attr = getattr(self, f)
+                if idx >= index_field_has_default:
+                    if attr is argspec.defaults[idx - index_field_has_default]:
+                        continue
+                argstr.append("{}={}".format(f, pprint.pformat(attr)))
+            return "imgaug.{}({})".format(classname, ', '.join(argstr))
+        except AssertionError as e:
+            log_once(e.args[0], 'warn')
+            return super(Augmentor, self).__repr__()
 
     __str__ = __repr__
 

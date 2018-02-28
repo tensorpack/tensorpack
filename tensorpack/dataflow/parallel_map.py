@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # File: parallel_map.py
 import numpy as np
+import time
 import ctypes
 import copy
 import threading
@@ -271,6 +272,7 @@ class MultiProcessMapDataZMQ(_ParallelMapData, _MultiProcessZMQDataFlow):
         self._iter_worker = _repeat_iter(lambda: iter(self._proc_ids))
 
         self._start_processes()
+        time.sleep(5)  # TODO temporarily work around #673
         self._fill_buffer()     # pre-fill the bufer
 
     def reset_state(self):
