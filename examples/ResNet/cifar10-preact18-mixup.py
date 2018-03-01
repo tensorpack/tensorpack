@@ -134,8 +134,8 @@ if __name__ == '__main__':
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
-    log_foder = 'train_log/cifar10-preact18%s' % ('-mixup' if args.mixup else '')
-    logger.set_logger_dir(os.path.join(log_foder))
+    log_folder = 'train_log/cifar10-preact18%s' % ('-mixup' if args.mixup else '')
+    logger.set_logger_dir(os.path.join(log_folder))
 
     dataset_train = get_data('train', args.mixup, args.alpha)
     dataset_test = get_data('test', args.mixup, args.alpha)
