@@ -3,7 +3,6 @@
 
 
 import tensorflow as tf
-from contextlib import contextmanager
 import numpy as np
 
 from ..utils.develop import deprecated
@@ -15,19 +14,6 @@ from ..utils.develop import deprecated
 def prediction_incorrect(logits, label, topk=1, name='incorrect_vector'):
     return tf.cast(tf.logical_not(tf.nn.in_top_k(logits, label, topk)),
                    tf.float32, name=name)
-
-
-@deprecated("Please implement it by yourself.", "2018-02-28")
-def accuracy(logits, label, topk=1, name='accuracy'):
-    """
-    Args:
-        logits: shape [B,C].
-        label: shape [B].
-        topk(int): topk
-    Returns:
-        a single scalar
-    """
-    return tf.reduce_mean(tf.cast(tf.nn.in_top_k(logits, label, topk), tf.float32), name=name)
 
 
 def flatten(x):
@@ -45,54 +31,6 @@ def batch_flatten(x):
     if None not in shape:
         return tf.reshape(x, [-1, int(np.prod(shape))])
     return tf.reshape(x, tf.stack([tf.shape(x)[0], -1]))
-
-
-@deprecated("Please implement it by yourself.", "2018-02-28")
-def class_balanced_cross_entropy(pred, label, name='cross_entropy_loss'):
-    """
-    The class-balanced cross entropy loss,
-    as in `Holistically-Nested Edge Detection
-    <http://arxiv.org/abs/1504.06375>`_.
-
-    Args:
-        pred: of shape (b, ...). the predictions in [0,1].
-        label: of the same shape. the ground truth in {0,1}.
-    Returns:
-        class-balanced cross entropy loss.
-    """
-    with tf.name_scope('class_balanced_cross_entropy'):
-        z = batch_flatten(pred)
-        y = tf.cast(batch_flatten(label), tf.float32)
-
-        count_neg = tf.reduce_sum(1. - y)
-        count_pos = tf.reduce_sum(y)
-        beta = count_neg / (count_neg + count_pos)
-
-        eps = 1e-12
-        loss_pos = -beta * tf.reduce_mean(y * tf.log(z + eps))
-        loss_neg = (1. - beta) * tf.reduce_mean((1. - y) * tf.log(1. - z + eps))
-    cost = tf.subtract(loss_pos, loss_neg, name=name)
-    return cost
-
-
-@deprecated("Please implement it by yourself.", "2018-02-28")
-def class_balanced_sigmoid_cross_entropy(logits, label, name='cross_entropy_loss'):
-    """
-    This function accepts logits rather than predictions, and is more numerically stable than
-    :func:`class_balanced_cross_entropy`.
-    """
-    with tf.name_scope('class_balanced_sigmoid_cross_entropy'):
-        y = tf.cast(label, tf.float32)
-
-        count_neg = tf.reduce_sum(1. - y)
-        count_pos = tf.reduce_sum(y)
-        beta = count_neg / (count_neg + count_pos)
-
-        pos_weight = beta / (1 - beta)
-        cost = tf.nn.weighted_cross_entropy_with_logits(logits=logits, targets=y, pos_weight=pos_weight)
-        cost = tf.reduce_mean(cost * (1 - beta))
-        zero = tf.equal(count_pos, 0.0)
-    return tf.where(zero, 0.0, cost, name=name)
 
 
 def print_stat(x, message=None):
@@ -204,29 +142,6 @@ def psnr(prediction, ground_truth, maxp=None, name='psnr'):
         psnr = tf.add(tf.multiply(20., log10(maxp)), psnr, name=name)
 
     return psnr
-
-
-@contextmanager
-@deprecated("Please implement it by yourself.", "2018-02-28")
-def guided_relu():
-    """
-    Returns:
-        A context where the gradient of :meth:`tf.nn.relu` is replaced by
-        guided back-propagation, as described in the paper:
-        `Striving for Simplicity: The All Convolutional Net
-        <https://arxiv.org/abs/1412.6806>`_
-    """
-    from tensorflow.python.ops import gen_nn_ops   # noqa
-
-    @tf.RegisterGradient("GuidedReLU")
-    def GuidedReluGrad(op, grad):
-        return tf.where(0. < grad,
-                        gen_nn_ops._relu_grad(grad, op.outputs[0]),
-                        tf.zeros(grad.get_shape()))
-
-    g = tf.get_default_graph()
-    with g.gradient_override_map({'Relu': 'GuidedReLU'}):
-        yield
 
 
 @deprecated("Please implement it by yourself.", "2018-04-28")

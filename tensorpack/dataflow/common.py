@@ -688,7 +688,7 @@ class PrintData(ProxyDataFlow):
         self.num = num
 
         if label:
-            log_deprecated("PrintData(label, ...", "Use PrintData(name, ... instead.")
+            log_deprecated("PrintData(label, ...", "Use PrintData(name, ...  instead.", "2018-05-01")
             self.name = label
         else:
             self.name = name

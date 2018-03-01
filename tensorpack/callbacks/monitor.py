@@ -19,7 +19,7 @@ from ..tfutils.summary import create_scalar_summary, create_image_summary
 from .base import Callback
 
 __all__ = ['TrainingMonitor', 'Monitors',
-           'TFSummaryWriter', 'TFEventWriter', 'JSONWriter',
+           'TFEventWriter', 'JSONWriter',
            'ScalarPrinter', 'SendMonitorData']
 
 
@@ -108,7 +108,7 @@ class Monitors(Callback):
     _chief_only = False
 
     def __init__(self, monitors):
-        self._scalar_history = ScalarHistory().set_chief_only(False)
+        self._scalar_history = ScalarHistory()
         self._monitors = monitors + [self._scalar_history]
         for m in self._monitors:
             assert isinstance(m, TrainingMonitor), m
@@ -172,7 +172,7 @@ class Monitors(Callback):
 
     def put_event(self, evt):
         """
-        Put an tf.Event.
+        Put an :class:`tf.Event`.
         `step` and `wall_time` fields of :class:`tf.Event` will be filled automatically.
 
         Args:
@@ -185,12 +185,18 @@ class Monitors(Callback):
     def get_latest(self, name):
         """
         Get latest scalar value of some data.
+
+        If you run multiprocess training, keep in mind that
+        the data is perhaps only available on chief process.
         """
         return self._scalar_history.get_latest(name)
 
     def get_history(self, name):
         """
         Get a history of the scalar value of some data.
+
+        If you run multiprocess training, keep in mind that
+        the data is perhaps only available on chief process.
         """
         return self._scalar_history.get_history(name)
 
@@ -238,11 +244,6 @@ class TFEventWriter(TrainingMonitor):
 
     def _after_train(self):
         self._writer.close()
-
-
-def TFSummaryWriter(*args, **kwargs):
-    logger.warn("TFSummaryWriter was renamed to TFEventWriter!")
-    return TFEventWriter(*args, **kwargs)
 
 
 class JSONWriter(TrainingMonitor):
@@ -397,6 +398,9 @@ class ScalarHistory(TrainingMonitor):
     """
     Only used by monitors internally.
     """
+
+    _chief_only = False
+
     def _setup_graph(self):
         self._dic = defaultdict(list)
 

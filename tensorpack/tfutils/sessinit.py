@@ -8,6 +8,7 @@ import tensorflow as tf
 import six
 
 from ..utils import logger
+from ..utils.develop import deprecated
 from .common import get_op_tensor_name
 from .varmanip import (SessionUpdate, get_savename_from_varname,
                        is_training_name, get_checkpoint_path)
@@ -261,6 +262,7 @@ def get_model_loader(filename):
         return SaverRestore(filename)
 
 
+@deprecated("Write the logic yourself!", "2018-06-01")
 def TryResumeTraining():
     """
     Try loading latest checkpoint from ``logger.get_logger_dir()``, only if there is one.
