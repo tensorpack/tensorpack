@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # File: parallel_map.py
 import numpy as np
-import time
 import ctypes
 import copy
 import threading
@@ -227,7 +226,7 @@ class MultiProcessMapDataZMQ(_ParallelMapData, _MultiProcessZMQDataFlow):
 
         def run(self):
             ctx = zmq.Context()
-            socket = ctx.socket(zmq.DEALER)
+            socket = ctx.socket(zmq.REP)
             socket.setsockopt(zmq.IDENTITY, self.identity)
             socket.set_hwm(self.hwm)
             socket.connect(self.pipename)
@@ -256,7 +255,7 @@ class MultiProcessMapDataZMQ(_ParallelMapData, _MultiProcessZMQDataFlow):
 
     def _reset_once(self):
         self.context = zmq.Context()
-        self.socket = self.context.socket(zmq.ROUTER)
+        self.socket = self.context.socket(zmq.DEALER)
         self.socket.set_hwm(self._buffer_size * 2)
         pipename = _get_pipe_name('dataflow-map')
         _bind_guard(self.socket, pipename)
@@ -272,16 +271,13 @@ class MultiProcessMapDataZMQ(_ParallelMapData, _MultiProcessZMQDataFlow):
         self._iter_worker = _repeat_iter(lambda: iter(self._proc_ids))
 
         self._start_processes()
-        time.sleep(5)  # TODO temporarily work around #673
         self._fill_buffer()     # pre-fill the bufer
 
     def reset_state(self):
         _MultiProcessZMQDataFlow.reset_state(self)
 
     def _send(self, dp):
-        # round-robin assignment
-        worker = next(self._iter_worker)
-        msg = [worker, dumps(dp)]
+        msg = [b"", dumps(dp)]
         self.socket.send_multipart(msg, copy=False)
 
     def _recv(self):
