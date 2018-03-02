@@ -81,23 +81,35 @@ class CollectionGuard(object):
 
     def __init__(self, name, check_diff,
                  freeze_keys=[],
-                 diff_whitelist=[
-                     tf.GraphKeys.TRAINABLE_VARIABLES,
-                     tf.GraphKeys.GLOBAL_VARIABLES,
-                     tf.GraphKeys.QUEUE_RUNNERS,
-                     tf.GraphKeys.LOCAL_VARIABLES]):
+                 diff_whitelist=None):
         """
         Args:
            name (str): name of the tower
-           check_diff (bool): whether to test and print about collection change
+           check_diff (bool): whether to check and print about collection change
+                when leaving this guard.
            freeze_keys (list): list of keys to freeze
-           diff_whitelist (list): list of keys to not print, when check_diff is True
+           diff_whitelist (list): list of keys to ignore, when check_diff is True.
+                Defaults to some collections that are normally changed,
+                including variables, losses, contexts, queue runners.
         """
         self._name = name
         self._check_diff = check_diff
+        if diff_whitelist is None:
+            diff_whitelist = CollectionGuard._default_diff_whitelist()
         self._whitelist = set(diff_whitelist)
         self._freeze_keys = freeze_keys
         self._inverse_graphkeys = get_inverse_graphkeys()
+
+    @staticmethod
+    def _default_diff_whitelist():
+        ret = [tf.GraphKeys.TRAINABLE_VARIABLES,
+               tf.GraphKeys.GLOBAL_VARIABLES,
+               tf.GraphKeys.QUEUE_RUNNERS,
+               tf.GraphKeys.LOCAL_VARIABLES]
+        for newkey in ['COND_CONTEXT', 'WHILE_CONTEXT', 'LOSSES']:
+            if hasattr(tf.GraphKeys, newkey):
+                ret.append(getattr(tf.GraphKeys, newkey))
+        return ret
 
     def _key_name(self, name):
         return self._inverse_graphkeys.get(name, name)

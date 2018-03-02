@@ -30,7 +30,7 @@ GAN_FACTOR_PARAMETER = 2.
 def normalize(v):
     assert isinstance(v, tf.Tensor)
     v.get_shape().assert_has_rank(4)
-    return v / tf.reduce_mean(v, axis=[1, 2, 3], keep_dims=True)
+    return v / tf.reduce_mean(v, axis=[1, 2, 3], keepdims=True)
 
 
 def gram_matrix(v):

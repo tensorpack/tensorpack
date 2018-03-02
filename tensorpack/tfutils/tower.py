@@ -8,7 +8,7 @@ from six.moves import zip
 
 from ..utils import logger
 from ..utils.argtools import call_only_once
-from ..utils.naming import TRAIN_TOWER_FREEZE_KEYS, PREDICT_TOWER_FREEZE_KEYS
+from ..utils.naming import MOVING_SUMMARY_OPS_KEY
 from ..utils.develop import HIDE_DOC
 from .collection import CollectionGuard
 from .common import get_tf_version_number, get_op_or_tensor_by_name, get_op_tensor_name
@@ -122,8 +122,9 @@ class TowerContext(object):
         if self.is_main_training_tower:
             return []
         if self.is_training:
-            return TRAIN_TOWER_FREEZE_KEYS
-        return PREDICT_TOWER_FREEZE_KEYS
+            return [tf.GraphKeys.SUMMARIES, MOVING_SUMMARY_OPS_KEY]
+        # freeze UPDATE_OPS during inference because they should never be used
+        return [tf.GraphKeys.SUMMARIES, MOVING_SUMMARY_OPS_KEY, tf.GraphKeys.UPDATE_OPS]
 
     def __enter__(self):
         global _CurrentTowerContext

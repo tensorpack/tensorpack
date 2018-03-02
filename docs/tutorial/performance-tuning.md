@@ -38,14 +38,13 @@ Benchmark your DataFlow with modifications to understand which part is the bottl
 2. Gradually add some pre-processing and see how the performance changes.
 3. Change the number of parallel processes or threads.
 
-A DataFlow could be blocked by CPU/hard disk/network/IPC bandwidth. Only by benchmarking will you
+A DataFlow could be blocked by CPU/disk/network/IPC bandwidth. Only by benchmarking will you
 know the reason and improve it accordingly, e.g.:
 
 1. Use single-file database to avoid random read on hard disk.
-2. Write faster pre-processing with whatever tools you have.
+2. Use fewer pre-processings or write faster ones with whatever tools you have.
 3. Move certain pre-processing (e.g. mean/std normalization) to the graph, if TF has fast implementation of it.
-4. Compress your data (e.g. use uint8 images, or JPEG-compressed images) before sending them through
-	 anything (network, ZMQ pipe, Python-TF copy etc.)
+4. Compress your data (e.g. use uint8 images, or JPEG-compressed images) before sending them through anything (network, ZMQ pipe, Python-TF copy etc.)
 5. Use distributed data preprocessing, with `send_dataflow_zmq` and `RemoteDataZMQ`.
 
 ## Investigate TensorFlow

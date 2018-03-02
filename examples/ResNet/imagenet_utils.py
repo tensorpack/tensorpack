@@ -58,7 +58,7 @@ def fbresnet_augmentor(isTrain):
     if isTrain:
         augmentors = [
             GoogleNetResize(),
-            imgaug.RandomOrderAug(
+            imgaug.RandomOrderAug(      # Remove these augs if your CPU is not fast enough
                 [imgaug.BrightnessScale((0.6, 1.4), clip=False),
                  imgaug.Contrast((0.6, 1.4), clip=False),
                  imgaug.Saturation(0.4, rgb=False),

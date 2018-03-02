@@ -336,7 +336,13 @@ class StatMonitorParamSetter(HyperParamSetter):
         self.last_changed_epoch = 0
 
     def _get_value_to_set(self):
-        hist = self.trainer.monitors.get_history(self.stat_name)
+        try:
+            hist = self.trainer.monitors.get_history(self.stat_name)
+        except KeyError:
+            logger.warn(
+                "[StatMonitorParamSetter] Key {} not found in monitor history! Ignore it.".format(self.stat_name))
+            return None
+
         if len(hist) < self.last_k + 1 or \
                 self.epoch_num - self.last_changed_epoch < self.last_k:
             return None
