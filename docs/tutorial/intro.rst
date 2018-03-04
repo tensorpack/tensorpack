@@ -8,8 +8,9 @@ you'll use mostly tensorpack high-level APIs to do training, rather than TensorF
 Why tensorpack?
 ~~~~~~~~~~~~~~~~~~~
 
-TensorFlow is powerful, but at the same time too complicated for a lot of people, especially when **speed** is a concern.
-Users can often write slow code with low-level APIs or other existing high-level wrappers.
+TensorFlow is powerful, but at the same time too complicated for a lot of people.
+Users will have to worry a lot about things unrelated to the model, especially when **speed** is a concern.
+Code written with low-level APIs or other existing high-level wrappers is often suboptimal in speed.
 Even a lot of official TensorFlow examples are written for simplicity rather than efficiency,
 which as a result makes people think TensorFlow is slow.
 
@@ -22,7 +23,7 @@ However you can have them both in tensorpack.
 Tensorpack uses TensorFlow efficiently, and hides performance details under its APIs.
 You no longer need to write
 data prefetch, multi-GPU replication, device placement, variables synchronization -- anything that's unrelated to the model itself.
-You still need to learn to write models with TF, but performance is all taken care of by tensorpack.
+You still need to understand graph and learn to write models with TF, but performance is all taken care of by tensorpack.
 
 A High Level Glance
 ~~~~~~~~~~~~~~~~~~~

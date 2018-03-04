@@ -8,13 +8,14 @@ import copy
 
 from tensorpack.utils.argtools import memoized, log_once
 from tensorpack.dataflow import (
-    imgaug, TestDataSpeed, PrefetchDataZMQ, MultiProcessMapData,
+    imgaug, TestDataSpeed, PrefetchDataZMQ, MapData,
     MapDataComponent, DataFromList)
 # import tensorpack.utils.viz as tpviz
 
 from coco import COCODetection
 from utils.generate_anchors import generate_anchors
 from utils.np_box_ops import iou as np_iou
+from utils.np_box_ops import area as np_area
 from common import (
     DataFromListOfDict, CustomResize,
     box_to_point8, point8_to_box, segmentation_to_mask)
@@ -231,6 +232,7 @@ def get_train_dataflow(add_mask=False):
         points = box_to_point8(boxes)
         points = aug.augment_coords(points, params)
         boxes = point8_to_box(points)
+        assert np.min(np_area(boxes)) > 0, "Some boxes have zero area!"
 
         # rpn anchor:
         try:
@@ -267,7 +269,8 @@ def get_train_dataflow(add_mask=False):
             # tpviz.interactive_imshow(viz)
         return ret
 
-    ds = MultiProcessMapData(ds, 3, preprocess)
+    ds = MapData(ds, preprocess)
+    ds = PrefetchDataZMQ(ds, 1)
     return ds
 
 
@@ -286,9 +289,10 @@ def get_eval_dataflow():
 
 
 if __name__ == '__main__':
-    config.BASEDIR = '/private/home/yuxinwu/data/coco'
-    config.TRAIN_DATASET = ['train2014']
+    import os
     from tensorpack.dataflow import PrintData
+    config.BASEDIR = os.path.expanduser('~/data/coco')
+    config.TRAIN_DATASET = ['train2014']
     ds = get_train_dataflow(add_mask=config.MODE_MASK)
     ds = PrintData(ds, 100)
     TestDataSpeed(ds, 50000).start()

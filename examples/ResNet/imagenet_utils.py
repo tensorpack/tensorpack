@@ -94,7 +94,7 @@ def get_imagenet_dataflow(
     assert isinstance(augmentors, list)
     isTrain = name == 'train'
     if parallel is None:
-        parallel = min(40, multiprocessing.cpu_count())
+        parallel = min(40, multiprocessing.cpu_count() // 2)  # assuming hyperthreading
     if isTrain:
         ds = dataset.ILSVRC12(datadir, name, shuffle=True)
         ds = AugmentImageComponent(ds, augmentors, copy=False)

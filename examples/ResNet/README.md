@@ -28,7 +28,7 @@ To train, first decompress ImageNet data into [this structure](http://tensorpack
 You should be able to see good GPU utilization (95%~99%), if your data is fast enough.
 It can finish training [within 20 hours](http://dawn.cs.stanford.edu/benchmark/ImageNet/train.html) on AWS p3.16xlarge.
 
-The default data pipeline is probably OK for machines with SSD + E5 CPUs.
+The default data pipeline is probably OK for machines with SSD & 20 CPU cores.
 See the [tutorial](http://tensorpack.readthedocs.io/en/latest/tutorial/efficient-dataflow.html) on other options to speed up your data.
 
 ![imagenet](imagenet-resnet.png)

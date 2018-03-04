@@ -46,6 +46,8 @@ class MergeAllSummaries_RunAlone(Callback):
         self._key = key
 
     def _setup_graph(self):
+        size = len(tf.get_collection(self._key))
+        logger.info("Summarizing collection '{}' of size {}".format(self._key, size))
         self.summary_op = tf.summary.merge_all(self._key)
 
     def _trigger_step(self):
@@ -65,6 +67,8 @@ class MergeAllSummaries_RunWithOp(Callback):
         self._key = key
 
     def _setup_graph(self):
+        size = len(tf.get_collection(self._key))
+        logger.info("Summarizing collection '{}' of size {}".format(self._key, size))
         self.summary_op = tf.summary.merge_all(self._key)
         if self.summary_op is not None:
             self._fetches = tf.train.SessionRunArgs(self.summary_op)
