@@ -196,25 +196,25 @@ class QueueInput(FeedfreeInput):
 
             self._dequeue_op = self.queue.dequeue(name='dequeue_for_reset')
 
-    def _reset_state(self):
-        if self._started:   # do not try to clear the queue if there is nothing
-            self.thread.pause()     # pause enqueue
+    def refill_queue(self):
+        """
+        Clear the queue, then call dataflow.get_data() again and fill into the queue.
+        """
+        self.thread.pause()     # pause enqueue
 
-            opt = tf.RunOptions()
-            opt.timeout_in_ms = 2000   # 2s
-            sess = tf.get_default_session()
-            # dequeue until empty
-            try:
-                while True:
-                    sess.run(self._dequeue_op, options=opt)
-            except tf.errors.DeadlineExceededError:
-                pass
+        opt = tf.RunOptions()
+        opt.timeout_in_ms = 2000   # 2s
+        sess = tf.get_default_session()
+        # dequeue until empty
+        try:
+            while True:
+                sess.run(self._dequeue_op, options=opt)
+        except tf.errors.DeadlineExceededError:
+            pass
 
-            # reset dataflow, start thread
-            self.thread.reinitialize_dataflow()
-            self.thread.resume()
-        else:
-            self._started = True
+        # reset dataflow, start thread
+        self.thread.reinitialize_dataflow()
+        self.thread.resume()
 
     def _create_ema_callback(self):
         """

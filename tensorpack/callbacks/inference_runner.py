@@ -156,6 +156,7 @@ class InferenceRunner(InferenceRunnerBase):
         for inf in self.infs:
             inf.before_epoch()
 
+        self._input_source.reset_state()
         # iterate over the data, and run the hooked session
         with _inference_context(), \
                 tqdm.tqdm(total=self._size, **get_tqdm_kwargs()) as pbar:
@@ -265,6 +266,7 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
 
         total = self._size
         nr_tower = len(self._gpus)
+        self._input_source.reset_state()
         with _inference_context():
             with tqdm.tqdm(total=total, **get_tqdm_kwargs()) as pbar:
                 while total >= nr_tower:

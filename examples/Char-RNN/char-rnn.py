@@ -33,7 +33,7 @@ param.seq_len = 50
 param.grad_clip = 5.
 param.vocab_size = None
 param.softmax_temprature = 1
-param.corpus = 'input.txt'
+param.corpus = None
 
 
 class CharRNNData(RNGDataFlow):
@@ -182,6 +182,7 @@ if __name__ == '__main__':
     parser_sample.add_argument('-t', '--temperature', type=float,
                                default=1, help='softmax temperature')
     parser_train = subparsers.add_parser('train', help='train')
+    parser_train.add_argument('--corpus', help='corpus file', default='input.txt')
     args = parser.parse_args()
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
@@ -192,6 +193,7 @@ if __name__ == '__main__':
         sample(args.load, args.start, args.num)
         sys.exit()
     else:
+        param.corpus = args.corpus
         config = get_config()
         if args.load:
             config.session_init = SaverRestore(args.load)
