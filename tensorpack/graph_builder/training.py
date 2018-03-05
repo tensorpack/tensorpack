@@ -12,7 +12,6 @@ from six.moves import zip, range
 
 from ..utils import logger
 from ..tfutils.tower import TowerContext
-from ..tfutils.common import get_tf_version_number
 from ..tfutils.gradproc import ScaleGradient
 
 from .utils import (
@@ -39,15 +38,9 @@ class DataParallelBuilder(GraphBuilder):
             towers(list[int]): list of GPU ids.
         """
         if len(towers) > 1:
-            logger.info("Training a model of {} towers".format(len(towers)))
-            DataParallelBuilder._check_tf_version()
+            logger.info("[DataParallel] Training a model of {} towers.".format(len(towers)))
 
         self.towers = towers
-
-    @staticmethod
-    def _check_tf_version():
-        assert get_tf_version_number() >= 1.1, \
-            "TF version {} is too old to run multi GPU training!".format(tf.VERSION)
 
     @staticmethod
     def _check_grad_list(grad_list):
@@ -103,7 +96,7 @@ class DataParallelBuilder(GraphBuilder):
                     index=idx,
                     vs_name=tower_names[idx] if usevs else ''):
                 if len(str(device)) < 10:   # a device function doesn't have good string description
-                    logger.info("Building graph for training tower {} on device {}...".format(idx, device))
+                    logger.info("Building graph for training tower {} on device {} ...".format(idx, device))
                 else:
                     logger.info("Building graph for training tower {} ...".format(idx))
 

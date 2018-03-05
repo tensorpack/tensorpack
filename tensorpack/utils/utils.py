@@ -24,42 +24,38 @@ def humanize_time_delta(sec):
     """Humanize timedelta given in seconds
 
     Args:
-        sec (float): time difference in seconds.
+        sec (float): time difference in seconds. Must be positive.
+
+    Returns:
+        str - time difference as a readable string
 
     Examples:
 
-        Several time differences as a human readable string
-
     .. code-block:: python
 
-        print humanize_seconds(1)                                   # 1 second
-        print humanize_seconds(60 + 1)                              # 1 minute 1 second
-        print humanize_seconds(87.6)                                # 1 minute 27 seconds
-        print humanize_seconds(0.01)                                # 0.01 seconds
-        print humanize_seconds(60 * 60 + 1)                         # 1 hour 0 minutes 1 second
-        print humanize_seconds(60 * 60 * 24 + 1)                    # 1 day 0 hours 0 minutes 1 second
-        print humanize_seconds(60 * 60 * 24 + 60 * 2 + 60*60*9+ 3)  # 1 day 9 hours 2 minutes 3 seconds
-
-    Returns:
-        time difference as a readable string
+        print(humanize_time_delta(1))                                   # 1 second
+        print(humanize_time_delta(60 + 1))                              # 1 minute 1 second
+        print(humanize_time_delta(87.6))                                # 1 minute 27 seconds
+        print(humanize_time_delta(0.01))                                # 0.01 seconds
+        print(humanize_time_delta(60 * 60 + 1))                         # 1 hour 1 second
+        print(humanize_time_delta(60 * 60 * 24 + 1))                    # 1 day 1 second
+        print(humanize_time_delta(60 * 60 * 24 + 60 * 2 + 60*60*9 + 3)) # 1 day 9 hours 2 minutes 3 seconds
     """
+    assert sec >= 0, sec
+    if sec == 0:
+        return "0 second"
     time = datetime(2000, 1, 1) + timedelta(seconds=int(sec))
     units = ['day', 'hour', 'minute', 'second']
-    vals = [time.day - 1, time.hour, time.minute, time.second]
+    vals = [int(sec // 86400), time.hour, time.minute, time.second]
     if sec < 60:
         vals[-1] = sec
 
     def _format(v, u):
         return "{:.3g} {}{}".format(v, u, "s" if v > 1 else "")
 
-    required = False
     ans = []
     for v, u in zip(vals, units):
-        if not required:
-            if v > 0:
-                required = True
-                ans.append(_format(v, u))
-        else:
+        if v > 0:
             ans.append(_format(v, u))
     return " ".join(ans)
 

@@ -94,4 +94,5 @@ class EstimatedTimeLeft(Callback):
 
         average_epoch_time = np.mean(self._times)
         time_left = (self._max_epoch - self.epoch_num) * average_epoch_time
-        logger.info("Estimated Time Left: " + humanize_time_delta(time_left))
+        if time_left > 0:
+            logger.info("Estimated Time Left: " + humanize_time_delta(time_left))

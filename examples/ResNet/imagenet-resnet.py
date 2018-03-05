@@ -80,7 +80,7 @@ def get_config(model, fake=False):
             EstimatedTimeLeft(),
             ScheduledHyperParamSetter(
                 'learning_rate', [(30, BASE_LR * 1e-1), (60, BASE_LR * 1e-2),
-                                  (85, BASE_LR * 1e-3), (95, BASE_LR * 1e-4), (105, BASE_LR * 1e-5)]),
+                                  (90, BASE_LR * 1e-3), (100, BASE_LR * 1e-4)]),
         ]
         if BASE_LR > 0.1:
             callbacks.append(
@@ -102,7 +102,7 @@ def get_config(model, fake=False):
         dataflow=dataset_train,
         callbacks=callbacks,
         steps_per_epoch=100 if args.fake else 1280000 // args.batch,
-        max_epoch=110,
+        max_epoch=105,
     )
 
 
@@ -115,7 +115,7 @@ if __name__ == '__main__':
     parser.add_argument('--data_format', help='specify NCHW or NHWC',
                         type=str, default='NCHW')
     parser.add_argument('-d', '--depth', help='resnet depth',
-                        type=int, default=18, choices=[18, 34, 50, 101, 152])
+                        type=int, default=50, choices=[18, 34, 50, 101, 152])
     parser.add_argument('--eval', action='store_true')
     parser.add_argument('--batch', default=256, type=int,
                         help='total batch size. 32 per GPU gives best accuracy, higher values should be similarly good')

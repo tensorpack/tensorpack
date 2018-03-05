@@ -114,7 +114,7 @@ def _guess_dir_structure(dir):
     else:
         dir_structure = 'original'
     logger.info(
-        "Assuming directory {} has {} structure.".format(
+        "[ILSVRC12] Assuming directory {} has '{}' structure.".format(
             dir, dir_structure))
     return dir_structure
 

@@ -78,8 +78,8 @@ def regularize_cost(regex, func, name='regularize_cost'):
                 return name[prefixlen:]
             return name
         names = list(map(f, names))
-    logger.info("regularize_cost() found {} tensors.".format(len(names)))
-    _log_once("Applying regularizer for {}".format(', '.join(names)))
+    logger.info("regularize_cost() applying regularizers on {} tensors.".format(len(names)))
+    _log_once("The following tensors will be regularized: {}".format(', '.join(names)))
 
     return tf.add_n(costs, name=name)
 
@@ -106,7 +106,8 @@ def regularize_cost_from_collection(name='regularize_cost'):
     else:
         losses = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
     if len(losses) > 0:
-        logger.info("regularize_cost_from_collection() found {} tensors in REGULARIZATION_LOSSES.".format(len(losses)))
+        logger.info("regularize_cost_from_collection() applying regularizers on "
+                    "{} tensors in REGULARIZATION_LOSSES.".format(len(losses)))
         reg_loss = tf.add_n(losses, name=name)
         return reg_loss
     else:

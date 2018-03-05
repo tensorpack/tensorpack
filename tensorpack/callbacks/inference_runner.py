@@ -78,10 +78,8 @@ class InferenceRunnerBase(Callback):
 
         try:
             self._size = input.size()
-            logger.info("InferenceRunner will eval {} iterations".format(input.size()))
         except NotImplementedError:
             self._size = 0
-            logger.warn("InferenceRunner got an input with unknown size! It will iterate until OutOfRangeError!")
 
         self._hooks = []
 
@@ -95,6 +93,10 @@ class InferenceRunnerBase(Callback):
     def _before_train(self):
         self._hooked_sess = HookedSession(self.trainer.sess, self._hooks)
         self._input_callbacks.before_train()
+        if self._size > 0:
+            logger.info("InferenceRunner will eval {} iterations".format(self._size))
+        else:
+            logger.warn("InferenceRunner got an input with unknown size! It will iterate until OutOfRangeError!")
 
     def _after_train(self):
         self._input_callbacks.after_train()
