@@ -298,8 +298,7 @@ def predict(pred_func, input_file):
 class EvalCallback(Callback):
     def _setup_graph(self):
         self.pred = self.trainer.get_predictor(
-            ['image'],
-            get_model_output_names())
+            ['image'], get_model_output_names())
         self.df = get_eval_dataflow()
 
     def _before_train(self):
@@ -389,6 +388,7 @@ if __name__ == '__main__':
                 ScheduledHyperParamSetter('learning_rate', lr_schedule),
                 EvalCallback(),
                 GPUUtilizationTracker(),
+                EstimatedTimeLeft(),
             ],
             steps_per_epoch=stepnum,
             max_epoch=config.LR_SCHEDULE[2] * factor // stepnum,

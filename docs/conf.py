@@ -368,6 +368,7 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
         'GaussianDeform',
         'dump_chkpt_vars',
         'DumpTensor',
+        'DumpParamAsImage',
         'StagingInputWrapper',
         'set_tower_func',
         'TryResumeTraining',

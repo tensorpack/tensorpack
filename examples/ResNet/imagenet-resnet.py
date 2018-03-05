@@ -77,6 +77,7 @@ def get_config(model, fake=False):
         BASE_LR = 0.1 * (args.batch / 256.0)
         callbacks = [
             ModelSaver(),
+            EstimatedTimeLeft(),
             ScheduledHyperParamSetter(
                 'learning_rate', [(30, BASE_LR * 1e-1), (60, BASE_LR * 1e-2),
                                   (85, BASE_LR * 1e-3), (95, BASE_LR * 1e-4), (105, BASE_LR * 1e-5)]),

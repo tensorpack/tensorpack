@@ -17,7 +17,7 @@ if STATICA_HACK:
     from .param import *
     from .prof import *
     from .saver import *
-    from .stats import *
+    from .misc import *
     from .steps import *
     from .summary import *
     from .trigger import *

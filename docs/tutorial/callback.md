@@ -45,8 +45,10 @@ callbacks=[
              'val-error-top1'),
   # record GPU utilizations during training
   GPUUtilizationTracker(),
-  # Touch a file to pause the training and start a debug shell, to observe what's going on
-  InjectShell(shell='ipython')
+  # touch a file to pause the training and start a debug shell, to observe what's going on
+  InjectShell(shell='ipython'),
+	# estimate time until completion
+	EstimatedTimeLeft()
 ] + [    # these callbacks are enabled by default already, though you can customize them
   # maintain those moving average summaries defined in the model (e.g. training loss, training error)
   MovingAverageSummary(),
