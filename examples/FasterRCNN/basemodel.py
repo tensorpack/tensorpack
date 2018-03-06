@@ -6,6 +6,7 @@ from contextlib import contextmanager
 import tensorflow as tf
 from tensorpack.tfutils.argscope import argscope, get_arg_scope
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
+from tensorpack.tfutils.varreplace import custom_getter_scope
 from tensorpack.models import (
     Conv2D, MaxPooling, BatchNorm, BNReLU)
 
@@ -26,8 +27,7 @@ def resnet_argscope():
     with argscope([Conv2D, MaxPooling, BatchNorm], data_format='NCHW'), \
             argscope(Conv2D, use_bias=False), \
             argscope(BatchNorm, use_local_stat=False), \
-            tf.variable_scope(tf.get_variable_scope(),
-                              custom_getter=maybe_freeze_affine):
+            custom_getter_scope(maybe_freeze_affine):
         yield
 
 

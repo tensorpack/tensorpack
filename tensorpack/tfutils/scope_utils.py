@@ -8,6 +8,7 @@ import functools
 from contextlib import contextmanager
 
 from ..utils.argtools import graph_memoized
+from .common import get_tf_version_number
 
 __all__ = ['auto_reuse_variable_scope', 'cached_name_scope', 'under_name_scope']
 
@@ -39,8 +40,14 @@ def auto_reuse_variable_scope(func):
         h = hash((tf.get_default_graph(), scope.name))
         # print("Entering " + scope.name + " reuse: " + str(h in used_scope))
         if h in used_scope:
-            with tf.variable_scope(scope, reuse=True):
-                return func(*args, **kwargs)
+            if get_tf_version_number() >= 1.5:
+                with tf.variable_scope(scope, reuse=True, auxiliary_name_scope=False):
+                    return func(*args, **kwargs)
+            else:
+                ns = tf.get_default_graph().get_name_scope()
+                with tf.variable_scope(scope, reuse=True), \
+                        tf.name_scope(ns + '/' if ns else ''):
+                    return func(*args, **kwargs)
         else:
             used_scope.add(h)
             return func(*args, **kwargs)
