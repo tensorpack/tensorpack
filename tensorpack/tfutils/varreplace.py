@@ -6,14 +6,25 @@
 import tensorflow as tf
 from contextlib import contextmanager
 
+from .common import get_tf_version_number
+
 __all__ = ['freeze_variables', 'remap_variables']
 
 
 @contextmanager
 def custom_getter_scope(custom_getter):
     scope = tf.get_variable_scope()
-    with tf.variable_scope(scope, custom_getter=custom_getter):
-        yield
+    if get_tf_version_number() >= 1.5:
+        with tf.variable_scope(
+                scope, custom_getter=custom_getter,
+                auxiliary_name_scope=False):
+            yield
+    else:
+        ns = tf.get_default_graph().get_name_scope()
+        with tf.variable_scope(
+                scope, custom_getter=custom_getter):
+            with tf.name_scope(ns + '/' if ns else ''):
+                yield
 
 
 def remap_variables(fn):

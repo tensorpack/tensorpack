@@ -7,7 +7,7 @@ from contextlib import contextmanager
 import operator
 import tensorflow as tf
 
-from ..tfutils.common import get_tf_version_number
+from ..tfutils.varreplace import custom_getter_scope
 
 
 __all__ = ['LeastLoadedDeviceSetter',
@@ -42,22 +42,8 @@ def override_to_local_variable(enable=True):
             _replace_global_by_local(kwargs)
             return getter(name, *args, **kwargs)
 
-        orig_vs = tf.get_variable_scope()
-        if get_tf_version_number() >= 1.5:
-            with tf.variable_scope(
-                    orig_vs,
-                    custom_getter=custom_getter,
-                    auxiliary_name_scope=False):
-                yield
-        else:
-            if get_tf_version_number() >= 1.2:
-                ns = tf.get_default_graph().get_name_scope()
-            else:
-                ns = orig_vs.original_name_scope
-            with tf.variable_scope(
-                    orig_vs, custom_getter=custom_getter):
-                with tf.name_scope(ns + '/' if ns else ''):
-                    yield
+        with custom_getter_scope(custom_getter):
+            yield
     else:
         yield
 
