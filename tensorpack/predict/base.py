@@ -95,6 +95,8 @@ class OnlinePredictor(PredictorBase):
     """ A predictor which directly use an existing session and given tensors.
     """
 
+    ACCEPT_OPTIONS = False
+
     def __init__(self, input_tensors, output_tensors,
                  return_input=False, sess=None):
         """
@@ -115,7 +117,8 @@ class OnlinePredictor(PredictorBase):
             if sess is not None:
                 self._callable = sess.make_callable(
                     fetches=output_tensors,
-                    feed_list=input_tensors)
+                    feed_list=input_tensors,
+                    accept_options=self.ACCEPT_OPTIONS)
             else:
                 self._callable = None
         else:
@@ -131,8 +134,12 @@ class OnlinePredictor(PredictorBase):
         if self._callable is None:
             self._callable = self.sess.make_callable(
                 fetches=self.output_tensors,
-                feed_list=self.input_tensors)
-        return self._callable(*dp)
+                feed_list=self.input_tensors,
+                accept_options=self.ACCEPT_OPTIONS)
+        # run_metadata = tf.RunMetadata()
+        # options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
+        ret = self._callable(*dp)
+        return ret
 
     def _do_call(self, dp):
         assert len(dp) == len(self.input_tensors), \

@@ -152,18 +152,23 @@ class SummaryGradient(MapGradient):
     # TODO this is global. not good.
     _summaried_gradient = set()
 
-    def __init__(self, regex='.*'):
+    def __init__(self, regex='.*', collections=None):
         """
         Args:
             regex(str): same as in :class:`MapGradient`.
+            collections (list[str]): list of collection names
         """
         super(SummaryGradient, self).__init__(self._mapper, regex)
+        self._coll = collections
 
     def _mapper(self, grad, var):
         name = var.op.name
+        if re.match('tower[0-9]+/', name):
+            # replicated training, var may come from different towers
+            return grad
         if name not in SummaryGradient._summaried_gradient:
             SummaryGradient._summaried_gradient.add(name)
-            tf.summary.histogram(name + '-grad', grad)
+            tf.summary.histogram(name + '-grad', grad, collections=self._coll)
             add_moving_summary(rms(grad, name=name + '/rms'))
         return grad
 

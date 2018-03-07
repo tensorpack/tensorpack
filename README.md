@@ -24,9 +24,9 @@ It's Yet Another TF wrapper, but different in:
 		Tensorpack helps you load large datasets (e.g. ImageNet) in __pure Python__ with autoparallelization.
 
 3. It's not a model wrapper.
-	+ There are too many symbolic function wrappers.
+	+ There are too many symbolic function wrappers in the world.
 		Tensorpack includes only a few common models.
-	  You can use any symbolic function library inside tensorpack, including tflayers/Keras/slim/tflearn/tensorlayer/....
+	  But you can use any symbolic function library inside tensorpack, including tf.layers/Keras/slim/tflearn/tensorlayer/....
 
 See [tutorials](http://tensorpack.readthedocs.io/en/latest/tutorial/index.html) to know more about these features.
 
