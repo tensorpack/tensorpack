@@ -125,10 +125,11 @@ def Dropout(x, *args, **kwargs):
     if 'is_training' in kwargs:
         kwargs['training'] = kwargs.pop('is_training')
     if len(args) > 0:
-        logger.warn(
-            "The first positional argument to tensorpack.Dropout is the probability to keep rather than to drop. "
-            "This is different from the rate argument in tf.layers.Dropout due to historical reasons. "
-            "To mimic tf.layers.Dropout, explicitly use keyword argument 'rate' instead")
+        if args[0] != 0.5:
+            logger.warn(
+                "The first positional argument to tensorpack.Dropout is the probability to keep, rather than to drop. "
+                "This is different from the rate argument in tf.layers.Dropout due to historical reasons. "
+                "To mimic tf.layers.Dropout, explicitly use keyword argument 'rate' instead")
         rate = 1 - args[0]
     elif 'keep_prob' in kwargs:
         assert 'rate' not in kwargs, "Cannot set both keep_prob and rate!"

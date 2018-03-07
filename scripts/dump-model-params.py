@@ -17,7 +17,7 @@ if __name__ == '__main__':
     parser.add_argument(dest='output', help='output model file, can be npz or TF checkpoint')
     args = parser.parse_args()
 
-    tf.train.import_meta_graph(args.meta)
+    tf.train.import_meta_graph(args.meta, clear_devices=True)
 
     # loading...
     init = get_model_loader(args.input)

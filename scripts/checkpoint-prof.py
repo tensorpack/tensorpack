@@ -21,7 +21,7 @@ if __name__ == '__main__':
     parser.add_argument('--print-timing', action='store_true')
     args = parser.parse_args()
 
-    tf.train.import_meta_graph(args.meta)
+    tf.train.import_meta_graph(args.meta, clear_devices=True)
     G = tf.get_default_graph()
     with tf.Session(config=get_default_sess_config()) as sess:
         init = get_model_loader(args.model)

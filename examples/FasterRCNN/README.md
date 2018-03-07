@@ -64,7 +64,7 @@ The two 360k models have identical configurations with
 `R50-C4-2x` configuration in
 [Detectron Model Zoo](https://github.com/facebookresearch/Detectron/blob/master/MODEL_ZOO.md#end-to-end-faster--mask-r-cnn-baselines).
 They get the __same performance__ with the official models, and are about 14% slower than the official implementation,
-probably due to the lack of specialized ops in TensorFlow.
+probably due to the lack of specialized ops (e.g. AffineChannel, ROIAlign) in TensorFlow.
 
 ## Notes
 
