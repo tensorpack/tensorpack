@@ -22,14 +22,6 @@ NR_GPU = 6
 BATCH_SIZE = TOTAL_BATCH_SIZE // NR_GPU
 INPUT_SHAPE = 224
 
-"""
-Inception-BN model on ILSVRC12.
-See "Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift", arxiv:1502.03167
-
-This config reaches 73% single-crop validation accuracy after 300k steps with 6 GPUs.
-"""
-
-
 class Model(ModelDesc):
     def _get_inputs(self):
         return [InputDesc(tf.float32, [None, INPUT_SHAPE, INPUT_SHAPE, 3], 'input'),

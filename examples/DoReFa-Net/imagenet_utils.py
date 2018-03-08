@@ -1,1 +1,1 @@
-../ResNet/imagenet_utils.py
+../ImageNetModels/imagenet_utils.py
