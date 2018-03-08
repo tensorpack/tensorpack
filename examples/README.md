@@ -20,18 +20,17 @@ These examples don't have meaningful performance numbers. They are supposed to b
 ## Vision:
 | Name | Performance |
 | ---  | --- |
-|	Train [ResNet](ResNet) and [ShuffleNet](ShuffleNet) on ImageNet		| reproduce paper	|
+|	Train [ResNet](ResNet) and [ShuffleNet](ImageNetModels) on ImageNet		| reproduce paper	|
 |	[Train Faster-RCNN / Mask-RCNN on COCO](FasterRCNN)				|	reproduce paper		|
 | [DoReFa-Net: training binary / low-bitwidth CNN on ImageNet](DoReFa-Net) | reproduce paper |
 | [Generative Adversarial Network(GAN) variants](GAN), including DCGAN, InfoGAN, <br/> Conditional GAN, WGAN, BEGAN, DiscoGAN, Image to Image, CycleGAN | visually reproduce |
-| [Inception-BN](Inception) | reproduce reference code |
 | [Fully-convolutional Network for Holistically-Nested Edge Detection(HED)](HED) | visually reproduce |
 | [Spatial Transformer Networks on MNIST addition](SpatialTransformer) | reproduce paper |
 | [Visualize CNN saliency maps](Saliency) | visually reproduce |
 | [Similarity learning on MNIST](SimilarityLearning) | |
 | Single-image super-resolution using [EnhanceNet](SuperResolution) | visually reproduce |
 | Learn steering filters with [Dynamic Filter Networks](DynamicFilterNetwork) | visually reproduce |
-| Load a pre-trained [AlexNet](load-alexnet.py), [VGG16](load-vgg16.py), or [Convolutional Pose Machines](ConvolutionalPoseMachines/) | |
+| Load a pre-trained [AlexNet, VGG, or Convolutional Pose Machines](CaffeModels) | |
 
 ## Reinforcement Learning:
 | Name | Performance |

@@ -15,20 +15,6 @@ from tensorpack.tfutils.summary import *
 from tensorpack.dataflow.dataset import ILSVRCMeta
 import tensorflow as tf
 
-"""
-Usage:
-    Download caffe models at https://github.com/BVLC/caffe/tree/master/models/bvlc_alexnet
-
-    Install caffe python bindings.
-
-    python -m tensorpack.utils.loadcaffe PATH/TO/CAFFE/{deploy.prototxt,bvlc_alexnet.caffemodel} alexnet.npz
-
-    Or download a converted caffe model from http://models.tensorpack.com/caffe/
-
-    Then, run it:
-    ./load-alexnet.py --load alexnet.npz --input cat.png
-"""
-
 
 def tower_func(image):
     # img: 227x227x3

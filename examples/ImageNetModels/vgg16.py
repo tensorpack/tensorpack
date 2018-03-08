@@ -2,20 +2,13 @@
 # -*- coding: UTF-8 -*-
 # File: vgg16.py
 
-import sys
 import argparse
-import numpy as np
 import os
-from itertools import count
 
 import tensorflow as tf
 
 from tensorpack import *
-from tensorpack.models import *
-from tensorpack.callbacks import *
-from tensorpack.train import TrainConfig, SyncMultiGPUTrainerParameterServer
-from tensorpack.dataflow import imgaug
-from tensorpack.tfutils import argscope, get_model_loader, get_current_tower_context
+from tensorpack.tfutils import argscope, get_model_loader
 from tensorpack.tfutils.summary import *
 from tensorpack.utils.gpu import get_nr_gpu
 
@@ -37,7 +30,7 @@ class Model(ImageNetModel):
     def get_logits(self, image):
         with argscope(Conv2D, kernel_shape=3,
                       W_init=tf.variance_scaling_initializer(scale=2.)), \
-                  argscope([Conv2D, MaxPooling, BatchNorm], data_format='NCHW'):
+                argscope([Conv2D, MaxPooling, BatchNorm], data_format='NCHW'):
             logits = (LinearWrap(image)
                       .apply(convnormrelu, 'conv1_1', 64)
                       .apply(convnormrelu, 'conv1_2', 64)
@@ -63,17 +56,18 @@ class Model(ImageNetModel):
                       .MaxPooling('pool5', 2)
                       # 7
                       .FullyConnected('fc6', 4096,
-                          W_init=tf.random_normal_initializer(stddev=0.001))
+                                      W_init=tf.random_normal_initializer(stddev=0.001))
                       .tf.nn.relu(name='fc6_relu')
                       .Dropout('drop0', rate=0.5)
                       .FullyConnected('fc7', 4096,
-                          W_init=tf.random_normal_initializer(stddev=0.001))
+                                      W_init=tf.random_normal_initializer(stddev=0.001))
                       .tf.nn.relu(name='fc7_relu')
                       .Dropout('drop1', rate=0.5)
                       .FullyConnected('fc8', 1000,
-                          W_init=tf.random_normal_initializer(stddev=0.01))())
+                                      W_init=tf.random_normal_initializer(stddev=0.01))())
         add_param_summary(('.*', ['histogram', 'rms']))
         return logits
+
 
 def get_data(name, batch):
     isTrain = name == 'train'
@@ -98,9 +92,11 @@ def get_config():
         ModelSaver(),
         GPUUtilizationTracker(),
         EstimatedTimeLeft(),
-        ScheduledHyperParamSetter('learning_rate',
+        ScheduledHyperParamSetter(
+            'learning_rate',
             [(0, 0.01), (3, max(BASE_LR, 0.01))], interp='linear'),
-        ScheduledHyperParamSetter('learning_rate',
+        ScheduledHyperParamSetter(
+            'learning_rate',
             [(30, BASE_LR * 1e-1), (60, BASE_LR * 1e-2), (80, BASE_LR * 1e-3)]),
         DataParallelInferenceRunner(
             dataset_val, infs, list(range(nr_tower))),
