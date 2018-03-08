@@ -28,10 +28,10 @@ class ILSVRCMeta(object):
             dir = get_dataset_path('ilsvrc_metadata')
         self.dir = dir
         mkdir_p(self.dir)
-        self.caffepb = get_caffe_pb()
         f = os.path.join(self.dir, 'synsets.txt')
         if not os.path.isfile(f):
             self._download_caffe_meta()
+        self.caffepb = None
 
     def get_synset_words_1000(self):
         """
@@ -93,6 +93,8 @@ class ILSVRCMeta(object):
         Returns:
             np.ndarray: per-pixel mean of shape (h, w, 3 (BGR)) in range [0, 255].
         """
+        if self.caffepb is None:
+            self.caffepb = get_caffe_pb()
         obj = self.caffepb.BlobProto()
 
         mean_file = os.path.join(self.dir, 'imagenet_mean.binaryproto')
