@@ -37,7 +37,7 @@ Instead of showing you 10 random networks with random accuracy,
 And everything runs on multiple GPUs. Some highlights:
 
 ### Vision:
-+ [Train ResNet on ImageNet](examples/ResNet)
++ [Train ResNet](examples/ResNet) and [other models](examples/ImageNetModels) on ImageNet.
 + [Train Faster-RCNN / Mask-RCNN on COCO object detection](examples/FasterRCNN)
 + [Generative Adversarial Network(GAN) variants](examples/GAN), including DCGAN, InfoGAN, Conditional GAN, WGAN, BEGAN, DiscoGAN, Image to Image, CycleGAN.
 + [DoReFa-Net: train binary / low-bitwidth CNN on ImageNet](examples/DoReFa-Net)
