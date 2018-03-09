@@ -120,6 +120,7 @@ class FashionMnist(Mnist):
 
 if __name__ == '__main__':
     ds = Mnist('train')
+    ds.reset_state()
     for (img, label) in ds.get_data():
         from IPython import embed
         embed()

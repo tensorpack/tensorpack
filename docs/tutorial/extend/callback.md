@@ -57,8 +57,9 @@ You can overwrite any of the following methods to define a new callback:
 
 * `_before_epoch(self)`, `_after_epoch(self)`
 
-  Use them __only__ when you really need something to happen __immediately__ before/after an epoch.
-  Otherwise, `_trigger_epoch` should be enough.
+  `_trigger_epoch` should be enough for most cases, as can be seen from the scheduling snippet above.
+  Use these two methods __only__ when you really need something to happen __immediately__ before/after an epoch.
+	And when you do need to use them, make sure they are very very fast to avoid affecting other callbacks which use them.
 
 * `_before_run(self, ctx)`, `_after_run(self, ctx, values)`
 

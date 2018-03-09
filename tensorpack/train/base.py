@@ -253,8 +253,8 @@ class Trainer(object):
                 for self.loop._epoch_num in range(
                         self.loop.starting_epoch, self.loop.max_epoch + 1):
                     logger.info("Start Epoch {} ...".format(self.loop.epoch_num))
-                    start_time = time.time()
                     self._callbacks.before_epoch()
+                    start_time = time.time()
                     for self.loop._local_step in range(self.loop.steps_per_epoch):
                         if self.hooked_sess.should_stop():
                             return
@@ -267,8 +267,8 @@ class Trainer(object):
                     # trigger epoch outside the timing region.
                     self._callbacks.trigger_epoch()
                 logger.info("Training has finished!")
-            except (StopTraining, tf.errors.OutOfRangeError):
-                logger.info("Training was stopped.")
+            except (StopTraining, tf.errors.OutOfRangeError) as e:
+                logger.info("Training was stopped by exception {}.".format(str(e)))
             except KeyboardInterrupt:
                 logger.info("Detected Ctrl-C and exiting main loop.")
                 raise

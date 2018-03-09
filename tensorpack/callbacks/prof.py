@@ -66,6 +66,10 @@ class GPUUtilizationTracker(Callback):
         while self._evt.is_set():   # unlikely
             pass
         self._evt.set()
+
+    def _trigger_epoch(self):
+        # Don't do this in after_epoch because
+        # before,after_epoch are supposed to be extremely fast by design.
         stats = self._queue.get()
         for idx, dev in enumerate(self._devices):
             self.trainer.monitors.put_scalar('GPUUtil/{}'.format(dev), stats[idx])

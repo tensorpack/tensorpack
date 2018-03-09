@@ -27,10 +27,16 @@ os.environ['TF_AUTOTUNE_THRESHOLD'] = '2'   # use more warm-up
 # Since 1.3, this is not needed
 os.environ['TF_AVGPOOL_USE_CUDNN'] = '1'   # issue#8566
 
-# TF1.5 features from tensorflow/benchmarks
+# TF1.5 features
 os.environ['TF_SYNC_ON_FINISH'] = '0'   # will become default
 os.environ['TF_GPU_THREAD_MODE'] = 'gpu_private'
 os.environ['TF_GPU_THREAD_COUNT'] = '2'
+
+# Available in TF1.6+. Haven't seen different performance on R50.
+# NOTE TF set it to 0 by default, because:
+# this mode may use scaled atomic integer reduction that may cause a numerical
+# overflow for certain input data range.
+# os.environ['TF_USE_CUDNN_BATCHNORM_SPATIAL_PERSISTENT'] = '1'
 
 try:
     import tensorflow as tf  # noqa

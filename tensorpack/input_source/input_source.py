@@ -456,11 +456,17 @@ class TFDatasetInput(FeedfreeInput):
     def dataflow_to_dataset(df, types):
         """
         Wrap a dataflow to tf.data.Dataset.
-        Will reset df.
+        Will also reset the dataflow.
+
+        If for training, you'll need to add `.repeat()` on the returned
+        dataset, if the dataflow iterator can terminate.
 
         Args:
             df (DataFlow)
             types([tf.DType])
+
+        Returns:
+            (tf.data.Dataset)
         """
         assert isinstance(df, DataFlow), df
         assert isinstance(types, (list, tuple)), types
