@@ -66,7 +66,7 @@ We will now add the cheapest pre-processing now to get an ndarray in the end ins
 		ds = AugmentImageComponent(ds, [imgaug.Resize(224)])
 		ds = BatchData(ds, 256)
 ```
-You'll start to observe slow down after adding more pre-processing (such as those in the [ResNet example](../examples/ResNet/imagenet_utils.py)).
+You'll start to observe slow down after adding more pre-processing (such as those in the [ResNet example](../examples/ImageNetModels/imagenet_utils.py)).
 Now it's time to add threads or processes:
 ```eval_rst
 .. code-block:: python
@@ -127,7 +127,7 @@ If you identify this as a bottleneck, you can also use:
 Let's summarize what the above dataflow does:
 1. One thread iterates over a shuffled list of (filename, label) pairs, and put them into a queue of size 1000.
 2. 25 worker threads take pairs and make them into (preprocessed image, label) pairs.
-3. Both 1 and 2 happen in one separate process, and the results are sent back to main process through ZeroMQ.
+3. Both 1 and 2 happen together in a separate process, and the results are sent back to main process through ZeroMQ.
 4. Main process makes batches, and other tensorpack modules will then take care of how they should go into the graph.
 
 Note that in an actual training setup, I used the above multiprocess version for training set since
@@ -195,8 +195,8 @@ Then we add necessary transformations:
     ds = BatchData(ds, 256)
 ```
 
-1. `LMDBDataPoint` deserialize the datapoints (from raw bytes to [jpeg_string, label] -- what we dumped in `RawILSVRC12`)
-2. Use OpenCV to decode the first component into ndarray
+1. `LMDBDataPoint` deserialize the datapoints (from raw bytes to [jpeg bytes, label] -- what we dumped in `RawILSVRC12`)
+2. Use OpenCV to decode the first component (jpeg bytes) into ndarray
 3. Apply augmentations to the ndarray
 
 Both imdecode and the augmentors can be quite slow. We can parallelize them like this:

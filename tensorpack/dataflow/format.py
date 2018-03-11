@@ -61,7 +61,12 @@ class HDF5Data(RNGDataFlow):
 
 
 class LMDBData(RNGDataFlow):
-    """ Read a LMDB database and produce (k,v) raw string pairs.
+    """
+    Read a LMDB database and produce (k,v) raw bytes pairs.
+    The raw bytes are usually not what you're interested in.
+    You might want to use
+    :class:`LMDBDataDecoder`, :class:`LMDBDataPoint`, or apply a
+    mapper function after :class:`LMDBData`.
     """
     def __init__(self, lmdb_path, shuffle=True, keys=None):
         """
@@ -161,29 +166,35 @@ class LMDBDataDecoder(MapData):
 class LMDBDataPoint(MapData):
     """
     Read a LMDB file and produce deserialized datapoints.
-    It only accepts the database produced by
+    It **only** accepts the database produced by
     :func:`tensorpack.dataflow.dftools.dump_dataflow_to_lmdb`,
     which uses :func:`tensorpack.utils.serialize.dumps` for serialization.
 
     Example:
         .. code-block:: python
 
-            ds = LMDBDataPoint("/data/ImageNet.lmdb", shuffle=False)
+            ds = LMDBDataPoint("/data/ImageNet.lmdb", shuffle=False)  # read and decode
 
-            # alternatively:
-            ds = LMDBData("/data/ImageNet.lmdb", shuffle=False)
-            ds = LocallyShuffleData(ds, 50000)
-            ds = LMDBDataPoint(ds)
+            # The above is equivalent to:
+            ds = LMDBData("/data/ImageNet.lmdb", shuffle=False)  # read
+            ds = LMDBDataPoint(ds)  # decode
+            # Sometimes it makes sense to separate reading and decoding
+            # to be able to make decoding parallel.
     """
 
     def __init__(self, *args, **kwargs):
         """
         Args:
             args, kwargs: Same as in :class:`LMDBData`.
+
+        In addition, args[0] can be a :class:`LMDBData` instance.
+        In this case args[0] has to be the only argument.
         """
 
         if isinstance(args[0], DataFlow):
             ds = args[0]
+            assert len(args) == 1 and len(kwargs) == 0, \
+                "No more arguments are allowed if LMDBDataPoint is called with a LMDBData instance!"
         else:
             ds = LMDBData(*args, **kwargs)
 

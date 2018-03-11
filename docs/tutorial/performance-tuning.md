@@ -6,22 +6,22 @@ Performance is different across machines and tasks,
 so you need to figure out most parts by your own.
 Here's a list of things you can do when your training is slow.
 
-If you ask for help understanding and improving the speed, PLEASE do them and include your findings.
+If you ask for help to understand and improve the speed, PLEASE do them and include your findings.
 
 ## Figure out the bottleneck
 
 1. If you use feed-based input (unrecommended) and datapoints are large, data is likely to become the bottleneck.
-2. If you use queue-based input + dataflow, you can look for the queue size statistics in
-	 training log. Ideally the input queue should be near-full (default size is 50).
- 	 If the size is near-zero, data is the bottleneck.
-3. If GPU utilization is low, it may be because of slow data, or some ops are inefficient. Also make sure GPUs are not locked in P8 state.
+2. If you use queue-based input + DataFlow, always pay attention to the queue size statistics in
+	 training log. Ideally the input queue should be nearly full (default size is 50).
+ 	 __If the queue size is close to zero, data is the bottleneck. Otherwise, it's not.__
+3. If GPU utilization is low but queue is full. It's because of the graph.
+	Either there are some communication inefficiency or some ops you use are inefficient (e.g. CPU ops). Also make sure GPUs are not locked in P8 state.
 
 ## Benchmark the components
-1. (usually not needed) Use `data=DummyConstantInput(shapes)` for training,
-	so that the iterations only take data from a constant tensor.
-	This will benchmark the graph without the overhead of data.
-2. Use `dataflow=FakeData(shapes, random=False)` to replace your original DataFlow by a constant DataFlow.
-  This is almost the same as (1).
+1. Use `dataflow=FakeData(shapes, random=False)` to replace your original DataFlow by a constant DataFlow.
+	This will benchmark the graph without the possible overhead of DataFlow.
+2. (usually not needed) Use `data=DummyConstantInput(shapes)` for training, so that the iterations only take data from a constant tensor.
+	No DataFlow is involved in this case.
 3. If you're using a TF-based input pipeline you wrote, you can simply run it in a loop and test its speed.
 4. Use `TestDataSpeed(mydf).start()` to benchmark your DataFlow.
 
@@ -31,15 +31,18 @@ Note that you should only look at iteration speed after about 50 iterations, sin
 ## Investigate DataFlow
 
 Understand the [Efficient DataFlow](efficient-dataflow.html) tutorial, so you know what your DataFlow is doing.
+Then, make modifications and benchmark to understand which part is the bottleneck.
+Use [TestDataSpeed](../modules/dataflow.html#tensorpack.dataflow.TestDataSpeed).
+Do __NOT__ look at training speed when you benchmark a DataFlow.
 
-Benchmark your DataFlow with modifications to understand which part is the bottleneck. Some examples include:
+Some example things to try:
 
-1. Benchmark only raw reader (and perhaps add some parallelism).
+1. Benchmark only the raw reader (and perhaps add some parallelism).
 2. Gradually add some pre-processing and see how the performance changes.
 3. Change the number of parallel processes or threads.
 
-A DataFlow could be blocked by CPU/disk/network/IPC bandwidth. Only by benchmarking will you
-know the reason and improve it accordingly, e.g.:
+A DataFlow could be blocked by CPU/disk/network/IPC bandwidth.
+Only by benchmarking will you know the reason and improve it accordingly, e.g.:
 
 1. Use single-file database to avoid random read on hard disk.
 2. Use fewer pre-processings or write faster ones with whatever tools you have.
@@ -57,7 +60,7 @@ Or you can use `GraphProfiler` callback to benchmark the graph. It will
 dump runtime tracing information (to either TensorBoard or chrome) to help diagnose the issue.
 Remember not to use the first several iterations.
 
-### Slow with single-GPU
+### Slow on single-GPU
 This is literally saying TF ops are slow. Usually there isn't much you can do, except to optimize the kernels.
 But there may be something cheap you can try:
 

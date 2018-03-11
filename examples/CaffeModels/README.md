@@ -7,7 +7,10 @@ Converted models can also be found at [tensorpack model zoo](http://models.tenso
 
 Download: https://github.com/BVLC/caffe/tree/master/models/bvlc_alexnet
 
-Convert: `python -m tensorpack.utils.loadcaffe PATH/TO/CAFFE/{deploy.prototxt,bvlc_alexnet.caffemodel} alexnet.npz`
+Convert:
+```
+python -m tensorpack.utils.loadcaffe PATH/TO/CAFFE/{deploy.prototxt,bvlc_alexnet.caffemodel} alexnet.npz
+```
 
 Run: `./load-alexnet.py --load alexnet.npz --input cat.png`
 
@@ -36,7 +39,10 @@ wget http://pearl.vasc.ri.cmu.edu/caffe_model_github/model/_trained_MPI/pose_ite
 wget https://github.com/shihenw/convolutional-pose-machines-release/raw/master/model/_trained_MPI/pose_deploy_resize.prototxt
 ```
 
-Convert: `python -m tensorpack.utils.loadcaffe pose_deploy_resize.prototxt pose_iter_320000.caffemodel CPM-original.npz`
+Convert:
+```
+python -m tensorpack.utils.loadcaffe pose_deploy_resize.prototxt pose_iter_320000.caffemodel CPM-original.npz
+```
 
 Run: `python load-cpm.py --load CPM-original.npz --input test.jpg`
 
