@@ -2,6 +2,9 @@
 # -*- coding: utf-8 -*-
 # File: config.py
 
+import os
+import tensorflow as tf
+
 from ..callbacks import (
     MovingAverageSummary,
     ProgressBar, MergeAllSummaries,
@@ -9,11 +12,11 @@ from ..callbacks import (
 from ..dataflow.base import DataFlow
 from ..graph_builder.model_desc import ModelDescBase
 from ..utils import logger
-from ..tfutils import (JustCurrentSession, SessionInit)
+from ..tfutils.sessinit import JustCurrentSession, SessionInit, SaverRestore
 from ..tfutils.sesscreate import NewSessionCreator
 from ..input_source import InputSource
 
-__all__ = ['TrainConfig', 'DEFAULT_CALLBACKS', 'DEFAULT_MONITORS']
+__all__ = ['TrainConfig', 'AutoResumeTrainConfig', 'DEFAULT_CALLBACKS', 'DEFAULT_MONITORS']
 
 
 def DEFAULT_CALLBACKS():
@@ -145,7 +148,6 @@ class TrainConfig(object):
 
         self.starting_epoch = int(starting_epoch)
         self.max_epoch = int(max_epoch)
-        assert self.steps_per_epoch > 0 and self.max_epoch > 0
 
         # Tower stuff are for Trainer v1 only:
         nr_tower = max(nr_tower, 1)
@@ -167,3 +169,69 @@ class TrainConfig(object):
     @property
     def callbacks(self):        # disable setter
         return self._callbacks
+
+
+class AutoResumeTrainConfig(TrainConfig):
+    """
+    Same as :class:`TrainConfig`, but does the following to automatically
+    resume from training:
+
+    1. If a checkpoint was found in :meth:`logger.get_logger_dir()`, set
+       `session_init` option to load it.
+    2. If a JSON history was found in :meth:`logger.get_logger_dir()`, try to
+       load the epoch number from it and set the `starting_epoch` option to
+       continue training.
+
+    You can choose to let the above two option to either overwrite or
+    not overwrite user-provided arguments, as explained below.
+    """
+    def __init__(self, always_resume=True, **kwargs):
+        """
+        Args:
+            always_resume (bool): If False, user-provided arguments
+                `session_init` and `starting_epoch` will take priority.
+                Otherwise, resume will take priority.
+            kwargs: same as in :class:`TrainConfig`.
+
+        Notes:
+            The main goal of this class is to let a training job to resume
+            without changing any line of code or command line arguments.
+            So it's useful to let resume take priority over user-provided arguments sometimes:
+
+            If your training starts from a pretrained model,
+            you would want it to use user-provided model loader at the
+            beginning, but a "resume" model loader when the job was
+            interrupted and restarted.
+        """
+        if always_resume or 'session_init' not in kwargs:
+            sessinit = self._get_sessinit_resume()
+            if sessinit is not None:
+                path = sessinit.path
+                if 'session_init' in kwargs:
+                    logger.info("Found checkpoint at {}. "
+                                "session_init arguments will be overwritten.".format(path))
+                else:
+                    logger.info("Will load checkpoint at {}.".format(path))
+                kwargs['session_init'] = sessinit
+
+        if always_resume or 'starting_epoch' not in kwargs:
+            last_epoch = self._get_last_epoch()
+            if last_epoch is not None:
+                now_epoch = last_epoch + 1
+                logger.info("Found history statistics from JSON. "
+                            "Overwrite the starting epoch to epoch #{}.".format(now_epoch))
+                kwargs['starting_epoch'] = now_epoch
+
+        super(AutoResumeTrainConfig, self).__init__(**kwargs)
+
+    def _get_sessinit_resume(self):
+        logdir = logger.get_logger_dir()
+        if not logdir:
+            return None
+        path = os.path.join(logdir, 'checkpoint')
+        if not tf.gfile.Exists(path):
+            return None
+        return SaverRestore(path)
+
+    def _get_last_epoch(self):
+        return JSONWriter.load_existing_epoch_number()

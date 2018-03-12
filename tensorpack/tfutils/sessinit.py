@@ -105,7 +105,7 @@ class SaverRestore(SessionInit):
             logger.warn("SaverRestore expect a TF checkpoint, but got a model path '{}'.".format(model_path) +
                         " To load from a dict, use 'DictRestore'.")
         model_path = get_checkpoint_path(model_path)
-        self.path = model_path
+        self.path = model_path  # attribute used by AutoResumeTrainConfig!
         self.prefix = prefix
         self.ignore = [i if i.endswith(':0') else i + ':0' for i in ignore]
 
@@ -262,7 +262,7 @@ def get_model_loader(filename):
         return SaverRestore(filename)
 
 
-@deprecated("Write the logic yourself!", "2018-06-01")
+@deprecated("Write the logic yourself or use AutoResumeTrainConfig!", "2018-06-01")
 def TryResumeTraining():
     """
     Try loading latest checkpoint from ``logger.get_logger_dir()``, only if there is one.

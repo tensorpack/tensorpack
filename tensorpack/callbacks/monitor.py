@@ -7,6 +7,7 @@ import os
 import numpy as np
 import shutil
 import time
+from datetime import datetime
 import operator
 from collections import defaultdict
 import six
@@ -213,7 +214,7 @@ class TFEventWriter(TrainingMonitor):
         """
         if logdir is None:
             logdir = logger.get_logger_dir()
-        assert os.path.isdir(logdir), logdir
+        assert tf.gfile.IsDirectory(logdir), logdir
         self._logdir = logdir
         self._max_queue = max_queue
         self._flush_secs = flush_secs
@@ -249,13 +250,12 @@ class TFEventWriter(TrainingMonitor):
 class JSONWriter(TrainingMonitor):
     """
     Write all scalar data to a json file under ``logger.get_logger_dir()``, grouped by their global step.
-    This monitor also attemps to recover the epoch number during setup,
-    if an existing json file is found at the same place.
+    If found an earlier json history file, will append to it.
     """
 
-    FILENAME = 'stat.json'
+    FILENAME = 'stats.json'
     """
-    The name of the json file.
+    The name of the json file. Do not change it.
     """
 
     def __new__(cls):
@@ -265,26 +265,61 @@ class JSONWriter(TrainingMonitor):
             logger.warn("logger directory was not set. Ignore JSONWriter.")
             return NoOpMonitor()
 
+    @staticmethod
+    def load_existing_json():
+        """
+        Look for an existing json under :meth:`logger.get_logger_dir()` named "stats.json",
+        and return the loaded list of statistics if found. Returns None otherwise.
+        """
+        dir = logger.get_logger_dir()
+        fname = os.path.join(dir, JSONWriter.FILENAME)
+        if tf.gfile.Exists(fname):
+            with open(fname) as f:
+                stats = json.load(f)
+                assert isinstance(stats, list), type(stats)
+                return stats
+        return None
+
+    @staticmethod
+    def load_existing_epoch_number():
+        """
+        Try to load the latest epoch number from an existing json stats file (if any).
+        Returns None if not found.
+        """
+        stats = JSONWriter.load_existing_json()
+        try:
+            return int(stats[-1]['epoch_num'])
+        except Exception:
+            return None
+
     def _before_train(self):
-        self._dir = logger.get_logger_dir()
-        self._fname = os.path.join(self._dir, self.FILENAME)
-
-        if os.path.isfile(self._fname):
-            logger.info("Found JSON at {}, will append to it.".format(self._fname))
-            with open(self._fname) as f:
-                self._stats = json.load(f)
-                assert isinstance(self._stats, list), type(self._stats)
-
+        stats = JSONWriter.load_existing_json()
+        self._fname = os.path.join(logger.get_logger_dir(), JSONWriter.FILENAME)
+        if stats is not None:
             try:
-                epoch = self._stats[-1]['epoch_num'] + 1
+                epoch = stats[-1]['epoch_num'] + 1
             except Exception:
-                pass
+                epoch = None
+
+            starting_epoch = self.trainer.loop.starting_epoch
+            if epoch is None or epoch == starting_epoch:
+                logger.info("Found existing JSON inside {}, will append to it.".format(logger.get_logger_dir()))
+                self._stats = stats
             else:
-                # TODO is this a good idea?
-                logger.info("Found history statistics from JSON. "
-                            "Rename the first epoch of this training to epoch #{}.".format(epoch))
-                self.trainer.loop.starting_epoch = epoch
-                self.trainer.loop._epoch_num = epoch - 1
+                logger.warn(
+                    "History epoch value {} from JSON is not the predecessor of the starting_epoch value {}".format(
+                        epoch - 1, starting_epoch))
+                logger.warn("If you want to resume old training, either use `AutoResumeTrainConfig` "
+                            "or correctly set the starting_epoch yourself to avoid inconsistency. "
+                            "Epoch number will not be automatically loaded by JSONWriter.")
+
+                backup_fname = JSONWriter.FILENAME + '.' + datetime.now().strftime('%m%d-%H%M%S')
+                backup_fname = os.path.join(logger.get_logger_dir(), backup_fname)
+
+                logger.warn("Now, we will start training at epoch {} and backup old json to {}".format(
+                    self.trainer.loop.starting_epoch, backup_fname))
+                shutil.move(self._fname, backup_fname)
+                self._stats = []
         else:
             self._stats = []
         self._stat_now = {}

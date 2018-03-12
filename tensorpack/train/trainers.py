@@ -49,6 +49,7 @@ class SimpleTrainer(SingleCostTrainer):
     Single-GPU single-cost single-tower trainer.
     """
     def _setup_graph(self, input, get_cost_fn, get_opt_fn):
+        logger.info("Building graph for a single training tower ...")
         with TowerContext('', is_training=True):
             grads = self._make_get_grad_fn(input, get_cost_fn, get_opt_fn)()
             opt = get_opt_fn()

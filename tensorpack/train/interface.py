@@ -65,9 +65,9 @@ def launch_train_with_config(config, trainer):
 
     .. code-block:: python
 
-        # with the old trainer:
+        # With the old trainer:
         SyncMultiGPUTrainerParameterServer(config, ps_device='gpu').train()
-        # with the new trainer:
+        # With the current version of trainer:
         launch_train_with_config(
             config, SyncMultiGPUTrainerParameterServer(towers, ps_device='gpu'))
     """

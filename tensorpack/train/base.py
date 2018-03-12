@@ -16,7 +16,7 @@ from ..utils.argtools import call_only_once
 from ..tfutils import get_global_step_value
 from ..tfutils.tower import TowerFuncWrapper
 from ..tfutils.model_utils import describe_trainable_vars
-from ..tfutils.sessinit import JustCurrentSession
+from ..tfutils.sessinit import SessionInit, JustCurrentSession
 from ..tfutils.sesscreate import ReuseSessionCreator, NewSessionCreator
 from ..callbacks.steps import MaintainStepCounter
 
@@ -46,9 +46,10 @@ class TrainLoop(object):
         """
         Configure the loop given the settings.
         """
-        self.starting_epoch = starting_epoch
-        self.max_epoch = max_epoch
-        self.steps_per_epoch = steps_per_epoch
+        self.starting_epoch = int(starting_epoch)
+        self.max_epoch = int(max_epoch)
+        self.steps_per_epoch = int(steps_per_epoch)
+        assert self.steps_per_epoch > 0 and self.max_epoch > 0
 
         self._epoch_num = starting_epoch - 1
 
@@ -215,6 +216,8 @@ class Trainer(object):
             session_creator (tf.train.SessionCreator):
             session_init (sessinit.SessionInit):
         """
+        assert isinstance(session_creator, tf.train.SessionCreator), session_creator
+        assert isinstance(session_init, SessionInit), session_init
         session_init._setup_graph()
 
         logger.info("Creating the session ...")
