@@ -31,7 +31,7 @@ class Model(ModelDesc):
 
         image = image / 128.0 - 1
 
-        with argscope(Conv2D, nl=BNReLU, use_bias=False):
+        with argscope(Conv2D, activation=BNReLU, use_bias=False):
             logits = (LinearWrap(image)
                       .Conv2D('conv1', 24, 5, padding='VALID')
                       .MaxPooling('pool1', 2, padding='SAME')
@@ -39,10 +39,11 @@ class Model(ModelDesc):
                       .Conv2D('conv3', 32, 3, padding='VALID')
                       .MaxPooling('pool2', 2, padding='SAME')
                       .Conv2D('conv4', 64, 3, padding='VALID')
-                      .Dropout('drop', 0.5)
+                      .Dropout('drop', rate=0.5)
                       .FullyConnected('fc0', 512,
-                                      b_init=tf.constant_initializer(0.1), nl=tf.nn.relu)
-                      .FullyConnected('linear', out_dim=10, nl=tf.identity)())
+                                      bias_initializer=tf.constant_initializer(0.1),
+                                      activation=tf.nn.relu)
+                      .FullyConnected('linear', units=10)())
         tf.nn.softmax(logits, name='output')
 
         accuracy = tf.to_float(tf.nn.in_top_k(logits, label, 1))

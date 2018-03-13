@@ -72,8 +72,8 @@ class Model(ModelDesc):
         image = image / 256.0
 
         with remap_variables(binarize_weight), \
-                argscope(BatchNorm, decay=0.9, epsilon=1e-4), \
-                argscope(Conv2D, use_bias=False, nl=tf.identity):
+                argscope(BatchNorm, momentum=0.9, epsilon=1e-4), \
+                argscope(Conv2D, use_bias=False):
             logits = (LinearWrap(image)
                       .Conv2D('conv0', 48, 5, padding='VALID', use_bias=True)
                       .MaxPooling('pool0', 2, padding='SAME')
@@ -106,7 +106,7 @@ class Model(ModelDesc):
                       .Conv2D('conv6', 512, 5, padding='VALID')
                       .apply(fg).BatchNorm('bn6')
                       .apply(cabs)
-                      .FullyConnected('fc1', 10, nl=tf.identity)())
+                      .FullyConnected('fc1', 10)())
         tf.nn.softmax(logits, name='output')
 
         # compute the number of failed samples

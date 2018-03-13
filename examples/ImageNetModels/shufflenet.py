@@ -28,7 +28,7 @@ TOTAL_BATCH_SIZE = 1024
 
 @layer_register(log_shape=True)
 def DepthConv(x, out_channel, kernel_shape, padding='SAME', stride=1,
-              W_init=None, nl=tf.identity):
+              W_init=None, activation=tf.identity):
     in_shape = x.get_shape().as_list()
     in_channel = in_shape[1]
     assert out_channel % in_channel == 0
@@ -41,7 +41,7 @@ def DepthConv(x, out_channel, kernel_shape, padding='SAME', stride=1,
 
     W = tf.get_variable('W', filter_shape, initializer=W_init)
     conv = tf.nn.depthwise_conv2d(x, W, [1, 1, stride, stride], padding=padding, data_format='NCHW')
-    return nl(conv, name='output')
+    return activation(conv, name='output')
 
 
 @under_name_scope()
@@ -71,13 +71,13 @@ class Model(ImageNetModel):
             # We do not apply group convolution on the first pointwise layer
             # because the number of input channels is relatively small.
             first_split = group if in_channel != 12 else 1
-            l = Conv2D('conv1', l, out_channel // 4, 1, split=first_split, nl=BNReLU)
+            l = Conv2D('conv1', l, out_channel // 4, 1, split=first_split, activation=BNReLU)
             l = channel_shuffle(l, group)
-            l = DepthConv('dconv', l, out_channel // 4, 3, nl=BN, stride=stride)
+            l = DepthConv('dconv', l, out_channel // 4, 3, activation=BN, stride=stride)
 
             l = Conv2D('conv2', l,
                        out_channel if stride == 1 else out_channel - in_channel,
-                       1, split=group, nl=BN)
+                       1, split=group, activation=BN)
             if stride == 1:     # unit (b)
                 output = tf.nn.relu(shortcut + l)
             else:   # unit (c)
@@ -90,7 +90,7 @@ class Model(ImageNetModel):
             group = 3
             channels = [120, 240, 480]
 
-            l = Conv2D('conv1', image, 12, 3, stride=2, nl=BNReLU)
+            l = Conv2D('conv1', image, 12, 3, strides=2, activation=BNReLU)
             l = MaxPooling('pool1', l, 3, 2, padding='SAME')
 
             with tf.variable_scope('group1'):

@@ -8,8 +8,8 @@ Using the tensorpack implementations, you can also benefit from `argscope` and `
 simplify the code.
 
 Note that these layers were written because there were no other alternatives back at that time.
-In the future we may shift the implementation to `tf.layers` because they will be better maintained.
-You can start using `tf.layers` today as long as it fits your need.
+Now, these layers actually call `tf.layers` directly.
+You can just use `tf.layers` as long as it fits your need.
 
 ### argscope and LinearWrap
 `argscope` gives you a context with default arguments.

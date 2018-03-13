@@ -40,26 +40,26 @@ class Model(ModelDesc):
             tf.summary.image("train_image", image, 10)
         if tf.test.is_gpu_available():
             image = tf.transpose(image, [0, 3, 1, 2])
-            data_format = 'NCHW'
+            data_format = 'channels_first'
         else:
-            data_format = 'NHWC'
+            data_format = 'channels_last'
 
         image = image / 4.0     # just to make range smaller
-        with argscope(Conv2D, nl=BNReLU, use_bias=False, kernel_shape=3), \
+        with argscope(Conv2D, activation=BNReLU, use_bias=False, kernel_size=3), \
                 argscope([Conv2D, MaxPooling, BatchNorm], data_format=data_format):
             logits = LinearWrap(image) \
-                .Conv2D('conv1.1', out_channel=64) \
-                .Conv2D('conv1.2', out_channel=64) \
+                .Conv2D('conv1.1', filters=64) \
+                .Conv2D('conv1.2', filters=64) \
                 .MaxPooling('pool1', 3, stride=2, padding='SAME') \
-                .Conv2D('conv2.1', out_channel=128) \
-                .Conv2D('conv2.2', out_channel=128) \
+                .Conv2D('conv2.1', filters=128) \
+                .Conv2D('conv2.2', filters=128) \
                 .MaxPooling('pool2', 3, stride=2, padding='SAME') \
-                .Conv2D('conv3.1', out_channel=128, padding='VALID') \
-                .Conv2D('conv3.2', out_channel=128, padding='VALID') \
-                .FullyConnected('fc0', 1024 + 512, nl=tf.nn.relu) \
+                .Conv2D('conv3.1', filters=128, padding='VALID') \
+                .Conv2D('conv3.2', filters=128, padding='VALID') \
+                .FullyConnected('fc0', 1024 + 512, activation=tf.nn.relu) \
                 .tf.nn.dropout(keep_prob) \
-                .FullyConnected('fc1', 512, nl=tf.nn.relu) \
-                .FullyConnected('linear', out_dim=self.cifar_classnum, nl=tf.identity)()
+                .FullyConnected('fc1', 512, activation=tf.nn.relu) \
+                .FullyConnected('linear', out_dim=self.cifar_classnum)()
 
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')

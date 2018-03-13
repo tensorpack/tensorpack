@@ -79,19 +79,19 @@ class Model(ModelDesc):
 
     def _get_NN_prediction(self, image):
         image = tf.cast(image, tf.float32) / 255.0
-        with argscope(Conv2D, nl=tf.nn.relu):
-            l = Conv2D('conv0', image, out_channel=32, kernel_shape=5)
+        with argscope(Conv2D, activation=tf.nn.relu):
+            l = Conv2D('conv0', image, 32, 5)
             l = MaxPooling('pool0', l, 2)
-            l = Conv2D('conv1', l, out_channel=32, kernel_shape=5)
+            l = Conv2D('conv1', l, 32, 5)
             l = MaxPooling('pool1', l, 2)
-            l = Conv2D('conv2', l, out_channel=64, kernel_shape=4)
+            l = Conv2D('conv2', l, 64, 4)
             l = MaxPooling('pool2', l, 2)
-            l = Conv2D('conv3', l, out_channel=64, kernel_shape=3)
+            l = Conv2D('conv3', l, 64, 3)
 
-        l = FullyConnected('fc0', l, 512, nl=tf.identity)
+        l = FullyConnected('fc0', l, 512)
         l = PReLU('prelu', l)
-        logits = FullyConnected('fc-pi', l, out_dim=NUM_ACTIONS, nl=tf.identity)    # unnormalized policy
-        value = FullyConnected('fc-v', l, 1, nl=tf.identity)
+        logits = FullyConnected('fc-pi', l, NUM_ACTIONS)    # unnormalized policy
+        value = FullyConnected('fc-v', l, 1)
         return logits, value
 
     def _build_graph(self, inputs):

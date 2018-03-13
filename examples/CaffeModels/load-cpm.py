@@ -48,9 +48,8 @@ def CPM(image):
 
     gmap = tf.constant(get_gaussian_map())
     gmap = tf.pad(gmap, [[0, 0], [0, 1], [0, 1], [0, 0]])
-    pool_center = AvgPooling('mappool', gmap, 9, stride=8, padding='VALID')
-    with argscope(Conv2D, kernel_shape=3, nl=tf.nn.relu,
-                  W_init=tf.random_normal_initializer(stddev=0.01)):
+    pool_center = AvgPooling('mappool', gmap, 9, strides=8, padding='VALID')
+    with argscope(Conv2D, kernel_size=3, activation=tf.nn.relu):
         shared = (LinearWrap(image)
                   .Conv2D('conv1_1', 64)
                   .Conv2D('conv1_2', 64)
@@ -78,22 +77,20 @@ def CPM(image):
         l = tf.concat([l, shared, pool_center], 3,
                       name='concat_stage{}'.format(stage))
         for i in range(1, 6):
-            l = Conv2D('Mconv{}_stage{}'.format(i, stage), l, 128)
-        l = Conv2D('Mconv6_stage{}'.format(stage), l, 128, kernel_shape=1)
-        l = Conv2D('Mconv7_stage{}'.format(stage),
-                   l, 15, kernel_shape=1, nl=tf.identity)
+            l = Conv2D('Mconv{}_stage{}'.format(i, stage), l, 128, 7, activation=tf.nn.relu)
+        l = Conv2D('Mconv6_stage{}'.format(stage), l, 128, 1, activation=tf.nn.relu)
+        l = Conv2D('Mconv7_stage{}'.format(stage), l, 15, 1, activation=tf.identity)
         return l
 
-    with argscope(Conv2D, kernel_shape=7, nl=tf.nn.relu):
-        out1 = (LinearWrap(shared)
-                .Conv2D('conv5_1_CPM', 512, kernel_shape=1)
-                .Conv2D('conv5_2_CPM', 15, kernel_shape=1, nl=tf.identity)())
-        out2 = add_stage(2, out1)
-        out3 = add_stage(3, out2)
-        out4 = add_stage(4, out3)
-        out5 = add_stage(5, out4)
-        out6 = add_stage(6, out5)
-        tf.image.resize_bilinear(out6, [368, 368], name='resized_map')
+    out1 = (LinearWrap(shared)
+            .Conv2D('conv5_1_CPM', 512, 1, activation=tf.nn.relu)
+            .Conv2D('conv5_2_CPM', 15, 1, activation=tf.identity)())
+    out2 = add_stage(2, out1)
+    out3 = add_stage(3, out2)
+    out4 = add_stage(4, out3)
+    out5 = add_stage(5, out4)
+    out6 = add_stage(6, out5)
+    tf.image.resize_bilinear(out6, [368, 368], name='resized_map')
 
 
 def run_test(model_path, img_file):

@@ -99,7 +99,7 @@ class Model(ModelDesc):
 
         # seqlen x (Bxrnnsize)
         output = tf.reshape(tf.concat(outputs, 1), [-1, param.rnn_size])  # (Bxseqlen) x rnnsize
-        logits = FullyConnected('fc', output, param.vocab_size, nl=tf.identity)
+        logits = FullyConnected('fc', output, param.vocab_size, activation=tf.identity)
         tf.nn.softmax(logits / param.softmax_temprature, name='prob')
 
         xent_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(

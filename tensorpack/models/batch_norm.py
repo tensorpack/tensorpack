@@ -73,32 +73,27 @@ def reshape_for_bn(param, ndims, chan, data_format):
         'use_bias': 'center',
         'use_scale': 'scale',
         'gamma_init': 'gamma_initializer',
-        'decay': 'momentum'
+        'decay': 'momentum',
+        'use_local_stat': 'training'
     })
-def BatchNorm(x, use_local_stat=None, momentum=0.9, epsilon=1e-5,
-              scale=True, center=True,
+def BatchNorm(inputs, training=None, momentum=0.9, epsilon=1e-5,
+              center=True, scale=True,
               gamma_initializer=tf.ones_initializer(),
               data_format='channels_last',
               internal_update=False):
     """
-    Batch Normalization layer, as described in the paper:
-    `Batch Normalization: Accelerating Deep Network Training by
-    Reducing Internal Covariance Shift <http://arxiv.org/abs/1502.03167>`_.
+    Mostly equivalent to `tf.layers.batch_normalization`, but difference in
+    the following:
+
+    1. Accepts `data_format` rather than `axis`. For 2D input, this argument will be ignored.
+    2. Default value for `momentum` and `epsilon` is different.
+    3. Default value for `training` is automatically obtained from `TowerContext`.
+    4. Support the `internal_update` option.
 
     Args:
-        x (tf.Tensor): a 4D or 2D tensor. When 4D, the layout should match data_format.
-        use_local_stat (bool): whether to use mean/var of the current batch or the moving average.
-            Defaults to True in training and False in inference.
-        momentum (float): momentum of moving average.
-        epsilon (float): epsilon to avoid divide-by-zero.
-        scale, center (bool): whether to use the extra affine transformation or not.
-        gamma_initializer: initializer for gamma (the scale).
         internal_update (bool): if False, add EMA update ops to
             `tf.GraphKeys.UPDATE_OPS`. If True, update EMA inside the layer
-            which will be slightly slower.
-
-    Returns:
-        tf.Tensor: a tensor named ``output`` with the same shape of x.
+            by control dependencies.
 
     Variable Names:
 
@@ -110,18 +105,18 @@ def BatchNorm(x, use_local_stat=None, momentum=0.9, epsilon=1e-5,
     Note:
         1. About multi-GPU training: moving averages across GPUs are not aggregated.
            Batch statistics are computed independently.  This is consistent with most frameworks.
-        2. Combinations of ``use_local_stat`` and ``ctx.is_training``:
-            * ``use_local_stat == is_training``: standard BN, EMA are
-                maintained during training and used during inference.
-            * ``use_local_stat and not is_training``: still use local (batch)
-                statistics in inference.
-            * ``not use_local_stat and is_training``: use EMA to normalize in
+        2. Combinations of ``training`` and ``ctx.is_training``:
+            * ``training == ctx.is_training``: standard BN, EMA are
+                maintained during training and used during inference. This is
+                the default.
+            * ``training and not ctx.is_training``: still use batch statistics in inference.
+            * ``not training and ctx.is_training``: use EMA to normalize in
                 training. This is useful when you load a pre-trained BN and
                 don't want to fine tune the EMA. EMA will not be updated in
                 this case.
     """
     data_format = get_data_format(data_format, tfmode=False)
-    shape = x.get_shape().as_list()
+    shape = inputs.get_shape().as_list()
     ndims = len(shape)
     assert ndims in [2, 4]
     if ndims == 2:
@@ -134,17 +129,18 @@ def BatchNorm(x, use_local_stat=None, momentum=0.9, epsilon=1e-5,
     beta, gamma, moving_mean, moving_var = get_bn_variables(n_out, scale, center, gamma_initializer)
 
     ctx = get_current_tower_context()
+    use_local_stat = training
     if use_local_stat is None:
         use_local_stat = ctx.is_training
     use_local_stat = bool(use_local_stat)
 
     if use_local_stat:
         if ndims == 2:
-            x = tf.reshape(x, [-1, 1, 1, n_out])    # fused_bn only takes 4D input
+            inputs = tf.reshape(inputs, [-1, 1, 1, n_out])    # fused_bn only takes 4D input
             # fused_bn has error using NCHW? (see #190)
 
         xn, batch_mean, batch_var = tf.nn.fused_batch_norm(
-            x, gamma, beta, epsilon=epsilon,
+            inputs, gamma, beta, epsilon=epsilon,
             is_training=True, data_format=data_format)
 
         if ndims == 2:
@@ -159,19 +155,19 @@ def BatchNorm(x, use_local_stat=None, momentum=0.9, epsilon=1e-5,
             # Using moving_mean/moving_variance in training, which means we
             # loaded a pre-trained BN and only fine-tuning the affine part.
             xn, _, _ = tf.nn.fused_batch_norm(
-                x, gamma, beta,
+                inputs, gamma, beta,
                 mean=moving_mean, variance=moving_var, epsilon=epsilon,
                 data_format=data_format, is_training=False)
         else:
             if ndims == 4:
                 xn, _, _ = tf.nn.fused_batch_norm(
-                    x, gamma, beta,
+                    inputs, gamma, beta,
                     mean=moving_mean, variance=moving_var, epsilon=epsilon,
                     data_format=data_format, is_training=False)
             else:
                 # avoid the reshape if possible (when channel is the last dimension)
                 xn = tf.nn.batch_normalization(
-                    x, moving_mean, moving_var, beta, gamma, epsilon)
+                    inputs, moving_mean, moving_var, beta, gamma, epsilon)
 
     # maintain EMA only on one GPU is OK, even in replicated mode.
     # because training time doesn't use EMA
@@ -201,7 +197,7 @@ def BatchNorm(x, use_local_stat=None, momentum=0.9, epsilon=1e-5,
         'decay': 'momentum'
     })
 def BatchRenorm(x, rmax, dmax, momentum=0.9, epsilon=1e-5,
-                scale=True, center=True, gamma_initializer=None,
+                center=True, scale=True, gamma_initializer=None,
                 data_format='channels_last'):
     """
     Batch Renormalization layer, as described in the paper:
@@ -231,8 +227,7 @@ def BatchRenorm(x, rmax, dmax, momentum=0.9, epsilon=1e-5,
     ndims = len(shape)
     assert ndims in [2, 4]
     if ndims == 2:
-        data_format = 'channels_last'    # error using NCHW? (see #190)
-        x = tf.reshape(x, [-1, 1, 1, shape[1]])
+        data_format = 'channels_first'
 
     ctx = get_current_tower_context()
     coll_bk = backup_collection([tf.GraphKeys.UPDATE_OPS])

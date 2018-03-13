@@ -106,10 +106,10 @@ class Model(ModelDesc):
             return fa(nonlin(x))
 
         with remap_variables(new_get_variable), \
-                argscope(BatchNorm, decay=0.9, epsilon=1e-4), \
-                argscope([Conv2D, FullyConnected], use_bias=False, nl=tf.identity):
+                argscope(BatchNorm, momentum=0.9, epsilon=1e-4), \
+                argscope(Conv2D, use_bias=False):
             logits = (LinearWrap(image)
-                      .Conv2D('conv0', 96, 12, stride=4, padding='VALID')
+                      .Conv2D('conv0', 96, 12, strides=4, padding='VALID')
                       .apply(activate)
                       .Conv2D('conv1', 256, 5, padding='SAME', split=2)
                       .apply(fg)
@@ -139,7 +139,7 @@ class Model(ModelDesc):
                       .BatchNorm('bnfc0')
                       .apply(activate)
 
-                      .FullyConnected('fc1', 4096)
+                      .FullyConnected('fc1', 4096, use_bias=False)
                       .apply(fg)
                       .BatchNorm('bnfc1')
                       .apply(nonlin)

@@ -39,11 +39,11 @@ class Model(ModelDesc):
                 if nr1x1 != 0:
                     outs.append(Conv2D('conv1x1', x, nr1x1, 1))
                 x2 = Conv2D('conv3x3r', x, nr3x3r, 1)
-                outs.append(Conv2D('conv3x3', x2, nr3x3, 3, stride=stride))
+                outs.append(Conv2D('conv3x3', x2, nr3x3, 3, strides=stride))
 
                 x3 = Conv2D('conv233r', x, nr233r, 1)
                 x3 = Conv2D('conv233a', x3, nr233, 3)
-                outs.append(Conv2D('conv233b', x3, nr233, 3, stride=stride))
+                outs.append(Conv2D('conv233b', x3, nr233, 3, strides=stride))
 
                 if pooltype == 'max':
                     x4 = MaxPooling('mpool', x, 3, stride, padding='SAME')
@@ -55,9 +55,9 @@ class Model(ModelDesc):
                 outs.append(x4)
                 return tf.concat(outs, 3, name='concat')
 
-        with argscope(Conv2D, nl=BNReLU, use_bias=False):
+        with argscope(Conv2D, activation=BNReLU, use_bias=False):
             l = (LinearWrap(image)
-                 .Conv2D('conv0', 64, 7, stride=2)
+                 .Conv2D('conv0', 64, 7, strides=2)
                  .MaxPooling('pool0', 3, 2, padding='SAME')
                  .Conv2D('conv1', 64, 1)
                  .Conv2D('conv2', 192, 3)
@@ -69,8 +69,8 @@ class Model(ModelDesc):
 
             br1 = (LinearWrap(l)
                    .Conv2D('loss1conv', 128, 1)
-                   .FullyConnected('loss1fc', 1024, nl=tf.nn.relu)
-                   .FullyConnected('loss1logit', 1000, nl=tf.identity)())
+                   .FullyConnected('loss1fc', 1024, activation=tf.nn.relu)
+                   .FullyConnected('loss1logit', 1000, activation=tf.identity)())
             loss1 = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=br1, labels=label)
             loss1 = tf.reduce_mean(loss1, name='loss1')
 
@@ -82,8 +82,8 @@ class Model(ModelDesc):
             l = inception('incep4e', l, 0, 128, 192, 192, 256, 0, 'max')
 
             br2 = Conv2D('loss2conv', l, 128, 1)
-            br2 = FullyConnected('loss2fc', br2, 1024, nl=tf.nn.relu)
-            br2 = FullyConnected('loss2logit', br2, 1000, nl=tf.identity)
+            br2 = FullyConnected('loss2fc', br2, 1024, activation=tf.nn.relu)
+            br2 = FullyConnected('loss2logit', br2, 1000, activation=tf.identity)
             loss2 = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=br2, labels=label)
             loss2 = tf.reduce_mean(loss2, name='loss2')
 
@@ -92,7 +92,7 @@ class Model(ModelDesc):
             l = inception('incep5b', l, 352, 192, 320, 192, 224, 128, 'max')
             l = GlobalAvgPooling('gap', l)
 
-            logits = FullyConnected('linear', l, out_dim=1000, nl=tf.identity)
+            logits = FullyConnected('linear', l, 1000, activation=tf.identity)
         tf.nn.softmax(logits, name='output')
         loss3 = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         loss3 = tf.reduce_mean(loss3, name='loss3')

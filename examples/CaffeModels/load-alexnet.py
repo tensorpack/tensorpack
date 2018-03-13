@@ -18,24 +18,24 @@ import tensorflow as tf
 
 def tower_func(image):
     # img: 227x227x3
-    with argscope([Conv2D, FullyConnected], nl=tf.nn.relu):
-        l = Conv2D('conv1', image, out_channel=96, kernel_shape=11, stride=4, padding='VALID')
+    with argscope([Conv2D, FullyConnected], activation=tf.nn.relu):
+        l = Conv2D('conv1', image, filters=96, kernel_size=11, strides=4, padding='VALID')
         l = tf.nn.lrn(l, 2, bias=1.0, alpha=2e-5, beta=0.75, name='norm1')
-        l = MaxPooling('pool1', l, 3, stride=2, padding='VALID')
+        l = MaxPooling('pool1', l, 3, strides=2, padding='VALID')
 
-        l = Conv2D('conv2', l, out_channel=256, kernel_shape=5, split=2)
+        l = Conv2D('conv2', l, filters=256, kernel_size=5, split=2)
         l = tf.nn.lrn(l, 2, bias=1.0, alpha=2e-5, beta=0.75, name='norm2')
-        l = MaxPooling('pool2', l, 3, stride=2, padding='VALID')
+        l = MaxPooling('pool2', l, 3, strides=2, padding='VALID')
 
-        l = Conv2D('conv3', l, out_channel=384, kernel_shape=3)
-        l = Conv2D('conv4', l, out_channel=384, kernel_shape=3, split=2)
-        l = Conv2D('conv5', l, out_channel=256, kernel_shape=3, split=2)
-        l = MaxPooling('pool3', l, 3, stride=2, padding='VALID')
+        l = Conv2D('conv3', l, filters=384, kernel_size=3)
+        l = Conv2D('conv4', l, filters=384, kernel_size=3, split=2)
+        l = Conv2D('conv5', l, filters=256, kernel_size=3, split=2)
+        l = MaxPooling('pool3', l, 3, strides=2, padding='VALID')
 
         # This is just a script to load model, so we ignore the dropout layer
         l = FullyConnected('fc6', l, 4096)
-        l = FullyConnected('fc7', l, out_dim=4096)
-    logits = FullyConnected('fc8', l, out_dim=1000, nl=tf.identity)
+        l = FullyConnected('fc7', l, 4096)
+    logits = FullyConnected('fc8', l, 1000)
     tf.nn.softmax(logits, name='prob')
 
 

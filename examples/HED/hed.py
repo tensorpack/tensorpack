@@ -55,16 +55,15 @@ class Model(ModelDesc):
 
         def branch(name, l, up):
             with tf.variable_scope(name):
-                l = Conv2D('convfc', l, 1, kernel_shape=1, nl=tf.identity,
+                l = Conv2D('convfc', l, 1, kernel_size=1, activation=tf.identity,
                            use_bias=True,
-                           W_init=tf.constant_initializer(),
-                           b_init=tf.constant_initializer())
+                           kernel_initializer=tf.constant_initializer())
                 while up != 1:
                     l = BilinearUpSample('upsample{}'.format(up), l, 2)
                     up = up / 2
                 return l
 
-        with argscope(Conv2D, kernel_shape=3, nl=tf.nn.relu):
+        with argscope(Conv2D, kernel_size=3, activation=tf.nn.relu):
             l = Conv2D('conv1_1', image, 64)
             l = Conv2D('conv1_2', l, 64)
             b1 = branch('branch1', l, 1)
@@ -93,9 +92,9 @@ class Model(ModelDesc):
             b5 = branch('branch5', l, 16)
 
         final_map = Conv2D('convfcweight',
-                           tf.concat([b1, b2, b3, b4, b5], 3), 1, 1,
-                           W_init=tf.constant_initializer(0.2),
-                           use_bias=False, nl=tf.identity)
+                           tf.concat([b1, b2, b3, b4, b5], 3), 1, kernel_size=1,
+                           kernel_initializer=tf.constant_initializer(0.2),
+                           use_bias=False, activation=tf.identity)
         costs = []
         for idx, b in enumerate([b1, b2, b3, b4, b5, final_map]):
             output = tf.nn.sigmoid(b, name='output{}'.format(idx + 1))

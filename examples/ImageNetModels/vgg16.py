@@ -28,9 +28,9 @@ class Model(ImageNetModel):
     weight_decay = 5e-4
 
     def get_logits(self, image):
-        with argscope(Conv2D, kernel_shape=3,
-                      W_init=tf.variance_scaling_initializer(scale=2.)), \
-                argscope([Conv2D, MaxPooling, BatchNorm], data_format='NCHW'):
+        with argscope(Conv2D, kernel_size=3,
+                      kernel_initializer=tf.variance_scaling_initializer(scale=2.)), \
+                argscope([Conv2D, MaxPooling, BatchNorm], data_format='channels_first'):
             logits = (LinearWrap(image)
                       .apply(convnormrelu, 'conv1_1', 64)
                       .apply(convnormrelu, 'conv1_2', 64)
@@ -56,15 +56,15 @@ class Model(ImageNetModel):
                       .MaxPooling('pool5', 2)
                       # 7
                       .FullyConnected('fc6', 4096,
-                                      W_init=tf.random_normal_initializer(stddev=0.001))
+                                      kernel_initializer=tf.random_normal_initializer(stddev=0.001))
                       .tf.nn.relu(name='fc6_relu')
                       .Dropout('drop0', rate=0.5)
                       .FullyConnected('fc7', 4096,
-                                      W_init=tf.random_normal_initializer(stddev=0.001))
+                                      kernel_initializer=tf.random_normal_initializer(stddev=0.001))
                       .tf.nn.relu(name='fc7_relu')
                       .Dropout('drop1', rate=0.5)
                       .FullyConnected('fc8', 1000,
-                                      W_init=tf.random_normal_initializer(stddev=0.01))())
+                                      kernel_initializer=tf.random_normal_initializer(stddev=0.01))())
         add_param_summary(('.*', ['histogram', 'rms']))
         return logits
 

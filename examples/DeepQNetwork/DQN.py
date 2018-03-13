@@ -57,9 +57,9 @@ class Model(DQNModel):
         with argscope(Conv2D, activation=lambda x: PReLU('prelu', x), use_bias=True):
             l = (LinearWrap(image)
                  # Nature architecture
-                 .Conv2D('conv0', out_channel=32, kernel_shape=8, stride=4)
-                 .Conv2D('conv1', out_channel=64, kernel_shape=4, stride=2)
-                 .Conv2D('conv2', out_channel=64, kernel_shape=3)
+                 .Conv2D('conv0', 32, 8, strides=4)
+                 .Conv2D('conv1', 64, 4, strides=2)
+                 .Conv2D('conv2', 64, 3)
 
                  # architecture used for the figure in the README, slower but takes fewer iterations to converge
                  # .Conv2D('conv0', out_channel=32, kernel_shape=5)
@@ -73,11 +73,11 @@ class Model(DQNModel):
                  .FullyConnected('fc0', 512)
                  .tf.nn.leaky_relu(alpha=0.01)())
         if self.method != 'Dueling':
-            Q = FullyConnected('fct', l, self.num_actions, nl=tf.identity)
+            Q = FullyConnected('fct', l, self.num_actions)
         else:
             # Dueling DQN
-            V = FullyConnected('fctV', l, 1, nl=tf.identity)
-            As = FullyConnected('fctA', l, self.num_actions, nl=tf.identity)
+            V = FullyConnected('fctV', l, 1)
+            As = FullyConnected('fctA', l, self.num_actions)
             Q = tf.add(As, V - tf.reduce_mean(As, 1, keep_dims=True))
         return tf.identity(Q, name='Qvalue')
 

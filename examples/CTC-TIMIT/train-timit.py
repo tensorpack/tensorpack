@@ -47,8 +47,8 @@ class Model(ModelDesc):
 
         # o: b x t x HIDDEN
         output = tf.reshape(outputs, [-1, HIDDEN])  # (Bxt) x rnnsize
-        logits = FullyConnected('fc', output, NR_CLASS, nl=tf.identity,
-                                W_init=tf.truncated_normal_initializer(stddev=0.01))
+        logits = FullyConnected('fc', output, NR_CLASS, activation=tf.identity,
+                                kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
         logits = tf.reshape(logits, (BATCH, -1, NR_CLASS))
 
         loss = tf.nn.ctc_loss(label, logits, seqlen, time_major=False)

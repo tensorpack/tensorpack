@@ -42,7 +42,7 @@ class Model(ModelDesc):
         image = image * 2 - 1   # center the pixels values at zero
         # The context manager `argscope` sets the default option for all the layers under
         # this context. Here we use 32 channel convolution with shape 3x3
-        with argscope(Conv2D, kernel_shape=3, nl=tf.nn.relu, out_channel=32):
+        with argscope(Conv2D, kernel_size=3, activation=tf.nn.relu, filters=32):
             logits = (LinearWrap(image)
                       .Conv2D('conv0')
                       .MaxPooling('pool0', 2)
