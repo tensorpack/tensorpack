@@ -9,7 +9,7 @@ from ..tfutils.common import get_tf_version_number
 from ..utils.argtools import shape2d, shape4d, get_data_format
 from .tflayer import rename_get_variable, convert_to_tflayer_args
 
-__all__ = ['Conv2D', 'Deconv2D']
+__all__ = ['Conv2D', 'Deconv2D', 'Conv2DTranspose']
 
 
 @layer_register(log_shape=True)
@@ -125,7 +125,7 @@ def Conv2D(
         'kernel_shape': 'kernel_size',
         'stride': 'strides',
     })
-def Deconv2D(
+def Conv2DTranspose(
         inputs,
         filters,
         kernel_size,
@@ -172,3 +172,6 @@ def Deconv2D(
     if use_bias:
         ret.variables.b = layer.bias
     return tf.identity(ret, name='output')
+
+
+Deconv2D = Conv2DTranspose

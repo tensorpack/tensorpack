@@ -109,33 +109,33 @@ class Model(GANModelDesc):
         return [InputDesc(tf.float32, (None, 28, 28), 'input')]
 
     def generator(self, z):
-        l = FullyConnected('fc0', z, 1024, nl=BNReLU)
-        l = FullyConnected('fc1', l, 128 * 7 * 7, nl=BNReLU)
+        l = FullyConnected('fc0', z, 1024, activation=BNReLU)
+        l = FullyConnected('fc1', l, 128 * 7 * 7, activation=BNReLU)
         l = tf.reshape(l, [-1, 7, 7, 128])
-        l = Deconv2D('deconv1', l, 64, 4, 2, nl=BNReLU)
-        l = Deconv2D('deconv2', l, 1, 4, 2, nl=tf.identity)
+        l = Conv2DTranspose('deconv1', l, 64, 4, 2, activation=BNReLU)
+        l = Conv2DTranspose('deconv2', l, 1, 4, 2, activation=tf.identity)
         l = tf.sigmoid(l, name='gen')
         return l
 
     @auto_reuse_variable_scope
     def discriminator(self, imgs):
-        with argscope(Conv2D, nl=tf.identity, kernel_shape=4, stride=2):
+        with argscope(Conv2D, kernel_size=4, strides=2):
             l = (LinearWrap(imgs)
                  .Conv2D('conv0', 64)
                  .tf.nn.leaky_relu()
                  .Conv2D('conv1', 128)
                  .BatchNorm('bn1')
                  .tf.nn.leaky_relu()
-                 .FullyConnected('fc1', 1024, nl=tf.identity)
+                 .FullyConnected('fc1', 1024)
                  .BatchNorm('bn2')
                  .tf.nn.leaky_relu()())
 
-            logits = FullyConnected('fct', l, 1, nl=tf.identity)
+            logits = FullyConnected('fct', l, 1)
             encoder = (LinearWrap(l)
-                       .FullyConnected('fce1', 128, nl=tf.identity)
+                       .FullyConnected('fce1', 128)
                        .BatchNorm('bne')
                        .tf.nn.leaky_relu()
-                       .FullyConnected('fce-out', DIST_PARAM_DIM, nl=tf.identity)())
+                       .FullyConnected('fce-out', DIST_PARAM_DIM)())
         return logits, encoder
 
     def _build_graph(self, inputs):
@@ -148,8 +148,8 @@ class Model(GANModelDesc):
             tf.random_uniform([BATCH, NOISE_DIM], -1, 1), 0, name='z_noise')
         z = tf.concat([zc, z_noise], 1, name='z')
 
-        with argscope([Conv2D, Deconv2D, FullyConnected],
-                      W_init=tf.truncated_normal_initializer(stddev=0.02)):
+        with argscope([Conv2D, Conv2DTranspose, FullyConnected],
+                      kernel_initializer=tf.truncated_normal_initializer(stddev=0.02)):
             with tf.variable_scope('gen'):
                 fake_sample = self.generator(z)
                 fake_sample_viz = tf.cast((fake_sample) * 255.0, tf.uint8, name='viz')

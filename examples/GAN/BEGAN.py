@@ -31,10 +31,10 @@ class Model(GANModelDesc):
 
     @auto_reuse_variable_scope
     def decoder(self, z):
-        l = FullyConnected('fc', z, NF * 8 * 8, nl=tf.identity)
+        l = FullyConnected('fc', z, NF * 8 * 8)
         l = tf.reshape(l, [-1, 8, 8, NF])
 
-        with argscope(Conv2D, nl=tf.nn.elu, kernel_shape=3, stride=1):
+        with argscope(Conv2D, activation=tf.nn.elu, kernel_size=3, strides=1):
             l = (LinearWrap(l)
                  .Conv2D('conv1.1', NF)
                  .Conv2D('conv1.2', NF)
@@ -47,12 +47,12 @@ class Model(GANModelDesc):
                  .tf.image.resize_nearest_neighbor([64, 64], align_corners=True)
                  .Conv2D('conv4.1', NF)
                  .Conv2D('conv4.2', NF)
-                 .Conv2D('conv4.3', 3, nl=tf.identity)())
+                 .Conv2D('conv4.3', 3, activation=tf.identity)())
         return l
 
     @auto_reuse_variable_scope
     def encoder(self, imgs):
-        with argscope(Conv2D, nl=tf.nn.elu, kernel_shape=3, stride=1):
+        with argscope(Conv2D, activation=tf.nn.elu, kernel_size=3, strides=1):
             l = (LinearWrap(imgs)
                  .Conv2D('conv1.1', NF)
                  .Conv2D('conv1.2', NF)
@@ -70,7 +70,7 @@ class Model(GANModelDesc):
                  .Conv2D('conv4.1', NF * 4)
                  .Conv2D('conv4.2', NF * 4)
 
-                 .FullyConnected('fc', NH, nl=tf.identity)())
+                 .FullyConnected('fc', NH)())
         return l
 
     def _build_graph(self, inputs):
@@ -86,7 +86,7 @@ class Model(GANModelDesc):
             tf.summary.image(name, tf.cast(x, tf.uint8), max_outputs=30)
 
         with argscope([Conv2D, FullyConnected],
-                      W_init=tf.truncated_normal_initializer(stddev=0.02)):
+                      kernel_initializer=tf.truncated_normal_initializer(stddev=0.02)):
             with tf.variable_scope('gen'):
                 image_gen = self.decoder(z)
 

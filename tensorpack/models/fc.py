@@ -28,7 +28,7 @@ def FullyConnected(
         activity_regularizer=None):
     """
     A wrapper around `tf.layers.Dense`.
-    One differences to maintain backward-compatibility:
+    One difference to maintain backward-compatibility:
     Default weight initializer is variance_scaling_initializer(2.0).
 
     Variable Names:

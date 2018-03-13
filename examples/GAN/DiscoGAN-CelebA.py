@@ -21,13 +21,6 @@ from GAN import SeparateGANTrainer, GANModelDesc
 3. Start training gender transfer:
     ./DiscoGAN-CelebA.py --data /path/to/img_align_celeba --style-A Male
 4. Visualize the gender conversion images in tensorboard.
-
-With TF1.0.1, cuda 8.0, cudnn 5.1.10,
-the training on 64x64 images of batch 64 runs 5.4 it/s on Tesla M40.
-This is 2.4x as fast as the original PyTorch implementation.
-
-The cause is probably that in the torch implementation,
-a backward() computes gradients for ALL parameters, which is not necessary in GAN.
 """
 
 SHAPE = 64
@@ -48,29 +41,29 @@ class Model(GANModelDesc):
     @auto_reuse_variable_scope
     def generator(self, img):
         assert img is not None
-        with argscope([Conv2D, Deconv2D],
-                      nl=BNLReLU, kernel_shape=4, stride=2), \
-                argscope(Deconv2D, nl=BNReLU):
+        with argscope([Conv2D, Conv2DTranspose],
+                      activation=BNLReLU, kernel_size=4, strides=2), \
+                argscope(Conv2DTranspose, activation=BNReLU):
             l = (LinearWrap(img)
-                 .Conv2D('conv0', NF, nl=tf.nn.leaky_relu)
+                 .Conv2D('conv0', NF, activation=tf.nn.leaky_relu)
                  .Conv2D('conv1', NF * 2)
                  .Conv2D('conv2', NF * 4)
                  .Conv2D('conv3', NF * 8)
-                 .Deconv2D('deconv0', NF * 4)
-                 .Deconv2D('deconv1', NF * 2)
-                 .Deconv2D('deconv2', NF * 1)
-                 .Deconv2D('deconv3', 3, nl=tf.identity)
+                 .Conv2DTranspose('deconv0', NF * 4)
+                 .Conv2DTranspose('deconv1', NF * 2)
+                 .Conv2DTranspose('deconv2', NF * 1)
+                 .Conv2DTranspose('deconv3', 3, activation=tf.identity)
                  .tf.sigmoid()())
         return l
 
     @auto_reuse_variable_scope
     def discriminator(self, img):
-        with argscope(Conv2D, nl=BNLReLU, kernel_shape=4, stride=2):
-            l = Conv2D('conv0', img, NF, nl=tf.nn.leaky_relu)
+        with argscope(Conv2D, activation=BNLReLU, kernel_size=4, strides=2):
+            l = Conv2D('conv0', img, NF, activation=tf.nn.leaky_relu)
             relu1 = Conv2D('conv1', l, NF * 2)
             relu2 = Conv2D('conv2', relu1, NF * 4)
             relu3 = Conv2D('conv3', relu2, NF * 8)
-            logits = FullyConnected('fc', relu3, 1, nl=tf.identity)
+            logits = FullyConnected('fc', relu3, 1, activation=tf.identity)
         return logits, [relu1, relu2, relu3]
 
     def get_feature_match_loss(self, feats_real, feats_fake):
@@ -91,11 +84,11 @@ class Model(GANModelDesc):
         B = tf.transpose(B / 255.0, [0, 3, 1, 2])
 
         # use the torch initializers
-        with argscope([Conv2D, Deconv2D, FullyConnected],
-                      W_init=tf.variance_scaling_initializer(scale=0.333, distribution='uniform'),
+        with argscope([Conv2D, Conv2DTranspose, FullyConnected],
+                      kernel_initializer=tf.variance_scaling_initializer(scale=0.333, distribution='uniform'),
                       use_bias=False), \
                 argscope(BatchNorm, gamma_init=tf.random_uniform_initializer()), \
-                argscope([Conv2D, Deconv2D, BatchNorm], data_format='NCHW'):
+                argscope([Conv2D, Conv2DTranspose, BatchNorm], data_format='NCHW'):
             with tf.variable_scope('gen'):
                 with tf.variable_scope('B'):
                     AB = self.generator(A)
@@ -194,7 +187,7 @@ def get_celebA_data(datadir, styleA, styleB=None):
         imgaug.Resize(64)]
     df = AugmentImageComponents(df, augs, (0, 1))
     df = BatchData(df, BATCH)
-    df = PrefetchDataZMQ(df, 1)
+    df = PrefetchDataZMQ(df, 3)
     return df
 
 

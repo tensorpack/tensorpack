@@ -74,54 +74,54 @@ class Model(GANModelDesc):
         with argscope(BatchNorm, use_local_stat=True), \
                 argscope(Dropout, is_training=True):
             # always use local stat for BN, and apply dropout even in testing
-            with argscope(Conv2D, kernel_shape=4, stride=2, nl=BNLReLU):
-                e1 = Conv2D('conv1', imgs, NF, nl=tf.nn.leaky_relu)
+            with argscope(Conv2D, kernel_size=4, strides=2, activation=BNLReLU):
+                e1 = Conv2D('conv1', imgs, NF, activation=tf.nn.leaky_relu)
                 e2 = Conv2D('conv2', e1, NF * 2)
                 e3 = Conv2D('conv3', e2, NF * 4)
                 e4 = Conv2D('conv4', e3, NF * 8)
                 e5 = Conv2D('conv5', e4, NF * 8)
                 e6 = Conv2D('conv6', e5, NF * 8)
                 e7 = Conv2D('conv7', e6, NF * 8)
-                e8 = Conv2D('conv8', e7, NF * 8, nl=BNReLU)  # 1x1
-            with argscope(Deconv2D, nl=BNReLU, kernel_shape=4, stride=2):
+                e8 = Conv2D('conv8', e7, NF * 8, activation=BNReLU)  # 1x1
+            with argscope(Conv2DTranspose, activation=BNReLU, kernel_size=4, strides=2):
                 return (LinearWrap(e8)
-                        .Deconv2D('deconv1', NF * 8)
+                        .Conv2DTranspose('deconv1', NF * 8)
                         .Dropout()
                         .ConcatWith(e7, 3)
-                        .Deconv2D('deconv2', NF * 8)
+                        .Conv2DTranspose('deconv2', NF * 8)
                         .Dropout()
                         .ConcatWith(e6, 3)
-                        .Deconv2D('deconv3', NF * 8)
+                        .Conv2DTranspose('deconv3', NF * 8)
                         .Dropout()
                         .ConcatWith(e5, 3)
-                        .Deconv2D('deconv4', NF * 8)
+                        .Conv2DTranspose('deconv4', NF * 8)
                         .ConcatWith(e4, 3)
-                        .Deconv2D('deconv5', NF * 4)
+                        .Conv2DTranspose('deconv5', NF * 4)
                         .ConcatWith(e3, 3)
-                        .Deconv2D('deconv6', NF * 2)
+                        .Conv2DTranspose('deconv6', NF * 2)
                         .ConcatWith(e2, 3)
-                        .Deconv2D('deconv7', NF * 1)
+                        .Conv2DTranspose('deconv7', NF * 1)
                         .ConcatWith(e1, 3)
-                        .Deconv2D('deconv8', OUT_CH, nl=tf.tanh)())
+                        .Conv2DTranspose('deconv8', OUT_CH, activation=tf.tanh)())
 
     @auto_reuse_variable_scope
     def discriminator(self, inputs, outputs):
         """ return a (b, 1) logits"""
         l = tf.concat([inputs, outputs], 3)
-        with argscope(Conv2D, kernel_shape=4, stride=2, nl=BNLReLU):
+        with argscope(Conv2D, kernel_size=4, strides=2, activation=BNLReLU):
             l = (LinearWrap(l)
-                 .Conv2D('conv0', NF, nl=tf.nn.leaky_relu)
+                 .Conv2D('conv0', NF, activation=tf.nn.leaky_relu)
                  .Conv2D('conv1', NF * 2)
                  .Conv2D('conv2', NF * 4)
-                 .Conv2D('conv3', NF * 8, stride=1, padding='VALID')
-                 .Conv2D('convlast', 1, stride=1, padding='VALID', nl=tf.identity)())
+                 .Conv2D('conv3', NF * 8, strides=1, padding='VALID')
+                 .Conv2D('convlast', 1, strides=1, padding='VALID', activation=tf.identity)())
         return l
 
     def _build_graph(self, inputs):
         input, output = inputs
         input, output = input / 128.0 - 1, output / 128.0 - 1
 
-        with argscope([Conv2D, Deconv2D], W_init=tf.truncated_normal_initializer(stddev=0.02)):
+        with argscope([Conv2D, Conv2DTranspose], kernel_initializer=tf.truncated_normal_initializer(stddev=0.02)):
             with tf.variable_scope('gen'):
                 fake_output = self.generator(input)
             with tf.variable_scope('discrim'):

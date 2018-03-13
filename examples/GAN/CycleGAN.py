@@ -51,38 +51,38 @@ class Model(GANModelDesc):
             input = x
             return (LinearWrap(x)
                     .tf.pad([[0, 0], [0, 0], [1, 1], [1, 1]], mode='SYMMETRIC')
-                    .Conv2D('conv0', chan, padding='VALID')
+                    .Conv2D('conv0', chan, 3, padding='VALID')
                     .tf.pad([[0, 0], [0, 0], [1, 1], [1, 1]], mode='SYMMETRIC')
-                    .Conv2D('conv1', chan, padding='VALID', nl=tf.identity)
+                    .Conv2D('conv1', chan, 3, padding='VALID', activation=tf.identity)
                     .InstanceNorm('inorm')()) + input
 
     @auto_reuse_variable_scope
     def generator(self, img):
         assert img is not None
-        with argscope([Conv2D, Deconv2D], nl=INReLU, kernel_shape=3):
+        with argscope([Conv2D, Conv2DTranspose], activation=INReLU):
             l = (LinearWrap(img)
                  .tf.pad([[0, 0], [0, 0], [3, 3], [3, 3]], mode='SYMMETRIC')
-                 .Conv2D('conv0', NF, kernel_shape=7, padding='VALID')
-                 .Conv2D('conv1', NF * 2, stride=2)
-                 .Conv2D('conv2', NF * 4, stride=2)())
+                 .Conv2D('conv0', NF, 7, padding='VALID')
+                 .Conv2D('conv1', NF * 2, 3, strides=2)
+                 .Conv2D('conv2', NF * 4, 3, strides=2)())
             for k in range(9):
                 l = Model.build_res_block(l, 'res{}'.format(k), NF * 4, first=(k == 0))
             l = (LinearWrap(l)
-                 .Deconv2D('deconv0', NF * 2, stride=2)
-                 .Deconv2D('deconv1', NF * 1, stride=2)
+                 .Conv2DTranspose('deconv0', NF * 2, 3, strides=2)
+                 .Conv2DTranspose('deconv1', NF * 1, 3, strides=2)
                  .tf.pad([[0, 0], [0, 0], [3, 3], [3, 3]], mode='SYMMETRIC')
-                 .Conv2D('convlast', 3, kernel_shape=7, padding='VALID', nl=tf.tanh, use_bias=True)())
+                 .Conv2D('convlast', 3, 7, padding='VALID', activation=tf.tanh, use_bias=True)())
         return l
 
     @auto_reuse_variable_scope
     def discriminator(self, img):
-        with argscope(Conv2D, nl=INLReLU, kernel_shape=4, stride=2):
+        with argscope(Conv2D, activation=INLReLU, kernel_size=4, strides=2):
             l = (LinearWrap(img)
-                 .Conv2D('conv0', NF, nl=tf.nn.leaky_relu)
+                 .Conv2D('conv0', NF, activation=tf.nn.leaky_relu)
                  .Conv2D('conv1', NF * 2)
                  .Conv2D('conv2', NF * 4)
-                 .Conv2D('conv3', NF * 8, stride=1)
-                 .Conv2D('conv4', 1, stride=1, nl=tf.identity, use_bias=True)())
+                 .Conv2D('conv3', NF * 8, strides=1)
+                 .Conv2D('conv4', 1, strides=1, activation=tf.identity, use_bias=True)())
         return l
 
     def _build_graph(self, inputs):
@@ -101,9 +101,9 @@ class Model(GANModelDesc):
             tf.summary.image(name, im, max_outputs=50)
 
         # use the initializers from torch
-        with argscope([Conv2D, Deconv2D], use_bias=False,
-                      W_init=tf.random_normal_initializer(stddev=0.02)), \
-                argscope([Conv2D, Deconv2D, InstanceNorm], data_format='NCHW'):
+        with argscope([Conv2D, Conv2DTranspose], use_bias=False,
+                      kernel_initializer=tf.random_normal_initializer(stddev=0.02)), \
+                argscope([Conv2D, Conv2DTranspose, InstanceNorm], data_format='channels_first'):
             with tf.variable_scope('gen'):
                 with tf.variable_scope('B'):
                     AB = self.generator(A)
@@ -211,10 +211,11 @@ if __name__ == '__main__':
 
     logger.auto_set_dir()
 
-    data = get_data(args.data)
-    data = PrintData(data)
+    df = get_data(args.data)
+    df = PrintData(df)
+    data = StagingInput(QueueInput(df))
 
-    GANTrainer(QueueInput(data), Model()).train_with_defaults(
+    GANTrainer(data, Model()).train_with_defaults(
         callbacks=[
             ModelSaver(),
             ScheduledHyperParamSetter(
