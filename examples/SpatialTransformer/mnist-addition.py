@@ -39,10 +39,10 @@ class Model(ModelDesc):
                    .Conv2D('conv0', 20, 5, padding='VALID')
                    .MaxPooling('pool0', 2)
                    .Conv2D('conv1', 20, 5, padding='VALID')
-                   .FullyConnected('fc1', out_dim=32)
-                   .FullyConnected('fct', out_dim=6, nl=tf.identity,
-                                   W_init=tf.constant_initializer(),
-                                   b_init=tf.constant_initializer([1, 0, HALF_DIFF, 0, 1, HALF_DIFF]))())
+                   .FullyConnected('fc1', 32)
+                   .FullyConnected('fct', 6, activation=tf.identity,
+                                   kernel_initializer=tf.constant_initializer(),
+                                   bias_initializer=tf.constant_initializer([1, 0, HALF_DIFF, 0, 1, HALF_DIFF]))())
             # output 6 parameters for affine transformation
             stn = tf.reshape(stn, [-1, 2, 3], name='affine')  # bx2x3
             stn = tf.reshape(tf.transpose(stn, [2, 0, 1]), [3, -1])  # 3 x (bx2)
@@ -52,7 +52,7 @@ class Model(ModelDesc):
             sampled = ImageSample('warp', [image, coor], borderMode='constant')
             return sampled
 
-        with argscope([Conv2D, FullyConnected], nl=tf.nn.relu):
+        with argscope([Conv2D, FullyConnected], activation=tf.nn.relu):
             with tf.variable_scope('STN1'):
                 sampled1 = get_stn(image)
             with tf.variable_scope('STN2'):
@@ -71,9 +71,9 @@ class Model(ModelDesc):
 
         sampled = tf.concat([sampled1, sampled2], 3, 'sampled_concat')
         logits = (LinearWrap(sampled)
-                  .FullyConnected('fc1', out_dim=256, nl=tf.nn.relu)
-                  .FullyConnected('fc2', out_dim=128, nl=tf.nn.relu)
-                  .FullyConnected('fct', out_dim=19, nl=tf.identity)())
+                  .FullyConnected('fc1', 256, activation=tf.nn.relu)
+                  .FullyConnected('fc2', 128, activation=tf.nn.relu)
+                  .FullyConnected('fct', 19, activation=tf.identity)())
         tf.nn.softmax(logits, name='prob')
 
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)

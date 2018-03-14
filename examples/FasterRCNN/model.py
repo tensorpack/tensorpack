@@ -8,7 +8,7 @@ from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.tfutils.argscope import argscope
 from tensorpack.tfutils.scope_utils import under_name_scope
 from tensorpack.models import (
-    Conv2D, FullyConnected, GlobalAvgPooling, layer_register, Deconv2D)
+    Conv2D, FullyConnected, GlobalAvgPooling, layer_register, Conv2DTranspose)
 
 from utils.box_ops import pairwise_iou
 import config
@@ -34,9 +34,9 @@ def rpn_head(featuremap, channel, num_anchors):
         label_logits: fHxfWxNA
         box_logits: fHxfWxNAx4
     """
-    with argscope(Conv2D, data_format='NCHW',
-                  W_init=tf.random_normal_initializer(stddev=0.01)):
-        hidden = Conv2D('conv0', featuremap, channel, 3, nl=tf.nn.relu)
+    with argscope(Conv2D, data_format='channels_first',
+                  kernel_initializer=tf.random_normal_initializer(stddev=0.01)):
+        hidden = Conv2D('conv0', featuremap, channel, 3, activation=tf.nn.relu)
 
         label_logits = Conv2D('class', hidden, num_anchors, 1)
         box_logits = Conv2D('box', hidden, 4 * num_anchors, 1)
@@ -384,13 +384,13 @@ def fastrcnn_head(feature, num_classes):
     Returns:
         cls_logits (Nxnum_class), reg_logits (Nx num_class-1 x 4)
     """
-    feature = GlobalAvgPooling('gap', feature, data_format='NCHW')
+    feature = GlobalAvgPooling('gap', feature, data_format='channels_first')
     classification = FullyConnected(
         'class', feature, num_classes,
-        W_init=tf.random_normal_initializer(stddev=0.01))
+        kernel_initializer=tf.random_normal_initializer(stddev=0.01))
     box_regression = FullyConnected(
         'box', feature, (num_classes - 1) * 4,
-        W_init=tf.random_normal_initializer(stddev=0.001))
+        kernel_initializer=tf.random_normal_initializer(stddev=0.001))
     box_regression = tf.reshape(box_regression, (-1, num_classes - 1, 4))
     return classification, box_regression
 
@@ -501,11 +501,11 @@ def maskrcnn_head(feature, num_class):
     Returns:
         mask_logits (N x num_category x 14 x 14):
     """
-    with argscope([Conv2D, Deconv2D], data_format='NCHW',
-                  W_init=tf.variance_scaling_initializer(
+    with argscope([Conv2D, Conv2DTranspose], data_format='channels_first',
+                  kernel_initializer=tf.variance_scaling_initializer(
                       scale=2.0, mode='fan_out', distribution='normal')):
         # c2's MSRAFill is fan_out
-        l = Deconv2D('deconv', feature, 256, 2, stride=2, nl=tf.nn.relu)
+        l = Conv2DTranspose('deconv', feature, 256, 2, strides=2, activation=tf.nn.relu)
         l = Conv2D('conv', l, num_class - 1, 1)
     return l
 

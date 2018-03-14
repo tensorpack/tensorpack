@@ -46,12 +46,12 @@ class Model(ModelDesc):
         }
         defs, block_func = cfg[DEPTH]
 
-        with argscope(Conv2D, nl=tf.identity, use_bias=False,
-                      W_init=tf.variance_scaling_initializer(scale=2.0, mode='fan_out')), \
-                argscope([Conv2D, MaxPooling, GlobalAvgPooling, BatchNorm], data_format='NCHW'):
+        with argscope(Conv2D, use_bias=False,
+                      kernel_initializer=tf.variance_scaling_initializer(scale=2.0, mode='fan_out')), \
+                argscope([Conv2D, MaxPooling, GlobalAvgPooling, BatchNorm], data_format='channels_first'):
             convmaps = (LinearWrap(image)
-                        .Conv2D('conv0', 64, 7, stride=2, nl=BNReLU)
-                        .MaxPooling('pool0', shape=3, stride=2, padding='SAME')
+                        .Conv2D('conv0', 64, 7, strides=2, activation=BNReLU)
+                        .MaxPooling('pool0', 3, strides=2, padding='SAME')
                         .apply(preresnet_group, 'group0', block_func, 64, defs[0], 1)
                         .apply(preresnet_group, 'group1', block_func, 128, defs[1], 2)
                         .apply(preresnet_group, 'group2', block_func, 256, defs[2], 2)
@@ -59,7 +59,7 @@ class Model(ModelDesc):
             print(convmaps)
             logits = (LinearWrap(convmaps)
                       .GlobalAvgPooling('gap')
-                      .FullyConnected('linearnew', 1000, nl=tf.identity)())
+                      .FullyConnected('linearnew', 1000)())
 
         loss = compute_loss_and_error(logits, label)
         wd_cost = regularize_cost('.*/W', l2_regularizer(1e-4), name='l2_regularize_loss')

@@ -10,12 +10,9 @@ import cv2
 import tensorflow as tf
 
 
-from tensorpack import logger, QueueInput, InputDesc, PlaceholderInput, TowerContext
-from tensorpack.models import *
-from tensorpack.callbacks import *
-from tensorpack.train import *
+from tensorpack import *
 from tensorpack.dataflow import imgaug
-from tensorpack.tfutils import argscope, get_model_loader
+from tensorpack.tfutils import argscope, get_model_loader, model_utils
 from tensorpack.tfutils.scope_utils import under_name_scope
 from tensorpack.utils.gpu import get_nr_gpu
 
@@ -55,7 +52,7 @@ def channel_shuffle(l, group):
     return l
 
 
-def BN(x, name):
+def BN(x, name=None):
     return BatchNorm('bn', x)
 
 
@@ -206,6 +203,7 @@ if __name__ == '__main__':
         input.setup(input_desc)
         with TowerContext('', is_training=True):
             model.build_graph(*input.get_input_tensors())
+        model_utils.describe_trainable_vars()
 
         tf.profiler.profile(
             tf.get_default_graph(),

@@ -517,8 +517,7 @@ class StagingInput(FeedfreeInput):
         Args:
             input (FeedfreeInput):
             nr_stage: number of elements to prefetch into each StagingArea, at the beginning.
-                Since enqueue and dequeue are synchronized, prefetching 1
-                    element should be sufficient.
+                Since enqueue and dequeue are synchronized, prefetching 1 element should be sufficient.
             towers: deprecated
             device (str or None): if not None, place the StagingArea on a specific device. e.g., '/cpu:0'.
                 Otherwise, they are placed under where `get_inputs_tensors`

@@ -74,7 +74,7 @@ class Model(ModelDesc):
 
         embeddingW = tf.get_variable('embedding', [VOCAB_SIZE, HIDDEN_SIZE], initializer=initializer)
         input_feature = tf.nn.embedding_lookup(embeddingW, input)  # B x seqlen x hiddensize
-        input_feature = Dropout(input_feature, DROPOUT)
+        input_feature = Dropout(input_feature, rate=DROPOUT)
 
         with tf.variable_scope('LSTM', initializer=initializer):
             input_list = tf.unstack(input_feature, num=SEQ_LEN, axis=1)  # seqlen x (Bxhidden)
@@ -89,7 +89,9 @@ class Model(ModelDesc):
 
         # seqlen x (Bxrnnsize)
         output = tf.reshape(tf.concat(outputs, 1), [-1, HIDDEN_SIZE])  # (Bxseqlen) x hidden
-        logits = FullyConnected('fc', output, VOCAB_SIZE, nl=tf.identity, W_init=initializer, b_init=initializer)
+        logits = FullyConnected('fc', output, VOCAB_SIZE,
+                                activation=tf.identity, kernel_initializer=initializer,
+                                bias_initializer=initializer)
         xent_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
             logits=logits, labels=tf.reshape(nextinput, [-1]))
 

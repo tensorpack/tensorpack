@@ -80,11 +80,13 @@ def set_logger_dir(dirname, action=None):
 
     Args:
         dirname(str): log directory
-        action(str): an action of ("k","d","q") to be performed
+        action(str): an action of ["k","d","q"] to be performed
             when the directory exists. Will ask user by default.
-            "d": delete the directory. Note that the deletion may fail when
+
+                "d": delete the directory. Note that the deletion may fail when
                 the directory is used by tensorboard.
-            "k": keep the directory. This is useful when you resume from a
+
+                "k": keep the directory. This is useful when you resume from a
                 previous training and want the directory to look as if the
                 training was not interrupted.
                 Note that this option does not load old models or any other

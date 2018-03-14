@@ -63,7 +63,7 @@ class Model(ModelDesc):
 
             with tf.variable_scope(name):
                 b1 = l if first else BNReLU(l)
-                c1 = Conv2D('conv1', b1, out_channel, stride=stride1, nl=BNReLU)
+                c1 = Conv2D('conv1', b1, out_channel, strides=stride1, activation=BNReLU)
                 c2 = Conv2D('conv2', c1, out_channel)
                 if increase_dim:
                     l = AvgPooling('pool', l, 2)
@@ -72,10 +72,10 @@ class Model(ModelDesc):
                 l = c2 + l
                 return l
 
-        with argscope([Conv2D, AvgPooling, BatchNorm, GlobalAvgPooling], data_format='NCHW'), \
-                argscope(Conv2D, nl=tf.identity, use_bias=False, kernel_shape=3,
-                         W_init=tf.variance_scaling_initializer(scale=2.0, mode='fan_out')):
-            l = Conv2D('conv0', image, 16, nl=BNReLU)
+        with argscope([Conv2D, AvgPooling, BatchNorm, GlobalAvgPooling], data_format='channels_first'), \
+                argscope(Conv2D, use_bias=False, kernel_size=3,
+                         kernel_initializer=tf.variance_scaling_initializer(scale=2.0, mode='fan_out')):
+            l = Conv2D('conv0', image, 16, activation=BNReLU)
             l = residual('res1.0', l, first=True)
             for k in range(1, self.n):
                 l = residual('res1.{}'.format(k), l)
@@ -93,7 +93,7 @@ class Model(ModelDesc):
             # 8,c=64
             l = GlobalAvgPooling('gap', l)
 
-        logits = FullyConnected('linear', l, out_dim=10, nl=tf.identity)
+        logits = FullyConnected('linear', l, 10)
         tf.nn.softmax(logits, name='output')
 
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)

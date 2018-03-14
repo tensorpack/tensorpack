@@ -43,17 +43,17 @@ class Model(ModelDesc):
         image = tf.pad(image, [[0, 0], [3, 3], [3, 3], [0, 0]])
         image = tf.transpose(image, [0, 3, 1, 2])
         with argscope([Conv2D, MaxPooling, GlobalAvgPooling, BatchNorm],
-                      data_format='NCHW'), \
-                argscope(Conv2D, nl=tf.identity, use_bias=False):
+                      data_format='channels_first'), \
+                argscope(Conv2D, use_bias=False):
             logits = (LinearWrap(image)
-                      .Conv2D('conv0', 64, 7, stride=2, nl=BNReLU, padding='VALID')
-                      .MaxPooling('pool0', shape=3, stride=2, padding='SAME')
+                      .Conv2D('conv0', 64, 7, strides=2, activation=BNReLU, padding='VALID')
+                      .MaxPooling('pool0', 3, strides=2, padding='SAME')
                       .apply(resnet_group, 'group0', bottleneck, 64, blocks[0], 1)
                       .apply(resnet_group, 'group1', bottleneck, 128, blocks[1], 2)
                       .apply(resnet_group, 'group2', bottleneck, 256, blocks[2], 2)
                       .apply(resnet_group, 'group3', bottleneck, 512, blocks[3], 2)
                       .GlobalAvgPooling('gap')
-                      .FullyConnected('linear', 1000, nl=tf.identity)())
+                      .FullyConnected('linear', 1000)())
         tf.nn.softmax(logits, name='prob')
         ImageNetModel.compute_loss_and_error(logits, label)
 

@@ -24,9 +24,9 @@ def maybe_freeze_affine(getter, *args, **kwargs):
 
 @contextmanager
 def resnet_argscope():
-    with argscope([Conv2D, MaxPooling, BatchNorm], data_format='NCHW'), \
+    with argscope([Conv2D, MaxPooling, BatchNorm], data_format='channels_first'), \
             argscope(Conv2D, use_bias=False), \
-            argscope(BatchNorm, use_local_stat=False), \
+            argscope(BatchNorm, training=False), \
             custom_getter_scope(maybe_freeze_affine):
         yield
 
@@ -50,36 +50,36 @@ def image_preprocess(image, bgr=True):
 
 def get_bn(zero_init=False):
     if zero_init:
-        return lambda x, name: BatchNorm('bn', x, gamma_init=tf.zeros_initializer())
+        return lambda x, name=None: BatchNorm('bn', x, gamma_init=tf.zeros_initializer())
     else:
-        return lambda x, name: BatchNorm('bn', x)
+        return lambda x, name=None: BatchNorm('bn', x)
 
 
-def resnet_shortcut(l, n_out, stride, nl=tf.identity):
+def resnet_shortcut(l, n_out, stride, activation=tf.identity):
     data_format = get_arg_scope()['Conv2D']['data_format']
-    n_in = l.get_shape().as_list()[1 if data_format == 'NCHW' else 3]
+    n_in = l.get_shape().as_list()[1 if data_format in ['NCHW', 'channels_first'] else 3]
     if n_in != n_out:   # change dimension when channel is not the same
         if stride == 2:
             l = l[:, :, :-1, :-1]
             return Conv2D('convshortcut', l, n_out, 1,
-                          stride=stride, padding='VALID', nl=nl)
+                          strides=stride, padding='VALID', activation=activation)
         else:
             return Conv2D('convshortcut', l, n_out, 1,
-                          stride=stride, nl=nl)
+                          strides=stride, activation=activation)
     else:
         return l
 
 
 def resnet_bottleneck(l, ch_out, stride):
     l, shortcut = l, l
-    l = Conv2D('conv1', l, ch_out, 1, nl=BNReLU)
+    l = Conv2D('conv1', l, ch_out, 1, activation=BNReLU)
     if stride == 2:
         l = tf.pad(l, [[0, 0], [0, 0], [0, 1], [0, 1]])
-        l = Conv2D('conv2', l, ch_out, 3, stride=2, nl=BNReLU, padding='VALID')
+        l = Conv2D('conv2', l, ch_out, 3, strides=2, activation=BNReLU, padding='VALID')
     else:
-        l = Conv2D('conv2', l, ch_out, 3, stride=stride, nl=BNReLU)
-    l = Conv2D('conv3', l, ch_out * 4, 1, nl=get_bn(zero_init=True))
-    return l + resnet_shortcut(shortcut, ch_out * 4, stride, nl=get_bn(zero_init=False))
+        l = Conv2D('conv2', l, ch_out, 3, strides=stride, activation=BNReLU)
+    l = Conv2D('conv3', l, ch_out * 4, 1, activation=get_bn(zero_init=True))
+    return l + resnet_shortcut(shortcut, ch_out * 4, stride, activation=get_bn(zero_init=False))
 
 
 def resnet_group(l, name, block_func, features, count, stride):
@@ -97,9 +97,9 @@ def pretrained_resnet_conv4(image, num_blocks, freeze_c2=True):
     assert len(num_blocks) == 3
     with resnet_argscope():
         l = tf.pad(image, [[0, 0], [0, 0], [2, 3], [2, 3]])
-        l = Conv2D('conv0', l, 64, 7, stride=2, nl=BNReLU, padding='VALID')
+        l = Conv2D('conv0', l, 64, 7, strides=2, activation=BNReLU, padding='VALID')
         l = tf.pad(l, [[0, 0], [0, 0], [0, 1], [0, 1]])
-        l = MaxPooling('pool0', l, shape=3, stride=2, padding='VALID')
+        l = MaxPooling('pool0', l, 3, strides=2, padding='VALID')
         c2 = resnet_group(l, 'group0', resnet_bottleneck, 64, num_blocks[0], 1)
         # TODO replace var by const to enable optimization
         if freeze_c2:

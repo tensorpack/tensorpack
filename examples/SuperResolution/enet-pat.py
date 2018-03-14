@@ -63,8 +63,8 @@ class Model(GANModelDesc):
 
         def resnet_block(x, name):
             with tf.variable_scope(name):
-                y = Conv2D('conv0', x, NF, nl=tf.nn.relu)
-                y = Conv2D('conv1', y, NF, nl=tf.identity)
+                y = Conv2D('conv0', x, NF, activation=tf.nn.relu)
+                y = Conv2D('conv1', y, NF, activation=tf.identity)
             return x + y
 
         def upsample(x, factor=2):
@@ -74,7 +74,7 @@ class Model(GANModelDesc):
 
         def generator(x, Ibicubic):
             x = x - VGG_MEAN_TENSOR / 255.0
-            with argscope(Conv2D, kernel_shape=3, stride=1, nl=tf.nn.relu):
+            with argscope(Conv2D, kernel_size=3, activation=tf.nn.relu):
                 x = Conv2D('conv1', x, NF)
                 for i in range(10):
                     x = resnet_block(x, 'block_%i' % i)
@@ -83,27 +83,27 @@ class Model(GANModelDesc):
                 x = upsample(x)
                 x = Conv2D('conv_post_2', x, NF)
                 x = Conv2D('conv_post_3', x, NF)
-                Ires = Conv2D('conv_post_4', x, 3, nl=tf.identity)
+                Ires = Conv2D('conv_post_4', x, 3, activation=tf.identity)
                 Iest = tf.add(Ibicubic, Ires, name='Iest')
                 return Iest     # [0,1]
 
         @auto_reuse_variable_scope
         def discriminator(x):
             x = x - VGG_MEAN_TENSOR / 255.0
-            with argscope(Conv2D, kernel_shape=3, stride=1, nl=tf.nn.leaky_relu):
+            with argscope(Conv2D, kernel_size=3, activation=tf.nn.leaky_relu):
                 x = Conv2D('conv0', x, 32)
-                x = Conv2D('conv0b', x, 32, stride=2)
+                x = Conv2D('conv0b', x, 32, strides=2)
                 x = Conv2D('conv1', x, 64)
-                x = Conv2D('conv1b', x, 64, stride=2)
+                x = Conv2D('conv1b', x, 64, strides=2)
                 x = Conv2D('conv2', x, 128)
-                x = Conv2D('conv2b', x, 128, stride=2)
+                x = Conv2D('conv2b', x, 128, strides=2)
                 x = Conv2D('conv3', x, 256)
-                x = Conv2D('conv3b', x, 256, stride=2)
+                x = Conv2D('conv3b', x, 256, strides=2)
                 x = Conv2D('conv4', x, 512)
-                x = Conv2D('conv4b', x, 512, stride=2)
+                x = Conv2D('conv4b', x, 512, strides=2)
 
-            x = FullyConnected('fc0', x, 1024, nl=tf.nn.leaky_relu)
-            x = FullyConnected('fc1', x, 1, nl=tf.identity)
+            x = FullyConnected('fc0', x, 1024, activation=tf.nn.leaky_relu)
+            x = FullyConnected('fc1', x, 1, activation=tf.identity)
             return x
 
         def additional_losses(a, b):
@@ -113,7 +113,7 @@ class Model(GANModelDesc):
                 x = x - VGG_MEAN_TENSOR
                 # VGG 19
                 with varreplace.freeze_variables():
-                    with argscope(Conv2D, kernel_shape=3, nl=tf.nn.relu):
+                    with argscope(Conv2D, kernel_size=3, activation=tf.nn.relu):
                         conv1_1 = Conv2D('conv1_1', x, 64)
                         conv1_2 = Conv2D('conv1_2', conv1_1, 64)
                         pool1 = MaxPooling('pool1', conv1_2, 2)  # 64
