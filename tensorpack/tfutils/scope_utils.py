@@ -55,11 +55,11 @@ def auto_reuse_variable_scope(func):
     return wrapper
 
 
-def under_name_scope():
+def under_name_scope(name=None):
     """
     Returns:
-        A decorator which makes the function happen under a name scope,
-        which is named by the function itself.
+        A decorator which makes the function happen under a name scope.
+        The default name is the function itself.
 
     Examples:
 
@@ -77,8 +77,11 @@ def under_name_scope():
     def _impl(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            name = func.__name__
-            with tf.name_scope(name):
+            if name is None:
+                scopename = func.__name__
+            else:
+                scopename = name
+            with tf.name_scope(scopename):
                 return func(*args, **kwargs)
         return wrapper
     return _impl

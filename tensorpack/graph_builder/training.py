@@ -16,7 +16,8 @@ from ..tfutils.gradproc import ScaleGradient
 
 from .utils import (
     LeastLoadedDeviceSetter, override_to_local_variable,
-    allreduce_grads, aggregate_grads)
+    allreduce_grads, aggregate_grads, allreduce_hierarchical,
+    split_grad_list, merge_grad_list)
 
 
 __all__ = ['GraphBuilder',
@@ -213,7 +214,12 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
         DataParallelBuilder._check_grad_list(grad_list)
 
         if self._mode == 'nccl':
-            self.grads = allreduce_grads(grad_list, average=self._average)  # #gpu x #param x 2
+            all_grads, all_vars = split_grad_list(grad_list)
+            if True:
+                all_grads = allreduce_grads(all_grads, average=self._average)  # #gpu x #param x 2
+            else:
+                all_grads = allreduce_hierarchical(all_grads, raw_devices, average=self._average)
+            self.grads = merge_grad_list(all_grads, all_vars)
         elif self._mode == 'cpu':
             agg_grad_and_vars = aggregate_grads(
                 grad_list, colocation=False,

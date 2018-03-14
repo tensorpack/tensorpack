@@ -364,23 +364,29 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
             return False
     # hide deprecated stuff
     if name in [
-        'get_predictors',
+        # deprecated stuff:
         'GaussianDeform',
+        'set_tower_func',
+        'TryResumeTraining',
+
+        # renamed stuff:
         'dump_chkpt_vars',
         'DumpTensor',
         'DumpParamAsImage',
         'StagingInputWrapper',
-        'set_tower_func',
-        'TryResumeTraining',
-        'LeakyReLU',
-        'PrefetchOnGPUs',
         'PeriodicRunHooks',
-        'apply_default_prefetch',
-        'average_grads',
-        'Deconv2D',
 
+        # deprecated or renamed symbolic code
+        'Deconv2D', 'LeakyReLU',
         'saliency_map', 'get_scalar_var', 'psnr',
         'prediction_incorrect', 'huber_loss', 'SoftMax'
+
+        # internal only
+        'apply_default_prefetch',
+        'average_grads',
+        'aggregate_grads',
+        'allreduce_grads',
+        'PrefetchOnGPUs',
         ]:
         return True
     if name in ['get_data', 'size', 'reset_state']:

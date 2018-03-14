@@ -38,7 +38,7 @@ class TowerTrainer(Trainer):
         assert isinstance(tower_func, TowerFuncWrapper), tower_func
         self._tower_func = tower_func
 
-    @deprecated("Just use tower_func = xxx instead!")
+    @deprecated("Just use tower_func = xxx instead!", "2018-06-01")
     def set_tower_func(self, tower_func):
         self._set_tower_func(tower_func)
 

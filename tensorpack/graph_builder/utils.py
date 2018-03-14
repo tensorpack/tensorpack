@@ -8,6 +8,7 @@ import operator
 import tensorflow as tf
 
 from ..tfutils.varreplace import custom_getter_scope
+from ..tfutils.scope_utils import under_name_scope
 
 
 __all__ = ['LeastLoadedDeviceSetter',
@@ -15,7 +16,8 @@ __all__ = ['LeastLoadedDeviceSetter',
            'override_to_local_variable',
            'allreduce_grads',
            'average_grads',
-           'aggregate_grads']
+           'aggregate_grads'
+           ]
 
 
 """
@@ -83,43 +85,132 @@ class LeastLoadedDeviceSetter(object):
         return "LeastLoadedDeviceSetter-{}".format(self.worker_device)
 
 
+def split_grad_list(grad_list):
+    """
+    Args:
+        grad_list: K x N x 2
+
+    Returns:
+        K x N: gradients
+        K x N: variables
+    """
+    g = []
+    v = []
+    for tower in grad_list:
+        g.append([x[0] for x in tower])
+        v.append([x[1] for x in tower])
+    return g, v
+
+
+def merge_grad_list(all_grads, all_vars):
+    """
+    Args:
+        all_grads (K x N): gradients
+        all_vars(K x N): variables
+
+    Return:
+        K x N x 2: list of list of (grad, var) pairs
+    """
+    return [list(zip(gs, vs)) for gs, vs in zip(all_grads, all_vars)]
+
+
+@under_name_scope('AllReduceGrads')
 def allreduce_grads(all_grads, average):
     """
-    All-reduce average the gradients among devices. Results are broadcasted to all devices.
+    All-reduce average the gradients among K devices. Results are broadcasted to all devices.
 
     Args:
-        all_grads (K x N x 2): A list of K lists. Each of the list is a list of N (grad, var) tuples.
-            The variables have to be the same across the K lists.
+        all_grads (K x N): List of list of gradients. N is the number of variables.
         average (bool): average gradients or not.
 
     Returns:
-        (K x N x 2): same as input, but each grad is replaced by the average over K lists.
+        K x N: same as input, but each grad is replaced by the average over K devices.
     """
     from tensorflow.contrib import nccl
     nr_tower = len(all_grads)
     if nr_tower == 1:
         return all_grads
-    new_all_grads = []  # NVar * NGPU * 2
-    with tf.name_scope('AvgGrad'):
-        for grad_and_vars in zip(*all_grads):
-            v = grad_and_vars[0][1]
-            grads = [g for g, _ in grad_and_vars]
-            summed = nccl.all_sum(grads)
+    new_all_grads = []  # N x K
+    for grads in zip(*all_grads):
+        summed = nccl.all_sum(grads)
 
-            grads_for_a_var = []
-            for (_, v), g in zip(grad_and_vars, summed):
-                with tf.device(g.device):
-                    # tensorflow/benchmarks didn't average gradients
-                    if average:
-                        g = tf.multiply(g, 1.0 / nr_tower)
-                    grads_for_a_var.append((g, v))
-            new_all_grads.append(grads_for_a_var)
+        grads_for_devices = []  # K
+        for g in summed:
+            with tf.device(g.device):
+                # tensorflow/benchmarks didn't average gradients
+                if average:
+                    g = tf.multiply(g, 1.0 / nr_tower)
+            grads_for_devices.append(g)
+        new_all_grads.append(grads_for_devices)
 
-    # transpose
-    ret = [k for k in zip(*new_all_grads)]
+    # transpose to K x N
+    ret = list(zip(*new_all_grads))
     return ret
 
 
+@under_name_scope('AllReduceGradsHierachical')
+def allreduce_hierarchical(all_grads, devices, average=False):
+    """
+    Hierarchical allreduce for DGX-1 system.
+
+    Args:
+        all_grads (K x N): List of list of gradients. N is the number of variables.
+        devices ([str]): K str for the K devices.
+        average (bool): average gradients or not.
+
+    Returns:
+        (K x N): same as input, but each grad is replaced by the average over K lists.
+    """
+    num_gpu = len(devices)
+    assert num_gpu == 8, num_gpu
+    assert len(all_grads) == num_gpu, len(all_grads)
+    group_size = num_gpu // 2
+
+    agg_all_grads = []  # N x K
+    for varid, grads in enumerate(zip(*all_grads)):
+        # grads: K gradients
+        g0_main_gpu = varid % num_gpu
+        g1_main_gpu = (g0_main_gpu + group_size) % num_gpu
+        g0_start = 0 if g0_main_gpu < group_size else group_size
+        g1_start = 0 if g1_main_gpu < group_size else group_size
+        assert g0_start != g1_start
+        g0_grads = grads[g0_start: g0_start + group_size]
+        g1_grads = grads[g1_start: g1_start + group_size]
+
+        with tf.device(devices[g0_main_gpu]):
+            g0_agg = tf.add_n(g0_grads, name='group0_agg')
+
+        with tf.device(devices[g1_main_gpu]):
+            g1_agg = tf.add_n(g1_grads, name='group1_agg')
+            g1_total_agg = tf.add(g0_agg, g1_agg, name='group1_total_agg')
+
+        with tf.device(devices[g0_main_gpu]):
+            g0_total_agg = tf.identity(g1_total_agg, name='group0_total_agg')
+
+        agg_grads = []  # K aggregated grads
+        for k in range(num_gpu):
+            if (k < group_size) == (g0_main_gpu < group_size):
+                main_gpu = g0_total_agg
+            else:
+                main_gpu = g1_total_agg
+            with tf.device(devices[k]):
+                if not average:
+                    device_total_agg = tf.identity(
+                        main_gpu, name='device{}_total_agg'.format(k))
+                else:
+                    # TODO where to put average?
+                    device_total_agg = tf.multiply(
+                        main_gpu, 1.0 / num_gpu, name='device{}_total_agg'.format(k))
+                agg_grads.append(device_total_agg)
+
+        agg_all_grads.append(agg_grads)
+
+    # transpose
+    agg_all_grads = list(zip(*agg_all_grads))   # K x Nvar
+    return agg_all_grads
+
+
+@under_name_scope('AggregateGrads')
 def aggregate_grads(all_grads,
                     colocation=False,
                     devices=None,
@@ -153,22 +244,21 @@ def aggregate_grads(all_grads,
             return tf.add_n(grads)
 
     ret = []
-    with tf.name_scope('AggregateGrad'):
-        for idx, grad_and_vars in enumerate(zip(*all_grads)):
-            # Ngpu * 2
-            v = grad_and_vars[0][1]
-            grads = [g for (g, _) in grad_and_vars]
+    for idx, grad_and_vars in enumerate(zip(*all_grads)):
+        # Ngpu * 2
+        v = grad_and_vars[0][1]
+        grads = [g for (g, _) in grad_and_vars]
 
-            if colocation:
-                with tf.device(v.device):       # colocate summed grad with var
-                    grad = aggregate(grads)
-            elif devices is None:
+        if colocation:
+            with tf.device(v.device):       # colocate summed grad with var
                 grad = aggregate(grads)
-            else:
-                dev = devices[idx % len(devices)]
-                with tf.device(dev):
-                    grad = aggregate(grads)
-            ret.append((grad, v))
+        elif devices is None:
+            grad = aggregate(grads)
+        else:
+            dev = devices[idx % len(devices)]
+            with tf.device(dev):
+                grad = aggregate(grads)
+        ret.append((grad, v))
     return ret
 
 
