@@ -376,6 +376,8 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
         'PrefetchOnGPUs',
         'PeriodicRunHooks',
         'apply_default_prefetch',
+        'average_grads',
+        'Deconv2D',
 
         'saliency_map', 'get_scalar_var', 'psnr',
         'prediction_incorrect', 'huber_loss', 'SoftMax'

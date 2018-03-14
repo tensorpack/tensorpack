@@ -140,15 +140,19 @@ class SyncMultiGPUTrainerReplicated(SingleCostTrainer):
     """
 
     @map_arg(gpus=_int_to_range)
-    def __init__(self, gpus, average=True, use_nccl=True):
+    def __init__(self, gpus, average=True, mode='nccl', use_nccl=None):
         """
         Args:
             gpus (int or [int]): list of GPU ids.
             average (bool): whether to average or sum gradients.
-            use_nccl (bool): use NCCL or TensorFlow copy to reduce.
+            mode (str): Gradient aggregation mode. Supported values: ['nccl', 'cpu']
         """
         self.devices = gpus
-        self._builder = SyncMultiGPUReplicatedBuilder(gpus, average, use_nccl)
+        if use_nccl is not None:
+            mode = 'nccl' if use_nccl else 'cpu'
+            logger.warn("use_nccl option was deprecated! Use the `mode` option instead!")
+        mode = mode.lower()
+        self._builder = SyncMultiGPUReplicatedBuilder(gpus, average, mode)
         super(SyncMultiGPUTrainerReplicated, self).__init__()
 
     def _setup_graph(self, input, get_cost_fn, get_opt_fn):

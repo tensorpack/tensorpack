@@ -12,7 +12,7 @@ from ..tfutils.common import get_op_tensor_name, get_global_step_var
 
 from .training import GraphBuilder, DataParallelBuilder
 from .utils import (
-    override_to_local_variable, average_grads,
+    override_to_local_variable, aggregate_grads,
     OverrideCachingDevice)
 
 __all__ = ['DistributedParameterServerBuilder', 'DistributedReplicatedBuilder']
@@ -126,7 +126,7 @@ class DistributedParameterServerBuilder(DataParallelBuilder, DistributedBuilderB
         DataParallelBuilder._check_grad_list(grad_list)
 
         with tf.device(self.param_server_device):
-            grads = average_grads(grad_list, colocation=False)
+            grads = aggregate_grads(grad_list, colocation=False)
             opt = get_opt_fn()
             train_op = opt.apply_gradients(grads, name='train_op')
         train_op = self._add_sync_queues_and_barrier('all_workers_sync_barrier', [train_op])
@@ -287,7 +287,7 @@ class DistributedReplicatedBuilder(DataParallelBuilder, DistributedBuilderBase):
             use_vs=[True] * len(self.towers))  # open vs at each tower
         DataParallelBuilder._check_grad_list(grad_list)
 
-        avg_grads = average_grads(
+        avg_grads = aggregate_grads(
             grad_list, colocation=False, devices=self.raw_devices)
         with tf.device(self.param_server_device):
             ps_var_grads = DistributedReplicatedBuilder._apply_shadow_vars(avg_grads)

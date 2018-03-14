@@ -16,7 +16,7 @@ from ..tfutils.gradproc import ScaleGradient
 
 from .utils import (
     LeastLoadedDeviceSetter, override_to_local_variable,
-    allreduce_grads, average_grads)
+    allreduce_grads, aggregate_grads)
 
 
 __all__ = ['GraphBuilder',
@@ -154,7 +154,7 @@ class SyncMultiGPUParameterServerBuilder(DataParallelBuilder):
         # self.train_op = tf.group(*ops)
         # return
 
-        self.grads = average_grads(grad_list, colocation=True)
+        self.grads = aggregate_grads(grad_list, colocation=True)
         # grads = grad_list[0]
 
         opt = get_opt_fn()
@@ -181,10 +181,11 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
             Though on different deviecs, they should contain the same value.
     """
 
-    def __init__(self, towers, average, use_nccl):
+    def __init__(self, towers, average, mode):
         super(SyncMultiGPUReplicatedBuilder, self).__init__(towers)
         self._average = average
-        self._use_nccl = use_nccl
+        assert mode in ['nccl', 'cpu'], mode
+        self._mode = mode
 
     def build(self, get_grad_fn, get_opt_fn):
         """
@@ -211,10 +212,10 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
 
         DataParallelBuilder._check_grad_list(grad_list)
 
-        if self._use_nccl:
+        if self._mode == 'nccl':
             self.grads = allreduce_grads(grad_list, average=self._average)  # #gpu x #param x 2
-        else:
-            agg_grad_and_vars = average_grads(
+        elif self._mode == 'cpu':
+            agg_grad_and_vars = aggregate_grads(
                 grad_list, colocation=False,
                 devices=['/cpu:0'], average=self._average)    # #param x 2
             self.grads = []  # #gpu x #param x 2

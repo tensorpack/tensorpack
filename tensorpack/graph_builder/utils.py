@@ -14,7 +14,8 @@ __all__ = ['LeastLoadedDeviceSetter',
            'OverrideCachingDevice',
            'override_to_local_variable',
            'allreduce_grads',
-           'average_grads']
+           'average_grads',
+           'aggregate_grads']
 
 
 """
@@ -119,7 +120,10 @@ def allreduce_grads(all_grads, average):
     return ret
 
 
-def average_grads(all_grads, colocation=True, devices=None, average=True):
+def aggregate_grads(all_grads,
+                    colocation=False,
+                    devices=None,
+                    average=True):
     """
     Average the gradients.
 
@@ -132,7 +136,7 @@ def average_grads(all_grads, colocation=True, devices=None, average=True):
         average (bool): do average or sum
 
     Returns:
-        (N x 2): A list of N (grad, var) tuples, where grad is averaged over K.
+        (N x 2): A list of N (grad, var) tuples, where grad is averaged or summed over K.
     """
     assert not (devices is not None and colocation)
     if devices is not None:
@@ -149,7 +153,7 @@ def average_grads(all_grads, colocation=True, devices=None, average=True):
             return tf.add_n(grads)
 
     ret = []
-    with tf.name_scope('AvgGrad'):
+    with tf.name_scope('AggregateGrad'):
         for idx, grad_and_vars in enumerate(zip(*all_grads)):
             # Ngpu * 2
             v = grad_and_vars[0][1]
@@ -166,6 +170,9 @@ def average_grads(all_grads, colocation=True, devices=None, average=True):
                     grad = aggregate(grads)
             ret.append((grad, v))
     return ret
+
+
+average_grads = aggregate_grads
 
 
 # https://github.com/tensorflow/benchmarks/blob/48cbef14a592e02a14beee8e9aef3ad22cadaed1/scripts/tf_cnn_benchmarks/variable_mgr_util.py#L140-L166
