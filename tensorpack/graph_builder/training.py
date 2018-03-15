@@ -223,13 +223,15 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
             if self._mode == 'nccl':
                 all_grads = allreduce_grads(all_grads, average=self._average)  # #gpu x #param x 2
             else:
-                # all_grads = allreduce_grads_hierarchical(all_grads, raw_devices, average=self._average)
-
                 packer = GradientPacker(len(raw_devices))
-                packer.compute_strategy(all_grads[0])
-                packed_grads = packer.pack_all(all_grads, raw_devices)
-                packed_grads_aggr = allreduce_grads_hierarchical(packed_grads, raw_devices, average=self._average)
-                all_grads = packer.unpack_all(packed_grads_aggr, raw_devices)
+                succ = packer.compute_strategy(all_grads[0])
+                if succ:
+                    packed_grads = packer.pack_all(all_grads, raw_devices)
+                    packed_grads_aggr = allreduce_grads_hierarchical(
+                        packed_grads, raw_devices, average=self._average)
+                    all_grads = packer.unpack_all(packed_grads_aggr, raw_devices)
+                else:
+                    all_grads = allreduce_grads_hierarchical(all_grads, raw_devices, average=self._average)
 
             self.grads = merge_grad_list(all_grads, all_vars)
         elif self._mode == 'cpu':

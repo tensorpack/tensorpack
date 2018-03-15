@@ -146,17 +146,19 @@ class SyncMultiGPUTrainerReplicated(SingleCostTrainer):
             gpus (int or [int]): list of GPU ids.
             average (bool): whether to average or sum gradients.
             mode (str or None): Gradient aggregation mode.
-                These methods may have slight differences in speed.
-                Supported values: ['nccl', 'cpu']. Default to pick
-                automatically by heuristics.
+                Supported values: ['nccl', 'hierarchical', 'cpu'].
+                Default to pick automatically by heuristics.
+                These modes may have slight (within 5%) differences in speed.
         """
         self.devices = gpus
+
         if use_nccl is not None:
-            mode = 'nccl' if use_nccl else 'cpu'
+            mode = 'nccl' if use_nccl else None
             logger.warn("use_nccl option was deprecated! Use the `mode` option instead!")
         if mode is None:
-            mode = 'nccl'
+            mode = 'hierarchical' if len(gpus) >= 8 else 'nccl'
         mode = mode.lower()
+
         self._builder = SyncMultiGPUReplicatedBuilder(gpus, average, mode)
         super(SyncMultiGPUTrainerReplicated, self).__init__()
 
