@@ -13,9 +13,7 @@ from ..utils import logger
 from .common import get_op_tensor_name
 
 __all__ = ['SessionUpdate', 'dump_session_params', 'dump_chkpt_vars',
-           'load_chkpt_vars',
-           # 'get_savename_from_varname', 'is_training_name',
-           'get_checkpoint_path']
+           'load_chkpt_vars', 'get_checkpoint_path']
 
 
 def get_savename_from_varname(

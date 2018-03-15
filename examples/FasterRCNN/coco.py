@@ -59,7 +59,8 @@ class COCODetection(object):
     def __init__(self, basedir, name):
         assert name in COCOMeta.INSTANCE_TO_BASEDIR.keys(), name
         self.name = name
-        self._imgdir = os.path.join(basedir, COCOMeta.INSTANCE_TO_BASEDIR[name])
+        self._imgdir = os.path.realpath(os.path.join(
+            basedir, COCOMeta.INSTANCE_TO_BASEDIR[name]))
         assert os.path.isdir(self._imgdir), self._imgdir
         annotation_file = os.path.join(
             basedir, 'annotations/instances_{}.json'.format(name))

@@ -31,7 +31,8 @@ class MovingAverageSummary(Callback):
 
     def _setup_graph(self):
         ops = tf.get_collection(self._collection)
-        logger.info("Maintain moving average summary of {} tensors.".format(len(ops)))
+        logger.info("Maintain moving average summary of {} tensors in collection {}.".format(
+            len(ops), self._collection))
 
         self.ema_op = tf.group(*ops, name='maintain_moving_average_summary')
         self._fetch = tf.train.SessionRunArgs(fetches=self.ema_op)
@@ -47,7 +48,7 @@ class MergeAllSummaries_RunAlone(Callback):
 
     def _setup_graph(self):
         size = len(tf.get_collection(self._key))
-        logger.info("Summarizing collection '{}' of size {}".format(self._key, size))
+        logger.info("Summarizing collection '{}' of size {}.".format(self._key, size))
         self.summary_op = tf.summary.merge_all(self._key)
 
     def _trigger_step(self):
@@ -68,7 +69,7 @@ class MergeAllSummaries_RunWithOp(Callback):
 
     def _setup_graph(self):
         size = len(tf.get_collection(self._key))
-        logger.info("Summarizing collection '{}' of size {}".format(self._key, size))
+        logger.info("Summarizing collection '{}' of size {}.".format(self._key, size))
         self.summary_op = tf.summary.merge_all(self._key)
         if self.summary_op is not None:
             self._fetches = tf.train.SessionRunArgs(self.summary_op)

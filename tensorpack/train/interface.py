@@ -48,28 +48,24 @@ def apply_default_prefetch(input_source_or_dataflow, trainer):
 def launch_train_with_config(config, trainer):
     """
     Train with a :class:`TrainConfig` and a :class:`Trainer`, to
-    mimic the old training interface. It basically does the following
-    3 things (and you can easily do them by yourself):
+    present a simple training interface. It basically does the following
+    3 things (and you can easily do them by yourself if you need more control):
 
-    1. Setup the :class:`InputSource` with automatic prefetching,
-       for `config.data` or `config.dataflow`.
-    2. Call `trainer.setup_graph` with the :class:`InputSource`,
-       as well as `config.model`.
+    1. Setup the input with automatic prefetching,
+       from `config.data` or `config.dataflow`.
+    2. Call `trainer.setup_graph` with the input as well as `config.model`.
     3. Call `trainer.train` with rest of the attributes of config.
 
     Args:
         config (TrainConfig):
-        trainer (Trainer): an instance of a SingleCostTrainer
+        trainer (Trainer): an instance of :class:`SingleCostTrainer`.
 
     Examples:
 
     .. code-block:: python
 
-        # With the old trainer:
-        SyncMultiGPUTrainerParameterServer(config, ps_device='gpu').train()
-        # With the current version of trainer:
         launch_train_with_config(
-            config, SyncMultiGPUTrainerParameterServer(towers, ps_device='gpu'))
+            config, SyncMultiGPUTrainerParameterServer(8, ps_device='gpu'))
     """
     assert isinstance(trainer, SingleCostTrainer), trainer
     assert isinstance(config, TrainConfig), config

@@ -10,7 +10,7 @@ def train(self):
   # start training:
   with sess.as_default():
     callbacks.before_train()
-    for epoch in range(epoch_start, epoch_end):
+    for epoch in range(starting_epoch, max_epoch + 1):
       callbacks.before_epoch()
       for step in range(steps_per_epoch):
         self.run_step()  # callbacks.{before,after}_run are hooked with session

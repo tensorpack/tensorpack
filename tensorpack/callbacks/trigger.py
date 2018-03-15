@@ -162,8 +162,9 @@ class PeriodicCallback(EnableCallbackIf):
             callback (Callback): a Callback instance.
             every_k_steps (int): enable the callback when ``global_step % k == 0``. Set to
                 None to ignore.
-            every_k_epochs (int): enable the callback when ``epoch_num % k == 0``. Set to
-                None to ignore.
+            every_k_epochs (int): enable the callback when ``epoch_num % k == 0``.
+                Also enable when the last step finishes (``epoch_num == max_epoch``
+                and ``local_step == steps_per_epoch - 1``). Set to None to ignore.
 
         every_k_steps and every_k_epochs can be both set, but cannot be both None.
         """
@@ -179,6 +180,10 @@ class PeriodicCallback(EnableCallbackIf):
             return True
         if self._epoch_k is not None and self.epoch_num % self._epoch_k == 0:
             return True
+        if self._epoch_k is not None:
+            if self.local_step == self.trainer.steps_per_epoch - 1 and \
+                    self.epoch_num == self.trainer.max_epoch:
+                return True
         return False
 
     def __str__(self):

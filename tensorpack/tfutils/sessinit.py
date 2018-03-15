@@ -98,7 +98,7 @@ class SaverRestore(SessionInit):
         """
         Args:
             model_path (str): a model name (model-xxxx) or a ``checkpoint`` file.
-            prefix (str): during restore, add a ``prefix/`` for every variable in this checkpoint
+            prefix (str): during restore, add a ``prefix/`` for every variable in this checkpoint.
             ignore (list[str]): list of tensor names that should be ignored during loading, e.g. learning-rate
         """
         if model_path.endswith('.npy') or model_path.endswith('.npz'):
@@ -134,7 +134,7 @@ class SaverRestore(SessionInit):
         for v in graph_vars:
             name = get_savename_from_varname(v.name, varname_prefix=self.prefix)
             if name in self.ignore and reader.has_tensor(name):
-                logger.info("Variable {} in the graph will be not loaded from the checkpoint!".format(name))
+                logger.info("Variable {} in the graph will not be loaded from the checkpoint!".format(name))
             else:
                 if reader.has_tensor(name):
                     func(reader, name, v)

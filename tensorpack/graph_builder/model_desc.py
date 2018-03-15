@@ -90,7 +90,7 @@ class ModelDescBase(object):
         """
         Build the whole symbolic graph.
         This is supposed to be the "tower function" when used with :class:`TowerTrainer`.
-        By default it will call :meth:`_build_graph` with a list of input tensors, for backward-compatibility.
+        By default it will call :meth:`_build_graph` with a list of input tensors.
 
         Args:
             args ([tf.Tensor]): tensors that matches the list of

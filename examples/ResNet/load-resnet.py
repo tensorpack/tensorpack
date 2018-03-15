@@ -39,8 +39,8 @@ class Model(ModelDesc):
         bottleneck = functools.partial(resnet_bottleneck, stride_first=True)
 
         # tensorflow with padding=SAME will by default pad [2,3] here.
-        # but caffe conv with stride will pad [3,3]
-        image = tf.pad(image, [[0, 0], [3, 3], [3, 3], [0, 0]])
+        # but caffe conv with stride will pad [3,2]
+        image = tf.pad(image, [[0, 0], [3, 2], [3, 2], [0, 0]])
         image = tf.transpose(image, [0, 3, 1, 2])
         with argscope([Conv2D, MaxPooling, GlobalAvgPooling, BatchNorm],
                       data_format='channels_first'), \

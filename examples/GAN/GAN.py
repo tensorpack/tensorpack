@@ -16,8 +16,8 @@ from tensorpack.utils.argtools import memoized
 class GANModelDesc(ModelDescBase):
     def collect_variables(self, g_scope='gen', d_scope='discrim'):
         """
-        Assign self.g_vars to the parameters under scope `g_scope`,
-        and same with self.d_vars.
+        Assign `self.g_vars` to the parameters under scope `g_scope`,
+        and same with `self.d_vars`.
         """
         self.g_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, g_scope)
         assert self.g_vars
@@ -25,7 +25,10 @@ class GANModelDesc(ModelDescBase):
         assert self.d_vars
 
     def build_losses(self, logits_real, logits_fake):
-        """D and G play two-player minimax game with value function V(G,D)
+        """
+        Build standard GAN loss and set `self.g_loss` and `self.d_loss`.
+
+        D and G play two-player minimax game with value function V(G,D)
 
           min_G max _D V(D, G) = IE_{x ~ p_data} [log D(x)] + IE_{z ~ p_fake} [log (1 - D(G(z)))]
 
@@ -58,6 +61,13 @@ class GANModelDesc(ModelDescBase):
 
             add_moving_summary(self.g_loss, self.d_loss, d_accuracy, g_accuracy)
 
+    def _build_graph(self, inputs):
+        """
+        Have to build one tower and set the following attributes:
+        g_loss, d_loss, g_vars, d_vars.
+        """
+        pass
+
     @memoized
     def get_optimizer(self):
         return self._get_optimizer()
@@ -65,6 +75,11 @@ class GANModelDesc(ModelDescBase):
 
 class GANTrainer(TowerTrainer):
     def __init__(self, input, model):
+        """
+        Args:
+            input (InputSource):
+            model (GANModelDesc):
+        """
         super(GANTrainer, self).__init__()
         assert isinstance(model, GANModelDesc), model
         inputs_desc = model.get_inputs_desc()
@@ -149,6 +164,7 @@ class MultiGPUGANTrainer(TowerTrainer):
         def get_cost(*inputs):
             model.build_graph(*inputs)
             return [model.d_loss, model.g_loss]
+
         self.tower_func = TowerFuncWrapper(get_cost, model.get_inputs_desc())
         devices = [LeastLoadedDeviceSetter(d, raw_devices) for d in raw_devices]
         cost_list = DataParallelBuilder.build_on_towers(
