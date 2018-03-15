@@ -8,7 +8,9 @@ import operator
 import tensorflow as tf
 
 from ..tfutils.varreplace import custom_getter_scope
-from ..tfutils.scope_utils import under_name_scope
+from ..tfutils.scope_utils import under_name_scope, cached_name_scope
+from ..utils.argtools import call_only_once
+from ..utils import logger
 
 
 __all__ = ['LeastLoadedDeviceSetter',
@@ -149,7 +151,7 @@ def allreduce_grads(all_grads, average):
 
 
 @under_name_scope('AllReduceGradsHierachical')
-def allreduce_hierarchical(all_grads, devices, average=False):
+def allreduce_grads_hierarchical(all_grads, devices, average=False):
     """
     Hierarchical allreduce for DGX-1 system.
 
@@ -298,3 +300,77 @@ class OverrideCachingDevice(object):
         kwargs['caching_device'] = device_name
         var = getter(*args, **kwargs)
         return var
+
+
+class GradientPacker(object):
+    """
+    Concat gradients together to optimize transfer.
+    """
+
+    def __init__(self, num_split=8):
+        self._num_split = num_split
+
+    @call_only_once
+    def compute_strategy(self, grads):
+        for g in grads:
+            assert g.shape.is_fully_defined(), "Shape of {} is {}!".format(g.name, g.shape)
+
+        self._shapes = [g.shape for g in grads]
+        self._sizes = [g.shape.num_elements() for g in grads]
+        self._total_size = sum(self._sizes)
+        assert self._total_size > self._num_split
+        # should have the same dtype
+        dtypes = set([g.dtype for g in grads])
+        assert len(dtypes) == 1, dtypes
+
+        split_size = self._total_size // self._num_split
+        split_size_last = self._total_size - split_size * (self._num_split - 1)
+        self._split_sizes = [split_size] * (self._num_split - 1) + [split_size_last]
+        logger.info(
+            "Will pack {} gradients of total number={} into {} splits.".format(
+                len(self._sizes), self._total_size, self._num_split))
+
+    def pack(self, grads):
+        """
+        Args:
+            grads (list): list of gradient tensors
+
+        Returns:
+            packed list of gradient tensors to be aggregated.
+        """
+        for i, g in enumerate(grads):
+            assert g.shape == self._shapes[i]
+
+        with cached_name_scope("GradientPacker", top_level=False):
+            concat_grads = tf.concat([tf.reshape(g, [-1]) for g in grads], 0, name='concatenated_grads')
+            grad_packs = tf.split(concat_grads, self._split_sizes)
+            return grad_packs
+
+    def unpack(self, grad_packs):
+        with cached_name_scope("GradientPacker", top_level=False):
+            concat_grads = tf.concat(grad_packs, 0, name='concatenated_packs')
+            flattened_grads = tf.split(concat_grads, self._sizes)
+            grads = [tf.reshape(g, shape) for g, shape in zip(flattened_grads, self._shapes)]
+            return grads
+
+    def pack_all(self, all_grads, devices):
+        """
+        Args:
+            all_grads: K x N, K lists of gradients to be packed
+        """
+        ret = []    # #GPU x #split
+        for dev, grads in zip(devices, all_grads):
+            with tf.device(dev):
+                ret.append(self.pack(grads))
+        return ret
+
+    def unpack_all(self, all_packed, devices):
+        """
+        Args:
+            all_packed: K lists of packed gradients.
+        """
+        all_grads = []  # #GPU x #Var
+        for dev, packed_grads_single_device in zip(devices, all_packed):
+            with tf.device(dev):
+                all_grads.append(self.unpack(packed_grads_single_device))
+        return all_grads
