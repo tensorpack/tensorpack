@@ -41,7 +41,7 @@ class PlaceholderInput(InputSource):
     Just produce placeholders as input tensors.
     """
     def _setup(self, inputs):
-        self._all_placehdrs = [v.build_placeholder() for v in inputs]
+        self._all_placehdrs = [v.build_placeholder_reuse() for v in inputs]
 
     def _get_input_tensors(self):
         return self._all_placehdrs
