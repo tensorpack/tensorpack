@@ -8,8 +8,8 @@ so you won't need to look at here very often.
 Here are a list of things that were changed, starting from an early version.
 TensorFlow itself also changed APIs before 1.0 and those are not listed here.
 
-+ [2018/03/12] `JSONWriter` used a different file name, and will not automatically restore epoch number.
-	`AutoResumeTrainConfig` was added to support resuming better.
++ [2018/03/12] `JSONWriter` use a different file name, and will not automatically restore epoch number.
+	`AutoResumeTrainConfig` was added to support resuming.
 + [2017/10/21]
 	tensorpack is gradually switching to a new Trainer API.
 	The old API will keep working for a while. See [issue](https://github.com/ppwwyyxx/tensorpack/issues/458)

@@ -118,12 +118,11 @@ class ModelDescBase(object):
     def inputs(self):
         """
         __Create__ and returns a list of placeholders.
-        To be implemented by subclass.
+        A subclass is expected to implement this method.
 
         The placeholders __have to__ be created inside this method.
         Don't return placeholders created in other methods.
-
-        You should not call this method by yourself.
+        Also, you should not call this method by yourself.
 
         Returns:
             a list of `tf.placeholder`, to be converted to :class:`InputDesc`.
@@ -133,8 +132,10 @@ class ModelDescBase(object):
     def build_graph(self, *args):
         """
         Build the whole symbolic graph.
-        This is supposed to be the "tower function" when used with :class:`TowerTrainer`.
+        This is supposed to be part of the "tower function" when used with :class:`TowerTrainer`.
         By default it will call :meth:`_build_graph` with a list of input tensors.
+
+        A subclass is expected to overwrite this method or the :meth:`_build_graph` method.
 
         Args:
             args ([tf.Tensor]): tensors that matches the list of inputs defined by ``inputs()``.
@@ -161,7 +162,7 @@ class ModelDescBase(object):
         assert len(inputs) == len(self.get_inputs_desc()), \
             "Number of inputs passed to the graph != number of inputs defined " \
             "in ModelDesc! ({} != {})".format(len(inputs), len(self.get_inputs_desc()))
-        self._build_graph(inputs)
+        return self._build_graph(inputs)
 
     def _build_graph(self, inputs):
         """
@@ -174,20 +175,28 @@ class ModelDescBase(object):
 class ModelDesc(ModelDescBase):
     """
     A ModelDesc with **single cost** and **single optimizer**.
-    It contains information about InputDesc, how to get cost, and how to get optimizer.
+    It has the following constraints in addition to :class:`ModelDescBase`:
+
+    1. :meth:`build_graph(...)` method should return a cost.
+      The cost will be the final cost to be optimized by the optimizer.
+      Therefore it should include necessary regularization.
+    2. Subclass is expected to implement :meth:`optimizer()` method.
     """
 
     def get_cost(self):
         """
-        Return the cost tensor to optimize on.
+        Being deprecated.
+        You're recommended to return a cost tensor in :meth:`build_graph` method directly.
 
-        This function takes the cost tensor defined by :meth:`build_graph`,
+        This function takes the `self.cost` tensor defined by :meth:`build_graph`,
         and applies the collection
         ``tf.GraphKeys.REGULARIZATION_LOSSES`` to the cost automatically.
         """
         cost = self._get_cost()
         reg_cost = regularize_cost_from_collection()
-        if reg_cost is not None:
+        if reg_cost.op.type != 'Const':
+            logger.warn("Regularization losses found in collection, and a 'cost' tensor was "
+                        "not returned by `build_graph`. Therefore applying regularization automatically!")
             return tf.add(cost, reg_cost, name='cost_with_regularizer')
         else:
             return cost
@@ -215,8 +224,13 @@ class ModelDesc(ModelDescBase):
         """
         Used by trainers to get the final cost for optimization.
         """
-        self.build_graph(*inputs)
-        return self.get_cost()
+        ret = self.build_graph(*inputs)
+        if isinstance(ret, tf.Tensor):  # the preferred way
+            assert ret.shape.ndims == 0, "Cost must be a scalar, but found a tensor of shape {}!".format(ret.shape)
+            _check_unused_regularization()
+            return ret
+        else:   # the old way
+            return self.get_cost()
 
     # TODO this is deprecated and only used for v1 trainers
     def _build_graph_get_grads(self, *inputs):
@@ -239,3 +253,15 @@ class ModelDesc(ModelDescBase):
             gate_gradients=False, colocate_gradients_with_ops=True)
         grads = FilterNoneGrad().process(grads)
         return grads
+
+
+def _check_unused_regularization():
+    coll = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
+    unconsumed_reg = []
+    for c in coll:
+        if len(c.consumers()) == 0:
+            unconsumed_reg.append(c)
+    if unconsumed_reg:
+        logger.warn("The following tensors appear in REGULARIZATION_LOSSES collection but has no "
+                    "consumers! You may have forgotten to add regularization to total cost.")
+        logger.warn("Unconsumed regularization: {}".format(', '.join([x.name for x in unconsumed_reg])))
