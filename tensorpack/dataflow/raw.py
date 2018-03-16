@@ -104,6 +104,7 @@ class DataFromGenerator(DataFlow):
         """
         Args:
             gen: iterable, or a callable that returns an iterable
+            size: deprecated
         """
         if not callable(gen):
             self._gen = lambda: gen
