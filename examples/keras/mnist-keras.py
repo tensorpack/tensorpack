@@ -40,9 +40,9 @@ def get_keras_model():
 
 
 class Model(ModelDesc):
-    def _get_inputs(self):
-        return [InputDesc(tf.float32, (None, IMAGE_SIZE, IMAGE_SIZE), 'input'),
-                InputDesc(tf.int32, (None,), 'label')]
+    def inputs(self):
+        return [tf.placeholder(tf.float32, (None, IMAGE_SIZE, IMAGE_SIZE), 'input'),
+                tf.placeholder(tf.int32, (None,), 'label')]
 
     def _build_graph(self, inputs):
         image, label = inputs

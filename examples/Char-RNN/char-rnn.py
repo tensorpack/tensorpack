@@ -70,9 +70,9 @@ class CharRNNData(RNGDataFlow):
 
 
 class Model(ModelDesc):
-    def _get_inputs(self):
-        return [InputDesc(tf.int32, (None, param.seq_len), 'input'),
-                InputDesc(tf.int32, (None, param.seq_len), 'nextinput')]
+    def inputs(self):
+        return [tf.placeholder(tf.int32, (None, param.seq_len), 'input'),
+                tf.placeholder(tf.int32, (None, param.seq_len), 'nextinput')]
 
     def _build_graph(self, inputs):
         input, nextinput = inputs

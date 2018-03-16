@@ -41,9 +41,9 @@ def INLReLU(x, name=None):
 
 
 class Model(GANModelDesc):
-    def _get_inputs(self):
-        return [InputDesc(tf.float32, (None, SHAPE, SHAPE, 3), 'inputA'),
-                InputDesc(tf.float32, (None, SHAPE, SHAPE, 3), 'inputB')]
+    def inputs(self):
+        return [tf.placeholder(tf.float32, (None, SHAPE, SHAPE, 3), 'inputA'),
+                tf.placeholder(tf.float32, (None, SHAPE, SHAPE, 3), 'inputB')]
 
     @staticmethod
     def build_res_block(x, name, chan, first=False):

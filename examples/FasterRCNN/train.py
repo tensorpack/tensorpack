@@ -57,16 +57,16 @@ def get_model_output_names():
 
 
 class Model(ModelDesc):
-    def _get_inputs(self):
+    def inputs(self):
         ret = [
-            InputDesc(tf.float32, (None, None, 3), 'image'),
-            InputDesc(tf.int32, (None, None, config.NUM_ANCHOR), 'anchor_labels'),
-            InputDesc(tf.float32, (None, None, config.NUM_ANCHOR, 4), 'anchor_boxes'),
-            InputDesc(tf.float32, (None, 4), 'gt_boxes'),
-            InputDesc(tf.int64, (None,), 'gt_labels')]  # all > 0
+            tf.placeholder(tf.float32, (None, None, 3), 'image'),
+            tf.placeholder(tf.int32, (None, None, config.NUM_ANCHOR), 'anchor_labels'),
+            tf.placeholder(tf.float32, (None, None, config.NUM_ANCHOR, 4), 'anchor_boxes'),
+            tf.placeholder(tf.float32, (None, 4), 'gt_boxes'),
+            tf.placeholder(tf.int64, (None,), 'gt_labels')]  # all > 0
         if config.MODE_MASK:
             ret.append(
-                InputDesc(tf.uint8, (None, None, None), 'gt_masks')
+                tf.placeholder(tf.uint8, (None, None, None), 'gt_masks')
             )   # NR_GT x height x width
         return ret
 

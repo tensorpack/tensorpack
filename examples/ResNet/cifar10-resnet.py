@@ -40,9 +40,9 @@ class Model(ModelDesc):
         super(Model, self).__init__()
         self.n = n
 
-    def _get_inputs(self):
-        return [InputDesc(tf.float32, [None, 32, 32, 3], 'input'),
-                InputDesc(tf.int32, [None], 'label')]
+    def inputs(self):
+        return [tf.placeholder(tf.float32, [None, 32, 32, 3], 'input'),
+                tf.placeholder(tf.int32, [None], 'label')]
 
     def _build_graph(self, inputs):
         image, label = inputs

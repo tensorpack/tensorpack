@@ -63,10 +63,10 @@ def visualize_tensors(name, imgs, scale_func=lambda x: (x + 1.) * 128., max_outp
 
 
 class Model(GANModelDesc):
-    def _get_inputs(self):
+    def inputs(self):
         SHAPE = 256
-        return [InputDesc(tf.float32, (None, SHAPE, SHAPE, IN_CH), 'input'),
-                InputDesc(tf.float32, (None, SHAPE, SHAPE, OUT_CH), 'output')]
+        return [tf.placeholder(tf.float32, (None, SHAPE, SHAPE, IN_CH), 'input'),
+                tf.placeholder(tf.float32, (None, SHAPE, SHAPE, OUT_CH), 'output')]
 
     def generator(self, imgs):
         # imgs: input: 256x256xch

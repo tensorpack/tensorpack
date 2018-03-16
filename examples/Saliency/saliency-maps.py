@@ -54,8 +54,8 @@ def saliency_map(output, input, name="saliency_map"):
 
 
 class Model(tp.ModelDesc):
-    def _get_inputs(self):
-        return [tp.InputDesc(tf.float32, (IMAGE_SIZE, IMAGE_SIZE, 3), 'image')]
+    def inputs(self):
+        return [tf.placeholder(tf.float32, (IMAGE_SIZE, IMAGE_SIZE, 3), 'image')]
 
     def _build_graph(self, inputs):
         orig_image = inputs[0]

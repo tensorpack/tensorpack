@@ -236,10 +236,10 @@ class SiameseModel(EmbeddingModel):
         ds = BatchData(ds, 128 // 2)
         return ds
 
-    def _get_inputs(self):
-        return [InputDesc(tf.float32, (None, 28, 28), 'input'),
-                InputDesc(tf.float32, (None, 28, 28), 'input_y'),
-                InputDesc(tf.int32, (None,), 'label')]
+    def inputs(self):
+        return [tf.placeholder(tf.float32, (None, 28, 28), 'input'),
+                tf.placeholder(tf.float32, (None, 28, 28), 'input_y'),
+                tf.placeholder(tf.int32, (None,), 'label')]
 
     def _build_graph(self, inputs):
         # get inputs
@@ -279,10 +279,10 @@ class TripletModel(EmbeddingModel):
         ds = BatchData(ds, 128 // 3)
         return ds
 
-    def _get_inputs(self):
-        return [InputDesc(tf.float32, (None, 28, 28), 'input'),
-                InputDesc(tf.float32, (None, 28, 28), 'input_p'),
-                InputDesc(tf.float32, (None, 28, 28), 'input_n')]
+    def inputs(self):
+        return [tf.placeholder(tf.float32, (None, 28, 28), 'input'),
+                tf.placeholder(tf.float32, (None, 28, 28), 'input_p'),
+                tf.placeholder(tf.float32, (None, 28, 28), 'input_n')]
 
     def loss(self, a, p, n):
         return triplet_loss(a, p, n, 5., extra=True, scope="loss")
@@ -312,9 +312,9 @@ class CenterModel(EmbeddingModel):
         ds = BatchData(ds, 128)
         return ds
 
-    def _get_inputs(self):
-        return [InputDesc(tf.float32, (None, 28, 28), 'input'),
-                InputDesc(tf.int32, (None,), 'label')]
+    def inputs(self):
+        return [tf.placeholder(tf.float32, (None, 28, 28), 'input'),
+                tf.placeholder(tf.int32, (None,), 'label')]
 
     def _build_graph(self, inputs):
         # get inputs

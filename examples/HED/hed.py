@@ -44,9 +44,9 @@ def class_balanced_sigmoid_cross_entropy(logits, label, name='cross_entropy_loss
 
 
 class Model(ModelDesc):
-    def _get_inputs(self):
-        return [InputDesc(tf.float32, [None, None, None, 3], 'image'),
-                InputDesc(tf.int32, [None, None, None], 'edgemap')]
+    def inputs(self):
+        return [tf.placeholder(tf.float32, [None, None, None, 3], 'image'),
+                tf.placeholder(tf.int32, [None, None, None], 'edgemap')]
 
     def _build_graph(self, inputs):
         image, edgemap = inputs

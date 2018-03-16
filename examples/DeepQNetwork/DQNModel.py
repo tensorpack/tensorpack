@@ -6,7 +6,7 @@
 import abc
 import tensorflow as tf
 import tensorpack
-from tensorpack import ModelDesc, InputDesc
+from tensorpack import ModelDesc
 from tensorpack.utils import logger
 from tensorpack.tfutils import (
     varreplace, summary, get_current_tower_context, optimizer, gradproc)
@@ -24,15 +24,15 @@ class Model(ModelDesc):
         self.num_actions = num_actions
         self.gamma = gamma
 
-    def _get_inputs(self):
+    def inputs(self):
         # Use a combined state for efficiency.
         # The first h channels are the current state, and the last h channels are the next state.
-        return [InputDesc(tf.uint8,
-                          (None,) + self.image_shape + (self.channel + 1,),
-                          'comb_state'),
-                InputDesc(tf.int64, (None,), 'action'),
-                InputDesc(tf.float32, (None,), 'reward'),
-                InputDesc(tf.bool, (None,), 'isOver')]
+        return [tf.placeholder(tf.uint8,
+                               (None,) + self.image_shape + (self.channel + 1,),
+                               'comb_state'),
+                tf.placeholder(tf.int64, (None,), 'action'),
+                tf.placeholder(tf.float32, (None,), 'reward'),
+                tf.placeholder(tf.bool, (None,), 'isOver')]
 
     @abc.abstractmethod
     def _get_DQN_prediction(self, image):

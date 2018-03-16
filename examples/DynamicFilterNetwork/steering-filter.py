@@ -95,11 +95,11 @@ class OnlineTensorboardExport(Callback):
 
 
 class Model(ModelDesc):
-    def _get_inputs(self):
-        return [InputDesc(tf.float32, (BATCH, ), 'theta'),
-                InputDesc(tf.float32, (BATCH, SHAPE, SHAPE), 'image'),
-                InputDesc(tf.float32, (BATCH, SHAPE, SHAPE), 'gt_image'),
-                InputDesc(tf.float32, (BATCH, 9, 9), 'gt_filter')]
+    def inputs(self):
+        return [tf.placeholder(tf.float32, (BATCH, ), 'theta'),
+                tf.placeholder(tf.float32, (BATCH, SHAPE, SHAPE), 'image'),
+                tf.placeholder(tf.float32, (BATCH, SHAPE, SHAPE), 'gt_image'),
+                tf.placeholder(tf.float32, (BATCH, 9, 9), 'gt_filter')]
 
     def _parameter_net(self, theta, kernel_shape=9):
         """Estimate filters for convolution layers

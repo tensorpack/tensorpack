@@ -48,9 +48,9 @@ class Model(GANModelDesc):
         self.height = height
         self.width = width
 
-    def _get_inputs(self):
-        return [InputDesc(tf.float32, (None, self.height * 1, self.width * 1, CHANNELS), 'Ilr'),
-                InputDesc(tf.float32, (None, self.height * 4, self.width * 4, CHANNELS), 'Ihr')]
+    def inputs(self):
+        return [tf.placeholder(tf.float32, (None, self.height * 1, self.width * 1, CHANNELS), 'Ilr'),
+                tf.placeholder(tf.float32, (None, self.height * 4, self.width * 4, CHANNELS), 'Ihr')]
 
     def _build_graph(self, inputs):
         ctx = get_current_tower_context()

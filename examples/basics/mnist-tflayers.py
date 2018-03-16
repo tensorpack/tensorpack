@@ -23,13 +23,13 @@ IMAGE_SIZE = 28
 
 
 class Model(ModelDesc):
-    def _get_inputs(self):
+    def inputs(self):
         """
         Define all the inputs (with type, shape, name) that
         the graph will need.
         """
-        return [InputDesc(tf.float32, (None, IMAGE_SIZE, IMAGE_SIZE), 'input'),
-                InputDesc(tf.int32, (None,), 'label')]
+        return [tf.placeholder(tf.float32, (None, IMAGE_SIZE, IMAGE_SIZE), 'input'),
+                tf.placeholder(tf.int32, (None,), 'label')]
 
     def _build_graph(self, inputs):
         """This function should build the model which takes the input variables
