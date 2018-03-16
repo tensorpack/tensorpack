@@ -76,14 +76,16 @@ def launch_train_with_config(config, trainer):
     inputs_desc = model.get_inputs_desc()
     input = config.data or config.dataflow
     input = apply_default_prefetch(input, trainer)
-    if config.nr_tower > 1:
-        logger.warn("With trainer v2, setting tower in TrainConfig has no effect.")
-        logger.warn("It's enough to set the tower when initializing the trainer.")
 
     trainer.setup_graph(
         inputs_desc, input,
         model._build_graph_get_cost, model.get_optimizer)
-    trainer.train(
-        config.callbacks, config.monitors,
-        config.session_creator, config.session_init,
-        config.steps_per_epoch, config.starting_epoch, config.max_epoch)
+    trainer.train_with_defaults(
+        callbacks=config.callbacks,
+        monitors=config.monitors,
+        session_creator=config.session_creator,
+        session_init=config.session_init,
+        steps_per_epoch=config.steps_per_epoch,
+        starting_epoch=config.starting_epoch,
+        max_epoch=config.max_epoch,
+        extra_callbacks=config.extra_callbacks)

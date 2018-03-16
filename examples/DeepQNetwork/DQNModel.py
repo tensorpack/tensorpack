@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # File: DQNModel.py
-# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+
 
 import abc
 import tensorflow as tf

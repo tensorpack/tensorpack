@@ -12,7 +12,7 @@ from ..callbacks import (
 from ..dataflow.base import DataFlow
 from ..graph_builder.model_desc import ModelDescBase
 from ..utils import logger
-from ..tfutils.sessinit import JustCurrentSession, SessionInit, SaverRestore
+from ..tfutils.sessinit import SessionInit, SaverRestore
 from ..tfutils.sesscreate import NewSessionCreator
 from ..input_source import InputSource
 
@@ -52,21 +52,20 @@ def DEFAULT_MONITORS():
 
 class TrainConfig(object):
     """
-    A collection of options to be used for trainers.
+    A collection of options to be used for single-cost trainers.
     """
 
     def __init__(self,
-                 dataflow=None, data=None, model=None,
+                 dataflow=None, data=None,
+                 model=None,
                  callbacks=None, extra_callbacks=None, monitors=None,
                  session_creator=None, session_config=None, session_init=None,
-                 starting_epoch=1, steps_per_epoch=None, max_epoch=99999,
-                 nr_tower=1, tower=None,
-                 **kwargs):
+                 starting_epoch=1, steps_per_epoch=None, max_epoch=99999):
         """
         Args:
             dataflow (DataFlow):
             data (InputSource):
-            model (ModelDescBase):
+            model (ModelDesc):
 
             callbacks (list): a list of :class:`Callback` to perform during training.
             extra_callbacks (list): the same as ``callbacks``. This argument
@@ -107,20 +106,18 @@ class TrainConfig(object):
             assert_type(model, ModelDescBase)
         self.model = model
 
-        if callbacks is None:
-            callbacks = []
-        assert_type(callbacks, list)
+        if callbacks is not None:
+            assert_type(callbacks, list)
+        self.callbacks = callbacks
         if extra_callbacks is not None:
-            self._callbacks = callbacks + extra_callbacks
-        else:
-            self._callbacks = callbacks + DEFAULT_CALLBACKS()
-
-        self.monitors = monitors if monitors is not None else DEFAULT_MONITORS()
-
-        if session_init is None:
-            session_init = JustCurrentSession()
+            assert_type(extra_callbacks, list)
+        self.extra_callbacks = extra_callbacks
+        if monitors is not None:
+            assert_type(monitors, list)
+        self.monitors = monitors
+        if session_init is not None:
+            assert_type(session_init, SessionInit)
         self.session_init = session_init
-        assert_type(self.session_init, SessionInit)
 
         if session_creator is None:
             if session_config is not None:
@@ -148,27 +145,6 @@ class TrainConfig(object):
 
         self.starting_epoch = int(starting_epoch)
         self.max_epoch = int(max_epoch)
-
-        # Tower stuff are for Trainer v1 only:
-        nr_tower = max(nr_tower, 1)
-        self.nr_tower = nr_tower
-        if tower is not None:
-            assert self.nr_tower == 1, "Cannot set both nr_tower and tower in TrainConfig!"
-            self.tower = tower
-
-        assert len(kwargs) == 0, 'Unknown arguments: {}'.format(str(kwargs.keys()))
-
-    @property
-    def nr_tower(self):
-        return len(self.tower)
-
-    @nr_tower.setter
-    def nr_tower(self, value):
-        self.tower = list(range(value))
-
-    @property
-    def callbacks(self):        # disable setter
-        return self._callbacks
 
 
 class AutoResumeTrainConfig(TrainConfig):

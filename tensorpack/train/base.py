@@ -7,6 +7,7 @@ import weakref
 import time
 from six.moves import range
 import six
+import copy
 
 from ..callbacks import (
     Callback, Callbacks, Monitors, TrainingMonitor)
@@ -187,6 +188,8 @@ class Trainer(object):
             callbacks ([Callback]):
             monitors ([TrainingMonitor]):
         """
+        assert isinstance(callbacks, list), callbacks
+        assert isinstance(monitors, list), monitors
         describe_trainable_vars()   # TODO weird
 
         self.register_callback(MaintainStepCounter())
@@ -284,7 +287,7 @@ class Trainer(object):
               session_creator, session_init,
               steps_per_epoch, starting_epoch=1, max_epoch=9999999):
         """
-        Implemented by:
+        Implemented by three lines:
 
         .. code-block:: python
 
@@ -299,18 +302,24 @@ class Trainer(object):
         self.main_loop(steps_per_epoch, starting_epoch, max_epoch)
 
     def train_with_defaults(
-            self, callbacks=None, monitors=None,
+            self, _sentinel=None,
+            callbacks=None, monitors=None,
             session_creator=None, session_init=None,
-            steps_per_epoch=None, starting_epoch=1, max_epoch=9999999):
+            steps_per_epoch=None, starting_epoch=1, max_epoch=9999999,
+            extra_callbacks=None):
         """
-        Same as :meth:`train()`, but will:
+        Same as :meth:`train()`, except:
 
-        1. Append :meth:`DEFAULT_CALLBACKS()` to callbacks.
-        2. Append :meth:`DEFAULT_MONITORS()` to monitors.
+        1. Add `extra_callbacks` to callbacks. The default value for
+           `extra_callbacks` is :meth:`DEFAULT_CALLBACKS()`.
+        2. Default value for `monitors` is :meth:`DEFAULT_MONITORS()`.
         3. Provide default values for every option except `steps_per_epoch`.
         """
-        callbacks = (callbacks or []) + DEFAULT_CALLBACKS()
-        monitors = (monitors or []) + DEFAULT_MONITORS()
+        assert _sentinel is None, "Please call `train_with_defaults` with keyword arguments only!"
+        callbacks = copy.copy(callbacks or [])
+        monitors = DEFAULT_MONITORS() if monitors is None else monitors
+        extra_callbacks = DEFAULT_CALLBACKS() if extra_callbacks is None else extra_callbacks
+        callbacks.extend(extra_callbacks)
 
         assert steps_per_epoch is not None
         session_creator = session_creator or NewSessionCreator()

@@ -124,7 +124,7 @@ if __name__ == '__main__':
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
-    logger.set_logger_dir(os.path.join('train_log', 'vgg16'))
+    logger.set_logger_dir(os.path.join('train_log', 'vgg16-norm={}'.format(args.norm)))
 
     config = get_config()
     if args.load:
