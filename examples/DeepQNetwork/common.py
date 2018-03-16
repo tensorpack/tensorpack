@@ -18,7 +18,7 @@ from tensorpack.utils.utils import get_tqdm_kwargs
 def play_one_episode(env, func, render=False):
     def predict(s):
         """
-        Map from observation to action, with 0.001 greedy.
+        Map from observation to action, with 0.01 greedy.
         """
         act = func(s[None, :, :, :])[0][0].argmax()
         if random.random() < 0.01:
@@ -45,7 +45,7 @@ def play_n_episodes(player, predfunc, nr, render=False):
         print("{}/{}, score={}".format(k, nr, score))
 
 
-def eval_with_funcs(predictors, nr_eval, get_player_fn):
+def eval_with_funcs(predictors, nr_eval, get_player_fn, verbose=False):
     """
     Args:
         predictors ([PredictorBase])
@@ -67,7 +67,6 @@ def eval_with_funcs(predictors, nr_eval, get_player_fn):
                 while not self.stopped():
                     try:
                         score = play_one_episode(player, self.func)
-                        # print("Score, ", score)
                     except RuntimeError:
                         return
                     self.queue_put_stoppable(self.q, score)
@@ -80,17 +79,21 @@ def eval_with_funcs(predictors, nr_eval, get_player_fn):
         time.sleep(0.1)  # avoid simulator bugs
     stat = StatCounter()
 
-    for _ in tqdm(range(nr_eval), **get_tqdm_kwargs()):
+    def fetch():
         r = q.get()
         stat.feed(r)
+        if verbose:
+            logger.info("Score: {}".format(r))
+
+    for _ in tqdm(range(nr_eval), **get_tqdm_kwargs()):
+        fetch()
     logger.info("Waiting for all the workers to finish the last run...")
     for k in threads:
         k.stop()
     for k in threads:
         k.join()
     while q.qsize():
-        r = q.get()
-        stat.feed(r)
+        fetch()
 
     if stat.count > 0:
         return (stat.average, stat.max)
@@ -100,11 +103,13 @@ def eval_with_funcs(predictors, nr_eval, get_player_fn):
 def eval_model_multithread(pred, nr_eval, get_player_fn):
     """
     Args:
-        pred (OfflinePredictor): state -> Qvalue
+        pred (OfflinePredictor): state -> [#action]
     """
     NR_PROC = min(multiprocessing.cpu_count() // 2, 8)
     with pred.sess.as_default():
-        mean, max = eval_with_funcs([pred] * NR_PROC, nr_eval, get_player_fn)
+        mean, max = eval_with_funcs(
+            [pred] * NR_PROC, nr_eval,
+            get_player_fn, verbose=True)
     logger.info("Average Score: {}; Max Score: {}".format(mean, max))
 
 

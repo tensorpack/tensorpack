@@ -9,7 +9,7 @@ import tensorpack
 from tensorpack import ModelDesc, InputDesc
 from tensorpack.utils import logger
 from tensorpack.tfutils import (
-    summary, get_current_tower_context, optimizer, gradproc)
+    varreplace, summary, get_current_tower_context, optimizer, gradproc)
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
 assert tensorpack.tfutils.common.get_tf_version_number() >= 1.2
 
@@ -60,7 +60,7 @@ class Model(ModelDesc):
             self.predict_value, 1), name='predict_reward')
         summary.add_moving_summary(max_pred_reward)
 
-        with tf.variable_scope('target'):
+        with tf.variable_scope('target'), varreplace.freeze_variables(skip_collection=True):
             targetQ_predict_value = self.get_DQN_prediction(next_state)    # NxA
 
         if self.method != 'Double':
@@ -96,6 +96,6 @@ class Model(ModelDesc):
             target_name = v.op.name
             if target_name.startswith('target'):
                 new_name = target_name.replace('target/', '')
-                logger.info("{} <- {}".format(target_name, new_name))
+                logger.info("Target Network Update: {} <- {}".format(target_name, new_name))
                 ops.append(v.assign(G.get_tensor_by_name(new_name + ':0')))
         return tf.group(*ops, name='update_target_network')

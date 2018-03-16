@@ -138,12 +138,12 @@ class AtariPlayer(gym.Env):
                 self.last_raw_screen = self._grab_raw_image()
             self.ale.act(0)
 
-    def _reset(self):
+    def reset(self):
         if self.ale.game_over():
             self._restart_episode()
         return self._current_state()
 
-    def _step(self, act):
+    def step(self, act):
         oldlives = self.ale.lives()
         r = 0
         for k in range(self.frame_skip):

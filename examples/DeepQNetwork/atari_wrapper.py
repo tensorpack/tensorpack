@@ -8,6 +8,9 @@ from collections import deque
 import gym
 from gym import spaces
 
+_v0, _v1 = gym.__version__.split('.')[:2]
+assert int(_v0) > 0 or int(_v1) >= 10, gym.__version__
+
 
 """
 The following wrappers are copied or modified from openai/baselines:
@@ -20,7 +23,7 @@ class MapState(gym.ObservationWrapper):
         gym.ObservationWrapper.__init__(self, env)
         self._func = map_func
 
-    def _observation(self, obs):
+    def observation(self, obs):
         return self._func(obs)
 
 
@@ -32,22 +35,23 @@ class FrameStack(gym.Wrapper):
         self.frames = deque([], maxlen=k)
         shp = env.observation_space.shape
         chan = 1 if len(shp) == 2 else shp[2]
-        self.observation_space = spaces.Box(low=0, high=255, shape=(shp[0], shp[1], chan * k))
+        self.observation_space = spaces.Box(
+            low=0, high=255, shape=(shp[0], shp[1], chan * k), dtype=np.uint8)
 
-    def _reset(self):
+    def reset(self):
         """Clear buffer and re-fill by duplicating the first observation."""
         ob = self.env.reset()
         for _ in range(self.k - 1):
             self.frames.append(np.zeros_like(ob))
         self.frames.append(ob)
-        return self._observation()
+        return self.observation()
 
-    def _step(self, action):
+    def step(self, action):
         ob, reward, done, info = self.env.step(action)
         self.frames.append(ob)
-        return self._observation(), reward, done, info
+        return self.observation(), reward, done, info
 
-    def _observation(self):
+    def observation(self):
         assert len(self.frames) == self.k
         if self.frames[-1].ndim == 2:
             return np.stack(self.frames, axis=-1)
@@ -62,7 +66,7 @@ class _FireResetEnv(gym.Wrapper):
         assert env.unwrapped.get_action_meanings()[1] == 'FIRE'
         assert len(env.unwrapped.get_action_meanings()) >= 3
 
-    def _reset(self):
+    def reset(self):
         self.env.reset()
         obs, _, done, _ = self.env.step(1)
         if done:
@@ -71,6 +75,9 @@ class _FireResetEnv(gym.Wrapper):
         if done:
             self.env.reset()
         return obs
+
+    def step(self, action):
+        return self.env.step(action)
 
 
 def FireResetEnv(env):
@@ -88,7 +95,7 @@ class LimitLength(gym.Wrapper):
         gym.Wrapper.__init__(self, env)
         self.k = k
 
-    def _reset(self):
+    def reset(self):
         # This assumes that reset() will really reset the env.
         # If the underlying env tries to be smart about reset
         # (e.g. end-of-life), the assumption doesn't hold.
@@ -96,7 +103,7 @@ class LimitLength(gym.Wrapper):
         self.cnt = 0
         return ob
 
-    def _step(self, action):
+    def step(self, action):
         ob, r, done, info = self.env.step(action)
         self.cnt += 1
         if self.cnt == self.k:

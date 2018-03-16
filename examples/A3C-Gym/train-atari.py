@@ -54,7 +54,7 @@ ENV_NAME = None
 def get_player(train=False, dumpdir=None):
     env = gym.make(ENV_NAME)
     if dumpdir:
-        env = gym.wrappers.Monitor(env, dumpdir)
+        env = gym.wrappers.Monitor(env, dumpdir, video_callable=lambda _: True)
     env = FireResetEnv(env)
     env = MapState(env, lambda im: cv2.resize(im, IMAGE_SIZE))
     env = FrameStack(env, 4)
@@ -272,7 +272,7 @@ if __name__ == '__main__':
     parser.add_argument('--load', help='load model')
     parser.add_argument('--env', help='env', required=True)
     parser.add_argument('--task', help='task to perform',
-                        choices=['play', 'eval', 'train', 'gen_submit'], default='train')
+                        choices=['play', 'eval', 'train', 'dump_video'], default='train')
     parser.add_argument('--output', help='output directory for submission', default='output_dir')
     parser.add_argument('--episode', help='number of episode to eval', default=100, type=int)
     args = parser.parse_args()
@@ -297,10 +297,9 @@ if __name__ == '__main__':
                             args.episode, render=True)
         elif args.task == 'eval':
             eval_model_multithread(pred, args.episode, get_player)
-        elif args.task == 'gen_submit':
+        elif args.task == 'dump_video':
             play_n_episodes(
                 get_player(train=False, dumpdir=args.output),
                 pred, args.episode)
-            # gym.upload(args.output, api_key='xxx')
     else:
         train()

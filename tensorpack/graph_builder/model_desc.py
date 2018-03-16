@@ -95,6 +95,11 @@ class ModelDescBase(object):
         Args:
             args ([tf.Tensor]): tensors that matches the list of
                 :class:`InputDesc` defined by ``_get_inputs``.
+
+        Returns:
+            In general it returns nothing, but a subclass (e.g.
+            :class:`ModelDesc` may require it to return necessary information
+            to build the trainer.
         """
         if len(args) == 1:
             arg = args[0]
@@ -124,18 +129,16 @@ class ModelDescBase(object):
 
 class ModelDesc(ModelDescBase):
     """
-    A ModelDesc with single cost and single optimizer.
+    A ModelDesc with **single cost** and **single optimizer**.
     It contains information about InputDesc, how to get cost, and how to get optimizer.
     """
 
     def get_cost(self):
         """
-        Return the cost tensor in the graph.
+        Return the cost tensor to optimize on.
 
-        It calls :meth:`ModelDesc._get_cost()` which by default returns
-        ``self.cost``. You can override :meth:`_get_cost()` if needed.
-
-        This function also applies the collection
+        This function takes the cost tensor defined by :meth:`build_graph`,
+        and applies the collection
         ``tf.GraphKeys.REGULARIZATION_LOSSES`` to the cost automatically.
         """
         cost = self._get_cost()
@@ -165,6 +168,9 @@ class ModelDesc(ModelDescBase):
         raise NotImplementedError()
 
     def _build_graph_get_cost(self, *inputs):
+        """
+        Used by trainers to get the final cost for optimization.
+        """
         self.build_graph(*inputs)
         return self.get_cost()
 
