@@ -2,7 +2,6 @@
 # -*- coding: UTF-8 -*-
 # File: svhn.py
 
-
 import os
 import numpy as np
 
@@ -77,7 +76,7 @@ try:
     import scipy.io
 except ImportError:
     from ...utils.develop import create_dummy_class
-    SVHNDigit = create_dummy_class('SVHNDigit', 'scipy.io')  # noqa
+    SVHNDigit = create_dummy_class('SVHNDigit', 'scipy.io')    # noqa
 
 if __name__ == '__main__':
     a = SVHNDigit('train')

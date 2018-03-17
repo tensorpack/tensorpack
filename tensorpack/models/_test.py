@@ -2,7 +2,6 @@
 # -*- coding: UTF-8 -*-
 # File: _test.py
 
-
 import logging
 import tensorflow as tf
 import unittest

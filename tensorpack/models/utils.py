@@ -7,6 +7,7 @@ import six
 
 class VariableHolder(object):
     """ A proxy to access variables defined in a layer. """
+
     def __init__(self, **kwargs):
         """
         Args:

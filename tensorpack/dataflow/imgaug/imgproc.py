@@ -1,14 +1,15 @@
 # -*- coding: UTF-8 -*-
 # File: imgproc.py
 
-
 from .base import ImageAugmentor
 from ...utils import logger
 import numpy as np
 import cv2
 
-__all__ = ['Hue', 'Brightness', 'BrightnessScale', 'Contrast', 'MeanVarianceNormalize',
-           'GaussianBlur', 'Gamma', 'Clip', 'Saturation', 'Lighting', 'MinMaxNormalize']
+__all__ = [
+    'Hue', 'Brightness', 'BrightnessScale', 'Contrast', 'MeanVarianceNormalize',
+    'GaussianBlur', 'Gamma', 'Clip', 'Saturation', 'Lighting', 'MinMaxNormalize'
+]
 
 
 class Hue(ImageAugmentor):
@@ -23,7 +24,9 @@ class Hue(ImageAugmentor):
         """
         super(Hue, self).__init__()
         if rgb is None:
-            logger.warn("Hue() now assumes rgb=False, but will by default use rgb=True in the future!")
+            logger.warn(
+                "Hue() now assumes rgb=False, but will by default use rgb=True in the future!"
+            )
             rgb = False
         rgb = bool(rgb)
         self._init(locals())
@@ -50,6 +53,7 @@ class Brightness(ImageAugmentor):
     """
     Adjust brightness by adding a random number.
     """
+
     def __init__(self, delta, clip=True):
         """
         Args:
@@ -77,6 +81,7 @@ class BrightnessScale(ImageAugmentor):
     """
     Adjust brightness by scaling by a random factor.
     """
+
     def __init__(self, range, clip=True):
         """
         Args:
@@ -173,12 +178,15 @@ class GaussianBlur(ImageAugmentor):
         return sx, sy
 
     def _augment(self, img, s):
-        return np.reshape(cv2.GaussianBlur(img, s, sigmaX=0, sigmaY=0,
-                                           borderType=cv2.BORDER_REPLICATE), img.shape)
+        return np.reshape(
+            cv2.GaussianBlur(
+                img, s, sigmaX=0, sigmaY=0, borderType=cv2.BORDER_REPLICATE),
+            img.shape)
 
 
 class Gamma(ImageAugmentor):
     """ Randomly adjust gamma """
+
     def __init__(self, range=(-0.5, 0.5)):
         """
         Args:
@@ -192,7 +200,8 @@ class Gamma(ImageAugmentor):
 
     def _augment(self, img, gamma):
         old_dtype = img.dtype
-        lut = ((np.arange(256, dtype='float32') / 255) ** (1. / (1. + gamma)) * 255).astype('uint8')
+        lut = ((np.arange(256, dtype='float32') / 255)**
+               (1. / (1. + gamma)) * 255).astype('uint8')
         img = np.clip(img, 0, 255).astype('uint8')
         ret = cv2.LUT(img, lut).astype(old_dtype)
         if img.ndim == 3 and ret.ndim == 2:
@@ -287,6 +296,7 @@ class MinMaxNormalize(ImageAugmentor):
 
     This augmentor always returns float32 images.
     """
+
     def __init__(self, min=0, max=255, all_channel=True):
         """
         Args:
@@ -304,5 +314,6 @@ class MinMaxNormalize(ImageAugmentor):
         else:
             minimum = np.min(img, axis=(0, 1), keepdims=True)
             maximum = np.max(img, axis=(0, 1), keepdims=True)
-        img = (self.max - self.min) * (img - minimum) / (maximum - minimum) + self.min
+        img = (self.max - self.min) * (img - minimum) / (
+            maximum - minimum) + self.min
         return img

@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # File: prof.py
 
-
 import os
 import numpy as np
 import multiprocessing as mp
@@ -39,8 +38,10 @@ class GPUUtilizationTracker(Callback):
             env = os.environ.get('CUDA_VISIBLE_DEVICES')
             if env is None:
                 self._devices = list(range(get_nr_gpu()))
-                logger.warn("[GPUUtilizationTracker] Both devices and CUDA_VISIBLE_DEVICES are None! "
-                            "Will monitor all {} visible GPUs!".format(len(self._devices)))
+                logger.warn(
+                    "[GPUUtilizationTracker] Both devices and CUDA_VISIBLE_DEVICES are None! "
+                    "Will monitor all {} visible GPUs!".format(
+                        len(self._devices)))
             else:
                 if len(env):
                     self._devices = list(map(int, env.split(',')))
@@ -48,14 +49,15 @@ class GPUUtilizationTracker(Callback):
                     self._devices = []
         else:
             self._devices = devices
-        assert len(self._devices), "[GPUUtilizationTracker] No GPU device given!"
+        assert len(
+            self._devices), "[GPUUtilizationTracker] No GPU device given!"
 
     def _before_train(self):
         self._evt = mp.Event()
         self._stop_evt = mp.Event()
         self._queue = mp.Queue()
-        self._proc = mp.Process(target=self.worker, args=(
-            self._evt, self._queue, self._stop_evt))
+        self._proc = mp.Process(
+            target=self.worker, args=(self._evt, self._queue, self._stop_evt))
         ensure_proc_terminate(self._proc)
         start_proc_mask_signal(self._proc)
 
@@ -63,7 +65,7 @@ class GPUUtilizationTracker(Callback):
         self._evt.set()
 
     def _after_epoch(self):
-        while self._evt.is_set():   # unlikely
+        while self._evt.is_set():    # unlikely
             pass
         self._evt.set()
 
@@ -72,7 +74,8 @@ class GPUUtilizationTracker(Callback):
         # before,after_epoch are supposed to be extremely fast by design.
         stats = self._queue.get()
         for idx, dev in enumerate(self._devices):
-            self.trainer.monitors.put_scalar('GPUUtil/{}'.format(dev), stats[idx])
+            self.trainer.monitors.put_scalar('GPUUtil/{}'.format(dev),
+                                             stats[idx])
 
     def _after_train(self):
         self._stop_evt.set()
@@ -81,9 +84,9 @@ class GPUUtilizationTracker(Callback):
 
     def worker(self, evt, rst_queue, stop_evt):
         while True:
-            evt.wait()  # start epoch
+            evt.wait()    # start epoch
             evt.clear()
-            if stop_evt.is_set():   # or on exit
+            if stop_evt.is_set():    # or on exit
                 return
 
             stats = np.zeros((len(self._devices),), dtype='f4')
@@ -92,13 +95,16 @@ class GPUUtilizationTracker(Callback):
                 while True:
                     time.sleep(1)
 
-                    data = [ctx.device(i).utilization()['gpu'] for i in self._devices]
+                    data = [
+                        ctx.device(i).utilization()['gpu']
+                        for i in self._devices
+                    ]
                     data = list(map(float, data))
                     stats += data
                     cnt += 1
 
                     if evt.is_set():    # stop epoch
-                        if stop_evt.is_set():   # or on exit
+                        if stop_evt.is_set():    # or on exit
                             return
                         evt.clear()
                         # Ignore the last datapoint. Usually is zero, makes us underestimate the util.
@@ -110,6 +116,7 @@ class GPUUtilizationTracker(Callback):
 
 # Can add more features from tfprof
 # https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/profiler/README.md
+
 
 class GraphProfiler(Callback):
     """
@@ -126,7 +133,9 @@ class GraphProfiler(Callback):
     You probably want to schedule it less frequently by
     :class:`PeriodicRunHooks`.
     """
-    def __init__(self, dump_metadata=False, dump_tracing=True, dump_event=False):
+
+    def __init__(self, dump_metadata=False, dump_tracing=True,
+                 dump_event=False):
         """
         Args:
             dump_metadata(bool): Dump :class:`tf.RunMetadata` to be used with tfprof.
@@ -155,18 +164,19 @@ class GraphProfiler(Callback):
             self._write_event(meta)
 
     def _write_meta(self, metadata):
-        fname = os.path.join(
-            self._dir, 'runmetadata-{}.pb'.format(self.global_step))
+        fname = os.path.join(self._dir, 'runmetadata-{}.pb'.format(
+            self.global_step))
         with open(fname, 'wb') as f:
             f.write(metadata.SerializeToString())
 
     def _write_tracing(self, metadata):
         tl = timeline.Timeline(step_stats=metadata.step_stats)
-        fname = os.path.join(
-            self._dir, 'chrome-trace-{}.json'.format(self.global_step))
+        fname = os.path.join(self._dir, 'chrome-trace-{}.json'.format(
+            self.global_step))
         with open(fname, 'w') as f:
-            f.write(tl.generate_chrome_trace_format(
-                show_dataflow=True, show_memory=True))
+            f.write(
+                tl.generate_chrome_trace_format(
+                    show_dataflow=True, show_memory=True))
 
     def _write_event(self, metadata):
         evt = tf.Event()
@@ -191,7 +201,9 @@ class PeakMemoryTracker(Callback):
             devices([int] or [str]): list of GPU devices to track memory on.
         """
         assert isinstance(devices, (list, tuple)), devices
-        devices = ['/gpu:{}'.format(x) if isinstance(x, int) else x for x in devices]
+        devices = [
+            '/gpu:{}'.format(x) if isinstance(x, int) else x for x in devices
+        ]
         self._devices = devices
 
     def _setup_graph(self):

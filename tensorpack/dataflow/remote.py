@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # File: remote.py
 
-
 import time
 import tqdm
 
@@ -88,6 +87,7 @@ class RemoteDataZMQ(DataFlow):
     Attributes:
         cnt1, cnt2 (int): number of data points received from addr1 and addr2
     """
+
     def __init__(self, addr1, addr2=None, hwm=50, bind=True):
         """
         Args:
@@ -157,7 +157,6 @@ if __name__ == '__main__':
     from argparse import ArgumentParser
     from .raw import FakeData
     from .common import TestDataSpeed
-
     """
     Test the multi-producer single-consumer model
     """

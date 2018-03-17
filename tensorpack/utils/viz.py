@@ -17,11 +17,10 @@ try:
 except ImportError:
     pass
 
-
-__all__ = ['pyplot2img', 'interactive_imshow',
-           'stack_patches', 'gen_stack_patches',
-           'dump_dataflow_images', 'intensity_to_rgb',
-           'draw_boxes']
+__all__ = [
+    'pyplot2img', 'interactive_imshow', 'stack_patches', 'gen_stack_patches',
+    'dump_dataflow_images', 'intensity_to_rgb', 'draw_boxes'
+]
 
 
 def pyplot2img(plt):
@@ -58,6 +57,7 @@ def interactive_imshow(img, lclick_cb=None, rclick_cb=None, **kwargs):
             lclick_cb(img, x, y)
         elif event == cv2.EVENT_RBUTTONUP and rclick_cb is not None:
             rclick_cb(img, x, y)
+
     cv2.setMouseCallback(name, mouse_cb)
     key = chr(cv2.waitKey(-1) & 0xff)
     cb_name = 'key_cb_' + key
@@ -110,9 +110,8 @@ def _pad_patch_list(plist, bgcolor):
 
 
 class Canvas(object):
-    def __init__(self, ph, pw,
-                 nr_row, nr_col,
-                 channel, border, bgcolor):
+
+    def __init__(self, ph, pw, nr_row, nr_col, channel, border, bgcolor):
         self.ph = ph
         self.pw = pw
         self.nr_row = nr_row
@@ -129,9 +128,10 @@ class Canvas(object):
         self.bgcolor = bgcolor
         self.channel = max(channel, bgchannel)
 
-        self.canvas = np.zeros((nr_row * (ph + border) - border,
-                               nr_col * (pw + border) - border,
-                               self.channel), dtype='uint8')
+        self.canvas = np.zeros(
+            (nr_row * (ph + border) - border, nr_col *
+             (pw + border) - border, self.channel),
+            dtype='uint8')
 
     def draw_patches(self, plist):
         assert self.nr_row * self.nr_col >= len(plist), \
@@ -159,9 +159,14 @@ class Canvas(object):
         return idx
 
 
-def stack_patches(
-        patch_list, nr_row, nr_col, border=None,
-        pad=False, bgcolor=255, viz=False, lclick_cb=None):
+def stack_patches(patch_list,
+                  nr_row,
+                  nr_col,
+                  border=None,
+                  pad=False,
+                  bgcolor=255,
+                  viz=False,
+                  lclick_cb=None):
     """
     Stacked patches into grid, to produce visualizations like the following:
 
@@ -192,10 +197,11 @@ def stack_patches(
         viz = True
     ph, pw = patch_list.shape[1:3]
 
-    canvas = Canvas(ph, pw, nr_row, nr_col,
-                    patch_list.shape[-1], border, bgcolor)
+    canvas = Canvas(ph, pw, nr_row, nr_col, patch_list.shape[-1], border,
+                    bgcolor)
 
     if lclick_cb is not None:
+
         def lclick_callback(img, x, y):
             idx = canvas.get_patchid_from_coord(x, y)
             lclick_cb(patch_list[idx], idx)
@@ -209,9 +215,14 @@ def stack_patches(
 
 
 def gen_stack_patches(patch_list,
-                      nr_row=None, nr_col=None, border=None,
-                      max_width=1000, max_height=1000,
-                      bgcolor=255, viz=False, lclick_cb=None):
+                      nr_row=None,
+                      nr_col=None,
+                      border=None,
+                      max_width=1000,
+                      max_height=1000,
+                      bgcolor=255,
+                      viz=False,
+                      lclick_cb=None):
     """
     Similar to :func:`stack_patches` but with a generator interface.
     It takes a much-longer list and yields stacked results one by one.
@@ -241,12 +252,14 @@ def gen_stack_patches(patch_list,
         nr_row = int(max_height / (ph + border))
     if nr_col is None:
         nr_col = int(max_width / (pw + border))
-    canvas = Canvas(ph, pw, nr_row, nr_col, patch_list.shape[-1], border, bgcolor)
+    canvas = Canvas(ph, pw, nr_row, nr_col, patch_list.shape[-1], border,
+                    bgcolor)
 
     nr_patch = nr_row * nr_col
     start = 0
 
     if lclick_cb is not None:
+
         def lclick_callback(img, x, y):
             idx = canvas.get_patchid_from_coord(x, y)
             idx = idx + start
@@ -267,9 +280,14 @@ def gen_stack_patches(patch_list,
         start = end
 
 
-def dump_dataflow_images(df, index=0, batched=True,
-                         number=1000, output_dir=None,
-                         scale=1, resize=None, viz=None,
+def dump_dataflow_images(df,
+                         index=0,
+                         batched=True,
+                         number=1000,
+                         output_dir=None,
+                         scale=1,
+                         resize=None,
+                         viz=None,
                          flipRGB=False):
     """
     Dump or visualize images of a :class:`DataFlow`.
@@ -322,8 +340,7 @@ def dump_dataflow_images(df, index=0, batched=True,
                     vizlist.append(img)
             if viz is not None and len(vizlist) >= vizsize:
                 stack_patches(
-                    vizlist[:vizsize],
-                    nr_row=viz[0], nr_col=viz[1], viz=True)
+                    vizlist[:vizsize], nr_row=viz[0], nr_col=viz[1], viz=True)
                 vizlist = vizlist[vizsize:]
 
 
@@ -378,7 +395,8 @@ def draw_boxes(im, boxes, labels=None, color=None):
     else:
         boxes = boxes.astype('int32')
     if labels is not None:
-        assert len(labels) == len(boxes), "{} != {}".format(len(labels), len(boxes))
+        assert len(labels) == len(boxes), "{} != {}".format(
+            len(labels), len(boxes))
     areas = (boxes[:, 2] - boxes[:, 0] + 1) * (boxes[:, 3] - boxes[:, 1] + 1)
     sorted_inds = np.argsort(-areas)    # draw large ones first
     assert areas.min() > 0, areas.min()
@@ -389,7 +407,9 @@ def draw_boxes(im, boxes, labels=None, color=None):
 
     im = im.copy()
     COLOR = (218, 218, 218) if color is None else color
-    COLOR_DIFF_WEIGHT = np.asarray((3, 4, 2), dtype='int32')    # https://www.wikiwand.com/en/Color_difference
+    COLOR_DIFF_WEIGHT = np.asarray(
+        (3, 4, 2),
+        dtype='int32')    # https://www.wikiwand.com/en/Color_difference
     COLOR_CANDIDATES = PALETTE_RGB[:, ::-1]
     if im.ndim == 2 or (im.ndim == 3 and im.shape[2] == 1):
         im = cv2.cvtColor(im, cv2.COLOR_GRAY2BGR)
@@ -404,11 +424,12 @@ def draw_boxes(im, boxes, labels=None, color=None):
             ((linew, lineh), _) = cv2.getTextSize(label, FONT, FONT_SCALE, 1)
             bottom_left = [box[0] + 1, box[1] - 0.3 * lineh]
             top_left = [box[0] + 1, box[1] - 1.3 * lineh]
-            if top_left[1] < 0:     # out of image
+            if top_left[1] < 0:    # out of image
                 top_left[1] = box[3] - 1.3 * lineh
                 bottom_left[1] = box[3] - 0.3 * lineh
-            textbox = IntBox(int(top_left[0]), int(top_left[1]),
-                             int(top_left[0] + linew), int(top_left[1] + lineh))
+            textbox = IntBox(
+                int(top_left[0]), int(top_left[1]), int(top_left[0] + linew),
+                int(top_left[1] + lineh))
             textbox.clip_by_shape(im.shape[:2])
             if color is None:
                 # find the best color
@@ -417,19 +438,27 @@ def draw_boxes(im, boxes, labels=None, color=None):
                                   COLOR_DIFF_WEIGHT).sum(axis=1).argmax()
                 best_color = COLOR_CANDIDATES[best_color_ind].tolist()
 
-            cv2.putText(im, label, (textbox.x1, textbox.y2),
-                        FONT, FONT_SCALE, color=best_color, lineType=cv2.LINE_AA)
-        cv2.rectangle(im, (box[0], box[1]), (box[2], box[3]),
-                      color=best_color, thickness=1)
+            cv2.putText(
+                im,
+                label, (textbox.x1, textbox.y2),
+                FONT,
+                FONT_SCALE,
+                color=best_color,
+                lineType=cv2.LINE_AA)
+        cv2.rectangle(
+            im, (box[0], box[1]), (box[2], box[3]),
+            color=best_color,
+            thickness=1)
     return im
 
 
-from ..utils.develop import create_dummy_func   # noqa
+from ..utils.develop import create_dummy_func    # noqa
 try:
     import matplotlib.pyplot as plt
 except (ImportError, RuntimeError):
     pyplot2img = create_dummy_func('pyplot2img', 'matplotlib')    # noqa
-    intensity_to_rgb = create_dummy_func('intensity_to_rgb', 'matplotlib')    # noqa
+    intensity_to_rgb = create_dummy_func('intensity_to_rgb',
+                                         'matplotlib')    # noqa
 
 if __name__ == '__main__':
     if False:
@@ -437,8 +466,8 @@ if __name__ == '__main__':
         for i in range(100):
             fname = "{:03d}.png".format(i)
             imglist.append(cv2.imread(fname))
-        for idx, patch in enumerate(gen_stack_patches(
-                imglist, max_width=500, max_height=200)):
+        for idx, patch in enumerate(
+                gen_stack_patches(imglist, max_width=500, max_height=200)):
             of = "patch{:02d}.png".format(idx)
             cv2.imwrite(of, patch)
     if False:
@@ -449,9 +478,6 @@ if __name__ == '__main__':
 
     if False:
         img = cv2.imread('cat.jpg')
-        boxes = np.asarray([
-            [10, 30, 200, 100],
-            [20, 80, 250, 250]
-        ])
+        boxes = np.asarray([[10, 30, 200, 100], [20, 80, 250, 250]])
         img = draw_boxes(img, boxes, ['asdfasdf', '11111111111111'])
         interactive_imshow(img)

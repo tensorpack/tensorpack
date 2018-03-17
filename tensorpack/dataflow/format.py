@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # File: format.py
 
-
 import numpy as np
 import six
 from six.moves import range
@@ -16,9 +15,10 @@ from ..utils.argtools import log_once
 from .base import RNGDataFlow, DataFlow, DataFlowReentrantGuard
 from .common import MapData
 
-__all__ = ['HDF5Data', 'LMDBData', 'LMDBDataDecoder', 'LMDBDataPoint',
-           'CaffeLMDB', 'SVMLightData', 'TFRecordData']
-
+__all__ = [
+    'HDF5Data', 'LMDBData', 'LMDBDataDecoder', 'LMDBDataPoint', 'CaffeLMDB',
+    'SVMLightData', 'TFRecordData'
+]
 """
 Adapters for different data format.
 """
@@ -31,7 +31,8 @@ class HDF5Data(RNGDataFlow):
     Warning:
         The current implementation will load all data into memory. (TODO)
     """
-# TODO
+
+    # TODO
 
     def __init__(self, filename, data_paths, shuffle=True):
         """
@@ -68,6 +69,7 @@ class LMDBData(RNGDataFlow):
     :class:`LMDBDataDecoder`, :class:`LMDBDataPoint`, or apply a
     mapper function after :class:`LMDBData`.
     """
+
     def __init__(self, lmdb_path, shuffle=True, keys=None):
         """
         Args:
@@ -88,12 +90,16 @@ class LMDBData(RNGDataFlow):
         self._open_lmdb()
         self._size = self._txn.stat()['entries']
         self._set_keys(keys)
-        logger.info("Found {} entries in {}".format(self._size, self._lmdb_path))
+        logger.info("Found {} entries in {}".format(self._size,
+                                                    self._lmdb_path))
         self._guard = DataFlowReentrantGuard()
 
     def _set_keys(self, keys=None):
+
         def find_keys(txn, size):
-            logger.warn("Traversing the database to find keys is slow. Your should specify the keys.")
+            logger.warn(
+                "Traversing the database to find keys is slow. Your should specify the keys."
+            )
             keys = []
             with timed_operation("Loading LMDB keys ...", log_start=True), \
                     get_tqdm(total=size) as pbar:
@@ -106,24 +112,29 @@ class LMDBData(RNGDataFlow):
         self.keys = self._txn.get(b'__keys__')
         if self.keys is not None:
             self.keys = loads(self.keys)
-            self._size -= 1     # delete this item
+            self._size -= 1    # delete this item
 
-        if self._shuffle:   # keys are necessary when shuffle is True
+        if self._shuffle:    # keys are necessary when shuffle is True
             if keys is None:
                 if self.keys is None:
                     self.keys = find_keys(self._txn, self._size)
             else:
                 # check if key-format like '{:0>8d}' was given
                 if isinstance(keys, six.string_types):
-                    self.keys = map(lambda x: keys.format(x), list(np.arange(self._size)))
+                    self.keys = map(lambda x: keys.format(x),
+                                    list(np.arange(self._size)))
                 else:
                     self.keys = keys
 
     def _open_lmdb(self):
-        self._lmdb = lmdb.open(self._lmdb_path,
-                               subdir=os.path.isdir(self._lmdb_path),
-                               readonly=True, lock=False, readahead=True,
-                               map_size=1099511627776 * 2, max_readers=100)
+        self._lmdb = lmdb.open(
+            self._lmdb_path,
+            subdir=os.path.isdir(self._lmdb_path),
+            readonly=True,
+            lock=False,
+            readahead=True,
+            map_size=1099511627776 * 2,
+            max_readers=100)
         self._txn = self._lmdb.begin()
 
     def reset_state(self):
@@ -151,6 +162,7 @@ class LMDBData(RNGDataFlow):
 
 class LMDBDataDecoder(MapData):
     """ Read a LMDB database and produce a decoded output."""
+
     def __init__(self, lmdb_data, decoder):
         """
         Args:
@@ -158,8 +170,10 @@ class LMDBDataDecoder(MapData):
             decoder (k,v -> dp | None): a function taking k, v and returning a datapoint,
                 or return None to discard.
         """
+
         def f(dp):
             return decoder(dp[0], dp[1])
+
         super(LMDBDataDecoder, self).__init__(lmdb_data, f)
 
 
@@ -200,6 +214,7 @@ class LMDBDataPoint(MapData):
 
         def f(dp):
             return loads(dp[1])
+
         super(LMDBDataPoint, self).__init__(ds, f)
 
 
@@ -236,6 +251,7 @@ def CaffeLMDB(lmdb_path, shuffle=True, keys=None):
             log_once("Cannot read key {}".format(k), 'warn')
             return None
         return [img.transpose(1, 2, 0), datum.label]
+
     logger.warn("Caffe LMDB format doesn't store jpeg-compressed images, \
         it's not recommended due to its inferior performance.")
     return LMDBDataDecoder(lmdb_data, decoder)
@@ -250,7 +266,7 @@ class SVMLightData(RNGDataFlow):
             filename (str): input file
             shuffle (bool): shuffle the data
         """
-        import sklearn.datasets  # noqa
+        import sklearn.datasets    # noqa
         self.X, self.y = sklearn.datasets.load_svmlight_file(filename)
         self.X = np.asarray(self.X.todense())
         self.shuffle = shuffle
@@ -272,6 +288,7 @@ class TFRecordData(DataFlow):
     serialized by :func:`serialize.dumps`.
     This class works with :func:`dftools.dump_dataflow_to_tfrecord`.
     """
+
     def __init__(self, path, size=None):
         """
         Args:
@@ -292,11 +309,12 @@ class TFRecordData(DataFlow):
         for dp in gen:
             yield loads(dp)
 
-from ..utils.develop import create_dummy_class   # noqa
+
+from ..utils.develop import create_dummy_class    # noqa
 try:
     import h5py
 except ImportError:
-    HDF5Data = create_dummy_class('HDF5Data', 'h5py')   # noqa
+    HDF5Data = create_dummy_class('HDF5Data', 'h5py')    # noqa
 
 try:
     import lmdb
@@ -307,4 +325,4 @@ except ImportError:
 try:
     import tensorflow as tf
 except ImportError:
-    TFRecordData = create_dummy_class('TFRecordData', 'tensorflow')   # noqa
+    TFRecordData = create_dummy_class('TFRecordData', 'tensorflow')    # noqa

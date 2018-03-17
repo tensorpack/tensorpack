@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # File: base.py
 
-
 import time
 import weakref
 import six
@@ -69,9 +68,10 @@ class Trainer(object):
         self._callbacks = []
         self._monitors = []
         self.loop = TrainLoop()
-        self.loop.config(config.steps_per_epoch, config.starting_epoch, config.max_epoch)
+        self.loop.config(config.steps_per_epoch, config.starting_epoch,
+                         config.max_epoch)
 
-        self._setup()   # subclass will setup the graph and InputSource
+        self._setup()    # subclass will setup the graph and InputSource
 
     def register_callback(self, cb):
         """
@@ -102,7 +102,8 @@ class Trainer(object):
 
     @property
     def monitors(self):
-        assert isinstance(self._monitors, Monitors), "Monitors haven't been setup!"
+        assert isinstance(self._monitors,
+                          Monitors), "Monitors haven't been setup!"
         return self._monitors
 
     def train(self):
@@ -152,7 +153,8 @@ class Trainer(object):
             self._config.session_init._run_init(self.sess)
         else:
             if not isinstance(self._config.session_init, JustCurrentSession):
-                logger.warn("This is not a chief worker, 'session_init' was ignored!")
+                logger.warn(
+                    "This is not a chief worker, 'session_init' was ignored!")
 
         self.sess.graph.finalize()
         logger.info("Graph Finalized.")
@@ -187,19 +189,23 @@ class Trainer(object):
                 self._callbacks.before_train()
                 # refresh global step (might have changed by callbacks) TODO ugly
                 self.loop.update_global_step()
-                for self.loop._epoch_num in range(
-                        self.loop.starting_epoch, self.loop.max_epoch + 1):
-                    logger.info("Start Epoch {} ...".format(self.loop.epoch_num))
+                for self.loop._epoch_num in range(self.loop.starting_epoch,
+                                                  self.loop.max_epoch + 1):
+                    logger.info("Start Epoch {} ...".format(
+                        self.loop.epoch_num))
                     start_time = time.time()
                     self._callbacks.before_epoch()
-                    for self.loop._local_step in range(self.loop.steps_per_epoch):
+                    for self.loop._local_step in range(
+                            self.loop.steps_per_epoch):
                         if self.hooked_sess.should_stop():
                             return
-                        self.run_step()  # implemented by subclass
+                        self.run_step()    # implemented by subclass
                         self._callbacks.trigger_step()
                     self._callbacks.after_epoch()
-                    logger.info("Epoch {} (global_step {}) finished, time:{:.2f} sec.".format(
-                        self.loop.epoch_num, self.loop.global_step, time.time() - start_time))
+                    logger.info(
+                        "Epoch {} (global_step {}) finished, time:{:.2f} sec.".
+                        format(self.loop.epoch_num, self.loop.global_step,
+                               time.time() - start_time))
 
                     # trigger epoch outside the timing region.
                     self._callbacks.trigger_epoch()
@@ -226,7 +232,8 @@ class Trainer(object):
         """
         device = tower
         assert self.tower_func is not None, "Must set tower_func on the trainer to use get_predictor()!"
-        tower_name = 'tower-pred-{}'.format(device) if device >= 0 else 'tower-pred-cpu'
+        tower_name = 'tower-pred-{}'.format(
+            device) if device >= 0 else 'tower-pred-cpu'
 
         try:
             tower = self.tower_func.towers[tower_name]
@@ -236,7 +243,8 @@ class Trainer(object):
 
             with tf.variable_scope(tf.get_variable_scope(), reuse=True):
                 SimplePredictBuilder(
-                    ns_name=tower_name, vs_name=self._main_tower_vs_name,
+                    ns_name=tower_name,
+                    vs_name=self._main_tower_vs_name,
                     device=device).build(input, self.tower_func)
             tower = self.tower_func.towers[tower_name]
         input_tensors = tower.get_tensors(input_names)
@@ -267,9 +275,12 @@ class Trainer(object):
             name = cls.__name__
             new_trainer = getattr(new_train, name)
             logger.warn("You're calling old trainers with new trainer API!")
-            logger.warn("Now it returns the new trainer for you, please `export TENSORPACK_TRAIN_API=v2`"
-                        " to import new trainers automatically.")
-            logger.warn("You can also ignore this warning and wait for new API to become the default.")
+            logger.warn(
+                "Now it returns the new trainer for you, please `export TENSORPACK_TRAIN_API=v2`"
+                " to import new trainers automatically.")
+            logger.warn(
+                "You can also ignore this warning and wait for new API to become the default."
+            )
             return new_trainer(*args, **kwargs)
 
 
@@ -277,9 +288,8 @@ def _get_property(name):
     """
     Delegate property to self.loop
     """
-    ret = property(
-        lambda self: getattr(self.loop, name))
-    if six.PY3:     # __doc__ is readonly in Py2
+    ret = property(lambda self: getattr(self.loop, name))
+    if six.PY3:    # __doc__ is readonly in Py2
         try:
             ret.__doc__ = getattr(TrainLoop, name).__doc__
         except AttributeError:
@@ -287,6 +297,8 @@ def _get_property(name):
     return ret
 
 
-for name in ['global_step', 'local_step', 'steps_per_epoch',
-             'epoch_num', 'starting_epoch', 'max_epoch']:
+for name in [
+        'global_step', 'local_step', 'steps_per_epoch', 'epoch_num',
+        'starting_epoch', 'max_epoch'
+]:
     setattr(Trainer, name, _get_property(name))

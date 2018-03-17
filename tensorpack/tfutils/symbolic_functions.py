@@ -1,7 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: symbolic_functions.py
 
-
 import tensorflow as tf
 import numpy as np
 
@@ -12,8 +11,10 @@ from ..utils.develop import deprecated
 
 # this function exists for backwards-compatibilty
 def prediction_incorrect(logits, label, topk=1, name='incorrect_vector'):
-    return tf.cast(tf.logical_not(tf.nn.in_top_k(logits, label, topk)),
-                   tf.float32, name=name)
+    return tf.cast(
+        tf.logical_not(tf.nn.in_top_k(logits, label, topk)),
+        tf.float32,
+        name=name)
 
 
 def flatten(x):
@@ -42,8 +43,8 @@ def print_stat(x, message=None):
     lst = [tf.shape(x), tf.reduce_mean(x)]
     if x.dtype.is_floating:
         lst.append(rms(x))
-    return tf.Print(x, lst + [x], summarize=20,
-                    message=message, name='print_' + x.op.name)
+    return tf.Print(
+        x, lst + [x], summarize=20, message=message, name='print_' + x.op.name)
 
 
 def rms(x, name=None):
@@ -53,7 +54,7 @@ def rms(x, name=None):
     """
     if name is None:
         name = x.op.name + '/rms'
-        with tf.name_scope(None):   # name already contains the scope
+        with tf.name_scope(None):    # name already contains the scope
             return tf.sqrt(tf.reduce_mean(tf.square(x)), name=name)
     return tf.sqrt(tf.reduce_mean(tf.square(x)), name=name)
 
@@ -82,7 +83,7 @@ def huber_loss(x, delta=1, name='huber_loss'):
 
         cond = abscost < delta
         l2 = sqrcost * 0.5
-        l1 = abscost * delta - 0.5 * delta ** 2
+        l1 = abscost * delta - 0.5 * delta**2
     return tf.where(cond, l2, l1, name=name)
 
 
@@ -101,8 +102,8 @@ def get_scalar_var(name, init_value, summary=False, trainable=False):
     Returns:
         tf.Variable: the variable
     """
-    ret = tf.get_variable(name, initializer=float(init_value),
-                          trainable=trainable)
+    ret = tf.get_variable(
+        name, initializer=float(init_value), trainable=trainable)
     if summary:
         # this is recognized in callbacks.StatHolder
         tf.summary.scalar(name + '-summary', ret)
@@ -186,7 +187,8 @@ def shapeless_placeholder(x, axis, name):
         axis = [axis]
     for a in axis:
         if shp[a] is None:
-            raise ValueError("Axis {} of shape {} is already unknown!".format(a, shp))
+            raise ValueError("Axis {} of shape {} is already unknown!".format(
+                a, shp))
         shp[a] = None
     x = tf.placeholder_with_default(x, shape=shp, name=name)
     return x

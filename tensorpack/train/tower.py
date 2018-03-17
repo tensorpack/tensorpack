@@ -85,7 +85,8 @@ class TowerTrainer(Trainer):
             an :class:`OnlinePredictor`.
         """
         assert self.tower_func is not None, "Must set tower_func on the trainer to use get_predictor()!"
-        tower_name = 'tower-pred-{}'.format(device) if device >= 0 else 'tower-pred-cpu'
+        tower_name = 'tower-pred-{}'.format(
+            device) if device >= 0 else 'tower-pred-cpu'
 
         try:
             tower = self.tower_func.towers[tower_name]
@@ -99,7 +100,8 @@ class TowerTrainer(Trainer):
 
             with tf.variable_scope(tf.get_variable_scope(), reuse=True):
                 SimplePredictBuilder(
-                    ns_name=tower_name, vs_name=self._main_tower_vs_name,
+                    ns_name=tower_name,
+                    vs_name=self._main_tower_vs_name,
                     device=device).build(input, self.tower_func)
             tower = self.tower_func.towers[tower_name]
         input_tensors = tower.get_tensors(input_names)
@@ -192,12 +194,14 @@ class SingleCostTrainer(TowerTrainer):
             cost = get_cost_fn(*input.get_input_tensors())
 
             if ctx.has_own_variables:
-                varlist = ctx.get_collection_in_tower(tf.GraphKeys.TRAINABLE_VARIABLES)
+                varlist = ctx.get_collection_in_tower(
+                    tf.GraphKeys.TRAINABLE_VARIABLES)
             else:
                 varlist = tf.trainable_variables()
             opt = get_opt_fn()
             grads = opt.compute_gradients(
-                cost, var_list=varlist,
+                cost,
+                var_list=varlist,
                 gate_gradients=self.GATE_GRADIENTS,
                 colocate_gradients_with_ops=self.COLOCATE_GRADIENTS_WITH_OPS,
                 aggregation_method=self.AGGREGATION_METHOD)

@@ -11,9 +11,8 @@ from ..utils.argtools import memoized
 from ..tfutils.common import get_op_tensor_name, get_global_step_var
 
 from .training import GraphBuilder, DataParallelBuilder
-from .utils import (
-    override_to_local_variable, aggregate_grads,
-    OverrideCachingDevice)
+from .utils import (override_to_local_variable, aggregate_grads,
+                    OverrideCachingDevice)
 
 __all__ = ['DistributedParameterServerBuilder', 'DistributedReplicatedBuilder']
 
@@ -42,11 +41,15 @@ class DistributedBuilderBase(GraphBuilder):
             an op that should be used as control dependency before starting next step.
         """
         self._sync_queue_counter += 1
-        with tf.device(self.sync_queue_devices[self._sync_queue_counter % len(self.sync_queue_devices)]):
+        with tf.device(self.sync_queue_devices[self._sync_queue_counter % len(
+                self.sync_queue_devices)]):
             sync_queues = [
-                tf.FIFOQueue(self.num_worker, [tf.bool], shapes=[[]],
-                             shared_name='%s%s' % (name, i))
-                for i in range(self.num_worker)]
+                tf.FIFOQueue(
+                    self.num_worker, [tf.bool],
+                    shapes=[[]],
+                    shared_name='%s%s' % (name, i))
+                for i in range(self.num_worker)
+            ]
             queue_ops = []
             # For each other worker, add an entry in a queue, signaling that it can finish this step.
             token = tf.constant(False)
@@ -62,7 +65,8 @@ class DistributedBuilderBase(GraphBuilder):
             return tf.group(*queue_ops, name=name)
 
 
-class DistributedParameterServerBuilder(DataParallelBuilder, DistributedBuilderBase):
+class DistributedParameterServerBuilder(DataParallelBuilder,
+                                        DistributedBuilderBase):
     """
     Distributed parameter server training.
     A single copy of parameters are scattered around PS.
@@ -101,35 +105,42 @@ class DistributedParameterServerBuilder(DataParallelBuilder, DistributedBuilderB
         self.param_server_device = tf.train.replica_device_setter(
             worker_device=worker_prefix + '/cpu:0', cluster=self.cluster)
         self.cpu_device = '%s/cpu:0' % worker_prefix
-        self.raw_devices = ['{}/gpu:{}'.format(worker_prefix, k) for k in self.towers]
+        self.raw_devices = [
+            '{}/gpu:{}'.format(worker_prefix, k) for k in self.towers
+        ]
 
-        self.sync_queue_devices = ['/job:ps/task:%s/cpu:0' % i for i in range(self.num_ps)]
+        self.sync_queue_devices = [
+            '/job:ps/task:%s/cpu:0' % i for i in range(self.num_ps)
+        ]
 
     def build(self, get_grad_fn, get_opt_fn):
         ps_strategy = tf.contrib.training.GreedyLoadBalancingStrategy(
             self.num_ps, tf.contrib.training.byte_size_load_fn)
         devices = [
             tf.train.replica_device_setter(
-                worker_device=d,
-                cluster=self.cluster,
-                ps_strategy=ps_strategy) for d in self.raw_devices]
+                worker_device=d, cluster=self.cluster, ps_strategy=ps_strategy)
+            for d in self.raw_devices
+        ]
 
         if self.caching_device == 'gpu':
             caching_devices = self.raw_devices
         else:
             caching_devices = [self.cpu_device]
-        custom_getter = OverrideCachingDevice(
-            caching_devices, self.cpu_device, 1024 * 64)
+        custom_getter = OverrideCachingDevice(caching_devices, self.cpu_device,
+                                              1024 * 64)
 
-        with tf.variable_scope(tf.get_variable_scope(), custom_getter=custom_getter):
-            grad_list = DataParallelBuilder.build_on_towers(self.towers, get_grad_fn, devices)
+        with tf.variable_scope(
+                tf.get_variable_scope(), custom_getter=custom_getter):
+            grad_list = DataParallelBuilder.build_on_towers(
+                self.towers, get_grad_fn, devices)
         DataParallelBuilder._check_grad_list(grad_list)
 
         with tf.device(self.param_server_device):
             grads = aggregate_grads(grad_list, colocation=False)
             opt = get_opt_fn()
             train_op = opt.apply_gradients(grads, name='train_op')
-        train_op = self._add_sync_queues_and_barrier('all_workers_sync_barrier', [train_op])
+        train_op = self._add_sync_queues_and_barrier('all_workers_sync_barrier',
+                                                     [train_op])
         return train_op
 
 
@@ -200,7 +211,9 @@ class DistributedReplicatedBuilder(DataParallelBuilder, DistributedBuilderBase):
         self.raw_devices = ['%s/gpu:%i' % (worker_prefix, i) for i in towers]
 
         # Device for queues for managing synchronization between servers
-        self.sync_queue_devices = ['/job:ps/task:%s/cpu:0' % i for i in range(self.num_ps)]
+        self.sync_queue_devices = [
+            '/job:ps/task:%s/cpu:0' % i for i in range(self.num_ps)
+        ]
 
     @staticmethod
     def _apply_shadow_vars(avg_grads):
@@ -216,9 +229,11 @@ class DistributedReplicatedBuilder(DataParallelBuilder, DistributedBuilderBase):
             assert var.name.startswith('tower'), var.name
             my_name = '/'.join(var.name.split('/')[1:])
             my_name = get_op_tensor_name(my_name)[0]
-            new_v = tf.get_variable(my_name, dtype=var.dtype.base_dtype,
-                                    initializer=var.initial_value,
-                                    trainable=True)
+            new_v = tf.get_variable(
+                my_name,
+                dtype=var.dtype.base_dtype,
+                initializer=var.initial_value,
+                trainable=True)
             # (g, v) to be applied, where v is global (ps vars)
             ps_var_grads.append((grad, new_v))
         return ps_var_grads
@@ -236,23 +251,32 @@ class DistributedReplicatedBuilder(DataParallelBuilder, DistributedBuilderBase):
         model_vars = tf.model_variables()
         shadow_model_vars = []
         for v in model_vars:
-            assert v.name.startswith('tower'), "Found some MODEL_VARIABLES created outside of the tower function!"
-            stripped_op_name, stripped_var_name = get_op_tensor_name(re.sub('^tower[0-9]+/', '', v.name))
+            assert v.name.startswith(
+                'tower'
+            ), "Found some MODEL_VARIABLES created outside of the tower function!"
+            stripped_op_name, stripped_var_name = get_op_tensor_name(
+                re.sub('^tower[0-9]+/', '', v.name))
             if stripped_op_name in curr_shadow_vars:
                 continue
             try:
                 G.get_tensor_by_name(stripped_var_name)
-                logger.warn("Model Variable {} also appears in other collections.".format(stripped_var_name))
+                logger.warn(
+                    "Model Variable {} also appears in other collections.".
+                    format(stripped_var_name))
                 continue
             except KeyError:
                 pass
-            new_v = tf.get_variable(stripped_op_name, dtype=v.dtype.base_dtype,
-                                    initializer=v.initial_value,
-                                    trainable=False)
+            new_v = tf.get_variable(
+                stripped_op_name,
+                dtype=v.dtype.base_dtype,
+                initializer=v.initial_value,
+                trainable=False)
 
-            curr_shadow_vars.add(stripped_op_name)  # avoid duplicated shadow_model_vars
+            curr_shadow_vars.add(
+                stripped_op_name)    # avoid duplicated shadow_model_vars
             shadow_vars.append(new_v)
-            shadow_model_vars.append((new_v, v))  # only need to sync model_var from one tower
+            shadow_model_vars.append(
+                (new_v, v))    # only need to sync model_var from one tower
         return shadow_model_vars
 
     def build(self, get_grad_fn, get_opt_fn):
@@ -282,24 +306,27 @@ class DistributedReplicatedBuilder(DataParallelBuilder, DistributedBuilderBase):
 
         # Ngpu * Nvar * 2
         grad_list = DataParallelBuilder.build_on_towers(
-            self.towers, get_grad_fn,
+            self.towers,
+            get_grad_fn,
             devices=self.raw_devices,
-            use_vs=[True] * len(self.towers))  # open vs at each tower
+            use_vs=[True] * len(self.towers))    # open vs at each tower
         DataParallelBuilder._check_grad_list(grad_list)
 
         avg_grads = aggregate_grads(
             grad_list, colocation=False, devices=self.raw_devices)
         with tf.device(self.param_server_device):
-            ps_var_grads = DistributedReplicatedBuilder._apply_shadow_vars(avg_grads)
+            ps_var_grads = DistributedReplicatedBuilder._apply_shadow_vars(
+                avg_grads)
             var_update_ops = self._apply_gradients_and_copy(
                 get_opt_fn(), grad_list, ps_var_grads)
             self._shadow_vars = [v for (__, v) in ps_var_grads]
-            self._shadow_model_vars = DistributedReplicatedBuilder._shadow_model_variables(self._shadow_vars)
+            self._shadow_model_vars = DistributedReplicatedBuilder._shadow_model_variables(
+                self._shadow_vars)
 
         # TODO add options to synchronize less
         main_fetch = tf.group(*var_update_ops, name='main_fetches')
-        train_op = self._add_sync_queues_and_barrier(
-            'post_copy_barrier', [main_fetch])
+        train_op = self._add_sync_queues_and_barrier('post_copy_barrier',
+                                                     [main_fetch])
 
         # initial local_vars syncing
         with tf.name_scope('initial_sync_variables'):
@@ -335,18 +362,20 @@ class DistributedReplicatedBuilder(DataParallelBuilder, DistributedBuilderBase):
                         tf.device(self.cpu_device):
                     updated_value = v.read_value()
                     for towerid in range(self.nr_gpu):
-                        var_update_ops.append(
-                            raw_grad_list[towerid][vid][1].assign(updated_value))
+                        var_update_ops.append(raw_grad_list[towerid][vid][1]
+                                              .assign(updated_value))
             return var_update_ops
 
     def _get_initial_sync_op(self):
         """
         Get the op to copy-initialized all local variables from PS.
         """
+
         def strip_port(s):
             if s.endswith(':0'):
                 return s[:-2]
             return s
+
         local_vars = tf.local_variables()
         local_var_by_name = dict([(strip_port(v.name), v) for v in local_vars])
         ops = []
@@ -360,7 +389,8 @@ class DistributedReplicatedBuilder(DataParallelBuilder, DistributedBuilderBase):
                 copy_to = local_var_by_name[name]
                 # logger.info("{} -> {}".format(v.name, copy_to.name))
                 ops.append(copy_to.assign(v.read_value()))
-        return tf.group(*ops, name='sync_{}_variables_from_ps'.format(nr_shadow_vars))
+        return tf.group(
+            *ops, name='sync_{}_variables_from_ps'.format(nr_shadow_vars))
 
     def _get_sync_model_vars_op(self):
         """
@@ -370,4 +400,5 @@ class DistributedReplicatedBuilder(DataParallelBuilder, DistributedBuilderBase):
         for (shadow_v, local_v) in self._shadow_model_vars:
             ops.append(shadow_v.assign(local_v.read_value()))
         assert len(ops)
-        return tf.group(*ops, name='sync_{}_model_variables_to_ps'.format(len(ops)))
+        return tf.group(
+            *ops, name='sync_{}_model_variables_to_ps'.format(len(ops)))

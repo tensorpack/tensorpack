@@ -2,20 +2,21 @@
 # -*- coding: utf-8 -*-
 # File: optimizer.py
 
-
 import tensorflow as tf
 from contextlib import contextmanager
 from .gradproc import FilterNoneGrad, GradientProcessor
 
-__all__ = ['apply_grad_processors', 'ProxyOptimizer',
-           'PostProcessOptimizer', 'VariableAssignmentOptimizer',
-           'AccumGradOptimizer']
+__all__ = [
+    'apply_grad_processors', 'ProxyOptimizer', 'PostProcessOptimizer',
+    'VariableAssignmentOptimizer', 'AccumGradOptimizer'
+]
 
 
 class ProxyOptimizer(tf.train.Optimizer):
     """
     A transparent proxy which delegates all methods of :class:`tf.train.Optimizer`
     """
+
     def __init__(self, opt, name='ProxyOptimizer'):
         assert isinstance(opt, tf.train.Optimizer), opt
         super(ProxyOptimizer, self).__init__(False, name)
@@ -52,12 +53,12 @@ def apply_grad_processors(opt, gradprocs):
         assert isinstance(gp, GradientProcessor), gp
 
     class _ApplyGradientProcessor(ProxyOptimizer):
+
         def __init__(self, opt, gradprocs):
             self._gradprocs = gradprocs[:]
             super(_ApplyGradientProcessor, self).__init__(opt)
 
-        def apply_gradients(self, grads_and_vars,
-                            global_step=None, name=None):
+        def apply_gradients(self, grads_and_vars, global_step=None, name=None):
             g = self._apply(grads_and_vars)
             return self._opt.apply_gradients(g, global_step, name)
 
@@ -74,6 +75,7 @@ class PostProcessOptimizer(ProxyOptimizer):
     An optimizer which applies some "post-processing operation" per variable
     (e.g. clipping, quantization) after the gradient update.
     """
+
     def __init__(self, opt, func, colocate=True):
         """
         Args:
@@ -115,6 +117,7 @@ class VariableAssignmentOptimizer(PostProcessOptimizer):
     An optimizer which assigns each variable a new value (e.g. clipping,
     quantization) after the gradient update.
     """
+
     def __init__(self, opt, func):
         """
         Args:
@@ -122,11 +125,13 @@ class VariableAssignmentOptimizer(PostProcessOptimizer):
             func (tf.Variable -> tf.Tensor or None): the new value to be
                 assigned to this variable after the gradient update.
         """
+
         def f(v):
             t = func(v)
             if t is None:
                 return t
             return tf.assign(v, t, use_locking=False).op
+
         super(VariableAssignmentOptimizer, self).__init__(opt, f)
 
 
@@ -172,7 +177,9 @@ class AccumGradOptimizer(ProxyOptimizer):
 
         with tf.control_dependencies(None):
             slots = self._create_accum_slots(vs)
-            slots_and_vars = [(s, gv[1]) for s, gv in zip(slots, grads_and_vars)]
+            slots_and_vars = [
+                (s, gv[1]) for s, gv in zip(slots, grads_and_vars)
+            ]
 
             # Create the counter on the same device as the first variable.
             with tf.variable_scope(self._name), \

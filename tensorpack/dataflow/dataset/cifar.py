@@ -16,7 +16,6 @@ from ..base import RNGDataFlow
 
 __all__ = ['Cifar10', 'Cifar100']
 
-
 DATA_URL_CIFAR_10 = 'http://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz'
 DATA_URL_CIFAR_100 = 'http://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz'
 
@@ -30,7 +29,8 @@ def maybe_download_and_extract(dest_directory, cifar_classnum):
     else:
         cifar_foldername = 'cifar-100-python'
     if os.path.isdir(os.path.join(dest_directory, cifar_foldername)):
-        logger.info("Found cifar{} data in {}.".format(cifar_classnum, dest_directory))
+        logger.info("Found cifar{} data in {}.".format(cifar_classnum,
+                                                       dest_directory))
         return
     else:
         DATA_URL = DATA_URL_CIFAR_10 if cifar_classnum == 10 else DATA_URL_CIFAR_100
@@ -53,7 +53,7 @@ def read_cifar(filenames, cifar_classnum):
         data = dic[b'data']
         if cifar_classnum == 10:
             label = dic[b'labels']
-            IMG_NUM = 10000  # cifar10 data are split into blocks of 10000
+            IMG_NUM = 10000    # cifar10 data are split into blocks of 10000
         elif cifar_classnum == 100:
             label = dic[b'fine_labels']
             IMG_NUM = 50000 if 'train' in fname else 10000
@@ -68,18 +68,23 @@ def read_cifar(filenames, cifar_classnum):
 def get_filenames(dir, cifar_classnum):
     assert cifar_classnum == 10 or cifar_classnum == 100
     if cifar_classnum == 10:
-        filenames = [os.path.join(
-            dir, 'cifar-10-batches-py', 'data_batch_%d' % i) for i in range(1, 6)]
-        filenames.append(os.path.join(
-            dir, 'cifar-10-batches-py', 'test_batch'))
+        filenames = [
+            os.path.join(dir, 'cifar-10-batches-py', 'data_batch_%d' % i)
+            for i in range(1, 6)
+        ]
+        filenames.append(os.path.join(dir, 'cifar-10-batches-py', 'test_batch'))
     elif cifar_classnum == 100:
-        filenames = [os.path.join(dir, 'cifar-100-python', 'train'),
-                     os.path.join(dir, 'cifar-100-python', 'test')]
+        filenames = [
+            os.path.join(dir, 'cifar-100-python', 'train'),
+            os.path.join(dir, 'cifar-100-python', 'test')
+        ]
     return filenames
 
 
 class CifarBase(RNGDataFlow):
-    def __init__(self, train_or_test, shuffle=True, dir=None, cifar_classnum=10):
+
+    def __init__(self, train_or_test, shuffle=True, dir=None,
+                 cifar_classnum=10):
         assert train_or_test in ['train', 'test']
         assert cifar_classnum == 10 or cifar_classnum == 100
         self.cifar_classnum = cifar_classnum
@@ -134,6 +139,7 @@ class Cifar10(CifarBase):
     image is 32x32x3 in the range [0,255].
     label is an int.
     """
+
     def __init__(self, train_or_test, shuffle=True, dir=None):
         """
         Args:
@@ -145,6 +151,7 @@ class Cifar10(CifarBase):
 
 class Cifar100(CifarBase):
     """ Similar to Cifar10"""
+
     def __init__(self, train_or_test, shuffle=True, dir=None):
         super(Cifar100, self).__init__(train_or_test, shuffle, dir, 100)
 

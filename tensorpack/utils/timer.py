@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # File: timer.py
 
-
 from contextlib import contextmanager
 import time
 from collections import defaultdict
@@ -12,8 +11,9 @@ import atexit
 from .stats import StatCounter
 from . import logger
 
-__all__ = ['total_timer', 'timed_operation',
-           'print_total_timer', 'IterSpeedCounter']
+__all__ = [
+    'total_timer', 'timed_operation', 'print_total_timer', 'IterSpeedCounter'
+]
 
 
 @contextmanager
@@ -41,8 +41,7 @@ def timed_operation(msg, log_start=False):
         logger.info('Start {} ...'.format(msg))
     start = time.time()
     yield
-    logger.info('{} finished, time:{:.4f}sec.'.format(
-        msg, time.time() - start))
+    logger.info('{} finished, time:{:.4f}sec.'.format(msg, time.time() - start))
 
 
 _TOTAL_TIMER_DATA = defaultdict(StatCounter)
@@ -65,8 +64,9 @@ def print_total_timer():
     if len(_TOTAL_TIMER_DATA) == 0:
         return
     for k, v in six.iteritems(_TOTAL_TIMER_DATA):
-        logger.info("Total Time: {} -> {:.2f} sec, {} times, {:.3g} sec/time".format(
-            k, v.sum, v.count, v.average))
+        logger.info(
+            "Total Time: {} -> {:.2f} sec, {} times, {:.3g} sec/time".format(
+                k, v.sum, v.count, v.average))
 
 
 atexit.register(print_total_timer)

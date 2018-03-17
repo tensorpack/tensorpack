@@ -1,10 +1,8 @@
 # -*- coding: UTF-8 -*-
 # File: crop.py
 
-
 from ...utils.argtools import shape2d
 from .transform import TransformAugmentorBase, CropTransform
-
 
 __all__ = ['RandomCrop', 'CenterCrop', 'RandomCropRandomShape']
 
@@ -55,9 +53,7 @@ class CenterCrop(TransformAugmentorBase):
 class RandomCropRandomShape(TransformAugmentorBase):
     """ Random crop with a random shape"""
 
-    def __init__(self, wmin, hmin,
-                 wmax=None, hmax=None,
-                 max_aspect_ratio=None):
+    def __init__(self, wmin, hmin, wmax=None, hmax=None, max_aspect_ratio=None):
         """
         Randomly crop a box of shape (h, w), sampled from [min, max] (both inclusive).
         If max is None, will use the input image shape.

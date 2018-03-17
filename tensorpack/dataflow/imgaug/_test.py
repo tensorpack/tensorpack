@@ -2,7 +2,6 @@
 # -*- coding: UTF-8 -*-
 # File: _test.py
 
-
 import sys
 import cv2
 from . import AugmentorList
@@ -11,7 +10,6 @@ from .imgproc import *
 from .noname import *
 from .deform import *
 from .noise import SaltPepperNoise
-
 
 anchors = [(0.2, 0.2), (0.7, 0.2), (0.8, 0.8), (0.5, 0.5), (0.2, 0.5)]
 augmentors = AugmentorList([

@@ -2,7 +2,6 @@
 # -*- coding: UTF-8 -*-
 # File: base.py
 
-
 import threading
 from abc import abstractmethod, ABCMeta
 import six
@@ -27,6 +26,7 @@ class DataFlowReentrantGuard(object):
     Mostly used on DataFlow whose :meth:`get_data` is stateful,
     so that multiple instances of the iterator cannot co-exist.
     """
+
     def __init__(self):
         self._lock = threading.Lock()
 

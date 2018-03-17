@@ -1,17 +1,15 @@
 #  -*- coding: UTF-8 -*-
 #  File: __init__.py
 
-
 from .tower import get_current_tower_context, TowerContext
 
 # https://github.com/celery/kombu/blob/7d13f9b95d0b50c94393b962e6def928511bfda6/kombu/__init__.py#L34-L36
 STATICA_HACK = True
-globals()['kcah_acitats'[::-1].upper()] = False
+globals()['kcah_acitats' [::-1].upper()] = False
 if STATICA_HACK:
     from .common import *
     from .sessinit import *
     from .argscope import *
-
 
 # don't want to include everything from .tower
 __all__ = ['get_current_tower_context', 'TowerContext']
@@ -34,7 +32,6 @@ _TO_IMPORT = frozenset([
 
 for module_name in _TO_IMPORT:
     _global_import(module_name)
-
 """
 TODO remove this line in the future.
 Better to keep submodule names (sesscreate, varmanip, etc) out of __all__,
@@ -44,6 +41,7 @@ To use these utilities, users are expected to import them explicitly, e.g.:
 
 import tensorpack.tfutils.symbolic_functions as symbf
 """
-__all__.extend(['sessinit', 'summary', 'optimizer',
-                'sesscreate', 'gradproc', 'varreplace', 'symbolic_functions',
-                'distributed', 'tower'])
+__all__.extend([
+    'sessinit', 'summary', 'optimizer', 'sesscreate', 'gradproc', 'varreplace',
+    'symbolic_functions', 'distributed', 'tower'
+])

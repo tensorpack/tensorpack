@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # File: globvars.py
 
-
 import six
 import argparse
 from . import logger
@@ -10,19 +9,21 @@ from . import logger
 __all__ = ['globalns', 'GlobalNS']
 
 if six.PY2:
+
     class NS:
         pass
 else:
     import types
     NS = types.SimpleNamespace
 
-
 # TODO make it singleton
+
 
 class GlobalNS(NS):
     """
     The class of the globalns instance.
     """
+
     def use_argument(self, args):
         """
         Add the content of :class:`argparse.Namespace` to this ns.

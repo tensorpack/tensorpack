@@ -115,9 +115,8 @@ def _guess_dir_structure(dir):
         dir_structure = 'train'
     else:
         dir_structure = 'original'
-    logger.info(
-        "[ILSVRC12] Assuming directory {} has '{}' structure.".format(
-            dir, dir_structure))
+    logger.info("[ILSVRC12] Assuming directory {} has '{}' structure.".format(
+        dir, dir_structure))
     return dir_structure
 
 
@@ -127,8 +126,13 @@ class ILSVRC12Files(RNGDataFlow):
     This could be useful when ``cv2.imread`` is a bottleneck and you want to
     decode it in smarter ways (e.g. in parallel).
     """
-    def __init__(self, dir, name, meta_dir=None,
-                 shuffle=None, dir_structure=None):
+
+    def __init__(self,
+                 dir,
+                 name,
+                 meta_dir=None,
+                 shuffle=None,
+                 dir_structure=None):
         """
         Same as in :class:`ILSVRC12`.
         """
@@ -171,8 +175,13 @@ class ILSVRC12(ILSVRC12Files):
     """
     Produces uint8 ILSVRC12 images of shape [h, w, 3(BGR)], and a label between [0, 999].
     """
-    def __init__(self, dir, name, meta_dir=None,
-                 shuffle=None, dir_structure=None):
+
+    def __init__(self,
+                 dir,
+                 name,
+                 meta_dir=None,
+                 shuffle=None,
+                 dir_structure=None):
         """
         Args:
             dir (str): A directory containing a subdir named ``name``,
@@ -235,13 +244,14 @@ class ILSVRC12(ILSVRC12Files):
                 ILSVRC2012_test_00000001.JPEG
                 ...
         """
-        super(ILSVRC12, self).__init__(
-            dir, name, meta_dir, shuffle, dir_structure)
+        super(ILSVRC12, self).__init__(dir, name, meta_dir, shuffle,
+                                       dir_structure)
 
     """
     There are some CMYK / png images, but cv2 seems robust to them.
     https://github.com/tensorflow/models/blob/c0cd713f59cfe44fa049b3120c417cc4079c17e3/research/inception/inception/data/build_imagenet_data.py#L264-L300
     """
+
     def get_data(self):
         for fname, label in super(ILSVRC12, self).get_data():
             im = cv2.imread(fname, cv2.IMREAD_COLOR)
@@ -273,7 +283,8 @@ class ILSVRC12(ILSVRC12Files):
                     cnt += 1
                 except Exception:
                     ret.append(None)
-            logger.info("{}/{} images have bounding box.".format(cnt, len(imglist)))
+            logger.info("{}/{} images have bounding box.".format(
+                cnt, len(imglist)))
         return ret
 
 
@@ -281,7 +292,7 @@ try:
     import cv2
 except ImportError:
     from ...utils.develop import create_dummy_class
-    ILSVRC12 = create_dummy_class('ILSVRC12', 'cv2')  # noqa
+    ILSVRC12 = create_dummy_class('ILSVRC12', 'cv2')    # noqa
 
 if __name__ == '__main__':
     meta = ILSVRCMeta()

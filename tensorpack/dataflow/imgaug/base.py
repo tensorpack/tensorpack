@@ -1,7 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: base.py
 
-
 import inspect
 import pprint
 from abc import abstractmethod, ABCMeta
@@ -87,7 +86,9 @@ class Augmentor(object):
             assert argspec.varargs is None, "The default __repr__ doesn't work for vaargs!"
             assert argspec.keywords is None, "The default __repr__ doesn't work for kwargs!"
             fields = argspec.args[1:]
-            index_field_has_default = len(fields) - (0 if argspec.defaults is None else len(argspec.defaults))
+            index_field_has_default = len(fields) - (0
+                                                     if argspec.defaults is None
+                                                     else len(argspec.defaults))
 
             classname = type(self).__name__
             argstr = []
@@ -112,6 +113,7 @@ class ImageAugmentor(Augmentor):
     ImageAugmentor should take images of type uint8 in range [0, 255], or
     floating point images in range [0, 1] or [0, 255].
     """
+
     def augment_coords(self, coords, param):
         return self._augment_coords(coords, param)
 
@@ -145,7 +147,9 @@ class AugmentorList(ImageAugmentor):
 
     def _get_augment_params(self, img):
         # the next augmentor requires the previous one to finish
-        raise RuntimeError("Cannot simply get all parameters of a AugmentorList without running the augmentation!")
+        raise RuntimeError(
+            "Cannot simply get all parameters of a AugmentorList without running the augmentation!"
+        )
 
     def _augment_return_params(self, img):
         check_dtype(img)

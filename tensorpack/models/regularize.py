@@ -1,7 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: regularize.py
 
-
 import tensorflow as tf
 import re
 
@@ -10,8 +9,10 @@ from ..utils.argtools import graph_memoized
 from ..tfutils.tower import get_current_tower_context
 from .common import layer_register
 
-__all__ = ['regularize_cost', 'regularize_cost_from_collection',
-           'l2_regularizer', 'l1_regularizer', 'Dropout']
+__all__ = [
+    'regularize_cost', 'regularize_cost_from_collection', 'l2_regularizer',
+    'l1_regularizer', 'Dropout'
+]
 
 
 @graph_memoized
@@ -78,9 +79,12 @@ def regularize_cost(regex, func, name='regularize_cost'):
             if name.startswith(prefix):
                 return name[prefixlen:]
             return name
+
         names = list(map(f, names))
-    logger.info("regularize_cost() found {} variables to regularize.".format(len(names)))
-    _log_once("The following tensors will be regularized: {}".format(', '.join(names)))
+    logger.info("regularize_cost() found {} variables to regularize.".format(
+        len(names)))
+    _log_once("The following tensors will be regularized: {}".format(
+        ', '.join(names)))
 
     return tf.add_n(costs, name=name)
 
@@ -105,7 +109,7 @@ def regularize_cost_from_collection(name='regularize_cost'):
 
     # NOTE: this collection doesn't always grow with towers.
     # It only grows with actual variable creation, but not get_variable call.
-    if ctx.has_own_variables:   # be careful of the first tower (name='')
+    if ctx.has_own_variables:    # be careful of the first tower (name='')
         losses = ctx.get_collection_in_tower(tf.GraphKeys.REGULARIZATION_LOSSES)
     else:
         losses = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
@@ -133,7 +137,8 @@ def Dropout(x, *args, **kwargs):
             logger.warn(
                 "The first positional argument to tensorpack.Dropout is the probability to keep, rather than to drop. "
                 "This is different from the rate argument in tf.layers.Dropout due to historical reasons. "
-                "To mimic tf.layers.Dropout, explicitly use keyword argument 'rate' instead")
+                "To mimic tf.layers.Dropout, explicitly use keyword argument 'rate' instead"
+            )
         rate = 1 - args[0]
     elif 'keep_prob' in kwargs:
         assert 'rate' not in kwargs, "Cannot set both keep_prob and rate!"

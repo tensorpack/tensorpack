@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # File: rect.py
 
-
 import numpy as np
 
 __all__ = ['IntBox', 'FloatBox']
@@ -37,6 +36,7 @@ class BoxBase(object):
 
 
 class IntBox(BoxBase):
+
     def __init__(self, x1, y1, x2, y2):
         for k in [x1, y1, x2, y2]:
             assert isinstance(k, int)
@@ -82,11 +82,13 @@ class IntBox(BoxBase):
         self.y2 = np.clip(self.y2, 0, shape[0] - 1)
 
     def roi(self, img):
-        assert self.is_valid_box(img.shape[:2]), "{} vs {}".format(self, img.shape[:2])
+        assert self.is_valid_box(img.shape[:2]), "{} vs {}".format(
+            self, img.shape[:2])
         return img[self.y1:self.y2 + 1, self.x1:self.x2 + 1]
 
 
 class FloatBox(BoxBase):
+
     def __init__(self, x1, y1, x2, y2):
         for k in [x1, y1, x2, y2]:
             assert isinstance(k, float), "type={},value={}".format(type(k), k)
@@ -102,8 +104,7 @@ class FloatBox(BoxBase):
 
     @staticmethod
     def from_intbox(intbox):
-        return FloatBox(intbox.x1, intbox.y1,
-                        intbox.x2 + 1, intbox.y2 + 1)
+        return FloatBox(intbox.x1, intbox.y1, intbox.x2 + 1, intbox.y2 + 1)
 
     def clip_by_shape(self, shape):
         self.x1 = np.clip(self.x1, 0, shape[1])

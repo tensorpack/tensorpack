@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # File: misc.py
 
-
 import os
 import time
 from collections import deque
@@ -16,6 +15,7 @@ __all__ = ['SendStat', 'InjectShell', 'EstimatedTimeLeft']
 
 class SendStat(Callback):
     """ An equivalent of :class:`SendMonitorData`, but as a normal callback. """
+
     def __init__(self, command, names):
         self.command = command
         if not isinstance(names, list):
@@ -58,12 +58,12 @@ class InjectShell(Callback):
             self._inject()
 
     def _inject(self):
-        trainer = self.trainer   # noqa
+        trainer = self.trainer    # noqa
         if self._shell == 'ipython':
             import IPython as IP    # noqa
             IP.embed()
         elif self._shell == 'pdb':
-            import pdb   # noqa
+            import pdb    # noqa
             pdb.set_trace()
 
     def _after_train(self):
@@ -75,6 +75,7 @@ class EstimatedTimeLeft(Callback):
     """
     Estimate the time left until completion of training.
     """
+
     def __init__(self, last_k_epochs=5):
         """
         Args:
@@ -95,4 +96,5 @@ class EstimatedTimeLeft(Callback):
         average_epoch_time = np.mean(self._times)
         time_left = (self._max_epoch - self.epoch_num) * average_epoch_time
         if time_left > 0:
-            logger.info("Estimated Time Left: " + humanize_time_delta(time_left))
+            logger.info(
+                "Estimated Time Left: " + humanize_time_delta(time_left))

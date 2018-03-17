@@ -3,7 +3,7 @@
 
 # https://github.com/celery/kombu/blob/7d13f9b95d0b50c94393b962e6def928511bfda6/kombu/__init__.py#L34-L36
 STATICA_HACK = True
-globals()['kcah_acitats'[::-1].upper()] = False
+globals()['kcah_acitats' [::-1].upper()] = False
 if STATICA_HACK:
     from .base import *
     from .common import *
@@ -16,7 +16,6 @@ if STATICA_HACK:
     from . import imgaug
     from . import dataset
     from . import dftools
-
 
 from pkgutil import iter_modules
 import os
@@ -39,8 +38,7 @@ def _global_import(name):
 
 __SKIP = set(['dftools', 'dataset', 'imgaug'])
 _CURR_DIR = os.path.dirname(__file__)
-for _, module_name, __ in iter_modules(
-        [os.path.dirname(__file__)]):
+for _, module_name, __ in iter_modules([os.path.dirname(__file__)]):
     srcpath = os.path.join(_CURR_DIR, module_name + '.py')
     if not os.path.isfile(srcpath):
         continue
@@ -48,9 +46,10 @@ for _, module_name, __ in iter_modules(
             module_name not in __SKIP:
         _global_import(module_name)
 
-
-globals()['dataset'] = LazyLoader('dataset', globals(), 'tensorpack.dataflow.dataset')
-globals()['imgaug'] = LazyLoader('imgaug', globals(), 'tensorpack.dataflow.imgaug')
+globals()['dataset'] = LazyLoader('dataset', globals(),
+                                  'tensorpack.dataflow.dataset')
+globals()['imgaug'] = LazyLoader('imgaug', globals(),
+                                 'tensorpack.dataflow.imgaug')
 
 del LazyLoader
 

@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # File: geometry.py
 
-
 import math
 import cv2
 import numpy as np
@@ -16,8 +15,11 @@ __all__ = ['Shift', 'Rotation', 'RotationAndCropValid', 'Affine']
 class Shift(TransformAugmentorBase):
     """ Random horizontal and vertical shifts """
 
-    def __init__(self, horiz_frac=0, vert_frac=0,
-                 border=cv2.BORDER_REPLICATE, border_value=0):
+    def __init__(self,
+                 horiz_frac=0,
+                 vert_frac=0,
+                 border=cv2.BORDER_REPLICATE,
+                 border_value=0):
         """
         Args:
             horiz_frac (float): max abs fraction for horizontal shift
@@ -37,16 +39,22 @@ class Shift(TransformAugmentorBase):
 
         mat = np.array([[1, 0, dx], [0, 1, dy]], dtype='float32')
         return WarpAffineTransform(
-            mat, img.shape[1::-1],
-            borderMode=self.border, borderValue=self.border_value)
+            mat,
+            img.shape[1::-1],
+            borderMode=self.border,
+            borderValue=self.border_value)
 
 
 class Rotation(TransformAugmentorBase):
     """ Random rotate the image w.r.t a random center"""
 
-    def __init__(self, max_deg, center_range=(0, 1),
+    def __init__(self,
+                 max_deg,
+                 center_range=(0, 1),
                  interp=cv2.INTER_LINEAR,
-                 border=cv2.BORDER_REPLICATE, step_deg=None, border_value=0):
+                 border=cv2.BORDER_REPLICATE,
+                 step_deg=None,
+                 border_value=0):
         """
         Args:
             max_deg (float): max abs value of the rotation angle (in degree).
@@ -63,8 +71,8 @@ class Rotation(TransformAugmentorBase):
         self._init(locals())
 
     def _get_augment_params(self, img):
-        center = img.shape[1::-1] * self._rand_range(
-            self.center_range[0], self.center_range[1], (2,))
+        center = img.shape[1::-1] * self._rand_range(self.center_range[0],
+                                                     self.center_range[1], (2,))
         deg = self._rand_range(-self.max_deg, self.max_deg)
         if self.step_deg:
             deg = deg // self.step_deg * self.step_deg
@@ -83,8 +91,11 @@ class Rotation(TransformAugmentorBase):
         """
         mat = cv2.getRotationMatrix2D(tuple(center - 0.5), deg, 1)
         return WarpAffineTransform(
-            mat, img.shape[1::-1], interp=self.interp,
-            borderMode=self.border, borderValue=self.border_value)
+            mat,
+            img.shape[1::-1],
+            interp=self.interp,
+            borderMode=self.border,
+            borderValue=self.border_value)
 
 
 class RotationAndCropValid(ImageAugmentor):
@@ -109,12 +120,18 @@ class RotationAndCropValid(ImageAugmentor):
 
     def _augment(self, img, deg):
         center = (img.shape[1] * 0.5, img.shape[0] * 0.5)
-        rot_m = cv2.getRotationMatrix2D((center[0] - 0.5, center[1] - 0.5), deg, 1)
-        ret = cv2.warpAffine(img, rot_m, img.shape[1::-1],
-                             flags=self.interp, borderMode=cv2.BORDER_CONSTANT)
+        rot_m = cv2.getRotationMatrix2D((center[0] - 0.5, center[1] - 0.5), deg,
+                                        1)
+        ret = cv2.warpAffine(
+            img,
+            rot_m,
+            img.shape[1::-1],
+            flags=self.interp,
+            borderMode=cv2.BORDER_CONSTANT)
         if img.ndim == 3 and ret.ndim == 2:
             ret = ret[:, :, np.newaxis]
-        neww, newh = RotationAndCropValid.largest_rotated_rect(ret.shape[1], ret.shape[0], deg)
+        neww, newh = RotationAndCropValid.largest_rotated_rect(
+            ret.shape[1], ret.shape[0], deg)
         neww = min(neww, ret.shape[1])
         newh = min(newh, ret.shape[0])
         newx = int(center[0] - neww * 0.5)
@@ -145,11 +162,13 @@ class RotationAndCropValid(ImageAugmentor):
             # half constrained case: two crop corners touch the longer side,
             #   the other two corners are on the mid-line parallel to the longer line
             x = 0.5 * side_short
-            wr, hr = (x / sin_a, x / cos_a) if width_is_longer else (x / cos_a, x / sin_a)
+            wr, hr = (x / sin_a, x / cos_a) if width_is_longer else (x / cos_a,
+                                                                     x / sin_a)
         else:
             # fully constrained case: crop touches all 4 sides
             cos_2a = cos_a * cos_a - sin_a * sin_a
-            wr, hr = (w * cos_a - h * sin_a) / cos_2a, (h * cos_a - w * sin_a) / cos_2a
+            wr, hr = (w * cos_a - h * sin_a) / cos_2a, (
+                h * cos_a - w * sin_a) / cos_2a
         return int(np.round(wr)), int(np.round(hr))
 
 
@@ -164,8 +183,14 @@ class Affine(TransformAugmentorBase):
     - Shear (move one side of the image, turning a square into a trapezoid)
     """
 
-    def __init__(self, scale=None, translate_frac=None, rotate_max_deg=0.0, shear=0.0,
-                 interp=cv2.INTER_LINEAR, border=cv2.BORDER_REPLICATE, border_value=0):
+    def __init__(self,
+                 scale=None,
+                 translate_frac=None,
+                 rotate_max_deg=0.0,
+                 shear=0.0,
+                 interp=cv2.INTER_LINEAR,
+                 border=cv2.BORDER_REPLICATE,
+                 border_value=0):
         """
         Args:
             scale (tuple of 2 floats): scaling factor interval, e.g (a, b), then scale is

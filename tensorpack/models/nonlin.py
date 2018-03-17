@@ -2,7 +2,6 @@
 # -*- coding: UTF-8 -*-
 # File: nonlin.py
 
-
 import tensorflow as tf
 
 from .common import layer_register, VariableHolder
@@ -30,7 +29,8 @@ def Maxout(x, num_unit):
     ch = input_shape[-1]
     assert ch is not None and ch % num_unit == 0
     if ndim == 4:
-        x = tf.reshape(x, [-1, input_shape[1], input_shape[2], ch / num_unit, num_unit])
+        x = tf.reshape(
+            x, [-1, input_shape[1], input_shape[2], ch / num_unit, num_unit])
     else:
         x = tf.reshape(x, [-1, ch / num_unit, num_unit])
     return tf.reduce_max(x, ndim, name='output')
@@ -72,7 +72,8 @@ def LeakyReLU(x, alpha, name='output'):
         x (tf.Tensor): input
         alpha (float): the slope.
     """
-    log_deprecated("LeakyReLU", "Use tf.nn.leaky_relu in TF 1.4 instead!", "2018-03-30")
+    log_deprecated("LeakyReLU", "Use tf.nn.leaky_relu in TF 1.4 instead!",
+                   "2018-03-30")
     return tf.maximum(x, alpha * x, name=name)
 
 

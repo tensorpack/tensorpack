@@ -14,15 +14,16 @@ import zmq
 import atexit
 
 from .base import DataFlow, ProxyDataFlow, DataFlowTerminated, DataFlowReentrantGuard
-from ..utils.concurrency import (ensure_proc_terminate,
-                                 mask_sigint, start_proc_mask_signal,
-                                 StoppableThread)
+from ..utils.concurrency import (ensure_proc_terminate, mask_sigint,
+                                 start_proc_mask_signal, StoppableThread)
 from ..utils.serialize import loads, dumps
 from ..utils import logger
 from ..utils.gpu import change_gpu
 
-__all__ = ['PrefetchData', 'MultiProcessPrefetchData',
-           'PrefetchDataZMQ', 'PrefetchOnGPUs', 'MultiThreadPrefetchData']
+__all__ = [
+    'PrefetchData', 'MultiProcessPrefetchData', 'PrefetchDataZMQ',
+    'PrefetchOnGPUs', 'MultiThreadPrefetchData'
+]
 
 
 def _repeat_iter(get_itr):
@@ -35,9 +36,9 @@ def _bind_guard(sock, name):
     try:
         sock.bind(name)
     except zmq.ZMQError:
-        logger.error(
-            "ZMQError in socket.bind(). Perhaps you're \
-            using pipes on a non-local file system. See documentation of PrefetchDataZMQ for more information.")
+        logger.error("ZMQError in socket.bind(). Perhaps you're \
+            using pipes on a non-local file system. See documentation of PrefetchDataZMQ for more information."
+                    )
         raise
 
 
@@ -47,7 +48,9 @@ def _get_pipe_name(name):
         pipename = "ipc://@{}-pipe-{}".format(name, str(uuid.uuid1())[:8])
         pipedir = os.environ.get('TENSORPACK_PIPEDIR', None)
         if pipedir is not None:
-            logger.warn("TENSORPACK_PIPEDIR is not used on Linux any more! Abstract sockets will be used.")
+            logger.warn(
+                "TENSORPACK_PIPEDIR is not used on Linux any more! Abstract sockets will be used."
+            )
     else:
         pipedir = os.environ.get('TENSORPACK_PIPEDIR', None)
         if pipedir is not None:
@@ -55,8 +58,11 @@ def _get_pipe_name(name):
         else:
             pipedir = '.'
         assert os.path.isdir(pipedir), pipedir
-        filename = '{}/{}-pipe-{}'.format(pipedir.rstrip('/'), name, str(uuid.uuid1())[:6])
-        assert not os.path.exists(filename), "Pipe {} exists! You may be unlucky.".format(filename)
+        filename = '{}/{}-pipe-{}'.format(
+            pipedir.rstrip('/'), name,
+            str(uuid.uuid1())[:6])
+        assert not os.path.exists(
+            filename), "Pipe {} exists! You may be unlucky.".format(filename)
         pipename = "ipc://{}".format(filename)
     return pipename
 
@@ -75,7 +81,7 @@ def _zmq_catch_error(name):
         logger.info("[{}] Context terminated.".format(name))
         raise DataFlowTerminated()
     except zmq.ZMQError as e:
-        if e.errno == errno.ENOTSOCK:       # socket closed
+        if e.errno == errno.ENOTSOCK:    # socket closed
             logger.info("[{}] Socket closed.".format(name))
             raise DataFlowTerminated()
         else:
@@ -85,6 +91,7 @@ def _zmq_catch_error(name):
 
 
 class _MultiProcessZMQDataFlow(DataFlow):
+
     def __init__(self):
         assert os.name != 'nt', "ZMQ IPC doesn't support windows!"
         self._reset_done = False
@@ -102,7 +109,7 @@ class _MultiProcessZMQDataFlow(DataFlow):
         # __del__ not guranteed to get called at exit
         atexit.register(del_weakref, weakref.ref(self))
 
-        self._reset_once()  # build processes
+        self._reset_once()    # build processes
 
     def _reset_once(self):
         pass
@@ -147,6 +154,7 @@ class MultiProcessPrefetchData(ProxyDataFlow):
     """
 
     class _Worker(mp.Process):
+
         def __init__(self, ds, queue):
             super(MultiProcessPrefetchData._Worker, self).__init__()
             self.ds = ds
@@ -175,12 +183,15 @@ class MultiProcessPrefetchData(ProxyDataFlow):
         self.nr_prefetch = nr_prefetch
 
         if nr_proc > 1:
-            logger.info("[MultiProcessPrefetchData] Will fork a dataflow more than one times. "
-                        "This assumes the datapoints are i.i.d.")
+            logger.info(
+                "[MultiProcessPrefetchData] Will fork a dataflow more than one times. "
+                "This assumes the datapoints are i.i.d.")
 
         self.queue = mp.Queue(self.nr_prefetch)
-        self.procs = [MultiProcessPrefetchData._Worker(self.ds, self.queue)
-                      for _ in range(self.nr_proc)]
+        self.procs = [
+            MultiProcessPrefetchData._Worker(self.ds, self.queue)
+            for _ in range(self.nr_proc)
+        ]
         ensure_proc_terminate(self.procs)
         start_proc_mask_signal(self.procs)
 
@@ -241,6 +252,7 @@ class PrefetchDataZMQ(_MultiProcessZMQDataFlow):
     """
 
     class _Worker(mp.Process):
+
         def __init__(self, ds, conn_name, hwm):
             super(PrefetchDataZMQ._Worker, self).__init__()
             self.ds = ds
@@ -279,8 +291,9 @@ class PrefetchDataZMQ(_MultiProcessZMQDataFlow):
 
         self._guard = DataFlowReentrantGuard()
         if nr_proc > 1:
-            logger.info("[PrefetchDataZMQ] Will fork a dataflow more than one times. "
-                        "This assumes the datapoints are i.i.d.")
+            logger.info(
+                "[PrefetchDataZMQ] Will fork a dataflow more than one times. "
+                "This assumes the datapoints are i.i.d.")
         try:
             self._size = ds.size()
         except NotImplementedError:
@@ -306,8 +319,10 @@ class PrefetchDataZMQ(_MultiProcessZMQDataFlow):
         pipename = _get_pipe_name('dataflow')
         _bind_guard(self.socket, pipename)
 
-        self._procs = [PrefetchDataZMQ._Worker(self.ds, pipename, self._hwm)
-                       for _ in range(self.nr_proc)]
+        self._procs = [
+            PrefetchDataZMQ._Worker(self.ds, pipename, self._hwm)
+            for _ in range(self.nr_proc)
+        ]
         self._start_processes()
 
 
@@ -341,6 +356,7 @@ class MultiThreadPrefetchData(DataFlow):
     """
 
     class _Worker(StoppableThread):
+
         def __init__(self, get_df, queue):
             super(MultiThreadPrefetchData._Worker, self).__init__()
             self.df = get_df()
@@ -357,7 +373,7 @@ class MultiThreadPrefetchData(DataFlow):
                     self.queue_put_stoppable(self.queue, dp)
             except Exception:
                 if self.stopped():
-                    pass        # skip duplicated error messages
+                    pass    # skip duplicated error messages
                 else:
                     raise
             finally:
@@ -375,7 +391,8 @@ class MultiThreadPrefetchData(DataFlow):
         self.queue = queue.Queue(maxsize=nr_prefetch)
         self.threads = [
             MultiThreadPrefetchData._Worker(get_df, self.queue)
-            for _ in range(nr_thread)]
+            for _ in range(nr_thread)
+        ]
 
     def reset_state(self):
         for th in self.threads:
@@ -399,6 +416,7 @@ class PlasmaPutData(ProxyDataFlow):
     """
     Put each data point to plasma shared memory object store, and yield the object id instead.
     """
+
     def __init__(self, ds):
         super(PlasmaPutData, self).__init__(ds)
 
@@ -417,6 +435,7 @@ class PlasmaGetData(ProxyDataFlow):
     Take plasma object id from a DataFlow, and retrieve it from plasma shared
     memory object store.
     """
+
     def __init__(self, ds):
         super(PlasmaGetData, self).__init__(ds)
 
@@ -435,5 +454,5 @@ try:
     import pyarrow.plasma as plasma
 except ImportError:
     from ..utils.develop import create_dummy_class
-    PlasmaPutData = create_dummy_class('PlasmaPutData', 'pyarrow')   # noqa
-    PlasmaGetData = create_dummy_class('PlasmaGetData', 'pyarrow')   # noqa
+    PlasmaPutData = create_dummy_class('PlasmaPutData', 'pyarrow')    # noqa
+    PlasmaGetData = create_dummy_class('PlasmaGetData', 'pyarrow')    # noqa

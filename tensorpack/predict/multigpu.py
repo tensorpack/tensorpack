@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # File: multigpu.py
 
-
 import tensorflow as tf
 from ..utils import logger
 from ..graph_builder.predict import SimplePredictBuilder
@@ -10,8 +9,7 @@ from ..graph_builder.model_desc import InputDesc
 from ..input_source import PlaceholderInput
 from .base import OnlinePredictor
 
-__all__ = ['MultiTowerOfflinePredictor',
-           'DataParallelOfflinePredictor']
+__all__ = ['MultiTowerOfflinePredictor', 'DataParallelOfflinePredictor']
 
 
 class MultiTowerOfflinePredictor(OnlinePredictor):
@@ -47,8 +45,9 @@ class MultiTowerOfflinePredictor(OnlinePredictor):
             for h in handles:
                 input_tensors = h.get_tensors(config.input_names)
                 output_tensors = h.get_tensors(config.output_names)
-                self.predictors.append(OnlinePredictor(
-                    input_tensors, output_tensors, config.return_input, self.sess))
+                self.predictors.append(
+                    OnlinePredictor(input_tensors, output_tensors,
+                                    config.return_input, self.sess))
 
     def _do_call(self, dp):
         # use the first tower for compatible PredictorBase interface
@@ -61,7 +60,8 @@ class MultiTowerOfflinePredictor(OnlinePredictor):
         """
         l = len(self.predictors)
         if n >= l:
-            logger.warn("n > #towers, will assign predictor to GPU by round-robin")
+            logger.warn(
+                "n > #towers, will assign predictor to GPU by round-robin")
         return [self.predictors[k % l] for k in range(n)]
 
     def get_predictors(self):
@@ -95,8 +95,11 @@ class DataParallelOfflinePredictor(OnlinePredictor):
             for idx, t in enumerate(towers):
                 tower_name = 'tower' + str(t)
 
-                inputs_desc = [InputDesc(desc.type, desc.shape, tower_name + '/' + desc.name)
-                               for desc in config.inputs_desc]
+                inputs_desc = [
+                    InputDesc(desc.type, desc.shape,
+                              tower_name + '/' + desc.name)
+                    for desc in config.inputs_desc
+                ]
                 input = PlaceholderInput()
                 input.setup(inputs_desc)
 

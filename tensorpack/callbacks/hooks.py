@@ -1,13 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # File: hooks.py
-
-
 """ Compatible layers between tf.train.SessionRunHook and Callback"""
 
 import tensorflow as tf
 from .base import Callback
-
 
 __all__ = ['CallbackToHook', 'HookToCallback']
 
@@ -46,7 +43,7 @@ class HookToCallback(Callback):
         self._hook = hook
 
     def _setup_graph(self):
-        with tf.name_scope(None):   # jump out of the name scope
+        with tf.name_scope(None):    # jump out of the name scope
             self._hook.begin()
 
     def _before_train(self):

@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # File: shapes.py
 
-
 import tensorflow as tf
 from .common import layer_register
 

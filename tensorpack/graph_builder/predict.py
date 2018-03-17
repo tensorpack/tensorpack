@@ -15,6 +15,7 @@ class SimplePredictBuilder(GraphBuilder):
     """
     Single-tower predictor.
     """
+
     def __init__(self, ns_name='', vs_name='', device=0):
         """
         Args:

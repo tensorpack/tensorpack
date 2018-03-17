@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # File: collection.py
 
-
 import tensorflow as tf
 from copy import copy
 import six
@@ -11,9 +10,7 @@ from contextlib import contextmanager
 from ..utils import logger
 from ..utils.argtools import memoized
 
-__all__ = ['backup_collection',
-           'restore_collection',
-           'freeze_collection']
+__all__ = ['backup_collection', 'restore_collection', 'freeze_collection']
 
 
 def backup_collection(keys=None):
@@ -66,7 +63,7 @@ def get_inverse_graphkeys():
     for name in dir(tf.GraphKeys):
         if name.startswith('_'):
             continue
-        if name in ['VARIABLES']:   # will produce deprecated warning
+        if name in ['VARIABLES']:    # will produce deprecated warning
             continue
         ret[getattr(tf.GraphKeys, name)] = "tf.GraphKeys.{}".format(name)
     return ret
@@ -79,9 +76,7 @@ class CollectionGuard(object):
 
     original = None
 
-    def __init__(self, name, check_diff,
-                 freeze_keys=[],
-                 diff_whitelist=None):
+    def __init__(self, name, check_diff, freeze_keys=[], diff_whitelist=None):
         """
         Args:
            name (str): name of the tower
@@ -102,10 +97,10 @@ class CollectionGuard(object):
 
     @staticmethod
     def _default_diff_whitelist():
-        ret = [tf.GraphKeys.TRAINABLE_VARIABLES,
-               tf.GraphKeys.GLOBAL_VARIABLES,
-               tf.GraphKeys.QUEUE_RUNNERS,
-               tf.GraphKeys.LOCAL_VARIABLES]
+        ret = [
+            tf.GraphKeys.TRAINABLE_VARIABLES, tf.GraphKeys.GLOBAL_VARIABLES,
+            tf.GraphKeys.QUEUE_RUNNERS, tf.GraphKeys.LOCAL_VARIABLES
+        ]
         for newkey in ['COND_CONTEXT', 'WHILE_CONTEXT', 'LOSSES']:
             if hasattr(tf.GraphKeys, newkey):
                 ret.append(getattr(tf.GraphKeys, newkey))
@@ -141,15 +136,13 @@ class CollectionGuard(object):
                 if len(old_v) != len(v):
                     size_change.append((self._key_name(k), len(old_v), len(v)))
         if newly_created:
-            logger.info(
-                "New collections created in {}: {}".format(
-                    self._name, ', '.join(newly_created)))
+            logger.info("New collections created in {}: {}".format(
+                self._name, ', '.join(newly_created)))
         if size_change:
             logger.info(
                 "Size of these collections were changed in {}: {}".format(
                     self._name, ', '.join(
-                        map(lambda t: "({}: {}->{})".format(*t),
-                            size_change))))
+                        map(lambda t: "({}: {}->{})".format(*t), size_change))))
 
     def _restore_freeze(self, new):
         size_change = []
@@ -161,8 +154,7 @@ class CollectionGuard(object):
             logger.info(
                 "These collections were modified but restored in {}: {}".format(
                     self._name, ', '.join(
-                        map(lambda t: "({}: {}->{})".format(*t),
-                            size_change))))
+                        map(lambda t: "({}: {}->{})".format(*t), size_change))))
         restore_collection(self._freeze_backup)
 
     def get_collection_in_tower(self, key):

@@ -1,7 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: dftools.py
 
-
 import os
 import multiprocessing as mp
 from six.moves import range
@@ -12,8 +11,10 @@ from ..utils.utils import get_tqdm
 from ..utils.concurrency import DIE
 from ..utils.serialize import dumps
 
-__all__ = ['dump_dataflow_to_process_queue',
-           'dump_dataflow_to_lmdb', 'dump_dataflow_to_tfrecord']
+__all__ = [
+    'dump_dataflow_to_process_queue', 'dump_dataflow_to_lmdb',
+    'dump_dataflow_to_tfrecord'
+]
 
 
 def dump_dataflow_to_process_queue(df, size, nr_consumer):
@@ -70,13 +71,18 @@ def dump_dataflow_to_lmdb(df, lmdb_path, write_frequency=5000):
     assert isinstance(df, DataFlow), type(df)
     isdir = os.path.isdir(lmdb_path)
     if isdir:
-        assert not os.path.isfile(os.path.join(lmdb_path, 'data.mdb')), "LMDB file exists!"
+        assert not os.path.isfile(os.path.join(lmdb_path,
+                                               'data.mdb')), "LMDB file exists!"
     else:
         assert not os.path.isfile(lmdb_path), "LMDB file exists!"
     df.reset_state()
-    db = lmdb.open(lmdb_path, subdir=isdir,
-                   map_size=1099511627776 * 2, readonly=False,
-                   meminit=False, map_async=True)    # need sync() at the end
+    db = lmdb.open(
+        lmdb_path,
+        subdir=isdir,
+        map_size=1099511627776 * 2,
+        readonly=False,
+        meminit=False,
+        map_async=True)    # need sync() at the end
     try:
         sz = df.size()
     except NotImplementedError:
@@ -125,14 +131,15 @@ def dump_dataflow_to_tfrecord(df, path):
                 pbar.update()
 
 
-from ..utils.develop import create_dummy_func  # noqa
+from ..utils.develop import create_dummy_func    # noqa
 try:
     import lmdb
 except ImportError:
-    dump_dataflow_to_lmdb = create_dummy_func('dump_dataflow_to_lmdb', 'lmdb') # noqa
+    dump_dataflow_to_lmdb = create_dummy_func('dump_dataflow_to_lmdb',
+                                              'lmdb')    # noqa
 
 try:
     import tensorflow as tf
 except ImportError:
-    dump_dataflow_to_tfrecord = create_dummy_func(  # noqa
+    dump_dataflow_to_tfrecord = create_dummy_func(    # noqa
         'dump_dataflow_to_tfrecord', 'tensorflow')

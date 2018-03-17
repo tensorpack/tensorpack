@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # File: steps.py
-
 """ Some common step callbacks. """
 
 import tensorflow as tf
@@ -11,8 +10,7 @@ import tqdm
 from ..utils import logger
 from ..utils.utils import get_tqdm_kwargs
 from ..utils.naming import GLOBAL_STEP_INCR_OP_NAME
-from ..tfutils.common import (
-    get_op_tensor_name, get_global_step_var)
+from ..tfutils.common import (get_op_tensor_name, get_global_step_var)
 from .base import Callback
 
 __all__ = ['TensorPrinter', 'ProgressBar']
@@ -29,7 +27,8 @@ class TensorPrinter(Callback):
             names(list): list of string, the names of the tensors to print.
         """
         names = [get_op_tensor_name(n)[1] for n in names]
-        logger.warn("Using tf.Print in the graph is much faster than TensorPrinter!")
+        logger.warn(
+            "Using tf.Print in the graph is much faster than TensorPrinter!")
         self._names = names
 
     def _setup_graph(self):
@@ -70,9 +69,11 @@ class ProgressBar(Callback):
         self._fetches = self.get_tensors_maybe_in_tower(self._names) or None
         if self._fetches:
             for t in self._fetches:
-                assert t.shape.ndims == 0, "ProgressBar can only print scalars, not {}".format(t)
+                assert t.shape.ndims == 0, "ProgressBar can only print scalars, not {}".format(
+                    t)
             self._fetches = tf.train.SessionRunArgs(self._fetches)
-            self._tqdm_args['bar_format'] = self._tqdm_args['bar_format'] + "{postfix} "
+            self._tqdm_args[
+                'bar_format'] = self._tqdm_args['bar_format'] + "{postfix} "
 
     def _before_epoch(self):
         self._bar = tqdm.trange(self._total, **self._tqdm_args)
@@ -97,7 +98,7 @@ class ProgressBar(Callback):
         self._bar.update()
 
     def _after_train(self):
-        if self._bar:       # training may get killed before the first step
+        if self._bar:    # training may get killed before the first step
             self._bar.close()
 
 
@@ -118,13 +119,13 @@ class MaintainStepCounter(Callback):
         with tf.name_scope(None):
             with self.graph.colocate_with(gs_var):
                 self.gs_incr_op = tf.assign_add(
-                    gs_var, 1,
-                    name=GLOBAL_STEP_INCR_OP_NAME).op
+                    gs_var, 1, name=GLOBAL_STEP_INCR_OP_NAME).op
         self._fetches = tf.train.SessionRunArgs(self.gs_incr_op)
 
     def _before_train(self):
         if self.global_step != 0:
-            logger.info("Start training with global_step={}".format(self.global_step))
+            logger.info("Start training with global_step={}".format(
+                self.global_step))
 
     def _before_run(self, _):
         # always increase global_step when hooked_sess.run is called

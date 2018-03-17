@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # File: varmanip.py
 
-
 import six
 import os
 import pprint
@@ -12,13 +11,15 @@ from ..utils.develop import deprecated
 from ..utils import logger
 from .common import get_op_tensor_name
 
-__all__ = ['SessionUpdate', 'dump_session_params', 'dump_chkpt_vars',
-           'load_chkpt_vars', 'get_checkpoint_path']
+__all__ = [
+    'SessionUpdate', 'dump_session_params', 'dump_chkpt_vars',
+    'load_chkpt_vars', 'get_checkpoint_path'
+]
 
 
-def get_savename_from_varname(
-        varname, varname_prefix=None,
-        savename_prefix=None):
+def get_savename_from_varname(varname,
+                              varname_prefix=None,
+                              savename_prefix=None):
     """
     Args:
         varname(str): a variable name in the graph
@@ -68,8 +69,9 @@ class SessionUpdate(object):
             # TODO only allow reshape when shape different by empty axis
             assert np.prod(varshape) == np.prod(val.shape), \
                 "{}: {}!={}".format(name, varshape, val.shape)
-            logger.warn("Variable {} is reshaped {}->{} during assigning".format(
-                name, val.shape, varshape))
+            logger.warn(
+                "Variable {} is reshaped {}->{} during assigning".format(
+                    name, val.shape, varshape))
             val = val.reshape(varshape)
 
         # fix some common type incompatibility problems, but not all
@@ -77,14 +79,16 @@ class SessionUpdate(object):
             # allow up-casting
             if vartype == tf.float64 and valtype == np.float32:
                 return np.float64
-            if vartype in [tf.int64, tf.int32] and valtype in [np.int32, np.int16, np.int8]:
+            if vartype in [tf.int64, tf.int32
+                          ] and valtype in [np.int32, np.int16, np.int8]:
                 return np.int64 if vartype == tf.int64 else np.int32
             return None
 
         if hasattr(val, 'dtype'):
             vartype = var.value().dtype
             if vartype != val.dtype:
-                msg = "Variable {} has dtype {} but was given a value of dtype {}.".format(name, vartype, val.dtype)
+                msg = "Variable {} has dtype {} but was given a value of dtype {}.".format(
+                    name, vartype, val.dtype)
                 newtype = upcast(var.dtype, val.dtype)
                 if newtype is not None:
                     val = newtype(val)
@@ -120,7 +124,8 @@ def dump_session_params(path):
     var = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
     var.extend(tf.get_collection(tf.GraphKeys.MODEL_VARIABLES))
     # TODO dedup
-    assert len(set(var)) == len(var), "TRAINABLE and MODEL variables have duplication!"
+    assert len(
+        set(var)) == len(var), "TRAINABLE and MODEL variables have duplication!"
     gvars = set([k.name for k in tf.global_variables()])
     var = [v for v in var if v.name in gvars]
     result = {}
@@ -147,7 +152,7 @@ def get_checkpoint_path(model_path):
         str: the argument that can be passed to NewCheckpointReader
     """
     if os.path.basename(model_path) == model_path:
-        model_path = os.path.join('.', model_path)  # avoid #4921 and #6142
+        model_path = os.path.join('.', model_path)    # avoid #4921 and #6142
     if os.path.basename(model_path) == 'checkpoint':
         assert tf.gfile.Exists(model_path), model_path
         model_path = tf.train.latest_checkpoint(os.path.dirname(model_path))
@@ -160,10 +165,11 @@ def get_checkpoint_path(model_path):
     elif model_path.endswith('.index'):
         new_path = model_path.split('.index')[0]
     if new_path != model_path:
-        logger.warn(
-            "Checkpoint path {} is auto-corrected to {}.".format(model_path, new_path))
+        logger.warn("Checkpoint path {} is auto-corrected to {}.".format(
+            model_path, new_path))
         model_path = new_path
-    assert tf.gfile.Exists(model_path) or tf.gfile.Exists(model_path + '.index'), model_path
+    assert tf.gfile.Exists(model_path) or tf.gfile.Exists(
+        model_path + '.index'), model_path
     return model_path
 
 
@@ -208,7 +214,7 @@ def is_training_name(name):
         return True
     if name.endswith('/Adagrad'):
         return True
-    if name.startswith('EMA/'):  # all the moving average summaries
+    if name.startswith('EMA/'):    # all the moving average summaries
         return True
     if name.startswith('AccumGrad') or name.endswith('/AccumGrad'):
         return True

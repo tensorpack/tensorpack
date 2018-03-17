@@ -5,10 +5,8 @@
 import os
 import tensorflow as tf
 
-from ..callbacks import (
-    MovingAverageSummary,
-    ProgressBar, MergeAllSummaries,
-    TFEventWriter, JSONWriter, ScalarPrinter, RunUpdateOps)
+from ..callbacks import (MovingAverageSummary, ProgressBar, MergeAllSummaries,
+                         TFEventWriter, JSONWriter, ScalarPrinter, RunUpdateOps)
 from ..dataflow.base import DataFlow
 from ..graph_builder.model_desc import ModelDescBase
 from ..utils import logger
@@ -16,7 +14,10 @@ from ..tfutils.sessinit import SessionInit, SaverRestore, JustCurrentSession
 from ..tfutils.sesscreate import NewSessionCreator
 from ..input_source import InputSource
 
-__all__ = ['TrainConfig', 'AutoResumeTrainConfig', 'DEFAULT_CALLBACKS', 'DEFAULT_MONITORS']
+__all__ = [
+    'TrainConfig', 'AutoResumeTrainConfig', 'DEFAULT_CALLBACKS',
+    'DEFAULT_MONITORS'
+]
 
 
 def DEFAULT_CALLBACKS():
@@ -34,7 +35,8 @@ def DEFAULT_CALLBACKS():
         MovingAverageSummary(),
         ProgressBar(),
         MergeAllSummaries(),
-        RunUpdateOps()]
+        RunUpdateOps()
+    ]
 
 
 def DEFAULT_MONITORS():
@@ -56,11 +58,18 @@ class TrainConfig(object):
     """
 
     def __init__(self,
-                 dataflow=None, data=None,
+                 dataflow=None,
+                 data=None,
                  model=None,
-                 callbacks=None, extra_callbacks=None, monitors=None,
-                 session_creator=None, session_config=None, session_init=None,
-                 starting_epoch=1, steps_per_epoch=None, max_epoch=99999,
+                 callbacks=None,
+                 extra_callbacks=None,
+                 monitors=None,
+                 session_creator=None,
+                 session_config=None,
+                 session_init=None,
+                 starting_epoch=1,
+                 steps_per_epoch=None,
+                 max_epoch=99999,
                  **kwargs):
         """
         Args:
@@ -138,7 +147,9 @@ class TrainConfig(object):
                 else:
                     raise NotImplementedError()
             except NotImplementedError:
-                logger.error("You must set `TrainConfig(steps_per_epoch)` if data.size() is not available.")
+                logger.error(
+                    "You must set `TrainConfig(steps_per_epoch)` if data.size() is not available."
+                )
                 raise
         else:
             steps_per_epoch = int(steps_per_epoch)
@@ -157,21 +168,31 @@ class TrainConfig(object):
 
     @property
     def nr_tower(self):
-        logger.warn("TrainConfig.nr_tower was deprecated! Set the number of GPUs on the trainer instead!")
-        logger.warn("See https://github.com/ppwwyyxx/tensorpack/issues/458 for more information.")
+        logger.warn(
+            "TrainConfig.nr_tower was deprecated! Set the number of GPUs on the trainer instead!"
+        )
+        logger.warn(
+            "See https://github.com/ppwwyyxx/tensorpack/issues/458 for more information."
+        )
         return len(self.tower)
 
     @nr_tower.setter
     def nr_tower(self, value):
-        logger.warn("TrainConfig.nr_tower was deprecated! Set the number of GPUs on the trainer instead!")
-        logger.warn("See https://github.com/ppwwyyxx/tensorpack/issues/458 for more information.")
+        logger.warn(
+            "TrainConfig.nr_tower was deprecated! Set the number of GPUs on the trainer instead!"
+        )
+        logger.warn(
+            "See https://github.com/ppwwyyxx/tensorpack/issues/458 for more information."
+        )
         self.tower = list(range(value))
 
     def _deprecated_parsing(self):
         self.callbacks = self.callbacks or []
-        self.extra_callbacks = DEFAULT_CALLBACKS() if self.extra_callbacks is None else self.extra_callbacks
+        self.extra_callbacks = DEFAULT_CALLBACKS(
+        ) if self.extra_callbacks is None else self.extra_callbacks
         self.callbacks.extend(self.extra_callbacks)
-        self.monitors = DEFAULT_MONITORS() if self.monitors is None else self.monitors
+        self.monitors = DEFAULT_MONITORS(
+        ) if self.monitors is None else self.monitors
         self.session_init = self.session_init or JustCurrentSession()
 
 
@@ -189,6 +210,7 @@ class AutoResumeTrainConfig(TrainConfig):
     You can choose to let the above two option to either overwrite or
     not overwrite user-provided arguments, as explained below.
     """
+
     def __init__(self, always_resume=True, **kwargs):
         """
         Args:
@@ -212,8 +234,10 @@ class AutoResumeTrainConfig(TrainConfig):
             if sessinit is not None:
                 path = sessinit.path
                 if 'session_init' in kwargs:
-                    logger.info("Found checkpoint at {}. "
-                                "session_init arguments will be overwritten.".format(path))
+                    logger.info(
+                        "Found checkpoint at {}. "
+                        "session_init arguments will be overwritten.".format(
+                            path))
                 else:
                     logger.info("Will load checkpoint at {}.".format(path))
                 kwargs['session_init'] = sessinit
@@ -223,7 +247,8 @@ class AutoResumeTrainConfig(TrainConfig):
             if last_epoch is not None:
                 now_epoch = last_epoch + 1
                 logger.info("Found history statistics from JSON. "
-                            "Overwrite the starting epoch to epoch #{}.".format(now_epoch))
+                            "Overwrite the starting epoch to epoch #{}.".format(
+                                now_epoch))
                 kwargs['starting_epoch'] = now_epoch
 
         super(AutoResumeTrainConfig, self).__init__(**kwargs)

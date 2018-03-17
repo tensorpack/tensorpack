@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # File: raw.py
 
-
 import numpy as np
 import copy
 import six
@@ -10,13 +9,21 @@ from six.moves import range
 from .base import DataFlow, RNGDataFlow
 from ..utils.develop import log_deprecated
 
-__all__ = ['FakeData', 'DataFromQueue', 'DataFromList', 'DataFromGenerator', 'DataFromIterable']
+__all__ = [
+    'FakeData', 'DataFromQueue', 'DataFromList', 'DataFromGenerator',
+    'DataFromIterable'
+]
 
 
 class FakeData(RNGDataFlow):
     """ Generate fake data of given shapes"""
 
-    def __init__(self, shapes, size=1000, random=True, dtype='float32', domain=(0, 1)):
+    def __init__(self,
+                 shapes,
+                 size=1000,
+                 random=True,
+                 dtype='float32',
+                 domain=(0, 1)):
         """
         Args:
             shapes (list): a list of lists/tuples. Shapes of each component.
@@ -30,8 +37,10 @@ class FakeData(RNGDataFlow):
         self.shapes = shapes
         self._size = int(size)
         self.random = random
-        self.dtype = [dtype] * len(shapes) if isinstance(dtype, six.string_types) else dtype
-        self.domain = [domain] * len(shapes) if isinstance(domain, tuple) else domain
+        self.dtype = [dtype] * len(shapes) if isinstance(
+            dtype, six.string_types) else dtype
+        self.domain = [domain] * len(shapes) if isinstance(domain,
+                                                           tuple) else domain
         assert len(self.dtype) == len(self.shapes)
         assert len(self.domain) == len(self.domain)
 
@@ -43,13 +52,16 @@ class FakeData(RNGDataFlow):
             for _ in range(self._size):
                 val = []
                 for k in range(len(self.shapes)):
-                    v = self.rng.rand(*self.shapes[k]) * (self.domain[k][1] - self.domain[k][0]) + self.domain[k][0]
+                    v = self.rng.rand(*self.shapes[k]) * (
+                        self.domain[k][1] - self.domain[k][0]
+                    ) + self.domain[k][0]
                     val.append(v.astype(self.dtype[k]))
                 yield val
         else:
             val = []
             for k in range(len(self.shapes)):
-                v = self.rng.rand(*self.shapes[k]) * (self.domain[k][1] - self.domain[k][0]) + self.domain[k][0]
+                v = self.rng.rand(*self.shapes[k]) * (
+                    self.domain[k][1] - self.domain[k][0]) + self.domain[k][0]
                 val.append(v.astype(self.dtype[k]))
             for _ in range(self._size):
                 yield copy.copy(val)
@@ -57,6 +69,7 @@ class FakeData(RNGDataFlow):
 
 class DataFromQueue(DataFlow):
     """ Produce data from a queue """
+
     def __init__(self, queue):
         """
         Args:
@@ -100,6 +113,7 @@ class DataFromGenerator(DataFlow):
     """
     Wrap a generator to a DataFlow.
     """
+
     def __init__(self, gen, size=None):
         """
         Args:
@@ -111,7 +125,8 @@ class DataFromGenerator(DataFlow):
         else:
             self._gen = gen
         if size is not None:
-            log_deprecated("DataFromGenerator(size=)", "It doesn't make much sense.", "2018-03-31")
+            log_deprecated("DataFromGenerator(size=)",
+                           "It doesn't make much sense.", "2018-03-31")
 
     def get_data(self):
         # yield from
@@ -121,6 +136,7 @@ class DataFromGenerator(DataFlow):
 
 class DataFromIterable(DataFlow):
     """ Wrap an iterable of datapoitns to a DataFlow"""
+
     def __init__(self, iterable):
         """
         Args:

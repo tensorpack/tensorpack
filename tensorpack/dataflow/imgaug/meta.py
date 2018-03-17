@@ -2,15 +2,17 @@
 # -*- coding: utf-8 -*-
 # File: meta.py
 
-
 from .base import ImageAugmentor
 
-__all__ = ['RandomChooseAug', 'MapImage', 'Identity', 'RandomApplyAug',
-           'RandomOrderAug']
+__all__ = [
+    'RandomChooseAug', 'MapImage', 'Identity', 'RandomApplyAug',
+    'RandomOrderAug'
+]
 
 
 class Identity(ImageAugmentor):
     """ A no-op augmentor """
+
     def _augment(self, img, _):
         return img
 
@@ -64,6 +66,7 @@ class RandomApplyAug(ImageAugmentor):
 
 class RandomChooseAug(ImageAugmentor):
     """ Randomly choose one from a list of augmentors """
+
     def __init__(self, aug_lists):
         """
         Args:
@@ -120,8 +123,10 @@ class RandomOrderAug(ImageAugmentor):
         # Note: If augmentors change the shape of image, get_augment_param might not work
         # All augmentors should only rely on the shape of image
         idxs = self.rng.permutation(len(self.aug_lists))
-        prms = [self.aug_lists[k]._get_augment_params(img)
-                for k in range(len(self.aug_lists))]
+        prms = [
+            self.aug_lists[k]._get_augment_params(img)
+            for k in range(len(self.aug_lists))
+        ]
         return idxs, prms
 
     def _augment(self, img, prm):

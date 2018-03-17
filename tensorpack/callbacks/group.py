@@ -1,7 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: group.py
 
-
 import tensorflow as tf
 from contextlib import contextmanager
 import time
@@ -16,6 +15,7 @@ __all__ = ['Callbacks']
 
 
 class CallbackTimeLogger(object):
+
     def __init__(self):
         self.times = []
         self.tot = 0
@@ -31,7 +31,6 @@ class CallbackTimeLogger(object):
         self.add(name, time.time() - s)
 
     def log(self):
-
         """ log the time of some heavy callbacks """
         if self.tot < 3:
             return
@@ -39,9 +38,8 @@ class CallbackTimeLogger(object):
         for name, t in self.times:
             if t / self.tot > 0.3 and t > 1:
                 msgs.append(name + ": " + humanize_time_delta(t))
-        logger.info(
-            "Callbacks took {:.3f} sec in total. {}".format(
-                self.tot, '; '.join(msgs)))
+        logger.info("Callbacks took {:.3f} sec in total. {}".format(
+            self.tot, '; '.join(msgs)))
 
 
 class Callbacks(Callback):
@@ -61,7 +59,7 @@ class Callbacks(Callback):
         self.cbs = cbs
 
     def _setup_graph(self):
-        with tf.name_scope(None):   # clear the name scope
+        with tf.name_scope(None):    # clear the name scope
             for cb in self.cbs:
                 cb.setup_graph(self.trainer)
 

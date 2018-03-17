@@ -21,6 +21,7 @@ class TransformAugmentorBase(ImageAugmentor):
     return a :class:`ImageTransform` instance, and it will use
     this instance to augment both image and coordinates.
     """
+
     def _augment(self, img, t):
         return t.apply_image(img)
 
@@ -56,14 +57,13 @@ class ImageTransform(object):
 
 
 class ResizeTransform(ImageTransform):
+
     def __init__(self, h, w, newh, neww, interp):
         self._init(locals())
 
     def apply_image(self, img):
         assert img.shape[:2] == (self.h, self.w)
-        ret = cv2.resize(
-            img, (self.neww, self.newh),
-            interpolation=self.interp)
+        ret = cv2.resize(img, (self.neww, self.newh), interpolation=self.interp)
         if img.ndim == 3 and ret.ndim == 2:
             ret = ret[:, :, np.newaxis]
         return ret
@@ -75,6 +75,7 @@ class ResizeTransform(ImageTransform):
 
 
 class CropTransform(ImageTransform):
+
     def __init__(self, h0, w0, h, w):
         self._init(locals())
 
@@ -88,21 +89,30 @@ class CropTransform(ImageTransform):
 
 
 class WarpAffineTransform(ImageTransform):
-    def __init__(self, mat, dsize, interp=cv2.INTER_LINEAR,
-                 borderMode=cv2.BORDER_CONSTANT, borderValue=0):
+
+    def __init__(self,
+                 mat,
+                 dsize,
+                 interp=cv2.INTER_LINEAR,
+                 borderMode=cv2.BORDER_CONSTANT,
+                 borderValue=0):
         self._init(locals())
 
     def apply_image(self, img):
-        ret = cv2.warpAffine(img, self.mat, self.dsize,
-                             flags=self.interp,
-                             borderMode=self.borderMode,
-                             borderValue=self.borderValue)
+        ret = cv2.warpAffine(
+            img,
+            self.mat,
+            self.dsize,
+            flags=self.interp,
+            borderMode=self.borderMode,
+            borderValue=self.borderValue)
         if img.ndim == 3 and ret.ndim == 2:
             ret = ret[:, :, np.newaxis]
         return ret
 
     def apply_coords(self, coords):
-        coords = np.concatenate((coords, np.ones((coords.shape[0], 1), dtype='f4')), axis=1)
+        coords = np.concatenate(
+            (coords, np.ones((coords.shape[0], 1), dtype='f4')), axis=1)
         coords = np.dot(coords, self.mat.T)
         return coords
 

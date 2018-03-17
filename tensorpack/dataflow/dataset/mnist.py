@@ -2,7 +2,6 @@
 # -*- coding: UTF-8 -*-
 # File: mnist.py
 
-
 import os
 import gzip
 import numpy
@@ -35,9 +34,8 @@ def extract_images(filename):
     with gzip.open(filename) as bytestream:
         magic = _read32(bytestream)
         if magic != 2051:
-            raise ValueError(
-                'Invalid magic number %d in MNIST image file: %s' %
-                (magic, filename))
+            raise ValueError('Invalid magic number %d in MNIST image file: %s' %
+                             (magic, filename))
         num_images = _read32(bytestream)
         rows = _read32(bytestream)
         cols = _read32(bytestream)
@@ -53,9 +51,8 @@ def extract_labels(filename):
     with gzip.open(filename) as bytestream:
         magic = _read32(bytestream)
         if magic != 2049:
-            raise ValueError(
-                'Invalid magic number %d in MNIST label file: %s' %
-                (magic, filename))
+            raise ValueError('Invalid magic number %d in MNIST label file: %s' %
+                             (magic, filename))
         num_items = _read32(bytestream)
         buf = bytestream.read(num_items)
         labels = numpy.frombuffer(buf, dtype=numpy.uint8)
@@ -93,12 +90,10 @@ class Mnist(RNGDataFlow):
 
         if self.train_or_test == 'train':
             self.images, self.labels = get_images_and_labels(
-                'train-images-idx3-ubyte.gz',
-                'train-labels-idx1-ubyte.gz')
+                'train-images-idx3-ubyte.gz', 'train-labels-idx1-ubyte.gz')
         else:
             self.images, self.labels = get_images_and_labels(
-                't10k-images-idx3-ubyte.gz',
-                't10k-labels-idx1-ubyte.gz')
+                't10k-images-idx3-ubyte.gz', 't10k-labels-idx1-ubyte.gz')
 
     def size(self):
         return self.images.shape[0]

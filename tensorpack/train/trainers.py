@@ -17,24 +17,20 @@ from ..tfutils.distributed import get_distributed_session_creator
 from ..tfutils.tower import TowerContext
 from ..input_source import QueueInput
 
-from ..graph_builder.training import (
-    SyncMultiGPUParameterServerBuilder,
-    SyncMultiGPUReplicatedBuilder,
-    AsyncMultiGPUBuilder)
+from ..graph_builder.training import (SyncMultiGPUParameterServerBuilder,
+                                      SyncMultiGPUReplicatedBuilder,
+                                      AsyncMultiGPUBuilder)
 from ..graph_builder.distributed import DistributedReplicatedBuilder, DistributedParameterServerBuilder
 from ..graph_builder.utils import override_to_local_variable
 
 from .tower import SingleCostTrainer
 
-__all__ = ['SimpleTrainer',
-           'QueueInputTrainer',
-           'SyncMultiGPUTrainer',
-           'SyncMultiGPUTrainerReplicated',
-           'SyncMultiGPUTrainerParameterServer',
-           'AsyncMultiGPUTrainer',
-           'DistributedTrainerParameterServer',
-           'DistributedTrainerReplicated',
-           'HorovodTrainer']
+__all__ = [
+    'SimpleTrainer', 'QueueInputTrainer', 'SyncMultiGPUTrainer',
+    'SyncMultiGPUTrainerReplicated', 'SyncMultiGPUTrainerParameterServer',
+    'AsyncMultiGPUTrainer', 'DistributedTrainerParameterServer',
+    'DistributedTrainerReplicated', 'HorovodTrainer'
+]
 
 
 def _int_to_range(x):
@@ -48,6 +44,7 @@ class SimpleTrainer(SingleCostTrainer):
     """
     Single-GPU single-cost single-tower trainer.
     """
+
     def _setup_graph(self, input, get_cost_fn, get_opt_fn):
         logger.info("Building graph for a single training tower ...")
         with TowerContext('', is_training=True):
@@ -59,9 +56,11 @@ class SimpleTrainer(SingleCostTrainer):
 
 # Only exists for type check & back-compatibility
 class QueueInputTrainer(SimpleTrainer):
+
     def _setup_graph(self, input, get_cost_fn, get_opt_fn):
         assert isinstance(input, QueueInput)
-        return super(QueueInputTrainer, self)._setup_graph(input, get_cost_fn, get_opt_fn)
+        return super(QueueInputTrainer, self)._setup_graph(
+            input, get_cost_fn, get_opt_fn)
 
 
 class SyncMultiGPUTrainerParameterServer(SingleCostTrainer):
@@ -154,7 +153,9 @@ class SyncMultiGPUTrainerReplicated(SingleCostTrainer):
 
         if use_nccl is not None:
             mode = 'nccl' if use_nccl else None
-            logger.warn("use_nccl option was deprecated! Use the `mode` option instead!")
+            logger.warn(
+                "use_nccl option was deprecated! Use the `mode` option instead!"
+            )
         if mode is None:
             mode = 'hierarchical' if len(gpus) >= 8 else 'nccl'
         mode = mode.lower()
@@ -167,8 +168,7 @@ class SyncMultiGPUTrainerReplicated(SingleCostTrainer):
             self._make_get_grad_fn(input, get_cost_fn, get_opt_fn), get_opt_fn)
 
         cb = RunOp(
-            post_init_op,
-            run_before=True, run_as_trigger=True, verbose=True)
+            post_init_op, run_before=True, run_as_trigger=True, verbose=True)
         return [cb]
 
 
@@ -181,13 +181,16 @@ class DistributedTrainerBase(SingleCostTrainer):
         self.devices = gpus
         self.server = server
         self.job_name = server.server_def.job_name
-        logger.info("Distributed training on cluster:\n" + str(server.server_def.cluster))
+        logger.info("Distributed training on cluster:\n" +
+                    str(server.server_def.cluster))
 
     def join(self):
-        logger.info("Calling server.join() on {}:{}".format(self.job_name, self.server.server_def.task_index))
+        logger.info("Calling server.join() on {}:{}".format(
+            self.job_name, self.server.server_def.task_index))
         logger.info("Kill me with 'kill {}'".format(os.getpid()))
-        self.server.join()  # this function will never return tensorflow#4713
-        raise RuntimeError("This is a bug. Server.join() for should never return!")
+        self.server.join()    # this function will never return tensorflow#4713
+        raise RuntimeError(
+            "This is a bug. Server.join() for should never return!")
 
     @HIDE_DOC
     def initialize(self, session_creator, session_init):
@@ -217,7 +220,8 @@ class DistributedTrainerParameterServer(DistributedTrainerBase):
         if self.job_name == 'ps':
             self.join()
 
-        self._builder = DistributedParameterServerBuilder(gpus, server, caching_device)
+        self._builder = DistributedParameterServerBuilder(
+            gpus, server, caching_device)
         self.is_chief = self._builder.is_chief
 
     def _setup_graph(self, input, get_cost_fn, get_opt_fn):
@@ -247,7 +251,7 @@ class DistributedTrainerReplicated(DistributedTrainerBase):
 
     def _setup_input(self, inputs_desc, input):
         with override_to_local_variable():
-            get_global_step_var()  # gs should be local
+            get_global_step_var()    # gs should be local
             # input source may create variable (queue size summary)
             # TODO This is not good because we don't know from here
             # whether something should be global or local. We now assume
@@ -261,17 +265,25 @@ class DistributedTrainerReplicated(DistributedTrainerBase):
 
         callbacks = []
         # Initial syncing vars from PS
-        cb = RunOp(lambda: initial_sync_op,
-                   run_before=True, run_as_trigger=False, verbose=True)
+        cb = RunOp(
+            lambda: initial_sync_op,
+            run_before=True,
+            run_as_trigger=False,
+            verbose=True)
         cb.chief_only = False
         callbacks.append(cb)
 
         # Sync model_variables to PS, only chief needs to do this
         if model_sync_op:
-            cb = RunOp(lambda: model_sync_op,
-                       run_before=False, run_as_trigger=True, verbose=True)
-            logger.warn("For efficiency, local MODEL_VARIABLES are only synced to PS once "
-                        "every epoch. Be careful if you save the model more frequently than this.")
+            cb = RunOp(
+                lambda: model_sync_op,
+                run_before=False,
+                run_as_trigger=True,
+                verbose=True)
+            logger.warn(
+                "For efficiency, local MODEL_VARIABLES are only synced to PS once "
+                "every epoch. Be careful if you save the model more frequently than this."
+            )
             callbacks.append(cb)
         return callbacks
 
@@ -304,6 +316,7 @@ class HorovodTrainer(SingleCostTrainer):
 
         3. MPI often fails to kill all processes. Be sure to check it.
     """
+
     def __init__(self, average=True):
         """
         Args:
@@ -339,32 +352,34 @@ class HorovodTrainer(SingleCostTrainer):
             self.train_op = opt.apply_gradients(grads, name='min_op')
         with tf.name_scope('horovod_broadcast'):
             op = hvd.broadcast_global_variables(0)
-        cb = RunOp(
-            op, run_before=True,
-            run_as_trigger=False, verbose=True)
+        cb = RunOp(op, run_before=True, run_as_trigger=False, verbose=True)
         return [cb]
 
     @HIDE_DOC
     def initialize(self, session_creator, session_init):
         if not isinstance(session_creator, NewSessionCreator):
             raise ValueError(
-                "session_creator has to be `NewSessionCreator` for horovod training! ")
+                "session_creator has to be `NewSessionCreator` for horovod training! "
+            )
         # NOTE It will fail if GPU was already detected before initializing the session
         # https://github.com/tensorflow/tensorflow/issues/8136
-        session_creator.config.gpu_options.visible_device_list = str(self._local_rank)
+        session_creator.config.gpu_options.visible_device_list = str(
+            self._local_rank)
         try:
-            session_creator.config.inter_op_parallelism_threads = mp.cpu_count() // hvd.local_size()
+            session_creator.config.inter_op_parallelism_threads = mp.cpu_count(
+            ) // hvd.local_size()
         except AttributeError:
             pass
-        super(HorovodTrainer, self).initialize(
-            session_creator, session_init)
+        super(HorovodTrainer, self).initialize(session_creator, session_init)
 
 
-from ..utils.develop import create_dummy_class   # noqa
+from ..utils.develop import create_dummy_class    # noqa
 try:
     import horovod.tensorflow as hvd
 except ImportError:
     HorovodTrainer = create_dummy_class('HovorodTrainer', 'horovod')    # noqa
-except Exception:      # could be other than ImportError, e.g. NCCL not found
-    print("Horovod is installed but cannot be imported. Check `python -c 'import horovod.tensorflow'`.")
+except Exception:    # could be other than ImportError, e.g. NCCL not found
+    print(
+        "Horovod is installed but cannot be imported. Check `python -c 'import horovod.tensorflow'`."
+    )
     HorovodTrainer = create_dummy_class('HovorodTrainer', 'horovod')    # noqa
