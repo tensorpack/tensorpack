@@ -151,6 +151,8 @@ class TrainConfig(object):
             self.nr_tower = kwargs.pop('nr_tower')
         if 'tower' in kwargs:
             self.tower = kwargs.pop('tower')
+        else:
+            self.tower = [0]
         assert len(kwargs) == 0, "Unknown arguments: {}".format(kwargs.keys())
 
     @property

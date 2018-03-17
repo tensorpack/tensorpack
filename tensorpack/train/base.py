@@ -117,6 +117,7 @@ class Trainer(object):
             logger.warn("This could happen if you wrote a custom trainer before.")
             logger.warn("It may work now through some hacks, but please switch to the new API!")
             logger.warn("See https://github.com/ppwwyyxx/tensorpack/issues/458 for more information.")
+            config._deprecated_parsing()
             self._config = config
             self.inputs_desc = config.model.get_inputs_desc()
             self.tower_func = TowerFuncWrapper(
