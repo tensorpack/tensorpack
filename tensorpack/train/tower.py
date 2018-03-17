@@ -89,7 +89,11 @@ class TowerTrainer(Trainer):
 
         try:
             tower = self.tower_func.towers[tower_name]
+            assert tower is not None, "This is a bug!"
         except KeyError:
+            tower = None
+
+        if tower is None:
             input = PlaceholderInput()
             input.setup(self.inputs_desc)
 

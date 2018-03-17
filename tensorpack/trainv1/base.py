@@ -52,6 +52,7 @@ class Trainer(object):
             config (TrainConfig): the train config.
         """
         assert isinstance(config, TrainConfig), type(config)
+        config._deprecated_parsing()
         self._config = config
         self.model = config.model
         if self.model is not None:
