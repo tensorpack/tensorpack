@@ -19,7 +19,6 @@ if old_mod is not None:
 else:
     del sys.modules['torch']
 
-
 __all__ = ['loads', 'dumps']
 
 

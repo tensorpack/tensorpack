@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # File: gpu.py
 
-
 import os
 from .utils import change_env
 from . import logger
@@ -47,4 +46,5 @@ def get_nr_gpu():
             logger.info("Loading local devices by TensorFlow ...")
             from tensorflow.python.client import device_lib
             local_device_protos = device_lib.list_local_devices()
-            return len([x.name for x in local_device_protos if x.device_type == 'GPU'])
+            return len(
+                [x.name for x in local_device_protos if x.device_type == 'GPU'])

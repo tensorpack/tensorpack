@@ -122,8 +122,8 @@ class InputSource(object):
             list[Callback]: extra callbacks needed by this InputSource.
         """
         assert self.setup_done()
-        ret = [CallbackFactory(
-            before_train=lambda _: self.reset_state())] + self._get_callbacks()
+        ret = [CallbackFactory(before_train=lambda _: self.reset_state())
+              ] + self._get_callbacks()
 
         for r in ret:
             r.set_chief_only(False)    # no input callbacks should be chief-only
@@ -175,6 +175,7 @@ class ProxyInputSource(InputSource):
     """
     An InputSource which proxy every method to ``self._input``.
     """
+
     def __init__(self, input):
         assert isinstance(input, InputSource), input
         self._input = input
@@ -226,6 +227,7 @@ def remap_input_source(input, names):
         # now, input2.get_input_tensors() will return a placeholder for 'score',
         # plus the tensors returned by input1.get_input_tensors()
     """
+
     def __init__(self, input, names):
         ProxyInputSource.__init__(self, input)
         assert isinstance(names, (list, tuple)), names
@@ -239,13 +241,14 @@ def remap_input_source(input, names):
     def _get_input_tensors(self):
         ret = self._input.get_input_tensors()
         assert len(ret) == len(self._names)
-        return get_tensors_inputs(
-            self._all_placehdrs, ret, self._names)
+        return get_tensors_inputs(self._all_placehdrs, ret, self._names)
 
     oldcls = type(input)
     # inherit oldcls so that type check in various places would work
-    cls = type('Remapped' + oldcls.__name__, (ProxyInputSource, oldcls), {
-        '__init__': __init__,
-        '_setup': _setup,
-        '_get_input_tensors': _get_input_tensors})
+    cls = type(
+        'Remapped' + oldcls.__name__, (ProxyInputSource, oldcls), {
+            '__init__': __init__,
+            '_setup': _setup,
+            '_get_input_tensors': _get_input_tensors
+        })
     return cls(input, names)

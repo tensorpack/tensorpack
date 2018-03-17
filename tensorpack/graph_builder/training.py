@@ -14,32 +14,35 @@ from ..utils import logger
 from ..tfutils.tower import TowerContext
 from ..tfutils.gradproc import ScaleGradient
 
-from .utils import (
-    LeastLoadedDeviceSetter, override_to_local_variable,
-    allreduce_grads, aggregate_grads, allreduce_grads_hierarchical,
-    split_grad_list, merge_grad_list, GradientPacker)
+from .utils import (LeastLoadedDeviceSetter, override_to_local_variable,
+                    allreduce_grads, aggregate_grads,
+                    allreduce_grads_hierarchical, split_grad_list,
+                    merge_grad_list, GradientPacker)
 
-
-__all__ = ['GraphBuilder',
-           'SyncMultiGPUParameterServerBuilder', 'DataParallelBuilder',
-           'SyncMultiGPUReplicatedBuilder', 'AsyncMultiGPUBuilder']
+__all__ = [
+    'GraphBuilder', 'SyncMultiGPUParameterServerBuilder', 'DataParallelBuilder',
+    'SyncMultiGPUReplicatedBuilder', 'AsyncMultiGPUBuilder'
+]
 
 
 @six.add_metaclass(ABCMeta)
 class GraphBuilder(object):
+
     @abstractmethod
     def build(*args, **kwargs):
         pass
 
 
 class DataParallelBuilder(GraphBuilder):
+
     def __init__(self, towers):
         """
         Args:
             towers(list[int]): list of GPU ids.
         """
         if len(towers) > 1:
-            logger.info("[DataParallel] Training a model of {} towers.".format(len(towers)))
+            logger.info("[DataParallel] Training a model of {} towers.".format(
+                len(towers)))
 
         self.towers = towers
 
@@ -55,18 +58,24 @@ class DataParallelBuilder(GraphBuilder):
             return re.sub('tower[0-9]+/', '', x.op.name)
 
         if len(set(nvars)) != 1:
-            names_per_gpu = [set([basename(k[1]) for k in grad_and_vars]) for grad_and_vars in grad_list]
+            names_per_gpu = [
+                set([basename(k[1])
+                     for k in grad_and_vars])
+                for grad_and_vars in grad_list
+            ]
             inters = copy.copy(names_per_gpu[0])
             for s in names_per_gpu:
                 inters &= s
             for s in names_per_gpu:
                 s -= inters
-            logger.error("Unique trainable variables on towers: " + pprint.pformat(names_per_gpu))
-            raise ValueError("Number of gradients from each tower is different! " + str(nvars))
+            logger.error("Unique trainable variables on towers: " +
+                         pprint.pformat(names_per_gpu))
+            raise ValueError(
+                "Number of gradients from each tower is different! " +
+                str(nvars))
 
     @staticmethod
-    def build_on_towers(
-            towers, func, devices=None, use_vs=None):
+    def build_on_towers(towers, func, devices=None, use_vs=None):
         """
         Run `func` on all GPUs (towers) and return the results.
 
@@ -89,17 +98,23 @@ class DataParallelBuilder(GraphBuilder):
         tower_names = ['tower{}'.format(idx) for idx in range(len(towers))]
 
         for idx, t in enumerate(towers):
-            device = devices[idx] if devices is not None else '/gpu:{}'.format(t)
+            device = devices[idx] if devices is not None else '/gpu:{}'.format(
+                t)
             usevs = use_vs[idx] if use_vs is not None else False
             with tf.device(device), TowerContext(
                     tower_names[idx],
                     is_training=True,
                     index=idx,
                     vs_name=tower_names[idx] if usevs else ''):
-                if len(str(device)) < 10:   # a device function doesn't have good string description
-                    logger.info("Building graph for training tower {} on device {} ...".format(idx, device))
+                if len(
+                        str(device)
+                ) < 10:    # a device function doesn't have good string description
+                    logger.info(
+                        "Building graph for training tower {} on device {} ...".
+                        format(idx, device))
                 else:
-                    logger.info("Building graph for training tower {} ...".format(idx))
+                    logger.info(
+                        "Building graph for training tower {} ...".format(idx))
 
                 # When use_vs is True, use LOCAL_VARIABLES,
                 # so these duplicated variables won't be saved by default.
@@ -121,6 +136,7 @@ class SyncMultiGPUParameterServerBuilder(DataParallelBuilder):
     Attribute:
         grads: list of (g, v). Averaged gradients, available after build()
     """
+
     def __init__(self, towers, ps_device):
         """
         Args:
@@ -142,12 +158,18 @@ class SyncMultiGPUParameterServerBuilder(DataParallelBuilder):
         """
         raw_devices = ['/gpu:{}'.format(k) for k in self.towers]
         if self.ps_device == 'gpu':
-            devices = [LeastLoadedDeviceSetter(d, raw_devices) for d in raw_devices]
+            devices = [
+                LeastLoadedDeviceSetter(d, raw_devices) for d in raw_devices
+            ]
         else:
-            devices = [tf.train.replica_device_setter(
-                worker_device=d, ps_device='/cpu:0', ps_tasks=1) for d in raw_devices]
+            devices = [
+                tf.train.replica_device_setter(
+                    worker_device=d, ps_device='/cpu:0', ps_tasks=1)
+                for d in raw_devices
+            ]
 
-        grad_list = DataParallelBuilder.build_on_towers(self.towers, get_grad_fn, devices)
+        grad_list = DataParallelBuilder.build_on_towers(self.towers,
+                                                        get_grad_fn, devices)
         DataParallelBuilder._check_grad_list(grad_list)
 
         # debug tower performance (without update):
@@ -209,19 +231,22 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
         grad_list = DataParallelBuilder.build_on_towers(
             self.towers,
             get_grad_fn,
-            # use no variable scope for the first tower
+    # use no variable scope for the first tower
             use_vs=[False] + [True] * (len(self.towers) - 1))
 
         DataParallelBuilder._check_grad_list(grad_list)
 
         if self._mode == 'hierarchical' and len(raw_devices) < 8:
-            logger.warn("mode='hierarchical' require >= 8 GPUs. Fallback to mode='cpu'.")
+            logger.warn(
+                "mode='hierarchical' require >= 8 GPUs. Fallback to mode='cpu'."
+            )
             self._mode = 'cpu'
 
         if self._mode in ['nccl', 'hierarchical']:
             all_grads, all_vars = split_grad_list(grad_list)
             if self._mode == 'nccl':
-                all_grads = allreduce_grads(all_grads, average=self._average)  # #gpu x #param x 2
+                all_grads = allreduce_grads(
+                    all_grads, average=self._average)    # #gpu x #param x 2
             else:
                 packer = GradientPacker(len(raw_devices))
                 succ = packer.compute_strategy(all_grads[0])
@@ -229,20 +254,26 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
                     packed_grads = packer.pack_all(all_grads, raw_devices)
                     packed_grads_aggr = allreduce_grads_hierarchical(
                         packed_grads, raw_devices, average=self._average)
-                    all_grads = packer.unpack_all(packed_grads_aggr, raw_devices)
+                    all_grads = packer.unpack_all(packed_grads_aggr,
+                                                  raw_devices)
                 else:
-                    all_grads = allreduce_grads_hierarchical(all_grads, raw_devices, average=self._average)
+                    all_grads = allreduce_grads_hierarchical(
+                        all_grads, raw_devices, average=self._average)
 
             self.grads = merge_grad_list(all_grads, all_vars)
         elif self._mode == 'cpu':
             agg_grad_and_vars = aggregate_grads(
-                grad_list, colocation=False,
-                devices=['/cpu:0'], average=self._average)    # #param x 2
-            self.grads = []  # #gpu x #param x 2
-            for grad_and_vars in grad_list:   # grad_and_vars: #paramx2
+                grad_list,
+                colocation=False,
+                devices=['/cpu:0'],
+                average=self._average)    # #param x 2
+            self.grads = []    # #gpu x #param x 2
+            for grad_and_vars in grad_list:    # grad_and_vars: #paramx2
                 # take v from each tower, and g from average.
                 self.grads.append(
-                    [(g, v) for (_, v), (g, _) in zip(grad_and_vars, agg_grad_and_vars)])
+                    [(g, v)
+                     for (_, v), (g,
+                                  _) in zip(grad_and_vars, agg_grad_and_vars)])
 
         train_ops = []
         opt = get_opt_fn()
@@ -251,15 +282,19 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
                 with tf.device(raw_devices[idx]):
                     # apply_gradients may create variables. Make them LOCAL_VARIABLES
                     with override_to_local_variable(enable=idx > 0):
-                        train_ops.append(opt.apply_gradients(
-                            grad_and_vars, name='apply_grad_{}'.format(idx)))
+                        train_ops.append(
+                            opt.apply_gradients(
+                                grad_and_vars,
+                                name='apply_grad_{}'.format(idx)))
         train_op = tf.group(*train_ops, name='train_op')
 
         with tf.name_scope('sync_variables'):
             post_init_op = SyncMultiGPUReplicatedBuilder.get_post_init_ops()
         return train_op, post_init_op
 
+
 # Adopt from https://github.com/tensorflow/benchmarks/blob/master/scripts/tf_cnn_benchmarks/variable_mgr.py
+
     @staticmethod
     def get_post_init_ops():
         """
@@ -273,23 +308,30 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
             if not v.name.startswith('tower'):
                 continue
             if v.name.startswith('tower0'):
-                logger.warn("[SyncMultiGPUReplicatedBuilder] variable "
-                            "{} has prefix 'tower0', this is unexpected.".format(v.name))
-                continue        # TODO some vars (EMA) may still startswith tower0
+                logger.warn(
+                    "[SyncMultiGPUReplicatedBuilder] variable "
+                    "{} has prefix 'tower0', this is unexpected.".format(
+                        v.name))
+                continue    # TODO some vars (EMA) may still startswith tower0
             # in this trainer, the master name doesn't have the towerx/ prefix
             split_name = v.name.split('/')
             prefix = split_name[0]
             realname = '/'.join(split_name[1:])
             if prefix in realname:
-                logger.error("[SyncMultiGPUReplicatedBuilder] variable "
-                             "{} has its prefix {} appears multiple times in its name!".format(v.name, prefix))
+                logger.error(
+                    "[SyncMultiGPUReplicatedBuilder] variable "
+                    "{} has its prefix {} appears multiple times in its name!".
+                    format(v.name, prefix))
             copy_from = var_by_name.get(realname)
             if copy_from is not None:
                 post_init_ops.append(v.assign(copy_from.read_value()))
             else:
-                logger.warn("[ReplicatedTrainer] Cannot find {} in the graph!".format(realname))
+                logger.warn(
+                    "[ReplicatedTrainer] Cannot find {} in the graph!".format(
+                        realname))
         logger.info(
-            "'sync_variables_from_main_tower' includes {} operations.".format(len(post_init_ops)))
+            "'sync_variables_from_main_tower' includes {} operations.".format(
+                len(post_init_ops)))
         return tf.group(*post_init_ops, name='sync_variables_from_main_tower')
 
 
@@ -323,18 +365,25 @@ class AsyncMultiGPUBuilder(DataParallelBuilder):
 
         if ps_device == 'gpu':
             raw_devices = ['/gpu:{}'.format(k) for k in self.towers]
-            devices = [LeastLoadedDeviceSetter(d, raw_devices) for d in raw_devices]
+            devices = [
+                LeastLoadedDeviceSetter(d, raw_devices) for d in raw_devices
+            ]
         else:
-            devices = [tf.train.replica_device_setter(
-                worker_device=d, ps_device='/cpu:0', ps_tasks=1) for d in raw_devices]
+            devices = [
+                tf.train.replica_device_setter(
+                    worker_device=d, ps_device='/cpu:0', ps_tasks=1)
+                for d in raw_devices
+            ]
 
-        grad_list = DataParallelBuilder.build_on_towers(self.towers, get_grad_fn, devices)
+        grad_list = DataParallelBuilder.build_on_towers(self.towers,
+                                                        get_grad_fn, devices)
         DataParallelBuilder._check_grad_list(grad_list)
 
         if self._scale_gradient and len(self.towers) > 1:
             # pretend to average the grads, in order to make async and
             # sync have consistent effective learning rate
-            gradproc = ScaleGradient(('.*', 1.0 / len(self.towers)), verbose=False)
+            gradproc = ScaleGradient(
+                ('.*', 1.0 / len(self.towers)), verbose=False)
             grad_list = [gradproc.process(gv) for gv in grad_list]
         # Ngpu x Nvar x 2
 
@@ -346,6 +395,7 @@ class AsyncMultiGPUBuilder(DataParallelBuilder):
                 v = grad_and_vars[0][1]
                 with tf.device(v.device):
                     # will call apply_gradients (therefore gradproc) multiple times
-                    train_ops.append(opt.apply_gradients(
-                        grad_and_vars, name='apply_grad_{}'.format(i)))
+                    train_ops.append(
+                        opt.apply_gradients(
+                            grad_and_vars, name='apply_grad_{}'.format(i)))
             return tf.group(*train_ops, name='train_op')

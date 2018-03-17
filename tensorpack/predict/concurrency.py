@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # File: concurrency.py
 
-
 import numpy as np
 import multiprocessing
 import six
@@ -14,8 +13,10 @@ from ..utils.concurrency import DIE, StoppableThread, ShareSessionThread
 from ..tfutils.model_utils import describe_trainable_vars
 from .base import OnlinePredictor, OfflinePredictor, AsyncPredictorBase
 
-__all__ = ['MultiProcessPredictWorker', 'MultiProcessQueuePredictWorker',
-           'MultiThreadAsyncPredictor']
+__all__ = [
+    'MultiProcessPredictWorker', 'MultiProcessQueuePredictWorker',
+    'MultiThreadAsyncPredictor'
+]
 
 
 class MultiProcessPredictWorker(multiprocessing.Process):
@@ -76,6 +77,7 @@ class MultiProcessQueuePredictWorker(MultiProcessPredictWorker):
 
 
 class PredictorWorkerThread(StoppableThread, ShareSessionThread):
+
     def __init__(self, queue, pred_func, id, batch_size=5):
         super(PredictorWorkerThread, self).__init__()
         self.name = "PredictorWorkerThread-{}".format(id)
@@ -94,15 +96,17 @@ class PredictorWorkerThread(StoppableThread, ShareSessionThread):
                 except tf.errors.CancelledError:
                     for f in futures:
                         f.cancel()
-                    logger.warn("In PredictorWorkerThread id={}, call was cancelled.".format(self.id))
+                    logger.warn(
+                        "In PredictorWorkerThread id={}, call was cancelled.".
+                        format(self.id))
                     return
                 # print "Worker {} batched {} Queue {}".format(
                 #         self.id, len(futures), self.queue.qsize())
                 #  debug, for speed testing
                 # if not hasattr(self, 'xxx'):
-                    # self.xxx = outputs = self.func(batched)
+                # self.xxx = outputs = self.func(batched)
                 # else:
-                    # outputs = [[self.xxx[0][0]] * len(batched[0]), [self.xxx[1][0]] * len(batched[0])]
+                # outputs = [[self.xxx[0][0]] * len(batched[0]), [self.xxx[1][0]] * len(batched[0])]
 
                 for idx, f in enumerate(futures):
                     f.set_result([k[idx] for k in outputs])
@@ -122,7 +126,7 @@ class PredictorWorkerThread(StoppableThread, ShareSessionThread):
                     batched[k].append(inp[k])
                 futures.append(f)
             except queue.Empty:
-                break   # do not wait
+                break    # do not wait
 
         for k in range(nr_input_var):
             batched[k] = np.asarray(batched[k])
@@ -153,13 +157,16 @@ class MultiThreadAsyncPredictor(AsyncPredictorBase):
         self.threads = [
             PredictorWorkerThread(
                 self.input_queue, f, id, batch_size=batch_size)
-            for id, f in enumerate(predictors)]
+            for id, f in enumerate(predictors)
+        ]
 
         if six.PY2:
             # TODO XXX set logging here to avoid affecting TF logging
             import tornado.options as options
             options.parse_command_line(['--logging=debug'])
-            logger.warn("MultiThreadAsyncPredictor is inefficient in Python 2! Switch to Python 3 instead.")
+            logger.warn(
+                "MultiThreadAsyncPredictor is inefficient in Python 2! Switch to Python 3 instead."
+            )
 
     def start(self):
         if self._need_default_sess:
@@ -187,4 +194,5 @@ try:
         from concurrent.futures import Future
 except ImportError:
     from ..utils.develop import create_dummy_class
-    MultiThreadAsyncPredictor = create_dummy_class('MultiThreadAsyncPredictor', 'tornado.concurrent')  # noqa
+    MultiThreadAsyncPredictor = create_dummy_class(
+        'MultiThreadAsyncPredictor', 'tornado.concurrent')    # noqa

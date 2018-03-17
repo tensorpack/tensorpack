@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # File: base.py
 
-
 from abc import abstractmethod, ABCMeta
 import tensorflow as tf
 import six
@@ -14,9 +13,12 @@ from ..utils.develop import log_deprecated
 from ..utils.argtools import log_once
 from ..utils.utils import execute_only_once
 
-__all__ = ['PredictorBase', 'AsyncPredictorBase',
-           'OnlinePredictor', 'OfflinePredictor',
-           ]
+__all__ = [
+    'PredictorBase',
+    'AsyncPredictorBase',
+    'OnlinePredictor',
+    'OfflinePredictor',
+]
 
 
 @six.add_metaclass(ABCMeta)
@@ -43,10 +45,9 @@ class PredictorBase(object):
         if len(args) == 1 and isinstance(args[0], (list, tuple)):
             dp = args[0]    # backward-compatibility
             if execute_only_once():
-                log_deprecated(
-                    "Calling a predictor with one datapoint",
-                    "Call it with positional arguments instead!",
-                    "2018-3-1")
+                log_deprecated("Calling a predictor with one datapoint",
+                               "Call it with positional arguments instead!",
+                               "2018-3-1")
         else:
             dp = args
         output = self._do_call(dp)
@@ -97,8 +98,11 @@ class OnlinePredictor(PredictorBase):
 
     ACCEPT_OPTIONS = False
 
-    def __init__(self, input_tensors, output_tensors,
-                 return_input=False, sess=None):
+    def __init__(self,
+                 input_tensors,
+                 output_tensors,
+                 return_input=False,
+                 sess=None):
         """
         Args:
             input_tensors (list): list of names.
@@ -123,7 +127,8 @@ class OnlinePredictor(PredictorBase):
                 self._callable = None
         else:
             log_once(
-                "TF>=1.2 is recommended for better performance of predictor!", 'warn')
+                "TF>=1.2 is recommended for better performance of predictor!",
+                'warn')
 
     def _do_call_old(self, dp):
         feed = dict(zip(self.input_tensors, dp))

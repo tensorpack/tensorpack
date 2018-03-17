@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*- File: softmax.py
 
-
 import tensorflow as tf
 from .common import layer_register
 from ..utils.develop import log_deprecated
@@ -29,9 +28,11 @@ def SoftMax(x, use_temperature=False, temperature_init=1.0):
 
     * ``invtemp``: 1.0/temperature.
     """
-    log_deprecated("models.SoftMax", "Please implement it by yourself!", "2018-05-01")
+    log_deprecated("models.SoftMax", "Please implement it by yourself!",
+                   "2018-05-01")
     if use_temperature:
-        t = tf.get_variable('invtemp', [],
-                            initializer=tf.constant_initializer(1.0 / float(temperature_init)))
+        t = tf.get_variable(
+            'invtemp', [],
+            initializer=tf.constant_initializer(1.0 / float(temperature_init)))
         x = x * t
     return tf.nn.softmax(x, name='output')

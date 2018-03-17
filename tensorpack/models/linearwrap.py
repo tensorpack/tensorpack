@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # File: linearwrap.py
 
-
 import six
 from types import ModuleType
 from .registry import get_registered_layer
@@ -16,6 +15,7 @@ class LinearWrap(object):
     """
 
     class _TFModuleFunc(object):
+
         def __init__(self, mod, tensor):
             self._mod = mod
             self._t = tensor
@@ -29,6 +29,7 @@ class LinearWrap(object):
                 def f(*args, **kwargs):
                     o = ret(self._t, *args, **kwargs)
                     return LinearWrap(o)
+
                 return f
 
     def __init__(self, tensor):
@@ -44,10 +45,12 @@ class LinearWrap(object):
             # this is a registered tensorpack layer
             # parse arguments by tensorpack model convention
             if layer.use_scope:
+
                 def layer_func(name, *args, **kwargs):
                     ret = layer(name, self._t, *args, **kwargs)
                     return LinearWrap(ret)
             else:
+
                 def layer_func(*args, **kwargs):
                     if len(args) and isinstance(args[0], six.string_types):
                         name, args = args[0], args[1:]
@@ -55,13 +58,14 @@ class LinearWrap(object):
                     else:
                         ret = layer(self._t, *args, **kwargs)
                     return LinearWrap(ret)
+
             return layer_func
         else:
             assert layer_name == 'tf', \
                 "Calling LinearWrap.{}:" \
                 " neither a layer nor 'tf'! " \
                 "Did you forget to extract tensor from LinearWrap?".format(layer_name)
-            import tensorflow as layer  # noqa
+            import tensorflow as layer    # noqa
             assert isinstance(layer, ModuleType), layer
             return LinearWrap._TFModuleFunc(layer, self._t)
 

@@ -20,11 +20,11 @@ if six.PY2:
 else:
     import subprocess
 
-
-__all__ = ['StoppableThread', 'LoopThread', 'ShareSessionThread',
-           'ensure_proc_terminate',
-           'OrderedResultGatherProc', 'OrderedContainer', 'DIE',
-           'mask_sigint', 'start_proc_mask_signal']
+__all__ = [
+    'StoppableThread', 'LoopThread', 'ShareSessionThread',
+    'ensure_proc_terminate', 'OrderedResultGatherProc', 'OrderedContainer',
+    'DIE', 'mask_sigint', 'start_proc_mask_signal'
+]
 
 
 class StoppableThread(threading.Thread):
@@ -108,6 +108,7 @@ class ShareSessionThread(threading.Thread):
     """ A wrapper around thread so that the thread
         uses the default session at "start()" time.
     """
+
     def __init__(self, th=None):
         """
         Args:
@@ -126,7 +127,9 @@ class ShareSessionThread(threading.Thread):
             with self._sess.as_default():
                 yield self._sess
         else:
-            logger.warn("ShareSessionThread {} wasn't under a default session!".format(self.name))
+            logger.warn(
+                "ShareSessionThread {} wasn't under a default session!".format(
+                    self.name))
             yield None
 
     def start(self):
@@ -225,8 +228,7 @@ def subproc_call(cmd, timeout=None):
     """
     try:
         output = subprocess.check_output(
-            cmd, stderr=subprocess.STDOUT,
-            shell=True, timeout=timeout)
+            cmd, stderr=subprocess.STDOUT, shell=True, timeout=timeout)
         return output, 0
     except subprocess.TimeoutExpired as e:
         logger.warn("Command timeout!")

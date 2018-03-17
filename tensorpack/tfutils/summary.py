@@ -1,7 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: summary.py
 
-
 import six
 import tensorflow as tf
 import re
@@ -18,8 +17,10 @@ from .tower import get_current_tower_context
 from .symbolic_functions import rms
 from .scope_utils import cached_name_scope
 
-__all__ = ['add_tensor_summary', 'add_param_summary',
-           'add_activation_summary', 'add_moving_summary']
+__all__ = [
+    'add_tensor_summary', 'add_param_summary', 'add_activation_summary',
+    'add_moving_summary'
+]
 
 
 # some scope stuff to use internally...
@@ -93,7 +94,10 @@ def create_image_summary(name, val):
     return s
 
 
-def add_tensor_summary(x, types, name=None, collections=None,
+def add_tensor_summary(x,
+                       types,
+                       name=None,
+                       collections=None,
                        main_tower_only=True):
     """
     Summarize a tensor by different methods.
@@ -193,7 +197,8 @@ def add_param_summary(*summary_lists, **kwargs):
                 if not rgx.endswith('$'):
                     rgx = rgx + '$'
                 if re.match(rgx, name):
-                    add_tensor_summary(p, actions, name=name, collections=collections)
+                    add_tensor_summary(
+                        p, actions, name=name, collections=collections)
 
 
 def add_moving_summary(*args, **kwargs):
@@ -221,13 +226,16 @@ def add_moving_summary(*args, **kwargs):
     if ctx is not None and not ctx.is_main_training_tower:
         return []
     if tf.get_variable_scope().reuse is True:
-        logger.warn("add_moving_summary() called under reuse=True scope, ignored.")
+        logger.warn(
+            "add_moving_summary() called under reuse=True scope, ignored.")
         return []
 
     if not isinstance(args[0], list):
         v = args
     else:
-        log_deprecated("Call add_moving_summary with positional args instead of a list!", eos="2018-02-28")
+        log_deprecated(
+            "Call add_moving_summary with positional args instead of a list!",
+            eos="2018-02-28")
         v = args[0]
     for x in v:
         assert isinstance(x, (tf.Tensor, tf.Variable)), x
@@ -246,17 +254,25 @@ def add_moving_summary(*args, **kwargs):
                 c = tf.cast(c, tf.float32)
             # assign_moving_average creates variables with op names, therefore clear ns first.
             with _enter_vs_reuse_ns('EMA') as vs:
-                ema_var = tf.get_variable(name, shape=c.shape, dtype=c.dtype,
-                                          initializer=tf.constant_initializer(), trainable=False)
+                ema_var = tf.get_variable(
+                    name,
+                    shape=c.shape,
+                    dtype=c.dtype,
+                    initializer=tf.constant_initializer(),
+                    trainable=False)
                 ns = vs.original_name_scope
-            with tf.name_scope(ns):     # reuse VS&NS so that EMA_1 won't appear
+            with tf.name_scope(ns):    # reuse VS&NS so that EMA_1 won't appear
                 ema_op = moving_averages.assign_moving_average(
-                    ema_var, c, decay,
-                    zero_debias=True, name=name + '_EMA_apply')
+                    ema_var,
+                    c,
+                    decay,
+                    zero_debias=True,
+                    name=name + '_EMA_apply')
             ema_ops.append(ema_op)
         with tf.name_scope(None):
             # cannot add it into colocate group -- will force everything to cpus
-            tf.summary.scalar(name + '-summary', ema_op)    # write the EMA value as a summary
+            tf.summary.scalar(name + '-summary',
+                              ema_op)    # write the EMA value as a summary
     if coll is not None:
         for op in ema_ops:
             # TODO a new collection to summary every step?
@@ -268,4 +284,5 @@ try:
     import cv2
 except ImportError:
     from ..utils.develop import create_dummy_func
-    create_image_summary = create_dummy_func('create_image_summary', 'cv2')  # noqa
+    create_image_summary = create_dummy_func('create_image_summary',
+                                             'cv2')    # noqa

@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # File: dataset.py
 
-
 from six.moves import range, zip
 from abc import ABCMeta, abstractmethod
 import multiprocessing
@@ -20,8 +19,10 @@ from .concurrency import MultiProcessQueuePredictWorker
 from .config import PredictConfig
 from .base import OfflinePredictor
 
-__all__ = ['DatasetPredictorBase', 'SimpleDatasetPredictor',
-           'MultiProcessDatasetPredictor']
+__all__ = [
+    'DatasetPredictorBase', 'SimpleDatasetPredictor',
+    'MultiProcessDatasetPredictor'
+]
 
 
 @six.add_metaclass(ABCMeta)
@@ -61,6 +62,7 @@ class SimpleDatasetPredictor(DatasetPredictorBase):
     """
     Simply create one predictor and run it on the DataFlow.
     """
+
     def __init__(self, config, dataset):
         super(SimpleDatasetPredictor, self).__init__(config, dataset)
         self.predictor = OfflinePredictor(config)
@@ -83,6 +85,7 @@ class MultiProcessDatasetPredictor(DatasetPredictorBase):
     Run prediction in multiprocesses, on either CPU or GPU.
     Each process fetch datapoints as tasks and run predictions independently.
     """
+
     # TODO allow unordered
 
     def __init__(self, config, dataset, nr_proc, use_gpu=True, ordered=True):
@@ -99,7 +102,9 @@ class MultiProcessDatasetPredictor(DatasetPredictorBase):
                 outputs in any order.
         """
         if config.return_input:
-            logger.warn("Using the option `return_input` in MultiProcessDatasetPredictor might be slow")
+            logger.warn(
+                "Using the option `return_input` in MultiProcessDatasetPredictor might be slow"
+            )
         assert nr_proc > 1, nr_proc
         super(MultiProcessDatasetPredictor, self).__init__(config, dataset)
 
@@ -107,7 +112,8 @@ class MultiProcessDatasetPredictor(DatasetPredictorBase):
         self.ordered = ordered
 
         self.inqueue, self.inqueue_proc = dump_dataflow_to_process_queue(
-            self.dataset, nr_proc * 2, self.nr_proc)    # put (idx, dp) to inqueue
+            self.dataset, nr_proc * 2,
+            self.nr_proc)    # put (idx, dp) to inqueue
 
         if use_gpu:
             try:
@@ -122,9 +128,11 @@ class MultiProcessDatasetPredictor(DatasetPredictorBase):
             gpus = ['-1'] * self.nr_proc
         # worker produces (idx, result) to outqueue
         self.outqueue = multiprocessing.Queue()
-        self.workers = [MultiProcessQueuePredictWorker(
-            i, self.inqueue, self.outqueue, self.config)
-            for i in range(self.nr_proc)]
+        self.workers = [
+            MultiProcessQueuePredictWorker(i, self.inqueue, self.outqueue,
+                                           self.config)
+            for i in range(self.nr_proc)
+        ]
 
         # start inqueue and workers
         self.inqueue_proc.start()

@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 # File: interface.py
 
-from ..input_source import (
-    InputSource, FeedInput, QueueInput, StagingInput, DummyConstantInput)
+from ..input_source import (InputSource, FeedInput, QueueInput, StagingInput,
+                            DummyConstantInput)
 from ..utils import logger
 
 from .config import TrainConfig
@@ -40,7 +40,8 @@ def apply_default_prefetch(input_source_or_dataflow, trainer):
             assert not isinstance(trainer, SimpleTrainer)
 
             if not isinstance(input, (StagingInput, DummyConstantInput)):
-                logger.info("Automatically applying StagingInput on the DataFlow.")
+                logger.info(
+                    "Automatically applying StagingInput on the DataFlow.")
                 input = StagingInput(input)
     return input
 
@@ -77,9 +78,8 @@ def launch_train_with_config(config, trainer):
     input = config.data or config.dataflow
     input = apply_default_prefetch(input, trainer)
 
-    trainer.setup_graph(
-        inputs_desc, input,
-        model._build_graph_get_cost, model.get_optimizer)
+    trainer.setup_graph(inputs_desc, input, model._build_graph_get_cost,
+                        model.get_optimizer)
     trainer.train_with_defaults(
         callbacks=config.callbacks,
         monitors=config.monitors,

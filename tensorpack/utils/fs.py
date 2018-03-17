@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # File: fs.py
 
-
 import os
 from six.moves import urllib
 import errno
@@ -47,10 +46,14 @@ def download(url, dir, filename=None):
                 t.total = tsize
             t.update((b - last_b[0]) * bsize)
             last_b[0] = b
+
         return inner
+
     try:
-        with tqdm.tqdm(unit='B', unit_scale=True, miniters=1, desc=filename) as t:
-            fpath, _ = urllib.request.urlretrieve(url, fpath, reporthook=hook(t))
+        with tqdm.tqdm(
+                unit='B', unit_scale=True, miniters=1, desc=filename) as t:
+            fpath, _ = urllib.request.urlretrieve(
+                url, fpath, reporthook=hook(t))
         statinfo = os.stat(fpath)
         size = statinfo.st_size
     except IOError:
@@ -86,7 +89,9 @@ def get_dataset_path(*args):
     if d is None:
         d = os.path.join(os.path.expanduser('~'), 'tensorpack_data')
         if execute_only_once():
-            logger.warn("Env var $TENSORPACK_DATASET not set, using {} for datasets.".format(d))
+            logger.warn(
+                "Env var $TENSORPACK_DATASET not set, using {} for datasets.".
+                format(d))
         if not os.path.isdir(d):
             mkdir_p(d)
             logger.info("Created the directory {}.".format(d))

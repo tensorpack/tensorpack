@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # File: argtools.py
 
-
 import inspect
 import six
 from . import logger
@@ -11,8 +10,10 @@ if six.PY2:
 else:
     import functools
 
-__all__ = ['map_arg', 'memoized', 'graph_memoized', 'shape2d', 'shape4d',
-           'memoized_ignoreargs', 'log_once', 'call_only_once']
+__all__ = [
+    'map_arg', 'memoized', 'graph_memoized', 'shape2d', 'shape4d',
+    'memoized_ignoreargs', 'log_once', 'call_only_once'
+]
 
 
 def map_arg(**maps):
@@ -22,7 +23,9 @@ def map_arg(**maps):
     Args:
         maps (dict): {argument_name: map_func}
     """
+
     def deco(func):
+
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             if six.PY2:
@@ -35,7 +38,9 @@ def map_arg(**maps):
                 if k in argmap:
                     argmap[k] = map_func(argmap[k])
             return func(**argmap)
+
         return wrapper
+
     return deco
 
 
@@ -61,6 +66,7 @@ def graph_memoized(func):
         graph = tf.get_default_graph()
         kwargs[GRAPH_ARG_NAME] = graph
         return func_with_graph_arg(*args, **kwargs)
+
     return wrapper
 
 
@@ -72,7 +78,7 @@ def memoized_ignoreargs(func):
     A decorator. It performs memoization ignoring the arguments used to call
     the function.
     """
-    hash(func)  # make sure it is hashable. TODO is it necessary?
+    hash(func)    # make sure it is hashable. TODO is it necessary?
 
     def wrapper(*args, **kwargs):
         if func not in _MEMOIZED_NOARGS:
@@ -80,7 +86,9 @@ def memoized_ignoreargs(func):
             _MEMOIZED_NOARGS[func] = res
             return res
         return _MEMOIZED_NOARGS[func]
+
     return wrapper
+
 
 # _GLOBAL_MEMOIZED_CACHE = dict()
 # def global_memoized(func):
@@ -162,12 +170,14 @@ def call_only_once(func):
     be called once for every instance.
     Calling it more than once will result in exception.
     """
+
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         self = args[0]
         # cannot use hasattr here, because hasattr tries to getattr, which
         # fails if func is a property
-        assert func.__name__ in dir(self), "call_only_once can only be used on method or property!"
+        assert func.__name__ in dir(
+            self), "call_only_once can only be used on method or property!"
 
         cls = type(self)
         # cannot use ismethod(), because decorated method becomes a function
@@ -185,7 +195,9 @@ def call_only_once(func):
 
 
 if __name__ == '__main__':
+
     class A():
+
         def __init__(self):
             self._p = 0
 

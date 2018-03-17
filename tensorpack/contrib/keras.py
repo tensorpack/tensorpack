@@ -11,9 +11,8 @@ from ..models.regularize import regularize_cost_from_collection
 from ..train import Trainer, SimpleTrainer, SyncMultiGPUTrainerParameterServer
 from ..train.trainers import DistributedTrainerBase
 from ..train.interface import apply_default_prefetch
-from ..callbacks import (
-    Callback, InferenceRunnerBase, InferenceRunner, CallbackToHook,
-    ScalarStats)
+from ..callbacks import (Callback, InferenceRunnerBase, InferenceRunner,
+                         CallbackToHook, ScalarStats)
 
 from ..tfutils.common import get_op_tensor_name
 from ..tfutils.tower import get_current_tower_context
@@ -22,9 +21,7 @@ from ..tfutils.summary import add_moving_summary
 from ..utils.gpu import get_nr_gpu
 from ..utils import logger
 
-
 __all__ = ['KerasPhaseCallback', 'setup_keras_trainer', 'KerasModel']
-
 
 TOTAL_LOSS_NAME = 'total_loss'
 
@@ -40,6 +37,7 @@ class KerasModelCaller(object):
     Keras model doesn't support vs reuse.
     This is hack to mimic reuse.
     """
+
     def __init__(self, get_model):
         self.get_model = get_model
 
@@ -72,6 +70,7 @@ class KerasModelCaller(object):
 # 1. trainer with isTrain=True
 # 2. InferenceRunner with isTrain=False, in the form of hooks
 class KerasPhaseCallback(Callback):
+
     def __init__(self, isTrain):
         assert isinstance(isTrain, bool), isTrain
         self._isTrain = isTrain
@@ -89,13 +88,13 @@ class KerasPhaseCallback(Callback):
 
     def _before_run(self, ctx):
         return tf.train.SessionRunArgs(
-            fetches=[], feed_dict={self._learning_phase: int(self._isTrain)})
+            fetches=[], feed_dict={
+                self._learning_phase: int(self._isTrain)
+            })
 
 
-def setup_keras_trainer(
-        trainer, get_model,
-        inputs_desc, targets_desc,
-        input, optimizer, loss, metrics):
+def setup_keras_trainer(trainer, get_model, inputs_desc, targets_desc, input,
+                        optimizer, loss, metrics):
     """
     Args:
         trainer (SingleCostTrainer):
@@ -138,7 +137,8 @@ def setup_keras_trainer(
 
         loss_reg = regularize_cost_from_collection()
         if loss_reg is not None:
-            total_loss = tf.add_n(loss_tensors + [loss_reg], name=TOTAL_LOSS_NAME)
+            total_loss = tf.add_n(
+                loss_tensors + [loss_reg], name=TOTAL_LOSS_NAME)
             add_moving_summary(loss_reg, total_loss, *loss_tensors)
         else:
             total_loss = tf.add_n(loss_tensors, name=TOTAL_LOSS_NAME)
@@ -149,7 +149,8 @@ def setup_keras_trainer(
             metric_tensors = []
             for oid, metric_name in enumerate(metrics):
                 output_tensor = outputs[oid]
-                target_tensor = target_tensors[oid]  # TODO may not have the same mapping?
+                target_tensor = target_tensors[
+                    oid]    # TODO may not have the same mapping?
                 with cached_name_scope('keras_metric', top_level=False):
                     metric_fn = metrics_module.get(metric_name)
                     metric_tensor = metric_fn(target_tensor, output_tensor)
@@ -161,18 +162,20 @@ def setup_keras_trainer(
 
         return total_loss
 
-    trainer.setup_graph(
-        inputs_desc + targets_desc,
-        input,
-        get_cost,
-        lambda: optimizer)
+    trainer.setup_graph(inputs_desc + targets_desc, input, get_cost,
+                        lambda: optimizer)
     if model_caller.cached_model.uses_learning_phase:
         trainer.register_callback(KerasPhaseCallback(True))
 
 
 class KerasModel(object):
-    def __init__(self, get_model, inputs_desc, targets_desc,
-                 input, trainer=None):
+
+    def __init__(self,
+                 get_model,
+                 inputs_desc,
+                 targets_desc,
+                 input,
+                 trainer=None):
         """
         Args:
             get_model ( -> keras.model.Model):
@@ -213,8 +216,10 @@ class KerasModel(object):
 
         self._stats_to_inference = loss + metrics + [TOTAL_LOSS_NAME]
         setup_keras_trainer(
-            self.trainer, get_model=self.get_model,
-            inputs_desc=self.inputs_desc, targets_desc=self.targets_desc,
+            self.trainer,
+            get_model=self.get_model,
+            inputs_desc=self.inputs_desc,
+            targets_desc=self.targets_desc,
             input=self.input,
             optimizer=optimizer,
             loss=loss,
@@ -228,6 +233,7 @@ class KerasModel(object):
         """
         callbacks = kwargs.pop('callbacks', [])
         if validation_data is not None:
-            callbacks.append(InferenceRunner(
-                validation_data, ScalarStats(self._stats_to_inference)))
+            callbacks.append(
+                InferenceRunner(validation_data,
+                                ScalarStats(self._stats_to_inference)))
         self.trainer.train_with_defaults(callbacks=callbacks, **kwargs)

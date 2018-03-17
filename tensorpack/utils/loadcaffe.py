@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # File: loadcaffe.py
 
-
 import sys
 import numpy as np
 import os
@@ -41,7 +40,8 @@ class CaffeLayerProcessor(object):
                 self.param_dict.update(dic)
             elif len(layer.blobs) != 0:
                 logger.warn(
-                    "{} layer contains parameters but is not supported!".format(layer.type))
+                    "{} layer contains parameters but is not supported!".format(
+                        layer.type))
         return self.param_dict
 
     def proc_conv(self, idx, name, param):
@@ -52,8 +52,7 @@ class CaffeLayerProcessor(object):
         if len(param) == 1:
             return {name + '/W': W}
         else:
-            return {name + '/W': W,
-                    name + '/b': param[1].data}
+            return {name + '/W': W, name + '/b': param[1].data}
 
     def proc_fc(self, idx, name, param):
         # TODO caffe has an 'transpose' option for fc/W
@@ -64,17 +63,19 @@ class CaffeLayerProcessor(object):
             logger.info("FC layer {} takes spatial data.".format(name))
             W = param[0].data
             # original: outx(CxHxW)
-            W = W.reshape((-1,) + prev_layer_output.shape[1:]).transpose(2, 3, 1, 0)
+            W = W.reshape((-1,) + prev_layer_output.shape[1:]).transpose(
+                2, 3, 1, 0)
             # become: (HxWxC)xout
         else:
             W = param[0].data.transpose()
-        return {name + '/W': W,
-                name + '/b': param[1].data}
+        return {name + '/W': W, name + '/b': param[1].data}
 
     def proc_bn(self, idx, name, param):
         scale_factor = param[2].data[0]
-        return {name + '/mean/EMA': param[0].data / scale_factor,
-                name + '/variance/EMA': param[1].data / scale_factor}
+        return {
+            name + '/mean/EMA': param[0].data / scale_factor,
+            name + '/variance/EMA': param[1].data / scale_factor
+        }
 
     def proc_scale(self, idx, name, param):
         bottom_name = self.net.bottom_names[name][0]
@@ -85,12 +86,16 @@ class CaffeLayerProcessor(object):
                 bottom_name2 = self.net.bottom_names[name2][0]
                 if bottom_name2 == bottom_name:
                     # scaling and BN share the same bottom, should merge
-                    logger.info("Merge {} and {} into one BatchNorm layer".format(
-                        name, name2))
-                    return {name2 + '/beta': param[1].data,
-                            name2 + '/gamma': param[0].data}
+                    logger.info(
+                        "Merge {} and {} into one BatchNorm layer".format(
+                            name, name2))
+                    return {
+                        name2 + '/beta': param[1].data,
+                        name2 + '/gamma': param[0].data
+                    }
         # assume this scaling layer is part of some BN
-        logger.error("Could not find a BN layer corresponding to this Scale layer!")
+        logger.error(
+            "Could not find a BN layer corresponding to this Scale layer!")
         raise ValueError()
 
 

@@ -2,7 +2,6 @@
 # -*- coding: UTF-8 -*-
 # File: fc.py
 
-
 import tensorflow as tf
 
 from .common import layer_register, VariableHolder
@@ -14,8 +13,9 @@ __all__ = ['FullyConnected']
 
 @layer_register(log_shape=True)
 @convert_to_tflayer_args(
-    args_names=['units'],
-    name_mapping={'out_dim': 'units'})
+    args_names=['units'], name_mapping={
+        'out_dim': 'units'
+    })
 def FullyConnected(
         inputs,
         units,

@@ -40,6 +40,7 @@ def convert_to_tflayer_args(args_names, name_mapping):
     """
 
     def decorator(func):
+
         @functools.wraps(func)
         def decorated_func(inputs, *args, **kwargs):
             kwargs = map_common_tfargs(kwargs)
@@ -60,7 +61,8 @@ def convert_to_tflayer_args(args_names, name_mapping):
                 else:
                     newname = name
                 ret[newname] = arg
-            ret.update(posarg_dic)  # Let pos arg overwrite kw arg, for argscope to work
+            ret.update(posarg_dic
+                      )    # Let pos arg overwrite kw arg, for argscope to work
 
             return func(inputs, **ret)
 
@@ -74,6 +76,7 @@ def rename_get_variable(mapping):
     Args:
         mapping(dict): an old -> new mapping for variable basename. e.g. {'kernel': 'W'}
     """
+
     def custom_getter(getter, name, *args, **kwargs):
         splits = name.split('/')
         basename = splits[-1]
@@ -82,6 +85,7 @@ def rename_get_variable(mapping):
             splits[-1] = basename
             name = '/'.join(splits)
         return getter(name, *args, **kwargs)
+
     return custom_getter_scope(custom_getter)
 
 

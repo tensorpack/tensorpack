@@ -2,19 +2,19 @@
 # -*- coding: UTF-8 -*-
 # File: common.py
 
-
 import tensorflow as tf
 from six.moves import map
 from ..utils.argtools import graph_memoized
 
-__all__ = ['get_default_sess_config',
-           'get_global_step_value',
-           'get_global_step_var',
-           # 'get_op_tensor_name',
-           # 'get_tensors_by_names',
-           # 'get_op_or_tensor_by_name',
-           # 'get_tf_version_number',
-           ]
+__all__ = [
+    'get_default_sess_config',
+    'get_global_step_value',
+    'get_global_step_var',
+    # 'get_op_tensor_name',
+    # 'get_tensors_by_names',
+    # 'get_op_or_tensor_by_name',
+    # 'get_tf_version_number',
+]
 
 
 def get_default_sess_config(mem_fraction=0.99):
@@ -60,7 +60,7 @@ def get_global_step_var():
         tf.Tensor: the global_step variable in the current graph. Create if
             doesn't exist.
     """
-    scope = tf.VariableScope(reuse=False, name='')  # the root vs
+    scope = tf.VariableScope(reuse=False, name='')    # the root vs
     with tf.variable_scope(scope):
         var = tf.train.get_or_create_global_step()
     return var
@@ -70,9 +70,7 @@ def get_global_step_value():
     """
     Returns:
         int: global_step value in current graph and session"""
-    return tf.train.global_step(
-        tf.get_default_session(),
-        get_global_step_var())
+    return tf.train.global_step(tf.get_default_session(), get_global_step_var())
 
 
 def get_op_tensor_name(name):

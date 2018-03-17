@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # File: noise.py
 
-
 from .base import ImageAugmentor
 import numpy as np
 import cv2
@@ -33,6 +32,7 @@ class GaussianNoise(ImageAugmentor):
     """
     Add random Gaussian noise N(0, sigma^2) of the same shape to img.
     """
+
     def __init__(self, sigma=1, clip=True):
         """
         Args:

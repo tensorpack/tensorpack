@@ -1,7 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: export.py
 # Author: Patrick Wieschollek <mail@patwie.com>
-
 """
 This simplifies the process of exporting a model for TensorFlow serving.
 
@@ -13,12 +12,12 @@ from ..graph_builder.model_desc import ModelDescBase
 from ..input_source import PlaceholderInput
 from ..tfutils import TowerContext, sessinit
 
-
 __all__ = ['ModelExport']
 
 
 class ModelExport(object):
     """Wrapper for tf.saved_model"""
+
     def __init__(self, model, input_names, output_names):
         """Initialise the export process.
 
@@ -62,7 +61,9 @@ class ModelExport(object):
         self.output_names = output_names
         self.input_names = input_names
 
-    def export(self, checkpoint, export_path,
+    def export(self,
+               checkpoint,
+               export_path,
                tags=[tf.saved_model.tag_constants.SERVING],
                signature_name='prediction_pipeline'):
         """
@@ -129,6 +130,9 @@ class ModelExport(object):
             method_name=tf.saved_model.signature_constants.PREDICT_METHOD_NAME)
 
         builder.add_meta_graph_and_variables(
-            self.sess, tags,
-            signature_def_map={signature_name: prediction_signature})
+            self.sess,
+            tags,
+            signature_def_map={
+                signature_name: prediction_signature
+            })
         builder.save()

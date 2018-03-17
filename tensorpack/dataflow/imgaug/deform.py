@@ -1,7 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: deform.py
 
-
 from .base import ImageAugmentor
 from ...utils import logger
 import numpy as np
@@ -11,6 +10,7 @@ __all__ = ['GaussianDeform']
 
 class GaussianMap(object):
     """ Generate gaussian weighted deformation map"""
+
     # TODO really needs speedup
 
     def __init__(self, image_shape, sigma=0.5):
@@ -28,7 +28,7 @@ class GaussianMap(object):
         y, x = np.mgrid[:self.shape[0], :self.shape[1]]
         y = y.astype('float32') / ret.shape[0] - anchor[0]
         x = x.astype('float32') / ret.shape[1] - anchor[1]
-        g = np.exp(-(x**2 + y ** 2) / self.sigma)
+        g = np.exp(-(x**2 + y**2) / self.sigma)
         # cv2.imshow(" ", g)
         # cv2.waitKey()
         return g
@@ -48,7 +48,8 @@ def np_sample(img, coords):
     lcoory, lcoorx = np.split(lcoor, 2, axis=2)
     ucoory, ucoorx = np.split(ucoor, 2, axis=2)
     diff = np.repeat(diff, 3, 2).reshape((diff.shape[0], diff.shape[1], 2, 3))
-    neg_diff = np.repeat(neg_diff, 3, 2).reshape((diff.shape[0], diff.shape[1], 2, 3))
+    neg_diff = np.repeat(neg_diff, 3, 2).reshape((diff.shape[0], diff.shape[1],
+                                                  2, 3))
     diffy, diffx = np.split(diff, 2, axis=2)
     ndiffy, ndiffx = np.split(neg_diff, 2, axis=2)
 
@@ -74,18 +75,22 @@ class GaussianDeform(ImageAugmentor):
             sigma (float): sigma for Gaussian weight
             randrange (int): offset range. Defaults to shape[0] / 8
         """
-        logger.warn("GaussianDeform is slow. Consider using it with 4 or more prefetching processes.")
+        logger.warn(
+            "GaussianDeform is slow. Consider using it with 4 or more prefetching processes."
+        )
         super(GaussianDeform, self).__init__()
         self.anchors = anchors
         self.K = len(self.anchors)
         self.shape = shape
-        self.grid = np.mgrid[0:self.shape[0], 0:self.shape[1]].transpose(1, 2, 0)
-        self.grid = self.grid.astype('float32')  # HxWx2
+        self.grid = np.mgrid[0:self.shape[0], 0:self.shape[1]].transpose(
+            1, 2, 0)
+        self.grid = self.grid.astype('float32')    # HxWx2
 
         gm = GaussianMap(self.shape, sigma=sigma)
-        self.gws = np.array([gm.get_gaussian_weight(ank)
-                             for ank in self.anchors], dtype='float32')  # KxHxW
-        self.gws = self.gws.transpose(1, 2, 0)  # HxWxK
+        self.gws = np.array(
+            [gm.get_gaussian_weight(ank) for ank in self.anchors],
+            dtype='float32')    # KxHxW
+        self.gws = self.gws.transpose(1, 2, 0)    # HxWxK
         if randrange is None:
             self.randrange = self.shape[0] / 8
         else:

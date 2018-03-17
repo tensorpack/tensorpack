@@ -1,7 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: registry.py
 
-
 import tensorflow as tf
 from functools import wraps
 import six
@@ -23,7 +22,8 @@ def _register(name, func):
     if name in _LAYER_REGISTRY:
         raise ValueError("Layer named {} is already registered!".format(name))
     if name in ['tf']:
-        raise ValueError(logger.error("A layer cannot be named {}".format(name)))
+        raise ValueError(
+            logger.error("A layer cannot be named {}".format(name)))
     _LAYER_REGISTRY[name] = func
 
 
@@ -42,16 +42,17 @@ def disable_layer_logging():
     Disable the shape logging for all layers from this moment on. Can be
     useful when creating multiple towers.
     """
+
     class ContainEverything:
+
         def __contains__(self, x):
             return True
+
     # can use nonlocal in python3, but how
     globals()['_LAYER_LOGGED'] = ContainEverything()
 
 
-def layer_register(
-        log_shape=False,
-        use_scope=True):
+def layer_register(log_shape=False, use_scope=True):
     """
     Args:
         log_shape (bool): log input/output shape of this layer
@@ -75,14 +76,18 @@ def layer_register(
     """
 
     def wrapper(func):
+
         @wraps(func)
         def wrapped_func(*args, **kwargs):
             assert args[0] is not None, args
             if use_scope:
                 name, inputs = args[0], args[1]
-                args = args[1:]  # actual positional args used to call func
-                assert isinstance(name, six.string_types), "First argument for \"{}\" should be a string. ".format(
-                    func.__name__) + "Did you forget to specify the name of the layer?"
+                args = args[1:]    # actual positional args used to call func
+                assert isinstance(
+                    name, six.string_types
+                ), "First argument for \"{}\" should be a string. ".format(
+                    func.__name__
+                ) + "Did you forget to specify the name of the layer?"
             else:
                 assert not log_shape
                 if isinstance(args[0], six.string_types):
@@ -92,13 +97,14 @@ def layer_register(
                             "or register the layer with use_scope=None to allow "
                             "two calling methods.".format(func.__name__))
                     name, inputs = args[0], args[1]
-                    args = args[1:]  # actual positional args used to call func
+                    args = args[
+                        1:]    # actual positional args used to call func
                 else:
                     inputs = args[0]
                     name = None
             if not (isinstance(inputs, (tf.Tensor, tf.Variable)) or
-                    (isinstance(inputs, (list, tuple)) and
-                        isinstance(inputs[0], (tf.Tensor, tf.Variable)))):
+                    (isinstance(inputs, (list, tuple))
+                     and isinstance(inputs[0], (tf.Tensor, tf.Variable)))):
                 raise ValueError("Invalid inputs to layer: " + str(inputs))
 
             # use kwargs from current argument scope
@@ -112,13 +118,14 @@ def layer_register(
             #         if k in actual_args:
             #             del actual_args[k]
 
-            if name is not None:        # use scope
+            if name is not None:    # use scope
                 with tf.variable_scope(name) as scope:
                     # this name is only used to surpress logging, doesn't hurt to do some heuristics
                     scope_name = re.sub('tower[0-9]+/', '', scope.name)
                     do_log_shape = log_shape and scope_name not in _LAYER_LOGGED
                     if do_log_shape:
-                        logger.info("{} input: {}".format(scope.name, get_shape_str(inputs)))
+                        logger.info("{} input: {}".format(
+                            scope.name, get_shape_str(inputs)))
 
                     # run the actual function
                     outputs = func(*args, **actual_args)
@@ -133,7 +140,7 @@ def layer_register(
                 outputs = func(*args, **actual_args)
             return outputs
 
-        wrapped_func.symbolic_function = func   # attribute to access the underlying function object
+        wrapped_func.symbolic_function = func    # attribute to access the underlying function object
         wrapped_func.use_scope = use_scope
         _register(func.__name__, wrapped_func)
         return wrapped_func

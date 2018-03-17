@@ -1,10 +1,8 @@
 #  -*- coding: UTF-8 -*-
 #  File: __init__.py
 
-
 from pkgutil import iter_modules
 import os
-
 """
 Common utils.
 These utils should be irrelevant to tensorflow.
@@ -36,6 +34,7 @@ def get_rng(obj=None):
         "get_rng will not be automatically imported any more! "
         "Please do `from tensorpack.utils.utils import get_rng`")
     return gr(obj)
+
 
 # Import no submodules. they are supposed to be explicitly imported by users.
 __all__.extend(['logger', 'get_nr_gpu', 'change_gpu', 'get_rng'])

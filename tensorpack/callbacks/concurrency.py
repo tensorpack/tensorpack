@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # File: concurrency.py
 
-
 import multiprocessing as mp
 from .base import Callback
 from ..utils.concurrency import start_proc_mask_signal, StoppableThread

@@ -16,13 +16,11 @@ def custom_getter_scope(custom_getter):
     scope = tf.get_variable_scope()
     if get_tf_version_number() >= 1.5:
         with tf.variable_scope(
-                scope, custom_getter=custom_getter,
-                auxiliary_name_scope=False):
+                scope, custom_getter=custom_getter, auxiliary_name_scope=False):
             yield
     else:
         ns = tf.get_default_graph().get_name_scope()
-        with tf.variable_scope(
-                scope, custom_getter=custom_getter):
+        with tf.variable_scope(scope, custom_getter=custom_getter):
             with tf.name_scope(ns + '/' if ns else ''):
                 yield
 
@@ -43,9 +41,11 @@ def remap_variables(fn):
             with varreplace.remap_variables(lambda var: quantize(var)):
                 x = FullyConnected('fc', x, 1000)   # fc/{W,b} will be quantized
     """
+
     def custom_getter(getter, *args, **kwargs):
         v = getter(*args, **kwargs)
         return fn(v)
+
     return custom_getter_scope(custom_getter)
 
 
@@ -73,6 +73,7 @@ def freeze_variables(stop_gradient=True, skip_collection=False):
             ``TRAINABLE_VARIABLES`` collection. As a result they will not be
             trained by default.
     """
+
     def custom_getter(getter, *args, **kwargs):
         trainable = kwargs.get('trainable', True)
         if skip_collection:
@@ -81,4 +82,5 @@ def freeze_variables(stop_gradient=True, skip_collection=False):
         if trainable and stop_gradient:
             v = tf.stop_gradient(v)
         return v
+
     return custom_getter_scope(custom_getter)

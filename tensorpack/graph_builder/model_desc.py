@@ -2,7 +2,6 @@
 # -*- coding: UTF-8 -*-
 # File: model_desc.py
 
-
 from collections import namedtuple
 import tensorflow as tf
 
@@ -17,8 +16,7 @@ from ..models.regularize import regularize_cost_from_collection
 __all__ = ['InputDesc', 'ModelDesc', 'ModelDescBase']
 
 
-class InputDesc(
-        namedtuple('InputDescTuple', ['type', 'shape', 'name'])):
+class InputDesc(namedtuple('InputDescTuple', ['type', 'shape', 'name'])):
     """
     Metadata about an input entry point to the graph.
     This metadata can be later used to build placeholders or other types of
@@ -48,9 +46,9 @@ class InputDesc(
         Returns:
             tf.Tensor:
         """
-        with tf.name_scope(None):   # clear any name scope it might get called in
-            ret = tf.placeholder(
-                self.type, shape=self.shape, name=self.name)
+        with tf.name_scope(
+                None):    # clear any name scope it might get called in
+            ret = tf.placeholder(self.type, shape=self.shape, name=self.name)
         self._register_cached_placeholder(ret)
         return ret
 
@@ -78,12 +76,13 @@ class InputDesc(
     def from_placeholder(placeholder):
         name = placeholder.op.name
         if name.endswith('_1') or name.endswith('_2'):
-            logger.error("Creating InputDesc from a placeholder named {}.".format(name))
-            logger.error("You might have mistakenly created this placeholder multiple times!")
-        ret = InputDesc(
-            placeholder.dtype,
-            tuple(placeholder.shape.as_list()),
-            name)
+            logger.error(
+                "Creating InputDesc from a placeholder named {}.".format(name))
+            logger.error(
+                "You might have mistakenly created this placeholder multiple times!"
+            )
+        ret = InputDesc(placeholder.dtype, tuple(placeholder.shape.as_list()),
+                        name)
         ret._register_cached_placeholder(placeholder)
         return ret
 
@@ -102,7 +101,8 @@ class ModelDescBase(object):
         try:
             return self._get_inputs()
         except NotImplementedError:
-            with tf.Graph().as_default() as G:   # create these placeholder in a temporary graph
+            with tf.Graph().as_default(
+            ) as G:    # create these placeholder in a temporary graph
                 inputs = self.inputs()
                 for p in inputs:
                     assert p.graph == G, "Placeholders returned by inputs() sholud be created inside inputs()!"
@@ -148,12 +148,15 @@ class ModelDescBase(object):
         if len(args) == 1:
             arg = args[0]
             if isinstance(arg, InputSource):
-                inputs = arg.get_input_tensors()  # remove in the future?
+                inputs = arg.get_input_tensors()    # remove in the future?
                 log_deprecated("build_graph(InputSource)",
-                               "Call with tensors in positional args instead.", "2018-03-31")
+                               "Call with tensors in positional args instead.",
+                               "2018-03-31")
             elif isinstance(arg, (list, tuple)):
                 inputs = arg
-                log_deprecated("build_graph([Tensor])", "Call with positional args instead.", "2018-03-31")
+                log_deprecated("build_graph([Tensor])",
+                               "Call with positional args instead.",
+                               "2018-03-31")
             else:
                 inputs = [arg]
         else:
@@ -195,8 +198,10 @@ class ModelDesc(ModelDescBase):
         cost = self._get_cost()
         reg_cost = regularize_cost_from_collection()
         if reg_cost.op.type != 'Const':
-            logger.warn("Regularization losses found in collection, and a 'cost' tensor was "
-                        "not returned by `build_graph`. Therefore applying regularization automatically!")
+            logger.warn(
+                "Regularization losses found in collection, and a 'cost' tensor was "
+                "not returned by `build_graph`. Therefore applying regularization automatically!"
+            )
             return tf.add(cost, reg_cost, name='cost_with_regularizer')
         else:
             return cost
@@ -225,11 +230,12 @@ class ModelDesc(ModelDescBase):
         Used by trainers to get the final cost for optimization.
         """
         ret = self.build_graph(*inputs)
-        if isinstance(ret, tf.Tensor):  # the preferred way
-            assert ret.shape.ndims == 0, "Cost must be a scalar, but found a tensor of shape {}!".format(ret.shape)
+        if isinstance(ret, tf.Tensor):    # the preferred way
+            assert ret.shape.ndims == 0, "Cost must be a scalar, but found a tensor of shape {}!".format(
+                ret.shape)
             _check_unused_regularization()
             return ret
-        else:   # the old way
+        else:    # the old way
             return self.get_cost()
 
     # TODO this is deprecated and only used for v1 trainers
@@ -244,13 +250,16 @@ class ModelDesc(ModelDescBase):
         cost = self._build_graph_get_cost(*inputs)
 
         if ctx.has_own_variables:
-            varlist = ctx.get_collection_in_tower(tf.GraphKeys.TRAINABLE_VARIABLES)
+            varlist = ctx.get_collection_in_tower(
+                tf.GraphKeys.TRAINABLE_VARIABLES)
         else:
             varlist = tf.trainable_variables()
         opt = self.get_optimizer()
         grads = opt.compute_gradients(
-            cost, var_list=varlist,
-            gate_gradients=False, colocate_gradients_with_ops=True)
+            cost,
+            var_list=varlist,
+            gate_gradients=False,
+            colocate_gradients_with_ops=True)
         grads = FilterNoneGrad().process(grads)
         return grads
 
@@ -262,6 +271,9 @@ def _check_unused_regularization():
         if len(c.consumers()) == 0:
             unconsumed_reg.append(c)
     if unconsumed_reg:
-        logger.warn("The following tensors appear in REGULARIZATION_LOSSES collection but has no "
-                    "consumers! You may have forgotten to add regularization to total cost.")
-        logger.warn("Unconsumed regularization: {}".format(', '.join([x.name for x in unconsumed_reg])))
+        logger.warn(
+            "The following tensors appear in REGULARIZATION_LOSSES collection but has no "
+            "consumers! You may have forgotten to add regularization to total cost."
+        )
+        logger.warn("Unconsumed regularization: {}".format(
+            ', '.join([x.name for x in unconsumed_reg])))

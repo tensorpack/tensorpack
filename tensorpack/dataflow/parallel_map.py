@@ -14,21 +14,22 @@ from ..utils.concurrency import StoppableThread
 from ..utils import logger
 from ..utils.serialize import loads, dumps
 
-from .parallel import (
-    _MultiProcessZMQDataFlow, _repeat_iter, _get_pipe_name,
-    _bind_guard, _zmq_catch_error)
+from .parallel import (_MultiProcessZMQDataFlow, _repeat_iter, _get_pipe_name,
+                       _bind_guard, _zmq_catch_error)
 
-
-__all__ = ['ThreadedMapData', 'MultiThreadMapData',
-           'MultiProcessMapData', 'MultiProcessMapDataZMQ']
+__all__ = [
+    'ThreadedMapData', 'MultiThreadMapData', 'MultiProcessMapData',
+    'MultiProcessMapDataZMQ'
+]
 
 
 class _ParallelMapData(ProxyDataFlow):
+
     def __init__(self, ds, buffer_size):
         super(_ParallelMapData, self).__init__(ds)
         assert buffer_size > 0, buffer_size
         self._buffer_size = buffer_size
-        self._buffer_occupancy = 0  # actual #elements in buffer
+        self._buffer_occupancy = 0    # actual #elements in buffer
 
     def _recv(self):
         pass
@@ -51,7 +52,8 @@ class _ParallelMapData(ProxyDataFlow):
                 self._send(dp)
         except StopIteration:
             logger.error(
-                "[{}] buffer_size cannot be larger than the size of the DataFlow!".format(type(self).__name__))
+                "[{}] buffer_size cannot be larger than the size of the DataFlow!".
+                format(type(self).__name__))
             raise
         self._buffer_occupancy += cnt
 
@@ -62,7 +64,7 @@ class _ParallelMapData(ProxyDataFlow):
             if ret is not None:
                 yield ret
 
-        self._iter = self.ds.get_data()   # refresh
+        self._iter = self.ds.get_data()    # refresh
         for _ in range(self._buffer_size):
             self._send(next(self._iter))
             ret = self._recv()
@@ -74,7 +76,7 @@ class _ParallelMapData(ProxyDataFlow):
         for dp in self._iter:
             self._send(dp)
             yield self._recv_filter_none()
-        self._iter = self.ds.get_data()   # refresh
+        self._iter = self.ds.get_data()    # refresh
 
         # first clear the buffer, then fill
         for k in range(self._buffer_size):
@@ -108,7 +110,9 @@ class MultiThreadMapData(_ParallelMapData):
            is guranteed to produce the exact set which `df.get_data()`
            produces. Although the order of data still isn't preserved.
     """
+
     class _Worker(StoppableThread):
+
         def __init__(self, inq, outq, evt, map_func):
             super(MultiThreadMapData._Worker, self).__init__(evt)
             self.inq = inq
@@ -127,7 +131,7 @@ class MultiThreadMapData(_ParallelMapData):
                     self.queue_put_stoppable(self.outq, obj)
             except Exception:
                 if self.stopped():
-                    pass        # skip duplicated error messages
+                    pass    # skip duplicated error messages
                 else:
                     raise
             finally:
@@ -160,9 +164,11 @@ class MultiThreadMapData(_ParallelMapData):
         self._in_queue = queue.Queue()
         self._out_queue = queue.Queue()
         self._evt = threading.Event()
-        self._threads = [MultiThreadMapData._Worker(
-            self._in_queue, self._out_queue, self._evt, self.map_func)
-            for _ in range(self.nr_thread)]
+        self._threads = [
+            MultiThreadMapData._Worker(self._in_queue, self._out_queue,
+                                       self._evt, self.map_func)
+            for _ in range(self.nr_thread)
+        ]
         for t in self._threads:
             t.start()
 
@@ -216,7 +222,9 @@ class MultiProcessMapDataZMQ(_ParallelMapData, _MultiProcessZMQDataFlow):
            is guranteed to produce the exact set which `df.get_data()`
            produces. Although the order of data still isn't preserved.
     """
+
     class _Worker(mp.Process):
+
         def __init__(self, identity, map_func, pipename, hwm):
             super(MultiProcessMapDataZMQ._Worker, self).__init__()
             self.identity = identity
@@ -260,18 +268,22 @@ class MultiProcessMapDataZMQ(_ParallelMapData, _MultiProcessZMQDataFlow):
         pipename = _get_pipe_name('dataflow-map')
         _bind_guard(self.socket, pipename)
 
-        self._proc_ids = [u'{}'.format(k).encode('utf-8') for k in range(self.nr_proc)]
+        self._proc_ids = [
+            u'{}'.format(k).encode('utf-8') for k in range(self.nr_proc)
+        ]
         worker_hwm = int(self._buffer_size * 2 // self.nr_proc)
-        self._procs = [MultiProcessMapDataZMQ._Worker(
-            self._proc_ids[k], self.map_func, pipename, worker_hwm)
-            for k in range(self.nr_proc)]
+        self._procs = [
+            MultiProcessMapDataZMQ._Worker(self._proc_ids[k], self.map_func,
+                                           pipename, worker_hwm)
+            for k in range(self.nr_proc)
+        ]
 
         self.ds.reset_state()
         self._iter = self.ds.get_data()
         self._iter_worker = _repeat_iter(lambda: iter(self._proc_ids))
 
         self._start_processes()
-        self._fill_buffer()     # pre-fill the bufer
+        self._fill_buffer()    # pre-fill the bufer
 
     def reset_state(self):
         _MultiProcessZMQDataFlow.reset_state(self)
@@ -295,7 +307,7 @@ class MultiProcessMapDataZMQ(_ParallelMapData, _MultiProcessZMQDataFlow):
                     yield dp
 
 
-MultiProcessMapData = MultiProcessMapDataZMQ  # alias
+MultiProcessMapData = MultiProcessMapDataZMQ    # alias
 
 
 def _pool_map(data):
@@ -316,7 +328,14 @@ class MultiProcessMapDataComponentSharedArray(DataFlow):
     therefore more efficient when data (result of map_func) is large.
     It requires `map_func` to always return a numpy array of fixed shape and dtype, or None.
     """
-    def __init__(self, ds, nr_proc, map_func, output_shape, output_dtype, index=0):
+
+    def __init__(self,
+                 ds,
+                 nr_proc,
+                 map_func,
+                 output_shape,
+                 output_dtype,
+                 index=0):
         """
         Args:
             ds (DataFlow): the dataflow to map on
@@ -389,7 +408,9 @@ class MultiProcessMapDataComponentSharedArray(DataFlow):
 
 
 if __name__ == '__main__':
+
     class Zero(DataFlow):
+
         def __init__(self, size):
             self._size = size
 

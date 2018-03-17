@@ -3,8 +3,10 @@
 
 import numpy as np
 
-__all__ = ['StatCounter', 'BinaryStatistics', 'RatioCounter', 'Accuracy',
-           'OnlineMoments']
+__all__ = [
+    'StatCounter', 'BinaryStatistics', 'RatioCounter', 'Accuracy',
+    'OnlineMoments'
+]
 
 
 class StatCounter(object):
@@ -84,6 +86,7 @@ class RatioCounter(object):
 
 class Accuracy(RatioCounter):
     """ A RatioCounter with a fancy name """
+
     @property
     def accuracy(self):
         return self.ratio
@@ -99,12 +102,12 @@ class BinaryStatistics(object):
         self.reset()
 
     def reset(self):
-        self.nr_pos = 0  # positive label
-        self.nr_neg = 0  # negative label
+        self.nr_pos = 0    # positive label
+        self.nr_neg = 0    # negative label
         self.nr_pred_pos = 0
         self.nr_pred_neg = 0
-        self.corr_pos = 0   # correct predict positive
-        self.corr_neg = 0   # correct predict negative
+        self.corr_pos = 0    # correct predict positive
+        self.corr_neg = 0    # correct predict negative
 
     def feed(self, pred, label):
         """
@@ -112,7 +115,8 @@ class BinaryStatistics(object):
             pred (np.ndarray): binary array.
             label (np.ndarray): binary array of the same size.
         """
-        assert pred.shape == label.shape, "{} != {}".format(pred.shape, label.shape)
+        assert pred.shape == label.shape, "{} != {}".format(
+            pred.shape, label.shape)
         self.nr_pos += (label == 1).sum()
         self.nr_neg += (label == 0).sum()
         self.nr_pred_pos += (pred == 1).sum()

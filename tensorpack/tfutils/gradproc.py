@@ -2,7 +2,6 @@
 # -*- coding: UTF-8 -*-
 # File: gradproc.py
 
-
 import tensorflow as tf
 from abc import ABCMeta, abstractmethod
 import re
@@ -12,9 +11,10 @@ from ..utils import logger
 from .symbolic_functions import rms, print_stat
 from .summary import add_moving_summary
 
-__all__ = ['GradientProcessor',
-           'FilterNoneGrad', 'GlobalNormClip', 'MapGradient', 'SummaryGradient',
-           'PrintGradient', 'CheckGradient', 'ScaleGradient']
+__all__ = [
+    'GradientProcessor', 'FilterNoneGrad', 'GlobalNormClip', 'MapGradient',
+    'SummaryGradient', 'PrintGradient', 'CheckGradient', 'ScaleGradient'
+]
 
 
 @six.add_metaclass(ABCMeta)
@@ -54,6 +54,7 @@ class FilterNoneGrad(GradientProcessor):
     Skip the update and print a warning (instead of crashing),
     when the gradient of certain variable is None.
     """
+
     def __init__(self, verbose=True):
         """
         Args:
@@ -72,7 +73,8 @@ class FilterNoneGrad(GradientProcessor):
                 g.append((grad, var))
         if self._verbose and len(to_print):
             message = ', '.join(to_print)
-            logger.warn("No gradient w.r.t {} trainable variables: {}".format(len(to_print), message))
+            logger.warn("No gradient w.r.t {} trainable variables: {}".format(
+                len(to_print), message))
         return g
 
 
@@ -137,7 +139,8 @@ class MapGradient(GradientProcessor):
             else:
                 ret.append((grad, var))
         if not matched:
-            logger.warn("[MapGradient] No match was found for regex {}.".format(self.regex))
+            logger.warn("[MapGradient] No match was found for regex {}.".format(
+                self.regex))
         return ret
 
 
@@ -178,6 +181,7 @@ class PrintGradient(MapGradient):
     Print the gradients every step with :func:`symbolic_functions.print_stat`.
     """
     _printed = set()
+
     # TODO this is global. not good.
 
     def __init__(self, regex='.*'):
@@ -249,7 +253,8 @@ class ScaleGradient(MapGradient):
 
             if re.match(regex, varname):
                 if self._verbose:
-                    logger.info("Apply lr multiplier {} for {}".format(val, varname))
+                    logger.info("Apply lr multiplier {} for {}".format(
+                        val, varname))
                 if val != 0:    # skip zero to speed up
                     return grad * val
                 else:

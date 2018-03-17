@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # File: utils.py
 
-
 from contextlib import contextmanager
 import operator
 import tensorflow as tf
@@ -12,16 +11,11 @@ from ..tfutils.scope_utils import under_name_scope, cached_name_scope
 from ..utils.argtools import call_only_once
 from ..utils import logger
 
-
-__all__ = ['LeastLoadedDeviceSetter',
-           'OverrideCachingDevice',
-           'override_to_local_variable',
-           'allreduce_grads',
-           'average_grads',
-           'aggregate_grads'
-           ]
-
-
+__all__ = [
+    'LeastLoadedDeviceSetter', 'OverrideCachingDevice',
+    'override_to_local_variable', 'allreduce_grads', 'average_grads',
+    'aggregate_grads'
+]
 """
 Some utilities for building the graph.
 """
@@ -56,6 +50,7 @@ def override_to_local_variable(enable=True):
 # https://github.com/tensorflow/benchmarks/blob/48cbef14a592e02a14beee8e9aef3ad22cadaed1/scripts/tf_cnn_benchmarks/variable_mgr_util.py#L192-L218
 class LeastLoadedDeviceSetter(object):
     """ Helper class to assign variables on the least loaded ps-device."""
+
     def __init__(self, worker_device, ps_devices):
         """
         Args:
@@ -67,6 +62,7 @@ class LeastLoadedDeviceSetter(object):
         self.ps_sizes = [0] * len(self.ps_devices)
 
     def __call__(self, op):
+
         def sanitize_name(name):    # tensorflow/tensorflow#11484
             return tf.DeviceSpec.from_string(name).to_string()
 
@@ -75,8 +71,8 @@ class LeastLoadedDeviceSetter(object):
         if op.type not in ['Variable', 'VariableV2']:
             return sanitize_name(self.worker_device)
 
-        device_index, _ = min(enumerate(
-            self.ps_sizes), key=operator.itemgetter(1))
+        device_index, _ = min(
+            enumerate(self.ps_sizes), key=operator.itemgetter(1))
         device_name = self.ps_devices[device_index]
         var_size = op.outputs[0].get_shape().num_elements()
         self.ps_sizes[device_index] += var_size
@@ -132,11 +128,11 @@ def allreduce_grads(all_grads, average):
     nr_tower = len(all_grads)
     if nr_tower == 1:
         return all_grads
-    new_all_grads = []  # N x K
+    new_all_grads = []    # N x K
     for grads in zip(*all_grads):
         summed = nccl.all_sum(grads)
 
-        grads_for_devices = []  # K
+        grads_for_devices = []    # K
         for g in summed:
             with tf.device(g.device):
                 # tensorflow/benchmarks didn't average gradients
@@ -168,7 +164,7 @@ def allreduce_grads_hierarchical(all_grads, devices, average=False):
     assert len(all_grads) == num_gpu, len(all_grads)
     group_size = num_gpu // 2
 
-    agg_all_grads = []  # N x K
+    agg_all_grads = []    # N x K
     for varid, grads in enumerate(zip(*all_grads)):
         # grads: K gradients
         g0_main_gpu = varid % num_gpu
@@ -176,8 +172,8 @@ def allreduce_grads_hierarchical(all_grads, devices, average=False):
         g0_start = 0 if g0_main_gpu < group_size else group_size
         g1_start = 0 if g1_main_gpu < group_size else group_size
         assert g0_start != g1_start
-        g0_grads = grads[g0_start: g0_start + group_size]
-        g1_grads = grads[g1_start: g1_start + group_size]
+        g0_grads = grads[g0_start:g0_start + group_size]
+        g1_grads = grads[g1_start:g1_start + group_size]
 
         with tf.device(devices[g0_main_gpu]):
             g0_agg = tf.add_n(g0_grads, name='group0_agg')
@@ -189,7 +185,7 @@ def allreduce_grads_hierarchical(all_grads, devices, average=False):
         with tf.device(devices[g0_main_gpu]):
             g0_total_agg = tf.identity(g1_total_agg, name='group0_total_agg')
 
-        agg_grads = []  # K aggregated grads
+        agg_grads = []    # K aggregated grads
         for k in range(num_gpu):
             if (k < group_size) == (g0_main_gpu < group_size):
                 main_gpu = g0_total_agg
@@ -202,21 +198,20 @@ def allreduce_grads_hierarchical(all_grads, devices, average=False):
                 else:
                     # TODO where to put average?
                     device_total_agg = tf.multiply(
-                        main_gpu, 1.0 / num_gpu, name='device{}_total_agg'.format(k))
+                        main_gpu,
+                        1.0 / num_gpu,
+                        name='device{}_total_agg'.format(k))
                 agg_grads.append(device_total_agg)
 
         agg_all_grads.append(agg_grads)
 
     # transpose
-    agg_all_grads = list(zip(*agg_all_grads))   # K x Nvar
+    agg_all_grads = list(zip(*agg_all_grads))    # K x Nvar
     return agg_all_grads
 
 
 @under_name_scope('AggregateGrads')
-def aggregate_grads(all_grads,
-                    colocation=False,
-                    devices=None,
-                    average=True):
+def aggregate_grads(all_grads, colocation=False, devices=None, average=True):
     """
     Average the gradients.
 
@@ -252,7 +247,7 @@ def aggregate_grads(all_grads,
         grads = [g for (g, _) in grad_and_vars]
 
         if colocation:
-            with tf.device(v.device):       # colocate summed grad with var
+            with tf.device(v.device):    # colocate summed grad with var
                 grad = aggregate(grads)
         elif devices is None:
             grad = aggregate(grads)
@@ -293,7 +288,8 @@ class OverrideCachingDevice(object):
         if size < self.small_variable_size_threshold:
             device_name = self.device_for_small_variables
         else:
-            device_index, _ = min(enumerate(self.sizes), key=operator.itemgetter(1))
+            device_index, _ = min(
+                enumerate(self.sizes), key=operator.itemgetter(1))
             device_name = self.devices[device_index]
             self.sizes[device_index] += size
 
@@ -317,7 +313,8 @@ class GradientPacker(object):
             bool - False if grads cannot be packed due to various reasons.
         """
         for g in grads:
-            assert g.shape.is_fully_defined(), "Shape of {} is {}!".format(g.name, g.shape)
+            assert g.shape.is_fully_defined(), "Shape of {} is {}!".format(
+                g.name, g.shape)
 
         self._shapes = [g.shape for g in grads]
         self._sizes = [g.shape.num_elements() for g in grads]
@@ -328,12 +325,14 @@ class GradientPacker(object):
         # should have the same dtype
         dtypes = set([g.dtype for g in grads])
         if len(dtypes) != 1:
-            logger.info("Skip GradientPacker due to inconsistent gradient types.")
+            logger.info(
+                "Skip GradientPacker due to inconsistent gradient types.")
             return False
 
         split_size = self._total_size // self._num_split
         split_size_last = self._total_size - split_size * (self._num_split - 1)
-        self._split_sizes = [split_size] * (self._num_split - 1) + [split_size_last]
+        self._split_sizes = [split_size] * (
+            self._num_split - 1) + [split_size_last]
         logger.info(
             "Will pack {} gradients of total number={} into {} splits.".format(
                 len(self._sizes), self._total_size, self._num_split))
@@ -351,7 +350,10 @@ class GradientPacker(object):
             assert g.shape == self._shapes[i]
 
         with cached_name_scope("GradientPacker", top_level=False):
-            concat_grads = tf.concat([tf.reshape(g, [-1]) for g in grads], 0, name='concatenated_grads')
+            concat_grads = tf.concat(
+                [tf.reshape(g, [-1]) for g in grads],
+                0,
+                name='concatenated_grads')
             grad_packs = tf.split(concat_grads, self._split_sizes)
             return grad_packs
 
@@ -359,7 +361,10 @@ class GradientPacker(object):
         with cached_name_scope("GradientPacker", top_level=False):
             concat_grads = tf.concat(grad_packs, 0, name='concatenated_packs')
             flattened_grads = tf.split(concat_grads, self._sizes)
-            grads = [tf.reshape(g, shape) for g, shape in zip(flattened_grads, self._shapes)]
+            grads = [
+                tf.reshape(g, shape)
+                for g, shape in zip(flattened_grads, self._shapes)
+            ]
             return grads
 
     def pack_all(self, all_grads, devices):
@@ -378,7 +383,7 @@ class GradientPacker(object):
         Args:
             all_packed: K lists of packed gradients.
         """
-        all_grads = []  # #GPU x #Var
+        all_grads = []    # #GPU x #Var
         for dev, packed_grads_single_device in zip(devices, all_packed):
             with tf.device(dev):
                 all_grads.append(self.unpack(packed_grads_single_device))

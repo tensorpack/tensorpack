@@ -2,13 +2,11 @@
 # -*- coding: utf-8 -*-
 # File: sesscreate.py
 
-
 import tensorflow as tf
 from .common import get_default_sess_config
 from ..utils import logger
 
 __all__ = ['NewSessionCreator', 'ReuseSessionCreator', 'SessionCreatorAdapter']
-
 """
 A SessionCreator should:
     (optionally) finalize the graph
@@ -19,6 +17,7 @@ A SessionCreator should:
 
 
 class NewSessionCreator(tf.train.ChiefSessionCreator):
+
     def __init__(self, target='', graph=None, config=None):
         """
         Args:
@@ -43,6 +42,7 @@ bugs. See https://github.com/ppwwyyxx/tensorpack/issues/497 for workarounds.")
 
 
 class ReuseSessionCreator(tf.train.SessionCreator):
+
     def __init__(self, sess):
         """
         Args:
@@ -55,6 +55,7 @@ class ReuseSessionCreator(tf.train.SessionCreator):
 
 
 class SessionCreatorAdapter(tf.train.SessionCreator):
+
     def __init__(self, session_creator, func):
         """
         Args:

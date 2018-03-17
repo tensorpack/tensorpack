@@ -2,7 +2,6 @@
 # -*- coding: UTF-8 -*-
 # File: conv2d.py
 
-
 import tensorflow as tf
 from .common import layer_register, VariableHolder
 from ..tfutils.common import get_tf_version_number
@@ -86,7 +85,8 @@ def Conv2D(
 
         out_channel = filters
         assert out_channel % split == 0
-        assert dilation_rate == (1, 1) or get_tf_version_number() >= 1.5, 'TF>=1.5 required for group dilated conv'
+        assert dilation_rate == (1, 1) or get_tf_version_number(
+        ) >= 1.5, 'TF>=1.5 required for group dilated conv'
 
         kernel_shape = shape2d(kernel_size)
         filter_shape = kernel_shape + [in_channel / split, out_channel]
@@ -94,22 +94,28 @@ def Conv2D(
 
         kwargs = dict(data_format=data_format)
         if get_tf_version_number() >= 1.5:
-            kwargs['dilations'] = shape4d(dilation_rate, data_format=data_format)
+            kwargs['dilations'] = shape4d(
+                dilation_rate, data_format=data_format)
 
-        W = tf.get_variable(
-            'W', filter_shape, initializer=kernel_initializer)
+        W = tf.get_variable('W', filter_shape, initializer=kernel_initializer)
 
         if use_bias:
-            b = tf.get_variable('b', [out_channel], initializer=bias_initializer)
+            b = tf.get_variable(
+                'b', [out_channel], initializer=bias_initializer)
 
         inputs = tf.split(inputs, split, channel_axis)
         kernels = tf.split(W, split, 3)
-        outputs = [tf.nn.conv2d(i, k, stride, padding.upper(), **kwargs)
-                   for i, k in zip(inputs, kernels)]
+        outputs = [
+            tf.nn.conv2d(i, k, stride, padding.upper(), **kwargs)
+            for i, k in zip(inputs, kernels)
+        ]
         conv = tf.concat(outputs, channel_axis)
         if activation is None:
             activation = tf.identity
-        ret = activation(tf.nn.bias_add(conv, b, data_format=data_format) if use_bias else conv, name='output')
+        ret = activation(
+            tf.nn.bias_add(conv, b, data_format=data_format)
+            if use_bias else conv,
+            name='output')
 
         ret.variables = VariableHolder(W=W)
         if use_bias:

@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # File: monitor.py
 
-
 import os
 import numpy as np
 import shutil
@@ -19,9 +18,10 @@ from ..utils import logger
 from ..tfutils.summary import create_scalar_summary, create_image_summary
 from .base import Callback
 
-__all__ = ['TrainingMonitor', 'Monitors',
-           'TFEventWriter', 'JSONWriter',
-           'ScalarPrinter', 'SendMonitorData']
+__all__ = [
+    'TrainingMonitor', 'Monitors', 'TFEventWriter', 'JSONWriter',
+    'ScalarPrinter', 'SendMonitorData'
+]
 
 
 def image_to_nhwc(arr):
@@ -47,6 +47,7 @@ class TrainingMonitor(Callback):
     .. document private functions
     .. automethod:: _setup_graph
     """
+
     def setup_graph(self, trainer):
         self.trainer = trainer
         self._setup_graph()
@@ -89,6 +90,7 @@ class TrainingMonitor(Callback):
                 It could include Summary, RunMetadata, LogMessage, and more.
         """
         pass
+
     # TODO process other types
 
 
@@ -132,15 +134,17 @@ class Monitors(Callback):
         # TODO other types
         for val in summary.value:
             if val.WhichOneof('value') == 'simple_value':
-                val.tag = re.sub('tower[0-9]+/', '', val.tag)   # TODO move to subclasses
+                val.tag = re.sub('tower[0-9]+/', '',
+                                 val.tag)    # TODO move to subclasses
 
                 # TODO This hack is still needed, seem to disappear only when
                 # compiled from source.
-                suffix = '-summary'  # tensorflow#6150, tensorboard#59
+                suffix = '-summary'    # tensorflow#6150, tensorboard#59
                 if val.tag.endswith(suffix):
                     val.tag = val.tag[:-len(suffix)]
 
-                self._dispatch(lambda m: m.process_scalar(val.tag, val.simple_value))
+                self._dispatch(
+                    lambda m: m.process_scalar(val.tag, val.simple_value))
 
         self._dispatch(lambda m: m.process_summary(summary))
 
@@ -206,6 +210,7 @@ class TFEventWriter(TrainingMonitor):
     """
     Write summaries to TensorFlow event file.
     """
+
     def __init__(self, logdir=None, max_queue=10, flush_secs=120):
         """
         Args:
@@ -231,8 +236,10 @@ class TFEventWriter(TrainingMonitor):
 
     def _setup_graph(self):
         self._writer = tf.summary.FileWriter(
-            self._logdir, graph=tf.get_default_graph(),
-            max_queue=self._max_queue, flush_secs=self._flush_secs)
+            self._logdir,
+            graph=tf.get_default_graph(),
+            max_queue=self._max_queue,
+            flush_secs=self._flush_secs)
 
     def process_summary(self, summary):
         self._writer.add_summary(summary, self.global_step)
@@ -240,7 +247,7 @@ class TFEventWriter(TrainingMonitor):
     def process_event(self, evt):
         self._writer.add_event(evt)
 
-    def _trigger(self):     # flush every epoch
+    def _trigger(self):    # flush every epoch
         self._writer.flush()
 
     def _after_train(self):
@@ -303,21 +310,28 @@ class JSONWriter(TrainingMonitor):
 
             starting_epoch = self.trainer.loop.starting_epoch
             if epoch is None or epoch == starting_epoch:
-                logger.info("Found existing JSON inside {}, will append to it.".format(logger.get_logger_dir()))
+                logger.info(
+                    "Found existing JSON inside {}, will append to it.".format(
+                        logger.get_logger_dir()))
                 self._stats = stats
             else:
                 logger.warn(
-                    "History epoch value {} from JSON is not the predecessor of the starting_epoch value {}".format(
-                        epoch - 1, starting_epoch))
-                logger.warn("If you want to resume old training, either use `AutoResumeTrainConfig` "
-                            "or correctly set the starting_epoch yourself to avoid inconsistency. "
-                            "Epoch number will not be automatically loaded by JSONWriter.")
+                    "History epoch value {} from JSON is not the predecessor of the starting_epoch value {}".
+                    format(epoch - 1, starting_epoch))
+                logger.warn(
+                    "If you want to resume old training, either use `AutoResumeTrainConfig` "
+                    "or correctly set the starting_epoch yourself to avoid inconsistency. "
+                    "Epoch number will not be automatically loaded by JSONWriter."
+                )
 
-                backup_fname = JSONWriter.FILENAME + '.' + datetime.now().strftime('%m%d-%H%M%S')
-                backup_fname = os.path.join(logger.get_logger_dir(), backup_fname)
+                backup_fname = JSONWriter.FILENAME + '.' + datetime.now(
+                ).strftime('%m%d-%H%M%S')
+                backup_fname = os.path.join(logger.get_logger_dir(),
+                                            backup_fname)
 
-                logger.warn("Now, we will start training at epoch {} and backup old json to {}".format(
-                    self.trainer.loop.starting_epoch, backup_fname))
+                logger.warn(
+                    "Now, we will start training at epoch {} and backup old json to {}".
+                    format(self.trainer.loop.starting_epoch, backup_fname))
                 shutil.move(self._fname, backup_fname)
                 self._stats = []
         else:
@@ -356,7 +370,7 @@ class JSONWriter(TrainingMonitor):
             with open(tmp_filename, 'w') as f:
                 json.dump(self._stats, f)
             shutil.move(tmp_filename, self._fname)
-        except IOError:  # disk error sometimes..
+        except IOError:    # disk error sometimes..
             logger.exception("Exception in JSONWriter._write_stat()!")
 
 
@@ -367,8 +381,11 @@ class ScalarPrinter(TrainingMonitor):
 
     _chief_only = False
 
-    def __init__(self, enable_step=False, enable_epoch=True,
-                 whitelist=None, blacklist=None):
+    def __init__(self,
+                 enable_step=False,
+                 enable_epoch=True,
+                 whitelist=None,
+                 blacklist=None):
         """
         Args:
             enable_step, enable_epoch (bool): whether to print the
@@ -379,6 +396,7 @@ class ScalarPrinter(TrainingMonitor):
             blacklist (list[str] or None): A list of regex. Names matching
                 any regex will not be printed. Defaults to match no names.
         """
+
         def compile_regex(rs):
             if rs is None:
                 return None
@@ -460,6 +478,7 @@ class SendMonitorData(TrainingMonitor):
 
     It will try to send once receiving all the stats
     """
+
     def __init__(self, command, names):
         """
         Args:

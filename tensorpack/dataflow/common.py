@@ -1,7 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: common.py
 
-
 from __future__ import division
 import numpy as np
 from copy import copy
@@ -17,14 +16,17 @@ from ..utils import logger
 from ..utils.utils import get_tqdm, get_rng, get_tqdm_kwargs
 from ..utils.develop import log_deprecated
 
-__all__ = ['TestDataSpeed', 'PrintData', 'BatchData', 'BatchDataByShape', 'FixedSizeData', 'MapData',
-           'MapDataComponent', 'RepeatedData', 'RepeatedDataPoint', 'RandomChooseData',
-           'RandomMixData', 'JoinData', 'ConcatData', 'SelectComponent',
-           'LocallyShuffleData', 'CacheData']
+__all__ = [
+    'TestDataSpeed', 'PrintData', 'BatchData', 'BatchDataByShape',
+    'FixedSizeData', 'MapData', 'MapDataComponent', 'RepeatedData',
+    'RepeatedDataPoint', 'RandomChooseData', 'RandomMixData', 'JoinData',
+    'ConcatData', 'SelectComponent', 'LocallyShuffleData', 'CacheData'
+]
 
 
 class TestDataSpeed(ProxyDataFlow):
     """ Test the speed of some DataFlow """
+
     def __init__(self, ds, size=5000, warmup=0):
         """
         Args:
@@ -52,8 +54,7 @@ class TestDataSpeed(ProxyDataFlow):
             for d in tqdm.trange(self.warmup, **get_tqdm_kwargs()):
                 next(itr)
         # add smoothing for speed benchmark
-        with get_tqdm(total=self.test_size,
-                      leave=True, smoothing=0.2) as pbar:
+        with get_tqdm(total=self.test_size, leave=True, smoothing=0.2) as pbar:
             for idx, dp in enumerate(itr):
                 pbar.update()
                 if idx == self.test_size - 1:
@@ -127,8 +128,7 @@ class BatchData(ProxyDataFlow):
         result = []
         for k in range(size):
             if use_list:
-                result.append(
-                    [x[k] for x in data_holder])
+                result.append([x[k] for x in data_holder])
             else:
                 dt = data_holder[0][k]
                 if type(dt) in [int, bool]:
@@ -139,18 +139,22 @@ class BatchData(ProxyDataFlow):
                     try:
                         tp = dt.dtype
                     except AttributeError:
-                        raise TypeError("Unsupported type to batch: {}".format(type(dt)))
+                        raise TypeError("Unsupported type to batch: {}".format(
+                            type(dt)))
                 try:
                     result.append(
                         np.asarray([x[k] for x in data_holder], dtype=tp))
-                except Exception as e:  # noqa
-                    logger.exception("Cannot batch data. Perhaps they are of inconsistent shape?")
+                except Exception as e:    # noqa
+                    logger.exception(
+                        "Cannot batch data. Perhaps they are of inconsistent shape?"
+                    )
                     if isinstance(dt, np.ndarray):
                         s = pprint.pformat([x[k].shape for x in data_holder])
                         logger.error("Shape of all arrays to be batched: " + s)
                     try:
                         # open an ipython shell if possible
-                        import IPython as IP; IP.embed()    # noqa
+                        import IPython as IP
+                        IP.embed()    # noqa
                     except ImportError:
                         pass
         return result
@@ -168,6 +172,7 @@ class BatchDataByShape(BatchData):
         Datapoints of uncommon shapes may never be enough to form a batch and
         never get generated.
     """
+
     def __init__(self, ds, batch_size, idx):
         """
         Args:
@@ -198,6 +203,7 @@ class BatchDataByShape(BatchData):
 class FixedSizeData(ProxyDataFlow):
     """ Generate data from another DataFlow, but with a fixed total count.
     """
+
     def __init__(self, ds, size, keep_state=True):
         """
         Args:
@@ -272,7 +278,7 @@ class MapData(ProxyDataFlow):
 
     def get_data(self):
         for dp in self.ds.get_data():
-            ret = self.func(copy(dp))  # shallow copy the list
+            ret = self.func(copy(dp))    # shallow copy the list
             if ret is not None:
                 yield ret
 
@@ -287,6 +293,7 @@ class MapDataComponent(MapData):
            unless you're certain it's safe.
         2. If you discard some datapoints, ``ds.size()`` will be incorrect.
     """
+
     def __init__(self, ds, func, index=0):
         """
         Args:
@@ -301,9 +308,10 @@ class MapDataComponent(MapData):
             r = func(dp[index])
             if r is None:
                 return None
-            dp = copy(dp)   # shallow copy to avoid modifying the list
+            dp = copy(dp)    # shallow copy to avoid modifying the list
             dp[index] = r
             return dp
+
         super(MapDataComponent, self).__init__(ds, f)
 
 
@@ -435,10 +443,12 @@ class RandomMixData(RNGDataFlow):
         sums = np.cumsum(self.sizes)
         idxs = np.arange(self.size())
         self.rng.shuffle(idxs)
-        idxs = np.array(list(map(
-            lambda x: np.searchsorted(sums, x, 'right'), idxs)))
+        idxs = np.array(
+            list(map(lambda x: np.searchsorted(sums, x, 'right'), idxs)))
         itrs = [k.get_data() for k in self.df_lists]
-        assert idxs.max() == len(itrs) - 1, "{}!={}".format(idxs.max(), len(itrs) - 1)
+        assert idxs.max() == len(itrs) - 1, "{}!={}".format(
+            idxs.max(),
+            len(itrs) - 1)
         for k in idxs:
             yield next(itrs[k])
         # TODO run till exception
@@ -499,7 +509,9 @@ class JoinData(DataFlow):
                 assert d.size() == self._size, \
                     "All DataFlow must have the same size! {} != {}".format(d.size(), self._size)
         except Exception:
-            logger.info("[JoinData] Size check failed for the list of dataflow to be joined!")
+            logger.info(
+                "[JoinData] Size check failed for the list of dataflow to be joined!"
+            )
 
     def reset_state(self):
         for d in self.df_lists:
@@ -519,7 +531,7 @@ class JoinData(DataFlow):
                 for itr in itrs:
                     dp.extend(next(itr))
                 yield dp
-        except StopIteration:   # some of them are exhausted
+        except StopIteration:    # some of them are exhausted
             pass
         finally:
             for itr in itrs:
@@ -607,6 +619,7 @@ class CacheData(ProxyDataFlow):
     Cache the first pass of a DataFlow completely in memory,
     and produce from the cache thereafter.
     """
+
     def __init__(self, ds, shuffle=False):
         """
         Args:
@@ -675,7 +688,13 @@ class PrintData(ProxyDataFlow):
                   ...
     """
 
-    def __init__(self, ds, num=1, label=None, name=None, max_depth=3, max_list=3):
+    def __init__(self,
+                 ds,
+                 num=1,
+                 label=None,
+                 name=None,
+                 max_depth=3,
+                 max_list=3):
         """
         Args:
             ds (DataFlow): input DataFlow.
@@ -688,7 +707,8 @@ class PrintData(ProxyDataFlow):
         self.num = num
 
         if label:
-            log_deprecated("PrintData(label, ...", "Use PrintData(name, ...  instead.", "2018-05-01")
+            log_deprecated("PrintData(label, ...",
+                           "Use PrintData(name, ...  instead.", "2018-05-01")
             self.name = label
         else:
             self.name = name
@@ -711,6 +731,7 @@ class PrintData(ProxyDataFlow):
         """
 
         class _elementInfo(object):
+
             def __init__(self, el, pos, depth=0, max_list=3):
                 self.shape = ""
                 self.type = type(el).__name__
@@ -738,17 +759,21 @@ class PrintData(ProxyDataFlow):
                     if depth < max_depth:
                         for k, subel in enumerate(el):
                             if k < max_list:
-                                self.sub_elements.append(_elementInfo(subel, k, depth + 1, max_list))
+                                self.sub_elements.append(
+                                    _elementInfo(subel, k, depth + 1, max_list))
                             else:
-                                self.sub_elements.append(" " * ((depth + 1) * 2) + '...')
+                                self.sub_elements.append(
+                                    " " * ((depth + 1) * 2) + '...')
                                 break
                     else:
                         if len(el) > 0:
-                            self.sub_elements.append(" " * ((depth + 1) * 2) + ' ...')
+                            self.sub_elements.append(" " * (
+                                (depth + 1) * 2) + ' ...')
 
             def __str__(self):
                 strings = []
-                vals = (self.ident, self.pos, self.type, self.dtype, self.shape, self.range)
+                vals = (self.ident, self.pos, self.type, self.dtype, self.shape,
+                        self.range)
                 strings.append("{}{}: {}{}{}{}".format(*vals))
 
                 for k, el in enumerate(self.sub_elements):
@@ -758,9 +783,15 @@ class PrintData(ProxyDataFlow):
         return str(_elementInfo(entry, k, depth, max_list))
 
     def _get_msg(self, dp):
-        msg = [u"datapoint %i<%i with %i components consists of" % (self.cnt, self.num, len(dp))]
+        msg = [
+            u"datapoint %i<%i with %i components consists of" % (self.cnt,
+                                                                 self.num,
+                                                                 len(dp))
+        ]
         for k, entry in enumerate(dp):
-            msg.append(self._analyze_input_data(entry, k, max_depth=self.max_depth, max_list=self.max_list))
+            msg.append(
+                self._analyze_input_data(
+                    entry, k, max_depth=self.max_depth, max_list=self.max_list))
         return u'\n'.join(msg)
 
     def get_data(self):

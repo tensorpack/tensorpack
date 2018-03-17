@@ -1,7 +1,6 @@
 #  -*- coding: UTF-8 -*-
 #  File: __init__.py
 
-
 from pkgutil import iter_modules
 import os
 import os.path
@@ -20,8 +19,7 @@ def global_import(name):
 
 _CURR_DIR = os.path.dirname(__file__)
 _SKIP = ['utility']
-for _, module_name, _ in iter_modules(
-        [_CURR_DIR]):
+for _, module_name, _ in iter_modules([_CURR_DIR]):
     srcpath = os.path.join(_CURR_DIR, module_name + '.py')
     if not os.path.isfile(srcpath):
         continue

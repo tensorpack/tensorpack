@@ -2,39 +2,40 @@
 # -*- coding: utf-8 -*-
 # File: multigpu.py
 
-
 import tensorflow as tf
 
 from ..callbacks.graph import RunOp
 from ..utils.develop import log_deprecated
 
 from ..input_source import QueueInput, StagingInput, DummyConstantInput
-from ..graph_builder.training import (
-    SyncMultiGPUParameterServerBuilder,
-    SyncMultiGPUReplicatedBuilder,
-    AsyncMultiGPUBuilder,
-    DataParallelBuilder)
+from ..graph_builder.training import (SyncMultiGPUParameterServerBuilder,
+                                      SyncMultiGPUReplicatedBuilder,
+                                      AsyncMultiGPUBuilder, DataParallelBuilder)
 from .base import Trainer
 
-__all__ = ['MultiGPUTrainerBase',
-           'SyncMultiGPUTrainerReplicated',
-           'SyncMultiGPUTrainerParameterServer',
-           'AsyncMultiGPUTrainer',
-           'SyncMultiGPUTrainer']
+__all__ = [
+    'MultiGPUTrainerBase', 'SyncMultiGPUTrainerReplicated',
+    'SyncMultiGPUTrainerParameterServer', 'AsyncMultiGPUTrainer',
+    'SyncMultiGPUTrainer'
+]
 
 
 class MultiGPUTrainerBase(Trainer):
     """
     For backward compatibility only
     """
+
     def build_on_multi_tower(towers, func, devices=None, use_vs=None):
         log_deprecated("MultiGPUTrainerBase.build_on_multitower",
-                       "Please use DataParallelBuilder.build_on_towers", "2018-01-31")
-        return DataParallelBuilder.build_on_towers(towers, func, devices, use_vs)
+                       "Please use DataParallelBuilder.build_on_towers",
+                       "2018-01-31")
+        return DataParallelBuilder.build_on_towers(towers, func, devices,
+                                                   use_vs)
 
 
 def apply_prefetch_policy(config, gpu_prefetch=True):
-    assert (config.data is not None or config.dataflow is not None) and config.model is not None
+    assert (config.data is not None
+            or config.dataflow is not None) and config.model is not None
     if config.data is None and config.dataflow is not None:
         # always use Queue prefetch
         config.data = QueueInput(config.dataflow)
@@ -110,7 +111,9 @@ class SyncMultiGPUTrainerReplicated(Trainer):
 
         cb = RunOp(
             lambda: post_init_op,
-            run_before=True, run_as_trigger=True, verbose=True)
+            run_before=True,
+            run_as_trigger=True,
+            verbose=True)
         self._config.callbacks.extend(callbacks + [cb])
 
 

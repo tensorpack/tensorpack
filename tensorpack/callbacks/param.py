@@ -2,7 +2,6 @@
 # -*- coding: UTF-8 -*-
 # File: param.py
 
-
 import tensorflow as tf
 from abc import abstractmethod, ABCMeta
 import operator
@@ -13,11 +12,16 @@ from .base import Callback
 from ..utils import logger
 from ..tfutils.common import get_op_tensor_name
 
-__all__ = ['HyperParam', 'GraphVarParam', 'ObjAttrParam',
-           'HyperParamSetter', 'HumanHyperParamSetter',
-           'ScheduledHyperParamSetter',
-           'StatMonitorParamSetter', 'HyperParamSetterWithFunc',
-           ]
+__all__ = [
+    'HyperParam',
+    'GraphVarParam',
+    'ObjAttrParam',
+    'HyperParamSetter',
+    'HumanHyperParamSetter',
+    'ScheduledHyperParamSetter',
+    'StatMonitorParamSetter',
+    'HyperParamSetterWithFunc',
+]
 
 
 @six.add_metaclass(ABCMeta)
@@ -72,7 +76,8 @@ class GraphVarParam(HyperParam):
                 self.var = v
                 break
         else:
-            raise ValueError("{} is not a variable in the graph!".format(self.var_name))
+            raise ValueError("{} is not a variable in the graph!".format(
+                self.var_name))
 
     def set_value(self, v):
         """ Assign the variable a new value. """
@@ -145,8 +150,9 @@ class HyperParamSetter(Callback):
         if ret is not None and ret != self._last_value:
             if self.epoch_num != self._last_epoch_set:
                 # Print this message at most once every epoch
-                logger.info("[HyperParamSetter] At global_step={}, {} will change to {:.8f}".format(
-                    self.global_step, self.param.readable_name, ret))
+                logger.info(
+                    "[HyperParamSetter] At global_step={}, {} will change to {:.8f}".
+                    format(self.global_step, self.param.readable_name, ret))
             self._last_epoch_set = self.epoch_num
         self._last_value = ret
         return ret
@@ -206,9 +212,8 @@ class HumanHyperParamSetter(HyperParamSetter):
             ret = dic[self.param.readable_name]
             return ret
         except Exception:
-            logger.warn(
-                "Cannot find {} in {}".format(
-                    self.param.readable_name, self.file_name))
+            logger.warn("Cannot find {} in {}".format(self.param.readable_name,
+                                                      self.file_name))
             return None
 
 
@@ -273,6 +278,7 @@ class ScheduledHyperParamSetter(HyperParamSetter):
 
 class HyperParamSetterWithFunc(HyperParamSetter):
     """ Set the parameter by a function of epoch num and old value. """
+
     def __init__(self, param, func):
         """
         Args:
@@ -300,8 +306,14 @@ class StatMonitorParamSetter(HyperParamSetter):
     Change the param by monitoring the change of a statistic.
     Change when it wasn't decreasing/increasing enough.
     """
-    def __init__(self, param, stat_name, value_func, threshold,
-                 last_k, reverse=False):
+
+    def __init__(self,
+                 param,
+                 stat_name,
+                 value_func,
+                 threshold,
+                 last_k,
+                 reverse=False):
         """
         Args:
             param: same as in :class:`HyperParamSetter`.
@@ -340,7 +352,8 @@ class StatMonitorParamSetter(HyperParamSetter):
             hist = self.trainer.monitors.get_history(self.stat_name)
         except KeyError:
             logger.warn(
-                "[StatMonitorParamSetter] Key {} not found in monitor history! Ignore it.".format(self.stat_name))
+                "[StatMonitorParamSetter] Key {} not found in monitor history! Ignore it.".
+                format(self.stat_name))
             return None
 
         if len(hist) < self.last_k + 1 or \
@@ -351,14 +364,13 @@ class StatMonitorParamSetter(HyperParamSetter):
         hist_first = hist[0]
         if not self.reverse:
             hist_min = min(hist)
-            if hist_min < hist_first - self.threshold:  # small enough
+            if hist_min < hist_first - self.threshold:    # small enough
                 return None
         else:
             hist_max = max(hist)
-            if hist_max > hist_first + self.threshold:  # large enough
+            if hist_max > hist_first + self.threshold:    # large enough
                 return None
         self.last_changed_epoch = self.epoch_num
-        logger.info(
-            "[StatMonitorParamSetter] Triggered, history of {}: ".format(
-                self.stat_name) + ','.join(map(str, hist)))
+        logger.info("[StatMonitorParamSetter] Triggered, history of {}: ".
+                    format(self.stat_name) + ','.join(map(str, hist)))
         return self.value_func(self.get_current_value())

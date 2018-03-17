@@ -1,7 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: base.py
 
-
 import tensorflow as tf
 from abc import ABCMeta
 import six
@@ -220,7 +219,7 @@ class Callback(object):
         Returns:
             [tf.Tensor]
         """
-        from ..train.tower import TowerTrainer  # noqa
+        from ..train.tower import TowerTrainer    # noqa
 
         def get_tensor(name):
             msg = "Tensor {} not found in the graph!".format(name)
@@ -235,6 +234,7 @@ class Callback(object):
                 return towers.training()[0][name]
             except KeyError:
                 raise KeyError(msg)
+
         return [get_tensor(name) for name in names]
 
 
@@ -290,7 +290,11 @@ class CallbackFactory(Callback):
     """
     Create a callback with some lambdas.
     """
-    def __init__(self, setup_graph=None, before_train=None, trigger=None,
+
+    def __init__(self,
+                 setup_graph=None,
+                 before_train=None,
+                 trigger=None,
                  after_train=None):
         """
         Each lambda takes ``self`` as the only argument.

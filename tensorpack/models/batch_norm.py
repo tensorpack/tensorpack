@@ -2,7 +2,6 @@
 # -*- coding: UTF-8 -*-
 # File: batch_norm.py
 
-
 import tensorflow as tf
 from tensorflow.contrib.framework import add_model_variable
 from tensorflow.python.training import moving_averages
@@ -23,7 +22,8 @@ __all__ = ['BatchNorm', 'BatchRenorm']
 
 def get_bn_variables(n_out, use_scale, use_bias, gamma_init):
     if use_bias:
-        beta = tf.get_variable('beta', [n_out], initializer=tf.constant_initializer())
+        beta = tf.get_variable(
+            'beta', [n_out], initializer=tf.constant_initializer())
     else:
         beta = tf.zeros([n_out], name='beta')
     if use_scale:
@@ -32,22 +32,24 @@ def get_bn_variables(n_out, use_scale, use_bias, gamma_init):
         gamma = tf.ones([n_out], name='gamma')
     # x * gamma + beta
 
-    moving_mean = tf.get_variable('mean/EMA', [n_out],
-                                  initializer=tf.constant_initializer(), trainable=False)
-    moving_var = tf.get_variable('variance/EMA', [n_out],
-                                 initializer=tf.constant_initializer(1.0), trainable=False)
+    moving_mean = tf.get_variable(
+        'mean/EMA', [n_out],
+        initializer=tf.constant_initializer(),
+        trainable=False)
+    moving_var = tf.get_variable(
+        'variance/EMA', [n_out],
+        initializer=tf.constant_initializer(1.0),
+        trainable=False)
     return beta, gamma, moving_mean, moving_var
 
 
-def update_bn_ema(xn, batch_mean, batch_var,
-                  moving_mean, moving_var, decay, internal_update):
+def update_bn_ema(xn, batch_mean, batch_var, moving_mean, moving_var, decay,
+                  internal_update):
     # TODO is there a way to use zero_debias in multi-GPU?
     update_op1 = moving_averages.assign_moving_average(
-        moving_mean, batch_mean, decay, zero_debias=False,
-        name='mean_ema_op')
+        moving_mean, batch_mean, decay, zero_debias=False, name='mean_ema_op')
     update_op2 = moving_averages.assign_moving_average(
-        moving_var, batch_var, decay, zero_debias=False,
-        name='var_ema_op')
+        moving_var, batch_var, decay, zero_debias=False, name='var_ema_op')
 
     if internal_update:
         with tf.control_dependencies([update_op1, update_op2]):
@@ -76,8 +78,12 @@ def reshape_for_bn(param, ndims, chan, data_format):
         'decay': 'momentum',
         'use_local_stat': 'training'
     })
-def BatchNorm(inputs, training=None, momentum=0.9, epsilon=1e-5,
-              center=True, scale=True,
+def BatchNorm(inputs,
+              training=None,
+              momentum=0.9,
+              epsilon=1e-5,
+              center=True,
+              scale=True,
               gamma_initializer=tf.ones_initializer(),
               data_format='channels_last',
               internal_update=False):
@@ -124,9 +130,10 @@ def BatchNorm(inputs, training=None, momentum=0.9, epsilon=1e-5,
     if data_format == 'NCHW':
         n_out = shape[1]
     else:
-        n_out = shape[-1]  # channel
+        n_out = shape[-1]    # channel
     assert n_out is not None, "Input to BatchNorm cannot have unknown channels!"
-    beta, gamma, moving_mean, moving_var = get_bn_variables(n_out, scale, center, gamma_initializer)
+    beta, gamma, moving_mean, moving_var = get_bn_variables(
+        n_out, scale, center, gamma_initializer)
 
     ctx = get_current_tower_context()
     use_local_stat = training
@@ -136,12 +143,17 @@ def BatchNorm(inputs, training=None, momentum=0.9, epsilon=1e-5,
 
     if use_local_stat:
         if ndims == 2:
-            inputs = tf.reshape(inputs, [-1, 1, 1, n_out])    # fused_bn only takes 4D input
+            inputs = tf.reshape(
+                inputs, [-1, 1, 1, n_out])    # fused_bn only takes 4D input
             # fused_bn has error using NCHW? (see #190)
 
         xn, batch_mean, batch_var = tf.nn.fused_batch_norm(
-            inputs, gamma, beta, epsilon=epsilon,
-            is_training=True, data_format=data_format)
+            inputs,
+            gamma,
+            beta,
+            epsilon=epsilon,
+            is_training=True,
+            data_format=data_format)
 
         if ndims == 2:
             xn = tf.squeeze(xn, [1, 2])
@@ -150,24 +162,36 @@ def BatchNorm(inputs, training=None, momentum=0.9, epsilon=1e-5,
             assert get_tf_version_number() >= 1.4, \
                 "Fine tuning a BatchNorm model with fixed statistics is only " \
                 "supported after https://github.com/tensorflow/tensorflow/pull/12580 "
-            if ctx.is_main_training_tower:  # only warn in first tower
-                logger.warn("[BatchNorm] Using moving_mean/moving_variance in training.")
+            if ctx.is_main_training_tower:    # only warn in first tower
+                logger.warn(
+                    "[BatchNorm] Using moving_mean/moving_variance in training."
+                )
             # Using moving_mean/moving_variance in training, which means we
             # loaded a pre-trained BN and only fine-tuning the affine part.
             xn, _, _ = tf.nn.fused_batch_norm(
-                inputs, gamma, beta,
-                mean=moving_mean, variance=moving_var, epsilon=epsilon,
-                data_format=data_format, is_training=False)
+                inputs,
+                gamma,
+                beta,
+                mean=moving_mean,
+                variance=moving_var,
+                epsilon=epsilon,
+                data_format=data_format,
+                is_training=False)
         else:
             if ndims == 4:
                 xn, _, _ = tf.nn.fused_batch_norm(
-                    inputs, gamma, beta,
-                    mean=moving_mean, variance=moving_var, epsilon=epsilon,
-                    data_format=data_format, is_training=False)
+                    inputs,
+                    gamma,
+                    beta,
+                    mean=moving_mean,
+                    variance=moving_var,
+                    epsilon=epsilon,
+                    data_format=data_format,
+                    is_training=False)
             else:
                 # avoid the reshape if possible (when channel is the last dimension)
-                xn = tf.nn.batch_normalization(
-                    inputs, moving_mean, moving_var, beta, gamma, epsilon)
+                xn = tf.nn.batch_normalization(inputs, moving_mean, moving_var,
+                                               beta, gamma, epsilon)
 
     # maintain EMA only on one GPU is OK, even in replicated mode.
     # because training time doesn't use EMA
@@ -175,7 +199,8 @@ def BatchNorm(inputs, training=None, momentum=0.9, epsilon=1e-5,
         add_model_variable(moving_mean)
         add_model_variable(moving_var)
     if ctx.is_main_training_tower and use_local_stat:
-        ret = update_bn_ema(xn, batch_mean, batch_var, moving_mean, moving_var, momentum, internal_update)
+        ret = update_bn_ema(xn, batch_mean, batch_var, moving_mean, moving_var,
+                            momentum, internal_update)
     else:
         ret = tf.identity(xn, name='output')
 
@@ -196,8 +221,14 @@ def BatchNorm(inputs, training=None, momentum=0.9, epsilon=1e-5,
         'gamma_init': 'gamma_initializer',
         'decay': 'momentum'
     })
-def BatchRenorm(x, rmax, dmax, momentum=0.9, epsilon=1e-5,
-                center=True, scale=True, gamma_initializer=None,
+def BatchRenorm(x,
+                rmax,
+                dmax,
+                momentum=0.9,
+                epsilon=1e-5,
+                center=True,
+                scale=True,
+                gamma_initializer=None,
                 data_format='channels_last'):
     """
     Batch Renormalization layer, as described in the paper:
@@ -233,13 +264,14 @@ def BatchRenorm(x, rmax, dmax, momentum=0.9, epsilon=1e-5,
     coll_bk = backup_collection([tf.GraphKeys.UPDATE_OPS])
     layer = tf.layers.BatchNormalization(
         axis=1 if data_format == 'channels_first' else 3,
-        momentum=momentum, epsilon=epsilon,
-        center=center, scale=scale,
+        momentum=momentum,
+        epsilon=epsilon,
+        center=center,
+        scale=scale,
         renorm=True,
-        renorm_clipping={
-            'rmin': 1.0 / rmax,
-            'rmax': rmax,
-            'dmax': dmax},
+        renorm_clipping={'rmin': 1.0 / rmax,
+                         'rmax': rmax,
+                         'dmax': dmax},
         renorm_momentum=0.99,
         gamma_initializer=gamma_initializer,
         fused=False)

@@ -1,7 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: image.py
 
-
 import numpy as np
 import copy as copy_mod
 from contextlib import contextmanager
@@ -10,7 +9,10 @@ from .common import MapDataComponent, MapData
 from ..utils import logger
 from ..utils.argtools import shape2d
 
-__all__ = ['ImageFromFile', 'AugmentImageComponent', 'AugmentImageCoordinates', 'AugmentImageComponents']
+__all__ = [
+    'ImageFromFile', 'AugmentImageComponent', 'AugmentImageCoordinates',
+    'AugmentImageComponents'
+]
 
 
 def check_dtype(img):
@@ -26,6 +28,7 @@ def validate_coords(coords):
 
 
 class ExceptionHandler:
+
     def __init__(self, catch_exceptions=False):
         self._nr_error = 0
         self.catch_exceptions = catch_exceptions
@@ -40,11 +43,13 @@ class ExceptionHandler:
                 raise
             else:
                 if self._nr_error % 100 == 0 or self._nr_error < 10:
-                    logger.exception("Got {} augmentation errors.".format(self._nr_error))
+                    logger.exception("Got {} augmentation errors.".format(
+                        self._nr_error))
 
 
 class ImageFromFile(RNGDataFlow):
     """ Produce images read from a list of files. """
+
     def __init__(self, files, channel=3, resize=None, shuffle=False):
         """
         Args:
@@ -83,7 +88,12 @@ class AugmentImageComponent(MapDataComponent):
     Apply image augmentors on 1 image component.
     """
 
-    def __init__(self, ds, augmentors, index=0, copy=True, catch_exceptions=False):
+    def __init__(self,
+                 ds,
+                 augmentors,
+                 index=0,
+                 copy=True,
+                 catch_exceptions=False):
         """
         Args:
             ds (DataFlow): input DataFlow.
@@ -111,8 +121,7 @@ class AugmentImageComponent(MapDataComponent):
                     x = copy_mod.deepcopy(x)
                 return self.augs.augment(x)
 
-        super(AugmentImageComponent, self).__init__(
-            ds, func, index)
+        super(AugmentImageComponent, self).__init__(ds, func, index)
 
     def reset_state(self):
         self.ds.reset_state()
@@ -125,8 +134,13 @@ class AugmentImageCoordinates(MapData):
     Coordinates must be a Nx2 floating point array, each row is (x, y).
     """
 
-    def __init__(self, ds, augmentors, img_index=0, coords_index=1, copy=True, catch_exceptions=False):
-
+    def __init__(self,
+                 ds,
+                 augmentors,
+                 img_index=0,
+                 coords_index=1,
+                 copy=True,
+                 catch_exceptions=False):
         """
         Args:
             ds (DataFlow): input DataFlow.
@@ -177,7 +191,13 @@ class AugmentImageComponents(MapData):
 
     """
 
-    def __init__(self, ds, augmentors, index=(0, 1), coords_index=(), copy=True, catch_exceptions=False):
+    def __init__(self,
+                 ds,
+                 augmentors,
+                 index=(0, 1),
+                 coords_index=(),
+                 copy=True,
+                 catch_exceptions=False):
         """
         Args:
             ds (DataFlow): input DataFlow.
@@ -195,10 +215,12 @@ class AugmentImageComponents(MapData):
         exception_handler = ExceptionHandler(catch_exceptions)
 
         def func(dp):
-            dp = copy_mod.copy(dp)  # always do a shallow copy, make sure the list is intact
-            copy_func = copy_mod.deepcopy if copy else lambda x: x  # noqa
+            dp = copy_mod.copy(
+                dp)    # always do a shallow copy, make sure the list is intact
+            copy_func = copy_mod.deepcopy if copy else lambda x: x    # noqa
             with exception_handler.catch():
-                major_image = index[0]  # image to be used to get params. TODO better design?
+                major_image = index[
+                    0]    # image to be used to get params. TODO better design?
                 im = copy_func(dp[major_image])
                 check_dtype(im)
                 im, prms = self.augs._augment_return_params(im)
@@ -224,7 +246,10 @@ try:
     from .imgaug import AugmentorList
 except ImportError:
     from ..utils.develop import create_dummy_class
-    ImageFromFile = create_dummy_class('ImageFromFile', 'cv2')  # noqa
-    AugmentImageComponent = create_dummy_class('AugmentImageComponent', 'cv2')  # noqa
-    AugmentImageCoordinates = create_dummy_class('AugmentImageCoordinates', 'cv2') # noqa
-    AugmentImageComponents = create_dummy_class('AugmentImageComponents', 'cv2')  # noqa
+    ImageFromFile = create_dummy_class('ImageFromFile', 'cv2')    # noqa
+    AugmentImageComponent = create_dummy_class('AugmentImageComponent',
+                                               'cv2')    # noqa
+    AugmentImageCoordinates = create_dummy_class('AugmentImageCoordinates',
+                                                 'cv2')    # noqa
+    AugmentImageComponents = create_dummy_class('AugmentImageComponents',
+                                                'cv2')    # noqa

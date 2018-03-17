@@ -1,7 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: config.py
 
-
 import tensorflow as tf
 import six
 
@@ -14,19 +13,19 @@ __all__ = ['PredictConfig']
 
 
 class PredictConfig(object):
-    def __init__(self,
-                 model=None,
-                 inputs_desc=None,
-                 tower_func=None,
 
-                 input_names=None,
-                 output_names=None,
-
-                 session_creator=None,
-                 session_init=None,
-                 return_input=False,
-                 create_graph=True,
-                 ):
+    def __init__(
+            self,
+            model=None,
+            inputs_desc=None,
+            tower_func=None,
+            input_names=None,
+            output_names=None,
+            session_creator=None,
+            session_init=None,
+            return_input=False,
+            create_graph=True,
+    ):
         """
         You need to set either `model`, or `inputs_desc` plus `tower_func`.
         They are needed to construct the graph.
@@ -50,13 +49,16 @@ class PredictConfig(object):
             create_graph (bool): create a new graph, or use the default graph
                 when predictor is first initialized.
         """
+
         def assert_type(v, tp):
             assert isinstance(v, tp), v.__class__
+
         if model is not None:
             assert_type(model, ModelDescBase)
             assert inputs_desc is None and tower_func is None
             self.inputs_desc = model.get_inputs_desc()
-            self.tower_func = TowerFuncWrapper(model.build_graph, self.inputs_desc)
+            self.tower_func = TowerFuncWrapper(model.build_graph,
+                                               self.inputs_desc)
         else:
             assert inputs_desc is not None and tower_func is not None
             self.inputs_desc = inputs_desc
@@ -68,7 +70,8 @@ class PredictConfig(object):
         assert_type(self.session_init, SessionInit)
 
         if session_creator is None:
-            self.session_creator = tf.train.ChiefSessionCreator(config=get_default_sess_config())
+            self.session_creator = tf.train.ChiefSessionCreator(
+                config=get_default_sess_config())
         else:
             self.session_creator = session_creator
 

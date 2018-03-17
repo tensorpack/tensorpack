@@ -14,7 +14,6 @@ from ..graph_builder.distributed import DistributedReplicatedBuilder
 from ..graph_builder.utils import override_to_local_variable
 from .base import Trainer
 
-
 __all__ = ['DistributedTrainerReplicated']
 
 
@@ -40,7 +39,8 @@ class DistributedTrainerReplicated(Trainer):
             self.is_chief = self._builder.is_chief
         else:
             self.is_chief = False
-        logger.info("Distributed training on cluster:\n" + str(server.server_def.cluster))
+        logger.info("Distributed training on cluster:\n" +
+                    str(server.server_def.cluster))
 
         self._input_source = config.data
 
@@ -48,13 +48,14 @@ class DistributedTrainerReplicated(Trainer):
 
     def _setup(self):
         if self.job_name == 'ps':
-            logger.info("Running ps {}".format(self.server.server_def.task_index))
+            logger.info("Running ps {}".format(
+                self.server.server_def.task_index))
             logger.info("Kill me with 'kill {}'".format(os.getpid()))
-            self.server.join()  # this will never return tensorflow#4713
+            self.server.join()    # this will never return tensorflow#4713
             return
 
         with override_to_local_variable():
-            get_global_step_var()  # gs should be local
+            get_global_step_var()    # gs should be local
 
             # input source may create variable (queue size summary)
             # TODO This is not good because we don't know from here
@@ -69,17 +70,25 @@ class DistributedTrainerReplicated(Trainer):
             self.model.get_optimizer)
 
         # initial local_vars syncing
-        cb = RunOp(lambda: initial_sync_op,
-                   run_before=True, run_as_trigger=False, verbose=True)
+        cb = RunOp(
+            lambda: initial_sync_op,
+            run_before=True,
+            run_as_trigger=False,
+            verbose=True)
         cb.chief_only = False
         self.register_callback(cb)
 
         # model_variables syncing
         if model_sync_op:
-            cb = RunOp(lambda: model_sync_op,
-                       run_before=False, run_as_trigger=True, verbose=True)
-            logger.warn("For efficiency, local MODEL_VARIABLES are only synced to PS once "
-                        "every epoch. Be careful if you save the model more frequently than this.")
+            cb = RunOp(
+                lambda: model_sync_op,
+                run_before=False,
+                run_as_trigger=True,
+                verbose=True)
+            logger.warn(
+                "For efficiency, local MODEL_VARIABLES are only synced to PS once "
+                "every epoch. Be careful if you save the model more frequently than this."
+            )
             self.register_callback(cb)
 
         self._set_session_creator()
@@ -92,7 +101,8 @@ class DistributedTrainerReplicated(Trainer):
                 "Cannot set session_creator or session_config for distributed training! "
                 "To use a custom session config, pass it to tf.train.Server.")
 
-        self._config.session_creator = get_distributed_session_creator(self.server)
+        self._config.session_creator = get_distributed_session_creator(
+            self.server)
 
     @property
     def _main_tower_vs_name(self):

@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # File: tower.py
 
-
 import tensorflow as tf
 from six.moves import zip
 
@@ -13,8 +12,10 @@ from ..utils.develop import HIDE_DOC
 from .collection import CollectionGuard
 from .common import get_tf_version_number, get_op_or_tensor_by_name, get_op_tensor_name
 
-__all__ = ['get_current_tower_context', 'TowerContext', 'TowerFuncWrapper',
-           'TowerTensorHandle', 'TowerTensorHandles']
+__all__ = [
+    'get_current_tower_context', 'TowerContext', 'TowerFuncWrapper',
+    'TowerTensorHandle', 'TowerTensorHandles'
+]
 
 _CurrentTowerContext = None
 
@@ -40,7 +41,9 @@ class TowerContext(object):
         self._index = int(index)
         self._vs_name = vs_name
         if len(vs_name):
-            assert len(tower_name), "TowerContext(vs_name) cannot be used with an empty tower_name!"
+            assert len(
+                tower_name
+            ), "TowerContext(vs_name) cannot be used with an empty tower_name!"
 
         self._initial_vs_reuse = tf.get_variable_scope().reuse
         if self.has_own_variables:
@@ -101,15 +104,15 @@ class TowerContext(object):
 
         # either the Tower was originally created with reuse,
         # or a training tower without vs has to use reuse.
-        reuse = (self.is_training and self._index > 0 and not
-                 self.has_own_variables) or self._initial_vs_reuse
+        reuse = (self.is_training and self._index > 0
+                 and not self.has_own_variables) or self._initial_vs_reuse
 
         if len(self._vs_name):
             ret.append(tf.variable_scope(self._vs_name, reuse=reuse))
         else:
             if reuse:
-                ret.append(tf.variable_scope(
-                    tf.get_variable_scope(), reuse=True))
+                ret.append(
+                    tf.variable_scope(tf.get_variable_scope(), reuse=True))
             else:
                 # work around https://github.com/tensorflow/tensorflow/issues/14703
                 ret.append(tf.variable_scope(tf.get_variable_scope()))
@@ -124,7 +127,10 @@ class TowerContext(object):
         if self.is_training:
             return [tf.GraphKeys.SUMMARIES, MOVING_SUMMARY_OPS_KEY]
         # freeze UPDATE_OPS during inference because they should never be used
-        return [tf.GraphKeys.SUMMARIES, MOVING_SUMMARY_OPS_KEY, tf.GraphKeys.UPDATE_OPS]
+        return [
+            tf.GraphKeys.SUMMARIES, MOVING_SUMMARY_OPS_KEY,
+            tf.GraphKeys.UPDATE_OPS
+        ]
 
     def __enter__(self):
         global _CurrentTowerContext
@@ -152,7 +158,8 @@ class TowerContext(object):
         _CurrentTowerContext = None
 
         if not self.has_own_variables:
-            diff_trainable_vars = self._collection_guard.get_collection_in_tower(tf.GraphKeys.TRAINABLE_VARIABLES)
+            diff_trainable_vars = self._collection_guard.get_collection_in_tower(
+                tf.GraphKeys.TRAINABLE_VARIABLES)
             assert len(diff_trainable_vars) == 0,  \
                 "New TRAINABLE_VARIABLES shouldn't be created in {}: ".format(
                     self._name) + ', '.join([k.name for k in diff_trainable_vars])
@@ -228,6 +235,7 @@ class TowerTensorHandles(object):
     Wrap a list of :class:`TowerTensorHandle`,
     to support access to them by index or names.
     """
+
     def __init__(self, handles):
         self._handles = handles
         self._name_to_handle = {k.ns_name: k for k in handles}
@@ -278,7 +286,9 @@ class TowerTensorHandle(object):
         if inputs_desc is not None:
             assert len(inputs_desc) == len(input)
             self._extra_tensor_names = {
-                get_op_tensor_name(x.name)[1]: y for x, y in zip(inputs_desc, input)}
+                get_op_tensor_name(x.name)[1]: y
+                for x, y in zip(inputs_desc, input)
+            }
         self._input = input
         self._output = output
 
@@ -311,9 +321,9 @@ class TowerTensorHandle(object):
         else:
             if name in self._extra_tensor_names:
                 logger.warn(
-                    "'{}' may refer to both the tensor '{}' or the input '{}'.".format(
-                        name, ret.name, self._extra_tensor_names[name].name) +
-                    "Assuming it is the tensor '{}'.".format(ret.name))
+                    "'{}' may refer to both the tensor '{}' or the input '{}'.".
+                    format(name, ret.name, self._extra_tensor_names[name].name)
+                    + "Assuming it is the tensor '{}'.".format(ret.name))
             return ret
 
     def get_tensors(self, names):

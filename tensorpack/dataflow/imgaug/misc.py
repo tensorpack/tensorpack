@@ -1,7 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: misc.py
 
-
 import numpy as np
 import cv2
 
@@ -17,6 +16,7 @@ class Flip(ImageAugmentor):
     """
     Random flip the image either horizontally or vertically.
     """
+
     def __init__(self, horiz=False, vert=False, prob=0.5):
         """
         Args:
@@ -26,7 +26,8 @@ class Flip(ImageAugmentor):
         """
         super(Flip, self).__init__()
         if horiz and vert:
-            raise ValueError("Cannot do both horiz and vert. Please use two Flip instead.")
+            raise ValueError(
+                "Cannot do both horiz and vert. Please use two Flip instead.")
         elif horiz:
             self.code = 1
         elif vert:
@@ -73,9 +74,8 @@ class Resize(TransformAugmentorBase):
         self._init(locals())
 
     def _get_augment_params(self, img):
-        return ResizeTransform(
-            img.shape[0], img.shape[1],
-            self.shape[0], self.shape[1], self.interp)
+        return ResizeTransform(img.shape[0], img.shape[1], self.shape[0],
+                               self.shape[1], self.interp)
 
 
 class ResizeShortestEdge(TransformAugmentorBase):
@@ -99,14 +99,17 @@ class ResizeShortestEdge(TransformAugmentorBase):
             newh, neww = self.size, int(scale * w + 0.5)
         else:
             newh, neww = int(scale * h + 0.5), self.size
-        return ResizeTransform(
-            h, w, newh, neww, self.interp)
+        return ResizeTransform(h, w, newh, neww, self.interp)
 
 
 class RandomResize(TransformAugmentorBase):
     """ Randomly rescale width and height of the image."""
 
-    def __init__(self, xrange, yrange=None, minimum=(0, 0), aspect_ratio_thres=0.15,
+    def __init__(self,
+                 xrange,
+                 yrange=None,
+                 minimum=(0, 0),
+                 aspect_ratio_thres=0.15,
                  interp=cv2.INTER_LINEAR):
         """
         Args:
@@ -127,7 +130,8 @@ class RandomResize(TransformAugmentorBase):
             return isinstance(tp[0], float) or isinstance(tp[1], float)
 
         if yrange is not None:
-            assert is_float(xrange) == is_float(yrange), "xrange and yrange has different type!"
+            assert is_float(xrange) == is_float(
+                yrange), "xrange and yrange has different type!"
         self._is_scale = is_float(xrange)
 
         if aspect_ratio_thres == 0:
@@ -162,7 +166,7 @@ class RandomResize(TransformAugmentorBase):
 
         while True:
             destX, destY = get_dest_size()
-            if self.aspect_ratio_thres > 0:  # don't check when thres == 0
+            if self.aspect_ratio_thres > 0:    # don't check when thres == 0
                 oldr = w * 1.0 / h
                 newr = destX * 1.0 / destY
                 diff = abs(newr - oldr) / oldr
@@ -179,6 +183,7 @@ class Transpose(ImageAugmentor):
     """
     Random transpose the image
     """
+
     def __init__(self, prob=0.5):
         """
         Args:

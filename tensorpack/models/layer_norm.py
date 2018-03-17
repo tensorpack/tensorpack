@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # File: layer_norm.py
 
-
 import tensorflow as tf
 from .common import layer_register, VariableHolder
 from ..utils.argtools import get_data_format
@@ -11,10 +10,12 @@ __all__ = ['LayerNorm', 'InstanceNorm']
 
 
 @layer_register()
-def LayerNorm(
-        x, epsilon=1e-5,
-        use_bias=True, use_scale=True,
-        gamma_init=None, data_format='channels_last'):
+def LayerNorm(x,
+              epsilon=1e-5,
+              use_bias=True,
+              use_scale=True,
+              gamma_init=None,
+              data_format='channels_last'):
     """
     Layer Normalization layer, as described in the paper:
     `Layer Normalization <https://arxiv.org/abs/1607.06450>`_.
@@ -41,7 +42,8 @@ def LayerNorm(
         new_shape = [1, chan]
 
     if use_bias:
-        beta = tf.get_variable('beta', [chan], initializer=tf.constant_initializer())
+        beta = tf.get_variable(
+            'beta', [chan], initializer=tf.constant_initializer())
         beta = tf.reshape(beta, new_shape)
     else:
         beta = tf.zeros([1] * ndims, name='beta')
@@ -53,7 +55,8 @@ def LayerNorm(
     else:
         gamma = tf.ones([1] * ndims, name='gamma')
 
-    ret = tf.nn.batch_normalization(x, mean, var, beta, gamma, epsilon, name='output')
+    ret = tf.nn.batch_normalization(
+        x, mean, var, beta, gamma, epsilon, name='output')
 
     vh = ret.variables = VariableHolder()
     if use_scale:
@@ -64,7 +67,11 @@ def LayerNorm(
 
 
 @layer_register()
-def InstanceNorm(x, epsilon=1e-5, use_affine=True, gamma_init=None, data_format='channels_last'):
+def InstanceNorm(x,
+                 epsilon=1e-5,
+                 use_affine=True,
+                 gamma_init=None,
+                 data_format='channels_last'):
     """
     Instance Normalization, as in the paper:
     `Instance Normalization: The Missing Ingredient for Fast Stylization
@@ -100,7 +107,8 @@ def InstanceNorm(x, epsilon=1e-5, use_affine=True, gamma_init=None, data_format=
         gamma_init = tf.constant_initializer(1.0)
     gamma = tf.get_variable('gamma', [ch], initializer=gamma_init)
     gamma = tf.reshape(gamma, new_shape)
-    ret = tf.nn.batch_normalization(x, mean, var, beta, gamma, epsilon, name='output')
+    ret = tf.nn.batch_normalization(
+        x, mean, var, beta, gamma, epsilon, name='output')
 
     vh = ret.variables = VariableHolder()
     if use_affine:

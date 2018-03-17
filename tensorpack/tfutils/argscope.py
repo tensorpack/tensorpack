@@ -39,7 +39,9 @@ def argscope(layers, **kwargs):
     #         assert k in args, "No argument {} in {}".format(k, l.__name__)
 
     for l in layers:
-        assert hasattr(l, 'symbolic_function'), "{} is not a registered layer".format(l.__name__)
+        assert hasattr(
+            l, 'symbolic_function'), "{} is not a registered layer".format(
+                l.__name__)
         # _check_args_exist(l.symbolic_function)
 
     new_scope = copy.copy(get_arg_scope())

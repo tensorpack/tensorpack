@@ -1,7 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: utils.py
 
-
 import os
 import sys
 from contextlib import contextmanager
@@ -10,14 +9,10 @@ from datetime import datetime, timedelta
 from tqdm import tqdm
 import numpy as np
 
-
-__all__ = ['change_env',
-           'get_rng',
-           'fix_rng_seed',
-           'get_tqdm',
-           'execute_only_once',
-           'humanize_time_delta'
-           ]
+__all__ = [
+    'change_env', 'get_rng', 'fix_rng_seed', 'get_tqdm', 'execute_only_once',
+    'humanize_time_delta'
+]
 
 
 def humanize_time_delta(sec):
@@ -118,8 +113,9 @@ def get_rng(obj=None):
     Returns:
         np.random.RandomState: the RNG.
     """
-    seed = (id(obj) + os.getpid() +
-            int(datetime.now().strftime("%Y%m%d%H%M%S%f"))) % 4294967295
+    seed = (
+        id(obj) + os.getpid() + int(datetime.now().strftime("%Y%m%d%H%M%S%f"))
+    ) % 4294967295
     if _RNG_SEED is not None:
         seed = _RNG_SEED
     return np.random.RandomState(seed)
@@ -163,7 +159,8 @@ def get_tqdm_kwargs(**kwargs):
         smoothing=0.5,
         dynamic_ncols=True,
         ascii=True,
-        bar_format='{l_bar}{bar}|{n_fmt}/{total_fmt}[{elapsed}<{remaining},{rate_noinv_fmt}]'
+        bar_format=
+        '{l_bar}{bar}|{n_fmt}/{total_fmt}[{elapsed}<{remaining},{rate_noinv_fmt}]'
     )
 
     f = kwargs.get('file', sys.stderr)

@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 # File: develop.py
 # Author: tensorpack contributors
-
-
 """ Utilities for developers only.
 These are not visible to users (not automatically imported). And should not
 appeared in docs."""
@@ -27,9 +25,14 @@ def create_dummy_class(klass, dependency):
     Returns:
         class: a class object
     """
+
     class _Dummy(object):
+
         def __init__(self, *args, **kwargs):
-            raise ImportError("Cannot import '{}', therefore '{}' is not available".format(dependency, klass))
+            raise ImportError(
+                "Cannot import '{}', therefore '{}' is not available".format(
+                    dependency, klass))
+
     return _Dummy
 
 
@@ -48,7 +51,10 @@ def create_dummy_func(func, dependency):
         dependency = ','.join(dependency)
 
     def _dummy(*args, **kwargs):
-        raise ImportError("Cannot import '{}', therefore '{}' is not available".format(dependency, func))
+        raise ImportError(
+            "Cannot import '{}', therefore '{}' is not available".format(
+                dependency, func))
+
     return _dummy
 
 
@@ -113,12 +119,15 @@ def deprecated(text="", eos=""):
             return '%s:%i' % (entry[1], entry[2])
 
     def deprecated_inner(func):
+
         @functools.wraps(func)
         def new_func(*args, **kwargs):
             name = "{} [{}]".format(func.__name__, get_location())
             log_deprecated(name, text, eos)
             return func(*args, **kwargs)
+
         return new_func
+
     return deprecated_inner
 
 
@@ -129,6 +138,7 @@ def HIDE_DOC(func):
 
 # Copied from https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/util/lazy_loader.py
 class LazyLoader(types.ModuleType):
+
     def __init__(self, local_name, parent_module_globals, name):
         self._local_name = local_name
         self._parent_module_globals = parent_module_globals

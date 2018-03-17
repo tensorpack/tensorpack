@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # File: inference_runner.py
 
-
 import sys
 import tensorflow as tf
 from tensorflow.python.training.monitored_session \
@@ -17,19 +16,20 @@ from ..utils import logger
 from ..utils.utils import get_tqdm_kwargs
 from ..dataflow.base import DataFlow
 
-from ..input_source import (
-    InputSource, FeedInput, QueueInput, StagingInput)
+from ..input_source import (InputSource, FeedInput, QueueInput, StagingInput)
 from ..graph_builder.predict import SimplePredictBuilder
 
 from .base import Callback
 from .group import Callbacks
 from .inference import Inferencer
 
-__all__ = ['InferenceRunnerBase', 'InferenceRunner',
-           'DataParallelInferenceRunner']
+__all__ = [
+    'InferenceRunnerBase', 'InferenceRunner', 'DataParallelInferenceRunner'
+]
 
 
 class InferencerToHook(tf.train.SessionRunHook):
+
     def __init__(self, inf, fetches):
         self._inf = inf
         self._fetches = fetches
@@ -48,9 +48,10 @@ def _inference_context():
         yield
     except (StopIteration, tf.errors.CancelledError):
         logger.error(
-            "[InferenceRunner] input stopped before reaching its size()! " + msg)
+            "[InferenceRunner] input stopped before reaching its size()! " + msg
+        )
         raise
-    except tf.errors.OutOfRangeError:   # tf.data reaches an end
+    except tf.errors.OutOfRangeError:    # tf.data reaches an end
         pass
 
 
@@ -62,6 +63,7 @@ class InferenceRunnerBase(Callback):
 
         Also, InferenceRunner assumes that `trainer.model` exists.
     """
+
     def __init__(self, input, infs):
         """
         Args:
@@ -94,9 +96,12 @@ class InferenceRunnerBase(Callback):
         self._hooked_sess = HookedSession(self.trainer.sess, self._hooks)
         self._input_callbacks.before_train()
         if self._size > 0:
-            logger.info("InferenceRunner will eval {} iterations".format(self._size))
+            logger.info("InferenceRunner will eval {} iterations".format(
+                self._size))
         else:
-            logger.warn("InferenceRunner got an input with unknown size! It will iterate until OutOfRangeError!")
+            logger.warn(
+                "InferenceRunner got an input with unknown size! It will iterate until OutOfRangeError!"
+            )
 
     def _after_train(self):
         self._input_callbacks.after_train()
@@ -118,7 +123,9 @@ class InferenceRunner(InferenceRunnerBase):
             device (int): the device to use
         """
         if isinstance(input, DataFlow):
-            input = FeedInput(input, infinite=True)     # TODO a better way to handle inference size
+            input = FeedInput(
+                input,
+                infinite=True)    # TODO a better way to handle inference size
         assert isinstance(input, InputSource), input
         assert not isinstance(input, StagingInput), input
         self._tower_name = tower_name
@@ -138,8 +145,9 @@ class InferenceRunner(InferenceRunnerBase):
         with tf.variable_scope(tf.get_variable_scope(), reuse=True):
             SimplePredictBuilder(
                 ns_name=self._tower_name,
-                vs_name=self.trainer._main_tower_vs_name, device=device).build(
-                    self._input_source, self.trainer.tower_func)
+                vs_name=self.trainer._main_tower_vs_name,
+                device=device).build(self._input_source,
+                                     self.trainer.tower_func)
             self._tower_handle = self.trainer.tower_func.towers[-1]
 
         for h in [self._build_hook(inf) for inf in self.infs]:
@@ -178,6 +186,7 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
     It will run the remainder (when the total size of input is not a multiple of #GPU)
     sequentially.
     """
+
     def __init__(self, input, infs, gpus):
         """
         Args:
@@ -186,7 +195,9 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
         """
         if isinstance(gpus, int):
             gpus = list(range(gpus))
-        self._tower_names = ['InferenceTower{}'.format(k) for k in range(len(gpus))]
+        self._tower_names = [
+            'InferenceTower{}'.format(k) for k in range(len(gpus))
+        ]
         if isinstance(input, DataFlow):
             input = QueueInput(input)
         assert isinstance(input, QueueInput), input
@@ -207,8 +218,8 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
                 tower_name = self._tower_names[idx]
                 SimplePredictBuilder(
                     ns_name=tower_name,
-                    vs_name=self.trainer._main_tower_vs_name, device=t).build(
-                        self._input_source, self.trainer.tower_func)
+                    vs_name=self.trainer._main_tower_vs_name,
+                    device=t).build(self._input_source, self.trainer.tower_func)
                 self._handles.append(self.trainer.tower_func.towers[-1])
 
         # setup callbacks and hooks
@@ -218,8 +229,10 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
         # e.g. hooks from StagingInput will force the consumption
         # of nr_tower datapoints in every run.
         input_hooks = self._input_callbacks.get_hooks()
-        self._hooks.extend([self._build_hook(inf) for inf in self.infs] + input_hooks)
-        self._hooks_parallel.extend([self._build_hook_parallel(inf) for inf in self.infs] + input_hooks)
+        self._hooks.extend([self._build_hook(inf)
+                            for inf in self.infs] + input_hooks)
+        self._hooks_parallel.extend(
+            [self._build_hook_parallel(inf) for inf in self.infs] + input_hooks)
 
         for inf in self.infs:
             inf.setup_graph(self.trainer)
@@ -227,17 +240,20 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
 
     def register_hook(self, h):
         logger.info(
-            "[DataParallelInferenceRunner] Registering hook {} on both parallel and sequential inference.")
+            "[DataParallelInferenceRunner] Registering hook {} on both parallel and sequential inference."
+        )
         self._hooks.append(h)
         self._hooks_parallel.append(h)
 
     class InferencerToHookDataParallel(InferencerToHook):
+
         def __init__(self, inf, fetches, size):
             """
             Args:
                 size(int): number of tensors to fetch per tower
             """
-            super(DataParallelInferenceRunner.InferencerToHookDataParallel, self).__init__(inf, fetches)
+            super(DataParallelInferenceRunner.InferencerToHookDataParallel,
+                  self).__init__(inf, fetches)
             assert len(self._fetches) % size == 0
             self._sz = size
 
@@ -250,7 +266,8 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
     def _build_hook_parallel(self, inf):
         out_names = inf.get_fetches()
         sz = len(out_names)
-        fetches = list(itertools.chain(*[t.get_tensors(out_names) for t in self._handles]))
+        fetches = list(
+            itertools.chain(*[t.get_tensors(out_names) for t in self._handles]))
         return self.InferencerToHookDataParallel(inf, fetches, sz)
 
     def _build_hook(self, inf):
@@ -260,7 +277,8 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
 
     def _before_train(self):
         super(DataParallelInferenceRunner, self)._before_train()
-        self._parallel_hooked_sess = HookedSession(self.trainer.sess, self._hooks_parallel)
+        self._parallel_hooked_sess = HookedSession(self.trainer.sess,
+                                                   self._hooks_parallel)
 
     def _trigger(self):
         for inf in self.infs:

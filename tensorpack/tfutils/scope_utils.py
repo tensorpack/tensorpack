@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # File: scope_utils.py
 
-
 import tensorflow as tf
 import functools
 from contextlib import contextmanager
@@ -41,7 +40,8 @@ def auto_reuse_variable_scope(func):
         # print("Entering " + scope.name + " reuse: " + str(h in used_scope))
         if h in used_scope:
             if get_tf_version_number() >= 1.5:
-                with tf.variable_scope(scope, reuse=True, auxiliary_name_scope=False):
+                with tf.variable_scope(
+                        scope, reuse=True, auxiliary_name_scope=False):
                     return func(*args, **kwargs)
             else:
                 ns = tf.get_default_graph().get_name_scope()
@@ -75,6 +75,7 @@ def under_name_scope(name=None):
     """
 
     def _impl(func):
+
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             if name is None:
@@ -83,7 +84,9 @@ def under_name_scope(name=None):
                 scopename = name
             with tf.name_scope(scopename):
                 return func(*args, **kwargs)
+
         return wrapper
+
     return _impl
 
 
@@ -107,12 +110,15 @@ def under_variable_scope():
     """
 
     def _impl(func):
+
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             name = func.__name__
             with tf.variable_scope(name):
                 return func(*args, **kwargs)
+
         return wrapper
+
     return _impl
 
 

@@ -1,7 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: simple.py
 
-
 from .base import Trainer
 
 from ..tfutils.tower import TowerContext
@@ -29,13 +28,15 @@ class SimpleTrainer(Trainer):
             "Got nr_tower={}, but doesn't support multigpu!" \
             " Use Sync/AsyncMultiGPUTrainer instead.".format(len(config.tower))
 
-        assert (config.data is not None or config.dataflow is not None) and config.model is not None
+        assert (config.data is not None
+                or config.dataflow is not None) and config.model is not None
         if config.dataflow is None:
             self._input_source = config.data
         else:
             self._input_source = FeedInput(config.dataflow)
-            logger.warn("FeedInput is slow (and this is the default of SimpleTrainer). "
-                        "Consider QueueInput or other InputSource instead.")
+            logger.warn(
+                "FeedInput is slow (and this is the default of SimpleTrainer). "
+                "Consider QueueInput or other InputSource instead.")
         super(SimpleTrainer, self).__init__(config)
 
     def _setup(self):
@@ -59,7 +60,8 @@ def QueueInputTrainer(config, input_queue=None):
         config (TrainConfig): Must contain 'model' and 'dataflow'.
         input_queue (tf.QueueBase): an input queue. Defaults to the :class:`QueueInput` default.
     """
-    assert (config.data is not None or config.dataflow is not None) and config.model is not None
+    assert (config.data is not None
+            or config.dataflow is not None) and config.model is not None
     if config.data is not None:
         assert isinstance(config.data, QueueInput), config.data
     else:

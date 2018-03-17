@@ -43,10 +43,10 @@ def describe_trainable_vars():
         table = tabulate(data, headers=['name', 'shape', 'dim', 'device'])
 
     size_mb = total_bytes / 1024.0**2
-    summary_msg = colored(
-        "\nTotal #vars={}, #params={}, size={:.02f}MB".format(
-            len(data), total, size_mb), 'cyan')
-    logger.info(colored("Trainable Variables: \n", 'cyan') + table + summary_msg)
+    summary_msg = colored("\nTotal #vars={}, #params={}, size={:.02f}MB".format(
+        len(data), total, size_mb), 'cyan')
+    logger.info(
+        colored("Trainable Variables: \n", 'cyan') + table + summary_msg)
 
 
 def get_shape_str(tensors):
@@ -60,10 +60,14 @@ def get_shape_str(tensors):
     """
     if isinstance(tensors, (list, tuple)):
         for v in tensors:
-            assert isinstance(v, (tf.Tensor, tf.Variable)), "Not a tensor: {}".format(type(v))
+            assert isinstance(
+                v, (tf.Tensor, tf.Variable)), "Not a tensor: {}".format(
+                    type(v))
         shape_str = ",".join(
             map(lambda x: str(x.get_shape().as_list()), tensors))
     else:
-        assert isinstance(tensors, (tf.Tensor, tf.Variable)), "Not a tensor: {}".format(type(tensors))
+        assert isinstance(tensors,
+                          (tf.Tensor, tf.Variable)), "Not a tensor: {}".format(
+                              type(tensors))
         shape_str = str(tensors.get_shape().as_list())
     return shape_str

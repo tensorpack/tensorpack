@@ -20,7 +20,7 @@ from GAN import GANTrainer, GANModelDesc
 """
 To train Image-to-Image translation model with image pairs:
     ./Image2Image.py --data /path/to/datadir --mode {AtoB,BtoA}
-    # datadir should contain jpg images of shpae 2s x s, formed by A and B
+    # datadir should contain jpg images of shape 2s x s, formed by A and B
     # you can download some data from the original authors:
     # https://people.eecs.berkeley.edu/~tinghuiz/projects/pix2pix/datasets/
 

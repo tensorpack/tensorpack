@@ -2,14 +2,14 @@
 # -*- coding: utf-8 -*-
 # File: paste.py
 
-
 from .base import ImageAugmentor
 
 from abc import abstractmethod
 import numpy as np
 
-__all__ = ['CenterPaste', 'BackgroundFiller', 'ConstantBackgroundFiller',
-           'RandomPaste']
+__all__ = [
+    'CenterPaste', 'BackgroundFiller', 'ConstantBackgroundFiller', 'RandomPaste'
+]
 
 
 class BackgroundFiller(object):
@@ -72,8 +72,7 @@ class CenterPaste(ImageAugmentor):
         img_shape = img.shape[:2]
         assert self.background_shape[0] >= img_shape[0] and self.background_shape[1] >= img_shape[1]
 
-        background = self.background_filler.fill(
-            self.background_shape, img)
+        background = self.background_filler.fill(self.background_shape, img)
         y0 = int((self.background_shape[0] - img_shape[0]) * 0.5)
         x0 = int((self.background_shape[1] - img_shape[1]) * 0.5)
         background[y0:y0 + img_shape[0], x0:x0 + img_shape[1]] = img
@@ -99,7 +98,6 @@ class RandomPaste(CenterPaste):
     def _augment(self, img, loc):
         x0, y0 = loc
         img_shape = img.shape[:2]
-        background = self.background_filler.fill(
-            self.background_shape, img)
+        background = self.background_filler.fill(self.background_shape, img)
         background[y0:y0 + img_shape[0], x0:x0 + img_shape[1]] = img
         return background

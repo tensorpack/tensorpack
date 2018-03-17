@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # File: bsds500.py
 
-
 import os
 import glob
 import numpy as np
@@ -60,7 +59,8 @@ class BSDS500(RNGDataFlow):
             assert im is not None
             if im.shape[0] > im.shape[1]:
                 im = np.transpose(im, (1, 0, 2))
-            assert im.shape[:2] == (IMG_H, IMG_W), "{} != {}".format(im.shape[:2], (IMG_H, IMG_W))
+            assert im.shape[:2] == (IMG_H, IMG_W), "{} != {}".format(
+                im.shape[:2], (IMG_H, IMG_W))
 
             imgid = os.path.basename(f).split('.')[0]
             gt_file = os.path.join(gt_dir, imgid)
@@ -92,7 +92,7 @@ try:
     import cv2
 except ImportError:
     from ...utils.develop import create_dummy_class
-    BSDS500 = create_dummy_class('BSDS500', ['scipy.io', 'cv2'])  # noqa
+    BSDS500 = create_dummy_class('BSDS500', ['scipy.io', 'cv2'])    # noqa
 
 if __name__ == '__main__':
     a = BSDS500('val')

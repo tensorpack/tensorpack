@@ -1,7 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: inference.py
 
-
 import numpy as np
 from abc import ABCMeta
 import six
@@ -12,8 +11,10 @@ from ..utils import logger
 from ..utils.stats import RatioCounter, BinaryStatistics
 from ..tfutils.common import get_op_tensor_name
 
-__all__ = ['ScalarStats', 'Inferencer',
-           'ClassificationError', 'BinaryClassificationStats']
+__all__ = [
+    'ScalarStats', 'Inferencer', 'ClassificationError',
+    'BinaryClassificationStats'
+]
 
 
 @six.add_metaclass(ABCMeta)
@@ -38,7 +39,8 @@ class Inferencer(Callback):
             try:
                 v = float(v)
             except ValueError:
-                logger.warn("{} returns a non-scalar statistics!".format(type(self).__name__))
+                logger.warn("{} returns a non-scalar statistics!".format(
+                    type(self).__name__))
                 continue
             else:
                 self.trainer.monitors.put_scalar(k, v)
@@ -110,7 +112,8 @@ class ScalarStats(Inferencer):
         ret = {}
         for stat, name in zip(self.stats, self.names):
             opname, _ = get_op_tensor_name(name)
-            name = '{}_{}'.format(self.prefix, opname) if self.prefix else opname
+            name = '{}_{}'.format(self.prefix,
+                                  opname) if self.prefix else opname
             ret[name] = stat
         return ret
 
@@ -133,7 +136,9 @@ class ClassificationError(Inferencer):
     give you "classification accuracy" instead of error.
     """
 
-    def __init__(self, wrong_tensor_name='incorrect_vector', summary_name='validation_error'):
+    def __init__(self,
+                 wrong_tensor_name='incorrect_vector',
+                 summary_name='validation_error'):
         """
         Args:
             wrong_tensor_name(str): name of the ``wrong`` binary vector tensor.
@@ -151,7 +156,8 @@ class ClassificationError(Inferencer):
     def _on_fetches(self, outputs):
         vec = outputs[0]
         # TODO put shape assertion into inference-runner
-        assert vec.ndim == 1, "{} is not a vector!".format(self.wrong_tensor_name)
+        assert vec.ndim == 1, "{} is not a vector!".format(
+            self.wrong_tensor_name)
         batch_size = len(vec)
         wrong = np.sum(vec)
         self.err_stat.feed(wrong, batch_size)
@@ -187,5 +193,7 @@ class BinaryClassificationStats(Inferencer):
         self.stat.feed(pred, label)
 
     def _after_inference(self):
-        return {self.prefix + '_precision': self.stat.precision,
-                self.prefix + '_recall': self.stat.recall}
+        return {
+            self.prefix + '_precision': self.stat.precision,
+            self.prefix + '_recall': self.stat.recall
+        }

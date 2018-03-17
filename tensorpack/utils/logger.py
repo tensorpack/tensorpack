@@ -1,7 +1,6 @@
 # -*- coding: UTF-8 -*-
 # File: logger.py
 
-
 import logging
 import os
 import shutil
@@ -15,13 +14,16 @@ __all__ = ['set_logger_dir', 'auto_set_dir', 'get_logger_dir']
 
 
 class _MyFormatter(logging.Formatter):
+
     def format(self, record):
         date = colored('[%(asctime)s @%(filename)s:%(lineno)d]', 'green')
         msg = '%(message)s'
         if record.levelno == logging.WARNING:
-            fmt = date + ' ' + colored('WRN', 'red', attrs=['blink']) + ' ' + msg
+            fmt = date + ' ' + colored(
+                'WRN', 'red', attrs=['blink']) + ' ' + msg
         elif record.levelno == logging.ERROR or record.levelno == logging.CRITICAL:
-            fmt = date + ' ' + colored('ERR', 'red', attrs=['blink', 'underline']) + ' ' + msg
+            fmt = date + ' ' + colored(
+                'ERR', 'red', attrs=['blink', 'underline']) + ' ' + msg
         else:
             fmt = date + ' ' + msg
         if hasattr(self, '_style'):
@@ -42,7 +44,10 @@ def _getlogger():
 
 
 _logger = _getlogger()
-_LOGGING_METHOD = ['info', 'warning', 'error', 'critical', 'warn', 'exception', 'debug', 'setLevel']
+_LOGGING_METHOD = [
+    'info', 'warning', 'error', 'critical', 'warn', 'exception', 'debug',
+    'setLevel'
+]
 # export logger functions
 for func in _LOGGING_METHOD:
     locals()[func] = getattr(_logger, func)
@@ -64,9 +69,9 @@ def _set_file(path):
     if os.path.isfile(path):
         backup_name = path + '.' + _get_time_str()
         shutil.move(path, backup_name)
-        _logger.info("Existing log file '{}' backuped to '{}'".format(path, backup_name))  # noqa: F821
-    hdl = logging.FileHandler(
-        filename=path, encoding='utf-8', mode='w')
+        _logger.info("Existing log file '{}' backuped to '{}'".format(
+            path, backup_name))    # noqa: F821
+    hdl = logging.FileHandler(filename=path, encoding='utf-8', mode='w')
     hdl.setFormatter(_MyFormatter(datefmt='%m%d %H:%M:%S'))
 
     _FILE_HANDLER = hdl
@@ -106,17 +111,19 @@ Log directory {} exists! Use 'd' to delete it. """.format(dirname))
 If you're resuming from a previous run, you can choose to keep it.
 Press any other key to exit. """)
         while not action:
-            action = input("Select Action: k (keep) / d (delete) / q (quit):").lower().strip()
+            action = input("Select Action: k (keep) / d (delete) / q (quit):"
+                          ).lower().strip()
         act = action
         if act == 'b':
             backup_name = dirname + _get_time_str()
             shutil.move(dirname, backup_name)
-            info("Directory '{}' backuped to '{}'".format(dirname, backup_name))  # noqa: F821
+            info("Directory '{}' backuped to '{}'".format(
+                dirname, backup_name))    # noqa: F821
         elif act == 'd':
             shutil.rmtree(dirname)
         elif act == 'n':
             dirname = dirname + _get_time_str()
-            info("Use a new log directory {}".format(dirname))  # noqa: F821
+            info("Use a new log directory {}".format(dirname))    # noqa: F821
         elif act == 'k':
             pass
         else:

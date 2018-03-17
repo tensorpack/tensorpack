@@ -2,7 +2,6 @@
 # -*- coding: UTF-8 -*-
 # File: image_sample.py
 
-
 import tensorflow as tf
 
 from .common import layer_register
@@ -20,19 +19,20 @@ def sample(img, coords):
     Return:
         bxh2xw2xc image
     """
-    shape = img.get_shape().as_list()[1:]   # h, w, c
+    shape = img.get_shape().as_list()[1:]    # h, w, c
     batch = tf.shape(img)[0]
-    shape2 = coords.get_shape().as_list()[1:3]  # h2, w2
+    shape2 = coords.get_shape().as_list()[1:3]    # h2, w2
     assert None not in shape2, coords.get_shape()
     max_coor = tf.constant([shape[0] - 1, shape[1] - 1], dtype=tf.float32)
 
-    coords = tf.clip_by_value(coords, 0., max_coor)  # borderMode==repeat
+    coords = tf.clip_by_value(coords, 0., max_coor)    # borderMode==repeat
     coords = tf.to_int32(coords)
 
     batch_index = tf.range(batch, dtype=tf.int32)
     batch_index = tf.reshape(batch_index, [-1, 1, 1, 1])
-    batch_index = tf.tile(batch_index, [1, shape2[0], shape2[1], 1])    # bxh2xw2x1
-    indices = tf.concat([batch_index, coords], axis=3)  # bxh2xw2x3
+    batch_index = tf.tile(batch_index,
+                          [1, shape2[0], shape2[1], 1])    # bxh2xw2x1
+    indices = tf.concat([batch_index, coords], axis=3)    # bxh2xw2x3
     sampled = tf.gather_nd(img, indices)
     return sampled
 
@@ -66,7 +66,7 @@ def ImageSample(inputs, borderMode='repeat'):
     ucoor = lcoor + 1
 
     diff = mapping - lcoor
-    neg_diff = 1.0 - diff  # bxh2xw2x2
+    neg_diff = 1.0 - diff    # bxh2xw2x2
 
     lcoory, lcoorx = tf.split(lcoor, 2, 3)
     ucoory, ucoorx = tf.split(ucoor, 2, 3)
@@ -77,16 +77,21 @@ def ImageSample(inputs, borderMode='repeat'):
     diffy, diffx = tf.split(diff, 2, 3)
     neg_diffy, neg_diffx = tf.split(neg_diff, 2, 3)
 
-    ret = tf.add_n([sample(image, lcoor) * neg_diffx * neg_diffy,
-                    sample(image, ucoor) * diffx * diffy,
-                    sample(image, lyux) * neg_diffy * diffx,
-                    sample(image, uylx) * diffy * neg_diffx], name='sampled')
+    ret = tf.add_n(
+        [
+            sample(image, lcoor) * neg_diffx * neg_diffy,
+            sample(image, ucoor) * diffx * diffy,
+            sample(image, lyux) * neg_diffy * diffx,
+            sample(image, uylx) * diffy * neg_diffx
+        ],
+        name='sampled')
     if borderMode == 'constant':
-        max_coor = tf.constant([input_shape[0] - 1, input_shape[1] - 1], dtype=tf.float32)
+        max_coor = tf.constant(
+            [input_shape[0] - 1, input_shape[1] - 1], dtype=tf.float32)
         mask = tf.greater_equal(orig_mapping, 0.0)
         mask2 = tf.less_equal(orig_mapping, max_coor)
-        mask = tf.logical_and(mask, mask2)  # bxh2xw2x2
-        mask = tf.reduce_all(mask, [3])  # bxh2xw2 boolean
+        mask = tf.logical_and(mask, mask2)    # bxh2xw2x2
+        mask = tf.reduce_all(mask, [3])    # bxh2xw2 boolean
         mask = tf.expand_dims(mask, 3)
         ret = ret * tf.cast(mask, tf.float32)
     return tf.identity(ret, name='output')
@@ -106,12 +111,13 @@ class TestSample(TestModel):
             xs = coords[:, :, :, 1].reshape((img.shape[0], -1))
             ys = coords[:, :, :, 0].reshape((img.shape[0], -1))
 
-            ret = np.zeros((img.shape[0], coords.shape[1], coords.shape[2],
-                            img.shape[3]), dtype='float32')
+            ret = np.zeros(
+                (img.shape[0], coords.shape[1], coords.shape[2], img.shape[3]),
+                dtype='float32')
             for k in range(img.shape[0]):
                 xss, yss = xs[k], ys[k]
-                ret[k, :, :, :] = img[k, yss, xss, :].reshape((coords.shape[1],
-                                                               coords.shape[2], 3))
+                ret[k, :, :, :] = img[k, yss, xss, :].reshape(
+                    (coords.shape[1], coords.shape[2], 3))
             return ret
 
         bimg = np.random.rand(2, h, w, 3).astype('float32')

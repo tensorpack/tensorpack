@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # File: summary.py
 
-
 import tensorflow as tf
 
 from ..utils import logger
@@ -19,6 +18,7 @@ class MovingAverageSummary(Callback):
     by ops added to the collection.
     Note that it only maintains the EMAs, the actual summary should be done in other callbacks.
     """
+
     def __init__(self, collection=MOVING_SUMMARY_OPS_KEY):
         """
         Args:
@@ -31,8 +31,9 @@ class MovingAverageSummary(Callback):
 
     def _setup_graph(self):
         ops = tf.get_collection(self._collection)
-        logger.info("Maintain moving average summary of {} tensors in collection {}.".format(
-            len(ops), self._collection))
+        logger.info(
+            "Maintain moving average summary of {} tensors in collection {}.".
+            format(len(ops), self._collection))
 
         self.ema_op = tf.group(*ops, name='maintain_moving_average_summary')
         self._fetch = tf.train.SessionRunArgs(fetches=self.ema_op)
@@ -42,13 +43,15 @@ class MovingAverageSummary(Callback):
 
 
 class MergeAllSummaries_RunAlone(Callback):
+
     def __init__(self, period, key):
         self._period = period
         self._key = key
 
     def _setup_graph(self):
         size = len(tf.get_collection(self._key))
-        logger.info("Summarizing collection '{}' of size {}.".format(self._key, size))
+        logger.info("Summarizing collection '{}' of size {}.".format(
+            self._key, size))
         self.summary_op = tf.summary.merge_all(self._key)
 
     def _trigger_step(self):
@@ -63,13 +66,15 @@ class MergeAllSummaries_RunAlone(Callback):
 
 
 class MergeAllSummaries_RunWithOp(Callback):
+
     def __init__(self, period, key):
         self._period = period
         self._key = key
 
     def _setup_graph(self):
         size = len(tf.get_collection(self._key))
-        logger.info("Summarizing collection '{}' of size {}.".format(self._key, size))
+        logger.info("Summarizing collection '{}' of size {}.".format(
+            self._key, size))
         self.summary_op = tf.summary.merge_all(self._key)
         if self.summary_op is not None:
             self._fetches = tf.train.SessionRunArgs(self.summary_op)

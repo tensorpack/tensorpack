@@ -2,40 +2,39 @@
 # -*- coding: utf-8 -*-
 # File: nvml.py
 
-from ctypes import (byref, c_uint, c_ulonglong,
-                    CDLL, POINTER, Structure)
+from ctypes import (byref, c_uint, c_ulonglong, CDLL, POINTER, Structure)
 import threading
-
 
 __all__ = ['NVMLContext']
 
-
 NVML_ERROR_FUNCTION_NOT_FOUND = 13
 
-
-NvmlErrorCodes = {"0": "NVML_SUCCESS",
-                  "1": "NVML_ERROR_UNINITIALIZED",
-                  "2": "NVML_ERROR_INVALID_ARGUMENT",
-                  "3": "NVML_ERROR_NOT_SUPPORTED",
-                  "4": "NVML_ERROR_NO_PERMISSION",
-                  "5": "NVML_ERROR_ALREADY_INITIALIZED",
-                  "6": "NVML_ERROR_NOT_FOUND",
-                  "7": "NVML_ERROR_INSUFFICIENT_SIZE",
-                  "8": "NVML_ERROR_INSUFFICIENT_POWER",
-                  "9": "NVML_ERROR_DRIVER_NOT_LOADED",
-                  "10": "NVML_ERROR_TIMEOUT",
-                  "11": "NVML_ERROR_IRQ_ISSUE",
-                  "12": "NVML_ERROR_LIBRARY_NOT_FOUND",
-                  "13": "NVML_ERROR_FUNCTION_NOT_FOUND",
-                  "14": "NVML_ERROR_CORRUPTED_INFOROM",
-                  "15": "NVML_ERROR_GPU_IS_LOST",
-                  "16": "NVML_ERROR_RESET_REQUIRED",
-                  "17": "NVML_ERROR_OPERATING_SYSTEM",
-                  "18": "NVML_ERROR_LIB_RM_VERSION_MISMATCH",
-                  "999": "NVML_ERROR_UNKNOWN"}
+NvmlErrorCodes = {
+    "0": "NVML_SUCCESS",
+    "1": "NVML_ERROR_UNINITIALIZED",
+    "2": "NVML_ERROR_INVALID_ARGUMENT",
+    "3": "NVML_ERROR_NOT_SUPPORTED",
+    "4": "NVML_ERROR_NO_PERMISSION",
+    "5": "NVML_ERROR_ALREADY_INITIALIZED",
+    "6": "NVML_ERROR_NOT_FOUND",
+    "7": "NVML_ERROR_INSUFFICIENT_SIZE",
+    "8": "NVML_ERROR_INSUFFICIENT_POWER",
+    "9": "NVML_ERROR_DRIVER_NOT_LOADED",
+    "10": "NVML_ERROR_TIMEOUT",
+    "11": "NVML_ERROR_IRQ_ISSUE",
+    "12": "NVML_ERROR_LIBRARY_NOT_FOUND",
+    "13": "NVML_ERROR_FUNCTION_NOT_FOUND",
+    "14": "NVML_ERROR_CORRUPTED_INFOROM",
+    "15": "NVML_ERROR_GPU_IS_LOST",
+    "16": "NVML_ERROR_RESET_REQUIRED",
+    "17": "NVML_ERROR_OPERATING_SYSTEM",
+    "18": "NVML_ERROR_LIB_RM_VERSION_MISMATCH",
+    "999": "NVML_ERROR_UNKNOWN"
+}
 
 
 class NvmlException(Exception):
+
     def __init__(self, error_code):
         super(NvmlException, self).__init__(error_code)
         self.error_code = error_code
@@ -63,11 +62,17 @@ class NVML(object):
             if self._nvmlLib is None:
                 self._nvmlLib = CDLL("libnvidia-ml.so.1")
 
-                function_pointers = ["nvmlDeviceGetName", "nvmlDeviceGetUUID", "nvmlDeviceGetMemoryInfo",
-                                     "nvmlDeviceGetUtilizationRates", "nvmlInit_v2", "nvmlShutdown",
-                                     "nvmlDeviceGetCount_v2", "nvmlDeviceGetHandleByIndex_v2"]
+                function_pointers = [
+                    "nvmlDeviceGetName", "nvmlDeviceGetUUID",
+                    "nvmlDeviceGetMemoryInfo", "nvmlDeviceGetUtilizationRates",
+                    "nvmlInit_v2", "nvmlShutdown", "nvmlDeviceGetCount_v2",
+                    "nvmlDeviceGetHandleByIndex_v2"
+                ]
 
-                self.func_ptr = {n: self._function_pointer(n) for n in function_pointers}
+                self.func_ptr = {
+                    n: self._function_pointer(n)
+                    for n in function_pointers
+                }
 
     def _function_pointer(self, name):
         try:
@@ -101,6 +106,7 @@ class NvidiaDevice(object):
         Returns:
             total/used/free memory in bytes
         """
+
         class GpuMemoryInfo(Structure):
             _fields_ = [
                 ('total', c_ulonglong),
@@ -109,9 +115,14 @@ class NvidiaDevice(object):
             ]
 
         c_memory = GpuMemoryInfo()
-        _check_return(_NVML.get_function(
-            "nvmlDeviceGetMemoryInfo")(self.hnd, byref(c_memory)))
-        return {'total': c_memory.total, 'free': c_memory.free, 'used': c_memory.used}
+        _check_return(
+            _NVML.get_function("nvmlDeviceGetMemoryInfo")(self.hnd,
+                                                          byref(c_memory)))
+        return {
+            'total': c_memory.total,
+            'free': c_memory.free,
+            'used': c_memory.used
+        }
 
     def utilization(self):
         """Percent of time over the past second was utilized.
@@ -126,6 +137,7 @@ class NvidiaDevice(object):
             {'gpu': 4L, 'memory': 6L}
 
         """
+
         class GpuUtilizationInfo(Structure):
 
             _fields_ = [
@@ -134,8 +146,9 @@ class NvidiaDevice(object):
             ]
 
         c_util = GpuUtilizationInfo()
-        _check_return(_NVML.get_function(
-            "nvmlDeviceGetUtilizationRates")(self.hnd, byref(c_util)))
+        _check_return(
+            _NVML.get_function("nvmlDeviceGetUtilizationRates")(self.hnd,
+                                                                byref(c_util)))
         return {'gpu': c_util.gpu, 'memory': c_util.memory}
 
 
@@ -151,6 +164,7 @@ class NVMLContext(object):
                 print(device.utilization())
 
     """
+
     def __enter__(self):
         """Create a new context """
         _NVML.load()
@@ -164,8 +178,8 @@ class NVMLContext(object):
     def num_devices(self):
         """Get number of devices """
         c_count = c_uint()
-        _check_return(_NVML.get_function(
-            "nvmlDeviceGetCount_v2")(byref(c_count)))
+        _check_return(
+            _NVML.get_function("nvmlDeviceGetCount_v2")(byref(c_count)))
         return c_count.value
 
     def devices(self):
@@ -192,8 +206,9 @@ class NVMLContext(object):
 
         c_index = c_uint(idx)
         device = c_nvmlDevice_t()
-        _check_return(_NVML.get_function(
-            "nvmlDeviceGetHandleByIndex_v2")(c_index, byref(device)))
+        _check_return(
+            _NVML.get_function("nvmlDeviceGetHandleByIndex_v2")(c_index,
+                                                                byref(device)))
         return NvidiaDevice(device)
 
 

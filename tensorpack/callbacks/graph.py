@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # File: graph.py
-
-
 """ Graph related callbacks"""
 
 import tensorflow as tf
@@ -14,8 +12,10 @@ from ..utils import logger
 from .base import Callback
 from ..tfutils.common import get_op_tensor_name
 
-__all__ = ['RunOp', 'RunUpdateOps', 'ProcessTensors', 'DumpTensors',
-           'DumpTensor', 'DumpTensorAsImage', 'DumpParamAsImage']
+__all__ = [
+    'RunOp', 'RunUpdateOps', 'ProcessTensors', 'DumpTensors', 'DumpTensor',
+    'DumpTensorAsImage', 'DumpParamAsImage'
+]
 
 
 class RunOp(Callback):
@@ -23,9 +23,12 @@ class RunOp(Callback):
 
     _chief_only = False
 
-    def __init__(self, op,
-                 run_before=True, run_as_trigger=True,
-                 run_step=False, verbose=False):
+    def __init__(self,
+                 op,
+                 run_before=True,
+                 run_as_trigger=True,
+                 run_step=False,
+                 verbose=False):
         """
         Args:
             op (tf.Operation or function): an Op, or a function that returns the Op in the graph.
@@ -41,7 +44,7 @@ class RunOp(Callback):
             uses this callback to update target network.
         """
         if not callable(op):
-            self.setup_func = lambda: op  # noqa
+            self.setup_func = lambda: op    # noqa
         else:
             self.setup_func = op
         self.run_before = run_before
@@ -89,7 +92,8 @@ class RunUpdateOps(RunOp):
         def f():
             ops = tf.get_collection(collection)
             if ops:
-                logger.info("Applying collection {} of {} ops.".format(name, len(ops)))
+                logger.info("Applying collection {} of {} ops.".format(
+                    name, len(ops)))
                 return tf.group(*ops, name='update_ops')
             else:
                 return tf.no_op(name='empty_update_ops')
@@ -112,6 +116,7 @@ class ProcessTensors(Callback):
 
         ProcessTensors(['mycost1', 'mycost2'], lambda c1, c2: print(c1, c2, c1 + c2))
     """
+
     def __init__(self, names, fn):
         """
         Args:
@@ -141,6 +146,7 @@ class DumpTensors(ProcessTensors):
     under ``logger.get_logger_dir``.
     The dump can be loaded by ``dict(np.load(filename).items())``.
     """
+
     def __init__(self, names):
         """
         Args:
@@ -154,9 +160,10 @@ class DumpTensors(ProcessTensors):
             dic = {}
             for name, val in zip(self._names, args):
                 dic[name] = val
-            fname = os.path.join(
-                dir, 'DumpTensor-{}.npz'.format(self.global_step))
+            fname = os.path.join(dir, 'DumpTensor-{}.npz'.format(
+                self.global_step))
             np.savez(fname, **dic)
+
         super(DumpTensors, self).__init__(names, fn)
 
 
@@ -203,10 +210,9 @@ class DumpTensorAsImage(Callback):
 
     def _dump_image(self, im, idx=None):
         assert im.ndim in [2, 3], str(im.ndim)
-        fname = os.path.join(
-            self.log_dir,
-            self.prefix + '-ep{:03d}{}.png'.format(
-                self.epoch_num, '-' + str(idx) if idx else ''))
+        fname = os.path.join(self.log_dir,
+                             self.prefix + '-ep{:03d}{}.png'.format(
+                                 self.epoch_num, '-' + str(idx) if idx else ''))
         res = im * self.scale
         res = np.clip(res, 0, 255)
         cv2.imwrite(fname, res.astype('uint8'))
@@ -216,7 +222,7 @@ try:
     import cv2
 except ImportError:
     from ..utils.develop import create_dummy_class
-    DumpTensorAsImage = create_dummy_class('DumpTensorAsImage', 'cv2')  # noqa
+    DumpTensorAsImage = create_dummy_class('DumpTensorAsImage', 'cv2')    # noqa
 
 # alias
 DumpParamAsImage = DumpTensorAsImage

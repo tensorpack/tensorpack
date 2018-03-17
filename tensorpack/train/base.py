@@ -9,8 +9,7 @@ from six.moves import range
 import six
 import copy
 
-from ..callbacks import (
-    Callback, Callbacks, Monitors, TrainingMonitor)
+from ..callbacks import (Callback, Callbacks, Monitors, TrainingMonitor)
 from ..utils import logger
 from ..utils.utils import humanize_time_delta
 from ..utils.argtools import call_only_once
@@ -114,9 +113,14 @@ class Trainer(object):
         # Hacks!
         if config is not None:
             logger.warn("You're initializing new trainer with old trainer API!")
-            logger.warn("This could happen if you wrote a custom trainer before.")
-            logger.warn("It may work now through some hacks, but please switch to the new API!")
-            logger.warn("See https://github.com/ppwwyyxx/tensorpack/issues/458 for more information.")
+            logger.warn(
+                "This could happen if you wrote a custom trainer before.")
+            logger.warn(
+                "It may work now through some hacks, but please switch to the new API!"
+            )
+            logger.warn(
+                "See https://github.com/ppwwyyxx/tensorpack/issues/458 for more information."
+            )
             config._deprecated_parsing()
             self._config = config
             self.inputs_desc = config.model.get_inputs_desc()
@@ -127,16 +131,19 @@ class Trainer(object):
 
             def gp(input_names, output_names, tower=0):
                 from .tower import TowerTrainer
-                return TowerTrainer.get_predictor(self, input_names, output_names, device=tower)
+                return TowerTrainer.get_predictor(
+                    self, input_names, output_names, device=tower)
+
             self.get_predictor = gp
 
             old_train = self.train
 
             def train():
-                return old_train(
-                    config.callbacks, config.monitors,
-                    config.session_creator, config.session_init,
-                    config.steps_per_epoch, config.starting_epoch, config.max_epoch)
+                return old_train(config.callbacks, config.monitors,
+                                 config.session_creator, config.session_init,
+                                 config.steps_per_epoch, config.starting_epoch,
+                                 config.max_epoch)
+
             self.train = train
 
     def _register_callback(self, cb):
@@ -191,19 +198,21 @@ class Trainer(object):
         """
         assert isinstance(callbacks, list), callbacks
         assert isinstance(monitors, list), monitors
-        describe_trainable_vars()   # TODO weird
+        describe_trainable_vars()    # TODO weird
 
         self.register_callback(MaintainStepCounter())
         for cb in callbacks:
             self.register_callback(cb)
         for cb in self._callbacks:
-            assert not isinstance(cb, TrainingMonitor), "Monitor cannot be pre-registered for now!"
+            assert not isinstance(
+                cb,
+                TrainingMonitor), "Monitor cannot be pre-registered for now!"
         registered_monitors = []
         for m in monitors:
             if self.register_callback(m):
                 registered_monitors.append(m)
         self.monitors = Monitors(registered_monitors)
-        self.register_callback(self.monitors)   # monitors is also a callback
+        self.register_callback(self.monitors)    # monitors is also a callback
 
         # some final operations that might modify the graph
         logger.info("Setup callbacks graph ...")
@@ -220,7 +229,8 @@ class Trainer(object):
             session_creator (tf.train.SessionCreator):
             session_init (sessinit.SessionInit):
         """
-        assert isinstance(session_creator, tf.train.SessionCreator), session_creator
+        assert isinstance(session_creator,
+                          tf.train.SessionCreator), session_creator
         assert isinstance(session_init, SessionInit), session_init
         session_init._setup_graph()
 
@@ -236,7 +246,8 @@ class Trainer(object):
             session_init._run_init(self.sess)
         else:
             if not isinstance(session_init, JustCurrentSession):
-                logger.warn("This is not a chief worker, 'session_init' was ignored!")
+                logger.warn(
+                    "This is not a chief worker, 'session_init' was ignored!")
 
         self.sess.graph.finalize()
         logger.info("Graph Finalized.")
@@ -257,25 +268,30 @@ class Trainer(object):
                 # refresh global step (might have changed by callbacks) TODO ugly
                 # what if gs is changed later?
                 self.loop.update_global_step()
-                for self.loop._epoch_num in range(
-                        self.loop.starting_epoch, self.loop.max_epoch + 1):
-                    logger.info("Start Epoch {} ...".format(self.loop.epoch_num))
+                for self.loop._epoch_num in range(self.loop.starting_epoch,
+                                                  self.loop.max_epoch + 1):
+                    logger.info("Start Epoch {} ...".format(
+                        self.loop.epoch_num))
                     self._callbacks.before_epoch()
                     start_time = time.time()
-                    for self.loop._local_step in range(self.loop.steps_per_epoch):
+                    for self.loop._local_step in range(
+                            self.loop.steps_per_epoch):
                         if self.hooked_sess.should_stop():
                             return
-                        self.run_step()  # implemented by subclass
+                        self.run_step()    # implemented by subclass
                         self._callbacks.trigger_step()
                     self._callbacks.after_epoch()
-                    logger.info("Epoch {} (global_step {}) finished, time:{}.".format(
-                        self.loop.epoch_num, self.loop.global_step, humanize_time_delta(time.time() - start_time)))
+                    logger.info(
+                        "Epoch {} (global_step {}) finished, time:{}.".format(
+                            self.loop.epoch_num, self.loop.global_step,
+                            humanize_time_delta(time.time() - start_time)))
 
                     # trigger epoch outside the timing region.
                     self._callbacks.trigger_epoch()
                 logger.info("Training has finished!")
             except (StopTraining, tf.errors.OutOfRangeError) as e:
-                logger.info("Training was stopped by exception {}.".format(str(e)))
+                logger.info("Training was stopped by exception {}.".format(
+                    str(e)))
             except KeyboardInterrupt:
                 logger.info("Detected Ctrl-C and exiting main loop.")
                 raise
@@ -284,9 +300,13 @@ class Trainer(object):
                 self.hooked_sess.close()
 
     def train(self,
-              callbacks, monitors,
-              session_creator, session_init,
-              steps_per_epoch, starting_epoch=1, max_epoch=9999999):
+              callbacks,
+              monitors,
+              session_creator,
+              session_init,
+              steps_per_epoch,
+              starting_epoch=1,
+              max_epoch=9999999):
         """
         Implemented by three lines:
 
@@ -302,12 +322,16 @@ class Trainer(object):
         self.initialize(session_creator, session_init)
         self.main_loop(steps_per_epoch, starting_epoch, max_epoch)
 
-    def train_with_defaults(
-            self, _sentinel=None,
-            callbacks=None, monitors=None,
-            session_creator=None, session_init=None,
-            steps_per_epoch=None, starting_epoch=1, max_epoch=9999999,
-            extra_callbacks=None):
+    def train_with_defaults(self,
+                            _sentinel=None,
+                            callbacks=None,
+                            monitors=None,
+                            session_creator=None,
+                            session_init=None,
+                            steps_per_epoch=None,
+                            starting_epoch=1,
+                            max_epoch=9999999,
+                            extra_callbacks=None):
         """
         Same as :meth:`train()`, except:
 
@@ -319,15 +343,15 @@ class Trainer(object):
         assert _sentinel is None, "Please call `train_with_defaults` with keyword arguments only!"
         callbacks = copy.copy(callbacks or [])
         monitors = DEFAULT_MONITORS() if monitors is None else monitors
-        extra_callbacks = DEFAULT_CALLBACKS() if extra_callbacks is None else extra_callbacks
+        extra_callbacks = DEFAULT_CALLBACKS(
+        ) if extra_callbacks is None else extra_callbacks
         callbacks.extend(extra_callbacks)
 
         assert steps_per_epoch is not None
         session_creator = session_creator or NewSessionCreator()
         session_init = session_init or JustCurrentSession()
 
-        self.train(callbacks, monitors,
-                   session_creator, session_init,
+        self.train(callbacks, monitors, session_creator, session_init,
                    steps_per_epoch, starting_epoch, max_epoch)
 
     # create the old trainer when called with TrainConfig
@@ -343,8 +367,12 @@ class Trainer(object):
                 return super(Trainer, cls).__new__(cls)
             else:
                 logger.warn("You're calling new trainers with old trainer API!")
-                logger.warn("Now it returns the old trainer for you, please switch to use new trainers soon!")
-                logger.warn("See https://github.com/ppwwyyxx/tensorpack/issues/458 for more information.")
+                logger.warn(
+                    "Now it returns the old trainer for you, please switch to use new trainers soon!"
+                )
+                logger.warn(
+                    "See https://github.com/ppwwyyxx/tensorpack/issues/458 for more information."
+                )
                 return old_trainer(*args, **kwargs)
         else:
             return super(Trainer, cls).__new__(cls)
@@ -354,9 +382,8 @@ def _get_property(name):
     """
     Delegate property to self.loop
     """
-    ret = property(
-        lambda self: getattr(self.loop, name))
-    if six.PY3:     # __doc__ is readonly in Py2
+    ret = property(lambda self: getattr(self.loop, name))
+    if six.PY3:    # __doc__ is readonly in Py2
         try:
             ret.__doc__ = getattr(TrainLoop, name).__doc__
         except AttributeError:
@@ -364,6 +391,8 @@ def _get_property(name):
     return ret
 
 
-for name in ['global_step', 'local_step', 'steps_per_epoch',
-             'epoch_num', 'starting_epoch', 'max_epoch']:
+for name in [
+        'global_step', 'local_step', 'steps_per_epoch', 'epoch_num',
+        'starting_epoch', 'max_epoch'
+]:
     setattr(Trainer, name, _get_property(name))

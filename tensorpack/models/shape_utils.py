@@ -8,6 +8,7 @@ __all__ = []
 
 
 class StaticDynamicAxis(object):
+
     def __init__(self, static, dynamic):
         self.static = static
         self.dynamic = dynamic
@@ -32,6 +33,7 @@ def StaticLazyAxis(dim):
 
 
 class StaticDynamicShape(object):
+
     def __init__(self, tensor):
         assert isinstance(tensor, tf.Tensor), tensor
         ndims = tensor.shape.ndims
