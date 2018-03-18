@@ -190,6 +190,8 @@ class SingleCostTrainer(TowerTrainer):
         def get_grad_fn():
             ctx = get_current_tower_context()
             cost = get_cost_fn(*input.get_input_tensors())
+            if not ctx.is_training:
+                return None     # this is the tower function, could be called for inference
 
             if ctx.has_own_variables:
                 varlist = ctx.get_collection_in_tower(tf.GraphKeys.TRAINABLE_VARIABLES)

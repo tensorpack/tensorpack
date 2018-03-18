@@ -50,11 +50,13 @@ class ImageFromFile(RNGDataFlow):
         Args:
             files (list): list of file paths.
             channel (int): 1 or 3. Will convert grayscale to RGB images if channel==3.
+                Will produce (h, w, 1) array if channel==1.
             resize (tuple): int or (h, w) tuple. If given, resize the image.
         """
         assert len(files), "No image files given to ImageFromFile!"
         self.files = files
         self.channel = int(channel)
+        assert self.channel in [1, 3], self.channel
         self.imread_mode = cv2.IMREAD_GRAYSCALE if self.channel == 1 else cv2.IMREAD_COLOR
         if resize is not None:
             resize = shape2d(resize)

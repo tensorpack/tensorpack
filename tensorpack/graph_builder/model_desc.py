@@ -225,6 +225,8 @@ class ModelDesc(ModelDescBase):
         Used by trainers to get the final cost for optimization.
         """
         ret = self.build_graph(*inputs)
+        if not get_current_tower_context().is_training:
+            return None     # this is the tower function, could be called for inference
         if isinstance(ret, tf.Tensor):  # the preferred way
             assert ret.shape.ndims == 0, "Cost must be a scalar, but found a tensor of shape {}!".format(ret.shape)
             _check_unused_regularization()
@@ -242,6 +244,9 @@ class ModelDesc(ModelDescBase):
         """
         ctx = get_current_tower_context()
         cost = self._build_graph_get_cost(*inputs)
+
+        if not ctx.is_training:
+            return None     # this is the tower function, could be called for inference
 
         if ctx.has_own_variables:
             varlist = ctx.get_collection_in_tower(tf.GraphKeys.TRAINABLE_VARIABLES)
