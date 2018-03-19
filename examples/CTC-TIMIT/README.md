@@ -23,7 +23,7 @@ TRAIN/
 Convert NIST wav format to RIFF wav format:
 ```
 cd /PATH/TO/TIMIT
-find -name '*.WAV' | parallel -P20 sox {} '{.}.wav'
+find . -name '*.WAV' | parallel -P20 sox {} '{.}.wav'
 ```
 
 Extract MFCC features and phoneme labels, and save everything to LMDB database. The preprocessing
