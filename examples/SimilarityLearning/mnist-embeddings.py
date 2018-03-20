@@ -247,7 +247,7 @@ class SiameseModel(EmbeddingModel):
 
         # tag the embedding of 'input' with name 'emb', just for inference later on
         with tf.variable_scope(tf.get_variable_scope(), reuse=True):
-            tf.identity(self.embed(inputs[0]), name="emb")
+            tf.identity(self.embed(x), name="emb")
 
         # compute the actual loss
         cost, pos_dist, neg_dist = contrastive_loss(x, y, label, 5., extra=True, scope="loss")
@@ -263,7 +263,7 @@ class CosineModel(SiameseModel):
         x, y = self.embed([x, y])
 
         with tf.variable_scope(tf.get_variable_scope(), reuse=True):
-            tf.identity(self.embed(inputs[0]), name="emb")
+            tf.identity(self.embed(x), name="emb")
 
         cost = siamese_cosine_loss(x, y, label, scope="loss")
         cost = tf.identity(cost, name="cost")
@@ -290,7 +290,7 @@ class TripletModel(EmbeddingModel):
         a, p, n = self.embed([a, p, n])
 
         with tf.variable_scope(tf.get_variable_scope(), reuse=True):
-            tf.identity(self.embed(inputs[0]), name="emb")
+            tf.identity(self.embed(a), name="emb")
 
         cost, pos_dist, neg_dist = self.loss(a, p, n)
 
@@ -321,7 +321,7 @@ class CenterModel(EmbeddingModel):
 
         # tag the embedding of 'input' with name 'emb', just for inference later on
         with tf.variable_scope(tf.get_variable_scope(), reuse=True):
-            tf.identity(self.embed(inputs[0]), name="emb")
+            tf.identity(self.embed(x), name="emb")
 
         # compute the embedding loss
         emb_cost = center_loss(x, label, 10, 0.01)

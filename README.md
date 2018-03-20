@@ -20,7 +20,7 @@ It's Yet Another TF wrapper, but different in:
 	+ See [tensorpack/benchmarks](https://github.com/tensorpack/benchmarks) for the benchmark scripts.
 
 2. Focus on __large datasets__.
-	+ It's painful to read/preprocess data through TF.
+	+ It's unnecessary to read/preprocess data with a new language called TF.
 		Tensorpack helps you load large datasets (e.g. ImageNet) in __pure Python__ with autoparallelization.
 
 3. It's not a model wrapper.
