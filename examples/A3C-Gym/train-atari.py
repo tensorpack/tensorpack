@@ -119,13 +119,12 @@ class Model(ModelDesc):
         advantage = tf.sqrt(tf.reduce_mean(tf.square(advantage)), name='rms_advantage')
         entropy_beta = tf.get_variable('entropy_beta', shape=[],
                                        initializer=tf.constant_initializer(0.01), trainable=False)
-        self.cost = tf.add_n([policy_loss, xentropy_loss * entropy_beta, value_loss])
-        self.cost = tf.truediv(self.cost,
-                               tf.cast(tf.shape(futurereward)[0], tf.float32),
-                               name='cost')
+        cost = tf.add_n([policy_loss, xentropy_loss * entropy_beta, value_loss])
+        cost = tf.truediv(cost, tf.cast(tf.shape(futurereward)[0], tf.float32), name='cost')
         summary.add_moving_summary(policy_loss, xentropy_loss,
                                    value_loss, pred_reward, advantage,
-                                   self.cost, tf.reduce_mean(importance, name='importance'))
+                                   cost, tf.reduce_mean(importance, name='importance'))
+        return cost
 
     def _get_optimizer(self):
         lr = tf.get_variable('learning_rate', initializer=0.001, trainable=False)

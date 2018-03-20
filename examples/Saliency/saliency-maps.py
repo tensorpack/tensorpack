@@ -53,7 +53,7 @@ def saliency_map(output, input, name="saliency_map"):
     return tf.identity(saliency_op, name=name)
 
 
-class Model(tp.ModelDesc):
+class Model(tp.ModelDescBase):
     def inputs(self):
         return [tf.placeholder(tf.float32, (IMAGE_SIZE, IMAGE_SIZE, 3), 'image')]
 

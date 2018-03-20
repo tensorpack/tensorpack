@@ -180,13 +180,14 @@ class Model(ModelDesc):
                 '(?:group1|group2|group3|rpn|fastrcnn|maskrcnn)/.*W',
                 l2_regularizer(1e-4), name='wd_cost')
 
-            self.cost = tf.add_n([
+            total_cost = tf.add_n([
                 rpn_label_loss, rpn_box_loss,
                 fastrcnn_label_loss, fastrcnn_box_loss,
                 mrcnn_loss,
                 wd_cost], 'total_cost')
 
-            add_moving_summary(self.cost, wd_cost)
+            add_moving_summary(total_cost, wd_cost)
+            return total_cost
         else:
             label_probs = tf.nn.softmax(fastrcnn_label_logits, name='fastrcnn_all_probs')  # #proposal x #Class
             anchors = tf.tile(tf.expand_dims(proposal_boxes, 1), [1, config.NUM_CLASS - 1, 1])   # #proposal x #Cat x 4

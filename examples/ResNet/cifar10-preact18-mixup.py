@@ -77,7 +77,7 @@ class ResNet_Cifar(ModelDesc):
         # weight decay on all W matrixes. including convolutional layers
         wd_cost = tf.multiply(WEIGHT_DECAY, regularize_cost('.*', tf.nn.l2_loss), name='wd_cost')
 
-        self.cost = tf.add_n([ce_cost, wd_cost], name='cost')
+        return tf.add_n([ce_cost, wd_cost], name='cost')
 
     def _get_optimizer(self):
         lr = tf.get_variable('learning_rate', initializer=0.1, trainable=False)

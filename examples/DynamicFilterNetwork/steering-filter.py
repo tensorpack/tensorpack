@@ -143,8 +143,9 @@ class Model(ModelDesc):
         tf.summary.image('pred_gt_filters', filters, max_outputs=20)
         tf.summary.image('pred_gt_images', images, max_outputs=20)
 
-        self.cost = tf.reduce_mean(tf.squared_difference(pred_image, gt_image), name="cost")
-        summary.add_moving_summary(self.cost)
+        cost = tf.reduce_mean(tf.squared_difference(pred_image, gt_image), name="cost")
+        summary.add_moving_summary(cost)
+        return cost
 
     def _get_optimizer(self):
         return tf.train.AdamOptimizer(1e-3)

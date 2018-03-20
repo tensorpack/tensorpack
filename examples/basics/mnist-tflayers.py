@@ -32,9 +32,6 @@ class Model(ModelDesc):
                 tf.placeholder(tf.int32, (None,), 'label')]
 
     def _build_graph(self, inputs):
-        """This function should build the model which takes the input variables
-        and define self.cost at the end"""
-
         # inputs contains a list of input variables defined above
         image, label = inputs
 
@@ -77,11 +74,12 @@ class Model(ModelDesc):
         wd_cost = tf.multiply(1e-5,
                               regularize_cost('fc.*/kernel', tf.nn.l2_loss),
                               name='regularize_loss')
-        self.cost = tf.add_n([wd_cost, cost], name='total_cost')
-        summary.add_moving_summary(cost, wd_cost, self.cost)
+        total_cost = tf.add_n([wd_cost, cost], name='total_cost')
+        summary.add_moving_summary(cost, wd_cost, total_cost)
 
         # monitor histogram of all weight (of conv and fc layers) in tensorboard
         summary.add_param_summary(('.*/kernel', ['histogram', 'rms']))
+        return total_cost
 
     def _get_optimizer(self):
         lr = tf.train.exponential_decay(

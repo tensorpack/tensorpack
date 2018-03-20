@@ -53,7 +53,7 @@ class Model(ModelDesc):
 
         loss = tf.nn.ctc_loss(label, logits, seqlen, time_major=False)
 
-        self.cost = tf.reduce_mean(loss, name='cost')
+        cost = tf.reduce_mean(loss, name='cost')
 
         logits = tf.transpose(logits, [1, 0, 2])
 
@@ -68,7 +68,8 @@ class Model(ModelDesc):
         err = tf.edit_distance(predictions, label, normalize=True)
         err.set_shape([None])
         err = tf.reduce_mean(err, name='error')
-        summary.add_moving_summary(err, self.cost)
+        summary.add_moving_summary(err, cost)
+        return cost
 
     def _get_optimizer(self):
         lr = tf.get_variable('learning_rate', initializer=5e-3, trainable=False)

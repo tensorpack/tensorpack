@@ -64,7 +64,7 @@ class Model(ModelDesc):
         loss = compute_loss_and_error(logits, label)
         wd_cost = regularize_cost('.*/W', l2_regularizer(1e-4), name='l2_regularize_loss')
         add_moving_summary(loss, wd_cost)
-        self.cost = tf.add_n([loss, wd_cost], name='cost')
+        return tf.add_n([loss, wd_cost], name='cost')
 
     def _get_optimizer(self):
         lr = tf.get_variable('learning_rate', initializer=0.1, trainable=False)

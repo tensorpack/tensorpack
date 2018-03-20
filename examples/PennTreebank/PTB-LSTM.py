@@ -96,11 +96,12 @@ class Model(ModelDesc):
             logits=logits, labels=tf.reshape(nextinput, [-1]))
 
         with tf.control_dependencies(update_state_ops):
-            self.cost = tf.truediv(tf.reduce_sum(xent_loss),
-                                   tf.cast(BATCH, tf.float32), name='cost')  # log-perplexity
+            cost = tf.truediv(tf.reduce_sum(xent_loss),
+                              tf.cast(BATCH, tf.float32), name='cost')  # log-perplexity
 
-        perpl = tf.exp(self.cost / SEQ_LEN, name='perplexity')
-        summary.add_moving_summary(perpl, self.cost)
+        perpl = tf.exp(cost / SEQ_LEN, name='perplexity')
+        summary.add_moving_summary(perpl, cost)
+        return cost
 
     def reset_lstm_state(self):
         s = self.state

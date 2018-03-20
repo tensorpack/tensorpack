@@ -108,10 +108,7 @@ class Model(ModelDesc):
         wd_cost = tf.multiply(1e-5,
                               regularize_cost('fc.*/W', tf.nn.l2_loss),
                               name='regularize_loss')
-        self.cost = tf.add_n([wd_cost, cost], name='total_cost')
-        summary.add_moving_summary(cost, wd_cost, self.cost, accuracy)
-
-        summary.add_param_summary(('.*/W', ['histogram', 'rms']))
+        return tf.add_n([wd_cost, cost], name='total_cost')
 
     def _get_optimizer(self):
         lr = tf.train.exponential_decay(

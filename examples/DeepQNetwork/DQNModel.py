@@ -75,11 +75,12 @@ class Model(ModelDesc):
 
         target = reward + (1.0 - tf.cast(isOver, tf.float32)) * self.gamma * tf.stop_gradient(best_v)
 
-        self.cost = tf.losses.huber_loss(
+        cost = tf.losses.huber_loss(
             target, pred_action_value, reduction=tf.losses.Reduction.MEAN)
         summary.add_param_summary(('conv.*/W', ['histogram', 'rms']),
                                   ('fc.*/W', ['histogram', 'rms']))   # monitor all W
-        summary.add_moving_summary(self.cost)
+        summary.add_moving_summary(cost)
+        return cost
 
     def _get_optimizer(self):
         lr = tf.get_variable('learning_rate', initializer=self.learning_rate, trainable=False)

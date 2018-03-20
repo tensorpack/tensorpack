@@ -111,8 +111,9 @@ class Model(ModelDesc):
                                           80000, 0.7, True)
         wd_cost = tf.multiply(wd_w, regularize_cost('.*/W', tf.nn.l2_loss), name='l2_regularize_loss')
 
-        self.cost = tf.add_n([cost, wd_cost], name='cost')
-        add_moving_summary(wd_cost, self.cost)
+        total_cost = tf.add_n([cost, wd_cost], name='cost')
+        add_moving_summary(wd_cost, total_cost)
+        return total_cost
 
     def _get_optimizer(self):
         lr = tf.get_variable('learning_rate', initializer=0.045, trainable=False)

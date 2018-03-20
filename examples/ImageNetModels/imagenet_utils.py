@@ -165,10 +165,11 @@ class ImageNetModel(ModelDesc):
             wd_loss = regularize_cost('.*/W', tf.contrib.layers.l2_regularizer(self.weight_decay),
                                       name='l2_regularize_loss')
             add_moving_summary(loss, wd_loss)
-            self.cost = tf.add_n([loss, wd_loss], name='cost')
+            total_cost = tf.add_n([loss, wd_loss], name='cost')
         else:
-            self.cost = tf.identity(loss, name='cost')
-            add_moving_summary(self.cost)
+            total_cost = tf.identity(loss, name='cost')
+            add_moving_summary(total_cost)
+        return total_cost
 
     @abstractmethod
     def get_logits(self, image):

@@ -50,8 +50,7 @@ class Model(mnist_example.Model):
         wd_cost = tf.multiply(1e-5, regularize_cost('fc.*/W', tf.nn.l2_loss),
                               name='regularize_loss')
 
-        self.cost = tf.add_n([wd_cost, cost], name='cost')
-        add_moving_summary(cost, wd_cost, self.cost)
+        return tf.add_n([wd_cost, cost], name='cost')
 
 
 if __name__ == '__main__':

@@ -115,8 +115,9 @@ class Model(ModelDesc):
             costs.append(wd_cost)
 
             add_param_summary(('.*/W', ['histogram']))   # monitor W
-            self.cost = tf.add_n(costs, name='cost')
-            add_moving_summary(costs + [wrong, self.cost])
+            total_cost = tf.add_n(costs, name='cost')
+            add_moving_summary(costs + [wrong, total_cost])
+            return total_cost
 
     def _get_optimizer(self):
         lr = tf.get_variable('learning_rate', initializer=3e-5, trainable=False)

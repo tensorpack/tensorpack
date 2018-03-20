@@ -104,9 +104,10 @@ class Model(ModelDesc):
 
         xent_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
             logits=logits, labels=tf.reshape(nextinput, [-1]))
-        self.cost = tf.reduce_mean(xent_loss, name='cost')
+        cost = tf.reduce_mean(xent_loss, name='cost')
         summary.add_param_summary(('.*/W', ['histogram']))   # monitor histogram of all W
-        summary.add_moving_summary(self.cost)
+        summary.add_moving_summary(cost)
+        return cost
 
     def _get_optimizer(self):
         lr = tf.get_variable('learning_rate', initializer=2e-3, trainable=False)
