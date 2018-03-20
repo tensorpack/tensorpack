@@ -28,7 +28,7 @@ class Model(DCGAN.Model):
         self.g_loss = tf.negative(tf.reduce_mean(vecneg), name='g_loss')
         add_moving_summary(self.d_loss, self.g_loss)
 
-    def _get_optimizer(self):
+    def optimizer(self):
         opt = tf.train.RMSPropOptimizer(1e-4)
         return opt
 

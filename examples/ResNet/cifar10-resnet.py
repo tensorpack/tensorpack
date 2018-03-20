@@ -111,7 +111,7 @@ class Model(ModelDesc):
         add_param_summary(('.*/W', ['histogram']))   # monitor W
         return tf.add_n([cost, wd_cost], name='cost')
 
-    def _get_optimizer(self):
+    def optimizer(self):
         lr = tf.get_variable('learning_rate', initializer=0.01, trainable=False)
         opt = tf.train.MomentumOptimizer(lr, 0.9)
         return opt

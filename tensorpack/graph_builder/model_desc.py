@@ -109,10 +109,6 @@ class ModelDescBase(object):
                 return [InputDesc.from_placeholder(p) for p in inputs]
 
     def _get_inputs(self):
-        """
-        Returns:
-            a list of :class:`InputDesc`.
-        """
         raise NotImplementedError()
 
     def inputs(self):
@@ -207,22 +203,33 @@ class ModelDesc(ModelDescBase):
     @memoized
     def get_optimizer(self):
         """
-        Return the memoized optimizer returned by `_get_optimizer`.
+        Return the memoized optimizer returned by `optimizer()`.
 
-        Users of :class:`ModelDesc` will need to implement `_get_optimizer()`,
+        Users of :class:`ModelDesc` will need to implement `optimizer()`,
         which will only be called once per each model.
 
         Returns:
             a :class:`tf.train.Optimizer` instance.
         """
-        return self._get_optimizer()
+        try:
+            return self._get_optimizer()
+        except NotImplementedError:
+            pass
+        return self.optimizer()
 
     def _get_optimizer(self):
         raise NotImplementedError()
 
+    def optimizer(self):
+        """
+        Returns a `tf.train.Optimizer` instance.
+        A subclass is expected to implement this method.
+        """
+        raise NotImplementedError()
+
     def _build_graph_get_cost(self, *inputs):
         """
-        Used by trainers to get the final cost for optimization.
+        Used internally by trainers to get the final cost for optimization.
         """
         ret = self.build_graph(*inputs)
         if not get_current_tower_context().is_training:

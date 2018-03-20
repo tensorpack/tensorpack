@@ -70,7 +70,7 @@ class GANModelDesc(ModelDescBase):
 
     @memoized
     def get_optimizer(self):
-        return self._get_optimizer()
+        return self.optimizer()
 
 
 class GANTrainer(TowerTrainer):

@@ -201,7 +201,7 @@ class Model(GANModelDesc):
         # distinguish between variables of generator and discriminator updates
         self.collect_variables()
 
-    def _get_optimizer(self):
+    def optimizer(self):
         lr = tf.get_variable('learning_rate', initializer=2e-4, dtype=tf.float32, trainable=False)
         opt = tf.train.AdamOptimizer(lr, beta1=0.5, epsilon=1e-6)
         # generator learns 5 times faster

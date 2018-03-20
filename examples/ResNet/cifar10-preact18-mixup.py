@@ -78,7 +78,7 @@ class ResNet_Cifar(ModelDesc):
 
         return tf.add_n([ce_cost, wd_cost], name='cost')
 
-    def _get_optimizer(self):
+    def optimizer(self):
         lr = tf.get_variable('learning_rate', initializer=0.1, trainable=False)
         opt = tf.train.MomentumOptimizer(lr, 0.9)
         return opt

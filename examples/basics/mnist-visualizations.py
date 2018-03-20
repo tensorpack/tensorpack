@@ -108,7 +108,7 @@ class Model(ModelDesc):
                               name='regularize_loss')
         return tf.add_n([wd_cost, cost], name='total_cost')
 
-    def _get_optimizer(self):
+    def optimizer(self):
         lr = tf.train.exponential_decay(
             learning_rate=1e-3,
             global_step=get_global_step_var(),

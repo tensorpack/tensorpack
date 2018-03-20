@@ -56,7 +56,7 @@ class Model(ModelDesc):
         add_param_summary(('.*/W', ['histogram', 'rms']))   # monitor W
         return tf.add_n([cost, wd_cost], name='cost')
 
-    def _get_optimizer(self):
+    def optimizer(self):
         lr = tf.train.exponential_decay(
             learning_rate=1e-3,
             global_step=get_global_step_var(),

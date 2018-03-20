@@ -103,7 +103,7 @@ class Model(GANModelDesc):
         self.build_losses(vecpos, vecneg)
         self.collect_variables()
 
-    def _get_optimizer(self):
+    def optimizer(self):
         return tf.train.AdamOptimizer(2e-4, beta1=0.5, epsilon=1e-3)
 
 

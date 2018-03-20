@@ -147,7 +147,7 @@ class Model(GANModelDesc):
 
         add_moving_summary(recon_loss_A, recon_loss_B, rate, g_loss, d_loss, wd_g, wd_d)
 
-    def _get_optimizer(self):
+    def optimizer(self):
         return tf.train.AdamOptimizer(2e-4, beta1=0.5, epsilon=1e-3)
 
 

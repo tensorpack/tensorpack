@@ -216,7 +216,7 @@ class Model(ModelDesc):
                 final_masks = tf.cond(tf.size(final_probs) > 0, f1, lambda: tf.zeros([0, 14, 14]))
                 tf.identity(final_masks, name='final_masks')
 
-    def _get_optimizer(self):
+    def optimizer(self):
         lr = tf.get_variable('learning_rate', initializer=0.003, trainable=False)
         tf.summary.scalar('learning_rate', lr)
 

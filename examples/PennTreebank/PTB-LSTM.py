@@ -111,7 +111,7 @@ class Model(ModelDesc):
             ops.append(s[k].h.assign(z))
         return tf.group(*ops, name='reset_lstm_state')
 
-    def _get_optimizer(self):
+    def optimizer(self):
         lr = tf.get_variable('learning_rate', initializer=1.0, trainable=False)
         opt = tf.train.GradientDescentOptimizer(lr)
         return optimizer.apply_grad_processors(

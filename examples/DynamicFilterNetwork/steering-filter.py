@@ -146,7 +146,7 @@ class Model(ModelDesc):
         summary.add_moving_summary(cost)
         return cost
 
-    def _get_optimizer(self):
+    def optimizer(self):
         return tf.train.AdamOptimizer(1e-3)
 
 

@@ -77,7 +77,7 @@ class Model(DCGAN.Model):
 
         self.collect_variables()
 
-    def _get_optimizer(self):
+    def optimizer(self):
         opt = tf.train.AdamOptimizer(1e-4, beta1=0.5, beta2=0.9)
         return opt
 

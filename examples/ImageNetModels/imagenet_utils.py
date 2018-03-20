@@ -180,7 +180,7 @@ class ImageNetModel(ModelDesc):
             Nx1000 logits
         """
 
-    def _get_optimizer(self):
+    def optimizer(self):
         lr = tf.get_variable('learning_rate', initializer=0.1, trainable=False)
         tf.summary.scalar('learning_rate-summary', lr)
         return tf.train.MomentumOptimizer(lr, 0.9, use_nesterov=True)

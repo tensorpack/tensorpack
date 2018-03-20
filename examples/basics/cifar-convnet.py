@@ -73,7 +73,7 @@ class Model(ModelDesc):
         add_param_summary(('.*/W', ['histogram']))   # monitor W
         return tf.add_n([cost, wd_cost], name='cost')
 
-    def _get_optimizer(self):
+    def optimizer(self):
         lr = tf.get_variable('learning_rate', initializer=1e-2, trainable=False)
         tf.summary.scalar('lr', lr)
         return tf.train.AdamOptimizer(lr, epsilon=1e-3)

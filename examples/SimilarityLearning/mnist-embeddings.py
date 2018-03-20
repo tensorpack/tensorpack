@@ -224,7 +224,7 @@ class EmbeddingModel(ModelDesc):
 
         return embeddings
 
-    def _get_optimizer(self):
+    def optimizer(self):
         lr = tf.get_variable('learning_rate', initializer=1e-4, trainable=False)
         return tf.train.GradientDescentOptimizer(lr)
 
