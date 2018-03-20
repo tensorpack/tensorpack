@@ -74,9 +74,7 @@ class Model(ModelDesc):
         return [tf.placeholder(tf.int32, (None, param.seq_len), 'input'),
                 tf.placeholder(tf.int32, (None, param.seq_len), 'nextinput')]
 
-    def _build_graph(self, inputs):
-        input, nextinput = inputs
-
+    def build_graph(self, input, nextinput):
         cell = rnn.MultiRNNCell([rnn.LSTMBlockCell(num_units=param.rnn_size)
                                 for _ in range(param.num_rnn_layer)])
 

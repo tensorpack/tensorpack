@@ -120,9 +120,8 @@ class Model(ModelDesc):
         logger.info('Parameter net output: {}'.format(pred_filter.get_shape().as_list()))
         return pred_filter
 
-    def _build_graph(self, inputs):
+    def build_graph(self, theta, image, gt_image, gt_filter):
         kernel_size = 9
-        theta, image, gt_image, gt_filter = inputs
 
         image = image
         gt_image = gt_image

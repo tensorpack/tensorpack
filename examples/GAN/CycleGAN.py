@@ -85,8 +85,7 @@ class Model(GANModelDesc):
                  .Conv2D('conv4', 1, strides=1, activation=tf.identity, use_bias=True)())
         return l
 
-    def _build_graph(self, inputs):
-        A, B = inputs
+    def build_graph(self, A, B):
         with tf.name_scope('preprocess'):
             A = tf.transpose(A / 128.0 - 1.0, [0, 3, 1, 2])
             B = tf.transpose(B / 128.0 - 1.0, [0, 3, 1, 2])

@@ -44,8 +44,7 @@ class Model(ModelDesc):
         return [tf.placeholder(tf.float32, [None, 32, 32, 3], 'input'),
                 tf.placeholder(tf.int32, [None], 'label')]
 
-    def _build_graph(self, inputs):
-        image, label = inputs
+    def build_graph(self, image, label):
         image = image / 128.0
         assert tf.test.is_gpu_available()
         image = tf.transpose(image, [0, 3, 1, 2])

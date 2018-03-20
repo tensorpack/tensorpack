@@ -43,8 +43,7 @@ class Model(ModelDesc):
     def get_DQN_prediction(self, image):
         return self._get_DQN_prediction(image)
 
-    def _build_graph(self, inputs):
-        comb_state, action, reward, isOver = inputs
+    def build_graph(self, comb_state, action, reward, isOver):
         comb_state = tf.cast(comb_state, tf.float32)
         state = tf.slice(comb_state, [0, 0, 0, 0], [-1, -1, -1, self.channel], name='state')
         self.predict_value = self.get_DQN_prediction(state)

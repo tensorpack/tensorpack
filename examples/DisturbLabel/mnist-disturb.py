@@ -29,8 +29,7 @@ IMAGE_SIZE = 28
 
 
 class Model(mnist_example.Model):
-    def _build_graph(self, inputs):
-        image, label = inputs
+    def build_graph(self, image, label):
         image = tf.expand_dims(image, 3)
 
         logits = (LinearWrap(image)  # the starting brace is oactivationy for line-breaking

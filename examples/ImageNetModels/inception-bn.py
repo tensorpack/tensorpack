@@ -28,8 +28,7 @@ class Model(ModelDesc):
         return [tf.placeholder(tf.float32, [None, INPUT_SHAPE, INPUT_SHAPE, 3], 'input'),
                 tf.placeholder(tf.int32, [None], 'label')]
 
-    def _build_graph(self, inputs):
-        image, label = inputs
+    def build_graph(self, image, label):
         image = image / 128.0
 
         def inception(name, x, nr1x1, nr3x3r, nr3x3, nr233r, nr233, nrpool, pooltype):

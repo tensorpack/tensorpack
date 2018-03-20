@@ -78,8 +78,7 @@ class Model(GANModelDesc):
         add_moving_summary(ret)
         return ret
 
-    def _build_graph(self, inputs):
-        A, B = inputs
+    def build_graph(self, A, B):
         A = tf.transpose(A / 255.0, [0, 3, 1, 2])
         B = tf.transpose(B / 255.0, [0, 3, 1, 2])
 

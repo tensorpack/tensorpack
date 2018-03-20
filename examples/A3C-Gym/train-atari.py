@@ -94,8 +94,7 @@ class Model(ModelDesc):
         value = FullyConnected('fc-v', l, 1)
         return logits, value
 
-    def _build_graph(self, inputs):
-        state, action, futurereward, action_prob = inputs
+    def build_graph(self, state, action, futurereward, action_prob):
         logits, value = self._get_NN_prediction(state)
         value = tf.squeeze(value, [1], name='pred_value')  # (B,)
         policy = tf.nn.softmax(logits, name='policy')

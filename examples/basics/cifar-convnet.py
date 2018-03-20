@@ -30,8 +30,7 @@ class Model(ModelDesc):
         return [tf.placeholder(tf.float32, (None, 30, 30, 3), 'input'),
                 tf.placeholder(tf.int32, (None,), 'label')]
 
-    def _build_graph(self, inputs):
-        image, label = inputs
+    def build_graph(self, image, label):
         is_training = get_current_tower_context().is_training
         keep_prob = tf.constant(0.5 if is_training else 1.0)
 

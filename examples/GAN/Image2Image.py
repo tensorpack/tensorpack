@@ -117,8 +117,7 @@ class Model(GANModelDesc):
                  .Conv2D('convlast', 1, strides=1, padding='VALID', activation=tf.identity)())
         return l
 
-    def _build_graph(self, inputs):
-        input, output = inputs
+    def build_graph(self, input, output):
         input, output = input / 128.0 - 1, output / 128.0 - 1
 
         with argscope([Conv2D, Conv2DTranspose], kernel_initializer=tf.truncated_normal_initializer(stddev=0.02)):

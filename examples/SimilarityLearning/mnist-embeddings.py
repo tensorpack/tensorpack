@@ -241,9 +241,7 @@ class SiameseModel(EmbeddingModel):
                 tf.placeholder(tf.float32, (None, 28, 28), 'input_y'),
                 tf.placeholder(tf.int32, (None,), 'label')]
 
-    def _build_graph(self, inputs):
-        # get inputs
-        x, y, label = inputs
+    def build_graph(self, x, y, label):
         # embed them
         x, y = self.embed([x, y])
 
@@ -261,8 +259,7 @@ class SiameseModel(EmbeddingModel):
 
 
 class CosineModel(SiameseModel):
-    def _build_graph(self, inputs):
-        x, y, label = inputs
+    def build_graph(self, x, y, label):
         x, y = self.embed([x, y])
 
         with tf.variable_scope(tf.get_variable_scope(), reuse=True):
@@ -289,8 +286,7 @@ class TripletModel(EmbeddingModel):
     def loss(self, a, p, n):
         return triplet_loss(a, p, n, 5., extra=True, scope="loss")
 
-    def _build_graph(self, inputs):
-        a, p, n = inputs
+    def build_graph(self, a, p, n):
         a, p, n = self.embed([a, p, n])
 
         with tf.variable_scope(tf.get_variable_scope(), reuse=True):
@@ -319,9 +315,7 @@ class CenterModel(EmbeddingModel):
         return [tf.placeholder(tf.float32, (None, 28, 28), 'input'),
                 tf.placeholder(tf.int32, (None,), 'label')]
 
-    def _build_graph(self, inputs):
-        # get inputs
-        x, label = inputs
+    def build_graph(self, x, label):
         # embed them
         x = self.embed(x)
 

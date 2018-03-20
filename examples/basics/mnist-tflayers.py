@@ -31,10 +31,7 @@ class Model(ModelDesc):
         return [tf.placeholder(tf.float32, (None, IMAGE_SIZE, IMAGE_SIZE), 'input'),
                 tf.placeholder(tf.int32, (None,), 'label')]
 
-    def _build_graph(self, inputs):
-        # inputs contains a list of input variables defined above
-        image, label = inputs
-
+    def build_graph(self, image, label):
         # In tensorflow, inputs to convolution function are assumed to be
         # NHWC. Add a single channel here.
         image = tf.expand_dims(image, 3)

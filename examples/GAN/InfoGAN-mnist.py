@@ -138,8 +138,7 @@ class Model(GANModelDesc):
                        .FullyConnected('fce-out', DIST_PARAM_DIM)())
         return logits, encoder
 
-    def _build_graph(self, inputs):
-        real_sample = inputs[0]
+    def build_graph(self, real_sample):
         real_sample = tf.expand_dims(real_sample, -1)
 
         # sample the latent code:

@@ -90,7 +90,7 @@ class Model(ModelDesc):
                     -1, -1]), name='fm_anchors')
             return fm_anchors
 
-    def _build_graph(self, inputs):
+    def build_graph(self, *inputs):
         is_training = get_current_tower_context().is_training
         if config.MODE_MASK:
             image, anchor_labels, anchor_boxes, gt_boxes, gt_labels, gt_masks = inputs

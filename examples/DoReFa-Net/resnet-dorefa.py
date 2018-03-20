@@ -36,8 +36,7 @@ class Model(ModelDesc):
         return [tf.placeholder(tf.float32, [None, 224, 224, 3], 'input'),
                 tf.placeholder(tf.int32, [None], 'label')]
 
-    def _build_graph(self, inputs):
-        image, label = inputs
+    def build_graph(self, image, label):
         image = image / 256.0
 
         fw, fa, fg = get_dorefa(BITW, BITA, BITG)

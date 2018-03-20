@@ -72,9 +72,7 @@ class Model(ModelDesc):
         return [tf.placeholder(tf.float32, (None, IMAGE_SIZE, IMAGE_SIZE), 'input'),
                 tf.placeholder(tf.int32, (None,), 'label')]
 
-    def _build_graph(self, inputs):
-
-        image, label = inputs
+    def build_graph(self, image, label):
         image = tf.expand_dims(image * 2 - 1, 3)
 
         with argscope(Conv2D, kernel_shape=3, nl=tf.nn.relu, out_channel=32):
@@ -103,7 +101,7 @@ class Model(ModelDesc):
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
 
-        accuracy = tf.reduce_mean(tf.to_float(tf.nn.in_top_k(logits, label, 1)), name='accuracy')
+        tf.reduce_mean(tf.to_float(tf.nn.in_top_k(logits, label, 1)), name='accuracy')
 
         wd_cost = tf.multiply(1e-5,
                               regularize_cost('fc.*/W', tf.nn.l2_loss),

@@ -50,9 +50,8 @@ class Model(ModelDesc):
         return [tf.placeholder(tf.int32, (None, SEQ_LEN), 'input'),
                 tf.placeholder(tf.int32, (None, SEQ_LEN), 'nextinput')]
 
-    def _build_graph(self, inputs):
+    def build_graph(self, input, nextinput):
         is_training = get_current_tower_context().is_training
-        input, nextinput = inputs
         initializer = tf.random_uniform_initializer(-0.05, 0.05)
 
         def get_basic_cell():

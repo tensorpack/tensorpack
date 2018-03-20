@@ -152,8 +152,7 @@ class ImageNetModel(ModelDesc):
         return [tf.placeholder(self.image_dtype, [None, self.image_shape, self.image_shape, 3], 'input'),
                 tf.placeholder(tf.int32, [None], 'label')]
 
-    def _build_graph(self, inputs):
-        image, label = inputs
+    def build_graph(self, image, label):
         image = ImageNetModel.image_preprocess(image, bgr=True)
         if self.data_format == 'NCHW':
             image = tf.transpose(image, [0, 3, 1, 2])

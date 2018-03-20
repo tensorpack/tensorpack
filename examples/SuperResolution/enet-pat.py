@@ -52,9 +52,9 @@ class Model(GANModelDesc):
         return [tf.placeholder(tf.float32, (None, self.height * 1, self.width * 1, CHANNELS), 'Ilr'),
                 tf.placeholder(tf.float32, (None, self.height * 4, self.width * 4, CHANNELS), 'Ihr')]
 
-    def _build_graph(self, inputs):
+    def build_graph(self, Ilr, Ihr):
+        Ilr, Ihr = Ilr / 255.0, Ihr / 255.0
         ctx = get_current_tower_context()
-        Ilr, Ihr = inputs[0] / 255.0, inputs[1] / 255.0
         Ibicubic = tf.image.resize_bicubic(
             Ilr, [4 * self.height, 4 * self.width], align_corners=True,
             name='bicubic_baseline')    # (0,1)

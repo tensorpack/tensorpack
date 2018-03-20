@@ -76,8 +76,7 @@ class Model(GANModelDesc):
                  .FullyConnected('fct', 1)())
         return l
 
-    def _build_graph(self, inputs):
-        image_pos = inputs[0]
+    def build_graph(self, image_pos):
         image_pos = image_pos / 128.0 - 1
 
         z = tf.random_uniform([self.batch, self.zdim], -1, 1, name='z_train')

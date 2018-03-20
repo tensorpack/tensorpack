@@ -33,8 +33,7 @@ class Model(ModelDesc):
                 tf.placeholder(tf.int32, [None], 'seqlen'),   # b
                 ]
 
-    def _build_graph(self, inputs):
-        feat, labelidx, labelvalue, labelshape, seqlen = inputs
+    def build_graph(self, feat, labelidx, labelvalue, labelshape, seqlen):
         label = tf.SparseTensor(labelidx, labelvalue, labelshape)
 
         cell = rnn.MultiRNNCell([rnn.LSTMBlockCell(num_units=HIDDEN) for _ in range(NLAYER)])

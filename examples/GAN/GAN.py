@@ -61,7 +61,7 @@ class GANModelDesc(ModelDescBase):
 
             add_moving_summary(self.g_loss, self.d_loss, d_accuracy, g_accuracy)
 
-    def _build_graph(self, inputs):
+    def build_graph(self, *inputs):
         """
         Have to build one tower and set the following attributes:
         g_loss, d_loss, g_vars, d_vars.

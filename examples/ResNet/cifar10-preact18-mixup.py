@@ -43,9 +43,8 @@ class ResNet_Cifar(ModelDesc):
         return [tf.placeholder(tf.float32, [None, 32, 32, 3], 'input'),
                 tf.placeholder(tf.float32, [None, CLASS_NUM], 'label')]
 
-    def _build_graph(self, inputs):
+    def build_graph(self, image, label):
         assert tf.test.is_gpu_available()
-        image, label = inputs
 
         MEAN_IMAGE = tf.constant([0.4914, 0.4822, 0.4465], dtype=tf.float32)
         STD_IMAGE = tf.constant([0.2023, 0.1994, 0.2010], dtype=tf.float32)

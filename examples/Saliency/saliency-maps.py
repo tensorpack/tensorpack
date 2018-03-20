@@ -57,8 +57,7 @@ class Model(tp.ModelDescBase):
     def inputs(self):
         return [tf.placeholder(tf.float32, (IMAGE_SIZE, IMAGE_SIZE, 3), 'image')]
 
-    def _build_graph(self, inputs):
-        orig_image = inputs[0]
+    def build_graph(self, orig_image):
         mean = tf.get_variable('resnet_v1_50/mean_rgb', shape=[3])
         with guided_relu():
             with slim.arg_scope(resnet_v1.resnet_arg_scope(is_training=False)):
