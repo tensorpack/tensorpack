@@ -8,6 +8,11 @@ so you won't need to look at here very often.
 Here are a list of things that were changed, starting from an early version.
 TensorFlow itself also changed APIs before 1.0 and those are not listed here.
 
++ [2018/03/20] `ModelDesc` starts to use simplified interfaces:
+	+ `_get_inputs()` renamed to `inputs()` and returns `tf.placeholder`s.
+	+ `build_graph(self, tensor1, tensor2)` returns the cost tensor directly.
+	+ `_get_optimizer()` renamed to `optimizer()`.
+	Old interface will still be available, but new ones are recommended.
 + [2018/03/12] `JSONWriter` use a different file name, and will not automatically restore epoch number.
 	`AutoResumeTrainConfig` was added to support resuming.
 + [2017/10/21]
