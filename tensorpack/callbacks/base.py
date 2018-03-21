@@ -211,6 +211,7 @@ class Callback(object):
     def __str__(self):
         return type(self).__name__
 
+    # TODO RENAME: same function to be used to get ops as well
     def get_tensors_maybe_in_tower(self, names):
         """
         Get tensors in the graph with the given names.
