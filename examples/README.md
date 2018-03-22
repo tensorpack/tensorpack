@@ -27,7 +27,7 @@ These examples don't have meaningful performance numbers. They are supposed to b
 | [Spatial Transformer Networks on MNIST addition](SpatialTransformer) | reproduce paper |
 | [Visualize CNN saliency maps](Saliency) | visually reproduce |
 | [Similarity learning on MNIST](SimilarityLearning) | |
-| Single-image super-resolution using [EnhanceNet](SuperResolution) | visually reproduce |
+| Single-image super-resolution using [EnhanceNet](SuperResolution) |  |
 | Learn steering filters with [Dynamic Filter Networks](DynamicFilterNetwork) | visually reproduce |
 | Load a pre-trained [AlexNet, VGG, or Convolutional Pose Machines](CaffeModels) | |
 

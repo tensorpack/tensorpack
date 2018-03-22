@@ -33,7 +33,8 @@ python data_sampler.py --lmdb train2017.lmdb --input train2017.zip --create
 python enet-pat.py --vgg19 /path/to/vgg19.npz --data train2017.lmdb
 ```
 
-Training is highly unstable and does not often give results as good as the pretrained model.
+Training is highly unstable and does not often give good results.
+The pretrained model may also fail on different types of images.
 You can download and play with the pretrained model [here](http://models.tensorpack.com/SuperResolution/).
 
 3. Inference on an image and output in current directory:
