@@ -206,7 +206,7 @@ class TFEventWriter(TrainingMonitor):
     """
     Write summaries to TensorFlow event file.
     """
-    def __init__(self, logdir=None, max_queue=10, flush_secs=120):
+    def __init__(self, logdir=None, max_queue=10, flush_secs=120, multiple_event_files=False):
         """
         Args:
             Same as in :class:`tf.summary.FileWriter`.
@@ -218,6 +218,7 @@ class TFEventWriter(TrainingMonitor):
         self._logdir = logdir
         self._max_queue = max_queue
         self._flush_secs = flush_secs
+        self._multiple_event_files = multiple_event_files
 
     def __new__(cls, logdir=None, max_queue=10, flush_secs=120):
         if logdir is None:
@@ -242,6 +243,9 @@ class TFEventWriter(TrainingMonitor):
 
     def _trigger(self):     # flush every epoch
         self._writer.flush()
+        if self._multiple_event_files:
+            self._writer.close()
+            self._writer.reopen()  # open new file
 
     def _after_train(self):
         self._writer.close()
