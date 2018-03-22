@@ -44,7 +44,7 @@ def create_dummy_func(func, dependency):
     Returns:
         function: a function object
     """
-    if isinstance(dependency, (list, str)):
+    if isinstance(dependency, (list, tuple)):
         dependency = ','.join(dependency)
 
     def _dummy(*args, **kwargs):
