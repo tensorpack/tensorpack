@@ -138,7 +138,7 @@ class SimpleMovingAverage(Callback):
             window_size (int): size of the moving window
         """
 
-        self._tensors_names = [get_op_tensor_name(x)[1] for x in tensors]
+        self._tensor_names = [get_op_tensor_name(x)[1] for x in tensors]
         self._display_names = [get_op_tensor_name(x)[0] for x in tensors]
         self._window = int(window_size)
         self._queue = deque(maxlen=window_size)
