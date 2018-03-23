@@ -4,8 +4,13 @@
 Training examples with __reproducible performance__.
 
 __The word "reproduce" should always means reproduce performance__.
-With the magic of SGD, wrong code often appears to still work, unless you check its performance number.
+With the magic of SGD, wrong deep learning code often appears to still work,
+especially if you try it on toy datasets.
 See [Unawareness of Deep Learning Mistakes](https://medium.com/@ppwwyyxx/unawareness-of-deep-learning-mistakes-d5b5774da0ba).
+
+Instead of showing you 10 arbitrary networks trained on toy datasets with random final performance,
+tensorpack examples try to faithfully replicate experiments and performance in the paper as much as possible,
+so you're confident that they are correct.
 
 
 ## Getting Started:

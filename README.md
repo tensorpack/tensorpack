@@ -13,7 +13,7 @@ It's Yet Another TF wrapper, but different in:
 
 1. Focus on __training speed__.
 	+	Speed comes for free with tensorpack -- it uses TensorFlow in the __efficient way__ with no extra overhead.
-	  On different CNNs, it runs [1.2~5x faster](https://github.com/tensorpack/benchmarks/tree/master/other-wrappers) than the equivalent Keras code.
+	  On different CNNs, it runs training [1.2~5x faster](https://github.com/tensorpack/benchmarks/tree/master/other-wrappers) than the equivalent Keras code.
 
 	+ Data-parallel multi-GPU training is off-the-shelf to use. It scales as well as Google's [official benchmark](https://www.tensorflow.org/performance/benchmarks).
 
@@ -32,7 +32,7 @@ See [tutorials](http://tensorpack.readthedocs.io/en/latest/tutorial/index.html) 
 
 ## [Examples](examples):
 
-Instead of showing you 10 random networks with random accuracy,
+Instead of showing you 10 random networks trained on toy datasets,
 [tensorpack examples](examples) faithfully replicate papers and care about performance.
 And everything runs on multiple GPUs. Some highlights:
 

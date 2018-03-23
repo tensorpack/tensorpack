@@ -16,10 +16,43 @@ from imagenet_utils import (
     ImageNetModel, get_imagenet_dataflow, fbresnet_augmentor)
 
 
+def GroupNorm(x, group):
+    """
+    https://arxiv.org/abs/1803.08494
+    """
+    shape = x.get_shape().as_list()
+    ndims = len(shape)
+    assert ndims in [2, 4]
+    chan = shape[1]
+    assert chan % group == 0, chan
+    group_size = chan // group
+
+    orig_shape = tf.shape(x)
+    h, w = orig_shape[2], orig_shape[3]
+
+    x = tf.reshape(x, tf.stack([-1, group, group_size, h, w]))
+
+    mean, var = tf.nn.moments(x, [2, 3, 4], keep_dims=True)
+
+    new_shape = [1, group, group_size, 1, 1]
+
+    beta = tf.get_variable('beta', [chan], initializer=tf.constant_initializer())
+    beta = tf.reshape(beta, new_shape)
+
+    gamma = tf.get_variable('gamma', [chan], initializer=tf.constant_initializer(1.0))
+    gamma = tf.reshape(gamma, new_shape)
+
+    out = tf.nn.batch_normalization(x, mean, var, beta, gamma, 1e-5, name='output')
+    return tf.reshape(out, orig_shape, name='output')
+
+
 def convnormrelu(x, name, chan):
     x = Conv2D(name, x, chan, 3)
     if args.norm == 'bn':
         x = BatchNorm(name + '_bn', x)
+    elif args.norm == 'gn':
+        with tf.variable_scope(name + '_gn'):
+            x = GroupNorm(x, 32)
     x = tf.nn.relu(x, name=name + '_relu')
     return x
 
@@ -78,7 +111,7 @@ def get_data(name, batch):
 
 def get_config():
     nr_tower = max(get_nr_gpu(), 1)
-    batch = 64
+    batch = args.batch
     total_batch = batch * nr_tower
     BASE_LR = 0.01 * (total_batch / 256.)
 
@@ -117,7 +150,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
     parser.add_argument('--data', help='ILSVRC dataset dir')
-    parser.add_argument('--norm', choices=['none', 'bn'], default='none')
+    parser.add_argument('--batch', type=int, default=32, help='batch per GPU')
+    parser.add_argument('--norm', choices=['none', 'bn', 'gn'], default='none')
     parser.add_argument('--load', help='load model')
     args = parser.parse_args()
 

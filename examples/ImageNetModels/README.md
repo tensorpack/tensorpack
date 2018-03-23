@@ -28,7 +28,8 @@ Evaluate the [pretrained model](http://models.tensorpack.com/ShuffleNet/):
 
 This Inception-BN script reaches 27% single-crop error after 300k steps with 6 GPUs.
 
-This VGG16 script reaches 29~30% single-crop error after 100 epochs (30h with 8 P100s), and 28% if BN is enabled.
+This VGG16 script, when trained with 32x8 batch size, reaches 29~30% single-crop error after 100 epochs (30h with 8 P100s),
+28% with BN, and 27.6% with GN.
 
 ### ResNet, DoReFa-Net
 
