@@ -145,6 +145,11 @@ class ImageNetModel(ModelDesc):
     """
     image_dtype = tf.uint8
 
+    """
+    Whether to apply weight decay on BN parameters.
+    """
+    weight_decay_on_bn = False
+
     def __init__(self, data_format='NCHW'):
         self.data_format = data_format
 
@@ -161,7 +166,11 @@ class ImageNetModel(ModelDesc):
         loss = ImageNetModel.compute_loss_and_error(logits, label)
 
         if self.weight_decay > 0:
-            wd_loss = regularize_cost('.*/W', tf.contrib.layers.l2_regularizer(self.weight_decay),
+            if self.weight_decay_on_bn:
+                pattern = '.*/W|.*/gamma|.*/beta'
+            else:
+                pattern = '.*/W'
+            wd_loss = regularize_cost(pattern, tf.contrib.layers.l2_regularizer(self.weight_decay),
                                       name='l2_regularize_loss')
             add_moving_summary(loss, wd_loss)
             total_cost = tf.add_n([loss, wd_loss], name='cost')

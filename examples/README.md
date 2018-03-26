@@ -3,7 +3,7 @@
 
 Training examples with __reproducible performance__.
 
-__The word "reproduce" should always means reproduce performance__.
+__The word "reproduce" should always mean reproduce performance__.
 With the magic of SGD, wrong deep learning code often appears to still work,
 especially if you try it on toy datasets.
 See [Unawareness of Deep Learning Mistakes](https://medium.com/@ppwwyyxx/unawareness-of-deep-learning-mistakes-d5b5774da0ba).

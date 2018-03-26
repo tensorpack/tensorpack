@@ -17,7 +17,7 @@ It's Yet Another TF wrapper, but different in:
 
 	+ Data-parallel multi-GPU training is off-the-shelf to use. It scales as well as Google's [official benchmark](https://www.tensorflow.org/performance/benchmarks).
 
-	+ See [tensorpack/benchmarks](https://github.com/tensorpack/benchmarks) for the benchmark scripts.
+	+ Distributed data-parallel training is also supported and scales well. See [tensorpack/benchmarks](https://github.com/tensorpack/benchmarks) for more benchmark scripts.
 
 2. Focus on __large datasets__.
 	+ It's unnecessary to read/preprocess data with a new language called TF.
