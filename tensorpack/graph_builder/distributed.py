@@ -267,7 +267,7 @@ class DistributedReplicatedBuilder(DataParallelBuilder, DistributedBuilderBase):
             1. the training op.
 
             2. the op which sync all the local variables from PS.
-            This op sholud be run before training.
+            This op should be run before training.
 
             3. the op which sync all the local `MODEL_VARIABLES` from PS.
             You can choose how often to run it by yourself.

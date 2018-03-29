@@ -78,7 +78,7 @@ class KerasPhaseCallback(Callback):
         self._learning_phase = keras.backend.learning_phase()
 
     def _setup_graph(self):
-        logger.info("Using Keras leraning phase {} in the graph!".format(
+        logger.info("Using Keras learning phase {} in the graph!".format(
             self._learning_phase.name))
         cbs = self.trainer._callbacks.cbs
         for cb in cbs:
