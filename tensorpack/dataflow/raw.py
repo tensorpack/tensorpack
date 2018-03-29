@@ -126,7 +126,7 @@ class DataFromIterable(DataFlow):
         Args:
             iterable: an iterable object with length
         """
-        self._itr = self.iterable
+        self._itr = iterable
         self._len = len(iterable)
 
     def size(self):
