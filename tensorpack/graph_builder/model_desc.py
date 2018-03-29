@@ -105,7 +105,7 @@ class ModelDescBase(object):
             with tf.Graph().as_default() as G:   # create these placeholder in a temporary graph
                 inputs = self.inputs()
                 for p in inputs:
-                    assert p.graph == G, "Placeholders returned by inputs() sholud be created inside inputs()!"
+                    assert p.graph == G, "Placeholders returned by inputs() should be created inside inputs()!"
                 return [InputDesc.from_placeholder(p) for p in inputs]
 
     def _get_inputs(self):
