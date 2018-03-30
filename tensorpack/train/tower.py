@@ -146,7 +146,7 @@ class SingleCostTrainer(TowerTrainer):
         Args:
             inputs_desc ([InputDesc]):
             input (InputSource):
-            get_cost_fn ([tf.Tensor] -> tf.Tensor): callable, takes some input tenosrs and return a cost tensor.
+            get_cost_fn ([tf.Tensor] -> tf.Tensor): callable, takes some input tensors and return a cost tensor.
             get_opt_fn (-> tf.train.Optimizer): callable which returns an
                 optimizer. Will only be called once.
 
