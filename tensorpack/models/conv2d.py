@@ -167,11 +167,12 @@ def Conv2DTranspose(
             bias_regularizer=bias_regularizer,
             activity_regularizer=activity_regularizer)
         ret = layer.apply(inputs, scope=tf.get_variable_scope())
+        ret = tf.identity(ret, name='output')
 
     ret.variables = VariableHolder(W=layer.kernel)
     if use_bias:
         ret.variables.b = layer.bias
-    return tf.identity(ret, name='output')
+    return ret
 
 
 Deconv2D = Conv2DTranspose
