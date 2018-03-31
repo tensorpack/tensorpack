@@ -312,6 +312,10 @@ def crop_and_resize(image, boxes, box_ind, crop_size):
     """
     assert isinstance(crop_size, int), crop_size
 
+    # TF's crop_and_resize fails on border
+    image = tf.pad(image, [[0, 0], [0, 0], [1, 1], [1, 1]])
+    boxes = boxes + 1
+
     @under_name_scope()
     def transform_fpcoor_for_tf(boxes, image_shape, crop_shape):
         """
@@ -570,8 +574,6 @@ if __name__ == '__main__':
     7 7.5 8 8.5
     9.5 10 10.5 11
     12 12.5 13 13.5
-    Our implementation is not perfect either. When boxes are on the border of
-    images, TF pads zeros instead of border values. But this rarely happens so it's fine.
 
     You cannot easily get the above results with tf.image.crop_and_resize.
     Try out yourself here:
