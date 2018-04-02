@@ -298,7 +298,7 @@ def sample_fast_rcnn_targets(boxes, gt_boxes, gt_labels):
 
 
 @under_name_scope()
-def crop_and_resize(image, boxes, box_ind, crop_size):
+def crop_and_resize(image, boxes, box_ind, crop_size, pad_border=True):
     """
     Better-aligned version of tf.image.crop_and_resize, following our definition of floating point boxes.
 
@@ -312,9 +312,11 @@ def crop_and_resize(image, boxes, box_ind, crop_size):
     """
     assert isinstance(crop_size, int), crop_size
 
-    # TF's crop_and_resize fails on border
-    image = tf.pad(image, [[0, 0], [0, 0], [1, 1], [1, 1]])
-    boxes = boxes + 1
+    # TF's crop_and_resize produces zeros on border
+    if pad_border:
+        # this can be quite slow
+        image = tf.pad(image, [[0, 0], [0, 0], [1, 1], [1, 1]], mode='SYMMETRIC')
+        boxes = boxes + 1
 
     @under_name_scope()
     def transform_fpcoor_for_tf(boxes, image_shape, crop_shape):

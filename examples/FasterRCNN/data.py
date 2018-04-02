@@ -34,7 +34,7 @@ def get_all_anchors(
     Get all anchors in the largest possible image, shifted, floatbox
 
     Returns:
-        anchors: SxSxNUM_ANCHORx4, where S == MAX_SIZE//STRIDE, floatbox
+        anchors: SxSxNUM_ANCHORx4, where S == ceil(MAX_SIZE/STRIDE), floatbox
         The layout in the NUM_ANCHOR dim is NUM_RATIO x NUM_SCALE.
 
     """
@@ -48,7 +48,7 @@ def get_all_anchors(
     # anchors are intbox here.
     # anchors at featuremap [0,0] are centered at fpcoor (8,8) (half of stride)
 
-    field_size = config.MAX_SIZE // stride
+    field_size = int(np.ceil(config.MAX_SIZE / stride))
     shifts = np.arange(0, field_size) * stride
     shift_x, shift_y = np.meshgrid(shifts, shifts)
     shift_x = shift_x.flatten()
@@ -154,7 +154,7 @@ def get_rpn_anchor_input(im, boxes, is_crowd):
 
     ALL_ANCHORS = get_all_anchors()
     H, W = im.shape[:2]
-    featureH, featureW = H // config.ANCHOR_STRIDE, W // config.ANCHOR_STRIDE
+    anchorH, anchorW = ALL_ANCHORS.shape[:2]
 
     def filter_box_inside(im, boxes):
         h, w = im.shape[:2]
@@ -169,8 +169,7 @@ def get_rpn_anchor_input(im, boxes, is_crowd):
     non_crowd_boxes = boxes[is_crowd == 0]
 
     # fHxfWxAx4
-    featuremap_anchors = ALL_ANCHORS[:featureH, :featureW, :, :]
-    featuremap_anchors_flatten = featuremap_anchors.reshape((-1, 4))
+    featuremap_anchors_flatten = np.copy(ALL_ANCHORS).reshape((-1, 4))
     # only use anchors inside the image
     inside_ind = filter_box_inside(im, featuremap_anchors_flatten)
     inside_anchors = featuremap_anchors_flatten[inside_ind, :]
@@ -178,12 +177,12 @@ def get_rpn_anchor_input(im, boxes, is_crowd):
     anchor_labels, anchor_boxes = get_anchor_labels(inside_anchors, non_crowd_boxes, crowd_boxes)
 
     # Fill them back to original size: fHxfWx1, fHxfWx4
-    featuremap_labels = -np.ones((featureH * featureW * config.NUM_ANCHOR, ), dtype='int32')
+    featuremap_labels = -np.ones((anchorH * anchorW * config.NUM_ANCHOR, ), dtype='int32')
     featuremap_labels[inside_ind] = anchor_labels
-    featuremap_labels = featuremap_labels.reshape((featureH, featureW, config.NUM_ANCHOR))
-    featuremap_boxes = np.zeros((featureH * featureW * config.NUM_ANCHOR, 4), dtype='float32')
+    featuremap_labels = featuremap_labels.reshape((anchorH, anchorW, config.NUM_ANCHOR))
+    featuremap_boxes = np.zeros((anchorH * anchorW * config.NUM_ANCHOR, 4), dtype='float32')
     featuremap_boxes[inside_ind, :] = anchor_boxes
-    featuremap_boxes = featuremap_boxes.reshape((featureH, featureW, config.NUM_ANCHOR, 4))
+    featuremap_boxes = featuremap_boxes.reshape((anchorH, anchorW, config.NUM_ANCHOR, 4))
     return featuremap_labels, featuremap_boxes
 
 

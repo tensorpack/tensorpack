@@ -9,7 +9,7 @@ Tensorpack is a training interface based on TensorFlow.
 
 ## Features:
 
-It's Yet Another TF wrapper, but different in:
+It's Yet Another TF high-level API, with __speed__, __readability__ and __flexibility__ built together.
 
 1. Focus on __training speed__.
 	+	Speed comes for free with tensorpack -- it uses TensorFlow in the __efficient way__ with no extra overhead.
@@ -33,8 +33,9 @@ See [tutorials](http://tensorpack.readthedocs.io/en/latest/tutorial/index.html) 
 ## [Examples](examples):
 
 Instead of showing you 10 random networks trained on toy datasets,
-[tensorpack examples](examples) faithfully replicate papers and care about performance.
-And everything runs on multiple GPUs. Some highlights:
+[tensorpack examples](examples) faithfully replicate papers and care about reproducing numbers,
+demonstrating its flexibility for actual research.
+Some highlights:
 
 ### Vision:
 + [Train ResNet](examples/ResNet) and [other models](examples/ImageNetModels) on ImageNet.

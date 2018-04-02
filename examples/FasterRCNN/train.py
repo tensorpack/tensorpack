@@ -75,7 +75,7 @@ class Model(ModelDesc):
         image = image_preprocess(image, bgr=True)
         return tf.transpose(image, [0, 3, 1, 2])
 
-    def _get_anchors(self, image):
+    def _get_anchors(self, shape2d):
         """
         Returns:
             FSxFSxNAx4 anchors,
@@ -85,9 +85,7 @@ class Model(ModelDesc):
             all_anchors = tf.constant(get_all_anchors(), name='all_anchors', dtype=tf.float32)
             fm_anchors = tf.slice(
                 all_anchors, [0, 0, 0, 0], tf.stack([
-                    tf.shape(image)[0] // config.ANCHOR_STRIDE,
-                    tf.shape(image)[1] // config.ANCHOR_STRIDE,
-                    -1, -1]), name='fm_anchors')
+                    shape2d[0], shape2d[1], -1, -1]), name='fm_anchors')
             return fm_anchors
 
     def build_graph(self, *inputs):
@@ -96,14 +94,24 @@ class Model(ModelDesc):
             image, anchor_labels, anchor_boxes, gt_boxes, gt_labels, gt_masks = inputs
         else:
             image, anchor_labels, anchor_boxes, gt_boxes, gt_labels = inputs
-        fm_anchors = self._get_anchors(image)
         image = self._preprocess(image)     # 1CHW
-        image_shape2d = tf.shape(image)[2:]
 
-        anchor_boxes_encoded = encode_bbox_target(anchor_boxes, fm_anchors)
         featuremap = pretrained_resnet_conv4(image, config.RESNET_NUM_BLOCK[:3])
         rpn_label_logits, rpn_box_logits = rpn_head('rpn', featuremap, 1024, config.NUM_ANCHOR)
+        fm_shape = tf.shape(featuremap)[2:]    # h,w
 
+        fm_anchors = self._get_anchors(fm_shape)
+        anchor_labels = tf.slice(
+            anchor_labels, [0, 0, 0],
+            tf.stack([fm_shape[0], fm_shape[1], -1]),
+            name='sliced_anchor_labels')
+        anchor_boxes = tf.slice(
+            anchor_boxes, [0, 0, 0, 0],
+            tf.stack([fm_shape[0], fm_shape[1], -1, -1]),
+            name='sliced_anchor_boxes')
+        anchor_boxes_encoded = encode_bbox_target(anchor_boxes, fm_anchors)
+
+        image_shape2d = tf.shape(image)[2:]     # h,w
         decoded_boxes = decode_bbox_target(rpn_box_logits, fm_anchors)  # fHxfWxNAx4, floatbox
         proposal_boxes, proposal_scores = generate_rpn_proposals(
             tf.reshape(decoded_boxes, [-1, 4]),
@@ -170,7 +178,8 @@ class Model(ModelDesc):
                 target_masks_for_fg = crop_and_resize(
                     tf.expand_dims(gt_masks_for_fg, 1),
                     fg_sampled_boxes,
-                    tf.range(tf.size(fg_inds_wrt_gt)), 14)  # nfg x 1x14x14
+                    tf.range(tf.size(fg_inds_wrt_gt)), 14,
+                    pad_border=False)  # nfg x 1x14x14
                 target_masks_for_fg = tf.squeeze(target_masks_for_fg, 1, 'sampled_fg_mask_targets')
                 mrcnn_loss = maskrcnn_loss(mask_logits, fg_labels, target_masks_for_fg)
             else:
