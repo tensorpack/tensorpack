@@ -218,10 +218,17 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
             logger.warn("mode='hierarchical' require >= 8 GPUs. Fallback to mode='cpu'.")
             self._mode = 'cpu'
 
+        dtypes = set([x[0].dtype.base_dtype for x in grad_list[0]])
+        valid_for_nccl = all([k in [tf.float32, tf.float64] for k in dtypes])
+        if self._mode == 'nccl' and not valid_for_nccl:
+            logger.warn("Cannot use mode='nccl' because some gradients have unsupported types. Fallback to mode='cpu'")
+            self._mode = 'cpu'
+
         if self._mode in ['nccl', 'hierarchical']:
             all_grads, all_vars = split_grad_list(grad_list)
+
             if self._mode == 'nccl':
-                all_grads = allreduce_grads(all_grads, average=self._average)  # #gpu x #param x 2
+                all_grads = allreduce_grads(all_grads, average=self._average)  # #gpu x #param
             else:
                 packer = GradientPacker(len(raw_devices))
                 succ = packer.compute_strategy(all_grads[0])
