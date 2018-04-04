@@ -64,7 +64,13 @@ def regularize_cost(regex, func, name='regularize_cost'):
         for p in params:
             para_name = p.op.name
             if re.search(regex, para_name):
-                costs.append(func(p))
+                regloss = func(p)
+                assert regloss.dtype.is_floating, regloss
+                # Some variables may not be fp32, but it should
+                # be fine to assume regularization in fp32
+                if regloss.dtype != tf.float32:
+                    regloss = tf.cast(regloss, tf.float32)
+                costs.append(regloss)
                 names.append(p.name)
         if not costs:
             return tf.constant(0, dtype=tf.float32, name='empty_' + name)
@@ -112,6 +118,14 @@ def regularize_cost_from_collection(name='regularize_cost'):
     if len(losses) > 0:
         logger.info("regularize_cost_from_collection() found {} regularizers "
                     "in REGULARIZATION_LOSSES collection.".format(len(losses)))
+
+        def maploss(l):
+            assert l.dtype.is_floating, l
+            if l.dtype != tf.float32:
+                l = tf.cast(l, tf.float32)
+            return l
+
+        losses = [maploss(l) for l in losses]
         reg_loss = tf.add_n(losses, name=name)
         return reg_loss
     else:

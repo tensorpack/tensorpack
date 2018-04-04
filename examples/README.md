@@ -8,13 +8,14 @@ With the magic of SGD, wrong deep learning code often appears to still work,
 especially if you try it on toy datasets.
 See [Unawareness of Deep Learning Mistakes](https://medium.com/@ppwwyyxx/unawareness-of-deep-learning-mistakes-d5b5774da0ba).
 
+We refuse toy examples.
 Instead of showing you 10 arbitrary networks trained on toy datasets with random final performance,
 tensorpack examples try to faithfully replicate experiments and performance in the paper as much as possible,
 so you're confident that they are correct.
 
 
 ## Getting Started:
-These examples don't have meaningful performance numbers. They are supposed to be just demos.
+These are all the toy examples in tensorpack. They are supposed to be just demos.
 + [An illustrative MNIST example with explanation of the framework](basics/mnist-convnet.py)
 + Tensorpack supports any symbolic libraries. See the same MNIST example written with [tf.layers](basics/mnist-tflayers.py), [tf-slim](basics/mnist-tfslim.py), and [with weights visualizations](basics/mnist-visualizations.py)
 + A tiny [Cifar ConvNet](basics/cifar-convnet.py) and [SVHN ConvNet](basics/svhn-digit-convnet.py)

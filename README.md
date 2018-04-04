@@ -32,7 +32,8 @@ See [tutorials](http://tensorpack.readthedocs.io/en/latest/tutorial/index.html) 
 
 ## [Examples](examples):
 
-Instead of showing you 10 random networks trained on toy datasets,
+We refuse toy examples.
+Instead of showing you 10 arbitrary networks trained on toy datasets,
 [tensorpack examples](examples) faithfully replicate papers and care about reproducing numbers,
 demonstrating its flexibility for actual research.
 Some highlights:
