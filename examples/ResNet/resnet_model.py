@@ -81,12 +81,7 @@ def resnet_bottleneck(l, ch_out, stride, stride_first=False):
     """
     shortcut = l
     l = Conv2D('conv1', l, ch_out, 1, strides=stride if stride_first else 1, activation=BNReLU)
-    if stride == 2:
-        l = tf.pad(l, [[0,0],[0,0],[1,1],[1,1]])
-        l = Conv2D('conv2', l, ch_out, 3, strides=1 if stride_first else
-                stride, activation=BNReLU, padding='VALID')
-    else:
-        l = Conv2D('conv2', l, ch_out, 3, strides=1 if stride_first else stride, activation=BNReLU)
+    l = Conv2D('conv2', l, ch_out, 3, strides=1 if stride_first else stride, activation=BNReLU)
     l = Conv2D('conv3', l, ch_out * 4, 1, activation=get_bn(zero_init=True))
     return l + resnet_shortcut(shortcut, ch_out * 4, stride, activation=get_bn(zero_init=False))
 
@@ -122,11 +117,8 @@ def resnet_backbone(image, num_blocks, group_func, block_func):
     with argscope(Conv2D, use_bias=False,
                   kernel_initializer=tf.variance_scaling_initializer(scale=2.0, mode='fan_out')):
         logits = (LinearWrap(image)
-                  .tf.pad([[0,0],[0,0],[3,3],[3,3]])
-                  .Conv2D('conv0', 64, 7, strides=2, activation=BNReLU,
-                      padding='VALID')
-                  .tf.pad([[0,0],[0,0],[1,1],[1,1]])
-                  .MaxPooling('pool0', shape=3, stride=2, padding='VALID')
+                  .Conv2D('conv0', 64, 7, strides=2, activation=BNReLU)
+                  .MaxPooling('pool0', shape=3, stride=2, padding='SAME')
                   .apply(group_func, 'group0', block_func, 64, num_blocks[0], 1)
                   .apply(group_func, 'group1', block_func, 128, num_blocks[1], 2)
                   .apply(group_func, 'group2', block_func, 256, num_blocks[2], 2)
