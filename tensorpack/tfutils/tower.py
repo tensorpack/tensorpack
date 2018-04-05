@@ -333,6 +333,15 @@ class TowerTensorHandle(object):
             name_with_vs = name
         return get_op_or_tensor_by_name(name_with_vs)
 
+    def get_collection(self, name):
+        """
+        Get items from a collection that are added in this tower.
+
+        Args:
+            name (str): the name of the collection
+        """
+        return self._ctx.get_collection_in_tower(name)
+
     @property
     def input(self):
         """

@@ -98,6 +98,7 @@ class MinSaver(Callback):
             reverse (bool): if True, will save the maximum.
             filename (str): the name for the saved model.
                 Defaults to ``min-{monitor_stat}.tfmodel``.
+            checkpoint_dir (str): the directory containing checkpoints.
 
         Example:
             Save the model with minimum validation error to
@@ -108,9 +109,8 @@ class MinSaver(Callback):
                 MinSaver('val-error')
 
         Notes:
-            It assumes that :class:`ModelSaver` is used with
-            the same ``checkpoint_dir``. And it will save
-            the model to that directory as well.
+            It assumes that :class:`ModelSaver` is used with the same ``checkpoint_dir``
+            and appears earlier in the callback list.
             The default for both :class:`ModelSaver` and :class:`MinSaver`
             is ``checkpoint_dir=logger.get_logger_dir()``
         """
