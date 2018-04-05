@@ -117,6 +117,7 @@ def dump_session_params(path):
     Args:
         path(str): the file name to save the parameters. Must ends with npz.
     """
+    # save variables that are GLOBAL, and either TRAINABLE or MODEL
     var = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
     var.extend(tf.get_collection(tf.GraphKeys.MODEL_VARIABLES))
     # TODO dedup
@@ -126,15 +127,33 @@ def dump_session_params(path):
     result = {}
     for v in var:
         result[v.name] = v.eval()
+    save_chkpt_vars(result, path)
+
+
+def save_chkpt_vars(dic, path):
+    """
+    Save variables in dic to path.
+
+    Args:
+        dic: {name: value}
+        path: save as npz if the name ends with '.npz', otherwise save as a checkpoint.
+    """
     logger.info("Variables to save to {}:".format(path))
-    keys = sorted(list(result.keys()))
+    keys = sorted(list(dic.keys()))
     logger.info(pprint.pformat(keys))
-    if path.endswith('.npy'):
-        np.save(path, result)
-    elif path.endswith('.npz'):
-        np.savez_compressed(path, **result)
+
+    assert not path.endswith('.npy')
+    if path.endswith('.npz'):
+        np.savez_compressed(path, **dic)
     else:
-        raise ValueError("Don't know which format to use for {}".format(path))
+        with tf.Graph().as_default(), \
+                tf.Session() as sess:
+            for k, v in six.iteritems(dic):
+                k = get_op_tensor_name(k)[0]
+                _ = tf.Variable(name=k, initial_value=v)    # noqa
+            sess.run(tf.global_variables_initializer())
+            saver = tf.train.Saver()
+            saver.save(sess, path, write_meta_graph=False)
 
 
 def get_checkpoint_path(model_path):

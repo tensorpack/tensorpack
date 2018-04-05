@@ -166,6 +166,8 @@ class MultiProcessPrefetchData(ProxyDataFlow):
             nr_prefetch (int): size of the queue to hold prefetched datapoints.
             nr_proc (int): number of processes to use.
         """
+        if os.name == 'nt':
+            logger.warn("MultiProcessPrefetchData may not support windows!")
         super(MultiProcessPrefetchData, self).__init__(ds)
         try:
             self._size = ds.size()

@@ -35,6 +35,7 @@ class GPUUtilizationTracker(Callback):
         Args:
             devices (list[int]): physical GPU ids. If None, will use CUDA_VISIBLE_DEVICES
         """
+        assert os.name != 'nt', "GPUUtilizationTracker does not support windows!"
         if devices is None:
             env = os.environ.get('CUDA_VISIBLE_DEVICES')
             if env is None:
