@@ -4,6 +4,7 @@
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 import numpy as np
+import sys
 import os
 import uuid
 import argparse

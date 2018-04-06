@@ -98,7 +98,8 @@ def set_logger_dir(dirname, action=None):
         # unload and close the old file handler, so that we may safely delete the logger directory
         _logger.removeHandler(_FILE_HANDLER)
         del _FILE_HANDLER
-    if os.path.isdir(dirname) and len(os.listdir(dirname)):
+    # If directory exists and nonempty (ignore hidden files), prompt for action
+    if os.path.isdir(dirname) and len([x for x in os.listdir(dirname) if x[0] != '.']):
         if not action:
             _logger.warn("""\
 Log directory {} exists! Use 'd' to delete it. """.format(dirname))

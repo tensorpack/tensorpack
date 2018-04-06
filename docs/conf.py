@@ -25,13 +25,13 @@ ON_RTD = (os.environ.get('READTHEDOCS') == 'True')
 
 
 MOCK_MODULES = ['tabulate', 'h5py',
-                'cv2', 'zmq', 'subprocess32', 'lmdb',
+                'cv2', 'zmq', 'lmdb',
                 'sklearn', 'sklearn.datasets',
                 'scipy', 'scipy.misc', 'scipy.io',
                 'tornado', 'tornado.concurrent',
                 'horovod', 'horovod.tensorflow',
-                'pyarrow', 'msgpack', 'msgpack_numpy',
-                'functools32']
+                'pyarrow',
+                'subprocess32', 'functools32']
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock(name=mod_name)
 sys.modules['cv2'].__version__ = '3.2.1'    # fake version

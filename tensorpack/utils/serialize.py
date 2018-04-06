@@ -2,23 +2,7 @@
 # -*- coding: utf-8 -*-
 # File: serialize.py
 
-import sys
-import msgpack
-import msgpack_numpy
-msgpack_numpy.patch()
-
-# https://github.com/apache/arrow/pull/1223#issuecomment-359895666
-old_mod = sys.modules.get('torch', None)
-sys.modules['torch'] = None
-try:
-    import pyarrow as pa
-except ImportError:
-    pa = None
-if old_mod is not None:
-    sys.modules['torch'] = old_mod
-else:
-    del sys.modules['torch']
-
+from .develop import create_dummy_func
 
 __all__ = ['loads', 'dumps']
 
@@ -57,6 +41,25 @@ def loads_pyarrow(buf):
     """
     return pa.deserialize(buf)
 
+
+try:
+    # fixed in pyarrow 0.9: https://github.com/apache/arrow/pull/1223#issuecomment-359895666
+    import pyarrow as pa
+except ImportError:
+    pa = None
+    dumps_pyarrow = create_dummy_func('dumps_pyarrow', ['pyarrow'])  # noqa
+    loads_pyarrow = create_dummy_func('loads_pyarrow', ['pyarrow'])  # noqa
+
+try:
+    import msgpack
+    import msgpack_numpy
+    msgpack_numpy.patch()
+except ImportError:
+    assert pa is not None, "pyarrow is a dependency of tensorpack!"
+    loads_msgpack = create_dummy_func(  # noqa
+        'loads_msgpack', ['msgpack', 'msgpack_numpy'])
+    dumps_msgpack = create_dummy_func(  # noqa
+        'dumps_msgpack', ['msgpack', 'msgpack_numpy'])
 
 if pa is None:
     loads = loads_msgpack

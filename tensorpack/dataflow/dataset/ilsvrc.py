@@ -106,19 +106,28 @@ class ILSVRCMeta(object):
             arr = cv2.resize(arr, size[::-1])
         return arr
 
+    @staticmethod
+    def guess_dir_structure(dir):
+        """
+        Return the directory structure of "dir".
 
-def _guess_dir_structure(dir):
-    subdir = os.listdir(dir)[0]
-    # find a subdir starting with 'n'
-    if subdir.startswith('n') and \
-            os.path.isdir(os.path.join(dir, subdir)):
-        dir_structure = 'train'
-    else:
-        dir_structure = 'original'
-    logger.info(
-        "[ILSVRC12] Assuming directory {} has '{}' structure.".format(
-            dir, dir_structure))
-    return dir_structure
+        Args:
+            dir(str): something like '/path/to/imagenet/val'
+
+        Returns:
+            either 'train' or 'original'
+        """
+        subdir = os.listdir(dir)[0]
+        # find a subdir starting with 'n'
+        if subdir.startswith('n') and \
+                os.path.isdir(os.path.join(dir, subdir)):
+            dir_structure = 'train'
+        else:
+            dir_structure = 'original'
+        logger.info(
+            "[ILSVRC12] Assuming directory {} has '{}' structure.".format(
+                dir, dir_structure))
+        return dir_structure
 
 
 class ILSVRC12Files(RNGDataFlow):
@@ -145,7 +154,7 @@ class ILSVRC12Files(RNGDataFlow):
         if name == 'train':
             dir_structure = 'train'
         if dir_structure is None:
-            dir_structure = _guess_dir_structure(self.full_dir)
+            dir_structure = ILSVRCMeta.guess_dir_structure(self.full_dir)
 
         meta = ILSVRCMeta(meta_dir)
         self.imglist = meta.get_image_list(name, dir_structure)

@@ -8,6 +8,8 @@ so you won't need to look at here very often.
 Here are a list of things that were changed, starting from an early version.
 TensorFlow itself also changed APIs before 1.0 and those are not listed here.
 
++ [2018/04/05] msgpack is replaced by pyarrow. If you want compatibility with old serialized data,
+	manually uninstall pyarrow, and msgpack will be used as a fallback.
 + [2018/03/20] `ModelDesc` starts to use simplified interfaces:
 	+ `_get_inputs()` renamed to `inputs()` and returns `tf.placeholder`s.
 	+ `build_graph(self, tensor1, tensor2)` returns the cost tensor directly.

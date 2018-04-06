@@ -400,6 +400,8 @@ class MultiThreadPrefetchData(DataFlow):
 class PlasmaPutData(ProxyDataFlow):
     """
     Put each data point to plasma shared memory object store, and yield the object id instead.
+
+    Experimental.
     """
     def __init__(self, ds):
         super(PlasmaPutData, self).__init__(ds)
