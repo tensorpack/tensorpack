@@ -301,7 +301,7 @@ class MapDataComponent(MapData):
             r = func(dp[index])
             if r is None:
                 return None
-            dp = copy(dp)   # shallow copy to avoid modifying the list
+            dp = list(dp)   # shallow copy to avoid modifying the list
             dp[index] = r
             return dp
         super(MapDataComponent, self).__init__(ds, f)
@@ -606,6 +606,9 @@ class CacheData(ProxyDataFlow):
     """
     Cache the first pass of a DataFlow completely in memory,
     and produce from the cache thereafter.
+
+    NOTE: The user should not stop the iterator before it has reached the end.
+        Otherwise the cache may be incomplete.
     """
     def __init__(self, ds, shuffle=False):
         """

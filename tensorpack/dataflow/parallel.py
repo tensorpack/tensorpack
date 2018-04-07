@@ -403,12 +403,13 @@ class PlasmaPutData(ProxyDataFlow):
 
     Experimental.
     """
-    def __init__(self, ds):
+    def __init__(self, ds, socket="/tmp/plasma"):
+        self._socket = socket
         super(PlasmaPutData, self).__init__(ds)
 
     def reset_state(self):
         super(PlasmaPutData, self).reset_state()
-        self.client = plasma.connect("/tmp/plasma", "", 0)
+        self.client = plasma.connect(self._socket, "", 0)
 
     def get_data(self):
         for dp in self.ds.get_data():
@@ -421,12 +422,13 @@ class PlasmaGetData(ProxyDataFlow):
     Take plasma object id from a DataFlow, and retrieve it from plasma shared
     memory object store.
     """
-    def __init__(self, ds):
+    def __init__(self, ds, socket="/tmp/plasma"):
+        self._socket = socket
         super(PlasmaGetData, self).__init__(ds)
 
     def reset_state(self):
         super(PlasmaGetData, self).reset_state()
-        self.client = plasma.connect("/tmp/plasma", "", 0)
+        self.client = plasma.connect(self._socket, "", 0)
 
     def get_data(self):
         for dp in self.ds.get_data():

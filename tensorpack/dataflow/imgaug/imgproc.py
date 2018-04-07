@@ -268,7 +268,8 @@ class Lighting(ImageAugmentor):
 
     def _get_augment_params(self, img):
         assert img.shape[2] == 3
-        return self.rng.randn(3) * self.std
+        ret = self.rng.randn(3) * self.std
+        return ret.astype('float32')
 
     def _augment(self, img, v):
         old_dtype = img.dtype

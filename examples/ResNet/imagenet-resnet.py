@@ -25,9 +25,7 @@ from resnet_model import (
 
 
 class Model(ImageNetModel):
-    def __init__(self, depth, data_format='NCHW', mode='resnet'):
-        super(Model, self).__init__(data_format)
-
+    def __init__(self, depth, mode='resnet'):
         if mode == 'se':
             assert depth >= 50
 
@@ -64,17 +62,17 @@ def get_config(model, fake=False):
     assert args.batch % nr_tower == 0
     batch = args.batch // nr_tower
 
+    logger.info("Running on {} towers. Batch size per tower: {}".format(nr_tower, batch))
     if fake:
-        logger.info("For benchmark, batch size is fixed to 64 per tower.")
         dataset_train = FakeData(
-            [[64, 224, 224, 3], [64]], 1000, random=False, dtype='uint8')
+            [[batch, 224, 224, 3], [batch]], 1000, random=False, dtype='uint8')
         callbacks = []
     else:
-        logger.info("Running on {} towers. Batch size per tower: {}".format(nr_tower, batch))
         dataset_train = get_data('train', batch)
         dataset_val = get_data('val', batch)
 
-        BASE_LR = 0.1 * (args.batch / 256.0)
+        START_LR = 0.1
+        BASE_LR = START_LR * (args.batch / 256.0)
         callbacks = [
             ModelSaver(),
             EstimatedTimeLeft(),
@@ -82,10 +80,10 @@ def get_config(model, fake=False):
                 'learning_rate', [(30, BASE_LR * 1e-1), (60, BASE_LR * 1e-2),
                                   (90, BASE_LR * 1e-3), (100, BASE_LR * 1e-4)]),
         ]
-        if BASE_LR > 0.1:
+        if BASE_LR > START_LR:
             callbacks.append(
                 ScheduledHyperParamSetter(
-                    'learning_rate', [(0, 0.1), (3, BASE_LR)], interp='linear'))
+                    'learning_rate', [(0, START_LR), (5, BASE_LR)], interp='linear'))
 
         infs = [ClassificationError('wrong-top1', 'val-error-top1'),
                 ClassificationError('wrong-top5', 'val-error-top5')]
@@ -126,7 +124,8 @@ if __name__ == '__main__':
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
-    model = Model(args.depth, args.data_format, args.mode)
+    model = Model(args.depth, args.mode)
+    model.data_format = args.data_format
     if args.eval:
         batch = 128    # something that can run on one gpu
         ds = get_data('val', batch)

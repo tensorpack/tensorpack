@@ -38,8 +38,10 @@ def get_default_sess_config(mem_fraction=0.99):
     # Didn't see much difference.
 
     conf.gpu_options.per_process_gpu_memory_fraction = 0.99
-    if get_tf_version_number() >= 1.2:
-        conf.gpu_options.force_gpu_compatible = True
+
+    # This hurt performance of large data pipeline:
+    # https://github.com/tensorflow/benchmarks/commit/1528c46499cdcff669b5d7c006b7b971884ad0e6
+    # conf.gpu_options.force_gpu_compatible = True
 
     conf.gpu_options.allow_growth = True
 
@@ -47,7 +49,7 @@ def get_default_sess_config(mem_fraction=0.99):
     # conf.graph_options.rewrite_options.memory_optimization = \
     #     rwc.RewriterConfig.HEURISTICS
 
-    # May hurt performance
+    # May hurt performance?
     # conf.graph_options.optimizer_options.global_jit_level = tf.OptimizerOptions.ON_1
     # conf.graph_options.place_pruned_graph = True
     return conf

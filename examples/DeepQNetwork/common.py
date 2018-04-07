@@ -87,6 +87,7 @@ def eval_with_funcs(predictors, nr_eval, get_player_fn, verbose=False):
 
     for _ in tqdm(range(nr_eval), **get_tqdm_kwargs()):
         fetch()
+    # waiting is necessary, otherwise the estimated mean score is biased
     logger.info("Waiting for all the workers to finish the last run...")
     for k in threads:
         k.stop()

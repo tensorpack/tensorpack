@@ -150,8 +150,10 @@ class ImageNetModel(ModelDesc):
     """
     weight_decay_on_bn = False
 
-    def __init__(self, data_format='NCHW'):
-        self.data_format = data_format
+    """
+    Either 'NCHW' or 'NHWC'
+    """
+    data_format = 'NCHW'
 
     def inputs(self):
         return [tf.placeholder(self.image_dtype, [None, self.image_shape, self.image_shape, 3], 'input'),
