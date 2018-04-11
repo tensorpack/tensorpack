@@ -1,4 +1,7 @@
-Potential Bugs/Feature Requests/Usage Questions Only:
+An issue has to be one of the following:
+1. Unexpected Problems / Potential Bugs
+2. Feature Requests
+3. Usage Questions
 
 Any unexpected problems: __PLEASE ALWAYS INCLUDE__:
 1. What you did:
@@ -18,17 +21,17 @@ Any unexpected problems: __PLEASE ALWAYS INCLUDE__:
 5. About efficiency, PLEASE first read http://tensorpack.readthedocs.io/en/latest/tutorial/performance-tuning.html
 
 Feature Requests:
-+ Improve an existing feature, or add a new feature.
 + You can implement a lot of features by extending tensorpack
 	(See http://tensorpack.readthedocs.io/en/latest/tutorial/index.html#extend-tensorpack).
 	It does not have to be added to tensorpack unless you have a good reason.
-+ We don't take feature requests for examples.
++ We don't take feature requests for implementing new techniques.
+  If you don't know how, ask it as a usage question.
 
 Usage Questions:
 
 + Read the [tutorials](http://tensorpack.readthedocs.io/en/latest/tutorial/index.html#user-tutorials) first.
 + We answer "HOW to do X in tensorpack" for a specific well-defined X.
   We don't answer general machine learning questions,
-  such as "how to improve my model" or "I don't understand the paper".
+  such as "what networks to use" or "I don't understand the paper".
 
 You can also use gitter (https://gitter.im/tensorpack/users) for more casual discussions.

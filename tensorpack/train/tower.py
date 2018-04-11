@@ -78,11 +78,25 @@ class TowerTrainer(Trainer):
         Returns a callable predictor built under ``TowerContext(is_training=False)``.
 
         Args:
-            input_names (list), output_names(list): list of names
+            input_names (list): list of input names, matching the inputs declared for the trainer.
+            output_names(list): list of tensor names without the tower prefix.
             device (int): build the predictor on device '/gpu:{device}' or use -1 for '/cpu:0'.
 
         Returns:
             an :class:`OnlinePredictor`.
+
+        Examples:
+
+        .. code-block:: none
+
+            # in the graph:
+            interesting_tensor = tf.identity(x, name='fun')
+            # in _setup_graph callback method:
+            self._predictor = self.trainer.get_predictor(['input1'], ['fun'])
+            # After session is initialized (see Tutorials - Write a Callback), can use it by:
+            outputs = self._predictor(inputs)
+
+        The CycleGAN example and DQN example have more concrete use of this method.
         """
         assert self.tower_func is not None, "Must set tower_func on the trainer to use get_predictor()!"
         tower_name = 'tower-pred-{}'.format(device) if device >= 0 else 'tower-pred-cpu'

@@ -84,6 +84,7 @@ class TowerContext(object):
     def get_collection_in_tower(self, key):
         """
         Get items from this collection that are added in the current tower.
+        These items may or may not start with the same prefix as the tower.
         """
         return self._collection_guard.get_collection_in_tower(key)
 
@@ -336,6 +337,7 @@ class TowerTensorHandle(object):
     def get_collection(self, name):
         """
         Get items from a collection that are added in this tower.
+        These items may or may not start with the same prefix as the tower.
 
         Args:
             name (str): the name of the collection
