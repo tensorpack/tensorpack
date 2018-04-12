@@ -16,7 +16,7 @@ from imagenet_utils import (
     ImageNetModel, get_imagenet_dataflow, fbresnet_augmentor)
 
 
-def GroupNorm(x, group):
+def GroupNorm(x, group, gamma_initializer=tf.constant_initializer(1.)):
     """
     https://arxiv.org/abs/1803.08494
     """
@@ -39,7 +39,7 @@ def GroupNorm(x, group):
     beta = tf.get_variable('beta', [chan], initializer=tf.constant_initializer())
     beta = tf.reshape(beta, new_shape)
 
-    gamma = tf.get_variable('gamma', [chan], initializer=tf.constant_initializer(1.0))
+    gamma = tf.get_variable('gamma', [chan], initializer=gamma_initializer)
     gamma = tf.reshape(gamma, new_shape)
 
     out = tf.nn.batch_normalization(x, mean, var, beta, gamma, 1e-5, name='output')

@@ -64,12 +64,11 @@ def get_config(model, fake=False):
 
     logger.info("Running on {} towers. Batch size per tower: {}".format(nr_tower, batch))
     if fake:
-        dataset_train = FakeData(
-            [[batch, 224, 224, 3], [batch]], 1000, random=False, dtype='uint8')
+        data = QueueInput(FakeData(
+            [[batch, 224, 224, 3], [batch]], 1000, random=False, dtype='uint8'))
         callbacks = []
     else:
-        dataset_train = get_data('train', batch)
-        dataset_val = get_data('val', batch)
+        data = QueueInput(get_data('train', batch))
 
         START_LR = 0.1
         BASE_LR = START_LR * (args.batch / 256.0)
@@ -87,6 +86,7 @@ def get_config(model, fake=False):
 
         infs = [ClassificationError('wrong-top1', 'val-error-top1'),
                 ClassificationError('wrong-top5', 'val-error-top5')]
+        dataset_val = get_data('val', batch)
         if nr_tower == 1:
             # single-GPU inference with queue prefetch
             callbacks.append(InferenceRunner(QueueInput(dataset_val), infs))
@@ -97,7 +97,7 @@ def get_config(model, fake=False):
 
     return TrainConfig(
         model=model,
-        dataflow=dataset_train,
+        data=data,
         callbacks=callbacks,
         steps_per_epoch=100 if args.fake else 1280000 // args.batch,
         max_epoch=105,

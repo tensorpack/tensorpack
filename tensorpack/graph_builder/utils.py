@@ -330,6 +330,7 @@ class GradientPacker(object):
         if len(dtypes) != 1:
             logger.info("Skip GradientPacker due to inconsistent gradient types.")
             return False
+        self._grad_dtype = grads[0].dtype
 
         split_size = self._total_size // self._num_split
         split_size_last = self._total_size - split_size * (self._num_split - 1)
@@ -352,12 +353,14 @@ class GradientPacker(object):
 
         with cached_name_scope("GradientPacker", top_level=False):
             concat_grads = tf.concat([tf.reshape(g, [-1]) for g in grads], 0, name='concatenated_grads')
+            # concat_grads = tf.cast(concat_grads, tf.float16)
             grad_packs = tf.split(concat_grads, self._split_sizes)
             return grad_packs
 
     def unpack(self, grad_packs):
         with cached_name_scope("GradientPacker", top_level=False):
             concat_grads = tf.concat(grad_packs, 0, name='concatenated_packs')
+            # concat_grads = tf.cast(concat_grads, self._grad_dtype)
             flattened_grads = tf.split(concat_grads, self._sizes)
             grads = [tf.reshape(g, shape) for g, shape in zip(flattened_grads, self._shapes)]
             return grads
