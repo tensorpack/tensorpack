@@ -95,7 +95,7 @@ class DataParallelOfflinePredictor(OnlinePredictor):
             for idx, t in enumerate(towers):
                 tower_name = 'tower' + str(t)
 
-                inputs_desc = [InputDesc(desc.type, desc.shape, tower_name + '/' + desc.name)
+                inputs_desc = [InputDesc(desc.type, desc.shape, tower_name + '_' + desc.name)
                                for desc in config.inputs_desc]
                 input = PlaceholderInput()
                 input.setup(inputs_desc)
