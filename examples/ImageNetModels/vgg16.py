@@ -113,6 +113,7 @@ def get_config():
     nr_tower = max(get_nr_gpu(), 1)
     batch = args.batch
     total_batch = batch * nr_tower
+    assert total_batch >= 256   # otherwise the learning rate warmup is wrong.
     BASE_LR = 0.01 * (total_batch / 256.)
 
     logger.info("Running on {} towers. Batch size per tower: {}".format(nr_tower, batch))
