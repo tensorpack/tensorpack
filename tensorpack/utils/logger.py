@@ -114,7 +114,13 @@ Press any other key to exit. """)
             shutil.move(dirname, backup_name)
             info("Directory '{}' backuped to '{}'".format(dirname, backup_name))  # noqa: F821
         elif act == 'd':
-            shutil.rmtree(dirname)
+            try:
+                shutil.rmtree(dirname)
+            except OSError:
+                num_files = len([x for x in os.listdir(dirname) if x[0] != '.'])
+                if num_files > 0:
+                    raise
+
         elif act == 'n':
             dirname = dirname + _get_time_str()
             info("Use a new log directory {}".format(dirname))  # noqa: F821

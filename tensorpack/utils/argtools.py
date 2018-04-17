@@ -141,7 +141,7 @@ def shape4d(a, data_format='channels_last'):
 
 
 @memoized
-def log_once(message, func):
+def log_once(message, func='info'):
     """
     Log certain message only once. Call this function more than one times with
     the same message will result in no-op.

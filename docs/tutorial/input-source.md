@@ -42,12 +42,11 @@ Both are supported in tensorpack, while we recommend using Python.
 ### TensorFlow Reader: Pros
 * Faster read/preprocessing.
 
-	* Potentially true, but not necessarily. With Python you can call a variety of other fast libraries, which
-		you might not have a good support in TF. For example, LMDB could be faster than TFRecords.
+	* Often true, but not necessarily. With Python you have access to many other fast libraries, which might be unsupported in TF.
 	* Python may be just fast enough.
 
-		As long as data preparation runs faster than training, and the latency of all four blocks in the
-		above figure is hidden, it makes no difference at all.
+		As long as data preparation keeps up with training, and the latency of all four blocks in the
+		above figure is hidden, running faster brings no more gains to overall throughput.
 		For most types of problems, up to the scale of multi-GPU ImageNet training,
 		Python can offer enough speed if you use a fast library (e.g. `tensorpack.dataflow`).
 		See the [Efficient DataFlow](efficient-dataflow.html) tutorial on how to build a fast Python reader with DataFlow.
@@ -56,15 +55,15 @@ Both are supported in tensorpack, while we recommend using Python.
 
 	* True. But as mentioned above, the latency can usually be hidden.
 
-		In tensorpack, TF queues are used to hide the "Copy to TF" latency,
+		In tensorpack, TF queues are usually used to hide the "Copy to TF" latency,
 		and TF `StagingArea` can help hide the "Copy to GPU" latency.
 		They are used by most examples in tensorpack.
 
 ### TensorFlow Reader: Cons
 The disadvantage of TF reader is obvious and it's huge: it's __too complicated__.
 
-Unlike running a mathematical model, reading data is a complicated and badly-structured task.
-You need to handle different data format, handle corner cases in noisy data,
+Unlike running a mathematical model, reading data is a complicated and poorly-structured task.
+You need to handle different formats, handle corner cases, noisy data,
 which all require condition operations, loops, sometimes even exception handling. These operations
 are __naturally not suitable__ for a symbolic graph.
 
@@ -97,7 +96,7 @@ For example,
 1. [FeedInput](../modules/input_source.html#tensorpack.input_source.FeedInput):
 	Come from a DataFlow and get fed to the graph (slow).
 2. [QueueInput](../modules/input_source.html#tensorpack.input_source.QueueInput):
-  Come from a DataFlow and get prefetched on CPU by a TF queue.
+  Come from a DataFlow and get buffered on CPU by a TF queue.
 3. [StagingInput](../modules/input_source.html#tensorpack.input_source.StagingInput):
 	Come from some `InputSource`, then prefetched on GPU by a TF StagingArea.
 4. [TFDatasetInput](http://tensorpack.readthedocs.io/en/latest/modules/input_source.html#tensorpack.input_source.TFDatasetInput)
@@ -105,6 +104,10 @@ For example,
 5. [dataflow_to_dataset](http://tensorpack.readthedocs.io/en/latest/modules/input_source.html#tensorpack.input_source.TFDatasetInput.dataflow_to_dataset)
 	Come from a DataFlow, and further processed by `tf.data.Dataset`.
 6. [TensorInput](../modules/input_source.html#tensorpack.input_source.TensorInput):
-	Come from some tensors you wrote.
+	Come from some tensors you define (can be reading ops, for example).
 7. [ZMQInput](http://tensorpack.readthedocs.io/en/latest/modules/input_source.html#tensorpack.input_source.ZMQInput)
-	Come from some ZeroMQ pipe, where the load/preprocessing may happen on a different machine.
+	Come from some ZeroMQ pipe, where the reading/preprocessing may happen in a different process or even a different machine.
+
+Typically, we recommend `QueueInput + StagingInput` as it's good for most use cases.
+If your data has to come from a separate process for whatever reasons, use `ZMQInput`.
+If you still like to use TF reading ops, define a `tf.data.Dataset` and use `TFDatasetInput`.

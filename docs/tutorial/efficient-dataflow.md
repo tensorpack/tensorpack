@@ -1,10 +1,9 @@
 # Efficient DataFlow
 
-This tutorial gives an overview of how to build an efficient DataFlow, using ImageNet
-dataset as an example.
+This tutorial gives an overview of how to build an efficient DataFlow, using ImageNet dataset as an example.
 Our goal in the end is to have
 a __Python generator__ which yields preprocessed ImageNet images and labels as fast as possible.
-Since it is simply a generator interface, you can use the DataFlow in other Python-based frameworks (e.g. Keras)
+Since it is simply a generator interface, you can use the DataFlow in any Python-based frameworks (e.g. PyTorch, Keras)
 or your own code as well.
 
 **What we are going to do**: We'll use ILSVRC12 dataset, which contains 1.28 million images.
@@ -13,10 +12,10 @@ The average resolution is about 400x350 <sup>[[1]]</sup>.
 Following the [ResNet example](../examples/ResNet), we need images in their original resolution,
 so we will read the original dataset (instead of a down-sampled version), and
 then apply complicated preprocessing to it.
-We will need to reach a speed of, roughly **1k ~ 2k images per second**, to keep GPUs busy.
+We aim to reach a speed of, roughly **1k~3k images per second**, to keep GPUs busy.
 
 Some things to know before reading:
-1. For smaller datasets (e.g. several GBs of images with lightweight preprocessing), a simple reader plus some prefetch should usually work well enough.
+1. For smaller datasets (e.g. several GBs of images with lightweight preprocessing), a simple reader plus some multiprocess prefetch should usually work well enough.
 	 Therefore you don't have to understand this tutorial in depth unless you really find your data being the bottleneck.
 	 This tutorial could be a bit complicated for people new to system architectures, but you do need these to be able to run fast enough on ImageNet-scale dataset.
 2. Having a fast Python generator **alone** may or may not improve your overall training speed.
@@ -30,6 +29,9 @@ Some things to know before reading:
 4. The actual performance would depend on not only the disk, but also memory (for caching) and CPU (for data processing).
 	 You may need to tune the parameters (#processes, #threads, size of buffer, etc.)
 	 or change the pipeline for new tasks and new machines to achieve the best performance.
+
+The benchmark code for this tutorial can be found in [tensorpack/benchmarks](https://github.com/tensorpack/benchmarks/tree/master/ImageNet),
+including comparison with a similar (but simpler) pipeline built with `tf.data`.
 
 ## Random Read
 

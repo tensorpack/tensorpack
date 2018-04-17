@@ -58,14 +58,14 @@ class RatioCounter(object):
         self._tot = 0
         self._cnt = 0
 
-    def feed(self, cnt, tot=1):
+    def feed(self, count, total=1):
         """
         Args:
             cnt(int): the count of some event of interest.
             tot(int): the total number of events.
         """
-        self._tot += tot
-        self._cnt += cnt
+        self._tot += total
+        self._cnt += count
 
     @property
     def ratio(self):
@@ -74,12 +74,20 @@ class RatioCounter(object):
         return self._cnt * 1.0 / self._tot
 
     @property
-    def count(self):
+    def total(self):
         """
         Returns:
             int: the total
         """
         return self._tot
+
+    @property
+    def count(self):
+        """
+        Returns:
+            int: the total
+        """
+        return self._cnt
 
 
 class Accuracy(RatioCounter):

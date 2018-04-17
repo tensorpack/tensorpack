@@ -135,7 +135,6 @@ def eval_on_ILSVRC12(model, sessinit, dataflow):
 
 
 class ImageNetModel(ModelDesc):
-    weight_decay = 1e-4
     image_shape = 224
 
     """
@@ -146,21 +145,34 @@ class ImageNetModel(ModelDesc):
     image_dtype = tf.uint8
 
     """
-    Whether to apply weight decay on BN parameters.
-    """
-    weight_decay_on_bn = False
-
-    """
     Either 'NCHW' or 'NHWC'
     """
     data_format = 'NCHW'
+
+    """
+    Whether the image is BGR or RGB. If using DataFlow, then it should be BGR.
+    """
+    image_bgr = True
+
+    weight_decay = 1e-4
+
+    """
+    To apply on normalization parameters, use '.*/W|.*/gamma|.*/beta'
+    """
+    weight_decay_pattern = '.*/W'
+
+    """
+    Scale the loss, for whatever reasons (e.g., gradient averaging, fp16 training, etc)
+    """
+    loss_scale = 1.
 
     def inputs(self):
         return [tf.placeholder(self.image_dtype, [None, self.image_shape, self.image_shape, 3], 'input'),
                 tf.placeholder(tf.int32, [None], 'label')]
 
     def build_graph(self, image, label):
-        image = ImageNetModel.image_preprocess(image, bgr=True)
+        image = ImageNetModel.image_preprocess(image, bgr=self.image_bgr)
+        assert self.data_format in ['NCHW', 'NHWC']
         if self.data_format == 'NCHW':
             image = tf.transpose(image, [0, 3, 1, 2])
 
@@ -168,18 +180,20 @@ class ImageNetModel(ModelDesc):
         loss = ImageNetModel.compute_loss_and_error(logits, label)
 
         if self.weight_decay > 0:
-            if self.weight_decay_on_bn:
-                pattern = '.*/W|.*/gamma|.*/beta'
-            else:
-                pattern = '.*/W'
-            wd_loss = regularize_cost(pattern, tf.contrib.layers.l2_regularizer(self.weight_decay),
+            wd_loss = regularize_cost(self.weight_decay_pattern,
+                                      tf.contrib.layers.l2_regularizer(self.weight_decay),
                                       name='l2_regularize_loss')
             add_moving_summary(loss, wd_loss)
             total_cost = tf.add_n([loss, wd_loss], name='cost')
         else:
             total_cost = tf.identity(loss, name='cost')
             add_moving_summary(total_cost)
-        return total_cost
+
+        if self.loss_scale != 1.:
+            logger.info("Scaling the total loss by {} ...".format(self.loss_scale))
+            return total_cost * self.loss_scale
+        else:
+            return total_cost
 
     @abstractmethod
     def get_logits(self, image):
