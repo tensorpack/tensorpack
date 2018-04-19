@@ -98,8 +98,12 @@ def set_logger_dir(dirname, action=None):
         # unload and close the old file handler, so that we may safely delete the logger directory
         _logger.removeHandler(_FILE_HANDLER)
         del _FILE_HANDLER
-    # If directory exists and nonempty (ignore hidden files), prompt for action
-    if os.path.isdir(dirname) and len([x for x in os.listdir(dirname) if x[0] != '.']):
+
+    def dir_nonempty(dirname):
+        # If directory exists and nonempty (ignore hidden files), prompt for action
+        return os.path.isdir(dirname) and len([x for x in os.listdir(dirname) if x[0] != '.'])
+
+    if dir_nonempty(dirname):
         if not action:
             _logger.warn("""\
 Log directory {} exists! Use 'd' to delete it. """.format(dirname))
@@ -114,13 +118,9 @@ Press any other key to exit. """)
             shutil.move(dirname, backup_name)
             info("Directory '{}' backuped to '{}'".format(dirname, backup_name))  # noqa: F821
         elif act == 'd':
-            try:
-                shutil.rmtree(dirname)
-            except OSError:
-                num_files = len([x for x in os.listdir(dirname) if x[0] != '.'])
-                if num_files > 0:
-                    raise
-
+            shutil.rmtree(dirname, ignore_errors=True)
+            if dir_nonempty(dirname):
+                shutil.rmtree(dirname, ignore_errors=False)
         elif act == 'n':
             dirname = dirname + _get_time_str()
             info("Use a new log directory {}".format(dirname))  # noqa: F821

@@ -1,6 +1,9 @@
 
 ## Write a Callback
 
+__Everything__ other than the training iterations happen in the callbacks.
+Most of the fancy things you want to do will probably end up here.
+
 The time where each callback method gets called is demonstrated in this snippet.
 ```python
 def train(self):
@@ -37,13 +40,13 @@ You can overwrite any of the following methods to define a new callback:
   To access tensors/ops which are already defined,
   you can use TF methods such as
   [`graph.get_tensor_by_name`](https://www.tensorflow.org/api_docs/python/tf/Graph#get_tensor_by_name).
-  If you're using a `TowerTrainer` instance, more tools are available:
+  If you're using a `TowerTrainer`, more tools are available:
 
   - Use `self.trainer.tower_func.towers` to access the
   	[tower handles](../../modules/tfutils.html#tensorpack.tfutils.tower.TowerTensorHandles),
   	and therefore the tensors in each tower.
   - [self.get_tensors_maybe_in_tower()](../../modules/callbacks.html#tensorpack.callbacks.Callback.get_tensors_maybe_in_tower)
-  	is a helper function to access tensors in the first training tower.
+  	is a helper function to look for tensors first globally, then in the first training tower.
   - [self.trainer.get_predictor()](../../modules/train.html#tensorpack.train.TowerTrainer.get_predictor)
   	is a helper function to create a callable under inference mode.
 
@@ -105,7 +108,7 @@ You can overwrite any of the following methods to define a new callback:
 * Write stuff to the monitor backend, by `self.trainer.monitors.put_xxx`.
   The monitors might direct your events to TensorFlow events file, JSON file, stdout, etc.
   You can access history monitor data as well. See the docs for [Monitors](../../modules/callbacks.html#tensorpack.callbacks.Monitors)
-* Access the current status of training, such as `self.epoch_num`, `self.global_step`. See [here](../../modules/callbacks.html#tensorpack.callbacks.Callback)
+* Access the current status of training, such as `self.epoch_num`, `self.global_step`. See docs of [Callback](../../modules/callbacks.html#tensorpack.callbacks.Callback)
 * Stop training by `raise StopTraining()` (with `from tensorpack.train import StopTraining`).
 * Anything else that can be done with plain python.
 
@@ -120,4 +123,5 @@ You can overwrite any of the following methods to define a new callback:
   [PeriodicTrigger](../../modules/callbacks.html#tensorpack.callbacks.PeriodicTrigger),
   [PeriodicCallback](../../modules/callbacks.html#tensorpack.callbacks.PeriodicCallback),
   or [EnableCallbackIf](../../modules/callbacks.html#tensorpack.callbacks.EnableCallbackIf).
+	Of course you also have the freedom to implement "what to do" and "when to do" altogether.
 

@@ -40,7 +40,7 @@ Model:
 
 Speed:
 
-1. The training will start very slow due to convolution warmup, until about 3k steps to reach a maximum speed.
+1. The training will start very slow due to convolution warmup, until about 10k steps to reach a maximum speed.
 	 Then the training speed will slowly decrease due to more accurate proposals.
 
 2. Inference is not quite fast, because either you disable convolution autotune and end up with

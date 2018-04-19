@@ -53,12 +53,12 @@ MaskRCNN results contain both bbox and segm mAP.
 
 |Backbone|`FASTRCNN_BATCH`|resolution |schedule|mAP (bbox/segm)|Time         |
 |   -    |    -           |    -      |   -    |   -           |   -         |
-|R-50    |64              |(600, 1024)|280k    |33.1           |18h on 8 V100|
-|R-50    |512             |(800, 1333)|280k    |35.6           |55h on 8 P100|
-|R-50    |512             |(800, 1333)|360k    |36.7           |49h on 8 V100|
-|R-50    |256             |(800, 1333)|280k    |36.8/32.1      |39h on 8 P100|
-|R-50    |512							|(800, 1333)|360k    |37.7/33.0      |72h on 8 P100|
-|R-101   |512             |(800, 1333)|280k    |40.1/34.4      |70h on 8 P100|
+|R-50    |64              |(600, 1024)|280k    |33.1           |18h on 8 V100s|
+|R-50    |512             |(800, 1333)|280k    |35.6           |55h on 8 P100s|
+|R-50    |512             |(800, 1333)|360k    |36.6           |49h on 8 V100s|
+|R-50    |256             |(800, 1333)|280k    |36.8/32.1      |39h on 8 P100s|
+|R-50    |512							|(800, 1333)|360k    |37.8/33.2      |51h on 8 V100s|
+|R-101   |512             |(800, 1333)|280k    |40.1/34.4      |70h on 8 P100s|
 
 The two 360k models have identical configurations with
 `R50-C4-2x` configuration in
