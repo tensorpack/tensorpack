@@ -24,9 +24,6 @@ To train Image-to-Image translation model with image pairs:
     # you can download some data from the original authors:
     # https://people.eecs.berkeley.edu/~tinghuiz/projects/pix2pix/datasets/
 
-Speed:
-    On GTX1080 with BATCH=1, the speed is about 9.3it/s (the original torch version is 9.5it/s)
-
 Training visualization will appear be in tensorboard.
 To visualize on test set:
     ./Image2Image.py --sample --data /path/to/test/datadir --mode {AtoB,BtoA} --load model
@@ -71,7 +68,7 @@ class Model(GANModelDesc):
     def generator(self, imgs):
         # imgs: input: 256x256xch
         # U-Net structure, it's slightly different from the original on the location of relu/lrelu
-        with argscope(BatchNorm, use_local_stat=True), \
+        with argscope(BatchNorm, training=True), \
                 argscope(Dropout, is_training=True):
             # always use local stat for BN, and apply dropout even in testing
             with argscope(Conv2D, kernel_size=4, strides=2, activation=BNLReLU):

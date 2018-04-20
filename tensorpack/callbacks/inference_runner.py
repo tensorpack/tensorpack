@@ -56,11 +56,14 @@ def _inference_context():
 
 class InferenceRunnerBase(Callback):
     """ Base class for inference runner.
-        Please note that InferenceRunner will use `input.size()` to determine
-        how much iterations to run, so you're responsible to ensure that
-        `size()` is accurate.
 
-        Also, InferenceRunner assumes that `trainer.model` exists.
+    Note:
+
+    1. InferenceRunner will use `input.size()` to determine
+        how much iterations to run, so you're responsible to ensure that
+        `size()` is reasonable.
+
+    2. Only works with instances of `TowerTrainer`.
     """
     def __init__(self, input, infs):
         """

@@ -208,6 +208,8 @@ def add_moving_summary(*args, **kwargs):
         collection (str or None): the name of the collection to add EMA-maintaining ops.
             The default will work together with the default
             :class:`MovingAverageSummary` callback.
+        summary_collections ([str]): the names of collections to add the
+            summary op. Default is TF's default (`tf.GraphKeys.SUMMARIES`).
 
     Returns:
         [tf.Tensor]: list of tensors returned by assign_moving_average,
@@ -215,6 +217,7 @@ def add_moving_summary(*args, **kwargs):
     """
     decay = kwargs.pop('decay', 0.95)
     coll = kwargs.pop('collection', MOVING_SUMMARY_OPS_KEY)
+    summ_coll = kwargs.pop('summary_collections', None)
     assert len(kwargs) == 0, "Unknown arguments: " + str(kwargs)
 
     ctx = get_current_tower_context()
@@ -248,7 +251,9 @@ def add_moving_summary(*args, **kwargs):
                     zero_debias=True, name=name + '_EMA_apply')
             ema_ops.append(ema_op)
         with tf.name_scope(None):
-            tf.summary.scalar(name + '-summary', ema_op)    # write the EMA value as a summary
+            tf.summary.scalar(
+                name + '-summary', ema_op,
+                collections=summ_coll)    # write the EMA value as a summary
     if coll is not None:
         for op in ema_ops:
             tf.add_to_collection(coll, op)

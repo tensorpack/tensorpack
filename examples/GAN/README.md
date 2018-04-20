@@ -20,7 +20,6 @@ Reproduce the following GAN-related methods, 100~200 lines each:
 
 + CycleGAN ([Unpaired Image-to-Image Translation using Cycle-Consistent Adversarial Networks](https://arxiv.org/abs/1703.10593))
 
-
 Please see the __docstring__ in each script for detailed usage and pretrained models. MultiGPU training is supported.
 
 ## [DCGAN.py](DCGAN.py)
