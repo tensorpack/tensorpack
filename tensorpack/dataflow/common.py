@@ -295,16 +295,17 @@ class MapDataComponent(MapData):
                 return None to discard this datapoint.
             index (int): index of the component.
         """
-        index = int(index)
+        self._index = int(index)
+        self._func = func
+        super(MapDataComponent, self).__init__(ds, self._mapper)
 
-        def f(dp):
-            r = func(dp[index])
-            if r is None:
-                return None
-            dp = list(dp)   # shallow copy to avoid modifying the list
-            dp[index] = r
-            return dp
-        super(MapDataComponent, self).__init__(ds, f)
+    def _mapper(self, dp):
+        r = self._func(dp[self._index])
+        if r is None:
+            return None
+        dp = list(dp)   # shallow copy to avoid modifying the list
+        dp[self._index] = r
+        return dp
 
 
 class RepeatedData(ProxyDataFlow):

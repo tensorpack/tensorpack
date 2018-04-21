@@ -170,7 +170,9 @@ class MultiProcessPrefetchData(ProxyDataFlow):
             nr_proc (int): number of processes to use.
         """
         if os.name == 'nt':
-            logger.warn("MultiProcessPrefetchData may not support windows!")
+            logger.warn("MultiProcessPrefetchData does support windows. \
+However, windows requires more strict picklability on processes, which may \
+lead of failure on some of the code.")
         super(MultiProcessPrefetchData, self).__init__(ds)
         try:
             self._size = ds.size()

@@ -103,22 +103,21 @@ class AugmentImageComponent(MapDataComponent):
             self.augs = augmentors
         else:
             self.augs = AugmentorList(augmentors)
+        self._copy = copy
 
-        exception_handler = ExceptionHandler(catch_exceptions)
-
-        def func(x):
-            check_dtype(x)
-            with exception_handler.catch():
-                if copy:
-                    x = copy_mod.deepcopy(x)
-                return self.augs.augment(x)
-
-        super(AugmentImageComponent, self).__init__(
-            ds, func, index)
+        self._exception_handler = ExceptionHandler(catch_exceptions)
+        super(AugmentImageComponent, self).__init__(ds, self._aug_mapper, index)
 
     def reset_state(self):
         self.ds.reset_state()
         self.augs.reset_state()
+
+    def _aug_mapper(self, x):
+        check_dtype(x)
+        with self._exception_handler.catch():
+            if self._copy:
+                x = copy_mod.deepcopy(x)
+            return self.augs.augment(x)
 
 
 class AugmentImageCoordinates(MapData):
@@ -142,26 +141,29 @@ class AugmentImageCoordinates(MapData):
         else:
             self.augs = AugmentorList(augmentors)
 
-        exception_handler = ExceptionHandler(catch_exceptions)
+        self._img_index = img_index
+        self._coords_index = coords_index
+        self._copy = copy
+        self._exception_handler = ExceptionHandler(catch_exceptions)
 
-        def func(dp):
-            with exception_handler.catch():
-                img, coords = dp[img_index], dp[coords_index]
-                check_dtype(img)
-                validate_coords(coords)
-                if copy:
-                    img, coords = copy_mod.deepcopy((img, coords))
-                img, prms = self.augs._augment_return_params(img)
-                dp[img_index] = img
-                coords = self.augs._augment_coords(coords, prms)
-                dp[coords_index] = coords
-                return dp
-
-        super(AugmentImageCoordinates, self).__init__(ds, func)
+        super(AugmentImageCoordinates, self).__init__(ds, self._aug_mapper)
 
     def reset_state(self):
         self.ds.reset_state()
         self.augs.reset_state()
+
+    def _aug_mapper(self, dp):
+        with self._exception_handler.catch():
+            img, coords = dp[self._img_index], dp[self._coords_index]
+            check_dtype(img)
+            validate_coords(coords)
+            if self._copy:
+                img, coords = copy_mod.deepcopy((img, coords))
+            img, prms = self.augs._augment_return_params(img)
+            dp[self._img_index] = img
+            coords = self.augs._augment_coords(coords, prms)
+            dp[self._coords_index] = coords
+            return dp
 
 
 class AugmentImageComponents(MapData):
