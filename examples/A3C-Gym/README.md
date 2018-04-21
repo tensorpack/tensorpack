@@ -24,9 +24,9 @@ because the bottleneck in this implementation is not computation but simulation.
 Some practicical notes:
 
 1. Prefer Python 3; Windows not supported.
-2. Occasionally, processes may not get terminated completely. It is suggested to use `systemd-run` to run any
-multiprocess Python program to get a cgroup dedicated for the task.
-3. Training with a significant slower speed (e.g. on CPU) will result in very bad score, probably because of the slightly off-policy implementation.
+2. Training with a significant slower speed (e.g. on CPU) will result in very bad score, probably because of the slightly off-policy implementation.
+3. Occasionally, processes may not get terminated completely.
+	If you're using Linux, install [python-prctl](https://pypi.org/project/python-prctl/) to prevent this.
 
 ### To test a model:
 

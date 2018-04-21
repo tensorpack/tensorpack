@@ -16,7 +16,8 @@ import zmq
 
 from tensorpack.utils import logger
 from tensorpack.utils.serialize import loads, dumps
-from tensorpack.utils.concurrency import LoopThread, ensure_proc_terminate
+from tensorpack.utils.concurrency import (
+    LoopThread, ensure_proc_terminate, enable_death_signal)
 
 __all__ = ['SimulatorProcess', 'SimulatorMaster',
            'SimulatorProcessStateExchange',
@@ -65,6 +66,7 @@ class SimulatorProcessStateExchange(SimulatorProcessBase):
         self.s2c = pipe_s2c
 
     def run(self):
+        enable_death_signal()
         player = self._build_player()
         context = zmq.Context()
         c2s_socket = context.socket(zmq.PUSH)

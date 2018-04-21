@@ -171,6 +171,21 @@ def ensure_proc_terminate(proc):
     atexit.register(stop_proc_by_weak_ref, weakref.ref(proc))
 
 
+def enable_death_signal():
+    """
+    Set the "death signal" of the current process, so that
+    the current process will be cleaned with guarantee
+    in case the parent dies accidentally.
+    """
+    try:
+        import prctl
+    except ImportError:
+        return
+    else:
+        # is SIGHUP a good choice?
+        prctl.set_pdeathsig(signal.SIGHUP)
+
+
 def is_main_thread():
     if six.PY2:
         return isinstance(threading.current_thread(), threading._MainThread)

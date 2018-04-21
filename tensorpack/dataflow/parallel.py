@@ -16,6 +16,7 @@ import atexit
 from .base import DataFlow, ProxyDataFlow, DataFlowTerminated, DataFlowReentrantGuard
 from ..utils.concurrency import (ensure_proc_terminate,
                                  mask_sigint, start_proc_mask_signal,
+                                 enable_death_signal,
                                  StoppableThread)
 from ..utils.serialize import loads, dumps
 from ..utils import logger
@@ -36,8 +37,9 @@ def _bind_guard(sock, name):
         sock.bind(name)
     except zmq.ZMQError:
         logger.error(
-            "ZMQError in socket.bind(). Perhaps you're \
-            using pipes on a non-local file system. See documentation of PrefetchDataZMQ for more information.")
+            "ZMQError in socket.bind('{}'). Perhaps you're \
+using pipes on a non-local file system. See documentation of PrefetchDataZMQ \
+for more information.".format(name))
         raise
 
 
@@ -153,6 +155,7 @@ class MultiProcessPrefetchData(ProxyDataFlow):
             self.queue = queue
 
         def run(self):
+            enable_death_signal()
             # reset all ds so each process will produce different data
             self.ds.reset_state()
             while True:
@@ -250,6 +253,7 @@ class PrefetchDataZMQ(_MultiProcessZMQDataFlow):
             self.hwm = hwm
 
         def run(self):
+            enable_death_signal()
             self.ds.reset_state()
             context = zmq.Context()
             socket = context.socket(zmq.PUSH)

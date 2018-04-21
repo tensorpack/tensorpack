@@ -65,7 +65,13 @@ class DataFlow(object):
 
     def reset_state(self):
         """
-        Reset state of the dataflow. It has to be called before producing datapoints.
+        Reset state of the dataflow.
+        It **has to** be called once and only once before producing datapoints.
+
+        Note:
+            1. If the dataflow is forked, each process will call this method
+               before producing datapoints.
+            2. The caller thread of this method must remain alive to keep this dataflow alive.
 
         For example, RNG **has to** be reset if used in the DataFlow,
         otherwise it won't work well with prefetching, because different

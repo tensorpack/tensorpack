@@ -10,7 +10,7 @@ from six.moves import queue
 import zmq
 
 from .base import DataFlow, ProxyDataFlow, DataFlowReentrantGuard
-from ..utils.concurrency import StoppableThread
+from ..utils.concurrency import StoppableThread, enable_death_signal
 from ..utils import logger
 from ..utils.serialize import loads, dumps
 
@@ -225,6 +225,7 @@ class MultiProcessMapDataZMQ(_ParallelMapData, _MultiProcessZMQDataFlow):
             self.hwm = hwm
 
         def run(self):
+            enable_death_signal()
             ctx = zmq.Context()
             socket = ctx.socket(zmq.REP)
             socket.setsockopt(zmq.IDENTITY, self.identity)
