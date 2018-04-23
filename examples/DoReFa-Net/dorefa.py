@@ -55,3 +55,36 @@ def get_dorefa(bitW, bitA, bitG):
         with G.gradient_override_map({"Identity": "FGGrad"}):
             return tf.identity(x)
     return fw, fa, fg
+
+
+def ternarize(x, thresh=0.05):
+    """
+    Implemented Trained Ternary Quantization:
+    https://arxiv.org/abs/1612.01064
+
+    Code modified from the authors' at:
+    https://github.com/czhu95/ternarynet/blob/master/examples/Ternary-Net/ternary.py
+    """
+    G = tf.get_default_graph()
+    shape = x.get_shape()
+
+    thre_x = tf.stop_gradient(tf.reduce_max(tf.abs(x)) * thresh)
+
+    w_p = tf.get_variable('Wp', initializer=1.0, dtype=tf.float32)
+    w_n = tf.get_variable('Wn', initializer=1.0, dtype=tf.float32)
+
+    tf.summary.scalar(w_p.op.name + '-summary', w_p)
+    tf.summary.scalar(w_n.op.name + '-summary', w_n)
+
+    mask = tf.ones(shape)
+    mask_p = tf.where(x > thre_x, tf.ones(shape) * w_p, mask)
+    mask_np = tf.where(x < -thre_x, tf.ones(shape) * w_n, mask_p)
+    mask_z = tf.where((x < thre_x) & (x > - thre_x), tf.zeros(shape), mask)
+
+    with G.gradient_override_map({"Sign": "Identity", "Mul": "Add"}):
+        w = tf.sign(x) * tf.stop_gradient(mask_z)
+
+    w = w * mask_np
+
+    tf.summary.histogram(w.name, w)
+    return w

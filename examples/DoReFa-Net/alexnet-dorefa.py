@@ -19,7 +19,7 @@ from tensorpack.dataflow import dataset
 from tensorpack.utils.gpu import get_nr_gpu
 
 from imagenet_utils import get_imagenet_dataflow, fbresnet_augmentor
-from dorefa import get_dorefa
+from dorefa import get_dorefa, ternarize
 
 """
 This is a tensorpack script for the ImageNet results in paper:
@@ -35,7 +35,9 @@ Accuracy:
     due to more sophisticated augmentations.
 
     With (W,A,G)=(32,32,32) -- full precision baseline, 41.4% error.
+    With (W,A,G)=(t,32,32) -- TTQ, 42.3% error
     With (W,A,G)=(1,32,32) -- BWN, 44.3% error
+    With (W,A,G)=(1,1,32) -- BNN, 53.4% error
     With (W,A,G)=(1,2,6), 47.6% error
     With (W,A,G)=(1,2,4), 58.4% error
 
@@ -84,7 +86,11 @@ class Model(ModelDesc):
     def build_graph(self, image, label):
         image = image / 255.0
 
-        fw, fa, fg = get_dorefa(BITW, BITA, BITG)
+        if BITW == 't':
+            fw, fa, fg = get_dorefa(32, 32, 32)
+            fw = ternarize
+        else:
+            fw, fa, fg = get_dorefa(BITW, BITA, BITG)
 
         # monkey-patch tf.get_variable to apply fw
         def new_get_variable(v):
@@ -93,7 +99,7 @@ class Model(ModelDesc):
             if not name.endswith('W') or 'conv0' in name or 'fct' in name:
                 return v
             else:
-                logger.info("Binarizing weight {}".format(v.op.name))
+                logger.info("Quantizing weight {}".format(v.op.name))
                 return fw(v)
 
         def nonlin(x):
@@ -175,7 +181,6 @@ def get_data(dataset_name):
 
 
 def get_config():
-    logger.auto_set_dir()
     data_train = get_data('train')
     data_test = get_data('val')
 
@@ -242,12 +247,17 @@ if __name__ == '__main__':
     parser.add_argument('--gpu', help='the physical ids of GPUs to use')
     parser.add_argument('--load', help='load a checkpoint, or a npz (given as the pretrained model)')
     parser.add_argument('--data', help='ILSVRC dataset dir')
-    parser.add_argument('--dorefa',
-                        help='number of bits for W,A,G, separated by comma', required=True)
+    parser.add_argument('--dorefa', required=True,
+                        help='number of bits for W,A,G, separated by comma. W="t" means TTQ')
     parser.add_argument('--run', help='run on a list of images with the pretrained model', nargs='*')
     args = parser.parse_args()
 
-    BITW, BITA, BITG = map(int, args.dorefa.split(','))
+    dorefa = args.dorefa.split(',')
+    if dorefa[0] == 't':
+        assert dorefa[1] == '32' and dorefa[2] == '32'
+        BITW, BITA, BITG = 't', 32, 32
+    else:
+        BITW, BITA, BITG = map(int, dorefa)
 
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
@@ -259,6 +269,8 @@ if __name__ == '__main__':
 
     nr_tower = max(get_nr_gpu(), 1)
     BATCH_SIZE = TOTAL_BATCH_SIZE // nr_tower
+    logger.set_logger_dir(os.path.join(
+        'train_log', 'alexnet-dorefa-{}'.format(args.dorefa)))
     logger.info("Batch per tower: {}".format(BATCH_SIZE))
 
     config = get_config()
