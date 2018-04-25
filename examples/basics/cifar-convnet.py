@@ -15,7 +15,7 @@ A small convnet model for Cifar10 or Cifar100 dataset.
 
 Cifar10 trained on 1 GPU:
     91% accuracy after 50k iterations.
-    70 itr/s on P100
+    79 itr/s on P100
 
 Not a good model for Cifar100, just for demonstration.
 """

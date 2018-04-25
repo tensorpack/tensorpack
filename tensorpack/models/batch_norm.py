@@ -89,8 +89,9 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
     if training is None:
         training = ctx.is_training
     training = bool(training)
+    TF_version = get_tf_version_number()
     if not training and ctx.is_training:
-        assert get_tf_version_number() >= 1.4, \
+        assert TF_version >= 1.4, \
             "Fine tuning a BatchNorm model with fixed statistics is only " \
             "supported after https://github.com/tensorflow/tensorflow/pull/12580 "
         if ctx.is_main_training_tower:  # only warn in first tower
@@ -102,15 +103,26 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
     with rename_get_variable(
             {'moving_mean': 'mean/EMA',
              'moving_variance': 'variance/EMA'}):
-        layer = tf.layers.BatchNormalization(
-            axis=axis,
-            momentum=momentum, epsilon=epsilon,
-            center=center, scale=scale,
-            beta_initializer=beta_initializer,
-            gamma_initializer=gamma_initializer,
-            virtual_batch_size=virtual_batch_size,
-            fused=True
-        )
+        if TF_version >= 1.5:
+            layer = tf.layers.BatchNormalization(
+                axis=axis,
+                momentum=momentum, epsilon=epsilon,
+                center=center, scale=scale,
+                beta_initializer=beta_initializer,
+                gamma_initializer=gamma_initializer,
+                virtual_batch_size=virtual_batch_size,
+                fused=True
+            )
+        else:
+            assert virtual_batch_size is None, "Feature not supported in this version of TF!"
+            layer = tf.layers.BatchNormalization(
+                axis=axis,
+                momentum=momentum, epsilon=epsilon,
+                center=center, scale=scale,
+                beta_initializer=beta_initializer,
+                gamma_initializer=gamma_initializer,
+                fused=True
+            )
         xn = layer.apply(inputs, training=training, scope=tf.get_variable_scope())
 
     # maintain EMA only on one GPU is OK, even in replicated mode.

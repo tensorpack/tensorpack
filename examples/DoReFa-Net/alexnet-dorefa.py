@@ -41,7 +41,9 @@ Accuracy:
     With (W,A,G)=(1,2,6), 47.6% error
     With (W,A,G)=(1,2,4), 58.4% error
 
-    Don't train with >4 GPUs because the batch size will be different.
+    Training with 2 or 8 GPUs is supported but the result may get slightly
+    different, due to limited per-GPU batch size.
+    You may want to adjust total batch size and learning rate accordingly.
 
 Speed:
     About 11 iteration/s on 4 P100s. (Each epoch is set to 10000 iterations)
