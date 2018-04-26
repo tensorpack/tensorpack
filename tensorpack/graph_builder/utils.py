@@ -79,6 +79,10 @@ class LeastLoadedDeviceSetter(object):
             self.ps_sizes), key=operator.itemgetter(1))
         device_name = self.ps_devices[device_index]
         var_size = op.outputs[0].get_shape().num_elements()
+        if var_size is None:
+            logger.warn("[LeastLoadedDeviceSetter] Shape of variable {} is not fully defined!".format(op.name))
+            var_size = 0
+
         self.ps_sizes[device_index] += var_size
 
         return sanitize_name(device_name)

@@ -28,9 +28,17 @@ def describe_trainable_vars():
             continue
         shape = v.get_shape()
         ele = shape.num_elements()
+        if ele is None:
+            logger.warn("Shape of variable {} is not fully defined but {}.".format(v.name, shape))
+            ele = 0
+        try:
+            shape = shape.as_list()
+        except ValueError:
+            shape = '<unknown>'
+
         total += ele
         total_bytes += ele * v.dtype.size
-        data.append([v.name, shape.as_list(), ele, v.device, v.dtype.base_dtype.name])
+        data.append([v.name, shape, ele, v.device, v.dtype.base_dtype.name])
     headers = ['name', 'shape', 'dim', 'device', 'dtype']
 
     dtypes = set([x[4] for x in data])
