@@ -7,8 +7,8 @@ __Training__ code of three variants of ResNet on ImageNet:
 * [Pre-activation ResNet](https://arxiv.org/abs/1603.05027)
 * [Squeeze-and-Excitation ResNet](https://arxiv.org/abs/1709.01507)
 
-The training mostly follows the setup in [fb.resnet.torch](https://github.com/facebook/fb.resnet.torch)
-and gets similar performance (with much fewer lines of code).
+The training follows the __exact__ recipe used by the [Training ImageNet in 1 Hour paper](https://arxiv.org/abs/1706.02677)
+and gets the same performance.
 Models can be [downloaded here](http://models.tensorpack.com/ResNet/).
 
 | Model              | Top 5 Error | Top 1 Error |

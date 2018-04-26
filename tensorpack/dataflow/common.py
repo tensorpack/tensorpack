@@ -3,6 +3,7 @@
 
 
 from __future__ import division
+import six
 import numpy as np
 from copy import copy
 import pprint
@@ -131,7 +132,7 @@ class BatchData(ProxyDataFlow):
                     [x[k] for x in data_holder])
             else:
                 dt = data_holder[0][k]
-                if type(dt) in [int, bool]:
+                if type(dt) in list(six.integer_types) + [bool]:
                     tp = 'int32'
                 elif type(dt) == float:
                     tp = 'float32'
