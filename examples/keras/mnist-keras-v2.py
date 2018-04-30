@@ -31,16 +31,16 @@ def get_data():
 
 
 if __name__ == '__main__':
-    logger.auto_set_dir()
+    logger.auto_set_dir('d')
 
-    def model_func(inputs):
+    def model_func(image):
         """
         Keras model has to be created inside this function to be used with tensorpack.
         """
         M = keras.models.Sequential()
         # input_tensor have to be used here for tensorpack trainer to function properly.
         # Just use inputs[1], inputs[2] if you have multiple inputs.
-        M.add(KL.InputLayer(input_tensor=inputs[0]))
+        M.add(KL.InputLayer(input_tensor=image))
         M.add(KL.Conv2D(32, 3, activation='relu', padding='same'))
         M.add(KL.MaxPooling2D())
         M.add(KL.Conv2D(32, 3, activation='relu', padding='same'))

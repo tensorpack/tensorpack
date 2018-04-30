@@ -1,6 +1,5 @@
-# -*- coding: UTF-8 -*-
+# -*- coding: utf-8 -*-
 # File: common.py
-
 
 from __future__ import division
 import six

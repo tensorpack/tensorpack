@@ -85,8 +85,8 @@ def conv_block(input_tensor, kernel_size, filters, stage, block, strides=(2, 2))
     return x
 
 
-def resnet50(inputs):
-    input = tf.layers.Input(tensor=inputs[0])
+def resnet50(image):
+    input = Input(tensor=image)
 
     def image_preprocess(image):
         image = ImageNetModel.image_preprocess(image)

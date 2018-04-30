@@ -47,13 +47,15 @@ class KerasModelCaller(object):
 
     def __call__(self, input_tensors):
         """
+        Args:
+            input_tensors ([tf.Tensor])
         Returns:
             output tensors of this tower, evaluated with the input tensors.
         """
         reuse = tf.get_variable_scope().reuse
         if self.cached_model is None:
             assert not reuse
-            self.cached_model = self.get_model(input_tensors)
+            self.cached_model = self.get_model(*input_tensors)
             return self.cached_model.outputs
 
         if reuse:
@@ -63,7 +65,7 @@ class KerasModelCaller(object):
             return self.cached_model.call(input_tensors)
         else:
             # create new Keras model if not reuse
-            M = self.get_model(input_tensors)
+            M = self.get_model(*input_tensors)
             return M.outputs
 
 
@@ -99,7 +101,8 @@ def setup_keras_trainer(
     """
     Args:
         trainer (SingleCostTrainer):
-        get_model ( -> keras.model.Model):
+        get_model (input1, input2, ... -> keras.model.Model):
+            Takes tensors and returns a Keras model. Will be part of the tower function.
         input (InputSource):
         optimizer (tf.tarin.Optimizer):
         loss, metrics: list of strings
@@ -175,7 +178,8 @@ class KerasModel(object):
                  input, trainer=None):
         """
         Args:
-            get_model ( -> keras.model.Model):
+            get_model (input1, input2, ... -> keras.model.Model):
+                Takes tensors and returns a Keras model. Will be part of the tower function.
             inputs_desc ([InputDesc]):
             targets_desc ([InputDesc]):
             input (InputSource | DataFlow):

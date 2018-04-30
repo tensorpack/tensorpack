@@ -1,4 +1,4 @@
-# -*- coding: UTF-8 -*-
+# -*- coding: utf-8 -*-
 # File: config.py
 
 
@@ -35,7 +35,7 @@ class PredictConfig(object):
         Args:
             model (ModelDescBase): to be used to obtain inputs_desc and tower_func.
             inputs_desc ([InputDesc]):
-            tower_func: a callable which takes input tensors and construct a tower.
+            tower_func: a callable which takes input tensors (by positional args) and construct a tower.
 
             input_names (list): a list of input tensor names. Defaults to match inputs_desc.
             output_names (list): a list of names of the output tensors to predict, the
