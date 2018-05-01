@@ -1,4 +1,4 @@
-# -*- coding: UTF-8 -*-
+# -*- coding: utf-8 -*-
 # File: utils.py
 
 
@@ -9,6 +9,8 @@ import inspect
 from datetime import datetime, timedelta
 from tqdm import tqdm
 import numpy as np
+
+from . import logger
 
 
 __all__ = ['change_env',
@@ -41,7 +43,9 @@ def humanize_time_delta(sec):
         print(humanize_time_delta(60 * 60 * 24 + 1))                    # 1 day 1 second
         print(humanize_time_delta(60 * 60 * 24 + 60 * 2 + 60*60*9 + 3)) # 1 day 9 hours 2 minutes 3 seconds
     """
-    assert sec >= 0, sec
+    if sec < 0:
+        logger.warn("humanize_time_delta() obtains negative seconds!")
+        return "{:.3g} seconds".format(sec)
     if sec == 0:
         return "0 second"
     time = datetime(2000, 1, 1) + timedelta(seconds=int(sec))

@@ -1,4 +1,4 @@
-# -*- coding: UTF-8 -*-
+# -*- coding: utf-8 -*-
 # File: summary.py
 
 
@@ -70,7 +70,7 @@ def create_image_summary(name, val):
     s = tf.Summary()
     for k in range(n):
         arr = val[k]
-        #CV2 will only write correctly in BGR chanel order
+        # CV2 will only write correctly in BGR chanel order
         if c == 3:
             arr = cv2.cvtColor(arr, cv2.COLOR_RGB2BGR)
         elif c == 4:

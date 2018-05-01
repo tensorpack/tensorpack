@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: UTF-8 -*-
+# -*- coding: utf-8 -*-
 # File: load-resnet.py
 # Author: Eric Yujia Huang <yujiah1@andrew.cmu.edu>
 #         Yuxin Wu <ppwwyyxx@gmail.com>

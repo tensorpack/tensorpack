@@ -1,4 +1,4 @@
-# -*- coding: UTF-8 -*-
+# -*- coding: utf-8 -*-
 # File: export.py
 # Author: Patrick Wieschollek <mail@patwie.com>
 

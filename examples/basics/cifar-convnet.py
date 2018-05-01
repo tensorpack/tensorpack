@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: UTF-8 -*-
+# -*- coding: utf-8 -*-
 # File: cifar-convnet.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 import tensorflow as tf

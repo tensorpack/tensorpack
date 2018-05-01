@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: UTF-8 -*-
+# -*- coding: utf-8 -*-
 # File: cifar10-preact18-mixup.py
 # Author: Tao Hu <taohu620@gmail.com>,  Yauheni Selivonchyk <y.selivonchyk@gmail.com>
 
