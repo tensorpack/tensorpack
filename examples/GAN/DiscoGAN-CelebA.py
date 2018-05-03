@@ -16,7 +16,7 @@ import tensorflow as tf
 from GAN import SeparateGANTrainer, GANModelDesc
 
 """
-1. Download "aligned&cropped" version of celebA to /path/to/img_ailgn_celeba.
+1. Download "aligned&cropped" version of celebA to /path/to/img_align_celeba.
 2. Put list_attr_celeba.txt into that directory as well.
 3. Start training gender transfer:
     ./DiscoGAN-CelebA.py --data /path/to/img_align_celeba --style-A Male
