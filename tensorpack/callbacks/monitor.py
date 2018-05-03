@@ -206,11 +206,13 @@ class TFEventWriter(TrainingMonitor):
     """
     Write summaries to TensorFlow event file.
     """
-    def __init__(self, logdir=None, max_queue=10, flush_secs=120):
+    def __init__(self, logdir=None, max_queue=10, flush_secs=120, split_files=False):
         """
         Args:
-            Same as in :class:`tf.summary.FileWriter`.
-            logdir will be ``logger.get_logger_dir()`` by default.
+            logdir: ``logger.get_logger_dir()`` by default.
+            max_queue, flush_secs: Same as in :class:`tf.summary.FileWriter`.
+            split_files: if True, split events to multiple files rather than
+                append to a single file. Useful on certain filesystems where append is expensive.
         """
         if logdir is None:
             logdir = logger.get_logger_dir()
@@ -218,6 +220,7 @@ class TFEventWriter(TrainingMonitor):
         self._logdir = logdir
         self._max_queue = max_queue
         self._flush_secs = flush_secs
+        self._split_files = split_files
 
     def __new__(cls, logdir=None, max_queue=10, flush_secs=120):
         if logdir is None:
@@ -242,6 +245,9 @@ class TFEventWriter(TrainingMonitor):
 
     def _trigger(self):     # flush every epoch
         self._writer.flush()
+        if self._split_files:
+            self._writer.close()
+            self._writer.reopen()  # open new file
 
     def _after_train(self):
         self._writer.close()
