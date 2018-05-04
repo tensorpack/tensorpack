@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # File: serialize.py
 
+import os
 from .develop import create_dummy_func
 
 __all__ = ['loads', 'dumps']
@@ -61,7 +62,7 @@ except ImportError:
     dumps_msgpack = create_dummy_func(  # noqa
         'dumps_msgpack', ['msgpack', 'msgpack_numpy'])
 
-if pa is None:
+if pa is None or os.environ.get('TENSORPACK_SERIALIZE', None) == 'msgpack':
     loads = loads_msgpack
     dumps = dumps_msgpack
 else:

@@ -87,7 +87,7 @@ class SimulatorProcessStateExchange(SimulatorProcessBase):
             c2s_socket.send(dumps(
                 (self.identity, state, reward, isOver)),
                 copy=False)
-            action = loads(s2c_socket.recv(copy=False).bytes)
+            action = loads(s2c_socket.recv(copy=False))
             state, reward, isOver, _ = player.step(action)
             if isOver:
                 state = player.reset()
@@ -144,7 +144,7 @@ class SimulatorMaster(threading.Thread):
         self.clients = defaultdict(self.ClientState)
         try:
             while True:
-                msg = loads(self.c2s_socket.recv(copy=False).bytes)
+                msg = loads(self.c2s_socket.recv(copy=False))
                 ident, state, reward, isOver = msg
                 client = self.clients[ident]
                 if client.ident is None:
