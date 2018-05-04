@@ -31,11 +31,10 @@ This is our attempt to reproduce it on tensorpack & TensorFlow.
 
 Accuracy:
     Trained with 4 GPUs and (W,A,G)=(1,2,6), it can reach top-1 single-crop validation error of 47.6%,
-    after 70 epochs. This number is better than what's in the paper
-    due to more sophisticated augmentations.
+    after 70 epochs. This number is better than what's in the paper due to more sophisticated augmentations.
 
     With (W,A,G)=(32,32,32) -- full precision baseline, 41.4% error.
-    With (W,A,G)=(t,32,32) -- TTQ, 42.3% error
+    With (W,A,G)=(t,32,32) -- TTQ, 41.9% error
     With (W,A,G)=(1,32,32) -- BWN, 44.3% error
     With (W,A,G)=(1,1,32) -- BNN, 53.4% error
     With (W,A,G)=(1,2,6), 47.6% error

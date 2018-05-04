@@ -15,8 +15,10 @@ exec(open(libinfo_py, "rb").read())
 try:
     import pypandoc
     long_description = pypandoc.convert_file('README.md', 'rst')
+    description_type = 'text/x-rst'
 except ImportError:
     long_description = open('README.md').read()
+    description_type = 'text/markdown'
 
 # configure requirements
 reqfile = os.path.join(CURRENT_DIR, 'requirements.txt')
@@ -27,7 +29,7 @@ setup(
     version=__version__,
     description='Neural Network Toolbox on TensorFlow',
     long_description=long_description,
-
+    long_description_content_type=description_type,
     install_requires=req,
     tests_require=['flake8', 'scikit-image'],
     extras_require={
