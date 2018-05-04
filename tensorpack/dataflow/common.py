@@ -330,7 +330,7 @@ class RepeatedData(ProxyDataFlow):
             :class:`ValueError` when nr == -1.
         """
         if self.nr == -1:
-            raise ValueError("size() is unavailable for infinite dataflow")
+            raise NotImplementedError("size() is unavailable for infinite dataflow")
         return self.ds.size() * self.nr
 
     def get_data(self):
