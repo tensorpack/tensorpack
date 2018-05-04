@@ -233,7 +233,7 @@ class MultiProcessMapDataZMQ(_ParallelMapData, _MultiProcessZMQDataFlow):
             socket.connect(self.pipename)
 
             while True:
-                dp = loads(socket.recv(copy=False).bytes)
+                dp = loads(socket.recv(copy=False))
                 dp = self.map_func(dp)
                 socket.send(dumps(dp), copy=False)
 
@@ -283,7 +283,7 @@ class MultiProcessMapDataZMQ(_ParallelMapData, _MultiProcessZMQDataFlow):
 
     def _recv(self):
         msg = self.socket.recv_multipart(copy=False)
-        dp = loads(msg[1].bytes)
+        dp = loads(msg[1])
         return dp
 
     def get_data(self):
