@@ -399,8 +399,9 @@ class MultiThreadPrefetchData(DataFlow):
 
     def __del__(self):
         for p in self.threads:
-            p.stop()
-            p.join()
+            if p.is_alive():
+                p.stop()
+                p.join()
 
 
 class PlasmaPutData(ProxyDataFlow):
