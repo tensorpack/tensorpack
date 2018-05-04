@@ -124,7 +124,7 @@ class RemoteDataZMQ(DataFlow):
                     self.bind_or_connect(socket, self._addr1)
 
                     while True:
-                        dp = loads(socket.recv(copy=False).bytes)
+                        dp = loads(socket.recv(copy=False))
                         yield dp
                         self.cnt1 += 1
                 else:
@@ -143,7 +143,7 @@ class RemoteDataZMQ(DataFlow):
                     while True:
                         evts = poller.poll()
                         for sock, evt in evts:
-                            dp = loads(sock.recv(copy=False).bytes)
+                            dp = loads(sock.recv(copy=False))
                             yield dp
                             if sock == socket1:
                                 self.cnt1 += 1
