@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # File: GAN.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>

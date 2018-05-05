@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # File: transform.py
 
@@ -134,7 +133,7 @@ if __name__ == '__main__':
     print(coords)
     draw_points(image, coords)
 
-    #viz = cv2.resize(viz, (1200, 600))
+    # viz = cv2.resize(viz, (1200, 600))
     orig_image = cv2.resize(orig_image, (600, 600))
     image = cv2.resize(image, (600, 600))
     viz = np.concatenate((orig_image, image), axis=1)

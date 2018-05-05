@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # File: embedding_data.py
 # Author: tensorpack contributors
