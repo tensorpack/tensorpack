@@ -173,9 +173,11 @@ class ModelDesc(ModelDescBase):
     It has the following constraints in addition to :class:`ModelDescBase`:
 
     1. :meth:`build_graph(...)` method should return a cost when called under a training context.
-      The cost will be the final cost to be optimized by the optimizer.
-      Therefore it should include necessary regularization.
+       The cost will be the final cost to be optimized by the optimizer.
+       Therefore it should include necessary regularization.
+
     2. Subclass is expected to implement :meth:`optimizer()` method.
+
     """
 
     def get_cost(self):

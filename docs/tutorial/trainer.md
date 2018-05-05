@@ -31,18 +31,17 @@ The tower function needs to follow some conventions:
    * Only put variables __trainable by gradient descent__ into `TRAINABLE_VARIABLES`.
    * Put variables that need to be saved into `MODEL_VARIABLES`.
 3. It has to respect variable scopes:
-   * The name of any trainable variables created in the function must be like "variable_scope_name/variable/name".
+   * The name of any trainable variables created in the function must be like "variable_scope_name/custom/name".
      Don't depend on name_scope's name. Don't use variable_scope's name twice.
-   * The creation of any trainable variables must respect variable reuse.
-     To respect variable reuse, use `tf.get_variable` instead of
-	 `tf.Variable` in the function.
-     For non-trainable variables, it's OK to use `tf.Variable` to force creation of new variables in each tower.
-4. It will always be called under a `TowerContext`.
-	which will contain information about training/inference mode, reuse, etc.
+   * The creation of any trainable variables must respect __reuse__ variable scope.
+     To respect variable reuse, use `tf.get_variable` instead of `tf.Variable` in the function.
+     On the other hand, for non-trainable variables, it's OK to use `tf.Variable` to force creation of new variables in each tower.
+4. It will always be called under a `TowerContext`, which can be accessed by `get_current_tower_contxt()`.
+   The context contains information about training/inference mode, reuse, etc.
      
 These conventions are easy to follow, and most layer wrappers (e.g.,
 tf.layers/slim/tensorlayer) do follow them. Note that certain Keras layers do not
-follow these conventions and may crash if used within tensorpack.
+follow these conventions and will need some workarounds if used within tensorpack.
 
 It's possible to write ones that are not, but all existing trainers in
 tensorpack are subclass of [TowerTrainer](../modules/train.html#tensorpack.train.TowerTrainer).
