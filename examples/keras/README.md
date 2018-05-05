@@ -32,3 +32,11 @@ It has:
 	+ Still slightly slower than native tensorpack examples.
 + Good accuracy (same as [tensorpack ResNet example](../ResNet))
 
+### Note:
+
+Keras support is __not official__. Keras does not use variable scopes or variable
+collections, which contradicts with tensorpack trainers.
+Therefore, not all Keras layers are supported in tensorpack.
+
+These simple examples can run within tensorpack smoothly, but note that a future version
+of Keras may still break them (unlikely, though).

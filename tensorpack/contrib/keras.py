@@ -16,6 +16,7 @@ from ..callbacks import (
     ScalarStats)
 
 from ..tfutils.common import get_op_tensor_name
+from ..tfutils.collection import backup_collection, restore_collection
 from ..tfutils.tower import get_current_tower_context
 from ..tfutils.scope_utils import cached_name_scope
 from ..tfutils.summary import add_moving_summary
@@ -37,8 +38,8 @@ def _check_name(tensor, name):
 
 class KerasModelCaller(object):
     """
-    Keras model doesn't support vs reuse.
-    This is hack to mimic reuse.
+    Keras model doesn't support variable scope reuse.
+    This is a hack to mimic reuse.
     """
     def __init__(self, get_model):
         self.get_model = get_model
@@ -53,20 +54,39 @@ class KerasModelCaller(object):
             output tensors of this tower, evaluated with the input tensors.
         """
         reuse = tf.get_variable_scope().reuse
-        if self.cached_model is None:
-            assert not reuse
-            self.cached_model = self.get_model(*input_tensors)
-            return self.cached_model.outputs
 
-        if reuse:
-            # use the cached Keras model to mimic reuse
-            # NOTE: ctx.is_training won't be useful inside model,
-            # because inference will always use the cached Keras model
-            return self.cached_model.call(input_tensors)
-        else:
-            # create new Keras model if not reuse
-            M = self.get_model(*input_tensors)
-            return M.outputs
+        old_trainable_names = set([x.name for x in tf.trainable_variables()])
+        trainable_backup = backup_collection([tf.GraphKeys.TRAINABLE_VARIABLES])
+        try:
+            if self.cached_model is None:
+                assert not reuse
+                M = self.cached_model = self.get_model(*input_tensors)
+                return M.outputs
+            elif reuse:
+                # use the cached Keras model to mimic reuse
+                # NOTE: ctx.is_training won't be useful inside model,
+                # because inference will always use the cached Keras model
+                M = self.cached_model
+                return M.call(input_tensors)
+            else:
+                # create new Keras model if not reuse
+                M = self.get_model(*input_tensors)
+                return M.outputs
+        finally:
+            added_trainable_names = set([x.name for x in tf.trainable_variables()])
+            restore_collection(trainable_backup)
+
+            for v in M.weights:
+                # In Keras, the collection is not respected and could contain non-trainable vars.
+                # We put M.weights into the collection instead.
+                if v.name not in old_trainable_names:
+                    tf.add_to_collection(tf.GraphKeys.TRAINABLE_VARIABLES, v)
+            new_trainable_names = set([x.name for x in tf.trainable_variables()])
+
+            for n in added_trainable_names:
+                if n not in new_trainable_names:
+                    logger.warn("Keras created trainable variable '{}' which is actually not trainable. "
+                                "This was automatically corrected by tensorpack.".format(n))
 
 
 # Keras needs an extra input if learning_phase is used by the model
