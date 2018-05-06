@@ -136,7 +136,7 @@ if __name__ == '__main__':
     parser.add_argument('--data', help='ILSVRC dataset dir')
     parser.add_argument('--fake', help='use fakedata to test or benchmark this model', action='store_true')
     args = parser.parse_args()
-    logger.set_logger_dir("train_log/imagenet-resnet-keras")
+    logger.set_logger_dir(os.path.join("train_log", "imagenet-resnet-keras"))
 
     tf.keras.backend.set_image_data_format('channels_first')
 

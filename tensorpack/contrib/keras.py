@@ -78,7 +78,7 @@ class KerasModelCaller(object):
             for v in M.weights:
                 # In Keras, the collection is not respected and could contain non-trainable vars.
                 # We put M.weights into the collection instead.
-                if v.name not in old_trainable_names:
+                if v.name not in old_trainable_names and v.name in added_trainable_names:
                     tf.add_to_collection(tf.GraphKeys.TRAINABLE_VARIABLES, v)
             new_trainable_names = set([x.name for x in tf.trainable_variables()])
 
