@@ -178,10 +178,12 @@ def enable_death_signal():
     in case the parent dies accidentally.
     """
     try:
-        import prctl
+        import prctl    # pip install prctl-python
     except ImportError:
         return
     else:
+        assert hasattr(prctl, 'set_pdeathsig'), \
+            "prctl.set_pdeathsig does not exist! Note that you need to install 'prctl-python' instead of 'prctl'."
         # is SIGHUP a good choice?
         prctl.set_pdeathsig(signal.SIGHUP)
 

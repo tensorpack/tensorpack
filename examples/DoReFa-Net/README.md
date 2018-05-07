@@ -7,7 +7,7 @@ It also contains an implementation of the following papers:
 + [Trained Ternary Quantization](https://arxiv.org/abs/1612.01064), with (W,A,G)=(t,32,32).
 + [Binarized Neural Networks](https://arxiv.org/abs/1602.02830), with (W,A,G)=(1,1,32).
 
-These different quantization techniques achieves the following accuracy in this implementation:
+These quantization techniques achieves the following ImageNet performance in this implementation:
 
 | Model              | W,A,G       | Top 1 Error |
 |:-------------------|-------------|------------:|

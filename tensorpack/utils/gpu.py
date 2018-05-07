@@ -8,7 +8,7 @@ from . import logger
 from .nvml import NVMLContext
 from .concurrency import subproc_call
 
-__all__ = ['change_gpu', 'get_nr_gpu']
+__all__ = ['change_gpu', 'get_nr_gpu', 'get_num_gpu']
 
 
 def change_gpu(val):
@@ -22,7 +22,7 @@ def change_gpu(val):
     return change_env('CUDA_VISIBLE_DEVICES', val)
 
 
-def get_nr_gpu():
+def get_num_gpu():
     """
     Returns:
         int: #available GPUs in CUDA_VISIBLE_DEVICES, or in the system.
@@ -47,3 +47,6 @@ def get_nr_gpu():
             from tensorflow.python.client import device_lib
             local_device_protos = device_lib.list_local_devices()
             return len([x.name for x in local_device_protos if x.device_type == 'GPU'])
+
+
+get_nr_gpu = get_num_gpu

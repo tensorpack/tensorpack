@@ -28,8 +28,8 @@ The tower function needs to follow some conventions:
 
 1. __It might get called multiple times__ for data-parallel training or inference.
 2. It has to respect variable collections:
-   * Only put variables __trainable by gradient descent__ into `TRAINABLE_VARIABLES`.
-   * Put variables that need to be saved into `MODEL_VARIABLES`.
+   * (Required) Only put variables __trainable by gradient descent__ into `TRAINABLE_VARIABLES`.
+   * (Recommended) Put non-trainable variables that need to be used in inference into `MODEL_VARIABLES`.
 3. It has to respect variable scopes:
    * The name of any trainable variables created in the function must be like "variable_scope_name/custom/name".
      Don't depend on name_scope's name. Don't use variable_scope's name twice.

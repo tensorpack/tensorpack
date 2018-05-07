@@ -375,6 +375,7 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
         'DumpParamAsImage',
         'StagingInputWrapper',
         'PeriodicRunHooks',
+        'get_nr_gpu',
 
         # deprecated or renamed symbolic code
         'Deconv2D', 'LeakyReLU',
