@@ -111,7 +111,7 @@ class SyncMultiGPUParameterServerBuilder(DataParallelBuilder):
     """
     Data-parallel training in 'ParameterServer' mode.
     It builds one tower on each GPU with
-    shared variable scope. It synchronoizes the gradients computed
+    shared variable scope. It synchronizes the gradients computed
     from each tower, averages them and applies to the shared variables.
 
     It is an equivalent of ``--variable_update=parameter_server`` in
@@ -178,7 +178,7 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
 
     Attribute:
         grads: #GPU number of lists of (g, v). Synchronized gradients on each device, available after build()
-            Though on different deviecs, they should contain the same value.
+            Though on different devices, they should contain the same value.
     """
 
     def __init__(self, towers, average, mode):

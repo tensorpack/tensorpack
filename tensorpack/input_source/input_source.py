@@ -351,7 +351,7 @@ class DummyConstantInput(TensorInput):
     def __init__(self, shapes):
         """
         Args:
-            shapes (list[list]): a list of fully-sepcified shapes.
+            shapes (list[list]): a list of fully-specified shapes.
         """
         self.shapes = shapes
         logger.warn("Using dummy input for debug!")
@@ -372,7 +372,7 @@ class DummyConstantInput(TensorInput):
 
 class ZMQInput(TensorInput):
     """
-    Recv tensors from a ZMQ endpoint, with ops from https://github.com/tensorpack/zmq_ops.
+    Receive tensors from a ZMQ endpoint, with ops from https://github.com/tensorpack/zmq_ops.
     It works with :meth:`dataflow.remote.send_dataflow_zmq(format='zmq_op')`.
     """
     def __init__(self, end_point, hwm, bind=True):

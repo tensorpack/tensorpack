@@ -104,7 +104,7 @@ class MultiThreadMapData(_ParallelMapData):
            mixed with datapoints from the next pass.
 
            You can use **strict mode**, where `MultiThreadMapData.get_data()`
-           is guranteed to produce the exact set which `df.get_data()`
+           is guaranteed to produce the exact set which `df.get_data()`
            produces. Although the order of data still isn't preserved.
     """
     class _Worker(StoppableThread):
@@ -212,7 +212,7 @@ class MultiProcessMapDataZMQ(_ParallelMapData, _MultiProcessZMQDataFlow):
            mixed with datapoints from the next pass.
 
            You can use **strict mode**, where `MultiProcessMapData.get_data()`
-           is guranteed to produce the exact set which `df.get_data()`
+           is guaranteed to produce the exact set which `df.get_data()`
            produces. Although the order of data still isn't preserved.
     """
     class _Worker(mp.Process):

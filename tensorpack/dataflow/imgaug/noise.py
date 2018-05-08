@@ -10,12 +10,12 @@ __all__ = ['JpegNoise', 'GaussianNoise', 'SaltPepperNoise']
 
 
 class JpegNoise(ImageAugmentor):
-    """ Random Jpeg noise. """
+    """ Random JPEG noise. """
 
     def __init__(self, quality_range=(40, 100)):
         """
         Args:
-            quality_range (tuple): range to sample Jpeg quality
+            quality_range (tuple): range to sample JPEG quality
         """
         super(JpegNoise, self).__init__()
         self._init(locals())
@@ -54,7 +54,7 @@ class GaussianNoise(ImageAugmentor):
 
 class SaltPepperNoise(ImageAugmentor):
     """ Salt and pepper noise.
-        Randomly set some elements in img to 0 or 255, regardless of its channels.
+        Randomly set some elements in image to 0 or 255, regardless of its channels.
     """
 
     def __init__(self, white_prob=0.05, black_prob=0.05):

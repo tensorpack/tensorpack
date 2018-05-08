@@ -43,7 +43,7 @@ class Augmentor(object):
         """
         Returns:
             augmented data
-            augmentaion params
+            augmentation params
         """
         return self._augment_return_params(d)
 
@@ -84,7 +84,7 @@ class Augmentor(object):
         """
         try:
             argspec = inspect.getargspec(self.__init__)
-            assert argspec.varargs is None, "The default __repr__ doesn't work for vaargs!"
+            assert argspec.varargs is None, "The default __repr__ doesn't work for varargs!"
             assert argspec.keywords is None, "The default __repr__ doesn't work for kwargs!"
             fields = argspec.args[1:]
             index_field_has_default = len(fields) - (0 if argspec.defaults is None else len(argspec.defaults))
