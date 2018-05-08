@@ -84,7 +84,7 @@ class CenterPaste(ImageAugmentor):
 
 class RandomPaste(CenterPaste):
     """
-    Randomly paste the image onto a background convas.
+    Randomly paste the image onto a background canvas.
     """
 
     def _get_augment_params(self, img):

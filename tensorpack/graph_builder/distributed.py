@@ -142,7 +142,7 @@ class DistributedReplicatedBuilder(DataParallelBuilder, DistributedBuilderBase):
 
     It is an equivalent of ``--variable_update=distributed_replicated`` in
     `tensorflow/benchmarks <https://github.com/tensorflow/benchmarks>`_.
-    Note that the performance of this trianer is still not satisfactory.
+    Note that the performance of this trainer is still not satisfactory.
     Check `ResNet-Horovod <https://github.com/tensorpack/benchmarks/tree/master/ResNet-Horovod>`_
     for fast and correct distributed examples.
 

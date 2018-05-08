@@ -119,7 +119,7 @@ class DataFromGenerator(DataFlow):
 
 
 class DataFromIterable(DataFlow):
-    """ Wrap an iterable of datapoitns to a DataFlow"""
+    """ Wrap an iterable of datapoints to a DataFlow"""
     def __init__(self, iterable):
         """
         Args:

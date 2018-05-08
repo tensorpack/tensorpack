@@ -122,7 +122,7 @@ def get_data():
     ds = MapData(ds, lambda dp: [cv2.cvtColor(dp[0], cv2.COLOR_RGB2Lab)[:,:,0], dp[0]])
     ds = BatchData(ds, 32)
     ds = PrefetchData(ds, 4) # use queue size 4
-		ds = PrintData(ds, num=2)	# only for debug
+    ds = PrintData(ds, num=2)	# only for debug
     return ds
 ```
 

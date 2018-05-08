@@ -242,7 +242,7 @@ def CaffeLMDB(lmdb_path, shuffle=True, keys=None):
 
 
 class SVMLightData(RNGDataFlow):
-    """ Read X,y from a svmlight file, and produce [X_i, y_i] pairs. """
+    """ Read X,y from an SVMlight file, and produce [X_i, y_i] pairs. """
 
     def __init__(self, filename, shuffle=True):
         """
@@ -275,9 +275,9 @@ class TFRecordData(DataFlow):
     def __init__(self, path, size=None):
         """
         Args:
-            path (str): path to the tfrecord file
+            path (str): path to the TFRecord file
             size (int): total number of records, because this metadata is not
-                stored in the tfrecord file.
+                stored in the TFRecord file.
         """
         self._path = path
         self._size = int(size)

@@ -191,7 +191,7 @@ class ILSVRC12(ILSVRC12Files):
             dir_structure (str): One of 'original' or 'train'.
                 The directory structure for the 'val' directory.
                 'original' means the original decompressed directory, which only has list of image files (as below).
-                If set to 'train', it expects the same two-level directory structure simlar to 'dir/train/'.
+                If set to 'train', it expects the same two-level directory structure similar to 'dir/train/'.
                 By default, it tries to automatically detect the structure.
                 You probably do not need to care about this option because 'original' is what people usually have.
 

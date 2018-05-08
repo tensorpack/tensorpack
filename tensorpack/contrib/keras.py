@@ -123,7 +123,7 @@ def setup_keras_trainer(
         get_model (input1, input2, ... -> keras.model.Model):
             Takes tensors and returns a Keras model. Will be part of the tower function.
         input (InputSource):
-        optimizer (tf.tarin.Optimizer):
+        optimizer (tf.train.Optimizer):
         loss, metrics: list of strings
     """
     assert isinstance(optimizer, tf.train.Optimizer), optimizer
@@ -213,7 +213,7 @@ class KerasModel(object):
             if nr_gpu <= 1:
                 trainer = SimpleTrainer()
             else:
-                # the default multigpu trainer
+                # the default multi-gpu trainer
                 trainer = SyncMultiGPUTrainerParameterServer(nr_gpu)
         assert isinstance(trainer, Trainer), trainer
         assert not isinstance(trainer, DistributedTrainerBase)

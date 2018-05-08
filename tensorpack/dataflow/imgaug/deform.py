@@ -10,7 +10,7 @@ __all__ = ['GaussianDeform']
 
 
 class GaussianMap(object):
-    """ Generate gaussian weighted deformation map"""
+    """ Generate Gaussian weighted deformation map"""
     # TODO really needs speedup
 
     def __init__(self, image_shape, sigma=0.5):

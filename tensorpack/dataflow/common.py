@@ -84,7 +84,7 @@ class BatchData(ProxyDataFlow):
             remainder (bool): When the remaining datapoints in ``ds`` is not
                 enough to form a batch, whether or not to also produce the remaining
                 data as a smaller batch.
-                If set to False, all produced datapoints are guranteed to have the same batch size.
+                If set to False, all produced datapoints are guaranteed to have the same batch size.
                 If set to True, `ds.size()` must be accurate.
             use_list (bool): if True, each component will contain a list
                 of datapoints instead of an numpy array of an extra dimension.
@@ -706,7 +706,7 @@ class PrintData(ProxyDataFlow):
 
         Args:
             entry: the datapoint component
-            k (int): index of this compoennt in current datapoint
+            k (int): index of this component in current datapoint
             depth (int, optional): recursion depth
             max_depth, max_list: same as in :meth:`__init__`.
 

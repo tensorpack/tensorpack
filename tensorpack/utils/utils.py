@@ -134,7 +134,7 @@ _EXECUTE_HISTORY = set()
 
 def execute_only_once():
     """
-    Each called in the code to this function is guranteed to return True the
+    Each called in the code to this function is guaranteed to return True the
     first time and False afterwards.
 
     Returns:

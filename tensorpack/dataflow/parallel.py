@@ -101,7 +101,7 @@ class _MultiProcessZMQDataFlow(DataFlow):
             return
         self._reset_done = True
 
-        # __del__ not guranteed to get called at exit
+        # __del__ not guaranteed to get called at exit
         atexit.register(del_weakref, weakref.ref(self))
 
         self._reset_once()  # build processes
@@ -134,7 +134,7 @@ class MultiProcessPrefetchData(ProxyDataFlow):
     process by a Python :class:`multiprocessing.Queue`.
 
     Note:
-        1. An iterator cannot run faster automatically -- what's happenning is
+        1. An iterator cannot run faster automatically -- what's happening is
            that the underlying dataflow will be forked ``nr_proc`` times.
            As a result, we have the following guarantee on the dataflow correctness:
 
@@ -215,7 +215,7 @@ class PrefetchDataZMQ(_MultiProcessZMQDataFlow):
     and collect datapoints from the given dataflow in each process by ZeroMQ IPC pipe.
 
     Note:
-        1. An iterator cannot run faster automatically -- what's happenning is
+        1. An iterator cannot run faster automatically -- what's happening is
            that the underlying dataflow will be forked ``nr_proc`` times.
            As a result, we have the following guarantee on the dataflow correctness:
 

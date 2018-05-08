@@ -84,8 +84,8 @@ def dump_dataflow_to_lmdb(df, lmdb_path, write_frequency=5000):
     with get_tqdm(total=sz) as pbar:
         idx = -1
 
-        # lmdb transaction is not exception-safe!
-        # although it has a contextmanager interface
+        # LMDB transaction is not exception-safe!
+        # although it has a context manager interface
         txn = db.begin(write=True)
         for idx, dp in enumerate(df.get_data()):
             txn.put(u'{}'.format(idx).encode('ascii'), dumps(dp))
