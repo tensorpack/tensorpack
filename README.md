@@ -28,7 +28,7 @@ It's Yet Another TF high-level API, with __speed__, __readability__ and __flexib
 		Tensorpack includes only a few common models.
 	  But you can use any symbolic function library inside tensorpack, including tf.layers/Keras/slim/tflearn/tensorlayer/....
 
-See [tutorials](http://tensorpack.readthedocs.io/en/latest/tutorial/index.html) to know more about these features.
+See [tutorials](http://tensorpack.readthedocs.io/tutorial/index.html#user-tutorials) to know more about these features.
 
 ## [Examples](examples):
 
