@@ -66,7 +66,7 @@ class ModelExport(object):
                tags=[tf.saved_model.tag_constants.SERVING],
                signature_name='prediction_pipeline'):
         """
-        Use SavedModelBuilder to export a trained model without tensorpack depency.
+        Use SavedModelBuilder to export a trained model without tensorpack dependency.
 
         Remarks:
             This produces

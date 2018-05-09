@@ -201,7 +201,7 @@ class AutoResumeTrainConfig(TrainConfig):
             without changing any line of code or command line arguments.
             So it's useful to let resume take priority over user-provided arguments sometimes:
 
-            If your training starts from a pretrained model,
+            If your training starts from a pre-trained model,
             you would want it to use user-provided model loader at the
             beginning, but a "resume" model loader when the job was
             interrupted and restarted.

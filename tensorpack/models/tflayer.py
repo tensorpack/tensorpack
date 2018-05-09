@@ -34,7 +34,7 @@ def convert_to_tflayer_args(args_names, name_mapping):
     1. data_format becomes tf.layers style
     2. nl becomes activation
     3. initializers are renamed
-    4. positional args are transformed to correspoding kwargs, according to args_names
+    4. positional args are transformed to corresponding kwargs, according to args_names
     5. kwargs are mapped to tf.layers names if needed, by name_mapping
     """
 

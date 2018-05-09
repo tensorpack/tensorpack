@@ -204,7 +204,7 @@ class TestPool(TestModel):
         res = self.run_variable(output)
         self.assertEqual(res.shape, (1, scale * h, scale * w, 3))
 
-        # mat is on cornser
+        # mat is on corner
         ele = res[0, ::scale, ::scale, 0]
         self.assertTrue((ele == mat[:, :, 0]).all())
         # the rest are zeros
