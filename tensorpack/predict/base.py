@@ -25,7 +25,7 @@ class PredictorBase(object):
 
     Attributes:
         return_input (bool): whether the call will also return (inputs, outputs)
-            or just outpus
+            or just outputs
     """
 
     def __call__(self, *args):

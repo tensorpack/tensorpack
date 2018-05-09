@@ -79,7 +79,7 @@ class SimpleDatasetPredictor(DatasetPredictorBase):
 
 class MultiProcessDatasetPredictor(DatasetPredictorBase):
     """
-    Run prediction in multiprocesses, on either CPU or GPU.
+    Run prediction in multiple processes, on either CPU or GPU.
     Each process fetch datapoints as tasks and run predictions independently.
     """
     # TODO allow unordered

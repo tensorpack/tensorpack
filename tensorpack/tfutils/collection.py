@@ -170,5 +170,5 @@ class CollectionGuard(object):
         """
         new = tf.get_collection(key)
         old = set(self.original.get(key, []))
-        # presist the order in new
+        # persist the order in new
         return [x for x in new if x not in old]

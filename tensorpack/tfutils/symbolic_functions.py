@@ -10,7 +10,7 @@ from ..utils.develop import deprecated
 # __all__ = ['get_scalar_var']
 
 
-# this function exists for backwards-compatibilty
+# this function exists for backwards-compatibility
 def prediction_incorrect(logits, label, topk=1, name='incorrect_vector'):
     return tf.cast(tf.logical_not(tf.nn.in_top_k(logits, label, topk)),
                    tf.float32, name=name)

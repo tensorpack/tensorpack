@@ -110,7 +110,7 @@ class InputSource(object):
     @memoized
     def get_callbacks(self):
         """
-        An InputSource might need some extra maintainance during training,
+        An InputSource might need some extra maintenance during training,
         which is done also through the Callback interface.
         This method returns the callbacks and the return value will be memoized.
 

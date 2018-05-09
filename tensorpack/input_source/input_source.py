@@ -104,7 +104,7 @@ class FeedfreeInput(InputSource):
         pass
 
 
-# TODO enqueu_many? https://github.com/tensorflow/tensorflow/issues/7817#issuecomment-282053155
+# TODO enqueue_many? https://github.com/tensorflow/tensorflow/issues/7817#issuecomment-282053155
 class EnqueueThread(ShareSessionThread):
     def __init__(self, queue, ds, placehdrs):
         super(EnqueueThread, self).__init__()

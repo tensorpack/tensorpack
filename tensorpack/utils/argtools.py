@@ -16,7 +16,7 @@ __all__ = ['map_arg', 'memoized', 'graph_memoized', 'shape2d', 'shape4d',
 
 def map_arg(**maps):
     """
-    Apply a mapping on certains argument before calling the original function.
+    Apply a mapping on certain argument before calling the original function.
 
     Args:
         maps (dict): {argument_name: map_func}
