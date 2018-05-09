@@ -9,6 +9,7 @@ from ..graph_builder import ModelDescBase
 from ..tfutils import get_default_sess_config
 from ..tfutils.tower import TowerFuncWrapper
 from ..tfutils.sessinit import SessionInit, JustCurrentSession
+from ..utils import logger
 
 __all__ = ['PredictConfig']
 
@@ -79,7 +80,9 @@ class PredictConfig(object):
         self.output_names = output_names
         assert_type(self.output_names, list)
         assert_type(self.input_names, list)
-        assert len(self.input_names), self.input_names
+        if len(self.input_names) == 0:
+            logger.warn('PredictConfig has no argument "input_names".')
+        # assert len(self.input_names), self.input_names
         for v in self.input_names:
             assert_type(v, six.string_types)
         assert len(self.output_names), self.output_names
