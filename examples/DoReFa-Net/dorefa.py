@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # File: dorefa.py
-# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+# Author: Yuxin Wu
 
 import tensorflow as tf
 from tensorpack.utils.argtools import graph_memoized

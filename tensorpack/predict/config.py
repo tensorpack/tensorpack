@@ -81,7 +81,7 @@ class PredictConfig(object):
         assert_type(self.output_names, list)
         assert_type(self.input_names, list)
         if len(self.input_names) == 0:
-            logger.warn('PredictConfig has no argument "input_names".')
+            logger.warn('PredictConfig receives empty "input_names".')
         # assert len(self.input_names), self.input_names
         for v in self.input_names:
             assert_type(v, six.string_types)

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # File: GAN.py
-# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+# Author: Yuxin Wu
 
 import tensorflow as tf
 import numpy as np

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # File: disturb.py
-# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+# Author: Yuxin Wu
 
 from tensorpack.dataflow import ProxyDataFlow, RNGDataFlow
 

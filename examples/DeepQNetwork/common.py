@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # File: common.py
-# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+# Author: Yuxin Wu
 import random
 import time
 import multiprocessing

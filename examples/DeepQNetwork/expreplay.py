@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # File: expreplay.py
-# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
+# Author: Yuxin Wu
 
 import numpy as np
 import copy
