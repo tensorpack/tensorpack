@@ -40,7 +40,7 @@ Predict on an image (and show output in a window):
 ./train.py --predict input.jpg --load /path/to/model
 ```
 
-Evaluate the performance of a model and save to json.
+Evaluate the performance of a model on COCO, and save results to json.
 (Pretrained models can be downloaded in [model zoo](http://models.tensorpack.com/FasterRCNN):
 ```
 ./train.py --evaluate output.json --load /path/to/model
@@ -61,11 +61,10 @@ MaskRCNN results contain both bbox and segm mAP.
 |R-101   |512             |(800, 1333)|280k    |40.1/34.4      |70h on 8 P100s|
 |R-101   |512             |(800, 1333)|360k    |40.8/35.1      |63h on 8 V100s|
 
-The two 360k models have identical configurations with
-`R50-C4-2x` configuration in
+The two R-50 360k models have the same configuration __and mAP__ 
+as the `R50-C4-2x` entries in
 [Detectron Model Zoo](https://github.com/facebookresearch/Detectron/blob/master/MODEL_ZOO.md#end-to-end-faster--mask-r-cnn-baselines).
-They get the __same performance__ with the official models, and are about 14% slower than the official implementation,
-probably due to the lack of specialized ops (e.g. AffineChannel, ROIAlign) in TensorFlow.
+So far this seems to be the only open source re-implementation that can reproduce mAP in Detectron.
 
 ## Notes
 

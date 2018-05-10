@@ -11,18 +11,23 @@ The training follows the __exact__ recipe used by the [Training ImageNet in 1 Ho
 and gets the same performance.
 Models can be [downloaded here](http://models.tensorpack.com/ResNet/).
 
+This recipe has better performance than most open source implementations.
+In fact, many papers that claim to "improve" ResNet only compete with a lower
+baseline and they actually cannot beat this ResNet recipe.
+
 | Model              | Top 5 Error | Top 1 Error |
 |:-------------------|-------------|------------:|
 | ResNet18           |     10.50%  |      29.66% |
-| ResNet34					 |     8.56%   |      26.17% |
+| ResNet34  		 |     8.56%   |      26.17% |
 | ResNet50           |     6.85%   |      23.61% |
-| ResNet50-SE				 |     6.24%   |      22.64% |
-| ResNet101      		 |     6.04%   |      21.95% |
-| ResNet152      		 |     5.78%   |      21.51% |
+| ResNet50-SE       |     6.24%   |      22.64% |
+| ResNet101         |     6.04%   |      21.95% |
+| ResNet152         |     5.78%   |      21.51% |
 
 To train, first decompress ImageNet data into [this structure](http://tensorpack.readthedocs.io/en/latest/modules/dataflow.dataset.html#tensorpack.dataflow.dataset.ILSVRC12), then:
 ```bash
-./imagenet-resnet.py --data /path/to/original/ILSVRC --gpu 0,1,2,3 -d 50 [--mode resnet/preact/se]
+./imagenet-resnet.py --data /path/to/original/ILSVRC -d 50 [--mode resnet/preact/se]
+# See ./imagenet-resnet.py -h for other options.
 ```
 
 You should be able to see good GPU utilization (95%~99%), if your data is fast enough.
@@ -37,6 +42,7 @@ See the [tutorial](http://tensorpack.readthedocs.io/en/latest/tutorial/efficient
 
 This script only converts and runs ImageNet-ResNet{50,101,152} Caffe models [released by MSRA](https://github.com/KaimingHe/deep-residual-networks).
 Note that the architecture is different from the `imagenet-resnet.py` script and the models are not compatible.
+ResNets have evolved, generally you should not cite these numbers as baselines in your paper.
 
 Usage:
 ```bash
@@ -76,7 +82,7 @@ Note that the architecture is different from the offcial preact-ResNet18.
 Usage:
 ```bash
 ./cifar10-preact18-mixup.py  # train without mixup
-./cifar10-preact18-mixup.py --mixup	 # with mixup
+./cifar10-preact18-mixup.py --mixup   # with mixup
 ```
 
 Results of the reference code can be reproduced.

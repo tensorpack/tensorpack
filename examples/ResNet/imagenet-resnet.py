@@ -63,6 +63,8 @@ def get_config(model, fake=False):
     batch = args.batch // nr_tower
 
     logger.info("Running on {} towers. Batch size per tower: {}".format(nr_tower, batch))
+    if batch < 32 or batch > 64:
+        logger.warn("Batch size per tower not in [32, 64]. This may lead to worse accuracy than reported.")
     if fake:
         data = QueueInput(FakeData(
             [[batch, 224, 224, 3], [batch]], 1000, random=False, dtype='uint8'))
@@ -106,17 +108,18 @@ def get_config(model, fake=False):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
+    parser.add_argument('--gpu', help='comma separated list of GPU(s) to use. Default to use all available ones')
     parser.add_argument('--data', help='ILSVRC dataset dir')
-    parser.add_argument('--load', help='load model')
-    parser.add_argument('--fake', help='use fakedata to test or benchmark this model', action='store_true')
-    parser.add_argument('--data_format', help='specify NCHW or NHWC',
-                        type=str, default='NCHW')
-    parser.add_argument('-d', '--depth', help='resnet depth',
+    parser.add_argument('--load', help='load a model for training or evaluation')
+    parser.add_argument('--fake', help='use FakeData to debug or benchmark this model', action='store_true')
+    parser.add_argument('--data_format', help='image data format',
+                        default='NCHW', choices=['NCHW', 'NHWC'])
+    parser.add_argument('-d', '--depth', help='ResNet depth',
                         type=int, default=50, choices=[18, 34, 50, 101, 152])
-    parser.add_argument('--eval', action='store_true')
+    parser.add_argument('--eval', action='store_true', help='run offline evaluation instead of training')
     parser.add_argument('--batch', default=256, type=int,
-                        help='total batch size. 32 per GPU gives best accuracy, higher values should be similarly good')
+                        help="total batch size. "
+                        "Note that it's best to keep per-GPU batch size in [32, 64] to obtain the best accuracy.")
     parser.add_argument('--mode', choices=['resnet', 'preact', 'se'],
                         help='variants of resnet to use', default='resnet')
     args = parser.parse_args()

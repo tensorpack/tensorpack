@@ -334,13 +334,15 @@ class EvalCallback(Callback):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
-    parser.add_argument('--load', help='load model')
-    parser.add_argument('--logdir', help='logdir', default='train_log/maskrcnn')
+    parser.add_argument('--gpu', help='comma separated list of GPU(s) to use. Default to all availalbe ones')
+    parser.add_argument('--load', help='load model for evaluation or training')
+    parser.add_argument('--logdir', help='log directory', default='train_log/maskrcnn')
     parser.add_argument('--datadir', help='override config.BASEDIR')
     parser.add_argument('--visualize', action='store_true')
-    parser.add_argument('--evaluate', help='path to the output json eval file')
-    parser.add_argument('--predict', help='path to the input image file')
+    parser.add_argument('--evaluate', help="Run evaluation on COCO. "
+                                           "This option is the path to the output json evaluation file")
+    parser.add_argument('--predict', help="Run prediction on a given image. "
+                                          "This argument is the path to the input image file")
     args = parser.parse_args()
     if args.datadir:
         config.BASEDIR = args.datadir

@@ -49,3 +49,6 @@ Speed:
 
 3. With a large roi batch size (e.g. >= 256), GPU utilitization should stay above 90%.
 
+4. This implementation is about 14% slower than detectron,
+   probably due to the lack of specialized ops (e.g. AffineChannel, ROIAlign) in TensorFlow.
+   It's certainly faster than other TF implementation.
