@@ -119,7 +119,8 @@ if __name__ == '__main__':
     parser.add_argument('--eval', action='store_true', help='run offline evaluation instead of training')
     parser.add_argument('--batch', default=256, type=int,
                         help="total batch size. "
-                        "Note that it's best to keep per-GPU batch size in [32, 64] to obtain the best accuracy.")
+                        "Note that it's best to keep per-GPU batch size in [32, 64] to obtain the best accuracy."
+                        "Pretrained models listed in README were trained with batch=32x8.")
     parser.add_argument('--mode', choices=['resnet', 'preact', 'se'],
                         help='variants of resnet to use', default='resnet')
     args = parser.parse_args()
