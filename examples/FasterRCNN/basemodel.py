@@ -92,7 +92,7 @@ def resnet_group(l, name, block_func, features, count, stride):
     return l
 
 
-def pretrained_resnet_conv4(image, num_blocks, freeze_c2=True):
+def pretrained_resnet_c4_backbone(image, num_blocks, freeze_c2=True):
     assert len(num_blocks) == 3
     with resnet_argscope():
         l = tf.pad(image, [[0, 0], [0, 0], [2, 3], [2, 3]])
@@ -114,3 +114,20 @@ def resnet_conv5(image, num_block):
     with resnet_argscope():
         l = resnet_group(image, 'group3', resnet_bottleneck, 512, num_block, 2)
         return l
+
+
+def pretrained_resnet_fpn_backbone(image, num_blocks, freeze_c2=True):
+    assert len(num_blocks) == 4
+    with resnet_argscope():
+        l = tf.pad(image, [[0, 0], [0, 0], [2, 3], [2, 3]])
+        l = Conv2D('conv0', l, 64, 7, strides=2, activation=BNReLU, padding='VALID')
+        l = tf.pad(l, [[0, 0], [0, 0], [0, 1], [0, 1]])
+        l = MaxPooling('pool0', l, 3, strides=2, padding='VALID')
+        c2 = resnet_group(l, 'group0', resnet_bottleneck, 64, num_blocks[0], 1)
+        if freeze_c2:
+            c2 = tf.stop_gradient(c2)
+        c3 = resnet_group(c2, 'group1', resnet_bottleneck, 128, num_blocks[1], 2)
+        c4 = resnet_group(c3, 'group2', resnet_bottleneck, 256, num_blocks[2], 2)
+        c5 = resnet_group(c4, 'group3', resnet_bottleneck, 512, num_blocks[3], 2)
+    # 32x downsampling up to now
+    return c2, c3, c4, c5

@@ -7,7 +7,8 @@ from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.tfutils.argscope import argscope
 from tensorpack.tfutils.scope_utils import under_name_scope
 from tensorpack.models import (
-    Conv2D, FullyConnected, GlobalAvgPooling, layer_register, Conv2DTranspose)
+    Conv2D, FullyConnected, GlobalAvgPooling, MaxPooling,
+    layer_register, Conv2DTranspose, FixedUnPooling)
 
 from utils.box_ops import pairwise_iou
 import config
@@ -552,6 +553,32 @@ def maskrcnn_loss(mask_logits, fg_labels, fg_target_masks):
 
     add_moving_summary(loss, accuracy, fg_pixel_ratio, pos_accuracy)
     return loss
+
+
+def fpn_model(features):
+    assert len(features) == 4, features
+    num_channel = config.FPN_NUM_CHANNEL
+
+    def upsample2x(x):
+        # TODO may not be optimal in speed or math
+        return FixedUnPooling(x, 2, data_format='channels_first')
+
+    with argscope(Conv2D, data_format='channels_first',
+                  nl=tf.identity, use_bias=True,
+                  kernel_initializer=tf.variance_scaling_initializer(scale=1.)):
+        lat_2345 = [Conv2D('lateral_1x1_c{}'.format(i + 2), c, num_channel, 1)
+                    for i, c in enumerate(features)]
+        lat_sum_5432 = []
+        for idx, lat in enumerate(lat_2345[::-1]):
+            if idx == 0:
+                lat_sum_5432.append(lat)
+            else:
+                lat = lat + upsample2x(lat_sum_5432[-1])
+                lat_sum_5432.append(lat)
+        p2345 = [Conv2D('fpn_3x3_p{}'.format(i + 2), c, num_channel, 3)
+                 for i, c in enumerate(lat_sum_5432[::-1])]
+        p6 = MaxPooling('maxpool_p6', p2345[-1], pool_size=1, strides=2)
+        return p2345 + [p6]
 
 
 if __name__ == '__main__':

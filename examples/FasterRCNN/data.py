@@ -312,6 +312,7 @@ def get_train_dataflow(add_mask=False):
             return None
 
         ret = [im] + list(anchor_inputs) + [boxes, klass]
+        # TODO pad im when FPN
 
         if add_mask:
             # augmentation will modify the polys in-place

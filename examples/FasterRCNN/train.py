@@ -17,6 +17,7 @@ assert six.PY3, "FasterRCNN requires Python 3!"
 
 from tensorpack import *
 from tensorpack.tfutils.summary import add_moving_summary
+from tensorpack.tfutils.scope_utils import under_name_scope
 from tensorpack.tfutils import optimizer
 import tensorpack.utils.viz as tpviz
 from tensorpack.utils.gpu import get_nr_gpu
@@ -24,7 +25,7 @@ from tensorpack.utils.gpu import get_nr_gpu
 
 from coco import COCODetection
 from basemodel import (
-    image_preprocess, pretrained_resnet_conv4, resnet_conv5)
+    image_preprocess, pretrained_resnet_c4_backbone, resnet_conv5)
 from model import (
     clip_boxes, decode_bbox_target, encode_bbox_target, crop_and_resize,
     rpn_head, rpn_losses,
@@ -75,18 +76,22 @@ class Model(ModelDesc):
         image = image_preprocess(image, bgr=True)
         return tf.transpose(image, [0, 3, 1, 2])
 
-    def _get_anchors(self, shape2d):
+    @under_name_scope()
+    def slice_to_featuremap(self, featuremap, anchors, anchor_labels, anchor_boxes):
         """
-        Returns:
-            FSxFSxNAx4 anchors,
+        Args:
+            Slice anchors/anchor_labels/anchor_boxes to the spatial size of this featuremap.
+            anchors (FS x FS x NA x 4):
+            anchor_labels (FS x FS x NA):
+            anchor_boxes (FS x FS x NA x 4):
         """
-        # FSxFSxNAx4 (FS=MAX_SIZE//ANCHOR_STRIDE)
-        with tf.name_scope('anchors'):
-            all_anchors = tf.constant(get_all_anchors(), name='all_anchors', dtype=tf.float32)
-            fm_anchors = tf.slice(
-                all_anchors, [0, 0, 0, 0], tf.stack([
-                    shape2d[0], shape2d[1], -1, -1]), name='fm_anchors')
-            return fm_anchors
+        shape2d = tf.shape(featuremap)[2:]  # h,w
+        slice3d = tf.concat([shape2d, [-1]], axis=0)
+        slice4d = tf.concat([shape2d, [-1, -1]], axis=0)
+        anchors = tf.slice(anchors, [0, 0, 0, 0], slice4d)
+        anchor_labels = tf.slice(anchor_labels, [0, 0, 0], slice3d)
+        anchor_boxes = tf.slice(anchor_boxes, [0, 0, 0, 0], slice4d)
+        return anchors, anchor_labels, anchor_boxes
 
     def build_graph(self, *inputs):
         is_training = get_current_tower_context().is_training
@@ -96,19 +101,11 @@ class Model(ModelDesc):
             image, anchor_labels, anchor_boxes, gt_boxes, gt_labels = inputs
         image = self._preprocess(image)     # 1CHW
 
-        featuremap = pretrained_resnet_conv4(image, config.RESNET_NUM_BLOCK[:3])
+        featuremap = pretrained_resnet_c4_backbone(image, config.RESNET_NUM_BLOCK[:3])
         rpn_label_logits, rpn_box_logits = rpn_head('rpn', featuremap, 1024, config.NUM_ANCHOR)
-        fm_shape = tf.shape(featuremap)[2:]    # h,w
 
-        fm_anchors = self._get_anchors(fm_shape)
-        anchor_labels = tf.slice(
-            anchor_labels, [0, 0, 0],
-            tf.stack([fm_shape[0], fm_shape[1], -1]),
-            name='sliced_anchor_labels')
-        anchor_boxes = tf.slice(
-            anchor_boxes, [0, 0, 0, 0],
-            tf.stack([fm_shape[0], fm_shape[1], -1, -1]),
-            name='sliced_anchor_boxes')
+        fm_anchors, anchor_labels, anchor_boxes = self.slice_to_featuremap(
+            featuremap, get_all_anchors(), anchor_labels, anchor_boxes)
         anchor_boxes_encoded = encode_bbox_target(anchor_boxes, fm_anchors)
 
         image_shape2d = tf.shape(image)[2:]     # h,w
