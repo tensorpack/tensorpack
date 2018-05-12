@@ -40,7 +40,7 @@ class DataParallelBuilder(GraphBuilder):
         if len(towers) > 1:
             logger.info("[DataParallel] Training a model of {} towers.".format(len(towers)))
             if not tf.test.is_built_with_cuda():
-                logger.warn("TensorFlow was not built with CUDA support!")
+                logger.error("[DataParallel] TensorFlow was not built with CUDA support!")
 
         self.towers = towers
 

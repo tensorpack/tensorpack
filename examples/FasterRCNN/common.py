@@ -118,6 +118,27 @@ def clip_boxes(boxes, shape):
     return boxes.reshape(orig_shape)
 
 
+def filter_boxes_inside_shape(boxes, shape):
+    """
+    Args:
+        boxes: (nx4), float
+        shape: (h, w)
+
+    Returns:
+        indices: (k, )
+        selection: (kx4)
+    """
+    assert boxes.ndim == 2, boxes.shape
+    assert len(shape) == 2, shape
+    h, w = shape
+    indices = np.where(
+        (boxes[:, 0] >= 0) &
+        (boxes[:, 1] >= 0) &
+        (boxes[:, 2] <= w) &
+        (boxes[:, 3] <= h))[0]
+    return indices, boxes[indices, :]
+
+
 def print_config():
     logger.info("Config: ------------------------------------------")
     for k in dir(config):

@@ -33,6 +33,7 @@ MAX_SIZE = 1333
 
 # anchors -------------------------
 ANCHOR_STRIDE = 16
+ANCHOR_STRIDES_FPN = (4, 8, 16, 32, 64)
 # sqrtarea of the anchor box
 ANCHOR_SIZES = (32, 64, 128, 256, 512)
 ANCHOR_RATIOS = (0.5, 1., 2.)
@@ -67,3 +68,6 @@ FASTRCNN_NMS_THRESH = 0.5
 RESULT_SCORE_THRESH = 0.05
 RESULT_SCORE_THRESH_VIS = 0.3   # only visualize confident results
 RESULTS_PER_IM = 100
+
+# TODO Not Functioning. Don't USE
+MODE_FPN = False

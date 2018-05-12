@@ -4,6 +4,7 @@
 import cv2
 import numpy as np
 import copy
+import itertools
 
 from tensorpack.utils.argtools import memoized, log_once
 from tensorpack.dataflow import (
@@ -16,7 +17,7 @@ from utils.generate_anchors import generate_anchors
 from utils.np_box_ops import iou as np_iou
 from utils.np_box_ops import area as np_area
 from common import (
-    DataFromListOfDict, CustomResize,
+    DataFromListOfDict, CustomResize, filter_boxes_inside_shape,
     box_to_point8, point8_to_box, segmentation_to_mask)
 import config
 
@@ -31,10 +32,13 @@ def get_all_anchors(
         sizes=config.ANCHOR_SIZES):
     """
     Get all anchors in the largest possible image, shifted, floatbox
+    Args:
+        stride (int): the stride of anchors.
+        sizes (tuple[int]): the sizes (sqrt area) of anchors
 
     Returns:
         anchors: SxSxNUM_ANCHORx4, where S == ceil(MAX_SIZE/STRIDE), floatbox
-        The layout in the NUM_ANCHOR dim is NUM_RATIO x NUM_SCALE.
+        The layout in the NUM_ANCHOR dim is NUM_RATIO x NUM_SIZE.
 
     """
     # Generates a NAx4 matrix of anchor boxes in (x1, y1, x2, y2) format. Anchors
@@ -66,6 +70,22 @@ def get_all_anchors(
     field_of_anchors = field_of_anchors.astype('float32')
     field_of_anchors[:, :, :, [2, 3]] += 1
     return field_of_anchors
+
+
+@memoized
+def get_all_anchors_fpn(
+        strides=config.ANCHOR_STRIDES_FPN,
+        sizes=config.ANCHOR_SIZES):
+    """
+    Returns:
+        [anchors]: each anchors is a SxSx NUM_ANCHOR_RATIOS x4 array.
+    """
+    assert len(strides) == len(sizes)
+    foas = []
+    for stride, size in zip(strides, sizes):
+        foa = get_all_anchors(stride=stride, sizes=(size,))
+        foas.append(foa)
+    return foas
 
 
 def get_anchor_labels(anchors, gt_boxes, crowd_boxes):
@@ -148,47 +168,88 @@ def get_rpn_anchor_input(im, boxes, is_crowd):
         The anchor labels and target boxes for each pixel in the featuremap.
         fm_labels: fHxfWxNA
         fm_boxes: fHxfWxNAx4
+        NA will be NUM_ANCHOR_SIZES x NUM_ANCHOR_RATIOS
     """
     boxes = boxes.copy()
+    all_anchors = np.copy(get_all_anchors())
+    # fHxfWxAx4 -> (-1, 4)
+    featuremap_anchors_flatten = all_anchors.reshape((-1, 4))
 
-    ALL_ANCHORS = get_all_anchors()
-    H, W = im.shape[:2]
-    anchorH, anchorW = ALL_ANCHORS.shape[:2]
-
-    def filter_box_inside(im, boxes):
-        h, w = im.shape[:2]
-        indices = np.where(
-            (boxes[:, 0] >= 0) &
-            (boxes[:, 1] >= 0) &
-            (boxes[:, 2] <= w) &
-            (boxes[:, 3] <= h))[0]
-        return indices
-
-    crowd_boxes = boxes[is_crowd == 1]
-    non_crowd_boxes = boxes[is_crowd == 0]
-
-    # fHxfWxAx4
-    featuremap_anchors_flatten = np.copy(ALL_ANCHORS).reshape((-1, 4))
     # only use anchors inside the image
-    inside_ind = filter_box_inside(im, featuremap_anchors_flatten)
-    inside_anchors = featuremap_anchors_flatten[inside_ind, :]
-
-    anchor_labels, anchor_boxes = get_anchor_labels(inside_anchors, non_crowd_boxes, crowd_boxes)
+    inside_ind, inside_anchors = filter_boxes_inside_shape(featuremap_anchors_flatten, im.shape[:2])
+    # obtain anchor labels and their corresponding gt boxes
+    anchor_labels, anchor_gt_boxes = get_anchor_labels(inside_anchors, boxes[is_crowd == 0], boxes[is_crowd == 1])
 
     # Fill them back to original size: fHxfWx1, fHxfWx4
+    anchorH, anchorW = all_anchors.shape[:2]
     featuremap_labels = -np.ones((anchorH * anchorW * config.NUM_ANCHOR, ), dtype='int32')
     featuremap_labels[inside_ind] = anchor_labels
     featuremap_labels = featuremap_labels.reshape((anchorH, anchorW, config.NUM_ANCHOR))
     featuremap_boxes = np.zeros((anchorH * anchorW * config.NUM_ANCHOR, 4), dtype='float32')
-    featuremap_boxes[inside_ind, :] = anchor_boxes
+    featuremap_boxes[inside_ind, :] = anchor_gt_boxes
     featuremap_boxes = featuremap_boxes.reshape((anchorH, anchorW, config.NUM_ANCHOR, 4))
     return featuremap_labels, featuremap_boxes
 
 
+def get_multilevel_rpn_anchor_input(im, boxes, is_crowd):
+    """
+    Args:
+        im: an image
+        boxes: nx4, floatbox, gt. shoudn't be changed
+        is_crowd: n,
+
+    Returns:
+        [(fm_labels, fm_boxes)]: Returns a tuple for each FPN level.
+        Each tuple contains the anchor labels and target boxes for each pixel in the featuremap.
+
+        fm_labels: fHxfWx NUM_ANCHOR_RATIOS
+        fm_boxes: fHxfWx NUM_ANCHOR_RATIOS x4
+    """
+    boxes = boxes.copy()
+    anchors_per_level = get_all_anchors_fpn()
+    flatten_anchors_per_level = [k.reshape((-1, 4)) for k in anchors_per_level]
+    all_anchors_flatten = np.concatenate(flatten_anchors_per_level, axis=0)
+
+    inside_ind, inside_anchors = filter_boxes_inside_shape(all_anchors_flatten, im.shape[:2])
+    anchor_labels, anchor_gt_boxes = get_anchor_labels(inside_anchors, boxes[is_crowd == 0], boxes[is_crowd == 1])
+
+    # map back to all_anchors, then split to each level
+    num_all_anchors = all_anchors_flatten.shape[0]
+    all_labels = -np.ones((num_all_anchors, ), dtype='int32')
+    all_labels[inside_ind] = anchor_labels
+    all_boxes = np.zeros((num_all_anchors, 4), dtype='float32')
+    all_boxes[inside_ind] = anchor_gt_boxes
+
+    start = 0
+    multilevel_inputs = []
+    for level_anchor in anchors_per_level:
+        assert level_anchor.shape[2] == len(config.ANCHOR_RATIOS)
+        anchor_shape = level_anchor.shape[:3]   # fHxfWxNUM_ANCHOR_RATIOS
+        num_anchor_this_level = np.prod(anchor_shape)
+        end = start + num_anchor_this_level
+        multilevel_inputs.append(
+            (all_labels[start: end].reshape(anchor_shape),
+             all_boxes[start: end, :].reshape(anchor_shape + (4,))
+             ))
+        start = end
+    assert end == num_all_anchors, "{} != {}".format(end, num_all_anchors)
+    return multilevel_inputs
+
+
 def get_train_dataflow(add_mask=False):
     """
-    Return a training dataflow. Each datapoint is:
-    image, fm_labels, fm_boxes, gt_boxes, gt_class [, masks]
+    Return a training dataflow. Each datapoint consists of the following:
+
+    An image: (h, w, 3),
+
+    1 or more pairs of (anchor_labels, anchor_boxes):
+    anchor_labels: (h', w', NA)
+    anchor_boxes: (h', w', NA, 4)
+
+    gt_boxes: (N, 4)
+    gt_labels: (N,)
+
+    If MODE_MASK, gt_masks: (N, h, w)
     """
 
     imgs = COCODetection.load_many(
@@ -234,7 +295,14 @@ def get_train_dataflow(add_mask=False):
 
         # rpn anchor:
         try:
-            fm_labels, fm_boxes = get_rpn_anchor_input(im, boxes, is_crowd)
+            if config.MODE_FPN:
+                multilevel_anchor_inputs = get_multilevel_rpn_anchor_input(im, boxes, is_crowd)
+                anchor_inputs = itertools.chain.from_iterable(multilevel_anchor_inputs)
+            else:
+                # anchor_labels, anchor_boxes
+                anchor_inputs = get_rpn_anchor_input(im, boxes, is_crowd)
+                assert len(anchor_inputs) == 2
+
             boxes = boxes[is_crowd == 0]    # skip crowd boxes in training target
             klass = klass[is_crowd == 0]
             if not len(boxes):
@@ -243,7 +311,7 @@ def get_train_dataflow(add_mask=False):
             log_once("Input {} is filtered for training: {}".format(fname, str(e)), 'warn')
             return None
 
-        ret = [im, fm_labels, fm_boxes, boxes, klass]
+        ret = [im] + list(anchor_inputs) + [boxes, klass]
 
         if add_mask:
             # augmentation will modify the polys in-place
