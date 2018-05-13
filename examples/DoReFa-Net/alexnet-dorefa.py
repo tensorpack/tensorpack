@@ -29,27 +29,7 @@ http://arxiv.org/abs/1606.06160
 The original experiements are performed on a proprietary framework.
 This is our attempt to reproduce it on tensorpack & TensorFlow.
 
-Accuracy:
-    Trained with 4 GPUs and (W,A,G)=(1,2,6), it can reach top-1 single-crop validation error of 47.6%,
-    after 70 epochs. This number is better than what's in the paper due to more sophisticated augmentations.
-
-    With (W,A,G)=(32,32,32) -- full precision baseline, 41.4% error.
-    With (W,A,G)=(t,32,32) -- TTQ, 41.9% error
-    With (W,A,G)=(1,32,32) -- BWN, 44.3% error
-    With (W,A,G)=(1,1,32) -- BNN, 53.4% error
-    With (W,A,G)=(1,2,6), 47.6% error
-    With (W,A,G)=(1,2,4), 58.4% error
-
-    Training with 2 or 8 GPUs is supported but the result may get slightly
-    different, due to limited per-GPU batch size.
-    You may want to adjust total batch size and learning rate accordingly.
-
-Speed:
-    About 11 iteration/s on 4 P100s. (Each epoch is set to 10000 iterations)
-    Note that this code was written early without using NCHW format. You
-    should expect a speed up if the code is ported to NCHW format.
-
-To Train, for example:
+To Train:
     ./alexnet-dorefa.py --dorefa 1,2,6 --data PATH --gpu 0,1
 
     PATH should look like:
@@ -75,7 +55,7 @@ To run pretrained model:
 BITW = 1
 BITA = 2
 BITG = 6
-TOTAL_BATCH_SIZE = 128
+TOTAL_BATCH_SIZE = 256
 BATCH_SIZE = None
 
 
@@ -86,6 +66,7 @@ class Model(ModelDesc):
 
     def build_graph(self, image, label):
         image = image / 255.0
+        image = tf.transpose(image, [0, 3, 1, 2])
 
         if BITW == 't':
             fw, fa, fg = get_dorefa(32, 32, 32)
@@ -112,6 +93,7 @@ class Model(ModelDesc):
             return fa(nonlin(x))
 
         with remap_variables(new_get_variable), \
+                argscope([Conv2D, BatchNorm, MaxPooling], data_format='channels_first'), \
                 argscope(BatchNorm, momentum=0.9, epsilon=1e-4), \
                 argscope(Conv2D, use_bias=False):
             logits = (LinearWrap(image)
@@ -170,7 +152,7 @@ class Model(ModelDesc):
         return total_cost
 
     def optimizer(self):
-        lr = tf.get_variable('learning_rate', initializer=1e-4, trainable=False)
+        lr = tf.get_variable('learning_rate', initializer=2e-4, trainable=False)
         return tf.train.AdamOptimizer(lr, epsilon=1e-5)
 
 
@@ -189,17 +171,15 @@ def get_config():
         dataflow=data_train,
         callbacks=[
             ModelSaver(),
-            # HumanHyperParamSetter('learning_rate'),
             ScheduledHyperParamSetter(
-                'learning_rate', [(56, 2e-5), (64, 4e-6)]),
+                'learning_rate', [(60, 4e-5), (75, 8e-6)]),
             InferenceRunner(data_test,
-                            [ScalarStats('cost'),
-                             ClassificationError('wrong-top1', 'val-error-top1'),
+                            [ClassificationError('wrong-top1', 'val-error-top1'),
                              ClassificationError('wrong-top5', 'val-error-top5')])
         ],
         model=Model(),
-        steps_per_epoch=10000,
-        max_epoch=100,
+        steps_per_epoch=1280000 // TOTAL_BATCH_SIZE,
+        max_epoch=90,
     )
 
 

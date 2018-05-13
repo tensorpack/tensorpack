@@ -7,16 +7,22 @@ It also contains an implementation of the following papers:
 + [Trained Ternary Quantization](https://arxiv.org/abs/1612.01064), with (W,A,G)=(t,32,32).
 + [Binarized Neural Networks](https://arxiv.org/abs/1602.02830), with (W,A,G)=(1,1,32).
 
+This is a solid baseline for research in model quantization.
 These quantization techniques achieves the following ImageNet performance in this implementation:
 
 | Model              | W,A,G       | Top 1 Error |
 |:-------------------|-------------|------------:|
-| Full Precision     | 32,32,32    |      41.4%  |
-| TTQ                | t,32,32     |      41.9%  |
-| BWN                | 1,32,32     |      44.3%  |
+| Full Precision     | 32,32,32    |      40.9%  |
+| TTQ                | t,32,32     |      41.5%  |
+| BWN                | 1,32,32     |      43.7%  |
 | BNN                | 1,1,32      |      53.4%  |
-| DoReFa             | 1,2,6       |      47.6%  |
-| DoReFa             | 1,2,4       |      58.4%  |
+| DoReFa             | 1,2,32      |      47.2%  |
+| DoReFa             | 1,2,6       |      47.2%  |
+| DoReFa             | 1,2,4       |      60.9%  |
+
+These numbers were obtained by training on 8 GPUs with a total batch size of 256.
+The DoReFa-Net models reach slightly better performance than our paper, due to
+more sophisticated augmentations.
 
 We hosted a demo at CVPR16 on behalf of Megvii, Inc, running a real-time 1/4-VGG size DoReFa-Net on ARM and half-VGG size DoReFa-Net on FPGA.
 We're not planning to release our C++ runtime for bit-operations.
