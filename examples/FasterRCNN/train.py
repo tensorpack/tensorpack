@@ -389,7 +389,11 @@ class ResNetFPNModel(DetectionModel):
             'fastrcnn', all_rois, config.FASTRCNN_FC_HEAD_DIM, config.NUM_CLASS)
 
         if is_training:
-            # rpn_losses = ..
+            with tf.name_scope('rpn_losses'):
+                rpn_total_label_loss = tf.add_n(rpn_loss_collection[::2], name='label_loss')
+                rpn_total_box_loss = tf.add_n(rpn_loss_collection[1::2], name='box_loss')
+                add_moving_summary(rpn_total_box_loss, rpn_total_label_loss)
+
             # fastrcnn loss:
             matched_gt_boxes = tf.gather(gt_boxes, fg_inds_wrt_gt)
 
@@ -579,6 +583,7 @@ if __name__ == '__main__':
                 PeriodicCallback(
                     ModelSaver(max_to_keep=10, keep_checkpoint_every_n_hours=1),
                     every_k_epochs=20),
+                SessionRunTimeout(60000),   # 1 minute timeout
                 # linear warmup
                 ScheduledHyperParamSetter(
                     'learning_rate', warmup_schedule, interp='linear', step_based=True),

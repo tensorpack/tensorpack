@@ -96,7 +96,7 @@ def rpn_losses(anchor_labels, anchor_boxes, label_logits, box_logits):
                 summaries.extend([precision, recall])
         add_moving_summary(*summaries)
 
-    placeholder = 1.
+    placeholder = 0.    # Per-level loss summaries in FPN may appear lower. But the sum should be OK.
     label_loss = tf.nn.sigmoid_cross_entropy_with_logits(
         labels=tf.to_float(valid_anchor_labels), logits=valid_label_logits)
     label_loss = tf.reduce_sum(label_loss) * (1. / config.RPN_BATCH_PER_IM)
