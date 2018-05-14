@@ -502,7 +502,11 @@ class EvalCallback(Callback):
             logger.get_logger_dir(), 'outputs{}.json'.format(self.global_step))
         with open(output_file, 'w') as f:
             json.dump(all_results, f)
-        scores = print_evaluation_scores(output_file)
+        try:
+            scores = print_evaluation_scores(output_file)
+        except Exception:
+            logger.exception("Exception in COCO evaluation.")
+            scores = {}
         for k, v in scores.items():
             self.trainer.monitors.put_scalar(k, v)
 
