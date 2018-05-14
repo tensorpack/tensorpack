@@ -99,7 +99,7 @@ def rpn_losses(anchor_labels, anchor_boxes, label_logits, box_logits):
     placeholder = 1.
     label_loss = tf.nn.sigmoid_cross_entropy_with_logits(
         labels=tf.to_float(valid_anchor_labels), logits=valid_label_logits)
-    label_loss = tf.reduce_mean(label_loss)
+    label_loss = label_loss * (1. / config.RPN_BATCH_PER_IM)
     label_loss = tf.where(tf.equal(nr_valid, 0), placeholder, label_loss, name='label_loss')
 
     pos_anchor_boxes = tf.boolean_mask(anchor_boxes, pos_mask)
@@ -108,9 +108,7 @@ def rpn_losses(anchor_labels, anchor_boxes, label_logits, box_logits):
     box_loss = tf.losses.huber_loss(
         pos_anchor_boxes, pos_box_logits, delta=delta,
         reduction=tf.losses.Reduction.SUM) / delta
-    box_loss = tf.div(
-        box_loss,
-        tf.cast(nr_valid, tf.float32))
+    box_loss = box_loss * (1. / config.RPN_BATCH_PER_IM)
     box_loss = tf.where(tf.equal(nr_pos, 0), placeholder, box_loss, name='box_loss')
 
     add_moving_summary(label_loss, box_loss, nr_valid, nr_pos)

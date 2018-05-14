@@ -141,12 +141,12 @@ def get_anchor_labels(anchors, gt_boxes, crowd_boxes):
         overlap_with_crowd = cand_inds[ious.max(axis=1) > config.CROWD_OVERLAP_THRES]
         anchor_labels[overlap_with_crowd] = -1
 
-    # Filter fg labels: ignore some fg if fg is too many
+    # Subsample fg labels: ignore some fg if fg is too many
     target_num_fg = int(config.RPN_BATCH_PER_IM * config.RPN_FG_RATIO)
     fg_inds = filter_box_label(anchor_labels, 1, target_num_fg)
     # Note that fg could be fewer than the target ratio
 
-    # filter bg labels. num_bg is not allowed to be too many
+    # Subsample bg labels. num_bg is not allowed to be too many
     old_num_bg = np.sum(anchor_labels == 0)
     if old_num_bg == 0 or len(fg_inds) == 0:
         # No valid bg/fg in this image, skip.
