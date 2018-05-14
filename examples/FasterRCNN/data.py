@@ -51,7 +51,12 @@ def get_all_anchors(
     # anchors are intbox here.
     # anchors at featuremap [0,0] are centered at fpcoor (8,8) (half of stride)
 
-    field_size = int(np.ceil(config.MAX_SIZE / stride))
+    max_size = config.MAX_SIZE
+    if config.MODE_FPN:
+        # TODO setting this in config is perhaps better
+        size_mult = config.FPN_RESOLUTION_REQUIREMENT * 1.
+        max_size = np.ceil(max_size / size_mult) * size_mult
+    field_size = int(np.ceil(max_size / stride))
     shifts = np.arange(0, field_size) * stride
     shift_x, shift_y = np.meshgrid(shifts, shifts)
     shift_x = shift_x.flatten()
@@ -337,7 +342,7 @@ def get_train_dataflow(add_mask=False):
         return ret
 
     ds = MapData(ds, preprocess)
-    ds = PrefetchDataZMQ(ds, 1)
+    ds = PrefetchDataZMQ(ds, 3)
     return ds
 
 
@@ -359,7 +364,6 @@ if __name__ == '__main__':
     import os
     from tensorpack.dataflow import PrintData
     config.BASEDIR = os.path.expanduser('~/data/coco')
-    config.TRAIN_DATASET = ['train2014']
     ds = get_train_dataflow(add_mask=config.MODE_MASK)
     ds = PrintData(ds, 100)
     TestDataSpeed(ds, 50000).start()

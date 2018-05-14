@@ -4,11 +4,12 @@
 import numpy as np
 
 # mode flags ---------------------
-MODE_MASK = True
+MODE_MASK = False
 
 # dataset -----------------------
 BASEDIR = '/path/to/your/COCO/DIR'
 TRAIN_DATASET = ['train2014', 'valminusminival2014']
+# TRAIN_DATASET = ['valminusminival2014']
 VAL_DATASET = 'minival2014'   # only support evaluation on single dataset
 NUM_CLASS = 81
 CLASS_NAMES = []  # NUM_CLASS strings. Will be populated later by coco loader
@@ -23,12 +24,12 @@ BASE_LR = 1e-2
 WARMUP = 1000    # in steps
 STEPS_PER_EPOCH = 500
 LR_SCHEDULE = [150000, 230000, 280000]
-# LR_SCHEDULE = [120000, 160000, 180000]    # "1x" schedule in detectron
+LR_SCHEDULE = [120000, 160000, 180000]    # "1x" schedule in detectron
 # LR_SCHEDULE = [240000, 320000, 360000]    # "2x" schedule in detectron
 
 # image resolution --------------------
 SHORT_EDGE_SIZE = 800
-MAX_SIZE = 1333
+MAX_SIZE = 1333  # TODO use 1344
 # alternative (worse & faster) setting: 600, 1024
 
 # anchors -------------------------
@@ -55,7 +56,7 @@ TRAIN_POST_NMS_TOPK = 2000
 CROWD_OVERLAP_THRES = 0.7
 
 # fastrcnn training ---------------------
-FASTRCNN_BATCH_PER_IM = 256
+FASTRCNN_BATCH_PER_IM = 512
 FASTRCNN_BBOX_REG_WEIGHTS = np.array([10, 10, 5, 5], dtype='float32')
 FASTRCNN_FG_THRESH = 0.5
 # fg ratio in a ROI batch
@@ -70,6 +71,9 @@ RESULT_SCORE_THRESH_VIS = 0.3   # only visualize confident results
 RESULTS_PER_IM = 100
 
 # TODO Not Functioning. Don't USE
-MODE_FPN = False
+MODE_FPN = True
 FPN_NUM_CHANNEL = 256
-FPN_SIZE_REQUIREMENT = 32
+FASTRCNN_FC_HEAD_DIM = 1024
+FPN_RESOLUTION_REQUIREMENT = 32
+TRAIN_FPN_NMS_TOPK = 2048
+TEST_FPN_NMS_TOPK = 1024

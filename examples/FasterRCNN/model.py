@@ -2,15 +2,16 @@
 # File: model.py
 
 import tensorflow as tf
-from tensorpack.tfutils import get_current_tower_context
+import numpy as np
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.tfutils.argscope import argscope
-from tensorpack.tfutils.scope_utils import under_name_scope
+from tensorpack.tfutils.scope_utils import under_name_scope, auto_reuse_variable_scope
 from tensorpack.models import (
-    Conv2D, FullyConnected, GlobalAvgPooling, MaxPooling,
+    Conv2D, FullyConnected, MaxPooling,
     layer_register, Conv2DTranspose, FixedUnPooling)
 
 from utils.box_ops import pairwise_iou
+from utils.box_ops import area as tf_area
 import config
 
 
@@ -28,6 +29,7 @@ def clip_boxes(boxes, window, name=None):
 
 
 @layer_register(log_shape=True)
+@auto_reuse_variable_scope
 def rpn_head(featuremap, channel, num_anchors):
     """
     Returns:
@@ -67,7 +69,8 @@ def rpn_losses(anchor_labels, anchor_boxes, label_logits, box_logits):
         valid_mask = tf.stop_gradient(tf.not_equal(anchor_labels, -1))
         pos_mask = tf.stop_gradient(tf.equal(anchor_labels, 1))
         nr_valid = tf.stop_gradient(tf.count_nonzero(valid_mask, dtype=tf.int32), name='num_valid_anchor')
-        nr_pos = tf.count_nonzero(pos_mask, dtype=tf.int32, name='num_pos_anchor')
+        nr_pos = tf.identity(tf.count_nonzero(pos_mask, dtype=tf.int32), name='num_pos_anchor')
+        # nr_pos is guaranteed >0 in C4. But in FPN. even nr_valid could be 0.
 
         valid_anchor_labels = tf.boolean_mask(anchor_labels, valid_mask)
     valid_label_logits = tf.boolean_mask(label_logits, valid_mask)
@@ -84,17 +87,20 @@ def rpn_losses(anchor_labels, anchor_boxes, label_logits, box_logits):
                         valid_label_prob > th,
                         tf.equal(valid_prediction, valid_anchor_labels)),
                     dtype=tf.int32)
-                summaries.append(tf.truediv(
-                    pos_prediction_corr,
-                    nr_pos, name='recall_th{}'.format(th)))
+                placeholder = 0.5   # TODO A small value will make summaries appear lower.
+                recall = tf.to_float(tf.truediv(pos_prediction_corr, nr_pos))
+                recall = tf.where(tf.equal(nr_pos, 0), placeholder, recall, name='recall_th{}'.format(th))
                 precision = tf.to_float(tf.truediv(pos_prediction_corr, nr_pos_prediction))
-                precision = tf.where(tf.equal(nr_pos_prediction, 0), 0.0, precision, name='precision_th{}'.format(th))
-                summaries.append(precision)
+                precision = tf.where(tf.equal(nr_pos_prediction, 0),
+                                     placeholder, precision, name='precision_th{}'.format(th))
+                summaries.extend([precision, recall])
         add_moving_summary(*summaries)
 
+    placeholder = 1.
     label_loss = tf.nn.sigmoid_cross_entropy_with_logits(
         labels=tf.to_float(valid_anchor_labels), logits=valid_label_logits)
-    label_loss = tf.reduce_mean(label_loss, name='label_loss')
+    label_loss = tf.reduce_mean(label_loss)
+    label_loss = tf.where(tf.equal(nr_valid, 0), placeholder, label_loss, name='label_loss')
 
     pos_anchor_boxes = tf.boolean_mask(anchor_boxes, pos_mask)
     pos_box_logits = tf.boolean_mask(box_logits, pos_mask)
@@ -104,7 +110,8 @@ def rpn_losses(anchor_labels, anchor_boxes, label_logits, box_logits):
         reduction=tf.losses.Reduction.SUM) / delta
     box_loss = tf.div(
         box_loss,
-        tf.cast(nr_valid, tf.float32), name='box_loss')
+        tf.cast(nr_valid, tf.float32))
+    box_loss = tf.where(tf.equal(nr_pos, 0), placeholder, box_loss, name='box_loss')
 
     add_moving_summary(label_loss, box_loss, nr_valid, nr_pos)
     return label_loss, box_loss
@@ -167,26 +174,29 @@ def encode_bbox_target(boxes, anchors):
 
 
 @under_name_scope()
-def generate_rpn_proposals(boxes, scores, img_shape):
+def generate_rpn_proposals(boxes, scores, img_shape,
+                           pre_nms_topk, post_nms_topk=None):
     """
+    Sample RPN proposals by the following steps:
+    1. Pick top k1 by scores
+    2. NMS them
+    3. Pick top k2 by scores. Default k2 == k1, i.e. does not filter the NMS output.
+
     Args:
-        boxes: nx4 float dtype, decoded to floatbox already
+        boxes: nx4 float dtype, the proposal boxes. Decoded to floatbox already
         scores: n float, the logits
         img_shape: [h, w]
+        pre_nms_topk, post_nms_topk (int): See above.
 
     Returns:
         boxes: kx4 float
         scores: k logits
     """
     assert boxes.shape.ndims == 2, boxes.shape
-    if get_current_tower_context().is_training:
-        PRE_NMS_TOPK = config.TRAIN_PRE_NMS_TOPK
-        POST_NMS_TOPK = config.TRAIN_POST_NMS_TOPK
-    else:
-        PRE_NMS_TOPK = config.TEST_PRE_NMS_TOPK
-        POST_NMS_TOPK = config.TEST_POST_NMS_TOPK
+    if post_nms_topk is None:
+        post_nms_topk = pre_nms_topk
 
-    topk = tf.minimum(PRE_NMS_TOPK, tf.size(scores))
+    topk = tf.minimum(pre_nms_topk, tf.size(scores))
     topk_scores, topk_indices = tf.nn.top_k(scores, k=topk, sorted=False)
     topk_boxes = tf.gather(boxes, topk_indices)
     topk_boxes = clip_boxes(topk_boxes, img_shape)
@@ -199,22 +209,21 @@ def generate_rpn_proposals(boxes, scores, img_shape):
     topk_valid_boxes_x1y1x2y2 = tf.boolean_mask(topk_boxes_x1y1x2y2, valid)
     topk_valid_scores = tf.boolean_mask(topk_scores, valid)
 
+    # TODO not needed
     topk_valid_boxes_y1x1y2x2 = tf.reshape(
         tf.reverse(topk_valid_boxes_x1y1x2y2, axis=[2]),
         (-1, 4), name='nms_input_boxes')
     nms_indices = tf.image.non_max_suppression(
         topk_valid_boxes_y1x1y2x2,
         topk_valid_scores,
-        max_output_size=POST_NMS_TOPK,
+        max_output_size=post_nms_topk,
         iou_threshold=config.RPN_PROPOSAL_NMS_THRESH)
 
     topk_valid_boxes = tf.reshape(topk_valid_boxes_x1y1x2y2, (-1, 4))
-    final_boxes = tf.gather(
-        topk_valid_boxes,
-        nms_indices, name='boxes')
-    final_scores = tf.gather(topk_valid_scores, nms_indices, name='scores')
+    final_boxes = tf.gather(topk_valid_boxes, nms_indices)
+    final_scores = tf.gather(topk_valid_scores, nms_indices)
     tf.sigmoid(final_scores, name='probs')  # for visualization
-    return final_boxes, final_scores
+    return tf.stop_gradient(final_boxes, name='boxes'), tf.stop_gradient(final_scores, name='scores')
 
 
 @under_name_scope()
@@ -243,6 +252,7 @@ def proposal_metrics(iou):
 def sample_fast_rcnn_targets(boxes, gt_boxes, gt_labels):
     """
     Sample some ROIs from all proposals for training.
+    #fg is guaranteed to be > 0, because grount truth boxes are added as RoIs.
 
     Args:
         boxes: nx4 region proposals, floatbox
@@ -288,13 +298,15 @@ def sample_fast_rcnn_targets(boxes, gt_boxes, gt_labels):
     fg_inds_wrt_gt = tf.gather(best_iou_ind, fg_inds)   # num_fg
 
     all_indices = tf.concat([fg_inds, bg_inds], axis=0)   # indices w.r.t all n+m proposal boxes
-    ret_boxes = tf.gather(boxes, all_indices, name='sampled_proposal_boxes')
+    ret_boxes = tf.gather(boxes, all_indices)
 
     ret_labels = tf.concat(
         [tf.gather(gt_labels, fg_inds_wrt_gt),
-         tf.zeros_like(bg_inds, dtype=tf.int64)], axis=0, name='sampled_labels')
+         tf.zeros_like(bg_inds, dtype=tf.int64)], axis=0)
     # stop the gradient -- they are meant to be ground-truth
-    return tf.stop_gradient(ret_boxes), tf.stop_gradient(ret_labels), fg_inds_wrt_gt
+    return tf.stop_gradient(ret_boxes, name='sampled_proposal_boxes'), \
+        tf.stop_gradient(ret_labels, name='sampled_labels'), \
+        tf.stop_gradient(fg_inds_wrt_gt)
 
 
 @under_name_scope()
@@ -381,16 +393,15 @@ def roi_align(featuremap, boxes, output_shape):
 
 
 @layer_register(log_shape=True)
-def fastrcnn_head(feature, num_classes):
+def fastrcnn_outputs(feature, num_classes):
     """
     Args:
-        feature (NxCx7x7):
+        feature (any shape):
         num_classes(int): num_category + 1
 
     Returns:
         cls_logits (Nxnum_class), reg_logits (Nx num_class-1 x 4)
     """
-    feature = GlobalAvgPooling('gap', feature, data_format='channels_first')
     classification = FullyConnected(
         'class', feature, num_classes,
         kernel_initializer=tf.random_normal_initializer(stddev=0.01))
@@ -555,13 +566,21 @@ def maskrcnn_loss(mask_logits, fg_labels, fg_target_masks):
     return loss
 
 
+@layer_register(log_shape=True)
 def fpn_model(features):
+    """
+    Args:
+        features ([tf.Tensor]): ResNet features c2-c5
+
+    Returns:
+        [tf.Tensor]: FPN features p2-p6
+    """
     assert len(features) == 4, features
     num_channel = config.FPN_NUM_CHANNEL
 
-    def upsample2x(x):
+    def upsample2x(name, x):
         # TODO may not be optimal in speed or math
-        return FixedUnPooling(x, 2, data_format='channels_first')
+        return FixedUnPooling(name, x, 2, data_format='channels_first')
 
     with argscope(Conv2D, data_format='channels_first',
                   nl=tf.identity, use_bias=True,
@@ -573,19 +592,66 @@ def fpn_model(features):
             if idx == 0:
                 lat_sum_5432.append(lat)
             else:
-                lat = lat + upsample2x(lat_sum_5432[-1])
+                lat = lat + upsample2x('upsample_c{}'.format(5 - idx), lat_sum_5432[-1])
                 lat_sum_5432.append(lat)
-        p2345 = [Conv2D('fpn_3x3_p{}'.format(i + 2), c, num_channel, 3)
+        p2345 = [Conv2D('posthoc_3x3_p{}'.format(i + 2), c, num_channel, 3)
                  for i, c in enumerate(lat_sum_5432[::-1])]
-        p6 = MaxPooling('maxpool_p6', p2345[-1], pool_size=1, strides=2)
+        p6 = MaxPooling('maxpool_p6', p2345[-1], pool_size=1, strides=2, data_format='channels_first')
         return p2345 + [p6]
+
+
+@under_name_scope()
+def fpn_map_rois_to_levels(boxes):
+    """
+    Args:
+        boxes (nx4)
+
+    Returns:
+        [tf.Tensor]: 4 tensors for level 2-5. Each tensor is a vector of indices of boxes in its level.
+        [tf.Tensor]: 4 tensors, the gathered boxes in each level.
+
+    Be careful that the returned tensor could be empty.
+    """
+    sqrtarea = tf.sqrt(tf_area(boxes))
+    level = tf.floor(4 + tf.log(sqrtarea * (1. / 224) + 1e-6) * (1.0 / np.log(2)))
+
+    # RoI levels range from 2~5 (not 6)
+    level_ids = [
+        tf.where(level <= 2),
+        tf.where(tf.equal(level, 3)),   # == is not supported
+        tf.where(tf.equal(level, 4)),
+        tf.where(level >= 5)]
+    level_ids = [tf.reshape(x, [-1], name='roi_level{}_id'.format(i + 2))
+                 for i, x in enumerate(level_ids)]
+    num_in_levels = [tf.size(x, name='num_roi_level{}'.format(i + 2))
+                     for i, x in enumerate(level_ids)]
+    add_moving_summary(*num_in_levels)
+
+    level_boxes = [tf.gather(boxes, ids) for ids in level_ids]
+    return level_ids, level_boxes
+
+
+@layer_register(log_shape=True)
+def fastrcnn_2fc_head(feature, dim, num_classes):
+    """
+    Args:
+        feature (any shape):
+        dim (int): mlp dim
+        num_classes(int): num_category + 1
+
+    Returns:
+        cls_logits (Nxnum_class), reg_logits (Nx num_class-1 x 4)
+    """
+    init = tf.random_normal_initializer(stddev=0.01)
+    hidden = FullyConnected('fc6', feature, dim, kernel_initializer=init, nl=tf.nn.relu)
+    hidden = FullyConnected('fc7', hidden, dim, kernel_initializer=init, nl=tf.nn.relu)
+    return fastrcnn_outputs('outputs', hidden, num_classes)
 
 
 if __name__ == '__main__':
     """
     Demonstrate what's wrong with tf.image.crop_and_resize:
     """
-    import numpy as np
     import tensorflow.contrib.eager as tfe
     tfe.enable_eager_execution()
 
