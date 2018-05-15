@@ -47,8 +47,8 @@ callbacks=[
   GPUUtilizationTracker(),
   # touch a file to pause the training and start a debug shell, to observe what's going on
   InjectShell(shell='ipython'),
-	# estimate time until completion
-	EstimatedTimeLeft()
+  # estimate time until completion
+  EstimatedTimeLeft()
 ] + [    # these callbacks are enabled by default already, though you can customize them
   # maintain those moving average summaries defined in the model (e.g. training loss, training error)
   MovingAverageSummary(),
@@ -73,9 +73,9 @@ Notice that callbacks cover every detail of training, ranging from graph operati
 This means you can customize every part of the training to your preference, e.g. display something
 different in the progress bar, evaluate part of the summaries at a different frequency, etc.
 
-These features may not be always useful, but think about how messy the main loop would look like if you
+These features are not always necessary, but think about how messy the main loop would look like if you
 were to write these logic together with the loops, and how easy your life will be if you could enable
-these features with one line when you need them.
+these features with just one line when you need them.
 
 See [Write a callback](extend/callback.html)
 for details on how callbacks work, what they can do, and how to write them.

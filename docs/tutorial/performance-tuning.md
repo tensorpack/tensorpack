@@ -2,8 +2,11 @@
 # Performance Tuning
 
 __We do not know why your training is slow__ (and most of the times it's not a tensorpack problem).
-Performance is different across machines and tasks,
-so you need to figure out most parts by your own.
+
+Tensorpack is designed to be high-performance, as can be seen in the [benchmarks](https://github.com/tensorpack/benchmarks).
+But performance is different across machines and tasks,
+so you need to figure out what goes wrong by your own.
+Tensorpack has some tools to make it easier to understand the performance.
 Here's a list of things you can do when your training is slow.
 
 If you ask for help to understand and improve the speed, PLEASE do them and include your findings.
@@ -77,6 +80,6 @@ If you're unable to scale to multiple GPUs almost linearly:
 	If not, it's a bug or an environment setup problem.
 2. Then note that your model may have a different communication-computation pattern that affects efficiency.
 	 There isn't a simple answer to this.
-	 You may try a different multi-GPU trainer; the speed can vary a lot sometimes.
+	 You may try a different multi-GPU trainer; the speed can vary a lot in rare cases.
 
 Note that scalibility is always measured by keeping "batch size per GPU" constant.

@@ -28,8 +28,14 @@ Evaluate the [pretrained model](http://models.tensorpack.com/ShuffleNet/):
 
 This Inception-BN script reaches 27% single-crop error after 300k steps with 6 GPUs.
 
-This VGG16 script, when trained with 32x8 batch size, reaches 29~30% single-crop error after 100 epochs (30h with 8 P100s),
-28% with BN, and 27.6% with GN.
+This VGG16 script, when trained with 32x8 batch size, reaches the following
+error rate after 100 epochs (30h with 8 P100s). This reproduces the VGG
+experiements in the paper [Group Normalization](https://arxiv.org/abs/1803.08494).
+
+ | No Normalization                 | Batch Normalization | Group Normalization |
+ |:---------------------------------|---------------------|--------------------:|
+ | 29~30% (varies with random seed) | 28%                 |               27.6% |
+
 
 ### ResNet, DoReFa-Net
 
