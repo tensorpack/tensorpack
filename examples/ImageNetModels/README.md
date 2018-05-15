@@ -30,7 +30,7 @@ This Inception-BN script reaches 27% single-crop error after 300k steps with 6 G
 
 This VGG16 script, when trained with 32x8 batch size, reaches the following
 error rate after 100 epochs (30h with 8 P100s). This reproduces the VGG
-experiements in the paper [Group Normalization](https://arxiv.org/abs/1803.08494).
+experiments in the paper [Group Normalization](https://arxiv.org/abs/1803.08494).
 
  | No Normalization                 | Batch Normalization | Group Normalization |
  |:---------------------------------|---------------------|--------------------:|

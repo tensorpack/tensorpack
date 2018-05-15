@@ -96,7 +96,7 @@ class AtariPlayer(gym.Env):
 
         self.action_space = spaces.Discrete(len(self.actions))
         self.observation_space = spaces.Box(
-            low=0, high=255, shape=(self.height, self.width))
+            low=0, high=255, shape=(self.height, self.width), dtype=np.uint8)
         self._restart_episode()
 
     def get_action_meanings(self):
