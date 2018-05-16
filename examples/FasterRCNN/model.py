@@ -578,7 +578,12 @@ def fpn_model(features):
 
     def upsample2x(name, x):
         # TODO may not be optimal in speed or math
-        return FixedUnPooling(name, x, 2, data_format='channels_first')
+        with tf.name_scope(name):
+            shape2d = tf.shape(x)[2:]
+            x = tf.transpose(x, [0, 2, 3, 1])
+            x = tf.image.resize_nearest_neighbor(x, shape2d * 2, align_corners=True)
+            x = tf.transpose(x, [0, 3, 1, 2])
+            return x
 
     with argscope(Conv2D, data_format='channels_first',
                   nl=tf.identity, use_bias=True,
@@ -590,7 +595,7 @@ def fpn_model(features):
             if idx == 0:
                 lat_sum_5432.append(lat)
             else:
-                lat = lat + upsample2x('upsample_c{}'.format(5 - idx), lat_sum_5432[-1])
+                lat = lat + upsample2x('upsample_lat{}'.format(6 - idx), lat_sum_5432[-1])
                 lat_sum_5432.append(lat)
         p2345 = [Conv2D('posthoc_3x3_p{}'.format(i + 2), c, num_channel, 3)
                  for i, c in enumerate(lat_sum_5432[::-1])]

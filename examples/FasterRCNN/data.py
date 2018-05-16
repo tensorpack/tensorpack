@@ -8,7 +8,7 @@ import itertools
 
 from tensorpack.utils.argtools import memoized, log_once
 from tensorpack.dataflow import (
-    imgaug, TestDataSpeed, PrefetchDataZMQ, MapData,
+    imgaug, TestDataSpeed, PrefetchDataZMQ, MapData, MultiProcessMapDataZMQ,
     MapDataComponent, DataFromList)
 # import tensorpack.utils.viz as tpviz
 
@@ -341,8 +341,8 @@ def get_train_dataflow(add_mask=False):
             # tpviz.interactive_imshow(viz)
         return ret
 
-    ds = MapData(ds, preprocess)
-    ds = PrefetchDataZMQ(ds, 3)
+    ds = MultiProcessMapDataZMQ(ds, 5, preprocess)
+    #ds = PrefetchDataZMQ(ds, 3)
     return ds
 
 
