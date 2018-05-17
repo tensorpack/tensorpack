@@ -53,7 +53,7 @@ implement different distribution strategies.
 They take care of device placement, gradient averaging and synchronoization
 in the efficient way and all reach the same performance as the
 [official TF benchmarks](https://www.tensorflow.org/performance/benchmarks).
-It takes only one line of code change to use them.
+It takes only one line of code change to use them, i.e. `trainer=SyncMultiGPUTrainerReplicated()`.
 
 Note some __common problems__ when using these trainers:
 
@@ -66,3 +66,13 @@ Note some __common problems__ when using these trainers:
 
 2. The tower function (your model code) will get called multipile times.
 	As a result, you'll need to be careful when modifying global states in those functions, e.g. adding ops to TF collections.
+
+### Distributed Trainers
+
+Distributed training needs the [horovod](https://github.com/uber/horovod) library which offers high-performance allreduce implementation.
+To run distributed training, first install horovod properly, then refer to the
+documentation of [HorovodTrainer](../modules/train.html#tensorpack.train.HorovodTrainer).
+
+Tensorpack has implemented some other distributed trainers using TF's native API,
+but TF's native support for distributed training isn't very high-performance even today.
+Therefore those trainers are not actively maintained and are not recommended for use.

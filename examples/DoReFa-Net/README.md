@@ -12,13 +12,13 @@ These quantization techniques achieves the following ImageNet performance in thi
 
 | Model              | W,A,G       | Top 1 Error |
 |:-------------------|-------------|------------:|
-| Full Precision     | 32,32,32    |      40.9%  |
-| TTQ                | t,32,32     |      41.5%  |
-| BWN                | 1,32,32     |      43.7%  |
-| BNN                | 1,1,32      |      53.4%  |
-| DoReFa             | 1,2,32      |      47.2%  |
-| DoReFa             | 1,2,6       |      47.2%  |
-| DoReFa             | 1,2,4       |      60.9%  |
+| Full Precision     | 32,32,32    |      40.3%  |
+| TTQ                | t,32,32     |      42.0%  |
+| BWN                | 1,32,32     |      44.6%  |
+| BNN                | 1,1,32      |      51.9%  |
+| DoReFa             | 1,2,32      |      46.6%  |
+| DoReFa             | 1,2,6       |      46.8%  |
+| DoReFa             | 1,2,4       |      54.0%  |
 
 These numbers were obtained by training on 8 GPUs with a total batch size of 256.
 The DoReFa-Net models reach slightly better performance than our paper, due to
