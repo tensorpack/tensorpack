@@ -10,6 +10,7 @@ from tensorpack.models import (
     Conv2D, FullyConnected, MaxPooling,
     layer_register, Conv2DTranspose, FixedUnPooling)
 
+from tensorpack.utils import logger
 from utils.box_ops import pairwise_iou
 from utils.box_ops import area as tf_area
 import config
@@ -578,7 +579,13 @@ def fpn_model(features):
 
     def upsample2x(name, x):
         # TODO may not be optimal in speed or math
+        logger.info("Unpool 1111 ...")
+        return FixedUnPooling(
+            name, x, 2, unpool_mat=np.ones((2, 2), dtype='float32'),
+            data_format='channels_first')
+
         with tf.name_scope(name):
+            logger.info("Nearest neighbor")
             shape2d = tf.shape(x)[2:]
             x = tf.transpose(x, [0, 2, 3, 1])
             x = tf.image.resize_nearest_neighbor(x, shape2d * 2, align_corners=True)
@@ -616,7 +623,8 @@ def fpn_map_rois_to_levels(boxes):
     Be careful that the returned tensor could be empty.
     """
     sqrtarea = tf.sqrt(tf_area(boxes))
-    level = tf.floor(4 + tf.log(sqrtarea * (1. / 224) + 1e-6) * (1.0 / np.log(2)))
+    level = tf.to_int32(tf.floor(
+        4 + tf.log(sqrtarea * (1. / 224) + 1e-6) * (1.0 / np.log(2))))
 
     # RoI levels range from 2~5 (not 6)
     level_ids = [
@@ -645,6 +653,7 @@ def fastrcnn_2fc_head(feature, dim, num_classes):
     Returns:
         cls_logits (Nxnum_class), reg_logits (Nx num_class-1 x 4)
     """
+    logger.info("fc-head-stddev=0.01")
     init = tf.random_normal_initializer(stddev=0.01)
     hidden = FullyConnected('fc6', feature, dim, kernel_initializer=init, nl=tf.nn.relu)
     hidden = FullyConnected('fc7', hidden, dim, kernel_initializer=init, nl=tf.nn.relu)

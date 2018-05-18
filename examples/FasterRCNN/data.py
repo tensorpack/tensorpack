@@ -144,14 +144,16 @@ def get_anchor_labels(anchors, gt_boxes, crowd_boxes):
     # Subsample fg labels: ignore some fg if fg is too many
     target_num_fg = int(config.RPN_BATCH_PER_IM * config.RPN_FG_RATIO)
     fg_inds = filter_box_label(anchor_labels, 1, target_num_fg)
+    if len(fg_inds) == 0:
+        raise MalformedData("No valid foreground for RPN!")
     # Note that fg could be fewer than the target ratio
 
     # Subsample bg labels. num_bg is not allowed to be too many
     old_num_bg = np.sum(anchor_labels == 0)
-    if old_num_bg == 0 or len(fg_inds) == 0:
+    if old_num_bg == 0:
         # No valid bg/fg in this image, skip.
         # This can happen if, e.g. the image has large crowd.
-        raise MalformedData("No valid foreground/background for RPN!")
+        raise MalformedData("No valid background for RPN!")
     target_num_bg = config.RPN_BATCH_PER_IM - len(fg_inds)
     filter_box_label(anchor_labels, 0, target_num_bg)   # ignore return values
 
@@ -341,7 +343,7 @@ def get_train_dataflow(add_mask=False):
             # tpviz.interactive_imshow(viz)
         return ret
 
-    ds = MultiProcessMapDataZMQ(ds, 5, preprocess)
+    ds = MultiProcessMapDataZMQ(ds, 10, preprocess)
     #ds = PrefetchDataZMQ(ds, 3)
     return ds
 
