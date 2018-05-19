@@ -344,7 +344,6 @@ def get_train_dataflow(add_mask=False):
         return ret
 
     ds = MultiProcessMapDataZMQ(ds, 10, preprocess)
-    #ds = PrefetchDataZMQ(ds, 3)
     return ds
 
 

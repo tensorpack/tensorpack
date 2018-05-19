@@ -3,6 +3,8 @@
 
 import tensorflow as tf
 import numpy as np
+import itertools
+
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.tfutils.argscope import argscope
 from tensorpack.tfutils.scope_utils import under_name_scope, auto_reuse_variable_scope
@@ -371,22 +373,22 @@ def crop_and_resize(image, boxes, box_ind, crop_size, pad_border=True):
 
 
 @under_name_scope()
-def roi_align(featuremap, boxes, output_shape):
+def roi_align(featuremap, boxes, resolution):
     """
     Args:
         featuremap: 1xCxHxW
         boxes: Nx4 floatbox
-        output_shape: int
+        resolution: output spatial resolution
 
     Returns:
-        NxCxoHxoW
+        NxCx res x res
     """
     boxes = tf.stop_gradient(boxes)  # TODO
     # sample 4 locations per roi bin
     ret = crop_and_resize(
         featuremap, boxes,
         tf.zeros([tf.shape(boxes)[0]], dtype=tf.int32),
-        output_shape * 2)
+        resolution * 2)
     ret = tf.nn.avg_pool(ret, [1, 1, 2, 2], [1, 1, 2, 2], padding='SAME', data_format='NCHW')
     return ret
 
@@ -409,6 +411,25 @@ def fastrcnn_outputs(feature, num_classes):
         kernel_initializer=tf.random_normal_initializer(stddev=0.001))
     box_regression = tf.reshape(box_regression, (-1, num_classes - 1, 4))
     return classification, box_regression
+
+
+@layer_register(log_shape=True)
+def fastrcnn_2fc_head(feature, num_classes):
+    """
+    Args:
+        feature (any shape):
+        num_classes(int): num_category + 1
+
+    Returns:
+        cls_logits (Nxnum_class), reg_logits (Nx num_class-1 x 4)
+    """
+    dim = config.FASTRCNN_FC_HEAD_DIM
+    logger.info("fc-head-xavier-fanin")
+    #init = tf.random_normal_initializer(stddev=0.01)
+    init = tf.variance_scaling_initializer()
+    hidden = FullyConnected('fc6', feature, dim, kernel_initializer=init, nl=tf.nn.relu)
+    hidden = FullyConnected('fc7', hidden, dim, kernel_initializer=init, nl=tf.nn.relu)
+    return fastrcnn_outputs('outputs', hidden, num_classes)
 
 
 @under_name_scope()
@@ -508,20 +529,24 @@ def fastrcnn_predictions(boxes, probs):
 
 
 @layer_register(log_shape=True)
-def maskrcnn_head(feature, num_class):
+def maskrcnn_upXconv_head(feature, num_class, num_convs):
     """
     Args:
-        feature (NxCx7x7):
+        feature (NxCx s x s): size is 7 in C4 models and 14 in FPN models.
         num_classes(int): num_category + 1
+        num_convs (int): number of convolution layers
 
     Returns:
-        mask_logits (N x num_category x 14 x 14):
+        mask_logits (N x num_category x 2s x 2s):
     """
+    l = feature
     with argscope([Conv2D, Conv2DTranspose], data_format='channels_first',
                   kernel_initializer=tf.variance_scaling_initializer(
                       scale=2.0, mode='fan_out', distribution='normal')):
         # c2's MSRAFill is fan_out
-        l = Conv2DTranspose('deconv', feature, 256, 2, strides=2, activation=tf.nn.relu)
+        for k in range(num_convs):
+            l = Conv2D('fcn{}'.format(k), l, config.MASKRCNN_HEAD_DIM, 3, activation=tf.nn.relu)
+        l = Conv2DTranspose('deconv', l, config.MASKRCNN_HEAD_DIM, 2, strides=2, activation=tf.nn.relu)
         l = Conv2D('conv', l, num_class - 1, 1)
     return l
 
@@ -530,13 +555,13 @@ def maskrcnn_head(feature, num_class):
 def maskrcnn_loss(mask_logits, fg_labels, fg_target_masks):
     """
     Args:
-        mask_logits: #fg x #category x14x14
+        mask_logits: #fg x #category xhxw
         fg_labels: #fg, in 1~#class
-        fg_target_masks: #fgx14x14, int
+        fg_target_masks: #fgxhxw, int
     """
     num_fg = tf.size(fg_labels)
     indices = tf.stack([tf.range(num_fg), tf.to_int32(fg_labels) - 1], axis=1)  # #fgx2
-    mask_logits = tf.gather_nd(mask_logits, indices)  # #fgx14x14
+    mask_logits = tf.gather_nd(mask_logits, indices)  # #fgxhxw
     mask_probs = tf.sigmoid(mask_logits)
 
     # add some training visualizations to tensorboard
@@ -642,22 +667,33 @@ def fpn_map_rois_to_levels(boxes):
     return level_ids, level_boxes
 
 
-@layer_register(log_shape=True)
-def fastrcnn_2fc_head(feature, dim, num_classes):
+@under_name_scope()
+def multilevel_roi_align(features, rcnn_boxes, resolution):
     """
     Args:
-        feature (any shape):
-        dim (int): mlp dim
-        num_classes(int): num_category + 1
-
+        features ([tf.Tensor]): 4 FPN feature level 2-5
+        rcnn_boxes (tf.Tensor): nx4 boxes
+        resolution (int): output spatial resolution
     Returns:
-        cls_logits (Nxnum_class), reg_logits (Nx num_class-1 x 4)
+        NxC x res x res
     """
-    logger.info("fc-head-stddev=0.01")
-    init = tf.random_normal_initializer(stddev=0.01)
-    hidden = FullyConnected('fc6', feature, dim, kernel_initializer=init, nl=tf.nn.relu)
-    hidden = FullyConnected('fc7', hidden, dim, kernel_initializer=init, nl=tf.nn.relu)
-    return fastrcnn_outputs('outputs', hidden, num_classes)
+    assert len(features) == 4, features
+    # Reassign rcnn_boxes to levels
+    level_ids, level_boxes = fpn_map_rois_to_levels(rcnn_boxes)
+    all_rois = []
+
+    # Crop patches from corresponding levels
+    for i, boxes, featuremap in zip(itertools.count(), level_boxes, features):
+        with tf.name_scope('roi_level{}'.format(i + 2)):
+            boxes_on_featuremap = boxes * (1.0 / config.ANCHOR_STRIDES_FPN[i])
+            all_rois.append(roi_align(featuremap, boxes_on_featuremap, resolution))
+
+    all_rois = tf.concat(all_rois, axis=0)  # NCHW
+    # Unshuffle to the original order, to match the original samples
+    level_id_perm = tf.concat(level_ids, axis=0)  # A permutation of 1~N
+    level_id_invert_perm = tf.invert_permutation(level_id_perm)
+    all_rois = tf.gather(all_rois, level_id_invert_perm)
+    return all_rois
 
 
 if __name__ == '__main__':

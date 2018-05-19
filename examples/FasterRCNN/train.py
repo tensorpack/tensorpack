@@ -32,8 +32,9 @@ from model import (
     rpn_head, rpn_losses,
     generate_rpn_proposals, sample_fast_rcnn_targets, roi_align,
     fastrcnn_outputs, fastrcnn_losses, fastrcnn_predictions,
-    maskrcnn_head, maskrcnn_loss,
-    fpn_model, fpn_map_rois_to_levels, fastrcnn_2fc_head)
+    maskrcnn_upXconv_head, maskrcnn_loss,
+    fpn_model, fpn_map_rois_to_levels, fastrcnn_2fc_head,
+    multilevel_roi_align)
 from data import (
     get_train_dataflow, get_eval_dataflow,
     get_all_anchors, get_all_anchors_fpn)
@@ -245,11 +246,12 @@ class ResNetC4Model(DetectionModel):
                 fg_labels = tf.gather(rcnn_labels, fg_inds_wrt_sample)
                 # In training, mask branch shares the same C5 feature.
                 fg_feature = tf.gather(feature_fastrcnn, fg_inds_wrt_sample)
-                mask_logits = maskrcnn_head('maskrcnn', fg_feature, config.NUM_CLASS)   # #fg x #cat x 14x14
+                mask_logits = maskrcnn_upXconv_head(
+                    'maskrcnn', fg_feature, config.NUM_CLASS, 0)   # #fg x #cat x 14x14
 
-                gt_masks_for_fg = tf.gather(gt_masks, fg_inds_wrt_gt)  # nfg x H x W
+                matched_gt_masks = tf.gather(gt_masks, fg_inds_wrt_gt)  # nfg x H x W
                 target_masks_for_fg = crop_and_resize(
-                    tf.expand_dims(gt_masks_for_fg, 1),
+                    tf.expand_dims(matched_gt_masks, 1),
                     fg_sampled_boxes,
                     tf.range(tf.size(fg_inds_wrt_gt)), 14,
                     pad_border=False)  # nfg x 1x14x14
@@ -279,8 +281,8 @@ class ResNetC4Model(DetectionModel):
                 def f1():
                     roi_resized = roi_align(featuremap, final_boxes * (1.0 / config.ANCHOR_STRIDE), 14)
                     feature_maskrcnn = resnet_conv5(roi_resized, config.RESNET_NUM_BLOCK[-1])
-                    mask_logits = maskrcnn_head(
-                        'maskrcnn', feature_maskrcnn, config.NUM_CLASS)   # #result x #cat x 14x14
+                    mask_logits = maskrcnn_upXconv_head(
+                        'maskrcnn', feature_maskrcnn, config.NUM_CLASS, 0)   # #result x #cat x 14x14
                     indices = tf.stack([tf.range(tf.size(final_labels)), tf.to_int32(final_labels) - 1], axis=1)
                     final_mask_logits = tf.gather_nd(mask_logits, indices)   # #resultx14x14
                     return tf.sigmoid(final_mask_logits)
@@ -370,25 +372,13 @@ class ResNetFPNModel(DetectionModel):
             # The boxes to be used to crop RoIs.
             rcnn_boxes = proposal_boxes
 
-        # Reassign rcnn_boxes to levels
-        level_ids, level_boxes = fpn_map_rois_to_levels(rcnn_boxes)
-        all_rois = []
-        # Crop patches from corresponding levels
-        for i, boxes, featuremap in zip(itertools.count(), level_boxes, p23456[:4]):
-            with tf.name_scope('roi_level{}'.format(i + 2)):
-                boxes_on_featuremap = boxes * (1.0 / config.ANCHOR_STRIDES_FPN[i])
-                all_rois.append(roi_align(featuremap, boxes_on_featuremap, 7))
-        all_rois = tf.concat(all_rois, axis=0)  # NCHW
-
-        # Unshuffle to the original order, to match the original samples
-        level_id_perm = tf.concat(level_ids, axis=0)  # A permutation of 1~N
-        level_id_invert_perm = tf.invert_permutation(level_id_perm)
-        all_rois = tf.gather(all_rois, level_id_invert_perm)
+        roi_feature_fastrcnn = multilevel_roi_align(p23456[:4], rcnn_boxes, 7)
 
         fastrcnn_label_logits, fastrcnn_box_logits = fastrcnn_2fc_head(
-            'fastrcnn', all_rois, config.FASTRCNN_FC_HEAD_DIM, config.NUM_CLASS)
+            'fastrcnn', roi_feature_fastrcnn, config.NUM_CLASS)
 
         if is_training:
+            # rpn loss ...
             with tf.name_scope('rpn_losses'):
                 rpn_total_label_loss = tf.add_n(rpn_loss_collection[::2], name='label_loss')
                 rpn_total_box_loss = tf.add_n(rpn_loss_collection[1::2], name='box_loss')
@@ -405,7 +395,24 @@ class ResNetFPNModel(DetectionModel):
                 image, rcnn_labels, fg_sampled_boxes,
                 matched_gt_boxes, fastrcnn_label_logits, fg_fastrcnn_box_logits)
 
-            mrcnn_loss = 0.0
+            if config.MODE_MASK:
+                # maskrcnn loss
+                fg_labels = tf.gather(rcnn_labels, fg_inds_wrt_sample)
+                roi_feature_maskrcnn = multilevel_roi_align(
+                    p23456[:4], fg_sampled_boxes, 14)
+                mask_logits = maskrcnn_upXconv_head(
+                    'maskrcnn', roi_feature_maskrcnn, config.NUM_CLASS, 4)   # #fg x #cat x 28 x 28
+
+                matched_gt_masks = tf.gather(gt_masks, fg_inds_wrt_gt)  # fg x H x W
+                target_masks_for_fg = crop_and_resize(
+                    tf.expand_dims(matched_gt_masks, 1),
+                    fg_sampled_boxes,
+                    tf.range(tf.size(fg_inds_wrt_gt)), 28,
+                    pad_border=False)  # fg x 1x28x28
+                target_masks_for_fg = tf.squeeze(target_masks_for_fg, 1, 'sampled_fg_mask_targets')
+                mrcnn_loss = maskrcnn_loss(mask_logits, fg_labels, target_masks_for_fg)
+            else:
+                mrcnn_loss = 0.0
 
             wd_cost = regularize_cost(
                 '(?:group1|group2|group3|rpn|fastrcnn|maskrcnn)/.*W',
@@ -420,6 +427,14 @@ class ResNetFPNModel(DetectionModel):
         else:
             final_boxes, final_labels = self.fastrcnn_inference(
                 image_shape2d, rcnn_boxes, fastrcnn_label_logits, fastrcnn_box_logits)
+            if config.MODE_MASK:
+                roi_feature_maskrcnn = multilevel_roi_align(
+                    p23456[:4], final_boxes, 14)
+                mask_logits = maskrcnn_upXconv_head(
+                    'maskrcnn', roi_feature_maskrcnn, config.NUM_CLASS, 4)   # #fg x #cat x 28 x 28
+                indices = tf.stack([tf.range(tf.size(final_labels)), tf.to_int32(final_labels) - 1], axis=1)
+                final_mask_logits = tf.gather_nd(mask_logits, indices)   # #resultx28x28
+                final_masks = tf.sigmoid(final_mask_logits, name='final_masks')
 
 
 def visualize(model_path, nr_visualize=50, output_dir='output'):

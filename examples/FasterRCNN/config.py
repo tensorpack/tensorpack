@@ -4,7 +4,7 @@
 import numpy as np
 
 # mode flags ---------------------
-MODE_MASK = False
+MODE_MASK = True
 
 # dataset -----------------------
 BASEDIR = '/path/to/your/COCO/DIR'
@@ -25,7 +25,7 @@ WARMUP = 1000    # in steps
 STEPS_PER_EPOCH = 500
 LR_SCHEDULE = [150000, 230000, 280000]
 LR_SCHEDULE = [120000, 160000, 180000]    # "1x" schedule in detectron
-LR_SCHEDULE = [240000, 320000, 360000]    # "2x" schedule in detectron
+#LR_SCHEDULE = [240000, 320000, 360000]    # "2x" schedule in detectron
 
 # image resolution --------------------
 SHORT_EDGE_SIZE = 800
@@ -73,6 +73,7 @@ RESULTS_PER_IM = 100
 # TODO Not Functioning. Don't USE
 MODE_FPN = True
 FPN_NUM_CHANNEL = 256
+MASKRCNN_HEAD_DIM = 256
 FASTRCNN_FC_HEAD_DIM = 1024
 FPN_RESOLUTION_REQUIREMENT = 32
 TRAIN_FPN_NMS_TOPK = 2000
