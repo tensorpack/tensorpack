@@ -5,11 +5,11 @@ import numpy as np
 
 # mode flags ---------------------
 MODE_MASK = True
+MODE_FPN = False
 
 # dataset -----------------------
 BASEDIR = '/path/to/your/COCO/DIR'
 TRAIN_DATASET = ['train2014', 'valminusminival2014']
-# TRAIN_DATASET = ['valminusminival2014']
 VAL_DATASET = 'minival2014'   # only support evaluation on single dataset
 NUM_CLASS = 81
 CLASS_NAMES = []  # NUM_CLASS strings. Will be populated later by coco loader
@@ -29,14 +29,14 @@ LR_SCHEDULE = [240000, 320000, 360000]    # "2x" schedule in detectron
 
 # image resolution --------------------
 SHORT_EDGE_SIZE = 800
-MAX_SIZE = 1333  # TODO use 1344
+MAX_SIZE = 1333
 # alternative (worse & faster) setting: 600, 1024
 
 # anchors -------------------------
 ANCHOR_STRIDE = 16
 ANCHOR_STRIDES_FPN = (4, 8, 16, 32, 64)
-# sqrtarea of the anchor box
-ANCHOR_SIZES = (32, 64, 128, 256, 512)
+FPN_RESOLUTION_REQUIREMENT = 32    # image size into the backbone has to be multiple of this number
+ANCHOR_SIZES = (32, 64, 128, 256, 512)   # sqrtarea of the anchor box
 ANCHOR_RATIOS = (0.5, 1., 2.)
 NUM_ANCHOR = len(ANCHOR_SIZES) * len(ANCHOR_RATIOS)
 POSITIVE_ANCHOR_THRES = 0.7
@@ -52,6 +52,7 @@ RPN_MIN_SIZE = 0
 RPN_PROPOSAL_NMS_THRESH = 0.7
 TRAIN_PRE_NMS_TOPK = 12000
 TRAIN_POST_NMS_TOPK = 2000
+TRAIN_FPN_NMS_TOPK = 2000
 # boxes overlapping crowd will be ignored.
 CROWD_OVERLAP_THRES = 0.7
 
@@ -62,19 +63,16 @@ FASTRCNN_FG_THRESH = 0.5
 # fg ratio in a ROI batch
 FASTRCNN_FG_RATIO = 0.25
 
+# modeling -------------------------
+FPN_NUM_CHANNEL = 256
+FASTRCNN_FC_HEAD_DIM = 1024
+MASKRCNN_HEAD_DIM = 256
+
 # testing -----------------------
 TEST_PRE_NMS_TOPK = 6000
 TEST_POST_NMS_TOPK = 1000   # if you encounter OOM in inference, set this to a smaller number
+TEST_FPN_NMS_TOPK = 1000
 FASTRCNN_NMS_THRESH = 0.5
 RESULT_SCORE_THRESH = 0.05
 RESULT_SCORE_THRESH_VIS = 0.3   # only visualize confident results
 RESULTS_PER_IM = 100
-
-# TODO Not Functioning. Don't USE
-MODE_FPN = True
-FPN_NUM_CHANNEL = 256
-MASKRCNN_HEAD_DIM = 256
-FASTRCNN_FC_HEAD_DIM = 1024
-FPN_RESOLUTION_REQUIREMENT = 32
-TRAIN_FPN_NMS_TOPK = 2000
-TEST_FPN_NMS_TOPK = 1000

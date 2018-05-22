@@ -12,7 +12,6 @@ from tensorpack.models import (
     Conv2D, FullyConnected, MaxPooling,
     layer_register, Conv2DTranspose, FixedUnPooling)
 
-from tensorpack.utils import logger
 from utils.box_ops import pairwise_iou
 from utils.box_ops import area as tf_area
 import config
@@ -90,7 +89,7 @@ def rpn_losses(anchor_labels, anchor_boxes, label_logits, box_logits):
                         valid_label_prob > th,
                         tf.equal(valid_prediction, valid_anchor_labels)),
                     dtype=tf.int32)
-                placeholder = 0.5   # TODO A small value will make summaries appear lower.
+                placeholder = 0.5   # A small value will make summaries appear lower.
                 recall = tf.to_float(tf.truediv(pos_prediction_corr, nr_pos))
                 recall = tf.where(tf.equal(nr_pos, 0), placeholder, recall, name='recall_th{}'.format(th))
                 precision = tf.to_float(tf.truediv(pos_prediction_corr, nr_pos_prediction))
@@ -99,7 +98,9 @@ def rpn_losses(anchor_labels, anchor_boxes, label_logits, box_logits):
                 summaries.extend([precision, recall])
         add_moving_summary(*summaries)
 
-    placeholder = 0.    # Per-level loss summaries in FPN may appear lower. But the sum should be OK.
+    # Per-level loss summaries in FPN may appear lower due to the use of a small placeholder.
+    # But the total loss is still the same.
+    placeholder = 0.
     label_loss = tf.nn.sigmoid_cross_entropy_with_logits(
         labels=tf.to_float(valid_anchor_labels), logits=valid_label_logits)
     label_loss = tf.reduce_sum(label_loss) * (1. / config.RPN_BATCH_PER_IM)
@@ -601,19 +602,18 @@ def fpn_model(features):
     num_channel = config.FPN_NUM_CHANNEL
 
     def upsample2x(name, x):
-        # TODO may not be optimal in speed or math
-        logger.info("Unpool 1111 ...")
         return FixedUnPooling(
             name, x, 2, unpool_mat=np.ones((2, 2), dtype='float32'),
             data_format='channels_first')
 
-        with tf.name_scope(name):
-            logger.info("Nearest neighbor")
-            shape2d = tf.shape(x)[2:]
-            x = tf.transpose(x, [0, 2, 3, 1])
-            x = tf.image.resize_nearest_neighbor(x, shape2d * 2, align_corners=True)
-            x = tf.transpose(x, [0, 3, 1, 2])
-            return x
+        # tf.image.resize is, again, not aligned.
+        # with tf.name_scope(name):
+        #     logger.info("Nearest neighbor")
+        #     shape2d = tf.shape(x)[2:]
+        #     x = tf.transpose(x, [0, 2, 3, 1])
+        #     x = tf.image.resize_nearest_neighbor(x, shape2d * 2, align_corners=True)
+        #     x = tf.transpose(x, [0, 3, 1, 2])
+        #     return x
 
     with argscope(Conv2D, data_format='channels_first',
                   nl=tf.identity, use_bias=True,
@@ -636,6 +636,8 @@ def fpn_model(features):
 @under_name_scope()
 def fpn_map_rois_to_levels(boxes):
     """
+    Assign boxes to level 2~5.
+
     Args:
         boxes (nx4)
 

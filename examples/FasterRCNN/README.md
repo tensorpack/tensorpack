@@ -1,9 +1,9 @@
 # Faster-RCNN / Mask-RCNN on COCO
 This example aims to provide a minimal (1.3k lines) implementation of
-end-to-end Faster-RCNN & Mask-RCNN (with ResNet backbones) on COCO.
+end-to-end Faster-RCNN & Mask-RCNN (with ResNet & FPN backbones) on COCO.
 
 ## Dependencies
-+ Python 3; TensorFlow >= 1.4.0
++ Python 3; TensorFlow >= 1.4.0 (>=1.6.0 recommended due to a TF bug);
 + [pycocotools](https://github.com/pdollar/coco/tree/master/PythonAPI/pycocotools), OpenCV.
 + Pre-trained [ResNet model](http://models.tensorpack.com/ResNet/) from tensorpack model zoo.
 + COCO data. It assumes the following directory structure:
@@ -61,7 +61,7 @@ MaskRCNN results contain both bbox and segm mAP.
 |R-101   |512             |(800, 1333)|280k    |40.1/34.4      |70h on 8 P100s|
 |R-101   |512             |(800, 1333)|360k    |40.8/35.1      |63h on 8 V100s|
 
-The two R-50 360k models have the same configuration __and mAP__ 
+The two R-50 360k models have the same configuration __and mAP__
 as the `R50-C4-2x` entries in
 [Detectron Model Zoo](https://github.com/facebookresearch/Detectron/blob/master/MODEL_ZOO.md#end-to-end-faster--mask-r-cnn-baselines).
 So far this seems to be the only open source re-implementation that can reproduce mAP in Detectron.

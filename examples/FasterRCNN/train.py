@@ -19,6 +19,7 @@ from tensorpack import *
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.tfutils.scope_utils import under_name_scope
 from tensorpack.tfutils import optimizer
+from tensorpack.tfutils.common import get_tf_version_number
 import tensorpack.utils.viz as tpviz
 from tensorpack.utils.gpu import get_nr_gpu
 
@@ -33,8 +34,7 @@ from model import (
     generate_rpn_proposals, sample_fast_rcnn_targets, roi_align,
     fastrcnn_outputs, fastrcnn_losses, fastrcnn_predictions,
     maskrcnn_upXconv_head, maskrcnn_loss,
-    fpn_model, fpn_map_rois_to_levels, fastrcnn_2fc_head,
-    multilevel_roi_align)
+    fpn_model, fastrcnn_2fc_head, multilevel_roi_align)
 from data import (
     get_train_dataflow, get_eval_dataflow,
     get_all_anchors, get_all_anchors_fpn)
@@ -62,6 +62,8 @@ def get_model_output_names():
 
 def get_model():
     if config.MODE_FPN:
+        if get_tf_version() < 1.6:
+            logger.warn("FPN has chances to crash in TF<1.6, due to a TF issue.")
         return ResNetFPNModel()
     else:
         return ResNetC4Model()
@@ -223,8 +225,12 @@ class ResNetC4Model(DetectionModel):
             ncls = config.NUM_CLASS
             return tf.zeros([0, 2048, 7, 7]), tf.zeros([0, ncls]), tf.zeros([0, ncls - 1, 4])
 
-        feature_fastrcnn, fastrcnn_label_logits, fastrcnn_box_logits = tf.cond(
-            tf.size(boxes_on_featuremap) > 0, ff_true, ff_false)
+        if get_tf_version_number() >= 1.6:
+            feature_fastrcnn, fastrcnn_label_logits, fastrcnn_box_logits = ff_true()
+        else:
+            logger.warn("This example may drop support for TF < 1.6 soon.")
+            feature_fastrcnn, fastrcnn_label_logits, fastrcnn_box_logits = tf.cond(
+                tf.size(boxes_on_featuremap) > 0, ff_true, ff_false)
 
         if is_training:
             # rpn loss
@@ -434,10 +440,11 @@ class ResNetFPNModel(DetectionModel):
                     'maskrcnn', roi_feature_maskrcnn, config.NUM_CLASS, 4)   # #fg x #cat x 28 x 28
                 indices = tf.stack([tf.range(tf.size(final_labels)), tf.to_int32(final_labels) - 1], axis=1)
                 final_mask_logits = tf.gather_nd(mask_logits, indices)   # #resultx28x28
-                final_masks = tf.sigmoid(final_mask_logits, name='final_masks')
+                tf.sigmoid(final_mask_logits, name='final_masks')
 
 
 def visualize(model_path, nr_visualize=50, output_dir='output'):
+    assert not config.MODE_FPN, "FPN visualize is not supported yet!"
     df = get_train_dataflow()   # we don't visualize mask stuff
     df.reset_state()
 
@@ -577,7 +584,7 @@ if __name__ == '__main__':
                 COCODetection(config.BASEDIR, 'val2014')   # Only to load the class names into caches
                 predict(pred, args.predict)
     else:
-        logger.set_logger_dir(args.logdir, 'd')
+        logger.set_logger_dir(args.logdir)
         print_config()
         factor = get_batch_factor()
         stepnum = config.STEPS_PER_EPOCH
@@ -611,5 +618,5 @@ if __name__ == '__main__':
             max_epoch=config.LR_SCHEDULE[-1] * factor // stepnum,
             session_init=get_model_loader(args.load) if args.load else None,
         )
-        trainer = SyncMultiGPUTrainerReplicated(get_nr_gpu())
+        trainer = SyncMultiGPUTrainerReplicated(get_nr_gpu(), mode='cpu')
         launch_train_with_config(cfg, trainer)

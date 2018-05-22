@@ -8,7 +8,7 @@ import itertools
 
 from tensorpack.utils.argtools import memoized, log_once
 from tensorpack.dataflow import (
-    imgaug, TestDataSpeed, PrefetchDataZMQ, MapData, MultiProcessMapDataZMQ,
+    imgaug, TestDataSpeed, PrefetchDataZMQ, MultiProcessMapDataZMQ,
     MapDataComponent, DataFromList)
 # import tensorpack.utils.viz as tpviz
 
