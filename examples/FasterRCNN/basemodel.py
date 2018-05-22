@@ -92,7 +92,7 @@ def resnet_group(l, name, block_func, features, count, stride):
     return l
 
 
-def pretrained_resnet_c4_backbone(image, num_blocks, freeze_c2=True):
+def resnet_c4_backbone(image, num_blocks, freeze_c2=True):
     assert len(num_blocks) == 3
     with resnet_argscope():
         l = tf.pad(image, [[0, 0], [0, 0], [2, 3], [2, 3]])
@@ -116,7 +116,7 @@ def resnet_conv5(image, num_block):
         return l
 
 
-def pretrained_resnet_fpn_backbone(image, num_blocks, freeze_c2=True):
+def resnet_fpn_backbone(image, num_blocks, freeze_c2=True):
     shape2d = tf.shape(image)[2:]
     mult = config.FPN_RESOLUTION_REQUIREMENT * 1.
     new_shape2d = tf.to_int32(tf.ceil(tf.to_float(shape2d) / mult) * mult)

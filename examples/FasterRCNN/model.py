@@ -424,8 +424,6 @@ def fastrcnn_2fc_head(feature, num_classes):
         cls_logits (Nxnum_class), reg_logits (Nx num_class-1 x 4)
     """
     dim = config.FASTRCNN_FC_HEAD_DIM
-    logger.info("fc-head-xavier-fanin")
-    #init = tf.random_normal_initializer(stddev=0.01)
     init = tf.variance_scaling_initializer()
     hidden = FullyConnected('fc6', feature, dim, kernel_initializer=init, nl=tf.nn.relu)
     hidden = FullyConnected('fc7', hidden, dim, kernel_initializer=init, nl=tf.nn.relu)

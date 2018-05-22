@@ -17,7 +17,7 @@ CLASS_NAMES = []  # NUM_CLASS strings. Will be populated later by coco loader
 # basemodel ----------------------
 RESNET_NUM_BLOCK = [3, 4, 6, 3]     # for resnet50
 # RESNET_NUM_BLOCK = [3, 4, 23, 3]     # for resnet101
-FREEZE_AFFINE = False   # do not train affine parameters inside BN
+FREEZE_AFFINE = False  # do not train affine parameters inside BN
 
 # schedule -----------------------
 BASE_LR = 1e-2
@@ -25,7 +25,7 @@ WARMUP = 1000    # in steps
 STEPS_PER_EPOCH = 500
 LR_SCHEDULE = [150000, 230000, 280000]
 LR_SCHEDULE = [120000, 160000, 180000]    # "1x" schedule in detectron
-#LR_SCHEDULE = [240000, 320000, 360000]    # "2x" schedule in detectron
+LR_SCHEDULE = [240000, 320000, 360000]    # "2x" schedule in detectron
 
 # image resolution --------------------
 SHORT_EDGE_SIZE = 800

@@ -143,7 +143,7 @@ def print_evaluation_scores(json_file):
     cocoEval.summarize()
     fields = ['IoU=0.5:0.95', 'IoU=0.5', 'IoU=0.75', 'small', 'medium', 'large']
     for k in range(6):
-        ret['mAP(bbox)/' + fields[k]] = cocoEval.stat[k]
+        ret['mAP(bbox)/' + fields[k]] = cocoEval.stats[k]
 
     if config.MODE_MASK:
         cocoEval = COCOeval(coco, cocoDt, 'segm')

@@ -25,8 +25,8 @@ from tensorpack.utils.gpu import get_nr_gpu
 
 from coco import COCODetection
 from basemodel import (
-    image_preprocess, pretrained_resnet_c4_backbone, resnet_conv5,
-    pretrained_resnet_fpn_backbone)
+    image_preprocess, resnet_c4_backbone, resnet_conv5,
+    resnet_fpn_backbone)
 from model import (
     clip_boxes, decode_bbox_target, encode_bbox_target, crop_and_resize,
     rpn_head, rpn_losses,
@@ -182,7 +182,7 @@ class ResNetC4Model(DetectionModel):
             image, anchor_labels, anchor_boxes, gt_boxes, gt_labels = inputs
         image = self.preprocess(image)     # 1CHW
 
-        featuremap = pretrained_resnet_c4_backbone(image, config.RESNET_NUM_BLOCK[:3])
+        featuremap = resnet_c4_backbone(image, config.RESNET_NUM_BLOCK[:3])
         rpn_label_logits, rpn_box_logits = rpn_head('rpn', featuremap, 1024, config.NUM_ANCHOR)
 
         fm_anchors, anchor_labels, anchor_boxes = self.narrow_to_featuremap(
@@ -211,6 +211,7 @@ class ResNetC4Model(DetectionModel):
         roi_resized = roi_align(featuremap, boxes_on_featuremap, 14)
 
         # HACK to work around https://github.com/tensorflow/tensorflow/issues/14657
+        # which was fixed in TF 1.6
         def ff_true():
             feature_fastrcnn = resnet_conv5(roi_resized, config.RESNET_NUM_BLOCK[-1])    # nxcx7x7
             feature_gap = GlobalAvgPooling('gap', feature_fastrcnn, data_format='channels_first')
@@ -247,7 +248,7 @@ class ResNetC4Model(DetectionModel):
                 # In training, mask branch shares the same C5 feature.
                 fg_feature = tf.gather(feature_fastrcnn, fg_inds_wrt_sample)
                 mask_logits = maskrcnn_upXconv_head(
-                    'maskrcnn', fg_feature, config.NUM_CLASS, 0)   # #fg x #cat x 14x14
+                    'maskrcnn', fg_feature, config.NUM_CLASS, num_convs=0)   # #fg x #cat x 14x14
 
                 matched_gt_masks = tf.gather(gt_masks, fg_inds_wrt_gt)  # nfg x H x W
                 target_masks_for_fg = crop_and_resize(
@@ -326,20 +327,19 @@ class ResNetFPNModel(DetectionModel):
         image = self.preprocess(image)     # 1CHW
         image_shape2d = tf.shape(image)[2:]     # h,w
 
-        c2345 = pretrained_resnet_fpn_backbone(image, config.RESNET_NUM_BLOCK)
+        c2345 = resnet_fpn_backbone(image, config.RESNET_NUM_BLOCK)
         p23456 = fpn_model('fpn', c2345)
 
         # Multi-Level RPN Proposals
-        multilevel_anchors = get_all_anchors_fpn()
-        assert len(multilevel_anchors) == num_fpn_level
         multilevel_proposals = []
         rpn_loss_collection = []
         for lvl in range(num_fpn_level):
             rpn_label_logits, rpn_box_logits = rpn_head(
                 'rpn', p23456[lvl], config.FPN_NUM_CHANNEL, len(config.ANCHOR_RATIOS))
             with tf.name_scope('FPN_lvl{}'.format(lvl + 2)):
+                anchors = tf.constant(get_all_anchors_fpn()[lvl], name='rpn_anchor_lvl{}'.format(lvl + 2))
                 anchors, anchor_labels, anchor_boxes = \
-                    self.narrow_to_featuremap(p23456[lvl], multilevel_anchors[lvl],
+                    self.narrow_to_featuremap(p23456[lvl], anchors,
                                               multilevel_anchor_labels[lvl],
                                               multilevel_anchor_boxes[lvl])
                 anchor_boxes_encoded = encode_bbox_target(anchor_boxes, anchors)
@@ -356,12 +356,11 @@ class ResNetFPNModel(DetectionModel):
                         rpn_label_logits, rpn_box_logits)
                     rpn_loss_collection.extend([label_loss, box_loss])
 
-        # merge proposals from multi levels
+        # Merge proposals from multi levels, pick top K
         proposal_boxes = tf.concat([x[0] for x in multilevel_proposals], axis=0)  # nx4
         proposal_scores = tf.concat([x[1] for x in multilevel_proposals], axis=0)  # n
         proposal_topk = tf.minimum(tf.size(proposal_scores),
                                    config.TRAIN_FPN_NMS_TOPK if is_training else config.TEST_FPN_NMS_TOPK)
-
         proposal_scores, topk_indices = tf.nn.top_k(proposal_scores, k=proposal_topk, sorted=False)
         proposal_boxes = tf.gather(proposal_boxes, topk_indices)
 
@@ -378,7 +377,7 @@ class ResNetFPNModel(DetectionModel):
             'fastrcnn', roi_feature_fastrcnn, config.NUM_CLASS)
 
         if is_training:
-            # rpn loss ...
+            # rpn loss is already defined above
             with tf.name_scope('rpn_losses'):
                 rpn_total_label_loss = tf.add_n(rpn_loss_collection[::2], name='label_loss')
                 rpn_total_box_loss = tf.add_n(rpn_loss_collection[1::2], name='box_loss')
@@ -428,6 +427,7 @@ class ResNetFPNModel(DetectionModel):
             final_boxes, final_labels = self.fastrcnn_inference(
                 image_shape2d, rcnn_boxes, fastrcnn_label_logits, fastrcnn_box_logits)
             if config.MODE_MASK:
+                # Cascade inference needs roi transform with refined boxes.
                 roi_feature_maskrcnn = multilevel_roi_align(
                     p23456[:4], final_boxes, 14)
                 mask_logits = maskrcnn_upXconv_head(
