@@ -110,7 +110,8 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
                 beta_initializer=beta_initializer,
                 gamma_initializer=gamma_initializer,
                 virtual_batch_size=virtual_batch_size,
-                fused=True
+                fused=True,
+                _reuse=tf.get_variable_scope().reuse
             )
         else:
             assert virtual_batch_size is None, "Feature not supported in this version of TF!"
@@ -120,7 +121,8 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
                 center=center, scale=scale,
                 beta_initializer=beta_initializer,
                 gamma_initializer=gamma_initializer,
-                fused=True
+                fused=True,
+                _reuse=tf.get_variable_scope().reuse
             )
         xn = layer.apply(inputs, training=training, scope=tf.get_variable_scope())
 
@@ -206,7 +208,8 @@ def BatchRenorm(x, rmax, dmax, momentum=0.9, epsilon=1e-5,
             'dmax': dmax},
         renorm_momentum=0.99,
         gamma_initializer=gamma_initializer,
-        fused=False)
+        fused=False,
+        _reuse=tf.get_variable_scope().reuse)
     xn = layer.apply(x, training=ctx.is_training, scope=tf.get_variable_scope())
 
     if ctx.is_main_training_tower:

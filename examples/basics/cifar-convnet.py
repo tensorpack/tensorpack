@@ -9,6 +9,7 @@ import os
 from tensorpack import *
 from tensorpack.tfutils.summary import *
 from tensorpack.dataflow import dataset
+from tensorpack.utils.gpu import get_num_gpu
 
 """
 A small convnet model for Cifar10 or Cifar100 dataset.
@@ -145,7 +146,7 @@ if __name__ == '__main__':
         if args.load:
             config.session_init = SaverRestore(args.load)
 
-        nr_gpu = len(args.gpu.split(','))
-        trainer = QueueInputTrainer() if nr_gpu <= 1 \
-            else SyncMultiGPUTrainerParameterServer(nr_gpu)
+        num_gpu = get_num_gpu()
+        trainer = QueueInputTrainer() if num_gpu <= 1 \
+            else SyncMultiGPUTrainerParameterServer(num_gpu)
         launch_train_with_config(config, trainer)

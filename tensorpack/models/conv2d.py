@@ -63,7 +63,8 @@ def Conv2D(
                 bias_initializer=bias_initializer,
                 kernel_regularizer=kernel_regularizer,
                 bias_regularizer=bias_regularizer,
-                activity_regularizer=activity_regularizer)
+                activity_regularizer=activity_regularizer,
+                _reuse=tf.get_variable_scope().reuse)
             ret = layer.apply(inputs, scope=tf.get_variable_scope())
             ret = tf.identity(ret, name='output')
 
@@ -164,7 +165,8 @@ def Conv2DTranspose(
             bias_initializer=bias_initializer,
             kernel_regularizer=kernel_regularizer,
             bias_regularizer=bias_regularizer,
-            activity_regularizer=activity_regularizer)
+            activity_regularizer=activity_regularizer,
+            _reuse=tf.get_variable_scope().reuse)
         ret = layer.apply(inputs, scope=tf.get_variable_scope())
         ret = tf.identity(ret, name='output')
 
