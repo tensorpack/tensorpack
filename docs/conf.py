@@ -405,7 +405,7 @@ def url_resolver(url):
         return "https://github.com/ppwwyyxx/tensorpack/blob/master/" + url
     else:
         if ON_RTD:
-            return "http://tensorpack.readthedocs.io/en/latest/" + url
+            return "http://tensorpack.readthedocs.io/" + url
         else:
             return '/' + url
 
