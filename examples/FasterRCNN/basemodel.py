@@ -92,7 +92,7 @@ def resnet_group(l, name, block_func, features, count, stride):
     return l
 
 
-def pretrained_resnet_c4_backbone(image, num_blocks, freeze_c2=True):
+def resnet_c4_backbone(image, num_blocks, freeze_c2=True):
     assert len(num_blocks) == 3
     with resnet_argscope():
         l = tf.pad(image, [[0, 0], [0, 0], [2, 3], [2, 3]])
@@ -116,10 +116,19 @@ def resnet_conv5(image, num_block):
         return l
 
 
-def pretrained_resnet_fpn_backbone(image, num_blocks, freeze_c2=True):
+def resnet_fpn_backbone(image, num_blocks, freeze_c2=True):
+    shape2d = tf.shape(image)[2:]
+    mult = config.FPN_RESOLUTION_REQUIREMENT * 1.
+    new_shape2d = tf.to_int32(tf.ceil(tf.to_float(shape2d) / mult) * mult)
+    pad_shape2d = new_shape2d - shape2d
     assert len(num_blocks) == 4
+    # TODO pad 1 at each stage
     with resnet_argscope():
-        l = tf.pad(image, [[0, 0], [0, 0], [2, 3], [2, 3]])
+        chan = image.shape[1]
+        l = tf.pad(image,
+                   tf.stack([[0, 0], [0, 0],
+                            [2, 3 + pad_shape2d[0]], [2, 3 + pad_shape2d[1]]]))
+        l.set_shape([None, chan, None, None])
         l = Conv2D('conv0', l, 64, 7, strides=2, activation=BNReLU, padding='VALID')
         l = tf.pad(l, [[0, 0], [0, 0], [0, 1], [0, 1]])
         l = MaxPooling('pool0', l, 3, strides=2, padding='VALID')

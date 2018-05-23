@@ -8,7 +8,7 @@ import itertools
 
 from tensorpack.utils.argtools import memoized, log_once
 from tensorpack.dataflow import (
-    imgaug, TestDataSpeed, PrefetchDataZMQ, MapData,
+    imgaug, TestDataSpeed, PrefetchDataZMQ, MultiProcessMapDataZMQ,
     MapDataComponent, DataFromList)
 # import tensorpack.utils.viz as tpviz
 
@@ -51,7 +51,12 @@ def get_all_anchors(
     # anchors are intbox here.
     # anchors at featuremap [0,0] are centered at fpcoor (8,8) (half of stride)
 
-    field_size = int(np.ceil(config.MAX_SIZE / stride))
+    max_size = config.MAX_SIZE
+    if config.MODE_FPN:
+        # TODO setting this in config is perhaps better
+        size_mult = config.FPN_RESOLUTION_REQUIREMENT * 1.
+        max_size = np.ceil(max_size / size_mult) * size_mult
+    field_size = int(np.ceil(max_size / stride))
     shifts = np.arange(0, field_size) * stride
     shift_x, shift_y = np.meshgrid(shifts, shifts)
     shift_x = shift_x.flatten()
@@ -136,17 +141,19 @@ def get_anchor_labels(anchors, gt_boxes, crowd_boxes):
         overlap_with_crowd = cand_inds[ious.max(axis=1) > config.CROWD_OVERLAP_THRES]
         anchor_labels[overlap_with_crowd] = -1
 
-    # Filter fg labels: ignore some fg if fg is too many
+    # Subsample fg labels: ignore some fg if fg is too many
     target_num_fg = int(config.RPN_BATCH_PER_IM * config.RPN_FG_RATIO)
     fg_inds = filter_box_label(anchor_labels, 1, target_num_fg)
+    if len(fg_inds) == 0:
+        raise MalformedData("No valid foreground for RPN!")
     # Note that fg could be fewer than the target ratio
 
-    # filter bg labels. num_bg is not allowed to be too many
+    # Subsample bg labels. num_bg is not allowed to be too many
     old_num_bg = np.sum(anchor_labels == 0)
-    if old_num_bg == 0 or len(fg_inds) == 0:
+    if old_num_bg == 0:
         # No valid bg/fg in this image, skip.
         # This can happen if, e.g. the image has large crowd.
-        raise MalformedData("No valid foreground/background for RPN!")
+        raise MalformedData("No valid background for RPN!")
     target_num_bg = config.RPN_BATCH_PER_IM - len(fg_inds)
     filter_box_label(anchor_labels, 0, target_num_bg)   # ignore return values
 
@@ -336,8 +343,7 @@ def get_train_dataflow(add_mask=False):
             # tpviz.interactive_imshow(viz)
         return ret
 
-    ds = MapData(ds, preprocess)
-    ds = PrefetchDataZMQ(ds, 1)
+    ds = MultiProcessMapDataZMQ(ds, 10, preprocess)
     return ds
 
 
@@ -359,7 +365,6 @@ if __name__ == '__main__':
     import os
     from tensorpack.dataflow import PrintData
     config.BASEDIR = os.path.expanduser('~/data/coco')
-    config.TRAIN_DATASET = ['train2014']
     ds = get_train_dataflow(add_mask=config.MODE_MASK)
     ds = PrintData(ds, 100)
     TestDataSpeed(ds, 50000).start()

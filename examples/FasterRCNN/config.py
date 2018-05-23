@@ -5,6 +5,7 @@ import numpy as np
 
 # mode flags ---------------------
 MODE_MASK = True
+MODE_FPN = False
 
 # dataset -----------------------
 BASEDIR = '/path/to/your/COCO/DIR'
@@ -34,6 +35,7 @@ MAX_SIZE = 1333
 # anchors -------------------------
 ANCHOR_STRIDE = 16
 ANCHOR_STRIDES_FPN = (4, 8, 16, 32, 64)  # strides for each FPN level. Must be the same length as ANCHOR_SIZES
+FPN_RESOLUTION_REQUIREMENT = 32    # image size into the backbone has to be multiple of this number
 ANCHOR_SIZES = (32, 64, 128, 256, 512)   # sqrtarea of the anchor box
 ANCHOR_RATIOS = (0.5, 1., 2.)
 NUM_ANCHOR = len(ANCHOR_SIZES) * len(ANCHOR_RATIOS)
@@ -48,6 +50,7 @@ RPN_MIN_SIZE = 0
 RPN_PROPOSAL_NMS_THRESH = 0.7
 TRAIN_PRE_NMS_TOPK = 12000
 TRAIN_POST_NMS_TOPK = 2000
+TRAIN_FPN_NMS_TOPK = 2000
 CROWD_OVERLAP_THRES = 0.7  # boxes overlapping crowd will be ignored.
 
 # fastrcnn training ---------------------
@@ -56,15 +59,16 @@ FASTRCNN_BBOX_REG_WEIGHTS = np.array([10, 10, 5, 5], dtype='float32')
 FASTRCNN_FG_THRESH = 0.5
 FASTRCNN_FG_RATIO = 0.25  # fg ratio in a ROI batch
 
+# modeling -------------------------
+FPN_NUM_CHANNEL = 256
+FASTRCNN_FC_HEAD_DIM = 1024
+MASKRCNN_HEAD_DIM = 256
+
 # testing -----------------------
 TEST_PRE_NMS_TOPK = 6000
 TEST_POST_NMS_TOPK = 1000   # if you encounter OOM in inference, set this to a smaller number
+TEST_FPN_NMS_TOPK = 1000
 FASTRCNN_NMS_THRESH = 0.5
 RESULT_SCORE_THRESH = 0.05
 RESULT_SCORE_THRESH_VIS = 0.3   # only visualize confident results
 RESULTS_PER_IM = 100
-
-# TODO Not Functioning. Don't USE
-MODE_FPN = False
-FPN_NUM_CHANNEL = 256
-FPN_SIZE_REQUIREMENT = 32
