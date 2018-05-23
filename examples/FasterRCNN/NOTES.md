@@ -47,8 +47,6 @@ Speed:
 	 a slow convolution algorithm, or you spend more time on autotune.
 	 This is a general problem of TensorFlow when running against variable-sized input.
 
-3. With a large roi batch size (e.g. >= 256), GPU utilitization should stay above 90%.
-
-4. This implementation is about 14% slower than detectron,
+3. This implementation is about 14% slower than detectron,
    probably due to the lack of specialized ops (e.g. AffineChannel, ROIAlign) in TensorFlow.
    It's certainly faster than other TF implementation.
