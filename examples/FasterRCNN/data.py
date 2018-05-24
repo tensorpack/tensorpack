@@ -243,7 +243,7 @@ def get_multilevel_rpn_anchor_input(im, boxes, is_crowd):
     return multilevel_inputs
 
 
-def get_train_dataflow(add_mask=False):
+def get_train_dataflow():
     """
     Return a training dataflow. Each datapoint consists of the following:
 
@@ -260,7 +260,7 @@ def get_train_dataflow(add_mask=False):
     """
 
     imgs = COCODetection.load_many(
-        config.BASEDIR, config.TRAIN_DATASET, add_gt=True, add_mask=add_mask)
+        config.BASEDIR, config.TRAIN_DATASET, add_gt=True, add_mask=config.MODE_MASK)
     """
     To train on your own data, change this to your loader.
     Produce "imgs" as a list of dict, in the dict the following keys are needed for training:
@@ -291,7 +291,7 @@ def get_train_dataflow(add_mask=False):
         assert im is not None, fname
         im = im.astype('float32')
         # assume floatbox as input
-        assert boxes.dtype == np.float32
+        assert boxes.dtype == np.float32, "Loader has to return floating point boxes!"
 
         # augmentation:
         im, params = aug.augment_return_params(im)
@@ -319,9 +319,8 @@ def get_train_dataflow(add_mask=False):
             return None
 
         ret = [im] + list(anchor_inputs) + [boxes, klass]
-        # TODO pad im when FPN
 
-        if add_mask:
+        if config.MODE_MASK:
             # augmentation will modify the polys in-place
             segmentation = copy.deepcopy(img['segmentation'])
             segmentation = [segmentation[k] for k in range(len(segmentation)) if not is_crowd[k]]
@@ -365,7 +364,7 @@ if __name__ == '__main__':
     import os
     from tensorpack.dataflow import PrintData
     config.BASEDIR = os.path.expanduser('~/data/coco')
-    ds = get_train_dataflow(add_mask=config.MODE_MASK)
+    ds = get_train_dataflow()
     ds = PrintData(ds, 100)
     TestDataSpeed(ds, 50000).start()
     ds.reset_state()

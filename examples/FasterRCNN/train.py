@@ -519,7 +519,7 @@ class EvalCallback(Callback):
     def _before_train(self):
         EVAL_TIMES = 5  # eval 5 times during training
         interval = self.trainer.max_epoch // (EVAL_TIMES + 1)
-        self.epochs_to_eval = set([interval * k for k in range(1, EVAL_TIMES)])
+        self.epochs_to_eval = set([interval * k for k in range(1, EVAL_TIMES + 1)])
         self.epochs_to_eval.add(self.trainer.max_epoch)
 
     def _eval(self):
@@ -600,19 +600,20 @@ if __name__ == '__main__':
 
         cfg = TrainConfig(
             model=get_model(),
-            data=QueueInput(get_train_dataflow(add_mask=config.MODE_MASK)),
+            data=QueueInput(get_train_dataflow()),
             callbacks=[
                 PeriodicCallback(
                     ModelSaver(max_to_keep=10, keep_checkpoint_every_n_hours=1),
                     every_k_epochs=20),
-                SessionRunTimeout(60000),   # 1 minute timeout
                 # linear warmup
                 ScheduledHyperParamSetter(
                     'learning_rate', warmup_schedule, interp='linear', step_based=True),
                 ScheduledHyperParamSetter('learning_rate', lr_schedule),
                 EvalCallback(),
                 GPUUtilizationTracker(),
+                PeakMemoryTracker(),
                 EstimatedTimeLeft(),
+                SessionRunTimeout(60000),   # 1 minute timeout
             ],
             steps_per_epoch=stepnum,
             max_epoch=config.LR_SCHEDULE[-1] * factor // stepnum,

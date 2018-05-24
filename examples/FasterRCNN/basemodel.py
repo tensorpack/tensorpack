@@ -121,13 +121,11 @@ def resnet_fpn_backbone(image, num_blocks, freeze_c2=True):
     mult = config.FPN_RESOLUTION_REQUIREMENT * 1.
     new_shape2d = tf.to_int32(tf.ceil(tf.to_float(shape2d) / mult) * mult)
     pad_shape2d = new_shape2d - shape2d
-    assert len(num_blocks) == 4
-    # TODO pad 1 at each stage
+    assert len(num_blocks) == 4, num_blocks
     with resnet_argscope():
         chan = image.shape[1]
-        l = tf.pad(image,
-                   tf.stack([[0, 0], [0, 0],
-                            [2, 3 + pad_shape2d[0]], [2, 3 + pad_shape2d[1]]]))
+        l = tf.pad(image, tf.stack(
+            [[0, 0], [0, 0], [2, 3 + pad_shape2d[0]], [2, 3 + pad_shape2d[1]]]))
         l.set_shape([None, chan, None, None])
         l = Conv2D('conv0', l, 64, 7, strides=2, activation=BNReLU, padding='VALID')
         l = tf.pad(l, [[0, 0], [0, 0], [0, 1], [0, 1]])

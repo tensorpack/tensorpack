@@ -50,3 +50,14 @@ Speed:
 3. This implementation is about 14% slower than detectron,
    probably due to the lack of specialized ops (e.g. AffineChannel, ROIAlign) in TensorFlow.
    It's certainly faster than other TF implementation.
+
+Possible Future Enhancements:
+
+1. Data-parallel evaluation during training.
+
+2. Define an interface to load custom dataset.
+
+3. Support batch>1 per GPU.
+
+4. Use dedicated ops to improve speed. (e.g. a TF implementation of ROIAlign op
+   can be found in [light-head RCNN](https://github.com/zengarden/light_head_rcnn/tree/master/lib/lib_kernel))

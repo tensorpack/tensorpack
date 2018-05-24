@@ -639,7 +639,7 @@ def fpn_map_rois_to_levels(boxes):
     Assign boxes to level 2~5.
 
     Args:
-        boxes (nx4)
+        boxes (nx4):
 
     Returns:
         [tf.Tensor]: 4 tensors for level 2-5. Each tensor is a vector of indices of boxes in its level.

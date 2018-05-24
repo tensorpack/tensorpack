@@ -70,7 +70,7 @@ MaskRCNN results contain both bbox and segm mAP.
 The two R50-C4 360k models have the same configuration __and mAP__
 as the `R50-C4-2x` entries in
 [Detectron Model Zoo](https://github.com/facebookresearch/Detectron/blob/master/MODEL_ZOO.md#end-to-end-faster--mask-r-cnn-baselines).
-So far this is the only TensorFlow implementation that can reproduce mAP in Detectron.
+So far this is the only public TensorFlow implementation that can reproduce mAP in Detectron.
 The other models listed here do not correspond to any configurations in Detectron.
 
 ## Notes
