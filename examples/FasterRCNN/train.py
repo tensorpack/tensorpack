@@ -62,7 +62,7 @@ def get_model_output_names():
 
 def get_model():
     if config.MODE_FPN:
-        if get_tf_version() < 1.6:
+        if get_tf_version_number() < 1.6:
             logger.warn("FPN has chances to crash in TF<1.6, due to a TF issue.")
         return ResNetFPNModel()
     else:
