@@ -5,7 +5,6 @@
 import argparse
 import os
 
-
 from tensorpack import logger, QueueInput
 from tensorpack.models import *
 from tensorpack.callbacks import *
@@ -64,7 +63,7 @@ def get_config(model, fake=False):
 
     logger.info("Running on {} towers. Batch size per tower: {}".format(nr_tower, batch))
     if batch < 32 or batch > 64:
-        logger.warn("Batch size per tower not in [32, 64]. This may lead to worse accuracy than reported.")
+        logger.warn("Batch size per tower not in [32, 64]. This probably will lead to worse accuracy than reported.")
     if fake:
         data = QueueInput(FakeData(
             [[batch, 224, 224, 3], [batch]], 1000, random=False, dtype='uint8'))

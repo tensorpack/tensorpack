@@ -36,8 +36,8 @@ Train:
 ```
 ./train.py --load /path/to/ImageNet-ResNet50.npz
 ```
-The code is only for training with 1, 2, 4 or 8 GPUs.
-Otherwise, you probably need different hyperparameters for the same performance.
+The code is only valid for training with 1, 2, 4 or 8 GPUs.
+Not training with 8 GPUs may result in different performance from the table below.
 
 Predict on an image (and show output in a window):
 ```
@@ -62,8 +62,8 @@ MaskRCNN results contain both bbox and segm mAP.
 |R50-C4  |512             |(800, 1333)|360k    |36.6           |49h on 8 V100s|
 |R50-FPN |512             |(800, 1333)|360k    |37.5           |28h on 8 V100s|
 |R50-C4  |256             |(800, 1333)|280k    |36.8/32.1      |39h on 8 P100s|
-|R50-C4  |512							|(800, 1333)|360k    |37.8/33.2      |51h on 8 V100s|
-|R50-FPN |512							|(800, 1333)|360k    |38.1/34.9      |38h on 8 V100s|
+|R50-C4  |512             |(800, 1333)|360k    |37.8/33.1      |51h on 8 V100s|
+|R50-FPN |512             |(800, 1333)|360k    |38.1/34.9      |38h on 8 V100s|
 |R101-C4 |512             |(800, 1333)|280k    |40.1/34.4      |70h on 8 P100s|
 |R101-C4 |512             |(800, 1333)|360k    |40.8/35.1      |63h on 8 V100s|
 

@@ -91,7 +91,7 @@ class Model(ModelDesc):
                 argscope(BatchNorm, decay=0.9, epsilon=1e-4), \
                 argscope(Conv2D, use_bias=False, nl=tf.identity):
             logits = (LinearWrap(image)
-                      # use explicit padding here, because our training framework has
+                      # use explicit padding here, because our private training framework has
                       # different padding mechanisms from TensorFlow
                       .tf.pad([[0, 0], [3, 2], [3, 2], [0, 0]])
                       .Conv2D('conv1', 64, 7, stride=2, padding='VALID', use_bias=True)

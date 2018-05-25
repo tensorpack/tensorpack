@@ -164,8 +164,6 @@ class COCODetection(object):
         if add_mask:
             img['segmentation'] = [obj['segmentation'] for obj in valid_objs]
 
-        del objs
-
     def print_class_histogram(self, imgs):
         nr_class = len(COCOMeta.class_names)
         hist_bins = np.arange(nr_class + 1)
@@ -200,9 +198,7 @@ class COCODetection(object):
 
 
 if __name__ == '__main__':
-    c = COCODetection('/home/wyx/data/coco', 'train2014')
+    c = COCODetection(config.BASEDIR, 'train2014')
     gt_boxes = c.load(add_gt=True, add_mask=True)
-    import IPython as IP
-    IP.embed()
     print("#Images:", len(gt_boxes))
     c.print_class_histogram(gt_boxes)

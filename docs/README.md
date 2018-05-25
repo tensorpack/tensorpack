@@ -2,8 +2,8 @@
 ## Build the docs:
 
 ### Dependencies:
-1. python3
-2. `pip install -r requirements.txt`
+1. Python3
+2. `pip install -r requirements.txt`. These requirements are different from tensorpack dependencies.
 
 ### Build HTML docs:
 `make html`

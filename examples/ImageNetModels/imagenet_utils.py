@@ -201,10 +201,10 @@ class ImageNetModel(ModelDesc):
     def get_logits(self, image):
         """
         Args:
-            image: 4D tensor of 224x224 in ``self.data_format``
+            image: 4D tensor of ``self.input_shape`` in ``self.data_format``
 
         Returns:
-            Nx1000 logits
+            Nx#class logits
         """
 
     def optimizer(self):

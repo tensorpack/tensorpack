@@ -444,7 +444,10 @@ class ResNetFPNModel(DetectionModel):
 
 
 def visualize(model_path, nr_visualize=50, output_dir='output'):
-    assert not config.MODE_FPN, "FPN visualize is not supported yet!"
+    """
+    Visualize some intermediate results (proposals, raw predictions) inside the pipeline.
+    Does not support FPN.
+    """
     df = get_train_dataflow()   # we don't visualize mask stuff
     df.reset_state()
 
@@ -547,9 +550,9 @@ if __name__ == '__main__':
     parser.add_argument('--load', help='load model for evaluation or training')
     parser.add_argument('--logdir', help='log directory', default='train_log/maskrcnn')
     parser.add_argument('--datadir', help='override config.BASEDIR')
-    parser.add_argument('--visualize', action='store_true')
+    parser.add_argument('--visualize', action='store_true', help='visualize intermediate results')
     parser.add_argument('--evaluate', help="Run evaluation on COCO. "
-                                           "This option is the path to the output json evaluation file")
+                                           "This argument is the path to the output json evaluation file")
     parser.add_argument('--predict', help="Run prediction on a given image. "
                                           "This argument is the path to the input image file")
     args = parser.parse_args()
@@ -570,6 +573,7 @@ if __name__ == '__main__':
             config.RESULT_SCORE_THRESH = config.RESULT_SCORE_THRESH_VIS
 
         if args.visualize:
+            assert not config.MODE_FPN, "FPN visualize is not supported!"
             visualize(args.load)
         else:
             pred = OfflinePredictor(PredictConfig(

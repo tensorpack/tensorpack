@@ -81,7 +81,7 @@ def resnet_bottleneck(l, ch_out, stride):
     return l + resnet_shortcut(shortcut, ch_out * 4, stride, activation=get_bn(zero_init=False))
 
 
-def resnet_group(l, name, block_func, features, count, stride):
+def resnet_group(name, l, block_func, features, count, stride):
     with tf.variable_scope(name):
         for i in range(0, count):
             with tf.variable_scope('block{}'.format(i)):
@@ -99,12 +99,12 @@ def resnet_c4_backbone(image, num_blocks, freeze_c2=True):
         l = Conv2D('conv0', l, 64, 7, strides=2, activation=BNReLU, padding='VALID')
         l = tf.pad(l, [[0, 0], [0, 0], [0, 1], [0, 1]])
         l = MaxPooling('pool0', l, 3, strides=2, padding='VALID')
-        c2 = resnet_group(l, 'group0', resnet_bottleneck, 64, num_blocks[0], 1)
+        c2 = resnet_group('group0', l, resnet_bottleneck, 64, num_blocks[0], 1)
         # TODO replace var by const to enable optimization
         if freeze_c2:
             c2 = tf.stop_gradient(c2)
-        c3 = resnet_group(c2, 'group1', resnet_bottleneck, 128, num_blocks[1], 2)
-        c4 = resnet_group(c3, 'group2', resnet_bottleneck, 256, num_blocks[2], 2)
+        c3 = resnet_group('group1', c2, resnet_bottleneck, 128, num_blocks[1], 2)
+        c4 = resnet_group('group2', c3, resnet_bottleneck, 256, num_blocks[2], 2)
     # 16x downsampling up to now
     return c4
 
@@ -112,7 +112,7 @@ def resnet_c4_backbone(image, num_blocks, freeze_c2=True):
 @auto_reuse_variable_scope
 def resnet_conv5(image, num_block):
     with resnet_argscope():
-        l = resnet_group(image, 'group3', resnet_bottleneck, 512, num_block, 2)
+        l = resnet_group('group3', image, resnet_bottleneck, 512, num_block, 2)
         return l
 
 
@@ -130,11 +130,11 @@ def resnet_fpn_backbone(image, num_blocks, freeze_c2=True):
         l = Conv2D('conv0', l, 64, 7, strides=2, activation=BNReLU, padding='VALID')
         l = tf.pad(l, [[0, 0], [0, 0], [0, 1], [0, 1]])
         l = MaxPooling('pool0', l, 3, strides=2, padding='VALID')
-        c2 = resnet_group(l, 'group0', resnet_bottleneck, 64, num_blocks[0], 1)
+        c2 = resnet_group('group0', l, resnet_bottleneck, 64, num_blocks[0], 1)
         if freeze_c2:
             c2 = tf.stop_gradient(c2)
-        c3 = resnet_group(c2, 'group1', resnet_bottleneck, 128, num_blocks[1], 2)
-        c4 = resnet_group(c3, 'group2', resnet_bottleneck, 256, num_blocks[2], 2)
-        c5 = resnet_group(c4, 'group3', resnet_bottleneck, 512, num_blocks[3], 2)
+        c3 = resnet_group('group1', c2, resnet_bottleneck, 128, num_blocks[1], 2)
+        c4 = resnet_group('group2', c3, resnet_bottleneck, 256, num_blocks[2], 2)
+        c5 = resnet_group('group3', c4, resnet_bottleneck, 512, num_blocks[3], 2)
     # 32x downsampling up to now
     return c2, c3, c4, c5
