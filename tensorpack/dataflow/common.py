@@ -491,6 +491,8 @@ class JoinData(DataFlow):
             df_lists (list): a list of DataFlow.
                 When these dataflows have different sizes, JoinData will stop when any
                 of them is exhausted.
+                The list could contain the same DataFlow instance more than once,
+                but note that `get_data` will then also be called many times.
         """
         self.df_lists = df_lists
 
@@ -503,7 +505,7 @@ class JoinData(DataFlow):
             logger.info("[JoinData] Size check failed for the list of dataflow to be joined!")
 
     def reset_state(self):
-        for d in self.df_lists:
+        for d in set(self.df_lists):
             d.reset_state()
 
     def size(self):
@@ -522,9 +524,6 @@ class JoinData(DataFlow):
                 yield dp
         except StopIteration:   # some of them are exhausted
             pass
-        finally:
-            for itr in itrs:
-                del itr
 
 
 def SelectComponent(ds, idxs):
