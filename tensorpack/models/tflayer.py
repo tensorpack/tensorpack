@@ -72,6 +72,9 @@ def rename_get_variable(mapping):
     """
     Args:
         mapping(dict): an old -> new mapping for variable basename. e.g. {'kernel': 'W'}
+
+    Returns:
+        A context where the variables are renamed.
     """
     def custom_getter(getter, name, *args, **kwargs):
         splits = name.split('/')
@@ -82,6 +85,30 @@ def rename_get_variable(mapping):
             name = '/'.join(splits)
         return getter(name, *args, **kwargs)
     return custom_getter_scope(custom_getter)
+
+
+def rename_tflayer_get_variable():
+    """
+    Rename all :func:`tf.get_variable` with rules that transforms tflayer style to tensorpack style.
+
+    Returns:
+        A context where the variables are renamed.
+
+    Examples:
+
+    .. code-block:: python
+
+        with rename_tflayer_get_variable():
+            x = tf.layer.conv2d(input, 3, 3, name='conv0')
+            # variables will be named 'conv0/W', 'conv0/b'
+    """
+    mapping = {
+        'kernel': 'W',
+        'bias': 'b',
+        'moving_mean': 'mean/EMA',
+        'moving_variance': 'variance/EMA',
+    }
+    return rename_get_variable(mapping)
 
 
 def monkeypatch_tf_layers():

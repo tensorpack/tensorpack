@@ -1,15 +1,19 @@
 
 # Symbolic Layers
 
-While you can use other symbolic libraries,
-tensorpack also contains a small collection of common model primitives,
+Tensorpack contains a small collection of common model primitives,
 such as conv/deconv, fc, bn, pooling layers.
+These layers were written only because there were no alternatives when
+tensorpack was first developed.
+Nowadays, these implementation actually call `tf.layers` directly.
+
+Today, you can just use `tf.layers` or any other symbolic libraries inside tensorpack.
 Using the tensorpack implementations, you can also benefit from `argscope` and `LinearWrap` to
 simplify the code.
 
-Note that these layers were written because there were no other alternatives back at that time.
-Now, these layers actually call `tf.layers` directly.
-You can just use `tf.layers` as long as it fits your need.
+Note that to keep backward compatibility of code and pre-trained models, tensorpack layers
+have some small differences with `tf.layers`, including variable names and default options.
+Refer to the API document for details.
 
 ### argscope and LinearWrap
 `argscope` gives you a context with default arguments.
