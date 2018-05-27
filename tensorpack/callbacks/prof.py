@@ -177,7 +177,7 @@ class GraphProfiler(Callback):
 
 class PeakMemoryTracker(Callback):
     """
-    Track peak memory used on each GPU device, by :mod:`tf.contrib.memory_stats`.
+    Track peak memory used on each GPU device every epoch, by :mod:`tf.contrib.memory_stats`.
     The peak memory comes from the `MaxBytesInUse` op, which might span
     multiple session.run.
     See https://github.com/tensorflow/tensorflow/pull/13107.
@@ -203,9 +203,12 @@ class PeakMemoryTracker(Callback):
         self._fetches = tf.train.SessionRunArgs(fetches=ops)
 
     def _before_run(self, _):
-        return self._fetches
+        if self.local_step == self.trainer.steps_per_epoch - 1:
+            return self._fetches
+        return None
 
     def _after_run(self, _, rv):
         results = rv.results
-        for mem, dev in zip(results, self._devices):
-            self.trainer.monitors.put_scalar('PeakMemory(MB) ' + dev, mem / 1e6)
+        if results is not None:
+            for mem, dev in zip(results, self._devices):
+                self.trainer.monitors.put_scalar('PeakMemory(MB) ' + dev, mem / 1e6)
