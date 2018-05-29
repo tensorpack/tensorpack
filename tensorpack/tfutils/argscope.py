@@ -4,8 +4,10 @@
 from contextlib import contextmanager
 from collections import defaultdict
 import copy
+from functools import wraps
+from inspect import isfunction, getmembers
 
-__all__ = ['argscope', 'get_arg_scope']
+__all__ = ['argscope', 'get_arg_scope', 'enable_argscope_for_lib']
 
 _ArgScopeStack = []
 
@@ -60,3 +62,26 @@ def get_arg_scope():
         return _ArgScopeStack[-1]
     else:
         return defaultdict(dict)
+
+
+def argscope_mapper(func):
+    """Decorator for function to support argscope
+    """
+    @wraps(func)
+    def wrapped_func(*args, **kwargs):
+        actual_args = copy.copy(get_arg_scope()[func.__name__])
+        actual_args.update(kwargs)
+        out_tensor = func(*args, **actual_args)
+        return out_tensor
+    a = wrapped_func
+    # argscope requires this property
+    a.symbolic_function = None
+    return a
+
+
+def enable_argscope_for_lib(lib, decorator=argscope_mapper):
+    """Overwrite functions of given lib to support argscope
+    """
+    for name, obj in getmembers(lib):
+        if isfunction(obj):
+            setattr(lib, name, decorator(obj))
