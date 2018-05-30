@@ -114,6 +114,8 @@ def resnet_group(name, l, block_func, features, count, stride):
 def resnet_backbone(image, num_blocks, group_func, block_func):
     with argscope(Conv2D, use_bias=False,
                   kernel_initializer=tf.variance_scaling_initializer(scale=2.0, mode='fan_out')):
+        # Note that this pads the image by [2, 3] instead of [3, 2].
+        # Similar things happen in later stride=2 layers as well.
         l = Conv2D('conv0', image, 64, 7, strides=2, activation=BNReLU)
         l = MaxPooling('pool0', l, pool_size=3, strides=2, padding='SAME')
         l = group_func('group0', l, block_func, 64, num_blocks[0], 1)

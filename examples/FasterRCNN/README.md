@@ -1,6 +1,5 @@
 # Faster-RCNN / Mask-RCNN on COCO
-This example provides a minimal (only 1.6k lines) but faithful implementation of
-the following papers:
+This example provides a minimal (only 1.6k lines) but faithful implementation of the following papers:
 
 + [Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks](https://arxiv.org/abs/1506.01497)
 + [Feature Pyramid Networks for Object Detection](https://arxiv.org/abs/1612.03144)
@@ -70,7 +69,7 @@ MaskRCNN results contain both bbox and segm mAP.
 The two R50-C4 360k models have the same configuration __and mAP__
 as the `R50-C4-2x` entries in
 [Detectron Model Zoo](https://github.com/facebookresearch/Detectron/blob/master/MODEL_ZOO.md#end-to-end-faster--mask-r-cnn-baselines).
-So far this is the only public TensorFlow implementation that can reproduce mAP in Detectron.
+<!-- So far this is the only public TensorFlow implementation that can reproduce mAP in Detectron. -->
 The other models listed here do not correspond to any configurations in Detectron.
 
 ## Notes

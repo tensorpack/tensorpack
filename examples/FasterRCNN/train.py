@@ -623,5 +623,6 @@ if __name__ == '__main__':
             max_epoch=config.LR_SCHEDULE[-1] * factor // stepnum,
             session_init=get_model_loader(args.load) if args.load else None,
         )
+        # nccl mode gives the best speed
         trainer = SyncMultiGPUTrainerReplicated(get_nr_gpu(), mode='nccl')
         launch_train_with_config(cfg, trainer)

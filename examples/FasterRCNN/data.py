@@ -10,6 +10,7 @@ from tensorpack.utils.argtools import memoized, log_once
 from tensorpack.dataflow import (
     imgaug, TestDataSpeed, PrefetchDataZMQ, MultiProcessMapDataZMQ,
     MapDataComponent, DataFromList)
+from tensorpack.utils import logger
 # import tensorpack.utils.viz as tpviz
 
 from coco import COCODetection
@@ -277,7 +278,10 @@ def get_train_dataflow():
 
     # Valid training images should have at least one fg box.
     # But this filter shall not be applied for testing.
+    num = len(imgs)
     imgs = list(filter(lambda img: len(img['boxes']) > 0, imgs))    # log invalid training
+    logger.info("Filtered {} images which contain no groudtruth boxes. Total #images for training: {}".format(
+        num - len(imgs), len(imgs)))
 
     ds = DataFromList(imgs, shuffle=True)
 

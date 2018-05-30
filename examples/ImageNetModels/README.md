@@ -31,8 +31,8 @@ Evaluate the [pretrained model](http://models.tensorpack.com/ShuffleNet/):
 This AlexNet script is quite close to the setting in its [original
 paper](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks).
 Trained with 64x2 batch size, the script reaches 58% single-crop validation
-accuracy after 100 epochs. It also generates first-layer filter visualizations
-similar to the paper in tensorboard.
+accuracy after 100 epochs (21 hours on 2 V100s).
+It also puts in tensorboard the first-layer filter visualizations similar to the paper.
 
 ### Inception-BN, VGG16
 

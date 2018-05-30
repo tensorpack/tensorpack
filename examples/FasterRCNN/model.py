@@ -99,7 +99,7 @@ def rpn_losses(anchor_labels, anchor_boxes, label_logits, box_logits):
         add_moving_summary(*summaries)
 
     # Per-level loss summaries in FPN may appear lower due to the use of a small placeholder.
-    # But the total loss is still the same.
+    # But the total loss is still the same.  TODO make the summary op smarter
     placeholder = 0.
     label_loss = tf.nn.sigmoid_cross_entropy_with_logits(
         labels=tf.to_float(valid_anchor_labels), logits=valid_label_logits)
@@ -217,7 +217,8 @@ def generate_rpn_proposals(boxes, scores, img_shape,
         (-1, 4), name='nms_input_boxes')
     nms_indices = tf.image.non_max_suppression(
         topk_valid_boxes_y1x1y2x2,
-        topk_valid_scores,
+        # TODO use exp to work around a bug in TF1.9: https://github.com/tensorflow/tensorflow/issues/19578
+        tf.exp(topk_valid_scores),
         max_output_size=post_nms_topk,
         iou_threshold=config.RPN_PROPOSAL_NMS_THRESH)
 
@@ -608,7 +609,6 @@ def fpn_model(features):
 
         # tf.image.resize is, again, not aligned.
         # with tf.name_scope(name):
-        #     logger.info("Nearest neighbor")
         #     shape2d = tf.shape(x)[2:]
         #     x = tf.transpose(x, [0, 2, 3, 1])
         #     x = tf.image.resize_nearest_neighbor(x, shape2d * 2, align_corners=True)

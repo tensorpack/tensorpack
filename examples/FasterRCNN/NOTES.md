@@ -35,8 +35,8 @@ Model:
 3. We only support single image per GPU.
 
 4. Because of (3), BatchNorm statistics are not supposed to be updated during fine-tuning.
-	 This specific kind of BatchNorm will need [my kernel](https://github.com/tensorflow/tensorflow/pull/12580)
-	 which is included since TF 1.4. If using an earlier version of TF, it will be either slow or wrong.
+   This specific kind of BatchNorm will need [my kernel](https://github.com/tensorflow/tensorflow/pull/12580)
+   which is included since TF 1.4. If using an earlier version of TF, it will be either slow or wrong.
 
 Speed:
 
