@@ -81,7 +81,7 @@ def argscope_mapper(func):
 def enable_argscope_for_module(module):
     """
     Overwrite all functions of a given module to support argscope.
-    Note that this function monkey-patch the module and therefore could have unexpected consequences.
+    Note that this function monkey-patches the module and therefore could have unexpected consequences.
     It has been only tested to work well with `tf.layers` module.
     """
     for name, obj in getmembers(module):
