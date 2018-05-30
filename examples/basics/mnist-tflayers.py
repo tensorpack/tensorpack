@@ -20,6 +20,7 @@ from tensorpack.tfutils import summary, get_current_tower_context
 from tensorpack.dataflow import dataset
 
 IMAGE_SIZE = 28
+enable_argscope_for_module(tf.layers)
 
 
 class Model(ModelDesc):
@@ -38,16 +39,17 @@ class Model(ModelDesc):
 
         image = image * 2 - 1   # center the pixels values at zero
 
-        l = tf.layers.conv2d(image, 32, 3, padding='same', activation=tf.nn.relu, name='conv0')
-        l = tf.layers.max_pooling2d(l, 2, 2, padding='valid')
-        l = tf.layers.conv2d(l, 32, 3, padding='same', activation=tf.nn.relu, name='conv1')
-        l = tf.layers.conv2d(l, 32, 3, padding='same', activation=tf.nn.relu, name='conv2')
-        l = tf.layers.max_pooling2d(l, 2, 2, padding='valid')
-        l = tf.layers.conv2d(l, 32, 3, padding='same', activation=tf.nn.relu, name='conv3')
-        l = tf.layers.flatten(l)
-        l = tf.layers.dense(l, 512, activation=tf.nn.relu, name='fc0')
-        l = tf.layers.dropout(l, rate=0.5,
-                              training=get_current_tower_context().is_training)
+        with argscope([tf.layers.conv2d], padding='same', activation=tf.nn.relu):
+            l = tf.layers.conv2d(image, 32, 3, name='conv0')
+            l = tf.layers.max_pooling2d(l, 2, 2, padding='valid')
+            l = tf.layers.conv2d(l, 32, 3, name='conv1')
+            l = tf.layers.conv2d(l, 32, 3, name='conv2')
+            l = tf.layers.max_pooling2d(l, 2, 2, padding='valid')
+            l = tf.layers.conv2d(l, 32, 3, name='conv3')
+            l = tf.layers.flatten(l)
+            l = tf.layers.dense(l, 512, activation=tf.nn.relu, name='fc0')
+            l = tf.layers.dropout(l, rate=0.5,
+                                  training=get_current_tower_context().is_training)
         logits = tf.layers.dense(l, 10, activation=tf.identity, name='fc1')
 
         tf.nn.softmax(logits, name='prob')   # a Bx10 with probabilities
@@ -60,7 +62,7 @@ class Model(ModelDesc):
         accuracy = tf.reduce_mean(correct, name='accuracy')
 
         # This will monitor training error (in a moving_average fashion):
-        # 1. write the value to tensosrboard
+        # 1. write the value to tensorboard
         # 2. write the value to stat.json
         # 3. print the value after each epoch
         train_error = tf.reduce_mean(1 - correct, name='train_error')

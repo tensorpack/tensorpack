@@ -4,8 +4,10 @@
 from contextlib import contextmanager
 from collections import defaultdict
 import copy
+from functools import wraps
+from inspect import isfunction, getmembers
 
-__all__ = ['argscope', 'get_arg_scope']
+__all__ = ['argscope', 'get_arg_scope', 'enable_argscope_for_module']
 
 _ArgScopeStack = []
 
@@ -60,3 +62,28 @@ def get_arg_scope():
         return _ArgScopeStack[-1]
     else:
         return defaultdict(dict)
+
+
+def argscope_mapper(func):
+    """Decorator for function to support argscope
+    """
+    @wraps(func)
+    def wrapped_func(*args, **kwargs):
+        actual_args = copy.copy(get_arg_scope()[func.__name__])
+        actual_args.update(kwargs)
+        out_tensor = func(*args, **actual_args)
+        return out_tensor
+    # argscope requires this property
+    wrapped_func.symbolic_function = None
+    return wrapped_func
+
+
+def enable_argscope_for_module(module):
+    """
+    Overwrite all functions of a given module to support argscope.
+    Note that this function monkey-patches the module and therefore could have unexpected consequences.
+    It has been only tested to work well with `tf.layers` module.
+    """
+    for name, obj in getmembers(module):
+        if isfunction(obj):
+            setattr(module, name, argscope_mapper(obj))
