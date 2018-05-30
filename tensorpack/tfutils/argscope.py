@@ -79,9 +79,9 @@ def argscope_mapper(func):
     return a
 
 
-def enable_argscope_for_lib(lib, decorator=argscope_mapper):
-    """Overwrite functions of given lib to support argscope
+def enable_argscope_for_lib(module):
+    """Overwrite functions of given module to support argscope
     """
-    for name, obj in getmembers(lib):
+    for name, obj in getmembers(module):
         if isfunction(obj):
-            setattr(lib, name, decorator(obj))
+            setattr(module, name, argscope_mapper(obj))
