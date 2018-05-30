@@ -20,7 +20,7 @@ from tensorpack.tfutils import summary, get_current_tower_context
 from tensorpack.dataflow import dataset
 
 IMAGE_SIZE = 28
-enable_argscope_for_lib(tf.layers)
+enable_argscope_for_module(tf.layers)
 
 
 class Model(ModelDesc):

@@ -7,7 +7,7 @@ import copy
 from functools import wraps
 from inspect import isfunction, getmembers
 
-__all__ = ['argscope', 'get_arg_scope', 'enable_argscope_for_lib']
+__all__ = ['argscope', 'get_arg_scope', 'enable_argscope_for_module']
 
 _ArgScopeStack = []
 
@@ -73,14 +73,16 @@ def argscope_mapper(func):
         actual_args.update(kwargs)
         out_tensor = func(*args, **actual_args)
         return out_tensor
-    a = wrapped_func
     # argscope requires this property
-    a.symbolic_function = None
-    return a
+    wrapped_func.symbolic_function = None
+    return wrapped_func
 
 
-def enable_argscope_for_lib(module):
-    """Overwrite functions of given module to support argscope
+def enable_argscope_for_module(module):
+    """
+    Overwrite all functions of a given module to support argscope.
+    Note that this function monkey-patch the module and therefore could have unexpected consequences.
+    It has been only tested to work well with `tf.layers` module.
     """
     for name, obj in getmembers(module):
         if isfunction(obj):
