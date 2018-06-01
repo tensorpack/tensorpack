@@ -70,19 +70,6 @@ def get_model():
 
 
 class DetectionModel(ModelDesc):
-    def inputs(self):
-        ret = [
-            tf.placeholder(tf.float32, (None, None, 3), 'image'),
-            tf.placeholder(tf.int32, (None, None, config.NUM_ANCHOR), 'anchor_labels'),
-            tf.placeholder(tf.float32, (None, None, config.NUM_ANCHOR, 4), 'anchor_boxes'),
-            tf.placeholder(tf.float32, (None, 4), 'gt_boxes'),
-            tf.placeholder(tf.int64, (None,), 'gt_labels')]  # all > 0
-        if config.MODE_MASK:
-            ret.append(
-                tf.placeholder(tf.uint8, (None, None, None), 'gt_masks')
-            )   # NR_GT x height x width
-        return ret
-
     def preprocess(self, image):
         image = tf.expand_dims(image, 0)
         image = image_preprocess(image, bgr=True)
@@ -176,6 +163,19 @@ class DetectionModel(ModelDesc):
 
 
 class ResNetC4Model(DetectionModel):
+    def inputs(self):
+        ret = [
+            tf.placeholder(tf.float32, (None, None, 3), 'image'),
+            tf.placeholder(tf.int32, (None, None, config.NUM_ANCHOR), 'anchor_labels'),
+            tf.placeholder(tf.float32, (None, None, config.NUM_ANCHOR, 4), 'anchor_boxes'),
+            tf.placeholder(tf.float32, (None, 4), 'gt_boxes'),
+            tf.placeholder(tf.int64, (None,), 'gt_labels')]  # all > 0
+        if config.MODE_MASK:
+            ret.append(
+                tf.placeholder(tf.uint8, (None, None, None), 'gt_masks')
+            )   # NR_GT x height x width
+        return ret
+
     def build_graph(self, *inputs):
         is_training = get_current_tower_context().is_training
         if config.MODE_MASK:
@@ -256,11 +256,10 @@ class ResNetC4Model(DetectionModel):
                 mask_logits = maskrcnn_upXconv_head(
                     'maskrcnn', fg_feature, config.NUM_CLASS, num_convs=0)   # #fg x #cat x 14x14
 
-                matched_gt_masks = tf.gather(gt_masks, fg_inds_wrt_gt)  # nfg x H x W
                 target_masks_for_fg = crop_and_resize(
-                    tf.expand_dims(matched_gt_masks, 1),
+                    tf.expand_dims(gt_masks, 1),
                     fg_sampled_boxes,
-                    tf.range(tf.size(fg_inds_wrt_gt)), 14,
+                    fg_inds_wrt_gt, 14,
                     pad_border=False)  # nfg x 1x14x14
                 target_masks_for_fg = tf.squeeze(target_masks_for_fg, 1, 'sampled_fg_mask_targets')
                 mrcnn_loss = maskrcnn_loss(mask_logits, fg_labels, target_masks_for_fg)
@@ -408,11 +407,10 @@ class ResNetFPNModel(DetectionModel):
                 mask_logits = maskrcnn_upXconv_head(
                     'maskrcnn', roi_feature_maskrcnn, config.NUM_CLASS, 4)   # #fg x #cat x 28 x 28
 
-                matched_gt_masks = tf.gather(gt_masks, fg_inds_wrt_gt)  # fg x H x W
                 target_masks_for_fg = crop_and_resize(
-                    tf.expand_dims(matched_gt_masks, 1),
+                    tf.expand_dims(gt_masks, 1),
                     fg_sampled_boxes,
-                    tf.range(tf.size(fg_inds_wrt_gt)), 28,
+                    fg_inds_wrt_gt, 28,
                     pad_border=False)  # fg x 1x28x28
                 target_masks_for_fg = tf.squeeze(target_masks_for_fg, 1, 'sampled_fg_mask_targets')
                 mrcnn_loss = maskrcnn_loss(mask_logits, fg_labels, target_masks_for_fg)

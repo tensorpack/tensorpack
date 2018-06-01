@@ -1,5 +1,5 @@
 # Faster-RCNN / Mask-RCNN on COCO
-This example provides a minimal (only 1.6k lines) but faithful implementation of the following papers:
+This example provides a minimal (only 1.6k lines) and faithful implementation of the following papers:
 
 + [Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks](https://arxiv.org/abs/1506.01497)
 + [Feature Pyramid Networks for Object Detection](https://arxiv.org/abs/1612.03144)
@@ -8,8 +8,8 @@ This example provides a minimal (only 1.6k lines) but faithful implementation of
 ## Dependencies
 + Python 3; TensorFlow >= 1.4.0 (>=1.6.0 recommended due to a TF bug);
 + [pycocotools](https://github.com/pdollar/coco/tree/master/PythonAPI/pycocotools), OpenCV.
-+ Pre-trained [ResNet model](http://models.tensorpack.com/ResNet/) from tensorpack model zoo.
-+ COCO data. It assumes the following directory structure:
++ Pre-trained [ImageNet ResNet model](http://models.tensorpack.com/ResNet/) from tensorpack model zoo.
++ COCO data. It needs to have the following directory structure:
 ```
 DIR/
   annotations/
@@ -44,9 +44,9 @@ Predict on an image (and show output in a window):
 ```
 
 Evaluate the performance of a model on COCO, and save results to json.
-(Pretrained models can be downloaded in [model zoo](http://models.tensorpack.com/FasterRCNN):
+(Trained COCO models can be downloaded in [model zoo](http://models.tensorpack.com/FasterRCNN):
 ```
-./train.py --evaluate output.json --load /path/to/model
+./train.py --evaluate output.json --load /path/to/COCO-ResNet50-MaskRCNN.npz
 ```
 
 ## Results

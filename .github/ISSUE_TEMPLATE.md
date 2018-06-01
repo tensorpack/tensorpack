@@ -3,7 +3,7 @@ An issue has to be one of the following:
 2. Feature Requests
 3. Usage Questions
 
-Any unexpected problems: __PLEASE ALWAYS INCLUDE__:
+For any unexpected problems, __PLEASE ALWAYS INCLUDE__:
 1. What you did:
 	+ If you're using examples:
 		+ What's the command you run:
@@ -17,7 +17,7 @@ Any unexpected problems: __PLEASE ALWAYS INCLUDE__:
 4. Your environment:
 	+ Python version.
 	+ TF version: `python -c 'import tensorflow as tf; print(tf.GIT_VERSION, tf.VERSION)'`.
-	+ Tensorpack version: `python3 -c 'import tensorpack; print(tensorpack.__version__)'`.
+	+ Tensorpack version: `python -c 'import tensorpack; print(tensorpack.__version__)'`.
       You can install Tensorpack master by `pip install -U git+https://github.com/ppwwyyxx/tensorpack.git`.:
 5. About efficiency, PLEASE first read http://tensorpack.readthedocs.io/en/latest/tutorial/performance-tuning.html
 

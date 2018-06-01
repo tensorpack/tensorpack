@@ -38,7 +38,7 @@ __all__ = ['SimpleTrainer',
 
 def _int_to_range(x):
     if isinstance(x, int):
-        assert x > 0, x
+        assert x > 0, "Argument cannot be {}!".format(x)
         return list(range(x))
     return x
 
