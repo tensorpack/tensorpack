@@ -14,7 +14,6 @@ from ..utils import logger
 from ..utils.utils import humanize_time_delta
 from ..utils.argtools import call_only_once
 from ..tfutils import get_global_step_value
-from ..tfutils.tower import TowerFuncWrapper
 from ..tfutils.model_utils import describe_trainable_vars
 from ..tfutils.sessinit import SessionInit, JustCurrentSession
 from ..tfutils.sesscreate import ReuseSessionCreator, NewSessionCreator
@@ -25,7 +24,7 @@ from .config import TrainConfig, DEFAULT_MONITORS, DEFAULT_CALLBACKS
 __all__ = ['StopTraining', 'Trainer']
 
 
-class StopTraining(BaseException):
+class StopTraining(Exception):
     """
     An exception thrown to stop training.
     """
@@ -101,7 +100,7 @@ class Trainer(object):
     Certain callbacks will only be run by chief worker.
     """
 
-    def __init__(self, config=None):
+    def __init__(self):
         """
         config is only for compatibility reasons in case you're
         using custom trainers with old-style API.
@@ -109,34 +108,6 @@ class Trainer(object):
         """
         self._callbacks = []
         self.loop = TrainLoop()
-
-        # Hacks!
-        if config is not None:
-            logger.warn("You're initializing new trainer with old trainer API!")
-            logger.warn("This could happen if you wrote a custom trainer before.")
-            logger.warn("It may work now through some hacks, but please switch to the new API!")
-            logger.warn("See https://github.com/ppwwyyxx/tensorpack/issues/458 for more information.")
-            config._deprecated_parsing()
-            self._config = config
-            self.inputs_desc = config.model.get_inputs_desc()
-            self.tower_func = TowerFuncWrapper(
-                lambda *inputs: config.model.build_graph(*inputs),
-                self.inputs_desc)
-            self._main_tower_vs_name = ""
-
-            def gp(input_names, output_names, tower=0):
-                from .tower import TowerTrainer
-                return TowerTrainer.get_predictor(self, input_names, output_names, device=tower)
-            self.get_predictor = gp
-
-            old_train = self.train
-
-            def train():
-                return old_train(
-                    config.callbacks, config.monitors,
-                    config.session_creator, config.session_init,
-                    config.steps_per_epoch, config.starting_epoch, config.max_epoch)
-            self.train = train
 
     def _register_callback(self, cb):
         """
@@ -170,7 +141,7 @@ class Trainer(object):
         Defines what to do in one iteration. The default is:
         ``self.hooked_sess.run(self.train_op)``.
 
-        The behavior can be changed by either defining what is ``train_op``,
+        The behavior of each iteration can be changed by either setting ``trainer.train_op``,
         or overriding this method.
         """
         if not hasattr(self, 'train_op'):
@@ -343,7 +314,7 @@ class Trainer(object):
             else:
                 logger.warn("You're calling new trainers with old trainer API!")
                 logger.warn("Now it returns the old trainer for you, please switch to use new trainers soon!")
-                logger.warn("See https://github.com/ppwwyyxx/tensorpack/issues/458 for more information.")
+                logger.warn("See https://github.com/tensorpack/tensorpack/issues/458 for more information.")
                 return old_trainer(*args, **kwargs)
         else:
             return super(Trainer, cls).__new__(cls)

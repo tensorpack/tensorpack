@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # File: load-resnet.py
 # Author: Eric Yujia Huang <yujiah1@andrew.cmu.edu>
-#         Yuxin Wu <ppwwyyxx@gmail.com>
+#         Yuxin Wu
 
 import cv2
 import functools

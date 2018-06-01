@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # File: dump-model-params.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 import numpy as np
 import six

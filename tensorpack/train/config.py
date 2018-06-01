@@ -157,13 +157,13 @@ class TrainConfig(object):
     @property
     def nr_tower(self):
         logger.warn("TrainConfig.nr_tower was deprecated! Set the number of GPUs on the trainer instead!")
-        logger.warn("See https://github.com/ppwwyyxx/tensorpack/issues/458 for more information.")
+        logger.warn("See https://github.com/tensorpack/tensorpack/issues/458 for more information.")
         return len(self.tower)
 
     @nr_tower.setter
     def nr_tower(self, value):
         logger.warn("TrainConfig.nr_tower was deprecated! Set the number of GPUs on the trainer instead!")
-        logger.warn("See https://github.com/ppwwyyxx/tensorpack/issues/458 for more information.")
+        logger.warn("See https://github.com/tensorpack/tensorpack/issues/458 for more information.")
         self.tower = list(range(value))
 
     def _deprecated_parsing(self):

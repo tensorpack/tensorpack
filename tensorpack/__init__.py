@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 # File: __init__.py
-# flake8: noqa
 
-
-import os as _os
 
 from tensorpack.libinfo import __version__, _HAS_TF
 

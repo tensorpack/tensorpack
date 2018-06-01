@@ -1,6 +1,5 @@
 #!/bin/bash -e
 # File: run-tests.sh
-# Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 DIR=$(dirname $0)
 cd $DIR

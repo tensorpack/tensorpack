@@ -164,7 +164,7 @@ def stack_patches(
     """
     Stacked patches into grid, to produce visualizations like the following:
 
-    .. image:: https://github.com/ppwwyyxx/tensorpack/raw/master/examples/GAN/demo/BEGAN-CelebA-samples.jpg
+    .. image:: https://github.com/tensorpack/tensorpack/raw/master/examples/GAN/demo/BEGAN-CelebA-samples.jpg
 
     Args:
         patch_list(list[ndarray] or ndarray): NHW or NHWC images in [0,255].

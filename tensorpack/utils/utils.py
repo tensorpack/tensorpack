@@ -94,7 +94,7 @@ def fix_rng_seed(seed):
         seed (int):
 
     Note:
-        See https://github.com/ppwwyyxx/tensorpack/issues/196.
+        See https://github.com/tensorpack/tensorpack/issues/196.
 
     Examples:
 

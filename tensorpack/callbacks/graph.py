@@ -36,7 +36,7 @@ class RunOp(Callback):
 
         Examples:
             The `DQN Example
-            <https://github.com/ppwwyyxx/tensorpack/blob/master/examples/DeepQNetwork/>`_
+            <https://github.com/tensorpack/tensorpack/blob/master/examples/DeepQNetwork/>`_
             uses this callback to update target network.
         """
         if not callable(op):

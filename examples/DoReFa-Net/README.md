@@ -37,13 +37,13 @@ Alternative link to this page: [http://dorefa.net](http://dorefa.net)
 
 ## Use
 
-+ Install [tensorpack](https://github.com/ppwwyyxx/tensorpack) and scipy.
++ Install tensorpack and scipy.
 
 + Look at the docstring in `*-dorefa.py` to see detailed usage and performance.
 
 ## Support
 
-Please use [github issues](https://github.com/ppwwyyxx/tensorpack/issues) for any issues related to the code itself.
+Please use [github issues](https://github.com/tensorpack/tensorpack/issues) for any issues related to the code itself.
 Please send email to the authors for general questions related to the paper.
 
 ## Citation

@@ -402,7 +402,7 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
 
 def url_resolver(url):
     if '.html' not in url:
-        return "https://github.com/ppwwyyxx/tensorpack/blob/master/" + url
+        return "https://github.com/tensorpack/tensorpack/blob/master/" + url
     else:
         if ON_RTD:
             return "http://tensorpack.readthedocs.io/" + url
