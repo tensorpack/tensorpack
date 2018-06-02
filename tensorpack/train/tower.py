@@ -6,7 +6,6 @@ import six
 from abc import abstractmethod, ABCMeta
 
 from ..utils.argtools import call_only_once, memoized
-from ..utils.develop import deprecated
 from ..graph_builder.predict import SimplePredictBuilder
 from ..input_source import PlaceholderInput
 from ..predict.base import OnlinePredictor
@@ -36,10 +35,6 @@ class TowerTrainer(Trainer):
     def _set_tower_func(self, tower_func):
         assert isinstance(tower_func, TowerFuncWrapper), tower_func
         self._tower_func = tower_func
-
-    @deprecated("Just use tower_func = xxx instead!", "2018-06-01")
-    def set_tower_func(self, tower_func):
-        self._set_tower_func(tower_func)
 
     @property
     def tower_func(self):

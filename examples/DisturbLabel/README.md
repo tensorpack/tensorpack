@@ -3,7 +3,8 @@
 
 I ran into the paper [DisturbLabel: Regularizing CNN on the Loss Layer](https://arxiv.org/abs/1605.00055) on CVPR16,
 which basically said that noisy data gives you better performance.
-As many, I didn't believe the method and the results.
+As many, I didn't believe the method and the results. This code exists to
+disprove the results in the paper.
 
 This is a simple mnist training script with DisturbLabel. It uses the simple architecture in the paper, and
 hyperparameters in my original [mnist example](../mnist-convnet.py).
@@ -21,6 +22,7 @@ The method didn't work for slightly harder problems such as SVHN:
 ![svhn](svhn.png)
 
 The SVHN experiements used the model & hyperparemeters as my original [svhn example](../svhn-digit-convnet.py).
-Experiements were all repeated 10 times to get the error bar.
+Experiements were all repeated 10 times to get the error bar. It apparently does not work.
 
-And I don't believe it will work for ImageNet either. And that's a CVPR paper..
+It will not work for ImageNet either. There is indeed a terribly weak
+ImageNet experiment in this paper, and that's a CVPR paper.

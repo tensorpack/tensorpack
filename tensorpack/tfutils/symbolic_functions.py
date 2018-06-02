@@ -7,15 +7,15 @@ import numpy as np
 
 from ..utils.develop import deprecated
 
-# __all__ = ['get_scalar_var']
+__all__ = ['get_scalar_var', 'prediction_incorrect', 'flatten', 'batch_flatten', 'print_stat', 'rms', 'huber_loss']
 
 
 # this function exists for backwards-compatibility
 def prediction_incorrect(logits, label, topk=1, name='incorrect_vector'):
-    return tf.cast(tf.logical_not(tf.nn.in_top_k(logits, label, topk)),
-                   tf.float32, name=name)
+    return tf.cast(tf.logical_not(tf.nn.in_top_k(logits, label, topk)), tf.float32, name=name)
 
 
+@deprecated("Please implement it yourself!", "2018-08-01")
 def flatten(x):
     """
     Flatten the tensor.
@@ -23,6 +23,7 @@ def flatten(x):
     return tf.reshape(x, [-1])
 
 
+@deprecated("Please implement it yourself!", "2018-08-01")
 def batch_flatten(x):
     """
     Flatten the tensor except the first dimension.
@@ -46,6 +47,8 @@ def print_stat(x, message=None):
                     message=message, name='print_' + x.op.name)
 
 
+# after deprecated, keep it for internal use only
+# @deprecated("Please implement it yourself!", "2018-08-01")
 def rms(x, name=None):
     """
     Returns:
@@ -58,7 +61,7 @@ def rms(x, name=None):
     return tf.sqrt(tf.reduce_mean(tf.square(x)), name=name)
 
 
-@deprecated("Please use tf.losses.huber_loss instead!")
+@deprecated("Please use tf.losses.huber_loss instead!", "2018-08-01")
 def huber_loss(x, delta=1, name='huber_loss'):
     r"""
     Huber loss of x.
@@ -88,6 +91,7 @@ def huber_loss(x, delta=1, name='huber_loss'):
 
 # TODO deprecate this in the future
 # doesn't hurt to keep it here for now
+@deprecated("Simply use tf.get_variable instead!", "2018-08-01")
 def get_scalar_var(name, init_value, summary=False, trainable=False):
     """
     Get a scalar float variable with certain initial value.
@@ -142,51 +146,3 @@ def psnr(prediction, ground_truth, maxp=None, name='psnr'):
         psnr = tf.add(tf.multiply(20., log10(maxp)), psnr, name=name)
 
     return psnr
-
-
-@deprecated("Please implement it by yourself.", "2018-04-28")
-def saliency_map(output, input, name="saliency_map"):
-    """
-    Produce a saliency map as described in the paper:
-    `Deep Inside Convolutional Networks: Visualising Image Classification Models and Saliency Maps
-    <https://arxiv.org/abs/1312.6034>`_.
-    The saliency map is the gradient of the max element in output w.r.t input.
-
-    Returns:
-        tf.Tensor: the saliency map. Has the same shape as input.
-    """
-    max_outp = tf.reduce_max(output, 1)
-    saliency_op = tf.gradients(max_outp, input)[:][0]
-    saliency_op = tf.identity(saliency_op, name=name)
-    return saliency_op
-
-
-@deprecated("Please implement it by yourself.", "2018-04-28")
-def shapeless_placeholder(x, axis, name):
-    """
-    Make the static shape of a tensor less specific.
-
-    If you want to feed to a tensor, the shape of the feed value must match
-    the tensor's static shape. This function creates a placeholder which
-    defaults to x if not fed, but has a less specific static shape than x.
-    See also `tensorflow#5680
-    <https://github.com/tensorflow/tensorflow/issues/5680>`_.
-
-    Args:
-        x: a tensor
-        axis(int or list of ints): these axes of ``x.get_shape()`` will become
-            None in the output.
-        name(str): name of the output tensor
-
-    Returns:
-        a tensor equal to x, but shape information is partially cleared.
-    """
-    shp = x.get_shape().as_list()
-    if not isinstance(axis, list):
-        axis = [axis]
-    for a in axis:
-        if shp[a] is None:
-            raise ValueError("Axis {} of shape {} is already unknown!".format(a, shp))
-        shp[a] = None
-    x = tf.placeholder_with_default(x, shape=shp, name=name)
-    return x

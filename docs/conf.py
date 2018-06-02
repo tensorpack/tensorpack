@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#
+# flake8: noqa
 # tensorpack documentation build configuration file, created by
 # sphinx-quickstart on Sun Mar 27 01:41:24 2016.
 #
@@ -92,8 +92,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'tensorpack'
-copyright = u'2015 - 2017, Yuxin Wu'
-author = u'Yuxin Wu'
+copyright = u'2015 - 2018, Yuxin Wu, et al.'
+author = u'Yuxin Wu, et al.'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -365,12 +365,10 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
     # Hide some names that are deprecated or not intended to be used
     if name in [
         # deprecated stuff:
-        'GaussianDeform',
-        'set_tower_func',
         'TryResumeTraining',
+        'QueueInputTrainer',
 
         # renamed stuff:
-        'dump_chkpt_vars',
         'DumpTensor',
         'DumpParamAsImage',
         'StagingInputWrapper',
@@ -378,9 +376,9 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
         'get_nr_gpu',
 
         # deprecated or renamed symbolic code
-        'Deconv2D', 'LeakyReLU',
-        'saliency_map', 'get_scalar_var', 'psnr',
-        'prediction_incorrect', 'huber_loss', 'SoftMax'
+        'Deconv2D',
+        'get_scalar_var', 'psnr',
+        'prediction_incorrect', 'huber_loss',
 
         # internal only
         'apply_default_prefetch',

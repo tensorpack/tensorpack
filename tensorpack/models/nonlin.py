@@ -6,9 +6,8 @@ import tensorflow as tf
 
 from .common import layer_register, VariableHolder
 from .batch_norm import BatchNorm
-from ..utils.develop import log_deprecated
 
-__all__ = ['Maxout', 'PReLU', 'LeakyReLU', 'BNReLU']
+__all__ = ['Maxout', 'PReLU', 'BNReLU']
 
 
 @layer_register(use_scope=None)
@@ -58,21 +57,6 @@ def PReLU(x, init=0.001, name='output'):
 
     ret.variables = VariableHolder(alpha=alpha)
     return ret
-
-
-@layer_register(use_scope=None)
-def LeakyReLU(x, alpha, name='output'):
-    """
-    Leaky ReLU as in paper `Rectifier Nonlinearities Improve Neural Network Acoustic
-    Models
-    <http://ai.stanford.edu/~amaas/papers/relu_hybrid_icml2013_final.pdf>`_.
-
-    Args:
-        x (tf.Tensor): input
-        alpha (float): the slope.
-    """
-    log_deprecated("LeakyReLU", "Use tf.nn.leaky_relu in TF 1.4 instead!", "2018-03-30")
-    return tf.maximum(x, alpha * x, name=name)
 
 
 @layer_register(use_scope=None)

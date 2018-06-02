@@ -3,12 +3,22 @@
 
 
 import tensorflow as tf
+import numpy as np
 
 from .common import layer_register, VariableHolder
 from .tflayer import convert_to_tflayer_args, rename_get_variable
-from ..tfutils import symbolic_functions as symbf
 
 __all__ = ['FullyConnected']
+
+
+def batch_flatten(x):
+    """
+    Flatten the tensor except the first dimension.
+    """
+    shape = x.get_shape().as_list()[1:]
+    if None not in shape:
+        return tf.reshape(x, [-1, int(np.prod(shape))])
+    return tf.reshape(x, tf.stack([tf.shape(x)[0], -1]))
 
 
 @layer_register(log_shape=True)
@@ -36,7 +46,7 @@ def FullyConnected(
     * ``b``: bias
     """
 
-    inputs = symbf.batch_flatten(inputs)
+    inputs = batch_flatten(inputs)
     with rename_get_variable({'kernel': 'W', 'bias': 'b'}):
         layer = tf.layers.Dense(
             units=units,

@@ -6,7 +6,6 @@
 import argparse
 
 from tensorpack import *
-from tensorpack.tfutils.symbolic_functions import prediction_incorrect
 from tensorpack.tfutils.summary import add_moving_summary, add_param_summary
 from tensorpack.dataflow import dataset
 from tensorpack.tfutils.varreplace import remap_variables
@@ -109,7 +108,7 @@ class Model(ModelDesc):
         tf.nn.softmax(logits, name='output')
 
         # compute the number of failed samples
-        wrong = prediction_incorrect(logits, label)
+        wrong = tf.cast(tf.logical_not(tf.nn.in_top_k(logits, label, 1)), tf.float32, name='wrong_tensor')
         # monitor training error
         add_moving_summary(tf.reduce_mean(wrong, name='train_error'))
 
@@ -163,7 +162,7 @@ def get_config():
         callbacks=[
             ModelSaver(),
             InferenceRunner(data_test,
-                            [ScalarStats('cost'), ClassificationError()])
+                            [ScalarStats('cost'), ClassificationError('wrong_tensor')])
         ],
         model=Model(),
         max_epoch=200,

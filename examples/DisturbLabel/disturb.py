@@ -11,7 +11,8 @@ class DisturbLabel(ProxyDataFlow, RNGDataFlow):
         self.prob = prob
 
     def reset_state(self):
-        super(DisturbLabel, self).reset_state()
+        RNGDataFlow.reset_state(self)
+        ProxyDataFlow.reset_state(self)
 
     def get_data(self):
         for dp in self.ds.get_data():

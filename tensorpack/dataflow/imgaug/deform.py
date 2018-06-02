@@ -6,7 +6,11 @@ from .base import ImageAugmentor
 from ...utils import logger
 import numpy as np
 
-__all__ = ['GaussianDeform']
+__all__ = []
+
+# Code was temporarily kept here for a future reference in case someone needs it
+# But it was already deprecated,
+# because this augmentation is not a general one that people will often find helpful.
 
 
 class GaussianMap(object):

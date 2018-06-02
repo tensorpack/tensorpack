@@ -9,7 +9,6 @@ import tensorflow as tf
 
 
 from tensorpack import *
-from tensorpack.tfutils.symbolic_functions import prediction_incorrect
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.dataflow import dataset
 from tensorpack.utils.gpu import get_nr_gpu
@@ -98,6 +97,9 @@ class Model(ModelDesc):
 
         cost = tf.add_n([loss3, 0.3 * loss2, 0.3 * loss1], name='weighted_cost')
         add_moving_summary([cost, loss1, loss2, loss3])
+
+        def prediction_incorrect(logits, label, topk, name):
+            return tf.cast(tf.logical_not(tf.nn.in_top_k(logits, label, topk)), tf.float32, name=name)
 
         wrong = prediction_incorrect(logits, label, 1, name='wrong-top1')
         add_moving_summary(tf.reduce_mean(wrong, name='train_error_top1'))

@@ -262,7 +262,7 @@ def get_model_loader(filename):
         return SaverRestore(filename)
 
 
-@deprecated("Write the logic yourself or use AutoResumeTrainConfig!", "2018-06-01")
+@deprecated("It's better to write the logic yourself or use AutoResumeTrainConfig!", "2018-07-01")
 def TryResumeTraining():
     """
     Try loading latest checkpoint from ``logger.get_logger_dir()``, only if there is one.

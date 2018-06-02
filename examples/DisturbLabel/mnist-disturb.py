@@ -1,20 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # File: mnist-disturb.py
-# Author: Yuxin Wu
 
 import os
 import argparse
 
 
 from tensorpack import *
+from tensorpack.utils import logger
 from tensorpack.dataflow import dataset
 import tensorflow as tf
 from disturb import DisturbLabel
 
 import imp
 mnist_example = imp.load_source('mnist_example',
-                                os.path.join(os.path.dirname(__file__), '..', 'mnist-convnet.py'))
+                                os.path.join(os.path.dirname(__file__), '..', 'basics', 'mnist-convnet.py'))
 get_config = mnist_example.get_config
 
 
@@ -25,7 +25,6 @@ def get_data():
 
 
 mnist_example.get_data = get_data
-IMAGE_SIZE = 28
 
 
 class Model(mnist_example.Model):
@@ -41,7 +40,7 @@ class Model(mnist_example.Model):
                   .FullyConnected('fc1', out_dim=10, activation=tf.identity)())
         tf.nn.softmax(logits, name='prob')
 
-        wrong = symbolic_functions.prediction_incorrect(logits, label)
+        wrong = tf.cast(tf.logical_not(tf.nn.in_top_k(logits, label, 1)), tf.float32, name='incorrect_vector')
         add_moving_summary(tf.reduce_mean(wrong, name='train_error'))
 
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
@@ -60,5 +59,6 @@ if __name__ == '__main__':
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
+    logger.auto_set_dir()
     config = get_config()
     launch_train_with_config(config, SimpleTrainer())

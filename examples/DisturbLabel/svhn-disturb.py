@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # File: svhn-disturb.py
-# Author: Yuxin Wu
 
 import argparse
 import os
@@ -9,14 +8,15 @@ import imp
 
 
 from tensorpack import *
+from tensorpack.utils import logger
 from tensorpack.dataflow import dataset
 
 from disturb import DisturbLabel
 
 svhn_example = imp.load_source('svhn_example',
-                               os.path.join(os.path.dirname(__file__), '..', 'svhn-digit-convnet.py'))
+                               os.path.join(os.path.dirname(__file__), '..',
+                                            'basics', 'svhn-digit-convnet.py'))
 Model = svhn_example.Model
-get_config = svhn_example.get_config
 
 
 def get_data():
@@ -41,19 +41,21 @@ def get_data():
     return data_train, data_test
 
 
-svhn_example.get_data = get_data
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gpu', help='a gpu to use')
-    parser.add_argument('--prob', help='disturb prob',
-                        type=float, required=True)
+    parser.add_argument('--prob', help='disturb prob', type=float, required=True)
     args = parser.parse_args()
 
-    if args.gpu:
-        os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
-    else:
-        os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-
-    config = get_config(args.prob)
+    logger.auto_set_dir()
+    data_train, data_test = get_data()
+    config = TrainConfig(
+        model=Model(),
+        data=QueueInput(data_train),
+        callbacks=[
+            ModelSaver(),
+            InferenceRunner(data_test,
+                            ScalarStats(['cost', 'accuracy']))
+        ],
+        max_epoch=350,
+    )
     launch_train_with_config(config, SimpleTrainer())
