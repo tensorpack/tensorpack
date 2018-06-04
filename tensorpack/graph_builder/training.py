@@ -179,8 +179,8 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
     `tensorflow/benchmarks <https://github.com/tensorflow/benchmarks>`_.
 
     Attribute:
-        grads: #GPU number of lists of (g, v). Synchronized gradients on each device, available after build()
-            Though on different devices, they should contain the same value.
+        grads: #GPU number of lists of (g, v). Synchronized gradients on each device,
+        available after build() Though on different devices, they should contain the same value.
     """
 
     def __init__(self, towers, average, mode):

@@ -3,7 +3,7 @@
 
 The first thing to note: __you never have to write a layer__.
 Tensorpack layers are nothing but wrappers of symbolic functions.
-In tensorpack, you can use any symbolic functions you have written or seen elsewhere with or without tensorpack layers.
+In tensorpack, you can use __any__ symbolic functions you have written or seen elsewhere with or without tensorpack layers.
 
 If you would like, you can make a symbolic function become a "layer" by following some simple rules, and then gain benefits from the framework.
 

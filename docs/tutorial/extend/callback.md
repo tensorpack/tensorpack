@@ -98,7 +98,7 @@ You can overwrite any of the following methods to define a new callback:
   By default it will get called by `_trigger_epoch`,
   but you can customize the scheduling of this method by
   [`PeriodicTrigger`](../../modules/callbacks.html#tensorpack.callbacks.PeriodicTrigger),
-  to let this method run every k steps (potentially more frequently) or every k epochs.
+  to let this method run every k steps or every k epochs.
 
 ### What you can do in the callback
 

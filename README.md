@@ -12,17 +12,18 @@ Tensorpack is a training interface based on TensorFlow.
 It's Yet Another TF high-level API, with __speed__, __readability__ and __flexibility__ built together.
 
 1. Focus on __training speed__.
-	+	Speed comes for free with tensorpack -- it uses TensorFlow in the __efficient way__ with no extra overhead.
+	+ Speed comes for free with tensorpack -- it uses TensorFlow in the __efficient way__ with no extra overhead.
 	  On different CNNs, it runs training [1.2~5x faster](https://github.com/tensorpack/benchmarks/tree/master/other-wrappers) than the equivalent Keras code.
 
-	+ Data-parallel multi-GPU/distributed training is off-the-shelf to use with
-      one line of code. It scales as well as Google's [official benchmark](https://www.tensorflow.org/performance/benchmarks).
+	+ Data-parallel multi-GPU/distributed training strategy is off-the-shelf to use.
+      It scales as well as Google's [official benchmark](https://www.tensorflow.org/performance/benchmarks).
 
-	+ See [tensorpack/benchmarks](https://github.com/tensorpack/benchmarks) for more benchmark scripts.
+	+ See [tensorpack/benchmarks](https://github.com/tensorpack/benchmarks) for
+      some benchmark scripts.
 
 2. Focus on __large datasets__.
 	+ It's unnecessary to read/preprocess data with a new language called TF.
-		Tensorpack helps you load large datasets (e.g. ImageNet) in __pure Python__ with autoparallelization.
+	  Tensorpack helps you load large datasets (e.g. ImageNet) in __pure Python__ with autoparallelization.
 
 3. It's not a model wrapper.
 	+ There are too many symbolic function wrappers in the world. Tensorpack includes only a few common models.

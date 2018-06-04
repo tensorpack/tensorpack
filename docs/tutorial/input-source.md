@@ -36,8 +36,8 @@ This is the major reason why tensorpack is [faster](https://github.com/tensorpac
 ## Python Reader or TF Reader ?
 
 The above discussion is valid regardless of what you use to load/preprocess data,
-either Python code or TensorFlow operators.
-Both are supported in tensorpack, while we recommend using Python.
+either Python code or TensorFlow operators, or a mix of two.
+Both are supported in tensorpack, while we recommend using Python. 
 
 ### TensorFlow Reader: Pros
 * Faster read/preprocessing.
@@ -63,8 +63,8 @@ Both are supported in tensorpack, while we recommend using Python.
 The disadvantage of TF reader is obvious and it's huge: it's __too complicated__.
 
 Unlike running a mathematical model, reading data is a complicated and poorly-structured task.
-You need to handle different formats, handle corner cases, noisy data,
-which all require condition operations, loops, sometimes even exception handling. These operations
+You need to handle different formats, handle corner cases, noisy data, combination of data,
+which require condition operations, loops, data structures, sometimes even exception handling. These operations
 are __naturally not suitable__ for a symbolic graph.
 
 Let's take a look at what users are asking for `tf.data`:
@@ -75,7 +75,7 @@ Let's take a look at what users are asking for `tf.data`:
 * [Sort/skip some data](https://github.com/tensorflow/tensorflow/issues/14250)
 * [Write data to files](https://github.com/tensorflow/tensorflow/issues/15014)
 
-To support all these features which could've been done with __3 lines of code in Python__, you need either a new TF
+To support all these features which could've been done with __3 lines of code in Python __, you need either a new TF
 API, or ask [Dataset.from_generator](https://www.tensorflow.org/versions/r1.4/api_docs/python/tf/contrib/data/Dataset#from_generator)
 (i.e. Python again) to the rescue.
 

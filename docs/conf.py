@@ -69,7 +69,7 @@ if ON_RTD:
 else:
     # skip this when building locally
     intersphinx_timeout = 0.1
-intersphinx_mapping = {'python': ('https://docs.python.org/3.4', None)}
+intersphinx_mapping = {'python': ('https://docs.python.org/3.6', None)}
 # -------------------------
 
 # Add any paths that contain templates here, relative to this directory.

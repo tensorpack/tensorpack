@@ -1,6 +1,8 @@
 tensorpack.dataflow package
 ===========================
 
+Relevant tutorials: :doc:`../tutorial/dataflow`, :doc:`../tutorial/input-source`.
+
 .. container:: custom-index
 
     .. raw:: html

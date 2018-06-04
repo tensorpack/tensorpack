@@ -11,4 +11,5 @@ will build the docs in `build/html`.
 
 ### Build Dash/Zeal docset
 
-`make docset` produces `tensorpack.docset`.
+1. `pip install doc2dash`
+2. `make docset` produces `tensorpack.docset`.

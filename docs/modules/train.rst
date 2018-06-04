@@ -1,6 +1,8 @@
 tensorpack.train package
 ========================
 
+Relevant tutorials: :doc:`../tutorial/trainer`, :doc:`../tutorial/training-interface`
+
 .. container:: custom-index
 
     .. raw:: html
