@@ -73,7 +73,7 @@ def resnet_bottleneck(l, ch_out, stride):
     l, shortcut = l, l
     l = Conv2D('conv1', l, ch_out, 1, activation=BNReLU)
     if stride == 2:
-        l = tf.pad(l, [[0, 0], [0, 0], [0, 1], [0, 1]])
+        l = tf.pad(l, [[0, 0], [0, 0], [1, 0], [1, 0]])
         l = Conv2D('conv2', l, ch_out, 3, strides=2, activation=BNReLU, padding='VALID')
     else:
         l = Conv2D('conv2', l, ch_out, 3, strides=stride, activation=BNReLU)
@@ -95,9 +95,9 @@ def resnet_group(name, l, block_func, features, count, stride):
 def resnet_c4_backbone(image, num_blocks, freeze_c2=True):
     assert len(num_blocks) == 3
     with resnet_argscope():
-        l = tf.pad(image, [[0, 0], [0, 0], [2, 3], [2, 3]])
+        l = tf.pad(image, [[0, 0], [0, 0], [3, 2], [3, 2]])
         l = Conv2D('conv0', l, 64, 7, strides=2, activation=BNReLU, padding='VALID')
-        l = tf.pad(l, [[0, 0], [0, 0], [0, 1], [0, 1]])
+        l = tf.pad(l, [[0, 0], [0, 0], [1, 0], [1, 0]])
         l = MaxPooling('pool0', l, 3, strides=2, padding='VALID')
         c2 = resnet_group('group0', l, resnet_bottleneck, 64, num_blocks[0], 1)
         # TODO replace var by const to enable optimization
@@ -125,10 +125,10 @@ def resnet_fpn_backbone(image, num_blocks, freeze_c2=True):
     with resnet_argscope():
         chan = image.shape[1]
         l = tf.pad(image, tf.stack(
-            [[0, 0], [0, 0], [2, 3 + pad_shape2d[0]], [2, 3 + pad_shape2d[1]]]))
+            [[0, 0], [0, 0], [3, 2 + pad_shape2d[0]], [3, 2 + pad_shape2d[1]]]))
         l.set_shape([None, chan, None, None])
         l = Conv2D('conv0', l, 64, 7, strides=2, activation=BNReLU, padding='VALID')
-        l = tf.pad(l, [[0, 0], [0, 0], [0, 1], [0, 1]])
+        l = tf.pad(l, [[0, 0], [0, 0], [1, 0], [1, 0]])
         l = MaxPooling('pool0', l, 3, strides=2, padding='VALID')
         c2 = resnet_group('group0', l, resnet_bottleneck, 64, num_blocks[0], 1)
         if freeze_c2:

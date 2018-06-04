@@ -134,20 +134,21 @@ def get_anchor_labels(anchors, gt_boxes, crowd_boxes):
     anchor_labels[ious_max_per_anchor >= config.POSITIVE_ANCHOR_THRES] = 1
     anchor_labels[ious_max_per_anchor < config.NEGATIVE_ANCHOR_THRES] = 0
 
-    # First label all non-ignore candidate boxes which overlap crowd as ignore
-    if crowd_boxes.size > 0:
-        cand_inds = np.where(anchor_labels >= 0)[0]
-        cand_anchors = anchors[cand_inds]
-        ious = np_iou(cand_anchors, crowd_boxes)
-        overlap_with_crowd = cand_inds[ious.max(axis=1) > config.CROWD_OVERLAP_THRES]
-        anchor_labels[overlap_with_crowd] = -1
+    # We can label all non-ignore candidate boxes which overlap crowd as ignore
+    # But detectron did not do this.
+    # if crowd_boxes.size > 0:
+    #     cand_inds = np.where(anchor_labels >= 0)[0]
+    #     cand_anchors = anchors[cand_inds]
+    #     ious = np_iou(cand_anchors, crowd_boxes)
+    #     overlap_with_crowd = cand_inds[ious.max(axis=1) > config.CROWD_OVERLAP_THRES]
+    #     anchor_labels[overlap_with_crowd] = -1
 
     # Subsample fg labels: ignore some fg if fg is too many
     target_num_fg = int(config.RPN_BATCH_PER_IM * config.RPN_FG_RATIO)
     fg_inds = filter_box_label(anchor_labels, 1, target_num_fg)
-    if len(fg_inds) == 0:
-        raise MalformedData("No valid foreground for RPN!")
-    # Note that fg could be fewer than the target ratio
+    # Keep an image even if there is no foreground anchors
+    # if len(fg_inds) == 0:
+    #     raise MalformedData("No valid foreground for RPN!")
 
     # Subsample bg labels. num_bg is not allowed to be too many
     old_num_bg = np.sum(anchor_labels == 0)
@@ -162,6 +163,7 @@ def get_anchor_labels(anchors, gt_boxes, crowd_boxes):
     anchor_boxes = np.zeros((NA, 4), dtype='float32')
     fg_boxes = gt_boxes[ious_argmax_per_anchor[fg_inds], :]
     anchor_boxes[fg_inds, :] = fg_boxes
+    # assert len(fg_inds) + np.sum(anchor_labels == 0) == config.RPN_BATCH_PER_IM
     return anchor_labels, anchor_boxes
 
 
@@ -291,6 +293,7 @@ def get_train_dataflow():
 
     def preprocess(img):
         fname, boxes, klass, is_crowd = img['file_name'], img['boxes'], img['class'], img['is_crowd']
+        boxes = np.copy(boxes)
         im = cv2.imread(fname, cv2.IMREAD_COLOR)
         assert im is not None, fname
         im = im.astype('float32')
@@ -366,6 +369,7 @@ def get_eval_dataflow():
 
 if __name__ == '__main__':
     import os
+    # import IPython as IP; IP.embed()
     from tensorpack.dataflow import PrintData
     config.BASEDIR = os.path.expanduser('~/data/coco')
     ds = get_train_dataflow()

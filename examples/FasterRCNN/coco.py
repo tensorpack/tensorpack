@@ -162,7 +162,9 @@ class COCODetection(object):
         img['class'] = cls          # n, always >0
         img['is_crowd'] = is_crowd  # n,
         if add_mask:
-            img['segmentation'] = [obj['segmentation'] for obj in valid_objs]
+            # also required to be float32
+            img['segmentation'] = [
+                obj['segmentation'].astype('float32') for obj in valid_objs]
 
     def print_class_histogram(self, imgs):
         nr_class = len(COCOMeta.class_names)
