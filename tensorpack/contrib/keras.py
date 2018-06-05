@@ -56,6 +56,7 @@ class KerasModelCaller(object):
 
         old_trainable_names = set([x.name for x in tf.trainable_variables()])
         trainable_backup = backup_collection([tf.GraphKeys.TRAINABLE_VARIABLES])
+        update_ops_backup = backup_collection([tf.GraphKeys.UPDATE_OPS])
 
         def post_process_model(model):
             added_trainable_names = set([x.name for x in tf.trainable_variables()])
@@ -72,6 +73,11 @@ class KerasModelCaller(object):
                 if n not in new_trainable_names:
                     logger.warn("Keras created trainable variable '{}' which is actually not trainable. "
                                 "This was automatically corrected by tensorpack.".format(n))
+
+            # Keras models might not use this collection at all (in some versions).
+            restore_collection(update_ops_backup)
+            for op in model.updates:
+                tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, op)
 
         if self.cached_model is None:
             assert not reuse
