@@ -377,7 +377,7 @@ def crop_and_resize(image, boxes, box_ind, crop_size, pad_border=True):
     boxes = transform_fpcoor_for_tf(boxes, image_shape, [crop_size, crop_size])
     image = tf.transpose(image, [0, 2, 3, 1])   # 1hwc
     ret = tf.image.crop_and_resize(
-        image, boxes, box_ind,
+        image, boxes, tf.to_int32(box_ind),
         crop_size=[crop_size, crop_size])
     ret = tf.transpose(ret, [0, 3, 1, 2])   # ncss
     return ret

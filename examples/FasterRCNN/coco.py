@@ -144,7 +144,7 @@ class COCODetection(object):
                         assert obj['iscrowd'] == 1
                         obj['segmentation'] = None
                     else:
-                        valid_segs = [np.asarray(p).reshape(-1, 2) for p in segs if len(p) >= 6]
+                        valid_segs = [np.asarray(p).reshape(-1, 2).astype('float32') for p in segs if len(p) >= 6]
                         if len(valid_segs) < len(segs):
                             log_once("Image {} has invalid polygons!".format(img['file_name']), 'warn')
 
@@ -164,7 +164,7 @@ class COCODetection(object):
         if add_mask:
             # also required to be float32
             img['segmentation'] = [
-                obj['segmentation'].astype('float32') for obj in valid_objs]
+                obj['segmentation'] for obj in valid_objs]
 
     def print_class_histogram(self, imgs):
         nr_class = len(COCOMeta.class_names)

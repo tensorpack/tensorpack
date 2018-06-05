@@ -272,8 +272,12 @@ def get_train_dataflow():
     boxes: kx4 floats
     class: k integers
     is_crowd: k booleans. Use k False if you don't know what it means.
-    segmentation: k numpy arrays. Each array is a polygon of shape Nx2.
-        If your segmentation annotations are masks rather than polygons,
+    segmentation: k lists of numpy arrays (one for each box).
+        Each list of numpy array corresponds to the mask for one instance.
+        Each numpy array in the list is a polygon of shape Nx2,
+        because one mask can be represented by N polygons.
+
+        If your segmentation annotations are originally masks rather than polygons,
         either convert it, or the augmentation code below will need to be
         changed or skipped accordingly.
     """
@@ -369,7 +373,6 @@ def get_eval_dataflow():
 
 if __name__ == '__main__':
     import os
-    # import IPython as IP; IP.embed()
     from tensorpack.dataflow import PrintData
     config.BASEDIR = os.path.expanduser('~/data/coco')
     ds = get_train_dataflow()
