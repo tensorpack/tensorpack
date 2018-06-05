@@ -18,6 +18,10 @@ CLASS_NAMES = []  # NUM_CLASS strings. Needs to be populated later by data loade
 RESNET_NUM_BLOCK = [3, 4, 6, 3]     # for resnet50
 # RESNET_NUM_BLOCK = [3, 4, 23, 3]    # for resnet101
 FREEZE_AFFINE = False   # do not train affine parameters inside BN
+# Use a base model with TF-preferred pad mode
+# which may pad more pixels on right/bottom than top/left.
+# This is probably not good for alignment but we'll have to live with it.
+TF_PAD_MODE = True
 
 # schedule -----------------------
 BASE_LR = 1e-2

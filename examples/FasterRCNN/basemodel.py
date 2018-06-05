@@ -21,6 +21,12 @@ def maybe_freeze_affine(getter, *args, **kwargs):
     return getter(*args, **kwargs)
 
 
+def maybe_reverse_pad(topleft, bottomright):
+    if config.TF_PAD_MODE:
+        return [topleft, bottomright]
+    return [bottomright, topleft]
+
+
 @contextmanager
 def resnet_argscope():
     with argscope([Conv2D, MaxPooling, BatchNorm], data_format='channels_first'), \
@@ -58,7 +64,8 @@ def resnet_shortcut(l, n_out, stride, activation=tf.identity):
     data_format = get_arg_scope()['Conv2D']['data_format']
     n_in = l.get_shape().as_list()[1 if data_format in ['NCHW', 'channels_first'] else 3]
     if n_in != n_out:   # change dimension when channel is not the same
-        if stride == 2:
+        # TF's SAME mode output ceil(x/stride), which is NOT what we want when x is odd and stride is 2
+        if not config.MODE_FPN and stride == 2:
             l = l[:, :, :-1, :-1]
             return Conv2D('convshortcut', l, n_out, 1,
                           strides=stride, padding='VALID', activation=activation)
@@ -73,12 +80,13 @@ def resnet_bottleneck(l, ch_out, stride):
     l, shortcut = l, l
     l = Conv2D('conv1', l, ch_out, 1, activation=BNReLU)
     if stride == 2:
-        l = tf.pad(l, [[0, 0], [0, 0], [0, 1], [0, 1]])
+        l = tf.pad(l, [[0, 0], [0, 0], maybe_reverse_pad(0, 1), maybe_reverse_pad(0, 1)])
         l = Conv2D('conv2', l, ch_out, 3, strides=2, activation=BNReLU, padding='VALID')
     else:
         l = Conv2D('conv2', l, ch_out, 3, strides=stride, activation=BNReLU)
     l = Conv2D('conv3', l, ch_out * 4, 1, activation=get_bn(zero_init=True))
-    return l + resnet_shortcut(shortcut, ch_out * 4, stride, activation=get_bn(zero_init=False))
+    ret = l + resnet_shortcut(shortcut, ch_out * 4, stride, activation=get_bn(zero_init=False))
+    return tf.nn.relu(ret, name='output')
 
 
 def resnet_group(name, l, block_func, features, count, stride):
@@ -87,17 +95,15 @@ def resnet_group(name, l, block_func, features, count, stride):
             with tf.variable_scope('block{}'.format(i)):
                 l = block_func(l, features,
                                stride if i == 0 else 1)
-                # end of each block need an activation
-                l = tf.nn.relu(l)
     return l
 
 
 def resnet_c4_backbone(image, num_blocks, freeze_c2=True):
     assert len(num_blocks) == 3
     with resnet_argscope():
-        l = tf.pad(image, [[0, 0], [0, 0], [2, 3], [2, 3]])
+        l = tf.pad(image, [[0, 0], [0, 0], maybe_reverse_pad(2, 3), maybe_reverse_pad(2, 3)])
         l = Conv2D('conv0', l, 64, 7, strides=2, activation=BNReLU, padding='VALID')
-        l = tf.pad(l, [[0, 0], [0, 0], [0, 1], [0, 1]])
+        l = tf.pad(l, [[0, 0], [0, 0], maybe_reverse_pad(0, 1), maybe_reverse_pad(0, 1)])
         l = MaxPooling('pool0', l, 3, strides=2, padding='VALID')
         c2 = resnet_group('group0', l, resnet_bottleneck, 64, num_blocks[0], 1)
         # TODO replace var by const to enable optimization
@@ -118,17 +124,19 @@ def resnet_conv5(image, num_block):
 
 def resnet_fpn_backbone(image, num_blocks, freeze_c2=True):
     shape2d = tf.shape(image)[2:]
-    mult = config.FPN_RESOLUTION_REQUIREMENT * 1.
+    mult = float(config.FPN_RESOLUTION_REQUIREMENT)
     new_shape2d = tf.to_int32(tf.ceil(tf.to_float(shape2d) / mult) * mult)
     pad_shape2d = new_shape2d - shape2d
     assert len(num_blocks) == 4, num_blocks
     with resnet_argscope():
         chan = image.shape[1]
         l = tf.pad(image, tf.stack(
-            [[0, 0], [0, 0], [2, 3 + pad_shape2d[0]], [2, 3 + pad_shape2d[1]]]))
+            [[0, 0], [0, 0],
+             maybe_reverse_pad(2, 3 + pad_shape2d[0]),
+             maybe_reverse_pad(2, 3 + pad_shape2d[1])]))
         l.set_shape([None, chan, None, None])
         l = Conv2D('conv0', l, 64, 7, strides=2, activation=BNReLU, padding='VALID')
-        l = tf.pad(l, [[0, 0], [0, 0], [0, 1], [0, 1]])
+        l = tf.pad(l, [[0, 0], [0, 0], maybe_reverse_pad(0, 1), maybe_reverse_pad(0, 1)])
         l = MaxPooling('pool0', l, 3, strides=2, padding='VALID')
         c2 = resnet_group('group0', l, resnet_bottleneck, 64, num_blocks[0], 1)
         if freeze_c2:
