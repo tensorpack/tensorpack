@@ -315,7 +315,7 @@ def sample_fast_rcnn_targets(boxes, gt_boxes, gt_labels):
 @under_name_scope()
 def crop_and_resize(image, boxes, box_ind, crop_size, pad_border=True):
     """
-    Better-aligned version of tf.image.crop_and_resize, following our definition of floating point boxes.
+    Aligned version of tf.image.crop_and_resize, following our definition of floating point boxes.
 
     Args:
         image: NCHW
@@ -375,7 +375,7 @@ def crop_and_resize(image, boxes, box_ind, crop_size, pad_border=True):
 
     image_shape = tf.shape(image)[2:]
     boxes = transform_fpcoor_for_tf(boxes, image_shape, [crop_size, crop_size])
-    image = tf.transpose(image, [0, 2, 3, 1])   # 1hwc
+    image = tf.transpose(image, [0, 2, 3, 1])   # nhwc
     ret = tf.image.crop_and_resize(
         image, boxes, tf.to_int32(box_ind),
         crop_size=[crop_size, crop_size])

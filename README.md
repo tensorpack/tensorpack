@@ -22,8 +22,9 @@ It's Yet Another TF high-level API, with __speed__, __readability__ and __flexib
       some benchmark scripts.
 
 2. Focus on __large datasets__.
-	+ It's unnecessary to read/preprocess data with a new language called TF.
-	  Tensorpack helps you load large datasets (e.g. ImageNet) in __pure Python__ with autoparallelization.
+	+ [You don't need `tf.data`](http://tensorpack.readthedocs.io/tutorial/input-source.html#tensorflow-reader-cons).
+ It's unnecessary and painful to process data with a new language called TF.
+	  Tensorpack helps you efficiently load large datasets (e.g. ImageNet) in __pure Python__ with autoparallelization.
 
 3. It's not a model wrapper.
 	+ There are too many symbolic function wrappers in the world. Tensorpack includes only a few common models.

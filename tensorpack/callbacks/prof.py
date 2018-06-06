@@ -211,4 +211,4 @@ class PeakMemoryTracker(Callback):
         results = rv.results
         if results is not None:
             for mem, dev in zip(results, self._devices):
-                self.trainer.monitors.put_scalar('PeakMemory(MB) ' + dev, mem / 1e6)
+                self.trainer.monitors.put_scalar('PeakMemory(MB)' + dev, mem / 1e6)

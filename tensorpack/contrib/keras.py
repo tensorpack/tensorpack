@@ -75,6 +75,7 @@ class KerasModelCaller(object):
                                 "This was automatically corrected by tensorpack.".format(n))
 
             # Keras models might not use this collection at all (in some versions).
+            # This is a BC-breaking change of tf.keras: https://github.com/tensorflow/tensorflow/issues/19643
             restore_collection(update_ops_backup)
             for op in model.updates:
                 tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, op)

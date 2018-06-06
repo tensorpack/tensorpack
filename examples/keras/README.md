@@ -9,7 +9,7 @@ The article [Towards Efficient Multi-GPU Training in Keras with TensorFlow](http
 has mentioned some of it.
 
 Even on a single GPU, tensorpack can run [1.2~2x faster](https://github.com/tensorpack/benchmarks/tree/master/other-wrappers)
-than the equivalent Keras code. The gap becomes larger when you scale.
+than the equivalent Keras code. The gap becomes larger when you scale to multiple GPUs.
 Tensorpack and [horovod](https://github.com/uber/horovod/blob/master/examples/keras_imagenet_resnet50.py)
 are the only two tools I know that can scale the training of a large Keras model.
 
@@ -28,15 +28,15 @@ It has:
 + ResNet-50 model modified from [keras.applications](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/keras/_impl/keras/applications/resnet50.py).
 	(We put stride on 3x3 conv in each bottleneck, which is different from certain other implementations).
 + Multi-GPU data-parallel __training and validation__ which scales
-	+ Finished 100 epochs in 19.5 hours on 8 V100s, with >90% GPU utilization.
+	+ Finished 100 epochs in 19 hours on 8 V100s, with >90% GPU utilization.
 	+ Still slightly slower than native tensorpack examples.
 + Good accuracy (same as [tensorpack ResNet example](../ResNet))
 
 ### Note:
 
-Keras support is __not official__. Keras does not use variable scopes or variable
-collections, which contradicts with tensorpack trainers.
-Therefore, not all Keras layers are supported in tensorpack.
+Keras support is __not official__. Keras does not respect variable scopes or variable
+collections, which contradicts with TensorFlow conventions and tensorpack trainers.
+Therefore, the support in tensorpack is experimental.
 
 These simple examples can run within tensorpack smoothly, but note that a future version
-of Keras may still break them (unlikely, though).
+of Keras may break them (unlikely, though).
