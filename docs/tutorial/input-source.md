@@ -58,7 +58,7 @@ The disadvantage of TF reader is obvious and it's huge: it's __too complicated__
 
 Unlike running a mathematical model, data processing is a complicated and poorly-structured task.
 You need to handle different formats, handle corner cases, noisy data, combination of data.
-Doing these require condition operations, loops, data structures, sometimes even exception handling. 
+Doing these requires condition operations, loops, data structures, sometimes even exception handling. 
 These operations are __naturally not the right task for a symbolic graph__.
 
 Let's take a look at what users are asking for `tf.data`:
