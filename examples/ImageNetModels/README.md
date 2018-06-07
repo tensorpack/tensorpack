@@ -33,6 +33,7 @@ paper](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convo
 Trained with 64x2 batch size, the script reaches 58% single-crop validation
 accuracy after 100 epochs (21 hours on 2 V100s).
 It also puts in tensorboard the first-layer filter visualizations similar to the paper.
+See `./alexnet.py --help` for usage.
 
 ### Inception-BN, VGG16
 
@@ -43,6 +44,7 @@ is a bit vague on these details.
 This VGG16 script, when trained with 32x8 batch size, reaches the following
 validation error after 100 epochs (30h with 8 P100s). This is the code for the VGG
 experiments in the paper [Group Normalization](https://arxiv.org/abs/1803.08494).
+See `./vgg16.py --help` for usage.
 
  | No Normalization                          | Batch Normalization | Group Normalization |
  |:------------------------------------------|---------------------|--------------------:|

@@ -170,23 +170,38 @@ def get_tqdm_kwargs(**kwargs):
         bar_format='{l_bar}{bar}|{n_fmt}/{total_fmt}[{elapsed}<{remaining},{rate_noinv_fmt}]'
     )
 
-    f = kwargs.get('file', sys.stderr)
-    isatty = f.isatty()
-    # NOTE when run under mpirun/slurm, isatty is always False
-    # Jupyter notebook should be recognized as tty.
-    # Wait for https://github.com/ipython/ipykernel/issues/268
     try:
-        from ipykernel import iostream
-        if isinstance(f, iostream.OutStream):
-            isatty = True
-    except ImportError:
-        pass
+        # Use this env var to override the refresh interval setting
+        interval = float(os.environ['TENSORPACK_PROGRESS_REFRESH'])
+    except KeyError:
 
-    if isatty:
-        default['mininterval'] = 0.5
-    else:
-        # If not a tty, don't refresh progress bar that often
-        default['mininterval'] = 180
+        f = kwargs.get('file', sys.stderr)
+        isatty = f.isatty()
+        # Jupyter notebook should be recognized as tty.
+        # Wait for https://github.com/ipython/ipykernel/issues/268
+        try:
+            from ipykernel import iostream
+            if isinstance(f, iostream.OutStream):
+                isatty = True
+        except ImportError:
+            pass
+
+        if isatty:
+            interval = 0.5
+        else:
+            # When run under mpirun/slurm, isatty is always False.
+            # Here we apply some hacky heuristics for slurm.
+            if 'SLURM_JOB_ID' in os.environ:
+                if int(os.environ.get('SLURM_JOB_NUM_NODES', 1)) > 1:
+                    # multi-machine job, probably not interactive
+                    interval = 180
+                else:
+                    # possibly interactive, so let's be conservative
+                    interval = 15
+
+            # If not a tty, don't refresh progress bar that often
+            interval = 180
+    default['mininterval'] = interval
     default.update(kwargs)
     return default
 

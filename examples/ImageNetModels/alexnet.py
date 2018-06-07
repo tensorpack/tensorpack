@@ -126,7 +126,6 @@ if __name__ == '__main__':
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
     parser.add_argument('--data', help='ILSVRC dataset dir')
     parser.add_argument('--batch', type=int, default=32, help='batch per GPU')
-    parser.add_argument('--load', help='load model')
     args = parser.parse_args()
 
     if args.gpu:

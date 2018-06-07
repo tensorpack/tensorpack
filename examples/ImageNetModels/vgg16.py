@@ -8,7 +8,7 @@ import os
 import tensorflow as tf
 
 from tensorpack import *
-from tensorpack.tfutils import argscope, get_model_loader
+from tensorpack.tfutils import argscope
 from tensorpack.tfutils.summary import *
 from tensorpack.utils.gpu import get_nr_gpu
 
@@ -151,7 +151,6 @@ if __name__ == '__main__':
     parser.add_argument('--data', help='ILSVRC dataset dir')
     parser.add_argument('--batch', type=int, default=32, help='batch per GPU')
     parser.add_argument('--norm', choices=['none', 'bn', 'gn'], default='none')
-    parser.add_argument('--load', help='load model')
     args = parser.parse_args()
 
     if args.gpu:
@@ -160,8 +159,6 @@ if __name__ == '__main__':
     logger.set_logger_dir(os.path.join('train_log', 'vgg16-norm={}'.format(args.norm)))
 
     config = get_config()
-    if args.load:
-        config.session_init = get_model_loader(args.load)
     nr_tower = max(get_nr_gpu(), 1)
     trainer = SyncMultiGPUTrainerReplicated(nr_tower)
     launch_train_with_config(config, trainer)
