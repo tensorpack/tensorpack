@@ -80,8 +80,8 @@ You can overwrite any of the following methods to define a new callback:
 
   The training loops would become `sess.run([training_op, my_op])`.
   This is different from `sess.run(training_op); sess.run(my_op);`,
-  which is what you would get if you run `my_op` in `_trigger_step`.
-	Sometimes the difference matters, please choose carefully.
+  which is what you would get if you write `self.trainer.sess.run(my_op)` in `_trigger_step`.
+  Usually the difference matters, please choose carefully.
 
 * `_trigger_step(self)`
 
@@ -105,6 +105,7 @@ You can overwrite any of the following methods to define a new callback:
 * Access tensors / ops (details mentioned above):
 	* For existing tensors/ops created in the tower, access them through [self.trainer.towers](../../modules/train.html#tensorpack.train.TowerTrainer.towers).
 	* Extra tensors/ops have to be created in `_setup_graph` callback method.
+* Access the current graph and session by `self.trainer.graph` and `self.trainer.sess`.
 * Write stuff to the monitor backend, by `self.trainer.monitors.put_xxx`.
   The monitors might direct your events to TensorFlow events file, JSON file, stdout, etc.
   You can access history monitor data as well. See the docs for [Monitors](../../modules/callbacks.html#tensorpack.callbacks.Monitors)

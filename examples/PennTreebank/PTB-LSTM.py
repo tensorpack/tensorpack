@@ -57,7 +57,7 @@ class Model(ModelDesc):
         def get_basic_cell():
             cell = rnn.BasicLSTMCell(num_units=HIDDEN_SIZE, forget_bias=0.0, reuse=tf.get_variable_scope().reuse)
             if is_training:
-                cell = rnn.DropoutWrapper(cell, output_keep_prob=DROPOUT)
+                cell = rnn.DropoutWrapper(cell, output_keep_prob=1 - DROPOUT)
             return cell
 
         cell = rnn.MultiRNNCell([get_basic_cell() for _ in range(NUM_LAYER)])
@@ -73,7 +73,7 @@ class Model(ModelDesc):
 
         embeddingW = tf.get_variable('embedding', [VOCAB_SIZE, HIDDEN_SIZE], initializer=initializer)
         input_feature = tf.nn.embedding_lookup(embeddingW, input)  # B x seqlen x hiddensize
-        input_feature = Dropout(input_feature, rate=DROPOUT)
+        input_feature = Dropout(input_feature, keep_prob=1 - DROPOUT)
 
         with tf.variable_scope('LSTM', initializer=initializer):
             input_list = tf.unstack(input_feature, num=SEQ_LEN, axis=1)  # seqlen x (Bxhidden)
