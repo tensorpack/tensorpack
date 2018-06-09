@@ -373,7 +373,7 @@ class DummyConstantInput(TensorInput):
 class ZMQInput(TensorInput):
     """
     Receive tensors from a ZMQ endpoint, with ops from https://github.com/tensorpack/zmq_ops.
-    It works with :meth:`dataflow.remote.send_dataflow_zmq(format='zmq_op')`.
+    It works with :meth:`dataflow.remote.send_dataflow_zmq(format='zmq_ops')`.
     """
     def __init__(self, end_point, hwm, bind=True):
         """

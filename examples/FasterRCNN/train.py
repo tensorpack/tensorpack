@@ -418,7 +418,7 @@ class ResNetFPNModel(DetectionModel):
                 mrcnn_loss = 0.0
 
             wd_cost = regularize_cost(
-                '(?:group1|group2|group3|rpn|fpn|fastrcnn|maskrcnn)/.*W',
+                '(?:group1|group2|group3|rpn|fastrcnn|maskrcnn)/.*W',
                 l2_regularizer(1e-4), name='wd_cost')
 
             total_cost = tf.add_n(rpn_loss_collection + [

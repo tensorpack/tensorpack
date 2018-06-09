@@ -22,18 +22,19 @@ else:
 def send_dataflow_zmq(df, addr, hwm=50, format=None, bind=False):
     """
     Run DataFlow and send data to a ZMQ socket addr.
-    It will __connect__ to this addr,
-    serialize and send each datapoint to this addr with a PUSH socket.
-    This function never returns unless an error is encountered.
+    It will serialize and send each datapoint to this address with a PUSH socket.
+    This function never returns.
 
     Args:
         df (DataFlow): Will infinitely loop over the DataFlow.
         addr: a ZMQ socket endpoint.
         hwm (int): ZMQ high-water mark (buffer size)
         format (str): The serialization format.
-             Default format would use :mod:`tensorpack.utils.serialize`.
-             An alternate format is 'zmq_ops', used by https://github.com/tensorpack/zmq_ops.
-        bind (bool): whether to bind or connect to the endpoint.
+             Default format uses :mod:`tensorpack.utils.serialize`.
+             This format works with :class:`dataflow.RemoteDataZMQ`.
+             An alternate format is 'zmq_ops', used by https://github.com/tensorpack/zmq_ops
+             and :class:`input_source.ZMQInput`.
+        bind (bool): whether to bind or connect to the endpoint address.
     """
     assert format in [None, 'zmq_op', 'zmq_ops']
     if format is None:
@@ -82,6 +83,8 @@ def send_dataflow_zmq(df, addr, hwm=50, format=None, bind=False):
 class RemoteDataZMQ(DataFlow):
     """
     Produce data from ZMQ PULL socket(s).
+    It is the receiver-side counterpart of :func:`send_dataflow_zmq`, which uses :mod:`tensorpack.utils.serialize`
+    for serialization.
     See http://tensorpack.readthedocs.io/en/latest/tutorial/efficient-dataflow.html#distributed-dataflow
 
     Attributes:

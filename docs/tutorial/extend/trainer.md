@@ -68,11 +68,19 @@ You can customize the trainer by either using or inheriting the base `Trainer` c
 You will need to do two things for a new Trainer:
 
 1. Define the graph. There are 2 ways you can do this:
-    1. Create any tensors and ops you like, before creating the trainer.
+    1. Create any tensors and ops you need, before creating the trainer.
     2. Create them inside `Trainer.__init__`.
 
 2. Define what is the iteration. There are 2 ways to define the iteration:
 	1. Set `Trainer.train_op` to a TensorFlow operation. This op will be run by default.
-	2. Subclass `Trainer` and override the `run_step()` method. This way you can do something more than running an op.
+	2. Subclass `Trainer` and override the `run_step()` method. This way you can
+       do something more than running an op. 
+
+       Note that trainer has `self.sess` and `self.hooked_sess`: only the hooked
+       session will trigger the `before_run`/`after_run` callbacks.
+       If you need more than one `Session.run` in one steps, special care needs
+       to be taken to choose which session to use, because many states 
+       (global steps, StagingArea, summaries) are maintained through `before_run`/`after_run`.
+       
 
 There are several different [GAN trainers](../../examples/GAN/GAN.py) for reference.

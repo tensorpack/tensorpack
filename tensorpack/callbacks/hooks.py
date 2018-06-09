@@ -7,7 +7,6 @@
 import tensorflow as tf
 from .base import Callback
 
-
 __all__ = ['CallbackToHook', 'HookToCallback']
 
 
@@ -16,8 +15,6 @@ class CallbackToHook(tf.train.SessionRunHook):
         before_run/after_run callbacks.
         You shouldn't need to use this.
     """
-
-    _chief_only = False
 
     def __init__(self, cb):
         self._cb = cb

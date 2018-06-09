@@ -196,10 +196,8 @@ class Trainer(object):
 
         logger.info("Creating the session ...")
 
-        hooks = self._callbacks.get_hooks()
         self.sess = session_creator.create_session()
-        self.hooked_sess = tf.train.MonitoredSession(
-            session_creator=ReuseSessionCreator(self.sess), hooks=hooks)
+        self.initialize_hooks()
 
         if self.is_chief:
             logger.info("Initializing the session ...")
@@ -210,6 +208,18 @@ class Trainer(object):
 
         self.sess.graph.finalize()
         logger.info("Graph Finalized.")
+
+    @call_only_once
+    def initialize_hooks(self):
+        """
+        Create SessionRunHooks for all callbacks, and hook it onto self.sess.
+
+        A new trainer may override this method to create multiple groups of hooks,
+        which can be useful when the training is not done by a single `train_op`.
+        """
+        hooks = self._callbacks.get_hooks()
+        self.hooked_sess = tf.train.MonitoredSession(
+            session_creator=ReuseSessionCreator(self.sess), hooks=hooks)
 
     @call_only_once
     def main_loop(self, steps_per_epoch, starting_epoch, max_epoch):
