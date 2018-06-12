@@ -117,7 +117,7 @@ def get_config(cifar_classnum):
         return lr * 0.31
     return TrainConfig(
         model=Model(cifar_classnum),
-        dataflow=dataset_train,
+        data=QueueInput(dataset_train),
         callbacks=[
             ModelSaver(),
             InferenceRunner(dataset_test,
@@ -131,7 +131,7 @@ def get_config(cifar_classnum):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.', required=True)
+    parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
     parser.add_argument('--load', help='load model')
     parser.add_argument('--classnum', help='10 for cifar10 or 100 for cifar100',
                         type=int, default=10)
@@ -147,6 +147,6 @@ if __name__ == '__main__':
             config.session_init = SaverRestore(args.load)
 
         num_gpu = get_num_gpu()
-        trainer = QueueInputTrainer() if num_gpu <= 1 \
+        trainer = SimpleTrainer() if num_gpu <= 1 \
             else SyncMultiGPUTrainerParameterServer(num_gpu)
         launch_train_with_config(config, trainer)

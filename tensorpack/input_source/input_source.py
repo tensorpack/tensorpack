@@ -18,9 +18,10 @@ from ..dataflow import DataFlow, MapData, RepeatedData, DataFlowTerminated
 from ..tfutils.summary import add_moving_summary
 from ..tfutils.common import get_op_tensor_name
 from ..tfutils.tower import get_current_tower_context
+from ..tfutils.dependency import dependency_of_fetches
 from ..utils import logger
 from ..utils.concurrency import ShareSessionThread
-from ..utils.develop import log_deprecated
+from ..utils.develop import log_deprecated, deprecated
 from ..callbacks.base import Callback, CallbackFactory
 from ..callbacks.graph import RunOp
 
@@ -117,7 +118,8 @@ class EnqueueThread(ShareSessionThread):
         self.op = self.queue.enqueue(self.placehdrs)
         self.close_op = self.queue.close(cancel_pending_enqueues=True)
 
-        self._lock = threading.Lock()
+        self._running = threading.Event()
+        self._running.set()
         # self._size = queue.size()
 
     def run(self):
@@ -126,8 +128,8 @@ class EnqueueThread(ShareSessionThread):
                 self.reinitialize_dataflow()
                 while True:
                     # pausable loop
-                    self._lock.acquire()
-                    self._lock.release()
+                    if not self._running.is_set():
+                        self._running.wait()
 
                     dp = next(self._itr)
                     feed = dict(zip(self.placehdrs, dp))
@@ -151,10 +153,10 @@ class EnqueueThread(ShareSessionThread):
         self._itr = self.dataflow.get_data()
 
     def pause(self):
-        self._lock.acquire()
+        self._running.clear()
 
     def resume(self):
-        self._lock.release()
+        self._running.set()
 
 
 class QueueInput(FeedfreeInput):
@@ -486,7 +488,7 @@ class StagingInput(FeedfreeInput):
     it requires that all outputs ever produced by this InputSource will be fetched together.
 
     This means that in multi-GPU training, you should ensure that each call on `hooked_sess.run`
-    depends on all input tensors on all GPUs.
+    depends on either all input tensors on all GPUs, or no input tensors at all.
     As a result you cannot use this InputSource for :class:`InferenceRunner`.
     """
     class StagingCallback(Callback):
@@ -503,6 +505,7 @@ class StagingInput(FeedfreeInput):
             self.stage_op = self._input._get_stage_op()
             unstage_ops = self._input._get_unstage_ops()
             unstage_op = tf.group(unstage_ops, name='unstage_all')
+            self._check_dependency_op = unstage_ops[0]
             self.fetches = tf.train.SessionRunArgs(
                 fetches=[self.stage_op, unstage_op])
 
@@ -510,8 +513,8 @@ class StagingInput(FeedfreeInput):
             logger.info("Pre-filling StagingArea ...")
             for k in range(self.nr_stage):
                 self.stage_op.run()
-            logger.info("Successfully put {} element{} to StagingArea.".format(
-                self.nr_stage, "s" if self.nr_stage > 1 else ""))
+            logger.info("{} element{} put into StagingArea.".format(
+                self.nr_stage, "s were" if self.nr_stage > 1 else " was"))
 
         def _before_run(self, ctx):
             # This has to happen once, right before the first iteration.
@@ -519,7 +522,10 @@ class StagingInput(FeedfreeInput):
             if not self._initialized:
                 self._initialized = True
                 self._prefill()
-            return self.fetches
+            # Only step the stagingarea when the input is evaluated in this sess.run
+            fetches = ctx.original_args.fetches
+            if dependency_of_fetches(fetches, self._check_dependency_op):
+                return self.fetches
 
     def __init__(self, input, towers=None, nr_stage=1, device=None):
         """
@@ -568,32 +574,34 @@ class StagingInput(FeedfreeInput):
                 yield
 
     def _get_input_tensors(self):
-        with self.cached_name_scope(), self._device_ctx():
-            inputs = self._input.get_input_tensors()
+        inputs = self._input.get_input_tensors()
 
-            # Putting variables to stagingarea will cause trouble
-            dtypes = []
-            for idx in range(len(inputs)):
-                dtype = inputs[idx].dtype
-                if dtype.base_dtype != dtype:     # is reference type
-                    inputs[idx] = tf.identity(inputs[idx])
-                dtypes.append(dtype.base_dtype)
+        with self._device_ctx():
+            with self.cached_name_scope():
+                # Putting variables to stagingarea will cause trouble
+                dtypes = []
+                for idx in range(len(inputs)):
+                    dtype = inputs[idx].dtype
+                    if dtype.base_dtype != dtype:     # is reference type
+                        inputs[idx] = tf.identity(inputs[idx])
+                    dtypes.append(dtype.base_dtype)
 
-            # TODO tensorflow/benchmarks use static shapes here,
-            # though it doesn't seem to help. We can use it when it's known.
-            stage = StagingArea(dtypes, shapes=None)
+                # TODO tensorflow/benchmarks use static shapes here,
+                # though it doesn't seem to help. We can use it when it's known.
+                stage = StagingArea(dtypes, shapes=None)
 
-        # put & get automatically inherit the name scope from the area
-        self._stage_ops.append(stage.put(inputs))
-        self._areas.append(stage)
-        outputs = stage.get()
-        if isinstance(outputs, tf.Tensor):  # when size=1, TF doesn't return a list
-            outputs = [outputs]
-        for vin, vout in zip(inputs, outputs):
-            vout.set_shape(vin.get_shape())
-        self._unstage_ops.append(outputs)
-        # self._size_ops.append(stage.size())
-        return outputs
+            # put & get automatically inherit the name scope from the area
+            self._stage_ops.append(stage.put(inputs))
+            self._areas.append(stage)
+            outputs = stage.get()
+            if isinstance(outputs, tf.Tensor):  # when size=1, TF doesn't return a list
+                outputs = [outputs]
+
+            for vin, vout in zip(inputs, outputs):
+                vout.set_shape(vin.get_shape())
+            self._unstage_ops.append(outputs)
+            # self._size_ops.append(stage.size())
+            return outputs
 
     def _get_stage_op(self):
         with self.cached_name_scope():
@@ -617,4 +625,6 @@ class StagingInput(FeedfreeInput):
             run_step=True)
 
 
-StagingInputWrapper = StagingInput
+@deprecated("Renamed to StagingInput", "2018-08-01")
+def StagingInputWrapper(*args, **kwargs):
+    return StagingInput(*args, **kwargs)

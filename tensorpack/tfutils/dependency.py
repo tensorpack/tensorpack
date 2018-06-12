@@ -7,6 +7,10 @@ from ..utils.argtools import graph_memoized
 Utils about parsing dependencies in the graph.
 """
 
+__all__ = [
+    'dependency_of_targets', 'dependency_of_fetches'
+]
+
 
 @graph_memoized
 def dependency_of_targets(targets, op):
