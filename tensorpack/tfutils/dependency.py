@@ -1,0 +1,67 @@
+
+import tensorflow as tf
+from tensorflow.contrib.graph_editor import get_backward_walk_ops
+from ..utils.argtools import graph_memoized
+
+"""
+Utils about parsing dependencies in the graph.
+"""
+
+
+@graph_memoized
+def dependency_of_targets(targets, op):
+    """
+    Check that op is in the subgraph induced by the dependencies of targets.
+    The result is memoized.
+
+    This is useful if some SessionRunHooks should be run only together with certain ops.
+
+    Args:
+        targets: a tuple of ops or tensors. The targets to find dependencies of.
+        op (tf.Operation or tf.Tensor):
+
+    Returns:
+        bool
+    """
+    # TODO tensorarray? sparsetensor?
+    if isinstance(op, tf.Tensor):
+        op = op.op
+    assert isinstance(op, tf.Operation), op
+
+    # alternative implementation can use graph_util.extract_sub_graph
+    dependent_ops = get_backward_walk_ops(targets, control_inputs=True)
+    return op in dependent_ops
+
+
+def dependency_of_fetches(fetches, op):
+    """
+    Check that op is in the subgraph induced by the dependencies of fetches.
+    fetches may have more general structure.
+
+    Args:
+        fetches: An argument to `sess.run`. Nested structure will affect performance.
+        op (tf.Operation or tf.Tensor):
+
+    Returns:
+        bool
+    """
+    try:
+        from tensorflow.python.client.session import _FetchHandler as FetchHandler
+        handler = FetchHandler(tf.get_default_graph(), fetches, {})
+        targets = tuple(handler.fetches() + handler.targets())
+    except ImportError:
+        if isinstance(fetches, list):
+            targets = tuple(fetches)
+        elif isinstance(fetches, dict):
+            raise ValueError("Don't know how to parse dictionary to fetch list! "
+                             "This is a bug of tensorpack.")
+        else:
+            targets = (fetches, )
+    return dependency_of_targets(targets, op)
+
+
+if __name__ == '__main__':
+    a = tf.random_normal(shape=[3, 3])
+    b = tf.random_normal(shape=[3, 3])
+    print(dependency_of_fetches(a, a))
+    print(dependency_of_fetches([a, b], a))

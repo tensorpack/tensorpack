@@ -480,6 +480,14 @@ class StagingInput(FeedfreeInput):
     """
     A wrapper around a feedfree input,
     to prefetch the input in StagingArea (on GPUs).
+
+    It works by registering hooks to put & get tensors into the StagingArea.
+    If `get_input_tensors` gets called multiple times,
+    it requires that all outputs ever produced by this InputSource will be fetched together.
+
+    This means that in multi-GPU training, you should ensure that each call on `hooked_sess.run`
+    depends on all input tensors on all GPUs.
+    As a result you cannot use this InputSource for :class:`InferenceRunner`.
     """
     class StagingCallback(Callback):
         """
@@ -493,7 +501,8 @@ class StagingInput(FeedfreeInput):
 
         def _setup_graph(self):
             self.stage_op = self._input._get_stage_op()
-            unstage_op = self._input._get_unstage_op()
+            unstage_ops = self._input._get_unstage_ops()
+            unstage_op = tf.group(unstage_ops, name='unstage_all')
             self.fetches = tf.train.SessionRunArgs(
                 fetches=[self.stage_op, unstage_op])
 
@@ -506,6 +515,7 @@ class StagingInput(FeedfreeInput):
 
         def _before_run(self, ctx):
             # This has to happen once, right before the first iteration.
+            # doing it in `before_train` may not work because QueueInput happens in before_train.
             if not self._initialized:
                 self._initialized = True
                 self._prefill()
@@ -589,10 +599,10 @@ class StagingInput(FeedfreeInput):
         with self.cached_name_scope():
             return tf.group(*self._stage_ops)
 
-    def _get_unstage_op(self):
+    def _get_unstage_ops(self):
         with self.cached_name_scope():
             all_outputs = list(chain.from_iterable(self._unstage_ops))
-            return tf.group(*all_outputs)
+            return all_outputs
 
     # for debugging only
     def _create_ema_callback(self):

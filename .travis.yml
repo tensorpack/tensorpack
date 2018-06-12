@@ -53,6 +53,9 @@ before_script:
 - protoc --version
 - python -c "import cv2; print('OpenCV '+ cv2.__version__)"
 - python -c "import tensorflow as tf; print('TensorFlow '+ tf.__version__)"
+# Check that these private names can be imported because tensorpack is using them
+- python -c "from tensorflow.python.client.session import _FetchHandler"
+- python -c "from tensorflow.python.training.monitored_session import _HookedSession"
 
 script:
 - flake8 .

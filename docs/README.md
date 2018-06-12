@@ -2,8 +2,9 @@
 ## Build the docs:
 
 ### Dependencies:
-1. Python3
-2. `pip install -r requirements.txt`. These requirements are different from tensorpack dependencies.
+1. Python 3
+2. Remove "tensorflow" from `requirements.txt` since you probably prefer to install TensorFlow by yourself.
+3. `pip install -r requirements.txt`. Note that these requirements are different from tensorpack dependencies.
 
 ### Build HTML docs:
 `make html`
