@@ -37,6 +37,8 @@ Alternative link to this page: [http://dorefa.net](http://dorefa.net)
 
 ## Use
 
++ Install TensorFlow>=1.7. For TensorFlow<1.7, you can use an earlier implementation of `dorefa.py` at [here](https://github.com/tensorpack/tensorpack/blob/58529de18e9bdad1bab31aed9c397a8f340e7f94/examples/DoReFa-Net/dorefa.py)
+
 + Install tensorpack and scipy.
 
 + Look at the docstring in `*-dorefa.py` to see detailed usage and performance.

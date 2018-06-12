@@ -82,7 +82,7 @@ class Model(ModelDesc):
 
     def optimizer(self):
         lr = tf.get_variable('learning_rate', initializer=self.learning_rate, trainable=False)
-        opt = tf.train.AdamOptimizer(lr, epsilon=1e-3)
+        opt = tf.train.RMSPropOptimizer(lr, epsilon=1e-5)
         return optimizer.apply_grad_processors(opt, [gradproc.SummaryGradient()])
 
     @staticmethod
