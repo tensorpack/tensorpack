@@ -224,6 +224,14 @@ class ExpReplay(DataFlow, Callback):
         if sample[1] or sample[3]:
             view_state(sample[0])
 
+    def _process_batch(self, batch_exp):
+        state = np.asarray([e[0] for e in batch_exp], dtype='uint8')
+        reward = np.asarray([e[1] for e in batch_exp], dtype='float32')
+        action = np.asarray([e[2] for e in batch_exp], dtype='int8')
+        isOver = np.asarray([e[3] for e in batch_exp], dtype='bool')
+        return [state, action, reward, isOver]
+
+    # DataFlow method:
     def get_data(self):
         # wait for memory to be initialized
         self._init_memory_flag.wait()
@@ -238,13 +246,7 @@ class ExpReplay(DataFlow, Callback):
             yield self._process_batch(batch_exp)
             self._populate_job_queue.put(1)
 
-    def _process_batch(self, batch_exp):
-        state = np.asarray([e[0] for e in batch_exp], dtype='uint8')
-        reward = np.asarray([e[1] for e in batch_exp], dtype='float32')
-        action = np.asarray([e[2] for e in batch_exp], dtype='int8')
-        isOver = np.asarray([e[3] for e in batch_exp], dtype='bool')
-        return [state, action, reward, isOver]
-
+    # Callback methods:
     def _setup_graph(self):
         self.predictor = self.trainer.get_predictor(*self.predictor_io_names)
 
@@ -282,6 +284,3 @@ if __name__ == '__main__':
         import IPython as IP
         IP.embed(config=IP.terminal.ipapp.load_default_config())
         pass
-        # import IPython;
-        # IPython.embed(config=IPython.terminal.ipapp.load_default_config())
-        # break

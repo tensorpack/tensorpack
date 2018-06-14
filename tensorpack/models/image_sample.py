@@ -4,6 +4,7 @@
 
 import tensorflow as tf
 
+from ..utils.develop import log_deprecated
 from .common import layer_register
 from ._test import TestModel
 
@@ -52,6 +53,7 @@ def ImageSample(inputs, borderMode='repeat'):
     Returns:
         tf.Tensor: a tensor named ``output`` of shape (N, H', W', C).
     """
+    log_deprecated("ImageSample", "Please implement it in your own code instead!", "2018-09-01")
     image, mapping = inputs
     assert image.get_shape().ndims == 4 and mapping.get_shape().ndims == 4
     input_shape = image.get_shape().as_list()[1:]

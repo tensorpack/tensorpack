@@ -28,7 +28,7 @@ Evaluate the [pretrained model](http://models.tensorpack.com/ShuffleNet/):
 
 ### AlexNet
 
-This AlexNet script is quite close to the setting in its [original
+This AlexNet script is quite close to the settings in its [original
 paper](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks).
 Trained with 64x2 batch size, the script reaches 58% single-crop validation
 accuracy after 100 epochs (21 hours on 2 V100s).
@@ -49,6 +49,9 @@ See `./vgg16.py --help` for usage.
  | No Normalization                          | Batch Normalization | Group Normalization |
  |:------------------------------------------|---------------------|--------------------:|
  | 29~30% (large variation with random seed) | 28%                 |               27.6% |
+ 
+ Note that the purpose of this experiment in the paper is not to claim GroupNorm is better
+ than BatchNorm, therefore the training settings and hyperpameters have not been individually tuned for best accuracy.
 
 ### ResNet
 

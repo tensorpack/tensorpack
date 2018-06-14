@@ -376,6 +376,7 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
         'get_nr_gpu',
 
         # deprecated or renamed symbolic code
+        'ImageSample',
         'Deconv2D',
         'get_scalar_var', 'psnr',
         'prediction_incorrect', 'huber_loss',

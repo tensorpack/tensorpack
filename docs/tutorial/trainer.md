@@ -27,6 +27,8 @@ In particular, when working with the `ModelDesc` interface, the `build_graph` me
 The tower function needs to follow some conventions:
 
 1. __It might get called multiple times__ for data-parallel training or inference.
+   * Therefore, to use a tensorflow-hub module, you need to initialize the
+     module outside the tower function, and call the module inside the tower function.
 2. It has to respect variable collections:
    * (Required) Only put variables __trainable by gradient descent__ into `TRAINABLE_VARIABLES`.
    * (Recommended) Put non-trainable variables that need to be used in inference into `MODEL_VARIABLES`.
@@ -35,7 +37,8 @@ The tower function needs to follow some conventions:
      Don't depend on name_scope's name. Don't use variable_scope's name twice.
    * The creation of any trainable variables must respect __reuse__ variable scope.
      To respect variable reuse, use `tf.get_variable` instead of `tf.Variable` in the function.
-     On the other hand, for non-trainable variables, it's OK to use `tf.Variable` to force creation of new variables in each tower.
+     On the other hand, for non-trainable variables, it's OK to use
+     `tf.Variable` to ensure creation of new variables in each tower even when `reuse=True`.
 4. It will always be called under a `TowerContext`, which can be accessed by `get_current_tower_contxt()`.
    The context contains information about training/inference mode, reuse, etc.
      
