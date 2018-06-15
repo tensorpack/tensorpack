@@ -6,10 +6,10 @@ import numpy as np
 import copy
 import six
 from six.moves import range
-from .base import DataFlow, RNGDataFlow
+from .base import DataFlow, RNGDataFlow, RNGDataFlowSequence
 from ..utils.develop import log_deprecated
 
-__all__ = ['FakeData', 'DataFromQueue', 'DataFromList', 'DataFromGenerator', 'DataFromIterable']
+__all__ = ['FakeData', 'DataFromQueue', 'DataFromList', 'DataFromGenerator', 'DataFromIterable', 'SequenceFromList']
 
 
 class FakeData(RNGDataFlow):
@@ -134,3 +134,31 @@ class DataFromIterable(DataFlow):
     def get_data(self):
         for dp in self._itr:
             yield dp
+
+
+class SequenceFromList(RNGDataFlowSequence):
+    """ Wrap a list of datapoints to a DataFlowSequence"""
+
+    def __init__(self, lst, shuffle=True):
+        """
+        Args:
+            lst (list): input list. Each element is a datapoint.
+            shuffle (bool): shuffle data.
+        """
+        super(SequenceFromList, self).__init__()
+        self.orig_lst = lst
+        self.shuffle = shuffle
+
+    def reset_state(self):
+        RNGDataFlowSequence.reset_state(self)
+
+        if self.shuffle:
+            self.lst = self.rng.shuffle(self.orig_lst)
+        else:
+            self.lst = self.orig_lst
+
+    def size(self):
+        return len(self.lst)
+
+    def __getitem__(self, id):
+        return self.lst[id]

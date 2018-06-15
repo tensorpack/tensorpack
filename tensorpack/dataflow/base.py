@@ -78,10 +78,44 @@ class DataFlow(object):
         """
         pass
 
+class DataFlowSequence(DataFlow):
+    """
+    A DataFlow based on a sequence. Can be sliced then.
+    Should be similar in look to https://github.com/keras-team/keras/blob/master/keras/utils/data_utils.py class Sequence
+    """
+
+    def get_data(self):
+        """Create an infinite generator that iterate over the Sequence."""
+        while True:
+            for item in (self[i] for i in range(len(self))):
+                yield item
+
+    @abstractmethod
+    def __getitem__(self, index):
+        """Gets batch at position `index`.
+        # Arguments
+            index: position of the batch in the Sequence.
+        # Returns
+            A data item.
+        """
+        raise NotImplementedError
+
+    def __len__(self):
+        return self.size()
+
 
 class RNGDataFlow(DataFlow):
     """ A DataFlow with RNG"""
 
+    def reset_state(self):
+        """ Reset the RNG """
+        self.rng = get_rng(self)
+
+
+class RNGDataFlowSequence(DataFlowSequence):
+    """
+    A DataFlowSequence with RNG
+    """
     def reset_state(self):
         """ Reset the RNG """
         self.rng = get_rng(self)
@@ -107,3 +141,42 @@ class ProxyDataFlow(DataFlow):
 
     def get_data(self):
         return self.ds.get_data()
+
+
+class DataFlowSequenceSlicer(DataFlowSequence, ProxyDataFlow):
+    """
+    A DataFlowSequence proxy, that can slice also if the provided input is slicable.
+
+    how to use it:
+    when we need a slice of ds, lets proxy it like this:
+    DataFlowSequenceSlicer(ds, i, n)
+
+    """
+
+    def __init__(self, ds, slicing_i = None, slicing_n = None):
+        ProxyDataFlow.__init__(self,ds)
+        self.slicing_i = slicing_i
+        self.slicing_n = slicing_n
+        assert IsSequence(self)
+
+    def __getitem__(self, index):
+        if None in [self.slicing_n, self.slicing_i]:
+            return self.ds[index]
+        else:
+            return self.ds[index*self.slicing_n + self.slicing_i]
+
+    def size(self):
+        if None in [self.slicing_n, self.slicing_i]:
+            return self.ds.size()
+        else:
+            remainder_add = 1 if (self.ds.size() % self.slicing_n >= self.slicing_i) else 0
+            return int(self.ds.size() / self.slicing_n) + remainder_add
+
+    def get_data(self):
+        """Create an infinite generator that iterate over the Sequence."""
+        while True:
+            for item in (self[i] for i in range(len(self))):
+                yield item
+
+def IsSequence(ds):
+    isinstance(ds, DataFlowSequence) or (hasattr(ds, '__getitem__') and hasattr(ds, '__len__'))
