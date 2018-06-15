@@ -343,7 +343,7 @@ class HorovodTrainer(SingleCostTrainer):
         self.is_chief = hvd.rank() == 0
         self._local_rank = hvd.local_rank()
         self._average = average
-        logger.info("Horovod local rank={}".format(self._local_rank))
+        logger.info("[HorovodTrainer] local rank={}".format(self._local_rank))
         super(HorovodTrainer, self).__init__()
 
     def allreduce(self, grads):

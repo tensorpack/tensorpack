@@ -46,6 +46,9 @@ class TrainingMonitor(Callback):
     .. document private functions
     .. automethod:: _setup_graph
     """
+
+    _chief_only = False
+
     def setup_graph(self, trainer):
         self.trainer = trainer
         self._setup_graph()
@@ -92,7 +95,13 @@ class TrainingMonitor(Callback):
 
 
 class NoOpMonitor(TrainingMonitor):
-    pass
+    def __init__(self, name=None):
+        self._name = name
+
+    def __str__(self):
+        if self._name is None:
+            return "NoOpMonitor"
+        return "NoOpMonitor({})".format(self._name)
 
 
 class Monitors(Callback):
@@ -221,7 +230,7 @@ class TFEventWriter(TrainingMonitor):
         self._flush_secs = flush_secs
         self._split_files = split_files
 
-    def __new__(cls, logdir=None, max_queue=10, flush_secs=120):
+    def __new__(cls, logdir=None, max_queue=10, flush_secs=120, **kwargs):
         if logdir is None:
             logdir = logger.get_logger_dir()
 
@@ -229,7 +238,7 @@ class TFEventWriter(TrainingMonitor):
             return super(TFEventWriter, cls).__new__(cls)
         else:
             logger.warn("logger directory was not set. Ignore TFEventWriter.")
-            return NoOpMonitor()
+            return NoOpMonitor("TFEventWriter")
 
     def _setup_graph(self):
         self._writer = tf.summary.FileWriter(
@@ -268,7 +277,7 @@ class JSONWriter(TrainingMonitor):
             return super(JSONWriter, cls).__new__(cls)
         else:
             logger.warn("logger directory was not set. Ignore JSONWriter.")
-            return NoOpMonitor()
+            return NoOpMonitor("JSONWriter")
 
     @staticmethod
     def load_existing_json():
@@ -370,8 +379,6 @@ class ScalarPrinter(TrainingMonitor):
     Print scalar data into terminal.
     """
 
-    _chief_only = False
-
     def __init__(self, enable_step=False, enable_epoch=True,
                  whitelist=None, blacklist=None):
         """
@@ -438,8 +445,6 @@ class ScalarHistory(TrainingMonitor):
     """
     Only used by monitors internally.
     """
-
-    _chief_only = False
 
     def _setup_graph(self):
         self._dic = defaultdict(list)

@@ -114,7 +114,7 @@ class GPUUtilizationTracker(Callback):
 class GraphProfiler(Callback):
     """
     Enable profiling by installing session hooks,
-    and write metadata or tracing files to ``logger.get_logger_dir()``.
+    and write tracing files / events / metadata to ``logger.get_logger_dir()``.
 
     The tracing files can be loaded from ``chrome://tracing``.
     The metadata files can be processed by
@@ -122,9 +122,16 @@ class GraphProfiler(Callback):
     <https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/profiler/README.md>`_.
     The event is viewable from tensorboard.
 
-    Note that the profiling is enabled for every step.
-    You probably want to schedule it less frequently by
-    :class:`PeriodicRunHooks`.
+    Tips:
+
+    Note that the profiling is by default enabled for every step and is expensive.
+    You probably want to schedule it less frequently, e.g.:
+
+    .. code-block:: none
+
+        EnableCallbackIf(
+            GraphProfiler(dump_tracing=True, dump_event=True),
+            lambda self: self.trainer.global_step > 20 and self.trainer.global_step < 30)
     """
     def __init__(self, dump_metadata=False, dump_tracing=True, dump_event=False):
         """
@@ -138,7 +145,7 @@ class GraphProfiler(Callback):
         self._dump_meta = bool(dump_metadata)
         self._dump_tracing = bool(dump_tracing)
         self._dump_event = bool(dump_event)
-        assert os.path.isdir(self._dir)
+        assert os.path.isdir(self._dir), self._dir
 
     def _before_run(self, _):
         opt = tf.RunOptions()

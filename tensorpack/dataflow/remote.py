@@ -74,6 +74,7 @@ def send_dataflow_zmq(df, addr, hwm=50, format=None, bind=False):
                         avg = "{:.3f}".format(sum(q) / len(q))
                         pbar.set_postfix({'AvgSendLat': avg})
     finally:
+        logger.info("Exiting send_dataflow_zmq ...")
         socket.setsockopt(zmq.LINGER, 0)
         socket.close()
         if not ctx.closed:
