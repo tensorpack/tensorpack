@@ -7,6 +7,7 @@ import copy
 from functools import wraps
 from inspect import isfunction, getmembers
 from ..utils import logger
+import tensorflow as tf
 
 __all__ = ['argscope', 'get_arg_scope', 'enable_argscope_for_module']
 
@@ -73,10 +74,19 @@ def argscope_mapper(func, log_shape=True):
         actual_args = copy.copy(get_arg_scope()[func.__name__])
         actual_args.update(kwargs)
         out_tensor = func(*args, **actual_args)
+
+        scope_name = tf.get_variable_scope().name
+        is_tower_scope = 'tower' in scope_name
+
+        in_tensor = args[0]
+        name = '<unkown>' if 'name' not in kwargs else kwargs['name']
         if log_shape:
-            in_tensor = args[0]
-            name = '<unkown>' if 'name' not in kwargs else kwargs['name']
-            logger.info('%20s: %20s -> %20s' % (name, in_tensor.shape.as_list(), out_tensor.shape.as_list()))
+            if is_tower_scope:
+                if 'tower0' in scope_name:
+                    logger.info('%20s: %20s -> %20s' % (name, in_tensor.shape.as_list(), out_tensor.shape.as_list()))
+            else:
+                logger.info('%20s: %20s -> %20s' % (name, in_tensor.shape.as_list(), out_tensor.shape.as_list()))
+
         return out_tensor
     # argscope requires this property
     wrapped_func.symbolic_function = None
