@@ -6,6 +6,7 @@ from collections import defaultdict
 import copy
 from functools import wraps
 from inspect import isfunction, getmembers
+from ..utils import logger
 
 __all__ = ['argscope', 'get_arg_scope', 'enable_argscope_for_module']
 
@@ -64,7 +65,7 @@ def get_arg_scope():
         return defaultdict(dict)
 
 
-def argscope_mapper(func):
+def argscope_mapper(func, log_shape=True):
     """Decorator for function to support argscope
     """
     @wraps(func)
@@ -72,13 +73,17 @@ def argscope_mapper(func):
         actual_args = copy.copy(get_arg_scope()[func.__name__])
         actual_args.update(kwargs)
         out_tensor = func(*args, **actual_args)
+        if log_shape:
+            in_tensor = args[0]
+            name = '<unkown>' if 'name' not in kwargs else kwargs['name']
+            logger.info('%20s: %20s -> %20s' % (name, in_tensor.shape.as_list(), out_tensor.shape.as_list()))
         return out_tensor
     # argscope requires this property
     wrapped_func.symbolic_function = None
     return wrapped_func
 
 
-def enable_argscope_for_module(module):
+def enable_argscope_for_module(module, log_shape=True):
     """
     Overwrite all functions of a given module to support argscope.
     Note that this function monkey-patches the module and therefore could have unexpected consequences.
@@ -86,4 +91,4 @@ def enable_argscope_for_module(module):
     """
     for name, obj in getmembers(module):
         if isfunction(obj):
-            setattr(module, name, argscope_mapper(obj))
+            setattr(module, name, argscope_mapper(obj, log_shape=log_shape))
