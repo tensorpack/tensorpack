@@ -28,7 +28,7 @@ GAMMA = 0.99
 MEMORY_SIZE = 1e6
 # will consume at least 1e6 * 84 * 84 bytes == 6.6G memory.
 INIT_MEMORY_SIZE = MEMORY_SIZE // 20
-STEPS_PER_EPOCH = 10000 // UPDATE_FREQ * 10  # each epoch is 100k played frames
+STEPS_PER_EPOCH = 100000 // UPDATE_FREQ  # each epoch is 100k played frames
 EVAL_EPISODE = 50
 
 NUM_ACTIONS = None
@@ -105,7 +105,7 @@ def get_config():
                 every_k_steps=10000 // UPDATE_FREQ),    # update target network every 10k steps
             expreplay,
             ScheduledHyperParamSetter('learning_rate',
-                                      [(60, 4e-4), (100, 2e-4)]),
+                                      [(60, 4e-4), (100, 2e-4), (500, 5e-5)]),
             ScheduledHyperParamSetter(
                 ObjAttrParam(expreplay, 'exploration'),
                 [(0, 1), (10, 0.1), (320, 0.01)],   # 1->0.1 in the first million steps
@@ -116,7 +116,7 @@ def get_config():
             HumanHyperParamSetter('learning_rate'),
         ],
         steps_per_epoch=STEPS_PER_EPOCH,
-        max_epoch=1000,
+        max_epoch=800,
     )
 
 

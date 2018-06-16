@@ -38,12 +38,12 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
               internal_update=False):
     """
     Mostly equivalent to `tf.layers.batch_normalization`, but different in
-    the following:
+    the following due to historical reasons:
 
     1. Accepts `data_format` when `axis` is None. For 2D input, this argument will be ignored.
     2. Default value for `momentum` and `epsilon` is different.
     3. Default value for `training` is automatically obtained from `TowerContext`.
-    4. Support the `internal_update` option.
+    4. Support the `internal_update` option, which can be very useful in certain models.
 
     Args:
         internal_update (bool): if False, add EMA update ops to

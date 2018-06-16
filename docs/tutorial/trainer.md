@@ -64,7 +64,9 @@ Note some __common problems__ when using these trainers:
 	instead of taking one for all and split.
 	So the total batch size would become ``(batch size of InputSource) * #GPU``.
 
-	Splitting a tensor for data-parallel training makes no sense at all, only to put unnecessary shape constraints on the data.
+	Splitting a tensor for data-parallel training makes no sense at all. First, why
+	wasting time in concatenating into large batches and then split them? 
+    Second, this puts unnecessary shape constraints on the data.
 	By letting each GPU train on its own input tensors, they can train on inputs of different shapes simultaneously.
 
 2. The tower function (your model code) will get called multipile times.
