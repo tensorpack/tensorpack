@@ -71,6 +71,7 @@ class ImageFromFile(RNGDataFlow):
             self.rng.shuffle(self.files)
         for f in self.files:
             im = cv2.imread(f, self.imread_mode)
+            assert im is not None, f
             if self.channel == 3:
                 im = im[:, :, ::-1]
             if self.resize is not None:

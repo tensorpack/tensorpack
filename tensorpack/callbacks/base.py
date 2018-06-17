@@ -250,6 +250,7 @@ class ProxyCallback(Callback):
             cb(Callback): the underlying callback
         """
         assert isinstance(cb, Callback), type(cb)
+        self.chief_only = cb.chief_only
         self.cb = cb
 
     def _before_train(self):

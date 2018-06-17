@@ -20,7 +20,7 @@ _CurrentTowerContext = None
 
 class TowerContext(object):
     """ A context where the current model is built in.
-        Since TF1.8, TensorFlow starts to introduce the same concept.
+        Since TF 1.8, TensorFlow starts to introduce the same concept.
     """
 
     def __init__(self, tower_name, is_training, index=0, vs_name=''):

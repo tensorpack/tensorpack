@@ -20,7 +20,7 @@ Claimed performance in the paper can be reproduced, on several games I've tested
 
 ![DQN](curve-breakout.png)
 
-On one TitanX, Double-DQN took 1 day of training to reach a score of 400 on breakout game.
+On one TitanX, Double-DQN took 1 day of training to reach a score of 400 on breakout.
 Batch-A3C implementation only took <2 hours.
 
 Double-DQN with nature paper setting runs at 60 batches (3840 trained frames, 240 seen frames, 960 game frames) per second on (Maxwell) TitanX.
@@ -29,11 +29,9 @@ Double-DQN with nature paper setting runs at 60 batches (3840 trained frames, 24
 
 Install [ALE](https://github.com/mgbellemare/Arcade-Learning-Environment) and gym.
 
-Download an [atari rom](https://github.com/openai/atari-py/tree/master/atari_py/atari_roms) to
-`$TENSORPACK_DATASET/atari_rom/` (defaults to ~/tensorpack_data/atari_rom/), e.g.:
+Download an [atari rom](https://github.com/openai/atari-py/tree/master/atari_py/atari_roms), e.g.:
 ```
-mkdir -p ~/tensorpack_data/atari_rom
-wget https://github.com/openai/atari-py/raw/master/atari_py/atari_roms/breakout.bin -O ~/tensorpack_data/atari_rom/breakout.bin
+wget https://github.com/openai/atari-py/raw/master/atari_py/atari_roms/breakout.bin
 ```
 
 Start Training:
@@ -44,8 +42,9 @@ Start Training:
 
 Watch the agent play:
 ```
-./DQN.py --rom breakout.bin --task play --load path/to/model
+# Download pretrained models or use one you trained:
+wget http://models.tensorpack.com/DeepQNetwork/DoubleDQN-Breakout.npz
+./DQN.py --rom breakout.bin --task play --load DoubleDQN-Breakout.npz
 ```
-A pretrained model on breakout can be downloaded [here](http://models.tensorpack.com/DeepQNetwork/).
 
 A3C code and models for Atari games in OpenAI Gym are released in [examples/A3C-Gym](../A3C-Gym)

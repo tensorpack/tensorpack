@@ -297,42 +297,40 @@ class HorovodTrainer(SingleCostTrainer):
         # change trainer to HorovodTrainer(), then
         /path/to/mpirun -np 8 -H server1:4,server2:4  \\
             -bind-to none -map-by slot \\
-            --output-filename mylog  -x LD_LIBRARY_PATH -x CUDA_VISIBLE_DEVICES=0,1,2,3 \\
+            --output-filename mylog  -x LD_LIBRARY_PATH \\
             python train.py
-        # (Add other environment variables you need by -x, e.g. PYTHONPATH, PATH)
+        # Add other environment variables you need by -x, e.g. PYTHONPATH, PATH.
+        # If using all GPUs, you can always skip the `CUDA_VISIBLE_DEVICES` option.
+        # There are other MPI options that can potentially improve performance especially on special hardwares.
 
     Note:
-        1. If using all GPUs, you can always skip the `CUDA_VISIBLE_DEVICES` option.
-
-        2. Due to the use of MPI, training is less informative (no progress bar).
-
-        3. Due to a TF bug, you must not initialize CUDA context before training.
+        1. Due to a TF bug, you must not initialize CUDA context before training.
            Therefore TF functions like `is_gpu_available()` or `list_local_devices()`
            must be avoided.
 
-        4. MPI does not like fork(). If your dataflow contains multiprocessing, it may cause problems.
+        2. MPI does not like fork(). If your dataflow contains multiprocessing, it may cause problems.
 
-        3. MPI sometimes fails to kill all processes. Be sure to check it.
+        3. MPI sometimes fails to kill all processes. Be sure to check it afterwards.
 
-        5. Keep in mind that there is one process per GPU, therefore:
+        4. Keep in mind that there is one process per GPU, therefore:
 
            + If your data processing is heavy, doing it in a separate dedicated process might be
              a better choice than doing them repeatedly in each process.
 
-           + Your need to set log directory carefully to avoid conflicts.
-             For example you can set it only for the chief process.
+           + You need to make sure log directories in each process won't conflict.
+             You can set it only for the chief process, or set a different one for each process.
 
-           + Callbacks have an option to be run only on the chief process, or on all processes.
+           + Callbacks have an option to be run only in the chief process, or in all processes.
              See :meth:`callback.set_chief_only()`. Most callbacks have a reasonable
              default already, but certain callbacks may not behave properly by default. Report an issue if you find any.
 
            + You can use Horovod API such as `hvd.rank()` to know which process you are.
              Chief process has rank 0.
 
-        6. Due to these caveats, see
+        5. Due to these caveats, see
            `ResNet-Horovod <https://github.com/tensorpack/benchmarks/tree/master/ResNet-Horovod>`_
            for a full example which has handled these common issues.
-           The example can train ImageNet in roughly an hour following the paper's setup.
+           This example can train ImageNet in roughly an hour following the paper's setup.
     """
     def __init__(self, average=True):
         """

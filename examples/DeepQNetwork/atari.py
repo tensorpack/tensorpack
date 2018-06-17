@@ -83,7 +83,6 @@ class AtariPlayer(gym.Env):
             self.viz = viz
             if self.viz and isinstance(self.viz, float):
                 self.windowname = os.path.basename(rom_file)
-                cv2.startWindowThread()
                 cv2.namedWindow(self.windowname)
 
             self.ale.loadROM(rom_file.encode('utf-8'))

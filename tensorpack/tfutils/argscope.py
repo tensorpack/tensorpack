@@ -6,8 +6,9 @@ from collections import defaultdict
 import copy
 from functools import wraps
 from inspect import isfunction, getmembers
+
+from .tower import get_current_tower_context
 from ..utils import logger
-import tensorflow as tf
 
 __all__ = ['argscope', 'get_arg_scope', 'enable_argscope_for_module']
 
@@ -74,18 +75,14 @@ def argscope_mapper(func, log_shape=True):
         actual_args = copy.copy(get_arg_scope()[func.__name__])
         actual_args.update(kwargs)
         out_tensor = func(*args, **actual_args)
-
-        scope_name = tf.get_variable_scope().name
-        is_tower_scope = 'tower' in scope_name
-
         in_tensor = args[0]
+
+        ctx = get_current_tower_context()
         name = '<unkown>' if 'name' not in kwargs else kwargs['name']
         if log_shape:
-            if is_tower_scope:
-                if 'tower0' in scope_name:
-                    logger.info('%20s: %20s -> %20s' % (name, in_tensor.shape.as_list(), out_tensor.shape.as_list()))
-            else:
-                logger.info('%20s: %20s -> %20s' % (name, in_tensor.shape.as_list(), out_tensor.shape.as_list()))
+            if ('tower' not in ctx.ns_name.lower()) or ctx.is_main_training_tower:
+                logger.info('%20s: %20s -> %20s' %
+                            (name, in_tensor.shape.as_list(), out_tensor.shape.as_list()))
 
         return out_tensor
     # argscope requires this property
@@ -98,6 +95,9 @@ def enable_argscope_for_module(module, log_shape=True):
     Overwrite all functions of a given module to support argscope.
     Note that this function monkey-patches the module and therefore could have unexpected consequences.
     It has been only tested to work well with `tf.layers` module.
+
+    Args:
+        log_shape (bool): print input/output shapes of each function when called.
     """
     for name, obj in getmembers(module):
         if isfunction(obj):
