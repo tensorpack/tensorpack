@@ -190,8 +190,8 @@ class DataFlowSequenceSlicer(ProxyDataFlowSequence):
         if None in [self.slicing_n, self.slicing_i]:
             return self.ds.size()
         else:
-            remainder_add = 1 if (self.ds.size() % self.slicing_n >= self.slicing_i) else 0
-            return int(self.ds.size() / self.slicing_n) + remainder_add
+            remainder_add = 1 if (self.ds.size() % self.slicing_n > self.slicing_i) else 0
+            return int(self.ds.size() // self.slicing_n) + remainder_add
 
 def is_sequence(ds):
     return isinstance(ds, DataFlowSequence) or (hasattr(ds, '__getitem__') and hasattr(ds, '__len__'))
