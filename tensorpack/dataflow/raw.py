@@ -146,16 +146,14 @@ class SequenceFromList(RNGDataFlowSequence):
             shuffle (bool): shuffle data.
         """
         super(SequenceFromList, self).__init__()
-        self.orig_lst = lst
+        self.lst = copy.copy(lst)
         self.shuffle = shuffle
 
     def reset_state(self):
         RNGDataFlowSequence.reset_state(self)
 
         if self.shuffle:
-            self.lst = self.rng.shuffle(self.orig_lst)
-        else:
-            self.lst = self.orig_lst
+            self.rng.shuffle(self.lst)
 
     def size(self):
         return len(self.lst)

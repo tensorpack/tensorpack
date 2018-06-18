@@ -13,7 +13,7 @@ import os
 import zmq
 import atexit
 
-from .base import DataFlow, ProxyDataFlow, DataFlowTerminated, DataFlowReentrantGuard, DataFlowSequenceSlicer, IsSequence
+from .base import DataFlow, ProxyDataFlow, DataFlowTerminated, DataFlowReentrantGuard, DataFlowSequenceSlicer, is_sequence
 from ..utils.concurrency import (ensure_proc_terminate,
                                  mask_sigint, start_proc_mask_signal,
                                  enable_death_signal,
@@ -251,7 +251,7 @@ class PrefetchDataZMQ(_MultiProcessZMQDataFlow):
         def __init__(self, ds, conn_name, hwm, id, totalworkers):
             super(PrefetchDataZMQ._Worker, self).__init__()
 
-            if IsSequence(ds):
+            if is_sequence(ds):
                 self.ds = DataFlowSequenceSlicer(ds, id, totalworkers)
             else:
                 self.ds = ds

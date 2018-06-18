@@ -13,6 +13,7 @@ from six.moves import range, map
 import tqdm
 
 from .base import DataFlow, ProxyDataFlow, RNGDataFlow, DataFlowReentrantGuard
+from .base import ProxyDataFlowSequence
 from ..utils import logger
 from ..utils.utils import get_tqdm, get_rng, get_tqdm_kwargs
 from ..utils.develop import log_deprecated
@@ -20,7 +21,8 @@ from ..utils.develop import log_deprecated
 __all__ = ['TestDataSpeed', 'PrintData', 'BatchData', 'BatchDataByShape', 'FixedSizeData', 'MapData',
            'MapDataComponent', 'RepeatedData', 'RepeatedDataPoint', 'RandomChooseData',
            'RandomMixData', 'JoinData', 'ConcatData', 'SelectComponent',
-           'LocallyShuffleData', 'CacheData']
+           'LocallyShuffleData', 'CacheData',
+           'MapDataSequence', 'BatchDataSequence', 'RepeatedDataSequence']
 
 
 class TestDataSpeed(ProxyDataFlow):
@@ -120,6 +122,95 @@ class BatchData(ProxyDataFlow):
                 del holder[:]
         if self.remainder and len(holder) > 0:
             yield BatchData._aggregate_batch(holder, self.use_list)
+
+    @staticmethod
+    def _aggregate_batch(data_holder, use_list=False):
+        size = len(data_holder[0])
+        result = []
+        for k in range(size):
+            if use_list:
+                result.append(
+                    [x[k] for x in data_holder])
+            else:
+                dt = data_holder[0][k]
+                if type(dt) in list(six.integer_types) + [bool]:
+                    tp = 'int32'
+                elif type(dt) == float:
+                    tp = 'float32'
+                else:
+                    try:
+                        tp = dt.dtype
+                    except AttributeError:
+                        raise TypeError("Unsupported type to batch: {}".format(type(dt)))
+                try:
+                    result.append(
+                        np.asarray([x[k] for x in data_holder], dtype=tp))
+                except Exception as e:  # noqa
+                    logger.exception("Cannot batch data. Perhaps they are of inconsistent shape?")
+                    if isinstance(dt, np.ndarray):
+                        s = pprint.pformat([x[k].shape for x in data_holder])
+                        logger.error("Shape of all arrays to be batched: " + s)
+                    try:
+                        # open an ipython shell if possible
+                        import IPython as IP; IP.embed()    # noqa
+                    except ImportError:
+                        pass
+        return result
+
+class BatchDataSequence(ProxyDataFlowSequence):
+    """
+    Stack datapoints into batches.
+    It produces datapoints of the same number of components as ``ds``, but
+    each component has one new extra dimension of size ``batch_size``.
+    The batch can be either a list of original components, or (by default)
+    a numpy array of original components.
+    """
+
+    def __init__(self, ds, batch_size, remainder=False, use_list=False):
+        """
+        Args:
+            ds (DataFlow): When ``use_list=False``, the components of ``ds``
+                must be either scalars or :class:`np.ndarray`, and have to be consistent in shapes.
+            batch_size(int): batch size
+            remainder (bool): When the remaining datapoints in ``ds`` is not
+                enough to form a batch, whether or not to also produce the remaining
+                data as a smaller batch.
+                If set to False, all produced datapoints are guaranteed to have the same batch size.
+                If set to True, `ds.size()` must be accurate.
+            use_list (bool): if True, each component will contain a list
+                of datapoints instead of an numpy array of an extra dimension.
+        """
+        super(BatchDataSequence, self).__init__(ds)
+        if not remainder:
+            try:
+                assert batch_size <= ds.size()
+            except NotImplementedError:
+                pass
+        self.batch_size = int(batch_size)
+        self.remainder = remainder
+        self.use_list = use_list
+
+    def size(self):
+        ds_size = self.ds.size()
+        div = ds_size // self.batch_size
+        rem = ds_size % self.batch_size
+        if rem == 0:
+            return div
+        return div + int(self.remainder)
+
+    def __getitem__(self, id):
+        """
+        returns:
+            i-th batch of batched data by stacking each component on an extra 0th dimension.
+        """
+        holder = []
+        for i in xrange(self.batch_size):
+            if id*self.batch_size + i >= len(self.ds):
+                break
+            data = self.ds[id*self.batch_size + i]
+            holder.append(data)
+
+        return BatchData._aggregate_batch(holder, self.use_list)
 
     @staticmethod
     def _aggregate_batch(data_holder, use_list=False):
@@ -276,6 +367,29 @@ class MapData(ProxyDataFlow):
             if ret is not None:
                 yield ret
 
+class MapDataSequence(ProxyDataFlowSequence):
+    """
+    Apply a mapper/filter on the DataFlowSequence.
+
+    Note:
+        1. Please make sure func doesn't modify the components
+           unless you're certain it's safe.
+        2. If you discard some datapoints, ``ds.size()`` will be incorrect.
+    """
+
+    def __init__(self, ds, func):
+        """
+        Args:
+            ds (DataFlow): input DataFlow
+            func (datapoint -> datapoint | None): takes a datapoint and returns a new
+                datapoint. Return None to discard this datapoint.
+        """
+        super(MapDataSequence, self).__init__(ds)
+        self.func = func
+
+    def __getitem__(self, id):
+        return self.func(copy(self.ds[id]))
+
 
 class MapDataComponent(MapData):
     """
@@ -332,6 +446,45 @@ class RepeatedData(ProxyDataFlow):
         if self.nr == -1:
             raise NotImplementedError("size() is unavailable for infinite dataflow")
         return self.ds.size() * self.nr
+
+    def get_data(self):
+        if self.nr == -1:
+            while True:
+                for dp in self.ds.get_data():
+                    yield dp
+        else:
+            for _ in range(self.nr):
+                for dp in self.ds.get_data():
+                    yield dp
+
+class RepeatedDataSequence(ProxyDataFlowSequence):
+    """ Take data points from another DataFlow and produce them until
+        it's exhausted for certain amount of times. i.e.:
+        dp1, dp2, .... dpn, dp1, dp2, ....dpn
+    """
+
+    def __init__(self, ds, nr):
+        """
+        Args:
+            ds (DataFlow): input DataFlow
+            nr (int): number of times to repeat ds.
+                Set to -1 to repeat ``ds`` infinite times.
+        """
+        self.nr = nr
+        super(RepeatedDataSequence, self).__init__(ds)
+
+    def size(self):
+        """
+        Raises:
+            :class:`ValueError` when nr == -1.
+        """
+        if self.nr == -1:
+            raise NotImplementedError("size() is unavailable for infinite dataflow")
+        return self.ds.size() * self.nr
+
+    def __getitem__(self, id):
+        # we do not need to solve number of repeats for sequences...
+        return self.ds[id / len(self.ds)]
 
     def get_data(self):
         if self.nr == -1:

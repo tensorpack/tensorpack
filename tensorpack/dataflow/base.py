@@ -7,7 +7,8 @@ from abc import abstractmethod, ABCMeta
 import six
 from ..utils.utils import get_rng
 
-__all__ = ['DataFlow', 'ProxyDataFlow', 'RNGDataFlow', 'DataFlowTerminated']
+__all__ = ['DataFlow', 'ProxyDataFlow', 'RNGDataFlow', 'DataFlowTerminated',
+           'RNGDataFlowSequence', 'ProxyDataFlowSequence', 'DataFlowSequenceSlicer']
 
 
 class DataFlowTerminated(BaseException):
@@ -85,10 +86,10 @@ class DataFlowSequence(DataFlow):
     """
 
     def get_data(self):
-        """Create an infinite generator that iterate over the Sequence."""
-        while True:
-            for item in (self[i] for i in range(len(self))):
-                yield item
+        """Create a generator that iterate over the Sequence.
+        For infinite one, use RepeatedDataSequence"""
+        for item in (self[i] for i in range(len(self))):
+            yield item
 
     @abstractmethod
     def __getitem__(self, index):
@@ -143,7 +144,28 @@ class ProxyDataFlow(DataFlow):
         return self.ds.get_data()
 
 
-class DataFlowSequenceSlicer(DataFlowSequence, ProxyDataFlow):
+class ProxyDataFlowSequence(DataFlowSequence):
+    """
+    A DataFlowSequence proxy.
+    """
+
+    def __init__(self, ds):
+        """
+        Args:
+            ds (DataFlow): DataFlow to proxy.
+        """
+        self.ds = ds
+
+    def reset_state(self):
+        self.ds.reset_state()
+
+    def size(self):
+        return self.ds.size()
+
+    def __getitem__(self, index):
+        return self.ds[index]
+
+class DataFlowSequenceSlicer(ProxyDataFlowSequence):
     """
     A DataFlowSequence proxy, that can slice also if the provided input is slicable.
 
@@ -154,10 +176,9 @@ class DataFlowSequenceSlicer(DataFlowSequence, ProxyDataFlow):
     """
 
     def __init__(self, ds, slicing_i = None, slicing_n = None):
-        ProxyDataFlow.__init__(self,ds)
+        ProxyDataFlowSequence.__init__(self,ds)
         self.slicing_i = slicing_i
         self.slicing_n = slicing_n
-        assert IsSequence(self)
 
     def __getitem__(self, index):
         if None in [self.slicing_n, self.slicing_i]:
@@ -172,11 +193,5 @@ class DataFlowSequenceSlicer(DataFlowSequence, ProxyDataFlow):
             remainder_add = 1 if (self.ds.size() % self.slicing_n >= self.slicing_i) else 0
             return int(self.ds.size() / self.slicing_n) + remainder_add
 
-    def get_data(self):
-        """Create an infinite generator that iterate over the Sequence."""
-        while True:
-            for item in (self[i] for i in range(len(self))):
-                yield item
-
-def IsSequence(ds):
-    isinstance(ds, DataFlowSequence) or (hasattr(ds, '__getitem__') and hasattr(ds, '__len__'))
+def is_sequence(ds):
+    return isinstance(ds, DataFlowSequence) or (hasattr(ds, '__getitem__') and hasattr(ds, '__len__'))
