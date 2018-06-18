@@ -8,7 +8,8 @@ import itertools
 
 from tensorpack.utils.argtools import memoized, log_once
 from tensorpack.dataflow import (
-    imgaug, TestDataSpeed, PrefetchDataZMQ, MultiProcessMapDataZMQ,
+    imgaug, TestDataSpeed,
+    PrefetchDataZMQ, MultiProcessMapDataZMQ, MultiThreadMapData,
     MapDataComponent, DataFromList)
 from tensorpack.utils import logger
 # import tensorpack.utils.viz as tpviz
@@ -353,7 +354,13 @@ def get_train_dataflow():
             # tpviz.interactive_imshow(viz)
         return ret
 
-    ds = MultiProcessMapDataZMQ(ds, 10, preprocess)
+    if config.TRAINER == 'horovod':
+        ds = MultiThreadMapData(ds, 5, preprocess)
+        # MPI does not like fork(), but we use it for speed anyway.
+        # We only fork once here, which seems to work fine.
+        ds = PrefetchDataZMQ(ds, 1)
+    else:
+        ds = MultiProcessMapDataZMQ(ds, 10, preprocess)
     return ds
 
 

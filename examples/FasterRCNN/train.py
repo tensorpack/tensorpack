@@ -94,7 +94,7 @@ class DetectionModel(ModelDesc):
 
     def optimizer(self):
         lr = tf.get_variable('learning_rate', initializer=0.003, trainable=False)
-        tf.summary.scalar('learning_rate', lr)
+        tf.summary.scalar('learning_rate-summary', lr)
 
         factor = get_batch_factor()
         if factor != 1:
@@ -586,7 +586,15 @@ if __name__ == '__main__':
                 COCODetection(config.BASEDIR, 'val2014')   # Only to load the class names into caches
                 predict(pred, args.predict)
     else:
-        logger.set_logger_dir(args.logdir)
+        os.environ['TF_AUTOTUNE_THRESHOLD'] = '1'
+        is_horovod = config.TRAINER == 'horovod'
+        if is_horovod:
+            import horovod.tensorflow as hvd
+            hvd.init()
+            logger.info("Horovod Rank={}, Size={}".format(hvd.rank(), hvd.size()))
+
+        if not is_horovod or hvd.rank() == 0:
+            logger.set_logger_dir(args.logdir, 'd')
         print_config()
         factor = get_batch_factor()
         stepnum = config.STEPS_PER_EPOCH
@@ -600,27 +608,35 @@ if __name__ == '__main__':
             lr_schedule.append(
                 (steps * factor // stepnum, config.BASE_LR * mult))
 
+        callbacks = [
+            PeriodicCallback(
+                ModelSaver(max_to_keep=10, keep_checkpoint_every_n_hours=1),
+                every_k_epochs=20),
+            # linear warmup
+            ScheduledHyperParamSetter(
+                'learning_rate', warmup_schedule, interp='linear', step_based=True),
+            ScheduledHyperParamSetter('learning_rate', lr_schedule),
+            EvalCallback(),
+            PeakMemoryTracker(),
+            EstimatedTimeLeft(),
+        ]
+        if not is_horovod:
+            callbacks.extend([
+                GPUUtilizationTracker(),
+                SessionRunTimeout(60000),   # 1 minute timeout
+            ])
+
         cfg = TrainConfig(
             model=get_model(),
             data=QueueInput(get_train_dataflow()),
-            callbacks=[
-                PeriodicCallback(
-                    ModelSaver(max_to_keep=10, keep_checkpoint_every_n_hours=1),
-                    every_k_epochs=20),
-                # linear warmup
-                ScheduledHyperParamSetter(
-                    'learning_rate', warmup_schedule, interp='linear', step_based=True),
-                ScheduledHyperParamSetter('learning_rate', lr_schedule),
-                EvalCallback(),
-                GPUUtilizationTracker(),
-                PeakMemoryTracker(),
-                EstimatedTimeLeft(),
-                SessionRunTimeout(60000),   # 1 minute timeout
-            ],
+            callbacks=callbacks,
             steps_per_epoch=stepnum,
             max_epoch=config.LR_SCHEDULE[-1] * factor // stepnum,
             session_init=get_model_loader(args.load) if args.load else None,
         )
         # nccl mode gives the best speed
-        trainer = SyncMultiGPUTrainerReplicated(get_nr_gpu(), mode='nccl')
+        if is_horovod:
+            trainer = HorovodTrainer()
+        else:
+            trainer = SyncMultiGPUTrainerReplicated(get_nr_gpu(), mode='nccl')
         launch_train_with_config(cfg, trainer)

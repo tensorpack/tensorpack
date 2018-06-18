@@ -4,6 +4,7 @@
 import numpy as np
 
 # mode flags ---------------------
+TRAINER = 'replicated'  # options: 'horovod', 'replicated'
 MODE_MASK = True
 MODE_FPN = False
 
