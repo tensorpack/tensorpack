@@ -11,6 +11,7 @@ from termcolor import colored
 from collections import deque, defaultdict
 from six.moves import range, map
 import tqdm
+import os
 
 from .base import DataFlow, ProxyDataFlow, RNGDataFlow, DataFlowReentrantGuard
 from ..utils import logger
@@ -610,13 +611,16 @@ class CacheData(ProxyDataFlow):
     NOTE: The user should not stop the iterator before it has reached the end.
         Otherwise the cache may be incomplete.
     """
-    def __init__(self, ds, shuffle=False):
+    def __init__(self, ds, shuffle=False, storage_file=None):
         """
         Args:
             ds (DataFlow): input DataFlow.
             shuffle (bool): whether to shuffle the datapoints before producing them.
+            storage_file (string): file which stores the cache for re-using (potentially randomly augmented) data
+                                   between different runs
         """
         self.shuffle = shuffle
+        self.storage_file = storage_file
         self._guard = DataFlowReentrantGuard()
         super(CacheData, self).__init__(ds)
 
@@ -634,9 +638,20 @@ class CacheData(ProxyDataFlow):
                 for dp in self.buffer:
                     yield dp
             else:
-                for dp in self.ds.get_data():
-                    yield dp
-                    self.buffer.append(dp)
+                if self.storage_file is not None and os.path.isfile(self.storage_file):
+                    # file exists -> read cache from file
+                    logger.warn('ignoring incoming dataflow and reading cache instead from %s' % self.storage_file)
+                    self.buffer = np.load(self.storage_file)['buffer']
+                    for dp in self.buffer:
+                        yield dp
+                else:
+                    # generate buffer from incoming data
+                    for dp in self.ds.get_data():
+                        yield dp
+                        self.buffer.append(dp)
+
+                    if self.storage_file is not None:
+                        np.savez_compressed(self.storage_file, buffer=self.buffer)
 
 
 class PrintData(ProxyDataFlow):
