@@ -151,7 +151,7 @@ class BinaryILSVRC12(dataset.ILSVRC12Files):
             yield [jpeg, label]
 ds0 = BinaryILSVRC12('/path/to/ILSVRC/', 'train')
 ds1 = PrefetchDataZMQ(ds0, nr_proc=1)
-dftools.dump_dataflow_to_lmdb(ds1, '/path/to/ILSVRC-train.lmdb')
+dftools.LMDBDataWriter(ds1, '/path/to/ILSVRC-train.lmdb').serialize()
 ```
 The above script builds a DataFlow which produces jpeg-encoded ImageNet data.
 We store the jpeg string as a numpy array because the function `cv2.imdecode` later expect this format.
@@ -191,13 +191,13 @@ Then we add necessary transformations:
 
     ds = LMDBData(db, shuffle=False)
     ds = LocallyShuffleData(ds, 50000)
-    ds = LMDBDataPoint(ds)
+    ds = LMDBDataReader(ds)
     ds = MapDataComponent(ds, lambda x: cv2.imdecode(x, cv2.IMREAD_COLOR), 0)
     ds = AugmentImageComponent(ds, lots_of_augmentors)
     ds = BatchData(ds, 256)
 ```
 
-1. `LMDBDataPoint` deserialize the datapoints (from raw bytes to [jpeg bytes, label] -- what we dumped in `RawILSVRC12`)
+1. `LMDBDataReader` deserialize the datapoints (from raw bytes to [jpeg bytes, label] -- what we dumped in `RawILSVRC12`)
 2. Use OpenCV to decode the first component (jpeg bytes) into ndarray
 3. Apply augmentations to the ndarray
 
@@ -209,7 +209,7 @@ Both imdecode and the augmentors can be quite slow. We can parallelize them like
     ds = LMDBData(db, shuffle=False)
     ds = LocallyShuffleData(ds, 50000)
     ds = PrefetchData(ds, 5000, 1)
-    ds = LMDBDataPoint(ds)
+    ds = LMDBDataReader(ds)
     ds = MapDataComponent(ds, lambda x: cv2.imdecode(x, cv2.IMREAD_COLOR), 0)
     ds = AugmentImageComponent(ds, lots_of_augmentors)
     ds = PrefetchDataZMQ(ds, 25)

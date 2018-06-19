@@ -9,7 +9,7 @@ import numpy as np
 import argparse
 
 import bob.ap
-from tensorpack.dataflow import dftools, DataFlow, LMDBDataPoint
+from tensorpack.dataflow import dftools, DataFlow, LMDBDataReader
 from tensorpack.utils.argtools import memoized
 from tensorpack.utils.stats import OnlineMoments
 from tensorpack.utils import serialize, fs, logger
@@ -103,7 +103,7 @@ class RawTIMIT(DataFlow):
 
 
 def compute_mean_std(db, fname):
-    ds = LMDBDataPoint(db, shuffle=False)
+    ds = LMDBDataReader(db, shuffle=False)
     ds.reset_state()
     o = OnlineMoments()
     with get_tqdm(total=ds.size()) as bar:
@@ -133,6 +133,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if args.command == 'build':
         ds = RawTIMIT(args.dataset)
-        dftools.dump_dataflow_to_lmdb(ds, args.db)
+        dftools.LMDBDataWriter(ds, args.db).serialize()
     elif args.command == 'stat':
         compute_mean_std(args.db, args.output)
