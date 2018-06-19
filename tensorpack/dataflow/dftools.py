@@ -3,8 +3,11 @@
 
 
 import os
+import numpy as np
 import multiprocessing as mp
 from six.moves import range
+from abc import abstractmethod, ABCMeta
+import six
 
 from .base import DataFlow
 from ..utils import logger
@@ -13,7 +16,8 @@ from ..utils.concurrency import DIE
 from ..utils.serialize import dumps
 
 __all__ = ['dump_dataflow_to_process_queue',
-           'dump_dataflow_to_lmdb', 'dump_dataflow_to_tfrecord']
+           'dump_dataflow_to_lmdb', 'dump_dataflow_to_tfrecord',
+           'LMDBDataWriter', 'TfRecordDataWriter', 'NumpyDataWriter', 'HDF5DataWriter']
 
 
 def dump_dataflow_to_process_queue(df, size, nr_consumer):
@@ -67,72 +71,184 @@ def dump_dataflow_to_lmdb(df, lmdb_path, write_frequency=5000):
         lmdb_path (str): output path. Either a directory or a mdb file.
         write_frequency (int): the frequency to write back data to disk.
     """
-    assert isinstance(df, DataFlow), type(df)
-    isdir = os.path.isdir(lmdb_path)
-    if isdir:
-        assert not os.path.isfile(os.path.join(lmdb_path, 'data.mdb')), "LMDB file exists!"
-    else:
-        assert not os.path.isfile(lmdb_path), "LMDB file exists!"
-    df.reset_state()
-    db = lmdb.open(lmdb_path, subdir=isdir,
-                   map_size=1099511627776 * 2, readonly=False,
-                   meminit=False, map_async=True)    # need sync() at the end
-    try:
-        sz = df.size()
-    except NotImplementedError:
-        sz = 0
-    with get_tqdm(total=sz) as pbar:
-        idx = -1
-
-        # LMDB transaction is not exception-safe!
-        # although it has a context manager interface
-        txn = db.begin(write=True)
-        for idx, dp in enumerate(df.get_data()):
-            txn.put(u'{}'.format(idx).encode('ascii'), dumps(dp))
-            pbar.update()
-            if (idx + 1) % write_frequency == 0:
-                txn.commit()
-                txn = db.begin(write=True)
-        txn.commit()
-
-        keys = [u'{}'.format(k).encode('ascii') for k in range(idx + 1)]
-        with db.begin(write=True) as txn:
-            txn.put(b'__keys__', dumps(keys))
-
-        logger.info("Flushing database ...")
-        db.sync()
-    db.close()
+    serializer = LMDBDataWriter(df, lmdb_path, write_frequency)
+    serializer.serialize()
 
 
 def dump_dataflow_to_tfrecord(df, path):
     """
     Dump all datapoints of a Dataflow to a TensorFlow TFRecord file,
     using :func:`serialize.dumps` to serialize.
-
     Args:
-        df (DataFlow):
+        df (DataFlow): the DataFlow to dump.
         path (str): the output file path
     """
-    df.reset_state()
-    with tf.python_io.TFRecordWriter(path) as writer:
+    serializer = TfRecordDataWriter(df, path)
+    serializer.serialize()
+
+
+@six.add_metaclass(ABCMeta)
+class DataWriter(object):
+    """ Base class for all DataWriter"""
+
+    def __init__(self, df, filename):
+        """Summary
+
+        Args:
+            df (DataFlow): the DataFlow to dump.
+            path (str): the output file path
+        """
+        assert not os.path.isfile(filename)
+        self.filename = filename
+        assert isinstance(df, DataFlow), type(df)
+        self.df = df
+
         try:
-            sz = df.size()
+            self.size = df.size()
         except NotImplementedError:
-            sz = 0
-        with get_tqdm(total=sz) as pbar:
-            for dp in df.get_data():
-                writer.write(dumps(dp))
+            self.size = 0
+            logger.warn("Incoming data for serializer has size 0")
+
+    def begin(self):
+        logger.info("begin serializing ...")
+        self.df.reset_state()
+        self._begin()
+
+    def serialize(self):
+        self.begin()
+        with get_tqdm(total=self.size) as pbar:
+            for idx, dp in enumerate(self.df.get_data()):
+                self._put(idx, dp)
                 pbar.update()
+        self.commit()
+
+    def commit(self):
+        self._commit()
+        logger.info("finished serializing")
+
+    @abstractmethod
+    def _begin(self):
+        """
+        """
+
+    @abstractmethod
+    def _put(self, idx, dp):
+        """
+        Args:
+            idx (int): global index in dataflow (like loop-iterator index)
+            dp (list): actual datapoint
+        """
+
+    @abstractmethod
+    def _commit(self):
+        """
+        """
+
+
+class LMDBDataWriter(DataWriter):
+    """
+    Dump all datapoints of a Dataflow to a TensorFlow TFRecord file,
+    using :func:`serialize.dumps` to serialize.
+    """
+
+    def __init__(self, df, filename, write_frequency=5000):
+        """Summary
+
+        Args:
+            df (DataFlow): the DataFlow to dump.
+            lmdb_path (str): output path. Either a directory or a mdb file.
+            write_frequency (int): the frequency to write back data to disk.
+        """
+        super(LMDBDataWriter, self).__init__(df, filename)
+        self.write_frequency = write_frequency
+
+    def _begin(self):
+        self.db = lmdb.open(self.filename, subdir=False,
+                            map_size=1099511627776 * 2, readonly=False,
+                            meminit=False, map_async=True)    # need sync() at the end
+        self.txn = self.db.begin(write=True)
+        self.latest_idx = 0
+
+    def _put(self, idx, dp):
+        self.txn.put(u'{}'.format(idx).encode('ascii'), dumps(dp))
+        if (idx + 1) % self.write_frequency == 0:
+            self.txn.commit()
+            self.txn = self.db.begin(write=True)
+        self.latest_idx = idx
+
+    def _commit(self):
+        self.txn.commit()
+        keys = [u'{}'.format(k).encode('ascii') for k in range(self.latest_idx + 1)]
+        with self.db.begin(write=True) as txn:
+            txn.put(b'__keys__', dumps(keys))
+
+        logger.info("Flushing database ...")
+        self.db.sync()
+        self.db.close()
+
+
+class TfRecordDataWriter(DataWriter):
+    """
+    Dump all datapoints of a Dataflow to a TensorFlow TFRecord file,
+    using :func:`serialize.dumps` to serialize.
+    """
+    def _begin(self):
+        self.writer = tf.python_io.TFRecordWriter(self.filename)
+        self.writer.__enter__()
+
+    def _put(self, idx, dp):
+        self.writer.write(dumps(dp))
+
+    def _commit(self):
+        self.writer.__exit__(None, None, None)
+
+
+class NumpyDataWriter(DataWriter):
+    """
+    Dump all datapoints of a Dataflow to a Numpy file,
+    using :func:`serialize.dumps` to serialize.
+    """
+    def _begin(self):
+        self.buffer = []
+
+    def _put(self, idx, dp):
+        self.buffer.append(dumps(dp))
+
+    def _commit(self):
+        np.savez_compressed(self.filename, buffer=self.buffer)
+
+
+class HDF5DataWriter(DataWriter):
+    """
+    Dump all datapoints of a Dataflow to a HDF5 file,
+    using :func:`serialize.dumps` to serialize.
+    """
+    def _begin(self):
+        self.buffer = []
+        self.hf = h5py.File(self.filename, 'w')
+
+    def _put(self, idx, dp):
+        self.buffer.append(dumps(dp))
+
+    def _commit(self):
+        self.hf.create_dataset('dataset_1', data=self.buffer)
+
 
 
 from ..utils.develop import create_dummy_func  # noqa
 try:
+    import h5py
+except ImportError:
+    HDF5DataWriter = create_dummy_class('HDF5DataWriter', 'h5py')   # noqa
+try:
     import lmdb
 except ImportError:
     dump_dataflow_to_lmdb = create_dummy_func('dump_dataflow_to_lmdb', 'lmdb') # noqa
+    LMDBDataWriter = create_dummy_class('LMDBDataWriter', 'lmdb') # noqa
 
 try:
     import tensorflow as tf
 except ImportError:
     dump_dataflow_to_tfrecord = create_dummy_func(  # noqa
         'dump_dataflow_to_tfrecord', 'tensorflow')
+    TfRecordDataWriter = create_dummy_class('TfRecordDataWriter', 'tensorflow') # noqa

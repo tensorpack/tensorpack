@@ -620,7 +620,10 @@ class CacheData(ProxyDataFlow):
                                    between different runs
         """
         self.shuffle = shuffle
+        if storage_file is not None:
+            assert storage_file.endswith('.npz'), 'CacheData-storage file needs extension .npz but is %s' % storage_file
         self.storage_file = storage_file
+
         self._guard = DataFlowReentrantGuard()
         super(CacheData, self).__init__(ds)
 

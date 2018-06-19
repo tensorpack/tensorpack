@@ -87,3 +87,9 @@ target/
 
 .idea/
 *.diff
+
+# from tests
+tests/test.h5
+tests/test.lmdb
+tests/test.lmdb-lock
+tests/test.tfrecord

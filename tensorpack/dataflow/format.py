@@ -13,18 +13,21 @@ from ..utils.timer import timed_operation
 from ..utils.loadcaffe import get_caffe_pb
 from ..utils.serialize import loads
 from ..utils.argtools import log_once
+from ..utils.develop import log_deprecated
 from .base import RNGDataFlow, DataFlow, DataFlowReentrantGuard
 from .common import MapData
 
-__all__ = ['HDF5Data', 'LMDBData', 'LMDBDataDecoder', 'LMDBDataPoint',
-           'CaffeLMDB', 'SVMLightData', 'TFRecordData']
+__all__ = ['HDF5Data', 'LMDBData', 'LMDBDataDecoder',
+           'CaffeLMDB', 'SVMLightData',
+           'TFRecordData', 'LMDBDataPoint',
+           'TFRecordDataReader', 'NumpyDataReader', 'LMDBDataReader', 'HDF5DataReader']
 
 """
 Adapters for different data format.
 """
 
 
-class HDF5Data(RNGDataFlow):
+class HDF5DataReader(RNGDataFlow):
     """
     Zip data from different paths in an HDF5 file.
 
@@ -58,6 +61,13 @@ class HDF5Data(RNGDataFlow):
             self.rng.shuffle(idxs)
         for k in idxs:
             yield [dp[k] for dp in self.dps]
+
+
+class HDF5Data(HDF5DataReader):
+    """docstring for HDF5Data"""
+    def __init__(self, path):
+        super(HDF5Data, self).__init__(path)
+        log_deprecated("HDF5Data(path, ...", "Use HDF5DataReader(path, ...  instead.", "2099-10-10")
 
 
 class LMDBData(RNGDataFlow):
@@ -163,7 +173,7 @@ class LMDBDataDecoder(MapData):
         super(LMDBDataDecoder, self).__init__(lmdb_data, f)
 
 
-class LMDBDataPoint(MapData):
+class LMDBDataReader(MapData):
     """
     Read a LMDB file and produce deserialized datapoints.
     It **only** accepts the database produced by
@@ -173,11 +183,11 @@ class LMDBDataPoint(MapData):
     Example:
         .. code-block:: python
 
-            ds = LMDBDataPoint("/data/ImageNet.lmdb", shuffle=False)  # read and decode
+            ds = LMDBDataReader("/data/ImageNet.lmdb", shuffle=False)  # read and decode
 
             # The above is equivalent to:
             ds = LMDBData("/data/ImageNet.lmdb", shuffle=False)  # read
-            ds = LMDBDataPoint(ds)  # decode
+            ds = LMDBDataReader(ds)  # decode
             # Sometimes it makes sense to separate reading and decoding
             # to be able to make decoding parallel.
     """
@@ -194,13 +204,20 @@ class LMDBDataPoint(MapData):
         if isinstance(args[0], DataFlow):
             ds = args[0]
             assert len(args) == 1 and len(kwargs) == 0, \
-                "No more arguments are allowed if LMDBDataPoint is called with a LMDBData instance!"
+                "No more arguments are allowed if LMDBDataReader is called with a LMDBData instance!"
         else:
             ds = LMDBData(*args, **kwargs)
 
         def f(dp):
             return loads(dp[1])
-        super(LMDBDataPoint, self).__init__(ds, f)
+        super(LMDBDataReader, self).__init__(ds, f)
+
+
+class LMDBDataPoint(LMDBDataReader):
+    """docstring for LMDBDataPoint"""
+    def __init__(self, path):
+        super(LMDBDataPoint, self).__init__(path)
+        log_deprecated("LMDBDataPoint(path, ...", "Use LMDBDataReader(path, ...  instead.", "2099-10-10")
 
 
 def CaffeLMDB(lmdb_path, shuffle=True, keys=None):
@@ -266,11 +283,11 @@ class SVMLightData(RNGDataFlow):
             yield [self.X[id, :], self.y[id]]
 
 
-class TFRecordData(DataFlow):
+class TFRecordDataReader(DataFlow):
     """
     Produce datapoints from a TFRecord file, assuming each record is
     serialized by :func:`serialize.dumps`.
-    This class works with :func:`dftools.dump_dataflow_to_tfrecord`.
+    This class works with :func:`dftools.TfRecordDataWriter`.
     """
     def __init__(self, path, size=None):
         """
@@ -285,26 +302,62 @@ class TFRecordData(DataFlow):
     def size(self):
         if self._size:
             return self._size
-        return super(TFRecordData, self).size()
+        return super(TFRecordDataReader, self).size()
 
     def get_data(self):
         gen = tf.python_io.tf_record_iterator(self._path)
         for dp in gen:
             yield loads(dp)
 
+
+class TFRecordData(TFRecordDataReader):
+    """docstring for TFRecordData"""
+    def __init__(self, path):
+        super(TFRecordData, self).__init__(path)
+        log_deprecated("TFRecordData(path, ...", "Use TFRecordDataReader(path, ...  instead.", "2099-10-10")
+
+
+class NumpyDataReader(DataFlow):
+    """
+    Produce datapoints from a numpy file, assuming each record is
+    serialized by :func:`serialize.dumps`.
+    This class works with :func:`dftools.NumpyDataWriter`.
+    """
+    def __init__(self, path):
+        """
+        Args:
+            path (str): path to the numpy npz file
+        """
+        self._path = path
+        self.buffer = np.load(path)['buffer']
+
+    def size(self):
+        return len(self.buffer)
+
+    def get_data(self):
+        for dp in self.buffer:
+            yield loads(dp)
+
+
+
+
+
+
 from ..utils.develop import create_dummy_class   # noqa
 try:
     import h5py
 except ImportError:
     HDF5Data = create_dummy_class('HDF5Data', 'h5py')   # noqa
+    HDF5DataReader = create_dummy_class('HDF5DataReader', 'h5py')   # noqa
 
 try:
     import lmdb
 except ImportError:
-    for klass in ['LMDBData', 'LMDBDataDecoder', 'LMDBDataPoint', 'CaffeLMDB']:
+    for klass in ['LMDBData', 'LMDBDataDecoder', 'LMDBDataPoint', 'CaffeLMDB', 'LMDBDataReader']:
         globals()[klass] = create_dummy_class(klass, 'lmdb')
 
 try:
     import tensorflow as tf
 except ImportError:
     TFRecordData = create_dummy_class('TFRecordData', 'tensorflow')   # noqa
+    TFRecordDataReader = create_dummy_class('TFRecordDataReader', 'tensorflow')   # noqa
