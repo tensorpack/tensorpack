@@ -37,7 +37,11 @@ class HDF5DataReader(RNGDataFlow):
     Example:
         .. code-block:: python
 
-            ds = HDF5DataReader('mydataset.h5', ['label', 'image'])
+            # writing some data
+            ds = SomeData()
+            HDF5DataWriter(ds, 'mydataset.h5', ['label', 'image']).serialize()
+            # loading some data
+            ds2 = HDF5DataReader('mydataset.h5', ['label', 'image'])
     """
 # TODO
 
@@ -198,9 +202,9 @@ class LMDBDataReader(MapData):
 
             # writing some data
             ds = SomeData()
-            LMDBDataWriter(ds, 'test.lmdb').serialize()
+            LMDBDataWriter(ds, 'mydataset.lmdb').serialize()
             # loading some data
-            ds2 = LMDBDataReader('test.lmdb')
+            ds2 = LMDBDataReader('mydataset.lmdb')
     """
 
     def __init__(self, *args, **kwargs):
@@ -339,9 +343,9 @@ class TFRecordDataReader(DataFlow):
 
             # writing some data
             ds = SomeData()
-            TFRecordDataWriter(ds, 'test.tfrecord').serialize()
+            TFRecordDataWriter(ds, 'mydataset.tfrecord').serialize()
             # loading some data
-            ds2 = TFRecordDataReader('test.tfrecord', size=10)
+            ds2 = TFRecordDataReader('mydataset.tfrecord', size=10)
     """
     def __init__(self, path, size=None):
         """
@@ -385,9 +389,9 @@ class NumpyDataReader(RNGDataFlow):
 
             # writing some data
             ds = SomeData()
-            NumpyDataWriter(ds, 'test.npz').serialize()
+            NumpyDataWriter(ds, 'mydataset.npz').serialize()
             # loading some data
-            ds2 = NumpyDataReader('test.npz')
+            ds2 = NumpyDataReader('mydataset.npz')
     """
     def __init__(self, path, shuffle=True):
         """
