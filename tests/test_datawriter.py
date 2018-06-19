@@ -45,7 +45,6 @@ class SeededFakeDataFlow(DataFlow):
 class SerializerTest(unittest.TestCase):
 
     def run_write_read_test(self, file, writer, w_args, w_kwargs, reader, r_args, r_kwargs, error_msg):
-        print writer, w_args, w_kwargs, reader, r_args, r_kwargs
         try:
             delete_file_if_exists(file)
 
