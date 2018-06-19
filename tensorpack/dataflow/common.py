@@ -607,23 +607,16 @@ class CacheData(ProxyDataFlow):
     """
     Cache the first pass of a DataFlow completely in memory,
     and produce from the cache thereafter.
-
     NOTE: The user should not stop the iterator before it has reached the end.
         Otherwise the cache may be incomplete.
     """
-    def __init__(self, ds, shuffle=False, storage_file=None):
+    def __init__(self, ds, shuffle=False):
         """
         Args:
             ds (DataFlow): input DataFlow.
             shuffle (bool): whether to shuffle the datapoints before producing them.
-            storage_file (string): file which stores the cache for re-using (potentially randomly augmented) data
-                                   between different runs
         """
         self.shuffle = shuffle
-        if storage_file is not None:
-            assert storage_file.endswith('.npz'), 'CacheData-storage file needs extension .npz but is %s' % storage_file
-        self.storage_file = storage_file
-
         self._guard = DataFlowReentrantGuard()
         super(CacheData, self).__init__(ds)
 
@@ -641,20 +634,9 @@ class CacheData(ProxyDataFlow):
                 for dp in self.buffer:
                     yield dp
             else:
-                if self.storage_file is not None and os.path.isfile(self.storage_file):
-                    # file exists -> read cache from file
-                    logger.warn('ignoring incoming dataflow and reading cache instead from %s' % self.storage_file)
-                    self.buffer = np.load(self.storage_file)['buffer']
-                    for dp in self.buffer:
-                        yield dp
-                else:
-                    # generate buffer from incoming data
-                    for dp in self.ds.get_data():
-                        yield dp
-                        self.buffer.append(dp)
-
-                    if self.storage_file is not None:
-                        np.savez_compressed(self.storage_file, buffer=self.buffer)
+                for dp in self.ds.get_data():
+                    yield dp
+                    self.buffer.append(dp)
 
 
 class PrintData(ProxyDataFlow):
