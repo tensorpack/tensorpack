@@ -147,7 +147,7 @@ class DataWriter(object):
 
 class LMDBDataWriter(DataWriter):
     """
-    Dump all datapoints of a Dataflow to a TensorFlow TFRecord file,
+    Dump all datapoints of a Dataflow to a LMDB file,
     using :func:`serialize.dumps` to serialize.
 
     Example:
