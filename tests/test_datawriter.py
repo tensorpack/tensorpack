@@ -64,6 +64,26 @@ class SerializerTest(unittest.TestCase):
             self.assertEqual(dp_expected[0], dp_actual[0])
             self.assertTrue(np.allclose(dp_expected[1], dp_actual[1]))
 
+    def test_lmdb_old(self):
+        delete_file_if_exists('test.lmdb')
+
+        ds_expected = SeededFakeDataFlow()
+        dump_dataflow_to_lmdb_old(ds_expected, 'test.lmdb')
+
+        ds_actual = LMDBDataPoint('test.lmdb', shuffle=False)
+
+        ds_actual.reset_state()
+        ds_expected.reset_state()
+
+        # sanity check
+        ds_expected2 = SeededFakeDataFlow()
+        ds_expected2.reset_state()
+
+        for dp_expected, dp_actual, dp_expected2 in zip(ds_expected.get_data(), ds_actual.get_data(), ds_expected2.get_data()):
+            print(dp_expected[0], dp_actual[0], dp_expected2[0])
+            self.assertEqual(dp_expected[0], dp_actual[0])
+            self.assertTrue(np.allclose(dp_expected[1], dp_actual[1]))
+
     def test_tfrecord(self):
         delete_file_if_exists('test.tfrecord')
 
@@ -96,14 +116,13 @@ class SerializerTest(unittest.TestCase):
         delete_file_if_exists('test.h5')
 
         ds_expected = SeededFakeDataFlow()
-        serializer = HDF5DataWriter(ds_expected, 'test.h5')
+        serializer = HDF5DataWriter(ds_expected, 'test.h5', ['label', 'image'])
         serializer.serialize()
 
-        ds_actual = HDF5DataReader('test.h5', ['dataset_1'])
+        ds_actual = HDF5DataReader('test.h5', ['label', 'image'], shuffle=False)
         ds_actual.reset_state()
 
         for dp_expected, dp_actual in zip(ds_expected.get_data(), ds_actual.get_data()):
-            dp_actual = loads(dp_actual)
             self.assertEqual(dp_expected[0], dp_actual[0])
             self.assertTrue(np.allclose(dp_expected[1], dp_actual[1]))
 

@@ -17,7 +17,8 @@ from ..utils.serialize import dumps
 
 __all__ = ['dump_dataflow_to_process_queue',
            'dump_dataflow_to_lmdb', 'dump_dataflow_to_tfrecord',
-           'LMDBDataWriter', 'TfRecordDataWriter', 'NumpyDataWriter', 'HDF5DataWriter']
+           'LMDBDataWriter', 'TfRecordDataWriter', 'NumpyDataWriter', 'HDF5DataWriter',
+           'dump_dataflow_to_lmdb_old']
 
 
 def dump_dataflow_to_process_queue(df, size, nr_consumer):
@@ -85,6 +86,47 @@ def dump_dataflow_to_tfrecord(df, path):
     """
     serializer = TfRecordDataWriter(df, path)
     serializer.serialize()
+
+
+def dump_dataflow_to_lmdb_old(df, lmdb_path, write_frequency=5000):
+    """
+    JUST FOR HISTORY REASONS TO DEMONSTRATE THIS FUNCTIONS AS WELL DOES NOT PASS THE UNIT TEST
+    """
+    assert isinstance(df, DataFlow), type(df)
+    isdir = os.path.isdir(lmdb_path)
+    if isdir:
+        assert not os.path.isfile(os.path.join(lmdb_path, 'data.mdb')), "LMDB file exists!"
+    else:
+        assert not os.path.isfile(lmdb_path), "LMDB file exists!"
+    df.reset_state()
+    db = lmdb.open(lmdb_path, subdir=isdir,
+                   map_size=1099511627776 * 2, readonly=False,
+                   meminit=False, map_async=True)    # need sync() at the end
+    try:
+        sz = df.size()
+    except NotImplementedError:
+        sz = 0
+    with get_tqdm(total=sz) as pbar:
+        idx = -1
+
+        # LMDB transaction is not exception-safe!
+        # although it has a context manager interface
+        txn = db.begin(write=True)
+        for idx, dp in enumerate(df.get_data()):
+            txn.put(u'{}'.format(idx).encode('ascii'), dumps(dp))
+            pbar.update()
+            if (idx + 1) % write_frequency == 0:
+                txn.commit()
+                txn = db.begin(write=True)
+        txn.commit()
+
+        keys = [u'{}'.format(k).encode('ascii') for k in range(idx + 1)]
+        with db.begin(write=True) as txn:
+            txn.put(b'__keys__', dumps(keys))
+
+        logger.info("Flushing database ...")
+        db.sync()
+    db.close()
 
 
 @six.add_metaclass(ABCMeta)
@@ -223,15 +265,33 @@ class HDF5DataWriter(DataWriter):
     Dump all datapoints of a Dataflow to a HDF5 file,
     using :func:`serialize.dumps` to serialize.
     """
+
+    def __init__(self, df, filename, data_paths):
+        """Summary
+
+        Args:
+            df (DataFlow): the DataFlow to dump.
+            lmdb_path (str): output path. Either a directory or a mdb file.
+            write_frequency (int): the frequency to write back data to disk.
+        """
+        super(HDF5DataWriter, self).__init__(df, filename)
+        self.data_paths = data_paths
+
     def _begin(self):
-        self.buffer = []
+        self.buffer = dict()
+        for data_path in self.data_paths:
+            self.buffer[data_path] = []
         self.hf = h5py.File(self.filename, 'w')
 
     def _put(self, idx, dp):
-        self.buffer.append(dumps(dp))
+        assert len(dp) == len(self.data_paths)
+        for k, el in zip(self.data_paths, dp):
+            self.buffer[k].append(el)
 
     def _commit(self):
-        self.hf.create_dataset('dataset_1', data=self.buffer)
+        for data_path in self.data_paths:
+            self.hf.create_dataset(data_path, data=self.buffer[data_path])
+        self.hf.close()
 
 
 
@@ -244,6 +304,7 @@ try:
     import lmdb
 except ImportError:
     dump_dataflow_to_lmdb = create_dummy_func('dump_dataflow_to_lmdb', 'lmdb') # noqa
+    dump_dataflow_to_lmdb_old = create_dummy_func('dump_dataflow_to_lmdb_old', 'lmdb') # noqa
     LMDBDataWriter = create_dummy_class('LMDBDataWriter', 'lmdb') # noqa
 
 try:

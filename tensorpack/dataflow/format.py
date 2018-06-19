@@ -64,9 +64,9 @@ class HDF5DataReader(RNGDataFlow):
 
 
 class HDF5Data(HDF5DataReader):
-    """docstring for HDF5Data"""
+    """docstring for LMDBDataPoint"""
     def __init__(self, path):
-        super(HDF5Data, self).__init__(path)
+        super(LMDBDataPoint, self).__init__(path)
         log_deprecated("HDF5Data(path, ...", "Use HDF5DataReader(path, ...  instead.", "2099-10-10")
 
 
@@ -213,11 +213,45 @@ class LMDBDataReader(MapData):
         super(LMDBDataReader, self).__init__(ds, f)
 
 
-class LMDBDataPoint(LMDBDataReader):
-    """docstring for LMDBDataPoint"""
-    def __init__(self, path):
-        super(LMDBDataPoint, self).__init__(path)
-        log_deprecated("LMDBDataPoint(path, ...", "Use LMDBDataReader(path, ...  instead.", "2099-10-10")
+class LMDBDataPoint(MapData):
+    """
+    Read a LMDB file and produce deserialized datapoints.
+    It **only** accepts the database produced by
+    :func:`tensorpack.dataflow.dftools.dump_dataflow_to_lmdb`,
+    which uses :func:`tensorpack.utils.serialize.dumps` for serialization.
+
+    Example:
+        .. code-block:: python
+
+            ds = LMDBDataPoint("/data/ImageNet.lmdb", shuffle=False)  # read and decode
+
+            # The above is equivalent to:
+            ds = LMDBData("/data/ImageNet.lmdb", shuffle=False)  # read
+            ds = LMDBDataPoint(ds)  # decode
+            # Sometimes it makes sense to separate reading and decoding
+            # to be able to make decoding parallel.
+    """
+
+    def __init__(self, *args, **kwargs):
+        """
+        Args:
+            args, kwargs: Same as in :class:`LMDBData`.
+
+        In addition, args[0] can be a :class:`LMDBData` instance.
+        In this case args[0] has to be the only argument.
+        """
+        log_deprecated("LMDBDataPoint(path, ...", "Use LMDBDataPoint(path, ...  instead.", "2099-10-10")
+
+        if isinstance(args[0], DataFlow):
+            ds = args[0]
+            assert len(args) == 1 and len(kwargs) == 0, \
+                "No more arguments are allowed if LMDBDataPoint is called with a LMDBData instance!"
+        else:
+            ds = LMDBData(*args, **kwargs)
+
+        def f(dp):
+            return loads(dp[1])
+        super(LMDBDataPoint, self).__init__(ds, f)
 
 
 def CaffeLMDB(lmdb_path, shuffle=True, keys=None):
