@@ -149,6 +149,15 @@ class LMDBDataWriter(DataWriter):
     """
     Dump all datapoints of a Dataflow to a TensorFlow TFRecord file,
     using :func:`serialize.dumps` to serialize.
+
+    Example:
+        .. code-block:: python
+
+            # writing some data
+            ds = SomeData()
+            LMDBDataWriter(ds, 'test.lmdb').serialize()
+            # loading some data
+            ds2 = LMDBDataReader('test.lmdb')
     """
 
     def __init__(self, df, filename, write_frequency=5000):
@@ -191,6 +200,15 @@ class TFRecordDataWriter(DataWriter):
     """
     Dump all datapoints of a Dataflow to a TensorFlow TFRecord file,
     using :func:`serialize.dumps` to serialize.
+
+    Example:
+        .. code-block:: python
+
+            # writing some data
+            ds = SomeData()
+            TFRecordDataWriter(ds, 'test.tfrecord').serialize()
+            # loading some data
+            ds2 = TFRecordDataReader('test.tfrecord', size=10)
     """
     def _begin(self):
         self.writer = tf.python_io.TFRecordWriter(self.filename)
@@ -207,6 +225,15 @@ class NumpyDataWriter(DataWriter):
     """
     Dump all datapoints of a Dataflow to a Numpy file,
     using :func:`serialize.dumps` to serialize.
+
+    Example:
+        .. code-block:: python
+
+            # writing some data
+            ds = SomeData()
+            NumpyDataWriter(ds, 'test.npz').serialize()
+            # loading some data
+            ds2 = NumpyDataReader('test.npz')
     """
     def _begin(self):
         self.buffer = []
@@ -222,6 +249,15 @@ class HDF5DataWriter(DataWriter):
     """
     Dump all datapoints of a Dataflow to a HDF5 file,
     using :func:`serialize.dumps` to serialize.
+
+    Example:
+        .. code-block:: python
+
+            # writing some data
+            ds = SomeData()
+            HDF5DataWriter(ds, 'test.h5', ['label', 'image']).serialize()
+            # loading some data
+            ds2 = HDF5DataReader('test.h5', ['label', 'image'])
     """
 
     def __init__(self, df, filename, data_paths):
@@ -253,7 +289,7 @@ class HDF5DataWriter(DataWriter):
 
 
 
-from ..utils.develop import create_dummy_func  # noqa
+from ..utils.develop import create_dummy_func, create_dummy_class  # noqa
 try:
     import h5py
 except ImportError:

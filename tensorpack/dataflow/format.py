@@ -33,6 +33,11 @@ class HDF5DataReader(RNGDataFlow):
 
     Warning:
         The current implementation will load all data into memory. (TODO)
+
+    Example:
+        .. code-block:: python
+
+            ds = HDF5DataReader('mydataset.h5', ['label', 'image'])
     """
 # TODO
 
@@ -190,6 +195,12 @@ class LMDBDataReader(MapData):
             ds = LMDBDataReader(ds)  # decode
             # Sometimes it makes sense to separate reading and decoding
             # to be able to make decoding parallel.
+
+            # writing some data
+            ds = SomeData()
+            LMDBDataWriter(ds, 'test.lmdb').serialize()
+            # loading some data
+            ds2 = LMDBDataReader('test.lmdb')
     """
 
     def __init__(self, *args, **kwargs):
@@ -322,6 +333,15 @@ class TFRecordDataReader(DataFlow):
     Produce datapoints from a TFRecord file, assuming each record is
     serialized by :func:`serialize.dumps`.
     This class works with :func:`dftools.TfRecordDataWriter`.
+
+    Example:
+        .. code-block:: python
+
+            # writing some data
+            ds = SomeData()
+            TFRecordDataWriter(ds, 'test.tfrecord').serialize()
+            # loading some data
+            ds2 = TFRecordDataReader('test.tfrecord', size=10)
     """
     def __init__(self, path, size=None):
         """
@@ -351,26 +371,43 @@ class TFRecordData(TFRecordDataReader):
         log_deprecated("TFRecordData(path, ...", "Use TFRecordDataReader(path, ...  instead.", "2099-10-10")
 
 
-class NumpyDataReader(DataFlow):
+class NumpyDataReader(RNGDataFlow):
     """
     Produce datapoints from a numpy file, assuming each record is
     serialized by :func:`serialize.dumps`.
     This class works with :func:`dftools.NumpyDataWriter`.
+
+    Warning:
+        The current implementation will load all data into memory. (TODO)
+
+    Example:
+        .. code-block:: python
+
+            # writing some data
+            ds = SomeData()
+            NumpyDataWriter(ds, 'test.npz').serialize()
+            # loading some data
+            ds2 = NumpyDataReader('test.npz')
     """
-    def __init__(self, path):
+    def __init__(self, path, shuffle=True):
         """
         Args:
             path (str): path to the numpy npz file
         """
         self._path = path
+        self.shuffle = shuffle
         self.buffer = np.load(path)['buffer']
 
     def size(self):
         return len(self.buffer)
 
     def get_data(self):
-        for dp in self.buffer:
-            yield loads(dp)
+        idxs = np.arange(self.size())
+        if self.shuffle:
+            self.rng.shuffle(idxs)
+
+        for id in idxs:
+            yield loads(self.buffer[id])
 
 
 
