@@ -26,7 +26,7 @@ class GPUUtilizationTracker(Callback):
     within the epoch (the trigger_epoch time was not included),
     and write average utilization to monitors.
 
-    This callback creates a process, therefore it cannot be used with MPI.
+    This callback creates a process, therefore it's not safe to be used with MPI.
     """
 
     _chief_only = False
@@ -53,7 +53,6 @@ class GPUUtilizationTracker(Callback):
         assert len(self._devices), "[GPUUtilizationTracker] No GPU device given!"
 
     def _before_train(self):
-        assert 'OMPI_COMM_WORLD_SIZE' not in os.environ, "GPUUtilizationTracker cannot be used under MPI!"
         self._evt = mp.Event()
         self._stop_evt = mp.Event()
         self._queue = mp.Queue()

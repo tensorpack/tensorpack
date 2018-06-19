@@ -356,9 +356,7 @@ def get_train_dataflow():
 
     if config.TRAINER == 'horovod':
         ds = MultiThreadMapData(ds, 5, preprocess)
-        # MPI does not like fork(), but we use it for speed anyway.
-        # We only fork once here, which seems to work fine.
-        ds = PrefetchDataZMQ(ds, 1)
+        # MPI does not like fork()
     else:
         ds = MultiProcessMapDataZMQ(ds, 10, preprocess)
     return ds
@@ -374,7 +372,8 @@ def get_eval_dataflow():
         assert im is not None, fname
         return im
     ds = MapDataComponent(ds, f, 0)
-    ds = PrefetchDataZMQ(ds, 1)
+    if config.TRAINER != 'horovod':
+        ds = PrefetchDataZMQ(ds, 1)
     return ds
 
 

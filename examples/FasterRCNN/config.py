@@ -5,6 +5,7 @@ import numpy as np
 
 # mode flags ---------------------
 TRAINER = 'replicated'  # options: 'horovod', 'replicated'
+NUM_GPUS = None         # by default, will be set from code
 MODE_MASK = True
 MODE_FPN = False
 

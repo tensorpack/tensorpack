@@ -12,6 +12,10 @@ import numpy as np
 import json
 import six
 import tensorflow as tf
+try:
+    import horovod.tensorflow as hvd
+except ImportError:
+    pass
 
 assert six.PY3, "FasterRCNN requires Python 3!"
 
@@ -21,7 +25,7 @@ from tensorpack.tfutils.scope_utils import under_name_scope
 from tensorpack.tfutils import optimizer
 from tensorpack.tfutils.common import get_tf_version_number
 import tensorpack.utils.viz as tpviz
-from tensorpack.utils.gpu import get_nr_gpu
+from tensorpack.utils.gpu import get_num_gpu
 
 
 from coco import COCODetection
@@ -45,12 +49,6 @@ from common import print_config
 from eval import (
     eval_coco, detect_one_image, print_evaluation_scores, DetectionResult)
 import config
-
-
-def get_batch_factor():
-    nr_gpu = get_nr_gpu()
-    assert nr_gpu in [1, 2, 4, 8], nr_gpu
-    return 8 // nr_gpu
 
 
 def get_model_output_names():
@@ -96,13 +94,12 @@ class DetectionModel(ModelDesc):
         lr = tf.get_variable('learning_rate', initializer=0.003, trainable=False)
         tf.summary.scalar('learning_rate-summary', lr)
 
-        factor = get_batch_factor()
+        factor = config.NUM_GPUS / 8.
         if factor != 1:
-            lr = lr / float(factor)
-            opt = tf.train.MomentumOptimizer(lr, 0.9)
-            opt = optimizer.AccumGradOptimizer(opt, factor)
-        else:
-            opt = tf.train.MomentumOptimizer(lr, 0.9)
+            lr = lr * factor
+        opt = tf.train.MomentumOptimizer(lr, 0.9)
+        if config.NUM_GPUS < 8:
+            opt = optimizer.AccumGradOptimizer(opt, 8 // config.NUM_GPUS)
         return opt
 
     def fastrcnn_training(self, image,
@@ -522,6 +519,7 @@ class EvalCallback(Callback):
         interval = self.trainer.max_epoch // (EVAL_TIMES + 1)
         self.epochs_to_eval = set([interval * k for k in range(1, EVAL_TIMES + 1)])
         self.epochs_to_eval.add(self.trainer.max_epoch)
+        logger.info("[EvalCallback] Will evaluate at epoch " + str(sorted(self.epochs_to_eval)))
 
     def _eval(self):
         all_results = eval_coco(self.df, lambda img: detect_one_image(img, self.pred))
@@ -542,10 +540,25 @@ class EvalCallback(Callback):
             self._eval()
 
 
+def init_config():
+    if config.TRAINER == 'horovod':
+        ngpu = hvd.size()
+    else:
+        ngpu = get_num_gpu()
+    assert ngpu % 8 == 0 or 8 % ngpu == 0, ngpu
+    if config.NUM_GPUS is None:
+        config.NUM_GPUS = ngpu
+    else:
+        if config.TRAINER == 'horovod':
+            assert config.NUM_GPUS == ngpu
+        else:
+            assert config.NUM_GPUS <= ngpu
+    print_config()
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gpu', help='comma separated list of GPU(s) to use. Default to all availalbe ones')
-    parser.add_argument('--load', help='load model for evaluation or training')
+    parser.add_argument('--load', help='load a model for evaluation or training')
     parser.add_argument('--logdir', help='log directory', default='train_log/maskrcnn')
     parser.add_argument('--datadir', help='override config.BASEDIR')
     parser.add_argument('--visualize', action='store_true', help='visualize intermediate results')
@@ -556,9 +569,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if args.datadir:
         config.BASEDIR = args.datadir
-
-    if args.gpu:
-        os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
     if args.visualize or args.evaluate or args.predict:
         # autotune is too slow for inference
@@ -589,14 +599,16 @@ if __name__ == '__main__':
         os.environ['TF_AUTOTUNE_THRESHOLD'] = '1'
         is_horovod = config.TRAINER == 'horovod'
         if is_horovod:
-            import horovod.tensorflow as hvd
             hvd.init()
             logger.info("Horovod Rank={}, Size={}".format(hvd.rank(), hvd.size()))
+        else:
+            assert 'OMPI_COMM_WORLD_SIZE' not in os.environ
 
         if not is_horovod or hvd.rank() == 0:
             logger.set_logger_dir(args.logdir, 'd')
-        print_config()
-        factor = get_batch_factor()
+
+        init_config()
+        factor = 8. / config.NUM_GPUS
         stepnum = config.STEPS_PER_EPOCH
 
         # warmup is step based, lr is epoch based
@@ -607,6 +619,8 @@ if __name__ == '__main__':
             mult = 0.1 ** (idx + 1)
             lr_schedule.append(
                 (steps * factor // stepnum, config.BASE_LR * mult))
+        logger.info("Warmup Up Schedule: " + str(warmup_schedule))
+        logger.info("LR Schedule: " + str(lr_schedule))
 
         callbacks = [
             PeriodicCallback(
@@ -619,12 +633,10 @@ if __name__ == '__main__':
             EvalCallback(),
             PeakMemoryTracker(),
             EstimatedTimeLeft(),
+            SessionRunTimeout(60000).set_chief_only(True),   # 1 minute timeout
         ]
         if not is_horovod:
-            callbacks.extend([
-                GPUUtilizationTracker(),
-                SessionRunTimeout(60000),   # 1 minute timeout
-            ])
+            callbacks.append(GPUUtilizationTracker())
 
         cfg = TrainConfig(
             model=get_model(),
@@ -634,9 +646,10 @@ if __name__ == '__main__':
             max_epoch=config.LR_SCHEDULE[-1] * factor // stepnum,
             session_init=get_model_loader(args.load) if args.load else None,
         )
-        # nccl mode gives the best speed
         if is_horovod:
+            # horovod mode has the best speed for this model
             trainer = HorovodTrainer()
         else:
-            trainer = SyncMultiGPUTrainerReplicated(get_nr_gpu(), mode='nccl')
+            # nccl mode has better speed than cpu mode
+            trainer = SyncMultiGPUTrainerReplicated(config.NUM_GPUS, mode='nccl')
         launch_train_with_config(cfg, trainer)
