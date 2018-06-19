@@ -11,7 +11,6 @@ from termcolor import colored
 from collections import deque, defaultdict
 from six.moves import range, map
 import tqdm
-import os
 
 from .base import DataFlow, ProxyDataFlow, RNGDataFlow, DataFlowReentrantGuard
 from ..utils import logger
