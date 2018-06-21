@@ -128,6 +128,7 @@ class Model(ImageNetModel):
                       .apply(nonlin)
                       .FullyConnected('fct', 1000, use_bias=True)())
         add_param_summary(('.*/W', ['histogram', 'rms']))
+        tf.nn.softmax(logits, name='output')  # for prediction
         return logits
 
     def optimizer(self):
