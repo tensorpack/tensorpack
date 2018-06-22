@@ -108,7 +108,7 @@ if __name__ == '__main__':
     ds = CenterSquareResize(ds, index=0)
     if args.create:
         ds = ImageEncode(ds, index=0)
-        dftools.dump_dataflow_to_lmdb(ds, args.lmdb)
+        dftools.LMDBDataWriter(ds, args.lmdb).serialize()
     if args.debug:
         ds.reset_state()
         for i in ds.get_data():
