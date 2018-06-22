@@ -255,7 +255,7 @@ class LMDBDataPoint(MapData):
         In addition, args[0] can be a :class:`LMDBData` instance.
         In this case args[0] has to be the only argument.
         """
-        log_deprecated("LMDBDataPoint(path, ...", "Use LMDBDataPoint(path, ...  instead.", "2099-10-10")
+        log_deprecated("LMDBDataPoint(path, ...", "Use LMDBDataReader(path, ...  instead.", "2099-10-10")
 
         if isinstance(args[0], DataFlow):
             ds = args[0]
