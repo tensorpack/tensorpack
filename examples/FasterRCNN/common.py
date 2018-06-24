@@ -2,6 +2,7 @@
 # File: common.py
 
 import numpy as np
+import six
 import cv2
 
 from tensorpack.dataflow import RNGDataFlow
@@ -137,6 +138,16 @@ def filter_boxes_inside_shape(boxes, shape):
         (boxes[:, 2] <= w) &
         (boxes[:, 3] <= h))[0]
     return indices, boxes[indices, :]
+
+
+def write_config_from_args(configs):
+    for cfg in configs:
+        k, v = cfg.split('=', maxsplit=1)
+        assert k in dir(config), "Unknown config key: {}".format(k)
+        oldv = getattr(config, k)
+        if not isinstance(oldv, six.text_type):
+            v = eval(v)
+        setattr(config, k, v)
 
 
 def print_config():

@@ -20,9 +20,11 @@ CLASS_NAMES = []  # NUM_CLASS strings. Needs to be populated later by data loade
 RESNET_NUM_BLOCK = [3, 4, 6, 3]     # for resnet50
 # RESNET_NUM_BLOCK = [3, 4, 23, 3]    # for resnet101
 FREEZE_AFFINE = False   # do not train affine parameters inside BN
-# Use a base model with TF-preferred pad mode
+
+# Use a base model with TF-preferred pad mode,
 # which may pad more pixels on right/bottom than top/left.
-# This is probably not good for alignment but we'll have to live with it.
+# TF_PAD_MODE=False is better for performance but will require a different base model.
+# See https://github.com/tensorflow/tensorflow/issues/18213
 TF_PAD_MODE = True
 
 # schedule -----------------------
@@ -41,7 +43,7 @@ MAX_SIZE = 1333
 # anchors -------------------------
 ANCHOR_STRIDE = 16
 ANCHOR_STRIDES_FPN = (4, 8, 16, 32, 64)  # strides for each FPN level. Must be the same length as ANCHOR_SIZES
-FPN_RESOLUTION_REQUIREMENT = 32    # image size into the backbone has to be multiple of this number
+FPN_RESOLUTION_REQUIREMENT = 32          # image size into the backbone has to be multiple of this number
 ANCHOR_SIZES = (32, 64, 128, 256, 512)   # sqrtarea of the anchor box
 ANCHOR_RATIOS = (0.5, 1., 2.)
 NUM_ANCHOR = len(ANCHOR_SIZES) * len(ANCHOR_RATIOS)

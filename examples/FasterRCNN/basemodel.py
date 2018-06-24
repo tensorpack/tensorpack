@@ -146,4 +146,5 @@ def resnet_fpn_backbone(image, num_blocks, freeze_c2=True):
         c4 = resnet_group('group2', c3, resnet_bottleneck, 256, num_blocks[2], 2)
         c5 = resnet_group('group3', c4, resnet_bottleneck, 512, num_blocks[3], 2)
     # 32x downsampling up to now
+    # size of c5: ceil(input/32)
     return c2, c3, c4, c5

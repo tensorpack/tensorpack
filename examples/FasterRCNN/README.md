@@ -57,7 +57,6 @@ MaskRCNN results contain both bbox and segm mAP.
 |Backbone|`FASTRCNN_BATCH`|resolution |schedule|mAP (bbox/segm)|Time          |
 |   -    |    -           |    -      |   -    |   -           |   -          |
 |R50-C4  |64              |(600, 1024)|280k    |33.1           |18h on 8 V100s|
-|R50-C4  |512             |(800, 1333)|280k    |35.6           |55h on 8 P100s|
 |R50-C4  |512             |(800, 1333)|360k    |36.6           |49h on 8 V100s|
 |R50-FPN |512             |(800, 1333)|360k    |37.5           |28h on 8 V100s|
 |R50-C4  |256             |(800, 1333)|280k    |36.8/32.1      |39h on 8 P100s|
@@ -69,7 +68,6 @@ MaskRCNN results contain both bbox and segm mAP.
 The two R50-C4 360k models have the same configuration __and mAP__
 as the `R50-C4-2x` entries in
 [Detectron Model Zoo](https://github.com/facebookresearch/Detectron/blob/master/MODEL_ZOO.md#end-to-end-faster--mask-r-cnn-baselines).
-<!-- So far this is the only public TensorFlow implementation that can reproduce mAP in Detectron. -->
 The other models listed here do not correspond to any configurations in Detectron.
 
 ## Notes

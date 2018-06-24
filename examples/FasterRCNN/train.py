@@ -45,7 +45,7 @@ from data import (
 from viz import (
     draw_annotation, draw_proposal_recall,
     draw_predictions, draw_final_outputs)
-from common import print_config
+from common import print_config, write_config_from_args
 from eval import (
     eval_coco, detect_one_image, print_evaluation_scores, DetectionResult)
 import config
@@ -332,6 +332,14 @@ class ResNetFPNModel(DetectionModel):
         c2345 = resnet_fpn_backbone(image, config.RESNET_NUM_BLOCK)
         p23456 = fpn_model('fpn', c2345)
 
+        # images are padded for p5, which are too large for p2-p4
+        for i, stride in enumerate(config.ANCHOR_STRIDES_FPN[:3]):
+            pi = p23456[i]
+            target_shape = tf.to_int32(tf.ceil(tf.to_float(image_shape2d) * (1.0 / stride)))
+            p23456[i] = tf.slice(pi, [0, 0, 0, 0],
+                                 tf.concat([[-1, -1], target_shape], axis=0))
+            p23456[i].set_shape([1, pi.shape[1], None, None])
+
         # Multi-Level RPN Proposals
         multilevel_proposals = []
         rpn_loss_collection = []
@@ -429,8 +437,7 @@ class ResNetFPNModel(DetectionModel):
                 image_shape2d, rcnn_boxes, fastrcnn_label_logits, fastrcnn_box_logits)
             if config.MODE_MASK:
                 # Cascade inference needs roi transform with refined boxes.
-                roi_feature_maskrcnn = multilevel_roi_align(
-                    p23456[:4], final_boxes, 14)
+                roi_feature_maskrcnn = multilevel_roi_align(p23456[:4], final_boxes, 14)
                 mask_logits = maskrcnn_upXconv_head(
                     'maskrcnn', roi_feature_maskrcnn, config.NUM_CLASS, 4)   # #fg x #cat x 28 x 28
                 indices = tf.stack([tf.range(tf.size(final_labels)), tf.to_int32(final_labels) - 1], axis=1)
@@ -560,15 +567,16 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--load', help='load a model for evaluation or training')
     parser.add_argument('--logdir', help='log directory', default='train_log/maskrcnn')
-    parser.add_argument('--datadir', help='override config.BASEDIR')
     parser.add_argument('--visualize', action='store_true', help='visualize intermediate results')
     parser.add_argument('--evaluate', help="Run evaluation on COCO. "
                                            "This argument is the path to the output json evaluation file")
     parser.add_argument('--predict', help="Run prediction on a given image. "
                                           "This argument is the path to the input image file")
+    parser.add_argument('--config', help="A list of key=value to overwrite those defined in config.py",
+                        nargs='+')
+
     args = parser.parse_args()
-    if args.datadir:
-        config.BASEDIR = args.datadir
+    write_config_from_args(args.config)
 
     if args.visualize or args.evaluate or args.predict:
         # autotune is too slow for inference
@@ -619,8 +627,8 @@ if __name__ == '__main__':
             mult = 0.1 ** (idx + 1)
             lr_schedule.append(
                 (steps * factor // stepnum, config.BASE_LR * mult))
-        logger.info("Warmup Up Schedule: " + str(warmup_schedule))
-        logger.info("LR Schedule: " + str(lr_schedule))
+        logger.info("Warm Up Schedule (steps, value): " + str(warmup_schedule))
+        logger.info("LR Schedule (epochs, value): " + str(lr_schedule))
 
         callbacks = [
             PeriodicCallback(
