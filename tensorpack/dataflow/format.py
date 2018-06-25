@@ -190,6 +190,7 @@ class LMDBDataPoint(MapData):
         In addition, args[0] can be a :class:`LMDBData` instance.
         In this case args[0] has to be the only argument.
         """
+        # TODO mark deprecated
 
         if isinstance(args[0], DataFlow):
             ds = args[0]
@@ -268,19 +269,22 @@ class SVMLightData(RNGDataFlow):
 
 class TFRecordData(DataFlow):
     """
-    Produce datapoints from a TFRecord file, assuming each record is
-    serialized by :func:`serialize.dumps`.
+    Produce datapoints from a TFRecord file, and each record is decoded by `decoder`.
     This class works with :func:`dftools.dump_dataflow_to_tfrecord`.
     """
-    def __init__(self, path, size=None):
+    def __init__(self, path, size=None, decoder=None):
         """
         Args:
             path (str): path to the TFRecord file
             size (int): total number of records, because this metadata is not
                 stored in the TFRecord file.
+            decoder (str -> datapoints): by default to `tensorpack.utils.serialize.loads`.
         """
         self._path = path
         self._size = int(size)
+        if decoder is None:
+            decoder = loads
+        self._decoder = decoder
 
     def size(self):
         if self._size:
@@ -290,7 +294,7 @@ class TFRecordData(DataFlow):
     def get_data(self):
         gen = tf.python_io.tf_record_iterator(self._path)
         for dp in gen:
-            yield loads(dp)
+            yield self._decoder(dp)
 
 from ..utils.develop import create_dummy_class   # noqa
 try:
