@@ -270,7 +270,6 @@ class SVMLightData(RNGDataFlow):
 class TFRecordData(DataFlow):
     """
     Produce datapoints from a TFRecord file, and each record is decoded by `decoder`.
-    This class works with :func:`dftools.dump_dataflow_to_tfrecord`.
     """
     def __init__(self, path, size=None, decoder=None):
         """
