@@ -20,14 +20,14 @@ from .common import MapData
 __all__ = ['HDF5Data', 'LMDBData', 'LMDBDataDecoder',
            'CaffeLMDB', 'SVMLightData',
            'TFRecordData', 'LMDBDataPoint',
-           'TFRecordDataReader', 'NumpyDataReader', 'LMDBDataReader', 'HDF5DataReader']
+           'TFRecordDataReader', 'NumpyDataReader']
 
 """
 Adapters for different data format.
 """
 
 
-class HDF5DataReader(RNGDataFlow):
+class HDF5Data(RNGDataFlow):
     """
     Zip data from different paths in an HDF5 file.
 
@@ -39,11 +39,10 @@ class HDF5DataReader(RNGDataFlow):
 
             # writing some data
             ds = SomeData()
-            HDF5DataWriter(ds, 'mydataset.h5', ['label', 'image']).serialize()
+            HDF5DataWriter('mydataset.h5').save(ds, ['label', 'image'])
             # loading some data
-            ds2 = HDF5DataReader('mydataset.h5', ['label', 'image'])
+            ds2 = HDF5Data('mydataset.h5').load(['label', 'image'])
     """
-# TODO
 
     def __init__(self, filename, data_paths, shuffle=True):
         """
@@ -70,13 +69,6 @@ class HDF5DataReader(RNGDataFlow):
             self.rng.shuffle(idxs)
         for k in idxs:
             yield [dp[k] for dp in self.dps]
-
-
-class HDF5Data(HDF5DataReader):
-    """docstring for LMDBDataPoint"""
-    def __init__(self, path):
-        super(LMDBDataPoint, self).__init__(path)
-        log_deprecated("HDF5Data(path, ...", "Use HDF5DataReader(path, ...  instead.", "2099-10-10")
 
 
 class LMDBData(RNGDataFlow):
@@ -182,52 +174,6 @@ class LMDBDataDecoder(MapData):
         super(LMDBDataDecoder, self).__init__(lmdb_data, f)
 
 
-class LMDBDataReader(MapData):
-    """
-    Read a LMDB file and produce deserialized datapoints.
-    It **only** accepts the database produced by
-    :func:`tensorpack.dataflow.dftools.dump_dataflow_to_lmdb`,
-    which uses :func:`tensorpack.utils.serialize.dumps` for serialization.
-
-    Example:
-        .. code-block:: python
-
-            ds = LMDBDataReader("/data/ImageNet.lmdb", shuffle=False)  # read and decode
-
-            # The above is equivalent to:
-            ds = LMDBData("/data/ImageNet.lmdb", shuffle=False)  # read
-            ds = LMDBDataReader(ds)  # decode
-            # Sometimes it makes sense to separate reading and decoding
-            # to be able to make decoding parallel.
-
-            # writing some data
-            ds = SomeData()
-            LMDBDataWriter(ds, 'mydataset.lmdb').serialize()
-            # loading some data
-            ds2 = LMDBDataReader('mydataset.lmdb')
-    """
-
-    def __init__(self, *args, **kwargs):
-        """
-        Args:
-            args, kwargs: Same as in :class:`LMDBData`.
-
-        In addition, args[0] can be a :class:`LMDBData` instance.
-        In this case args[0] has to be the only argument.
-        """
-
-        if isinstance(args[0], DataFlow):
-            ds = args[0]
-            assert len(args) == 1 and len(kwargs) == 0, \
-                "No more arguments are allowed if LMDBDataReader is called with a LMDBData instance!"
-        else:
-            ds = LMDBData(*args, **kwargs)
-
-        def f(dp):
-            return loads(dp[1])
-        super(LMDBDataReader, self).__init__(ds, f)
-
-
 class LMDBDataPoint(MapData):
     """
     Read a LMDB file and produce deserialized datapoints.
@@ -255,8 +201,6 @@ class LMDBDataPoint(MapData):
         In addition, args[0] can be a :class:`LMDBData` instance.
         In this case args[0] has to be the only argument.
         """
-        log_deprecated("LMDBDataPoint(path, ...", "Use LMDBDataReader(path, ...  instead.", "2099-10-10")
-
         if isinstance(args[0], DataFlow):
             ds = args[0]
             assert len(args) == 1 and len(kwargs) == 0, \
@@ -343,9 +287,9 @@ class TFRecordDataReader(DataFlow):
 
             # writing some data
             ds = SomeData()
-            TFRecordDataWriter(ds, 'mydataset.tfrecord').serialize()
+            TFRecordDataWriter('mydataset.tfrecord').save(ds)
             # loading some data
-            ds2 = TFRecordDataReader('mydataset.tfrecord', size=10)
+            ds2 = TFRecordDataReader('mydataset.tfrecord').load(size=10)
     """
     def __init__(self, path, size=None):
         """
@@ -389,9 +333,9 @@ class NumpyDataReader(RNGDataFlow):
 
             # writing some data
             ds = SomeData()
-            NumpyDataWriter(ds, 'mydataset.npz').serialize()
+            NumpyDataSerializer('mydataset.npz').serialize(ds)
             # loading some data
-            ds2 = NumpyDataReader('mydataset.npz')
+            ds2 = NumpyDataSerializer('mydataset.npz').load()
     """
     def __init__(self, path, shuffle=True):
         """
