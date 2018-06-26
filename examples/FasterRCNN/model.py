@@ -306,7 +306,7 @@ def sample_fast_rcnn_targets(boxes, gt_boxes, gt_labels):
     ret_labels = tf.concat(
         [tf.gather(gt_labels, fg_inds_wrt_gt),
          tf.zeros_like(bg_inds, dtype=tf.int64)], axis=0)
-    # stop the gradient -- they are meant to be ground-truth
+    # stop the gradient -- they are meant to be training targets
     return tf.stop_gradient(ret_boxes, name='sampled_proposal_boxes'), \
         tf.stop_gradient(ret_labels, name='sampled_labels'), \
         tf.stop_gradient(fg_inds_wrt_gt)

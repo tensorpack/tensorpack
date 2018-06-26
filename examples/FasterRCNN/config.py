@@ -63,7 +63,7 @@ CROWD_OVERLAP_THRES = 0.7  # boxes overlapping crowd will be ignored.
 
 # fastrcnn training ---------------------
 FASTRCNN_BATCH_PER_IM = 512
-FASTRCNN_BBOX_REG_WEIGHTS = np.array([10, 10, 5, 5], dtype='float32')
+FASTRCNN_BBOX_REG_WEIGHTS = [10., 10., 5., 5.]  # Better but non-standard setting: [20, 20, 10, 10]
 FASTRCNN_FG_THRESH = 0.5
 FASTRCNN_FG_RATIO = 0.25  # fg ratio in a ROI batch
 

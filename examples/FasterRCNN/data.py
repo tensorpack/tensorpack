@@ -154,8 +154,7 @@ def get_anchor_labels(anchors, gt_boxes, crowd_boxes):
     # Subsample bg labels. num_bg is not allowed to be too many
     old_num_bg = np.sum(anchor_labels == 0)
     if old_num_bg == 0:
-        # No valid bg/fg in this image, skip.
-        # This can happen if, e.g. the image has large crowd.
+        # No valid bg in this image, skip.
         raise MalformedData("No valid background for RPN!")
     target_num_bg = config.RPN_BATCH_PER_IM - len(fg_inds)
     filter_box_label(anchor_labels, 0, target_num_bg)   # ignore return values
