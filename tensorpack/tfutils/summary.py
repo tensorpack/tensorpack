@@ -39,21 +39,6 @@ def _enter_vs_reuse_ns(name):
             yield vs
 
 
-def create_scalar_summary(name, v):
-    """
-    Args:
-        name (str):
-        v (float): scalar value
-    Returns:
-        tf.Summary: a tf.Summary object with name and simple scalar value v.
-    """
-    assert isinstance(name, six.string_types), type(name)
-    v = float(v)
-    s = tf.Summary()
-    s.value.add(tag=name, simple_value=v)
-    return s
-
-
 def create_image_summary(name, val):
     """
     Args:
