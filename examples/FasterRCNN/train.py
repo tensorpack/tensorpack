@@ -32,13 +32,15 @@ from coco import COCODetection
 from basemodel import (
     image_preprocess, resnet_c4_backbone, resnet_conv5,
     resnet_fpn_backbone)
+import model
 from model import (
-    clip_boxes, decode_bbox_target, encode_bbox_target, crop_and_resize,
     rpn_head, rpn_losses,
-    generate_rpn_proposals, sample_fast_rcnn_targets, roi_align,
+    generate_rpn_proposals, sample_fast_rcnn_targets,
     fastrcnn_outputs, fastrcnn_losses, fastrcnn_predictions,
     maskrcnn_upXconv_head, maskrcnn_loss,
-    fpn_model, fastrcnn_2fc_head, multilevel_roi_align)
+    fpn_model, multilevel_roi_align)
+from model_box import (
+    clip_boxes, decode_bbox_target, encode_bbox_target, crop_and_resize, roi_align)
 from data import (
     get_train_dataflow, get_eval_dataflow,
     get_all_anchors, get_all_anchors_fpn)
@@ -49,22 +51,6 @@ from common import print_config, write_config_from_args
 from eval import (
     eval_coco, detect_one_image, print_evaluation_scores, DetectionResult)
 import config
-
-
-def get_model_output_names():
-    ret = ['final_boxes', 'final_probs', 'final_labels']
-    if config.MODE_MASK:
-        ret.append('final_masks')
-    return ret
-
-
-def get_model():
-    if config.MODE_FPN:
-        if get_tf_version_number() < 1.6:
-            logger.warn("FPN has chances to crash in TF<1.6, due to a TF issue.")
-        return ResNetFPNModel()
-    else:
-        return ResNetC4Model()
 
 
 class DetectionModel(ModelDesc):
@@ -159,6 +145,19 @@ class DetectionModel(ModelDesc):
         final_labels = tf.add(pred_indices[:, 1], 1, name='final_labels')
         return final_boxes, final_labels
 
+    def get_inference_tensor_names(self):
+        """
+        Returns two lists of tensor names to be used to create an inference callable.
+
+        Returns:
+            [str]: input names
+            [str]: output names
+        """
+        out = ['final_boxes', 'final_probs', 'final_labels']
+        if config.MODE_MASK:
+            out.append('final_masks')
+        return ['image'], out
+
 
 class ResNetC4Model(DetectionModel):
     def inputs(self):
@@ -210,25 +209,10 @@ class ResNetC4Model(DetectionModel):
         boxes_on_featuremap = rcnn_boxes * (1.0 / config.ANCHOR_STRIDE)
         roi_resized = roi_align(featuremap, boxes_on_featuremap, 14)
 
-        # HACK to work around https://github.com/tensorflow/tensorflow/issues/14657
-        # which was fixed in TF 1.6
-        def ff_true():
-            feature_fastrcnn = resnet_conv5(roi_resized, config.RESNET_NUM_BLOCK[-1])    # nxcx7x7
-            feature_gap = GlobalAvgPooling('gap', feature_fastrcnn, data_format='channels_first')
-            fastrcnn_label_logits, fastrcnn_box_logits = fastrcnn_outputs('fastrcnn', feature_gap, config.NUM_CLASS)
-            # Return C5 feature to be shared with mask branch
-            return feature_fastrcnn, fastrcnn_label_logits, fastrcnn_box_logits
-
-        def ff_false():
-            ncls = config.NUM_CLASS
-            return tf.zeros([0, 2048, 7, 7]), tf.zeros([0, ncls]), tf.zeros([0, ncls - 1, 4])
-
-        if get_tf_version_number() >= 1.6:
-            feature_fastrcnn, fastrcnn_label_logits, fastrcnn_box_logits = ff_true()
-        else:
-            logger.warn("This example may drop support for TF < 1.6 soon.")
-            feature_fastrcnn, fastrcnn_label_logits, fastrcnn_box_logits = tf.cond(
-                tf.size(boxes_on_featuremap) > 0, ff_true, ff_false)
+        feature_fastrcnn = resnet_conv5(roi_resized, config.RESNET_NUM_BLOCK[-1])    # nxcx7x7
+        # Keep C5 feature to be shared with mask branch
+        feature_gap = GlobalAvgPooling('gap', feature_fastrcnn, data_format='channels_first')
+        fastrcnn_label_logits, fastrcnn_box_logits = fastrcnn_outputs('fastrcnn', feature_gap, config.NUM_CLASS)
 
         if is_training:
             # rpn loss
@@ -281,18 +265,13 @@ class ResNetC4Model(DetectionModel):
                 image_shape2d, rcnn_boxes, fastrcnn_label_logits, fastrcnn_box_logits)
 
             if config.MODE_MASK:
-                # HACK to work around https://github.com/tensorflow/tensorflow/issues/14657
-                def f1():
-                    roi_resized = roi_align(featuremap, final_boxes * (1.0 / config.ANCHOR_STRIDE), 14)
-                    feature_maskrcnn = resnet_conv5(roi_resized, config.RESNET_NUM_BLOCK[-1])
-                    mask_logits = maskrcnn_upXconv_head(
-                        'maskrcnn', feature_maskrcnn, config.NUM_CLASS, 0)   # #result x #cat x 14x14
-                    indices = tf.stack([tf.range(tf.size(final_labels)), tf.to_int32(final_labels) - 1], axis=1)
-                    final_mask_logits = tf.gather_nd(mask_logits, indices)   # #resultx14x14
-                    return tf.sigmoid(final_mask_logits)
-
-                final_masks = tf.cond(tf.size(final_labels) > 0, f1, lambda: tf.zeros([0, 14, 14]))
-                tf.identity(final_masks, name='final_masks')
+                roi_resized = roi_align(featuremap, final_boxes * (1.0 / config.ANCHOR_STRIDE), 14)
+                feature_maskrcnn = resnet_conv5(roi_resized, config.RESNET_NUM_BLOCK[-1])
+                mask_logits = maskrcnn_upXconv_head(
+                    'maskrcnn', feature_maskrcnn, config.NUM_CLASS, 0)   # #result x #cat x 14x14
+                indices = tf.stack([tf.range(tf.size(final_labels)), tf.to_int32(final_labels) - 1], axis=1)
+                final_mask_logits = tf.gather_nd(mask_logits, indices)   # #resultx14x14
+                tf.sigmoid(final_mask_logits, name='final_masks')
 
 
 class ResNetFPNModel(DetectionModel):
@@ -385,7 +364,8 @@ class ResNetFPNModel(DetectionModel):
 
         roi_feature_fastrcnn = multilevel_roi_align(p23456[:4], rcnn_boxes, 7)
 
-        fastrcnn_label_logits, fastrcnn_box_logits = fastrcnn_2fc_head(
+        fastrcnn_head_func = getattr(model, config.FPN_FASTRCNN_HEAD_FUNC)
+        fastrcnn_label_logits, fastrcnn_box_logits = fastrcnn_head_func(
             'fastrcnn', roi_feature_fastrcnn, config.NUM_CLASS)
 
         if is_training:
@@ -518,9 +498,11 @@ def predict(pred_func, input_file):
 
 
 class EvalCallback(Callback):
+    def __init__(self, in_names, out_names):
+        self._in_names, self._out_names = in_names, out_names
+
     def _setup_graph(self):
-        self.pred = self.trainer.get_predictor(
-            ['image'], get_model_output_names())
+        self.pred = self.trainer.get_predictor(self._in_names, self._out_names)
         self.df = get_eval_dataflow()
 
     def _before_train(self):
@@ -550,6 +532,9 @@ class EvalCallback(Callback):
 
 
 def init_config():
+    """
+    Initialize config for training.
+    """
     if config.TRAINER == 'horovod':
         ngpu = hvd.size()
     else:
@@ -569,16 +554,22 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--load', help='load a model for evaluation or training')
     parser.add_argument('--logdir', help='log directory', default='train_log/maskrcnn')
+    parser.add_argument('--config', help="A list of KEY=VALUE to overwrite those defined in config.py",
+                        nargs='+')
     parser.add_argument('--visualize', action='store_true', help='visualize intermediate results')
     parser.add_argument('--evaluate', help="Run evaluation on COCO. "
                                            "This argument is the path to the output json evaluation file")
     parser.add_argument('--predict', help="Run prediction on a given image. "
                                           "This argument is the path to the input image file")
-    parser.add_argument('--config', help="A list of key=value to overwrite those defined in config.py",
-                        nargs='+')
+
+    if get_tf_version_number() < 1.6:
+        # https://github.com/tensorflow/tensorflow/issues/14657
+        logger.warn("TF<1.6 has a bug which may lead to crash in FasterRCNN training if you're unlucky.")
 
     args = parser.parse_args()
     write_config_from_args(args.config)
+
+    MODEL = ResNetFPNModel() if config.MODE_FPN else ResNetC4Model()
 
     if args.visualize or args.evaluate or args.predict:
         # autotune is too slow for inference
@@ -595,12 +586,12 @@ if __name__ == '__main__':
             visualize(args.load)
         else:
             pred = OfflinePredictor(PredictConfig(
-                model=get_model(),
+                model=MODEL,
                 session_init=get_model_loader(args.load),
-                input_names=['image'],
-                output_names=get_model_output_names()))
+                input_names=MODEL.get_inference_tensor_names()[0],
+                output_names=MODEL.get_inference_tensor_names()[1]))
             if args.evaluate:
-                assert args.evaluate.endswith('.json')
+                assert args.evaluate.endswith('.json'), args.evaluate
                 offline_evaluate(pred, args.evaluate)
             elif args.predict:
                 COCODetection(config.BASEDIR, 'val2014')   # Only to load the class names into caches
@@ -640,7 +631,7 @@ if __name__ == '__main__':
             ScheduledHyperParamSetter(
                 'learning_rate', warmup_schedule, interp='linear', step_based=True),
             ScheduledHyperParamSetter('learning_rate', lr_schedule),
-            EvalCallback(),
+            EvalCallback(*MODEL.get_inference_tensor_names()),
             PeakMemoryTracker(),
             EstimatedTimeLeft(),
             SessionRunTimeout(60000).set_chief_only(True),   # 1 minute timeout
@@ -649,7 +640,7 @@ if __name__ == '__main__':
             callbacks.append(GPUUtilizationTracker())
 
         cfg = TrainConfig(
-            model=get_model(),
+            model=MODEL,
             data=QueueInput(get_train_dataflow()),
             callbacks=callbacks,
             steps_per_epoch=stepnum,

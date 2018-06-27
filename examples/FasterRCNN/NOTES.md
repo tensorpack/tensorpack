@@ -4,8 +4,9 @@ This is a minimal implementation that simply contains these files:
 + coco.py: load COCO data
 + data.py: prepare data for training
 + common.py: common data preparation utilities
-+ basemodel.py: implement resnet
-+ model.py: implement RPN/Faster-RCNN/RPN/Mask-RCNN
++ basemodel.py: implement backbones
++ model_box.py: implement box-related symbolic functions
++ model.py: implement RPN/Faster-RCNN/FPN/Mask-RCNN
 + train.py: main training script
 + utils/: third-party helper functions
 + eval.py: evaluation utilities

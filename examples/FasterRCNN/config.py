@@ -69,6 +69,10 @@ FASTRCNN_FG_RATIO = 0.25  # fg ratio in a ROI batch
 
 # modeling -------------------------
 FPN_NUM_CHANNEL = 256
+# conv head and fc head are only used in FPN.
+# For C4 models, the head is C5
+FPN_FASTRCNN_HEAD_FUNC = 'fastrcnn_2fc_head'  # choices: fastrcnn_2fc_head, fastrcnn_4conv1fc_head
+FASTRCNN_CONV_HEAD_DIM = 256
 FASTRCNN_FC_HEAD_DIM = 1024
 MASKRCNN_HEAD_DIM = 256
 

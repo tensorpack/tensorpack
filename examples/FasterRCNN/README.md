@@ -6,7 +6,7 @@ This example provides a minimal (only 1.6k lines) and faithful implementation of
 + [Mask R-CNN](https://arxiv.org/abs/1703.06870)
 
 ## Dependencies
-+ Python 3; TensorFlow >= 1.4.0 (>=1.6.0 recommended due to a TF bug);
++ Python 3; TensorFlow >= 1.6 (1.4 or 1.5 can run but may crash due to a TF bug);
 + [pycocotools](https://github.com/pdollar/coco/tree/master/PythonAPI/pycocotools), OpenCV.
 + Pre-trained [ImageNet ResNet model](http://models.tensorpack.com/ResNet/) from tensorpack model zoo.
 + COCO data. It needs to have the following directory structure:
