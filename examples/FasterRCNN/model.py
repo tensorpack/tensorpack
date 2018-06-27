@@ -15,7 +15,7 @@ from tensorpack.models import (
 from utils.box_ops import pairwise_iou
 from utils.box_ops import area as tf_area
 from model_box import roi_align, clip_boxes
-import config
+from config import config as cfg
 
 
 @layer_register(log_shape=True)
@@ -91,7 +91,7 @@ def rpn_losses(anchor_labels, anchor_boxes, label_logits, box_logits):
     placeholder = 0.
     label_loss = tf.nn.sigmoid_cross_entropy_with_logits(
         labels=tf.to_float(valid_anchor_labels), logits=valid_label_logits)
-    label_loss = tf.reduce_sum(label_loss) * (1. / config.RPN_BATCH_PER_IM)
+    label_loss = tf.reduce_sum(label_loss) * (1. / cfg.RPN.BATCH_PER_IM)
     label_loss = tf.where(tf.equal(nr_valid, 0), placeholder, label_loss, name='label_loss')
 
     pos_anchor_boxes = tf.boolean_mask(anchor_boxes, pos_mask)
@@ -100,7 +100,7 @@ def rpn_losses(anchor_labels, anchor_boxes, label_logits, box_logits):
     box_loss = tf.losses.huber_loss(
         pos_anchor_boxes, pos_box_logits, delta=delta,
         reduction=tf.losses.Reduction.SUM) / delta
-    box_loss = box_loss * (1. / config.RPN_BATCH_PER_IM)
+    box_loss = box_loss * (1. / cfg.RPN.BATCH_PER_IM)
     box_loss = tf.where(tf.equal(nr_pos, 0), placeholder, box_loss, name='box_loss')
 
     add_moving_summary(label_loss, box_loss, nr_valid, nr_pos)
@@ -139,7 +139,7 @@ def generate_rpn_proposals(boxes, scores, img_shape,
     topk_boxes_x1y1, topk_boxes_x2y2 = tf.split(topk_boxes_x1y1x2y2, 2, axis=1)
     # nx1x2 each
     wbhb = tf.squeeze(topk_boxes_x2y2 - topk_boxes_x1y1, axis=1)
-    valid = tf.reduce_all(wbhb > config.RPN_MIN_SIZE, axis=1)  # n,
+    valid = tf.reduce_all(wbhb > cfg.RPN.MIN_SIZE, axis=1)  # n,
     topk_valid_boxes_x1y1x2y2 = tf.boolean_mask(topk_boxes_x1y1x2y2, valid)
     topk_valid_scores = tf.boolean_mask(topk_scores, valid)
 
@@ -152,7 +152,7 @@ def generate_rpn_proposals(boxes, scores, img_shape,
         # TODO use exp to work around a bug in TF1.9: https://github.com/tensorflow/tensorflow/issues/19578
         tf.exp(topk_valid_scores),
         max_output_size=post_nms_topk,
-        iou_threshold=config.RPN_PROPOSAL_NMS_THRESH)
+        iou_threshold=cfg.RPN.PROPOSAL_NMS_THRESH)
 
     topk_valid_boxes = tf.reshape(topk_valid_boxes_x1y1x2y2, (-1, 4))
     final_boxes = tf.gather(topk_valid_boxes, nms_indices)
@@ -209,17 +209,17 @@ def sample_fast_rcnn_targets(boxes, gt_boxes, gt_labels):
     # #proposal=n+m from now on
 
     def sample_fg_bg(iou):
-        fg_mask = tf.reduce_max(iou, axis=1) >= config.FASTRCNN_FG_THRESH
+        fg_mask = tf.reduce_max(iou, axis=1) >= cfg.FRCNN.FG_THRESH
 
         fg_inds = tf.reshape(tf.where(fg_mask), [-1])
         num_fg = tf.minimum(int(
-            config.FASTRCNN_BATCH_PER_IM * config.FASTRCNN_FG_RATIO),
+            cfg.FRCNN.BATCH_PER_IM * cfg.FRCNN.FG_RATIO),
             tf.size(fg_inds), name='num_fg')
         fg_inds = tf.random_shuffle(fg_inds)[:num_fg]
 
         bg_inds = tf.reshape(tf.where(tf.logical_not(fg_mask)), [-1])
         num_bg = tf.minimum(
-            config.FASTRCNN_BATCH_PER_IM - num_fg,
+            cfg.FRCNN.BATCH_PER_IM - num_fg,
             tf.size(bg_inds), name='num_bg')
         bg_inds = tf.random_shuffle(bg_inds)[:num_bg]
 
@@ -274,7 +274,7 @@ def fastrcnn_2fc_head(feature, num_classes):
     Returns:
         cls_logits (Nxnum_class), reg_logits (Nx num_class-1 x 4)
     """
-    dim = config.FASTRCNN_FC_HEAD_DIM
+    dim = cfg.FPN.FRCNN_FC_HEAD_DIM
     init = tf.variance_scaling_initializer()
     hidden = FullyConnected('fc6', feature, dim, kernel_initializer=init, activation=tf.nn.relu)
     hidden = FullyConnected('fc7', hidden, dim, kernel_initializer=init, activation=tf.nn.relu)
@@ -297,8 +297,8 @@ def fastrcnn_Xconv1fc_head(feature, num_classes, num_convs):
                   kernel_initializer=tf.variance_scaling_initializer(
                       scale=2.0, mode='fan_out', distribution='normal')):
         for k in range(num_convs):
-            l = Conv2D('conv{}'.format(k), l, config.FASTRCNN_CONV_HEAD_DIM, 3, activation=tf.nn.relu)
-        l = FullyConnected('fc', l, config.FASTRCNN_FC_HEAD_DIM,
+            l = Conv2D('conv{}'.format(k), l, cfg.FPN.FRCNN_CONV_HEAD_DIM, 3, activation=tf.nn.relu)
+        l = FullyConnected('fc', l, cfg.FPN.FRCNN_FC_HEAD_DIM,
                            kernel_initializer=tf.variance_scaling_initializer(), activation=tf.nn.relu)
     return fastrcnn_outputs('outputs', l, num_classes)
 
@@ -356,8 +356,8 @@ def fastrcnn_predictions(boxes, probs):
         boxes: n#catx4 floatbox in float32
         probs: nx#class
     """
-    assert boxes.shape[1] == config.NUM_CLASS - 1
-    assert probs.shape[1] == config.NUM_CLASS
+    assert boxes.shape[1] == cfg.DATA.NUM_CLASS - 1
+    assert probs.shape[1] == cfg.DATA.NUM_CLASS
     boxes = tf.transpose(boxes, [1, 0, 2])  # #catxnx4
     probs = tf.transpose(probs[:, 1:], [1, 0])  # #catxn
 
@@ -371,12 +371,12 @@ def fastrcnn_predictions(boxes, probs):
         prob, box = X
         output_shape = tf.shape(prob)
         # filter by score threshold
-        ids = tf.reshape(tf.where(prob > config.RESULT_SCORE_THRESH), [-1])
+        ids = tf.reshape(tf.where(prob > cfg.TEST.RESULT_SCORE_THRESH), [-1])
         prob = tf.gather(prob, ids)
         box = tf.gather(box, ids)
         # NMS within each class
         selection = tf.image.non_max_suppression(
-            box, prob, config.RESULTS_PER_IM, config.FASTRCNN_NMS_THRESH)
+            box, prob, cfg.TEST.RESULTS_PER_IM, cfg.TEST.FRCNN_NMS_THRESH)
         selection = tf.to_int32(tf.gather(ids, selection))
         # sort available in TF>1.4.0
         # sorted_selection = tf.contrib.framework.sort(selection, direction='ASCENDING')
@@ -396,7 +396,7 @@ def fastrcnn_predictions(boxes, probs):
     # filter again by sorting scores
     topk_probs, topk_indices = tf.nn.top_k(
         probs,
-        tf.minimum(config.RESULTS_PER_IM, tf.size(probs)),
+        tf.minimum(cfg.TEST.RESULTS_PER_IM, tf.size(probs)),
         sorted=False)
     filtered_selection = tf.gather(selected_indices, topk_indices)
     filtered_selection = tf.reverse(filtered_selection, axis=[1], name='filtered_indices')
@@ -420,8 +420,8 @@ def maskrcnn_upXconv_head(feature, num_class, num_convs):
                       scale=2.0, mode='fan_out', distribution='normal')):
         # c2's MSRAFill is fan_out
         for k in range(num_convs):
-            l = Conv2D('fcn{}'.format(k), l, config.MASKRCNN_HEAD_DIM, 3, activation=tf.nn.relu)
-        l = Conv2DTranspose('deconv', l, config.MASKRCNN_HEAD_DIM, 2, strides=2, activation=tf.nn.relu)
+            l = Conv2D('fcn{}'.format(k), l, cfg.MRCNN.HEAD_DIM, 3, activation=tf.nn.relu)
+        l = Conv2DTranspose('deconv', l, cfg.MRCNN.HEAD_DIM, 2, strides=2, activation=tf.nn.relu)
         l = Conv2D('conv', l, num_class - 1, 1)
     return l
 
@@ -475,7 +475,7 @@ def fpn_model(features):
         [tf.Tensor]: FPN features p2-p6
     """
     assert len(features) == 4, features
-    num_channel = config.FPN_NUM_CHANNEL
+    num_channel = cfg.FPN.NUM_CHANNEL
 
     def upsample2x(name, x):
         return FixedUnPooling(
@@ -560,7 +560,7 @@ def multilevel_roi_align(features, rcnn_boxes, resolution):
     # Crop patches from corresponding levels
     for i, boxes, featuremap in zip(itertools.count(), level_boxes, features):
         with tf.name_scope('roi_level{}'.format(i + 2)):
-            boxes_on_featuremap = boxes * (1.0 / config.ANCHOR_STRIDES_FPN[i])
+            boxes_on_featuremap = boxes * (1.0 / cfg.FPN.ANCHOR_STRIDES[i])
             all_rois.append(roi_align(featuremap, boxes_on_featuremap, resolution))
 
     all_rois = tf.concat(all_rois, axis=0)  # NCHW

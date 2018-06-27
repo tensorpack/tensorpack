@@ -9,20 +9,20 @@ from tensorpack.tfutils.varreplace import custom_getter_scope
 from tensorpack.models import (
     Conv2D, MaxPooling, BatchNorm, BNReLU)
 
-import config
+from config import config as cfg
 
 
 def maybe_freeze_affine(getter, *args, **kwargs):
     # custom getter to freeze affine params inside bn
     name = args[0] if len(args) else kwargs.get('name')
     if name.endswith('/gamma') or name.endswith('/beta'):
-        if config.FREEZE_AFFINE:
+        if cfg.BACKBONE.FREEZE_AFFINE:
             kwargs['trainable'] = False
     return getter(*args, **kwargs)
 
 
 def maybe_reverse_pad(topleft, bottomright):
-    if config.TF_PAD_MODE:
+    if cfg.BACKBONE.TF_PAD_MODE:
         return [topleft, bottomright]
     return [bottomright, topleft]
 
@@ -65,7 +65,7 @@ def resnet_shortcut(l, n_out, stride, activation=tf.identity):
     n_in = l.get_shape().as_list()[1 if data_format in ['NCHW', 'channels_first'] else 3]
     if n_in != n_out:   # change dimension when channel is not the same
         # TF's SAME mode output ceil(x/stride), which is NOT what we want when x is odd and stride is 2
-        if not config.MODE_FPN and stride == 2:
+        if not cfg.MODE_FPN and stride == 2:
             l = l[:, :, :-1, :-1]
             return Conv2D('convshortcut', l, n_out, 1,
                           strides=stride, padding='VALID', activation=activation)
@@ -124,7 +124,7 @@ def resnet_conv5(image, num_block):
 
 def resnet_fpn_backbone(image, num_blocks, freeze_c2=True):
     shape2d = tf.shape(image)[2:]
-    mult = float(config.FPN_RESOLUTION_REQUIREMENT)
+    mult = float(cfg.FPN.RESOLUTION_REQUIREMENT)
     new_shape2d = tf.to_int32(tf.ceil(tf.to_float(shape2d) / mult) * mult)
     pad_shape2d = new_shape2d - shape2d
     assert len(num_blocks) == 4, num_blocks

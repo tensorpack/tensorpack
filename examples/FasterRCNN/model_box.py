@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 # File: model_box.py
 
+import numpy as np
 import tensorflow as tf
 
 from tensorpack.tfutils.scope_utils import under_name_scope
 
-import config
+from config import config
 
 
 @under_name_scope()
@@ -41,8 +42,8 @@ def decode_bbox_target(box_predictions, anchors):
     waha = anchors_x2y2 - anchors_x1y1
     xaya = (anchors_x2y2 + anchors_x1y1) * 0.5
 
-    wbhb = tf.exp(tf.minimum(
-        box_pred_twth, config.BBOX_DECODE_CLIP)) * waha
+    clip = np.log(config.PREPROC.MAX_SIZE / 16.)
+    wbhb = tf.exp(tf.minimum(box_pred_twth, clip)) * waha
     xbyb = box_pred_txty * waha + xaya
     x1y1 = xbyb - wbhb * 0.5
     x2y2 = xbyb + wbhb * 0.5    # (...)x1x2
@@ -174,7 +175,6 @@ if __name__ == '__main__':
     Demonstrate what's wrong with tf.image.crop_and_resize:
     """
     import tensorflow.contrib.eager as tfe
-    import numpy as np
     tfe.enable_eager_execution()
 
     # want to crop 2x2 out of a 5x5 image, and resize to 4x4

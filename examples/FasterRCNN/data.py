@@ -21,7 +21,7 @@ from utils.np_box_ops import area as np_area
 from common import (
     DataFromListOfDict, CustomResize, filter_boxes_inside_shape,
     box_to_point8, point8_to_box, segmentation_to_mask)
-import config
+from config import config as cfg
 
 
 class MalformedData(BaseException):
@@ -30,8 +30,8 @@ class MalformedData(BaseException):
 
 @memoized
 def get_all_anchors(
-        stride=config.ANCHOR_STRIDE,
-        sizes=config.ANCHOR_SIZES):
+        stride=cfg.RPN.ANCHOR_STRIDE,
+        sizes=cfg.RPN.ANCHOR_SIZES):
     """
     Get all anchors in the largest possible image, shifted, floatbox
     Args:
@@ -49,14 +49,14 @@ def get_all_anchors(
     cell_anchors = generate_anchors(
         stride,
         scales=np.array(sizes, dtype=np.float) / stride,
-        ratios=np.array(config.ANCHOR_RATIOS, dtype=np.float))
+        ratios=np.array(cfg.RPN.ANCHOR_RATIOS, dtype=np.float))
     # anchors are intbox here.
     # anchors at featuremap [0,0] are centered at fpcoor (8,8) (half of stride)
 
-    max_size = config.MAX_SIZE
-    if config.MODE_FPN:
+    max_size = cfg.PREPROC.MAX_SIZE
+    if cfg.MODE_FPN:
         # TODO setting this in config is perhaps better
-        size_mult = config.FPN_RESOLUTION_REQUIREMENT * 1.
+        size_mult = cfg.FPN.RESOLUTION_REQUIREMENT * 1.
         max_size = np.ceil(max_size / size_mult) * size_mult
     field_size = int(np.ceil(max_size / stride))
     shifts = np.arange(0, field_size) * stride
@@ -81,8 +81,8 @@ def get_all_anchors(
 
 @memoized
 def get_all_anchors_fpn(
-        strides=config.ANCHOR_STRIDES_FPN,
-        sizes=config.ANCHOR_SIZES):
+        strides=cfg.FPN.ANCHOR_STRIDES,
+        sizes=cfg.RPN.ANCHOR_SIZES):
     """
     Returns:
         [anchors]: each anchors is a SxSx NUM_ANCHOR_RATIOS x4 array.
@@ -132,8 +132,8 @@ def get_anchor_labels(anchors, gt_boxes, crowd_boxes):
 
     # the order of setting neg/pos labels matter
     anchor_labels[anchors_with_max_iou_per_gt] = 1
-    anchor_labels[ious_max_per_anchor >= config.POSITIVE_ANCHOR_THRES] = 1
-    anchor_labels[ious_max_per_anchor < config.NEGATIVE_ANCHOR_THRES] = 0
+    anchor_labels[ious_max_per_anchor >= cfg.RPN.POSITIVE_ANCHOR_THRES] = 1
+    anchor_labels[ious_max_per_anchor < cfg.RPN.NEGATIVE_ANCHOR_THRES] = 0
 
     # We can label all non-ignore candidate boxes which overlap crowd as ignore
     # But detectron did not do this.
@@ -141,11 +141,11 @@ def get_anchor_labels(anchors, gt_boxes, crowd_boxes):
     #     cand_inds = np.where(anchor_labels >= 0)[0]
     #     cand_anchors = anchors[cand_inds]
     #     ious = np_iou(cand_anchors, crowd_boxes)
-    #     overlap_with_crowd = cand_inds[ious.max(axis=1) > config.CROWD_OVERLAP_THRES]
+    #     overlap_with_crowd = cand_inds[ious.max(axis=1) > cfg.RPN.CROWD_OVERLAP_THRES]
     #     anchor_labels[overlap_with_crowd] = -1
 
     # Subsample fg labels: ignore some fg if fg is too many
-    target_num_fg = int(config.RPN_BATCH_PER_IM * config.RPN_FG_RATIO)
+    target_num_fg = int(cfg.RPN.BATCH_PER_IM * cfg.RPN.FG_RATIO)
     fg_inds = filter_box_label(anchor_labels, 1, target_num_fg)
     # Keep an image even if there is no foreground anchors
     # if len(fg_inds) == 0:
@@ -156,14 +156,14 @@ def get_anchor_labels(anchors, gt_boxes, crowd_boxes):
     if old_num_bg == 0:
         # No valid bg in this image, skip.
         raise MalformedData("No valid background for RPN!")
-    target_num_bg = config.RPN_BATCH_PER_IM - len(fg_inds)
+    target_num_bg = cfg.RPN.BATCH_PER_IM - len(fg_inds)
     filter_box_label(anchor_labels, 0, target_num_bg)   # ignore return values
 
     # Set anchor boxes: the best gt_box for each fg anchor
     anchor_boxes = np.zeros((NA, 4), dtype='float32')
     fg_boxes = gt_boxes[ious_argmax_per_anchor[fg_inds], :]
     anchor_boxes[fg_inds, :] = fg_boxes
-    # assert len(fg_inds) + np.sum(anchor_labels == 0) == config.RPN_BATCH_PER_IM
+    # assert len(fg_inds) + np.sum(anchor_labels == 0) == cfg.RPN.BATCH_PER_IM
     return anchor_labels, anchor_boxes
 
 
@@ -192,12 +192,12 @@ def get_rpn_anchor_input(im, boxes, is_crowd):
 
     # Fill them back to original size: fHxfWx1, fHxfWx4
     anchorH, anchorW = all_anchors.shape[:2]
-    featuremap_labels = -np.ones((anchorH * anchorW * config.NUM_ANCHOR, ), dtype='int32')
+    featuremap_labels = -np.ones((anchorH * anchorW * cfg.RPN.NUM_ANCHOR, ), dtype='int32')
     featuremap_labels[inside_ind] = anchor_labels
-    featuremap_labels = featuremap_labels.reshape((anchorH, anchorW, config.NUM_ANCHOR))
-    featuremap_boxes = np.zeros((anchorH * anchorW * config.NUM_ANCHOR, 4), dtype='float32')
+    featuremap_labels = featuremap_labels.reshape((anchorH, anchorW, cfg.RPN.NUM_ANCHOR))
+    featuremap_boxes = np.zeros((anchorH * anchorW * cfg.RPN.NUM_ANCHOR, 4), dtype='float32')
     featuremap_boxes[inside_ind, :] = anchor_gt_boxes
-    featuremap_boxes = featuremap_boxes.reshape((anchorH, anchorW, config.NUM_ANCHOR, 4))
+    featuremap_boxes = featuremap_boxes.reshape((anchorH, anchorW, cfg.RPN.NUM_ANCHOR, 4))
     return featuremap_labels, featuremap_boxes
 
 
@@ -233,7 +233,7 @@ def get_multilevel_rpn_anchor_input(im, boxes, is_crowd):
     start = 0
     multilevel_inputs = []
     for level_anchor in anchors_per_level:
-        assert level_anchor.shape[2] == len(config.ANCHOR_RATIOS)
+        assert level_anchor.shape[2] == len(cfg.RPN.ANCHOR_RATIOS)
         anchor_shape = level_anchor.shape[:3]   # fHxfWxNUM_ANCHOR_RATIOS
         num_anchor_this_level = np.prod(anchor_shape)
         end = start + num_anchor_this_level
@@ -263,7 +263,7 @@ def get_train_dataflow():
     """
 
     imgs = COCODetection.load_many(
-        config.BASEDIR, config.TRAIN_DATASET, add_gt=True, add_mask=config.MODE_MASK)
+        cfg.DATA.BASEDIR, cfg.DATA.TRAIN, add_gt=True, add_mask=cfg.MODE_MASK)
     """
     To train on your own data, change this to your loader.
     Produce "imgs" as a list of dict, in the dict the following keys are needed for training:
@@ -292,7 +292,7 @@ def get_train_dataflow():
     ds = DataFromList(imgs, shuffle=True)
 
     aug = imgaug.AugmentorList(
-        [CustomResize(config.SHORT_EDGE_SIZE, config.MAX_SIZE),
+        [CustomResize(cfg.PREPROC.SHORT_EDGE_SIZE, cfg.PREPROC.MAX_SIZE),
          imgaug.Flip(horiz=True)])
 
     def preprocess(img):
@@ -313,7 +313,7 @@ def get_train_dataflow():
 
         # rpn anchor:
         try:
-            if config.MODE_FPN:
+            if cfg.MODE_FPN:
                 multilevel_anchor_inputs = get_multilevel_rpn_anchor_input(im, boxes, is_crowd)
                 anchor_inputs = itertools.chain.from_iterable(multilevel_anchor_inputs)
             else:
@@ -331,7 +331,7 @@ def get_train_dataflow():
 
         ret = [im] + list(anchor_inputs) + [boxes, klass]
 
-        if config.MODE_MASK:
+        if cfg.MODE_MASK:
             # augmentation will modify the polys in-place
             segmentation = copy.deepcopy(img['segmentation'])
             segmentation = [segmentation[k] for k in range(len(segmentation)) if not is_crowd[k]]
@@ -353,7 +353,7 @@ def get_train_dataflow():
             # tpviz.interactive_imshow(viz)
         return ret
 
-    if config.TRAINER == 'horovod':
+    if cfg.TRAINER == 'horovod':
         ds = MultiThreadMapData(ds, 5, preprocess)
         # MPI does not like fork()
     else:
@@ -362,7 +362,7 @@ def get_train_dataflow():
 
 
 def get_eval_dataflow():
-    imgs = COCODetection.load_many(config.BASEDIR, config.VAL_DATASET, add_gt=False)
+    imgs = COCODetection.load_many(cfg.DATA.BASEDIR, cfg.DATA.VAL, add_gt=False)
     # no filter for training
     ds = DataFromListOfDict(imgs, ['file_name', 'id'])
 
@@ -371,7 +371,7 @@ def get_eval_dataflow():
         assert im is not None, fname
         return im
     ds = MapDataComponent(ds, f, 0)
-    if config.TRAINER != 'horovod':
+    if cfg.TRAINER != 'horovod':
         ds = PrefetchDataZMQ(ds, 1)
     return ds
 
@@ -379,7 +379,7 @@ def get_eval_dataflow():
 if __name__ == '__main__':
     import os
     from tensorpack.dataflow import PrintData
-    config.BASEDIR = os.path.expanduser('~/data/coco')
+    cfg.DATA.BASEDIR = os.path.expanduser('~/data/coco')
     ds = get_train_dataflow()
     ds = PrintData(ds, 100)
     TestDataSpeed(ds, 50000).start()

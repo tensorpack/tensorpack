@@ -12,13 +12,13 @@ from tensorpack.utils.timer import timed_operation
 from tensorpack.utils.argtools import log_once
 
 from pycocotools.coco import COCO
-import config
+from config import config as cfg
 
 
 __all__ = ['COCODetection', 'COCOMeta']
 
 COCO_NUM_CATEGORY = 80
-config.NUM_CLASS = COCO_NUM_CATEGORY + 1
+cfg.DATA.NUM_CLASS = COCO_NUM_CATEGORY + 1
 
 
 class _COCOMeta(object):
@@ -48,7 +48,7 @@ class _COCOMeta(object):
             v: i + 1 for i, v in enumerate(cat_ids)}
         self.class_id_to_category_id = {
             v: k for k, v in self.category_id_to_class_id.items()}
-        config.CLASS_NAMES = self.class_names
+        cfg.DATA.CLASS_NAMES = self.class_names
 
 
 COCOMeta = _COCOMeta()
@@ -200,7 +200,7 @@ class COCODetection(object):
 
 
 if __name__ == '__main__':
-    c = COCODetection(config.BASEDIR, 'train2014')
+    c = COCODetection(cfg.DATA.BASEDIR, 'train2014')
     gt_boxes = c.load(add_gt=True, add_mask=True)
     print("#Images:", len(gt_boxes))
     c.print_class_histogram(gt_boxes)

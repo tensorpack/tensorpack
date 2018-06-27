@@ -15,7 +15,7 @@ import pycocotools.mask as cocomask
 
 from coco import COCOMeta
 from common import CustomResize, clip_boxes
-import config
+from config import config as cfg
 
 DetectionResult = namedtuple(
     'DetectionResult',
@@ -69,7 +69,7 @@ def detect_one_image(img, model_func):
     """
 
     orig_shape = img.shape[:2]
-    resizer = CustomResize(config.SHORT_EDGE_SIZE, config.MAX_SIZE)
+    resizer = CustomResize(cfg.PREPROC.SHORT_EDGE_SIZE, cfg.PREPROC.MAX_SIZE)
     resized_img = resizer.augment(img)
     scale = (resized_img.shape[0] * 1.0 / img.shape[0] + resized_img.shape[1] * 1.0 / img.shape[1]) / 2
     boxes, probs, labels, *masks = model_func(resized_img)
@@ -131,10 +131,10 @@ def eval_coco(df, detect_func):
 # https://github.com/pdollar/coco/blob/master/PythonAPI/pycocoEvalDemo.ipynb
 def print_evaluation_scores(json_file):
     ret = {}
-    assert config.BASEDIR and os.path.isdir(config.BASEDIR)
+    assert cfg.DATA.BASEDIR and os.path.isdir(cfg.DATA.BASEDIR)
     annofile = os.path.join(
-        config.BASEDIR, 'annotations',
-        'instances_{}.json'.format(config.VAL_DATASET))
+        cfg.DATA.BASEDIR, 'annotations',
+        'instances_{}.json'.format(cfg.DATA.VAL))
     coco = COCO(annofile)
     cocoDt = coco.loadRes(json_file)
     cocoEval = COCOeval(coco, cocoDt, 'bbox')
@@ -145,7 +145,7 @@ def print_evaluation_scores(json_file):
     for k in range(6):
         ret['mAP(bbox)/' + fields[k]] = cocoEval.stats[k]
 
-    if config.MODE_MASK:
+    if cfg.MODE_MASK:
         cocoEval = COCOeval(coco, cocoDt, 'segm')
         cocoEval.evaluate()
         cocoEval.accumulate()
