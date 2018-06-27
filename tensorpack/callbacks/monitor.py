@@ -14,9 +14,8 @@ import json
 import re
 
 import tensorflow as tf
-import tensorboard as tb
 from ..utils import logger
-from ..tfutils.summary import create_image_summary
+from ..tfutils.summary import create_scalar_summary, create_image_summary
 from .base import Callback
 
 __all__ = ['TrainingMonitor', 'Monitors',
@@ -162,7 +161,7 @@ class Monitors(Callback):
         if isinstance(val, np.integer):
             val = int(val)
         self._dispatch(lambda m: m.process_scalar(name, val))
-        s = tb.summary.scalar_pb(name, val)
+        s = create_scalar_summary(name, val)
         self._dispatch(lambda m: m.process_summary(s))
 
     def put_image(self, name, val):
