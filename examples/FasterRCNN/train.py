@@ -131,6 +131,8 @@ class DetectionModel(ModelDesc):
             boxes (mx4):
             labels (m): each >= 1
         """
+        rcnn_box_logits = rcnn_box_logits[:, 1:, :]
+        rcnn_box_logits.set_shape([None, config.NUM_CLASS - 1, None])
         label_probs = tf.nn.softmax(rcnn_label_logits, name='fastrcnn_all_probs')  # #proposal x #Class
         anchors = tf.tile(tf.expand_dims(rcnn_boxes, 1), [1, config.NUM_CLASS - 1, 1])   # #proposal x #Cat x 4
         decoded_boxes = decode_bbox_target(

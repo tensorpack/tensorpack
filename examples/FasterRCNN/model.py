@@ -252,15 +252,15 @@ def fastrcnn_outputs(feature, num_classes):
         num_classes(int): num_category + 1
 
     Returns:
-        cls_logits (Nxnum_class), reg_logits (Nx num_class-1 x 4)
+        cls_logits (Nxnum_class), reg_logits (Nx num_class x 4)
     """
     classification = FullyConnected(
         'class', feature, num_classes,
         kernel_initializer=tf.random_normal_initializer(stddev=0.01))
     box_regression = FullyConnected(
-        'box', feature, (num_classes - 1) * 4,
+        'box', feature, num_classes * 4,
         kernel_initializer=tf.random_normal_initializer(stddev=0.001))
-    box_regression = tf.reshape(box_regression, (-1, num_classes - 1, 4))
+    box_regression = tf.reshape(box_regression, (-1, num_classes, 4))
     return classification, box_regression
 
 
@@ -314,7 +314,7 @@ def fastrcnn_losses(labels, label_logits, fg_boxes, fg_box_logits):
         labels: n,
         label_logits: nxC
         fg_boxes: nfgx4, encoded
-        fg_box_logits: nfgx(C-1)x4
+        fg_box_logits: nfgxCx4
     """
     label_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
         labels=labels, logits=label_logits)
@@ -325,7 +325,7 @@ def fastrcnn_losses(labels, label_logits, fg_boxes, fg_box_logits):
     num_fg = tf.size(fg_inds)
     indices = tf.stack(
         [tf.range(num_fg),
-         tf.to_int32(fg_labels) - 1], axis=1)  # #fgx2
+         tf.to_int32(fg_labels)], axis=1)  # #fgx2
     fg_box_logits = tf.gather_nd(fg_box_logits, indices)
 
     with tf.name_scope('label_metrics'), tf.device('/cpu:0'):
