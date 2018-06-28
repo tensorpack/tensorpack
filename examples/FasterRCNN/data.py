@@ -54,10 +54,6 @@ def get_all_anchors(
     # anchors at featuremap [0,0] are centered at fpcoor (8,8) (half of stride)
 
     max_size = cfg.PREPROC.MAX_SIZE
-    if cfg.MODE_FPN:
-        # TODO setting this in config is perhaps better
-        size_mult = cfg.FPN.RESOLUTION_REQUIREMENT * 1.
-        max_size = np.ceil(max_size / size_mult) * size_mult
     field_size = int(np.ceil(max_size / stride))
     shifts = np.arange(0, field_size) * stride
     shift_x, shift_y = np.meshgrid(shifts, shifts)

@@ -25,8 +25,6 @@ from tensorpack.tfutils.scope_utils import under_name_scope
 from tensorpack.tfutils import optimizer
 from tensorpack.tfutils.common import get_tf_version_number
 import tensorpack.utils.viz as tpviz
-from tensorpack.utils.gpu import get_num_gpu
-
 
 from coco import COCODetection
 from basemodel import (
@@ -49,7 +47,7 @@ from viz import (
     draw_predictions, draw_final_outputs)
 from eval import (
     eval_coco, detect_one_image, print_evaluation_scores, DetectionResult)
-from config import config as cfg
+from config import finalize_configs, config as cfg
 
 
 class DetectionModel(ModelDesc):
@@ -131,9 +129,9 @@ class DetectionModel(ModelDesc):
             labels (m): each >= 1
         """
         rcnn_box_logits = rcnn_box_logits[:, 1:, :]
-        rcnn_box_logits.set_shape([None, cfg.DATA.NUM_CLASS - 1, None])
+        rcnn_box_logits.set_shape([None, cfg.DATA.NUM_CATEGORY, None])
         label_probs = tf.nn.softmax(rcnn_label_logits, name='fastrcnn_all_probs')  # #proposal x #Class
-        anchors = tf.tile(tf.expand_dims(rcnn_boxes, 1), [1, cfg.DATA.NUM_CLASS - 1, 1])   # #proposal x #Cat x 4
+        anchors = tf.tile(tf.expand_dims(rcnn_boxes, 1), [1, cfg.DATA.NUM_CATEGORY, 1])   # #proposal x #Cat x 4
         decoded_boxes = decode_bbox_target(
             rcnn_box_logits /
             tf.constant(cfg.FRCNN.BBOX_REG_WEIGHTS, dtype=tf.float32), anchors)
@@ -237,7 +235,7 @@ class ResNetC4Model(DetectionModel):
                 # In training, mask branch shares the same C5 feature.
                 fg_feature = tf.gather(feature_fastrcnn, fg_inds_wrt_sample)
                 mask_logits = maskrcnn_upXconv_head(
-                    'maskrcnn', fg_feature, cfg.DATA.NUM_CLASS, num_convs=0)   # #fg x #cat x 14x14
+                    'maskrcnn', fg_feature, cfg.DATA.NUM_CATEGORY, num_convs=0)   # #fg x #cat x 14x14
 
                 target_masks_for_fg = crop_and_resize(
                     tf.expand_dims(gt_masks, 1),
@@ -269,7 +267,7 @@ class ResNetC4Model(DetectionModel):
                 roi_resized = roi_align(featuremap, final_boxes * (1.0 / cfg.RPN.ANCHOR_STRIDE), 14)
                 feature_maskrcnn = resnet_conv5(roi_resized, cfg.BACKBONE.RESNET_NUM_BLOCK[-1])
                 mask_logits = maskrcnn_upXconv_head(
-                    'maskrcnn', feature_maskrcnn, cfg.DATA.NUM_CLASS, 0)   # #result x #cat x 14x14
+                    'maskrcnn', feature_maskrcnn, cfg.DATA.NUM_CATEGORY, 0)   # #result x #cat x 14x14
                 indices = tf.stack([tf.range(tf.size(final_labels)), tf.to_int32(final_labels) - 1], axis=1)
                 final_mask_logits = tf.gather_nd(mask_logits, indices)   # #resultx14x14
                 tf.sigmoid(final_mask_logits, name='final_masks')
@@ -393,7 +391,7 @@ class ResNetFPNModel(DetectionModel):
                 roi_feature_maskrcnn = multilevel_roi_align(
                     p23456[:4], fg_sampled_boxes, 14)
                 mask_logits = maskrcnn_upXconv_head(
-                    'maskrcnn', roi_feature_maskrcnn, cfg.DATA.NUM_CLASS, 4)   # #fg x #cat x 28 x 28
+                    'maskrcnn', roi_feature_maskrcnn, cfg.DATA.NUM_CATEGORY, 4)   # #fg x #cat x 28 x 28
 
                 target_masks_for_fg = crop_and_resize(
                     tf.expand_dims(gt_masks, 1),
@@ -422,7 +420,7 @@ class ResNetFPNModel(DetectionModel):
                 # Cascade inference needs roi transform with refined boxes.
                 roi_feature_maskrcnn = multilevel_roi_align(p23456[:4], final_boxes, 14)
                 mask_logits = maskrcnn_upXconv_head(
-                    'maskrcnn', roi_feature_maskrcnn, cfg.DATA.NUM_CLASS, 4)   # #fg x #cat x 28 x 28
+                    'maskrcnn', roi_feature_maskrcnn, cfg.DATA.NUM_CATEGORY, 4)   # #fg x #cat x 28 x 28
                 indices = tf.stack([tf.range(tf.size(final_labels)), tf.to_int32(final_labels) - 1], axis=1)
                 final_mask_logits = tf.gather_nd(mask_logits, indices)   # #resultx28x28
                 tf.sigmoid(final_mask_logits, name='final_masks')
@@ -532,25 +530,6 @@ class EvalCallback(Callback):
             self._eval()
 
 
-def init_config():
-    """
-    Initialize config for training.
-    """
-    if cfg.TRAINER == 'horovod':
-        ngpu = hvd.size()
-    else:
-        ngpu = get_num_gpu()
-    assert ngpu % 8 == 0 or 8 % ngpu == 0, ngpu
-    if cfg.TRAIN.NUM_GPUS is None:
-        cfg.TRAIN.NUM_GPUS = ngpu
-    else:
-        if cfg.TRAINER == 'horovod':
-            assert cfg.TRAIN.NUM_GPUS == ngpu
-        else:
-            assert cfg.TRAIN.NUM_GPUS <= ngpu
-    logger.info("Config: ------------------------------------------\n" + str(cfg))
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--load', help='load a model for evaluation or training')
@@ -573,11 +552,8 @@ if __name__ == '__main__':
     MODEL = ResNetFPNModel() if cfg.MODE_FPN else ResNetC4Model()
 
     if args.visualize or args.evaluate or args.predict:
-        # autotune is too slow for inference
-        os.environ['TF_CUDNN_USE_AUTOTUNE'] = '0'
-
         assert args.load
-        logger.info("Config: ------------------------------------------\n" + str(cfg))
+        finalize_configs(is_training=False)
 
         if args.predict or args.visualize:
             cfg.TEST.RESULT_SCORE_THRESH = cfg.TEST.RESULT_SCORE_THRESH_VIS
@@ -598,18 +574,15 @@ if __name__ == '__main__':
                 COCODetection(cfg.DATA.BASEDIR, 'val2014')   # Only to load the class names into caches
                 predict(pred, args.predict)
     else:
-        os.environ['TF_AUTOTUNE_THRESHOLD'] = '1'
         is_horovod = cfg.TRAINER == 'horovod'
         if is_horovod:
             hvd.init()
             logger.info("Horovod Rank={}, Size={}".format(hvd.rank(), hvd.size()))
-        else:
-            assert 'OMPI_COMM_WORLD_SIZE' not in os.environ
 
         if not is_horovod or hvd.rank() == 0:
             logger.set_logger_dir(args.logdir, 'd')
 
-        init_config()
+        finalize_configs(is_training=True)
         factor = 8. / cfg.TRAIN.NUM_GPUS
         stepnum = cfg.TRAIN.STEPS_PER_EPOCH
 

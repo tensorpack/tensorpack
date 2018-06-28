@@ -356,7 +356,7 @@ def fastrcnn_predictions(boxes, probs):
         boxes: n#catx4 floatbox in float32
         probs: nx#class
     """
-    assert boxes.shape[1] == cfg.DATA.NUM_CLASS - 1
+    assert boxes.shape[1] == cfg.DATA.NUM_CATEGORY
     assert probs.shape[1] == cfg.DATA.NUM_CLASS
     boxes = tf.transpose(boxes, [1, 0, 2])  # #catxnx4
     probs = tf.transpose(probs[:, 1:], [1, 0])  # #catxn
@@ -404,11 +404,11 @@ def fastrcnn_predictions(boxes, probs):
 
 
 @layer_register(log_shape=True)
-def maskrcnn_upXconv_head(feature, num_class, num_convs):
+def maskrcnn_upXconv_head(feature, num_category, num_convs):
     """
     Args:
         feature (NxCx s x s): size is 7 in C4 models and 14 in FPN models.
-        num_classes(int): num_category + 1
+        num_category(int):
         num_convs (int): number of convolution layers
 
     Returns:
@@ -422,7 +422,7 @@ def maskrcnn_upXconv_head(feature, num_class, num_convs):
         for k in range(num_convs):
             l = Conv2D('fcn{}'.format(k), l, cfg.MRCNN.HEAD_DIM, 3, activation=tf.nn.relu)
         l = Conv2DTranspose('deconv', l, cfg.MRCNN.HEAD_DIM, 2, strides=2, activation=tf.nn.relu)
-        l = Conv2D('conv', l, num_class - 1, 1)
+        l = Conv2D('conv', l, num_category, 1)
     return l
 
 

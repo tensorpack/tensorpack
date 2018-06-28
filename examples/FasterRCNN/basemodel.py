@@ -40,10 +40,9 @@ def image_preprocess(image, bgr=True):
     with tf.name_scope('image_preprocess'):
         if image.dtype.base_dtype != tf.float32:
             image = tf.cast(image, tf.float32)
-        image = image * (1.0 / 255)
 
-        mean = [0.485, 0.456, 0.406]    # rgb
-        std = [0.229, 0.224, 0.225]
+        mean = cfg.PREPROC.PIXEL_MEAN
+        std = cfg.PREPROC.PIXEL_STD
         if bgr:
             mean = mean[::-1]
             std = std[::-1]
@@ -93,8 +92,7 @@ def resnet_group(name, l, block_func, features, count, stride):
     with tf.variable_scope(name):
         for i in range(0, count):
             with tf.variable_scope('block{}'.format(i)):
-                l = block_func(l, features,
-                               stride if i == 0 else 1)
+                l = block_func(l, features, stride if i == 0 else 1)
     return l
 
 

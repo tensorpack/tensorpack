@@ -18,7 +18,6 @@ from config import config as cfg
 __all__ = ['COCODetection', 'COCOMeta']
 
 COCO_NUM_CATEGORY = 80
-cfg.DATA.NUM_CLASS = COCO_NUM_CATEGORY + 1
 
 
 class _COCOMeta(object):
