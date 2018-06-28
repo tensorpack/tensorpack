@@ -115,7 +115,7 @@ class Model(ModelDesc):
 
             add_param_summary(('.*/W', ['histogram']))   # monitor W
             total_cost = tf.add_n(costs, name='cost')
-            add_moving_summary(*(costs + [wrong, total_cost]))
+            add_moving_summary(wrong, total_cost, *costs)
             return total_cost
 
     def optimizer(self):

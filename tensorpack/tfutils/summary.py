@@ -196,7 +196,6 @@ def add_param_summary(*summary_lists, **kwargs):
                     add_tensor_summary(p, actions, name=name, collections=collections)
 
 
-# TODO: collection for the summary op
 def add_moving_summary(*args, **kwargs):
     """
     Summarize the moving average for scalar tensors.
@@ -227,6 +226,10 @@ def add_moving_summary(*args, **kwargs):
     if tf.get_variable_scope().reuse is True:
         logger.warn("add_moving_summary() called under reuse=True scope, ignored.")
         return []
+
+    if len(args) == 1 and isinstance(args[0], (list, tuple)):
+        logger.warn("add_moving_summary() takes positional args instead of an iterable of tensors!")
+        args = args[0]
 
     for x in args:
         assert isinstance(x, (tf.Tensor, tf.Variable)), x

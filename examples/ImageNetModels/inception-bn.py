@@ -96,7 +96,7 @@ class Model(ModelDesc):
         loss3 = tf.reduce_mean(loss3, name='loss3')
 
         cost = tf.add_n([loss3, 0.3 * loss2, 0.3 * loss1], name='weighted_cost')
-        add_moving_summary([cost, loss1, loss2, loss3])
+        add_moving_summary(cost, loss1, loss2, loss3)
 
         def prediction_incorrect(logits, label, topk, name):
             return tf.cast(tf.logical_not(tf.nn.in_top_k(logits, label, topk)), tf.float32, name=name)
