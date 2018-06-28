@@ -86,7 +86,7 @@ class CollectionGuard(object):
            name (str): name of the tower
            check_diff (bool): whether to check and print about collection change
                 when leaving this guard.
-           freeze_keys (list): list of keys to freeze
+           freeze_keys (list): list of keys to backup when entering and restore when leaving this guard.
            diff_whitelist (list): list of keys to ignore, when check_diff is True.
                 Defaults to some collections that are normally changed,
                 including variables, losses, contexts, queue runners.

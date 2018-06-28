@@ -4,7 +4,7 @@
 import tensorflow as tf
 
 from ..utils import logger
-from ..tfutils.tower import TowerContext
+from ..tfutils.tower import PredictTowerContext
 from .training import GraphBuilder
 
 __all__ = ['SimplePredictBuilder']
@@ -41,8 +41,8 @@ class SimplePredictBuilder(GraphBuilder):
             self._ns_name, self._device))
 
         with tf.device(self._device), \
-                TowerContext(
-                    self._ns_name, is_training=False, vs_name=self._vs_name):
+                PredictTowerContext(
+                    self._ns_name, vs_name=self._vs_name):
             inputs = input.get_input_tensors()
             assert isinstance(inputs, (list, tuple)), inputs
             return tower_fn(*inputs)

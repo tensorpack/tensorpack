@@ -13,7 +13,7 @@ from ..utils.argtools import map_arg
 from ..utils.develop import HIDE_DOC
 from ..tfutils import get_global_step_var
 from ..tfutils.distributed import get_distributed_session_creator
-from ..tfutils.tower import TowerContext
+from ..tfutils.tower import TrainTowerContext
 from ..input_source import QueueInput
 
 from ..graph_builder.training import (
@@ -49,7 +49,7 @@ class SimpleTrainer(SingleCostTrainer):
     """
     def _setup_graph(self, input, get_cost_fn, get_opt_fn):
         logger.info("Building graph for a single training tower ...")
-        with TowerContext('', is_training=True):
+        with TrainTowerContext(''):
             grads = self._make_get_grad_fn(input, get_cost_fn, get_opt_fn)()
             opt = get_opt_fn()
             self.train_op = opt.apply_gradients(grads, name='min_op')
@@ -359,7 +359,7 @@ class HorovodTrainer(SingleCostTrainer):
         return averaged_gradients
 
     def _setup_graph(self, input, get_cost_fn, get_opt_fn):
-        with TowerContext('', is_training=True):
+        with TrainTowerContext(''):
             grads = self._make_get_grad_fn(input, get_cost_fn, get_opt_fn)()
             grads = self.allreduce(grads)
 

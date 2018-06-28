@@ -7,7 +7,7 @@ import tensorflow as tf
 import six
 
 from ..tfutils.common import get_tensors_by_names, get_tf_version_number
-from ..tfutils.tower import TowerContext
+from ..tfutils.tower import PredictTowerContext
 from ..input_source import PlaceholderInput
 from ..utils.develop import log_deprecated
 from ..utils.argtools import log_once
@@ -165,7 +165,7 @@ class OfflinePredictor(OnlinePredictor):
         with self.graph.as_default():
             input = PlaceholderInput()
             input.setup(config.inputs_desc)
-            with TowerContext('', is_training=False):
+            with PredictTowerContext(''):
                 config.tower_func(*input.get_input_tensors())
 
             input_tensors = get_tensors_by_names(config.input_names)

@@ -8,9 +8,10 @@ import six
 import re
 import pprint
 from six.moves import zip, range
+from contextlib import contextmanager
 
 from ..utils import logger
-from ..tfutils.tower import TowerContext
+from ..tfutils.tower import TrainTowerContext
 from ..tfutils.gradproc import ScaleGradient
 
 from .utils import (
@@ -29,6 +30,15 @@ class GraphBuilder(object):
     @abstractmethod
     def build(*args, **kwargs):
         pass
+
+
+@contextmanager
+def _maybe_reuse_vs(reuse):
+    if reuse:
+        with tf.variable_scope(tf.get_variable_scope(), reuse=True):
+            yield
+    else:
+        yield
 
 
 class DataParallelBuilder(GraphBuilder):
@@ -92,11 +102,11 @@ class DataParallelBuilder(GraphBuilder):
         for idx, t in enumerate(towers):
             device = devices[idx] if devices is not None else '/gpu:{}'.format(t)
             usevs = use_vs[idx] if use_vs is not None else False
-            with tf.device(device), TowerContext(
+            reuse = not usevs and idx > 0
+            with tf.device(device), _maybe_reuse_vs(reuse), TrainTowerContext(
                     tower_names[idx],
-                    is_training=True,
-                    index=idx,
-                    vs_name=tower_names[idx] if usevs else ''):
+                    vs_name=tower_names[idx] if usevs else '',
+                    index=idx, total=len(towers)):
                 if len(str(device)) < 10:   # a device function doesn't have good string description
                     logger.info("Building graph for training tower {} on device {} ...".format(idx, device))
                 else:
