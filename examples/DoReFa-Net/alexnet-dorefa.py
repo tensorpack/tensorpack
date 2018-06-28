@@ -172,24 +172,11 @@ def run_image(model, sess_init, inputs):
     )
     predictor = OfflinePredictor(pred_config)
     meta = dataset.ILSVRCMeta()
-    pp_mean = meta.get_per_pixel_mean()
-    pp_mean_224 = pp_mean[16:-16, 16:-16, :]
     words = meta.get_synset_words_1000()
 
-    def resize_func(im):
-        h, w = im.shape[:2]
-        scale = 256.0 / min(h, w)
-        desSize = map(int, (max(224, min(w, scale * w)),
-                            max(224, min(h, scale * h))))
-        im = cv2.resize(im, tuple(desSize), interpolation=cv2.INTER_CUBIC)
-        return im
-    transformers = imgaug.AugmentorList([
-        imgaug.MapImage(resize_func),
-        imgaug.CenterCrop((224, 224)),
-        imgaug.MapImage(lambda x: x - pp_mean_224),
-    ])
+    transformers = imgaug.AugmentorList(fbresnet_augmentor(isTrain=False))
     for f in inputs:
-        assert os.path.isfile(f)
+        assert os.path.isfile(f), f
         img = cv2.imread(f).astype('float32')
         assert img is not None
 
