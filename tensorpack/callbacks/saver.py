@@ -108,7 +108,7 @@ class MinSaver(Callback):
 
                 MinSaver('val-error')
 
-        Notes:
+        Note:
             It assumes that :class:`ModelSaver` is used with the same ``checkpoint_dir``
             and appears earlier in the callback list.
             The default for both :class:`ModelSaver` and :class:`MinSaver`

@@ -88,34 +88,35 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
 
     Args:
         internal_update (bool): if False, add EMA update ops to
-            `tf.GraphKeys.UPDATE_OPS`. If True, update EMA inside the layer
-            by control dependencies.
-            They are very similar in speed, but `internal_update=True` can be used
-            when you have conditionals in your model, or when you have multiple networks to train.
+          `tf.GraphKeys.UPDATE_OPS`. If True, update EMA inside the layer by control dependencies.
+          They are very similar in speed, but `internal_update=True` can be used
+          when you have conditionals in your model, or when you have multiple networks to train.
+          Corresponding TF issue: https://github.com/tensorflow/tensorflow/issues/14699
         sync_statistics: either None or "nccl". By default (None), it uses statistics of the input tensor to normalize.
-            When set to "nccl", this layer must be used under tensorpack multi-gpu trainers,
-            and it then uses per-machine (multiple GPU) statistics to normalize.
+          When set to "nccl", this layer must be used under tensorpack multi-gpu trainers,
+          and it then uses per-machine (multiple GPU) statistics to normalize.
 
-            This option has no effect when not training.
-            The option is also known as "Cross-GPU BatchNorm" as mentioned in https://arxiv.org/abs/1711.07240.
+          This option has no effect when not training.
+          The option is also known as "Cross-GPU BatchNorm" as mentioned in https://arxiv.org/abs/1711.07240.
+          Corresponding TF issue: https://github.com/tensorflow/tensorflow/issues/18222
 
     Variable Names:
 
     * ``beta``: the bias term. Will be zero-inited by default.
-    * ``gamma``: the scale term. Will be one-inited by default. Input will be transformed by ``x * gamma + beta``.
+    * ``gamma``: the scale term. Will be one-inited by default.
     * ``mean/EMA``: the moving average of mean.
     * ``variance/EMA``: the moving average of variance.
 
     Note:
-        1. Combinations of ``training`` and ``ctx.is_training``:
-            * ``training == ctx.is_training``: standard BN, EMA are
-                maintained during training and used during inference. This is
-                the default.
-            * ``training and not ctx.is_training``: still use batch statistics in inference.
-            * ``not training and ctx.is_training``: use EMA to normalize in
-                training. This is useful when you load a pre-trained BN and
-                don't want to fine tune the EMA. EMA will not be updated in
-                this case.
+        Combinations of ``training`` and ``ctx.is_training``:
+
+        * ``training == ctx.is_training``: standard BN, EMA are maintained during training
+          and used during inference. This is the default.
+        * ``training and not ctx.is_training``: still use batch statistics in inference.
+        * ``not training and ctx.is_training``: use EMA to normalize in
+          training. This is useful when you load a pre-trained BN and
+          don't want to fine tune the EMA. EMA will not be updated in
+          this case.
     """
     # parse shapes
     data_format = get_data_format(data_format, tfmode=False)
@@ -238,12 +239,16 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
         if new_shape is not None:
             batch_mean = tf.reshape(batch_mean, new_shape)
             batch_var = tf.reshape(batch_var, new_shape)
-            r_gamma = tf.reshape(gamma, new_shape)
-            r_beta = tf.reshape(beta, new_shape)
+            # Using fused_batch_norm(is_training=False) is actually slightly faster,
+            # but hopefully this call will be JITed in the future.
+            xn = tf.nn.batch_normalization(
+                inputs, batch_mean, batch_var,
+                tf.reshape(beta, new_shape),
+                tf.reshape(gamma, new_shape), epsilon)
         else:
-            r_gamma, r_beta = gamma, beta
-        xn = tf.nn.batch_normalization(
-            inputs, batch_mean, batch_var, r_beta, r_gamma, epsilon)
+            xn = tf.nn.batch_normalization(
+                inputs, batch_mean, batch_var,
+                beta, gamma, epsilon)
 
         if ctx.is_main_training_tower:
             ret = update_bn_ema(

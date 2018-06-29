@@ -59,7 +59,7 @@ def launch_train_with_config(config, trainer):
         config (TrainConfig):
         trainer (Trainer): an instance of :class:`SingleCostTrainer`.
 
-    Examples:
+    Example:
 
     .. code-block:: python
 

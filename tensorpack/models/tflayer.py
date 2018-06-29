@@ -94,7 +94,7 @@ def rename_tflayer_get_variable():
     Returns:
         A context where the variables are renamed.
 
-    Examples:
+    Example:
 
     .. code-block:: python
 

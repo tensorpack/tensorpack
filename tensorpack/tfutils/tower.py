@@ -204,7 +204,7 @@ def TowerContext(tower_name, is_training, vs_name=''):
     Returns:
         A context within which the tower function should be called.
 
-    Examples:
+    Example:
 
     .. code-block:: python
 

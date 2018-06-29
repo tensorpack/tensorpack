@@ -65,7 +65,7 @@ def layer_register(
     Returns:
         A decorator used to register a layer.
 
-    Examples:
+    Example:
 
     .. code-block:: python
 

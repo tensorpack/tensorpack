@@ -31,7 +31,7 @@ def humanize_time_delta(sec):
     Returns:
         str - time difference as a readable string
 
-    Examples:
+    Example:
 
     .. code-block:: python
 
@@ -96,7 +96,7 @@ def fix_rng_seed(seed):
     Note:
         See https://github.com/tensorpack/tensorpack/issues/196.
 
-    Examples:
+    Example:
 
         Fix random seed in both tensorpack and tensorflow.
 

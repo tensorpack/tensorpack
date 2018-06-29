@@ -107,7 +107,7 @@ def add_tensor_summary(x, types, name=None, collections=None,
             set to True, calling this function under other TowerContext
             has no effect.
 
-    Examples:
+    Example:
 
     .. code-block:: python
 
@@ -170,7 +170,7 @@ def add_param_summary(*summary_lists, **kwargs):
             Summary type is defined in :func:`add_tensor_summary`.
         collections (list[str]): collections of the summary ops.
 
-    Examples:
+    Example:
 
     .. code-block:: python
 

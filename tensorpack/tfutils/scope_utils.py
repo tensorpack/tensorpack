@@ -17,7 +17,7 @@ def auto_reuse_variable_scope(func):
     A decorator which automatically reuses the current variable scope if the
     function has been called with the same variable scope before.
 
-    Examples:
+    Example:
 
     .. code-block:: python
 
@@ -60,7 +60,7 @@ def under_name_scope(name=None):
         A decorator which makes the function happen under a name scope.
         The default name is the function itself.
 
-    Examples:
+    Example:
 
     .. code-block:: python
 
@@ -92,7 +92,7 @@ def under_variable_scope():
         A decorator which makes the function happen under a variable scope,
         which is named by the function itself.
 
-    Examples:
+    Example:
 
     .. code-block:: python
 

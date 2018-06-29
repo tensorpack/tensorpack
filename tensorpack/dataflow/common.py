@@ -208,7 +208,7 @@ class FixedSizeData(ProxyDataFlow):
                 next call will continue the previous iteration over ``ds``,
                 instead of reinitializing an iterator.
 
-        Examples:
+        Example:
 
         .. code-block:: none
 
@@ -476,7 +476,7 @@ class JoinData(DataFlow):
     """
     Join the components from each DataFlow.
 
-    Examples:
+    Example:
 
     .. code-block:: none
 

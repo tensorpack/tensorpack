@@ -220,12 +220,12 @@ class PrefetchDataZMQ(_MultiProcessZMQDataFlow):
            As a result, we have the following guarantee on the dataflow correctness:
 
            a. When ``nr_proc=1``, this dataflow produces the same data as the
-                given dataflow in the same order.
+              given dataflow in the same order.
            b. When ``nr_proc>1``, if each sample from the given dataflow is i.i.d. (e.g. fully shuffled),
-                then this dataflow produces the **same distribution** of data as the given dataflow.
-                This implies that there will be duplication, reordering, etc.
-                You probably only want to use it for training.
-                If the samples are not i.i.d., the behavior is undefined.
+              then this dataflow produces the **same distribution** of data as the given dataflow.
+              This implies that there will be duplication, reordering, etc.
+              You probably only want to use it for training.
+              If the samples are not i.i.d., the behavior is undefined.
         2. `reset_state()` of the given dataflow will be called **once and only once** in the worker processes.
         3. The fork of processes happened in this dataflow's `reset_state()` method.
            Please note that forking a TensorFlow GPU session may be unsafe.

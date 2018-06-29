@@ -78,7 +78,7 @@ class DistributedParameterServerBuilder(DataParallelBuilder, DistributedBuilderB
 
     Note:
         1. Gradients are not averaged across workers, but applied to PS variables
-        directly (either with or without locking depending on the optimizer).
+           directly (either with or without locking depending on the optimizer).
     """
 
     def __init__(self, towers, server, caching_device):
@@ -150,8 +150,7 @@ class DistributedReplicatedBuilder(DataParallelBuilder, DistributedBuilderBase):
 
     Note:
         1. Gradients are not averaged across workers, but applied to PS variables
-        directly (either with or without locking depending on the optimizer).
-
+           directly (either with or without locking depending on the optimizer).
         2. Some details about collections: all variables created inside tower
            will become local variables,
            and a clone will be made in global variables for all trainable/model variables.

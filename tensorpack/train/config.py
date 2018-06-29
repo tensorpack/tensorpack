@@ -196,7 +196,7 @@ class AutoResumeTrainConfig(TrainConfig):
                 Otherwise, resume will take priority.
             kwargs: same as in :class:`TrainConfig`.
 
-        Notes:
+        Note:
             The main goal of this class is to let a training job to resume
             without changing any line of code or command line arguments.
             So it's useful to let resume take priority over user-provided arguments sometimes:

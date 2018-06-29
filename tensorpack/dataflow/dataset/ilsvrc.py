@@ -195,7 +195,7 @@ class ILSVRC12(ILSVRC12Files):
                 By default, it tries to automatically detect the structure.
                 You probably do not need to care about this option because 'original' is what people usually have.
 
-        Examples:
+        Example:
 
         When `dir_structure=='original'`, `dir` should have the following structure:
 

@@ -34,7 +34,7 @@ class RunOp(Callback):
             run_step (bool): run the Op every step (along with training)
             verbose (bool): print logs when the op is run.
 
-        Examples:
+        Example:
             The `DQN Example
             <https://github.com/tensorpack/tensorpack/blob/master/examples/DeepQNetwork/>`_
             uses this callback to update target network.
@@ -105,7 +105,7 @@ class ProcessTensors(Callback):
     to the session.
     You can use it to print tensors, save tensors to file, etc.
 
-    Examples:
+    Example:
 
     .. code-block:: python
 

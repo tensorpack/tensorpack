@@ -79,7 +79,7 @@ class TowerTrainer(Trainer):
         Returns:
             an :class:`OnlinePredictor`.
 
-        Examples:
+        Example:
 
         .. code-block:: none
 
@@ -160,8 +160,7 @@ class SingleCostTrainer(TowerTrainer):
 
         Note:
             `get_cost_fn` will be the tower function.
-            It must follows the
-            `rules of tower function.
+            It must follows the `rules of tower function.
             <http://tensorpack.readthedocs.io/en/latest/tutorial/trainer.html#tower-trainer>`_.
         """
         get_cost_fn = TowerFuncWrapper(get_cost_fn, inputs_desc)

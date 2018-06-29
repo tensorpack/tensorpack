@@ -40,7 +40,7 @@ globalns = GlobalNS()
 """
 A namespace to store global variables.
 
-Examples:
+Example:
 
 .. code-block:: none
 

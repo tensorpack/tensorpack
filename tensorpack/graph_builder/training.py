@@ -128,9 +128,6 @@ class SyncMultiGPUParameterServerBuilder(DataParallelBuilder):
 
     It is an equivalent of ``--variable_update=parameter_server`` in
     `tensorflow/benchmarks <https://github.com/tensorflow/benchmarks>`_.
-
-    Attribute:
-        grads: list of (g, v). Averaged gradients, available after build()
     """
     def __init__(self, towers, ps_device):
         """
@@ -144,6 +141,8 @@ class SyncMultiGPUParameterServerBuilder(DataParallelBuilder):
 
     def build(self, get_grad_fn, get_opt_fn):
         """
+        Build the graph, and set self.grads to a list of (g, v), containing the averaged gradients.
+
         Args:
             get_grad_fn (-> [(grad, var)]):
             get_opt_fn (-> tf.train.Optimizer): callable which returns an optimizer
@@ -187,10 +186,6 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
 
     It is an equivalent of ``--variable_update=replicated`` in
     `tensorflow/benchmarks <https://github.com/tensorflow/benchmarks>`_.
-
-    Attribute:
-        grads: #GPU number of lists of (g, v). Synchronized gradients on each device,
-        available after build() Though on different devices, they should contain the same value.
     """
 
     def __init__(self, towers, average, mode):
@@ -201,6 +196,9 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
 
     def build(self, get_grad_fn, get_opt_fn):
         """
+        Build the graph, and set self.grads to #GPU number of lists of (g, v), containing the
+        all-reduced gradients on each device.
+
         Args:
             get_grad_fn (-> [(grad, var)]):
             get_opt_fn (-> tf.train.Optimizer): callable which returns an optimizer

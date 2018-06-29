@@ -32,7 +32,7 @@ class PredictorBase(object):
         """
         Call the predictor on some inputs.
 
-        Examples:
+        Example:
             When you have a predictor defined with two inputs, call it with:
 
             .. code-block:: python

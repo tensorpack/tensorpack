@@ -210,7 +210,7 @@ def remap_input_source(input, names):
     Returns:
         InputSource:
 
-    Examples:
+    Example:
 
     .. code-block:: python
 

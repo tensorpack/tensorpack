@@ -57,12 +57,10 @@ class InferenceRunnerBase(Callback):
     """ Base class for inference runner.
 
     Note:
-
-    1. InferenceRunner will use `input.size()` to determine
-        how much iterations to run, so you're responsible to ensure that
-        `size()` is reasonable.
-
-    2. Only works with instances of `TowerTrainer`.
+        1. InferenceRunner will use `input.size()` to determine
+           how much iterations to run, so you're responsible to ensure that
+           `size()` is reasonable.
+        2. Only works with instances of `TowerTrainer`.
     """
     def __init__(self, input, infs):
         """
