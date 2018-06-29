@@ -11,14 +11,14 @@ import tensorflow as tf
 from tensorpack import *
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.dataflow import dataset
-from tensorpack.utils.gpu import get_nr_gpu
+from tensorpack.utils.gpu import get_num_gpu
 
 from imagenet_utils import fbresnet_augmentor, get_imagenet_dataflow
 
 # Change them if using different number of GPUs.
 TOTAL_BATCH_SIZE = 64 * 6
-NR_GPU = 6
-BATCH_SIZE = TOTAL_BATCH_SIZE // NR_GPU
+NUM_GPU = 6
+BATCH_SIZE = TOTAL_BATCH_SIZE // NUM_GPU
 INPUT_SHAPE = 224
 
 
@@ -169,6 +169,6 @@ if __name__ == '__main__':
     config = get_config()
     if args.load:
         config.session_init = SaverRestore(args.load)
-    nr_tower = get_nr_gpu()
-    assert nr_tower == NR_GPU
-    launch_train_with_config(config, SyncMultiGPUTrainer(NR_GPU))
+    nr_tower = get_num_gpu()
+    assert nr_tower == NUM_GPU
+    launch_train_with_config(config, SyncMultiGPUTrainer(NUM_GPU))

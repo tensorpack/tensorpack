@@ -149,10 +149,10 @@ class MultiGPUGANTrainer(TowerTrainer):
     """
     A replacement of GANTrainer (optimize d and g one by one) with multi-gpu support.
     """
-    def __init__(self, nr_gpu, input, model):
+    def __init__(self, num_gpu, input, model):
         super(MultiGPUGANTrainer, self).__init__()
-        assert nr_gpu > 1
-        raw_devices = ['/gpu:{}'.format(k) for k in range(nr_gpu)]
+        assert num_gpu > 1
+        raw_devices = ['/gpu:{}'.format(k) for k in range(num_gpu)]
 
         # Setup input
         input = StagingInput(input)
@@ -167,13 +167,13 @@ class MultiGPUGANTrainer(TowerTrainer):
         self.tower_func = TowerFuncWrapper(get_cost, model.get_inputs_desc())
         devices = [LeastLoadedDeviceSetter(d, raw_devices) for d in raw_devices]
         cost_list = DataParallelBuilder.build_on_towers(
-            list(range(nr_gpu)),
+            list(range(num_gpu)),
             lambda: self.tower_func(*input.get_input_tensors()),
             devices)
         # Simply average the cost here. It might be faster to average the gradients
         with tf.name_scope('optimize'):
-            d_loss = tf.add_n([x[0] for x in cost_list]) * (1.0 / nr_gpu)
-            g_loss = tf.add_n([x[1] for x in cost_list]) * (1.0 / nr_gpu)
+            d_loss = tf.add_n([x[0] for x in cost_list]) * (1.0 / num_gpu)
+            g_loss = tf.add_n([x[1] for x in cost_list]) * (1.0 / num_gpu)
 
             opt = model.get_optimizer()
             # run one d_min after one g_min

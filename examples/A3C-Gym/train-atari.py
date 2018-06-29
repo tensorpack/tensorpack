@@ -19,7 +19,7 @@ from tensorpack import *
 from tensorpack.utils.concurrency import ensure_proc_terminate, start_proc_mask_signal
 from tensorpack.utils.serialize import dumps
 from tensorpack.tfutils.gradproc import MapGradient, SummaryGradient
-from tensorpack.utils.gpu import get_nr_gpu
+from tensorpack.utils.gpu import get_num_gpu
 
 
 import gym
@@ -144,10 +144,10 @@ class MySimulatorMaster(SimulatorMaster, Callback):
 
     def _setup_graph(self):
         # create predictors on the available predictor GPUs.
-        nr_gpu = len(self._gpus)
+        num_gpu = len(self._gpus)
         predictors = [self.trainer.get_predictor(
             ['state'], ['policy', 'pred_value'],
-            self._gpus[k % nr_gpu])
+            self._gpus[k % num_gpu])
             for k in range(PREDICTOR_THREAD)]
         self.async_predictor = MultiThreadAsyncPredictor(
             predictors, batch_size=PREDICT_BATCH_SIZE)
@@ -213,16 +213,16 @@ def train():
     logger.set_logger_dir(dirname)
 
     # assign GPUs for training & inference
-    nr_gpu = get_nr_gpu()
+    num_gpu = get_num_gpu()
     global PREDICTOR_THREAD
-    if nr_gpu > 0:
-        if nr_gpu > 1:
+    if num_gpu > 0:
+        if num_gpu > 1:
             # use half gpus for inference
-            predict_tower = list(range(nr_gpu))[-nr_gpu // 2:]
+            predict_tower = list(range(num_gpu))[-num_gpu // 2:]
         else:
             predict_tower = [0]
         PREDICTOR_THREAD = len(predict_tower) * PREDICTOR_THREAD_PER_GPU
-        train_tower = list(range(nr_gpu))[:-nr_gpu // 2] or [0]
+        train_tower = list(range(num_gpu))[:-num_gpu // 2] or [0]
         logger.info("[Batch-A3C] Train on gpu {} and infer on gpu {}".format(
             ','.join(map(str, train_tower)), ','.join(map(str, predict_tower))))
     else:

@@ -27,8 +27,8 @@ These are all the toy examples in tensorpack. They are supposed to be just demos
 | ---  | --- |
 |	Train [ResNet](ResNet), [ShuffleNet and other models](ImageNetModels) on ImageNet		| reproduce paper	|
 |	[Train Faster-RCNN / Mask-RCNN on COCO](FasterRCNN)				|	reproduce paper		|
-| [DoReFa-Net: training binary / low-bitwidth CNN on ImageNet](DoReFa-Net) | reproduce paper |
 | [Generative Adversarial Network(GAN) variants](GAN), including DCGAN, InfoGAN, <br/> Conditional GAN, WGAN, BEGAN, DiscoGAN, Image to Image, CycleGAN | visually reproduce |
+| [DoReFa-Net: training binary / low-bitwidth CNN on ImageNet](DoReFa-Net) | reproduce paper |
 | [Fully-convolutional Network for Holistically-Nested Edge Detection(HED)](HED) | visually reproduce |
 | [Spatial Transformer Networks on MNIST addition](SpatialTransformer) | reproduce paper |
 | [Visualize CNN saliency maps](Saliency) | visually reproduce |

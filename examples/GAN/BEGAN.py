@@ -5,7 +5,7 @@
 
 from tensorpack import *
 from tensorpack.tfutils.summary import add_moving_summary
-from tensorpack.utils.gpu import get_nr_gpu
+from tensorpack.utils.gpu import get_num_gpu
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
 import tensorflow as tf
 
@@ -137,7 +137,7 @@ if __name__ == '__main__':
 
         input = QueueInput(DCGAN.get_data())
         model = Model()
-        nr_tower = max(get_nr_gpu(), 1)
+        nr_tower = max(get_num_gpu(), 1)
         if nr_tower == 1:
             trainer = GANTrainer(input, model)
         else:

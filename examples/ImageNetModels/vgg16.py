@@ -10,7 +10,7 @@ import tensorflow as tf
 from tensorpack import *
 from tensorpack.tfutils import argscope
 from tensorpack.tfutils.summary import *
-from tensorpack.utils.gpu import get_nr_gpu
+from tensorpack.utils.gpu import get_num_gpu
 
 from imagenet_utils import (
     ImageNetModel, get_imagenet_dataflow, fbresnet_augmentor)
@@ -108,7 +108,7 @@ def get_data(name, batch):
 
 
 def get_config():
-    nr_tower = max(get_nr_gpu(), 1)
+    nr_tower = max(get_num_gpu(), 1)
     batch = args.batch
     total_batch = batch * nr_tower
     assert total_batch >= 256   # otherwise the learning rate warmup is wrong.
@@ -159,6 +159,6 @@ if __name__ == '__main__':
     logger.set_logger_dir(os.path.join('train_log', 'vgg16-norm={}'.format(args.norm)))
 
     config = get_config()
-    nr_tower = max(get_nr_gpu(), 1)
+    nr_tower = max(get_num_gpu(), 1)
     trainer = SyncMultiGPUTrainerReplicated(nr_tower)
     launch_train_with_config(config, trainer)

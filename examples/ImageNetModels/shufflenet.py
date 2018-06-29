@@ -14,7 +14,7 @@ from tensorpack import *
 from tensorpack.dataflow import imgaug
 from tensorpack.tfutils import argscope, get_model_loader, model_utils
 from tensorpack.tfutils.scope_utils import under_name_scope
-from tensorpack.utils.gpu import get_nr_gpu
+from tensorpack.utils.gpu import get_num_gpu
 
 from imagenet_utils import (
     get_imagenet_dataflow,
@@ -212,7 +212,7 @@ if __name__ == '__main__':
     else:
         logger.set_logger_dir(os.path.join('train_log', 'shufflenet'))
 
-        nr_tower = max(get_nr_gpu(), 1)
+        nr_tower = max(get_num_gpu(), 1)
         config = get_config(model, nr_tower)
         if args.load:
             config.session_init = get_model_loader(args.load)

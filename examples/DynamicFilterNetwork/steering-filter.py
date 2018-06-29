@@ -257,8 +257,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     with change_gpu(args.gpu):
-        NR_GPU = len(args.gpu.split(','))
+        NGPU = len(args.gpu.split(','))
         config = get_config()
         if args.load:
             config.session_init = SaverRestore(args.load)
-        launch_train_with_config(config, SyncMultiGPUTrainer(NR_GPU))
+        launch_train_with_config(config, SyncMultiGPUTrainer(NGPU))

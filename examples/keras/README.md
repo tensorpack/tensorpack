@@ -1,10 +1,10 @@
 
 ## Keras + Tensorpack
 
-Use Keras to define a model a train it with efficient tensorpack trainers.
+Use Keras to define a model and train it with efficient tensorpack trainers.
 
 ### Why?
-Keras alone has various overhead. In particular, it is not efficient when working on large models.
+Keras alone has various overhead. In particular, it is not efficient with large models.
 The article [Towards Efficient Multi-GPU Training in Keras with TensorFlow](https://medium.com/rossum/towards-efficient-multi-gpu-training-in-keras-with-tensorflow-8a0091074fb2)
 has mentioned some of it.
 

@@ -39,8 +39,10 @@ The tower function needs to follow some conventions:
      To respect variable reuse, use `tf.get_variable` instead of `tf.Variable` in the function.
      On the other hand, for non-trainable variables, it's OK to use
      `tf.Variable` to ensure creation of new variables in each tower even when `reuse=True`.
-4. It will always be called under a `TowerContext`, which can be accessed by `get_current_tower_contxt()`.
+4. It will always be called under a `TowerContext`, which can be accessed by `get_current_tower_context()`.
    The context contains information about training/inference mode, reuse, etc.
+5. It cannot create scopes or variables containing the name 'tower', as it is
+   reserved for special use.
      
 These conventions are easy to follow, and most layer wrappers (e.g.,
 tf.layers/slim/tensorlayer) do follow them. Note that certain Keras layers do not

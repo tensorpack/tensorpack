@@ -12,7 +12,7 @@ from tensorpack.train import (
     TrainConfig, SyncMultiGPUTrainerReplicated, launch_train_with_config)
 from tensorpack.dataflow import FakeData
 from tensorpack.tfutils import argscope, get_model_loader
-from tensorpack.utils.gpu import get_nr_gpu
+from tensorpack.utils.gpu import get_num_gpu
 
 from imagenet_utils import (
     fbresnet_augmentor, get_imagenet_dataflow, ImageNetModel,
@@ -57,7 +57,7 @@ def get_data(name, batch):
 
 
 def get_config(model, fake=False):
-    nr_tower = max(get_nr_gpu(), 1)
+    nr_tower = max(get_num_gpu(), 1)
     assert args.batch % nr_tower == 0
     batch = args.batch // nr_tower
 
@@ -143,5 +143,5 @@ if __name__ == '__main__':
         config = get_config(model, fake=args.fake)
         if args.load:
             config.session_init = get_model_loader(args.load)
-        trainer = SyncMultiGPUTrainerReplicated(max(get_nr_gpu(), 1))
+        trainer = SyncMultiGPUTrainerReplicated(max(get_num_gpu(), 1))
         launch_train_with_config(config, trainer)

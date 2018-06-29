@@ -9,7 +9,7 @@ import os
 
 from tensorpack import *
 from tensorpack.tfutils.summary import add_moving_summary, add_param_summary
-from tensorpack.utils.gpu import get_nr_gpu
+from tensorpack.utils.gpu import get_num_gpu
 from tensorpack.dataflow import dataset
 
 import tensorflow as tf
@@ -170,5 +170,5 @@ if __name__ == '__main__':
         max_epoch=400,
         session_init=SaverRestore(args.load) if args.load else None
     )
-    nr_gpu = max(get_nr_gpu(), 1)
-    launch_train_with_config(config, SyncMultiGPUTrainerParameterServer(nr_gpu))
+    num_gpu = max(get_num_gpu(), 1)
+    launch_train_with_config(config, SyncMultiGPUTrainerParameterServer(num_gpu))

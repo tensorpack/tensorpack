@@ -13,6 +13,7 @@ from tensorpack import *
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.utils import logger
+from tensorpack.utils.gpu import get_num_gpu
 from data_sampler import (
     ImageDecode, ImageDataFromZIPFile,
     RejectTooSmallImages, CenterSquareResize)
@@ -286,7 +287,7 @@ if __name__ == '__main__':
             param_dict = {'VGG19/' + name: value for name, value in six.iteritems(param_dict)}
             session_init = DictRestore(param_dict)
 
-        nr_tower = max(get_nr_gpu(), 1)
+        nr_tower = max(get_num_gpu(), 1)
         data = QueueInput(get_data(args.data))
         model = Model()
 

@@ -11,7 +11,7 @@ import argparse
 from tensorpack import InputDesc, SyncMultiGPUTrainerReplicated
 from tensorpack.dataflow import FakeData, MapDataComponent
 from tensorpack.utils import logger
-from tensorpack.utils.gpu import get_nr_gpu
+from tensorpack.utils.gpu import get_num_gpu
 from tensorpack.contrib.keras import KerasModel
 from tensorpack.callbacks import *
 from tensorflow.python.keras.layers import *
@@ -141,12 +141,12 @@ if __name__ == '__main__':
 
     tf.keras.backend.set_image_data_format('channels_first')
 
-    nr_gpu = get_nr_gpu()
+    num_gpu = get_num_gpu()
     if args.fake:
         df_train = FakeData([[64, 224, 224, 3], [64, 1000]], 5000, random=False, dtype='uint8')
         df_val = FakeData([[64, 224, 224, 3], [64, 1000]], 5000, random=False)
     else:
-        batch_size = TOTAL_BATCH_SIZE // nr_gpu
+        batch_size = TOTAL_BATCH_SIZE // num_gpu
         assert args.data is not None
         df_train = get_imagenet_dataflow(
             args.data, 'train', batch_size, fbresnet_augmentor(True))
@@ -164,7 +164,7 @@ if __name__ == '__main__':
         inputs_desc=[InputDesc(tf.uint8, [None, 224, 224, 3], 'images')],
         targets_desc=[InputDesc(tf.float32, [None, 1000], 'labels')],
         input=df_train,
-        trainer=SyncMultiGPUTrainerReplicated(nr_gpu))
+        trainer=SyncMultiGPUTrainerReplicated(num_gpu))
 
     lr = tf.get_variable('learning_rate', initializer=0.1, trainable=False)
     tf.summary.scalar('lr', lr)
@@ -188,7 +188,7 @@ if __name__ == '__main__':
     if not args.fake:
         callbacks.append(
             DataParallelInferenceRunner(
-                df_val, ScalarStats(['categorical_accuracy']), nr_gpu))
+                df_val, ScalarStats(['categorical_accuracy']), num_gpu))
 
     M.fit(
         steps_per_epoch=100 if args.fake else 1281167 // TOTAL_BATCH_SIZE,

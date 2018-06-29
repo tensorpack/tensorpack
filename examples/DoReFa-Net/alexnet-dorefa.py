@@ -15,7 +15,7 @@ from tensorpack import *
 from tensorpack.tfutils.summary import add_param_summary
 from tensorpack.tfutils.varreplace import remap_variables
 from tensorpack.dataflow import dataset
-from tensorpack.utils.gpu import get_nr_gpu
+from tensorpack.utils.gpu import get_num_gpu
 
 from imagenet_utils import get_imagenet_dataflow, fbresnet_augmentor, ImageNetModel
 from dorefa import get_dorefa, ternarize
@@ -215,7 +215,7 @@ if __name__ == '__main__':
         run_image(Model(), DictRestore(dict(np.load(args.load))), args.run)
         sys.exit()
 
-    nr_tower = max(get_nr_gpu(), 1)
+    nr_tower = max(get_num_gpu(), 1)
     BATCH_SIZE = TOTAL_BATCH_SIZE // nr_tower
     logger.set_logger_dir(os.path.join(
         'train_log', 'alexnet-dorefa-{}'.format(args.dorefa)))

@@ -96,8 +96,11 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
           When set to "nccl", this layer must be used under tensorpack multi-gpu trainers,
           and it then uses per-machine (multiple GPU) statistics to normalize.
 
+          Note that this implementation averages the per-tower E[x] and E[x^2] among towers to compute
+          global mean&variance. The result is the global mean&variance only if each tower has the same batch size.
+
           This option has no effect when not training.
-          The option is also known as "Cross-GPU BatchNorm" as mentioned in https://arxiv.org/abs/1711.07240.
+          This option is also known as "Cross-GPU BatchNorm" as mentioned in https://arxiv.org/abs/1711.07240.
           Corresponding TF issue: https://github.com/tensorflow/tensorflow/issues/18222
 
     Variable Names:

@@ -12,7 +12,7 @@ import os
 
 from tensorpack import *
 from tensorpack.dataflow import dataset
-from tensorpack.utils.gpu import get_nr_gpu
+from tensorpack.utils.gpu import get_num_gpu
 from tensorpack.tfutils import optimizer, gradproc
 from tensorpack.tfutils.summary import add_moving_summary, add_param_summary
 
@@ -256,4 +256,4 @@ if __name__ == '__main__':
             config.session_init = get_model_loader(args.load)
         launch_train_with_config(
             config,
-            SyncMultiGPUTrainer(max(get_nr_gpu(), 1)))
+            SyncMultiGPUTrainer(max(get_num_gpu(), 1)))

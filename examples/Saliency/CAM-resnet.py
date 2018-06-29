@@ -16,7 +16,7 @@ from tensorpack.dataflow import dataset
 from tensorpack.tfutils import optimizer, gradproc
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.summary import *
-from tensorpack.utils.gpu import get_nr_gpu
+from tensorpack.utils.gpu import get_num_gpu
 from tensorpack.utils import viz
 
 from imagenet_utils import (
@@ -157,8 +157,8 @@ if __name__ == '__main__':
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
-    nr_gpu = get_nr_gpu()
-    BATCH_SIZE = TOTAL_BATCH_SIZE // nr_gpu
+    num_gpu = get_num_gpu()
+    BATCH_SIZE = TOTAL_BATCH_SIZE // num_gpu
 
     if args.cam:
         BATCH_SIZE = 128    # something that can run on one gpu
@@ -169,4 +169,4 @@ if __name__ == '__main__':
     config = get_config()
     if args.load:
         config.session_init = get_model_loader(args.load)
-    launch_train_with_config(config, SyncMultiGPUTrainerParameterServer(nr_gpu))
+    launch_train_with_config(config, SyncMultiGPUTrainerParameterServer(num_gpu))
