@@ -532,15 +532,15 @@ class EvalCallback(Callback):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--load', help='load a model for evaluation or training')
+    parser.add_argument('--load', help='load a model for evaluation or training. Can overwrite BACKBONE.WEIGHTS')
     parser.add_argument('--logdir', help='log directory', default='train_log/maskrcnn')
-    parser.add_argument('--config', help="A list of KEY=VALUE to overwrite those defined in config.py",
-                        nargs='+')
     parser.add_argument('--visualize', action='store_true', help='visualize intermediate results')
     parser.add_argument('--evaluate', help="Run evaluation on COCO. "
                                            "This argument is the path to the output json evaluation file")
     parser.add_argument('--predict', help="Run prediction on a given image. "
                                           "This argument is the path to the input image file")
+    parser.add_argument('--config', help="A list of KEY=VALUE to overwrite those defined in config.py",
+                        nargs='+')
 
     if get_tf_version_number() < 1.6:
         # https://github.com/tensorflow/tensorflow/issues/14657
@@ -613,13 +613,18 @@ if __name__ == '__main__':
         if not is_horovod:
             callbacks.append(GPUUtilizationTracker())
 
+        if args.load:
+            session_init = get_model_loader(args.load)
+        else:
+            session_init = get_model_loader(cfg.BACKBONE.WEIGHTS) if cfg.BACKBONE.WEIGHTS else None
+
         traincfg = TrainConfig(
             model=MODEL,
             data=QueueInput(get_train_dataflow()),
             callbacks=callbacks,
             steps_per_epoch=stepnum,
             max_epoch=cfg.TRAIN.LR_SCHEDULE[-1] * factor // stepnum,
-            session_init=get_model_loader(args.load) if args.load else None,
+            session_init=session_init,
         )
         if is_horovod:
             # horovod mode has the best speed for this model

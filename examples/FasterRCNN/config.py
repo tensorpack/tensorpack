@@ -60,9 +60,11 @@ _C.DATA.NUM_CATEGORY = 80    # 80 categories
 _C.DATA.CLASS_NAMES = []  # NUM_CLASS strings. Needs to be populated later by data loader
 
 # basemodel ----------------------
+_C.BACKBONE.WEIGHTS = '/path/to/ImageNet-ResNet50.npz'
 _C.BACKBONE.RESNET_NUM_BLOCK = [3, 4, 6, 3]     # for resnet50
 # RESNET_NUM_BLOCK = [3, 4, 23, 3]    # for resnet101
 _C.BACKBONE.FREEZE_AFFINE = False   # do not train affine parameters inside BN
+_C.BACKBONE.NORM = 'FreezeBN'  # options: FreezeBN, SyncBN
 
 # Use a base model with TF-preferred padding mode,
 # which may pad more pixels on right/bottom than top/left.
@@ -146,6 +148,11 @@ def finalize_configs(is_training):
     Run some sanity checks, and populate some configs from others
     """
     _C.DATA.NUM_CLASS = _C.DATA.NUM_CATEGORY + 1  # +1 background
+
+    assert _C.BACKBONE.NORM in ['FreezeBN', 'SyncBN'], _C.BACKBONE.NORM
+    if _C.BACKBONE.NORM != 'FreezeBN':
+        assert not _C.BACKBONE.FREEZE_AFFINE
+
     _C.RPN.NUM_ANCHOR = len(_C.RPN.ANCHOR_SIZES) * len(_C.RPN.ANCHOR_RATIOS)
     assert len(_C.FPN.ANCHOR_STRIDES) == len(_C.RPN.ANCHOR_SIZES)
     # image size into the backbone has to be multiple of this number

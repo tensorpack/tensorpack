@@ -36,6 +36,15 @@ def resnet_argscope():
         yield
 
 
+@contextmanager
+def maybe_syncbn_scope():
+    if cfg.BACKBONE.NORM == 'SyncBN':
+        with argscope(BatchNorm, training=None, sync_statistics='nccl'):
+            yield
+    else:
+        yield
+
+
 def image_preprocess(image, bgr=True):
     with tf.name_scope('image_preprocess'):
         if image.dtype.base_dtype != tf.float32:
@@ -107,15 +116,16 @@ def resnet_c4_backbone(image, num_blocks, freeze_c2=True):
         # TODO replace var by const to enable optimization
         if freeze_c2:
             c2 = tf.stop_gradient(c2)
-        c3 = resnet_group('group1', c2, resnet_bottleneck, 128, num_blocks[1], 2)
-        c4 = resnet_group('group2', c3, resnet_bottleneck, 256, num_blocks[2], 2)
+        with maybe_syncbn_scope():
+            c3 = resnet_group('group1', c2, resnet_bottleneck, 128, num_blocks[1], 2)
+            c4 = resnet_group('group2', c3, resnet_bottleneck, 256, num_blocks[2], 2)
     # 16x downsampling up to now
     return c4
 
 
 @auto_reuse_variable_scope
 def resnet_conv5(image, num_block):
-    with resnet_argscope():
+    with resnet_argscope(), maybe_syncbn_scope():
         l = resnet_group('group3', image, resnet_bottleneck, 512, num_block, 2)
         return l
 
@@ -140,9 +150,10 @@ def resnet_fpn_backbone(image, num_blocks, freeze_c2=True):
         c2 = resnet_group('group0', l, resnet_bottleneck, 64, num_blocks[0], 1)
         if freeze_c2:
             c2 = tf.stop_gradient(c2)
-        c3 = resnet_group('group1', c2, resnet_bottleneck, 128, num_blocks[1], 2)
-        c4 = resnet_group('group2', c3, resnet_bottleneck, 256, num_blocks[2], 2)
-        c5 = resnet_group('group3', c4, resnet_bottleneck, 512, num_blocks[3], 2)
+        with maybe_syncbn_scope():
+            c3 = resnet_group('group1', c2, resnet_bottleneck, 128, num_blocks[1], 2)
+            c4 = resnet_group('group2', c3, resnet_bottleneck, 256, num_blocks[2], 2)
+            c5 = resnet_group('group3', c4, resnet_bottleneck, 512, num_blocks[3], 2)
     # 32x downsampling up to now
     # size of c5: ceil(input/32)
     return c2, c3, c4, c5

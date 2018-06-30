@@ -304,7 +304,10 @@ class HorovodTrainer(SingleCostTrainer):
         # There are other MPI options that can potentially improve performance especially on special hardwares.
 
     Note:
-        1. Due to a TF bug, you must not initialize CUDA context before training.
+        1. There are several options in Horovod installation and in MPI command line that can improve speed.
+           See Horovod docs for details.
+
+        2. Due to a TF bug, you must not initialize CUDA context before training.
            Therefore TF functions like `is_gpu_available()` or `list_local_devices()`
            must be avoided.
 
@@ -312,7 +315,9 @@ class HorovodTrainer(SingleCostTrainer):
 
         3. MPI sometimes fails to kill all processes. Be sure to check it afterwards.
 
-        4. Keep in mind that there is one process per GPU, therefore:
+        4. Keep in mind that there is one process running the script per GPU, therefore:
+
+           + Make sure your InputSource has reasonable randomness.
 
            + If your data processing is heavy, doing it in a separate dedicated process might be
              a better choice than doing them repeatedly in each process.

@@ -35,20 +35,21 @@ Model:
 
 3. We only support single image per GPU.
 
-4. Because of (3), BatchNorm statistics are not supposed to be updated during fine-tuning.
+4. Because of (3), BatchNorm statistics are supposed to be freezed during fine-tuning.
    This specific kind of BatchNorm will need [my kernel](https://github.com/tensorflow/tensorflow/pull/12580)
-   which is included since TF 1.4. If using an earlier version of TF, it will be either slow or wrong.
+   which is included since TF 1.4.
+   
+5. An alternative to freezing BatchNorm is to sync BatchNorm statistics across
+   GPUs (the `BACKBONE.NORM=SyncBN` option). This would require [my bugfix](https://github.com/tensorflow/tensorflow/pull/20360)
+   which will probably be in TF 1.10. You can manually apply the patch to use it.
+   For now the total batch size is at most 8, so this option does not improve the model by much.
 
 Speed:
 
 1. The training will start very slow due to convolution warmup, until about 10k steps to reach a maximum speed.
-	 Then the training speed will slowly decrease due to more accurate proposals.
+   Then the training speed will slowly decrease due to more accurate proposals.
 
-2. Inference is not quite fast, because either you disable convolution autotune and end up with
-	 a slow convolution algorithm, or you spend more time on autotune.
-	 This is a general problem of TensorFlow when running against variable-sized input.
-
-3. This implementation is about 14% slower than detectron,
+2. This implementation is about 14% slower than detectron,
    probably due to the lack of specialized ops (e.g. AffineChannel, ROIAlign) in TensorFlow.
    It's certainly faster than other TF implementation.
 

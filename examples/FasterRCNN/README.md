@@ -11,7 +11,7 @@ This example provides a minimal (only 1.6k lines) and faithful implementation of
 + Pre-trained [ImageNet ResNet model](http://models.tensorpack.com/ResNet/) from tensorpack model zoo.
 + COCO data. It needs to have the following directory structure:
 ```
-DIR/
+COCO/DIR/
   annotations/
     instances_train2014.json
     instances_val2014.json
@@ -27,27 +27,31 @@ DIR/
 
 
 ## Usage
-Change config in `config.py`:
-1. Change `BASEDIR` to `/path/to/DIR` as described above.
-2. Change `MODE_MASK`/`MODE_FPN`, or other options you like. Recommended configurations are listed in the table below.
+To train:
+```
+./train.py --config \
+    MODE_MASK=True MODE_FPN=True \
+    DATA.BASEDIR=/path/to/COCO/DIR \
+    BACKBONE.WEIGHTS=/path/to/ImageNet-ResNet50.npz \
+```
+Options can be changed by either the command line or the `config.py` file. 
+Recommended configurations are listed in the table below.
 
-Train:
-```
-./train.py --load /path/to/ImageNet-ResNet50.npz
-```
 The code is only valid for training with 1, 2, 4 or 8 GPUs.
 Not training with 8 GPUs may result in different performance from the table below.
 
-Predict on an image (and show output in a window):
+To predict on an image (and show output in a window):
 ```
-./train.py --predict input.jpg --load /path/to/model
+./train.py --predict input.jpg --load /path/to/model --config SAME-AS-TRAINING
 ```
 
 Evaluate the performance of a model on COCO, and save results to json.
 (Trained COCO models can be downloaded in [model zoo](http://models.tensorpack.com/FasterRCNN):
 ```
-./train.py --evaluate output.json --load /path/to/COCO-ResNet50-MaskRCNN.npz
+./train.py --evaluate output.json --load /path/to/COCO-ResNet50-MaskRCNN.npz \
+    --config MODE_MASK=True DATA.BASEDIR=/path/to/COCO/DIR
 ```
+Evaluation or prediction will need the same config used during training.
 
 ## Results
 
