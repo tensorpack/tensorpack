@@ -13,7 +13,7 @@ import os
 import zmq
 import atexit
 
-from .base import DataFlow, ProxyDataFlow, DataFlowTerminated, DataFlowReentrantGuard
+from .base import DataFlow, ProxyDataFlow, DataFlowTerminated, DataFlowReentrantGuard, DataFlowSequenceSlicer, is_sequence
 from ..utils.concurrency import (ensure_proc_terminate,
                                  mask_sigint, start_proc_mask_signal,
                                  enable_death_signal,
@@ -248,11 +248,20 @@ class PrefetchDataZMQ(_MultiProcessZMQDataFlow):
     """
 
     class _Worker(mp.Process):
-        def __init__(self, ds, conn_name, hwm):
+        def __init__(self, ds, conn_name, hwm, id, totalworkers):
             super(PrefetchDataZMQ._Worker, self).__init__()
-            self.ds = ds
+
+            if is_sequence(ds):
+                self.ds = DataFlowSequenceSlicer(ds, id, totalworkers)
+            else:
+                self.ds = ds
+
             self.conn_name = conn_name
             self.hwm = hwm
+
+            # this worker is id-th from totalworkers
+            self.id = id
+            self.totalworkers = totalworkers
 
         def run(self):
             enable_death_signal()
@@ -288,7 +297,7 @@ class PrefetchDataZMQ(_MultiProcessZMQDataFlow):
         self._guard = DataFlowReentrantGuard()
         if nr_proc > 1:
             logger.info("[PrefetchDataZMQ] Will fork a dataflow more than one times. "
-                        "This assumes the datapoints are i.i.d.")
+                        "This assumes the datapoints are i.i.d. or come from slicable DataFlowSequence descendant")
         try:
             self._size = ds.size()
         except NotImplementedError:
@@ -314,8 +323,8 @@ class PrefetchDataZMQ(_MultiProcessZMQDataFlow):
         pipename = _get_pipe_name('dataflow')
         _bind_guard(self.socket, pipename)
 
-        self._procs = [PrefetchDataZMQ._Worker(self.ds, pipename, self._hwm)
-                       for _ in range(self.nr_proc)]
+        self._procs = [PrefetchDataZMQ._Worker(self.ds, pipename, self._hwm, i, self.nr_proc)
+                       for i in range(self.nr_proc)]
         self._start_processes()
 
 
