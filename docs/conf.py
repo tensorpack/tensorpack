@@ -353,6 +353,34 @@ def process_signature(app, what, name, obj, options, signature,
     # signature: arg list
     return signature, return_annotation
 
+
+_DEPRECATED_NAMES = set([
+    # deprecated stuff:
+    'TryResumeTraining',
+    'QueueInputTrainer',
+    'SimplePredictBuilder',
+
+    # renamed stuff:
+    'DumpTensor',
+    'DumpParamAsImage',
+    'StagingInputWrapper',
+    'PeriodicRunHooks',
+    'get_nr_gpu',
+
+    # deprecated or renamed symbolic code
+    'ImageSample',
+    'Deconv2D',
+    'get_scalar_var', 'psnr',
+    'prediction_incorrect', 'huber_loss',
+
+    # internal only
+    'apply_default_prefetch',
+    'average_grads',
+    'aggregate_grads',
+    'allreduce_grads',
+    'PrefetchOnGPUs',
+])
+
 def autodoc_skip_member(app, what, name, obj, skip, options):
     # we hide something deliberately
     if getattr(obj, '__HIDE_SPHINX_DOC__', False):
@@ -363,31 +391,7 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
             # https://github.com/sphinx-doc/sphinx/issues/4258
             return False
     # Hide some names that are deprecated or not intended to be used
-    if name in [
-        # deprecated stuff:
-        'TryResumeTraining',
-        'QueueInputTrainer',
-
-        # renamed stuff:
-        'DumpTensor',
-        'DumpParamAsImage',
-        'StagingInputWrapper',
-        'PeriodicRunHooks',
-        'get_nr_gpu',
-
-        # deprecated or renamed symbolic code
-        'ImageSample',
-        'Deconv2D',
-        'get_scalar_var', 'psnr',
-        'prediction_incorrect', 'huber_loss',
-
-        # internal only
-        'apply_default_prefetch',
-        'average_grads',
-        'aggregate_grads',
-        'allreduce_grads',
-        'PrefetchOnGPUs',
-        ]:
+    if name in _DEPRECATED_NAMES:
         return True
     if name in ['get_data', 'size', 'reset_state']:
         # skip these methods with empty docstring

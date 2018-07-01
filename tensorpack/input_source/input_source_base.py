@@ -92,6 +92,7 @@ class InputSource(object):
 
         Returns:
             list[Callback]: extra callbacks needed by this InputSource.
+                callbacks of InputSource cannot use any `trigger*()` method.
         """
         self._setup(inputs_desc)
         self._setup_done = True

@@ -15,10 +15,10 @@ from six.moves import range
 from ..utils import logger
 from ..utils.utils import get_tqdm_kwargs
 from ..dataflow.base import DataFlow
+from ..tfutils.tower import PredictTowerContext
 
 from ..input_source import (
     InputSource, FeedInput, QueueInput, StagingInput)
-from ..graph_builder.predict import SimplePredictBuilder
 
 from .base import Callback
 from .group import Callbacks
@@ -26,6 +26,10 @@ from .inference import Inferencer
 
 __all__ = ['InferenceRunnerBase', 'InferenceRunner',
            'DataParallelInferenceRunner']
+
+
+def _device_from_int(dev):
+    return '/gpu:{}'.format(dev) if dev >= 0 else '/cpu:0'
 
 
 class InferencerToHook(tf.train.SessionRunHook):
@@ -94,9 +98,9 @@ class InferenceRunnerBase(Callback):
         self._hooked_sess = HookedSession(self.trainer.sess, self._hooks)
         self._input_callbacks.before_train()
         if self._size > 0:
-            logger.info("InferenceRunner will eval {} iterations".format(self._size))
+            logger.info("[InferenceRunner] Will eval {} iterations".format(self._size))
         else:
-            logger.warn("InferenceRunner got an input with unknown size! It will iterate until OutOfRangeError!")
+            logger.warn("[InferenceRunner] Got an InputSource with unknown size! Will iterate until OutOfRangeError!")
 
     def _after_train(self):
         self._input_callbacks.after_train()
@@ -122,7 +126,7 @@ class InferenceRunner(InferenceRunnerBase):
         assert isinstance(input, InputSource), input
         assert not isinstance(input, StagingInput), input
         self._tower_name = tower_name
-        self._device = device
+        self._device = _device_from_int(device)
         super(InferenceRunner, self).__init__(input, infs)
 
     def _build_hook(self, inf):
@@ -131,16 +135,17 @@ class InferenceRunner(InferenceRunnerBase):
         return InferencerToHook(inf, fetches)
 
     def _setup_graph(self):
-        device = self._device
         assert self.trainer.tower_func is not None, "You must set tower_func of the trainer to use InferenceRunner!"
-        input_callbacks = self._input_source.setup(self.trainer.inputs_desc)
+        tower_func = self.trainer.tower_func
+        input_callbacks = self._input_source.setup(tower_func.inputs_desc)
 
-        with tf.variable_scope(tf.get_variable_scope(), reuse=True):
-            SimplePredictBuilder(
-                ns_name=self._tower_name,
-                vs_name=self.trainer._main_tower_vs_name, device=device).build(
-                    self._input_source, self.trainer.tower_func)
-            self._tower_handle = self.trainer.tower_func.towers[-1]
+        logger.info("[InferenceRunner] Building tower '{}' on device {} ...".format(self._tower_name, self._device))
+        with tf.variable_scope(tf.get_variable_scope(), reuse=True), \
+                tf.device(self._device), \
+                PredictTowerContext(
+                    self._tower_name, vs_name=self.trainer._main_tower_vs_name):
+            tower_func(*self._input_source.get_input_tensors())
+            self._tower_handle = tower_func.towers[-1]
 
         for h in [self._build_hook(inf) for inf in self.infs]:
             self.register_hook(h)
@@ -178,7 +183,7 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
     It will run the remainder (when the total size of input is not a multiple of #GPU)
     sequentially.
     """
-    def __init__(self, input, infs, gpus):
+    def __init__(self, input, infs, gpus, tower_name='InferenceTower'):
         """
         Args:
             input (DataFlow or QueueInput)
@@ -186,13 +191,14 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
         """
         if isinstance(gpus, int):
             gpus = list(range(gpus))
-        self._tower_names = ['InferenceTower{}'.format(k) for k in range(len(gpus))]
+        self._devices = [_device_from_int(k) for k in gpus]
+        self._tower_names = ['{}{}'.format(tower_name, k) for k in range(len(gpus))]
+
         if isinstance(input, DataFlow):
             input = QueueInput(input)
         assert isinstance(input, QueueInput), input
         super(DataParallelInferenceRunner, self).__init__(input, infs)
         assert self._size > 0, "Input for DataParallelInferenceRunner must have a size!"
-        self._gpus = gpus
 
         self._hooks = []
         self._hooks_parallel = []
@@ -201,15 +207,14 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
         self._handles = []
 
         assert self.trainer.tower_func is not None, "You must set tower_func of the trainer to use InferenceRunner!"
-        input_callbacks = self._input_source.setup(self.trainer.inputs_desc)
+        tower_func = self.trainer.tower_func
+        input_callbacks = self._input_source.setup(tower_func.inputs_desc)
         with tf.variable_scope(tf.get_variable_scope(), reuse=True):
-            for idx, t in enumerate(self._gpus):
-                tower_name = self._tower_names[idx]
-                SimplePredictBuilder(
-                    ns_name=tower_name,
-                    vs_name=self.trainer._main_tower_vs_name, device=t).build(
-                        self._input_source, self.trainer.tower_func)
-                self._handles.append(self.trainer.tower_func.towers[-1])
+            for idx, dev in enumerate(self._devices):
+                with tf.device(dev), PredictTowerContext(
+                        self._tower_names[idx], vs_name=self.trainer._main_tower_vs_name):
+                    tower_func(*self._input_source.get_input_tensors())
+                    self._handles.append(tower_func.towers[-1])
 
         # setup callbacks and hooks
         self._input_callbacks = Callbacks(input_callbacks)
@@ -267,7 +272,7 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
             inf.before_epoch()
 
         total = self._size
-        nr_tower = len(self._gpus)
+        nr_tower = len(self._devices)
         self._input_source.reset_state()
         with _inference_context():
             with tqdm.tqdm(total=total, **get_tqdm_kwargs()) as pbar:

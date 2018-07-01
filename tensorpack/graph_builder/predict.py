@@ -4,6 +4,7 @@
 import tensorflow as tf
 
 from ..utils import logger
+from ..utils.develop import deprecated
 from ..tfutils.tower import PredictTowerContext
 from .training import GraphBuilder
 
@@ -14,6 +15,7 @@ class SimplePredictBuilder(GraphBuilder):
     """
     Single-tower predictor.
     """
+    @deprecated("Please use TowerContext to build it by yourself!", "2018-12-31")
     def __init__(self, ns_name='', vs_name='', device=0):
         """
         Args:

@@ -6,11 +6,10 @@ import six
 from abc import abstractmethod, ABCMeta
 
 from ..utils.argtools import call_only_once, memoized
-from ..graph_builder.predict import SimplePredictBuilder
 from ..input_source import PlaceholderInput
 from ..predict.base import OnlinePredictor
 
-from ..tfutils.tower import TowerFuncWrapper, get_current_tower_context
+from ..tfutils.tower import TowerFuncWrapper, get_current_tower_context, PredictTowerContext
 from ..tfutils.gradproc import FilterNoneGrad
 
 from .base import Trainer
@@ -94,6 +93,7 @@ class TowerTrainer(Trainer):
         """
         assert self.tower_func is not None, "Must set tower_func on the trainer to use get_predictor()!"
         tower_name = 'tower-pred-{}'.format(device) if device >= 0 else 'tower-pred-cpu'
+        device = '/gpu:{}'.format(device) if device >= 0 else '/cpu:0'
 
         try:
             tower = self.tower_func.towers[tower_name]
@@ -105,10 +105,10 @@ class TowerTrainer(Trainer):
             input = PlaceholderInput()
             input.setup(self.inputs_desc)
 
-            with tf.variable_scope(tf.get_variable_scope(), reuse=True):
-                SimplePredictBuilder(
-                    ns_name=tower_name, vs_name=self._main_tower_vs_name,
-                    device=device).build(input, self.tower_func)
+            with tf.variable_scope(tf.get_variable_scope(), reuse=True), \
+                    tf.device(device), PredictTowerContext(
+                    tower_name, vs_name=self._main_tower_vs_name):
+                self.tower_func(*input.get_input_tensors())
             tower = self.tower_func.towers[tower_name]
         input_tensors = tower.get_tensors(input_names)
         output_tensors = tower.get_tensors(output_names)

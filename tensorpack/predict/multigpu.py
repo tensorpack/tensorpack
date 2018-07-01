@@ -4,9 +4,9 @@
 
 import tensorflow as tf
 from ..utils import logger
-from ..graph_builder.predict import SimplePredictBuilder
 from ..graph_builder.model_desc import InputDesc
 from ..input_source import PlaceholderInput
+from ..tfutils.tower import PredictTowerContext
 from .base import OnlinePredictor
 
 __all__ = ['MultiTowerOfflinePredictor',
@@ -14,7 +14,9 @@ __all__ = ['MultiTowerOfflinePredictor',
 
 
 class MultiTowerOfflinePredictor(OnlinePredictor):
-    """ A multi-tower multi-GPU predictor. """
+    """ A multi-tower multi-GPU predictor.
+        It builds one predictor for each tower.
+    """
 
     def __init__(self, config, towers):
         """
@@ -35,9 +37,10 @@ class MultiTowerOfflinePredictor(OnlinePredictor):
             for idx, t in enumerate(towers):
                 tower_name = 'tower' + str(t)
 
-                with tf.variable_scope(tf.get_variable_scope(), reuse=idx > 0):
-                    builder = SimplePredictBuilder(ns_name=tower_name, device=t)
-                    builder.build(input, config.tower_func)
+                with tf.variable_scope(tf.get_variable_scope(), reuse=idx > 0), \
+                        tf.device('/gpu:{}'.format(t)), \
+                        PredictTowerContext(tower_name):
+                    config.tower_func(*input.get_input_tensors())
                     handles.append(config.tower_func.towers[-1])
 
             self.sess = config.session_creator.create_session()
@@ -73,7 +76,8 @@ class MultiTowerOfflinePredictor(OnlinePredictor):
 
 class DataParallelOfflinePredictor(OnlinePredictor):
     """
-    A data-parallel predictor.
+    A data-parallel predictor. It builds one predictor that utilizes all GPUs.
+
     Note that it doesn't split/concat inputs/outputs automatically.
     Instead, its inputs are:
     ``[input[0] in tower[0], input[1] in tower[0], ..., input[0] in tower[1], input[1] in tower[1], ...]``
@@ -99,9 +103,10 @@ class DataParallelOfflinePredictor(OnlinePredictor):
                 input = PlaceholderInput()
                 input.setup(inputs_desc)
 
-                with tf.variable_scope(tf.get_variable_scope(), reuse=idx > 0):
-                    builder = SimplePredictBuilder(ns_name=tower_name, device=t)
-                    builder.build(input, config.tower_func)
+                with tf.variable_scope(tf.get_variable_scope(), reuse=idx > 0), \
+                        tf.device('/gpu:{}'.format(t)), \
+                        PredictTowerContext(tower_name):
+                    config.tower_func(*input.get_input_tensors())
                     h = config.tower_func.towers[-1]
                     input_tensors.extend(h.get_tensors(config.input_names))
                     output_tensors.extend(h.get_tensors(config.output_names))
