@@ -101,11 +101,6 @@ class Trainer(object):
     """
 
     def __init__(self):
-        """
-        config is only for compatibility reasons in case you're
-        using custom trainers with old-style API.
-        You should never use config.
-        """
         self._callbacks = []
         self.loop = TrainLoop()
 
@@ -310,22 +305,13 @@ class Trainer(object):
                    session_creator, session_init,
                    steps_per_epoch, starting_epoch, max_epoch)
 
-    # create the old trainer when called with TrainConfig
     def __new__(cls, *args, **kwargs):
         if (len(args) > 0 and isinstance(args[0], TrainConfig)) \
                 or 'config' in kwargs:
-            name = cls.__name__
-            try:
-                import tensorpack.trainv1 as old_train_mod    # noqa
-                old_trainer = getattr(old_train_mod, name)
-            except AttributeError:
-                # custom trainer. has to live with it
-                return super(Trainer, cls).__new__(cls)
-            else:
-                logger.warn("You're calling new trainers with old trainer API!")
-                logger.warn("Now it returns the old trainer for you, please switch to use new trainers soon!")
-                logger.warn("See https://github.com/tensorpack/tensorpack/issues/458 for more information.")
-                return old_trainer(*args, **kwargs)
+            logger.error("You're calling new trainers with old trainer API!")
+            logger.error("See https://github.com/tensorpack/tensorpack/issues/458 for more information.")
+            import sys
+            sys.exit(1)
         else:
             return super(Trainer, cls).__new__(cls)
 
