@@ -2,6 +2,7 @@
 # File: model_box.py
 
 import numpy as np
+from collections import namedtuple
 import tensorflow as tf
 
 from tensorpack.tfutils.scope_utils import under_name_scope
@@ -168,6 +169,32 @@ def roi_align(featuremap, boxes, resolution):
         resolution * 2)
     ret = tf.nn.avg_pool(ret, [1, 1, 2, 2], [1, 1, 2, 2], padding='SAME', data_format='NCHW')
     return ret
+
+
+class RPNAnchors(namedtuple('_RPNAnchors', ['boxes', 'gt_labels', 'gt_boxes'])):
+    """
+    boxes (FS x FS x NA x 4): The anchor boxes.
+    gt_labels (FS x FS x NA):
+    gt_boxes (FS x FS x NA x 4): Groundtruth boxes corresponding to each anchor.
+    """
+    def encoded_gt_boxes(self):
+        return encode_bbox_target(self.gt_boxes, self.boxes)
+
+    def decode_logits(self, logits):
+        return decode_bbox_target(logits, self.boxes)
+
+    @under_name_scope()
+    def narrow_to(self, featuremap):
+        """
+        Slice anchors to the spatial size of this featuremap.
+        """
+        shape2d = tf.shape(featuremap)[2:]  # h,w
+        slice3d = tf.concat([shape2d, [-1]], axis=0)
+        slice4d = tf.concat([shape2d, [-1, -1]], axis=0)
+        boxes = tf.slice(self.boxes, [0, 0, 0, 0], slice4d)
+        gt_labels = tf.slice(self.gt_labels, [0, 0, 0], slice3d)
+        gt_boxes = tf.slice(self.gt_boxes, [0, 0, 0, 0], slice4d)
+        return RPNAnchors(boxes, gt_labels, gt_boxes)
 
 
 if __name__ == '__main__':
