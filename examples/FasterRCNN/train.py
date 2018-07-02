@@ -35,7 +35,7 @@ from model import (
     generate_rpn_proposals, sample_fast_rcnn_targets,
     fastrcnn_outputs, fastrcnn_losses, fastrcnn_predictions,
     maskrcnn_upXconv_head, maskrcnn_loss,
-    fpn_model, multilevel_roi_align)
+    fpn_model, multilevel_roi_align, multilevel_rpn_losses, generate_fpn_proposals)
 from model_box import (
     clip_boxes, decode_bbox_target, encode_bbox_target,
     crop_and_resize, roi_align, RPNAnchors)
@@ -163,7 +163,7 @@ class ResNetC4Model(DetectionModel):
         image = self.preprocess(image)     # 1CHW
 
         featuremap = resnet_c4_backbone(image, cfg.BACKBONE.RESNET_NUM_BLOCK[:3])
-        rpn_label_logits, rpn_box_logits = rpn_head('rpn', featuremap, 1024, cfg.RPN.NUM_ANCHOR)
+        rpn_label_logits, rpn_box_logits = rpn_head('rpn', featuremap, cfg.RPN.HEAD_DIM, cfg.RPN.NUM_ANCHOR)
 
         anchors = RPNAnchors(get_all_anchors(), anchor_labels, anchor_boxes)
         anchors = anchors.narrow_to(featuremap)
@@ -309,33 +309,15 @@ class ResNetFPNModel(DetectionModel):
         self.slice_feature_and_anchors(image_shape2d, p23456, multilevel_anchors)
 
         # Multi-Level RPN Proposals
-        multilevel_proposals = []
-        rpn_loss_collection = []
-        for lvl in range(num_fpn_level):
-            rpn_label_logits, rpn_box_logits = rpn_head(
-                'rpn', p23456[lvl], cfg.FPN.NUM_CHANNEL, len(cfg.RPN.ANCHOR_RATIOS))
-            with tf.name_scope('FPN_lvl{}'.format(lvl + 2)):
-                anchors = multilevel_anchors[lvl]
-                pred_boxes_decoded = anchors.decode_logits(rpn_box_logits)
-                proposal_boxes, proposal_scores = generate_rpn_proposals(
-                    tf.reshape(pred_boxes_decoded, [-1, 4]),
-                    tf.reshape(rpn_label_logits, [-1]),
-                    image_shape2d,
-                    cfg.RPN.TRAIN_FPN_NMS_TOPK if is_training else cfg.RPN.TEST_FPN_NMS_TOPK)
-                multilevel_proposals.append((proposal_boxes, proposal_scores))
-                if is_training:
-                    label_loss, box_loss = rpn_losses(
-                        anchors.gt_labels, anchors.encoded_gt_boxes(),
-                        rpn_label_logits, rpn_box_logits)
-                    rpn_loss_collection.extend([label_loss, box_loss])
+        rpn_outputs = [rpn_head('rpn', pi, cfg.FPN.NUM_CHANNEL, len(cfg.RPN.ANCHOR_RATIOS))
+                       for pi in p23456]
+        multilevel_label_logits = [k[0] for k in rpn_outputs]
+        multilevel_box_logits = [k[1] for k in rpn_outputs]
 
-        # Merge proposals from multi levels, pick top K
-        proposal_boxes = tf.concat([x[0] for x in multilevel_proposals], axis=0)  # nx4
-        proposal_scores = tf.concat([x[1] for x in multilevel_proposals], axis=0)  # n
-        proposal_topk = tf.minimum(tf.size(proposal_scores),
-                                   cfg.RPN.TRAIN_FPN_NMS_TOPK if is_training else cfg.RPN.TEST_FPN_NMS_TOPK)
-        proposal_scores, topk_indices = tf.nn.top_k(proposal_scores, k=proposal_topk, sorted=False)
-        proposal_boxes = tf.gather(proposal_boxes, topk_indices)
+        fpn_nms_topk = cfg.RPN.TRAIN_FPN_NMS_TOPK if is_training else cfg.RPN.TEST_FPN_NMS_TOPK
+        proposal_boxes, proposal_scores = generate_fpn_proposals(
+            multilevel_anchors, multilevel_label_logits, multilevel_box_logits,
+            image_shape2d, fpn_nms_topk, fpn_nms_topk)
 
         if is_training:
             rcnn_boxes, rcnn_labels, fg_inds_wrt_gt = sample_fast_rcnn_targets(
@@ -351,11 +333,9 @@ class ResNetFPNModel(DetectionModel):
             'fastrcnn', roi_feature_fastrcnn, cfg.DATA.NUM_CLASS)
 
         if is_training:
-            # rpn loss is already defined above
-            with tf.name_scope('rpn_losses'):
-                rpn_total_label_loss = tf.add_n(rpn_loss_collection[::2], name='label_loss')
-                rpn_total_box_loss = tf.add_n(rpn_loss_collection[1::2], name='box_loss')
-                add_moving_summary(rpn_total_box_loss, rpn_total_label_loss)
+            # rpn loss:
+            rpn_label_loss, rpn_box_loss = multilevel_rpn_losses(
+                multilevel_anchors, multilevel_label_logits, multilevel_box_logits)
 
             # fastrcnn loss:
             matched_gt_boxes = tf.gather(gt_boxes, fg_inds_wrt_gt)
@@ -390,9 +370,9 @@ class ResNetFPNModel(DetectionModel):
                 '(?:group1|group2|group3|rpn|fpn|fastrcnn|maskrcnn)/.*W',
                 l2_regularizer(cfg.TRAIN.WEIGHT_DECAY), name='wd_cost')
 
-            total_cost = tf.add_n(rpn_loss_collection + [
-                fastrcnn_label_loss, fastrcnn_box_loss,
-                mrcnn_loss, wd_cost], 'total_cost')
+            total_cost = tf.add_n([rpn_label_loss, rpn_box_loss,
+                                   fastrcnn_label_loss, fastrcnn_box_loss,
+                                   mrcnn_loss, wd_cost], 'total_cost')
 
             add_moving_summary(total_cost, wd_cost)
             return total_cost

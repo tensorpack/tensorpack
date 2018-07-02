@@ -107,6 +107,7 @@ _C.RPN.BATCH_PER_IM = 256  # total (across FPN levels) number of anchors that ar
 _C.RPN.MIN_SIZE = 0
 _C.RPN.PROPOSAL_NMS_THRESH = 0.7
 _C.RPN.CROWD_OVERLAP_THRES = 0.7  # boxes overlapping crowd will be ignored.
+_C.RPN.HEAD_DIM = 1024      # used in C4 only
 
 # RPN proposal selection -------------------------------
 # for C4

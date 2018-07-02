@@ -569,3 +569,75 @@ def multilevel_roi_align(features, rcnn_boxes, resolution):
     level_id_invert_perm = tf.invert_permutation(level_id_perm)
     all_rois = tf.gather(all_rois, level_id_invert_perm)
     return all_rois
+
+
+def multilevel_rpn_losses(
+        multilevel_anchors, multilevel_label_logits, multilevel_box_logits):
+    """
+    Args:
+        multilevel_anchors: #lvl RPNAnchors
+        multilevel_label_logits: #lvl tensors of shape HxWxA
+        multilevel_box_logits: #lvl tensors of shape HxWxAx4
+
+    Returns:
+        label_loss, box_loss
+    """
+    num_lvl = len(cfg.FPN.ANCHOR_STRIDES)
+    assert len(multilevel_anchors) == num_lvl
+    assert len(multilevel_label_logits) == num_lvl
+    assert len(multilevel_box_logits) == num_lvl
+
+    losses = []
+    for lvl in range(num_lvl):
+        with tf.name_scope('RPNLoss_Lvl{}'.format(lvl + 2)):
+            anchors = multilevel_anchors[lvl]
+            label_loss, box_loss = rpn_losses(
+                anchors.gt_labels, anchors.encoded_gt_boxes(),
+                multilevel_label_logits[lvl], multilevel_box_logits[lvl])
+            losses.extend([label_loss, box_loss])
+
+    with tf.name_scope('rpn_losses'):
+        total_label_loss = tf.add_n(losses[::2], name='label_loss')
+        total_box_loss = tf.add_n(losses[1::2], name='box_loss')
+        add_moving_summary(total_label_loss, total_box_loss)
+    return total_label_loss, total_box_loss
+
+
+def generate_fpn_proposals(
+    multilevel_anchors, multilevel_label_logits, multilevel_box_logits,
+        image_shape2d, pre_nms_topk, post_nms_topk):
+    """
+    Args:
+        multilevel_anchors: #lvl RPNAnchors
+        multilevel_label_logits: #lvl tensors of shape HxWxA
+        multilevel_box_logits: #lvl tensors of shape HxWxAx4
+
+    Returns:
+        boxes: kx4 float
+        scores: k logits
+    """
+    num_lvl = len(cfg.FPN.ANCHOR_STRIDES)
+    assert len(multilevel_anchors) == num_lvl
+    assert len(multilevel_label_logits) == num_lvl
+    assert len(multilevel_box_logits) == num_lvl
+
+    all_boxes = []
+    all_scores = []
+    for lvl in range(num_lvl):
+        with tf.name_scope('FPNProposal_Lvl{}'.format(lvl + 2)):
+            anchors = multilevel_anchors[lvl]
+            pred_boxes_decoded = anchors.decode_logits(multilevel_box_logits[lvl])
+
+            proposal_boxes, proposal_scores = generate_rpn_proposals(
+                tf.reshape(pred_boxes_decoded, [-1, 4]),
+                tf.reshape(multilevel_label_logits[lvl], [-1]),
+                image_shape2d, pre_nms_topk)
+            all_boxes.append(proposal_boxes)
+            all_scores.append(proposal_scores)
+
+    proposal_boxes = tf.concat(all_boxes, axis=0)  # nx4
+    proposal_scores = tf.concat(all_scores, axis=0)  # n
+    proposal_topk = tf.minimum(tf.size(proposal_scores), post_nms_topk)
+    proposal_scores, topk_indices = tf.nn.top_k(proposal_scores, k=proposal_topk, sorted=False)
+    proposal_boxes = tf.gather(proposal_boxes, topk_indices)
+    return proposal_boxes, proposal_scores
