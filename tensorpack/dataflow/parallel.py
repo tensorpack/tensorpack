@@ -123,6 +123,8 @@ class _MultiProcessZMQDataFlow(DataFlow):
                 x.terminate()
                 x.join(5)
             print("{} successfully cleaned-up.".format(type(self).__name__))
+            self._reset_done = False  # obviously if needed to be used again, needs to be reset again.
+            # Also prevents the print function to be called twice
         except Exception:
             pass
 
