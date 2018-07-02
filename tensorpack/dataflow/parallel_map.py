@@ -294,6 +294,10 @@ class MultiProcessMapDataZMQ(_ParallelMapData, _MultiProcessZMQDataFlow):
                 for dp in self.get_data_non_strict():
                     yield dp
 
+    def __del__(self):
+        _MultiProcessZMQDataFlow.__del__(self)
+        _ParallelMapData.__del__(self)
+
 
 MultiProcessMapData = MultiProcessMapDataZMQ  # alias
 

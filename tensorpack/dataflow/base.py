@@ -107,3 +107,7 @@ class ProxyDataFlow(DataFlow):
 
     def get_data(self):
         return self.ds.get_data()
+
+    def __del__(self):
+        if hasattr(self.ds, "__del__"):
+            self.ds.__del__()
