@@ -268,7 +268,6 @@ class MultiProcessMapDataZMQ(_ParallelMapData, _MultiProcessZMQDataFlow):
 
         self.ds.reset_state()
         self._iter = self.ds.get_data()
-        self._iter_worker = _repeat_iter(lambda: iter(self._proc_ids))
 
         self._start_processes()
         self._fill_buffer()     # pre-fill the bufer
