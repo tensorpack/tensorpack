@@ -143,8 +143,7 @@ def generate_rpn_proposals(boxes, scores, img_shape,
         (-1, 4), name='nms_input_boxes')
     nms_indices = tf.image.non_max_suppression(
         topk_valid_boxes_y1x1y2x2,
-        # TODO use exp to work around a bug in TF1.9: https://github.com/tensorflow/tensorflow/issues/19578
-        tf.exp(topk_valid_scores),
+        topk_valid_scores,
         max_output_size=post_nms_topk,
         iou_threshold=cfg.RPN.PROPOSAL_NMS_THRESH)
 

@@ -156,6 +156,7 @@ def fastrcnn_Xconv1fc_head(feature, num_classes, num_convs):
 
 
 def fastrcnn_4conv1fc_head(*args, **kwargs):
+    # This head was used in Group Normalization
     return fastrcnn_Xconv1fc_head(*args, num_convs=4, **kwargs)
 
 

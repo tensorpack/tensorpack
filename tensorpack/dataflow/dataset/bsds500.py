@@ -95,6 +95,7 @@ except ImportError:
 
 if __name__ == '__main__':
     a = BSDS500('val')
+    a.reset_state()
     for k in a.get_data():
         cv2.imshow("haha", k[1].astype('uint8') * 255)
         cv2.waitKey(1000)
