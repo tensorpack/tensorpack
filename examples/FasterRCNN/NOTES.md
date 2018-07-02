@@ -6,7 +6,7 @@ This is a minimal implementation that simply contains these files:
 + common.py: common data preparation utilities
 + basemodel.py: implement backbones
 + model_box.py: implement box-related symbolic functions
-+ model.py: implement RPN/Faster-RCNN/FPN/Mask-RCNN
++ model_{fpn,rpn,mrcnn,frcnn}.py: implement FPN,RPN,Mask-/Fast-RCNN models.
 + train.py: main training script
 + utils/: third-party helper functions
 + eval.py: evaluation utilities

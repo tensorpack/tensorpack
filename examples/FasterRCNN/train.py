@@ -29,16 +29,20 @@ from coco import COCODetection
 from basemodel import (
     image_preprocess, resnet_c4_backbone, resnet_conv5,
     resnet_fpn_backbone)
-import model
-from model import (
-    rpn_head, rpn_losses,
-    generate_rpn_proposals, sample_fast_rcnn_targets,
-    fastrcnn_outputs, fastrcnn_losses, fastrcnn_predictions,
-    maskrcnn_upXconv_head, maskrcnn_loss,
-    fpn_model, multilevel_roi_align, multilevel_rpn_losses, generate_fpn_proposals)
+
+import model_frcnn
+from model_frcnn import (
+    sample_fast_rcnn_targets,
+    fastrcnn_outputs, fastrcnn_losses, fastrcnn_predictions)
+from model_mrcnn import maskrcnn_upXconv_head, maskrcnn_loss
+from model_rpn import rpn_head, rpn_losses, generate_rpn_proposals
+from model_fpn import (
+    fpn_model, multilevel_roi_align,
+    multilevel_rpn_losses, generate_fpn_proposals)
 from model_box import (
     clip_boxes, decode_bbox_target, encode_bbox_target,
     crop_and_resize, roi_align, RPNAnchors)
+
 from data import (
     get_train_dataflow, get_eval_dataflow,
     get_all_anchors, get_all_anchors_fpn)
@@ -328,7 +332,7 @@ class ResNetFPNModel(DetectionModel):
 
         roi_feature_fastrcnn = multilevel_roi_align(p23456[:4], rcnn_boxes, 7)
 
-        fastrcnn_head_func = getattr(model, cfg.FPN.FRCNN_HEAD_FUNC)
+        fastrcnn_head_func = getattr(model_frcnn, cfg.FPN.FRCNN_HEAD_FUNC)
         fastrcnn_label_logits, fastrcnn_box_logits = fastrcnn_head_func(
             'fastrcnn', roi_feature_fastrcnn, cfg.DATA.NUM_CLASS)
 
