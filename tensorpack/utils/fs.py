@@ -28,7 +28,7 @@ def mkdir_p(dirname):
             raise e
 
 
-def download(url, dir, filename=None):
+def download(url, dir, filename=None, expect_size=None):
     """
     Download URL to a directory.
     Will figure out the filename automatically from URL, if not given.
@@ -55,7 +55,12 @@ def download(url, dir, filename=None):
     except IOError:
         logger.error("Failed to download {}".format(url))
         raise
-    assert size > 0, "Download an empty file!"
+    assert size > 0, "Downloaded an empty file from {}!".format(url)
+
+    if expect_size is not None and size != expect_size:
+        logger.error("File downloaded from {} does not match the expected size!".format(url))
+        logger.error("You may have downloaded a broken file, or the upstream may have modified the file.")
+
     # TODO human-readable size
     print('Succesfully downloaded ' + filename + ". " + str(size) + ' bytes.')
     return fpath

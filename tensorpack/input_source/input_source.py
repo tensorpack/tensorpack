@@ -504,7 +504,7 @@ class StagingInput(FeedfreeInput):
         def _setup_graph(self):
             self.stage_op = self._input._get_stage_op()
             unstage_ops = self._input._get_unstage_ops()
-            unstage_op = tf.group(unstage_ops, name='unstage_all')
+            unstage_op = tf.group(*unstage_ops, name='unstage_all')
             self._check_dependency_op = unstage_ops[0]
             self.fetches = tf.train.SessionRunArgs(
                 fetches=[self.stage_op, unstage_op])

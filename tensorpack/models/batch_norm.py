@@ -166,7 +166,7 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
                 center=center, scale=scale,
                 beta_initializer=beta_initializer,
                 gamma_initializer=gamma_initializer,
-                fused=True,
+                fused=(ndims == 4 and axis in [1, 3]),
                 _reuse=tf.get_variable_scope().reuse)
             if TF_version >= 1.5:
                 tf_args['virtual_batch_size'] = virtual_batch_size

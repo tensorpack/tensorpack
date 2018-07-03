@@ -53,7 +53,7 @@ class ILSVRCMeta(object):
         return dict(enumerate(lines))
 
     def _download_caffe_meta(self):
-        fpath = download(CAFFE_ILSVRC12_URL, self.dir)
+        fpath = download(CAFFE_ILSVRC12_URL, self.dir, expect_size=17858008)
         tarfile.open(fpath, 'r:gz').extractall(self.dir)
 
     def get_image_list(self, name, dir_structure='original'):
