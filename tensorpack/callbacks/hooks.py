@@ -29,7 +29,7 @@ class CallbackToHook(tf.train.SessionRunHook):
 class HookToCallback(Callback):
     """
     Make a ``tf.train.SessionRunHook`` into a callback.
-    Note that the `coord` argument in `after_create_session` will be None.
+    Note that when `SessionRunHook.after_create_session` is called, the `coord` argument will be None.
     """
 
     _chief_only = False

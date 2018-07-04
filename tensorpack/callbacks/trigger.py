@@ -9,14 +9,12 @@ __all__ = ['PeriodicTrigger', 'PeriodicCallback', 'EnableCallbackIf']
 
 class PeriodicTrigger(ProxyCallback):
     """
-    Schedule to trigger a callback every k global steps or every k epochs by its :meth:`trigger()` method.
+    Trigger a callback every k global steps or every k epochs by its :meth:`trigger()` method.
     Most existing callbacks which do something every epoch are implemented
     with :meth:`trigger()` method.
 
-    All other methods (``before/after_run``, ``trigger_step``, etc) are unaffected.
+    All other methods (``before/after_run``, ``trigger_step``, etc) of the input callback are unaffected.
     """
-
-    _chief_only = False
 
     def __init__(self, triggerable, every_k_steps=None, every_k_epochs=None):
         """
@@ -59,8 +57,6 @@ class PeriodicRunHooks(ProxyCallback):
     All other methods are untouched.
     """
 
-    _chief_only = False
-
     def __init__(self, callback, every_k_steps):
         """
         Args:
@@ -88,7 +84,7 @@ class PeriodicRunHooks(ProxyCallback):
 
 class EnableCallbackIf(ProxyCallback):
     """
-    Enable ``{before,after}_epoch``, ``{before,after}_run``,
+    Enable the ``{before,after}_epoch``, ``{before,after}_run``,
     ``trigger_{epoch,step}``
     methods of a callback, only when some condition satisfies.
     The other methods are unaffected.
@@ -97,8 +93,6 @@ class EnableCallbackIf(ProxyCallback):
         If you use ``{before,after}_run``,
         ``pred`` will be evaluated only in ``before_run``.
     """
-
-    _chief_only = False
 
     def __init__(self, callback, pred):
         """
@@ -142,18 +136,14 @@ class EnableCallbackIf(ProxyCallback):
 
 class PeriodicCallback(EnableCallbackIf):
     """
-    Make the calls to the following methods of a callback **less** frequent:
-    ``{before,after}_epoch``, ``{before,after}_run``, ``trigger_{epoch,step}``.
-
-    These methods will be enabled only when ``global_step % every_k_steps == 0`
+    The ``{before,after}_epoch``, ``{before,after}_run``, ``trigger_{epoch,step}``
+    methods of the given callback will be enabled only when ``global_step % every_k_steps == 0`
     or ``epoch_num % every_k_epochs == 0``. The other methods are unaffected.
 
-    Note that this can only makes a callback **less** frequent than before.
-    :class:`PeriodicTrigger` can
-    make a callback which supports :meth:`trigger()` method more frequent than before.
+    Note that this can only makes a callback **less** frequent than itself.
+    If you have a callback that by default runs every epoch by its :meth:`trigger()` method,
+    use :class:`PeriodicTrigger` to schedule it more frequent than itself.
     """
-
-    _chief_only = False
 
     def __init__(self, callback, every_k_steps=None, every_k_epochs=None):
         """

@@ -139,15 +139,15 @@ def multilevel_rpn_losses(
     assert len(multilevel_box_logits) == num_lvl
 
     losses = []
-    for lvl in range(num_lvl):
-        with tf.name_scope('RPNLoss_Lvl{}'.format(lvl + 2)):
-            anchors = multilevel_anchors[lvl]
-            label_loss, box_loss = rpn_losses(
-                anchors.gt_labels, anchors.encoded_gt_boxes(),
-                multilevel_label_logits[lvl], multilevel_box_logits[lvl])
-            losses.extend([label_loss, box_loss])
-
     with tf.name_scope('rpn_losses'):
+        for lvl in range(num_lvl):
+            with tf.name_scope('Level{}'.format(lvl + 2)):
+                anchors = multilevel_anchors[lvl]
+                label_loss, box_loss = rpn_losses(
+                    anchors.gt_labels, anchors.encoded_gt_boxes(),
+                    multilevel_label_logits[lvl], multilevel_box_logits[lvl])
+                losses.extend([label_loss, box_loss])
+
         total_label_loss = tf.add_n(losses[::2], name='label_loss')
         total_box_loss = tf.add_n(losses[1::2], name='box_loss')
         add_moving_summary(total_label_loss, total_box_loss)

@@ -58,7 +58,7 @@ implement different distribution strategies.
 They take care of device placement, gradient averaging and synchronoization
 in the efficient way and all reach the same performance as the
 [official TF benchmarks](https://www.tensorflow.org/performance/benchmarks).
-It takes only one line of code change to use them, i.e. `trainer=SyncMultiGPUTrainerReplicated()`.
+It takes only one line of code change to use them, e.g. `trainer=SyncMultiGPUTrainerReplicated(...)`.
 
 Note some __common problems__ when using these trainers:
 

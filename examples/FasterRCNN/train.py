@@ -200,8 +200,9 @@ class ResNetC4Model(DetectionModel):
 
         if is_training:
             # rpn loss
-            rpn_label_loss, rpn_box_loss = rpn_losses(
-                anchors.gt_labels, anchors.encoded_gt_boxes(), rpn_label_logits, rpn_box_logits)
+            with tf.name_scope('rpn_losses'):
+                rpn_label_loss, rpn_box_loss = rpn_losses(
+                    anchors.gt_labels, anchors.encoded_gt_boxes(), rpn_label_logits, rpn_box_logits)
 
             # fastrcnn loss
             matched_gt_boxes = tf.gather(gt_boxes, fg_inds_wrt_gt)

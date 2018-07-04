@@ -37,7 +37,6 @@ def rpn_head(featuremap, channel, num_anchors):
     return label_logits, box_logits
 
 
-@under_name_scope()
 def rpn_losses(anchor_labels, anchor_boxes, label_logits, box_logits):
     """
     Args:
