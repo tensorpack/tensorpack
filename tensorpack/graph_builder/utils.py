@@ -8,6 +8,7 @@ import tensorflow as tf
 
 from ..tfutils.varreplace import custom_getter_scope
 from ..tfutils.scope_utils import under_name_scope, cached_name_scope
+from ..tfutils.common import get_tf_version_number
 from ..utils.argtools import call_only_once
 from ..utils import logger
 
@@ -66,13 +67,16 @@ class LeastLoadedDeviceSetter(object):
         self.ps_sizes = [0] * len(self.ps_devices)
 
     def __call__(self, op):
-        def sanitize_name(name):    # tensorflow/tensorflow#11484
-            return tf.DeviceSpec.from_string(name).to_string()
+        if get_tf_version_number() >= 1.8:
+            from tensorflow.python.training.device_util import canonicalize
+        else:
+            def canonicalize(name):    # tensorflow/tensorflow#11484
+                return tf.DeviceSpec.from_string(name).to_string()
 
         if op.device:
             return op.device
         if op.type not in ['Variable', 'VariableV2']:
-            return sanitize_name(self.worker_device)
+            return canonicalize(self.worker_device)
 
         device_index, _ = min(enumerate(
             self.ps_sizes), key=operator.itemgetter(1))
@@ -84,7 +88,7 @@ class LeastLoadedDeviceSetter(object):
 
         self.ps_sizes[device_index] += var_size
 
-        return sanitize_name(device_name)
+        return canonicalize(device_name)
 
     def __str__(self):
         return "LeastLoadedDeviceSetter-{}".format(self.worker_device)

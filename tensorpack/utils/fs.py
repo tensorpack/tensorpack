@@ -13,7 +13,7 @@ __all__ = ['mkdir_p', 'download', 'recursive_walk', 'get_dataset_path']
 
 
 def mkdir_p(dirname):
-    """ Make a dir recursively, but do nothing if the dir exists
+    """ Like "mkdir -p", make a dir recursively, but do nothing if the dir exists
 
     Args:
         dirname(str):
@@ -37,6 +37,13 @@ def download(url, dir, filename=None, expect_size=None):
     if filename is None:
         filename = url.split('/')[-1]
     fpath = os.path.join(dir, filename)
+
+    if os.path.isfile(fpath):
+        if expect_size is not None and os.stat(fpath).st_size == expect_size:
+            logger.info("File {} exists! Skip download.".format(filename))
+            return fpath
+        else:
+            logger.warn("File {} exists. Will overwrite with a new download!".format(filename))
 
     def hook(t):
         last_b = [0]
@@ -62,7 +69,7 @@ def download(url, dir, filename=None, expect_size=None):
         logger.error("You may have downloaded a broken file, or the upstream may have modified the file.")
 
     # TODO human-readable size
-    print('Succesfully downloaded ' + filename + ". " + str(size) + ' bytes.')
+    logger.info('Succesfully downloaded ' + filename + ". " + str(size) + ' bytes.')
     return fpath
 
 

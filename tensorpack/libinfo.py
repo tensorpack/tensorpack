@@ -8,16 +8,21 @@ try:
     import cv2  # noqa
     if int(cv2.__version__.split('.')[0]) == 3:
         cv2.ocl.setUseOpenCL(False)
-    # check if cv is built with cuda
+    # check if cv is built with cuda or openmp
     info = cv2.getBuildInformation().split('\n')
     for line in info:
-        if 'use cuda' in line.lower():
-            answer = line.split()[-1].lower()
-            if answer == 'yes':
+        splits = line.split()
+        if not len(splits):
+            continue
+        answer = splits[-1].lower()
+        if answer in ['yes', 'no']:
+            if 'cuda' in line.lower() and answer == 'yes':
                 # issue#1197
                 print("OpenCV is built with CUDA support. "
                       "This may cause slow initialization or sometimes segfault with TensorFlow.")
-            break
+        if answer == 'openmp':
+            print("OpenCV is built with OpenMP support. This usually results in poor performance. For details, see "
+                  "https://github.com/tensorpack/benchmarks/blob/master/ImageNet/benchmark-opencv-resize.py")
 except (ImportError, TypeError):
     pass
 
@@ -41,9 +46,7 @@ os.environ['TF_GPU_THREAD_COUNT'] = '2'
 try:
     import tensorflow as tf  # noqa
     _version = tf.__version__.split('.')
-    assert int(_version[0]) >= 1, "TF>=1.0 is required!"
-    if int(_version[1]) < 3:
-        print("TF<1.3 support will be removed after 2018-03-15! Actually many examples already require TF>=1.3.")
+    assert int(_version[0]) >= 1 and int(_version[1]) >= 3, "TF>=1.3 is required!"
     _HAS_TF = True
 except ImportError:
     _HAS_TF = False

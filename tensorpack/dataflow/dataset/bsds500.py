@@ -10,7 +10,10 @@ from ...utils.fs import download, get_dataset_path
 from ..base import RNGDataFlow
 
 __all__ = ['BSDS500']
+
+
 DATA_URL = "http://www.eecs.berkeley.edu/Research/Projects/CS/vision/grouping/BSR/BSR_bsds500.tgz"
+DATA_SIZE = 70763455
 IMG_W, IMG_H = 481, 321
 
 
@@ -35,7 +38,7 @@ class BSDS500(RNGDataFlow):
         if data_dir is None:
             data_dir = get_dataset_path('bsds500_data')
         if not os.path.isdir(os.path.join(data_dir, 'BSR')):
-            download(DATA_URL, data_dir)
+            download(DATA_URL, data_dir, expect_size=DATA_SIZE)
             filename = DATA_URL.split('/')[-1]
             filepath = os.path.join(data_dir, filename)
             import tarfile

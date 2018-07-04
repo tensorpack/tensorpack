@@ -14,7 +14,7 @@ from ..base import RNGDataFlow
 
 __all__ = ['ILSVRCMeta', 'ILSVRC12', 'ILSVRC12Files']
 
-CAFFE_ILSVRC12_URL = "http://dl.caffe.berkeleyvision.org/caffe_ilsvrc12.tar.gz"
+CAFFE_ILSVRC12_URL = ("http://dl.caffe.berkeleyvision.org/caffe_ilsvrc12.tar.gz", 17858008)
 
 
 class ILSVRCMeta(object):
@@ -53,7 +53,7 @@ class ILSVRCMeta(object):
         return dict(enumerate(lines))
 
     def _download_caffe_meta(self):
-        fpath = download(CAFFE_ILSVRC12_URL, self.dir, expect_size=17858008)
+        fpath = download(CAFFE_ILSVRC12_URL[0], self.dir, expect_size=CAFFE_ILSVRC12_URL[1])
         tarfile.open(fpath, 'r:gz').extractall(self.dir)
 
     def get_image_list(self, name, dir_structure='original'):

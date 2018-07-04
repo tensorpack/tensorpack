@@ -6,6 +6,7 @@
 import os
 import pickle
 import numpy as np
+import tarfile
 import six
 from six.moves import range
 
@@ -16,13 +17,12 @@ from ..base import RNGDataFlow
 __all__ = ['Cifar10', 'Cifar100']
 
 
-DATA_URL_CIFAR_10 = 'http://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz'
-DATA_URL_CIFAR_100 = 'http://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz'
+DATA_URL_CIFAR_10 = ('http://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz', 170498071)
+DATA_URL_CIFAR_100 = ('http://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz', 169001437)
 
 
 def maybe_download_and_extract(dest_directory, cifar_classnum):
-    """Download and extract the tarball from Alex's website.
-       copied from tensorflow example """
+    """Download and extract the tarball from Alex's website. Copied from tensorflow example """
     assert cifar_classnum == 10 or cifar_classnum == 100
     if cifar_classnum == 10:
         cifar_foldername = 'cifar-10-batches-py'
@@ -33,10 +33,9 @@ def maybe_download_and_extract(dest_directory, cifar_classnum):
         return
     else:
         DATA_URL = DATA_URL_CIFAR_10 if cifar_classnum == 10 else DATA_URL_CIFAR_100
-        download(DATA_URL, dest_directory)
-        filename = DATA_URL.split('/')[-1]
+        filename = DATA_URL[0].split('/')[-1]
         filepath = os.path.join(dest_directory, filename)
-        import tarfile
+        download(DATA_URL[0], dest_directory, expect_size=DATA_URL[1])
         tarfile.open(filepath, 'r:gz').extractall(dest_directory)
 
 
