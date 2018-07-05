@@ -72,6 +72,7 @@ _C.BACKBONE.NORM = 'FreezeBN'  # options: FreezeBN, SyncBN
 # We will eventually switch to TF_PAD_MODE=False.
 # See https://github.com/tensorflow/tensorflow/issues/18213
 _C.BACKBONE.TF_PAD_MODE = True
+_C.BACKBONE.STRIDE_1X1 = False  # True for MSRA models
 
 # schedule -----------------------
 # The schedule and learning rate here is defined for a total batch size of 8.
@@ -82,7 +83,6 @@ _C.TRAIN.BASE_LR = 1e-2
 _C.TRAIN.WARMUP = 1000    # in steps
 _C.TRAIN.STEPS_PER_EPOCH = 500
 # LR_SCHEDULE = [120000, 160000, 180000]  # "1x" schedule in detectron
-# LR_SCHEDULE = [150000, 230000, 280000]  # roughly a "1.5x" schedule
 _C.TRAIN.LR_SCHEDULE = [240000, 320000, 360000]    # "2x" schedule in detectron
 
 # preprocessing --------------------

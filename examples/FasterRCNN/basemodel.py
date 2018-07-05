@@ -85,13 +85,19 @@ def resnet_shortcut(l, n_out, stride, activation=tf.identity):
 
 
 def resnet_bottleneck(l, ch_out, stride):
-    l, shortcut = l, l
-    l = Conv2D('conv1', l, ch_out, 1, activation=BNReLU)
-    if stride == 2:
-        l = tf.pad(l, [[0, 0], [0, 0], maybe_reverse_pad(0, 1), maybe_reverse_pad(0, 1)])
-        l = Conv2D('conv2', l, ch_out, 3, strides=2, activation=BNReLU, padding='VALID')
+    shortcut = l
+    if cfg.BACKBONE.STRIDE_1X1:
+        if stride == 2:
+            l = l[:, :, :-1, :-1]
+        l = Conv2D('conv1', l, ch_out, 1, strides=stride, activation=BNReLU)
+        l = Conv2D('conv2', l, ch_out, 3, strides=1, activation=BNReLU)
     else:
-        l = Conv2D('conv2', l, ch_out, 3, strides=stride, activation=BNReLU)
+        l = Conv2D('conv1', l, ch_out, 1, strides=1, activation=BNReLU)
+        if stride == 2:
+            l = tf.pad(l, [[0, 0], [0, 0], maybe_reverse_pad(0, 1), maybe_reverse_pad(0, 1)])
+            l = Conv2D('conv2', l, ch_out, 3, strides=2, activation=BNReLU, padding='VALID')
+        else:
+            l = Conv2D('conv2', l, ch_out, 3, strides=stride, activation=BNReLU)
     l = Conv2D('conv3', l, ch_out * 4, 1, activation=get_bn(zero_init=True))
     ret = l + resnet_shortcut(shortcut, ch_out * 4, stride, activation=get_bn(zero_init=False))
     return tf.nn.relu(ret, name='output')
