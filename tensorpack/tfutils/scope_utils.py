@@ -54,11 +54,17 @@ def auto_reuse_variable_scope(func):
     return wrapper
 
 
-def under_name_scope(name=None):
+def under_name_scope(name_scope=None):
     """
+    Args:
+        name_scope(str): the default scope to use. If None, will use the name of the function.
+
     Returns:
-        A decorator which makes the function happen under a name scope.
-        The default name is the function itself.
+        A decorator which makes the function run under a name scope.
+        The name scope is obtained by the following:
+        1. The 'name_scope' keyword argument when the decorated function is called.
+        2. The 'name_scope' argument of the decorator.
+        3. (default) The name of the decorated function itself.
 
     Example:
 
@@ -66,8 +72,12 @@ def under_name_scope(name=None):
 
         @under_name_scope()
         def rms(x):
-            return tf.sqrt(  # will be under name scope 'rms'
+            return tf.sqrt(
                 tf.reduce_mean(tf.square(x)))
+
+        rms(tensor)  # will be called under name scope 'rms'
+        rms(tensor, name_scope='scope')  # will be called under name scope 'scope'
+
 
     Todo:
         Add a reuse option.
@@ -76,10 +86,10 @@ def under_name_scope(name=None):
     def _impl(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            if name is None:
+            scopename = kwargs.pop('name_scope', name_scope)
+            if scopename is None:
                 scopename = func.__name__
-            else:
-                scopename = name
+
             with tf.name_scope(scopename):
                 return func(*args, **kwargs)
         return wrapper
