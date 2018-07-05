@@ -225,7 +225,11 @@ class ScheduledHyperParamSetter(HyperParamSetter):
                 to "val" **after** the completion of epoch `ep`.
                 If ep == 0, the value will be set before the first epoch
                 (because by default the first is epoch 1).
-            interp: None: no interpolation. 'linear': linear interpolation
+                The epoch numbers have to be increasing.
+            interp (str or None): Either None or 'linear'.
+                If None, the parameter will only be set when the specific epoch or steps
+                is reached exactly. If 'linear', perform linear interpolation (but no extrapolation)
+                every time this callback is triggered.
             step_based (bool): interpret ``schedule`` as (step, value) instead
                 of (epoch, value).
 
@@ -248,17 +252,17 @@ class ScheduledHyperParamSetter(HyperParamSetter):
         laste, lastv = None, None
         for e, v in self.schedule:
             if e == refnum:
-                return v
+                return v    # meet the exact boundary, return directly
             if e > refnum:
                 break
             laste, lastv = e, v
         if laste is None or laste == e:
             # hasn't reached the first scheduled point, or reached the end of all scheduled points
             return None
-        if self.interp is not None:
-            v = (refnum - laste) * 1. / (e - laste) * (v - lastv) + lastv
-        else:
-            v = lastv
+        if self.interp is None:
+            # If no interpolation, nothing to do.
+            return None
+        v = (refnum - laste) * 1. / (e - laste) * (v - lastv) + lastv
         return v
 
     def _trigger_epoch(self):
