@@ -77,8 +77,9 @@ def get_config(model, fake=False):
             ModelSaver(),
             EstimatedTimeLeft(),
             ScheduledHyperParamSetter(
-                'learning_rate', [(30, BASE_LR * 1e-1), (60, BASE_LR * 1e-2),
-                                  (90, BASE_LR * 1e-3), (100, BASE_LR * 1e-4)]),
+                'learning_rate', [
+                    (0, min(START_LR, BASE_LR)), (30, BASE_LR * 1e-1), (60, BASE_LR * 1e-2),
+                    (90, BASE_LR * 1e-3), (100, BASE_LR * 1e-4)]),
         ]
         if BASE_LR > START_LR:
             callbacks.append(
@@ -138,7 +139,7 @@ if __name__ == '__main__':
             logger.set_logger_dir(os.path.join('train_log', 'tmp'), 'd')
         else:
             logger.set_logger_dir(
-                os.path.join('train_log', 'imagenet-{}-d{}'.format(args.mode, args.depth)))
+                os.path.join('train_log', 'imagenet-{}-d{}-batch{}'.format(args.mode, args.depth, args.batch)))
 
         config = get_config(model, fake=args.fake)
         if args.load:
