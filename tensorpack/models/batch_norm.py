@@ -92,16 +92,26 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
           They are very similar in speed, but `internal_update=True` can be used
           when you have conditionals in your model, or when you have multiple networks to train.
           Corresponding TF issue: https://github.com/tensorflow/tensorflow/issues/14699
-        sync_statistics: either None or "nccl". By default (None), it uses statistics of the input tensor to normalize.
-          When set to "nccl", this layer must be used under tensorpack multi-gpu trainers,
-          and it then uses per-machine (multiple GPU) statistics to normalize.
+        sync_statistics (str or None): one of None "nccl", or "horovod".
 
-          Note that this implementation averages the per-tower E[x] and E[x^2] among towers to compute
-          global mean&variance. The result is the global mean&variance only if each tower has the same batch size.
+          By default (None), it uses statistics of the input tensor to normalize.
+          This is the standard way BatchNorm was done in most frameworks.
+
+          When set to "nccl", this layer must be used under tensorpack's multi-GPU trainers.
+          It uses the aggregated statistics of the whole batch (across all GPUs) to normalize.
+
+          When set to "horovod", this layer must be used under tensorpack's :class:`HorovodTrainer`.
+          It uses the aggregated statistics of the whole batch (across all MPI ranks) to normalize.
+          Note that on single machine this is significantly slower than the "nccl" implementation.
+
+          This implementation averages the per-GPU E[x] and E[x^2] among GPUs to compute
+          global mean & variance. Therefore each GPU needs to have the same batch size.
 
           This option has no effect when not training.
-          This option is also known as "Cross-GPU BatchNorm" as mentioned in https://arxiv.org/abs/1711.07240.
-          Corresponding TF issue: https://github.com/tensorflow/tensorflow/issues/18222
+
+          This option is also known as "Cross-GPU BatchNorm" as mentioned in:
+          `MegDet: A Large Mini-Batch Object Detector <https://arxiv.org/abs/1711.07240>`_.
+          Corresponding TF issue: https://github.com/tensorflow/tensorflow/issues/18222.
 
     Variable Names:
 
@@ -217,19 +227,21 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
             from tensorflow.contrib.nccl.ops import gen_nccl_ops
             shared_name = re.sub('tower[0-9]+/', '', tf.get_variable_scope().name)
             num_dev = ctx.total
-            batch_mean = gen_nccl_ops.nccl_all_reduce(
-                input=batch_mean,
-                reduction='sum',
-                num_devices=num_dev,
-                shared_name=shared_name + '_NCCL_mean') * (1.0 / num_dev)
-            batch_mean_square = gen_nccl_ops.nccl_all_reduce(
-                input=batch_mean_square,
-                reduction='sum',
-                num_devices=num_dev,
-                shared_name=shared_name + '_NCCL_mean_square') * (1.0 / num_dev)
+            if num_dev == 1:
+                logger.warn("BatchNorm(sync_statistics='nccl') is used with only one tower!")
+            else:
+                batch_mean = gen_nccl_ops.nccl_all_reduce(
+                    input=batch_mean,
+                    reduction='sum',
+                    num_devices=num_dev,
+                    shared_name=shared_name + '_NCCL_mean') * (1.0 / num_dev)
+                batch_mean_square = gen_nccl_ops.nccl_all_reduce(
+                    input=batch_mean_square,
+                    reduction='sum',
+                    num_devices=num_dev,
+                    shared_name=shared_name + '_NCCL_mean_square') * (1.0 / num_dev)
         elif sync_statistics == 'horovod':
             # Require https://github.com/uber/horovod/pull/331
-            # Proof-of-concept, not ready yet.
             import horovod.tensorflow as hvd
             batch_mean = hvd.allreduce(batch_mean, average=True)
             batch_mean_square = hvd.allreduce(batch_mean_square, average=True)
