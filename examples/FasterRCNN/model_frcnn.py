@@ -9,6 +9,7 @@ from tensorpack.tfutils.scope_utils import under_name_scope
 from tensorpack.models import (
     Conv2D, FullyConnected, layer_register)
 
+from basemodel import GroupNorm
 from utils.box_ops import pairwise_iou
 from config import config as cfg
 
@@ -116,50 +117,6 @@ def fastrcnn_outputs(feature, num_classes):
     return classification, box_regression
 
 
-@layer_register(log_shape=True)
-def fastrcnn_2fc_head(feature, num_classes):
-    """
-    Args:
-        feature (any shape):
-        num_classes(int): num_category + 1
-
-    Returns:
-        cls_logits (Nxnum_class), reg_logits (Nx num_class-1 x 4)
-    """
-    dim = cfg.FPN.FRCNN_FC_HEAD_DIM
-    init = tf.variance_scaling_initializer()
-    hidden = FullyConnected('fc6', feature, dim, kernel_initializer=init, activation=tf.nn.relu)
-    hidden = FullyConnected('fc7', hidden, dim, kernel_initializer=init, activation=tf.nn.relu)
-    return fastrcnn_outputs('outputs', hidden, num_classes)
-
-
-@layer_register(log_shape=True)
-def fastrcnn_Xconv1fc_head(feature, num_classes, num_convs):
-    """
-    Args:
-        feature (any shape):
-        num_classes(int): num_category + 1
-        num_convs (int): number of conv layers
-
-    Returns:
-        cls_logits (Nxnum_class), reg_logits (Nx num_class-1 x 4)
-    """
-    l = feature
-    with argscope(Conv2D, data_format='channels_first',
-                  kernel_initializer=tf.variance_scaling_initializer(
-                      scale=2.0, mode='fan_out', distribution='normal')):
-        for k in range(num_convs):
-            l = Conv2D('conv{}'.format(k), l, cfg.FPN.FRCNN_CONV_HEAD_DIM, 3, activation=tf.nn.relu)
-        l = FullyConnected('fc', l, cfg.FPN.FRCNN_FC_HEAD_DIM,
-                           kernel_initializer=tf.variance_scaling_initializer(), activation=tf.nn.relu)
-    return fastrcnn_outputs('outputs', l, num_classes)
-
-
-def fastrcnn_4conv1fc_head(*args, **kwargs):
-    # This head was used in Group Normalization
-    return fastrcnn_Xconv1fc_head(*args, num_convs=4, **kwargs)
-
-
 @under_name_scope()
 def fastrcnn_losses(labels, label_logits, fg_boxes, fg_box_logits):
     """
@@ -254,3 +211,58 @@ def fastrcnn_predictions(boxes, probs):
     filtered_selection = tf.gather(selected_indices, topk_indices)
     filtered_selection = tf.reverse(filtered_selection, axis=[1], name='filtered_indices')
     return filtered_selection, topk_probs
+
+
+"""
+FC Heads:
+"""
+
+
+@layer_register(log_shape=True)
+def fastrcnn_2fc_head(feature, num_classes):
+    """
+    Args:
+        feature (any shape):
+        num_classes(int): num_category + 1
+
+    Returns:
+        cls_logits (Nxnum_class), reg_logits (Nx num_class-1 x 4)
+    """
+    dim = cfg.FPN.FRCNN_FC_HEAD_DIM
+    init = tf.variance_scaling_initializer()
+    hidden = FullyConnected('fc6', feature, dim, kernel_initializer=init, activation=tf.nn.relu)
+    hidden = FullyConnected('fc7', hidden, dim, kernel_initializer=init, activation=tf.nn.relu)
+    return fastrcnn_outputs('outputs', hidden, num_classes)
+
+
+@layer_register(log_shape=True)
+def fastrcnn_Xconv1fc_head(feature, num_classes, num_convs, norm=None):
+    """
+    Args:
+        feature (any shape):
+        num_classes(int): num_category + 1
+        num_convs (int): number of conv layers
+        norm (str or None): either None or 'GN'
+
+    Returns:
+        cls_logits (Nxnum_class), reg_logits (Nx num_class-1 x 4)
+    """
+    l = feature
+    with argscope(Conv2D, data_format='channels_first',
+                  kernel_initializer=tf.variance_scaling_initializer(
+                      scale=2.0, mode='fan_out', distribution='normal')):
+        for k in range(num_convs):
+            l = Conv2D('conv{}'.format(k), l, cfg.FPN.FRCNN_CONV_HEAD_DIM, 3, activation=tf.nn.relu)
+            if norm is not None:
+                l = GroupNorm('gn{}'.format(k), l)
+        l = FullyConnected('fc', l, cfg.FPN.FRCNN_FC_HEAD_DIM,
+                           kernel_initializer=tf.variance_scaling_initializer(), activation=tf.nn.relu)
+    return fastrcnn_outputs('outputs', l, num_classes)
+
+
+def fastrcnn_4conv1fc_head(*args, **kwargs):
+    return fastrcnn_Xconv1fc_head(*args, num_convs=4, **kwargs)
+
+
+def fastrcnn_4conv1fc_gn_head(*args, **kwargs):
+    return fastrcnn_Xconv1fc_head(*args, num_convs=4, norm='GN', **kwargs)

@@ -7,9 +7,37 @@ from tensorpack.tfutils.argscope import argscope, get_arg_scope
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
 from tensorpack.tfutils.varreplace import custom_getter_scope
 from tensorpack.models import (
-    Conv2D, MaxPooling, BatchNorm, BNReLU)
+    Conv2D, MaxPooling, BatchNorm, BNReLU, layer_register)
 
 from config import config as cfg
+
+
+@layer_register(log_shape=True)
+def GroupNorm(x, group=32, gamma_initializer=tf.constant_initializer(1.)):
+    shape = x.get_shape().as_list()
+    ndims = len(shape)
+    assert ndims == 4, shape
+    chan = shape[1]
+    assert chan % group == 0, chan
+    group_size = chan // group
+
+    orig_shape = tf.shape(x)
+    h, w = orig_shape[2], orig_shape[3]
+
+    x = tf.reshape(x, tf.stack([-1, group, group_size, h, w]))
+
+    mean, var = tf.nn.moments(x, [2, 3, 4], keep_dims=True)
+
+    new_shape = [1, group, group_size, 1, 1]
+
+    beta = tf.get_variable('beta', [chan], initializer=tf.constant_initializer())
+    beta = tf.reshape(beta, new_shape)
+
+    gamma = tf.get_variable('gamma', [chan], initializer=gamma_initializer)
+    gamma = tf.reshape(gamma, new_shape)
+
+    out = tf.nn.batch_normalization(x, mean, var, beta, gamma, 1e-5, name='output')
+    return tf.reshape(out, orig_shape, name='output')
 
 
 def maybe_freeze_affine(getter, *args, **kwargs):

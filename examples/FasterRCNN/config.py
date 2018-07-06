@@ -165,6 +165,7 @@ def finalize_configs(is_training):
         size_mult = _C.FPN.RESOLUTION_REQUIREMENT * 1.
         _C.PREPROC.MAX_SIZE = np.ceil(_C.PREPROC.MAX_SIZE / size_mult) * size_mult
         assert _C.FPN.PROPOSAL_MODE in ['Level', 'Joint']
+        assert _C.FPN.FRCNN_HEAD_FUNC.endswith('_head')
 
     if is_training:
         os.environ['TF_AUTOTUNE_THRESHOLD'] = '1'

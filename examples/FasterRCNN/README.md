@@ -69,10 +69,12 @@ MaskRCNN results contain both bbox and segm mAP.
  | R50-FPN  | 37.5               | 37.9<sup>[1](#ft1)</sup>       | 28h on 8 V100s | <details><summary>standard</summary>`MODE_MASK=False MODE_FPN=True` </details>                                                                                                                   |
  | R50-C4   | 36.8/32.1          |                                | 39h on 8 P100s | <details><summary>quick</summary>`MODE_MASK=True FRCNN.BATCH_PER_IM=256`<br/>`TRAIN.LR_SCHEDULE=[150000,230000,280000]` </details>                                                               |
  | R50-C4   | 37.8/33.1          | 37.8/32.8                      | 51h on 8 V100s | <details><summary>standard</summary>`MODE_MASK=True` </details>                                                                                                                                  |
- | R50-FPN  | 38.1/34.9          | 38.6/34.5<sup>[1](#ft1)</sup>  | 38h on 8 V100s | <details><summary>standard</summary>`MODE_MASK=True MODE_FPN=True` </details>                                                                                                                    |
+ | R50-FPN  | 38.1/34.9          | 38.6/34.5<sup>[1](#ft1)</sup>  | 32h on 8 V100s | <details><summary>standard</summary>`MODE_MASK=True MODE_FPN=True` </details>                                                                                                                    |
+ | R50-FPN  | 38.5/34.8          | 38.6/34.2<sup>[2](#ft2)</sup>  | 34h on 8 V100s | <details><summary>standard+convhead</summary>`MODE_MASK=True MODE_FPN=True`<br/>`FPN.FRCNN_HEAD_FUNC=fastrcnn_4conv1fc_head` </details>                                                          |
  | R101-C4  | 40.8/35.1          |                                | 63h on 8 V100s | <details><summary>standard</summary>`MODE_MASK=True `<br/>`BACKBONE.RESNET_NUM_BLOCK=[3,4,23,3]` </details>                                                                                      |
  
  <a id="ft1">1</a>: Slightly different configurations.
+ <a id="ft2">2</a>: Number from [Group Normalization](https://arxiv.org/abs/1803.08494)
 
 The two R50-C4 360k models have the same configuration __and mAP__
 as the `R50-C4-2x` entries in

@@ -9,7 +9,7 @@ from tensorpack.utils.argtools import graph_memoized
 @graph_memoized
 def get_dorefa(bitW, bitA, bitG):
     """
-    return the three quantization functions fw, fa, fg, for weights, activations and gradients respectively
+    Return the three quantization functions fw, fa, fg, for weights, activations and gradients respectively
     It's unsafe to call this function multiple times with different parameters
     """
     def quantize(x, k):
