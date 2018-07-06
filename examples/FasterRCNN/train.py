@@ -318,10 +318,9 @@ class ResNetFPNModel(DetectionModel):
         multilevel_label_logits = [k[0] for k in rpn_outputs]
         multilevel_box_logits = [k[1] for k in rpn_outputs]
 
-        fpn_nms_topk = cfg.RPN.TRAIN_FPN_NMS_TOPK if is_training else cfg.RPN.TEST_FPN_NMS_TOPK
         proposal_boxes, proposal_scores = generate_fpn_proposals(
-            multilevel_anchors, multilevel_label_logits, multilevel_box_logits,
-            image_shape2d, fpn_nms_topk, fpn_nms_topk)
+            multilevel_anchors, multilevel_label_logits,
+            multilevel_box_logits, image_shape2d)
 
         if is_training:
             rcnn_boxes, rcnn_labels, fg_inds_wrt_gt = sample_fast_rcnn_targets(
@@ -356,7 +355,8 @@ class ResNetFPNModel(DetectionModel):
                 # maskrcnn loss
                 fg_labels = tf.gather(rcnn_labels, fg_inds_wrt_sample)
                 roi_feature_maskrcnn = multilevel_roi_align(
-                    p23456[:4], fg_sampled_boxes, 14)
+                    p23456[:4], fg_sampled_boxes, 14,
+                    name_scope='multilevel_roi_align_mask')
                 mask_logits = maskrcnn_upXconv_head(
                     'maskrcnn', roi_feature_maskrcnn, cfg.DATA.NUM_CATEGORY, 4)   # #fg x #cat x 28 x 28
 

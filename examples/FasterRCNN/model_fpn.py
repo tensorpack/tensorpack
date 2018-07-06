@@ -6,6 +6,7 @@ import itertools
 
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.tfutils.argscope import argscope
+from tensorpack.tfutils.tower import get_current_tower_context
 from tensorpack.tfutils.scope_utils import under_name_scope
 from tensorpack.models import (
     Conv2D, layer_register, FixedUnPooling, MaxPooling)
@@ -145,7 +146,7 @@ def multilevel_rpn_losses(
             label_loss, box_loss = rpn_losses(
                 anchors.gt_labels, anchors.encoded_gt_boxes(),
                 multilevel_label_logits[lvl], multilevel_box_logits[lvl],
-                name_scope='Level{}'.format(lvl + 2))
+                name_scope='level{}'.format(lvl + 2))
             losses.extend([label_loss, box_loss])
 
         total_label_loss = tf.add_n(losses[::2], name='label_loss')
@@ -155,8 +156,8 @@ def multilevel_rpn_losses(
 
 
 def generate_fpn_proposals(
-    multilevel_anchors, multilevel_label_logits, multilevel_box_logits,
-        image_shape2d, pre_nms_topk, post_nms_topk):
+    multilevel_anchors, multilevel_label_logits,
+        multilevel_box_logits, image_shape2d):
     """
     Args:
         multilevel_anchors: #lvl RPNAnchors
@@ -172,23 +173,40 @@ def generate_fpn_proposals(
     assert len(multilevel_label_logits) == num_lvl
     assert len(multilevel_box_logits) == num_lvl
 
+    ctx = get_current_tower_context()
     all_boxes = []
     all_scores = []
-    for lvl in range(num_lvl):
-        with tf.name_scope('FPNProposal_Lvl{}'.format(lvl + 2)):
-            anchors = multilevel_anchors[lvl]
-            pred_boxes_decoded = anchors.decode_logits(multilevel_box_logits[lvl])
+    if cfg.FPN.PROPOSAL_MODE == 'Level':
+        fpn_nms_topk = cfg.RPN.TRAIN_PER_LEVEL_NMS_TOPK if ctx.is_training else cfg.RPN.TEST_PER_LEVEL_NMS_TOPK
+        for lvl in range(num_lvl):
+            with tf.name_scope('FPNProposal_Lvl{}'.format(lvl + 2)):
+                anchors = multilevel_anchors[lvl]
+                pred_boxes_decoded = anchors.decode_logits(multilevel_box_logits[lvl])
 
-            proposal_boxes, proposal_scores = generate_rpn_proposals(
-                tf.reshape(pred_boxes_decoded, [-1, 4]),
-                tf.reshape(multilevel_label_logits[lvl], [-1]),
-                image_shape2d, pre_nms_topk)
-            all_boxes.append(proposal_boxes)
-            all_scores.append(proposal_scores)
+                proposal_boxes, proposal_scores = generate_rpn_proposals(
+                    tf.reshape(pred_boxes_decoded, [-1, 4]),
+                    tf.reshape(multilevel_label_logits[lvl], [-1]),
+                    image_shape2d, fpn_nms_topk)
+                all_boxes.append(proposal_boxes)
+                all_scores.append(proposal_scores)
 
-    proposal_boxes = tf.concat(all_boxes, axis=0)  # nx4
-    proposal_scores = tf.concat(all_scores, axis=0)  # n
-    proposal_topk = tf.minimum(tf.size(proposal_scores), post_nms_topk)
-    proposal_scores, topk_indices = tf.nn.top_k(proposal_scores, k=proposal_topk, sorted=False)
-    proposal_boxes = tf.gather(proposal_boxes, topk_indices)
+        proposal_boxes = tf.concat(all_boxes, axis=0)  # nx4
+        proposal_scores = tf.concat(all_scores, axis=0)  # n
+        proposal_topk = tf.minimum(tf.size(proposal_scores), fpn_nms_topk)
+        proposal_scores, topk_indices = tf.nn.top_k(proposal_scores, k=proposal_topk, sorted=False)
+        proposal_boxes = tf.gather(proposal_boxes, topk_indices)
+    else:
+        for lvl in range(num_lvl):
+            with tf.name_scope('FPNProposal_Lvl{}'.format(lvl + 2)):
+                anchors = multilevel_anchors[lvl]
+                pred_boxes_decoded = anchors.decode_logits(multilevel_box_logits[lvl])
+                all_boxes.append(tf.reshape(pred_boxes_decoded, [-1, 4]))
+                all_scores.append(tf.reshape(multilevel_label_logits[lvl], [-1]))
+        all_boxes = tf.concat(all_boxes, axis=0)
+        all_scores = tf.concat(all_scores, axis=0)
+        proposal_boxes, proposal_scores = generate_rpn_proposals(
+            all_boxes, all_scores, image_shape2d,
+            cfg.RPN.TRAIN_PRE_NMS_TOPK if ctx.is_training else cfg.RPN.TEST_PRE_NMS_TOPK,
+            cfg.RPN.TRAIN_POST_NMS_TOPK if ctx.is_training else cfg.RPN.TEST_POST_NMS_TOPK)
+
     return proposal_boxes, proposal_scores

@@ -115,9 +115,10 @@ _C.RPN.TRAIN_PRE_NMS_TOPK = 12000
 _C.RPN.TRAIN_POST_NMS_TOPK = 2000
 _C.RPN.TEST_PRE_NMS_TOPK = 6000
 _C.RPN.TEST_POST_NMS_TOPK = 1000   # if you encounter OOM in inference, set this to a smaller number
-# for FPN, pre/post are (for now) the same
-_C.RPN.TRAIN_FPN_NMS_TOPK = 2000
-_C.RPN.TEST_FPN_NMS_TOPK = 1000
+# for FPN, #proposals per-level and #proposals after merging are (for now) the same
+# if FPN.PROPOSAL_MODE = 'Joint', these options have no effect
+_C.RPN.TRAIN_PER_LEVEL_NMS_TOPK = 2000
+_C.RPN.TEST_PER_LEVEL_NMS_TOPK = 1000
 
 # fastrcnn training ---------------------
 _C.FRCNN.BATCH_PER_IM = 512
@@ -127,6 +128,7 @@ _C.FRCNN.FG_RATIO = 0.25  # fg ratio in a ROI batch
 
 # FPN -------------------------
 _C.FPN.ANCHOR_STRIDES = (4, 8, 16, 32, 64)  # strides for each FPN level. Must be the same length as ANCHOR_SIZES
+_C.FPN.PROPOSAL_MODE = 'Level'  # 'Level', 'Joint'
 _C.FPN.NUM_CHANNEL = 256
 # conv head and fc head are only used in FPN.
 # For C4 models, the head is C5
@@ -162,6 +164,7 @@ def finalize_configs(is_training):
     if _C.MODE_FPN:
         size_mult = _C.FPN.RESOLUTION_REQUIREMENT * 1.
         _C.PREPROC.MAX_SIZE = np.ceil(_C.PREPROC.MAX_SIZE / size_mult) * size_mult
+        assert _C.FPN.PROPOSAL_MODE in ['Level', 'Joint']
 
     if is_training:
         os.environ['TF_AUTOTUNE_THRESHOLD'] = '1'
