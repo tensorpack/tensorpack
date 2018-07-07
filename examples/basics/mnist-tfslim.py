@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 # File: mnist-tfslim.py
 
-import os
-import argparse
 """
 MNIST ConvNet example using TensorFlow-slim.
 Mostly the same as 'mnist-convnet.py',
@@ -45,8 +43,6 @@ class Model(ModelDesc):
             l = slim.layers.dropout(l, is_training=is_training)
             logits = slim.layers.fully_connected(l, 10, activation_fn=None, scope='fc1')
 
-        tf.nn.softmax(logits, name='prob')
-
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
 
@@ -75,10 +71,11 @@ def get_data():
     return train, test
 
 
-def get_config():
+if __name__ == '__main__':
     logger.auto_set_dir()
     dataset_train, dataset_test = get_data()
-    return TrainConfig(
+
+    config = TrainConfig(
         model=Model(),
         dataflow=dataset_train,
         callbacks=[
@@ -89,14 +86,4 @@ def get_config():
         ],
         max_epoch=100,
     )
-
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
-    args = parser.parse_args()
-    if args.gpu:
-        os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
-
-    config = get_config()
     launch_train_with_config(config, SimpleTrainer())

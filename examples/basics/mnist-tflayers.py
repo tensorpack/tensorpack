@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 # File: mnist-tflayers.py
 
-import os
-import argparse
 import tensorflow as tf
 """
 MNIST ConvNet example using tf.layers
@@ -20,25 +18,30 @@ from tensorpack.tfutils import summary, get_current_tower_context
 from tensorpack.dataflow import dataset
 
 IMAGE_SIZE = 28
+# Monkey-patch tf.layers to support argscope.
 enable_argscope_for_module(tf.layers)
 
 
 class Model(ModelDesc):
     def inputs(self):
         """
-        Define all the inputs (with type, shape, name) that
-        the graph will need.
+        Define all the inputs (with type, shape, name) that the graph will need.
         """
         return [tf.placeholder(tf.float32, (None, IMAGE_SIZE, IMAGE_SIZE), 'input'),
                 tf.placeholder(tf.int32, (None,), 'label')]
 
     def build_graph(self, image, label):
+        """This function should build the model which takes the input variables
+        and return cost at the end"""
+
         # In tensorflow, inputs to convolution function are assumed to be
         # NHWC. Add a single channel here.
         image = tf.expand_dims(image, 3)
 
         image = image * 2 - 1   # center the pixels values at zero
 
+        # The context manager `argscope` sets the default option for all the layers under
+        # this context. Here we use 32 channel convolution with shape 3x3
         with argscope([tf.layers.conv2d], padding='same', activation=tf.nn.relu):
             l = tf.layers.conv2d(image, 32, 3, name='conv0')
             l = tf.layers.max_pooling2d(l, 2, 2, padding='valid')
@@ -52,8 +55,6 @@ class Model(ModelDesc):
                                   training=get_current_tower_context().is_training)
         logits = tf.layers.dense(l, 10, activation=tf.identity, name='fc1')
 
-        tf.nn.softmax(logits, name='prob')   # a Bx10 with probabilities
-
         # a vector of length B with loss of each sample
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')  # the average cross-entropy loss
@@ -61,15 +62,16 @@ class Model(ModelDesc):
         correct = tf.cast(tf.nn.in_top_k(logits, label, 1), tf.float32, name='correct')
         accuracy = tf.reduce_mean(correct, name='accuracy')
 
-        # This will monitor training error (in a moving_average fashion):
-        # 1. write the value to tensorboard
-        # 2. write the value to stat.json
-        # 3. print the value after each epoch
+        # This will monitor training error & accuracy (in a moving average fashion). The value will be automatically
+        # 1. written to tensosrboard
+        # 2. written to stat.json
+        # 3. printed after each epoch
         train_error = tf.reduce_mean(1 - correct, name='train_error')
         summary.add_moving_summary(train_error, accuracy)
 
         # Use a regex to find parameters to apply weight decay.
         # Here we apply a weight decay on all W (weight matrix) of all fc layers
+        # If you don't like regex, you can certainly define the cost in any other methods.
         wd_cost = tf.multiply(1e-5,
                               regularize_cost('fc.*/kernel', tf.nn.l2_loss),
                               name='regularize_loss')
@@ -78,6 +80,7 @@ class Model(ModelDesc):
 
         # monitor histogram of all weight (of conv and fc layers) in tensorboard
         summary.add_param_summary(('.*/kernel', ['histogram', 'rms']))
+        # the function should return the total cost to be optimized
         return total_cost
 
     def optimizer(self):
@@ -98,16 +101,22 @@ def get_data():
     return train, test
 
 
-def get_config():
+if __name__ == '__main__':
+    # automatically setup the directory train_log/mnist-convnet for logging
+    logger.auto_set_dir()
+
     dataset_train, dataset_test = get_data()
+
     # How many iterations you want in each epoch.
-    # This is the default value, don't actually need to set it in the config
+    # This (data.size()) is the default value.
     steps_per_epoch = dataset_train.size()
 
     # get the config which contains everything necessary in a training
-    return TrainConfig(
+    config = TrainConfig(
         model=Model(),
-        dataflow=dataset_train,  # the DataFlow instance for training
+        # The input source for training. FeedInput is slow, this is just for demo purpose.
+        # In practice it's best to use QueueInput or others. See tutorials for details.
+        data=FeedInput(dataset_train),
         callbacks=[
             ModelSaver(),   # save the model after every epoch
             MaxSaver('validation_accuracy'),  # save the model with highest accuracy (prefix 'validation_')
@@ -118,22 +127,4 @@ def get_config():
         steps_per_epoch=steps_per_epoch,
         max_epoch=100,
     )
-
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
-    parser.add_argument('--load', help='load model')
-    args = parser.parse_args()
-    if args.gpu:
-        os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
-
-    # automatically setup the directory train_log/mnist-convnet for logging
-    logger.auto_set_dir()
-
-    config = get_config()
-    if args.load:
-        config.session_init = SaverRestore(args.load)
-    # SimpleTrainer is slow, this is just a demo.
-    # You can use QueueInputTrainer instead
     launch_train_with_config(config, SimpleTrainer())

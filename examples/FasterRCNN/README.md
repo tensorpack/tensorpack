@@ -60,7 +60,7 @@ Evaluation or prediction will need the same config used during training.
 ## Results
 
 These models are trained with different configurations on trainval35k and evaluated on minival using mAP@IoU=0.50:0.95.
-MaskRCNN results contain both bbox and segm mAP.
+MaskRCNN results contain both box and mask mAP.
 
  | Backbone | mAP<br/>(box/mask) | Detectron mAP <br/> (box/mask) | Time           | Configurations <br/> (click to expand)                                                                                                                                                           |
  | -        | -                  | -                              | -              | -                                                                                                                                                                                                |
@@ -74,12 +74,11 @@ MaskRCNN results contain both bbox and segm mAP.
  | R101-C4  | 40.8/35.1          |                                | 63h on 8 V100s | <details><summary>standard</summary>`MODE_MASK=True `<br/>`BACKBONE.RESNET_NUM_BLOCK=[3,4,23,3]` </details>                                                                                      |
  
  <a id="ft1">1</a>: Slightly different configurations.
- <a id="ft2">2</a>: Number from [Group Normalization](https://arxiv.org/abs/1803.08494)
 
-The two R50-C4 360k models have the same configuration __and mAP__
-as the `R50-C4-2x` entries in
-[Detectron Model Zoo](https://github.com/facebookresearch/Detectron/blob/master/MODEL_ZOO.md#end-to-end-faster--mask-r-cnn-baselines).
-The other models listed here do not correspond to any configurations in Detectron.
+ <a id="ft2">2</a>: Numbers taken from [Group Normalization](https://arxiv.org/abs/1803.08494)
+ 
+ Performance in [Detectron](https://github.com/facebookresearch/Detectron/) can be reproduced.
+ Note that most of these numbers are better than what's in the paper. 
 
 ## Notes
 

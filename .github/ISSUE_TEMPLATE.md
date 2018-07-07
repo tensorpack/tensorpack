@@ -9,9 +9,9 @@ For any unexpected problems, __PLEASE ALWAYS INCLUDE__:
 		+ What's the command you run:
 		+ Have you made any changes to code? Paste them if any:
 	+ If not, tell us what you did that may be relevant.
-		But we may not be able to resolve it if there is no reproducible code.
+	  But we may not investigate it if there is no reproducible code.
 	+ Better to paste what you did instead of describing them.
-2. What you observed, e.g. the entire log:
+2. What you observed, including but not limited to the __entire__ logs.
 	+ Better to paste what you observed instead of describing them.
 3. What you expected, if not obvious.
 4. Your environment:
@@ -23,10 +23,9 @@ For any unexpected problems, __PLEASE ALWAYS INCLUDE__:
 
 Feature Requests:
 + You can implement a lot of features by extending tensorpack
-	(See http://tensorpack.readthedocs.io/en/latest/tutorial/index.html#extend-tensorpack).
-	It does not have to be added to tensorpack unless you have a good reason.
-+ We don't take feature requests for implementing new papers.
-  If you don't know how, ask it as a usage question.
+  (See http://tensorpack.readthedocs.io/en/latest/tutorial/index.html#extend-tensorpack).
+  It does not have to be added to tensorpack unless you have a good reason.
++ We don't take feature requests for examples or implementing papers.
 
 Usage Questions:
 

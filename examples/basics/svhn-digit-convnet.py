@@ -16,8 +16,7 @@ import tensorflow as tf
 A very small SVHN convnet model (only 0.8m parameters).
 About 2.3% validation error after 70 epochs. 2.15% after 150 epochs.
 
-Each epoch iterates over the whole training set (4721 iterations).
-Speed is about 43 it/s on TitanX.
+Each epoch iterates over the whole training set (4721 iterations), and takes about 24s on a P100.
 """
 
 
@@ -76,9 +75,6 @@ def get_data():
         imgaug.Resize((40, 40)),
         imgaug.Brightness(30),
         imgaug.Contrast((0.5, 1.5)),
-        imgaug.GaussianDeform(  # this is slow. only use it when you have lots of cpus
-            [(0.2, 0.2), (0.2, 0.8), (0.8, 0.8), (0.8, 0.2)],
-            (40, 40), 0.2, 3),
     ]
     data_train = AugmentImageComponent(data_train, augmentors)
     data_train = BatchData(data_train, 128)

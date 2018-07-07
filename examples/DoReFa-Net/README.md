@@ -8,17 +8,17 @@ It also contains an implementation of the following papers:
 + [Binarized Neural Networks](https://arxiv.org/abs/1602.02830), with (W,A,G)=(1,1,32).
 
 This is a good set of baselines for research in model quantization.
-These quantization techniques achieves the following ImageNet performance in this implementation:
+These quantization techniques, when applied on AlexNet, achieves the following ImageNet performance in this implementation:
 
-| Model          | W,A,G    | Top 1 Validation Error |
-|:---------------|----------|-----------------------:|
-| Full Precision | 32,32,32 |                  40.3% |
-| TTQ            | t,32,32  |                  42.0% |
-| BWN            | 1,32,32  |                  44.6% |
-| BNN            | 1,1,32   |                  51.9% |
-| DoReFa         | 1,2,32   |                  46.6% |
-| DoReFa         | 1,2,6    |                  46.8% |
-| DoReFa         | 1,2,4    |                  54.0% |
+| Model          | Bit Width <br/> (weights, activations, gradients) | Top 1 Validation Error |
+|:---------------|---------------------------------------------------|-----------------------:|
+| Full Precision | 32,32,32                                          |                  40.3% |
+| TTQ            | t,32,32                                           |                  42.0% |
+| BWN            | 1,32,32                                           |                  44.6% |
+| BNN            | 1,1,32                                            |                  51.9% |
+| DoReFa         | 1,2,32                                            |                  46.6% |
+| DoReFa         | 1,2,6                                             |                  46.8% |
+| DoReFa         | 1,2,4                                             |                  54.0% |
 
 These numbers were obtained by training on 8 GPUs with a total batch size of 256.
 The DoReFa-Net models reach slightly better performance than our paper, due to

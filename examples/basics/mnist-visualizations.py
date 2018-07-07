@@ -2,17 +2,13 @@
 # -*- coding: utf-8 -*-
 # File: mnist-visualizations.py
 
-import os
-import argparse
-
 """
-MNIST ConvNet example with weights/activations visualization.
+The same MNIST ConvNet example, but with weights/activations visualization.
 """
 
-
+import tensorflow as tf
 from tensorpack import *
 from tensorpack.dataflow import dataset
-import tensorflow as tf
 
 IMAGE_SIZE = 28
 
@@ -124,12 +120,11 @@ def get_data():
     return train, test
 
 
-def get_config():
-
+if __name__ == '__main__':
     logger.auto_set_dir()
     dataset_train, dataset_test = get_data()
 
-    return TrainConfig(
+    config = TrainConfig(
         model=Model(),
         dataflow=dataset_train,
         callbacks=[
@@ -141,16 +136,4 @@ def get_config():
         max_epoch=100,
     )
 
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
-    parser.add_argument('--load', help='load model')
-    args = parser.parse_args()
-    if args.gpu:
-        os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
-
-    config = get_config()
-    if args.load:
-        config.session_init = SaverRestore(args.load)
     launch_train_with_config(config, SimpleTrainer())
