@@ -243,7 +243,7 @@ class ResNetC4Model(DetectionModel):
                 wd_cost], 'total_cost')
 
             add_moving_summary(total_cost, wd_cost)
-            return total_cost
+            return total_cost * (1. / cfg.TRAIN.NUM_GPUS)
         else:
             final_boxes, final_labels = self.fastrcnn_inference(
                 image_shape2d, rcnn_boxes, fastrcnn_label_logits, fastrcnn_box_logits)
@@ -379,7 +379,7 @@ class ResNetFPNModel(DetectionModel):
                                    mrcnn_loss, wd_cost], 'total_cost')
 
             add_moving_summary(total_cost, wd_cost)
-            return total_cost
+            return total_cost * (1. / cfg.TRAIN.NUM_GPUS)
         else:
             final_boxes, final_labels = self.fastrcnn_inference(
                 image_shape2d, rcnn_boxes, fastrcnn_label_logits, fastrcnn_box_logits)
@@ -595,8 +595,8 @@ if __name__ == '__main__':
         )
         if is_horovod:
             # horovod mode has the best speed for this model
-            trainer = HorovodTrainer()
+            trainer = HorovodTrainer(average=False)
         else:
             # nccl mode has better speed than cpu mode
-            trainer = SyncMultiGPUTrainerReplicated(cfg.TRAIN.NUM_GPUS, mode='nccl')
+            trainer = SyncMultiGPUTrainerReplicated(cfg.TRAIN.NUM_GPUS, average=False, mode='nccl')
         launch_train_with_config(traincfg, trainer)

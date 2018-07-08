@@ -56,7 +56,7 @@ def fpn_model(features):
                 lat_sum_5432.append(lat)
         p2345 = [Conv2D('posthoc_3x3_p{}'.format(i + 2), c, num_channel, 3)
                  for i, c in enumerate(lat_sum_5432[::-1])]
-        p6 = MaxPooling('maxpool_p6', p2345[-1], pool_size=1, strides=2, data_format='channels_first')
+        p6 = MaxPooling('maxpool_p6', p2345[-1], pool_size=1, strides=2, data_format='channels_first', padding='VALID')
         return p2345 + [p6]
 
 

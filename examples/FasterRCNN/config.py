@@ -132,7 +132,8 @@ _C.FPN.PROPOSAL_MODE = 'Level'  # 'Level', 'Joint'
 _C.FPN.NUM_CHANNEL = 256
 # conv head and fc head are only used in FPN.
 # For C4 models, the head is C5
-_C.FPN.FRCNN_HEAD_FUNC = 'fastrcnn_2fc_head'  # choices: fastrcnn_2fc_head, fastrcnn_4conv1fc_head
+_C.FPN.FRCNN_HEAD_FUNC = 'fastrcnn_2fc_head'
+# choices: fastrcnn_2fc_head, fastrcnn_4conv1fc_head, fastrcnn_4conv1fc_gn_head
 _C.FPN.FRCNN_CONV_HEAD_DIM = 256
 _C.FPN.FRCNN_FC_HEAD_DIM = 1024
 
@@ -152,7 +153,7 @@ def finalize_configs(is_training):
     """
     _C.DATA.NUM_CLASS = _C.DATA.NUM_CATEGORY + 1  # +1 background
 
-    assert _C.BACKBONE.NORM in ['FreezeBN', 'SyncBN'], _C.BACKBONE.NORM
+    assert _C.BACKBONE.NORM in ['FreezeBN', 'SyncBN', 'GN'], _C.BACKBONE.NORM
     if _C.BACKBONE.NORM != 'FreezeBN':
         assert not _C.BACKBONE.FREEZE_AFFINE
 
