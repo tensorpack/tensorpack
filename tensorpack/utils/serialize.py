@@ -31,7 +31,7 @@ def dumps_pyarrow(obj):
     Returns:
         Implementation-dependent bytes-like object
     """
-    return pa.serialize(obj).to_buffer()
+    return pa.serialize(obj).to_buffer().to_pybytes()
 
 
 def loads_pyarrow(buf):

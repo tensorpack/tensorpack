@@ -13,11 +13,14 @@ from ..utils.timer import timed_operation
 from ..utils.loadcaffe import get_caffe_pb
 from ..utils.serialize import loads
 from ..utils.argtools import log_once
+from ..utils.develop import log_deprecated
 from .base import RNGDataFlow, DataFlow, DataFlowReentrantGuard
 from .common import MapData
 
-__all__ = ['HDF5Data', 'LMDBData', 'LMDBDataDecoder', 'LMDBDataPoint',
-           'CaffeLMDB', 'SVMLightData', 'TFRecordData']
+__all__ = ['HDF5Data', 'LMDBData', 'LMDBDataDecoder',
+           'CaffeLMDB', 'SVMLightData',
+           'TFRecordData', 'LMDBDataPoint',
+           'TFRecordDataReader', 'NumpyDataReader']
 
 """
 Adapters for different data format.
@@ -30,8 +33,16 @@ class HDF5Data(RNGDataFlow):
 
     Warning:
         The current implementation will load all data into memory. (TODO)
+
+    Example:
+        .. code-block:: python
+
+            # writing some data
+            ds = SomeData()
+            HDF5DataWriter('mydataset.h5').save(ds, ['label', 'image'])
+            # loading some data
+            ds2 = HDF5Data('mydataset.h5').load(['label', 'image'])
     """
-# TODO
 
     def __init__(self, filename, data_paths, shuffle=True):
         """
@@ -190,7 +201,6 @@ class LMDBDataPoint(MapData):
         In addition, args[0] can be a :class:`LMDBData` instance.
         In this case args[0] has to be the only argument.
         """
-
         if isinstance(args[0], DataFlow):
             ds = args[0]
             assert len(args) == 1 and len(kwargs) == 0, \
@@ -266,11 +276,20 @@ class SVMLightData(RNGDataFlow):
             yield [self.X[id, :], self.y[id]]
 
 
-class TFRecordData(DataFlow):
+class TFRecordDataReader(DataFlow):
     """
     Produce datapoints from a TFRecord file, assuming each record is
     serialized by :func:`serialize.dumps`.
-    This class works with :func:`dftools.dump_dataflow_to_tfrecord`.
+    This class works with :func:`dftools.TfRecordDataWriter`.
+
+    Example:
+        .. code-block:: python
+
+            # writing some data
+            ds = SomeData()
+            TFRecordDataWriter('mydataset.tfrecord').save(ds)
+            # loading some data
+            ds2 = TFRecordDataReader('mydataset.tfrecord').load(size=10)
     """
     def __init__(self, path, size=None):
         """
@@ -285,26 +304,79 @@ class TFRecordData(DataFlow):
     def size(self):
         if self._size:
             return self._size
-        return super(TFRecordData, self).size()
+        return super(TFRecordDataReader, self).size()
 
     def get_data(self):
         gen = tf.python_io.tf_record_iterator(self._path)
         for dp in gen:
             yield loads(dp)
 
+
+class TFRecordData(TFRecordDataReader):
+    """docstring for TFRecordData"""
+    def __init__(self, path):
+        super(TFRecordData, self).__init__(path)
+        log_deprecated("TFRecordData(path, ...", "Use TFRecordDataReader(path, ...  instead.", "2099-10-10")
+
+
+class NumpyDataReader(RNGDataFlow):
+    """
+    Produce datapoints from a numpy file, assuming each record is
+    serialized by :func:`serialize.dumps`.
+    This class works with :func:`dftools.NumpyDataWriter`.
+
+    Warning:
+        The current implementation will load all data into memory. (TODO)
+
+    Example:
+        .. code-block:: python
+
+            # writing some data
+            ds = SomeData()
+            NumpyDataSerializer('mydataset.npz').serialize(ds)
+            # loading some data
+            ds2 = NumpyDataSerializer('mydataset.npz').load()
+    """
+    def __init__(self, path, shuffle=True):
+        """
+        Args:
+            path (str): path to the numpy npz file
+        """
+        self._path = path
+        self.shuffle = shuffle
+        self.buffer = np.load(path)['buffer']
+
+    def size(self):
+        return len(self.buffer)
+
+    def get_data(self):
+        idxs = np.arange(self.size())
+        if self.shuffle:
+            self.rng.shuffle(idxs)
+
+        for id in idxs:
+            yield loads(self.buffer[id])
+
+
+
+
+
+
 from ..utils.develop import create_dummy_class   # noqa
 try:
     import h5py
 except ImportError:
     HDF5Data = create_dummy_class('HDF5Data', 'h5py')   # noqa
+    HDF5DataReader = create_dummy_class('HDF5DataReader', 'h5py')   # noqa
 
 try:
     import lmdb
 except ImportError:
-    for klass in ['LMDBData', 'LMDBDataDecoder', 'LMDBDataPoint', 'CaffeLMDB']:
+    for klass in ['LMDBData', 'LMDBDataDecoder', 'LMDBDataPoint', 'CaffeLMDB', 'LMDBDataReader']:
         globals()[klass] = create_dummy_class(klass, 'lmdb')
 
 try:
     import tensorflow as tf
 except ImportError:
     TFRecordData = create_dummy_class('TFRecordData', 'tensorflow')   # noqa
+    TFRecordDataReader = create_dummy_class('TFRecordDataReader', 'tensorflow')   # noqa

@@ -241,7 +241,7 @@ def apply(model_path, lowres_path="", output_path='.'):
 
 def get_data(file_name):
     if file_name.endswith('.lmdb'):
-        ds = LMDBDataPoint(file_name, shuffle=True)
+        ds = LMDBDataReader(file_name, shuffle=True)
         ds = ImageDecode(ds, index=0)
     elif file_name.endswith('.zip'):
         ds = ImageDataFromZIPFile(file_name, shuffle=True)
