@@ -247,6 +247,7 @@ def fastrcnn_Xconv1fc_head(feature, num_classes, num_convs, norm=None):
     Returns:
         cls_logits (Nxnum_class), reg_logits (Nx num_class-1 x 4)
     """
+    assert norm in [None, 'GN'], norm
     l = feature
     with argscope(Conv2D, data_format='channels_first',
                   kernel_initializer=tf.variance_scaling_initializer(

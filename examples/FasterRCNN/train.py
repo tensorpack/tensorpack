@@ -31,6 +31,7 @@ from basemodel import (
     resnet_fpn_backbone)
 
 import model_frcnn
+import model_mrcnn
 from model_frcnn import (
     sample_fast_rcnn_targets,
     fastrcnn_outputs, fastrcnn_losses, fastrcnn_predictions)
@@ -357,8 +358,9 @@ class ResNetFPNModel(DetectionModel):
                 roi_feature_maskrcnn = multilevel_roi_align(
                     p23456[:4], fg_sampled_boxes, 14,
                     name_scope='multilevel_roi_align_mask')
-                mask_logits = maskrcnn_upXconv_head(
-                    'maskrcnn', roi_feature_maskrcnn, cfg.DATA.NUM_CATEGORY, 4)   # #fg x #cat x 28 x 28
+                maskrcnn_head_func = getattr(model_mrcnn, cfg.FPN.MRCNN_HEAD_FUNC)
+                mask_logits = maskrcnn_head_func(
+                    'maskrcnn', roi_feature_maskrcnn, cfg.DATA.NUM_CATEGORY)   # #fg x #cat x 28 x 28
 
                 target_masks_for_fg = crop_and_resize(
                     tf.expand_dims(gt_masks, 1),
@@ -386,8 +388,9 @@ class ResNetFPNModel(DetectionModel):
             if cfg.MODE_MASK:
                 # Cascade inference needs roi transform with refined boxes.
                 roi_feature_maskrcnn = multilevel_roi_align(p23456[:4], final_boxes, 14)
-                mask_logits = maskrcnn_upXconv_head(
-                    'maskrcnn', roi_feature_maskrcnn, cfg.DATA.NUM_CATEGORY, 4)   # #fg x #cat x 28 x 28
+                maskrcnn_head_func = getattr(model_mrcnn, cfg.FPN.MRCNN_HEAD_FUNC)
+                mask_logits = maskrcnn_head_func(
+                    'maskrcnn', roi_feature_maskrcnn, cfg.DATA.NUM_CATEGORY)   # #fg x #cat x 28 x 28
                 indices = tf.stack([tf.range(tf.size(final_labels)), tf.to_int32(final_labels) - 1], axis=1)
                 final_mask_logits = tf.gather_nd(mask_logits, indices)   # #resultx28x28
                 tf.sigmoid(final_mask_logits, name='final_masks')

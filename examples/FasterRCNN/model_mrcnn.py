@@ -8,30 +8,8 @@ from tensorpack.models import (
 from tensorpack.tfutils.scope_utils import under_name_scope
 from tensorpack.tfutils.summary import add_moving_summary
 
+from basemodel import GroupNorm
 from config import config as cfg
-
-
-@layer_register(log_shape=True)
-def maskrcnn_upXconv_head(feature, num_category, num_convs):
-    """
-    Args:
-        feature (NxCx s x s): size is 7 in C4 models and 14 in FPN models.
-        num_category(int):
-        num_convs (int): number of convolution layers
-
-    Returns:
-        mask_logits (N x num_category x 2s x 2s):
-    """
-    l = feature
-    with argscope([Conv2D, Conv2DTranspose], data_format='channels_first',
-                  kernel_initializer=tf.variance_scaling_initializer(
-                      scale=2.0, mode='fan_out', distribution='normal')):
-        # c2's MSRAFill is fan_out
-        for k in range(num_convs):
-            l = Conv2D('fcn{}'.format(k), l, cfg.MRCNN.HEAD_DIM, 3, activation=tf.nn.relu)
-        l = Conv2DTranspose('deconv', l, cfg.MRCNN.HEAD_DIM, 2, strides=2, activation=tf.nn.relu)
-        l = Conv2D('conv', l, num_category, 1)
-    return l
 
 
 @under_name_scope()
@@ -71,3 +49,38 @@ def maskrcnn_loss(mask_logits, fg_labels, fg_target_masks):
 
     add_moving_summary(loss, accuracy, fg_pixel_ratio, pos_accuracy)
     return loss
+
+
+@layer_register(log_shape=True)
+def maskrcnn_upXconv_head(feature, num_category, num_convs, norm=None):
+    """
+    Args:
+        feature (NxCx s x s): size is 7 in C4 models and 14 in FPN models.
+        num_category(int):
+        num_convs (int): number of convolution layers
+        norm (str or None): either None or 'GN'
+
+    Returns:
+        mask_logits (N x num_category x 2s x 2s):
+    """
+    assert norm in [None, 'GN'], norm
+    l = feature
+    with argscope([Conv2D, Conv2DTranspose], data_format='channels_first',
+                  kernel_initializer=tf.variance_scaling_initializer(
+                      scale=2.0, mode='fan_out', distribution='normal')):
+        # c2's MSRAFill is fan_out
+        for k in range(num_convs):
+            l = Conv2D('fcn{}'.format(k), l, cfg.MRCNN.HEAD_DIM, 3, activation=tf.nn.relu)
+            if norm is not None:
+                l = GroupNorm('gn{}'.format(k), l)
+        l = Conv2DTranspose('deconv', l, cfg.MRCNN.HEAD_DIM, 2, strides=2, activation=tf.nn.relu)
+        l = Conv2D('conv', l, num_category, 1)
+    return l
+
+
+def maskrcnn_up4conv_head(*args, **kwargs):
+    return maskrcnn_upXconv_head(*args, num_convs=4, **kwargs)
+
+
+def maskrcnn_up4conv_gn_head(*args, **kwargs):
+    return maskrcnn_upXconv_head(*args, num_convs=4, norm='GN', **kwargs)

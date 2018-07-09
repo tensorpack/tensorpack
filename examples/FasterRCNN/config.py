@@ -63,8 +63,8 @@ _C.DATA.CLASS_NAMES = []  # NUM_CLASS strings. Needs to be populated later by da
 _C.BACKBONE.WEIGHTS = ''   # /path/to/weights.npz
 _C.BACKBONE.RESNET_NUM_BLOCK = [3, 4, 6, 3]     # for resnet50
 # RESNET_NUM_BLOCK = [3, 4, 23, 3]    # for resnet101
-_C.BACKBONE.FREEZE_AFFINE = False   # do not train affine parameters inside BN
-_C.BACKBONE.NORM = 'FreezeBN'  # options: FreezeBN, SyncBN
+_C.BACKBONE.FREEZE_AFFINE = False   # do not train affine parameters inside norm layers
+_C.BACKBONE.NORM = 'FreezeBN'  # options: FreezeBN, SyncBN, GN
 
 # Use a base model with TF-preferred padding mode,
 # which may pad more pixels on right/bottom than top/left.
@@ -99,15 +99,15 @@ _C.PREPROC.PIXEL_STD = [58.395, 57.12, 57.375]
 _C.RPN.ANCHOR_STRIDE = 16
 _C.RPN.ANCHOR_SIZES = (32, 64, 128, 256, 512)   # sqrtarea of the anchor box
 _C.RPN.ANCHOR_RATIOS = (0.5, 1., 2.)
-_C.RPN.POSITIVE_ANCHOR_THRES = 0.7
-_C.RPN.NEGATIVE_ANCHOR_THRES = 0.3
+_C.RPN.POSITIVE_ANCHOR_THRESH = 0.7
+_C.RPN.NEGATIVE_ANCHOR_THRESH = 0.3
 
 # rpn training -------------------------
 _C.RPN.FG_RATIO = 0.5  # fg ratio among selected RPN anchors
 _C.RPN.BATCH_PER_IM = 256  # total (across FPN levels) number of anchors that are marked valid
 _C.RPN.MIN_SIZE = 0
 _C.RPN.PROPOSAL_NMS_THRESH = 0.7
-_C.RPN.CROWD_OVERLAP_THRES = 0.7  # boxes overlapping crowd will be ignored.
+_C.RPN.CROWD_OVERLAP_THRESH = 0.7  # boxes overlapping crowd will be ignored.
 _C.RPN.HEAD_DIM = 1024      # used in C4 only
 
 # RPN proposal selection -------------------------------
@@ -134,9 +134,11 @@ _C.FPN.NUM_CHANNEL = 256
 # conv head and fc head are only used in FPN.
 # For C4 models, the head is C5
 _C.FPN.FRCNN_HEAD_FUNC = 'fastrcnn_2fc_head'
-# choices: fastrcnn_2fc_head, fastrcnn_4conv1fc_head, fastrcnn_4conv1fc_gn_head
+# choices: fastrcnn_2fc_head, fastrcnn_4conv1fc_{,gn_}head
 _C.FPN.FRCNN_CONV_HEAD_DIM = 256
 _C.FPN.FRCNN_FC_HEAD_DIM = 1024
+_C.FPN.MRCNN_HEAD_FUNC = 'maskrcnn_up4conv_head'
+# choices: maskrcnn_up4conv_{,gn_}head
 
 # Mask-RCNN
 _C.MRCNN.HEAD_DIM = 256
@@ -168,6 +170,7 @@ def finalize_configs(is_training):
         _C.PREPROC.MAX_SIZE = np.ceil(_C.PREPROC.MAX_SIZE / size_mult) * size_mult
         assert _C.FPN.PROPOSAL_MODE in ['Level', 'Joint']
         assert _C.FPN.FRCNN_HEAD_FUNC.endswith('_head')
+        assert _C.FPN.MRCNN_HEAD_FUNC.endswith('_head')
 
     if is_training:
         os.environ['TF_AUTOTUNE_THRESHOLD'] = '1'

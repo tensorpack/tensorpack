@@ -128,8 +128,8 @@ def get_anchor_labels(anchors, gt_boxes, crowd_boxes):
 
     # the order of setting neg/pos labels matter
     anchor_labels[anchors_with_max_iou_per_gt] = 1
-    anchor_labels[ious_max_per_anchor >= cfg.RPN.POSITIVE_ANCHOR_THRES] = 1
-    anchor_labels[ious_max_per_anchor < cfg.RPN.NEGATIVE_ANCHOR_THRES] = 0
+    anchor_labels[ious_max_per_anchor >= cfg.RPN.POSITIVE_ANCHOR_THRESH] = 1
+    anchor_labels[ious_max_per_anchor < cfg.RPN.NEGATIVE_ANCHOR_THRESH] = 0
 
     # We can label all non-ignore candidate boxes which overlap crowd as ignore
     # But detectron did not do this.
@@ -137,7 +137,7 @@ def get_anchor_labels(anchors, gt_boxes, crowd_boxes):
     #     cand_inds = np.where(anchor_labels >= 0)[0]
     #     cand_anchors = anchors[cand_inds]
     #     ious = np_iou(cand_anchors, crowd_boxes)
-    #     overlap_with_crowd = cand_inds[ious.max(axis=1) > cfg.RPN.CROWD_OVERLAP_THRES]
+    #     overlap_with_crowd = cand_inds[ious.max(axis=1) > cfg.RPN.CROWD_OVERLAP_THRESH]
     #     anchor_labels[overlap_with_crowd] = -1
 
     # Subsample fg labels: ignore some fg if fg is too many
