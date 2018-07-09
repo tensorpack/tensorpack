@@ -68,10 +68,11 @@ _C.BACKBONE.NORM = 'FreezeBN'  # options: FreezeBN, SyncBN
 
 # Use a base model with TF-preferred padding mode,
 # which may pad more pixels on right/bottom than top/left.
-# TF_PAD_MODE=False is better for accuracy but will require a different base model.
-# We will eventually switch to TF_PAD_MODE=False.
 # See https://github.com/tensorflow/tensorflow/issues/18213
-_C.BACKBONE.TF_PAD_MODE = True
+
+# In tensorpack model zoo, ResNet models with TF_PAD_MODE=False are marked with "-AlignPadding".
+# All other models under `ResNet/` in the model zoo are trained with TF_PAD_MODE=True.
+_C.BACKBONE.TF_PAD_MODE = False
 _C.BACKBONE.STRIDE_1X1 = False  # True for MSRA models
 
 # schedule -----------------------

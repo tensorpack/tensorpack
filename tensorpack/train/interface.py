@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 # File: interface.py
 
+import tensorflow as tf
+
 from ..input_source import (
     InputSource, FeedInput, QueueInput, StagingInput, DummyConstantInput)
 from ..utils import logger
@@ -79,6 +81,7 @@ def launch_train_with_config(config, trainer):
     trainer.setup_graph(
         inputs_desc, input,
         model._build_graph_get_cost, model.get_optimizer)
+    _check_unused_regularization()
     trainer.train_with_defaults(
         callbacks=config.callbacks,
         monitors=config.monitors,
@@ -88,3 +91,15 @@ def launch_train_with_config(config, trainer):
         starting_epoch=config.starting_epoch,
         max_epoch=config.max_epoch,
         extra_callbacks=config.extra_callbacks)
+
+
+def _check_unused_regularization():
+    coll = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
+    unconsumed_reg = []
+    for c in coll:
+        if len(c.consumers()) == 0:
+            unconsumed_reg.append(c)
+    if unconsumed_reg:
+        logger.warn("The following tensors appear in REGULARIZATION_LOSSES collection but have no "
+                    "consumers! You may have forgotten to add regularization to total cost.")
+        logger.warn("Unconsumed regularization: {}".format(', '.join([x.name for x in unconsumed_reg])))

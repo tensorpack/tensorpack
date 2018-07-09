@@ -129,14 +129,14 @@ class SingleCostTrainer(TowerTrainer):
     Base class for single-cost trainer.
 
     Single-cost trainer has a :meth:`setup_graph` method which takes
-    (inputs_desc, input, get_cost_fn, get_opt_fn), and build the training operations from them.
+    (inputs_desc, input, get_cost_fn, get_opt_fn), and build the training graph from them.
 
     To use a :class:`SingleCostTrainer` object, call `trainer.setup_graph(...); trainer.train(...)`.
     """
 
     COLOCATE_GRADIENTS_WITH_OPS = True
     """
-    See `tf.gradients`. This might affect performance when backward op does
+    See `tf.gradients`. It sometimes can heavily affect performance when backward op does
     not support the device of forward op.
     """
 
@@ -159,7 +159,7 @@ class SingleCostTrainer(TowerTrainer):
                 optimizer. Will only be called once.
 
         Note:
-            `get_cost_fn` will be the tower function.
+            `get_cost_fn` will be part of the tower function.
             It must follows the `rules of tower function.
             <http://tensorpack.readthedocs.io/en/latest/tutorial/trainer.html#tower-trainer>`_.
         """
@@ -188,15 +188,18 @@ class SingleCostTrainer(TowerTrainer):
 
     def _make_get_grad_fn(self, input, get_cost_fn, get_opt_fn):
         """
+        Internal use only.
+
         Returns:
             a get_grad_fn for GraphBuilder to use.
         """
-        # internal use only
         assert input.setup_done()
 
         def get_grad_fn():
             ctx = get_current_tower_context()
             cost = get_cost_fn(*input.get_input_tensors())
+            assert isinstance(cost, tf.Tensor), cost
+            assert cost.shape.ndims == 0, "Cost must be a scalar, but found {}!".format(cost)
             if not ctx.is_training:
                 return None     # this is the tower function, could be called for inference
 

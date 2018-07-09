@@ -8,7 +8,6 @@ import tensorflow as tf
 from ..utils import logger
 from ..utils.argtools import memoized
 from ..utils.develop import log_deprecated
-from ..tfutils.gradproc import FilterNoneGrad
 from ..tfutils.tower import get_current_tower_context
 from ..input_source import InputSource
 from ..models.regularize import regularize_cost_from_collection
@@ -128,17 +127,16 @@ class ModelDescBase(object):
         """
         Build the whole symbolic graph.
         This is supposed to be part of the "tower function" when used with :class:`TowerTrainer`.
-        By default it will call :meth:`_build_graph` with a list of input tensors.
 
-        A subclass is expected to overwrite this method or the :meth:`_build_graph` method.
+        A subclass is expected to overwrite this method.
 
         Args:
             args ([tf.Tensor]): tensors that matches the list of inputs defined by ``inputs()``.
 
         Returns:
-            In general it returns nothing, but a subclass (e.g.
-            :class:`ModelDesc`) may require it to return necessary information
-            (e.g. cost) to build the trainer.
+            In general it returns nothing, but a subclass
+            may require it to return necessary information to build the trainer.
+            For example, `SingleCostTrainer` expect this method to return the cost tensor.
         """
         if len(args) == 1:
             arg = args[0]
@@ -230,51 +228,12 @@ class ModelDesc(ModelDescBase):
 
     def _build_graph_get_cost(self, *inputs):
         """
-        Used internally by trainers to get the final cost for optimization.
+        Used internally by trainers to get the final cost for optimization in a backward-compatible way.
         """
         ret = self.build_graph(*inputs)
         if not get_current_tower_context().is_training:
             return None     # this is the tower function, could be called for inference
         if isinstance(ret, tf.Tensor):  # the preferred way
-            assert ret.shape.ndims == 0, "Cost must be a scalar, but found a tensor of shape {}!".format(ret.shape)
-            _check_unused_regularization()
             return ret
-        else:   # the old way
+        else:   # the old way, for compatibility
             return self.get_cost()
-
-    # TODO this is deprecated and only used for v1 trainers
-    def _build_graph_get_grads(self, *inputs):
-        """
-        Build the graph from inputs and return the grads.
-
-        Returns:
-            [(grad, var)]
-        """
-        ctx = get_current_tower_context()
-        cost = self._build_graph_get_cost(*inputs)
-
-        if not ctx.is_training:
-            return None     # this is the tower function, could be called for inference
-
-        if ctx.has_own_variables:
-            varlist = ctx.get_collection_in_tower(tf.GraphKeys.TRAINABLE_VARIABLES)
-        else:
-            varlist = tf.trainable_variables()
-        opt = self.get_optimizer()
-        grads = opt.compute_gradients(
-            cost, var_list=varlist,
-            gate_gradients=False, colocate_gradients_with_ops=True)
-        grads = FilterNoneGrad().process(grads)
-        return grads
-
-
-def _check_unused_regularization():
-    coll = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
-    unconsumed_reg = []
-    for c in coll:
-        if len(c.consumers()) == 0:
-            unconsumed_reg.append(c)
-    if unconsumed_reg:
-        logger.warn("The following tensors appear in REGULARIZATION_LOSSES collection but has no "
-                    "consumers! You may have forgotten to add regularization to total cost.")
-        logger.warn("Unconsumed regularization: {}".format(', '.join([x.name for x in unconsumed_reg])))

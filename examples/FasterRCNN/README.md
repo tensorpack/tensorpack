@@ -13,7 +13,8 @@ with the support of:
 ## Dependencies
 + Python 3; TensorFlow >= 1.6 (1.4 or 1.5 can run but may crash due to a TF bug);
 + [pycocotools](https://github.com/pdollar/coco/tree/master/PythonAPI/pycocotools), OpenCV.
-+ Pre-trained [ImageNet ResNet model](http://models.tensorpack.com/ResNet/) from tensorpack model zoo.
++ Pre-trained [ImageNet ResNet model](http://models.tensorpack.com/FasterRCNN/)
+  from tensorpack model zoo. Use the models with "-AlignPadding".
 + COCO data. It needs to have the following directory structure:
 ```
 COCO/DIR/
@@ -37,7 +38,7 @@ To train:
 ./train.py --config \
     MODE_MASK=True MODE_FPN=True \
     DATA.BASEDIR=/path/to/COCO/DIR \
-    BACKBONE.WEIGHTS=/path/to/ImageNet-ResNet50.npz \
+    BACKBONE.WEIGHTS=/path/to/ImageNet-R50-Pad.npz \
 ```
 Options can be changed by either the command line or the `config.py` file. 
 Recommended configurations are listed in the table below.
@@ -50,13 +51,13 @@ To predict on an image (and show output in a window):
 ./train.py --predict input.jpg --load /path/to/model --config SAME-AS-TRAINING
 ```
 
-Evaluate the performance of a model on COCO, and save results to json.
-(Trained COCO models can be downloaded in [model zoo](http://models.tensorpack.com/FasterRCNN):
+Evaluate the performance of a model on COCO.
+(Several trained models can be downloaded in [model zoo](http://models.tensorpack.com/FasterRCNN):
 ```
-./train.py --evaluate output.json --load /path/to/COCO-ResNet50-MaskRCNN.npz \
+./train.py --evaluate output.json --load /path/to/COCO-R50C4-MaskRCNN-Standard.npz \
     --config MODE_MASK=True DATA.BASEDIR=/path/to/COCO/DIR
 ```
-Evaluation or prediction will need the same config used during training.
+Evaluation or prediction will need the same `--config` used during training.
 
 ## Results
 
@@ -69,8 +70,8 @@ MaskRCNN results contain both box and mask mAP.
  | R50-C4   | 36.6               | 36.5                           | 44h on 8 V100s | <details><summary>standard</summary>`MODE_MASK=False` </details>                                                                                                                                 |
  | R50-FPN  | 37.5               | 37.9<sup>[1](#ft1)</sup>       | 28h on 8 V100s | <details><summary>standard</summary>`MODE_MASK=False MODE_FPN=True` </details>                                                                                                                   |
  | R50-C4   | 36.8/32.1          |                                | 39h on 8 P100s | <details><summary>quick</summary>`MODE_MASK=True FRCNN.BATCH_PER_IM=256`<br/>`TRAIN.LR_SCHEDULE=[150000,230000,280000]` </details>                                                               |
- | R50-C4   | 37.8/33.1          | 37.8/32.8                      | 45h on 8 V100s | <details><summary>standard</summary>`MODE_MASK=True` </details>                                                                                                                                  |
- | R50-FPN  | 38.1/34.9          | 38.6/34.5<sup>[1](#ft1)</sup>  | 32h on 8 V100s | <details><summary>standard</summary>`MODE_MASK=True MODE_FPN=True` </details>                                                                                                                    |
+ | R50-C4   | 37.8/33.1          | 37.8/32.8                      | 49h on 8 V100s | <details><summary>standard</summary>`MODE_MASK=True` </details>                                                                                                                                  |
+ | R50-FPN  | 38.2/34.9          | 38.6/34.5<sup>[1](#ft1)</sup>  | 32h on 8 V100s | <details><summary>standard</summary>`MODE_MASK=True MODE_FPN=True` </details>                                                                                                                    |
  | R50-FPN  | 38.5/34.8          | 38.6/34.2<sup>[2](#ft2)</sup>  | 34h on 8 V100s | <details><summary>standard+ConvHead</summary>`MODE_MASK=True MODE_FPN=True`<br/>`FPN.FRCNN_HEAD_FUNC=fastrcnn_4conv1fc_head` </details>                                                          |
  | R50-FPN  | 39.5/35.2          | 39.5/34.4<sup>[2](#ft2)</sup>  | 34h on 8 V100s | <details><summary>standard+ConvGNHead</summary>`MODE_MASK=True MODE_FPN=True`<br/>`FPN.FRCNN_HEAD_FUNC=fastrcnn_4conv1fc_gn_head` </details>                                                          |
  | R101-C4  | 40.8/35.1          |                                | 63h on 8 V100s | <details><summary>standard</summary>`MODE_MASK=True `<br/>`BACKBONE.RESNET_NUM_BLOCK=[3,4,23,3]` </details>                                                                                      |
