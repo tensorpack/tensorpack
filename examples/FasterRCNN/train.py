@@ -574,7 +574,7 @@ if __name__ == '__main__':
             ScheduledHyperParamSetter('learning_rate', lr_schedule),
             EvalCallback(*MODEL.get_inference_tensor_names()),
             PeakMemoryTracker(),
-            EstimatedTimeLeft(),
+            EstimatedTimeLeft(median=True),
             SessionRunTimeout(60000).set_chief_only(True),   # 1 minute timeout
         ]
         if not is_horovod:

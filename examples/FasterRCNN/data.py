@@ -281,8 +281,8 @@ def get_train_dataflow():
     # Valid training images should have at least one fg box.
     # But this filter shall not be applied for testing.
     num = len(imgs)
-    imgs = list(filter(lambda img: len(img['boxes']) > 0, imgs))    # log invalid training
-    logger.info("Filtered {} images which contain no groudtruth boxes. Total #images for training: {}".format(
+    imgs = list(filter(lambda img: len(img['boxes'][img['is_crowd'] == 0]) > 0, imgs))
+    logger.info("Filtered {} images which contain no non-crowd groudtruth boxes. Total #images for training: {}".format(
         num - len(imgs), len(imgs)))
 
     ds = DataFromList(imgs, shuffle=True)

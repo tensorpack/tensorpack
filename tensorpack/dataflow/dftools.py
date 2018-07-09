@@ -121,7 +121,7 @@ def dump_dataflow_to_tfrecord(df, path):
             sz = 0
         with get_tqdm(total=sz) as pbar:
             for dp in df.get_data():
-                writer.write(dumps(dp))
+                writer.write(dumps(dp).to_pybytes())
                 pbar.update()
 
 

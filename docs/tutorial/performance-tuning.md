@@ -15,26 +15,32 @@ If you ask for help to understand and improve the speed, PLEASE do them and incl
 
 1. If you use feed-based input (unrecommended) and datapoints are large, data is likely to become the bottleneck.
 2. If you use queue-based input + DataFlow, always pay attention to the queue size statistics in
-	 training log. Ideally the input queue should be nearly full (default size is 50).
- 	 __If the queue size is close to zero, data is the bottleneck. Otherwise, it's not.__
-3. If GPU utilization is low but queue is full. It's because of the graph.
-	Either there are some communication inefficiency or some ops you use are inefficient (e.g. CPU ops). Also make sure GPUs are not locked in P8 state.
+   training log. Ideally the input queue should be nearly full (default size is 50).
+   __If the queue size is close to zero, data is the bottleneck. Otherwise, it's not.__
+
+   The size is by default printed after every epoch. Set `steps_per_epoch` to a
+   smaller number (e.g. 100) to see this number earlier.
+3. If GPU utilization is low but queue is full, the graph is inefficient.
+   Either there are some communication inefficiency, or some ops in the graph are inefficient (e.g. CPU ops). Also make sure GPUs are not locked in P8 state.
 
 ## Benchmark the components
+
+Whatever benchmarks you're doing, never look at the speed of the first 50 iterations.
+Everything is slow at the beginning.
+
 1. Use `dataflow=FakeData(shapes, random=False)` to replace your original DataFlow by a constant DataFlow.
-	This will benchmark the graph without the possible overhead of DataFlow.
+	This will benchmark the graph, without the possible overhead of DataFlow.
 2. (usually not needed) Use `data=DummyConstantInput(shapes)` for training, so that the iterations only take data from a constant tensor.
 	No DataFlow is involved in this case.
 3. If you're using a TF-based input pipeline you wrote, you can simply run it in a loop and test its speed.
 4. Use `TestDataSpeed(mydf).start()` to benchmark your DataFlow.
 
 A benchmark will give you more precise information about which part you should improve.
-Note that you should only look at iteration speed after about 50 iterations, since everything is slow at the beginning.
 
 ## Investigate DataFlow
 
 Understand the [Efficient DataFlow](efficient-dataflow.html) tutorial, so you know what your DataFlow is doing.
-Then, make modifications and benchmark to understand which part is the bottleneck.
+Then, make modifications and benchmark to understand which part of dataflow is the bottleneck.
 Use [TestDataSpeed](../modules/dataflow.html#tensorpack.dataflow.TestDataSpeed).
 Do __NOT__ look at training speed when you benchmark a DataFlow.
 
@@ -76,7 +82,7 @@ But there may be something cheap you can try:
 
 ### Cannot scale to multi-GPU
 If you're unable to scale to multiple GPUs almost linearly:
-1. First make sure that the ResNet example can scale. Run it with `--fake` to use fake data.
+1. First make sure that the ImageNet-ResNet example can scale. Run it with `--fake` to use fake data.
 	If not, it's a bug or an environment setup problem.
 2. Then note that your model may have a different communication-computation pattern that affects efficiency.
 	 There isn't a simple answer to this.

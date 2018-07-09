@@ -32,7 +32,7 @@ Failure to hide the data preparation latency is the major reason why people
 cannot see good GPU utilization. You should __always choose a framework that enables latency hiding.__
 However most other TensorFlow wrappers are designed to be `feed_dict` based.
 Tensorpack has built-in mechanisms to hide latency of the above stages.
-This is the major reason why tensorpack is [faster](https://github.com/tensorpack/benchmarks).
+This is one of the reasons why tensorpack is [faster](https://github.com/tensorpack/benchmarks).
 
 ## Python Reader or TF Reader ?
 

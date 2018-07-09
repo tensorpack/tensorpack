@@ -111,7 +111,8 @@ def crop_and_resize(image, boxes, box_ind, crop_size, pad_border=True):
         However, what we want is (with fpcoor box):
         Spacing: w_box / W_crop
         Initial point: x0_box + spacing/2 - 0.5
-        (-0.5 because bilinear sample assumes floating point coordinate (0.0, 0.0) is the same as pixel value (0, 0))
+        (-0.5 because bilinear sample (in my definition) assumes floating point coordinate
+         (0.0, 0.0) is the same as pixel value (0, 0))
 
         This function transform fpcoor boxes to a format to be used by tf.image.crop_and_resize
 

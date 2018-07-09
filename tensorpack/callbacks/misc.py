@@ -75,13 +75,14 @@ class EstimatedTimeLeft(Callback):
     """
     Estimate the time left until completion of training.
     """
-    def __init__(self, last_k_epochs=5):
+    def __init__(self, last_k_epochs=5, median=False):
         """
         Args:
-            last_k_epochs (int): Use the time spent on last k epochs to
-                estimate total time left.
+            last_k_epochs (int): Use the time spent on last k epochs to estimate total time left.
+            median (bool): Use mean by default. If True, use the median time spent on last k epochs.
         """
         self._times = deque(maxlen=last_k_epochs)
+        self._median = median
 
     def _before_train(self):
         self._max_epoch = self.trainer.max_epoch
@@ -92,7 +93,7 @@ class EstimatedTimeLeft(Callback):
         self._last_time = time.time()
         self._times.append(duration)
 
-        average_epoch_time = np.mean(self._times)
-        time_left = (self._max_epoch - self.epoch_num) * average_epoch_time
+        epoch_time = np.median(self._times) if self._median else np.mean(self._times)
+        time_left = (self._max_epoch - self.epoch_num) * epoch_time
         if time_left > 0:
             logger.info("Estimated Time Left: " + humanize_time_delta(time_left))

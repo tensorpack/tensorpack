@@ -214,7 +214,7 @@ def fastrcnn_predictions(boxes, probs):
 
 
 """
-FC Heads:
+FastRCNN heads for FPN:
 """
 
 

@@ -230,4 +230,6 @@ def is_training_name(name):
         return True
     if name.startswith('AccumGrad') or name.endswith('/AccumGrad'):
         return True
+    if name.startswith('apply_gradients'):
+        return True
     return False
