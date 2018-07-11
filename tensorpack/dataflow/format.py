@@ -13,6 +13,7 @@ from ..utils.timer import timed_operation
 from ..utils.loadcaffe import get_caffe_pb
 from ..utils.serialize import loads
 from ..utils.argtools import log_once
+from ..utils.develop import log_deprecated
 from .base import RNGDataFlow, DataFlow, DataFlowReentrantGuard
 from .common import MapData
 
@@ -150,7 +151,7 @@ class LMDBData(RNGDataFlow):
 
 
 class LMDBDataDecoder(MapData):
-    """ Read a LMDB database and produce a decoded output."""
+    """ Read a LMDB database with a custom decoder and produce decoded outputs."""
     def __init__(self, lmdb_data, decoder):
         """
         Args:
@@ -164,34 +165,8 @@ class LMDBDataDecoder(MapData):
 
 
 class LMDBDataPoint(MapData):
-    """
-    Read a LMDB file and produce deserialized datapoints.
-    It **only** accepts the database produced by
-    :func:`tensorpack.dataflow.dftools.dump_dataflow_to_lmdb`,
-    which uses :func:`tensorpack.utils.serialize.dumps` for serialization.
-
-    Example:
-        .. code-block:: python
-
-            ds = LMDBDataPoint("/data/ImageNet.lmdb", shuffle=False)  # read and decode
-
-            # The above is equivalent to:
-            ds = LMDBData("/data/ImageNet.lmdb", shuffle=False)  # read
-            ds = LMDBDataPoint(ds)  # decode
-            # Sometimes it makes sense to separate reading and decoding
-            # to be able to make decoding parallel.
-    """
-
     def __init__(self, *args, **kwargs):
-        """
-        Args:
-            args, kwargs: Same as in :class:`LMDBData`.
-
-        In addition, args[0] can be a :class:`LMDBData` instance.
-        In this case args[0] has to be the only argument.
-        """
-        # TODO mark deprecated
-
+        log_deprecated("LMDBDataPoint", "Use LMDBSerializer.load() instead!", "2019-01-31")
         if isinstance(args[0], DataFlow):
             ds = args[0]
             assert len(args) == 1 and len(kwargs) == 0, \
@@ -268,22 +243,10 @@ class SVMLightData(RNGDataFlow):
 
 
 class TFRecordData(DataFlow):
-    """
-    Produce datapoints from a TFRecord file, and each record is decoded by `decoder`.
-    """
-    def __init__(self, path, size=None, decoder=None):
-        """
-        Args:
-            path (str): path to the TFRecord file
-            size (int): total number of records, because this metadata is not
-                stored in the TFRecord file.
-            decoder (str -> datapoints): by default to `tensorpack.utils.serialize.loads`.
-        """
+    def __init__(self, path, size=None):
+        log_deprecated("TFRecordData", "Use TFRecordSerializer.load instead!", "2019-01-31")
         self._path = path
         self._size = int(size)
-        if decoder is None:
-            decoder = loads
-        self._decoder = decoder
 
     def size(self):
         if self._size:
@@ -293,7 +256,7 @@ class TFRecordData(DataFlow):
     def get_data(self):
         gen = tf.python_io.tf_record_iterator(self._path)
         for dp in gen:
-            yield self._decoder(dp)
+            yield loads(dp)
 
 from ..utils.develop import create_dummy_class   # noqa
 try:

@@ -359,6 +359,10 @@ _DEPRECATED_NAMES = set([
     'TryResumeTraining',
     'QueueInputTrainer',
     'SimplePredictBuilder',
+    'LMDBDataPoint',
+    'TFRecordData',
+    'dump_dataflow_to_lmdb',
+    'dump_dataflow_to_tfrecord',
 
     # renamed stuff:
     'DumpTensor',

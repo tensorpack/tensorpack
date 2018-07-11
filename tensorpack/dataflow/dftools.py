@@ -6,6 +6,7 @@ import multiprocessing as mp
 from six.moves import range
 
 from ..utils.concurrency import DIE
+from ..utils.develop import deprecated
 
 from .serialize import LMDBSerializer, TFRecordSerializer
 
@@ -52,22 +53,12 @@ def dump_dataflow_to_process_queue(df, size, nr_consumer):
     return q, proc
 
 
+@deprecated("Use LMDBSerializer.save instead!", "2019-01-31")
 def dump_dataflow_to_lmdb(df, lmdb_path, write_frequency=5000):
-    """
-    Dump a Dataflow to a lmdb database, where the keys are indices and values
-    are serialized datapoints.
-    The output database can be read directly by
-    :class:`tensorpack.dataflow.LMDBDataPoint`.
-
-    Args:
-        df (DataFlow): the DataFlow to dump.
-        lmdb_path (str): output path. Either a directory or a mdb file.
-        write_frequency (int): the frequency to write back data to disk.
-    """
-    # TODO mark deprecated
     LMDBSerializer.save(df, lmdb_path, write_frequency)
 
 
+@deprecated("Use TFRecordSerializer.save instead!", "2019-01-31")
 def dump_dataflow_to_tfrecord(df, path):
     """
     Dump all datapoints of a Dataflow to a TensorFlow TFRecord file,
