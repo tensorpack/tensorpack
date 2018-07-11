@@ -3,8 +3,8 @@
 
 # Some code taken from zxytim
 
-import os
 import threading
+import platform
 import multiprocessing
 import atexit
 import bisect
@@ -15,6 +15,7 @@ import six
 from six.moves import queue
 
 from . import logger
+from .argtools import log_once
 
 if six.PY2:
     import subprocess32 as subprocess
@@ -178,11 +179,12 @@ def enable_death_signal():
     the current process will be cleaned with guarantee
     in case the parent dies accidentally.
     """
-    if os.name != 'posix':
+    if platform.system() != 'Linux':
         return
     try:
         import prctl    # pip install python-prctl
     except ImportError:
+        log_once('Install python-prctl so that processes can be cleaned with guarantee.', 'warn')
         return
     else:
         assert hasattr(prctl, 'set_pdeathsig'), \
