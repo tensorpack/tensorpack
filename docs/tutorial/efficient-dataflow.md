@@ -151,7 +151,7 @@ class BinaryILSVRC12(dataset.ILSVRC12Files):
             yield [jpeg, label]
 ds0 = BinaryILSVRC12('/path/to/ILSVRC/', 'train')
 ds1 = PrefetchDataZMQ(ds0, nr_proc=1)
-dftools.dump_dataflow_to_lmdb(ds1, '/path/to/ILSVRC-train.lmdb')
+LMDBSerializer.save(ds1, '/path/to/ILSVRC-train.lmdb')
 ```
 The above script builds a DataFlow which produces jpeg-encoded ImageNet data.
 We store the jpeg string as a numpy array because the function `cv2.imdecode` later expect this format.
@@ -160,9 +160,9 @@ from several forks of `ds0`, then neither the content nor the order of `ds1` wil
 See [documentation](../modules/dataflow.html#tensorpack.dataflow.PrefetchDataZMQ)
 about caveats of `PrefetchDataZMQ`.
 
-It will generate a database file of 140G. We build a DataFlow to read this LMDB file sequentially:
+It will generate a database file of 140G. We load the DataFlow back by reading this LMDB file sequentially:
 ```
-ds = LMDBData('/path/to/ILSVRC-train.lmdb', shuffle=False)
+ds = LMDBSerializer.load('/path/to/ILSVRC-train.lmdb', shuffle=False)
 ds = BatchData(ds, 256, use_list=True)
 TestDataSpeed(ds).start()
 ```
@@ -175,7 +175,7 @@ As a reference, on Samsung SSD 850, the uncached speed is about 16it/s.
 .. code-block:: python
 	  :emphasize-lines: 2
 
-	  ds = LMDBData('/path/to/ILSVRC-train.lmdb', shuffle=False)
+	  ds = LMDBSerializer.load('/path/to/ILSVRC-train.lmdb', shuffle=False)
 	  ds = LocallyShuffleData(ds, 50000)
 	  ds = BatchData(ds, 256, use_list=True)
 ```
@@ -189,15 +189,14 @@ Then we add necessary transformations:
 .. code-block:: python
     :emphasize-lines: 3-5
 
-    ds = LMDBData(db, shuffle=False)
+    ds = LMDBSerializer.load(db, shuffle=False)
     ds = LocallyShuffleData(ds, 50000)
-    ds = LMDBDataPoint(ds)
     ds = MapDataComponent(ds, lambda x: cv2.imdecode(x, cv2.IMREAD_COLOR), 0)
     ds = AugmentImageComponent(ds, lots_of_augmentors)
     ds = BatchData(ds, 256)
 ```
 
-1. `LMDBDataPoint` deserialize the datapoints (from raw bytes to [jpeg bytes, label] -- what we dumped in `RawILSVRC12`)
+1. First we deserialize the datapoints (from raw bytes to [jpeg bytes, label] -- what we dumped in `RawILSVRC12`)
 2. Use OpenCV to decode the first component (jpeg bytes) into ndarray
 3. Apply augmentations to the ndarray
 
@@ -206,10 +205,9 @@ Both imdecode and the augmentors can be quite slow. We can parallelize them like
 .. code-block:: python
     :emphasize-lines: 3,7
 
-    ds = LMDBData(db, shuffle=False)
+    ds = LMDBSerializer.load(db, shuffle=False)
     ds = LocallyShuffleData(ds, 50000)
     ds = PrefetchData(ds, 5000, 1)
-    ds = LMDBDataPoint(ds)
     ds = MapDataComponent(ds, lambda x: cv2.imdecode(x, cv2.IMREAD_COLOR), 0)
     ds = AugmentImageComponent(ds, lots_of_augmentors)
     ds = PrefetchDataZMQ(ds, 25)

@@ -60,13 +60,4 @@ def dump_dataflow_to_lmdb(df, lmdb_path, write_frequency=5000):
 
 @deprecated("Use TFRecordSerializer.save instead!", "2019-01-31")
 def dump_dataflow_to_tfrecord(df, path):
-    """
-    Dump all datapoints of a Dataflow to a TensorFlow TFRecord file,
-    using :func:`serialize.dumps` to serialize.
-
-    Args:
-        df (DataFlow):
-        path (str): the output file path
-    """
-    # TODO mark deprecated
     TFRecordSerializer.save(df, path)

@@ -66,7 +66,7 @@ class LMDBData(RNGDataFlow):
     Read a LMDB database and produce (k,v) raw bytes pairs.
     The raw bytes are usually not what you're interested in.
     You might want to use
-    :class:`LMDBDataDecoder`, :class:`LMDBDataPoint`, or apply a
+    :class:`LMDBDataDecoder` or apply a
     mapper function after :class:`LMDBData`.
     """
     def __init__(self, lmdb_path, shuffle=True, keys=None):
@@ -78,8 +78,8 @@ class LMDBData(RNGDataFlow):
                 It can also be a format string e.g. ``{:0>8d}`` which will be
                 formatted with the indices from 0 to *total_size - 1*.
 
-                If not provided, it will then look in the database for ``__keys__`` which
-                :func:`dump_dataflow_to_lmdb` used to store the list of keys.
+                If not given, it will then look in the database for ``__keys__`` which
+                :func:`LMDBSerializer.save` used to store the list of keys.
                 If still not found, it will iterate over the database to find
                 all the keys.
         """
