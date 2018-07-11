@@ -105,10 +105,15 @@ class FloatBox(BoxBase):
                         intbox.x2 + 1, intbox.y2 + 1)
 
     def clip_by_shape(self, shape):
+        """
+        Args:
+            shape: h, w
+        """
         self.x1 = np.clip(self.x1, 0, shape[1])
         self.x2 = np.clip(self.x2, 0, shape[1])
         self.y1 = np.clip(self.y1, 0, shape[0])
         self.y2 = np.clip(self.y2, 0, shape[0])
+        return self
 
 
 if __name__ == '__main__':

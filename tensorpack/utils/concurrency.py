@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 # File: concurrency.py
 
-# Credit belongs to Xinyu Zhou
+# Some code taken from zxytim
 
+import os
 import threading
 import multiprocessing
 import atexit
@@ -177,13 +178,15 @@ def enable_death_signal():
     the current process will be cleaned with guarantee
     in case the parent dies accidentally.
     """
+    if os.name != 'posix':
+        return
     try:
-        import prctl    # pip install prctl-python
+        import prctl    # pip install python-prctl
     except ImportError:
         return
     else:
         assert hasattr(prctl, 'set_pdeathsig'), \
-            "prctl.set_pdeathsig does not exist! Note that you need to install 'prctl-python' instead of 'prctl'."
+            "prctl.set_pdeathsig does not exist! Note that you need to install 'python-prctl' instead of 'prctl'."
         # is SIGHUP a good choice?
         prctl.set_pdeathsig(signal.SIGHUP)
 

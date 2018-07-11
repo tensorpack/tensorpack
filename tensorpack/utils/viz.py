@@ -58,7 +58,10 @@ def interactive_imshow(img, lclick_cb=None, rclick_cb=None, **kwargs):
         elif event == cv2.EVENT_RBUTTONUP and rclick_cb is not None:
             rclick_cb(img, x, y)
     cv2.setMouseCallback(name, mouse_cb)
-    key = chr(cv2.waitKey(-1) & 0xff)
+    key = cv2.waitKey(-1)
+    while key >= 128:
+        key = cv2.waitKey(-1)
+    key = chr(key & 0xff)
     cb_name = 'key_cb_' + key
     if cb_name in kwargs:
         kwargs[cb_name](img)
@@ -68,6 +71,12 @@ def interactive_imshow(img, lclick_cb=None, rclick_cb=None, **kwargs):
         sys.exit()
     elif key == 's':
         cv2.imwrite('out.png', img)
+    elif key in ['+', '=']:
+        img = cv2.resize(img, None, fx=1.3, fy=1.3, interpolation=cv2.INTER_CUBIC)
+        interactive_imshow(img, lclick_cb, rclick_cb, **kwargs)
+    elif key == '-':
+        img = cv2.resize(img, None, fx=0.7, fy=0.7, interpolation=cv2.INTER_CUBIC)
+        interactive_imshow(img, lclick_cb, rclick_cb, **kwargs)
 
 
 def _preprocess_patch_list(plist):
