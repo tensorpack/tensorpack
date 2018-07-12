@@ -148,7 +148,7 @@ def generate_rpn_proposals(boxes, scores, img_shape,
         iou_threshold=cfg.RPN.PROPOSAL_NMS_THRESH)
 
     topk_valid_boxes = tf.reshape(topk_valid_boxes_x1y1x2y2, (-1, 4))
-    final_boxes = tf.gather(topk_valid_boxes, nms_indices)
-    final_scores = tf.gather(topk_valid_scores, nms_indices)
-    tf.sigmoid(final_scores, name='probs')  # for visualization
-    return tf.stop_gradient(final_boxes, name='boxes'), tf.stop_gradient(final_scores, name='scores')
+    proposal_boxes = tf.gather(topk_valid_boxes, nms_indices)
+    proposal_scores = tf.gather(topk_valid_scores, nms_indices)
+    tf.sigmoid(proposal_scores, name='probs')  # for visualization
+    return tf.stop_gradient(proposal_boxes, name='boxes'), tf.stop_gradient(proposal_scores, name='scores')

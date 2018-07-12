@@ -396,7 +396,7 @@ class ResNetFPNModel(DetectionModel):
                 tf.sigmoid(final_mask_logits, name='final_masks')
 
 
-def visualize(model_path, nr_visualize=50, output_dir='output'):
+def visualize(model, model_path, nr_visualize=100, output_dir='output'):
     """
     Visualize some intermediate results (proposals, raw predictions) inside the pipeline.
     Does not support FPN.
@@ -405,12 +405,12 @@ def visualize(model_path, nr_visualize=50, output_dir='output'):
     df.reset_state()
 
     pred = OfflinePredictor(PredictConfig(
-        model=ResNetC4Model(),
+        model=model,
         session_init=get_model_loader(model_path),
         input_names=['image', 'gt_boxes', 'gt_labels'],
         output_names=[
-            'generate_rpn_proposals/boxes',
-            'generate_rpn_proposals/probs',
+            'generate_{}_proposals/boxes'.format('fpn' if cfg.MODE_FPN else 'rpn'),
+            'generate_{}_proposals/probs'.format('fpn' if cfg.MODE_FPN else 'rpn'),
             'fastrcnn_all_probs',
             'final_boxes',
             'final_probs',
@@ -422,7 +422,11 @@ def visualize(model_path, nr_visualize=50, output_dir='output'):
     utils.fs.mkdir_p(output_dir)
     with tqdm.tqdm(total=nr_visualize) as pbar:
         for idx, dp in itertools.islice(enumerate(df.get_data()), nr_visualize):
-            img, _, _, gt_boxes, gt_labels = dp
+            img = dp[0]
+            if cfg.MODE_MASK:
+                gt_boxes, gt_labels, gt_masks = dp[-3:]
+            else:
+                gt_boxes, gt_labels = dp[-2:]
 
             rpn_boxes, rpn_scores, all_probs, \
                 final_boxes, final_probs, final_labels = pred(img, gt_boxes, gt_labels)
@@ -530,8 +534,7 @@ if __name__ == '__main__':
             cfg.TEST.RESULT_SCORE_THRESH = cfg.TEST.RESULT_SCORE_THRESH_VIS
 
         if args.visualize:
-            assert not cfg.MODE_FPN, "FPN visualize is not supported!"
-            visualize(args.load)
+            visualize(MODEL, args.load)
         else:
             pred = OfflinePredictor(PredictConfig(
                 model=MODEL,
