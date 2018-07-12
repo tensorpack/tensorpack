@@ -12,7 +12,7 @@ with the support of:
 
 ## Dependencies
 + Python 3; TensorFlow >= 1.6 (1.4 or 1.5 can run but may crash due to a TF bug);
-+ [pycocotools](https://github.com/pdollar/coco/tree/master/PythonAPI/pycocotools), OpenCV.
++ [pycocotools](https://github.com/pdollar/coco/tree/master/PythonAPI/), OpenCV.
 + Pre-trained [ImageNet ResNet model](http://models.tensorpack.com/FasterRCNN/)
   from tensorpack model zoo. Use the models with "-AlignPadding".
 + COCO data. It needs to have the following directory structure:

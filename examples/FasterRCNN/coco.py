@@ -116,8 +116,9 @@ class COCODetection(object):
         Add 'boxes', 'class', 'is_crowd' of this image to the dict, used by detection.
         If add_mask is True, also add 'segmentation' in coco poly format.
         """
-        ann_ids = self.coco.getAnnIds(imgIds=img['id'], iscrowd=None)
-        objs = self.coco.loadAnns(ann_ids)
+        # ann_ids = self.coco.getAnnIds(imgIds=img['id'])
+        # objs = self.coco.loadAnns(ann_ids)
+        objs = self.coco.imgToAnns[img['id']]  # equivalent but faster than the above two lines
 
         # clean-up boxes
         valid_objs = []

@@ -89,7 +89,7 @@ class DetectionModel(ModelDesc):
         with tf.name_scope('fg_sample_patch_viz'):
             fg_sampled_patches = crop_and_resize(
                 image, fg_rcnn_boxes,
-                tf.zeros(tf.shape(fg_rcnn_boxes)[0], dtype=tf.int32), 300)
+                tf.zeros([tf.shape(fg_rcnn_boxes)[0]], dtype=tf.int32), 300)
             fg_sampled_patches = tf.transpose(fg_sampled_patches, [0, 2, 3, 1])
             fg_sampled_patches = tf.reverse(fg_sampled_patches, axis=[-1])  # BGR->RGB
             tf.summary.image('viz', fg_sampled_patches, max_outputs=30)
@@ -517,7 +517,8 @@ if __name__ == '__main__':
         logger.warn("TF<1.6 has a bug which may lead to crash in FasterRCNN training if you're unlucky.")
 
     args = parser.parse_args()
-    cfg.update_args(args.config)
+    if args.config:
+        cfg.update_args(args.config)
 
     MODEL = ResNetFPNModel() if cfg.MODE_FPN else ResNetC4Model()
 

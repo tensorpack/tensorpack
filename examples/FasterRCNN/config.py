@@ -164,6 +164,7 @@ def finalize_configs(is_training):
     Run some sanity checks, and populate some configs from others
     """
     _C.DATA.NUM_CLASS = _C.DATA.NUM_CATEGORY + 1  # +1 background
+    _C.DATA.BASEDIR = os.path.expanduser(_C.DATA.BASEDIR)
 
     assert _C.BACKBONE.NORM in ['FreezeBN', 'SyncBN', 'GN'], _C.BACKBONE.NORM
     if _C.BACKBONE.NORM != 'FreezeBN':
