@@ -15,6 +15,7 @@ from model_rpn import rpn_losses, generate_rpn_proposals
 from model_box import roi_align
 from utils.box_ops import area as tf_area
 from config import config as cfg
+from basemodel import GroupNorm
 
 
 @layer_register(log_shape=True)
@@ -28,6 +29,8 @@ def fpn_model(features):
     """
     assert len(features) == 4, features
     num_channel = cfg.FPN.NUM_CHANNEL
+
+    use_gn = cfg.FPN.NORM == 'GN'
 
     def upsample2x(name, x):
         return FixedUnPooling(
@@ -47,6 +50,8 @@ def fpn_model(features):
                   kernel_initializer=tf.variance_scaling_initializer(scale=1.)):
         lat_2345 = [Conv2D('lateral_1x1_c{}'.format(i + 2), c, num_channel, 1)
                     for i, c in enumerate(features)]
+        if use_gn:
+            lat_2345 = [GroupNorm('gn_c{}'.format(i + 2), c) for i, c in enumerate(lat_2345)]
         lat_sum_5432 = []
         for idx, lat in enumerate(lat_2345[::-1]):
             if idx == 0:
@@ -56,6 +61,8 @@ def fpn_model(features):
                 lat_sum_5432.append(lat)
         p2345 = [Conv2D('posthoc_3x3_p{}'.format(i + 2), c, num_channel, 3)
                  for i, c in enumerate(lat_sum_5432[::-1])]
+        if use_gn:
+            p2345 = [GroupNorm('gn_p{}'.format(i + 2), c) for i, c in enumerate(p2345)]
         p6 = MaxPooling('maxpool_p6', p2345[-1], pool_size=1, strides=2, data_format='channels_first', padding='VALID')
         return p2345 + [p6]
 

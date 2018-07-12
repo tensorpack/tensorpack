@@ -43,6 +43,13 @@ class AttrDict():
                 v = eval(v)
             setattr(dic, key, v)
 
+    # avoid silent bugs
+    def __eq__(self, _):
+        raise NotImplementedError()
+
+    def __ne__(self, _):
+        raise NotImplementedError()
+
 
 config = AttrDict()
 _C = config     # short alias to avoid coding
@@ -65,6 +72,7 @@ _C.BACKBONE.RESNET_NUM_BLOCK = [3, 4, 6, 3]     # for resnet50
 # RESNET_NUM_BLOCK = [3, 4, 23, 3]    # for resnet101
 _C.BACKBONE.FREEZE_AFFINE = False   # do not train affine parameters inside norm layers
 _C.BACKBONE.NORM = 'FreezeBN'  # options: FreezeBN, SyncBN, GN
+_C.BACKBONE.FREEZE_AT = 2  # options: 0, 2
 
 # Use a base model with TF-preferred padding mode,
 # which may pad more pixels on right/bottom than top/left.
@@ -131,6 +139,7 @@ _C.FRCNN.FG_RATIO = 0.25  # fg ratio in a ROI batch
 _C.FPN.ANCHOR_STRIDES = (4, 8, 16, 32, 64)  # strides for each FPN level. Must be the same length as ANCHOR_SIZES
 _C.FPN.PROPOSAL_MODE = 'Level'  # 'Level', 'Joint'
 _C.FPN.NUM_CHANNEL = 256
+_C.FPN.NORM = 'None'  # 'None', 'GN'
 # conv head and fc head are only used in FPN.
 # For C4 models, the head is C5
 _C.FPN.FRCNN_HEAD_FUNC = 'fastrcnn_2fc_head'
@@ -159,6 +168,7 @@ def finalize_configs(is_training):
     assert _C.BACKBONE.NORM in ['FreezeBN', 'SyncBN', 'GN'], _C.BACKBONE.NORM
     if _C.BACKBONE.NORM != 'FreezeBN':
         assert not _C.BACKBONE.FREEZE_AFFINE
+    assert _C.BACKBONE.FREEZE_AT in [0, 2]
 
     _C.RPN.NUM_ANCHOR = len(_C.RPN.ANCHOR_SIZES) * len(_C.RPN.ANCHOR_RATIOS)
     assert len(_C.FPN.ANCHOR_STRIDES) == len(_C.RPN.ANCHOR_SIZES)
@@ -171,6 +181,7 @@ def finalize_configs(is_training):
         assert _C.FPN.PROPOSAL_MODE in ['Level', 'Joint']
         assert _C.FPN.FRCNN_HEAD_FUNC.endswith('_head')
         assert _C.FPN.MRCNN_HEAD_FUNC.endswith('_head')
+        assert _C.FPN.NORM in ['None', 'GN']
 
     if is_training:
         os.environ['TF_AUTOTUNE_THRESHOLD'] = '1'

@@ -71,6 +71,7 @@ def backbone_argscope():
 @contextmanager
 def maybe_syncbn_scope():
     if cfg.BACKBONE.NORM == 'SyncBN':
+        assert cfg.BACKBONE.FREEZE_AT == 2  # TODO add better support
         with argscope(BatchNorm, training=None, sync_statistics='nccl'):
             yield
     else:
@@ -143,7 +144,7 @@ def resnet_group(name, l, block_func, features, count, stride):
     return l
 
 
-def resnet_c4_backbone(image, num_blocks, freeze_c2=True):
+def resnet_c4_backbone(image, num_blocks):
     assert len(num_blocks) == 3
     with backbone_argscope():
         l = tf.pad(image, [[0, 0], [0, 0], maybe_reverse_pad(2, 3), maybe_reverse_pad(2, 3)])
@@ -152,7 +153,7 @@ def resnet_c4_backbone(image, num_blocks, freeze_c2=True):
         l = MaxPooling('pool0', l, 3, strides=2, padding='VALID')
         c2 = resnet_group('group0', l, resnet_bottleneck, 64, num_blocks[0], 1)
         # TODO replace var by const to enable optimization
-        if freeze_c2:
+        if cfg.BACKBONE.FREEZE_AT == 2:
             c2 = tf.stop_gradient(c2)
         with maybe_syncbn_scope():
             c3 = resnet_group('group1', c2, resnet_bottleneck, 128, num_blocks[1], 2)
@@ -168,7 +169,7 @@ def resnet_conv5(image, num_block):
         return l
 
 
-def resnet_fpn_backbone(image, num_blocks, freeze_c2=True):
+def resnet_fpn_backbone(image, num_blocks):
     shape2d = tf.shape(image)[2:]
     mult = float(cfg.FPN.RESOLUTION_REQUIREMENT)
     new_shape2d = tf.to_int32(tf.ceil(tf.to_float(shape2d) / mult) * mult)
@@ -186,7 +187,7 @@ def resnet_fpn_backbone(image, num_blocks, freeze_c2=True):
         l = tf.pad(l, [[0, 0], [0, 0], maybe_reverse_pad(0, 1), maybe_reverse_pad(0, 1)])
         l = MaxPooling('pool0', l, 3, strides=2, padding='VALID')
         c2 = resnet_group('group0', l, resnet_bottleneck, 64, num_blocks[0], 1)
-        if freeze_c2:
+        if cfg.BACKBONE.FREEZE_AT == 2:
             c2 = tf.stop_gradient(c2)
         with maybe_syncbn_scope():
             c3 = resnet_group('group1', c2, resnet_bottleneck, 128, num_blocks[1], 2)

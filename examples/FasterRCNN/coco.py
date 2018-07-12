@@ -5,6 +5,7 @@ import numpy as np
 import os
 from termcolor import colored
 from tabulate import tabulate
+import tqdm
 
 from tensorpack.utils import logger
 from tensorpack.utils.rect import FloatBox
@@ -96,7 +97,7 @@ class COCODetection(object):
             # list of dict, each has keys: height,width,id,file_name
             imgs = self.coco.loadImgs(img_ids)
 
-            for img in imgs:
+            for img in tqdm.tqdm(imgs):
                 self._use_absolute_file_name(img)
                 if add_gt:
                     self._add_detection_gt(img, add_mask)
