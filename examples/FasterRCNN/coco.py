@@ -18,8 +18,6 @@ from config import config as cfg
 
 __all__ = ['COCODetection', 'COCOMeta']
 
-COCO_NUM_CATEGORY = 80
-
 
 class _COCOMeta(object):
     INSTANCE_TO_BASEDIR = {
@@ -39,7 +37,7 @@ class _COCOMeta(object):
         cat_names: list of names
         """
         assert not self.valid()
-        assert len(cat_ids) == COCO_NUM_CATEGORY and len(cat_names) == COCO_NUM_CATEGORY
+        assert len(cat_ids) == cfg.DATA.NUM_CATEGORY and len(cat_names) == cfg.DATA.NUM_CATEGORY
         self.cat_names = cat_names
         self.class_names = ['BG'] + self.cat_names
 

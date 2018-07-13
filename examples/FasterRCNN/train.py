@@ -399,7 +399,6 @@ class ResNetFPNModel(DetectionModel):
 def visualize(model, model_path, nr_visualize=100, output_dir='output'):
     """
     Visualize some intermediate results (proposals, raw predictions) inside the pipeline.
-    Does not support FPN.
     """
     df = get_train_dataflow()   # we don't visualize mask stuff
     df.reset_state()

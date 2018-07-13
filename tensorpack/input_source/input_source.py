@@ -48,7 +48,14 @@ class PlaceholderInput(InputSource):
 
 
 class FeedInput(InputSource):
-    """ Input by iterating over a DataFlow and feed datapoints. """
+    """
+    Input by iterating over a DataFlow and feed datapoints.
+
+    Note:
+        If `get_input_tensors()` is called more than one time, it will return the same placeholders (i.e. feed points)
+        as the first time.
+        Therefore you can't use it for data-parallel training.
+    """
 
     class _FeedCallback(Callback):
         def __init__(self, ds, placeholders):

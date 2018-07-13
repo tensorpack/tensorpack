@@ -19,6 +19,7 @@ For any unexpected problems, __PLEASE ALWAYS INCLUDE__:
 	+ TF version: `python -c 'import tensorflow as tf; print(tf.GIT_VERSION, tf.VERSION)'`.
 	+ Tensorpack version: `python -c 'import tensorpack; print(tensorpack.__version__)'`.
       You can install Tensorpack master by `pip install -U git+https://github.com/ppwwyyxx/tensorpack.git`.:
+  + Hardware information, if relevant.
 5. About efficiency, PLEASE first read http://tensorpack.readthedocs.io/en/latest/tutorial/performance-tuning.html
 
 Feature Requests:

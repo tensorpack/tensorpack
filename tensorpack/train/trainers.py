@@ -14,7 +14,7 @@ from ..utils.develop import HIDE_DOC
 from ..tfutils import get_global_step_var
 from ..tfutils.distributed import get_distributed_session_creator
 from ..tfutils.tower import TrainTowerContext
-from ..input_source import QueueInput
+from ..input_source import QueueInput, FeedfreeInput
 
 from ..graph_builder.training import (
     SyncMultiGPUParameterServerBuilder,
@@ -59,7 +59,7 @@ class SimpleTrainer(SingleCostTrainer):
 # Only exists for type check & back-compatibility
 class QueueInputTrainer(SimpleTrainer):
     def _setup_graph(self, input, get_cost_fn, get_opt_fn):
-        assert isinstance(input, QueueInput)
+        assert isinstance(input, QueueInput), input
         return super(QueueInputTrainer, self)._setup_graph(input, get_cost_fn, get_opt_fn)
 
 
@@ -87,6 +87,8 @@ class SyncMultiGPUTrainerParameterServer(SingleCostTrainer):
         super(SyncMultiGPUTrainerParameterServer, self).__init__()
 
     def _setup_graph(self, input, get_cost_fn, get_opt_fn):
+        if len(self.devices) > 1:
+            assert isinstance(input, FeedfreeInput), input
         self.train_op = self._builder.build(
             self._make_get_grad_fn(input, get_cost_fn, get_opt_fn), get_opt_fn)
         return []
@@ -124,6 +126,8 @@ class AsyncMultiGPUTrainer(SingleCostTrainer):
         super(AsyncMultiGPUTrainer, self).__init__()
 
     def _setup_graph(self, input, get_cost_fn, get_opt_fn):
+        if len(self.devices) > 1:
+            assert isinstance(input, FeedfreeInput), input
         self.train_op = self._builder.build(
             self._make_get_grad_fn(input, get_cost_fn, get_opt_fn), get_opt_fn)
         return []
@@ -162,6 +166,8 @@ class SyncMultiGPUTrainerReplicated(SingleCostTrainer):
         super(SyncMultiGPUTrainerReplicated, self).__init__()
 
     def _setup_graph(self, input, get_cost_fn, get_opt_fn):
+        if len(self.devices) > 1:
+            assert isinstance(input, FeedfreeInput), input
         self.train_op, post_init_op = self._builder.build(
             self._make_get_grad_fn(input, get_cost_fn, get_opt_fn), get_opt_fn)
 
@@ -220,6 +226,7 @@ class DistributedTrainerParameterServer(DistributedTrainerBase):
         self.is_chief = self._builder.is_chief
 
     def _setup_graph(self, input, get_cost_fn, get_opt_fn):
+        assert isinstance(input, FeedfreeInput), input
         self.train_op = self._builder.build(
             self._make_get_grad_fn(input, get_cost_fn, get_opt_fn), get_opt_fn)
         return []
@@ -255,6 +262,7 @@ class DistributedTrainerReplicated(DistributedTrainerBase):
             return input.setup(inputs_desc)
 
     def _setup_graph(self, input, get_cost_fn, get_opt_fn):
+        assert isinstance(input, FeedfreeInput), input
         self.train_op, initial_sync_op, model_sync_op = self._builder.build(
             self._make_get_grad_fn(input, get_cost_fn, get_opt_fn), get_opt_fn)
 
