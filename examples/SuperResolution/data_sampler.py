@@ -3,7 +3,7 @@ import os
 import argparse
 import numpy as np
 import zipfile
-from tensorpack import RNGDataFlow, MapDataComponent, dftools
+from tensorpack import RNGDataFlow, MapDataComponent, LMDBSerializer
 
 
 class ImageDataFromZIPFile(RNGDataFlow):
@@ -108,7 +108,7 @@ if __name__ == '__main__':
     ds = CenterSquareResize(ds, index=0)
     if args.create:
         ds = ImageEncode(ds, index=0)
-        dftools.dump_dataflow_to_lmdb(ds, args.lmdb)
+        LMDBSerializer.save(ds, args.lmdb)
     if args.debug:
         ds.reset_state()
         for i in ds.get_data():

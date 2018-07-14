@@ -13,6 +13,7 @@ from ..utils.timer import timed_operation
 from ..utils.loadcaffe import get_caffe_pb
 from ..utils.serialize import loads
 from ..utils.argtools import log_once
+from ..utils.develop import log_deprecated
 from .base import RNGDataFlow, DataFlow, DataFlowReentrantGuard
 from .common import MapData
 
@@ -65,7 +66,7 @@ class LMDBData(RNGDataFlow):
     Read a LMDB database and produce (k,v) raw bytes pairs.
     The raw bytes are usually not what you're interested in.
     You might want to use
-    :class:`LMDBDataDecoder`, :class:`LMDBDataPoint`, or apply a
+    :class:`LMDBDataDecoder` or apply a
     mapper function after :class:`LMDBData`.
     """
     def __init__(self, lmdb_path, shuffle=True, keys=None):
@@ -77,8 +78,8 @@ class LMDBData(RNGDataFlow):
                 It can also be a format string e.g. ``{:0>8d}`` which will be
                 formatted with the indices from 0 to *total_size - 1*.
 
-                If not provided, it will then look in the database for ``__keys__`` which
-                :func:`dump_dataflow_to_lmdb` used to store the list of keys.
+                If not given, it will then look in the database for ``__keys__`` which
+                :func:`LMDBSerializer.save` used to store the list of keys.
                 If still not found, it will iterate over the database to find
                 all the keys.
         """
@@ -150,7 +151,7 @@ class LMDBData(RNGDataFlow):
 
 
 class LMDBDataDecoder(MapData):
-    """ Read a LMDB database and produce a decoded output."""
+    """ Read a LMDB database with a custom decoder and produce decoded outputs."""
     def __init__(self, lmdb_data, decoder):
         """
         Args:
@@ -164,33 +165,8 @@ class LMDBDataDecoder(MapData):
 
 
 class LMDBDataPoint(MapData):
-    """
-    Read a LMDB file and produce deserialized datapoints.
-    It **only** accepts the database produced by
-    :func:`tensorpack.dataflow.dftools.dump_dataflow_to_lmdb`,
-    which uses :func:`tensorpack.utils.serialize.dumps` for serialization.
-
-    Example:
-        .. code-block:: python
-
-            ds = LMDBDataPoint("/data/ImageNet.lmdb", shuffle=False)  # read and decode
-
-            # The above is equivalent to:
-            ds = LMDBData("/data/ImageNet.lmdb", shuffle=False)  # read
-            ds = LMDBDataPoint(ds)  # decode
-            # Sometimes it makes sense to separate reading and decoding
-            # to be able to make decoding parallel.
-    """
-
     def __init__(self, *args, **kwargs):
-        """
-        Args:
-            args, kwargs: Same as in :class:`LMDBData`.
-
-        In addition, args[0] can be a :class:`LMDBData` instance.
-        In this case args[0] has to be the only argument.
-        """
-
+        log_deprecated("LMDBDataPoint", "Use LMDBSerializer.load() instead!", "2019-01-31")
         if isinstance(args[0], DataFlow):
             ds = args[0]
             assert len(args) == 1 and len(kwargs) == 0, \
@@ -267,18 +243,8 @@ class SVMLightData(RNGDataFlow):
 
 
 class TFRecordData(DataFlow):
-    """
-    Produce datapoints from a TFRecord file, assuming each record is
-    serialized by :func:`serialize.dumps`.
-    This class works with :func:`dftools.dump_dataflow_to_tfrecord`.
-    """
     def __init__(self, path, size=None):
-        """
-        Args:
-            path (str): path to the TFRecord file
-            size (int): total number of records, because this metadata is not
-                stored in the TFRecord file.
-        """
+        log_deprecated("TFRecordData", "Use TFRecordSerializer.load instead!", "2019-01-31")
         self._path = path
         self._size = int(size)
 
