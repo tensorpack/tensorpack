@@ -220,7 +220,7 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
         batch_mean_square = tf.reduce_mean(tf.square(inputs), axis=red_axis)
 
         if sync_statistics == 'nccl':
-            if six.PY3 and TF_version <= 1.8 and ctx.is_main_training_tower:
+            if six.PY3 and TF_version <= 1.9 and ctx.is_main_training_tower:
                 logger.warn("A TensorFlow bug will cause cross-GPU BatchNorm to fail. "
                             "Apply this patch: https://github.com/tensorflow/tensorflow/pull/20360")
 

@@ -52,4 +52,6 @@ except ImportError:
     _HAS_TF = False
 
 
+# This line has to be the last line of the file.
+# setup.py will use it to determine the version
 __version__ = '0.8.6'

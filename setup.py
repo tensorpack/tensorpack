@@ -1,40 +1,41 @@
 import setuptools
+from setuptools import setup
+from os import path
+import platform
+
 version = int(setuptools.__version__.split('.')[0])
 assert version > 30, "tensorpack installation requires setuptools > 30"
-from setuptools import setup
-import os
-import platform
-import shutil
-import sys
+
+this_directory = path.abspath(path.dirname(__file__))
 
 # setup metainfo
-CURRENT_DIR = os.path.dirname(__file__)
-libinfo_py = os.path.join(CURRENT_DIR, 'tensorpack/libinfo.py')
-exec(open(libinfo_py, "rb").read())
+libinfo_py = path.join(this_directory, 'tensorpack', 'libinfo.py')
+last_line = open(libinfo_py, "rb").readlines()[-1].strip()
+exec(last_line)
 
-# produce rst readme for pypi
-try:
-    import pypandoc
-    long_description = pypandoc.convert_file('README.md', 'rst')
-    description_type = 'text/x-rst'
-except ImportError:
-    long_description = open('README.md').read()
-    description_type = 'text/markdown'
-
-# configure requirements
-reqfile = os.path.join(CURRENT_DIR, 'requirements.txt')
-req = [x.strip() for x in open(reqfile).readlines()]
+with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
+    long_description = f.read()
 
 setup(
     name='tensorpack',
-    version=__version__,
+    version=__version__,   # noqa
     description='Neural Network Toolbox on TensorFlow',
     long_description=long_description,
-    long_description_content_type=description_type,
-    install_requires=req,
+    long_description_content_type='text/markdown',
+    install_requires=[
+        "numpy",
+        "six",
+        "termcolor>=1.1",
+        "tabulate>=0.7.7",
+        "tqdm>4.11.1",
+        "pyarrow>=0.9.0",
+        "pyzmq>=16",
+        "subprocess32; python_version < '3.0'",
+        "functools32; python_version < '3.0'",
+    ],
     tests_require=['flake8', 'scikit-image'],
     extras_require={
-        'all': ['pillow', 'scipy', 'h5py', 'lmdb>=0.92', 'matplotlib', 'scikit-learn'] + \
+        'all': ['pillow', 'scipy', 'h5py', 'lmdb>=0.92', 'matplotlib', 'scikit-learn'] +
                ['python-prctl'] if platform.system() == 'Linux' else [],
         'all: python_version < "3.0"': ['tornado'],
     },

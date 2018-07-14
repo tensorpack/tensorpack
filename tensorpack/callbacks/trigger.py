@@ -10,10 +10,12 @@ __all__ = ['PeriodicTrigger', 'PeriodicCallback', 'EnableCallbackIf']
 class PeriodicTrigger(ProxyCallback):
     """
     Trigger a callback every k global steps or every k epochs by its :meth:`trigger()` method.
-    Most existing callbacks which do something every epoch are implemented
-    with :meth:`trigger()` method.
 
-    All other methods (``before/after_run``, ``trigger_step``, etc) of the input callback are unaffected.
+    Most existing callbacks which do something every epoch are implemented
+    with :meth:`trigger()` method. By default the :meth:`trigger()` method will be called every epoch.
+    This wrapper can make the callback run at a different frequency.
+
+    All other methods (``before/after_run``, ``trigger_step``, etc) of the given callback are unaffected.
     """
 
     def __init__(self, triggerable, every_k_steps=None, every_k_epochs=None):

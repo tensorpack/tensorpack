@@ -1,6 +1,6 @@
 ![Tensorpack](.github/tensorpack.png)
 
-Tensorpack is a training interface based on TensorFlow.
+Tensorpack is a neural network training interface based on TensorFlow.
 
 [![Build Status](https://travis-ci.org/tensorpack/tensorpack.svg?branch=master)](https://travis-ci.org/tensorpack/tensorpack)
 [![ReadTheDoc](https://readthedocs.org/projects/tensorpack/badge/?version=latest)](http://tensorpack.readthedocs.io/en/latest/index.html)
@@ -12,7 +12,7 @@ Tensorpack is a training interface based on TensorFlow.
 It's Yet Another TF high-level API, with __speed__, __readability__ and __flexibility__ built together.
 
 1. Focus on __training speed__.
-	+ Speed comes for free with tensorpack -- it uses TensorFlow in the __efficient way__ with no extra overhead.
+	+ Speed comes for free with Tensorpack -- it uses TensorFlow in the __efficient way__ with no extra overhead.
 	  On common CNNs, it runs training [1.2~5x faster](https://github.com/tensorpack/benchmarks/tree/master/other-wrappers) than the equivalent Keras code.
 
 	+ Data-parallel multi-GPU/distributed training strategy is off-the-shelf to use.
@@ -28,7 +28,7 @@ It's Yet Another TF high-level API, with __speed__, __readability__ and __flexib
 
 3. It's not a model wrapper.
 	+ There are too many symbolic function wrappers in the world. Tensorpack includes only a few common models.
-	  But you can use any symbolic function library inside tensorpack, including tf.layers/Keras/slim/tflearn/tensorlayer/....
+	  But you can use any symbolic function library inside Tensorpack, including tf.layers/Keras/slim/tflearn/tensorlayer/....
 
 See [tutorials](http://tensorpack.readthedocs.io/tutorial/index.html#user-tutorials) to know more about these features.
 
@@ -36,7 +36,7 @@ See [tutorials](http://tensorpack.readthedocs.io/tutorial/index.html#user-tutori
 
 We refuse toy examples.
 Instead of showing you 10 arbitrary networks trained on toy datasets,
-[tensorpack examples](examples) faithfully replicate papers and care about reproducing numbers,
+[Tensorpack examples](examples) faithfully replicate papers and care about reproducing numbers,
 demonstrating its flexibility for actual research.
 
 ### Vision:
@@ -67,7 +67,7 @@ Dependencies:
 + TensorFlow >= 1.3.0 (Optional if you only want to use `tensorpack.dataflow` alone as a data processing library)
 ```
 # install git, then:
-pip install -U git+https://github.com/tensorpack/tensorpack.git
+pip install --upgrade git+https://github.com/tensorpack/tensorpack.git
 # or add `--user` to avoid system-wide installation.
 ```
 

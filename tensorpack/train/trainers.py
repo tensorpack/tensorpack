@@ -295,15 +295,15 @@ class HorovodTrainer(SingleCostTrainer):
 
     .. code-block:: bash
 
-        # change trainer to HorovodTrainer(), then
+        # First, change trainer to HorovodTrainer(), then
         CUDA_VISIBLE_DEVICES=0,1,2,3 mpirun -np 4 --output-filename mylog python train.py
 
     To use for distributed training:
 
     .. code-block:: bash
 
-        # change trainer to HorovodTrainer(), then
-        /path/to/mpirun -np 8 -H server1:4,server2:4  \\
+        # First, change trainer to HorovodTrainer(), then
+        mpirun -np 8 -H server1:4,server2:4  \\
             -bind-to none -map-by slot \\
             --output-filename mylog  -x LD_LIBRARY_PATH \\
             python train.py
@@ -312,14 +312,15 @@ class HorovodTrainer(SingleCostTrainer):
         # There are other MPI options that can potentially improve performance especially on special hardwares.
 
     Note:
-        1. There are several options in Horovod installation and in MPI command line that can improve speed.
+        1. To reach the maximum speed in your system, there are many options to tune
+           for Horovod installation and in the MPI command line.
            See Horovod docs for details.
 
-        2. Due to a TF bug, you must not initialize CUDA context before training.
+        2. Due to a TF bug, you must not initialize CUDA context before the trainer starts training.
            Therefore TF functions like `is_gpu_available()` or `list_local_devices()`
            must be avoided.
 
-        2. MPI does not like fork(). If your dataflow contains multiprocessing, it may cause problems.
+        2. MPI does not like `fork()`. If your dataflow contains multiprocessing, it may cause problems.
 
         3. MPI sometimes fails to kill all processes. Be sure to check it afterwards.
 
@@ -337,8 +338,8 @@ class HorovodTrainer(SingleCostTrainer):
              See :meth:`callback.set_chief_only()`. Most callbacks have a reasonable
              default already, but certain callbacks may not behave properly by default. Report an issue if you find any.
 
-           + You can use Horovod API such as `hvd.rank()` to know which process you are.
-             Chief process has rank 0.
+           + You can use Horovod API such as `hvd.rank()` to know which process you are and choose
+             different code path. Chief process has rank 0.
 
         5. Due to these caveats, see
            `ResNet-Horovod <https://github.com/tensorpack/benchmarks/tree/master/ResNet-Horovod>`_
@@ -395,7 +396,7 @@ class HorovodTrainer(SingleCostTrainer):
         session_creator.config.gpu_options.visible_device_list = str(self._local_rank)
         try:
             session_creator.config.inter_op_parallelism_threads = mp.cpu_count() // hvd.local_size()
-        except AttributeError:
+        except AttributeError:  # old horovod does not have local_size
             pass
         super(HorovodTrainer, self).initialize(
             session_creator, session_init)
