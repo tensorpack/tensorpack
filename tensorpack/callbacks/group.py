@@ -4,13 +4,17 @@
 
 import tensorflow as tf
 from contextlib import contextmanager
-import time
+from time import time as timer
 import traceback
+import six
 
 from .base import Callback
 from .hooks import CallbackToHook
 from ..utils import logger
 from ..utils.utils import humanize_time_delta
+
+if six.PY3:
+    from time import perf_counter as timer  # noqa
 
 __all__ = ['Callbacks']
 
@@ -26,9 +30,9 @@ class CallbackTimeLogger(object):
 
     @contextmanager
     def timed_callback(self, name):
-        s = time.time()
+        s = timer()
         yield
-        self.add(name, time.time() - s)
+        self.add(name, timer() - s)
 
     def log(self):
 

@@ -218,5 +218,5 @@ def generate_fpn_proposals(
             cfg.RPN.TRAIN_POST_NMS_TOPK if ctx.is_training else cfg.RPN.TEST_POST_NMS_TOPK)
 
     tf.sigmoid(proposal_scores, name='probs')  # for visualization
-    return tf.identity(proposal_boxes, name='boxes'), \
-        tf.identity(proposal_scores, name='scores')
+    return tf.stop_gradient(proposal_boxes, name='boxes'), \
+        tf.stop_gradient(proposal_scores, name='scores')

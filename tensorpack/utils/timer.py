@@ -3,13 +3,17 @@
 
 
 from contextlib import contextmanager
-import time
 from collections import defaultdict
 import six
 import atexit
+from time import time as timer
 
 from .stats import StatCounter
 from . import logger
+
+if six.PY3:
+    from time import perf_counter as timer  # noqa
+
 
 __all__ = ['total_timer', 'timed_operation',
            'print_total_timer', 'IterSpeedCounter']
@@ -38,10 +42,10 @@ def timed_operation(msg, log_start=False):
     """
     if log_start:
         logger.info('Start {} ...'.format(msg))
-    start = time.time()
+    start = timer()
     yield
     logger.info('{} finished, time:{:.4f}sec.'.format(
-        msg, time.time() - start))
+        msg, timer() - start))
 
 
 _TOTAL_TIMER_DATA = defaultdict(StatCounter)
@@ -50,9 +54,9 @@ _TOTAL_TIMER_DATA = defaultdict(StatCounter)
 @contextmanager
 def total_timer(msg):
     """ A context which add the time spent inside to TotalTimer. """
-    start = time.time()
+    start = timer()
     yield
-    t = time.time() - start
+    t = timer() - start
     _TOTAL_TIMER_DATA[msg].feed(t)
 
 
@@ -96,7 +100,7 @@ class IterSpeedCounter(object):
         self.name = name if name else 'IterSpeed'
 
     def reset(self):
-        self.start = time.time()
+        self.start = timer()
 
     def __call__(self):
         if self.cnt == 0:
@@ -104,6 +108,6 @@ class IterSpeedCounter(object):
         self.cnt += 1
         if self.cnt % self.print_every != 0:
             return
-        t = time.time() - self.start
+        t = timer() - self.start
         logger.info("{}: {:.2f} sec, {} times, {:.3g} sec/time".format(
             self.name, t, self.cnt, t / self.cnt))

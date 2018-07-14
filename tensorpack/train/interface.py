@@ -52,7 +52,7 @@ def launch_train_with_config(config, trainer):
     present a simple training interface. It basically does the following
     3 things (and you can easily do them by yourself if you need more control):
 
-    1. Setup the input with automatic prefetching,
+    1. Setup the input with automatic prefetching heuristics,
        from `config.data` or `config.dataflow`.
     2. Call `trainer.setup_graph` with the input as well as `config.model`.
     3. Call `trainer.train` with rest of the attributes of config.

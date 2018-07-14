@@ -73,14 +73,15 @@ MaskRCNN results contain both box and mask mAP.
  | R50-C4   | 37.8/33.1          | 37.8/32.8                      | 49h on 8 V100s | <details><summary>standard</summary>`MODE_MASK=True` </details>                                                                                                                                  |
  | R50-FPN  | 38.2/34.9          | 38.6/34.5<sup>[1](#ft1)</sup>  | 32h on 8 V100s | <details><summary>standard</summary>`MODE_MASK=True MODE_FPN=True` </details>                                                                                                                    |
  | R50-FPN  | 38.5/34.8          | 38.6/34.2<sup>[2](#ft2)</sup>  | 34h on 8 V100s | <details><summary>standard+ConvHead</summary>`MODE_MASK=True MODE_FPN=True`<br/>`FPN.FRCNN_HEAD_FUNC=fastrcnn_4conv1fc_head` </details>                                                          |
- | R50-FPN  | 39.5/35.2          | 39.5/34.4<sup>[2](#ft2)</sup>  | 34h on 8 V100s | <details><summary>standard+ConvGNHead</summary>`MODE_MASK=True MODE_FPN=True`<br/>`FPN.FRCNN_HEAD_FUNC=fastrcnn_4conv1fc_gn_head` </details>                                                          |
+ | R50-FPN  | 39.5/35.2          | 39.5/34.4<sup>[2](#ft2)</sup>  | 34h on 8 V100s | <details><summary>standard+ConvGNHead</summary>`MODE_MASK=True MODE_FPN=True`<br/>`FPN.FRCNN_HEAD_FUNC=fastrcnn_4conv1fc_gn_head` </details>                                                     |
  | R101-C4  | 40.8/35.1          |                                | 63h on 8 V100s | <details><summary>standard</summary>`MODE_MASK=True `<br/>`BACKBONE.RESNET_NUM_BLOCK=[3,4,23,3]` </details>                                                                                      |
  
  <a id="ft1">1</a>: Slightly different configurations.
 
  <a id="ft2">2</a>: Numbers taken from [Group Normalization](https://arxiv.org/abs/1803.08494)
  
- Performance in [Detectron](https://github.com/facebookresearch/Detectron/) can be reproduced.
+ Performance in [Detectron](https://github.com/facebookresearch/Detectron/) can
+ be roughly reproduced, some are better but some are worse, probably due to many tiny implementation details.
  Note that most of these numbers are better than what's in the paper. 
 
 ## Notes
