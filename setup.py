@@ -13,8 +13,8 @@ libinfo_py = path.join(this_directory, 'tensorpack', 'libinfo.py')
 last_line = open(libinfo_py, "rb").readlines()[-1].strip()
 exec(last_line)
 
-with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
-    long_description = f.read()
+with open(path.join(this_directory, 'README.md'), 'rb') as f:
+    long_description = f.read().decode('utf-8')
 
 setup(
     name='tensorpack',

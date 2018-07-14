@@ -1,12 +1,12 @@
 
 ## Breaking API changes.
 
-tensorpack is still in early development, and API changes can happen.
-The backward compatibilty will be __preserved for several months__, with a deprecation warning,
-so you won't need to look at here very often.
+Tensorpack is in development, and API changes can happen.
+The backward compatibilty will be __preserved for at least several months__, with a deprecation warning,
+so you don't need to look at here very often.
 
 Here are a list of things that were changed, starting from an early version.
-TensorFlow itself also changed APIs before 1.0 and those are not listed here.
+TensorFlow itself also APIs changes and those are not listed here.
 
 + [2018/04/05] msgpack is replaced by pyarrow. If you want compatibility with old serialized data,
 	`export TENSORPACK_SERIALIZE=msgpack`.
