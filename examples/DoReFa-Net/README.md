@@ -7,33 +7,36 @@ It also contains an implementation of the following papers:
 + [Trained Ternary Quantization](https://arxiv.org/abs/1612.01064), with (W,A,G)=(t,32,32).
 + [Binarized Neural Networks](https://arxiv.org/abs/1602.02830), with (W,A,G)=(1,1,32).
 
+Alternative link to this page: [http://dorefa.net](http://dorefa.net)
+
+## Results:
 This is a good set of baselines for research in model quantization.
 These quantization techniques, when applied on AlexNet, achieves the following ImageNet performance in this implementation:
 
-| Model          | Bit Width <br/> (weights, activations, gradients) | Top 1 Validation Error |
-|:---------------|---------------------------------------------------|-----------------------:|
-| Full Precision | 32,32,32                                          |                  40.3% |
-| TTQ            | t,32,32                                           |                  42.0% |
-| BWN            | 1,32,32                                           |                  44.6% |
-| BNN            | 1,1,32                                            |                  51.9% |
-| DoReFa         | 1,2,32                                            |                  46.6% |
-| DoReFa         | 1,2,6                                             |                  46.8% |
-| DoReFa         | 1,2,4                                             |                  54.0% |
+| Model                              | Bit Width <br/> (weights, activations, gradients) | Top 1 Validation Error <sup>[1](#ft1)</sup>|
+|:----------------------------------:|:-------------------------------------------------:|:----------------------:|
+| Full Precision<sup>[2](#ft2)</sup> | 32,32,32                                          | 40.3%                  |
+| TTQ                                | t,32,32                                           | 42.0%                  |
+| BWN                                | 1,32,32                                           | 44.6%                  |
+| BNN                                | 1,1,32                                            | 51.9%                  |
+| DoReFa                             | 1,2,32                                            | 46.6%                  |
+| DoReFa                             | 1,2,6                                             | 46.8%                  |
+| DoReFa                             | 1,2,4                                             | 54.0%                  |
 
-These numbers were obtained by training on 8 GPUs with a total batch size of 256.
+ <a id="ft1">1</a>: These numbers were obtained by training on 8 GPUs with a total batch size of 256.
 The DoReFa-Net models reach slightly better performance than our paper, due to
 more sophisticated augmentations.
 
-We hosted a demo at CVPR16 on behalf of Megvii, Inc, running a real-time 1/4-VGG size DoReFa-Net on ARM and half-VGG size DoReFa-Net on FPGA.
-We're not planning to release our C++ runtime for bit-operations.
-In this repo, quantized operations are all performed through `tf.float32`.
+ <a id="ft2">2</a>: Not directly comparable with the original AlexNet. Check out
+ [../ImageNetModels](../ImageNetModels) for a more faithful implementation of the original AlexNet.
 
-Pretrained model for (1,4,32)-ResNet18 and (1,2,6)-AlexNet are available at
-[tensorpack model zoo](http://models.tensorpack.com/DoReFa-Net/).
-They're provided in the format of numpy dictionary.
-The __binary-weight 4-bit-activation ResNet-18__ model has 59.2% top-1 validation accuracy.
+## Speed:
+__DoReFa-Net works on mobile and FPGA!__
+We hosted a demo at CVPR16 on behalf of Megvii, Inc, running a 1/4-VGG size DoReFa-Net on a phone and a half-VGG size DoReFa-Net on an FPGA, in real time.
+DoReFa-Net and its variants have been deployed widely in Megvii's embeded products.
 
-Alternative link to this page: [http://dorefa.net](http://dorefa.net)
+This code release is meant for research purpose. We're not planning to release our C++ runtime for bit-operations.
+In this implementation, quantized operations are all performed through `tf.float32`.
 
 ## Use
 
@@ -42,6 +45,12 @@ Alternative link to this page: [http://dorefa.net](http://dorefa.net)
 + Install tensorpack and scipy.
 
 + Look at the docstring in `*-dorefa.py` to see detailed usage and performance.
+
+Pretrained model for (1,4,32)-ResNet18 and (1,2,6)-AlexNet are available at
+[tensorpack model zoo](http://models.tensorpack.com/DoReFa-Net/).
+They're provided in the format of numpy dictionary.
+The __binary-weight 4-bit-activation ResNet-18__ model has 59.2% top-1 validation accuracy.
+
 
 ## Support
 

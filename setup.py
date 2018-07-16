@@ -4,7 +4,7 @@ from os import path
 import platform
 
 version = int(setuptools.__version__.split('.')[0])
-assert version > 30, "tensorpack installation requires setuptools > 30"
+assert version > 30, "Tensorpack installation requires setuptools > 30"
 
 this_directory = path.abspath(path.dirname(__file__))
 

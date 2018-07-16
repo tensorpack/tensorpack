@@ -93,6 +93,7 @@ def crop_and_resize(image, boxes, box_ind, crop_size, pad_border=True):
         n,C,size,size
     """
     assert isinstance(crop_size, int), crop_size
+    boxes = tf.stop_gradient(boxes)
 
     # TF's crop_and_resize produces zeros on border
     if pad_border:
@@ -162,7 +163,6 @@ def roi_align(featuremap, boxes, resolution):
     Returns:
         NxCx res x res
     """
-    boxes = tf.stop_gradient(boxes)  # TODO
     # sample 4 locations per roi bin
     ret = crop_and_resize(
         featuremap, boxes,

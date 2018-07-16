@@ -46,6 +46,7 @@ To Train:
         Fast disk random access (Not necessarily SSD. I used a RAID of HDD, but not sure if plain HDD is enough)
         More than 20 CPU cores (for data processing)
         More than 10G of free memory
+    On 8 P100s and dorefa==1,2,6, the training should take about 30 minutes per epoch.
 
 To run pretrained model:
     ./alexnet-dorefa.py --load alexnet-126.npz --run a.jpg --dorefa 1,2,6

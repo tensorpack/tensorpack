@@ -4,12 +4,12 @@
 # Author: Yuxin Wu
 
 import argparse
+import tensorflow as tf
 
 from tensorpack import *
 from tensorpack.tfutils.summary import add_moving_summary, add_param_summary
 from tensorpack.dataflow import dataset
 from tensorpack.tfutils.varreplace import remap_variables
-import tensorflow as tf
 
 from dorefa import get_dorefa
 
@@ -19,7 +19,7 @@ DoReFa-Net: Training Low Bitwidth Convolutional Neural Networks with Low Bitwidt
 http://arxiv.org/abs/1606.06160
 
 The original experiements are performed on a proprietary framework.
-This is our attempt to reproduce it on tensorpack/tensorflow.
+This is our attempt to reproduce it on tensorpack.
 
 Accuracy:
     With (W,A,G)=(1,1,4), can reach 3.1~3.2% error after 150 epochs.
