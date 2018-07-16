@@ -124,10 +124,17 @@ class TFRecordSerializer():
             df (DataFlow): the DataFlow to serialize.
             path (str): output tfrecord file.
         """
+        if os.environ.get('TENSORPACK_SERIALIZE', None) == 'msgpack':
+            def _dumps(dp):
+                return dumps(dp)
+        else:
+            def _dumps(dp):
+                return dumps(dp).to_pybytes()
+
         size = _reset_df_and_get_size(df)
         with tf.python_io.TFRecordWriter(path) as writer, get_tqdm(total=size) as pbar:
             for dp in df.get_data():
-                writer.write(dumps(dp).to_pybytes())
+                writer.write(_dumps(dp))
                 pbar.update()
 
     @staticmethod
