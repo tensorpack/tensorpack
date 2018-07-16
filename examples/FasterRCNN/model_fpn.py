@@ -122,6 +122,7 @@ def multilevel_roi_align(features, rcnn_boxes, resolution):
             boxes_on_featuremap = boxes * (1.0 / cfg.FPN.ANCHOR_STRIDES[i])
             all_rois.append(roi_align(featuremap, boxes_on_featuremap, resolution))
 
+    # this can fail if using TF<=1.8 with MKL build
     all_rois = tf.concat(all_rois, axis=0)  # NCHW
     # Unshuffle to the original order, to match the original samples
     level_id_perm = tf.concat(level_ids, axis=0)  # A permutation of 1~N

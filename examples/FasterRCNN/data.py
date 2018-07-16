@@ -29,9 +29,7 @@ class MalformedData(BaseException):
 
 
 @memoized
-def get_all_anchors(
-        stride=cfg.RPN.ANCHOR_STRIDE,
-        sizes=cfg.RPN.ANCHOR_SIZES):
+def get_all_anchors(stride=None, sizes=None):
     """
     Get all anchors in the largest possible image, shifted, floatbox
     Args:
@@ -43,6 +41,10 @@ def get_all_anchors(
         The layout in the NUM_ANCHOR dim is NUM_RATIO x NUM_SIZE.
 
     """
+    if stride is None:
+        stride = cfg.RPN.ANCHOR_STRIDE
+    if sizes is None:
+        sizes = cfg.RPN.ANCHOR_SIZES
     # Generates a NAx4 matrix of anchor boxes in (x1, y1, x2, y2) format. Anchors
     # are centered on stride / 2, have (approximate) sqrt areas of the specified
     # sizes, and aspect ratios as given.
@@ -69,20 +71,23 @@ def get_all_anchors(
         shifts.reshape((1, K, 4)).transpose((1, 0, 2)))
     field_of_anchors = field_of_anchors.reshape((field_size, field_size, A, 4))
     # FSxFSxAx4
-    assert np.all(field_of_anchors == field_of_anchors.astype('int32'))
+    # Many rounding happens inside the anchor code anyway
+    # assert np.all(field_of_anchors == field_of_anchors.astype('int32'))
     field_of_anchors = field_of_anchors.astype('float32')
     field_of_anchors[:, :, :, [2, 3]] += 1
     return field_of_anchors
 
 
 @memoized
-def get_all_anchors_fpn(
-        strides=cfg.FPN.ANCHOR_STRIDES,
-        sizes=cfg.RPN.ANCHOR_SIZES):
+def get_all_anchors_fpn(strides=None, sizes=None):
     """
     Returns:
         [anchors]: each anchors is a SxSx NUM_ANCHOR_RATIOS x4 array.
     """
+    if strides is None:
+        strides = cfg.FPN.ANCHOR_STRIDES
+    if sizes is None:
+        sizes = cfg.RPN.ANCHOR_SIZES
     assert len(strides) == len(sizes)
     foas = []
     for stride, size in zip(strides, sizes):
