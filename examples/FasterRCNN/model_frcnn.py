@@ -239,7 +239,7 @@ def fastrcnn_2fc_head(feature, num_classes):
 def fastrcnn_Xconv1fc_head(feature, num_classes, num_convs, norm=None):
     """
     Args:
-        feature (any shape):
+        feature (NCHW):
         num_classes(int): num_category + 1
         num_convs (int): number of conv layers
         norm (str or None): either None or 'GN'

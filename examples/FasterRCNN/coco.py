@@ -12,7 +12,6 @@ from tensorpack.utils.rect import FloatBox
 from tensorpack.utils.timer import timed_operation
 from tensorpack.utils.argtools import log_once
 
-from pycocotools.coco import COCO
 from config import config as cfg
 
 
@@ -63,6 +62,7 @@ class COCODetection(object):
             basedir, 'annotations/instances_{}.json'.format(name))
         assert os.path.isfile(annotation_file), annotation_file
 
+        from pycocotools.coco import COCO
         self.coco = COCO(annotation_file)
 
         # initialize the meta

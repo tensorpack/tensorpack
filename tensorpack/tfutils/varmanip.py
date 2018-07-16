@@ -178,7 +178,7 @@ def get_checkpoint_path(model_path):
     elif model_path.endswith('.index'):
         new_path = model_path.split('.index')[0]
     if new_path != model_path:
-        logger.warn(
+        logger.info(
             "Checkpoint path {} is auto-corrected to {}.".format(model_path, new_path))
         model_path = new_path
     assert tf.gfile.Exists(model_path) or tf.gfile.Exists(model_path + '.index'), model_path

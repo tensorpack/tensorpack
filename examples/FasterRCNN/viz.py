@@ -12,6 +12,7 @@ from config import config as cfg
 
 
 def draw_annotation(img, boxes, klass, is_crowd=None):
+    """Will not modify img"""
     labels = []
     assert len(boxes) == len(klass)
     if is_crowd is not None:

@@ -7,8 +7,6 @@ import cv2
 from tensorpack.dataflow import RNGDataFlow
 from tensorpack.dataflow.imgaug import transform
 
-import pycocotools.mask as cocomask
-
 
 class DataFromListOfDict(RNGDataFlow):
     def __init__(self, lst, keys, shuffle=False):
@@ -95,6 +93,8 @@ def segmentation_to_mask(polys, height, width):
         a binary matrix of (height, width)
     """
     polys = [p.flatten().tolist() for p in polys]
+
+    import pycocotools.mask as cocomask
     rles = cocomask.frPyObjects(polys, height, width)
     rle = cocomask.merge(rles)
     return cocomask.decode(rle)

@@ -264,9 +264,9 @@ def get_train_dataflow():
     To train on your own data, change this to your loader.
     Produce "imgs" as a list of dict, in the dict the following keys are needed for training:
     height, width: integer
-    file_name: str
-    boxes: kx4 floats
-    class: k integers
+    file_name: str, full path to the image
+    boxes: numpy array of kx4 floats
+    class: numpy array of k integers
     is_crowd: k booleans. Use k False if you don't know what it means.
     segmentation: k lists of numpy arrays (one for each box).
         Each list of numpy array corresponds to the mask for one instance.
