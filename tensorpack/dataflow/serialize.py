@@ -9,11 +9,11 @@ from ..utils import logger
 from ..utils.serialize import dumps, loads
 
 from .base import DataFlow
-from .format import LMDBData
+from .format import LMDBData, HDF5Data
 from .common import MapData, FixedSizeData
 from .raw import DataFromList, DataFromGenerator
 
-__all__ = ['LMDBSerializer', 'NumpySerializer', 'TFRecordSerializer']
+__all__ = ['LMDBSerializer', 'NumpySerializer', 'TFRecordSerializer', 'HDF5Serializer']
 
 
 def _reset_df_and_get_size(df):
@@ -100,14 +100,15 @@ class NumpySerializer():
         size = _reset_df_and_get_size(df)
         with get_tqdm(total=size) as pbar:
             for dp in df.get_data():
-                buffer.append(dp)
+                buffer.append(dumps(dp).to_pybytes())
                 pbar.update()
         np.savez_compressed(path, buffer=buffer)
 
     @staticmethod
     def load(path, shuffle=True):
         buffer = np.load(path)['buffer']
-        return DataFromList(buffer, shuffle=shuffle)
+        ds = DataFromList(buffer, shuffle=shuffle)
+        return MapData(ds, lambda dp: loads(dp))
 
 
 class TFRecordSerializer():
@@ -152,6 +153,46 @@ class TFRecordSerializer():
         return ds
 
 
+class HDF5Serializer():
+    """
+    Write datapoints to a HDF5 file.
+
+    Note that HDF5 files are in fact not very performant and currently do not support lazy loading.
+    It's better to use :class:`LMDBSerializer`.
+    """
+    @staticmethod
+    def save(df, path, data_paths=[]):
+        """
+        Args:
+            df (DataFlow): the DataFlow to serialize.
+            path (str): output hdf5 file.
+            data_paths (list, optional): list of h5 paths to zipped.
+        """
+        size = _reset_df_and_get_size(df)
+        buffer = dict()
+
+        for data_path in data_paths:
+            buffer[data_path] = []
+        with get_tqdm(total=size) as pbar:
+            for dp in df.get_data():
+                assert len(dp) == len(data_paths)
+                for k, el in zip(data_paths, dp):
+                    buffer[k].append(el)
+                pbar.update()
+
+        with h5py.File(path, 'w') as hf, get_tqdm(total=size) as pbar:
+            for data_path in data_paths:
+                hf.create_dataset(data_path, data=buffer[data_path])
+
+    @staticmethod
+    def load(path, data_paths=[], shuffle=True):
+        """
+        Args:
+            data_paths (list, optional): list of h5 paths to zipped.
+        """
+        return HDF5Data(path, data_paths, shuffle)
+
+
 from ..utils.develop import create_dummy_class   # noqa
 try:
     import lmdb
@@ -162,6 +203,11 @@ try:
     import tensorflow as tf
 except ImportError:
     TFRecordSerializer = create_dummy_class('TFRecordSerializer', 'tensorflow')   # noqa
+
+try:
+    import h5py
+except ImportError:
+    HDF5Serializer = create_dummy_class('HDF5Serializer', 'h5py')   # noqa
 
 
 if __name__ == '__main__':
@@ -195,4 +241,13 @@ if __name__ == '__main__':
     for idx, dp in enumerate(df.get_data()):
         pass
     print("Numpy Finished, ", idx)
+    print(time.time())
+
+    HDF5Serializer.save(ds, 'out.h5')
+    print(time.time())
+    df = HDF5Serializer.load('out.h5')
+    df.reset_state()
+    for idx, dp in enumerate(df.get_data()):
+        pass
+    print("HDF5 Finished, ", idx)
     print(time.time())
