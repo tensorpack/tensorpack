@@ -50,12 +50,12 @@ def intersection(boxes1, boxes2):
   all_pairs_min_ymax = np.minimum(y_max1, np.transpose(y_max2))
   all_pairs_max_ymin = np.maximum(y_min1, np.transpose(y_min2))
   intersect_heights = np.maximum(
-      np.zeros(all_pairs_max_ymin.shape),
+      np.zeros(all_pairs_max_ymin.shape, dtype='f4'),
       all_pairs_min_ymax - all_pairs_max_ymin)
   all_pairs_min_xmax = np.minimum(x_max1, np.transpose(x_max2))
   all_pairs_max_xmin = np.maximum(x_min1, np.transpose(x_min2))
   intersect_widths = np.maximum(
-      np.zeros(all_pairs_max_xmin.shape),
+      np.zeros(all_pairs_max_xmin.shape, dtype='f4'),
       all_pairs_min_xmax - all_pairs_max_xmin)
   return intersect_heights * intersect_widths
 
@@ -93,5 +93,5 @@ def ioa(boxes1, boxes2):
     a numpy array with shape [N, M] representing pairwise ioa scores.
   """
   intersect = intersection(boxes1, boxes2)
-  areas = np.expand_dims(area(boxes2), axis=0)
-  return intersect / areas
+  inv_areas = np.expand_dims(1.0 / area(boxes2), axis=0)
+  return intersect * inv_areas
