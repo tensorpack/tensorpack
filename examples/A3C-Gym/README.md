@@ -38,9 +38,9 @@ Watch the agent play:
 Dump some videos:
 `./train-atari.py --task dump_video --load Breakout-v0.npz --env Breakout-v0 --output output_dir --episode 3`
 
-This table lists available pretrained models and scores (average over 100 episodes),
+This table lists available pretrained models and __scores__ (average over 100 episodes),
 with their submission links.
-The site is not maintained any more so the links might become invalid any time.
+The old submission site is not maintained any more so the links might become invalid any time.
 
 | | | | |
 | - | - | - | - |

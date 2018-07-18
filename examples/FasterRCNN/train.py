@@ -240,8 +240,7 @@ class ResNetC4Model(DetectionModel):
             total_cost = tf.add_n([
                 rpn_label_loss, rpn_box_loss,
                 fastrcnn_label_loss, fastrcnn_box_loss,
-                mrcnn_loss,
-                wd_cost], 'total_cost')
+                mrcnn_loss, wd_cost], 'total_cost')
 
             add_moving_summary(total_cost, wd_cost)
             return total_cost * (1. / cfg.TRAIN.NUM_GPUS)

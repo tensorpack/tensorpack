@@ -71,7 +71,7 @@ def detect_one_image(img, model_func):
     orig_shape = img.shape[:2]
     resizer = CustomResize(cfg.PREPROC.SHORT_EDGE_SIZE, cfg.PREPROC.MAX_SIZE)
     resized_img = resizer.augment(img)
-    scale = (resized_img.shape[0] * 1.0 / img.shape[0] + resized_img.shape[1] * 1.0 / img.shape[1]) / 2
+    scale = np.sqrt(resized_img.shape[0] * 1.0 / img.shape[0] * resized_img.shape[1] / img.shape[1])
     boxes, probs, labels, *masks = model_func(resized_img)
     boxes = boxes / scale
     # boxes are already clipped inside the graph, but after the floating point scaling, this may not be true any more.
@@ -113,8 +113,8 @@ def eval_coco(df, detect_func):
                 res = {
                     'image_id': img_id,
                     'category_id': cat_id,
-                    'bbox': list(map(lambda x: float(round(x, 1)), box)),
-                    'score': float(round(r.score, 2)),
+                    'bbox': list(map(lambda x: round(float(x), 2), box)),
+                    'score': round(r.score, 3),
                 }
 
                 # also append segmentation to results
