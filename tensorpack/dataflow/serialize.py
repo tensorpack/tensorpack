@@ -89,6 +89,7 @@ class NumpySerializer():
     Note that this would have to store the entire dataflow in memory,
     and is also >10x slower than the other serializers.
     """
+
     @staticmethod
     def save(df, path):
         """
@@ -96,11 +97,19 @@ class NumpySerializer():
             df (DataFlow): the DataFlow to serialize.
             path (str): output npz file.
         """
+
+        if os.environ.get('TENSORPACK_SERIALIZE', None) == 'msgpack':
+            def _dumps(dp):
+                return dumps(dp)
+        else:
+            def _dumps(dp):
+                return dumps(dp).to_pybytes()
+
         buffer = []
         size = _reset_df_and_get_size(df)
         with get_tqdm(total=size) as pbar:
             for dp in df.get_data():
-                buffer.append(dumps(dp).to_pybytes())
+                buffer.append(_dumps(dp))
                 pbar.update()
         np.savez_compressed(path, buffer=buffer)
 
