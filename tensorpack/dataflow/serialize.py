@@ -97,26 +97,18 @@ class NumpySerializer():
             df (DataFlow): the DataFlow to serialize.
             path (str): output npz file.
         """
-
-        if os.environ.get('TENSORPACK_SERIALIZE', None) == 'msgpack':
-            def _dumps(dp):
-                return dumps(dp)
-        else:
-            def _dumps(dp):
-                return dumps(dp).to_pybytes()
-
         buffer = []
         size = _reset_df_and_get_size(df)
         with get_tqdm(total=size) as pbar:
             for dp in df.get_data():
-                buffer.append(_dumps(dp))
+                buffer.append(dp)
                 pbar.update()
-        np.savez_compressed(path, buffer=buffer)
+        np.savez_compressed(path, buffer=np.asarray(buffer, dtype=np.object))
 
     @staticmethod
     def load(path, shuffle=True):
         buffer = np.load(path)['buffer']
-        ds = DataFromList(buffer, shuffle=shuffle)
+        return DataFromList(buffer, shuffle=shuffle)
         return MapData(ds, lambda dp: loads(dp))
 
 
