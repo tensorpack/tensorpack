@@ -1,57 +1,63 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # File: load-vgg16.py
-# Author: Yuxin Wu
 
 from __future__ import print_function
 import cv2
 import tensorflow as tf
 import numpy as np
 import os
+import six
 import argparse
 
 from tensorpack import *
-from tensorpack.tfutils.symbolic_functions import *
-from tensorpack.tfutils.summary import *
 from tensorpack.dataflow.dataset import ILSVRCMeta
+
+enable_argscope_for_module(tf.layers)
 
 
 def tower_func(image):
-    with argscope(Conv2D, kernel_size=3, activation=tf.nn.relu):
-        logits = (LinearWrap(image)
-                  .Conv2D('conv1_1', 64)
-                  .Conv2D('conv1_2', 64)
-                  .MaxPooling('pool1', 2)
-                  # 112
-                  .Conv2D('conv2_1', 128)
-                  .Conv2D('conv2_2', 128)
-                  .MaxPooling('pool2', 2)
-                  # 56
-                  .Conv2D('conv3_1', 256)
-                  .Conv2D('conv3_2', 256)
-                  .Conv2D('conv3_3', 256)
-                  .MaxPooling('pool3', 2)
-                  # 28
-                  .Conv2D('conv4_1', 512)
-                  .Conv2D('conv4_2', 512)
-                  .Conv2D('conv4_3', 512)
-                  .MaxPooling('pool4', 2)
-                  # 14
-                  .Conv2D('conv5_1', 512)
-                  .Conv2D('conv5_2', 512)
-                  .Conv2D('conv5_3', 512)
-                  .MaxPooling('pool5', 2)
-                  # 7
-                  .FullyConnected('fc6', 4096, activation=tf.nn.relu)
-                  .Dropout('drop0', 0.5)
-                  .FullyConnected('fc7', 4096, activation=tf.nn.relu)
-                  .Dropout('drop1', 0.5)
-                  .FullyConnected('fc8', 1000)())
+    is_training = get_current_tower_context().is_training
+
+    with argscope([tf.layers.conv2d], kernel_size=3, activation=tf.nn.relu, padding='same'):
+        x = image
+        x = tf.layers.conv2d(x, 64, name='conv1_1')
+        x = tf.layers.conv2d(x, 64, name='conv1_2')
+        x = tf.layers.max_pooling2d(x, 2, 2, name='pool1')
+
+        x = tf.layers.conv2d(x, 128, name='conv2_1')
+        x = tf.layers.conv2d(x, 128, name='conv2_2')
+        x = tf.layers.max_pooling2d(x, 2, 2, name='pool2')
+
+        x = tf.layers.conv2d(x, 256, name='conv3_1')
+        x = tf.layers.conv2d(x, 256, name='conv3_2')
+        x = tf.layers.conv2d(x, 256, name='conv3_3')
+        x = tf.layers.max_pooling2d(x, 2, 2, name='pool3')
+
+        x = tf.layers.conv2d(x, 512, name='conv4_1')
+        x = tf.layers.conv2d(x, 512, name='conv4_2')
+        x = tf.layers.conv2d(x, 512, name='conv4_3')
+        x = tf.layers.max_pooling2d(x, 2, 2, name='pool4')
+
+        x = tf.layers.conv2d(x, 512, name='conv5_1')
+        x = tf.layers.conv2d(x, 512, name='conv5_2')
+        x = tf.layers.conv2d(x, 512, name='conv5_3')
+        x = tf.layers.max_pooling2d(x, 2, 2, name='pool5')
+        x = tf.layers.flatten(x, name='flatten')
+
+        x = tf.layers.dense(x, 4096, activation=tf.nn.relu, name='fc6')
+        x = tf.layers.dropout(x, rate=0.5, name='drop0', training=is_training)
+        x = tf.layers.dense(x, 4096, activation=tf.nn.relu, name='fc7')
+        x = tf.layers.dropout(x, rate=0.5, name='drop1', training=is_training)
+        logits = tf.layers.dense(x, 1000, activation=tf.identity, name='fc8')
+
     tf.nn.softmax(logits, name='prob')
 
 
 def run_test(path, input):
     param_dict = dict(np.load(path))
+    param_dict = {k.replace('/W', '/kernel').replace('/b', '/bias'): v for k, v in six.iteritems(param_dict)}
+
     predict_func = OfflinePredictor(PredictConfig(
         inputs_desc=[InputDesc(tf.float32, (None, 224, 224, 3), 'input')],
         tower_func=tower_func,
