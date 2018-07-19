@@ -88,7 +88,7 @@ class NumpySerializer():
     """
     Serialize the entire dataflow to a npz dict.
     Note that this would have to store the entire dataflow in memory,
-    and is also >10x slower than the other serializers.
+    and is also >10x slower than LMDB/TFRecord serializers.
     """
 
     @staticmethod
@@ -110,7 +110,6 @@ class NumpySerializer():
     def load(path, shuffle=True):
         buffer = np.load(path)['buffer']
         return DataFromList(buffer, shuffle=shuffle)
-        return MapData(ds, lambda dp: loads(dp))
 
 
 class TFRecordSerializer():
@@ -168,16 +167,16 @@ class HDF5Serializer():
         Args:
             df (DataFlow): the DataFlow to serialize.
             path (str): output hdf5 file.
-            data_paths (list): list of h5 paths to zipped.
+            data_paths (list[str]): list of h5 paths. It should have the same
+                length as each datapoint, and each path should correspond to one
+                component of the datapoint.
         """
         size = _reset_df_and_get_size(df)
-        buffer = defaultdict()
+        buffer = defaultdict(list)
 
-        for data_path in data_paths:
-            buffer[data_path] = []
         with get_tqdm(total=size) as pbar:
             for dp in df.get_data():
-                assert len(dp) == len(data_paths)
+                assert len(dp) == len(data_paths), "Datapoint has {} components!".format(len(dp))
                 for k, el in zip(data_paths, dp):
                     buffer[k].append(el)
                 pbar.update()
@@ -190,7 +189,7 @@ class HDF5Serializer():
     def load(path, data_paths, shuffle=True):
         """
         Args:
-            data_paths (list): list of h5 paths to zipped.
+            data_paths (list): list of h5 paths to be zipped.
         """
         return HDF5Data(path, data_paths, shuffle)
 

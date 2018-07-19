@@ -62,26 +62,26 @@ class SerializerTest(unittest.TestCase):
         self.run_write_read_test('test.lmdb', LMDBSerializer,
                                  {}, {},
                                  {}, {'shuffle': False},
-                                 'skip test_lmdb, no lmdb available')
+                                 'Skip test_lmdb, no lmdb available')
 
     def test_tfrecord(self):
         self.run_write_read_test('test.tfrecord', TFRecordSerializer,
                                  {}, {},
                                  {}, {'size': 32},
-                                 'skip test_tfrecord, no tensorflow available')
+                                 'Skip test_tfrecord, no tensorflow available')
 
     def test_numpy(self):
         self.run_write_read_test('test.npz', NumpySerializer,
                                  {}, {},
                                  {}, {'shuffle': False},
-                                 'skip test_numpy, no numpy available')
+                                 'Skip test_numpy, no numpy available')
 
     def test_hdf5(self):
         args = [['label', 'image']]
         self.run_write_read_test('test.h5', HDF5Serializer,
                                  args, {},
                                  args, {'shuffle': False},
-                                 'skip test_hdf5, no h5py available')
+                                 'Skip test_hdf5, no h5py available')
 
 
 if __name__ == '__main__':
