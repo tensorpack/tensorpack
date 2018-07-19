@@ -122,9 +122,6 @@ class Monitors(Callback):
         for m in self._monitors:
             assert isinstance(m, TrainingMonitor), m
 
-    def _setup_graph(self):
-        self._scalar_history.setup_graph(self.trainer)
-
     def _dispatch(self, func):
         for m in self._monitors:
             func(m)
@@ -404,8 +401,6 @@ class ScalarPrinter(TrainingMonitor):
 
         self._enable_step = enable_step
         self._enable_epoch = enable_epoch
-
-    def _setup_graph(self):
         self._dic = {}
 
     def _trigger_step(self):

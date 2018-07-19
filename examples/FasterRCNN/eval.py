@@ -114,7 +114,7 @@ def eval_coco(df, detect_func):
                     'image_id': img_id,
                     'category_id': cat_id,
                     'bbox': list(map(lambda x: round(float(x), 2), box)),
-                    'score': round(r.score, 3),
+                    'score': round(float(r.score), 3),
                 }
 
                 # also append segmentation to results
