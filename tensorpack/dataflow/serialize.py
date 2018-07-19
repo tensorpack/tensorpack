@@ -3,6 +3,7 @@
 
 import os
 import numpy as np
+from collections import defaultdict
 
 from ..utils.utils import get_tqdm
 from ..utils import logger
@@ -162,15 +163,15 @@ class HDF5Serializer():
     It's better to use :class:`LMDBSerializer`.
     """
     @staticmethod
-    def save(df, path, data_paths=[]):
+    def save(df, path, data_paths):
         """
         Args:
             df (DataFlow): the DataFlow to serialize.
             path (str): output hdf5 file.
-            data_paths (list, optional): list of h5 paths to zipped.
+            data_paths (list): list of h5 paths to zipped.
         """
         size = _reset_df_and_get_size(df)
-        buffer = dict()
+        buffer = defaultdict()
 
         for data_path in data_paths:
             buffer[data_path] = []
@@ -186,10 +187,10 @@ class HDF5Serializer():
                 hf.create_dataset(data_path, data=buffer[data_path])
 
     @staticmethod
-    def load(path, data_paths=[], shuffle=True):
+    def load(path, data_paths, shuffle=True):
         """
         Args:
-            data_paths (list, optional): list of h5 paths to zipped.
+            data_paths (list): list of h5 paths to zipped.
         """
         return HDF5Data(path, data_paths, shuffle)
 
