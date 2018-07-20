@@ -41,7 +41,7 @@ matrix:
 
 install:
 - pip install -U pip    # the pip version on travis is too old
-- pip install flake8 scikit-image opencv-python
+- pip install flake8 scikit-image opencv-python lmdb h5py pyarrow msgpack
 - pip install .
   # check that dataflow can be imported alone
 - python -c "import tensorpack.dataflow"

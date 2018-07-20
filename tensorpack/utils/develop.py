@@ -11,6 +11,7 @@ import functools
 from datetime import datetime
 import importlib
 import types
+import six
 
 from . import logger
 
@@ -26,9 +27,18 @@ def create_dummy_class(klass, dependency):
     Returns:
         class: a class object
     """
+
+    class _DummyMetaClass(type):
+        # throw error on class attribute access
+        def __getattr__(_, __):
+            raise ImportError("Cannot import '{}', therefore '{}' is not available".format(dependency, klass))
+
+    @six.add_metaclass(_DummyMetaClass)
     class _Dummy(object):
+        # throw error on constructor
         def __init__(self, *args, **kwargs):
             raise ImportError("Cannot import '{}', therefore '{}' is not available".format(dependency, klass))
+
     return _Dummy
 
 
