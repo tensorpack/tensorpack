@@ -441,7 +441,7 @@ class ScalarHistory(TrainingMonitor):
     Only used by monitors internally.
     """
 
-    def _setup_graph(self):
+    def __init__(self):
         self._dic = defaultdict(list)
 
     def process_scalar(self, name, val):
