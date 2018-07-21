@@ -4,7 +4,7 @@
 # Author: Yuxin Wu
 
 from tensorpack import *
-from tensorpack.tfutils import get_tf_version_number
+from tensorpack.tfutils import get_tf_version_tuple
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
 import tensorflow as tf
@@ -83,7 +83,7 @@ class Model(DCGAN.Model):
 
 
 if __name__ == '__main__':
-    assert get_tf_version_number() >= 1.4
+    assert get_tf_version_tuple() >= (1, 4)
     args = DCGAN.get_args(default_batch=64, default_z_dim=128)
     M = Model(shape=args.final_size, batch=args.batch, z_dim=args.z_dim)
     if args.sample:

@@ -8,7 +8,6 @@ import os
 
 from .base import Callback
 from ..utils import logger
-from ..tfutils.common import get_tf_version_number
 
 __all__ = ['ModelSaver', 'MinSaver', 'MaxSaver']
 
@@ -51,19 +50,12 @@ class ModelSaver(Callback):
             vars.extend(tf.get_collection(key))
         vars = list(set(vars))
         self.path = os.path.join(self.checkpoint_dir, 'model')
-        if get_tf_version_number() <= 1.1:
-            self.saver = tf.train.Saver(
-                var_list=vars,
-                max_to_keep=self._max_to_keep,
-                keep_checkpoint_every_n_hours=self._keep_every_n_hours,
-                write_version=tf.train.SaverDef.V2)
-        else:
-            self.saver = tf.train.Saver(
-                var_list=vars,
-                max_to_keep=self._max_to_keep,
-                keep_checkpoint_every_n_hours=self._keep_every_n_hours,
-                write_version=tf.train.SaverDef.V2,
-                save_relative_paths=True)
+        self.saver = tf.train.Saver(
+            var_list=vars,
+            max_to_keep=self._max_to_keep,
+            keep_checkpoint_every_n_hours=self._keep_every_n_hours,
+            write_version=tf.train.SaverDef.V2,
+            save_relative_paths=True)
         # Scaffold will call saver.build from this collection
         tf.add_to_collection(tf.GraphKeys.SAVERS, self.saver)
 

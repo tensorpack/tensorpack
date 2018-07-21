@@ -7,7 +7,7 @@ from tensorflow.python.training import moving_averages
 from ..utils import logger
 from ..utils.argtools import get_data_format
 from ..tfutils.tower import get_current_tower_context
-from ..tfutils.common import get_tf_version_number
+from ..tfutils.common import get_tf_version_tuple
 
 from .common import layer_register, VariableHolder
 from .tflayer import convert_to_tflayer_args
@@ -128,7 +128,7 @@ def BatchNorm(inputs, training=None, momentum=0.9, epsilon=1e-5,
             xn = tf.squeeze(xn, [1, 2])
     else:
         if ctx.is_training:
-            assert get_tf_version_number() >= 1.4, \
+            assert get_tf_version_tuple() >= (1, 4), \
                 "Fine tuning a BatchNorm model with fixed statistics is only " \
                 "supported after https://github.com/tensorflow/tensorflow/pull/12580 "
             if ctx.is_main_training_tower:  # only warn in first tower

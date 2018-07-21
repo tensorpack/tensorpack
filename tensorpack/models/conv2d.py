@@ -4,7 +4,7 @@
 
 import tensorflow as tf
 from .common import layer_register, VariableHolder
-from ..tfutils.common import get_tf_version_number
+from ..tfutils.common import get_tf_version_tuple
 from ..utils.argtools import shape2d, shape4d, get_data_format
 from .tflayer import rename_get_variable, convert_to_tflayer_args
 
@@ -86,14 +86,14 @@ def Conv2D(
 
         out_channel = filters
         assert out_channel % split == 0
-        assert dilation_rate == (1, 1) or get_tf_version_number() >= 1.5, 'TF>=1.5 required for group dilated conv'
+        assert dilation_rate == (1, 1) or get_tf_version_tuple() >= (1, 5), 'TF>=1.5 required for group dilated conv'
 
         kernel_shape = shape2d(kernel_size)
         filter_shape = kernel_shape + [in_channel / split, out_channel]
         stride = shape4d(strides, data_format=data_format)
 
         kwargs = dict(data_format=data_format)
-        if get_tf_version_number() >= 1.5:
+        if get_tf_version_tuple() >= (1, 5):
             kwargs['dilations'] = shape4d(dilation_rate, data_format=data_format)
 
         W = tf.get_variable(

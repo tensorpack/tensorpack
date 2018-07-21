@@ -5,6 +5,7 @@
 import tensorflow as tf
 from six.moves import map
 from ..utils.argtools import graph_memoized
+from ..utils.develop import deprecated
 
 __all__ = ['get_default_sess_config',
            'get_global_step_value',
@@ -12,7 +13,6 @@ __all__ = ['get_default_sess_config',
            # 'get_op_tensor_name',
            # 'get_tensors_by_names',
            # 'get_op_or_tensor_by_name',
-           # 'get_tf_version_number',
            ]
 
 
@@ -132,8 +132,13 @@ def get_op_or_tensor_by_name(name):
         return list(map(f, name))
 
 
+@deprecated("You should use get_tf_version_tuple instead due to the existence of TF 1.10")
 def get_tf_version_number():
-    """
-    Return a float (for comparison), indicating tensorflow version.
-    """
     return float('.'.join(tf.VERSION.split('.')[:2]))
+
+
+def get_tf_version_tuple():
+    """
+    Return TensorFlow version as a 2-element tuple (for comparison).
+    """
+    return tuple(map(int, tf.VERSION.split('.')[:2]))

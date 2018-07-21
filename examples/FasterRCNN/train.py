@@ -22,7 +22,7 @@ assert six.PY3, "FasterRCNN requires Python 3!"
 from tensorpack import *
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.tfutils import optimizer
-from tensorpack.tfutils.common import get_tf_version_number
+from tensorpack.tfutils.common import get_tf_version_tuple
 import tensorpack.utils.viz as tpviz
 
 from coco import COCODetection
@@ -514,7 +514,7 @@ if __name__ == '__main__':
     parser.add_argument('--config', help="A list of KEY=VALUE to overwrite those defined in config.py",
                         nargs='+')
 
-    if get_tf_version_number() < 1.6:
+    if get_tf_version_tuple() < (1, 6):
         # https://github.com/tensorflow/tensorflow/issues/14657
         logger.warn("TF<1.6 has a bug which may lead to crash in FasterRCNN training if you're unlucky.")
 

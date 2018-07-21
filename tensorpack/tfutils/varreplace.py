@@ -5,7 +5,7 @@
 import tensorflow as tf
 from contextlib import contextmanager
 
-from .common import get_tf_version_number
+from .common import get_tf_version_tuple
 
 __all__ = ['freeze_variables', 'remap_variables']
 
@@ -13,7 +13,7 @@ __all__ = ['freeze_variables', 'remap_variables']
 @contextmanager
 def custom_getter_scope(custom_getter):
     scope = tf.get_variable_scope()
-    if get_tf_version_number() >= 1.5:
+    if get_tf_version_tuple() >= (1, 5):
         with tf.variable_scope(
                 scope, custom_getter=custom_getter,
                 auxiliary_name_scope=False):

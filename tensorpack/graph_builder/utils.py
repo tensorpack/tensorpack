@@ -8,7 +8,7 @@ import tensorflow as tf
 
 from ..tfutils.varreplace import custom_getter_scope
 from ..tfutils.scope_utils import under_name_scope, cached_name_scope
-from ..tfutils.common import get_tf_version_number
+from ..tfutils.common import get_tf_version_tuple
 from ..utils.argtools import call_only_once
 from ..utils import logger
 
@@ -67,7 +67,7 @@ class LeastLoadedDeviceSetter(object):
         self.ps_sizes = [0] * len(self.ps_devices)
 
     def __call__(self, op):
-        if get_tf_version_number() >= 1.8:
+        if get_tf_version_tuple() >= (1, 8):
             from tensorflow.python.training.device_util import canonicalize
         else:
             def canonicalize(name):    # tensorflow/tensorflow#11484

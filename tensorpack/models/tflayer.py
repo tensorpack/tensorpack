@@ -6,7 +6,7 @@ import six
 import functools
 
 from ..utils.argtools import get_data_format
-from ..tfutils.common import get_tf_version_number
+from ..tfutils.common import get_tf_version_tuple
 from ..tfutils.varreplace import custom_getter_scope
 
 
@@ -112,7 +112,7 @@ def rename_tflayer_get_variable():
 
 
 def monkeypatch_tf_layers():
-    if get_tf_version_number() < 1.4:
+    if get_tf_version_tuple() < (1, 4):
         if not hasattr(tf.layers, 'Dense'):
             from tensorflow.python.layers.core import Dense
             tf.layers.Dense = Dense

@@ -1,6 +1,6 @@
 from case_script import TestPythonScript
 
-from tensorpack.tfutils.common import get_tf_version_number
+from tensorpack.tfutils.common import get_tf_version_tuple
 
 
 class InfoGANTest(TestPythonScript):
@@ -10,6 +10,6 @@ class InfoGANTest(TestPythonScript):
         return '../examples/GAN/InfoGAN-mnist.py'
 
     def test(self):
-        if get_tf_version_number() < 1.4:
+        if get_tf_version_tuple() < (1, 4):
             return True     # requires leaky_relu
         self.assertSurvive(self.script, args=None)

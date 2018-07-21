@@ -11,7 +11,7 @@ import six
 from ..utils import logger
 from ..utils.argtools import get_data_format
 from ..tfutils.tower import get_current_tower_context
-from ..tfutils.common import get_tf_version_number
+from ..tfutils.common import get_tf_version_tuple
 from ..tfutils.collection import backup_collection, restore_collection
 from .common import layer_register, VariableHolder
 from .tflayer import convert_to_tflayer_args, rename_get_variable
@@ -155,9 +155,9 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
     if training is None:
         training = ctx.is_training
     training = bool(training)
-    TF_version = get_tf_version_number()
+    TF_version = get_tf_version_tuple()
     if not training and ctx.is_training:
-        assert TF_version >= 1.4, \
+        assert TF_version >= (1, 4), \
             "Fine tuning a BatchNorm model with fixed statistics is only " \
             "supported after https://github.com/tensorflow/tensorflow/pull/12580 "
         if ctx.is_main_training_tower:  # only warn in first tower
@@ -178,7 +178,7 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
                 gamma_initializer=gamma_initializer,
                 fused=(ndims == 4 and axis in [1, 3]),
                 _reuse=tf.get_variable_scope().reuse)
-            if TF_version >= 1.5:
+            if TF_version >= (1, 5):
                 tf_args['virtual_batch_size'] = virtual_batch_size
             else:
                 assert virtual_batch_size is None, "Feature not supported in this version of TF!"
@@ -220,7 +220,7 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
         batch_mean_square = tf.reduce_mean(tf.square(inputs), axis=red_axis)
 
         if sync_statistics == 'nccl':
-            if six.PY3 and TF_version <= 1.9 and ctx.is_main_training_tower:
+            if six.PY3 and TF_version <= (1, 9) and ctx.is_main_training_tower:
                 logger.warn("A TensorFlow bug will cause cross-GPU BatchNorm to fail. "
                             "Apply this patch: https://github.com/tensorflow/tensorflow/pull/20360")
 
