@@ -28,7 +28,7 @@ class RunOp(Callback):
         """
         Args:
             op (tf.Operation or function): an Op, or a function that returns the Op in the graph.
-                The function will be called later (in the `setup_graph` callback).
+                The function will be called after the main graph has been created (in the `setup_graph` callback).
             run_before (bool): run the Op before training
             run_as_trigger (bool): run the Op on every :meth:`trigger()` call.
             run_step (bool): run the Op every step (along with training)

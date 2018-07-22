@@ -72,7 +72,8 @@ def backbone_argscope():
 def maybe_syncbn_scope():
     if cfg.BACKBONE.NORM == 'SyncBN':
         assert cfg.BACKBONE.FREEZE_AT == 2  # TODO add better support
-        with argscope(BatchNorm, training=None, sync_statistics='nccl'):
+        with argscope(BatchNorm, training=None,
+                      sync_statistics='nccl' if cfg.TRAINER == 'replicated' else 'horovod'):
             yield
     else:
         yield
