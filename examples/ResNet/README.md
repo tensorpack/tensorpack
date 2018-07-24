@@ -15,14 +15,14 @@ This recipe has better performance than most open source implementations.
 In fact, many papers that claim to "improve" ResNet only compete with a lower
 baseline and they actually cannot beat this ResNet recipe.
 
-| Model              | Top 5 Error | Top 1 Error |
-|:-------------------|-------------|------------:|
-| ResNet18           |     10.50%  |      29.66% |
-| ResNet34  		 |     8.56%   |      26.17% |
-| ResNet50           |     6.85%   |      23.61% |
-| ResNet50-SE       |     6.24%   |      22.64% |
-| ResNet101         |     6.04%   |      21.95% |
-| ResNet152         |     5.78%   |      21.51% |
+| Model       | Top 5 Error | Top 1 Error | Download                                                                     |
+|:------------|:------------|:-----------:|:----------------------------------------------------------------------------:|
+| ResNet18    | 10.50%      | 29.66%      | [:arrow_down:](http://models.tensorpack.com/ResNet/ImageNet-ResNet18.npz)    |
+| ResNet34    | 8.56%       | 26.17%      | [:arrow_down:](http://models.tensorpack.com/ResNet/ImageNet-ResNet34.npz)    |
+| ResNet50    | 6.85%       | 23.61%      | [:arrow_down:](http://models.tensorpack.com/ResNet/ImageNet-ResNet50.npz)    |
+| ResNet50-SE | 6.24%       | 22.64%      | [:arrow_down:](http://models.tensorpack.com/ResNet/ImageNet-ResNet50-SE.npz) |
+| ResNet101   | 6.04%       | 21.95%      | [:arrow_down:](http://models.tensorpack.com/ResNet/ImageNet-ResNet101.npz)   |
+| ResNet152   | 5.78%       | 21.51%      | [:arrow_down:](http://models.tensorpack.com/ResNet/ImageNet-ResNet152.npz)   |
 
 To train, first decompress ImageNet data into [this structure](http://tensorpack.readthedocs.io/en/latest/modules/dataflow.dataset.html#tensorpack.dataflow.dataset.ILSVRC12), then:
 ```bash

@@ -13,7 +13,7 @@ from tensorflow.python.client import timeline
 from .base import Callback
 from ..utils import logger
 from ..utils.concurrency import ensure_proc_terminate, start_proc_mask_signal
-from ..utils.gpu import get_nr_gpu
+from ..utils.gpu import get_num_gpu
 from ..utils.nvml import NVMLContext
 
 __all__ = ['GPUUtilizationTracker', 'GraphProfiler', 'PeakMemoryTracker']
@@ -40,7 +40,7 @@ class GPUUtilizationTracker(Callback):
         if devices is None:
             env = os.environ.get('CUDA_VISIBLE_DEVICES')
             if env is None:
-                self._devices = list(range(get_nr_gpu()))
+                self._devices = list(range(get_num_gpu()))
                 logger.warn("[GPUUtilizationTracker] Both devices and CUDA_VISIBLE_DEVICES are None! "
                             "Will monitor all {} visible GPUs!".format(len(self._devices)))
             else:

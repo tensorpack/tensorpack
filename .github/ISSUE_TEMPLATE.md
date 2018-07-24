@@ -3,7 +3,7 @@ An issue has to be one of the following:
 - [ ] Feature Requests
 - [ ] Questions on Using/Understanding Tensorpack
 
-For any unexpected problems, __PLEASE ALWAYS INCLUDE__:
+## For any unexpected problems, __PLEASE ALWAYS INCLUDE__:
 1. What you did:
   + If you're using examples:
     + What's the command you run:
@@ -21,18 +21,17 @@ For any unexpected problems, __PLEASE ALWAYS INCLUDE__:
       You can install Tensorpack master by `pip install -U git+https://github.com/ppwwyyxx/tensorpack.git`.:
   + Hardware information, if relevant.
 
-For efficiency issues, PLEASE first read http://tensorpack.readthedocs.io/en/latest/tutorial/performance-tuning.html
+About efficiency issues, PLEASE first read http://tensorpack.readthedocs.io/en/latest/tutorial/performance-tuning.html
 
-Feature Requests:
+## Feature Requests:
 + You can implement a lot of features by extending Tensorpack
   (See http://tensorpack.readthedocs.io/en/latest/tutorial/index.html#extend-tensorpack).
   It does not have to be added to Tensorpack unless you have a good reason.
 + "Could you improve/implement an example/paper ?" 
-  -- the answer is: we don't know, and we don't take feature requests for
-  examples. You should do it yourself with Tensorpack. If you don't know how to
-  do it, you may ask a usage question.
+  -- the answer is: we have no plans to do so and we don't take feature requests for
+  examples. If you don't know how to do it, you may ask a usage question.
 
-Usage Questions:
+## Usage Questions:
 
 + Read the [tutorials](http://tensorpack.readthedocs.io/en/latest/tutorial/index.html#user-tutorials) first.
 + We answer "HOW to do X with Tensorpack" for a well-defined X.

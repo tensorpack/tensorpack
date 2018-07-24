@@ -13,15 +13,15 @@ Alternative link to this page: [http://dorefa.net](http://dorefa.net)
 This is a good set of baselines for research in model quantization.
 These quantization techniques, when applied on AlexNet, achieves the following ImageNet performance in this implementation:
 
-| Model                              | Bit Width <br/> (weights, activations, gradients) | Top 1 Validation Error <sup>[1](#ft1)</sup>|
-|:----------------------------------:|:-------------------------------------------------:|:----------------------:|
-| Full Precision<sup>[2](#ft2)</sup> | 32,32,32                                          | 40.3%                  |
-| TTQ                                | t,32,32                                           | 42.0%                  |
-| BWN                                | 1,32,32                                           | 44.6%                  |
-| BNN                                | 1,1,32                                            | 51.9%                  |
-| DoReFa                             | 1,2,32                                            | 46.6%                  |
-| DoReFa                             | 1,2,6                                             | 46.8%                  |
-| DoReFa                             | 1,2,4                                             | 54.0%                  |
+| Model                              | Bit Width <br/> (weights, activations, gradients) | Top 1 Validation Error <sup>[1](#ft1)</sup>                                   |
+|:----------------------------------:|:-------------------------------------------------:|:-----------------------------------------------------------------------------:|
+| Full Precision<sup>[2](#ft2)</sup> | 32,32,32                                          | 40.3%                                                                         |
+| TTQ                                | t,32,32                                           | 42.0%                                                                         |
+| BWN                                | 1,32,32                                           | 44.6%                                                                         |
+| BNN                                | 1,1,32                                            | 51.9%                                                                         |
+| DoReFa                             | 1,2,32                                            | 46.6%                                                                         |
+| DoReFa                             | 1,2,6                                             | 46.8% [:arrow_down:](http://models.tensorpack.com/DoReFa-Net/alexnet-126.npz) |
+| DoReFa                             | 1,2,4                                             | 54.0%                                                                         |
 
  <a id="ft1">1</a>: These numbers were obtained by training on 8 GPUs with a total batch size of 256.
 The DoReFa-Net models reach slightly better performance than our paper, due to

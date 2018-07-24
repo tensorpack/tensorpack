@@ -221,8 +221,8 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
 
         if sync_statistics == 'nccl':
             if six.PY3 and TF_version <= (1, 9) and ctx.is_main_training_tower:
-                logger.warn("A TensorFlow bug will cause cross-GPU BatchNorm to fail. "
-                            "Apply this patch: https://github.com/tensorflow/tensorflow/pull/20360")
+                logger.warn("A bug in TensorFlow<=1.9 will cause cross-GPU BatchNorm to fail. "
+                            "Upgrade or apply this patch manually: https://github.com/tensorflow/tensorflow/pull/20360")
 
             from tensorflow.contrib.nccl.ops import gen_nccl_ops
             shared_name = re.sub('tower[0-9]+/', '', tf.get_variable_scope().name)
