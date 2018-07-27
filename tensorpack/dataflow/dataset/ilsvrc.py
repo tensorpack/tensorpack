@@ -25,7 +25,7 @@ class ILSVRCMeta(object):
     def __init__(self, dir=None):
         if dir is None:
             dir = get_dataset_path('ilsvrc_metadata')
-        self.dir = dir
+        self.dir = os.path.expanduser(dir)
         mkdir_p(self.dir)
         f = os.path.join(self.dir, 'synsets.txt')
         if not os.path.isfile(f):
@@ -141,6 +141,7 @@ class ILSVRC12Files(RNGDataFlow):
         Same as in :class:`ILSVRC12`.
         """
         assert name in ['train', 'test', 'val'], name
+        dir = os.path.expanduser(dir)
         assert os.path.isdir(dir), dir
         self.full_dir = os.path.join(dir, name)
         self.name = name

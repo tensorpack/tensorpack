@@ -21,9 +21,10 @@ To print flops:
 ```
 It will print about 75Mflops, because the paper counts multiply+add as 1 flop.
 
-Evaluate the [pretrained model](http://models.tensorpack.com/ShuffleNet/):
+Download and evaluate the pretrained model:
 ```
-./shufflenet.py --eval --data /path/to/ilsvrc --load /path/to/model
+wget http://models.tensorpack.com/ImageNetModels/ShuffleNet.npz
+./shufflenet.py --eval --data /path/to/ilsvrc --load ShuffleNet.npz
 ```
 
 ### AlexNet
@@ -50,8 +51,8 @@ See `./vgg16.py --help` for usage.
  |:------------------------------------------|---------------------|--------------------:|
  | 29~30% (large variation with random seed) | 28%                 |               27.6% |
  
- Note that the purpose of this experiment in the paper is not to claim GroupNorm is better
- than BatchNorm, therefore the training settings and hyperpameters have not been individually tuned for best accuracy.
+Note that the purpose of this experiment in the paper is not to claim GroupNorm is better
+than BatchNorm, therefore the training settings and hyperpameters have not been individually tuned for best accuracy.
 
 ### ResNet
 

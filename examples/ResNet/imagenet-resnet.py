@@ -112,7 +112,7 @@ if __name__ == '__main__':
     parser.add_argument('--data', help='ILSVRC dataset dir')
     parser.add_argument('--load', help='load a model for training or evaluation')
     parser.add_argument('--fake', help='use FakeData to debug or benchmark this model', action='store_true')
-    parser.add_argument('--data_format', help='image data format',
+    parser.add_argument('--data-format', help='image data format',
                         default='NCHW', choices=['NCHW', 'NHWC'])
     parser.add_argument('-d', '--depth', help='ResNet depth',
                         type=int, default=50, choices=[18, 34, 50, 101, 152])
