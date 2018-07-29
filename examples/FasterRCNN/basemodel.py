@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 # File: basemodel.py
 
-from contextlib import contextmanager
+from contextlib import contextmanager, ExitStack
 import tensorflow as tf
+from tensorflow.contrib.framework import add_model_variable
+
 from tensorpack.tfutils import argscope
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
-from tensorpack.tfutils.varreplace import custom_getter_scope
+from tensorpack.tfutils.varreplace import custom_getter_scope, freeze_variables
 from tensorpack.models import (
     Conv2D, MaxPooling, BatchNorm, layer_register)
 
@@ -40,13 +42,16 @@ def GroupNorm(x, group=32, gamma_initializer=tf.constant_initializer(1.)):
     return tf.reshape(out, orig_shape, name='output')
 
 
-def maybe_freeze_affine(getter, *args, **kwargs):
+def freeze_affine_getter(getter, *args, **kwargs):
     # custom getter to freeze affine params inside bn
     name = args[0] if len(args) else kwargs.get('name')
     if name.endswith('/gamma') or name.endswith('/beta'):
-        if cfg.BACKBONE.FREEZE_AFFINE:
-            kwargs['trainable'] = False
-    return getter(*args, **kwargs)
+        kwargs['trainable'] = False
+        ret = getter(*args, **kwargs)
+        add_model_variable(ret)
+    else:
+        ret = getter(*args, **kwargs)
+    return ret
 
 
 def maybe_reverse_pad(topleft, bottomright):
@@ -56,26 +61,33 @@ def maybe_reverse_pad(topleft, bottomright):
 
 
 @contextmanager
-def backbone_argscope():
+def backbone_scope(freeze):
+    """
+    Args:
+        freeze (bool): whether to freeze all the variables under the scope
+    """
     def nonlin(x):
         x = get_norm()(x)
         return tf.nn.relu(x)
 
     with argscope([Conv2D, MaxPooling, BatchNorm], data_format='channels_first'), \
-            argscope(Conv2D, use_bias=False, activation=nonlin), \
-            argscope(BatchNorm, training=False), \
-            custom_getter_scope(maybe_freeze_affine):
-        yield
+            argscope(Conv2D, use_bias=False, activation=nonlin,
+                     kernel_initializer=tf.variance_scaling_initializer(
+                         scale=2.0, mode='fan_out')), \
+            ExitStack() as stack:
+        if cfg.BACKBONE.NORM in ['FreezeBN', 'SyncBN']:
+            if freeze or cfg.BACKBONE.NORM == 'FreezeBN':
+                stack.enter_context(argscope(BatchNorm, training=False))
+            else:
+                stack.enter_context(argscope(
+                    BatchNorm, sync_statistics='nccl' if cfg.TRAINER == 'replicated' else 'horovod'))
 
-
-@contextmanager
-def maybe_syncbn_scope():
-    if cfg.BACKBONE.NORM == 'SyncBN':
-        assert cfg.BACKBONE.FREEZE_AT == 2  # TODO add better support
-        with argscope(BatchNorm, training=None,
-                      sync_statistics='nccl' if cfg.TRAINER == 'replicated' else 'horovod'):
-            yield
-    else:
+        if freeze:
+            stack.enter_context(freeze_variables(stop_gradient=False, skip_collection=True))
+        else:
+            # the layers are not completely freezed, but we may want to only freeze the affine
+            if cfg.BACKBONE.FREEZE_AFFINE:
+                stack.enter_context(custom_getter_scope(freeze_affine_getter))
         yield
 
 
@@ -147,36 +159,37 @@ def resnet_group(name, l, block_func, features, count, stride):
 
 def resnet_c4_backbone(image, num_blocks):
     assert len(num_blocks) == 3
-    with backbone_argscope():
+    freeze_at = cfg.BACKBONE.FREEZE_AT
+    with backbone_scope(freeze=freeze_at > 0):
         l = tf.pad(image, [[0, 0], [0, 0], maybe_reverse_pad(2, 3), maybe_reverse_pad(2, 3)])
         l = Conv2D('conv0', l, 64, 7, strides=2, padding='VALID')
         l = tf.pad(l, [[0, 0], [0, 0], maybe_reverse_pad(0, 1), maybe_reverse_pad(0, 1)])
         l = MaxPooling('pool0', l, 3, strides=2, padding='VALID')
+
+    with backbone_scope(freeze=freeze_at > 1):
         c2 = resnet_group('group0', l, resnet_bottleneck, 64, num_blocks[0], 1)
-        # TODO replace var by const to enable optimization
-        if cfg.BACKBONE.FREEZE_AT == 2:
-            c2 = tf.stop_gradient(c2)
-        with maybe_syncbn_scope():
-            c3 = resnet_group('group1', c2, resnet_bottleneck, 128, num_blocks[1], 2)
-            c4 = resnet_group('group2', c3, resnet_bottleneck, 256, num_blocks[2], 2)
+    with backbone_scope(freeze=False):
+        c3 = resnet_group('group1', c2, resnet_bottleneck, 128, num_blocks[1], 2)
+        c4 = resnet_group('group2', c3, resnet_bottleneck, 256, num_blocks[2], 2)
     # 16x downsampling up to now
     return c4
 
 
 @auto_reuse_variable_scope
 def resnet_conv5(image, num_block):
-    with backbone_argscope(), maybe_syncbn_scope():
+    with backbone_scope(freeze=False):
         l = resnet_group('group3', image, resnet_bottleneck, 512, num_block, 2)
         return l
 
 
 def resnet_fpn_backbone(image, num_blocks):
+    freeze_at = cfg.BACKBONE.FREEZE_AT
     shape2d = tf.shape(image)[2:]
     mult = float(cfg.FPN.RESOLUTION_REQUIREMENT)
     new_shape2d = tf.to_int32(tf.ceil(tf.to_float(shape2d) / mult) * mult)
     pad_shape2d = new_shape2d - shape2d
     assert len(num_blocks) == 4, num_blocks
-    with backbone_argscope():
+    with backbone_scope(freeze=freeze_at > 0):
         chan = image.shape[1]
         pad_base = maybe_reverse_pad(2, 3)
         l = tf.pad(image, tf.stack(
@@ -187,13 +200,12 @@ def resnet_fpn_backbone(image, num_blocks):
         l = Conv2D('conv0', l, 64, 7, strides=2, padding='VALID')
         l = tf.pad(l, [[0, 0], [0, 0], maybe_reverse_pad(0, 1), maybe_reverse_pad(0, 1)])
         l = MaxPooling('pool0', l, 3, strides=2, padding='VALID')
+    with backbone_scope(freeze=freeze_at > 1):
         c2 = resnet_group('group0', l, resnet_bottleneck, 64, num_blocks[0], 1)
-        if cfg.BACKBONE.FREEZE_AT == 2:
-            c2 = tf.stop_gradient(c2)
-        with maybe_syncbn_scope():
-            c3 = resnet_group('group1', c2, resnet_bottleneck, 128, num_blocks[1], 2)
-            c4 = resnet_group('group2', c3, resnet_bottleneck, 256, num_blocks[2], 2)
-            c5 = resnet_group('group3', c4, resnet_bottleneck, 512, num_blocks[3], 2)
+    with backbone_scope(freeze=False):
+        c3 = resnet_group('group1', c2, resnet_bottleneck, 128, num_blocks[1], 2)
+        c4 = resnet_group('group2', c3, resnet_bottleneck, 256, num_blocks[2], 2)
+        c5 = resnet_group('group3', c4, resnet_bottleneck, 512, num_blocks[3], 2)
     # 32x downsampling up to now
     # size of c5: ceil(input/32)
     return c2, c3, c4, c5

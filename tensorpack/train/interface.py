@@ -4,7 +4,8 @@
 import tensorflow as tf
 
 from ..input_source import (
-    InputSource, FeedInput, QueueInput, StagingInput, DummyConstantInput)
+    InputSource, FeedInput, FeedfreeInput,
+    QueueInput, StagingInput, DummyConstantInput)
 from ..utils import logger
 
 from .config import TrainConfig
@@ -40,7 +41,8 @@ def apply_default_prefetch(input_source_or_dataflow, trainer):
             # seem to only improve on >1 GPUs
             assert not isinstance(trainer, SimpleTrainer)
 
-            if not isinstance(input, (StagingInput, DummyConstantInput)):
+            if isinstance(input, FeedfreeInput) and \
+               not isinstance(input, (StagingInput, DummyConstantInput)):
                 logger.info("Automatically applying StagingInput on the DataFlow.")
                 input = StagingInput(input)
     return input

@@ -234,8 +234,7 @@ class ResNetC4Model(DetectionModel):
                 mrcnn_loss = 0.0
 
             wd_cost = regularize_cost(
-                '(?:group1|group2|group3|rpn|fastrcnn|maskrcnn)/.*W',
-                l2_regularizer(cfg.TRAIN.WEIGHT_DECAY), name='wd_cost')
+                '.*/W', l2_regularizer(cfg.TRAIN.WEIGHT_DECAY), name='wd_cost')
 
             total_cost = tf.add_n([
                 rpn_label_loss, rpn_box_loss,
@@ -372,8 +371,7 @@ class ResNetFPNModel(DetectionModel):
                 mrcnn_loss = 0.0
 
             wd_cost = regularize_cost(
-                '(?:group1|group2|group3|rpn|fpn|fastrcnn|maskrcnn)/.*W',
-                l2_regularizer(cfg.TRAIN.WEIGHT_DECAY), name='wd_cost')
+                '.*/W', l2_regularizer(cfg.TRAIN.WEIGHT_DECAY), name='wd_cost')
 
             total_cost = tf.add_n([rpn_label_loss, rpn_box_loss,
                                    fastrcnn_label_loss, fastrcnn_box_loss,

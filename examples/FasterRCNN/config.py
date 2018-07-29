@@ -72,7 +72,7 @@ _C.BACKBONE.RESNET_NUM_BLOCK = [3, 4, 6, 3]     # for resnet50
 # RESNET_NUM_BLOCK = [3, 4, 23, 3]    # for resnet101
 _C.BACKBONE.FREEZE_AFFINE = False   # do not train affine parameters inside norm layers
 _C.BACKBONE.NORM = 'FreezeBN'  # options: FreezeBN, SyncBN, GN
-_C.BACKBONE.FREEZE_AT = 2  # options: 0, 2
+_C.BACKBONE.FREEZE_AT = 2  # options: 0, 1, 2
 
 # Use a base model with TF-preferred padding mode,
 # which may pad more pixels on right/bottom than top/left.
@@ -169,7 +169,7 @@ def finalize_configs(is_training):
     assert _C.BACKBONE.NORM in ['FreezeBN', 'SyncBN', 'GN'], _C.BACKBONE.NORM
     if _C.BACKBONE.NORM != 'FreezeBN':
         assert not _C.BACKBONE.FREEZE_AFFINE
-    assert _C.BACKBONE.FREEZE_AT in [0, 2]
+    assert _C.BACKBONE.FREEZE_AT in [0, 1, 2]
 
     _C.RPN.NUM_ANCHOR = len(_C.RPN.ANCHOR_SIZES) * len(_C.RPN.ANCHOR_RATIOS)
     assert len(_C.FPN.ANCHOR_STRIDES) == len(_C.RPN.ANCHOR_SIZES)
