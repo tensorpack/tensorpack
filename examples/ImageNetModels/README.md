@@ -10,8 +10,7 @@ Pretrained models can be downloaded at [tensorpack model zoo](http://models.tens
 Reproduce [ShuffleNet: An Extremely Efficient Convolutional Neural Network for Mobile Devices](https://arxiv.org/abs/1707.01083)
 on ImageNet.
 
-This is a 38Mflops ShuffleNet, corresponding to `ShuffleNet 0.5x g=3` in __the
-2nd arxiv version__ of the paper.
+This is a 38Mflops ShuffleNet, corresponding to `ShuffleNet 0.5x g=3` in the paper.
 After 240 epochs (36 hours on 8 P100s) it reaches top-1 error of 42.32%,
 matching the paper's number.
 
@@ -50,7 +49,7 @@ See `./vgg16.py --help` for usage.
  | No Normalization                          | Batch Normalization | Group Normalization |
  |:------------------------------------------|---------------------|--------------------:|
  | 29~30% (large variation with random seed) | 28%                 |               27.6% |
- 
+
 Note that the purpose of this experiment in the paper is not to claim GroupNorm is better
 than BatchNorm, therefore the training settings and hyperpameters have not been individually tuned for best accuracy.
 
@@ -62,5 +61,5 @@ ResNet, squeeze-and-excitation networks.
 ### DoReFa-Net
 
 See [DoReFa-Net examples](../DoReFa-Net).
-It includes other quantization methods such as Binary Weight Network, Trained Ternary Quantization. 
+It includes other quantization methods such as Binary Weight Network, Trained Ternary Quantization.
 

@@ -251,7 +251,7 @@ class ScaleGradient(MapGradient):
 
             if re.match(regex, varname):
                 if self._verbose:
-                    logger.info("Apply lr multiplier {} for {}".format(val, varname))
+                    logger.info("Gradient of '{}' is multipled by {}".format(varname, val))
                 if val != 0:    # skip zero to speed up
                     return grad * val
                 else:

@@ -4,6 +4,7 @@
 
 import argparse
 import numpy as np
+import math
 import os
 import cv2
 
@@ -15,6 +16,7 @@ from tensorpack.dataflow import imgaug
 from tensorpack.tfutils import argscope, get_model_loader, model_utils
 from tensorpack.tfutils.scope_utils import under_name_scope
 from tensorpack.utils.gpu import get_num_gpu
+from tensorpack.utils import logger
 
 from imagenet_utils import (
     get_imagenet_dataflow,
@@ -52,58 +54,69 @@ def channel_shuffle(l, group):
     return l
 
 
-def BN(x, name=None):
-    return BatchNorm('bn', x)
+@layer_register()
+def shufflenet_unit(l, out_channel, group, stride):
+    in_shape = l.get_shape().as_list()
+    in_channel = in_shape[1]
+    shortcut = l
+
+    # "We do not apply group convolution on the first pointwise layer
+    #  because the number of input channels is relatively small."
+    first_split = group if in_channel > 24 else 1
+    l = Conv2D('conv1', l, out_channel // 4, 1, split=first_split, activation=BNReLU)
+    l = channel_shuffle(l, group)
+    l = DepthConv('dconv', l, out_channel // 4, 3, stride=stride)
+    l = BatchNorm('dconv_bn', l)
+
+    l = Conv2D('conv2', l,
+               out_channel if stride == 1 else out_channel - in_channel,
+               1, split=group)
+    l = BatchNorm('conv2_bn', l)
+    if stride == 1:     # unit (b)
+        output = tf.nn.relu(shortcut + l)
+    else:   # unit (c)
+        shortcut = AvgPooling('avgpool', shortcut, 3, 2, padding='SAME')
+        output = tf.concat([shortcut, tf.nn.relu(l)], axis=1)
+    return output
+
+
+@layer_register(log_shape=True)
+def shufflenet_stage(input, channel, num_blocks, group):
+    l = input
+    for i in range(num_blocks):
+        name = 'block{}'.format(i)
+        l = shufflenet_unit(name, l, channel, group, 2 if i == 0 else 1)
+    return l
 
 
 class Model(ImageNetModel):
     weight_decay = 4e-5
 
     def get_logits(self, image):
-        def shufflenet_unit(l, out_channel, group, stride):
-            in_shape = l.get_shape().as_list()
-            in_channel = in_shape[1]
-            shortcut = l
-
-            # We do not apply group convolution on the first pointwise layer
-            # because the number of input channels is relatively small.
-            first_split = group if in_channel != 12 else 1
-            l = Conv2D('conv1', l, out_channel // 4, 1, split=first_split, activation=BNReLU)
-            l = channel_shuffle(l, group)
-            l = DepthConv('dconv', l, out_channel // 4, 3, activation=BN, stride=stride)
-
-            l = Conv2D('conv2', l,
-                       out_channel if stride == 1 else out_channel - in_channel,
-                       1, split=group, activation=BN)
-            if stride == 1:     # unit (b)
-                output = tf.nn.relu(shortcut + l)
-            else:   # unit (c)
-                shortcut = AvgPooling('avgpool', shortcut, 3, 2, padding='SAME')
-                output = tf.concat([shortcut, tf.nn.relu(l)], axis=1)
-            return output
 
         with argscope([Conv2D, MaxPooling, AvgPooling, GlobalAvgPooling, BatchNorm], data_format=self.data_format), \
                 argscope(Conv2D, use_bias=False):
-            group = 3
-            channels = [120, 240, 480]
+            # See Table 1 & 2 in https://arxiv.org/abs/1707.01083
+            group = args.group
+            channels = {
+                3: [240, 480, 960],
+                4: [272, 544, 1088],
+                8: [384, 768, 1536]
+            }
+            mul = group * 4  # #chan has to be a multiple of this number
+            channels = [int(math.ceil(x * args.ratio / mul) * mul)
+                        for x in channels[group]]
+            # The first channel must be a multiple of group
+            first_chan = int(math.ceil(24 * args.ratio / group) * group)
+            logger.info("#Channels: " + str([first_chan] + channels))
 
-            l = Conv2D('conv1', image, 12, 3, strides=2, activation=BNReLU)
+            l = Conv2D('conv1', image, first_chan, 3, strides=2, activation=BNReLU)
             l = MaxPooling('pool1', l, 3, 2, padding='SAME')
 
-            with tf.variable_scope('group1'):
-                for i in range(4):
-                    with tf.variable_scope('block{}'.format(i)):
-                        l = shufflenet_unit(l, channels[0], group, 2 if i == 0 else 1)
+            l = shufflenet_stage('group1', l, channels[0], 4, group)
+            l = shufflenet_stage('group2', l, channels[1], 8, group)
+            l = shufflenet_stage('group3', l, channels[2], 4, group)
 
-            with tf.variable_scope('group2'):
-                for i in range(8):
-                    with tf.variable_scope('block{}'.format(i)):
-                        l = shufflenet_unit(l, channels[1], group, 2 if i == 0 else 1)
-
-            with tf.variable_scope('group3'):
-                for i in range(4):
-                    with tf.variable_scope('block{}'.format(i)):
-                        l = shufflenet_unit(l, channels[2], group, 2 if i == 0 else 1)
             l = GlobalAvgPooling('gap', l)
             logits = FullyConnected('linear', l, 1000)
             return logits
@@ -179,6 +192,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
     parser.add_argument('--data', help='ILSVRC dataset dir')
+    parser.add_argument('--ratio', type=float, default=0.5, choices=[1., 0.5, 0.25])
+    parser.add_argument('--group', type=int, default=3, choices=[3, 4, 8])
     parser.add_argument('--load', help='load model')
     parser.add_argument('--eval', action='store_true')
     parser.add_argument('--flops', action='store_true', help='print flops and exit')
@@ -210,7 +225,8 @@ if __name__ == '__main__':
             cmd='op',
             options=tf.profiler.ProfileOptionBuilder.float_operation())
     else:
-        logger.set_logger_dir(os.path.join('train_log', 'shufflenet'))
+        logger.set_logger_dir(os.path.join(
+            'train_log', 'shufflenet-{}x-g={}'.format(args.ratio, args.group)))
 
         nr_tower = max(get_num_gpu(), 1)
         config = get_config(model, nr_tower)

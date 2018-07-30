@@ -92,7 +92,7 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
           They are very similar in speed, but `internal_update=True` can be used
           when you have conditionals in your model, or when you have multiple networks to train.
           Corresponding TF issue: https://github.com/tensorflow/tensorflow/issues/14699
-        sync_statistics (str or None): one of None "nccl", or "horovod".
+        sync_statistics (str or None): one of None, "nccl", or "horovod".
 
           By default (None), it uses statistics of the input tensor to normalize.
           This is the standard way BatchNorm was done in most frameworks.
