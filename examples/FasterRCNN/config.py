@@ -154,7 +154,7 @@ _C.MRCNN.HEAD_DIM = 256
 
 # testing -----------------------
 _C.TEST.FRCNN_NMS_THRESH = 0.5
-_C.TEST.RESULT_SCORE_THRESH = 0.05
+_C.TEST.RESULT_SCORE_THRESH = 1e-4
 _C.TEST.RESULT_SCORE_THRESH_VIS = 0.3   # only visualize confident results
 _C.TEST.RESULTS_PER_IM = 100
 
