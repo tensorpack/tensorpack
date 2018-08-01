@@ -2,6 +2,7 @@
 # File: basemodel.py
 
 from contextlib import contextmanager, ExitStack
+import numpy as np
 import tensorflow as tf
 from tensorflow.contrib.framework import add_model_variable
 
@@ -97,7 +98,7 @@ def image_preprocess(image, bgr=True):
             image = tf.cast(image, tf.float32)
 
         mean = cfg.PREPROC.PIXEL_MEAN
-        std = cfg.PREPROC.PIXEL_STD
+        std = np.asarray(cfg.PREPROC.PIXEL_STD)
         if bgr:
             mean = mean[::-1]
             std = std[::-1]
