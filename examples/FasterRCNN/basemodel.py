@@ -102,8 +102,8 @@ def image_preprocess(image, bgr=True):
             mean = mean[::-1]
             std = std[::-1]
         image_mean = tf.constant(mean, dtype=tf.float32)
-        image_std = tf.constant(std, dtype=tf.float32)
-        image = (image - image_mean) / image_std
+        image_invstd = tf.constant(1.0 / std, dtype=tf.float32)
+        image = (image - image_mean) * image_invstd
         return image
 
 

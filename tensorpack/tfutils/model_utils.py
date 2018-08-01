@@ -11,6 +11,7 @@ from ..utils import logger
 __all__ = []
 
 
+# TODO should also describe model_variables
 def describe_trainable_vars():
     """
     Print a description of the current model parameters.

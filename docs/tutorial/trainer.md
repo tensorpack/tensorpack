@@ -81,5 +81,6 @@ To run distributed training, first install horovod properly, then refer to the
 documentation of [HorovodTrainer](../modules/train.html#tensorpack.train.HorovodTrainer).
 
 Tensorpack has implemented some other distributed trainers using TF's native API,
-but TF's native support for distributed training isn't very high-performance even today.
+but TensorFlow is not actively supporting its distributed training features, and
+its native distributed performance isn't very good even today.
 Therefore those trainers are not actively maintained and are not recommended for use.

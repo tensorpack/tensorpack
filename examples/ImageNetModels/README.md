@@ -3,7 +3,7 @@ ImageNet training code of ResNet, ShuffleNet, DoReFa-Net, AlexNet, Inception, VG
 
 To train any of the models, just do `./{model}.py --data /path/to/ilsvrc`.
 Expected format of data directory is described in [docs](http://tensorpack.readthedocs.io/en/latest/modules/dataflow.dataset.html#tensorpack.dataflow.dataset.ILSVRC12).
-Pretrained models can be downloaded at [tensorpack model zoo](http://models.tensorpack.com/).
+Some pretrained models can be downloaded at [tensorpack model zoo](http://models.tensorpack.com/).
 
 ### ShuffleNet
 
@@ -35,11 +35,7 @@ accuracy after 100 epochs (21 hours on 2 V100s).
 It also puts in tensorboard the first-layer filter visualizations similar to the paper.
 See `./alexnet.py --help` for usage.
 
-### Inception-BN, VGG16
-
-This Inception-BN script reaches 27% single-crop validation error after 300k steps with 6 GPUs.
-The training recipe is very different from the original paper because the paper
-is a bit vague on these details.
+### VGG16
 
 This VGG16 script, when trained with 32x8 batch size, reaches the following
 validation error after 100 epochs (30h with 8 P100s). This is the code for the VGG
@@ -52,6 +48,12 @@ See `./vgg16.py --help` for usage.
 
 Note that the purpose of this experiment in the paper is not to claim GroupNorm is better
 than BatchNorm, therefore the training settings and hyperpameters have not been individually tuned for best accuracy.
+
+### Inception-BN
+
+This Inception-BN script reaches 27% single-crop validation error after 300k steps with 6 GPUs.
+The training recipe is very different from the original paper because the paper
+is a bit vague on these details.
 
 ### ResNet
 

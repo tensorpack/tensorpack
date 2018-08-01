@@ -81,7 +81,7 @@ def rpn_losses(anchor_labels, anchor_boxes, label_logits, box_logits):
         add_moving_summary(*summaries)
 
     # Per-level loss summaries in FPN may appear lower due to the use of a small placeholder.
-    # But the total loss is still the same.  TODO make the summary op smarter
+    # But the total RPN loss will be fine.  TODO make the summary op smarter
     placeholder = 0.
     label_loss = tf.nn.sigmoid_cross_entropy_with_logits(
         labels=tf.to_float(valid_anchor_labels), logits=valid_label_logits)
