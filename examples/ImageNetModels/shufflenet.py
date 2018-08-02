@@ -30,7 +30,7 @@ def DepthConv(x, out_channel, kernel_shape, padding='SAME', stride=1,
               W_init=None, activation=tf.identity):
     in_shape = x.get_shape().as_list()
     in_channel = in_shape[1]
-    assert out_channel % in_channel == 0
+    assert out_channel % in_channel == 0, (out_channel, in_channel)
     channel_mult = out_channel // in_channel
 
     if W_init is None:
@@ -48,7 +48,7 @@ def channel_shuffle(l, group):
     in_shape = l.get_shape().as_list()
     in_channel = in_shape[1]
     assert in_channel % group == 0, in_channel
-    l = tf.reshape(l, [-1, group, in_channel // group] + in_shape[-2:])
+    l = tf.reshape(l, [-1, in_channel // group, group] + in_shape[-2:])
     l = tf.transpose(l, [0, 2, 1, 3, 4])
     l = tf.reshape(l, [-1, in_channel] + in_shape[-2:])
     return l
@@ -80,12 +80,37 @@ def shufflenet_unit(l, out_channel, group, stride):
     return output
 
 
+@layer_register()
+def shufflenet_unit_v2(l, out_channel, stride):
+    if stride == 1:
+        shortcut, l = tf.split(l, 2, axis=1)
+    else:
+        shortcut, l = l, l
+    shortcut_channel = shortcut.shape[1]
+
+    l = Conv2D('conv1', l, out_channel // 2, 1, activation=BNReLU)
+    l = DepthConv('dconv', l, out_channel // 2, 3, stride=stride)
+    l = BatchNorm('dconv_bn', l)
+    l = Conv2D('conv2', l, out_channel - shortcut_channel, 1, activation=BNReLU)
+
+    if stride == 2:
+        shortcut = DepthConv('shortcut_dconv', shortcut, shortcut_channel, 3, stride=2)
+        shortcut = BatchNorm('shortcut_dconv_bn', shortcut)
+        shortcut = Conv2D('shortcut_conv', shortcut, shortcut_channel, 1, activation=BNReLU)
+    output = tf.concat([shortcut, l], axis=1)
+    output = channel_shuffle(output, 2)
+    return output
+
+
 @layer_register(log_shape=True)
 def shufflenet_stage(input, channel, num_blocks, group):
     l = input
     for i in range(num_blocks):
         name = 'block{}'.format(i)
-        l = shufflenet_unit(name, l, channel, group, 2 if i == 0 else 1)
+        if args.v2:
+            l = shufflenet_unit_v2(name, l, channel, 2 if i == 0 else 1)
+        else:
+            l = shufflenet_unit(name, l, channel, group, 2 if i == 0 else 1)
     return l
 
 
@@ -94,28 +119,41 @@ class Model(ImageNetModel):
 
     def get_logits(self, image):
 
-        with argscope([Conv2D, MaxPooling, AvgPooling, GlobalAvgPooling, BatchNorm], data_format=self.data_format), \
+        with argscope([Conv2D, MaxPooling, AvgPooling, GlobalAvgPooling, BatchNorm], data_format='channels_first'), \
                 argscope(Conv2D, use_bias=False):
-            # See Table 1 & 2 in https://arxiv.org/abs/1707.01083
+
             group = args.group
-            channels = {
-                3: [240, 480, 960],
-                4: [272, 544, 1088],
-                8: [384, 768, 1536]
-            }
-            mul = group * 4  # #chan has to be a multiple of this number
-            channels = [int(math.ceil(x * args.ratio / mul) * mul)
-                        for x in channels[group]]
-            # The first channel must be a multiple of group
-            first_chan = int(math.ceil(24 * args.ratio / group) * group)
+            if not args.v2:
+                # Copied from the paper
+                channels = {
+                    3: [240, 480, 960],
+                    4: [272, 544, 1088],
+                    8: [384, 768, 1536]
+                }
+                mul = group * 4  # #chan has to be a multiple of this number
+                channels = [int(math.ceil(x * args.ratio / mul) * mul)
+                            for x in channels[group]]
+                # The first channel must be a multiple of group
+                first_chan = int(math.ceil(24 * args.ratio / group) * group)
+            else:
+                # Copied from the paper
+                channels = {
+                    0.5: [48, 96, 192],
+                    1.: [116, 232, 464]
+                }[args.ratio]
+                first_chan = 24
+
             logger.info("#Channels: " + str([first_chan] + channels))
 
             l = Conv2D('conv1', image, first_chan, 3, strides=2, activation=BNReLU)
             l = MaxPooling('pool1', l, 3, 2, padding='SAME')
 
-            l = shufflenet_stage('group1', l, channels[0], 4, group)
-            l = shufflenet_stage('group2', l, channels[1], 8, group)
-            l = shufflenet_stage('group3', l, channels[2], 4, group)
+            l = shufflenet_stage('stage2', l, channels[0], 4, group)
+            l = shufflenet_stage('stage3', l, channels[1], 8, group)
+            l = shufflenet_stage('stage4', l, channels[2], 4, group)
+
+            if args.v2:
+                l = Conv2D('conv5', l, 1024, 1, activation=BNReLU)
 
             l = GlobalAvgPooling('gap', l)
             logits = FullyConnected('linear', l, 1000)
@@ -127,7 +165,8 @@ def get_data(name, batch):
 
     if isTrain:
         augmentors = [
-            GoogleNetResize(crop_area_fraction=0.49),
+            # use lighter augs if model is too small
+            GoogleNetResize(crop_area_fraction=0.49 if args.ratio < 1 else 0.08),
             imgaug.RandomOrderAug(
                 [imgaug.BrightnessScale((0.6, 1.4), clip=False),
                  imgaug.Contrast((0.6, 1.4), clip=False),
@@ -192,15 +231,20 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
     parser.add_argument('--data', help='ILSVRC dataset dir')
-    parser.add_argument('--ratio', type=float, default=0.5, choices=[1., 0.5, 0.25])
-    parser.add_argument('--group', type=int, default=3, choices=[3, 4, 8])
-    parser.add_argument('--load', help='load model')
+    parser.add_argument('-r', '--ratio', type=float, default=0.5, choices=[1., 0.5])
+    parser.add_argument('--group', type=int, default=8, choices=[3, 4, 8],
+                        help="Number of groups for ShuffleNetV1")
+    parser.add_argument('--v2', action='store_true', help='Use ShuffleNetV2')
+    parser.add_argument('--load', help='path to load a model from')
     parser.add_argument('--eval', action='store_true')
     parser.add_argument('--flops', action='store_true', help='print flops and exit')
     args = parser.parse_args()
 
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
+
+    if args.v2 and args.group != parser.get_default('group'):
+        logger.error("group= is not used in ShuffleNetV2!")
 
     model = Model()
 
@@ -216,7 +260,7 @@ if __name__ == '__main__':
         ]
         input = PlaceholderInput()
         input.setup(input_desc)
-        with TowerContext('', is_training=True):
+        with TowerContext('', is_training=False):
             model.build_graph(*input.get_input_tensors())
         model_utils.describe_trainable_vars()
 
@@ -224,9 +268,15 @@ if __name__ == '__main__':
             tf.get_default_graph(),
             cmd='op',
             options=tf.profiler.ProfileOptionBuilder.float_operation())
+        logger.info("Note that TensorFlow counts flops in a different way from the paper.")
+        logger.info("TensorFlow counts multiply+add as two flops, however the paper counts them "
+                    "as 1 flop because it can be executed in one instruction.")
     else:
-        logger.set_logger_dir(os.path.join(
-            'train_log', 'shufflenet-{}x-g={}'.format(args.ratio, args.group)))
+        if args.v2:
+            name = "ShuffleNetV2-{}x".format(args.ratio)
+        else:
+            name = "ShuffleNetV1-{}x-g{}".format(args.ratio, args.group)
+        logger.set_logger_dir(os.path.join('train_log', name))
 
         nr_tower = max(get_num_gpu(), 1)
         config = get_config(model, nr_tower)

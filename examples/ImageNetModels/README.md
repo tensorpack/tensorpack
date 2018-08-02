@@ -2,28 +2,32 @@
 ImageNet training code of ResNet, ShuffleNet, DoReFa-Net, AlexNet, Inception, VGG with tensorpack.
 
 To train any of the models, just do `./{model}.py --data /path/to/ilsvrc`.
+More options are available in `./{model}.py -h`.
 Expected format of data directory is described in [docs](http://tensorpack.readthedocs.io/en/latest/modules/dataflow.dataset.html#tensorpack.dataflow.dataset.ILSVRC12).
 Some pretrained models can be downloaded at [tensorpack model zoo](http://models.tensorpack.com/).
 
 ### ShuffleNet
 
-Reproduce [ShuffleNet: An Extremely Efficient Convolutional Neural Network for Mobile Devices](https://arxiv.org/abs/1707.01083)
-on ImageNet.
+Reproduce ImageNet results of the following two papers:
++ [ShuffleNet: An Extremely Efficient Convolutional Neural Network for Mobile Devices](https://arxiv.org/abs/1707.01083)
++ [ShuffleNet V2: Practical Guidelines for Efficient CNN Architecture Design](https://arxiv.org/abs/1807.11164)
 
-This is a 38Mflops ShuffleNet, corresponding to `ShuffleNet 0.5x g=3` in the paper.
-After 240 epochs (36 hours on 8 P100s) it reaches top-1 error of 42.32%,
-matching the paper's number.
+| Model                                                                                                    | Flops | Top 1 Error | Flags         |
+|:---------------------------------------------------------------------------------------------------------|:------|:-----------:|:-------------:|
+| ShuffleNetV1 0.5x  [:arrow_down:](http://models.tensorpack.com/ImageNetModels/ShuffleNetV1-0.5x-g=8.npz) | 40M   | 40.8%       | `-r=0.5`      |
+| ShuffleNetV1 1x    [:arrow_down:](http://models.tensorpack.com/ImageNetModels/ShuffleNetV1-1x-g=8.npz)   | 140M  | 32.6%       | `-r=1`        |
+| ShuffleNetV2 0.5x  [:arrow_down:](http://models.tensorpack.com/ImageNetModels/ShuffleNetV2-0.5x.npz)     | 41M   | 39.5%       | `-r=0.5 --v2` |
+| ShuffleNetV2 1x    [:arrow_down:](http://models.tensorpack.com/ImageNetModels/ShuffleNetV2-1x.npz)       | 146M  | 30.6%       | `-r=1 --v2`   |
 
 To print flops:
 ```bash
-./shufflenet.py --flops
+./shufflenet.py --flops [--other-flags]
 ```
-It will print about 75Mflops, because the paper counts multiply+add as 1 flop.
 
-Download and evaluate the pretrained model:
+Download and evaluate a pretrained model:
 ```
-wget http://models.tensorpack.com/ImageNetModels/ShuffleNet.npz
-./shufflenet.py --eval --data /path/to/ilsvrc --load ShuffleNet.npz
+wget http://models.tensorpack.com/ImageNetModels/ShuffleNetV2-0.5x.npz
+./shufflenet.py --eval --data /path/to/ilsvrc --load ShuffleNetV2-0.5x.npz --v2 -r=0.5
 ```
 
 ### AlexNet
