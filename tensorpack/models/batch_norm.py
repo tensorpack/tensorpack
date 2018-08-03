@@ -156,10 +156,10 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
         training = ctx.is_training
     training = bool(training)
     TF_version = get_tf_version_tuple()
-    if not training and ctx.is_training:
+    freeze_bn_backward = not training and ctx.is_training
+    if freeze_bn_backward:
         assert TF_version >= (1, 4), \
-            "Fine tuning a BatchNorm model with fixed statistics is only " \
-            "supported after https://github.com/tensorflow/tensorflow/pull/12580 "
+            "Fine tuning a BatchNorm model with fixed statistics needs TF>=1.4!"
         if ctx.is_main_training_tower:  # only warn in first tower
             logger.warn("[BatchNorm] Using moving_mean/moving_variance in training.")
         # Using moving_mean/moving_variance in training, which means we
@@ -169,14 +169,15 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
         coll_bk = backup_collection([tf.GraphKeys.UPDATE_OPS])
         with rename_get_variable(
                 {'moving_mean': 'mean/EMA',
-                 'moving_variance': 'variance/EMA'}):
+                    'moving_variance': 'variance/EMA'}):
             tf_args = dict(
                 axis=axis,
                 momentum=momentum, epsilon=epsilon,
                 center=center, scale=scale,
                 beta_initializer=beta_initializer,
                 gamma_initializer=gamma_initializer,
-                fused=(ndims == 4 and axis in [1, 3]),
+                # https://github.com/tensorflow/tensorflow/issues/10857#issuecomment-410185429
+                fused=(ndims == 4 and axis in [1, 3] and not freeze_bn_backward),
                 _reuse=tf.get_variable_scope().reuse)
             if TF_version >= (1, 5):
                 tf_args['virtual_batch_size'] = virtual_batch_size

@@ -28,8 +28,8 @@ About efficiency issues, PLEASE first read http://tensorpack.readthedocs.io/en/l
   (See http://tensorpack.readthedocs.io/en/latest/tutorial/index.html#extend-tensorpack).
   It does not have to be added to Tensorpack unless you have a good reason.
 + "Could you improve/implement an example/paper ?" 
-  -- the answer is: we have no plans to do so and we don't take feature requests for
-  examples. If you don't know how to do it, you may ask a usage question.
+  -- the answer is: we have no plans to do so. We don't take feature requests for
+  examples or implement a paper for you. If you don't know how to do it, you may ask a usage question.
 
 ## Usage Questions:
 

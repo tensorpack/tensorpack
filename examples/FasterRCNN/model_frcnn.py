@@ -226,7 +226,7 @@ def fastrcnn_2fc_head(feature, num_classes):
         num_classes(int): num_category + 1
 
     Returns:
-        cls_logits (Nxnum_class), reg_logits (Nx num_class-1 x 4)
+        outputs of `fastrcnn_outputs()`
     """
     dim = cfg.FPN.FRCNN_FC_HEAD_DIM
     init = tf.variance_scaling_initializer()
@@ -245,7 +245,7 @@ def fastrcnn_Xconv1fc_head(feature, num_classes, num_convs, norm=None):
         norm (str or None): either None or 'GN'
 
     Returns:
-        cls_logits (Nxnum_class), reg_logits (Nx num_class-1 x 4)
+        outputs of `fastrcnn_outputs()`
     """
     assert norm in [None, 'GN'], norm
     l = feature
