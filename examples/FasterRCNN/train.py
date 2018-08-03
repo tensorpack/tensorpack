@@ -65,9 +65,8 @@ class DetectionModel(ModelDesc):
         lr = tf.get_variable('learning_rate', initializer=0.003, trainable=False)
         tf.summary.scalar('learning_rate-summary', lr)
 
-        factor = cfg.TRAIN.NUM_GPUS / 8.
-        if factor != 1:
-            lr = lr * factor
+        # The learning rate is set for 8 GPUs, and we use trainers with average=False.
+        lr = lr / 8.
         opt = tf.train.MomentumOptimizer(lr, 0.9)
         if cfg.TRAIN.NUM_GPUS < 8:
             opt = optimizer.AccumGradOptimizer(opt, 8 // cfg.TRAIN.NUM_GPUS)
@@ -242,7 +241,7 @@ class ResNetC4Model(DetectionModel):
                 mrcnn_loss, wd_cost], 'total_cost')
 
             add_moving_summary(total_cost, wd_cost)
-            return total_cost * (1. / cfg.TRAIN.NUM_GPUS)
+            return total_cost
         else:
             final_boxes, final_labels = self.fastrcnn_inference(
                 image_shape2d, rcnn_boxes, fastrcnn_label_logits, fastrcnn_box_logits)
@@ -378,7 +377,7 @@ class ResNetFPNModel(DetectionModel):
                                    mrcnn_loss, wd_cost], 'total_cost')
 
             add_moving_summary(total_cost, wd_cost)
-            return total_cost * (1. / cfg.TRAIN.NUM_GPUS)
+            return total_cost
         else:
             final_boxes, final_labels = self.fastrcnn_inference(
                 image_shape2d, rcnn_boxes, fastrcnn_label_logits, fastrcnn_box_logits)
@@ -553,13 +552,15 @@ if __name__ == '__main__':
             logger.set_logger_dir(args.logdir, 'd')
 
         finalize_configs(is_training=True)
-        factor = 8. / cfg.TRAIN.NUM_GPUS
         stepnum = cfg.TRAIN.STEPS_PER_EPOCH
 
         # warmup is step based, lr is epoch based
-        warmup_schedule = [(0, cfg.TRAIN.BASE_LR / 3), (cfg.TRAIN.WARMUP * factor, cfg.TRAIN.BASE_LR)]
-        warmup_end_epoch = cfg.TRAIN.WARMUP * factor * 1. / stepnum
+        init_lr = cfg.TRAIN.BASE_LR * 0.33 * (8. / cfg.TRAIN.NUM_GPUS)
+        warmup_schedule = [(0, init_lr), (cfg.TRAIN.WARMUP, cfg.TRAIN.BASE_LR)]
+        warmup_end_epoch = cfg.TRAIN.WARMUP * 1. / stepnum
         lr_schedule = [(int(np.ceil(warmup_end_epoch)), warmup_schedule[-1][1])]
+
+        factor = 8. / cfg.TRAIN.NUM_GPUS
         for idx, steps in enumerate(cfg.TRAIN.LR_SCHEDULE[:-1]):
             mult = 0.1 ** (idx + 1)
             lr_schedule.append(

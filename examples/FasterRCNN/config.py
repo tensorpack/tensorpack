@@ -84,13 +84,14 @@ _C.BACKBONE.TF_PAD_MODE = False
 _C.BACKBONE.STRIDE_1X1 = False  # True for MSRA models
 
 # schedule -----------------------
-# The schedule and learning rate here is defined for a total batch size of 8.
-# If not running with 8 GPUs, they will be adjusted automatically in code.
 _C.TRAIN.NUM_GPUS = None         # by default, will be set from code
 _C.TRAIN.WEIGHT_DECAY = 1e-4
-_C.TRAIN.BASE_LR = 1e-2
-_C.TRAIN.WARMUP = 1000    # in steps
+_C.TRAIN.BASE_LR = 1e-2  # defined for a total batch size of 8. Otherwise it will be adjusted automatically
+_C.TRAIN.WARMUP = 1000   # in terms of iterations. This is not affected by #GPUs
 _C.TRAIN.STEPS_PER_EPOCH = 500
+
+# Schedule means "steps" only when total batch size is 8.
+# Otherwise the actual steps to decrease learning rate are computed from the schedule.
 # LR_SCHEDULE = [120000, 160000, 180000]  # "1x" schedule in detectron
 _C.TRAIN.LR_SCHEDULE = [240000, 320000, 360000]    # "2x" schedule in detectron
 
