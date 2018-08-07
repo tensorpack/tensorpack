@@ -280,6 +280,9 @@ class TowerTensorHandles(object):
         self._handles = handles
         self._name_to_handle = {k.ns_name: k for k in handles}
 
+    def __len__(self):
+        return len(self._handles)
+
     def __getitem__(self, name_or_index):
         """
         Args:

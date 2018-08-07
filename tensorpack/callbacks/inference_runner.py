@@ -126,6 +126,7 @@ class InferenceRunner(InferenceRunnerBase):
         assert isinstance(input, InputSource), input
         assert not isinstance(input, StagingInput), input
         self._tower_name = tower_name
+        self._device_id = device
         self._device = _device_from_int(device)
         super(InferenceRunner, self).__init__(input, infs)
 
@@ -139,11 +140,13 @@ class InferenceRunner(InferenceRunnerBase):
         tower_func = self.trainer.tower_func
         input_callbacks = self._input_source.setup(tower_func.inputs_desc)
 
-        logger.info("[InferenceRunner] Building tower '{}' on device {} ...".format(self._tower_name, self._device))
+        vs_name = self.trainer._vs_name_for_predictor(self._device_id)
+        logger.info("[InferenceRunner] Building tower '{}' on device {} {}...".format(
+            self._tower_name, self._device,
+            "with variable scope '{}'".format(vs_name) if vs_name else ''))
         with tf.variable_scope(tf.get_variable_scope(), reuse=True), \
                 tf.device(self._device), \
-                PredictTowerContext(
-                    self._tower_name, vs_name=self.trainer._main_tower_vs_name):
+                PredictTowerContext(self._tower_name, vs_name=vs_name):
             tower_func(*self._input_source.get_input_tensors())
             self._tower_handle = tower_func.towers[-1]
 
@@ -211,8 +214,13 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
         input_callbacks = self._input_source.setup(tower_func.inputs_desc)
         with tf.variable_scope(tf.get_variable_scope(), reuse=True):
             for idx, dev in enumerate(self._devices):
+                vs_name = self._vs_name_for_predictor(idx)
                 with tf.device(dev), PredictTowerContext(
-                        self._tower_names[idx], vs_name=self.trainer._main_tower_vs_name):
+                        self._tower_names[idx], vs_name=vs_name):
+                    logger.info("[InferenceRunner] Building tower '{}' on device {} {}...".format(
+                        self._tower_names[idx], dev,
+                        "with variable scope '{}'".format(vs_name) if vs_name else ''))
+                    # TODO log for tower creation, here or in tower.py?
                     tower_func(*self._input_source.get_input_tensors())
                     self._handles.append(tower_func.towers[-1])
 

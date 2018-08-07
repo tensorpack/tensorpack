@@ -9,8 +9,6 @@ import six
 from ..tfutils.common import get_tensors_by_names
 from ..tfutils.tower import PredictTowerContext
 from ..input_source import PlaceholderInput
-from ..utils.develop import log_deprecated
-from ..utils.utils import execute_only_once
 
 __all__ = ['PredictorBase', 'AsyncPredictorBase',
            'OnlinePredictor', 'OfflinePredictor',
@@ -27,7 +25,7 @@ class PredictorBase(object):
             or just outputs
     """
 
-    def __call__(self, *args):
+    def __call__(self, *dp):
         """
         Call the predictor on some inputs.
 
@@ -38,15 +36,6 @@ class PredictorBase(object):
 
                 predictor(e1, e2)
         """
-        if len(args) == 1 and isinstance(args[0], (list, tuple)):
-            dp = args[0]    # backward-compatibility
-            if execute_only_once():
-                log_deprecated(
-                    "Calling a predictor with one datapoint",
-                    "Call it with positional arguments instead!",
-                    "2018-3-1")
-        else:
-            dp = args
         output = self._do_call(dp)
         if self.return_input:
             return (dp, output)
@@ -94,6 +83,12 @@ class OnlinePredictor(PredictorBase):
     """
 
     ACCEPT_OPTIONS = False
+    """ See Session.make_callable """
+
+    sess = None
+    """
+    The tf.Session object associated with this predictor.
+    """
 
     def __init__(self, input_tensors, output_tensors,
                  return_input=False, sess=None):
@@ -104,6 +99,7 @@ class OnlinePredictor(PredictorBase):
             return_input (bool): same as :attr:`PredictorBase.return_input`.
             sess (tf.Session): the session this predictor runs in. If None,
                 will use the default session at the first call.
+                Note that in TensorFlow, default session is thread-local.
         """
         self.return_input = return_input
         self.input_tensors = input_tensors
@@ -123,6 +119,7 @@ class OnlinePredictor(PredictorBase):
             "{} != {}".format(len(dp), len(self.input_tensors))
         if self.sess is None:
             self.sess = tf.get_default_session()
+            assert self.sess is not None, "Predictor isn't called under a default session!"
 
         if self._callable is None:
             self._callable = self.sess.make_callable(
