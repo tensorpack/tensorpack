@@ -4,6 +4,7 @@
 import tqdm
 import os
 from collections import namedtuple
+from contextlib import ExitStack
 import numpy as np
 import cv2
 
@@ -90,18 +91,24 @@ def detect_one_image(img, model_func):
     return results
 
 
-def eval_coco(df, detect_func):
+def eval_coco(df, detect_func, tqdm_bar=None):
     """
     Args:
         df: a DataFlow which produces (image, image_id)
         detect_func: a callable, takes [image] and returns [DetectionResult]
+        tqdm_bar: a tqdm object to be shared among multiple evaluation instances. If None,
+            will create a new one.
 
     Returns:
         list of dict, to be dumped to COCO json format
     """
     df.reset_state()
     all_results = []
-    with tqdm.tqdm(total=df.size(), **get_tqdm_kwargs()) as pbar:
+    # tqdm is not quite thread-safe: https://github.com/tqdm/tqdm/issues/323
+    with ExitStack() as stack:
+        if tqdm_bar is None:
+            tqdm_bar = stack.enter_context(
+                tqdm.tqdm(total=df.size(), **get_tqdm_kwargs()))
         for img, img_id in df.get_data():
             results = detect_func(img)
             for r in results:
@@ -124,7 +131,7 @@ def eval_coco(df, detect_func):
                     rle['counts'] = rle['counts'].decode('ascii')
                     res['segmentation'] = rle
                 all_results.append(res)
-            pbar.update(1)
+            tqdm_bar.update(1)
     return all_results
 
 

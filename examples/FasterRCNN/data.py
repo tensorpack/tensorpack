@@ -9,7 +9,7 @@ import itertools
 from tensorpack.utils.argtools import memoized, log_once
 from tensorpack.dataflow import (
     imgaug, TestDataSpeed,
-    PrefetchDataZMQ, MultiProcessMapDataZMQ, MultiThreadMapData,
+    MultiProcessMapDataZMQ, MultiThreadMapData,
     MapDataComponent, DataFromList)
 from tensorpack.utils import logger
 # import tensorpack.utils.viz as tpviz
@@ -381,18 +381,25 @@ def get_train_dataflow():
     return ds
 
 
-def get_eval_dataflow():
+def get_eval_dataflow(shard=0, num_shards=1):
+    """
+    Args:
+        shard, num_shards: to get subset of evaluation data
+    """
     imgs = COCODetection.load_many(cfg.DATA.BASEDIR, cfg.DATA.VAL, add_gt=False)
+    num_imgs = len(imgs)
+    img_per_shard = num_imgs // num_shards
+    img_range = (shard * img_per_shard, (shard + 1) * img_per_shard if shard + 1 < num_shards else num_imgs)
+
     # no filter for training
-    ds = DataFromListOfDict(imgs, ['file_name', 'id'])
+    ds = DataFromListOfDict(imgs[img_range[0]: img_range[1]], ['file_name', 'id'])
 
     def f(fname):
         im = cv2.imread(fname, cv2.IMREAD_COLOR)
         assert im is not None, fname
         return im
     ds = MapDataComponent(ds, f, 0)
-    if cfg.TRAINER != 'horovod':
-        ds = PrefetchDataZMQ(ds, 1)
+    # Evaluation itself may be multi-threaded, therefore don't add prefetch here.
     return ds
 
 

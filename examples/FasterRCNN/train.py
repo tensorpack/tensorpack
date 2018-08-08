@@ -12,6 +12,7 @@ import numpy as np
 import json
 import six
 import tensorflow as tf
+from concurrent.futures import ThreadPoolExecutor
 try:
     import horovod.tensorflow as hvd
 except ImportError:
@@ -466,33 +467,54 @@ def predict(pred_func, input_file):
 
 
 class EvalCallback(Callback):
+    """
+    A callback that runs COCO evaluation once a while.
+    It supports multi-GPU evaluation if TRAINER=='replicated' and single-GPU evaluation if TRAINER=='horovod'
+    """
+
     def __init__(self, in_names, out_names):
         self._in_names, self._out_names = in_names, out_names
 
     def _setup_graph(self):
-        self.pred = self.trainer.get_predictor(self._in_names, self._out_names)
-        self.df = get_eval_dataflow()
+        num_gpu = cfg.TRAIN.NUM_GPUS
+        # Use two predictor threads per GPU to get better throughput
+        self.num_predictor = 1 if cfg.TRAINER == 'horovod' else num_gpu * 2
+        self.predictors = [self._build_coco_predictor(k % num_gpu) for k in range(self.num_predictor)]
+        self.dataflows = [get_eval_dataflow(shard=k, num_shards=self.num_predictor)
+                          for k in range(self.num_predictor)]
+
+    def _build_coco_predictor(self, idx):
+        graph_func = self.trainer.get_predictor(self._in_names, self._out_names, device=idx)
+        return lambda img: detect_one_image(img, graph_func)
 
     def _before_train(self):
-        EVAL_TIMES = 5  # eval 5 times during training
-        interval = self.trainer.max_epoch // (EVAL_TIMES + 1)
-        self.epochs_to_eval = set([interval * k for k in range(1, EVAL_TIMES + 1)])
+        num_eval = cfg.TRAIN.NUM_EVALS
+        interval = max(self.trainer.max_epoch // (num_eval + 1), 1)
+        self.epochs_to_eval = set([interval * k for k in range(1, num_eval + 1)])
         self.epochs_to_eval.add(self.trainer.max_epoch)
-        logger.info("[EvalCallback] Will evaluate at epoch " + str(sorted(self.epochs_to_eval)))
+        if len(self.epochs_to_eval) < 15:
+            logger.info("[EvalCallback] Will evaluate at epoch " + str(sorted(self.epochs_to_eval)))
+        else:
+            logger.info("[EvalCallback] Will evaluate every {} epochs".format(interval))
 
     def _eval(self):
-        all_results = eval_coco(self.df, lambda img: detect_one_image(img, self.pred))
+        with ThreadPoolExecutor(max_workers=self.num_predictor, thread_name_prefix='EvalWorker') as executor, \
+                tqdm.tqdm(total=sum([df.size() for df in self.dataflows])) as pbar:
+            futures = []
+            for dataflow, pred in zip(self.dataflows, self.predictors):
+                futures.append(executor.submit(eval_coco, dataflow, pred, pbar))
+            all_results = list(itertools.chain(*[fut.result() for fut in futures]))
+
         output_file = os.path.join(
             logger.get_logger_dir(), 'outputs{}.json'.format(self.global_step))
         with open(output_file, 'w') as f:
             json.dump(all_results, f)
         try:
             scores = print_evaluation_scores(output_file)
+            for k, v in scores.items():
+                self.trainer.monitors.put_scalar(k, v)
         except Exception:
             logger.exception("Exception in COCO evaluation.")
-            scores = {}
-        for k, v in scores.items():
-            self.trainer.monitors.put_scalar(k, v)
 
     def _trigger_epoch(self):
         if self.epoch_num in self.epochs_to_eval:
@@ -558,7 +580,7 @@ if __name__ == '__main__':
         init_lr = cfg.TRAIN.BASE_LR * 0.33 * (8. / cfg.TRAIN.NUM_GPUS)
         warmup_schedule = [(0, init_lr), (cfg.TRAIN.WARMUP, cfg.TRAIN.BASE_LR)]
         warmup_end_epoch = cfg.TRAIN.WARMUP * 1. / stepnum
-        lr_schedule = [(int(np.ceil(warmup_end_epoch)), warmup_schedule[-1][1])]
+        lr_schedule = [(int(np.ceil(warmup_end_epoch)), cfg.TRAIN.BASE_LR)]
 
         factor = 8. / cfg.TRAIN.NUM_GPUS
         for idx, steps in enumerate(cfg.TRAIN.LR_SCHEDULE[:-1]):

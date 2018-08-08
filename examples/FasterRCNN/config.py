@@ -11,7 +11,13 @@ __all__ = ['config', 'finalize_configs']
 
 
 class AttrDict():
+
+    _freezed = False
+    """ Avoid accidental creation of new hierarchies. """
+
     def __getattr__(self, name):
+        if self._freezed:
+            raise AttributeError(name)
         ret = AttrDict()
         setattr(self, name, ret)
         return ret
@@ -24,7 +30,7 @@ class AttrDict():
     def to_dict(self):
         """Convert to a nested dict. """
         return {k: v.to_dict() if isinstance(v, AttrDict) else v
-                for k, v in self.__dict__.items()}
+                for k, v in self.__dict__.items() if not k.startswith('_')}
 
     def update_args(self, args):
         """Update from command line args. """
@@ -42,6 +48,9 @@ class AttrDict():
             if not isinstance(oldv, str):
                 v = eval(v)
             setattr(dic, key, v)
+
+    def freeze(self):
+        self._freezed = True
 
     # avoid silent bugs
     def __eq__(self, _):
@@ -94,6 +103,7 @@ _C.TRAIN.STEPS_PER_EPOCH = 500
 # Otherwise the actual steps to decrease learning rate are computed from the schedule.
 # LR_SCHEDULE = [120000, 160000, 180000]  # "1x" schedule in detectron
 _C.TRAIN.LR_SCHEDULE = [240000, 320000, 360000]    # "2x" schedule in detectron
+_C.TRAIN.NUM_EVALS = 20  # number of evaluations to run during training
 
 # preprocessing --------------------
 # Alternative old (worse & faster) setting: 600, 1024
@@ -208,4 +218,5 @@ def finalize_configs(is_training):
         # autotune is too slow for inference
         os.environ['TF_CUDNN_USE_AUTOTUNE'] = '0'
 
+    _C.freeze()
     logger.info("Config: ------------------------------------------\n" + str(_C))
