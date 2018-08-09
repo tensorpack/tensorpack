@@ -21,7 +21,7 @@ from ..tfutils.tower import get_current_tower_context
 from ..tfutils.dependency import dependency_of_fetches
 from ..utils import logger
 from ..utils.concurrency import ShareSessionThread
-from ..utils.develop import log_deprecated, deprecated
+from ..utils.develop import deprecated
 from ..callbacks.base import Callback, CallbackFactory
 from ..callbacks.graph import RunOp
 
@@ -520,7 +520,7 @@ class StagingInput(FeedfreeInput):
             logger.info("Pre-filling StagingArea ...")
             for k in range(self.nr_stage):
                 self.stage_op.run()
-            logger.info("{} element{} put into StagingArea.".format(
+            logger.info("{} element{} put into StagingArea on each tower.".format(
                 self.nr_stage, "s were" if self.nr_stage > 1 else " was"))
 
         def _before_run(self, ctx):
@@ -534,21 +534,18 @@ class StagingInput(FeedfreeInput):
             if dependency_of_fetches(fetches, self._check_dependency_op):
                 return self.fetches
 
-    def __init__(self, input, towers=None, nr_stage=1, device=None):
+    def __init__(self, input, nr_stage=1, device=None):
         """
         Args:
             input (FeedfreeInput):
             nr_stage: number of elements to prefetch into each StagingArea, at the beginning.
                 Since enqueue and dequeue are synchronized, prefetching 1 element should be sufficient.
-            towers: deprecated
             device (str or None): if not None, place the StagingArea on a specific device. e.g., '/cpu:0'.
                 Otherwise, they are placed under where `get_inputs_tensors`
                 gets called, which could be unspecified in case of simple trainers.
         """
         assert isinstance(input, FeedfreeInput), input
         self._input = input
-        if towers is not None:
-            log_deprecated("StagingInput(towers=)", "Devices are handled automatically.", "2018-03-31")
 
         self._nr_stage = nr_stage
         self._areas = []

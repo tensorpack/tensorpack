@@ -157,15 +157,16 @@ _C.FPN.FRCNN_HEAD_FUNC = 'fastrcnn_2fc_head'
 # choices: fastrcnn_2fc_head, fastrcnn_4conv1fc_{,gn_}head
 _C.FPN.FRCNN_CONV_HEAD_DIM = 256
 _C.FPN.FRCNN_FC_HEAD_DIM = 1024
-_C.FPN.MRCNN_HEAD_FUNC = 'maskrcnn_up4conv_head'
-# choices: maskrcnn_up4conv_{,gn_}head
+_C.FPN.MRCNN_HEAD_FUNC = 'maskrcnn_up4conv_head'   # choices: maskrcnn_up4conv_{,gn_}head
 
 # Mask-RCNN
 _C.MRCNN.HEAD_DIM = 256
 
 # testing -----------------------
 _C.TEST.FRCNN_NMS_THRESH = 0.5
-_C.TEST.RESULT_SCORE_THRESH = 1e-4
+
+# Smaller threshold value gives significantly better mAP. But we use 0.05 for consistency with Detectron.
+_C.TEST.RESULT_SCORE_THRESH = 0.05
 _C.TEST.RESULT_SCORE_THRESH_VIS = 0.3   # only visualize confident results
 _C.TEST.RESULTS_PER_IM = 100
 

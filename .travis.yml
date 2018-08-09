@@ -22,28 +22,29 @@ matrix:
     python: 2.7
     env: TF_VERSION=1.3.0 TF_TYPE=release
   - os: linux
-    python: 3.5
+    python: 3.6
     env: TF_VERSION=1.3.0 TF_TYPE=release
   - os: linux
     python: 2.7
-    env: TF_VERSION=1.9.0 TF_TYPE=release
+    env: TF_VERSION=1.10.0 TF_TYPE=release
   - os: linux
-    python: 3.5
-    env: TF_VERSION=1.9.0 TF_TYPE=release PYPI=true
+    python: 3.6
+    env: TF_VERSION=1.10.0 TF_TYPE=release PYPI=true
   - os: linux
     python: 2.7
     env: TF_TYPE=nightly
   - os: linux
-    python: 3.5
+    python: 3.6
     env: TF_TYPE=nightly
   allow_failures:
   - env: TF_TYPE=nightly
 
 install:
 - pip install -U pip    # the pip version on travis is too old
-- pip install flake8 scikit-image opencv-python lmdb h5py pyarrow msgpack
+- pip install flake8 scikit-image opencv-python lmdb h5py msgpack
 - pip install .
   # check that dataflow can be imported alone
+- python -c "import pyarrow"
 - python -c "import tensorpack.dataflow"
 - ./tests/install-tensorflow.sh
 
@@ -58,7 +59,7 @@ before_script:
 
 script:
 - flake8 .
-- if [[ $TRAVIS_PYTHON_VERSION == '3.5' ]]; then cd examples && flake8 .; fi  # some examples are py3 only
+- if [[ $TRAVIS_PYTHON_VERSION == '3.6' ]]; then cd examples && flake8 .; fi  # some examples are py3 only
 - mkdir -p $HOME/tensorpack_data
 - export TENSORPACK_DATASET=$HOME/tensorpack_data
 - $TRAVIS_BUILD_DIR/tests/run-tests.sh
@@ -90,7 +91,7 @@ deploy:
     tags: true
     branch: master
     repo: tensorpack/tensorpack
-    python: "3.5"
+    python: "3.6"
     condition: "$PYPI = true"
 
 - provider: pypi
@@ -103,5 +104,5 @@ deploy:
   on:
     branch: test-travis
     repo: tensorpack/tensorpack
-    python: "3.5"
+    python: "3.6"
     condition: "$PYPI = true"
