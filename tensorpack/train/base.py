@@ -100,6 +100,19 @@ class Trainer(object):
     Certain callbacks will only be run by chief worker.
     """
 
+    sess = None
+    """
+    The ``tf.Session`` object the trainer is using.
+    Available after :meth:`initialize()`.
+    """
+
+    hooked_sess = None
+    """
+    The ``tf.train.MonitoredSession`` object the trainer is using.
+    It contains all the hooks the callbacks have registered.
+    Available after :meth:`initialize()`.
+    """
+
     def __init__(self):
         self._callbacks = []
         self.loop = TrainLoop()
