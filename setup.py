@@ -23,7 +23,7 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     install_requires=[
-        "numpy",
+        "numpy>=1.14",
         "six",
         "termcolor>=1.1",
         "tabulate>=0.7.7",
