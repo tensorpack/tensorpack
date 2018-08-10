@@ -20,7 +20,7 @@ Then it is a good time to open an issue.
 
 1. Learn `tf.Print`.
 
-2. Know [DumpTensors](../modules/callbacks.html#tensorpack.callbacks.DumpTensors[]),
+2. Know [DumpTensors](../modules/callbacks.html#tensorpack.callbacks.DumpTensors),
 	[ProcessTensors](../modules/callbacks.html#tensorpack.callbacks.ProcessTensors) callbacks.
 	And it's also easy to write your own version of them.
 

@@ -8,7 +8,8 @@ The default logging behavior should be good enough for normal use cases, so you 
 
 This is how TensorFlow summaries eventually get logged/saved/printed:
 
-1. __What to Log__: When you call `tf.summary.xxx` in your graph code, TensorFlow adds an op to
+1. __What to Log__: Define what you want to log in the graph. 
+   When you call `tf.summary.xxx` in your graph code, TensorFlow adds an op to
 	`tf.GraphKeys.SUMMARIES` collection (by default).
 2. __When to Log__: [MergeAllSummaries](../modules/callbacks.html#tensorpack.callbacks.MergeAllSummaries)
 	callback is in the [default callbacks](../modules/train.html#tensorpack.train.DEFAULT_CALLBACKS).
@@ -25,16 +26,30 @@ This is how TensorFlow summaries eventually get logged/saved/printed:
 
 All the "what, when, where" can be customized in either the graph or with the callbacks/monitors setting.
 
-Since TF summaries are evaluated infrequently (every epoch) by default, if the content is data-dependent, the values
-could have high variance. To address this issue, you can:
+The design goal to disentangle "what, when, where" is to make components reusable.
+Suppose you have `M` items to log 
+(possibly from differently places, not necessarily the graph)
+and `N` backends to log your data to, you
+automatically obtain all the `MxN` combinations.
+
+Despite of that, if you only care about logging one specific item (e.g. for
+debugging purpose), you can check out the 
+[FAQ](http://tensorpack.readthedocs.io/tutorial/faq.html#how-to-print-dump-intermediate-results-in-training)
+for easier options.
+
+### Noisy TensorFlow Summaries
+
+Since TF summaries are evaluated infrequently (every epoch) by default,
+if the content is data-dependent, the values could have high variance.
+To address this issue, you can:
 1. Change "When to Log": log more frequently, but note that certain summaries can be expensive to
-	 log. You may want to use a separate collection for frequent logging.
+  log. You may want to use a separate collection for frequent logging.
 2. Change "What to Log": you can call
-	 [tfutils.summary.add_moving_summary](../modules/tfutils.html#tensorpack.tfutils.summary.add_moving_summary)
-	 on scalar tensors, which will summarize the moving average of those scalars, instead of their instant values.
-	 The moving averages are maintained by the
-	 [MovingAverageSummary](../modules/callbacks.html#tensorpack.callbacks.MovingAverageSummary)
-	 callback (enabled by default).
+  [tfutils.summary.add_moving_summary](../modules/tfutils.html#tensorpack.tfutils.summary.add_moving_summary)
+  on scalar tensors, which will summarize the moving average of those scalars, instead of their instant values.
+  The moving averages are maintained by the
+  [MovingAverageSummary](../modules/callbacks.html#tensorpack.callbacks.MovingAverageSummary)
+  callback (enabled by default).
 
 ### Other Logging Data
 
