@@ -214,7 +214,7 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
         input_callbacks = self._input_source.setup(tower_func.inputs_desc)
         with tf.variable_scope(tf.get_variable_scope(), reuse=True):
             for idx, dev in enumerate(self._devices):
-                vs_name = self._vs_name_for_predictor(idx)
+                vs_name = self.trainer._vs_name_for_predictor(idx)
                 with tf.device(dev), PredictTowerContext(
                         self._tower_names[idx], vs_name=vs_name):
                     logger.info("[InferenceRunner] Building tower '{}' on device {} {}...".format(

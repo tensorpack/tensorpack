@@ -231,11 +231,12 @@ class PrefetchDataZMQ(_MultiProcessZMQDataFlow):
            Please note that forking a TensorFlow GPU session may be unsafe.
            If you're managing this dataflow on your own,
            it's better to fork before creating the session.
-        4. After the fork has happened, this dataflow becomes not fork-safe.
+        4. (Fork-safety) After the fork has happened, this dataflow becomes not fork-safe.
            i.e., if you fork an already reset instance of this dataflow,
-           it won't be usable in the forked process.
-        5. Do not nest two `PrefetchDataZMQ`.
-        6. By default, a UNIX named pipe will be created in the current directory.
+           it won't be usable in the forked process. Therefore, do not nest two `PrefetchDataZMQ`.
+        5. (Thread-safety) ZMQ is not thread safe. Therefore, do not call :meth:`get_data` of the same dataflow in
+           more than 1 threads.
+        6. (For Mac only) A UNIX named pipe will be created in the current directory.
            However, certain non-local filesystem such as NFS/GlusterFS/AFS doesn't always support pipes.
            You can change the directory by ``export TENSORPACK_PIPEDIR=/other/dir``.
            In particular, you can use somewhere under '/tmp' which is usually local.
@@ -428,6 +429,8 @@ class PlasmaGetData(ProxyDataFlow):
     """
     Take plasma object id from a DataFlow, and retrieve it from plasma shared
     memory object store.
+
+    Experimental.
     """
     def __init__(self, ds, socket="/tmp/plasma"):
         self._socket = socket
