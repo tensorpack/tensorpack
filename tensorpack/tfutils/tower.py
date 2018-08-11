@@ -14,7 +14,7 @@ from ..utils.develop import HIDE_DOC
 from .collection import CollectionGuard
 from .common import get_op_or_tensor_by_name, get_op_tensor_name
 
-__all__ = ['get_current_tower_context', 'TowerContext', 'TowerFuncWrapper',
+__all__ = ['get_current_tower_context', 'BaseTowerContext', 'TowerContext', 'TowerFuncWrapper',
            'TowerTensorHandle', 'TowerTensorHandles']
 
 _CurrentTowerContext = None
@@ -23,9 +23,10 @@ _CurrentTowerContext = None
 @six.add_metaclass(ABCMeta)
 class BaseTowerContext(object):
     """ A context where the current model is built in.
-        Since TF 1.8, TensorFlow starts to introduce the same concept.
+        You need to use :func:`TowerContext` to create a :class:`BaseTowerContext`.
     """
 
+    @HIDE_DOC
     def __init__(self, ns_name, vs_name=''):
         """
         Args:
@@ -40,31 +41,49 @@ class BaseTowerContext(object):
 
     @abstractproperty
     def is_main_training_tower(self):
+        """
+        Whether this tower is the main (i.e., the first) training tower.
+        """
         pass
 
     @abstractproperty
     def has_own_variables(self):
         """
-        Whether this tower is supposed to have its own variables.
+        Whether this tower is supposed to have its own trainable variables.
         """
         pass
 
     @property
     def name(self):
+        """
+        Returns:
+            str - The name scope of the tower.
+        """
         return self._name
 
     @property
     def vs_name(self):
+        """
+        Returns:
+            str - The variable scope of the tower.
+        """
         return self._vs_name
 
     @property
     def ns_name(self):
+        """
+        Returns:
+            str - The name scope of the tower.
+        """
         return self._name
 
     def get_collection_in_tower(self, key):
         """
-        Get items from this collection that are added in the current tower.
-        These items may or may not start with the same prefix as the tower.
+        From a collection, get items that are __added__ to the collection in this tower.
+
+        Note that it works by tracking the collection at the beginning and end of
+        the tower function.
+        Therefore it does not guarantee that the items are __created__ in this tower.
         """
         return self._collection_guard.get_collection_in_tower(key)
 
@@ -194,15 +213,21 @@ class PredictTowerContext(BaseTowerContext):
 
 
 def get_current_tower_context():
+    """
+    When called inside a TowerContext, return the TowerContext.
+
+    Returns:
+        a :class:`BaseTowerContext` instance.
+    """
+    assert _CurrentTowerContext is not None, "The function is supposed to be called under a TowerContext!"
     return _CurrentTowerContext
 
 
 def TowerContext(tower_name, is_training, vs_name=''):
     """
-    User-facing API to build a tower manually.
-
-    Returns:
-        A context within which the tower function should be called.
+    The context for a tower function, containing metadata about the current tower.
+    Tensorpack trainers use :class:`TowerContext` to manage tower function.
+    Many tensorpack layers have to be called under a :class:`TowerContext`.
 
     Example:
 
@@ -219,7 +244,8 @@ def TowerContext(tower_name, is_training, vs_name=''):
 
 class TowerFuncWrapper(object):
     """
-    A wrapper around a tower function (function which builds one tower, i.e. one replicate of the model).
+    A wrapper around a tower function (see
+    [tutorial on tower function](http://tensorpack.readthedocs.io/tutorial/trainer.html#tower-trainer)).
     It keeps track of the name scope, variable scope and input/output tensors
     each time the function is called.
 
@@ -231,7 +257,8 @@ class TowerFuncWrapper(object):
         Args:
             tower_func: a function which builds one tower in the graph.
                 It takes several input tensors and could return anything.
-            inputs_desc ([InputDesc]): use this to figure out the right name for the input tensors.
+            inputs_desc ([InputDesc]): list of :class:`InputDesc`.
+                They are used to figure out the names for the input tensors.
         """
         assert callable(tower_fn), tower_fn
         inputs_desc_names = [k.name for k in inputs_desc]
@@ -344,7 +371,9 @@ class TowerTensorHandle(object):
     def get_tensor(self, name):
         """
         Get a tensor in this tower. The name can be:
+
         1. The name of the tensor without any tower prefix.
+
         2. The name of an :class:`InputDesc`, if it is used when building the tower.
         """
         name = get_op_tensor_name(name)[1]
@@ -368,14 +397,24 @@ class TowerTensorHandle(object):
             return ret
 
     def get_tensors(self, names):
+        """
+        Like :meth:`get_tensor`, but takes a list and returns a list.
+        """
         return [self.get_tensor(name) for name in names]
 
     def __getitem__(self, name):
+        """
+        The same as :meth:`get_tensor`.
+        """
         return self.get_tensor(name)
 
     def get_variable(self, name):
         """
         Get a variable used in this tower.
+        The name should not contain the variable scope prefix of the tower.
+
+        When the tower has the same variable scope and name scope, this is equivalent to
+        :meth:`get_tensor`.
         """
         name = get_op_tensor_name(name)[1]
         if len(self.vs_name):
@@ -384,15 +423,24 @@ class TowerTensorHandle(object):
             name_with_vs = name
         return get_op_or_tensor_by_name(name_with_vs)
 
-    def get_collection(self, name):
+    def get_variables(self, names):
         """
-        Get items from a collection that are added in this tower.
-        These items may or may not start with the same prefix as the tower.
+        Like :meth:`get_variable`, but takes a list and returns a list.
+        """
+        return [self.get_variable(name) for name in names]
+
+    def get_collection(self, key=None, name=None):
+        """
+        See :meth:`BaseTowerContext.get_collection_in_tower`.
 
         Args:
-            name (str): the name of the collection
+            key (str): the key of the collection
+            name: deprecated
         """
-        return self._ctx.get_collection_in_tower(name)
+        if name is not None:
+            logger.warn("TowerTensorHandle.get_collection(name=..) was renamed to (key=..) !")
+            key = name
+        return self._ctx.get_collection_in_tower(key)
 
     @property
     def input(self):

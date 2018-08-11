@@ -46,7 +46,8 @@ class TowerTrainer(Trainer):
     def tower_func(self):
         """
         A :class:`TowerFuncWrapper` instance.
-        A callable which takes some input tensors and builds one replicate of the model.
+        See [tutorial on tower function](http://tensorpack.readthedocs.io/tutorial/trainer.html#tower-trainer)
+        for more information.
         """
         return self._tower_func
 
@@ -70,6 +71,14 @@ class TowerTrainer(Trainer):
             access the tower handles by either indices or names.
 
         It is accessbile only after the graph is set up.
+        With :meth:`towers`, you can then access many attributes of each tower:
+
+        Example:
+
+        .. code-block:: python
+
+            # Access the conv1/output tensor in the first training tower
+            trainer.towers.training()[0].get_tensor('conv1/output')
         """
         return self.tower_func.towers
 
@@ -92,9 +101,9 @@ class TowerTrainer(Trainer):
             # in the graph:
             interesting_tensor = tf.identity(x, name='fun')
             # in _setup_graph callback method:
-            self._predictor = self.trainer.get_predictor(['input1'], ['fun'])
+            self._predictor = self.trainer.get_predictor(['input1', 'input2'], ['fun'])
             # After session is initialized (see Tutorials - Write a Callback), can use it by:
-            outputs = self._predictor(inputs)
+            outputs = self._predictor(input1, input2)
 
         The CycleGAN example and DQN example have more concrete use of this method.
         """
