@@ -75,8 +75,8 @@ class InputSource(object):
         """
         Returns:
             list: A list of tensors corresponding to the inputs of the model,
-                used as input of :func:`build_graph`.
-                For non-placeholder tensors, should always create and return new tensors when called.
+            used as input of :func:`build_graph`.
+            For non-placeholder tensors, should always create and return new tensors when called.
         """
         return self._get_input_tensors()
 
@@ -92,7 +92,7 @@ class InputSource(object):
 
         Returns:
             list[Callback]: extra callbacks needed by this InputSource.
-                callbacks of InputSource cannot use any `trigger*()` method.
+            callbacks of InputSource cannot use any `trigger*()` method.
         """
         self._setup(inputs_desc)
         self._setup_done = True

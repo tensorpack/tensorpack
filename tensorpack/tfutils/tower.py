@@ -29,6 +29,9 @@ class BaseTowerContext(object):
     @HIDE_DOC
     def __init__(self, ns_name, vs_name=''):
         """
+        This is not supposed to be used by users.
+        You need to use :func:`TowerContext` to create a :class:`BaseTowerContext`.
+
         Args:
             ns_name (str): The name scope of the tower.
             vs_name (str): Open a new variable scope with this name.
@@ -214,7 +217,7 @@ class PredictTowerContext(BaseTowerContext):
 
 def get_current_tower_context():
     """
-    When called inside a TowerContext, return the TowerContext.
+    When called inside a TowerContext, returns the TowerContext.
 
     Returns:
         a :class:`BaseTowerContext` instance.

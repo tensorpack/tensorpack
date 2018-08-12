@@ -40,6 +40,9 @@ class PlaceholderInput(InputSource):
     """
     Just produce placeholders as input tensors.
     """
+    def __init__(self):
+        pass
+
     def _setup(self, inputs):
         self._all_placehdrs = [v.build_placeholder_reuse() for v in inputs]
 

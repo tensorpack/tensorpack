@@ -363,6 +363,7 @@ _DEPRECATED_NAMES = set([
     'TFRecordData',
     'dump_dataflow_to_lmdb',
     'dump_dataflow_to_tfrecord',
+    'pyplot2img',
 
     # renamed stuff:
     'DumpTensor',

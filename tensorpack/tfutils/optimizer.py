@@ -4,6 +4,8 @@
 
 import tensorflow as tf
 from contextlib import contextmanager
+
+from ..utils.develop import HIDE_DOC
 from .gradproc import FilterNoneGrad, GradientProcessor
 
 __all__ = ['apply_grad_processors', 'ProxyOptimizer',
@@ -20,15 +22,19 @@ class ProxyOptimizer(tf.train.Optimizer):
         super(ProxyOptimizer, self).__init__(False, name)
         self._opt = opt
 
+    @HIDE_DOC
     def compute_gradients(self, *args, **kwargs):
         return self._opt.compute_gradients(*args, **kwargs)
 
+    @HIDE_DOC
     def get_slot(self, *args, **kwargs):
         return self._opt.get_slot(*args, **kwargs)
 
+    @HIDE_DOC
     def get_slot_names(self, *args, **kwargs):
         return self._opt.get_slot_names(*args, **kwargs)
 
+    @HIDE_DOC
     def apply_gradients(self, *args, **kwargs):
         return self._opt.apply_gradients(*args, **kwargs)
 
@@ -85,6 +91,7 @@ class PostProcessOptimizer(ProxyOptimizer):
         self._func = func
         self._colocate = colocate
 
+    @HIDE_DOC
     def apply_gradients(self, grads_and_vars, global_step=None, name=None):
         update_op = super(PostProcessOptimizer, self).apply_gradients(
             grads_and_vars, global_step)
@@ -131,8 +138,8 @@ class VariableAssignmentOptimizer(PostProcessOptimizer):
 
 class AccumGradOptimizer(ProxyOptimizer):
     """
-    An optimizer which accumulates gradients across :math:`k` :meth:`minimize` calls,
-    and apply them together in every :math:`k`th :meth:`minimize` call.
+    An optimizer which accumulates gradients across :math:`k` :meth:`minimize` executions,
+    and apply them together in every :math:`k` th :meth:`minimize` execution.
     This is roughly the same as using a :math:`k` times larger batch size plus a
     :math:`k` times larger learning rate, but uses much less memory.
 
@@ -157,6 +164,7 @@ class AccumGradOptimizer(ProxyOptimizer):
             slots.append(s)
         return slots
 
+    @HIDE_DOC
     def apply_gradients(self, grads_and_vars, global_step=None, name=None):
         assert global_step is None, \
             "AccumGradOptimizer doesn't support the option global_step! " \

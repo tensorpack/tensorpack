@@ -18,7 +18,10 @@ __all__ = ['GradientProcessor',
 
 @six.add_metaclass(ABCMeta)
 class GradientProcessor(object):
-    """ Base class for all gradient processors.
+    """
+    Base class for all gradient processors.
+    Gradient processors can be applied to optimizers by
+    :func:`optimizer.apply_grad_processors`.
 
     Subclass should override the ``_process()`` method.
     """
