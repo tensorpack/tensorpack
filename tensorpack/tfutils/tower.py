@@ -220,9 +220,8 @@ def get_current_tower_context():
     When called inside a TowerContext, returns the TowerContext.
 
     Returns:
-        a :class:`BaseTowerContext` instance.
+        a :class:`BaseTowerContext` instance or None, if not called under a TowerContext.
     """
-    assert _CurrentTowerContext is not None, "The function is supposed to be called under a TowerContext!"
     return _CurrentTowerContext
 
 
