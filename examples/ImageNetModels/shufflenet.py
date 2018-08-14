@@ -86,7 +86,7 @@ def shufflenet_unit_v2(l, out_channel, stride):
         shortcut, l = tf.split(l, 2, axis=1)
     else:
         shortcut, l = l, l
-    shortcut_channel = shortcut.shape[1]
+    shortcut_channel = int(shortcut.shape[1])
 
     l = Conv2D('conv1', l, out_channel // 2, 1, activation=BNReLU)
     l = DepthConv('dconv', l, out_channel // 2, 3, stride=stride)
