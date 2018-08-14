@@ -577,7 +577,7 @@ if __name__ == '__main__':
         stepnum = cfg.TRAIN.STEPS_PER_EPOCH
 
         # warmup is step based, lr is epoch based
-        init_lr = cfg.TRAIN.BASE_LR * 0.33 * (8. / cfg.TRAIN.NUM_GPUS)
+        init_lr = cfg.TRAIN.BASE_LR * 0.33 * min(8. / cfg.TRAIN.NUM_GPUS, 1.)
         warmup_schedule = [(0, init_lr), (cfg.TRAIN.WARMUP, cfg.TRAIN.BASE_LR)]
         warmup_end_epoch = cfg.TRAIN.WARMUP * 1. / stepnum
         lr_schedule = [(int(np.ceil(warmup_end_epoch)), cfg.TRAIN.BASE_LR)]
