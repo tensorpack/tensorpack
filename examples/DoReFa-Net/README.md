@@ -37,7 +37,7 @@ We hosted a demo at CVPR16 on behalf of Megvii, Inc, running a 1/4-VGG size DoRe
 DoReFa-Net and its variants have been deployed widely in Megvii's embeded products.
 
 This code release is meant for research purpose. We're not planning to release our C++ runtime for bit-operations.
-In this implementation, quantized operations are all performed through `tf.float32`.
+In this implementation, quantized operations are all performed through `tf.float32`. They don't make your network faster.
 
 ## Use
 
