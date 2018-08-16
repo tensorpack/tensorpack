@@ -3,7 +3,6 @@
 # Credit: Qinyao He
 
 import tensorflow as tf
-from tensorflow.contrib.framework import add_model_variable
 from contextlib import contextmanager
 
 from .common import get_tf_version_tuple
@@ -13,6 +12,13 @@ __all__ = ['custom_getter_scope', 'freeze_variables', 'remap_variables']
 
 @contextmanager
 def custom_getter_scope(custom_getter):
+    """
+    Args:
+        custom_getter: the same as in :func:`tf.get_variable`
+
+    Returns:
+        The current variable scope with a custom_getter.
+    """
     scope = tf.get_variable_scope()
     if get_tf_version_tuple() >= (1, 5):
         with tf.variable_scope(
@@ -35,7 +41,8 @@ def remap_variables(fn):
         fn (tf.Variable -> tf.Tensor)
 
     Returns:
-        a context where all the variables will be mapped by fn.
+        The current variable scope with a custom_getter that maps
+        all the variables by fn.
 
     Example:
         .. code-block:: python
@@ -83,7 +90,7 @@ def freeze_variables(stop_gradient=True, skip_collection=False):
             kwargs['trainable'] = False
         v = getter(*args, **kwargs)
         if skip_collection:
-            add_model_variable(v)
+            tf.add_to_collection(tf.GraphKeys.MODEL_VARIABLES, v)
         if trainable and stop_gradient:
             v = tf.stop_gradient(v, name='freezed_' + name)
         return v

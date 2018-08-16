@@ -64,7 +64,8 @@ class SVHNDigit(RNGDataFlow):
     @staticmethod
     def get_per_pixel_mean():
         """
-        return 32x32x3 image
+        Returns:
+            a 32x32x3 image
         """
         a = SVHNDigit('train')
         b = SVHNDigit('test')

@@ -67,8 +67,8 @@ class Mnist(RNGDataFlow):
     image is 28x28 in the range [0,1], label is an int.
     """
 
-    DIR_NAME = 'mnist_data'
-    SOURCE_URL = 'http://yann.lecun.com/exdb/mnist/'
+    _DIR_NAME = 'mnist_data'
+    _SOURCE_URL = 'http://yann.lecun.com/exdb/mnist/'
 
     def __init__(self, train_or_test, shuffle=True, dir=None):
         """
@@ -77,15 +77,15 @@ class Mnist(RNGDataFlow):
             shuffle (bool): shuffle the dataset
         """
         if dir is None:
-            dir = get_dataset_path(self.DIR_NAME)
+            dir = get_dataset_path(self._DIR_NAME)
         assert train_or_test in ['train', 'test']
         self.train_or_test = train_or_test
         self.shuffle = shuffle
 
         def get_images_and_labels(image_file, label_file):
-            f = maybe_download(self.SOURCE_URL + image_file, dir)
+            f = maybe_download(self._SOURCE_URL + image_file, dir)
             images = extract_images(f)
-            f = maybe_download(self.SOURCE_URL + label_file, dir)
+            f = maybe_download(self._SOURCE_URL + label_file, dir)
             labels = extract_labels(f)
             assert images.shape[0] == labels.shape[0]
             return images, labels
@@ -113,8 +113,21 @@ class Mnist(RNGDataFlow):
 
 
 class FashionMnist(Mnist):
-    DIR_NAME = 'fashion_mnist_data'
-    SOURCE_URL = 'http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/'
+    """
+    Same API as :class:`Mnist`, but more fashion.
+    """
+
+    _DIR_NAME = 'fashion_mnist_data'
+    _SOURCE_URL = 'http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/'
+
+    def get_label_names(self):
+        """
+        Returns:
+            [str]: the name of each class
+        """
+        # copied from https://github.com/zalandoresearch/fashion-mnist
+        return ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat',
+                'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
 
 
 if __name__ == '__main__':

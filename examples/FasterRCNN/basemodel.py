@@ -4,7 +4,6 @@
 from contextlib import contextmanager, ExitStack
 import numpy as np
 import tensorflow as tf
-from tensorflow.contrib.framework import add_model_variable
 
 from tensorpack.tfutils import argscope
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
@@ -49,7 +48,7 @@ def freeze_affine_getter(getter, *args, **kwargs):
     if name.endswith('/gamma') or name.endswith('/beta'):
         kwargs['trainable'] = False
         ret = getter(*args, **kwargs)
-        add_model_variable(ret)
+        tf.add_to_collection(tf.GraphKeys.MODEL_VARIABLES, ret)
     else:
         ret = getter(*args, **kwargs)
     return ret

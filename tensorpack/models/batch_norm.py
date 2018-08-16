@@ -3,7 +3,6 @@
 
 
 import tensorflow as tf
-from tensorflow.contrib.framework import add_model_variable
 from tensorflow.python.training import moving_averages
 import re
 import six
@@ -191,7 +190,7 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
         if ctx.is_main_training_tower:
             for v in layer.non_trainable_variables:
                 if isinstance(v, tf.Variable):
-                    add_model_variable(v)
+                    tf.add_to_collection(tf.GraphKeys.MODEL_VARIABLES, v)
         if not ctx.is_main_training_tower or internal_update:
             restore_collection(coll_bk)
 
@@ -354,7 +353,7 @@ def BatchRenorm(x, rmax, dmax, momentum=0.9, epsilon=1e-5,
     if ctx.is_main_training_tower:
         for v in layer.non_trainable_variables:
             if isinstance(v, tf.Variable):
-                add_model_variable(v)
+                tf.add_to_collection(tf.GraphKeys.MODEL_VARIABLES, v)
     else:
         # only run UPDATE_OPS in the first tower
         restore_collection(coll_bk)
