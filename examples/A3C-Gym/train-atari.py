@@ -278,9 +278,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     ENV_NAME = args.env
-    logger.info("Environment Name: {}".format(ENV_NAME))
     NUM_ACTIONS = get_player().action_space.n
-    logger.info("Number of actions: {}".format(NUM_ACTIONS))
+    logger.info("Environment: {}, number of actions: {}".format(ENV_NAME, NUM_ACTIONS))
 
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu

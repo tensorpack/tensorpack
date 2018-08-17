@@ -6,6 +6,7 @@
 import os
 import argparse
 import cv2
+import numpy as np
 import tensorflow as tf
 
 
@@ -40,7 +41,7 @@ def get_player(viz=False, train=False):
     env = AtariPlayer(ROM_FILE, frame_skip=ACTION_REPEAT, viz=viz,
                       live_lost_as_eoe=train, max_num_frames=60000)
     env = FireResetEnv(env)
-    env = MapState(env, lambda im: cv2.resize(im, IMAGE_SIZE))
+    env = MapState(env, lambda im: cv2.resize(im, IMAGE_SIZE)[:, :, np.newaxis])
     if not train:
         # in training, history is taken care of in expreplay buffer
         env = FrameStack(env, FRAME_HISTORY)
@@ -49,10 +50,10 @@ def get_player(viz=False, train=False):
 
 class Model(DQNModel):
     def __init__(self):
-        super(Model, self).__init__(IMAGE_SIZE, FRAME_HISTORY, METHOD, NUM_ACTIONS, GAMMA)
+        super(Model, self).__init__(IMAGE_SIZE, 1, FRAME_HISTORY, METHOD, NUM_ACTIONS, GAMMA)
 
     def _get_DQN_prediction(self, image):
-        """ image: [0,255]"""
+        """ image: [N, H, W, C * history] in [0,255]"""
         image = image / 255.0
         with argscope(Conv2D, activation=lambda x: PReLU('prelu', x), use_bias=True):
             l = (LinearWrap(image)
@@ -86,7 +87,7 @@ def get_config():
     expreplay = ExpReplay(
         predictor_io_names=(['state'], ['Qvalue']),
         player=get_player(train=True),
-        state_shape=IMAGE_SIZE,
+        state_shape=IMAGE_SIZE + (1,),
         batch_size=BATCH_SIZE,
         memory_size=MEMORY_SIZE,
         init_memory_size=INIT_MEMORY_SIZE,

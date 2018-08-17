@@ -20,10 +20,9 @@ Claimed performance in the paper can be reproduced, on several games I've tested
 
 ![DQN](curve-breakout.png)
 
-On one TitanX, Double-DQN took 1 day of training to reach a score of 400 on breakout.
-Batch-A3C implementation only took <2 hours.
+On one (Maxwell) TitanX, Double-DQN took ~18 hours of training to reach a score of 400 on breakout.
 
-Double-DQN with nature paper setting runs at 60 batches (3840 trained frames, 240 seen frames, 960 game frames) per second on (Maxwell) TitanX.
+Double-DQN with nature paper setting runs at 60 batches (3840 trained frames, 240 seen frames, 960 game frames) per second on TitanX.
 
 ## How to use
 

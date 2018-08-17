@@ -25,6 +25,9 @@ class ReplayMemory(object):
     def __init__(self, max_size, state_shape, history_len):
         self.max_size = int(max_size)
         self.state_shape = state_shape
+        self._state_transpose = list(range(1, len(state_shape) + 1)) + [0]
+        self._channel = state_shape[2] if len(state_shape) == 3 else 1
+        self._shape3d = (state_shape[0], state_shape[1], self._channel * (history_len + 1))
         self.history_len = int(history_len)
 
         self.state = np.zeros((self.max_size,) + state_shape, dtype='uint8')
@@ -62,7 +65,7 @@ class ReplayMemory(object):
 
     def sample(self, idx):
         """ return a tuple of (s,r,a,o),
-            where s is of shape STATE_SIZE + (hist_len+1,)"""
+            where s is of shape [H, W, channel * (hist_len+1)]"""
         idx = (self._curr_pos + idx) % self._curr_size
         k = self.history_len + 1
         if idx + k <= self._curr_size:
@@ -86,7 +89,9 @@ class ReplayMemory(object):
                 state = copy.deepcopy(state)
                 state[:k + 1].fill(0)
                 break
-        state = state.transpose(1, 2, 0)
+        # move the first dim to the last
+        state = state.transpose(*self._state_transpose)
+        state = state.reshape(self._shape3d)
         return (state, reward[-2], action[-2], isOver[-2])
 
     def _slice(self, arr, start, end):
@@ -130,11 +135,13 @@ class ExpReplay(DataFlow, Callback):
             predictor_io_names (tuple of list of str): input/output names to
                 predict Q value from state.
             player (RLEnvironment): the player.
+            state_shape (tuple): h, w, c
             history_len (int): length of history frames to concat. Zero-filled
                 initial frames.
             update_frequency (int): number of new transitions to add to memory
                 after sampling a batch of transitions for training.
         """
+        assert len(state_shape) == 3, state_shape
         init_memory_size = int(init_memory_size)
 
         for k, v in locals().items():
@@ -195,10 +202,10 @@ class ExpReplay(DataFlow, Callback):
             # build a history state
             history = self.mem.recent_state()
             history.append(old_s)
-            history = np.stack(history, axis=2)
+            history = np.concatenate(history, axis=-1)
 
             # assume batched network
-            q_values = self.predictor(history[None, :, :, :])[0][0]  # this is the bottleneck
+            q_values = self.predictor(np.expand_dims(history, 0))[0][0]  # this is the bottleneck
             act = np.argmax(q_values)
         self._current_ob, reward, isOver, info = self.player.step(act)
         self._current_game_score.feed(reward)
