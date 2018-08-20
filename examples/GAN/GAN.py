@@ -7,7 +7,7 @@ import numpy as np
 from tensorpack import (TowerTrainer,
                         ModelDescBase, DataFlow, StagingInput)
 from tensorpack.tfutils.tower import TowerContext, TowerFuncWrapper
-from tensorpack.graph_builder import DataParallelBuilder, LeastLoadedDeviceSetter
+from tensorpack.graph_builder.training import DataParallelBuilder, LeastLoadedDeviceSetter
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.utils.argtools import memoized
 
