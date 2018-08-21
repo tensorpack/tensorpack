@@ -290,12 +290,12 @@ class MapDataComponent(MapData):
     def __init__(self, ds, func, index=0):
         """
         Args:
-            ds (DataFlow): input DataFlow.
+            ds (DataFlow): input DataFlow which produces either list or dict.
             func (TYPE -> TYPE|None): takes ``dp[index]``, returns a new value for ``dp[index]``.
                 return None to discard this datapoint.
-            index (int): index of the component.
+            index (int or str): index or key of the component.
         """
-        self._index = int(index)
+        self._index = index
         self._func = func
         super(MapDataComponent, self).__init__(ds, self._mapper)
 
@@ -303,7 +303,7 @@ class MapDataComponent(MapData):
         r = self._func(dp[self._index])
         if r is None:
             return None
-        dp = list(dp)   # shallow copy to avoid modifying the list
+        dp = copy(dp)   # shallow copy to avoid modifying the list
         dp[self._index] = r
         return dp
 
