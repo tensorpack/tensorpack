@@ -52,18 +52,21 @@ Recommended configurations are listed in the table below.
 The code is only valid for training with 1, 2, 4 or >=8 GPUs.
 Not training with 8 GPUs may result in different performance from the table below.
 
+### Inference:
+
 To predict on an image (and show output in a window):
 ```
 ./train.py --predict input.jpg --load /path/to/model --config SAME-AS-TRAINING
 ```
 
-Evaluate the performance of a model on COCO.
-(Several trained models can be downloaded in [model zoo](http://models.tensorpack.com/FasterRCNN)):
+To Evaluate the performance of a model on COCO:
 ```
 ./train.py --evaluate output.json --load /path/to/COCO-R50C4-MaskRCNN-Standard.npz \
-    --config MODE_MASK=True DATA.BASEDIR=/path/to/COCO/DIR
+    --config SAME-AS-TRAINING
 ```
-Evaluation or prediction will need the same `--config` used during training.
+
+Several trained models can be downloaded in the table below. Evaluation and
+prediction will need to be run with the corresponding training configs.
 
 ## Results
 

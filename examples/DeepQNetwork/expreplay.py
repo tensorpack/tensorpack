@@ -25,7 +25,8 @@ class ReplayMemory(object):
     def __init__(self, max_size, state_shape, history_len):
         self.max_size = int(max_size)
         self.state_shape = state_shape
-        self._state_transpose = list(range(1, len(state_shape) + 1)) + [0]
+        assert len(state_shape) == 3, state_shape
+        # self._state_transpose = list(range(1, len(state_shape) + 1)) + [0]
         self._channel = state_shape[2] if len(state_shape) == 3 else 1
         self._shape3d = (state_shape[0], state_shape[1], self._channel * (history_len + 1))
         self.history_len = int(history_len)
@@ -57,7 +58,7 @@ class ReplayMemory(object):
             self._hist.append(exp)
 
     def recent_state(self):
-        """ return a list of (hist_len-1,) + STATE_SIZE """
+        """ return a list of ``hist_len-1`` elements, each of shape ``self.state_shape`` """
         lst = list(self._hist)
         states = [np.zeros(self.state_shape, dtype='uint8')] * (self._hist.maxlen - len(lst))
         states.extend([k.state for k in lst])
@@ -65,7 +66,7 @@ class ReplayMemory(object):
 
     def sample(self, idx):
         """ return a tuple of (s,r,a,o),
-            where s is of shape [H, W, channel * (hist_len+1)]"""
+            where s is of shape [H, W, (hist_len+1) * channel]"""
         idx = (self._curr_pos + idx) % self._curr_size
         k = self.history_len + 1
         if idx + k <= self._curr_size:
@@ -84,14 +85,14 @@ class ReplayMemory(object):
 
     # the next_state is a different episode if current_state.isOver==True
     def _pad_sample(self, state, reward, action, isOver):
+        # state: Hist+1,H,W,C
         for k in range(self.history_len - 2, -1, -1):
             if isOver[k]:
                 state = copy.deepcopy(state)
                 state[:k + 1].fill(0)
                 break
         # move the first dim to the last
-        state = state.transpose(*self._state_transpose)
-        state = state.reshape(self._shape3d)
+        state = state.transpose(1, 2, 0, 3).reshape(self._shape3d)
         return (state, reward[-2], action[-2], isOver[-2])
 
     def _slice(self, arr, start, end):
@@ -202,10 +203,11 @@ class ExpReplay(DataFlow, Callback):
             # build a history state
             history = self.mem.recent_state()
             history.append(old_s)
-            history = np.concatenate(history, axis=-1)
+            history = np.concatenate(history, axis=-1)  # H,W,HistxC
+            history = np.expand_dims(history, axis=0)
 
             # assume batched network
-            q_values = self.predictor(np.expand_dims(history, 0))[0][0]  # this is the bottleneck
+            q_values = self.predictor(history)[0][0]  # this is the bottleneck
             act = np.argmax(q_values)
         self._current_ob, reward, isOver, info = self.player.step(act)
         self._current_game_score.feed(reward)

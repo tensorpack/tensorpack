@@ -303,7 +303,7 @@ class MapDataComponent(MapData):
         r = self._func(dp[self._index])
         if r is None:
             return None
-        dp = copy(dp)   # shallow copy to avoid modifying the list
+        dp = copy(dp)   # shallow copy to avoid modifying the datapoint
         dp[self._index] = r
         return dp
 

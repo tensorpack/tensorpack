@@ -49,7 +49,7 @@ def sample_fast_rcnn_targets(boxes, gt_boxes, gt_labels):
 
     Returns:
         sampled_boxes: tx4 floatbox, the rois
-        sampled_labels: t labels, in [0, #class-1]. Positive means foreground.
+        sampled_labels: t int64 labels, in [0, #class-1]. Positive means foreground.
         fg_inds_wrt_gt: #fg indices, each in range [0, m-1].
             It contains the matching GT of each foreground roi.
     """

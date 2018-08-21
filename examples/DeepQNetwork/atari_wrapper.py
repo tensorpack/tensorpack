@@ -27,8 +27,11 @@ class MapState(gym.ObservationWrapper):
 
 
 class FrameStack(gym.Wrapper):
+    """
+    Buffer observations and stack across channels (last axis).
+    The output observation has shape (H, W, History * Channel)
+    """
     def __init__(self, env, k):
-        """Buffer observations and stack across channels (last axis)."""
         gym.Wrapper.__init__(self, env)
         self.k = k
         self.frames = deque([], maxlen=k)

@@ -620,7 +620,6 @@ if __name__ == '__main__':
             session_init=session_init,
         )
         if is_horovod:
-            # horovod mode has the best speed for this model
             trainer = HorovodTrainer(average=False)
         else:
             # nccl mode has better speed than cpu mode

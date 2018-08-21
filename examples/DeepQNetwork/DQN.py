@@ -53,7 +53,6 @@ class Model(DQNModel):
         super(Model, self).__init__(IMAGE_SIZE, 1, FRAME_HISTORY, METHOD, NUM_ACTIONS, GAMMA)
 
     def _get_DQN_prediction(self, image):
-        """ image: [N, H, W, C * history] in [0,255]"""
         image = image / 255.0
         with argscope(Conv2D, activation=lambda x: PReLU('prelu', x), use_bias=True):
             l = (LinearWrap(image)

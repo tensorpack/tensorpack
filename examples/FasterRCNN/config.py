@@ -99,7 +99,7 @@ _C.TRAIN.BASE_LR = 1e-2  # defined for a total batch size of 8. Otherwise it wil
 _C.TRAIN.WARMUP = 1000   # in terms of iterations. This is not affected by #GPUs
 _C.TRAIN.STEPS_PER_EPOCH = 500
 
-# Schedule means "steps" only when total batch size is 8.
+# LR_SCHEDULE means "steps" only when total batch size is 8.
 # Otherwise the actual steps to decrease learning rate are computed from the schedule.
 # LR_SCHEDULE = [120000, 160000, 180000]  # "1x" schedule in detectron
 _C.TRAIN.LR_SCHEDULE = [240000, 320000, 360000]    # "2x" schedule in detectron

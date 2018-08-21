@@ -15,10 +15,12 @@ class Model(ModelDesc):
     learning_rate = 1e-3
 
     def __init__(self, image_shape, channel, history, method, num_actions, gamma):
+        assert len(image_shape) == 2, image_shape
+
         self.channel = channel
-        self._shape2d = image_shape
-        self._shape3d = image_shape + (channel, )
-        self._shape4d_for_prediction = (-1, ) + image_shape + (channel * history, )
+        self._shape2d = tuple(image_shape)
+        self._shape3d = self._shape2d + (channel, )
+        self._shape4d_for_prediction = (-1, ) + self._shape2d + (history * channel, )
         self._channel = channel
         self.history = history
         self.method = method
@@ -31,7 +33,7 @@ class Model(ModelDesc):
         # The first h are the current state, and the last h are the next state.
         return [tf.placeholder(tf.uint8,
                                (None,) + self._shape2d +
-                               (self._channel * (self.history + 1),),
+                               ((self.history + 1) * self.channel,),
                                'comb_state'),
                 tf.placeholder(tf.int64, (None,), 'action'),
                 tf.placeholder(tf.float32, (None,), 'reward'),
@@ -43,20 +45,22 @@ class Model(ModelDesc):
 
     @auto_reuse_variable_scope
     def get_DQN_prediction(self, image):
+        """ image: [N, H, W, history * C] in [0,255]"""
         return self._get_DQN_prediction(image)
 
     def build_graph(self, comb_state, action, reward, isOver):
         comb_state = tf.cast(comb_state, tf.float32)
-        comb_state = tf.reshape(comb_state, [-1] + list(self._shape3d) + [self.history + 1])
+        comb_state = tf.reshape(
+            comb_state, [-1] + list(self._shape2d) + [self.history + 1, self.channel])
 
-        state = tf.slice(comb_state, [0, 0, 0, 0, 0], [-1, -1, -1, -1, self.history])
+        state = tf.slice(comb_state, [0, 0, 0, 0, 0], [-1, -1, -1, self.history, -1])
         state = tf.reshape(state, self._shape4d_for_prediction, name='state')
         self.predict_value = self.get_DQN_prediction(state)
         if not get_current_tower_context().is_training:
             return
 
         reward = tf.clip_by_value(reward, -1, 1)
-        next_state = tf.slice(comb_state, [0, 0, 0, 0, 1], [-1, -1, -1, -1, self.history], name='next_state')
+        next_state = tf.slice(comb_state, [0, 0, 0, 1, 0], [-1, -1, -1, self.history, -1], name='next_state')
         next_state = tf.reshape(next_state, self._shape4d_for_prediction)
         action_onehot = tf.one_hot(action, self.num_actions, 1.0, 0.0)
 
