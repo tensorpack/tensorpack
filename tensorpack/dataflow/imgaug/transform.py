@@ -56,6 +56,7 @@ class ImageTransform(object):
 
 class ResizeTransform(ImageTransform):
     def __init__(self, h, w, newh, neww, interp):
+        super(ResizeTransform, self).__init__()
         self._init(locals())
 
     def apply_image(self, img):
@@ -75,6 +76,7 @@ class ResizeTransform(ImageTransform):
 
 class CropTransform(ImageTransform):
     def __init__(self, h0, w0, h, w):
+        super(CropTransform, self).__init__()
         self._init(locals())
 
     def apply_image(self, img):
@@ -89,6 +91,7 @@ class CropTransform(ImageTransform):
 class WarpAffineTransform(ImageTransform):
     def __init__(self, mat, dsize, interp=cv2.INTER_LINEAR,
                  borderMode=cv2.BORDER_CONSTANT, borderValue=0):
+        super(WarpAffineTransform, self).__init__()
         self._init(locals())
 
     def apply_image(self, img):

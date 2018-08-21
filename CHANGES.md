@@ -6,9 +6,9 @@ The backward compatibilty will be __preserved for at least several months__, wit
 so you don't need to look at here very often.
 
 Here are a list of things that were changed, starting from an early version.
-TensorFlow itself also APIs changes and those are not listed here.
+TensorFlow itself also changes API and those are not listed here.
 
-+ [2018/04/05] msgpack is replaced by pyarrow. If you want compatibility with old serialized data,
++ [2018/04/05] msgpack is replaced by pyarrow. If you want old behavior,
 	`export TENSORPACK_SERIALIZE=msgpack`.
 + [2018/03/20] `ModelDesc` starts to use simplified interfaces:
 	+ `_get_inputs()` renamed to `inputs()` and returns `tf.placeholder`s.

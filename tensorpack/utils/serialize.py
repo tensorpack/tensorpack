@@ -10,8 +10,9 @@ __all__ = ['loads', 'dumps']
 def dumps_msgpack(obj):
     """
     Serialize an object.
+
     Returns:
-        Implementation-dependent bytes-like object
+        Implementation-dependent bytes-like object.
     """
     return msgpack.dumps(obj, use_bin_type=True)
 
@@ -29,7 +30,8 @@ def dumps_pyarrow(obj):
     Serialize an object.
 
     Returns:
-        Implementation-dependent bytes-like object
+        Implementation-dependent bytes-like object.
+        May not be compatible across different versions of pyarrow.
     """
     return pa.serialize(obj).to_buffer()
 

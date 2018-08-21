@@ -23,8 +23,8 @@ You can use this predicate to choose a different code path in inference mode.
 
 Tensorpack is a training interface -- it doesn't care what happened after training.
 It saves models to standard checkpoint format.
-You can build the graph for inference, load the checkpoint, and then use whatever deployment methods TensorFlow supports.
-But you'll need to read TF docs and do it on your own.
+So you can build the graph for inference, load the checkpoint, and then use whatever deployment methods TensorFlow supports.
+But you'll need to read TF docs and __do it on your own__.
 
 ### Don't Use Training Metagraph for Inference
 
@@ -50,6 +50,11 @@ with TowerContext('', is_training=False):
 ### OfflinePredictor
 The only tool tensorpack has for after-training inference is [OfflinePredictor](../modules/predict.html#tensorpack.predict.OfflinePredictor),
 a simple function to build the graph and return a callable for you.
-It is mainly for quick demo purposes.
-It only runs inference on numpy arrays, therefore may not be the most efficient way.
 Check out examples and docs for its usage.
+
+
+OfflinePredictor is only for quick demo purposes.
+It runs inference on numpy arrays, therefore may not be the most efficient way.
+It also has very limited functionalities.
+If you need anything more complicated, please __do it on your own__ because Tensorpack
+doesn't care what happened after training.

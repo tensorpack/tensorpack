@@ -38,6 +38,7 @@ class CustomResize(transform.TransformAugmentorBase):
             size (int): the size to resize the shortest edge to.
             max_size (int): maximum allowed longest edge.
         """
+        super(CustomResize, self).__init__()
         self._init(locals())
 
     def _get_augment_params(self, img):
