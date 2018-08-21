@@ -311,7 +311,7 @@ def get_train_dataflow():
     ds = DataFromList(roidbs, shuffle=True)
 
     aug = imgaug.AugmentorList(
-        [CustomResize(cfg.PREPROC.SHORT_EDGE_SIZE, cfg.PREPROC.MAX_SIZE),
+        [CustomResize(cfg.PREPROC.TRAIN_SHORT_EDGE_SIZE, cfg.PREPROC.MAX_SIZE),
          imgaug.Flip(horiz=True)])
 
     def preprocess(roidb):

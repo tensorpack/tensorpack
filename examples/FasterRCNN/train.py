@@ -162,7 +162,7 @@ class ResNetC4Model(DetectionModel):
         fastrcnn_label_logits, fastrcnn_box_logits = fastrcnn_outputs('fastrcnn', feature_gap, cfg.DATA.NUM_CLASS)
 
         fastrcnn_head = FastRCNNHead(rcnn_boxes, fastrcnn_box_logits, fastrcnn_label_logits,
-                                     tf.constant(cfg.FRCNN.BBOX_REG_WEIGHTS),
+                                     tf.constant(cfg.FRCNN.BBOX_REG_WEIGHTS, dtype=tf.float32),
                                      rcnn_labels, matched_gt_boxes)
 
         if is_training:
@@ -293,7 +293,7 @@ class ResNetFPNModel(DetectionModel):
         fastrcnn_label_logits, fastrcnn_box_logits = fastrcnn_head_func(
             'fastrcnn', roi_feature_fastrcnn, cfg.DATA.NUM_CLASS)
         fastrcnn_head = FastRCNNHead(rcnn_boxes, fastrcnn_box_logits, fastrcnn_label_logits,
-                                     tf.constant(cfg.FRCNN.BBOX_REG_WEIGHTS),
+                                     tf.constant(cfg.FRCNN.BBOX_REG_WEIGHTS, dtype=tf.float32),
                                      rcnn_labels, matched_gt_boxes)
 
         if is_training:

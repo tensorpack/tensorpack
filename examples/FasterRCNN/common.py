@@ -32,22 +32,27 @@ class CustomResize(transform.TransformAugmentorBase):
     while avoiding the longest edge to exceed max_size.
     """
 
-    def __init__(self, size, max_size, interp=cv2.INTER_LINEAR):
+    def __init__(self, short_edge_length, max_size, interp=cv2.INTER_LINEAR):
         """
         Args:
-            size (int): the size to resize the shortest edge to.
-            max_size (int): maximum allowed longest edge.
+            short_edge_length ([int, int]): a [min, max] interval from which to sample the
+                shortest edge length.
+            max_size (int): maximum allowed longest edge length.
         """
         super(CustomResize, self).__init__()
+        if isinstance(short_edge_length, int):
+            short_edge_length = (short_edge_length, short_edge_length)
         self._init(locals())
 
     def _get_augment_params(self, img):
         h, w = img.shape[:2]
-        scale = self.size * 1.0 / min(h, w)
+        size = self.rng.randint(
+            self.short_edge_length[0], self.short_edge_length[1] + 1)
+        scale = size * 1.0 / min(h, w)
         if h < w:
-            newh, neww = self.size, scale * w
+            newh, neww = size, scale * w
         else:
-            newh, neww = scale * h, self.size
+            newh, neww = scale * h, size
         if max(newh, neww) > self.max_size:
             scale = self.max_size * 1.0 / max(newh, neww)
             newh = newh * scale

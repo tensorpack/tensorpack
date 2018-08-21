@@ -107,7 +107,8 @@ _C.TRAIN.NUM_EVALS = 20  # number of evaluations to run during training
 
 # preprocessing --------------------
 # Alternative old (worse & faster) setting: 600, 1024
-_C.PREPROC.SHORT_EDGE_SIZE = 800
+_C.PREPROC.TRAIN_SHORT_EDGE_SIZE = [800, 800]  # [min, max] to sample from
+_C.PREPROC.TEST_SHORT_EDGE_SIZE = 800
 _C.PREPROC.MAX_SIZE = 1333
 # mean and std in RGB order.
 # Un-scaled version: [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
