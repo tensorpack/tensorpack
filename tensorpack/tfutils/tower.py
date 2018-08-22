@@ -263,9 +263,9 @@ class TowerFuncWrapper(object):
                 They are used to figure out the names for the input tensors.
         """
         assert callable(tower_fn), tower_fn
-        inputs_desc_names = [k.name for k in inputs_desc]
-        assert len(set(inputs_desc_names)) == len(inputs_desc_names), \
-            "Duplicated names in inputs_desc! " + str(inputs_desc_names)
+        self._inputs_desc_names = [k.name for k in inputs_desc]
+        assert len(set(self._inputs_desc_names)) == len(self._inputs_desc_names), \
+            "Duplicated names in inputs_desc! " + str(self._inputs_desc_names)
         self._tower_fn = tower_fn
         self._inputs_desc = inputs_desc
 
