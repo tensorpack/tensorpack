@@ -46,6 +46,8 @@ def _make_feeds(placeholders, datapoint):
     elif isinstance(datapoint, dict):
         ret = {p: datapoint[p.op.name] for p in placeholders}
         return ret
+    else:
+        raise TypeError("Got a datapoint of type {}!".format(type(datapoint)))
 
 
 class PlaceholderInput(InputSource):

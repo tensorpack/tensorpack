@@ -41,6 +41,10 @@ def _replace_global_by_local(kwargs):
 
 @contextmanager
 def override_to_local_variable(enable=True):
+    """
+    Returns:
+        a context where all variables will be created as local.
+    """
     if enable:
 
         def custom_getter(getter, name, *args, **kwargs):
@@ -55,7 +59,16 @@ def override_to_local_variable(enable=True):
 
 # https://github.com/tensorflow/benchmarks/blob/48cbef14a592e02a14beee8e9aef3ad22cadaed1/scripts/tf_cnn_benchmarks/variable_mgr_util.py#L192-L218
 class LeastLoadedDeviceSetter(object):
-    """ Helper class to assign variables on the least loaded ps-device."""
+    """
+    Helper class to assign variables on the least loaded ps-device.
+
+    Usage:
+
+        .. code-block:: python
+
+            with tf.device(LeastLoadedDeviceSetter(...)):
+                ...
+    """
     def __init__(self, worker_device, ps_devices):
         """
         Args:

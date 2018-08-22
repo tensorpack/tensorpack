@@ -160,17 +160,14 @@ class ResNetC4Model(DetectionModel):
         return ret
 
     def build_graph(self, *inputs):
+        inputs = dict(zip(self.input_names, inputs))
         is_training = get_current_tower_context().is_training
-        if cfg.MODE_MASK:
-            image, anchor_labels, anchor_boxes, gt_boxes, gt_labels, gt_masks = inputs
-        else:
-            image, anchor_labels, anchor_boxes, gt_boxes, gt_labels = inputs
-        image = self.preprocess(image)     # 1CHW
+        image = self.preprocess(inputs['image'])     # 1CHW
 
         featuremap = resnet_c4_backbone(image, cfg.BACKBONE.RESNET_NUM_BLOCK[:3])
         rpn_label_logits, rpn_box_logits = rpn_head('rpn', featuremap, cfg.RPN.HEAD_DIM, cfg.RPN.NUM_ANCHOR)
 
-        anchors = RPNAnchors(get_all_anchors(), anchor_labels, anchor_boxes)
+        anchors = RPNAnchors(get_all_anchors(), inputs['anchor_labels'], inputs['anchor_boxes'])
         anchors = anchors.narrow_to(featuremap)
 
         image_shape2d = tf.shape(image)[2:]     # h,w
@@ -182,6 +179,7 @@ class ResNetC4Model(DetectionModel):
             cfg.RPN.TRAIN_PRE_NMS_TOPK if is_training else cfg.RPN.TEST_PRE_NMS_TOPK,
             cfg.RPN.TRAIN_POST_NMS_TOPK if is_training else cfg.RPN.TEST_POST_NMS_TOPK)
 
+        gt_boxes, gt_labels = inputs['gt_boxes'], inputs['gt_labels']
         if is_training:
             # sample proposal boxes in training
             rcnn_boxes, rcnn_labels, fg_inds_wrt_gt = sample_fast_rcnn_targets(
@@ -224,7 +222,7 @@ class ResNetC4Model(DetectionModel):
                     'maskrcnn', fg_feature, cfg.DATA.NUM_CATEGORY, num_convs=0)   # #fg x #cat x 14x14
 
                 target_masks_for_fg = crop_and_resize(
-                    tf.expand_dims(gt_masks, 1),
+                    tf.expand_dims(inputs['gt_masks'], 1),
                     fg_sampled_boxes,
                     fg_inds_wrt_gt, 14,
                     pad_border=False)  # nfg x 1x14x14
@@ -293,18 +291,18 @@ class ResNetFPNModel(DetectionModel):
                 anchors[i] = anchors[i].narrow_to(p23456[i])
 
     def build_graph(self, *inputs):
+        inputs = dict(zip(self.input_names, inputs))
         num_fpn_level = len(cfg.FPN.ANCHOR_STRIDES)
         assert len(cfg.RPN.ANCHOR_SIZES) == num_fpn_level
         is_training = get_current_tower_context().is_training
-        image = inputs[0]
-        input_anchors = inputs[1: 1 + 2 * num_fpn_level]
-        multilevel_anchors = [RPNAnchors(*args) for args in
-                              zip(get_all_anchors_fpn(), input_anchors[0::2], input_anchors[1::2])]
-        gt_boxes, gt_labels = inputs[11], inputs[12]
-        if cfg.MODE_MASK:
-            gt_masks = inputs[-1]
 
-        image = self.preprocess(image)     # 1CHW
+        all_anchors_fpn = get_all_anchors_fpn()
+        multilevel_anchors = [RPNAnchors(
+            all_anchors_fpn[i],
+            inputs['anchor_labels_lvl{}'.format(i + 2)],
+            inputs['anchor_boxes_lvl{}'.format(i + 2)]) for i in range(len(all_anchors_fpn))]
+
+        image = self.preprocess(inputs['image'])     # 1CHW
         image_shape2d = tf.shape(image)[2:]     # h,w
 
         c2345 = resnet_fpn_backbone(image, cfg.BACKBONE.RESNET_NUM_BLOCK)
@@ -321,6 +319,7 @@ class ResNetFPNModel(DetectionModel):
             multilevel_anchors, multilevel_label_logits,
             multilevel_box_logits, image_shape2d)
 
+        gt_boxes, gt_labels = inputs['gt_boxes'], inputs['gt_labels']
         if is_training:
             rcnn_boxes, rcnn_labels, fg_inds_wrt_gt = sample_fast_rcnn_targets(
                 proposal_boxes, gt_boxes, gt_labels)
@@ -361,7 +360,7 @@ class ResNetFPNModel(DetectionModel):
                     'maskrcnn', roi_feature_maskrcnn, cfg.DATA.NUM_CATEGORY)   # #fg x #cat x 28 x 28
 
                 target_masks_for_fg = crop_and_resize(
-                    tf.expand_dims(gt_masks, 1),
+                    tf.expand_dims(inputs['gt_masks'], 1),
                     fg_sampled_boxes,
                     fg_inds_wrt_gt, 28,
                     pad_border=False)  # fg x 1x28x28
