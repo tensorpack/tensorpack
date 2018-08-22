@@ -494,6 +494,8 @@ class EvalCallback(Callback):
         if len(self.epochs_to_eval) < 15:
             logger.info("[EvalCallback] Will evaluate at epoch " + str(sorted(self.epochs_to_eval)))
         else:
+            if cfg.TRAINER == 'horovod':
+                logger.warn("[EvalCallback] Evaluation is single-GPU only and quite slow under horovod mode.")
             logger.info("[EvalCallback] Will evaluate every {} epochs".format(interval))
 
     def _eval(self):

@@ -4,7 +4,8 @@ about: More general questions about Tensorpack.
 
 ---
 
-+ Read the [tutorials](http://tensorpack.readthedocs.io/en/latest/tutorial/index.html#user-tutorials) first.
++ Your question is probably answered in [tutorials](http://tensorpack.readthedocs.io/en/latest/tutorial/index.html#user-tutorials). Read it first.
+
 + We answer "HOW to do X with Tensorpack" for a well-defined X.
   We also answer "HOW/WHY Tensorpack does X" for some X that Tensorpack or its examples are doing.
 

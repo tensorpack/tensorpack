@@ -94,4 +94,4 @@ MaskRCNN results contain both box and mask mAP.
 
 ## Notes
 
-See [Notes on This Implementation](NOTES.md)
+[NOTES.md](NOTES.md) has some notes about implementation details & speed.

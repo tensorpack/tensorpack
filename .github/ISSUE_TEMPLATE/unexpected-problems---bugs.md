@@ -1,6 +1,6 @@
 ---
 name: Unexpected Problems / Bugs
-about: For use with unexpected problems of Tensorpack.
+about: Report unexpected problems about Tensorpack or its examples.
 
 ---
 

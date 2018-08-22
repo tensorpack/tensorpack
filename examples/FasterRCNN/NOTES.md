@@ -31,35 +31,40 @@ Model:
 
 <p align="center"> <img src="https://user-images.githubusercontent.com/1381301/31527740-2f1b38ce-af84-11e7-8de1-628e90089826.png"> </p>
 
-2. We use ROIAlign, and because of (1), `tf.image.crop_and_resize` is __NOT__ ROIAlign.
+2. We use ROIAlign, and `tf.image.crop_and_resize` is __NOT__ ROIAlign.
 
-3. We only support single image per GPU.
+3. We currently only support single image per GPU.
 
 4. Because of (3), BatchNorm statistics are supposed to be freezed during fine-tuning.
-   This specific kind of BatchNorm will need [my kernel](https://github.com/tensorflow/tensorflow/pull/12580)
-   which is included since TF 1.4.
-   
+
 5. An alternative to freezing BatchNorm is to sync BatchNorm statistics across
    GPUs (the `BACKBONE.NORM=SyncBN` option). This would require [my bugfix](https://github.com/tensorflow/tensorflow/pull/20360)
-   which will probably be in TF 1.10. You can manually apply the patch to use it.
+   which is available since TF 1.10. You can manually apply the patch to use it.
    For now the total batch size is at most 8, so this option does not improve the model by much.
+
+6. Another alternative to BatchNorm is GroupNorm (`BACKBONE.NORM=GN`) which has better performance.
 
 Speed:
 
-1. The training will start very slow due to convolution warmup, until about 10k steps to reach a maximum speed.
-   Then the training speed will slowly decrease due to more accurate proposals.
+1. The training will start very slow due to convolution warmup, until about 10k
+   steps to reach a maximum speed. 
+   You can disable warmup by `export TF_CUDNN_USE_AUTOTUNE=0`, which makes the
+   training faster at the beginning, but perhaps not in the end.
 
-2. This implementation is about 14% slower than detectron,
+1. After warmup the training speed will slowly decrease due to more accurate proposals.
+
+1. This implementation is about 10% slower than detectron,
    probably due to the lack of specialized ops (e.g. AffineChannel, ROIAlign) in TensorFlow.
    It's certainly faster than other TF implementation.
+   
+1. The code should have around 70% GPU utilization on V100s, and 85%~90% scaling
+   efficiency from 1 V100 to 8 V100s.
 
 Possible Future Enhancements:
 
-1. Data-parallel evaluation during training.
+1. Define an interface to load custom dataset.
 
-2. Define an interface to load custom dataset.
+1. Support batch>1 per GPU.
 
-3. Support batch>1 per GPU.
-
-4. Use dedicated ops to improve speed. (e.g. a TF implementation of ROIAlign op
+1. Use dedicated ops to improve speed. (e.g. a TF implementation of ROIAlign op
    can be found in [light-head RCNN](https://github.com/zengarden/light_head_rcnn/tree/master/lib/lib_kernel))
