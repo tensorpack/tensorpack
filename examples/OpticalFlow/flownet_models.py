@@ -144,11 +144,11 @@ def resize(x, factor=4, mode='bilinear'):
 
 
 def endpoint_error(gt, pred):
-  with tf.name_scope('endpoint_error'):
-    sq_diff = tf.squared_difference(gt, pred)
-    ret = tf.reduce_sum(sq_diff, 1, keepdims=True)
-    ret = tf.sqrt(ret)
-    return tf.reduce_mean(ret)
+    with tf.name_scope('endpoint_error'):
+        sq_diff = tf.squared_difference(gt, pred)
+        ret = tf.reduce_sum(sq_diff, 1, keepdims=True)
+        ret = tf.sqrt(ret)
+        return tf.reduce_mean(ret)
 
 
 class FlowNetBase(ModelDesc):
