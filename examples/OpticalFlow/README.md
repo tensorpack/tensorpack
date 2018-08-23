@@ -13,6 +13,11 @@ Given two images, the network is trained to predict the optical flow between the
 
 The authors report the AEE of *2.03* (Caffe Model) on Sintel-clean and our implementation gives an AEE of *2.10*, which is better than other TensorFlow implementations.
 
+| Model|  AEE(sintel clean) |
+| ------ | ------ |
+| FlowNet-S | 3.82|
+| FlowNet-C | 3.08|
+| FlowNet2 | 2.10 (authors report 2.03) |
 
 ### Usage
 

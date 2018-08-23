@@ -145,10 +145,7 @@ def resize(x, factor=4, mode='bilinear'):
 
 def endpoint_error(gt, pred):
     with tf.name_scope('endpoint_error'):
-        sq_diff = tf.squared_difference(gt, pred)
-        ret = tf.reduce_sum(sq_diff, 1, keepdims=True)
-        ret = tf.sqrt(ret)
-        return tf.reduce_mean(ret)
+        return tf.reduce_mean(tf.norm(gt - pred, axis=1))
 
 
 class FlowNetBase(ModelDesc):
@@ -171,7 +168,7 @@ class FlowNetBase(ModelDesc):
         x = (x - rgb_mean) / 255.
 
         prediction = self.graph_structure(x)
-        prediction = resize(prediction / DISP_SCALE)
+        prediction = resize(prediction * DISP_SCALE)
         tf.identity(prediction, name="prediction")
         tf.identity(endpoint_error(prediction, gt_flow), name='epe')
 
