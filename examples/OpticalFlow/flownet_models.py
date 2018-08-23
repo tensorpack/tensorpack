@@ -34,32 +34,36 @@ def channel_norm(x):
     return tf.sqrt(tf.reduce_sum(tf.square(x), keep_dims=True, axis=1))
 
 
-def correlation(ina, inb, kernel_size, max_displacement, stride_1, stride_2, pad, data_format):
-    """ This is a fallback option for the correlation cost layer (just for FlowNet2)
+def correlation(ina, inb,
+                kernel_size, max_displacement,
+                stride_1, stride_2,
+                pad, data_format):
+    """
+    Correlation Cost Volume computation.
 
-    Warning: This takes a lot of memory. If you know to compile a custom op yourself, feel
-    free to use this imeplementation:
+    This is a fallback Python-only implementation, specialized just for FlowNet2.
+    It takes a lot of memory.
+
+    If you know to compile a custom op yourself, it's better to use the cuda implementation here:
     https://github.com/PatWie/tensorflow-recipes/tree/master/OpticalFlow/user_ops
     """
+    assert pad == max_displacement
     assert kernel_size == 1
     assert data_format == 'NCHW'
-    assert max_displacement == 20
+    assert max_displacement % stride_2 == 0
     assert stride_1 == 1
-    assert stride_2 == 2
 
-    d = 20
-    D = 21
-    assert d % 2 == 0
+    D = int(max_displacement / stride_2 * 2) + 1  # D^2 == number of correlations per spatial location
 
     b, c, h, w = ina.shape.as_list()
 
-    inb = tf.pad(inb, [[0, 0], [0, 0], [d, d], [d, d]])
+    inb = tf.pad(inb, [[0, 0], [0, 0], [pad, pad], [pad, pad]])
 
     res = []
     for k1 in range(0, D):
-        start_h = k1 * 2
+        start_h = k1 * stride_2
         for k2 in range(0, D):
-            start_w = k2 * 2
+            start_w = k2 * stride_2
             s = tf.slice(inb, [0, 0, start_h, start_w], [-1, -1, h, w])
             ans = tf.reduce_mean(ina * s, axis=1, keepdims=True)
             res.append(ans)
@@ -159,12 +163,12 @@ class FlowNetBase(ModelDesc):
                 tf.placeholder(tf.float32, (1, self.channels, self.height, self.width), 'right'),
                 tf.placeholder(tf.float32, (1, 2, self.height, self.width), 'gt_flow')]
 
-    def graph_structure(self, x):
+    def graph_structure(self, inputs):
         raise NotImplementedError()
 
     def build_graph(self, left, right, gt_flow):
-        x = tf.stack([left, right], axis=2)
-        rgb_mean = tf.reduce_mean(x, axis=[2, 3, 4], keep_dims=True)
+        x = tf.concat([left, right], axis=0)
+        rgb_mean = tf.reduce_mean(x, axis=[0, 2, 3], keep_dims=True)
         x = (x - rgb_mean) / 255.
 
         prediction = self.graph_structure(x)
@@ -176,8 +180,8 @@ class FlowNetBase(ModelDesc):
 class FlowNet2(FlowNetBase):
 
     def build_graph(self, left, right, gt_flow):
-        x = tf.stack([left, right], axis=2)
-        rgb_mean = tf.reduce_mean(x, axis=[2, 3, 4], keep_dims=True)
+        x = tf.concat([left, right], axis=0)   # 2CHW
+        rgb_mean = tf.reduce_mean(x, axis=[0, 2, 3], keep_dims=True)
         x = (x - rgb_mean) / 255.
 
         prediction = self.graph_structure(x)
@@ -185,8 +189,8 @@ class FlowNet2(FlowNetBase):
         tf.identity(endpoint_error(prediction, gt_flow), name='epe')
 
     def graph_structure(self, x):
-        x1, x2 = tf.unstack(x, axis=2)
-        x1x2 = tf.concat([x1, x2], axis=1)
+        x1, x2 = tf.unstack(x, axis=0)
+        x1x2 = tf.reshape(x, [1, -1, self.height, self.width])  # 1(2C)HW
 
         # FlowNet-C
         flownetc_flow2 = FlowNet2C().graph_structure(x)
@@ -367,10 +371,7 @@ class FlowNet2S(FlowNetBase):
 
 
 class FlowNet2C(FlowNetBase):
-    def graph_structure(self, x):
-        x1, x2 = tf.unstack(x, axis=2)
-        x1x2 = tf.concat([x1, x2], axis=0)
-
+    def graph_structure(self, x1x2):
         with argscope([tf.layers.conv2d], activation=lambda x: tf.nn.leaky_relu(x, 0.1),
                       padding='valid', strides=2, kernel_size=3,
                       data_format='channels_first'), \
