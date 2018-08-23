@@ -34,9 +34,9 @@ It has:
 
 ### Note:
 
-Keras support is __not official__. Keras does not respect variable scopes or variable
-collections, which contradicts with TensorFlow conventions and tensorpack trainers.
-Therefore, the support in tensorpack is experimental.
+Keras does not respect variable scopes or variable
+collections, which contradicts with tensorpack trainers.
+Therefore Keras support is __experimental__. 
 
 These simple examples can run within tensorpack smoothly, but note that a future version
 of Keras may break them (unlikely, though).
