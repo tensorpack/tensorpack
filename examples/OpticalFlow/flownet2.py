@@ -7,103 +7,52 @@ import cv2
 import glob
 from helper import Flow
 import argparse
-import tensorflow as tf
-import numpy as np
 
 from tensorpack import *
+from tensorpack.utils import viz
 
 import flownet_models as models
 
-enable_argscope_for_module(tf.layers)
 
-"""
-This is a tensorpack script re-implementation of
-FlowNet 2.0: Evolution of Optical Flow Estimation with Deep Networks
-https://arxiv.org/abs/1612.01925
+def apply(model, model_path, left, right, ground_truth=None):
+    left = cv2.imread(left)
+    right = cv2.imread(right)
 
-This is not an attempt to reproduce the lengthly training protocol (fow now),
-but to rely on tensorpack's "OfflinePredictor" for easier inference.
-
-The ported pre-trained Caffe-model are here
-http://models.tensorpack.com/opticalflow/flownet2-s.npz
-http://models.tensorpack.com/opticalflow/flownet2-c.npz
-http://models.tensorpack.com/opticalflow/flownet2.npz
-
-It has the original license:
-
-```
-    Pre-trained weights are provided for research purposes only and without any warranty.
-
-    Any commercial use of the pre-trained weights requires FlowNet2 authors consent.
-    When using the the pre-trained weights in your research work, please cite the following paper:
-
-    @InProceedings{IMKDB17,
-      author       = "E. Ilg and N. Mayer and T. Saikia and M. Keuper and A. Dosovitskiy and T. Brox",
-      title        = "FlowNet 2.0: Evolution of Optical Flow Estimation with Deep Networks",
-      booktitle    = "IEEE Conference on Computer Vision and Pattern Recognition (CVPR)",
-      month        = "Jul",
-      year         = "2017",
-      url          = "http://lmb.informatik.uni-freiburg.de//Publications/2017/IMKDB17"
-    }
-```
-
-To run it on actual data:
-
-    python flownet2.py --gpu 0 \
-        --left 00001_img1.ppm \
-        --right 00001_img2.ppm \
-        --load flownet2.npz
-        --model "flownet2"
-
-To evaluate AEE on sintel:
-
-    python flownet2.py --gpu 2 \
-        --load flownet2.npz \
-        --model "flownet2" \
-        --sintel_path "/path/to/sintel/training/"
-
-"""
-
-
-MODEL_MAP = {'flownet2-s': models.FlowNet2S,
-             'flownet2-c': models.FlowNet2C,
-             'flownet2': models.FlowNet2}
-
-
-def apply(model_name, model_path, left, right, ground_truth=None):
-    model = MODEL_MAP[model_name]
-    left = cv2.imread(left).astype(np.float32).transpose(2, 0, 1)[None, ...]
-    right = cv2.imread(right).astype(np.float32).transpose(2, 0, 1)[None, ...]
-
-    _, _, h, w = left.shape
+    h, w = left.shape[:2]
+    newh = (h // 64) * 64
+    neww = (w // 64) * 64
+    aug = imgaug.CenterCrop((newh, neww))
+    left, right = aug.augment(left), aug.augment(right)
 
     predict_func = OfflinePredictor(PredictConfig(
-        model=model(height=h, width=w),
+        model=model(height=newh, width=neww),
         session_init=get_model_loader(model_path),
         input_names=['left', 'right'],
         output_names=['prediction']))
 
-    output = predict_func(left, right)[0].transpose(0, 2, 3, 1)
+    left_input, right_input = [x.astype('float32').transpose(2, 0, 1)[None, ...]
+                               for x in [left, right]]
+    output = predict_func(left_input, right_input)[0].transpose(0, 2, 3, 1)
     flow = Flow()
 
     img = flow.visualize(output[0])
+    patches = [left, right, img * 255.]
     if ground_truth is not None:
-        img = np.concatenate([img, flow.visualize(Flow.read(ground_truth))], axis=1)
+        patches.append(flow.visualize(Flow.read(ground_truth)) * 255.)
+    img = viz.stack_patches(patches, 2, 2)
 
     cv2.imshow('flow output', img)
-    cv2.imwrite('flow_prediction.png', img * 255)
+    cv2.imwrite('flow_prediction.png', img)
     cv2.waitKey(0)
 
 
 class SintelData(DataFlow):
-    """Read images directly from tar file without unpacking.
-    """
 
     def __init__(self, data_path):
         super(SintelData, self).__init__()
-        assert os.path.isdir(data_path)
         self.data_path = data_path
-        self.path_prefix = os.path.join(data_path, 'flow', )
+        self.path_prefix = os.path.join(data_path, 'flow')
+        assert os.path.isdir(self.path_prefix), self.path_prefix
         self.flows = glob.glob(os.path.join(self.path_prefix, '*', '*.flo'))
 
     def size(self):
@@ -112,7 +61,7 @@ class SintelData(DataFlow):
     def get_data(self):
         for flow_path in self.flows:
             input_path = flow_path.replace(
-                self.path_prefix, os.path.join(self.data_path, 'clean', ))
+                self.path_prefix, os.path.join(self.data_path, 'clean'))
             frame_id = int(input_path[-8:-4])
             input_a_path = '%s%04i.png' % (input_path[:-8], frame_id)
             input_b_path = '%s%04i.png' % (input_path[:-8], frame_id + 1)
@@ -124,26 +73,16 @@ class SintelData(DataFlow):
             # most implementation just crop the center
             # which seems to be accepted practise
             h, w = input_a.shape[:2]
-            h_ = (h // 64) * 64
-            w_ = (w // 64) * 64
-            h_start = (h - h_) // 2
-            w_start = (w - w_) // 2
-
-            # this is ugly
-            h_end = -h_start if h_start > 0 else h
-            w_end = -w_start if w_start > 0 else w
-
-            input_a = input_a[h_start:h_end, w_start:w_end, :]
-            input_b = input_b[h_start:h_end, w_start:w_end, :]
-            flow = flow[h_start:h_end, w_start:w_end, :]
-
+            newh = (h // 64) * 64
+            neww = (w // 64) * 64
+            aug = imgaug.CenterCrop((newh, neww))
+            input_a = aug.augment(input_a)
+            input_b = aug.augment(input_b)
+            flow = aug.augment(flow)
             yield [input_a, input_b, flow]
 
 
-def inference(model_name, model_path, sintel_path):
-    assert os.path.isdir(sintel_path)
-    model = MODEL_MAP[model_name]
-
+def inference(model, model_path, sintel_path):
     ds = SintelData(sintel_path)
 
     def nhwc2nchw(dp):
@@ -155,7 +94,7 @@ def inference(model_name, model_path, sintel_path):
     ds = BatchData(ds, 1)
     ds.reset_state()
 
-    # look at shape information
+    # look at shape information (all images in Sintel has the same shape)
     h, w = next(ds.get_data())[0].shape[2:]
 
     pred = PredictConfig(
@@ -165,8 +104,7 @@ def inference(model_name, model_path, sintel_path):
         output_names=['epe', 'prediction'])
     pred = SimpleDatasetPredictor(pred, ds)
 
-    avg_epe = 0
-    count_epe = 0
+    avg_epe, count_epe = 0, 0
 
     for o in pred.get_result():
         avg_epe += o[0]
@@ -177,19 +115,20 @@ def inference(model_name, model_path, sintel_path):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
-    parser.add_argument('--load', help='load model')
-    parser.add_argument('--left', help='input', type=str)
-    parser.add_argument('--right', help='input', type=str)
-    parser.add_argument('--model', help='model', type=str)
-    parser.add_argument('--sintel_path', help='path to sintel dataset', type=str)
-    parser.add_argument('--gt', help='ground_truth', type=str, default=None)
+    parser.add_argument('--load', help='path to the model', required=True)
+    parser.add_argument('--model', help='model',
+                        choices=['flownet2', 'flownet2-s', 'flownet2-c'], required=True)
+    parser.add_argument('--left', help='input')
+    parser.add_argument('--right', help='input')
+    parser.add_argument('--gt', help='path to ground truth flow')
+    parser.add_argument('--sintel_path', help='path to sintel dataset')
     args = parser.parse_args()
 
-    if args.gpu:
-        os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
+    model = {'flownet2-s': models.FlowNet2S,
+             'flownet2-c': models.FlowNet2C,
+             'flownet2': models.FlowNet2}[args.model]
 
-    if args.sintel_path != '':
-        inference(args.model, args.load, args.sintel_path)
+    if args.sintel_path:
+        inference(model, args.load, args.sintel_path)
     else:
-        apply(args.model, args.load, args.left, args.right, args.gt)
+        apply(model, args.load, args.left, args.right, args.gt)

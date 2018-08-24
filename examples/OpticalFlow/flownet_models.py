@@ -4,7 +4,7 @@
 
 
 import tensorflow as tf
-from tensorpack import *
+from tensorpack import ModelDesc, argscope, enable_argscope_for_module
 
 enable_argscope_for_module(tf.layers)
 
@@ -42,7 +42,7 @@ def correlation(ina, inb,
     Correlation Cost Volume computation.
 
     This is a fallback Python-only implementation, specialized just for FlowNet2.
-    It takes a lot of memory.
+    It takes a lot of memory and is slow.
 
     If you know to compile a custom op yourself, it's better to use the cuda implementation here:
     https://github.com/PatWie/tensorflow-recipes/tree/master/OpticalFlow/user_ops
@@ -71,24 +71,17 @@ def correlation(ina, inb,
     return res
 
 
-def resample(img, warp):
+def resample(img, flow):
     # img, NCHW
-    # warp, N2HW
+    # flow, N2HW
     B = tf.shape(img)[0]
     c = tf.shape(img)[1]
     h = tf.shape(img)[2]
     w = tf.shape(img)[3]
     img_flat = tf.reshape(tf.transpose(img, [0, 2, 3, 1]), [-1, c])
 
-    dx = warp[:, 0, :, :]
-    dy = warp[:, 1, :, :]
-
-    xf = tf.reshape(tf.tile(tf.range(w), [h]), [h, w])
-    yf = tf.transpose(tf.reshape(tf.tile(tf.range(h), [w]), [w, h]), [1, 0])
-
-    xf = tf.cast(xf, dx.dtype)
-    yf = tf.cast(yf, dy.dtype)
-
+    dx, dy = tf.unstack(flow, axis=1)
+    xf, yf = tf.meshgrid(tf.to_float(tf.range(w)), tf.to_float(tf.range(h)))
     xf = xf + dx
     yf = yf + dy
 
@@ -120,7 +113,7 @@ def resample(img, warp):
     return tf.reshape(tf.transpose(val, [0, 3, 1, 2]), [-1, shp[1], h, w])
 
 
-def resize(x, factor=4, mode='bilinear'):
+def resize(x, mode, factor=4):
     """Resize input tensor with unkown input-shape by a factor
 
     Args:
@@ -134,7 +127,7 @@ def resize(x, factor=4, mode='bilinear'):
     Returns:
         tf.Tensor: resized tensor NCHW
     """
-    assert mode in ['bilinear', 'nearest']
+    assert mode in ['bilinear', 'nearest'], mode
     shp = tf.shape(x)[2:] * factor
     # NCHW -> NHWC
     x = tf.transpose(x, [0, 2, 3, 1])
@@ -148,14 +141,13 @@ def resize(x, factor=4, mode='bilinear'):
 
 
 class FlowNetBase(ModelDesc):
-    def __init__(self, height=None, width=None, channels=3):
+    def __init__(self, height=None, width=None):
         self.height = height
         self.width = width
-        self.channels = channels
 
     def inputs(self):
-        return [tf.placeholder(tf.float32, (1, self.channels, self.height, self.width), 'left'),
-                tf.placeholder(tf.float32, (1, self.channels, self.height, self.width), 'right'),
+        return [tf.placeholder(tf.float32, (1, 3, self.height, self.width), 'left'),
+                tf.placeholder(tf.float32, (1, 3, self.height, self.width), 'right'),
                 tf.placeholder(tf.float32, (1, 2, self.height, self.width), 'gt_flow')]
 
     def graph_structure(self, inputs):
