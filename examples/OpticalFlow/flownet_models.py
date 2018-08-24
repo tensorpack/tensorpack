@@ -31,7 +31,7 @@ def pad(x, p=3):
 
 
 def channel_norm(x):
-    return tf.sqrt(tf.reduce_sum(tf.square(x), keep_dims=True, axis=1))
+    return tf.norm(x, axis=1, keep_dims=True)
 
 
 def correlation(ina, inb,
@@ -147,11 +147,6 @@ def resize(x, factor=4, mode='bilinear'):
     return tf.transpose(x, [0, 3, 1, 2])
 
 
-def endpoint_error(gt, pred):
-    with tf.name_scope('endpoint_error'):
-        return tf.reduce_mean(tf.norm(gt - pred, axis=1))
-
-
 class FlowNetBase(ModelDesc):
     def __init__(self, height=None, width=None, channels=3):
         self.height = height
@@ -164,32 +159,36 @@ class FlowNetBase(ModelDesc):
                 tf.placeholder(tf.float32, (1, 2, self.height, self.width), 'gt_flow')]
 
     def graph_structure(self, inputs):
+        """
+        Args:
+            inputs: [2, C, H, W]
+        """
         raise NotImplementedError()
 
-    def build_graph(self, left, right, gt_flow):
-        x = tf.concat([left, right], axis=0)
+    def preprocess(self, left, right):
+        x = tf.concat([left, right], axis=0)  # 2CHW
         rgb_mean = tf.reduce_mean(x, axis=[0, 2, 3], keep_dims=True)
-        x = (x - rgb_mean) / 255.
+        return (x - rgb_mean) / 255.
 
+    def postprocess(self, prediction):
+        return resize(prediction * DISP_SCALE, mode='bilinear')
+
+    def build_graph(self, left, right, gt_flow):
+        x = self.preprocess(left, right)
         prediction = self.graph_structure(x)
-        prediction = resize(prediction * DISP_SCALE)
+        prediction = self.postprocess(prediction)
         tf.identity(prediction, name="prediction")
-        tf.identity(endpoint_error(prediction, gt_flow), name='epe')
+        # endpoint error
+        tf.reduce_mean(tf.norm(prediction - gt_flow, axis=1), name='epe')
 
 
 class FlowNet2(FlowNetBase):
 
-    def build_graph(self, left, right, gt_flow):
-        x = tf.concat([left, right], axis=0)   # 2CHW
-        rgb_mean = tf.reduce_mean(x, axis=[0, 2, 3], keep_dims=True)
-        x = (x - rgb_mean) / 255.
-
-        prediction = self.graph_structure(x)
-        tf.identity(prediction, name="prediction")
-        tf.identity(endpoint_error(prediction, gt_flow), name='epe')
+    def postprocess(self, prediction):
+        return prediction
 
     def graph_structure(self, x):
-        x1, x2 = tf.unstack(x, axis=0)
+        x1, x2 = tf.split(x, 2, axis=0)
         x1x2 = tf.reshape(x, [1, -1, self.height, self.width])  # 1(2C)HW
 
         # FlowNet-C
@@ -202,7 +201,7 @@ class FlowNet2(FlowNetBase):
         # FlowNet-S
         concat1 = tf.concat([x1x2, resampled_img1, flownetc_flow / DISP_SCALE, norm_diff_img0], axis=1)
         with tf.variable_scope('flownet_s1'):
-            flownets1_flow2 = FlowNet2S().graph_structure(concat1, preprocess=False)
+            flownets1_flow2 = FlowNet2S().graph_structure(concat1, standalone=False)
         flownets1_flow = resize(flownets1_flow2 * DISP_SCALE, mode='bilinear')
 
         resampled_img1 = resample(x2, flownets1_flow)
@@ -211,8 +210,7 @@ class FlowNet2(FlowNetBase):
         # FlowNet-S
         concat2 = tf.concat([x1x2, resampled_img1, flownets1_flow / DISP_SCALE, norm_diff_img0], axis=1)
         with tf.variable_scope('flownet_s2'):
-            flownets2_flow2 = FlowNet2S().graph_structure(concat2, preprocess=False)
-
+            flownets2_flow2 = FlowNet2S().graph_structure(concat2, standalone=False)
         flownets2_flow = resize(flownets2_flow2 * DISP_SCALE, mode='nearest')
 
         norm_flownets2_flow = channel_norm(flownets2_flow)
@@ -221,8 +219,7 @@ class FlowNet2(FlowNetBase):
 
         # FlowNet-SD
         with tf.variable_scope('flownet_sd'):
-            flownetsd_flow2 = FlowNet2SD().graph_structure(x1x2)
-        flownetsd_flow = resize(flownetsd_flow2 / DISP_SCALE, mode='nearest')
+            flownetsd_flow = self.flownet2_sd(x1x2)
 
         norm_flownetsd_flow = channel_norm(flownetsd_flow)
         diff_flownetsd_flow = resample(x2, flownetsd_flow)
@@ -235,13 +232,17 @@ class FlowNet2(FlowNetBase):
 
         # FlowNet-Fusion
         with tf.variable_scope('flownet_fusion'):
-            flownetfusion_flow = FlowNet2Fusion().graph_structure(concat3)
+            flownetfusion_flow = self.flownet2_fusion(concat3)
 
         return flownetfusion_flow
 
+    def flownet2_fusion(self, x):
+        """
+        Architecture in Table 4 of FlowNet 2.0.
 
-class FlowNet2Fusion(FlowNetBase):
-    def graph_structure(self, x):
+        Args:
+            x: NCHW tensor, where C=11 is the concatenation of 7 items of [3, 2, 2, 1, 1, 1, 1] channels.
+        """
         with argscope([tf.layers.conv2d], activation=lambda x: tf.nn.leaky_relu(x, 0.1),
                       padding='valid', strides=2, kernel_size=3,
                       data_format='channels_first'), \
@@ -271,9 +272,13 @@ class FlowNet2Fusion(FlowNetBase):
 
             return tf.identity(flow0, name='flow2')
 
+    def flownet2_sd(self, x):
+        """
+        Architecture in Table 3 of FlowNet 2.0.
 
-class FlowNet2SD(FlowNetBase):
-    def graph_structure(self, x):
+        Args:
+            x: concatenation of two inputs, of shape [1, 2xC, H, W]
+        """
         with argscope([tf.layers.conv2d], activation=lambda x: tf.nn.leaky_relu(x, 0.1),
                       padding='valid', strides=2, kernel_size=3,
                       data_format='channels_first'), \
@@ -321,13 +326,22 @@ class FlowNet2SD(FlowNetBase):
             interconv2 = tf.layers.conv2d(pad(concat2, 1), 64, strides=1, name='inter_conv2', activation=tf.identity)
             flow2 = tf.layers.conv2d(pad(interconv2, 1), 2, name='predict_flow2', strides=1, activation=tf.identity)
 
-            return tf.identity(flow2, name='flow2')
+            return resize(flow2 / DISP_SCALE, mode='nearest')
 
 
 class FlowNet2S(FlowNetBase):
-    def graph_structure(self, x, preprocess=True):
-        if preprocess:
-            x = tf.concat(tf.unstack(x, axis=2), axis=1)
+    def graph_structure(self, x, standalone=True):
+        """
+        Architecture of FlowNetSimple in Figure 2 of FlowNet 1.0.
+
+        Args:
+            x: 2CHW if standalone==True, else NCHW where C=12 is a concatenation
+                of 5 tensors of [3, 3, 3, 2, 1] channels.
+            standalone: If True, this model is used to predict flow from two inputs.
+                If False, this model is used as part of the FlowNet2.
+        """
+        if standalone:
+            x = tf.concat(tf.split(x, 2, axis=0), axis=1)
 
         with argscope([tf.layers.conv2d], activation=lambda x: tf.nn.leaky_relu(x, 0.1),
                       padding='valid', strides=2, kernel_size=3,
@@ -372,6 +386,11 @@ class FlowNet2S(FlowNetBase):
 
 class FlowNet2C(FlowNetBase):
     def graph_structure(self, x1x2):
+        """
+        Architecture of FlowNetCorr in Figure 2 of FlowNet 1.0.
+        Args:
+            x: 2CHW.
+        """
         with argscope([tf.layers.conv2d], activation=lambda x: tf.nn.leaky_relu(x, 0.1),
                       padding='valid', strides=2, kernel_size=3,
                       data_format='channels_first'), \
