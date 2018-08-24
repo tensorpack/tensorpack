@@ -36,6 +36,7 @@ These are all the toy examples in tensorpack. They are supposed to be just demos
 | Single-image super-resolution using [EnhanceNet](SuperResolution)                                                                                     |                    |
 | Learn steering filters with [Dynamic Filter Networks](DynamicFilterNetwork)                                                                           | visually reproduce |
 | Load a pre-trained [AlexNet, VGG, or Convolutional Pose Machines](CaffeModels)                                                                        |                    |
+| Load a pre-trained [FlowNet2-S, FlowNet2-C, FlowNet2](OpticalFlow) | |
 
 ## Reinforcement Learning:
 | Name                                                                                                     | Performance     |
