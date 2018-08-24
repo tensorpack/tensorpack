@@ -7,6 +7,7 @@ import numpy as np
 from .shape_utils import StaticDynamicShape
 from .common import layer_register
 from ..utils.argtools import shape2d, get_data_format
+from ..utils.develop import log_deprecated
 from ._test import TestModel
 from .tflayer import convert_to_tflayer_args
 
@@ -145,6 +146,8 @@ def FixedUnPooling(x, shape, unpool_mat=None, data_format='channels_last'):
 def BilinearUpSample(x, shape):
     """
     Deterministic bilinearly-upsample the input images.
+    It is implemented by deconvolution with "BilinearFiller" in Caffe.
+    It is aimed to mimic caffe behavior.
 
     Args:
         x (tf.Tensor): a NHWC tensor
@@ -153,6 +156,7 @@ def BilinearUpSample(x, shape):
     Returns:
         tf.Tensor: a NHWC tensor.
     """
+    log_deprecated("BilinearUpsample", "Please implement it in your own code instead!", "2019-03-01")
     inp_shape = x.shape.as_list()
     ch = inp_shape[3]
     assert ch is not None
@@ -163,7 +167,7 @@ def BilinearUpSample(x, shape):
     def bilinear_conv_filler(s):
         """
         s: width, height of the conv filter
-        See https://github.com/BVLC/caffe/blob/master/include%2Fcaffe%2Ffiller.hpp#L244
+        https://github.com/BVLC/caffe/blob/99bd99795dcdf0b1d3086a8d67ab1782a8a08383/include/caffe/filler.hpp#L219-L268
         """
         f = np.ceil(float(s) / 2)
         c = float(2 * f - 1 - f % 2) / (2 * f)

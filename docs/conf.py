@@ -374,6 +374,7 @@ _DEPRECATED_NAMES = set([
 
     # deprecated or renamed symbolic code
     'ImageSample',
+    'BilinearUpSample'
     'Deconv2D',
     'get_scalar_var', 'psnr',
     'prediction_incorrect', 'huber_loss',

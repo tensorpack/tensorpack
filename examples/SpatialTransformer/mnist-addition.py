@@ -46,15 +46,21 @@ def sample(img, coords):
 
 
 @layer_register(log_shape=True)
-def BilinearSample(inputs, borderMode='repeat'):
+def GridSample(inputs, borderMode='repeat'):
     """
     Sample the images using the given coordinates, by bilinear interpolation.
     This was described in the paper:
     `Spatial Transformer Networks <http://arxiv.org/abs/1506.02025>`_.
 
+    This is equivalent to `torch.nn.functional.grid_sample`,
+    up to some non-trivial coordinate transformation.
+
+    This implementation returns pixel value at pixel (1, 1) for a floating point coordinate (1.0, 1.0).
+    Note that this may not be what you need.
+
     Args:
         inputs (list): [images, coords]. images has shape NHWC.
-            coords has shape (N, H', W', 2), where each pair in the last dimension is a (y, x) real-value
+            coords has shape (N, H', W', 2), where each pair of the last dimension is a (y, x) real-value
             coordinate.
         borderMode: either "repeat" or "constant" (zero-filled)
 
@@ -63,10 +69,9 @@ def BilinearSample(inputs, borderMode='repeat'):
     """
     image, mapping = inputs
     assert image.get_shape().ndims == 4 and mapping.get_shape().ndims == 4
-    assert mapping.dtype.is_floating, mapping
     input_shape = image.get_shape().as_list()[1:]
     assert None not in input_shape, \
-        "Images must have fully-defined shape"
+        "Images in GridSample layer must have fully-defined shape"
     assert borderMode in ['repeat', 'constant']
 
     orig_mapping = mapping
@@ -129,7 +134,7 @@ class Model(ModelDesc):
             coor = tf.reshape(tf.matmul(xys, stn),
                               [WARP_TARGET_SIZE, WARP_TARGET_SIZE, -1, 2])
             coor = tf.transpose(coor, [2, 0, 1, 3], 'sampled_coords')  # b h w 2
-            sampled = BilinearSample('warp', [image, coor], borderMode='constant')
+            sampled = GridSample('warp', [image, coor], borderMode='constant')
             return sampled
 
         with argscope([Conv2D, FullyConnected], activation=tf.nn.relu):

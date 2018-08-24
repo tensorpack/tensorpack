@@ -44,6 +44,12 @@ def ImageSample(inputs, borderMode='repeat'):
     This was described in the paper:
     `Spatial Transformer Networks <http://arxiv.org/abs/1506.02025>`_.
 
+    This is equivalent to `torch.nn.functional.grid_sample`,
+    up to some non-trivial coordinate transformation.
+
+    This implementation returns pixel value at pixel (1, 1) for a floating point coordinate (1.0, 1.0).
+    Note that this may not be what you need.
+
     Args:
         inputs (list): [images, coords]. images has shape NHWC.
             coords has shape (N, H', W', 2), where each pair of the last dimension is a (y, x) real-value
@@ -53,7 +59,7 @@ def ImageSample(inputs, borderMode='repeat'):
     Returns:
         tf.Tensor: a tensor named ``output`` of shape (N, H', W', C).
     """
-    log_deprecated("ImageSample", "Please implement it in your own code instead!", "2018-09-01")
+    log_deprecated("ImageSample", "Please implement it in your own code instead!", "2018-12-01")
     image, mapping = inputs
     assert image.get_shape().ndims == 4 and mapping.get_shape().ndims == 4
     input_shape = image.get_shape().as_list()[1:]
