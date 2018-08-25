@@ -290,8 +290,9 @@ class ResNetFPNModel(DetectionModel):
         roi_feature_fastrcnn = multilevel_roi_align(p23456[:4], rcnn_boxes, 7)
 
         fastrcnn_head_func = getattr(model_frcnn, cfg.FPN.FRCNN_HEAD_FUNC)
-        fastrcnn_label_logits, fastrcnn_box_logits = fastrcnn_head_func(
-            'fastrcnn', roi_feature_fastrcnn, cfg.DATA.NUM_CLASS)
+        head_feature = fastrcnn_head_func('fastrcnn', roi_feature_fastrcnn)
+        fastrcnn_label_logits, fastrcnn_box_logits = fastrcnn_outputs(
+            'fastrcnn/outputs', head_feature, cfg.DATA.NUM_CLASS)
         fastrcnn_head = FastRCNNHead(rcnn_boxes, fastrcnn_box_logits, fastrcnn_label_logits,
                                      tf.constant(cfg.FRCNN.BBOX_REG_WEIGHTS, dtype=tf.float32),
                                      rcnn_labels, matched_gt_boxes)

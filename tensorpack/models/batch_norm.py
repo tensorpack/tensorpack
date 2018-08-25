@@ -221,16 +221,16 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
         batch_mean_square = tf.reduce_mean(tf.square(inputs), axis=red_axis)
 
         if sync_statistics == 'nccl':
-            if six.PY3 and TF_version <= (1, 9) and ctx.is_main_training_tower:
-                logger.warn("A bug in TensorFlow<=1.9 will cause cross-GPU BatchNorm to fail. "
-                            "Upgrade or apply this patch manually: https://github.com/tensorflow/tensorflow/pull/20360")
-
-            from tensorflow.contrib.nccl.ops import gen_nccl_ops
-            shared_name = re.sub('tower[0-9]+/', '', tf.get_variable_scope().name)
             num_dev = ctx.total
             if num_dev == 1:
                 logger.warn("BatchNorm(sync_statistics='nccl') is used with only one tower!")
             else:
+                assert six.PY2 or TF_version >= (1, 10), \
+                    "Cross-GPU BatchNorm is only supported in TF>=1.10 ." \
+                    "Upgrade TF or apply this patch manually: https://github.com/tensorflow/tensorflow/pull/20360"
+
+                from tensorflow.contrib.nccl.ops import gen_nccl_ops
+                shared_name = re.sub('tower[0-9]+/', '', tf.get_variable_scope().name)
                 batch_mean = gen_nccl_ops.nccl_all_reduce(
                     input=batch_mean,
                     reduction='sum',
@@ -243,13 +243,14 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
                     shared_name=shared_name + '_NCCL_mean_square') * (1.0 / num_dev)
         elif sync_statistics == 'horovod':
             # Require https://github.com/uber/horovod/pull/331
-            import horovod
-            hvd_version = tuple(map(int, horovod.__version__.split('.')))
-            assert hvd_version >= (0, 13, 6), "sync_statistics needs horovod>=0.13.6 !"
             import horovod.tensorflow as hvd
             if hvd.size() == 1:
                 logger.warn("BatchNorm(sync_statistics='horovod') is used with only one process!")
             else:
+                import horovod
+                hvd_version = tuple(map(int, horovod.__version__.split('.')))
+                assert hvd_version >= (0, 13, 6), "sync_statistics=horovod needs horovod>=0.13.6 !"
+
                 batch_mean = hvd.allreduce(batch_mean, average=True)
                 batch_mean_square = hvd.allreduce(batch_mean_square, average=True)
         batch_var = batch_mean_square - tf.square(batch_mean)
