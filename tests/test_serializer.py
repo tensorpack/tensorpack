@@ -31,10 +31,10 @@ class SeededFakeDataFlow(DataFlow):
             img = np.random.randn(28, 28, 3)
             self.cache.append([label, img])
 
-    def size(self):
+    def __len__(self):
         return self._size
 
-    def get_data(self):
+    def __iter__(self):
         for dp in self.cache:
             yield dp
 
@@ -52,7 +52,7 @@ class SerializerTest(unittest.TestCase):
             ds_actual.reset_state()
             ds_expected.reset_state()
 
-            for dp_expected, dp_actual in zip(ds_expected.get_data(), ds_actual.get_data()):
+            for dp_expected, dp_actual in zip(ds_expected.__iter__(), ds_actual.__iter__()):
                 self.assertEqual(dp_expected[0], dp_actual[0])
                 self.assertTrue(np.allclose(dp_expected[1], dp_actual[1]))
         except ImportError:

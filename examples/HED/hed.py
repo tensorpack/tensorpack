@@ -237,7 +237,7 @@ def get_data(name):
 def view_data():
     ds = RepeatedData(get_data('train'), -1)
     ds.reset_state()
-    for ims, edgemaps in ds.get_data():
+    for ims, edgemaps in ds:
         for im, edgemap in zip(ims, edgemaps):
             assert im.shape[0] % 16 == 0 and im.shape[1] % 16 == 0, im.shape
             cv2.imshow("im", im / 255.0)
@@ -249,7 +249,7 @@ def view_data():
 def get_config():
     logger.auto_set_dir()
     dataset_train = get_data('train')
-    steps_per_epoch = dataset_train.size() * 40
+    steps_per_epoch = len(dataset_train) * 40
     dataset_val = get_data('val')
 
     return TrainConfig(

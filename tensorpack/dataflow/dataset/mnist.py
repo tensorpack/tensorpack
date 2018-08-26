@@ -99,11 +99,11 @@ class Mnist(RNGDataFlow):
                 't10k-images-idx3-ubyte.gz',
                 't10k-labels-idx1-ubyte.gz')
 
-    def size(self):
+    def __len__(self):
         return self.images.shape[0]
 
-    def get_data(self):
-        idxs = list(range(self.size()))
+    def __iter__(self):
+        idxs = list(range(self.__len__()))
         if self.shuffle:
             self.rng.shuffle(idxs)
         for k in idxs:
@@ -133,7 +133,7 @@ class FashionMnist(Mnist):
 if __name__ == '__main__':
     ds = Mnist('train')
     ds.reset_state()
-    for (img, label) in ds.get_data():
+    for (img, label) in ds:
         from IPython import embed
         embed()
         break

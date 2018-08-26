@@ -43,7 +43,7 @@ def dump_dataflow_to_process_queue(df, size, nr_consumer):
         def run(self):
             self.df.reset_state()
             try:
-                for idx, dp in enumerate(self.df.get_data()):
+                for idx, dp in enumerate(self.df):
                     self.q.put((idx, dp))
             finally:
                 for _ in range(nr_consumer):

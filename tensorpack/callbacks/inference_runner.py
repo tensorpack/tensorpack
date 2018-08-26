@@ -51,7 +51,7 @@ def _inference_context():
         yield
     except (StopIteration, tf.errors.CancelledError):
         logger.error(
-            "[InferenceRunner] input stopped before reaching its size()! " + msg)
+            "[InferenceRunner] input stopped before reaching its __len__()! " + msg)
         raise
     except tf.errors.OutOfRangeError:   # tf.data reaches an end
         pass
@@ -61,15 +61,15 @@ class InferenceRunnerBase(Callback):
     """ Base class for inference runner.
 
     Note:
-        1. InferenceRunner will use `input.size()` to determine
+        1. InferenceRunner will use `input.__len__()` to determine
            how much iterations to run, so you're responsible to ensure that
-           `size()` is reasonable.
+           `__len__()` is reasonable.
         2. Only works with instances of `TowerTrainer`.
     """
     def __init__(self, input, infs):
         """
         Args:
-            input (InputSource): the input to use. Must have ``size()``.
+            input (InputSource): the input to use. Must have ``__len__()``.
             infs (list[Inferencer]): list of :class:`Inferencer` to run.
         """
         self._input_source = input
@@ -81,7 +81,7 @@ class InferenceRunnerBase(Callback):
             assert isinstance(v, Inferencer), v
 
         try:
-            self._size = input.size()
+            self._size = input.__len__()
         except NotImplementedError:
             self._size = 0
 

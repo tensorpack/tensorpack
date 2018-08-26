@@ -193,7 +193,7 @@ class VisualizeTestSet(Callback):
 
     def _trigger(self):
         idx = 0
-        for iA, iB in self.val_ds.get_data():
+        for iA, iB in self.val_ds:
             vizA, vizB = self.pred(iA, iB)
             self.trainer.monitors.put_image('testA-{}'.format(idx), vizA)
             self.trainer.monitors.put_image('testB-{}'.format(idx), vizB)
@@ -223,6 +223,6 @@ if __name__ == '__main__':
             PeriodicTrigger(VisualizeTestSet(), every_k_epochs=3),
         ],
         max_epoch=195,
-        steps_per_epoch=data.size(),
+        steps_per_epoch=len(data),
         session_init=SaverRestore(args.load) if args.load else None
     )

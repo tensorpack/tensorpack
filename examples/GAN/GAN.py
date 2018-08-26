@@ -191,6 +191,6 @@ class RandomZData(DataFlow):
         super(RandomZData, self).__init__()
         self.shape = shape
 
-    def get_data(self):
+    def __iter__(self):
         while True:
             yield [np.random.uniform(-1, 1, size=self.shape)]

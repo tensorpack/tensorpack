@@ -138,8 +138,6 @@ if __name__ == '__main__':
     dataset_train = get_data('train', args.mixup, args.alpha)
     dataset_test = get_data('test', args.mixup, args.alpha)
 
-    steps_per_epoch = dataset_train.size()
-
     config = TrainConfig(
         model=ResNet_Cifar(),
         data=QueueInput(dataset_train),
@@ -150,7 +148,7 @@ if __name__ == '__main__':
             ScheduledHyperParamSetter('learning_rate', LR_SCHEDULE)
         ],
         max_epoch=200,
-        steps_per_epoch=steps_per_epoch,
+        steps_per_epoch=len(dataset_train),
         session_init=SaverRestore(args.load) if args.load else None
     )
     launch_train_with_config(config, SimpleTrainer())

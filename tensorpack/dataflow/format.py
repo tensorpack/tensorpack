@@ -50,10 +50,10 @@ class HDF5Data(RNGDataFlow):
         self._size = lens[0]
         self.shuffle = shuffle
 
-    def size(self):
+    def __len__(self):
         return self._size
 
-    def get_data(self):
+    def __iter__(self):
         idxs = list(range(self._size))
         if self.shuffle:
             self.rng.shuffle(idxs)
@@ -132,10 +132,10 @@ class LMDBData(RNGDataFlow):
         super(LMDBData, self).reset_state()
         self._open_lmdb()
 
-    def size(self):
+    def __len__(self):
         return self._size
 
-    def get_data(self):
+    def __iter__(self):
         with self._guard:
             if not self._shuffle:
                 c = self._txn.cursor()
@@ -231,11 +231,11 @@ class SVMLightData(RNGDataFlow):
         self.X = np.asarray(self.X.todense())
         self.shuffle = shuffle
 
-    def size(self):
+    def __len__(self):
         return len(self.y)
 
-    def get_data(self):
-        idxs = np.arange(self.size())
+    def __iter__(self):
+        idxs = np.arange(self.__len__())
         if self.shuffle:
             self.rng.shuffle(idxs)
         for id in idxs:
@@ -248,12 +248,12 @@ class TFRecordData(DataFlow):
         self._path = path
         self._size = int(size)
 
-    def size(self):
+    def __len__(self):
         if self._size:
             return self._size
-        return super(TFRecordData, self).size()
+        return len(super(TFRecordData, self))
 
-    def get_data(self):
+    def __iter__(self):
         gen = tf.python_io.tf_record_iterator(self._path)
         for dp in gen:
             yield loads(dp)

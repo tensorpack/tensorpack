@@ -63,10 +63,10 @@ class ImageFromFile(RNGDataFlow):
         self.resize = resize
         self.shuffle = shuffle
 
-    def size(self):
+    def __len__(self):
         return len(self.files)
 
-    def get_data(self):
+    def __iter__(self):
         if self.shuffle:
             self.rng.shuffle(self.files)
         for f in self.files:

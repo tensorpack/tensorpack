@@ -3,9 +3,10 @@
 
 
 import threading
-from abc import abstractmethod, ABCMeta
+from abc import abstractmethod
 import six
 from ..utils.utils import get_rng
+from ..utils.develop import log_deprecated
 
 __all__ = ['DataFlow', 'ProxyDataFlow', 'RNGDataFlow', 'DataFlowTerminated']
 
@@ -39,12 +40,36 @@ class DataFlowReentrantGuard(object):
         return False
 
 
-@six.add_metaclass(ABCMeta)
+class DataFlowMeta(type):
+    """
+    DataFlow uses "__iter__()" and "__len__()" instead of
+    "get_data()" and "size()". This add back-compatibility.
+    """
+    def __new__(meta, name, bases, dct):
+        # "'get_data' in dct" is important as we just care about DataFlow itself
+        # and not derived classes.
+        if '__iter__' not in dct and 'get_data' in dct:
+            dct['__iter__'] = dct['get_data']
+            log_deprecated("DataFlow.get_data()",
+                           "use DataFlow.__iter__() instead!",
+                           "2018-12-30")
+        if '__len__' not in dct and 'size' in dct:
+            dct['__len__'] = dct['size']
+            log_deprecated("DataFlow.size()",
+                           "use DataFlow.__len__() instead!",
+                           "2018-12-30")
+        return super(DataFlowMeta, meta).__new__(meta, name, bases, dct)
+
+    def __init__(cls, name, bases, dct):
+        super(DataFlowMeta, cls).__init__(name, bases, dct)
+
+
+@six.add_metaclass(DataFlowMeta)
 class DataFlow(object):
     """ Base class for all DataFlow """
 
     @abstractmethod
-    def get_data(self):
+    def __iter__(self):
         """
         The method to generate datapoints.
 
@@ -52,15 +77,21 @@ class DataFlow(object):
             list: The datapoint, i.e. list of components.
         """
 
-    def size(self):
+    def get_data(self):
+        return self.__iter__()
+
+    def __len__(self):
         """
         Returns:
             int: size of this data flow.
 
-        Raises:
+          Raises:
             :class:`NotImplementedError` if this DataFlow doesn't have a size.
         """
         raise NotImplementedError()
+
+    def size(self):
+        return self.__len__()
 
     def reset_state(self):
         """
@@ -102,8 +133,8 @@ class ProxyDataFlow(DataFlow):
     def reset_state(self):
         self.ds.reset_state()
 
-    def size(self):
-        return self.ds.size()
+    def __len__(self):
+        return self.ds.__len__()
 
-    def get_data(self):
-        return self.ds.get_data()
+    def __iter__(self):
+        return self.ds.__iter__()

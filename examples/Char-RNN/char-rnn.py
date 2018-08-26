@@ -58,10 +58,10 @@ class CharRNNData(RNGDataFlow):
         self.whole_seq = np.array([self.char2idx[c] for c in data], dtype='int32')
         logger.info("Corpus loaded. Vocab size: {}".format(self.vocab_size))
 
-    def size(self):
+    def __len__(self):
         return self._size
 
-    def get_data(self):
+    def __iter__(self):
         random_starts = self.rng.randint(
             0, self.whole_seq.shape[0] - self.seq_length - 1, (self._size,))
         for st in random_starts:

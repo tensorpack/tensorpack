@@ -412,5 +412,5 @@ if __name__ == '__main__':
     ds = PrintData(ds, 100)
     TestDataSpeed(ds, 50000).start()
     ds.reset_state()
-    for k in ds.get_data():
+    for k in ds:
         pass

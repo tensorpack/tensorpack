@@ -14,8 +14,8 @@ class DisturbLabel(ProxyDataFlow, RNGDataFlow):
         RNGDataFlow.reset_state(self)
         ProxyDataFlow.reset_state(self)
 
-    def get_data(self):
-        for dp in self.ds.get_data():
+    def __iter__(self):
+        for dp in self.ds:
             img, l = dp
             if self.rng.rand() < self.prob:
                 l = self.rng.choice(10)

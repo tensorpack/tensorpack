@@ -145,7 +145,7 @@ class InputSource(object):
     def _reset_state(self):
         pass
 
-    def size(self):
+    def __len__(self):
         """
         Returns:
             int: epoch size of the InputSource
@@ -189,7 +189,7 @@ class ProxyInputSource(InputSource):
         return self._input.get_callbacks()
 
     def _size(self):
-        return self._input.size()
+        return len(self._input)
 
     def _reset_state(self):
         self._input.reset_state()

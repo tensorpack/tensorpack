@@ -163,10 +163,10 @@ class ILSVRC12Files(RNGDataFlow):
             fname = os.path.join(self.full_dir, fname)
             assert os.path.isfile(fname), fname
 
-    def size(self):
+    def __len__(self):
         return len(self.imglist)
 
-    def get_data(self):
+    def __iter__(self):
         idxs = np.arange(len(self.imglist))
         if self.shuffle:
             self.rng.shuffle(idxs)
@@ -251,8 +251,8 @@ class ILSVRC12(ILSVRC12Files):
     There are some CMYK / png images, but cv2 seems robust to them.
     https://github.com/tensorflow/models/blob/c0cd713f59cfe44fa049b3120c417cc4079c17e3/research/inception/inception/data/build_imagenet_data.py#L264-L300
     """
-    def get_data(self):
-        for fname, label in super(ILSVRC12, self).get_data():
+    def __iter__(self):
+        for fname, label in super(ILSVRC12, self).__iter__():
             im = cv2.imread(fname, cv2.IMREAD_COLOR)
             assert im is not None, fname
             yield [im, label]
@@ -299,7 +299,7 @@ if __name__ == '__main__':
     ds = ILSVRC12('/home/wyx/data/fake_ilsvrc/', 'train', shuffle=False)
     ds.reset_state()
 
-    for k in ds.get_data():
+    for k in ds:
         from IPython import embed
         embed()
         break

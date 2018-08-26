@@ -61,7 +61,7 @@ class _ParallelMapData(ProxyDataFlow):
             if ret is not None:
                 yield ret
 
-        self._iter = self.ds.get_data()   # refresh
+        self._iter = self.ds.__iter__()   # refresh
         for _ in range(self._buffer_size):
             self._send(next(self._iter))
             ret = self._recv()
@@ -73,7 +73,7 @@ class _ParallelMapData(ProxyDataFlow):
         for dp in self._iter:
             self._send(dp)
             yield self._recv_filter_none()
-        self._iter = self.ds.get_data()   # refresh
+        self._iter = self.ds.__iter__()   # refresh
 
         # first clear the buffer, then fill
         for k in range(self._buffer_size):
@@ -100,11 +100,11 @@ class MultiThreadMapData(_ParallelMapData):
 
         2. Threads run in parallel and can take different time to run the
            mapping function. Therefore the order of datapoints won't be
-           preserved, and datapoints from one pass of `df.get_data()` might get
+           preserved, and datapoints from one pass of `df.__iter__()` might get
            mixed with datapoints from the next pass.
 
-           You can use **strict mode**, where `MultiThreadMapData.get_data()`
-           is guaranteed to produce the exact set which `df.get_data()`
+           You can use **strict mode**, where `MultiThreadMapData.__iter__()`
+           is guaranteed to produce the exact set which `df.__iter__()`
            produces. Although the order of data still isn't preserved.
     """
     class _Worker(StoppableThread):
@@ -165,7 +165,7 @@ class MultiThreadMapData(_ParallelMapData):
         for t in self._threads:
             t.start()
 
-        self._iter = self.ds.get_data()
+        self._iter = self.ds.__iter__()
         self._guard = DataFlowReentrantGuard()
 
         # Call once at the beginning, to ensure inq+outq has a total of buffer_size elements
@@ -177,7 +177,7 @@ class MultiThreadMapData(_ParallelMapData):
     def _send(self, dp):
         self._in_queue.put(dp)
 
-    def get_data(self):
+    def __iter__(self):
         with self._guard:
             if self._strict:
                 for dp in self.get_data_strict():
@@ -208,11 +208,11 @@ class MultiProcessMapDataZMQ(_ParallelMapData, _MultiProcessZMQDataFlow):
     Note:
         1. Processes run in parallel and can take different time to run the
            mapping function. Therefore the order of datapoints won't be
-           preserved, and datapoints from one pass of `df.get_data()` might get
+           preserved, and datapoints from one pass of `df.__iter__()` might get
            mixed with datapoints from the next pass.
 
-           You can use **strict mode**, where `MultiProcessMapData.get_data()`
-           is guaranteed to produce the exact set which `df.get_data()`
+           You can use **strict mode**, where `MultiProcessMapData.__iter__()`
+           is guaranteed to produce the exact set which `df.__iter__()`
            produces. Although the order of data still isn't preserved.
     """
     class _Worker(mp.Process):
@@ -267,7 +267,7 @@ class MultiProcessMapDataZMQ(_ParallelMapData, _MultiProcessZMQDataFlow):
             for k in range(self.nr_proc)]
 
         self.ds.reset_state()
-        self._iter = self.ds.get_data()
+        self._iter = self.ds.__iter__()
 
         self._start_processes()
         self._fill_buffer()     # pre-fill the bufer
@@ -284,7 +284,7 @@ class MultiProcessMapDataZMQ(_ParallelMapData, _MultiProcessZMQDataFlow):
         dp = loads(msg[1])
         return dp
 
-    def get_data(self):
+    def __iter__(self):
         with self._guard, _zmq_catch_error('MultiProcessMapData'):
             if self._strict:
                 for dp in self.get_data_strict():
@@ -362,13 +362,13 @@ class MultiProcessMapDataComponentSharedArray(DataFlow):
         arr = mp.RawArray(ctype, int(np.prod(self.output_shape)))
         return arr
 
-    def size(self):
-        return self.ds.size()
+    def __len__(self):
+        return len(self.ds)
 
     def reset_state(self):
         self.ds.reset_state()
 
-    def get_data(self):
+    def __iter__(self):
         ds_itr = _repeat_iter(self.ds.get_data)
         with self._guard:
             while True:
@@ -392,16 +392,16 @@ if __name__ == '__main__':
         def __init__(self, size):
             self._size = size
 
-        def get_data(self):
+        def __iter__(self):
             for k in range(self._size):
                 yield [k]
 
-        def size(self):
+        def __len__(self):
             return self._size
 
     ds = Zero(300)
     ds = MultiProcessMapData(ds, 3, lambda x: [x[0] + 1], strict=True)
     ds.reset_state()
-    for k in ds.get_data():
+    for k in ds:
         print("Bang!", k)
     print("END!")

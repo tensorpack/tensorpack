@@ -15,10 +15,10 @@ class DataFromListOfDict(RNGDataFlow):
         self._shuffle = shuffle
         self._size = len(lst)
 
-    def size(self):
+    def __len__(self):
         return self._size
 
-    def get_data(self):
+    def __iter__(self):
         if self._shuffle:
             self.rng.shuffle(self._lst)
         for dic in self._lst:

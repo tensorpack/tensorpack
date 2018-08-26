@@ -5,11 +5,10 @@
 
 DataFlow is a library to build Python iterators for efficient data loading.
 
-**Definition**: A DataFlow is something that has a `get_data()` generator method,
-which yields `datapoints`.
+**Definition**: A DataFlow is a idiomatic Python container object that has a `__iter__()` generator method, which yields `datapoints` and a `__len__()` method returning the size of the flow.
 A datapoint is a **list** of Python objects which are called the `components` of a datapoint.
 
-**Example**: to train on MNIST dataset, you may need a DataFlow with a `get_data()` method
+**Example**: to train on MNIST dataset, you may need a DataFlow with a `__iter__()` method
 that yields datapoints (lists) of two components:
 a numpy array of shape (64, 28, 28), and an array of shape (64,).
 
@@ -61,8 +60,7 @@ and then use the generator however you like:
 df = SomeDataFlow()
 
 df.reset_state()
-generator = df.get_data()
-for dp in generator:
+for dp in df:
 	# dp is now a list. do whatever
 ```
 

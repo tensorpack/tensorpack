@@ -58,7 +58,7 @@ class SintelData(DataFlow):
     def size(self):
         return len(self.flows)
 
-    def get_data(self):
+    def __iter__(self):
         for flow_path in self.flows:
             input_path = flow_path.replace(
                 self.path_prefix, os.path.join(self.data_path, 'clean'))
@@ -95,7 +95,7 @@ def inference(model, model_path, sintel_path):
     ds.reset_state()
 
     # look at shape information (all images in Sintel has the same shape)
-    h, w = next(ds.get_data())[0].shape[2:]
+    h, w = next(ds.__iter__())[0].shape[2:]
 
     pred = PredictConfig(
         model=model(height=h, width=w),

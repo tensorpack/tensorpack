@@ -55,7 +55,7 @@ def get_config():
             ModelSaver(),
             InferenceRunner(ds_test, [ScalarStats('total_costs')]),
         ],
-        steps_per_epoch=ds_train.size(),
+        steps_per_epoch=len(ds_train),
         max_epoch=100,
     )
 

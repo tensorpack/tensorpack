@@ -106,10 +106,10 @@ class CifarBase(RNGDataFlow):
         self.dir = dir
         self.shuffle = shuffle
 
-    def size(self):
+    def __len__(self):
         return 50000 if self.train_or_test == 'train' else 10000
 
-    def get_data(self):
+    def __iter__(self):
         idxs = np.arange(len(self.data))
         if self.shuffle:
             self.rng.shuffle(idxs)
@@ -171,7 +171,7 @@ if __name__ == '__main__':
 
     import cv2
     ds.reset_state()
-    for i, dp in enumerate(ds.get_data()):
+    for i, dp in enumerate(ds):
         if i == 100:
             break
         img = dp[0]

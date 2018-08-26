@@ -109,7 +109,7 @@ def eval_coco(df, detect_func, tqdm_bar=None):
         if tqdm_bar is None:
             tqdm_bar = stack.enter_context(
                 tqdm.tqdm(total=df.size(), **get_tqdm_kwargs()))
-        for img, img_id in df.get_data():
+        for img, img_id in df:
             results = detect_func(img)
             for r in results:
                 box = r.box

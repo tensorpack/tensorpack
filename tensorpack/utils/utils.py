@@ -214,7 +214,9 @@ def get_tqdm_kwargs(**kwargs):
     return default
 
 
-def get_tqdm(**kwargs):
+def get_tqdm(df=None, **kwargs):
     """ Similar to :func:`get_tqdm_kwargs`,
     but returns the tqdm object directly. """
+    if df is not None:
+        return tqdm(df, **get_tqdm_kwargs(**kwargs))
     return tqdm(**get_tqdm_kwargs(**kwargs))
