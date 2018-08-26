@@ -159,7 +159,7 @@ def fastrcnn_losses(labels, label_logits, fg_boxes, fg_box_logits):
         fg_label_pred = tf.argmax(tf.gather(label_logits, fg_inds), axis=1)
         num_zero = tf.reduce_sum(tf.to_int64(tf.equal(fg_label_pred, 0)), name='num_zero')
         false_negative = tf.where(
-            empty_fg, 0., tf.truediv(num_zero, num_fg), name='false_negative')
+            empty_fg, 0., tf.to_float(tf.truediv(num_zero, num_fg)), name='false_negative')
         fg_accuracy = tf.where(
             empty_fg, 0., tf.reduce_mean(tf.gather(correct, fg_inds)), name='fg_accuracy')
 
@@ -297,7 +297,7 @@ def fastrcnn_4conv1fc_gn_head(*args, **kwargs):
 
 class BoxProposals(object):
     """
-    A structure to manage box proposals and their relation with ground truth.
+    A structure to manage box proposals and their relations with ground truth.
     """
     def __init__(self, boxes,
                  labels=None, fg_inds_wrt_gt=None,
@@ -406,6 +406,7 @@ class FastRCNNHead(object):
 
     @memoized
     def decoded_output_boxes_class_agnostic(self):
+        """ Returns: Nx4 """
         assert self._bbox_class_agnostic
         box_logits = tf.reshape(self.box_logits, [-1, 4])
         decoded = decode_bbox_target(
