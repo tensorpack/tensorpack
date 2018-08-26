@@ -144,6 +144,7 @@ def fastrcnn_losses(labels, label_logits, fg_boxes, fg_box_logits):
     fg_inds = tf.where(labels > 0)[:, 0]
     fg_labels = tf.gather(labels, fg_inds)
     num_fg = tf.size(fg_inds, out_type=tf.int64)
+    empty_fg = tf.equal(num_fg, 0)
     if int(fg_box_logits.shape[1]) > 1:
         indices = tf.stack(
             [tf.range(num_fg), fg_labels], axis=1)  # #fgx2
@@ -157,16 +158,18 @@ def fastrcnn_losses(labels, label_logits, fg_boxes, fg_box_logits):
         accuracy = tf.reduce_mean(correct, name='accuracy')
         fg_label_pred = tf.argmax(tf.gather(label_logits, fg_inds), axis=1)
         num_zero = tf.reduce_sum(tf.to_int64(tf.equal(fg_label_pred, 0)), name='num_zero')
-        false_negative = tf.truediv(num_zero, num_fg, name='false_negative')
-        fg_accuracy = tf.reduce_mean(
-            tf.gather(correct, fg_inds), name='fg_accuracy')
+        false_negative = tf.where(
+            empty_fg, 0., tf.truediv(num_zero, num_fg), name='false_negative')
+        fg_accuracy = tf.where(
+            empty_fg, 0., tf.reduce_mean(tf.gather(correct, fg_inds)), name='fg_accuracy')
 
     box_loss = tf.losses.huber_loss(
         fg_boxes, fg_box_logits, reduction=tf.losses.Reduction.SUM)
     box_loss = tf.truediv(
         box_loss, tf.to_float(tf.shape(labels)[0]), name='box_loss')
 
-    add_moving_summary(label_loss, box_loss, accuracy, fg_accuracy, false_negative)
+    add_moving_summary(label_loss, box_loss, accuracy,
+                       fg_accuracy, false_negative, tf.to_float(num_fg, name='num_fg_label'))
     return label_loss, box_loss
 
 

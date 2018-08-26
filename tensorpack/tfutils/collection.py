@@ -141,7 +141,7 @@ class CollectionGuard(object):
                     size_change.append((self._key_name(k), len(old_v), len(v)))
         if newly_created:
             logger.info(
-                "New collections created in {}: {}".format(
+                "New collections created in tower {}: {}".format(
                     self._name, ', '.join(newly_created)))
         if size_change:
             logger.info(

@@ -141,12 +141,13 @@ class ResNetC4Model(DetectionModel):
                                      tf.constant(cfg.FRCNN.BBOX_REG_WEIGHTS, dtype=tf.float32))
 
         if is_training:
+            all_losses = []
             # rpn loss
-            rpn_label_loss, rpn_box_loss = rpn_losses(
-                anchors.gt_labels, anchors.encoded_gt_boxes(), rpn_label_logits, rpn_box_logits)
+            all_losses.extend(rpn_losses(
+                anchors.gt_labels, anchors.encoded_gt_boxes(), rpn_label_logits, rpn_box_logits))
 
             # fastrcnn loss
-            fastrcnn_label_loss, fastrcnn_box_loss = fastrcnn_head.losses()
+            all_losses.extend(fastrcnn_head.losses())
 
             if cfg.MODE_MASK:
                 # maskrcnn loss
@@ -161,18 +162,13 @@ class ResNetC4Model(DetectionModel):
                     proposals.fg_inds_wrt_gt, 14,
                     pad_border=False)  # nfg x 1x14x14
                 target_masks_for_fg = tf.squeeze(target_masks_for_fg, 1, 'sampled_fg_mask_targets')
-                mrcnn_loss = maskrcnn_loss(mask_logits, proposals.fg_labels(), target_masks_for_fg)
-            else:
-                mrcnn_loss = 0.0
+                all_losses.append(maskrcnn_loss(mask_logits, proposals.fg_labels(), target_masks_for_fg))
 
             wd_cost = regularize_cost(
                 '.*/W', l2_regularizer(cfg.TRAIN.WEIGHT_DECAY), name='wd_cost')
+            all_losses.append(wd_cost)
 
-            total_cost = tf.add_n([
-                rpn_label_loss, rpn_box_loss,
-                fastrcnn_label_loss, fastrcnn_box_loss,
-                mrcnn_loss, wd_cost], 'total_cost')
-
+            total_cost = tf.add_n(all_losses, 'total_cost')
             add_moving_summary(total_cost, wd_cost)
             return total_cost
         else:
@@ -272,11 +268,11 @@ class ResNetFPNModel(DetectionModel):
                                      tf.constant(cfg.FRCNN.BBOX_REG_WEIGHTS, dtype=tf.float32))
 
         if is_training:
-            # rpn loss:
-            rpn_label_loss, rpn_box_loss = multilevel_rpn_losses(
-                multilevel_anchors, multilevel_label_logits, multilevel_box_logits)
+            all_losses = []
+            all_losses.extend(multilevel_rpn_losses(
+                multilevel_anchors, multilevel_label_logits, multilevel_box_logits))
 
-            fastrcnn_label_loss, fastrcnn_box_loss = fastrcnn_head.losses()
+            all_losses.extend(fastrcnn_head.losses())
 
             if cfg.MODE_MASK:
                 # maskrcnn loss
@@ -293,17 +289,13 @@ class ResNetFPNModel(DetectionModel):
                     proposals.fg_inds_wrt_gt, 28,
                     pad_border=False)  # fg x 1x28x28
                 target_masks_for_fg = tf.squeeze(target_masks_for_fg, 1, 'sampled_fg_mask_targets')
-                mrcnn_loss = maskrcnn_loss(mask_logits, proposals.fg_labels(), target_masks_for_fg)
-            else:
-                mrcnn_loss = 0.0
+                all_losses.append(maskrcnn_loss(mask_logits, proposals.fg_labels(), target_masks_for_fg))
 
             wd_cost = regularize_cost(
                 '.*/W', l2_regularizer(cfg.TRAIN.WEIGHT_DECAY), name='wd_cost')
+            all_losses.append(wd_cost)
 
-            total_cost = tf.add_n([rpn_label_loss, rpn_box_loss,
-                                   fastrcnn_label_loss, fastrcnn_box_loss,
-                                   mrcnn_loss, wd_cost], 'total_cost')
-
+            total_cost = tf.add_n(all_losses, 'total_cost')
             add_moving_summary(total_cost, wd_cost)
             return total_cost
         else:
