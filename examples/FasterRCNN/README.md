@@ -59,7 +59,7 @@ To predict on an image (and show output in a window):
 ./train.py --predict input.jpg --load /path/to/model --config SAME-AS-TRAINING
 ```
 
-To Evaluate the performance of a model on COCO:
+To evaluate the performance of a model on COCO:
 ```
 ./train.py --evaluate output.json --load /path/to/COCO-R50C4-MaskRCNN-Standard.npz \
     --config SAME-AS-TRAINING

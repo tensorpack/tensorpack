@@ -50,8 +50,9 @@ def sample_fast_rcnn_targets(boxes, gt_boxes, gt_labels):
         gt_labels: m, int32
 
     Returns:
+        A BoxProposals instance.
         sampled_boxes: tx4 floatbox, the rois
-        sampled_labels: t int64 labels, in [0, #class-1]. Positive means foreground.
+        sampled_labels: t int64 labels, in [0, #class). Positive means foreground.
         fg_inds_wrt_gt: #fg indices, each in range [0, m-1].
             It contains the matching GT of each foreground roi.
     """
@@ -94,9 +95,11 @@ def sample_fast_rcnn_targets(boxes, gt_boxes, gt_labels):
         [tf.gather(gt_labels, fg_inds_wrt_gt),
          tf.zeros_like(bg_inds, dtype=tf.int64)], axis=0)
     # stop the gradient -- they are meant to be training targets
-    return tf.stop_gradient(ret_boxes, name='sampled_proposal_boxes'), \
-        tf.stop_gradient(ret_labels, name='sampled_labels'), \
-        tf.stop_gradient(fg_inds_wrt_gt)
+    return BoxProposals(
+        tf.stop_gradient(ret_boxes, name='sampled_proposal_boxes'),
+        tf.stop_gradient(ret_labels, name='sampled_labels'),
+        tf.stop_gradient(fg_inds_wrt_gt),
+        gt_boxes, gt_labels)
 
 
 @layer_register(log_shape=True)
@@ -168,23 +171,24 @@ def fastrcnn_losses(labels, label_logits, fg_boxes, fg_box_logits):
 
 
 @under_name_scope()
-def fastrcnn_predictions(boxes, probs):
+def fastrcnn_predictions(boxes, scores):
     """
     Generate final results from predictions of all proposals.
 
     Args:
         boxes: n#classx4 floatbox in float32
-        probs: nx#class
+        scores: nx#class
 
     Returns:
-        indices: Kx2. Each is (box_id, class_id)
-        probs: K floats
+        boxes: Kx4
+        scores: K
+        labels: K
     """
     assert boxes.shape[1] == cfg.DATA.NUM_CLASS
-    assert probs.shape[1] == cfg.DATA.NUM_CLASS
+    assert scores.shape[1] == cfg.DATA.NUM_CLASS
     boxes = tf.transpose(boxes, [1, 0, 2])[1:, :, :]  # #catxnx4
     boxes.set_shape([None, cfg.DATA.NUM_CATEGORY, None])
-    probs = tf.transpose(probs[:, 1:], [1, 0])  # #catxn
+    scores = tf.transpose(scores[:, 1:], [1, 0])  # #catxn
 
     def f(X):
         """
@@ -213,20 +217,24 @@ def fastrcnn_predictions(boxes, probs):
             default_value=False)
         return mask
 
-    masks = tf.map_fn(f, (probs, boxes), dtype=tf.bool,
+    masks = tf.map_fn(f, (scores, boxes), dtype=tf.bool,
                       parallel_iterations=10)     # #cat x N
     selected_indices = tf.where(masks)  # #selection x 2, each is (cat_id, box_id)
-    probs = tf.boolean_mask(probs, masks)
+    scores = tf.boolean_mask(scores, masks)
 
     # filter again by sorting scores
-    topk_probs, topk_indices = tf.nn.top_k(
-        probs,
-        tf.minimum(cfg.TEST.RESULTS_PER_IM, tf.size(probs)),
+    topk_scores, topk_indices = tf.nn.top_k(
+        scores,
+        tf.minimum(cfg.TEST.RESULTS_PER_IM, tf.size(scores)),
         sorted=False)
     filtered_selection = tf.gather(selected_indices, topk_indices)
     cat_ids, box_ids = tf.unstack(filtered_selection, axis=1)
-    final_ids = tf.stack([box_ids, cat_ids + 1], axis=1, name='final_ids')  # Kx2, each is (box_id, class_id)
-    return final_ids, topk_probs
+
+    final_scores = tf.identity(topk_scores, name='scores')
+    final_labels = tf.add(cat_ids, 1, name='labels')
+    final_ids = tf.stack([cat_ids, box_ids], axis=1, name='all_ids')
+    final_boxes = tf.gather_nd(boxes, final_ids, name='boxes')
+    return final_boxes, final_scores, final_labels
 
 
 """
@@ -284,63 +292,84 @@ def fastrcnn_4conv1fc_gn_head(*args, **kwargs):
     return fastrcnn_Xconv1fc_head(*args, num_convs=4, norm='GN', **kwargs)
 
 
+class BoxProposals(object):
+    """
+    A structure to manage box proposals and their relation with ground truth.
+    """
+    def __init__(self, boxes,
+                 labels=None, fg_inds_wrt_gt=None,
+                 gt_boxes=None, gt_labels=None):
+        """
+        Args:
+            boxes: Nx4
+            labels: N, each in [0, #class), the true label for each input box
+            fg_inds_wrt_gt: #fg, each in [0, M)
+            gt_boxes: Mx4
+            gt_labels: M
+
+        The last four arguments could be None when not training.
+        """
+        for k, v in locals().items():
+            if k != 'self' and v is not None:
+                setattr(self, k, v)
+
+    @memoized
+    def fg_inds(self):
+        """ Returns: #fg indices in [0, N-1] """
+        return tf.reshape(tf.where(self.labels > 0), [-1], name='fg_inds')
+
+    @memoized
+    def fg_boxes(self):
+        """ Returns: #fg x4"""
+        return tf.gather(self.boxes, self.fg_inds(), name='fg_boxes')
+
+    @memoized
+    def fg_labels(self):
+        """ Returns: #fg"""
+        return tf.gather(self.labels, self.fg_inds(), name='fg_labels')
+
+    @memoized
+    def matched_gt_boxes(self):
+        """ Returns: #fg x 4"""
+        return tf.gather(self.gt_boxes, self.fg_inds_wrt_gt)
+
+
 class FastRCNNHead(object):
     """
     A class to process & decode inputs/outputs of a fastrcnn classification+regression head.
     """
-    def __init__(self, input_boxes, box_logits, label_logits, bbox_regression_weights,
-                 labels=None, matched_gt_boxes_per_fg=None):
+    def __init__(self, proposals, box_logits, label_logits, bbox_regression_weights):
         """
         Args:
-            input_boxes: Nx4, inputs to the head
+            proposals: BoxProposals
             box_logits: Nx#classx4 or Nx1x4, the output of the head
             label_logits: Nx#class, the output of the head
             bbox_regression_weights: a 4 element tensor
-            labels: N, each in [0, #class), the true label for each input box
-            matched_gt_boxes_per_fg: #fgx4, the matching gt boxes for each fg input box
-
-        The last two arguments could be None when not training.
         """
         for k, v in locals().items():
-            if k != 'self':
+            if k != 'self' and v is not None:
                 setattr(self, k, v)
         self._bbox_class_agnostic = int(box_logits.shape[1]) == 1
 
     @memoized
-    def fg_inds_in_inputs(self):
-        """ Returns: #fg indices in [0, N-1] """
-        assert self.labels is not None
-        return tf.reshape(tf.where(self.labels > 0), [-1], name='fg_inds_in_inputs')
-
-    @memoized
-    def fg_input_boxes(self):
-        """ Returns: #fgx4 """
-        return tf.gather(self.input_boxes, self.fg_inds_in_inputs(), name='fg_input_boxes')
-
-    @memoized
     def fg_box_logits(self):
         """ Returns: #fg x ? x 4 """
-        return tf.gather(self.box_logits, self.fg_inds_in_inputs(), name='fg_box_logits')
-
-    @memoized
-    def fg_labels(self):
-        """ Returns: #fg """
-        return tf.gather(self.labels, self.fg_inds_in_inputs(), name='fg_labels')
+        return tf.gather(self.box_logits, self.proposals.fg_inds(), name='fg_box_logits')
 
     @memoized
     def losses(self):
         encoded_fg_gt_boxes = encode_bbox_target(
-            self.matched_gt_boxes_per_fg,
-            self.fg_input_boxes()) * self.bbox_regression_weights
+            self.proposals.matched_gt_boxes(),
+            self.proposals.fg_boxes()) * self.bbox_regression_weights
         return fastrcnn_losses(
-            self.labels, self.label_logits,
+            self.proposals.labels, self.label_logits,
             encoded_fg_gt_boxes, self.fg_box_logits()
         )
 
     @memoized
     def decoded_output_boxes(self):
         """ Returns: N x #class x 4 """
-        anchors = tf.tile(tf.expand_dims(self.input_boxes, 1),
+        anchors = tf.tile(tf.expand_dims(self.proposals.boxes, 1),
                           [1, cfg.DATA.NUM_CLASS, 1])   # N x #class x 4
         decoded_boxes = decode_bbox_target(
             self.box_logits / self.bbox_regression_weights,
@@ -351,8 +380,7 @@ class FastRCNNHead(object):
     @memoized
     def decoded_output_boxes_for_true_label(self):
         """ Returns: Nx4 decoded boxes """
-        assert self.labels is not None
-        return self._decoded_output_boxes_for_label(self.labels)
+        return self._decoded_output_boxes_for_label(self.proposals.labels)
 
     @memoized
     def decoded_output_boxes_for_predicted_label(self):
@@ -363,13 +391,13 @@ class FastRCNNHead(object):
     def decoded_output_boxes_for_label(self, labels):
         assert not self._bbox_class_agnostic
         indices = tf.stack([
-            tf.range(tf.size(self.labels, out_type=tf.int64)),
+            tf.range(tf.size(labels, out_type=tf.int64)),
             labels
         ])
         needed_logits = tf.gather_nd(self.box_logits, indices)
         decoded = decode_bbox_target(
             needed_logits / self.bbox_regression_weights,
-            self.input_boxes
+            self.proposals.boxes
         )
         return decoded
 
@@ -379,7 +407,7 @@ class FastRCNNHead(object):
         box_logits = tf.reshape(self.box_logits, [-1, 4])
         decoded = decode_bbox_target(
             box_logits / self.bbox_regression_weights,
-            self.input_boxes
+            self.proposals.boxes
         )
         return decoded
 
