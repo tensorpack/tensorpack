@@ -21,10 +21,14 @@ You can use this predicate to choose a different code path in inference mode.
 
 ## Inference After Training
 
-Tensorpack is a training interface -- it doesn't care what happened after training.
-It saves models to standard checkpoint format.
-So you can build the graph for inference, load the checkpoint, and then use whatever deployment methods TensorFlow supports.
-But you'll need to read TF docs and __do it on your own__.
+Tensorpack is a training interface -- __it doesn't care what happened after training__.
+You have everything needed for inference or model diagnosis after
+training:
+1. The trained weights: tensorpack saves them in standard TF checkpoint format.
+2. The model: you've already written it yourself with TF symbolic functions.
+
+Therefore, you can build the graph for inference, load the checkpoint, and then use whatever deployment methods TensorFlow supports.
+And you'll need to read TF docs and __do it on your own__.
 
 ### Don't Use Training Metagraph for Inference
 

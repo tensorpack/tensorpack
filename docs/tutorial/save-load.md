@@ -8,8 +8,11 @@ in TensorFlow checkpoint format.
 A TF checkpoint typically includes a `.data-xxxxx` file and a `.index` file.
 Both are necessary.
 
-`tf.train.NewCheckpointReader` is the best tool to parse TensorFlow checkpoint.
-We have two example scripts to demo its usage, but read [TF docs](https://www.tensorflow.org/api_docs/python/tf/train/NewCheckpointReader) for details.
+`tf.train.NewCheckpointReader` is the offical tool to parse TensorFlow checkpoint.
+Read [TF docs](https://www.tensorflow.org/api_docs/python/tf/train/NewCheckpointReader) for details.
+Tensorpack also provides some small tools to work with checkpoints, see 
+[documentation](../modules/tfutils.html#tensorpack.tfutils.varmanip.load_chkpt_vars)
+for details.
 
 [scripts/ls-checkpoint.py](../scripts/ls-checkpoint.py)
 demos how to print all variables and their shapes in a checkpoint.

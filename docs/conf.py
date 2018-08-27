@@ -380,6 +380,7 @@ _DEPRECATED_NAMES = set([
     'prediction_incorrect', 'huber_loss',
 
     # internal only
+    'SessionUpdate',
     'apply_default_prefetch',
     'average_grads',
     'aggregate_grads',

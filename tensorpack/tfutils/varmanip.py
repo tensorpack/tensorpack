@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 # File: varmanip.py
 
-
 import six
 import os
 import pprint
 import tensorflow as tf
 import numpy as np
-from ..utils.develop import deprecated
 from ..utils import logger
 from .common import get_op_tensor_name
 
@@ -50,7 +48,7 @@ class SessionUpdate(object):
     @staticmethod
     def load_value_to_var(var, val, strict=False):
         """
-        Call `var.load(val)` with the default session.
+        Call `var.load(val)` with the default session, with some type checks.
 
         Args:
             var (tf.Variable):
@@ -111,7 +109,7 @@ class SessionUpdate(object):
 def dump_session_params(path):
     """
     Dump value of all TRAINABLE + MODEL variables to a dict, and save as
-    npz format (loadable by :class:`DictRestore`).
+    npz format (loadable by :func:`sessinit.get_model_loader`).
 
     Args:
         path(str): the file name to save the parameters. Must ends with npz.
@@ -201,11 +199,6 @@ def load_chkpt_vars(model_path):
     for n in var_names:
         result[n] = reader.get_tensor(n)
     return result
-
-
-@deprecated("Renamed to 'load_chkpt_vars!'", "2018-04-20")
-def dump_chkpt_vars(model_path):
-    return load_chkpt_vars(model_path)
 
 
 def is_training_name(name):
