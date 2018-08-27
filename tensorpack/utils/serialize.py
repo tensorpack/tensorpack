@@ -2,6 +2,8 @@
 # File: serialize.py
 
 import os
+import pyarrow as pa
+
 from .develop import create_dummy_func
 
 __all__ = ['loads', 'dumps']
@@ -45,19 +47,10 @@ def loads_pyarrow(buf):
 
 
 try:
-    # fixed in pyarrow 0.9: https://github.com/apache/arrow/pull/1223#issuecomment-359895666
-    import pyarrow as pa
-except ImportError:
-    pa = None
-    dumps_pyarrow = create_dummy_func('dumps_pyarrow', ['pyarrow'])  # noqa
-    loads_pyarrow = create_dummy_func('loads_pyarrow', ['pyarrow'])  # noqa
-
-try:
     import msgpack
     import msgpack_numpy
     msgpack_numpy.patch()
 except ImportError:
-    assert pa is not None, "pyarrow is a dependency of tensorpack!"
     loads_msgpack = create_dummy_func(  # noqa
         'loads_msgpack', ['msgpack', 'msgpack_numpy'])
     dumps_msgpack = create_dummy_func(  # noqa

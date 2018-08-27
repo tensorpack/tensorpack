@@ -11,7 +11,7 @@ from ..utils import logger
 from ..utils.utils import get_tqdm
 from ..utils.timer import timed_operation
 from ..utils.loadcaffe import get_caffe_pb
-from ..utils.serialize import loads
+from ..utils.compatible_serialize import loads
 from ..utils.argtools import log_once
 from ..utils.develop import log_deprecated
 from .base import RNGDataFlow, DataFlow, DataFlowReentrantGuard

@@ -7,7 +7,7 @@ from collections import defaultdict
 
 from ..utils.utils import get_tqdm
 from ..utils import logger
-from ..utils.serialize import dumps, loads
+from ..utils.compatible_serialize import dumps, loads
 
 from .base import DataFlow
 from .format import LMDBData, HDF5Data
@@ -46,7 +46,7 @@ class LMDBSerializer():
         if isdir:
             assert not os.path.isfile(os.path.join(path, 'data.mdb')), "LMDB file exists!"
         else:
-            assert not os.path.isfile(path), "LMDB file exists!"
+            assert not os.path.isfile(path), "LMDB file {} exists!".format(path)
         db = lmdb.open(path, subdir=isdir,
                        map_size=1099511627776 * 2, readonly=False,
                        meminit=False, map_async=True)    # need sync() at the end
@@ -126,7 +126,7 @@ class TFRecordSerializer():
             df (DataFlow): the DataFlow to serialize.
             path (str): output tfrecord file.
         """
-        if os.environ.get('TENSORPACK_SERIALIZE', None) == 'msgpack':
+        if os.environ.get('TENSORPACK_COMPATIBLE_SERIALIZE', 'msgpack') == 'msgpack':
             def _dumps(dp):
                 return dumps(dp)
         else:

@@ -51,6 +51,15 @@ tensorpack.utils.serialize module
     :undoc-members:
     :show-inheritance:
 
+tensorpack.utils.compatible_serialize module
+---------------------------------
+
+.. automodule:: tensorpack.utils.compatible_serialize
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
 tensorpack.utils.stats module
 -----------------------------
 
