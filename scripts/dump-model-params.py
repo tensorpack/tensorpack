@@ -34,8 +34,10 @@ if __name__ == '__main__':
     # save variables that are GLOBAL, and either TRAINABLE or MODEL
     var_to_dump = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
     var_to_dump.extend(tf.get_collection(tf.GraphKeys.MODEL_VARIABLES))
-    assert len(set(var_to_dump)) == len(var_to_dump), "TRAINABLE and MODEL variables have duplication!"
-    globvarname = [k.name for k in tf.global_variables()]
+    if len(set(var_to_dump)) != len(var_to_dump):
+        print("TRAINABLE and MODEL variables have duplication!")
+    var_to_dump = list(set(var_to_dump))
+    globvarname = set([k.name for k in tf.global_variables()])
     var_to_dump = set([k.name for k in var_to_dump if k.name in globvarname])
 
     for name in var_to_dump:

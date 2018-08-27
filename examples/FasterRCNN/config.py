@@ -163,6 +163,12 @@ _C.FPN.MRCNN_HEAD_FUNC = 'maskrcnn_up4conv_head'   # choices: maskrcnn_up4conv_{
 # Mask-RCNN
 _C.MRCNN.HEAD_DIM = 256
 
+# Cascade-RCNN, only available in FPN mode
+_C.FPN.CASCADE = False
+_C.CASCADE.NUM_STAGES = 3
+_C.CASCADE.IOUS = [0.5, 0.6, 0.7]
+_C.CASCADE.BBOX_REG_WEIGHTS = [[10., 10., 5., 5.], [20., 20., 10., 10.], [30., 30., 15., 15.]]
+
 # testing -----------------------
 _C.TEST.FRCNN_NMS_THRESH = 0.5
 
@@ -197,6 +203,13 @@ def finalize_configs(is_training):
         assert _C.FPN.FRCNN_HEAD_FUNC.endswith('_head')
         assert _C.FPN.MRCNN_HEAD_FUNC.endswith('_head')
         assert _C.FPN.NORM in ['None', 'GN']
+
+        if _C.FPN.CASCADE:
+            num_cascade = _C.CASCADE.NUM_STAGES
+            # the first threshold is the proposal sampling threshold
+            assert len(_C.CASCADE.IOUS) == num_cascade
+            assert _C.CASCADE.IOUS[0] == _C.FRCNN.FG_THRESH
+            assert len(_C.CASCADE.BBOX_REG_WEIGHTS) == num_cascade
 
     if is_training:
         os.environ['TF_AUTOTUNE_THRESHOLD'] = '1'

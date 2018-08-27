@@ -6,7 +6,7 @@ This is a minimal implementation that simply contains these files:
 + common.py: common data preparation utilities
 + basemodel.py: implement backbones
 + model_box.py: implement box-related symbolic functions
-+ model_{fpn,rpn,mrcnn,frcnn}.py: implement FPN,RPN,Mask-/Fast-RCNN models.
++ model_{fpn,rpn,frcnn,mrcnn,cascade}.py: implement FPN,RPN,Fast-/Mask-/Cascade-RCNN models.
 + train.py: main training script
 + utils/: third-party helper functions
 + eval.py: evaluation utilities
@@ -47,7 +47,7 @@ Model:
 Speed:
 
 1. The training will start very slow due to convolution warmup, until about 10k
-   steps to reach a maximum speed. 
+   steps to reach a maximum speed.
    You can disable warmup by `export TF_CUDNN_USE_AUTOTUNE=0`, which makes the
    training faster at the beginning, but perhaps not in the end.
 
@@ -56,7 +56,7 @@ Speed:
 1. This implementation is about 10% slower than detectron,
    probably due to the lack of specialized ops (e.g. AffineChannel, ROIAlign) in TensorFlow.
    It's certainly faster than other TF implementation.
-   
+
 1. The code should have around 70% GPU utilization on V100s, and 85%~90% scaling
    efficiency from 1 V100 to 8 V100s.
 

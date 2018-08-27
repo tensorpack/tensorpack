@@ -41,6 +41,7 @@ from model_rpn import rpn_head, rpn_losses, generate_rpn_proposals
 from model_fpn import (
     fpn_model, multilevel_roi_align,
     multilevel_rpn_losses, generate_fpn_proposals)
+from model_cascade import CascadeRCNNHead
 from model_box import (
     clip_boxes, crop_and_resize, roi_align, RPNAnchors)
 
@@ -258,14 +259,21 @@ class ResNetFPNModel(DetectionModel):
         else:
             proposals = BoxProposals(proposal_boxes)
 
-        roi_feature_fastrcnn = multilevel_roi_align(p23456[:4], proposals.boxes, 7)
-
         fastrcnn_head_func = getattr(model_frcnn, cfg.FPN.FRCNN_HEAD_FUNC)
-        head_feature = fastrcnn_head_func('fastrcnn', roi_feature_fastrcnn)
-        fastrcnn_label_logits, fastrcnn_box_logits = fastrcnn_outputs(
-            'fastrcnn/outputs', head_feature, cfg.DATA.NUM_CLASS)
-        fastrcnn_head = FastRCNNHead(proposals, fastrcnn_box_logits, fastrcnn_label_logits,
-                                     tf.constant(cfg.FRCNN.BBOX_REG_WEIGHTS, dtype=tf.float32))
+        if not cfg.FPN.CASCADE:
+            roi_feature_fastrcnn = multilevel_roi_align(p23456[:4], proposals.boxes, 7)
+
+            head_feature = fastrcnn_head_func('fastrcnn', roi_feature_fastrcnn)
+            fastrcnn_label_logits, fastrcnn_box_logits = fastrcnn_outputs(
+                'fastrcnn/outputs', head_feature, cfg.DATA.NUM_CLASS)
+            fastrcnn_head = FastRCNNHead(proposals, fastrcnn_box_logits, fastrcnn_label_logits,
+                                         tf.constant(cfg.FRCNN.BBOX_REG_WEIGHTS, dtype=tf.float32))
+        else:
+            def roi_func(boxes):
+                return multilevel_roi_align(p23456[:4], boxes, 7)
+
+            fastrcnn_head = CascadeRCNNHead(
+                proposals, roi_func, fastrcnn_head_func, image_shape2d, cfg.DATA.NUM_CLASS)
 
         if is_training:
             all_losses = []

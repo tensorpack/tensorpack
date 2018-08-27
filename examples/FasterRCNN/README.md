@@ -1,9 +1,10 @@
 # Faster-RCNN / Mask-RCNN on COCO
-This example provides a minimal (<2k lines) and faithful implementation of the following papers:
+This example provides a minimal (2k lines) and faithful implementation of the following papers:
 
 + [Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks](https://arxiv.org/abs/1506.01497)
 + [Feature Pyramid Networks for Object Detection](https://arxiv.org/abs/1612.03144)
 + [Mask R-CNN](https://arxiv.org/abs/1703.06870)
++ [Cascade R-CNN: Delving into High Quality Object Detection](https://arxiv.org/abs/1712.00726)
 
 with the support of:
 + Multi-GPU / distributed training
