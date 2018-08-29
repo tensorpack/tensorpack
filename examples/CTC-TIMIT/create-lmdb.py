@@ -106,7 +106,7 @@ def compute_mean_std(db, fname):
     ds = LMDBSerializer.load(db, shuffle=False)
     ds.reset_state()
     o = OnlineMoments()
-    for dp in get_tqdm(df=ds):
+    for dp in get_tqdm(ds):
         feat = dp[0]  # len x dim
         for f in feat:
             o.feed(f)

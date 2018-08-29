@@ -100,7 +100,7 @@ class NumpySerializer():
         """
         buffer = []
         df.reset_state()
-        for dp in get_tqdm(df=df):
+        for dp in get_tqdm(df):
             buffer.append(dp)
         np.savez_compressed(path, buffer=np.asarray(buffer, dtype=np.object))
 
@@ -133,7 +133,7 @@ class TFRecordSerializer():
 
         df.reset_state()
         with tf.python_io.TFRecordWriter(path) as writer:
-            for dp in get_tqdm(df=df):
+            for dp in get_tqdm(df):
                 writer.write(_dumps(dp))
 
     @staticmethod
@@ -171,7 +171,7 @@ class HDF5Serializer():
         df.reset_state()
         buffer = defaultdict(list)
 
-        for dp in get_tqdm(df=df):
+        for dp in get_tqdm(df):
             assert len(dp) == len(data_paths), "Datapoint has {} components!".format(len(dp))
             for k, el in zip(data_paths, dp):
                 buffer[k].append(el)

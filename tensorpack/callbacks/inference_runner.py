@@ -61,7 +61,7 @@ class InferenceRunnerBase(Callback):
     """ Base class for inference runner.
 
     Note:
-        1. InferenceRunner will use `input.__len__()` to determine
+        1. InferenceRunner will use `len(input)` to determine
            how much iterations to run, so you're responsible to ensure that
            `__len__()` is reasonable.
         2. Only works with instances of `TowerTrainer`.

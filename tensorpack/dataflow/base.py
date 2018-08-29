@@ -3,10 +3,9 @@
 
 
 import threading
-from abc import abstractmethod
+from abc import abstractmethod, ABCMeta
 import six
 from ..utils.utils import get_rng
-from ..utils.develop import log_deprecated
 
 __all__ = ['DataFlow', 'ProxyDataFlow', 'RNGDataFlow', 'DataFlowTerminated']
 
@@ -40,28 +39,21 @@ class DataFlowReentrantGuard(object):
         return False
 
 
-class DataFlowMeta(type):
+class DataFlowMeta(ABCMeta):
     """
     DataFlow uses "__iter__()" and "__len__()" instead of
     "get_data()" and "size()". This add back-compatibility.
     """
-    def __new__(meta, name, bases, dct):
-        # "'get_data' in dct" is important as we just care about DataFlow itself
-        # and not derived classes.
-        if '__iter__' not in dct and 'get_data' in dct:
-            dct['__iter__'] = dct['get_data']
-            log_deprecated("DataFlow.get_data()",
-                           "use DataFlow.__iter__() instead!",
-                           "2018-12-30")
-        if '__len__' not in dct and 'size' in dct:
-            dct['__len__'] = dct['size']
-            log_deprecated("DataFlow.size()",
-                           "use DataFlow.__len__() instead!",
-                           "2018-12-30")
-        return super(DataFlowMeta, meta).__new__(meta, name, bases, dct)
+    def __new__(mcls, name, bases, namespace, **kwargs):
 
-    def __init__(cls, name, bases, dct):
-        super(DataFlowMeta, cls).__init__(name, bases, dct)
+        def hot_patch(required, existing):
+            if required not in namespace and existing in namespace:
+                namespace[required] = namespace[existing]
+
+        hot_patch('__iter__', 'get_data')
+        hot_patch('__len__', 'size')
+
+        return super().__new__(mcls, name, bases, namespace, **kwargs)
 
 
 @six.add_metaclass(DataFlowMeta)
