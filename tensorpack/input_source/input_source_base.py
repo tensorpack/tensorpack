@@ -152,6 +152,12 @@ class InputSource(object):
         """
         return self._size()
 
+    def size(self):
+        """
+        Alias for __len__
+        """
+        return self._size()
+
     def _size(self):
         raise NotImplementedError()
 
