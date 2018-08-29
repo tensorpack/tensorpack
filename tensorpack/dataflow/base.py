@@ -39,6 +39,7 @@ class DataFlowReentrantGuard(object):
         return False
 
 
+# NOTE: we cannot use six here
 class DataFlowMeta(ABCMeta):
     """
     DataFlow uses "__iter__()" and "__len__()" instead of
@@ -53,7 +54,7 @@ class DataFlowMeta(ABCMeta):
         hot_patch('__iter__', 'get_data')
         hot_patch('__len__', 'size')
 
-        return super().__new__(mcls, name, bases, namespace, **kwargs)
+        return ABCMeta.__new__(mcls, name, bases, namespace, **kwargs)
 
 
 @six.add_metaclass(DataFlowMeta)
