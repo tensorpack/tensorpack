@@ -385,7 +385,7 @@ class HorovodTrainer(SingleCostTrainer):
             # the op will be created later in initialize()
             self.trainer._broadcast_op.run()
 
-        cb = CallbackFactory(trigger=broadcast)
+        cb = CallbackFactory(trigger=broadcast).set_chief_only(False)
         return [cb]
 
     @HIDE_DOC
