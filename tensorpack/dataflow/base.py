@@ -78,7 +78,7 @@ class DataFlow(object):
         Returns:
             int: size of this data flow.
 
-          Raises:
+        Raises:
             :class:`NotImplementedError` if this DataFlow doesn't have a size.
         """
         raise NotImplementedError()

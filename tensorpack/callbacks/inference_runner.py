@@ -63,7 +63,7 @@ class InferenceRunnerBase(Callback):
     Note:
         1. InferenceRunner will use `len(input)` to determine
            how much iterations to run, so you're responsible to ensure that
-           `__len__()` is reasonable.
+           `len(input)` is reasonable.
         2. Only works with instances of `TowerTrainer`.
     """
     def __init__(self, input, infs):
@@ -81,7 +81,7 @@ class InferenceRunnerBase(Callback):
             assert isinstance(v, Inferencer), v
 
         try:
-            self._size = input.__len__()
+            self._size = len(input)
         except NotImplementedError:
             self._size = 0
 

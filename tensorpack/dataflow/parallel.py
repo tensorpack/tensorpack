@@ -175,7 +175,7 @@ However, windows requires more strict picklability on processes, which may \
 lead of failure on some of the code.")
         super(MultiProcessPrefetchData, self).__init__(ds)
         try:
-            self._size = ds.__len__()
+            self._size = len(ds)
         except NotImplementedError:
             self._size = -1
         self.nr_proc = nr_proc
