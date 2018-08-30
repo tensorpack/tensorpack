@@ -214,7 +214,7 @@ class Trainer(object):
             if not isinstance(session_init, JustCurrentSession):
                 logger.warn("This is not a chief worker, 'session_init' was ignored!")
 
-        self.sess.graph.finalize()
+        self.sess.graph.finalize()  # possibly already finalized by ChiefSessionCreator
         logger.info("Graph Finalized.")
 
     @call_only_once

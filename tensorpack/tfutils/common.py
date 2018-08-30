@@ -70,7 +70,11 @@ def get_global_step_var():
 def get_global_step_value():
     """
     Returns:
-        int: global_step value in current graph and session"""
+        int: global_step value in current graph and session
+
+    Has to be called under a default session.
+    """
+
     return tf.train.global_step(
         tf.get_default_session(),
         get_global_step_var())

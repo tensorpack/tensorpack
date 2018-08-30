@@ -103,7 +103,7 @@ class ProgressBar(Callback):
 class MaintainStepCounter(Callback):
     """
     It maintains the global step in the graph, making sure it's increased by one.
-    This callback is used by the trainer, you don't need to worry about it.
+    This callback is used internally by the trainer, you don't need to worry about it.
     """
 
     _chief_only = False

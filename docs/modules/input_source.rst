@@ -1,7 +1,7 @@
 tensorpack.input_source package
 ================================
 
-Relevant tutorials: :doc:`../tutorial/input-source`.
+Read the relevant tutorials first for an overview of InputSource: :doc:`../tutorial/input-source`.
 
 .. automodule:: tensorpack.input_source
     :members:

@@ -5,7 +5,7 @@ import os
 import tensorflow as tf
 import multiprocessing as mp
 
-from ..callbacks import RunOp
+from ..callbacks import RunOp, CallbackFactory
 from ..tfutils.sesscreate import NewSessionCreator
 
 from ..utils import logger
@@ -379,15 +379,23 @@ class HorovodTrainer(SingleCostTrainer):
 
             opt = get_opt_fn()
             self.train_op = opt.apply_gradients(grads, name='min_op')
-        with tf.name_scope('horovod_broadcast'):
-            self._broadcast_op = hvd.broadcast_global_variables(0)
-        cb = RunOp(
-            self._broadcast_op, run_before=False,
-            run_as_trigger=True, verbose=True)
+
+        def broadcast(self):
+            logger.info("Running horovod broadcast ...")
+            # the op will be created later in initialize()
+            self.trainer._broadcast_op.run()
+
+        cb = CallbackFactory(trigger=broadcast)
         return [cb]
 
     @HIDE_DOC
     def initialize(self, session_creator, session_init):
+        # broadcast_op should be the last setup_graph: it needs to be created
+        # "right before" the session is initialized,
+        # because it needs to capture all the variables (which may be created by callbacks).
+        with tf.name_scope('horovod_broadcast'):
+            self._broadcast_op = hvd.broadcast_global_variables(0)
+
         if not isinstance(session_creator, NewSessionCreator):
             raise ValueError(
                 "session_creator has to be `NewSessionCreator` for horovod training! ")

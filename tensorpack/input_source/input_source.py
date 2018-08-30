@@ -96,7 +96,8 @@ class FeedInput(InputSource):
             infinite (bool): When set to False, will raise StopIteration when
                 ds is exhausted.
         """
-        assert isinstance(ds, DataFlow), ds
+        if not isinstance(ds, DataFlow):
+            raise ValueError("FeedInput takes a DataFlow! Got {}".format(ds))
         self.ds = ds
         if infinite:
             self._iter_ds = RepeatedData(self.ds, -1)
@@ -198,7 +199,8 @@ class QueueInput(FeedfreeInput):
                 should match the corresponding InputDesc of the model.
                 Defaults to a FIFO queue of size 50.
         """
-        assert isinstance(ds, DataFlow), ds
+        if not isinstance(ds, DataFlow):
+            raise ValueError("QueueInput takes a DataFlow! Got {}".format(ds))
         self.queue = queue
         self.ds = ds
         self._inf_ds = RepeatedData(ds, -1)
@@ -352,6 +354,8 @@ class TensorInput(FeedfreeInput):
                 The returned tensors will be evaluated every iteration, it's your job to make sure it's possible.
             size(int): size of this input. Use None to leave it undefined.
         """
+        if not callable(get_tensor_fn):
+            raise ValueError("get_tensor_fn has to be a function! Got {}".format(get_tensor_fn))
         self.get_tensor_fn = get_tensor_fn
         if size is not None:
             size = int(size)
@@ -369,7 +373,9 @@ class TensorInput(FeedfreeInput):
     def _get_input_tensors(self):
         with self.cached_name_scope():
             ret = self.get_tensor_fn()
-        assert len(ret) == len(self._desc), "{} != {}".format(len(ret), len(self._desc))
+        assert isinstance(ret, (list, tuple)), "get_tensor_fn needs to return a list!"
+        assert len(ret) == len(self._desc), \
+            "get_tensor_fn returns {} tensors but there are {} inputs".format(len(ret), len(self._desc))
         return ret
 
 
@@ -436,7 +442,7 @@ class ZMQInput(TensorInput):
 
 class TFDatasetInput(FeedfreeInput):
     """
-    Use a :class:`tf.contrib.data.Dataset` instance as input.
+    Use a :class:`tf.data.Dataset` instance as input.
 
     Note:
         In training, the dataset should be infinite (use :func:`repeat()`).
@@ -444,8 +450,10 @@ class TFDatasetInput(FeedfreeInput):
     def __init__(self, dataset):
         """
         Args:
-            dataset (tf.contrib.data.Dataset):
+            dataset (tf.data.Dataset):
         """
+        if not isinstance(dataset, tf.data.Dataset):
+            raise ValueError("TFDatasetInput takes a tf.data.Dataset! Got {}".format(dataset))
         self._dataset = dataset
 
     def _setup(self, inputs_desc):
@@ -474,7 +482,8 @@ class TFDatasetInput(FeedfreeInput):
     def _get_input_tensors(self):
         desc_shapes = [k.shape for k in self._desc]
         ret = self._iterator.get_next()
-        assert len(ret) == len(desc_shapes)
+        assert len(ret) == len(desc_shapes), \
+            "Dataset returns {} tensors but there are {} inputs!".format(len(ret), len(desc_shapes))
         for t, shp in zip(ret, desc_shapes):
             t.set_shape(shp)
         return ret
@@ -491,7 +500,7 @@ class TFDatasetInput(FeedfreeInput):
 
         Args:
             df (DataFlow): a dataflow which produces lists
-            types([tf.DType])
+            types([tf.DType]): list of types
 
         Returns:
             (tf.data.Dataset)
@@ -559,13 +568,14 @@ class StagingInput(FeedfreeInput):
         """
         Args:
             input (FeedfreeInput):
-            nr_stage: number of elements to prefetch into each StagingArea, at the beginning.
+            nr_stage (int): number of elements to prefetch into each StagingArea, at the beginning.
                 Since enqueue and dequeue are synchronized, prefetching 1 element should be sufficient.
             device (str or None): if not None, place the StagingArea on a specific device. e.g., '/cpu:0'.
                 Otherwise, they are placed under where `get_inputs_tensors`
                 gets called, which could be unspecified in case of simple trainers.
         """
-        assert isinstance(input, FeedfreeInput), input
+        if not isinstance(input, FeedfreeInput):
+            raise ValueError("StagingInput takes a FeedfreeInput! Got {}".format(input))
         self._input = input
 
         self._nr_stage = nr_stage
