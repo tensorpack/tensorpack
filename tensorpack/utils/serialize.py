@@ -2,8 +2,6 @@
 # File: serialize.py
 
 import os
-import pyarrow as pa
-
 from .develop import create_dummy_func
 
 __all__ = ['loads', 'dumps']
@@ -45,6 +43,16 @@ def loads_pyarrow(buf):
     """
     return pa.deserialize(buf)
 
+
+try:
+    # import pyarrow has a lot of side effect: https://github.com/apache/arrow/pull/2329
+    # So we need an option to disable it.
+    if os.environ.get('TENSORPACK_SERIALIZE', 'pyarrow') == 'pyarrow':
+        import pyarrow as pa
+except ImportError:
+    pa = None
+    dumps_pyarrow = create_dummy_func('dumps_pyarrow', ['pyarrow'])  # noqa
+    loads_pyarrow = create_dummy_func('loads_pyarrow', ['pyarrow'])  # noqa
 
 try:
     import msgpack

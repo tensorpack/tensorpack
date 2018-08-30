@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import os
 from .serialize import loads_msgpack, loads_pyarrow, dumps_msgpack, dumps_pyarrow
 

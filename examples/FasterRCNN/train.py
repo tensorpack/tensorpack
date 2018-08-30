@@ -441,7 +441,7 @@ class EvalCallback(Callback):
             logger.info("[EvalCallback] Will evaluate every {} epochs".format(interval))
 
     def _eval(self):
-        if cfg.TRAINER == 'replicated' or cfg.TRAIN.NUM_GPUS == 1:
+        if cfg.TRAINER == 'replicated':
             with ThreadPoolExecutor(max_workers=self.num_predictor, thread_name_prefix='EvalWorker') as executor, \
                     tqdm.tqdm(total=sum([df.size() for df in self.dataflows])) as pbar:
                 futures = []

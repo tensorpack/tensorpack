@@ -86,10 +86,12 @@ class PeriodicRunHooks(ProxyCallback):
 
 class EnableCallbackIf(ProxyCallback):
     """
-    Enable the ``{before,after}_epoch``, ``{before,after}_run``,
+    Disable the ``{before,after}_epoch``, ``{before,after}_run``,
     ``trigger_{epoch,step}``
-    methods of a callback, only when some condition satisfies.
+    methods of a callback, unless some condition satisfies.
     The other methods are unaffected.
+
+    A more accurate name for this callback should be "DisableCallbackUnless", but that's too ugly.
 
     Note:
         If you use ``{before,after}_run``,
@@ -101,6 +103,7 @@ class EnableCallbackIf(ProxyCallback):
         Args:
             callback (Callback):
             pred (self -> bool): a callable predicate. Has to be a pure function.
+                The callback is disabled unless this predicate returns True.
         """
         self._pred = pred
         super(EnableCallbackIf, self).__init__(callback)

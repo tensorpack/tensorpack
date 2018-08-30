@@ -13,6 +13,13 @@ A datapoint is a **list** of Python objects which are called the `components` of
 that yields datapoints (lists) of two components:
 a numpy array of shape (64, 28, 28), and an array of shape (64,).
 
+As you saw,
+DataFlow is __independent__ of TensorFlow since it produces any python objects
+(usually numpy arrays).
+To `import tensorpack.dataflow`, you don't even have to install TensorFlow.
+You can simply use DataFlow as a data processing pipeline and plug it into any other frameworks.
+
+
 ### Composition of DataFlow
 One good thing about having a standard interface is to be able to provide
 the greatest code reusability.
@@ -65,8 +72,3 @@ generator = df.get_data()
 for dp in generator:
 	# dp is now a list. do whatever
 ```
-
-DataFlow is __independent__ of both tensorpack and TensorFlow.
-To `import tensorpack.dataflow`, you don't even have to install TensorFlow.
-You can simply use it as a data processing pipeline and plug it into any other frameworks.
-
