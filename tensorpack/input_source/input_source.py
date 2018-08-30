@@ -339,15 +339,17 @@ class BatchQueueInput(QueueInput):
 
 # TODO tensor inputs can be drained? look at the new dataset API.
 class TensorInput(FeedfreeInput):
-    """ Input from a list of tensors, e.g. a TF data reading pipeline.
+    """ Use inputs from a list of tensors, e.g. a TF data reading pipeline.
         The PTB training example shows how to use it.
     """
 
     def __init__(self, get_tensor_fn, size=None):
         """
         Args:
-            get_tensor_fn: a function which returns a list of input tensors
-                when called. It will be called under a TowerContext.
+            get_tensor_fn ( -> [tf.Tensor]): a function which returns a list of input tensors
+                (for example, [image, label]) when called.
+                It will be called under a TowerContext and should return the inputs to be used in that tower.
+                The returned tensors will be evaluated every iteration, it's your job to make sure it's possible.
             size(int): size of this input. Use None to leave it undefined.
         """
         self.get_tensor_fn = get_tensor_fn
@@ -399,13 +401,13 @@ class DummyConstantInput(TensorInput):
 class ZMQInput(TensorInput):
     """
     Receive tensors from a ZMQ endpoint, with ops from https://github.com/tensorpack/zmq_ops.
-    It works with :meth:`dataflow.remote.send_dataflow_zmq(format='zmq_ops')`.
+    It works with :func:`dataflow.remote.send_dataflow_zmq(format='zmq_ops')`.
     """
     def __init__(self, end_point, hwm, bind=True):
         """
         Args:
-            end_point (str):
-            hwm (int):
+            end_point (str): the ZMQ endpoint
+            hwm (int): the ZMQ high-water-mark
         """
         self._end_point = end_point
         self._hwm = int(hwm)
@@ -481,10 +483,11 @@ class TFDatasetInput(FeedfreeInput):
     def dataflow_to_dataset(df, types):
         """
         Wrap a dataflow to tf.data.Dataset.
-        Will also reset the dataflow.
+        This function will also reset the dataflow.
 
-        If for training, you'll need to add `.repeat()` on the returned
-        dataset, if the dataflow iterator can terminate.
+        If the dataflow itself is finite, the returned dataset is also finite.
+        Therefore, if used for training, you'll need to add `.repeat()` on the returned
+        dataset.
 
         Args:
             df (DataFlow): a dataflow which produces lists
