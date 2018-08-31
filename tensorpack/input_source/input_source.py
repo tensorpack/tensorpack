@@ -77,7 +77,7 @@ class FeedInput(InputSource):
     class _FeedCallback(Callback):
         def __init__(self, ds, placeholders):
             self._ds = ds
-            self._itr = self._ds.get_data()
+            self._itr = self._ds.__iter__()
             self._placeholders = placeholders
 
         def _before_run(self, _):
@@ -87,7 +87,7 @@ class FeedInput(InputSource):
             return tf.train.SessionRunArgs(fetches=[], feed_dict=feed)
 
         def _reset(self):
-            self._itr = self._ds.get_data()
+            self._itr = self._ds.__iter__()
 
     def __init__(self, ds, infinite=True):
         """
@@ -105,7 +105,7 @@ class FeedInput(InputSource):
             self._iter_ds = self.ds
 
     def _size(self):
-        return self.ds.size()
+        return len(self.ds)
 
     def _setup(self, inputs):
         # placeholders as input are always safe to reuse.
@@ -175,7 +175,7 @@ class EnqueueThread(ShareSessionThread):
                 logger.info("{} Exited.".format(self.name))
 
     def reinitialize_dataflow(self):
-        self._itr = self.dataflow.get_data()
+        self._itr = self.dataflow.__iter__()
 
     def pause(self):
         self._running.clear()
@@ -207,7 +207,7 @@ class QueueInput(FeedfreeInput):
         self._started = False
 
     def _size(self):
-        return self.ds.size()
+        return len(self.ds)
 
     def _setup(self, inputs):
         self._input_placehdrs = [v.build_placeholder_reuse() for v in inputs]
@@ -225,7 +225,7 @@ class QueueInput(FeedfreeInput):
 
     def refill_queue(self):
         """
-        Clear the queue, then call dataflow.get_data() again and fill into the queue.
+        Clear the queue, then call dataflow.__iter__() again and fill into the queue.
         """
         self.thread.pause()     # pause enqueue
 
@@ -292,7 +292,7 @@ class BatchQueueInput(QueueInput):
         self.batch_size = int(batch_size)
 
     def _size(self):
-        return self.ds.size() // self.batch_size
+        return len(self.ds) // self.batch_size
 
     def _setup(self, inputs):
         logger.info("Setting up the queue for CPU prefetching ...")

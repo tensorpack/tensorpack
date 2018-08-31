@@ -308,7 +308,7 @@ def dump_dataflow_images(df, index=0, batched=True,
     df.reset_state()
     cnt = 0
     while True:
-        for dp in df.get_data():
+        for dp in df:
             if not batched:
                 imgbatch = [dp[index]]
             else:

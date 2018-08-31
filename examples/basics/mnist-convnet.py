@@ -104,8 +104,8 @@ if __name__ == '__main__':
     dataset_train, dataset_test = get_data()
 
     # How many iterations you want in each epoch.
-    # This (data.size()) is the default value.
-    steps_per_epoch = dataset_train.size()
+    # This len(data) is the default value.
+    steps_per_epoch = len(dataset_train)
 
     # get the config which contains everything necessary in a training
     config = TrainConfig(

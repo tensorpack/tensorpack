@@ -132,7 +132,7 @@ if __name__ == '__main__':
             InferenceRunner(
                 dataset_test, ScalarStats(['cross_entropy_loss', 'accuracy'])),
         ],
-        steps_per_epoch=dataset_train.size(),
+        steps_per_epoch=len(dataset_train),
         max_epoch=100,
     )
 

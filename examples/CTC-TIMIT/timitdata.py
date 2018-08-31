@@ -39,12 +39,12 @@ class TIMITBatch(ProxyDataFlow):
         self.batch = batch
         self.ds = ds
 
-    def size(self):
-        return self.ds.size() // self.batch
+    def __len__(self):
+        return len(self.ds) // self.batch
 
-    def get_data(self):
-        itr = self.ds.get_data()
-        for _ in range(self.size()):
+    def __iter__(self):
+        itr = self.ds.__iter__()
+        for _ in range(self.__len__()):
             feats = []
             labs = []
             for b in range(self.batch):

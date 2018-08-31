@@ -348,7 +348,7 @@ def visualize(model, model_path, nr_visualize=100, output_dir='output'):
         shutil.rmtree(output_dir)
     utils.fs.mkdir_p(output_dir)
     with tqdm.tqdm(total=nr_visualize) as pbar:
-        for idx, dp in itertools.islice(enumerate(df.get_data()), nr_visualize):
+        for idx, dp in itertools.islice(enumerate(df), nr_visualize):
             img = dp[0]
             if cfg.MODE_MASK:
                 gt_boxes, gt_labels, gt_masks = dp[-3:]

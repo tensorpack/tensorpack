@@ -39,12 +39,30 @@ class DataFlowReentrantGuard(object):
         return False
 
 
-@six.add_metaclass(ABCMeta)
+# NOTE: we cannot use six here
+class DataFlowMeta(ABCMeta):
+    """
+    DataFlow uses "__iter__()" and "__len__()" instead of
+    "get_data()" and "size()". This add back-compatibility.
+    """
+    def __new__(mcls, name, bases, namespace, **kwargs):
+
+        def hot_patch(required, existing):
+            if required not in namespace and existing in namespace:
+                namespace[required] = namespace[existing]
+
+        hot_patch('__iter__', 'get_data')
+        hot_patch('__len__', 'size')
+
+        return ABCMeta.__new__(mcls, name, bases, namespace, **kwargs)
+
+
+@six.add_metaclass(DataFlowMeta)
 class DataFlow(object):
     """ Base class for all DataFlow """
 
     @abstractmethod
-    def get_data(self):
+    def __iter__(self):
         """
         The method to generate datapoints.
 
@@ -52,7 +70,10 @@ class DataFlow(object):
             list: The datapoint, i.e. list of components.
         """
 
-    def size(self):
+    def get_data(self):
+        return self.__iter__()
+
+    def __len__(self):
         """
         Returns:
             int: size of this data flow.
@@ -61,6 +82,9 @@ class DataFlow(object):
             :class:`NotImplementedError` if this DataFlow doesn't have a size.
         """
         raise NotImplementedError()
+
+    def size(self):
+        return self.__len__()
 
     def reset_state(self):
         """
@@ -102,8 +126,8 @@ class ProxyDataFlow(DataFlow):
     def reset_state(self):
         self.ds.reset_state()
 
-    def size(self):
-        return self.ds.size()
+    def __len__(self):
+        return self.ds.__len__()
 
-    def get_data(self):
-        return self.ds.get_data()
+    def __iter__(self):
+        return self.ds.__iter__()

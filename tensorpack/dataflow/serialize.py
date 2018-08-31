@@ -20,7 +20,7 @@ __all__ = ['LMDBSerializer', 'NumpySerializer', 'TFRecordSerializer', 'HDF5Seria
 def _reset_df_and_get_size(df):
     df.reset_state()
     try:
-        sz = df.size()
+        sz = len(df)
     except NotImplementedError:
         sz = 0
     return sz
@@ -57,7 +57,7 @@ class LMDBSerializer():
             # LMDB transaction is not exception-safe!
             # although it has a context manager interface
             txn = db.begin(write=True)
-            for idx, dp in enumerate(df.get_data()):
+            for idx, dp in enumerate(df):
                 txn.put(u'{:08}'.format(idx).encode('ascii'), dumps(dp))
                 pbar.update()
                 if (idx + 1) % write_frequency == 0:
@@ -101,7 +101,7 @@ class NumpySerializer():
         buffer = []
         size = _reset_df_and_get_size(df)
         with get_tqdm(total=size) as pbar:
-            for dp in df.get_data():
+            for dp in df:
                 buffer.append(dp)
                 pbar.update()
         np.savez_compressed(path, buffer=np.asarray(buffer, dtype=np.object))
@@ -135,7 +135,7 @@ class TFRecordSerializer():
 
         size = _reset_df_and_get_size(df)
         with tf.python_io.TFRecordWriter(path) as writer, get_tqdm(total=size) as pbar:
-            for dp in df.get_data():
+            for dp in df:
                 writer.write(_dumps(dp))
                 pbar.update()
 
@@ -143,7 +143,7 @@ class TFRecordSerializer():
     def load(path, size=None):
         """
         Args:
-            size (int): total number of records. If not provided, the returned dataflow will have no `size()`.
+            size (int): total number of records. If not provided, the returned dataflow will have no `__len__()`.
                 It's needed because this metadata is not stored in the TFRecord file.
         """
         gen = tf.python_io.tf_record_iterator(path)
@@ -175,15 +175,16 @@ class HDF5Serializer():
         buffer = defaultdict(list)
 
         with get_tqdm(total=size) as pbar:
-            for dp in df.get_data():
+            for dp in df:
                 assert len(dp) == len(data_paths), "Datapoint has {} components!".format(len(dp))
                 for k, el in zip(data_paths, dp):
                     buffer[k].append(el)
                 pbar.update()
 
-        with h5py.File(path, 'w') as hf, get_tqdm(total=size) as pbar:
+        with h5py.File(path, 'w') as hf, get_tqdm(total=len(data_paths)) as pbar:
             for data_path in data_paths:
                 hf.create_dataset(data_path, data=buffer[data_path])
+                pbar.update()
 
     @staticmethod
     def load(path, data_paths, shuffle=True):
@@ -221,7 +222,7 @@ if __name__ == '__main__':
     print(time.time())
     df = TFRecordSerializer.load('out.tfrecords', size=1000)
     df.reset_state()
-    for idx, dp in enumerate(df.get_data()):
+    for idx, dp in enumerate(df):
         pass
     print("TF Finished, ", idx)
     print(time.time())
@@ -230,7 +231,7 @@ if __name__ == '__main__':
     print(time.time())
     df = LMDBSerializer.load('out.lmdb')
     df.reset_state()
-    for idx, dp in enumerate(df.get_data()):
+    for idx, dp in enumerate(df):
         pass
     print("LMDB Finished, ", idx)
     print(time.time())
@@ -239,7 +240,7 @@ if __name__ == '__main__':
     print(time.time())
     df = NumpySerializer.load('out.npz')
     df.reset_state()
-    for idx, dp in enumerate(df.get_data()):
+    for idx, dp in enumerate(df):
         pass
     print("Numpy Finished, ", idx)
     print(time.time())
@@ -248,7 +249,7 @@ if __name__ == '__main__':
     print(time.time())
     df = HDF5Serializer.load('out.h5')
     df.reset_state()
-    for idx, dp in enumerate(df.get_data()):
+    for idx, dp in enumerate(df):
         pass
     print("HDF5 Finished, ", idx)
     print(time.time())

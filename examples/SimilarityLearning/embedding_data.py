@@ -41,7 +41,7 @@ class MnistPairs(dataset.Mnist):
         idx = self.rng.randint(len(self.data_dict[label]))
         return self.data_dict[label][idx].astype(np.float32)
 
-    def get_data(self):
+    def __iter__(self):
         while True:
             y = self.rng.randint(2)
             if y == 0:
@@ -54,7 +54,7 @@ class MnistPairs(dataset.Mnist):
 
 
 class MnistTriplets(MnistPairs):
-    def get_data(self):
+    def __iter__(self):
         while True:
             pick_label, pick_other = self.rng.choice(10, size=2, replace=False)
             yield [self.pick(pick_label), self.pick(pick_label), self.pick(pick_other)]

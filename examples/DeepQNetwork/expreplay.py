@@ -241,7 +241,7 @@ class ExpReplay(DataFlow, Callback):
         return [state, action, reward, isOver]
 
     # DataFlow method:
-    def get_data(self):
+    def __iter__(self):
         # wait for memory to be initialized
         self._init_memory_flag.wait()
 

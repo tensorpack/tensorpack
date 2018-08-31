@@ -23,7 +23,7 @@ To write more complicated DataFlow, you need to inherit the base `DataFlow` clas
 Usually, you just need to implement the `get_data()` method which yields a datapoint every time.
 ```python
 class MyDataFlow(DataFlow):
-  def get_data(self):
+  def __iter__(self):
     for k in range(100):
       digit = np.random.rand(28, 28)
       label = np.random.randint(10)
@@ -56,7 +56,7 @@ class ProcessingDataFlow(DataFlow):
   def __init__(self, ds):
     self.ds = ds
 
-  def get_data(self):
+  def __iter__(self):
     for datapoint in self.ds.get_data():
       # do something
       yield new_datapoint

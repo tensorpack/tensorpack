@@ -159,7 +159,7 @@ class MultiProcessPrefetchData(ProxyDataFlow):
             # reset all ds so each process will produce different data
             self.ds.reset_state()
             while True:
-                for dp in self.ds.get_data():
+                for dp in self.ds:
                     self.queue.put(dp)
 
     def __init__(self, ds, nr_prefetch, nr_proc):
@@ -175,7 +175,7 @@ However, windows requires more strict picklability on processes, which may \
 lead of failure on some of the code.")
         super(MultiProcessPrefetchData, self).__init__(ds)
         try:
-            self._size = ds.size()
+            self._size = len(ds)
         except NotImplementedError:
             self._size = -1
         self.nr_proc = nr_proc
@@ -191,7 +191,7 @@ lead of failure on some of the code.")
         ensure_proc_terminate(self.procs)
         start_proc_mask_signal(self.procs)
 
-    def get_data(self):
+    def __iter__(self):
         for k in itertools.count():
             if self._size > 0 and k >= self._size:
                 break
@@ -264,7 +264,7 @@ class PrefetchDataZMQ(_MultiProcessZMQDataFlow):
             socket.connect(self.conn_name)
             try:
                 while True:
-                    for dp in self.ds.get_data():
+                    for dp in self.ds:
                         socket.send(dumps(dp), copy=False)
             # sigint could still propagate here, e.g. when nested
             except KeyboardInterrupt:
@@ -291,17 +291,17 @@ class PrefetchDataZMQ(_MultiProcessZMQDataFlow):
             logger.info("[PrefetchDataZMQ] Will fork a dataflow more than one times. "
                         "This assumes the datapoints are i.i.d.")
         try:
-            self._size = ds.size()
+            self._size = ds.__len__()
         except NotImplementedError:
             self._size = -1
 
     def _recv(self):
         return loads(self.socket.recv(copy=False))
 
-    def size(self):
-        return self.ds.size()
+    def __len__(self):
+        return self.ds.__len__()
 
-    def get_data(self):
+    def __iter__(self):
         with self._guard, _zmq_catch_error('PrefetchDataZMQ'):
             for k in itertools.count():
                 if self._size > 0 and k >= self._size:
@@ -360,7 +360,7 @@ class MultiThreadPrefetchData(DataFlow):
         def run(self):
             self.df.reset_state()
             try:
-                for dp in self.df.get_data():
+                for dp in self.df:
                     if self.stopped():
                         return
                     self.queue_put_stoppable(self.queue, dp)
@@ -391,10 +391,10 @@ class MultiThreadPrefetchData(DataFlow):
             th.df.reset_state()
             th.start()
 
-    def size(self):
-        return self.threads[0].size()
+    def __len__(self):
+        return self.threads[0].__len__()
 
-    def get_data(self):
+    def __iter__(self):
         while True:
             yield self.queue.get()
 
@@ -419,8 +419,8 @@ class PlasmaPutData(ProxyDataFlow):
         super(PlasmaPutData, self).reset_state()
         self.client = plasma.connect(self._socket, "", 0)
 
-    def get_data(self):
-        for dp in self.ds.get_data():
+    def __iter__(self):
+        for dp in self.ds:
             oid = self.client.put(dp)
             yield [oid.binary()]
 
@@ -440,8 +440,8 @@ class PlasmaGetData(ProxyDataFlow):
         super(PlasmaGetData, self).reset_state()
         self.client = plasma.connect(self._socket, "", 0)
 
-    def get_data(self):
-        for dp in self.ds.get_data():
+    def __iter__(self):
+        for dp in self.ds:
             oid = plasma.ObjectID(dp[0])
             dp = self.client.get(oid)
             yield dp

@@ -222,7 +222,7 @@ def view_warp(modelpath):
 
     ds = get_data(False)
     ds.reset_state()
-    for k in ds.get_data():
+    for k in ds:
         img, label = k
         outputs, affine1, affine2 = pred(img)
         for idx, viz in enumerate(outputs):
@@ -238,7 +238,7 @@ def get_config():
     logger.auto_set_dir()
 
     dataset_train, dataset_test = get_data(True), get_data(False)
-    steps_per_epoch = dataset_train.size() * 5
+    steps_per_epoch = len(dataset_train) * 5
 
     return TrainConfig(
         model=Model(),

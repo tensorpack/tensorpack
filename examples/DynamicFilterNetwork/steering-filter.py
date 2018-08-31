@@ -214,8 +214,8 @@ class ThetaImages(ProxyDataFlow, RNGDataFlow):
         ProxyDataFlow.reset_state(self)
         RNGDataFlow.reset_state(self)
 
-    def get_data(self):
-        for image, label in self.ds.get_data():
+    def __iter__(self):
+        for image, label in self.ds:
             theta = self.rng.uniform(0, 2 * np.pi)
             filtered_image, gt_filter = ThetaImages.filter_with_theta(image, theta)
             yield [theta, image, filtered_image, gt_filter]
@@ -245,7 +245,7 @@ def get_config():
             OnlineTensorboardExport()
         ],
         model=Model(),
-        steps_per_epoch=dataset_train.size(),
+        steps_per_epoch=len(dataset_train),
         max_epoch=50,
     )
 

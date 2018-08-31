@@ -379,7 +379,7 @@ def visualize(model_path, model, algo_name):
     ds = get_test_data()
     ds.reset_state()
 
-    for offset, dp in enumerate(ds.get_data()):
+    for offset, dp in enumerate(ds):
         digit, label = dp
         prediction = pred(digit)[0]
         embed[offset * BATCH_SIZE:offset * BATCH_SIZE + BATCH_SIZE, ...] = prediction

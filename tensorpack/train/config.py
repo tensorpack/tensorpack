@@ -131,13 +131,13 @@ class TrainConfig(object):
         if steps_per_epoch is None:
             try:
                 if dataflow is not None:
-                    steps_per_epoch = dataflow.size()
+                    steps_per_epoch = len(dataflow)
                 elif data is not None:
                     steps_per_epoch = data.size()
                 else:
                     raise NotImplementedError()
             except NotImplementedError:
-                logger.error("You must set `TrainConfig(steps_per_epoch)` if data.size() is not available.")
+                logger.error("You must set `TrainConfig(steps_per_epoch)` if the size of your input is not available.")
                 raise
         else:
             steps_per_epoch = int(steps_per_epoch)

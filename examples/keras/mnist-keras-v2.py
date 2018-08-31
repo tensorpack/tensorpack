@@ -69,7 +69,7 @@ if __name__ == '__main__':
     )
     M.fit(
         validation_data=dataset_test,
-        steps_per_epoch=dataset_train.size(),
+        steps_per_epoch=len(dataset_train),
         callbacks=[
             ModelSaver()
         ]

@@ -34,10 +34,10 @@ class FakeData(RNGDataFlow):
         assert len(self.dtype) == len(self.shapes)
         assert len(self.domain) == len(self.domain)
 
-    def size(self):
+    def __len__(self):
         return self._size
 
-    def get_data(self):
+    def __iter__(self):
         if self.random:
             for _ in range(self._size):
                 val = []
@@ -63,7 +63,7 @@ class DataFromQueue(DataFlow):
         """
         self.queue = queue
 
-    def get_data(self):
+    def __iter__(self):
         while True:
             yield self.queue.get()
 
@@ -81,10 +81,10 @@ class DataFromList(RNGDataFlow):
         self.lst = lst
         self.shuffle = shuffle
 
-    def size(self):
+    def __len__(self):
         return len(self.lst)
 
-    def get_data(self):
+    def __iter__(self):
         if not self.shuffle:
             for k in self.lst:
                 yield k
@@ -112,7 +112,7 @@ class DataFromGenerator(DataFlow):
         if size is not None:
             log_deprecated("DataFromGenerator(size=)", "It doesn't make much sense.", "2018-03-31")
 
-    def get_data(self):
+    def __iter__(self):
         # yield from
         for dp in self._gen():
             yield dp
@@ -128,9 +128,9 @@ class DataFromIterable(DataFlow):
         self._itr = iterable
         self._len = len(iterable)
 
-    def size(self):
+    def __len__(self):
         return self._len
 
-    def get_data(self):
+    def __iter__(self):
         for dp in self._itr:
             yield dp

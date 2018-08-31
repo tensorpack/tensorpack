@@ -214,7 +214,7 @@ def get_tqdm_kwargs(**kwargs):
     return default
 
 
-def get_tqdm(**kwargs):
-    """ Similar to :func:`get_tqdm_kwargs`,
-    but returns the tqdm object directly. """
-    return tqdm(**get_tqdm_kwargs(**kwargs))
+def get_tqdm(*args, **kwargs):
+    """ Similar to :func:`tqdm.tqdm()`,
+    but use tensorpack's default options to have consistent style. """
+    return tqdm(*args, **get_tqdm_kwargs(**kwargs))

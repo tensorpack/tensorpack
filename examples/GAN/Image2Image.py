@@ -223,7 +223,7 @@ if __name__ == '__main__':
                 PeriodicTrigger(ModelSaver(), every_k_epochs=3),
                 ScheduledHyperParamSetter('learning_rate', [(200, 1e-4)])
             ],
-            steps_per_epoch=data.size(),
+            steps_per_epoch=len(data),
             max_epoch=300,
             session_init=SaverRestore(args.load) if args.load else None
         )

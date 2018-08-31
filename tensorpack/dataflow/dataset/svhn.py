@@ -49,10 +49,10 @@ class SVHNDigit(RNGDataFlow):
         self.Y[self.Y == 10] = 0
         SVHNDigit._Cache[name] = (self.X, self.Y)
 
-    def size(self):
+    def __len__(self):
         return self.X.shape[0]
 
-    def get_data(self):
+    def __iter__(self):
         n = self.X.shape[0]
         idxs = np.arange(n)
         if self.shuffle:
