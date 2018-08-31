@@ -181,9 +181,10 @@ class HDF5Serializer():
                     buffer[k].append(el)
                 pbar.update()
 
-        with h5py.File(path, 'w') as hf, get_tqdm(total=size) as pbar:
+        with h5py.File(path, 'w') as hf, get_tqdm(total=len(data_paths)) as pbar:
             for data_path in data_paths:
                 hf.create_dataset(data_path, data=buffer[data_path])
+                pbar.update()
 
     @staticmethod
     def load(path, data_paths, shuffle=True):
