@@ -99,9 +99,11 @@ class NumpySerializer():
             path (str): output npz file.
         """
         buffer = []
-        df.reset_state()
-        for dp in get_tqdm(df):
-            buffer.append(dp)
+        size = _reset_df_and_get_size(df)
+        with get_tqdm(total=size) as pbar:
+            for dp in df:
+                buffer.append(dp)
+                pbar.update()
         np.savez_compressed(path, buffer=np.asarray(buffer, dtype=np.object))
 
     @staticmethod
@@ -131,10 +133,11 @@ class TFRecordSerializer():
             def _dumps(dp):
                 return dumps(dp).to_pybytes()
 
-        df.reset_state()
-        with tf.python_io.TFRecordWriter(path) as writer:
-            for dp in get_tqdm(df):
+        size = _reset_df_and_get_size(df)
+        with tf.python_io.TFRecordWriter(path) as writer, get_tqdm(total=size) as pbar:
+            for dp in df:
                 writer.write(_dumps(dp))
+                pbar.update()
 
     @staticmethod
     def load(path, size=None):
@@ -168,15 +171,17 @@ class HDF5Serializer():
                 length as each datapoint, and each path should correspond to one
                 component of the datapoint.
         """
-        df.reset_state()
+        size = _reset_df_and_get_size(df)
         buffer = defaultdict(list)
 
-        for dp in get_tqdm(df):
-            assert len(dp) == len(data_paths), "Datapoint has {} components!".format(len(dp))
-            for k, el in zip(data_paths, dp):
-                buffer[k].append(el)
+        with get_tqdm(total=size) as pbar:
+            for dp in df:
+                assert len(dp) == len(data_paths), "Datapoint has {} components!".format(len(dp))
+                for k, el in zip(data_paths, dp):
+                    buffer[k].append(el)
+                pbar.update()
 
-        with h5py.File(path, 'w') as hf:
+        with h5py.File(path, 'w') as hf, get_tqdm(total=size) as pbar:
             for data_path in data_paths:
                 hf.create_dataset(data_path, data=buffer[data_path])
 
