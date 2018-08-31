@@ -585,7 +585,7 @@ class StagingInput(FeedfreeInput):
         return cbs
 
     def _size(self):
-        return len(self._input)
+        return self._input.size()
 
     @contextmanager
     def _device_ctx(self):
