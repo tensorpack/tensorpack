@@ -24,7 +24,9 @@ class _COCOMeta(object):
         'val2014': 'val2014',
         'valminusminival2014': 'val2014',
         'minival2014': 'val2014',
-        'test2014': 'test2014'
+        'test2014': 'test2014',
+        'train2017': 'train2017',
+        'val2017': 'val2017',
     }
 
     def valid(self):

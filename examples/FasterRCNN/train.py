@@ -417,6 +417,8 @@ class EvalCallback(Callback):
             self.dataflows = [get_eval_dataflow(shard=k, num_shards=self.num_predictor)
                               for k in range(self.num_predictor)]
         else:
+            if hvd.size() > hvd.local_size():
+                logger.warn("Distributed evaluation with horovod is unstable. Sometimes MPI hangs for unknown reasons.")
             self.predictor = self._build_coco_predictor(0)
             self.dataflow = get_eval_dataflow(shard=hvd.rank(), num_shards=hvd.size())
 
@@ -495,7 +497,7 @@ if __name__ == '__main__':
 
     if get_tf_version_tuple() < (1, 6):
         # https://github.com/tensorflow/tensorflow/issues/14657
-        logger.warn("TF<1.6 has a bug which may lead to crash in FasterRCNN training if you're unlucky.")
+        logger.warn("TF<1.6 has a bug which may lead to crash in FasterRCNN if you're unlucky.")
 
     args = parser.parse_args()
     if args.config:
@@ -540,7 +542,7 @@ if __name__ == '__main__':
         init_lr = cfg.TRAIN.BASE_LR * 0.33 * min(8. / cfg.TRAIN.NUM_GPUS, 1.)
         warmup_schedule = [(0, init_lr), (cfg.TRAIN.WARMUP, cfg.TRAIN.BASE_LR)]
         warmup_end_epoch = cfg.TRAIN.WARMUP * 1. / stepnum
-        lr_schedule = [(int(np.ceil(warmup_end_epoch)), cfg.TRAIN.BASE_LR)]
+        lr_schedule = [(int(warmup_end_epoch + 0.5), cfg.TRAIN.BASE_LR)]
 
         factor = 8. / cfg.TRAIN.NUM_GPUS
         for idx, steps in enumerate(cfg.TRAIN.LR_SCHEDULE[:-1]):
@@ -549,6 +551,10 @@ if __name__ == '__main__':
                 (steps * factor // stepnum, cfg.TRAIN.BASE_LR * mult))
         logger.info("Warm Up Schedule (steps, value): " + str(warmup_schedule))
         logger.info("LR Schedule (epochs, value): " + str(lr_schedule))
+        train_dataflow = get_train_dataflow()
+        # This is what's commonly referred to as "epochs"
+        total_passes = cfg.TRAIN.LR_SCHEDULE[-1] * 8 / train_dataflow.size()
+        logger.info("Total passes of the training set is: {}".format(total_passes))
 
         callbacks = [
             PeriodicCallback(
@@ -573,7 +579,7 @@ if __name__ == '__main__':
 
         traincfg = TrainConfig(
             model=MODEL,
-            data=QueueInput(get_train_dataflow()),
+            data=QueueInput(train_dataflow),
             callbacks=callbacks,
             steps_per_epoch=stepnum,
             max_epoch=cfg.TRAIN.LR_SCHEDULE[-1] * factor // stepnum,

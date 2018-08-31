@@ -46,12 +46,13 @@ Model:
 
 Speed:
 
-1. The training will start very slow due to convolution warmup, until about 10k
-   steps to reach a maximum speed.
+1. The training will start very slowly due to convolution warmup, until about
+   10k steps (or more if scale augmentation is used) to reach a maximum speed.
+   As a result, the ETA is also inaccurate at the beginning.
    You can disable warmup by `export TF_CUDNN_USE_AUTOTUNE=0`, which makes the
    training faster at the beginning, but perhaps not in the end.
 
-1. After warmup the training speed will slowly decrease due to more accurate proposals.
+1. After warmup, the training speed will slowly decrease due to more accurate proposals.
 
 1. This implementation is about 10% slower than detectron,
    probably due to the lack of specialized ops (e.g. AffineChannel, ROIAlign) in TensorFlow.
@@ -62,7 +63,7 @@ Speed:
 
 Possible Future Enhancements:
 
-1. Define an interface to load custom dataset.
+1. Define a better interface to load custom dataset.
 
 1. Support batch>1 per GPU.
 

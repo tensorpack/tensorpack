@@ -2,7 +2,8 @@
 # Symbolic Layers
 
 Tensorpack contains a small collection of common model primitives,
-such as conv/deconv, fc, bn, pooling layers.
+such as conv/deconv, fc, bn, pooling layers. **You do not need to learn them.**
+
 These layers were written only because there were no alternatives when
 tensorpack was first developed.
 Nowadays, these implementation actually call `tf.layers` directly.

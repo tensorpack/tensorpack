@@ -39,5 +39,5 @@ Variables that appear in only one side will be printed as warning.
 
 ## Transfer Learning
 Therefore, transfer learning is trivial.
-If you want to load some model, just use the same variable names.
+If you want to load a pre-trained model, just use the same variable names.
 If you want to re-train some layer, just rename it.

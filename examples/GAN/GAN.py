@@ -170,7 +170,7 @@ class MultiGPUGANTrainer(TowerTrainer):
             list(range(num_gpu)),
             lambda: self.tower_func(*input.get_input_tensors()),
             devices)
-        # Simply average the cost here. It might be faster to average the gradients
+        # For simplicity, average the cost here. It might be faster to average the gradients
         with tf.name_scope('optimize'):
             d_loss = tf.add_n([x[0] for x in cost_list]) * (1.0 / num_gpu)
             g_loss = tf.add_n([x[1] for x in cost_list]) * (1.0 / num_gpu)

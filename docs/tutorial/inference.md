@@ -11,7 +11,7 @@ There are two ways to do inference during training.
 	See [Write a Callback](extend/callback.html).
 
 2. If your inference follows the paradigm of:
-	"fetch some tensors for each input, and aggregate the results".
+	"evaluate some tensors for each input, and aggregate the results in the end".
 	You can use the `InferenceRunner` interface with some `Inferencer**.
 	This will further support prefetch & data-parallel inference.
 	More details to come.
@@ -22,18 +22,19 @@ You can use this predicate to choose a different code path in inference mode.
 ## Inference After Training
 
 Tensorpack is a training interface -- __it doesn't care what happened after training__.
-You have everything needed for inference or model diagnosis after
+You have everything you need for inference or model diagnosis after
 training:
 1. The trained weights: tensorpack saves them in standard TF checkpoint format.
 2. The model: you've already written it yourself with TF symbolic functions.
 
-Therefore, you can build the graph for inference, load the checkpoint, and then use whatever deployment methods TensorFlow supports.
+Therefore, you can build the graph for inference, load the checkpoint, and apply
+any processing or deployment TensorFlow supports.
 And you'll need to read TF docs and __do it on your own__.
 
 ### Don't Use Training Metagraph for Inference
 
 Metagraph is the wrong abstraction for a "model". 
-It stores the entire graph which contains not only the model, but also all the
+It stores the entire graph which contains not only the mathematical model, but also all the
 training settings (queues, iterators, summaries, evaluations, multi-gpu replications).
 Therefore it is usually wrong to import a training metagraph for inference.
 

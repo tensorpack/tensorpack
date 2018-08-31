@@ -88,7 +88,9 @@ _C.BACKBONE.FREEZE_AT = 2  # options: 0, 1, 2
 # See https://github.com/tensorflow/tensorflow/issues/18213
 
 # In tensorpack model zoo, ResNet models with TF_PAD_MODE=False are marked with "-AlignPadding".
-# All other models under `ResNet/` in the model zoo are trained with TF_PAD_MODE=True.
+# All other models under `ResNet/` in the model zoo are using TF_PAD_MODE=True.
+# Using either one should probably give the same performance.
+# We use the "AlignPadding" one just to be consistent with caffe2.
 _C.BACKBONE.TF_PAD_MODE = False
 _C.BACKBONE.STRIDE_1X1 = False  # True for MSRA models
 
@@ -101,6 +103,7 @@ _C.TRAIN.STEPS_PER_EPOCH = 500
 
 # LR_SCHEDULE means "steps" only when total batch size is 8.
 # Otherwise the actual steps to decrease learning rate are computed from the schedule.
+# Therefore, there is *no need* to modify the config if you only change the number of GPUs.
 # LR_SCHEDULE = [120000, 160000, 180000]  # "1x" schedule in detectron
 _C.TRAIN.LR_SCHEDULE = [240000, 320000, 360000]    # "2x" schedule in detectron
 _C.TRAIN.NUM_EVALS = 20  # number of evaluations to run during training

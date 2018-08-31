@@ -14,7 +14,7 @@ that yields datapoints (lists) of two components:
 a numpy array of shape (64, 28, 28), and an array of shape (64,).
 
 As you saw,
-DataFlow is __independent__ of TensorFlow since it produces any python objects
+DataFlow is __independent of TensorFlow__ since it produces any python objects
 (usually numpy arrays).
 To `import tensorpack.dataflow`, you don't even have to install TensorFlow.
 You can simply use DataFlow as a data processing pipeline and plug it into any other frameworks.
@@ -24,7 +24,7 @@ You can simply use DataFlow as a data processing pipeline and plug it into any o
 One good thing about having a standard interface is to be able to provide
 the greatest code reusability.
 There are a lot of existing DataFlow utilities in tensorpack, which you can use to compose
-complex DataFlow with a long data pipeline. A common pipeline usually
+DataFlow with complex data pipeline. A common pipeline usually
 would __read from disk (or other sources), apply transformations, group into batches,
 prefetch data__, etc. A simple example is as the following:
 
@@ -38,13 +38,12 @@ df = BatchData(df, 128)
 # start 3 processes to run the dataflow in parallel
 df = PrefetchDataZMQ(df, 3)
 ````
-You can find more complicated DataFlow in the [ResNet training script](../examples/ResNet/imagenet_utils.py)
+You can find more complicated DataFlow in the [ImageNet training script](../examples/ImageNetModels/imagenet_utils.py)
 with all the data preprocessing.
 
 Unless you are working with standard data types (image folders, LMDB, etc),
 you would usually want to write the source DataFlow (`MyDataFlow` in the above example) for your data format.
-See [another tutorial](extend/dataflow.html)
-for simple instructions on writing a DataFlow.
+See [another tutorial](extend/dataflow.html) for simple instructions on writing a DataFlow.
 Once you have the source reader, all the [existing DataFlows](../modules/dataflow.html) are ready for you to complete
 the rest of the data pipeline.
 
@@ -62,7 +61,7 @@ Nevertheless, tensorpack supports data loading with native TF operators / TF dat
 
 ### Use DataFlow (outside Tensorpack)
 Normally, tensorpack `InputSource` interface links DataFlow to the graph for training.
-If you use DataFlow in some custom code, call `reset_state()` first to initialize it,
+If you use DataFlow in other places such as your custom code, call `reset_state()` first to initialize it,
 and then use the generator however you like:
 ```python
 df = SomeDataFlow()
