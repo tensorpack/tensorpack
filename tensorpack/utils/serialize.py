@@ -49,6 +49,8 @@ try:
     # So we need an option to disable it.
     if os.environ.get('TENSORPACK_SERIALIZE', 'pyarrow') == 'pyarrow':
         import pyarrow as pa
+    else:
+        pa = None
 except ImportError:
     pa = None
     dumps_pyarrow = create_dummy_func('dumps_pyarrow', ['pyarrow'])  # noqa
