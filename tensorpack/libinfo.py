@@ -37,11 +37,11 @@ os.environ['TF_SYNC_ON_FINISH'] = '0'   # will become default
 os.environ['TF_GPU_THREAD_MODE'] = 'gpu_private'
 os.environ['TF_GPU_THREAD_COUNT'] = '2'
 
-# Available in TF1.6+. Haven't seen different performance on R50.
-# NOTE TF set it to 0 by default, because:
+# Available in TF1.6+ & cudnn7. Haven't seen different performance on R50.
+# NOTE we disable it because:
 # this mode may use scaled atomic integer reduction that may cause a numerical
 # overflow for certain input data range.
-# os.environ['TF_USE_CUDNN_BATCHNORM_SPATIAL_PERSISTENT'] = '1'
+os.environ['TF_USE_CUDNN_BATCHNORM_SPATIAL_PERSISTENT'] = '0'
 
 try:
     import tensorflow as tf  # noqa

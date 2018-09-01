@@ -64,7 +64,7 @@ except ImportError:
     dumps_msgpack = create_dummy_func(  # noqa
         'dumps_msgpack', ['msgpack', 'msgpack_numpy'])
 
-if os.environ.get('TENSORPACK_SERIALIZE', None) == 'msgpack':
+if pa is None or os.environ.get('TENSORPACK_SERIALIZE', None) == 'msgpack':
     loads = loads_msgpack
     dumps = dumps_msgpack
 else:

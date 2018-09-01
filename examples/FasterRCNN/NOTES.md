@@ -46,11 +46,10 @@ Model:
 
 Speed:
 
-1. The training will start very slowly due to convolution warmup, until about
+1. If cudnn warmup is on, the training will start very slowly, until about
    10k steps (or more if scale augmentation is used) to reach a maximum speed.
    As a result, the ETA is also inaccurate at the beginning.
-   You can disable warmup by `export TF_CUDNN_USE_AUTOTUNE=0`, which makes the
-   training faster at the beginning, but perhaps not in the end.
+   Warmup is by default on when no scale augmentation is used.
 
 1. After warmup, the training speed will slowly decrease due to more accurate proposals.
 

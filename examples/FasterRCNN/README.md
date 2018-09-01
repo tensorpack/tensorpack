@@ -1,4 +1,4 @@
-# Faster-RCNN / Mask-RCNN on COCO
+# Faster R-CNN / Mask R-CNN on COCO
 This example provides a minimal (2k lines) and faithful implementation of the following papers:
 
 + [Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks](https://arxiv.org/abs/1506.01497)
@@ -73,7 +73,7 @@ prediction will need to be run with the corresponding training configs.
 
 These models are trained with different configurations on trainval35k and evaluated on minival using mAP@IoU=0.50:0.95.
 Performance in [Detectron](https://github.com/facebookresearch/Detectron/) can be roughly reproduced.
-MaskRCNN results contain both box and mask mAP.
+Mask R-CNN results contain both box and mask mAP.
 
  | Backbone | mAP<br/>(box;mask)                                                                                                            | Detectron mAP <sup>[1](#ft1)</sup><br/> (box;mask) | Time on 8 V100s | Configurations <br/> (click to expand)                                                                                                                                                                                                                 |
  | -        | -                                                                                                                             | -                                                  | -               | -                                                                                                                                                                                                                                                      |

@@ -24,7 +24,6 @@ from tensorpack import *
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.tfutils import optimizer
 from tensorpack.tfutils.common import get_tf_version_tuple
-from tensorpack.utils.serialize import loads, dumps
 import tensorpack.utils.viz as tpviz
 
 from coco import COCODetection
@@ -417,16 +416,14 @@ class EvalCallback(Callback):
             self.dataflows = [get_eval_dataflow(shard=k, num_shards=self.num_predictor)
                               for k in range(self.num_predictor)]
         else:
-            if hvd.size() > hvd.local_size():
-                logger.warn("Distributed evaluation with horovod is unstable. Sometimes MPI hangs for unknown reasons.")
-            self.predictor = self._build_coco_predictor(0)
-            self.dataflow = get_eval_dataflow(shard=hvd.rank(), num_shards=hvd.size())
+            # Only eval on the first machine.
+            # Alternatively, can eval on all ranks and use allgather, but allgather sometimes hangs
+            self._horovod_run_eval = hvd.rank() == hvd.local_rank()
+            if self._horovod_run_eval:
+                self.predictor = self._build_coco_predictor(0)
+                self.dataflow = get_eval_dataflow(shard=hvd.local_rank(), num_shards=hvd.local_size())
 
-            # use uint8 to aggregate strings
-            self.local_result_tensor = tf.placeholder(tf.uint8, shape=[None], name='local_result_string')
-            self.concat_results = hvd.allgather(self.local_result_tensor, name='concat_results')
-            local_size = tf.expand_dims(tf.size(self.local_result_tensor), 0)
-            self.string_lens = hvd.allgather(local_size, name='concat_sizes')
+            self.barrier = hvd.allreduce(tf.random_normal(shape=[1]))
 
     def _build_coco_predictor(self, idx):
         graph_func = self.trainer.get_predictor(self._in_names, self._out_names, device=idx)
@@ -443,6 +440,7 @@ class EvalCallback(Callback):
             logger.info("[EvalCallback] Will evaluate every {} epochs".format(interval))
 
     def _eval(self):
+        logdir = args.logdir
         if cfg.TRAINER == 'replicated':
             with ThreadPoolExecutor(max_workers=self.num_predictor, thread_name_prefix='EvalWorker') as executor, \
                     tqdm.tqdm(total=sum([df.size() for df in self.dataflows])) as pbar:
@@ -451,23 +449,26 @@ class EvalCallback(Callback):
                     futures.append(executor.submit(eval_coco, dataflow, pred, pbar))
                 all_results = list(itertools.chain(*[fut.result() for fut in futures]))
         else:
-            local_results = eval_coco(self.dataflow, self.predictor)
-            results_as_arr = np.frombuffer(dumps(local_results), dtype=np.uint8)
-            sizes, concat_arrs = tf.get_default_session().run(
-                [self.string_lens, self.concat_results],
-                feed_dict={self.local_result_tensor: results_as_arr})
+            if self._horovod_run_eval:
+                local_results = eval_coco(self.dataflow, self.predictor)
+                output_partial = os.path.join(
+                    logdir, 'outputs{}-part{}.json'.format(self.global_step, hvd.local_rank()))
+                with open(output_partial, 'w') as f:
+                    json.dump(local_results, f)
+            self.barrier.eval()
             if hvd.rank() > 0:
                 return
             all_results = []
-            start = 0
-            for size in sizes:
-                substr = concat_arrs[start: start + size]
-                results = loads(substr.tobytes())
-                all_results.extend(results)
-                start = start + size
+            for k in range(hvd.local_size()):
+                output_partial = os.path.join(
+                    logdir, 'outputs{}-part{}.json'.format(self.global_step, k))
+                with open(output_partial, 'r') as f:
+                    obj = json.load(f)
+                all_results.extend(obj)
+                os.unlink(output_partial)
 
         output_file = os.path.join(
-            logger.get_logger_dir(), 'outputs{}.json'.format(self.global_step))
+            logdir, 'outputs{}.json'.format(self.global_step))
         with open(output_file, 'w') as f:
             json.dump(all_results, f)
         try:
@@ -572,10 +573,13 @@ if __name__ == '__main__':
         if not is_horovod:
             callbacks.append(GPUUtilizationTracker())
 
-        if args.load:
-            session_init = get_model_loader(args.load)
+        if is_horovod and hvd.rank() > 0:
+            session_init = None
         else:
-            session_init = get_model_loader(cfg.BACKBONE.WEIGHTS) if cfg.BACKBONE.WEIGHTS else None
+            if args.load:
+                session_init = get_model_loader(args.load)
+            else:
+                session_init = get_model_loader(cfg.BACKBONE.WEIGHTS) if cfg.BACKBONE.WEIGHTS else None
 
         traincfg = TrainConfig(
             model=MODEL,

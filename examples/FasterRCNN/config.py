@@ -215,6 +215,10 @@ def finalize_configs(is_training):
             assert len(_C.CASCADE.BBOX_REG_WEIGHTS) == num_cascade
 
     if is_training:
+        train_scales = _C.PREPROC.TRAIN_SHORT_EDGE_SIZE
+        if train_scales[1] - train_scales[0] > 100:
+            # don't warmup if augmentation is on
+            os.environ['TF_CUDNN_USE_AUTOTUNE'] = '0'
         os.environ['TF_AUTOTUNE_THRESHOLD'] = '1'
         assert _C.TRAINER in ['horovod', 'replicated'], _C.TRAINER
 
