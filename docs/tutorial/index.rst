@@ -22,6 +22,7 @@ User Tutorials
   save-load
   summary
   inference
+  export
   faq
 
 
