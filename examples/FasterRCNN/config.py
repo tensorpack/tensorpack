@@ -114,7 +114,7 @@ _C.TRAIN.STEPS_PER_EPOCH = 500
 # Therefore, there is *no need* to modify the config if you only change the number of GPUs.
 # LR_SCHEDULE = [120000, 160000, 180000]  # "1x" schedule in detectron
 _C.TRAIN.LR_SCHEDULE = [240000, 320000, 360000]    # "2x" schedule in detectron
-_C.TRAIN.NUM_EVALS = 20  # number of evaluations to run during training
+_C.TRAIN.EVAL_PERIOD = 25  # period (epochs) to run eva
 
 # preprocessing --------------------
 # Alternative old (worse & faster) setting: 600, 1024

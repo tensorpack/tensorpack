@@ -430,14 +430,14 @@ class EvalCallback(Callback):
         return lambda img: detect_one_image(img, graph_func)
 
     def _before_train(self):
-        num_eval = cfg.TRAIN.NUM_EVALS
-        interval = max(self.trainer.max_epoch // (num_eval + 1), 1)
-        self.epochs_to_eval = set([interval * k for k in range(1, num_eval + 1)])
+        eval_period = cfg.TRAIN.EVAL_PERIOD
+        self.epochs_to_eval = set()
+        for k in itertools.count(1):
+            if k * eval_period > self.trainer.max_epoch:
+                break
+            self.epochs_to_eval.add(k * eval_period)
         self.epochs_to_eval.add(self.trainer.max_epoch)
-        if len(self.epochs_to_eval) < 15:
-            logger.info("[EvalCallback] Will evaluate at epoch " + str(sorted(self.epochs_to_eval)))
-        else:
-            logger.info("[EvalCallback] Will evaluate every {} epochs".format(interval))
+        logger.info("[EvalCallback] Will evaluate every {} epochs".format(eval_period))
 
     def _eval(self):
         logdir = args.logdir
