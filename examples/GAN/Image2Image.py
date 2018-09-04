@@ -217,8 +217,14 @@ if __name__ == '__main__':
         logger.auto_set_dir()
 
         data = QueueInput(get_data())
+        
+        nr_tower = max(get_num_gpu(), 1)
+        if nr_tower == 1:
+            trainer = GANTrainer(data, Model())
+        else:
+            trainer = MultiGPUGANTrainer(nr_tower, data, Model())
 
-        GANTrainer(data, Model()).train_with_defaults(
+        trainer.train_with_defaults(
             callbacks=[
                 PeriodicTrigger(ModelSaver(), every_k_epochs=3),
                 ScheduledHyperParamSetter('learning_rate', [(200, 1e-4)])
