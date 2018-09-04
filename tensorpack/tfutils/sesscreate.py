@@ -34,7 +34,7 @@ class NewSessionCreator(tf.train.ChiefSessionCreator):
         else:
             self.user_provided_config = True
             logger.warn(
-                "Some options in custom session config may not work due to TF \
+                "User-provided custom session config may not work due to TF \
 bugs. See https://github.com/tensorpack/tensorpack/issues/497 for workarounds.")
 
         self.config = config

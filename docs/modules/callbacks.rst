@@ -1,7 +1,7 @@
 tensorpack.callbacks package
 ============================
 
-__Everything__ other than the training iterations happen in the callbacks.
+**Everything** other than the training iterations happen in the callbacks.
 Most of the fancy things you want to do will probably end up here.
 See relevant tutorials: :doc:`../tutorial/callback`.
 

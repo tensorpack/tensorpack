@@ -15,6 +15,8 @@ import six
 
 from . import logger
 
+__all__ = []
+
 
 def create_dummy_class(klass, dependency):
     """

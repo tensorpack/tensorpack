@@ -126,3 +126,8 @@ You can overwrite any of the following methods to define a new callback:
   or [EnableCallbackIf](../../modules/callbacks.html#tensorpack.callbacks.EnableCallbackIf).
 	Of course you also have the freedom to implement "what to do" and "when to do" altogether.
 
+
+### Examples
+
+Check source code of the [existing tensorpack callbacks](../../modules/callbacks.html). 
+Or grep 'Callback' in tensorpack examples for those implemented as extensions.

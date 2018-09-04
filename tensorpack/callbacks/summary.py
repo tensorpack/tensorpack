@@ -114,9 +114,6 @@ def MergeAllSummaries(period=0, run_alone=False, key=tf.GraphKeys.SUMMARIES):
             depend on inputs.
         key (str): the collection of summary tensors. Same as in `tf.summary.merge_all`.
             Default is ``tf.GraphKeys.SUMMARIES``
-
-    Returns:
-        a Callback.
     """
     period = int(period)
     if run_alone:

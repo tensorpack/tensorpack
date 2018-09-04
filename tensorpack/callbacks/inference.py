@@ -117,7 +117,7 @@ class ScalarStats(Inferencer):
 
 class ClassificationError(Inferencer):
     """
-    Compute __true__ classification error in batch mode, from a ``wrong`` tensor.
+    Compute **true** classification error in batch mode, from a ``wrong`` tensor.
 
     The ``wrong`` tensor is supposed to be an binary vector containing
     whether each sample in the batch is *incorrectly* classified.

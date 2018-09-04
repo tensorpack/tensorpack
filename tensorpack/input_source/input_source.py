@@ -623,7 +623,9 @@ class StagingInput(FeedfreeInput):
 
                 # TODO tensorflow/benchmarks use static shapes here,
                 # though it doesn't seem to help. We can use it when it's known.
-                stage = StagingArea(dtypes, shapes=None)
+                # Setting capacity to 1 to potentially save some memory, because we should
+                # expect the consumers to run slower than the producer.
+                stage = StagingArea(dtypes, shapes=None, capacity=1)
 
             # put & get automatically inherit the name scope from the area
             self._stage_ops.append(stage.put(inputs))

@@ -22,6 +22,11 @@ class AttrDict():
         setattr(self, name, ret)
         return ret
 
+    def __setattr__(self, name, value):
+        if self._freezed and name not in self.__dict__:
+            raise AttributeError("Cannot create new attribute!")
+        super().__setattr__(name, value)
+
     def __str__(self):
         return pprint.pformat(self.to_dict(), indent=1)
 
@@ -51,6 +56,9 @@ class AttrDict():
 
     def freeze(self):
         self._freezed = True
+        for v in self.__dict__.values():
+            if isinstance(v, AttrDict):
+                v.freeze()
 
     # avoid silent bugs
     def __eq__(self, _):
@@ -229,6 +237,7 @@ def finalize_configs(is_training):
         else:
             assert 'OMPI_COMM_WORLD_SIZE' not in os.environ
             ngpu = get_num_gpu()
+        assert ngpu > 0, "Has to run with GPU!"
         assert ngpu % 8 == 0 or 8 % ngpu == 0, ngpu
         if _C.TRAIN.NUM_GPUS is None:
             _C.TRAIN.NUM_GPUS = ngpu

@@ -16,6 +16,7 @@ import re
 import tensorflow as tf
 from ..utils import logger
 from ..tfutils.summary import create_scalar_summary, create_image_summary
+from ..utils.develop import HIDE_DOC
 from .base import Callback
 
 __all__ = ['TrainingMonitor', 'Monitors',
@@ -242,9 +243,11 @@ class TFEventWriter(TrainingMonitor):
             self._logdir, graph=tf.get_default_graph(),
             max_queue=self._max_queue, flush_secs=self._flush_secs)
 
+    @HIDE_DOC
     def process_summary(self, summary):
         self._writer.add_summary(summary, self.global_step)
 
+    @HIDE_DOC
     def process_event(self, evt):
         self._writer.add_event(evt)
 
@@ -345,6 +348,7 @@ class JSONWriter(TrainingMonitor):
     def _trigger_epoch(self):
         self._trigger()
 
+    @HIDE_DOC
     def process_scalar(self, name, val):
         self._stat_now[name] = val
 
@@ -417,6 +421,7 @@ class ScalarPrinter(TrainingMonitor):
         if self._enable_epoch:
             self._trigger()
 
+    @HIDE_DOC
     def process_scalar(self, name, val):
         self._dic[name] = float(val)
 
@@ -444,6 +449,7 @@ class ScalarHistory(TrainingMonitor):
     def __init__(self):
         self._dic = defaultdict(list)
 
+    @HIDE_DOC
     def process_scalar(self, name, val):
         self._dic[name].append(float(val))
 
@@ -488,6 +494,7 @@ class SendMonitorData(TrainingMonitor):
         self.names = names
         self.dic = {}
 
+    @HIDE_DOC
     def process_scalar(self, name, val):
         if name in self.names:
             self.dic[name] = val

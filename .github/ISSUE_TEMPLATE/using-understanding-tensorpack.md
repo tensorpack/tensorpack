@@ -4,6 +4,9 @@ about: More general questions about Tensorpack.
 
 ---
 
++ If you did something specific and it failed, please use the "Unexpected Problems /
+  Bugs" category.
+
 + Your question is probably answered in [tutorials](http://tensorpack.readthedocs.io/en/latest/tutorial/index.html#user-tutorials). Read it first.
 
 + We answer "HOW to do X with Tensorpack" for a well-defined X.
