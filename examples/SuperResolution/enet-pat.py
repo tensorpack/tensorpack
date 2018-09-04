@@ -298,6 +298,6 @@ if __name__ == '__main__':
                 ModelSaver(keep_checkpoint_every_n_hours=2)
             ],
             session_init=session_init,
-            steps_per_epoch=len(data) // 4,
+            steps_per_epoch=data.size() // 4,
             max_epoch=300
         )

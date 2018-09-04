@@ -223,6 +223,6 @@ if __name__ == '__main__':
             PeriodicTrigger(VisualizeTestSet(), every_k_epochs=3),
         ],
         max_epoch=195,
-        steps_per_epoch=len(data),
+        steps_per_epoch=data.size(),
         session_init=SaverRestore(args.load) if args.load else None
     )
