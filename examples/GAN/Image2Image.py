@@ -12,6 +12,7 @@ import argparse
 
 
 from tensorpack import *
+from tensorpack.utils.gpu import get_num_gpu
 from tensorpack.utils.viz import stack_patches
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
