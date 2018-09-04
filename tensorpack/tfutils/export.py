@@ -14,12 +14,58 @@ from ..input_source import PlaceholderInput
 from ..tfutils.common import get_tensors_by_names
 from ..tfutils.tower import PredictTowerContext
 from ..input_source import PlaceholderInput
+from tensorflow.python.framework import graph_util
+from tensorflow.python.platform import gfile
+from tensorflow.python.tools import optimize_for_inference_lib
 
-__all__ = ['ServingExporter']
+__all__ = ['ServingExporter', 'MobileExporter']
+
+
+class MobileExporter(object):
+    """docstring for MobileExporter"""
+
+    def __init__(self, config):
+        self.config = config
+
+    def export(self, export_graph, dtype=tf.float32):
+        self.graph = self.config._maybe_create_graph()
+        with self.graph.as_default():
+            input = PlaceholderInput()
+            input.setup(self.config.inputs_desc)
+            with PredictTowerContext(''):
+                self.config.tower_func(*input.get_input_tensors())
+
+            input_tensors = get_tensors_by_names(self.config.input_names)
+            output_tensors = get_tensors_by_names(self.config.output_names)
+
+            self.config.session_init._setup_graph()
+            # we cannot use "self.config.session_creator.create_session()" here since it finalizes the graph
+            sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
+            self.config.session_init._run_init(sess)
+
+            # freeze variables to constants
+            frozen_graph_def = graph_util.convert_variables_to_constants(
+                sess,
+                self.graph.as_graph_def(),
+                [n.name[:-2] for n in output_tensors],
+                variable_names_whitelist=[],
+                variable_names_blacklist=[])
+
+            # prune unused nodes from graph
+            mobile_graph_def = optimize_for_inference_lib.optimize_for_inference(
+                frozen_graph_def,
+                [n.name[:-2] for n in input_tensors],
+                [n.name[:-2] for n in output_tensors],
+                dtype.as_datatype_enum,
+                False)
+
+            with gfile.FastGFile(export_graph, "wb") as f:
+                f.write(mobile_graph_def.SerializeToString())
 
 
 class ServingExporter(object):
     """Wrapper for tf.saved_model"""
+
     def __init__(self, config):
         """Initialise the export process.
 

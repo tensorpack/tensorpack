@@ -5,13 +5,18 @@ import argparse
 import cv2
 import tensorflow as tf
 from tensorpack import *
-from tensorpack.tfutils.export import ServingExporter
+from tensorpack.tfutils.export import ServingExporter, MobileExporter
 
 """
 This example illustrates the process of exporting a model trained in Tensorpack to:
 - npz containing just the weights
 - TensorFlow Serving
 - TensorFlow Lite (TODO)
+
+
+python3 export.py --export npz --load train_log/export/checkpoint
+python3 export.py --export serving --load train_log/export/checkpoint
+python3 export.py --export mobile --load train_log/export/checkpoint
 """
 
 
@@ -128,47 +133,74 @@ def export_serving(model_path):
     ServingExporter(pred_config).export('/tmp/exported')
 
 
-def export_lite():
-    pass
+def export_mobile(model_path):
+    # pred_config = PredictConfig(
+    #     session_init=get_model_loader(model_path),
+    #     model=InferenceOnlyModel(),
+    #     input_names=['input_img_bytes'],
+    #     output_names=['prediction_img_bytes'])
+    pred_config = PredictConfig(
+        session_init=get_model_loader(model_path),
+        model=Model(),
+        input_names=['input_img'],
+        output_names=['prediction_img'])
+    MobileExporter(pred_config).export('/tmp/mobile_graph.pb', dtype=tf.uint8)
 
 
-def apply(model_path, use_inference_graph=False):
-    if use_inference_graph:
-        pred_config = PredictConfig(
-            session_init=get_model_loader(model_path),
-            model=InferenceOnlyModel(),
-            input_names=['input_img_bytes'],
-            output_names=['prediction_img_bytes'])
+def apply(model_path):
+    pred_config = PredictConfig(
+        session_init=get_model_loader(model_path),
+        model=Model(),
+        input_names=['input_img'],
+        output_names=['prediction_img'])
 
-        pred = OfflinePredictor(pred_config)
+    pred = OfflinePredictor(pred_config)
 
-        with open('lena.png', 'rb') as f:
-            buf = f.read()
+    img = cv2.imread('lena.png')
 
-        prediction = pred([buf])[0]
+    prediction = pred([img])[0]
+    cv2.imwrite('applied.jpg', prediction[0])
 
-        with open('applied_serving.png', 'wb') as f:
-            f.write(prediction[0])
-    else:
-        pred_config = PredictConfig(
-            session_init=get_model_loader(model_path),
-            model=Model(),
-            input_names=['input_img'],
-            output_names=['prediction_img'])
 
-        pred = OfflinePredictor(pred_config)
+def apply_inference_graph(model_path):
+    pred_config = PredictConfig(
+        session_init=get_model_loader(model_path),
+        model=InferenceOnlyModel(),
+        input_names=['input_img_bytes'],
+        output_names=['prediction_img_bytes'])
 
-        img = cv2.imread('lena.png')
+    pred = OfflinePredictor(pred_config)
 
-        prediction = pred([img])[0]
-        cv2.imwrite('applied.jpg', prediction[0])
+    with open('lena.png', 'rb') as f:
+        buf = f.read()
+
+    prediction = pred([buf])[0]
+
+    with open('applied_serving.png', 'wb') as f:
+        f.write(prediction[0])
+
+
+def apply_mobile(graph_path):
+    print("apply_mobile")
+    def load_graph(fn):
+        with tf.gfile.GFile(fn, "rb") as f:
+            graph_def = tf.GraphDef()
+            graph_def.ParseFromString(f.read())
+            _ = tf.import_graph_def(graph_def)
+
+    with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
+        load_graph(graph_path)
+
+        input_img = sess.graph.get_tensor_by_name('import/input_img:0')
+        prediction_img = sess.graph.get_tensor_by_name('import/prediction_img:0')
+
+        prediction = sess.run(prediction_img, {input_img: cv2.imread('lena.png')[None, ...]})
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
     parser.add_argument('--load', help='load model')
-    parser.add_argument('--apply', action='store_true', help='run sampling')
-    parser.add_argument('--apply_inference', action='store_true', help='run sampling')
+    parser.add_argument('--apply', help='run sampling', default='')
     parser.add_argument('--export', help='export the model', default='')
 
     args = parser.parse_args()
@@ -176,18 +208,22 @@ if __name__ == '__main__':
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
-    if args.apply:
-        apply(args.load, False)
-    elif args.apply_inference:
-        apply(args.load, True)
+    if args.apply != '':
+        assert args.apply in ['normal', 'inference_graph', 'mobile']
+        if args.apply == 'normal':
+            apply(args.load)
+        elif args.apply == 'serving':
+            apply_inference_graph(args.load)
+        else:
+            apply_mobile(args.load)
     elif args.export != '':
-        assert args.export in ['serving', 'lite', 'npz']
+        assert args.export in ['serving', 'mobile', 'npz']
         if args.export == 'npz':
             export_npz()
         elif args.export == 'serving':
             export_serving(args.load)
         else:
-            print("todo")
+            export_mobile(args.load)
     else:
         config = get_config()
 
