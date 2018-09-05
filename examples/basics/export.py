@@ -92,7 +92,6 @@ def get_config():
     logger.auto_set_dir()
 
     ds_train = get_data('train')
-    ds_test = get_data('test')
 
     return TrainConfig(
         model=Model(),
@@ -210,7 +209,7 @@ def apply_mobile(graph_path):
         with tf.gfile.GFile(graph_path, "rb") as f:
             graph_def = tf.GraphDef()
             graph_def.ParseFromString(f.read())
-            _ = tf.import_graph_def(graph_def)
+            tf.import_graph_def(graph_def)
 
         input_img = sess.graph.get_tensor_by_name('import/input_img:0')
         prediction_img = sess.graph.get_tensor_by_name('import/prediction_img:0')
