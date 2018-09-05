@@ -1,15 +1,13 @@
 # -*- coding: utf-8 -*-
 # File: export.py
-# Author: Patrick Wieschollek <mail@patwie.com>
 
 """
-This simplifies the process of exporting a model for TensorFlow serving.
+A collection of functions to ease the process of exporting
+a model for production.
 
 """
 
 import tensorflow as tf
-from ..input_source import PlaceholderInput
-
 
 from ..tfutils.common import get_tensors_by_names
 from ..tfutils.tower import PredictTowerContext
@@ -22,12 +20,19 @@ __all__ = ['ServingExporter', 'MobileExporter']
 
 
 class MobileExporter(object):
-    """docstring for MobileExporter"""
+    """Convert a checkpoint to a frozen and pruned graph."""
 
     def __init__(self, config):
         self.config = config
 
-    def export(self, export_graph, dtype=tf.float32):
+    def export(self, export_graph_file, dtype=tf.float32):
+        """Apply all graph modifications and write final graph to disk.
+
+        Args:
+            export_graph_file (str): path to final local of the graph
+            dtype (TYPE, optional): The placeholder data type, or
+                a list that specifies one value per input node name.
+        """
         self.graph = self.config._maybe_create_graph()
         with self.graph.as_default():
             input = PlaceholderInput()
@@ -48,8 +53,8 @@ class MobileExporter(object):
                 sess,
                 self.graph.as_graph_def(),
                 [n.name[:-2] for n in output_tensors],
-                variable_names_whitelist=[],
-                variable_names_blacklist=[])
+                variable_names_whitelist=None,
+                variable_names_blacklist=None)
 
             # prune unused nodes from graph
             mobile_graph_def = optimize_for_inference_lib.optimize_for_inference(
@@ -59,12 +64,12 @@ class MobileExporter(object):
                 dtype.as_datatype_enum,
                 False)
 
-            with gfile.FastGFile(export_graph, "wb") as f:
+            with gfile.FastGFile(export_graph_file, "wb") as f:
                 f.write(mobile_graph_def.SerializeToString())
 
 
 class ServingExporter(object):
-    """Wrapper for tf.saved_model"""
+    """Converts and checkpoint to a servable for TensorFlow Serving"""
 
     def __init__(self, config):
         """Initialise the export process.
