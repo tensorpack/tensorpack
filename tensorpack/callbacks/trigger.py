@@ -38,11 +38,11 @@ class PeriodicTrigger(ProxyCallback):
                 "Arguments to PeriodicTrigger have disabled the triggerable!"
         self._step_k = every_k_steps
         self._epoch_k = every_k_epochs
-        self._before_train = before_train
+        self._do_before_train = before_train
 
     def _before_train(self):
         self.cb.before_train()
-        if self._before_train:
+        if self._do_before_train:
             self.cb.trigger()
 
     def _trigger_step(self):

@@ -306,7 +306,7 @@ class JSONWriter(TrainingMonitor):
         except Exception:
             return None
 
-    def _before_train(self):
+    def _setup_graph(self):
         stats = JSONWriter.load_existing_json()
         self._fname = os.path.join(logger.get_logger_dir(), JSONWriter.FILENAME)
         if stats is not None:
@@ -339,6 +339,10 @@ class JSONWriter(TrainingMonitor):
         self._stat_now = {}
 
         self._last_gs = -1
+
+    # in case we have something to log here.
+    def _before_train(self):
+        self._trigger()
 
     def _trigger_step(self):
         # will do this in trigger_epoch
@@ -406,6 +410,10 @@ class ScalarPrinter(TrainingMonitor):
         self._enable_step = enable_step
         self._enable_epoch = enable_epoch
         self._dic = {}
+
+    # in case we have something to log here.
+    def _before_train(self):
+        self._trigger()
 
     def _trigger_step(self):
         if self._enable_step:
