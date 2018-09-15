@@ -79,7 +79,7 @@ Note some __common problems__ when using these trainers:
 
 1. In each iteration, instead of taking one tensor for all GPUs and split,
     all GPUs take tensors from the `InputSource`.
-	So the total batch size would become ``(batch size of InputSource) * #GPU``.
+	So the total batch size across all GPUs would become ``(batch size of InputSource) * #GPU``.
 
 	Splitting a tensor for data-parallel training makes no sense at all. First,
 	it wastes time because typically data is concatenated into batches by the user.

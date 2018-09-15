@@ -252,12 +252,19 @@ class FixedSizeData(ProxyDataFlow):
 
 class MapData(ProxyDataFlow):
     """
-    Apply a mapper/filter on the DataFlow.
+    Apply a mapper/filter on the datapoints of a DataFlow.
 
     Note:
-        1. Please make sure func doesn't modify the components
+        1. Please make sure func doesn't modify its arguments in place,
            unless you're certain it's safe.
         2. If you discard some datapoints, ``len(ds)`` will be incorrect.
+
+    Example:
+
+        .. code-block:: none
+
+            ds = Mnist('train)
+            ds = MapData(ds, lambda dp: [dp[0] * 255, dp[1]])
     """
 
     def __init__(self, ds, func):
@@ -283,9 +290,16 @@ class MapDataComponent(MapData):
 
     Note:
         1. This dataflow itself doesn't modify the datapoints.
-           But please make sure func doesn't modify the components
+           But please make sure func doesn't modify its arguments in place,
            unless you're certain it's safe.
         2. If you discard some datapoints, ``len(ds)`` will be incorrect.
+
+    Example:
+
+        .. code-block:: none
+
+            ds = Mnist('train)
+            ds = MapDataComponent(ds, lambda img: img * 255, 0)
     """
     def __init__(self, ds, func, index=0):
         """
@@ -556,10 +570,10 @@ class LocallyShuffleData(ProxyDataFlow, RNGDataFlow):
         Args:
             ds (DataFlow): input DataFlow.
             buffer_size (int): size of the buffer.
-            nr_reuse (int): reuse each datapoints several times to improve
+            nr_reuse (int): duplicate each datapoints several times into the buffer to improve
                 speed, but may hurt your model.
             shuffle_interval (int): shuffle the buffer after this many
-                datapoints went through it. Frequent shuffle on large buffer
+                datapoints were produced from the given dataflow. Frequent shuffle on large buffer
                 may affect speed, but infrequent shuffle may affect
                 randomness. Defaults to buffer_size / 3
         """
@@ -574,32 +588,23 @@ class LocallyShuffleData(ProxyDataFlow, RNGDataFlow):
     def reset_state(self):
         ProxyDataFlow.reset_state(self)
         RNGDataFlow.reset_state(self)
-        self.ds_itr = RepeatedData(self.ds, -1).__iter__()
         self.current_cnt = 0
 
-    def _add_data(self):
-        dp = next(self.ds_itr)
-        for _ in range(self.nr_reuse):
-            self.q.append(dp)
+    def __len__(self):
+        return len(self.ds) * self.nr_reuse
 
     def __iter__(self):
         with self._guard:
-            # fill queue
-            while self.q.maxlen > len(self.q):
-                self._add_data()
-
-            sz = self.__len__()
-            cnt = 0
-            while True:
-                self.rng.shuffle(self.q)
-                for _ in range(self.shuffle_interval):
-                    # the inner loop maintains the queue size (almost) unchanged
-                    for _ in range(self.nr_reuse):
-                        yield self.q.popleft()
-                    cnt += self.nr_reuse
-                    if cnt >= sz:
-                        return
-                    self._add_data()
+            for i, dp in enumerate(self.ds):
+                # fill queue
+                if i % self.shuffle_interval == 0:
+                    self.rng.shuffle(self.q)
+                if self.q.maxlen > len(self.q):
+                    self.q.extend([dp] * self.nr_reuse)
+                    continue
+                for _ in range(self.nr_reuse):
+                    yield self.q.popleft()
+                    self.q.append(dp)
 
 
 class CacheData(ProxyDataFlow):

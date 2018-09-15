@@ -5,7 +5,8 @@
 
 DataFlow is a library to build Python iterators for efficient data loading.
 
-**Definition**: A DataFlow is a idiomatic Python container object that has a `__iter__()` generator method, which yields `datapoints` and a `__len__()` method returning the size of the flow.
+**Definition**: A DataFlow is a idiomatic Python container object that has a `__iter__()` generator method, 
+which yields `datapoints` and optionally a `__len__()` method returning the size of the flow.
 A datapoint is a **list** of Python objects which are called the `components` of a datapoint.
 
 **Example**: to train on MNIST dataset, you may need a DataFlow with a `__iter__()` method
@@ -40,6 +41,7 @@ df = PrefetchDataZMQ(df, 3)
 You can find more complicated DataFlow in the [ImageNet training script](../examples/ImageNetModels/imagenet_utils.py)
 with all the data preprocessing.
 
+### Work with Your Data
 Unless you are working with standard data types (image folders, LMDB, etc),
 you would usually want to write the source DataFlow (`MyDataFlow` in the above example) for your data format.
 See [another tutorial](extend/dataflow.html) for simple instructions on writing a DataFlow.
@@ -58,7 +60,7 @@ the rest of the data pipeline.
 
 Nevertheless, tensorpack supports data loading with native TF operators / TF datasets as well.
 
-### Use DataFlow (outside Tensorpack)
+### Use DataFlow outside Tensorpack
 Normally, tensorpack `InputSource` interface links DataFlow to the graph for training.
 If you use DataFlow in other places such as your custom code, call `reset_state()` first to initialize it,
 and then use the generator however you like:
