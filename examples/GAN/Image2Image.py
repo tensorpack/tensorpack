@@ -204,7 +204,6 @@ if __name__ == '__main__':
     parser.add_argument('--data', help='Image directory', required=True)
     parser.add_argument('--mode', choices=['AtoB', 'BtoA'], default='AtoB')
     parser.add_argument('-b', '--batch', type=int, default=1)
-    global args
     args = parser.parse_args()
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu

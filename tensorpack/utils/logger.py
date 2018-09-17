@@ -53,8 +53,7 @@ def _get_time_str():
     return datetime.now().strftime('%m%d-%H%M%S')
 
 
-# logger file and directory:
-global LOG_DIR, _FILE_HANDLER
+# globals: logger file and directory:
 LOG_DIR = None
 _FILE_HANDLER = None
 

@@ -49,7 +49,7 @@ class TestDataSpeed(ProxyDataFlow):
         self.ds.reset_state()
         itr = self.ds.__iter__()
         if self.warmup:
-            for d in tqdm.trange(self.warmup, **get_tqdm_kwargs()):
+            for _ in tqdm.trange(self.warmup, **get_tqdm_kwargs()):
                 next(itr)
         # add smoothing for speed benchmark
         with get_tqdm(total=self.test_size,

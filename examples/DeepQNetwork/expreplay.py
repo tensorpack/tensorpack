@@ -289,7 +289,6 @@ if __name__ == '__main__':
                   history_len=4)
     E._init_memory()
 
-    for k in E.get_data():
+    for _ in E.get_data():
         import IPython as IP
         IP.embed(config=IP.terminal.ipapp.load_default_config())
-        pass
