@@ -135,7 +135,7 @@ class ExpReplay(DataFlow, Callback):
         Args:
             predictor_io_names (tuple of list of str): input/output names to
                 predict Q value from state.
-            player (RLEnvironment): the player.
+            player (gym.Env): the player.
             state_shape (tuple): h, w, c
             history_len (int): length of history frames to concat. Zero-filled
                 initial frames.
