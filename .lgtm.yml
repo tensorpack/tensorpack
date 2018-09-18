@@ -1,0 +1,6 @@
+extraction:
+  python:
+    prepare:
+      packages:
+        - libcap-dev
+
