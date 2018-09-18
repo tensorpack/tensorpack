@@ -65,6 +65,11 @@ script:
 - cd $TRAVIS_BUILD_DIR  # go back to root so that deploy may work
 
 notifications:
+  email:
+    recipients:
+      - ppwwyyxxc@gmail.com
+    on_success: never
+    on_failure: always
   webhooks:
     urls:
       - https://webhooks.gitter.im/e/cede9dbbf6630b3704b3
