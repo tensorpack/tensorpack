@@ -149,13 +149,14 @@ class MultiProcessPrefetchData(ProxyDataFlow):
     """
 
     class _Worker(mp.Process):
-        def __init__(self, ds, queue):
+        def __init__(self, ds, queue, idx):
             super(MultiProcessPrefetchData._Worker, self).__init__()
             self.ds = ds
             self.queue = queue
+            self.idx = idx
 
         def run(self):
-            enable_death_signal()
+            enable_death_signal(_warn=self.idx == 0)
             # reset all ds so each process will produce different data
             self.ds.reset_state()
             while True:
@@ -186,8 +187,8 @@ lead of failure on some of the code.")
                         "This assumes the datapoints are i.i.d.")
 
         self.queue = mp.Queue(self.nr_prefetch)
-        self.procs = [MultiProcessPrefetchData._Worker(self.ds, self.queue)
-                      for _ in range(self.nr_proc)]
+        self.procs = [MultiProcessPrefetchData._Worker(self.ds, self.queue, idx)
+                      for idx in range(self.nr_proc)]
         ensure_proc_terminate(self.procs)
         start_proc_mask_signal(self.procs)
 
@@ -249,14 +250,15 @@ class PrefetchDataZMQ(_MultiProcessZMQDataFlow):
     """
 
     class _Worker(mp.Process):
-        def __init__(self, ds, conn_name, hwm):
+        def __init__(self, ds, conn_name, hwm, idx):
             super(PrefetchDataZMQ._Worker, self).__init__()
             self.ds = ds
             self.conn_name = conn_name
             self.hwm = hwm
+            self.idx = idx
 
         def run(self):
-            enable_death_signal()
+            enable_death_signal(_warn=self.idx == 0)
             self.ds.reset_state()
             context = zmq.Context()
             socket = context.socket(zmq.PUSH)
@@ -315,8 +317,8 @@ class PrefetchDataZMQ(_MultiProcessZMQDataFlow):
         pipename = _get_pipe_name('dataflow')
         _bind_guard(self.socket, pipename)
 
-        self._procs = [PrefetchDataZMQ._Worker(self.ds, pipename, self._hwm)
-                       for _ in range(self.nr_proc)]
+        self._procs = [PrefetchDataZMQ._Worker(self.ds, pipename, self._hwm, idx)
+                       for idx in range(self.nr_proc)]
         self._start_processes()
 
 

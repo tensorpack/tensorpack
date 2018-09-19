@@ -356,7 +356,7 @@ class GradientPacker(object):
         split_size_last = self._total_size - split_size * (self._num_split - 1)
         self._split_sizes = [split_size] * (self._num_split - 1) + [split_size_last]
         logger.info(
-            "Will pack {} gradients of total number={} into {} splits.".format(
+            "Will pack {} gradients of total dimension={} into {} splits.".format(
                 len(self._sizes), self._total_size, self._num_split))
         return True
 

@@ -173,7 +173,7 @@ def ensure_proc_terminate(proc):
     atexit.register(stop_proc_by_weak_ref, weakref.ref(proc))
 
 
-def enable_death_signal():
+def enable_death_signal(_warn=True):
     """
     Set the "death signal" of the current process, so that
     the current process will be cleaned with guarantee
@@ -184,7 +184,8 @@ def enable_death_signal():
     try:
         import prctl    # pip install python-prctl
     except ImportError:
-        log_once('Install python-prctl so that processes can be cleaned with guarantee.', 'warn')
+        if _warn:
+            log_once('Install python-prctl so that processes can be cleaned with guarantee.', 'warn')
         return
     else:
         assert hasattr(prctl, 'set_pdeathsig'), \

@@ -363,5 +363,5 @@ class StatMonitorParamSetter(HyperParamSetter):
         self.last_changed_epoch = self.epoch_num
         logger.info(
             "[StatMonitorParamSetter] Triggered, history of {}: ".format(
-                self.stat_name) + ','.join(map(str, hist)))
+                self.stat_name) + ','.join([str(round(x, 3)) for x in hist]))
         return self.value_func(self.get_current_value())
