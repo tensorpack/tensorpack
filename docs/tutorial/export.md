@@ -61,7 +61,7 @@ You might want to rewrite the graph for inference beforehand, e.g., to support b
 
 # Freezing and pruning a trained model
 
-For mobile and similar applications you might want to change the inference graph by:
+For mobile and similar applications you might want to change the graph before exporting by:
 
 - Convert all variables to constants to embed the weights directly in the graph.
 - Remove all unnecessary operations (training-only ops, e.g., learning-rate) to compress the graph.
@@ -76,7 +76,7 @@ pred_config = PredictConfig(
     input_names=['some_input_name'],
     output_names=['some_output_name'])
 
-ModelExporter(pred_config).export_compact('/path/to/mobile_graph.pb')
+ModelExporter(pred_config).export_compact('/path/to/compact_graph.pb')
 ```
 
 Again, `examples/basic/export.py` demonstrates the usage of such a frozen/pruned graph.
