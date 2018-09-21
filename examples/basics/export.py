@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import os
@@ -5,13 +6,15 @@ import argparse
 import cv2
 import tensorflow as tf
 from tensorpack import *
-from tensorpack.tfutils.export import ServingExporter, MobileExporter
+from tensorpack.tfutils.export import ModelExporter
 
 """
 This example illustrates the process of exporting a model trained in Tensorpack to:
 - npz containing just the weights
 - TensorFlow Serving
-- a frozen and pruned inference graph
+- a frozen and pruned inference graph (compact)
+
+The model applies a laplace filter to the input image.
 
 The steps are:
 
@@ -23,13 +26,13 @@ The steps are:
 
     python export.py --export npz --load train_log/export/checkpoint
     python export.py --export serving --load train_log/export/checkpoint
-    python export.py --export mobile --load train_log/export/checkpoint
+    python export.py --export compact --load train_log/export/checkpoint
 
 3. run inference by
 
     python export.py --apply default --load train_log/export/checkpoint
     python export.py --apply inference_graph --load train_log/export/checkpoint
-    python export.py --apply mobile --load /tmp/mobile_graph.pb
+    python export.py --apply compact --load /tmp/compact_graph.pb
 """
 
 
@@ -150,10 +153,10 @@ def export_serving(model_path):
         model=InferenceOnlyModel(),
         input_names=['input_img_bytes'],
         output_names=['prediction_img_bytes'])
-    ServingExporter(pred_config).export('/tmp/exported')
+    ModelExporter(pred_config).export_serving('/tmp/exported')
 
 
-def export_mobile(model_path):
+def export_compact(model_path):
     """Export trained model to use it as a frozen and pruned inference graph in
        mobile applications.
     """
@@ -162,7 +165,7 @@ def export_mobile(model_path):
         model=Model(),
         input_names=['input_img'],
         output_names=['prediction_img'])
-    MobileExporter(pred_config).export('/tmp/mobile_graph.pb', dtype=tf.uint8)
+    ModelExporter(pred_config).export_compact('/tmp/compact_graph.pb')
 
 
 def apply(model_path):
@@ -201,7 +204,7 @@ def apply_inference_graph(model_path):
         f.write(prediction[0])
 
 
-def apply_mobile(graph_path):
+def apply_compact(graph_path):
     """Run pruned and frozen inference graph.
     """
     with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
@@ -215,7 +218,7 @@ def apply_mobile(graph_path):
         prediction_img = sess.graph.get_tensor_by_name('import/prediction_img:0')
 
         prediction = sess.run(prediction_img, {input_img: cv2.imread('lena.png')[None, ...]})
-        cv2.imwrite('applied_mobile.png', prediction[0])
+        cv2.imwrite('applied_compact.png', prediction[0])
 
 
 if __name__ == '__main__':
@@ -231,21 +234,21 @@ if __name__ == '__main__':
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
     if args.apply != '':
-        assert args.apply in ['default', 'inference_graph', 'mobile']
+        assert args.apply in ['default', 'inference_graph', 'compact']
         if args.apply == 'default':
             apply(args.load)
         elif args.apply == 'inference_graph':
             apply_inference_graph(args.load)
         else:
-            apply_mobile(args.load)
+            apply_compact(args.load)
     elif args.export != '':
-        assert args.export in ['serving', 'mobile', 'npz']
+        assert args.export in ['serving', 'compact', 'npz']
         if args.export == 'npz':
             export_npz()
         elif args.export == 'serving':
             export_serving(args.load)
         else:
-            export_mobile(args.load)
+            export_compact(args.load)
     else:
         config = get_config()
 

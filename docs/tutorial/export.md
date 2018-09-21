@@ -7,8 +7,8 @@ Currently, there are the following ways to save your model:
 
 - Use the `ModelSaver` callback to save checkpoints during training.
 - Use the `dump-model-params.py` script to save all weights without the graph into a compressed numpy container `npz` file similar to most pre-trained models offered by Tensorpack.
-- Use the `ServingExporter` to generate a `tf.SavedModel` which offers a plug-and-play solution with TensorFlow-Serving.
-- Use the `MobileExporter` which generate a frozen and pruned model ready to deploy in mobile apps.
+- Use the `ModelExporter` to generate a `tf.SavedModel` which offers a plug-and-play solution with TensorFlow-Serving.
+- Use the `ModelExporter` which generate a frozen and pruned model ready to deploy in mobile apps.
 
 
 # Saving Checkpoints (ModelSaver)
@@ -45,7 +45,7 @@ Such a `npz` file can be reused later in Tensorpack.
 
 # Exporting the model for TensorFlow Serving
 
-Exporting the model is similar to apply inference *within* Tensorpack. It requires to write a `PredictConfig` and uses the `ServingExporter` like
+Exporting the model is similar to apply inference *within* Tensorpack. It requires to write a `PredictConfig` and uses the `ModelExporter` like
 
 ```python
 pred_config = PredictConfig(
@@ -54,7 +54,7 @@ pred_config = PredictConfig(
     input_names=['some_input_name'],
     output_names=['some_output_name'])
 
-ServingExporter(pred_config).export('/path/to/export')
+ModelExporter(pred_config).export_serving('/path/to/export')
 ```
 
 You might want to rewrite the graph for inference beforehand, e.g., to support base64-encoded images. The example provided in `examples/basic/export.py` demonstrates such an altered inference graph.
@@ -66,7 +66,8 @@ For mobile and similar applications you might want to change the inference graph
 - Convert all variables to constants to embed the weights directly in the graph.
 - Remove all unnecessary operations (training-only ops, e.g., learning-rate) to compress the graph.
 
-Similar to `ServingExporter` Tensorpack offers a `MobileExporter` which takes care of both steps automatically:
+This creates a self-contained graph which includes all necessary information to run inference.
+Tensorpack's `ModelExporter` takes care of both steps automatically:
 
 ```python
 pred_config = PredictConfig(
@@ -75,8 +76,7 @@ pred_config = PredictConfig(
     input_names=['some_input_name'],
     output_names=['some_output_name'])
 
-# ServingExporter(pred_config).export('/path/to/export')
-MobileExporter(pred_config).export('/path/to/mobile_graph.pb', dtype=[tf.uint8])
+ModelExporter(pred_config).export_compact('/path/to/mobile_graph.pb')
 ```
 
-Additionally, you need to specify the datatyp of your placeholder inputs. Again, `examples/basic/export.py` demonstrates the usage of such a frozen/pruned graph.
+Again, `examples/basic/export.py` demonstrates the usage of such a frozen/pruned graph.

@@ -16,17 +16,22 @@ from tensorflow.python.framework import graph_util
 from tensorflow.python.platform import gfile
 from tensorflow.python.tools import optimize_for_inference_lib
 
-__all__ = ['ServingExporter', 'MobileExporter']
+__all__ = ['ModelExporter']
 
 
-class MobileExporter(object):
-    """Convert a checkpoint to a frozen and pruned graph."""
-
+class ModelExporter(object):
+    """Exporting models for production."""
     def __init__(self, config):
+        """Initialise the export process.
+
+        Args:
+            config (PredictConfig): the config to use.
+        """
+        super(ModelExporter, self).__init__()
         self.config = config
 
-    def export(self, export_graph_file, dtype=tf.float32):
-        """Apply all graph modifications and write final graph to disk.
+    def export_compact(self, filename, dtypes=None):
+        """Create a self-contained inference-only graph and write final graph to disk.
 
         Args:
             export_graph_file (str): path to final local of the graph
@@ -48,6 +53,9 @@ class MobileExporter(object):
             sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
             self.config.session_init._run_init(sess)
 
+            if dtypes is None:
+                dtypes = [n.dtype for n in input_tensors]
+
             # freeze variables to constants
             frozen_graph_def = graph_util.convert_variables_to_constants(
                 sess,
@@ -57,33 +65,21 @@ class MobileExporter(object):
                 variable_names_blacklist=None)
 
             # prune unused nodes from graph
-            mobile_graph_def = optimize_for_inference_lib.optimize_for_inference(
+            pruned_graph_def = optimize_for_inference_lib.optimize_for_inference(
                 frozen_graph_def,
                 [n.name[:-2] for n in input_tensors],
                 [n.name[:-2] for n in output_tensors],
-                dtype.as_datatype_enum,
+                [dtype.as_datatype_enum for dtype in dtypes],
                 False)
 
-            with gfile.FastGFile(export_graph_file, "wb") as f:
-                f.write(mobile_graph_def.SerializeToString())
+            with gfile.FastGFile(filename, "wb") as f:
+                f.write(pruned_graph_def.SerializeToString())
 
-
-class ServingExporter(object):
-    """Converts and checkpoint to a servable for TensorFlow Serving"""
-
-    def __init__(self, config):
-        """Initialise the export process.
-
-        Args:
-            config (PredictConfig): the config to use.
+    def export_serving(self, filename,
+                       tags=[tf.saved_model.tag_constants.SERVING],
+                       signature_name='prediction_pipeline'):
         """
-
-        self.config = config
-
-    def export(self, export_path,
-               tags=[tf.saved_model.tag_constants.SERVING],
-               signature_name='prediction_pipeline'):
-        """
+        Converts and checkpoint to a servable for TensorFlow Serving.
         Use SavedModelBuilder to export a trained model without tensorpack dependency.
 
         Remarks:
@@ -97,7 +93,7 @@ class ServingExporter(object):
             https://github.com/tensorflow/serving/blob/master/tensorflow_serving/g3doc/signature_defs.md
 
         Args:
-            export_path (str): path for export directory
+            filename (str): path for export directory
             tags (list): list of user specified tags
             signature_name (str): name of signature for prediction
         """
@@ -119,7 +115,7 @@ class ServingExporter(object):
             sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
             self.config.session_init._run_init(sess)
 
-            builder = tf.saved_model.builder.SavedModelBuilder(export_path)
+            builder = tf.saved_model.builder.SavedModelBuilder(filename)
 
             prediction_signature = tf.saved_model.signature_def_utils.build_signature_def(
                 inputs=inputs_signatures,
