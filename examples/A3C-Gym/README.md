@@ -63,7 +63,7 @@ Note that this variant is quite different from DeepMind papers, so the scores ar
 The most notable differences are:
 + Each action is randomly repeated 2~4 times.
 + Inputs are RGB instead of greyscale.
-+ An episode is limited to 10000 steps.
++ An episode is limited to 60000 steps.
 + Lost of live is not end of episode.
 
 Also see the DQN implementation [here](../DeepQNetwork)
