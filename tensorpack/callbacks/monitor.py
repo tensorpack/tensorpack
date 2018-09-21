@@ -306,7 +306,13 @@ class JSONWriter(TrainingMonitor):
         except Exception:
             return None
 
+    # initialize the stats here, because before_train from other callbacks may use it
     def _setup_graph(self):
+        self._stats = []
+        self._stat_now = {}
+        self._last_gs = -1
+
+    def _before_train(self):
         stats = JSONWriter.load_existing_json()
         self._fname = os.path.join(logger.get_logger_dir(), JSONWriter.FILENAME)
         if stats is not None:
@@ -315,33 +321,27 @@ class JSONWriter(TrainingMonitor):
             except Exception:
                 epoch = None
 
+            # check against the current training settings
+            # therefore this logic needs to be in before_train stage
             starting_epoch = self.trainer.loop.starting_epoch
             if epoch is None or epoch == starting_epoch:
                 logger.info("Found existing JSON inside {}, will append to it.".format(logger.get_logger_dir()))
                 self._stats = stats
             else:
                 logger.warn(
-                    "History epoch value {} from JSON is not the predecessor of the starting_epoch value {}".format(
+                    "History epoch={} from JSON is not the predecessor of the current starting_epoch={}".format(
                         epoch - 1, starting_epoch))
                 logger.warn("If you want to resume old training, either use `AutoResumeTrainConfig` "
-                            "or correctly set the starting_epoch yourself to avoid inconsistency. "
-                            "Epoch number will not be automatically loaded by JSONWriter.")
+                            "or correctly set the new starting_epoch yourself to avoid inconsistency. ")
 
                 backup_fname = JSONWriter.FILENAME + '.' + datetime.now().strftime('%m%d-%H%M%S')
                 backup_fname = os.path.join(logger.get_logger_dir(), backup_fname)
 
-                logger.warn("Now, we will start training at epoch {} and backup old json to {}".format(
+                logger.warn("Now, we will train with starting_epoch={} and backup old json to {}".format(
                     self.trainer.loop.starting_epoch, backup_fname))
                 shutil.move(self._fname, backup_fname)
-                self._stats = []
-        else:
-            self._stats = []
-        self._stat_now = {}
 
-        self._last_gs = -1
-
-    # in case we have something to log here.
-    def _before_train(self):
+        # in case we have something to log here.
         self._trigger()
 
     def _trigger_step(self):

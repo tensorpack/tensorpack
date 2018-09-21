@@ -78,6 +78,9 @@ class ScalarStats(Inferencer):
     """
     Statistics of some scalar tensor.
     The value will be averaged over all given datapoints.
+
+    Note that the average of accuracy over all batches is not necessarily the
+    accuracy of the whole dataset. See :class:`ClassificationError` for details.
     """
 
     def __init__(self, names, prefix='validation'):

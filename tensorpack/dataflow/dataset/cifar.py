@@ -85,7 +85,7 @@ def _parse_meta(filename, cifar_classnum):
 
 
 class CifarBase(RNGDataFlow):
-    def __init__(self, train_or_test, shuffle=True, dir=None, cifar_classnum=10):
+    def __init__(self, train_or_test, shuffle=None, dir=None, cifar_classnum=10):
         assert train_or_test in ['train', 'test']
         assert cifar_classnum == 10 or cifar_classnum == 100
         self.cifar_classnum = cifar_classnum
@@ -104,6 +104,9 @@ class CifarBase(RNGDataFlow):
         self.train_or_test = train_or_test
         self.data = read_cifar(self.fs, cifar_classnum)
         self.dir = dir
+
+        if shuffle is None:
+            shuffle = train_or_test == 'train'
         self.shuffle = shuffle
 
     def __len__(self):
@@ -149,18 +152,18 @@ class Cifar10(CifarBase):
     image is 32x32x3 in the range [0,255].
     label is an int.
     """
-    def __init__(self, train_or_test, shuffle=True, dir=None):
+    def __init__(self, train_or_test, shuffle=None, dir=None):
         """
         Args:
             train_or_test (str): either 'train' or 'test'.
-            shuffle (bool): shuffle the dataset.
+            shuffle (bool): shuffle the dataset, default to shuffle in training
         """
         super(Cifar10, self).__init__(train_or_test, shuffle, dir, 10)
 
 
 class Cifar100(CifarBase):
     """ Similar to Cifar10"""
-    def __init__(self, train_or_test, shuffle=True, dir=None):
+    def __init__(self, train_or_test, shuffle=None, dir=None):
         super(Cifar100, self).__init__(train_or_test, shuffle, dir, 100)
 
 
