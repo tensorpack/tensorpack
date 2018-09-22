@@ -212,6 +212,7 @@ class Model(GANModelDesc):
 def get_data():
     ds = ConcatData([dataset.Mnist('train'), dataset.Mnist('test')])
     ds = BatchData(ds, BATCH)
+    ds = MapData(ds, lambda dp: [dp[0]])  # only use the image
     return ds
 
 
