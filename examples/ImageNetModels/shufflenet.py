@@ -205,6 +205,7 @@ def get_config(model, nr_tower):
         ScheduledHyperParamSetter('learning_rate',
                                   [(0, 0.5), (max_iter, 0)],
                                   interp='linear', step_based=True),
+        EstimatedTimeLeft()
     ]
     infs = [ClassificationError('wrong-top1', 'val-error-top1'),
             ClassificationError('wrong-top5', 'val-error-top5')]
