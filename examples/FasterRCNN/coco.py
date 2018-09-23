@@ -8,7 +8,6 @@ from tabulate import tabulate
 import tqdm
 
 from tensorpack.utils import logger
-from tensorpack.utils.rect import FloatBox
 from tensorpack.utils.timer import timed_operation
 from tensorpack.utils.argtools import log_once
 
@@ -130,13 +129,15 @@ class COCODetection(object):
             x1, y1, w, h = obj['bbox']
             # bbox is originally in float
             # x1/y1 means upper-left corner and w/h means true w/h. This can be verified by segmentation pixels.
-            # But we do assume that (0.0, 0.0) is upper-left corner of the first pixel
-            box = FloatBox(float(x1), float(y1),
-                           float(x1 + w), float(y1 + h))
-            box.clip_by_shape([height, width])
+            # But we do make an assumption here that (0.0, 0.0) is upper-left corner of the first pixel
+
+            x1 = np.clip(float(x1), 0, width)
+            y1 = np.clip(float(y1), 0, height)
+            w = np.clip(float(x1 + w), 0, width) - x1
+            h = np.clip(float(y1 + h), 0, height) - y1
             # Require non-zero seg area and more than 1x1 box size
-            if obj['area'] > 1 and box.is_box() and box.area() >= 4:
-                obj['bbox'] = [box.x1, box.y1, box.x2, box.y2]
+            if obj['area'] > 1 and w > 0 and h > 0 and w * h >= 4:
+                obj['bbox'] = [x1, y1, x1 + w, y1 + h]
                 valid_objs.append(obj)
 
                 if add_mask:

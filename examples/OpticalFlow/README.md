@@ -23,7 +23,7 @@ which is better than other TensorFlow implementations.
 
 ### Usage
 
-1. Download the pre-trained model:
+1. Download the pre-trained model (converted from caffe):
 
 ```bash
 wget http://models.tensorpack.com/OpticalFlow/flownet2.npz
@@ -36,9 +36,9 @@ wget http://models.tensorpack.com/OpticalFlow/flownet2-c.npz
 2. Run inference
 
 ```bash
-python flownet2.py
-			--left left.png --right right.png \
-			--load flownet2.npz --model flownet2
+python flownet2.py \
+	--left left.png --right right.png \
+	--load flownet2.npz --model flownet2
 ```
 
 3. Evaluate AEE (Average Endpoing Error) on Sintel dataset:

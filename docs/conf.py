@@ -364,6 +364,7 @@ _DEPRECATED_NAMES = set([
     'dump_dataflow_to_lmdb',
     'dump_dataflow_to_tfrecord',
     'pyplot2img',
+    'IntBox', 'FloatBox',
 
     # renamed stuff:
     'DumpTensor',
