@@ -408,8 +408,8 @@ def draw_boxes(im, boxes, labels=None, color=None):
                 bottom_left[1] = box[3] - 0.3 * lineh
             x1, y1 = int(top_left[0]), int(top_left[1])
             x2, y2 = int(top_left[0] + linew), int(top_left[1] + lineh)
-            x1, x2 = [np.clip(x, 0, img.shape[1] - 1) for x in [x1, x2]]
-            y1, y2 = [np.clip(y, 0, img.shape[0] - 1) for y in [y1, y2]]
+            x1, x2 = [np.clip(x, 0, im.shape[1] - 1) for x in [x1, x2]]
+            y1, y2 = [np.clip(y, 0, im.shape[0] - 1) for y in [y1, y2]]
             if color is None:
                 # find the best color
                 mean_color = im[y1:y2 + 1, x1:x2 + 1].mean(axis=(0, 1))
