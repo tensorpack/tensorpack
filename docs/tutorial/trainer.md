@@ -81,10 +81,15 @@ Note some __common problems__ when using these trainers:
     all GPUs take tensors from the `InputSource`.
 	So the total batch size across all GPUs would become ``(batch size of InputSource) * #GPU``.
 
-	Splitting a tensor for data-parallel training makes no sense at all. First,
-	it wastes time because typically data is concatenated into batches by the user.
-    Second, this puts unnecessary shape constraints on the data.
-	By letting each GPU train on its own input tensors, they can train on inputs of different shapes simultaneously.
+    ```eval_rst
+    .. note:: 
+
+        Splitting a tensor for data-parallel training (as done by frameworks like Keras) 
+        makes no sense at all. 
+        First, it wastes time doing the split because typically data is first concatenated by the user.
+        Second, this puts unnecessary shape constraints on the data, that the
+        inputs on each GPU needs to have consistent shapes.
+    ```
 
 2. The tower function (your model code) will get called multipile times on each GPU.
    You must follow the abovementieond rules of tower function.
