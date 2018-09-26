@@ -34,7 +34,7 @@ class ModelExporter(object):
         """Create a self-contained inference-only graph and write final graph to disk.
 
         Args:
-            export_graph_file (str): path to final local of the graph
+            export_graph_file (str): path to final location of the graph
             dtype (TYPE, optional): The placeholder data type, or
                 a list that specifies one value per input node name.
         """
@@ -79,7 +79,7 @@ class ModelExporter(object):
                        tags=[tf.saved_model.tag_constants.SERVING],
                        signature_name='prediction_pipeline'):
         """
-        Converts and checkpoint to a servable for TensorFlow Serving.
+        Converts a checkpoint and graph to a servable for TensorFlow Serving.
         Use SavedModelBuilder to export a trained model without tensorpack dependency.
 
         Remarks:
