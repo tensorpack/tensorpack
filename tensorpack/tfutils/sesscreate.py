@@ -22,7 +22,7 @@ class NewSessionCreator(tf.train.ChiefSessionCreator):
         """
         Args:
             target, graph, config: same as :meth:`Session.__init__()`.
-            config: defaults to :func:`tfutils.get_default_sess_config()`
+            config: a :class:`tf.ConfigProto` instance, defaults to :func:`tfutils.get_default_sess_config()`
         """
         assert graph is None
 

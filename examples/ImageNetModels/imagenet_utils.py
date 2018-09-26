@@ -4,15 +4,17 @@
 
 import cv2
 import numpy as np
+import tqdm
 import multiprocessing
 import tensorflow as tf
 from abc import abstractmethod
 
-from tensorpack import imgaug, dataset, ModelDesc
+from tensorpack import ModelDesc
+from tensorpack.input_source import QueueInput, StagingInput
 from tensorpack.dataflow import (
-    AugmentImageComponent, PrefetchDataZMQ,
+    imgaug, dataset, AugmentImageComponent, PrefetchDataZMQ,
     BatchData, MultiThreadMapData)
-from tensorpack.predict import PredictConfig, SimpleDatasetPredictor
+from tensorpack.predict import PredictConfig, FeedfreePredictor
 from tensorpack.utils.stats import RatioCounter
 from tensorpack.models import regularize_cost
 from tensorpack.tfutils.summary import add_moving_summary
@@ -126,12 +128,17 @@ def eval_on_ILSVRC12(model, sessinit, dataflow):
         input_names=['input', 'label'],
         output_names=['wrong-top1', 'wrong-top5']
     )
-    pred = SimpleDatasetPredictor(pred_config, dataflow)
     acc1, acc5 = RatioCounter(), RatioCounter()
-    for top1, top5 in pred.get_result():
+
+    # This does not have a visible improvement over naive predictor,
+    # but will have an improvement if image_dtype is set to float32.
+    pred = FeedfreePredictor(pred_config, StagingInput(QueueInput(dataflow), device='/gpu:0'))
+    for _ in tqdm.trange(dataflow.size()):
+        top1, top5 = pred()
         batch_size = top1.shape[0]
         acc1.feed(top1.sum(), batch_size)
         acc5.feed(top5.sum(), batch_size)
+
     print("Top1 Error: {}".format(acc1.ratio))
     print("Top5 Error: {}".format(acc5.ratio))
 

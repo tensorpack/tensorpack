@@ -377,6 +377,9 @@ class TowerTensorHandle(object):
         1. The name of the tensor without any tower prefix.
 
         2. The name of an :class:`InputDesc`, if it is used when building the tower.
+
+        In the second case, this method will return the tensor that's used as the corresponding
+        input to the tower. Note that this tensor may have a different name (e.g. may be an output of a queue).
         """
         name = get_op_tensor_name(name)[1]
         if len(self.ns_name):
@@ -392,10 +395,12 @@ class TowerTensorHandle(object):
             raise
         else:
             if name in self._extra_tensor_names:
-                logger.warn(
-                    "'{}' may refer to both the tensor '{}' or the input '{}'.".format(
-                        name, ret.name, self._extra_tensor_names[name].name) +
-                    "Assuming it is the tensor '{}'.".format(ret.name))
+                mapped_tensor = self._extra_tensor_names[name]
+                logger.info(
+                    "'{}' may refer to both the Tensor/Placeholder '{}' or the input to the tower '{}'.".format(
+                        name, ret.name, mapped_tensor.name) +
+                    " Assuming it is the input '{}'.".format(mapped_tensor.name))
+                return mapped_tensor
             return ret
 
     def get_tensors(self, names):

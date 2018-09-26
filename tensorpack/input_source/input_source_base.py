@@ -118,6 +118,13 @@ class InputSource(object):
         All callbacks will be automatically marked as `chief_only=False`,
         so they will run on all nodes.
 
+        Callbacks returned by :class:`InputSource` only supports a subset of callback's functionalities:
+
+        1. It cannot access the trainer, because an :class:`InputSource` can be used in pure inference.
+        2. It cannot use the following methods: `trigger_{step,epoch}, {before,after}_epoch`.
+
+        In other words, these callbacks should only have the basic functionality of `tf.train.SessionRunHooks`.
+
         Returns:
             list[Callback]: extra callbacks needed by this InputSource.
         """

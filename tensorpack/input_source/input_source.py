@@ -547,10 +547,10 @@ class StagingInput(FeedfreeInput):
             self.fetches = tf.train.SessionRunArgs(
                 fetches=[self.stage_op, unstage_op])
 
-        def _prefill(self):
+        def _prefill(self, sess):
             logger.info("Pre-filling StagingArea ...")
             for k in range(self.nr_stage):
-                self.stage_op.run()
+                self.stage_op.run(session=sess)
             logger.info("{} element{} put into StagingArea on each tower.".format(
                 self.nr_stage, "s were" if self.nr_stage > 1 else " was"))
 
@@ -559,7 +559,7 @@ class StagingInput(FeedfreeInput):
             # doing it in `before_train` may not work because QueueInput happens in before_train.
             if not self._initialized:
                 self._initialized = True
-                self._prefill()
+                self._prefill(ctx.session)
             # Only step the stagingarea when the input is evaluated in this sess.run
             fetches = ctx.original_args.fetches
             if dependency_of_fetches(fetches, self._check_dependency_op):
