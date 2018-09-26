@@ -51,7 +51,7 @@ def apply_default_prefetch(input_source_or_dataflow, trainer):
 def launch_train_with_config(config, trainer):
     """
     Train with a :class:`TrainConfig` and a :class:`Trainer`, to
-    present a simple training interface. It basically does the following
+    present the simple and old training interface. It basically does the following
     3 things (and you can easily do them by yourself if you need more control):
 
     1. Setup the input with automatic prefetching heuristics,
@@ -76,12 +76,14 @@ def launch_train_with_config(config, trainer):
     assert config.dataflow is not None or config.data is not None
 
     model = config.model
-    inputs_desc = model.get_inputs_desc()
     input = config.data or config.dataflow
     input = apply_default_prefetch(input, trainer)
 
+    # This is the only place where the `ModelDesc` abstraction is useful.
+    # We should gradually stay away from this unuseful abstraction.
+    # TowerFuncWrapper is a better abstraction (similar to tf.defun in the future)
     trainer.setup_graph(
-        inputs_desc, input,
+        model.get_inputs_desc(), input,
         model._build_graph_get_cost, model.get_optimizer)
     _check_unused_regularization()
     trainer.train_with_defaults(

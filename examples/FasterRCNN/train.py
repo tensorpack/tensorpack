@@ -102,6 +102,7 @@ class ResNetC4Model(DetectionModel):
         return ret
 
     def build_graph(self, *inputs):
+        # TODO need to make tensorpack handles dict better
         inputs = dict(zip(self.input_names, inputs))
         is_training = get_current_tower_context().is_training
         image = self.preprocess(inputs['image'])     # 1CHW

@@ -52,7 +52,7 @@ def read_cifar(filenames, cifar_classnum):
         if cifar_classnum == 10:
             label = dic[b'labels']
             IMG_NUM = 10000  # cifar10 data are split into blocks of 10000
-        elif cifar_classnum == 100:
+        else:
             label = dic[b'fine_labels']
             IMG_NUM = 50000 if 'train' in fname else 10000
         fo.close()

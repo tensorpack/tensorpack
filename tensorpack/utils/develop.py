@@ -33,7 +33,7 @@ def create_dummy_class(klass, dependency):
     class _DummyMetaClass(type):
         # throw error on class attribute access
         def __getattr__(_, __):
-            raise ImportError("Cannot import '{}', therefore '{}' is not available".format(dependency, klass))
+            raise AttributeError("Cannot import '{}', therefore '{}' is not available".format(dependency, klass))
 
     @six.add_metaclass(_DummyMetaClass)
     class _Dummy(object):

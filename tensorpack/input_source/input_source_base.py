@@ -21,10 +21,10 @@ def get_tensors_inputs(placeholders, tensors, names):
     Args:
         placeholders (list[Tensor]):
         tensors (list[Tensor]): list of tf.Tensor
-        names (list[str]): names matching the tensors
+        names (list[str]): names matching the given tensors
 
     Returns:
-        list[Tensor]: inputs to used with build_graph(),
+        list[Tensor]: inputs to used for the tower function,
             with the corresponding placeholders replaced by tensors.
     """
     assert len(tensors) == len(names), \
@@ -74,9 +74,10 @@ class InputSource(object):
     def get_input_tensors(self):
         """
         Returns:
-            list: A list of tensors corresponding to the inputs of the model,
-            used as input of :func:`build_graph`.
-            For non-placeholder tensors, should always create and return new tensors when called.
+            list[Tensor]: A list of tensors corresponding to the inputs of the model.
+                Will be used as input for the tower function.
+                This method should always create and return new tensors when called,
+                unless it returns placeholders.
         """
         return self._get_input_tensors()
 
@@ -204,8 +205,8 @@ class ProxyInputSource(InputSource):
 
 def remap_input_source(input, names):
     """
-    When you have some :class:`InputSource` which doesn't match the inputs in
-    your :class:`ModelDesc`, use `RemapInputSource`.
+    When you have some :class:`InputSource` which doesn't match the inputs of
+    your tower function, use `RemapInputSource`.
     It produces placeholders for all the inputs in your model,
     except that the corresponding ones are replaced with the tensor produced
     by the given :class:`InputSource`.

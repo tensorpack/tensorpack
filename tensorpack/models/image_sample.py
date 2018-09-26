@@ -3,6 +3,7 @@
 
 
 import tensorflow as tf
+import numpy as np
 
 from ..utils.develop import log_deprecated
 from .common import layer_register
@@ -102,7 +103,6 @@ def ImageSample(inputs, borderMode='repeat'):
 class TestSample(TestModel):
 
     def test_ImageSample(self):
-        import numpy as np
         h, w = 3, 4
 
         def np_sample(img, coords):
@@ -139,7 +139,6 @@ class TestSample(TestModel):
 
 if __name__ == '__main__':
     import cv2
-    import numpy as np
     im = cv2.imread('cat.jpg')
     im = im.reshape((1,) + im.shape).astype('float32')
     imv = tf.Variable(im)

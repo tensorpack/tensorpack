@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash -ev
 # File: run-tests.sh
 
 DIR=$(dirname $0)

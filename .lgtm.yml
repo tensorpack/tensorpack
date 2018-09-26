@@ -1,3 +1,10 @@
+queries:
+  - exclude: py/unguarded-next-in-generator
+  - exclude: py/explicit-call-to-delete
+  - exclude: py/polluting-import
+  - exclude: py/import-and-import-from
+  - exclude: py/similar-function
+  - exclude: py/unused-local-variable
 extraction:
   python:
     prepare:

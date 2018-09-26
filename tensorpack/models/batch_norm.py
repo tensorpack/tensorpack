@@ -141,12 +141,10 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
 
     if axis is None:
         if ndims == 2:
-            data_format = 'NHWC'
             axis = 1
         else:
             axis = 1 if data_format == 'NCHW' else 3
-    else:
-        data_format = 'NCHW' if axis == 1 else 'NHWC'
+    assert axis in [1, 3], axis
     num_chan = shape[axis]
 
     # parse training/ctx

@@ -29,6 +29,8 @@ def regularize_cost(regex, func, name='regularize_cost'):
     the matched variables (only print once in multi-tower training).
     In replicated mode, it will only regularize variables within the current tower.
 
+    If called under a TowerContext with `is_training==False`, this function returns a zero constant tensor.
+
     Args:
         regex (str): a regex to match variable names, e.g. "conv.*/W"
         func: the regularization function, which takes a tensor and returns a scalar tensor.
