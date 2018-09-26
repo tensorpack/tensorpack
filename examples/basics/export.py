@@ -134,17 +134,6 @@ class InferenceOnlyModel(Model):
         tf.identity(prediction_img_bytes, name='prediction_img_bytes')
 
 
-def export_npz():
-    """The default Tensorpack way of packing just the weights into numpy
-       compressed containers.
-    """
-    print('RUN')
-    print("python tensorpack/scripts/dump-model-params.py "
-          "--meta train_log/export/graph-0904-161912.meta "
-          "train_log/export/checkpoint "
-          "weights.npz")
-
-
 def export_serving(model_path):
     """Export trained model to use it in TensorFlow Serving or cloudML.
     """
@@ -242,10 +231,8 @@ if __name__ == '__main__':
         else:
             apply_compact(args.load)
     elif args.export != '':
-        assert args.export in ['serving', 'compact', 'npz']
-        if args.export == 'npz':
-            export_npz()
-        elif args.export == 'serving':
+        assert args.export in ['serving', 'compact']
+        if args.export == 'serving':
             export_serving(args.load)
         else:
             export_compact(args.load)

@@ -30,13 +30,11 @@ class ModelExporter(object):
         super(ModelExporter, self).__init__()
         self.config = config
 
-    def export_compact(self, filename, dtypes=None):
+    def export_compact(self, filename):
         """Create a self-contained inference-only graph and write final graph to disk.
 
         Args:
             export_graph_file (str): path to final location of the graph
-            dtype (TYPE, optional): The placeholder data type, or
-                a list that specifies one value per input node name.
         """
         self.graph = self.config._maybe_create_graph()
         with self.graph.as_default():
@@ -53,8 +51,7 @@ class ModelExporter(object):
             sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
             self.config.session_init._run_init(sess)
 
-            if dtypes is None:
-                dtypes = [n.dtype for n in input_tensors]
+            dtypes = [n.dtype for n in input_tensors]
 
             # freeze variables to constants
             frozen_graph_def = graph_util.convert_variables_to_constants(
