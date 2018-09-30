@@ -123,6 +123,11 @@ class Monitors(Callback):
         for m in self._monitors:
             assert isinstance(m, TrainingMonitor), m
 
+    def _setup_graph(self):
+        # scalar_history's other methods were not called.
+        # but they are not useful for now
+        self._scalar_history.setup_graph(self.trainer)
+
     def _dispatch(self, func):
         for m in self._monitors:
             func(m)
@@ -204,6 +209,9 @@ class Monitors(Callback):
 
         If you run multiprocess training, keep in mind that
         the data is perhaps only available on chief process.
+
+        Returns:
+            a list of (global_step, value) pairs: history data for this scalar
         """
         return self._scalar_history.get_history(name)
 
@@ -451,7 +459,7 @@ class ScalarPrinter(TrainingMonitor):
 
 class ScalarHistory(TrainingMonitor):
     """
-    Only used by monitors internally.
+    Only internally used by monitors.
     """
 
     def __init__(self):
@@ -459,12 +467,12 @@ class ScalarHistory(TrainingMonitor):
 
     @HIDE_DOC
     def process_scalar(self, name, val):
-        self._dic[name].append(float(val))
+        self._dic[name].append((self.global_step, float(val)))
 
     def get_latest(self, name):
         hist = self._dic[name]
         if len(hist) == 0:
-            raise KeyError("Invalid key: {}".format(name))
+            raise KeyError("No available data for the key: {}".format(name))
         else:
             return hist[-1]
 
