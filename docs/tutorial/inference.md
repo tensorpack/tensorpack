@@ -76,7 +76,7 @@ outputs = predictor(input1_array, input2_array)
 As mentioned before, you might want to use a different graph for inference, 
 e.g., use NHWC format, support base64-encoded images. 
 You can make these changes in the `model` or `tower_func` in your `PredictConfig`.
-The example in [examples/basic/export.py](../examples/basic/export.py) demonstrates such an altered inference graph.
+The example in [examples/basic/export-model.py](../examples/basic/export-model.py) demonstrates such an altered inference graph.
 
 ### Exporter
 
@@ -110,4 +110,4 @@ graph_def = tf.GraphDef()
 graph_def.ParseFromString(open(graph_file, 'rb').read())
 tf.import_graph_def(graph_def)
 ```
-[examples/basic/export.py](../examples/basic/export.py) demonstrates the usage of such a frozen/pruned graph.
+[examples/basic/export-model.py](../examples/basic/export-model.py) demonstrates the usage of such a frozen/pruned graph.

@@ -9,8 +9,8 @@ from tensorpack.tfutils.export import ModelExporter
 
 """
 This example illustrates the process of exporting a model trained in Tensorpack to:
-- TensorFlow Serving
-- a frozen and pruned inference graph (compact)
+- SavedModel format for TensorFlow Serving
+- A frozen and pruned inference graph (compact)
 
 The model applies a laplace filter to the input image.
 
