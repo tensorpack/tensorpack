@@ -8,33 +8,37 @@ a model for production.
 """
 
 import tensorflow as tf
-
-from ..tfutils.common import get_tensors_by_names
-from ..tfutils.tower import PredictTowerContext
-from ..input_source import PlaceholderInput
 from tensorflow.python.framework import graph_util
 from tensorflow.python.platform import gfile
 from tensorflow.python.tools import optimize_for_inference_lib
+
+from ..utils import logger
+from ..tfutils.common import get_tensors_by_names
+from ..tfutils.tower import PredictTowerContext
+from ..input_source import PlaceholderInput
 
 __all__ = ['ModelExporter']
 
 
 class ModelExporter(object):
-    """Exporting models for production."""
+    """Export models for inference."""
+
     def __init__(self, config):
         """Initialise the export process.
 
         Args:
             config (PredictConfig): the config to use.
+                The graph will be built with `config.tower_func` and `config.inputs_desc`.
+                Then the input / output names will be used to export models for inference.
         """
         super(ModelExporter, self).__init__()
         self.config = config
 
     def export_compact(self, filename):
-        """Create a self-contained inference-only graph and write final graph to disk.
+        """Create a self-contained inference-only graph and write final graph (in pb format) to disk.
 
         Args:
-            export_graph_file (str): path to final location of the graph
+            filename (str): path to the output graph
         """
         self.graph = self.config._maybe_create_graph()
         with self.graph.as_default():
@@ -71,6 +75,7 @@ class ModelExporter(object):
 
             with gfile.FastGFile(filename, "wb") as f:
                 f.write(pruned_graph_def.SerializeToString())
+                logger.info("Output graph written to {}.".format(filename))
 
     def export_serving(self, filename,
                        tags=[tf.saved_model.tag_constants.SERVING],
@@ -123,3 +128,4 @@ class ModelExporter(object):
                 sess, tags,
                 signature_def_map={signature_name: prediction_signature})
             builder.save()
+            logger.info("SavedModel created at {}.".format(filename))

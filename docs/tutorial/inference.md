@@ -55,11 +55,59 @@ with TowerContext('', is_training=False):
 ### OfflinePredictor
 The only tool tensorpack has for after-training inference is [OfflinePredictor](../modules/predict.html#tensorpack.predict.OfflinePredictor),
 a simple function to build the graph and return a callable for you.
-Check out examples and docs for its usage.
-
 
 OfflinePredictor is only for quick demo purposes.
 It runs inference on numpy arrays, therefore may not be the most efficient way.
 It also has very limited functionalities.
 If you need anything more complicated, please __do it on your own__ because Tensorpack
 doesn't care what happened after training.
+
+A simple explanation of how it works:
+```python
+pred_config = PredictConfig(
+    session_init=get_model_loader(model_path),
+    model=YourModel(),
+    input_names=['input1', 'input2'],
+    output_names=['output1', 'output2'])
+predictor = OfflinePredictor(pred_config)
+outputs = predictor(input1_array, input2_array)
+```
+
+As mentioned before, you might want to use a different graph for inference, 
+e.g., use NHWC format, support base64-encoded images. 
+You can make these changes in the `model` or `tower_func` in your `PredictConfig`.
+The example in [examples/basic/export.py](../examples/basic/export.py) demonstrates such an altered inference graph.
+
+### Exporter
+
+In addition to the standard checkpoint format tensorpack saved for you during training. 
+You can also save your models into other formats so it may be more friendly for inference.
+
+1. Export to `SavedModel` format for TensorFlow Serving:
+```python
+from tfutils.export import ModelExporter
+ModelExporter(pred_config).export_serving('/path/to/export')
+```
+
+This format contains both the graph and the variables. Refer to TensorFlow
+serving documentation on how to use it.
+
+2. Export to a frozen and pruned graph:
+
+```python
+ModelExporter(pred_config).export_compact('/path/to/compact_graph.pb')
+```
+
+This format is just a serialized `tf.Graph`. The export process:
+- Converts all variables to constants to embed the variables directly in the graph.
+- Removes all unnecessary operations (training-only ops, e.g., learning-rate) to compress the graph.
+
+This creates a self-contained graph which includes all necessary information to run inference.
+
+To load the graph, you can simply:
+```python
+graph_def = tf.GraphDef()
+graph_def.ParseFromString(open(graph_file, 'rb').read())
+tf.import_graph_def(graph_def)
+```
+[examples/basic/export.py](../examples/basic/export.py) demonstrates the usage of such a frozen/pruned graph.

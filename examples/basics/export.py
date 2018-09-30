@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
 import argparse
 import cv2
 import tensorflow as tf
@@ -10,7 +9,6 @@ from tensorpack.tfutils.export import ModelExporter
 
 """
 This example illustrates the process of exporting a model trained in Tensorpack to:
-- npz containing just the weights
 - TensorFlow Serving
 - a frozen and pruned inference graph (compact)
 
@@ -20,11 +18,10 @@ The steps are:
 
 1. train the model by
 
-    python export.py --gpu 0
+    python export.py
 
 2. export the model by
 
-    python export.py --export npz --load train_log/export/checkpoint
     python export.py --export serving --load train_log/export/checkpoint
     python export.py --export compact --load train_log/export/checkpoint
 
@@ -36,7 +33,6 @@ The steps are:
 """
 
 
-BATCH_SIZE = 1
 SHAPE = 256
 CHANNELS = 3
 
@@ -78,65 +74,36 @@ class Model(ModelDesc):
 
 
 def get_data(subset):
-    """
-    You might train this model using some fake data. But since the learning-rate is 0,
-    it does not change the model weights.
-    """
     ds = FakeData([[SHAPE, SHAPE, CHANNELS], [SHAPE, SHAPE, CHANNELS]], 1000, random=False,
                   dtype=['uint8', 'uint8'], domain=[(0, 255), (0, 10)])
-    ds = BatchData(ds, BATCH_SIZE)
+    ds = BatchData(ds, 1)
     return ds
 
 
-def get_config():
-    """
-    The usual config for training.
-    """
-    logger.auto_set_dir()
-
-    ds_train = get_data('train')
-
-    return TrainConfig(
-        model=Model(),
-        data=QueueInput(ds_train),
-        callbacks=[
-            ModelSaver(),
-        ],
-        steps_per_epoch=1,
-        max_epoch=1,
-    )
-
-
 class InferenceOnlyModel(Model):
-    """This illustrates the way to rewrite the inference graph to accept images encoded as base64.
-
-    Remarks:
-        CloudML expects base64 encoded data to feed into placeholders with suffix "_bytes".
-    """
+    """Recreate a different inference graph to accept images encoded as png. """
 
     def inputs(self):
         # The inference graph only accepts a single image, which is different to the training model.
         return [tf.placeholder(tf.string, (None,), 'input_img_bytes')]
 
     def build_graph(self, input_img_bytes):
-        # prepare input (base64 encoded strings to images)
+        # prepare input (png encoded strings to images)
         input_img = tf.map_fn(lambda x: tf.image.decode_png(x, channels=3), input_img_bytes, dtype=tf.uint8)
 
-        # It is a good idea to just copy the inference relevant parts to this graph.
+        # just copy the relevant parts to this graph.
         prediction_img = self.make_prediction(input_img)
 
-        # outputs should be base64 encoded strings agains
+        # outputs should be png encoded strings agains
         prediction_img = tf.clip_by_value(prediction_img, 0, 255)
         prediction_img = tf.cast(prediction_img, tf.uint8)
         prediction_img_bytes = tf.map_fn(tf.image.encode_png, prediction_img, dtype=tf.string)
 
-        # prediction_img_bytes = tf.image.encode_png(prediction_img)
         tf.identity(prediction_img_bytes, name='prediction_img_bytes')
 
 
 def export_serving(model_path):
-    """Export trained model to use it in TensorFlow Serving or cloudML.
-    """
+    """Export trained model to use it in TensorFlow Serving or cloudML. """
     pred_config = PredictConfig(
         session_init=get_model_loader(model_path),
         model=InferenceOnlyModel(),
@@ -147,8 +114,7 @@ def export_serving(model_path):
 
 def export_compact(model_path):
     """Export trained model to use it as a frozen and pruned inference graph in
-       mobile applications.
-    """
+       mobile applications. """
     pred_config = PredictConfig(
         session_init=get_model_loader(model_path),
         model=Model(),
@@ -158,8 +124,7 @@ def export_compact(model_path):
 
 
 def apply(model_path):
-    """Run inference from a training model checkpoint.
-    """
+    """Run inference from a training model checkpoint. """
     pred_config = PredictConfig(
         session_init=get_model_loader(model_path),
         model=Model(),
@@ -173,9 +138,7 @@ def apply(model_path):
 
 
 def apply_inference_graph(model_path):
-    """Run inference from an altered graph, which receives
-       encoded images buffers.
-    """
+    """Run inference from a different graph, which receives encoded images buffers. """
     pred_config = PredictConfig(
         session_init=get_model_loader(model_path),
         model=InferenceOnlyModel(),
@@ -183,21 +146,16 @@ def apply_inference_graph(model_path):
         output_names=['prediction_img_bytes'])
 
     pred = OfflinePredictor(pred_config)
-
-    with open('lena.png', 'rb') as f:
-        buf = f.read()
-
+    buf = open('lena.png', 'rb').read()
     prediction = pred([buf])[0]
-
     with open('applied_inference_graph.png', 'wb') as f:
         f.write(prediction[0])
 
 
 def apply_compact(graph_path):
-    """Run pruned and frozen inference graph.
-    """
+    """Run the pruned and frozen inference graph. """
     with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
-        # Note, we just load the graph and do *not* initialize anything.
+        # Note, we just load the graph and do *not* need to initialize anything.
         with tf.gfile.GFile(graph_path, "rb") as f:
             graph_def = tf.GraphDef()
             graph_def.ParseFromString(f.read())
@@ -212,18 +170,15 @@ def apply_compact(graph_path):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
     parser.add_argument('--load', help='load model')
-    parser.add_argument('--apply', help='run sampling', default='')
-    parser.add_argument('--export', help='export the model', default='')
+    parser.add_argument('--apply', help='run sampling', default='',
+                        choices=['default', 'inference_graph', 'compact'])
+    parser.add_argument('--export', help='export the model', default='',
+                        choices=['serving', 'compact'])
 
     args = parser.parse_args()
 
-    if args.gpu:
-        os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
-
     if args.apply != '':
-        assert args.apply in ['default', 'inference_graph', 'compact']
         if args.apply == 'default':
             apply(args.load)
         elif args.apply == 'inference_graph':
@@ -231,17 +186,22 @@ if __name__ == '__main__':
         else:
             apply_compact(args.load)
     elif args.export != '':
-        assert args.export in ['serving', 'compact']
         if args.export == 'serving':
             export_serving(args.load)
         else:
             export_compact(args.load)
     else:
-        config = get_config()
+        logger.auto_set_dir()
 
-        if args.gpu:
-            config.nr_tower = len(args.gpu.split(','))
-        if args.load:
-            config.session_init = SaverRestore(args.load)
+        ds_train = get_data('train')
 
+        config = TrainConfig(
+            model=Model(),
+            data=QueueInput(ds_train),
+            callbacks=[
+                ModelSaver(),
+            ],
+            steps_per_epoch=1,
+            max_epoch=1,
+        )
         launch_train_with_config(config, SimpleTrainer())
