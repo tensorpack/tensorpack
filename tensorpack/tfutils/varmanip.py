@@ -82,7 +82,7 @@ class SessionUpdate(object):
             vartype = var.value().dtype
             if vartype != val.dtype:
                 msg = "Variable {} has dtype {} but was given a value of dtype {}.".format(name, vartype, val.dtype)
-                newtype = upcast(var.dtype, val.dtype)
+                newtype = upcast(var.dtype.base_dtype, val.dtype)
                 if newtype is not None:
                     val = newtype(val)
                     logger.warn(msg + " Load it after casting!")

@@ -30,7 +30,7 @@ def get_dorefa(bitW, bitA, bitG):
 
             @tf.custom_gradient
             def _sign(x):
-                return tf.sign(x / E) * E, lambda dy: dy
+                return tf.where(tf.equal(x, 0), tf.ones_like(x), tf.sign(x / E)) * E, lambda dy: dy
 
             return _sign(x)
 

@@ -84,7 +84,8 @@ class TowerTrainer(Trainer):
 
     def get_predictor(self, input_names, output_names, device=0):
         """
-        Returns a callable predictor built under ``TowerContext(is_training=False)``.
+        This method will build the tower under ``TowerContext(is_training=False)``,
+        and returns a callable predictor with input placeholders & output tensors in this tower.
 
         Args:
             input_names (list): list of input names, matching the inputs declared for the trainer.

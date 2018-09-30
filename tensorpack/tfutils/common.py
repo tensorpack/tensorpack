@@ -22,7 +22,10 @@ def get_default_sess_config(mem_fraction=0.99):
     You can modify the returned config to fit your needs.
 
     Args:
-        mem_fraction(float): fraction of memory to use.
+        mem_fraction(float): see the `per_process_gpu_memory_fraction` option
+        in TensorFlow's GPUOptions protobuf:
+        https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/protobuf/config.proto
+
     Returns:
         tf.ConfigProto: the config to use.
     """
@@ -36,7 +39,7 @@ def get_default_sess_config(mem_fraction=0.99):
     # TF benchmark use cpu_count() - gpu_thread_count(), e.g. 80 - 8 * 2
     # Didn't see much difference.
 
-    conf.gpu_options.per_process_gpu_memory_fraction = 0.99
+    conf.gpu_options.per_process_gpu_memory_fraction = mem_fraction
 
     # This hurt performance of large data pipeline:
     # https://github.com/tensorflow/benchmarks/commit/1528c46499cdcff669b5d7c006b7b971884ad0e6

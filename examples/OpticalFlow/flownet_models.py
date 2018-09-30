@@ -85,9 +85,7 @@ def resample(img, flow):
     xf = xf + dx
     yf = yf + dy
 
-    alpha = tf.expand_dims(xf - tf.floor(xf), axis=0)
     alpha = tf.expand_dims(xf - tf.floor(xf), axis=-1)
-    beta = tf.expand_dims(yf - tf.floor(yf), axis=0)
     beta = tf.expand_dims(yf - tf.floor(yf), axis=-1)
 
     xL = tf.clip_by_value(tf.cast(tf.floor(xf), dtype=tf.int32), 0, w - 1)
@@ -406,7 +404,6 @@ class FlowNet2C(FlowNetBase):
             corr = tf.nn.leaky_relu(corr, 0.1)
 
             conv_redir = tf.layers.conv2d(conv3a, 32, kernel_size=1, strides=1, name='conv_redir')
-            x = tf.concat([conv_redir, corr], axis=1, name='concat_redir')
 
             in_conv3_1 = tf.concat([conv_redir, corr], axis=1, name='in_conv3_1')
             conv3_1 = tf.layers.conv2d(pad(in_conv3_1, 1), 256, name='conv3_1', strides=1)

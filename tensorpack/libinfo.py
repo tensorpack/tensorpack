@@ -54,4 +54,4 @@ except ImportError:
 
 # This line has to be the last line of the file.
 # setup.py will use it to determine the version
-__version__ = '0.8.8'
+__version__ = '0.8.9'

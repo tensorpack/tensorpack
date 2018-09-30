@@ -1,7 +1,7 @@
 
 # Save and Load models
 
-## Work with TF Checkpoint
+## Inspect a TF Checkpoint
 
 The `ModelSaver` callback saves the model to the directory defined by `logger.get_logger_dir()`,
 in TensorFlow checkpoint format.
@@ -21,9 +21,9 @@ demos how to print all variables and their shapes in a checkpoint.
 It takes a metagraph file (which is also saved by `ModelSaver`) and only saves variables that the model needs at inference time.
 It can dump the model to a `var-name: value` dict saved in npz format.
 
-## Load a Model
+## Load a Model to a Session
 
-Model loading (in either training or testing) is through the `session_init` interface.
+Model loading (in either training or inference) is through the `session_init` interface.
 Currently there are two ways a session can be restored:
 [session_init=SaverRestore(...)](../modules/tfutils.html#tensorpack.tfutils.sessinit.SaverRestore)
 which restores a TF checkpoint,

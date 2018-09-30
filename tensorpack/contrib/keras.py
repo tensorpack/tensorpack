@@ -209,7 +209,7 @@ class KerasModel(object):
                  input, trainer=None):
         """
         Args:
-            get_model (input1, input2, ... -> keras.model.Model):
+            get_model (input1, input2, ... -> keras.Model):
                 Takes tensors and returns a Keras model. Will be part of the tower function.
             inputs_desc ([InputDesc]):
             targets_desc ([InputDesc]):

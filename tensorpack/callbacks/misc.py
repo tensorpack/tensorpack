@@ -42,7 +42,7 @@ class InjectShell(Callback):
 
     Example:
 
-    .. code-block:: python
+    .. code-block:: none
 
         callbacks=[InjectShell('/path/to/pause-training.tmp'), ...]
 

@@ -222,7 +222,7 @@ class AutoResumeTrainConfig(TrainConfig):
             if last_epoch is not None:
                 now_epoch = last_epoch + 1
                 logger.info("Found history statistics from JSON. "
-                            "Overwrite the starting epoch to epoch #{}.".format(now_epoch))
+                            "Setting starting_epoch to {}.".format(now_epoch))
                 kwargs['starting_epoch'] = now_epoch
 
         super(AutoResumeTrainConfig, self).__init__(**kwargs)

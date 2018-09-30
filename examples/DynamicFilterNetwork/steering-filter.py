@@ -123,9 +123,6 @@ class Model(ModelDesc):
     def build_graph(self, theta, image, gt_image, gt_filter):
         kernel_size = 9
 
-        image = image
-        gt_image = gt_image
-
         theta = tf.reshape(theta, [BATCH, 1, 1, 1]) - np.pi
         image = tf.reshape(image, [BATCH, SHAPE, SHAPE, 1])
         gt_image = tf.reshape(gt_image, [BATCH, SHAPE, SHAPE, 1])

@@ -21,7 +21,6 @@ from ..tfutils.tower import get_current_tower_context
 from ..tfutils.dependency import dependency_of_fetches
 from ..utils import logger
 from ..utils.concurrency import ShareSessionThread
-from ..utils.develop import deprecated
 from ..callbacks.base import Callback, CallbackFactory
 from ..callbacks.graph import RunOp
 
@@ -29,7 +28,7 @@ __all__ = ['PlaceholderInput', 'FeedInput', 'FeedfreeInput',
            'QueueInput', 'BatchQueueInput',
            'DummyConstantInput', 'TensorInput',
            'ZMQInput', 'TFDatasetInput',
-           'StagingInputWrapper', 'StagingInput']
+           'StagingInput']
 
 
 def _get_reset_callback(df):
@@ -527,6 +526,8 @@ class StagingInput(FeedfreeInput):
     This means that in multi-GPU training, you should ensure that each call on `hooked_sess.run`
     depends on either all input tensors on all GPUs, or no input tensors at all.
     As a result you cannot use this InputSource for :class:`InferenceRunner`.
+
+    More than one StagingInput cannot be used together.
     """
     class StagingCallback(Callback):
         """
@@ -546,10 +547,10 @@ class StagingInput(FeedfreeInput):
             self.fetches = tf.train.SessionRunArgs(
                 fetches=[self.stage_op, unstage_op])
 
-        def _prefill(self):
+        def _prefill(self, sess):
             logger.info("Pre-filling StagingArea ...")
             for k in range(self.nr_stage):
-                self.stage_op.run()
+                self.stage_op.run(session=sess)
             logger.info("{} element{} put into StagingArea on each tower.".format(
                 self.nr_stage, "s were" if self.nr_stage > 1 else " was"))
 
@@ -558,10 +559,11 @@ class StagingInput(FeedfreeInput):
             # doing it in `before_train` may not work because QueueInput happens in before_train.
             if not self._initialized:
                 self._initialized = True
-                self._prefill()
+                self._prefill(ctx.session)
             # Only step the stagingarea when the input is evaluated in this sess.run
             fetches = ctx.original_args.fetches
             if dependency_of_fetches(fetches, self._check_dependency_op):
+                # note: this disable nesting of StagingInput
                 return self.fetches
 
     def __init__(self, input, nr_stage=1, device=None):
@@ -576,6 +578,9 @@ class StagingInput(FeedfreeInput):
         """
         if not isinstance(input, FeedfreeInput):
             raise ValueError("StagingInput takes a FeedfreeInput! Got {}".format(input))
+        if isinstance(input, StagingInput):
+            raise ValueError("StagingInput cannot be nested!")
+
         self._input = input
 
         self._nr_stage = nr_stage
@@ -623,7 +628,9 @@ class StagingInput(FeedfreeInput):
 
                 # TODO tensorflow/benchmarks use static shapes here,
                 # though it doesn't seem to help. We can use it when it's known.
-                stage = StagingArea(dtypes, shapes=None)
+                # Setting capacity to 1 to potentially save some memory, because we should
+                # expect the consumers to run slower than the producer.
+                stage = StagingArea(dtypes, shapes=None, capacity=1)
 
             # put & get automatically inherit the name scope from the area
             self._stage_ops.append(stage.put(inputs))
@@ -658,8 +665,3 @@ class StagingInput(FeedfreeInput):
             run_before=False,
             run_as_trigger=False,
             run_step=True)
-
-
-@deprecated("Renamed to StagingInput", "2018-08-01")
-def StagingInputWrapper(*args, **kwargs):
-    return StagingInput(*args, **kwargs)

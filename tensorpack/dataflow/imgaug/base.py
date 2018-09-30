@@ -25,7 +25,7 @@ class Augmentor(object):
     def _init(self, params=None):
         if params:
             for k, v in params.items():
-                if k != 'self':
+                if k != 'self' and not k.startswith('_'):
                     setattr(self, k, v)
 
     def reset_state(self):
@@ -113,20 +113,20 @@ class ImageAugmentor(Augmentor):
     floating point images in range [0, 1] or [0, 255].
     """
     def augment_coords(self, coords, param):
-        return self._augment_coords(coords, param)
-
-    def _augment_coords(self, coords, param):
         """
         Augment the coordinates given the param.
-        By default, keeps coordinates unchanged.
+        By default, an augmentor keeps coordinates unchanged.
         If a subclass changes coordinates but couldn't implement this method,
         it should ``raise NotImplementedError()``.
 
         Args:
-            coords: Nx2 floating point nparray where each row is (x, y)
+            coords: Nx2 floating point numpy array where each row is (x, y)
         Returns:
             new coords
         """
+        return self._augment_coords(coords, param)
+
+    def _augment_coords(self, coords, param):
         return coords
 
 

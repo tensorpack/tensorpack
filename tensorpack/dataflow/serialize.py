@@ -245,9 +245,10 @@ if __name__ == '__main__':
     print("Numpy Finished, ", idx)
     print(time.time())
 
-    HDF5Serializer.save(ds, 'out.h5')
+    paths = ['p1', 'p2']
+    HDF5Serializer.save(ds, 'out.h5', paths)
     print(time.time())
-    df = HDF5Serializer.load('out.h5')
+    df = HDF5Serializer.load('out.h5', paths)
     df.reset_state()
     for idx, dp in enumerate(df):
         pass

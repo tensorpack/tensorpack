@@ -14,6 +14,7 @@ __all__ = ['ImageFromFile', 'AugmentImageComponent', 'AugmentImageCoordinates', 
 
 
 def check_dtype(img):
+    assert isinstance(img, np.ndarray), "[Augmentor] Needs an numpy array, but got a {}!".format(type(img))
     if isinstance(img.dtype, np.integer):
         assert img.dtype == np.uint8, \
             "[Augmentor] Got image of type {}, use uint8 or floating points instead!".format(img.dtype)

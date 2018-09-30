@@ -22,8 +22,6 @@ from imagenet_utils import (
     get_imagenet_dataflow,
     ImageNetModel, GoogleNetResize, eval_on_ILSVRC12)
 
-TOTAL_BATCH_SIZE = 1024
-
 
 @layer_register(log_shape=True)
 def DepthConv(x, out_channel, kernel_shape, padding='SAME', stride=1,
@@ -207,6 +205,7 @@ def get_config(model, nr_tower):
         ScheduledHyperParamSetter('learning_rate',
                                   [(0, 0.5), (max_iter, 0)],
                                   interp='linear', step_based=True),
+        EstimatedTimeLeft()
     ]
     infs = [ClassificationError('wrong-top1', 'val-error-top1'),
             ClassificationError('wrong-top5', 'val-error-top5')]
@@ -235,6 +234,7 @@ if __name__ == '__main__':
     parser.add_argument('--group', type=int, default=8, choices=[3, 4, 8],
                         help="Number of groups for ShuffleNetV1")
     parser.add_argument('--v2', action='store_true', help='Use ShuffleNetV2')
+    parser.add_argument('--batch', type=int, default=1024, help='total batch size')
     parser.add_argument('--load', help='path to load a model from')
     parser.add_argument('--eval', action='store_true')
     parser.add_argument('--flops', action='store_true', help='print flops and exit')
@@ -245,6 +245,10 @@ if __name__ == '__main__':
 
     if args.v2 and args.group != parser.get_default('group'):
         logger.error("group= is not used in ShuffleNetV2!")
+
+    if args.batch != 1024:
+        logger.warn("Total batch size != 1024, you need to change other hyperparameters to get the same results.")
+    TOTAL_BATCH_SIZE = args.batch
 
     model = Model()
 

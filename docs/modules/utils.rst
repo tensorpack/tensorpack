@@ -52,7 +52,7 @@ tensorpack.utils.serialize module
     :show-inheritance:
 
 tensorpack.utils.compatible_serialize module
----------------------------------
+--------------------------------------------
 
 .. automodule:: tensorpack.utils.compatible_serialize
     :members:

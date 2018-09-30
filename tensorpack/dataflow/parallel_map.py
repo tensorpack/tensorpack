@@ -224,7 +224,7 @@ class MultiProcessMapDataZMQ(_ParallelMapData, _MultiProcessZMQDataFlow):
             self.hwm = hwm
 
         def run(self):
-            enable_death_signal()
+            enable_death_signal(_warn=self.identity == b'0')
             ctx = zmq.Context()
             socket = ctx.socket(zmq.REP)
             socket.setsockopt(zmq.IDENTITY, self.identity)

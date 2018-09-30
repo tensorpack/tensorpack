@@ -347,8 +347,8 @@ class AsyncMultiGPUBuilder(DataParallelBuilder):
         """
         ps_device = 'cpu' if len(self.towers) >= 4 else 'gpu'
 
+        raw_devices = ['/gpu:{}'.format(k) for k in self.towers]
         if ps_device == 'gpu':
-            raw_devices = ['/gpu:{}'.format(k) for k in self.towers]
             devices = [LeastLoadedDeviceSetter(d, raw_devices) for d in raw_devices]
         else:
             devices = [tf.train.replica_device_setter(

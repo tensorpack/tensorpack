@@ -81,14 +81,28 @@ with TowerContext('some_name_or_empty_string', is_training=False):
   # build the graph again
 ```
 
-### Use Other Symbolic Libraries within Tensorpack
+### Use Other Symbolic Libraries
 
-When defining the model you can construct the graph using whatever library you feel comfortable with.
+Tensorpack & `tf.layers` only provide a subset of most common models.
+However you can construct the graph using whatever library you feel comfortable with.
 
-Usually, slim/tflearn/tensorlayer are just symbolic function wrappers, calling them is nothing different
+Functions in slim/tflearn/tensorlayer are just symbolic function wrappers, calling them is nothing different
 from calling `tf.add`. You may need to be careful how regularizations/BN updates are supposed
 to be handled in those libraries, though.
 
 It is a bit different to use sonnet/Keras.
 sonnet/Keras manages the variable scope by their own model classes, and calling their symbolic functions
 always creates new variable scope. See the [Keras example](../examples/keras) for how to use it within tensorpack.
+
+```eval_rst
+.. note:: **It's best to not trust others' layers!**. 
+    
+    For non-standard layers that's not included in TensorFlow or Tensorpack, it's best to implement them yourself.
+    Non-standard layers often do not have a mathematical definition that people
+    all agree on, and different people can implement it differently. 
+    Also, deep learning models on github often have bugs, especially when there is
+    no reproduced experiments with the code.
+    
+    For your own good, it's best to implement the layers yourself.
+    This is also why Tensorpack does not contain non-standard layers.
+```

@@ -16,6 +16,7 @@ import re
 import tensorflow as tf
 from ..utils import logger
 from ..tfutils.summary import create_scalar_summary, create_image_summary
+from ..utils.develop import HIDE_DOC
 from .base import Callback
 
 __all__ = ['TrainingMonitor', 'Monitors',
@@ -122,6 +123,11 @@ class Monitors(Callback):
         for m in self._monitors:
             assert isinstance(m, TrainingMonitor), m
 
+    def _setup_graph(self):
+        # scalar_history's other methods were not called.
+        # but they are not useful for now
+        self._scalar_history.setup_graph(self.trainer)
+
     def _dispatch(self, func):
         for m in self._monitors:
             func(m)
@@ -203,6 +209,9 @@ class Monitors(Callback):
 
         If you run multiprocess training, keep in mind that
         the data is perhaps only available on chief process.
+
+        Returns:
+            a list of (global_step, value) pairs: history data for this scalar
         """
         return self._scalar_history.get_history(name)
 
@@ -242,9 +251,11 @@ class TFEventWriter(TrainingMonitor):
             self._logdir, graph=tf.get_default_graph(),
             max_queue=self._max_queue, flush_secs=self._flush_secs)
 
+    @HIDE_DOC
     def process_summary(self, summary):
         self._writer.add_summary(summary, self.global_step)
 
+    @HIDE_DOC
     def process_event(self, evt):
         self._writer.add_event(evt)
 
@@ -303,6 +314,12 @@ class JSONWriter(TrainingMonitor):
         except Exception:
             return None
 
+    # initialize the stats here, because before_train from other callbacks may use it
+    def _setup_graph(self):
+        self._stats = []
+        self._stat_now = {}
+        self._last_gs = -1
+
     def _before_train(self):
         stats = JSONWriter.load_existing_json()
         self._fname = os.path.join(logger.get_logger_dir(), JSONWriter.FILENAME)
@@ -312,30 +329,28 @@ class JSONWriter(TrainingMonitor):
             except Exception:
                 epoch = None
 
+            # check against the current training settings
+            # therefore this logic needs to be in before_train stage
             starting_epoch = self.trainer.loop.starting_epoch
             if epoch is None or epoch == starting_epoch:
                 logger.info("Found existing JSON inside {}, will append to it.".format(logger.get_logger_dir()))
                 self._stats = stats
             else:
                 logger.warn(
-                    "History epoch value {} from JSON is not the predecessor of the starting_epoch value {}".format(
+                    "History epoch={} from JSON is not the predecessor of the current starting_epoch={}".format(
                         epoch - 1, starting_epoch))
                 logger.warn("If you want to resume old training, either use `AutoResumeTrainConfig` "
-                            "or correctly set the starting_epoch yourself to avoid inconsistency. "
-                            "Epoch number will not be automatically loaded by JSONWriter.")
+                            "or correctly set the new starting_epoch yourself to avoid inconsistency. ")
 
                 backup_fname = JSONWriter.FILENAME + '.' + datetime.now().strftime('%m%d-%H%M%S')
                 backup_fname = os.path.join(logger.get_logger_dir(), backup_fname)
 
-                logger.warn("Now, we will start training at epoch {} and backup old json to {}".format(
+                logger.warn("Now, we will train with starting_epoch={} and backup old json to {}".format(
                     self.trainer.loop.starting_epoch, backup_fname))
                 shutil.move(self._fname, backup_fname)
-                self._stats = []
-        else:
-            self._stats = []
-        self._stat_now = {}
 
-        self._last_gs = -1
+        # in case we have something to log here.
+        self._trigger()
 
     def _trigger_step(self):
         # will do this in trigger_epoch
@@ -345,6 +360,7 @@ class JSONWriter(TrainingMonitor):
     def _trigger_epoch(self):
         self._trigger()
 
+    @HIDE_DOC
     def process_scalar(self, name, val):
         self._stat_now[name] = val
 
@@ -403,6 +419,10 @@ class ScalarPrinter(TrainingMonitor):
         self._enable_epoch = enable_epoch
         self._dic = {}
 
+    # in case we have something to log here.
+    def _before_train(self):
+        self._trigger()
+
     def _trigger_step(self):
         if self._enable_step:
             if self.local_step != self.trainer.steps_per_epoch - 1:
@@ -417,6 +437,7 @@ class ScalarPrinter(TrainingMonitor):
         if self._enable_epoch:
             self._trigger()
 
+    @HIDE_DOC
     def process_scalar(self, name, val):
         self._dic[name] = float(val)
 
@@ -438,19 +459,20 @@ class ScalarPrinter(TrainingMonitor):
 
 class ScalarHistory(TrainingMonitor):
     """
-    Only used by monitors internally.
+    Only internally used by monitors.
     """
 
     def __init__(self):
         self._dic = defaultdict(list)
 
+    @HIDE_DOC
     def process_scalar(self, name, val):
-        self._dic[name].append(float(val))
+        self._dic[name].append((self.global_step, float(val)))
 
     def get_latest(self, name):
         hist = self._dic[name]
         if len(hist) == 0:
-            raise KeyError("Invalid key: {}".format(name))
+            raise KeyError("No available data for the key: {}".format(name))
         else:
             return hist[-1]
 
@@ -488,6 +510,7 @@ class SendMonitorData(TrainingMonitor):
         self.names = names
         self.dic = {}
 
+    @HIDE_DOC
     def process_scalar(self, name, val):
         if name in self.names:
             self.dic[name] = val

@@ -111,7 +111,7 @@ class InferenceRunner(InferenceRunnerBase):
     A callback that runs a list of :class:`Inferencer` on some :class:`InputSource`.
     """
 
-    def __init__(self, input, infs, tower_name='InferenceTower', device=0):
+    def __init__(self, input, infs, tower_name='InferenceTower', tower_func=None, device=0):
         """
         Args:
             input (InputSource or DataFlow): The :class:`InputSource` to run
@@ -119,6 +119,10 @@ class InferenceRunner(InferenceRunnerBase):
             infs (list): a list of :class:`Inferencer` instances.
             tower_name (str): the name scope of the tower to build. Need to set a
                 different one if multiple InferenceRunner are used.
+            tower_func (tfutils.TowerFuncWrapper or None): the tower function to be used to build the graph.
+                By defaults to call `trainer.tower_func` under a `training=False` TowerContext,
+                but you can change it to a different tower function
+                if you need to inference with several different graphs.
             device (int): the device to use
         """
         if isinstance(input, DataFlow):
@@ -128,6 +132,7 @@ class InferenceRunner(InferenceRunnerBase):
         self._tower_name = tower_name
         self._device_id = device
         self._device = _device_from_int(device)
+        self._tower_func = tower_func
         super(InferenceRunner, self).__init__(input, infs)
 
     def _build_hook(self, inf):
@@ -136,9 +141,10 @@ class InferenceRunner(InferenceRunnerBase):
         return InferencerToHook(inf, fetches)
 
     def _setup_graph(self):
-        assert self.trainer.tower_func is not None, "You must set tower_func of the trainer to use InferenceRunner!"
-        tower_func = self.trainer.tower_func
-        input_callbacks = self._input_source.setup(tower_func.inputs_desc)
+        if self._tower_func is None:
+            assert self.trainer.tower_func is not None, "You must set tower_func of the trainer to use InferenceRunner!"
+            self._tower_func = self.trainer.tower_func
+        input_callbacks = self._input_source.setup(self._tower_func.inputs_desc)
 
         vs_name = self.trainer._vs_name_for_predictor(self._device_id)
         logger.info("[InferenceRunner] Building tower '{}' on device {} {}...".format(
@@ -147,8 +153,8 @@ class InferenceRunner(InferenceRunnerBase):
         with tf.variable_scope(tf.get_variable_scope(), reuse=True), \
                 tf.device(self._device), \
                 PredictTowerContext(self._tower_name, vs_name=vs_name):
-            tower_func(*self._input_source.get_input_tensors())
-            self._tower_handle = tower_func.towers[-1]
+            self._tower_func(*self._input_source.get_input_tensors())
+            self._tower_handle = self._tower_func.towers[-1]
 
         for h in [self._build_hook(inf) for inf in self.infs]:
             self.register_hook(h)
@@ -186,11 +192,17 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
     It will run the remainder (when the total size of input is not a multiple of #GPU)
     sequentially.
     """
-    def __init__(self, input, infs, gpus, tower_name='InferenceTower'):
+    def __init__(self, input, infs, gpus, tower_name='InferenceTower', tower_func=None):
         """
         Args:
             input (DataFlow or QueueInput)
             gpus (int or list[int]): #gpus, or list of GPU id
+            tower_name (str): the name scope of the tower to build. Need to set a
+                different one if multiple InferenceRunner are used.
+            tower_func (tfutils.TowerFuncWrapper or None): the tower function to be used to build the graph.
+                By defaults to call `trainer.tower_func` under a `training=False` TowerContext,
+                but you can change it to a different tower function
+                if you need to inference with several different graphs.
         """
         if isinstance(gpus, int):
             gpus = list(range(gpus))
@@ -205,13 +217,15 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
 
         self._hooks = []
         self._hooks_parallel = []
+        self._tower_func = tower_func
 
     def _setup_graph(self):
         self._handles = []
+        if self._tower_func is None:
+            assert self.trainer.tower_func is not None, "You must set tower_func of the trainer to use InferenceRunner!"
+            self._tower_func = self.trainer.tower_func
 
-        assert self.trainer.tower_func is not None, "You must set tower_func of the trainer to use InferenceRunner!"
-        tower_func = self.trainer.tower_func
-        input_callbacks = self._input_source.setup(tower_func.inputs_desc)
+        input_callbacks = self._input_source.setup(self._tower_func.inputs_desc)
         with tf.variable_scope(tf.get_variable_scope(), reuse=True):
             for idx, dev in enumerate(self._devices):
                 vs_name = self.trainer._vs_name_for_predictor(idx)
@@ -221,8 +235,8 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
                         self._tower_names[idx], dev,
                         "with variable scope '{}'".format(vs_name) if vs_name else ''))
                     # TODO log for tower creation, here or in tower.py?
-                    tower_func(*self._input_source.get_input_tensors())
-                    self._handles.append(tower_func.towers[-1])
+                    self._tower_func(*self._input_source.get_input_tensors())
+                    self._handles.append(self._tower_func.towers[-1])
 
         # setup callbacks and hooks
         self._input_callbacks = Callbacks(input_callbacks)

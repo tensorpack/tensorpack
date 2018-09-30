@@ -12,10 +12,11 @@ import argparse
 
 
 from tensorpack import *
+from tensorpack.utils.gpu import get_num_gpu
 from tensorpack.utils.viz import stack_patches
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
-from GAN import GANTrainer, GANModelDesc
+from GAN import GANTrainer, MultiGPUGANTrainer, GANModelDesc
 
 """
 To train Image-to-Image translation model with image pairs:
@@ -203,7 +204,6 @@ if __name__ == '__main__':
     parser.add_argument('--data', help='Image directory', required=True)
     parser.add_argument('--mode', choices=['AtoB', 'BtoA'], default='AtoB')
     parser.add_argument('-b', '--batch', type=int, default=1)
-    global args
     args = parser.parse_args()
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
@@ -218,12 +218,18 @@ if __name__ == '__main__':
 
         data = QueueInput(get_data())
 
-        GANTrainer(data, Model()).train_with_defaults(
+        nr_tower = max(get_num_gpu(), 1)
+        if nr_tower == 1:
+            trainer = GANTrainer(data, Model())
+        else:
+            trainer = MultiGPUGANTrainer(nr_tower, data, Model())
+
+        trainer.train_with_defaults(
             callbacks=[
                 PeriodicTrigger(ModelSaver(), every_k_epochs=3),
                 ScheduledHyperParamSetter('learning_rate', [(200, 1e-4)])
             ],
-            steps_per_epoch=len(data),
+            steps_per_epoch=data.size(),
             max_epoch=300,
             session_init=SaverRestore(args.load) if args.load else None
         )

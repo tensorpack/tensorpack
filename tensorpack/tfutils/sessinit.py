@@ -140,9 +140,9 @@ class SaverRestore(SessionInit):
                     func(reader, name, v)
                     chkpt_vars_used.add(name)
                 else:
-                    vname = v.op.name
-                    if not is_training_name(vname):
-                        mismatch.add(vname)
+                    # use tensor name (instead of op name) for logging, to be consistent with the reverse case
+                    if not is_training_name(v.name):
+                        mismatch.add(v.name)
         mismatch.log()
         mismatch = MismatchLogger('checkpoint', 'graph')
         if len(chkpt_vars_used) < len(chkpt_vars):

@@ -95,7 +95,7 @@ class AtariPlayer(gym.Env):
 
         self.action_space = spaces.Discrete(len(self.actions))
         self.observation_space = spaces.Box(
-            low=0, high=255, shape=(self.height, self.width), dtype=np.uint8)
+            low=0, high=255, shape=(self.height, self.width, 1), dtype=np.uint8)
         self._restart_episode()
 
     def get_action_meanings(self):
@@ -110,7 +110,7 @@ class AtariPlayer(gym.Env):
 
     def _current_state(self):
         """
-        :returns: a gray-scale (h, w) uint8 image
+        :returns: a gray-scale (h, w, 1) uint8 image
         """
         ret = self._grab_raw_image()
         # max-pooled over the last screen
@@ -121,7 +121,7 @@ class AtariPlayer(gym.Env):
                 cv2.waitKey(int(self.viz * 1000))
         ret = ret.astype('float32')
         # 0.299,0.587.0.114. same as rgb2y in torch/image
-        ret = cv2.cvtColor(ret, cv2.COLOR_RGB2GRAY)
+        ret = cv2.cvtColor(ret, cv2.COLOR_RGB2GRAY)[:, :, np.newaxis]
         return ret.astype('uint8')  # to save some memory
 
     def _restart_episode(self):

@@ -4,15 +4,17 @@
 
 import cv2
 import numpy as np
+import tqdm
 import multiprocessing
 import tensorflow as tf
 from abc import abstractmethod
 
-from tensorpack import imgaug, dataset, ModelDesc
+from tensorpack import ModelDesc
+from tensorpack.input_source import QueueInput, StagingInput
 from tensorpack.dataflow import (
-    AugmentImageComponent, PrefetchDataZMQ,
+    imgaug, dataset, AugmentImageComponent, PrefetchDataZMQ,
     BatchData, MultiThreadMapData)
-from tensorpack.predict import PredictConfig, SimpleDatasetPredictor
+from tensorpack.predict import PredictConfig, FeedfreePredictor
 from tensorpack.utils.stats import RatioCounter
 from tensorpack.models import regularize_cost
 from tensorpack.tfutils.summary import add_moving_summary
@@ -126,12 +128,17 @@ def eval_on_ILSVRC12(model, sessinit, dataflow):
         input_names=['input', 'label'],
         output_names=['wrong-top1', 'wrong-top5']
     )
-    pred = SimpleDatasetPredictor(pred_config, dataflow)
     acc1, acc5 = RatioCounter(), RatioCounter()
-    for top1, top5 in pred.get_result():
+
+    # This does not have a visible improvement over naive predictor,
+    # but will have an improvement if image_dtype is set to float32.
+    pred = FeedfreePredictor(pred_config, StagingInput(QueueInput(dataflow), device='/gpu:0'))
+    for _ in tqdm.trange(dataflow.size()):
+        top1, top5 = pred()
         batch_size = top1.shape[0]
         acc1.feed(top1.sum(), batch_size)
         acc5.feed(top5.sum(), batch_size)
+
     print("Top1 Error: {}".format(acc1.ratio))
     print("Top5 Error: {}".format(acc5.ratio))
 
@@ -168,18 +175,24 @@ class ImageNetModel(ModelDesc):
     """
     loss_scale = 1.
 
+    """
+    Label smoothing (See tf.losses.softmax_cross_entropy)
+    """
+    label_smoothing = 0.
+
     def inputs(self):
         return [tf.placeholder(self.image_dtype, [None, self.image_shape, self.image_shape, 3], 'input'),
                 tf.placeholder(tf.int32, [None], 'label')]
 
     def build_graph(self, image, label):
-        image = ImageNetModel.image_preprocess(image, bgr=self.image_bgr)
+        image = self.image_preprocess(image)
         assert self.data_format in ['NCHW', 'NHWC']
         if self.data_format == 'NCHW':
             image = tf.transpose(image, [0, 3, 1, 2])
 
         logits = self.get_logits(image)
-        loss = ImageNetModel.compute_loss_and_error(logits, label)
+        loss = ImageNetModel.compute_loss_and_error(
+            logits, label, label_smoothing=self.label_smoothing)
 
         if self.weight_decay > 0:
             wd_loss = regularize_cost(self.weight_decay_pattern,
@@ -212,26 +225,29 @@ class ImageNetModel(ModelDesc):
         tf.summary.scalar('learning_rate-summary', lr)
         return tf.train.MomentumOptimizer(lr, 0.9, use_nesterov=True)
 
-    @staticmethod
-    def image_preprocess(image, bgr=True):
+    def image_preprocess(self, image):
         with tf.name_scope('image_preprocess'):
             if image.dtype.base_dtype != tf.float32:
                 image = tf.cast(image, tf.float32)
-            image = image * (1.0 / 255)
-
             mean = [0.485, 0.456, 0.406]    # rgb
             std = [0.229, 0.224, 0.225]
-            if bgr:
+            if self.image_bgr:
                 mean = mean[::-1]
                 std = std[::-1]
-            image_mean = tf.constant(mean, dtype=tf.float32)
-            image_std = tf.constant(std, dtype=tf.float32)
+            image_mean = tf.constant(mean, dtype=tf.float32) * 255.
+            image_std = tf.constant(std, dtype=tf.float32) * 255.
             image = (image - image_mean) / image_std
             return image
 
     @staticmethod
-    def compute_loss_and_error(logits, label):
-        loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
+    def compute_loss_and_error(logits, label, label_smoothing=0.):
+        if label_smoothing == 0.:
+            loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
+        else:
+            nclass = logits.shape[-1]
+            loss = tf.losses.softmax_cross_entropy(
+                tf.one_hot(label, nclass),
+                logits, label_smoothing=label_smoothing)
         loss = tf.reduce_mean(loss, name='xentropy-loss')
 
         def prediction_incorrect(logits, label, topk=1, name='incorrect_vector'):

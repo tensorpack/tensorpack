@@ -22,7 +22,7 @@ class NewSessionCreator(tf.train.ChiefSessionCreator):
         """
         Args:
             target, graph, config: same as :meth:`Session.__init__()`.
-            config: defaults to :func:`tfutils.get_default_sess_config()`
+            config: a :class:`tf.ConfigProto` instance, defaults to :func:`tfutils.get_default_sess_config()`
         """
         assert graph is None
 
@@ -34,7 +34,7 @@ class NewSessionCreator(tf.train.ChiefSessionCreator):
         else:
             self.user_provided_config = True
             logger.warn(
-                "Some options in custom session config may not work due to TF \
+                "User-provided custom session config may not work due to TF \
 bugs. See https://github.com/tensorpack/tensorpack/issues/497 for workarounds.")
 
         self.config = config

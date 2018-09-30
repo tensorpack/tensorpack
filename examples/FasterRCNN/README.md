@@ -71,7 +71,7 @@ prediction will need to be run with the corresponding training configs.
 
 ## Results
 
-These models are trained with different configurations on trainval35k and evaluated on minival using mAP@IoU=0.50:0.95.
+These models are trained on trainval35k and evaluated on minival using mAP@IoU=0.50:0.95.
 Performance in [Detectron](https://github.com/facebookresearch/Detectron/) can be roughly reproduced.
 Mask R-CNN results contain both box and mask mAP.
 

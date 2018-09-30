@@ -135,7 +135,7 @@ class ExpReplay(DataFlow, Callback):
         Args:
             predictor_io_names (tuple of list of str): input/output names to
                 predict Q value from state.
-            player (RLEnvironment): the player.
+            player (gym.Env): the player.
             state_shape (tuple): h, w, c
             history_len (int): length of history frames to concat. Zero-filled
                 initial frames.
@@ -289,7 +289,6 @@ if __name__ == '__main__':
                   history_len=4)
     E._init_memory()
 
-    for k in E.get_data():
+    for _ in E.get_data():
         import IPython as IP
         IP.embed(config=IP.terminal.ipapp.load_default_config())
-        pass

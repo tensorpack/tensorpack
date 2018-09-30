@@ -16,7 +16,7 @@ from tensorpack.contrib.keras import KerasModel
 from tensorpack.callbacks import *
 from tensorflow.python.keras.layers import *
 
-from imagenet_utils import get_imagenet_dataflow, fbresnet_augmentor, ImageNetModel
+from imagenet_utils import get_imagenet_dataflow, fbresnet_augmentor
 
 
 TOTAL_BATCH_SIZE = 512
@@ -90,7 +90,11 @@ def resnet50(image):
     input = Input(tensor=image)
 
     def image_preprocess(image):
-        image = ImageNetModel.image_preprocess(image)
+        image = tf.cast(image, tf.float32)
+        image = image * (1.0 / 255)
+        mean = [0.485, 0.456, 0.406][::-1]
+        std = [0.229, 0.224, 0.225][::-1]
+        image = (image - tf.constant(mean, dtype=tf.float32)) / tf.constant(std, dtype=tf.float32)
         image = tf.transpose(image, [0, 3, 1, 2])
         return image
 
