@@ -8,7 +8,7 @@ __PLEASE ALWAYS INCLUDE__:
 1. What you did:
   + If you're using examples:
     + What's the command you run:
-    + Have you made any changes to code? Paste them if any:
+    + Have you made any changes to the examples? Paste them if any:
   + If not, tell us what you did that may be relevant.
     But we may not investigate it if there is no reproducible code.
   + Better to paste what you did instead of describing them.

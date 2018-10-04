@@ -152,6 +152,7 @@ class SyncMultiGPUTrainerReplicated(SingleCostTrainer):
                 Supported values: ['nccl', 'hierarchical', 'cpu'].
                 Default to pick automatically by heuristics.
                 These modes may have slight (within 5%) differences in speed.
+            use_nccl: deprecated option
         """
         self.devices = gpus
 

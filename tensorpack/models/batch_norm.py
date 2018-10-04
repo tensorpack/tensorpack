@@ -105,6 +105,8 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
 
           This implementation averages the per-GPU E[x] and E[x^2] among GPUs to compute
           global mean & variance. Therefore each GPU needs to have the same batch size.
+          It will match the BatchNorm layer on each GPU by its name (`BatchNorm('name', input)`).
+          If names do not match, the operation will hang.
 
           This option has no effect when not training.
 

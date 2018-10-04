@@ -101,19 +101,19 @@ class MergeAllSummaries_RunWithOp(Callback):
 def MergeAllSummaries(period=0, run_alone=False, key=tf.GraphKeys.SUMMARIES):
     """
     This callback is enabled by default.
-    Evaluate all summaries by `tf.summary.merge_all`, and write to logs.
+    Evaluate all summaries by `tf.summary.merge_all`, and write them to logs.
 
     Args:
         period (int): by default the callback summarizes once every epoch.
             This option (if not set to 0) makes it additionally summarize every ``period`` steps.
         run_alone (bool): whether to evaluate the summaries alone.
             If True, summaries will be evaluated after each epoch alone.
-            If False, summaries will be evaluated together with other
+            If False, summaries will be evaluated together with the
             `sess.run` calls, in the last step of each epoch.
             For :class:`SimpleTrainer`, it needs to be False because summary may
             depend on inputs.
         key (str): the collection of summary tensors. Same as in `tf.summary.merge_all`.
-            Default is ``tf.GraphKeys.SUMMARIES``
+            Default is ``tf.GraphKeys.SUMMARIES``.
     """
     period = int(period)
     if run_alone:

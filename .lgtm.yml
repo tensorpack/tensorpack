@@ -5,6 +5,9 @@ queries:
   - exclude: py/import-and-import-from
   - exclude: py/similar-function
   - exclude: py/unused-local-variable
+  # buggy: https://discuss.lgtm.com/t/python-false-positive-about-super/1330/3
+  - exclude: py/super-not-enclosing-class
+  - exclude: py/unreachable-statement
 extraction:
   python:
     prepare:

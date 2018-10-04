@@ -95,7 +95,7 @@ sonnet/Keras manages the variable scope by their own model classes, and calling 
 always creates new variable scope. See the [Keras example](../examples/keras) for how to use it within tensorpack.
 
 ```eval_rst
-.. note:: **It's best to not trust others' layers!**. 
+.. note:: **It's best to not trust others' layers!**
     
     For non-standard layers that's not included in TensorFlow or Tensorpack, it's best to implement them yourself.
     Non-standard layers often do not have a mathematical definition that people
