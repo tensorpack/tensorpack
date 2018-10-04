@@ -217,12 +217,7 @@ if __name__ == '__main__':
         logger.auto_set_dir()
 
         data = QueueInput(get_data())
-
-        nr_tower = max(get_num_gpu(), 1)
-        if nr_tower == 1:
-            trainer = GANTrainer(data, Model())
-        else:
-            trainer = MultiGPUGANTrainer(nr_tower, data, Model())
+        trainer = GANTrainer(data, Model(), get_num_gpu())
 
         trainer.train_with_defaults(
             callbacks=[
