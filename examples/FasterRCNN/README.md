@@ -17,21 +17,26 @@ with the support of:
 + pycocotools: `pip install 'git+https://github.com/cocodataset/cocoapi.git#subdirectory=PythonAPI'`
 + Pre-trained [ImageNet ResNet model](http://models.tensorpack.com/FasterRCNN/)
   from tensorpack model zoo.
-+ COCO data. It needs to have the following directory structure:
++ [COCO data](http://cocodataset.org/#download). It needs to have the following directory structure:
 ```
 COCO/DIR/
   annotations/
-    instances_train2014.json
-    instances_val2014.json
-    instances_minival2014.json
-    instances_valminusminival2014.json
-  train2014/
-    COCO_train2014_*.jpg
-  val2014/
-    COCO_val2014_*.jpg
+    instances_train201?.json
+    instances_val201?.json
+  train201?/
+    COCO_train201?_*.jpg
+  val201?/
+    COCO_val201?_*.jpg
 ```
-`minival` and `valminusminival` are optional. You can download them
-[here](https://github.com/rbgirshick/py-faster-rcnn/blob/master/data/README.md).
+
+You can use either the 2014 version or the 2017 version of the dataset.
+To use the common "trainval35k + minival" split for the 2014 dataset, just
+download the annotation files `instances_minival2014.json`,
+`instances_valminusminival2014.json` from
+[here](https://github.com/rbgirshick/py-faster-rcnn/blob/master/data/README.md)
+to `annotations/` as well.
+
+<sub><sup>Note that train2017==trainval35k==train2014+val2014-minival2014, and val2017==minival2014</sup></sub>
 
 
 ## Usage
@@ -71,7 +76,7 @@ prediction will need to be run with the corresponding training configs.
 
 ## Results
 
-These models are trained on trainval35k and evaluated on minival using mAP@IoU=0.50:0.95.
+These models are trained on trainval35k and evaluated on minival2014 using mAP@IoU=0.50:0.95.
 Performance in [Detectron](https://github.com/facebookresearch/Detectron/) can be roughly reproduced.
 Mask R-CNN results contain both box and mask mAP.
 
