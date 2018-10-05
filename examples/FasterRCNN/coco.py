@@ -18,14 +18,10 @@ __all__ = ['COCODetection', 'COCOMeta']
 
 
 class _COCOMeta(object):
+    # handle the weird (but standard) split of train and val
     INSTANCE_TO_BASEDIR = {
-        'train2014': 'train2014',
-        'val2014': 'val2014',
         'valminusminival2014': 'val2014',
         'minival2014': 'val2014',
-        'test2014': 'test2014',
-        'train2017': 'train2017',
-        'val2017': 'val2017',
     }
 
     def valid(self):
@@ -54,10 +50,9 @@ COCOMeta = _COCOMeta()
 
 class COCODetection(object):
     def __init__(self, basedir, name):
-        assert name in COCOMeta.INSTANCE_TO_BASEDIR.keys(), name
         self.name = name
         self._imgdir = os.path.realpath(os.path.join(
-            basedir, COCOMeta.INSTANCE_TO_BASEDIR[name]))
+            basedir, COCOMeta.INSTANCE_TO_BASEDIR.get(name, name)))
         assert os.path.isdir(self._imgdir), self._imgdir
         annotation_file = os.path.join(
             basedir, 'annotations/instances_{}.json'.format(name))

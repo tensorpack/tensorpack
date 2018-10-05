@@ -1,6 +1,5 @@
 
-__If you meet any unexpected problems when running the code, or want to report bugs, please STOP here__. Go to the
-following link instead and fill out the information there:
+# If you meet any unexpected problems when running the code, or want to report bugs, please STOP here. Go to the following link instead and fill out the information there:
 https://github.com/tensorpack/tensorpack/issues/new?template=unexpected-problems---bugs.md
 
 

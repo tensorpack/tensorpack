@@ -3,6 +3,7 @@
 # File: svhn-digit-dorefa.py
 # Author: Yuxin Wu
 
+import os
 import argparse
 import tensorflow as tf
 
@@ -23,14 +24,11 @@ This is our attempt to reproduce it on tensorpack.
 
 Accuracy:
     With (W,A,G)=(1,1,4), can reach 3.1~3.2% error after 150 epochs.
-    With the GaussianDeform augmentor, it will reach 2.8~2.9%
-    (we are not using this augmentor in the paper).
-
     With (W,A,G)=(1,2,4), error is 3.0~3.1%.
-    With (W,A,G)=(32,32,32), error is about 2.9%.
+    With (W,A,G)=(32,32,32), error is about 2.3%.
 
 Speed:
-    30~35 iteration/s on 1 TitanX Pascal. (4721 iterations / epoch)
+    With quantization, 60 batch/s on 1 1080Ti. (4721 batch / epoch)
 
 To Run:
     ./svhn-digit-dorefa.py --dorefa 1,2,4
@@ -61,11 +59,13 @@ class Model(ModelDesc):
                 logger.info("Binarizing weight {}".format(v.op.name))
                 return fw(v)
 
-        def cabs(x):
-            return tf.minimum(1.0, tf.abs(x), name='cabs')
+        def nonlin(x):
+            if BITA == 32:
+                return tf.nn.relu(x)
+            return tf.clip_by_value(x, 0.0, 1.0)
 
         def activate(x):
-            return fa(cabs(x))
+            return fa(nonlin(x))
 
         image = image / 256.0
 
@@ -103,7 +103,7 @@ class Model(ModelDesc):
                       .tf.nn.dropout(0.5 if is_training else 1.0)
                       .Conv2D('conv6', 512, 5, padding='VALID')
                       .apply(fg).BatchNorm('bn6')
-                      .apply(cabs)
+                      .apply(nonlin)
                       .FullyConnected('fc1', 10)())
         tf.nn.softmax(logits, name='output')
 
@@ -133,7 +133,7 @@ class Model(ModelDesc):
 
 
 def get_config():
-    logger.auto_set_dir()
+    logger.set_logger_dir(os.path.join('train_log', 'svhn-dorefa-{}'.format(args.dorefa)))
 
     # prepare dataset
     d1 = dataset.SVHNDigit('train')
@@ -145,9 +145,6 @@ def get_config():
         imgaug.Resize((40, 40)),
         imgaug.Brightness(30),
         imgaug.Contrast((0.5, 1.5)),
-        # imgaug.GaussianDeform(  # this is slow but helpful. only use it when you have lots of cpus
-        # [(0.2, 0.2), (0.2, 0.8), (0.8,0.8), (0.8,0.2)],
-        # (40,40), 0.2, 3),
     ]
     data_train = AugmentImageComponent(data_train, augmentors)
     data_train = BatchData(data_train, 128)
