@@ -25,7 +25,7 @@ from ..graph_builder.utils import override_to_local_variable
 
 from .tower import SingleCostTrainer
 
-__all__ = ['SimpleTrainer',
+__all__ = ['NoOpTrainer', 'SimpleTrainer',
            'QueueInputTrainer',
            'SyncMultiGPUTrainer',
            'SyncMultiGPUTrainerReplicated',
@@ -54,6 +54,18 @@ class SimpleTrainer(SingleCostTrainer):
             opt = get_opt_fn()
             self.train_op = opt.apply_gradients(grads, name='min_op')
         return []
+
+
+class NoOpTrainer(SimpleTrainer):
+    """
+    A special trainer that builds the graph (if given a tower function)
+    and does nothing in each step.
+    It is used to only run the callbacks.
+
+    Note that `steps_per_epoch` and `max_epochs` are still valid options.
+    """
+    def run_step(self):
+        pass
 
 
 # Only exists for type check & back-compatibility

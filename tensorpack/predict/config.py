@@ -17,8 +17,8 @@ __all__ = ['PredictConfig']
 class PredictConfig(object):
     def __init__(self,
                  model=None,
-                 inputs_desc=None,
                  tower_func=None,
+                 inputs_desc=None,
 
                  input_names=None,
                  output_names=None,
@@ -35,8 +35,10 @@ class PredictConfig(object):
 
         Args:
             model (ModelDescBase): to be used to obtain inputs_desc and tower_func.
-            inputs_desc ([InputDesc]):
             tower_func: a callable which takes input tensors (by positional args) and construct a tower.
+                or a :class:`tfutils.TowerFuncWrapper` instance, which packs both `inputs_desc` and function together.
+            inputs_desc ([InputDesc]): if tower_func is a plain function (instead of a TowerFuncWrapper), this describes
+                the list of inputs it takes.
 
             input_names (list): a list of input tensor names. Defaults to match inputs_desc.
             output_names (list): a list of names of the output tensors to predict, the
@@ -59,6 +61,8 @@ class PredictConfig(object):
             self.inputs_desc = model.get_inputs_desc()
             self.tower_func = TowerFuncWrapper(model.build_graph, self.inputs_desc)
         else:
+            if isinstance(tower_func, TowerFuncWrapper):
+                inputs_desc = tower_func.inputs_desc
             assert inputs_desc is not None and tower_func is not None
             self.inputs_desc = inputs_desc
             self.tower_func = TowerFuncWrapper(tower_func, inputs_desc)

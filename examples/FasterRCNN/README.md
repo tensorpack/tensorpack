@@ -36,7 +36,7 @@ download the annotation files `instances_minival2014.json`,
 [here](https://github.com/rbgirshick/py-faster-rcnn/blob/master/data/README.md)
 to `annotations/` as well.
 
-<sub><sup>Note that train2017==trainval35k==train2014+val2014-minival2014, and val2017==minival2014</sup></sub>
+<sup>Note that train2017==trainval35k==train2014+val2014-minival2014, and val2017==minival2014</sup>
 
 
 ## Usage

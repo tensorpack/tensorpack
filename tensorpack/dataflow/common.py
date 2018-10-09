@@ -318,6 +318,8 @@ class MapDataComponent(MapData):
         if r is None:
             return None
         dp = copy(dp)   # shallow copy to avoid modifying the datapoint
+        if isinstance(dp, tuple):
+            dp = list(dp)  # to be able to modify it in the next line
         dp[self._index] = r
         return dp
 

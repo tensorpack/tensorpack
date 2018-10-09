@@ -19,7 +19,16 @@ __all__ = ['ScalarStats', 'Inferencer',
 @six.add_metaclass(ABCMeta)
 class Inferencer(Callback):
     """ Base class of Inferencer.
-    Inferencer is a special kind of callback that should be called by :class:`InferenceRunner`. """
+    Inferencer is a special kind of callback that should be called by :class:`InferenceRunner`.
+    It has the methods `_get_fetches` and `_on_fetches` which are like
+    :class:`SessionRunHooks`, except that they will be used only by :class:`InferenceRunner`.
+
+    .. document private functions
+    .. automethod:: _before_inference
+    .. automethod:: _after_inference
+    .. automethod:: _get_fetches
+    .. automethod:: _on_fetches
+    """
 
     def _before_epoch(self):
         self._before_inference()
@@ -58,6 +67,9 @@ class Inferencer(Callback):
         return [get_op_tensor_name(n)[1] for n in ret]
 
     def _get_fetches(self):
+        """
+        To be implemented by subclasses
+        """
         raise NotImplementedError()
 
     def on_fetches(self, results):
@@ -71,6 +83,9 @@ class Inferencer(Callback):
         self._on_fetches(results)
 
     def _on_fetches(self, results):
+        """
+        To be implemented by subclasses
+        """
         raise NotImplementedError()
 
 

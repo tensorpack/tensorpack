@@ -200,8 +200,11 @@ class Monitors(Callback):
 
         If you run multiprocess training, keep in mind that
         the data is perhaps only available on chief process.
+
+        Returns:
+            scalar
         """
-        return self._scalar_history.get_latest(name)
+        return self._scalar_history.get_latest(name)[1]
 
     def get_history(self, name):
         """
