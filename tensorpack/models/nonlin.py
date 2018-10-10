@@ -7,7 +7,7 @@ import tensorflow as tf
 from .common import layer_register, VariableHolder
 from .batch_norm import BatchNorm
 
-__all__ = ['Maxout', 'PReLU', 'BNReLU']
+__all__ = ['Maxout', 'PReLU', 'BNReLU', 'BNLeakyReLU']
 
 
 @layer_register(use_scope=None)
@@ -66,4 +66,14 @@ def BNReLU(x, name=None):
     """
     x = BatchNorm('bn', x)
     x = tf.nn.relu(x, name=name)
+    return x
+
+
+@layer_register(use_scope=None)
+def BNLeakyReLU(x, name=None):
+    """
+    A shorthand of BatchNormalization + LeakyReLU.
+    """
+    x = BatchNorm('bn', x)
+    x = tf.nn.leaky_relu(x, name=name)
     return x

@@ -228,7 +228,7 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
             self._mode = 'cpu'
 
         dtypes = set([x[0].dtype.base_dtype for x in grad_list[0]])
-        valid_for_nccl = all([k in [tf.float32, tf.float64] for k in dtypes])
+        valid_for_nccl = all([k in [tf.float16, tf.float32, tf.float64] for k in dtypes])
         if self._mode == 'nccl' and not valid_for_nccl:
             logger.warn("Cannot use mode='nccl' because some gradients have unsupported types. Fallback to mode='cpu'")
             self._mode = 'cpu'
