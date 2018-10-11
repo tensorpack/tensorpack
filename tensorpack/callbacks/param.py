@@ -357,8 +357,6 @@ class StatMonitorParamSetter(HyperParamSetter):
         self.threshold = threshold
         self.reverse = reverse
 
-        self.observations_since_last_changed = 0
-
     def _get_value_to_set(self):
         try:
             last = self.trainer.monitors.get_history(self.stat_name)[-1]
@@ -371,11 +369,8 @@ class StatMonitorParamSetter(HyperParamSetter):
             return None
 
         self.history.append(last)
-        self.observations_since_last_changed += 1
 
-        if len(self.history) < self.history.maxlen or \
-                self.observations_since_last_changed < self.history.maxlen:
-            # not full yet, or the k observations which lead to the last change haven't been all popped out
+        if len(self.history) < self.history.maxlen:
             return None
 
         values = [k[1] for k in self.history]
@@ -388,7 +383,7 @@ class StatMonitorParamSetter(HyperParamSetter):
             hist_max = max(values)
             if hist_max > hist_first + self.threshold:  # large enough
                 return None
-        self.observations_since_last_changed = 0
+        self.history.clear()
         logger.info(
             "[StatMonitorParamSetter] Triggered, history of {}: ".format(
                 self.stat_name) + ','.join([str(round(x, 3)) for x in values]))
