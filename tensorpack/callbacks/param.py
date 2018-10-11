@@ -151,12 +151,10 @@ class HyperParamSetter(Callback):
         """
         ret = self._get_value_to_set()
         if ret is not None and ret != self._last_value:
-            if self.epoch_num != self._last_epoch_set:
-                # Print this message at most once every epoch
-                logger.info("[HyperParamSetter] At global_step={}, {} will change to {:.8f}".format(
-                    self.global_step, self.param.readable_name, ret))
+            logger.info("[HyperParamSetter] At global_step={}, {} will change to {:.8f}".format(
+                self.global_step, self.param.readable_name, ret))
             self._last_epoch_set = self.epoch_num
-        self._last_value = ret
+            self._last_value = ret
         return ret
 
     @abstractmethod
@@ -359,7 +357,7 @@ class StatMonitorParamSetter(HyperParamSetter):
         self.threshold = threshold
         self.reverse = reverse
 
-        self.last_changed_epoch = 0
+        self.observations_since_last_changed = 0
 
     def _get_value_to_set(self):
         try:
@@ -373,10 +371,11 @@ class StatMonitorParamSetter(HyperParamSetter):
             return None
 
         self.history.append(last)
+        self.observations_since_last_changed += 1
 
         if len(self.history) < self.history.maxlen or \
-                self.epoch_num - self.last_changed_epoch < self.history.maxlen:
-            # not full yet, or value have changed just now
+                self.observations_since_last_changed < self.history.maxlen:
+            # not full yet, or the k observations which lead to the last change haven't been all popped out
             return None
 
         values = [k[1] for k in self.history]
@@ -389,7 +388,7 @@ class StatMonitorParamSetter(HyperParamSetter):
             hist_max = max(values)
             if hist_max > hist_first + self.threshold:  # large enough
                 return None
-        self.last_changed_epoch = self.epoch_num
+        self.observations_since_last_changed = 0
         logger.info(
             "[StatMonitorParamSetter] Triggered, history of {}: ".format(
                 self.stat_name) + ','.join([str(round(x, 3)) for x in values]))
