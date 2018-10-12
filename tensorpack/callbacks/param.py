@@ -153,8 +153,12 @@ class HyperParamSetter(Callback):
         if ret is not None and ret != self._last_value:
             if self.epoch_num != self._last_epoch_set:
                 # Print this message at most once every epoch
-                logger.info("[HyperParamSetter] At global_step={}, {} will change to {:.8f}".format(
-                    self.global_step, self.param.readable_name, ret))
+                if self._last_value is None:
+                    logger.info("[HyperParamSetter] At global_step={}, {} is set to {:.6f}".format(
+                        self.global_step, self.param.readable_name, ret))
+                else:
+                    logger.info("[HyperParamSetter] At global_step={}, {} changes from {:.6f} to {:.6f}".format(
+                        self.global_step, self.param.readable_name, self._last_value, ret))
             self._last_epoch_set = self.epoch_num
         self._last_value = ret
         return ret
