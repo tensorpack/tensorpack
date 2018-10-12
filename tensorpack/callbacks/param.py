@@ -160,7 +160,7 @@ class HyperParamSetter(Callback):
                     logger.info("[HyperParamSetter] At global_step={}, {} changes from {:.6f} to {:.6f}".format(
                         self.global_step, self.param.readable_name, self._last_value, ret))
             self._last_epoch_set = self.epoch_num
-        self._last_value = ret
+            self._last_value = ret
         return ret
 
     @abstractmethod
@@ -363,8 +363,6 @@ class StatMonitorParamSetter(HyperParamSetter):
         self.threshold = threshold
         self.reverse = reverse
 
-        self.last_changed_epoch = 0
-
     def _get_value_to_set(self):
         try:
             last = self.trainer.monitors.get_history(self.stat_name)[-1]
@@ -378,9 +376,7 @@ class StatMonitorParamSetter(HyperParamSetter):
 
         self.history.append(last)
 
-        if len(self.history) < self.history.maxlen or \
-                self.epoch_num - self.last_changed_epoch < self.history.maxlen:
-            # not full yet, or value have changed just now
+        if len(self.history) < self.history.maxlen:
             return None
 
         values = [k[1] for k in self.history]
@@ -393,7 +389,7 @@ class StatMonitorParamSetter(HyperParamSetter):
             hist_max = max(values)
             if hist_max > hist_first + self.threshold:  # large enough
                 return None
-        self.last_changed_epoch = self.epoch_num
+        self.history.clear()
         logger.info(
             "[StatMonitorParamSetter] Triggered, history of {}: ".format(
                 self.stat_name) + ','.join([str(round(x, 3)) for x in values]))
