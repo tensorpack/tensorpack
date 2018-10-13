@@ -404,11 +404,12 @@ class HorovodTrainer(SingleCostTrainer):
     @HIDE_DOC
     def initialize(self, session_creator, session_init):
         # broadcast_op should be the last setup_graph: it needs to be created
-        # "right before" the session is initialized,
+        # "right before" the graph is finalized,
         # because it needs to capture all the variables (which may be created by callbacks).
         with tf.name_scope('horovod_broadcast'):
             self._broadcast_op = hvd.broadcast_global_variables(0)
 
+        # it's important that our NewSessionCreator does not finalize the graph
         if not isinstance(session_creator, NewSessionCreator):
             raise ValueError(
                 "session_creator has to be `NewSessionCreator` for horovod training! ")
@@ -423,6 +424,9 @@ class HorovodTrainer(SingleCostTrainer):
 
         # This broadcast belongs to the "intialize" stage
         # It should not be delayed to the "before_train" stage.
+        # TODO:
+        # 1. a allgather helper to concat strings
+        # 2. check variables on each rank match each other, print warnings, and broadcast the common set.
         logger.info("Broadcasting initialized variables ...")
         self.sess.run(self._broadcast_op)
 

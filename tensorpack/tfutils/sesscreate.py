@@ -10,24 +10,25 @@ __all__ = ['NewSessionCreator', 'ReuseSessionCreator', 'SessionCreatorAdapter']
 
 """
 A SessionCreator should:
-    (optionally) finalize the graph
     create the session
     initialize all variables
     return a session that is ready to use
+    not finalize the graph
 """
 
 
-class NewSessionCreator(tf.train.ChiefSessionCreator):
-    def __init__(self, target='', graph=None, config=None):
+class NewSessionCreator(tf.train.SessionCreator):
+    def __init__(self, target='', config=None):
         """
         Args:
-            target, graph, config: same as :meth:`Session.__init__()`.
+            target, config: same as :meth:`Session.__init__()`.
             config: a :class:`tf.ConfigProto` instance, defaults to :func:`tfutils.get_default_sess_config()`
         """
-        assert graph is None
+        self.config = config
+        self.target = target
 
         if config is None:
-            # distributd trainer doesn't support user-provided config
+            # distributed trainer doesn't support user-provided config
             # we set this attribute so that they can check
             self.user_provided_config = False
             config = get_default_sess_config()
@@ -37,8 +38,11 @@ class NewSessionCreator(tf.train.ChiefSessionCreator):
                 "User-provided custom session config may not work due to TF \
 bugs. See https://github.com/tensorpack/tensorpack/issues/497 for workarounds.")
 
-        self.config = config
-        super(NewSessionCreator, self).__init__(master=target, config=config)
+    def create_session(self):
+        sess = tf.Session(target=self.target, config=self.config)
+        sess.run(tf.global_variables_initializer())
+        sess.run(tf.local_variables_initializer())
+        return sess
 
 
 class ReuseSessionCreator(tf.train.SessionCreator):
