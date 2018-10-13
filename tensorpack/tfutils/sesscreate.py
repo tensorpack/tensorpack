@@ -24,7 +24,6 @@ class NewSessionCreator(tf.train.SessionCreator):
             target, config: same as :meth:`Session.__init__()`.
             config: a :class:`tf.ConfigProto` instance, defaults to :func:`tfutils.get_default_sess_config()`
         """
-        self.config = config
         self.target = target
 
         if config is None:
@@ -37,6 +36,7 @@ class NewSessionCreator(tf.train.SessionCreator):
             logger.warn(
                 "User-provided custom session config may not work due to TF \
 bugs. See https://github.com/tensorpack/tensorpack/issues/497 for workarounds.")
+        self.config = config
 
     def create_session(self):
         sess = tf.Session(target=self.target, config=self.config)
