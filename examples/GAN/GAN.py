@@ -91,12 +91,12 @@ class GANTrainer(TowerTrainer):
         cbs = input.setup(model.get_inputs_desc())
         self.register_callback(cbs)
 
-        if num_gpu < 2:
-            self._build_single_gan_trainer(input, model)
+        if num_gpu <= 1:
+            self._build_gan_trainer(input, model)
         else:
-            self._build_multi_gan_trainer(input, model, num_gpu)
+            self._build_multigpu_gan_trainer(input, model, num_gpu)
 
-    def _build_single_gan_trainer(self, input, model):
+    def _build_gan_trainer(self, input, model):
         """
         We need to set tower_func because it's a TowerTrainer,
         and only TowerTrainer supports automatic graph creation for inference during training.
@@ -118,7 +118,7 @@ class GANTrainer(TowerTrainer):
                 d_min = opt.minimize(model.d_loss, var_list=model.d_vars, name='d_op')
         self.train_op = d_min
 
-    def _build_multi_gan_trainer(self, input, model, num_gpu=1):
+    def _build_multigpu_gan_trainer(self, input, model, num_gpu):
         assert num_gpu > 1
         raw_devices = ['/gpu:{}'.format(k) for k in range(num_gpu)]
 
