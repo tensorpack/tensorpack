@@ -104,13 +104,35 @@ class Trainer(object):
     """
     The ``tf.Session`` object the trainer is using.
     Available after :meth:`initialize()`.
+
+    Using ``trainer.sess.run`` to evaluate tensors that depend on the inputs
+    can lead to unexpected effect:
+
+    For example, if you use ``trainer.sess.run`` to evaluate a tensor that depends on the
+    inputs coming from a ``StagingArea``,
+    this will take a datapoint from the ``StagingArea``, making the ``StagingArea`` empty, and as a result
+    make the training hang.
     """
 
     hooked_sess = None
     """
     The ``tf.train.MonitoredSession`` object the trainer is using.
-    It contains all the hooks the callbacks have registered.
+    It contains all the ``before_run/after_run`` hooks the callbacks have registered.
+    It is used for running the training iterations.
     Available after :meth:`initialize()`.
+
+    Note that using ``hooked_sess.run`` will evaluate all the hooks,
+    just like running a training iteration. It may do the following:
+
+    1. Take a datapoint from the InputSource
+    2. Increase the global_step
+    3. Evaluate some summaries
+
+    Typically you do not want to use ``hooked_sess.run`` in callbacks,
+    because it is for the "training iteration". If you just want to evaluate
+    some tensors, use ``sess.run`` if the tensors does not depend on the inputs,
+    or more generally, use `before_run/after_run` to evaluate the tensors **along with**
+    the training iterations.
     """
 
     def __init__(self):

@@ -79,11 +79,15 @@ You can overwrite any of the following methods in the new callback:
     return tf.train.SessionRunArgs(fetches=my_op)
   ```
 
-  The training loops would become `sess.run([training_op, my_op])`.
+  The training loops would become equivalent to `sess.run([training_op, my_op])`.
   
   However, if you write `my_op.run()` in `_trigger_step`, the training loop would become
   `sess.run(training_op); sess.run(my_op);`.
   Usually the difference matters, please choose carefully.
+  
+  If you want to run ops that depend on your inputs, it's better to run it
+  __along with__ the training iteration, to avoid wasting a datapoint and avoid
+  messing up hooks of the `InputSource`.
 
 * `_trigger_step(self)`
 
@@ -107,7 +111,13 @@ You can overwrite any of the following methods in the new callback:
 * Access tensors / ops (details mentioned above):
 	* For existing tensors/ops created in the tower, access them through [self.trainer.towers](../../modules/train.html#tensorpack.train.TowerTrainer.towers).
 	* Extra tensors/ops have to be created in `_setup_graph` callback method.
-* Access the current graph and session by `self.trainer.graph` and `self.trainer.sess`.
+* Access the current graph and session by `self.trainer.graph` and
+  `self.trainer.sess`, `self.trainer.hooked_sess`.
+  Note that calling `(hooked_)sess.run` to evaluate tensors may have unexpected
+  effect in certain scenarios. 
+  In general, use `sess.run` to evaluate tensors that do not depend on the inputs.
+  And use `_{before,after}_run` to evaluate tensors together with inputs if the
+  tensors depend on the inputs.
 * Write stuff to the monitor backend, by `self.trainer.monitors.put_xxx`.
   The monitors might direct your events to TensorFlow events file, JSON file, stdout, etc.
   You can access history monitor data as well. See the docs for [Monitors](../../modules/callbacks.html#tensorpack.callbacks.Monitors)
@@ -118,7 +128,7 @@ You can overwrite any of the following methods in the new callback:
 ### Typical Steps about Writing/Using a Callback
 
 * Define the callback in `__init__`, prepare for it in `_setup_graph, _before_train`.
-* Know whether you want to do something __along with__ the session run or not.
+* Know whether you want to do something __along with__ the training iterations or not.
   If yes, implement the logic with `_{before,after}_run`.
   Otherwise, implement in `_trigger`, or `_trigger_step`.
 * You can choose to only implement "what to do", and leave "when to do" to

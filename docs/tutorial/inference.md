@@ -51,12 +51,16 @@ with TowerContext('', is_training=False):
 	training settings (queues, iterators, summaries, evaluations, multi-gpu replications).
 	Therefore it is usually wrong to import a training metagraph for inference.
 
+    It's especially error-prone to load a metagraph on top of a non-empty graph.
+    The potential name conflicts between the current graph and the nodes in the
+    metagraph can lead to esoteric bugs or sometimes completely ruin the model.
+
 	It's also very common to change the graph for inference.
 	For example, you may need a different data layout for CPU inference,
 	or you may need placeholders in the inference graph (which may not even exist in
 	the training graph). However metagraph is not designed to be easily modified at all.
 
-	To do inference, it's best to recreate a clean graph (and save it if needed) by yourself.
+	Due to the above reasons, to do inference, it's best to recreate a clean graph (and save it if needed) by yourself.
 ```
 
 ### Step 2: load the checkpoint
