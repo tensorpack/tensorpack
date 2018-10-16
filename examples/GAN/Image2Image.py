@@ -16,7 +16,7 @@ from tensorpack.utils.gpu import get_num_gpu
 from tensorpack.utils.viz import stack_patches
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
-from GAN import GANTrainer, MultiGPUGANTrainer, GANModelDesc
+from GAN import GANTrainer, GANModelDesc
 
 """
 To train Image-to-Image translation model with image pairs:
@@ -217,12 +217,7 @@ if __name__ == '__main__':
         logger.auto_set_dir()
 
         data = QueueInput(get_data())
-
-        nr_tower = max(get_num_gpu(), 1)
-        if nr_tower == 1:
-            trainer = GANTrainer(data, Model())
-        else:
-            trainer = MultiGPUGANTrainer(nr_tower, data, Model())
+        trainer = GANTrainer(data, Model(), get_num_gpu())
 
         trainer.train_with_defaults(
             callbacks=[

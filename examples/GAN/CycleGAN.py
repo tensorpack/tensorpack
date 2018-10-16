@@ -212,7 +212,7 @@ if __name__ == '__main__':
 
     df = get_data(args.data)
     df = PrintData(df)
-    data = StagingInput(QueueInput(df))
+    data = QueueInput(df)
 
     GANTrainer(data, Model()).train_with_defaults(
         callbacks=[
