@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 # File: serialize.py
 
+import sys
 import os
 from .develop import create_dummy_func
+from . import logger
 
 __all__ = ['loads', 'dumps']
 
@@ -48,6 +50,9 @@ try:
     # import pyarrow has a lot of side effect: https://github.com/apache/arrow/pull/2329
     # So we need an option to disable it.
     if os.environ.get('TENSORPACK_SERIALIZE', 'pyarrow') == 'pyarrow':
+        if 'horovod' in sys.modules:
+            logger.warn("Horovod and pyarrow may conflict due to pyarrow bugs. "
+                        "Uninstall pyarrow and use msgpack instead.")
         import pyarrow as pa
     else:
         pa = None

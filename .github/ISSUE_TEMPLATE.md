@@ -18,12 +18,11 @@ Some typical questions that we DO NOT answer:
 
 + "Could you improve/implement an example/paper ?" --
   We have no plans to do so. We don't consider feature
-  requests for examples or implement a paper for you, unless it demonstrates 
-  some Tensorpack features not yet demonstrated in the existing examples.
+  requests for examples or implement a paper for you.
   If you don't know how to do something yourself, you may ask a usage question.
 + "The examples do not perform well after I change the models/dataset/parameters/etc."
   Tensorpack maintainers make sure the examples perform well without modification.
-  But it's your job to make sure the model and parameters is suitable in your own situation.
+  But it's your job to pick the model and parameters that are suitable for your own situation.
   We do not help with such questions unless they appear to be a bug in tensorpack.
 + "Why my model doesn't work?", "I don't understand this paper you implement."
   We do not answer machine learning questions.

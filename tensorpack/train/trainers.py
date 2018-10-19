@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # File: trainers.py
 
+import sys
 import os
 import tensorflow as tf
 import multiprocessing as mp
@@ -364,6 +365,14 @@ class HorovodTrainer(SingleCostTrainer):
         Args:
             average (bool): whether to average or sum the gradients across processes.
         """
+        if 'pyarrow' in sys.modules:
+            logger.warn("Horovod and pyarrow may conflict due to pyarrow bugs. "
+                        "Uninstall pyarrow and use msgpack instead.")
+        # lazy import
+        import horovod.tensorflow as _hvd
+        global hvd
+        hvd = _hvd
+
         hvd.init()
         self.is_chief = hvd.rank() == 0
         self._local_rank = hvd.local_rank()
@@ -431,11 +440,5 @@ class HorovodTrainer(SingleCostTrainer):
         self.sess.run(self._broadcast_op)
 
 
-from ..utils.develop import create_dummy_class   # noqa
-try:
-    import horovod.tensorflow as hvd
-except ImportError:
-    HorovodTrainer = create_dummy_class('HovorodTrainer', 'horovod')    # noqa
-except Exception:      # could be other than ImportError, e.g. NCCL not found
-    print("Horovod is installed but cannot be imported. Check `python -c 'import horovod.tensorflow'`.")
-    HorovodTrainer = create_dummy_class('HovorodTrainer', 'horovod')    # noqa
+# for lazy import
+hvd = None
