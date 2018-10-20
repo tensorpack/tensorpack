@@ -108,7 +108,7 @@ class BaseTowerContext(object):
             ret.append(tf.variable_scope(tf.get_variable_scope()))
 
         # always clear existing ns  # TODO check existing ns
-        if len(self._name) and self._name != self._vs_name:
+        if len(self._name):
             ret.append(tf.name_scope(self._name + '/'))
         return ret
 

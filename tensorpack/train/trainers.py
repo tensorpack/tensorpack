@@ -336,7 +336,7 @@ class HorovodTrainer(SingleCostTrainer):
 
         2. MPI does not like `fork()`. If your dataflow contains multiprocessing, it may cause problems.
 
-        3. MPI sometimes fails to kill all processes. Be sure to check it afterwards.
+        3. MPI sometimes fails to kill all processes in the end. Be sure to check it afterwards.
 
         4. Keep in mind that there is one process running the script per GPU, therefore:
 
