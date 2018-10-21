@@ -114,8 +114,8 @@ class MultiProcessDatasetPredictor(DatasetPredictorBase):
             except KeyError:
                 gpus = list(range(get_num_gpu()))
             assert len(gpus) >= self.nr_proc, \
-                    "nr_proc={} while only {} gpus available".format(
-                    self.nr_proc, len(gpus))
+                "nr_proc={} while only {} gpus available".format(
+                self.nr_proc, len(gpus))
         else:
             gpus = ['-1'] * self.nr_proc
         # worker produces (idx, result) to outqueue
