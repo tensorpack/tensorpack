@@ -104,7 +104,7 @@ You can also save your models into other formats so it may be more friendly for 
 
 1. Export to `SavedModel` format for TensorFlow Serving:
 ```python
-from tfutils.export import ModelExporter
+from tensorpack.tfutils.export import ModelExporter
 ModelExporter(pred_config).export_serving('/path/to/export')
 ```
 
