@@ -50,10 +50,10 @@ try:
     # import pyarrow has a lot of side effect: https://github.com/apache/arrow/pull/2329
     # So we need an option to disable it.
     if os.environ.get('TENSORPACK_SERIALIZE', 'pyarrow') == 'pyarrow':
+        import pyarrow as pa
         if 'horovod' in sys.modules:
             logger.warn("Horovod and pyarrow may conflict due to pyarrow bugs. "
                         "Uninstall pyarrow and use msgpack instead.")
-        import pyarrow as pa
     else:
         pa = None
 except ImportError:

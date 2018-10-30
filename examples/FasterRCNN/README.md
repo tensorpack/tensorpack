@@ -47,7 +47,7 @@ On a single machine:
 ./train.py --config \
     MODE_MASK=True MODE_FPN=True \
     DATA.BASEDIR=/path/to/COCO/DIR \
-    BACKBONE.WEIGHTS=/path/to/ImageNet-R50-Pad.npz \
+    BACKBONE.WEIGHTS=/path/to/ImageNet-R50-AlignPadding.npz \
 ```
 
 To run distributed training, set `TRAINER=horovod` and refer to [HorovodTrainer docs](http://tensorpack.readthedocs.io/modules/train.html#tensorpack.train.HorovodTrainer).
@@ -77,6 +77,7 @@ prediction will need to be run with the corresponding training configs.
 ## Results
 
 These models are trained on trainval35k and evaluated on minival2014 using mAP@IoU=0.50:0.95.
+All models are fine-tuned from ImageNet pre-trained R50/R101 models in the [model zoo](http://models.tensorpack.com/FasterRCNN/).
 Performance in [Detectron](https://github.com/facebookresearch/Detectron/) can be roughly reproduced.
 Mask R-CNN results contain both box and mask mAP.
 

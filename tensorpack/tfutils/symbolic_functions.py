@@ -127,7 +127,7 @@ def psnr(prediction, ground_truth, maxp=None, name='psnr'):
         maxp: maximum possible pixel value of the image (255 in in 8bit images)
 
     Returns:
-        A scalar tensor representing the PSNR.
+        A scalar tensor representing the PSNR
     """
 
     maxp = float(maxp)

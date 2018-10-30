@@ -565,6 +565,9 @@ class LocallyShuffleData(ProxyDataFlow, RNGDataFlow):
     """ Maintain a pool to buffer datapoints, and shuffle before producing them.
         This can be used as an alternative when a complete random read is too expensive
         or impossible for the data source.
+
+        To maintain shuffling states, this dataflow is not reentrant.
+        The iterator will run indefinitely because after mixing the datapoints, it does not make sense to stop anywhere.
     """
 
     def __init__(self, ds, buffer_size, nr_reuse=1, shuffle_interval=None):
@@ -585,27 +588,28 @@ class LocallyShuffleData(ProxyDataFlow, RNGDataFlow):
             shuffle_interval = int(buffer_size // 3)
         self.shuffle_interval = shuffle_interval
         self.nr_reuse = nr_reuse
+        self._inf_ds = RepeatedData(ds, -1)
         self._guard = DataFlowReentrantGuard()
 
     def reset_state(self):
         ProxyDataFlow.reset_state(self)
         RNGDataFlow.reset_state(self)
-        self.current_cnt = 0
+        self._iter_cnt = 0
+        self._inf_iter = iter(self._inf_ds)
 
     def __len__(self):
         return len(self.ds) * self.nr_reuse
 
     def __iter__(self):
         with self._guard:
-            for i, dp in enumerate(self.ds):
+            for dp in self._inf_iter:
+                self._iter_cnt = (self._iter_cnt + 1) % self.shuffle_interval
                 # fill queue
-                if i % self.shuffle_interval == 0:
+                if self._iter_cnt % self.shuffle_interval == 0:
                     self.rng.shuffle(self.q)
-                if self.q.maxlen > len(self.q):
-                    self.q.extend([dp] * self.nr_reuse)
-                    continue
                 for _ in range(self.nr_reuse):
-                    yield self.q.popleft()
+                    if self.q.maxlen == len(self.q):
+                        yield self.q.popleft()
                     self.q.append(dp)
 
 
