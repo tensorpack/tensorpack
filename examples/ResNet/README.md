@@ -9,7 +9,7 @@ __Training__ code of three variants of ResNet on ImageNet:
 
 The training follows the __exact__ recipe used by the [Training ImageNet in 1 Hour paper](https://arxiv.org/abs/1706.02677)
 and gets the same performance.
-Models can be [downloaded here](http://models.tensorpack.com/ResNet/).
+Models trained with 8 GPUs and a total batch size of 256 is listed in the table below.
 
 This recipe has better performance than most open source implementations.
 In fact, many papers that claim to "improve" ResNet only compete with a lower

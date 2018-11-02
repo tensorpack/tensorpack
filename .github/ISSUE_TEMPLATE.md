@@ -23,7 +23,7 @@ Some typical questions that we DO NOT answer:
 + "The examples do not perform well after I change the models/dataset/parameters/etc."
   Tensorpack maintainers make sure the examples perform well without modification.
   But it's your job to pick the model and parameters that are suitable for your own situation.
-  We do not help with such questions unless they appear to be a bug in tensorpack.
+  We cannot help with such questions unless they appear to be a bug in tensorpack.
 + "Why my model doesn't work?", "I don't understand this paper you implement.",
   "How should I change the examples for my own dataset?"
   We do not answer machine learning questions.

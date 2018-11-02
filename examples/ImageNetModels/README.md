@@ -12,7 +12,7 @@ Reproduce ImageNet results of the following two papers:
 + [ShuffleNet: An Extremely Efficient Convolutional Neural Network for Mobile Devices](https://arxiv.org/abs/1707.01083)
 + [ShuffleNet V2: Practical Guidelines for Efficient CNN Architecture Design](https://arxiv.org/abs/1807.11164)
 
-| Model                                                                                                    | Flops | Top-1 Error | Claimed Error | Flags         |
+| Model                                                                                                    | Flops | Top-1 Error | Paper's Error | Flags         |
 |:---------------------------------------------------------------------------------------------------------|:------|:-----------:|:-------------:|:-------------:|
 | ShuffleNetV1 0.5x  [:arrow_down:](http://models.tensorpack.com/ImageNetModels/ShuffleNetV1-0.5x-g=8.npz) | 40M   | 40.8%       | 42.3%         | `-r=0.5`      |
 | ShuffleNetV1 1x    [:arrow_down:](http://models.tensorpack.com/ImageNetModels/ShuffleNetV1-1x-g=8.npz)   | 140M  | 32.6%       | 32.4%         | `-r=1`        |

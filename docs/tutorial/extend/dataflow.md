@@ -28,21 +28,16 @@ class MyDataFlow(DataFlow):
       digit = np.random.rand(28, 28)
       label = np.random.randint(10)
       yield [digit, label]
+      
+df = MyDataFlow()
+df.reset_state()
+for datapoint in df:
+    print(datapoint[0], datapoint[1])
 ```
 
-Optionally, you can implement the following two methods:
-
-+ `__len__()`. Return the number of elements the generator can produce. Certain tensorpack features might need it.
-  This is optional, and even when implemented, it is
-  not guaranteed to be an accurate length because it's impossible to know the length of certain generator.
-
-+ `reset_state()`. It is guaranteed that the actual process which runs a DataFlow will invoke this method before using it.
-  So if this DataFlow needs to do something after a `fork()`, you should put it here.
-  `reset_state()` must be called once and only once for each DataFlow instance.
-
-  A typical example is when your DataFlow uses random number generator (RNG). Then you would need to reset the RNG here.
-  Otherwise, child processes will have the same random seed. The `RNGDataFlow` base class does this for you.
-  You can subclass `RNGDataFlow` to access `self.rng` whose seed has been taken care of.
+Optionally, you can implement the `__len__` and `reset_state` method. 
+The detailed semantics of these three methods are explained 
+in the [API documentation](../../modules/dataflow.html#tensorpack.dataflow.DataFlow).
 
 DataFlow implementations for several well-known datasets are provided in the
 [dataflow.dataset](../../modules/dataflow.dataset.html)
@@ -66,5 +61,5 @@ class ProcessingDataFlow(DataFlow):
 
 Some built-in dataflows, e.g.
 [MapData](../../modules/dataflow.html#tensorpack.dataflow.MapData) and 
-[MapDataComponent](../../https://tensorpack.readthedocs.io/modules/dataflow.html#tensorpack.dataflow.MapDataComponent)
-can do the above type of data processing for you.
+[MapDataComponent](../../modules/dataflow.html#tensorpack.dataflow.MapDataComponent)
+can do common types of data processing for you.

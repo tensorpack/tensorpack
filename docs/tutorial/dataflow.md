@@ -61,6 +61,7 @@ the rest of the data pipeline.
 Nevertheless, tensorpack supports data loading with native TF operators / TF datasets as well.
 
 ### Use DataFlow outside Tensorpack
+
 Normally, tensorpack `InputSource` interface links DataFlow to the graph for training.
 If you use DataFlow in other places such as your custom code, call `reset_state()` first to initialize it,
 and then use the generator however you like:
@@ -71,3 +72,6 @@ df.reset_state()
 for dp in df:
 	# dp is now a list. do whatever
 ```
+
+Read the [API documentation](../../modules/dataflow.html#tensorpack.dataflow.DataFlw)
+to see API details of DataFlow.
