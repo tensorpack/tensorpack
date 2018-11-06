@@ -8,7 +8,7 @@ from six.moves import zip
 from contextlib import contextmanager
 import tensorflow as tf
 
-from ..utils.argtools import memoized, call_only_once
+from ..utils.argtools import memoized_method, call_only_once
 from ..callbacks.base import CallbackFactory
 from ..tfutils.common import get_op_tensor_name
 from ..utils import logger
@@ -109,7 +109,7 @@ class InputSource(object):
         """
         return self._setup_done
 
-    @memoized
+    @memoized_method
     def get_callbacks(self):
         """
         An InputSource might need some extra maintenance during training,

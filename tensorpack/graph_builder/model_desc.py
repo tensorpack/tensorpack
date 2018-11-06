@@ -6,7 +6,7 @@ from collections import namedtuple
 import tensorflow as tf
 
 from ..utils import logger
-from ..utils.argtools import memoized
+from ..utils.argtools import memoized_method
 from ..utils.develop import log_deprecated
 from ..tfutils.tower import get_current_tower_context
 from ..models.regularize import regularize_cost_from_collection
@@ -90,7 +90,7 @@ class ModelDescBase(object):
     Base class for a model description.
     """
 
-    @memoized
+    @memoized_method
     def get_inputs_desc(self):
         """
         Returns:
@@ -207,7 +207,7 @@ class ModelDesc(ModelDescBase):
     def _get_cost(self, *args):
         return self.cost
 
-    @memoized
+    @memoized_method
     def get_optimizer(self):
         """
         Return the memoized optimizer returned by `optimizer()`.

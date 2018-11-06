@@ -8,7 +8,7 @@ from tensorpack.tfutils.argscope import argscope
 from tensorpack.tfutils.scope_utils import under_name_scope
 from tensorpack.models import (
     Conv2D, FullyConnected, layer_register)
-from tensorpack.utils.argtools import memoized
+from tensorpack.utils.argtools import memoized_method
 
 from basemodel import GroupNorm
 from utils.box_ops import pairwise_iou
@@ -316,22 +316,22 @@ class BoxProposals(object):
             if k != 'self' and v is not None:
                 setattr(self, k, v)
 
-    @memoized
+    @memoized_method
     def fg_inds(self):
         """ Returns: #fg indices in [0, N-1] """
         return tf.reshape(tf.where(self.labels > 0), [-1], name='fg_inds')
 
-    @memoized
+    @memoized_method
     def fg_boxes(self):
         """ Returns: #fg x4"""
         return tf.gather(self.boxes, self.fg_inds(), name='fg_boxes')
 
-    @memoized
+    @memoized_method
     def fg_labels(self):
         """ Returns: #fg"""
         return tf.gather(self.labels, self.fg_inds(), name='fg_labels')
 
-    @memoized
+    @memoized_method
     def matched_gt_boxes(self):
         """ Returns: #fg x 4"""
         return tf.gather(self.gt_boxes, self.fg_inds_wrt_gt)
@@ -354,12 +354,12 @@ class FastRCNNHead(object):
                 setattr(self, k, v)
         self._bbox_class_agnostic = int(box_logits.shape[1]) == 1
 
-    @memoized
+    @memoized_method
     def fg_box_logits(self):
         """ Returns: #fg x ? x 4 """
         return tf.gather(self.box_logits, self.proposals.fg_inds(), name='fg_box_logits')
 
-    @memoized
+    @memoized_method
     def losses(self):
         encoded_fg_gt_boxes = encode_bbox_target(
             self.proposals.matched_gt_boxes(),
@@ -369,7 +369,7 @@ class FastRCNNHead(object):
             encoded_fg_gt_boxes, self.fg_box_logits()
         )
 
-    @memoized
+    @memoized_method
     def decoded_output_boxes(self):
         """ Returns: N x #class x 4 """
         anchors = tf.tile(tf.expand_dims(self.proposals.boxes, 1),
@@ -380,17 +380,17 @@ class FastRCNNHead(object):
         )
         return decoded_boxes
 
-    @memoized
+    @memoized_method
     def decoded_output_boxes_for_true_label(self):
         """ Returns: Nx4 decoded boxes """
         return self._decoded_output_boxes_for_label(self.proposals.labels)
 
-    @memoized
+    @memoized_method
     def decoded_output_boxes_for_predicted_label(self):
         """ Returns: Nx4 decoded boxes """
         return self._decoded_output_boxes_for_label(self.predicted_labels())
 
-    @memoized
+    @memoized_method
     def decoded_output_boxes_for_label(self, labels):
         assert not self._bbox_class_agnostic
         indices = tf.stack([
@@ -404,7 +404,7 @@ class FastRCNNHead(object):
         )
         return decoded
 
-    @memoized
+    @memoized_method
     def decoded_output_boxes_class_agnostic(self):
         """ Returns: Nx4 """
         assert self._bbox_class_agnostic
@@ -415,12 +415,12 @@ class FastRCNNHead(object):
         )
         return decoded
 
-    @memoized
+    @memoized_method
     def output_scores(self, name=None):
         """ Returns: N x #class scores, summed to one for each box."""
         return tf.nn.softmax(self.label_logits, name=name)
 
-    @memoized
+    @memoized_method
     def predicted_labels(self):
         """ Returns: N ints """
         return tf.argmax(self.label_logits, axis=1, name='predicted_labels')

@@ -9,7 +9,7 @@ from tensorpack import (TowerTrainer, StagingInput,
 from tensorpack.tfutils.tower import TowerContext, TowerFuncWrapper
 from tensorpack.graph_builder import DataParallelBuilder, LeastLoadedDeviceSetter
 from tensorpack.tfutils.summary import add_moving_summary
-from tensorpack.utils.argtools import memoized
+from tensorpack.utils.argtools import memoized_method
 from tensorpack.utils.develop import deprecated
 
 
@@ -68,7 +68,7 @@ class GANModelDesc(ModelDescBase):
         """
         pass
 
-    @memoized
+    @memoized_method
     def get_optimizer(self):
         return self.optimizer()
 

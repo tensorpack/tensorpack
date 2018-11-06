@@ -10,7 +10,7 @@ if six.PY2:
 else:
     import functools
 
-__all__ = ['map_arg', 'memoized', 'graph_memoized', 'shape2d', 'shape4d',
+__all__ = ['map_arg', 'memoized', 'memoized_method', 'graph_memoized', 'shape2d', 'shape4d',
            'memoized_ignoreargs', 'log_once', 'call_only_once']
 
 
@@ -39,13 +39,17 @@ def map_arg(**maps):
 
 
 memoized = functools.lru_cache(maxsize=None)
-""" Alias to :func:`functools.lru_cache` """
+""" Alias to :func:`functools.lru_cache`
+WARNING: memoization will keep keys and values alive!
+"""
 
 
 def graph_memoized(func):
     """
     Like memoized, but keep one cache per default graph.
     """
+
+    # TODO it keeps the graph alive
     import tensorflow as tf
     GRAPH_ARG_NAME = '__IMPOSSIBLE_NAME_FOR_YOU__'
 
@@ -80,16 +84,6 @@ def memoized_ignoreargs(func):
             return res
         return _MEMOIZED_NOARGS[func]
     return wrapper
-
-# _GLOBAL_MEMOIZED_CACHE = dict()
-# def global_memoized(func):
-#     """ Make sure that the same `memoized` object is returned on different
-#      calls to global_memoized(func)
-#     """
-#     ret = _GLOBAL_MEMOIZED_CACHE.get(func, None)
-#     if ret is None:
-#         ret = _GLOBAL_MEMOIZED_CACHE[func] = memoized(func)
-#     return ret
 
 
 def shape2d(a):
@@ -152,9 +146,6 @@ def log_once(message, func='info'):
     getattr(logger, func)(message)
 
 
-_FUNC_CALLED = set()
-
-
 def call_only_once(func):
     """
     Decorate a method or property of a class, so that this method can only
@@ -168,17 +159,48 @@ def call_only_once(func):
         # fails if func is a property
         assert func.__name__ in dir(self), "call_only_once can only be used on method or property!"
 
+        if not hasattr(self, '_CALL_ONLY_ONCE_CACHE'):
+            cache = self._CALL_ONLY_ONCE_CACHE = set()
+        else:
+            cache = self._CALL_ONLY_ONCE_CACHE
+
         cls = type(self)
         # cannot use ismethod(), because decorated method becomes a function
         is_method = inspect.isfunction(getattr(cls, func.__name__))
-        key = (self, func)
-        assert key not in _FUNC_CALLED, \
+        assert func not in cache, \
             "{} {}.{} can only be called once per object!".format(
                 'Method' if is_method else 'Property',
                 cls.__name__, func.__name__)
-        _FUNC_CALLED.add(key)
+        cache.add(func)
 
         return func(*args, **kwargs)
+
+    return wrapper
+
+
+def memoized_method(func):
+    """
+    A decorator that performs memoization on methods. It stores the cache on the object instance itself.
+    """
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        self = args[0]
+        assert func.__name__ in dir(self), "memoized_method can only be used on method!"
+
+        if not hasattr(self, '_MEMOIZED_CACHE'):
+            cache = self._MEMOIZED_CACHE = {}
+        else:
+            cache = self._MEMOIZED_CACHE
+
+        key = args[1:] + tuple(kwargs)
+        print(key)
+        ret = cache.get(key, None)
+        if ret is not None:
+            return ret
+        value = func(*args, **kwargs)
+        cache[key] = value
+        return value
 
     return wrapper
 
