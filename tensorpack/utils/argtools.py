@@ -193,8 +193,7 @@ def memoized_method(func):
         else:
             cache = self._MEMOIZED_CACHE
 
-        key = args[1:] + tuple(kwargs)
-        print(key)
+        key = (func, ) + args[1:] + tuple(kwargs)
         ret = cache.get(key, None)
         if ret is not None:
             return ret
