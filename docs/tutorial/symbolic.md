@@ -90,8 +90,16 @@ Tensorpack & `tf.layers` only provide a subset of most common models.
 However you can construct the graph using whatever library you feel comfortable with.
 
 Functions in slim/tflearn/tensorlayer are just symbolic function wrappers, calling them is nothing different
-from calling `tf.add`. You may need to be careful how regularizations/BN updates are supposed
-to be handled in those libraries, though.
+from calling `tf.add`. You may need to be careful on some issues:
+1. Regularizations may be handled differently:
+   in tensorpack, users need to add the regularization losses to the total cost manually.
+1. BN updates may be handled differently: in tensorpack,
+   the ops from the `tf.GraphKeys.UPDATE_OPS` collection will be run
+   automatically every step.
+1. How training/testing mode is supported in those libraries: in tensorpack's
+   tower function, you can get a boolean `is_training` from
+   [here](trainer.html#what-you-can-do-inside-tower-function)
+   and use it however you like (e.g. create different codepath condition on this value).
 
 It is a bit different to use sonnet/Keras.
 sonnet/Keras manages the variable scope by their own model classes, and calling their symbolic functions

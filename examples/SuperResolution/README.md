@@ -20,7 +20,7 @@ produce a 4x resolution image using different loss functions.
 
 ```bash
 wget http://images.cocodataset.org/zips/train2017.zip
-wget http://models.tensorpack.com/caffe/vgg19.npz
+wget http://models.tensorpack.com/Caffe-Converted/vgg19.npz
 ```
 
 2. Train an EnhanceNet-PAT using:
