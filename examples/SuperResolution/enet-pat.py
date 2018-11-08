@@ -219,9 +219,42 @@ class Model(GANModelDesc):
         return opt
 
 
+def apply_all(model_path, lowres_path=".", output_path='.'):
+    assert os.path.isdir(lowres_path)
+    assert os.path.isdir(output_path)
+
+    for filename in os.listdir(lowres_path):
+        if filename.endswith(".jpg") or filename.endswith(".png") or filename.endswith(".jpeg"):
+            basename = os.path.splitext(filename)[0]
+            fullname = os.path.join(lowres_path, filename)
+            lr = cv2.imread(fullname).astype(np.float32)
+            baseline = cv2.resize(lr, (0, 0), fx=4, fy=4, interpolation=cv2.INTER_CUBIC)
+            LR_SIZE_H, LR_SIZE_W = lr.shape[:2]
+
+            if (LR_SIZE_H > 400 or LR_SIZE_W > 400):
+                continue
+
+            predict_func = OfflinePredictor(PredictConfig(
+                model=Model(LR_SIZE_H, LR_SIZE_W),
+                session_init=get_model_loader(model_path),
+                input_names=['Ilr'],
+                output_names=['prediction']))
+
+            pred = predict_func(lr[None, ...])
+            p = np.clip(pred[0][0, ...], 0, 255)
+
+            cv2.imwrite(os.path.join(output_path, basename + "_predition.png"), p)
+            cv2.imwrite(os.path.join(output_path, basename + "_baseline.png"), baseline)
+        else:
+            continue
+
+
+
+
 def apply(model_path, lowres_path="", output_path='.'):
     assert os.path.isfile(lowres_path)
     assert os.path.isdir(output_path)
+
     lr = cv2.imread(lowres_path).astype(np.float32)
     baseline = cv2.resize(lr, (0, 0), fx=4, fy=4, interpolation=cv2.INTER_CUBIC)
     LR_SIZE_H, LR_SIZE_W = lr.shape[:2]
@@ -275,7 +308,10 @@ if __name__ == '__main__':
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
     if args.apply:
-        apply(args.load, args.lowres, args.output)
+        if (os.path.isdir(args.lowres)):
+            apply_all(args.load, args.lowres, args.output)
+        else:
+            apply(args.load, args.lowres, args.output)
     else:
         logger.auto_set_dir()
 
