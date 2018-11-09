@@ -5,6 +5,7 @@ import tensorflow as tf
 
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.tfutils.argscope import argscope
+from tensorpack.tfutils.common import get_tf_version_tuple
 from tensorpack.tfutils.scope_utils import under_name_scope
 from tensorpack.models import (
     Conv2D, FullyConnected, layer_register)
@@ -220,8 +221,10 @@ def fastrcnn_predictions(boxes, scores):
             default_value=False)
         return mask
 
+    # TF bug in version 1.11, 1.12: https://github.com/tensorflow/tensorflow/issues/22750
+    parallel = 1 if (get_tf_version_tuple() in [(1, 11), (1, 12)]) else 10
     masks = tf.map_fn(f, (scores, boxes), dtype=tf.bool,
-                      parallel_iterations=10)     # #cat x N
+                      parallel_iterations=parallel)     # #cat x N
     selected_indices = tf.where(masks)  # #selection x 2, each is (cat_id, box_id)
     scores = tf.boolean_mask(scores, masks)
 

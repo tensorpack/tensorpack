@@ -496,9 +496,6 @@ if __name__ == '__main__':
     if get_tf_version_tuple() < (1, 6):
         # https://github.com/tensorflow/tensorflow/issues/14657
         logger.warn("TF<1.6 has a bug which may lead to crash in FasterRCNN if you're unlucky.")
-    if get_tf_version_tuple() == (1, 11):
-        # https://github.com/tensorflow/tensorflow/issues/22750
-        logger.warn("TF=1.11 has a bug which leads to crash in inference.")
 
     args = parser.parse_args()
     if args.config:
