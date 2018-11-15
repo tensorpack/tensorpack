@@ -50,6 +50,9 @@ l = func(l, *args, **kwargs)
 l = FullyConnected('fc1', l, 10, activation=tf.identity)
 ```
 
+If you need to access the output of some layer and use it with some other
+operations, then just don't use `LinearWrap`, because the graph is not linear anymore.
+
 ### Access Relevant Tensors
 
 The variables inside the layer will be named `name/W`, `name/b`, etc.
@@ -60,7 +63,7 @@ l = Conv2D('conv1', l, 32, 3)
 print(l.variables.W)
 print(l.variables.b)
 ```
-But note that this is a hacky way and may not work with future versions of TensorFlow.
+But note that this is a __hacky__ way and may not work with future versions of TensorFlow.
 Also this method doesn't work with LinearWrap, and cannot access the variables created by an activation function.
 
 The output of a layer is usually named `name/output` unless documented differently in the API.

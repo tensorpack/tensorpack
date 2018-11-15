@@ -51,6 +51,8 @@ The tower function needs to follow some rules:
 
      On the other hand, for a non-trainable variable, it may be desirable to not reuse it between towers.
      In this case, `tf.Variable` can be used to ensure creation of new variables in each tower even when `reuse=True`.
+   * Do not modify the reuse option (e.g., by `scope.reuse_variables()`) of a variable
+     scope that is not created by you. This affects other's code.
 4. It cannot create scopes or variables containing the name 'tower', as it is
    reserved for special use.
      

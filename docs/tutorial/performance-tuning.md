@@ -5,11 +5,13 @@ __We do not know why your training is slow__ (and most of the times it's not a t
 
 Tensorpack is designed to be high-performance, as can be seen in the [benchmarks](https://github.com/tensorpack/benchmarks).
 But performance is different across machines and tasks,
-so you need to figure out what goes wrong by your own.
+so it's not easy to understand what goes wrong without doing some investigations by your own.
 Tensorpack has some tools to make it easier to understand the performance.
-Here's a list of things you can do when your training is slow.
+Here is a list of things you can do to understand why your training is slow.
 
-If you ask for help to understand and improve the speed, PLEASE do them and include your findings.
+If you ask for help to understand and improve the speed, PLEASE do the
+investigations below, post your hardware information and your findings from the investigation, such as what changes
+you've made and what performance numbers you've seen.
 
 ## Figure out the bottleneck
 
@@ -40,18 +42,29 @@ A benchmark will give you more precise information about which part you should i
 ## Investigate DataFlow
 
 Understand the [Efficient DataFlow](efficient-dataflow.html) tutorial, so you know what your DataFlow is doing.
-Then, make modifications and benchmark to understand which part of dataflow is the bottleneck.
-Use [TestDataSpeed](../modules/dataflow.html#tensorpack.dataflow.TestDataSpeed).
-Do __NOT__ look at training speed when you benchmark a DataFlow.
-
-Some example things to try:
-
-1. Benchmark only the raw reader (and perhaps add some parallelism).
-2. Gradually add some pre-processing and see how the performance changes.
-3. Change the number of parallel processes or threads.
+Then, make modifications and benchmark to understand what in the data pipeline is your bottleneck.
+Do __NOT__ look at training speed when you benchmark a DataFlow, only use the output of `TestDataSpeed`.
 
 A DataFlow could be blocked by CPU/disk/network/IPC bandwidth.
-Only by benchmarking will you know the reason and improve it accordingly, e.g.:
+Do __NOT__ optimize the DataFlow before knowing what it is blocked on.
+By benchmarking with modifications to your dataflow, you can see which
+components is the bottleneck of your dataflow. For example, with a simple
+dataflow, you can usually do the following:
+
+1. If your dataflow becomes fast enough after removing some pre-processing (e.g.
+   augmentations), then the pre-processing is the bottleneck.
+1. Without pre-processing, your dataflow is just reading + parallelism, which
+   includes both reading cost and the multiprocess communication cost.
+   You can now let your reader produce only a single float after reading a large
+   amount of data, so that the pipeline contains only parallel reading, but negligible
+   communication cost any more. 
+   
+   If this becomes fast enough, it means that communication is the bottleneck.
+   If pure parallel reading is still not fast enough, it means your raw reader is the bottleneck.
+1. In practice the dataflow can be more complicated and you'll need to design
+   your own strategies to understand its performance.
+   
+Once you've understand what is the bottleneck, you can try some improvements such as:
 
 1. Use single-file database to avoid random read on hard disk.
 2. Use fewer pre-processings or write faster ones with whatever tools you have.

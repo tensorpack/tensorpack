@@ -42,8 +42,8 @@ def proposal_metrics(iou):
 @under_name_scope()
 def sample_fast_rcnn_targets(boxes, gt_boxes, gt_labels):
     """
-    Sample some ROIs from all proposals for training.
-    #fg is guaranteed to be > 0, because grount truth boxes are added as RoIs.
+    Sample some boxes from all proposals for training.
+    #fg is guaranteed to be > 0, because ground truth boxes will be added as proposals.
 
     Args:
         boxes: nx4 region proposals, floatbox
