@@ -135,6 +135,8 @@ class BatchData(ProxyDataFlow):
                     tp = 'int32'
                 elif type(dt) == float:
                     tp = 'float32'
+                elif type(dt) == str:
+                    tp = 'str'
                 else:
                     try:
                         tp = dt.dtype
