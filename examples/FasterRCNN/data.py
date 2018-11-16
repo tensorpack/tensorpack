@@ -16,6 +16,7 @@ from tensorpack.utils import logger
 from coco import COCODetection
 from utils.generate_anchors import generate_anchors
 from utils.np_box_ops import area as np_area
+from utils.np_box_ops import ioa as np_ioa
 from common import (
     DataFromListOfDict, CustomResize, filter_boxes_inside_shape,
     box_to_point8, point8_to_box, segmentation_to_mask)
@@ -154,14 +155,13 @@ def get_anchor_labels(anchors, gt_boxes, crowd_boxes):
     anchor_labels[ious_max_per_anchor >= cfg.RPN.POSITIVE_ANCHOR_THRESH] = 1
     anchor_labels[ious_max_per_anchor < cfg.RPN.NEGATIVE_ANCHOR_THRESH] = 0
 
-    # We can label all non-ignore candidate boxes which overlap crowd as ignore
-    # But detectron did not do this.
-    # if crowd_boxes.size > 0:
-    #     cand_inds = np.where(anchor_labels >= 0)[0]
-    #     cand_anchors = anchors[cand_inds]
-    #     ious = np_iou(cand_anchors, crowd_boxes)
-    #     overlap_with_crowd = cand_inds[ious.max(axis=1) > cfg.RPN.CROWD_OVERLAP_THRES]
-    #     anchor_labels[overlap_with_crowd] = -1
+    # label all non-ignore candidate boxes which overlap crowd as ignore
+    if crowd_boxes.size > 0:
+        cand_inds = np.where(anchor_labels >= 0)[0]
+        cand_anchors = anchors[cand_inds]
+        ioas = np_ioa(crowd_boxes, cand_anchors)
+        overlap_with_crowd = cand_inds[np.transpose(ioas).max(axis=1) > cfg.RPN.CROWD_OVERLAP_THRES]
+        anchor_labels[overlap_with_crowd] = -1
 
     # Subsample fg labels: ignore some fg if fg is too many
     target_num_fg = int(cfg.RPN.BATCH_PER_IM * cfg.RPN.FG_RATIO)
