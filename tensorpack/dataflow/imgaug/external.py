@@ -33,12 +33,12 @@ class IAAugmentor(ImageAugmentor):
     def _get_augment_params(self, img):
         return (self._aug.to_deterministic(), img.shape)
 
-    def _augment(self, img, p):
-        aug, _ = p
+    def _augment(self, img, param):
+        aug, _ = param
         return aug.augment_image(img)
 
-    def _augment_coords(self, coords, p):
-        aug, shape = p
+    def _augment_coords(self, coords, param):
+        aug, shape = param
         points = [IA.Keypoint(x=x, y=y) for x, y in coords]
         points = IA.KeypointsOnImage(points, shape=shape)
         augmented = aug.augment_keypoints([points])[0].keypoints

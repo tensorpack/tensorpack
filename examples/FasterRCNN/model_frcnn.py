@@ -222,9 +222,9 @@ def fastrcnn_predictions(boxes, scores):
         return mask
 
     # TF bug in version 1.11, 1.12: https://github.com/tensorflow/tensorflow/issues/22750
-    parallel = 1 if (get_tf_version_tuple() in [(1, 11), (1, 12)]) else 10
+    buggy_tf = get_tf_version_tuple() in [(1, 11), (1, 12)]
     masks = tf.map_fn(f, (scores, boxes), dtype=tf.bool,
-                      parallel_iterations=parallel)     # #cat x N
+                      parallel_iterations=1 if buggy_tf else 10)     # #cat x N
     selected_indices = tf.where(masks)  # #selection x 2, each is (cat_id, box_id)
     scores = tf.boolean_mask(scores, masks)
 

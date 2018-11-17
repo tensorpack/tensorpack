@@ -16,6 +16,7 @@ if STATICA_HACK:
     from .noise import *
     from .paste import *
     from .transform import *
+    from .external import *
 
 
 import os
