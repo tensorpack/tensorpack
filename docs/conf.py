@@ -30,7 +30,21 @@ MOCK_MODULES = ['tabulate', 'h5py',
                 'scipy', 'scipy.misc', 'scipy.io',
                 'tornado', 'tornado.concurrent',
                 'horovod', 'horovod.tensorflow',
-                'subprocess32', 'functools32']
+                'subprocess32', 'functools32',
+                'imgaug']
+
+# it's better to have tensorflow installed (for some docs to show)
+# but it's OK to mock it as well
+try:
+    import tensorflow
+except ImportError:
+    mod = sys.modules['tensorflow'] = mock.Mock(name='tensorflow')
+    mod.__version__ = mod.VERSION = '1.12'
+    MOCK_MODULES.extend(['tensorflow.python.training.monitored_session'])
+    MOCK_MODULES.extend(['tensorflow.python.training'])
+    MOCK_MODULES.extend(['tensorflow.python.client'])
+    MOCK_MODULES.extend(['tensorflow.contrib.graph_editor'])
+
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock(name=mod_name)
 sys.modules['cv2'].__version__ = '3.2.1'    # fake version
