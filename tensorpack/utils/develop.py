@@ -29,6 +29,7 @@ def create_dummy_class(klass, dependency):
     Returns:
         class: a class object
     """
+    assert not building_rtfd()
 
     class _DummyMetaClass(type):
         # throw error on class attribute access
@@ -55,6 +56,8 @@ def create_dummy_func(func, dependency):
     Returns:
         function: a function object
     """
+    assert not building_rtfd()
+
     if isinstance(dependency, (list, tuple)):
         dependency = ','.join(dependency)
 

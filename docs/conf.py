@@ -26,12 +26,12 @@ ON_RTD = (os.environ.get('READTHEDOCS') == 'True')
 
 MOCK_MODULES = ['tabulate', 'h5py',
                 'cv2', 'zmq', 'lmdb',
+                'msgpack', 'msgpack_numpy', 'pyarrow',
                 'sklearn', 'sklearn.datasets',
                 'scipy', 'scipy.misc', 'scipy.io',
                 'tornado', 'tornado.concurrent',
                 'horovod', 'horovod.tensorflow',
-                'subprocess32', 'functools32',
-                'imgaug']
+                'subprocess32', 'functools32']
 
 # it's better to have tensorflow installed (for some docs to show)
 # but it's OK to mock it as well

@@ -5,7 +5,7 @@ import numpy as np
 from .base import ImageAugmentor
 
 
-__all__ = ['IAAugmentor']
+__all__ = ['IAAugmentor', 'Albumentations']
 
 
 class IAAugmentor(ImageAugmentor):
@@ -38,6 +38,7 @@ class IAAugmentor(ImageAugmentor):
         return aug.augment_image(img)
 
     def _augment_coords(self, coords, param):
+        import imgaug as IA
         aug, shape = param
         points = [IA.Keypoint(x=x, y=y) for x, y in coords]
         points = IA.KeypointsOnImage(points, shape=shape)
@@ -45,8 +46,24 @@ class IAAugmentor(ImageAugmentor):
         return np.asarray([[p.x, p.y] for p in augmented])
 
 
-from ...utils.develop import create_dummy_class   # noqa
-try:
-    import imgaug as IA
-except ImportError:
-    IAAugmentor = create_dummy_class('IAAugmentor', 'imgaug')  # noqa
+class Albumentations(ImageAugmentor):
+    """
+    Wrap an augmentor form the albumentations library: https://github.com/albu/albumentations
+    Coordinate augmentation is not supported by the library.
+    """
+    def __init__(self, augmentor):
+        """
+        Args:
+            augmentor (albumentations.BasicTransform):
+        """
+        super(Albumentations, self).__init__()
+        self._aug = augmentor
+
+    def _get_augment_params(self, img):
+        return self._aug.get_params()
+
+    def _augment(self, img, param):
+        return self._aug.apply(img, **param)
+
+    def _augment_coords(self, coords, param):
+        raise NotImplementedError()
