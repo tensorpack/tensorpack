@@ -160,7 +160,7 @@ def get_anchor_labels(anchors, gt_boxes, crowd_boxes):
         cand_inds = np.where(anchor_labels >= 0)[0]
         cand_anchors = anchors[cand_inds]
         ioas = np_ioa(crowd_boxes, cand_anchors)
-        overlap_with_crowd = cand_inds[np.transpose(ioas).max(axis=1) > cfg.RPN.CROWD_OVERLAP_THRES]
+        overlap_with_crowd = cand_inds[ioas.max(axis=0) > cfg.RPN.CROWD_OVERLAP_THRES]
         anchor_labels[overlap_with_crowd] = -1
 
     # Subsample fg labels: ignore some fg if fg is too many
