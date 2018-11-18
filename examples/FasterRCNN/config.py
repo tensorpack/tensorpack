@@ -139,7 +139,10 @@ _C.RPN.FG_RATIO = 0.5  # fg ratio among selected RPN anchors
 _C.RPN.BATCH_PER_IM = 256  # total (across FPN levels) number of anchors that are marked valid
 _C.RPN.MIN_SIZE = 0
 _C.RPN.PROPOSAL_NMS_THRESH = 0.7
-_C.RPN.CROWD_OVERLAP_THRESH = 0.7  # boxes overlapping crowd will be ignored.
+# Anchors which overlap with a crowd box (IOA larger than threshold) will be ignored.
+# Setting this to a value larger than 1.0 will disable the feature.
+# It is disabled by default because Detectron does not do this.
+_C.RPN.CROWD_OVERLAP_THRESH = 9.99
 _C.RPN.HEAD_DIM = 1024      # used in C4 only
 
 # RPN proposal selection -------------------------------
