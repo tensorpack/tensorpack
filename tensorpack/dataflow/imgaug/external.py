@@ -10,7 +10,7 @@ __all__ = ['IAAugmentor', 'Albumentations']
 
 class IAAugmentor(ImageAugmentor):
     """
-    Wrap an augmentor form the IAA library: https://github.com/aleju/imgaug
+    Wrap an augmentor form the IAA library: https://github.com/aleju/imgaug.
     Both images and coordinates are supported.
 
     Note:
@@ -20,6 +20,19 @@ class IAAugmentor(ImageAugmentor):
         2. Only uint8 images are supported by the IAA library.
 
         3. The IAA library can only produces images of the same shape.
+
+    Example:
+
+    .. code-block:: python
+
+        from tensorpack import imgaug  # this is not the aleju/imgaug library
+        from imgaug import augmentors as iaa  # this is the aleju/imgaug library
+        myaug = imgaug.IAAugmentor(
+            iaa.Sequential([
+                iaa.Sharpen(alpha=(0, 1), lightness=(0.75, 1.5)),
+                iaa.Fliplr(0.5),
+                iaa.Crop(px=(0, 100)),
+            ])
     """
 
     def __init__(self, augmentor):
@@ -48,8 +61,16 @@ class IAAugmentor(ImageAugmentor):
 
 class Albumentations(ImageAugmentor):
     """
-    Wrap an augmentor form the albumentations library: https://github.com/albu/albumentations
+    Wrap an augmentor form the albumentations library: https://github.com/albu/albumentations.
     Coordinate augmentation is not supported by the library.
+
+    Example:
+
+    .. code-block:: python
+
+        from tensorpack import imgaug
+        import albumentations as AB
+        myaug = imgaug.Albumentations(AB.RandomRotate90(p=1))
     """
     def __init__(self, augmentor):
         """

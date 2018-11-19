@@ -4,7 +4,7 @@ tensorpack.dataflow.imgaug package
 This package contains Tensorpack's augmentors.
 Note that other image augmentation libraries can be wrapped into Tensorpack's interface as well.
 For example, `imgaug.IAAugmentor <#tensorpack.dataflow.imgaug.IAAugmentor>`_
-and `imgaug.Albumentations <#tensorpack.dataflow.imgaug.Albumentations`_
+and `imgaug.Albumentations <#tensorpack.dataflow.imgaug.Albumentations>`_
 wrap two popular image augmentation libraries.
 
 .. container:: custom-index

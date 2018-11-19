@@ -555,7 +555,7 @@ if __name__ == '__main__':
         train_dataflow = get_train_dataflow()
         # This is what's commonly referred to as "epochs"
         total_passes = cfg.TRAIN.LR_SCHEDULE[-1] * 8 / train_dataflow.size()
-        logger.info("Total passes of the training set is: {}".format(total_passes))
+        logger.info("Total passes of the training set is: {:.5g}".format(total_passes))
 
         callbacks = [
             PeriodicCallback(

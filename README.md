@@ -16,14 +16,14 @@ It's Yet Another TF high-level API, with __speed__, __readability__ and __flexib
 		Your training can probably gets faster if written with Tensorpack.
 
 	+ Data-parallel multi-GPU/distributed training strategy is off-the-shelf to use.
-      It scales as well as Google's [official benchmark](https://www.tensorflow.org/performance/benchmarks).
+    It scales as well as Google's [official benchmark](https://www.tensorflow.org/performance/benchmarks).
 
 	+ See [tensorpack/benchmarks](https://github.com/tensorpack/benchmarks) for
-      some benchmark scripts.
+    some benchmark scripts.
 
 2. Focus on __large datasets__.
 	+ [You don't usually need `tf.data`](http://tensorpack.readthedocs.io/tutorial/input-source.html#tensorflow-reader-cons).
-      Symbolic programming often makes data processing harder.
+    Symbolic programming often makes data processing harder.
 	  Tensorpack helps you efficiently process large datasets (e.g. ImageNet) in __pure Python__ with autoparallelization.
 
 3. It's not a model wrapper.

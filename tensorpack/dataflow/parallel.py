@@ -146,6 +146,9 @@ class MultiProcessPrefetchData(ProxyDataFlow):
         3. You can nest like this: ``PrefetchDataZMQ(PrefetchData(df, nr_proc=a), nr_proc=b)``.
            A total of ``a`` instances of ``df`` worker processes will be created.
         4. fork happens in `__init__`. `reset_state()` is a no-op. The worker processes won't get called.
+        5. This DataFlow does support windows. However, Windows requires more strict picklability on processes,
+           which means that some code that's forkable on Linux may not be forkable on Windows. If that happens you'll
+           need to re-organize some part of code that's not forkable.
     """
 
     class _Worker(mp.Process):
@@ -170,9 +173,10 @@ class MultiProcessPrefetchData(ProxyDataFlow):
             nr_prefetch (int): size of the queue to hold prefetched datapoints.
             nr_proc (int): number of processes to use.
         """
+        # https://docs.python.org/3.6/library/multiprocessing.html?highlight=process#the-spawn-and-forkserver-start-methods
         if os.name == 'nt':
-            logger.warn("MultiProcessPrefetchData does support windows. \
-However, windows requires more strict picklability on processes, which may \
+            logger.warn("MultiProcessPrefetchData does support Windows. \
+However, Windows requires more strict picklability on processes, which may \
 lead of failure on some of the code.")
         super(MultiProcessPrefetchData, self).__init__(ds)
         try:
@@ -210,8 +214,7 @@ PrefetchData = MultiProcessPrefetchData
 # TODO renamed to MultiProcessDataFlow{,ZMQ} if separated to a new project
 class PrefetchDataZMQ(_MultiProcessZMQDataFlow):
     """
-    Prefetch data from a DataFlow using multiple processes, with ZeroMQ for
-    communication.
+    Prefetch data from a DataFlow using multiple processes, with ZeroMQ for communication.
     It will fork the calling process of :meth:`reset_state()`,
     and collect datapoints from the given dataflow in each process by ZeroMQ IPC pipe.
 
@@ -237,7 +240,8 @@ class PrefetchDataZMQ(_MultiProcessZMQDataFlow):
            it won't be usable in the forked process. Therefore, do not nest two `PrefetchDataZMQ`.
         5. (Thread-safety) ZMQ is not thread safe. Therefore, do not call :meth:`get_data` of the same dataflow in
            more than 1 threads.
-        6. (For Mac only) A UNIX named pipe will be created in the current directory.
+        6. This dataflow does not support windows. Use `MultiProcessPrefetchData` which works on windows.
+        7. (For Mac only) A UNIX named pipe will be created in the current directory.
            However, certain non-local filesystem such as NFS/GlusterFS/AFS doesn't always support pipes.
            You can change the directory by ``export TENSORPACK_PIPEDIR=/other/dir``.
            In particular, you can use somewhere under '/tmp' which is usually local.

@@ -103,12 +103,13 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
           It uses the aggregated statistics of the whole batch (across all MPI ranks) to normalize.
           Note that on single machine this is significantly slower than the "nccl" implementation.
 
-          This implementation averages the per-GPU E[x] and E[x^2] among GPUs to compute
+          If not None, per-GPU E[x] and E[x^2] among all GPUs are averaged to compute
           global mean & variance. Therefore each GPU needs to have the same batch size.
-          It will match the BatchNorm layer on each GPU by its name (`BatchNorm('name', input)`).
-          If names do not match, the operation will hang.
 
-          This option has no effect when not training.
+          The BatchNorm layer on each GPU needs to use the same name (`BatchNorm('name', input)`), so that
+          statistics can be reduced. If names do not match, this layer will hang.
+
+          This option only has effect in standard training mode.
 
           This option is also known as "Cross-GPU BatchNorm" as mentioned in:
           `MegDet: A Large Mini-Batch Object Detector <https://arxiv.org/abs/1711.07240>`_.
