@@ -249,10 +249,11 @@ class ResNetFPNModel(DetectionModel):
                        for pi in p23456]
         multilevel_label_logits = [k[0] for k in rpn_outputs]
         multilevel_box_logits = [k[1] for k in rpn_outputs]
+        multilevel_pred_boxes = [anchor.decode_logits(logits)
+                                 for anchor, logits in zip(multilevel_anchors, multilevel_box_logits)]
 
         proposal_boxes, proposal_scores = generate_fpn_proposals(
-            multilevel_anchors, multilevel_label_logits,
-            multilevel_box_logits, image_shape2d)
+            multilevel_pred_boxes, multilevel_label_logits, image_shape2d)
 
         gt_boxes, gt_labels = inputs['gt_boxes'], inputs['gt_labels']
         if is_training:
