@@ -45,7 +45,7 @@ The tower function needs to follow some rules:
    * (Recommended) Put non-trainable variables that need to be used in inference into `MODEL_VARIABLES`.
 3. It must __respect variable scopes__:
    * The name of any trainable variables created in the function must be like "variable_scope_name/custom/scopes/name".
-     Don't depend on name_scope's name. Don't use variable_scope's name twice.
+     Don't depend on name_scope's name. Don't depend on some tensor's name. Don't use variable_scope's name twice.
    * The creation of any trainable variables must __respect reuse__ variable scope.
      To respect variable reuse (i.e. sharing), use `tf.get_variable` instead of `tf.Variable` in the function.
 
