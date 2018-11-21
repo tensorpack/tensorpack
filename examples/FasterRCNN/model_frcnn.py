@@ -99,8 +99,7 @@ def sample_fast_rcnn_targets(boxes, gt_boxes, gt_labels):
     return BoxProposals(
         tf.stop_gradient(ret_boxes, name='sampled_proposal_boxes'),
         tf.stop_gradient(ret_labels, name='sampled_labels'),
-        tf.stop_gradient(fg_inds_wrt_gt),
-        gt_boxes, gt_labels)
+        tf.stop_gradient(fg_inds_wrt_gt))
 
 
 @layer_register(log_shape=True)
@@ -302,16 +301,12 @@ class BoxProposals(object):
     """
     A structure to manage box proposals and their relations with ground truth.
     """
-    def __init__(self, boxes,
-                 labels=None, fg_inds_wrt_gt=None,
-                 gt_boxes=None, gt_labels=None):
+    def __init__(self, boxes, labels=None, fg_inds_wrt_gt=None):
         """
         Args:
             boxes: Nx4
             labels: N, each in [0, #class), the true label for each input box
             fg_inds_wrt_gt: #fg, each in [0, M)
-            gt_boxes: Mx4
-            gt_labels: M
 
         The last four arguments could be None when not training.
         """
@@ -334,22 +329,18 @@ class BoxProposals(object):
         """ Returns: #fg"""
         return tf.gather(self.labels, self.fg_inds(), name='fg_labels')
 
-    @memoized_method
-    def matched_gt_boxes(self):
-        """ Returns: #fg x 4"""
-        return tf.gather(self.gt_boxes, self.fg_inds_wrt_gt)
-
 
 class FastRCNNHead(object):
     """
     A class to process & decode inputs/outputs of a fastrcnn classification+regression head.
     """
-    def __init__(self, proposals, box_logits, label_logits, bbox_regression_weights):
+    def __init__(self, proposals, box_logits, label_logits, gt_boxes, bbox_regression_weights):
         """
         Args:
             proposals: BoxProposals
             box_logits: Nx#classx4 or Nx1x4, the output of the head
             label_logits: Nx#class, the output of the head
+            gt_boxes: Mx4
             bbox_regression_weights: a 4 element tensor
         """
         for k, v in locals().items():
@@ -365,7 +356,7 @@ class FastRCNNHead(object):
     @memoized_method
     def losses(self):
         encoded_fg_gt_boxes = encode_bbox_target(
-            self.proposals.matched_gt_boxes(),
+            tf.gather(self.gt_boxes, self.proposals.fg_inds_wrt_gt),
             self.proposals.fg_boxes()) * self.bbox_regression_weights
         return fastrcnn_losses(
             self.proposals.labels, self.label_logits,

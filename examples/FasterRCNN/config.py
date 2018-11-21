@@ -180,7 +180,6 @@ _C.MRCNN.HEAD_DIM = 256
 
 # Cascade-RCNN, only available in FPN mode
 _C.FPN.CASCADE = False
-_C.CASCADE.NUM_STAGES = 3
 _C.CASCADE.IOUS = [0.5, 0.6, 0.7]
 _C.CASCADE.BBOX_REG_WEIGHTS = [[10., 10., 5., 5.], [20., 20., 10., 10.], [30., 30., 15., 15.]]
 
@@ -220,11 +219,9 @@ def finalize_configs(is_training):
         assert _C.FPN.NORM in ['None', 'GN']
 
         if _C.FPN.CASCADE:
-            num_cascade = _C.CASCADE.NUM_STAGES
             # the first threshold is the proposal sampling threshold
-            assert len(_C.CASCADE.IOUS) == num_cascade
             assert _C.CASCADE.IOUS[0] == _C.FRCNN.FG_THRESH
-            assert len(_C.CASCADE.BBOX_REG_WEIGHTS) == num_cascade
+            assert len(_C.CASCADE.BBOX_REG_WEIGHTS) == len(_C.CASCADE.IOUS)
 
     if is_training:
         train_scales = _C.PREPROC.TRAIN_SHORT_EDGE_SIZE

@@ -96,12 +96,10 @@ class DetectionModel(ModelDesc):
         image = self.preprocess(inputs['image'])     # 1CHW
 
         features = self.backbone(image)
-        proposals, rpn_losses = self.rpn(image, features, inputs)  # inputs?
+        anchor_inputs = {k: v for k, v in inputs.items() if k.startswith('anchor_')}
+        proposals, rpn_losses = self.rpn(image, features, anchor_inputs)  # inputs?
 
-        targets = [inputs['gt_boxes'], inputs['gt_labels']]
-        if 'gt_masks' in inputs:
-            targets.append(inputs['gt_masks'])
-
+        targets = [inputs[k] for k in ['gt_boxes', 'gt_labels', 'gt_masks'] if k in inputs]
         head_losses = self.roi_heads(image, features, proposals, targets)
 
         if self.training:
@@ -299,13 +297,14 @@ class ResNetFPNModel(DetectionModel):
             fastrcnn_label_logits, fastrcnn_box_logits = fastrcnn_outputs(
                 'fastrcnn/outputs', head_feature, cfg.DATA.NUM_CLASS)
             fastrcnn_head = FastRCNNHead(proposals, fastrcnn_box_logits, fastrcnn_label_logits,
-                                         tf.constant(cfg.FRCNN.BBOX_REG_WEIGHTS, dtype=tf.float32))
+                                         gt_boxes, tf.constant(cfg.FRCNN.BBOX_REG_WEIGHTS, dtype=tf.float32))
         else:
             def roi_func(boxes):
                 return multilevel_roi_align(features[:4], boxes, 7)
 
             fastrcnn_head = CascadeRCNNHead(
-                proposals, roi_func, fastrcnn_head_func, image_shape2d, cfg.DATA.NUM_CLASS)
+                proposals, roi_func, fastrcnn_head_func,
+                (gt_boxes, gt_labels), image_shape2d, cfg.DATA.NUM_CLASS)
 
         if self.training:
             all_losses = fastrcnn_head.losses()

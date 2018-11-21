@@ -10,18 +10,21 @@ from config import config as cfg
 
 class CascadeRCNNHead(object):
     def __init__(self, proposals,
-                 roi_func, fastrcnn_head_func, image_shape2d, num_classes):
+                 roi_func, fastrcnn_head_func, gt_targets, image_shape2d, num_classes):
         """
         Args:
             proposals: BoxProposals
             roi_func (boxes -> features): a function to crop features with rois
             fastrcnn_head_func (features -> features): the fastrcnn head to apply on the cropped features
+            gt_targets (gt_boxes, gt_labels):
         """
         for k, v in locals().items():
             if k != 'self':
                 setattr(self, k, v)
+        self.gt_boxes, self.gt_labels = gt_targets
+        del self.gt_targets
 
-        self.num_cascade_stages = cfg.CASCADE.NUM_STAGES
+        self.num_cascade_stages = len(cfg.CASCADE.IOUS)
 
         self.is_training = get_current_tower_context().is_training
         if self.is_training:
@@ -29,8 +32,6 @@ class CascadeRCNNHead(object):
             def scale_gradient(x):
                 return x, lambda dy: dy * (1.0 / self.num_cascade_stages)
             self.scale_gradient = scale_gradient
-            self.gt_boxes = proposals.gt_boxes
-            self.gt_labels = proposals.gt_labels
         else:
             self.scale_gradient = tf.identity
 
@@ -66,7 +67,7 @@ class CascadeRCNNHead(object):
         head_feature = self.fastrcnn_head_func('head', pooled_feature)
         label_logits, box_logits = fastrcnn_outputs(
             'outputs', head_feature, self.num_classes, class_agnostic_regression=True)
-        head = FastRCNNHead(proposals, box_logits, label_logits, reg_weights)
+        head = FastRCNNHead(proposals, box_logits, label_logits, self.gt_boxes, reg_weights)
 
         refined_boxes = head.decoded_output_boxes_class_agnostic()
         refined_boxes = clip_boxes(refined_boxes, self.image_shape2d)
@@ -88,8 +89,7 @@ class CascadeRCNNHead(object):
                 fg_mask = max_iou_per_box >= iou_threshold
                 fg_inds_wrt_gt = tf.boolean_mask(best_iou_ind, fg_mask)
                 labels_per_box = tf.stop_gradient(labels_per_box * tf.to_int64(fg_mask))
-                return BoxProposals(
-                    boxes, labels_per_box, fg_inds_wrt_gt, self.gt_boxes, self.gt_labels)
+                return BoxProposals(boxes, labels_per_box, fg_inds_wrt_gt)
         else:
             return BoxProposals(boxes)
 
