@@ -232,18 +232,9 @@ class ResNetFPNModel(DetectionModel):
             )   # NR_GT x height x width
         return ret
 
-    def slice_feature_and_anchors(self, image_shape2d, p23456, anchors):
+    def slice_feature_and_anchors(self, p23456, anchors):
         for i, stride in enumerate(cfg.FPN.ANCHOR_STRIDES):
             with tf.name_scope('FPN_slice_lvl{}'.format(i)):
-                if i < 3:
-                    # Images are padded for p5, which are too large for p2-p4.
-                    # This seems to have no effect on mAP.
-                    pi = p23456[i]
-                    target_shape = tf.to_int32(tf.ceil(tf.to_float(image_shape2d) * (1.0 / stride)))
-                    p23456[i] = tf.slice(pi, [0, 0, 0, 0],
-                                         tf.concat([[-1, -1], target_shape], axis=0))
-                    p23456[i].set_shape([1, pi.shape[1], None, None])
-
                 anchors[i] = anchors[i].narrow_to(p23456[i])
 
     def backbone(self, image):
@@ -260,7 +251,7 @@ class ResNetFPNModel(DetectionModel):
             all_anchors_fpn[i],
             inputs['anchor_labels_lvl{}'.format(i + 2)],
             inputs['anchor_boxes_lvl{}'.format(i + 2)]) for i in range(len(all_anchors_fpn))]
-        self.slice_feature_and_anchors(image_shape2d, features, multilevel_anchors)
+        self.slice_feature_and_anchors(features, multilevel_anchors)
 
         # Multi-Level RPN Proposals
         rpn_outputs = [rpn_head('rpn', pi, cfg.FPN.NUM_CHANNEL, len(cfg.RPN.ANCHOR_RATIOS))
@@ -472,23 +463,24 @@ class EvalCallback(Callback):
                     futures.append(executor.submit(eval_coco, dataflow, pred, pbar))
                 all_results = list(itertools.chain(*[fut.result() for fut in futures]))
         else:
+            filenames = [os.path.join(
+                logdir, 'outputs{}-part{}.json'.format(self.global_step, rank)
+            ) for rank in range(hvd.local_size())]
+
             if self._horovod_run_eval:
                 local_results = eval_coco(self.dataflow, self.predictor)
-                output_partial = os.path.join(
-                    logdir, 'outputs{}-part{}.json'.format(self.global_step, hvd.local_rank()))
-                with open(output_partial, 'w') as f:
+                fname = filenames[hvd.local_rank()]
+                with open(fname, 'w') as f:
                     json.dump(local_results, f)
             self.barrier.eval()
             if hvd.rank() > 0:
                 return
             all_results = []
-            for k in range(hvd.local_size()):
-                output_partial = os.path.join(
-                    logdir, 'outputs{}-part{}.json'.format(self.global_step, k))
-                with open(output_partial, 'r') as f:
+            for fname in filenames:
+                with open(fname, 'r') as f:
                     obj = json.load(f)
                 all_results.extend(obj)
-                os.unlink(output_partial)
+                os.unlink(fname)
 
         output_file = os.path.join(
             logdir, 'outputs{}.json'.format(self.global_step))
@@ -615,6 +607,6 @@ if __name__ == '__main__':
         if is_horovod:
             trainer = HorovodTrainer(average=False)
         else:
-            # nccl mode has better speed than cpu mode
+            # nccl mode appears faster than cpu mode
             trainer = SyncMultiGPUTrainerReplicated(cfg.TRAIN.NUM_GPUS, average=False, mode='nccl')
         launch_train_with_config(traincfg, trainer)

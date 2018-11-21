@@ -24,7 +24,8 @@ class AttrDict():
 
     def __setattr__(self, name, value):
         if self._freezed and name not in self.__dict__:
-            raise AttributeError("Cannot create new attribute!")
+            raise AttributeError(
+                "Config was freezed! Unknown config: {}".format(name))
         super().__setattr__(name, value)
 
     def __str__(self):
@@ -54,11 +55,11 @@ class AttrDict():
                 v = eval(v)
             setattr(dic, key, v)
 
-    def freeze(self):
-        self._freezed = True
+    def freeze(self, freezed=True):
+        self._freezed = freezed
         for v in self.__dict__.values():
             if isinstance(v, AttrDict):
-                v.freeze()
+                v.freeze(freezed)
 
     # avoid silent bugs
     def __eq__(self, _):
@@ -95,7 +96,6 @@ _C.BACKBONE.FREEZE_AT = 2  # options: 0, 1, 2
 # Use a base model with TF-preferred padding mode,
 # which may pad more pixels on right/bottom than top/left.
 # See https://github.com/tensorflow/tensorflow/issues/18213
-
 # In tensorpack model zoo, ResNet models with TF_PAD_MODE=False are marked with "-AlignPadding".
 # All other models under `ResNet/` in the model zoo are using TF_PAD_MODE=True.
 # Using either one should probably give the same performance.
@@ -110,11 +110,16 @@ _C.TRAIN.BASE_LR = 1e-2  # defined for a total batch size of 8. Otherwise it wil
 _C.TRAIN.WARMUP = 1000   # in terms of iterations. This is not affected by #GPUs
 _C.TRAIN.STEPS_PER_EPOCH = 500
 
-# LR_SCHEDULE means "steps" only when total batch size is 8.
-# Otherwise the actual steps to decrease learning rate are computed from the schedule.
+# LR_SCHEDULE means equivalent steps when the total batch size is 8.
+# When the total bs!=8, the actual iterations to decrease learning rate, and
+# the base learning rate are computed from BASE_LR and LR_SCHEDULE.
 # Therefore, there is *no need* to modify the config if you only change the number of GPUs.
-# LR_SCHEDULE = [120000, 160000, 180000]  # "1x" schedule in detectron
-_C.TRAIN.LR_SCHEDULE = [240000, 320000, 360000]    # "2x" schedule in detectron
+
+# _C.TRAIN.LR_SCHEDULE = [120000, 160000, 180000]      # "1x" schedule in detectron
+_C.TRAIN.LR_SCHEDULE = [240000, 320000, 360000]      # "2x" schedule in detectron
+# Longer schedules for from-scratch training (https://arxiv.org/abs/1811.08883):
+# _C.TRAIN.LR_SCHEDULE = [960000, 1040000, 1080000]    # "6x" schedule in detectron
+# _C.TRAIN.LR_SCHEDULE = [1500000, 1580000, 1620000]   # "9x" schedule in detectron
 _C.TRAIN.EVAL_PERIOD = 25  # period (epochs) to run eva
 
 # preprocessing --------------------
@@ -167,8 +172,7 @@ _C.FPN.ANCHOR_STRIDES = (4, 8, 16, 32, 64)  # strides for each FPN level. Must b
 _C.FPN.PROPOSAL_MODE = 'Level'  # 'Level', 'Joint'
 _C.FPN.NUM_CHANNEL = 256
 _C.FPN.NORM = 'None'  # 'None', 'GN'
-# conv head and fc head are only used in FPN.
-# For C4 models, the head is C5
+# The head option is only used in FPN. For C4 models, the head is C5
 _C.FPN.FRCNN_HEAD_FUNC = 'fastrcnn_2fc_head'
 # choices: fastrcnn_2fc_head, fastrcnn_4conv1fc_{,gn_}head
 _C.FPN.FRCNN_CONV_HEAD_DIM = 256
@@ -192,11 +196,14 @@ _C.TEST.RESULT_SCORE_THRESH = 0.05
 _C.TEST.RESULT_SCORE_THRESH_VIS = 0.3   # only visualize confident results
 _C.TEST.RESULTS_PER_IM = 100
 
+_C.freeze()  # avoid typo / wrong config keys
+
 
 def finalize_configs(is_training):
     """
     Run some sanity checks, and populate some configs from others
     """
+    _C.freeze(False)  # populate new keys now
     _C.DATA.NUM_CLASS = _C.DATA.NUM_CATEGORY + 1  # +1 background
     _C.DATA.BASEDIR = os.path.expanduser(_C.DATA.BASEDIR)
 
