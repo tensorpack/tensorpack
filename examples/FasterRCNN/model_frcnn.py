@@ -171,7 +171,7 @@ def fastrcnn_losses(labels, label_logits, fg_boxes, fg_box_logits):
 
     add_moving_summary(label_loss, box_loss, accuracy,
                        fg_accuracy, false_negative, tf.to_float(num_fg, name='num_fg_label'))
-    return label_loss, box_loss
+    return [label_loss, box_loss]
 
 
 @under_name_scope()

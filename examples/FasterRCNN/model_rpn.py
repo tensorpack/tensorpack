@@ -98,7 +98,7 @@ def rpn_losses(anchor_labels, anchor_boxes, label_logits, box_logits):
     box_loss = tf.where(tf.equal(nr_pos, 0), placeholder, box_loss, name='box_loss')
 
     add_moving_summary(label_loss, box_loss, nr_valid, nr_pos)
-    return label_loss, box_loss
+    return [label_loss, box_loss]
 
 
 @under_name_scope()

@@ -160,7 +160,7 @@ def multilevel_rpn_losses(
         total_label_loss = tf.add_n(losses[::2], name='label_loss')
         total_box_loss = tf.add_n(losses[1::2], name='box_loss')
         add_moving_summary(total_label_loss, total_box_loss)
-    return total_label_loss, total_box_loss
+    return [total_label_loss, total_box_loss]
 
 
 @under_name_scope()
@@ -179,11 +179,11 @@ def generate_fpn_proposals(
     assert len(multilevel_pred_boxes) == num_lvl
     assert len(multilevel_label_logits) == num_lvl
 
-    ctx = get_current_tower_context()
+    training = get_current_tower_context().is_training
     all_boxes = []
     all_scores = []
     if cfg.FPN.PROPOSAL_MODE == 'Level':
-        fpn_nms_topk = cfg.RPN.TRAIN_PER_LEVEL_NMS_TOPK if ctx.is_training else cfg.RPN.TEST_PER_LEVEL_NMS_TOPK
+        fpn_nms_topk = cfg.RPN.TRAIN_PER_LEVEL_NMS_TOPK if training else cfg.RPN.TEST_PER_LEVEL_NMS_TOPK
         for lvl in range(num_lvl):
             with tf.name_scope('Lvl{}'.format(lvl + 2)):
                 pred_boxes_decoded = multilevel_pred_boxes[lvl]
@@ -210,8 +210,8 @@ def generate_fpn_proposals(
         all_scores = tf.concat(all_scores, axis=0)
         proposal_boxes, proposal_scores = generate_rpn_proposals(
             all_boxes, all_scores, image_shape2d,
-            cfg.RPN.TRAIN_PRE_NMS_TOPK if ctx.is_training else cfg.RPN.TEST_PRE_NMS_TOPK,
-            cfg.RPN.TRAIN_POST_NMS_TOPK if ctx.is_training else cfg.RPN.TEST_POST_NMS_TOPK)
+            cfg.RPN.TRAIN_PRE_NMS_TOPK if training else cfg.RPN.TEST_PRE_NMS_TOPK,
+            cfg.RPN.TRAIN_POST_NMS_TOPK if training else cfg.RPN.TEST_POST_NMS_TOPK)
 
     tf.sigmoid(proposal_scores, name='probs')  # for visualization
     return tf.stop_gradient(proposal_boxes, name='boxes'), \
