@@ -171,7 +171,7 @@ class ResNetC4Model(DetectionModel):
         feature_gap = GlobalAvgPooling('gap', feature_fastrcnn, data_format='channels_first')
         fastrcnn_label_logits, fastrcnn_box_logits = fastrcnn_outputs('fastrcnn', feature_gap, cfg.DATA.NUM_CLASS)
 
-        fastrcnn_head = FastRCNNHead(proposals, fastrcnn_box_logits, fastrcnn_label_logits,
+        fastrcnn_head = FastRCNNHead(proposals, fastrcnn_box_logits, fastrcnn_label_logits, gt_boxes,
                                      tf.constant(cfg.FRCNN.BBOX_REG_WEIGHTS, dtype=tf.float32))
 
         if self.training:
