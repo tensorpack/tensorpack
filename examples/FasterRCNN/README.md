@@ -60,7 +60,7 @@ Not training with 8 GPUs may result in different performance from the table belo
 
 ### Inference:
 
-To predict on an image (and show output in a window):
+To predict on an image (needs DISPLAY to show the outputs):
 ```
 ./train.py --predict input.jpg --load /path/to/model --config SAME-AS-TRAINING
 ```

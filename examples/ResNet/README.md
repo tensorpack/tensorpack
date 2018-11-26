@@ -9,10 +9,10 @@ __Training__ code of three variants of ResNet on ImageNet:
 
 The training follows the __exact__ recipe used by the [Training ImageNet in 1 Hour paper](https://arxiv.org/abs/1706.02677)
 and gets the same performance.
-Models trained with 8 GPUs and a total batch size of 256 is listed in the table below.
+Models trained with 8 GPUs and a total batch size of 256 are listed in the table below.
 
 This recipe has better performance than most open source implementations.
-In fact, many papers that claim to "improve" ResNet only compete with a lower
+In fact, many papers that claim to "improve" ResNet by .5% only compete with a lower
 baseline and they actually cannot beat this ResNet recipe.
 
 | Model       | Top 5 Error | Top 1 Error | Download                                                                     |
@@ -42,7 +42,7 @@ See the [tutorial](http://tensorpack.readthedocs.io/en/latest/tutorial/efficient
 
 This script only converts and runs ImageNet-ResNet{50,101,152} Caffe models [released by MSRA](https://github.com/KaimingHe/deep-residual-networks).
 Note that the architecture is different from the `imagenet-resnet.py` script and the models are not compatible.
-ResNets have evolved, generally you should not cite these numbers as baselines in your paper.
+ResNets have evolved, generally you'd better not cite these old numbers as baselines in your paper.
 
 Usage:
 ```bash
@@ -53,7 +53,8 @@ python -m tensorpack.utils.loadcaffe PATH/TO/{ResNet-101-deploy.prototxt,ResNet-
 ```
 
 The converted models are verified on ILSVRC12 validation set.
-The per-pixel mean used here is slightly different from the original.
+The per-pixel mean used here is slightly different from the original, but has
+negligible effect.
 
 | Model              | Top 5 Error | Top 1 Error |
 |:-------------------|-------------|------------:|
@@ -77,7 +78,8 @@ Reproduce the mixup pre-act ResNet-18 CIFAR10 experiment, in the paper:
 * [mixup: Beyond Empirical Risk Minimization](https://arxiv.org/abs/1710.09412).
 
 This implementation follows exact settings from the [author's code](https://github.com/hongyi-zhang/mixup).
-Note that the architecture is different from the offcial preact-ResNet18.
+Note that the architecture is different from the offcial preact-ResNet18 in the
+ResNet paper.
 
 Usage:
 ```bash

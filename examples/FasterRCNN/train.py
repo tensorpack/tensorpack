@@ -411,6 +411,8 @@ def predict(pred_func, input_file):
     results = detect_one_image(img, pred_func)
     final = draw_final_outputs(img, results)
     viz = np.concatenate((img, final), axis=1)
+    cv2.imwrite("output.png", viz)
+    logger.info("Inference output written to output.png")
     tpviz.interactive_imshow(viz)
 
 

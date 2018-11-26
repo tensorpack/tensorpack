@@ -53,6 +53,7 @@ class GPUUtilizationTracker(Callback):
         assert len(self._devices), "[GPUUtilizationTracker] No GPU device given!"
 
     def _before_train(self):
+        assert tf.test.is_gpu_available()
         self._evt = mp.Event()
         self._stop_evt = mp.Event()
         self._queue = mp.Queue()
@@ -212,6 +213,7 @@ class PeakMemoryTracker(Callback):
         self._fetches = tf.train.SessionRunArgs(fetches=ops)
 
     def _before_run(self, _):
+        assert tf.test.is_gpu_available(), "PeakMemoryTracker only supports GPU!"
         if self.local_step == self.trainer.steps_per_epoch - 1:
             return self._fetches
         return None
