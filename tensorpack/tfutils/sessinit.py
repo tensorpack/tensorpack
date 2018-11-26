@@ -2,20 +2,18 @@
 # File: sessinit.py
 
 
-import os
 import numpy as np
 import tensorflow as tf
 import six
 
 from ..utils import logger
-from ..utils.develop import deprecated
 from .common import get_op_tensor_name
 from .varmanip import (SessionUpdate, get_savename_from_varname,
                        is_training_name, get_checkpoint_path)
 
 __all__ = ['SessionInit', 'ChainInit',
            'SaverRestore', 'SaverRestoreRelaxed', 'DictRestore',
-           'JustCurrentSession', 'get_model_loader', 'TryResumeTraining']
+           'JustCurrentSession', 'get_model_loader']
 
 
 class SessionInit(object):
@@ -260,21 +258,3 @@ def get_model_loader(filename):
         return DictRestore(dict(obj))
     else:
         return SaverRestore(filename)
-
-
-@deprecated("It's better to write the logic yourself or use AutoResumeTrainConfig!", "2018-07-01")
-def TryResumeTraining():
-    """
-    Try loading latest checkpoint from ``logger.get_logger_dir()``, only if there is one.
-    Actually not very useful... better to write your own one.
-
-    Returns:
-        SessInit: either a :class:`JustCurrentSession`, or a :class:`SaverRestore`.
-    """
-    if not logger.get_logger_dir():
-        return JustCurrentSession()
-    path = os.path.join(logger.get_logger_dir(), 'checkpoint')
-    if not tf.gfile.Exists(path):
-        return JustCurrentSession()
-    logger.info("Found checkpoint at {}.".format(path))
-    return SaverRestore(path)

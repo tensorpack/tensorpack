@@ -6,6 +6,8 @@ a __Python generator__ which yields preprocessed ImageNet images and labels as f
 Since it is simply a generator interface, you can use the DataFlow in any Python-based frameworks (e.g. PyTorch, Keras)
 or your own code as well.
 
+
+
 **What we are going to do**: We'll use ILSVRC12 dataset, which contains 1.28 million images.
 The original images (JPEG compressed) are 140G in total.
 The average resolution is about 400x350 <sup>[[1]]</sup>.
@@ -27,8 +29,12 @@ Some things to know before reading:
 	 But in validation we often need the exact set of data, to be able to compute a correct and comparable score.
 	 This will affect how we build the DataFlow.
 4. The actual performance would depend on not only the disk, but also memory (for caching) and CPU (for data processing).
-	 You may need to tune the parameters (#processes, #threads, size of buffer, etc.)
-	 or change the pipeline for new tasks and new machines to achieve the best performance.
+	You may need to tune the parameters (#processes, #threads, size of buffer, etc.)
+	or change the pipeline for new tasks and new machines to achieve the best performance.
+    The solutions in this tutorial may not help you.
+    To improve your own DataFlow, read the 
+    [performance tuning tutorial](performance-tuning.html#investigate-dataflow)
+    before doing any optimizations.
 
 The benchmark code for this tutorial can be found in [tensorpack/benchmarks](https://github.com/tensorpack/benchmarks/tree/master/ImageNet),
 including comparison with a similar (but simpler) pipeline built with `tf.data`.

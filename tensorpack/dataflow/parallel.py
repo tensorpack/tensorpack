@@ -21,6 +21,7 @@ from ..utils.concurrency import (ensure_proc_terminate,
 from ..utils.serialize import loads, dumps
 from ..utils import logger
 from ..utils.gpu import change_gpu
+from ..utils.develop import log_deprecated
 
 __all__ = ['PrefetchData', 'MultiProcessPrefetchData',
            'PrefetchDataZMQ', 'PrefetchOnGPUs', 'MultiThreadPrefetchData']
@@ -339,6 +340,7 @@ class PrefetchOnGPUs(PrefetchDataZMQ):
             ds (DataFlow): input DataFlow.
             gpus (list[int]): list of GPUs to use. Will also start this number of processes.
         """
+        log_deprecated("PrefetchOnGPUs", "It does not seem useful, and please implement it yourself.", "2019-02-28")
         self.gpus = gpus
         super(PrefetchOnGPUs, self).__init__(ds, len(gpus))
 

@@ -12,11 +12,11 @@ and then compose it with existing modules (e.g. mapping, batching, prefetching, 
 The easiest way to create a DataFlow to load custom data, is to wrap a custom generator, e.g.:
 ```python
 def my_data_loader():
-  while True:
-    # load data from somewhere with Python
+  # load data from somewhere with Python, and yield them
+  for k in range(100):
     yield [my_array, my_label]
 
-dataflow = DataFromGenerator(my_data_loader)
+df = DataFromGenerator(my_data_loader)
 ```
 
 To write more complicated DataFlow, you need to inherit the base `DataFlow` class.
@@ -24,6 +24,7 @@ Usually, you just need to implement the `__iter__()` method which yields a datap
 ```python
 class MyDataFlow(DataFlow):
   def __iter__(self):
+    # load data from somewhere with Python, and yield them
     for k in range(100):
       digit = np.random.rand(28, 28)
       label = np.random.randint(10)
@@ -38,6 +39,8 @@ for datapoint in df:
 Optionally, you can implement the `__len__` and `reset_state` method. 
 The detailed semantics of these three methods are explained 
 in the [API documentation](../../modules/dataflow.html#tensorpack.dataflow.DataFlow).
+If you're writing a complicated DataFlow, make sure to read the API documentation
+for the semantics.
 
 DataFlow implementations for several well-known datasets are provided in the
 [dataflow.dataset](../../modules/dataflow.dataset.html)
@@ -52,9 +55,12 @@ processing on top of the source DataFlow, e.g.:
 class ProcessingDataFlow(DataFlow):
   def __init__(self, ds):
     self.ds = ds
+    
+  def reset_state(self):
+    self.ds.reset_state()
 
   def __iter__(self):
-    for datapoint in self.ds.get_data():
+    for datapoint in self.ds:
       # do something
       yield new_datapoint
 ```

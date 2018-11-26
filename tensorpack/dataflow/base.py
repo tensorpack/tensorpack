@@ -65,7 +65,7 @@ class DataFlow(object):
         """
         * A dataflow is an iterable. The :meth:`__iter__` method should yield a list each time.
           Each element in the list should be either a number or a numpy array.
-          For now, tensorpack also partially supports dict instead of list.
+          For now, tensorpack also **partially** supports dict instead of list.
 
         * The :meth:`__iter__` method can be either finite (will stop iteration) or infinite
           (will not stop iteration). For a finite dataflow, :meth:`__iter__` can be called
@@ -107,7 +107,7 @@ class DataFlow(object):
             it yourself, especially when using data-parallel trainer.
           + The length of progress bar when processing a dataflow.
           + Used by :class:`InferenceRunner` to get the number of iterations in inference.
-            In this case users are responsible for making sure that :meth:`__len__` is accurate.
+            In this case users are **responsible** for making sure that :meth:`__len__` is accurate.
             This is to guarantee that inference is run on a fixed set of images.
 
         Returns:
@@ -127,11 +127,11 @@ class DataFlow(object):
           by the **process that uses the dataflow** before :meth:`__iter__` is called.
           The caller thread of this method should stay alive to keep this dataflow alive.
 
-        * It is meant for initialization works that involve processes,
-          e.g., initialize random number generator (RNG), create worker processes.
+        * It is meant for certain initialization that involves processes,
+          e.g., initialize random number generators (RNG), create worker processes.
 
           Because it's very common to use RNG in data processing,
-          developers of dataflow can also subclass :class:`RNGDataFlow` to simplify the work.
+          developers of dataflow can also subclass :class:`RNGDataFlow` to have easier access to an RNG.
 
         * A dataflow is not fork-safe after :meth:`reset_state` is called (because this will violate the guarantee).
           A few number of dataflow is not fork-safe anytime, which will be mentioned in the docs.
@@ -158,7 +158,7 @@ class RNGDataFlow(DataFlow):
 
 class ProxyDataFlow(DataFlow):
     """ Base class for DataFlow that proxies another.
-        Every method is proxied to ``self.ds`` unless override by subclass.
+        Every method is proxied to ``self.ds`` unless overriden by a subclass.
     """
 
     def __init__(self, ds):

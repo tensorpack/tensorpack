@@ -3,6 +3,7 @@
 
 
 from .base import ProxyCallback, Callback
+from ..utils.develop import log_deprecated
 
 __all__ = ['PeriodicTrigger', 'PeriodicCallback', 'EnableCallbackIf']
 
@@ -77,6 +78,7 @@ class PeriodicRunHooks(ProxyCallback):
         """
         self._every_k_steps = int(every_k_steps)
         super(PeriodicRunHooks, self).__init__(callback)
+        log_deprecated("PeriodicRunHooks", "Use PeriodicCallback instead!", "2019-02-28")
 
     def _before_run(self, ctx):
         if self.global_step % self._every_k_steps == 0:

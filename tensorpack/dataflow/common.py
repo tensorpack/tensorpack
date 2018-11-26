@@ -43,6 +43,10 @@ class TestDataSpeed(ProxyDataFlow):
             yield dp
 
     def start_test(self):
+        log_deprecated("TestDataSpeed.start_test() was renamed to start()", "2019-03-30")
+        self.start()
+
+    def start(self):
         """
         Start testing with a progress bar.
         """
@@ -58,12 +62,6 @@ class TestDataSpeed(ProxyDataFlow):
                 pbar.update()
                 if idx == self.test_size - 1:
                     break
-
-    def start(self):
-        """
-        Alias of start_test.
-        """
-        self.start_test()
 
 
 class BatchData(ProxyDataFlow):

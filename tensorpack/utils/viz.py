@@ -5,7 +5,6 @@
 import numpy as np
 import os
 import sys
-import io
 from .fs import mkdir_p
 from .argtools import shape2d
 from .palette import PALETTE_RGB
@@ -16,22 +15,10 @@ except ImportError:
     pass
 
 
-__all__ = ['pyplot2img', 'interactive_imshow',
+__all__ = ['interactive_imshow',
            'stack_patches', 'gen_stack_patches',
            'dump_dataflow_images', 'intensity_to_rgb',
            'draw_boxes']
-
-
-def pyplot2img(plt):
-    """ Convert a pyplot instance to image """
-    buf = io.BytesIO()
-    plt.axis('off')
-    plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0)
-    buf.seek(0)
-    rawbuf = np.frombuffer(buf.getvalue(), dtype='uint8')
-    im = cv2.imdecode(rawbuf, cv2.IMREAD_COLOR)
-    buf.close()
-    return im
 
 
 def interactive_imshow(img, lclick_cb=None, rclick_cb=None, **kwargs):
@@ -428,7 +415,6 @@ from ..utils.develop import create_dummy_func   # noqa
 try:
     import matplotlib.pyplot as plt
 except (ImportError, RuntimeError):
-    pyplot2img = create_dummy_func('pyplot2img', 'matplotlib')    # noqa
     intensity_to_rgb = create_dummy_func('intensity_to_rgb', 'matplotlib')    # noqa
 
 if __name__ == '__main__':

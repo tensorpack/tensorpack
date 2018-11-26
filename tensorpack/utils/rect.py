@@ -3,6 +3,7 @@
 
 
 import numpy as np
+from .develop import log_deprecated
 
 __all__ = ['IntBox', 'FloatBox']
 
@@ -11,6 +12,7 @@ class BoxBase(object):
     __slots__ = ['x1', 'y1', 'x2', 'y2']
 
     def __init__(self, x1, y1, x2, y2):
+        log_deprecated("IntBox and FloatBox", "Please implement them by your own.", "2019-02-28")
         self.x1 = x1
         self.y1 = y1
         self.x2 = x2

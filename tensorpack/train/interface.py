@@ -12,7 +12,7 @@ from .config import TrainConfig
 from .tower import SingleCostTrainer
 from .trainers import SimpleTrainer
 
-__all__ = ['launch_train_with_config', 'apply_default_prefetch']
+__all__ = ['launch_train_with_config']
 
 
 def apply_default_prefetch(input_source_or_dataflow, trainer):
