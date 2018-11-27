@@ -65,6 +65,7 @@ try:
     import msgpack
     import msgpack_numpy
     msgpack_numpy.patch()
+    assert msgpack.version >= (0, 5, 2)
 except ImportError:
     loads_msgpack = create_dummy_func(  # noqa
         'loads_msgpack', ['msgpack', 'msgpack_numpy'])

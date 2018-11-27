@@ -310,7 +310,7 @@ class HorovodTrainer(SingleCostTrainer):
     .. code-block:: bash
 
         # First, change trainer to HorovodTrainer(), then
-        CUDA_VISIBLE_DEVICES=0,1,2,3 mpirun -np 4 --output-filename mylog python train.py
+        CUDA_VISIBLE_DEVICES=0,1,2,3 NCCL_DEBUG=INFO mpirun -np 4 --output-filename mylog python train.py
 
     To use for distributed training:
 
@@ -319,7 +319,7 @@ class HorovodTrainer(SingleCostTrainer):
         # First, change trainer to HorovodTrainer(), then
         mpirun -np 8 -H server1:4,server2:4  \\
             -bind-to none -map-by slot \\
-            --output-filename mylog  -x LD_LIBRARY_PATH \\
+            --output-filename mylog -x NCCL_DEBUG=INFO -x LD_LIBRARY_PATH \\
             python train.py
         # Add other environment variables you need by -x, e.g. PYTHONPATH, PATH.
         # If using all GPUs, you can always skip the `CUDA_VISIBLE_DEVICES` option.
@@ -430,8 +430,8 @@ class HorovodTrainer(SingleCostTrainer):
         except AttributeError:  # old horovod does not have local_size
             pass
         super(HorovodTrainer, self).initialize(session_creator, session_init)
-        if not tf.test.is_gpu_available():
-            logger.error("tf.test.is_gpu_available() == False")
+        # if not tf.test.is_gpu_available():
+        # logger.error("tf.test.is_gpu_available() == False")
 
         # This broadcast belongs to the "intialize" stage
         # It should not be delayed to the "before_train" stage.

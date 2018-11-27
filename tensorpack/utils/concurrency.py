@@ -185,7 +185,8 @@ def enable_death_signal(_warn=True):
         import prctl    # pip install python-prctl
     except ImportError:
         if _warn:
-            log_once('Install python-prctl so that processes can be cleaned with guarantee.', 'warn')
+            log_once('"import prctl" failed! Install python-prctl so that processes can be cleaned with guarantee.',
+                     'warn')
         return
     else:
         assert hasattr(prctl, 'set_pdeathsig'), \

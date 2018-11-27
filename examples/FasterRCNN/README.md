@@ -8,7 +8,7 @@ This example provides a minimal (2k lines) and faithful implementation of the fo
 
 with the support of:
 + Multi-GPU / distributed training
-+ [Cross-GPU BatchNorm](https://arxiv.org/abs/1711.07240)
++ Cross-GPU BatchNorm (from [MegDet: A Large Mini-Batch Object Detector](https://arxiv.org/abs/1711.07240))
 + [Group Normalization](https://arxiv.org/abs/1803.08494)
 
 ## Dependencies
@@ -56,7 +56,6 @@ Options can be changed by either the command line or the `config.py` file.
 Recommended configurations are listed in the table below.
 
 The code is only valid for training with 1, 2, 4 or >=8 GPUs.
-Not training with 8 GPUs may result in different performance from the table below.
 
 ### Inference:
 
@@ -77,11 +76,13 @@ prediction will need to be run with the corresponding training configs.
 ## Results
 
 These models are trained on trainval35k and evaluated on minival2014 using mAP@IoU=0.50:0.95.
-All models are fine-tuned from ImageNet pre-trained R50/R101 models in the [model zoo](http://models.tensorpack.com/FasterRCNN/).
+All models are fine-tuned from ImageNet pre-trained R50/R101 models in the
+[model zoo](http://models.tensorpack.com/FasterRCNN/), unless otherwise noted.
+All models are trained with 8 NVIDIA V100s, unless otherwise noted.
 Performance in [Detectron](https://github.com/facebookresearch/Detectron/) can be roughly reproduced.
 Mask R-CNN results contain both box and mask mAP.
 
- | Backbone | mAP<br/>(box;mask)                                                                                                            | Detectron mAP <sup>[1](#ft1)</sup><br/> (box;mask) | Time on 8 V100s | Configurations <br/> (click to expand)                                                                                                                                                                                                                 |
+ | Backbone | mAP<br/>(box;mask)                                                                                                            | Detectron mAP <sup>[1](#ft1)</sup><br/> (box;mask) | Time (on 8 V100s) | Configurations <br/> (click to expand)                                                                                                                                                                                                                 |
  | -        | -                                                                                                                             | -                                                  | -               | -                                                                                                                                                                                                                                                      |
  | R50-C4   | 33.1                                                                                                                          |                                                    | 18h             | <details><summary>super quick</summary>`MODE_MASK=False FRCNN.BATCH_PER_IM=64`<br/>`PREPROC.SHORT_EDGE_SIZE=600 PREPROC.MAX_SIZE=1024`<br/>`TRAIN.LR_SCHEDULE=[150000,230000,280000]` </details>                                                       |
  | R50-C4   | 36.6                                                                                                                          | 36.5                                               | 44h             | <details><summary>standard</summary>`MODE_MASK=False` </details>                                                                                                                                                                                       |
