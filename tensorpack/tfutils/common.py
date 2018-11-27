@@ -139,6 +139,14 @@ def get_op_or_tensor_by_name(name):
         return list(map(f, name))
 
 
+def gpu_available_in_session():
+    sess = tf.get_default_session()
+    for dev in sess.list_devices():
+        if dev.device_type.lower() == 'gpu':
+            return True
+    return False
+
+
 @deprecated("You should use get_tf_version_tuple instead due to the existence of TF 1.10")
 def get_tf_version_number():
     return float('.'.join(tf.VERSION.split('.')[:2]))

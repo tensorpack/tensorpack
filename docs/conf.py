@@ -48,6 +48,7 @@ except ImportError:
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock(name=mod_name)
 sys.modules['cv2'].__version__ = '3.2.1'    # fake version
+sys.modules['msgpack'].version = (0, 5, 2)
 
 import tensorpack
 

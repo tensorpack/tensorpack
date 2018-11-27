@@ -15,6 +15,7 @@ from ..utils import logger
 from ..utils.concurrency import ensure_proc_terminate, start_proc_mask_signal
 from ..utils.gpu import get_num_gpu
 from ..utils.nvml import NVMLContext
+from ..tfutils.common import gpu_available_in_session
 
 __all__ = ['GPUUtilizationTracker', 'GraphProfiler', 'PeakMemoryTracker']
 
@@ -53,7 +54,7 @@ class GPUUtilizationTracker(Callback):
         assert len(self._devices), "[GPUUtilizationTracker] No GPU device given!"
 
     def _before_train(self):
-        # assert tf.test.is_gpu_available()
+        assert gpu_available_in_session(), "[GPUUtilizationTracker] needs GPU!"
         self._evt = mp.Event()
         self._stop_evt = mp.Event()
         self._queue = mp.Queue()
@@ -212,8 +213,10 @@ class PeakMemoryTracker(Callback):
                 ops.append(MaxBytesInUse())
         self._fetches = tf.train.SessionRunArgs(fetches=ops)
 
+    def _before_train(self):
+        assert gpu_available_in_session(), "PeakMemoryTracker only supports GPU!"
+
     def _before_run(self, _):
-        # assert tf.test.is_gpu_available(), "PeakMemoryTracker only supports GPU!"
         if self.local_step == self.trainer.steps_per_epoch - 1:
             return self._fetches
         return None

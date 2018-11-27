@@ -430,8 +430,6 @@ class HorovodTrainer(SingleCostTrainer):
         except AttributeError:  # old horovod does not have local_size
             pass
         super(HorovodTrainer, self).initialize(session_creator, session_init)
-        # if not tf.test.is_gpu_available():
-        # logger.error("tf.test.is_gpu_available() == False")
 
         # This broadcast belongs to the "intialize" stage
         # It should not be delayed to the "before_train" stage.
