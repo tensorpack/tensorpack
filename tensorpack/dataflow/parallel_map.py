@@ -9,6 +9,7 @@ from six.moves import queue
 import zmq
 
 from .base import DataFlow, ProxyDataFlow, DataFlowReentrantGuard
+from .common import RepeatedData
 from ..utils.concurrency import StoppableThread, enable_death_signal
 from ..utils import logger
 from ..utils.serialize import loads, dumps
@@ -23,11 +24,18 @@ __all__ = ['ThreadedMapData', 'MultiThreadMapData',
 
 
 class _ParallelMapData(ProxyDataFlow):
-    def __init__(self, ds, buffer_size):
+    def __init__(self, ds, buffer_size, strict=False):
+        if not strict:
+            ds = RepeatedData(ds, -1)
         super(_ParallelMapData, self).__init__(ds)
         assert buffer_size > 0, buffer_size
         self._buffer_size = buffer_size
-        self._buffer_occupancy = 0  # actual #elements in buffer
+        self._buffer_occupancy = 0  # actual #elements in buffer, only useful in strict mode
+        self._strict = strict
+
+    def reset_state(self):
+        super(_ParallelMapData, self).reset_state()
+        self._iter = self.ds.__iter__()
 
     def _recv(self):
         pass
@@ -50,20 +58,14 @@ class _ParallelMapData(ProxyDataFlow):
                 self._send(dp)
         except StopIteration:
             logger.error(
-                "[{}] buffer_size cannot be larger than the size of the DataFlow!".format(type(self).__name__))
+                "[{}] buffer_size cannot be larger than the size of the DataFlow when strict=True!".format(
+                    type(self).__name__))
             raise
         self._buffer_occupancy += cnt
 
     def get_data_non_strict(self):
         for dp in self._iter:
             self._send(dp)
-            ret = self._recv()
-            if ret is not None:
-                yield ret
-
-        self._iter = self.ds.__iter__()   # refresh
-        for _ in range(self._buffer_size):
-            self._send(next(self._iter))
             ret = self._recv()
             if ret is not None:
                 yield ret
@@ -82,6 +84,14 @@ class _ParallelMapData(ProxyDataFlow):
             if k == self._buffer_size - 1:
                 self._fill_buffer()
             yield dp
+
+    def __iter__(self):
+        if self._strict:
+            for dp in self.get_data_strict():
+                yield dp
+        else:
+            for dp in self.get_data_non_strict():
+                yield dp
 
 
 class MultiThreadMapData(_ParallelMapData):
@@ -141,7 +151,7 @@ class MultiThreadMapData(_ParallelMapData):
             buffer_size (int): number of datapoints in the buffer
             strict (bool): use "strict mode", see notes above.
         """
-        super(MultiThreadMapData, self).__init__(ds, buffer_size)
+        super(MultiThreadMapData, self).__init__(ds, buffer_size, strict)
 
         self._strict = strict
         self.nr_thread = nr_thread
@@ -165,7 +175,6 @@ class MultiThreadMapData(_ParallelMapData):
         for t in self._threads:
             t.start()
 
-        self._iter = self.ds.__iter__()
         self._guard = DataFlowReentrantGuard()
 
         # Call once at the beginning, to ensure inq+outq has a total of buffer_size elements
@@ -179,12 +188,8 @@ class MultiThreadMapData(_ParallelMapData):
 
     def __iter__(self):
         with self._guard:
-            if self._strict:
-                for dp in self.get_data_strict():
-                    yield dp
-            else:
-                for dp in self.get_data_non_strict():
-                    yield dp
+            for dp in super(MultiThreadMapData, self).__iter__():
+                yield dp
 
     def __del__(self):
         if self._evt is not None:
@@ -245,7 +250,7 @@ class MultiProcessMapDataZMQ(_ParallelMapData, _MultiProcessZMQDataFlow):
             buffer_size (int): number of datapoints in the buffer
             strict (bool): use "strict mode", see notes above.
         """
-        _ParallelMapData.__init__(self, ds, buffer_size)
+        _ParallelMapData.__init__(self, ds, buffer_size, strict)
         _MultiProcessZMQDataFlow.__init__(self)
         self.nr_proc = nr_proc
         self.map_func = map_func
@@ -253,7 +258,10 @@ class MultiProcessMapDataZMQ(_ParallelMapData, _MultiProcessZMQDataFlow):
         self._procs = []
         self._guard = DataFlowReentrantGuard()
 
-    def _reset_once(self):
+    def reset_state(self):
+        _MultiProcessZMQDataFlow.reset_state(self)
+        _ParallelMapData.reset_state(self)
+
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.DEALER)
         self.socket.set_hwm(self._buffer_size * 2)
@@ -266,14 +274,8 @@ class MultiProcessMapDataZMQ(_ParallelMapData, _MultiProcessZMQDataFlow):
             self._proc_ids[k], self.map_func, pipename, worker_hwm)
             for k in range(self.nr_proc)]
 
-        self.ds.reset_state()
-        self._iter = self.ds.__iter__()
-
         self._start_processes()
         self._fill_buffer()     # pre-fill the bufer
-
-    def reset_state(self):
-        _MultiProcessZMQDataFlow.reset_state(self)
 
     def _send(self, dp):
         msg = [b"", dumps(dp)]
@@ -286,12 +288,8 @@ class MultiProcessMapDataZMQ(_ParallelMapData, _MultiProcessZMQDataFlow):
 
     def __iter__(self):
         with self._guard, _zmq_catch_error('MultiProcessMapData'):
-            if self._strict:
-                for dp in self.get_data_strict():
-                    yield dp
-            else:
-                for dp in self.get_data_non_strict():
-                    yield dp
+            for dp in super(MultiProcessMapDataZMQ, self).__iter__():
+                yield dp
 
 
 MultiProcessMapData = MultiProcessMapDataZMQ  # alias
@@ -388,6 +386,8 @@ class MultiProcessMapDataComponentSharedArray(DataFlow):
 
 
 if __name__ == '__main__':
+    import time
+
     class Zero(DataFlow):
         def __init__(self, size):
             self._size = size
@@ -399,8 +399,13 @@ if __name__ == '__main__':
         def __len__(self):
             return self._size
 
-    ds = Zero(300)
-    ds = MultiProcessMapData(ds, 3, lambda x: [x[0] + 1], strict=True)
+    def f(x):
+        if x[0] < 10:
+            time.sleep(1)
+        return x
+
+    ds = Zero(100)
+    ds = MultiThreadMapData(ds, 50, f, buffer_size=50, strict=False)
     ds.reset_state()
     for k in ds:
         print("Bang!", k)

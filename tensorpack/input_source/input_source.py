@@ -187,8 +187,6 @@ class EnqueueThread(ShareSessionThread):
 class QueueInput(FeedfreeInput):
     """ Enqueue datapoints from a DataFlow to a TF queue.
         And the model receives dequeued tensors.
-
-        Calling :meth:`reset_state()` will clear the queue and reset the dataflow.
     """
 
     def __init__(self, ds, queue=None):

@@ -95,20 +95,14 @@ class _MultiProcessZMQDataFlow(DataFlow):
 
     def reset_state(self):
         """
-        All forked dataflows are reset **once and only once** in spawned processes.
-        Nothing more can be done when calling this method.
+        All forked dataflows should only be reset **once and only once** in spawned processes.
+        Subclasses should call this method with super.
         """
-        if self._reset_done:
-            return
+        assert not self._reset_done, "reset_state() was called twice! This violates the API of DataFlow!"
         self._reset_done = True
 
         # __del__ not guaranteed to get called at exit
         atexit.register(del_weakref, weakref.ref(self))
-
-        self._reset_once()  # build processes
-
-    def _reset_once(self):
-        pass
 
     def _start_processes(self):
         start_proc_mask_signal(self._procs)
@@ -315,7 +309,8 @@ class PrefetchDataZMQ(_MultiProcessZMQDataFlow):
                     break
                 yield self._recv()
 
-    def _reset_once(self):
+    def reset_state(self):
+        super(PrefetchDataZMQ, self).reset_state()
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.PULL)
         self.socket.set_hwm(self._hwm)
@@ -400,7 +395,7 @@ class MultiThreadPrefetchData(DataFlow):
             th.start()
 
     def __len__(self):
-        return self.threads[0].__len__()
+        return self.threads[0].df.__len__()
 
     def __iter__(self):
         while True:
@@ -463,3 +458,16 @@ plasma = None
 #     from ..utils.develop import create_dummy_class
 #     PlasmaPutData = create_dummy_class('PlasmaPutData', 'pyarrow')   # noqa
 #     PlasmaGetData = create_dummy_class('PlasmaGetData', 'pyarrow')   # noqa
+
+
+if __name__ == '__main__':
+    import time
+    from .raw import DataFromGenerator
+    from .common import FixedSizeData
+    x = DataFromGenerator(itertools.count())
+    x = FixedSizeData(x, 100)
+    x = PrefetchDataZMQ(x, 2)
+    x.reset_state()
+    for idx, dp in enumerate(x):
+        print(dp)
+        time.sleep(0.1)
