@@ -25,8 +25,6 @@ __all__ = ['ThreadedMapData', 'MultiThreadMapData',
 
 class _ParallelMapData(ProxyDataFlow):
     def __init__(self, ds, buffer_size, strict=False):
-        if not strict:
-            ds = RepeatedData(ds, -1)
         super(_ParallelMapData, self).__init__(ds)
         assert buffer_size > 0, buffer_size
         self._buffer_size = buffer_size
@@ -35,7 +33,11 @@ class _ParallelMapData(ProxyDataFlow):
 
     def reset_state(self):
         super(_ParallelMapData, self).reset_state()
-        self._iter = self.ds.__iter__()
+        if not self._strict:
+            ds = RepeatedData(self.ds, -1)
+        else:
+            ds = self.ds
+        self._iter = ds.__iter__()
 
     def _recv(self):
         pass
