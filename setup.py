@@ -10,11 +10,31 @@ this_directory = path.abspath(path.dirname(__file__))
 
 # setup metainfo
 libinfo_py = path.join(this_directory, 'tensorpack', 'libinfo.py')
-last_line = open(libinfo_py, "rb").readlines()[-1].strip()
-exec(last_line)
+libinfo_content = open(libinfo_py, "r").readlines()
+version_line = [l.strip() for l in libinfo_content if l.startswith('__version__')][0]
+exec(version_line)  # produce __version__
 
 with open(path.join(this_directory, 'README.md'), 'rb') as f:
     long_description = f.read().decode('utf-8')
+
+
+def add_git_version():
+
+    def get_git_version():
+        from subprocess import check_output
+        try:
+            return check_output("git describe --tags --long --dirty".split()).decode('utf-8').strip()
+        except:
+            return __version__  # noqa
+
+    newlibinfo_content = [l for l in libinfo_content if not l.startswith('__git_version__')]
+    newlibinfo_content.append('__git_version__ = "{}"'.format(get_git_version()))
+    with open(libinfo_py, "w") as f:
+        f.write("".join(newlibinfo_content))
+
+
+add_git_version()
+
 
 setup(
     name='tensorpack',

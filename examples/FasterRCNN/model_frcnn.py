@@ -201,7 +201,6 @@ def fastrcnn_predictions(boxes, scores):
         Returns: n boolean, the selection
         """
         prob, box = X
-        output_shape = tf.shape(prob)
         # filter by score threshold
         ids = tf.reshape(tf.where(prob > cfg.TEST.RESULT_SCORE_THRESH), [-1])
         prob = tf.gather(prob, ids)
@@ -213,11 +212,19 @@ def fastrcnn_predictions(boxes, scores):
         # sort available in TF>1.4.0
         # sorted_selection = tf.contrib.framework.sort(selection, direction='ASCENDING')
         sorted_selection = -tf.nn.top_k(-selection, k=tf.size(selection))[0]
-        mask = tf.sparse_to_dense(
-            sparse_indices=sorted_selection,
-            output_shape=output_shape,
-            sparse_values=True,
-            default_value=False)
+
+        if get_tf_version_tuple() >= (1, 12):
+            mask = tf.sparse.SparseTensor(indices=sorted_selection,
+                                          values=tf.ones_like(sorted_selection, dtype=tf.bool),
+                                          dense_shape=tf.shape(prob))
+            mask = tf.sparse.to_dense(mask, default_value=False)
+        else:
+            # deprecated by TF
+            mask = tf.sparse_to_dense(
+                sparse_indices=sorted_selection,
+                output_shape=tf.shape(prob),
+                sparse_values=True,
+                default_value=False)
         return mask
 
     # TF bug in version 1.11, 1.12: https://github.com/tensorflow/tensorflow/issues/22750

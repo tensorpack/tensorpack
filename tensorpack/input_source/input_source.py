@@ -14,7 +14,7 @@ from six.moves import range, zip
 import threading
 
 from .input_source_base import InputSource
-from ..dataflow import DataFlow, MapData, RepeatedData, DataFlowTerminated
+from ..dataflow import DataFlow, MapData, RepeatedData
 from ..tfutils.summary import add_moving_summary
 from ..tfutils.common import get_op_tensor_name
 from ..tfutils.tower import get_current_tower_context
@@ -159,8 +159,9 @@ class EnqueueThread(ShareSessionThread):
                     feed = _make_feeds(self.placehdrs, dp)
                     # _, sz = sess.run([self.op, self._sz], feed_dict=feed)
                     self.op.run(feed_dict=feed)
-            except (tf.errors.CancelledError, tf.errors.OutOfRangeError, DataFlowTerminated):
+            except (tf.errors.CancelledError, tf.errors.OutOfRangeError):
                 pass
+                # logger.exception("Exception in {}:".format(self.name))
             except Exception as e:
                 if isinstance(e, RuntimeError) and 'closed Session' in str(e):
                     pass
