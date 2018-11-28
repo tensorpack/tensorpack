@@ -116,6 +116,8 @@ class MultiThreadMapData(_ParallelMapData):
            You can use **strict mode**, where `MultiThreadMapData.__iter__()`
            is guaranteed to produce the exact set which `df.__iter__()`
            produces. Although the order of data still isn't preserved.
+
+           The behavior of strict mode is undefined if the dataflow is infinite.
     """
     class _Worker(StoppableThread):
         def __init__(self, inq, outq, evt, map_func):
@@ -219,6 +221,8 @@ class MultiProcessMapDataZMQ(_ParallelMapData, _MultiProcessZMQDataFlow):
            You can use **strict mode**, where `MultiProcessMapData.__iter__()`
            is guaranteed to produce the exact set which `df.__iter__()`
            produces. Although the order of data still isn't preserved.
+
+           The behavior of strict mode is undefined if the dataflow is infinite.
     """
     class _Worker(mp.Process):
         def __init__(self, identity, map_func, pipename, hwm):
@@ -405,8 +409,10 @@ if __name__ == '__main__':
         return x
 
     ds = Zero(100)
-    ds = MultiThreadMapData(ds, 50, f, buffer_size=50, strict=False)
+    ds = MultiThreadMapData(ds, 50, f, buffer_size=50, strict=True)
     ds.reset_state()
-    for k in ds:
+    for idx, k in enumerate(ds):
         print("Bang!", k)
+        if idx == 100:
+            break
     print("END!")
