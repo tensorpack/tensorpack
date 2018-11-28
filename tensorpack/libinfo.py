@@ -57,6 +57,7 @@ except ImportError:
     _HAS_TF = False
 
 
-# This line has to be the last line of the file.
-# setup.py will use it to determine the version
+# These lines will be programatically read/write by setup.py
+# Don't touch them.
 __version__ = '0.9.0.1'
+__git_version__ = __version__

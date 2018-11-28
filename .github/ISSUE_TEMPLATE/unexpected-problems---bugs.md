@@ -35,7 +35,7 @@ For example, CPU/GPU utilization, output images, tensorboard curves, if relevant
 ### 4. Your environment:
   + Python version:
   + TF version: `python -c 'import tensorflow as tf; print(tf.GIT_VERSION, tf.VERSION)'`.
-  + Tensorpack version: `python -c 'import tensorpack; print(tensorpack.__version__)'`.
+  + Tensorpack version: `python -c 'import tensorpack; print(tensorpack.__version__);'`.
       You can install Tensorpack master by `pip install -U git+https://github.com/ppwwyyxx/tensorpack.git`
       and see if your issue is already solved.
   + If you're not using tensorpack under a normal command line shell (e.g.,

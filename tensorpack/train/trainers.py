@@ -11,7 +11,7 @@ from ..tfutils.sesscreate import NewSessionCreator
 
 from ..utils import logger
 from ..utils.argtools import map_arg
-from ..utils.develop import HIDE_DOC
+from ..utils.develop import HIDE_DOC, log_deprecated
 from ..tfutils import get_global_step_var
 from ..tfutils.distributed import get_distributed_session_creator
 from ..tfutils.tower import TrainTowerContext
@@ -171,7 +171,7 @@ class SyncMultiGPUTrainerReplicated(SingleCostTrainer):
 
         if use_nccl is not None:
             mode = 'nccl' if use_nccl else None
-            logger.warn("use_nccl option was deprecated! Use the `mode` option instead!")
+            log_deprecated("use_nccl option", "Use the `mode` option instead!", "2019-01-31")
         if mode is None:
             mode = 'hierarchical' if len(gpus) >= 8 else 'nccl'
         mode = mode.lower()

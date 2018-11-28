@@ -147,7 +147,7 @@ def gpu_available_in_session():
     return False
 
 
-@deprecated("You should use get_tf_version_tuple instead due to the existence of TF 1.10")
+@deprecated("Use get_tf_version_tuple instead.", "2019-01-31")
 def get_tf_version_number():
     return float('.'.join(tf.VERSION.split('.')[:2]))
 

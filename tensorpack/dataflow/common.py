@@ -687,7 +687,7 @@ class PrintData(ProxyDataFlow):
                   ...
     """
 
-    def __init__(self, ds, num=1, label=None, name=None, max_depth=3, max_list=3):
+    def __init__(self, ds, num=1, name=None, max_depth=3, max_list=3):
         """
         Args:
             ds (DataFlow): input DataFlow.
@@ -698,12 +698,7 @@ class PrintData(ProxyDataFlow):
         """
         super(PrintData, self).__init__(ds)
         self.num = num
-
-        if label:
-            log_deprecated("PrintData(label, ...", "Use PrintData(name, ...  instead.", "2018-05-01")
-            self.name = label
-        else:
-            self.name = name
+        self.name = name
         self.cnt = 0
         self.max_depth = max_depth
         self.max_list = max_list
