@@ -48,15 +48,13 @@ On a single machine:
 ./train.py --config \
     MODE_MASK=True MODE_FPN=True \
     DATA.BASEDIR=/path/to/COCO/DIR \
-    BACKBONE.WEIGHTS=/path/to/ImageNet-R50-AlignPadding.npz \
+    BACKBONE.WEIGHTS=/path/to/ImageNet-R50-AlignPadding.npz
 ```
 
 To run distributed training, set `TRAINER=horovod` and refer to [HorovodTrainer docs](http://tensorpack.readthedocs.io/modules/train.html#tensorpack.train.HorovodTrainer).
 
-Options can be changed by either the command line or the `config.py` file.
-Recommended configurations are listed in the table below.
-
-The code is only valid for training with 1, 2, 4 or >=8 GPUs.
+Options can be changed by either the command line or the `config.py` file (recommended).
+Some reasonable configurations are listed in the table below.
 
 ### Inference:
 
@@ -72,7 +70,7 @@ To evaluate the performance of a model on COCO:
 ```
 
 Several trained models can be downloaded in the table below. Evaluation and
-prediction will need to be run with the corresponding training configs.
+prediction will need to be run with the corresponding configs used in training.
 
 ## Results
 
@@ -81,7 +79,6 @@ All models are fine-tuned from ImageNet pre-trained R50/R101 models in
 [tensorpack model zoo](http://models.tensorpack.com/FasterRCNN/), unless otherwise noted.
 All models are trained with 8 NVIDIA V100s, unless otherwise noted.
 Performance in [Detectron](https://github.com/facebookresearch/Detectron/) can be roughly reproduced.
-Mask R-CNN results contain both box and mask mAP.
 
  | Backbone                    | mAP<br/>(box;mask)                                                                                                            | Detectron mAP <sup>[1](#ft1)</sup><br/> (box;mask) | Time (on 8 V100s) | Configurations <br/> (click to expand)                                                                                                                                                                                                                                                                                                                     |
  | -                           | -                                                                                                                             | -                                                  | -                 | -                                                                                                                                                                                                                                                                                                                                                          |

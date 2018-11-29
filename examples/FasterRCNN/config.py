@@ -246,7 +246,7 @@ def finalize_configs(is_training):
             assert 'OMPI_COMM_WORLD_SIZE' not in os.environ
             ngpu = get_num_gpu()
         assert ngpu > 0, "Has to run with GPU!"
-        assert ngpu % 8 == 0 or 8 % ngpu == 0, ngpu
+        assert ngpu % 8 == 0 or 8 % ngpu == 0, "Can only run with 1,2,4 or >=8 GPUs, but found {} GPUs".format(ngpu)
         if _C.TRAIN.NUM_GPUS is None:
             _C.TRAIN.NUM_GPUS = ngpu
         else:

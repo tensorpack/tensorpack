@@ -213,8 +213,11 @@ class Trainer(object):
     @call_only_once
     def initialize(self, session_creator, session_init):
         """
-        Initialize self.sess and self.hooked_sess.
-        Must be called after callbacks are setup.
+        Create the session and set `self.sess`.
+        Call `self.initiailize_hooks()`
+        Finalize the graph.
+
+        It must be called after callbacks are setup.
 
         Args:
             session_creator (tf.train.SessionCreator):
@@ -242,7 +245,7 @@ class Trainer(object):
     @call_only_once
     def initialize_hooks(self):
         """
-        Create SessionRunHooks for all callbacks, and hook it onto self.sess.
+        Create SessionRunHooks for all callbacks, and hook it onto `self.sess` to create `self.hooked_sess`.
 
         A new trainer may override this method to create multiple groups of hooks,
         which can be useful when the training is not done by a single `train_op`.

@@ -52,6 +52,9 @@ def DEFAULT_MONITORS():
 class TrainConfig(object):
     """
     A collection of options to be used for single-cost trainers.
+
+    Note that you do not have to use :class:`TrainConfig`.
+    You can use the API of :class:`Trainer` directly, to have more fine-grained control of the training.
     """
 
     def __init__(self,
@@ -67,16 +70,23 @@ class TrainConfig(object):
             data (InputSource):
             model (ModelDesc):
 
-            callbacks (list): a list of :class:`Callback` to perform during training.
-            extra_callbacks (list): the same as ``callbacks``. This argument
+            callbacks (list[Callback]): a list of :class:`Callback` to use during training.
+            extra_callbacks (list[Callback]): This argument
                 is only used to provide the defaults in addition to ``callbacks``.
-                The list of callbacks that will be used in the end is ``callbacks + extra_callbacks``.
+                The list of callbacks that will be used in the end is simply ``callbacks + extra_callbacks``.
 
-                It is usually left as None and the default value for this
-                option will be the return value of :meth:`train.DEFAULT_CALLBACKS()`.
+                It is usually left as None, and the default value for this argument is :func:`DEFAULT_CALLBACKS()`.
                 You can override it when you don't like any of the default callbacks.
-            monitors (list): a list of :class:`TrainingMonitor`.
-                Defaults to the return value of :meth:`train.DEFAULT_MONITORS()`.
+                For example, if you'd like to let the progress bar print tensors, you can use
+
+                .. code-block:: none
+
+                    extra_callbacks=[ProgressBar(names=['name']),
+                                     MovingAverageSummary(),
+                                     MergeAllSummaries(),
+                                     RunUpdateOps()]
+
+            monitors (list[TrainingMonitor]): Defaults to :func:`DEFAULT_MONITORS()`.
 
             session_creator (tf.train.SessionCreator): Defaults to :class:`sesscreate.NewSessionCreator()`
                 with the config returned by :func:`tfutils.get_default_sess_config()`.
