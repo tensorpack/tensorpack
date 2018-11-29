@@ -201,6 +201,7 @@ def fastrcnn_predictions(boxes, scores):
         Returns: n boolean, the selection
         """
         prob, box = X
+        output_shape = tf.shape(prob, out_type=tf.int64)
         # filter by score threshold
         ids = tf.reshape(tf.where(prob > cfg.TEST.RESULT_SCORE_THRESH), [-1])
         prob = tf.gather(prob, ids)
@@ -216,13 +217,13 @@ def fastrcnn_predictions(boxes, scores):
         if get_tf_version_tuple() >= (1, 12):
             mask = tf.sparse.SparseTensor(indices=tf.expand_dims(sorted_selection, 1),
                                           values=tf.ones_like(sorted_selection, dtype=tf.bool),
-                                          dense_shape=tf.shape(prob, out_type=tf.int64))
+                                          dense_shape=output_shape)
             mask = tf.sparse.to_dense(mask, default_value=False)
         else:
             # this function is deprecated by TF
             mask = tf.sparse_to_dense(
                 sparse_indices=sorted_selection,
-                output_shape=tf.shape(prob, out_type=tf.int64),
+                output_shape=output_shape,
                 sparse_values=True,
                 default_value=False)
         return mask
