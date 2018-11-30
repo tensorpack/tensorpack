@@ -68,6 +68,7 @@ def create_image_summary(name, val):
     n, h, w, c = val.shape
     val = val.astype('uint8')
     s = tf.Summary()
+    imparams = [cv2.IMWRITE_PNG_COMPRESSION, 9]
     for k in range(n):
         arr = val[k]
         # CV2 will only write correctly in BGR chanel order
@@ -76,8 +77,7 @@ def create_image_summary(name, val):
         elif c == 4:
             arr = cv2.cvtColor(arr, cv2.COLOR_RGBA2BGRA)
         tag = name if n == 1 else '{}/{}'.format(name, k)
-
-        retval, img_str = cv2.imencode('.png', arr)
+        retval, img_str = cv2.imencode('.png', arr, imparams)
         if not retval:
             # Encoding has failed.
             continue
