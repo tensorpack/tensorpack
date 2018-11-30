@@ -9,7 +9,7 @@ __Training__ code of three variants of ResNet on ImageNet:
 
 The training follows the __exact__ recipe used by the [Training ImageNet in 1 Hour paper](https://arxiv.org/abs/1706.02677)
 and gets the same performance.
-Models trained with 8 GPUs and a total batch size of 256 are listed in the table below.
+Distributed training code & results can be found at [tensorpack/benchmarks](https://github.com/tensorpack/benchmarks/tree/master/ResNet-Horovod).
 
 This recipe has better performance than most open source implementations.
 In fact, many papers that claim to "improve" ResNet by .5% only compete with a lower
@@ -24,9 +24,10 @@ baseline and they actually cannot beat this ResNet recipe.
 | ResNet101   | 6.04%       | 21.95%      | [:arrow_down:](http://models.tensorpack.com/ResNet/ImageNet-ResNet101.npz)   |
 | ResNet152   | 5.78%       | 21.51%      | [:arrow_down:](http://models.tensorpack.com/ResNet/ImageNet-ResNet152.npz)   |
 
-To train, first decompress ImageNet data into [this structure](http://tensorpack.readthedocs.io/en/latest/modules/dataflow.dataset.html#tensorpack.dataflow.dataset.ILSVRC12), then:
+To reproduce the above results,
+first decompress ImageNet data into [this structure](http://tensorpack.readthedocs.io/en/latest/modules/dataflow.dataset.html#tensorpack.dataflow.dataset.ILSVRC12), then:
 ```bash
-./imagenet-resnet.py --data /path/to/original/ILSVRC -d 50 [--mode resnet/preact/se]
+./imagenet-resnet.py --data /path/to/original/ILSVRC -d 50 [--mode resnet/preact/se] --batch 256
 # See ./imagenet-resnet.py -h for other options.
 ```
 

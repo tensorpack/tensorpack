@@ -5,7 +5,7 @@
 import argparse
 import os
 
-from tensorpack import logger, QueueInput
+from tensorpack import logger, QueueInput, TFDatasetInput
 from tensorpack.models import *
 from tensorpack.callbacks import *
 from tensorpack.train import (
@@ -15,8 +15,8 @@ from tensorpack.tfutils import argscope, get_model_loader
 from tensorpack.utils.gpu import get_num_gpu
 
 from imagenet_utils import (
-    fbresnet_augmentor, get_imagenet_dataflow, ImageNetModel,
-    eval_on_ILSVRC12)
+    get_imagenet_dataflow, get_imagenet_tfdata,
+    ImageNetModel, eval_on_ILSVRC12)
 from resnet_model import (
     preresnet_group, preresnet_basicblock, preresnet_bottleneck,
     resnet_group, resnet_basicblock, resnet_bottleneck, se_resnet_bottleneck,
@@ -49,14 +49,7 @@ class Model(ImageNetModel):
                 preresnet_group if self.mode == 'preact' else resnet_group, self.block_func)
 
 
-def get_data(name, batch):
-    isTrain = name == 'train'
-    augmentors = fbresnet_augmentor(isTrain)
-    return get_imagenet_dataflow(
-        args.data, name, batch, augmentors)
-
-
-def get_config(model, fake=False):
+def get_config(model):
     nr_tower = max(get_num_gpu(), 1)
     assert args.batch % nr_tower == 0
     batch = args.batch // nr_tower
@@ -64,12 +57,15 @@ def get_config(model, fake=False):
     logger.info("Running on {} towers. Batch size per tower: {}".format(nr_tower, batch))
     if batch < 32 or batch > 64:
         logger.warn("Batch size per tower not in [32, 64]. This probably will lead to worse accuracy than reported.")
-    if fake:
+    if args.fake:
         data = QueueInput(FakeData(
             [[batch, 224, 224, 3], [batch]], 1000, random=False, dtype='uint8'))
         callbacks = []
     else:
-        data = QueueInput(get_data('train', batch))
+        if args.symbolic:
+            data = TFDatasetInput(get_imagenet_tfdata(args.data, 'train', batch))
+        else:
+            data = QueueInput(get_imagenet_dataflow(args.data, 'train', batch))
 
         START_LR = 0.1
         BASE_LR = START_LR * (args.batch / 256.0)
@@ -88,7 +84,7 @@ def get_config(model, fake=False):
 
         infs = [ClassificationError('wrong-top1', 'val-error-top1'),
                 ClassificationError('wrong-top5', 'val-error-top5')]
-        dataset_val = get_data('val', batch)
+        dataset_val = get_imagenet_dataflow(args.data, 'val', batch)
         if nr_tower == 1:
             # single-GPU inference with queue prefetch
             callbacks.append(InferenceRunner(QueueInput(dataset_val), infs))
@@ -96,6 +92,9 @@ def get_config(model, fake=False):
             # multi-GPU inference (with mandatory queue prefetch)
             callbacks.append(DataParallelInferenceRunner(
                 dataset_val, infs, list(range(nr_tower))))
+
+    if get_num_gpu() > 0:
+        callbacks.append(GPUUtilizationTracker())
 
     return TrainConfig(
         model=model,
@@ -112,6 +111,7 @@ if __name__ == '__main__':
     parser.add_argument('--data', help='ILSVRC dataset dir')
     parser.add_argument('--load', help='load a model for training or evaluation')
     parser.add_argument('--fake', help='use FakeData to debug or benchmark this model', action='store_true')
+    parser.add_argument('--symbolic', help='use symbolic data loader', action='store_true')
     parser.add_argument('--data-format', help='image data format',
                         default='NCHW', choices=['NCHW', 'NHWC'])
     parser.add_argument('-d', '--depth', help='ResNet depth',
@@ -139,9 +139,11 @@ if __name__ == '__main__':
             logger.set_logger_dir(os.path.join('train_log', 'tmp'), 'd')
         else:
             logger.set_logger_dir(
-                os.path.join('train_log', 'imagenet-{}-d{}-batch{}'.format(args.mode, args.depth, args.batch)))
+                os.path.join('train_log',
+                             'imagenet-{}-d{}-batch{}'.format(
+                                 args.mode, args.depth, args.batch)))
 
-        config = get_config(model, fake=args.fake)
+        config = get_config(model)
         if args.load:
             config.session_init = get_model_loader(args.load)
         trainer = SyncMultiGPUTrainerReplicated(max(get_num_gpu(), 1))
