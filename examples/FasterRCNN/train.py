@@ -522,6 +522,7 @@ if __name__ == '__main__':
     MODEL = ResNetFPNModel() if cfg.MODE_FPN else ResNetC4Model()
 
     if args.visualize or args.evaluate or args.predict:
+        assert tf.test.is_gpu_available()
         assert args.load
         finalize_configs(is_training=False)
 

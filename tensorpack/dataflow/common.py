@@ -128,22 +128,26 @@ class BatchData(ProxyDataFlow):
                 result.append(
                     [x[k] for x in data_holder])
             else:
-                dt = data_holder[0][k]
-                if type(dt) in list(six.integer_types) + [bool]:
-                    tp = 'int32'
-                elif type(dt) == float:
-                    tp = 'float32'
+                data = data_holder[0][k]
+                if isinstance(data, six.integer_types):
+                    dtype = 'int32'
+                elif type(data) == bool:
+                    dtype = 'bool'
+                elif type(data) == float:
+                    dtype = 'float32'
+                elif isinstance(data, (six.binary_type, six.text_type)):
+                    dtype = 'str'
                 else:
                     try:
-                        tp = dt.dtype
+                        dtype = data.dtype
                     except AttributeError:
-                        raise TypeError("Unsupported type to batch: {}".format(type(dt)))
+                        raise TypeError("Unsupported type to batch: {}".format(type(data)))
                 try:
                     result.append(
-                        np.asarray([x[k] for x in data_holder], dtype=tp))
+                        np.asarray([x[k] for x in data_holder], dtype=dtype))
                 except Exception as e:  # noqa
                     logger.exception("Cannot batch data. Perhaps they are of inconsistent shape?")
-                    if isinstance(dt, np.ndarray):
+                    if isinstance(data, np.ndarray):
                         s = pprint.pformat([x[k].shape for x in data_holder])
                         logger.error("Shape of all arrays to be batched: " + s)
                     try:

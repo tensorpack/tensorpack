@@ -214,7 +214,7 @@ def fastrcnn_predictions(boxes, scores):
         # sorted_selection = tf.contrib.framework.sort(selection, direction='ASCENDING')
         sorted_selection = -tf.nn.top_k(-selection, k=tf.size(selection))[0]
 
-        if get_tf_version_tuple() >= (1, 12):
+        if get_tf_version_tuple() >= (1, 13):
             mask = tf.sparse.SparseTensor(indices=tf.expand_dims(sorted_selection, 1),
                                           values=tf.ones_like(sorted_selection, dtype=tf.bool),
                                           dense_shape=output_shape)
