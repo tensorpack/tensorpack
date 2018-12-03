@@ -205,7 +205,7 @@ def get_imagenet_tfdata(datadir, name, batch_size, mapper=None, parallel=None):
 def fbresnet_mapper(isTrain):
     """
     Note: compared to fbresnet_augmentor, it
-    lacks some photometric augmentation that may have a small effect on accuracy.
+    lacks some photometric augmentation that may have a small effect (0.1~0.2%) on accuracy.
     """
     JPEG_OPT = {'fancy_upscaling': True, 'dct_method': 'INTEGER_ACCURATE'}
 

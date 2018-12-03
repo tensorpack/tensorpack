@@ -35,15 +35,22 @@ class Augmentor(object):
     def augment(self, d):
         """
         Perform augmentation on the data.
+
+        Returns:
+            augmented data
         """
         d, params = self._augment_return_params(d)
         return d
 
     def augment_return_params(self, d):
         """
+        Augment the data and return the augmentation parameters.
+        The returned parameters can be used to augment another data with identical transformation.
+        This can be used in, e.g. augmentation for image, masks, keypoints altogether.
+
         Returns:
             augmented data
-            augmentation params
+            augmentation params: can be any type
         """
         return self._augment_return_params(d)
 
@@ -53,6 +60,15 @@ class Augmentor(object):
         """
         prms = self._get_augment_params(d)
         return (self._augment(d, prms), prms)
+
+    def augment_with_params(self, d, param):
+        """
+        Augment the data with the given param.
+
+        Returns:
+            augmented data
+        """
+        return self._augment(d, param)
 
     @abstractmethod
     def _augment(self, d, param):
@@ -115,8 +131,9 @@ class ImageAugmentor(Augmentor):
     def augment_coords(self, coords, param):
         """
         Augment the coordinates given the param.
+
         By default, an augmentor keeps coordinates unchanged.
-        If a subclass changes coordinates but couldn't implement this method,
+        If a subclass of :class:`ImageAugmentor` changes coordinates but couldn't implement this method,
         it should ``raise NotImplementedError()``.
 
         Args:
@@ -132,7 +149,7 @@ class ImageAugmentor(Augmentor):
 
 class AugmentorList(ImageAugmentor):
     """
-    Augment by a list of augmentors
+    Augment an image by a list of augmentors
     """
 
     def __init__(self, augmentors):

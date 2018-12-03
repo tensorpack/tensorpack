@@ -378,7 +378,9 @@ class MultiThreadPrefetchData(DataFlow):
     def __init__(self, get_df, nr_prefetch, nr_thread):
         """
         Args:
-            get_df ( -> DataFlow): a callable which returns a DataFlow
+            get_df ( -> DataFlow): a callable which returns a DataFlow.
+                Each thread will call this function to get the DataFlow to use.
+                Therefore do not return the same DataFlow for each call.
             nr_prefetch (int): size of the queue
             nr_thread (int): number of threads
         """

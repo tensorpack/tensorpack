@@ -123,7 +123,7 @@ _C.TRAIN.LR_SCHEDULE = [240000, 320000, 360000]      # "2x" schedule in detectro
 _C.TRAIN.EVAL_PERIOD = 25  # period (epochs) to run eva
 
 # preprocessing --------------------
-# Alternative old (worse & faster) setting: 600, 1024
+# Alternative old (worse & faster) setting: 600
 _C.PREPROC.TRAIN_SHORT_EDGE_SIZE = [800, 800]  # [min, max] to sample from
 _C.PREPROC.TEST_SHORT_EDGE_SIZE = 800
 _C.PREPROC.MAX_SIZE = 1333

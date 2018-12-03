@@ -15,9 +15,8 @@ __all__ = ['ImageFromFile', 'AugmentImageComponent', 'AugmentImageCoordinates', 
 
 def check_dtype(img):
     assert isinstance(img, np.ndarray), "[Augmentor] Needs an numpy array, but got a {}!".format(type(img))
-    if isinstance(img.dtype, np.integer):
-        assert img.dtype == np.uint8, \
-            "[Augmentor] Got image of type {}, use uint8 or floating points instead!".format(img.dtype)
+    assert not isinstance(img.dtype, np.integer) or (img.dtype == np.uint8), \
+        "[Augmentor] Got image of type {}, use uint8 or floating points instead!".format(img.dtype)
 
 
 def validate_coords(coords):
@@ -161,9 +160,9 @@ class AugmentImageCoordinates(MapData):
             validate_coords(coords)
             if self._copy:
                 img, coords = copy_mod.deepcopy((img, coords))
-            img, prms = self.augs._augment_return_params(img)
+            img, prms = self.augs.augment_return_params(img)
             dp[self._img_index] = img
-            coords = self.augs._augment_coords(coords, prms)
+            coords = self.augs.augment_coords(coords, prms)
             dp[self._coords_index] = coords
             return dp
 
@@ -207,15 +206,15 @@ class AugmentImageComponents(MapData):
                 major_image = index[0]  # image to be used to get params. TODO better design?
                 im = copy_func(dp[major_image])
                 check_dtype(im)
-                im, prms = self.augs._augment_return_params(im)
+                im, prms = self.augs.augment_return_params(im)
                 dp[major_image] = im
                 for idx in index[1:]:
                     check_dtype(dp[idx])
-                    dp[idx] = self.augs._augment(copy_func(dp[idx]), prms)
+                    dp[idx] = self.augs.augment_with_params(copy_func(dp[idx]), prms)
                 for idx in coords_index:
                     coords = copy_func(dp[idx])
                     validate_coords(coords)
-                    dp[idx] = self.augs._augment_coords(coords, prms)
+                    dp[idx] = self.augs.augment_coords(coords, prms)
                 return dp
 
         super(AugmentImageComponents, self).__init__(ds, func)

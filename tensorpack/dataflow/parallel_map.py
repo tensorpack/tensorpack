@@ -11,7 +11,6 @@ import zmq
 from .base import DataFlow, ProxyDataFlow, DataFlowReentrantGuard
 from .common import RepeatedData
 from ..utils.concurrency import StoppableThread, enable_death_signal
-from ..utils import logger
 from ..utils.serialize import loads, dumps
 
 from .parallel import (
@@ -59,10 +58,9 @@ class _ParallelMapData(ProxyDataFlow):
                 dp = next(self._iter)
                 self._send(dp)
         except StopIteration:
-            logger.error(
+            raise RuntimeError(
                 "[{}] buffer_size cannot be larger than the size of the DataFlow when strict=True!".format(
                     type(self).__name__))
-            raise
         self._buffer_occupancy += cnt
 
     def get_data_non_strict(self):
