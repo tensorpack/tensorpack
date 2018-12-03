@@ -129,14 +129,26 @@ class MultiProcessPrefetchData(ProxyDataFlow):
     process by a Python :class:`multiprocessing.Queue`.
 
     Note:
-        1. An iterator cannot run faster automatically -- what's happening is
-           that the underlying dataflow will be forked ``nr_proc`` times.
+        1. (Data integrity) An iterator cannot run faster automatically -- what's happening is
+           that the process will be forked ``nr_proc`` times.
+           There will be ``nr_proc`` dataflow running in parallel and **independently**.
            As a result, we have the following guarantee on the dataflow correctness:
 
-           a. When ``nr_proc=1``, the dataflow produces the same data as ``ds`` in the same order.
-           b. When ``nr_proc>1``, the dataflow produces the same distribution
-              of data as ``ds`` if each sample from ``ds`` is i.i.d. (e.g. fully shuffled).
+           a. When ``nr_proc=1``, this dataflow produces the same data as the
+              given dataflow in the same order.
+           b. When ``nr_proc>1``, if each sample from the given dataflow is i.i.d.,
+              then this dataflow produces the **same distribution** of data as the given dataflow.
+              This implies that there will be duplication, reordering, etc.
               You probably only want to use it for training.
+
+              For example, if your original dataflow produced the same first datapoint,
+              then after parallel prefetching, the datapoint will be produced ``nr_proc`` times
+              at the beginning.
+              Even when your original dataflow is fully shuffled, you still need to be aware of the
+              `Birthday Paradox <https://en.wikipedia.org/wiki/Birthday_problem>`_
+              and know that you'll likely see duplicates.
+
+           To utilize parallelism with stricter data integrity, you can use the parallel versions of `MapData`.
         2. This has more serialization overhead than :class:`PrefetchDataZMQ` when data is large.
         3. You can nest like this: ``PrefetchDataZMQ(PrefetchData(df, nr_proc=a), nr_proc=b)``.
            A total of ``a`` instances of ``df`` worker processes will be created.
@@ -214,17 +226,26 @@ class PrefetchDataZMQ(_MultiProcessZMQDataFlow):
     and collect datapoints from the given dataflow in each process by ZeroMQ IPC pipe.
 
     Note:
-        1. An iterator cannot run faster automatically -- what's happening is
-           that the underlying dataflow will be forked ``nr_proc`` times.
+        1. (Data integrity) An iterator cannot run faster automatically -- what's happening is
+           that the process will be forked ``nr_proc`` times.
+           There will be ``nr_proc`` dataflow running in parallel and **independently**.
            As a result, we have the following guarantee on the dataflow correctness:
 
            a. When ``nr_proc=1``, this dataflow produces the same data as the
               given dataflow in the same order.
-           b. When ``nr_proc>1``, if each sample from the given dataflow is i.i.d. (e.g. fully shuffled),
+           b. When ``nr_proc>1``, if each sample from the given dataflow is i.i.d.,
               then this dataflow produces the **same distribution** of data as the given dataflow.
               This implies that there will be duplication, reordering, etc.
               You probably only want to use it for training.
-              If the samples are not i.i.d., the behavior is undefined.
+
+              For example, if your original dataflow produced the same first datapoint,
+              then after parallel prefetching, the datapoint will be produced ``nr_proc`` times
+              at the beginning.
+              Even when your original dataflow is fully shuffled, you still need to be aware of the
+              `Birthday Paradox <https://en.wikipedia.org/wiki/Birthday_problem>`_
+              and know that you'll likely see duplicates.
+
+           To utilize parallelism with stricter data integrity, you can use the parallel versions of `MapData`.
         2. `reset_state()` of the given dataflow will be called **once and only once** in the worker processes.
         3. The fork of processes happened in this dataflow's `reset_state()` method.
            Please note that forking a TensorFlow GPU session may be unsafe.
@@ -346,10 +367,33 @@ class PrefetchOnGPUs(PrefetchDataZMQ):
                     proc.start()
 
 
+# TODO renamed to MultiThreadDataFlow if separated to a new project
 class MultiThreadPrefetchData(DataFlow):
     """
     Create multiple dataflow instances and run them each in one thread.
     Collect outputs with a queue.
+
+    Note:
+        1. (Data integrity) An iterator cannot run faster automatically -- what's happening is
+           that each thread will create a dataflow iterator.
+           There will be ``nr_thread`` dataflow running in parallel and **independently**.
+           As a result, we have the following guarantee on the dataflow correctness:
+
+           a. When ``nr_thread=1``, this dataflow produces the same data as the
+              given dataflow in the same order.
+           b. When ``nr_thread>1``, if each sample from the given dataflow is i.i.d.,
+              then this dataflow produces the **same distribution** of data as the given dataflow.
+              This implies that there will be duplication, reordering, etc.
+              You probably only want to use it for training.
+
+              For example, if your original dataflow produced the same first datapoint,
+              then after parallel prefetching, the datapoint will be produced ``nr_thread`` times
+              at the beginning.
+              Even when your original dataflow is fully shuffled, you still need to be aware of the
+              `Birthday Paradox <https://en.wikipedia.org/wiki/Birthday_problem>`_
+              and know that you'll likely see duplicates.
+
+           To utilize parallelism with stricter data integrity, you can use the parallel versions of `MapData`.
     """
 
     class _Worker(StoppableThread):
