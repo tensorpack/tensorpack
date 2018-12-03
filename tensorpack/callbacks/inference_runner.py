@@ -63,13 +63,13 @@ class InferenceRunnerBase(Callback):
     Note:
         1. InferenceRunner will use `input.size()` to determine
            how much iterations to run, so you're responsible to ensure that
-           `input.size()` is reasonable.
+           `input.size()` is accurate.
         2. Only works with instances of `TowerTrainer`.
     """
     def __init__(self, input, infs):
         """
         Args:
-            input (InputSource): the input to use. Must have ``size()``.
+            input (InputSource): the input to use. Must have an accurate ``size()``.
             infs (list[Inferencer]): list of :class:`Inferencer` to run.
         """
         self._input_source = input

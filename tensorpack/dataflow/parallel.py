@@ -363,10 +363,11 @@ class MultiThreadPrefetchData(DataFlow):
         def run(self):
             self.df.reset_state()
             try:
-                for dp in self.df:
-                    if self.stopped():
-                        return
-                    self.queue_put_stoppable(self.queue, dp)
+                while True:
+                    for dp in self.df:
+                        if self.stopped():
+                            return
+                        self.queue_put_stoppable(self.queue, dp)
             except Exception:
                 if self.stopped():
                     pass        # skip duplicated error messages
