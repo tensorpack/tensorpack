@@ -385,6 +385,7 @@ _DEPRECATED_NAMES = set([
     'PeriodicRunHooks',
     'get_nr_gpu',
     'start_test',  # TestDataSpeed
+    'ThreadedMapData',
 
     # deprecated or renamed symbolic code
     'ImageSample',

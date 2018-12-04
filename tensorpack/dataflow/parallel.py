@@ -141,7 +141,7 @@ class MultiProcessPrefetchData(ProxyDataFlow):
               This implies that there will be duplication, reordering, etc.
               You probably only want to use it for training.
 
-              For example, if your original dataflow produced the same first datapoint,
+              For example, if your original dataflow contains no randomness and produces the same first datapoint,
               then after parallel prefetching, the datapoint will be produced ``nr_proc`` times
               at the beginning.
               Even when your original dataflow is fully shuffled, you still need to be aware of the
@@ -238,7 +238,7 @@ class PrefetchDataZMQ(_MultiProcessZMQDataFlow):
               This implies that there will be duplication, reordering, etc.
               You probably only want to use it for training.
 
-              For example, if your original dataflow produced the same first datapoint,
+              For example, if your original dataflow contains no randomness and produces the same first datapoint,
               then after parallel prefetching, the datapoint will be produced ``nr_proc`` times
               at the beginning.
               Even when your original dataflow is fully shuffled, you still need to be aware of the
@@ -386,7 +386,7 @@ class MultiThreadPrefetchData(DataFlow):
               This implies that there will be duplication, reordering, etc.
               You probably only want to use it for training.
 
-              For example, if your original dataflow produced the same first datapoint,
+              For example, if your original dataflow contains no randomness and produces the same first datapoint,
               then after parallel prefetching, the datapoint will be produced ``nr_thread`` times
               at the beginning.
               Even when your original dataflow is fully shuffled, you still need to be aware of the

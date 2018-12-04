@@ -1,6 +1,18 @@
 # -*- coding: utf-8 -*-
 # File: logger.py
 
+"""
+The logger module itself has the common logging functions of Python's
+:class:`logging.Logger`. For example:
+
+.. code-block:: python
+
+    from tensorpack.utils import logger
+    logger.set_logger_dir('train_log/test')
+    logger.info("Test")
+    logger.error("Error happened!")
+"""
+
 
 import logging
 import os
