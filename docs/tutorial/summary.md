@@ -61,3 +61,13 @@ As long as the type of data is supported, the data will be dispatched to and log
 As a result, tensorboard will show not only summaries in the graph, but also your custom data.
 For example, a precise validation error often needs to be computed manually, outside the TensorFlow graph.
 With a uniform monitor backend, this number will show up in tensorboard as well.
+
+### Textual Logs
+
+```python
+from tensorpack.utils import logger
+# logger has the methods of Python's logging.Logger
+logger.info("Hello World!")
+```
+
+See [APIs of utils.logger](../modules/utils.html#module-tensorpack.utils.logger)
