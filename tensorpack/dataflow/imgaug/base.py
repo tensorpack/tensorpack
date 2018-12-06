@@ -49,8 +49,7 @@ class Augmentor(object):
         This can be used in, e.g. augmentation for image, masks, keypoints altogether.
 
         Returns:
-            augmented data
-            augmentation params: can be any type
+            (augmented data, augmentation params)
         """
         return self._augment_return_params(d)
 

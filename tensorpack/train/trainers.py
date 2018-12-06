@@ -165,6 +165,7 @@ class SyncMultiGPUTrainerReplicated(SingleCostTrainer):
                 Supported values: ['nccl', 'hierarchical', 'cpu'].
                 Default to pick automatically by heuristics.
                 These modes may have slight (within 5%) differences in speed.
+                "hierarchical" mode was designed for DGX-like 8GPU machines.
             use_nccl: deprecated option
         """
         self.devices = gpus
@@ -173,7 +174,7 @@ class SyncMultiGPUTrainerReplicated(SingleCostTrainer):
             mode = 'nccl' if use_nccl else None
             log_deprecated("use_nccl option", "Use the `mode` option instead!", "2019-01-31")
         if mode is None:
-            mode = 'hierarchical' if len(gpus) >= 8 else 'nccl'
+            mode = 'hierarchical' if len(gpus) == 8 else 'nccl'
         mode = mode.lower()
 
         self._builder = SyncMultiGPUReplicatedBuilder(gpus, average, mode)
