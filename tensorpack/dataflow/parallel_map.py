@@ -149,7 +149,8 @@ class MultiThreadMapData(_ParallelMapData):
         Args:
             ds (DataFlow): the dataflow to map
             nr_thread (int): number of threads to use
-            map_func (callable): datapoint -> datapoint | None
+            map_func (callable): datapoint -> datapoint | None. Return None to
+                discard/skip the datapoint.
             buffer_size (int): number of datapoints in the buffer
             strict (bool): use "strict mode", see notes above.
         """
@@ -250,7 +251,8 @@ class MultiProcessMapDataZMQ(_ParallelMapData, _MultiProcessZMQDataFlow):
         Args:
             ds (DataFlow): the dataflow to map
             nr_proc(int): number of threads to use
-            map_func (callable): datapoint -> datapoint | None
+            map_func (callable): datapoint -> datapoint | None. Return None to
+                discard/skip the datapoint.
             buffer_size (int): number of datapoints in the buffer
             strict (bool): use "strict mode", see notes above.
         """

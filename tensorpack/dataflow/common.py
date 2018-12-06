@@ -287,7 +287,7 @@ class MapData(ProxyDataFlow):
         Args:
             ds (DataFlow): input DataFlow
             func (datapoint -> datapoint | None): takes a datapoint and returns a new
-                datapoint. Return None to discard this datapoint.
+                datapoint. Return None to discard/skip this datapoint.
         """
         super(MapData, self).__init__(ds)
         self.func = func
@@ -321,7 +321,7 @@ class MapDataComponent(MapData):
         Args:
             ds (DataFlow): input DataFlow which produces either list or dict.
             func (TYPE -> TYPE|None): takes ``dp[index]``, returns a new value for ``dp[index]``.
-                return None to discard this datapoint.
+                Return None to discard/skip this datapoint.
             index (int or str): index or key of the component.
         """
         self._index = index

@@ -24,7 +24,9 @@ def loads_msgpack(buf):
     Args:
         buf: the output of `dumps`.
     """
-    return msgpack.loads(buf, raw=False)
+    # Since 0.6, the default max size was set to 1MB.
+    # We change it to approximately 1G.
+    return msgpack.loads(buf, raw=False, max_bin_len=1000000000)
 
 
 def dumps_pyarrow(obj):
