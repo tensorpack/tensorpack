@@ -4,12 +4,16 @@
 
 import time
 import tqdm
+import multiprocessing as mp
+from six.moves import range
 
 from collections import deque
 from .base import DataFlow, DataFlowReentrantGuard
 from ..utils import logger
 from ..utils.utils import get_tqdm_kwargs
+from ..utils.concurrency import DIE
 from ..utils.serialize import dumps, loads
+
 try:
     import zmq
 except ImportError:
@@ -154,6 +158,46 @@ class RemoteDataZMQ(DataFlow):
                                 self.cnt2 += 1
             finally:
                 ctx.destroy(linger=0)
+
+
+# for internal use only
+def dump_dataflow_to_process_queue(df, size, nr_consumer):
+    """
+    Convert a DataFlow to a :class:`multiprocessing.Queue`.
+    The DataFlow will only be reset in the spawned process.
+
+    Args:
+        df (DataFlow): the DataFlow to dump.
+        size (int): size of the queue
+        nr_consumer (int): number of consumer of the queue.
+            The producer will add this many of ``DIE`` sentinel to the end of the queue.
+
+    Returns:
+        tuple(queue, process):
+            The process will take data from ``df`` and fill
+            the queue, once you start it. Each element in the queue is (idx,
+            dp). idx can be the ``DIE`` sentinel when ``df`` is exhausted.
+    """
+    q = mp.Queue(size)
+
+    class EnqueProc(mp.Process):
+
+        def __init__(self, df, q, nr_consumer):
+            super(EnqueProc, self).__init__()
+            self.df = df
+            self.q = q
+
+        def run(self):
+            self.df.reset_state()
+            try:
+                for idx, dp in enumerate(self.df):
+                    self.q.put((idx, dp))
+            finally:
+                for _ in range(nr_consumer):
+                    self.q.put((DIE, None))
+
+    proc = EnqueProc(df, q, nr_consumer)
+    return q, proc
 
 
 if __name__ == '__main__':

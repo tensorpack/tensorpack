@@ -377,6 +377,7 @@ _DEPRECATED_NAMES = set([
     'dump_dataflow_to_lmdb',
     'dump_dataflow_to_tfrecord',
     'IntBox', 'FloatBox',
+    'dump_dataflow_to_process_queue',
     'PrefetchOnGPUs',
 
     # renamed stuff:
@@ -388,9 +389,11 @@ _DEPRECATED_NAMES = set([
     'ThreadedMapData',
 
     # deprecated or renamed symbolic code
-    'ImageSample',
-    'BilinearUpSample'
+    'BilinearUpSample',
     'Deconv2D', 'psnr',
+
+    # shouldn't appear in doc:
+    'l2_regularizer', 'l1_regularizer',
 
     # internal only
     'SessionUpdate',

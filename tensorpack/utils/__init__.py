@@ -17,8 +17,7 @@ __all__ = []
 def get_nr_gpu():
     from .gpu import get_nr_gpu as gg
     logger.warn(    # noqa
-        "get_nr_gpu will not be automatically imported any more! "
-        "Please do `from tensorpack.utils.gpu import get_nr_gpu`")
+        "Please use `from tensorpack.utils.gpu import get_num_gpu`")
     return gg()
 
 

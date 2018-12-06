@@ -9,7 +9,6 @@ if STATICA_HACK:
     from .common import *
     from .conv2d import *
     from .fc import *
-    from .image_sample import *
     from .layer_norm import *
     from .linearwrap import *
     from .nonlin import *

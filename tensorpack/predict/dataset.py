@@ -9,7 +9,7 @@ import os
 import six
 
 from ..dataflow import DataFlow
-from ..dataflow.dftools import dump_dataflow_to_process_queue
+from ..dataflow.remote import dump_dataflow_to_process_queue
 from ..utils.concurrency import ensure_proc_terminate, OrderedResultGatherProc, DIE
 from ..utils import logger
 from ..utils.utils import get_tqdm

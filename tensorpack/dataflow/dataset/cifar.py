@@ -14,7 +14,7 @@ from ...utils import logger
 from ...utils.fs import download, get_dataset_path
 from ..base import RNGDataFlow
 
-__all__ = ['Cifar10', 'Cifar100']
+__all__ = ['CifarBase', 'Cifar10', 'Cifar100']
 
 
 DATA_URL_CIFAR_10 = ('http://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz', 170498071)
@@ -85,7 +85,19 @@ def _parse_meta(filename, cifar_classnum):
 
 
 class CifarBase(RNGDataFlow):
+    """
+    Produces [image, label] in Cifar10/100 dataset,
+    image is 32x32x3 in the range [0,255].
+    label is an int.
+    """
     def __init__(self, train_or_test, shuffle=None, dir=None, cifar_classnum=10):
+        """
+        Args:
+            train_or_test (str): 'train' or 'test'
+            shuffle (bool): defaults to True for training set.
+            dir (str): path to the dataset directory
+            cifar_classnum (int): 10 or 100
+        """
         assert train_or_test in ['train', 'test']
         assert cifar_classnum == 10 or cifar_classnum == 100
         self.cifar_classnum = cifar_classnum

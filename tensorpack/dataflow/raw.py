@@ -7,7 +7,6 @@ import copy
 import six
 from six.moves import range
 from .base import DataFlow, RNGDataFlow
-from ..utils.develop import log_deprecated
 
 __all__ = ['FakeData', 'DataFromQueue', 'DataFromList', 'DataFromGenerator', 'DataFromIterable']
 
@@ -98,19 +97,17 @@ class DataFromList(RNGDataFlow):
 class DataFromGenerator(DataFlow):
     """
     Wrap a generator to a DataFlow.
+    The dataflow will not have length.
     """
-    def __init__(self, gen, size=None):
+    def __init__(self, gen):
         """
         Args:
             gen: iterable, or a callable that returns an iterable
-            size: deprecated
         """
         if not callable(gen):
             self._gen = lambda: gen
         else:
             self._gen = gen
-        if size is not None:
-            log_deprecated("DataFromGenerator(size=)", "It doesn't make much sense.", "2018-03-31")
 
     def __iter__(self):
         # yield from
