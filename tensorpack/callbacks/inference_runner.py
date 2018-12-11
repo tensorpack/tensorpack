@@ -202,9 +202,10 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
             tower_name (str): the name scope of the tower to build. Need to set a
                 different one if multiple InferenceRunner are used.
             tower_func (tfutils.TowerFuncWrapper or None): the tower function to be used to build the graph.
-                By defaults to call `trainer.tower_func` under a `training=False` TowerContext,
+                The tower function will be called under a `training=False` TowerContext.
+                The default is `trainer.tower_func`,
                 but you can change it to a different tower function
-                if you need to inference with several different graphs.
+                if you need to inference with several different models.
         """
         if isinstance(gpus, int):
             gpus = list(range(gpus))

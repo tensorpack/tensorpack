@@ -41,7 +41,7 @@ In this implementation, quantized operations are all performed through `tf.float
 
 ## Use
 
-+ Install TensorFlow>=1.7, tensorpack and scipy.
++ Install TensorFlow ≥ 1.7, tensorpack and scipy.
 
 + Look at the docstring in `*-dorefa.py` to see detailed usage and performance.
 

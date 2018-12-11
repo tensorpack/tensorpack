@@ -9,7 +9,7 @@ __Training__ code of three variants of ResNet on ImageNet:
 
 The training follows the __exact__ recipe used by the [Training ImageNet in 1 Hour paper](https://arxiv.org/abs/1706.02677)
 and gets the same performance.
-Distributed training code & results can be found at [tensorpack/benchmarks](https://github.com/tensorpack/benchmarks/tree/master/ResNet-Horovod).
+__Distributed training__ code & results can be found at [tensorpack/benchmarks](https://github.com/tensorpack/benchmarks/tree/master/ResNet-Horovod).
 
 This recipe has better performance than most open source implementations.
 In fact, many papers that claim to "improve" ResNet by .5% only compete with a lower

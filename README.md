@@ -64,7 +64,7 @@ Dependencies:
 
 + Python 2.7 or 3.3+. Python 2.7 is supported until [it retires in 2020](https://pythonclock.org/).
 + Python bindings for OpenCV (Optional, but required by a lot of features)
-+ TensorFlow >= 1.3. (If you only want to use `tensorpack.dataflow` alone as a data processing library, TensorFlow is not needed)
++ TensorFlow ≥ 1.3. (If you only want to use `tensorpack.dataflow` alone as a data processing library, TensorFlow is not needed)
 ```
 pip install --upgrade git+https://github.com/tensorpack/tensorpack.git
 # or add `--user` to install to user's local directories

@@ -14,7 +14,7 @@ with the support of:
 
 ## Dependencies
 + Python 3.3+; OpenCV.
-+ TensorFlow >= 1.6 (1.4 or 1.5 can run but may crash due to a TF bug);
++ TensorFlow ≥ 1.6 (1.4 or 1.5 can run but may crash due to a TF bug);
 + pycocotools: `pip install 'git+https://github.com/cocodataset/cocoapi.git#subdirectory=PythonAPI'`
 + Pre-trained [ImageNet ResNet model](http://models.tensorpack.com/FasterRCNN/)
   from tensorpack model zoo.
