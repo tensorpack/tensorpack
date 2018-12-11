@@ -8,7 +8,7 @@ Tensorpack is a neural network training interface based on TensorFlow.
 [![model-zoo](https://img.shields.io/badge/model-zoo-brightgreen.svg)](http://models.tensorpack.com)
 ## Features:
 
-It's Yet Another TF high-level API, with __speed__, __readability__ and __flexibility__ built together.
+It's Yet Another TF high-level API, with __speed__, and __flexibility__ built together.
 
 1. Focus on __training speed__.
 	+ Speed comes for free with Tensorpack -- it uses TensorFlow in the __efficient way__ with no extra overhead.
@@ -37,7 +37,7 @@ See [tutorials and documentations](http://tensorpack.readthedocs.io/tutorial/ind
 We refuse toy examples.
 Instead of showing you 10 arbitrary networks trained on toy datasets,
 [Tensorpack examples](examples) faithfully replicate papers and care about reproducing numbers,
-demonstrating its flexibility for actual research.
+demonstrating its __flexibility__ for actual research.
 
 ### Vision:
 + [Train ResNet](examples/ResNet) and [other models](examples/ImageNetModels) on ImageNet.

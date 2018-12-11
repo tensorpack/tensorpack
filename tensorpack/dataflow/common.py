@@ -577,12 +577,22 @@ def SelectComponent(ds, idxs):
 
 
 class LocallyShuffleData(ProxyDataFlow, RNGDataFlow):
-    """ Maintain a pool to buffer datapoints, and shuffle before producing them.
+    """ Buffer the datapoints from a given dataflow, and shuffle them before producing them.
         This can be used as an alternative when a complete random read is too expensive
         or impossible for the data source.
 
+        This dataflow has the following behavior:
+        1. It takes datapoints from the given dataflow `ds` to an internal buffer of fixed size.
+           Each datapoint is duplicated for `nr_reuse` times.
+        2. Once the buffer is full, this dataflow starts to yield data from the beginning of the buffer,
+           and new datapoints will be added to the end of the buffer. This is like a FIFO queue.
+        3. The internal buffer is shuffled after every `shuffle_interval` datapoints that come from `ds`.
+
         To maintain shuffling states, this dataflow is not reentrant.
-        The iterator will run indefinitely because after mixing the datapoints, it does not make sense to stop anywhere.
+
+        Datapoints from one pass of `ds` will get mixed with datapoints from a different pass.
+        As a result, the iterator of this dataflow will run indefinitely
+        because it does not make sense to stop the iteration anywhere.
     """
 
     def __init__(self, ds, buffer_size, nr_reuse=1, shuffle_interval=None):
@@ -591,11 +601,11 @@ class LocallyShuffleData(ProxyDataFlow, RNGDataFlow):
             ds (DataFlow): input DataFlow.
             buffer_size (int): size of the buffer.
             nr_reuse (int): duplicate each datapoints several times into the buffer to improve
-                speed, but may hurt your model.
+                speed, but duplication may hurt your model.
             shuffle_interval (int): shuffle the buffer after this many
                 datapoints were produced from the given dataflow. Frequent shuffle on large buffer
-                may affect speed, but infrequent shuffle may affect
-                randomness. Defaults to buffer_size / 3
+                may affect speed, but infrequent shuffle may not provide enough randomness.
+                Defaults to buffer_size / 3
         """
         ProxyDataFlow.__init__(self, ds)
         self.q = deque(maxlen=buffer_size)
@@ -620,7 +630,7 @@ class LocallyShuffleData(ProxyDataFlow, RNGDataFlow):
             for dp in self._inf_iter:
                 self._iter_cnt = (self._iter_cnt + 1) % self.shuffle_interval
                 # fill queue
-                if self._iter_cnt % self.shuffle_interval == 0:
+                if self._iter_cnt == 0:
                     self.rng.shuffle(self.q)
                 for _ in range(self.nr_reuse):
                     if self.q.maxlen == len(self.q):
