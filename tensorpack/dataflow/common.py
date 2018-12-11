@@ -582,6 +582,7 @@ class LocallyShuffleData(ProxyDataFlow, RNGDataFlow):
         or impossible for the data source.
 
         This dataflow has the following behavior:
+
         1. It takes datapoints from the given dataflow `ds` to an internal buffer of fixed size.
            Each datapoint is duplicated for `nr_reuse` times.
         2. Once the buffer is full, this dataflow starts to yield data from the beginning of the buffer,
