@@ -42,6 +42,7 @@ bugs. See https://github.com/tensorpack/tensorpack/issues/497 for workarounds.")
         sess = tf.Session(target=self.target, config=self.config)
         sess.run(tf.global_variables_initializer())
         sess.run(tf.local_variables_initializer())
+        sess.run(tf.tables_initializer())
         return sess
 
 
