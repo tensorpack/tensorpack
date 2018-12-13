@@ -20,13 +20,13 @@ Some typical questions that we DO NOT answer:
   We have no plans to do so. We don't consider feature
   requests for examples or implement a paper for you.
   If you don't know how to do something yourself, you may ask a usage question.
-+ "The examples do not perform well after I change the models/dataset/parameters/etc."
-  Tensorpack maintainers make sure the examples perform well without modification.
++ "The examples do not perform as expected after I change the models/dataset/parameters/etc."
+  Tensorpack maintainers make sure the examples perform well without modifications.
   But it's your job to pick the model and parameters that are suitable for your own situation.
   We cannot help with such questions unless they appear to be a bug in tensorpack.
-+ "Why my model doesn't work?", "I don't understand this paper you implement.",
-  "How should I change the examples for my own dataset?"
++ "Why my own model doesn't perform well?", "I don't understand this paper you implement.",
+  "How should I change the parameters for my own dataset?"
   We do not answer machine learning questions.
-  
+
 
 You can also use gitter (https://gitter.im/tensorpack/users) for more casual discussions.

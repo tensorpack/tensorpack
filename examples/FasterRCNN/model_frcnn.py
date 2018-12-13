@@ -190,7 +190,6 @@ def fastrcnn_predictions(boxes, scores):
     assert boxes.shape[1] == cfg.DATA.NUM_CLASS
     assert scores.shape[1] == cfg.DATA.NUM_CLASS
     boxes = tf.transpose(boxes, [1, 0, 2])[1:, :, :]  # #catxnx4
-    boxes.set_shape([None, cfg.DATA.NUM_CATEGORY, None])
     scores = tf.transpose(scores[:, 1:], [1, 0])  # #catxn
 
     def f(X):
