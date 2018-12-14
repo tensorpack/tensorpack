@@ -75,7 +75,9 @@ class RunOp(Callback):
 
 class RunUpdateOps(RunOp):
     """
-    Run ops from the collection UPDATE_OPS every step
+    Run ops from the collection UPDATE_OPS every step.
+    The ops will be hooked to `trainer.hooked_sess` and run along with
+    each `sess.run` call.
     """
 
     def __init__(self, collection=tf.GraphKeys.UPDATE_OPS):
