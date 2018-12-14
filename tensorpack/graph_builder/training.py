@@ -77,7 +77,7 @@ class DataParallelBuilder(GraphBuilder):
             raise ValueError("Number of gradients from each tower is different! " + str(nvars))
 
     @staticmethod
-    def build_on_towers(
+    def call_for_each_tower(
             towers, func, devices=None, use_vs=None):
         """
         Run `func` on all GPUs (towers) and return the results.
@@ -118,6 +118,10 @@ class DataParallelBuilder(GraphBuilder):
                 with override_to_local_variable(enable=usevs):
                     ret.append(func())
         return ret
+
+    @staticmethod
+    def build_on_towers(*args, **kwargs):
+        return DataParallelBuilder.call_for_each_tower(*args, **kwargs)
 
 
 class SyncMultiGPUParameterServerBuilder(DataParallelBuilder):
@@ -405,4 +409,4 @@ class AsyncMultiGPUBuilder(DataParallelBuilder):
                     # will call apply_gradients (therefore gradproc) multiple times
                     train_ops.append(opt.apply_gradients(
                         grad_and_vars, name='apply_grad_{}'.format(i)))
-            return tf.group(*train_ops, name='train_op')
+        return tf.group(*train_ops, name='train_op')

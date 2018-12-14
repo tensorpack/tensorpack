@@ -55,6 +55,7 @@ before_script:
 # Check that these private names can be imported because tensorpack is using them
 - python -c "from tensorflow.python.client.session import _FetchHandler"
 - python -c "from tensorflow.python.training.monitored_session import _HookedSession"
+- python -c "import tensorflow as tf; tf.Operation._add_control_input"
 
 script:
 - flake8 .

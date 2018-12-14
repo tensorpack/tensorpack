@@ -53,7 +53,7 @@ class SimpleTrainer(SingleCostTrainer):
         with TrainTowerContext(''):
             grads = self._make_get_grad_fn(input, get_cost_fn, get_opt_fn)()
             opt = get_opt_fn()
-            self.train_op = opt.apply_gradients(grads, name='min_op')
+            self.train_op = opt.apply_gradients(grads, name='train_op')
         return []
 
 
@@ -404,7 +404,7 @@ class HorovodTrainer(SingleCostTrainer):
             grads = self.allreduce(grads)
 
             opt = get_opt_fn()
-            self.train_op = opt.apply_gradients(grads, name='min_op')
+            self.train_op = opt.apply_gradients(grads, name='train_op')
 
         def broadcast(self):
             logger.info("Running horovod broadcast ...")
