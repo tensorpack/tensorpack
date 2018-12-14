@@ -37,8 +37,7 @@ class InputDesc(
         self._cached_placeholder = {}
         return self
 
-    # TODO this method seems unused outside this class
-    def build_placeholder(self):
+    def _build_placeholder(self):
         """
         Build a tf.placeholder from the metadata.
 
@@ -63,7 +62,7 @@ class InputDesc(
         if g in self._cached_placeholder:
             return self._cached_placeholder[g]
         else:
-            return self.build_placeholder()
+            return self._build_placeholder()
 
     def _register_cached_placeholder(self, placeholder):
         graph = placeholder.graph
@@ -241,12 +240,13 @@ class ModelDesc(ModelDescBase):
 
     def _build_graph_get_cost(self, *inputs):
         """
+        Equivalent to `build_graph`.
         Used internally by trainers to get the final cost for optimization in a backward-compatible way.
         """
         ret = self.build_graph(*inputs)
         if not get_current_tower_context().is_training:
             return None     # this is the tower function, could be called for inference
-        if isinstance(ret, tf.Tensor):  # the preferred way
+        if ret is not None:
             return ret
         else:   # the old way, for compatibility
             return self.get_cost()

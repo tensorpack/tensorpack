@@ -75,8 +75,6 @@ def memoized_ignoreargs(func):
     A decorator. It performs memoization ignoring the arguments used to call
     the function.
     """
-    hash(func)  # make sure it is hashable. TODO is it necessary?
-
     def wrapper(*args, **kwargs):
         if func not in _MEMOIZED_NOARGS:
             res = func(*args, **kwargs)
