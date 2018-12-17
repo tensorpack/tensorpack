@@ -3,7 +3,6 @@
 
 
 from .base import ImageAugmentor
-from ...utils import logger
 import numpy as np
 import cv2
 
@@ -15,16 +14,13 @@ class Hue(ImageAugmentor):
     """ Randomly change color hue.
     """
 
-    def __init__(self, range=(0, 180), rgb=None):
+    def __init__(self, range=(0, 180), rgb=True):
         """
         Args:
             range(list or tuple): range from which the applied hue offset is selected (maximum [-90,90] or [0,180])
             rgb (bool): whether input is RGB or BGR.
         """
         super(Hue, self).__init__()
-        if rgb is None:
-            logger.warn("Hue() now assumes rgb=False, but will by default use rgb=True in the future!")
-            rgb = False
         rgb = bool(rgb)
         self._init(locals())
 
@@ -104,7 +100,7 @@ class Contrast(ImageAugmentor):
     Apply ``x = (x - mean) * contrast_factor + mean`` to each channel.
     """
 
-    def __init__(self, factor_range, clip=True):
+    def __init__(self, factor_range, rgb=True, clip=True):
         """
         Args:
             factor_range (list or tuple): an interval to randomly sample the `contrast_factor`.
@@ -118,8 +114,14 @@ class Contrast(ImageAugmentor):
 
     def _augment(self, img, r):
         old_dtype = img.dtype
-        img = img.astype('float32')
-        mean = np.mean(img, axis=(0, 1), keepdims=True)
+
+        if img.ndim == 3:
+            m = cv2.COLOR_RGB2GRAY if self.rgb else cv2.COLOR_BGR2GRAY
+            grey = cv2.cvtColor(img, m)
+            mean = np.mean(grey)
+        else:
+            mean = np.mean(img)
+
         img = (img - mean) * r + mean
         if self.clip or old_dtype == np.uint8:
             img = np.clip(img, 0, 255)

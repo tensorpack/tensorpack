@@ -9,9 +9,11 @@ following object detection / instance segmentation papers:
 
 with the support of:
 + Multi-GPU / distributed training
-+ Cross-GPU BatchNorm (from [MegDet: A Large Mini-Batch Object Detector](https://arxiv.org/abs/1711.07240))
++ Cross-GPU BatchNorm (aka Sync-BN, from [MegDet: A Large Mini-Batch Object Detector](https://arxiv.org/abs/1711.07240))
 + [Group Normalization](https://arxiv.org/abs/1803.08494)
 + Training from scratch (from [Rethinking ImageNet Pre-training](https://arxiv.org/abs/1811.08883))
+
+This is likely the __best-performing__ open source TensorFlow reimplementation of the above papers.
 
 ## Dependencies
 + Python 3.3+; OpenCV

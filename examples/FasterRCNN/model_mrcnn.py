@@ -18,7 +18,7 @@ def maskrcnn_loss(mask_logits, fg_labels, fg_target_masks):
     Args:
         mask_logits: #fg x #category xhxw
         fg_labels: #fg, in 1~#class, int64
-        fg_target_masks: #fgxhxw, int
+        fg_target_masks: #fgxhxw, float32
     """
     num_fg = tf.size(fg_labels, out_type=tf.int64)
     indices = tf.stack([tf.range(num_fg), fg_labels - 1], axis=1)  # #fgx2

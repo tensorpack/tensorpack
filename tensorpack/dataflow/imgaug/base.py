@@ -156,6 +156,7 @@ class AugmentorList(ImageAugmentor):
         Args:
             augmentors (list): list of :class:`ImageAugmentor` instance to be applied.
         """
+        assert isinstance(augmentors, (list, tuple)), augmentors
         self.augmentors = augmentors
         super(AugmentorList, self).__init__()
 

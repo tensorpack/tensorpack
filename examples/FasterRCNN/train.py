@@ -604,6 +604,7 @@ if __name__ == '__main__':
             steps_per_epoch=stepnum,
             max_epoch=cfg.TRAIN.LR_SCHEDULE[-1] * factor // stepnum,
             session_init=session_init,
+            starting_epoch=cfg.TRAIN.STARTING_EPOCH
         )
         if is_horovod:
             trainer = HorovodTrainer(average=False)

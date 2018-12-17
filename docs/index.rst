@@ -3,9 +3,13 @@ Tensorpack Documentation
 
 .. image:: ../.github/tensorpack.png
 
-Tensorpack is a **training interface** based on TensorFlow.
+Tensorpack is a **training interface** based on TensorFlow, with a focus on speed + flexibility.
+TensorFlow is powerful, but has its own drawbacks:
+Its low-level APIs are too hard and complicated for many users,
+and its existing high-level APIs sacrifice a lot in either speed or flexibility.
+The Tensorpack API brings speed and flexibility together.
 
-It's Yet Another TF wrapper, but different in:
+Tensorpack is Yet Another TF high-level API, but different in:
 
 - Focus on **training speed**.
 

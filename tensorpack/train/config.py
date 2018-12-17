@@ -197,9 +197,11 @@ class AutoResumeTrainConfig(TrainConfig):
             beginning, but a "resume" model loader when the job was
             interrupted and restarted.
         """
+        found_sessinit = False
         if always_resume or 'session_init' not in kwargs:
             sessinit = self._get_sessinit_resume()
             if sessinit is not None:
+                found_sessinit = True
                 path = sessinit.path
                 if 'session_init' in kwargs:
                     logger.info("Found checkpoint at {}. "
@@ -208,13 +210,17 @@ class AutoResumeTrainConfig(TrainConfig):
                     logger.info("Will load checkpoint at {}.".format(path))
                 kwargs['session_init'] = sessinit
 
+        found_last_epoch = False
         if always_resume or 'starting_epoch' not in kwargs:
             last_epoch = self._get_last_epoch()
             if last_epoch is not None:
+                found_last_epoch = True
                 now_epoch = last_epoch + 1
                 logger.info("Found history statistics from JSON. "
                             "Setting starting_epoch to {}.".format(now_epoch))
                 kwargs['starting_epoch'] = now_epoch
+        assert found_sessinit == found_last_epoch, \
+            "Found SessionInit={}, Found Last Epoch={}".format(found_sessinit, found_last_epoch)
 
         super(AutoResumeTrainConfig, self).__init__(**kwargs)
 
