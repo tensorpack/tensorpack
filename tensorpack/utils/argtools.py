@@ -11,7 +11,7 @@ else:
     import functools
 
 __all__ = ['map_arg', 'memoized', 'memoized_method', 'graph_memoized', 'shape2d', 'shape4d',
-           'memoized_ignoreargs', 'log_once', 'call_only_once']
+           'shape3d', 'shape5d', 'memoized_ignoreargs', 'log_once', 'call_only_once']
 
 
 def map_arg(**maps):
@@ -100,6 +100,42 @@ def shape2d(a):
         assert len(a) == 2
         return list(a)
     raise RuntimeError("Illegal shape: {}".format(a))
+
+
+def shape3d(a):
+    """
+    Ensure a 3D shape.
+    
+    Args: 
+        a: a in or tuple/list of length 3
+
+    Returns:
+        list: of length 3. if ``a`` is a int, return ``[a, a, a]``.
+    """
+    if type(a) == int:
+        return [a, a, a]
+    if isinstance(a, (list, tuple)):
+        assert len(a) == 3
+        return list(a)
+    raise RuntimeError("Illegal shape: {}".format(a))
+
+
+def shape5d(a, data_format='channel_last'):
+    """
+    Ensure a 5D shape, to use with 5D symbolic functions.
+
+    Args: 
+        a: a int or tuple/list of length 3
+
+    Returns: 
+        list: of length 5, if ``a`` is a int, reutnr [``1, a, a, a,1]`` 
+            or ``[1, 1, a, a, a]`` depending on data_format.
+    """
+    s3d = shape3d(a)
+    if get_data_format(data_format) == 'channel_last':
+        return [1] + s3d + [1]
+    else:
+        return [1, 1] + s3d
 
 
 def get_data_format(data_format, tfmode=True):
