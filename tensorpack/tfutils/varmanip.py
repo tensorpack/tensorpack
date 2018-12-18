@@ -63,10 +63,12 @@ class SessionUpdate(object):
         varshape = tuple(var.get_shape().as_list())
         if varshape != val.shape:
             # TODO only allow reshape when shape different by empty axis
-            assert np.prod(varshape) == np.prod(val.shape), \
-                "{}: {}!={}".format(name, varshape, val.shape)
-            logger.warn("Variable {} is reshaped {}->{} during assigning".format(
-                name, val.shape, varshape))
+            if np.prod(varshape) != np.prod(val.shape):
+                raise ValueError(
+                    "Trying to load a tensor of shape {} into the variable '{}' whose shape is {}.".format(
+                        val.shape, name, varshape))
+            logger.warn("The tensor is reshaped from {} to {} when assigned to '{}'".format(
+                val.shape, varshape, name))
             val = val.reshape(varshape)
 
         # fix some common type incompatibility problems, but not all

@@ -13,6 +13,9 @@ __all__ = ['change_gpu', 'get_nr_gpu', 'get_num_gpu']
 
 def change_gpu(val):
     """
+    Args:
+        val: an integer, the index of the GPU or -1 to disable GPU.
+
     Returns:
         a context where ``CUDA_VISIBLE_DEVICES=val``.
     """

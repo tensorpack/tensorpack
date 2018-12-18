@@ -12,7 +12,6 @@ import numpy as np
 import json
 import six
 import tensorflow as tf
-from concurrent.futures import ThreadPoolExecutor
 try:
     import horovod.tensorflow as hvd
 except ImportError:
@@ -52,7 +51,8 @@ from viz import (
     draw_annotation, draw_proposal_recall,
     draw_predictions, draw_final_outputs)
 from eval import (
-    eval_coco, detect_one_image, print_evaluation_scores, DetectionResult)
+    eval_coco, multithread_eval_coco,
+    detect_one_image, print_coco_metrics, DetectionResult)
 from config import finalize_configs, config as cfg
 
 
@@ -388,13 +388,23 @@ def visualize(model, model_path, nr_visualize=100, output_dir='output'):
             pbar.update()
 
 
-def offline_evaluate(pred_func, output_file):
-    df = get_eval_dataflow()
-    all_results = eval_coco(
-        df, lambda img: detect_one_image(img, pred_func))
+def offline_evaluate(pred_config, output_file):
+    num_gpu = cfg.TRAIN.NUM_GPUS
+    graph_funcs = MultiTowerOfflinePredictor(
+        pred_config, list(range(num_gpu))).get_predictors()
+    predictors = []
+    dataflows = []
+    for k in range(num_gpu):
+        predictors.append(lambda img,
+                          pred=graph_funcs[k]: detect_one_image(img, pred))
+        dataflows.append(get_eval_dataflow(shard=k, num_shards=num_gpu))
+    if num_gpu > 1:
+        all_results = multithread_eval_coco(dataflows, predictors)
+    else:
+        all_results = eval_coco(dataflows[0], predictors[0])
     with open(output_file, 'w') as f:
         json.dump(all_results, f)
-    print_evaluation_scores(output_file)
+    print_coco_metrics(output_file)
 
 
 def predict(pred_func, input_file):
@@ -456,12 +466,7 @@ class EvalCallback(Callback):
     def _eval(self):
         logdir = args.logdir
         if cfg.TRAINER == 'replicated':
-            with ThreadPoolExecutor(max_workers=self.num_predictor, thread_name_prefix='EvalWorker') as executor, \
-                    tqdm.tqdm(total=sum([df.size() for df in self.dataflows])) as pbar:
-                futures = []
-                for dataflow, pred in zip(self.dataflows, self.predictors):
-                    futures.append(executor.submit(eval_coco, dataflow, pred, pbar))
-                all_results = list(itertools.chain(*[fut.result() for fut in futures]))
+            all_results = multithread_eval_coco(self.dataflows, self.predictors)
         else:
             filenames = [os.path.join(
                 logdir, 'outputs{}-part{}.json'.format(self.global_step, rank)
@@ -487,7 +492,7 @@ class EvalCallback(Callback):
         with open(output_file, 'w') as f:
             json.dump(all_results, f)
         try:
-            scores = print_evaluation_scores(output_file)
+            scores = print_coco_metrics(output_file)
             for k, v in scores.items():
                 self.trainer.monitors.put_scalar(k, v)
         except Exception:
@@ -532,17 +537,17 @@ if __name__ == '__main__':
         if args.visualize:
             visualize(MODEL, args.load)
         else:
-            pred = OfflinePredictor(PredictConfig(
+            predcfg = PredictConfig(
                 model=MODEL,
                 session_init=get_model_loader(args.load),
                 input_names=MODEL.get_inference_tensor_names()[0],
-                output_names=MODEL.get_inference_tensor_names()[1]))
-            if args.evaluate:
-                assert args.evaluate.endswith('.json'), args.evaluate
-                offline_evaluate(pred, args.evaluate)
-            elif args.predict:
+                output_names=MODEL.get_inference_tensor_names()[1])
+            if args.predict:
                 COCODetection(cfg.DATA.BASEDIR, 'val2014')   # Only to load the class names into caches
-                predict(pred, args.predict)
+                predict(OfflinePredictor(predcfg), args.predict)
+            elif args.evaluate:
+                assert args.evaluate.endswith('.json'), args.evaluate
+                offline_evaluate(predcfg, args.evaluate)
     else:
         is_horovod = cfg.TRAINER == 'horovod'
         if is_horovod:

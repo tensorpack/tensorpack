@@ -37,9 +37,11 @@ class MultiTowerOfflinePredictor(OnlinePredictor):
             for idx, t in enumerate(towers):
                 tower_name = 'tower' + str(t)
 
+                device = '/gpu:{}'.format(t)
                 with tf.variable_scope(tf.get_variable_scope(), reuse=idx > 0), \
-                        tf.device('/gpu:{}'.format(t)), \
+                        tf.device(device), \
                         PredictTowerContext(tower_name):
+                    logger.info("Building graph for predict tower '{}' on device {} ...".format(tower_name, device))
                     config.tower_func(*input.get_input_tensors())
                     handles.append(config.tower_func.towers[-1])
 

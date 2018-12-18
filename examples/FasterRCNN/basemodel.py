@@ -108,6 +108,8 @@ def image_preprocess(image, bgr=True):
 
 
 def get_norm(zero_init=False):
+    if cfg.BACKBONE.NORM == 'None':
+        return lambda x: x
     if cfg.BACKBONE.NORM == 'GN':
         Norm = GroupNorm
         layer_name = 'gn'
@@ -144,7 +146,11 @@ def resnet_bottleneck(l, ch_out, stride):
             l = Conv2D('conv2', l, ch_out, 3, strides=2, padding='VALID')
         else:
             l = Conv2D('conv2', l, ch_out, 3, strides=stride)
-    l = Conv2D('conv3', l, ch_out * 4, 1, activation=get_norm(zero_init=True))
+    if cfg.BACKBONE.NORM != 'None':
+        l = Conv2D('conv3', l, ch_out * 4, 1, activation=get_norm(zero_init=True))
+    else:
+        l = Conv2D('conv3', l, ch_out * 4, 1, activation=tf.identity,
+                   kernel_initializer=tf.constant_initializer())
     ret = l + resnet_shortcut(shortcut, ch_out * 4, stride, activation=get_norm(zero_init=False))
     return tf.nn.relu(ret, name='output')
 

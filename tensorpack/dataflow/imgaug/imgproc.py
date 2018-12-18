@@ -122,7 +122,7 @@ class Contrast(ImageAugmentor):
         else:
             mean = np.mean(img)
 
-        img = (img - mean) * r + mean
+        img = img * r + mean * (1 - r)
         if self.clip or old_dtype == np.uint8:
             img = np.clip(img, 0, 255)
         return img.astype(old_dtype)

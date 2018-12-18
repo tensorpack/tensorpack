@@ -80,7 +80,7 @@ class MismatchLogger(object):
         self._names = []
 
     def add(self, name):
-        self._names.append(name)
+        self._names.append(get_op_tensor_name(name)[0])
 
     def log(self):
         if len(self._names):

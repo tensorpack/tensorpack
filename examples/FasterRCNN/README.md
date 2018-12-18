@@ -8,7 +8,7 @@ following object detection / instance segmentation papers:
 + [Cascade R-CNN: Delving into High Quality Object Detection](https://arxiv.org/abs/1712.00726)
 
 with the support of:
-+ Multi-GPU / distributed training
++ Multi-GPU / distributed training, multi-GPU evaluation
 + Cross-GPU BatchNorm (aka Sync-BN, from [MegDet: A Large Mini-Batch Object Detector](https://arxiv.org/abs/1711.07240))
 + [Group Normalization](https://arxiv.org/abs/1803.08494)
 + Training from scratch (from [Rethinking ImageNet Pre-training](https://arxiv.org/abs/1811.08883))

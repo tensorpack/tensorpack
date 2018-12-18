@@ -82,15 +82,16 @@ _C.DATA.BASEDIR = '/path/to/your/COCO/DIR'
 _C.DATA.TRAIN = ['train2014', 'valminusminival2014']   # i.e. trainval35k, AKA train2017
 # For now, only support evaluation on single dataset
 _C.DATA.VAL = 'minival2014'  # AKA val2017
-_C.DATA.NUM_CATEGORY = 80    # 80 categories.
-_C.DATA.CLASS_NAMES = []  # NUM_CLASS (NUM_CATEGORY+1) strings, to be populated later by data loader. The first is BG.
+_C.DATA.NUM_CATEGORY = 80    # 80 categories in COCO
+_C.DATA.CLASS_NAMES = []  # NUM_CLASS (NUM_CATEGORY+1) strings, the first is "BG".
+# For COCO, this list will be populated later by the COCO data loader.
 
 # basemodel ----------------------
 _C.BACKBONE.WEIGHTS = ''   # /path/to/weights.npz
 _C.BACKBONE.RESNET_NUM_BLOCKS = [3, 4, 6, 3]     # for resnet50
 # RESNET_NUM_BLOCKS = [3, 4, 23, 3]    # for resnet101
 _C.BACKBONE.FREEZE_AFFINE = False   # do not train affine parameters inside norm layers
-_C.BACKBONE.NORM = 'FreezeBN'  # options: FreezeBN, SyncBN, GN
+_C.BACKBONE.NORM = 'FreezeBN'  # options: FreezeBN, SyncBN, GN, None
 _C.BACKBONE.FREEZE_AT = 2  # options: 0, 1, 2
 
 # Use a base model with TF-preferred padding mode,
@@ -208,7 +209,7 @@ def finalize_configs(is_training):
     _C.DATA.NUM_CLASS = _C.DATA.NUM_CATEGORY + 1  # +1 background
     _C.DATA.BASEDIR = os.path.expanduser(_C.DATA.BASEDIR)
 
-    assert _C.BACKBONE.NORM in ['FreezeBN', 'SyncBN', 'GN'], _C.BACKBONE.NORM
+    assert _C.BACKBONE.NORM in ['FreezeBN', 'SyncBN', 'GN', 'None'], _C.BACKBONE.NORM
     if _C.BACKBONE.NORM != 'FreezeBN':
         assert not _C.BACKBONE.FREEZE_AFFINE
     assert _C.BACKBONE.FREEZE_AT in [0, 1, 2]
@@ -246,18 +247,20 @@ def finalize_configs(is_training):
         else:
             assert 'OMPI_COMM_WORLD_SIZE' not in os.environ
             ngpu = get_num_gpu()
-        assert ngpu > 0, "Has to run with GPU!"
-        assert ngpu % 8 == 0 or 8 % ngpu == 0, "Can only run with 1,2,4 or >=8 GPUs, but found {} GPUs".format(ngpu)
-        if _C.TRAIN.NUM_GPUS is None:
-            _C.TRAIN.NUM_GPUS = ngpu
-        else:
-            if _C.TRAINER == 'horovod':
-                assert _C.TRAIN.NUM_GPUS == ngpu
-            else:
-                assert _C.TRAIN.NUM_GPUS <= ngpu
+        assert ngpu % 8 == 0 or 8 % ngpu == 0, "Can only train with 1,2,4 or >=8 GPUs, but found {} GPUs".format(ngpu)
     else:
         # autotune is too slow for inference
         os.environ['TF_CUDNN_USE_AUTOTUNE'] = '0'
+        ngpu = get_num_gpu()
+
+    assert ngpu > 0, "Has to run with GPU!"
+    if _C.TRAIN.NUM_GPUS is None:
+        _C.TRAIN.NUM_GPUS = ngpu
+    else:
+        if _C.TRAINER == 'horovod':
+            assert _C.TRAIN.NUM_GPUS == ngpu
+        else:
+            assert _C.TRAIN.NUM_GPUS <= ngpu
 
     _C.freeze()
     logger.info("Config: ------------------------------------------\n" + str(_C))

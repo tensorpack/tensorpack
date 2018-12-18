@@ -5,8 +5,10 @@ import tqdm
 import os
 from collections import namedtuple
 from contextlib import ExitStack
+import itertools
 import numpy as np
 import cv2
+from concurrent.futures import ThreadPoolExecutor
 
 from tensorpack.utils.utils import get_tqdm_kwargs
 
@@ -29,12 +31,14 @@ mask: None, or a binary image of the original image shape
 """
 
 
-def fill_full_mask(box, mask, shape):
+def paste_mask(box, mask, shape):
     """
     Args:
         box: 4 float
         mask: MxM floats
         shape: h,w
+    Returns:
+        A uint8 binary image of hxw.
     """
     # int() is floor
     # box fpcoor=0.0 -> intcoor=0.0
@@ -80,7 +84,7 @@ def detect_one_image(img, model_func):
 
     if masks:
         # has mask
-        full_masks = [fill_full_mask(box, mask, orig_shape)
+        full_masks = [paste_mask(box, mask, orig_shape)
                       for box, mask in zip(boxes, masks[0])]
         masks = full_masks
     else:
@@ -135,8 +139,30 @@ def eval_coco(df, detect_func, tqdm_bar=None):
     return all_results
 
 
+def multithread_eval_coco(dataflows, detect_funcs):
+    """
+    Running multiple `eval_coco` in multiple threads, and aggregate the results.
+
+    Args:
+        dataflows: a list of DataFlow to be used in :func:`eval_coco`
+        detect_funcs: a list of callable to be used in :func:`eval_coco`
+
+    Returns:
+        list of dict, to be dumped to COCO json format
+    """
+    num_worker = len(dataflows)
+    assert len(dataflows) == len(detect_funcs)
+    with ThreadPoolExecutor(max_workers=num_worker, thread_name_prefix='EvalWorker') as executor, \
+            tqdm.tqdm(total=sum([df.size() for df in dataflows])) as pbar:
+        futures = []
+        for dataflow, pred in zip(dataflows, detect_funcs):
+            futures.append(executor.submit(eval_coco, dataflow, pred, pbar))
+        all_results = list(itertools.chain(*[fut.result() for fut in futures]))
+        return all_results
+
+
 # https://github.com/pdollar/coco/blob/master/PythonAPI/pycocoEvalDemo.ipynb
-def print_evaluation_scores(json_file):
+def print_coco_metrics(json_file):
     ret = {}
     assert cfg.DATA.BASEDIR and os.path.isdir(cfg.DATA.BASEDIR)
     annofile = os.path.join(
