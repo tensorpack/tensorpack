@@ -78,7 +78,7 @@ def argscope_mapper(func, log_shape=True):
         in_tensor = args[0]
 
         ctx = get_current_tower_context()
-        name = '<unkown>' if 'name' not in kwargs else kwargs['name']
+        name = func.__name__ if 'name' not in kwargs else kwargs['name']
         if log_shape:
             if ('tower' not in ctx.ns_name.lower()) or ctx.is_main_training_tower:
                 logger.info('%20s: %20s -> %20s' %
