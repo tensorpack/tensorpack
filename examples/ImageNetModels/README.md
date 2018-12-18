@@ -3,7 +3,7 @@ ImageNet training code of ResNet, ShuffleNet, DoReFa-Net, AlexNet, Inception, VG
 
 To train any of the models, just do `./{model}.py --data /path/to/ilsvrc`.
 More options are available in `./{model}.py --help`.
-Expected format of data directory is described in [docs](http://tensorpack.readthedocs.io/en/latest/modules/dataflow.dataset.html#tensorpack.dataflow.dataset.ILSVRC12).
+Expected format of data directory is described in [docs](http://tensorpack.readthedocs.io/modules/dataflow.dataset.html#tensorpack.dataflow.dataset.ILSVRC12).
 Some pretrained models can be downloaded at [tensorpack model zoo](http://models.tensorpack.com/).
 
 ### ShuffleNet

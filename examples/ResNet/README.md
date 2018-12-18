@@ -25,7 +25,7 @@ baseline and they actually cannot beat this ResNet recipe.
 | ResNet152   | 5.78%       | 21.51%      | [:arrow_down:](http://models.tensorpack.com/ResNet/ImageNet-ResNet152.npz)   |
 
 To reproduce the above results,
-first decompress ImageNet data into [this structure](http://tensorpack.readthedocs.io/en/latest/modules/dataflow.dataset.html#tensorpack.dataflow.dataset.ILSVRC12), then:
+first decompress ImageNet data into [this structure](http://tensorpack.readthedocs.io/modules/dataflow.dataset.html#tensorpack.dataflow.dataset.ILSVRC12), then:
 ```bash
 ./imagenet-resnet.py --data /path/to/original/ILSVRC -d 50 [--mode resnet/preact/se] --batch 256
 # See ./imagenet-resnet.py -h for other options.
@@ -35,7 +35,7 @@ You should be able to see good GPU utilization (95%~99%), if your data is fast e
 With batch=64x8, it can finish 100 epochs in 16 hours on AWS p3.16xlarge (8 V100s).
 
 The default data pipeline is probably OK for machines with SSD & 20 CPU cores.
-See the [tutorial](http://tensorpack.readthedocs.io/en/latest/tutorial/efficient-dataflow.html) on other options to speed up your data.
+See the [tutorial](http://tensorpack.readthedocs.io/tutorial/efficient-dataflow.html) on other options to speed up your data.
 
 ![imagenet](imagenet-resnet.png)
 

@@ -90,7 +90,7 @@ class RemoteDataZMQ(DataFlow):
     Produce data from ZMQ PULL socket(s).
     It is the receiver-side counterpart of :func:`send_dataflow_zmq`, which uses :mod:`tensorpack.utils.serialize`
     for serialization.
-    See http://tensorpack.readthedocs.io/en/latest/tutorial/efficient-dataflow.html#distributed-dataflow
+    See http://tensorpack.readthedocs.io/tutorial/efficient-dataflow.html#distributed-dataflow
 
     Attributes:
         cnt1, cnt2 (int): number of data points received from addr1 and addr2

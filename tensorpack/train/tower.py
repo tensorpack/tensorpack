@@ -193,7 +193,7 @@ class SingleCostTrainer(TowerTrainer):
         Note:
             `get_cost_fn` will be part of the tower function.
             It must follows the `rules of tower function.
-            <http://tensorpack.readthedocs.io/en/latest/tutorial/trainer.html#tower-trainer>`_.
+            <http://tensorpack.readthedocs.io/tutorial/trainer.html#tower-trainer>`_.
         """
         get_cost_fn = TowerFuncWrapper(get_cost_fn, inputs_desc)
         get_opt_fn = memoized(get_opt_fn)

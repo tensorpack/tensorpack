@@ -14,7 +14,7 @@ __all__ = ['Callback', 'ProxyCallback', 'CallbackFactory']
 class Callback(object):
     """ Base class for all callbacks. See
     `Write a Callback
-    <http://tensorpack.readthedocs.io/en/latest/tutorial/extend/callback.html>`_
+    <http://tensorpack.readthedocs.io/tutorial/extend/callback.html>`_
     for more detailed explanation of the callback methods.
 
     Attributes:

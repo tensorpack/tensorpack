@@ -38,7 +38,7 @@ This is one of the reasons why tensorpack is [faster](https://github.com/tensorp
 
 The above discussion is valid regardless of what you use to load/preprocess data,
 either Python code or TensorFlow operators, or a mix of two.
-Both are supported in tensorpack, while we recommend using Python. 
+Both are supported in tensorpack, while we recommend using Python.
 
 ### TensorFlow Reader: Pros
 
@@ -58,7 +58,7 @@ The disadvantage of TF reader is obvious and it's huge: it's __too complicated__
 
 Unlike running a mathematical model, data processing is a complicated and poorly-structured task.
 You need to handle different formats, handle corner cases, noisy data, combination of data.
-Doing these requires condition operations, loops, data structures, sometimes even exception handling. 
+Doing these requires condition operations, loops, data structures, sometimes even exception handling.
 These operations are __naturally not the right task for a symbolic graph__.
 
 Let's take a look at what users are asking for `tf.data`:
@@ -93,13 +93,13 @@ Some choices are:
     Data come from a DataFlow and get buffered on CPU by a TF queue.
 3. [StagingInput](../modules/input_source.html#tensorpack.input_source.StagingInput):
 	Come from some other `InputSource`, then prefetched on GPU by a TF StagingArea.
-4. [TFDatasetInput](http://tensorpack.readthedocs.io/en/latest/modules/input_source.html#tensorpack.input_source.TFDatasetInput)
+4. [TFDatasetInput](../modules/input_source.html#tensorpack.input_source.TFDatasetInput)
 	Come from a `tf.data.Dataset`.
-5. [dataflow_to_dataset](http://tensorpack.readthedocs.io/en/latest/modules/input_source.html#tensorpack.input_source.TFDatasetInput.dataflow_to_dataset)
+5. [dataflow_to_dataset](../modules/input_source.html#tensorpack.input_source.TFDatasetInput.dataflow_to_dataset)
 	Come from a DataFlow, and then lfurther processed by utilities in `tf.data.Dataset`.
 6. [TensorInput](../modules/input_source.html#tensorpack.input_source.TensorInput):
 	Come from some tensors you define (can be reading ops, for example).
-7. [ZMQInput](http://tensorpack.readthedocs.io/en/latest/modules/input_source.html#tensorpack.input_source.ZMQInput)
+7. [ZMQInput](../modules/input_source.html#tensorpack.input_source.ZMQInput)
 	Come from some ZeroMQ pipe, where the reading/preprocessing may happen in a different process or even a different machine.
 
 Typically, we recommend using `DataFlow + QueueInput` as it's good for most use cases.

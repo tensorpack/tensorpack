@@ -279,7 +279,7 @@ Note that you can certainly use `tf.summary.scalar(self.cost)`, but then you'll 
 
 Let's summarize: we have a model and data.
 The missing piece which stitches these parts together is the training protocol.
-It is only a [configuration](http://tensorpack.readthedocs.io/en/latest/modules/tensorpack.train.html#tensorpack.train.TrainConfig)
+It is only a [configuration](http://tensorpack.readthedocs.io/modules/tensorpack.train.html#tensorpack.train.TrainConfig)
 
 For the dataflow, we already implemented `get_data` in the first part. Specifying the learning rate is done by
 

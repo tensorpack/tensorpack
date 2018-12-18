@@ -102,7 +102,7 @@ def get_imagenet_dataflow(
     Returns: A DataFlow which produces BGR images and labels.
 
     See explanations in the tutorial:
-    http://tensorpack.readthedocs.io/en/latest/tutorial/efficient-dataflow.html
+    http://tensorpack.readthedocs.io/tutorial/efficient-dataflow.html
     """
     assert name in ['train', 'val', 'test']
     isTrain = name == 'train'
