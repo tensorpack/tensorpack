@@ -140,7 +140,7 @@ def shape5d(a, data_format='channel_last'):
 
 def get_data_format(data_format, tfmode=True):
     if tfmode:
-        dic = {'NCHW': 'channels_first', 'NHWC': 'channels_last'}
+        dic = {'NCHW': 'channels_first', 'NHWC': 'channels_last', 'NDHWC': 'channels_last', 'NCDHW': 'channels_first'}
     else:
         dic = {'channels_first': 'NCHW', 'channels_last': 'NHWC'}
     ret = dic.get(data_format, data_format)
