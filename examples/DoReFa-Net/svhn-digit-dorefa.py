@@ -100,7 +100,7 @@ class Model(ModelDesc):
                       .apply(fg)
                       .BatchNorm('bn5').apply(activate)
                       # 5
-                      .tf.nn.dropout(0.5 if is_training else 1.0)
+                      .Dropout(rate=0.5 if is_training else 0.0)
                       .Conv2D('conv6', 512, 5, padding='VALID')
                       .apply(fg).BatchNorm('bn6')
                       .apply(nonlin)

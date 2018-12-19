@@ -147,8 +147,8 @@ if __name__ == '__main__':
 
     num_gpu = get_num_gpu()
     if args.fake:
-        df_train = FakeData([[64, 224, 224, 3], [64, 1000]], 5000, random=False, dtype='uint8')
-        df_val = FakeData([[64, 224, 224, 3], [64, 1000]], 5000, random=False)
+        df_train = FakeData([[32, 224, 224, 3], [32, 1000]], 5000, random=False, dtype='uint8')
+        df_val = FakeData([[32, 224, 224, 3], [32, 1000]], 5000, random=False)
     else:
         batch_size = TOTAL_BATCH_SIZE // num_gpu
         assert args.data is not None

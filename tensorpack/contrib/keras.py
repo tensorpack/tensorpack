@@ -4,7 +4,9 @@
 import tensorflow as tf
 import six
 from tensorflow import keras
+import tensorflow.keras.backend as K
 from tensorflow.python.keras import metrics as metrics_module
+from contextlib import contextmanager
 
 from ..models.regularize import regularize_cost_from_collection
 from ..train import Trainer, SimpleTrainer, SyncMultiGPUTrainerParameterServer
@@ -82,7 +84,19 @@ class KerasModelCaller(object):
 
         if self.cached_model is None:
             assert not reuse
-            model = self.cached_model = self.get_model(*input_tensors)
+
+            # starting from some versions, tf.keras starts to prepend name scope to variable names ..
+            @contextmanager
+            def clear_tower0_name_scope():
+                ns = tf.get_default_graph().get_name_scope()
+                if ns == 'tower0':
+                    with tf.name_scope('/'):
+                        yield
+                else:
+                    yield
+
+            with clear_tower0_name_scope():
+                model = self.cached_model = self.get_model(*input_tensors)
             outputs = model.outputs
         elif reuse:
             # use the cached Keras model to mimic reuse
@@ -108,7 +122,7 @@ class KerasPhaseCallback(Callback):
     def __init__(self, isTrain):
         assert isinstance(isTrain, bool), isTrain
         self._isTrain = isTrain
-        self._learning_phase = keras.backend.learning_phase()
+        self._learning_phase = K.learning_phase()
 
     def _setup_graph(self):
         logger.info("Using Keras learning phase {} in the graph!".format(
@@ -200,7 +214,8 @@ def setup_keras_trainer(
         input,
         get_cost,
         lambda: optimizer)
-    if model_caller.cached_model.uses_learning_phase:
+    if len(K.learning_phase().consumers()) > 0:
+        # check if learning_phase is used in this model
         trainer.register_callback(KerasPhaseCallback(True))
 
 

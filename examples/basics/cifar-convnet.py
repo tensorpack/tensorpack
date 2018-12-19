@@ -33,7 +33,7 @@ class Model(ModelDesc):
 
     def build_graph(self, image, label):
         is_training = get_current_tower_context().is_training
-        keep_prob = tf.constant(0.5 if is_training else 1.0)
+        drop_rate = tf.constant(0.5 if is_training else 0.0)
 
         if is_training:
             tf.summary.image("train_image", image, 10)
@@ -56,7 +56,7 @@ class Model(ModelDesc):
                 .Conv2D('conv3.1', filters=128, padding='VALID') \
                 .Conv2D('conv3.2', filters=128, padding='VALID') \
                 .FullyConnected('fc0', 1024 + 512, activation=tf.nn.relu) \
-                .tf.nn.dropout(keep_prob) \
+                .Dropout(rate=drop_rate) \
                 .FullyConnected('fc1', 512, activation=tf.nn.relu) \
                 .FullyConnected('linear', out_dim=self.cifar_classnum)()
 
