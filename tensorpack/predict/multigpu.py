@@ -45,8 +45,9 @@ class MultiTowerOfflinePredictor(OnlinePredictor):
                     config.tower_func(*input.get_input_tensors())
                     handles.append(config.tower_func.towers[-1])
 
+            config.session_init._setup_graph()
             self.sess = config.session_creator.create_session()
-            config.session_init.init(self.sess)
+            config.session_init._run_init(self.sess)
 
             for h in handles:
                 input_tensors = h.get_tensors(config.input_names)
