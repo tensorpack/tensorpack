@@ -209,17 +209,16 @@ def fastrcnn_predictions(boxes, scores):
         selection = tf.image.non_max_suppression(
             box, prob, cfg.TEST.RESULTS_PER_IM, cfg.TEST.FRCNN_NMS_THRESH)
         selection = tf.gather(ids, selection)
-        # sort available in TF>1.4.0
-        # sorted_selection = tf.contrib.framework.sort(selection, direction='ASCENDING')
-        sorted_selection = -tf.nn.top_k(-selection, k=tf.size(selection))[0]
 
         if get_tf_version_tuple() >= (1, 13):
+            sorted_selection = tf.sort(selection, direction='ASCENDING')
             mask = tf.sparse.SparseTensor(indices=tf.expand_dims(sorted_selection, 1),
                                           values=tf.ones_like(sorted_selection, dtype=tf.bool),
                                           dense_shape=output_shape)
             mask = tf.sparse.to_dense(mask, default_value=False)
         else:
             # this function is deprecated by TF
+            sorted_selection = -tf.nn.top_k(-selection, k=tf.size(selection))[0]
             mask = tf.sparse_to_dense(
                 sparse_indices=sorted_selection,
                 output_shape=output_shape,

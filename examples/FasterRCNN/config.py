@@ -234,6 +234,8 @@ def finalize_configs(is_training):
 
     if is_training:
         train_scales = _C.PREPROC.TRAIN_SHORT_EDGE_SIZE
+        if not isinstance(train_scales, (list, tuple)):
+            train_scales = [train_scales, train_scales]
         if train_scales[1] - train_scales[0] > 100:
             # don't warmup if augmentation is on
             os.environ['TF_CUDNN_USE_AUTOTUNE'] = '0'

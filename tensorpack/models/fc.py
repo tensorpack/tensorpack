@@ -5,6 +5,7 @@
 import tensorflow as tf
 import numpy as np
 
+from ..tfutils.common import get_tf_version_tuple
 from .common import layer_register, VariableHolder
 from .tflayer import convert_to_tflayer_args, rename_get_variable
 
@@ -30,7 +31,7 @@ def FullyConnected(
         units,
         activation=None,
         use_bias=True,
-        kernel_initializer=tf.contrib.layers.variance_scaling_initializer(2.0),
+        kernel_initializer=None,
         bias_initializer=tf.zeros_initializer(),
         kernel_regularizer=None,
         bias_regularizer=None,
@@ -45,6 +46,11 @@ def FullyConnected(
     * ``W``: weights of shape [in_dim, out_dim]
     * ``b``: bias
     """
+    if kernel_initializer is None:
+        if get_tf_version_tuple() <= (1, 12):
+            kernel_initializer = tf.contrib.layers.variance_scaling_initializer(2.0),
+        else:
+            kernel_initializer = tf.keras.initializers.VarianceScaling(2.0)
 
     inputs = batch_flatten(inputs)
     with rename_get_variable({'kernel': 'W', 'bias': 'b'}):

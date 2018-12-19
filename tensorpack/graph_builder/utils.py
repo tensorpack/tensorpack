@@ -148,7 +148,11 @@ def allreduce_grads(all_grads, average):
     Returns:
         K x N: same as input, but each grad is replaced by the average over K devices.
     """
-    from tensorflow.contrib import nccl
+
+    if get_tf_version_tuple() <= (1, 12):
+        from tensorflow.contrib import nccl
+    else:
+        from tensorflow.python.ops import nccl_ops as nccl
     nr_tower = len(all_grads)
     if nr_tower == 1:
         return all_grads

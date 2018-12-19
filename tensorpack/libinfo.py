@@ -54,6 +54,7 @@ try:
     assert int(_version[0]) >= 1 and int(_version[1]) >= 3, "TF>=1.3 is required!"
     _HAS_TF = True
 except ImportError:
+    print("Failed to import tensorflow.")
     _HAS_TF = False
 
 

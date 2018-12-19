@@ -22,7 +22,7 @@ No it's not, but it's not easy to write it in an efficient way.
 When **speed** is a concern, users will have to worry a lot about things unrelated to the model.
 Code written with low-level APIs or other existing high-level wrappers is often suboptimal in speed.
 Even most of the official TensorFlow examples are written for simplicity rather than efficiency,
-which as a result makes people think TensorFlow is __slow__.
+which as a result makes people think TensorFlow is *slow*.
 
 The `official TensorFlow benchmark <https://github.com/tensorflow/benchmarks/tree/master/scripts/tf_cnn_benchmarks>`_ said this in their README:
 

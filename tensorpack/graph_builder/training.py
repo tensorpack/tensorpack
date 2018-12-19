@@ -314,12 +314,13 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
         post_init_ops = []
 
         def log_failure(name, reason):
-            if name in trainable_names:
-                msg = "This variable is trainable, so this is probably a fatal error."
-            else:
-                msg = "This variable is non-trainable. Ignore this warning if you know it's OK to leave it out-of-sync."
             logger.warn("[ReplicatedTrainer] Do not know how to sync variable '{}' across GPUs. "
-                        "Reason: {} ".format(name, reason) + msg)
+                        "Reason: {} ".format(name, reason))
+            assert name not in trainable_names, \
+                "The aforementioned variable is trainable, so this is probably a fatal error."
+            logger.warn(
+                "[ReplicatedTrainer] This variable is non-trainable. "
+                "Ignore this warning if you know it's OK to leave it out-of-sync.")
 
         for v in all_vars:
             if not v.name.startswith('tower'):

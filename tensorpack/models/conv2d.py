@@ -29,7 +29,7 @@ def Conv2D(
         dilation_rate=(1, 1),
         activation=None,
         use_bias=True,
-        kernel_initializer=tf.contrib.layers.variance_scaling_initializer(2.0),
+        kernel_initializer=None,
         bias_initializer=tf.zeros_initializer(),
         kernel_regularizer=None,
         bias_regularizer=None,
@@ -48,6 +48,11 @@ def Conv2D(
     * ``W``: weights
     * ``b``: bias
     """
+    if kernel_initializer is None:
+        if get_tf_version_tuple() <= (1, 12):
+            kernel_initializer = tf.contrib.layers.variance_scaling_initializer(2.0),
+        else:
+            kernel_initializer = tf.keras.initializers.VarianceScaling(2.0)
     if split == 1:
         with rename_get_variable({'kernel': 'W', 'bias': 'b'}):
             layer = tf.layers.Conv2D(
@@ -134,7 +139,7 @@ def Conv2DTranspose(
         data_format='channels_last',
         activation=None,
         use_bias=True,
-        kernel_initializer=tf.contrib.layers.variance_scaling_initializer(2.0),
+        kernel_initializer=None,
         bias_initializer=tf.zeros_initializer(),
         kernel_regularizer=None,
         bias_regularizer=None,
@@ -151,6 +156,11 @@ def Conv2DTranspose(
     * ``W``: weights
     * ``b``: bias
     """
+    if kernel_initializer is None:
+        if get_tf_version_tuple() <= (1, 12):
+            kernel_initializer = tf.contrib.layers.variance_scaling_initializer(2.0),
+        else:
+            kernel_initializer = tf.keras.initializers.VarianceScaling(2.0)
 
     with rename_get_variable({'kernel': 'W', 'bias': 'b'}):
         layer = tf.layers.Conv2DTranspose(

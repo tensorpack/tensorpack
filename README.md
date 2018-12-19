@@ -41,7 +41,7 @@ demonstrating its __flexibility__ for actual research.
 
 ### Vision:
 + [Train ResNet](examples/ResNet) and [other models](examples/ImageNetModels) on ImageNet.
-+ [Train Faster-RCNN / Mask-RCNN on COCO object detection](examples/FasterRCNN)
++ [Train Mask/Faster R-CNN on COCO object detection](examples/FasterRCNN)
 + [Generative Adversarial Network(GAN) variants](examples/GAN), including DCGAN, InfoGAN, Conditional GAN, WGAN, BEGAN, DiscoGAN, Image to Image, CycleGAN.
 + [DoReFa-Net: train binary / low-bitwidth CNN on ImageNet](examples/DoReFa-Net)
 + [Fully-convolutional Network for Holistically-Nested Edge Detection(HED)](examples/HED)

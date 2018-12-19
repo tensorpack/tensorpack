@@ -7,6 +7,7 @@ import re
 
 from ..utils import logger
 from ..utils.argtools import graph_memoized
+from ..tfutils.common import get_tf_version_tuple
 from ..tfutils.tower import get_current_tower_context
 from .common import layer_register
 
@@ -19,8 +20,12 @@ def _log_once(msg):
     logger.info(msg)
 
 
-l2_regularizer = tf.contrib.layers.l2_regularizer
-l1_regularizer = tf.contrib.layers.l1_regularizer
+if get_tf_version_tuple() <= (1, 12):
+    l2_regularizer = tf.contrib.layers.l2_regularizer
+    l1_regularizer = tf.contrib.layers.l1_regularizer
+else:
+    l2_regularizer = tf.keras.regularizers.l2
+    l1_regularizer = tf.keras.regularizers.l1
 
 
 def regularize_cost(regex, func, name='regularize_cost'):
