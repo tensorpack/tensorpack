@@ -114,7 +114,8 @@ class DataParallelOfflinePredictor(OnlinePredictor):
                     input_tensors.extend(h.get_tensors(config.input_names))
                     output_tensors.extend(h.get_tensors(config.output_names))
 
+            config.session_init._setup_graph()
             sess = config.session_creator.create_session()
-            config.session_init.init(sess)
+            config.session_init._run_init(sess)
             super(DataParallelOfflinePredictor, self).__init__(
                 input_tensors, output_tensors, config.return_input, sess)
