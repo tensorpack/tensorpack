@@ -50,7 +50,7 @@ def FullyConnected(
         if get_tf_version_tuple() <= (1, 12):
             kernel_initializer = tf.contrib.layers.variance_scaling_initializer(2.0),
         else:
-            kernel_initializer = tf.keras.initializers.VarianceScaling(2.0)
+            kernel_initializer = tf.keras.initializers.VarianceScaling(2.0, distribution='untruncated_normal')
 
     inputs = batch_flatten(inputs)
     with rename_get_variable({'kernel': 'W', 'bias': 'b'}):

@@ -63,7 +63,7 @@ class Model(ModelDesc):
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
 
-        correct = tf.to_float(tf.nn.in_top_k(logits, label, 1), name='correct')
+        correct = tf.cast(tf.nn.in_top_k(logits, label, 1), tf.float32, name='correct')
         # monitor training error
         add_moving_summary(tf.reduce_mean(correct, name='accuracy'))
 

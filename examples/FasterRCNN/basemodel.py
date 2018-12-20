@@ -192,7 +192,7 @@ def resnet_fpn_backbone(image, num_blocks):
     freeze_at = cfg.BACKBONE.FREEZE_AT
     shape2d = tf.shape(image)[2:]
     mult = float(cfg.FPN.RESOLUTION_REQUIREMENT)
-    new_shape2d = tf.to_int32(tf.ceil(tf.to_float(shape2d) / mult) * mult)
+    new_shape2d = tf.cast(tf.ceil(tf.cast(shape2d, tf.float32) / mult) * mult, tf.int32)
     pad_shape2d = new_shape2d - shape2d
     assert len(num_blocks) == 4, num_blocks
     with backbone_scope(freeze=freeze_at > 0):

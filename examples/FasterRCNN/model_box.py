@@ -19,7 +19,7 @@ def clip_boxes(boxes, window, name=None):
     """
     boxes = tf.maximum(boxes, 0.0)
     m = tf.tile(tf.reverse(window, [0]), [2])    # (4,)
-    boxes = tf.minimum(boxes, tf.to_float(m), name=name)
+    boxes = tf.minimum(boxes, tf.cast(m, tf.float32), name=name)
     return boxes
 
 
@@ -122,14 +122,15 @@ def crop_and_resize(image, boxes, box_ind, crop_size, pad_border=True):
         """
         x0, y0, x1, y1 = tf.split(boxes, 4, axis=1)
 
-        spacing_w = (x1 - x0) / tf.to_float(crop_shape[1])
-        spacing_h = (y1 - y0) / tf.to_float(crop_shape[0])
+        spacing_w = (x1 - x0) / tf.cast(crop_shape[1], tf.float32)
+        spacing_h = (y1 - y0) / tf.cast(crop_shape[0], tf.float32)
 
-        nx0 = (x0 + spacing_w / 2 - 0.5) / tf.to_float(image_shape[1] - 1)
-        ny0 = (y0 + spacing_h / 2 - 0.5) / tf.to_float(image_shape[0] - 1)
+        imshape = [tf.cast(image_shape[0] - 1, tf.float32), tf.cast(image_shape[1] - 1, tf.float32)]
+        nx0 = (x0 + spacing_w / 2 - 0.5) / imshape[1]
+        ny0 = (y0 + spacing_h / 2 - 0.5) / imshape[0]
 
-        nw = spacing_w * tf.to_float(crop_shape[1] - 1) / tf.to_float(image_shape[1] - 1)
-        nh = spacing_h * tf.to_float(crop_shape[0] - 1) / tf.to_float(image_shape[0] - 1)
+        nw = spacing_w * tf.cast(crop_shape[1] - 1, tf.float32) / imshape[1]
+        nh = spacing_h * tf.cast(crop_shape[0] - 1, tf.float32) / imshape[0]
 
         return tf.concat([ny0, nx0, ny0 + nh, nx0 + nw], axis=1)
 
@@ -146,7 +147,7 @@ def crop_and_resize(image, boxes, box_ind, crop_size, pad_border=True):
     boxes = transform_fpcoor_for_tf(boxes, image_shape, [crop_size, crop_size])
     image = tf.transpose(image, [0, 2, 3, 1])   # nhwc
     ret = tf.image.crop_and_resize(
-        image, boxes, tf.to_int32(box_ind),
+        image, boxes, tf.cast(box_ind, tf.int32),
         crop_size=[crop_size, crop_size])
     ret = tf.transpose(ret, [0, 3, 1, 2])   # ncss
     return ret

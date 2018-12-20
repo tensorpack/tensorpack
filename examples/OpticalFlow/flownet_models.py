@@ -81,7 +81,7 @@ def resample(img, flow):
     img_flat = tf.reshape(tf.transpose(img, [0, 2, 3, 1]), [-1, c])
 
     dx, dy = tf.unstack(flow, axis=1)
-    xf, yf = tf.meshgrid(tf.to_float(tf.range(w)), tf.to_float(tf.range(h)))
+    xf, yf = tf.meshgrid(tf.cast(tf.range(w), tf.float32), tf.cast(tf.range(h), tf.float32))
     xf = xf + dx
     yf = yf + dy
 

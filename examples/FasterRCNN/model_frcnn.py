@@ -154,22 +154,22 @@ def fastrcnn_losses(labels, label_logits, fg_boxes, fg_box_logits):
 
     with tf.name_scope('label_metrics'), tf.device('/cpu:0'):
         prediction = tf.argmax(label_logits, axis=1, name='label_prediction')
-        correct = tf.to_float(tf.equal(prediction, labels))  # boolean/integer gather is unavailable on GPU
+        correct = tf.cast(tf.equal(prediction, labels), tf.float32)  # boolean/integer gather is unavailable on GPU
         accuracy = tf.reduce_mean(correct, name='accuracy')
         fg_label_pred = tf.argmax(tf.gather(label_logits, fg_inds), axis=1)
-        num_zero = tf.reduce_sum(tf.to_int64(tf.equal(fg_label_pred, 0)), name='num_zero')
+        num_zero = tf.reduce_sum(tf.cast(tf.equal(fg_label_pred, 0), tf.int64), name='num_zero')
         false_negative = tf.where(
-            empty_fg, 0., tf.to_float(tf.truediv(num_zero, num_fg)), name='false_negative')
+            empty_fg, 0., tf.cast(tf.truediv(num_zero, num_fg), tf.float32), name='false_negative')
         fg_accuracy = tf.where(
             empty_fg, 0., tf.reduce_mean(tf.gather(correct, fg_inds)), name='fg_accuracy')
 
     box_loss = tf.losses.huber_loss(
         fg_boxes, fg_box_logits, reduction=tf.losses.Reduction.SUM)
     box_loss = tf.truediv(
-        box_loss, tf.to_float(tf.shape(labels)[0]), name='box_loss')
+        box_loss, tf.cast(tf.shape(labels)[0], tf.float32), name='box_loss')
 
     add_moving_summary(label_loss, box_loss, accuracy,
-                       fg_accuracy, false_negative, tf.to_float(num_fg, name='num_fg_label'))
+                       fg_accuracy, false_negative, tf.cast(num_fg, tf.float32, name='num_fg_label'))
     return [label_loss, box_loss]
 
 
@@ -285,7 +285,8 @@ def fastrcnn_Xconv1fc_head(feature, num_convs, norm=None):
     l = feature
     with argscope(Conv2D, data_format='channels_first',
                   kernel_initializer=tf.variance_scaling_initializer(
-                      scale=2.0, mode='fan_out', distribution='normal')):
+                      scale=2.0, mode='fan_out',
+                      distribution='untruncated_normal' if get_tf_version_tuple() >= (1, 12) else 'normal')):
         for k in range(num_convs):
             l = Conv2D('conv{}'.format(k), l, cfg.FPN.FRCNN_CONV_HEAD_DIM, 3, activation=tf.nn.relu)
             if norm is not None:

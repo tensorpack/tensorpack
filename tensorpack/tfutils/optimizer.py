@@ -6,6 +6,7 @@ import tensorflow as tf
 from contextlib import contextmanager
 
 from ..utils.develop import HIDE_DOC
+from ..tfutils.common import get_tf_version_tuple
 from .gradproc import FilterNoneGrad, GradientProcessor
 
 __all__ = ['apply_grad_processors', 'ProxyOptimizer',
@@ -85,7 +86,7 @@ class PostProcessOptimizer(ProxyOptimizer):
             opt (tf.train.Optimizer):
             func (tf.Variable -> tf.Operation or None): the operation needed
                 to perform for this variable after the gradient update.
-            colocate (boolean): colocate the function with the variable.
+            colocate (boolean): colocate the function with the variable. No effect since TF 1.13.
         """
         super(PostProcessOptimizer, self).__init__(opt)
         self._func = func
@@ -109,7 +110,7 @@ class PostProcessOptimizer(ProxyOptimizer):
     @contextmanager
     def _maybe_colocate(self, var):
         G = tf.get_default_graph()
-        if self._colocate:
+        if self._colocate and get_tf_version_tuple() <= (1, 12):
             with G.colocate_with(var):
                 yield
         else:

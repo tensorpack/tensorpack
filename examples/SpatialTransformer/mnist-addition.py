@@ -35,7 +35,7 @@ def sample(img, coords):
     max_coor = tf.constant([shape[0] - 1, shape[1] - 1], dtype=tf.float32)
 
     coords = tf.clip_by_value(coords, 0., max_coor)  # borderMode==repeat
-    coords = tf.to_int32(coords)
+    coords = tf.cast(coords, tf.int32)
 
     batch_index = tf.range(batch, dtype=tf.int32)
     batch_index = tf.reshape(batch_index, [-1, 1, 1, 1])
@@ -164,7 +164,7 @@ class Model(ModelDesc):
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')
 
-        wrong = tf.to_float(tf.logical_not(tf.nn.in_top_k(logits, label, 1)), name='incorrect_vector')
+        wrong = tf.cast(tf.logical_not(tf.nn.in_top_k(logits, label, 1)), tf.float32, name='incorrect_vector')
         summary.add_moving_summary(tf.reduce_mean(wrong, name='train_error'))
 
         wd_cost = tf.multiply(1e-5, regularize_cost('fc.*/W', tf.nn.l2_loss),

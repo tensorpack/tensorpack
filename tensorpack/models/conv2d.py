@@ -52,7 +52,7 @@ def Conv2D(
         if get_tf_version_tuple() <= (1, 12):
             kernel_initializer = tf.contrib.layers.variance_scaling_initializer(2.0),
         else:
-            kernel_initializer = tf.keras.initializers.VarianceScaling(2.0)
+            kernel_initializer = tf.keras.initializers.VarianceScaling(2.0, distribution='untruncated_normal')
     if split == 1:
         with rename_get_variable({'kernel': 'W', 'bias': 'b'}):
             layer = tf.layers.Conv2D(
@@ -160,7 +160,7 @@ def Conv2DTranspose(
         if get_tf_version_tuple() <= (1, 12):
             kernel_initializer = tf.contrib.layers.variance_scaling_initializer(2.0),
         else:
-            kernel_initializer = tf.keras.initializers.VarianceScaling(2.0)
+            kernel_initializer = tf.keras.initializers.VarianceScaling(2.0, distribution='untruncated_normal')
 
     with rename_get_variable({'kernel': 'W', 'bias': 'b'}):
         layer = tf.layers.Conv2DTranspose(

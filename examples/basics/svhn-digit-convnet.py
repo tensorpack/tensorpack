@@ -43,7 +43,7 @@ class Model(ModelDesc):
                       .FullyConnected('linear', units=10)())
         tf.nn.softmax(logits, name='output')
 
-        accuracy = tf.to_float(tf.nn.in_top_k(logits, label, 1))
+        accuracy = tf.cast(tf.nn.in_top_k(logits, label, 1), tf.float32)
         add_moving_summary(tf.reduce_mean(accuracy, name='accuracy'))
 
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)

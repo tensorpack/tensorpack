@@ -54,7 +54,7 @@ class Model(ModelDesc):
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')  # the average cross-entropy loss
 
         # for tensorpack validation
-        acc = tf.to_float(tf.nn.in_top_k(logits, label, 1))
+        acc = tf.cast(tf.nn.in_top_k(logits, label, 1), tf.float32)
         acc = tf.reduce_mean(acc, name='accuracy')
         summary.add_moving_summary(acc)
 

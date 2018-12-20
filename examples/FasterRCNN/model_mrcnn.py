@@ -2,11 +2,12 @@
 
 import tensorflow as tf
 
-from tensorpack.tfutils.argscope import argscope
 from tensorpack.models import (
     Conv2D, layer_register, Conv2DTranspose)
 from tensorpack.tfutils.scope_utils import under_name_scope
+from tensorpack.tfutils.argscope import argscope
 from tensorpack.tfutils.summary import add_moving_summary
+from tensorpack.tfutils.common import get_tf_version_tuple
 
 from basemodel import GroupNorm
 from config import config as cfg
@@ -39,13 +40,13 @@ def maskrcnn_loss(mask_logits, fg_labels, fg_target_masks):
     pred_label = mask_probs > 0.5
     truth_label = fg_target_masks > 0.5
     accuracy = tf.reduce_mean(
-        tf.to_float(tf.equal(pred_label, truth_label)),
+        tf.cast(tf.equal(pred_label, truth_label), tf.float32),
         name='accuracy')
     pos_accuracy = tf.logical_and(
         tf.equal(pred_label, truth_label),
         tf.equal(truth_label, True))
-    pos_accuracy = tf.reduce_mean(tf.to_float(pos_accuracy), name='pos_accuracy')
-    fg_pixel_ratio = tf.reduce_mean(tf.to_float(truth_label), name='fg_pixel_ratio')
+    pos_accuracy = tf.reduce_mean(tf.cast(pos_accuracy, tf.float32), name='pos_accuracy')
+    fg_pixel_ratio = tf.reduce_mean(tf.cast(truth_label, tf.float32), name='fg_pixel_ratio')
 
     add_moving_summary(loss, accuracy, fg_pixel_ratio, pos_accuracy)
     return loss
@@ -67,7 +68,8 @@ def maskrcnn_upXconv_head(feature, num_category, num_convs, norm=None):
     l = feature
     with argscope([Conv2D, Conv2DTranspose], data_format='channels_first',
                   kernel_initializer=tf.variance_scaling_initializer(
-                      scale=2.0, mode='fan_out', distribution='normal')):
+                      scale=2.0, mode='fan_out',
+                      distribution='untruncated_normal' if get_tf_version_tuple() >= (1, 12) else 'normal')):
         # c2's MSRAFill is fan_out
         for k in range(num_convs):
             l = Conv2D('fcn{}'.format(k), l, cfg.MRCNN.HEAD_DIM, 3, activation=tf.nn.relu)

@@ -82,8 +82,8 @@ def fpn_map_rois_to_levels(boxes):
     Be careful that the returned tensor could be empty.
     """
     sqrtarea = tf.sqrt(tf_area(boxes))
-    level = tf.to_int32(tf.floor(
-        4 + tf.log(sqrtarea * (1. / 224) + 1e-6) * (1.0 / np.log(2))))
+    level = tf.cast(tf.floor(
+        4 + tf.log(sqrtarea * (1. / 224) + 1e-6) * (1.0 / np.log(2))), tf.int32)
 
     # RoI levels range from 2~5 (not 6)
     level_ids = [

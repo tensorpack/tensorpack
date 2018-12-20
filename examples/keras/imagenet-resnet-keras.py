@@ -16,6 +16,7 @@ from tensorpack.contrib.keras import KerasModel
 from tensorpack.callbacks import *
 from tensorflow.python.keras.layers import *
 
+from tensorpack.tfutils.common import get_tf_version_tuple
 from imagenet_utils import get_imagenet_dataflow, fbresnet_augmentor
 
 
@@ -34,7 +35,8 @@ def conv(x, filters, kernel, strides=1, name=None):
     return Conv2D(filters, kernel, name=name,
                   strides=strides, use_bias=False, padding='same',
                   kernel_initializer=tf.keras.initializers.VarianceScaling(
-                      scale=2.0, mode='fan_out', distribution='normal'),
+                      scale=2.0, mode='fan_out',
+                      distribution='untruncated_normal' if get_tf_version_tuple() >= (1, 12) else 'normal'),
                   kernel_regularizer=tf.keras.regularizers.l2(5e-5))(x)
 
 

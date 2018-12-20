@@ -67,8 +67,8 @@ class ResNet_Cifar(ModelDesc):
         ce_cost = tf.nn.softmax_cross_entropy_with_logits(labels=label, logits=logits)
         ce_cost = tf.reduce_mean(ce_cost, name='cross_entropy_loss')
 
-        single_label = tf.to_int32(tf.argmax(label, axis=1))
-        wrong = tf.to_float(tf.logical_not(tf.nn.in_top_k(logits, single_label, 1)), name='wrong_vector')
+        single_label = tf.cast(tf.argmax(label, axis=1), tf.int32)
+        wrong = tf.cast(tf.logical_not(tf.nn.in_top_k(logits, single_label, 1)), tf.float32, name='wrong_vector')
         # monitor training error
         add_moving_summary(tf.reduce_mean(wrong, name='train_error'), ce_cost)
         add_param_summary(('.*/W', ['histogram']))

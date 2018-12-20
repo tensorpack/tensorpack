@@ -72,9 +72,9 @@ def rpn_losses(anchor_labels, anchor_boxes, label_logits, box_logits):
                         tf.equal(valid_prediction, valid_anchor_labels)),
                     dtype=tf.int32)
                 placeholder = 0.5   # A small value will make summaries appear lower.
-                recall = tf.to_float(tf.truediv(pos_prediction_corr, nr_pos))
+                recall = tf.cast(tf.truediv(pos_prediction_corr, nr_pos), tf.float32)
                 recall = tf.where(tf.equal(nr_pos, 0), placeholder, recall, name='recall_th{}'.format(th))
-                precision = tf.to_float(tf.truediv(pos_prediction_corr, nr_pos_prediction))
+                precision = tf.cast(tf.truediv(pos_prediction_corr, nr_pos_prediction), tf.float32)
                 precision = tf.where(tf.equal(nr_pos_prediction, 0),
                                      placeholder, precision, name='precision_th{}'.format(th))
                 summaries.extend([precision, recall])
@@ -84,7 +84,7 @@ def rpn_losses(anchor_labels, anchor_boxes, label_logits, box_logits):
     # But the total RPN loss will be fine.  TODO make the summary op smarter
     placeholder = 0.
     label_loss = tf.nn.sigmoid_cross_entropy_with_logits(
-        labels=tf.to_float(valid_anchor_labels), logits=valid_label_logits)
+        labels=tf.cast(valid_anchor_labels, tf.float32), logits=valid_label_logits)
     label_loss = tf.reduce_sum(label_loss) * (1. / cfg.RPN.BATCH_PER_IM)
     label_loss = tf.where(tf.equal(nr_valid, 0), placeholder, label_loss, name='label_loss')
 
