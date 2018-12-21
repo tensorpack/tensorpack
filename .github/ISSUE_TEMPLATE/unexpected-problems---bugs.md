@@ -32,6 +32,14 @@ You can run a command with `CMD 2>&1 | tee logs.txt` to save all stdout & stderr
 For example, CPU/GPU utilization, output images, tensorboard curves, if relevant to your issue.
 
 ### 3. What you expected, if not obvious.
+
+If you expect higher accuracy, only in one of the two conditions can we help with it:
+(1) You're unable to match the accuracy documented in tensorpack examples.
+(2) It appears to be a tensorpack bug.
+
+Otherwise, how to get high accuracy is a machine learning question and is
+not our responsibility to figure out.
+
 ### 4. Your environment:
   + Python version:
   + TF version: `python -c 'import tensorflow as tf; print(tf.GIT_VERSION, tf.VERSION)'`.

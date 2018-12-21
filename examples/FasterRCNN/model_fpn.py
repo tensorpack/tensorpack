@@ -197,6 +197,8 @@ def generate_fpn_proposals(
 
         proposal_boxes = tf.concat(all_boxes, axis=0)  # nx4
         proposal_scores = tf.concat(all_scores, axis=0)  # n
+        # Here we are different from Detectron.
+        # Detectron picks top-k within the batch, rather than within an image. However we do not have a batch.
         proposal_topk = tf.minimum(tf.size(proposal_scores), fpn_nms_topk)
         proposal_scores, topk_indices = tf.nn.top_k(proposal_scores, k=proposal_topk, sorted=False)
         proposal_boxes = tf.gather(proposal_boxes, topk_indices)

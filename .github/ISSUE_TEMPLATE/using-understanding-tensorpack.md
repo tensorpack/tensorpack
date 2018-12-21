@@ -28,6 +28,7 @@ Some typical questions that we DO NOT answer:
   Tensorpack maintainers make sure the examples perform well without modifications.
   But it's your job to pick the model and parameters that are suitable for your own situation.
   We cannot help with such questions unless they appear to be a bug in tensorpack.
+
 + "Why my own model doesn't perform well?", "I don't understand this paper you implement.",
   "How should I change the parameters for my own dataset?":
 

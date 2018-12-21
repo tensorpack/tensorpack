@@ -17,15 +17,19 @@ Otherwise, you can post here for:
 Some typical questions that we DO NOT answer:
 
 + "Could you improve/implement an example/paper ?" --
+
   We have no plans to do so. We don't consider feature
   requests for examples or implement a paper for you.
   If you don't know how to do something yourself, you may ask a usage question.
 + "The examples do not perform as expected after I change the models/dataset/parameters/etc."
+
   Tensorpack maintainers make sure the examples perform well without modifications.
   But it's your job to pick the model and parameters that are suitable for your own situation.
   We cannot help with such questions unless they appear to be a bug in tensorpack.
+
 + "Why my own model doesn't perform well?", "I don't understand this paper you implement.",
   "How should I change the parameters for my own dataset?"
+
   We do not answer machine learning questions.
 
 

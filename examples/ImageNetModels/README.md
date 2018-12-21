@@ -50,8 +50,8 @@ See `./vgg16.py --help` for usage.
  |:------------------------------------------|---------------------|--------------------:|
  | 29~30% (large variation with random seed) | 28%                 |               27.6% |
 
-Note that the purpose of this experiment in the paper is not to claim GroupNorm is better
-than BatchNorm, therefore the training settings and hyperpameters may not be the best for BatchNorm.
+Note that the purpose of this experiment in the paper is not to claim GroupNorm
+has better performance than BatchNorm.
 
 ### Inception-BN
 

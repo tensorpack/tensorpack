@@ -13,7 +13,7 @@ with the support of:
 + [Group Normalization](https://arxiv.org/abs/1803.08494)
 + Training from scratch (from [Rethinking ImageNet Pre-training](https://arxiv.org/abs/1811.08883))
 
-This is likely the __best-performing__ open source TensorFlow reimplementation of the above papers.
+This is likely the best-performing open source TensorFlow reimplementation of the above papers.
 
 ## Dependencies
 + Python 3.3+; OpenCV
@@ -63,12 +63,12 @@ Some reasonable configurations are listed in the table below.
 
 To predict on an image (needs DISPLAY to show the outputs):
 ```
-./train.py --predict input.jpg --load /path/to/model --config SAME-AS-TRAINING
+./train.py --predict input.jpg --load /path/to/Trained-Model-Checkpoint --config SAME-AS-TRAINING
 ```
 
 To evaluate the performance of a model on COCO:
 ```
-./train.py --evaluate output.json --load /path/to/COCO-R50C4-MaskRCNN-Standard.npz \
+./train.py --evaluate output.json --load /path/to/Trained-Model-Checkpoint \
     --config SAME-AS-TRAINING
 ```
 
@@ -83,7 +83,6 @@ All models are fine-tuned from ImageNet pre-trained R50/R101 models in
 All models are trained with 8 NVIDIA V100s, unless otherwise noted.
 
 Performance in [Detectron](https://github.com/facebookresearch/Detectron/) can be roughly reproduced.
-FPN models are sometimes slightly worse, which is mainly due to batch size.
 
  | Backbone                    | mAP<br/>(box;mask)                                             | Detectron mAP <sup>[1](#ft1)</sup><br/> (box;mask) | Time (on 8 V100s) | Configurations <br/> (click to expand)                                                                                                                                                                                                                                                                                                                                                                        |
  | -                           | -                                                              | -                                                  | -                 | -                                                                                                                                                                                                                                                                                                                                                                                                             |
@@ -110,6 +109,7 @@ FPN models are sometimes slightly worse, which is mainly due to batch size.
 
  <a id="ft1">1</a>: Numbers taken from [Detectron Model Zoo](https://github.com/facebookresearch/Detectron/blob/master/MODEL_ZOO.md).
  We comapre models that have identical training & inference cost between the two implementation. However their numbers can be different due to many small implementation details.
+For example, our FPN models are sometimes slightly worse in box AP, which is probably due to batch size.
 
  <a id="ft2">2</a>: Numbers taken from Table 5 in [Group Normalization](https://arxiv.org/abs/1803.08494)
 
