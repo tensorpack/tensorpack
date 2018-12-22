@@ -3,10 +3,11 @@
 
 
 import os
-from .utils import change_env
+
 from . import logger
-from .nvml import NVMLContext
 from .concurrency import subproc_call
+from .nvml import NVMLContext
+from .utils import change_env
 
 __all__ = ['change_gpu', 'get_nr_gpu', 'get_num_gpu']
 

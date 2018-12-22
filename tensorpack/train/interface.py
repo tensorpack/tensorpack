@@ -3,11 +3,8 @@
 
 import tensorflow as tf
 
-from ..input_source import (
-    InputSource, FeedInput, FeedfreeInput,
-    QueueInput, StagingInput, DummyConstantInput)
+from ..input_source import DummyConstantInput, FeedfreeInput, FeedInput, InputSource, QueueInput, StagingInput
 from ..utils import logger
-
 from .config import TrainConfig
 from .tower import SingleCostTrainer
 from .trainers import SimpleTrainer

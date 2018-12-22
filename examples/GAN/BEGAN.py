@@ -3,12 +3,14 @@
 # File: BEGAN.py
 # Author: Yuxin Wu
 
-from tensorpack import *
-from tensorpack.tfutils.summary import add_moving_summary
-from tensorpack.utils.gpu import get_num_gpu
-from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
 import tensorflow as tf
 
+from tensorpack import *
+from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
+from tensorpack.tfutils.summary import add_moving_summary
+from tensorpack.utils.gpu import get_num_gpu
+
+import DCGAN
 from GAN import GANModelDesc, GANTrainer, MultiGPUGANTrainer
 
 """
@@ -19,7 +21,6 @@ A pretrained model on CelebA is at http://models.tensorpack.com/GAN/
 """
 
 
-import DCGAN
 NH = 64
 NF = 64
 GAMMA = 0.5

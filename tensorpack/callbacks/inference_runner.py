@@ -2,24 +2,19 @@
 # File: inference_runner.py
 
 
-import sys
-import tensorflow as tf
-from tensorflow.python.training.monitored_session \
-    import _HookedSession as HookedSession
-
 import itertools
+import sys
 from contextlib import contextmanager
+import tensorflow as tf
 import tqdm
 from six.moves import range
+from tensorflow.python.training.monitored_session import _HookedSession as HookedSession
 
+from ..dataflow.base import DataFlow
+from ..input_source import FeedInput, InputSource, QueueInput, StagingInput
+from ..tfutils.tower import PredictTowerContext
 from ..utils import logger
 from ..utils.utils import get_tqdm_kwargs
-from ..dataflow.base import DataFlow
-from ..tfutils.tower import PredictTowerContext
-
-from ..input_source import (
-    InputSource, FeedInput, QueueInput, StagingInput)
-
 from .base import Callback
 from .group import Callbacks
 from .inference import Inferencer

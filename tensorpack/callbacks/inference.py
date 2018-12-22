@@ -7,10 +7,10 @@ from abc import ABCMeta
 import six
 from six.moves import zip
 
-from .base import Callback
-from ..utils import logger
-from ..utils.stats import RatioCounter, BinaryStatistics
 from ..tfutils.common import get_op_tensor_name
+from ..utils import logger
+from ..utils.stats import BinaryStatistics, RatioCounter
+from .base import Callback
 
 __all__ = ['ScalarStats', 'Inferencer',
            'ClassificationError', 'BinaryClassificationStats']

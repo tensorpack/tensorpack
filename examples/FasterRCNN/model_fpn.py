@@ -1,21 +1,20 @@
 # -*- coding: utf-8 -*-
 
+import itertools
 import numpy as np
 import tensorflow as tf
-import itertools
 
-from tensorpack.tfutils.summary import add_moving_summary
+from tensorpack.models import Conv2D, FixedUnPooling, MaxPooling, layer_register
 from tensorpack.tfutils.argscope import argscope
-from tensorpack.tfutils.tower import get_current_tower_context
 from tensorpack.tfutils.scope_utils import under_name_scope
-from tensorpack.models import (
-    Conv2D, layer_register, FixedUnPooling, MaxPooling)
+from tensorpack.tfutils.summary import add_moving_summary
+from tensorpack.tfutils.tower import get_current_tower_context
 
-from model_rpn import rpn_losses, generate_rpn_proposals
-from model_box import roi_align
-from utils.box_ops import area as tf_area
-from config import config as cfg
 from basemodel import GroupNorm
+from config import config as cfg
+from model_box import roi_align
+from model_rpn import generate_rpn_proposals, rpn_losses
+from utils.box_ops import area as tf_area
 
 
 @layer_register(log_shape=True)

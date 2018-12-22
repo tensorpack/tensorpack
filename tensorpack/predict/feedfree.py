@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 
-from tensorflow.python.training.monitored_session \
-    import _HookedSession as HookedSession
+from tensorflow.python.training.monitored_session import _HookedSession as HookedSession
 
-from .base import PredictorBase
-from ..tfutils.tower import PredictTowerContext
 from ..callbacks import Callbacks
+from ..tfutils.tower import PredictTowerContext
+from .base import PredictorBase
 
 __all__ = ['FeedfreePredictor']
 

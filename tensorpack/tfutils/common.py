@@ -4,6 +4,7 @@
 
 import tensorflow as tf
 from six.moves import map
+
 from ..utils.argtools import graph_memoized
 from ..utils.develop import deprecated
 

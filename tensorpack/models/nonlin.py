@@ -4,8 +4,8 @@
 
 import tensorflow as tf
 
-from .common import layer_register, VariableHolder
 from .batch_norm import BatchNorm
+from .common import VariableHolder, layer_register
 
 __all__ = ['Maxout', 'PReLU', 'BNReLU']
 

@@ -4,14 +4,14 @@
 
 """ Graph related callbacks"""
 
-import tensorflow as tf
-import os
 import numpy as np
+import os
+import tensorflow as tf
 from six.moves import zip
 
+from ..tfutils.common import get_op_tensor_name
 from ..utils import logger
 from .base import Callback
-from ..tfutils.common import get_op_tensor_name
 
 __all__ = ['RunOp', 'RunUpdateOps', 'ProcessTensors', 'DumpTensors',
            'DumpTensor', 'DumpTensorAsImage', 'DumpParamAsImage']

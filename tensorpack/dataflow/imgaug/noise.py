@@ -2,9 +2,10 @@
 # File: noise.py
 
 
-from .base import ImageAugmentor
 import numpy as np
 import cv2
+
+from .base import ImageAugmentor
 
 __all__ = ['JpegNoise', 'GaussianNoise', 'SaltPepperNoise']
 

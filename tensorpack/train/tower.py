@@ -1,19 +1,17 @@
 # -*- coding: utf-8 -*-
 # File: tower.py
 
-import tensorflow as tf
+from abc import ABCMeta, abstractmethod
 import six
-from abc import abstractmethod, ABCMeta
+import tensorflow as tf
 
-from ..utils.argtools import call_only_once, memoized
-from ..utils.develop import HIDE_DOC
-from ..utils import logger
 from ..input_source import PlaceholderInput
 from ..predict.base import OnlinePredictor
-
-from ..tfutils.tower import TowerFuncWrapper, get_current_tower_context, PredictTowerContext
 from ..tfutils.gradproc import FilterNoneGrad
-
+from ..tfutils.tower import PredictTowerContext, TowerFuncWrapper, get_current_tower_context
+from ..utils import logger
+from ..utils.argtools import call_only_once, memoized
+from ..utils.develop import HIDE_DOC
 from .base import Trainer
 
 __all__ = ['SingleCostTrainer', 'TowerTrainer']

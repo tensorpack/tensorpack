@@ -3,12 +3,14 @@
 # File: Improved-WGAN.py
 # Author: Yuxin Wu
 
-from tensorpack import *
-from tensorpack.tfutils import get_tf_version_tuple
-from tensorpack.tfutils.summary import add_moving_summary
-from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
 import tensorflow as tf
 
+from tensorpack import *
+from tensorpack.tfutils import get_tf_version_tuple
+from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
+from tensorpack.tfutils.summary import add_moving_summary
+
+import DCGAN
 from GAN import SeparateGANTrainer
 
 """
@@ -18,7 +20,6 @@ See the docstring in DCGAN.py for usage.
 
 # Don't want to mix two examples together, but want to reuse the code.
 # So here just import stuff from DCGAN.
-import DCGAN
 
 
 class Model(DCGAN.Model):

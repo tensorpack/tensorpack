@@ -1,16 +1,15 @@
 # -*- coding: utf-8 -*-
 # File: pool.py
 
-import tensorflow as tf
 import numpy as np
+import tensorflow as tf
 
-from .shape_utils import StaticDynamicShape
-from .common import layer_register
-from ..utils.argtools import shape2d, get_data_format
+from ..utils.argtools import get_data_format, shape2d
 from ..utils.develop import log_deprecated
 from ._test import TestModel
+from .common import layer_register
+from .shape_utils import StaticDynamicShape
 from .tflayer import convert_to_tflayer_args
-
 
 __all__ = ['MaxPooling', 'FixedUnPooling', 'AvgPooling', 'GlobalAvgPooling',
            'BilinearUpSample']

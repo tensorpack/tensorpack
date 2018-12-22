@@ -2,11 +2,11 @@
 # File: svhn.py
 
 
-import os
 import numpy as np
+import os
 
 from ...utils import logger
-from ...utils.fs import get_dataset_path, download
+from ...utils.fs import download, get_dataset_path
 from ..base import RNGDataFlow
 
 __all__ = ['SVHNDigit']

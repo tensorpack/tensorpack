@@ -2,18 +2,18 @@
 # -*- coding: utf-8 -*-
 # File: resnet-dorefa.py
 
-import cv2
-import tensorflow as tf
 import argparse
 import numpy as np
 import os
+import cv2
+import tensorflow as tf
 
 from tensorpack import *
 from tensorpack.dataflow import dataset
 from tensorpack.tfutils.varreplace import remap_variables
 
-from imagenet_utils import ImageNetModel, eval_on_ILSVRC12, fbresnet_augmentor
 from dorefa import get_dorefa
+from imagenet_utils import ImageNetModel, eval_on_ILSVRC12, fbresnet_augmentor
 
 """
 This script loads the pre-trained ResNet-18 model with (W,A,G) = (1,4,32)

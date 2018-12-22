@@ -2,16 +2,15 @@
 # File: utils.py
 
 
+import inspect
+import numpy as np
 import os
 import sys
 from contextlib import contextmanager
-import inspect
 from datetime import datetime, timedelta
 from tqdm import tqdm
-import numpy as np
 
 from . import logger
-
 
 __all__ = ['change_env',
            'get_rng',

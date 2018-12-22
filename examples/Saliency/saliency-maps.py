@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import cv2
-import sys
-
-from contextlib import contextmanager
 import numpy as np
+import sys
+from contextlib import contextmanager
+import cv2
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 from tensorflow.contrib.slim.nets import resnet_v1

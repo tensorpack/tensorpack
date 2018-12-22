@@ -2,17 +2,17 @@
 # File: batch_norm.py
 
 
-import tensorflow as tf
-from tensorflow.python.training import moving_averages
 import re
 import six
+import tensorflow as tf
+from tensorflow.python.training import moving_averages
 
+from ..tfutils.collection import backup_collection, restore_collection
+from ..tfutils.common import get_tf_version_tuple
+from ..tfutils.tower import get_current_tower_context
 from ..utils import logger
 from ..utils.argtools import get_data_format
-from ..tfutils.tower import get_current_tower_context
-from ..tfutils.common import get_tf_version_tuple
-from ..tfutils.collection import backup_collection, restore_collection
-from .common import layer_register, VariableHolder
+from .common import VariableHolder, layer_register
 from .tflayer import convert_to_tflayer_args, rename_get_variable
 
 __all__ = ['BatchNorm', 'BatchRenorm']

@@ -3,8 +3,9 @@
 
 
 import tensorflow as tf
-from .common import get_default_sess_config
+
 from ..utils import logger
+from .common import get_default_sess_config
 
 __all__ = ['NewSessionCreator', 'ReuseSessionCreator', 'SessionCreatorAdapter']
 

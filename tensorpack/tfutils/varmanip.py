@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 # File: varmanip.py
 
-import six
+import numpy as np
 import os
 import pprint
+import six
 import tensorflow as tf
-import numpy as np
+
 from ..utils import logger
 from .common import get_op_tensor_name
 

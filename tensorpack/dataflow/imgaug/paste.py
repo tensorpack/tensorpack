@@ -2,10 +2,10 @@
 # File: paste.py
 
 
-from .base import ImageAugmentor
-
-from abc import abstractmethod
 import numpy as np
+from abc import abstractmethod
+
+from .base import ImageAugmentor
 
 __all__ = ['CenterPaste', 'BackgroundFiller', 'ConstantBackgroundFiller',
            'RandomPaste']

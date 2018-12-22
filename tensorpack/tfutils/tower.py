@@ -2,15 +2,15 @@
 # File: tower.py
 
 
-import tensorflow as tf
+from abc import ABCMeta, abstractmethod, abstractproperty
 import six
+import tensorflow as tf
 from six.moves import zip
-from abc import abstractproperty, abstractmethod, ABCMeta
 
 from ..utils import logger
 from ..utils.argtools import call_only_once
-from ..utils.naming import MOVING_SUMMARY_OPS_KEY
 from ..utils.develop import HIDE_DOC
+from ..utils.naming import MOVING_SUMMARY_OPS_KEY
 from .collection import CollectionGuard
 from .common import get_op_or_tensor_by_name, get_op_tensor_name
 

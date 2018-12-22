@@ -2,12 +2,12 @@
 # File: saver.py
 
 
-import tensorflow as tf
-from datetime import datetime
 import os
+from datetime import datetime
+import tensorflow as tf
 
-from .base import Callback
 from ..utils import logger
+from .base import Callback
 
 __all__ = ['ModelSaver', 'MinSaver', 'MaxSaver']
 

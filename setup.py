@@ -1,7 +1,7 @@
+import platform
+from os import path
 import setuptools
 from setuptools import setup
-from os import path
-import platform
 
 version = int(setuptools.__version__.split('.')[0])
 assert version > 30, "Tensorpack installation requires setuptools > 30"
@@ -24,7 +24,7 @@ def add_git_version():
         from subprocess import check_output
         try:
             return check_output("git describe --tags --long --dirty".split()).decode('utf-8').strip()
-        except:
+        except Exception:
             return __version__  # noqa
 
     newlibinfo_content = [l for l in libinfo_content if not l.startswith('__git_version__')]

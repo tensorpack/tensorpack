@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 # File: serialize.py
 
-import sys
 import os
-from .develop import create_dummy_func
+import sys
+
 from . import logger
+from .develop import create_dummy_func
 
 __all__ = ['loads', 'dumps']
 

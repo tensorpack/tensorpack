@@ -4,20 +4,18 @@
 # Author: Yuxin Wu
 
 import multiprocessing as mp
-import time
 import os
 import threading
-from abc import abstractmethod, ABCMeta
+import time
+from abc import ABCMeta, abstractmethod
 from collections import defaultdict
-
 import six
-from six.moves import queue
 import zmq
+from six.moves import queue
 
 from tensorpack.utils import logger
-from tensorpack.utils.serialize import loads, dumps
-from tensorpack.utils.concurrency import (
-    LoopThread, ensure_proc_terminate, enable_death_signal)
+from tensorpack.utils.concurrency import LoopThread, enable_death_signal, ensure_proc_terminate
+from tensorpack.utils.serialize import dumps, loads
 
 __all__ = ['SimulatorProcess', 'SimulatorMaster',
            'SimulatorProcessStateExchange',

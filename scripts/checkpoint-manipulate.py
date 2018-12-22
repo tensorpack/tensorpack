@@ -3,11 +3,11 @@
 # File: checkpoint-manipulate.py
 
 
+import argparse
 import numpy as np
+
 from tensorpack.tfutils.varmanip import load_chkpt_vars
 from tensorpack.utils import logger
-import argparse
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

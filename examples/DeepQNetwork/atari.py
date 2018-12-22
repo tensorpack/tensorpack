@@ -4,19 +4,18 @@
 
 import numpy as np
 import os
-import cv2
 import threading
-import six
-from six.moves import range
-from tensorpack.utils import logger
-from tensorpack.utils.utils import get_rng, execute_only_once
-from tensorpack.utils.fs import get_dataset_path
-
+import cv2
 import gym
+import six
+from ale_python_interface import ALEInterface
 from gym import spaces
 from gym.envs.atari.atari_env import ACTION_MEANING
+from six.moves import range
 
-from ale_python_interface import ALEInterface
+from tensorpack.utils import logger
+from tensorpack.utils.fs import get_dataset_path
+from tensorpack.utils.utils import execute_only_once, get_rng
 
 __all__ = ['AtariPlayer']
 

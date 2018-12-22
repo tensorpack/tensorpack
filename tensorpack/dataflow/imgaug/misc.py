@@ -5,9 +5,9 @@
 import numpy as np
 import cv2
 
-from .base import ImageAugmentor
 from ...utils import logger
 from ...utils.argtools import shape2d
+from .base import ImageAugmentor
 from .transform import ResizeTransform, TransformAugmentorBase
 
 __all__ = ['Flip', 'Resize', 'RandomResize', 'ResizeShortestEdge', 'Transpose']

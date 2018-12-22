@@ -3,8 +3,8 @@
 # Author: tensorpack contributors
 
 import tensorflow as tf
-from termcolor import colored
 from tabulate import tabulate
+from termcolor import colored
 
 from ..utils import logger
 

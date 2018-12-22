@@ -2,20 +2,19 @@
 # File: summary.py
 
 
+import re
+from contextlib import contextmanager
 import six
 import tensorflow as tf
-import re
 from six.moves import range
-from contextlib import contextmanager
-
 from tensorflow.python.training import moving_averages
 
 from ..utils import logger
 from ..utils.argtools import graph_memoized
 from ..utils.naming import MOVING_SUMMARY_OPS_KEY
-from .tower import get_current_tower_context
-from .symbolic_functions import rms
 from .scope_utils import cached_name_scope
+from .symbolic_functions import rms
+from .tower import get_current_tower_context
 
 __all__ = ['add_tensor_summary', 'add_param_summary',
            'add_activation_summary', 'add_moving_summary',

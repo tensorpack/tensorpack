@@ -3,6 +3,7 @@
 # Author: Yuxin Wu
 
 import tensorflow as tf
+
 from tensorpack.utils.argtools import graph_memoized
 
 

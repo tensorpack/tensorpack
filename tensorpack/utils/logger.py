@@ -16,12 +16,12 @@ The logger module itself has the common logging functions of Python's
 
 import logging
 import os
-import shutil
 import os.path
-from termcolor import colored
+import shutil
+import sys
 from datetime import datetime
 from six.moves import input
-import sys
+from termcolor import colored
 
 __all__ = ['set_logger_dir', 'auto_set_dir', 'get_logger_dir']
 

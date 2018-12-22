@@ -2,27 +2,28 @@
 # File: input_source.py
 
 
+import threading
+from contextlib import contextmanager
+from itertools import chain
 import tensorflow as tf
+from six.moves import range, zip
+
+from ..callbacks.base import Callback, CallbackFactory
+from ..callbacks.graph import RunOp
+from ..dataflow import DataFlow, MapData, RepeatedData
+from ..tfutils.common import get_op_tensor_name
+from ..tfutils.dependency import dependency_of_fetches
+from ..tfutils.summary import add_moving_summary
+from ..tfutils.tower import get_current_tower_context
+from ..utils import logger
+from ..utils.concurrency import ShareSessionThread
+from .input_source_base import InputSource
+
 try:
     from tensorflow.python.ops.data_flow_ops import StagingArea
 except ImportError:
     pass
 
-from contextlib import contextmanager
-from itertools import chain
-from six.moves import range, zip
-import threading
-
-from .input_source_base import InputSource
-from ..dataflow import DataFlow, MapData, RepeatedData
-from ..tfutils.summary import add_moving_summary
-from ..tfutils.common import get_op_tensor_name
-from ..tfutils.tower import get_current_tower_context
-from ..tfutils.dependency import dependency_of_fetches
-from ..utils import logger
-from ..utils.concurrency import ShareSessionThread
-from ..callbacks.base import Callback, CallbackFactory
-from ..callbacks.graph import RunOp
 
 __all__ = ['PlaceholderInput', 'FeedInput', 'FeedfreeInput',
            'QueueInput', 'BatchQueueInput',

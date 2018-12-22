@@ -3,21 +3,20 @@
 # File: PTB-LSTM.py
 # Author: Yuxin Wu
 
+import argparse
 import numpy as np
 import os
-import argparse
-
+import tensorflow as tf
 
 from tensorpack import *
-from tensorpack.tfutils import optimizer, summary, gradproc
+from tensorpack.tfutils import gradproc, optimizer, summary
 from tensorpack.utils import logger
-from tensorpack.utils.fs import download, get_dataset_path
 from tensorpack.utils.argtools import memoized_ignoreargs
+from tensorpack.utils.fs import download, get_dataset_path
 
 import reader as tfreader
 from reader import ptb_producer
 
-import tensorflow as tf
 rnn = tf.contrib.rnn
 
 SEQ_LEN = 35

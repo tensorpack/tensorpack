@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 # File: transform.py
 
-from abc import abstractmethod, ABCMeta
-import six
-import cv2
 import numpy as np
+from abc import ABCMeta, abstractmethod
+import cv2
+import six
 
 from .base import ImageAugmentor
 

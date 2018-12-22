@@ -1,11 +1,12 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from tensorpack.dataflow.base import DataFlow
-from tensorpack.dataflow import LMDBSerializer, TFRecordSerializer, NumpySerializer, HDF5Serializer
-import unittest
-import os
 import numpy as np
+import os
+import unittest
+
+from tensorpack.dataflow import HDF5Serializer, LMDBSerializer, NumpySerializer, TFRecordSerializer
+from tensorpack.dataflow.base import DataFlow
 
 
 def delete_file_if_exists(fn):

@@ -2,13 +2,13 @@
 # File: GAN.py
 # Author: Yuxin Wu
 
-import tensorflow as tf
 import numpy as np
-from tensorpack import (TowerTrainer, StagingInput,
-                        ModelDescBase, DataFlow, argscope, BatchNorm)
-from tensorpack.tfutils.tower import TowerContext, TowerFuncWrapper
+import tensorflow as tf
+
+from tensorpack import BatchNorm, DataFlow, ModelDescBase, StagingInput, TowerTrainer, argscope
 from tensorpack.graph_builder import DataParallelBuilder, LeastLoadedDeviceSetter
 from tensorpack.tfutils.summary import add_moving_summary
+from tensorpack.tfutils.tower import TowerContext, TowerFuncWrapper
 from tensorpack.utils import logger
 from tensorpack.utils.argtools import memoized_method
 from tensorpack.utils.develop import deprecated

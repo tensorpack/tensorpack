@@ -1,20 +1,19 @@
 # -*- coding: utf-8 -*-
 # File: eval.py
 
-import tqdm
-import os
-from collections import namedtuple
-from contextlib import ExitStack
 import itertools
 import numpy as np
-import cv2
+import os
+from collections import namedtuple
 from concurrent.futures import ThreadPoolExecutor
-
-from tensorpack.utils.utils import get_tqdm_kwargs
-
+from contextlib import ExitStack
+import cv2
+import pycocotools.mask as cocomask
+import tqdm
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
-import pycocotools.mask as cocomask
+
+from tensorpack.utils.utils import get_tqdm_kwargs
 
 from coco import COCOMeta
 from common import CustomResize, clip_boxes

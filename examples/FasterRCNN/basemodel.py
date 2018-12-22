@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 # File: basemodel.py
 
-from contextlib import contextmanager, ExitStack
 import numpy as np
+from contextlib import ExitStack, contextmanager
 import tensorflow as tf
 
+from tensorpack.models import BatchNorm, Conv2D, MaxPooling, layer_register
 from tensorpack.tfutils import argscope
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
 from tensorpack.tfutils.varreplace import custom_getter_scope, freeze_variables
-from tensorpack.models import (
-    Conv2D, MaxPooling, BatchNorm, layer_register)
 
 from config import config as cfg
 

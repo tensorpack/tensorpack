@@ -2,9 +2,9 @@
 # File: mnist.py
 
 
-import os
 import gzip
 import numpy
+import os
 from six.moves import range
 
 from ...utils import logger

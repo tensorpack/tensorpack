@@ -2,11 +2,11 @@
 # File: fc.py
 
 
-import tensorflow as tf
 import numpy as np
+import tensorflow as tf
 
 from ..tfutils.common import get_tf_version_tuple
-from .common import layer_register, VariableHolder
+from .common import VariableHolder, layer_register
 from .tflayer import convert_to_tflayer_args, rename_get_variable
 
 __all__ = ['FullyConnected']
@@ -48,7 +48,7 @@ def FullyConnected(
     """
     if kernel_initializer is None:
         if get_tf_version_tuple() <= (1, 12):
-            kernel_initializer = tf.contrib.layers.variance_scaling_initializer(2.0),
+            kernel_initializer = tf.contrib.layers.variance_scaling_initializer(2.0)
         else:
             kernel_initializer = tf.keras.initializers.VarianceScaling(2.0, distribution='untruncated_normal')
 

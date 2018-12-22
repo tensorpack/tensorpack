@@ -1,29 +1,24 @@
 # -*- coding: utf-8 -*-
 # File: trainers.py
 
-import sys
-import os
-import tensorflow as tf
 import multiprocessing as mp
+import os
+import sys
+import tensorflow as tf
 
-from ..callbacks import RunOp, CallbackFactory
+from ..callbacks import CallbackFactory, RunOp
+from ..graph_builder.distributed import DistributedParameterServerBuilder, DistributedReplicatedBuilder
+from ..graph_builder.training import (
+    AsyncMultiGPUBuilder, SyncMultiGPUParameterServerBuilder, SyncMultiGPUReplicatedBuilder)
+from ..graph_builder.utils import override_to_local_variable
+from ..input_source import FeedfreeInput, QueueInput
+from ..tfutils import get_global_step_var
+from ..tfutils.distributed import get_distributed_session_creator
 from ..tfutils.sesscreate import NewSessionCreator
-
+from ..tfutils.tower import TrainTowerContext
 from ..utils import logger
 from ..utils.argtools import map_arg
 from ..utils.develop import HIDE_DOC, log_deprecated
-from ..tfutils import get_global_step_var
-from ..tfutils.distributed import get_distributed_session_creator
-from ..tfutils.tower import TrainTowerContext
-from ..input_source import QueueInput, FeedfreeInput
-
-from ..graph_builder.training import (
-    SyncMultiGPUParameterServerBuilder,
-    SyncMultiGPUReplicatedBuilder,
-    AsyncMultiGPUBuilder)
-from ..graph_builder.distributed import DistributedReplicatedBuilder, DistributedParameterServerBuilder
-from ..graph_builder.utils import override_to_local_variable
-
 from .tower import SingleCostTrainer
 
 __all__ = ['NoOpTrainer', 'SimpleTrainer',

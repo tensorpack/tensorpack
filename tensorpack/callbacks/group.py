@@ -2,16 +2,16 @@
 # File: group.py
 
 
-import tensorflow as tf
+import traceback
 from contextlib import contextmanager
 from time import time as timer
-import traceback
 import six
+import tensorflow as tf
 
-from .base import Callback
-from .hooks import CallbackToHook
 from ..utils import logger
 from ..utils.utils import humanize_time_delta
+from .base import Callback
+from .hooks import CallbackToHook
 
 if six.PY3:
     from time import perf_counter as timer  # noqa

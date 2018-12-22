@@ -2,9 +2,9 @@
 # File: scope_utils.py
 
 
-import tensorflow as tf
 import functools
 from contextlib import contextmanager
+import tensorflow as tf
 
 from ..utils.argtools import graph_memoized
 from .common import get_tf_version_tuple

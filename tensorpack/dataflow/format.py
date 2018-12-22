@@ -3,18 +3,19 @@
 
 
 import numpy as np
+import os
 import six
 from six.moves import range
-import os
 
 from ..utils import logger
-from ..utils.utils import get_tqdm
-from ..utils.timer import timed_operation
-from ..utils.loadcaffe import get_caffe_pb
-from ..utils.compatible_serialize import loads
 from ..utils.argtools import log_once
+from ..utils.compatible_serialize import loads
+from ..utils.develop import create_dummy_class  # noqa
 from ..utils.develop import log_deprecated
-from .base import RNGDataFlow, DataFlow, DataFlowReentrantGuard
+from ..utils.loadcaffe import get_caffe_pb
+from ..utils.timer import timed_operation
+from ..utils.utils import get_tqdm
+from .base import DataFlow, DataFlowReentrantGuard, RNGDataFlow
 from .common import MapData
 
 __all__ = ['HDF5Data', 'LMDBData', 'LMDBDataDecoder', 'LMDBDataPoint',
@@ -258,7 +259,7 @@ class TFRecordData(DataFlow):
         for dp in gen:
             yield loads(dp)
 
-from ..utils.develop import create_dummy_class   # noqa
+
 try:
     import h5py
 except ImportError:

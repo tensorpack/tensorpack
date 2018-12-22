@@ -3,10 +3,11 @@
 
 
 import tensorflow as tf
-from ..utils import logger
+
 from ..graph_builder.model_desc import InputDesc
 from ..input_source import PlaceholderInput
 from ..tfutils.tower import PredictTowerContext
+from ..utils import logger
 from .base import OnlinePredictor
 
 __all__ = ['MultiTowerOfflinePredictor',

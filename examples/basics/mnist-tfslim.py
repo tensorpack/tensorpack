@@ -11,10 +11,11 @@ the only differences are:
 """
 
 
-from tensorpack import *
-from tensorpack.dataflow import dataset
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
+
+from tensorpack import *
+from tensorpack.dataflow import dataset
 
 IMAGE_SIZE = 28
 

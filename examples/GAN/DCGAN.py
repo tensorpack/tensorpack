@@ -3,18 +3,18 @@
 # File: DCGAN.py
 # Author: Yuxin Wu
 
+import argparse
 import glob
 import numpy as np
 import os
-import argparse
-
-
-from tensorpack import *
-from tensorpack.utils.viz import stack_patches
-from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
 import tensorflow as tf
 
-from GAN import GANTrainer, RandomZData, GANModelDesc
+from tensorpack import *
+from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
+from tensorpack.utils.viz import stack_patches
+
+from GAN import GANModelDesc, GANTrainer, RandomZData
+
 
 """
 1. Download the 'aligned&cropped' version of CelebA dataset

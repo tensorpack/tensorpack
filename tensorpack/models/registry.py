@@ -2,11 +2,11 @@
 # File: registry.py
 
 
-import tensorflow as tf
+import copy
+import re
 from functools import wraps
 import six
-import re
-import copy
+import tensorflow as tf
 
 from ..tfutils.argscope import get_arg_scope
 from ..tfutils.model_utils import get_shape_str

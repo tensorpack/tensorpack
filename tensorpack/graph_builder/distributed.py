@@ -1,18 +1,15 @@
 # -*- coding: utf-8 -*-
 # File: distributed.py
 
-import tensorflow as tf
 import re
+import tensorflow as tf
 from six.moves import range
 
+from ..tfutils.common import get_global_step_var, get_op_tensor_name
 from ..utils import logger
 from ..utils.argtools import memoized
-from ..tfutils.common import get_op_tensor_name, get_global_step_var
-
-from .training import GraphBuilder, DataParallelBuilder
-from .utils import (
-    override_to_local_variable, aggregate_grads,
-    OverrideCachingDevice)
+from .training import DataParallelBuilder, GraphBuilder
+from .utils import OverrideCachingDevice, aggregate_grads, override_to_local_variable
 
 __all__ = ['DistributedParameterServerBuilder', 'DistributedReplicatedBuilder']
 

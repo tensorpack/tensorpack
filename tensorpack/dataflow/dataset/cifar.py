@@ -3,9 +3,9 @@
 
 #         Yukun Chen <cykustc@gmail.com>
 
+import numpy as np
 import os
 import pickle
-import numpy as np
 import tarfile
 import six
 from six.moves import range

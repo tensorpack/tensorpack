@@ -5,6 +5,12 @@
 
 import tensorflow as tf
 from tensorflow import keras
+
+from tensorpack import *
+from tensorpack.contrib.keras import KerasPhaseCallback
+from tensorpack.dataflow import dataset
+from tensorpack.utils.argtools import memoized
+
 KL = keras.layers
 
 """
@@ -13,12 +19,6 @@ This way you can define models in Keras-style, and benefit from the more efficei
 
 Note: this example does not work for replicated-style data-parallel trainers.
 """
-
-
-from tensorpack import *
-from tensorpack.dataflow import dataset
-from tensorpack.utils.argtools import memoized
-from tensorpack.contrib.keras import KerasPhaseCallback
 
 IMAGE_SIZE = 28
 

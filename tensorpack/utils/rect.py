@@ -3,6 +3,7 @@
 
 
 import numpy as np
+
 from .develop import log_deprecated
 
 __all__ = ['IntBox', 'FloatBox']

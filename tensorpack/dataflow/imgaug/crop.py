@@ -3,8 +3,7 @@
 
 
 from ...utils.argtools import shape2d
-from .transform import TransformAugmentorBase, CropTransform
-
+from .transform import CropTransform, TransformAugmentorBase
 
 __all__ = ['RandomCrop', 'CenterCrop', 'RandomCropRandomShape']
 

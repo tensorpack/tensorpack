@@ -2,14 +2,15 @@
 # File: gradproc.py
 
 
-import tensorflow as tf
-from abc import ABCMeta, abstractmethod
-import re
-import six
 import inspect
+import re
+from abc import ABCMeta, abstractmethod
+import six
+import tensorflow as tf
+
 from ..utils import logger
-from .symbolic_functions import rms, print_stat
 from .summary import add_moving_summary
+from .symbolic_functions import print_stat, rms
 
 __all__ = ['GradientProcessor',
            'FilterNoneGrad', 'GlobalNormClip', 'MapGradient', 'SummaryGradient',

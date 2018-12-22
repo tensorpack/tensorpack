@@ -3,17 +3,17 @@
 # File: DiscoGAN-CelebA.py
 # Author: Yuxin Wu
 
-import os
 import argparse
-from six.moves import map, zip
 import numpy as np
-
+import os
+import tensorflow as tf
+from six.moves import map, zip
 
 from tensorpack import *
-from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
-import tensorflow as tf
-from GAN import SeparateGANTrainer, GANModelDesc
+from tensorpack.tfutils.summary import add_moving_summary
+
+from GAN import GANModelDesc, SeparateGANTrainer
 
 """
 1. Download "aligned&cropped" version of celebA to /path/to/img_align_celeba.

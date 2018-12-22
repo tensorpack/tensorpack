@@ -1,25 +1,22 @@
 # -*- coding: utf-8 -*-
 # File: training.py
 
-from abc import ABCMeta, abstractmethod
-import tensorflow as tf
 import copy
-import six
-import re
 import pprint
-from six.moves import zip, range
+import re
+from abc import ABCMeta, abstractmethod
 from contextlib import contextmanager
+import six
+import tensorflow as tf
+from six.moves import range, zip
 
-from ..utils import logger
-from ..tfutils.tower import TrainTowerContext
-from ..tfutils.gradproc import ScaleGradient
 from ..tfutils.common import get_tf_version_tuple
-
+from ..tfutils.gradproc import ScaleGradient
+from ..tfutils.tower import TrainTowerContext
+from ..utils import logger
 from .utils import (
-    LeastLoadedDeviceSetter, override_to_local_variable,
-    allreduce_grads, aggregate_grads, allreduce_grads_hierarchical,
-    split_grad_list, merge_grad_list, GradientPacker)
-
+    GradientPacker, LeastLoadedDeviceSetter, aggregate_grads, allreduce_grads, allreduce_grads_hierarchical,
+    merge_grad_list, override_to_local_variable, split_grad_list)
 
 __all__ = ['GraphBuilder',
            'SyncMultiGPUParameterServerBuilder', 'DataParallelBuilder',

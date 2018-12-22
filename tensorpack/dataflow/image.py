@@ -2,13 +2,14 @@
 # File: image.py
 
 
-import numpy as np
 import copy as copy_mod
+import numpy as np
 from contextlib import contextmanager
-from .base import RNGDataFlow
-from .common import MapDataComponent, MapData
+
 from ..utils import logger
 from ..utils.argtools import shape2d
+from .base import RNGDataFlow
+from .common import MapData, MapDataComponent
 
 __all__ = ['ImageFromFile', 'AugmentImageComponent', 'AugmentImageCoordinates', 'AugmentImageComponents']
 

@@ -3,10 +3,11 @@
 
 
 import tensorflow as tf
-from .common import layer_register, VariableHolder
+
 from ..tfutils.common import get_tf_version_tuple
-from ..utils.argtools import shape2d, shape4d, get_data_format
-from .tflayer import rename_get_variable, convert_to_tflayer_args
+from ..utils.argtools import get_data_format, shape2d, shape4d
+from .common import VariableHolder, layer_register
+from .tflayer import convert_to_tflayer_args, rename_get_variable
 
 __all__ = ['Conv2D', 'Deconv2D', 'Conv2DTranspose']
 
@@ -50,7 +51,7 @@ def Conv2D(
     """
     if kernel_initializer is None:
         if get_tf_version_tuple() <= (1, 12):
-            kernel_initializer = tf.contrib.layers.variance_scaling_initializer(2.0),
+            kernel_initializer = tf.contrib.layers.variance_scaling_initializer(2.0)
         else:
             kernel_initializer = tf.keras.initializers.VarianceScaling(2.0, distribution='untruncated_normal')
     if split == 1:
@@ -158,7 +159,7 @@ def Conv2DTranspose(
     """
     if kernel_initializer is None:
         if get_tf_version_tuple() <= (1, 12):
-            kernel_initializer = tf.contrib.layers.variance_scaling_initializer(2.0),
+            kernel_initializer = tf.contrib.layers.variance_scaling_initializer(2.0)
         else:
             kernel_initializer = tf.keras.initializers.VarianceScaling(2.0, distribution='untruncated_normal')
 

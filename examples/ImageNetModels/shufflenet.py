@@ -3,24 +3,20 @@
 # File: shufflenet.py
 
 import argparse
-import numpy as np
 import math
+import numpy as np
 import os
 import cv2
-
 import tensorflow as tf
-
 
 from tensorpack import *
 from tensorpack.dataflow import imgaug
 from tensorpack.tfutils import argscope, get_model_loader, model_utils
 from tensorpack.tfutils.scope_utils import under_name_scope
-from tensorpack.utils.gpu import get_num_gpu
 from tensorpack.utils import logger
+from tensorpack.utils.gpu import get_num_gpu
 
-from imagenet_utils import (
-    get_imagenet_dataflow,
-    ImageNetModel, GoogleNetResize, eval_on_ILSVRC12)
+from imagenet_utils import GoogleNetResize, ImageNetModel, eval_on_ILSVRC12, get_imagenet_dataflow
 
 
 @layer_register(log_shape=True)

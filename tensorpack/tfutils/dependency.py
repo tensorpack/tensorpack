@@ -1,6 +1,7 @@
 
 import tensorflow as tf
 from tensorflow.contrib.graph_editor import get_backward_walk_ops
+
 from ..utils.argtools import graph_memoized
 
 """

@@ -2,8 +2,9 @@
 # File: linearwrap.py
 
 
-import six
 from types import ModuleType
+import six
+
 from .registry import get_registered_layer
 
 __all__ = ['LinearWrap']

@@ -2,10 +2,11 @@
 # File: fs.py
 
 
-import os
-from six.moves import urllib
 import errno
+import os
 import tqdm
+from six.moves import urllib
+
 from . import logger
 from .utils import execute_only_once
 

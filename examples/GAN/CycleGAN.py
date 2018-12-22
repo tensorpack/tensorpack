@@ -3,17 +3,17 @@
 # File: CycleGAN.py
 # Author: Yuxin Wu
 
-import os
 import argparse
 import glob
+import os
+import tensorflow as tf
 from six.moves import range
 
-
 from tensorpack import *
-from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
-import tensorflow as tf
-from GAN import GANTrainer, GANModelDesc
+from tensorpack.tfutils.summary import add_moving_summary
+
+from GAN import GANModelDesc, GANTrainer
 
 """
 1. Download the dataset following the original project: https://github.com/junyanz/CycleGAN#train

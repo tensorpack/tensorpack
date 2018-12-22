@@ -2,16 +2,16 @@
 # -*- coding: utf-8 -*-
 # Author: Patrick Wieschollek <mail@patwie.com>
 
+import argparse
+import glob
 import os
 import cv2
-import glob
-from helper import Flow
-import argparse
 
 from tensorpack import *
 from tensorpack.utils import viz
 
 import flownet_models as models
+from helper import Flow
 
 
 def apply(model, model_path, left, right, ground_truth=None):

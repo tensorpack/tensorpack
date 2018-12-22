@@ -5,22 +5,18 @@
 import argparse
 import os
 
-from tensorpack import logger, QueueInput, TFDatasetInput
-from tensorpack.models import *
+from tensorpack import QueueInput, TFDatasetInput, logger
 from tensorpack.callbacks import *
-from tensorpack.train import (
-    TrainConfig, SyncMultiGPUTrainerReplicated, launch_train_with_config)
 from tensorpack.dataflow import FakeData
+from tensorpack.models import *
 from tensorpack.tfutils import argscope, get_model_loader
+from tensorpack.train import SyncMultiGPUTrainerReplicated, TrainConfig, launch_train_with_config
 from tensorpack.utils.gpu import get_num_gpu
 
-from imagenet_utils import (
-    get_imagenet_dataflow, get_imagenet_tfdata,
-    ImageNetModel, eval_on_ILSVRC12)
+from imagenet_utils import ImageNetModel, eval_on_ILSVRC12, get_imagenet_dataflow, get_imagenet_tfdata
 from resnet_model import (
-    preresnet_group, preresnet_basicblock, preresnet_bottleneck,
-    resnet_group, resnet_basicblock, resnet_bottleneck, se_resnet_bottleneck,
-    resnet_backbone)
+    preresnet_basicblock, preresnet_bottleneck, preresnet_group, resnet_backbone, resnet_basicblock, resnet_bottleneck,
+    resnet_group, se_resnet_bottleneck)
 
 
 class Model(ImageNetModel):

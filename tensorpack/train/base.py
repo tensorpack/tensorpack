@@ -1,25 +1,23 @@
 # -*- coding: utf-8 -*-
 # File: base.py
 
-import tensorflow as tf
-import weakref
-import time
-from six.moves import range
-import six
 import copy
+import time
+import weakref
+import six
+import tensorflow as tf
+from six.moves import range
 
-from ..callbacks import (
-    Callback, Callbacks, Monitors, TrainingMonitor)
-from ..utils import logger
-from ..utils.utils import humanize_time_delta
-from ..utils.argtools import call_only_once
+from ..callbacks import Callback, Callbacks, Monitors, TrainingMonitor
+from ..callbacks.steps import MaintainStepCounter
 from ..tfutils import get_global_step_value
 from ..tfutils.model_utils import describe_trainable_vars
-from ..tfutils.sessinit import SessionInit, JustCurrentSession
-from ..tfutils.sesscreate import ReuseSessionCreator, NewSessionCreator
-from ..callbacks.steps import MaintainStepCounter
-
-from .config import TrainConfig, DEFAULT_MONITORS, DEFAULT_CALLBACKS
+from ..tfutils.sesscreate import NewSessionCreator, ReuseSessionCreator
+from ..tfutils.sessinit import JustCurrentSession, SessionInit
+from ..utils import logger
+from ..utils.argtools import call_only_once
+from ..utils.utils import humanize_time_delta
+from .config import DEFAULT_CALLBACKS, DEFAULT_MONITORS, TrainConfig
 
 __all__ = ['StopTraining', 'Trainer']
 

@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 # File: ls-checkpoint.py
 
-import tensorflow as tf
 import numpy as np
-import six
-import sys
 import pprint
+import sys
+import six
+import tensorflow as tf
 
 from tensorpack.tfutils.varmanip import get_checkpoint_path
 

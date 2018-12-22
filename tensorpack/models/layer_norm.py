@@ -3,8 +3,9 @@
 
 
 import tensorflow as tf
-from .common import layer_register, VariableHolder
+
 from ..utils.argtools import get_data_format
+from .common import VariableHolder, layer_register
 
 __all__ = ['LayerNorm', 'InstanceNorm']
 

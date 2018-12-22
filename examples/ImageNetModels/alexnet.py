@@ -3,10 +3,9 @@
 # File: alexnet.py
 
 import argparse
+import numpy as np
 import os
 import cv2
-import numpy as np
-
 import tensorflow as tf
 
 from tensorpack import *

@@ -3,9 +3,9 @@
 
 import tensorflow as tf
 
+from ..tfutils.tower import PredictTowerContext
 from ..utils import logger
 from ..utils.develop import deprecated
-from ..tfutils.tower import PredictTowerContext
 from .training import GraphBuilder
 
 __all__ = ['SimplePredictBuilder']

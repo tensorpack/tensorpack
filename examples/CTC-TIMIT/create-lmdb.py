@@ -2,17 +2,17 @@
 # -*- coding: utf-8 -*-
 # File: create-lmdb.py
 # Author: Yuxin Wu
-import os
-import scipy.io.wavfile as wavfile
-import string
-import numpy as np
 import argparse
-
+import numpy as np
+import os
+import string
 import bob.ap
+import scipy.io.wavfile as wavfile
+
 from tensorpack.dataflow import DataFlow, LMDBSerializer
+from tensorpack.utils import fs, logger, serialize
 from tensorpack.utils.argtools import memoized
 from tensorpack.utils.stats import OnlineMoments
-from tensorpack.utils import serialize, fs, logger
 from tensorpack.utils.utils import get_tqdm
 
 CHARSET = set(string.ascii_lowercase + ' ')

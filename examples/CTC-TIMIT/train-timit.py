@@ -3,17 +3,17 @@
 # File: train-timit.py
 # Author: Yuxin Wu
 
-import os
 import argparse
+import os
+import tensorflow as tf
 from six.moves import range
 
-
 from tensorpack import *
-from tensorpack.tfutils.gradproc import SummaryGradient, GlobalNormClip
+from tensorpack.tfutils.gradproc import GlobalNormClip, SummaryGradient
 from tensorpack.utils import serialize
-import tensorflow as tf
 
 from timitdata import TIMITBatch
+
 rnn = tf.contrib.rnn
 
 

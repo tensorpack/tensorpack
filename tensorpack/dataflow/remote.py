@@ -2,17 +2,17 @@
 # File: remote.py
 
 
-import time
-import tqdm
 import multiprocessing as mp
+import time
+from collections import deque
+import tqdm
 from six.moves import range
 
-from collections import deque
-from .base import DataFlow, DataFlowReentrantGuard
 from ..utils import logger
-from ..utils.utils import get_tqdm_kwargs
 from ..utils.concurrency import DIE
 from ..utils.serialize import dumps, loads
+from ..utils.utils import get_tqdm_kwargs
+from .base import DataFlow, DataFlowReentrantGuard
 
 try:
     import zmq

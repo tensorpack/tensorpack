@@ -2,9 +2,10 @@
 # File: deform.py
 
 
-from .base import ImageAugmentor
-from ...utils import logger
 import numpy as np
+
+from ...utils import logger
+from .base import ImageAugmentor
 
 __all__ = []
 

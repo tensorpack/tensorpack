@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 # File: argscope.py
 
-from contextlib import contextmanager
-from collections import defaultdict
 import copy
+from collections import defaultdict
+from contextlib import contextmanager
 from functools import wraps
-from inspect import isfunction, getmembers
+from inspect import getmembers, isfunction
 
-from .tower import get_current_tower_context
 from ..utils import logger
+from .tower import get_current_tower_context
 
 __all__ = ['argscope', 'get_arg_scope', 'enable_argscope_for_module']
 

@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 # File: viz.py
 
-from six.moves import zip
 import numpy as np
+from six.moves import zip
 
 from tensorpack.utils import viz
 from tensorpack.utils.palette import PALETTE_RGB
 
-from utils.np_box_ops import iou as np_iou
 from config import config as cfg
+from utils.np_box_ops import iou as np_iou
 
 
 def draw_annotation(img, boxes, klass, is_crowd=None):

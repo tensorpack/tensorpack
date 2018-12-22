@@ -1,22 +1,18 @@
 # -*- coding: utf-8 -*-
 # File: parallel_map.py
-import numpy as np
-import ctypes
 import copy
-import threading
+import ctypes
 import multiprocessing as mp
-from six.moves import queue
+import numpy as np
+import threading
 import zmq
+from six.moves import queue
 
-from .base import DataFlow, ProxyDataFlow, DataFlowReentrantGuard
-from .common import RepeatedData
 from ..utils.concurrency import StoppableThread, enable_death_signal
-from ..utils.serialize import loads, dumps
-
-from .parallel import (
-    _MultiProcessZMQDataFlow, _repeat_iter, _get_pipe_name,
-    _bind_guard, _zmq_catch_error)
-
+from ..utils.serialize import dumps, loads
+from .base import DataFlow, DataFlowReentrantGuard, ProxyDataFlow
+from .common import RepeatedData
+from .parallel import _bind_guard, _get_pipe_name, _MultiProcessZMQDataFlow, _repeat_iter, _zmq_catch_error
 
 __all__ = ['ThreadedMapData', 'MultiThreadMapData',
            'MultiProcessMapData', 'MultiProcessMapDataZMQ']

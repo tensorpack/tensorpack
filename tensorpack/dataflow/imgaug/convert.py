@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 # File: convert.py
 
-from .base import ImageAugmentor
-from .meta import MapImage
 import numpy as np
 import cv2
+
+from .base import ImageAugmentor
+from .meta import MapImage
 
 __all__ = ['ColorSpace', 'Grayscale', 'ToUint8', 'ToFloat32']
 

@@ -4,7 +4,6 @@
 
 import argparse
 import os
-
 import tensorflow as tf
 
 from tensorpack import *
@@ -12,8 +11,7 @@ from tensorpack.tfutils import argscope
 from tensorpack.tfutils.summary import *
 from tensorpack.utils.gpu import get_num_gpu
 
-from imagenet_utils import (
-    ImageNetModel, get_imagenet_dataflow, fbresnet_augmentor)
+from imagenet_utils import ImageNetModel, fbresnet_augmentor, get_imagenet_dataflow
 
 
 def GroupNorm(x, group, gamma_initializer=tf.constant_initializer(1.)):

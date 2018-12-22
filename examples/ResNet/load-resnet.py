@@ -4,20 +4,20 @@
 # Author: Eric Yujia Huang <yujiah1@andrew.cmu.edu>
 #         Yuxin Wu
 
-import cv2
-import functools
-import tensorflow as tf
 import argparse
-import re
+import functools
 import numpy as np
+import re
+import cv2
 import six
+import tensorflow as tf
 
 from tensorpack import *
-from tensorpack.utils import logger
 from tensorpack.dataflow.dataset import ILSVRCMeta
+from tensorpack.utils import logger
 
-from imagenet_utils import eval_on_ILSVRC12, get_imagenet_dataflow, ImageNetModel
-from resnet_model import resnet_group, resnet_bottleneck
+from imagenet_utils import ImageNetModel, eval_on_ILSVRC12, get_imagenet_dataflow
+from resnet_model import resnet_bottleneck, resnet_group
 
 DEPTH = None
 CFG = {

@@ -3,6 +3,7 @@
 
 
 import tensorflow as tf
+
 from .common import layer_register
 
 __all__ = ['ConcatWith']

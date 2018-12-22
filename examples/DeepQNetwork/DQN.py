@@ -3,20 +3,20 @@
 # File: DQN.py
 # Author: Yuxin Wu
 
-import os
 import argparse
-import cv2
 import numpy as np
-import tensorflow as tf
+import os
+import cv2
 import gym
+import tensorflow as tf
 
 from tensorpack import *
 
-from DQNModel import Model as DQNModel
-from common import Evaluator, eval_model_multithread, play_n_episodes
-from atari_wrapper import FrameStack, MapState, FireResetEnv, LimitLength
-from expreplay import ExpReplay
 from atari import AtariPlayer
+from atari_wrapper import FireResetEnv, FrameStack, LimitLength, MapState
+from common import Evaluator, eval_model_multithread, play_n_episodes
+from DQNModel import Model as DQNModel
+from expreplay import ExpReplay
 
 BATCH_SIZE = 64
 IMAGE_SIZE = (84, 84)

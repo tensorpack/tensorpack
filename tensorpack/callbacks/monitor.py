@@ -2,20 +2,20 @@
 # File: monitor.py
 
 
-import os
+import json
 import numpy as np
+import operator
+import os
+import re
 import shutil
 import time
-from datetime import datetime
-import operator
 from collections import defaultdict
+from datetime import datetime
 import six
-import json
-import re
-
 import tensorflow as tf
+
+from ..tfutils.summary import create_image_summary, create_scalar_summary
 from ..utils import logger
-from ..tfutils.summary import create_scalar_summary, create_image_summary
 from ..utils.develop import HIDE_DOC
 from .base import Callback
 

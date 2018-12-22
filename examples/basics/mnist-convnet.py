@@ -3,16 +3,15 @@
 # File: mnist-convnet.py
 
 import tensorflow as tf
+
+from tensorpack import *
+from tensorpack.dataflow import dataset
+from tensorpack.tfutils import summary
+
 """
 MNIST ConvNet example.
 about 0.6% validation error after 30 epochs.
 """
-
-
-# Just import everything into current namespace
-from tensorpack import *
-from tensorpack.tfutils import summary
-from tensorpack.dataflow import dataset
 
 IMAGE_SIZE = 28
 

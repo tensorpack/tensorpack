@@ -2,20 +2,20 @@
 # File: common.py
 
 from __future__ import division
-import six
-import numpy as np
-from copy import copy
-import pprint
 import itertools
-from termcolor import colored
-from collections import deque, defaultdict
-from six.moves import range, map
+import numpy as np
+import pprint
+from collections import defaultdict, deque
+from copy import copy
+import six
 import tqdm
+from six.moves import map, range
+from termcolor import colored
 
-from .base import DataFlow, ProxyDataFlow, RNGDataFlow, DataFlowReentrantGuard
 from ..utils import logger
-from ..utils.utils import get_tqdm, get_rng, get_tqdm_kwargs
 from ..utils.develop import log_deprecated
+from ..utils.utils import get_rng, get_tqdm, get_tqdm_kwargs
+from .base import DataFlow, DataFlowReentrantGuard, ProxyDataFlow, RNGDataFlow
 
 __all__ = ['TestDataSpeed', 'PrintData', 'BatchData', 'BatchDataByShape', 'FixedSizeData', 'MapData',
            'MapDataComponent', 'RepeatedData', 'RepeatedDataPoint', 'RandomChooseData',

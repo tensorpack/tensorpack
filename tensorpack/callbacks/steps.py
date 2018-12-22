@@ -4,14 +4,13 @@
 """ Some common step callbacks. """
 
 import tensorflow as tf
-from six.moves import zip
 import tqdm
+from six.moves import zip
 
+from ..tfutils.common import get_global_step_var, get_op_tensor_name
 from ..utils import logger
-from ..utils.utils import get_tqdm_kwargs
 from ..utils.naming import GLOBAL_STEP_INCR_OP_NAME
-from ..tfutils.common import (
-    get_op_tensor_name, get_global_step_var)
+from ..utils.utils import get_tqdm_kwargs
 from .base import Callback
 
 __all__ = ['TensorPrinter', 'ProgressBar', 'SessionRunTimeout']

@@ -2,8 +2,8 @@
 # File: varreplace.py
 # Credit: Qinyao He
 
-import tensorflow as tf
 from contextlib import contextmanager
+import tensorflow as tf
 
 from .common import get_tf_version_tuple
 

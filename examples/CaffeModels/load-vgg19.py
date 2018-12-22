@@ -3,12 +3,12 @@
 # File: load-vgg19.py
 
 from __future__ import print_function
-import cv2
-import tensorflow as tf
+import argparse
 import numpy as np
 import os
+import cv2
 import six
-import argparse
+import tensorflow as tf
 
 from tensorpack import *
 from tensorpack.dataflow.dataset import ILSVRCMeta

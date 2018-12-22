@@ -32,7 +32,7 @@ It's Yet Another TF high-level API, with __speed__, and __flexibility__ built to
 
 See [tutorials and documentations](http://tensorpack.readthedocs.io/tutorial/index.html#user-tutorials) to know more about these features.
 
-## [Examples](examples):
+## Examples:
 
 We refuse toy examples.
 Instead of showing you 10 arbitrary networks trained on toy datasets,

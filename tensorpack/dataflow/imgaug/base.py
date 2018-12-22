@@ -4,12 +4,12 @@
 
 import inspect
 import pprint
-from abc import abstractmethod, ABCMeta
+from abc import ABCMeta, abstractmethod
 import six
 from six.moves import zip
 
-from ...utils.utils import get_rng
 from ...utils.argtools import log_once
+from ...utils.utils import get_rng
 from ..image import check_dtype
 
 __all__ = ['Augmentor', 'ImageAugmentor', 'AugmentorList']

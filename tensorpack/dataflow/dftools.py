@@ -3,13 +3,11 @@
 
 
 from ..utils.develop import deprecated
+from .remote import dump_dataflow_to_process_queue
 from .serialize import LMDBSerializer, TFRecordSerializer
 
 __all__ = ['dump_dataflow_to_process_queue',
            'dump_dataflow_to_lmdb', 'dump_dataflow_to_tfrecord']
-
-
-from .remote import dump_dataflow_to_process_queue
 
 
 @deprecated("Use LMDBSerializer.save instead!", "2019-01-31")

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # Author: Your Name <your@email.com>
 
-import os
 import argparse
+import os
 import tensorflow as tf
 
 from tensorpack import *

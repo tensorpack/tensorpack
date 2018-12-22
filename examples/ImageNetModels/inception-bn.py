@@ -7,10 +7,9 @@ import argparse
 import os
 import tensorflow as tf
 
-
 from tensorpack import *
-from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.dataflow import dataset
+from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.utils.gpu import get_num_gpu
 
 from imagenet_utils import fbresnet_augmentor, get_imagenet_dataflow

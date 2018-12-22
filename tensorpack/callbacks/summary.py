@@ -2,9 +2,9 @@
 # File: summary.py
 
 
-import tensorflow as tf
 import numpy as np
 from collections import deque
+import tensorflow as tf
 
 from ..tfutils.common import get_op_tensor_name
 from ..utils import logger

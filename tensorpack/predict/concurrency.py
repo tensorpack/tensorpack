@@ -2,16 +2,16 @@
 # File: concurrency.py
 
 
-import numpy as np
 import multiprocessing
+import numpy as np
 import six
-from six.moves import queue, range
 import tensorflow as tf
+from six.moves import queue, range
 
-from ..utils import logger
-from ..utils.concurrency import DIE, StoppableThread, ShareSessionThread
 from ..tfutils.model_utils import describe_trainable_vars
-from .base import OnlinePredictor, OfflinePredictor, AsyncPredictorBase
+from ..utils import logger
+from ..utils.concurrency import DIE, ShareSessionThread, StoppableThread
+from .base import AsyncPredictorBase, OfflinePredictor, OnlinePredictor
 
 __all__ = ['MultiProcessPredictWorker', 'MultiProcessQueuePredictWorker',
            'MultiThreadAsyncPredictor']

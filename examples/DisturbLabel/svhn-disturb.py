@@ -3,13 +3,12 @@
 # File: svhn-disturb.py
 
 import argparse
-import os
 import imp
-
+import os
 
 from tensorpack import *
-from tensorpack.utils import logger
 from tensorpack.dataflow import dataset
+from tensorpack.utils import logger
 
 from disturb import DisturbLabel
 

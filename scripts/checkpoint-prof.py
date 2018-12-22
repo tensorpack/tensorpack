@@ -2,12 +2,13 @@
 # -*- coding: utf-8 -*-
 # File: checkpoint-prof.py
 
-import tensorflow as tf
-import numpy as np
-from tensorpack import get_default_sess_config, get_op_tensor_name
-from tensorpack.utils import logger
-from tensorpack.tfutils.sessinit import get_model_loader
 import argparse
+import numpy as np
+import tensorflow as tf
+
+from tensorpack import get_default_sess_config, get_op_tensor_name
+from tensorpack.tfutils.sessinit import get_model_loader
+from tensorpack.utils import logger
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

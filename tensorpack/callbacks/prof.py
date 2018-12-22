@@ -2,20 +2,20 @@
 # File: prof.py
 
 
-import os
-import numpy as np
 import multiprocessing as mp
+import numpy as np
+import os
 import time
-from six.moves import map
 import tensorflow as tf
+from six.moves import map
 from tensorflow.python.client import timeline
 
-from .base import Callback
+from ..tfutils.common import gpu_available_in_session
 from ..utils import logger
 from ..utils.concurrency import ensure_proc_terminate, start_proc_mask_signal
 from ..utils.gpu import get_num_gpu
 from ..utils.nvml import NVMLContext
-from ..tfutils.common import gpu_available_in_session
+from .base import Callback
 
 __all__ = ['GPUUtilizationTracker', 'GraphProfiler', 'PeakMemoryTracker']
 

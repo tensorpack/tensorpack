@@ -2,13 +2,13 @@
 # File: base.py
 
 
-from abc import abstractmethod, ABCMeta
-import tensorflow as tf
+from abc import ABCMeta, abstractmethod
 import six
+import tensorflow as tf
 
+from ..input_source import PlaceholderInput
 from ..tfutils.common import get_tensors_by_names
 from ..tfutils.tower import PredictTowerContext
-from ..input_source import PlaceholderInput
 
 __all__ = ['PredictorBase', 'AsyncPredictorBase',
            'OnlinePredictor', 'OfflinePredictor',

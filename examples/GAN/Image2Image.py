@@ -3,20 +3,20 @@
 # File: Image2Image.py
 # Author: Yuxin Wu
 
-import cv2
-import numpy as np
-import tensorflow as tf
-import glob
-import os
 import argparse
-
+import glob
+import numpy as np
+import os
+import cv2
+import tensorflow as tf
 
 from tensorpack import *
+from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
+from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.utils.gpu import get_num_gpu
 from tensorpack.utils.viz import stack_patches
-from tensorpack.tfutils.summary import add_moving_summary
-from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
-from GAN import GANTrainer, GANModelDesc
+
+from GAN import GANModelDesc, GANTrainer
 
 """
 To train Image-to-Image translation model with image pairs:

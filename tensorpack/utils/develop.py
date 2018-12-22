@@ -6,11 +6,11 @@
 """ Utilities for developers only.
 These are not visible to users (not automatically imported). And should not
 appeared in docs."""
-import os
 import functools
-from datetime import datetime
 import importlib
+import os
 import types
+from datetime import datetime
 import six
 
 from . import logger

@@ -5,14 +5,12 @@
 
 import argparse
 import os
-
+import tensorflow as tf
 
 from tensorpack import *
+from tensorpack.dataflow import dataset
 from tensorpack.tfutils.summary import add_moving_summary, add_param_summary
 from tensorpack.utils.gpu import get_num_gpu
-from tensorpack.dataflow import dataset
-
-import tensorflow as tf
 
 """
 CIFAR10 ResNet example. See:

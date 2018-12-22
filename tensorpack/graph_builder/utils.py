@@ -2,16 +2,15 @@
 # File: utils.py
 
 
-from contextlib import contextmanager
 import operator
+from contextlib import contextmanager
 import tensorflow as tf
 
-from ..tfutils.varreplace import custom_getter_scope
-from ..tfutils.scope_utils import under_name_scope, cached_name_scope
 from ..tfutils.common import get_tf_version_tuple
-from ..utils.argtools import call_only_once
+from ..tfutils.scope_utils import cached_name_scope, under_name_scope
+from ..tfutils.varreplace import custom_getter_scope
 from ..utils import logger
-
+from ..utils.argtools import call_only_once
 
 __all__ = ['LeastLoadedDeviceSetter',
            'OverrideCachingDevice',

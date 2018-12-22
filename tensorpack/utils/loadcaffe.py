@@ -2,14 +2,14 @@
 # File: loadcaffe.py
 
 
-import sys
 import numpy as np
 import os
+import sys
 
-from .utils import change_env
-from .fs import download, get_dataset_path
-from .concurrency import subproc_call
 from . import logger
+from .concurrency import subproc_call
+from .fs import download, get_dataset_path
+from .utils import change_env
 
 __all__ = ['load_caffe', 'get_caffe_pb']
 

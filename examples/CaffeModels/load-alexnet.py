@@ -4,16 +4,16 @@
 # Author: Yuxin Wu
 
 from __future__ import print_function
+import argparse
 import numpy as np
 import os
 import cv2
-import argparse
+import tensorflow as tf
 
 from tensorpack import *
-from tensorpack.tfutils.symbolic_functions import *
-from tensorpack.tfutils.summary import *
 from tensorpack.dataflow.dataset import ILSVRCMeta
-import tensorflow as tf
+from tensorpack.tfutils.summary import *
+from tensorpack.tfutils.symbolic_functions import *
 
 
 def tower_func(image):

@@ -2,24 +2,22 @@
 # File: imagenet_utils.py
 
 
-import cv2
-import os
-import numpy as np
-import tqdm
 import multiprocessing
-import tensorflow as tf
+import numpy as np
+import os
 from abc import abstractmethod
+import cv2
+import tensorflow as tf
+import tqdm
 
 from tensorpack import ModelDesc
+from tensorpack.dataflow import AugmentImageComponent, BatchData, MultiThreadMapData, PrefetchDataZMQ, dataset, imgaug
 from tensorpack.input_source import QueueInput, StagingInput
-from tensorpack.dataflow import (
-    imgaug, dataset, AugmentImageComponent, PrefetchDataZMQ,
-    BatchData, MultiThreadMapData)
-from tensorpack.predict import PredictConfig, FeedfreePredictor
-from tensorpack.utils.stats import RatioCounter
 from tensorpack.models import regularize_cost
+from tensorpack.predict import FeedfreePredictor, PredictConfig
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.utils import logger
+from tensorpack.utils.stats import RatioCounter
 
 
 """

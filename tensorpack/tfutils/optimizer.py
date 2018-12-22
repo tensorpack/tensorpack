@@ -2,11 +2,11 @@
 # File: optimizer.py
 
 
-import tensorflow as tf
 from contextlib import contextmanager
+import tensorflow as tf
 
-from ..utils.develop import HIDE_DOC
 from ..tfutils.common import get_tf_version_tuple
+from ..utils.develop import HIDE_DOC
 from .gradproc import FilterNoneGrad, GradientProcessor
 
 __all__ = ['apply_grad_processors', 'ProxyOptimizer',

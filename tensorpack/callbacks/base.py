@@ -2,9 +2,10 @@
 # File: base.py
 
 
-import tensorflow as tf
 from abc import ABCMeta
 import six
+import tensorflow as tf
+
 from ..tfutils.common import get_op_or_tensor_by_name
 
 __all__ = ['Callback', 'ProxyCallback', 'CallbackFactory']

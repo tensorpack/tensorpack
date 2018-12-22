@@ -2,14 +2,15 @@
 # -*- coding: utf-8 -*-
 # File: cifar-convnet.py
 # Author: Yuxin Wu
-import tensorflow as tf
 import argparse
 import os
+import tensorflow as tf
 
 from tensorpack import *
-from tensorpack.tfutils.summary import *
 from tensorpack.dataflow import dataset
+from tensorpack.tfutils.summary import *
 from tensorpack.utils.gpu import get_num_gpu
+
 
 """
 A small convnet model for Cifar10 or Cifar100 dataset.

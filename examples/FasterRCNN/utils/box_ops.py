@@ -2,7 +2,9 @@
 # File: box_ops.py
 
 import tensorflow as tf
+
 from tensorpack.tfutils.scope_utils import under_name_scope
+
 
 """
 This file is modified from

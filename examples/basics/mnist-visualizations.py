@@ -7,6 +7,7 @@ The same MNIST ConvNet example, but with weights/activations visualization.
 """
 
 import tensorflow as tf
+
 from tensorpack import *
 from tensorpack.dataflow import dataset
 

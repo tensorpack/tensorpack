@@ -3,9 +3,12 @@
 # File: WGAN.py
 # Author: Yuxin Wu
 
+import tensorflow as tf
+
 from tensorpack import *
 from tensorpack.tfutils.summary import add_moving_summary
-import tensorflow as tf
+
+import DCGAN
 from GAN import SeparateGANTrainer
 
 """
@@ -15,7 +18,6 @@ See the docstring in DCGAN.py for usage.
 
 # Don't want to mix two examples together, but want to reuse the code.
 # So here just import stuff from DCGAN
-import DCGAN
 
 
 class Model(DCGAN.Model):

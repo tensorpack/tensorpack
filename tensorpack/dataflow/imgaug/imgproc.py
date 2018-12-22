@@ -2,9 +2,10 @@
 # File: imgproc.py
 
 
-from .base import ImageAugmentor
 import numpy as np
 import cv2
+
+from .base import ImageAugmentor
 
 __all__ = ['Hue', 'Brightness', 'BrightnessScale', 'Contrast', 'MeanVarianceNormalize',
            'GaussianBlur', 'Gamma', 'Clip', 'Saturation', 'Lighting', 'MinMaxNormalize']

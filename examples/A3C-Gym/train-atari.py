@@ -3,29 +3,26 @@
 # File: train-atari.py
 # Author: Yuxin Wu
 
-import numpy as np
-import sys
-import os
-import uuid
 import argparse
-
+import numpy as np
+import os
+import sys
+import uuid
 import cv2
-import tensorflow as tf
+import gym
 import six
+import tensorflow as tf
 from six.moves import queue
 
-
 from tensorpack import *
-from tensorpack.utils.concurrency import ensure_proc_terminate, start_proc_mask_signal
-from tensorpack.utils.serialize import dumps
 from tensorpack.tfutils.gradproc import MapGradient, SummaryGradient
+from tensorpack.utils.concurrency import ensure_proc_terminate, start_proc_mask_signal
 from tensorpack.utils.gpu import get_num_gpu
+from tensorpack.utils.serialize import dumps
 
-
-import gym
-from simulator import SimulatorProcess, SimulatorMaster, TransitionExperience
+from atari_wrapper import FireResetEnv, FrameStack, LimitLength, MapState
 from common import Evaluator, eval_model_multithread, play_n_episodes
-from atari_wrapper import MapState, FrameStack, FireResetEnv, LimitLength
+from simulator import SimulatorMaster, SimulatorProcess, TransitionExperience
 
 if six.PY3:
     from concurrent import futures

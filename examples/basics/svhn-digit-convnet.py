@@ -5,12 +5,12 @@
 
 import argparse
 import os
-
+import tensorflow as tf
 
 from tensorpack import *
 from tensorpack.dataflow import dataset
 from tensorpack.tfutils.summary import *
-import tensorflow as tf
+
 
 """
 A very small SVHN convnet model (only 0.8m parameters).

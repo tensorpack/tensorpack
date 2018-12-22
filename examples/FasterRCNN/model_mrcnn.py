@@ -2,12 +2,11 @@
 
 import tensorflow as tf
 
-from tensorpack.models import (
-    Conv2D, layer_register, Conv2DTranspose)
-from tensorpack.tfutils.scope_utils import under_name_scope
+from tensorpack.models import Conv2D, Conv2DTranspose, layer_register
 from tensorpack.tfutils.argscope import argscope
-from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.tfutils.common import get_tf_version_tuple
+from tensorpack.tfutils.scope_utils import under_name_scope
+from tensorpack.tfutils.summary import add_moving_summary
 
 from basemodel import GroupNorm
 from config import config as cfg

@@ -2,17 +2,17 @@
 # -*- coding: utf-8 -*-
 # File: mnist-disturb.py
 
-import os
 import argparse
-
+import imp
+import os
+import tensorflow as tf
 
 from tensorpack import *
-from tensorpack.utils import logger
 from tensorpack.dataflow import dataset
-import tensorflow as tf
+from tensorpack.utils import logger
+
 from disturb import DisturbLabel
 
-import imp
 mnist_example = imp.load_source('mnist_example',
                                 os.path.join(os.path.dirname(__file__), '..', 'basics', 'mnist-convnet.py'))
 get_config = mnist_example.get_config

@@ -1,26 +1,25 @@
 # -*- coding: utf-8 -*-
 # File: data.py
 
-import cv2
-import numpy as np
 import copy
+import numpy as np
+import cv2
 
-from tensorpack.utils.argtools import memoized, log_once
 from tensorpack.dataflow import (
-    imgaug, TestDataSpeed,
-    MultiProcessMapDataZMQ, MultiThreadMapData,
-    MapDataComponent, DataFromList)
+    DataFromList, MapDataComponent, MultiProcessMapDataZMQ, MultiThreadMapData, TestDataSpeed, imgaug)
 from tensorpack.utils import logger
-# import tensorpack.utils.viz as tpviz
+from tensorpack.utils.argtools import log_once, memoized
 
 from coco import COCODetection
+from common import (
+    CustomResize, DataFromListOfDict, box_to_point8, filter_boxes_inside_shape, point8_to_box, segmentation_to_mask)
+from config import config as cfg
 from utils.generate_anchors import generate_anchors
 from utils.np_box_ops import area as np_area
 from utils.np_box_ops import ioa as np_ioa
-from common import (
-    DataFromListOfDict, CustomResize, filter_boxes_inside_shape,
-    box_to_point8, point8_to_box, segmentation_to_mask)
-from config import config as cfg
+
+# import tensorpack.utils.viz as tpviz
+
 
 try:
     import pycocotools.mask as cocomask

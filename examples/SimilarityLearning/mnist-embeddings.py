@@ -2,17 +2,16 @@
 # -*- coding: utf-8 -*-
 # File: mnist-embeddings.py
 
-import numpy as np
 import argparse
+import numpy as np
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
-
 
 from tensorpack import *
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.utils.gpu import change_gpu
 
-from embedding_data import get_test_data, MnistPairs, MnistTriplets
+from embedding_data import MnistPairs, MnistTriplets, get_test_data
 
 MATPLOTLIB_AVAIBLABLE = False
 try:

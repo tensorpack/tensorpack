@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 # Author: Patrick Wieschollek <mail@patwie.com>
 
-import os
 import argparse
+import numpy as np
+import os
 import cv2
 import six
-import numpy as np
 import tensorflow as tf
 
 from tensorpack import *
@@ -14,10 +14,10 @@ from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.utils import logger
 from tensorpack.utils.gpu import get_num_gpu
-from data_sampler import (
-    ImageDecode, ImageDataFromZIPFile,
-    RejectTooSmallImages, CenterSquareResize)
-from GAN import SeparateGANTrainer, GANModelDesc
+
+from data_sampler import CenterSquareResize, ImageDataFromZIPFile, ImageDecode, RejectTooSmallImages
+from GAN import GANModelDesc, SeparateGANTrainer
+
 Reduction = tf.losses.Reduction
 
 BATCH_SIZE = 16

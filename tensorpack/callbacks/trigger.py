@@ -2,8 +2,8 @@
 # File: trigger.py
 
 
-from .base import ProxyCallback, Callback
 from ..utils.develop import log_deprecated
+from .base import Callback, ProxyCallback
 
 __all__ = ['PeriodicTrigger', 'PeriodicCallback', 'EnableCallbackIf']
 

@@ -2,14 +2,14 @@
 # File: timer.py
 
 
-from contextlib import contextmanager
-from collections import defaultdict
-import six
 import atexit
+from collections import defaultdict
+from contextlib import contextmanager
 from time import time as timer
+import six
 
-from .stats import StatCounter
 from . import logger
+from .stats import StatCounter
 
 if six.PY3:
     from time import perf_counter as timer  # noqa

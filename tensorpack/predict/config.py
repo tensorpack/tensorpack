@@ -2,13 +2,13 @@
 # File: config.py
 
 
-import tensorflow as tf
 import six
+import tensorflow as tf
 
 from ..graph_builder import ModelDescBase
 from ..tfutils import get_default_sess_config
+from ..tfutils.sessinit import JustCurrentSession, SessionInit
 from ..tfutils.tower import TowerFuncWrapper
-from ..tfutils.sessinit import SessionInit, JustCurrentSession
 from ..utils import logger
 
 __all__ = ['PredictConfig']

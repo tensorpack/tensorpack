@@ -2,13 +2,13 @@
 # File: regularize.py
 
 
-import tensorflow as tf
 import re
+import tensorflow as tf
 
-from ..utils import logger
-from ..utils.argtools import graph_memoized
 from ..tfutils.common import get_tf_version_tuple
 from ..tfutils.tower import get_current_tower_context
+from ..utils import logger
+from ..utils.argtools import graph_memoized
 from .common import layer_register
 
 __all__ = ['regularize_cost', 'regularize_cost_from_collection',

@@ -3,19 +3,18 @@
 # File: hed.py
 # Author: Yuxin Wu
 
+import argparse
+import numpy as np
+import os
 import cv2
 import tensorflow as tf
-import numpy as np
-import argparse
 from six.moves import zip
-import os
-
 
 from tensorpack import *
 from tensorpack.dataflow import dataset
-from tensorpack.utils.gpu import get_num_gpu
-from tensorpack.tfutils import optimizer, gradproc
+from tensorpack.tfutils import gradproc, optimizer
 from tensorpack.tfutils.summary import add_moving_summary, add_param_summary
+from tensorpack.utils.gpu import get_num_gpu
 
 
 def class_balanced_sigmoid_cross_entropy(logits, label, name='cross_entropy_loss'):

@@ -2,28 +2,24 @@
 # -*- coding: utf-8 -*-
 # File: CAM-resnet.py
 
-import cv2
-import sys
 import argparse
+import multiprocessing
 import numpy as np
 import os
-import multiprocessing
-
-
+import sys
+import cv2
 import tensorflow as tf
+
 from tensorpack import *
 from tensorpack.dataflow import dataset
-from tensorpack.tfutils import optimizer, gradproc
-from tensorpack.tfutils.symbolic_functions import *
+from tensorpack.tfutils import gradproc, optimizer
 from tensorpack.tfutils.summary import *
-from tensorpack.utils.gpu import get_num_gpu
+from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.utils import viz
+from tensorpack.utils.gpu import get_num_gpu
 
-from imagenet_utils import (
-    fbresnet_augmentor, ImageNetModel)
-from resnet_model import (
-    preresnet_basicblock, preresnet_group)
-
+from imagenet_utils import ImageNetModel, fbresnet_augmentor
+from resnet_model import preresnet_basicblock, preresnet_group
 
 TOTAL_BATCH_SIZE = 256
 DEPTH = None

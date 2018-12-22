@@ -1,9 +1,10 @@
-import cv2
-import os
 import argparse
 import numpy as np
+import os
 import zipfile
-from tensorpack import RNGDataFlow, MapDataComponent, LMDBSerializer
+import cv2
+
+from tensorpack import LMDBSerializer, MapDataComponent, RNGDataFlow
 
 
 class ImageDataFromZIPFile(RNGDataFlow):

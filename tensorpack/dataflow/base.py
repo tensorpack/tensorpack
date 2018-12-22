@@ -3,8 +3,9 @@
 
 
 import threading
-from abc import abstractmethod, ABCMeta
+from abc import ABCMeta, abstractmethod
 import six
+
 from ..utils.utils import get_rng
 
 __all__ = ['DataFlow', 'ProxyDataFlow', 'RNGDataFlow', 'DataFlowTerminated']

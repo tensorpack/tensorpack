@@ -3,8 +3,8 @@
 
 
 import logging
-import tensorflow as tf
 import unittest
+import tensorflow as tf
 
 
 class TestModel(unittest.TestCase):

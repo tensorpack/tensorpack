@@ -12,10 +12,10 @@ from tensorflow.python.framework import graph_util
 from tensorflow.python.platform import gfile
 from tensorflow.python.tools import optimize_for_inference_lib
 
-from ..utils import logger
+from ..input_source import PlaceholderInput
 from ..tfutils.common import get_tensors_by_names
 from ..tfutils.tower import PredictTowerContext
-from ..input_source import PlaceholderInput
+from ..utils import logger
 
 __all__ = ['ModelExporter']
 

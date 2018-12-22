@@ -2,10 +2,10 @@
 # File: collection.py
 
 
-import tensorflow as tf
+from contextlib import contextmanager
 from copy import copy
 import six
-from contextlib import contextmanager
+import tensorflow as tf
 
 from ..utils import logger
 from ..utils.argtools import memoized

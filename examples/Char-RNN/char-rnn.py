@@ -3,21 +3,20 @@
 # File: char-rnn.py
 # Author: Yuxin Wu
 
+import argparse
 import numpy as np
+import operator
 import os
 import sys
-import argparse
 from collections import Counter
-import operator
 import six
+import tensorflow as tf
 from six.moves import range
 
-
 from tensorpack import *
-from tensorpack.tfutils import summary, optimizer
+from tensorpack.tfutils import optimizer, summary
 from tensorpack.tfutils.gradproc import GlobalNormClip
 
-import tensorflow as tf
 rnn = tf.contrib.rnn
 
 class _NS: pass  # noqa

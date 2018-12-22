@@ -3,13 +3,12 @@
 
 
 import numpy as np
-import tensorflow as tf
 import six
+import tensorflow as tf
 
 from ..utils import logger
 from .common import get_op_tensor_name
-from .varmanip import (SessionUpdate, get_savename_from_varname,
-                       is_training_name, get_checkpoint_path)
+from .varmanip import SessionUpdate, get_checkpoint_path, get_savename_from_varname, is_training_name
 
 __all__ = ['SessionInit', 'ChainInit',
            'SaverRestore', 'SaverRestoreRelaxed', 'DictRestore',

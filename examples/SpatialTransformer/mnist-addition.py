@@ -3,16 +3,15 @@
 # File: mnist-addition.py
 # Author: Yuxin Wu
 
-import cv2
-import numpy as np
-import tensorflow as tf
-import os
 import argparse
-
+import numpy as np
+import os
+import cv2
+import tensorflow as tf
 
 from tensorpack import *
 from tensorpack.dataflow import dataset
-from tensorpack.tfutils import optimizer, summary, gradproc
+from tensorpack.tfutils import gradproc, optimizer, summary
 
 IMAGE_SIZE = 42
 WARP_TARGET_SIZE = 28

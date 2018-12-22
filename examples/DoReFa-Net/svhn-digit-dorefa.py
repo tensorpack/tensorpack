@@ -3,13 +3,13 @@
 # File: svhn-digit-dorefa.py
 # Author: Yuxin Wu
 
-import os
 import argparse
+import os
 import tensorflow as tf
 
 from tensorpack import *
-from tensorpack.tfutils.summary import add_moving_summary, add_param_summary
 from tensorpack.dataflow import dataset
+from tensorpack.tfutils.summary import add_moving_summary, add_param_summary
 from tensorpack.tfutils.varreplace import remap_variables
 
 from dorefa import get_dorefa

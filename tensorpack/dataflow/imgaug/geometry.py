@@ -3,8 +3,8 @@
 
 
 import math
-import cv2
 import numpy as np
+import cv2
 
 from .base import ImageAugmentor
 from .transform import TransformAugmentorBase, WarpAffineTransform

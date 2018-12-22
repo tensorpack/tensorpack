@@ -3,16 +3,15 @@
 
 import numpy as np
 import os
-from termcolor import colored
-from tabulate import tabulate
 import tqdm
+from tabulate import tabulate
+from termcolor import colored
 
 from tensorpack.utils import logger
-from tensorpack.utils.timer import timed_operation
 from tensorpack.utils.argtools import log_once
+from tensorpack.utils.timer import timed_operation
 
 from config import config as cfg
-
 
 __all__ = ['COCODetection', 'COCOMeta']
 

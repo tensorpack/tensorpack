@@ -1,27 +1,25 @@
 # -*- coding: utf-8 -*-
 # File: parallel.py
 
+import atexit
+import errno
+import itertools
+import multiprocessing as mp
+import os
 import sys
+import uuid
 import weakref
 from contextlib import contextmanager
-import multiprocessing as mp
-import itertools
-from six.moves import range, zip, queue
-import errno
-import uuid
-import os
 import zmq
-import atexit
+from six.moves import queue, range, zip
 
-from .base import DataFlow, ProxyDataFlow, DataFlowTerminated, DataFlowReentrantGuard
-from ..utils.concurrency import (ensure_proc_terminate,
-                                 mask_sigint, start_proc_mask_signal,
-                                 enable_death_signal,
-                                 StoppableThread)
-from ..utils.serialize import loads, dumps
 from ..utils import logger
-from ..utils.gpu import change_gpu
+from ..utils.concurrency import (
+    StoppableThread, enable_death_signal, ensure_proc_terminate, mask_sigint, start_proc_mask_signal)
 from ..utils.develop import log_deprecated
+from ..utils.gpu import change_gpu
+from ..utils.serialize import dumps, loads
+from .base import DataFlow, DataFlowReentrantGuard, DataFlowTerminated, ProxyDataFlow
 
 __all__ = ['PrefetchData', 'MultiProcessPrefetchData',
            'PrefetchDataZMQ', 'PrefetchOnGPUs', 'MultiThreadPrefetchData']

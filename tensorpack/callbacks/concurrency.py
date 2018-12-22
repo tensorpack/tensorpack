@@ -3,9 +3,10 @@
 
 
 import multiprocessing as mp
-from .base import Callback
-from ..utils.concurrency import start_proc_mask_signal, StoppableThread
+
 from ..utils import logger
+from ..utils.concurrency import StoppableThread, start_proc_mask_signal
+from .base import Callback
 
 __all__ = ['StartProcOrThread']
 

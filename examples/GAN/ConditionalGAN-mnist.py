@@ -3,18 +3,18 @@
 # File: ConditionalGAN-mnist.py
 # Author: Yuxin Wu
 
+import argparse
 import numpy as np
-import tensorflow as tf
 import os
 import cv2
-import argparse
-
+import tensorflow as tf
 
 from tensorpack import *
-from tensorpack.utils.viz import interactive_imshow, stack_patches
-from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
 from tensorpack.dataflow import dataset
-from GAN import GANTrainer, RandomZData, GANModelDesc
+from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
+from tensorpack.utils.viz import interactive_imshow, stack_patches
+
+from GAN import GANModelDesc, GANTrainer, RandomZData
 
 """
 To train:

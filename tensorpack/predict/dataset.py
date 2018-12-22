@@ -2,22 +2,21 @@
 # File: dataset.py
 
 
-from six.moves import range, zip
-from abc import ABCMeta, abstractmethod
 import multiprocessing
 import os
+from abc import ABCMeta, abstractmethod
 import six
+from six.moves import range, zip
 
 from ..dataflow import DataFlow
 from ..dataflow.remote import dump_dataflow_to_process_queue
-from ..utils.concurrency import ensure_proc_terminate, OrderedResultGatherProc, DIE
 from ..utils import logger
-from ..utils.utils import get_tqdm
+from ..utils.concurrency import DIE, OrderedResultGatherProc, ensure_proc_terminate
 from ..utils.gpu import change_gpu, get_num_gpu
-
+from ..utils.utils import get_tqdm
+from .base import OfflinePredictor
 from .concurrency import MultiProcessQueuePredictWorker
 from .config import PredictConfig
-from .base import OfflinePredictor
 
 __all__ = ['DatasetPredictorBase', 'SimpleDatasetPredictor',
            'MultiProcessDatasetPredictor']

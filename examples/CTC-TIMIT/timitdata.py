@@ -2,9 +2,10 @@
 # File: timitdata.py
 # Author: Yuxin Wu
 
-from tensorpack import ProxyDataFlow
 import numpy as np
 from six.moves import range
+
+from tensorpack import ProxyDataFlow
 
 __all__ = ['TIMITBatch']
 

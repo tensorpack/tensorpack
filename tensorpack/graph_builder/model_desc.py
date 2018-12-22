@@ -5,11 +5,11 @@
 from collections import namedtuple
 import tensorflow as tf
 
+from ..models.regularize import regularize_cost_from_collection
+from ..tfutils.tower import get_current_tower_context
 from ..utils import logger
 from ..utils.argtools import memoized_method
 from ..utils.develop import log_deprecated
-from ..tfutils.tower import get_current_tower_context
-from ..models.regularize import regularize_cost_from_collection
 
 __all__ = ['InputDesc', 'ModelDesc', 'ModelDescBase']
 

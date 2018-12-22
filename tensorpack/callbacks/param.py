@@ -2,16 +2,16 @@
 # File: param.py
 
 
-import tensorflow as tf
-from collections import deque
-from abc import abstractmethod, ABCMeta
 import operator
-import six
 import os
+from abc import ABCMeta, abstractmethod
+from collections import deque
+import six
+import tensorflow as tf
 
-from .base import Callback
-from ..utils import logger
 from ..tfutils.common import get_op_tensor_name
+from ..utils import logger
+from .base import Callback
 
 __all__ = ['HyperParam', 'GraphVarParam', 'ObjAttrParam',
            'HyperParamSetter', 'HumanHyperParamSetter',

@@ -3,19 +3,18 @@
 # File: steering-filter.py
 
 import argparse
+import multiprocessing
 import numpy as np
-import tensorflow as tf
 import cv2
+import tensorflow as tf
 from scipy.signal import convolve2d
 from six.moves import range, zip
-import multiprocessing
-
 
 from tensorpack import *
-from tensorpack.utils import logger
-from tensorpack.utils.viz import *
-from tensorpack.utils.argtools import shape2d, shape4d
 from tensorpack.dataflow import dataset
+from tensorpack.utils import logger
+from tensorpack.utils.argtools import shape2d, shape4d
+from tensorpack.utils.viz import *
 
 BATCH = 32
 SHAPE = 64

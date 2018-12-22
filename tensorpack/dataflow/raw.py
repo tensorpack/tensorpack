@@ -2,10 +2,11 @@
 # File: raw.py
 
 
-import numpy as np
 import copy
+import numpy as np
 import six
 from six.moves import range
+
 from .base import DataFlow, RNGDataFlow
 
 __all__ = ['FakeData', 'DataFromQueue', 'DataFromList', 'DataFromGenerator', 'DataFromIterable']

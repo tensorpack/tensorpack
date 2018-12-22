@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 # File: ilsvrc.py
 
+import numpy as np
 import os
 import tarfile
-import numpy as np
 import tqdm
 
 from ...utils import logger
+from ...utils.fs import download, get_dataset_path, mkdir_p
 from ...utils.loadcaffe import get_caffe_pb
-from ...utils.fs import mkdir_p, download, get_dataset_path
 from ...utils.timer import timed_operation
 from ..base import RNGDataFlow
 

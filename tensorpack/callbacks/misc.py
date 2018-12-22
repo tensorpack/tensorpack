@@ -2,14 +2,14 @@
 # File: misc.py
 
 
+import numpy as np
 import os
 import time
 from collections import deque
-import numpy as np
 
-from .base import Callback
-from ..utils.utils import humanize_time_delta
 from ..utils import logger
+from ..utils.utils import humanize_time_delta
+from .base import Callback
 
 __all__ = ['SendStat', 'InjectShell', 'EstimatedTimeLeft']
 

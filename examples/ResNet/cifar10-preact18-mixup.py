@@ -3,14 +3,14 @@
 # File: cifar10-preact18-mixup.py
 # Author: Tao Hu <taohu620@gmail.com>,  Yauheni Selivonchyk <y.selivonchyk@gmail.com>
 
-import numpy as np
 import argparse
+import numpy as np
 import os
 import tensorflow as tf
 
 from tensorpack import *
-from tensorpack.tfutils.summary import *
 from tensorpack.dataflow import dataset
+from tensorpack.tfutils.summary import *
 
 BATCH_SIZE = 128
 CLASS_NUM = 10

@@ -1,5 +1,6 @@
 import os
-from .serialize import loads_msgpack, loads_pyarrow, dumps_msgpack, dumps_pyarrow
+
+from .serialize import dumps_msgpack, dumps_pyarrow, loads_msgpack, loads_pyarrow
 
 """
 Serialization that has compatibility guarantee (therefore is safe to store to disk).

@@ -2,9 +2,9 @@
 # File: bsds500.py
 
 
-import os
 import glob
 import numpy as np
+import os
 
 from ...utils.fs import download, get_dataset_path
 from ..base import RNGDataFlow

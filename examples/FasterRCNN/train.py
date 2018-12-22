@@ -2,58 +2,45 @@
 # -*- coding: utf-8 -*-
 # File: train.py
 
-import os
 import argparse
-import cv2
-import shutil
 import itertools
-import tqdm
-import numpy as np
 import json
+import numpy as np
+import os
+import shutil
+import cv2
 import six
 import tensorflow as tf
+import tqdm
+
+import tensorpack.utils.viz as tpviz
+from tensorpack import *
+from tensorpack.tfutils import optimizer
+from tensorpack.tfutils.common import get_tf_version_tuple
+from tensorpack.tfutils.summary import add_moving_summary
+
+import model_frcnn
+import model_mrcnn
+from basemodel import image_preprocess, resnet_c4_backbone, resnet_conv5, resnet_fpn_backbone
+from coco import COCODetection
+from config import config as cfg
+from config import finalize_configs
+from data import get_all_anchors, get_all_anchors_fpn, get_eval_dataflow, get_train_dataflow
+from eval import DetectionResult, detect_one_image, eval_coco, multithread_eval_coco, print_coco_metrics
+from model_box import RPNAnchors, clip_boxes, crop_and_resize, roi_align
+from model_cascade import CascadeRCNNHead
+from model_fpn import fpn_model, generate_fpn_proposals, multilevel_roi_align, multilevel_rpn_losses
+from model_frcnn import BoxProposals, FastRCNNHead, fastrcnn_outputs, fastrcnn_predictions, sample_fast_rcnn_targets
+from model_mrcnn import maskrcnn_loss, maskrcnn_upXconv_head
+from model_rpn import generate_rpn_proposals, rpn_head, rpn_losses
+from viz import draw_annotation, draw_final_outputs, draw_predictions, draw_proposal_recall
+
 try:
     import horovod.tensorflow as hvd
 except ImportError:
     pass
 
 assert six.PY3, "FasterRCNN requires Python 3!"
-
-from tensorpack import *
-from tensorpack.tfutils.summary import add_moving_summary
-from tensorpack.tfutils import optimizer
-from tensorpack.tfutils.common import get_tf_version_tuple
-import tensorpack.utils.viz as tpviz
-
-from coco import COCODetection
-from basemodel import (
-    image_preprocess, resnet_c4_backbone, resnet_conv5,
-    resnet_fpn_backbone)
-
-import model_frcnn
-import model_mrcnn
-from model_frcnn import (
-    sample_fast_rcnn_targets, fastrcnn_outputs,
-    fastrcnn_predictions, BoxProposals, FastRCNNHead)
-from model_mrcnn import maskrcnn_upXconv_head, maskrcnn_loss
-from model_rpn import rpn_head, rpn_losses, generate_rpn_proposals
-from model_fpn import (
-    fpn_model, multilevel_roi_align,
-    multilevel_rpn_losses, generate_fpn_proposals)
-from model_cascade import CascadeRCNNHead
-from model_box import (
-    clip_boxes, crop_and_resize, roi_align, RPNAnchors)
-
-from data import (
-    get_train_dataflow, get_eval_dataflow,
-    get_all_anchors, get_all_anchors_fpn)
-from viz import (
-    draw_annotation, draw_proposal_recall,
-    draw_predictions, draw_final_outputs)
-from eval import (
-    eval_coco, multithread_eval_coco,
-    detect_one_image, print_coco_metrics, DetectionResult)
-from config import finalize_configs, config as cfg
 
 
 class DetectionModel(ModelDesc):

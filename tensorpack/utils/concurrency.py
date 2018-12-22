@@ -3,14 +3,14 @@
 
 # Some code taken from zxytim
 
-import threading
-import platform
-import multiprocessing
 import atexit
 import bisect
-from contextlib import contextmanager
+import multiprocessing
+import platform
 import signal
+import threading
 import weakref
+from contextlib import contextmanager
 import six
 from six.moves import queue
 

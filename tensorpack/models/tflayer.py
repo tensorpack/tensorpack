@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 # File: tflayer.py
 
-import tensorflow as tf
-import six
 import functools
+import six
+import tensorflow as tf
 
-from ..utils.argtools import get_data_format
 from ..tfutils.common import get_tf_version_tuple
 from ..tfutils.varreplace import custom_getter_scope
+from ..utils.argtools import get_data_format
 
 __all__ = []
 

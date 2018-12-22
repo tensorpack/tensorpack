@@ -4,6 +4,7 @@
 
 
 import tensorflow as tf
+
 from tensorpack import ModelDesc, argscope, enable_argscope_for_module
 
 enable_argscope_for_module(tf.layers)

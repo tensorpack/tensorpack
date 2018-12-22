@@ -5,6 +5,7 @@
 """ Compatible layers between tf.train.SessionRunHook and Callback"""
 
 import tensorflow as tf
+
 from .base import Callback
 
 __all__ = ['CallbackToHook', 'HookToCallback']

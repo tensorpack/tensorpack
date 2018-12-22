@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 # File: input_source_base.py
 
-from abc import ABCMeta, abstractmethod
 import copy
-import six
-from six.moves import zip
+from abc import ABCMeta, abstractmethod
 from contextlib import contextmanager
+import six
 import tensorflow as tf
+from six.moves import zip
 
-from ..utils.argtools import memoized_method, call_only_once
 from ..callbacks.base import CallbackFactory
 from ..tfutils.common import get_op_tensor_name
 from ..utils import logger
+from ..utils.argtools import call_only_once, memoized_method
 
 __all__ = ['InputSource', 'remap_input_source']
 

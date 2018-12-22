@@ -4,11 +4,11 @@
 
 import abc
 import tensorflow as tf
+
 from tensorpack import ModelDesc
-from tensorpack.utils import logger
-from tensorpack.tfutils import (
-    varreplace, summary, get_current_tower_context, optimizer, gradproc)
+from tensorpack.tfutils import get_current_tower_context, gradproc, optimizer, summary, varreplace
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
+from tensorpack.utils import logger
 
 
 class Model(ModelDesc):

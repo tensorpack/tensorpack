@@ -3,18 +3,17 @@
 
 import tensorflow as tf
 
-from tensorpack.tfutils.summary import add_moving_summary
+from tensorpack.models import Conv2D, FullyConnected, layer_register
 from tensorpack.tfutils.argscope import argscope
 from tensorpack.tfutils.common import get_tf_version_tuple
 from tensorpack.tfutils.scope_utils import under_name_scope
-from tensorpack.models import (
-    Conv2D, FullyConnected, layer_register)
+from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.utils.argtools import memoized_method
 
 from basemodel import GroupNorm
-from utils.box_ops import pairwise_iou
-from model_box import encode_bbox_target, decode_bbox_target
 from config import config as cfg
+from model_box import decode_bbox_target, encode_bbox_target
+from utils.box_ops import pairwise_iou
 
 
 @under_name_scope()

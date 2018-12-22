@@ -5,8 +5,10 @@
 import numpy as np
 import os
 import sys
-from .fs import mkdir_p
+
+from ..utils.develop import create_dummy_func  # noqa
 from .argtools import shape2d
+from .fs import mkdir_p
 from .palette import PALETTE_RGB
 
 try:
@@ -411,7 +413,6 @@ def draw_boxes(im, boxes, labels=None, color=None):
     return im
 
 
-from ..utils.develop import create_dummy_func   # noqa
 try:
     import matplotlib.pyplot as plt
 except (ImportError, RuntimeError):

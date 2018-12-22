@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 # File: dump-model-params.py
 
-import numpy as np
-import six
 import argparse
+import numpy as np
 import os
+import six
 import tensorflow as tf
 
 from tensorpack.tfutils import varmanip

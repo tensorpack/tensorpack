@@ -4,13 +4,13 @@
 
 import sys
 import cv2
+
 from . import AugmentorList
 from .crop import *
-from .imgproc import *
-from .noname import *
 from .deform import *
+from .imgproc import *
 from .noise import SaltPepperNoise
-
+from .noname import *
 
 anchors = [(0.2, 0.2), (0.7, 0.2), (0.8, 0.8), (0.5, 0.5), (0.2, 0.5)]
 augmentors = AugmentorList([

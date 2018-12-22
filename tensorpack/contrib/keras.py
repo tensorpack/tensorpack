@@ -1,29 +1,25 @@
 # -*- coding: utf-8 -*-
 # File: keras.py
 
-import tensorflow as tf
-import six
-from tensorflow import keras
-import tensorflow.keras.backend as K
-from tensorflow.python.keras import metrics as metrics_module
 from contextlib import contextmanager
+import six
+import tensorflow as tf
+import tensorflow.keras.backend as K
+from tensorflow import keras
+from tensorflow.python.keras import metrics as metrics_module
 
+from ..callbacks import Callback, CallbackToHook, InferenceRunner, InferenceRunnerBase, ScalarStats
 from ..models.regularize import regularize_cost_from_collection
-from ..train import Trainer, SimpleTrainer, SyncMultiGPUTrainerParameterServer
-from ..train.trainers import DistributedTrainerBase
-from ..train.interface import apply_default_prefetch
-from ..callbacks import (
-    Callback, InferenceRunnerBase, InferenceRunner, CallbackToHook,
-    ScalarStats)
-
-from ..tfutils.common import get_op_tensor_name
 from ..tfutils.collection import backup_collection, restore_collection
-from ..tfutils.tower import get_current_tower_context
+from ..tfutils.common import get_op_tensor_name
 from ..tfutils.scope_utils import cached_name_scope
 from ..tfutils.summary import add_moving_summary
-from ..utils.gpu import get_nr_gpu
+from ..tfutils.tower import get_current_tower_context
+from ..train import SimpleTrainer, SyncMultiGPUTrainerParameterServer, Trainer
+from ..train.interface import apply_default_prefetch
+from ..train.trainers import DistributedTrainerBase
 from ..utils import logger
-
+from ..utils.gpu import get_nr_gpu
 
 __all__ = ['KerasPhaseCallback', 'setup_keras_trainer', 'KerasModel']
 

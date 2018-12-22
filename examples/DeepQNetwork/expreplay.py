@@ -2,18 +2,18 @@
 # File: expreplay.py
 # Author: Yuxin Wu
 
-import numpy as np
 import copy
-from collections import deque, namedtuple
+import numpy as np
 import threading
+from collections import deque, namedtuple
 from six.moves import queue, range
 
+from tensorpack.callbacks.base import Callback
 from tensorpack.dataflow import DataFlow
 from tensorpack.utils import logger
-from tensorpack.utils.utils import get_tqdm, get_rng
-from tensorpack.utils.stats import StatCounter
 from tensorpack.utils.concurrency import LoopThread, ShareSessionThread
-from tensorpack.callbacks.base import Callback
+from tensorpack.utils.stats import StatCounter
+from tensorpack.utils.utils import get_rng, get_tqdm
 
 __all__ = ['ExpReplay']
 

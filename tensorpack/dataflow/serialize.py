@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
 # File: serialize.py
 
-import os
 import numpy as np
+import os
 from collections import defaultdict
 
-from ..utils.utils import get_tqdm
 from ..utils import logger
 from ..utils.compatible_serialize import dumps, loads
-
+from ..utils.develop import create_dummy_class  # noqa
+from ..utils.utils import get_tqdm
 from .base import DataFlow
-from .format import LMDBData, HDF5Data
-from .common import MapData, FixedSizeData
-from .raw import DataFromList, DataFromGenerator
+from .common import FixedSizeData, MapData
+from .format import HDF5Data, LMDBData
+from .raw import DataFromGenerator, DataFromList
 
 __all__ = ['LMDBSerializer', 'NumpySerializer', 'TFRecordSerializer', 'HDF5Serializer']
 
@@ -195,7 +195,6 @@ class HDF5Serializer():
         return HDF5Data(path, data_paths, shuffle)
 
 
-from ..utils.develop import create_dummy_class   # noqa
 try:
     import lmdb
 except ImportError:

@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 # File: nvml.py
 
-from ctypes import (byref, c_uint, c_ulonglong,
-                    CDLL, POINTER, Structure)
 import threading
-
+from ctypes import CDLL, POINTER, Structure, byref, c_uint, c_ulonglong
 
 __all__ = ['NVMLContext']
 

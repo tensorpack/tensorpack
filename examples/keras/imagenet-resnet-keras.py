@@ -3,22 +3,21 @@
 # File: imagenet-resnet-keras.py
 # Author: Yuxin Wu
 
+import argparse
 import numpy as np
 import os
 import tensorflow as tf
-import argparse
-
-from tensorpack import InputDesc, SyncMultiGPUTrainerReplicated
-from tensorpack.dataflow import FakeData, MapDataComponent
-from tensorpack.utils import logger
-from tensorpack.utils.gpu import get_num_gpu
-from tensorpack.contrib.keras import KerasModel
-from tensorpack.callbacks import *
 from tensorflow.python.keras.layers import *
 
+from tensorpack import InputDesc, SyncMultiGPUTrainerReplicated
+from tensorpack.callbacks import *
+from tensorpack.contrib.keras import KerasModel
+from tensorpack.dataflow import FakeData, MapDataComponent
 from tensorpack.tfutils.common import get_tf_version_tuple
-from imagenet_utils import get_imagenet_dataflow, fbresnet_augmentor
+from tensorpack.utils import logger
+from tensorpack.utils.gpu import get_num_gpu
 
+from imagenet_utils import fbresnet_augmentor, get_imagenet_dataflow
 
 TOTAL_BATCH_SIZE = 512
 BASE_LR = 0.1 * (TOTAL_BATCH_SIZE // 256)

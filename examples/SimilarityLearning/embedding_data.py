@@ -3,7 +3,8 @@
 # Author: tensorpack contributors
 
 import numpy as np
-from tensorpack.dataflow import dataset, BatchData
+
+from tensorpack.dataflow import BatchData, dataset
 
 
 def get_test_data(batch=128):

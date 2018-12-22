@@ -5,17 +5,15 @@
 
 import numpy as np
 import tensorflow as tf
-
 from tensorflow import keras
-KL = keras.layers
-
 
 from tensorpack import InputDesc, QueueInput
-from tensorpack.dataflow import dataset, BatchData, MapData
-from tensorpack.utils import logger
-from tensorpack.contrib.keras import KerasModel
 from tensorpack.callbacks import ModelSaver
+from tensorpack.contrib.keras import KerasModel
+from tensorpack.dataflow import BatchData, MapData, dataset
+from tensorpack.utils import logger
 
+KL = keras.layers
 IMAGE_SIZE = 28
 
 
