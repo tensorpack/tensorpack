@@ -14,7 +14,7 @@ from ..utils import logger
 from .base import Callback
 
 __all__ = ['RunOp', 'RunUpdateOps', 'ProcessTensors', 'DumpTensors',
-           'DumpTensor', 'DumpTensorAsImage', 'DumpParamAsImage']
+           'DumpTensor', 'DumpTensorAsImage', 'DumpParamAsImage', 'CheckNumerics']
 
 
 class RunOp(Callback):
@@ -211,6 +211,20 @@ class DumpTensorAsImage(Callback):
         res = im * self.scale
         res = np.clip(res, 0, 255)
         cv2.imwrite(fname, res.astype('uint8'))
+
+
+class CheckNumerics(Callback):
+    """
+    When triggered, check variables in the graph for NaN and Inf.
+    Raise exceptions if such an error is found.
+    """
+    def _setup_graph(self):
+        vars = tf.trainable_variables()
+        ops = [tf.check_numerics(v, "CheckNumerics['{}']".format(v.op.name)).op for v in vars]
+        self._check_op = tf.group(*ops)
+
+    def _trigger(self):
+        self._check_op.run()
 
 
 try:

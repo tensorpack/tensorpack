@@ -341,14 +341,14 @@ class HorovodTrainer(SingleCostTrainer):
 
            + Make sure your InputSource has reasonable randomness.
 
-           + If your data processing is heavy, doing it in a separate dedicated process might be
+           + If your data processing is heavy, doing it in a single dedicated process might be
              a better choice than doing them repeatedly in each process.
 
            + You need to make sure log directories in each process won't conflict.
              You can set it only for the chief process, or set a different one for each process.
 
            + Callbacks have an option to be run only in the chief process, or in all processes.
-             See :meth:`callback.set_chief_only()`. Most callbacks have a reasonable
+             See :meth:`Callback.set_chief_only()`. Most callbacks have a reasonable
              default already, but certain callbacks may not behave properly by default. Report an issue if you find any.
 
            + You can use Horovod API such as `hvd.rank()` to know which process you are and choose

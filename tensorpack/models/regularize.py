@@ -167,4 +167,7 @@ def Dropout(x, *args, **kwargs):
     if kwargs.get('training', None) is None:
         kwargs['training'] = get_current_tower_context().is_training
 
-    return tf.layers.dropout(x, rate=rate, **kwargs)
+    if get_tf_version_tuple() <= (1, 12):
+        return tf.layers.dropout(x, rate=rate, **kwargs)
+    else:
+        return tf.nn.dropout(x, rate=rate if kwargs['training'] else 0.)

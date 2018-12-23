@@ -42,13 +42,13 @@ See `./alexnet.py --help` for usage.
 ### VGG16
 
 This VGG16 script, when trained with 8 GPUs and 32 batch size per GPU, reaches the following
-validation error after 100 epochs (30h with 8 P100s). This is the code for the VGG
+validation error after 100 epochs (30h with 8 P100s). This reproduces the VGG
 experiments in the paper [Group Normalization](https://arxiv.org/abs/1803.08494).
 See `./vgg16.py --help` for usage.
 
  | No Normalization                          | Batch Normalization | Group Normalization |
- |:------------------------------------------|---------------------|--------------------:|
- | 29~30% (large variation with random seed) | 28%                 |               27.6% |
+ |:------------------------------------------|:-------------------:|:-------------------:|
+ | 29~30% (large variation with random seed) | 28%                 | 27.6%               |
 
 Note that the purpose of this experiment in the paper is not to claim GroupNorm
 has better performance than BatchNorm.
