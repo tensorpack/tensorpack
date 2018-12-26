@@ -108,8 +108,9 @@ _C.BACKBONE.STRIDE_1X1 = False  # True for MSRA models
 # schedule -----------------------
 _C.TRAIN.NUM_GPUS = None         # by default, will be set from code
 _C.TRAIN.WEIGHT_DECAY = 1e-4
-_C.TRAIN.BASE_LR = 1e-2  # defined for a total batch size of 8. Otherwise it will be adjusted automatically
+_C.TRAIN.BASE_LR = 1e-2  # defined for total batch size=8. Otherwise it will be adjusted automatically
 _C.TRAIN.WARMUP = 1000   # in terms of iterations. This is not affected by #GPUs
+_C.TRAIN.WARMUP_INIT_LR = 1e-2 * 0.33  # defined for total batch size=8. Otherwise it will be adjusted automatically
 _C.TRAIN.STEPS_PER_EPOCH = 500
 _C.TRAIN.STARTING_EPOCH = 1  # the first epoch to start with, useful to continue a training
 
@@ -235,9 +236,7 @@ def finalize_configs(is_training):
 
     if is_training:
         train_scales = _C.PREPROC.TRAIN_SHORT_EDGE_SIZE
-        if not isinstance(train_scales, (list, tuple)):
-            train_scales = [train_scales, train_scales]
-        if train_scales[1] - train_scales[0] > 100:
+        if isinstance(train_scales, (list, tuple)) and train_scales[1] - train_scales[0] > 100:
             # don't warmup if augmentation is on
             os.environ['TF_CUDNN_USE_AUTOTUNE'] = '0'
         os.environ['TF_AUTOTUNE_THRESHOLD'] = '1'
