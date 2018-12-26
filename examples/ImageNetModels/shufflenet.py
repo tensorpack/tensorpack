@@ -16,7 +16,7 @@ from tensorpack.tfutils.scope_utils import under_name_scope
 from tensorpack.utils import logger
 from tensorpack.utils.gpu import get_num_gpu
 
-from imagenet_utils import GoogleNetResize, ImageNetModel, eval_on_ILSVRC12, get_imagenet_dataflow
+from imagenet_utils import ImageNetModel, eval_on_ILSVRC12, get_imagenet_dataflow
 
 
 @layer_register(log_shape=True)
@@ -160,7 +160,7 @@ def get_data(name, batch):
     if isTrain:
         augmentors = [
             # use lighter augs if model is too small
-            GoogleNetResize(crop_area_fraction=0.49 if args.ratio < 1 else 0.08),
+            imgaug.GoogleNetRandomCropAndResize(crop_area_fraction=(0.49 if args.ratio < 1 else 0.08, 1.)),
             imgaug.RandomOrderAug(
                 [imgaug.BrightnessScale((0.6, 1.4), clip=False),
                  imgaug.Contrast((0.6, 1.4), clip=False),

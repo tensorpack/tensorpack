@@ -179,7 +179,7 @@ def _pick_tqdm_interval(file):
                 return 15
 
         if 'OMPI_COMM_WORLD_SIZE' in os.environ:
-            if int(os.environ['OMPI_COMM_WORLD_SIZE']) > 1:
+            if int(os.environ['OMPI_COMM_WORLD_SIZE']) > 8:
                 return 60
 
         # If not a tty, don't refresh progress bar that often

@@ -25,44 +25,13 @@ from tensorpack.utils.stats import RatioCounter
 """
 
 
-class GoogleNetResize(imgaug.ImageAugmentor):
-    """
-    crop 8%~100% of the original image
-    See `Going Deeper with Convolutions` by Google.
-    """
-    def __init__(self, crop_area_fraction=0.08,
-                 aspect_ratio_low=0.75, aspect_ratio_high=1.333,
-                 target_shape=224):
-        self._init(locals())
-
-    def _augment(self, img, _):
-        h, w = img.shape[:2]
-        area = h * w
-        for _ in range(10):
-            targetArea = self.rng.uniform(self.crop_area_fraction, 1.0) * area
-            aspectR = self.rng.uniform(self.aspect_ratio_low, self.aspect_ratio_high)
-            ww = int(np.sqrt(targetArea * aspectR) + 0.5)
-            hh = int(np.sqrt(targetArea / aspectR) + 0.5)
-            if self.rng.uniform() < 0.5:
-                ww, hh = hh, ww
-            if hh <= h and ww <= w:
-                x1 = 0 if w == ww else self.rng.randint(0, w - ww)
-                y1 = 0 if h == hh else self.rng.randint(0, h - hh)
-                out = img[y1:y1 + hh, x1:x1 + ww]
-                out = cv2.resize(out, (self.target_shape, self.target_shape), interpolation=cv2.INTER_CUBIC)
-                return out
-        out = imgaug.ResizeShortestEdge(self.target_shape, interp=cv2.INTER_CUBIC).augment(img)
-        out = imgaug.CenterCrop(self.target_shape).augment(out)
-        return out
-
-
 def fbresnet_augmentor(isTrain):
     """
     Augmentor used in fb.resnet.torch, for BGR images in range [0,255].
     """
     if isTrain:
         augmentors = [
-            GoogleNetResize(),
+            imgaug.GoogleNetRandomCropAndResize(),
             # It's OK to remove the following augs if your CPU is not fast enough.
             # Removing brightness/contrast/saturation does not have a significant effect on accuracy.
             # Removing lighting leads to a tiny drop in accuracy.

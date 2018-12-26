@@ -79,11 +79,10 @@ class LeastLoadedDeviceSetter(object):
         self.ps_sizes = [0] * len(self.ps_devices)
 
     def __call__(self, op):
-        if get_tf_version_tuple() >= (1, 8):
-            from tensorflow.python.training.device_util import canonicalize
-        else:
-            def canonicalize(name):    # tensorflow/tensorflow#11484
-                return tf.DeviceSpec.from_string(name).to_string()
+        # from tensorflow.python.training.device_util import canonicalize
+        # from tensorflow.python.distribute.device_util import canonicalize
+        def canonicalize(name):    # tensorflow/tensorflow#11484
+            return tf.DeviceSpec.from_string(name).to_string()
 
         if op.device:
             return op.device

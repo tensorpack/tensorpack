@@ -53,12 +53,12 @@ Speed:
 
 1. After warmup, the training speed will slowly decrease due to more accurate proposals.
 
-1. This implementation is about 10% slower than detectron,
-   probably due to the lack of specialized ops (e.g. AffineChannel, ROIAlign) in TensorFlow.
-   It's certainly faster than other TF implementation.
-
 1. The code should have around 70% GPU utilization on V100s, and 85%~90% scaling
    efficiency from 1 V100 to 8 V100s.
+
+1. This implementation does not contain specialized CUDA ops (e.g. AffineChannel, ROIAlign),
+   so it can be slightly (~10%) slower than Detectron (Caffe2) and
+   maskrcnn-benchmark (PyTorch).
 
 Possible Future Enhancements:
 
