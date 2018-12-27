@@ -375,6 +375,7 @@ class HorovodTrainer(SingleCostTrainer):
         hvd.init()
         self.is_chief = hvd.rank() == 0
         self._local_rank = hvd.local_rank()
+        self._rank = hvd.rank()
         self._average = average
         logger.info("[HorovodTrainer] local rank={}".format(self._local_rank))
         super(HorovodTrainer, self).__init__()
@@ -435,7 +436,10 @@ class HorovodTrainer(SingleCostTrainer):
         # TODO:
         # 1. a allgather helper to concat strings
         # 2. check variables on each rank match each other, print warnings, and broadcast the common set.
-        logger.info("Broadcasting initialized variables ...")
+        if self.is_chief:
+            logger.info("Broadcasting initialized variables ...")
+        else:
+            logger.info("Rank {} waiting for initialization broadcasting ...".format(self._rank))
         self.sess.run(self._broadcast_op)
 
 

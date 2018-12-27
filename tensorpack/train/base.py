@@ -46,7 +46,8 @@ class TrainLoop(object):
         self.starting_epoch = int(starting_epoch)
         self.max_epoch = int(max_epoch)
         self.steps_per_epoch = int(steps_per_epoch)
-        assert self.steps_per_epoch > 0 and self.max_epoch > 0
+        # Allow empty epoch (no steps), if we want to run the callbacks only.
+        assert self.steps_per_epoch >= 0 and self.max_epoch >= 0
 
         self._epoch_num = starting_epoch - 1
 

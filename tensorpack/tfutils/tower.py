@@ -252,6 +252,8 @@ class TowerFuncWrapper(object):
     each time the function is called.
 
     :class:`TowerTrainer` needs this so that it knows how to build a predictor.
+
+    Conceptually, this class is roughly equivalent to `tf.function` with input signature, introduced in TF 2.0.
     """
 
     def __init__(self, tower_fn, inputs_desc):
