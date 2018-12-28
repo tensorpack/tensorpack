@@ -84,7 +84,7 @@ class TrainConfig(object):
                                      MergeAllSummaries(),
                                      RunUpdateOps()]
 
-            monitors (list[TrainingMonitor]): Defaults to :func:`DEFAULT_MONITORS()`.
+            monitors (list[MonitorBase]): Defaults to :func:`DEFAULT_MONITORS()`.
 
             session_creator (tf.train.SessionCreator): Defaults to :class:`sesscreate.NewSessionCreator()`
                 with the config returned by :func:`tfutils.get_default_sess_config()`.

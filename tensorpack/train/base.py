@@ -8,7 +8,7 @@ import six
 import tensorflow as tf
 from six.moves import range
 
-from ..callbacks import Callback, Callbacks, Monitors, TrainingMonitor
+from ..callbacks import Callback, Callbacks, Monitors, MonitorBase
 from ..callbacks.steps import MaintainStepCounter
 from ..tfutils import get_global_step_value
 from ..tfutils.model_utils import describe_trainable_vars
@@ -186,7 +186,7 @@ class Trainer(object):
 
         Args:
             callbacks ([Callback]):
-            monitors ([TrainingMonitor]):
+            monitors ([MonitorBase]):
         """
         assert isinstance(callbacks, list), callbacks
         assert isinstance(monitors, list), monitors
@@ -196,7 +196,7 @@ class Trainer(object):
         for cb in callbacks:
             self.register_callback(cb)
         for cb in self._callbacks:
-            assert not isinstance(cb, TrainingMonitor), "Monitor cannot be pre-registered for now!"
+            assert not isinstance(cb, MonitorBase), "Monitor cannot be pre-registered for now!"
         registered_monitors = []
         for m in monitors:
             if self.register_callback(m):

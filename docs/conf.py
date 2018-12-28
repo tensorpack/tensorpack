@@ -380,13 +380,14 @@ _DEPRECATED_NAMES = set([
     'dump_dataflow_to_process_queue',
     'PrefetchOnGPUs',
 
-    # renamed stuff:
+    # renamed items that should not appear in docs
     'DumpTensor',
     'DumpParamAsImage',
     'PeriodicRunHooks',
     'get_nr_gpu',
     'start_test',  # TestDataSpeed
     'ThreadedMapData',
+    'TrainingMonitor',
 
     # deprecated or renamed symbolic code
     'BilinearUpSample',
