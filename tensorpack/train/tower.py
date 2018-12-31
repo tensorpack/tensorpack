@@ -176,6 +176,9 @@ class SingleCostTrainer(TowerTrainer):
     AGGREGATION_METHOD = tf.AggregationMethod.DEFAULT
     """See `tf.gradients`. """
 
+    XLA_COMPILE = False
+    """ Use :func:`xla.compile` to compile the tower function. """
+
     @call_only_once
     def setup_graph(self, inputs_desc, input, get_cost_fn, get_opt_fn):
         """
@@ -246,4 +249,26 @@ class SingleCostTrainer(TowerTrainer):
             grads = FilterNoneGrad().process(grads)
             return grads
 
-        return get_grad_fn
+        if not self.XLA_COMPILE:
+            return get_grad_fn
+        else:
+            from tensorflow.contrib.compiler import xla
+
+            def xla_get_grad_fn():
+                def xla_func():
+                    grads = get_grad_fn()
+                    # unpack, because the return value
+                    # of xla function cannot have nested structure
+                    grads = [x[0] for x in grads]
+                    return grads
+
+                grads_no_vars = xla.compile(xla_func)
+                # repack again
+                ctx = get_current_tower_context()
+                if ctx.has_own_variables:
+                    varlist = ctx.get_collection_in_tower(tf.GraphKeys.TRAINABLE_VARIABLES)
+                else:
+                    varlist = tf.trainable_variables()
+                return list(zip(grads_no_vars, varlist))
+
+            return xla_get_grad_fn

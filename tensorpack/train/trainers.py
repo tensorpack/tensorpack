@@ -152,6 +152,15 @@ class SyncMultiGPUTrainerReplicated(SingleCostTrainer):
     List of GPU ids.
     """
 
+    BROADCAST_EVERY_EPOCH = True
+    """
+    Whether to broadcast the variables every epoch.
+    Theoretically this is a no-op (because the variables
+    are supposed to be in-sync).
+    But this cheap operation may help prevent
+    certain numerical issues in practice.
+    """
+
     @map_arg(gpus=_int_to_range)
     def __init__(self, gpus, average=True, mode=None, use_nccl=None):
         """
@@ -186,7 +195,9 @@ class SyncMultiGPUTrainerReplicated(SingleCostTrainer):
 
         cb = RunOp(
             post_init_op,
-            run_before=True, run_as_trigger=True, verbose=True)
+            run_before=True,
+            run_as_trigger=self.BROADCAST_EVERY_EPOCH,
+            verbose=True)
         return [cb]
 
 

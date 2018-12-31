@@ -258,6 +258,11 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
 
         if self._mode in ['nccl', 'hierarchical']:
             all_grads, all_vars = split_grad_list(grad_list)
+            # use allreduce from tf-benchmarks
+            # from .batch_allreduce import AllReduceSpecAlgorithm
+            # algo = AllReduceSpecAlgorithm('nccl', list(range(8)), 0, 10)
+            # all_grads, warmup_ops = algo.batch_all_reduce(all_grads, 1, True, False)
+            # print("WARMUP OPS", warmup_ops)
 
             if self._mode == 'nccl':
                 all_grads = allreduce_grads(all_grads, average=self._average)  # #gpu x #param
