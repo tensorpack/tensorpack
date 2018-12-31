@@ -222,19 +222,26 @@ def add_moving_summary(*args, **kwargs):
     # allow ctx to be none
     if ctx is not None and not ctx.is_main_training_tower:
         return []
+
+    graph = tf.get_default_graph()
+    try:
+        control_flow_ctx = graph._get_control_flow_context()
+        # XLA does not support summaries anyway
+        # However, this function will generate unnecessary dependency edges,
+        # which makes the tower function harder to compile under XLA, so we skip it
+        if control_flow_ctx is not None and control_flow_ctx.IsXLAContext():
+            return
+    except Exception:
+        pass
+
     if tf.get_variable_scope().reuse is True:
         logger.warn("add_moving_summary() called under reuse=True scope, ignored.")
         return []
-
-    if len(args) == 1 and isinstance(args[0], (list, tuple)):
-        logger.warn("add_moving_summary() takes positional args instead of an iterable of tensors!")
-        args = args[0]
 
     for x in args:
         assert isinstance(x, (tf.Tensor, tf.Variable)), x
         assert x.get_shape().ndims == 0, \
             "add_moving_summary() only accepts scalar tensor! Got one with {}".format(x.get_shape())
-    # TODO variable not saved under distributed
 
     ema_ops = []
     for c in args:
@@ -245,7 +252,8 @@ def add_moving_summary(*args, **kwargs):
             # assign_moving_average creates variables with op names, therefore clear ns first.
             with _enter_vs_reuse_ns('EMA') as vs:
                 ema_var = tf.get_variable(name, shape=c.shape, dtype=c.dtype,
-                                          initializer=tf.constant_initializer(), trainable=False)
+                                          initializer=tf.constant_initializer(),
+                                          trainable=False)
                 ns = vs.original_name_scope
             with tf.name_scope(ns):     # reuse VS&NS so that EMA_1 won't appear
                 ema_op = moving_averages.assign_moving_average(

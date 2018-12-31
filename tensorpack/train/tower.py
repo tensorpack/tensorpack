@@ -177,7 +177,16 @@ class SingleCostTrainer(TowerTrainer):
     """See `tf.gradients`. """
 
     XLA_COMPILE = False
-    """ Use :func:`xla.compile` to compile the tower function. """
+    """ Use :func:`xla.compile` to compile the tower function.
+    Note that XLA has very strong requirements on the tower function, e.g.:
+
+    1. limited op support
+    2. inferrable shape
+    3. no summary support
+
+    and many tower functions cannot be compiled by XLA.
+    Don't use it if you don't understand it.
+    """
 
     @call_only_once
     def setup_graph(self, inputs_desc, input, get_cost_fn, get_opt_fn):
@@ -230,45 +239,46 @@ class SingleCostTrainer(TowerTrainer):
 
         def get_grad_fn():
             ctx = get_current_tower_context()
-            cost = get_cost_fn(*input.get_input_tensors())
-            assert isinstance(cost, tf.Tensor), cost
-            assert cost.shape.ndims == 0, "Cost must be a scalar, but found {}!".format(cost)
-            if not ctx.is_training:
-                return None     # this is the tower function, could be called for inference
+            inputs = input.get_input_tensors()
 
-            if ctx.has_own_variables:
-                varlist = ctx.get_collection_in_tower(tf.GraphKeys.TRAINABLE_VARIABLES)
+            def compute_grad_from_inputs(*inputs):
+                cost = get_cost_fn(*inputs)
+                assert isinstance(cost, tf.Tensor), cost
+                assert cost.shape.ndims == 0, "Cost must be a scalar, but found {}!".format(cost)
+
+                if not ctx.is_training:
+                    return None     # this is the tower function, could be called for inference
+
+                if ctx.has_own_variables:
+                    varlist = ctx.get_collection_in_tower(tf.GraphKeys.TRAINABLE_VARIABLES)
+                else:
+                    varlist = tf.trainable_variables()
+                opt = get_opt_fn()
+                grads = opt.compute_gradients(
+                    cost, var_list=varlist,
+                    gate_gradients=self.GATE_GRADIENTS,
+                    colocate_gradients_with_ops=self.COLOCATE_GRADIENTS_WITH_OPS,
+                    aggregation_method=self.AGGREGATION_METHOD)
+                grads = FilterNoneGrad().process(grads)
+                return grads
+
+            if not self.XLA_COMPILE:
+                return compute_grad_from_inputs(*inputs)
             else:
-                varlist = tf.trainable_variables()
-            opt = get_opt_fn()
-            grads = opt.compute_gradients(
-                cost, var_list=varlist,
-                gate_gradients=self.GATE_GRADIENTS,
-                colocate_gradients_with_ops=self.COLOCATE_GRADIENTS_WITH_OPS,
-                aggregation_method=self.AGGREGATION_METHOD)
-            grads = FilterNoneGrad().process(grads)
-            return grads
+                from tensorflow.contrib.compiler import xla
 
-        if not self.XLA_COMPILE:
-            return get_grad_fn
-        else:
-            from tensorflow.contrib.compiler import xla
-
-            def xla_get_grad_fn():
                 def xla_func():
-                    grads = get_grad_fn()
+                    grads = compute_grad_from_inputs(*inputs)
                     # unpack, because the return value
                     # of xla function cannot have nested structure
                     grads = [x[0] for x in grads]
                     return grads
 
                 grads_no_vars = xla.compile(xla_func)
-                # repack again
-                ctx = get_current_tower_context()
                 if ctx.has_own_variables:
                     varlist = ctx.get_collection_in_tower(tf.GraphKeys.TRAINABLE_VARIABLES)
                 else:
                     varlist = tf.trainable_variables()
                 return list(zip(grads_no_vars, varlist))
 
-            return xla_get_grad_fn
+        return get_grad_fn
