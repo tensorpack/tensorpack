@@ -116,7 +116,7 @@ class MergeAllSummaries_RunWithOp(Callback):
         self.trainer.monitors.put_summary(summary)
 
 
-def MergeAllSummaries(period=0, run_alone=False, key=tf.GraphKeys.SUMMARIES):
+def MergeAllSummaries(period=0, run_alone=False, key=None):
     """
     This callback is enabled by default.
     Evaluate all summaries by `tf.summary.merge_all`, and write them to logs.
@@ -133,6 +133,8 @@ def MergeAllSummaries(period=0, run_alone=False, key=tf.GraphKeys.SUMMARIES):
         key (str): the collection of summary tensors. Same as in `tf.summary.merge_all`.
             Default is ``tf.GraphKeys.SUMMARIES``.
     """
+    if key is None:
+        key = tf.GraphKeys.SUMMARIES
     period = int(period)
     if run_alone:
         return MergeAllSummaries_RunAlone(period, key)

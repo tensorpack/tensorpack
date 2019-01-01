@@ -20,7 +20,7 @@ class ModelSaver(Callback):
     def __init__(self, max_to_keep=10,
                  keep_checkpoint_every_n_hours=0.5,
                  checkpoint_dir=None,
-                 var_collections=[tf.GraphKeys.GLOBAL_VARIABLES]):
+                 var_collections=None):
         """
         Args:
             max_to_keep (int): the same as in ``tf.train.Saver``.
@@ -29,6 +29,8 @@ class ModelSaver(Callback):
             checkpoint_dir (str): Defaults to ``logger.get_logger_dir()``.
             var_collections (str or list of str): collection of the variables (or list of collections) to save.
         """
+        if var_collections is None:
+            var_collections = [tf.GraphKeys.GLOBAL_VARIABLES]
         self._max_to_keep = max_to_keep
         self._keep_every_n_hours = keep_checkpoint_every_n_hours
 

@@ -39,7 +39,7 @@ def regularize_cost(regex, func, name='regularize_cost'):
     Args:
         regex (str): a regex to match variable names, e.g. "conv.*/W"
         func: the regularization function, which takes a tensor and returns a scalar tensor.
-            E.g., ``tf.contrib.layers.l2_regularizer``.
+            E.g., ``tf.nn.l2_loss, tf.contrib.layers.l1_regularizer(0.001)``.
 
     Returns:
         tf.Tensor: a scalar, the total regularization cost.

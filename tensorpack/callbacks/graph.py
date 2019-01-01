@@ -80,11 +80,13 @@ class RunUpdateOps(RunOp):
     each `sess.run` call.
     """
 
-    def __init__(self, collection=tf.GraphKeys.UPDATE_OPS):
+    def __init__(self, collection=None):
         """
         Args:
             collection (str): collection of ops to run. Defaults to ``tf.GraphKeys.UPDATE_OPS``
         """
+        if collection is None:
+            collection = tf.GraphKeys.UPDATE_OPS
         name = 'UPDATE_OPS' if collection == tf.GraphKeys.UPDATE_OPS else collection
 
         def f():

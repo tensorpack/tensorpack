@@ -6,12 +6,13 @@
 
 import tensorflow as tf
 
+from ..tfutils.common import tfv1
 from .base import Callback
 
 __all__ = ['CallbackToHook', 'HookToCallback']
 
 
-class CallbackToHook(tf.train.SessionRunHook):
+class CallbackToHook(tfv1.train.SessionRunHook):
     """ This is only for internal implementation of
         before_run/after_run callbacks.
         You shouldn't need to use this.

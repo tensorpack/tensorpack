@@ -4,10 +4,11 @@
 
 import tensorflow as tf
 
+from ..tfutils.common import tfv1
 from ..utils import logger
 from .common import get_default_sess_config
 
-__all__ = ['NewSessionCreator', 'ReuseSessionCreator', 'SessionCreatorAdapter']
+__all__ = ['NewSessionCreator', 'ReuseSessionCreator']
 
 """
 A SessionCreator should:
@@ -18,7 +19,7 @@ A SessionCreator should:
 """
 
 
-class NewSessionCreator(tf.train.SessionCreator):
+class NewSessionCreator(tfv1.train.SessionCreator):
     def __init__(self, target='', config=None):
         """
         Args:
@@ -47,7 +48,7 @@ bugs. See https://github.com/tensorpack/tensorpack/issues/497 for workarounds.")
         return sess
 
 
-class ReuseSessionCreator(tf.train.SessionCreator):
+class ReuseSessionCreator(tfv1.train.SessionCreator):
     def __init__(self, sess):
         """
         Args:
@@ -57,19 +58,3 @@ class ReuseSessionCreator(tf.train.SessionCreator):
 
     def create_session(self):
         return self.sess
-
-
-class SessionCreatorAdapter(tf.train.SessionCreator):
-    def __init__(self, session_creator, func):
-        """
-        Args:
-            session_creator (tf.train.SessionCreator): a session creator
-            func (tf.Session -> tf.Session): takes a session created by
-            ``session_creator``, and return a new session to be returned by ``self.create_session``
-        """
-        self._creator = session_creator
-        self._func = func
-
-    def create_session(self):
-        sess = self._creator.create_session()
-        return self._func(sess)

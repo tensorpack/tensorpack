@@ -150,11 +150,25 @@ def gpu_available_in_session():
 
 @deprecated("Use get_tf_version_tuple instead.", "2019-01-31")
 def get_tf_version_number():
-    return float('.'.join(tf.VERSION.split('.')[:2]))
+    return float('.'.join(tf.__version__.split('.')[:2]))
 
 
 def get_tf_version_tuple():
     """
     Return TensorFlow version as a 2-element tuple (for comparison).
     """
-    return tuple(map(int, tf.VERSION.split('.')[:2]))
+    return tuple(map(int, tf.__version__.split('.')[:2]))
+
+
+def is_tf2():
+    try:
+        from tensorflow.python import tf2
+        return tf2.enabled()
+    except Exception:
+        return False
+
+
+if is_tf2():
+    tfv1 = tf.compat.v1
+else:
+    tfv1 = tf

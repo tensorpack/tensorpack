@@ -5,7 +5,7 @@
 from contextlib import contextmanager
 import tensorflow as tf
 
-from ..tfutils.common import get_tf_version_tuple
+from ..tfutils.common import get_tf_version_tuple, tfv1
 from ..utils.develop import HIDE_DOC
 from .gradproc import FilterNoneGrad, GradientProcessor
 
@@ -14,7 +14,7 @@ __all__ = ['apply_grad_processors', 'ProxyOptimizer',
            'AccumGradOptimizer']
 
 
-class ProxyOptimizer(tf.train.Optimizer):
+class ProxyOptimizer(tfv1.train.Optimizer):
     """
     A transparent proxy which delegates all methods of :class:`tf.train.Optimizer`
     """
