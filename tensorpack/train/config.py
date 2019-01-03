@@ -98,33 +98,35 @@ class TrainConfig(object):
         """
 
         # TODO type checker decorator
-        def assert_type(v, tp):
-            assert isinstance(v, tp), v.__class__
+        def assert_type(v, tp, name):
+            assert isinstance(v, tp), \
+                "{} has to be type '{}', but an object of type '{}' found.".format(
+                    name, tp.__name__, v.__class__.__name__)
 
         # process data & model
         assert data is None or dataflow is None, "dataflow and data cannot be both presented in TrainConfig!"
         if dataflow is not None:
-            assert_type(dataflow, DataFlow)
+            assert_type(dataflow, DataFlow, 'dataflow')
         if data is not None:
-            assert_type(data, InputSource)
+            assert_type(data, InputSource, 'data')
         self.dataflow = dataflow
         self.data = data
 
         if model is not None:
-            assert_type(model, ModelDescBase)
+            assert_type(model, ModelDescBase, 'model')
         self.model = model
 
         if callbacks is not None:
-            assert_type(callbacks, list)
+            assert_type(callbacks, list, 'callbacks')
         self.callbacks = callbacks
         if extra_callbacks is not None:
-            assert_type(extra_callbacks, list)
+            assert_type(extra_callbacks, list, 'extra_callbacks')
         self.extra_callbacks = extra_callbacks
         if monitors is not None:
-            assert_type(monitors, list)
+            assert_type(monitors, list, 'monitors')
         self.monitors = monitors
         if session_init is not None:
-            assert_type(session_init, SessionInit)
+            assert_type(session_init, SessionInit, 'session_init')
         self.session_init = session_init
 
         if session_creator is None:

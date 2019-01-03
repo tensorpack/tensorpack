@@ -19,18 +19,18 @@ The steps are:
 
 1. train the model by
 
-    python export.py
+    python export-model.py
 
 2. export the model by
 
-    python export.py --export serving --load train_log/export/checkpoint
-    python export.py --export compact --load train_log/export/checkpoint
+    python export-model.py --export serving --load train_log/export/checkpoint
+    python export-model.py --export compact --load train_log/export/checkpoint
 
 3. run inference by
 
-    python export.py --apply default --load train_log/export/checkpoint
-    python export.py --apply inference_graph --load train_log/export/checkpoint
-    python export.py --apply compact --load /tmp/compact_graph.pb
+    python export-model.py --apply default --load train_log/export/checkpoint
+    python export-model.py --apply inference_graph --load train_log/export/checkpoint
+    python export-model.py --apply compact --load /tmp/compact_graph.pb
 """
 
 

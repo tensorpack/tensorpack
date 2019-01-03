@@ -248,6 +248,7 @@ def get_model_loader(filename):
         SessInit: either a :class:`DictRestore` (if name ends with 'npy/npz') or
         :class:`SaverRestore` (otherwise).
     """
+    assert isinstance(filename, six.string_types), filename
     if filename.endswith('.npy'):
         assert tf.gfile.Exists(filename), filename
         return DictRestore(np.load(filename, encoding='latin1').item())

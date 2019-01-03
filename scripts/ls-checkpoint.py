@@ -20,7 +20,7 @@ if __name__ == '__main__':
         params = dict(np.load(fpath))
         dic = {k: v.shape for k, v in six.iteritems(params)}
     else:
-        path = get_checkpoint_path(sys.argv[1])
+        path = get_checkpoint_path(fpath)
         reader = tf.train.NewCheckpointReader(path)
         dic = reader.get_variable_to_shape_map()
     pprint.pprint(dic)

@@ -53,10 +53,13 @@ class PredictConfig(object):
             create_graph (bool): create a new graph, or use the default graph
                 when predictor is first initialized.
         """
-        def assert_type(v, tp):
-            assert isinstance(v, tp), v.__class__
+        def assert_type(v, tp, name):
+            assert isinstance(v, tp), \
+                "{} has to be type '{}', but an object of type '{}' found.".format(
+                    name, tp.__name__, v.__class__.__name__)
+
         if model is not None:
-            assert_type(model, ModelDescBase)
+            assert_type(model, ModelDescBase, 'model')
             assert inputs_desc is None and tower_func is None
             self.inputs_desc = model.get_inputs_desc()
             self.tower_func = TowerFuncWrapper(model.build_graph, self.inputs_desc)
@@ -70,7 +73,7 @@ class PredictConfig(object):
         if session_init is None:
             session_init = JustCurrentSession()
         self.session_init = session_init
-        assert_type(self.session_init, SessionInit)
+        assert_type(self.session_init, SessionInit, 'session_init')
 
         if session_creator is None:
             self.session_creator = tf.train.ChiefSessionCreator(config=get_default_sess_config())
@@ -82,13 +85,13 @@ class PredictConfig(object):
         if self.input_names is None:
             self.input_names = [k.name for k in self.inputs_desc]
         self.output_names = output_names
-        assert_type(self.output_names, list)
-        assert_type(self.input_names, list)
+        assert_type(self.output_names, list, 'output_names')
+        assert_type(self.input_names, list, 'input_names')
         if len(self.input_names) == 0:
             logger.warn('PredictConfig receives empty "input_names".')
         # assert len(self.input_names), self.input_names
         for v in self.input_names:
-            assert_type(v, six.string_types)
+            assert_type(v, six.string_types, 'Each item in input_names')
         assert len(self.output_names), self.output_names
 
         self.return_input = bool(return_input)
