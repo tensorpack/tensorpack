@@ -27,10 +27,6 @@ training:
 1. The model (the graph): you've already written it yourself with TF symbolic functions.
 2. The trained parameters: tensorpack saves them in standard TF checkpoint format.
 
-Therefore, you can build the graph for inference, load the checkpoint, and apply
-any processing or deployment TensorFlow supports.
-These are unrelated to tensorpack, and you'll need to read TF docs and __do it on your own__.
-
 ### Step 1: build the model
 
 You can build a graph however you like, with pure TensorFlow. If your model is written with
@@ -69,11 +65,17 @@ You can just use `tf.train.Saver` for all the work.
 Alternatively, use tensorpack's `SaverRestore(path).init(tf.get_default_session())`
 
 
+Now, you've already built a graph for inference, and the checkpoint is loaded. 
+You can then apply any graph processing or use deployment tools TensorFlow supports.
+These are unrelated to tensorpack, and you'll need to read TF docs and __do it on your own__.
+
+
 ### OfflinePredictor
 
 Tensorpack provides one tool [OfflinePredictor](../modules/predict.html#tensorpack.predict.OfflinePredictor),
 to merge the above two steps together.
-It has simple functionailities to build the graph, load the checkpoint, and return a callable for you.
+It has simple functionailities to build the graph, load the checkpoint, and
+return a callable for you for simple prediction.
 
 OfflinePredictor is only for quick demo purposes.
 It runs inference on numpy arrays, therefore may not be the most efficient way.
@@ -99,34 +101,41 @@ The example in [examples/basic/export-model.py](../examples/basic/export-model.p
 
 ### Exporter
 
-In addition to the standard checkpoint format tensorpack saved for you during training. 
-You can also save your models into other formats so it may be more friendly for inference.
+In addition to the standard checkpoint format tensorpack saved for you during training,
+you can also save your models into other formats so it may be more friendly for inference.
 
 1. Export to `SavedModel` format for TensorFlow Serving:
-```python
-from tensorpack.tfutils.export import ModelExporter
-ModelExporter(pred_config).export_serving('/path/to/export')
-```
 
-This format contains both the graph and the variables. Refer to TensorFlow
-serving documentation on how to use it.
+   ```python
+   from tensorpack.tfutils.export import ModelExporter
+   ModelExporter(pred_config).export_serving('/path/to/export')
+   ```
+
+   This format contains both the graph and the variables. Refer to TensorFlow
+   serving documentation on how to use it.
 
 2. Export to a frozen and pruned graph:
 
-```python
-ModelExporter(pred_config).export_compact('/path/to/compact_graph.pb')
-```
+   ```python
+   ModelExporter(pred_config).export_compact('/path/to/compact_graph.pb', toco_compatible=True)
+   ```
 
-This format is just a serialized `tf.Graph`. The export process:
-- Converts all variables to constants to embed the variables directly in the graph.
-- Removes all unnecessary operations (training-only ops, e.g., learning-rate) to compress the graph.
+   This format is just a serialized `tf.Graph`. The export process:
+   - Converts all variables to constants to embed the variables directly in the graph.
+   - Removes all unnecessary operations (training-only ops, e.g., learning-rate) to compress the graph.
 
-This creates a self-contained graph which includes all necessary information to run inference.
+   This creates a self-contained graph which includes all necessary information to run inference.
+   
+   To load the saved graph, you can simply:
+   ```python
+   graph_def = tf.GraphDef()
+   graph_def.ParseFromString(open(graph_file, 'rb').read())
+   tf.import_graph_def(graph_def)
+   ```
 
-To load the graph, you can simply:
-```python
-graph_def = tf.GraphDef()
-graph_def.ParseFromString(open(graph_file, 'rb').read())
-tf.import_graph_def(graph_def)
-```
 [examples/basic/export-model.py](../examples/basic/export-model.py) demonstrates the usage of such a frozen/pruned graph.
+
+Note that these steps are not the optimal way for inference. They may very likely
+produce an inefficent graph.
+To do efficient inference, understand what TensorFlow can do and do it on your
+own, because inference after training is unrelated to tensorpack.
