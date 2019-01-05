@@ -381,12 +381,20 @@ def get_train_dataflow():
     return ds
 
 
-def get_eval_dataflow(shard=0, num_shards=1):
+def get_eval_dataflow(name, shard=0, num_shards=1):
     """
     Args:
+        name (str): name of the dataset to evaluate
         shard, num_shards: to get subset of evaluation data
     """
-    roidbs = COCODetection.load_many(cfg.DATA.BASEDIR, cfg.DATA.VAL, add_gt=False)
+    roidbs = COCODetection.load_many(cfg.DATA.BASEDIR, name, add_gt=False)
+    """
+    To inference on your own data, change this to your loader.
+    Produce "roidbs" as a list of dict, in the dict the following keys are needed for training:
+    file_name: str, full path to the image
+    id: an id of this image
+    """
+
     num_imgs = len(roidbs)
     img_per_shard = num_imgs // num_shards
     img_range = (shard * img_per_shard, (shard + 1) * img_per_shard if shard + 1 < num_shards else num_imgs)

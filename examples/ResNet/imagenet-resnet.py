@@ -128,7 +128,7 @@ if __name__ == '__main__':
     model.data_format = args.data_format
     if args.eval:
         batch = 128    # something that can run on one gpu
-        ds = get_data('val', batch)
+        ds = get_imagenet_dataflow(args.data, 'val', batch)
         eval_on_ILSVRC12(model, get_model_loader(args.load), ds)
     else:
         if args.fake:

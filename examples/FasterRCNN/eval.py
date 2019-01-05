@@ -161,12 +161,19 @@ def multithread_eval_coco(dataflows, detect_funcs):
 
 
 # https://github.com/pdollar/coco/blob/master/PythonAPI/pycocoEvalDemo.ipynb
-def print_coco_metrics(json_file):
+def print_coco_metrics(dataset, json_file):
+    """
+    Args:
+        dataset (str): name of the dataset
+        json_file (str): path to the results json file in coco format
+
+    If your data is not in COCO format, write your own evaluation function.
+    """
     ret = {}
     assert cfg.DATA.BASEDIR and os.path.isdir(cfg.DATA.BASEDIR)
     annofile = os.path.join(
         cfg.DATA.BASEDIR, 'annotations',
-        'instances_{}.json'.format(cfg.DATA.VAL))
+        'instances_{}.json'.format(dataset))
     coco = COCO(annofile)
     cocoDt = coco.loadRes(json_file)
     cocoEval = COCOeval(coco, cocoDt, 'bbox')

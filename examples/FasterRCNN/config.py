@@ -3,6 +3,7 @@
 
 import numpy as np
 import os
+import six
 import pprint
 
 from tensorpack.utils import logger
@@ -80,9 +81,10 @@ _C.MODE_FPN = False
 
 # dataset -----------------------
 _C.DATA.BASEDIR = '/path/to/your/COCO/DIR'
+# All TRAIN dataset will be concatenated for training.
 _C.DATA.TRAIN = ['train2014', 'valminusminival2014']   # i.e. trainval35k, AKA train2017
-# For now, only support evaluation on single dataset
-_C.DATA.VAL = 'minival2014'  # AKA val2017
+# Each VAL dataset will be evaluated separately (instead of concatenated)
+_C.DATA.VAL = ('minival2014', )  # AKA val2017
 _C.DATA.NUM_CATEGORY = 80    # 80 categories in COCO
 _C.DATA.CLASS_NAMES = []  # NUM_CLASS (NUM_CATEGORY+1) strings, the first is "BG".
 # For COCO, this list will be populated later by the COCO data loader.
@@ -210,6 +212,8 @@ def finalize_configs(is_training):
     _C.freeze(False)  # populate new keys now
     _C.DATA.NUM_CLASS = _C.DATA.NUM_CATEGORY + 1  # +1 background
     _C.DATA.BASEDIR = os.path.expanduser(_C.DATA.BASEDIR)
+    if isinstance(_C.DATA.VAL, six.string_types):  # support single string (the typical case) as well
+        _C.DATA.VAL = (_C.DATA.VAL, )
 
     assert _C.BACKBONE.NORM in ['FreezeBN', 'SyncBN', 'GN', 'None'], _C.BACKBONE.NORM
     if _C.BACKBONE.NORM != 'FreezeBN':
@@ -246,6 +250,10 @@ def finalize_configs(is_training):
         if _C.TRAINER == 'horovod':
             import horovod.tensorflow as hvd
             ngpu = hvd.size()
+
+            if ngpu == hvd.local_size():
+                logger.warn("It's not recommended to use horovod for single-machine training. "
+                            "Replicated trainer is more stable and has the same efficiency.")
         else:
             assert 'OMPI_COMM_WORLD_SIZE' not in os.environ
             ngpu = get_num_gpu()

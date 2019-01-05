@@ -379,19 +379,24 @@ def offline_evaluate(pred_config, output_file):
     num_gpu = cfg.TRAIN.NUM_GPUS
     graph_funcs = MultiTowerOfflinePredictor(
         pred_config, list(range(num_gpu))).get_predictors()
+
     predictors = []
-    dataflows = []
     for k in range(num_gpu):
         predictors.append(lambda img,
                           pred=graph_funcs[k]: detect_one_image(img, pred))
-        dataflows.append(get_eval_dataflow(shard=k, num_shards=num_gpu))
-    if num_gpu > 1:
-        all_results = multithread_eval_coco(dataflows, predictors)
-    else:
-        all_results = eval_coco(dataflows[0], predictors[0])
-    with open(output_file, 'w') as f:
-        json.dump(all_results, f)
-    print_coco_metrics(output_file)
+    for dataset in cfg.DATA.VAL:
+        logger.info("Evaluating {} ...".format(dataset))
+        dataflows = [
+            get_eval_dataflow(dataset, shard=k, num_shards=num_gpu)
+            for k in range(num_gpu) ]
+        if num_gpu > 1:
+            all_results = multithread_eval_coco(dataflows, predictors)
+        else:
+            all_results = eval_coco(dataflows[0], predictors[0])
+        output = output_file + '-' + dataset
+        with open(output, 'w') as f:
+            json.dump(all_results, f)
+        print_coco_metrics(dataset, output)
 
 
 def predict(pred_func, input_file):
@@ -412,7 +417,8 @@ class EvalCallback(Callback):
 
     _chief_only = False
 
-    def __init__(self, in_names, out_names):
+    def __init__(self, eval_dataset, in_names, out_names):
+        self._eval_dataset = eval_dataset
         self._in_names, self._out_names = in_names, out_names
 
     def _setup_graph(self):
@@ -424,7 +430,8 @@ class EvalCallback(Callback):
             # Use two predictor threads per GPU to get better throughput
             self.num_predictor = num_gpu if buggy_tf else num_gpu * 2
             self.predictors = [self._build_coco_predictor(k % num_gpu) for k in range(self.num_predictor)]
-            self.dataflows = [get_eval_dataflow(shard=k, num_shards=self.num_predictor)
+            self.dataflows = [get_eval_dataflow(self._eval_dataset,
+                                                shard=k, num_shards=self.num_predictor)
                               for k in range(self.num_predictor)]
         else:
             # Only eval on the first machine.
@@ -432,7 +439,8 @@ class EvalCallback(Callback):
             self._horovod_run_eval = hvd.rank() == hvd.local_rank()
             if self._horovod_run_eval:
                 self.predictor = self._build_coco_predictor(0)
-                self.dataflow = get_eval_dataflow(shard=hvd.local_rank(), num_shards=hvd.local_size())
+                self.dataflow = get_eval_dataflow(self._eval_dataset,
+                                                  shard=hvd.local_rank(), num_shards=hvd.local_size())
 
             self.barrier = hvd.allreduce(tf.random_normal(shape=[1]))
 
@@ -475,11 +483,11 @@ class EvalCallback(Callback):
                 os.unlink(fname)
 
         output_file = os.path.join(
-            logdir, 'outputs{}.json'.format(self.global_step))
+            logdir, '{}-outputs{}.json'.format(self._eval_dataset, self.global_step))
         with open(output_file, 'w') as f:
             json.dump(all_results, f)
         try:
-            scores = print_coco_metrics(output_file)
+            scores = print_coco_metrics(self._eval_dataset, output_file)
             for k, v in scores.items():
                 self.trainer.monitors.put_scalar(k, v)
         except Exception:
@@ -565,6 +573,7 @@ if __name__ == '__main__':
         total_passes = cfg.TRAIN.LR_SCHEDULE[-1] * 8 / train_dataflow.size()
         logger.info("Total passes of the training set is: {:.5g}".format(total_passes))
 
+
         callbacks = [
             PeriodicCallback(
                 ModelSaver(max_to_keep=10, keep_checkpoint_every_n_hours=1),
@@ -573,10 +582,12 @@ if __name__ == '__main__':
             ScheduledHyperParamSetter(
                 'learning_rate', warmup_schedule, interp='linear', step_based=True),
             ScheduledHyperParamSetter('learning_rate', lr_schedule),
-            EvalCallback(*MODEL.get_inference_tensor_names()),
             PeakMemoryTracker(),
             EstimatedTimeLeft(median=True),
             SessionRunTimeout(60000).set_chief_only(True),   # 1 minute timeout
+        ] + [
+            EvalCallback(dataset, *MODEL.get_inference_tensor_names())
+            for dataset in cfg.DATA.VAL
         ]
         if not is_horovod:
             callbacks.append(GPUUtilizationTracker())

@@ -108,7 +108,7 @@ Performance in [Detectron](https://github.com/facebookresearch/Detectron/) can b
  [R101FPN9xGNCasAugScratch]: http://models.tensorpack.com/FasterRCNN/COCO-R101FPN-MaskRCNN-ScratchGN.npz
 
  <a id="ft1">1</a>: Numbers taken from [Detectron Model Zoo](https://github.com/facebookresearch/Detectron/blob/master/MODEL_ZOO.md).
- We comapre models that have identical training & inference cost between the two implementation. However their numbers can be different due to many small implementation details.
+ We compare models that have identical training & inference cost between the two implementations. However their numbers can be different due to many small implementation details.
 For example, our FPN models are sometimes slightly worse in box AP, which is probably due to batch size.
 
  <a id="ft2">2</a>: Numbers taken from Table 5 in [Group Normalization](https://arxiv.org/abs/1803.08494)
