@@ -3,19 +3,15 @@
 
 import itertools
 import numpy as np
-import os
 from collections import namedtuple
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import ExitStack
 import cv2
 import pycocotools.mask as cocomask
 import tqdm
-from pycocotools.coco import COCO
-from pycocotools.cocoeval import COCOeval
 
 from tensorpack.utils.utils import get_tqdm_kwargs
 
-from coco import COCOMeta
 from common import CustomResize, clip_boxes
 from config import config as cfg
 
@@ -103,7 +99,8 @@ def eval_coco(df, detect_func, tqdm_bar=None):
             will create a new one.
 
     Returns:
-        list of dict, to be dumped to COCO json format
+        list of dict, in the format used by
+        `DetectionDataset.eval_or_save_inference_results`
     """
     df.reset_state()
     all_results = []
@@ -115,15 +112,10 @@ def eval_coco(df, detect_func, tqdm_bar=None):
         for img, img_id in df:
             results = detect_func(img)
             for r in results:
-                box = r.box
-                cat_id = COCOMeta.class_id_to_category_id[r.class_id]
-                box[2] -= box[0]
-                box[3] -= box[1]
-
                 res = {
                     'image_id': img_id,
-                    'category_id': cat_id,
-                    'bbox': list(map(lambda x: round(float(x), 3), box)),
+                    'category_id': r.class_id,
+                    'bbox': list(r.box),
                     'score': round(float(r.score), 4),
                 }
 
@@ -147,7 +139,8 @@ def multithread_eval_coco(dataflows, detect_funcs):
         detect_funcs: a list of callable to be used in :func:`eval_coco`
 
     Returns:
-        list of dict, to be dumped to COCO json format
+        list of dict, in the format used by
+        `DetectionDataset.eval_or_save_inference_results`
     """
     num_worker = len(dataflows)
     assert len(dataflows) == len(detect_funcs)
@@ -158,37 +151,3 @@ def multithread_eval_coco(dataflows, detect_funcs):
             futures.append(executor.submit(eval_coco, dataflow, pred, pbar))
         all_results = list(itertools.chain(*[fut.result() for fut in futures]))
         return all_results
-
-
-# https://github.com/pdollar/coco/blob/master/PythonAPI/pycocoEvalDemo.ipynb
-def print_coco_metrics(dataset, json_file):
-    """
-    Args:
-        dataset (str): name of the dataset
-        json_file (str): path to the results json file in coco format
-
-    If your data is not in COCO format, write your own evaluation function.
-    """
-    ret = {}
-    assert cfg.DATA.BASEDIR and os.path.isdir(cfg.DATA.BASEDIR)
-    annofile = os.path.join(
-        cfg.DATA.BASEDIR, 'annotations',
-        'instances_{}.json'.format(dataset))
-    coco = COCO(annofile)
-    cocoDt = coco.loadRes(json_file)
-    cocoEval = COCOeval(coco, cocoDt, 'bbox')
-    cocoEval.evaluate()
-    cocoEval.accumulate()
-    cocoEval.summarize()
-    fields = ['IoU=0.5:0.95', 'IoU=0.5', 'IoU=0.75', 'small', 'medium', 'large']
-    for k in range(6):
-        ret['mAP(bbox)/' + fields[k]] = cocoEval.stats[k]
-
-    if cfg.MODE_MASK:
-        cocoEval = COCOeval(coco, cocoDt, 'segm')
-        cocoEval.evaluate()
-        cocoEval.accumulate()
-        cocoEval.summarize()
-        for k in range(6):
-            ret['mAP(segm)/' + fields[k]] = cocoEval.stats[k]
-    return ret

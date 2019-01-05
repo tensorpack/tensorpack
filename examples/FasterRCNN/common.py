@@ -95,12 +95,11 @@ def segmentation_to_mask(polys, height, width):
     Args:
         polys: a list of nx2 float array. Each array contains many (x, y) coordinates.
 
-
     Returns:
         a binary matrix of (height, width)
     """
-    polys = np.asarray([p.flatten() for p in polys], dtype='float32')
-    assert polys.size > 0, "Polygons are empty!"
+    polys = [p.flatten().tolist() for p in polys]
+    assert len(polys) > 0, "Polygons are empty!"
 
     import pycocotools.mask as cocomask
     rles = cocomask.frPyObjects(polys, height, width)

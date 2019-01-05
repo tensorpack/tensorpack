@@ -22,11 +22,11 @@ from tensorpack.tfutils.summary import add_moving_summary
 import model_frcnn
 import model_mrcnn
 from basemodel import image_preprocess, resnet_c4_backbone, resnet_conv5, resnet_fpn_backbone
-from coco import COCODetection
+from coco import DetectionDataset
 from config import config as cfg
 from config import finalize_configs
 from data import get_all_anchors, get_all_anchors_fpn, get_eval_dataflow, get_train_dataflow
-from eval import DetectionResult, detect_one_image, eval_coco, multithread_eval_coco, print_coco_metrics
+from eval import DetectionResult, detect_one_image, eval_coco, multithread_eval_coco
 from model_box import RPNAnchors, clip_boxes, crop_and_resize, roi_align
 from model_cascade import CascadeRCNNHead
 from model_fpn import fpn_model, generate_fpn_proposals, multilevel_roi_align, multilevel_rpn_losses
@@ -388,15 +388,13 @@ def offline_evaluate(pred_config, output_file):
         logger.info("Evaluating {} ...".format(dataset))
         dataflows = [
             get_eval_dataflow(dataset, shard=k, num_shards=num_gpu)
-            for k in range(num_gpu) ]
+            for k in range(num_gpu)]
         if num_gpu > 1:
             all_results = multithread_eval_coco(dataflows, predictors)
         else:
             all_results = eval_coco(dataflows[0], predictors[0])
         output = output_file + '-' + dataset
-        with open(output, 'w') as f:
-            json.dump(all_results, f)
-        print_coco_metrics(dataset, output)
+        DetectionDataset().eval_or_save_inference_results(all_results, dataset, output)
 
 
 def predict(pred_func, input_file):
@@ -484,14 +482,11 @@ class EvalCallback(Callback):
 
         output_file = os.path.join(
             logdir, '{}-outputs{}.json'.format(self._eval_dataset, self.global_step))
-        with open(output_file, 'w') as f:
-            json.dump(all_results, f)
-        try:
-            scores = print_coco_metrics(self._eval_dataset, output_file)
-            for k, v in scores.items():
-                self.trainer.monitors.put_scalar(k, v)
-        except Exception:
-            logger.exception("Exception in COCO evaluation.")
+
+        scores = DetectionDataset().eval_or_save_inference_results(
+            all_results, self._eval_dataset, output_file)
+        for k, v in scores.items():
+            self.trainer.monitors.put_scalar(k, v)
 
     def _trigger_epoch(self):
         if self.epoch_num in self.epochs_to_eval:
@@ -520,6 +515,7 @@ if __name__ == '__main__':
         cfg.update_args(args.config)
 
     MODEL = ResNetFPNModel() if cfg.MODE_FPN else ResNetC4Model()
+    DetectionDataset()  # initialize the config with information from our dataset
 
     if args.visualize or args.evaluate or args.predict:
         assert tf.test.is_gpu_available()
@@ -538,7 +534,6 @@ if __name__ == '__main__':
                 input_names=MODEL.get_inference_tensor_names()[0],
                 output_names=MODEL.get_inference_tensor_names()[1])
             if args.predict:
-                COCODetection(cfg.DATA.BASEDIR, 'val2014')   # Only to load the class names into caches
                 predict(OfflinePredictor(predcfg), args.predict)
             elif args.evaluate:
                 assert args.evaluate.endswith('.json'), args.evaluate
@@ -572,7 +567,6 @@ if __name__ == '__main__':
         # This is what's commonly referred to as "epochs"
         total_passes = cfg.TRAIN.LR_SCHEDULE[-1] * 8 / train_dataflow.size()
         logger.info("Total passes of the training set is: {:.5g}".format(total_passes))
-
 
         callbacks = [
             PeriodicCallback(

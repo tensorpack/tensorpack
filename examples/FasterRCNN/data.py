@@ -10,10 +10,10 @@ from tensorpack.dataflow import (
 from tensorpack.utils import logger
 from tensorpack.utils.argtools import log_once, memoized
 
-from coco import COCODetection
 from common import (
     CustomResize, DataFromListOfDict, box_to_point8, filter_boxes_inside_shape, point8_to_box, segmentation_to_mask)
 from config import config as cfg
+from coco import DetectionDataset
 from utils.generate_anchors import generate_anchors
 from utils.np_box_ops import area as np_area
 from utils.np_box_ops import ioa as np_ioa
@@ -280,25 +280,7 @@ def get_train_dataflow():
     If MODE_MASK, gt_masks: (N, h, w)
     """
 
-    roidbs = COCODetection.load_many(
-        cfg.DATA.BASEDIR, cfg.DATA.TRAIN, add_gt=True, add_mask=cfg.MODE_MASK)
-    """
-    To train on your own data, change this to your loader.
-    Produce "roidbs" as a list of dict, in the dict the following keys are needed for training:
-    height, width: integer
-    file_name: str, full path to the image
-    boxes: numpy array of kx4 floats
-    class: numpy array of k integers
-    is_crowd: k booleans. Use k False if you don't know what it means.
-    segmentation: k lists of numpy arrays (one for each box).
-        Each list of numpy arrays corresponds to the mask for one instance.
-        Each numpy array in the list is a polygon of shape Nx2,
-        because one mask can be represented by N polygons.
-
-        If your segmentation annotations are originally masks rather than polygons,
-        either convert it, or the augmentation code below will need to be
-        changed or skipped accordingly.
-    """
+    roidbs = DetectionDataset().load_training_roidbs(cfg.DATA.TRAIN)
 
     # Valid training images should have at least one fg box.
     # But this filter shall not be applied for testing.
@@ -387,13 +369,7 @@ def get_eval_dataflow(name, shard=0, num_shards=1):
         name (str): name of the dataset to evaluate
         shard, num_shards: to get subset of evaluation data
     """
-    roidbs = COCODetection.load_many(cfg.DATA.BASEDIR, name, add_gt=False)
-    """
-    To inference on your own data, change this to your loader.
-    Produce "roidbs" as a list of dict, in the dict the following keys are needed for training:
-    file_name: str, full path to the image
-    id: an id of this image
-    """
+    roidbs = DetectionDataset().load_inference_roidbs(name)
 
     num_imgs = len(roidbs)
     img_per_shard = num_imgs // num_shards

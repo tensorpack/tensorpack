@@ -85,7 +85,7 @@ _C.DATA.BASEDIR = '/path/to/your/COCO/DIR'
 _C.DATA.TRAIN = ['train2014', 'valminusminival2014']   # i.e. trainval35k, AKA train2017
 # Each VAL dataset will be evaluated separately (instead of concatenated)
 _C.DATA.VAL = ('minival2014', )  # AKA val2017
-_C.DATA.NUM_CATEGORY = 80    # 80 categories in COCO
+_C.DATA.NUM_CATEGORY = 0  # without the background class (e.g., 80 for COCO)
 _C.DATA.CLASS_NAMES = []  # NUM_CLASS (NUM_CATEGORY+1) strings, the first is "BG".
 # For COCO, this list will be populated later by the COCO data loader.
 
@@ -126,7 +126,7 @@ _C.TRAIN.LR_SCHEDULE = [240000, 320000, 360000]      # "2x" schedule in detectro
 # Longer schedules for from-scratch training (https://arxiv.org/abs/1811.08883):
 # _C.TRAIN.LR_SCHEDULE = [960000, 1040000, 1080000]    # "6x" schedule in detectron
 # _C.TRAIN.LR_SCHEDULE = [1500000, 1580000, 1620000]   # "9x" schedule in detectron
-_C.TRAIN.EVAL_PERIOD = 25  # period (epochs) to run eva
+_C.TRAIN.EVAL_PERIOD = 25  # period (epochs) to run evaluation
 
 # preprocessing --------------------
 # Alternative old (worse & faster) setting: 600
@@ -241,7 +241,7 @@ def finalize_configs(is_training):
     if is_training:
         train_scales = _C.PREPROC.TRAIN_SHORT_EDGE_SIZE
         if isinstance(train_scales, (list, tuple)) and train_scales[1] - train_scales[0] > 100:
-            # don't warmup if augmentation is on
+            # don't autotune if augmentation is on
             os.environ['TF_CUDNN_USE_AUTOTUNE'] = '0'
         os.environ['TF_AUTOTUNE_THRESHOLD'] = '1'
         assert _C.TRAINER in ['horovod', 'replicated'], _C.TRAINER

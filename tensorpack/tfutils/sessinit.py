@@ -214,7 +214,7 @@ class DictRestore(SessionInit):
         mismatch.log()
 
         upd = SessionUpdate(sess, [v for v in variables if v.name in intersect])
-        logger.info("Restoring from dict ...")
+        logger.info("Restoring {} variables from dict ...".format(len(intersect)))
         upd.update({name: value for name, value in six.iteritems(self._prms) if name in intersect})
 
 
