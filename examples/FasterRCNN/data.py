@@ -4,6 +4,8 @@
 import copy
 import numpy as np
 import cv2
+from tabulate import tabulate
+from termcolor import colored
 
 from tensorpack.dataflow import (
     DataFromList, MapDataComponent, MultiProcessMapDataZMQ, MultiThreadMapData, TestDataSpeed, imgaug)
@@ -13,7 +15,7 @@ from tensorpack.utils.argtools import log_once, memoized
 from common import (
     CustomResize, DataFromListOfDict, box_to_point8, filter_boxes_inside_shape, point8_to_box, segmentation_to_mask)
 from config import config as cfg
-from coco import DetectionDataset
+from dataset import DetectionDataset
 from utils.generate_anchors import generate_anchors
 from utils.np_box_ops import area as np_area
 from utils.np_box_ops import ioa as np_ioa
@@ -44,6 +46,28 @@ except ImportError:
 
 class MalformedData(BaseException):
     pass
+
+
+def print_class_histogram(roidbs):
+    """
+    Args:
+        roidbs (list[dict]): the same format as the output of `load_training_roidbs`.
+    """
+    dataset = DetectionDataset()
+    hist_bins = np.arange(dataset.num_classes + 1)
+
+    # Histogram of ground-truth objects
+    gt_hist = np.zeros((dataset.num_classes,), dtype=np.int)
+    for entry in roidbs:
+        # filter crowd?
+        gt_inds = np.where(
+            (entry['class'] > 0) & (entry['is_crowd'] == 0))[0]
+        gt_classes = entry['class'][gt_inds]
+        gt_hist += np.histogram(gt_classes, bins=hist_bins)[0]
+    data = [[dataset.class_names[i], v] for i, v in enumerate(gt_hist)]
+    data.append(['total', sum([x[1] for x in data])])
+    table = tabulate(data, headers=['class', '#box'], tablefmt='pipe')
+    logger.info("Ground-Truth Boxes:\n" + colored(table, 'cyan'))
 
 
 @memoized
@@ -281,6 +305,7 @@ def get_train_dataflow():
     """
 
     roidbs = DetectionDataset().load_training_roidbs(cfg.DATA.TRAIN)
+    print_class_histogram(roidbs)
 
     # Valid training images should have at least one fg box.
     # But this filter shall not be applied for testing.

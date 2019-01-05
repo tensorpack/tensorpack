@@ -1,13 +1,13 @@
 
 ### File Structure
 This is a minimal implementation that simply contains these files:
-+ coco.py: load COCO data
-+ data.py: prepare data for training
++ dataset.py: load and evaluate COCO dataset
++ data.py: prepare data for training & inference
 + common.py: common data preparation utilities
 + basemodel.py: implement backbones
 + model_box.py: implement box-related symbolic functions
 + model_{fpn,rpn,frcnn,mrcnn,cascade}.py: implement FPN,RPN,Fast-/Mask-/Cascade-RCNN models.
-+ train.py: main training script
++ train.py: main entry script
 + utils/: third-party helper functions
 + eval.py: evaluation utilities
 + viz.py: visualization utilities
@@ -16,9 +16,10 @@ This is a minimal implementation that simply contains these files:
 
 Data:
 
-1. It's easy to train on your own data. Just replace `COCODetection.load_many` in `data.py` by your own loader.
-	Also remember to change `DATA.NUM_CATEGORY` and `DATA.CLASS_NAMES` in the config.
-	The current evaluation code is also COCO-specific, and you may need to change it to use your data and metrics.
+1. It's easy to train on your own data. 
+   If your data is not in COCO format, you can just rewrite all the methods of
+   `DetectionDataset` following its documents in `dataset.py`.
+   You'll implement the logic to load your dataset and evaluate predictions.
 
 2. You can easily add more augmentations such as rotation, but be careful how a box should be
 	 augmented. The code now will always use the minimal axis-aligned bounding box of the 4 corners,

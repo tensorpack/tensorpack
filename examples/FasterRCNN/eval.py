@@ -54,15 +54,15 @@ def paste_mask(box, mask, shape):
     return ret
 
 
-def detect_one_image(img, model_func):
+def predict_image(img, model_func):
     """
     Run detection on one image, using the TF callable.
     This function should handle the preprocessing internally.
 
     Args:
         img: an image
-        model_func: a callable from TF model,
-            takes image and returns (boxes, probs, labels, [masks])
+        model_func: a callable from the TF model.
+            It takes image and returns (boxes, probs, labels, [masks])
 
     Returns:
         [DetectionResult]
@@ -90,11 +90,12 @@ def detect_one_image(img, model_func):
     return results
 
 
-def eval_coco(df, detect_func, tqdm_bar=None):
+def predict_dataflow(df, model_func, tqdm_bar=None):
     """
     Args:
         df: a DataFlow which produces (image, image_id)
-        detect_func: a callable, takes [image] and returns [DetectionResult]
+        model_func: a callable from the TF model.
+            It takes image and returns (boxes, probs, labels, [masks])
         tqdm_bar: a tqdm object to be shared among multiple evaluation instances. If None,
             will create a new one.
 
@@ -110,7 +111,7 @@ def eval_coco(df, detect_func, tqdm_bar=None):
             tqdm_bar = stack.enter_context(
                 tqdm.tqdm(total=df.size(), **get_tqdm_kwargs()))
         for img, img_id in df:
-            results = detect_func(img)
+            results = predict_image(img, model_func)
             for r in results:
                 res = {
                     'image_id': img_id,
@@ -130,24 +131,24 @@ def eval_coco(df, detect_func, tqdm_bar=None):
     return all_results
 
 
-def multithread_eval_coco(dataflows, detect_funcs):
+def multithread_predict_dataflow(dataflows, model_funcs):
     """
-    Running multiple `eval_coco` in multiple threads, and aggregate the results.
+    Running multiple `predict_dataflow` in multiple threads, and aggregate the results.
 
     Args:
-        dataflows: a list of DataFlow to be used in :func:`eval_coco`
-        detect_funcs: a list of callable to be used in :func:`eval_coco`
+        dataflows: a list of DataFlow to be used in :func:`predict_dataflow`
+        model_funcs: a list of callable to be used in :func:`predict_dataflow`
 
     Returns:
         list of dict, in the format used by
         `DetectionDataset.eval_or_save_inference_results`
     """
     num_worker = len(dataflows)
-    assert len(dataflows) == len(detect_funcs)
+    assert len(dataflows) == len(model_funcs)
     with ThreadPoolExecutor(max_workers=num_worker, thread_name_prefix='EvalWorker') as executor, \
             tqdm.tqdm(total=sum([df.size() for df in dataflows])) as pbar:
         futures = []
-        for dataflow, pred in zip(dataflows, detect_funcs):
-            futures.append(executor.submit(eval_coco, dataflow, pred, pbar))
+        for dataflow, pred in zip(dataflows, model_funcs):
+            futures.append(executor.submit(predict_dataflow, dataflow, pred, pbar))
         all_results = list(itertools.chain(*[fut.result() for fut in futures]))
         return all_results

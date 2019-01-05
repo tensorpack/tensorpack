@@ -5,8 +5,6 @@ import numpy as np
 import os
 import tqdm
 import json
-from tabulate import tabulate
-from termcolor import colored
 
 from tensorpack.utils import logger
 from tensorpack.utils.argtools import log_once
@@ -28,6 +26,9 @@ class COCODetection(object):
     """
     Mapping from the incontinuous COCO category id to an id in [1, #category]
     """
+
+    class_names = [
+        "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat", "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", "cow", "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee", "skis", "snowboard", "sports ball", "kite", "baseball bat", "baseball glove", "skateboard", "surfboard", "tennis racket", "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana", "apple", "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", "chair", "couch", "potted plant", "bed", "dining table", "toilet", "tv", "laptop", "mouse", "remote", "keyboard", "cell phone", "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase", "scissors", "teddy bear", "hair drier", "toothbrush"]  # noqa
 
     def __init__(self, basedir, name):
         self.name = name
@@ -182,15 +183,9 @@ class COCODetection(object):
 class DetectionDataset(object):
     """
     A singleton to load datasets, evaluate results, and provide metadata.
+
+    To use your own dataset that's not in COCO format, rewrite all methods of this class.
     """
-
-    _instance = None
-
-    def __new__(cls):
-        if not isinstance(cls._instance, cls):
-            cls._instance = object.__new__(cls)
-        return cls._instance
-
     def __init__(self):
         """
         This function is responsible for setting the dataset-specific
@@ -198,8 +193,7 @@ class DetectionDataset(object):
         """
         self.num_category = cfg.DATA.NUM_CATEGORY = 80
         self.num_classes = self.num_category + 1
-        self.class_names = cfg.DATA.CLASS_NAMES = [
-            "BG", "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat", "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", "cow", "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee", "skis", "snowboard", "sports ball", "kite", "baseball bat", "baseball glove", "skateboard", "surfboard", "tennis racket", "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana", "apple", "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", "chair", "couch", "potted plant", "bed", "dining table", "toilet", "tv", "laptop", "mouse", "remote", "keyboard", "cell phone", "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase", "scissors", "teddy bear", "hair drier", "toothbrush"]  # noqa
+        self.class_names = cfg.DATA.CLASS_NAMES = ["BG"] + COCODetection.class_names
         assert len(self.class_names) == self.num_classes
 
     def load_training_roidbs(self, names):
@@ -284,29 +278,16 @@ class DetectionDataset(object):
         else:
             return {}
 
-    def print_class_histogram(self, roidbs):
-        """
-        Args:
-            roidbs (list[dict]): the same format as the output of `load_training_roidbs`.
-        """
-        hist_bins = np.arange(self.num_classes + 1)
+    # code for singleton:
+    _instance = None
 
-        # Histogram of ground-truth objects
-        gt_hist = np.zeros((self.num_classes,), dtype=np.int)
-        for entry in roidbs:
-            # filter crowd?
-            gt_inds = np.where(
-                (entry['class'] > 0) & (entry['is_crowd'] == 0))[0]
-            gt_classes = entry['class'][gt_inds]
-            gt_hist += np.histogram(gt_classes, bins=hist_bins)[0]
-        data = [[self.class_names[i], v] for i, v in enumerate(gt_hist)]
-        data.append(['total', sum([x[1] for x in data])])
-        table = tabulate(data, headers=['class', '#box'], tablefmt='pipe')
-        logger.info("Ground-Truth Boxes:\n" + colored(table, 'cyan'))
+    def __new__(cls):
+        if not isinstance(cls._instance, cls):
+            cls._instance = object.__new__(cls)
+        return cls._instance
 
 
 if __name__ == '__main__':
     c = COCODetection(cfg.DATA.BASEDIR, 'train2014')
     gt_boxes = c.load(add_gt=True, add_mask=True)
     print("#Images:", len(gt_boxes))
-    DetectionDataset().print_class_histogram(gt_boxes)
