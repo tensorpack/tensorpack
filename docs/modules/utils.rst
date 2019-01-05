@@ -1,6 +1,11 @@
 tensorpack.utils package
 ========================
 
+.. automodule:: tensorpack.utils
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 tensorpack.utils.argtools module
 --------------------------------
 

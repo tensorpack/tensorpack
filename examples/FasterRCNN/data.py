@@ -13,35 +13,14 @@ from tensorpack.utils import logger
 from tensorpack.utils.argtools import log_once, memoized
 
 from common import (
-    CustomResize, DataFromListOfDict, box_to_point8, filter_boxes_inside_shape, point8_to_box, segmentation_to_mask)
+    CustomResize, DataFromListOfDict, box_to_point8,
+    filter_boxes_inside_shape, point8_to_box, segmentation_to_mask, np_iou)
 from config import config as cfg
 from dataset import DetectionDataset
 from utils.generate_anchors import generate_anchors
-from utils.np_box_ops import area as np_area
-from utils.np_box_ops import ioa as np_ioa
+from utils.np_box_ops import area as np_area, ioa as np_ioa
 
 # import tensorpack.utils.viz as tpviz
-
-
-try:
-    import pycocotools.mask as cocomask
-
-    # Much faster than utils/np_box_ops
-    def np_iou(A, B):
-        def to_xywh(box):
-            box = box.copy()
-            box[:, 2] -= box[:, 0]
-            box[:, 3] -= box[:, 1]
-            return box
-
-        ret = cocomask.iou(
-            to_xywh(A), to_xywh(B),
-            np.zeros((len(B),), dtype=np.bool))
-        # can accelerate even more, if using float32
-        return ret.astype('float32')
-
-except ImportError:
-    from utils.np_box_ops import iou as np_iou
 
 
 class MalformedData(BaseException):
@@ -143,7 +122,7 @@ def get_anchor_labels(anchors, gt_boxes, crowd_boxes):
     Label each anchor as fg/bg/ignore.
     Args:
         anchors: Ax4 float
-        gt_boxes: Bx4 float
+        gt_boxes: Bx4 float, non-crowd
         crowd_boxes: Cx4 float
 
     Returns:

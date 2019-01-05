@@ -2,6 +2,8 @@
 # File: eval.py
 
 import itertools
+import os
+import json
 import numpy as np
 from collections import namedtuple
 from concurrent.futures import ThreadPoolExecutor
@@ -9,11 +11,23 @@ from contextlib import ExitStack
 import cv2
 import pycocotools.mask as cocomask
 import tqdm
+import tensorflow as tf
 
-from tensorpack.utils.utils import get_tqdm_kwargs
+from tensorpack.callbacks import Callback
+from tensorpack.tfutils import get_tf_version_tuple
+from tensorpack.utils import logger
+from tensorpack.utils.utils import get_tqdm
 
 from common import CustomResize, clip_boxes
+from data import get_eval_dataflow
+from dataset import DetectionDataset
 from config import config as cfg
+
+try:
+    import horovod.tensorflow as hvd
+except ImportError:
+    pass
+
 
 DetectionResult = namedtuple(
     'DetectionResult',
@@ -26,7 +40,7 @@ mask: None, or a binary image of the original image shape
 """
 
 
-def paste_mask(box, mask, shape):
+def _paste_mask(box, mask, shape):
     """
     Args:
         box: 4 float
@@ -79,7 +93,7 @@ def predict_image(img, model_func):
 
     if masks:
         # has mask
-        full_masks = [paste_mask(box, mask, orig_shape)
+        full_masks = [_paste_mask(box, mask, orig_shape)
                       for box, mask in zip(boxes, masks[0])]
         masks = full_masks
     else:
@@ -105,11 +119,10 @@ def predict_dataflow(df, model_func, tqdm_bar=None):
     """
     df.reset_state()
     all_results = []
-    # tqdm is not quite thread-safe: https://github.com/tqdm/tqdm/issues/323
     with ExitStack() as stack:
+        # tqdm is not quite thread-safe: https://github.com/tqdm/tqdm/issues/323
         if tqdm_bar is None:
-            tqdm_bar = stack.enter_context(
-                tqdm.tqdm(total=df.size(), **get_tqdm_kwargs()))
+            tqdm_bar = stack.enter_context(get_tqdm(total=df.size()))
         for img, img_id in df:
             results = predict_image(img, model_func)
             for r in results:
@@ -143,8 +156,10 @@ def multithread_predict_dataflow(dataflows, model_funcs):
         list of dict, in the format used by
         `DetectionDataset.eval_or_save_inference_results`
     """
-    num_worker = len(dataflows)
-    assert len(dataflows) == len(model_funcs)
+    num_worker = len(model_funcs)
+    assert len(dataflows) == num_worker
+    if num_worker == 1:
+        return predict_dataflow(dataflows[0], model_funcs[0])
     with ThreadPoolExecutor(max_workers=num_worker, thread_name_prefix='EvalWorker') as executor, \
             tqdm.tqdm(total=sum([df.size() for df in dataflows])) as pbar:
         futures = []
@@ -152,3 +167,90 @@ def multithread_predict_dataflow(dataflows, model_funcs):
             futures.append(executor.submit(predict_dataflow, dataflow, pred, pbar))
         all_results = list(itertools.chain(*[fut.result() for fut in futures]))
         return all_results
+
+
+class EvalCallback(Callback):
+    """
+    A callback that runs evaluation once a while.
+    It supports multi-gpu evaluation.
+    """
+
+    _chief_only = False
+
+    def __init__(self, eval_dataset, in_names, out_names, output_dir):
+        self._eval_dataset = eval_dataset
+        self._in_names, self._out_names = in_names, out_names
+        self._output_dir = output_dir
+
+    def _setup_graph(self):
+        num_gpu = cfg.TRAIN.NUM_GPUS
+        if cfg.TRAINER == 'replicated':
+            # TF bug in version 1.11, 1.12: https://github.com/tensorflow/tensorflow/issues/22750
+            buggy_tf = get_tf_version_tuple() in [(1, 11), (1, 12)]
+
+            # Use two predictor threads per GPU to get better throughput
+            self.num_predictor = num_gpu if buggy_tf else num_gpu * 2
+            self.predictors = [self._build_predictor(k % num_gpu) for k in range(self.num_predictor)]
+            self.dataflows = [get_eval_dataflow(self._eval_dataset,
+                                                shard=k, num_shards=self.num_predictor)
+                              for k in range(self.num_predictor)]
+        else:
+            # Only eval on the first machine.
+            # Alternatively, can eval on all ranks and use allgather, but allgather sometimes hangs
+            self._horovod_run_eval = hvd.rank() == hvd.local_rank()
+            if self._horovod_run_eval:
+                self.predictor = self._build_predictor(0)
+                self.dataflow = get_eval_dataflow(self._eval_dataset,
+                                                  shard=hvd.local_rank(), num_shards=hvd.local_size())
+
+            self.barrier = hvd.allreduce(tf.random_normal(shape=[1]))
+
+    def _build_predictor(self, idx):
+        return self.trainer.get_predictor(self._in_names, self._out_names, device=idx)
+
+    def _before_train(self):
+        eval_period = cfg.TRAIN.EVAL_PERIOD
+        self.epochs_to_eval = set()
+        for k in itertools.count(1):
+            if k * eval_period > self.trainer.max_epoch:
+                break
+            self.epochs_to_eval.add(k * eval_period)
+        self.epochs_to_eval.add(self.trainer.max_epoch)
+        logger.info("[EvalCallback] Will evaluate every {} epochs".format(eval_period))
+
+    def _eval(self):
+        logdir = self._output_dir
+        if cfg.TRAINER == 'replicated':
+            all_results = multithread_predict_dataflow(self.dataflows, self.predictors)
+        else:
+            filenames = [os.path.join(
+                logdir, 'outputs{}-part{}.json'.format(self.global_step, rank)
+            ) for rank in range(hvd.local_size())]
+
+            if self._horovod_run_eval:
+                local_results = predict_dataflow(self.dataflow, self.predictor)
+                fname = filenames[hvd.local_rank()]
+                with open(fname, 'w') as f:
+                    json.dump(local_results, f)
+            self.barrier.eval()
+            if hvd.rank() > 0:
+                return
+            all_results = []
+            for fname in filenames:
+                with open(fname, 'r') as f:
+                    obj = json.load(f)
+                all_results.extend(obj)
+                os.unlink(fname)
+
+        output_file = os.path.join(
+            logdir, '{}-outputs{}.json'.format(self._eval_dataset, self.global_step))
+
+        scores = DetectionDataset().eval_or_save_inference_results(
+            all_results, self._eval_dataset, output_file)
+        for k, v in scores.items():
+            self.trainer.monitors.put_scalar(k, v)
+
+    def _trigger_epoch(self):
+        if self.epoch_num in self.epochs_to_eval:
+            logger.info("Running evaluation ...")
+            self._eval()

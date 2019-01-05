@@ -1,40 +1,31 @@
 #  -*- coding: utf-8 -*-
 #  File: __init__.py
 
-
-from pkgutil import iter_modules
-import os
-
 """
 Common utils.
 These utils should be irrelevant to tensorflow.
 """
 
+# https://github.com/celery/kombu/blob/7d13f9b95d0b50c94393b962e6def928511bfda6/kombu/__init__.py#L34-L36
+STATICA_HACK = True
+globals()['kcah_acitats'[::-1].upper()] = False
+if STATICA_HACK:
+    from .utils import *
+
+
 __all__ = []
 
 
-# this two functions for back-compat only
-def get_nr_gpu():
-    from .gpu import get_nr_gpu as gg
-    logger.warn(    # noqa
-        "Please use `from tensorpack.utils.gpu import get_num_gpu`")
-    return gg()
+def _global_import(name):
+    p = __import__(name, globals(), None, level=1)
+    lst = p.__all__ if '__all__' in dir(p) else dir(p)
+    for k in lst:
+        if not k.startswith('__'):
+            globals()[k] = p.__dict__[k]
+            __all__.append(k)
 
 
-def change_gpu(val):
-    from .gpu import change_gpu as cg
-    logger.warn(    # noqa
-        "change_gpu will not be automatically imported any more! "
-        "Please do `from tensorpack.utils.gpu import change_gpu`")
-    return cg(val)
+_global_import('utils')
 
-
-def get_rng(obj=None):
-    from .utils import get_rng as gr
-    logger.warn(    # noqa
-        "get_rng will not be automatically imported any more! "
-        "Please do `from tensorpack.utils.utils import get_rng`")
-    return gr(obj)
-
-# Import no submodules. they are supposed to be explicitly imported by users.
-__all__.extend(['logger', 'get_nr_gpu', 'change_gpu', 'get_rng'])
+# Import no other submodules. they are supposed to be explicitly imported by users.
+__all__.extend(['logger'])

@@ -31,7 +31,7 @@ class AttrDict():
         super().__setattr__(name, value)
 
     def __str__(self):
-        return pprint.pformat(self.to_dict(), indent=1)
+        return pprint.pformat(self.to_dict(), indent=1, width=100, compact=True)
 
     __repr__ = __str__
 

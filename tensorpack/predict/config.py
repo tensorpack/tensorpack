@@ -41,8 +41,10 @@ class PredictConfig(object):
                 the list of inputs it takes.
 
             input_names (list): a list of input tensor names. Defaults to match inputs_desc.
+                The name can be either the name of a tensor, or the name of one input defined
+                by `inputs_desc` or by `model`.
             output_names (list): a list of names of the output tensors to predict, the
-                tensors can be any computable tensor in the graph.
+                tensors can be any tensor in the graph that's computable from the tensors correponding to `input_names`.
 
             session_creator (tf.train.SessionCreator): how to create the
                 session. Defaults to :class:`tf.train.ChiefSessionCreator()`.
