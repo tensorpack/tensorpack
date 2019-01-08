@@ -16,4 +16,4 @@ API Documentation
   predict
   tfutils
   utils
-
+  contrib
