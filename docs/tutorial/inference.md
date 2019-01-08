@@ -12,22 +12,111 @@ There are two ways to do inference during training.
 
 2. If your inference follows the paradigm of:
 	"evaluate some tensors for each input, and aggregate the results in the end".
-	You can use the `InferenceRunner` interface with some `Inferencer**.
+	You can use the `InferenceRunner` interface with some `Inferencer`.
 	This will further support prefetch & data-parallel inference.
-	More details to come.
+	
+    Currently this lacks documentation, but you can refer to examples
+    that uses `InferenceRunner` or custom `Inferencer` to learn more.
 
 In both methods, your tower function will be called again, with `TowerContext.is_training==False`.
 You can use this predicate to choose a different code path in inference mode.
 
-## Inference After Training
+
+## Inference After Training: What Tensorpack Does
+
+Tensorpack provides some small tools to do the most basic types of inference for demo purposes.
+You can use them but
+__these approaches are often suboptimal and may fail__.
+They may often be inefficient or lack functionalities you need.
+
+If you need anything more complicated, please
+learn what TensorFlow can do, and __do it on your own__ because Tensorpack
+is a training interface and doesn't care what happened after training.
+
+### OfflinePredictor
+
+Tensorpack provides  [OfflinePredictor](../modules/predict.html#tensorpack.predict.OfflinePredictor),
+for inference demo after training.
+It has functionailities to build the graph, load the checkpoint, and
+return a callable for you for simple prediction. Refer to its docs for details.
+
+OfflinePredictor is only for quick demo purposes.
+It runs inference on numpy arrays, therefore may not be the most efficient way.
+It also has very limited functionalities.
+
+A simple example of how it works:
+```python
+pred_config = PredictConfig(
+    session_init=get_model_loader(model_path),
+    model=YourModel(),
+    input_names=['input1', 'input2'],  # tensor names in the graph, or name of the declared inputs
+    output_names=['output1', 'output2'])  # tensor names in the graph
+predictor = OfflinePredictor(pred_config)
+output1_array, output2_array = predictor(input1_array, input2_array)
+```
+
+It's __common to use a different graph for inference__, 
+e.g., use NHWC format, support encoded image format, etc. 
+You can make these changes inside the `model` or `tower_func` in your `PredictConfig`.
+The example in [examples/basics/export-model.py](../examples/basics/export-model.py) demonstrates such an altered inference graph.
+
+### Exporter
+
+In addition to the standard checkpoint format tensorpack saved for you during training,
+you can also save your models into other formats so it may be more friendly for inference.
+
+1. Export to `SavedModel` format for TensorFlow Serving:
+
+   ```python
+   from tensorpack.tfutils.export import ModelExporter
+   ModelExporter(pred_config).export_serving('/path/to/export')
+   ```
+
+   This format contains both the graph and the variables. Refer to TensorFlow
+   serving documentation on how to use it.
+
+2. Export to a frozen and pruned graph for TensorFlow's builtin tools such as TOCO:
+
+   ```python
+   ModelExporter(pred_config).export_compact('/path/to/compact_graph.pb', toco_compatible=True)
+   ```
+
+   This format is just a serialized `tf.Graph`. The export process:
+   - Converts all variables to constants to embed the variables directly in the graph.
+   - Removes all unnecessary operations (training-only ops, e.g., learning-rate) to compress the graph.
+
+   This creates a self-contained graph which includes all necessary information to run inference.
+   
+   To load the saved graph, you can simply:
+   ```python
+   graph_def = tf.GraphDef()
+   graph_def.ParseFromString(open(graph_file, 'rb').read())
+   tf.import_graph_def(graph_def)
+   ```
+
+[examples/basics/export-model.py](../examples/basics/export-model.py)
+demonstrates the usage of such a frozen/pruned graph.
+Again, you may often want to use a different graph for inference and you can
+do so by the arguments of `PredictConfig`.
+
+
+## Inference After Training: Do It Yourself
 
 Tensorpack is a training interface -- __it doesn't care what happened after training__.
-You already have everything you need for inference or model diagnosis after
+It already provides everything you need for inference or model diagnosis after
 training:
-1. The model (the graph): you've already written it yourself with TF symbolic functions.
-2. The trained parameters: tensorpack saves them in standard TF checkpoint format.
 
-### Step 1: build the model
+1. The model (the graph): you've already written it yourself with TF symbolic functions.
+   Nothing about it is related to the tensorpack interface.
+   If you use tensorpack layers, they are mainly just wrappers around `tf.layers`.
+
+2. The trained parameters: tensorpack saves them in standard TF checkpoint format.
+   Nothing about it is related to tensorpack.
+
+With the model and the weights, you can do inference with whatever approaches
+TensorFlow supports. Usually it involves the following steps:
+
+### Step 1: build the model (graph)
 
 You can build a graph however you like, with pure TensorFlow. If your model is written with
 tensorpack's `ModelDesc`, you can also build it like this:
@@ -64,78 +153,12 @@ with TowerContext('', is_training=False):
 You can just use `tf.train.Saver` for all the work.
 Alternatively, use tensorpack's `SaverRestore(path).init(tf.get_default_session())`
 
-
 Now, you've already built a graph for inference, and the checkpoint is loaded. 
-You can then apply any graph processing or use deployment tools TensorFlow supports.
-These are unrelated to tensorpack, and you'll need to read TF docs and __do it on your own__.
+You may now:
 
+1. use `sess.run` to do inference
+2. save the grpah to some formats for further processing
+3. apply graph transformation for efficient inference
 
-### OfflinePredictor
-
-Tensorpack provides one tool [OfflinePredictor](../modules/predict.html#tensorpack.predict.OfflinePredictor),
-to merge the above two steps together.
-It has simple functionailities to build the graph, load the checkpoint, and
-return a callable for you for simple prediction.
-
-OfflinePredictor is only for quick demo purposes.
-It runs inference on numpy arrays, therefore may not be the most efficient way.
-It also has very limited functionalities.
-If you need anything more complicated, please __do it on your own__ because Tensorpack
-doesn't care what happened after training.
-
-A simple explanation of how it works:
-```python
-pred_config = PredictConfig(
-    session_init=get_model_loader(model_path),
-    model=YourModel(),
-    input_names=['input1', 'input2'],
-    output_names=['output1', 'output2'])
-predictor = OfflinePredictor(pred_config)
-outputs = predictor(input1_array, input2_array)
-```
-
-As mentioned before, you might want to use a different graph for inference, 
-e.g., use NHWC format, support base64-encoded images. 
-You can make these changes in the `model` or `tower_func` in your `PredictConfig`.
-The example in [examples/basic/export-model.py](../examples/basic/export-model.py) demonstrates such an altered inference graph.
-
-### Exporter
-
-In addition to the standard checkpoint format tensorpack saved for you during training,
-you can also save your models into other formats so it may be more friendly for inference.
-
-1. Export to `SavedModel` format for TensorFlow Serving:
-
-   ```python
-   from tensorpack.tfutils.export import ModelExporter
-   ModelExporter(pred_config).export_serving('/path/to/export')
-   ```
-
-   This format contains both the graph and the variables. Refer to TensorFlow
-   serving documentation on how to use it.
-
-2. Export to a frozen and pruned graph:
-
-   ```python
-   ModelExporter(pred_config).export_compact('/path/to/compact_graph.pb', toco_compatible=True)
-   ```
-
-   This format is just a serialized `tf.Graph`. The export process:
-   - Converts all variables to constants to embed the variables directly in the graph.
-   - Removes all unnecessary operations (training-only ops, e.g., learning-rate) to compress the graph.
-
-   This creates a self-contained graph which includes all necessary information to run inference.
-   
-   To load the saved graph, you can simply:
-   ```python
-   graph_def = tf.GraphDef()
-   graph_def.ParseFromString(open(graph_file, 'rb').read())
-   tf.import_graph_def(graph_def)
-   ```
-
-[examples/basic/export-model.py](../examples/basic/export-model.py) demonstrates the usage of such a frozen/pruned graph.
-
-Note that these steps are not the optimal way for inference. They may very likely
-produce an inefficent graph.
-To do efficient inference, understand what TensorFlow can do and do it on your
-own, because inference after training is unrelated to tensorpack.
+These steps are unrelated to tensorpack, and you'll need to learn TensorFlow and
+do it yourself.

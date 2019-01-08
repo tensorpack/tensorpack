@@ -94,11 +94,11 @@ class GoogleNetRandomCropAndResize(ImageAugmentor):
 
     It attempts to crop a random rectangle with 8%~100% area of the original image,
     and keep the aspect ratio between 3/4 to 4/3. Then it resize this crop to the target shape.
-    If such crop cannot be found in 10 iterations, it will to a ResizeShortestEdge + CenterCrop.
+    If such crop cannot be found in 10 iterations, it will do a ResizeShortestEdge + CenterCrop.
     """
     def __init__(self, crop_area_fraction=(0.08, 1.),
                  aspect_ratio_range=(0.75, 1.333),
-                 target_shape=224, interp=cv2.INTER_LINEAR):
+                 target_shape=224, interp=cv2.INTER_CUBIC):
         """
         Args:
             crop_area_fraction (tuple(float)): Defaults to crop 8%-100% area.
@@ -123,7 +123,7 @@ class GoogleNetRandomCropAndResize(ImageAugmentor):
                 out = img[y1:y1 + hh, x1:x1 + ww]
                 out = cv2.resize(out, (self.target_shape, self.target_shape), interpolation=self.interp)
                 return out
-        out = ResizeShortestEdge(self.target_shape, interp=cv2.INTER_CUBIC).augment(img)
+        out = ResizeShortestEdge(self.target_shape, interp=self.interp).augment(img)
         out = CenterCrop(self.target_shape).augment(out)
         return out
 
