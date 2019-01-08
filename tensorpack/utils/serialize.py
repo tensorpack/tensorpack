@@ -4,10 +4,17 @@
 import os
 import sys
 
+import msgpack
+import msgpack_numpy
+
 from . import logger
 from .develop import create_dummy_func
 
+msgpack_numpy.patch()
+assert msgpack.version >= (0, 5, 2)
+
 __all__ = ['loads', 'dumps']
+
 
 MAX_MSGPACK_LEN = 1000000000
 
@@ -55,35 +62,22 @@ def loads_pyarrow(buf):
     return pa.deserialize(buf)
 
 
-try:
-    # import pyarrow has a lot of side effect: https://github.com/apache/arrow/pull/2329
-    # So we need an option to disable it.
-    if os.environ.get('TENSORPACK_SERIALIZE', 'pyarrow') == 'pyarrow':
+# import pyarrow has a lot of side effect:
+# https://github.com/apache/arrow/pull/2329
+# https://groups.google.com/a/tensorflow.org/forum/#!topic/developers/TMqRaT-H2bI
+# So we use msgpack as default.
+if os.environ.get('TENSORPACK_SERIALIZE', 'msgpack') == 'pyarrow':
+    try:
         import pyarrow as pa
-        if 'horovod' in sys.modules:
-            logger.warn("Horovod and pyarrow may conflict due to pyarrow bugs. "
-                        "Uninstall pyarrow and use msgpack instead.")
-    else:
-        pa = None
-except ImportError:
-    pa = None
-    dumps_pyarrow = create_dummy_func('dumps_pyarrow', ['pyarrow'])  # noqa
-    loads_pyarrow = create_dummy_func('loads_pyarrow', ['pyarrow'])  # noqa
+    except ImportError:
+        loads_pyarrow = create_dummy_func('loads_pyarrow', ['pyarrow'])  # noqa
+        dumps_pyarrow = create_dummy_func('dumps_pyarrow', ['pyarrow'])  # noqa
 
-try:
-    import msgpack
-    import msgpack_numpy
-    msgpack_numpy.patch()
-    assert msgpack.version >= (0, 5, 2)
-except ImportError:
-    loads_msgpack = create_dummy_func(  # noqa
-        'loads_msgpack', ['msgpack', 'msgpack_numpy'])
-    dumps_msgpack = create_dummy_func(  # noqa
-        'dumps_msgpack', ['msgpack', 'msgpack_numpy'])
-
-if pa is None or os.environ.get('TENSORPACK_SERIALIZE', None) == 'msgpack':
-    loads = loads_msgpack
-    dumps = dumps_msgpack
-else:
+    if 'horovod' in sys.modules:
+        logger.warn("Horovod and pyarrow may have symbol conflicts. "
+                    "Uninstall pyarrow and use msgpack instead.")
     loads = loads_pyarrow
     dumps = dumps_pyarrow
+else:
+    loads = loads_msgpack
+    dumps = dumps_msgpack
