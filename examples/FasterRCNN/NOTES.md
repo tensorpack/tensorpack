@@ -16,10 +16,14 @@ This is a minimal implementation that simply contains these files:
 
 Data:
 
-1. It's easy to train on your own data. 
-   If your data is not in COCO format, you can just rewrite all the methods of
-   `DetectionDataset` following its documents in `dataset.py`.
-   You'll implement the logic to load your dataset and evaluate predictions.
+1. It's easy to train on your own data by changing `dataset.py`.
+
+   + If your data is in COCO format, modify `COCODetection`
+     to change the class names and the id mapping.
+   + If your data is not in COCO format, ignore `COCODetection` completely and
+     rewrite all the methods of
+     `DetectionDataset` following its documents.
+     You'll implement the logic to load your dataset and evaluate predictions.
 
 2. You can easily add more augmentations such as rotation, but be careful how a box should be
 	 augmented. The code now will always use the minimal axis-aligned bounding box of the 4 corners,
