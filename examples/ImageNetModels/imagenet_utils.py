@@ -37,7 +37,7 @@ def fbresnet_augmentor(isTrain):
             # Removing lighting leads to a tiny drop in accuracy.
             imgaug.RandomOrderAug(
                 [imgaug.BrightnessScale((0.6, 1.4), clip=False),
-                 imgaug.Contrast((0.6, 1.4), clip=False),
+                 imgaug.Contrast((0.6, 1.4), rgb=False, clip=False),
                  imgaug.Saturation(0.4, rgb=False),
                  # rgb-bgr conversion for the constants copied from fb.resnet.torch
                  imgaug.Lighting(0.1,

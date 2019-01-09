@@ -2,6 +2,7 @@
 # File: eval.py
 
 import itertools
+import sys
 import os
 import json
 import numpy as np
@@ -160,7 +161,8 @@ def multithread_predict_dataflow(dataflows, model_funcs):
     assert len(dataflows) == num_worker
     if num_worker == 1:
         return predict_dataflow(dataflows[0], model_funcs[0])
-    with ThreadPoolExecutor(max_workers=num_worker, thread_name_prefix='EvalWorker') as executor, \
+    kwargs = {'thread_name_prefix': 'EvalWorker'} if sys.version_info.minor >= 6 else {}
+    with ThreadPoolExecutor(max_workers=num_worker, **kwargs) as executor, \
             tqdm.tqdm(total=sum([df.size() for df in dataflows])) as pbar:
         futures = []
         for dataflow, pred in zip(dataflows, model_funcs):
