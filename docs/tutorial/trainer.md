@@ -62,7 +62,7 @@ follow these conventions and will need some workarounds if used within tensorpac
 
 #### What You Can Do Inside Tower Function
 1. Call any symbolic functions as long as they follow the above rules.
-2. The function will be called under a
+2. The tower function will be called under a
  [TowerContext](../modules/tfutils.html#tensorpack.tfutils.tower.BaseTowerContext),
  which can be accessed by [get_current_tower_context()](../modules/tfutils.html#tensorpack.tfutils.tower.get_current_tower_context).
    The context contains information about training/inference mode, scope name, etc.
@@ -93,7 +93,7 @@ Note some __common problems__ when using these trainers:
         inputs on each GPU needs to have consistent shapes.
     ```
 
-2. The tower function (your model code) will get called multipile times on each GPU.
+2. The tower function (your model code) will get called once on each GPU.
    You must follow the abovementieond rules of tower function.
 
 ### Distributed Trainers
