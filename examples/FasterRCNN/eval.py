@@ -15,7 +15,7 @@ import tqdm
 import tensorflow as tf
 
 from tensorpack.callbacks import Callback
-from tensorpack.tfutils import get_tf_version_tuple
+from tensorpack.tfutils.common import get_tf_version_tuple
 from tensorpack.utils import logger
 from tensorpack.utils.utils import get_tqdm
 

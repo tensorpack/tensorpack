@@ -87,10 +87,18 @@ class ModelExporter(object):
                        signature_name='prediction_pipeline'):
         """
         Converts a checkpoint and graph to a servable for TensorFlow Serving.
-        Use SavedModelBuilder to export a trained model without tensorpack dependency.
+        Use TF's `SavedModelBuilder` to export a trained model without tensorpack dependency.
 
-        Remarks:
+        Args:
+            filename (str): path for export directory
+            tags (list): list of user specified tags
+            signature_name (str): name of signature for prediction
+
+        Note:
             This produces
+
+            .. code-block:: none
+
                 variables/       # output from the vanilla Saver
                     variables.data-?????-of-?????
                     variables.index
@@ -98,11 +106,6 @@ class ModelExporter(object):
 
             Currently, we only support a single signature, which is the general PredictSignatureDef:
             https://github.com/tensorflow/serving/blob/master/tensorflow_serving/g3doc/signature_defs.md
-
-        Args:
-            filename (str): path for export directory
-            tags (list): list of user specified tags
-            signature_name (str): name of signature for prediction
         """
 
         self.graph = self.config._maybe_create_graph()

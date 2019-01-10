@@ -36,6 +36,9 @@ class Augmentor(object):
         """
         Perform augmentation on the data.
 
+        Args:
+            d: input data
+
         Returns:
             augmented data
         """
@@ -45,8 +48,10 @@ class Augmentor(object):
     def augment_return_params(self, d):
         """
         Augment the data and return the augmentation parameters.
-        The returned parameters can be used to augment another data with identical transformation.
-        This can be used in, e.g. augmentation for image, masks, keypoints altogether.
+        If the augmentation is non-deterministic (random),
+        the returned parameters can be used to augment another data with the identical transformation.
+        This can be used for, e.g. augmenting image, masks, keypoints altogether with the
+        same transformation.
 
         Returns:
             (augmented data, augmentation params)
@@ -63,6 +68,10 @@ class Augmentor(object):
     def augment_with_params(self, d, param):
         """
         Augment the data with the given param.
+
+        Args:
+            d: input data
+            param: augmentation params returned by :meth:`augment_return_params`
 
         Returns:
             augmented data
@@ -137,6 +146,8 @@ class ImageAugmentor(Augmentor):
 
         Args:
             coords: Nx2 floating point numpy array where each row is (x, y)
+            param: augmentation params returned by :meth:`augment_return_params`
+
         Returns:
             new coords
         """

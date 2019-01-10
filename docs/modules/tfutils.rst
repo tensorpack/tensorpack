@@ -7,6 +7,14 @@ tensorpack.tfutils package
 
         <script type="text/javascript" src='../_static/build_toc_group.js'></script>
 
+tensorpack.tfutils.argscope module
+------------------------------------
+
+.. automodule:: tensorpack.tfutils.argscope
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 tensorpack.tfutils.collection module
 ------------------------------------
 
@@ -87,11 +95,18 @@ tensorpack.tfutils.varreplace module
     :undoc-members:
     :show-inheritance:
 
+tensorpack.tfutils.export module
+------------------------------------
+
+.. automodule:: tensorpack.tfutils.export
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Other functions in tensorpack.tfutils module
 ---------------------------------------------
 
 .. automethod:: tensorpack.tfutils.get_default_sess_config
 .. automethod:: tensorpack.tfutils.get_global_step_var
 .. automethod:: tensorpack.tfutils.get_global_step_value
-.. automethod:: tensorpack.tfutils.argscope
-.. automethod:: tensorpack.tfutils.get_arg_scope
+.. automethod:: tensorpack.tfutils.get_tf_version_tuple

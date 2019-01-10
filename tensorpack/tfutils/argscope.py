@@ -72,7 +72,9 @@ def enable_argscope_for_function(func, log_shape=True):
     """Decorator for function to support argscope
 
     Example:
+
         .. code-block:: python
+
             from mylib import myfunc
             myfunc = enable_argscope_for_function(myfunc)
 
@@ -113,7 +115,9 @@ def enable_argscope_for_module(module, log_shape=True):
     It has been only tested to work well with `tf.layers` module.
 
     Example:
+
         .. code-block:: python
+
             import tensorflow as tf
             enable_argscope_for_module(tf.layers)
 

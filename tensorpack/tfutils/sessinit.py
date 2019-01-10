@@ -219,7 +219,8 @@ class DictRestore(SessionInit):
 
 
 class ChainInit(SessionInit):
-    """ Initialize a session by a list of :class:`SessionInit` instance, executed one by one.
+    """
+    Initialize a session by a list of :class:`SessionInit` instance, executed one by one.
     This can be useful for, e.g., loading several models from different files
     to form a composition of models.
     """
