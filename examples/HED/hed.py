@@ -15,6 +15,7 @@ from tensorpack.dataflow import dataset
 from tensorpack.tfutils import gradproc, optimizer
 from tensorpack.tfutils.summary import add_moving_summary, add_param_summary
 from tensorpack.utils.gpu import get_num_gpu
+from tensorpack.utils import logger
 
 
 def class_balanced_sigmoid_cross_entropy(logits, label, name='cross_entropy_loss'):
@@ -51,15 +52,15 @@ def CaffeBilinearUpSample(x, shape):
     It is aimed to mimic caffe behavior.
 
     Args:
-        x (tf.Tensor): a NHWC tensor
+        x (tf.Tensor): a NCHW tensor
         shape (int): the upsample factor
 
     Returns:
-        tf.Tensor: a NHWC tensor.
+        tf.Tensor: a NCHW tensor.
     """
     inp_shape = x.shape.as_list()
-    ch = inp_shape[3]
-    assert ch is not None
+    ch = inp_shape[1]
+    assert ch == 1, "This layer only works for channel=1"
 
     shape = int(shape)
     filter_shape = 2 * shape
@@ -82,17 +83,17 @@ def CaffeBilinearUpSample(x, shape):
     weight_var = tf.constant(w, tf.float32,
                              shape=(filter_shape, filter_shape, ch, ch),
                              name='bilinear_upsample_filter')
-    x = tf.pad(x, [[0, 0], [shape - 1, shape - 1], [shape - 1, shape - 1], [0, 0]], mode='SYMMETRIC')
-    out_shape = tf.shape(x) * tf.constant([1, shape, shape, 1], tf.int32)
+    x = tf.pad(x, [[0, 0], [0, 0], [shape - 1, shape - 1], [shape - 1, shape - 1]], mode='SYMMETRIC')
+    out_shape = tf.shape(x) * tf.constant([1, 1, shape, shape], tf.int32)
     deconv = tf.nn.conv2d_transpose(x, weight_var, out_shape,
-                                    [1, shape, shape, 1], 'SAME')
+                                    [1, 1, shape, shape], 'SAME', data_format='NCHW')
     edge = shape * (shape - 1)
-    deconv = deconv[:, edge:-edge, edge:-edge, :]
+    deconv = deconv[:, :, edge:-edge, edge:-edge]
 
-    if inp_shape[1]:
-        inp_shape[1] *= shape
     if inp_shape[2]:
         inp_shape[2] *= shape
+    if inp_shape[3]:
+        inp_shape[3] *= shape
     deconv.set_shape(inp_shape)
     return deconv
 
@@ -104,6 +105,7 @@ class Model(ModelDesc):
 
     def build_graph(self, image, edgemap):
         image = image - tf.constant([104, 116, 122], dtype='float32')
+        image = tf.transpose(image, [0, 3, 1, 2])
         edgemap = tf.expand_dims(edgemap, 3, name='edgemap4d')
 
         def branch(name, l, up):
@@ -113,10 +115,11 @@ class Model(ModelDesc):
                            kernel_initializer=tf.constant_initializer())
                 while up != 1:
                     l = CaffeBilinearUpSample('upsample{}'.format(up), l, 2)
-                    up = up / 2
+                    up = up // 2
                 return l
 
-        with argscope(Conv2D, kernel_size=3, activation=tf.nn.relu):
+        with argscope(Conv2D, kernel_size=3, activation=tf.nn.relu), \
+                argscope([Conv2D, MaxPooling], data_format='NCHW'):
             l = Conv2D('conv1_1', image, 64)
             l = Conv2D('conv1_2', l, 64)
             b1 = branch('branch1', l, 1)
@@ -144,12 +147,13 @@ class Model(ModelDesc):
             l = Conv2D('conv5_3', l, 512)
             b5 = branch('branch5', l, 16)
 
-        final_map = Conv2D('convfcweight',
-                           tf.concat([b1, b2, b3, b4, b5], 3), 1, kernel_size=1,
-                           kernel_initializer=tf.constant_initializer(0.2),
-                           use_bias=False, activation=tf.identity)
+            final_map = Conv2D('convfcweight',
+                               tf.concat([b1, b2, b3, b4, b5], 1), 1, kernel_size=1,
+                               kernel_initializer=tf.constant_initializer(0.2),
+                               use_bias=False, activation=tf.identity)
         costs = []
         for idx, b in enumerate([b1, b2, b3, b4, b5, final_map]):
+            b = tf.transpose(b, [0, 2, 3, 1])
             output = tf.nn.sigmoid(b, name='output{}'.format(idx + 1))
             xentropy = class_balanced_sigmoid_cross_entropy(
                 b, edgemap,
@@ -161,16 +165,15 @@ class Model(ModelDesc):
         wrong = tf.cast(tf.not_equal(pred, edgemap), tf.float32)
         wrong = tf.reduce_mean(wrong, name='train_error')
 
-        if get_current_tower_context().is_training:
-            wd_w = tf.train.exponential_decay(2e-4, get_global_step_var(),
-                                              80000, 0.7, True)
-            wd_cost = tf.multiply(wd_w, regularize_cost('.*/W', tf.nn.l2_loss), name='wd_cost')
-            costs.append(wd_cost)
+        wd_w = tf.train.exponential_decay(2e-4, get_global_step_var(),
+                                          80000, 0.7, True)
+        wd_cost = tf.multiply(wd_w, regularize_cost('.*/W', tf.nn.l2_loss), name='wd_cost')
+        costs.append(wd_cost)
 
-            add_param_summary(('.*/W', ['histogram']))   # monitor W
-            total_cost = tf.add_n(costs, name='cost')
-            add_moving_summary(wrong, total_cost, *costs)
-            return total_cost
+        add_param_summary(('.*/W', ['histogram']))   # monitor W
+        total_cost = tf.add_n(costs, name='cost')
+        add_moving_summary(wrong, total_cost, *costs)
+        return total_cost
 
     def optimizer(self):
         lr = tf.get_variable('learning_rate', initializer=3e-5, trainable=False)
@@ -284,6 +287,7 @@ def run(model_path, image_path, output):
             pred = outputs[k][0]
             cv2.imwrite("out{}.png".format(
                 '-fused' if k == 5 else str(k + 1)), pred * 255)
+        logger.info("Results saved to out*.png")
     else:
         pred = outputs[5][0]
         cv2.imwrite(output, pred * 255)

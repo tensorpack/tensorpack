@@ -1,6 +1,9 @@
 
 ### Write a DataFlow
 
+First, make sure you know about Python's generators and `yield` keyword.
+If you don't, learn it on Google.
+
 #### Write a Source DataFlow
 
 There are several existing DataFlow, e.g. [ImageFromFile](../../modules/dataflow.html#tensorpack.dataflow.ImageFromFile),

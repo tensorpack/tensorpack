@@ -97,9 +97,9 @@ class DataFlow(object):
 
         * There could be many reasons why :meth:`__len__` is inaccurate.
           For example, some dataflow has dynamic size.
-          Some dataflow mixes the datapoints between consecutive epochs
-          due to parallelism and buffering, then it does not make sense to stop the
-          iteration anywhere.
+          Some dataflow mixes the datapoints between consecutive passes over
+          the dataset, due to parallelism and buffering.
+          In this case it does not make sense to stop the iteration anywhere.
 
         * Due to the above reasons, the length is only a rough guidance. Inside
           tensorpack it's only used in these places:

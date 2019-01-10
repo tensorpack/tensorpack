@@ -42,7 +42,7 @@ def Conv2D(
 
     1. Default kernel initializer is variance_scaling_initializer(2.0).
     2. Default padding is 'same'.
-    3. Support 'split' argument to do group conv.
+    3. Support 'split' argument to do group conv. Note that this is not efficient.
 
     Variable Names:
 
