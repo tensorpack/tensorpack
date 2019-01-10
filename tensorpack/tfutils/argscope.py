@@ -97,9 +97,14 @@ def enable_argscope_for_function(func, log_shape=True):
         name = func.__name__ if 'name' not in kwargs else kwargs['name']
         if log_shape:
             if ('tower' not in ctx.ns_name.lower()) or ctx.is_main_training_tower:
+                # we assume the first parameter is the most intersting
+                if isinstance(out_tensor, tuple):
+                    out_tensor_descr = out_tensor[0]
+                else:
+                    out_tensor_descr = out_tensor
                 logger.info('%20s: %20s -> %20s' %
                             (name, in_tensor.shape.as_list(),
-                             out_tensor.shape.as_list()))
+                             out_tensor_descr.shape.as_list()))
 
         return out_tensor
     # argscope requires this property
