@@ -7,7 +7,6 @@ import tqdm
 import json
 
 from tensorpack.utils import logger
-from tensorpack.utils.argtools import log_once
 from tensorpack.utils.timer import timed_operation
 
 from config import config as cfg
@@ -121,7 +120,7 @@ class COCODetection(object):
         valid_objs = []
         width = img['width']
         height = img['height']
-        for obj in objs:
+        for objid, obj in objs:
             if obj.get('ignore', 0) == 1:
                 continue
             x1, y1, w, h = obj['bbox']
@@ -145,8 +144,10 @@ class COCODetection(object):
                         obj['segmentation'] = None
                     else:
                         valid_segs = [np.asarray(p).reshape(-1, 2).astype('float32') for p in segs if len(p) >= 6]
-                        if len(valid_segs) < len(segs):
-                            log_once("Image {} has invalid polygons!".format(img['file_name']), 'warn')
+                        if len(valid_segs) == 0:
+                            logger.error("Object {} in image {} has no valid polygons!".format(objid, img['file_name']))
+                        elif len(valid_segs) < len(segs):
+                            logger.warn("Object {} in image {} has invalid polygons!".format(objid, img['file_name']))
 
                         obj['segmentation'] = valid_segs
 
