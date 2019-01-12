@@ -118,7 +118,7 @@ def add_tensor_summary(x, types, name=None, collections=None,
     if name is None:
         name = x.op.name
     ctx = get_current_tower_context()
-    if ctx is not None and not ctx.is_main_training_tower:
+    if main_tower_only and ctx is not None and not ctx.is_main_training_tower:
         return
 
     SUMMARY_TYPES_DIC = {

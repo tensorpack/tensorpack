@@ -99,6 +99,7 @@ If you're unable to scale to multiple GPUs almost linearly:
 	If not, it's a bug or an environment setup problem.
 2. Then note that your model may have a different communication-computation pattern that affects efficiency.
 	 There isn't a simple answer to this.
-	 You may try a different multi-GPU trainer; the speed can vary a lot in rare cases.
+	 You may try a different multi-GPU trainer; the speed can vary a lot between
+	 trainers in rare cases.
 
 Note that scalibility is always measured by keeping "batch size per GPU" constant.
