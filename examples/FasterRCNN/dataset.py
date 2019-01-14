@@ -120,7 +120,7 @@ class COCODetection(object):
         valid_objs = []
         width = img['width']
         height = img['height']
-        for objid, obj in objs:
+        for objid, obj in enumerate(objs):
             if obj.get('ignore', 0) == 1:
                 continue
             x1, y1, w, h = obj['bbox']
