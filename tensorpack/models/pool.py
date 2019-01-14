@@ -30,7 +30,11 @@ def MaxPooling(
     """
     if strides is None:
         strides = pool_size
-    layer = tf.layers.MaxPooling2D(pool_size, strides, padding=padding, data_format=data_format)
+    in_shape = inputs.get_shape().as_list()
+    if len(in_shape) == 5: # Add MaxPooling3D
+        layer = tf.layers.MaxPooling3D(pool_size, strides, padding=padding, data_format=data_format)
+    else:
+        layer = tf.layers.MaxPooling2D(pool_size, strides, padding=padding, data_format=data_format)
     ret = layer.apply(inputs, scope=tf.get_variable_scope())
     return tf.identity(ret, name='output')
 
@@ -50,7 +54,10 @@ def AvgPooling(
     """
     if strides is None:
         strides = pool_size
-    layer = tf.layers.AveragePooling2D(pool_size, strides, padding=padding, data_format=data_format)
+    if len(in_shape) == 5: # Add AveragePooling3D
+        layer = tf.layers.AveragePooling3D(pool_size, strides, padding=padding, data_format=data_format)
+    else:
+        layer = tf.layers.AveragePooling2D(pool_size, strides, padding=padding, data_format=data_format)
     ret = layer.apply(inputs, scope=tf.get_variable_scope())
     return tf.identity(ret, name='output')
 
