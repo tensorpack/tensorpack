@@ -12,7 +12,7 @@ if six.PY2:
 else:
     import functools
 
-__all__ = ['map_arg', 'memoized', 'memoized_method', 'graph_memoized', 'shape2d', 'shape4d',
+__all__ = ['map_arg', 'memoized', 'memoized_method', 'graph_memoized', 'shape2d', 'shape3d', 'shape4d', 'shape5d',
            'memoized_ignoreargs', 'log_once', 'call_only_once']
 
 
@@ -104,11 +104,35 @@ def shape2d(a):
     raise RuntimeError("Illegal shape: {}".format(a))
 
 
-def get_data_format(data_format, tfmode=True):
-    if tfmode:
-        dic = {'NCHW': 'channels_first', 'NHWC': 'channels_last'}
+def shape3d(a):
+    """
+    Ensure a 3D shape.
+
+    Args:
+        a: a int or tuple/list of length 3
+
+    Returns:
+        list: of length 2. if ``a`` is a int, return ``[a, a]``.
+    """
+    if type(a) == int:
+        return [a, a, a]
+    if isinstance(a, (list, tuple)):
+        assert len(a) == 3
+        return list(a)
+    raise RuntimeError("Illegal shape: {}".format(a))
+
+
+def get_data_format(data_format, tfmode=True, is_5d_data=False):
+    if is_3d_data:
+        if tfmode:
+            dic = {'NCDHW': 'channels_first', 'NDHWC': 'channels_last'}
+        else:
+            dic = {'channels_first': 'NCDHW', 'channels_last': 'NDHWC'}
     else:
-        dic = {'channels_first': 'NCHW', 'channels_last': 'NHWC'}
+        if tfmode:
+            dic = {'NCHW': 'channels_first', 'NHWC': 'channels_last'}
+        else:
+            dic = {'channels_first': 'NCHW', 'channels_last': 'NHWC'}
     ret = dic.get(data_format, data_format)
     if ret not in dic.values():
         raise ValueError("Unknown data_format: {}".format(data_format))
@@ -131,6 +155,24 @@ def shape4d(a, data_format='channels_last'):
         return [1] + s2d + [1]
     else:
         return [1, 1] + s2d
+
+
+def shape5d(a, data_format='channels_last'):
+    """
+    Ensuer a 4D shape, to use with 4D symbolic functions.
+
+    Args:
+        a: a int or tuple/list of length 2
+
+    Returns:
+        list: of length 4. if ``a`` is a int, return ``[1, a, a, 1]``
+            or ``[1, 1, a, a]`` depending on data_format.
+    """
+    s3d = shape3d(a)
+    if get_data_format(data_format) == 'channels_last':
+        return [1] + s3d + [1]
+    else:
+        return [1, 1] + s3d
 
 
 @memoized
