@@ -6,6 +6,7 @@ import os
 import sys
 import tensorflow as tf
 
+from horovod.tensorflow.compression import Compression
 from ..callbacks import CallbackFactory, RunOp
 from ..graph_builder.distributed import DistributedParameterServerBuilder, DistributedReplicatedBuilder
 from ..graph_builder.training import (
@@ -370,10 +371,11 @@ class HorovodTrainer(SingleCostTrainer):
            for a full example which has handled these common issues.
            This example can train ImageNet in roughly an hour following the paper's setup.
     """
-    def __init__(self, average=True):
+    def __init__(self, average=True, compression=Compression.none):
         """
         Args:
             average (bool): whether to average or sum the gradients across processes.
+            compession: None, fp16
         """
         if 'pyarrow' in sys.modules:
             logger.warn("Horovod and pyarrow may conflict due to pyarrow bugs. "
@@ -388,6 +390,7 @@ class HorovodTrainer(SingleCostTrainer):
         self._local_rank = hvd.local_rank()
         self._rank = hvd.rank()
         self._average = average
+        self._compression=compression
         logger.info("[HorovodTrainer] local rank={}".format(self._local_rank))
         super(HorovodTrainer, self).__init__()
 
@@ -399,7 +402,7 @@ class HorovodTrainer(SingleCostTrainer):
         with tf.name_scope("HVDAllReduce"):
             for grad, var in grads:
                 if grad is not None:
-                    avg_grad = hvd.allreduce(grad, average=self._average)
+                    avg_grad = hvd.allreduce(grad, average=self._average, compression=self._compression)
                     averaged_gradients.append((avg_grad, var))
                 else:
                     averaged_gradients.append((None, var))
