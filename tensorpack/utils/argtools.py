@@ -123,7 +123,7 @@ def shape3d(a):
 
 
 def get_data_format(data_format, tfmode=True, is_5d_data=False):
-    if is_3d_data:
+    if is_5d_data:
         if tfmode:
             dic = {'NCDHW': 'channels_first', 'NDHWC': 'channels_last'}
         else:
