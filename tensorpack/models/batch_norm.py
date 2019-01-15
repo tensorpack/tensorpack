@@ -11,7 +11,6 @@ from ..tfutils.collection import backup_collection, restore_collection
 from ..tfutils.common import get_tf_version_tuple
 from ..tfutils.tower import get_current_tower_context
 from ..utils import logger
-from ..utils.argtools import get_data_format
 from .common import VariableHolder, layer_register
 from .tflayer import convert_to_tflayer_args, rename_get_variable
 
@@ -134,10 +133,9 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
           this case.
     """
     # parse shapes
-    data_format = get_data_format(data_format, tfmode=False)
     shape = inputs.get_shape().as_list()
     ndims = len(shape)
-    assert ndims in [2, 4], ndims
+    assert ndims in [2, 4, 5], ndims
     if sync_statistics is not None:
         sync_statistics = sync_statistics.lower()
     assert sync_statistics in [None, 'nccl', 'horovod'], sync_statistics
@@ -146,8 +144,8 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
         if ndims == 2:
             axis = 1
         else:
-            axis = 1 if data_format == 'NCHW' else 3
-    assert axis in [1, 3], axis
+            axis = 1 if data_format == 'channels_first' else ndims - 1
+    assert axis in [1, 3, 4], axis
     num_chan = shape[axis]
 
     # parse training/ctx
@@ -177,6 +175,8 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
                 beta_initializer=beta_initializer,
                 gamma_initializer=gamma_initializer,
                 # https://github.com/tensorflow/tensorflow/issues/10857#issuecomment-410185429
+                # fused batch norm is currently not supported for multi-axis batch norm
+                # It only supports an input tensor of rank 4 and a channel dimension on axis 1 or 3.
                 fused=(ndims == 4 and axis in [1, 3] and not freeze_bn_backward),
                 _reuse=tf.get_variable_scope().reuse)
             if TF_version >= (1, 5):
@@ -212,11 +212,13 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
         if center:
             vh.beta = layer.beta
     else:
-        red_axis = [0] if ndims == 2 else ([0, 2, 3] if axis == 1 else [0, 1, 2])
+        red_axis = [0] if ndims == 2 else ([0] + range(2, ndims) if axis == 1 else range(ndims - 1))
 
         new_shape = None  # don't need to reshape unless ...
         if ndims == 4 and axis == 1:
             new_shape = [1, num_chan, 1, 1]
+        elif ndims == 5 and axis == 1:
+            new_shape = [1, num_chan, 1, 1, 1]
 
         batch_mean = tf.reduce_mean(inputs, axis=red_axis)
         batch_mean_square = tf.reduce_mean(tf.square(inputs), axis=red_axis)
@@ -340,14 +342,14 @@ def BatchRenorm(x, rmax, dmax, momentum=0.9, epsilon=1e-5,
 
     shape = x.get_shape().as_list()
     ndims = len(shape)
-    assert ndims in [2, 4]
+    assert ndims in [2, 4, 5]
     if ndims == 2:
         data_format = 'channels_first'
 
     ctx = get_current_tower_context()
     coll_bk = backup_collection([tf.GraphKeys.UPDATE_OPS])
     layer = tf.layers.BatchNormalization(
-        axis=1 if data_format == 'channels_first' else 3,
+        axis=1 if data_format == 'channels_first' else ndims - 1,
         momentum=momentum, epsilon=epsilon,
         center=center, scale=scale,
         renorm=True,
