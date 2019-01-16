@@ -6,7 +6,6 @@ import os
 import sys
 import tensorflow as tf
 
-from horovod.tensorflow.compression import Compression
 from ..callbacks import CallbackFactory, RunOp
 from ..graph_builder.distributed import DistributedParameterServerBuilder, DistributedReplicatedBuilder
 from ..graph_builder.training import (
@@ -382,15 +381,18 @@ class HorovodTrainer(SingleCostTrainer):
                         "Uninstall pyarrow and use msgpack instead.")
         # lazy import
         import horovod.tensorflow as _hvd
+        from horovod.tensorflow.compression import Compression
         global hvd
         hvd = _hvd
+        hvd_version=tuple(map(int, horovod.__version__.split('.')))
 
         hvd.init()
         self.is_chief = hvd.rank() == 0
         self._local_rank = hvd.local_rank()
         self._rank = hvd.rank()
         self._average = average
-        self._compression=compression
+        self._compression = compression
+        self._has_compression = hvd_version >= (0,15,0) ? True:False
         logger.info("[HorovodTrainer] local rank={}".format(self._local_rank))
         super(HorovodTrainer, self).__init__()
 
@@ -402,7 +404,10 @@ class HorovodTrainer(SingleCostTrainer):
         with tf.name_scope("HVDAllReduce"):
             for grad, var in grads:
                 if grad is not None:
-                    avg_grad = hvd.allreduce(grad, average=self._average, compression=self._compression)
+                    if compression is not None and self._has_compression:
+                        avg_grad = hvd.allreduce(grad, average=self._average, compression=self._compression)
+                    else:
+                        avg_grad = hvd.allreduce(grad, average=self._average)
                     averaged_gradients.append((avg_grad, var))
                 else:
                     averaged_gradients.append((None, var))
