@@ -392,7 +392,7 @@ class HorovodTrainer(SingleCostTrainer):
         self._rank = hvd.rank()
         self._average = average
         self._compression = compression
-        self._has_compression = hvd_version >= (0,15,0) ? True:False
+        self._has_compression = True if hvd_version >= (0,15,0) else False
         logger.info("[HorovodTrainer] local rank={}".format(self._local_rank))
         super(HorovodTrainer, self).__init__()
 
