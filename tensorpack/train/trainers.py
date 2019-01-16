@@ -374,7 +374,7 @@ class HorovodTrainer(SingleCostTrainer):
         """
         Args:
             average (bool): whether to average or sum the gradients across processes.
-            compression: none, fp16
+            compression: `hvd.Compression.fp16` or `hvd.Compression.none`
         """
         if 'pyarrow' in sys.modules:
             logger.warn("Horovod and pyarrow may conflict due to pyarrow bugs. "
@@ -392,7 +392,7 @@ class HorovodTrainer(SingleCostTrainer):
         self._rank = hvd.rank()
         self._average = average
         self._compression = compression
-        self._has_compression = True if hvd_version >= (0, 15, 0) else False
+        self._has_compression = hvd_version >= (0, 15, 0)
         logger.info("[HorovodTrainer] local rank={}".format(self._local_rank))
         super(HorovodTrainer, self).__init__()
 
