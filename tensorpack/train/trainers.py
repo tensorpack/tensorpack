@@ -371,7 +371,7 @@ class HorovodTrainer(SingleCostTrainer):
            for a full example which has handled these common issues.
            This example can train ImageNet in roughly an hour following the paper's setup.
     """
-    def __init__(self, average=True, compression=Compression.none):
+    def __init__(self, average=True, compression=None):
         """
         Args:
             average (bool): whether to average or sum the gradients across processes.
