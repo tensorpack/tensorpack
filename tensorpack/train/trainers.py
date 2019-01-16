@@ -381,7 +381,7 @@ class HorovodTrainer(SingleCostTrainer):
                         "Uninstall pyarrow and use msgpack instead.")
         # lazy import
         import horovod.tensorflow as _hvd
-        from horovod.tensorflow.compression import Compression
+        import horovod
         global hvd
         hvd = _hvd
         hvd_version=tuple(map(int, horovod.__version__.split('.')))
