@@ -375,7 +375,7 @@ class HorovodTrainer(SingleCostTrainer):
         """
         Args:
             average (bool): whether to average or sum the gradients across processes.
-            compession: None, fp16
+            compression: none, fp16
         """
         if 'pyarrow' in sys.modules:
             logger.warn("Horovod and pyarrow may conflict due to pyarrow bugs. "
