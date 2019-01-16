@@ -370,24 +370,29 @@ class HorovodTrainer(SingleCostTrainer):
            for a full example which has handled these common issues.
            This example can train ImageNet in roughly an hour following the paper's setup.
     """
-    def __init__(self, average=True):
+    def __init__(self, average=True, compression=None):
         """
         Args:
             average (bool): whether to average or sum the gradients across processes.
+            compression: `hvd.Compression.fp16` or `hvd.Compression.none`
         """
         if 'pyarrow' in sys.modules:
             logger.warn("Horovod and pyarrow may conflict due to pyarrow bugs. "
                         "Uninstall pyarrow and use msgpack instead.")
         # lazy import
         import horovod.tensorflow as _hvd
+        import horovod
         global hvd
         hvd = _hvd
+        hvd_version = tuple(map(int, horovod.__version__.split('.')))
 
         hvd.init()
         self.is_chief = hvd.rank() == 0
         self._local_rank = hvd.local_rank()
         self._rank = hvd.rank()
         self._average = average
+        self._compression = compression
+        self._has_compression = hvd_version >= (0, 15, 0)
         logger.info("[HorovodTrainer] local rank={}".format(self._local_rank))
         super(HorovodTrainer, self).__init__()
 
@@ -399,7 +404,10 @@ class HorovodTrainer(SingleCostTrainer):
         with tf.name_scope("HVDAllReduce"):
             for grad, var in grads:
                 if grad is not None:
-                    avg_grad = hvd.allreduce(grad, average=self._average)
+                    if self._compression is not None and self._has_compression:
+                        avg_grad = hvd.allreduce(grad, average=self._average, compression=self._compression)
+                    else:
+                        avg_grad = hvd.allreduce(grad, average=self._average)
                     averaged_gradients.append((avg_grad, var))
                 else:
                     averaged_gradients.append((None, var))
