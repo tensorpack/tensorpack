@@ -26,6 +26,10 @@ def _register(name, func):
         raise ValueError(logger.error("A layer cannot be named {}".format(name)))
     _LAYER_REGISTRY[name] = func
 
+    # handle alias
+    if name == 'Conv2DTranspose':
+        _register('Deconv2D', func)
+
 
 def get_registered_layer(name):
     """

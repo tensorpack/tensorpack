@@ -7,7 +7,7 @@ such as conv/deconv, fc, bn, pooling layers. **You do not need to learn them.**
 These layers were written only because there were no alternatives when
 tensorpack was first developed.
 Nowadays, these implementation actually call `tf.layers` directly.
-Tensorpack will not add any more layers into its core library because this is
+__Tensorpack will not add any more layers__ into its core library because this is
 not the focus of tensorpack, and there are many other alternative symbolic
 libraries today.
 
