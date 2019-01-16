@@ -421,7 +421,9 @@ if __name__ == '__main__':
     DetectionDataset()  # initialize the config with information from our dataset
 
     if args.visualize or args.evaluate or args.predict:
-        assert tf.test.is_gpu_available()
+        if not tf.test.is_gpu_available():
+            from tensorflow.python.framework import test_util
+            assert test_util.IsMklEnabled(), "Inference requires either GPU support or MKL support!"
         assert args.load
         finalize_configs(is_training=False)
 

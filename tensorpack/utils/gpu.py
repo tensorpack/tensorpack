@@ -44,7 +44,7 @@ def get_num_gpu():
         return ret
 
     env = os.environ.get('CUDA_VISIBLE_DEVICES', None)
-    if env is not None:
+    if env:
         return warn_return(len(env.split(',')), "Found non-empty CUDA_VISIBLE_DEVICES. ")
     output, code = subproc_call("nvidia-smi -L", timeout=5)
     if code == 0:
