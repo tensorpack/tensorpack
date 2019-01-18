@@ -133,7 +133,19 @@ class OnlinePredictor(PredictorBase):
 
 class OfflinePredictor(OnlinePredictor):
     """ A predictor built from a given config.
-        A single-tower model will be built without any prefix. """
+        A single-tower model will be built without any prefix.
+
+        Example:
+
+        .. code-block:: python
+
+            config = PredictConfig(model=my_model,
+                                   inputs_names=['image'],
+                                   output_names=['linear/output', 'prediction'])
+            predictor = OfflinePredictor(config)
+            batch_image = np.random.rand(1, 100, 100, 3)
+            batch_output, batch_prediction = predictor(batch_image)
+    """
 
     def __init__(self, config):
         """

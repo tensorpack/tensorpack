@@ -33,6 +33,14 @@ class PredictConfig(object):
         They are needed to construct the graph.
         You'll also have to set `output_names` as it does not have a default.
 
+        Example:
+
+        .. code-block:: python
+
+            config = PredictConfig(model=my_model,
+                                   inputs_names=['image'],
+                                   output_names=['linear/output', 'prediction'])
+
         Args:
             model (ModelDescBase): to be used to obtain inputs_desc and tower_func.
             tower_func: a callable which takes input tensors (by positional args) and construct a tower.

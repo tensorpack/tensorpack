@@ -178,6 +178,12 @@ class AutoResumeTrainConfig(TrainConfig):
 
     You can choose to let the above two option to either overwrite or
     not overwrite user-provided arguments, as explained below.
+
+    Note that the functionality requires the logging directory to obtain
+    necessary information from a previous run.
+    In some cases (e.g. when using Horovod), the directory is not
+    available or different for different workers and this class may not function
+    properly.
     """
     def __init__(self, always_resume=True, **kwargs):
         """

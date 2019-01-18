@@ -279,7 +279,7 @@ class KerasModel(object):
             validation_data (DataFlow or InputSource): to be used for inference.
                 The inference callback is added as the first in the callback list.
                 If you need to use it in a different order, please write it in the callback list manually.
-            kwargs: same as `self.trainer.train_with_defaults`.
+            kwargs: same arguments as :meth:`Trainer.train_with_defaults`.
         """
         callbacks = kwargs.pop('callbacks', [])
         if validation_data is not None:

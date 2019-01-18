@@ -387,7 +387,7 @@ class ImageNetModel(ModelDesc):
             nclass = logits.shape[-1]
             loss = tf.losses.softmax_cross_entropy(
                 tf.one_hot(label, nclass),
-                logits, label_smoothing=label_smoothing)
+                logits, label_smoothing=label_smoothing, reduction=tf.losses.Reduction.NONE)
         loss = tf.reduce_mean(loss, name='xentropy-loss')
 
         def prediction_incorrect(logits, label, topk=1, name='incorrect_vector'):

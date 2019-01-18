@@ -14,3 +14,7 @@ will build the docs in `build/html`.
 
 1. `pip install doc2dash`
 2. `make docset` produces `tensorpack.docset`.
+
+### Subscribe to docset updates in Dash/Zeal:
+
+Add this feed in Dash/Zeal: `https://github.com/tensorpack/tensorpack/raw/master/docs/tensorpack.xml`.
