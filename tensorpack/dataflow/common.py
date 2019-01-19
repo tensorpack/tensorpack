@@ -161,9 +161,9 @@ class BatchData(ProxyDataFlow):
                 else:
                     result.append(BatchData._batch_numpy(data_list))
         elif isinstance(first_dp, dict):
-            result = []
+            result = {}
             for key in first_dp.keys():
-                data_list = [x[k] for x in data_holder]
+                data_list = [x[key] for x in data_holder]
                 if use_list:
                     result[key] = data_list
                 else:
