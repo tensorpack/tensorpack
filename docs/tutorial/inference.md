@@ -99,6 +99,10 @@ demonstrates the usage of such a frozen/pruned graph.
 Again, you may often want to use a different graph for inference and you can
 do so by the arguments of `PredictConfig`.
 
+Note that the exporter relies on TensorFlow's automatic graph transformation, which do not always work reliably.
+Automated graph transformation is often suboptimal or sometimes fail.
+It's safer to write the graph by yourself.
+
 
 ## Inference After Training: Do It Yourself
 

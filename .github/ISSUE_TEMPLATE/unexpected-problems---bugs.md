@@ -4,8 +4,11 @@ about: Report unexpected problems about Tensorpack or its examples.
 
 ---
 
-If you're asking about an unexpected problem you met, use this template.
-__PLEASE DO NOT DELETE THIS TEMPLATE, FILL IT__:
+If you're asking about an unexpected problem which you do not know the root cause,
+use this template. __PLEASE DO NOT DELETE THIS TEMPLATE, FILL IT__:
+
+If you already know the root cause to your problem,
+feel free to delete everything in this template.
 
 ### 1. What you did:
 
@@ -54,5 +57,5 @@ not our responsibility to figure out.
     using an IDE or jupyter notebook), please retry under a normal command line shell. 
   + Hardware information, e.g. number of GPUs used.
 
-Feel free to add extra information related to your issue, but
-please try to provide the above information __accurately__ to save effort in the investigation.
+You may often want to provide extra information related to your issue, but
+at the minimum please try to provide the above information __accurately__ to save effort in the investigation.
