@@ -96,24 +96,27 @@ class MultiThreadMapData(_ParallelMapData):
     This is useful when the mapping function is the bottleneck, but you don't
     want to start processes for the entire dataflow pipeline.
 
+    The semantics of this class is __identical__ to :class:`MapData` except for the ordering.
+    Threads run in parallel and can take different time to run the
+    mapping function. Therefore the order of datapoints won't be preserved.
+
+    When `strict=True`, `MultiThreadMapData(df, ...)`
+    is guaranteed to produce the exact set of data as `MapData(df, ...)`,
+    if both are iterated until `StopIteration`. But the produced data will have different ordering.
+    The behavior of strict mode is undefined if the given dataflow `df` is infinite.
+
+    When `strict=False`, the data that's produced by `MultiThreadMapData(df, ...)`
+    is a reordering of the data produced by `RepeatedData(MapData(df, ...), -1)`.
+    In other words, first pass of `MultiThreadMapData.__iter__` may contain
+    datapoints from the second pass of `df.__iter__`.
+
+
     Note:
-        1. There is tiny communication overhead with threads, but you
-           should avoid starting many threads in your main process to reduce GIL contention.
+        1. You should avoid starting many threads in your main process to reduce GIL contention.
 
            The threads will only start in the process which calls :meth:`reset_state()`.
            Therefore you can use ``PrefetchDataZMQ(MultiThreadMapData(...), 1)``
            to reduce GIL contention.
-
-        2. Threads run in parallel and can take different time to run the
-           mapping function. Therefore the order of datapoints won't be
-           preserved, and datapoints from one pass of `df.__iter__()` might get
-           mixed with datapoints from the next pass.
-
-           You can use **strict mode**, where `MultiThreadMapData.__iter__()`
-           is guaranteed to produce the exact set which `df.__iter__()`
-           produces. Although the order of data still isn't preserved.
-
-           The behavior of strict mode is undefined if the dataflow is infinite.
     """
     class _Worker(StoppableThread):
         def __init__(self, inq, outq, evt, map_func):
@@ -209,17 +212,19 @@ class MultiProcessMapDataZMQ(_ParallelMapData, _MultiProcessZMQDataFlow):
     Same as :class:`MapData`, but start processes to run the mapping function,
     and communicate with ZeroMQ pipe.
 
-    Note:
-        1. Processes run in parallel and can take different time to run the
-           mapping function. Therefore the order of datapoints won't be
-           preserved, and datapoints from one pass of `df.__iter__()` might get
-           mixed with datapoints from the next pass.
+    The semantics of this class is __identical__ to :class:`MapData` except for the ordering.
+    Processes run in parallel and can take different time to run the
+    mapping function. Therefore the order of datapoints won't be preserved.
 
-           You can use **strict mode**, where `MultiProcessMapData.__iter__()`
-           is guaranteed to produce the exact set which `df.__iter__()`
-           produces. Although the order of data still isn't preserved.
+    When `strict=True`, `MultiProcessMapData(df, ...)`
+    is guaranteed to produce the exact set of data as `MapData(df, ...)`,
+    if both are iterated until `StopIteration`. But the produced data will have different ordering.
+    The behavior of strict mode is undefined if the given dataflow `df` is infinite.
 
-           The behavior of strict mode is undefined if the dataflow is infinite.
+    When `strict=False`, the data that's produced by `MultiProcessMapData(df, ...)`
+    is a reordering of the data produced by `RepeatedData(MapData(df, ...), -1)`.
+    In other words, first pass of `MultiProcessMapData.__iter__` may contain
+    datapoints from the second pass of `df.__iter__`.
     """
     class _Worker(mp.Process):
         def __init__(self, identity, map_func, pipename, hwm):

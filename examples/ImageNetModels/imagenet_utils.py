@@ -29,9 +29,12 @@ def fbresnet_augmentor(isTrain):
     """
     Augmentor used in fb.resnet.torch, for BGR images in range [0,255].
     """
+    interpolation = cv2.INTER_CUBIC
+    # linear seems to have more stable performance.
+    # but we keep cubic for compatibility with old models
     if isTrain:
         augmentors = [
-            imgaug.GoogleNetRandomCropAndResize(),
+            imgaug.GoogleNetRandomCropAndResize(interp=interpolation),
             # It's OK to remove the following augs if your CPU is not fast enough.
             # Removing brightness/contrast/saturation does not have a significant effect on accuracy.
             # Removing lighting leads to a tiny drop in accuracy.
@@ -53,7 +56,7 @@ def fbresnet_augmentor(isTrain):
         ]
     else:
         augmentors = [
-            imgaug.ResizeShortestEdge(256, cv2.INTER_CUBIC),
+            imgaug.ResizeShortestEdge(256, interp=interpolation),
             imgaug.CenterCrop((224, 224)),
         ]
     return augmentors

@@ -31,7 +31,7 @@ They may often be inefficient or lack functionalities you need.
 
 If you need anything more complicated, please
 learn what TensorFlow can do, and __do it on your own__ because Tensorpack
-is a training interface and doesn't care what happened after training.
+is a training interface and doesn't focus on what happened after training.
 
 ### OfflinePredictor
 
@@ -107,7 +107,7 @@ It's safer to write the graph by yourself.
 ## Inference After Training: Do It Yourself
 
 Tensorpack is a training interface -- __it doesn't care what happened after training__.
-It already provides everything you need for inference or model diagnosis after
+During training it already provides everything you need for inference or model diagnosis after
 training:
 
 1. The model (the graph): you've already written it yourself with TF symbolic functions.
@@ -115,9 +115,9 @@ training:
    If you use tensorpack layers, they are mainly just wrappers around `tf.layers`.
 
 2. The trained parameters: tensorpack saves them in standard TF checkpoint format.
-   Nothing about it is related to tensorpack.
+   Nothing about the format is related to tensorpack.
 
-With the model and the weights, you can do inference with whatever approaches
+With the model and the trained parameters, you can do inference with whatever approaches
 TensorFlow supports. Usually it involves the following steps:
 
 ### Step 1: build the model (graph)

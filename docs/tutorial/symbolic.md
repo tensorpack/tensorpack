@@ -2,17 +2,18 @@
 # Symbolic Layers
 
 Tensorpack contains a small collection of common model primitives,
-such as conv/deconv, fc, bn, pooling layers. **You do not need to learn them.**
+such as conv/deconv, fc, bn, pooling layers.
+However, tensorpack is model-agnostic, which means
+**you can skip this tutorial and do not need to use tensorpack's symbolic layers.**
 
-These layers were written only because there were no alternatives when
-tensorpack was first developed.
+These layers were written only because there were no alternatives when tensorpack was first developed.
 Nowadays, these implementation actually call `tf.layers` directly.
 __Tensorpack will not add any more layers__ into its core library because this is
 not the focus of tensorpack, and there are many other alternative symbolic
 libraries today.
 
 Today, you can just use `tf.layers` or any other symbolic libraries inside tensorpack.
-Using the tensorpack implementations, you can also benefit from `argscope` and `LinearWrap` to
+If you use the tensorpack implementations, you can also benefit from `argscope` and `LinearWrap` to
 simplify the code.
 
 Note that to keep backward compatibility of code and pre-trained models, tensorpack layers

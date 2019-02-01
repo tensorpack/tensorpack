@@ -98,7 +98,7 @@ class GoogleNetRandomCropAndResize(ImageAugmentor):
     """
     def __init__(self, crop_area_fraction=(0.08, 1.),
                  aspect_ratio_range=(0.75, 1.333),
-                 target_shape=224, interp=cv2.INTER_CUBIC):
+                 target_shape=224, interp=cv2.INTER_LINEAR):
         """
         Args:
             crop_area_fraction (tuple(float)): Defaults to crop 8%-100% area.

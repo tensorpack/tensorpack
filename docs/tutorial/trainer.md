@@ -52,7 +52,8 @@ The tower function needs to follow some rules:
      On the other hand, for a non-trainable variable, it may be desirable to not reuse it between towers.
      In this case, `tf.Variable` can be used to ensure creation of new variables in each tower even when `reuse=True`.
    * Do not modify the reuse option (e.g., by `scope.reuse_variables()`) of a variable
-     scope that is not created by you. This affects other's code.
+     scope that is not created by you. This affects other's code. You can always
+     open new scopes if you need the reuse option.
 4. It cannot create scopes or variables containing the name 'tower', as it is
    reserved for special use.
      
@@ -66,9 +67,10 @@ follow these conventions and will need some workarounds if used within tensorpac
  [TowerContext](../modules/tfutils.html#tensorpack.tfutils.tower.BaseTowerContext),
  which can be accessed by [get_current_tower_context()](../modules/tfutils.html#tensorpack.tfutils.tower.get_current_tower_context).
    The context contains information about training/inference mode, scope name, etc.
+   You can use the context to build a different graph under different mode.
 
 
-### MultiGPU Trainers
+### Multi-GPU Trainers
 
 For data-parallel multi-GPU training, different [multi-GPU trainers](../modules/train.html)
 implement different distribution strategies.
@@ -79,7 +81,7 @@ It takes only one line of code change to use them, e.g. `trainer=SyncMultiGPUTra
 
 Note some __common problems__ when using these trainers:
 
-1. In each iteration, instead of taking one tensor for all GPUs and split,
+1. In each iteration, instead of taking one input tensor for all GPUs and split,
     all GPUs take tensors from the `InputSource`.
 	So the total batch size across all GPUs would become ``(batch size of InputSource) * #GPU``.
 
@@ -90,7 +92,7 @@ Note some __common problems__ when using these trainers:
         makes no sense at all. 
         First, it wastes time doing the split because typically data is first concatenated by the user.
         Second, this puts unnecessary shape constraints on the data, that the
-        inputs on each GPU needs to have consistent shapes.
+        inputs on each GPU needs to have compatible shapes.
     ```
 
 2. The tower function (your model code) will get called once on each GPU.

@@ -4,7 +4,7 @@
 This tutorial contains some general discussions on the topic of
 "how to read data efficiently to work with TensorFlow",
 and how tensorpack supports these methods.
-You don't have to read it because these are details under the tensorpack interface,
+As a beginner you can skip this tutorial, because these are details under the tensorpack interface,
 but knowing it could help understand the efficiency and choose the best input pipeline for your task.
 
 ## Prepare Data in Parallel

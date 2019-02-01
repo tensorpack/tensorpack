@@ -182,8 +182,8 @@ class AutoResumeTrainConfig(TrainConfig):
     Note that the functionality requires the logging directory to obtain
     necessary information from a previous run.
     In some cases (e.g. when using Horovod), the directory is not
-    available or different for different workers and this class may not function
-    properly.
+    available, or the directories are different for different workers,
+    then this class may not function properly.
     """
     def __init__(self, always_resume=True, **kwargs):
         """
@@ -196,9 +196,9 @@ class AutoResumeTrainConfig(TrainConfig):
         Note:
             The main goal of this class is to let a training job to resume
             without changing any line of code or command line arguments.
-            So it's useful to let resume take priority over user-provided arguments sometimes:
+            So it's useful to let resume take priority over user-provided arguments sometimes.
 
-            If your training starts from a pre-trained model,
+            For example: if your training starts from a pre-trained model,
             you would want it to use user-provided model loader at the
             beginning, but a "resume" model loader when the job was
             interrupted and restarted.

@@ -22,7 +22,11 @@ if __name__ == '__main__':
     # this script does not need GPU
     os.environ['CUDA_VISIBLE_DEVICES'] = ''
 
-    tf.train.import_meta_graph(args.meta, clear_devices=True)
+    try:
+        tf.train.import_meta_graph(args.meta, clear_devices=True)
+    except KeyError:
+        print("If your graph contains non-standard ops, you need to import the relevant library first.")
+        raise
 
     # loading...
     if args.input.endswith('.npz'):
