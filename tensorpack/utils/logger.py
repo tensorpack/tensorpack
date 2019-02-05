@@ -155,7 +155,7 @@ def auto_set_dir(action=None, name=None):
     basename = os.path.basename(mod.__file__)
     auto_dirname = os.path.join('train_log', basename[:basename.rfind('.')])
     if name:
-        auto_dirname += ':%s' % name
+        auto_dirname += '_%s' % name if os.name == 'nt' else ':%s' % name
     set_logger_dir(auto_dirname, action=action)
 
 
