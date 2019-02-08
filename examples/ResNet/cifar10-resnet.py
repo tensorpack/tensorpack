@@ -118,7 +118,7 @@ class Model(ModelDesc):
 def get_data(train_or_test):
     isTrain = train_or_test == 'train'
     ds = dataset.Cifar10(train_or_test)
-    pp_mean = ds.get_per_pixel_mean()
+    pp_mean = ds.get_per_pixel_mean(('train',))
     if isTrain:
         augmentors = [
             imgaug.CenterPaste((40, 40)),
