@@ -45,8 +45,9 @@ os.environ['TF_GPU_THREAD_COUNT'] = '2'
 os.environ['TF_USE_CUDNN_BATCHNORM_SPATIAL_PERSISTENT'] = '0'
 
 # Available since 1.12. issue#15874
-os.environ['TF_ENABLE_WHILE_V2'] = '1'
-os.environ['TF_ENABLE_COND_V2'] = '1'
+# But they're sometimes buggy. We leave this decision to users.
+# os.environ['TF_ENABLE_WHILE_V2'] = '1'
+# os.environ['TF_ENABLE_COND_V2'] = '1'
 
 try:
     import tensorflow as tf  # noqa
