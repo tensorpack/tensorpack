@@ -206,6 +206,7 @@ class MySimulatorMaster(SimulatorMaster, Callback):
 
 
 def train():
+    assert tf.test.is_gpu_available(), "Training requires GPUs!"
     dirname = os.path.join('train_log', 'train-atari-{}'.format(ENV_NAME))
     logger.set_logger_dir(dirname)
 
@@ -259,7 +260,7 @@ def train():
         session_init=get_model_loader(args.load) if args.load else None,
         max_epoch=1000,
     )
-    trainer = SimpleTrainer() if config.nr_tower == 1 else AsyncMultiGPUTrainer(train_tower)
+    trainer = SimpleTrainer() if num_gpu == 1 else AsyncMultiGPUTrainer(train_tower)
     launch_train_with_config(config, trainer)
 
 

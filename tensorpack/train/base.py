@@ -104,12 +104,12 @@ class Trainer(object):
     The ``tf.Session`` object the trainer is using.
     Available after :meth:`initialize()`.
 
-    Using ``trainer.sess.run`` to evaluate tensors that depend on the inputs
-    can lead to unexpected effect:
+    Using ``trainer.sess.run`` to evaluate tensors that depend on the training
+    ``InputSource`` may have unexpected effect:
 
     For example, if you use ``trainer.sess.run`` to evaluate a tensor that depends on the
     inputs coming from a ``StagingArea``,
-    this will take a datapoint from the ``StagingArea``, making the ``StagingArea`` empty, and as a result
+    it will take a datapoint from the ``StagingArea``, making the ``StagingArea`` empty, and as a result
     make the training hang.
     """
 

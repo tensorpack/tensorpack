@@ -71,8 +71,6 @@ if __name__ == '__main__':
 
     config = get_config()
 
-    if args.gpu:
-        config.nr_tower = len(args.gpu.split(','))
     if args.load:
         config.session_init = SaverRestore(args.load)
 

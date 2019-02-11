@@ -137,7 +137,7 @@ class AsyncMultiGPUTrainer(SingleCostTrainer):
     def _setup_graph(self, input, get_cost_fn, get_opt_fn):
         if len(self.devices) > 1:
             assert isinstance(input, FeedfreeInput), input
-        tower_fn = self._make_get_grad_fn(input, get_cost_fn, get_opt_fn),
+        tower_fn = self._make_get_grad_fn(input, get_cost_fn, get_opt_fn)
         grad_list = self._builder.call_for_each_tower(tower_fn)
         self.train_op = self._builder.build(grad_list, get_opt_fn)
         return []
