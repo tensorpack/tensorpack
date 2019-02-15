@@ -85,6 +85,10 @@ class TowerTrainer(Trainer):
         This method will build the trainer's tower function under ``TowerContext(is_training=False)``,
         and returns a callable predictor with input placeholders & output tensors in this tower.
 
+        This method handles the common case of inference with the same tower function.
+        If you want to do inference with a different tower function, you can always build the tower by yourself,
+        under a "reuse" variable scope and a `TowerContext(is_training=False)`.
+
         Args:
             input_names (list): list of input names, matching the inputs declared for the trainer.
             output_names(list): list of tensor names without the tower prefix.

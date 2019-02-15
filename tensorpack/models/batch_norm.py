@@ -40,7 +40,7 @@ def get_bn_variables(n_out, use_scale, use_bias, beta_init, gamma_init):
 
 
 def update_bn_ema(xn, batch_mean, batch_var,
-                  moving_mean, moving_var, decay, internal_update):
+                  moving_mean, moving_var, decay):
     update_op1 = moving_averages.assign_moving_average(
         moving_mean, batch_mean, decay, zero_debias=False,
         name='mean_ema_op')
@@ -48,12 +48,10 @@ def update_bn_ema(xn, batch_mean, batch_var,
         moving_var, batch_var, decay, zero_debias=False,
         name='var_ema_op')
 
-    if internal_update:
-        with tf.control_dependencies([update_op1, update_op2]):
-            return tf.identity(xn, name='output')
-    else:
-        tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_op1)
-        tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_op2)
+    # When sync_statistics is True, always enable internal_update.
+    # Otherwise the update ops (only executed on main tower)
+    # will hang when some BatchNorm layers are unused (https://github.com/tensorpack/tensorpack/issues/1078)
+    with tf.control_dependencies([update_op1, update_op2]):
         return tf.identity(xn, name='output')
 
 
@@ -82,14 +80,19 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
     1. Accepts an alternative `data_format` option when `axis` is None. For 2D input, this argument will be ignored.
     2. Default value for `momentum` and `epsilon` is different.
     3. Default value for `training` is automatically obtained from tensorpack's `TowerContext`, but can be overwritten.
-    4. Support the `internal_update` option, which enables the use of BatchNorm layer inside conditionals.
+    4. Support the `internal_update` option, which cover more use cases than the standard collection-based update.
     5. Support the `sync_statistics` option, which is very useful in small-batch models.
 
     Args:
         internal_update (bool): if False, add EMA update ops to
           `tf.GraphKeys.UPDATE_OPS`. If True, update EMA inside the layer by control dependencies.
-          They are very similar in speed, but `internal_update=True` can be used
-          when you have conditionals in your model, or when you have multiple networks to train.
+          They are very similar in speed, but `internal_update=True` is recommended and can be helpful when:
+
+          1. BatchNorm is used inside dynamic control flow.
+             The collection-based update does not support dynamic control flows.
+          2. BatchNorm layer is sometimes unused (e.g., when you have two networks to train alternatively).
+             Putting all update ops into a single collection will waste a lot of compute.
+
           Corresponding TF issue: https://github.com/tensorflow/tensorflow/issues/14699
         sync_statistics (str or None): one of None, "nccl", or "horovod".
 
@@ -106,14 +109,24 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
           If not None, per-GPU E[x] and E[x^2] among all GPUs are averaged to compute
           global mean & variance. Therefore each GPU needs to have the same batch size.
 
-          The BatchNorm layer on each GPU needs to use the same name (`BatchNorm('name', input)`), so that
-          statistics can be reduced. If names do not match, this layer will hang.
+          The synchronization is based on the current variable scope + the name of the layer
+          (`BatchNorm('name', input)`). Therefore, you need to make sure that:
+
+          1. The BatchNorm layer on different GPUs needs to have the same name, so that
+             statistics can be synchronized. If names do not match, this layer will hang.
+          2. Different BatchNorm layers in one tower cannot share the same name.
+          3. A BatchNorm layer needs to be executed for the same number of times by all GPUs.
+             If different GPUs execute one BatchNorm layer for different number of times
+             (e.g., if some GPUs do not execute it), this layer may hang.
 
           This option only has effect in standard training mode.
 
           This option is also known as "Cross-GPU BatchNorm" as mentioned in:
           `MegDet: A Large Mini-Batch Object Detector <https://arxiv.org/abs/1711.07240>`_.
           Corresponding TF issue: https://github.com/tensorflow/tensorflow/issues/18222.
+
+          When `sync_statistics` is enabled, `internal_update` will be set to True automatically.
+          This is to avoid running `UPDATE_OPS`, which requires synchronization.
 
     Variable Names:
 
@@ -290,8 +303,7 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
 
         if ctx.is_main_training_tower:
             ret = update_bn_ema(
-                xn, batch_mean_vec, batch_var_vec, moving_mean, moving_var,
-                momentum, internal_update)
+                xn, batch_mean_vec, batch_var_vec, moving_mean, moving_var, momentum)
         else:
             ret = tf.identity(xn, name='output')
 

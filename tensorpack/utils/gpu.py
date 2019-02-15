@@ -40,7 +40,7 @@ def get_num_gpu():
 
         built_with_cuda = tf.test.is_built_with_cuda()
         if not built_with_cuda and ret > 0:
-            logger.warn(message + "But TensorFlow was not built with CUDA support!")
+            logger.warn(message + "But TensorFlow was not built with CUDA support and could not use GPUs!")
         return ret
 
     env = os.environ.get('CUDA_VISIBLE_DEVICES', None)

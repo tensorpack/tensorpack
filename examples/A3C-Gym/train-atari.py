@@ -127,7 +127,7 @@ class Model(ModelDesc):
         lr = tf.get_variable('learning_rate', initializer=0.001, trainable=False)
         opt = tf.train.AdamOptimizer(lr, epsilon=1e-3)
 
-        gradprocs = [MapGradient(lambda grad: tf.clip_by_average_norm(grad, 0.1)),
+        gradprocs = [MapGradient(lambda grad: tf.clip_by_norm(grad, 0.1 * tf.cast(tf.size(grad), tf.float32))),
                      SummaryGradient()]
         opt = optimizer.apply_grad_processors(opt, gradprocs)
         return opt
