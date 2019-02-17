@@ -93,7 +93,7 @@ class TrainConfig(object):
 
             starting_epoch (int): The index of the first epoch.
             steps_per_epoch (int): the number of steps (defined by :meth:`Trainer.run_step`) to run in each epoch.
-                Defaults to the input data size.
+                Defaults to the input data size. You may want to divide it by the #GPUs in multi-GPU training.
             max_epoch (int): maximum number of epoch to run training.
         """
 
@@ -155,14 +155,6 @@ class TrainConfig(object):
 
         self.starting_epoch = int(starting_epoch)
         self.max_epoch = int(max_epoch)
-
-        if 'nr_tower' in kwargs:
-            self.nr_tower = kwargs.pop('nr_tower')
-        if 'tower' in kwargs:
-            self.tower = kwargs.pop('tower')
-        else:
-            self.tower = [0]
-        assert len(kwargs) == 0, "Unknown arguments: {}".format(kwargs.keys())
 
 
 class AutoResumeTrainConfig(TrainConfig):

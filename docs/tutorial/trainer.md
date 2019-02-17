@@ -83,7 +83,9 @@ Note some __common problems__ when using these trainers:
 
 1. In each iteration, instead of taking one input tensor for all GPUs and split,
     all GPUs take tensors from the `InputSource`.
-	So the total batch size across all GPUs would become ``(batch size of InputSource) * #GPU``.
+	So the total batch size across all GPUs is ``(batch size of InputSource) * #GPU``.
+    You may want to change `steps_per_epoch` or learing rate appropriately according
+    to the total batch size.
 
     ```eval_rst
     .. note:: 
@@ -96,7 +98,7 @@ Note some __common problems__ when using these trainers:
     ```
 
 2. The tower function (your model code) will get called once on each GPU.
-   You must follow the abovementieond rules of tower function.
+   You must follow the abovementioned rules of tower function.
 
 ### Distributed Trainers
 
