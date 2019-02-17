@@ -47,5 +47,7 @@ for _, module_name, _ in iter_modules(
     srcpath = os.path.join(_CURR_DIR, module_name + '.py')
     if not os.path.isfile(srcpath):
         continue
+    if module_name.endswith('_test'):
+        continue
     if not module_name.startswith('_'):
         _global_import(module_name)

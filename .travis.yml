@@ -52,16 +52,12 @@ before_script:
 - protoc --version
 - python -c "import cv2; print('OpenCV '+ cv2.__version__)"
 - python -c "import tensorflow as tf; print('TensorFlow '+ tf.__version__)"
-# Check that these private names can be imported because tensorpack is using them
-- python -c "from tensorflow.python.client.session import _FetchHandler"
-- python -c "from tensorflow.python.training.monitored_session import _HookedSession"
-- python -c "import tensorflow as tf; tf.Operation._add_control_input"
+- mkdir -p $HOME/tensorpack_data
+- export TENSORPACK_DATASET=$HOME/tensorpack_data
 
 script:
 - flake8 .
 - if [[ $TRAVIS_PYTHON_VERSION == '3.6' ]]; then cd examples && flake8 .; fi  # some examples are py3 only
-- mkdir -p $HOME/tensorpack_data
-- export TENSORPACK_DATASET=$HOME/tensorpack_data
 - $TRAVIS_BUILD_DIR/tests/run-tests.sh
 - cd $TRAVIS_BUILD_DIR  # go back to root so that deploy may work
 

@@ -103,7 +103,7 @@ class ObjAttrParam(HyperParam):
     def set_value(self, v):
         setattr(self.obj, self.attrname, v)
 
-    def get_value(self, v):
+    def get_value(self):
         return getattr(self.obj, self.attrname)
 
 
@@ -151,8 +151,7 @@ class HyperParamSetter(Callback):
         """
         ret = self._get_value_to_set()
         if ret is not None and ret != self._last_value:
-            if self.epoch_num != self._last_epoch_set:
-                # Print this message at most once every epoch
+            if self.epoch_num != self._last_epoch_set:  # Print this message at most once every epoch
                 if self._last_value is None:
                     logger.info("[HyperParamSetter] At global_step={}, {} is set to {:.6f}".format(
                         self.global_step, self.param.readable_name, ret))
@@ -261,13 +260,33 @@ class ScheduledHyperParamSetter(HyperParamSetter):
         self._step = step_based
         super(ScheduledHyperParamSetter, self).__init__(param)
 
-    def _get_value_to_set(self):
-        refnum = self.global_step if self._step else self.epoch_num
+    def _get_value_to_set(self):  # override parent
+        return self._get_value_to_set_at_point(self._current_point())
+
+    def _current_point(self):
+        return self.global_step if self._step else self.epoch_num
+
+    def _check_value_at_beginning(self):
+        v = None
+        # we are at `before_train`, therefore the epoch/step associated with `current_point` has finished.
+        for p in range(0, self._current_point() + 1):
+            v = self._get_value_to_set_at_point(p) or v
+        actual_value = self.param.get_value()
+        if v is not None and v != actual_value:
+            logger.warn("According to the schedule, parameter '{}' should become {} at the current point. "
+                        "However its current value is {}. "
+                        "You may want to check whether your initialization of the parameter is as expected".format(
+                            self.param.readable_name, v, actual_value))
+
+    def _get_value_to_set_at_point(self, point):
+        """
+        Using schedule, compute the value to be set at a given point.
+        """
         laste, lastv = None, None
         for e, v in self.schedule:
-            if e == refnum:
+            if e == point:
                 return v    # meet the exact boundary, return directly
-            if e > refnum:
+            if e > point:
                 break
             laste, lastv = e, v
         if laste is None or laste == e:
@@ -276,8 +295,12 @@ class ScheduledHyperParamSetter(HyperParamSetter):
         if self.interp is None:
             # If no interpolation, nothing to do.
             return None
-        v = (refnum - laste) * 1. / (e - laste) * (v - lastv) + lastv
+        v = (point - laste) * 1. / (e - laste) * (v - lastv) + lastv
         return v
+
+    def _before_train(self):
+        super(ScheduledHyperParamSetter, self)._before_train()
+        self._check_value_at_beginning()
 
     def _trigger_epoch(self):
         if not self._step:

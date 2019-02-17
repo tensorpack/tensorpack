@@ -101,7 +101,7 @@ class ProgressBar(Callback):
 
 class MaintainStepCounter(Callback):
     """
-    It maintains the global step in the graph, making sure it's increased by one.
+    It maintains the global step in the graph, making sure it's increased by one at every `hooked_sess.run`.
     This callback is used internally by the trainer, you don't need to worry about it.
     """
 

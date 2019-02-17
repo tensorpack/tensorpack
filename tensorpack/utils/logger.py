@@ -56,11 +56,14 @@ def _getlogger():
 
 
 _logger = _getlogger()
-_LOGGING_METHOD = ['info', 'warning', 'error', 'critical', 'warn', 'exception', 'debug', 'setLevel']
+_LOGGING_METHOD = ['info', 'warning', 'error', 'critical', 'exception', 'debug', 'setLevel']
 # export logger functions
 for func in _LOGGING_METHOD:
     locals()[func] = getattr(_logger, func)
     __all__.append(func)
+# 'warn' is deprecated in logging module
+warn = _logger.warning
+__all__.append('warn')
 
 
 def _get_time_str():

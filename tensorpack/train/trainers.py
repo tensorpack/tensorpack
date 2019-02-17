@@ -61,7 +61,7 @@ class NoOpTrainer(SimpleTrainer):
     Note that `steps_per_epoch` and `max_epochs` are still valid options.
     """
     def run_step(self):
-        pass
+        self.hooked_sess.run([])
 
 
 # Only exists for type check & back-compatibility

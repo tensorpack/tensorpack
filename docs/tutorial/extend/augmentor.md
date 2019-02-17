@@ -1,4 +1,4 @@
-### Design of Tensorpack's imgaug Module
+#### Design of Tensorpack's imgaug Module
 
 The [imgaug module](../../modules/dataflow.imgaug.html) is designed to allow the following usage:
 
@@ -22,7 +22,7 @@ The [imgaug module](../../modules/dataflow.imgaug.html) is designed to allow the
 4. Reset random seed. Random seed can be reset by
    [reset_state](../../modules/dataflow.imgaug.html#tensorpack.dataflow.imgaug.Augmentor.reset_state).
    This is important for multi-process data loading, and
-   it is called automatically if you use tensorpack's 
+   the reset method is called automatically if you use tensorpack's 
    [image augmentation dataflow](../../modules/dataflow.html#tensorpack.dataflow.AugmentImageComponent).
 
 ### Write an Image Augmentor
