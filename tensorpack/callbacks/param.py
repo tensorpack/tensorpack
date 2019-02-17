@@ -273,10 +273,11 @@ class ScheduledHyperParamSetter(HyperParamSetter):
             v = self._get_value_to_set_at_point(p) or v
         actual_value = self.param.get_value()
         if v is not None and v != actual_value:
-            logger.warn("According to the schedule, parameter '{}' should become {} at the current point. "
+            logger.warn("According to scheduler {}, parameter '{}' should become {} at the current point. "
                         "However its current value is {}. "
-                        "You may want to check whether your initialization of the parameter is as expected".format(
-                            self.param.readable_name, v, actual_value))
+                        "If this is the only scheduler being used, you may want to check whether your "
+                        "initialization of the parameter is as expected".format(
+                            self, self.param.readable_name, v, actual_value))
 
     def _get_value_to_set_at_point(self, point):
         """
@@ -309,6 +310,9 @@ class ScheduledHyperParamSetter(HyperParamSetter):
     def _trigger_step(self):
         if self._step:
             self.trigger()
+
+    def __str__(self):
+        return "ScheduledHyperParamSetter(schedule={})".format(self.schedule)
 
 
 class HyperParamSetterWithFunc(HyperParamSetter):
